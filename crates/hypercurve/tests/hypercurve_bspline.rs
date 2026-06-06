@@ -626,6 +626,33 @@ fn retained_span_fact_constructors_reject_forged_evidence() {
         None,
     ));
 
+    let first_fact = RetainedBSplineSpanFacts2::new(
+        0,
+        r(0),
+        r(1),
+        bounds.clone(),
+        RetainedSpanAxisMonotonicity::CertifiedMonotone,
+        RetainedSpanAxisMonotonicity::CertifiedMonotone,
+        RetainedTopologyStatus::NativeExact,
+        None,
+    )
+    .unwrap();
+    let gapped_fact = RetainedBSplineSpanFacts2::new(
+        1,
+        r(2),
+        r(3),
+        bounds.clone(),
+        RetainedSpanAxisMonotonicity::CertifiedMonotone,
+        RetainedSpanAxisMonotonicity::CertifiedMonotone,
+        RetainedTopologyStatus::NativeExact,
+        None,
+    )
+    .unwrap();
+    assert_topology_error(RetainedBSplineSpanFactReport2::new(vec![
+        first_fact,
+        gapped_fact,
+    ]));
+
     let skipped_index = RetainedBSplineSpanFacts2::new(
         1,
         r(0),
@@ -699,6 +726,43 @@ fn retained_rational_span_topology_reports_reject_forged_native_evidence() {
     .unwrap();
     assert_topology_error(RationalBSplineNativeTopologyReport2::new(vec![
         skipped_index,
+    ]));
+
+    let first_report = RationalBezierSpanTopologyReport2::new(
+        0,
+        2,
+        r(0),
+        r(1),
+        RetainedTopologyStatus::Unsupported,
+        None,
+    )
+    .unwrap();
+    let gapped_report = RationalBezierSpanTopologyReport2::new(
+        1,
+        2,
+        r(2),
+        r(3),
+        RetainedTopologyStatus::Unsupported,
+        None,
+    )
+    .unwrap();
+    assert_topology_error(RationalBSplineNativeTopologyReport2::new(vec![
+        first_report.clone(),
+        gapped_report,
+    ]));
+
+    let mixed_degree_report = RationalBezierSpanTopologyReport2::new(
+        1,
+        3,
+        r(1),
+        r(2),
+        RetainedTopologyStatus::Unsupported,
+        None,
+    )
+    .unwrap();
+    assert_topology_error(RationalBSplineNativeTopologyReport2::new(vec![
+        first_report,
+        mixed_degree_report,
     ]));
 }
 

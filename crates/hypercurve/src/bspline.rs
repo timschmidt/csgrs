@@ -1032,7 +1032,7 @@ impl RetainedBSplineSpanFacts2 {
 impl RetainedBSplineSpanFactReport2 {
     /// Constructs a span-local fact report.
     pub fn new(span_facts: Vec<RetainedBSplineSpanFacts2>) -> CurveResult<Self> {
-        validate_span_fact_report_indices(&span_facts)?;
+        validate_span_fact_report_evidence(&span_facts)?;
         Ok(Self { span_facts })
     }
 
@@ -1045,7 +1045,7 @@ impl RetainedBSplineSpanFactReport2 {
 impl RationalBSplineNativeTopologyReport2 {
     /// Constructs a rational B-spline topology report from per-span reports.
     pub fn new(span_reports: Vec<RationalBezierSpanTopologyReport2>) -> CurveResult<Self> {
-        validate_span_topology_report_indices(&span_reports)?;
+        validate_span_topology_report_evidence(&span_reports)?;
         Ok(Self { span_reports })
     }
 
@@ -1164,23 +1164,35 @@ fn validate_span_fact_evidence(
     Ok(())
 }
 
-fn validate_span_fact_report_indices(span_facts: &[RetainedBSplineSpanFacts2]) -> CurveResult<()> {
+fn validate_span_fact_report_evidence(span_facts: &[RetainedBSplineSpanFacts2]) -> CurveResult<()> {
     if span_facts.is_empty() {
         return Err(CurveError::Topology(
             "retained span fact report must carry at least one span".into(),
         ));
     }
+    let policy = CurvePolicy::certified();
     for (expected_index, fact) in span_facts.iter().enumerate() {
         if fact.span_index() != expected_index {
             return Err(CurveError::Topology(
                 "retained span fact report indices must be contiguous".into(),
             ));
         }
+        if let Some(previous) = expected_index
+            .checked_sub(1)
+            .and_then(|index| span_facts.get(index))
+        {
+            validate_adjacent_knot_windows(
+                previous.knot_interval().1,
+                fact.knot_interval().0,
+                &policy,
+                "retained span fact report knot intervals must be contiguous",
+            )?;
+        }
     }
     Ok(())
 }
 
-fn validate_span_topology_report_indices(
+fn validate_span_topology_report_evidence(
     span_reports: &[RationalBezierSpanTopologyReport2],
 ) -> CurveResult<()> {
     if span_reports.is_empty() {
@@ -1188,11 +1200,29 @@ fn validate_span_topology_report_indices(
             "retained span topology report must carry at least one span".into(),
         ));
     }
+    let degree = span_reports[0].degree();
+    let policy = CurvePolicy::certified();
     for (expected_index, report) in span_reports.iter().enumerate() {
         if report.span_index() != expected_index {
             return Err(CurveError::Topology(
                 "retained span topology report indices must be contiguous".into(),
             ));
+        }
+        if report.degree() != degree {
+            return Err(CurveError::Topology(
+                "retained span topology report degrees must match".into(),
+            ));
+        }
+        if let Some(previous) = expected_index
+            .checked_sub(1)
+            .and_then(|index| span_reports.get(index))
+        {
+            validate_adjacent_knot_windows(
+                previous.knot_interval().1,
+                report.knot_interval().0,
+                &policy,
+                "retained span topology report knot intervals must be contiguous",
+            )?;
         }
     }
     Ok(())
@@ -1233,6 +1263,18 @@ fn validate_positive_knot_interval(knot_start: &Real, knot_end: &Real) -> CurveR
         return Err(CurveError::Topology(
             "retained B-spline span report must carry certified positive knot interval".into(),
         ));
+    }
+    Ok(())
+}
+
+fn validate_adjacent_knot_windows(
+    previous_end: &Real,
+    next_start: &Real,
+    policy: &CurvePolicy,
+    message: &str,
+) -> CurveResult<()> {
+    if compare_reals(previous_end, next_start, policy) != Some(Ordering::Equal) {
+        return Err(CurveError::Topology(message.into()));
     }
     Ok(())
 }
