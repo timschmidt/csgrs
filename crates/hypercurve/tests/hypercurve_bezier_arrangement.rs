@@ -76,6 +76,45 @@ fn arrangement_graph_rejects_duplicate_source_fragment_evidence() {
 }
 
 #[test]
+fn arrangement_graph_accepts_adjacent_reused_source_fragment_ranges() {
+    let first = BezierSplitFragment2::Materialized {
+        start: exact(r(0)),
+        end: exact(q(1, 2)),
+        curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 0))),
+    };
+    let second = BezierSplitFragment2::Materialized {
+        start: exact(q(1, 2)),
+        end: exact(r(1)),
+        curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(2, 0), p(3, 0), p(4, 0))),
+    };
+
+    BezierArrangementGraph2::new(vec![
+        hypercurve::BezierArrangementFragment2::new(0, 0, first),
+        hypercurve::BezierArrangementFragment2::new(0, 0, second),
+    ])
+    .unwrap();
+}
+
+#[test]
+fn arrangement_graph_rejects_overlapping_reused_source_fragment_ranges() {
+    let first = BezierSplitFragment2::Materialized {
+        start: exact(r(0)),
+        end: exact(q(3, 4)),
+        curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(0, 0), p(1, 0), p(3, 0))),
+    };
+    let second = BezierSplitFragment2::Materialized {
+        start: exact(q(1, 2)),
+        end: exact(r(1)),
+        curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(2, 0), p(3, 0), p(4, 0))),
+    };
+
+    assert_topology_error(BezierArrangementGraph2::new(vec![
+        hypercurve::BezierArrangementFragment2::new(0, 0, first),
+        hypercurve::BezierArrangementFragment2::new(0, 0, second),
+    ]));
+}
+
+#[test]
 fn monotone_span_rejects_reversed_parameter_evidence() {
     assert_topology_error(BezierMonotoneSpan::new(r(1), r(0)));
 }

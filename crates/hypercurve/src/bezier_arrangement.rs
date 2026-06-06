@@ -31,9 +31,9 @@ use crate::classify::{is_zero, real_sign};
 use crate::{
     BezierAlgebraicSameTangentOrderStatus, BezierAlgebraicTangentOrderStatus,
     BezierAlgebraicTangentVector2, BezierEndpoint, BezierEndpointPointImage2,
-    BezierEndpointTangentImage2, BezierSplitFragment2, BezierSplitMaterialization2,
-    BezierSubcurve2, BezierTangentTurnOrdering2, Classification, CurveError, CurvePolicy,
-    CurveResult, Point2, UncertaintyReason, ZeroStatus,
+    BezierEndpointTangentImage2, BezierParameter2, BezierSplitFragment2,
+    BezierSplitMaterialization2, BezierSubcurve2, BezierTangentTurnOrdering2, Classification,
+    CurveError, CurvePolicy, CurveResult, Point2, UncertaintyReason, ZeroStatus,
     compare_algebraic_same_tangent_second_order, compare_algebraic_same_tangent_third_order,
     compare_algebraic_tangent_turn_from_base,
 };
@@ -311,20 +311,57 @@ impl BezierArrangementGraph2 {
 fn validate_arrangement_fragment_provenance(
     fragments: &[BezierArrangementFragment2],
 ) -> CurveResult<()> {
+    let policy = CurvePolicy::certified();
     for (index, fragment) in fragments.iter().enumerate() {
         for other in &fragments[index + 1..] {
             if fragment.source_curve_index() == other.source_curve_index()
                 && fragment.source_fragment_index() == other.source_fragment_index()
-                && fragment.fragment() == other.fragment()
             {
-                return Err(CurveError::Topology(
-                    "retained Bezier arrangement graph must not duplicate source fragment evidence"
-                        .to_owned(),
-                ));
+                validate_reused_source_fragment_ranges(fragment, other, &policy)?;
             }
         }
     }
     Ok(())
+}
+
+fn validate_reused_source_fragment_ranges(
+    first: &BezierArrangementFragment2,
+    second: &BezierArrangementFragment2,
+    policy: &CurvePolicy,
+) -> CurveResult<()> {
+    let (first_start, first_end) = arrangement_fragment_source_range(first.fragment());
+    let (second_start, second_end) = arrangement_fragment_source_range(second.fragment());
+    match first_end.cmp_by_interval(second_start, policy)? {
+        Classification::Decided(std::cmp::Ordering::Less | std::cmp::Ordering::Equal) => {
+            return Ok(());
+        }
+        Classification::Decided(std::cmp::Ordering::Greater) => {}
+        Classification::Uncertain(reason) => {
+            return Err(CurveError::Topology(format!(
+                "retained Bezier arrangement graph cannot certify reused source fragment ranges are disjoint: {reason:?}"
+            )));
+        }
+    }
+    match second_end.cmp_by_interval(first_start, policy)? {
+        Classification::Decided(std::cmp::Ordering::Less | std::cmp::Ordering::Equal) => Ok(()),
+        Classification::Decided(std::cmp::Ordering::Greater) => Err(CurveError::Topology(
+            "retained Bezier arrangement graph must not overlap reused source fragment evidence"
+                .to_owned(),
+        )),
+        Classification::Uncertain(reason) => Err(CurveError::Topology(format!(
+            "retained Bezier arrangement graph cannot certify reused source fragment ranges are disjoint: {reason:?}"
+        ))),
+    }
+}
+
+fn arrangement_fragment_source_range(
+    fragment: &BezierSplitFragment2,
+) -> (&BezierParameter2, &BezierParameter2) {
+    match fragment {
+        BezierSplitFragment2::Materialized { start, end, .. }
+        | BezierSplitFragment2::AlgebraicEndpointImages { start, end, .. }
+        | BezierSplitFragment2::Unresolved { start, end } => (start, end),
+    }
 }
 
 impl BezierArrangementChain2 {

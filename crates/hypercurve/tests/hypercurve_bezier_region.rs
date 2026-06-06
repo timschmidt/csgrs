@@ -122,9 +122,19 @@ fn materialized_line_fragment(
     midpoint: Point2,
     end: Point2,
 ) -> BezierArrangementFragment2 {
+    materialized_line_fragment_at(source_curve_index, 0, start, midpoint, end)
+}
+
+fn materialized_line_fragment_at(
+    source_curve_index: usize,
+    source_fragment_index: usize,
+    start: Point2,
+    midpoint: Point2,
+    end: Point2,
+) -> BezierArrangementFragment2 {
     BezierArrangementFragment2::new(
         source_curve_index,
-        0,
+        source_fragment_index,
         BezierSplitFragment2::Materialized {
             start: exact(r(0)),
             end: exact(r(1)),
@@ -318,14 +328,14 @@ fn resolved_linear_overlap_traversal_materializes_native_and_retained_regions() 
 #[test]
 fn reversed_internal_overlap_traversal_materializes_union_boundary() {
     let graph = graph(vec![
-        materialized_line_fragment(0, p(0, 0), p(1, 0), p(2, 0)),
-        materialized_line_fragment(0, p(2, 0), p(2, 1), p(2, 2)),
-        materialized_line_fragment(0, p(2, 2), p(1, 2), p(0, 2)),
-        materialized_line_fragment(0, p(0, 2), p(0, 1), p(0, 0)),
-        materialized_line_fragment(1, p(2, 0), p(3, 0), p(4, 0)),
-        materialized_line_fragment(1, p(4, 0), p(4, 1), p(4, 2)),
-        materialized_line_fragment(1, p(4, 2), p(3, 2), p(2, 2)),
-        materialized_line_fragment(1, p(2, 2), p(2, 1), p(2, 0)),
+        materialized_line_fragment_at(0, 0, p(0, 0), p(1, 0), p(2, 0)),
+        materialized_line_fragment_at(0, 1, p(2, 0), p(2, 1), p(2, 2)),
+        materialized_line_fragment_at(0, 2, p(2, 2), p(1, 2), p(0, 2)),
+        materialized_line_fragment_at(0, 3, p(0, 2), p(0, 1), p(0, 0)),
+        materialized_line_fragment_at(1, 0, p(2, 0), p(3, 0), p(4, 0)),
+        materialized_line_fragment_at(1, 1, p(4, 0), p(4, 1), p(4, 2)),
+        materialized_line_fragment_at(1, 2, p(4, 2), p(3, 2), p(2, 2)),
+        materialized_line_fragment_at(1, 3, p(2, 2), p(2, 1), p(2, 0)),
     ]);
 
     let traversal = decided(graph.traverse_retained_splitting_linear_overlaps(&policy()));
