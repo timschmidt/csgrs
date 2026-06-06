@@ -94,8 +94,8 @@ use super::volumetric_cells::{
     CoplanarVolumetricCellEvidenceReport, CoplanarVolumetricCellObstacle,
 };
 use super::winding::{
-    ClosedMeshWindingMeshRelation, ClosedMeshWindingMeshReport, ClosedMeshWindingRelation,
-    WindingReportError, classify_mesh_vertices_against_closed_mesh_winding_report,
+    ClosedMeshWindingMeshReport, ClosedMeshWindingRelation, WindingReportError,
+    classify_mesh_vertices_against_closed_mesh_winding_report,
     classify_point_against_closed_mesh_winding_report,
 };
 use hyperlimit::{
@@ -577,12 +577,6 @@ pub fn preflight_boolean_exact(
         )?
     {
         return Ok(preflight);
-    }
-    if support == ExactBooleanSupport::RequiresCertifiedWinding
-        && let Some(winding_support) =
-            certified_closed_shell_no_intersection_support_from_graph(&graph, left, right)?
-    {
-        return Ok(certified_shortcut_preflight(operation, winding_support));
     }
     if let Some((support, region_classifications, _triangulations)) =
         open_surface_arrangement_plan_from_graph(&graph, left, right, operation)?
@@ -1407,14 +1401,6 @@ pub fn boolean_exact_with_boundary_policy(
             if let Some(result) = boolean_closed_boundary_only_contact_meshes_from_graph(
                 &graph, left, right, operation, validation,
             )? {
-                return Ok(result);
-            }
-            if let Some(shortcut) =
-                certified_closed_shell_no_intersection_shortcut_from_graph(&graph, left, right)?
-                && let Some(result) = materialize_closed_shell_no_intersection_meshes(
-                    shortcut, left, right, operation, validation,
-                )?
-            {
                 return Ok(result);
             }
             if let Some(result) = boolean_boundary_touching_meshes_from_graph(
@@ -4525,99 +4511,6 @@ fn winding_readiness_report(
     }
 }
 
-fn materialize_closed_shell_no_intersection_meshes(
-    shortcut: CertifiedClosedShellNoIntersectionShortcut,
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: ValidationPolicy,
-) -> Result<Option<ExactBooleanResult>, MeshError> {
-    let mesh = match (
-        shortcut.left_in_right.relation,
-        shortcut.right_in_left.relation,
-        operation,
-    ) {
-        (ClosedMeshWindingMeshRelation::StrictlyInside, _, ExactBooleanOperation::Union) => {
-            copy_mesh(
-                right,
-                "exact arrangement closed-shell containment union keeps outer right",
-                validation,
-            )?
-        }
-        (ClosedMeshWindingMeshRelation::StrictlyInside, _, ExactBooleanOperation::Intersection) => {
-            copy_mesh(
-                left,
-                "exact arrangement closed-shell containment intersection keeps inner left",
-                validation,
-            )?
-        }
-        (ClosedMeshWindingMeshRelation::StrictlyInside, _, ExactBooleanOperation::Difference) => {
-            empty_mesh(
-                "empty exact arrangement closed-shell containment difference",
-                validation,
-            )?
-        }
-        (_, ClosedMeshWindingMeshRelation::StrictlyInside, ExactBooleanOperation::Union) => {
-            copy_mesh(
-                left,
-                "exact arrangement closed-shell containment union keeps outer left",
-                validation,
-            )?
-        }
-        (_, ClosedMeshWindingMeshRelation::StrictlyInside, ExactBooleanOperation::Intersection) => {
-            copy_mesh(
-                right,
-                "exact arrangement closed-shell containment intersection keeps inner right",
-                validation,
-            )?
-        }
-        (_, ClosedMeshWindingMeshRelation::StrictlyInside, ExactBooleanOperation::Difference) => {
-            concatenate_meshes_with_options(
-                left,
-                right,
-                true,
-                "exact arrangement closed-shell containment difference with inner reversed shell",
-                validation,
-            )?
-        }
-        (
-            ClosedMeshWindingMeshRelation::Outside,
-            ClosedMeshWindingMeshRelation::Outside,
-            ExactBooleanOperation::Union,
-        ) => concatenate_meshes_with_options(
-            left,
-            right,
-            false,
-            "exact arrangement closed-shell separated union",
-            validation,
-        )?,
-        (
-            ClosedMeshWindingMeshRelation::Outside,
-            ClosedMeshWindingMeshRelation::Outside,
-            ExactBooleanOperation::Intersection,
-        ) => empty_mesh(
-            "empty exact arrangement closed-shell separated intersection",
-            validation,
-        )?,
-        (
-            ClosedMeshWindingMeshRelation::Outside,
-            ClosedMeshWindingMeshRelation::Outside,
-            ExactBooleanOperation::Difference,
-        ) => copy_mesh(
-            left,
-            "exact arrangement closed-shell separated difference keeps left",
-            validation,
-        )?,
-        (_, _, ExactBooleanOperation::SelectedRegions(_)) => unreachable!("handled by caller"),
-        _ => return Ok(None),
-    };
-
-    Ok(Some(certified_shortcut_result(
-        mesh,
-        ExactBooleanShortcutKind::ArrangementCellComplex,
-    )))
-}
-
 type VolumetricWindingRegionPlan = (
     Vec<FaceRegionPlaneClassification>,
     Vec<FaceRegionTriangulation>,
@@ -4971,11 +4864,6 @@ fn convex_boundary_containment_is_supported(
             .any(|vertex| matches!(vertex.relation, ConvexSolidPointRelation::Outside))
 }
 
-struct CertifiedClosedShellNoIntersectionShortcut {
-    left_in_right: ClosedMeshWindingMeshReport,
-    right_in_left: ClosedMeshWindingMeshReport,
-}
-
 fn certified_closed_shell_boundary_containment_support_from_graph(
     graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
@@ -5071,51 +4959,6 @@ fn triangle_centroid(a: &Point3, b: &Point3, c: &Point3) -> Option<Point3> {
         (&(&a.y + &b.y) + &c.y) * &third,
         (&(&a.z + &b.z) + &c.z) * &third,
     ))
-}
-
-fn certified_closed_shell_no_intersection_support_from_graph(
-    graph: &super::graph::ExactIntersectionGraph,
-    left: &ExactMesh,
-    right: &ExactMesh,
-) -> Result<Option<ExactBooleanSupport>, MeshError> {
-    Ok(
-        certified_closed_shell_no_intersection_shortcut_from_graph(graph, left, right)?
-            .map(|_| ExactBooleanSupport::CertifiedArrangementCellComplex),
-    )
-}
-
-fn certified_closed_shell_no_intersection_shortcut_from_graph(
-    graph: &super::graph::ExactIntersectionGraph,
-    left: &ExactMesh,
-    right: &ExactMesh,
-) -> Result<Option<CertifiedClosedShellNoIntersectionShortcut>, MeshError> {
-    if graph.has_unknowns()
-        || !graph.face_pairs.is_empty()
-        || !left.facts().mesh.closed_manifold
-        || !right.facts().mesh.closed_manifold
-    {
-        return Ok(None);
-    }
-
-    let left_in_right = classify_mesh_vertices_against_closed_mesh_winding_report(left, right);
-    left_in_right.validate().map_err(winding_error)?;
-    let right_in_left = classify_mesh_vertices_against_closed_mesh_winding_report(right, left);
-    right_in_left.validate().map_err(winding_error)?;
-    let supported = matches!(
-        (left_in_right.relation, right_in_left.relation),
-        (ClosedMeshWindingMeshRelation::StrictlyInside, _)
-            | (_, ClosedMeshWindingMeshRelation::StrictlyInside)
-            | (
-                ClosedMeshWindingMeshRelation::Outside,
-                ClosedMeshWindingMeshRelation::Outside,
-            )
-    );
-    Ok(
-        supported.then_some(CertifiedClosedShellNoIntersectionShortcut {
-            left_in_right,
-            right_in_left,
-        }),
-    )
 }
 
 fn winding_error(error: WindingReportError) -> MeshError {
@@ -6162,6 +6005,49 @@ mod tests {
         )
         .unwrap();
         assert!(exact_meshes_have_same_shape(&difference.mesh, &left));
+    }
+
+    #[test]
+    fn nested_closed_shell_booleans_materialize_through_arrangement_pipeline() {
+        let left = tetrahedron_i64([0, 0, 0], [10, 0, 0], [0, 10, 0], [0, 0, 10]);
+        let right = tetrahedron_i64([1, 1, 1], [2, 1, 1], [1, 2, 1], [1, 1, 2]);
+
+        for operation in [
+            ExactBooleanOperation::Union,
+            ExactBooleanOperation::Intersection,
+            ExactBooleanOperation::Difference,
+        ] {
+            let preflight = preflight_boolean_exact(&left, &right, operation).unwrap();
+            assert_eq!(
+                preflight.support,
+                ExactBooleanSupport::CertifiedArrangementCellComplex,
+                "{operation:?}: {preflight:?}"
+            );
+            assert!(preflight.blocker.is_none(), "{operation:?}: {preflight:?}");
+
+            let attempt = exact_arrangement_boolean_attempt_report(
+                &left,
+                &right,
+                operation,
+                ExactRegularizationPolicy::REGULARIZED_SOLID,
+            )
+            .unwrap();
+            assert_eq!(
+                attempt.materialized_shortcut,
+                Some(ExactBooleanShortcutKind::ArrangementCellComplex),
+                "{operation:?}: {attempt:?}"
+            );
+            assert!(attempt.decline.is_none(), "{operation:?}: {attempt:?}");
+
+            let result = boolean_exact(&left, &right, operation, ValidationPolicy::CLOSED).unwrap();
+            result.validate().unwrap();
+            result.validate_against_sources(&left, &right).unwrap();
+            assert!(
+                result.mesh.facts().mesh.closed_manifold,
+                "{operation:?}: {:?}",
+                result.mesh.facts().mesh
+            );
+        }
     }
 
     #[test]
