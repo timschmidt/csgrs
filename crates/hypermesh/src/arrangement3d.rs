@@ -2231,9 +2231,10 @@ fn classify_shell_witnesses_against_container(
     container: &ExactMesh,
 ) -> ShellContainmentRelation {
     let mut decided = None;
+    let mut saw_boundary = false;
     for witness in witnesses {
         match classify_shell_witness_against_container(witness, container) {
-            ShellContainmentRelation::Boundary => return ShellContainmentRelation::Boundary,
+            ShellContainmentRelation::Boundary => saw_boundary = true,
             ShellContainmentRelation::Unknown => {}
             relation @ (ShellContainmentRelation::Inside | ShellContainmentRelation::Outside) => {
                 match decided {
@@ -2246,7 +2247,11 @@ fn classify_shell_witnesses_against_container(
             }
         }
     }
-    decided.unwrap_or(ShellContainmentRelation::Unknown)
+    decided.unwrap_or(if saw_boundary {
+        ShellContainmentRelation::Boundary
+    } else {
+        ShellContainmentRelation::Unknown
+    })
 }
 
 fn classify_shell_witness_against_container(
@@ -3368,6 +3373,10 @@ mod tests {
         );
         assert_eq!(
             classify_shell_witnesses_against_container(&[p3(0, 0, 0), p3(1, 1, 1)], &container),
+            ShellContainmentRelation::Inside
+        );
+        assert_eq!(
+            classify_shell_witnesses_against_container(&[p3(0, 0, 0)], &container),
             ShellContainmentRelation::Boundary
         );
         assert_eq!(
