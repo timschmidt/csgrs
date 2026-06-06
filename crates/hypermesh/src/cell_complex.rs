@@ -222,6 +222,9 @@ impl ExactLabeledCellComplex {
                 &self.volume_adjacencies,
                 operation,
             ) {
+            blockers.retain(|blocker| {
+                *blocker != ExactArrangementBlocker::UnresolvedRegionClassification
+            });
             selected
         } else {
             let selected_faces =
@@ -879,7 +882,7 @@ mod tests {
                 }],
             }],
             lower_dimensional_artifacts: Vec::new(),
-            blockers: Vec::new(),
+            blockers: vec![ExactArrangementBlocker::UnresolvedRegionClassification],
         };
 
         let selected = labeled.select(ExactBooleanOperation::Union).unwrap();
