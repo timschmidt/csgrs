@@ -59,6 +59,10 @@ fn retained_loop(fragments: Vec<BezierSplitFragment2>) -> BezierRetainedBoundary
     BezierRetainedBoundaryLoop2::new(fragments).unwrap()
 }
 
+fn retained_region(boundary_loops: Vec<BezierRetainedBoundaryLoop2>) -> BezierRetainedRegion2 {
+    BezierRetainedRegion2::new(boundary_loops).unwrap()
+}
+
 fn exact(value: Real) -> BezierParameter2 {
     decided(BezierParameter2::exact(value, &policy()).unwrap())
 }
@@ -348,7 +352,7 @@ fn reversed_internal_overlap_traversal_materializes_union_boundary() {
 fn retained_line_image_role_report_assigns_nested_material_and_hole() {
     let outer = retained_line_loop(&[p(0, 0), p(6, 0), p(6, 6), p(0, 6)]);
     let same_orientation_inner = retained_line_loop(&[p(2, 2), p(4, 2), p(4, 4), p(2, 4)]);
-    let retained = BezierRetainedRegion2::new(vec![outer, same_orientation_inner]);
+    let retained = retained_region(vec![outer, same_orientation_inner]);
     assert!(retained.boundary_loops()[0].arrangement_sources().is_none());
 
     let report = decided(retained.line_image_role_report(&policy()).unwrap());
@@ -392,7 +396,7 @@ fn retained_role_report_constructors_reject_mismatched_evidence() {
         0,
         Vec::new(),
     ));
-    let retained = BezierRetainedRegion2::new(vec![retained_line_loop(&[
+    let retained = retained_region(vec![retained_line_loop(&[
         p(0, 0),
         p(4, 0),
         p(4, 4),
@@ -494,6 +498,27 @@ fn retained_boundary_loop_constructor_rejects_duplicate_arrangement_sources() {
 }
 
 #[test]
+fn native_region_constructor_rejects_duplicate_boundary_loops() {
+    let loop_ = BezierBoundaryLoop2::new(vec![
+        hypercurve::BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(0, 0), p(1, 1), p(2, 0))),
+        hypercurve::BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(2, 0), p(1, -1), p(0, 0))),
+    ])
+    .unwrap();
+
+    assert_topology_error(BezierRegion2::new(vec![loop_.clone(), loop_]));
+}
+
+#[test]
+fn retained_region_constructor_rejects_duplicate_boundary_loops() {
+    let loop_ = retained_loop(vec![
+        retained_algebraic_line_fragment(p(0, 0), p(1, 0)),
+        retained_algebraic_line_fragment(p(1, 0), p(0, 0)),
+    ]);
+
+    assert_topology_error(BezierRetainedRegion2::new(vec![loop_.clone(), loop_]));
+}
+
+#[test]
 fn retained_line_image_role_report_accepts_exact_algebraic_endpoint_carriers() {
     let outer = retained_loop(vec![
         retained_algebraic_line_fragment(p(0, 0), p(6, 0)),
@@ -507,7 +532,7 @@ fn retained_line_image_role_report_accepts_exact_algebraic_endpoint_carriers() {
         retained_algebraic_line_fragment(p(4, 4), p(2, 4)),
         retained_algebraic_line_fragment(p(2, 4), p(2, 2)),
     ]);
-    let retained = BezierRetainedRegion2::new(vec![outer, same_orientation_inner]);
+    let retained = retained_region(vec![outer, same_orientation_inner]);
 
     let report = decided(retained.line_image_role_report(&policy()).unwrap());
 
@@ -552,7 +577,7 @@ fn retained_line_image_role_report_rejects_nonrational_algebraic_endpoint() {
         ),
         end_image: Some(algebraic_constant_point_image(p(1, 0))),
     };
-    let retained = BezierRetainedRegion2::new(vec![retained_loop(vec![fragment])]);
+    let retained = retained_region(vec![retained_loop(vec![fragment])]);
 
     assert_eq!(
         retained.line_image_role_report(&policy()).unwrap(),
@@ -571,7 +596,7 @@ fn retained_line_image_role_report_accepts_certified_nonlinear_line_image_loop()
             p(4, 0),
         )),
     };
-    let retained = BezierRetainedRegion2::new(vec![retained_loop(vec![
+    let retained = retained_region(vec![retained_loop(vec![
         nonlinear_edge,
         BezierSplitFragment2::Materialized {
             start: exact(r(0)),
@@ -683,7 +708,7 @@ fn retained_quadratic_lens_loop(
 fn retained_signed_area_role_report_accepts_nonlinear_bezier_loops() {
     let material = retained_quadratic_lens_loop(0, 8, 4, true);
     let hole = retained_quadratic_lens_loop(2, 6, 1, false);
-    let retained = BezierRetainedRegion2::new(vec![material, hole]);
+    let retained = retained_region(vec![material, hole]);
 
     let report = decided(retained.signed_area_role_report(&policy()).unwrap());
     let report_sources = report
@@ -714,7 +739,7 @@ fn retained_signed_area_role_report_accepts_nonlinear_bezier_loops() {
 fn retained_curved_nesting_role_report_assigns_same_orientation_nonlinear_hole() {
     let material = retained_quadratic_lens_loop(0, 8, 4, true);
     let same_orientation_inner = retained_quadratic_lens_loop(2, 6, 1, true);
-    let retained = BezierRetainedRegion2::new(vec![material, same_orientation_inner]);
+    let retained = retained_region(vec![material, same_orientation_inner]);
 
     let signed_area = decided(retained.signed_area_role_report(&policy()).unwrap());
     assert_eq!(
@@ -753,7 +778,7 @@ fn retained_curved_nesting_role_report_assigns_same_orientation_nonlinear_hole()
 
 #[test]
 fn retained_signed_area_role_report_rejects_zero_area_and_algebraic_loops() {
-    let zero = BezierRetainedRegion2::new(vec![retained_loop(vec![
+    let zero = retained_region(vec![retained_loop(vec![
         BezierSplitFragment2::Materialized {
             start: exact(r(0)),
             end: exact(r(1)),
@@ -779,7 +804,7 @@ fn retained_signed_area_role_report_rejects_zero_area_and_algebraic_loops() {
     );
 
     let parameter = BezierParameter2::algebraic(algebraic_midpoint_parameter());
-    let algebraic = BezierRetainedRegion2::new(vec![retained_loop(vec![
+    let algebraic = retained_region(vec![retained_loop(vec![
         BezierSplitFragment2::AlgebraicEndpointImages {
             start: parameter.clone(),
             end: parameter,
@@ -1041,7 +1066,7 @@ fn retained_endpoint_envelope_rejects_incomplete_algebraic_endpoint_evidence() {
         start_image: Some(algebraic_image(&line_midpoint_curve(-1, 0, 1))),
         end_image: None,
     };
-    let retained = BezierRetainedRegion2::new(vec![retained_loop(vec![partial])]);
+    let retained = retained_region(vec![retained_loop(vec![partial])]);
 
     assert_eq!(
         BezierRetainedEndpointEnvelope2::from_region(&retained, &policy()),

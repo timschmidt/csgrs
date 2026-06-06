@@ -494,8 +494,9 @@ impl BezierBoundaryLoop2 {
 
 impl BezierRegion2 {
     /// Constructs a retained region from closed boundary loops.
-    pub const fn new(boundary_loops: Vec<BezierBoundaryLoop2>) -> Self {
-        Self { boundary_loops }
+    pub fn new(boundary_loops: Vec<BezierBoundaryLoop2>) -> CurveResult<Self> {
+        validate_bezier_region_loops(&boundary_loops)?;
+        Ok(Self { boundary_loops })
     }
 
     /// Materializes a retained region from a decided arrangement traversal.
@@ -536,7 +537,10 @@ impl BezierRegion2 {
             loops.push(loop_);
         }
 
-        Classification::Decided(Self::new(loops))
+        match Self::new(loops) {
+            Ok(region) => Classification::Decided(region),
+            Err(_) => Classification::Uncertain(UncertaintyReason::Unsupported),
+        }
     }
 
     /// Materializes a native region from a resolved linear-overlap traversal.
@@ -615,6 +619,20 @@ fn validate_native_boundary_loop(fragments: &[BezierSubcurve2]) -> CurveResult<(
 
 fn certified_points_equal(left: &Point2, right: &Point2, policy: &CurvePolicy) -> bool {
     is_zero(&left.distance_squared(right), policy) == Some(true)
+}
+
+fn validate_bezier_region_loops<Loop>(boundary_loops: &[Loop]) -> CurveResult<()>
+where
+    Loop: PartialEq,
+{
+    for (index, boundary_loop) in boundary_loops.iter().enumerate() {
+        if boundary_loops[index + 1..].contains(boundary_loop) {
+            return Err(CurveError::Topology(
+                "Bezier region must not duplicate boundary loop evidence".to_owned(),
+            ));
+        }
+    }
+    Ok(())
 }
 
 impl BezierRetainedBoundaryLoop2 {
@@ -735,8 +753,9 @@ fn validate_retained_boundary_loop_sources(
 
 impl BezierRetainedRegion2 {
     /// Constructs a retained region from retained boundary loops.
-    pub const fn new(boundary_loops: Vec<BezierRetainedBoundaryLoop2>) -> Self {
-        Self { boundary_loops }
+    pub fn new(boundary_loops: Vec<BezierRetainedBoundaryLoop2>) -> CurveResult<Self> {
+        validate_bezier_region_loops(&boundary_loops)?;
+        Ok(Self { boundary_loops })
     }
 
     /// Materializes retained region carriers from a decided retained traversal.
@@ -787,7 +806,10 @@ impl BezierRetainedRegion2 {
             loops.push(loop_);
         }
 
-        Classification::Decided(Self::new(loops))
+        match Self::new(loops) {
+            Ok(region) => Classification::Decided(region),
+            Err(_) => Classification::Uncertain(UncertaintyReason::Unsupported),
+        }
     }
 
     /// Materializes retained region carriers from a resolved linear-overlap traversal.

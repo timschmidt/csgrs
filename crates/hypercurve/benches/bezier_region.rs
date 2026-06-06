@@ -231,7 +231,7 @@ fn main() -> CurveResult<()> {
             retained_algebraic_line_fragment(p(1, 1), p(-1, 1), &policy)?,
             retained_algebraic_line_fragment(p(-1, 1), p(-1, -1), &policy)?,
         ])?,
-    ]);
+    ])?;
     let started = Instant::now();
     let mut algebraic_line_role_checksum = 0_usize;
     for _ in 0..iterations {
