@@ -74,6 +74,40 @@ pub enum ConvexSolidReportError {
     SourceReplayMismatch,
 }
 
+/// Freshness status for retained convex-solid reports.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum ConvexSolidReportFreshness {
+    /// The report is locally valid and replays from source evidence.
+    Current,
+    /// Retained solid orientation/convexity facts are internally inconsistent.
+    StaleSolidFacts,
+    /// Retained point/solid predicate evidence is internally inconsistent.
+    StalePointEvidence,
+    /// Retained mesh/solid summary evidence is internally inconsistent.
+    StaleMeshEvidence,
+    /// A nested retained convex report failed its own audit.
+    InvalidNestedReport,
+    /// The report is locally valid but no longer replays from source evidence.
+    SourceReplayMismatch,
+}
+
+impl From<ConvexSolidReportError> for ConvexSolidReportFreshness {
+    fn from(error: ConvexSolidReportError) -> Self {
+        match error {
+            ConvexSolidReportError::NotClosedStateMismatch
+            | ConvexSolidReportError::UnknownOrientationHasDecidedConvexity
+            | ConvexSolidReportError::OrientedStateHasUnsupportedConvexity => Self::StaleSolidFacts,
+            ConvexSolidReportError::NonCertifiedPointHasPredicates => Self::StalePointEvidence,
+            ConvexSolidReportError::CertifiedMeshRelationWithoutCertifiedSolid
+            | ConvexSolidReportError::NonCertifiedMeshHasVertices
+            | ConvexSolidReportError::UnexpectedVertexRelation
+            | ConvexSolidReportError::MeshRelationMismatch => Self::StaleMeshEvidence,
+            ConvexSolidReportError::NestedReport => Self::InvalidNestedReport,
+            ConvexSolidReportError::SourceReplayMismatch => Self::SourceReplayMismatch,
+        }
+    }
+}
+
 /// Exact facts retained while certifying a closed convex solid.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ConvexSolidFacts {
@@ -145,6 +179,14 @@ impl ConvexSolidFacts {
             Err(ConvexSolidReportError::SourceReplayMismatch)
         }
     }
+
+    /// Classify whether these retained convex-solid facts are fresh for `mesh`.
+    pub fn freshness_against_source(&self, mesh: &ExactMesh) -> ConvexSolidReportFreshness {
+        match self.validate_against_source(mesh) {
+            Ok(()) => ConvexSolidReportFreshness::Current,
+            Err(error) => error.into(),
+        }
+    }
 }
 
 /// Certified point/solid classification with retained predicate provenance.
@@ -196,6 +238,18 @@ impl ConvexSolidPointClassification {
             Ok(())
         } else {
             Err(ConvexSolidReportError::SourceReplayMismatch)
+        }
+    }
+
+    /// Classify whether this retained point/solid report is fresh.
+    pub fn freshness_against_sources(
+        &self,
+        point: &Point3,
+        solid: &ExactMesh,
+    ) -> ConvexSolidReportFreshness {
+        match self.validate_against_sources(point, solid) {
+            Ok(()) => ConvexSolidReportFreshness::Current,
+            Err(error) => error.into(),
         }
     }
 }
@@ -330,6 +384,18 @@ impl ConvexSolidMeshClassification {
             Ok(())
         } else {
             Err(ConvexSolidReportError::SourceReplayMismatch)
+        }
+    }
+
+    /// Classify whether this retained mesh/solid report is fresh.
+    pub fn freshness_against_sources(
+        &self,
+        subject: &ExactMesh,
+        solid: &ExactMesh,
+    ) -> ConvexSolidReportFreshness {
+        match self.validate_against_sources(subject, solid) {
+            Ok(()) => ConvexSolidReportFreshness::Current,
+            Err(error) => error.into(),
         }
     }
 }

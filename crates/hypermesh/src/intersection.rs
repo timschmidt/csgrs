@@ -55,6 +55,48 @@ pub enum MeshFacePairValidationError {
     SourceReplayMismatch,
 }
 
+/// Freshness status for retained mesh face-pair scheduler evidence.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum MeshFacePairFreshness {
+    /// The face-pair record is locally valid and replays from source meshes.
+    Current,
+    /// Retained bounds-rejection evidence is internally inconsistent.
+    StaleBoundsEvidence,
+    /// A required triangle classifier is absent.
+    MissingTriangleEvidence,
+    /// Retained triangle relation and mesh face-pair relation disagree.
+    StaleTriangleEvidence,
+    /// Retained candidate split-event evidence is missing or invalid.
+    StaleCandidateEvidence,
+    /// Retained coplanar classifier evidence is missing or misplaced.
+    StaleCoplanarEvidence,
+    /// Retained evidence is present for a relation that cannot consume it.
+    UnexpectedEvidence,
+    /// The record is locally valid but no longer replays from source meshes.
+    SourceReplayMismatch,
+}
+
+impl From<MeshFacePairValidationError> for MeshFacePairFreshness {
+    fn from(error: MeshFacePairValidationError) -> Self {
+        match error {
+            MeshFacePairValidationError::BoundsDisjointWithoutDisjointBounds
+            | MeshFacePairValidationError::BoundsDisjointHasTriangle => Self::StaleBoundsEvidence,
+            MeshFacePairValidationError::MissingTriangleClassification => {
+                Self::MissingTriangleEvidence
+            }
+            MeshFacePairValidationError::TriangleRelationMismatch => Self::StaleTriangleEvidence,
+            MeshFacePairValidationError::CandidateMissingEdgeEvents
+            | MeshFacePairValidationError::InvalidSegmentPlaneEvent => Self::StaleCandidateEvidence,
+            MeshFacePairValidationError::CoplanarRelationMissingCoplanarClassifier
+            | MeshFacePairValidationError::NonCoplanarRelationHasCoplanarClassifier => {
+                Self::StaleCoplanarEvidence
+            }
+            MeshFacePairValidationError::NonCandidateHasEdgeEvents => Self::UnexpectedEvidence,
+            MeshFacePairValidationError::SourceReplayMismatch => Self::SourceReplayMismatch,
+        }
+    }
+}
+
 /// Coarse exact relation for one pair of mesh faces.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum MeshFacePairRelation {
@@ -195,6 +237,18 @@ impl MeshFacePairClassification {
             Ok(())
         } else {
             Err(MeshFacePairValidationError::SourceReplayMismatch)
+        }
+    }
+
+    /// Classify whether this retained face-pair record is fresh for the source meshes.
+    pub fn freshness_against_sources(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> MeshFacePairFreshness {
+        match self.validate_against_sources(left, right) {
+            Ok(()) => MeshFacePairFreshness::Current,
+            Err(error) => error.into(),
         }
     }
 }

@@ -131,14 +131,14 @@ pub use handoff::{
     exact_solid_handoff, exact_surface_handoff,
 };
 pub use intersection::{
-    MeshFacePairClassification, MeshFacePairRelation, MeshFacePairValidationError,
-    classify_mesh_face_pair, classify_mesh_face_pairs,
+    MeshFacePairClassification, MeshFacePairFreshness, MeshFacePairRelation,
+    MeshFacePairValidationError, classify_mesh_face_pair, classify_mesh_face_pairs,
 };
 pub use mesh::{ExactMesh, ExactMeshValidationError, Triangle};
 pub use narrow::{
-    TriangleTriangleClassification, TriangleTriangleRelation, TriangleTriangleValidationError,
-    classify_mesh_triangle_against_retained_face_plane, classify_triangle_against_face_plane,
-    classify_triangle_triangle,
+    TriangleTriangleClassification, TriangleTriangleFreshness, TriangleTriangleRelation,
+    TriangleTriangleValidationError, classify_mesh_triangle_against_retained_face_plane,
+    classify_triangle_against_face_plane, classify_triangle_triangle,
 };
 pub use package::{
     ExactMeshConsumerDomain, ExactMeshDomainReportRef, ExactMeshDomainSummary,
@@ -174,8 +174,8 @@ pub use simplify::{
 pub use solid::{
     ClosedMeshOrientation, ConvexSolidClassification, ConvexSolidFacts,
     ConvexSolidMeshClassification, ConvexSolidMeshRelation, ConvexSolidPointClassification,
-    ConvexSolidPointRelation, ConvexSolidReportError, certify_convex_solid,
-    classify_mesh_vertices_against_convex_solid,
+    ConvexSolidPointRelation, ConvexSolidReportError, ConvexSolidReportFreshness,
+    certify_convex_solid, classify_mesh_vertices_against_convex_solid,
     classify_mesh_vertices_against_convex_solid_report, classify_point_against_convex_solid,
     classify_point_against_convex_solid_report,
 };

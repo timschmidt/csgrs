@@ -87,6 +87,43 @@ pub enum TriangleTriangleValidationError {
     SourceReplayMismatch,
 }
 
+/// Freshness status for retained triangle/triangle classifier evidence.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum TriangleTriangleFreshness {
+    /// The classifier is locally valid and replays from the source triangles.
+    Current,
+    /// Retained plane-side classifier evidence is internally inconsistent.
+    StalePlaneEvidence,
+    /// Retained coplanar classifier evidence is missing or inconsistent.
+    StaleCoplanarEvidence,
+    /// Retained candidate segment/plane construction evidence is missing or invalid.
+    StaleCandidateEvidence,
+    /// Retained evidence is present for a relation that cannot consume it.
+    UnexpectedEvidence,
+    /// The classifier is locally valid but no longer replays from the source triangles.
+    SourceReplayMismatch,
+}
+
+impl From<TriangleTriangleValidationError> for TriangleTriangleFreshness {
+    fn from(error: TriangleTriangleValidationError) -> Self {
+        match error {
+            TriangleTriangleValidationError::InvalidPlaneClassification
+            | TriangleTriangleValidationError::PlaneRelationMismatch => Self::StalePlaneEvidence,
+            TriangleTriangleValidationError::CoplanarRelationMissingClassifier
+            | TriangleTriangleValidationError::CoplanarRelationMismatch => {
+                Self::StaleCoplanarEvidence
+            }
+            TriangleTriangleValidationError::CandidateEdgeEventCountMismatch
+            | TriangleTriangleValidationError::InvalidSegmentPlaneEvent => {
+                Self::StaleCandidateEvidence
+            }
+            TriangleTriangleValidationError::UnexpectedCoplanarClassifier
+            | TriangleTriangleValidationError::UnexpectedEdgeEvents => Self::UnexpectedEvidence,
+            TriangleTriangleValidationError::SourceReplayMismatch => Self::SourceReplayMismatch,
+        }
+    }
+}
+
 /// Certified triangle/triangle coarse classification.
 ///
 /// This intentionally stops before coplanar overlap and full intersection
@@ -219,6 +256,19 @@ impl TriangleTriangleClassification {
             Ok(())
         } else {
             Err(TriangleTriangleValidationError::SourceReplayMismatch)
+        }
+    }
+
+    /// Classify whether this retained classifier is fresh for the source triangles.
+    pub fn freshness_against_sources(
+        &self,
+        points: &[Point3],
+        left: [usize; 3],
+        right: [usize; 3],
+    ) -> TriangleTriangleFreshness {
+        match self.validate_against_sources(points, left, right) {
+            Ok(()) => TriangleTriangleFreshness::Current,
+            Err(error) => error.into(),
         }
     }
 }

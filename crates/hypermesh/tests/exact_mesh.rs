@@ -1,19 +1,22 @@
 use hyperlimit::{Point3, SourceProvenance};
 use hypermesh::{
-    CoplanarArrangementReadinessFreshness, CoplanarOverlapGraphFreshness,
-    CoplanarOverlapSplitFreshness, ExactArrangement, ExactArrangementFreshness,
-    ExactBooleanOperation, ExactBooleanResultKind, ExactBoundaryBooleanPolicy,
-    ExactI64MeshInputReadiness, ExactLabeledCellComplexFreshness, ExactMesh,
-    ExactRegularizationPolicy, ExactReportFreshness, ExactSelectedCellComplexFreshness,
+    ClosedMeshOrientation, ConvexSolidMeshRelation, ConvexSolidPointRelation,
+    ConvexSolidReportFreshness, CoplanarArrangementReadinessFreshness,
+    CoplanarOverlapGraphFreshness, CoplanarOverlapSplitFreshness, ExactArrangement,
+    ExactArrangementFreshness, ExactBooleanOperation, ExactBooleanResultKind,
+    ExactBoundaryBooleanPolicy, ExactI64MeshInputReadiness, ExactLabeledCellComplexFreshness,
+    ExactMesh, ExactRegularizationPolicy, ExactReportFreshness, ExactSelectedCellComplexFreshness,
     ExactSimplifiedCellComplexFreshness, ExactVolumetricRegionFreshness,
-    ExactVolumetricRegionRelation, IntersectionGraphFreshness, MeshFacePairRelation,
-    MeshFacePairValidationError, SplitPlanFreshness, TriangleTriangleRelation, ValidationPolicy,
-    WindingReportFreshness, boolean_exact, boolean_exact_with_boundary_policy,
-    build_intersection_graph, certify_boundary_touching_report, classify_mesh_face_pair,
+    ExactVolumetricRegionRelation, IntersectionGraphFreshness, MeshFacePairFreshness,
+    MeshFacePairRelation, MeshFacePairValidationError, SplitPlanFreshness,
+    TriangleTriangleFreshness, TriangleTriangleRelation, ValidationPolicy, WindingReportFreshness,
+    boolean_exact, boolean_exact_with_boundary_policy, build_intersection_graph,
+    certify_boundary_touching_report, certify_convex_solid, classify_mesh_face_pair,
     classify_mesh_vertices_against_closed_mesh_winding_report,
-    classify_point_against_closed_mesh_winding_report, classify_triangle_triangle,
-    exact_arrangement_boolean_attempt_report, inspect_i64_mesh_input, preflight_boolean_exact,
-    preflight_boolean_exact_with_boundary_policy,
+    classify_mesh_vertices_against_convex_solid_report,
+    classify_point_against_closed_mesh_winding_report, classify_point_against_convex_solid_report,
+    classify_triangle_triangle, exact_arrangement_boolean_attempt_report, inspect_i64_mesh_input,
+    preflight_boolean_exact, preflight_boolean_exact_with_boundary_policy,
 };
 use hyperreal::Real;
 
@@ -120,6 +123,64 @@ fn exact_winding_reports_classify_freshness_publicly() {
 }
 
 #[test]
+fn exact_convex_reports_classify_freshness_publicly() {
+    let solid = tetra([0, 0, 0]);
+    let shifted = tetra([3, 0, 0]);
+    let point = rational_point([1, 1, 1], 4);
+
+    let facts = certify_convex_solid(&solid);
+    facts.validate_against_source(&solid).unwrap();
+    assert_eq!(
+        facts.freshness_against_source(&solid),
+        ConvexSolidReportFreshness::Current
+    );
+    let mut stale_facts = facts.clone();
+    stale_facts.orientation = ClosedMeshOrientation::NotClosed;
+    assert_eq!(
+        stale_facts.freshness_against_source(&solid),
+        ConvexSolidReportFreshness::StaleSolidFacts
+    );
+
+    let point_report = classify_point_against_convex_solid_report(&point, &solid);
+    point_report
+        .validate_against_sources(&point, &solid)
+        .unwrap();
+    assert_eq!(
+        point_report.freshness_against_sources(&point, &solid),
+        ConvexSolidReportFreshness::Current
+    );
+    let mut stale_point_report = point_report.clone();
+    stale_point_report.relation = ConvexSolidPointRelation::NotCertifiedConvex;
+    assert_eq!(
+        stale_point_report.freshness_against_sources(&point, &solid),
+        ConvexSolidReportFreshness::StalePointEvidence
+    );
+    assert_eq!(
+        point_report.freshness_against_sources(&point, &shifted),
+        ConvexSolidReportFreshness::SourceReplayMismatch
+    );
+
+    let mesh_report = classify_mesh_vertices_against_convex_solid_report(&shifted, &solid);
+    mesh_report
+        .validate_against_sources(&shifted, &solid)
+        .unwrap();
+    assert_eq!(
+        mesh_report.freshness_against_sources(&shifted, &solid),
+        ConvexSolidReportFreshness::Current
+    );
+    let mut stale_mesh_report = mesh_report.clone();
+    stale_mesh_report.relation = ConvexSolidMeshRelation::StrictlyInside;
+    assert_eq!(
+        stale_mesh_report.freshness_against_sources(&shifted, &solid),
+        ConvexSolidReportFreshness::StaleMeshEvidence
+    );
+    assert_eq!(
+        mesh_report.freshness_against_sources(&solid, &shifted),
+        ConvexSolidReportFreshness::SourceReplayMismatch
+    );
+}
+
+#[test]
 fn exact_face_pair_classifier_rejects_disjoint_bounds_publicly() {
     let left = tetra([0, 0, 0]);
     let right = tetra([3, 0, 0]);
@@ -150,6 +211,22 @@ fn exact_triangle_classifier_reports_degenerate_coplanar_overlap() {
     );
     assert!(classification.coplanar.is_some());
     assert!(classification.validate().is_ok());
+    assert_eq!(
+        classification.freshness_against_sources(&points, [0, 1, 2], [3, 4, 5]),
+        TriangleTriangleFreshness::Current
+    );
+    let mut stale_classification = classification.clone();
+    stale_classification.coplanar = None;
+    assert_eq!(
+        stale_classification.freshness_against_sources(&points, [0, 1, 2], [3, 4, 5]),
+        TriangleTriangleFreshness::StaleCoplanarEvidence
+    );
+    let mut moved_points = points.clone();
+    moved_points[4] = p(3, 0, 0);
+    assert_eq!(
+        classification.freshness_against_sources(&moved_points, [0, 1, 2], [3, 4, 5]),
+        TriangleTriangleFreshness::SourceReplayMismatch
+    );
 }
 
 #[test]
@@ -263,6 +340,16 @@ fn exact_face_pair_candidate_retains_source_plane_split_events() {
             .all(|event| event.predicates.is_empty())
     );
     pair.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(
+        pair.freshness_against_sources(&left, &right),
+        MeshFacePairFreshness::Current
+    );
+    let mut stale_pair = pair.clone();
+    stale_pair.triangle = None;
+    assert_eq!(
+        stale_pair.freshness_against_sources(&left, &right),
+        MeshFacePairFreshness::MissingTriangleEvidence
+    );
 
     let graph = build_intersection_graph(&left, &right).unwrap();
     assert_eq!(
@@ -289,6 +376,10 @@ fn exact_face_pair_candidate_retains_source_plane_split_events() {
     assert_eq!(
         graph.freshness_against_sources(&left, &separated_right),
         IntersectionGraphFreshness::SourceReplayMismatch
+    );
+    assert_eq!(
+        pair.freshness_against_sources(&left, &separated_right),
+        MeshFacePairFreshness::SourceReplayMismatch
     );
 
     let edge_splits = graph.edge_split_plan();
