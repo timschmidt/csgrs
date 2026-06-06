@@ -17,7 +17,8 @@ use super::error::{DiagnosticKind, MeshDiagnostic, MeshError, Severity};
 use super::mesh::ExactMesh;
 use super::narrow::{
     TriangleTriangleClassification, TriangleTriangleRelation,
-    classify_mesh_triangle_against_retained_face_plane, classify_triangle_triangle,
+    classify_mesh_triangle_against_retained_face_plane,
+    classify_triangle_triangle_without_candidate_events,
 };
 use super::topology::triangle_edges;
 
@@ -260,7 +261,8 @@ pub fn classify_mesh_face_pair(
         right.vertices()[right_tri[1]].clone(),
         right.vertices()[right_tri[2]].clone(),
     ];
-    let mut triangle = classify_triangle_triangle(&points, [0, 1, 2], [3, 4, 5]);
+    let mut triangle =
+        classify_triangle_triangle_without_candidate_events(&points, [0, 1, 2], [3, 4, 5]);
     if triangle.relation == TriangleTriangleRelation::Candidate {
         triangle.right_edge_events =
             retained_triangle_edge_events(left, left_face, right, right_face);

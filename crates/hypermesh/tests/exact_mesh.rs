@@ -121,6 +121,38 @@ fn exact_face_pair_classifier_matches_local_triangle_report() {
 }
 
 #[test]
+fn exact_face_pair_candidate_retains_source_plane_split_events() {
+    let left = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 0, 4, 0, 0, 0, 4, 0],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let right = ExactMesh::from_i64_triangles_with_policy(
+        &[1, -1, -1, 1, 3, 1, 1, 3, -1],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+
+    let pair = classify_mesh_face_pair(&left, 0, &right, 0).unwrap();
+    assert_eq!(pair.relation, MeshFacePairRelation::Candidate);
+
+    let triangle = pair.triangle.as_ref().unwrap();
+    assert_eq!(triangle.relation, TriangleTriangleRelation::Candidate);
+    assert_eq!(triangle.right_edge_events.len(), 3);
+    assert_eq!(triangle.left_edge_events.len(), 3);
+    assert!(
+        triangle
+            .right_edge_events
+            .iter()
+            .chain(&triangle.left_edge_events)
+            .all(|event| event.predicates.is_empty())
+    );
+    pair.validate_against_sources(&left, &right).unwrap();
+}
+
+#[test]
 fn exact_boolean_public_shortcuts_handle_disjoint_operands() {
     let left = tetra([0, 0, 0]);
     let right = tetra([3, 0, 0]);

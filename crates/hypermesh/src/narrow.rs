@@ -284,6 +284,29 @@ pub fn classify_triangle_triangle(
     left: [usize; 3],
     right: [usize; 3],
 ) -> TriangleTriangleClassification {
+    classify_triangle_triangle_with_candidate_events(points, left, right, true)
+}
+
+/// Classify two triangles without materializing generic candidate edge events.
+///
+/// Mesh face-pair classification replaces candidate edge events immediately
+/// with retained face-plane constructions from the source meshes. This helper
+/// keeps that path from building throwaway generic segment/plane evidence while
+/// leaving the public triangle classifier's complete validation contract intact.
+pub(crate) fn classify_triangle_triangle_without_candidate_events(
+    points: &[Point3],
+    left: [usize; 3],
+    right: [usize; 3],
+) -> TriangleTriangleClassification {
+    classify_triangle_triangle_with_candidate_events(points, left, right, false)
+}
+
+fn classify_triangle_triangle_with_candidate_events(
+    points: &[Point3],
+    left: [usize; 3],
+    right: [usize; 3],
+    build_candidate_events: bool,
+) -> TriangleTriangleClassification {
     let right_against_left_plane = classify_triangle_against_face_plane(points, left, right);
     let left_against_right_plane = classify_triangle_against_face_plane(points, right, left);
     let mut relation = triangle_triangle_relation(
@@ -303,14 +326,15 @@ pub fn classify_triangle_triangle(
         None
     };
 
-    let (right_edge_events, left_edge_events) = if relation == TriangleTriangleRelation::Candidate {
-        (
-            triangle_edge_events_against_plane(points, left, right),
-            triangle_edge_events_against_plane(points, right, left),
-        )
-    } else {
-        (Vec::new(), Vec::new())
-    };
+    let (right_edge_events, left_edge_events) =
+        if build_candidate_events && relation == TriangleTriangleRelation::Candidate {
+            (
+                triangle_edge_events_against_plane(points, left, right),
+                triangle_edge_events_against_plane(points, right, left),
+            )
+        } else {
+            (Vec::new(), Vec::new())
+        };
 
     TriangleTriangleClassification {
         relation,
