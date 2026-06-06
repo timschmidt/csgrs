@@ -751,10 +751,150 @@ fn validate_retained_boundary_loop_sources(
     Ok(())
 }
 
+fn validate_retained_region_loops(
+    boundary_loops: &[BezierRetainedBoundaryLoop2],
+) -> CurveResult<()> {
+    validate_bezier_region_loops(boundary_loops)?;
+    let policy = CurvePolicy::certified();
+    for boundary_loop in boundary_loops {
+        validate_retained_boundary_loop_connectivity(boundary_loop.fragments(), &policy)?;
+    }
+    Ok(())
+}
+
+#[derive(Clone, Debug, PartialEq)]
+struct RetainedEndpointEvidence {
+    point: Option<Point2>,
+    source: Option<(BezierSubcurve2, BezierParameter2)>,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum RetainedEndpointEquality {
+    Equal,
+    NotEqual,
+    Uncertified,
+}
+
+fn validate_retained_boundary_loop_connectivity(
+    fragments: &[BezierSplitFragment2],
+    policy: &CurvePolicy,
+) -> CurveResult<()> {
+    for (left, right) in fragments
+        .iter()
+        .zip(fragments.iter().cycle().skip(1))
+        .take(fragments.len())
+    {
+        let left_end = retained_fragment_endpoint_evidence(left, false, policy)?;
+        let right_start = retained_fragment_endpoint_evidence(right, true, policy)?;
+        match retained_endpoint_equality(&left_end, &right_start, policy) {
+            RetainedEndpointEquality::Equal => {}
+            RetainedEndpointEquality::NotEqual => {
+                return Err(CurveError::Topology(
+                    "retained Bezier boundary loop fragments must be endpoint-connected and closed"
+                        .into(),
+                ));
+            }
+            RetainedEndpointEquality::Uncertified => {
+                return Err(CurveError::Topology(
+                    "retained Bezier boundary loop must carry certified endpoint connectivity evidence"
+                        .into(),
+                ));
+            }
+        }
+    }
+    Ok(())
+}
+
+fn retained_fragment_endpoint_evidence(
+    fragment: &BezierSplitFragment2,
+    start_endpoint: bool,
+    policy: &CurvePolicy,
+) -> CurveResult<RetainedEndpointEvidence> {
+    match fragment {
+        BezierSplitFragment2::Materialized { curve, .. } => {
+            let (start, end) = curve.endpoints();
+            Ok(RetainedEndpointEvidence {
+                point: Some(if start_endpoint { start } else { end }),
+                source: None,
+            })
+        }
+        BezierSplitFragment2::AlgebraicEndpointImages {
+            start,
+            end,
+            source_curve,
+            start_image,
+            end_image,
+        } => {
+            let parameter = if start_endpoint { start } else { end };
+            let image = if start_endpoint {
+                start_image.as_ref()
+            } else {
+                end_image.as_ref()
+            };
+            let source = source_curve
+                .as_ref()
+                .map(|source_curve| (source_curve.clone(), parameter.clone()));
+            let point = retained_endpoint_point_evidence(parameter, image, source_curve, policy)?;
+            Ok(RetainedEndpointEvidence { point, source })
+        }
+        BezierSplitFragment2::Unresolved { .. } => Err(CurveError::Topology(
+            "retained Bezier region boundary loops must not contain unresolved carriers".into(),
+        )),
+    }
+}
+
+fn retained_endpoint_point_evidence(
+    parameter: &BezierParameter2,
+    image: Option<&crate::BezierAlgebraicEndpointImage2>,
+    source_curve: &Option<BezierSubcurve2>,
+    policy: &CurvePolicy,
+) -> CurveResult<Option<Point2>> {
+    if let Some(image) = image
+        && let Some(point) = exact_rational_point_from_image(image.point())
+    {
+        return Ok(Some(point));
+    }
+
+    let BezierParameter2::Exact(value) = parameter else {
+        return Ok(None);
+    };
+    let Some(source_curve) = source_curve else {
+        return Ok(None);
+    };
+    match subcurve_point_at(source_curve, value.clone(), policy) {
+        Classification::Decided(point) => Ok(Some(point)),
+        Classification::Uncertain(reason) => Err(CurveError::Topology(format!(
+            "could not certify retained boundary exact endpoint from source curve: {reason:?}"
+        ))),
+    }
+}
+
+fn retained_endpoint_equality(
+    left: &RetainedEndpointEvidence,
+    right: &RetainedEndpointEvidence,
+    policy: &CurvePolicy,
+) -> RetainedEndpointEquality {
+    if let (Some(left), Some(right)) = (&left.point, &right.point) {
+        return match is_zero(&left.distance_squared(right), policy) {
+            Some(true) => RetainedEndpointEquality::Equal,
+            Some(false) => RetainedEndpointEquality::NotEqual,
+            None => RetainedEndpointEquality::Uncertified,
+        };
+    }
+
+    if let (Some(left), Some(right)) = (&left.source, &right.source)
+        && left == right
+    {
+        return RetainedEndpointEquality::Equal;
+    }
+
+    RetainedEndpointEquality::Uncertified
+}
+
 impl BezierRetainedRegion2 {
     /// Constructs a retained region from retained boundary loops.
     pub fn new(boundary_loops: Vec<BezierRetainedBoundaryLoop2>) -> CurveResult<Self> {
-        validate_bezier_region_loops(&boundary_loops)?;
+        validate_retained_region_loops(&boundary_loops)?;
         Ok(Self { boundary_loops })
     }
 
