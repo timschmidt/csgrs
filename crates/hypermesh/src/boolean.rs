@@ -1374,7 +1374,7 @@ pub fn boolean_exact_with_boundary_policy(
                 }
                 ExactBooleanOperation::SelectedRegions(_) => unreachable!("handled above"),
             }
-            if let Some(result) = boolean_open_surface_disjoint_or_arrangement_meshes_from_graph(
+            if let Some(result) = boolean_open_surface_disjoint_meshes_from_graph(
                 &graph, left, right, operation, validation,
             )? {
                 return Ok(result);
@@ -1662,6 +1662,19 @@ fn run_arrangement_cell_complex_attempt(
         attempt.output_vertices = result.mesh.vertices().len();
         attempt.output_triangles = result.mesh.triangles().len();
         return Ok(ArrangementCellComplexOutcome::Materialized(result, attempt));
+    }
+
+    if let Some(validation) = validation
+        && let Some(outcome) = arrangement_open_surface_recovery_outcome(
+            &mut attempt,
+            &arrangement.graph,
+            left,
+            right,
+            operation,
+            validation,
+        )?
+    {
+        return Ok(outcome);
     }
 
     if !arrangement.is_complete()
@@ -1982,6 +1995,39 @@ fn arrangement_orthogonal_solid_cell_recovery_outcome(
     attempt.decline = None;
     attempt.materialized_shortcut = Some(ExactBooleanShortcutKind::ArrangementCellComplex);
     attempt.arrangement_blockers = 0;
+    attempt.output_vertices = result.mesh.vertices().len();
+    attempt.output_triangles = result.mesh.triangles().len();
+    Ok(Some(ArrangementCellComplexOutcome::Materialized(
+        result,
+        attempt.clone(),
+    )))
+}
+
+fn arrangement_open_surface_recovery_outcome(
+    attempt: &mut ExactArrangementBooleanAttempt,
+    graph: &super::graph::ExactIntersectionGraph,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+) -> Result<Option<ArrangementCellComplexOutcome>, MeshError> {
+    if !mesh_is_open_surface(left) || !mesh_is_open_surface(right) {
+        return Ok(None);
+    }
+    let Some(plan) = open_surface_arrangement_plan_from_graph(graph, left, right, operation)?
+    else {
+        return Ok(None);
+    };
+    let result = materialize_open_surface_arrangement_plan(
+        left,
+        right,
+        operation,
+        validation,
+        graph.has_unknowns(),
+        plan,
+    )?;
+    attempt.stage = ExactArrangementBooleanStage::Materialized;
+    attempt.decline = None;
     attempt.output_vertices = result.mesh.vertices().len();
     attempt.output_triangles = result.mesh.triangles().len();
     Ok(Some(ArrangementCellComplexOutcome::Materialized(
@@ -3483,7 +3529,7 @@ fn materialize_open_surface_disjoint_meshes(
     ))
 }
 
-fn boolean_open_surface_disjoint_or_arrangement_meshes_from_graph(
+fn boolean_open_surface_disjoint_meshes_from_graph(
     graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
@@ -3498,20 +3544,7 @@ fn boolean_open_surface_disjoint_or_arrangement_meshes_from_graph(
         return materialize_open_surface_disjoint_meshes(left, right, operation, validation)
             .map(Some);
     }
-    let graph_had_unknowns = graph.has_unknowns();
-    let Some(plan) = open_surface_arrangement_plan_from_graph(graph, left, right, operation)?
-    else {
-        return Ok(None);
-    };
-    materialize_open_surface_arrangement_plan(
-        left,
-        right,
-        operation,
-        validation,
-        graph_had_unknowns,
-        plan,
-    )
-    .map(Some)
+    Ok(None)
 }
 
 /// Certify whether two open surface meshes are disjoint by exact graph facts.
@@ -5794,6 +5827,59 @@ mod tests {
                 arrangement_cell_complex_materializes_for_preflight(&left, &right, operation, true)
                     .unwrap()
             );
+        }
+    }
+
+    #[test]
+    fn crossing_open_surface_boolean_materializes_inside_arrangement_attempt() {
+        let left = ExactMesh::from_i64_triangles_with_policy(
+            &[0, 0, 0, 4, 0, 0, 0, 4, 0],
+            &[0, 1, 2],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let right = ExactMesh::from_i64_triangles_with_policy(
+            &[1, -1, -1, 1, 3, 1, 1, 3, -1],
+            &[0, 1, 2],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+
+        for operation in [
+            ExactBooleanOperation::Union,
+            ExactBooleanOperation::Intersection,
+            ExactBooleanOperation::Difference,
+        ] {
+            let attempt = exact_arrangement_boolean_attempt_report(
+                &left,
+                &right,
+                operation,
+                ExactRegularizationPolicy::REGULARIZED_SOLID,
+            )
+            .expect("arrangement attempt should run");
+            assert_eq!(
+                attempt.stage,
+                ExactArrangementBooleanStage::Materialized,
+                "{operation:?}: {attempt:?}"
+            );
+            assert!(attempt.decline.is_none(), "{operation:?}: {attempt:?}");
+            if !matches!(operation, ExactBooleanOperation::Intersection) {
+                assert!(attempt.output_triangles > 0, "{operation:?}: {attempt:?}");
+            }
+
+            let result = boolean_exact(
+                &left,
+                &right,
+                operation,
+                ValidationPolicy::ALLOW_BOUNDARY,
+            )
+            .expect("open-surface crossing should materialize");
+            assert_eq!(
+                result.kind,
+                ExactBooleanResultKind::OpenSurfaceArrangement { operation }
+            );
+            result.validate().unwrap();
+            result.validate_against_sources(&left, &right).unwrap();
         }
     }
 
