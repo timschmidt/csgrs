@@ -790,6 +790,7 @@ const fn winding_readiness_status_already_materialized(
             | ExactWindingReadinessStatus::MixedDimensionalRegularizedSolidAlreadyMaterialized
             | ExactWindingReadinessStatus::ConvexBooleanAlreadyMaterialized
             | ExactWindingReadinessStatus::OpenSurfaceArrangementAlreadyMaterialized
+            | ExactWindingReadinessStatus::SurfaceEqualityAlreadyMaterialized
     )
 }
 
@@ -4306,6 +4307,24 @@ pub fn certify_winding_readiness_report(
     operation: ExactBooleanOperation,
 ) -> Result<ExactWindingReadinessReport, MeshError> {
     if !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
+        && (!left.facts().mesh.closed_manifold || !right.facts().mesh.closed_manifold)
+        && (meshes_are_certified_identical(left, right)
+            || meshes_are_certified_same_surface(left, right))
+    {
+        return Ok(winding_readiness_report(
+            operation,
+            ExactWindingReadinessStatus::SurfaceEqualityAlreadyMaterialized,
+            false,
+            0,
+            0,
+            0,
+            Vec::new(),
+            GraphRelationCounts::default().into_blocker(ExactBooleanBlockerKind::NeedsWinding),
+            None,
+            None,
+        ));
+    }
+    if !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
         && certified_mixed_dimensional_regularized_solid_support(left, right).is_some()
     {
         return Ok(winding_readiness_report(
@@ -6444,6 +6463,7 @@ mod tests {
             ExactWindingReadinessStatus::MixedDimensionalRegularizedSolidAlreadyMaterialized,
             ExactWindingReadinessStatus::ConvexBooleanAlreadyMaterialized,
             ExactWindingReadinessStatus::OpenSurfaceArrangementAlreadyMaterialized,
+            ExactWindingReadinessStatus::SurfaceEqualityAlreadyMaterialized,
         ] {
             assert!(winding_readiness_status_already_materialized(&status));
         }
@@ -6481,6 +6501,11 @@ mod tests {
         assert!(
             !winding_readiness_status_materializes_arrangement_cell_complex(
                 &ExactWindingReadinessStatus::OpenSurfaceArrangementAlreadyMaterialized,
+            )
+        );
+        assert!(
+            !winding_readiness_status_materializes_arrangement_cell_complex(
+                &ExactWindingReadinessStatus::SurfaceEqualityAlreadyMaterialized,
             )
         );
     }
@@ -7425,6 +7450,16 @@ mod tests {
                 ExactBooleanSupport::CertifiedSameSurface,
                 "{operation:?}: {preflight:?}"
             );
+            let readiness = certify_winding_readiness_report(&left, &right, operation).unwrap();
+            assert_eq!(
+                readiness.status,
+                ExactWindingReadinessStatus::SurfaceEqualityAlreadyMaterialized,
+                "{operation:?}: {readiness:?}"
+            );
+            assert_eq!(readiness.retained_face_pairs, 0);
+            assert_eq!(readiness.retained_events, 0);
+            readiness.validate().unwrap();
+            readiness.validate_against_sources(&left, &right).unwrap();
 
             let result =
                 boolean_exact(&left, &right, operation, ValidationPolicy::ALLOW_BOUNDARY).unwrap();
@@ -7437,6 +7472,15 @@ mod tests {
             );
             result.validate().unwrap();
             result.validate_against_sources(&left, &right).unwrap();
+            result
+                .validate_operation_against_sources(
+                    &left,
+                    &right,
+                    operation,
+                    ValidationPolicy::ALLOW_BOUNDARY,
+                    ExactBoundaryBooleanPolicy::Reject,
+                )
+                .unwrap();
             if matches!(operation, ExactBooleanOperation::Difference) {
                 assert!(result.mesh.triangles().is_empty(), "{result:?}");
             } else {
@@ -7458,6 +7502,15 @@ mod tests {
         let preflight =
             preflight_boolean_exact(&left, &right, ExactBooleanOperation::Union).unwrap();
         assert_eq!(preflight.support, ExactBooleanSupport::CertifiedIdentical);
+        let readiness =
+            certify_winding_readiness_report(&left, &right, ExactBooleanOperation::Union).unwrap();
+        assert_eq!(
+            readiness.status,
+            ExactWindingReadinessStatus::SurfaceEqualityAlreadyMaterialized,
+            "{readiness:?}"
+        );
+        readiness.validate().unwrap();
+        readiness.validate_against_sources(&left, &right).unwrap();
 
         let union = boolean_exact(
             &left,
@@ -7472,6 +7525,15 @@ mod tests {
                 shortcut: ExactBooleanShortcutKind::Identical
             }
         );
+        union
+            .validate_operation_against_sources(
+                &left,
+                &right,
+                ExactBooleanOperation::Union,
+                ValidationPolicy::ALLOW_BOUNDARY,
+                ExactBoundaryBooleanPolicy::Reject,
+            )
+            .unwrap();
     }
 
     #[test]
