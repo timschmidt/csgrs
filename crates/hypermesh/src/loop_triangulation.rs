@@ -9,7 +9,8 @@ use std::cmp::Ordering;
 use hyperlimit::{
     Point2, Point3, RingPointLocation, SegmentIntersection, Sign, TriangleLocation,
     classify_point_ring_even_odd, classify_point_triangle, classify_segment_intersection,
-    compare_reals, orient2d_report, point3_equal, project_point3, projected_polygon_area2_value,
+    compare_reals, orient2d_report, orient3d_report, point3_equal, project_point3,
+    projected_polygon_area2_value,
 };
 use hyperreal::Real;
 
@@ -29,6 +30,95 @@ struct ProjectedFaceLoop {
     projected: Vec<Point2>,
     witness: Point2,
     depth: usize,
+}
+
+struct ExactCoplanarLoopGroup {
+    carrier: [Point3; 3],
+    loops: Vec<Vec<Point3>>,
+}
+
+pub(crate) fn group_exact_coplanar_loops(
+    boundaries: Vec<Vec<Point3>>,
+) -> Result<Vec<Vec<Vec<Point3>>>, ExactArrangementBlocker> {
+    let mut groups = Vec::<ExactCoplanarLoopGroup>::new();
+    for boundary in boundaries {
+        if boundary.len() < 3 {
+            return Err(ExactArrangementBlocker::NonManifoldCellComplex);
+        }
+        let carrier = exact_non_collinear_point_loop_carrier(&boundary)
+            .ok_or(ExactArrangementBlocker::NonManifoldCellComplex)?;
+        let mut group_index = None;
+        for (index, group) in groups.iter().enumerate() {
+            if point_loop_is_exactly_coplanar(&boundary, group.carrier_refs())? {
+                group_index = Some(index);
+                break;
+            }
+        }
+        if let Some(index) = group_index {
+            groups[index].loops.push(boundary);
+            continue;
+        }
+        if !point_loop_is_exactly_coplanar(&boundary, (&carrier[0], &carrier[1], &carrier[2]))? {
+            return Err(ExactArrangementBlocker::UndecidableOrdering);
+        }
+        groups.push(ExactCoplanarLoopGroup {
+            carrier,
+            loops: vec![boundary],
+        });
+    }
+    Ok(groups.into_iter().map(|group| group.loops).collect())
+}
+
+impl ExactCoplanarLoopGroup {
+    fn carrier_refs(&self) -> (&Point3, &Point3, &Point3) {
+        (&self.carrier[0], &self.carrier[1], &self.carrier[2])
+    }
+}
+
+fn exact_non_collinear_point_loop_carrier(points: &[Point3]) -> Option<[Point3; 3]> {
+    let anchor = points.first()?;
+    for first_index in 1..points.len() - 1 {
+        for second_index in first_index + 1..points.len() {
+            let first = points.get(first_index)?;
+            let second = points.get(second_index)?;
+            if !exact_points_are_collinear(anchor, first, second)? {
+                return Some([anchor.clone(), first.clone(), second.clone()]);
+            }
+        }
+    }
+    None
+}
+
+fn point_loop_is_exactly_coplanar(
+    points: &[Point3],
+    carrier: (&Point3, &Point3, &Point3),
+) -> Result<bool, ExactArrangementBlocker> {
+    let (a, b, c) = carrier;
+    for point in points {
+        match orient3d_report(a, b, c, point).value() {
+            Some(Sign::Zero) => {}
+            Some(Sign::Positive | Sign::Negative) => return Ok(false),
+            None => return Err(ExactArrangementBlocker::UndecidableOrdering),
+        }
+    }
+    Ok(true)
+}
+
+fn exact_points_are_collinear(a: &Point3, b: &Point3, c: &Point3) -> Option<bool> {
+    let abx = b.x.clone() - &a.x;
+    let aby = b.y.clone() - &a.y;
+    let abz = b.z.clone() - &a.z;
+    let acx = c.x.clone() - &a.x;
+    let acy = c.y.clone() - &a.y;
+    let acz = c.z.clone() - &a.z;
+    let cross_x = aby.clone() * &acz - &(abz.clone() * &acy);
+    let cross_y = abz * &acx - &(abx.clone() * &acz);
+    let cross_z = abx * &acy - &(aby * &acx);
+    Some(
+        compare_reals(&cross_x, &Real::from(0)).value()? == Ordering::Equal
+            && compare_reals(&cross_y, &Real::from(0)).value()? == Ordering::Equal
+            && compare_reals(&cross_z, &Real::from(0)).value()? == Ordering::Equal,
+    )
 }
 
 pub(crate) fn triangulate_exact_loop_group(

@@ -53,7 +53,7 @@ use super::convex::{
 use super::error::{DiagnosticKind, MeshDiagnostic, MeshError, Severity};
 use super::graph::{FacePairEvents, IntersectionEvent, MeshSide, build_intersection_graph};
 use super::intersection::MeshFacePairRelation;
-use super::loop_triangulation::triangulate_exact_loop_group;
+use super::loop_triangulation::{group_exact_coplanar_loops, triangulate_exact_loop_group};
 use super::mesh::{ExactMesh, Triangle};
 use super::orthogonal_solid::{
     AxisAlignedOrthogonalSolidOperation, axis_aligned_orthogonal_solid_cell_plan,
@@ -2526,21 +2526,25 @@ fn close_exact_coplanar_boundary_loops_from_loops(
         return None;
     }
 
-    let cap_groups = coplanar_boundary_loop_groups(mesh, boundary_loops)?;
-    let boundary_edges = directed_boundary_edges(mesh);
-    let vertices = mesh.vertices().to_vec();
-    let mut cap_triangles = Vec::new();
-    for group in cap_groups {
-        let loops = group
-            .loops
-            .iter()
+    let cap_groups = group_exact_coplanar_loops(
+        boundary_loops
+            .into_iter()
             .map(|boundary_loop| {
+                if boundary_loop.len() < 3 {
+                    return None;
+                }
                 boundary_loop
                     .iter()
                     .map(|&vertex| mesh.vertices().get(vertex).cloned())
                     .collect::<Option<Vec<_>>>()
             })
-            .collect::<Option<Vec<_>>>()?;
+            .collect::<Option<Vec<_>>>()?,
+    )
+    .ok()?;
+    let boundary_edges = directed_boundary_edges(mesh);
+    let vertices = mesh.vertices().to_vec();
+    let mut cap_triangles = Vec::new();
+    for loops in cap_groups {
         let mut group_vertices = Vec::new();
         let mut group_triangles = Vec::new();
         triangulate_exact_loop_group(&loops, &mut group_vertices, &mut group_triangles).ok()?;
@@ -2570,55 +2574,6 @@ fn close_exact_coplanar_boundary_loops_from_loops(
         validation,
     )
     .ok()
-}
-
-struct CoplanarBoundaryLoopGroup {
-    carrier: [Point3; 3],
-    loops: Vec<Vec<usize>>,
-}
-
-fn coplanar_boundary_loop_groups(
-    mesh: &ExactMesh,
-    boundary_loops: Vec<Vec<usize>>,
-) -> Option<Vec<CoplanarBoundaryLoopGroup>> {
-    let mut groups = Vec::<CoplanarBoundaryLoopGroup>::new();
-    for boundary_loop in boundary_loops {
-        if boundary_loop.len() < 3 {
-            return None;
-        }
-        let (a, b, c) = exact_non_collinear_loop_carrier(mesh, &boundary_loop)?;
-        let carrier = [a.clone(), b.clone(), c.clone()];
-        let mut group_index = None;
-        for (index, group) in groups.iter().enumerate() {
-            if loop_is_exactly_coplanar(mesh, &boundary_loop, group.carrier_refs()) {
-                group_index = Some(index);
-                break;
-            }
-        }
-        match group_index {
-            Some(index) => groups[index].loops.push(boundary_loop),
-            None => {
-                if !loop_is_exactly_coplanar(
-                    mesh,
-                    &boundary_loop,
-                    (&carrier[0], &carrier[1], &carrier[2]),
-                ) {
-                    return None;
-                }
-                groups.push(CoplanarBoundaryLoopGroup {
-                    carrier,
-                    loops: vec![boundary_loop],
-                });
-            }
-        }
-    }
-    (!groups.is_empty()).then_some(groups)
-}
-
-impl CoplanarBoundaryLoopGroup {
-    fn carrier_refs(&self) -> (&Point3, &Point3, &Point3) {
-        (&self.carrier[0], &self.carrier[1], &self.carrier[2])
-    }
 }
 
 fn find_exact_mesh_vertex(vertices: &[Point3], point: &Point3) -> Option<usize> {
@@ -2775,54 +2730,6 @@ fn directed_boundary_loops(mesh: &ExactMesh) -> Option<Vec<Vec<usize>>> {
         return None;
     }
     Some(loops)
-}
-
-fn exact_non_collinear_loop_carrier<'a>(
-    mesh: &'a ExactMesh,
-    loop_vertices: &[usize],
-) -> Option<(&'a Point3, &'a Point3, &'a Point3)> {
-    let anchor = mesh.vertices().get(*loop_vertices.first()?)?;
-    for first_index in 1..loop_vertices.len() - 1 {
-        for second_index in first_index + 1..loop_vertices.len() {
-            let first = mesh.vertices().get(loop_vertices[first_index])?;
-            let second = mesh.vertices().get(loop_vertices[second_index])?;
-            if !exact_points_are_collinear(anchor, first, second)? {
-                return Some((anchor, first, second));
-            }
-        }
-    }
-    None
-}
-
-fn loop_is_exactly_coplanar(
-    mesh: &ExactMesh,
-    loop_vertices: &[usize],
-    carrier: (&Point3, &Point3, &Point3),
-) -> bool {
-    let (a, b, c) = carrier;
-    loop_vertices.iter().all(|vertex| {
-        mesh.vertices()
-            .get(*vertex)
-            .and_then(|point| orient3d_report(a, b, c, point).value())
-            == Some(Sign::Zero)
-    })
-}
-
-fn exact_points_are_collinear(a: &Point3, b: &Point3, c: &Point3) -> Option<bool> {
-    let abx = b.x.clone() - &a.x;
-    let aby = b.y.clone() - &a.y;
-    let abz = b.z.clone() - &a.z;
-    let acx = c.x.clone() - &a.x;
-    let acy = c.y.clone() - &a.y;
-    let acz = c.z.clone() - &a.z;
-    let cross_x = aby.clone() * &acz - &(abz.clone() * &acy);
-    let cross_y = abz * &acx - &(abx.clone() * &acz);
-    let cross_z = abx * &acy - &(aby * &acx);
-    Some(
-        compare_reals(&cross_x, &Real::from(0)).value()? == Ordering::Equal
-            && compare_reals(&cross_y, &Real::from(0)).value()? == Ordering::Equal
-            && compare_reals(&cross_z, &Real::from(0)).value()? == Ordering::Equal,
-    )
 }
 
 fn materialize_simple_coplanar_overlay_arrangement(
