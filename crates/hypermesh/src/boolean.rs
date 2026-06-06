@@ -3129,6 +3129,15 @@ fn mesh_from_selected_projected_overlay_faces(
     projection: CoplanarProjection,
     provenance: &'static str,
 ) -> Option<ExactMesh> {
+    if let Some(mesh) = mesh_from_projected_overlay_output_components(
+        overlay,
+        carrier_points,
+        projection,
+        provenance,
+    ) {
+        return Some(mesh);
+    }
+
     let mut vertices = Vec::new();
     let mut triangles = Vec::new();
     for component in selected_projected_overlay_face_components(overlay) {
@@ -3165,6 +3174,68 @@ fn mesh_from_selected_projected_overlay_faces(
         }));
         vertices.extend(component_vertices);
     }
+    if triangles.is_empty() {
+        return None;
+    }
+    ExactMesh::new_with_policy(
+        vertices,
+        triangles,
+        SourceProvenance::exact(provenance),
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .ok()
+}
+
+fn mesh_from_projected_overlay_output_components(
+    overlay: &ExactArrangement2dOverlay,
+    carrier_points: &[Point3; 3],
+    projection: CoplanarProjection,
+    provenance: &'static str,
+) -> Option<ExactMesh> {
+    if overlay.output_components.is_empty() {
+        return None;
+    }
+
+    let mut vertices = Vec::new();
+    let mut triangles = Vec::new();
+    for component in &overlay.output_components {
+        let mut loop_indices = Vec::with_capacity(component.hole_loops.len() + 1);
+        loop_indices.push(component.outer_loop);
+        loop_indices.extend(component.hole_loops.iter().copied());
+        let lifted_loops = loop_indices
+            .into_iter()
+            .map(|loop_index| {
+                let loop_ = overlay.output_loops.get(loop_index)?;
+                if loop_.points.len() < 3 {
+                    return None;
+                }
+                loop_
+                    .points
+                    .iter()
+                    .map(|point| lift_projected_point_to_carrier(point, carrier_points, projection))
+                    .collect::<Option<Vec<_>>>()
+            })
+            .collect::<Option<Vec<_>>>()?;
+
+        let mut component_vertices = Vec::new();
+        let mut component_triangles = Vec::new();
+        triangulate_exact_loop_group(
+            &lifted_loops,
+            &mut component_vertices,
+            &mut component_triangles,
+        )
+        .ok()?;
+        let component_offset = vertices.len();
+        triangles.extend(component_triangles.into_iter().map(|triangle| {
+            Triangle([
+                component_offset + triangle.0[0],
+                component_offset + triangle.0[1],
+                component_offset + triangle.0[2],
+            ])
+        }));
+        vertices.extend(component_vertices);
+    }
+
     if triangles.is_empty() {
         return None;
     }
@@ -7122,6 +7193,57 @@ mod tests {
         )
         .expect("selected arrangement faces should absorb contained components");
         assert!(exact_meshes_have_same_shape(&selected_faces, &outer_square));
+    }
+
+    #[test]
+    fn projected_overlay_mesh_uses_certified_output_components() {
+        let ring = |region, points: &[(i64, i64)]| {
+            ExactArrangement2dRegionRing::new(
+                region,
+                points
+                    .iter()
+                    .map(|&(x, y)| Point2::new(Real::from(x), Real::from(y)))
+                    .collect(),
+            )
+        };
+        let overlay = build_exact_arrangement2d_overlay(
+            &[
+                ring(
+                    ExactArrangement2dRegion::Left,
+                    &[(0, 0), (8, 0), (8, 8), (0, 8)],
+                ),
+                ring(
+                    ExactArrangement2dRegion::Left,
+                    &[(1, 1), (1, 7), (7, 7), (7, 1)],
+                ),
+                ring(
+                    ExactArrangement2dRegion::Left,
+                    &[(3, 3), (5, 3), (5, 5), (3, 5)],
+                ),
+            ],
+            ExactArrangement2dSetOperation::Union,
+        );
+        assert!(overlay.is_complete(), "{:?}", overlay.blockers);
+        assert_eq!(overlay.output_components.len(), 2);
+
+        let mut output_only_overlay = overlay.clone();
+        output_only_overlay.faces.clear();
+        let carrier_points = [
+            Point3::new(Real::from(0), Real::from(0), Real::from(0)),
+            Point3::new(Real::from(1), Real::from(0), Real::from(0)),
+            Point3::new(Real::from(0), Real::from(1), Real::from(0)),
+        ];
+        let projection = choose_triangle_projection(&carrier_points).unwrap();
+
+        let mesh = mesh_from_selected_projected_overlay_faces(
+            &output_only_overlay,
+            &carrier_points,
+            projection,
+            "test certified output-component overlay",
+        )
+        .expect("certified output components should triangulate without face-walk replay");
+        mesh.validate_retained_state().unwrap();
+        assert!(!mesh.triangles().is_empty());
     }
 
     #[test]
