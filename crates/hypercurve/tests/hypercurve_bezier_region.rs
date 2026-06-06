@@ -278,6 +278,15 @@ fn resolved_linear_overlap_traversal_materializes_native_and_retained_regions() 
     assert_eq!(retained.boundary_loops()[0].len(), 5);
     assert!(!retained.has_algebraic_fragments());
     assert_eq!(retained.signed_area().unwrap(), Some(r(8)));
+    let retained_sources = retained.boundary_loops()[0]
+        .arrangement_sources()
+        .expect("linear-overlap retained loop keeps graph sources");
+    let role_report = decided(retained.line_image_role_report(&policy()).unwrap());
+    let report_sources = role_report
+        .loop_arrangement_sources()
+        .expect("line role report keeps loop sources");
+    assert_eq!(report_sources.len(), 1);
+    assert_eq!(report_sources[0].as_deref(), Some(retained_sources));
 
     let native = decided(BezierRegion2::from_retained_linear_overlap_traversal(
         &traversal,
@@ -328,6 +337,12 @@ fn retained_line_image_role_report_assigns_nested_material_and_hole() {
     assert!(retained.boundary_loops()[0].arrangement_sources().is_none());
 
     let report = decided(retained.line_image_role_report(&policy()).unwrap());
+    let report_sources = report
+        .loop_arrangement_sources()
+        .expect("report records absence of graph provenance per loop");
+    assert_eq!(report_sources.len(), 2);
+    assert!(report_sources[0].is_none());
+    assert!(report_sources[1].is_none());
 
     assert_eq!(
         report.roles(),
@@ -542,6 +557,12 @@ fn retained_signed_area_role_report_accepts_nonlinear_bezier_loops() {
     let retained = BezierRetainedRegion2::new(vec![material, hole]);
 
     let report = decided(retained.signed_area_role_report(&policy()).unwrap());
+    let report_sources = report
+        .loop_arrangement_sources()
+        .expect("signed-area report records absence of graph provenance per loop");
+    assert_eq!(report_sources.len(), 2);
+    assert!(report_sources[0].is_none());
+    assert!(report_sources[1].is_none());
 
     assert_eq!(
         report.roles(),
@@ -576,6 +597,12 @@ fn retained_curved_nesting_role_report_assigns_same_orientation_nonlinear_hole()
     );
 
     let nesting = decided(retained.curved_nesting_role_report(&policy()).unwrap());
+    let nesting_sources = nesting
+        .loop_arrangement_sources()
+        .expect("curved nesting report records absence of graph provenance per loop");
+    assert_eq!(nesting_sources.len(), 2);
+    assert!(nesting_sources[0].is_none());
+    assert!(nesting_sources[1].is_none());
     assert_eq!(
         nesting.roles(),
         &[

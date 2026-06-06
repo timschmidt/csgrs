@@ -133,6 +133,7 @@ pub struct BezierRetainedLineRegionRoleReport2 {
     materialized_fragment_count: usize,
     algebraic_fragment_count: usize,
     contours: Vec<Contour2>,
+    loop_arrangement_sources: Option<Vec<Option<Vec<BezierRetainedFragmentSource2>>>>,
 }
 
 /// Exact orientation-derived role assignment for native retained Bezier loops.
@@ -152,6 +153,7 @@ pub struct BezierRetainedLineRegionRoleReport2 {
 pub struct BezierRetainedSignedAreaRoleReport2 {
     roles: Vec<BezierRetainedRegionLoopRole>,
     signed_areas: Vec<Real>,
+    loop_arrangement_sources: Option<Vec<Option<Vec<BezierRetainedFragmentSource2>>>>,
 }
 
 /// Exact nesting-derived role assignment for native retained curved loops.
@@ -175,6 +177,7 @@ pub struct BezierRetainedCurvedNestingRoleReport2 {
     nesting_depths: Vec<usize>,
     signed_areas: Vec<Real>,
     sample_points: Vec<Point2>,
+    loop_arrangement_sources: Option<Vec<Option<Vec<BezierRetainedFragmentSource2>>>>,
 }
 
 impl BezierRetainedLineRegionRoleReport2 {
@@ -192,7 +195,18 @@ impl BezierRetainedLineRegionRoleReport2 {
             materialized_fragment_count,
             algebraic_fragment_count,
             contours,
+            loop_arrangement_sources: None,
         }
+    }
+
+    /// Attaches one optional arrangement source trail per retained loop.
+    pub fn with_loop_arrangement_sources(
+        mut self,
+        loop_arrangement_sources: Vec<Option<Vec<BezierRetainedFragmentSource2>>>,
+    ) -> CurveResult<Self> {
+        validate_loop_arrangement_sources(self.roles.len(), &loop_arrangement_sources)?;
+        self.loop_arrangement_sources = Some(loop_arrangement_sources);
+        Ok(self)
     }
 
     /// Returns one assigned role per retained boundary loop.
@@ -223,6 +237,13 @@ impl BezierRetainedLineRegionRoleReport2 {
     /// Returns exact native line contours used for role assignment.
     pub fn contours(&self) -> &[Contour2] {
         &self.contours
+    }
+
+    /// Returns per-loop arrangement/source provenance when the report has it.
+    pub fn loop_arrangement_sources(
+        &self,
+    ) -> Option<&[Option<Vec<BezierRetainedFragmentSource2>>]> {
+        self.loop_arrangement_sources.as_deref()
     }
 
     /// Returns loop indices assigned as material.
@@ -272,7 +293,18 @@ impl BezierRetainedSignedAreaRoleReport2 {
         Self {
             roles,
             signed_areas,
+            loop_arrangement_sources: None,
         }
+    }
+
+    /// Attaches one optional arrangement source trail per retained loop.
+    pub fn with_loop_arrangement_sources(
+        mut self,
+        loop_arrangement_sources: Vec<Option<Vec<BezierRetainedFragmentSource2>>>,
+    ) -> CurveResult<Self> {
+        validate_loop_arrangement_sources(self.roles.len(), &loop_arrangement_sources)?;
+        self.loop_arrangement_sources = Some(loop_arrangement_sources);
+        Ok(self)
     }
 
     /// Returns one assigned role per retained boundary loop.
@@ -283,6 +315,13 @@ impl BezierRetainedSignedAreaRoleReport2 {
     /// Returns exact signed areas used as orientation evidence.
     pub fn signed_areas(&self) -> &[Real] {
         &self.signed_areas
+    }
+
+    /// Returns per-loop arrangement/source provenance when the report has it.
+    pub fn loop_arrangement_sources(
+        &self,
+    ) -> Option<&[Option<Vec<BezierRetainedFragmentSource2>>]> {
+        self.loop_arrangement_sources.as_deref()
     }
 
     /// Returns loop indices assigned as material.
@@ -321,7 +360,18 @@ impl BezierRetainedCurvedNestingRoleReport2 {
             nesting_depths,
             signed_areas,
             sample_points,
+            loop_arrangement_sources: None,
         }
+    }
+
+    /// Attaches one optional arrangement source trail per retained loop.
+    pub fn with_loop_arrangement_sources(
+        mut self,
+        loop_arrangement_sources: Vec<Option<Vec<BezierRetainedFragmentSource2>>>,
+    ) -> CurveResult<Self> {
+        validate_loop_arrangement_sources(self.roles.len(), &loop_arrangement_sources)?;
+        self.loop_arrangement_sources = Some(loop_arrangement_sources);
+        Ok(self)
     }
 
     /// Returns one assigned role per retained boundary loop.
@@ -342,6 +392,13 @@ impl BezierRetainedCurvedNestingRoleReport2 {
     /// Returns exact sample points used for nesting classification.
     pub fn sample_points(&self) -> &[Point2] {
         &self.sample_points
+    }
+
+    /// Returns per-loop arrangement/source provenance when the report has it.
+    pub fn loop_arrangement_sources(
+        &self,
+    ) -> Option<&[Option<Vec<BezierRetainedFragmentSource2>>]> {
+        self.loop_arrangement_sources.as_deref()
     }
 
     /// Returns loop indices assigned as material.
@@ -692,15 +749,15 @@ impl BezierRetainedRegion2 {
             Classification::Decided(roles) => roles,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
-        Ok(Classification::Decided(
-            BezierRetainedLineRegionRoleReport2::new(
-                roles.roles,
-                roles.nesting_depths,
-                materialized_fragment_count,
-                algebraic_fragment_count,
-                contours,
-            ),
-        ))
+        let report = BezierRetainedLineRegionRoleReport2::new(
+            roles.roles,
+            roles.nesting_depths,
+            materialized_fragment_count,
+            algebraic_fragment_count,
+            contours,
+        )
+        .with_loop_arrangement_sources(retained_loop_arrangement_sources(&self.boundary_loops))?;
+        Ok(Classification::Decided(report))
     }
 
     /// Assigns material/hole roles from exact native loop signed-area orientation.
@@ -732,9 +789,11 @@ impl BezierRetainedRegion2 {
             roles.push(role);
             signed_areas.push(area);
         }
-        Ok(Classification::Decided(
-            BezierRetainedSignedAreaRoleReport2::new(roles, signed_areas),
-        ))
+        let report = BezierRetainedSignedAreaRoleReport2::new(roles, signed_areas)
+            .with_loop_arrangement_sources(retained_loop_arrangement_sources(
+                &self.boundary_loops,
+            ))?;
+        Ok(Classification::Decided(report))
     }
 
     /// Assigns material/hole roles by exact curved-loop nesting.
@@ -802,14 +861,14 @@ impl BezierRetainedRegion2 {
             });
         }
 
-        Ok(Classification::Decided(
-            BezierRetainedCurvedNestingRoleReport2::new(
-                roles,
-                nesting_depths,
-                signed_areas,
-                sample_points,
-            ),
-        ))
+        let report = BezierRetainedCurvedNestingRoleReport2::new(
+            roles,
+            nesting_depths,
+            signed_areas,
+            sample_points,
+        )
+        .with_loop_arrangement_sources(retained_loop_arrangement_sources(&self.boundary_loops))?;
+        Ok(Classification::Decided(report))
     }
 
     /// Returns retained boundary loops.
@@ -857,6 +916,27 @@ struct RetainedLineLoopContour {
     contour: Contour2,
     materialized_fragment_count: usize,
     algebraic_fragment_count: usize,
+}
+
+fn retained_loop_arrangement_sources(
+    boundary_loops: &[BezierRetainedBoundaryLoop2],
+) -> Vec<Option<Vec<BezierRetainedFragmentSource2>>> {
+    boundary_loops
+        .iter()
+        .map(|boundary_loop| boundary_loop.arrangement_sources().map(<[_]>::to_vec))
+        .collect()
+}
+
+fn validate_loop_arrangement_sources(
+    loop_count: usize,
+    loop_arrangement_sources: &[Option<Vec<BezierRetainedFragmentSource2>>],
+) -> CurveResult<()> {
+    if loop_count != loop_arrangement_sources.len() {
+        return Err(CurveError::Topology(
+            "retained role report source count does not match loop count".to_owned(),
+        ));
+    }
+    Ok(())
 }
 
 fn retained_line_loop_to_contour(
