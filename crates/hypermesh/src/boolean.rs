@@ -3992,7 +3992,7 @@ fn is_closed_solid_arrangement_preempt_candidate(
         return false;
     }
     if meshes_are_certified_bounds_disjoint(left, right)
-        || (!meshes_are_certified_identical(left, right)
+        || ((!left.facts().mesh.closed_manifold || !right.facts().mesh.closed_manifold)
             && meshes_are_certified_same_surface(left, right))
         || both_axis_aligned_boxes(left, right)
     {
@@ -7359,6 +7359,78 @@ mod tests {
     fn closed_identical_solids_route_through_arrangement_pipeline() {
         let left = tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]);
         let right = left.clone();
+
+        let preflight =
+            preflight_boolean_exact(&left, &right, ExactBooleanOperation::Union).unwrap();
+        assert_eq!(
+            preflight.support,
+            ExactBooleanSupport::CertifiedArrangementCellComplex
+        );
+
+        let union = boolean_exact(
+            &left,
+            &right,
+            ExactBooleanOperation::Union,
+            ValidationPolicy::CLOSED,
+        )
+        .unwrap();
+        assert_eq!(
+            union.kind,
+            ExactBooleanResultKind::CertifiedShortcut {
+                shortcut: ExactBooleanShortcutKind::ArrangementCellComplex
+            }
+        );
+        assert!(exact_meshes_have_same_shape(&union.mesh, &left));
+
+        let difference = boolean_exact(
+            &left,
+            &right,
+            ExactBooleanOperation::Difference,
+            ValidationPolicy::CLOSED,
+        )
+        .unwrap();
+        assert_eq!(
+            difference.kind,
+            ExactBooleanResultKind::CertifiedShortcut {
+                shortcut: ExactBooleanShortcutKind::ArrangementCellComplex
+            }
+        );
+        assert!(difference.mesh.triangles().is_empty());
+    }
+
+    #[test]
+    fn closed_same_surface_solids_route_through_arrangement_pipeline() {
+        let left = tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]);
+        let right = ExactMesh::from_i64_triangles(
+            &[
+                4, 0, 0, //
+                0, 0, 0, //
+                0, 4, 0, //
+                0, 0, 4,
+            ],
+            &[
+                1, 2, 0, //
+                1, 0, 3, //
+                0, 2, 3, //
+                2, 1, 3,
+            ],
+        )
+        .unwrap();
+        assert!(!meshes_are_certified_identical(&left, &right));
+        assert!(meshes_are_certified_same_surface(&left, &right));
+
+        let attempt = exact_arrangement_boolean_attempt_report(
+            &left,
+            &right,
+            ExactBooleanOperation::Union,
+            ExactRegularizationPolicy::REGULARIZED_SOLID,
+        )
+        .unwrap();
+        assert_eq!(attempt.decline, None);
+        assert_eq!(
+            attempt.materialized_shortcut,
+            Some(ExactBooleanShortcutKind::ArrangementCellComplex)
+        );
 
         let preflight =
             preflight_boolean_exact(&left, &right, ExactBooleanOperation::Union).unwrap();
