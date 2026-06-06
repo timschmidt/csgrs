@@ -1,10 +1,13 @@
 use hypercurve::{
-    BezierBoundaryLoop2, BezierRegion2, BezierSubcurve2, Classification, CurveError, CurvePolicy,
-    Point2, PolynomialBSplineCurve2, RationalBSplineCurve2, RationalQuadraticBSplineCurve2, Real,
-    RetainedCurveCacheSummary2, RetainedCurveFamily2, RetainedCurveIdentity2,
-    RetainedCurvePeriodicity1, RetainedCurveProfile2, RetainedEndpointEvidence2,
-    RetainedParameterDomain1, RetainedSpanAxisMonotonicity, RetainedTopologyStatus,
-    RetainedTrimDirection, RetainedTrimInterval1,
+    Aabb2, BezierBoundaryLoop2, BezierRegion2, BezierSubcurve2, Classification, CurveError,
+    CurvePolicy, Point2, PolynomialBSplineCurve2, QuadraticBezier2, RationalBSplineCurve2,
+    RationalBSplineNativeTopologyReport2, RationalBezierSpanTopologyReport2,
+    RationalQuadraticBSplineCurve2, Real, RetainedBSplineSpanFactReport2,
+    RetainedBSplineSpanFacts2, RetainedCurveCacheSummary2, RetainedCurveFamily2,
+    RetainedCurveIdentity2, RetainedCurvePeriodicity1, RetainedCurveProfile2,
+    RetainedEndpointEvidence2, RetainedParameterDomain1, RetainedSpanAxisMonotonicity,
+    RetainedSpanWeightDomainReport2, RetainedTopologyStatus, RetainedTrimDirection,
+    RetainedTrimInterval1,
 };
 
 fn r(value: i32) -> Real {
@@ -558,6 +561,80 @@ fn retained_rational_cubic_profile_keeps_unsupported_spans_as_evidence() {
     assert_eq!(profile.cache_summary().span_count(), 2);
     assert_eq!(profile.cache_summary().native_span_count(), 0);
     assert_eq!(profile.cache_summary().retained_span_count(), 2);
+}
+
+#[test]
+fn retained_span_weight_report_rejects_inconsistent_counts() {
+    assert_topology_error(RetainedSpanWeightDomainReport2::new(0, 0, true));
+    assert_topology_error(RetainedSpanWeightDomainReport2::new(3, 4, false));
+    assert_topology_error(RetainedSpanWeightDomainReport2::new(3, 2, true));
+    assert_topology_error(RetainedSpanWeightDomainReport2::new(3, 3, false));
+}
+
+#[test]
+fn retained_span_fact_constructors_reject_forged_evidence() {
+    let bounds = Aabb2::from_point(p(0, 0));
+
+    assert_topology_error(RetainedBSplineSpanFacts2::new(
+        0,
+        r(0),
+        r(1),
+        bounds.clone(),
+        RetainedSpanAxisMonotonicity::CertifiedMonotone,
+        RetainedSpanAxisMonotonicity::Unsupported,
+        RetainedTopologyStatus::Unsupported,
+        Some(RetainedSpanWeightDomainReport2::new(3, 3, true).unwrap()),
+    ));
+
+    let skipped_index = RetainedBSplineSpanFacts2::new(
+        1,
+        r(0),
+        r(1),
+        bounds,
+        RetainedSpanAxisMonotonicity::CertifiedMonotone,
+        RetainedSpanAxisMonotonicity::CertifiedMonotone,
+        RetainedTopologyStatus::NativeExact,
+        None,
+    )
+    .unwrap();
+    assert_topology_error(RetainedBSplineSpanFactReport2::new(vec![skipped_index]));
+}
+
+#[test]
+fn retained_rational_span_topology_reports_reject_forged_native_evidence() {
+    assert_topology_error(RationalBezierSpanTopologyReport2::new(
+        0,
+        2,
+        r(0),
+        r(1),
+        RetainedTopologyStatus::NativeExact,
+        None,
+    ));
+    assert_topology_error(RationalBezierSpanTopologyReport2::new(
+        0,
+        2,
+        r(0),
+        r(1),
+        RetainedTopologyStatus::Unsupported,
+        Some(BezierSubcurve2::Quadratic(QuadraticBezier2::new(
+            p(0, 0),
+            p(1, 0),
+            p(2, 0),
+        ))),
+    ));
+
+    let skipped_index = RationalBezierSpanTopologyReport2::new(
+        1,
+        3,
+        r(0),
+        r(1),
+        RetainedTopologyStatus::Unsupported,
+        None,
+    )
+    .unwrap();
+    assert_topology_error(RationalBSplineNativeTopologyReport2::new(vec![
+        skipped_index,
+    ]));
 }
 
 #[test]
