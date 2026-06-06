@@ -43,8 +43,8 @@ use hyperlimit::SourceProvenance;
 use std::collections::{BTreeMap, BTreeSet};
 
 use hyperlimit::{
-    Point2, Point3, compare_point2_lexicographic, compare_reals, point2_equal, point3_equal,
-    project_point3,
+    Point2, Point3, Sign, compare_point2_lexicographic, compare_reals, orient3d_report,
+    point2_equal, point3_equal, project_point3,
 };
 use hyperreal::Real;
 
@@ -2556,7 +2556,7 @@ fn shell_region_mesh(
     shell: &ArrangementRegion,
     face_cells: &[ArrangementFaceCell],
 ) -> Result<ExactMesh, ExactArrangementBlocker> {
-    let mut boundary_loop_groups = BTreeMap::<(u8, usize), Vec<Vec<Point3>>>::new();
+    let mut boundary_loop_groups = Vec::<ShellBoundaryLoopGroup>::new();
     for &cell_index in &shell.face_cells {
         let cell = face_cells
             .get(cell_index)
@@ -2565,21 +2565,18 @@ fn shell_region_mesh(
             return Err(ExactArrangementBlocker::NonManifoldCellComplex);
         }
         if boundary_loop_groups
-            .values()
-            .flatten()
+            .iter()
+            .flat_map(|group| group.loops.iter())
             .any(|existing| exact_boundary_loops_equivalent(existing, &cell.boundary_points))
         {
             continue;
         }
-        boundary_loop_groups
-            .entry((mesh_side_key(cell.carrier.side), cell.carrier.face))
-            .or_default()
-            .push(cell.boundary_points.clone());
+        push_shell_boundary_loop_group(&mut boundary_loop_groups, cell.boundary_points.clone())?;
     }
     let mut vertices = Vec::new();
     let mut triangles = Vec::new();
-    for boundary_group in boundary_loop_groups.values() {
-        triangulate_exact_loop_group(boundary_group, &mut vertices, &mut triangles)?;
+    for boundary_group in &boundary_loop_groups {
+        triangulate_exact_loop_group(&boundary_group.loops, &mut vertices, &mut triangles)?;
     }
     ExactMesh::new_with_policy(
         vertices,
@@ -2590,11 +2587,83 @@ fn shell_region_mesh(
     .map_err(|_| ExactArrangementBlocker::NonManifoldCellComplex)
 }
 
-fn mesh_side_key(side: MeshSide) -> u8 {
-    match side {
-        MeshSide::Left => 0,
-        MeshSide::Right => 1,
+struct ShellBoundaryLoopGroup {
+    carrier: [Point3; 3],
+    loops: Vec<Vec<Point3>>,
+}
+
+fn push_shell_boundary_loop_group(
+    groups: &mut Vec<ShellBoundaryLoopGroup>,
+    boundary: Vec<Point3>,
+) -> Result<(), ExactArrangementBlocker> {
+    let carrier = exact_non_collinear_point_loop_carrier(&boundary)
+        .ok_or(ExactArrangementBlocker::NonManifoldCellComplex)?;
+    for group in groups.iter_mut() {
+        if point_loop_is_exactly_coplanar(&boundary, group.carrier_refs())? {
+            group.loops.push(boundary);
+            return Ok(());
+        }
     }
+    if !point_loop_is_exactly_coplanar(&boundary, (&carrier[0], &carrier[1], &carrier[2]))? {
+        return Err(ExactArrangementBlocker::UndecidableOrdering);
+    }
+    groups.push(ShellBoundaryLoopGroup {
+        carrier,
+        loops: vec![boundary],
+    });
+    Ok(())
+}
+
+impl ShellBoundaryLoopGroup {
+    fn carrier_refs(&self) -> (&Point3, &Point3, &Point3) {
+        (&self.carrier[0], &self.carrier[1], &self.carrier[2])
+    }
+}
+
+fn exact_non_collinear_point_loop_carrier(points: &[Point3]) -> Option<[Point3; 3]> {
+    let anchor = points.first()?;
+    for first_index in 1..points.len() - 1 {
+        for second_index in first_index + 1..points.len() {
+            let first = points.get(first_index)?;
+            let second = points.get(second_index)?;
+            if !exact_points_are_collinear(anchor, first, second)? {
+                return Some([anchor.clone(), first.clone(), second.clone()]);
+            }
+        }
+    }
+    None
+}
+
+fn point_loop_is_exactly_coplanar(
+    points: &[Point3],
+    carrier: (&Point3, &Point3, &Point3),
+) -> Result<bool, ExactArrangementBlocker> {
+    let (a, b, c) = carrier;
+    for point in points {
+        match orient3d_report(a, b, c, point).value() {
+            Some(Sign::Zero) => {}
+            Some(Sign::Positive | Sign::Negative) => return Ok(false),
+            None => return Err(ExactArrangementBlocker::UndecidableOrdering),
+        }
+    }
+    Ok(true)
+}
+
+fn exact_points_are_collinear(a: &Point3, b: &Point3, c: &Point3) -> Option<bool> {
+    let abx = b.x.clone() - &a.x;
+    let aby = b.y.clone() - &a.y;
+    let abz = b.z.clone() - &a.z;
+    let acx = c.x.clone() - &a.x;
+    let acy = c.y.clone() - &a.y;
+    let acz = c.z.clone() - &a.z;
+    let cross_x = aby.clone() * &acz - &(abz.clone() * &acy);
+    let cross_y = abz * &acx - &(abx.clone() * &acz);
+    let cross_z = abx * &acy - &(aby * &acx);
+    Some(
+        compare_reals(&cross_x, &Real::from(0)).value()? == Ordering::Equal
+            && compare_reals(&cross_y, &Real::from(0)).value()? == Ordering::Equal
+            && compare_reals(&cross_z, &Real::from(0)).value()? == Ordering::Equal,
+    )
 }
 
 fn nested_two_shell_volume_graph(
@@ -3311,9 +3380,9 @@ mod tests {
     fn shell_replay_triangulates_grouped_hole_carrier_loops() {
         let loops = [
             (0, vec![p3(0, 0, 1), p3(4, 0, 1), p3(4, 4, 1), p3(0, 4, 1)]),
-            (0, vec![p3(1, 3, 1), p3(3, 3, 1), p3(3, 1, 1), p3(1, 1, 1)]),
+            (10, vec![p3(1, 3, 1), p3(3, 3, 1), p3(3, 1, 1), p3(1, 1, 1)]),
             (1, vec![p3(0, 4, 0), p3(4, 4, 0), p3(4, 0, 0), p3(0, 0, 0)]),
-            (1, vec![p3(1, 1, 0), p3(3, 1, 0), p3(3, 3, 0), p3(1, 3, 0)]),
+            (11, vec![p3(1, 1, 0), p3(3, 1, 0), p3(3, 3, 0), p3(1, 3, 0)]),
             (2, vec![p3(0, 0, 0), p3(4, 0, 0), p3(4, 0, 1), p3(0, 0, 1)]),
             (3, vec![p3(4, 0, 0), p3(4, 4, 0), p3(4, 4, 1), p3(4, 0, 1)]),
             (4, vec![p3(4, 4, 0), p3(0, 4, 0), p3(0, 4, 1), p3(4, 4, 1)]),
