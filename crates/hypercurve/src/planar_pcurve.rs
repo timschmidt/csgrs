@@ -309,6 +309,7 @@ impl RetainedPlanarFace2 {
         {
             return Err(CurveError::InvalidPlanarFace);
         }
+        validate_planar_face_distinct_trim_loops(&material_loops, &hole_loops)?;
         Ok(Self {
             surface,
             material_loops,
@@ -523,6 +524,23 @@ impl<'a> PreparedRetainedPlanarFace2<'a> {
 
         face_edge_use_report_from_loops(self.face, pcurve.curve.segments())
     }
+}
+
+fn validate_planar_face_distinct_trim_loops(
+    material_loops: &[RetainedPlanarTrimLoop2],
+    hole_loops: &[RetainedPlanarTrimLoop2],
+) -> CurveResult<()> {
+    for (index, trim) in material_loops.iter().enumerate() {
+        if material_loops[index + 1..].contains(trim) || hole_loops.contains(trim) {
+            return Err(CurveError::InvalidPlanarFace);
+        }
+    }
+    for (index, trim) in hole_loops.iter().enumerate() {
+        if hole_loops[index + 1..].contains(trim) {
+            return Err(CurveError::InvalidPlanarFace);
+        }
+    }
+    Ok(())
 }
 
 impl RetainedPlanarFacePointLocation2 {

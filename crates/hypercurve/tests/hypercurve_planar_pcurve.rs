@@ -486,6 +486,20 @@ fn retained_planar_face_rejects_missing_material_or_mixed_surface_trims() {
         .unwrap_err(),
         CurveError::InvalidPlanarFace
     );
+    let material = trim(surface, &[(0, 0), (4, 0), (4, 4), (0, 4)]);
+    assert_eq!(
+        RetainedPlanarFace2::try_new(
+            surface,
+            vec![material.clone(), material.clone()],
+            Vec::new(),
+        )
+        .unwrap_err(),
+        CurveError::InvalidPlanarFace
+    );
+    assert_eq!(
+        RetainedPlanarFace2::try_new(surface, vec![material.clone()], vec![material]).unwrap_err(),
+        CurveError::InvalidPlanarFace
+    );
 }
 
 fn decided<T>(classification: Classification<T>) -> T {
