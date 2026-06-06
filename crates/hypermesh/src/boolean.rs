@@ -878,6 +878,10 @@ pub fn certify_volumetric_boundary_closure_report(
             boundary_loops: 0,
             noncoplanar_boundary_loops: 0,
             repeated_exact_boundary_points: 0,
+            self_contact_exact_points: 0,
+            self_contact_topological_vertices: 0,
+            self_contact_degenerate_cycles: 0,
+            self_contact_nondegenerate_cycles: 0,
             coplanar_loop_groups: 0,
         });
     };
@@ -902,6 +906,10 @@ pub fn certify_volumetric_boundary_closure_report(
             boundary_loops: 0,
             noncoplanar_boundary_loops: 0,
             repeated_exact_boundary_points: 0,
+            self_contact_exact_points: 0,
+            self_contact_topological_vertices: 0,
+            self_contact_degenerate_cycles: 0,
+            self_contact_nondegenerate_cycles: 0,
             coplanar_loop_groups: 0,
         });
     }
@@ -914,6 +922,10 @@ pub fn certify_volumetric_boundary_closure_report(
             boundary_loops: 0,
             noncoplanar_boundary_loops: 0,
             repeated_exact_boundary_points: 0,
+            self_contact_exact_points: 0,
+            self_contact_topological_vertices: 0,
+            self_contact_degenerate_cycles: 0,
+            self_contact_nondegenerate_cycles: 0,
             coplanar_loop_groups: 0,
         });
     };
@@ -933,10 +945,10 @@ pub fn certify_volumetric_boundary_closure_report(
                 "volumetric boundary closure report referenced a missing output vertex",
             ))
         })?;
-    let mut repeated_exact_boundary_points = 0;
+    let mut self_contact = BoundaryLoopSelfContactEvidence::default();
     for boundary in &boundary_points {
-        match repeated_exact_point_pairs(boundary) {
-            Ok(count) => repeated_exact_boundary_points += count,
+        match boundary_loop_self_contact_evidence(boundary) {
+            Ok(evidence) => self_contact.add(evidence),
             Err(blocker) => {
                 return Ok(ExactVolumetricBoundaryClosureReport {
                     operation,
@@ -945,13 +957,17 @@ pub fn certify_volumetric_boundary_closure_report(
                     boundary_edges,
                     boundary_loops: boundary_loops.len(),
                     noncoplanar_boundary_loops: 0,
-                    repeated_exact_boundary_points,
+                    repeated_exact_boundary_points: self_contact.repeated_exact_point_pairs,
+                    self_contact_exact_points: self_contact.exact_points,
+                    self_contact_topological_vertices: self_contact.topological_vertices,
+                    self_contact_degenerate_cycles: self_contact.degenerate_cycles,
+                    self_contact_nondegenerate_cycles: self_contact.nondegenerate_cycles,
                     coplanar_loop_groups: 0,
                 });
             }
         }
     }
-    if repeated_exact_boundary_points != 0 {
+    if self_contact.repeated_exact_point_pairs != 0 {
         return Ok(ExactVolumetricBoundaryClosureReport {
             operation,
             status: ExactVolumetricBoundaryClosureStatus::BoundaryLoopExactSelfContact,
@@ -959,10 +975,15 @@ pub fn certify_volumetric_boundary_closure_report(
             boundary_edges,
             boundary_loops: boundary_loops.len(),
             noncoplanar_boundary_loops: 0,
-            repeated_exact_boundary_points,
+            repeated_exact_boundary_points: self_contact.repeated_exact_point_pairs,
+            self_contact_exact_points: self_contact.exact_points,
+            self_contact_topological_vertices: self_contact.topological_vertices,
+            self_contact_degenerate_cycles: self_contact.degenerate_cycles,
+            self_contact_nondegenerate_cycles: self_contact.nondegenerate_cycles,
             coplanar_loop_groups: 0,
         });
     }
+    let repeated_exact_boundary_points = self_contact.repeated_exact_point_pairs;
     let mut noncoplanar_boundary_loops = 0;
     for boundary in &boundary_points {
         match exact_loop_is_coplanar(boundary) {
@@ -977,6 +998,10 @@ pub fn certify_volumetric_boundary_closure_report(
                     boundary_loops: boundary_loops.len(),
                     noncoplanar_boundary_loops,
                     repeated_exact_boundary_points,
+                    self_contact_exact_points: self_contact.exact_points,
+                    self_contact_topological_vertices: self_contact.topological_vertices,
+                    self_contact_degenerate_cycles: self_contact.degenerate_cycles,
+                    self_contact_nondegenerate_cycles: self_contact.nondegenerate_cycles,
                     coplanar_loop_groups: 0,
                 });
             }
@@ -991,6 +1016,10 @@ pub fn certify_volumetric_boundary_closure_report(
             boundary_loops: boundary_loops.len(),
             noncoplanar_boundary_loops,
             repeated_exact_boundary_points,
+            self_contact_exact_points: self_contact.exact_points,
+            self_contact_topological_vertices: self_contact.topological_vertices,
+            self_contact_degenerate_cycles: self_contact.degenerate_cycles,
+            self_contact_nondegenerate_cycles: self_contact.nondegenerate_cycles,
             coplanar_loop_groups: 0,
         });
     }
@@ -1003,6 +1032,10 @@ pub fn certify_volumetric_boundary_closure_report(
             boundary_loops: boundary_loops.len(),
             noncoplanar_boundary_loops: 0,
             repeated_exact_boundary_points: 0,
+            self_contact_exact_points: 0,
+            self_contact_topological_vertices: 0,
+            self_contact_degenerate_cycles: 0,
+            self_contact_nondegenerate_cycles: 0,
             coplanar_loop_groups: groups.len(),
         }),
         Err(blocker) => Ok(ExactVolumetricBoundaryClosureReport {
@@ -1013,6 +1046,10 @@ pub fn certify_volumetric_boundary_closure_report(
             boundary_loops: boundary_loops.len(),
             noncoplanar_boundary_loops: 0,
             repeated_exact_boundary_points: 0,
+            self_contact_exact_points: 0,
+            self_contact_topological_vertices: 0,
+            self_contact_degenerate_cycles: 0,
+            self_contact_nondegenerate_cycles: 0,
             coplanar_loop_groups: 0,
         }),
     }
@@ -3183,18 +3220,98 @@ fn point3_exact_equal(left: &Point3, right: &Point3) -> Option<bool> {
     )
 }
 
-fn repeated_exact_point_pairs(points: &[Point3]) -> Result<usize, ExactArrangementBlocker> {
-    let mut repeated = 0;
-    for left in 0..points.len() {
-        for right in left + 1..points.len() {
-            match point3_exact_equal(&points[left], &points[right]) {
-                Some(true) => repeated += 1,
+#[derive(Default)]
+struct BoundaryLoopSelfContactEvidence {
+    repeated_exact_point_pairs: usize,
+    exact_points: usize,
+    topological_vertices: usize,
+    degenerate_cycles: usize,
+    nondegenerate_cycles: usize,
+}
+
+impl BoundaryLoopSelfContactEvidence {
+    fn add(&mut self, other: Self) {
+        self.repeated_exact_point_pairs += other.repeated_exact_point_pairs;
+        self.exact_points += other.exact_points;
+        self.topological_vertices += other.topological_vertices;
+        self.degenerate_cycles += other.degenerate_cycles;
+        self.nondegenerate_cycles += other.nondegenerate_cycles;
+    }
+}
+
+fn boundary_loop_self_contact_evidence(
+    points: &[Point3],
+) -> Result<BoundaryLoopSelfContactEvidence, ExactArrangementBlocker> {
+    if points.is_empty() {
+        return Ok(BoundaryLoopSelfContactEvidence::default());
+    }
+    let mut exact_point_classes = Vec::<Vec<usize>>::new();
+    'points: for (index, point) in points.iter().enumerate() {
+        for class in &mut exact_point_classes {
+            match point3_exact_equal(&points[class[0]], point) {
+                Some(true) => {
+                    class.push(index);
+                    continue 'points;
+                }
                 Some(false) => {}
                 None => return Err(ExactArrangementBlocker::UndecidableOrdering),
             }
         }
+        exact_point_classes.push(vec![index]);
     }
-    Ok(repeated)
+
+    let mut evidence = BoundaryLoopSelfContactEvidence::default();
+    for class in exact_point_classes {
+        if class.len() < 2 {
+            continue;
+        }
+        evidence.repeated_exact_point_pairs += class.len() * (class.len() - 1) / 2;
+        evidence.exact_points += 1;
+        evidence.topological_vertices += class.len();
+        for index in 0..class.len() {
+            let start = class[index];
+            let end = class[(index + 1) % class.len()];
+            if cyclic_interval_distinct_exact_points(points, start, end)? < 3 {
+                evidence.degenerate_cycles += 1;
+            } else {
+                evidence.nondegenerate_cycles += 1;
+            }
+        }
+    }
+    Ok(evidence)
+}
+
+fn cyclic_interval_distinct_exact_points(
+    points: &[Point3],
+    start: usize,
+    end: usize,
+) -> Result<usize, ExactArrangementBlocker> {
+    let mut distinct = Vec::<&Point3>::new();
+    let span = if end >= start {
+        end - start
+    } else {
+        points.len() - start + end
+    };
+    for offset in 0..=span {
+        let point = points
+            .get((start + offset) % points.len())
+            .ok_or(ExactArrangementBlocker::NonManifoldCellComplex)?;
+        let mut already_seen = false;
+        for existing in &distinct {
+            match point3_exact_equal(existing, point) {
+                Some(true) => {
+                    already_seen = true;
+                    break;
+                }
+                Some(false) => {}
+                None => return Err(ExactArrangementBlocker::UndecidableOrdering),
+            }
+        }
+        if !already_seen {
+            distinct.push(point);
+        }
+    }
+    Ok(distinct.len())
 }
 
 fn exact_loop_is_coplanar(points: &[Point3]) -> Result<bool, ExactArrangementBlocker> {
@@ -7761,7 +7878,11 @@ mod tests {
         );
         assert_eq!(closure.boundary_loops, 1, "{closure:?}");
         assert_eq!(closure.noncoplanar_boundary_loops, 0, "{closure:?}");
-        assert!(closure.repeated_exact_boundary_points > 0, "{closure:?}");
+        assert_eq!(closure.repeated_exact_boundary_points, 10, "{closure:?}");
+        assert_eq!(closure.self_contact_exact_points, 5, "{closure:?}");
+        assert_eq!(closure.self_contact_topological_vertices, 12, "{closure:?}");
+        assert_eq!(closure.self_contact_degenerate_cycles, 2, "{closure:?}");
+        assert_eq!(closure.self_contact_nondegenerate_cycles, 10, "{closure:?}");
         assert!(closure.boundary_edges > 0, "{closure:?}");
         assert!(closure.output_triangles > 0, "{closure:?}");
         closure.validate().unwrap();

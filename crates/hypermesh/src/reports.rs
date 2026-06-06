@@ -1407,6 +1407,18 @@ pub struct ExactVolumetricBoundaryClosureReport {
     pub noncoplanar_boundary_loops: usize,
     /// Number of repeated exact point pairs found inside directed boundary loops.
     pub repeated_exact_boundary_points: usize,
+    /// Number of exact point classes that appear at multiple topological
+    /// vertices inside directed boundary loops.
+    pub self_contact_exact_points: usize,
+    /// Number of topological boundary vertices participating in exact
+    /// self-contact point classes.
+    pub self_contact_topological_vertices: usize,
+    /// Number of split cycles around exact self-contact points with fewer than
+    /// three distinct exact points.
+    pub self_contact_degenerate_cycles: usize,
+    /// Number of split cycles around exact self-contact points with at least
+    /// three distinct exact points.
+    pub self_contact_nondegenerate_cycles: usize,
     /// Number of coplanar loop groups produced by exact loop grouping.
     pub coplanar_loop_groups: usize,
 }
@@ -1437,6 +1449,10 @@ impl ExactVolumetricBoundaryClosureReport {
                     || self.boundary_loops != 0
                     || self.noncoplanar_boundary_loops != 0
                     || self.repeated_exact_boundary_points != 0
+                    || self.self_contact_exact_points != 0
+                    || self.self_contact_topological_vertices != 0
+                    || self.self_contact_degenerate_cycles != 0
+                    || self.self_contact_nondegenerate_cycles != 0
                     || self.coplanar_loop_groups != 0
                 {
                     return Err(ExactReportValidationError::StatusEvidenceMismatch);
@@ -1448,6 +1464,10 @@ impl ExactVolumetricBoundaryClosureReport {
                     || self.boundary_loops != 0
                     || self.noncoplanar_boundary_loops != 0
                     || self.repeated_exact_boundary_points != 0
+                    || self.self_contact_exact_points != 0
+                    || self.self_contact_topological_vertices != 0
+                    || self.self_contact_degenerate_cycles != 0
+                    || self.self_contact_nondegenerate_cycles != 0
                     || self.coplanar_loop_groups != 0
                 {
                     return Err(ExactReportValidationError::StatusEvidenceMismatch);
@@ -1459,6 +1479,10 @@ impl ExactVolumetricBoundaryClosureReport {
                     || self.boundary_loops == 0
                     || self.noncoplanar_boundary_loops != 0
                     || self.repeated_exact_boundary_points != 0
+                    || self.self_contact_exact_points != 0
+                    || self.self_contact_topological_vertices != 0
+                    || self.self_contact_degenerate_cycles != 0
+                    || self.self_contact_nondegenerate_cycles != 0
                     || self.coplanar_loop_groups == 0
                 {
                     return Err(ExactReportValidationError::StatusEvidenceMismatch);
@@ -1470,6 +1494,10 @@ impl ExactVolumetricBoundaryClosureReport {
                     || self.boundary_loops == 0
                     || self.noncoplanar_boundary_loops == 0
                     || self.repeated_exact_boundary_points != 0
+                    || self.self_contact_exact_points != 0
+                    || self.self_contact_topological_vertices != 0
+                    || self.self_contact_degenerate_cycles != 0
+                    || self.self_contact_nondegenerate_cycles != 0
                 {
                     return Err(ExactReportValidationError::StatusEvidenceMismatch);
                 }
@@ -1479,6 +1507,10 @@ impl ExactVolumetricBoundaryClosureReport {
                     || self.boundary_edges == 0
                     || self.boundary_loops == 0
                     || self.repeated_exact_boundary_points == 0
+                    || self.self_contact_exact_points == 0
+                    || self.self_contact_topological_vertices <= self.self_contact_exact_points
+                    || self.self_contact_degenerate_cycles + self.self_contact_nondegenerate_cycles
+                        == 0
                 {
                     return Err(ExactReportValidationError::StatusEvidenceMismatch);
                 }
@@ -1488,6 +1520,10 @@ impl ExactVolumetricBoundaryClosureReport {
                     || self.boundary_edges == 0
                     || self.boundary_loops != 0
                     || self.repeated_exact_boundary_points != 0
+                    || self.self_contact_exact_points != 0
+                    || self.self_contact_topological_vertices != 0
+                    || self.self_contact_degenerate_cycles != 0
+                    || self.self_contact_nondegenerate_cycles != 0
                     || self.coplanar_loop_groups != 0
                 {
                     return Err(ExactReportValidationError::StatusEvidenceMismatch);
