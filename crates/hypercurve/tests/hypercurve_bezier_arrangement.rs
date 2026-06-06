@@ -1,10 +1,10 @@
 use hypercurve::{
     BezierAlgebraicEndpointImage2, BezierAlgebraicParameter2, BezierArrangementGraph2,
     BezierParameter2, BezierParameterInterval, BezierParameterPolynomial,
-    BezierRetainedLineOverlapExtent2, BezierRetainedOverlapOrientation2,
+    BezierRetainedLineOverlapExtent2, BezierRetainedOverlap2, BezierRetainedOverlapOrientation2,
     BezierRetainedOverlapRelation2, BezierRetainedOverlapReport2, BezierSplitFragment2,
-    BezierSubcurve2, Classification, CubicBezier2, CurvePolicy, Point2, QuadraticBezier2,
-    RationalQuadraticBezier2, Real, UncertaintyReason,
+    BezierSubcurve2, Classification, CubicBezier2, CurveError, CurvePolicy, Point2,
+    QuadraticBezier2, RationalQuadraticBezier2, Real, UncertaintyReason,
 };
 use proptest::prelude::*;
 
@@ -29,6 +29,10 @@ fn decided<T>(classification: Classification<T>) -> T {
         Classification::Decided(value) => value,
         Classification::Uncertain(reason) => panic!("unexpected uncertainty: {reason:?}"),
     }
+}
+
+fn assert_topology_error<T>(result: Result<T, CurveError>) {
+    assert!(matches!(result, Err(CurveError::Topology(_))));
 }
 
 fn exact(value: Real) -> BezierParameter2 {
@@ -655,6 +659,20 @@ fn retained_overlap_report_finds_identical_materialized_fragments() {
     assert!(matches!(
         report.overlaps()[0].relation(),
         BezierRetainedOverlapRelation2::SameControlPolygon
+    ));
+}
+
+#[test]
+fn retained_overlap_pair_constructor_rejects_unordered_indices() {
+    assert_topology_error(BezierRetainedOverlap2::new(
+        0,
+        0,
+        BezierRetainedOverlapRelation2::SameControlPolygon,
+    ));
+    assert_topology_error(BezierRetainedOverlap2::new(
+        2,
+        1,
+        BezierRetainedOverlapRelation2::SameControlPolygon,
     ));
 }
 

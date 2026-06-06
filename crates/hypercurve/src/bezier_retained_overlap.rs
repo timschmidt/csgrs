@@ -24,7 +24,8 @@ use crate::classify::{compare_reals, is_zero};
 use crate::{
     BezierArrangementChain2, BezierArrangementGraph2, BezierArrangementTraversal2,
     BezierCurveRelation, BezierParameter2, BezierSplitFragment2, BezierSubcurve2, Classification,
-    CurvePolicy, LineLineIntersection, LineSeg2, ParamRange, Point2, UncertaintyReason,
+    CurveError, CurvePolicy, CurveResult, LineLineIntersection, LineSeg2, ParamRange, Point2,
+    UncertaintyReason,
 };
 
 /// Exact positive-dimensional overlap relation between two arrangement fragments.
@@ -51,16 +52,21 @@ pub struct BezierRetainedOverlap2 {
 
 impl BezierRetainedOverlap2 {
     /// Constructs a retained overlap pair.
-    pub const fn new(
+    pub fn new(
         first_fragment_index: usize,
         second_fragment_index: usize,
         relation: BezierRetainedOverlapRelation2,
-    ) -> Self {
-        Self {
+    ) -> CurveResult<Self> {
+        if first_fragment_index >= second_fragment_index {
+            return Err(CurveError::Topology(
+                "retained overlap pair indices must be strictly increasing".to_owned(),
+            ));
+        }
+        Ok(Self {
             first_fragment_index,
             second_fragment_index,
             relation,
-        }
+        })
     }
 
     /// Returns the lower graph-fragment index.
@@ -715,11 +721,14 @@ impl BezierRetainedOverlapReport2 {
                     Classification::Uncertain(reason) => return Classification::Uncertain(reason),
                 };
                 if let Some(relation) = relation {
-                    overlaps.push(BezierRetainedOverlap2::new(
-                        first_index,
-                        second_index,
-                        relation,
-                    ));
+                    let overlap =
+                        match BezierRetainedOverlap2::new(first_index, second_index, relation) {
+                            Ok(overlap) => overlap,
+                            Err(_) => {
+                                return Classification::Uncertain(UncertaintyReason::Unsupported);
+                            }
+                        };
+                    overlaps.push(overlap);
                 }
             }
         }
