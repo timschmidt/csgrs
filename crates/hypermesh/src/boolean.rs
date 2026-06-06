@@ -742,7 +742,7 @@ pub fn preflight_boolean_exact(
     }
 
     let winding_report = winding_readiness_report_from_graph(&graph, left, right, operation)?;
-    if winding_readiness_status_already_materialized(&winding_report.status)
+    if winding_readiness_status_materializes_arrangement_cell_complex(&winding_report.status)
         || (winding_report.status == ExactWindingReadinessStatus::Ready
             && materialize_volumetric_winding_region_plan_from_graph(
                 &graph,
@@ -772,7 +772,20 @@ pub fn preflight_boolean_exact(
     })
 }
 
+#[cfg(test)]
 const fn winding_readiness_status_already_materialized(
+    status: &ExactWindingReadinessStatus,
+) -> bool {
+    matches!(
+        status,
+        ExactWindingReadinessStatus::PlanarArrangementAlreadyMaterialized
+            | ExactWindingReadinessStatus::CoplanarVolumetricCellsAlreadyMaterialized
+            | ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized
+            | ExactWindingReadinessStatus::MixedDimensionalRegularizedSolidAlreadyMaterialized
+    )
+}
+
+const fn winding_readiness_status_materializes_arrangement_cell_complex(
     status: &ExactWindingReadinessStatus,
 ) -> bool {
     matches!(
@@ -4210,6 +4223,22 @@ pub fn certify_winding_readiness_report(
     right: &ExactMesh,
     operation: ExactBooleanOperation,
 ) -> Result<ExactWindingReadinessReport, MeshError> {
+    if !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
+        && certified_mixed_dimensional_regularized_solid_support(left, right).is_some()
+    {
+        return Ok(winding_readiness_report(
+            operation,
+            ExactWindingReadinessStatus::MixedDimensionalRegularizedSolidAlreadyMaterialized,
+            false,
+            0,
+            0,
+            0,
+            Vec::new(),
+            GraphRelationCounts::default().into_blocker(ExactBooleanBlockerKind::NeedsWinding),
+            None,
+            None,
+        ));
+    }
     let graph = build_intersection_graph(left, right)?;
     validate_graph_source_handoff(&graph, left, right)?;
     winding_readiness_report_from_graph(&graph, left, right, operation)
@@ -6266,6 +6295,7 @@ mod tests {
             ExactWindingReadinessStatus::PlanarArrangementAlreadyMaterialized,
             ExactWindingReadinessStatus::CoplanarVolumetricCellsAlreadyMaterialized,
             ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized,
+            ExactWindingReadinessStatus::MixedDimensionalRegularizedSolidAlreadyMaterialized,
         ] {
             assert!(winding_readiness_status_already_materialized(&status));
         }
@@ -6280,6 +6310,95 @@ mod tests {
             ExactWindingReadinessStatus::Ready,
         ] {
             assert!(!winding_readiness_status_already_materialized(&status));
+        }
+
+        for status in [
+            ExactWindingReadinessStatus::PlanarArrangementAlreadyMaterialized,
+            ExactWindingReadinessStatus::CoplanarVolumetricCellsAlreadyMaterialized,
+            ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized,
+        ] {
+            assert!(winding_readiness_status_materializes_arrangement_cell_complex(&status));
+        }
+
+        assert!(
+            !winding_readiness_status_materializes_arrangement_cell_complex(
+                &ExactWindingReadinessStatus::MixedDimensionalRegularizedSolidAlreadyMaterialized,
+            )
+        );
+    }
+
+    #[test]
+    fn mixed_dimensional_regularized_solid_reports_materialized_readiness() {
+        let solid = axis_aligned_box_i64([0, 0, 0], [4, 4, 4]);
+        let sheet = ExactMesh::from_i64_triangles_with_policy(
+            &[1, 1, 1, 3, 1, 1, 1, 3, 1],
+            &[0, 1, 2],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+
+        for (left, right) in [(&solid, &sheet), (&sheet, &solid)] {
+            for operation in [
+                ExactBooleanOperation::Union,
+                ExactBooleanOperation::Intersection,
+                ExactBooleanOperation::Difference,
+            ] {
+                let preflight = preflight_boolean_exact(left, right, operation).unwrap();
+                assert_eq!(
+                    preflight.support,
+                    ExactBooleanSupport::CertifiedMixedDimensionalRegularizedSolid,
+                    "{operation:?}: {preflight:?}"
+                );
+                assert!(preflight.blocker.is_none(), "{operation:?}: {preflight:?}");
+
+                let readiness = certify_winding_readiness_report(left, right, operation).unwrap();
+                assert_eq!(
+                    readiness.status,
+                    ExactWindingReadinessStatus::MixedDimensionalRegularizedSolidAlreadyMaterialized,
+                    "{operation:?}: {readiness:?}"
+                );
+                assert_eq!(
+                    readiness.blocker.kind,
+                    ExactBooleanBlockerKind::NeedsWinding,
+                    "{operation:?}: {readiness:?}"
+                );
+                assert_eq!(readiness.retained_face_pairs, 0);
+                assert_eq!(readiness.retained_events, 0);
+                assert!(winding_readiness_status_already_materialized(
+                    &readiness.status
+                ));
+                assert!(
+                    !winding_readiness_status_materializes_arrangement_cell_complex(
+                        &readiness.status
+                    )
+                );
+                readiness.validate().unwrap();
+                readiness.validate_against_sources(left, right).unwrap();
+
+                let result = boolean_exact(left, right, operation, ValidationPolicy::CLOSED)
+                    .expect("mixed-dimensional regularized solid should shortcut");
+                assert_eq!(
+                    result.kind,
+                    ExactBooleanResultKind::CertifiedShortcut {
+                        shortcut: ExactBooleanShortcutKind::MixedDimensionalRegularizedSolid
+                    },
+                    "{operation:?}: {result:?}"
+                );
+                result.validate().unwrap();
+                result.validate_against_sources(left, right).unwrap();
+
+                let keeps_solid = matches!(operation, ExactBooleanOperation::Union)
+                    || (std::ptr::eq(left, &solid)
+                        && matches!(operation, ExactBooleanOperation::Difference));
+                if keeps_solid {
+                    assert!(exact_meshes_have_same_shape(&result.mesh, &solid));
+                } else {
+                    assert!(
+                        result.mesh.triangles().is_empty(),
+                        "{operation:?}: {result:?}"
+                    );
+                }
+            }
         }
     }
 
