@@ -3431,14 +3431,27 @@ fn selected_projected_overlay_component_boundary_loops(
                 return None;
             }
             loop_vertices.push(current);
-            let Some(next_index) = boundary_edges
-                .iter()
-                .position(|candidate| candidate[0] == current)
-            else {
+            let mut incident_edges =
+                boundary_edges
+                    .iter()
+                    .enumerate()
+                    .filter_map(|(index, candidate)| {
+                        if candidate[0] == current {
+                            Some((index, candidate[1]))
+                        } else if candidate[1] == current {
+                            Some((index, candidate[0]))
+                        } else {
+                            None
+                        }
+                    });
+            let Some((next_index, next_vertex)) = incident_edges.next() else {
                 return None;
             };
-            let next = boundary_edges.remove(next_index);
-            current = next[1];
+            if incident_edges.next().is_some() {
+                return None;
+            }
+            boundary_edges.remove(next_index);
+            current = next_vertex;
         }
         if loop_vertices.len() < 3 {
             return None;
