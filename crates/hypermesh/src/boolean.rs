@@ -363,16 +363,6 @@ pub fn preflight_boolean_exact(
         }
     };
 
-    if support == ExactBooleanSupport::RequiresCertifiedWinding {
-        let graph = build_intersection_graph(left, right)?;
-        validate_graph_source_handoff(&graph, left, right)?;
-        if let Some(preflight) = certified_arrangement_cell_complex_preflight_if_materialized(
-            operation, &graph, left, right,
-        )? {
-            return Ok(preflight);
-        }
-    }
-
     if support == ExactBooleanSupport::CertifiedArrangementCellComplex {
         let graph = build_intersection_graph(left, right)?;
         validate_graph_source_handoff(&graph, left, right)?;
@@ -474,6 +464,17 @@ pub fn preflight_boolean_exact(
             coplanar_volumetric_evidence: None,
         });
     }
+    if support == ExactBooleanSupport::RequiresCertifiedWinding
+        && let Some(preflight) = cached_certified_arrangement_cell_complex_preflight(
+            &mut certified_arrangement_preflight,
+            operation,
+            &graph,
+            left,
+            right,
+        )?
+    {
+        return Ok(preflight);
+    }
     if matches!(
         operation,
         ExactBooleanOperation::Intersection | ExactBooleanOperation::Difference
@@ -557,17 +558,6 @@ pub fn preflight_boolean_exact(
             operation,
             ExactBooleanSupport::CertifiedArrangementCellComplex,
         ));
-    }
-    if support == ExactBooleanSupport::RequiresCertifiedWinding
-        && let Some(preflight) = cached_certified_arrangement_cell_complex_preflight(
-            &mut certified_arrangement_preflight,
-            operation,
-            &graph,
-            left,
-            right,
-        )?
-    {
-        return Ok(preflight);
     }
     if let Some((support, region_classifications, _triangulations)) =
         open_surface_arrangement_plan_from_graph(&graph, left, right, operation)?
@@ -6038,6 +6028,7 @@ mod tests {
 
         for operation in [
             ExactBooleanOperation::Union,
+            ExactBooleanOperation::Intersection,
             ExactBooleanOperation::Difference,
         ] {
             let preflight = preflight_boolean_exact(&left, &right, operation).unwrap();
