@@ -57,11 +57,7 @@ impl BezierRetainedOverlap2 {
         second_fragment_index: usize,
         relation: BezierRetainedOverlapRelation2,
     ) -> CurveResult<Self> {
-        if first_fragment_index >= second_fragment_index {
-            return Err(CurveError::Topology(
-                "retained overlap pair indices must be strictly increasing".to_owned(),
-            ));
-        }
+        validate_ordered_overlap_indices(first_fragment_index, second_fragment_index)?;
         Ok(Self {
             first_fragment_index,
             second_fragment_index,
@@ -83,6 +79,18 @@ impl BezierRetainedOverlap2 {
     pub const fn relation(&self) -> &BezierRetainedOverlapRelation2 {
         &self.relation
     }
+}
+
+fn validate_ordered_overlap_indices(
+    first_fragment_index: usize,
+    second_fragment_index: usize,
+) -> CurveResult<()> {
+    if first_fragment_index >= second_fragment_index {
+        return Err(CurveError::Topology(
+            "retained overlap indices must be strictly increasing".to_owned(),
+        ));
+    }
+    Ok(())
 }
 
 /// Exact overlap report for materialized retained Bezier arrangement fragments.
@@ -236,22 +244,23 @@ pub struct BezierRetainedLinearOverlapTraversal2 {
 
 impl BezierRetainedLinearOverlapSplit2 {
     /// Constructs exact Bezier-parameter split evidence for a linear overlap.
-    pub const fn new(
+    pub fn new(
         first_fragment_index: usize,
         second_fragment_index: usize,
         overlap_segment: LineSeg2,
         first_bezier_range: ParamRange,
         second_bezier_range: ParamRange,
         extent: BezierRetainedLineOverlapExtent2,
-    ) -> Self {
-        Self {
+    ) -> CurveResult<Self> {
+        validate_ordered_overlap_indices(first_fragment_index, second_fragment_index)?;
+        Ok(Self {
             first_fragment_index,
             second_fragment_index,
             overlap_segment,
             first_bezier_range,
             second_bezier_range,
             extent,
-        }
+        })
     }
 
     /// Returns the lower graph-fragment index.
@@ -481,22 +490,23 @@ impl BezierRetainedLinearOverlapTraversal2 {
 
 impl BezierRetainedLineOverlapSplit2 {
     /// Constructs exact line-image split evidence.
-    pub const fn new(
+    pub fn new(
         first_fragment_index: usize,
         second_fragment_index: usize,
         overlap_segment: LineSeg2,
         first_line_range: ParamRange,
         second_line_range: ParamRange,
         extent: BezierRetainedLineOverlapExtent2,
-    ) -> Self {
-        Self {
+    ) -> CurveResult<Self> {
+        validate_ordered_overlap_indices(first_fragment_index, second_fragment_index)?;
+        Ok(Self {
             first_fragment_index,
             second_fragment_index,
             overlap_segment,
             first_line_range,
             second_line_range,
             extent,
-        }
+        })
     }
 
     /// Returns the lower graph-fragment index.
@@ -788,14 +798,18 @@ impl BezierRetainedOverlapReport2 {
                 Some(extent) => extent,
                 None => return Classification::Uncertain(UncertaintyReason::Ordering),
             };
-            splits.push(BezierRetainedLineOverlapSplit2::new(
+            let split = match BezierRetainedLineOverlapSplit2::new(
                 overlap.first_fragment_index(),
                 overlap.second_fragment_index(),
                 segment.clone(),
                 a_range.clone(),
                 b_range.clone(),
                 extent,
-            ));
+            ) {
+                Ok(split) => split,
+                Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
+            };
+            splits.push(split);
         }
         Classification::Decided(splits)
     }
@@ -823,14 +837,18 @@ impl BezierRetainedOverlapReport2 {
             {
                 return Classification::Uncertain(UncertaintyReason::Unsupported);
             }
-            promoted.push(BezierRetainedLinearOverlapSplit2::new(
+            let promoted_split = match BezierRetainedLinearOverlapSplit2::new(
                 split.first_fragment_index(),
                 split.second_fragment_index(),
                 split.overlap_segment().clone(),
                 split.first_line_range().clone(),
                 split.second_line_range().clone(),
                 split.extent(),
-            ));
+            ) {
+                Ok(split) => split,
+                Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
+            };
+            promoted.push(promoted_split);
         }
         Classification::Decided(promoted)
     }
