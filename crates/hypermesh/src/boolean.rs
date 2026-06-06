@@ -6706,6 +6706,15 @@ mod tests {
             ExactBoundaryBooleanPolicy::PreserveSeparateShells,
         )
         .unwrap();
+        projected.validate_against_sources(&left, &right).unwrap();
+        let mut stale_mesh = projected.clone();
+        stale_mesh.mesh = empty_mesh(
+            "stale boundary-policy projection",
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        stale_mesh.validate().unwrap();
+        assert!(stale_mesh.validate_against_sources(&left, &right).is_err());
         projected.kind = ExactBooleanResultKind::BoundaryPolicyShortcut {
             operation: ExactBooleanOperation::SelectedRegions(ExactRegionSelection::KeepAll),
         };

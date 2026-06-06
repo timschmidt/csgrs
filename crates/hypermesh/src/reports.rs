@@ -1000,14 +1000,22 @@ impl ExactBooleanResult {
                     .map_err(ExactReportValidationError::InvalidVolumetricClassification)?;
             }
         }
-        if matches!(
-            self.kind,
-            ExactBooleanResultKind::BoundaryPolicyShortcut { .. }
-        ) {
+        if let ExactBooleanResultKind::BoundaryPolicyShortcut { operation } = self.kind {
             let replay = certify_boundary_touching_report(left, right)
                 .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
             replay.validate()?;
             if !replay.is_certified() {
+                return Err(ExactReportValidationError::SourceReplayMismatch);
+            }
+            let replay = boolean_exact_with_boundary_policy(
+                left,
+                right,
+                operation,
+                self.mesh.validation_policy(),
+                ExactBoundaryBooleanPolicy::PreserveSeparateShells,
+            )
+            .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+            if self != &replay {
                 return Err(ExactReportValidationError::SourceReplayMismatch);
             }
         }
