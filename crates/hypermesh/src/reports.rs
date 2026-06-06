@@ -1124,6 +1124,22 @@ impl ExactBooleanResult {
         Ok(())
     }
 
+    /// Classify whether this retained result is fresh for the source meshes.
+    ///
+    /// Local report integrity is checked before source replay so copied
+    /// materialized outputs can distinguish stale retained artifacts from
+    /// source-geometry drift.
+    pub fn freshness_against_sources(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> ExactReportFreshness {
+        match self.validate_against_sources(left, right) {
+            Ok(()) => ExactReportFreshness::Current,
+            Err(error) => error.into(),
+        }
+    }
+
     /// Validate this result against the operation and policies that produced it.
     ///
     /// [`Self::validate_against_sources`] audits retained source provenance for
@@ -1158,6 +1174,27 @@ impl ExactBooleanResult {
             Ok(())
         } else {
             Err(ExactReportValidationError::SourceReplayMismatch)
+        }
+    }
+
+    /// Classify whether this result still matches its full operation replay.
+    pub fn operation_freshness_against_sources(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+        operation: ExactBooleanOperation,
+        validation: ValidationPolicy,
+        boundary_policy: ExactBoundaryBooleanPolicy,
+    ) -> ExactReportFreshness {
+        match self.validate_operation_against_sources(
+            left,
+            right,
+            operation,
+            validation,
+            boundary_policy,
+        ) {
+            Ok(()) => ExactReportFreshness::Current,
+            Err(error) => error.into(),
         }
     }
 }
@@ -4191,6 +4228,57 @@ mod tests {
         assert_eq!(
             stale_boundary.freshness_against_sources(&open_left, &touching_right),
             ExactReportFreshness::StaleBlockerEvidence
+        );
+    }
+
+    #[test]
+    fn boolean_result_freshness_classifies_local_source_and_operation_drift() {
+        let left = report_test_tetra([0, 0, 0]);
+        let right = report_test_tetra([3, 0, 0]);
+        let result = boolean_exact_with_boundary_policy(
+            &left,
+            &right,
+            ExactBooleanOperation::Union,
+            ValidationPolicy::CLOSED,
+            ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+
+        assert_eq!(
+            result.freshness_against_sources(&left, &right),
+            ExactReportFreshness::Current
+        );
+        assert_eq!(
+            result.operation_freshness_against_sources(
+                &left,
+                &right,
+                ExactBooleanOperation::Union,
+                ValidationPolicy::CLOSED,
+                ExactBoundaryBooleanPolicy::Reject,
+            ),
+            ExactReportFreshness::Current
+        );
+
+        let mut stale_result = result.clone();
+        stale_result.graph_had_unknowns = true;
+        assert_eq!(
+            stale_result.freshness_against_sources(&left, &right),
+            ExactReportFreshness::StaleGraphUnknownStatus
+        );
+
+        assert_eq!(
+            result.freshness_against_sources(&left, &left),
+            ExactReportFreshness::SourceReplayMismatch
+        );
+        assert_eq!(
+            result.operation_freshness_against_sources(
+                &left,
+                &right,
+                ExactBooleanOperation::Intersection,
+                ValidationPolicy::CLOSED,
+                ExactBoundaryBooleanPolicy::Reject,
+            ),
+            ExactReportFreshness::SourceReplayMismatch
         );
     }
 
