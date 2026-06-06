@@ -93,8 +93,9 @@ pub struct BezierSplitMaterialization2 {
 
 impl BezierSplitMaterialization2 {
     /// Constructs a materialization result from ordered fragments.
-    pub const fn new(fragments: Vec<BezierSplitFragment2>) -> Self {
-        Self { fragments }
+    pub fn new(fragments: Vec<BezierSplitFragment2>) -> CurveResult<Self> {
+        validate_bezier_split_fragments(&fragments)?;
+        Ok(Self { fragments })
     }
 
     /// Returns fragments in increasing source-parameter order.
@@ -126,6 +127,20 @@ impl BezierSplitMaterialization2 {
             )
         })
     }
+}
+
+fn validate_bezier_split_fragments(fragments: &[BezierSplitFragment2]) -> CurveResult<()> {
+    for (left_index, left) in fragments.iter().enumerate() {
+        if fragments[left_index + 1..]
+            .iter()
+            .any(|right| right == left)
+        {
+            return Err(CurveError::Topology(
+                "Bezier split materialization must not contain duplicate fragments".into(),
+            ));
+        }
+    }
+    Ok(())
 }
 
 impl QuadraticBezier2 {
@@ -418,7 +433,7 @@ where
 
     Ok(Classification::Decided(BezierSplitMaterialization2::new(
         fragments,
-    )))
+    )?))
 }
 
 fn endpoint_image_for<G>(

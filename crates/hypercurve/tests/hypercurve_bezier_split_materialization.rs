@@ -1,9 +1,9 @@
 use hypercurve::{
     BezierAlgebraicEndpointImage2, BezierAlgebraicImageStatus, BezierAlgebraicParameter2,
     BezierEndpointPointImage2, BezierEndpointTangentImage2, BezierParameter2,
-    BezierParameterInterval, BezierParameterPolynomial, BezierSplitFragment2, BezierSubcurve2,
-    Classification, CubicBezier2, CurvePolicy, Point2, QuadraticBezier2, RationalQuadraticBezier2,
-    Real, UncertaintyReason,
+    BezierParameterInterval, BezierParameterPolynomial, BezierSplitFragment2,
+    BezierSplitMaterialization2, BezierSubcurve2, Classification, CubicBezier2, CurveError,
+    CurvePolicy, Point2, QuadraticBezier2, RationalQuadraticBezier2, Real, UncertaintyReason,
 };
 use proptest::prelude::*;
 
@@ -21,6 +21,14 @@ fn p(x: i32, y: i32) -> Point2 {
 
 fn policy() -> CurvePolicy {
     CurvePolicy::certified()
+}
+
+fn assert_topology_error<T>(result: hypercurve::CurveResult<T>) {
+    match result {
+        Err(CurveError::Topology(_)) => {}
+        Ok(_) => panic!("expected topology error"),
+        Err(error) => panic!("expected topology error, got {error:?}"),
+    }
 }
 
 fn exact(value: Real) -> BezierParameter2 {
@@ -240,6 +248,25 @@ fn exact_quadratic_split_materializes_native_subcurves() {
     assert_eq!(right.start(), &midpoint);
     assert_eq!(left.start(), curve.start());
     assert_eq!(right.end(), curve.end());
+}
+
+#[test]
+fn split_materialization_constructor_rejects_duplicate_fragments() {
+    BezierSplitMaterialization2::new(Vec::new()).unwrap();
+
+    let curve = QuadraticBezier2::new(p(0, 0), p(2, 4), p(4, 0));
+    let materialization = match curve
+        .split_at_parameters(&[exact(q(1, 2))], &policy())
+        .unwrap()
+    {
+        Classification::Decided(value) => value,
+        Classification::Uncertain(reason) => panic!("split unexpectedly uncertain: {reason:?}"),
+    };
+
+    let first = materialization.fragments()[0].clone();
+    let second = materialization.fragments()[1].clone();
+    BezierSplitMaterialization2::new(vec![first.clone(), second]).unwrap();
+    assert_topology_error(BezierSplitMaterialization2::new(vec![first.clone(), first]));
 }
 
 #[test]
