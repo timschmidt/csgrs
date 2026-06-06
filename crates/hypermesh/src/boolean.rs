@@ -3815,6 +3815,7 @@ fn overlay_allows_selected_face_materialization(overlay: &ExactArrangement2dOver
                 ExactArrangement2dBlocker::OutputHoleWithoutOuter { .. }
                     | ExactArrangement2dBlocker::UnresolvedOutputLoopContainment { .. }
                     | ExactArrangement2dBlocker::OutputLoopBoundaryContainment { .. }
+                    | ExactArrangement2dBlocker::NonManifoldSelectedBoundary { .. }
             )
         })
 }
@@ -3925,7 +3926,28 @@ fn mesh_from_projected_overlay_selected_faces(
                 lift_projected_point_to_carrier(point, carrier_points, projection)
             })
             .collect::<Option<Vec<_>>>()?;
-        triangulate_exact_loop_group(&[boundary], &mut vertices, &mut triangles).ok()?;
+        let mut face_vertices = Vec::new();
+        let mut face_triangles = Vec::new();
+        triangulate_exact_loop_group(&[boundary], &mut face_vertices, &mut face_triangles).ok()?;
+        let face_to_mesh = face_vertices
+            .into_iter()
+            .map(|point| {
+                if let Some(existing) = find_exact_mesh_vertex(&vertices, &point) {
+                    Some(existing)
+                } else {
+                    let index = vertices.len();
+                    vertices.push(point);
+                    Some(index)
+                }
+            })
+            .collect::<Option<Vec<_>>>()?;
+        triangles.extend(face_triangles.into_iter().map(|triangle| {
+            Triangle([
+                face_to_mesh[triangle.0[0]],
+                face_to_mesh[triangle.0[1]],
+                face_to_mesh[triangle.0[2]],
+            ])
+        }));
     }
     if triangles.is_empty() {
         return None;
@@ -6734,6 +6756,10 @@ mod tests {
         )
         .expect("canonical overlay should materialize");
         assert!(exact_meshes_have_same_shape(&selected_faces, &canonical));
+        assert_eq!(
+            selected_faces.facts().mesh.boundary_edges,
+            canonical.facts().mesh.boundary_edges
+        );
 
         let readiness =
             certify_winding_readiness_report(&left, &right, ExactBooleanOperation::Difference)
@@ -6979,7 +7005,7 @@ mod tests {
     }
 
     #[test]
-    fn selected_overlay_faces_do_not_recover_selected_boundary_topology_blockers() {
+    fn selected_overlay_faces_recover_selected_boundary_topology_blockers() {
         let left = ExactMesh::from_i64_triangles_with_policy(
             &[0, 0, 0, 4, 0, 0, 4, 4, 0, 0, 4, 0],
             &[0, 1, 2, 0, 2, 3],
@@ -7003,20 +7029,32 @@ mod tests {
         let mut overlay =
             build_exact_arrangement2d_overlay(&rings, ExactArrangement2dSetOperation::Difference);
         assert!(overlay.is_complete(), "{:?}", overlay.blockers);
+        let canonical = mesh_from_selected_projected_overlay_faces(
+            &overlay,
+            &carrier_points,
+            projection,
+            "test canonical selected-boundary topology overlay",
+        )
+        .expect("complete overlay should materialize");
+
         overlay.output_loops.clear();
         overlay.output_components.clear();
         overlay
             .blockers
             .push(ExactArrangement2dBlocker::NonManifoldSelectedBoundary { vertex: 0 });
 
-        assert!(
-            mesh_from_selected_projected_overlay_faces(
-                &overlay,
-                &carrier_points,
-                projection,
-                "test rejected selected-boundary topology blocker",
-            )
-            .is_none()
+        let recovered = mesh_from_selected_projected_overlay_faces(
+            &overlay,
+            &carrier_points,
+            projection,
+            "test recovered selected-boundary topology blocker",
+        )
+        .expect("selected faces should recover when topology blocker is stale");
+        recovered.validate_retained_state().unwrap();
+        assert!(exact_meshes_have_same_shape(&recovered, &canonical));
+        assert_eq!(
+            recovered.facts().mesh.boundary_edges,
+            canonical.facts().mesh.boundary_edges
         );
     }
 
