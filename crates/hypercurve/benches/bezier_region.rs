@@ -256,7 +256,7 @@ fn main() -> CurveResult<()> {
         line_fragment(2, p(4, 0), p(4, 1), p(4, 2)),
         line_fragment(3, p(4, 2), p(2, 2), p(0, 2)),
         line_fragment(4, p(0, 2), p(0, 1), p(0, 0)),
-    ]);
+    ])?;
     let overlap_traversal =
         decided(overlap_graph.traverse_retained_splitting_linear_overlaps(&policy));
     let started = Instant::now();

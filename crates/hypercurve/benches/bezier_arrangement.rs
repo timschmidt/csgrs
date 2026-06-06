@@ -124,7 +124,7 @@ fn main() -> CurveResult<()> {
         line_fragment(1, p(4, 0), p(4, 1), p(4, 2)),
         line_fragment(1, p(4, 2), p(3, 2), p(2, 2)),
         line_fragment(1, p(2, 2), p(2, 1), p(2, 0)),
-    ]);
+    ])?;
     let started = Instant::now();
     let mut reversed_overlap_total = 0_usize;
     for _ in 0..iterations {

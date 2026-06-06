@@ -51,6 +51,10 @@ fn assert_topology_error<T>(result: Result<T, CurveError>) {
     assert!(matches!(result, Err(CurveError::Topology(_))));
 }
 
+fn graph(fragments: Vec<BezierArrangementFragment2>) -> BezierArrangementGraph2 {
+    BezierArrangementGraph2::new(fragments).unwrap()
+}
+
 fn exact(value: Real) -> BezierParameter2 {
     decided(BezierParameter2::exact(value, &policy()).unwrap())
 }
@@ -264,7 +268,7 @@ fn conic_area_rejects_uncertified_projective_denominator() {
 
 #[test]
 fn resolved_linear_overlap_traversal_materializes_native_and_retained_regions() {
-    let graph = BezierArrangementGraph2::new(vec![
+    let graph = graph(vec![
         materialized_line_fragment(0, p(0, 0), p(2, 0), p(4, 0)),
         materialized_line_fragment(1, p(2, 0), p(3, 0), p(4, 0)),
         materialized_line_fragment(2, p(4, 0), p(4, 1), p(4, 2)),
@@ -305,7 +309,7 @@ fn resolved_linear_overlap_traversal_materializes_native_and_retained_regions() 
 
 #[test]
 fn reversed_internal_overlap_traversal_materializes_union_boundary() {
-    let graph = BezierArrangementGraph2::new(vec![
+    let graph = graph(vec![
         materialized_line_fragment(0, p(0, 0), p(1, 0), p(2, 0)),
         materialized_line_fragment(0, p(2, 0), p(2, 1), p(2, 2)),
         materialized_line_fragment(0, p(2, 2), p(1, 2), p(0, 2)),
@@ -930,7 +934,7 @@ fn retained_region_materializes_closed_algebraic_carrier_loop_without_area_sampl
         start_image: Some(p1_left),
         end_image: Some(p0_left),
     };
-    let graph = BezierArrangementGraph2::new(vec![
+    let graph = graph(vec![
         BezierArrangementFragment2::new(0, 0, first),
         BezierArrangementFragment2::new(1, 0, second),
     ]);
@@ -981,7 +985,7 @@ fn retained_region_materializes_closed_algebraic_carrier_loop_without_area_sampl
 #[test]
 fn retained_region_rejects_unresolved_carriers_even_when_marked_closed() {
     let parameter = BezierParameter2::algebraic(algebraic_midpoint_parameter());
-    let graph = BezierArrangementGraph2::new(vec![BezierArrangementFragment2::new(
+    let graph = graph(vec![BezierArrangementFragment2::new(
         0,
         0,
         BezierSplitFragment2::Unresolved {

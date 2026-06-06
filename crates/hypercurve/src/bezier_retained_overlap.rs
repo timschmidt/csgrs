@@ -1359,10 +1359,11 @@ fn refine_graph_at_boundaries(
         }
     }
 
-    Classification::Decided((
-        BezierArrangementGraph2::new(refined_graph_fragments),
-        refined_fragments,
-    ))
+    let refined_graph = match BezierArrangementGraph2::new(refined_graph_fragments) {
+        Ok(graph) => graph,
+        Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
+    };
+    Classification::Decided((refined_graph, refined_fragments))
 }
 
 fn resolved_linear_overlap_spans(
@@ -1717,7 +1718,11 @@ fn filtered_graph(
         original_indices.push(index);
         fragments.push(fragment.clone());
     }
-    (BezierArrangementGraph2::new(fragments), original_indices)
+    (
+        BezierArrangementGraph2::new(fragments)
+            .expect("filtered retained Bezier graph preserves distinct fragment evidence"),
+        original_indices,
+    )
 }
 
 fn remap_traversal_indices(

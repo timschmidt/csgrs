@@ -36,7 +36,7 @@ fn partial_line_overlap_graph() -> BezierArrangementGraph2 {
         end: exact(r(1)),
         curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(2, 0), p(4, 0), p(6, 0))),
     };
-    BezierArrangementGraph2::new(vec![
+    graph(vec![
         hypercurve::BezierArrangementFragment2::new(0, 0, first),
         hypercurve::BezierArrangementFragment2::new(1, 0, second),
     ])
@@ -55,6 +55,24 @@ fn decided<T>(classification: Classification<T>) -> T {
 
 fn assert_topology_error<T>(result: Result<T, CurveError>) {
     assert!(matches!(result, Err(CurveError::Topology(_))));
+}
+
+fn graph(fragments: Vec<hypercurve::BezierArrangementFragment2>) -> BezierArrangementGraph2 {
+    BezierArrangementGraph2::new(fragments).unwrap()
+}
+
+#[test]
+fn arrangement_graph_rejects_duplicate_source_fragment_evidence() {
+    let fragment = BezierSplitFragment2::Materialized {
+        start: exact(r(0)),
+        end: exact(r(1)),
+        curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(0, 0), p(1, 1), p(2, 0))),
+    };
+
+    assert_topology_error(BezierArrangementGraph2::new(vec![
+        hypercurve::BezierArrangementFragment2::new(0, 0, fragment.clone()),
+        hypercurve::BezierArrangementFragment2::new(0, 0, fragment),
+    ]));
 }
 
 fn exact(value: Real) -> BezierParameter2 {
@@ -176,7 +194,7 @@ fn branch_vertex_is_explicit_uncertainty_not_arbitrary_successor() {
         end: exact(r(1)),
         curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(2, 0), p(3, -1), p(4, 0))),
     };
-    let graph = BezierArrangementGraph2::new(vec![
+    let graph = graph(vec![
         hypercurve::BezierArrangementFragment2::new(0, 0, first),
         hypercurve::BezierArrangementFragment2::new(1, 0, second),
         hypercurve::BezierArrangementFragment2::new(2, 0, third),
@@ -205,7 +223,7 @@ fn tangent_ordered_traversal_resolves_simple_branch_vertex() {
         end: exact(r(1)),
         curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(2, 0), p(3, -1), p(4, 0))),
     };
-    let graph = BezierArrangementGraph2::new(vec![
+    let graph = graph(vec![
         hypercurve::BezierArrangementFragment2::new(0, 0, first),
         hypercurve::BezierArrangementFragment2::new(1, 0, upward),
         hypercurve::BezierArrangementFragment2::new(2, 0, straightest),
@@ -234,7 +252,7 @@ fn tangent_ordered_traversal_uses_second_order_for_equal_outgoing_tangents() {
         end: exact(r(1)),
         curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(2, 0), p(4, 2), p(5, 0))),
     };
-    let graph = BezierArrangementGraph2::new(vec![
+    let graph = graph(vec![
         hypercurve::BezierArrangementFragment2::new(0, 0, first),
         hypercurve::BezierArrangementFragment2::new(1, 0, first_out),
         hypercurve::BezierArrangementFragment2::new(2, 0, second_out),
@@ -268,7 +286,7 @@ fn tangent_ordered_traversal_rejects_equal_second_order_outgoing_tangents() {
         end: exact(r(1)),
         curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(2, 0), p(3, 1), p(4, 0))),
     };
-    let graph = BezierArrangementGraph2::new(vec![
+    let graph = graph(vec![
         hypercurve::BezierArrangementFragment2::new(0, 0, first),
         hypercurve::BezierArrangementFragment2::new(1, 0, first_out),
         hypercurve::BezierArrangementFragment2::new(2, 0, second_out),
@@ -306,7 +324,7 @@ fn tangent_ordered_traversal_uses_rational_second_order_for_equal_outgoing_tange
                 .unwrap(),
         ),
     };
-    let graph = BezierArrangementGraph2::new(vec![
+    let graph = graph(vec![
         hypercurve::BezierArrangementFragment2::new(0, 0, first),
         hypercurve::BezierArrangementFragment2::new(1, 0, upward),
         hypercurve::BezierArrangementFragment2::new(2, 0, downward),
@@ -344,7 +362,7 @@ fn tangent_ordered_traversal_rejects_equal_rational_second_order_successors() {
             RationalQuadraticBezier2::try_new(p(2, 0), p(3, 0), p(4, 1), r(1), r(2), r(3)).unwrap(),
         ),
     };
-    let graph = BezierArrangementGraph2::new(vec![
+    let graph = graph(vec![
         hypercurve::BezierArrangementFragment2::new(0, 0, first),
         hypercurve::BezierArrangementFragment2::new(1, 0, first_out),
         hypercurve::BezierArrangementFragment2::new(2, 0, second_out),
@@ -377,7 +395,7 @@ fn tangent_ordered_traversal_uses_third_order_for_cubic_same_tangent_inflections
         end: exact(r(1)),
         curve: BezierSubcurve2::Cubic(CubicBezier2::new(p(2, 0), p(3, 0), p(4, 0), p(5, -1))),
     };
-    let graph = BezierArrangementGraph2::new(vec![
+    let graph = graph(vec![
         hypercurve::BezierArrangementFragment2::new(0, 0, first),
         hypercurve::BezierArrangementFragment2::new(1, 0, upward),
         hypercurve::BezierArrangementFragment2::new(2, 0, downward),
@@ -411,7 +429,7 @@ fn tangent_ordered_traversal_rejects_equal_third_order_cubic_successors() {
         end: exact(r(1)),
         curve: BezierSubcurve2::Cubic(CubicBezier2::new(p(2, 0), p(3, 0), p(4, 0), p(5, 1))),
     };
-    let graph = BezierArrangementGraph2::new(vec![
+    let graph = graph(vec![
         hypercurve::BezierArrangementFragment2::new(0, 0, first),
         hypercurve::BezierArrangementFragment2::new(1, 0, first_out),
         hypercurve::BezierArrangementFragment2::new(2, 0, second_out),
@@ -471,7 +489,7 @@ fn retained_tangent_order_traverses_algebraic_branch_vertex() {
         start_image: Some(algebraic_endpoint_image(&downward_curve, &parameter)),
         end_image: None,
     };
-    let graph = BezierArrangementGraph2::new(vec![
+    let graph = graph(vec![
         hypercurve::BezierArrangementFragment2::new(0, 0, incoming),
         hypercurve::BezierArrangementFragment2::new(1, 0, upward),
         hypercurve::BezierArrangementFragment2::new(2, 0, downward),
@@ -516,7 +534,7 @@ fn retained_tangent_order_rejects_equal_algebraic_successors() {
         start_image: Some(algebraic_endpoint_image(&second_curve, &parameter)),
         end_image: None,
     };
-    let graph = BezierArrangementGraph2::new(vec![
+    let graph = graph(vec![
         hypercurve::BezierArrangementFragment2::new(0, 0, incoming),
         hypercurve::BezierArrangementFragment2::new(1, 0, first),
         hypercurve::BezierArrangementFragment2::new(2, 0, second),
@@ -556,7 +574,7 @@ fn retained_tangent_order_uses_algebraic_second_order_for_equal_successors() {
         start_image: Some(algebraic_endpoint_image(&downward_curve, &parameter)),
         end_image: None,
     };
-    let graph = BezierArrangementGraph2::new(vec![
+    let graph = graph(vec![
         hypercurve::BezierArrangementFragment2::new(0, 0, incoming),
         hypercurve::BezierArrangementFragment2::new(1, 0, upward),
         hypercurve::BezierArrangementFragment2::new(2, 0, downward),
@@ -599,7 +617,7 @@ fn retained_tangent_order_uses_rational_algebraic_second_order_for_equal_success
         )),
         end_image: None,
     };
-    let graph = BezierArrangementGraph2::new(vec![
+    let graph = graph(vec![
         hypercurve::BezierArrangementFragment2::new(0, 0, incoming),
         hypercurve::BezierArrangementFragment2::new(1, 0, upward),
         hypercurve::BezierArrangementFragment2::new(2, 0, downward),
@@ -639,7 +657,7 @@ fn retained_tangent_order_uses_algebraic_third_order_for_cubic_same_tangent_infl
         start_image: Some(algebraic_cubic_endpoint_image(&downward_curve, &parameter)),
         end_image: None,
     };
-    let graph = BezierArrangementGraph2::new(vec![
+    let graph = graph(vec![
         hypercurve::BezierArrangementFragment2::new(0, 0, incoming),
         hypercurve::BezierArrangementFragment2::new(1, 0, upward),
         hypercurve::BezierArrangementFragment2::new(2, 0, downward),
@@ -668,7 +686,7 @@ fn retained_overlap_report_finds_identical_materialized_fragments() {
         end: exact(r(1)),
         curve: BezierSubcurve2::Quadratic(curve),
     };
-    let graph = BezierArrangementGraph2::new(vec![
+    let graph = graph(vec![
         hypercurve::BezierArrangementFragment2::new(0, 0, first),
         hypercurve::BezierArrangementFragment2::new(1, 0, second),
     ]);
@@ -842,7 +860,7 @@ fn retained_linear_overlap_split_graph_rejects_missing_refined_provenance() {
         end: exact(r(1)),
         curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 0))),
     };
-    let graph = BezierArrangementGraph2::new(vec![hypercurve::BezierArrangementFragment2::new(
+    let graph = graph(vec![hypercurve::BezierArrangementFragment2::new(
         0, 0, fragment,
     )]);
 
@@ -937,12 +955,12 @@ fn retained_linear_overlap_traversal_rejects_indices_outside_refinement() {
         end: exact(r(1)),
         curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 0))),
     };
-    let graph = BezierArrangementGraph2::new(vec![hypercurve::BezierArrangementFragment2::new(
+    let graph = graph(vec![hypercurve::BezierArrangementFragment2::new(
         0, 0, fragment,
     )]);
     let traversal = decided(graph.traverse_retained_deduplicating_materialized_overlaps(&policy()));
     let empty_refinement = BezierRetainedLinearOverlapSplitGraph2::new(
-        BezierArrangementGraph2::new(Vec::new()),
+        BezierArrangementGraph2::new(Vec::new()).unwrap(),
         Vec::<BezierRetainedOverlapRefinedFragment2>::new(),
         BezierRetainedOverlapReport2::new(Vec::new()).unwrap(),
         Vec::new(),
@@ -965,7 +983,7 @@ fn retained_overlap_report_finds_reversed_degree_elevated_same_image() {
         Point2::new(q(4, 3), q(8, 3)),
         p(0, 0),
     );
-    let graph = BezierArrangementGraph2::new(vec![
+    let graph = graph(vec![
         hypercurve::BezierArrangementFragment2::new(
             0,
             0,
@@ -1007,7 +1025,7 @@ fn retained_overlap_report_separates_endpoint_touch_from_overlap() {
         end: exact(r(1)),
         curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(2, 0), p(3, -1), p(4, 0))),
     };
-    let graph = BezierArrangementGraph2::new(vec![
+    let graph = graph(vec![
         hypercurve::BezierArrangementFragment2::new(0, 0, first),
         hypercurve::BezierArrangementFragment2::new(1, 0, second),
     ]);
@@ -1029,7 +1047,7 @@ fn retained_overlap_report_extracts_partial_line_image_split_ranges() {
         end: exact(r(1)),
         curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(2, 0), p(4, 0), p(6, 0))),
     };
-    let graph = BezierArrangementGraph2::new(vec![
+    let graph = graph(vec![
         hypercurve::BezierArrangementFragment2::new(0, 0, first),
         hypercurve::BezierArrangementFragment2::new(1, 0, second),
     ]);
@@ -1155,7 +1173,7 @@ fn retained_linear_overlap_refinement_reports_reversed_span_orientation() {
         end: exact(r(1)),
         curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(4, 0), p(3, 0), p(2, 0))),
     };
-    let graph = BezierArrangementGraph2::new(vec![
+    let graph = graph(vec![
         hypercurve::BezierArrangementFragment2::new(0, 0, first),
         hypercurve::BezierArrangementFragment2::new(1, 0, reversed_overlap),
     ]);
@@ -1224,7 +1242,7 @@ fn retained_linear_overlap_traversal_splits_and_consumes_duplicate_span_in_loop(
         end: exact(r(1)),
         curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(0, 2), p(0, 1), p(0, 0))),
     };
-    let graph = BezierArrangementGraph2::new(vec![
+    let graph = graph(vec![
         hypercurve::BezierArrangementFragment2::new(0, 0, bottom),
         hypercurve::BezierArrangementFragment2::new(1, 0, overlapping_bottom_tail),
         hypercurve::BezierArrangementFragment2::new(2, 0, right),
@@ -1307,7 +1325,7 @@ fn retained_linear_overlap_traversal_cancels_reversed_internal_span_in_loop() {
         end: exact(r(1)),
         curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(2, 2), p(2, 1), p(2, 0))),
     };
-    let graph = BezierArrangementGraph2::new(vec![
+    let graph = graph(vec![
         hypercurve::BezierArrangementFragment2::new(0, 0, left_bottom),
         hypercurve::BezierArrangementFragment2::new(0, 1, shared_up),
         hypercurve::BezierArrangementFragment2::new(0, 2, left_top),
@@ -1341,7 +1359,7 @@ fn retained_linear_overlap_traversal_cancels_reversed_internal_span_in_loop() {
 #[test]
 fn retained_overlap_report_does_not_call_same_curve_image_a_line_split() {
     let curve = QuadraticBezier2::new(p(0, 0), p(1, 2), p(2, 0));
-    let graph = BezierArrangementGraph2::new(vec![
+    let graph = graph(vec![
         hypercurve::BezierArrangementFragment2::new(
             0,
             0,
@@ -1378,7 +1396,7 @@ fn retained_overlap_report_rejects_nonlinear_line_image_bezier_ranges() {
         end: exact(r(1)),
         curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(1, 0), p(3, 0), p(5, 0))),
     };
-    let graph = BezierArrangementGraph2::new(vec![
+    let graph = graph(vec![
         hypercurve::BezierArrangementFragment2::new(0, 0, first),
         hypercurve::BezierArrangementFragment2::new(1, 0, second),
     ]);
@@ -1407,7 +1425,7 @@ fn retained_overlap_report_does_not_sample_algebraic_endpoint_image_fragments() 
         start_image: Some(algebraic_endpoint_image(&curve, &parameter)),
         end_image: Some(algebraic_endpoint_image(&curve, &parameter)),
     };
-    let graph = BezierArrangementGraph2::new(vec![
+    let graph = graph(vec![
         hypercurve::BezierArrangementFragment2::new(0, 0, fragment.clone()),
         hypercurve::BezierArrangementFragment2::new(1, 0, fragment),
     ]);
@@ -1439,7 +1457,7 @@ fn retained_overlap_traversal_deduplicates_oriented_duplicate_loop_edges() {
             ));
         }
     }
-    let graph = BezierArrangementGraph2::new(fragments);
+    let graph = graph(fragments);
 
     assert_eq!(
         graph.traverse_retained_with_tangent_order(&policy()),
@@ -1462,7 +1480,7 @@ fn retained_overlap_traversal_deduplicates_oriented_duplicate_loop_edges() {
 fn retained_overlap_traversal_rejects_reversed_duplicate_as_ownership_boundary() {
     let forward = QuadraticBezier2::new(p(0, 0), p(1, 2), p(2, 0));
     let reversed = QuadraticBezier2::new(p(2, 0), p(1, 2), p(0, 0));
-    let graph = BezierArrangementGraph2::new(vec![
+    let graph = graph(vec![
         hypercurve::BezierArrangementFragment2::new(
             0,
             0,

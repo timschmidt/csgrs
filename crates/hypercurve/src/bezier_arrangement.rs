@@ -113,12 +113,14 @@ impl BezierArrangementGraph2 {
                 )
             })
             .collect();
-        Self { fragments }
+        Self::new(fragments)
+            .expect("split materializations generate unique retained Bezier arrangement provenance")
     }
 
     /// Constructs a graph from already-retained fragments.
-    pub const fn new(fragments: Vec<BezierArrangementFragment2>) -> Self {
-        Self { fragments }
+    pub fn new(fragments: Vec<BezierArrangementFragment2>) -> CurveResult<Self> {
+        validate_arrangement_fragment_provenance(&fragments)?;
+        Ok(Self { fragments })
     }
 
     /// Returns retained fragments.
@@ -304,6 +306,25 @@ impl BezierArrangementGraph2 {
 
         decided_arrangement_traversal(chains)
     }
+}
+
+fn validate_arrangement_fragment_provenance(
+    fragments: &[BezierArrangementFragment2],
+) -> CurveResult<()> {
+    for (index, fragment) in fragments.iter().enumerate() {
+        for other in &fragments[index + 1..] {
+            if fragment.source_curve_index() == other.source_curve_index()
+                && fragment.source_fragment_index() == other.source_fragment_index()
+                && fragment.fragment() == other.fragment()
+            {
+                return Err(CurveError::Topology(
+                    "retained Bezier arrangement graph must not duplicate source fragment evidence"
+                        .to_owned(),
+                ));
+            }
+        }
+    }
+    Ok(())
 }
 
 impl BezierArrangementChain2 {
