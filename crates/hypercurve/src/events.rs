@@ -11,7 +11,9 @@
 use hyperreal::Real;
 
 use crate::bbox::{Aabb2, aabbs_decided_disjoint, decided_contour_aabb, decided_segment_aabb};
-use crate::classify::{compare_reals, is_zero, min_real};
+use crate::classify::{
+    compare_reals, compare_reals_for_split_ordering, in_closed_unit_interval, is_zero, min_real,
+};
 use crate::{
     ArcArcIntersection, Classification, Contour2, CurveError, CurvePolicy, CurveResult,
     IntersectionKind, LineArcIntersection, LineArcOrder, LineLineIntersection, ParamRange, Point2,
@@ -36,7 +38,14 @@ pub struct ContourIntersectionSet {
 impl ContourIntersectionSet {
     /// Constructs an event set from already-normalized events.
     pub fn new(events: Vec<ContourIntersection>) -> CurveResult<Self> {
-        validate_contour_intersection_events(&events)?;
+        Self::new_with_policy(events, &CurvePolicy::certified())
+    }
+
+    fn new_with_policy(
+        events: Vec<ContourIntersection>,
+        policy: &CurvePolicy,
+    ) -> CurveResult<Self> {
+        validate_contour_intersection_events(&events, policy)?;
         Ok(Self { events })
     }
 
@@ -93,8 +102,12 @@ impl ContourIntersectionSet {
     }
 }
 
-fn validate_contour_intersection_events(events: &[ContourIntersection]) -> CurveResult<()> {
+fn validate_contour_intersection_events(
+    events: &[ContourIntersection],
+    policy: &CurvePolicy,
+) -> CurveResult<()> {
     for (left_index, left) in events.iter().enumerate() {
+        validate_contour_intersection_event(left, policy)?;
         if events[left_index + 1..].iter().any(|right| right == left) {
             return Err(CurveError::Topology(
                 "contour intersection set must not contain duplicate events".into(),
@@ -102,6 +115,54 @@ fn validate_contour_intersection_events(events: &[ContourIntersection]) -> Curve
         }
     }
     Ok(())
+}
+
+fn validate_contour_intersection_event(
+    event: &ContourIntersection,
+    policy: &CurvePolicy,
+) -> CurveResult<()> {
+    match event {
+        ContourIntersection::Point(point) => {
+            validate_event_unit_parameter(&point.a_param, policy, "first point")?;
+            validate_event_unit_parameter(&point.b_param, policy, "second point")
+        }
+        ContourIntersection::Overlap(overlap) => {
+            validate_event_unit_range(&overlap.a_range, policy, "first overlap")?;
+            validate_event_unit_range(&overlap.b_range, policy, "second overlap")
+        }
+        ContourIntersection::Uncertain(_) => Ok(()),
+    }
+}
+
+fn validate_event_unit_parameter(
+    parameter: &Real,
+    policy: &CurvePolicy,
+    name: &str,
+) -> CurveResult<()> {
+    if in_closed_unit_interval(parameter, policy) != Some(true) {
+        return Err(CurveError::Topology(format!(
+            "contour intersection {name} parameter must be certified inside the unit interval"
+        )));
+    }
+    Ok(())
+}
+
+fn validate_event_unit_range(
+    range: &ParamRange,
+    policy: &CurvePolicy,
+    name: &str,
+) -> CurveResult<()> {
+    validate_event_unit_parameter(range.start(), policy, name)?;
+    validate_event_unit_parameter(range.end(), policy, name)?;
+    match compare_reals_for_split_ordering(range.start(), range.end(), policy) {
+        Some(std::cmp::Ordering::Less | std::cmp::Ordering::Greater) => Ok(()),
+        Some(std::cmp::Ordering::Equal) => Err(CurveError::Topology(format!(
+            "contour intersection {name} range must be positive-dimensional"
+        ))),
+        None => Err(CurveError::Topology(format!(
+            "contour intersection {name} range ordering must be certified"
+        ))),
+    }
 }
 
 /// One normalized contour-pair topology event.
@@ -259,7 +320,7 @@ pub(crate) fn intersect_contours_with_cached_aabbs(
     if let (Some(a_box), Some(b_box)) = (a_box, b_box)
         && aabbs_decided_disjoint(a_box, b_box, policy)
     {
-        return ContourIntersectionSet::new(Vec::new());
+        return ContourIntersectionSet::new_with_policy(Vec::new(), policy);
     }
 
     let mut events = Vec::new();
@@ -287,7 +348,7 @@ pub(crate) fn intersect_contours_with_cached_aabbs(
         }
     }
 
-    ContourIntersectionSet::new(events)
+    ContourIntersectionSet::new_with_policy(events, policy)
 }
 
 pub(crate) fn intersect_contour_self_with_cached_aabbs(
@@ -336,7 +397,7 @@ pub(crate) fn intersect_contour_self_with_cached_aabbs(
         }
     }
 
-    ContourIntersectionSet::new(events)
+    ContourIntersectionSet::new_with_policy(events, policy)
 }
 
 fn append_segment_relation_events(

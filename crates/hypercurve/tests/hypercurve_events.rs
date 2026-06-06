@@ -1,7 +1,7 @@
 use hypercurve::{
     BulgeVertex2, CircularArc2, Classification, Contour2, ContourIntersection,
-    ContourIntersectionSet, ContourOperand, CurveError, CurvePolicy, IntersectionKind, LineSeg2,
-    Real, Segment2,
+    ContourIntersectionSet, ContourOperand, ContourOverlapIntersection, ContourPointIntersection,
+    CurveError, CurvePolicy, IntersectionKind, LineSeg2, ParamRange, Real, Segment2,
 };
 
 fn s(value: i32) -> Real {
@@ -92,6 +92,50 @@ fn contour_intersection_set_constructor_rejects_duplicate_events() {
         duplicate.clone(),
         duplicate,
     ]));
+}
+
+#[test]
+fn contour_intersection_set_constructor_validates_event_parameters() {
+    let point = ContourIntersection::Point(ContourPointIntersection {
+        a_segment_index: 0,
+        b_segment_index: 1,
+        point: p(1, 0),
+        a_param: s(0),
+        b_param: s(1),
+        kind: IntersectionKind::Crossing,
+    });
+    ContourIntersectionSet::new(vec![point.clone()]).unwrap();
+
+    let mut outside_point = point.clone();
+    let ContourIntersection::Point(outside) = &mut outside_point else {
+        panic!("expected point event");
+    };
+    outside.a_param = s(-1);
+    assert_topology_error(ContourIntersectionSet::new(vec![outside_point]));
+
+    let overlap_segment = Segment2::Line(LineSeg2::try_new(p(0, 0), p(1, 0)).unwrap());
+    let overlap = ContourIntersection::Overlap(ContourOverlapIntersection {
+        a_segment_index: 0,
+        b_segment_index: 1,
+        segment: overlap_segment,
+        a_range: ParamRange::new(s(0), s(1)),
+        b_range: ParamRange::new(s(1), s(0)),
+    });
+    ContourIntersectionSet::new(vec![overlap.clone()]).unwrap();
+
+    let mut zero_overlap = overlap.clone();
+    let ContourIntersection::Overlap(zero) = &mut zero_overlap else {
+        panic!("expected overlap event");
+    };
+    zero.a_range = ParamRange::new(s(1), s(1));
+    assert_topology_error(ContourIntersectionSet::new(vec![zero_overlap]));
+
+    let mut outside_overlap = overlap;
+    let ContourIntersection::Overlap(outside) = &mut outside_overlap else {
+        panic!("expected overlap event");
+    };
+    outside.b_range = ParamRange::new(s(0), s(2));
+    assert_topology_error(ContourIntersectionSet::new(vec![outside_overlap]));
 }
 
 #[test]
