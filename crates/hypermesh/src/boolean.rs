@@ -3079,19 +3079,19 @@ fn materialize_simple_coplanar_overlay_arrangement(
         left.vertices()[carrier[1]].clone(),
         left.vertices()[carrier[2]].clone(),
     ];
-    let Some(mesh) = mesh_from_projected_overlay(
+    let Some(mesh) = mesh_from_selected_projected_overlay_faces(
         &requested_overlay,
         &carrier_points,
         overlay.projection,
-        "exact coplanar overlay arrangement",
-        ProjectedOverlayBoundaryPolicy::SimplifyCollinear,
+        "exact coplanar selected-face overlay arrangement",
     )
     .or_else(|| {
-        mesh_from_selected_projected_overlay_faces(
+        mesh_from_projected_overlay(
             &requested_overlay,
             &carrier_points,
             overlay.projection,
-            "exact coplanar selected-face overlay arrangement",
+            "exact coplanar overlay arrangement",
+            ProjectedOverlayBoundaryPolicy::SimplifyCollinear,
         )
     }) else {
         return Ok(None);
@@ -3240,21 +3240,16 @@ pub(crate) fn materialize_coplanar_mesh_overlay_mesh(
             })
             .flatten();
     }
-    mesh_from_projected_overlay(
-        &overlay,
-        &carrier_points,
-        projection,
-        provenance,
-        projected_boundary_policy,
-    )
-    .or_else(|| {
-        mesh_from_selected_projected_overlay_faces(
-            &overlay,
-            &carrier_points,
-            projection,
-            provenance,
-        )
-    })
+    mesh_from_selected_projected_overlay_faces(&overlay, &carrier_points, projection, provenance)
+        .or_else(|| {
+            mesh_from_projected_overlay(
+                &overlay,
+                &carrier_points,
+                projection,
+                provenance,
+                projected_boundary_policy,
+            )
+        })
 }
 
 fn overlay_allows_selected_face_materialization(overlay: &ExactArrangement2dOverlay) -> bool {
