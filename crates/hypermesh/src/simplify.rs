@@ -721,20 +721,31 @@ fn selected_face_reverse_orientation(
     orientations: &[ExactSelectedFaceOrientation],
     require_volume_orientation: bool,
 ) -> Result<bool, ExactArrangementBlocker> {
-    let mut matches = orientations
+    let mut volume_matches = orientations
         .iter()
-        .filter(|orientation| orientation.face == source_face);
-    if let Some(first) = matches.next() {
+        .filter(|orientation| orientation.face == source_face && orientation.from_volume_adjacency);
+    if let Some(first) = volume_matches.next() {
         let reverse = first.reverse;
-        let mut has_volume_orientation = first.from_volume_adjacency;
-        for orientation in matches {
+        for orientation in volume_matches {
             if orientation.reverse != reverse {
                 return Err(ExactArrangementBlocker::UnresolvedRegionClassification);
             }
-            has_volume_orientation |= orientation.from_volume_adjacency;
         }
-        if require_volume_orientation && !has_volume_orientation {
+        return Ok(reverse);
+    }
+
+    let mut label_matches = orientations
+        .iter()
+        .filter(|orientation| orientation.face == source_face);
+    if let Some(first) = label_matches.next() {
+        if require_volume_orientation {
             return Err(ExactArrangementBlocker::UnresolvedRegionClassification);
+        }
+        let reverse = first.reverse;
+        for orientation in label_matches {
+            if orientation.reverse != reverse {
+                return Err(ExactArrangementBlocker::UnresolvedRegionClassification);
+            }
         }
         return Ok(reverse);
     }
@@ -1589,7 +1600,7 @@ mod tests {
     }
 
     #[test]
-    fn simplification_rejects_conflicting_mixed_orientation_evidence() {
+    fn simplification_prefers_volume_orientation_over_conflicting_source_evidence() {
         let points = [p(0, 0, 0), p(1, 0, 0), p(0, 1, 0)];
         let selected = ExactSelectedCellComplex {
             faces: vec![selected_face_with_source(
@@ -1612,6 +1623,45 @@ mod tests {
                     face: 0,
                     reverse: true,
                     from_volume_adjacency: false,
+                },
+            ],
+            selected_volume_regions: Vec::new(),
+            operation: ExactBooleanOperation::Difference,
+            blockers: Vec::new(),
+        };
+
+        let simplified =
+            simplify_selected_cell_complex(selected, ExactRegularizationPolicy::REGULARIZED_SOLID)
+                .unwrap();
+
+        assert_eq!(simplified.faces.len(), 1);
+        assert!(simplified.blockers.is_empty(), "{:?}", simplified.blockers);
+    }
+
+    #[test]
+    fn simplification_rejects_conflicting_volume_orientation_evidence() {
+        let points = [p(0, 0, 0), p(1, 0, 0), p(0, 1, 0)];
+        let selected = ExactSelectedCellComplex {
+            faces: vec![selected_face_with_source(
+                MeshSide::Right,
+                ExactCellRegionLabel::RightBoundary,
+                &[0, 1, 2],
+                &points,
+            )],
+            volume_regions: Vec::new(),
+            volume_adjacencies: vec![dummy_volume_adjacency(0)],
+            lower_dimensional_artifacts: Vec::new(),
+            selected_faces: vec![0],
+            selected_face_orientations: vec![
+                ExactSelectedFaceOrientation {
+                    face: 0,
+                    reverse: false,
+                    from_volume_adjacency: true,
+                },
+                ExactSelectedFaceOrientation {
+                    face: 0,
+                    reverse: true,
+                    from_volume_adjacency: true,
                 },
             ],
             selected_volume_regions: Vec::new(),
