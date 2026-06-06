@@ -58,6 +58,7 @@ impl BezierRetainedOverlap2 {
         relation: BezierRetainedOverlapRelation2,
     ) -> CurveResult<Self> {
         validate_ordered_overlap_indices(first_fragment_index, second_fragment_index)?;
+        validate_overlap_relation_evidence(&relation)?;
         Ok(Self {
             first_fragment_index,
             second_fragment_index,
@@ -88,6 +89,20 @@ fn validate_ordered_overlap_indices(
     if first_fragment_index >= second_fragment_index {
         return Err(CurveError::Topology(
             "retained overlap indices must be strictly increasing".to_owned(),
+        ));
+    }
+    Ok(())
+}
+
+fn validate_overlap_relation_evidence(
+    relation: &BezierRetainedOverlapRelation2,
+) -> CurveResult<()> {
+    if let BezierRetainedOverlapRelation2::LineSegmentOverlap { intersection } = relation
+        && !matches!(intersection.as_ref(), LineLineIntersection::Overlap { .. })
+    {
+        return Err(CurveError::Topology(
+            "retained line-segment overlap relation must carry positive-dimensional overlap evidence"
+                .to_owned(),
         ));
     }
     Ok(())

@@ -7,8 +7,8 @@ use hypercurve::{
     BezierRetainedOverlapOrientation2, BezierRetainedOverlapRefinedFragment2,
     BezierRetainedOverlapRelation2, BezierRetainedOverlapReport2,
     BezierRetainedResolvedLinearOverlap2, BezierSplitFragment2, BezierSubcurve2, Classification,
-    CubicBezier2, CurveError, CurvePolicy, LineSeg2, ParamRange, Point2, QuadraticBezier2,
-    RationalQuadraticBezier2, Real, UncertaintyReason,
+    CubicBezier2, CurveError, CurvePolicy, IntersectionKind, LineLineIntersection, LineSeg2,
+    ParamRange, Point2, QuadraticBezier2, RationalQuadraticBezier2, Real, UncertaintyReason,
 };
 use proptest::prelude::*;
 
@@ -694,6 +694,22 @@ fn retained_overlap_pair_constructor_rejects_unordered_indices() {
         2,
         1,
         BezierRetainedOverlapRelation2::SameControlPolygon,
+    ));
+}
+
+#[test]
+fn retained_overlap_pair_constructor_rejects_non_overlap_line_evidence() {
+    assert_topology_error(BezierRetainedOverlap2::new(
+        0,
+        1,
+        BezierRetainedOverlapRelation2::LineSegmentOverlap {
+            intersection: Box::new(LineLineIntersection::Point {
+                point: p(1, 0),
+                a_param: r(1),
+                b_param: r(0),
+                kind: IntersectionKind::Endpoint,
+            }),
+        },
     ));
 }
 
