@@ -137,7 +137,7 @@ impl MeshFacePairClassification {
 
         match self.relation {
             MeshFacePairRelation::Candidate => {
-                if triangle.left_edge_events.is_empty() || triangle.right_edge_events.is_empty() {
+                if triangle.left_edge_events.len() != 3 || triangle.right_edge_events.len() != 3 {
                     return Err(MeshFacePairValidationError::CandidateMissingEdgeEvents);
                 }
                 validate_segment_events(&triangle.left_edge_events)?;

@@ -2,9 +2,9 @@ use hyperlimit::{Point3, SourceProvenance};
 use hypermesh::{
     ExactArrangement, ExactBooleanOperation, ExactBoundaryBooleanPolicy,
     ExactI64MeshInputReadiness, ExactMesh, ExactRegularizationPolicy, MeshFacePairRelation,
-    TriangleTriangleRelation, ValidationPolicy, boolean_exact, boolean_exact_with_boundary_policy,
-    build_intersection_graph, classify_mesh_face_pair, classify_triangle_triangle,
-    inspect_i64_mesh_input, preflight_boolean_exact,
+    MeshFacePairValidationError, TriangleTriangleRelation, ValidationPolicy, boolean_exact,
+    boolean_exact_with_boundary_policy, build_intersection_graph, classify_mesh_face_pair,
+    classify_triangle_triangle, inspect_i64_mesh_input, preflight_boolean_exact,
 };
 use hyperreal::Real;
 
@@ -150,6 +150,13 @@ fn exact_face_pair_candidate_retains_source_plane_split_events() {
             .all(|event| event.predicates.is_empty())
     );
     pair.validate_against_sources(&left, &right).unwrap();
+
+    let mut truncated = pair.clone();
+    truncated.triangle.as_mut().unwrap().right_edge_events.pop();
+    assert_eq!(
+        truncated.validate(),
+        Err(MeshFacePairValidationError::CandidateMissingEdgeEvents)
+    );
 }
 
 #[test]
