@@ -711,6 +711,27 @@ impl ExactBooleanAssemblyPlan {
         self.to_exact_mesh(policy)
     }
 
+    /// Canonicalize exact assembly topology before mesh materialization.
+    ///
+    /// This is the shared normal form used by Boolean materializers that retain
+    /// an assembly artifact. It refines T-junction edges at already-retained
+    /// exact vertices, removes duplicate selected triangle cells, splits
+    /// disconnected exact-equal vertex fans, and orients paired edges
+    /// consistently. All changes happen inside the assembly, so the output mesh
+    /// can still replay exactly from retained source-face provenance.
+    pub fn canonicalize_for_mesh_with_sources(
+        &mut self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> hypertri::Result<()> {
+        self.refine_edges_at_existing_vertices(left, right)?;
+        self.remove_duplicate_triangle_vertex_sets()?;
+        self.split_disconnected_vertex_fans()?;
+        self.orient_paired_edge_uses()?;
+        self.validate_source_face_incidence(left, right)?;
+        Ok(())
+    }
+
     /// Validate output triangles against their retained source face planes.
     ///
     /// Output triangles carry `source_side` and `source_face` so later boolean
@@ -1880,4 +1901,94 @@ fn points_equal(left: &Point3, right: &Point3) -> Option<bool> {
     let y = compare_reals(&left.y, &right.y).value()?;
     let z = compare_reals(&left.z, &right.z).value()?;
     Some(x == Ordering::Equal && y == Ordering::Equal && z == Ordering::Equal)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use hyperreal::Real;
+
+    fn p(x: i64, y: i64, z: i64) -> Point3 {
+        Point3::new(Real::from(x), Real::from(y), Real::from(z))
+    }
+
+    fn original(vertex: usize, point: Point3) -> FaceSplitBoundaryNode {
+        FaceSplitBoundaryNode::OriginalVertex { vertex, point }
+    }
+
+    fn face_interior(point: Point3) -> FaceSplitBoundaryNode {
+        FaceSplitBoundaryNode::FaceInterior { point }
+    }
+
+    #[test]
+    fn assembly_canonicalization_refines_exact_t_junctions_before_mesh_handoff() {
+        let left = ExactMesh::from_i64_triangles_with_policy(
+            &[0, 0, 0, 2, 0, 0, 0, 2, 0],
+            &[0, 1, 2],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let right =
+            ExactMesh::from_i64_triangles_with_policy(&[], &[], ValidationPolicy::ALLOW_BOUNDARY)
+                .unwrap();
+
+        let mut assembly = ExactBooleanAssemblyPlan {
+            vertices: vec![
+                ExactOutputVertex {
+                    point: p(0, 0, 0),
+                    source: original(0, p(0, 0, 0)),
+                },
+                ExactOutputVertex {
+                    point: p(2, 0, 0),
+                    source: original(1, p(2, 0, 0)),
+                },
+                ExactOutputVertex {
+                    point: p(0, 2, 0),
+                    source: original(2, p(0, 2, 0)),
+                },
+                ExactOutputVertex {
+                    point: p(1, 0, 0),
+                    source: face_interior(p(1, 0, 0)),
+                },
+            ],
+            triangles: vec![
+                ExactOutputTriangle {
+                    vertices: [0, 1, 2],
+                    source_side: MeshSide::Left,
+                    source_face: 0,
+                    orientation: ExactOutputTriangleOrientation::PreserveSource,
+                },
+                ExactOutputTriangle {
+                    vertices: [0, 3, 2],
+                    source_side: MeshSide::Left,
+                    source_face: 0,
+                    orientation: ExactOutputTriangleOrientation::PreserveSource,
+                },
+            ],
+        };
+        assembly.validate().unwrap();
+
+        assembly
+            .canonicalize_for_mesh_with_sources(&left, &right)
+            .unwrap();
+
+        let mut triangle_sets = assembly
+            .triangles
+            .iter()
+            .map(|triangle| {
+                let mut vertices = triangle.vertices;
+                vertices.sort_unstable();
+                vertices
+            })
+            .collect::<Vec<_>>();
+        triangle_sets.sort_unstable();
+        assert_eq!(triangle_sets, vec![[0, 2, 3], [1, 2, 3]]);
+
+        let mesh = assembly
+            .checked_to_exact_mesh_with_sources(&left, &right, ValidationPolicy::ALLOW_BOUNDARY)
+            .unwrap();
+        assert_eq!(mesh.triangles().len(), 2);
+        assert_eq!(mesh.facts().mesh.boundary_edges, 4);
+        mesh.validate_retained_state().unwrap();
+    }
 }

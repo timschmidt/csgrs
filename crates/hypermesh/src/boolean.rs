@@ -278,7 +278,7 @@ pub fn boolean_selected_regions(
                 format!("exact region triangulation failed: {error}"),
             ))
         })?;
-    let assembly = ExactBooleanAssemblyPlan::from_region_triangulations_with_sources(
+    let mut assembly = ExactBooleanAssemblyPlan::from_region_triangulations_with_sources(
         &triangulations,
         policy.selection,
         left,
@@ -291,6 +291,15 @@ pub fn boolean_selected_regions(
             format!("exact boolean assembly failed: {error}"),
         ))
     })?;
+    assembly
+        .canonicalize_for_mesh_with_sources(left, right)
+        .map_err(|error| {
+            MeshError::one(MeshDiagnostic::new(
+                Severity::Error,
+                DiagnosticKind::IndexOutOfBounds,
+                format!("exact boolean assembly canonicalization failed: {error}"),
+            ))
+        })?;
     let mesh = assembly.checked_to_exact_mesh_with_sources(left, right, policy.validation)?;
 
     let result = ExactBooleanResult {
@@ -4558,7 +4567,7 @@ fn materialize_open_surface_arrangement_plan(
     // Open-surface arrangement is not a closed-volumetric inside/outside
     // split regions are retained by surface operation, and no winding label is
     // invented for a mesh that has no closed volume.
-    let assembly = ExactBooleanAssemblyPlan::from_region_triangulations_with_sources(
+    let mut assembly = ExactBooleanAssemblyPlan::from_region_triangulations_with_sources(
         &triangulations,
         selection,
         left,
@@ -4571,6 +4580,15 @@ fn materialize_open_surface_arrangement_plan(
             format!("open-surface arrangement assembly failed: {error}"),
         ))
     })?;
+    assembly
+        .canonicalize_for_mesh_with_sources(left, right)
+        .map_err(|error| {
+            MeshError::one(MeshDiagnostic::new(
+                Severity::Error,
+                DiagnosticKind::IndexOutOfBounds,
+                format!("open-surface arrangement assembly canonicalization failed: {error}"),
+            ))
+        })?;
     let mesh = assembly.checked_to_exact_mesh_with_sources(left, right, validation)?;
     let result = ExactBooleanResult {
         kind: ExactBooleanResultKind::OpenSurfaceArrangement { operation },
@@ -5748,18 +5766,9 @@ fn materialize_volumetric_winding_region_plan(
         Err(_) => return Ok(None),
     };
     if assembly
-        .refine_edges_at_existing_vertices(left, right)
+        .canonicalize_for_mesh_with_sources(left, right)
         .is_err()
     {
-        return Ok(None);
-    }
-    if assembly.remove_duplicate_triangle_vertex_sets().is_err() {
-        return Ok(None);
-    }
-    if assembly.split_disconnected_vertex_fans().is_err() {
-        return Ok(None);
-    }
-    if assembly.orient_paired_edge_uses().is_err() {
         return Ok(None);
     }
     let mesh = match assembly.checked_to_exact_mesh_with_sources(left, right, validation) {
