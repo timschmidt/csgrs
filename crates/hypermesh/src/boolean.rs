@@ -918,7 +918,10 @@ impl GraphRelationCounts {
 fn graph_relation_counts(graph: &super::graph::ExactIntersectionGraph) -> GraphRelationCounts {
     let mut counts = GraphRelationCounts::default();
     for pair in &graph.face_pairs {
-        let pair_has_unknown_event = pair.events.iter().any(graph_event_has_unknown_relation);
+        let pair_has_unknown_event = pair
+            .events
+            .iter()
+            .any(IntersectionEvent::has_unknown_relation);
         match pair.relation {
             MeshFacePairRelation::Candidate => counts.candidate_pairs += 1,
             MeshFacePairRelation::CoplanarOverlapping => counts.coplanar_overlapping_pairs += 1,
@@ -944,17 +947,6 @@ fn graph_relation_counts(graph: &super::graph::ExactIntersectionGraph) -> GraphR
             .count();
     }
     counts
-}
-
-fn graph_event_has_unknown_relation(event: &super::graph::IntersectionEvent) -> bool {
-    matches!(
-        event,
-        super::graph::IntersectionEvent::Unknown
-            | super::graph::IntersectionEvent::SegmentPlane {
-                relation: SegmentPlaneRelation::Unknown,
-                ..
-            }
-    )
 }
 
 fn unique_classified_region_count(classifications: &[FaceRegionPlaneClassification]) -> usize {

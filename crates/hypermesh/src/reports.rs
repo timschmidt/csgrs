@@ -353,7 +353,10 @@ impl BlockerSourceCounts {
 fn blocker_source_counts(graph: &ExactIntersectionGraph) -> BlockerSourceCounts {
     let mut counts = BlockerSourceCounts::default();
     for pair in &graph.face_pairs {
-        let pair_has_unknown_event = pair.events.iter().any(graph_event_has_unknown_relation);
+        let pair_has_unknown_event = pair
+            .events
+            .iter()
+            .any(IntersectionEvent::has_unknown_relation);
         match pair.relation {
             MeshFacePairRelation::Candidate => counts.candidate_pairs += 1,
             MeshFacePairRelation::CoplanarOverlapping => counts.coplanar_overlapping_pairs += 1,
@@ -379,17 +382,6 @@ fn blocker_source_counts(graph: &ExactIntersectionGraph) -> BlockerSourceCounts 
             .count();
     }
     counts
-}
-
-fn graph_event_has_unknown_relation(event: &IntersectionEvent) -> bool {
-    matches!(
-        event,
-        IntersectionEvent::Unknown
-            | IntersectionEvent::SegmentPlane {
-                relation: hyperlimit::SegmentPlaneRelation::Unknown,
-                ..
-            }
-    )
 }
 
 fn validate_refinement_partition(

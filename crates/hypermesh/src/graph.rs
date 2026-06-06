@@ -100,6 +100,26 @@ pub enum IntersectionEvent {
     Unknown,
 }
 
+impl IntersectionEvent {
+    /// Return whether this retained event still carries undecided evidence.
+    ///
+    /// `IntersectionEvent::Unknown` is the explicit graph marker. A
+    /// segment/plane event whose retained relation is `Unknown` is equally a
+    /// refinement blocker even though it has structured endpoint-side evidence.
+    /// Keeping this on the graph event type makes boolean/report summaries use
+    /// the same exact-evidence boundary as graph routing.
+    pub const fn has_unknown_relation(&self) -> bool {
+        matches!(
+            self,
+            Self::Unknown
+                | Self::SegmentPlane {
+                    relation: SegmentPlaneRelation::Unknown,
+                    ..
+                }
+        )
+    }
+}
+
 /// Retained projected edge contact in a coplanar face-pair overlap graph.
 ///
 /// These records are arrangement inputs, not final topology. They retain the
@@ -892,7 +912,7 @@ impl ExactIntersectionGraph {
                 || pair
                     .events
                     .iter()
-                    .any(intersection_event_has_unknown_relation)
+                    .any(IntersectionEvent::has_unknown_relation)
         })
     }
 
@@ -2234,17 +2254,6 @@ fn validate_intersection_event(
         },
         IntersectionEvent::Unknown => Ok(()),
     }
-}
-
-fn intersection_event_has_unknown_relation(event: &IntersectionEvent) -> bool {
-    matches!(
-        event,
-        IntersectionEvent::Unknown
-            | IntersectionEvent::SegmentPlane {
-                relation: SegmentPlaneRelation::Unknown,
-                ..
-            }
-    )
 }
 
 fn validate_intersection_event_sources(
