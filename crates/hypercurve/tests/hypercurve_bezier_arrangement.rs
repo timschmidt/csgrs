@@ -1061,6 +1061,35 @@ fn retained_linear_overlap_traversal_rejects_indices_outside_refinement() {
 }
 
 #[test]
+fn retained_linear_overlap_traversal_rejects_incomplete_refined_partition() {
+    let refinement =
+        decided(partial_line_overlap_graph().split_retained_linear_overlaps(&policy()));
+    assert_eq!(refinement.graph().len(), 4);
+
+    let unrelated_fragment = BezierSplitFragment2::Materialized {
+        start: exact(r(0)),
+        end: exact(r(1)),
+        curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 0))),
+    };
+    let unrelated_graph = graph(vec![hypercurve::BezierArrangementFragment2::new(
+        10,
+        0,
+        unrelated_fragment,
+    )]);
+    let unrelated_traversal =
+        decided(unrelated_graph.traverse_retained_deduplicating_materialized_overlaps(&policy()));
+    assert_eq!(
+        unrelated_traversal.traversal().chains()[0].fragment_indices(),
+        &[0]
+    );
+
+    assert_topology_error(BezierRetainedLinearOverlapTraversal2::new(
+        refinement,
+        unrelated_traversal,
+    ));
+}
+
+#[test]
 fn retained_overlap_report_finds_reversed_degree_elevated_same_image() {
     let quadratic = QuadraticBezier2::new(p(0, 0), p(2, 4), p(4, 0));
     let cubic_reversed = CubicBezier2::new(

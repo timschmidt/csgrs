@@ -618,6 +618,7 @@ fn validate_linear_overlap_traversal_indices(
     refined_traversal: &BezierRetainedOverlapTraversal2,
 ) -> CurveResult<()> {
     let refined_fragment_count = refinement.graph().len();
+    let mut covered = vec![false; refined_fragment_count];
     for chain in refined_traversal.traversal().chains() {
         for fragment_index in chain.fragment_indices() {
             if *fragment_index >= refined_fragment_count {
@@ -626,6 +627,12 @@ fn validate_linear_overlap_traversal_indices(
                         .to_owned(),
                 ));
             }
+            if covered[*fragment_index] {
+                return Err(CurveError::Topology(
+                    "retained linear-overlap traversal reuses a refined graph fragment".to_owned(),
+                ));
+            }
+            covered[*fragment_index] = true;
         }
     }
 
@@ -641,7 +648,21 @@ fn validate_linear_overlap_traversal_indices(
                 "retained linear-overlap consumed indices must be strictly increasing".to_owned(),
             ));
         }
+        if covered[*fragment_index] {
+            return Err(CurveError::Topology(
+                "retained linear-overlap traversal cannot also visit a consumed fragment"
+                    .to_owned(),
+            ));
+        }
+        covered[*fragment_index] = true;
         previous_shadowed = Some(*fragment_index);
+    }
+
+    if covered.iter().any(|covered| !covered) {
+        return Err(CurveError::Topology(
+            "retained linear-overlap traversal must cover or consume every refined graph fragment"
+                .to_owned(),
+        ));
     }
 
     Ok(())
