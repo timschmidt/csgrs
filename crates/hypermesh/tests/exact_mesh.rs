@@ -1,10 +1,11 @@
 use hyperlimit::{Point3, SourceProvenance};
 use hypermesh::{
-    ExactArrangement, ExactBooleanOperation, ExactBoundaryBooleanPolicy,
+    ExactArrangement, ExactBooleanOperation, ExactBooleanResultKind, ExactBoundaryBooleanPolicy,
     ExactI64MeshInputReadiness, ExactMesh, ExactRegularizationPolicy, MeshFacePairRelation,
     MeshFacePairValidationError, TriangleTriangleRelation, ValidationPolicy, boolean_exact,
-    boolean_exact_with_boundary_policy, build_intersection_graph, classify_mesh_face_pair,
-    classify_triangle_triangle, inspect_i64_mesh_input, preflight_boolean_exact,
+    boolean_exact_with_boundary_policy, build_intersection_graph, certify_boundary_touching_report,
+    classify_mesh_face_pair, classify_triangle_triangle, inspect_i64_mesh_input,
+    preflight_boolean_exact,
 };
 use hyperreal::Real;
 
@@ -209,11 +210,31 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
     )
     .unwrap();
     let right = ExactMesh::from_i64_triangles_with_policy(
-        &[2, 0, 0, 0, 2, 0, 2, 2, 0],
+        &[2, 0, 0, 0, 2, 0, 2, 2, 2],
         &[0, 1, 2],
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
+    let report = certify_boundary_touching_report(&left, &right).unwrap();
+    assert!(report.is_certified(), "{report:?}");
+    report.validate().unwrap();
+    report.validate_against_sources(&left, &right).unwrap();
+
+    let preflight = preflight_boolean_exact(&left, &right, ExactBooleanOperation::Union).unwrap();
+    assert_eq!(
+        preflight.support,
+        hypermesh::ExactBooleanSupport::RequiresBoundaryPolicy,
+        "{preflight:?}"
+    );
+    assert!(
+        boolean_exact(
+            &left,
+            &right,
+            ExactBooleanOperation::Union,
+            ValidationPolicy::ALLOW_BOUNDARY
+        )
+        .is_err()
+    );
 
     let projected = boolean_exact_with_boundary_policy(
         &left,
@@ -223,5 +244,24 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
         ExactBoundaryBooleanPolicy::PreserveSeparateShells,
     )
     .unwrap();
+    assert_eq!(
+        projected.kind,
+        ExactBooleanResultKind::BoundaryPolicyShortcut {
+            operation: ExactBooleanOperation::Union
+        }
+    );
     projected.mesh.validate_retained_state().unwrap();
+    projected.validate_against_sources(&left, &right).unwrap();
+
+    let separated_right = ExactMesh::from_i64_triangles_with_policy(
+        &[5, 0, 0, 7, 0, 0, 5, 2, 0],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    assert!(
+        projected
+            .validate_against_sources(&left, &separated_right)
+            .is_err()
+    );
 }

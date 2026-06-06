@@ -1332,6 +1332,12 @@ fn graph_requires_boundary_policy(
     if !graph_has_only_boundary_contact_pairs(graph, left, right) {
         return Ok(false);
     }
+    let counts = graph_relation_counts(graph);
+    if counts.coplanar_overlapping_pairs == 0
+        && (mesh_is_open_surface(left) || mesh_is_open_surface(right))
+    {
+        return Ok(true);
+    }
     if exact_cell_complexes_certify_boundary_contact_without_shared_volume(left, right) {
         return Ok(true);
     }

@@ -972,6 +972,17 @@ impl ExactBooleanResult {
                     .map_err(ExactReportValidationError::InvalidVolumetricClassification)?;
             }
         }
+        if matches!(
+            self.kind,
+            ExactBooleanResultKind::BoundaryPolicyShortcut { .. }
+        ) {
+            let replay = certify_boundary_touching_report(left, right)
+                .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+            replay.validate()?;
+            if !replay.is_certified() {
+                return Err(ExactReportValidationError::SourceReplayMismatch);
+            }
+        }
         Ok(())
     }
 
