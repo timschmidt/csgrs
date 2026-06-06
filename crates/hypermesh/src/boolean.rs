@@ -2527,6 +2527,7 @@ fn close_exact_coplanar_boundary_loops_from_loops(
     }
 
     let cap_groups = coplanar_boundary_loop_groups(mesh, boundary_loops)?;
+    let boundary_edges = directed_boundary_edges(mesh);
     let vertices = mesh.vertices().to_vec();
     let mut cap_triangles = Vec::new();
     for group in cap_groups {
@@ -2547,39 +2548,28 @@ fn close_exact_coplanar_boundary_loops_from_loops(
             .iter()
             .map(|point| find_exact_mesh_vertex(&vertices, point))
             .collect::<Option<Vec<_>>>()?;
-        cap_triangles.extend(group_triangles.into_iter().map(|triangle| {
+        let triangles = group_triangles.into_iter().map(|triangle| {
             Triangle([
                 local_to_global[triangle.0[0]],
                 local_to_global[triangle.0[1]],
                 local_to_global[triangle.0[2]],
             ])
-        }));
+        });
+        cap_triangles.extend(orient_cap_group_against_mesh_boundary(
+            &boundary_edges,
+            triangles.collect(),
+        )?);
     }
 
     let mut triangles = mesh.triangles().to_vec();
-    triangles.extend(cap_triangles.iter().copied());
-    match ExactMesh::new_with_policy(
-        vertices.clone(),
+    triangles.extend(cap_triangles);
+    ExactMesh::new_with_policy(
+        vertices,
         triangles,
         SourceProvenance::exact(label),
         validation,
-    ) {
-        Ok(mesh) => Some(mesh),
-        Err(_) => {
-            let mut triangles = mesh.triangles().to_vec();
-            triangles.extend(cap_triangles.into_iter().map(|triangle| {
-                let [a, b, c] = triangle.0;
-                Triangle([a, c, b])
-            }));
-            ExactMesh::new_with_policy(
-                vertices,
-                triangles,
-                SourceProvenance::exact(label),
-                validation,
-            )
-            .ok()
-        }
-    }
+    )
+    .ok()
 }
 
 struct CoplanarBoundaryLoopGroup {
@@ -2646,6 +2636,77 @@ fn point3_exact_equal(left: &Point3, right: &Point3) -> Option<bool> {
             && compare_reals(&left.y, &right.y).value()? == Ordering::Equal
             && compare_reals(&left.z, &right.z).value()? == Ordering::Equal,
     )
+}
+
+fn directed_boundary_edges(mesh: &ExactMesh) -> BTreeMap<[usize; 2], (usize, usize)> {
+    let mut edge_uses: BTreeMap<[usize; 2], Vec<(usize, usize)>> = BTreeMap::new();
+    for triangle in mesh.triangles() {
+        let [a, b, c] = triangle.0;
+        for (start, end) in [(a, b), (b, c), (c, a)] {
+            let key = if start < end {
+                [start, end]
+            } else {
+                [end, start]
+            };
+            edge_uses.entry(key).or_default().push((start, end));
+        }
+    }
+
+    edge_uses
+        .into_iter()
+        .filter_map(|(key, uses)| (uses.len() == 1).then(|| uses[0]).map(|edge| (key, edge)))
+        .collect::<BTreeMap<_, _>>()
+}
+
+fn orient_cap_group_against_mesh_boundary(
+    mesh_boundary_edges: &BTreeMap<[usize; 2], (usize, usize)>,
+    triangles: Vec<Triangle>,
+) -> Option<Vec<Triangle>> {
+    let mut edge_uses: BTreeMap<[usize; 2], Vec<(usize, usize)>> = BTreeMap::new();
+    for triangle in &triangles {
+        let [a, b, c] = triangle.0;
+        for (start, end) in [(a, b), (b, c), (c, a)] {
+            let key = if start < end {
+                [start, end]
+            } else {
+                [end, start]
+            };
+            edge_uses.entry(key).or_default().push((start, end));
+        }
+    }
+
+    let mut same_as_mesh = false;
+    let mut opposite_mesh = false;
+    for (key, uses) in edge_uses {
+        if uses.len() != 1 {
+            continue;
+        }
+        let Some(&(mesh_start, mesh_end)) = mesh_boundary_edges.get(&key) else {
+            continue;
+        };
+        let (cap_start, cap_end) = uses[0];
+        if (cap_start, cap_end) == (mesh_start, mesh_end) {
+            same_as_mesh = true;
+        } else if (cap_start, cap_end) == (mesh_end, mesh_start) {
+            opposite_mesh = true;
+        } else {
+            return None;
+        }
+    }
+
+    match (same_as_mesh, opposite_mesh) {
+        (false, true) => Some(triangles),
+        (true, false) => Some(
+            triangles
+                .into_iter()
+                .map(|triangle| {
+                    let [a, b, c] = triangle.0;
+                    Triangle([a, c, b])
+                })
+                .collect(),
+        ),
+        _ => None,
+    }
 }
 
 fn directed_boundary_loops(mesh: &ExactMesh) -> Option<Vec<Vec<usize>>> {
@@ -6346,6 +6407,28 @@ mod tests {
     }
 
     #[test]
+    fn exact_coplanar_boundary_closer_orients_cap_groups_independently() {
+        let mesh = two_open_boxes_missing_opposite_caps_i64([0, 0, 0], [4, 0, 0]);
+        assert_eq!(mesh.facts().mesh.boundary_edges, 8);
+        assert!(!mesh.facts().mesh.closed_manifold);
+
+        let closed = close_exact_coplanar_boundary_loops(
+            &mesh,
+            "test exact independently oriented coplanar boundary closure",
+            ValidationPolicy::CLOSED,
+        )
+        .expect("opposite cap groups should close with independently certified orientations");
+
+        assert!(
+            closed.facts().mesh.closed_manifold,
+            "{:?}",
+            closed.facts().mesh
+        );
+        assert_eq!(closed.vertices().len(), mesh.vertices().len());
+        assert_eq!(closed.triangles().len(), mesh.triangles().len() + 4);
+    }
+
+    #[test]
     fn closed_identical_solids_route_through_arrangement_pipeline() {
         let left = tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]);
         let right = left.clone();
@@ -6685,6 +6768,68 @@ mod tests {
                 start,
                 start + 3,
                 start + 2,
+                start,
+                start + 1,
+                start + 5,
+                start,
+                start + 5,
+                start + 4,
+                start + 1,
+                start + 2,
+                start + 6,
+                start + 1,
+                start + 6,
+                start + 5,
+                start + 2,
+                start + 3,
+                start + 7,
+                start + 2,
+                start + 7,
+                start + 6,
+                start + 3,
+                start,
+                start + 4,
+                start + 3,
+                start + 4,
+                start + 7,
+            ]);
+        }
+        ExactMesh::from_i64_triangles_with_policy(
+            &vertices,
+            &triangles,
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap()
+    }
+
+    fn two_open_boxes_missing_opposite_caps_i64(
+        missing_top_min: [i64; 3],
+        missing_bottom_min: [i64; 3],
+    ) -> ExactMesh {
+        let mut vertices = Vec::new();
+        let mut triangles = Vec::new();
+        for (min, missing_top) in [(missing_top_min, true), (missing_bottom_min, false)] {
+            let max = [min[0] + 2, min[1] + 2, min[2] + 2];
+            let start = vertices.len() / 3;
+            vertices.extend([
+                min[0], min[1], min[2], max[0], min[1], min[2], max[0], max[1], min[2], min[0],
+                max[1], min[2], min[0], min[1], max[2], max[0], min[1], max[2], max[0], max[1],
+                max[2], min[0], max[1], max[2],
+            ]);
+            if !missing_top {
+                triangles.extend([
+                    start + 4,
+                    start + 5,
+                    start + 6,
+                    start + 4,
+                    start + 6,
+                    start + 7,
+                ]);
+            }
+            if missing_top {
+                triangles.extend([start, start + 2, start + 1, start, start + 3, start + 2]);
+            }
+            triangles.extend([
                 start,
                 start + 1,
                 start + 5,
