@@ -2011,6 +2011,22 @@ fn boolean_closed_winding_containment_meshes(
     )))
 }
 
+/// Certify and materialize a named boolean for closed solids with empty graph
+/// containment proven by exact winding reports.
+///
+/// This path requires no retained face intersections and replays vertex
+/// winding classifications to prove one closed operand lies strictly inside
+/// the other. Unsupported contacts or non-containment relations return `None`
+/// rather than falling back to tolerance geometry.
+pub fn materialize_closed_winding_containment_boolean(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+) -> Result<Option<ExactBooleanResult>, MeshError> {
+    boolean_closed_winding_containment_meshes(left, right, operation, validation)
+}
+
 fn boolean_closed_winding_separated_meshes(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -2049,6 +2065,22 @@ fn boolean_closed_winding_separated_meshes(
         operation,
         ExactBooleanShortcutKind::ClosedWindingSeparated,
     )))
+}
+
+/// Certify and materialize a named boolean for closed solids with empty graph
+/// separation proven by exact winding reports.
+///
+/// The retained empty intersection graph and bidirectional closed-mesh winding
+/// classifications must prove both operands are outside the other. Unsupported
+/// contacts or containment relations return `None` rather than falling back to
+/// tolerance geometry.
+pub fn materialize_closed_winding_separated_boolean(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+) -> Result<Option<ExactBooleanResult>, MeshError> {
+    boolean_closed_winding_separated_meshes(left, right, operation, validation)
 }
 
 fn mesh_vertices_are_boundary_or_outside(report: &ClosedMeshWindingMeshReport) -> bool {

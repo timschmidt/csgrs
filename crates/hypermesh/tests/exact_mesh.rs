@@ -24,6 +24,7 @@ use hypermesh::{
     materialize_axis_aligned_orthogonal_solid_union, materialize_boundary_touching_policy_boolean,
     materialize_closed_boundary_touching_regularized_boolean,
     materialize_closed_regularized_lower_dimensional_boolean,
+    materialize_closed_winding_containment_boolean, materialize_closed_winding_separated_boolean,
     materialize_contained_face_adjacent_union, materialize_coplanar_mesh_overlay_arrangement,
     materialize_full_face_adjacent_union, materialize_open_surface_arrangement,
     materialize_volumetric_winding_arrangement, preflight_boolean_exact,
@@ -85,6 +86,27 @@ fn axis_aligned_box(min: [i64; 3], max: [i64; 3]) -> ExactMesh {
             0, 2, 1, 0, 3, 2, 4, 5, 6, 4, 6, 7, 0, 1, 5, 0, 5, 4, 1, 2, 6, 1, 6, 5, 2, 3, 7, 2, 7,
             6, 3, 0, 4, 3, 4, 7,
         ],
+    )
+    .unwrap()
+}
+
+fn combine_exact_meshes(left: &ExactMesh, right: &ExactMesh, label: &'static str) -> ExactMesh {
+    let right_offset = left.vertices().len();
+    ExactMesh::new(
+        left.vertices()
+            .iter()
+            .chain(right.vertices())
+            .cloned()
+            .collect(),
+        left.triangles()
+            .iter()
+            .copied()
+            .chain(right.triangles().iter().map(|triangle| {
+                let [a, b, c] = triangle.0;
+                hypermesh::Triangle([a + right_offset, b + right_offset, c + right_offset])
+            }))
+            .collect(),
+        SourceProvenance::exact(label),
     )
     .unwrap()
 }
@@ -648,29 +670,11 @@ fn boundary_touching_policy_boolean_is_publicly_replayable() {
 fn closed_boundary_touching_regularized_boolean_is_publicly_replayable() {
     let left_a = tetra_from_corners([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]);
     let left_b = tetra_from_corners([10, 0, 0], [12, 0, 0], [10, 2, 0], [10, 0, 2]);
-    let left = ExactMesh::new(
-        left_a
-            .vertices()
-            .iter()
-            .chain(left_b.vertices())
-            .cloned()
-            .collect(),
-        left_a
-            .triangles()
-            .iter()
-            .copied()
-            .chain(left_b.triangles().iter().map(|triangle| {
-                let [a, b, c] = triangle.0;
-                hypermesh::Triangle([
-                    a + left_a.vertices().len(),
-                    b + left_a.vertices().len(),
-                    c + left_a.vertices().len(),
-                ])
-            }))
-            .collect(),
-        SourceProvenance::exact("test disconnected closed boundary fixture"),
-    )
-    .unwrap();
+    let left = combine_exact_meshes(
+        &left_a,
+        &left_b,
+        "test disconnected closed boundary fixture",
+    );
     let right = tetra_from_corners([0, 0, 0], [-4, 0, 0], [0, -4, 0], [0, 0, -4]);
     let separated_right = tetra_from_corners([100, 0, 0], [104, 0, 0], [100, 4, 0], [100, 0, 4]);
 
@@ -717,6 +721,115 @@ fn closed_boundary_touching_regularized_boolean_is_publicly_replayable() {
             .validate_operation_against_sources(
                 &left,
                 &right,
+                operation,
+                ValidationPolicy::CLOSED,
+                ExactBoundaryBooleanPolicy::Reject,
+            )
+            .unwrap();
+    }
+}
+
+#[test]
+fn closed_winding_shortcuts_are_publicly_replayable() {
+    let separated_left_a = tetra_from_corners([0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1]);
+    let separated_left_b = tetra_from_corners([10, 0, 0], [11, 0, 0], [10, 1, 0], [10, 0, 1]);
+    let separated_left = combine_exact_meshes(
+        &separated_left_a,
+        &separated_left_b,
+        "test disconnected closed winding separated fixture",
+    );
+    let separated_right = tetra_from_corners([5, 0, 0], [6, 0, 0], [5, 1, 0], [5, 0, 1]);
+    let intersecting_right = tetra_from_corners([0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1]);
+
+    for operation in [
+        ExactBooleanOperation::Union,
+        ExactBooleanOperation::Intersection,
+        ExactBooleanOperation::Difference,
+    ] {
+        let result = materialize_closed_winding_separated_boolean(
+            &separated_left,
+            &separated_right,
+            operation,
+            ValidationPolicy::CLOSED,
+        )
+        .unwrap()
+        .expect("empty graph separated solids should materialize by exact winding");
+        assert_eq!(
+            result.kind,
+            ExactBooleanResultKind::CertifiedShortcut {
+                operation,
+                shortcut: hypermesh::ExactBooleanShortcutKind::ClosedWindingSeparated
+            }
+        );
+        result.validate().unwrap();
+        result
+            .validate_against_sources(&separated_left, &separated_right)
+            .unwrap();
+        assert_eq!(
+            result.freshness_against_sources(&separated_left, &separated_right),
+            ExactReportFreshness::Current
+        );
+        assert_eq!(
+            result.freshness_against_sources(&separated_left, &intersecting_right),
+            ExactReportFreshness::SourceReplayMismatch
+        );
+        result
+            .validate_operation_against_sources(
+                &separated_left,
+                &separated_right,
+                operation,
+                ValidationPolicy::CLOSED,
+                ExactBoundaryBooleanPolicy::Reject,
+            )
+            .unwrap();
+    }
+
+    let outer = tetra_from_corners([0, 0, 0], [10, 0, 0], [0, 10, 0], [0, 0, 10]);
+    let disjoint_shell = tetra_from_corners([20, 0, 0], [21, 0, 0], [20, 1, 0], [20, 0, 1]);
+    let container = combine_exact_meshes(
+        &outer,
+        &disjoint_shell,
+        "test disconnected closed winding containment fixture",
+    );
+    let contained = tetra_from_corners([1, 1, 1], [2, 1, 1], [1, 2, 1], [1, 1, 2]);
+    let uncontained = tetra_from_corners([30, 0, 0], [31, 0, 0], [30, 1, 0], [30, 0, 1]);
+
+    for operation in [
+        ExactBooleanOperation::Union,
+        ExactBooleanOperation::Intersection,
+        ExactBooleanOperation::Difference,
+    ] {
+        let result = materialize_closed_winding_containment_boolean(
+            &container,
+            &contained,
+            operation,
+            ValidationPolicy::CLOSED,
+        )
+        .unwrap()
+        .expect("empty graph contained solids should materialize by exact winding");
+        assert_eq!(
+            result.kind,
+            ExactBooleanResultKind::CertifiedShortcut {
+                operation,
+                shortcut: hypermesh::ExactBooleanShortcutKind::ClosedWindingContainment
+            }
+        );
+        result.validate().unwrap();
+        result
+            .validate_against_sources(&container, &contained)
+            .unwrap();
+        assert_eq!(
+            result.freshness_against_sources(&container, &contained),
+            ExactReportFreshness::Current
+        );
+        assert_eq!(
+            result.freshness_against_sources(&container, &uncontained),
+            ExactReportFreshness::SourceReplayMismatch
+        );
+        result
+            .validate_operation_against_sources(
+                &container,
+                &contained,
                 operation,
                 ValidationPolicy::CLOSED,
                 ExactBoundaryBooleanPolicy::Reject,
