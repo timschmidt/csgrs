@@ -17,8 +17,9 @@
 use std::{cmp::Ordering, collections::BTreeSet};
 
 use hyperlimit::{
-    Point2, Point3, TriangleLocation, classify_point_triangle, compare_reals, point_on_segment,
-    projected_segment_parameter3,
+    Point2, Point3, SegmentIntersection, TriangleLocation, classify_point_triangle,
+    classify_segment_intersection, compare_reals, point_on_segment, projected_segment_parameter3,
+    proper_segment_intersection_point,
 };
 use hypertri::Constraint;
 
@@ -329,6 +330,9 @@ fn append_coplanar_face_cell_constraints(
         seed_source_boundary_vertices_on_coplanar_opposite_edges(
             side, face, left, right, &mut edges,
         )?;
+        seed_source_boundary_edge_crossings_on_coplanar_opposite_edges(
+            side, face, left, right, &mut edges,
+        )?;
         for split in &graph.edge_splits {
             match side {
                 MeshSide::Left => {
@@ -524,6 +528,112 @@ fn seed_source_boundary_vertices_on_coplanar_opposite_edges(
                 None => {
                     return Err(hypertri::Error::PredicateUndecided {
                         predicate: "face-cell source vertex on coplanar opposite edge",
+                    });
+                }
+            }
+        }
+    }
+    Ok(())
+}
+
+/// Seed proper source-boundary/opposite-edge crossings.
+///
+/// The coplanar split plan normally carries these facts as edge split
+/// constructions. Replaying them here makes the planar cell builder complete
+/// against the exact source operands instead of depending on a previous graph
+/// stage to have retained every boundary clipping point. Each inserted point
+/// is first certified as a proper projected segment intersection, then lifted
+/// back to the source carrier plane and parameterized on the opposite edge.
+fn seed_source_boundary_edge_crossings_on_coplanar_opposite_edges(
+    side: MeshSide,
+    face: usize,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    edges: &mut [CoplanarCellEdge],
+) -> hypertri::Result<()> {
+    let source_mesh = match side {
+        MeshSide::Left => left,
+        MeshSide::Right => right,
+    };
+    let opposite_side = match side {
+        MeshSide::Left => MeshSide::Right,
+        MeshSide::Right => MeshSide::Left,
+    };
+    let source_triangle =
+        source_mesh
+            .triangles()
+            .get(face)
+            .ok_or(hypertri::Error::InvalidInput {
+                reason: "face-cell coplanar split graph references a missing source face",
+            })?;
+    let projection = choose_region_projection(source_mesh, face)?;
+    let source_edges = triangle_edges(source_triangle.0);
+
+    for edge in edges.to_vec() {
+        let opposite_start = vertex_point_for_side(opposite_side, edge.edge[0], left, right)?;
+        let opposite_end = vertex_point_for_side(opposite_side, edge.edge[1], left, right)?;
+        let projected_opposite_start = project_for_predicate(&opposite_start, projection);
+        let projected_opposite_end = project_for_predicate(&opposite_end, projection);
+        for source_edge in source_edges {
+            let source_start = source_mesh.vertices().get(source_edge[0]).ok_or(
+                hypertri::Error::InvalidInput {
+                    reason: "face-cell source edge references a missing start vertex",
+                },
+            )?;
+            let source_end = source_mesh.vertices().get(source_edge[1]).ok_or(
+                hypertri::Error::InvalidInput {
+                    reason: "face-cell source edge references a missing end vertex",
+                },
+            )?;
+            let projected_source_start = project_for_predicate(source_start, projection);
+            let projected_source_end = project_for_predicate(source_end, projection);
+            match classify_segment_intersection(
+                &projected_source_start,
+                &projected_source_end,
+                &projected_opposite_start,
+                &projected_opposite_end,
+            )
+            .value()
+            {
+                Some(SegmentIntersection::Proper) => {
+                    let projected_crossing = proper_segment_intersection_point(
+                        &projected_source_start,
+                        &projected_source_end,
+                        &projected_opposite_start,
+                        &projected_opposite_end,
+                    )
+                    .value()
+                    .flatten()
+                    .ok_or(hypertri::Error::PredicateUndecided {
+                        predicate: "face-cell coplanar source-boundary crossing construction",
+                    })?;
+                    let lifted = lift_projected_face_cell_point(
+                        source_mesh,
+                        face,
+                        projection,
+                        &hypertri::ExactPoint::new(projected_crossing.x, projected_crossing.y),
+                    )?;
+                    let parameter =
+                        projected_segment_parameter3(
+                            &lifted,
+                            &opposite_start,
+                            &opposite_end,
+                            projection,
+                        )
+                        .ok_or(hypertri::Error::InvalidInput {
+                            reason: "face-cell coplanar source-boundary crossing parameter is undefined",
+                        })?;
+                    push_coplanar_cell_edge_point(edges, edge.edge, parameter, lifted)?;
+                }
+                Some(
+                    SegmentIntersection::Disjoint
+                    | SegmentIntersection::EndpointTouch
+                    | SegmentIntersection::CollinearOverlap
+                    | SegmentIntersection::Identical,
+                ) => {}
+                None => {
+                    return Err(hypertri::Error::PredicateUndecided {
+                        predicate: "face-cell coplanar source-boundary segment relation",
                     });
                 }
             }
@@ -1484,6 +1594,10 @@ mod tests {
         hypertri::ExactPoint::new(Real::from(x), Real::from(y))
     }
 
+    fn p3(x: i64, y: i64, z: i64) -> Point3 {
+        Point3::new(Real::from(x), Real::from(y), Real::from(z))
+    }
+
     fn assert_point(point: &Point3, x: i64, y: i64, z: i64) {
         assert_eq!(
             compare_reals(&point.x, &Real::from(x)).value(),
@@ -1629,5 +1743,58 @@ mod tests {
                     || constraint.from == 3 && constraint.to == 0),
             "missing source-vertex-to-contained-endpoint coplanar constraint: {constraints:?}"
         );
+    }
+
+    #[test]
+    fn coplanar_cell_constraints_replay_source_boundary_crossings() {
+        let left = open_triangle_mesh(&[0, 0, 0, 4, 0, 0, 0, 4, 0]);
+        let right = open_triangle_mesh(&[-1, 2, 0, 2, -1, 0, -1, -1, 0]);
+        let split_plan = CoplanarOverlapSplitPlan {
+            graphs: vec![CoplanarOverlapSplitGraph {
+                left_face: 0,
+                right_face: 0,
+                projection: CoplanarProjection::Xy,
+                edge_splits: Vec::new(),
+                vertex_overlaps: Vec::new(),
+            }],
+        };
+        let mut boundary = left.triangles()[0]
+            .0
+            .into_iter()
+            .map(|vertex| FaceSplitBoundaryNode::OriginalVertex {
+                vertex,
+                point: left.vertices()[vertex].clone(),
+            })
+            .collect::<Vec<_>>();
+        let mut constraints = Vec::new();
+        let mut unique_constraints = BTreeSet::new();
+
+        append_coplanar_face_cell_constraints(
+            &split_plan,
+            MeshSide::Left,
+            0,
+            &left,
+            &right,
+            &mut boundary,
+            &mut constraints,
+            &mut unique_constraints,
+        )
+        .unwrap();
+
+        assert_eq!(constraints.len(), 1);
+        assert!(constraints.iter().any(|constraint| {
+            points_equal(
+                boundary_node_point(&boundary[constraint.from]),
+                &p3(0, 1, 0),
+            ) == Some(true)
+                && points_equal(boundary_node_point(&boundary[constraint.to]), &p3(1, 0, 0))
+                    == Some(true)
+                || points_equal(
+                    boundary_node_point(&boundary[constraint.from]),
+                    &p3(1, 0, 0),
+                ) == Some(true)
+                    && points_equal(boundary_node_point(&boundary[constraint.to]), &p3(0, 1, 0))
+                        == Some(true)
+        }));
     }
 }
