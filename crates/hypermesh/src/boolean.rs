@@ -6685,6 +6685,37 @@ mod tests {
     }
 
     #[test]
+    fn boundary_policy_shortcut_rejects_selected_region_operation_relabel() {
+        let left = ExactMesh::from_i64_triangles_with_policy(
+            &[0, 0, 0, 2, 0, 0, 0, 2, 0],
+            &[0, 1, 2],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let right = ExactMesh::from_i64_triangles_with_policy(
+            &[2, 0, 0, 0, 2, 0, 2, 2, 2],
+            &[0, 1, 2],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let mut projected = boolean_exact_with_boundary_policy(
+            &left,
+            &right,
+            ExactBooleanOperation::Union,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            ExactBoundaryBooleanPolicy::PreserveSeparateShells,
+        )
+        .unwrap();
+        projected.kind = ExactBooleanResultKind::BoundaryPolicyShortcut {
+            operation: ExactBooleanOperation::SelectedRegions(ExactRegionSelection::KeepAll),
+        };
+        assert_eq!(
+            projected.validate(),
+            Err(crate::ExactReportValidationError::StatusEvidenceMismatch)
+        );
+    }
+
+    #[test]
     fn coplanar_volumetric_gate_uses_source_side_evidence() {
         let boundary_left = axis_aligned_box_i64([0, 0, 0], [2, 2, 2]);
         let boundary_right = axis_aligned_box_i64([2, 0, 0], [4, 2, 2]);
@@ -8662,6 +8693,15 @@ mod tests {
         );
         difference.validate().unwrap();
         difference.validate_against_sources(&left, &right).unwrap();
+        let mut relabeled = difference.clone();
+        relabeled.kind = ExactBooleanResultKind::CertifiedShortcut {
+            operation: ExactBooleanOperation::Union,
+            shortcut: ExactBooleanShortcutKind::ConvexDifference,
+        };
+        assert_eq!(
+            relabeled.validate(),
+            Err(crate::ExactReportValidationError::StatusEvidenceMismatch)
+        );
         difference
             .validate_operation_against_sources(
                 &left,

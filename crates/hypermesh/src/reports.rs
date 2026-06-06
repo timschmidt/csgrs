@@ -713,13 +713,19 @@ impl ExactBooleanResult {
         if !retains_region_artifacts && self.graph_had_unknowns {
             return Err(ExactReportValidationError::ShortcutResultHasUnknownGraph);
         }
-        if matches!(
-            self.kind,
-            ExactBooleanResultKind::CertifiedShortcut {
-                operation: ExactBooleanOperation::SelectedRegions(_),
-                ..
-            }
-        ) {
+        if let ExactBooleanResultKind::CertifiedShortcut {
+            operation,
+            shortcut,
+        } = self.kind
+            && !shortcut_operation_matches(shortcut, operation)
+        {
+            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+        }
+        if let ExactBooleanResultKind::BoundaryPolicyShortcut { operation }
+        | ExactBooleanResultKind::OpenSurfaceArrangement { operation }
+        | ExactBooleanResultKind::ArrangementCellComplexMaterialized { operation } = self.kind
+            && operation_is_selected_region(operation)
+        {
             return Err(ExactReportValidationError::StatusEvidenceMismatch);
         }
         if retains_region_artifacts && self.graph_had_unknowns {
