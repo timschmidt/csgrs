@@ -45,8 +45,7 @@ use super::cell_complex::{
 use super::cells::triangulate_all_face_cells_with_cdt;
 use super::construction::SegmentPlaneRelation;
 use super::contained_adjacent::{
-    contained_face_adjacent_certificate,
-    materialize_contained_face_adjacent_union_from_certificate,
+    contained_face_adjacent_certificate, materialize_contained_face_adjacent_union_from_certificate,
 };
 use super::convex::{
     intersect_closed_convex_solids, subtract_closed_convex_solids, union_closed_convex_solids,
@@ -2893,7 +2892,24 @@ fn mesh_from_selected_projected_overlay_faces(
     projection: CoplanarProjection,
     provenance: &'static str,
 ) -> Option<ExactMesh> {
-    mesh_from_projected_overlay_output_components(overlay, carrier_points, projection, provenance)
+    match mesh_from_projected_overlay_output_components(
+        overlay,
+        carrier_points,
+        projection,
+        provenance,
+    ) {
+        Some(mesh) => Some(mesh),
+        None if !overlay.output_components.is_empty() => None,
+        None if overlay_allows_selected_face_materialization(overlay) => {
+            mesh_from_projected_overlay_selected_faces(
+                overlay,
+                carrier_points,
+                projection,
+                provenance,
+            )
+        }
+        None => None,
+    }
 }
 
 fn mesh_from_projected_overlay_output_components(
@@ -2946,6 +2962,38 @@ fn mesh_from_projected_overlay_output_components(
         vertices.extend(component_vertices);
     }
 
+    if triangles.is_empty() {
+        return None;
+    }
+    ExactMesh::new_with_policy(
+        vertices,
+        triangles,
+        SourceProvenance::exact(provenance),
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .ok()
+}
+
+fn mesh_from_projected_overlay_selected_faces(
+    overlay: &ExactArrangement2dOverlay,
+    carrier_points: &[Point3; 3],
+    projection: CoplanarProjection,
+    provenance: &'static str,
+) -> Option<ExactMesh> {
+    let mut vertices = Vec::new();
+    let mut triangles = Vec::new();
+    for overlay_face in overlay.faces.iter().filter(|face| face.selected) {
+        let face = overlay.arrangement.faces.get(overlay_face.face)?;
+        let boundary = face
+            .vertices
+            .iter()
+            .map(|vertex| {
+                let point = &overlay.arrangement.vertices.get(*vertex)?.point;
+                lift_projected_point_to_carrier(point, carrier_points, projection)
+            })
+            .collect::<Option<Vec<_>>>()?;
+        triangulate_exact_loop_group(&[boundary], &mut vertices, &mut triangles).ok()?;
+    }
     if triangles.is_empty() {
         return None;
     }
@@ -5542,6 +5590,69 @@ mod tests {
     }
 
     #[test]
+    fn selected_overlay_faces_recover_when_output_loop_ownership_is_blocked() {
+        let left = ExactMesh::from_i64_triangles_with_policy(
+            &[0, 0, 0, 8, 0, 0, 8, 8, 0, 0, 8, 0],
+            &[0, 1, 2, 0, 2, 3],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let right = ExactMesh::from_i64_triangles_with_policy(
+            &[
+                1, 1, 0, 3, 1, 0, 3, 3, 0, 1, 3, 0, //
+                3, 3, 0, 5, 3, 0, 5, 5, 0, 3, 5, 0,
+            ],
+            &[0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let (carrier_points, projection) = coplanar_mesh_overlay_carrier(&left, &right).unwrap();
+        let boundary_policy =
+            coplanar_mesh_overlay_materialized_difference_boundary_policy(&left, &right).unwrap();
+        let mut rings =
+            projected_mesh_boundary_rings(ExactArrangement2dRegion::Left, &left, projection)
+                .unwrap();
+        rings.extend(
+            projected_mesh_boundary_rings(ExactArrangement2dRegion::Right, &right, projection)
+                .unwrap(),
+        );
+        let overlay = build_exact_arrangement2d_overlay_with_boundary_policy(
+            &rings,
+            ExactArrangement2dSetOperation::Difference,
+            boundary_policy,
+        );
+        assert!(overlay.is_complete(), "{:?}", overlay.blockers);
+
+        let canonical = mesh_from_selected_projected_overlay_faces(
+            &overlay,
+            &carrier_points,
+            projection,
+            "test canonical selected-face overlay",
+        )
+        .expect("complete overlay should materialize through output components");
+
+        let mut blocked_loop_ownership = overlay;
+        blocked_loop_ownership.output_loops.clear();
+        blocked_loop_ownership.output_components.clear();
+        blocked_loop_ownership
+            .blockers
+            .push(ExactArrangement2dBlocker::OutputLoopBoundaryContainment {
+                container_loop: 0,
+                child_loop: 1,
+            });
+
+        let recovered = mesh_from_selected_projected_overlay_faces(
+            &blocked_loop_ownership,
+            &carrier_points,
+            projection,
+            "test selected-face recovery overlay",
+        )
+        .expect("selected faces should recover when only loop ownership is blocked");
+        recovered.validate_retained_state().unwrap();
+        assert!(exact_meshes_have_same_shape(&recovered, &canonical));
+    }
+
+    #[test]
     fn coplanar_overlay_certifies_component_holed_contact_difference() {
         let left = ExactMesh::from_i64_triangles_with_policy(
             &[0, 0, 0, 20, 0, 0, 20, 20, 0, 0, 20, 0],
@@ -5839,13 +5950,8 @@ mod tests {
                 assert!(attempt.output_triangles > 0, "{operation:?}: {attempt:?}");
             }
 
-            let result = boolean_exact(
-                &left,
-                &right,
-                operation,
-                ValidationPolicy::ALLOW_BOUNDARY,
-            )
-            .expect("open-surface crossing should materialize");
+            let result = boolean_exact(&left, &right, operation, ValidationPolicy::ALLOW_BOUNDARY)
+                .expect("open-surface crossing should materialize");
             assert_eq!(
                 result.kind,
                 ExactBooleanResultKind::OpenSurfaceArrangement { operation }
