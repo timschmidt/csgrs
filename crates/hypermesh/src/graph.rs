@@ -892,7 +892,7 @@ impl ExactIntersectionGraph {
                 || pair
                     .events
                     .iter()
-                    .any(|event| matches!(event, IntersectionEvent::Unknown))
+                    .any(intersection_event_has_unknown_relation)
         })
     }
 
@@ -2234,6 +2234,17 @@ fn validate_intersection_event(
         },
         IntersectionEvent::Unknown => Ok(()),
     }
+}
+
+fn intersection_event_has_unknown_relation(event: &IntersectionEvent) -> bool {
+    matches!(
+        event,
+        IntersectionEvent::Unknown
+            | IntersectionEvent::SegmentPlane {
+                relation: SegmentPlaneRelation::Unknown,
+                ..
+            }
+    )
 }
 
 fn validate_intersection_event_sources(
@@ -3906,4 +3917,36 @@ fn projected_points_equal(
     let x = compare_reals(&left.x, &right.x).value()?;
     let y = compare_reals(&left.y, &right.y).value()?;
     Some(x == Ordering::Equal && y == Ordering::Equal)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn graph_unknowns_include_unknown_segment_plane_events() {
+        let graph = ExactIntersectionGraph {
+            face_pairs: vec![FacePairEvents {
+                left_face: 0,
+                right_face: 0,
+                relation: MeshFacePairRelation::Candidate,
+                projection: None,
+                events: vec![IntersectionEvent::SegmentPlane {
+                    segment_side: MeshSide::Left,
+                    edge: [0, 1],
+                    plane_side: MeshSide::Right,
+                    plane_face: 0,
+                    relation: SegmentPlaneRelation::Unknown,
+                    point: None,
+                    parameter: None,
+                    parameter_ratio: None,
+                    construction_failure: None,
+                    endpoint_sides: [None, Some(PlaneSide::Above)],
+                }],
+            }],
+        };
+
+        assert!(graph.validate().is_ok());
+        assert!(graph.has_unknowns());
+    }
 }
