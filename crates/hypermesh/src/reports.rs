@@ -290,10 +290,15 @@ fn validate_blocker_count_bounds(
     retained_face_pairs: usize,
     retained_events: usize,
 ) -> Result<(), ExactReportValidationError> {
-    let blocker_pairs = blocker_pair_count(blocker);
-    if (blocker_pairs == 0 || retained_events == 0 || retained_face_pairs == 0)
-        && (retained_events != 0 || retained_face_pairs != 0)
-        || blocker_pairs > retained_face_pairs
+    let classified_relation_pairs = blocker
+        .candidate_pairs
+        .saturating_add(blocker.coplanar_overlapping_pairs)
+        .saturating_add(blocker.coplanar_touching_pairs);
+    if retained_face_pairs == 0 && retained_events != 0
+        || retained_face_pairs != 0 && retained_events == 0
+        || (retained_face_pairs != 0 && !blocker_has_any_evidence(blocker))
+        || classified_relation_pairs > retained_face_pairs
+        || blocker.unknown_pairs > retained_face_pairs
         || blocker.construction_failed_events > retained_events
     {
         Err(ExactReportValidationError::InvalidBlockerCounts)
@@ -2864,5 +2869,26 @@ mod tests {
                 .validate_for_kind(ExactBooleanBlockerKind::NeedsRefinement)
                 .is_ok()
         );
+    }
+
+    #[test]
+    fn refinement_report_allows_unknown_event_on_candidate_pair() {
+        let report = ExactRefinementReport {
+            operation: ExactBooleanOperation::Union,
+            status: ExactRefinementStatus::Required,
+            graph_had_unknowns: true,
+            retained_face_pairs: 1,
+            retained_events: 1,
+            blocker: Some(ExactBooleanBlocker {
+                kind: ExactBooleanBlockerKind::NeedsRefinement,
+                candidate_pairs: 1,
+                coplanar_overlapping_pairs: 0,
+                coplanar_touching_pairs: 0,
+                unknown_pairs: 1,
+                construction_failed_events: 0,
+            }),
+        };
+
+        assert!(report.validate().is_ok());
     }
 }
