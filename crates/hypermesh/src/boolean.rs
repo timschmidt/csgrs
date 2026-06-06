@@ -17,8 +17,7 @@
 use std::collections::{BTreeMap, BTreeSet};
 
 use super::adjacent::{
-    full_face_adjacent_certificate, has_full_face_adjacent_union,
-    materialize_full_face_adjacent_union_from_certificate,
+    full_face_adjacent_certificate, materialize_full_face_adjacent_union_from_certificate,
 };
 use super::affine_box::{
     has_affine_box_difference, has_affine_box_intersection, has_affine_box_union,
@@ -47,7 +46,7 @@ use super::cells::triangulate_all_face_cells_with_cdt;
 use super::construction::SegmentPlaneRelation;
 use super::contained_adjacent::{
     ContainedBoundaryDifferenceCertificate, contained_boundary_difference_certificate_from_graph,
-    contained_face_adjacent_certificate, has_contained_face_adjacent_union,
+    contained_face_adjacent_certificate,
     materialize_contained_boundary_difference_from_retained_certificate,
     materialize_contained_face_adjacent_union_from_certificate,
 };
@@ -367,23 +366,14 @@ pub fn preflight_boolean_exact(
         }
     };
 
-    if arrangement_cell_complex_materializes_preemptively(left, right, operation)? {
+    if support == ExactBooleanSupport::RequiresCertifiedWinding {
         let graph = build_intersection_graph(left, right)?;
         validate_graph_source_handoff(&graph, left, right)?;
-        return Ok(ExactBooleanPreflight {
-            operation,
-            support: ExactBooleanSupport::CertifiedArrangementCellComplex,
-            graph_had_unknowns: graph.has_unknowns(),
-            retained_face_pairs: graph.face_pairs.len(),
-            retained_events: graph.event_count(),
-            region_count: 0,
-            region_classifications: Vec::new(),
-            blocker: None,
-            arrangement_readiness: None,
-            coplanar_volumetric_evidence: coplanar_volumetric_evidence_if_required(
-                &graph, left, right,
-            ),
-        });
+        if let Some(preflight) = certified_arrangement_cell_complex_preflight_if_materialized(
+            operation, &graph, left, right,
+        )? {
+            return Ok(preflight);
+        }
     }
 
     if support == ExactBooleanSupport::CertifiedArrangementCellComplex {
@@ -1251,10 +1241,6 @@ fn both_axis_aligned_boxes(left: &ExactMesh, right: &ExactMesh) -> bool {
     is_axis_aligned_box(left) && is_axis_aligned_box(right)
 }
 
-fn non_box_full_face_adjacency(left: &ExactMesh, right: &ExactMesh) -> bool {
-    !both_axis_aligned_boxes(left, right) && has_full_face_adjacent_union(left, right)
-}
-
 fn contained_face_adjacency_should_yield_to_stronger_kernel(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -1396,7 +1382,7 @@ pub fn boolean_exact_with_boundary_policy(
         return boolean_identical_meshes(left, operation, validation);
     }
     if let Some(result) =
-        boolean_arrangement_cell_complex_meshes(left, right, operation, validation, true)?
+        boolean_arrangement_cell_complex_meshes(left, right, operation, validation)?
     {
         return Ok(result);
     }
@@ -1467,11 +1453,6 @@ pub fn boolean_exact_with_boundary_policy(
                     }
                 }
                 ExactBooleanOperation::SelectedRegions(_) => unreachable!("handled above"),
-            }
-            if let Some(result) =
-                boolean_arrangement_cell_complex_meshes(left, right, operation, validation, false)?
-            {
-                return Ok(result);
             }
             if let Some(result) = boolean_open_surface_disjoint_or_arrangement_meshes_from_graph(
                 &graph, left, right, operation, validation,
@@ -1588,14 +1569,7 @@ fn boolean_arrangement_cell_complex_meshes(
     right: &ExactMesh,
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
-    require_preempt_certification: bool,
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
-    if require_preempt_certification
-        && !arrangement_cell_complex_should_preempt_specialized_paths(left, right, operation)
-    {
-        return Ok(None);
-    }
-
     let outcome = match run_arrangement_cell_complex_attempt(
         left,
         right,
@@ -1610,31 +1584,6 @@ fn boolean_arrangement_cell_complex_meshes(
     match outcome {
         ArrangementCellComplexOutcome::Materialized(result, _) => Ok(Some(result)),
         ArrangementCellComplexOutcome::Declined(_) => Ok(None),
-    }
-}
-
-fn arrangement_cell_complex_materializes_preemptively(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-) -> Result<bool, MeshError> {
-    if !arrangement_cell_complex_should_preempt_specialized_paths(left, right, operation) {
-        return Ok(false);
-    }
-    match run_arrangement_cell_complex_attempt(
-        left,
-        right,
-        operation,
-        ExactRegularizationPolicy::REGULARIZED_SOLID,
-        Some(ValidationPolicy::CLOSED),
-        true,
-    ) {
-        Ok(ArrangementCellComplexOutcome::Materialized(_, attempt))
-            if arrangement_cell_complex_attempt_is_certified_for_preflight(&attempt) =>
-        {
-            Ok(true)
-        }
-        Ok(_) | Err(_) => Ok(false),
     }
 }
 
@@ -3939,82 +3888,6 @@ fn vector_between(from: &Point3, to: &Point3) -> Point3 {
     )
 }
 
-fn arrangement_cell_complex_should_preempt_specialized_paths(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-) -> bool {
-    (matches!(
-        operation,
-        ExactBooleanOperation::Union
-            | ExactBooleanOperation::Intersection
-            | ExactBooleanOperation::Difference
-    ) && (has_single_rectangular_orthogonal_cell_result(left, right, operation)
-        || has_axis_aligned_box_difference_cell_result(left, right, operation)
-        || is_convex_regularized_sheet_arrangement_candidate(left, right, operation)
-        || is_closed_solid_arrangement_preempt_candidate(left, right, operation)))
-        || (matches!(
-            operation,
-            ExactBooleanOperation::Union
-                | ExactBooleanOperation::Intersection
-                | ExactBooleanOperation::Difference
-        ) && non_box_full_face_adjacency(left, right))
-        || (matches!(
-            operation,
-            ExactBooleanOperation::Union
-                | ExactBooleanOperation::Intersection
-                | ExactBooleanOperation::Difference
-        ) && !both_axis_aligned_boxes(left, right)
-            && has_contained_face_adjacent_union(left, right))
-        || coplanar_mesh_overlay_should_preempt_surface_paths(left, right, operation)
-}
-
-fn has_single_rectangular_orthogonal_cell_result(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-) -> bool {
-    let Some(operation) = axis_aligned_orthogonal_solid_operation(operation) else {
-        return false;
-    };
-    axis_aligned_orthogonal_solid_cell_plan(left, right, operation)
-        .as_ref()
-        .is_some_and(orthogonal_cell_plan_is_single_rectangular_block)
-}
-
-fn is_closed_solid_arrangement_preempt_candidate(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-) -> bool {
-    if !left.facts().mesh.closed_manifold || !right.facts().mesh.closed_manifold {
-        return false;
-    }
-    if meshes_are_certified_bounds_disjoint(left, right)
-        || ((!left.facts().mesh.closed_manifold || !right.facts().mesh.closed_manifold)
-            && meshes_are_certified_same_surface(left, right))
-        || both_axis_aligned_boxes(left, right)
-    {
-        return false;
-    }
-    let Ok(graph) = build_intersection_graph(left, right) else {
-        return false;
-    };
-    if validate_graph_source_handoff(&graph, left, right).is_err() {
-        return false;
-    }
-    if matches!(
-        certified_convex_boolean_support_from_graph(&graph, left, right, operation),
-        Ok(Some(
-            ExactBooleanSupport::CertifiedConvexContainment
-                | ExactBooleanSupport::CertifiedConvexSeparated
-        ))
-    ) {
-        return false;
-    }
-    true
-}
-
 fn has_axis_aligned_box_difference_cell_result(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -4028,39 +3901,6 @@ fn has_axis_aligned_box_difference_cell_result(
             AxisAlignedOrthogonalSolidOperation::Difference,
         )
         .is_some()
-}
-
-fn is_convex_regularized_sheet_arrangement_candidate(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-) -> bool {
-    if !matches!(
-        operation,
-        ExactBooleanOperation::Union
-            | ExactBooleanOperation::Intersection
-            | ExactBooleanOperation::Difference
-    ) {
-        return false;
-    }
-    let Ok(arrangement) = ExactArrangement::from_meshes_with_policy(
-        left,
-        right,
-        ExactRegularizationPolicy::REGULARIZED_SOLID,
-    ) else {
-        return false;
-    };
-    if certified_closed_boundary_touching_support_from_graph(
-        &arrangement.graph,
-        left,
-        right,
-        operation,
-    )
-    .is_ok_and(|support| support.is_some())
-    {
-        return false;
-    }
-    arrangement_should_try_regularized_sheet_recovery(&arrangement, left, right)
 }
 
 fn boolean_convex_intersection_meshes(
@@ -7433,11 +7273,6 @@ mod tests {
             &right,
             ExactBooleanOperation::Union
         ));
-        assert!(arrangement_cell_complex_should_preempt_specialized_paths(
-            &left,
-            &right,
-            ExactBooleanOperation::Union
-        ));
 
         let inner = ExactMesh::from_i64_triangles_with_policy(
             &[1, 1, 0, 2, 1, 0, 1, 2, 0],
@@ -7445,11 +7280,19 @@ mod tests {
             ValidationPolicy::ALLOW_BOUNDARY,
         )
         .unwrap();
-        assert!(arrangement_cell_complex_should_preempt_specialized_paths(
+        let union = boolean_exact(
             &inner,
             &left,
-            ExactBooleanOperation::Union
-        ));
+            ExactBooleanOperation::Union,
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .expect("contained coplanar union should materialize through arrangement");
+        assert_eq!(
+            union.kind,
+            ExactBooleanResultKind::CertifiedShortcut {
+                shortcut: ExactBooleanShortcutKind::ArrangementCellComplex
+            }
+        );
     }
 
     #[test]

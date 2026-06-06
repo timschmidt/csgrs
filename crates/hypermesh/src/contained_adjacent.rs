@@ -156,11 +156,6 @@ impl ContainedBoundaryDifference {
     }
 }
 
-/// Return whether the sources can be unioned by contained-face adjacency.
-pub fn has_contained_face_adjacent_union(left: &ExactMesh, right: &ExactMesh) -> bool {
-    contained_face_adjacent_certificate(left, right).is_some()
-}
-
 /// Return the retained contained-face adjacency certificate for these sources.
 pub(crate) fn contained_face_adjacent_certificate(
     left: &ExactMesh,

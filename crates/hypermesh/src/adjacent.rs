@@ -138,11 +138,6 @@ impl FullFaceAdjacentUnion {
     }
 }
 
-/// Return whether the sources can be unioned by exact full-face adjacency.
-pub fn has_full_face_adjacent_union(left: &ExactMesh, right: &ExactMesh) -> bool {
-    full_face_adjacent_certificate(left, right).is_some()
-}
-
 /// Return the retained full-face adjacency certificate for these sources.
 pub(crate) fn full_face_adjacent_certificate(
     left: &ExactMesh,
