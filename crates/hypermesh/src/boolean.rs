@@ -7124,6 +7124,15 @@ mod tests {
             ValidationPolicy::ALLOW_BOUNDARY,
         )
         .unwrap();
+        let disjoint_holes = ExactMesh::from_i64_triangles_with_policy(
+            &[
+                20, 20, 0, 22, 20, 0, 22, 22, 0, 20, 22, 0, //
+                22, 22, 0, 24, 22, 0, 24, 24, 0, 22, 24, 0,
+            ],
+            &[0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
 
         let result = boolean_coplanar_mesh_overlay_optional(
             &left,
@@ -7140,6 +7149,15 @@ mod tests {
             }
         );
         result.mesh.validate_retained_state().unwrap();
+        result
+            .validate_against_sources(&left, &touching_holes)
+            .unwrap();
+        assert!(
+            result
+                .validate_against_sources(&left, &disjoint_holes)
+                .is_err(),
+            "{result:?}"
+        );
     }
 
     #[test]

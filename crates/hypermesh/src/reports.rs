@@ -1078,7 +1078,9 @@ fn certified_shortcut_sources_match(
         | ExactBooleanShortcutKind::ConvexSeparated => {
             convex_shortcut_sources_match(shortcut, left, right)
         }
-        ExactBooleanShortcutKind::ArrangementCellComplex => Ok(true),
+        ExactBooleanShortcutKind::ArrangementCellComplex => {
+            arrangement_cell_complex_sources_match(left, right)
+        }
     }
 }
 
@@ -1264,6 +1266,18 @@ fn convex_boundary_containment_sources_match(
             .vertices
             .iter()
             .any(|vertex| matches!(vertex.relation, ConvexSolidPointRelation::Outside))
+}
+
+fn arrangement_cell_complex_sources_match(
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Result<bool, ExactReportValidationError> {
+    let graph = build_intersection_graph(left, right)
+        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+    graph
+        .validate_against_sources(left, right)
+        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+    Ok(!graph.has_unknowns() && !graph.face_pairs.is_empty())
 }
 
 fn mesh_is_closed_solid(mesh: &ExactMesh) -> bool {
