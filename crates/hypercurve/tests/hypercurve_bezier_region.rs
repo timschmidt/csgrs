@@ -515,6 +515,12 @@ fn retained_role_report_constructors_reject_mismatched_evidence() {
         vec![r(1)],
         vec![p(0, 0)],
     ));
+    assert_topology_error(BezierRetainedCurvedNestingRoleReport2::new(
+        vec![BezierRetainedRegionLoopRole::Material],
+        vec![0],
+        vec![r(0)],
+        vec![p(0, 0)],
+    ));
 }
 
 #[test]
