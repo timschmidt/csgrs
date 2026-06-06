@@ -1992,13 +1992,14 @@ impl ExactVolumetricBoundaryClosureReport {
                     return Err(ExactReportValidationError::StatusEvidenceMismatch);
                 }
             }
-            ExactVolumetricBoundaryClosureStatus::BoundaryClosureBlocked(_) => {
+            ExactVolumetricBoundaryClosureStatus::BoundaryClosureBlocked(blocker) => {
                 if self.output_triangles == 0
                     || self.boundary_edges == 0
                     || self.boundary_loops == 0
                     || self.has_boundary_topology_failure_evidence()
                     || self.coplanar_loop_groups != 0
                     || !self.has_valid_optional_self_contact_evidence()
+                    || !volumetric_boundary_closure_blocker_is_supported(blocker)
                 {
                     return Err(ExactReportValidationError::StatusEvidenceMismatch);
                 }
@@ -2035,6 +2036,14 @@ impl ExactVolumetricBoundaryClosureReport {
             && self.self_contact_degenerate_cycles + self.self_contact_nondegenerate_cycles
                 == self.self_contact_topological_vertices
     }
+}
+
+fn volumetric_boundary_closure_blocker_is_supported(blocker: &ExactArrangementBlocker) -> bool {
+    matches!(
+        blocker,
+        ExactArrangementBlocker::UndecidableOrdering
+            | ExactArrangementBlocker::NonManifoldCellComplex
+    )
 }
 
 impl ExactBooleanPreflight {
@@ -3940,6 +3949,20 @@ mod tests {
         report.self_contact_degenerate_cycles = 1;
         report.self_contact_nondegenerate_cycles = 1;
         report.validate().unwrap();
+    }
+
+    #[test]
+    fn volumetric_boundary_blocked_report_rejects_nonclosure_blocker() {
+        let mut report = valid_blocked_closure_report();
+        report.validate().unwrap();
+
+        report.status = ExactVolumetricBoundaryClosureStatus::BoundaryClosureBlocked(
+            ExactArrangementBlocker::UnsupportedCurvedPrimitive,
+        );
+        assert_eq!(
+            report.validate(),
+            Err(ExactReportValidationError::StatusEvidenceMismatch)
+        );
     }
 
     #[test]
