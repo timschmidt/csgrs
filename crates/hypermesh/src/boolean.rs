@@ -102,9 +102,9 @@ use super::winding::{
     classify_point_against_closed_mesh_winding_report,
 };
 use hyperlimit::{
-    CoplanarProjection, Point2, Point3, SegmentIntersection, Sign, TriangleLocation,
-    classify_point_triangle, compare_reals, compare_reals_report, orient3d_report, project_point3,
-    projected_polygon_area2_value,
+    CoplanarProjection, Point2, Point3, RingPointLocation, SegmentIntersection, Sign,
+    TriangleLocation, classify_point_ring_even_odd, classify_point_triangle, compare_reals,
+    compare_reals_report, orient3d_report, project_point3, projected_polygon_area2_value,
 };
 use hyperlimit::{PredicateUse, SourceProvenance};
 use hyperreal::Real;
@@ -3528,7 +3528,69 @@ fn selected_projected_overlay_face_components(
         }
         components.push(component);
     }
+    merge_contained_selected_overlay_face_components(overlay, &mut components);
     components
+}
+
+fn merge_contained_selected_overlay_face_components(
+    overlay: &ExactArrangement2dOverlay,
+    components: &mut Vec<Vec<usize>>,
+) {
+    let mut changed = true;
+    while changed {
+        changed = false;
+        'pairs: for parent in 0..components.len() {
+            for child in 0..components.len() {
+                if parent == child {
+                    continue;
+                }
+                if selected_overlay_component_contains_component(
+                    overlay,
+                    &components[parent],
+                    &components[child],
+                ) {
+                    components.remove(child);
+                    changed = true;
+                    break 'pairs;
+                }
+            }
+        }
+    }
+}
+
+fn selected_overlay_component_contains_component(
+    overlay: &ExactArrangement2dOverlay,
+    parent: &[usize],
+    child: &[usize],
+) -> bool {
+    let Some(witness) = selected_overlay_component_witness(overlay, child) else {
+        return false;
+    };
+    let Some(loops) = selected_projected_overlay_component_boundary_loops(overlay, parent) else {
+        return false;
+    };
+    let mut inside = false;
+    for loop_ in loops {
+        match classify_point_ring_even_odd(&loop_, &witness).value() {
+            Some(RingPointLocation::Inside) => inside = !inside,
+            Some(RingPointLocation::Outside) => {}
+            Some(RingPointLocation::Boundary) | None => return false,
+        }
+    }
+    inside
+}
+
+fn selected_overlay_component_witness(
+    overlay: &ExactArrangement2dOverlay,
+    component: &[usize],
+) -> Option<Point2> {
+    component.iter().find_map(|face| {
+        overlay
+            .faces
+            .iter()
+            .find(|candidate| candidate.face == *face)
+            .map(|face| face.witness.clone())
+    })
 }
 
 fn arrangement_face_edge_key(left: usize, right: usize) -> [usize; 2] {
@@ -7417,6 +7479,53 @@ mod tests {
         )
         .expect("canonical overlay should materialize");
         assert!(exact_meshes_have_same_shape(&selected_faces, &canonical));
+    }
+
+    #[test]
+    fn selected_overlay_faces_absorb_contained_union_components() {
+        let outer_square = ExactMesh::from_i64_triangles_with_policy(
+            &[0, 0, 0, 4, 0, 0, 4, 4, 0, 0, 4, 0],
+            &[0, 1, 2, 0, 2, 3],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let inner_square = ExactMesh::from_i64_triangles_with_policy(
+            &[1, 1, 0, 2, 1, 0, 2, 2, 0, 1, 2, 0],
+            &[0, 1, 2, 0, 2, 3],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let (carrier_points, projection) =
+            coplanar_mesh_overlay_carrier(&outer_square, &inner_square).unwrap();
+        let mut rings = projected_mesh_boundary_rings(
+            ExactArrangement2dRegion::Left,
+            &outer_square,
+            projection,
+        )
+        .unwrap();
+        rings.extend(
+            projected_mesh_boundary_rings(
+                ExactArrangement2dRegion::Right,
+                &inner_square,
+                projection,
+            )
+            .unwrap(),
+        );
+        let overlay = build_exact_arrangement2d_overlay_with_boundary_policy(
+            &rings,
+            ExactArrangement2dSetOperation::Union,
+            ExactArrangement2dBoundaryPolicy::SimplifyCollinear,
+        );
+        assert!(overlay.is_complete(), "{:?}", overlay.blockers);
+
+        let selected_faces = mesh_from_selected_projected_overlay_faces(
+            &overlay,
+            &carrier_points,
+            projection,
+            "test selected-face contained union overlay",
+        )
+        .expect("selected arrangement faces should absorb contained components");
+        assert!(exact_meshes_have_same_shape(&selected_faces, &outer_square));
     }
 
     #[test]
