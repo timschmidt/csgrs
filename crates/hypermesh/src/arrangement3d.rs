@@ -1354,25 +1354,56 @@ fn non_coplanar_lower_dimensional_artifacts(
                 push_lower_dimensional_artifact(&mut artifacts, artifact);
                 continue;
             }
-            let super::graph::IntersectionEvent::SegmentPlane {
-                relation: super::construction::SegmentPlaneRelation::EndpointOnPlane,
-                point: Some(point),
-                ..
-            } = event
-            else {
-                continue;
-            };
-            push_lower_dimensional_artifact(
-                &mut artifacts,
-                ArrangementLowerDimensionalArtifact::PointContact {
-                    left_face: pair.left_face,
-                    right_face: pair.right_face,
-                    point: point.clone(),
-                },
-            );
+            if let Some(artifact) = non_coplanar_point_contact_artifact(
+                pair.left_face,
+                pair.right_face,
+                event,
+                left,
+                right,
+            ) {
+                push_lower_dimensional_artifact(&mut artifacts, artifact);
+            }
         }
     }
     artifacts
+}
+
+fn non_coplanar_point_contact_artifact(
+    left_face: usize,
+    right_face: usize,
+    event: &super::graph::IntersectionEvent,
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Option<ArrangementLowerDimensionalArtifact> {
+    let super::graph::IntersectionEvent::SegmentPlane {
+        plane_side,
+        plane_face,
+        relation: super::construction::SegmentPlaneRelation::EndpointOnPlane,
+        point: Some(point),
+        ..
+    } = event
+    else {
+        return None;
+    };
+    let plane_mesh = mesh_for_side(*plane_side, left, right);
+    let triangle = plane_mesh.triangles().get(*plane_face)?.0;
+    let projection = choose_triangle_projection(
+        plane_mesh,
+        triangle,
+        &mut Vec::<ExactArrangementBlocker>::new(),
+    )?;
+    let a = project_point3(plane_mesh.vertices().get(triangle[0])?, projection);
+    let b = project_point3(plane_mesh.vertices().get(triangle[1])?, projection);
+    let c = project_point3(plane_mesh.vertices().get(triangle[2])?, projection);
+    let projected = project_point3(point, projection);
+    let location = classify_point_triangle(&a, &b, &c, &projected).value()?;
+    constructive_triangle_location(location).then_some(
+        ArrangementLowerDimensionalArtifact::PointContact {
+            left_face,
+            right_face,
+            point: point.clone(),
+        },
+    )
 }
 
 fn non_coplanar_edge_contact_artifact(
@@ -4506,6 +4537,50 @@ mod tests {
         assert!(
             retained.face_plane_arrangements.is_empty(),
             "point-only contact should not create positive-area face-plane cells"
+        );
+    }
+
+    #[test]
+    fn lower_dimensional_policy_ignores_endpoint_on_plane_outside_triangle() {
+        let left = open_triangle_i64([0, 3, 3], [1, 1, 1], [1, 3, 4]);
+        let right = open_triangle_i64([0, 0, 0], [0, 4, 0], [0, 0, 4]);
+        let outside_endpoint = p3(0, 3, 3);
+
+        let graph = build_intersection_graph(&left, &right).unwrap();
+        assert!(
+            graph
+                .face_pairs
+                .iter()
+                .flat_map(|pair| pair.events.iter())
+                .any(|event| matches!(
+                    event,
+                    crate::graph::IntersectionEvent::SegmentPlane {
+                        relation: crate::construction::SegmentPlaneRelation::EndpointOnPlane,
+                        point: Some(point),
+                        ..
+                    } if point3_equal(point, &outside_endpoint).value() == Some(true)
+                )),
+            "{graph:?}"
+        );
+
+        let retained = ExactArrangement::from_meshes_with_policy(
+            &left,
+            &right,
+            ExactRegularizationPolicy::RETAIN_ARTIFACTS,
+        )
+        .unwrap();
+
+        assert!(
+            retained
+                .lower_dimensional_artifacts
+                .iter()
+                .all(|artifact| !matches!(
+                    artifact,
+                    ArrangementLowerDimensionalArtifact::PointContact { point, .. }
+                        if point3_equal(point, &outside_endpoint).value() == Some(true)
+                )),
+            "{:?}",
+            retained.lower_dimensional_artifacts
         );
     }
 
