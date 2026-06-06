@@ -1481,11 +1481,6 @@ pub fn boolean_exact_with_boundary_policy(
                     return Ok(result);
                 }
             }
-            if let Some(result) = boolean_arrangement_unregularized_sheet_complex_meshes(
-                left, right, operation, validation,
-            )? {
-                return Ok(result);
-            }
             if let Some(result) =
                 boolean_convex_difference_meshes(left, right, operation, validation)?
             {
@@ -2255,32 +2250,6 @@ fn arrangement_should_try_regularized_sheet_recovery(
 ) -> bool {
     arrangement_blockers_are_unregularized_sheet_complex(&arrangement.blockers)
         || arrangement_has_regularized_closed_sheet_recovery_surface(arrangement, left, right)
-}
-
-fn boolean_arrangement_unregularized_sheet_complex_meshes(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: ValidationPolicy,
-) -> Result<Option<ExactBooleanResult>, MeshError> {
-    let arrangement = ExactArrangement::from_meshes_with_policy(
-        left,
-        right,
-        ExactRegularizationPolicy::REGULARIZED_SOLID,
-    )?;
-    if !arrangement_should_try_regularized_sheet_recovery(&arrangement, left, right) {
-        return Ok(None);
-    }
-    if let Some(result) = boolean_arrangement_regularized_sheet_or_boundary_from_graph(
-        &arrangement.graph,
-        left,
-        right,
-        operation,
-        validation,
-    )? {
-        return Ok(Some(result));
-    }
-    boolean_arrangement_convex_regularized_sheet_recovery(left, right, operation, validation)
 }
 
 fn arrangement_unregularized_sheet_complex_materialized_for_preflight(
