@@ -2499,6 +2499,9 @@ pub enum ExactWindingReadinessStatus {
     /// for one closed solid and one lower-dimensional open surface, so no
     /// winding handoff is needed.
     MixedDimensionalRegularizedSolidAlreadyMaterialized,
+    /// The named Boolean was already answered by closed-convex exact
+    /// materialization, so no winding handoff is needed.
+    ConvexBooleanAlreadyMaterialized,
     /// The graph contains no retained face pairs requiring winding.
     NoNontrivialOverlap,
     /// Split regions and opposite-plane classifications were checked and are
@@ -2811,6 +2814,21 @@ impl ExactWindingReadinessReport {
                 no_region_facts(self.region_count, &self.region_classifications)
             }
             ExactWindingReadinessStatus::MixedDimensionalRegularizedSolidAlreadyMaterialized => {
+                if self.arrangement_readiness.is_some()
+                    || self.coplanar_volumetric_evidence.is_some()
+                    || matches!(self.operation, ExactBooleanOperation::SelectedRegions(_))
+                    || self.graph_had_unknowns
+                    || self.retained_face_pairs != 0
+                    || self.retained_events != 0
+                {
+                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                }
+                blocker_kind(Some(&self.blocker), ExactBooleanBlockerKind::NeedsWinding)?;
+                self.blocker
+                    .validate_for_kind(ExactBooleanBlockerKind::NeedsWinding)?;
+                no_region_facts(self.region_count, &self.region_classifications)
+            }
+            ExactWindingReadinessStatus::ConvexBooleanAlreadyMaterialized => {
                 if self.arrangement_readiness.is_some()
                     || self.coplanar_volumetric_evidence.is_some()
                     || matches!(self.operation, ExactBooleanOperation::SelectedRegions(_))
