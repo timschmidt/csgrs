@@ -96,7 +96,6 @@ use super::volumetric_cells::{
 use super::winding::{
     ClosedMeshWindingMeshReport, ClosedMeshWindingRelation, WindingReportError,
     classify_mesh_vertices_against_closed_mesh_winding_report,
-    classify_point_against_closed_mesh_winding_report,
 };
 use hyperlimit::{
     CoplanarProjection, Point2, Point3, SegmentIntersection, Sign, TriangleLocation,
@@ -549,14 +548,6 @@ pub fn preflight_boolean_exact(
             certified_closed_boundary_touching_support_from_graph(&graph, left, right, operation)?
     {
         return Ok(certified_shortcut_preflight(operation, boundary_support));
-    }
-    if support == ExactBooleanSupport::RequiresCertifiedWinding
-        && let Some(containment_support) =
-            certified_closed_shell_boundary_containment_support_from_graph(
-                &graph, left, right, operation,
-            )?
-    {
-        return Ok(certified_shortcut_preflight(operation, containment_support));
     }
     if support == ExactBooleanSupport::RequiresCertifiedWinding
         && operation == ExactBooleanOperation::Intersection
@@ -4862,103 +4853,6 @@ fn convex_boundary_containment_is_supported(
             .vertices
             .iter()
             .any(|vertex| matches!(vertex.relation, ConvexSolidPointRelation::Outside))
-}
-
-fn certified_closed_shell_boundary_containment_support_from_graph(
-    graph: &super::graph::ExactIntersectionGraph,
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-) -> Result<Option<ExactBooleanSupport>, MeshError> {
-    if graph.has_unknowns()
-        || !left.facts().mesh.closed_manifold
-        || !right.facts().mesh.closed_manifold
-    {
-        return Ok(None);
-    }
-    let counts = graph_relation_counts(graph);
-    if counts.unknown_pairs != 0 || counts.construction_failed_events != 0 {
-        return Ok(None);
-    }
-    let coplanar_evidence = CoplanarVolumetricCellEvidenceReport::from_graph(graph, left, right);
-    if coplanar_evidence.unknown_pairs != 0
-        || coplanar_evidence.unknown_events != 0
-        || coplanar_evidence.construction_failed_events != 0
-        || coplanar_evidence.proper_crossing_candidate_pairs != 0
-        || coplanar_evidence.proper_crossing_events != 0
-    {
-        return Ok(None);
-    }
-
-    let left_in_right = classify_mesh_vertices_against_closed_mesh_winding_report(left, right);
-    left_in_right.validate().map_err(winding_error)?;
-    let right_in_left = classify_mesh_vertices_against_closed_mesh_winding_report(right, left);
-    right_in_left.validate().map_err(winding_error)?;
-    let left_non_strict_inside =
-        closed_mesh_non_strict_containment_is_certified(left, right, &left_in_right);
-    let right_non_strict_inside =
-        closed_mesh_non_strict_containment_is_certified(right, left, &right_in_left);
-    let supported = match operation {
-        ExactBooleanOperation::Union | ExactBooleanOperation::Intersection => {
-            left_non_strict_inside || right_non_strict_inside
-        }
-        ExactBooleanOperation::Difference => left_non_strict_inside,
-        ExactBooleanOperation::SelectedRegions(_) => false,
-    };
-
-    Ok(supported.then_some(ExactBooleanSupport::CertifiedArrangementCellComplex))
-}
-
-fn winding_report_certifies_non_strict_containment(report: &ClosedMeshWindingMeshReport) -> bool {
-    report.target_closed
-        && report.vertices.len() == report.subject_vertex_count
-        && report.vertices.iter().all(|vertex| {
-            matches!(
-                vertex.relation,
-                ClosedMeshWindingRelation::Inside | ClosedMeshWindingRelation::Boundary
-            )
-        })
-        && report
-            .vertices
-            .iter()
-            .any(|vertex| vertex.relation == ClosedMeshWindingRelation::Boundary)
-}
-
-fn closed_mesh_non_strict_containment_is_certified(
-    subject: &ExactMesh,
-    target: &ExactMesh,
-    vertex_report: &ClosedMeshWindingMeshReport,
-) -> bool {
-    winding_report_certifies_non_strict_containment(vertex_report)
-        && subject_triangle_centroids_inside_or_boundary(subject, target)
-}
-
-fn subject_triangle_centroids_inside_or_boundary(subject: &ExactMesh, target: &ExactMesh) -> bool {
-    subject.triangles().iter().all(|triangle| {
-        let [a, b, c] = triangle.0;
-        let Some(centroid) = triangle_centroid(
-            &subject.vertices()[a],
-            &subject.vertices()[b],
-            &subject.vertices()[c],
-        ) else {
-            return false;
-        };
-        let report = classify_point_against_closed_mesh_winding_report(&centroid, target);
-        report.validate().is_ok()
-            && matches!(
-                report.relation,
-                ClosedMeshWindingRelation::Inside | ClosedMeshWindingRelation::Boundary
-            )
-    })
-}
-
-fn triangle_centroid(a: &Point3, b: &Point3, c: &Point3) -> Option<Point3> {
-    let third = (Real::from(1) / &Real::from(3)).ok()?;
-    Some(Point3::new(
-        (&(&a.x + &b.x) + &c.x) * &third,
-        (&(&a.y + &b.y) + &c.y) * &third,
-        (&(&a.z + &b.z) + &c.z) * &third,
-    ))
 }
 
 fn winding_error(error: WindingReportError) -> MeshError {
