@@ -22,8 +22,8 @@ use hypermesh::{
     materialize_affine_orthogonal_solid_intersection,
     materialize_axis_aligned_orthogonal_solid_intersection,
     materialize_axis_aligned_orthogonal_solid_union, materialize_contained_face_adjacent_union,
-    materialize_full_face_adjacent_union, preflight_boolean_exact,
-    preflight_boolean_exact_with_boundary_policy,
+    materialize_full_face_adjacent_union, materialize_open_surface_arrangement,
+    preflight_boolean_exact, preflight_boolean_exact_with_boundary_policy,
 };
 use hyperreal::Real;
 
@@ -393,6 +393,64 @@ fn exact_full_face_adjacent_union_is_publicly_replayable() {
         union.freshness_against_sources(&left, &separated_right),
         FullFaceAdjacentUnionFreshness::SourceReplayMismatch
     );
+}
+
+#[test]
+fn exact_open_surface_arrangement_is_publicly_replayable() {
+    let left = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 0, 4, 0, 0, 0, 4, 0],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let right = ExactMesh::from_i64_triangles_with_policy(
+        &[1, -1, -1, 1, 3, 1, 1, 3, -1],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let separated_right = ExactMesh::from_i64_triangles_with_policy(
+        &[8, -1, -1, 8, 3, 1, 8, 3, -1],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+
+    for operation in [
+        ExactBooleanOperation::Union,
+        ExactBooleanOperation::Intersection,
+        ExactBooleanOperation::Difference,
+    ] {
+        let result = materialize_open_surface_arrangement(
+            &left,
+            &right,
+            operation,
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap()
+        .expect("crossing open surfaces should materialize by exact arrangement");
+        assert_eq!(
+            result.kind,
+            ExactBooleanResultKind::OpenSurfaceArrangement { operation }
+        );
+        result.validate().unwrap();
+        result.validate_against_sources(&left, &right).unwrap();
+        assert_eq!(
+            result.freshness_against_sources(&left, &right),
+            ExactReportFreshness::Current
+        );
+        assert!(!result.region_classifications.is_empty());
+        assert!(!result.triangulations.is_empty());
+        if matches!(operation, ExactBooleanOperation::Intersection) {
+            assert!(result.mesh.triangles().is_empty());
+        } else {
+            assert!(!result.mesh.triangles().is_empty());
+        }
+        assert_eq!(
+            result.freshness_against_sources(&left, &separated_right),
+            ExactReportFreshness::SourceReplayMismatch
+        );
+    }
 }
 
 #[test]
