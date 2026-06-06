@@ -12,7 +12,7 @@ use std::cmp::Ordering;
 
 use hyperreal::Real;
 
-use crate::classify::{compare_reals_for_split_ordering, is_zero};
+use crate::classify::{compare_reals_for_split_ordering, in_closed_unit_interval, is_zero};
 use crate::{
     CircularArc2, Classification, Contour2, ContourSplitMarkers, CurveError, CurvePolicy,
     CurveResult, LineSeg2, NumericMode, ParamRange, Segment2, SegmentSplitMarker,
@@ -39,7 +39,11 @@ pub struct ContourFragmentSet {
 impl ContourFragmentSet {
     /// Constructs a fragment set from already-built fragments.
     pub fn new(fragments: Vec<ContourFragment>) -> CurveResult<Self> {
-        validate_contour_fragments(&fragments)?;
+        Self::new_with_policy(fragments, &CurvePolicy::certified())
+    }
+
+    fn new_with_policy(fragments: Vec<ContourFragment>, policy: &CurvePolicy) -> CurveResult<Self> {
+        validate_contour_fragments(&fragments, policy)?;
         Ok(Self { fragments })
     }
 
@@ -71,7 +75,9 @@ impl ContourFragmentSet {
             }
         }
 
-        Ok(Classification::Decided(Self::new(fragments)?))
+        Ok(Classification::Decided(Self::new_with_policy(
+            fragments, policy,
+        )?))
     }
 
     /// Returns fragments in contour traversal order.
@@ -95,7 +101,14 @@ impl ContourFragmentSet {
     }
 }
 
-fn validate_contour_fragments(fragments: &[ContourFragment]) -> CurveResult<()> {
+fn validate_contour_fragments(
+    fragments: &[ContourFragment],
+    policy: &CurvePolicy,
+) -> CurveResult<()> {
+    for fragment in fragments {
+        validate_contour_fragment_source_range(fragment, policy)?;
+    }
+
     for (left_index, left) in fragments.iter().enumerate() {
         if fragments[left_index + 1..]
             .iter()
@@ -105,6 +118,82 @@ fn validate_contour_fragments(fragments: &[ContourFragment]) -> CurveResult<()> 
                 "contour fragment set must not contain duplicate fragments".into(),
             ));
         }
+        for right in &fragments[left_index + 1..] {
+            validate_contour_fragment_source_ranges_disjoint(left, right, policy)?;
+        }
+    }
+    Ok(())
+}
+
+fn validate_contour_fragment_source_range(
+    fragment: &ContourFragment,
+    policy: &CurvePolicy,
+) -> CurveResult<()> {
+    if in_closed_unit_interval(fragment.source_range.start(), policy) != Some(true)
+        || in_closed_unit_interval(fragment.source_range.end(), policy) != Some(true)
+    {
+        return Err(CurveError::Topology(
+            "contour fragment source range endpoints must be certified inside the unit interval"
+                .into(),
+        ));
+    }
+    match compare_reals_for_split_ordering(
+        fragment.source_range.start(),
+        fragment.source_range.end(),
+        policy,
+    ) {
+        Some(Ordering::Less) => Ok(()),
+        Some(Ordering::Equal) => Err(CurveError::Topology(
+            "contour fragment source range must be positive-dimensional".into(),
+        )),
+        Some(Ordering::Greater) => Err(CurveError::Topology(
+            "contour fragment source range must be forward in source parameter".into(),
+        )),
+        None => Err(CurveError::Topology(
+            "contour fragment source range ordering must be certified".into(),
+        )),
+    }
+}
+
+fn validate_contour_fragment_source_ranges_disjoint(
+    left: &ContourFragment,
+    right: &ContourFragment,
+    policy: &CurvePolicy,
+) -> CurveResult<()> {
+    if left.source_segment_index != right.source_segment_index {
+        return Ok(());
+    }
+
+    let left_before_right = match compare_reals_for_split_ordering(
+        left.source_range.end(),
+        right.source_range.start(),
+        policy,
+    ) {
+        Some(Ordering::Less | Ordering::Equal) => true,
+        Some(Ordering::Greater) => false,
+        None => {
+            return Err(CurveError::Topology(
+                "contour fragment source range separation must be certified".into(),
+            ));
+        }
+    };
+    let right_before_left = match compare_reals_for_split_ordering(
+        right.source_range.end(),
+        left.source_range.start(),
+        policy,
+    ) {
+        Some(Ordering::Less | Ordering::Equal) => true,
+        Some(Ordering::Greater) => false,
+        None => {
+            return Err(CurveError::Topology(
+                "contour fragment source range separation must be certified".into(),
+            ));
+        }
+    };
+    if !left_before_right && !right_before_left {
+        return Err(CurveError::Topology(
+            "contour fragment set must not overlap retained source ranges".into(),
+        ));
     }
     Ok(())
 }

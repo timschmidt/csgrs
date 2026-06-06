@@ -1,10 +1,10 @@
 #![allow(clippy::too_many_arguments)]
 
 use hypercurve::{
-    ArcArcIntersection, BulgeVertex2, CircularArc2, Classification, Contour2, ContourFragmentSet,
-    ContourIntersection, ContourOperand, ContourSplitMarkers, CurveError, CurvePolicy,
-    LineArcIntersection, LineLineIntersection, LineSeg2, Point2, Real, Segment2,
-    SegmentIntersection, SegmentSplitMarker, Tolerance,
+    ArcArcIntersection, BulgeVertex2, CircularArc2, Classification, Contour2, ContourFragment,
+    ContourFragmentSet, ContourIntersection, ContourOperand, ContourSplitMarkers, CurveError,
+    CurvePolicy, LineArcIntersection, LineLineIntersection, LineSeg2, ParamRange, Point2, Real,
+    Segment2, SegmentIntersection, SegmentSplitMarker, Tolerance,
 };
 use proptest::prelude::*;
 
@@ -62,6 +62,10 @@ fn assert_topology_error<T>(result: hypercurve::CurveResult<T>) {
     }
 }
 
+fn line_segment(x0: i32, y0: i32, x1: i32, y1: i32) -> Segment2 {
+    Segment2::Line(LineSeg2::try_new(p(x0, y0), p(x1, y1)).unwrap())
+}
+
 #[test]
 fn contour_fragments_split_line_segments_at_point_events() {
     let a = rectangle(0, 0, 4, 4);
@@ -111,6 +115,47 @@ fn contour_fragment_set_constructor_rejects_duplicate_fragments() {
     let second = fragments.fragments()[1].clone();
     ContourFragmentSet::new(vec![first.clone(), second]).unwrap();
     assert_topology_error(ContourFragmentSet::new(vec![first.clone(), first]));
+}
+
+#[test]
+fn contour_fragment_set_constructor_validates_source_ranges() {
+    let base = ContourFragment {
+        source_segment_index: 0,
+        source_range: ParamRange::new(s(0), q(1, 2)),
+        segment: line_segment(0, 0, 2, 0),
+    };
+    let adjacent = ContourFragment {
+        source_segment_index: 0,
+        source_range: ParamRange::new(q(1, 2), s(1)),
+        segment: line_segment(2, 0, 4, 0),
+    };
+    ContourFragmentSet::new(vec![base.clone(), adjacent]).unwrap();
+
+    let mut outside = base.clone();
+    outside.source_range = ParamRange::new(s(-1), q(1, 2));
+    assert_topology_error(ContourFragmentSet::new(vec![outside]));
+
+    let mut zero = base.clone();
+    zero.source_range = ParamRange::new(q(1, 2), q(1, 2));
+    assert_topology_error(ContourFragmentSet::new(vec![zero]));
+
+    let mut reversed = base.clone();
+    reversed.source_range = ParamRange::new(q(1, 2), s(0));
+    assert_topology_error(ContourFragmentSet::new(vec![reversed]));
+
+    let overlapping = ContourFragment {
+        source_segment_index: 0,
+        source_range: ParamRange::new(q(1, 4), q(3, 4)),
+        segment: line_segment(1, 0, 3, 0),
+    };
+    assert_topology_error(ContourFragmentSet::new(vec![base.clone(), overlapping]));
+
+    let same_range_different_source = ContourFragment {
+        source_segment_index: 1,
+        source_range: base.source_range.clone(),
+        segment: line_segment(0, 1, 2, 1),
+    };
+    ContourFragmentSet::new(vec![base, same_range_different_source]).unwrap();
 }
 
 #[test]
