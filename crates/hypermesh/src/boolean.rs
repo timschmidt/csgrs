@@ -7471,6 +7471,79 @@ mod tests {
     }
 
     #[test]
+    fn closed_same_surface_reversed_orientation_routes_through_arrangement_pipeline() {
+        let left = tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]);
+        let right = ExactMesh::from_i64_triangles(
+            &[
+                4, 0, 0, //
+                0, 0, 0, //
+                0, 4, 0, //
+                0, 0, 4,
+            ],
+            &[
+                1, 0, 2, //
+                1, 3, 0, //
+                0, 3, 2, //
+                2, 3, 1,
+            ],
+        )
+        .unwrap();
+        assert!(meshes_are_certified_same_surface(&left, &right));
+
+        let union_attempt = exact_arrangement_boolean_attempt_report(
+            &left,
+            &right,
+            ExactBooleanOperation::Union,
+            ExactRegularizationPolicy::REGULARIZED_SOLID,
+        )
+        .unwrap();
+        assert_eq!(union_attempt.decline, None);
+        assert_eq!(union_attempt.selected_faces, 4);
+        assert_eq!(union_attempt.output_triangles, 4);
+
+        let difference_attempt = exact_arrangement_boolean_attempt_report(
+            &left,
+            &right,
+            ExactBooleanOperation::Difference,
+            ExactRegularizationPolicy::REGULARIZED_SOLID,
+        )
+        .unwrap();
+        assert_eq!(difference_attempt.decline, None);
+        assert_eq!(difference_attempt.selected_faces, 0);
+        assert_eq!(difference_attempt.output_triangles, 0);
+
+        let union = boolean_exact(
+            &left,
+            &right,
+            ExactBooleanOperation::Union,
+            ValidationPolicy::CLOSED,
+        )
+        .unwrap();
+        assert_eq!(
+            union.kind,
+            ExactBooleanResultKind::CertifiedShortcut {
+                shortcut: ExactBooleanShortcutKind::ArrangementCellComplex
+            }
+        );
+        assert!(exact_meshes_have_same_shape(&union.mesh, &left));
+
+        let difference = boolean_exact(
+            &left,
+            &right,
+            ExactBooleanOperation::Difference,
+            ValidationPolicy::CLOSED,
+        )
+        .unwrap();
+        assert_eq!(
+            difference.kind,
+            ExactBooleanResultKind::CertifiedShortcut {
+                shortcut: ExactBooleanShortcutKind::ArrangementCellComplex
+            }
+        );
+        assert!(difference.mesh.triangles().is_empty());
+    }
+
+    #[test]
     fn coplanar_overlay_regularizes_nonconvex_boundary_touch_intersection_to_empty() {
         let left = ExactMesh::from_i64_triangles_with_policy(
             &[

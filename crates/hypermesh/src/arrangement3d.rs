@@ -2040,19 +2040,27 @@ fn volume_face_sides_match_shell(
     adjacency: &ArrangementVolumeAdjacency,
     shell: &ArrangementRegion,
 ) -> bool {
-    if adjacency.oriented_face_sides.len() != shell.oriented_sides.len() {
+    if adjacency.oriented_face_sides.is_empty()
+        || adjacency.oriented_face_sides.len() > shell.oriented_sides.len()
+    {
         return false;
     }
-    shell.oriented_sides.iter().all(|side| {
-        adjacency.oriented_face_sides.iter().any(|volume_side| {
-            volume_side.face_cell == side.face_cell
-                && volume_side.source == side.source
-                && volume_side.source_face == side.source_face
-                && volume_side.boundary == side.boundary
-                && volume_side.exterior_volume == adjacency.exterior_volume
-                && volume_side.interior_volume == adjacency.interior_volume
+    let every_volume_side_matches_shell = adjacency.oriented_face_sides.iter().all(|volume_side| {
+        volume_side.exterior_volume == adjacency.exterior_volume
+            && volume_side.interior_volume == adjacency.interior_volume
+            && shell.oriented_sides.iter().any(|side| {
+                volume_side.face_cell == side.face_cell
+                    && volume_side.source == side.source
+                    && volume_side.source_face == side.source_face
+                    && volume_side.boundary == side.boundary
+            })
+    });
+    every_volume_side_matches_shell
+        && shell.oriented_sides.iter().all(|side| {
+            adjacency.oriented_face_sides.iter().any(|volume_side| {
+                exact_node_loops_equivalent(&volume_side.boundary, &side.boundary)
+            })
         })
-    })
 }
 
 fn arrangement_volume_face_sides(
@@ -2060,18 +2068,65 @@ fn arrangement_volume_face_sides(
     exterior_volume: usize,
     interior_volume: usize,
 ) -> Vec<ArrangementVolumeFaceSide> {
-    shell
-        .oriented_sides
-        .iter()
-        .map(|side| ArrangementVolumeFaceSide {
+    let mut sides = Vec::<ArrangementVolumeFaceSide>::new();
+    for side in &shell.oriented_sides {
+        if sides
+            .iter()
+            .any(|existing| exact_node_loops_equivalent(&existing.boundary, &side.boundary))
+        {
+            continue;
+        }
+        sides.push(ArrangementVolumeFaceSide {
             face_cell: side.face_cell,
             source: side.source,
             source_face: side.source_face,
             boundary: side.boundary.clone(),
             exterior_volume,
             interior_volume,
+        });
+    }
+    sides
+}
+
+fn exact_node_loops_equivalent(
+    left: &[ArrangementFaceCellNode],
+    right: &[ArrangementFaceCellNode],
+) -> bool {
+    exact_node_loops_same_orientation(left, right)
+        || exact_node_loops_opposite_orientation(left, right)
+}
+
+fn exact_node_loops_same_orientation(
+    left: &[ArrangementFaceCellNode],
+    right: &[ArrangementFaceCellNode],
+) -> bool {
+    if left.len() != right.len() {
+        return false;
+    }
+    if left.is_empty() {
+        return true;
+    }
+    (0..right.len()).any(|offset| {
+        (0..left.len()).all(|index| left[index] == right[(offset + index) % right.len()])
+    })
+}
+
+fn exact_node_loops_opposite_orientation(
+    left: &[ArrangementFaceCellNode],
+    right: &[ArrangementFaceCellNode],
+) -> bool {
+    if left.len() != right.len() {
+        return false;
+    }
+    if left.is_empty() {
+        return true;
+    }
+    (0..right.len()).any(|offset| {
+        (0..left.len()).all(|index| {
+            let right_index = (offset + right.len() - index) % right.len();
+            left[index] == right[right_index]
         })
-        .collect()
+    })
 }
 
 fn nested_shell_volume_graph(
@@ -2476,7 +2531,7 @@ fn shell_region_mesh(
         }
         if boundary_loops
             .iter()
-            .any(|existing| exact_boundary_loops_same_orientation(existing, &cell.boundary_points))
+            .any(|existing| exact_boundary_loops_equivalent(existing, &cell.boundary_points))
         {
             continue;
         }
@@ -3587,10 +3642,10 @@ mod tests {
             .select(ExactBooleanOperation::Union)
             .unwrap();
         assert_eq!(union.selected_volume_regions, vec![1]);
-        assert_eq!(union.selected_faces.len(), 8);
+        assert_eq!(union.selected_faces.len(), 4);
         let simplified_union = union.simplify_exact().unwrap();
         assert_eq!(simplified_union.faces.len(), 4);
-        assert_eq!(simplified_union.duplicate_cells_removed, 4);
+        assert_eq!(simplified_union.duplicate_cells_removed, 0);
         assert_eq!(simplified_union.triangulate().unwrap().triangles().len(), 4);
 
         let intersection = arrangement
@@ -3600,10 +3655,10 @@ mod tests {
             .select(ExactBooleanOperation::Intersection)
             .unwrap();
         assert_eq!(intersection.selected_volume_regions, vec![1]);
-        assert_eq!(intersection.selected_faces.len(), 8);
+        assert_eq!(intersection.selected_faces.len(), 4);
         let simplified_intersection = intersection.simplify_exact().unwrap();
         assert_eq!(simplified_intersection.faces.len(), 4);
-        assert_eq!(simplified_intersection.duplicate_cells_removed, 4);
+        assert_eq!(simplified_intersection.duplicate_cells_removed, 0);
         assert_eq!(
             simplified_intersection
                 .triangulate()
