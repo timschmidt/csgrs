@@ -386,7 +386,7 @@ impl BezierRetainedLinearOverlapSplitGraph2 {
 impl BezierRetainedResolvedLinearOverlap2 {
     /// Constructs one resolved refined-overlap span.
     #[allow(clippy::too_many_arguments)]
-    pub const fn new(
+    pub fn new(
         first_refined_fragment_index: usize,
         second_refined_fragment_index: usize,
         first_original_fragment_index: usize,
@@ -396,8 +396,16 @@ impl BezierRetainedResolvedLinearOverlap2 {
         overlap_segment: LineSeg2,
         orientation: BezierRetainedOverlapOrientation2,
         extent: BezierRetainedLineOverlapExtent2,
-    ) -> Self {
-        Self {
+    ) -> CurveResult<Self> {
+        validate_ordered_overlap_indices(
+            first_refined_fragment_index,
+            second_refined_fragment_index,
+        )?;
+        validate_ordered_overlap_indices(
+            first_original_fragment_index,
+            second_original_fragment_index,
+        )?;
+        Ok(Self {
             first_refined_fragment_index,
             second_refined_fragment_index,
             first_original_fragment_index,
@@ -407,7 +415,7 @@ impl BezierRetainedResolvedLinearOverlap2 {
             overlap_segment,
             orientation,
             extent,
-        }
+        })
     }
 
     /// Returns the refined graph-fragment index for the first overlap side.
@@ -1120,7 +1128,7 @@ fn resolved_linear_overlap_spans(
             Classification::Decided(orientation) => orientation,
             Classification::Uncertain(reason) => return Classification::Uncertain(reason),
         };
-        resolved.push(BezierRetainedResolvedLinearOverlap2::new(
+        let resolved_overlap = match BezierRetainedResolvedLinearOverlap2::new(
             first_refined_fragment_index,
             second_refined_fragment_index,
             split.first_fragment_index(),
@@ -1130,7 +1138,11 @@ fn resolved_linear_overlap_spans(
             split.overlap_segment().clone(),
             orientation,
             split.extent(),
-        ));
+        ) {
+            Ok(overlap) => overlap,
+            Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
+        };
+        resolved.push(resolved_overlap);
     }
     Classification::Decided(resolved)
 }

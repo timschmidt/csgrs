@@ -4,9 +4,9 @@ use hypercurve::{
     BezierRetainedLineOverlapExtent2, BezierRetainedLineOverlapSplit2,
     BezierRetainedLinearOverlapSplit2, BezierRetainedLinearOverlapSplitGraph2,
     BezierRetainedOverlap2, BezierRetainedOverlapOrientation2, BezierRetainedOverlapRelation2,
-    BezierRetainedOverlapReport2, BezierSplitFragment2, BezierSubcurve2, Classification,
-    CubicBezier2, CurveError, CurvePolicy, LineSeg2, ParamRange, Point2, QuadraticBezier2,
-    RationalQuadraticBezier2, Real, UncertaintyReason,
+    BezierRetainedOverlapReport2, BezierRetainedResolvedLinearOverlap2, BezierSplitFragment2,
+    BezierSubcurve2, Classification, CubicBezier2, CurveError, CurvePolicy, LineSeg2, ParamRange,
+    Point2, QuadraticBezier2, RationalQuadraticBezier2, Real, UncertaintyReason,
 };
 use proptest::prelude::*;
 
@@ -719,6 +719,36 @@ fn retained_linear_overlap_split_graph_rejects_missing_refined_provenance() {
         BezierRetainedOverlapReport2::new(Vec::new()),
         Vec::new(),
         Vec::new(),
+    ));
+}
+
+#[test]
+fn retained_resolved_overlap_constructor_rejects_unordered_indices() {
+    let overlap_segment = LineSeg2::try_new(p(0, 0), p(1, 0)).unwrap();
+    let first_range = ParamRange::new(r(0), r(1));
+    let second_range = ParamRange::new(r(0), r(1));
+
+    assert_topology_error(BezierRetainedResolvedLinearOverlap2::new(
+        1,
+        1,
+        0,
+        1,
+        first_range.clone(),
+        second_range.clone(),
+        overlap_segment.clone(),
+        BezierRetainedOverlapOrientation2::Same,
+        BezierRetainedLineOverlapExtent2::FullBoth,
+    ));
+    assert_topology_error(BezierRetainedResolvedLinearOverlap2::new(
+        1,
+        2,
+        4,
+        3,
+        first_range,
+        second_range,
+        overlap_segment,
+        BezierRetainedOverlapOrientation2::Same,
+        BezierRetainedLineOverlapExtent2::FullBoth,
     ));
 }
 
