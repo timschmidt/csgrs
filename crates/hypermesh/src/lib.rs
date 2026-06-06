@@ -104,7 +104,7 @@ pub use boolean::{
     certify_volumetric_boundary_closure_report, certify_winding_readiness_report,
     exact_arrangement_boolean_attempt_report, materialize_boundary_touching_policy_boolean,
     materialize_bounds_disjoint_boolean, materialize_closed_boundary_touching_regularized_boolean,
-    materialize_closed_regularized_lower_dimensional_boolean,
+    materialize_closed_convex_boolean, materialize_closed_regularized_lower_dimensional_boolean,
     materialize_closed_winding_containment_boolean, materialize_closed_winding_separated_boolean,
     materialize_coplanar_mesh_overlay_arrangement, materialize_empty_operand_boolean,
     materialize_identical_mesh_boolean, materialize_open_surface_arrangement,

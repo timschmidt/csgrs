@@ -23,7 +23,7 @@ use hypermesh::{
     materialize_axis_aligned_orthogonal_solid_intersection,
     materialize_axis_aligned_orthogonal_solid_union, materialize_boundary_touching_policy_boolean,
     materialize_bounds_disjoint_boolean, materialize_closed_boundary_touching_regularized_boolean,
-    materialize_closed_regularized_lower_dimensional_boolean,
+    materialize_closed_convex_boolean, materialize_closed_regularized_lower_dimensional_boolean,
     materialize_closed_winding_containment_boolean, materialize_closed_winding_separated_boolean,
     materialize_contained_face_adjacent_union, materialize_coplanar_mesh_overlay_arrangement,
     materialize_empty_operand_boolean, materialize_full_face_adjacent_union,
@@ -376,6 +376,76 @@ fn exact_coplanar_volumetric_cell_evidence_is_publicly_replayable() {
     assert_eq!(
         report.freshness_against_sources(&left, &separated_right),
         CoplanarVolumetricCellEvidenceFreshness::SourceReplayMismatch
+    );
+}
+
+#[test]
+fn exact_closed_convex_boolean_materializer_is_publicly_replayable() {
+    let left = tetra_from_corners([0, 0, 0], [6, 0, 0], [0, 6, 0], [0, 0, 6]);
+    let right = tetra_from_corners([2, 2, 2], [8, -1, -1], [-1, 8, -1], [3, 2, 0]);
+    let stale_open_right = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 0, 4, 0, 0, 0, 4, 0],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+
+    for (operation, shortcut) in [
+        (
+            ExactBooleanOperation::Union,
+            hypermesh::ExactBooleanShortcutKind::ConvexUnion,
+        ),
+        (
+            ExactBooleanOperation::Intersection,
+            hypermesh::ExactBooleanShortcutKind::ConvexIntersection,
+        ),
+        (
+            ExactBooleanOperation::Difference,
+            hypermesh::ExactBooleanShortcutKind::ConvexDifference,
+        ),
+    ] {
+        let result =
+            materialize_closed_convex_boolean(&left, &right, operation, ValidationPolicy::CLOSED)
+                .unwrap()
+                .expect("nonorthogonal closed convex solids should materialize directly");
+        assert_eq!(
+            result.kind,
+            ExactBooleanResultKind::CertifiedShortcut {
+                operation,
+                shortcut
+            }
+        );
+        result.validate().unwrap();
+        result.validate_against_sources(&left, &right).unwrap();
+        assert_eq!(
+            result.freshness_against_sources(&left, &right),
+            ExactReportFreshness::Current
+        );
+        assert_eq!(
+            result.freshness_against_sources(&left, &stale_open_right),
+            ExactReportFreshness::SourceReplayMismatch
+        );
+        result
+            .validate_operation_against_sources(
+                &left,
+                &right,
+                operation,
+                ValidationPolicy::CLOSED,
+                ExactBoundaryBooleanPolicy::Reject,
+            )
+            .unwrap();
+        assert!(result.mesh.facts().mesh.closed_manifold);
+    }
+
+    assert!(
+        materialize_closed_convex_boolean(
+            &axis_aligned_box([0, 0, 0], [2, 2, 2]),
+            &axis_aligned_box([1, 1, 1], [3, 3, 3]),
+            ExactBooleanOperation::Union,
+            ValidationPolicy::CLOSED,
+        )
+        .unwrap()
+        .is_none()
     );
 }
 

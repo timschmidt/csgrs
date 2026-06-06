@@ -3377,6 +3377,31 @@ fn boolean_convex_meshes_optional(
     Ok(Some(result))
 }
 
+/// Certify and materialize a named boolean for closed convex solids.
+///
+/// This public wrapper follows [`boolean_exact`] precedence: it only
+/// materializes when preflight certifies the requested operation as a direct
+/// convex union, intersection, or difference. Inputs handled by earlier exact
+/// shortcuts, such as orthogonal-cell recovery or bounds disjointness, return
+/// `None` so replay provenance remains stable.
+pub fn materialize_closed_convex_boolean(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+) -> Result<Option<ExactBooleanResult>, MeshError> {
+    let preflight = preflight_boolean_exact(left, right, operation)?;
+    if !matches!(
+        preflight.support,
+        ExactBooleanSupport::CertifiedConvexUnion
+            | ExactBooleanSupport::CertifiedConvexIntersection
+            | ExactBooleanSupport::CertifiedConvexDifference
+    ) {
+        return Ok(None);
+    }
+    boolean_convex_meshes_optional(left, right, operation, validation)
+}
+
 fn boolean_arrangement_convex_regularized_sheet_recovery(
     left: &ExactMesh,
     right: &ExactMesh,
