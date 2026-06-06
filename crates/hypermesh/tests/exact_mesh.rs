@@ -5,10 +5,13 @@ use hypermesh::{
     ExactBooleanOperation, ExactBooleanResultKind, ExactBoundaryBooleanPolicy,
     ExactI64MeshInputReadiness, ExactLabeledCellComplexFreshness, ExactMesh,
     ExactRegularizationPolicy, ExactReportFreshness, ExactSelectedCellComplexFreshness,
-    ExactSimplifiedCellComplexFreshness, IntersectionGraphFreshness, MeshFacePairRelation,
+    ExactSimplifiedCellComplexFreshness, ExactVolumetricRegionFreshness,
+    ExactVolumetricRegionRelation, IntersectionGraphFreshness, MeshFacePairRelation,
     MeshFacePairValidationError, SplitPlanFreshness, TriangleTriangleRelation, ValidationPolicy,
-    boolean_exact, boolean_exact_with_boundary_policy, build_intersection_graph,
-    certify_boundary_touching_report, classify_mesh_face_pair, classify_triangle_triangle,
+    WindingReportFreshness, boolean_exact, boolean_exact_with_boundary_policy,
+    build_intersection_graph, certify_boundary_touching_report, classify_mesh_face_pair,
+    classify_mesh_vertices_against_closed_mesh_winding_report,
+    classify_point_against_closed_mesh_winding_report, classify_triangle_triangle,
     exact_arrangement_boolean_attempt_report, inspect_i64_mesh_input, preflight_boolean_exact,
     preflight_boolean_exact_with_boundary_policy,
 };
@@ -16,6 +19,15 @@ use hyperreal::Real;
 
 fn p(x: i64, y: i64, z: i64) -> Point3 {
     Point3::new(Real::from(x), Real::from(y), Real::from(z))
+}
+
+fn rational_point(numerators: [i64; 3], denominator: i64) -> Point3 {
+    let denominator = Real::from(denominator);
+    Point3::new(
+        (Real::from(numerators[0]) / &denominator).expect("nonzero denominator"),
+        (Real::from(numerators[1]) / &denominator).expect("nonzero denominator"),
+        (Real::from(numerators[2]) / &denominator).expect("nonzero denominator"),
+    )
 }
 
 fn tetra(offset: [i64; 3]) -> ExactMesh {
@@ -60,6 +72,51 @@ fn exact_mesh_construction_retains_valid_public_facts() {
     let readiness = report.readiness();
     assert_eq!(readiness, ExactI64MeshInputReadiness::Ready);
     assert!(report.edge_ready());
+}
+
+#[test]
+fn exact_winding_reports_classify_freshness_publicly() {
+    let target = tetra([0, 0, 0]);
+    let shifted = tetra([3, 0, 0]);
+    let point = rational_point([1, 1, 1], 4);
+
+    let point_report = classify_point_against_closed_mesh_winding_report(&point, &target);
+    point_report
+        .validate_against_sources(&point, &target)
+        .unwrap();
+    assert_eq!(
+        point_report.freshness_against_sources(&point, &target),
+        WindingReportFreshness::Current
+    );
+    let mut stale_point_report = point_report.clone();
+    stale_point_report.axis = None;
+    assert_eq!(
+        stale_point_report.freshness_against_sources(&point, &target),
+        WindingReportFreshness::StaleAxisEvidence
+    );
+    assert_eq!(
+        point_report.freshness_against_sources(&point, &shifted),
+        WindingReportFreshness::SourceReplayMismatch
+    );
+
+    let mesh_report = classify_mesh_vertices_against_closed_mesh_winding_report(&shifted, &target);
+    mesh_report
+        .validate_against_sources(&shifted, &target)
+        .unwrap();
+    assert_eq!(
+        mesh_report.freshness_against_sources(&shifted, &target),
+        WindingReportFreshness::Current
+    );
+    let mut stale_mesh_report = mesh_report.clone();
+    stale_mesh_report.subject_vertex_count += 1;
+    assert_eq!(
+        stale_mesh_report.freshness_against_sources(&shifted, &target),
+        WindingReportFreshness::StaleCounts
+    );
+    assert_eq!(
+        mesh_report.freshness_against_sources(&target, &shifted),
+        WindingReportFreshness::SourceReplayMismatch
+    );
 }
 
 #[test]
@@ -454,6 +511,86 @@ fn exact_arrangement_public_path_reports_blockers_or_cells() {
     assert_eq!(
         stale_attempt.freshness_against_sources(&left, &right),
         ExactReportFreshness::SourceReplayMismatch
+    );
+}
+
+#[test]
+fn exact_volumetric_region_reports_classify_freshness_publicly() {
+    let left = ExactMesh::from_i64_triangles(
+        &[
+            0, 0, 0, //
+            4, 0, 0, //
+            0, 4, 0, //
+            0, 0, 4, //
+            2, 2, 3,
+        ],
+        &[
+            0, 2, 1, //
+            1, 2, 3, //
+            2, 0, 3, //
+            0, 1, 4, //
+            1, 3, 4, //
+            3, 0, 4,
+        ],
+    )
+    .unwrap();
+    let right = ExactMesh::from_i64_triangles(
+        &[1, 1, 1, 5, 1, 1, 1, 5, 1, 1, 1, 5],
+        &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
+    )
+    .unwrap();
+
+    let result = boolean_exact(
+        &left,
+        &right,
+        ExactBooleanOperation::Union,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    assert!(!result.volumetric_classifications.is_empty(), "{result:?}");
+    let classification = result
+        .volumetric_classifications
+        .iter()
+        .find(|classification| classification.relation != ExactVolumetricRegionRelation::Outside)
+        .expect("overlapping fixture should retain a non-outside volumetric cell");
+    let triangulation = result
+        .triangulations
+        .iter()
+        .find(|triangulation| {
+            triangulation.side == classification.region_side
+                && triangulation.face == classification.region_face
+                && triangulation
+                    .triangles
+                    .chunks_exact(3)
+                    .any(|triangle| triangle == classification.triangle)
+        })
+        .expect("volumetric classification should reference a retained triangulation");
+    let target = match classification.region_side {
+        hypermesh::MeshSide::Left => &right,
+        hypermesh::MeshSide::Right => &left,
+    };
+    assert_eq!(
+        classification.freshness_against_sources(triangulation, target),
+        ExactVolumetricRegionFreshness::Current
+    );
+
+    let mut stale_relation = classification.clone();
+    stale_relation.relation = ExactVolumetricRegionRelation::Unknown;
+    assert_eq!(
+        stale_relation.freshness_against_sources(triangulation, target),
+        ExactVolumetricRegionFreshness::StaleRelationEvidence
+    );
+    let mut stale_attempts = classification.clone();
+    stale_attempts.witness_attempts.clear();
+    assert_eq!(
+        stale_attempts.freshness_against_sources(triangulation, target),
+        ExactVolumetricRegionFreshness::InvalidRepresentativeEvidence
+    );
+
+    let shifted_target = tetra([10, 10, 10]);
+    assert_eq!(
+        classification.freshness_against_sources(triangulation, &shifted_target),
+        ExactVolumetricRegionFreshness::SourceReplayMismatch
     );
 }
 

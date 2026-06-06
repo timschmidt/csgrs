@@ -149,6 +149,11 @@ pub use readiness::{
     ExactMeshConsumerReadinessError, ExactMeshConsumerReadinessFreshness,
     ExactMeshConsumerReadinessReport, exact_mesh_consumer_readiness,
 };
+pub use region::{
+    ExactBooleanAssemblyPlan, ExactOutputTriangle, ExactOutputTriangleOrientation,
+    ExactOutputVertex, ExactRegionRetention, ExactRegionSelection, FaceRegionPlaneClassification,
+    FaceRegionPlaneRelation, FaceRegionPlaneValidationError, FaceRegionTriangulation,
+};
 pub use regularization::{
     ExactArrangementBlocker, ExactLowerDimensionalPolicy, ExactRegularizationPolicy,
     ExactUnresolvedPolicy,
@@ -183,9 +188,15 @@ pub use view::{
     ApproximateMeshF64View, ApproximateMeshF64ViewError, ApproximateMeshF64ViewFreshness,
     approximate_mesh_f64_view,
 };
+pub use volumetric::{
+    ExactVolumetricRegionClassification, ExactVolumetricRegionError,
+    ExactVolumetricRegionFreshness, ExactVolumetricRegionRelation, ExactVolumetricWitnessAttempt,
+    classify_triangulated_region_triangle_against_closed_mesh,
+    classify_triangulated_regions_against_opposite_meshes,
+};
 pub use winding::{
     ClosedMeshWindingMeshRelation, ClosedMeshWindingMeshReport, ClosedMeshWindingRelation,
-    PointMeshWindingReport, WindingRayAxis, WindingReportError,
+    PointMeshWindingReport, WindingRayAxis, WindingReportError, WindingReportFreshness,
     classify_mesh_vertices_against_closed_mesh_winding,
     classify_mesh_vertices_against_closed_mesh_winding_report,
     classify_point_against_closed_mesh_winding, classify_point_against_closed_mesh_winding_report,

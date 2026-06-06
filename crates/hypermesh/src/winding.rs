@@ -267,6 +267,18 @@ impl PointMeshWindingReport {
             Err(WindingReportError::SourceReplayMismatch)
         }
     }
+
+    /// Classify whether this retained point/mesh winding report is fresh.
+    pub fn freshness_against_sources(
+        &self,
+        point: &Point3,
+        mesh: &ExactMesh,
+    ) -> WindingReportFreshness {
+        match self.validate_against_sources(point, mesh) {
+            Ok(()) => WindingReportFreshness::Current,
+            Err(error) => error.into(),
+        }
+    }
 }
 
 /// Exact relation between every subject vertex and a closed target mesh.
@@ -362,6 +374,18 @@ impl ClosedMeshWindingMeshReport {
             Err(WindingReportError::SourceReplayMismatch)
         }
     }
+
+    /// Classify whether this retained mesh/mesh winding report is fresh.
+    pub fn freshness_against_sources(
+        &self,
+        subject: &ExactMesh,
+        target: &ExactMesh,
+    ) -> WindingReportFreshness {
+        match self.validate_against_sources(subject, target) {
+            Ok(()) => WindingReportFreshness::Current,
+            Err(error) => error.into(),
+        }
+    }
 }
 
 /// Validation or source-replay failure for winding reports.
@@ -377,6 +401,34 @@ pub enum WindingReportError {
     VertexCountMismatch,
     /// Recomputed source evidence did not match the retained report.
     SourceReplayMismatch,
+}
+
+/// Freshness status for retained exact winding reports.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum WindingReportFreshness {
+    /// The winding report is locally valid and replays from the source object.
+    Current,
+    /// Retained ray-axis evidence is missing or impossible.
+    StaleAxisEvidence,
+    /// Retained relation and crossing/dependency evidence disagree.
+    StaleStatusEvidence,
+    /// Retained mesh-summary counts no longer match retained vertex evidence.
+    StaleCounts,
+    /// The report is locally valid but no longer replays from the source object.
+    SourceReplayMismatch,
+}
+
+impl From<WindingReportError> for WindingReportFreshness {
+    fn from(error: WindingReportError) -> Self {
+        match error {
+            WindingReportError::InvalidAxisCount | WindingReportError::MissingAxis => {
+                Self::StaleAxisEvidence
+            }
+            WindingReportError::StatusEvidenceMismatch => Self::StaleStatusEvidence,
+            WindingReportError::VertexCountMismatch => Self::StaleCounts,
+            WindingReportError::SourceReplayMismatch => Self::SourceReplayMismatch,
+        }
+    }
 }
 
 /// Classify `point` against a closed triangle mesh by exact ray parity.

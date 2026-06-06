@@ -198,6 +198,18 @@ impl ExactVolumetricRegionClassification {
             Err(ExactVolumetricRegionError::SourceReplayMismatch)
         }
     }
+
+    /// Classify whether this retained volumetric region classification is fresh.
+    pub fn freshness_against_sources(
+        &self,
+        triangulation: &FaceRegionTriangulation,
+        target: &ExactMesh,
+    ) -> ExactVolumetricRegionFreshness {
+        match self.validate_against_sources(triangulation, target) {
+            Ok(()) => ExactVolumetricRegionFreshness::Current,
+            Err(error) => error.into(),
+        }
+    }
 }
 
 /// Validation or source-replay failure for volumetric region classifications.
@@ -230,6 +242,45 @@ pub enum ExactVolumetricRegionError {
     RelationMismatch,
     /// Recomputed representative or winding evidence did not match.
     SourceReplayMismatch,
+}
+
+/// Freshness status for retained volumetric winding region classifications.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum ExactVolumetricRegionFreshness {
+    /// The classification is locally valid and replays from source evidence.
+    Current,
+    /// Retained triangulation references or topology are invalid.
+    InvalidTriangulation,
+    /// Retained representative witness evidence is missing, out of order, or stale.
+    InvalidRepresentativeEvidence,
+    /// Retained winding evidence is internally inconsistent.
+    InvalidWindingEvidence,
+    /// Retained relation does not match retained winding evidence.
+    StaleRelationEvidence,
+    /// The classification is locally valid but no longer replays from sources.
+    SourceReplayMismatch,
+}
+
+impl From<ExactVolumetricRegionError> for ExactVolumetricRegionFreshness {
+    fn from(error: ExactVolumetricRegionError) -> Self {
+        match error {
+            ExactVolumetricRegionError::InvalidTriangulation
+            | ExactVolumetricRegionError::EmptyTriangulation
+            | ExactVolumetricRegionError::InvalidTriangleIndex => Self::InvalidTriangulation,
+            ExactVolumetricRegionError::InvalidRepresentativeWitness(_)
+            | ExactVolumetricRegionError::MissingRepresentativeAttempt
+            | ExactVolumetricRegionError::RepresentativeAttemptOrderMismatch
+            | ExactVolumetricRegionError::RepresentativeAttemptRelationMismatch
+            | ExactVolumetricRegionError::RepresentativeAttemptMismatch
+            | ExactVolumetricRegionError::RepresentativeAttemptNotExhausted
+            | ExactVolumetricRegionError::RepresentativeAttemptSkippedStrict => {
+                Self::InvalidRepresentativeEvidence
+            }
+            ExactVolumetricRegionError::Winding(_) => Self::InvalidWindingEvidence,
+            ExactVolumetricRegionError::RelationMismatch => Self::StaleRelationEvidence,
+            ExactVolumetricRegionError::SourceReplayMismatch => Self::SourceReplayMismatch,
+        }
+    }
 }
 
 /// Classify one exact triangulated source-face cell against a closed mesh.
