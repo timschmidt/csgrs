@@ -435,7 +435,11 @@ impl ExactArrangement3d {
             && policy == ExactRegularizationPolicy::REGULARIZED_SOLID
             && left.facts().mesh.closed_manifold
             && right.facts().mesh.closed_manifold;
-        if has_mixed_source_open_sheet_complex && !regularized_closed_solid_sheet_complex {
+        let retained_sheet_artifact_complex = policy == ExactRegularizationPolicy::RETAIN_ARTIFACTS;
+        if has_mixed_source_open_sheet_complex
+            && !regularized_closed_solid_sheet_complex
+            && !retained_sheet_artifact_complex
+        {
             push_unique_blocker(
                 &mut blockers,
                 ExactArrangementBlocker::UnregularizedOpenSheetComplex,
@@ -458,10 +462,12 @@ impl ExactArrangement3d {
                 // Closed regularized solid open sheet contacts are also
                 // supportable: the volume-boundary materializer may drop the
                 // lower-dimensional contact while retaining exact provenance
-                // for the selected cells. Open or non-regularized sheet
-                // complexes still report blockers.
+                // for the selected cells. Explicit artifact-retention policy
+                // likewise keeps mixed-source open sheet cells inspectable
+                // without claiming regularized solid output. Other open or
+                // non-regularized sheet complexes still report blockers.
                 let blocker = if has_mixed_source_open_sheet_complex {
-                    if regularized_closed_solid_sheet_complex {
+                    if regularized_closed_solid_sheet_complex || retained_sheet_artifact_complex {
                         None
                     } else {
                         Some(ExactArrangementBlocker::UnregularizedCoincidentSheetComplex)
@@ -4039,6 +4045,55 @@ mod tests {
                 .contains(&ExactArrangementBlocker::UnresolvedRegionClassification),
             "{:?}",
             arrangement.blockers
+        );
+    }
+
+    #[test]
+    fn retained_artifact_policy_keeps_open_sheet_complex_without_regularization_blockers() {
+        let left = open_triangle_i64([0, 0, 0], [4, 0, 0], [0, 4, 0]);
+        let right = open_triangle_i64([1, -1, -1], [1, 3, 1], [1, 3, -1]);
+
+        let retained = ExactArrangement::from_meshes_with_policy(
+            &left,
+            &right,
+            ExactRegularizationPolicy::RETAIN_ARTIFACTS,
+        )
+        .unwrap();
+
+        assert!(retained.blockers.is_empty(), "{:?}", retained.blockers);
+        let regions = retained
+            .shells_or_regions
+            .as_ref()
+            .expect("retained arrangement should keep sheet diagnostics");
+        assert_eq!(regions.len(), 1);
+        assert!(!regions[0].closed);
+        assert!(!regions[0].manifold);
+        assert_eq!(
+            regions[0].source_sides,
+            vec![MeshSide::Left, MeshSide::Right]
+        );
+        assert!(regions[0].boundary_edges > 0);
+        assert!(regions[0].non_manifold_edges > 0);
+
+        let regularized = ExactArrangement::from_meshes_with_policy(
+            &left,
+            &right,
+            ExactRegularizationPolicy::REGULARIZED_SOLID,
+        )
+        .unwrap();
+        assert!(
+            regularized
+                .blockers
+                .contains(&ExactArrangementBlocker::UnregularizedOpenSheetComplex),
+            "{:?}",
+            regularized.blockers
+        );
+        assert!(
+            regularized
+                .blockers
+                .contains(&ExactArrangementBlocker::UnregularizedCoincidentSheetComplex),
+            "{:?}",
+            regularized.blockers
         );
     }
 
