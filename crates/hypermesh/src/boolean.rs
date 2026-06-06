@@ -6819,6 +6819,24 @@ fn boolean_closed_regularized_lower_dimensional_optional(
     Ok(Some(certified_shortcut_result(mesh, operation, shortcut)))
 }
 
+/// Certify and materialize a named closed-regularized boolean when at least
+/// one operand has no closed-volume contribution.
+///
+/// This exposes the exact regularization path used by [`boolean_exact`]: a
+/// closed solid combined with a lower-dimensional surface keeps or drops the
+/// solid according to the named operation, while two lower-dimensional
+/// operands regularize to an empty closed-solid result. Unsupported operands or
+/// validation policies return `None` rather than falling back to tolerance
+/// geometry.
+pub fn materialize_closed_regularized_lower_dimensional_boolean(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+) -> Result<Option<ExactBooleanResult>, MeshError> {
+    boolean_closed_regularized_lower_dimensional_optional(left, right, operation, validation)
+}
+
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum ClosedRegularizedOperandKind {
     ClosedSolid,

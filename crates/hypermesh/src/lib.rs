@@ -102,10 +102,11 @@ pub use boolean::{
     certify_open_surface_disjoint_report, certify_planar_arrangement_report,
     certify_refinement_report, certify_same_surface_report,
     certify_volumetric_boundary_closure_report, certify_winding_readiness_report,
-    exact_arrangement_boolean_attempt_report, materialize_coplanar_mesh_overlay_arrangement,
-    materialize_open_surface_arrangement, materialize_volumetric_winding_arrangement,
-    preflight_boolean_exact, preflight_boolean_exact_with_boundary_policy,
-    preflight_boolean_exact_with_validation,
+    exact_arrangement_boolean_attempt_report,
+    materialize_closed_regularized_lower_dimensional_boolean,
+    materialize_coplanar_mesh_overlay_arrangement, materialize_open_surface_arrangement,
+    materialize_volumetric_winding_arrangement, preflight_boolean_exact,
+    preflight_boolean_exact_with_boundary_policy, preflight_boolean_exact_with_validation,
 };
 pub use bounds::{AabbIntersectionKind, BoundsValidationError, ExactAabb3, MeshBounds};
 pub use cell_complex::{

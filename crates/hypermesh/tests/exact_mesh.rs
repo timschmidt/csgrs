@@ -21,10 +21,12 @@ use hypermesh::{
     classify_triangle_triangle, exact_arrangement_boolean_attempt_report, inspect_i64_mesh_input,
     materialize_affine_orthogonal_solid_intersection,
     materialize_axis_aligned_orthogonal_solid_intersection,
-    materialize_axis_aligned_orthogonal_solid_union, materialize_contained_face_adjacent_union,
-    materialize_coplanar_mesh_overlay_arrangement, materialize_full_face_adjacent_union,
-    materialize_open_surface_arrangement, materialize_volumetric_winding_arrangement,
-    preflight_boolean_exact, preflight_boolean_exact_with_boundary_policy,
+    materialize_axis_aligned_orthogonal_solid_union,
+    materialize_closed_regularized_lower_dimensional_boolean,
+    materialize_contained_face_adjacent_union, materialize_coplanar_mesh_overlay_arrangement,
+    materialize_full_face_adjacent_union, materialize_open_surface_arrangement,
+    materialize_volumetric_winding_arrangement, preflight_boolean_exact,
+    preflight_boolean_exact_with_boundary_policy,
 };
 use hyperreal::Real;
 
@@ -506,6 +508,65 @@ fn exact_coplanar_mesh_overlay_arrangement_is_publicly_replayable() {
             result.freshness_against_sources(&left, &separated_right),
             ExactReportFreshness::SourceReplayMismatch
         );
+    }
+}
+
+#[test]
+fn lower_dimensional_regularized_boolean_is_publicly_replayable() {
+    let left = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 0, 4, 0, 0, 0, 4, 0],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let right = ExactMesh::from_i64_triangles_with_policy(
+        &[1, -1, -1, 1, 3, 1, 1, 3, -1],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let closed_right = tetra([0, 0, 0]);
+
+    for operation in [
+        ExactBooleanOperation::Union,
+        ExactBooleanOperation::Intersection,
+        ExactBooleanOperation::Difference,
+    ] {
+        let result = materialize_closed_regularized_lower_dimensional_boolean(
+            &left,
+            &right,
+            operation,
+            ValidationPolicy::CLOSED,
+        )
+        .unwrap()
+        .expect("lower-dimensional operands should regularize to exact empty solid output");
+        assert_eq!(
+            result.kind,
+            ExactBooleanResultKind::CertifiedShortcut {
+                operation,
+                shortcut: hypermesh::ExactBooleanShortcutKind::LowerDimensionalRegularizedSolid
+            }
+        );
+        assert!(result.mesh.triangles().is_empty());
+        result.validate().unwrap();
+        result.validate_against_sources(&left, &right).unwrap();
+        assert_eq!(
+            result.freshness_against_sources(&left, &right),
+            ExactReportFreshness::Current
+        );
+        assert_eq!(
+            result.freshness_against_sources(&left, &closed_right),
+            ExactReportFreshness::SourceReplayMismatch
+        );
+        result
+            .validate_operation_against_sources(
+                &left,
+                &right,
+                operation,
+                ValidationPolicy::CLOSED,
+                ExactBoundaryBooleanPolicy::Reject,
+            )
+            .unwrap();
     }
 }
 
