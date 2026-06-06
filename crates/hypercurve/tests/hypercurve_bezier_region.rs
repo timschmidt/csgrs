@@ -335,6 +335,7 @@ fn retained_line_image_role_report_assigns_nested_material_and_hole() {
             BezierRetainedRegionLoopRole::Hole
         ]
     );
+    assert_eq!(report.nesting_depths(), &[0, 1]);
     assert_eq!(report.material_loop_indices(), vec![0]);
     assert_eq!(report.hole_loop_indices(), vec![1]);
     assert_eq!(
@@ -368,6 +369,7 @@ fn retained_line_image_role_report_accepts_exact_algebraic_endpoint_carriers() {
             BezierRetainedRegionLoopRole::Hole
         ]
     );
+    assert_eq!(report.nesting_depths(), &[0, 1]);
     assert_eq!(report.material_loop_indices(), vec![0]);
     assert_eq!(report.hole_loop_indices(), vec![1]);
     assert_eq!(
@@ -567,6 +569,7 @@ fn retained_curved_nesting_role_report_assigns_same_orientation_nonlinear_hole()
             BezierRetainedRegionLoopRole::Hole
         ]
     );
+    assert_eq!(nesting.nesting_depths(), &[0, 1]);
     assert_eq!(nesting.material_loop_indices(), vec![0]);
     assert_eq!(nesting.hole_loop_indices(), vec![1]);
     assert_eq!(nesting.sample_points().len(), 2);

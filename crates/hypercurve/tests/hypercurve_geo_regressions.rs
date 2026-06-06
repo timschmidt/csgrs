@@ -72,8 +72,8 @@ fn assert_close(actual: f64, expected: f64, tolerance: f64) {
 }
 
 fn assert_point_close(actual: &HPoint, expected: (f64, f64), tolerance: f64) {
-    assert_close(actual.x().to_f64_approx().unwrap(), expected.0, tolerance);
-    assert_close(actual.y().to_f64_approx().unwrap(), expected.1, tolerance);
+    assert_close(actual.x().to_f64_lossy().unwrap(), expected.0, tolerance);
+    assert_close(actual.y().to_f64_lossy().unwrap(), expected.1, tolerance);
 }
 
 fn assert_single_line_hit(

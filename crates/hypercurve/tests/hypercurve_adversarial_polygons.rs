@@ -51,8 +51,8 @@ fn reconstruction_options() -> PolylineReconstructionOptions {
 }
 
 fn assert_point_finite(point: &Point2) {
-    assert!(point.x().to_f64_approx().is_some_and(f64::is_finite));
-    assert!(point.y().to_f64_approx().is_some_and(f64::is_finite));
+    assert!(point.x().to_f64_lossy().is_some_and(f64::is_finite));
+    assert!(point.y().to_f64_lossy().is_some_and(f64::is_finite));
 }
 
 fn assert_segment_finite(segment: &Segment2) {
@@ -67,7 +67,7 @@ fn assert_segment_finite(segment: &Segment2) {
             assert_point_finite(arc.center());
             assert!(
                 arc.radius_squared()
-                    .to_f64_approx()
+                    .to_f64_lossy()
                     .is_some_and(f64::is_finite)
             );
         }

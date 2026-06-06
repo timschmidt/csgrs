@@ -29,7 +29,7 @@ fn bench_line_offset(iterations: u32) -> CurveResult<()> {
 
     for _ in 0..iterations {
         let offset = line.offset_left(s(5))?;
-        checksum += black_box(offset.start().x().to_f64_approx().is_some() as usize);
+        checksum += black_box(offset.start().x().to_f64_lossy().is_some() as usize);
     }
 
     let elapsed = started.elapsed();
@@ -49,7 +49,7 @@ fn bench_arc_offset(name: &str, segment: &Segment2, iterations: u32) -> CurveRes
         let Classification::Decided(offset) = segment.offset_left(s(1), &policy)? else {
             panic!("{name} became uncertain during benchmark");
         };
-        checksum += black_box(offset.end().y().to_f64_approx().is_some() as usize);
+        checksum += black_box(offset.end().y().to_f64_lossy().is_some() as usize);
     }
 
     let elapsed = started.elapsed();
@@ -287,7 +287,7 @@ fn main() -> CurveResult<()> {
         else {
             panic!("counter_clockwise_arc_right_offset became uncertain during benchmark");
         };
-        checksum += black_box(offset.start().x().to_f64_approx().is_some() as usize);
+        checksum += black_box(offset.start().x().to_f64_lossy().is_some() as usize);
     }
     let elapsed = started.elapsed();
     println!(

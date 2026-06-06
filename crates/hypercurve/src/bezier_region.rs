@@ -88,6 +88,7 @@ pub enum BezierRetainedRegionLoopRole {
 #[derive(Clone, Debug, PartialEq)]
 pub struct BezierRetainedLineRegionRoleReport2 {
     roles: Vec<BezierRetainedRegionLoopRole>,
+    nesting_depths: Vec<usize>,
     contours: Vec<Contour2>,
 }
 
@@ -128,18 +129,32 @@ pub struct BezierRetainedSignedAreaRoleReport2 {
 #[derive(Clone, Debug, PartialEq)]
 pub struct BezierRetainedCurvedNestingRoleReport2 {
     roles: Vec<BezierRetainedRegionLoopRole>,
+    nesting_depths: Vec<usize>,
     sample_points: Vec<Point2>,
 }
 
 impl BezierRetainedLineRegionRoleReport2 {
     /// Constructs a retained line-image role report.
-    pub const fn new(roles: Vec<BezierRetainedRegionLoopRole>, contours: Vec<Contour2>) -> Self {
-        Self { roles, contours }
+    pub const fn new(
+        roles: Vec<BezierRetainedRegionLoopRole>,
+        nesting_depths: Vec<usize>,
+        contours: Vec<Contour2>,
+    ) -> Self {
+        Self {
+            roles,
+            nesting_depths,
+            contours,
+        }
     }
 
     /// Returns one assigned role per retained boundary loop.
     pub fn roles(&self) -> &[BezierRetainedRegionLoopRole] {
         &self.roles
+    }
+
+    /// Returns the certified count of containing loops for each retained loop.
+    pub fn nesting_depths(&self) -> &[usize] {
+        &self.nesting_depths
     }
 
     /// Returns exact native line contours used for role assignment.
@@ -232,9 +247,14 @@ impl BezierRetainedSignedAreaRoleReport2 {
 
 impl BezierRetainedCurvedNestingRoleReport2 {
     /// Constructs a retained curved-loop nesting role report.
-    pub const fn new(roles: Vec<BezierRetainedRegionLoopRole>, sample_points: Vec<Point2>) -> Self {
+    pub const fn new(
+        roles: Vec<BezierRetainedRegionLoopRole>,
+        nesting_depths: Vec<usize>,
+        sample_points: Vec<Point2>,
+    ) -> Self {
         Self {
             roles,
+            nesting_depths,
             sample_points,
         }
     }
@@ -242,6 +262,11 @@ impl BezierRetainedCurvedNestingRoleReport2 {
     /// Returns one assigned role per retained boundary loop.
     pub fn roles(&self) -> &[BezierRetainedRegionLoopRole] {
         &self.roles
+    }
+
+    /// Returns the certified count of containing loops for each retained loop.
+    pub fn nesting_depths(&self) -> &[usize] {
+        &self.nesting_depths
     }
 
     /// Returns exact sample points used for nesting classification.
@@ -552,7 +577,7 @@ impl BezierRetainedRegion2 {
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
         Ok(Classification::Decided(
-            BezierRetainedLineRegionRoleReport2::new(roles, contours),
+            BezierRetainedLineRegionRoleReport2::new(roles.roles, roles.nesting_depths, contours),
         ))
     }
 
@@ -627,6 +652,7 @@ impl BezierRetainedRegion2 {
         }
 
         let mut roles = Vec::with_capacity(native_loops.len());
+        let mut nesting_depths = Vec::with_capacity(native_loops.len());
         for (candidate_index, sample) in sample_points.iter().enumerate() {
             let mut depth = 0_usize;
             for (container_index, container) in native_loops.iter().enumerate() {
@@ -644,6 +670,7 @@ impl BezierRetainedRegion2 {
                     }
                 }
             }
+            nesting_depths.push(depth);
             roles.push(if depth.is_multiple_of(2) {
                 BezierRetainedRegionLoopRole::Material
             } else {
@@ -652,7 +679,7 @@ impl BezierRetainedRegion2 {
         }
 
         Ok(Classification::Decided(
-            BezierRetainedCurvedNestingRoleReport2::new(roles, sample_points),
+            BezierRetainedCurvedNestingRoleReport2::new(roles, nesting_depths, sample_points),
         ))
     }
 
@@ -817,11 +844,17 @@ fn exact_rational_point_from_image(point: &BezierEndpointPointImage2) -> Option<
     }
 }
 
+struct RetainedLoopRoleDecision {
+    roles: Vec<BezierRetainedRegionLoopRole>,
+    nesting_depths: Vec<usize>,
+}
+
 fn retained_line_loop_roles(
     contours: &[Contour2],
     policy: &CurvePolicy,
-) -> CurveResult<Classification<Vec<BezierRetainedRegionLoopRole>>> {
+) -> CurveResult<Classification<RetainedLoopRoleDecision>> {
     let mut roles = Vec::with_capacity(contours.len());
+    let mut nesting_depths = Vec::with_capacity(contours.len());
     for (candidate_index, candidate) in contours.iter().enumerate() {
         let sample = candidate
             .segments()
@@ -842,13 +875,17 @@ fn retained_line_loop_roles(
                 Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
             }
         }
+        nesting_depths.push(depth);
         roles.push(if depth.is_multiple_of(2) {
             BezierRetainedRegionLoopRole::Material
         } else {
             BezierRetainedRegionLoopRole::Hole
         });
     }
-    Ok(Classification::Decided(roles))
+    Ok(Classification::Decided(RetainedLoopRoleDecision {
+        roles,
+        nesting_depths,
+    }))
 }
 
 fn retained_loop_to_native(

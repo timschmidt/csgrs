@@ -1299,8 +1299,8 @@ fn assert_arc_approx(segment: &Segment2, start: (f64, f64), end: (f64, f64)) {
 }
 
 fn assert_approx_point(point: &Point2, expected: (f64, f64)) {
-    let x = point.x().to_f64_approx().unwrap();
-    let y = point.y().to_f64_approx().unwrap();
+    let x = point.x().to_f64_lossy().unwrap();
+    let y = point.y().to_f64_lossy().unwrap();
     assert!((x - expected.0).abs() <= 1e-9, "x mismatch: {x}");
     assert!((y - expected.1).abs() <= 1e-9, "y mismatch: {y}");
 }

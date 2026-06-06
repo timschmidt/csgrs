@@ -76,9 +76,9 @@ fn reconstruction_promotes_consistent_semicircle_samples_to_arc() {
     };
     assert_eq!(arc.start(), &points[0]);
     assert_eq!(arc.end(), &points[4]);
-    assert_close(arc.bulge().unwrap().to_f64_approx().unwrap(), 1.0);
-    assert_close(arc.center().x().to_f64_approx().unwrap(), 1.0);
-    assert_close(arc.center().y().to_f64_approx().unwrap(), 0.0);
+    assert_close(arc.bulge().unwrap().to_f64_lossy().unwrap(), 1.0);
+    assert_close(arc.center().x().to_f64_lossy().unwrap(), 1.0);
+    assert_close(arc.center().y().to_f64_lossy().unwrap(), 0.0);
 }
 
 #[test]
