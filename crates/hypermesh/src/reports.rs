@@ -2508,6 +2508,15 @@ pub enum ExactWindingReadinessStatus {
     /// The named Boolean was already answered by exact surface identity or
     /// same-surface equality, so no winding handoff is needed.
     SurfaceEqualityAlreadyMaterialized,
+    /// The named Boolean was already answered by exact empty-operand
+    /// semantics, so no winding handoff is needed.
+    EmptyOperandAlreadyMaterialized,
+    /// The named Boolean was already answered by certified disjoint mesh
+    /// bounds, so no winding handoff is needed.
+    BoundsDisjointAlreadyMaterialized,
+    /// The named Boolean was already answered by certified open-surface graph
+    /// disjointness, so no winding handoff is needed.
+    OpenSurfaceDisjointAlreadyMaterialized,
     /// The graph contains no retained face pairs requiring winding.
     NoNontrivialOverlap,
     /// Split regions and opposite-plane classifications were checked and are
@@ -2869,6 +2878,23 @@ impl ExactWindingReadinessReport {
                 checked_region_facts(self.region_count, &self.region_classifications)
             }
             ExactWindingReadinessStatus::SurfaceEqualityAlreadyMaterialized => {
+                if self.arrangement_readiness.is_some()
+                    || self.coplanar_volumetric_evidence.is_some()
+                    || matches!(self.operation, ExactBooleanOperation::SelectedRegions(_))
+                    || self.graph_had_unknowns
+                    || self.retained_face_pairs != 0
+                    || self.retained_events != 0
+                {
+                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                }
+                blocker_kind(Some(&self.blocker), ExactBooleanBlockerKind::NeedsWinding)?;
+                self.blocker
+                    .validate_for_kind(ExactBooleanBlockerKind::NeedsWinding)?;
+                no_region_facts(self.region_count, &self.region_classifications)
+            }
+            ExactWindingReadinessStatus::EmptyOperandAlreadyMaterialized
+            | ExactWindingReadinessStatus::BoundsDisjointAlreadyMaterialized
+            | ExactWindingReadinessStatus::OpenSurfaceDisjointAlreadyMaterialized => {
                 if self.arrangement_readiness.is_some()
                     || self.coplanar_volumetric_evidence.is_some()
                     || matches!(self.operation, ExactBooleanOperation::SelectedRegions(_))

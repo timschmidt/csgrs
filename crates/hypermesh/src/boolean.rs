@@ -791,6 +791,9 @@ const fn winding_readiness_status_already_materialized(
             | ExactWindingReadinessStatus::ConvexBooleanAlreadyMaterialized
             | ExactWindingReadinessStatus::OpenSurfaceArrangementAlreadyMaterialized
             | ExactWindingReadinessStatus::SurfaceEqualityAlreadyMaterialized
+            | ExactWindingReadinessStatus::EmptyOperandAlreadyMaterialized
+            | ExactWindingReadinessStatus::BoundsDisjointAlreadyMaterialized
+            | ExactWindingReadinessStatus::OpenSurfaceDisjointAlreadyMaterialized
     )
 }
 
@@ -1344,16 +1347,16 @@ pub fn boolean_exact_with_boundary_policy(
             },
         );
     }
-    if let Some(result) =
-        boolean_closed_regularized_lower_dimensional_optional(left, right, operation, validation)?
-    {
-        return Ok(result);
-    }
     if left.triangles().is_empty() || right.triangles().is_empty() {
         return boolean_empty_operand(left, right, operation, validation);
     }
     if meshes_are_certified_bounds_disjoint(left, right) {
         return boolean_disjoint_meshes(left, right, operation, validation);
+    }
+    if let Some(result) =
+        boolean_closed_regularized_lower_dimensional_optional(left, right, operation, validation)?
+    {
+        return Ok(result);
     }
     if (!left.facts().mesh.closed_manifold || !right.facts().mesh.closed_manifold)
         && meshes_are_certified_identical(left, right)
@@ -4307,6 +4310,38 @@ pub fn certify_winding_readiness_report(
     operation: ExactBooleanOperation,
 ) -> Result<ExactWindingReadinessReport, MeshError> {
     if !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
+        && (left.triangles().is_empty() || right.triangles().is_empty())
+    {
+        return Ok(winding_readiness_report(
+            operation,
+            ExactWindingReadinessStatus::EmptyOperandAlreadyMaterialized,
+            false,
+            0,
+            0,
+            0,
+            Vec::new(),
+            GraphRelationCounts::default().into_blocker(ExactBooleanBlockerKind::NeedsWinding),
+            None,
+            None,
+        ));
+    }
+    if !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
+        && meshes_are_certified_bounds_disjoint(left, right)
+    {
+        return Ok(winding_readiness_report(
+            operation,
+            ExactWindingReadinessStatus::BoundsDisjointAlreadyMaterialized,
+            false,
+            0,
+            0,
+            0,
+            Vec::new(),
+            GraphRelationCounts::default().into_blocker(ExactBooleanBlockerKind::NeedsWinding),
+            None,
+            None,
+        ));
+    }
+    if !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
         && (!left.facts().mesh.closed_manifold || !right.facts().mesh.closed_manifold)
         && (meshes_are_certified_identical(left, right)
             || meshes_are_certified_same_surface(left, right))
@@ -4547,6 +4582,20 @@ fn winding_readiness_report_from_graph(
             0,
             Vec::new(),
             counts.into_blocker(ExactBooleanBlockerKind::NeedsRefinement),
+            None,
+            None,
+        ));
+    }
+    if certified_open_surface_disjoint_support_from_graph(graph, left, right, operation).is_some() {
+        return Ok(winding_readiness_report(
+            operation,
+            ExactWindingReadinessStatus::OpenSurfaceDisjointAlreadyMaterialized,
+            graph_had_unknowns,
+            0,
+            graph.event_count(),
+            0,
+            Vec::new(),
+            counts.into_blocker(ExactBooleanBlockerKind::NeedsWinding),
             None,
             None,
         ));
@@ -6464,6 +6513,9 @@ mod tests {
             ExactWindingReadinessStatus::ConvexBooleanAlreadyMaterialized,
             ExactWindingReadinessStatus::OpenSurfaceArrangementAlreadyMaterialized,
             ExactWindingReadinessStatus::SurfaceEqualityAlreadyMaterialized,
+            ExactWindingReadinessStatus::EmptyOperandAlreadyMaterialized,
+            ExactWindingReadinessStatus::BoundsDisjointAlreadyMaterialized,
+            ExactWindingReadinessStatus::OpenSurfaceDisjointAlreadyMaterialized,
         ] {
             assert!(winding_readiness_status_already_materialized(&status));
         }
@@ -6508,6 +6560,112 @@ mod tests {
                 &ExactWindingReadinessStatus::SurfaceEqualityAlreadyMaterialized,
             )
         );
+        for status in [
+            ExactWindingReadinessStatus::EmptyOperandAlreadyMaterialized,
+            ExactWindingReadinessStatus::BoundsDisjointAlreadyMaterialized,
+            ExactWindingReadinessStatus::OpenSurfaceDisjointAlreadyMaterialized,
+        ] {
+            assert!(!winding_readiness_status_materializes_arrangement_cell_complex(&status));
+        }
+    }
+
+    #[test]
+    fn trivial_shortcuts_report_materialized_readiness() {
+        let empty =
+            empty_mesh("empty operand readiness fixture", ValidationPolicy::CLOSED).unwrap();
+        let solid = axis_aligned_box_i64([0, 0, 0], [2, 2, 2]);
+        let far_solid = axis_aligned_box_i64([4, 0, 0], [6, 2, 2]);
+        let left_open = ExactMesh::from_i64_triangles_with_policy(
+            &[
+                0, 0, 0, //
+                4, 0, 4, //
+                0, 4, 0,
+            ],
+            &[0, 1, 2],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let right_open = ExactMesh::from_i64_triangles_with_policy(
+            &[
+                0, 0, 1, //
+                4, 0, 5, //
+                0, 4, 1,
+            ],
+            &[0, 1, 2],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        assert!(!meshes_are_certified_bounds_disjoint(
+            &left_open,
+            &right_open
+        ));
+
+        for (left, right, validation, support, status, shortcut) in [
+            (
+                &empty,
+                &solid,
+                ValidationPolicy::CLOSED,
+                ExactBooleanSupport::CertifiedEmptyOperand,
+                ExactWindingReadinessStatus::EmptyOperandAlreadyMaterialized,
+                ExactBooleanShortcutKind::EmptyOperand,
+            ),
+            (
+                &solid,
+                &far_solid,
+                ValidationPolicy::CLOSED,
+                ExactBooleanSupport::CertifiedBoundsDisjoint,
+                ExactWindingReadinessStatus::BoundsDisjointAlreadyMaterialized,
+                ExactBooleanShortcutKind::BoundsDisjoint,
+            ),
+            (
+                &left_open,
+                &right_open,
+                ValidationPolicy::ALLOW_BOUNDARY,
+                ExactBooleanSupport::CertifiedOpenSurfaceDisjoint,
+                ExactWindingReadinessStatus::OpenSurfaceDisjointAlreadyMaterialized,
+                ExactBooleanShortcutKind::OpenSurfaceDisjoint,
+            ),
+        ] {
+            for operation in [
+                ExactBooleanOperation::Union,
+                ExactBooleanOperation::Intersection,
+                ExactBooleanOperation::Difference,
+            ] {
+                let preflight = preflight_boolean_exact(left, right, operation).unwrap();
+                assert_eq!(preflight.support, support, "{operation:?}: {preflight:?}");
+                assert!(preflight.blocker.is_none(), "{operation:?}: {preflight:?}");
+
+                let readiness = certify_winding_readiness_report(left, right, operation).unwrap();
+                assert_eq!(readiness.status, status, "{operation:?}: {readiness:?}");
+                assert_eq!(
+                    readiness.blocker.kind,
+                    ExactBooleanBlockerKind::NeedsWinding,
+                    "{operation:?}: {readiness:?}"
+                );
+                assert_eq!(readiness.retained_face_pairs, 0, "{operation:?}");
+                assert_eq!(readiness.retained_events, 0, "{operation:?}");
+                assert_eq!(readiness.region_count, 0, "{operation:?}");
+                assert!(winding_readiness_status_already_materialized(
+                    &readiness.status
+                ));
+                assert!(
+                    !winding_readiness_status_materializes_arrangement_cell_complex(
+                        &readiness.status
+                    )
+                );
+                readiness.validate().unwrap();
+                readiness.validate_against_sources(left, right).unwrap();
+
+                let result = boolean_exact(left, right, operation, validation).unwrap();
+                assert_eq!(
+                    result.kind,
+                    ExactBooleanResultKind::CertifiedShortcut { shortcut },
+                    "{operation:?}: {result:?}"
+                );
+                result.validate().unwrap();
+                result.validate_against_sources(left, right).unwrap();
+            }
+        }
     }
 
     #[test]
