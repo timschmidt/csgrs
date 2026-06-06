@@ -2123,6 +2123,26 @@ fn run_arrangement_cell_complex_attempt(
     ) {
         Ok(mesh) => mesh,
         Err(_) => {
+            if validation == ValidationPolicy::CLOSED
+                && let Some(mesh) = close_exact_coplanar_boundary_loops(
+                    &mesh,
+                    "exact arrangement cell-complex closed coplanar-boundary result",
+                    validation,
+                )
+            {
+                attempt.stage = ExactArrangementBooleanStage::Materialized;
+                attempt.materialized_shortcut =
+                    Some(ExactBooleanShortcutKind::ArrangementCellComplex);
+                attempt.output_vertices = mesh.vertices().len();
+                attempt.output_triangles = mesh.triangles().len();
+                return Ok(ArrangementCellComplexOutcome::Materialized(
+                    certified_shortcut_result(
+                        mesh,
+                        ExactBooleanShortcutKind::ArrangementCellComplex,
+                    ),
+                    attempt,
+                ));
+            }
             if let Some(outcome) = arrangement_cell_complex_recovery_outcome_if_available(
                 regularize_unregularized_sheet_complex,
                 regularized_sheet_recovery_surface,
@@ -2804,25 +2824,55 @@ fn close_single_exact_coplanar_boundary_loop(
     label: &'static str,
     validation: ValidationPolicy,
 ) -> Option<ExactMesh> {
+    let loops = directed_boundary_loops(mesh)?;
+    if loops.len() != 1 {
+        return None;
+    }
+    close_exact_coplanar_boundary_loops_from_loops(mesh, loops, label, validation)
+}
+
+fn close_exact_coplanar_boundary_loops(
+    mesh: &ExactMesh,
+    label: &'static str,
+    validation: ValidationPolicy,
+) -> Option<ExactMesh> {
+    close_exact_coplanar_boundary_loops_from_loops(
+        mesh,
+        directed_boundary_loops(mesh)?,
+        label,
+        validation,
+    )
+}
+
+fn close_exact_coplanar_boundary_loops_from_loops(
+    mesh: &ExactMesh,
+    boundary_loops: Vec<Vec<usize>>,
+    label: &'static str,
+    validation: ValidationPolicy,
+) -> Option<ExactMesh> {
     if mesh.facts().mesh.closed_manifold || mesh.facts().mesh.boundary_edges == 0 {
         return None;
     }
-    let boundary_loop = single_directed_boundary_loop(mesh)?;
-    if boundary_loop.len() < 3 {
-        return None;
-    }
-    let carrier = exact_non_collinear_loop_carrier(mesh, &boundary_loop)?;
-    if !loop_is_exactly_coplanar(mesh, &boundary_loop, carrier) {
+    if boundary_loops.is_empty() {
         return None;
     }
 
     let mut triangles = mesh.triangles().to_vec();
-    for index in 1..boundary_loop.len() - 1 {
-        triangles.push(Triangle([
-            boundary_loop[0],
-            boundary_loop[index + 1],
-            boundary_loop[index],
-        ]));
+    for boundary_loop in boundary_loops {
+        if boundary_loop.len() < 3 {
+            return None;
+        }
+        let carrier = exact_non_collinear_loop_carrier(mesh, &boundary_loop)?;
+        if !loop_is_exactly_coplanar(mesh, &boundary_loop, carrier) {
+            return None;
+        }
+        for index in 1..boundary_loop.len() - 1 {
+            triangles.push(Triangle([
+                boundary_loop[0],
+                boundary_loop[index + 1],
+                boundary_loop[index],
+            ]));
+        }
     }
     ExactMesh::new_with_policy(
         mesh.vertices().to_vec(),
@@ -2833,7 +2883,7 @@ fn close_single_exact_coplanar_boundary_loop(
     .ok()
 }
 
-fn single_directed_boundary_loop(mesh: &ExactMesh) -> Option<Vec<usize>> {
+fn directed_boundary_loops(mesh: &ExactMesh) -> Option<Vec<Vec<usize>>> {
     let mut edge_uses: BTreeMap<[usize; 2], Vec<(usize, usize)>> = BTreeMap::new();
     for triangle in mesh.triangles() {
         let [a, b, c] = triangle.0;
@@ -2871,20 +2921,34 @@ fn single_directed_boundary_loop(mesh: &ExactMesh) -> Option<Vec<usize>> {
         }
     }
 
-    let start = *next_by_start.keys().next()?;
-    let mut loop_vertices = Vec::with_capacity(boundary_edge_count);
-    let mut current = start;
-    for _ in 0..boundary_edge_count {
-        loop_vertices.push(current);
-        current = *next_by_start.get(&current)?;
-        if current == start {
-            break;
+    let mut loops = Vec::new();
+    let mut used_starts = BTreeSet::new();
+    while let Some(start) = next_by_start
+        .keys()
+        .copied()
+        .find(|start| !used_starts.contains(start))
+    {
+        let mut loop_vertices = Vec::new();
+        let mut current = start;
+        for _ in 0..boundary_edge_count {
+            if !used_starts.insert(current) {
+                return None;
+            }
+            loop_vertices.push(current);
+            current = *next_by_start.get(&current)?;
+            if current == start {
+                break;
+            }
         }
+        if current != start || loop_vertices.len() < 3 {
+            return None;
+        }
+        loops.push(loop_vertices);
     }
-    if current != start || loop_vertices.len() != boundary_edge_count {
+    if used_starts.len() != boundary_edge_count || loops.is_empty() {
         return None;
     }
-    Some(loop_vertices)
+    Some(loops)
 }
 
 fn exact_non_collinear_loop_carrier<'a>(
@@ -7506,6 +7570,24 @@ mod tests {
     }
 
     #[test]
+    fn exact_coplanar_boundary_closer_handles_multiple_planar_loops() {
+        let mesh = two_open_boxes_missing_top_i64([0, 0, 0], [4, 0, 0]);
+        assert_eq!(mesh.facts().mesh.boundary_edges, 8);
+        assert!(!mesh.facts().mesh.closed_manifold);
+
+        let closed = close_exact_coplanar_boundary_loops(
+            &mesh,
+            "test exact multi-loop coplanar boundary closure",
+            ValidationPolicy::CLOSED,
+        )
+        .expect("two planar cap loops should close exactly");
+
+        assert!(closed.facts().mesh.closed_manifold);
+        assert_eq!(closed.vertices().len(), mesh.vertices().len());
+        assert_eq!(closed.triangles().len(), mesh.triangles().len() + 4);
+    }
+
+    #[test]
     fn closed_identical_solids_route_through_arrangement_pipeline() {
         let left = tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]);
         let right = left.clone();
@@ -7823,6 +7905,58 @@ mod tests {
                 0, 2, 1, 0, 3, 2, 4, 5, 6, 4, 6, 7, 0, 1, 5, 0, 5, 4, 1, 2, 6, 1, 6, 5, 2, 3, 7, 2,
                 7, 6, 3, 0, 4, 3, 4, 7,
             ],
+        )
+        .unwrap()
+    }
+
+    fn two_open_boxes_missing_top_i64(first_min: [i64; 3], second_min: [i64; 3]) -> ExactMesh {
+        let mut vertices = Vec::new();
+        let mut triangles = Vec::new();
+        for min in [first_min, second_min] {
+            let max = [min[0] + 2, min[1] + 2, min[2] + 2];
+            let start = vertices.len() / 3;
+            vertices.extend([
+                min[0], min[1], min[2], max[0], min[1], min[2], max[0], max[1], min[2], min[0],
+                max[1], min[2], min[0], min[1], max[2], max[0], min[1], max[2], max[0], max[1],
+                max[2], min[0], max[1], max[2],
+            ]);
+            triangles.extend([
+                start,
+                start + 2,
+                start + 1,
+                start,
+                start + 3,
+                start + 2,
+                start,
+                start + 1,
+                start + 5,
+                start,
+                start + 5,
+                start + 4,
+                start + 1,
+                start + 2,
+                start + 6,
+                start + 1,
+                start + 6,
+                start + 5,
+                start + 2,
+                start + 3,
+                start + 7,
+                start + 2,
+                start + 7,
+                start + 6,
+                start + 3,
+                start,
+                start + 4,
+                start + 3,
+                start + 4,
+                start + 7,
+            ]);
+        }
+        ExactMesh::from_i64_triangles_with_policy(
+            &vertices,
+            &triangles,
+            ValidationPolicy::ALLOW_BOUNDARY,
         )
         .unwrap()
     }
