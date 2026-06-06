@@ -324,6 +324,7 @@ fn append_coplanar_face_cell_constraints(
         }
         let mut edges =
             coplanar_opposite_edges(graph.left_face, graph.right_face, side, left, right)?;
+        seed_contained_coplanar_opposite_edge_endpoints(side, face, left, right, &mut edges)?;
         for split in &graph.edge_splits {
             match side {
                 MeshSide::Left => {
@@ -418,6 +419,42 @@ fn append_coplanar_face_cell_constraints(
                     },
                 )?;
                 push_constraint(constraints, unique_constraints, from, to);
+            }
+        }
+    }
+    Ok(())
+}
+
+/// Seed opposite coplanar edge endpoints that lie in the current source face.
+///
+/// Split records retain edge/edge crossings and collinear intervals, and
+/// vertex-overlap records retain the same facts when the source graph reports
+/// them explicitly. A complete planar cell builder must also be able to replay
+/// endpoint containment directly from source operands: an opposite coplanar
+/// triangle can lie wholly inside the current source face without needing an
+/// edge crossing construction. These endpoint facts are exact
+/// point-in-triangle predicate decisions, so they are safe to promote to CDT
+/// constraints with the same provenance as copied vertex-overlap records.
+fn seed_contained_coplanar_opposite_edge_endpoints(
+    side: MeshSide,
+    face: usize,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    edges: &mut [CoplanarCellEdge],
+) -> hypertri::Result<()> {
+    let opposite_side = match side {
+        MeshSide::Left => MeshSide::Right,
+        MeshSide::Right => MeshSide::Left,
+    };
+    let source_mesh = match side {
+        MeshSide::Left => left,
+        MeshSide::Right => right,
+    };
+    for edge in edges.to_vec() {
+        for (vertex, parameter) in [(edge.edge[0], Real::from(0)), (edge.edge[1], Real::from(1))] {
+            let point = vertex_point_for_side(opposite_side, vertex, left, right)?;
+            if point_lies_on_mesh_face_closed(source_mesh, face, &point)? {
+                push_coplanar_cell_edge_point(edges, edge.edge, parameter, point)?;
             }
         }
     }
@@ -1345,6 +1382,14 @@ const fn point_triangle_location_is_closed(location: TriangleLocation) -> bool {
     )
 }
 
+fn point_lies_on_mesh_face_closed(
+    mesh: &ExactMesh,
+    face: usize,
+    point: &Point3,
+) -> hypertri::Result<bool> {
+    classify_point_on_mesh_face(mesh, face, point).map(point_triangle_location_is_closed)
+}
+
 fn points_equal(left: &Point3, right: &Point3) -> Option<bool> {
     Some(
         compare_reals(&left.x, &right.x).value()? == std::cmp::Ordering::Equal
@@ -1355,6 +1400,7 @@ fn points_equal(left: &Point3, right: &Point3) -> Option<bool> {
 
 #[cfg(test)]
 mod tests {
+    use super::super::graph::CoplanarOverlapSplitGraph;
     use super::super::validation::ValidationPolicy;
     use super::*;
 
@@ -1418,5 +1464,54 @@ mod tests {
                 Constraint::new(4, 3),
             ]
         );
+    }
+
+    #[test]
+    fn coplanar_cell_constraints_replay_contained_opposite_edge_endpoints() {
+        let left = open_triangle_mesh(&[0, 0, 0, 8, 0, 0, 0, 8, 0]);
+        let right = open_triangle_mesh(&[2, 2, 0, 4, 2, 0, 2, 4, 0]);
+        let split_plan = CoplanarOverlapSplitPlan {
+            graphs: vec![CoplanarOverlapSplitGraph {
+                left_face: 0,
+                right_face: 0,
+                projection: CoplanarProjection::Xy,
+                edge_splits: Vec::new(),
+                vertex_overlaps: Vec::new(),
+            }],
+        };
+        let mut boundary = left.triangles()[0]
+            .0
+            .into_iter()
+            .map(|vertex| FaceSplitBoundaryNode::OriginalVertex {
+                vertex,
+                point: left.vertices()[vertex].clone(),
+            })
+            .collect::<Vec<_>>();
+        let mut constraints = Vec::new();
+        let mut unique_constraints = BTreeSet::new();
+
+        append_coplanar_face_cell_constraints(
+            &split_plan,
+            MeshSide::Left,
+            0,
+            &left,
+            &right,
+            &mut boundary,
+            &mut constraints,
+            &mut unique_constraints,
+        )
+        .unwrap();
+
+        assert_eq!(boundary.len(), 6);
+        assert_eq!(constraints.len(), 3);
+        for [from, to] in [[3, 4], [4, 5], [5, 3]] {
+            assert!(
+                constraints
+                    .iter()
+                    .any(|constraint| constraint.from == from && constraint.to == to
+                        || constraint.from == to && constraint.to == from),
+                "missing contained opposite edge constraint {from}-{to}"
+            );
+        }
     }
 }
