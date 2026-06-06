@@ -1,12 +1,13 @@
 use hypercurve::{
     BezierAlgebraicEndpointImage2, BezierAlgebraicParameter2, BezierArrangementFragment2,
-    BezierArrangementGraph2, BezierParameter2, BezierParameterInterval, BezierParameterPolynomial,
-    BezierRegion2, BezierRetainedBoundaryLoop2, BezierRetainedCurveEnvelope2,
-    BezierRetainedCurvedNestingRoleReport2, BezierRetainedEndpointEnvelope2,
-    BezierRetainedEnvelopeSourceKind, BezierRetainedFragmentSource2,
-    BezierRetainedLineRegionRoleReport2, BezierRetainedRegion2, BezierRetainedRegionLoopRole,
-    BezierRetainedSignedAreaRoleReport2, BezierSplitFragment2, Classification, CurveError,
-    CurvePolicy, Point2, QuadraticBezier2, RationalQuadraticBezier2, Real, UncertaintyReason,
+    BezierArrangementGraph2, BezierBoundaryLoop2, BezierParameter2, BezierParameterInterval,
+    BezierParameterPolynomial, BezierRegion2, BezierRetainedBoundaryLoop2,
+    BezierRetainedCurveEnvelope2, BezierRetainedCurvedNestingRoleReport2,
+    BezierRetainedEndpointEnvelope2, BezierRetainedEnvelopeSourceKind,
+    BezierRetainedFragmentSource2, BezierRetainedLineRegionRoleReport2, BezierRetainedRegion2,
+    BezierRetainedRegionLoopRole, BezierRetainedSignedAreaRoleReport2, BezierSplitFragment2,
+    Classification, CurveError, CurvePolicy, Point2, QuadraticBezier2, RationalQuadraticBezier2,
+    Real, UncertaintyReason,
 };
 use proptest::prelude::*;
 
@@ -452,6 +453,12 @@ fn retained_role_report_constructors_reject_mismatched_evidence() {
         vec![r(1)],
         vec![p(0, 0)],
     ));
+}
+
+#[test]
+fn empty_boundary_loops_do_not_certify_signed_area() {
+    assert_topology_error(BezierBoundaryLoop2::new(Vec::new()).signed_area());
+    assert_topology_error(BezierRetainedBoundaryLoop2::new(Vec::new()).signed_area());
 }
 
 #[test]

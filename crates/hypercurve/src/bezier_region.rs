@@ -474,6 +474,12 @@ impl BezierBoundaryLoop2 {
     /// quadratics use the homogeneous rational Green integral when their
     /// denominator is certified nonzero on the affine parameter interval.
     pub fn signed_area(&self) -> CurveResult<Option<Real>> {
+        if self.fragments.is_empty() {
+            return Err(CurveError::Topology(
+                "Bezier boundary loop signed area requires nonempty fragments".to_owned(),
+            ));
+        }
+
         let mut total = Real::zero();
         for fragment in &self.fragments {
             let Some(contribution) = fragment.signed_area_contribution()? else {
@@ -653,6 +659,12 @@ impl BezierRetainedBoundaryLoop2 {
 
     /// Returns exact signed area only for fully native loops with implemented integrals.
     pub fn signed_area(&self) -> CurveResult<Option<Real>> {
+        if self.fragments.is_empty() {
+            return Err(CurveError::Topology(
+                "retained Bezier boundary loop signed area requires nonempty fragments".to_owned(),
+            ));
+        }
+
         let mut total = Real::zero();
         for fragment in &self.fragments {
             let BezierSplitFragment2::Materialized { curve, .. } = fragment else {
