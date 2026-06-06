@@ -758,6 +758,53 @@ fn retained_overlap_split_constructors_reject_unordered_indices() {
 }
 
 #[test]
+fn retained_overlap_split_constructors_validate_range_evidence() {
+    let overlap_segment = LineSeg2::try_new(p(0, 0), p(1, 0)).unwrap();
+    let full = ParamRange::new(r(0), r(1));
+    let reversed_full = ParamRange::new(r(1), r(0));
+    let zero = ParamRange::new(q(1, 2), q(1, 2));
+    let outside_unit = ParamRange::new(r(-1), r(1));
+    let partial = ParamRange::new(r(0), q(1, 2));
+
+    BezierRetainedLineOverlapSplit2::new(
+        0,
+        1,
+        overlap_segment.clone(),
+        full.clone(),
+        reversed_full.clone(),
+        BezierRetainedLineOverlapExtent2::FullBoth,
+    )
+    .unwrap();
+    assert_topology_error(BezierRetainedLineOverlapSplit2::new(
+        0,
+        1,
+        overlap_segment.clone(),
+        zero,
+        full.clone(),
+        BezierRetainedLineOverlapExtent2::PartialFirstFullSecond,
+    ));
+    assert_topology_error(BezierRetainedLinearOverlapSplit2::new(
+        0,
+        1,
+        overlap_segment.clone(),
+        outside_unit,
+        full.clone(),
+        BezierRetainedLineOverlapExtent2::PartialFirstFullSecond,
+    ));
+    assert_topology_error(BezierRetainedResolvedLinearOverlap2::new(
+        0,
+        1,
+        0,
+        1,
+        partial,
+        full,
+        overlap_segment,
+        BezierRetainedOverlapOrientation2::Same,
+        BezierRetainedLineOverlapExtent2::FullBoth,
+    ));
+}
+
+#[test]
 fn retained_linear_overlap_split_graph_rejects_missing_refined_provenance() {
     let fragment = BezierSplitFragment2::Materialized {
         start: exact(r(0)),

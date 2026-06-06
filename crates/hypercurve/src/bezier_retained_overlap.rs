@@ -20,7 +20,7 @@
 
 use hyperreal::Real;
 
-use crate::classify::{compare_reals, is_zero};
+use crate::classify::{compare_reals, in_closed_unit_interval, is_zero};
 use crate::{
     BezierArrangementChain2, BezierArrangementGraph2, BezierArrangementTraversal2,
     BezierCurveRelation, BezierParameter2, BezierSplitFragment2, BezierSubcurve2, Classification,
@@ -92,6 +92,48 @@ fn validate_ordered_overlap_indices(
         ));
     }
     Ok(())
+}
+
+fn validate_positive_unit_overlap_ranges(
+    first_range: &ParamRange,
+    second_range: &ParamRange,
+    extent: BezierRetainedLineOverlapExtent2,
+) -> CurveResult<()> {
+    let policy = CurvePolicy::certified();
+    validate_positive_unit_overlap_range(first_range)?;
+    validate_positive_unit_overlap_range(second_range)?;
+    let expected = line_overlap_extent(first_range, second_range, &policy).ok_or_else(|| {
+        CurveError::Topology(
+            "retained line-overlap extent requires certified range evidence".to_owned(),
+        )
+    })?;
+    if extent != expected {
+        return Err(CurveError::Topology(
+            "retained line-overlap extent does not match certified range evidence".to_owned(),
+        ));
+    }
+    Ok(())
+}
+
+fn validate_positive_unit_overlap_range(range: &ParamRange) -> CurveResult<()> {
+    let policy = CurvePolicy::certified();
+    if in_closed_unit_interval(range.start(), &policy) != Some(true)
+        || in_closed_unit_interval(range.end(), &policy) != Some(true)
+    {
+        return Err(CurveError::Topology(
+            "retained line-overlap range endpoints must be certified inside the unit interval"
+                .to_owned(),
+        ));
+    }
+    match compare_reals(range.start(), range.end(), &policy) {
+        Some(std::cmp::Ordering::Equal) => Err(CurveError::Topology(
+            "retained line-overlap range must be positive-dimensional".to_owned(),
+        )),
+        Some(std::cmp::Ordering::Less | std::cmp::Ordering::Greater) => Ok(()),
+        None => Err(CurveError::Topology(
+            "retained line-overlap range endpoint ordering must be certified".to_owned(),
+        )),
+    }
 }
 
 fn validate_overlap_relation_evidence(
@@ -268,6 +310,7 @@ impl BezierRetainedLinearOverlapSplit2 {
         extent: BezierRetainedLineOverlapExtent2,
     ) -> CurveResult<Self> {
         validate_ordered_overlap_indices(first_fragment_index, second_fragment_index)?;
+        validate_positive_unit_overlap_ranges(&first_bezier_range, &second_bezier_range, extent)?;
         Ok(Self {
             first_fragment_index,
             second_fragment_index,
@@ -578,6 +621,7 @@ impl BezierRetainedResolvedLinearOverlap2 {
             first_original_fragment_index,
             second_original_fragment_index,
         )?;
+        validate_positive_unit_overlap_ranges(&first_local_range, &second_local_range, extent)?;
         Ok(Self {
             first_refined_fragment_index,
             second_refined_fragment_index,
@@ -687,6 +731,7 @@ impl BezierRetainedLineOverlapSplit2 {
         extent: BezierRetainedLineOverlapExtent2,
     ) -> CurveResult<Self> {
         validate_ordered_overlap_indices(first_fragment_index, second_fragment_index)?;
+        validate_positive_unit_overlap_ranges(&first_line_range, &second_line_range, extent)?;
         Ok(Self {
             first_fragment_index,
             second_fragment_index,
