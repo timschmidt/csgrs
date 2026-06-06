@@ -8062,6 +8062,32 @@ mod tests {
         assert!(preflight.blocker.is_some(), "{preflight:?}");
         preflight.validate().unwrap();
         preflight.validate_against_sources(&left, &right).unwrap();
+        let fake_shortcut = ExactBooleanResult {
+            kind: ExactBooleanResultKind::CertifiedShortcut {
+                operation: ExactBooleanOperation::Union,
+                shortcut: ExactBooleanShortcutKind::ArrangementCellComplex,
+            },
+            graph_had_unknowns: false,
+            region_classifications: Vec::new(),
+            triangulations: Vec::new(),
+            assembly: ExactBooleanAssemblyPlan {
+                vertices: Vec::new(),
+                triangles: Vec::new(),
+            },
+            volumetric_classifications: Vec::new(),
+            mesh: empty_mesh(
+                "fake closed arrangement shortcut for unresolved winding case",
+                ValidationPolicy::CLOSED,
+            )
+            .unwrap(),
+        };
+        fake_shortcut.validate().unwrap();
+        assert!(
+            fake_shortcut
+                .validate_against_sources(&left, &right)
+                .is_err(),
+            "resolved graph alone must not certify an arrangement-cell shortcut"
+        );
 
         let boundary_preflight = preflight_boolean_exact_with_validation(
             &left,

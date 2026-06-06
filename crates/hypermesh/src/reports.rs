@@ -1034,7 +1034,13 @@ impl ExactBooleanResult {
             operation,
             shortcut,
         } = self.kind
-            && !certified_shortcut_sources_match(shortcut, operation, left, right)?
+            && !certified_shortcut_sources_match(
+                shortcut,
+                operation,
+                self.mesh.validation_policy(),
+                left,
+                right,
+            )?
         {
             return Err(ExactReportValidationError::SourceReplayMismatch);
         }
@@ -1082,6 +1088,7 @@ impl ExactBooleanResult {
 fn certified_shortcut_sources_match(
     shortcut: ExactBooleanShortcutKind,
     operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> Result<bool, ExactReportValidationError> {
@@ -1130,7 +1137,7 @@ fn certified_shortcut_sources_match(
             convex_shortcut_sources_match(shortcut, left, right)
         }
         ExactBooleanShortcutKind::ArrangementCellComplex => {
-            arrangement_cell_complex_sources_match(left, right)
+            arrangement_cell_complex_sources_match(operation, validation, left, right)
         }
     }
 }
@@ -1362,6 +1369,8 @@ fn convex_boundary_containment_sources_match(
 }
 
 fn arrangement_cell_complex_sources_match(
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> Result<bool, ExactReportValidationError> {
@@ -1370,7 +1379,13 @@ fn arrangement_cell_complex_sources_match(
     graph
         .validate_against_sources(left, right)
         .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
-    Ok(!graph.has_unknowns() && !graph.face_pairs.is_empty())
+    if graph.has_unknowns() || graph.face_pairs.is_empty() {
+        return Ok(false);
+    }
+    let preflight = preflight_boolean_exact_with_validation(left, right, operation, validation)
+        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+    preflight.validate()?;
+    Ok(preflight.support == ExactBooleanSupport::CertifiedArrangementCellComplex)
 }
 
 fn mesh_is_closed_solid(mesh: &ExactMesh) -> bool {
