@@ -2526,30 +2526,126 @@ fn close_exact_coplanar_boundary_loops_from_loops(
         return None;
     }
 
+    let cap_groups = coplanar_boundary_loop_groups(mesh, boundary_loops)?;
+    let vertices = mesh.vertices().to_vec();
+    let mut cap_triangles = Vec::new();
+    for group in cap_groups {
+        let loops = group
+            .loops
+            .iter()
+            .map(|boundary_loop| {
+                boundary_loop
+                    .iter()
+                    .map(|&vertex| mesh.vertices().get(vertex).cloned())
+                    .collect::<Option<Vec<_>>>()
+            })
+            .collect::<Option<Vec<_>>>()?;
+        let mut group_vertices = Vec::new();
+        let mut group_triangles = Vec::new();
+        triangulate_exact_loop_group(&loops, &mut group_vertices, &mut group_triangles).ok()?;
+        let local_to_global = group_vertices
+            .iter()
+            .map(|point| find_exact_mesh_vertex(&vertices, point))
+            .collect::<Option<Vec<_>>>()?;
+        cap_triangles.extend(group_triangles.into_iter().map(|triangle| {
+            Triangle([
+                local_to_global[triangle.0[0]],
+                local_to_global[triangle.0[1]],
+                local_to_global[triangle.0[2]],
+            ])
+        }));
+    }
+
     let mut triangles = mesh.triangles().to_vec();
+    triangles.extend(cap_triangles.iter().copied());
+    match ExactMesh::new_with_policy(
+        vertices.clone(),
+        triangles,
+        SourceProvenance::exact(label),
+        validation,
+    ) {
+        Ok(mesh) => Some(mesh),
+        Err(_) => {
+            let mut triangles = mesh.triangles().to_vec();
+            triangles.extend(cap_triangles.into_iter().map(|triangle| {
+                let [a, b, c] = triangle.0;
+                Triangle([a, c, b])
+            }));
+            ExactMesh::new_with_policy(
+                vertices,
+                triangles,
+                SourceProvenance::exact(label),
+                validation,
+            )
+            .ok()
+        }
+    }
+}
+
+struct CoplanarBoundaryLoopGroup {
+    carrier: [Point3; 3],
+    loops: Vec<Vec<usize>>,
+}
+
+fn coplanar_boundary_loop_groups(
+    mesh: &ExactMesh,
+    boundary_loops: Vec<Vec<usize>>,
+) -> Option<Vec<CoplanarBoundaryLoopGroup>> {
+    let mut groups = Vec::<CoplanarBoundaryLoopGroup>::new();
     for boundary_loop in boundary_loops {
         if boundary_loop.len() < 3 {
             return None;
         }
-        let carrier = exact_non_collinear_loop_carrier(mesh, &boundary_loop)?;
-        if !loop_is_exactly_coplanar(mesh, &boundary_loop, carrier) {
-            return None;
+        let (a, b, c) = exact_non_collinear_loop_carrier(mesh, &boundary_loop)?;
+        let carrier = [a.clone(), b.clone(), c.clone()];
+        let mut group_index = None;
+        for (index, group) in groups.iter().enumerate() {
+            if loop_is_exactly_coplanar(mesh, &boundary_loop, group.carrier_refs()) {
+                group_index = Some(index);
+                break;
+            }
         }
-        for index in 1..boundary_loop.len() - 1 {
-            triangles.push(Triangle([
-                boundary_loop[0],
-                boundary_loop[index + 1],
-                boundary_loop[index],
-            ]));
+        match group_index {
+            Some(index) => groups[index].loops.push(boundary_loop),
+            None => {
+                if !loop_is_exactly_coplanar(
+                    mesh,
+                    &boundary_loop,
+                    (&carrier[0], &carrier[1], &carrier[2]),
+                ) {
+                    return None;
+                }
+                groups.push(CoplanarBoundaryLoopGroup {
+                    carrier,
+                    loops: vec![boundary_loop],
+                });
+            }
         }
     }
-    ExactMesh::new_with_policy(
-        mesh.vertices().to_vec(),
-        triangles,
-        SourceProvenance::exact(label),
-        validation,
+    (!groups.is_empty()).then_some(groups)
+}
+
+impl CoplanarBoundaryLoopGroup {
+    fn carrier_refs(&self) -> (&Point3, &Point3, &Point3) {
+        (&self.carrier[0], &self.carrier[1], &self.carrier[2])
+    }
+}
+
+fn find_exact_mesh_vertex(vertices: &[Point3], point: &Point3) -> Option<usize> {
+    for (index, existing) in vertices.iter().enumerate() {
+        if point3_exact_equal(existing, point)? {
+            return Some(index);
+        }
+    }
+    None
+}
+
+fn point3_exact_equal(left: &Point3, right: &Point3) -> Option<bool> {
+    Some(
+        compare_reals(&left.x, &right.x).value()? == Ordering::Equal
+            && compare_reals(&left.y, &right.y).value()? == Ordering::Equal
+            && compare_reals(&left.z, &right.z).value()? == Ordering::Equal,
     )
-    .ok()
 }
 
 fn directed_boundary_loops(mesh: &ExactMesh) -> Option<Vec<Vec<usize>>> {
@@ -3225,15 +3321,6 @@ fn projected_mesh_face_ring(
         .map(|vertex| Some(project_point3(mesh.vertices().get(*vertex)?, projection)))
         .collect::<Option<Vec<_>>>()?;
     Some(ExactArrangement2dRegionRing::new(region, vertices))
-}
-
-#[cfg(test)]
-fn point3_exact_equal(left: &Point3, right: &Point3) -> Option<bool> {
-    Some(
-        compare_reals(&left.x, &right.x).value()? == Ordering::Equal
-            && compare_reals(&left.y, &right.y).value()? == Ordering::Equal
-            && compare_reals(&left.z, &right.z).value()? == Ordering::Equal,
-    )
 }
 
 fn coplanar_mesh_overlay_materialized_difference_boundary_policy(
@@ -5632,12 +5719,12 @@ mod tests {
         let mut blocked_loop_ownership = overlay;
         blocked_loop_ownership.output_loops.clear();
         blocked_loop_ownership.output_components.clear();
-        blocked_loop_ownership
-            .blockers
-            .push(ExactArrangement2dBlocker::OutputLoopBoundaryContainment {
+        blocked_loop_ownership.blockers.push(
+            ExactArrangement2dBlocker::OutputLoopBoundaryContainment {
                 container_loop: 0,
                 child_loop: 1,
-            });
+            },
+        );
 
         let recovered = mesh_from_selected_projected_overlay_faces(
             &blocked_loop_ownership,
@@ -5672,10 +5759,8 @@ mod tests {
             projected_mesh_boundary_rings(ExactArrangement2dRegion::Right, &right, projection)
                 .unwrap(),
         );
-        let mut overlay = build_exact_arrangement2d_overlay(
-            &rings,
-            ExactArrangement2dSetOperation::Difference,
-        );
+        let mut overlay =
+            build_exact_arrangement2d_overlay(&rings, ExactArrangement2dSetOperation::Difference);
         assert!(overlay.is_complete(), "{:?}", overlay.blockers);
         overlay.output_loops.clear();
         overlay.output_components.clear();
@@ -6211,6 +6296,53 @@ mod tests {
         assert!(closed.facts().mesh.closed_manifold);
         assert_eq!(closed.vertices().len(), mesh.vertices().len());
         assert_eq!(closed.triangles().len(), mesh.triangles().len() + 4);
+    }
+
+    #[test]
+    fn exact_coplanar_boundary_closer_preserves_hole_loop_groups() {
+        let mesh = ExactMesh::from_i64_triangles_with_policy(
+            &[
+                0, 0, 0, 4, 0, 0, 4, 4, 0, 0, 4, 0, //
+                1, 1, 0, 3, 1, 0, 3, 3, 0, 1, 3, 0, //
+                0, 0, 1, 4, 0, 1, 4, 4, 1, 0, 4, 1, //
+                1, 1, 1, 3, 1, 1, 3, 3, 1, 1, 3, 1,
+            ],
+            &[
+                0, 1, 9, 0, 9, 8, //
+                1, 2, 10, 1, 10, 9, //
+                2, 3, 11, 2, 11, 10, //
+                3, 0, 8, 3, 8, 11, //
+                4, 12, 13, 4, 13, 5, //
+                5, 13, 14, 5, 14, 6, //
+                6, 14, 15, 6, 15, 7, //
+                7, 15, 12, 7, 12, 4,
+            ],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        assert_eq!(mesh.facts().mesh.boundary_edges, 16);
+
+        let closed = close_exact_coplanar_boundary_loops(
+            &mesh,
+            "test exact annular cap closure",
+            ValidationPolicy::CLOSED,
+        )
+        .expect("annular cap loop groups should close exactly");
+
+        assert!(
+            closed.facts().mesh.closed_manifold,
+            "{:?}",
+            closed.facts().mesh
+        );
+        assert_eq!(closed.vertices().len(), mesh.vertices().len());
+        assert!(closed.triangles().len() > mesh.triangles().len());
+        assert!(
+            closed.vertices().iter().all(|point| point3_exact_equal(
+                point,
+                &Point3::new(Real::from(2), Real::from(2), Real::from(0))
+            ) == Some(false)),
+            "annular caps should not introduce a center vertex that fills the hole"
+        );
     }
 
     #[test]
