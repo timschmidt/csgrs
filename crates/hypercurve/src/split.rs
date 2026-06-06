@@ -14,10 +14,12 @@ use std::cmp::Ordering;
 
 use hyperreal::Real;
 
-use crate::classify::{compare_reals_for_split_ordering, is_zero};
+use crate::classify::{
+    compare_reals, compare_reals_for_split_ordering, in_closed_unit_interval, is_zero,
+};
 use crate::{
     Classification, Contour2, ContourIntersection, ContourIntersectionSet, ContourOperand,
-    CurvePolicy, Point2, UncertaintyReason,
+    CurveError, CurvePolicy, CurveResult, Point2, UncertaintyReason,
 };
 
 /// A local split parameter on one contour segment.
@@ -48,8 +50,9 @@ pub struct ContourSplitMarkers {
 
 impl ContourSplitMarkers {
     /// Constructs split markers from already-normalized per-segment markers.
-    pub const fn new(segment_markers: Vec<Vec<SegmentSplitMarker>>) -> Self {
-        Self { segment_markers }
+    pub fn new(segment_markers: Vec<Vec<SegmentSplitMarker>>) -> CurveResult<Self> {
+        validate_split_markers(&segment_markers)?;
+        Ok(Self { segment_markers })
     }
 
     /// Constructs a marker set containing only each segment's endpoints.
@@ -253,8 +256,9 @@ pub struct ContourSplitMap {
 
 impl ContourSplitMap {
     /// Constructs a split map from already-normalized per-segment parameters.
-    pub const fn new(segment_splits: Vec<Vec<Real>>) -> Self {
-        Self { segment_splits }
+    pub fn new(segment_splits: Vec<Vec<Real>>) -> CurveResult<Self> {
+        validate_split_params(&segment_splits)?;
+        Ok(Self { segment_splits })
     }
 
     /// Constructs a split map containing only segment endpoints.
@@ -431,5 +435,80 @@ fn insert_unique_sorted_marker(
     }
 
     markers.push(marker);
+    Ok(())
+}
+
+fn validate_split_params(segment_splits: &[Vec<Real>]) -> CurveResult<()> {
+    for params in segment_splits {
+        validate_split_param_sequence(params)?;
+    }
+    Ok(())
+}
+
+fn validate_split_markers(segment_markers: &[Vec<SegmentSplitMarker>]) -> CurveResult<()> {
+    for (segment_index, markers) in segment_markers.iter().enumerate() {
+        validate_split_marker_sequence(segment_index, markers)?;
+    }
+    Ok(())
+}
+
+fn validate_split_marker_sequence(
+    segment_index: usize,
+    markers: &[SegmentSplitMarker],
+) -> CurveResult<()> {
+    if markers
+        .iter()
+        .any(|marker| marker.segment_index != segment_index)
+    {
+        return Err(CurveError::Topology(
+            "contour split marker bin carries mismatched segment index evidence".to_owned(),
+        ));
+    }
+    validate_split_param_sequence(markers.iter().map(|marker| &marker.param))
+}
+
+fn validate_split_param_sequence<'a>(
+    params: impl IntoIterator<Item = &'a Real>,
+) -> CurveResult<()> {
+    let params = params.into_iter().collect::<Vec<_>>();
+    if params.len() < 2 {
+        return Err(CurveError::Topology(
+            "contour split evidence must include both segment endpoints".to_owned(),
+        ));
+    }
+
+    let policy = CurvePolicy::certified();
+    if compare_reals(params[0], &Real::zero(), &policy) != Some(Ordering::Equal)
+        || compare_reals(params[params.len() - 1], &Real::one(), &policy) != Some(Ordering::Equal)
+    {
+        return Err(CurveError::Topology(
+            "contour split evidence must start at 0 and end at 1".to_owned(),
+        ));
+    }
+
+    for param in &params {
+        if in_closed_unit_interval(param, &policy) != Some(true) {
+            return Err(CurveError::Topology(
+                "contour split parameter evidence must lie inside the unit interval".to_owned(),
+            ));
+        }
+    }
+
+    for window in params.windows(2) {
+        match compare_reals(window[0], window[1], &policy) {
+            Some(Ordering::Less) => {}
+            Some(Ordering::Equal | Ordering::Greater) => {
+                return Err(CurveError::Topology(
+                    "contour split parameter evidence must be strictly increasing".to_owned(),
+                ));
+            }
+            None => {
+                return Err(CurveError::Topology(
+                    "contour split parameter ordering must be certified".to_owned(),
+                ));
+            }
+        }
+    }
+
     Ok(())
 }

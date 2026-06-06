@@ -186,7 +186,8 @@ fn approximate_arc_fragment_uses_source_radius_for_policy_on_circle_split_points
                 point: Point2::new(af(1.0), af(0.0)),
             },
         ],
-    ]);
+    ])
+    .unwrap();
 
     let Classification::Decided(fragments) =
         ContourFragmentSet::from_split_markers(&contour, &markers, &approx_policy()).unwrap()

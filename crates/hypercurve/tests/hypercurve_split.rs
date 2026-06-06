@@ -1,5 +1,6 @@
 use hypercurve::{
-    BulgeVertex2, Classification, Contour2, ContourOperand, ContourSplitMap, CurvePolicy, Real,
+    BulgeVertex2, Classification, Contour2, ContourOperand, ContourSplitMap, ContourSplitMarkers,
+    CurveError, CurvePolicy, Real, SegmentSplitMarker,
 };
 
 fn s(value: i32) -> Real {
@@ -33,6 +34,10 @@ fn rectangle(xmin: i32, ymin: i32, xmax: i32, ymax: i32) -> Contour2 {
 
 fn policy() -> CurvePolicy {
     CurvePolicy::certified()
+}
+
+fn assert_topology_error<T>(result: Result<T, CurveError>) {
+    assert!(matches!(result, Err(CurveError::Topology(_))));
 }
 
 #[test]
@@ -129,6 +134,45 @@ fn split_map_preserves_same_circle_arc_overlap_endpoints() {
         split_map.params_for_segment(1).unwrap(),
         [s(0), s(1)].as_slice()
     );
+}
+
+#[test]
+fn split_constructors_reject_unnormalized_evidence() {
+    ContourSplitMap::new(vec![vec![s(0), q(1, 2), s(1)]]).unwrap();
+    assert_topology_error(ContourSplitMap::new(vec![vec![s(0)]]));
+    assert_topology_error(ContourSplitMap::new(vec![vec![
+        s(0),
+        q(3, 4),
+        q(1, 2),
+        s(1),
+    ]]));
+    assert_topology_error(ContourSplitMap::new(vec![vec![s(0), s(2), s(1)]]));
+
+    ContourSplitMarkers::new(vec![vec![
+        SegmentSplitMarker {
+            segment_index: 0,
+            param: s(0),
+            point: p(0, 0),
+        },
+        SegmentSplitMarker {
+            segment_index: 0,
+            param: s(1),
+            point: p(1, 0),
+        },
+    ]])
+    .unwrap();
+    assert_topology_error(ContourSplitMarkers::new(vec![vec![
+        SegmentSplitMarker {
+            segment_index: 1,
+            param: s(0),
+            point: p(0, 0),
+        },
+        SegmentSplitMarker {
+            segment_index: 1,
+            param: s(1),
+            point: p(1, 0),
+        },
+    ]]));
 }
 
 #[test]
