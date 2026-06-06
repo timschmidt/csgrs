@@ -18,6 +18,7 @@ use std::{cmp::Ordering, collections::BTreeSet};
 
 use hyperlimit::{
     Point2, Point3, TriangleLocation, classify_point_triangle, compare_reals, point_on_segment,
+    projected_segment_parameter3,
 };
 use hypertri::Constraint;
 
@@ -325,6 +326,9 @@ fn append_coplanar_face_cell_constraints(
         let mut edges =
             coplanar_opposite_edges(graph.left_face, graph.right_face, side, left, right)?;
         seed_contained_coplanar_opposite_edge_endpoints(side, face, left, right, &mut edges)?;
+        seed_source_boundary_vertices_on_coplanar_opposite_edges(
+            side, face, left, right, &mut edges,
+        )?;
         for split in &graph.edge_splits {
             match side {
                 MeshSide::Left => {
@@ -455,6 +459,73 @@ fn seed_contained_coplanar_opposite_edge_endpoints(
             let point = vertex_point_for_side(opposite_side, vertex, left, right)?;
             if point_lies_on_mesh_face_closed(source_mesh, face, &point)? {
                 push_coplanar_cell_edge_point(edges, edge.edge, parameter, point)?;
+            }
+        }
+    }
+    Ok(())
+}
+
+/// Seed source-boundary vertices that lie on opposite coplanar edges.
+///
+/// A coplanar opposite edge can enter the current source face exactly through a
+/// source vertex and then continue through the face interior. If the retained
+/// split graph has no explicit edge/edge split for that endpoint touch, the
+/// contained opposite endpoint alone is insufficient to emit a positive cell
+/// constraint. This replayed point-on-segment predicate plus exact projected
+/// edge parameter keeps the boundary-crossing cell construction auditable
+/// without adding a boolean-specific recovery branch.
+fn seed_source_boundary_vertices_on_coplanar_opposite_edges(
+    side: MeshSide,
+    face: usize,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    edges: &mut [CoplanarCellEdge],
+) -> hypertri::Result<()> {
+    let source_mesh = match side {
+        MeshSide::Left => left,
+        MeshSide::Right => right,
+    };
+    let opposite_side = match side {
+        MeshSide::Left => MeshSide::Right,
+        MeshSide::Right => MeshSide::Left,
+    };
+    let source_triangle =
+        source_mesh
+            .triangles()
+            .get(face)
+            .ok_or(hypertri::Error::InvalidInput {
+                reason: "face-cell coplanar split graph references a missing source face",
+            })?;
+    let projection = choose_region_projection(source_mesh, face)?;
+
+    for edge in edges.to_vec() {
+        let start = vertex_point_for_side(opposite_side, edge.edge[0], left, right)?;
+        let end = vertex_point_for_side(opposite_side, edge.edge[1], left, right)?;
+        let projected_start = project_for_predicate(&start, projection);
+        let projected_end = project_for_predicate(&end, projection);
+        for &vertex in &source_triangle.0 {
+            let point = source_mesh
+                .vertices()
+                .get(vertex)
+                .ok_or(hypertri::Error::InvalidInput {
+                    reason: "face-cell source triangle references a missing vertex",
+                })?
+                .clone();
+            let projected_point = project_for_predicate(&point, projection);
+            match point_on_segment(&projected_start, &projected_end, &projected_point).value() {
+                Some(true) => {
+                    let parameter = projected_segment_parameter3(&point, &start, &end, projection)
+                        .ok_or(hypertri::Error::InvalidInput {
+                            reason: "face-cell coplanar source-boundary parameter is undefined",
+                        })?;
+                    push_coplanar_cell_edge_point(edges, edge.edge, parameter, point)?;
+                }
+                Some(false) => {}
+                None => {
+                    return Err(hypertri::Error::PredicateUndecided {
+                        predicate: "face-cell source vertex on coplanar opposite edge",
+                    });
+                }
             }
         }
     }
@@ -1513,5 +1584,50 @@ mod tests {
                 "missing contained opposite edge constraint {from}-{to}"
             );
         }
+    }
+
+    #[test]
+    fn coplanar_cell_constraints_replay_source_vertex_on_opposite_edge() {
+        let left = open_triangle_mesh(&[0, 0, 0, 4, 0, 0, 0, 4, 0]);
+        let right = open_triangle_mesh(&[-1, -1, 0, 2, 2, 0, -1, 2, 0]);
+        let split_plan = CoplanarOverlapSplitPlan {
+            graphs: vec![CoplanarOverlapSplitGraph {
+                left_face: 0,
+                right_face: 0,
+                projection: CoplanarProjection::Xy,
+                edge_splits: Vec::new(),
+                vertex_overlaps: Vec::new(),
+            }],
+        };
+        let mut boundary = left.triangles()[0]
+            .0
+            .into_iter()
+            .map(|vertex| FaceSplitBoundaryNode::OriginalVertex {
+                vertex,
+                point: left.vertices()[vertex].clone(),
+            })
+            .collect::<Vec<_>>();
+        let mut constraints = Vec::new();
+        let mut unique_constraints = BTreeSet::new();
+
+        append_coplanar_face_cell_constraints(
+            &split_plan,
+            MeshSide::Left,
+            0,
+            &left,
+            &right,
+            &mut boundary,
+            &mut constraints,
+            &mut unique_constraints,
+        )
+        .unwrap();
+
+        assert!(
+            constraints
+                .iter()
+                .any(|constraint| constraint.from == 0 && constraint.to == 3
+                    || constraint.from == 3 && constraint.to == 0),
+            "missing source-vertex-to-contained-endpoint coplanar constraint: {constraints:?}"
+        );
     }
 }
