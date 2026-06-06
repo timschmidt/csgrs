@@ -380,6 +380,27 @@ fn retained_role_report_constructors_reject_mismatched_evidence() {
         0,
         Vec::new(),
     ));
+    let retained = BezierRetainedRegion2::new(vec![retained_line_loop(&[
+        p(0, 0),
+        p(4, 0),
+        p(4, 4),
+        p(0, 4),
+    ])]);
+    let report = decided(retained.line_image_role_report(&policy()).unwrap());
+    assert_topology_error(BezierRetainedLineRegionRoleReport2::new(
+        report.roles().to_vec(),
+        report.nesting_depths().to_vec(),
+        0,
+        0,
+        report.contours().to_vec(),
+    ));
+    assert_topology_error(BezierRetainedLineRegionRoleReport2::new(
+        report.roles().to_vec(),
+        report.nesting_depths().to_vec(),
+        usize::MAX,
+        1,
+        report.contours().to_vec(),
+    ));
     assert_topology_error(BezierRetainedSignedAreaRoleReport2::new(
         roles.clone(),
         Vec::new(),

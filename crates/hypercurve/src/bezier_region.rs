@@ -191,6 +191,11 @@ impl BezierRetainedLineRegionRoleReport2 {
     ) -> CurveResult<Self> {
         validate_report_length(roles.len(), "nesting depth", nesting_depths.len())?;
         validate_report_length(roles.len(), "line contour", contours.len())?;
+        validate_line_role_report_fragment_counts(
+            materialized_fragment_count,
+            algebraic_fragment_count,
+            &contours,
+        )?;
         Ok(Self {
             roles,
             nesting_depths,
@@ -956,6 +961,35 @@ fn validate_report_length(
         return Err(CurveError::Topology(format!(
             "retained role report {evidence_name} count does not match loop count"
         )));
+    }
+    Ok(())
+}
+
+fn validate_line_role_report_fragment_counts(
+    materialized_fragment_count: usize,
+    algebraic_fragment_count: usize,
+    contours: &[Contour2],
+) -> CurveResult<()> {
+    let source_fragment_count = materialized_fragment_count
+        .checked_add(algebraic_fragment_count)
+        .ok_or_else(|| {
+            CurveError::Topology(
+                "retained line role report source fragment count overflowed".into(),
+            )
+        })?;
+    let contour_fragment_count = contours
+        .iter()
+        .try_fold(0_usize, |count, contour| count.checked_add(contour.len()))
+        .ok_or_else(|| {
+            CurveError::Topology(
+                "retained line role report contour fragment count overflowed".into(),
+            )
+        })?;
+    if source_fragment_count != contour_fragment_count {
+        return Err(CurveError::Topology(
+            "retained line role report source fragment count does not match line contour evidence"
+                .into(),
+        ));
     }
     Ok(())
 }
