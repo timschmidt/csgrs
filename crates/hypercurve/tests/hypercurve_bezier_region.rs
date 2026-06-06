@@ -410,7 +410,7 @@ fn retained_line_image_role_report_rejects_nonrational_algebraic_endpoint() {
 }
 
 #[test]
-fn retained_line_image_role_report_rejects_nonlinear_line_image_loop() {
+fn retained_line_image_role_report_accepts_certified_nonlinear_line_image_loop() {
     let nonlinear_edge = BezierSplitFragment2::Materialized {
         start: exact(r(0)),
         end: exact(r(1)),
@@ -451,9 +451,13 @@ fn retained_line_image_role_report_rejects_nonlinear_line_image_loop() {
         },
     ])]);
 
+    let report = decided(retained.line_image_role_report(&policy()).unwrap());
+
+    assert_eq!(report.roles(), &[BezierRetainedRegionLoopRole::Material]);
+    assert_eq!(report.nesting_depths(), &[0]);
     assert_eq!(
-        retained.line_image_role_report(&policy()).unwrap(),
-        Classification::Uncertain(UncertaintyReason::Unsupported)
+        report.to_region().filled_area(&policy()).unwrap(),
+        Classification::Decided(Some(r(16)))
     );
 }
 

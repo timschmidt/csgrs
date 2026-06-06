@@ -22,7 +22,7 @@ use hyperreal::{Real, RealSign};
 use crate::classify::{compare_reals, real_sign};
 use crate::{
     Aabb2, BezierArrangementGraph2, BezierArrangementTraversal2, BezierEndpointPointImage2,
-    BezierLineContactKind, BezierLineContactRelation, BezierParameter2,
+    BezierLineContactKind, BezierLineContactRelation, BezierLineImageFitRelation, BezierParameter2,
     BezierRetainedLinearOverlapTraversal2, BezierSplitFragment2, BezierSubcurve2, Classification,
     Contour2, ContourPointLocation, CurvePolicy, CurveResult, LineSeg2, Point2, Region2, Segment2,
     UncertaintyReason,
@@ -730,7 +730,7 @@ fn retained_line_loop_to_contour(
 ) -> CurveResult<Classification<Contour2>> {
     let mut segments = Vec::with_capacity(boundary_loop.fragments().len());
     for fragment in boundary_loop.fragments() {
-        let (start, end) = match retained_line_fragment_endpoints(fragment, policy) {
+        let (start, end) = match retained_line_fragment_endpoints(fragment, policy)? {
             Classification::Decided(endpoints) => endpoints,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
@@ -741,25 +741,35 @@ fn retained_line_loop_to_contour(
 
 /// Returns exact line-segment endpoints for a retained line-image fragment.
 ///
-/// Materialized polynomial fragments must be certified degree elevations of
-/// their endpoint segment. Algebraic endpoint-image fragments are accepted
+/// Materialized fragments must carry a certified exact endpoint line-image
+/// fit. Algebraic endpoint-image fragments are accepted
 /// only when the endpoint point evidence has exact rational witnesses, or when
 /// an exact boundary parameter can be replayed against the retained source
 /// curve. This follows Yap's retained-object discipline: algebraic endpoints
 /// become line-contour topology only through exact construction evidence, not
-/// by sampling isolating intervals. The linear-control identities are the
-/// standard Bernstein degree-elevation formulas from Farin, *Curves and
-/// Surfaces for CAGD* (5th ed., 2002).
+/// by sampling isolating intervals. The native fit certificate proves every
+/// control point lies on the endpoint segment, preserving the exact
+/// object/predicate split described by Yap while allowing non-affine
+/// parameterizations whose image is still exactly one line segment.
 fn retained_line_fragment_endpoints(
     fragment: &BezierSplitFragment2,
     policy: &CurvePolicy,
-) -> Classification<(Point2, Point2)> {
+) -> CurveResult<Classification<(Point2, Point2)>> {
     match fragment {
         BezierSplitFragment2::Materialized { curve, .. } => {
-            if !subcurve_is_linearly_parameterized(curve, policy) {
-                return Classification::Uncertain(UncertaintyReason::Unsupported);
-            }
-            Classification::Decided(curve.endpoints())
+            let fit = match subcurve_fit_exact_line_image(curve, policy)? {
+                Classification::Decided(BezierLineImageFitRelation::Fit(fit)) => fit,
+                Classification::Decided(BezierLineImageFitRelation::NotLine) => {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+                }
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            Ok(Classification::Decided((
+                fit.line().start().clone(),
+                fit.line().end().clone(),
+            )))
         }
         BezierSplitFragment2::AlgebraicEndpointImages {
             start,
@@ -775,18 +785,33 @@ fn retained_line_fragment_endpoints(
                 policy,
             ) {
                 Classification::Decided(point) => point,
-                Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
             };
             let end =
                 match retained_line_endpoint_point(end, end_image.as_ref(), source_curve, policy) {
                     Classification::Decided(point) => point,
-                    Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
                 };
-            Classification::Decided((start, end))
+            Ok(Classification::Decided((start, end)))
         }
         BezierSplitFragment2::Unresolved { .. } => {
-            Classification::Uncertain(UncertaintyReason::Boundary)
+            Ok(Classification::Uncertain(UncertaintyReason::Boundary))
         }
+    }
+}
+
+fn subcurve_fit_exact_line_image(
+    curve: &BezierSubcurve2,
+    policy: &CurvePolicy,
+) -> CurveResult<Classification<BezierLineImageFitRelation>> {
+    match curve {
+        BezierSubcurve2::Quadratic(curve) => curve.fit_exact_line_image(policy),
+        BezierSubcurve2::Cubic(curve) => curve.fit_exact_line_image(policy),
+        BezierSubcurve2::RationalQuadratic(curve) => curve.fit_exact_line_image(policy),
     }
 }
 
@@ -1056,50 +1081,6 @@ fn subcurve_relation_to_line_with_contacts(
             curve.relation_to_line_with_contacts(line, policy)
         }
     }
-}
-
-fn subcurve_is_linearly_parameterized(curve: &BezierSubcurve2, policy: &CurvePolicy) -> bool {
-    match curve {
-        BezierSubcurve2::Quadratic(curve) => {
-            point_coordinates_equal(
-                curve.control(),
-                &linear_control(curve.start(), curve.end(), 1, 2),
-                policy,
-            ) == Some(true)
-        }
-        BezierSubcurve2::Cubic(curve) => {
-            point_coordinates_equal(
-                curve.control1(),
-                &linear_control(curve.start(), curve.end(), 1, 3),
-                policy,
-            ) == Some(true)
-                && point_coordinates_equal(
-                    curve.control2(),
-                    &linear_control(curve.start(), curve.end(), 2, 3),
-                    policy,
-                ) == Some(true)
-        }
-        BezierSubcurve2::RationalQuadratic(_) => false,
-    }
-}
-
-fn linear_control(start: &Point2, end: &Point2, numerator: i32, denominator: i32) -> Point2 {
-    let numerator = Real::from(numerator);
-    let denominator = Real::from(denominator);
-    let complement = &denominator - &numerator;
-    Point2::new(
-        (((&complement * start.x()) + (&numerator * end.x())) / &denominator)
-            .expect("positive integer denominator is nonzero"),
-        (((&complement * start.y()) + (&numerator * end.y())) / denominator)
-            .expect("positive integer denominator is nonzero"),
-    )
-}
-
-fn point_coordinates_equal(left: &Point2, right: &Point2, policy: &CurvePolicy) -> Option<bool> {
-    Some(
-        compare_reals(left.x(), right.x(), policy)? == std::cmp::Ordering::Equal
-            && compare_reals(left.y(), right.y(), policy)? == std::cmp::Ordering::Equal,
-    )
 }
 
 impl BezierSubcurve2 {
