@@ -986,6 +986,39 @@ fn retained_linear_overlap_split_graph_rejects_forged_resolved_provenance() {
 }
 
 #[test]
+fn retained_linear_overlap_split_graph_rejects_forged_orientation() {
+    let graph = partial_line_overlap_graph();
+    let refinement = decided(graph.split_retained_linear_overlaps(&policy()));
+    let (refined_graph, refined_fragments, overlap_report, split_plan, resolved_overlaps) =
+        refinement.into_parts();
+    let resolved = &resolved_overlaps[0];
+    assert_eq!(
+        resolved.orientation(),
+        BezierRetainedOverlapOrientation2::Same
+    );
+    let forged = BezierRetainedResolvedLinearOverlap2::new(
+        resolved.first_refined_fragment_index(),
+        resolved.second_refined_fragment_index(),
+        resolved.first_original_fragment_index(),
+        resolved.second_original_fragment_index(),
+        resolved.first_local_range().clone(),
+        resolved.second_local_range().clone(),
+        resolved.overlap_segment().clone(),
+        BezierRetainedOverlapOrientation2::Opposite,
+        resolved.extent(),
+    )
+    .unwrap();
+
+    assert_topology_error(BezierRetainedLinearOverlapSplitGraph2::new(
+        refined_graph,
+        refined_fragments,
+        overlap_report,
+        split_plan,
+        vec![forged],
+    ));
+}
+
+#[test]
 fn retained_linear_overlap_split_graph_rejects_missing_split_report_evidence() {
     let graph = partial_line_overlap_graph();
     let refinement = decided(graph.split_retained_linear_overlaps(&policy()));

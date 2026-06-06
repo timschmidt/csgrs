@@ -414,7 +414,7 @@ impl BezierRetainedLinearOverlapSplitGraph2 {
             ));
         }
         validate_linear_overlap_refinement_provenance(
-            graph.len(),
+            &graph,
             &refined_fragments,
             &overlap_report,
             &split_plan,
@@ -475,7 +475,7 @@ impl BezierRetainedLinearOverlapSplitGraph2 {
 }
 
 fn validate_linear_overlap_refinement_provenance(
-    refined_fragment_count: usize,
+    graph: &BezierArrangementGraph2,
     refined_fragments: &[BezierRetainedOverlapRefinedFragment2],
     overlap_report: &BezierRetainedOverlapReport2,
     split_plan: &[BezierRetainedLinearOverlapSplit2],
@@ -515,6 +515,8 @@ fn validate_linear_overlap_refinement_provenance(
         }
     }
 
+    let policy = CurvePolicy::certified();
+    let refined_fragment_count = graph.len();
     for resolved in resolved_overlaps {
         validate_resolved_overlap_refined_index(
             refined_fragment_count,
@@ -542,6 +544,26 @@ fn validate_linear_overlap_refinement_provenance(
             return Err(CurveError::Topology(
                 "retained resolved overlap lacks matching split-plan evidence".to_owned(),
             ));
+        }
+
+        match refined_overlap_orientation(
+            graph,
+            resolved.first_refined_fragment_index(),
+            resolved.second_refined_fragment_index(),
+            &policy,
+        ) {
+            Classification::Decided(orientation) if orientation == resolved.orientation() => {}
+            Classification::Decided(_) => {
+                return Err(CurveError::Topology(
+                    "retained resolved overlap orientation does not match refined graph evidence"
+                        .to_owned(),
+                ));
+            }
+            Classification::Uncertain(reason) => {
+                return Err(CurveError::Topology(format!(
+                    "retained resolved overlap orientation is not certified by refined graph evidence: {reason:?}"
+                )));
+            }
         }
     }
 
