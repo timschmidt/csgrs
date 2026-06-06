@@ -1918,6 +1918,24 @@ impl ExactVolumetricBoundaryClosureReport {
         }
     }
 
+    /// Classify whether this retained boundary-closure report is fresh.
+    ///
+    /// Local status/count coherence is checked before source replay, so callers
+    /// can distinguish stale closure evidence from source-geometry drift.
+    pub fn freshness_against_sources(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> ExactReportFreshness {
+        if let Err(error) = self.validate() {
+            return error.into();
+        }
+        match certify_volumetric_boundary_closure_report(left, right, self.operation) {
+            Ok(replay) if self == &replay => ExactReportFreshness::Current,
+            Ok(_) | Err(_) => ExactReportFreshness::SourceReplayMismatch,
+        }
+    }
+
     /// Validate status and retained closure counts.
     pub fn validate(&self) -> Result<(), ExactReportValidationError> {
         match &self.status {
@@ -2110,6 +2128,41 @@ impl ExactBooleanPreflight {
             Ok(())
         } else {
             Err(ExactReportValidationError::SourceReplayMismatch)
+        }
+    }
+
+    /// Classify whether this retained preflight is fresh for the source meshes.
+    ///
+    /// This uses the default strict closed-output preflight contract. Use
+    /// [`Self::freshness_against_sources_with_validation`] when a caller
+    /// deliberately accepted a different output validation policy.
+    pub fn freshness_against_sources(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> ExactReportFreshness {
+        if let Err(error) = self.validate() {
+            return error.into();
+        }
+        match preflight_boolean_exact(left, right, self.operation) {
+            Ok(replay) if self == &replay => ExactReportFreshness::Current,
+            Ok(_) | Err(_) => ExactReportFreshness::SourceReplayMismatch,
+        }
+    }
+
+    /// Classify whether this retained preflight is fresh under `validation`.
+    pub fn freshness_against_sources_with_validation(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+        validation: ValidationPolicy,
+    ) -> ExactReportFreshness {
+        if let Err(error) = self.validate() {
+            return error.into();
+        }
+        match preflight_boolean_exact_with_validation(left, right, self.operation, validation) {
+            Ok(replay) if self == &replay => ExactReportFreshness::Current,
+            Ok(_) | Err(_) => ExactReportFreshness::SourceReplayMismatch,
         }
     }
 
@@ -3881,6 +3934,64 @@ mod tests {
             ExactReportFreshness::from(
                 ExactReportValidationError::VolumetricMaterializedAssemblyViolatesOperation
             ),
+            ExactReportFreshness::StaleStatusEvidence
+        );
+    }
+
+    fn report_test_tetra(offset: [i64; 3]) -> ExactMesh {
+        let [ox, oy, oz] = offset;
+        ExactMesh::from_i64_triangles(
+            &[ox, oy, oz, ox + 1, oy, oz, ox, oy + 1, oz, ox, oy, oz + 1],
+            &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
+        )
+        .unwrap()
+    }
+
+    #[test]
+    fn preflight_and_closure_freshness_classify_local_and_source_drift() {
+        let left = report_test_tetra([0, 0, 0]);
+        let right = report_test_tetra([3, 0, 0]);
+
+        let preflight =
+            preflight_boolean_exact(&left, &right, ExactBooleanOperation::Union).unwrap();
+        assert_eq!(
+            preflight.freshness_against_sources(&left, &right),
+            ExactReportFreshness::Current
+        );
+        assert_eq!(
+            preflight.freshness_against_sources_with_validation(
+                &left,
+                &right,
+                ValidationPolicy::CLOSED
+            ),
+            ExactReportFreshness::Current
+        );
+
+        let mut stale_preflight = preflight.clone();
+        stale_preflight.retained_events = 1;
+        assert_eq!(
+            stale_preflight.freshness_against_sources(&left, &right),
+            ExactReportFreshness::StaleStatusEvidence
+        );
+
+        let overlapping_right = report_test_tetra([0, 0, 0]);
+        assert_eq!(
+            preflight.freshness_against_sources(&left, &overlapping_right),
+            ExactReportFreshness::SourceReplayMismatch
+        );
+
+        let closure =
+            certify_volumetric_boundary_closure_report(&left, &right, ExactBooleanOperation::Union)
+                .unwrap();
+        assert_eq!(
+            closure.freshness_against_sources(&left, &right),
+            ExactReportFreshness::Current
+        );
+
+        let mut stale_closure = closure.clone();
+        stale_closure.boundary_edges = 1;
+        assert_eq!(
+            stale_closure.freshness_against_sources(&left, &right),
             ExactReportFreshness::StaleStatusEvidence
         );
     }
