@@ -46,6 +46,8 @@ use crate::{
 pub struct BezierRetainedCurveEnvelope2 {
     envelope: Aabb2,
     exact_fragment_count: usize,
+    native_fragment_count: usize,
+    algebraic_fragment_count: usize,
 }
 
 impl BezierRetainedCurveEnvelope2 {
@@ -85,9 +87,24 @@ impl BezierRetainedCurveEnvelope2 {
         &self.envelope
     }
 
-    /// Returns how many native retained fragments contributed exact bounds.
+    /// Returns how many retained fragments contributed certified curve bounds.
     pub const fn exact_fragment_count(&self) -> usize {
         self.exact_fragment_count
+    }
+
+    /// Returns how many materialized native fragments contributed exact bounds.
+    pub const fn native_fragment_count(&self) -> usize {
+        self.native_fragment_count
+    }
+
+    /// Returns how many algebraic endpoint-image fragments contributed source-curve bounds.
+    pub const fn algebraic_fragment_count(&self) -> usize {
+        self.algebraic_fragment_count
+    }
+
+    /// Returns true when algebraic source-curve evidence contributed to the envelope.
+    pub const fn has_algebraic_fragments(&self) -> bool {
+        self.algebraic_fragment_count > 0
     }
 }
 
@@ -173,6 +190,12 @@ enum EndpointIntervalKind {
     Algebraic,
 }
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum CurveEnvelopeFragmentKind {
+    Native,
+    Algebraic,
+}
+
 #[derive(Default)]
 struct EndpointEnvelopeAccumulator {
     min_x: Option<Real>,
@@ -187,6 +210,8 @@ struct EndpointEnvelopeAccumulator {
 struct CurveEnvelopeAccumulator {
     envelope: Option<Aabb2>,
     exact_fragment_count: usize,
+    native_fragment_count: usize,
+    algebraic_fragment_count: usize,
 }
 
 impl CurveEnvelopeAccumulator {
@@ -209,10 +234,12 @@ impl CurveEnvelopeAccumulator {
         fragment: &BezierSplitFragment2,
         policy: &CurvePolicy,
     ) -> Classification<()> {
-        let curve_box = match fragment {
+        let (curve_box, kind) = match fragment {
             BezierSplitFragment2::Materialized { curve, .. } => {
                 match retained_curve_bounds(curve, policy) {
-                    Classification::Decided(curve_box) => curve_box,
+                    Classification::Decided(curve_box) => {
+                        (curve_box, CurveEnvelopeFragmentKind::Native)
+                    }
                     Classification::Uncertain(reason) => return Classification::Uncertain(reason),
                 }
             }
@@ -235,7 +262,9 @@ impl CurveEnvelopeAccumulator {
                     end_image.as_ref(),
                     policy,
                 ) {
-                    Classification::Decided(curve_box) => curve_box,
+                    Classification::Decided(curve_box) => {
+                        (curve_box, CurveEnvelopeFragmentKind::Algebraic)
+                    }
                     Classification::Uncertain(reason) => return Classification::Uncertain(reason),
                 }
             }
@@ -251,6 +280,10 @@ impl CurveEnvelopeAccumulator {
             None => Some(curve_box),
         };
         self.exact_fragment_count += 1;
+        match kind {
+            CurveEnvelopeFragmentKind::Native => self.native_fragment_count += 1,
+            CurveEnvelopeFragmentKind::Algebraic => self.algebraic_fragment_count += 1,
+        }
         Classification::Decided(())
     }
 
@@ -261,6 +294,8 @@ impl CurveEnvelopeAccumulator {
         Classification::Decided(BezierRetainedCurveEnvelope2 {
             envelope,
             exact_fragment_count: self.exact_fragment_count,
+            native_fragment_count: self.native_fragment_count,
+            algebraic_fragment_count: self.algebraic_fragment_count,
         })
     }
 }

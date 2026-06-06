@@ -653,6 +653,9 @@ fn retained_curve_envelope_includes_native_bezier_interior_extrema() {
     assert_eq!(curve_envelope.envelope().min(), &p(0, -2));
     assert_eq!(curve_envelope.envelope().max(), &p(4, 2));
     assert_eq!(curve_envelope.exact_fragment_count(), 2);
+    assert_eq!(curve_envelope.native_fragment_count(), 2);
+    assert_eq!(curve_envelope.algebraic_fragment_count(), 0);
+    assert!(!curve_envelope.has_algebraic_fragments());
 }
 
 #[test]
@@ -677,6 +680,9 @@ fn retained_curve_envelope_uses_source_bounds_for_algebraic_split_fragments() {
     assert_eq!(curve_envelope.envelope().min(), &p(0, 0));
     assert_eq!(curve_envelope.envelope().max(), &p(4, 2));
     assert_eq!(curve_envelope.exact_fragment_count(), 2);
+    assert_eq!(curve_envelope.native_fragment_count(), 0);
+    assert_eq!(curve_envelope.algebraic_fragment_count(), 2);
+    assert!(curve_envelope.has_algebraic_fragments());
 }
 
 #[test]
@@ -700,6 +706,9 @@ fn retained_curve_envelope_uses_algebraic_parameter_interval_hull() {
     assert_eq!(envelope.envelope().min(), &p(0, 0));
     assert_eq!(envelope.envelope().max(), &Point2::new(q(3, 1), q(2, 1)));
     assert_eq!(envelope.exact_fragment_count(), 1);
+    assert_eq!(envelope.native_fragment_count(), 0);
+    assert_eq!(envelope.algebraic_fragment_count(), 1);
+    assert!(envelope.has_algebraic_fragments());
 }
 
 #[test]
@@ -725,6 +734,9 @@ fn retained_curve_envelope_uses_algebraic_endpoint_image_before_interval_hull() 
     assert_eq!(envelope.envelope().min(), &p(0, 0));
     assert_eq!(envelope.envelope().max(), &p(1, 0));
     assert_eq!(envelope.exact_fragment_count(), 1);
+    assert_eq!(envelope.native_fragment_count(), 0);
+    assert_eq!(envelope.algebraic_fragment_count(), 1);
+    assert!(envelope.has_algebraic_fragments());
 }
 
 #[test]
