@@ -3,10 +3,10 @@ use hypercurve::{
     BezierArrangementGraph2, BezierParameter2, BezierParameterInterval, BezierParameterPolynomial,
     BezierRegion2, BezierRetainedBoundaryLoop2, BezierRetainedCurveEnvelope2,
     BezierRetainedCurvedNestingRoleReport2, BezierRetainedEndpointEnvelope2,
-    BezierRetainedEnvelopeSourceKind, BezierRetainedLineRegionRoleReport2, BezierRetainedRegion2,
-    BezierRetainedRegionLoopRole, BezierRetainedSignedAreaRoleReport2, BezierSplitFragment2,
-    Classification, CurveError, CurvePolicy, Point2, QuadraticBezier2, RationalQuadraticBezier2,
-    Real, UncertaintyReason,
+    BezierRetainedEnvelopeSourceKind, BezierRetainedFragmentSource2,
+    BezierRetainedLineRegionRoleReport2, BezierRetainedRegion2, BezierRetainedRegionLoopRole,
+    BezierRetainedSignedAreaRoleReport2, BezierSplitFragment2, Classification, CurveError,
+    CurvePolicy, Point2, QuadraticBezier2, RationalQuadraticBezier2, Real, UncertaintyReason,
 };
 use proptest::prelude::*;
 
@@ -401,6 +401,19 @@ fn retained_role_report_constructors_reject_mismatched_evidence() {
         1,
         report.contours().to_vec(),
     ));
+    assert_topology_error(
+        BezierRetainedLineRegionRoleReport2::new(
+            report.roles().to_vec(),
+            report.nesting_depths().to_vec(),
+            report.materialized_fragment_count(),
+            report.algebraic_fragment_count(),
+            report.contours().to_vec(),
+        )
+        .unwrap()
+        .with_loop_arrangement_sources(vec![Some(vec![
+            BezierRetainedFragmentSource2::new(0, 0, 0),
+        ])]),
+    );
     assert_topology_error(BezierRetainedSignedAreaRoleReport2::new(
         roles.clone(),
         Vec::new(),

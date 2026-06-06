@@ -212,6 +212,7 @@ impl BezierRetainedLineRegionRoleReport2 {
         loop_arrangement_sources: Vec<Option<Vec<BezierRetainedFragmentSource2>>>,
     ) -> CurveResult<Self> {
         validate_loop_arrangement_sources(self.roles.len(), &loop_arrangement_sources)?;
+        validate_line_loop_arrangement_source_counts(&self.contours, &loop_arrangement_sources)?;
         self.loop_arrangement_sources = Some(loop_arrangement_sources);
         Ok(self)
     }
@@ -990,6 +991,23 @@ fn validate_line_role_report_fragment_counts(
             "retained line role report source fragment count does not match line contour evidence"
                 .into(),
         ));
+    }
+    Ok(())
+}
+
+fn validate_line_loop_arrangement_source_counts(
+    contours: &[Contour2],
+    loop_arrangement_sources: &[Option<Vec<BezierRetainedFragmentSource2>>],
+) -> CurveResult<()> {
+    for (contour, sources) in contours.iter().zip(loop_arrangement_sources) {
+        if let Some(sources) = sources
+            && sources.len() != contour.len()
+        {
+            return Err(CurveError::Topology(
+                "retained line role report loop source count does not match contour fragment count"
+                    .into(),
+            ));
+        }
     }
     Ok(())
 }
