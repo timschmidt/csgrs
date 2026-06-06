@@ -348,7 +348,7 @@ pub(crate) fn select_arrangement_for_replay(
     }
 }
 
-fn arrangement_region_classification_blockers_are_volume_resolved(
+pub(crate) fn arrangement_region_classification_blockers_are_volume_resolved(
     arrangement: &ExactArrangement3d,
 ) -> bool {
     !arrangement.blockers.is_empty()

@@ -39,6 +39,7 @@ use super::bounds::AabbIntersectionKind;
 use super::box_solid::{
     has_axis_aligned_box_cell_difference, has_axis_aligned_box_cell_union, is_axis_aligned_box,
 };
+use super::cell_complex::arrangement_region_classification_blockers_are_volume_resolved;
 use super::cells::triangulate_all_face_cells_with_cdt;
 use super::construction::SegmentPlaneRelation;
 use super::contained_adjacent::{
@@ -2305,24 +2306,6 @@ fn arrangement_has_regularized_closed_sheet_recovery_surface(
     left.facts().mesh.closed_manifold
         && right.facts().mesh.closed_manifold
         && arrangement_has_mixed_source_sheet_complex(arrangement)
-}
-
-fn arrangement_region_classification_blockers_are_volume_resolved(
-    arrangement: &ExactArrangement,
-) -> bool {
-    !arrangement.blockers.is_empty()
-        && arrangement
-            .blockers
-            .iter()
-            .all(|blocker| *blocker == ExactArrangementBlocker::UnresolvedRegionClassification)
-        && arrangement
-            .volume_regions
-            .as_ref()
-            .is_some_and(|regions| !regions.is_empty())
-        && arrangement
-            .volume_adjacencies
-            .as_ref()
-            .is_some_and(|adjacencies| !adjacencies.is_empty())
 }
 
 fn arrangement_should_try_regularized_sheet_recovery(
