@@ -789,6 +789,7 @@ const fn winding_readiness_status_already_materialized(
             | ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized
             | ExactWindingReadinessStatus::MixedDimensionalRegularizedSolidAlreadyMaterialized
             | ExactWindingReadinessStatus::ConvexBooleanAlreadyMaterialized
+            | ExactWindingReadinessStatus::OpenSurfaceArrangementAlreadyMaterialized
     )
 }
 
@@ -4507,6 +4508,23 @@ fn winding_readiness_report_from_graph(
             None,
         ));
     }
+    if let Some((_support, region_classifications, _triangulations)) =
+        open_surface_arrangement_plan_from_graph(graph, left, right, operation)?
+    {
+        let region_count = unique_classified_region_count(&region_classifications);
+        return Ok(winding_readiness_report(
+            operation,
+            ExactWindingReadinessStatus::OpenSurfaceArrangementAlreadyMaterialized,
+            graph_had_unknowns,
+            graph.face_pairs.len(),
+            graph.event_count(),
+            region_count,
+            region_classifications,
+            counts.into_blocker(ExactBooleanBlockerKind::NeedsWinding),
+            None,
+            None,
+        ));
+    }
     let tail_shortcut_materializes = preflight_tail_shortcut_support(left, right, operation)
         == Some(ExactBooleanSupport::CertifiedArrangementCellComplex);
     let boundary_policy_required = graph_requires_boundary_policy(graph, left, right)?;
@@ -6401,6 +6419,7 @@ mod tests {
             ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized,
             ExactWindingReadinessStatus::MixedDimensionalRegularizedSolidAlreadyMaterialized,
             ExactWindingReadinessStatus::ConvexBooleanAlreadyMaterialized,
+            ExactWindingReadinessStatus::OpenSurfaceArrangementAlreadyMaterialized,
         ] {
             assert!(winding_readiness_status_already_materialized(&status));
         }
@@ -6433,6 +6452,11 @@ mod tests {
         assert!(
             !winding_readiness_status_materializes_arrangement_cell_complex(
                 &ExactWindingReadinessStatus::ConvexBooleanAlreadyMaterialized,
+            )
+        );
+        assert!(
+            !winding_readiness_status_materializes_arrangement_cell_complex(
+                &ExactWindingReadinessStatus::OpenSurfaceArrangementAlreadyMaterialized,
             )
         );
     }
@@ -6593,6 +6617,53 @@ mod tests {
             ExactBooleanOperation::Intersection,
             ExactBooleanOperation::Difference,
         ] {
+            let expected_support = match operation {
+                ExactBooleanOperation::Union => {
+                    ExactBooleanSupport::CertifiedOpenSurfaceArrangementUnion
+                }
+                ExactBooleanOperation::Intersection => {
+                    ExactBooleanSupport::CertifiedOpenSurfaceArrangementIntersection
+                }
+                ExactBooleanOperation::Difference => {
+                    ExactBooleanSupport::CertifiedOpenSurfaceArrangementDifference
+                }
+                ExactBooleanOperation::SelectedRegions(_) => unreachable!(),
+            };
+            let preflight = preflight_boolean_exact(&left, &right, operation).unwrap();
+            assert_eq!(
+                preflight.support, expected_support,
+                "{operation:?}: {preflight:?}"
+            );
+            assert!(preflight.blocker.is_none(), "{operation:?}: {preflight:?}");
+            assert!(preflight.region_count > 0, "{operation:?}: {preflight:?}");
+            assert!(preflight.validate().is_ok(), "{operation:?}: {preflight:?}");
+            preflight.validate_against_sources(&left, &right).unwrap();
+
+            let readiness = certify_winding_readiness_report(&left, &right, operation).unwrap();
+            assert_eq!(
+                readiness.status,
+                ExactWindingReadinessStatus::OpenSurfaceArrangementAlreadyMaterialized,
+                "{operation:?}: {readiness:?}"
+            );
+            assert_eq!(
+                readiness.blocker.kind,
+                ExactBooleanBlockerKind::NeedsWinding,
+                "{operation:?}: {readiness:?}"
+            );
+            assert_eq!(readiness.region_count, preflight.region_count);
+            assert_eq!(
+                readiness.region_classifications,
+                preflight.region_classifications
+            );
+            assert!(winding_readiness_status_already_materialized(
+                &readiness.status
+            ));
+            assert!(
+                !winding_readiness_status_materializes_arrangement_cell_complex(&readiness.status)
+            );
+            readiness.validate().unwrap();
+            readiness.validate_against_sources(&left, &right).unwrap();
+
             let attempt = exact_arrangement_boolean_attempt_report(
                 &left,
                 &right,
@@ -6618,6 +6689,15 @@ mod tests {
             );
             result.validate().unwrap();
             result.validate_against_sources(&left, &right).unwrap();
+            result
+                .validate_operation_against_sources(
+                    &left,
+                    &right,
+                    operation,
+                    ValidationPolicy::ALLOW_BOUNDARY,
+                    ExactBoundaryBooleanPolicy::Reject,
+                )
+                .unwrap();
         }
     }
 
