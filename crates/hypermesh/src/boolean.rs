@@ -78,9 +78,9 @@ use super::reports::{
     ExactBooleanResultKind, ExactBooleanShortcutKind, ExactBooleanSupport,
     ExactBoundaryTouchingReport, ExactBoundaryTouchingStatus, ExactOpenSurfaceDisjointReport,
     ExactOpenSurfaceDisjointStatus, ExactPlanarArrangementReport, ExactPlanarArrangementStatus,
-    ExactRefinementReport, ExactRefinementStatus, ExactSameSurfaceReport, ExactSameSurfaceStatus,
-    ExactVolumetricBoundaryClosureReport, ExactVolumetricBoundaryClosureStatus,
-    ExactWindingReadinessReport, ExactWindingReadinessStatus,
+    ExactRefinementReport, ExactRefinementStatus, ExactReportFreshness, ExactReportValidationError,
+    ExactSameSurfaceReport, ExactSameSurfaceStatus, ExactVolumetricBoundaryClosureReport,
+    ExactVolumetricBoundaryClosureStatus, ExactWindingReadinessReport, ExactWindingReadinessStatus,
 };
 use super::solid::{
     ConvexSolidMeshClassification, ConvexSolidMeshRelation, ConvexSolidPointRelation,
@@ -206,6 +206,161 @@ pub struct ExactArrangementBooleanAttempt {
     pub output_vertices: usize,
     /// Output triangle count, when triangulation succeeded.
     pub output_triangles: usize,
+}
+
+impl ExactArrangementBooleanAttempt {
+    /// Validate this retained arrangement/cell-complex attempt as a coherent
+    /// audit artifact.
+    ///
+    /// The attempt report is a public provenance object for a staged topology
+    /// construction. Its stage, decline reason, shortcut materialization, and
+    /// retained counts must describe one path through that state machine rather
+    /// than an arbitrary mix of successful output and blockers.
+    pub fn validate(&self) -> Result<(), ExactReportValidationError> {
+        if self.selected_volume_regions != 0 && self.volume_regions == 0 {
+            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+        }
+
+        match &self.decline {
+            Some(decline) => {
+                if self.materialized_shortcut.is_some()
+                    || self.stage == ExactArrangementBooleanStage::Materialized
+                {
+                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                }
+                if !arrangement_attempt_decline_matches_stage(decline, self.stage) {
+                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                }
+            }
+            None => {
+                if self.stage != ExactArrangementBooleanStage::Materialized
+                    || self.materialized_shortcut.is_none()
+                {
+                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                }
+            }
+        }
+
+        if let Some(shortcut) = self.materialized_shortcut {
+            if shortcut != ExactBooleanShortcutKind::ArrangementCellComplex {
+                return Err(ExactReportValidationError::StatusEvidenceMismatch);
+            }
+        }
+        if !arrangement_attempt_counts_match_stage(self) {
+            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+        }
+        Ok(())
+    }
+
+    /// Validate this attempt by replaying it from the source meshes.
+    pub fn validate_against_sources(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> Result<(), ExactReportValidationError> {
+        self.validate()?;
+        let replay =
+            exact_arrangement_boolean_attempt_report(left, right, self.operation, self.policy)
+                .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+        replay.validate()?;
+        if self == &replay {
+            Ok(())
+        } else {
+            Err(ExactReportValidationError::SourceReplayMismatch)
+        }
+    }
+
+    /// Classify whether this retained arrangement attempt is fresh.
+    pub fn freshness_against_sources(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> ExactReportFreshness {
+        if let Err(error) = self.validate() {
+            return error.into();
+        }
+        match exact_arrangement_boolean_attempt_report(left, right, self.operation, self.policy) {
+            Ok(replay) if replay.validate().is_ok() && self == &replay => {
+                ExactReportFreshness::Current
+            }
+            Ok(_) | Err(_) => ExactReportFreshness::SourceReplayMismatch,
+        }
+    }
+}
+
+fn arrangement_attempt_decline_matches_stage(
+    decline: &ExactArrangementBooleanDecline,
+    stage: ExactArrangementBooleanStage,
+) -> bool {
+    matches!(
+        (decline, stage),
+        (
+            ExactArrangementBooleanDecline::DispatchGate,
+            ExactArrangementBooleanStage::NotAttempted
+        ) | (
+            ExactArrangementBooleanDecline::ArrangementBlockers(_)
+                | ExactArrangementBooleanDecline::Labeling(_),
+            ExactArrangementBooleanStage::ArrangementBuilt
+        ) | (
+            ExactArrangementBooleanDecline::Selection(_),
+            ExactArrangementBooleanStage::Labeled
+        ) | (
+            ExactArrangementBooleanDecline::Simplification(_),
+            ExactArrangementBooleanStage::Selected
+        ) | (
+            ExactArrangementBooleanDecline::Triangulation(_),
+            ExactArrangementBooleanStage::Simplified
+        ) | (
+            ExactArrangementBooleanDecline::OutputValidation,
+            ExactArrangementBooleanStage::Triangulated
+        )
+    )
+}
+
+fn arrangement_attempt_counts_match_stage(attempt: &ExactArrangementBooleanAttempt) -> bool {
+    let stage = attempt.stage;
+    if stage == ExactArrangementBooleanStage::NotAttempted {
+        return attempt.arrangement_blockers == 0
+            && attempt.face_cells == 0
+            && attempt.regions == 0
+            && attempt.volume_regions == 0
+            && attempt.volume_adjacencies == 0
+            && attempt.lower_dimensional_artifacts == 0
+            && attempt.selected_faces == 0
+            && attempt.selected_volume_regions == 0
+            && attempt.output_vertices == 0
+            && attempt.output_triangles == 0;
+    }
+    if !arrangement_attempt_stage_reaches(stage, ExactArrangementBooleanStage::Labeled)
+        && (attempt.selected_faces != 0 || attempt.selected_volume_regions != 0)
+    {
+        return false;
+    }
+    if !arrangement_attempt_stage_reaches(stage, ExactArrangementBooleanStage::Triangulated)
+        && (attempt.output_vertices != 0 || attempt.output_triangles != 0)
+    {
+        return false;
+    }
+    true
+}
+
+fn arrangement_attempt_stage_reaches(
+    stage: ExactArrangementBooleanStage,
+    target: ExactArrangementBooleanStage,
+) -> bool {
+    arrangement_attempt_stage_rank(stage) >= arrangement_attempt_stage_rank(target)
+}
+
+const fn arrangement_attempt_stage_rank(stage: ExactArrangementBooleanStage) -> u8 {
+    match stage {
+        ExactArrangementBooleanStage::NotAttempted => 0,
+        ExactArrangementBooleanStage::ArrangementBuilt => 1,
+        ExactArrangementBooleanStage::Labeled => 2,
+        ExactArrangementBooleanStage::Selected => 3,
+        ExactArrangementBooleanStage::Simplified => 4,
+        ExactArrangementBooleanStage::Triangulated => 5,
+        ExactArrangementBooleanStage::Materialized => 6,
+    }
 }
 
 /// Exact boolean operation request.
@@ -7271,6 +7426,18 @@ mod tests {
             &left,
             &opening_plus_hole
         ));
+        let preflight =
+            preflight_boolean_exact(&left, &opening_plus_hole, ExactBooleanOperation::Difference)
+                .unwrap();
+        assert_eq!(
+            preflight.support,
+            ExactBooleanSupport::CertifiedArrangementCellComplex,
+            "{preflight:?}"
+        );
+        assert!(preflight.blocker.is_none(), "{preflight:?}");
+        preflight
+            .validate_against_sources(&left, &opening_plus_hole)
+            .unwrap();
         let result = boolean_coplanar_mesh_overlay_optional(
             &left,
             &opening_plus_hole,
@@ -9495,6 +9662,15 @@ mod tests {
         )
         .unwrap()
         .expect("regularized boundary-touch intersection should materialize through overlay");
+        let preflight =
+            preflight_boolean_exact(&left, &right, ExactBooleanOperation::Intersection).unwrap();
+        assert_eq!(
+            preflight.support,
+            ExactBooleanSupport::CertifiedArrangementCellComplex,
+            "{preflight:?}"
+        );
+        assert!(preflight.blocker.is_none(), "{preflight:?}");
+        preflight.validate_against_sources(&left, &right).unwrap();
         assert_eq!(
             result.kind,
             ExactBooleanResultKind::CertifiedShortcut {

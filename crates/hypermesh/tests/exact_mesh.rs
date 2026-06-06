@@ -1,11 +1,12 @@
 use hyperlimit::{Point3, SourceProvenance};
 use hypermesh::{
     ExactArrangement, ExactBooleanOperation, ExactBooleanResultKind, ExactBoundaryBooleanPolicy,
-    ExactI64MeshInputReadiness, ExactMesh, ExactRegularizationPolicy, MeshFacePairRelation,
-    MeshFacePairValidationError, TriangleTriangleRelation, ValidationPolicy, boolean_exact,
-    boolean_exact_with_boundary_policy, build_intersection_graph, certify_boundary_touching_report,
-    classify_mesh_face_pair, classify_triangle_triangle, inspect_i64_mesh_input,
-    preflight_boolean_exact, preflight_boolean_exact_with_boundary_policy,
+    ExactI64MeshInputReadiness, ExactMesh, ExactRegularizationPolicy, ExactReportFreshness,
+    MeshFacePairRelation, MeshFacePairValidationError, TriangleTriangleRelation, ValidationPolicy,
+    boolean_exact, boolean_exact_with_boundary_policy, build_intersection_graph,
+    certify_boundary_touching_report, classify_mesh_face_pair, classify_triangle_triangle,
+    exact_arrangement_boolean_attempt_report, inspect_i64_mesh_input, preflight_boolean_exact,
+    preflight_boolean_exact_with_boundary_policy,
 };
 use hyperreal::Real;
 
@@ -224,6 +225,26 @@ fn exact_arrangement_public_path_reports_blockers_or_cells() {
     )
     .unwrap();
     assert!(arrangement.validate_against_sources(&left, &right).is_ok());
+
+    let attempt = exact_arrangement_boolean_attempt_report(
+        &left,
+        &right,
+        ExactBooleanOperation::Union,
+        ExactRegularizationPolicy::REGULARIZED_SOLID,
+    )
+    .unwrap();
+    attempt.validate().unwrap();
+    attempt.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(
+        attempt.freshness_against_sources(&left, &right),
+        ExactReportFreshness::Current
+    );
+    let mut stale_attempt = attempt.clone();
+    stale_attempt.arrangement_blockers += 1;
+    assert_eq!(
+        stale_attempt.freshness_against_sources(&left, &right),
+        ExactReportFreshness::SourceReplayMismatch
+    );
 }
 
 #[test]
