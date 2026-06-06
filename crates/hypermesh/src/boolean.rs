@@ -4574,6 +4574,25 @@ fn winding_readiness_report_from_graph(
         ));
     }
     if graph.face_pairs.is_empty() {
+        if !meshes_are_certified_bounds_disjoint(left, right)
+            && certified_arrangement_cell_complex_preflight_if_materialized(
+                operation, graph, left, right,
+            )?
+            .is_some()
+        {
+            return Ok(winding_readiness_report(
+                operation,
+                ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized,
+                graph_had_unknowns,
+                0,
+                graph.event_count(),
+                0,
+                Vec::new(),
+                counts.into_blocker(ExactBooleanBlockerKind::NeedsWinding),
+                None,
+                None,
+            ));
+        }
         return Ok(winding_readiness_report(
             operation,
             ExactWindingReadinessStatus::NoNontrivialOverlap,
@@ -6568,6 +6587,26 @@ mod tests {
                 "{operation:?}: {preflight:?}"
             );
             assert!(preflight.blocker.is_none(), "{operation:?}: {preflight:?}");
+            assert_eq!(
+                preflight.retained_face_pairs, 0,
+                "{operation:?}: {preflight:?}"
+            );
+
+            let readiness = certify_winding_readiness_report(&left, &right, operation).unwrap();
+            assert_eq!(
+                readiness.status,
+                ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized,
+                "{operation:?}: {readiness:?}"
+            );
+            assert_eq!(
+                readiness.blocker.kind,
+                ExactBooleanBlockerKind::NeedsWinding,
+                "{operation:?}: {readiness:?}"
+            );
+            assert_eq!(readiness.retained_face_pairs, 0);
+            assert_eq!(readiness.retained_events, 0);
+            readiness.validate().unwrap();
+            readiness.validate_against_sources(&left, &right).unwrap();
 
             let attempt = exact_arrangement_boolean_attempt_report(
                 &left,
