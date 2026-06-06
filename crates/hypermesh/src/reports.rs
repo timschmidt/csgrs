@@ -1379,6 +1379,10 @@ pub enum ExactVolumetricBoundaryClosureStatus {
     /// Boundary loops are valid, but at least one loop is not exactly
     /// coplanar and needs non-coplanar cap-cell generation.
     NonCoplanarBoundaryClosureRequired,
+    /// A directed boundary loop reuses an exact 3D point at distinct
+    /// topological vertices, so cap construction must first regularize the
+    /// self-contact.
+    BoundaryLoopExactSelfContact,
     /// Boundary edges could not be organized into simple directed loops.
     BoundaryTopologyNotLoop,
     /// The coplanar loop grouping or closure check hit an exact arrangement
@@ -1401,6 +1405,8 @@ pub struct ExactVolumetricBoundaryClosureReport {
     pub boundary_loops: usize,
     /// Number of boundary loops proven not exactly coplanar.
     pub noncoplanar_boundary_loops: usize,
+    /// Number of repeated exact point pairs found inside directed boundary loops.
+    pub repeated_exact_boundary_points: usize,
     /// Number of coplanar loop groups produced by exact loop grouping.
     pub coplanar_loop_groups: usize,
 }
@@ -1430,6 +1436,7 @@ impl ExactVolumetricBoundaryClosureReport {
                     || self.boundary_edges != 0
                     || self.boundary_loops != 0
                     || self.noncoplanar_boundary_loops != 0
+                    || self.repeated_exact_boundary_points != 0
                     || self.coplanar_loop_groups != 0
                 {
                     return Err(ExactReportValidationError::StatusEvidenceMismatch);
@@ -1440,6 +1447,7 @@ impl ExactVolumetricBoundaryClosureReport {
                     || self.boundary_edges != 0
                     || self.boundary_loops != 0
                     || self.noncoplanar_boundary_loops != 0
+                    || self.repeated_exact_boundary_points != 0
                     || self.coplanar_loop_groups != 0
                 {
                     return Err(ExactReportValidationError::StatusEvidenceMismatch);
@@ -1450,6 +1458,7 @@ impl ExactVolumetricBoundaryClosureReport {
                     || self.boundary_edges == 0
                     || self.boundary_loops == 0
                     || self.noncoplanar_boundary_loops != 0
+                    || self.repeated_exact_boundary_points != 0
                     || self.coplanar_loop_groups == 0
                 {
                     return Err(ExactReportValidationError::StatusEvidenceMismatch);
@@ -1460,6 +1469,16 @@ impl ExactVolumetricBoundaryClosureReport {
                     || self.boundary_edges == 0
                     || self.boundary_loops == 0
                     || self.noncoplanar_boundary_loops == 0
+                    || self.repeated_exact_boundary_points != 0
+                {
+                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                }
+            }
+            ExactVolumetricBoundaryClosureStatus::BoundaryLoopExactSelfContact => {
+                if self.output_triangles == 0
+                    || self.boundary_edges == 0
+                    || self.boundary_loops == 0
+                    || self.repeated_exact_boundary_points == 0
                 {
                     return Err(ExactReportValidationError::StatusEvidenceMismatch);
                 }
@@ -1468,6 +1487,7 @@ impl ExactVolumetricBoundaryClosureReport {
                 if self.output_triangles == 0
                     || self.boundary_edges == 0
                     || self.boundary_loops != 0
+                    || self.repeated_exact_boundary_points != 0
                     || self.coplanar_loop_groups != 0
                 {
                     return Err(ExactReportValidationError::StatusEvidenceMismatch);

@@ -877,6 +877,7 @@ pub fn certify_volumetric_boundary_closure_report(
             boundary_edges: 0,
             boundary_loops: 0,
             noncoplanar_boundary_loops: 0,
+            repeated_exact_boundary_points: 0,
             coplanar_loop_groups: 0,
         });
     };
@@ -900,6 +901,7 @@ pub fn certify_volumetric_boundary_closure_report(
             boundary_edges: 0,
             boundary_loops: 0,
             noncoplanar_boundary_loops: 0,
+            repeated_exact_boundary_points: 0,
             coplanar_loop_groups: 0,
         });
     }
@@ -911,6 +913,7 @@ pub fn certify_volumetric_boundary_closure_report(
             boundary_edges,
             boundary_loops: 0,
             noncoplanar_boundary_loops: 0,
+            repeated_exact_boundary_points: 0,
             coplanar_loop_groups: 0,
         });
     };
@@ -930,6 +933,36 @@ pub fn certify_volumetric_boundary_closure_report(
                 "volumetric boundary closure report referenced a missing output vertex",
             ))
         })?;
+    let mut repeated_exact_boundary_points = 0;
+    for boundary in &boundary_points {
+        match repeated_exact_point_pairs(boundary) {
+            Ok(count) => repeated_exact_boundary_points += count,
+            Err(blocker) => {
+                return Ok(ExactVolumetricBoundaryClosureReport {
+                    operation,
+                    status: ExactVolumetricBoundaryClosureStatus::BoundaryClosureBlocked(blocker),
+                    output_triangles,
+                    boundary_edges,
+                    boundary_loops: boundary_loops.len(),
+                    noncoplanar_boundary_loops: 0,
+                    repeated_exact_boundary_points,
+                    coplanar_loop_groups: 0,
+                });
+            }
+        }
+    }
+    if repeated_exact_boundary_points != 0 {
+        return Ok(ExactVolumetricBoundaryClosureReport {
+            operation,
+            status: ExactVolumetricBoundaryClosureStatus::BoundaryLoopExactSelfContact,
+            output_triangles,
+            boundary_edges,
+            boundary_loops: boundary_loops.len(),
+            noncoplanar_boundary_loops: 0,
+            repeated_exact_boundary_points,
+            coplanar_loop_groups: 0,
+        });
+    }
     let mut noncoplanar_boundary_loops = 0;
     for boundary in &boundary_points {
         match exact_loop_is_coplanar(boundary) {
@@ -943,6 +976,7 @@ pub fn certify_volumetric_boundary_closure_report(
                     boundary_edges,
                     boundary_loops: boundary_loops.len(),
                     noncoplanar_boundary_loops,
+                    repeated_exact_boundary_points,
                     coplanar_loop_groups: 0,
                 });
             }
@@ -956,6 +990,7 @@ pub fn certify_volumetric_boundary_closure_report(
             boundary_edges,
             boundary_loops: boundary_loops.len(),
             noncoplanar_boundary_loops,
+            repeated_exact_boundary_points,
             coplanar_loop_groups: 0,
         });
     }
@@ -967,6 +1002,7 @@ pub fn certify_volumetric_boundary_closure_report(
             boundary_edges,
             boundary_loops: boundary_loops.len(),
             noncoplanar_boundary_loops: 0,
+            repeated_exact_boundary_points: 0,
             coplanar_loop_groups: groups.len(),
         }),
         Err(blocker) => Ok(ExactVolumetricBoundaryClosureReport {
@@ -976,6 +1012,7 @@ pub fn certify_volumetric_boundary_closure_report(
             boundary_edges,
             boundary_loops: boundary_loops.len(),
             noncoplanar_boundary_loops: 0,
+            repeated_exact_boundary_points: 0,
             coplanar_loop_groups: 0,
         }),
     }
@@ -3144,6 +3181,20 @@ fn point3_exact_equal(left: &Point3, right: &Point3) -> Option<bool> {
             && compare_reals(&left.y, &right.y).value()? == Ordering::Equal
             && compare_reals(&left.z, &right.z).value()? == Ordering::Equal,
     )
+}
+
+fn repeated_exact_point_pairs(points: &[Point3]) -> Result<usize, ExactArrangementBlocker> {
+    let mut repeated = 0;
+    for left in 0..points.len() {
+        for right in left + 1..points.len() {
+            match point3_exact_equal(&points[left], &points[right]) {
+                Some(true) => repeated += 1,
+                Some(false) => {}
+                None => return Err(ExactArrangementBlocker::UndecidableOrdering),
+            }
+        }
+    }
+    Ok(repeated)
 }
 
 fn exact_loop_is_coplanar(points: &[Point3]) -> Result<bool, ExactArrangementBlocker> {
@@ -7705,11 +7756,12 @@ mod tests {
                 .unwrap();
         assert_eq!(
             closure.status,
-            ExactVolumetricBoundaryClosureStatus::NonCoplanarBoundaryClosureRequired,
+            ExactVolumetricBoundaryClosureStatus::BoundaryLoopExactSelfContact,
             "{closure:?}"
         );
         assert_eq!(closure.boundary_loops, 1, "{closure:?}");
-        assert_eq!(closure.noncoplanar_boundary_loops, 1, "{closure:?}");
+        assert_eq!(closure.noncoplanar_boundary_loops, 0, "{closure:?}");
+        assert!(closure.repeated_exact_boundary_points > 0, "{closure:?}");
         assert!(closure.boundary_edges > 0, "{closure:?}");
         assert!(closure.output_triangles > 0, "{closure:?}");
         closure.validate().unwrap();
