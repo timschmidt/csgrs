@@ -1353,17 +1353,7 @@ pub fn boolean_exact_with_boundary_policy(
             let graph = build_intersection_graph(left, right)?;
             validate_graph_source_handoff(&graph, left, right)?;
             match operation {
-                ExactBooleanOperation::Union => {
-                    if let Some(report) =
-                        certified_closed_boundary_touching_union_report_from_graph(
-                            &graph, left, right,
-                        )?
-                    {
-                        return boolean_closed_boundary_touching_union(
-                            &graph, left, right, validation, report,
-                        );
-                    }
-                }
+                ExactBooleanOperation::Union => {}
                 ExactBooleanOperation::Intersection => {
                     if let Some(result) =
                         boolean_arrangement_regularized_boundary_contact_from_graph(
@@ -1385,11 +1375,6 @@ pub fn boolean_exact_with_boundary_policy(
                 ExactBooleanOperation::SelectedRegions(_) => unreachable!("handled above"),
             }
             if let Some(result) = boolean_open_surface_disjoint_or_arrangement_meshes_from_graph(
-                &graph, left, right, operation, validation,
-            )? {
-                return Ok(result);
-            }
-            if let Some(result) = boolean_closed_boundary_only_contact_meshes_from_graph(
                 &graph, left, right, operation, validation,
             )? {
                 return Ok(result);
@@ -3959,55 +3944,6 @@ fn certified_closed_boundary_only_contact_support_from_graph(
     }))
 }
 
-fn boolean_closed_boundary_only_contact_meshes_from_graph(
-    graph: &super::graph::ExactIntersectionGraph,
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: ValidationPolicy,
-) -> Result<Option<ExactBooleanResult>, MeshError> {
-    if !certified_closed_boundary_only_contact_from_graph(graph, left, right)? {
-        return Ok(None);
-    }
-    let (mesh, shortcut) = match operation {
-        ExactBooleanOperation::Union => (
-            concatenate_meshes_with_options(
-                left,
-                right,
-                false,
-                "exact closed-boundary-only regularized union preserving separate shells",
-                validation,
-            )?,
-            ExactBooleanShortcutKind::ClosedBoundaryTouchingUnion,
-        ),
-        ExactBooleanOperation::Intersection
-        | ExactBooleanOperation::Difference
-        | ExactBooleanOperation::SelectedRegions(_) => return Ok(None),
-    };
-    Ok(Some(certified_shortcut_result(mesh, shortcut)))
-}
-
-/// Materialize the regularized union for closed lower-dimensional contact.
-fn boolean_closed_boundary_touching_union(
-    _graph: &super::graph::ExactIntersectionGraph,
-    left: &ExactMesh,
-    right: &ExactMesh,
-    validation: ValidationPolicy,
-    report: ExactBoundaryTouchingReport,
-) -> Result<ExactBooleanResult, MeshError> {
-    validate_consumed_boundary_touching_report(&report, "closed-boundary-touch union")?;
-    Ok(certified_shortcut_result(
-        concatenate_meshes_with_options(
-            left,
-            right,
-            false,
-            "exact closed-boundary-touch regularized union preserving separate shells",
-            validation,
-        )?,
-        ExactBooleanShortcutKind::ClosedBoundaryTouchingUnion,
-    ))
-}
-
 fn validate_consumed_boundary_touching_report(
     report: &ExactBoundaryTouchingReport,
     label: &str,
@@ -5942,6 +5878,46 @@ mod tests {
                 result.mesh.facts().mesh
             );
         }
+    }
+
+    #[test]
+    fn closed_boundary_touching_union_materializes_through_arrangement_pipeline() {
+        let left = axis_aligned_box_i64([0, 0, 0], [1, 1, 1]);
+        let right = axis_aligned_box_i64([1, 0, 0], [2, 1, 1]);
+
+        let preflight = preflight_boolean_exact(&left, &right, ExactBooleanOperation::Union)
+            .expect("preflight should certify face-touching closed union");
+        assert_eq!(
+            preflight.support,
+            ExactBooleanSupport::CertifiedArrangementCellComplex,
+            "{preflight:?}"
+        );
+        assert!(preflight.blocker.is_none(), "{preflight:?}");
+
+        let attempt = exact_arrangement_boolean_attempt_report(
+            &left,
+            &right,
+            ExactBooleanOperation::Union,
+            ExactRegularizationPolicy::REGULARIZED_SOLID,
+        )
+        .expect("arrangement attempt should run");
+        assert_eq!(
+            attempt.materialized_shortcut,
+            Some(ExactBooleanShortcutKind::ArrangementCellComplex),
+            "{attempt:?}"
+        );
+        assert!(attempt.decline.is_none(), "{attempt:?}");
+
+        let result = boolean_exact(
+            &left,
+            &right,
+            ExactBooleanOperation::Union,
+            ValidationPolicy::CLOSED,
+        )
+        .expect("face-touching closed union should materialize");
+        result.validate().unwrap();
+        result.validate_against_sources(&left, &right).unwrap();
+        assert!(result.mesh.facts().mesh.closed_manifold);
     }
 
     #[test]
