@@ -1017,6 +1017,11 @@ impl ExactBooleanResult {
                     .validate_against_sources(left, right)
                     .map_err(ExactReportValidationError::InvalidRegionClassification)?;
             }
+            for triangulation in &self.triangulations {
+                triangulation
+                    .validate_against_sources(left, right)
+                    .map_err(|_| ExactReportValidationError::InvalidTriangulation)?;
+            }
         }
         if matches!(
             self.kind,

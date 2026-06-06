@@ -8430,6 +8430,20 @@ mod tests {
                     .is_err(),
                 "{operation:?}: stale region classification should fail source replay"
             );
+            let mut stale_triangulation_fact = result.clone();
+            let triangulation = stale_triangulation_fact
+                .triangulations
+                .iter_mut()
+                .find(|triangulation| triangulation.triangles.len() >= 3)
+                .expect("open-surface arrangement should retain triangulations");
+            triangulation.triangles.swap(0, 1);
+            stale_triangulation_fact.validate().unwrap();
+            assert!(
+                stale_triangulation_fact
+                    .validate_against_sources(&left, &right)
+                    .is_err(),
+                "{operation:?}: stale triangulation should fail source replay"
+            );
             let selection = match operation {
                 ExactBooleanOperation::Union => ExactRegionSelection::KeepAll,
                 ExactBooleanOperation::Intersection => ExactRegionSelection::KeepNone,
