@@ -1421,18 +1421,6 @@ pub fn boolean_exact_with_boundary_policy(
             )? {
                 return Ok(result);
             }
-            if !graph_requires_coplanar_volumetric_cells_for_sources(&graph, left, right) {
-                if let Some(result) =
-                    boolean_convex_intersection_meshes(left, right, operation, validation)?
-                {
-                    return Ok(result);
-                }
-            }
-            if let Some(result) =
-                boolean_convex_difference_meshes(left, right, operation, validation)?
-            {
-                return Ok(result);
-            }
             if let Some(shortcut) =
                 certified_closed_shell_no_intersection_shortcut_from_graph(&graph, left, right)?
                 && let Some(result) = materialize_closed_shell_no_intersection_meshes(
@@ -1449,19 +1437,6 @@ pub fn boolean_exact_with_boundary_policy(
                 validation,
                 boundary_policy,
             )? {
-                return Ok(result);
-            }
-            if let Some(result) = boolean_convex_union_meshes(left, right, operation, validation)? {
-                return Ok(result);
-            }
-            if let Some(result) =
-                boolean_convex_intersection_meshes(left, right, operation, validation)?
-            {
-                return Ok(result);
-            }
-            if let Some(result) =
-                boolean_convex_difference_meshes(left, right, operation, validation)?
-            {
                 return Ok(result);
             }
             Err(MeshError::one(MeshDiagnostic::new(
@@ -3457,29 +3432,6 @@ fn has_axis_aligned_box_difference_cell_result(
         .is_some()
 }
 
-fn boolean_convex_intersection_meshes(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: ValidationPolicy,
-) -> Result<Option<ExactBooleanResult>, MeshError> {
-    if operation != ExactBooleanOperation::Intersection {
-        return Ok(None);
-    }
-    let Some(intersection) = intersect_closed_convex_solids(left, right) else {
-        return Ok(None);
-    };
-    let mesh = copy_mesh(
-        &intersection.mesh,
-        "exact closed-convex solid intersection",
-        validation,
-    )?;
-    Ok(Some(certified_shortcut_result(
-        mesh,
-        ExactBooleanShortcutKind::ConvexIntersection,
-    )))
-}
-
 /// Return whether exact orthogonal occupancy certifies an empty intersection.
 ///
 /// This is intentionally narrower than the general orthogonal-cell shortcut:
@@ -5076,48 +5028,6 @@ fn volumetric_retention_for_operation(
         ) => ExactRegionRetention::KeepReversed,
         _ => ExactRegionRetention::Drop,
     }
-}
-
-fn boolean_convex_union_meshes(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: ValidationPolicy,
-) -> Result<Option<ExactBooleanResult>, MeshError> {
-    if operation != ExactBooleanOperation::Union {
-        return Ok(None);
-    }
-    let Some(union) = union_closed_convex_solids(left, right) else {
-        return Ok(None);
-    };
-    let mesh = copy_mesh(&union.mesh, "exact closed-convex solid union", validation)?;
-    Ok(Some(certified_shortcut_result(
-        mesh,
-        ExactBooleanShortcutKind::ConvexUnion,
-    )))
-}
-
-fn boolean_convex_difference_meshes(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: ValidationPolicy,
-) -> Result<Option<ExactBooleanResult>, MeshError> {
-    if operation != ExactBooleanOperation::Difference {
-        return Ok(None);
-    }
-    let Some(difference) = subtract_closed_convex_solids(left, right) else {
-        return Ok(None);
-    };
-    let mesh = copy_mesh(
-        &difference.mesh,
-        "exact closed-convex solid difference",
-        validation,
-    )?;
-    Ok(Some(certified_shortcut_result(
-        mesh,
-        ExactBooleanShortcutKind::ConvexDifference,
-    )))
 }
 
 fn certified_convex_intersection_support(
