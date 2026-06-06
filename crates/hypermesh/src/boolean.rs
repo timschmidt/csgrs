@@ -2877,9 +2877,7 @@ fn overlay_allows_selected_face_materialization(overlay: &ExactArrangement2dOver
         && overlay.blockers.iter().all(|blocker| {
             matches!(
                 blocker,
-                ExactArrangement2dBlocker::NonManifoldSelectedBoundary { .. }
-                    | ExactArrangement2dBlocker::DegenerateOutputLoop { .. }
-                    | ExactArrangement2dBlocker::OutputHoleWithoutOuter { .. }
+                ExactArrangement2dBlocker::OutputHoleWithoutOuter { .. }
                     | ExactArrangement2dBlocker::UnresolvedOutputLoopContainment { .. }
                     | ExactArrangement2dBlocker::OutputLoopBoundaryContainment { .. }
             )
@@ -5650,6 +5648,50 @@ mod tests {
         .expect("selected faces should recover when only loop ownership is blocked");
         recovered.validate_retained_state().unwrap();
         assert!(exact_meshes_have_same_shape(&recovered, &canonical));
+    }
+
+    #[test]
+    fn selected_overlay_faces_do_not_recover_selected_boundary_topology_blockers() {
+        let left = ExactMesh::from_i64_triangles_with_policy(
+            &[0, 0, 0, 4, 0, 0, 4, 4, 0, 0, 4, 0],
+            &[0, 1, 2, 0, 2, 3],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let right = ExactMesh::from_i64_triangles_with_policy(
+            &[2, 0, 0, 4, 0, 0, 4, 2, 0, 2, 2, 0],
+            &[0, 1, 2, 0, 2, 3],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let (carrier_points, projection) = coplanar_mesh_overlay_carrier(&left, &right).unwrap();
+        let mut rings =
+            projected_mesh_boundary_rings(ExactArrangement2dRegion::Left, &left, projection)
+                .unwrap();
+        rings.extend(
+            projected_mesh_boundary_rings(ExactArrangement2dRegion::Right, &right, projection)
+                .unwrap(),
+        );
+        let mut overlay = build_exact_arrangement2d_overlay(
+            &rings,
+            ExactArrangement2dSetOperation::Difference,
+        );
+        assert!(overlay.is_complete(), "{:?}", overlay.blockers);
+        overlay.output_loops.clear();
+        overlay.output_components.clear();
+        overlay
+            .blockers
+            .push(ExactArrangement2dBlocker::NonManifoldSelectedBoundary { vertex: 0 });
+
+        assert!(
+            mesh_from_selected_projected_overlay_faces(
+                &overlay,
+                &carrier_points,
+                projection,
+                "test rejected selected-boundary topology blocker",
+            )
+            .is_none()
+        );
     }
 
     #[test]
