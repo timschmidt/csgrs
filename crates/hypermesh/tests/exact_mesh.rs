@@ -178,12 +178,29 @@ fn exact_boolean_public_shortcuts_handle_disjoint_operands() {
     assert_eq!(
         union.kind,
         ExactBooleanResultKind::CertifiedShortcut {
+            operation: ExactBooleanOperation::Union,
             shortcut: hypermesh::ExactBooleanShortcutKind::BoundsDisjoint
         }
     );
     union.mesh.validate_retained_state().unwrap();
     union.validate_against_sources(&left, &right).unwrap();
     assert!(union.validate_against_sources(&left, &left).is_err());
+    let mut relabeled = union.clone();
+    relabeled.kind = ExactBooleanResultKind::CertifiedShortcut {
+        operation: ExactBooleanOperation::Intersection,
+        shortcut: hypermesh::ExactBooleanShortcutKind::BoundsDisjoint,
+    };
+    assert!(
+        relabeled
+            .validate_operation_against_sources(
+                &left,
+                &right,
+                ExactBooleanOperation::Union,
+                ValidationPolicy::CLOSED,
+                ExactBoundaryBooleanPolicy::Reject,
+            )
+            .is_err()
+    );
 
     let intersection = boolean_exact(
         &left,

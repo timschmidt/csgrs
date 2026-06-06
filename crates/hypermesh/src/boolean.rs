@@ -1762,6 +1762,7 @@ fn boolean_closed_winding_containment_meshes(
     };
     Ok(Some(certified_shortcut_result(
         mesh,
+        operation,
         ExactBooleanShortcutKind::ClosedWindingContainment,
     )))
 }
@@ -1801,6 +1802,7 @@ fn boolean_closed_winding_separated_meshes(
     };
     Ok(Some(certified_shortcut_result(
         mesh,
+        operation,
         ExactBooleanShortcutKind::ClosedWindingSeparated,
     )))
 }
@@ -2130,6 +2132,7 @@ fn boolean_arrangement_regularized_boundary_contact_from_graph(
     };
     Ok(Some(certified_shortcut_result(
         mesh,
+        operation,
         ExactBooleanShortcutKind::ArrangementCellComplex,
     )))
 }
@@ -2506,6 +2509,7 @@ fn run_arrangement_cell_complex_attempt(
                 return Ok(ArrangementCellComplexOutcome::materialized(
                     certified_shortcut_result(
                         mesh,
+                        operation,
                         ExactBooleanShortcutKind::ArrangementCellComplex,
                     ),
                     attempt,
@@ -2533,7 +2537,11 @@ fn run_arrangement_cell_complex_attempt(
         attempt.arrangement_blockers = 0;
     }
     Ok(ArrangementCellComplexOutcome::materialized(
-        certified_shortcut_result(mesh, ExactBooleanShortcutKind::ArrangementCellComplex),
+        certified_shortcut_result(
+            mesh,
+            operation,
+            ExactBooleanShortcutKind::ArrangementCellComplex,
+        ),
         attempt,
     ))
 }
@@ -2567,7 +2575,11 @@ fn boolean_arrangement_orthogonal_solid_cell_recovery(
         }
     };
     let mesh = materialize_axis_aligned_orthogonal_solid_cell_plan(plan, label, validation)?;
-    let result = certified_shortcut_result(mesh, ExactBooleanShortcutKind::ArrangementCellComplex);
+    let result = certified_shortcut_result(
+        mesh,
+        operation,
+        ExactBooleanShortcutKind::ArrangementCellComplex,
+    );
     if result.validate().is_err() || result.validate_against_sources(left, right).is_err() {
         return Ok(None);
     }
@@ -2685,6 +2697,7 @@ fn boolean_arrangement_adjacency_union_completion(
     {
         return Ok(Some(certified_shortcut_result(
             union.mesh,
+            ExactBooleanOperation::Union,
             ExactBooleanShortcutKind::ArrangementCellComplex,
         )));
     }
@@ -2702,6 +2715,7 @@ fn boolean_arrangement_adjacency_union_completion(
     {
         return Ok(Some(certified_shortcut_result(
             union.mesh,
+            ExactBooleanOperation::Union,
             ExactBooleanShortcutKind::ArrangementCellComplex,
         )));
     }
@@ -2850,7 +2864,7 @@ fn boolean_arrangement_regularized_no_volume_overlap_from_graph(
         ),
         ExactBooleanOperation::SelectedRegions(_) => unreachable!("handled above"),
     };
-    let result = certified_shortcut_result(mesh, shortcut);
+    let result = certified_shortcut_result(mesh, operation, shortcut);
     if result.validate().is_err() || result.validate_against_sources(left, right).is_err() {
         return Ok(None);
     }
@@ -3080,7 +3094,7 @@ fn boolean_convex_meshes_optional(
         ExactBooleanOperation::SelectedRegions(_) => return Ok(None),
     };
     let mesh = copy_mesh(&mesh, label, validation)?;
-    let result = certified_shortcut_result(mesh, shortcut);
+    let result = certified_shortcut_result(mesh, operation, shortcut);
     if result.validate().is_err() || result.validate_against_sources(left, right).is_err() {
         return Ok(None);
     }
@@ -3124,7 +3138,11 @@ fn boolean_arrangement_convex_regularized_sheet_recovery(
         ExactBooleanOperation::SelectedRegions(_) => return Ok(None),
     };
     let mesh = copy_mesh(&mesh, label, validation)?;
-    let result = certified_shortcut_result(mesh, ExactBooleanShortcutKind::ArrangementCellComplex);
+    let result = certified_shortcut_result(
+        mesh,
+        operation,
+        ExactBooleanShortcutKind::ArrangementCellComplex,
+    );
     if result.validate().is_err() || result.validate_against_sources(left, right).is_err() {
         return Ok(None);
     }
@@ -3629,7 +3647,7 @@ fn materialize_simple_coplanar_overlay_arrangement(
         operation,
         ExactBooleanOperation::Intersection | ExactBooleanOperation::Difference
     );
-    let operation = match operation {
+    let set_operation = match operation {
         ExactBooleanOperation::Union => ExactArrangement2dSetOperation::Union,
         ExactBooleanOperation::Intersection => ExactArrangement2dSetOperation::Intersection,
         ExactBooleanOperation::Difference => ExactArrangement2dSetOperation::Difference,
@@ -3650,7 +3668,8 @@ fn materialize_simple_coplanar_overlay_arrangement(
     let (Some(left_ring), Some(right_ring)) = (left_ring, right_ring) else {
         return Ok(None);
     };
-    let requested_overlay = build_exact_arrangement2d_overlay(&[left_ring, right_ring], operation);
+    let requested_overlay =
+        build_exact_arrangement2d_overlay(&[left_ring, right_ring], set_operation);
     if !requested_overlay.is_complete()
         && !overlay_allows_selected_face_materialization(&requested_overlay)
     {
@@ -3662,6 +3681,7 @@ fn materialize_simple_coplanar_overlay_arrangement(
             let mesh = empty_mesh("empty exact coplanar overlay arrangement", validation)?;
             return Ok(Some(certified_shortcut_result(
                 mesh,
+                operation,
                 ExactBooleanShortcutKind::ArrangementCellComplex,
             )));
         }
@@ -3689,6 +3709,7 @@ fn materialize_simple_coplanar_overlay_arrangement(
     )?;
     Ok(Some(certified_shortcut_result(
         mesh,
+        operation,
         ExactBooleanShortcutKind::ArrangementCellComplex,
     )))
 }
@@ -3722,7 +3743,7 @@ fn boolean_coplanar_mesh_overlay_optional(
             ExactArrangement2dBoundaryPolicy::SimplifyCollinear
         }
     };
-    let operation = match operation {
+    let set_operation = match operation {
         ExactBooleanOperation::Union => ExactArrangement2dSetOperation::Union,
         ExactBooleanOperation::Intersection => ExactArrangement2dSetOperation::Intersection,
         ExactBooleanOperation::Difference => ExactArrangement2dSetOperation::Difference,
@@ -3731,7 +3752,7 @@ fn boolean_coplanar_mesh_overlay_optional(
     let Some(mesh) = materialize_coplanar_mesh_overlay_mesh(
         left,
         right,
-        operation,
+        set_operation,
         boundary_policy,
         "exact coplanar mesh overlay arrangement",
         allow_empty_overlay,
@@ -3745,6 +3766,7 @@ fn boolean_coplanar_mesh_overlay_optional(
     )?;
     Ok(Some(certified_shortcut_result(
         mesh,
+        operation,
         ExactBooleanShortcutKind::ArrangementCellComplex,
     )))
 }
@@ -4470,6 +4492,7 @@ fn boolean_arrangement_affine_orthogonal_solid_recovery(
     arrangement.validate_against_sources(left, right)?;
     Ok(Some(certified_shortcut_result(
         arrangement.mesh,
+        operation,
         ExactBooleanShortcutKind::ArrangementCellComplex,
     )))
 }
@@ -4501,6 +4524,7 @@ fn materialize_open_surface_disjoint_meshes(
 
     Ok(certified_shortcut_result(
         mesh,
+        operation,
         ExactBooleanShortcutKind::OpenSurfaceDisjoint,
     ))
 }
@@ -4812,6 +4836,7 @@ fn boolean_same_surface_meshes(
 
     Ok(certified_shortcut_result(
         mesh,
+        operation,
         ExactBooleanShortcutKind::SameSurface,
     ))
 }
@@ -5041,7 +5066,7 @@ fn boolean_closed_boundary_touching_regularized_meshes(
         )?,
         ExactBooleanOperation::SelectedRegions(_) => unreachable!("handled by support check"),
     };
-    let result = certified_shortcut_result(mesh, shortcut);
+    let result = certified_shortcut_result(mesh, operation, shortcut);
     if result.validate().is_err() || result.validate_against_sources(left, right).is_err() {
         return Ok(None);
     }
@@ -6456,7 +6481,7 @@ fn boolean_closed_regularized_lower_dimensional_optional(
         _ => return Ok(None),
     };
 
-    Ok(Some(certified_shortcut_result(mesh, shortcut)))
+    Ok(Some(certified_shortcut_result(mesh, operation, shortcut)))
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -6501,6 +6526,7 @@ fn boolean_disjoint_meshes(
     };
     Ok(certified_shortcut_result(
         mesh,
+        operation,
         ExactBooleanShortcutKind::BoundsDisjoint,
     ))
 }
@@ -6530,6 +6556,7 @@ fn boolean_empty_operand(
 
     Ok(certified_shortcut_result(
         mesh,
+        operation,
         ExactBooleanShortcutKind::EmptyOperand,
     ))
 }
@@ -6559,6 +6586,7 @@ fn boolean_identical_meshes(
 
     Ok(certified_shortcut_result(
         mesh,
+        operation,
         ExactBooleanShortcutKind::Identical,
     ))
 }
@@ -6574,10 +6602,14 @@ fn empty_mesh(label: &'static str, validation: ValidationPolicy) -> Result<Exact
 
 fn certified_shortcut_result(
     mesh: ExactMesh,
+    operation: ExactBooleanOperation,
     shortcut: ExactBooleanShortcutKind,
 ) -> ExactBooleanResult {
     ExactBooleanResult {
-        kind: ExactBooleanResultKind::CertifiedShortcut { shortcut },
+        kind: ExactBooleanResultKind::CertifiedShortcut {
+            operation,
+            shortcut,
+        },
         graph_had_unknowns: false,
         region_classifications: Vec::new(),
         triangulations: Vec::new(),
@@ -7102,6 +7134,7 @@ mod tests {
         assert_eq!(
             result.kind,
             ExactBooleanResultKind::CertifiedShortcut {
+                operation: ExactBooleanOperation::Difference,
                 shortcut: ExactBooleanShortcutKind::ArrangementCellComplex
             }
         );
@@ -7145,6 +7178,7 @@ mod tests {
         assert_eq!(
             result.kind,
             ExactBooleanResultKind::CertifiedShortcut {
+                operation: ExactBooleanOperation::Difference,
                 shortcut: ExactBooleanShortcutKind::ArrangementCellComplex
             }
         );
@@ -7251,6 +7285,7 @@ mod tests {
         assert_eq!(
             union.kind,
             ExactBooleanResultKind::CertifiedShortcut {
+                operation: ExactBooleanOperation::Union,
                 shortcut: ExactBooleanShortcutKind::ArrangementCellComplex
             }
         );
@@ -7346,6 +7381,7 @@ mod tests {
             assert_eq!(
                 result.kind,
                 ExactBooleanResultKind::CertifiedShortcut {
+                    operation,
                     shortcut: ExactBooleanShortcutKind::ArrangementCellComplex
                 },
                 "{operation:?}: {result:?}"
@@ -7387,6 +7423,7 @@ mod tests {
             assert_eq!(
                 result.kind,
                 ExactBooleanResultKind::CertifiedShortcut {
+                    operation,
                     shortcut: ExactBooleanShortcutKind::ArrangementCellComplex
                 },
                 "{operation:?}: {result:?}"
@@ -7434,6 +7471,7 @@ mod tests {
         assert_eq!(
             result.kind,
             ExactBooleanResultKind::CertifiedShortcut {
+                operation: ExactBooleanOperation::Intersection,
                 shortcut: ExactBooleanShortcutKind::ArrangementCellComplex
             }
         );
@@ -7649,7 +7687,10 @@ mod tests {
                 let result = boolean_exact(left, right, operation, validation).unwrap();
                 assert_eq!(
                     result.kind,
-                    ExactBooleanResultKind::CertifiedShortcut { shortcut },
+                    ExactBooleanResultKind::CertifiedShortcut {
+                        operation,
+                        shortcut
+                    },
                     "{operation:?}: {result:?}"
                 );
                 result.validate().unwrap();
@@ -7725,6 +7766,7 @@ mod tests {
                 assert_eq!(
                     result.kind,
                     ExactBooleanResultKind::CertifiedShortcut {
+                        operation,
                         shortcut: ExactBooleanShortcutKind::ClosedWindingContainment
                     },
                     "{right_inside_left:?} {operation:?}: {result:?}"
@@ -7823,6 +7865,7 @@ mod tests {
             assert_eq!(
                 result.kind,
                 ExactBooleanResultKind::CertifiedShortcut {
+                    operation,
                     shortcut: ExactBooleanShortcutKind::ClosedWindingSeparated
                 },
                 "{operation:?}: {result:?}"
@@ -7906,6 +7949,7 @@ mod tests {
                 assert_eq!(
                     result.kind,
                     ExactBooleanResultKind::CertifiedShortcut {
+                        operation,
                         shortcut: ExactBooleanShortcutKind::MixedDimensionalRegularizedSolid
                     },
                     "{operation:?}: {result:?}"
@@ -8375,6 +8419,7 @@ mod tests {
             assert_eq!(
                 result.kind,
                 ExactBooleanResultKind::CertifiedShortcut {
+                    operation,
                     shortcut: expected_shortcut
                 },
                 "{operation:?}: {result:?}"
@@ -8536,7 +8581,10 @@ mod tests {
             let result = boolean_exact(&left, &right, operation, ValidationPolicy::CLOSED).unwrap();
             assert_eq!(
                 result.kind,
-                ExactBooleanResultKind::CertifiedShortcut { shortcut },
+                ExactBooleanResultKind::CertifiedShortcut {
+                    operation,
+                    shortcut
+                },
                 "{operation:?}: {result:?}"
             );
             result.validate().unwrap();
@@ -8598,6 +8646,7 @@ mod tests {
         assert_eq!(
             difference.kind,
             ExactBooleanResultKind::CertifiedShortcut {
+                operation: ExactBooleanOperation::Difference,
                 shortcut: ExactBooleanShortcutKind::ConvexDifference
             }
         );
@@ -8660,6 +8709,7 @@ mod tests {
             assert_eq!(
                 result.kind,
                 ExactBooleanResultKind::CertifiedShortcut {
+                    operation,
                     shortcut: expected_shortcut
                 },
                 "{operation:?}: {result:?}"
@@ -8807,6 +8857,7 @@ mod tests {
         assert_eq!(
             union.kind,
             ExactBooleanResultKind::CertifiedShortcut {
+                operation: ExactBooleanOperation::Union,
                 shortcut: ExactBooleanShortcutKind::ArrangementCellComplex
             }
         );
@@ -8822,6 +8873,7 @@ mod tests {
         assert_eq!(
             difference.kind,
             ExactBooleanResultKind::CertifiedShortcut {
+                operation: ExactBooleanOperation::Difference,
                 shortcut: ExactBooleanShortcutKind::ArrangementCellComplex
             }
         );
@@ -8879,6 +8931,7 @@ mod tests {
         assert_eq!(
             union.kind,
             ExactBooleanResultKind::CertifiedShortcut {
+                operation: ExactBooleanOperation::Union,
                 shortcut: ExactBooleanShortcutKind::ArrangementCellComplex
             }
         );
@@ -8894,6 +8947,7 @@ mod tests {
         assert_eq!(
             difference.kind,
             ExactBooleanResultKind::CertifiedShortcut {
+                operation: ExactBooleanOperation::Difference,
                 shortcut: ExactBooleanShortcutKind::ArrangementCellComplex
             }
         );
@@ -8952,6 +9006,7 @@ mod tests {
         assert_eq!(
             union.kind,
             ExactBooleanResultKind::CertifiedShortcut {
+                operation: ExactBooleanOperation::Union,
                 shortcut: ExactBooleanShortcutKind::ArrangementCellComplex
             }
         );
@@ -8967,6 +9022,7 @@ mod tests {
         assert_eq!(
             difference.kind,
             ExactBooleanResultKind::CertifiedShortcut {
+                operation: ExactBooleanOperation::Difference,
                 shortcut: ExactBooleanShortcutKind::ArrangementCellComplex
             }
         );
@@ -9016,6 +9072,7 @@ mod tests {
             assert_eq!(
                 result.kind,
                 ExactBooleanResultKind::CertifiedShortcut {
+                    operation,
                     shortcut: ExactBooleanShortcutKind::SameSurface
                 },
                 "{operation:?}: {result:?}"
@@ -9072,6 +9129,7 @@ mod tests {
         assert_eq!(
             union.kind,
             ExactBooleanResultKind::CertifiedShortcut {
+                operation: ExactBooleanOperation::Union,
                 shortcut: ExactBooleanShortcutKind::Identical
             }
         );
@@ -9121,6 +9179,7 @@ mod tests {
         assert_eq!(
             result.kind,
             ExactBooleanResultKind::CertifiedShortcut {
+                operation: ExactBooleanOperation::Intersection,
                 shortcut: ExactBooleanShortcutKind::ArrangementCellComplex
             }
         );
