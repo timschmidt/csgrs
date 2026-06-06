@@ -45,8 +45,8 @@ use hyperlimit::SourceProvenance;
 use std::collections::{BTreeMap, BTreeSet};
 
 use hyperlimit::{
-    Point2, Point3, compare_point2_lexicographic, compare_reals, point2_equal, point3_equal,
-    project_point3,
+    Point2, Point3, TriangleLocation, classify_point_triangle, compare_point2_lexicographic,
+    compare_reals, point2_equal, point3_equal, project_point3,
 };
 use hyperreal::Real;
 
@@ -1266,7 +1266,7 @@ fn lower_dimensional_artifacts(
         return Vec::new();
     }
 
-    let mut artifacts = non_coplanar_lower_dimensional_artifacts(graph);
+    let mut artifacts = non_coplanar_lower_dimensional_artifacts(graph, left, right);
     let touching_pairs = graph
         .coplanar_overlap_graphs()
         .into_iter()
@@ -1323,6 +1323,8 @@ fn lower_dimensional_artifacts(
 
 fn non_coplanar_lower_dimensional_artifacts(
     graph: &ExactIntersectionGraph,
+    left: &ExactMesh,
+    right: &ExactMesh,
 ) -> Vec<ArrangementLowerDimensionalArtifact> {
     let mut artifacts = Vec::new();
     for pair in &graph.face_pairs {
@@ -1341,6 +1343,16 @@ fn non_coplanar_lower_dimensional_artifacts(
             continue;
         }
         for event in &pair.events {
+            if let Some(artifact) = non_coplanar_edge_contact_artifact(
+                pair.left_face,
+                pair.right_face,
+                event,
+                left,
+                right,
+            ) {
+                push_lower_dimensional_artifact(&mut artifacts, artifact);
+                continue;
+            }
             let super::graph::IntersectionEvent::SegmentPlane {
                 relation: super::construction::SegmentPlaneRelation::EndpointOnPlane,
                 point: Some(point),
@@ -1360,6 +1372,65 @@ fn non_coplanar_lower_dimensional_artifacts(
         }
     }
     artifacts
+}
+
+fn non_coplanar_edge_contact_artifact(
+    left_face: usize,
+    right_face: usize,
+    event: &super::graph::IntersectionEvent,
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Option<ArrangementLowerDimensionalArtifact> {
+    let super::graph::IntersectionEvent::SegmentPlane {
+        segment_side,
+        edge,
+        plane_side,
+        plane_face,
+        relation: super::construction::SegmentPlaneRelation::Coplanar,
+        endpoint_sides:
+            [
+                Some(hyperlimit::PlaneSide::On),
+                Some(hyperlimit::PlaneSide::On),
+            ],
+        ..
+    } = event
+    else {
+        return None;
+    };
+    let segment_mesh = mesh_for_side(*segment_side, left, right);
+    let plane_mesh = mesh_for_side(*plane_side, left, right);
+    let start = segment_mesh.vertices().get(edge[0])?;
+    let end = segment_mesh.vertices().get(edge[1])?;
+    let triangle = plane_mesh.triangles().get(*plane_face)?.0;
+    let projection = choose_triangle_projection(
+        plane_mesh,
+        triangle,
+        &mut Vec::<ExactArrangementBlocker>::new(),
+    )?;
+    let a = project_point3(plane_mesh.vertices().get(triangle[0])?, projection);
+    let b = project_point3(plane_mesh.vertices().get(triangle[1])?, projection);
+    let c = project_point3(plane_mesh.vertices().get(triangle[2])?, projection);
+    let start_location =
+        classify_point_triangle(&a, &b, &c, &project_point3(start, projection)).value()?;
+    let end_location =
+        classify_point_triangle(&a, &b, &c, &project_point3(end, projection)).value()?;
+    if !constructive_triangle_location(start_location)
+        || !constructive_triangle_location(end_location)
+    {
+        return None;
+    }
+    Some(ArrangementLowerDimensionalArtifact::EdgeContact {
+        left_face,
+        right_face,
+        endpoints: [start.clone(), end.clone()],
+    })
+}
+
+fn constructive_triangle_location(location: TriangleLocation) -> bool {
+    matches!(
+        location,
+        TriangleLocation::Inside | TriangleLocation::OnEdge | TriangleLocation::OnVertex
+    )
 }
 
 fn push_lower_dimensional_edge_artifacts(
@@ -4309,6 +4380,48 @@ mod tests {
         assert!(
             retained.face_plane_arrangements.is_empty(),
             "point-only contact should not create positive-area face-plane cells"
+        );
+    }
+
+    #[test]
+    fn lower_dimensional_policy_retains_noncoplanar_edge_touch() {
+        let left = open_triangle_i64([0, 0, 0], [2, 0, 0], [0, 2, 0]);
+        let right = open_triangle_i64([0, 0, 0], [2, 0, 0], [0, 0, 2]);
+
+        let dropped = ExactArrangement::from_meshes_with_policy(
+            &left,
+            &right,
+            ExactRegularizationPolicy::REGULARIZED_SOLID,
+        )
+        .unwrap();
+        assert!(dropped.lower_dimensional_artifacts.is_empty());
+
+        let retained = ExactArrangement::from_meshes_with_policy(
+            &left,
+            &right,
+            ExactRegularizationPolicy::RETAIN_ARTIFACTS,
+        )
+        .unwrap();
+
+        assert!(
+            retained
+                .lower_dimensional_artifacts
+                .iter()
+                .any(|artifact| matches!(
+                    artifact,
+                    ArrangementLowerDimensionalArtifact::EdgeContact { .. }
+                )),
+            "{:?}",
+            retained.lower_dimensional_artifacts
+        );
+        assert!(
+            retained
+                .validate_against_sources_with_policy(
+                    &left,
+                    &right,
+                    ExactRegularizationPolicy::RETAIN_ARTIFACTS
+                )
+                .is_ok()
         );
     }
 }
