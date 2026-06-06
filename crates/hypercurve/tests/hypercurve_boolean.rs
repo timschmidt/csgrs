@@ -61,6 +61,25 @@ fn directed_fragment(
     }
 }
 
+fn open_chain_fragments() -> Vec<DirectedBooleanFragment> {
+    vec![
+        directed_fragment(0, 0, 0, 1, 0),
+        directed_fragment(1, 1, 0, 2, 0),
+    ]
+}
+
+fn triangle_loop_fragments(
+    fragment_indices: [usize; 3],
+    x: i32,
+    y: i32,
+) -> Vec<DirectedBooleanFragment> {
+    vec![
+        directed_fragment(fragment_indices[0], x, y, x + 1, y),
+        directed_fragment(fragment_indices[1], x + 1, y, x, y + 1),
+        directed_fragment(fragment_indices[2], x, y + 1, x, y),
+    ]
+}
+
 fn fragment_classification(
     fragment_index: usize,
     action: BooleanFragmentAction,
@@ -431,6 +450,21 @@ fn boolean_boundary_chain_constructors_validate_fragment_ownership() {
         true,
     ));
 
+    BooleanBoundaryChain::new(open_chain_fragments(), false).unwrap();
+    BooleanBoundaryChain::new(triangle_loop_fragments([0, 1, 2], 0, 0), true).unwrap();
+    assert_topology_error(BooleanBoundaryChain::new(open_chain_fragments(), true));
+    assert_topology_error(BooleanBoundaryChain::new(
+        triangle_loop_fragments([0, 1, 2], 0, 0),
+        false,
+    ));
+    assert_topology_error(BooleanBoundaryChain::new(
+        vec![
+            directed_fragment(0, 0, 0, 1, 0),
+            directed_fragment(1, 2, 0, 3, 0),
+        ],
+        false,
+    ));
+
     let first = BooleanBoundaryChain::new(vec![directed_fragment(0, 0, 0, 1, 0)], false).unwrap();
     let second = BooleanBoundaryChain::new(vec![directed_fragment(1, 1, 0, 2, 0)], false).unwrap();
     BooleanBoundaryChainSet::new(vec![first.clone(), second]).unwrap();
@@ -448,11 +482,17 @@ fn boolean_boundary_loop_constructors_validate_fragment_ownership() {
         directed_fragment(0, 1, 0, 0, 0),
     ]));
 
-    let first = BooleanBoundaryLoop::new(vec![directed_fragment(0, 0, 0, 1, 0)]).unwrap();
-    let second = BooleanBoundaryLoop::new(vec![directed_fragment(1, 1, 0, 2, 0)]).unwrap();
+    assert_topology_error(BooleanBoundaryLoop::new(open_chain_fragments()));
+    assert_topology_error(BooleanBoundaryLoop::new(vec![
+        directed_fragment(0, 0, 0, 1, 0),
+        directed_fragment(1, 2, 0, 3, 0),
+    ]));
+
+    let first = BooleanBoundaryLoop::new(triangle_loop_fragments([0, 1, 2], 0, 0)).unwrap();
+    let second = BooleanBoundaryLoop::new(triangle_loop_fragments([3, 4, 5], 2, 0)).unwrap();
     BooleanBoundaryLoopSet::new(vec![first.clone(), second]).unwrap();
 
-    let duplicate = BooleanBoundaryLoop::new(vec![directed_fragment(0, 2, 0, 3, 0)]).unwrap();
+    let duplicate = BooleanBoundaryLoop::new(triangle_loop_fragments([0, 6, 7], 4, 0)).unwrap();
     assert_topology_error(BooleanBoundaryLoopSet::new(vec![first, duplicate]));
 }
 

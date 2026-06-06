@@ -142,6 +142,7 @@ impl BooleanBoundaryChain {
     /// Constructs a boundary chain from already-ordered fragments.
     pub fn new(fragments: Vec<DirectedBooleanFragment>, closed: bool) -> CurveResult<Self> {
         validate_directed_boolean_fragments(&fragments, "boolean boundary chain")?;
+        validate_boolean_boundary_chain_geometry(&fragments, closed)?;
         Ok(Self { fragments, closed })
     }
 
@@ -273,6 +274,7 @@ impl BooleanBoundaryLoop {
     /// Constructs a loop from already-ordered directed fragments.
     pub fn new(fragments: Vec<DirectedBooleanFragment>) -> CurveResult<Self> {
         validate_directed_boolean_fragments(&fragments, "boolean boundary loop")?;
+        validate_boolean_boundary_loop_geometry(&fragments)?;
         Ok(Self { fragments })
     }
 
@@ -449,6 +451,70 @@ fn validate_directed_boolean_fragments(
         )));
     }
     Ok(())
+}
+
+fn validate_boolean_boundary_chain_geometry(
+    fragments: &[DirectedBooleanFragment],
+    closed: bool,
+) -> CurveResult<()> {
+    validate_directed_boolean_fragment_connectivity(fragments, "boolean boundary chain")?;
+
+    let endpoints_close = certified_endpoint_match(
+        fragments.last().unwrap(),
+        fragments.first().unwrap(),
+        "boolean boundary chain",
+    )?;
+    if endpoints_close != closed {
+        return Err(CurveError::Topology(
+            "boolean boundary chain closed flag must match endpoint evidence".to_owned(),
+        ));
+    }
+    Ok(())
+}
+
+fn validate_boolean_boundary_loop_geometry(
+    fragments: &[DirectedBooleanFragment],
+) -> CurveResult<()> {
+    validate_directed_boolean_fragment_connectivity(fragments, "boolean boundary loop")?;
+
+    if !certified_endpoint_match(
+        fragments.last().unwrap(),
+        fragments.first().unwrap(),
+        "boolean boundary loop",
+    )? {
+        return Err(CurveError::Topology(
+            "boolean boundary loop must close back to its first fragment".to_owned(),
+        ));
+    }
+    Ok(())
+}
+
+fn validate_directed_boolean_fragment_connectivity(
+    fragments: &[DirectedBooleanFragment],
+    owner: &str,
+) -> CurveResult<()> {
+    for window in fragments.windows(2) {
+        if !certified_endpoint_match(&window[0], &window[1], owner)? {
+            return Err(CurveError::Topology(format!(
+                "{owner} fragments must be endpoint-connected"
+            )));
+        }
+    }
+    Ok(())
+}
+
+fn certified_endpoint_match(
+    left: &DirectedBooleanFragment,
+    right: &DirectedBooleanFragment,
+    owner: &str,
+) -> CurveResult<bool> {
+    let policy = CurvePolicy::certified();
+    match points_match(left.segment.end(), right.segment.start(), &policy) {
+        Classification::Decided(matches) => Ok(matches),
+        Classification::Uncertain(reason) => Err(CurveError::Topology(format!(
+            "{owner} endpoint equality could not be certified: {reason:?}"
+        ))),
+    }
 }
 
 fn validate_boolean_boundary_chains(chains: &[BooleanBoundaryChain]) -> CurveResult<()> {
