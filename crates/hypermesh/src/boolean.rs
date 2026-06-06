@@ -8078,6 +8078,16 @@ mod tests {
             );
             result.validate().unwrap();
             result.validate_against_sources(&left, &right).unwrap();
+            let selection = match operation {
+                ExactBooleanOperation::Union => ExactRegionSelection::KeepAll,
+                ExactBooleanOperation::Intersection => ExactRegionSelection::KeepNone,
+                ExactBooleanOperation::Difference => ExactRegionSelection::KeepLeft,
+                ExactBooleanOperation::SelectedRegions(_) => unreachable!(),
+            };
+            result
+                .assembly
+                .validate_against_sources(&left, &right, selection)
+                .unwrap();
             result
                 .validate_operation_against_sources(
                     &left,

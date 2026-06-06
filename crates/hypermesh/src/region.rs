@@ -937,12 +937,13 @@ impl ExactBooleanAssemblyPlan {
                     reason: "assembly source replay could not triangulate region plan",
                 },
             )?;
-        let replay = ExactBooleanAssemblyPlan::from_region_triangulations_with_sources(
+        let mut replay = ExactBooleanAssemblyPlan::from_region_triangulations_with_sources(
             &triangulations,
             selection,
             left,
             right,
         )?;
+        replay.canonicalize_for_mesh_with_sources(left, right)?;
         if self == &replay {
             Ok(())
         } else {
