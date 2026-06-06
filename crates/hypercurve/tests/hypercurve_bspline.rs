@@ -169,7 +169,7 @@ fn extracted_bspline_spans_feed_existing_bezier_region_area() {
             .spans()
             .to_vec(),
     );
-    let region = BezierRegion2::new(vec![BezierBoundaryLoop2::new(fragments)]);
+    let region = BezierRegion2::new(vec![BezierBoundaryLoop2::new(fragments).unwrap()]);
 
     assert_eq!(region.signed_area().unwrap(), Some(q(-88, 3)));
 }
@@ -376,7 +376,7 @@ fn equal_weight_retained_rational_cubic_spans_feed_native_region_area() {
             .native_subcurves(&policy())
             .unwrap(),
     ));
-    let region = BezierRegion2::new(vec![BezierBoundaryLoop2::new(fragments)]);
+    let region = BezierRegion2::new(vec![BezierBoundaryLoop2::new(fragments).unwrap()]);
 
     assert!(region.signed_area().unwrap().is_some());
 }
@@ -1007,7 +1007,7 @@ fn extracted_rational_bspline_spans_feed_conic_region_area() {
             .spans()
             .to_vec(),
     );
-    let region = BezierRegion2::new(vec![BezierBoundaryLoop2::new(fragments)]);
+    let region = BezierRegion2::new(vec![BezierBoundaryLoop2::new(fragments).unwrap()]);
 
     assert!(region.signed_area().unwrap().is_some());
 }

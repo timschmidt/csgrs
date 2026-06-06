@@ -55,6 +55,10 @@ fn graph(fragments: Vec<BezierArrangementFragment2>) -> BezierArrangementGraph2 
     BezierArrangementGraph2::new(fragments).unwrap()
 }
 
+fn retained_loop(fragments: Vec<BezierSplitFragment2>) -> BezierRetainedBoundaryLoop2 {
+    BezierRetainedBoundaryLoop2::new(fragments).unwrap()
+}
+
 fn exact(value: Real) -> BezierParameter2 {
     decided(BezierParameter2::exact(value, &policy()).unwrap())
 }
@@ -151,7 +155,7 @@ fn retained_line_loop(vertices: &[Point2]) -> BezierRetainedBoundaryLoop2 {
             first.clone(),
         )),
     });
-    BezierRetainedBoundaryLoop2::new(fragments)
+    retained_loop(fragments)
 }
 
 #[test]
@@ -461,19 +465,43 @@ fn retained_role_report_constructors_reject_mismatched_evidence() {
 
 #[test]
 fn empty_boundary_loops_do_not_certify_signed_area() {
-    assert_topology_error(BezierBoundaryLoop2::new(Vec::new()).signed_area());
-    assert_topology_error(BezierRetainedBoundaryLoop2::new(Vec::new()).signed_area());
+    assert_topology_error(BezierBoundaryLoop2::new(Vec::new()));
+    assert_topology_error(BezierRetainedBoundaryLoop2::new(Vec::new()));
+}
+
+#[test]
+fn native_boundary_loop_constructor_rejects_open_fragment_cycle() {
+    assert_topology_error(BezierBoundaryLoop2::new(vec![
+        hypercurve::BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 0))),
+        hypercurve::BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(3, 0), p(4, 0), p(5, 0))),
+    ]));
+}
+
+#[test]
+fn retained_boundary_loop_constructor_rejects_duplicate_arrangement_sources() {
+    assert_topology_error(
+        BezierRetainedBoundaryLoop2::try_new_with_arrangement_sources(
+            vec![
+                retained_algebraic_line_fragment(p(0, 0), p(1, 0)),
+                retained_algebraic_line_fragment(p(1, 0), p(0, 0)),
+            ],
+            vec![
+                BezierRetainedFragmentSource2::new(0, 0, 0),
+                BezierRetainedFragmentSource2::new(0, 1, 0),
+            ],
+        ),
+    );
 }
 
 #[test]
 fn retained_line_image_role_report_accepts_exact_algebraic_endpoint_carriers() {
-    let outer = BezierRetainedBoundaryLoop2::new(vec![
+    let outer = retained_loop(vec![
         retained_algebraic_line_fragment(p(0, 0), p(6, 0)),
         retained_algebraic_line_fragment(p(6, 0), p(6, 6)),
         retained_algebraic_line_fragment(p(6, 6), p(0, 6)),
         retained_algebraic_line_fragment(p(0, 6), p(0, 0)),
     ]);
-    let same_orientation_inner = BezierRetainedBoundaryLoop2::new(vec![
+    let same_orientation_inner = retained_loop(vec![
         retained_algebraic_line_fragment(p(2, 2), p(4, 2)),
         retained_algebraic_line_fragment(p(4, 2), p(4, 4)),
         retained_algebraic_line_fragment(p(4, 4), p(2, 4)),
@@ -524,8 +552,7 @@ fn retained_line_image_role_report_rejects_nonrational_algebraic_endpoint() {
         ),
         end_image: Some(algebraic_constant_point_image(p(1, 0))),
     };
-    let retained =
-        BezierRetainedRegion2::new(vec![BezierRetainedBoundaryLoop2::new(vec![fragment])]);
+    let retained = BezierRetainedRegion2::new(vec![retained_loop(vec![fragment])]);
 
     assert_eq!(
         retained.line_image_role_report(&policy()).unwrap(),
@@ -544,7 +571,7 @@ fn retained_line_image_role_report_accepts_certified_nonlinear_line_image_loop()
             p(4, 0),
         )),
     };
-    let retained = BezierRetainedRegion2::new(vec![BezierRetainedBoundaryLoop2::new(vec![
+    let retained = BezierRetainedRegion2::new(vec![retained_loop(vec![
         nonlinear_edge,
         BezierSplitFragment2::Materialized {
             start: exact(r(0)),
@@ -613,7 +640,7 @@ fn retained_quadratic_lens_loop(
         )),
     };
     if material_orientation {
-        BezierRetainedBoundaryLoop2::new(vec![upper, lower])
+        retained_loop(vec![upper, lower])
     } else {
         let BezierSplitFragment2::Materialized {
             curve: hypercurve::BezierSubcurve2::Quadratic(upper),
@@ -629,7 +656,7 @@ fn retained_quadratic_lens_loop(
         else {
             unreachable!()
         };
-        BezierRetainedBoundaryLoop2::new(vec![
+        retained_loop(vec![
             BezierSplitFragment2::Materialized {
                 start: exact(r(0)),
                 end: exact(r(1)),
@@ -726,7 +753,7 @@ fn retained_curved_nesting_role_report_assigns_same_orientation_nonlinear_hole()
 
 #[test]
 fn retained_signed_area_role_report_rejects_zero_area_and_algebraic_loops() {
-    let zero = BezierRetainedRegion2::new(vec![BezierRetainedBoundaryLoop2::new(vec![
+    let zero = BezierRetainedRegion2::new(vec![retained_loop(vec![
         BezierSplitFragment2::Materialized {
             start: exact(r(0)),
             end: exact(r(1)),
@@ -752,7 +779,7 @@ fn retained_signed_area_role_report_rejects_zero_area_and_algebraic_loops() {
     );
 
     let parameter = BezierParameter2::algebraic(algebraic_midpoint_parameter());
-    let algebraic = BezierRetainedRegion2::new(vec![BezierRetainedBoundaryLoop2::new(vec![
+    let algebraic = BezierRetainedRegion2::new(vec![retained_loop(vec![
         BezierSplitFragment2::AlgebraicEndpointImages {
             start: parameter.clone(),
             end: parameter,
@@ -837,7 +864,7 @@ fn retained_curve_envelope_uses_source_bounds_for_algebraic_split_fragments() {
             .unwrap(),
     );
     assert!(split.has_algebraic_endpoint_images());
-    let loop_with_algebraic_boundary = BezierRetainedBoundaryLoop2::new(split.fragments().to_vec());
+    let loop_with_algebraic_boundary = retained_loop(split.fragments().to_vec());
 
     let curve_envelope = decided(BezierRetainedCurveEnvelope2::from_loop(
         &loop_with_algebraic_boundary,
@@ -870,7 +897,7 @@ fn retained_curve_envelope_uses_algebraic_parameter_interval_hull() {
             )
             .unwrap(),
     );
-    let first_fragment_loop = BezierRetainedBoundaryLoop2::new(vec![split.fragments()[0].clone()]);
+    let first_fragment_loop = retained_loop(vec![split.fragments()[0].clone()]);
 
     let envelope = decided(BezierRetainedCurveEnvelope2::from_loop(
         &first_fragment_loop,
@@ -898,7 +925,7 @@ fn retained_curve_envelope_uses_algebraic_endpoint_image_before_interval_hull() 
             )
             .unwrap(),
     );
-    let first_fragment_loop = BezierRetainedBoundaryLoop2::new(vec![split.fragments()[0].clone()]);
+    let first_fragment_loop = retained_loop(vec![split.fragments()[0].clone()]);
 
     let envelope = decided(BezierRetainedCurveEnvelope2::from_loop(
         &first_fragment_loop,
@@ -1014,8 +1041,7 @@ fn retained_endpoint_envelope_rejects_incomplete_algebraic_endpoint_evidence() {
         start_image: Some(algebraic_image(&line_midpoint_curve(-1, 0, 1))),
         end_image: None,
     };
-    let retained =
-        BezierRetainedRegion2::new(vec![BezierRetainedBoundaryLoop2::new(vec![partial])]);
+    let retained = BezierRetainedRegion2::new(vec![retained_loop(vec![partial])]);
 
     assert_eq!(
         BezierRetainedEndpointEnvelope2::from_region(&retained, &policy()),

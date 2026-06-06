@@ -46,6 +46,10 @@ fn line_fragment(
     )
 }
 
+fn retained_loop(fragments: Vec<BezierSplitFragment2>) -> CurveResult<BezierRetainedBoundaryLoop2> {
+    BezierRetainedBoundaryLoop2::new(fragments)
+}
+
 fn algebraic_polynomial_parameter(
     coefficients: Vec<Real>,
     interval_start: Real,
@@ -170,7 +174,7 @@ fn main() -> CurveResult<()> {
         )?],
         &policy,
     )?);
-    let algebraic_loop = BezierRetainedBoundaryLoop2::new(algebraic_split.fragments().to_vec());
+    let algebraic_loop = retained_loop(algebraic_split.fragments().to_vec())?;
     let started = Instant::now();
     let mut algebraic_envelope_checksum = 0_usize;
     for _ in 0..iterations {
@@ -197,8 +201,7 @@ fn main() -> CurveResult<()> {
         )?],
         &policy,
     )?);
-    let exact_endpoint_loop =
-        BezierRetainedBoundaryLoop2::new(vec![exact_endpoint_split.fragments()[0].clone()]);
+    let exact_endpoint_loop = retained_loop(vec![exact_endpoint_split.fragments()[0].clone()])?;
     let started = Instant::now();
     let mut algebraic_exact_endpoint_checksum = 0_usize;
     for _ in 0..iterations {
@@ -216,18 +219,18 @@ fn main() -> CurveResult<()> {
     );
 
     let algebraic_line_region = BezierRetainedRegion2::new(vec![
-        BezierRetainedBoundaryLoop2::new(vec![
+        retained_loop(vec![
             retained_algebraic_line_fragment(p(-3, -3), p(3, -3), &policy)?,
             retained_algebraic_line_fragment(p(3, -3), p(3, 3), &policy)?,
             retained_algebraic_line_fragment(p(3, 3), p(-3, 3), &policy)?,
             retained_algebraic_line_fragment(p(-3, 3), p(-3, -3), &policy)?,
-        ]),
-        BezierRetainedBoundaryLoop2::new(vec![
+        ])?,
+        retained_loop(vec![
             retained_algebraic_line_fragment(p(-1, -1), p(1, -1), &policy)?,
             retained_algebraic_line_fragment(p(1, -1), p(1, 1), &policy)?,
             retained_algebraic_line_fragment(p(1, 1), p(-1, 1), &policy)?,
             retained_algebraic_line_fragment(p(-1, 1), p(-1, -1), &policy)?,
-        ]),
+        ])?,
     ]);
     let started = Instant::now();
     let mut algebraic_line_role_checksum = 0_usize;

@@ -19,7 +19,7 @@
 
 use hyperreal::{Real, RealSign};
 
-use crate::classify::{compare_reals, real_sign};
+use crate::classify::{compare_reals, is_zero, real_sign};
 use crate::{
     Aabb2, BezierArrangementGraph2, BezierArrangementTraversal2, BezierEndpointPointImage2,
     BezierLineContactKind, BezierLineContactRelation, BezierLineImageFitRelation, BezierParameter2,
@@ -444,8 +444,9 @@ impl BezierRetainedCurvedNestingRoleReport2 {
 
 impl BezierBoundaryLoop2 {
     /// Constructs a closed boundary loop from native Bezier/conic fragments.
-    pub const fn new(fragments: Vec<BezierSubcurve2>) -> Self {
-        Self { fragments }
+    pub fn new(fragments: Vec<BezierSubcurve2>) -> CurveResult<Self> {
+        validate_native_boundary_loop(&fragments)?;
+        Ok(Self { fragments })
     }
 
     /// Returns native curve fragments in loop order.
@@ -528,7 +529,11 @@ impl BezierRegion2 {
                     }
                 }
             }
-            loops.push(BezierBoundaryLoop2::new(fragments));
+            let loop_ = match BezierBoundaryLoop2::new(fragments) {
+                Ok(loop_) => loop_,
+                Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
+            };
+            loops.push(loop_);
         }
 
         Classification::Decided(Self::new(loops))
@@ -586,13 +591,40 @@ impl BezierRegion2 {
     }
 }
 
+fn validate_native_boundary_loop(fragments: &[BezierSubcurve2]) -> CurveResult<()> {
+    if fragments.is_empty() {
+        return Err(CurveError::Topology(
+            "Bezier boundary loop requires nonempty fragments".to_owned(),
+        ));
+    }
+
+    let policy = CurvePolicy::certified();
+    for (left, right) in fragments
+        .iter()
+        .zip(fragments.iter().cycle().skip(1))
+        .take(fragments.len())
+    {
+        if !certified_points_equal(&left.endpoints().1, &right.endpoints().0, &policy) {
+            return Err(CurveError::Topology(
+                "Bezier boundary loop fragments must be endpoint-connected and closed".to_owned(),
+            ));
+        }
+    }
+    Ok(())
+}
+
+fn certified_points_equal(left: &Point2, right: &Point2, policy: &CurvePolicy) -> bool {
+    is_zero(&left.distance_squared(right), policy) == Some(true)
+}
+
 impl BezierRetainedBoundaryLoop2 {
     /// Constructs a retained boundary loop from accepted split fragments.
-    pub const fn new(fragments: Vec<BezierSplitFragment2>) -> Self {
-        Self {
+    pub fn new(fragments: Vec<BezierSplitFragment2>) -> CurveResult<Self> {
+        validate_retained_boundary_loop(&fragments)?;
+        Ok(Self {
             fragments,
             arrangement_sources: None,
-        }
+        })
     }
 
     /// Constructs a retained boundary loop with one source record per fragment.
@@ -600,17 +632,13 @@ impl BezierRetainedBoundaryLoop2 {
         fragments: Vec<BezierSplitFragment2>,
         arrangement_sources: Vec<BezierRetainedFragmentSource2>,
     ) -> CurveResult<Self> {
-        if fragments.is_empty() {
-            return Err(CurveError::Topology(
-                "retained boundary loop source provenance must reference nonempty fragments"
-                    .to_owned(),
-            ));
-        }
+        validate_retained_boundary_loop(&fragments)?;
         if fragments.len() != arrangement_sources.len() {
             return Err(CurveError::Topology(
                 "retained boundary source count does not match fragment count".to_owned(),
             ));
         }
+        validate_retained_boundary_loop_sources(&arrangement_sources)?;
         Ok(Self {
             fragments,
             arrangement_sources: Some(arrangement_sources),
@@ -677,6 +705,32 @@ impl BezierRetainedBoundaryLoop2 {
         }
         Ok(Some(total))
     }
+}
+
+fn validate_retained_boundary_loop(fragments: &[BezierSplitFragment2]) -> CurveResult<()> {
+    if fragments.is_empty() {
+        return Err(CurveError::Topology(
+            "retained Bezier boundary loop requires nonempty fragments".to_owned(),
+        ));
+    }
+    Ok(())
+}
+
+fn validate_retained_boundary_loop_sources(
+    arrangement_sources: &[BezierRetainedFragmentSource2],
+) -> CurveResult<()> {
+    let mut indices = arrangement_sources
+        .iter()
+        .map(|source| source.arrangement_fragment_index())
+        .collect::<Vec<_>>();
+    indices.sort_unstable();
+    if indices.windows(2).any(|window| window[0] == window[1]) {
+        return Err(CurveError::Topology(
+            "retained boundary loop source provenance must not reuse arrangement fragments"
+                .to_owned(),
+        ));
+    }
+    Ok(())
 }
 
 impl BezierRetainedRegion2 {
@@ -1303,7 +1357,7 @@ fn retained_loop_to_native(
         };
         fragments.push(curve.clone());
     }
-    Some(BezierBoundaryLoop2::new(fragments))
+    BezierBoundaryLoop2::new(fragments).ok()
 }
 
 fn native_loop_sample_point(
