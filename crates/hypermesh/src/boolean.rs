@@ -1057,9 +1057,38 @@ pub fn certify_volumetric_boundary_closure_report(
         });
     }
     match group_exact_coplanar_loops(boundary_points) {
-        Ok(groups) => Ok(ExactVolumetricBoundaryClosureReport {
+        Ok(groups)
+            if close_exact_coplanar_boundary_loops_from_loops(
+                &materialized.mesh,
+                boundary_loops.clone(),
+                "exact volumetric boundary closure certification cap",
+                ValidationPolicy::CLOSED,
+            )
+            .is_some() =>
+        {
+            Ok(ExactVolumetricBoundaryClosureReport {
+                operation,
+                status: ExactVolumetricBoundaryClosureStatus::CoplanarClosureAvailable,
+                output_triangles,
+                boundary_edges,
+                boundary_loops: boundary_loops.len(),
+                boundary_vertices_with_invalid_outgoing_degree: 0,
+                boundary_vertices_with_invalid_incoming_degree: 0,
+                overused_boundary_edges: 0,
+                noncoplanar_boundary_loops: 0,
+                repeated_exact_boundary_points: 0,
+                self_contact_exact_points: 0,
+                self_contact_topological_vertices: 0,
+                self_contact_degenerate_cycles: 0,
+                self_contact_nondegenerate_cycles: 0,
+                coplanar_loop_groups: groups.len(),
+            })
+        }
+        Ok(_) => Ok(ExactVolumetricBoundaryClosureReport {
             operation,
-            status: ExactVolumetricBoundaryClosureStatus::CoplanarClosureAvailable,
+            status: ExactVolumetricBoundaryClosureStatus::BoundaryClosureBlocked(
+                ExactArrangementBlocker::NonManifoldCellComplex,
+            ),
             output_triangles,
             boundary_edges,
             boundary_loops: boundary_loops.len(),
@@ -1072,7 +1101,7 @@ pub fn certify_volumetric_boundary_closure_report(
             self_contact_topological_vertices: 0,
             self_contact_degenerate_cycles: 0,
             self_contact_nondegenerate_cycles: 0,
-            coplanar_loop_groups: groups.len(),
+            coplanar_loop_groups: 0,
         }),
         Err(blocker) => Ok(ExactVolumetricBoundaryClosureReport {
             operation,
@@ -8249,6 +8278,44 @@ mod tests {
                 ExactBoundaryBooleanPolicy::Reject,
             )
             .unwrap();
+    }
+
+    #[test]
+    fn volumetric_boundary_closure_report_rejects_unmaterializable_coplanar_cap() {
+        let left = ExactMesh::from_i64_triangles(
+            &[
+                0, 0, 0, //
+                4, 0, 0, //
+                0, 4, 0, //
+                0, 0, 4, //
+                2, 2, 3,
+            ],
+            &[
+                0, 2, 1, //
+                1, 2, 3, //
+                2, 0, 3, //
+                0, 1, 4, //
+                1, 3, 4, //
+                3, 0, 4,
+            ],
+        )
+        .unwrap();
+        let right = tetrahedron_i64([-1, 1, 0], [3, 1, 0], [-1, 5, 0], [-1, 1, 4]);
+
+        let closure =
+            certify_volumetric_boundary_closure_report(&left, &right, ExactBooleanOperation::Union)
+                .unwrap();
+        assert_eq!(
+            closure.status,
+            ExactVolumetricBoundaryClosureStatus::BoundaryClosureBlocked(
+                ExactArrangementBlocker::NonManifoldCellComplex
+            ),
+            "{closure:?}"
+        );
+        assert_eq!(closure.boundary_loops, 1, "{closure:?}");
+        assert_eq!(closure.coplanar_loop_groups, 0, "{closure:?}");
+        closure.validate().unwrap();
+        closure.validate_against_sources(&left, &right).unwrap();
     }
 
     fn arrangement_attempt_certified_for_preflight_with_validation(
