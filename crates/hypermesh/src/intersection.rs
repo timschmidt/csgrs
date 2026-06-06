@@ -289,12 +289,10 @@ pub fn classify_mesh_face_pairs(
     right: &ExactMesh,
 ) -> Result<Vec<MeshFacePairClassification>, MeshError> {
     let mut retained = Vec::new();
-    for left_face in 0..left.triangles().len() {
-        for right_face in 0..right.triangles().len() {
-            let classification = classify_mesh_face_pair(left, left_face, right, right_face)?;
-            if classification.needs_graph_construction() {
-                retained.push(classification);
-            }
+    for [left_face, right_face] in left.bounds().candidate_face_pairs(right.bounds()) {
+        let classification = classify_mesh_face_pair(left, left_face, right, right_face)?;
+        if classification.needs_graph_construction() {
+            retained.push(classification);
         }
     }
     Ok(retained)

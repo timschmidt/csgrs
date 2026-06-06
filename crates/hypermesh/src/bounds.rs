@@ -168,6 +168,11 @@ impl MeshBounds {
 
     /// Return face-pair candidates whose exact boxes are not disjoint.
     pub fn candidate_face_pairs(&self, other: &Self) -> Vec<[usize; 2]> {
+        self.candidate_face_pairs_sweep(other)
+            .unwrap_or_else(|| self.candidate_face_pairs_quadratic(other))
+    }
+
+    fn candidate_face_pairs_quadratic(&self, other: &Self) -> Vec<[usize; 2]> {
         let mut pairs = Vec::new();
         for (left, left_box) in self.faces.iter().enumerate() {
             for (right, right_box) in other.faces.iter().enumerate() {
@@ -177,6 +182,46 @@ impl MeshBounds {
             }
         }
         pairs
+    }
+
+    fn candidate_face_pairs_sweep(&self, other: &Self) -> Option<Vec<[usize; 2]>> {
+        let mut left_order = sorted_face_indices_by_min_x(&self.faces)?;
+        let right_order = sorted_face_indices_by_min_x(&other.faces)?;
+        let mut active_right = Vec::<usize>::new();
+        let mut next_right = 0usize;
+        let mut pairs = Vec::new();
+
+        for left in left_order.drain(..) {
+            let left_box = &self.faces[left];
+            while let Some(&right) = right_order.get(next_right) {
+                if compare(&other.faces[right].min.x, &left_box.max.x)? == Ordering::Greater {
+                    break;
+                }
+                active_right.push(right);
+                next_right += 1;
+            }
+
+            let mut retained_active = Vec::with_capacity(active_right.len());
+            for right in active_right {
+                if compare(&other.faces[right].max.x, &left_box.min.x)? != Ordering::Less {
+                    retained_active.push(right);
+                }
+            }
+            active_right = retained_active;
+
+            for &right in &active_right {
+                let right_box = &other.faces[right];
+                if compare(&right_box.min.x, &left_box.max.x)? == Ordering::Greater {
+                    continue;
+                }
+                if must_keep_candidate(left_box.classify_intersection(right_box)) {
+                    pairs.push([left, right]);
+                }
+            }
+        }
+
+        pairs.sort_unstable();
+        Some(pairs)
     }
 
     /// Validate retained mesh and face bounds against expected topology sizes.
@@ -232,6 +277,24 @@ impl MeshBounds {
     }
 }
 
+fn sorted_face_indices_by_min_x(faces: &[ExactAabb3]) -> Option<Vec<usize>> {
+    let mut indices = (0..faces.len()).collect::<Vec<_>>();
+    for index in 1..indices.len() {
+        let mut cursor = index;
+        while cursor > 0 {
+            match compare(
+                &faces[indices[cursor]].min.x,
+                &faces[indices[cursor - 1]].min.x,
+            )? {
+                Ordering::Less => indices.swap(cursor, cursor - 1),
+                Ordering::Equal | Ordering::Greater => break,
+            }
+            cursor -= 1;
+        }
+    }
+    Some(indices)
+}
+
 fn include_axis(min: &mut Real, max: &mut Real, value: &Real) {
     if matches!(compare(value, min), Some(Ordering::Less)) {
         *min = value.clone();
@@ -249,5 +312,50 @@ fn must_keep_candidate(outcome: PredicateOutcome<AabbIntersectionKind>) -> bool 
     match outcome {
         PredicateOutcome::Decided { value, .. } => value.needs_narrow_phase(),
         PredicateOutcome::Unknown { .. } => true,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn p(x: i64, y: i64, z: i64) -> Point3 {
+        Point3::new(Real::from(x), Real::from(y), Real::from(z))
+    }
+
+    #[test]
+    fn candidate_face_pairs_prune_certified_disjoint_bounds() {
+        let left_points = vec![
+            p(0, 0, 0),
+            p(2, 0, 0),
+            p(0, 2, 0),
+            p(10, 0, 0),
+            p(12, 0, 0),
+            p(10, 2, 0),
+        ];
+        let right_points = vec![
+            p(1, 0, 0),
+            p(3, 0, 0),
+            p(1, 2, 0),
+            p(20, 0, 0),
+            p(22, 0, 0),
+            p(20, 2, 0),
+        ];
+        let triangles = [[0, 1, 2], [3, 4, 5]];
+        let left = MeshBounds::from_triangles(&left_points, &triangles);
+        let right = MeshBounds::from_triangles(&right_points, &triangles);
+
+        assert_eq!(left.candidate_face_pairs(&right), vec![[0, 0]]);
+    }
+
+    #[test]
+    fn candidate_face_pairs_keep_exact_touching_bounds() {
+        let left_points = vec![p(0, 0, 0), p(2, 0, 0), p(0, 2, 0)];
+        let right_points = vec![p(2, 0, 0), p(4, 0, 0), p(2, 2, 0)];
+        let triangles = [[0, 1, 2]];
+        let left = MeshBounds::from_triangles(&left_points, &triangles);
+        let right = MeshBounds::from_triangles(&right_points, &triangles);
+
+        assert_eq!(left.candidate_face_pairs(&right), vec![[0, 0]]);
     }
 }
