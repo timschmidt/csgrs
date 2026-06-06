@@ -808,6 +808,45 @@ pub fn preflight_boolean_exact(
     })
 }
 
+/// Preflight an exact boolean operation for a specific output validation policy.
+///
+/// [`preflight_boolean_exact`] preserves the strict closed-output boundary for
+/// named solid booleans. This policy-aware variant keeps that default contract
+/// for `CLOSED`, but can also certify exact arrangement/cell-complex support
+/// when the same retained split-cell facts materialize under a less restrictive
+/// output policy such as [`ValidationPolicy::ALLOW_BOUNDARY`].
+pub fn preflight_boolean_exact_with_validation(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+) -> Result<ExactBooleanPreflight, MeshError> {
+    let preflight = preflight_boolean_exact(left, right, operation)?;
+    if validation == ValidationPolicy::CLOSED
+        || matches!(operation, ExactBooleanOperation::SelectedRegions(_))
+        || !matches!(
+            preflight.support,
+            ExactBooleanSupport::RequiresCertifiedWinding
+                | ExactBooleanSupport::RequiresCoplanarVolumetricCells
+        )
+    {
+        return Ok(preflight);
+    }
+
+    let graph = build_intersection_graph(left, right)?;
+    validate_graph_source_handoff(&graph, left, right)?;
+    if boolean_arrangement_volumetric_split_cell_recovery_from_graph(
+        &graph, left, right, operation, validation,
+    )?
+    .is_some()
+    {
+        return Ok(certified_arrangement_cell_complex_preflight_from_graph(
+            operation, &graph, left, right,
+        ));
+    }
+    Ok(preflight)
+}
+
 #[cfg(test)]
 const fn winding_readiness_status_already_materialized(
     status: &ExactWindingReadinessStatus,
@@ -7392,6 +7431,42 @@ mod tests {
         assert!(preflight.blocker.is_some(), "{preflight:?}");
         preflight.validate().unwrap();
         preflight.validate_against_sources(&left, &right).unwrap();
+
+        let boundary_preflight = preflight_boolean_exact_with_validation(
+            &left,
+            &right,
+            ExactBooleanOperation::Union,
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        assert_eq!(
+            boundary_preflight.support,
+            ExactBooleanSupport::CertifiedArrangementCellComplex,
+            "{boundary_preflight:?}"
+        );
+        assert!(
+            boundary_preflight.blocker.is_none(),
+            "{boundary_preflight:?}"
+        );
+        assert_eq!(
+            boundary_preflight.retained_face_pairs,
+            graph.face_pairs.len()
+        );
+        assert_eq!(boundary_preflight.retained_events, graph.event_count());
+        boundary_preflight.validate().unwrap();
+        boundary_preflight
+            .validate_against_sources_with_validation(
+                &left,
+                &right,
+                ValidationPolicy::ALLOW_BOUNDARY,
+            )
+            .unwrap();
+        assert!(
+            boundary_preflight
+                .validate_against_sources(&left, &right)
+                .is_err(),
+            "closed replay should not certify an allow-boundary preflight"
+        );
 
         let readiness =
             certify_winding_readiness_report(&left, &right, ExactBooleanOperation::Union).unwrap();

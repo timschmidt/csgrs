@@ -16,6 +16,7 @@ use super::boolean::{
     certify_boundary_touching_report, certify_open_surface_disjoint_report,
     certify_planar_arrangement_report, certify_refinement_report, certify_same_surface_report,
     certify_winding_readiness_report, preflight_boolean_exact,
+    preflight_boolean_exact_with_validation,
 };
 use super::graph::MeshSide;
 use super::graph::{
@@ -1380,6 +1381,31 @@ impl ExactBooleanPreflight {
         self.validate()?;
         let replay = preflight_boolean_exact(left, right, self.operation)
             .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+        if self == &replay {
+            Ok(())
+        } else {
+            Err(ExactReportValidationError::SourceReplayMismatch)
+        }
+    }
+
+    /// Validate this preflight report against source meshes and an explicit
+    /// output validation policy.
+    ///
+    /// The default source replay intentionally uses the strict closed-output
+    /// preflight contract. Policy-aware callers that accepted boundary output
+    /// need replay to include that policy, otherwise a materialized
+    /// arrangement/cell-complex preflight could be incorrectly compared
+    /// against the closed-output blocker report.
+    pub fn validate_against_sources_with_validation(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+        validation: ValidationPolicy,
+    ) -> Result<(), ExactReportValidationError> {
+        self.validate()?;
+        let replay =
+            preflight_boolean_exact_with_validation(left, right, self.operation, validation)
+                .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
         if self == &replay {
             Ok(())
         } else {
