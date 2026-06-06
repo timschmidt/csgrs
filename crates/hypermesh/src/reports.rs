@@ -198,7 +198,8 @@ pub enum ExactReportFreshness {
     StaleBlockerEvidence,
     /// Status, operation, or precondition evidence no longer agree.
     StaleStatusEvidence,
-    /// Retained region classifications are missing, duplicated, invalid, or stale.
+    /// Retained region, triangulation, or assembly provenance is missing,
+    /// duplicated, invalid, or stale.
     StaleRegionFacts,
     /// Required coplanar-readiness evidence is absent.
     MissingArrangementReadiness,
@@ -236,10 +237,28 @@ impl From<ExactReportValidationError> for ExactReportFreshness {
             | ExactReportValidationError::MissingRegionFacts
             | ExactReportValidationError::UnclassifiedRegionTriangulation
             | ExactReportValidationError::OrphanedRegionClassification
+            | ExactReportValidationError::UntriangulatedAssemblyRegion
+            | ExactReportValidationError::AssemblyVertexOutsideTriangulation
+            | ExactReportValidationError::UnreferencedAssemblyVertex
             | ExactReportValidationError::InvalidRegionClassification(_)
             | ExactReportValidationError::RegionClassificationNotProofProducing
             | ExactReportValidationError::RegionCountMismatch
-            | ExactReportValidationError::DuplicateRegionClassification => Self::StaleRegionFacts,
+            | ExactReportValidationError::DuplicateRegionClassification
+            | ExactReportValidationError::DuplicateRegionTriangulation
+            | ExactReportValidationError::InvalidTriangulation
+            | ExactReportValidationError::InvalidAssembly
+            | ExactReportValidationError::InvalidVolumetricClassification(_)
+            | ExactReportValidationError::MissingVolumetricClassifications
+            | ExactReportValidationError::UnexpectedVolumetricClassifications
+            | ExactReportValidationError::OrphanedVolumetricClassification
+            | ExactReportValidationError::UnclassifiedVolumetricTriangulation
+            | ExactReportValidationError::VolumetricClassificationNotDecided
+            | ExactReportValidationError::OutputMeshAssemblyMismatch => Self::StaleRegionFacts,
+            ExactReportValidationError::OutputSourceReplayMismatch => Self::SourceReplayMismatch,
+            ExactReportValidationError::SelectedRegionAssemblyViolatesSelection
+            | ExactReportValidationError::VolumetricMaterializedAssemblyViolatesOperation => {
+                Self::StaleStatusEvidence
+            }
             ExactReportValidationError::MissingArrangementReadiness => {
                 Self::MissingArrangementReadiness
             }
@@ -3818,6 +3837,53 @@ impl ExactWindingReadinessReport {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn freshness_classifies_retained_region_provenance_drift() {
+        let stale_region_errors = [
+            ExactReportValidationError::DuplicateRegionTriangulation,
+            ExactReportValidationError::InvalidTriangulation,
+            ExactReportValidationError::UntriangulatedAssemblyRegion,
+            ExactReportValidationError::AssemblyVertexOutsideTriangulation,
+            ExactReportValidationError::UnreferencedAssemblyVertex,
+            ExactReportValidationError::InvalidAssembly,
+            ExactReportValidationError::OutputMeshAssemblyMismatch,
+            ExactReportValidationError::InvalidRegionClassification(
+                FaceRegionPlaneValidationError::EmptyNodeSides,
+            ),
+            ExactReportValidationError::InvalidVolumetricClassification(
+                ExactVolumetricRegionError::EmptyTriangulation,
+            ),
+            ExactReportValidationError::MissingVolumetricClassifications,
+            ExactReportValidationError::UnexpectedVolumetricClassifications,
+            ExactReportValidationError::OrphanedVolumetricClassification,
+            ExactReportValidationError::UnclassifiedVolumetricTriangulation,
+            ExactReportValidationError::VolumetricClassificationNotDecided,
+        ];
+        for error in stale_region_errors {
+            assert_eq!(
+                ExactReportFreshness::from(error),
+                ExactReportFreshness::StaleRegionFacts
+            );
+        }
+
+        assert_eq!(
+            ExactReportFreshness::from(ExactReportValidationError::OutputSourceReplayMismatch),
+            ExactReportFreshness::SourceReplayMismatch
+        );
+        assert_eq!(
+            ExactReportFreshness::from(
+                ExactReportValidationError::SelectedRegionAssemblyViolatesSelection
+            ),
+            ExactReportFreshness::StaleStatusEvidence
+        );
+        assert_eq!(
+            ExactReportFreshness::from(
+                ExactReportValidationError::VolumetricMaterializedAssemblyViolatesOperation
+            ),
+            ExactReportFreshness::StaleStatusEvidence
+        );
+    }
 
     fn valid_self_contact_closure_report() -> ExactVolumetricBoundaryClosureReport {
         ExactVolumetricBoundaryClosureReport {
