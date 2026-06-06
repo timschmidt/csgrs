@@ -1482,11 +1482,6 @@ pub fn boolean_exact_with_boundary_policy(
             {
                 return Ok(result);
             }
-            if let Some(result) = boolean_arrangement_volumetric_split_cell_recovery_from_graph(
-                &graph, left, right, operation, validation,
-            )? {
-                return Ok(result);
-            }
             if let Some(shortcut) =
                 certified_closed_shell_no_intersection_shortcut_from_graph(&graph, left, right)?
                 && let Some(result) = materialize_closed_shell_no_intersection_meshes(
