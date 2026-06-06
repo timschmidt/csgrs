@@ -13,7 +13,10 @@ use super::arrangement2d::{
     build_exact_arrangement2d_overlay, exact_arrangement2d_face_witness,
 };
 use super::boolean::ExactBooleanOperation;
-use super::cell_complex::{ExactCellComplex, ExactLabeledCellComplex};
+use super::cell_complex::{
+    ExactCellComplex, ExactLabeledCellComplex,
+    selected_region_selection_ignores_opposite_classification,
+};
 use super::graph::{
     CoplanarEdgeSplitConstruction, CoplanarOverlapGraph, ExactFaceRegionPlan,
     ExactIntersectionGraph, ExactSplitTopologyPlan, FaceRegionBoundary, FaceSplitBoundaryNode,
@@ -549,7 +552,16 @@ impl ExactArrangement3d {
         operation: ExactBooleanOperation,
         policy: ExactRegularizationPolicy,
     ) -> Result<super::cell_complex::ExactSelectedCellComplex, ExactArrangementBlocker> {
-        self.label_regions(policy)?
+        let labeling_policy =
+            if selected_region_selection_ignores_opposite_classification(operation) {
+                ExactRegularizationPolicy {
+                    unresolved: super::regularization::ExactUnresolvedPolicy::RetainArtifacts,
+                    ..policy
+                }
+            } else {
+                policy
+            };
+        self.label_regions(labeling_policy)?
             .select_with_policy(operation, policy)
     }
 }
@@ -3939,6 +3951,50 @@ mod tests {
                 )))
         );
         assert!(arrangement.face_cells.len() > 2);
+    }
+
+    #[test]
+    fn selected_regions_materialize_open_coplanar_overlap_without_winding_blocker() {
+        let left = open_triangle_i64([0, 0, 0], [4, 0, 0], [0, 4, 0]);
+        let right = open_triangle_i64([1, 1, 0], [5, 1, 0], [1, 5, 0]);
+
+        let arrangement = ExactArrangement::from_meshes_with_policy(
+            &left,
+            &right,
+            ExactRegularizationPolicy::RETAIN_ARTIFACTS,
+        )
+        .unwrap();
+        assert!(
+            arrangement
+                .blockers
+                .iter()
+                .all(|blocker| *blocker == ExactArrangementBlocker::UnresolvedRegionClassification),
+            "{:?}",
+            arrangement.blockers
+        );
+
+        let selected = arrangement
+            .select(ExactBooleanOperation::SelectedRegions(
+                crate::region::ExactRegionSelection::KeepLeft,
+            ))
+            .unwrap();
+        assert!(selected.blockers.is_empty(), "{:?}", selected.blockers);
+        assert!(
+            selected
+                .selected_faces
+                .iter()
+                .all(|face| selected.faces[*face].cell.carrier.side == MeshSide::Left)
+        );
+
+        let simplified = selected.simplify_exact().unwrap();
+        assert!(simplified.blockers.is_empty(), "{:?}", simplified.blockers);
+        let mesh = simplified.triangulate().unwrap();
+        assert!(!mesh.triangles().is_empty());
+        assert!(
+            mesh.facts().mesh.boundary_edges > 0,
+            "{:?}",
+            mesh.facts().mesh
+        );
     }
 
     #[test]

@@ -210,6 +210,11 @@ impl ExactLabeledCellComplex {
         policy: ExactRegularizationPolicy,
     ) -> Result<ExactSelectedCellComplex, ExactArrangementBlocker> {
         let mut blockers = self.blockers;
+        if selected_region_selection_ignores_opposite_classification(operation) {
+            blockers.retain(|blocker| {
+                *blocker != ExactArrangementBlocker::UnresolvedRegionClassification
+            });
+        }
         let selected_volume_regions = selected_volume_regions(&self.volume_regions, operation);
         let (selected_faces, selected_face_orientations) = if let Some(selected) =
             select_faces_from_volume_adjacencies(
@@ -419,6 +424,9 @@ fn select_face(
     operation: ExactBooleanOperation,
     policy: ExactRegularizationPolicy,
 ) -> Option<bool> {
+    if let ExactBooleanOperation::SelectedRegions(selection) = operation {
+        return Some(selection.keeps(mesh_side_for_source(face.source)));
+    }
     if face.opposite == ExactOppositeRegionLabel::Boundary {
         return select_boundary_face(face, operation, policy);
     }
@@ -435,9 +443,7 @@ fn select_face(
             ExactCellRegionLabel::LeftBoundary => Some(!inside),
             ExactCellRegionLabel::RightBoundary => Some(inside),
         },
-        ExactBooleanOperation::SelectedRegions(selection) => {
-            Some(selection.keeps(mesh_side_for_source(face.source)))
-        }
+        ExactBooleanOperation::SelectedRegions(_) => unreachable!("handled above"),
     }
 }
 
@@ -454,9 +460,7 @@ fn select_boundary_face(
                 ExactCellRegionLabel::LeftBoundary => Some(false),
                 ExactCellRegionLabel::RightBoundary => Some(true),
             },
-            ExactBooleanOperation::SelectedRegions(selection) => {
-                Some(selection.keeps(mesh_side_for_source(face.source)))
-            }
+            ExactBooleanOperation::SelectedRegions(_) => unreachable!("handled above"),
         };
     }
     match operation {
@@ -465,10 +469,14 @@ fn select_boundary_face(
             ExactCellRegionLabel::LeftBoundary => Some(true),
             ExactCellRegionLabel::RightBoundary => Some(false),
         },
-        ExactBooleanOperation::SelectedRegions(selection) => {
-            Some(selection.keeps(mesh_side_for_source(face.source)))
-        }
+        ExactBooleanOperation::SelectedRegions(_) => unreachable!("handled above"),
     }
+}
+
+pub(crate) fn selected_region_selection_ignores_opposite_classification(
+    operation: ExactBooleanOperation,
+) -> bool {
+    matches!(operation, ExactBooleanOperation::SelectedRegions(_))
 }
 
 fn select_faces_from_face_labels(
@@ -724,6 +732,50 @@ mod tests {
                 reverse: false,
                 from_volume_adjacency: false,
             }]
+        );
+    }
+
+    #[test]
+    fn selected_region_operation_ignores_unneeded_opposite_classification_blockers() {
+        let mut left = labeled_face(MeshSide::Left);
+        left.opposite = ExactOppositeRegionLabel::Unknown;
+        let mut right = labeled_face(MeshSide::Right);
+        right.opposite = ExactOppositeRegionLabel::Unknown;
+        let labeled = ExactLabeledCellComplex {
+            faces: vec![left, right],
+            volume_regions: Vec::new(),
+            volume_adjacencies: Vec::new(),
+            lower_dimensional_artifacts: Vec::new(),
+            blockers: vec![ExactArrangementBlocker::UnresolvedRegionClassification],
+        };
+
+        let selected = labeled
+            .select(ExactBooleanOperation::SelectedRegions(
+                ExactRegionSelection::KeepLeft,
+            ))
+            .unwrap();
+
+        assert_eq!(selected.selected_faces, vec![0]);
+        assert!(selected.blockers.is_empty());
+    }
+
+    #[test]
+    fn selected_region_operation_keeps_real_topology_blockers() {
+        let labeled = ExactLabeledCellComplex {
+            faces: vec![labeled_face(MeshSide::Left)],
+            volume_regions: Vec::new(),
+            volume_adjacencies: Vec::new(),
+            lower_dimensional_artifacts: Vec::new(),
+            blockers: vec![ExactArrangementBlocker::NonManifoldCellComplex],
+        };
+
+        assert_eq!(
+            labeled
+                .select(ExactBooleanOperation::SelectedRegions(
+                    ExactRegionSelection::KeepLeft,
+                ))
+                .unwrap_err(),
+            ExactArrangementBlocker::NonManifoldCellComplex
         );
     }
 

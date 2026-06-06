@@ -39,7 +39,10 @@ use super::bounds::AabbIntersectionKind;
 use super::box_solid::{
     has_axis_aligned_box_cell_difference, has_axis_aligned_box_cell_union, is_axis_aligned_box,
 };
-use super::cell_complex::arrangement_region_classification_blockers_are_volume_resolved;
+use super::cell_complex::{
+    arrangement_region_classification_blockers_are_volume_resolved,
+    selected_region_selection_ignores_opposite_classification,
+};
 use super::cells::triangulate_all_face_cells_with_cdt;
 use super::construction::SegmentPlaneRelation;
 use super::contained_adjacent::{
@@ -1846,6 +1849,12 @@ fn run_arrangement_cell_complex_attempt(
         arrangement_has_regularized_closed_sheet_recovery_surface(&arrangement, left, right);
     let volume_resolves_region_classification =
         arrangement_region_classification_blockers_are_volume_resolved(&arrangement);
+    let selected_regions_ignore_unresolved_classification =
+        selected_region_selection_ignores_opposite_classification(operation)
+            && arrangement
+                .blockers
+                .iter()
+                .all(|blocker| *blocker == ExactArrangementBlocker::UnresolvedRegionClassification);
 
     let axis_aligned_box_difference_cell_result =
         has_axis_aligned_box_difference_cell_result(left, right, operation);
@@ -1901,7 +1910,10 @@ fn run_arrangement_cell_complex_attempt(
         return Ok(ArrangementCellComplexOutcome::Materialized(result, attempt));
     }
 
-    if !arrangement.is_complete() && !volume_resolves_region_classification {
+    if !arrangement.is_complete()
+        && !volume_resolves_region_classification
+        && !selected_regions_ignore_unresolved_classification
+    {
         if let Some(result) = materialize_simple_coplanar_overlay_arrangement(
             left,
             right,
@@ -1979,7 +1991,9 @@ fn run_arrangement_cell_complex_attempt(
         return Ok(ArrangementCellComplexOutcome::Declined(attempt));
     }
 
-    let labeling_policy = if volume_resolves_region_classification {
+    let labeling_policy = if volume_resolves_region_classification
+        || selected_regions_ignore_unresolved_classification
+    {
         ExactRegularizationPolicy {
             unresolved: ExactUnresolvedPolicy::RetainArtifacts,
             ..policy
