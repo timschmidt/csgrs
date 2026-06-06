@@ -325,7 +325,7 @@ impl RetainedCurveProfile2 {
         endpoints: RetainedEndpointEvidence2,
         cache_summary: RetainedCurveCacheSummary2,
     ) -> CurveResult<Self> {
-        validate_curve_profile_evidence(&domain, &endpoints)?;
+        validate_curve_profile_evidence(&domain, topology_status, &endpoints, &cache_summary)?;
         Ok(Self {
             identity,
             domain,
@@ -385,7 +385,10 @@ fn validate_cache_summary_counts(
             "retained curve cache summary must carry nonempty controls, knots, and spans".into(),
         ));
     }
-    if native_span_count + retained_span_count != span_count {
+    if native_span_count
+        .checked_add(retained_span_count)
+        .is_none_or(|count| count != span_count)
+    {
         return Err(CurveError::Topology(
             "retained curve cache summary span decomposition does not match span count".into(),
         ));
@@ -395,11 +398,18 @@ fn validate_cache_summary_counts(
 
 fn validate_curve_profile_evidence(
     domain: &RetainedParameterDomain1,
+    topology_status: RetainedTopologyStatus,
     endpoints: &RetainedEndpointEvidence2,
+    cache_summary: &RetainedCurveCacheSummary2,
 ) -> CurveResult<()> {
     if endpoints.start_parameter() != domain.start() || endpoints.end_parameter() != domain.end() {
         return Err(CurveError::Topology(
             "retained curve endpoint evidence must match the active parameter domain".into(),
+        ));
+    }
+    if topology_status.is_native_exact() && cache_summary.retained_span_count() != 0 {
+        return Err(CurveError::Topology(
+            "native retained curve profile must not report retained unsupported spans".into(),
         ));
     }
     Ok(())

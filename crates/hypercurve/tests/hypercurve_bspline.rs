@@ -487,6 +487,13 @@ fn retained_bspline_profile_reports_exact_domain_trim_and_endpoints() {
 #[test]
 fn retained_curve_cache_summary_rejects_inconsistent_span_counts() {
     assert_topology_error(RetainedCurveCacheSummary2::new(5, 9, 2, 2, 1));
+    assert_topology_error(RetainedCurveCacheSummary2::new(
+        5,
+        9,
+        usize::MAX,
+        usize::MAX,
+        1,
+    ));
     assert_topology_error(RetainedCurveCacheSummary2::new(5, 9, 0, 0, 0));
     assert_topology_error(RetainedCurveCacheSummary2::new(0, 9, 2, 2, 0));
 }
@@ -499,6 +506,7 @@ fn retained_curve_profile_rejects_mismatched_endpoint_evidence_without_blocking_
     let partial_trim =
         decided(RetainedTrimInterval1::try_new(r(0), r(1), &domain, &policy).unwrap());
     let cache = RetainedCurveCacheSummary2::new(5, 9, 2, 2, 0).unwrap();
+    let mixed_cache = RetainedCurveCacheSummary2::new(5, 9, 2, 1, 1).unwrap();
     let identity = RetainedCurveIdentity2::new(RetainedCurveFamily2::PolynomialBSpline, 42);
     let endpoints = RetainedEndpointEvidence2::new(r(0), r(2), p(0, 0), p(2, 0));
     RetainedCurveProfile2::new(
@@ -528,11 +536,22 @@ fn retained_curve_profile_rejects_mismatched_endpoint_evidence_without_blocking_
     assert_topology_error(RetainedCurveProfile2::new(
         identity,
         domain.clone(),
-        full_trim,
+        full_trim.clone(),
         RetainedCurvePeriodicity1::NonPeriodic,
         RetainedTopologyStatus::NativeExact,
         bad_endpoints,
         cache.clone(),
+    ));
+
+    let endpoints = RetainedEndpointEvidence2::new(r(0), r(2), p(0, 0), p(2, 0));
+    assert_topology_error(RetainedCurveProfile2::new(
+        identity,
+        domain,
+        full_trim,
+        RetainedCurvePeriodicity1::NonPeriodic,
+        RetainedTopologyStatus::NativeExact,
+        endpoints,
+        mixed_cache,
     ));
 }
 
