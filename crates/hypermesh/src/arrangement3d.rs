@@ -2086,7 +2086,7 @@ fn nested_shell_volume_graph(
 )> {
     if shell_regions
         .iter()
-        .any(|region| region.source_sides.len() != 1)
+        .any(|region| region.source_sides.is_empty())
     {
         return None;
     }
@@ -2466,8 +2466,7 @@ fn shell_region_mesh(
     shell: &ArrangementRegion,
     face_cells: &[ArrangementFaceCell],
 ) -> Result<ExactMesh, ExactArrangementBlocker> {
-    let mut vertices = Vec::new();
-    let mut triangles = Vec::new();
+    let mut boundary_loops = Vec::<Vec<Point3>>::new();
     for &cell_index in &shell.face_cells {
         let cell = face_cells
             .get(cell_index)
@@ -2475,7 +2474,18 @@ fn shell_region_mesh(
         if cell.boundary_points.len() < 3 {
             return Err(ExactArrangementBlocker::NonManifoldCellComplex);
         }
-        triangulate_exact_loop(&cell.boundary_points, &mut vertices, &mut triangles)?;
+        if boundary_loops
+            .iter()
+            .any(|existing| exact_boundary_loops_same_orientation(existing, &cell.boundary_points))
+        {
+            continue;
+        }
+        boundary_loops.push(cell.boundary_points.clone());
+    }
+    let mut vertices = Vec::new();
+    let mut triangles = Vec::new();
+    for boundary in &boundary_loops {
+        triangulate_exact_loop(boundary, &mut vertices, &mut triangles)?;
     }
     ExactMesh::new_with_policy(
         vertices,
@@ -3540,6 +3550,76 @@ mod tests {
                 .iter()
                 .all(|orientation| orientation.from_volume_adjacency)
         );
+    }
+
+    #[test]
+    fn coincident_closed_shell_builds_mixed_source_volume_region() {
+        let left = tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]);
+        let right = left.clone();
+
+        let arrangement = ExactArrangement::from_meshes_with_policy(
+            &left,
+            &right,
+            ExactRegularizationPolicy::REGULARIZED_SOLID,
+        )
+        .unwrap();
+
+        assert!(
+            arrangement.blockers.is_empty(),
+            "{:?}",
+            arrangement.blockers
+        );
+        let volume_regions = arrangement
+            .volume_regions
+            .as_ref()
+            .expect("coincident closed shells should expose volume regions");
+        assert_eq!(volume_regions.len(), 2);
+        assert!(volume_regions[0].exterior);
+        assert_eq!(
+            volume_regions[1].source_sides,
+            vec![MeshSide::Left, MeshSide::Right]
+        );
+
+        let union = arrangement
+            .clone()
+            .label_regions(ExactRegularizationPolicy::REGULARIZED_SOLID)
+            .unwrap()
+            .select(ExactBooleanOperation::Union)
+            .unwrap();
+        assert_eq!(union.selected_volume_regions, vec![1]);
+        assert_eq!(union.selected_faces.len(), 8);
+        let simplified_union = union.simplify_exact().unwrap();
+        assert_eq!(simplified_union.faces.len(), 4);
+        assert_eq!(simplified_union.duplicate_cells_removed, 4);
+        assert_eq!(simplified_union.triangulate().unwrap().triangles().len(), 4);
+
+        let intersection = arrangement
+            .clone()
+            .label_regions(ExactRegularizationPolicy::REGULARIZED_SOLID)
+            .unwrap()
+            .select(ExactBooleanOperation::Intersection)
+            .unwrap();
+        assert_eq!(intersection.selected_volume_regions, vec![1]);
+        assert_eq!(intersection.selected_faces.len(), 8);
+        let simplified_intersection = intersection.simplify_exact().unwrap();
+        assert_eq!(simplified_intersection.faces.len(), 4);
+        assert_eq!(simplified_intersection.duplicate_cells_removed, 4);
+        assert_eq!(
+            simplified_intersection
+                .triangulate()
+                .unwrap()
+                .triangles()
+                .len(),
+            4
+        );
+
+        let difference = arrangement
+            .label_regions(ExactRegularizationPolicy::REGULARIZED_SOLID)
+            .unwrap()
+            .select(ExactBooleanOperation::Difference)
+            .unwrap();
+        assert!(difference.selected_volume_regions.is_empty());
+        assert!(difference.selected_faces.is_empty());
     }
 
     #[test]
