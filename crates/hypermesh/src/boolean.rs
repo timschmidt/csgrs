@@ -990,6 +990,10 @@ pub fn preflight_boolean_exact(
                 ValidationPolicy::CLOSED,
             )?
             .is_some())
+        || materialize_closed_volumetric_winding_boundary_caps_from_graph(
+            &graph, left, right, operation,
+        )?
+        .is_some()
     {
         return Ok(certified_arrangement_cell_complex_preflight_from_graph(
             operation, &graph, left, right,
@@ -4177,13 +4181,63 @@ fn boolean_arrangement_volumetric_split_cell_recovery_from_graph(
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
+    if validation == ValidationPolicy::CLOSED {
+        let Some(mut materialized) = materialize_volumetric_winding_region_plan_from_graph(
+            graph,
+            left,
+            right,
+            operation,
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )?
+        else {
+            return Ok(None);
+        };
+        if materialized.mesh.facts().mesh.closed_manifold
+            || materialized.mesh.triangles().is_empty()
+        {
+            materialized.mesh = copy_mesh(
+                &materialized.mesh,
+                "exact closed volumetric arrangement cell-complex result",
+                validation,
+            )?;
+            let result = volumetric_arrangement_cell_complex_result(operation, materialized);
+            if result.validate().is_err() || result.validate_against_sources(left, right).is_err() {
+                return Ok(None);
+            }
+            return Ok(Some(result));
+        }
+        if let Some(mesh) = close_exact_coplanar_boundary_loops_without_self_contact(
+            &materialized.mesh,
+            "exact volumetric split-cell coplanar boundary closure",
+            validation,
+        ) {
+            return Ok(Some(certified_shortcut_result(
+                mesh,
+                operation,
+                ExactBooleanShortcutKind::ArrangementCellComplex,
+            )));
+        }
+        return Ok(None);
+    }
+
     let Some(materialized) = materialize_volumetric_winding_region_plan_from_graph(
         graph, left, right, operation, validation,
     )?
     else {
         return Ok(None);
     };
-    let result = ExactBooleanResult {
+    let result = volumetric_arrangement_cell_complex_result(operation, materialized);
+    if result.validate().is_err() || result.validate_against_sources(left, right).is_err() {
+        return Ok(None);
+    }
+    Ok(Some(result))
+}
+
+fn volumetric_arrangement_cell_complex_result(
+    operation: ExactBooleanOperation,
+    materialized: MaterializedVolumetricWindingRegionPlan,
+) -> ExactBooleanResult {
+    ExactBooleanResult {
         kind: ExactBooleanResultKind::ArrangementCellComplexMaterialized { operation },
         graph_had_unknowns: false,
         region_classifications: materialized.region_classifications,
@@ -4191,11 +4245,7 @@ fn boolean_arrangement_volumetric_split_cell_recovery_from_graph(
         assembly: materialized.assembly,
         volumetric_classifications: materialized.volumetric_classifications,
         mesh: materialized.mesh,
-    };
-    if result.validate().is_err() || result.validate_against_sources(left, right).is_err() {
-        return Ok(None);
     }
-    Ok(Some(result))
 }
 
 fn close_exact_coplanar_boundary_loops(
@@ -4209,6 +4259,36 @@ fn close_exact_coplanar_boundary_loops(
         label,
         validation,
     )
+}
+
+fn close_exact_coplanar_boundary_loops_without_self_contact(
+    mesh: &ExactMesh,
+    label: &'static str,
+    validation: ValidationPolicy,
+) -> Option<ExactMesh> {
+    if mesh.facts().mesh.closed_manifold || mesh.facts().mesh.boundary_edges == 0 {
+        return None;
+    }
+    let boundary_loops = directed_boundary_loops(mesh)?;
+    let boundary_points = boundary_loops
+        .iter()
+        .map(|boundary_loop| {
+            boundary_loop
+                .iter()
+                .map(|&vertex| mesh.vertices().get(vertex).cloned())
+                .collect::<Option<Vec<_>>>()
+        })
+        .collect::<Option<Vec<_>>>()?;
+    for boundary in &boundary_points {
+        let self_contact = boundary_loop_self_contact_evidence(boundary).ok()?;
+        if self_contact.repeated_exact_point_pairs != 0 {
+            return None;
+        }
+        if !exact_loop_is_coplanar(boundary).ok()? {
+            return None;
+        }
+    }
+    close_exact_coplanar_boundary_loops_from_loops(mesh, boundary_loops, label, validation)
 }
 
 fn close_exact_coplanar_boundary_loops_from_loops(
@@ -6859,7 +6939,7 @@ fn winding_readiness_report_from_graph(
         };
         if let Some(materialized) = materialize_volumetric_winding_region_plan(
             region_classifications.clone(),
-            triangulations,
+            triangulations.clone(),
             volumetric_classifications.clone(),
             left,
             right,
@@ -6874,6 +6954,37 @@ fn winding_readiness_report_from_graph(
                 graph.event_count(),
                 materialized.triangulations.len(),
                 materialized.region_classifications,
+                counts.into_blocker(blocker_kind),
+                None,
+                coplanar_volumetric_evidence_if_required(graph, left, right),
+            ));
+        }
+        if materialize_volumetric_winding_region_plan(
+            region_classifications.clone(),
+            triangulations.clone(),
+            volumetric_classifications.clone(),
+            left,
+            right,
+            operation,
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )?
+        .and_then(|materialized| {
+            close_exact_coplanar_boundary_loops_without_self_contact(
+                &materialized.mesh,
+                "exact volumetric split-cell coplanar boundary closure",
+                ValidationPolicy::CLOSED,
+            )
+        })
+        .is_some()
+        {
+            return Ok(winding_readiness_report(
+                operation,
+                ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized,
+                graph_had_unknowns,
+                graph.face_pairs.len(),
+                graph.event_count(),
+                0,
+                Vec::new(),
                 counts.into_blocker(blocker_kind),
                 None,
                 coplanar_volumetric_evidence_if_required(graph, left, right),
@@ -7078,6 +7189,32 @@ fn materialize_volumetric_winding_region_plan_from_graph(
         operation,
         validation,
     )
+}
+
+fn materialize_closed_volumetric_winding_boundary_caps_from_graph(
+    graph: &super::graph::ExactIntersectionGraph,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+) -> Result<Option<ExactMesh>, MeshError> {
+    if matches!(operation, ExactBooleanOperation::SelectedRegions(_)) {
+        return Ok(None);
+    }
+    let Some(materialized) = materialize_volumetric_winding_region_plan_from_graph(
+        graph,
+        left,
+        right,
+        operation,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )?
+    else {
+        return Ok(None);
+    };
+    Ok(close_exact_coplanar_boundary_loops_without_self_contact(
+        &materialized.mesh,
+        "exact volumetric split-cell coplanar boundary closure",
+        ValidationPolicy::CLOSED,
+    ))
 }
 
 fn materialize_volumetric_winding_region_plan(
@@ -9634,6 +9771,119 @@ mod tests {
         assert_eq!(closure.coplanar_loop_groups, 0, "{closure:?}");
         closure.validate().unwrap();
         closure.validate_against_sources(&left, &right).unwrap();
+    }
+
+    #[test]
+    fn volumetric_coplanar_boundary_closure_materializes_closed_output() {
+        let left = ExactMesh::from_i64_triangles(
+            &[
+                0, 0, 0, //
+                4, 0, 0, //
+                0, 4, 0, //
+                0, 0, 4, //
+                2, 2, 3,
+            ],
+            &[
+                0, 2, 1, //
+                1, 2, 3, //
+                2, 0, 3, //
+                0, 1, 4, //
+                1, 3, 4, //
+                3, 0, 4,
+            ],
+        )
+        .unwrap();
+        let right = tetrahedron_i64([-1, 1, 0], [3, 1, 0], [-1, 5, 0], [-1, 1, 4]);
+        let graph = build_intersection_graph(&left, &right).unwrap();
+        validate_graph_source_handoff(&graph, &left, &right).unwrap();
+
+        let union_closure =
+            certify_volumetric_boundary_closure_report(&left, &right, ExactBooleanOperation::Union)
+                .unwrap();
+        assert_eq!(
+            union_closure.status,
+            ExactVolumetricBoundaryClosureStatus::BoundaryClosureBlocked(
+                ExactArrangementBlocker::NonManifoldCellComplex
+            ),
+            "{union_closure:?}"
+        );
+
+        let difference_closure = certify_volumetric_boundary_closure_report(
+            &left,
+            &right,
+            ExactBooleanOperation::Difference,
+        )
+        .unwrap();
+        assert_eq!(
+            difference_closure.status,
+            ExactVolumetricBoundaryClosureStatus::CoplanarClosureAvailable,
+            "{difference_closure:?}"
+        );
+        difference_closure.validate().unwrap();
+
+        for operation in [ExactBooleanOperation::Intersection] {
+            let closure =
+                certify_volumetric_boundary_closure_report(&left, &right, operation).unwrap();
+            assert_eq!(
+                closure.status,
+                ExactVolumetricBoundaryClosureStatus::CoplanarClosureAvailable,
+                "{operation:?}: {closure:?}"
+            );
+            assert_eq!(closure.boundary_loops, 1, "{operation:?}: {closure:?}");
+            assert_eq!(
+                closure.coplanar_loop_groups, 1,
+                "{operation:?}: {closure:?}"
+            );
+            closure.validate().unwrap();
+            closure.validate_against_sources(&left, &right).unwrap();
+
+            let preflight = preflight_boolean_exact(&left, &right, operation).unwrap();
+            assert_eq!(
+                preflight.support,
+                ExactBooleanSupport::CertifiedArrangementCellComplex,
+                "{operation:?}: {preflight:?}"
+            );
+            assert!(preflight.blocker.is_none(), "{operation:?}: {preflight:?}");
+            preflight.validate().unwrap();
+            preflight.validate_against_sources(&left, &right).unwrap();
+
+            let readiness = certify_winding_readiness_report(&left, &right, operation).unwrap();
+            assert_eq!(
+                readiness.status,
+                ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized,
+                "{operation:?}: {readiness:?}"
+            );
+            readiness.validate().unwrap();
+
+            let result = boolean_arrangement_volumetric_split_cell_recovery_from_graph(
+                &graph,
+                &left,
+                &right,
+                operation,
+                ValidationPolicy::CLOSED,
+            )
+            .unwrap()
+            .expect("coplanar boundary closure should materialize closed output");
+            assert_eq!(
+                result.kind,
+                ExactBooleanResultKind::CertifiedShortcut {
+                    operation,
+                    shortcut: ExactBooleanShortcutKind::ArrangementCellComplex
+                },
+                "{operation:?}: {result:?}"
+            );
+            result.validate().unwrap();
+            assert!(
+                result.mesh.facts().mesh.closed_manifold || result.mesh.triangles().is_empty(),
+                "{operation:?}: {:?}",
+                result.mesh.facts().mesh
+            );
+
+            let public = boolean_exact(&left, &right, operation, ValidationPolicy::CLOSED)
+                .expect("closed exact boolean should consume coplanar cap support");
+            assert_eq!(public.kind, result.kind, "{operation:?}: {public:?}");
+            public.validate().unwrap();
+        }
     }
 
     fn arrangement_attempt_certified_for_preflight_with_validation(
