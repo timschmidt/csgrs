@@ -2243,7 +2243,24 @@ pub fn materialize_closed_winding_containment_boolean(
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
-    boolean_closed_winding_containment_meshes(left, right, operation, validation)
+    let Some(result) =
+        boolean_closed_winding_containment_meshes(left, right, operation, validation)?
+    else {
+        return Ok(None);
+    };
+    if result
+        .validate_operation_against_sources(
+            left,
+            right,
+            operation,
+            validation,
+            ExactBoundaryBooleanPolicy::Reject,
+        )
+        .is_err()
+    {
+        return Ok(None);
+    }
+    Ok(Some(result))
 }
 
 fn boolean_closed_winding_separated_meshes(
@@ -2306,7 +2323,23 @@ pub fn materialize_closed_winding_separated_boolean(
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
-    boolean_closed_winding_separated_meshes(left, right, operation, validation)
+    let Some(result) = boolean_closed_winding_separated_meshes(left, right, operation, validation)?
+    else {
+        return Ok(None);
+    };
+    if result
+        .validate_operation_against_sources(
+            left,
+            right,
+            operation,
+            validation,
+            ExactBoundaryBooleanPolicy::Reject,
+        )
+        .is_err()
+    {
+        return Ok(None);
+    }
+    Ok(Some(result))
 }
 
 fn mesh_vertices_are_boundary_or_outside(report: &ClosedMeshWindingMeshReport) -> bool {

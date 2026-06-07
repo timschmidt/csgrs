@@ -2726,6 +2726,95 @@ fn closed_winding_shortcuts_are_publicly_replayable() {
 }
 
 #[test]
+fn closed_winding_materializers_yield_to_earlier_public_convex_replay() {
+    let separated_left = tetra_from_corners([0, 0, 0], [2, 0, 0], [0, 2, 0], [0, 0, 2]);
+    let separated_right = tetra_from_corners([1, 1, 1], [3, 1, 1], [1, 3, 1], [1, 1, 3]);
+    let container = tetra_from_corners([0, 0, 0], [10, 0, 0], [0, 10, 0], [0, 0, 10]);
+    let contained = tetra_from_corners([1, 1, 1], [2, 1, 1], [1, 2, 1], [1, 1, 2]);
+
+    for operation in [
+        ExactBooleanOperation::Union,
+        ExactBooleanOperation::Intersection,
+        ExactBooleanOperation::Difference,
+    ] {
+        assert!(
+            materialize_closed_winding_separated_boolean(
+                &separated_left,
+                &separated_right,
+                operation,
+                ValidationPolicy::CLOSED,
+            )
+            .unwrap()
+            .is_none(),
+            "{operation:?} should yield to convex-separated public provenance"
+        );
+        let separated_replay = boolean_exact(
+            &separated_left,
+            &separated_right,
+            operation,
+            ValidationPolicy::CLOSED,
+        )
+        .unwrap();
+        assert_convex_public_replay(&separated_replay, operation);
+        separated_replay
+            .validate_operation_against_sources(
+                &separated_left,
+                &separated_right,
+                operation,
+                ValidationPolicy::CLOSED,
+                ExactBoundaryBooleanPolicy::Reject,
+            )
+            .unwrap();
+
+        assert!(
+            materialize_closed_winding_containment_boolean(
+                &container,
+                &contained,
+                operation,
+                ValidationPolicy::CLOSED,
+            )
+            .unwrap()
+            .is_none(),
+            "{operation:?} should yield to convex-containment public provenance"
+        );
+        let containment_replay =
+            boolean_exact(&container, &contained, operation, ValidationPolicy::CLOSED).unwrap();
+        assert_convex_public_replay(&containment_replay, operation);
+        containment_replay
+            .validate_operation_against_sources(
+                &container,
+                &contained,
+                operation,
+                ValidationPolicy::CLOSED,
+                ExactBoundaryBooleanPolicy::Reject,
+            )
+            .unwrap();
+    }
+}
+
+fn assert_convex_public_replay(result: &ExactBooleanResult, operation: ExactBooleanOperation) {
+    let ExactBooleanResultKind::CertifiedShortcut {
+        operation: replay_operation,
+        shortcut,
+    } = &result.kind
+    else {
+        panic!("{operation:?}: expected certified convex shortcut, got {result:?}");
+    };
+    assert_eq!(*replay_operation, operation, "{result:?}");
+    assert!(
+        matches!(
+            shortcut,
+            hypermesh::ExactBooleanShortcutKind::ConvexUnion
+                | hypermesh::ExactBooleanShortcutKind::ConvexIntersection
+                | hypermesh::ExactBooleanShortcutKind::ConvexDifference
+                | hypermesh::ExactBooleanShortcutKind::ConvexSeparated
+                | hypermesh::ExactBooleanShortcutKind::ConvexContainment
+        ),
+        "{operation:?}: expected convex public replay, got {result:?}"
+    );
+}
+
+#[test]
 fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
     let left = ExactMesh::from_i64_triangles(
         &[
