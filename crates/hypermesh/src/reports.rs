@@ -526,6 +526,7 @@ const fn certified_preflight_support_matches_operation(
             | ExactBooleanSupport::CertifiedClosedWindingSeparated
             | ExactBooleanSupport::CertifiedClosedWindingContainment
             | ExactBooleanSupport::CertifiedMixedDimensionalRegularizedSolid
+            | ExactBooleanSupport::CertifiedLowerDimensionalRegularizedSolid
             | ExactBooleanSupport::CertifiedBoundaryPolicyShortcut
             | ExactBooleanSupport::CertifiedConvexContainment
             | ExactBooleanSupport::CertifiedConvexSeparated,
@@ -1954,6 +1955,9 @@ pub enum ExactBooleanSupport {
     /// A named operation was answered by closed-output regularization for one
     /// closed solid and one lower-dimensional open surface.
     CertifiedMixedDimensionalRegularizedSolid,
+    /// A named operation was answered by closed-output regularization for two
+    /// lower-dimensional operands, yielding an empty closed solid.
+    CertifiedLowerDimensionalRegularizedSolid,
     /// Open non-coplanar surfaces were unioned by exact split-region assembly.
     CertifiedOpenSurfaceArrangementUnion,
     /// Open non-coplanar surfaces were intersected by exact split-region
@@ -2474,7 +2478,8 @@ impl ExactBooleanPreflight {
             | ExactBooleanSupport::CertifiedOpenSurfaceDisjoint
             | ExactBooleanSupport::CertifiedClosedWindingSeparated
             | ExactBooleanSupport::CertifiedClosedWindingContainment
-            | ExactBooleanSupport::CertifiedMixedDimensionalRegularizedSolid => {
+            | ExactBooleanSupport::CertifiedMixedDimensionalRegularizedSolid
+            | ExactBooleanSupport::CertifiedLowerDimensionalRegularizedSolid => {
                 if self.blocker.is_some() {
                     return Err(ExactReportValidationError::CertifiedReportHasBlocker);
                 }

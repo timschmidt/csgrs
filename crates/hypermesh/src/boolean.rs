@@ -1031,6 +1031,12 @@ pub fn preflight_boolean_exact_with_validation(
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
 ) -> Result<ExactBooleanPreflight, MeshError> {
+    if validation == ValidationPolicy::CLOSED
+        && !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
+        && let Some(support) = certified_lower_dimensional_regularized_solid_support(left, right)
+    {
+        return Ok(certified_shortcut_preflight(operation, support));
+    }
     let preflight = preflight_boolean_exact(left, right, operation)?;
     if validation == ValidationPolicy::CLOSED
         || matches!(operation, ExactBooleanOperation::SelectedRegions(_))
@@ -5851,6 +5857,19 @@ fn certified_mixed_dimensional_regularized_solid_support(
     } else {
         None
     }
+}
+
+fn certified_lower_dimensional_regularized_solid_support(
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Option<ExactBooleanSupport> {
+    if left.triangles().is_empty() || right.triangles().is_empty() {
+        return None;
+    }
+    let left_kind = closed_regularized_operand_kind(left)?;
+    let right_kind = closed_regularized_operand_kind(right)?;
+    (!left_kind.has_volume() && !right_kind.has_volume())
+        .then_some(ExactBooleanSupport::CertifiedLowerDimensionalRegularizedSolid)
 }
 
 /// Retained split-region artifacts that certify an open-surface arrangement.

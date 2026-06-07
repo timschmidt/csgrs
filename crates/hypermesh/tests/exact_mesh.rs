@@ -1385,6 +1385,31 @@ fn lower_dimensional_regularized_boolean_is_publicly_replayable() {
         ExactBooleanOperation::Intersection,
         ExactBooleanOperation::Difference,
     ] {
+        let preflight = hypermesh::preflight_boolean_exact_with_validation(
+            &left,
+            &right,
+            operation,
+            ValidationPolicy::CLOSED,
+        )
+        .unwrap();
+        assert_eq!(
+            preflight.support,
+            hypermesh::ExactBooleanSupport::CertifiedLowerDimensionalRegularizedSolid
+        );
+        preflight.validate().unwrap();
+        preflight
+            .validate_against_sources_with_validation(&left, &right, ValidationPolicy::CLOSED)
+            .unwrap();
+        assert!(
+            preflight
+                .validate_against_sources_with_validation(
+                    &left,
+                    &closed_right,
+                    ValidationPolicy::CLOSED,
+                )
+                .is_err()
+        );
+
         let result = materialize_closed_regularized_lower_dimensional_boolean(
             &left,
             &right,
