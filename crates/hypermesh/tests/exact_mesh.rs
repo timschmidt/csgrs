@@ -1,6 +1,7 @@
 use hyperlimit::{Point2, Point3, SourceProvenance};
 use hypermesh::{
-    AffineOrthogonalSolidFreshness, AxisAlignedOrthogonalSolidFreshness, ClosedMeshOrientation,
+    AffineOrthogonalSolidFreshness, ApproximateMeshF64ViewFreshness,
+    AxisAlignedOrthogonalSolidFreshness, ClosedMeshOrientation,
     ContainedFaceAdjacentUnionFreshness, ConvexSolidMeshRelation, ConvexSolidPointRelation,
     ConvexSolidReportFreshness, CoplanarArrangementReadinessFreshness,
     CoplanarOverlapGraphFreshness, CoplanarOverlapSplitFreshness,
@@ -8,13 +9,15 @@ use hypermesh::{
     ExactArrangement2dRegion, ExactArrangement2dRegionRing, ExactArrangement2dSetOperation,
     ExactArrangementFreshness, ExactBooleanOperation, ExactBooleanResult, ExactBooleanResultKind,
     ExactBoundaryBooleanPolicy, ExactI64MeshInputReadiness, ExactLabeledCellComplexFreshness,
-    ExactMesh, ExactMeshProposalAcceptance, ExactMeshProposalSourceKind, ExactRegularizationPolicy,
-    ExactReportFreshness, ExactSelectedCellComplexFreshness, ExactSimplifiedCellComplexFreshness,
-    ExactVolumetricRegionFreshness, ExactVolumetricRegionRelation, FaceRegionPlaneRelation,
-    FullFaceAdjacentUnionFreshness, IntersectionGraphFreshness, MeshArtifactBlocker,
-    MeshArtifactManifest, MeshArtifactRole, MeshArtifactSourceKind, MeshCoordinateEvidence,
-    MeshFacePairFreshness, MeshFacePairRelation, MeshFacePairValidationError, SplitPlanFreshness,
-    TriangleTriangleFreshness, TriangleTriangleRelation, ValidationPolicy, WindingReportFreshness,
+    ExactMesh, ExactMeshConsumerDomain, ExactMeshDomainSummaryFreshness,
+    ExactMeshHandoffPackageFreshness, ExactMeshProposalAcceptance, ExactMeshProposalSourceKind,
+    ExactRegularizationPolicy, ExactReportFreshness, ExactSelectedCellComplexFreshness,
+    ExactSimplifiedCellComplexFreshness, ExactVolumetricRegionFreshness,
+    ExactVolumetricRegionRelation, FaceRegionPlaneRelation, FullFaceAdjacentUnionFreshness,
+    IntersectionGraphFreshness, MeshArtifactBlocker, MeshArtifactManifest, MeshArtifactRole,
+    MeshArtifactSourceKind, MeshCoordinateEvidence, MeshFacePairFreshness, MeshFacePairRelation,
+    MeshFacePairValidationError, SplitPlanFreshness, TriangleTriangleFreshness,
+    TriangleTriangleRelation, ValidationPolicy, WindingReportFreshness, approximate_mesh_f64_view,
     boolean_exact, boolean_exact_with_boundary_policy, build_exact_arrangement2d_overlay,
     build_exact_arrangement2d_overlay_with_boundary_policy, build_intersection_graph,
     certify_boundary_touching_report, certify_convex_solid,
@@ -24,7 +27,8 @@ use hypermesh::{
     classify_mesh_vertices_against_closed_mesh_winding_report,
     classify_mesh_vertices_against_convex_solid_report,
     classify_point_against_closed_mesh_winding_report, classify_point_against_convex_solid_report,
-    classify_triangle_triangle, exact_arrangement_boolean_attempt_report, inspect_i64_mesh_input,
+    classify_triangle_triangle, exact_arrangement_boolean_attempt_report,
+    exact_mesh_consumer_readiness, exact_mesh_handoff_package, inspect_i64_mesh_input,
     materialize_adjacent_union_completion_boolean, materialize_affine_orthogonal_solid_boolean,
     materialize_affine_orthogonal_solid_intersection, materialize_arrangement_cell_complex_boolean,
     materialize_axis_aligned_orthogonal_solid_boolean,
@@ -345,6 +349,137 @@ fn exact_mesh_proposal_and_artifact_reports_are_publicly_replayable() {
         preview
             .blockers
             .contains(&MeshArtifactBlocker::MissingExactTopologyReplay)
+    );
+}
+
+#[test]
+fn exact_mesh_handoff_package_domains_are_publicly_replayable() {
+    let solid = tetra([0, 0, 0]);
+    let package = exact_mesh_handoff_package(&solid).unwrap();
+
+    package.validate_internal().unwrap();
+    package.validate_against_mesh(&solid).unwrap();
+    assert_eq!(
+        package.freshness_against_mesh(&solid),
+        ExactMeshHandoffPackageFreshness::Current
+    );
+    assert!(package.has_domain(ExactMeshConsumerDomain::Surface));
+    assert!(package.has_domain(ExactMeshConsumerDomain::Solid));
+    assert!(package.has_domain(ExactMeshConsumerDomain::ApproximateF64View));
+    assert_eq!(
+        package
+            .require_preferred_exact_geometry_domain_against_mesh(&solid)
+            .unwrap(),
+        ExactMeshConsumerDomain::Solid
+    );
+    let preferred = package
+        .preferred_exact_geometry_report_against_mesh(&solid)
+        .unwrap();
+    assert_eq!(preferred.domain(), ExactMeshConsumerDomain::Solid);
+    assert_eq!(preferred.audit(), &package.audit);
+
+    let summary = package.domain_summary();
+    summary.validate_against_mesh(&package, &solid).unwrap();
+    assert_eq!(
+        summary.preferred_exact_geometry_domain(),
+        Some(ExactMeshConsumerDomain::Solid)
+    );
+    summary
+        .require_domain_against_mesh(
+            &package,
+            &solid,
+            ExactMeshConsumerDomain::ApproximateF64View,
+        )
+        .unwrap();
+    assert!(summary.require_lossy_adapter().is_ok());
+    assert!(summary.require_closed_volume().is_ok());
+
+    let stale_source = tetra([2, 0, 0]);
+    assert_eq!(
+        package.freshness_against_mesh(&stale_source),
+        ExactMeshHandoffPackageFreshness::StalePackage
+    );
+    assert!(
+        package
+            .domain_report_against_mesh(&stale_source, ExactMeshConsumerDomain::Solid)
+            .is_err()
+    );
+    assert_eq!(
+        summary.freshness_against_mesh(&package, &stale_source),
+        ExactMeshDomainSummaryFreshness::InvalidPackage
+    );
+
+    let mut stale_summary = summary.clone();
+    stale_summary.lossy_adapter_count = 0;
+    assert_eq!(
+        stale_summary.freshness_against_package(&package),
+        ExactMeshDomainSummaryFreshness::StaleSummary
+    );
+    assert!(stale_summary.validate_against_package(&package).is_err());
+
+    let view = approximate_mesh_f64_view(&solid).unwrap();
+    view.validate_against_mesh(&solid).unwrap();
+    let mut stale_view = view.clone();
+    stale_view.positions[0] = 42.0;
+    assert_eq!(
+        stale_view.freshness_against_mesh(&solid),
+        ApproximateMeshF64ViewFreshness::StaleCoordinate
+    );
+    let mut relabeled_view = view.clone();
+    relabeled_view.lossy_view = false;
+    assert_eq!(
+        relabeled_view.freshness_against_mesh(&solid),
+        ApproximateMeshF64ViewFreshness::MissingLossyFlag
+    );
+
+    let open_surface = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 0, 1, 0, 0, 0, 1, 0],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let open_readiness = exact_mesh_consumer_readiness(&open_surface).unwrap();
+    assert!(open_readiness.surface_handoff_ready);
+    assert!(!open_readiness.solid_handoff_ready);
+    assert!(open_readiness.boundary_allowed);
+
+    let open_package = exact_mesh_handoff_package(&open_surface).unwrap();
+    assert!(open_package.has_domain(ExactMeshConsumerDomain::Surface));
+    assert!(!open_package.has_domain(ExactMeshConsumerDomain::Solid));
+    assert!(open_package.has_domain(ExactMeshConsumerDomain::ApproximateF64View));
+    assert_eq!(
+        open_package.preferred_exact_geometry_domain(),
+        Some(ExactMeshConsumerDomain::Surface)
+    );
+    assert!(
+        open_package
+            .require_domain(ExactMeshConsumerDomain::Solid)
+            .is_err()
+    );
+    let open_summary = open_package.domain_summary();
+    assert!(!open_summary.closed_volume_ready);
+    assert!(open_summary.require_closed_volume().is_err());
+
+    let lossy = ExactMesh::from_f64_triangles_with_policy(
+        &[0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let lossy_readiness = exact_mesh_consumer_readiness(&lossy).unwrap();
+    assert!(lossy_readiness.surface_handoff_ready);
+    assert!(!lossy_readiness.solid_handoff_ready);
+    assert!(!lossy_readiness.exact_source);
+
+    let lossy_package = exact_mesh_handoff_package(&lossy).unwrap();
+    assert!(lossy_package.has_domain(ExactMeshConsumerDomain::Surface));
+    assert!(!lossy_package.has_domain(ExactMeshConsumerDomain::Solid));
+    assert!(lossy_package.has_domain(ExactMeshConsumerDomain::ApproximateF64View));
+    assert_eq!(
+        lossy_package
+            .require_preferred_exact_geometry_domain()
+            .unwrap(),
+        ExactMeshConsumerDomain::Surface
     );
 }
 
