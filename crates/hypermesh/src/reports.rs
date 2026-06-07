@@ -17,6 +17,7 @@ use super::boolean::{
     certify_open_surface_disjoint_report, certify_planar_arrangement_report,
     certify_refinement_report, certify_same_surface_report,
     certify_volumetric_boundary_closure_report, certify_winding_readiness_report,
+    certify_winding_readiness_report_with_boundary_policy,
     certify_winding_readiness_report_with_validation, materialize_closed_same_surface_boolean,
     preflight_boolean_exact, preflight_boolean_exact_with_boundary_policy,
     preflight_boolean_exact_with_validation, replay_volumetric_winding_region_plan,
@@ -3993,6 +3994,10 @@ pub enum ExactWindingReadinessStatus {
     /// The named Boolean was already answered by certified closed-boundary
     /// touching regularized semantics, so no winding handoff is needed.
     ClosedBoundaryTouchingAlreadyMaterialized,
+    /// A caller supplied a certified boundary-output policy, so boundary-only
+    /// contact has already been projected into output without a winding
+    /// handoff.
+    BoundaryPolicyShortcutAlreadyMaterialized,
     /// The named Boolean was already answered by exact empty-operand
     /// semantics, so no winding handoff is needed.
     EmptyOperandAlreadyMaterialized,
@@ -4106,6 +4111,31 @@ impl ExactWindingReadinessReport {
         }
     }
 
+    /// Validate this winding-readiness report against source meshes, output
+    /// validation, and an explicit boundary-output policy.
+    pub fn validate_against_sources_with_boundary_policy(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+        validation: ValidationPolicy,
+        boundary_policy: ExactBoundaryBooleanPolicy,
+    ) -> Result<(), ExactReportValidationError> {
+        self.validate()?;
+        let replay = certify_winding_readiness_report_with_boundary_policy(
+            left,
+            right,
+            self.operation,
+            validation,
+            boundary_policy,
+        )
+        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+        if self == &replay {
+            Ok(())
+        } else {
+            Err(ExactReportValidationError::SourceReplayMismatch)
+        }
+    }
+
     /// Classify whether this retained winding handoff is fresh for the source meshes.
     ///
     /// Local integrity is checked before source replay so copied reports can
@@ -4141,6 +4171,30 @@ impl ExactWindingReadinessReport {
             right,
             self.operation,
             validation,
+        ) {
+            Ok(replay) if self == &replay => ExactReportFreshness::Current,
+            Ok(_) | Err(_) => ExactReportFreshness::SourceReplayMismatch,
+        }
+    }
+
+    /// Classify freshness for a source replay under explicit output
+    /// validation and boundary-output policy.
+    pub fn freshness_against_sources_with_boundary_policy(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+        validation: ValidationPolicy,
+        boundary_policy: ExactBoundaryBooleanPolicy,
+    ) -> ExactReportFreshness {
+        if let Err(error) = self.validate() {
+            return error.into();
+        }
+        match certify_winding_readiness_report_with_boundary_policy(
+            left,
+            right,
+            self.operation,
+            validation,
+            boundary_policy,
         ) {
             Ok(replay) if self == &replay => ExactReportFreshness::Current,
             Ok(_) | Err(_) => ExactReportFreshness::SourceReplayMismatch,
@@ -4518,6 +4572,28 @@ impl ExactWindingReadinessReport {
                         self.retained_events,
                     )?;
                 }
+                no_region_facts(self.region_count, &self.region_classifications)
+            }
+            ExactWindingReadinessStatus::BoundaryPolicyShortcutAlreadyMaterialized => {
+                if self.arrangement_readiness.is_some()
+                    || self.coplanar_volumetric_evidence.is_some()
+                    || matches!(self.operation, ExactBooleanOperation::SelectedRegions(_))
+                    || self.graph_had_unknowns
+                    || self.retained_face_pairs == 0
+                {
+                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                }
+                blocker_kind(
+                    Some(&self.blocker),
+                    ExactBooleanBlockerKind::NeedsBoundaryPolicy,
+                )?;
+                self.blocker
+                    .validate_for_kind(ExactBooleanBlockerKind::NeedsBoundaryPolicy)?;
+                validate_blocker_count_bounds(
+                    &self.blocker,
+                    self.retained_face_pairs,
+                    self.retained_events,
+                )?;
                 no_region_facts(self.region_count, &self.region_classifications)
             }
             ExactWindingReadinessStatus::EmptyOperandAlreadyMaterialized

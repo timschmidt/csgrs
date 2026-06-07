@@ -110,6 +110,7 @@ pub use boolean::{
     certify_open_surface_disjoint_report, certify_planar_arrangement_report,
     certify_refinement_report, certify_same_surface_report,
     certify_volumetric_boundary_closure_report, certify_winding_readiness_report,
+    certify_winding_readiness_report_with_boundary_policy,
     certify_winding_readiness_report_with_validation, exact_arrangement_boolean_attempt_report,
     materialize_adjacent_union_completion_boolean, materialize_affine_orthogonal_solid_boolean,
     materialize_arrangement_cell_complex_boolean,

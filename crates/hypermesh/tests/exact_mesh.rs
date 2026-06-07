@@ -29,6 +29,7 @@ use hypermesh::{
     certify_open_surface_disjoint_report, certify_planar_arrangement_report,
     certify_refinement_report, certify_same_surface_report,
     certify_volumetric_boundary_closure_report, certify_winding_readiness_report,
+    certify_winding_readiness_report_with_boundary_policy,
     certify_winding_readiness_report_with_validation,
     checked_classify_face_regions_against_opposite_planes,
     checked_triangulate_face_regions_with_earcut, classify_mesh_face_pair,
@@ -3571,6 +3572,67 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
             .validate_against_sources(&left, &right)
             .is_err(),
         "strict replay should not certify a boundary-policy preflight"
+    );
+
+    let rejected_readiness = certify_winding_readiness_report_with_boundary_policy(
+        &left,
+        &right,
+        ExactBooleanOperation::Union,
+        ValidationPolicy::ALLOW_BOUNDARY,
+        ExactBoundaryBooleanPolicy::Reject,
+    )
+    .unwrap();
+    assert_eq!(
+        rejected_readiness.status,
+        ExactWindingReadinessStatus::BoundaryPolicyRequired,
+        "{rejected_readiness:?}"
+    );
+
+    let policy_readiness = certify_winding_readiness_report_with_boundary_policy(
+        &left,
+        &right,
+        ExactBooleanOperation::Union,
+        ValidationPolicy::ALLOW_BOUNDARY,
+        ExactBoundaryBooleanPolicy::PreserveSeparateShells,
+    )
+    .unwrap();
+    assert_eq!(
+        policy_readiness.status,
+        ExactWindingReadinessStatus::BoundaryPolicyShortcutAlreadyMaterialized,
+        "{policy_readiness:?}"
+    );
+    assert_eq!(
+        policy_readiness.blocker.kind,
+        ExactBooleanBlockerKind::NeedsBoundaryPolicy
+    );
+    assert_eq!(
+        policy_readiness.retained_face_pairs,
+        report.retained_face_pairs
+    );
+    assert_eq!(policy_readiness.retained_events, report.retained_events);
+    policy_readiness.validate().unwrap();
+    policy_readiness
+        .validate_against_sources_with_boundary_policy(
+            &left,
+            &right,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            ExactBoundaryBooleanPolicy::PreserveSeparateShells,
+        )
+        .unwrap();
+    assert_eq!(
+        policy_readiness.freshness_against_sources_with_boundary_policy(
+            &left,
+            &right,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            ExactBoundaryBooleanPolicy::PreserveSeparateShells,
+        ),
+        hypermesh::ExactReportFreshness::Current
+    );
+    assert!(
+        policy_readiness
+            .validate_against_sources(&left, &right)
+            .is_err(),
+        "strict replay should not certify a boundary-policy readiness report"
     );
     assert!(
         boolean_exact(

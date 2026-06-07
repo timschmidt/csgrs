@@ -1396,6 +1396,7 @@ const fn winding_readiness_status_already_materialized(
             | ExactWindingReadinessStatus::OpenSurfaceArrangementAlreadyMaterialized
             | ExactWindingReadinessStatus::SurfaceEqualityAlreadyMaterialized
             | ExactWindingReadinessStatus::ClosedBoundaryTouchingAlreadyMaterialized
+            | ExactWindingReadinessStatus::BoundaryPolicyShortcutAlreadyMaterialized
             | ExactWindingReadinessStatus::EmptyOperandAlreadyMaterialized
             | ExactWindingReadinessStatus::BoundsDisjointAlreadyMaterialized
             | ExactWindingReadinessStatus::OpenSurfaceDisjointAlreadyMaterialized
@@ -6671,6 +6672,60 @@ pub fn certify_winding_readiness_report_with_validation(
     certify_winding_readiness_report(left, right, operation)
 }
 
+/// Prepare and report exact winding handoff facts for explicit output
+/// validation and boundary-only projection policies.
+///
+/// The strict readiness report keeps boundary-only contact blocked on
+/// [`ExactWindingReadinessStatus::BoundaryPolicyRequired`]. This policy-aware
+/// variant mirrors [`preflight_boolean_exact_with_boundary_policy`]: when the
+/// caller supplies [`ExactBoundaryBooleanPolicy::PreserveSeparateShells`] and
+/// the retained graph certifies boundary-only contact, the winding handoff is
+/// marked as already materialized by that explicit projection policy.
+pub fn certify_winding_readiness_report_with_boundary_policy(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+    boundary_policy: ExactBoundaryBooleanPolicy,
+) -> Result<ExactWindingReadinessReport, MeshError> {
+    let readiness =
+        certify_winding_readiness_report_with_validation(left, right, operation, validation)?;
+    if boundary_policy == ExactBoundaryBooleanPolicy::Reject
+        || matches!(operation, ExactBooleanOperation::SelectedRegions(_))
+        || readiness.status != ExactWindingReadinessStatus::BoundaryPolicyRequired
+    {
+        return Ok(readiness);
+    }
+
+    let graph = build_intersection_graph(left, right)?;
+    validate_graph_source_handoff(&graph, left, right)?;
+    if boolean_boundary_touching_meshes_from_graph(
+        &graph,
+        left,
+        right,
+        operation,
+        validation,
+        boundary_policy,
+    )?
+    .is_some()
+    {
+        let counts = graph_relation_counts(&graph);
+        return Ok(winding_readiness_report(
+            operation,
+            ExactWindingReadinessStatus::BoundaryPolicyShortcutAlreadyMaterialized,
+            graph.has_unknowns(),
+            graph.face_pairs.len(),
+            graph.event_count(),
+            0,
+            Vec::new(),
+            counts.into_blocker(ExactBooleanBlockerKind::NeedsBoundaryPolicy),
+            None,
+            None,
+        ));
+    }
+    Ok(readiness)
+}
+
 /// Validate the retained graph/source-handle handoff for public reports.
 ///
 /// Boolean preflight and report constructors are public exact computation
@@ -9298,6 +9353,7 @@ mod tests {
             ExactWindingReadinessStatus::OpenSurfaceArrangementAlreadyMaterialized,
             ExactWindingReadinessStatus::SurfaceEqualityAlreadyMaterialized,
             ExactWindingReadinessStatus::ClosedBoundaryTouchingAlreadyMaterialized,
+            ExactWindingReadinessStatus::BoundaryPolicyShortcutAlreadyMaterialized,
             ExactWindingReadinessStatus::EmptyOperandAlreadyMaterialized,
             ExactWindingReadinessStatus::BoundsDisjointAlreadyMaterialized,
             ExactWindingReadinessStatus::OpenSurfaceDisjointAlreadyMaterialized,
@@ -9356,6 +9412,11 @@ mod tests {
         assert!(
             !winding_readiness_status_materializes_arrangement_cell_complex(
                 &ExactWindingReadinessStatus::ClosedBoundaryTouchingAlreadyMaterialized,
+            )
+        );
+        assert!(
+            !winding_readiness_status_materializes_arrangement_cell_complex(
+                &ExactWindingReadinessStatus::BoundaryPolicyShortcutAlreadyMaterialized,
             )
         );
         for status in [
