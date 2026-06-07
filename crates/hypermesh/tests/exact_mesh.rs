@@ -1562,20 +1562,32 @@ fn closed_boundary_touching_regularized_boolean_is_publicly_replayable() {
     let right = tetra_from_corners([0, 0, 0], [-4, 0, 0], [0, -4, 0], [0, 0, -4]);
     let separated_right = tetra_from_corners([100, 0, 0], [104, 0, 0], [100, 4, 0], [100, 0, 4]);
 
-    for (operation, shortcut) in [
+    for (operation, support, shortcut) in [
         (
             ExactBooleanOperation::Union,
+            hypermesh::ExactBooleanSupport::CertifiedClosedBoundaryTouchingUnion,
             hypermesh::ExactBooleanShortcutKind::ClosedBoundaryTouchingUnion,
         ),
         (
             ExactBooleanOperation::Intersection,
+            hypermesh::ExactBooleanSupport::CertifiedClosedBoundaryTouchingIntersection,
             hypermesh::ExactBooleanShortcutKind::ClosedBoundaryTouchingIntersection,
         ),
         (
             ExactBooleanOperation::Difference,
+            hypermesh::ExactBooleanSupport::CertifiedClosedBoundaryTouchingDifference,
             hypermesh::ExactBooleanShortcutKind::ClosedBoundaryTouchingDifference,
         ),
     ] {
+        let preflight = preflight_boolean_exact(&left, &right, operation).unwrap();
+        assert_eq!(preflight.support, support, "{operation:?}: {preflight:?}");
+        assert!(
+            preflight.retained_face_pairs > 0,
+            "closed boundary-touching shortcut should retain graph evidence: {operation:?}: {preflight:?}"
+        );
+        preflight.validate().unwrap();
+        preflight.validate_against_sources(&left, &right).unwrap();
+
         let result = materialize_closed_boundary_touching_regularized_boolean(
             &left,
             &right,

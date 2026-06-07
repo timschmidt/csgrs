@@ -671,7 +671,11 @@ pub fn preflight_boolean_exact(
                 &graph, left, right, operation,
             )?
     {
-        return Ok(certified_shortcut_preflight(operation, boundary_support));
+        return Ok(certified_shortcut_preflight_from_graph(
+            operation,
+            boundary_support,
+            &graph,
+        ));
     }
     if support == ExactBooleanSupport::RequiresCertifiedWinding
         && let Some(preflight) = cached_certified_arrangement_cell_complex_preflight(
@@ -793,7 +797,11 @@ pub fn preflight_boolean_exact(
         && let Some(boundary_support) =
             certified_closed_boundary_touching_support_from_graph(&graph, left, right, operation)?
     {
-        return Ok(certified_shortcut_preflight(operation, boundary_support));
+        return Ok(certified_shortcut_preflight_from_graph(
+            operation,
+            boundary_support,
+            &graph,
+        ));
     }
     if support == ExactBooleanSupport::RequiresCertifiedWinding
         && operation == ExactBooleanOperation::Intersection

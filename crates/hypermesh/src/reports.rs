@@ -2340,9 +2340,6 @@ impl ExactBooleanPreflight {
             | ExactBooleanSupport::CertifiedBoundsDisjoint
             | ExactBooleanSupport::CertifiedIdentical
             | ExactBooleanSupport::CertifiedSameSurface
-            | ExactBooleanSupport::CertifiedClosedBoundaryTouchingUnion
-            | ExactBooleanSupport::CertifiedClosedBoundaryTouchingIntersection
-            | ExactBooleanSupport::CertifiedClosedBoundaryTouchingDifference
             | ExactBooleanSupport::CertifiedOpenSurfaceDisjoint
             | ExactBooleanSupport::CertifiedClosedWindingSeparated
             | ExactBooleanSupport::CertifiedClosedWindingContainment
@@ -2366,7 +2363,10 @@ impl ExactBooleanPreflight {
                 }
                 no_region_facts(self.region_count, &self.region_classifications)
             }
-            ExactBooleanSupport::CertifiedConvexContainment
+            ExactBooleanSupport::CertifiedClosedBoundaryTouchingUnion
+            | ExactBooleanSupport::CertifiedClosedBoundaryTouchingIntersection
+            | ExactBooleanSupport::CertifiedClosedBoundaryTouchingDifference
+            | ExactBooleanSupport::CertifiedConvexContainment
             | ExactBooleanSupport::CertifiedConvexSeparated => {
                 if self.blocker.is_some() {
                     return Err(ExactReportValidationError::CertifiedReportHasBlocker);
