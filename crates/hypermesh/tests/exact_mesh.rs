@@ -2554,6 +2554,38 @@ fn open_surface_disjoint_report_classifies_retained_coplanar_overlap_blocker() {
 }
 
 #[test]
+fn planar_arrangement_report_classifies_noncoplanar_candidates_as_winding_blocker() {
+    let left = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 0, 4, 0, 0, 0, 4, 0],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let right = ExactMesh::from_i64_triangles_with_policy(
+        &[1, -1, -1, 1, 3, 1, 1, 3, -1],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+
+    let report =
+        certify_planar_arrangement_report(&left, &right, ExactBooleanOperation::Union).unwrap();
+
+    assert_eq!(
+        report.status,
+        ExactPlanarArrangementStatus::NoPositiveOverlap
+    );
+    assert_eq!(report.blocker.kind, ExactBooleanBlockerKind::NeedsWinding);
+    assert!(report.blocker.candidate_pairs > 0);
+    report.validate().unwrap();
+    report.validate_against_sources(&left, &right).unwrap();
+
+    let mut stale = report;
+    stale.blocker.kind = ExactBooleanBlockerKind::NeedsPlanarArrangement;
+    assert!(stale.validate().is_err());
+}
+
+#[test]
 fn exact_face_pair_candidate_retains_source_plane_split_events() {
     let left = ExactMesh::from_i64_triangles_with_policy(
         &[0, 0, 0, 4, 0, 0, 0, 4, 0],

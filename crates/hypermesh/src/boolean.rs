@@ -6755,7 +6755,10 @@ fn planar_arrangement_report(
         ExactPlanarArrangementStatus::BoundaryPolicyRequired => {
             ExactBooleanBlockerKind::NeedsBoundaryPolicy
         }
-        _ => ExactBooleanBlockerKind::NeedsPlanarArrangement,
+        ExactPlanarArrangementStatus::Required => ExactBooleanBlockerKind::NeedsPlanarArrangement,
+        ExactPlanarArrangementStatus::NotNamedOperation
+        | ExactPlanarArrangementStatus::AlreadyMaterialized
+        | ExactPlanarArrangementStatus::NoPositiveOverlap => retained_graph_blocker_kind(counts),
     };
     ExactPlanarArrangementReport {
         operation,

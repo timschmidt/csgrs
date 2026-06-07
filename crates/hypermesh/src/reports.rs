@@ -456,6 +456,22 @@ fn validate_refinement_partition(
     }
 }
 
+fn retained_blocker_kind_from_counts(blocker: &ExactBooleanBlocker) -> ExactBooleanBlockerKind {
+    if blocker_has_refinement_evidence(blocker) {
+        ExactBooleanBlockerKind::NeedsRefinement
+    } else if blocker.coplanar_overlapping_pairs + blocker.coplanar_touching_pairs > 0 {
+        if blocker.candidate_pairs == 0 && blocker.coplanar_overlapping_pairs > 0 {
+            ExactBooleanBlockerKind::NeedsPlanarArrangement
+        } else if blocker.candidate_pairs == 0 {
+            ExactBooleanBlockerKind::NeedsBoundaryPolicy
+        } else {
+            ExactBooleanBlockerKind::NeedsCoplanarVolumetricCells
+        }
+    } else {
+        ExactBooleanBlockerKind::NeedsWinding
+    }
+}
+
 fn boundary_touching_not_boundary_blocker_kind(
     blocker: &ExactBooleanBlocker,
 ) -> Result<ExactBooleanBlockerKind, ExactReportValidationError> {
@@ -3750,11 +3766,19 @@ impl ExactPlanarArrangementReport {
             ExactPlanarArrangementStatus::BoundaryPolicyRequired => {
                 ExactBooleanBlockerKind::NeedsBoundaryPolicy
             }
-            _ => ExactBooleanBlockerKind::NeedsPlanarArrangement,
+            ExactPlanarArrangementStatus::Required => {
+                ExactBooleanBlockerKind::NeedsPlanarArrangement
+            }
+            ExactPlanarArrangementStatus::NotNamedOperation
+            | ExactPlanarArrangementStatus::AlreadyMaterialized
+            | ExactPlanarArrangementStatus::NoPositiveOverlap => {
+                retained_blocker_kind_from_counts(&self.blocker)
+            }
         };
         if self.blocker.kind != expected_kind {
             return Err(ExactReportValidationError::WrongBlockerKind);
         }
+        self.blocker.validate_for_kind(expected_kind)?;
         validate_refinement_partition(
             matches!(self.status, ExactPlanarArrangementStatus::GraphUnknowns),
             &self.blocker,
