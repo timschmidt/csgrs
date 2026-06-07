@@ -50,6 +50,16 @@ fn contour_nesting_depths(
     contours: &[Contour2],
     policy: &CurvePolicy,
 ) -> CurveResult<Classification<BoundaryContourNestingDepths>> {
+    for (left_index, left) in contours.iter().enumerate() {
+        for right in &contours[left_index + 1..] {
+            if !left.intersect_contour(right, policy)?.is_empty() {
+                return Ok(Classification::Uncertain(
+                    crate::UncertaintyReason::Boundary,
+                ));
+            }
+        }
+    }
+
     let mut depths = Vec::with_capacity(contours.len());
 
     for (candidate_index, candidate) in contours.iter().enumerate() {

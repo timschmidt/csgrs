@@ -136,6 +136,50 @@ fn hole_bin_subtracts_from_material_depth() {
 }
 
 #[test]
+fn boundary_contour_nesting_assigns_disjoint_nested_roles() {
+    let region = match Region2::from_boundary_contours(
+        vec![rectangle(0, 0, 10, 10), rectangle(3, 3, 7, 7)],
+        &policy(),
+    )
+    .unwrap()
+    {
+        Classification::Decided(region) => region,
+        Classification::Uncertain(reason) => panic!("unexpected uncertainty: {reason:?}"),
+    };
+
+    assert_eq!(region.material_contours().len(), 1);
+    assert_eq!(region.hole_contours().len(), 1);
+    assert_eq!(
+        region.classify_point(&p(1, 1), &policy()),
+        Classification::Decided(RegionPointLocation::Inside)
+    );
+    assert_eq!(
+        region.classify_point(&p(5, 5), &policy()),
+        Classification::Decided(RegionPointLocation::Outside)
+    );
+}
+
+#[test]
+fn boundary_contour_nesting_rejects_crossing_or_touching_loops() {
+    assert_eq!(
+        Region2::from_boundary_contours(
+            vec![rectangle(0, 0, 4, 4), rectangle(2, -1, 6, 3)],
+            &policy(),
+        )
+        .unwrap(),
+        Classification::Uncertain(UncertaintyReason::Boundary)
+    );
+    assert_eq!(
+        Region2::from_boundary_contours(
+            vec![rectangle(0, 0, 4, 4), rectangle(4, 0, 8, 4)],
+            &policy(),
+        )
+        .unwrap(),
+        Classification::Uncertain(UncertaintyReason::Boundary)
+    );
+}
+
+#[test]
 fn hole_boundary_is_explicit() {
     let region = Region2::new(vec![rectangle(0, 0, 10, 10)], vec![rectangle(3, 3, 7, 7)]);
 
