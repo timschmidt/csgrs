@@ -1004,12 +1004,12 @@ fn exact_closed_convex_boolean_materializer_is_publicly_replayable() {
     let mut stale_separated_output = separated.clone();
     stale_separated_output.mesh = separated_left.clone();
     assert!(
-        stale_separated_output.validate().is_ok(),
+        stale_separated_output.validate().is_err(),
         "{stale_separated_output:?}"
     );
     assert_eq!(
         stale_separated_output.freshness_against_sources(&separated_left, &separated_right),
-        ExactReportFreshness::SourceReplayMismatch,
+        ExactReportFreshness::StaleStatusEvidence,
         "{stale_separated_output:?}"
     );
     separated
@@ -2455,10 +2455,10 @@ fn closed_boundary_touching_regularized_boolean_is_publicly_replayable() {
         if operation == ExactBooleanOperation::Intersection {
             let mut stale_output = result.clone();
             stale_output.mesh = left.clone();
-            assert!(stale_output.validate().is_ok(), "{stale_output:?}");
+            assert!(stale_output.validate().is_err(), "{stale_output:?}");
             assert_eq!(
                 stale_output.freshness_against_sources(&left, &right),
-                ExactReportFreshness::SourceReplayMismatch,
+                ExactReportFreshness::StaleStatusEvidence,
                 "{stale_output:?}"
             );
         }
@@ -2666,10 +2666,10 @@ fn closed_winding_shortcuts_are_publicly_replayable() {
         if operation == ExactBooleanOperation::Intersection {
             let mut stale_output = result.clone();
             stale_output.mesh = separated_left.clone();
-            assert!(stale_output.validate().is_ok(), "{stale_output:?}");
+            assert!(stale_output.validate().is_err(), "{stale_output:?}");
             assert_eq!(
                 stale_output.freshness_against_sources(&separated_left, &separated_right),
-                ExactReportFreshness::SourceReplayMismatch,
+                ExactReportFreshness::StaleStatusEvidence,
                 "{stale_output:?}"
             );
         }
