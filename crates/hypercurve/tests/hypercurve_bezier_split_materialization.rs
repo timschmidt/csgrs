@@ -252,7 +252,7 @@ fn exact_quadratic_split_materializes_native_subcurves() {
 
 #[test]
 fn split_materialization_constructor_rejects_duplicate_fragments() {
-    BezierSplitMaterialization2::new(Vec::new()).unwrap();
+    assert_topology_error(BezierSplitMaterialization2::new(Vec::new()));
 
     let curve = QuadraticBezier2::new(p(0, 0), p(2, 4), p(4, 0));
     let materialization = match curve
@@ -267,6 +267,21 @@ fn split_materialization_constructor_rejects_duplicate_fragments() {
     let second = materialization.fragments()[1].clone();
     BezierSplitMaterialization2::new(vec![first.clone(), second]).unwrap();
     assert_topology_error(BezierSplitMaterialization2::new(vec![first.clone(), first]));
+}
+
+#[test]
+fn split_materialization_constructor_rejects_incomplete_source_coverage() {
+    let curve = QuadraticBezier2::new(p(0, 0), p(2, 4), p(4, 0));
+    let materialization = match curve
+        .split_at_parameters(&[exact(q(1, 3)), exact(q(2, 3))], &policy())
+        .unwrap()
+    {
+        Classification::Decided(value) => value,
+        Classification::Uncertain(reason) => panic!("split unexpectedly uncertain: {reason:?}"),
+    };
+
+    let middle = materialization.fragments()[1].clone();
+    assert_topology_error(BezierSplitMaterialization2::new(vec![middle]));
 }
 
 #[test]

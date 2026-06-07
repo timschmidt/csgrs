@@ -130,7 +130,14 @@ impl BezierSplitMaterialization2 {
 }
 
 fn validate_bezier_split_fragments(fragments: &[BezierSplitFragment2]) -> CurveResult<()> {
+    if fragments.is_empty() {
+        return Err(CurveError::Topology(
+            "Bezier split materialization must carry at least one source fragment".into(),
+        ));
+    }
+
     let policy = CurvePolicy::certified();
+    validate_bezier_split_coverage(fragments, &policy)?;
     for (left_index, left) in fragments.iter().enumerate() {
         validate_bezier_split_fragment(left, &policy)?;
         if let Some(right) = fragments.get(left_index + 1) {
@@ -146,6 +153,33 @@ fn validate_bezier_split_fragments(fragments: &[BezierSplitFragment2]) -> CurveR
         }
     }
     Ok(())
+}
+
+fn validate_bezier_split_coverage(
+    fragments: &[BezierSplitFragment2],
+    policy: &CurvePolicy,
+) -> CurveResult<()> {
+    let (first_start, _) = bezier_split_fragment_range(&fragments[0]);
+    let (_, last_end) = bezier_split_fragment_range(&fragments[fragments.len() - 1]);
+    validate_bezier_boundary_equals(first_start, &BezierParameter2::Exact(Real::zero()), policy)?;
+    validate_bezier_boundary_equals(last_end, &BezierParameter2::Exact(Real::one()), policy)?;
+    Ok(())
+}
+
+fn validate_bezier_boundary_equals(
+    actual: &BezierParameter2,
+    expected: &BezierParameter2,
+    policy: &CurvePolicy,
+) -> CurveResult<()> {
+    match actual.cmp_by_interval(expected, policy)? {
+        Classification::Decided(Ordering::Equal) => Ok(()),
+        Classification::Decided(_) => Err(CurveError::Topology(
+            "Bezier split materialization must cover the full source parameter interval".into(),
+        )),
+        Classification::Uncertain(reason) => Err(CurveError::Topology(format!(
+            "Bezier split materialization source coverage is uncertain: {reason:?}"
+        ))),
+    }
 }
 
 fn validate_bezier_split_fragment(
