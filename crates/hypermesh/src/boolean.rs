@@ -4698,15 +4698,15 @@ fn close_exact_coplanar_boundary_loops_from_loops(
     )
     .ok()?;
     let boundary_edges = directed_boundary_edges(mesh);
-    let vertices = mesh.vertices().to_vec();
+    let mut vertices = mesh.vertices().to_vec();
     let mut cap_triangles = Vec::new();
     for loops in cap_groups {
         let mut group_vertices = Vec::new();
         let mut group_triangles = Vec::new();
         triangulate_exact_loop_group(&loops, &mut group_vertices, &mut group_triangles).ok()?;
         let local_to_global = group_vertices
-            .iter()
-            .map(|point| find_exact_mesh_vertex(&vertices, point))
+            .into_iter()
+            .map(|point| find_or_insert_exact_mesh_vertex(&mut vertices, point))
             .collect::<Option<Vec<_>>>()?;
         let triangles = group_triangles.into_iter().map(|triangle| {
             Triangle([
@@ -4730,6 +4730,19 @@ fn close_exact_coplanar_boundary_loops_from_loops(
         validation,
     )
     .ok()
+}
+
+fn find_or_insert_exact_mesh_vertex(vertices: &mut Vec<Point3>, point: Point3) -> Option<usize> {
+    for (index, existing) in vertices.iter().enumerate() {
+        match point3_exact_equal(existing, &point) {
+            Some(true) => return Some(index),
+            Some(false) => {}
+            None => return None,
+        }
+    }
+    let index = vertices.len();
+    vertices.push(point);
+    Some(index)
 }
 
 fn find_exact_mesh_vertex(vertices: &[Point3], point: &Point3) -> Option<usize> {
@@ -11667,6 +11680,34 @@ mod tests {
         assert!(closed.facts().mesh.closed_manifold);
         assert_eq!(closed.vertices().len(), mesh.vertices().len());
         assert_eq!(closed.triangles().len(), mesh.triangles().len() + 4);
+    }
+
+    #[test]
+    fn exact_coplanar_boundary_closer_can_append_cap_vertices() {
+        let mut vertices = vec![
+            Point3::new(Real::from(0), Real::from(0), Real::from(0)),
+            Point3::new(Real::from(4), Real::from(0), Real::from(0)),
+            Point3::new(Real::from(0), Real::from(4), Real::from(0)),
+        ];
+        let reused = find_or_insert_exact_mesh_vertex(
+            &mut vertices,
+            Point3::new(Real::from(4), Real::from(0), Real::from(0)),
+        )
+        .expect("exact existing cap vertex should be reusable");
+        assert_eq!(reused, 1);
+        assert_eq!(vertices.len(), 3);
+
+        let inserted = find_or_insert_exact_mesh_vertex(
+            &mut vertices,
+            Point3::new(
+                (Real::from(4) / &Real::from(3)).unwrap(),
+                (Real::from(4) / &Real::from(3)).unwrap(),
+                Real::from(0),
+            ),
+        )
+        .expect("exact cap triangulation vertex should be appendable");
+        assert_eq!(inserted, 3);
+        assert_eq!(vertices.len(), 4);
     }
 
     #[test]
