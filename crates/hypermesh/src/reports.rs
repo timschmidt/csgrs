@@ -17,9 +17,9 @@ use super::boolean::{
     certify_open_surface_disjoint_report, certify_planar_arrangement_report,
     certify_refinement_report, certify_same_surface_report,
     certify_volumetric_boundary_closure_report, certify_winding_readiness_report,
-    materialize_adjacent_union_completion_boolean, materialize_closed_same_surface_boolean,
-    preflight_boolean_exact, preflight_boolean_exact_with_boundary_policy,
-    preflight_boolean_exact_with_validation, replay_volumetric_winding_region_plan,
+    materialize_closed_same_surface_boolean, preflight_boolean_exact,
+    preflight_boolean_exact_with_boundary_policy, preflight_boolean_exact_with_validation,
+    replay_volumetric_winding_region_plan,
 };
 use super::bounds::AabbIntersectionKind;
 use super::convex::{
@@ -1586,12 +1586,17 @@ fn arrangement_cell_complex_sources_match(
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> Result<bool, ExactReportValidationError> {
-    if operation == ExactBooleanOperation::Union
-        && materialize_adjacent_union_completion_boolean(left, right, operation, validation)
-            .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
-            .is_some()
-    {
-        return Ok(true);
+    if operation == ExactBooleanOperation::Union {
+        let report = certify_adjacent_union_completion_report(left, right, operation)
+            .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+        report.validate()?;
+        if matches!(
+            report.status,
+            ExactAdjacentUnionCompletionStatus::CertifiedFullFace
+                | ExactAdjacentUnionCompletionStatus::CertifiedContainedFace
+        ) {
+            return Ok(true);
+        }
     }
     if materialize_closed_same_surface_boolean(left, right, operation, validation)
         .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
@@ -1607,6 +1612,17 @@ fn arrangement_cell_complex_sources_match(
         .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
     if graph.has_unknowns() || graph.face_pairs.is_empty() {
         return Ok(false);
+    }
+    if operation == ExactBooleanOperation::Union {
+        let evidence = CoplanarVolumetricCellEvidenceReport::from_graph(&graph, left, right);
+        evidence
+            .validate()
+            .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+        if evidence.obstacle == CoplanarVolumetricCellObstacle::BoundaryOnlyContact
+            && evidence.positive_area_coplanar_overlapping_pairs > 0
+        {
+            return Ok(true);
+        }
     }
     let preflight = preflight_boolean_exact_with_validation(left, right, operation, validation)
         .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;

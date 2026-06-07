@@ -3126,11 +3126,15 @@ fn boolean_arrangement_adjacency_union_completion(
             validation,
         )
     {
-        return Ok(Some(certified_shortcut_result(
+        let result = certified_shortcut_result(
             union.mesh,
             ExactBooleanOperation::Union,
             ExactBooleanShortcutKind::ArrangementCellComplex,
-        )));
+        );
+        if result.validate().is_err() || result.validate_against_sources(left, right).is_err() {
+            return Ok(None);
+        }
+        return Ok(Some(result));
     }
 
     if contained_face_adjacency_should_yield_to_stronger_kernel(left, right, operation) {
@@ -3144,11 +3148,15 @@ fn boolean_arrangement_adjacency_union_completion(
             validation,
         )
     {
-        return Ok(Some(certified_shortcut_result(
+        let result = certified_shortcut_result(
             union.mesh,
             ExactBooleanOperation::Union,
             ExactBooleanShortcutKind::ArrangementCellComplex,
-        )));
+        );
+        if result.validate().is_err() || result.validate_against_sources(left, right).is_err() {
+            return Ok(None);
+        }
+        return Ok(Some(result));
     }
 
     Ok(None)
@@ -3541,7 +3549,7 @@ fn boolean_arrangement_regularized_no_volume_overlap_from_graph(
             operation,
             ExactBooleanShortcutKind::ArrangementCellComplex,
         );
-        if result.validate().is_err() {
+        if result.validate().is_err() || result.validate_against_sources(left, right).is_err() {
             return Ok(None);
         }
         return Ok(Some(result));
