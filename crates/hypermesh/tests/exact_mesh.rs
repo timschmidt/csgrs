@@ -1243,8 +1243,31 @@ fn adjacent_union_completion_boolean_is_publicly_replayable() {
     );
     assert!(!intersection_report.is_certified());
     intersection_report.validate().unwrap();
+    let mut stale_intersection_report = intersection_report.clone();
+    stale_intersection_report.retained_face_pairs = 1;
+    stale_intersection_report.retained_events = 1;
+    stale_intersection_report.blocker.candidate_pairs = 1;
+    assert!(stale_intersection_report.validate().is_err());
+
     let axis_left = axis_aligned_box([0, 0, 0], [1, 1, 1]);
     let axis_right = axis_aligned_box([1, 0, 0], [2, 1, 1]);
+    let axis_report = certify_adjacent_union_completion_report(
+        &axis_left,
+        &axis_right,
+        ExactBooleanOperation::Union,
+    )
+    .unwrap();
+    assert_eq!(
+        axis_report.status,
+        ExactAdjacentUnionCompletionStatus::AxisAlignedBoxPair
+    );
+    axis_report.validate().unwrap();
+    let mut stale_axis_report = axis_report.clone();
+    stale_axis_report.retained_face_pairs = 1;
+    stale_axis_report.retained_events = 1;
+    stale_axis_report.blocker.candidate_pairs = 1;
+    assert!(stale_axis_report.validate().is_err());
+
     assert!(
         materialize_adjacent_union_completion_boolean(
             &axis_left,

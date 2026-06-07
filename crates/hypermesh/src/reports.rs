@@ -4150,6 +4150,17 @@ impl ExactAdjacentUnionCompletionReport {
 
         let full_face_counts = self.full_face_shared_faces + self.full_face_shared_patches;
         let contained_counts = self.contained_faces + self.containing_faces;
+        if matches!(
+            self.status,
+            ExactAdjacentUnionCompletionStatus::NotUnion
+                | ExactAdjacentUnionCompletionStatus::NotClosedSolid
+                | ExactAdjacentUnionCompletionStatus::AxisAlignedBoxPair
+        ) && (self.retained_face_pairs != 0
+            || self.retained_events != 0
+            || blocker_pair_count(&self.blocker) != 0)
+        {
+            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+        }
         match self.status {
             ExactAdjacentUnionCompletionStatus::NotUnion => {
                 if matches!(self.operation, ExactBooleanOperation::Union) {
