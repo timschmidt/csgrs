@@ -7,9 +7,10 @@
 
 use crate::classify::compare_reals;
 use crate::{
-    Aabb2, BooleanBoundaryFragmentSet, BooleanBoundaryLoopSet, BooleanFragmentSelection, BooleanOp,
-    BulgeVertex2, Classification, Contour2, ContourIntersection, CurvePolicy, CurveResult,
-    FillRule, IntersectionKind, Point2, Real, Region2, RegionFragmentSet, RegionIntersectionSet,
+    Aabb2, BooleanBoundaryFragmentSet, BooleanBoundaryLoopSet, BooleanFragmentAction,
+    BooleanFragmentClassification, BooleanFragmentSelection, BooleanOp, BulgeVertex2,
+    Classification, Contour2, ContourIntersection, CurveError, CurvePolicy, CurveResult, FillRule,
+    IntersectionKind, Point2, Real, Region2, RegionFragmentSet, RegionIntersectionSet,
     RegionPointLocation, RegionSide, RegionView2, Segment2, UncertaintyReason,
 };
 use std::cmp::Ordering;
@@ -1238,6 +1239,11 @@ pub(crate) fn boundary_contours_dropping_unresolved(
     fill_rule: FillRule,
     policy: &CurvePolicy,
 ) -> CurveResult<Classification<Vec<Contour2>>> {
+    match certify_unresolved_boundary_pairs(fragments, selection)? {
+        Classification::Decided(()) => {}
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    }
+
     let emitted = selection.emit_boundary_fragments(fragments)?;
 
     // Certified contact handlers call this only after proving that every
@@ -1261,6 +1267,79 @@ pub(crate) fn boundary_contours_dropping_unresolved(
         }
         Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
     }
+}
+
+fn certify_unresolved_boundary_pairs(
+    fragments: &RegionFragmentSet,
+    selection: &BooleanFragmentSelection,
+) -> CurveResult<Classification<()>> {
+    let unresolved = selection
+        .classifications()
+        .iter()
+        .filter(|classification| {
+            classification.action == BooleanFragmentAction::BoundaryNeedsResolution
+        })
+        .collect::<Vec<_>>();
+
+    if unresolved.is_empty() {
+        return Ok(Classification::Decided(()));
+    }
+    if unresolved.len() % 2 != 0 {
+        return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+    }
+
+    let mut paired = vec![false; unresolved.len()];
+    for left_index in 0..unresolved.len() {
+        if paired[left_index] {
+            continue;
+        }
+        let left_segment = fragment_segment_for_classification(fragments, unresolved[left_index])?;
+        let mut matched = false;
+        for right_index in left_index + 1..unresolved.len() {
+            if paired[right_index] {
+                continue;
+            }
+            if unresolved[left_index].key.side == unresolved[right_index].key.side {
+                continue;
+            }
+            let right_segment =
+                fragment_segment_for_classification(fragments, unresolved[right_index])?;
+            if segment_images_match_undirected(left_segment, right_segment) {
+                paired[left_index] = true;
+                paired[right_index] = true;
+                matched = true;
+                break;
+            }
+        }
+        if !matched {
+            return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+        }
+    }
+
+    Ok(Classification::Decided(()))
+}
+
+fn fragment_segment_for_classification<'a>(
+    fragments: &'a RegionFragmentSet,
+    classification: &BooleanFragmentClassification,
+) -> CurveResult<&'a Segment2> {
+    let contour_fragments = fragments
+        .fragments_for_contour(classification.key)
+        .ok_or_else(|| {
+            CurveError::Topology("boolean unresolved boundary references a missing contour".into())
+        })?;
+    contour_fragments
+        .fragments
+        .fragments()
+        .get(classification.fragment_index)
+        .map(|fragment| &fragment.segment)
+        .ok_or_else(|| {
+            CurveError::Topology("boolean unresolved boundary references a missing fragment".into())
+        })
+}
+
+fn segment_images_match_undirected(left: &Segment2, right: &Segment2) -> bool {
+    left == right || left == &right.reversed()
 }
 
 fn boundary_contact_region(
@@ -1436,5 +1515,96 @@ pub(crate) fn empty_operand_region(
         (true, _, BooleanOp::Union | BooleanOp::Xor) => clone_region(second),
         (_, true, BooleanOp::Union | BooleanOp::Xor | BooleanOp::Difference) => clone_region(first),
         _ => Region2::empty(),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{
+        BooleanFragmentAction, BooleanFragmentClassification, ContourFragment, ContourFragmentSet,
+        LineSeg2, ParamRange, RegionContourFragments, RegionContourKey, RegionContourRole,
+    };
+
+    fn real(value: i32) -> Real {
+        value.into()
+    }
+
+    fn point(x: i32, y: i32) -> Point2 {
+        Point2::new(real(x), real(y))
+    }
+
+    fn line_segment(x0: i32, y0: i32, x1: i32, y1: i32) -> Segment2 {
+        Segment2::Line(LineSeg2::try_new(point(x0, y0), point(x1, y1)).unwrap())
+    }
+
+    fn fragment_set_for(key: RegionContourKey, segment: Segment2) -> RegionContourFragments {
+        RegionContourFragments {
+            key,
+            fragments: ContourFragmentSet::new(vec![ContourFragment {
+                source_segment_index: 0,
+                source_range: ParamRange::new(real(0), real(1)),
+                segment,
+            }])
+            .unwrap(),
+        }
+    }
+
+    fn unresolved_boundary(key: RegionContourKey) -> BooleanFragmentClassification {
+        BooleanFragmentClassification {
+            key,
+            fragment_index: 0,
+            opposite_location: RegionPointLocation::Boundary,
+            action: BooleanFragmentAction::BoundaryNeedsResolution,
+        }
+    }
+
+    #[test]
+    fn dropping_unresolved_boundaries_requires_opposite_fragment_pair_evidence() {
+        let first_key = RegionContourKey::new(RegionSide::First, RegionContourRole::Material, 0);
+        let fragments =
+            RegionFragmentSet::new(vec![fragment_set_for(first_key, line_segment(0, 0, 1, 0))])
+                .unwrap();
+        let selection =
+            BooleanFragmentSelection::new(vec![unresolved_boundary(first_key)]).unwrap();
+
+        let result = boundary_contours_dropping_unresolved(
+            &fragments,
+            &selection,
+            FillRule::NonZero,
+            &CurvePolicy::certified(),
+        )
+        .unwrap();
+
+        assert_eq!(
+            result,
+            Classification::Uncertain(UncertaintyReason::Boundary)
+        );
+    }
+
+    #[test]
+    fn dropping_unresolved_boundaries_accepts_certified_opposite_fragment_pairs() {
+        let first_key = RegionContourKey::new(RegionSide::First, RegionContourRole::Material, 0);
+        let second_key = RegionContourKey::new(RegionSide::Second, RegionContourRole::Material, 0);
+        let fragments = RegionFragmentSet::new(vec![
+            fragment_set_for(first_key, line_segment(0, 0, 1, 0)),
+            fragment_set_for(second_key, line_segment(1, 0, 0, 0)),
+        ])
+        .unwrap();
+        let selection = BooleanFragmentSelection::new(vec![
+            unresolved_boundary(first_key),
+            unresolved_boundary(second_key),
+        ])
+        .unwrap();
+
+        let result = boundary_contours_dropping_unresolved(
+            &fragments,
+            &selection,
+            FillRule::NonZero,
+            &CurvePolicy::certified(),
+        )
+        .unwrap();
+
+        assert_eq!(result, Classification::Decided(Vec::new()));
     }
 }
