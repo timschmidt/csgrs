@@ -1673,6 +1673,15 @@ fn exact_coplanar_mesh_overlay_arrangement_is_publicly_replayable() {
         );
         result.validate().unwrap();
         result.validate_against_sources(&left, &right).unwrap();
+        result
+            .validate_operation_against_sources(
+                &left,
+                &right,
+                operation,
+                ValidationPolicy::ALLOW_BOUNDARY,
+                ExactBoundaryBooleanPolicy::Reject,
+            )
+            .unwrap();
         assert_eq!(
             result.freshness_against_sources(&left, &right),
             ExactReportFreshness::Current
@@ -1689,6 +1698,24 @@ fn exact_coplanar_mesh_overlay_arrangement_is_publicly_replayable() {
             ExactReportFreshness::SourceReplayMismatch
         );
     }
+
+    let identical = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 0, 4, 0, 0, 0, 4, 0],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    assert!(
+        materialize_coplanar_mesh_overlay_arrangement(
+            &identical,
+            &identical,
+            ExactBooleanOperation::Union,
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap()
+        .is_none(),
+        "direct coplanar overlay wrapper should yield to the public identical shortcut"
+    );
 }
 
 #[test]

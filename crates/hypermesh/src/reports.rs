@@ -24,11 +24,10 @@ use super::boolean::{
     certify_volumetric_boundary_closure_report, certify_winding_readiness_report,
     certify_winding_readiness_report_with_boundary_policy,
     certify_winding_readiness_report_with_validation, materialize_closed_same_surface_boolean,
-    materialize_coplanar_mesh_overlay_arrangement,
     materialize_volumetric_coplanar_boundary_closure_output, preflight_boolean_exact,
     preflight_boolean_exact_with_boundary_policy, preflight_boolean_exact_with_validation,
-    replay_materialized_volumetric_winding_region_plan, replay_open_surface_arrangement_result,
-    replay_selected_region_boolean_result,
+    replay_coplanar_mesh_overlay_result, replay_materialized_volumetric_winding_region_plan,
+    replay_open_surface_arrangement_result, replay_selected_region_boolean_result,
 };
 use super::bounds::AabbIntersectionKind;
 use super::contained_adjacent::materialize_contained_face_adjacent_union;
@@ -1266,7 +1265,7 @@ impl ExactBooleanResult {
             operation,
             shortcut: ExactBooleanShortcutKind::ArrangementCellComplex,
         } = self.kind
-            && let Some(replay) = materialize_coplanar_mesh_overlay_arrangement(
+            && let Some(replay) = replay_coplanar_mesh_overlay_result(
                 left,
                 right,
                 operation,

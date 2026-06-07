@@ -5294,6 +5294,31 @@ pub fn materialize_coplanar_mesh_overlay_arrangement(
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
+    let Some(result) = boolean_coplanar_mesh_overlay_optional(left, right, operation, validation)?
+    else {
+        return Ok(None);
+    };
+    if result
+        .validate_operation_against_sources(
+            left,
+            right,
+            operation,
+            validation,
+            ExactBoundaryBooleanPolicy::Reject,
+        )
+        .is_err()
+    {
+        return Ok(None);
+    }
+    Ok(Some(result))
+}
+
+pub(crate) fn replay_coplanar_mesh_overlay_result(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+) -> Result<Option<ExactBooleanResult>, MeshError> {
     boolean_coplanar_mesh_overlay_optional(left, right, operation, validation)
 }
 
