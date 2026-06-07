@@ -59,6 +59,26 @@ fn retained_loop(fragments: Vec<BezierSplitFragment2>) -> BezierRetainedBoundary
     BezierRetainedBoundaryLoop2::new(fragments).unwrap()
 }
 
+fn reversed_algebraic_fragment(fragment: &BezierSplitFragment2) -> BezierSplitFragment2 {
+    let BezierSplitFragment2::AlgebraicEndpointImages {
+        start,
+        end,
+        source_curve,
+        start_image,
+        end_image,
+    } = fragment
+    else {
+        panic!("test fragment must carry algebraic endpoint images");
+    };
+    BezierSplitFragment2::AlgebraicEndpointImages {
+        start: end.clone(),
+        end: start.clone(),
+        source_curve: source_curve.clone(),
+        start_image: end_image.clone(),
+        end_image: start_image.clone(),
+    }
+}
+
 fn retained_region(boundary_loops: Vec<BezierRetainedBoundaryLoop2>) -> BezierRetainedRegion2 {
     BezierRetainedRegion2::new(boundary_loops).unwrap()
 }
@@ -556,8 +576,8 @@ fn native_boundary_loop_constructor_rejects_open_fragment_cycle() {
 }
 
 #[test]
-fn retained_region_constructor_rejects_open_retained_boundary_loop() {
-    let loop_ = retained_loop(vec![
+fn retained_boundary_loop_constructor_rejects_open_fragment_cycle() {
+    assert_topology_error(BezierRetainedBoundaryLoop2::new(vec![
         BezierSplitFragment2::Materialized {
             start: exact(r(0)),
             end: exact(r(1)),
@@ -576,9 +596,7 @@ fn retained_region_constructor_rejects_open_retained_boundary_loop() {
                 p(5, 0),
             )),
         },
-    ]);
-
-    assert_topology_error(BezierRetainedRegion2::new(vec![loop_]));
+    ]));
 }
 
 #[test]
@@ -1006,7 +1024,17 @@ fn retained_curve_envelope_uses_source_bounds_for_algebraic_split_fragments() {
             .unwrap(),
     );
     assert!(split.has_algebraic_endpoint_images());
-    let loop_with_algebraic_boundary = retained_loop(split.fragments().to_vec());
+    let mut fragments = split.fragments().to_vec();
+    fragments.push(BezierSplitFragment2::Materialized {
+        start: exact(r(0)),
+        end: exact(r(1)),
+        curve: hypercurve::BezierSubcurve2::Quadratic(QuadraticBezier2::new(
+            p(4, 0),
+            p(2, 0),
+            p(0, 0),
+        )),
+    });
+    let loop_with_algebraic_boundary = retained_loop(fragments);
 
     let curve_envelope = decided(BezierRetainedCurveEnvelope2::from_loop(
         &loop_with_algebraic_boundary,
@@ -1015,8 +1043,8 @@ fn retained_curve_envelope_uses_source_bounds_for_algebraic_split_fragments() {
 
     assert_eq!(curve_envelope.envelope().min(), &p(0, 0));
     assert_eq!(curve_envelope.envelope().max(), &p(4, 2));
-    assert_eq!(curve_envelope.exact_fragment_count(), 2);
-    assert_eq!(curve_envelope.native_fragment_count(), 0);
+    assert_eq!(curve_envelope.exact_fragment_count(), 3);
+    assert_eq!(curve_envelope.native_fragment_count(), 1);
     assert_eq!(curve_envelope.algebraic_fragment_count(), 2);
     assert!(curve_envelope.has_algebraic_fragments());
     assert_eq!(
@@ -1024,6 +1052,7 @@ fn retained_curve_envelope_uses_source_bounds_for_algebraic_split_fragments() {
         &[
             BezierRetainedEnvelopeSourceKind::Algebraic,
             BezierRetainedEnvelopeSourceKind::Algebraic,
+            BezierRetainedEnvelopeSourceKind::Native,
         ]
     );
 }
@@ -1039,7 +1068,11 @@ fn retained_curve_envelope_uses_algebraic_parameter_interval_hull() {
             )
             .unwrap(),
     );
-    let first_fragment_loop = retained_loop(vec![split.fragments()[0].clone()]);
+    let first_fragment = split.fragments()[0].clone();
+    let first_fragment_loop = retained_loop(vec![
+        first_fragment.clone(),
+        reversed_algebraic_fragment(&first_fragment),
+    ]);
 
     let envelope = decided(BezierRetainedCurveEnvelope2::from_loop(
         &first_fragment_loop,
@@ -1048,9 +1081,9 @@ fn retained_curve_envelope_uses_algebraic_parameter_interval_hull() {
 
     assert_eq!(envelope.envelope().min(), &p(0, 0));
     assert_eq!(envelope.envelope().max(), &Point2::new(q(3, 1), q(2, 1)));
-    assert_eq!(envelope.exact_fragment_count(), 1);
+    assert_eq!(envelope.exact_fragment_count(), 2);
     assert_eq!(envelope.native_fragment_count(), 0);
-    assert_eq!(envelope.algebraic_fragment_count(), 1);
+    assert_eq!(envelope.algebraic_fragment_count(), 2);
     assert!(envelope.has_algebraic_fragments());
 }
 
@@ -1067,7 +1100,11 @@ fn retained_curve_envelope_uses_algebraic_endpoint_image_before_interval_hull() 
             )
             .unwrap(),
     );
-    let first_fragment_loop = retained_loop(vec![split.fragments()[0].clone()]);
+    let first_fragment = split.fragments()[0].clone();
+    let first_fragment_loop = retained_loop(vec![
+        first_fragment.clone(),
+        reversed_algebraic_fragment(&first_fragment),
+    ]);
 
     let envelope = decided(BezierRetainedCurveEnvelope2::from_loop(
         &first_fragment_loop,
@@ -1076,9 +1113,9 @@ fn retained_curve_envelope_uses_algebraic_endpoint_image_before_interval_hull() 
 
     assert_eq!(envelope.envelope().min(), &p(0, 0));
     assert_eq!(envelope.envelope().max(), &p(1, 0));
-    assert_eq!(envelope.exact_fragment_count(), 1);
+    assert_eq!(envelope.exact_fragment_count(), 2);
     assert_eq!(envelope.native_fragment_count(), 0);
-    assert_eq!(envelope.algebraic_fragment_count(), 1);
+    assert_eq!(envelope.algebraic_fragment_count(), 2);
     assert!(envelope.has_algebraic_fragments());
 }
 
@@ -1174,7 +1211,7 @@ fn retained_region_rejects_unresolved_carriers_even_when_marked_closed() {
 }
 
 #[test]
-fn retained_endpoint_envelope_rejects_incomplete_algebraic_endpoint_evidence() {
+fn retained_boundary_loop_constructor_rejects_incomplete_algebraic_endpoint_evidence() {
     let parameter = BezierParameter2::algebraic(algebraic_midpoint_parameter());
     let partial = BezierSplitFragment2::AlgebraicEndpointImages {
         start: parameter.clone(),
@@ -1184,9 +1221,7 @@ fn retained_endpoint_envelope_rejects_incomplete_algebraic_endpoint_evidence() {
         end_image: None,
     };
 
-    assert_topology_error(BezierRetainedRegion2::new(vec![retained_loop(vec![
-        partial,
-    ])]));
+    assert_topology_error(BezierRetainedBoundaryLoop2::new(vec![partial]));
 }
 
 proptest! {

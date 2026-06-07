@@ -732,7 +732,7 @@ fn validate_retained_boundary_loop(fragments: &[BezierSplitFragment2]) -> CurveR
             "retained Bezier boundary loop requires nonempty fragments".to_owned(),
         ));
     }
-    Ok(())
+    validate_retained_boundary_loop_connectivity(fragments, &CurvePolicy::certified())
 }
 
 fn validate_retained_boundary_loop_sources(
@@ -756,12 +756,7 @@ fn validate_retained_region_loops(
     boundary_loops: &[BezierRetainedBoundaryLoop2],
 ) -> CurveResult<()> {
     validate_bezier_region_loops(boundary_loops)?;
-    validate_retained_region_arrangement_sources(boundary_loops)?;
-    let policy = CurvePolicy::certified();
-    for boundary_loop in boundary_loops {
-        validate_retained_boundary_loop_connectivity(boundary_loop.fragments(), &policy)?;
-    }
-    Ok(())
+    validate_retained_region_arrangement_sources(boundary_loops)
 }
 
 fn validate_retained_region_arrangement_sources(
