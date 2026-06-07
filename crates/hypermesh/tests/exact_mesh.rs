@@ -7,18 +7,19 @@ use hypermesh::{
     CoplanarOverlapGraphFreshness, CoplanarOverlapSplitFreshness,
     CoplanarVolumetricCellEvidenceFreshness, ExactArrangement, ExactArrangement2dBoundaryPolicy,
     ExactArrangement2dRegion, ExactArrangement2dRegionRing, ExactArrangement2dSetOperation,
-    ExactArrangementFreshness, ExactBooleanOperation, ExactBooleanResult, ExactBooleanResultKind,
-    ExactBoundaryBooleanPolicy, ExactI64MeshInputReadiness, ExactLabeledCellComplexFreshness,
-    ExactMesh, ExactMeshConsumerDomain, ExactMeshDomainSummaryFreshness,
-    ExactMeshHandoffPackageFreshness, ExactMeshProposalAcceptance, ExactMeshProposalSourceKind,
-    ExactRegularizationPolicy, ExactReportFreshness, ExactSelectedCellComplexFreshness,
-    ExactSimplifiedCellComplexFreshness, ExactVolumetricRegionFreshness,
-    ExactVolumetricRegionRelation, FaceRegionPlaneRelation, FullFaceAdjacentUnionFreshness,
-    IntersectionGraphFreshness, MeshArtifactBlocker, MeshArtifactManifest, MeshArtifactRole,
-    MeshArtifactSourceKind, MeshCoordinateEvidence, MeshFacePairFreshness, MeshFacePairRelation,
-    MeshFacePairValidationError, SplitPlanFreshness, TriangleTriangleFreshness,
-    TriangleTriangleRelation, ValidationPolicy, WindingReportFreshness, approximate_mesh_f64_view,
-    boolean_exact, boolean_exact_with_boundary_policy, build_exact_arrangement2d_overlay,
+    ExactArrangementFreshness, ExactBooleanOperation, ExactBooleanPolicy, ExactBooleanResult,
+    ExactBooleanResultKind, ExactBoundaryBooleanPolicy, ExactI64MeshInputReadiness,
+    ExactLabeledCellComplexFreshness, ExactMesh, ExactMeshConsumerDomain,
+    ExactMeshDomainSummaryFreshness, ExactMeshHandoffPackageFreshness, ExactMeshProposalAcceptance,
+    ExactMeshProposalSourceKind, ExactRegionSelection, ExactRegularizationPolicy,
+    ExactReportFreshness, ExactSelectedCellComplexFreshness, ExactSimplifiedCellComplexFreshness,
+    ExactVolumetricRegionFreshness, ExactVolumetricRegionRelation, FaceRegionPlaneRelation,
+    FullFaceAdjacentUnionFreshness, IntersectionGraphFreshness, MeshArtifactBlocker,
+    MeshArtifactManifest, MeshArtifactRole, MeshArtifactSourceKind, MeshCoordinateEvidence,
+    MeshFacePairFreshness, MeshFacePairRelation, MeshFacePairValidationError, SplitPlanFreshness,
+    TriangleTriangleFreshness, TriangleTriangleRelation, ValidationPolicy, WindingReportFreshness,
+    approximate_mesh_f64_view, boolean_exact, boolean_exact_with_boundary_policy,
+    boolean_selected_regions, build_exact_arrangement2d_overlay,
     build_exact_arrangement2d_overlay_with_boundary_policy, build_intersection_graph,
     certify_boundary_touching_report, certify_convex_solid,
     certify_coplanar_volumetric_cell_evidence, certify_exact_mesh_proposal,
@@ -30,8 +31,10 @@ use hypermesh::{
     classify_triangle_triangle, exact_arrangement_boolean_attempt_report,
     exact_mesh_consumer_readiness, exact_mesh_handoff_package, inspect_i64_mesh_input,
     materialize_adjacent_union_completion_boolean, materialize_affine_orthogonal_solid_boolean,
+    materialize_affine_orthogonal_solid_difference,
     materialize_affine_orthogonal_solid_intersection, materialize_arrangement_cell_complex_boolean,
     materialize_axis_aligned_orthogonal_solid_boolean,
+    materialize_axis_aligned_orthogonal_solid_difference,
     materialize_axis_aligned_orthogonal_solid_intersection,
     materialize_axis_aligned_orthogonal_solid_union, materialize_boundary_touching_policy_boolean,
     materialize_bounds_disjoint_boolean, materialize_closed_boundary_touching_regularized_boolean,
@@ -590,6 +593,7 @@ fn exact_convex_reports_classify_freshness_publicly() {
 fn exact_affine_orthogonal_solid_materializer_is_publicly_replayable() {
     let left = skew_affine_box([0, 0, 0], [2, 2, 2]);
     let right = skew_affine_box([1, 1, 1], [3, 3, 3]);
+    let separated_right = skew_affine_box([4, 4, 4], [5, 5, 5]);
 
     let arrangement =
         materialize_affine_orthogonal_solid_intersection(&left, &right, ValidationPolicy::CLOSED)
@@ -604,6 +608,22 @@ fn exact_affine_orthogonal_solid_materializer_is_publicly_replayable() {
     assert!(arrangement.mesh.facts().mesh.closed_manifold);
     assert!(!arrangement.mesh.triangles().is_empty());
 
+    let difference =
+        materialize_affine_orthogonal_solid_difference(&left, &right, ValidationPolicy::CLOSED)
+            .unwrap()
+            .expect("skew affine boxes should materialize exact affine difference");
+    difference.validate().unwrap();
+    difference.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(
+        difference.freshness_against_sources(&left, &right),
+        AffineOrthogonalSolidFreshness::Current
+    );
+    assert_eq!(
+        difference.freshness_against_sources(&left, &separated_right),
+        AffineOrthogonalSolidFreshness::SourceReplayMismatch
+    );
+    assert!(difference.mesh.facts().mesh.closed_manifold);
+
     let mut invalid_basis = arrangement.clone();
     invalid_basis.basis.basis_u = p(0, 0, 0);
     assert_eq!(
@@ -611,7 +631,6 @@ fn exact_affine_orthogonal_solid_materializer_is_publicly_replayable() {
         AffineOrthogonalSolidFreshness::InvalidOutput
     );
 
-    let separated_right = skew_affine_box([4, 4, 4], [5, 5, 5]);
     assert_eq!(
         arrangement.freshness_against_sources(&left, &separated_right),
         AffineOrthogonalSolidFreshness::SourceReplayMismatch
@@ -673,6 +692,7 @@ fn exact_axis_aligned_orthogonal_solid_materializer_is_publicly_replayable() {
     .expect("adjacent exact boxes should materialize an L-shaped orthogonal solid")
     .mesh;
     let right = axis_aligned_box([1, 0, 0], [3, 1, 1]);
+    let separated_right = axis_aligned_box([5, 0, 0], [6, 1, 1]);
 
     let arrangement = materialize_axis_aligned_orthogonal_solid_intersection(
         &left,
@@ -691,6 +711,26 @@ fn exact_axis_aligned_orthogonal_solid_materializer_is_publicly_replayable() {
     assert!(arrangement.mesh.facts().mesh.closed_manifold);
     assert!(!arrangement.mesh.triangles().is_empty());
 
+    let difference = materialize_axis_aligned_orthogonal_solid_difference(
+        &left,
+        &right,
+        ValidationPolicy::CLOSED,
+    )
+    .unwrap()
+    .expect("L solid and box should materialize exact orthogonal difference");
+    difference.validate().unwrap();
+    difference.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(
+        difference.freshness_against_sources(&left, &right),
+        AxisAlignedOrthogonalSolidFreshness::Current
+    );
+    assert_eq!(
+        difference.freshness_against_sources(&left, &separated_right),
+        AxisAlignedOrthogonalSolidFreshness::SourceReplayMismatch
+    );
+    assert!(difference.selected_cells > 0);
+    assert!(difference.mesh.facts().mesh.closed_manifold);
+
     let mut stale_selected_count = arrangement.clone();
     stale_selected_count.selected_cells += 1;
     assert_eq!(
@@ -705,7 +745,6 @@ fn exact_axis_aligned_orthogonal_solid_materializer_is_publicly_replayable() {
         AxisAlignedOrthogonalSolidFreshness::InvalidOutput
     );
 
-    let separated_right = axis_aligned_box([5, 0, 0], [6, 1, 1]);
     assert_eq!(
         arrangement.freshness_against_sources(&left, &separated_right),
         AxisAlignedOrthogonalSolidFreshness::SourceReplayMismatch
@@ -1020,6 +1059,66 @@ fn exact_open_surface_arrangement_is_publicly_replayable() {
             ExactReportFreshness::SourceReplayMismatch
         );
     }
+}
+
+#[test]
+fn exact_selected_region_boolean_is_publicly_replayable() {
+    let left = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 0, 4, 0, 0, 0, 4, 0],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let right = ExactMesh::from_i64_triangles_with_policy(
+        &[1, -1, -1, 1, 3, 1, 1, 3, -1],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let separated_right = ExactMesh::from_i64_triangles_with_policy(
+        &[8, -1, -1, 8, 3, 1, 8, 3, -1],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let policy = ExactBooleanPolicy {
+        selection: ExactRegionSelection::KeepAll,
+        validation: ValidationPolicy::ALLOW_BOUNDARY,
+        reject_unknowns: true,
+    };
+
+    let result = boolean_selected_regions(&left, &right, policy).unwrap();
+
+    assert_eq!(
+        result.kind,
+        ExactBooleanResultKind::SelectedRegions {
+            selection: ExactRegionSelection::KeepAll
+        }
+    );
+    result.validate().unwrap();
+    result.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(
+        result.freshness_against_sources(&left, &right),
+        ExactReportFreshness::Current
+    );
+    assert_eq!(
+        result.freshness_against_sources(&left, &separated_right),
+        ExactReportFreshness::SourceReplayMismatch
+    );
+    assert!(!result.region_classifications.is_empty());
+    assert!(!result.triangulations.is_empty());
+    assert!(!result.assembly.triangles.is_empty());
+    assert!(!result.mesh.triangles().is_empty());
+    assert_eq!(
+        result.mesh.validation_policy(),
+        ValidationPolicy::ALLOW_BOUNDARY
+    );
+
+    let mut stale_kind = result.clone();
+    stale_kind.kind = ExactBooleanResultKind::SelectedRegions {
+        selection: ExactRegionSelection::KeepLeft,
+    };
+    assert!(stale_kind.validate_against_sources(&left, &right).is_err());
 }
 
 #[test]
