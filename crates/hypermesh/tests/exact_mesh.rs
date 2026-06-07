@@ -1499,6 +1499,12 @@ fn exact_coplanar_mesh_overlay_arrangement_is_publicly_replayable() {
             result.freshness_against_sources(&left, &separated_right),
             ExactReportFreshness::SourceReplayMismatch
         );
+        let mut stale_output = result.clone();
+        stale_output.mesh = left.clone();
+        assert_eq!(
+            stale_output.freshness_against_sources(&left, &right),
+            ExactReportFreshness::SourceReplayMismatch
+        );
     }
 }
 
