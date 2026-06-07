@@ -37,7 +37,8 @@ use hypermesh::{
     classify_mesh_vertices_against_convex_solid_report,
     classify_point_against_closed_mesh_winding_report, classify_point_against_convex_solid_report,
     classify_triangle_triangle, exact_arrangement_boolean_attempt_report,
-    exact_mesh_consumer_readiness, exact_mesh_handoff_package, inspect_i64_mesh_input,
+    exact_arrangement_boolean_attempt_report_with_validation, exact_mesh_consumer_readiness,
+    exact_mesh_handoff_package, inspect_i64_mesh_input,
     materialize_adjacent_union_completion_boolean, materialize_affine_orthogonal_solid_boolean,
     materialize_affine_orthogonal_solid_difference,
     materialize_affine_orthogonal_solid_intersection, materialize_arrangement_cell_complex_boolean,
@@ -1212,11 +1213,35 @@ fn exact_open_surface_arrangement_is_publicly_replayable() {
             Some(hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex),
             "{operation:?}: {attempt:?}"
         );
+        assert_eq!(attempt.output_validation, ValidationPolicy::ALLOW_BOUNDARY);
         attempt.validate().unwrap();
         attempt.validate_against_sources(&left, &right).unwrap();
+        attempt
+            .validate_against_sources_with_validation(
+                &left,
+                &right,
+                ValidationPolicy::ALLOW_BOUNDARY,
+            )
+            .unwrap();
         assert_eq!(
             attempt.freshness_against_sources(&left, &right),
             ExactReportFreshness::Current
+        );
+        assert_eq!(
+            attempt.freshness_against_sources_with_validation(
+                &left,
+                &right,
+                ValidationPolicy::ALLOW_BOUNDARY,
+            ),
+            ExactReportFreshness::Current
+        );
+        assert_eq!(
+            attempt.freshness_against_sources_with_validation(
+                &left,
+                &right,
+                ValidationPolicy::CLOSED,
+            ),
+            ExactReportFreshness::SourceReplayMismatch
         );
 
         let result = materialize_open_surface_arrangement(
@@ -1246,6 +1271,117 @@ fn exact_open_surface_arrangement_is_publicly_replayable() {
         }
         assert_eq!(
             result.freshness_against_sources(&left, &separated_right),
+            ExactReportFreshness::SourceReplayMismatch
+        );
+    }
+}
+
+#[test]
+fn arrangement_attempt_output_validation_is_publicly_replayable() {
+    let left = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 0, 4, 0, 0, 0, 4, 0],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let right = ExactMesh::from_i64_triangles_with_policy(
+        &[1, 1, 0, 5, 1, 0, 1, 5, 0],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+
+    for operation in [
+        ExactBooleanOperation::Union,
+        ExactBooleanOperation::Intersection,
+    ] {
+        let closed_attempt = exact_arrangement_boolean_attempt_report_with_validation(
+            &left,
+            &right,
+            operation,
+            ExactRegularizationPolicy::REGULARIZED_SOLID,
+            ValidationPolicy::CLOSED,
+        )
+        .unwrap();
+        assert_eq!(closed_attempt.output_validation, ValidationPolicy::CLOSED);
+        assert!(
+            closed_attempt.materialized_shortcut.is_none(),
+            "{operation:?}: {closed_attempt:?}"
+        );
+        assert!(
+            matches!(
+                closed_attempt.decline,
+                Some(hypermesh::ExactArrangementBooleanDecline::OutputValidation)
+            ),
+            "{operation:?}: {closed_attempt:?}"
+        );
+        closed_attempt.validate().unwrap();
+        closed_attempt
+            .validate_against_sources(&left, &right)
+            .unwrap();
+        closed_attempt
+            .validate_against_sources_with_validation(&left, &right, ValidationPolicy::CLOSED)
+            .unwrap();
+        assert_eq!(
+            closed_attempt.freshness_against_sources_with_validation(
+                &left,
+                &right,
+                ValidationPolicy::CLOSED,
+            ),
+            ExactReportFreshness::Current
+        );
+        assert_eq!(
+            closed_attempt.freshness_against_sources_with_validation(
+                &left,
+                &right,
+                ValidationPolicy::ALLOW_BOUNDARY,
+            ),
+            ExactReportFreshness::SourceReplayMismatch
+        );
+
+        let boundary_attempt = exact_arrangement_boolean_attempt_report_with_validation(
+            &left,
+            &right,
+            operation,
+            ExactRegularizationPolicy::REGULARIZED_SOLID,
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        assert_eq!(
+            boundary_attempt.output_validation,
+            ValidationPolicy::ALLOW_BOUNDARY
+        );
+        assert_eq!(
+            boundary_attempt.materialized_shortcut,
+            Some(hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex),
+            "{operation:?}: {boundary_attempt:?}"
+        );
+        assert!(
+            boundary_attempt.decline.is_none(),
+            "{operation:?}: {boundary_attempt:?}"
+        );
+        boundary_attempt.validate().unwrap();
+        boundary_attempt
+            .validate_against_sources_with_validation(
+                &left,
+                &right,
+                ValidationPolicy::ALLOW_BOUNDARY,
+            )
+            .unwrap();
+        assert_eq!(
+            boundary_attempt.freshness_against_sources_with_validation(
+                &left,
+                &right,
+                ValidationPolicy::ALLOW_BOUNDARY,
+            ),
+            ExactReportFreshness::Current
+        );
+        assert_eq!(
+            boundary_attempt.freshness_against_sources_with_validation(
+                &left,
+                &right,
+                ValidationPolicy::CLOSED,
+            ),
             ExactReportFreshness::SourceReplayMismatch
         );
     }

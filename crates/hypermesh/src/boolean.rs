@@ -181,6 +181,8 @@ pub struct ExactArrangementBooleanAttempt {
     pub operation: ExactBooleanOperation,
     /// Regularization policy used by the arrangement pipeline.
     pub policy: ExactRegularizationPolicy,
+    /// Output validation policy used by shortcut recovery and final mesh copy.
+    pub output_validation: ValidationPolicy,
     /// Furthest stage reached.
     pub stage: ExactArrangementBooleanStage,
     /// Reason no output was produced, when the attempt declined.
@@ -260,9 +262,39 @@ impl ExactArrangementBooleanAttempt {
         right: &ExactMesh,
     ) -> Result<(), ExactReportValidationError> {
         self.validate()?;
-        let replay =
-            exact_arrangement_boolean_attempt_report(left, right, self.operation, self.policy)
-                .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+        let replay = exact_arrangement_boolean_attempt_report_with_validation(
+            left,
+            right,
+            self.operation,
+            self.policy,
+            self.output_validation,
+        )
+        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+        replay.validate()?;
+        if self == &replay {
+            Ok(())
+        } else {
+            Err(ExactReportValidationError::SourceReplayMismatch)
+        }
+    }
+
+    /// Validate this attempt by replaying it under an explicit output
+    /// validation policy.
+    pub fn validate_against_sources_with_validation(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+        validation: ValidationPolicy,
+    ) -> Result<(), ExactReportValidationError> {
+        self.validate()?;
+        let replay = exact_arrangement_boolean_attempt_report_with_validation(
+            left,
+            right,
+            self.operation,
+            self.policy,
+            validation,
+        )
+        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
         replay.validate()?;
         if self == &replay {
             Ok(())
@@ -280,7 +312,38 @@ impl ExactArrangementBooleanAttempt {
         if let Err(error) = self.validate() {
             return error.into();
         }
-        match exact_arrangement_boolean_attempt_report(left, right, self.operation, self.policy) {
+        match exact_arrangement_boolean_attempt_report_with_validation(
+            left,
+            right,
+            self.operation,
+            self.policy,
+            self.output_validation,
+        ) {
+            Ok(replay) if replay.validate().is_ok() && self == &replay => {
+                ExactReportFreshness::Current
+            }
+            Ok(_) | Err(_) => ExactReportFreshness::SourceReplayMismatch,
+        }
+    }
+
+    /// Classify whether this retained arrangement attempt is fresh under an
+    /// explicit output validation policy.
+    pub fn freshness_against_sources_with_validation(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+        validation: ValidationPolicy,
+    ) -> ExactReportFreshness {
+        if let Err(error) = self.validate() {
+            return error.into();
+        }
+        match exact_arrangement_boolean_attempt_report_with_validation(
+            left,
+            right,
+            self.operation,
+            self.policy,
+            validation,
+        ) {
             Ok(replay) if replay.validate().is_ok() && self == &replay => {
                 ExactReportFreshness::Current
             }
@@ -2425,13 +2488,23 @@ fn materialized_arrangement_attempt_outcome(
     ArrangementCellComplexOutcome::materialized(result, attempt.clone())
 }
 
+fn declined_output_validation_attempt_outcome(
+    attempt: &mut ExactArrangementBooleanAttempt,
+) -> ArrangementCellComplexOutcome {
+    attempt.stage = ExactArrangementBooleanStage::Triangulated;
+    attempt.decline = Some(ExactArrangementBooleanDecline::OutputValidation);
+    ArrangementCellComplexOutcome::Declined(attempt.clone())
+}
+
 /// Report how far the arrangement/cell-complex Boolean pipeline gets for an
-/// operation without falling through to specialized materializers.
-pub fn exact_arrangement_boolean_attempt_report(
+/// operation under an explicit output validation policy, without falling
+/// through to specialized materializers.
+pub fn exact_arrangement_boolean_attempt_report_with_validation(
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
     policy: ExactRegularizationPolicy,
+    validation: ValidationPolicy,
 ) -> Result<ExactArrangementBooleanAttempt, MeshError> {
     Ok(
         match run_arrangement_cell_complex_attempt(
@@ -2439,12 +2512,34 @@ pub fn exact_arrangement_boolean_attempt_report(
             right,
             operation,
             policy,
-            Some(ValidationPolicy::ALLOW_BOUNDARY),
+            Some(validation),
             true,
         )? {
             ArrangementCellComplexOutcome::Materialized(_, attempt)
             | ArrangementCellComplexOutcome::Declined(attempt) => attempt,
         },
+    )
+}
+
+/// Report how far the arrangement/cell-complex Boolean pipeline gets for an
+/// operation without falling through to specialized materializers.
+///
+/// This compatibility form uses [`ValidationPolicy::ALLOW_BOUNDARY`], matching
+/// the historical public attempt report contract. Use
+/// [`exact_arrangement_boolean_attempt_report_with_validation`] when the output
+/// validation policy is part of the certified decision being retained.
+pub fn exact_arrangement_boolean_attempt_report(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    policy: ExactRegularizationPolicy,
+) -> Result<ExactArrangementBooleanAttempt, MeshError> {
+    exact_arrangement_boolean_attempt_report_with_validation(
+        left,
+        right,
+        operation,
+        policy,
+        ValidationPolicy::ALLOW_BOUNDARY,
     )
 }
 
@@ -2642,6 +2737,7 @@ fn run_arrangement_cell_complex_attempt(
     let mut attempt = ExactArrangementBooleanAttempt {
         operation,
         policy,
+        output_validation: validation.unwrap_or_default(),
         stage: ExactArrangementBooleanStage::ArrangementBuilt,
         decline: None,
         materialized_shortcut: None,
@@ -2720,14 +2816,18 @@ fn run_arrangement_cell_complex_attempt(
 
     if !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
         && let Some(validation) = validation
-        && let Some(result) =
-            boolean_coplanar_mesh_overlay_optional(left, right, operation, validation)?
     {
-        return Ok(materialized_arrangement_attempt_outcome(
-            &mut attempt,
-            result,
-            false,
-        ));
+        match boolean_coplanar_mesh_overlay_optional(left, right, operation, validation) {
+            Ok(Some(result)) => {
+                return Ok(materialized_arrangement_attempt_outcome(
+                    &mut attempt,
+                    result,
+                    false,
+                ));
+            }
+            Ok(None) => {}
+            Err(_) => return Ok(declined_output_validation_attempt_outcome(&mut attempt)),
+        }
     }
 
     if let Some(validation) = validation
@@ -2747,18 +2847,22 @@ fn run_arrangement_cell_complex_attempt(
         && !volume_resolves_region_classification
         && !selected_regions_ignore_unresolved_classification
     {
-        if let Some(result) = materialize_simple_coplanar_overlay_arrangement(
+        match materialize_simple_coplanar_overlay_arrangement(
             left,
             right,
             operation,
             validation,
             &arrangement,
-        )? {
-            return Ok(materialized_arrangement_attempt_outcome(
-                &mut attempt,
-                result,
-                false,
-            ));
+        ) {
+            Ok(Some(result)) => {
+                return Ok(materialized_arrangement_attempt_outcome(
+                    &mut attempt,
+                    result,
+                    false,
+                ));
+            }
+            Ok(None) => {}
+            Err(_) => return Ok(declined_output_validation_attempt_outcome(&mut attempt)),
         }
         if regularize_unregularized_sheet_complex
             && arrangement_blockers_are_unregularized_sheet_complex(&arrangement.blockers)
