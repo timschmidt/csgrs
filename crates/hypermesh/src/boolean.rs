@@ -2243,22 +2243,14 @@ pub fn materialize_closed_winding_containment_boolean(
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
-    let Some(result) =
-        boolean_closed_winding_containment_meshes(left, right, operation, validation)?
-    else {
-        return Ok(None);
-    };
-    if !exact_boolean_result_matches_public_operation_replay(
-        &result,
+    Ok(public_operation_replayable_result(
+        boolean_closed_winding_containment_meshes(left, right, operation, validation)?,
         left,
         right,
         operation,
         validation,
         ExactBoundaryBooleanPolicy::Reject,
-    ) {
-        return Ok(None);
-    }
-    Ok(Some(result))
+    ))
 }
 
 fn boolean_closed_winding_separated_meshes(
@@ -2321,21 +2313,34 @@ pub fn materialize_closed_winding_separated_boolean(
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
-    let Some(result) = boolean_closed_winding_separated_meshes(left, right, operation, validation)?
-    else {
-        return Ok(None);
-    };
-    if !exact_boolean_result_matches_public_operation_replay(
-        &result,
+    Ok(public_operation_replayable_result(
+        boolean_closed_winding_separated_meshes(left, right, operation, validation)?,
         left,
         right,
         operation,
         validation,
         ExactBoundaryBooleanPolicy::Reject,
-    ) {
-        return Ok(None);
-    }
-    Ok(Some(result))
+    ))
+}
+
+fn public_operation_replayable_result(
+    result: Option<ExactBooleanResult>,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+    boundary_policy: ExactBoundaryBooleanPolicy,
+) -> Option<ExactBooleanResult> {
+    let result = result?;
+    exact_boolean_result_matches_public_operation_replay(
+        &result,
+        left,
+        right,
+        operation,
+        validation,
+        boundary_policy,
+    )
+    .then_some(result)
 }
 
 fn exact_boolean_result_matches_public_operation_replay(
@@ -4432,20 +4437,14 @@ pub fn materialize_closed_convex_boolean(
         }
         _ => return Ok(None),
     };
-    let Some(result) = result else {
-        return Ok(None);
-    };
-    if !exact_boolean_result_matches_public_operation_replay(
-        &result,
+    Ok(public_operation_replayable_result(
+        result,
         left,
         right,
         operation,
         validation,
         ExactBoundaryBooleanPolicy::Reject,
-    ) {
-        return Ok(None);
-    }
-    Ok(Some(result))
+    ))
 }
 
 fn boolean_arrangement_convex_regularized_sheet_recovery(
@@ -6258,7 +6257,16 @@ pub fn materialize_open_surface_disjoint_boolean(
     }
     let graph = build_intersection_graph(left, right)?;
     validate_graph_source_handoff(&graph, left, right)?;
-    boolean_open_surface_disjoint_meshes_from_graph(&graph, left, right, operation, validation)
+    Ok(public_operation_replayable_result(
+        boolean_open_surface_disjoint_meshes_from_graph(
+            &graph, left, right, operation, validation,
+        )?,
+        left,
+        right,
+        operation,
+        validation,
+        ExactBoundaryBooleanPolicy::Reject,
+    ))
 }
 
 /// Certify whether two open surface meshes are disjoint by exact graph facts.
@@ -6697,7 +6705,14 @@ pub fn materialize_identical_mesh_boolean(
     {
         return Ok(None);
     }
-    boolean_identical_meshes(left, operation, validation).map(Some)
+    Ok(public_operation_replayable_result(
+        Some(boolean_identical_meshes(left, operation, validation)?),
+        left,
+        right,
+        operation,
+        validation,
+        ExactBoundaryBooleanPolicy::Reject,
+    ))
 }
 
 /// Certify and materialize a named boolean for equal non-closed surfaces with
@@ -6722,7 +6737,14 @@ pub fn materialize_same_surface_boolean(
     {
         return Ok(None);
     }
-    boolean_same_surface_meshes(left, operation, validation).map(Some)
+    Ok(public_operation_replayable_result(
+        Some(boolean_same_surface_meshes(left, operation, validation)?),
+        left,
+        right,
+        operation,
+        validation,
+        ExactBoundaryBooleanPolicy::Reject,
+    ))
 }
 
 /// Certify and materialize the closed same-surface arrangement boolean.
@@ -8757,7 +8779,14 @@ pub fn materialize_closed_regularized_lower_dimensional_boolean(
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
-    boolean_closed_regularized_lower_dimensional_optional(left, right, operation, validation)
+    Ok(public_operation_replayable_result(
+        boolean_closed_regularized_lower_dimensional_optional(left, right, operation, validation)?,
+        left,
+        right,
+        operation,
+        validation,
+        ExactBoundaryBooleanPolicy::Reject,
+    ))
 }
 
 /// Certify and materialize a named regularized boolean between a closed solid
@@ -8782,7 +8811,14 @@ pub fn materialize_mixed_dimensional_regularized_solid_boolean(
     {
         return Ok(None);
     }
-    boolean_closed_regularized_lower_dimensional_optional(left, right, operation, validation)
+    Ok(public_operation_replayable_result(
+        boolean_closed_regularized_lower_dimensional_optional(left, right, operation, validation)?,
+        left,
+        right,
+        operation,
+        validation,
+        ExactBoundaryBooleanPolicy::Reject,
+    ))
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -8853,7 +8889,14 @@ pub fn materialize_bounds_disjoint_boolean(
     {
         return Ok(None);
     }
-    boolean_disjoint_meshes(left, right, operation, validation).map(Some)
+    Ok(public_operation_replayable_result(
+        Some(boolean_disjoint_meshes(left, right, operation, validation)?),
+        left,
+        right,
+        operation,
+        validation,
+        ExactBoundaryBooleanPolicy::Reject,
+    ))
 }
 
 fn boolean_empty_operand(
@@ -8951,7 +8994,14 @@ pub fn materialize_empty_operand_boolean(
     {
         return Ok(None);
     }
-    boolean_empty_operand(left, right, operation, validation).map(Some)
+    Ok(public_operation_replayable_result(
+        Some(boolean_empty_operand(left, right, operation, validation)?),
+        left,
+        right,
+        operation,
+        validation,
+        ExactBoundaryBooleanPolicy::Reject,
+    ))
 }
 
 fn boolean_identical_meshes(
