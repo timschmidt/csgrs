@@ -2417,13 +2417,22 @@ pub fn materialize_arrangement_cell_complex_boolean(
     boolean_exact(left, right, operation, validation).map(Some)
 }
 
-fn arrangement_cell_complex_attempt_is_certified_for_preflight(
+fn arrangement_cell_complex_result_is_certified_for_preflight(
+    result: &ExactBooleanResult,
     attempt: &ExactArrangementBooleanAttempt,
 ) -> bool {
     attempt.decline.is_none()
         && (attempt.arrangement_blockers == 0
             || attempt.materialized_shortcut
                 == Some(ExactBooleanShortcutKind::ArrangementCellComplex))
+        && matches!(
+            result.kind,
+            ExactBooleanResultKind::ArrangementCellComplexMaterialized { .. }
+                | ExactBooleanResultKind::CertifiedShortcut {
+                    shortcut: ExactBooleanShortcutKind::ArrangementCellComplex,
+                    ..
+                }
+        )
 }
 
 fn arrangement_cell_complex_materializes_for_preflight(
@@ -2447,8 +2456,10 @@ fn arrangement_cell_complex_materializes_for_preflight(
             Some(validation),
             regularize_unregularized_sheet_complex,
         ) {
-            Ok(ArrangementCellComplexOutcome::Materialized(_, attempt))
-                if arrangement_cell_complex_attempt_is_certified_for_preflight(&attempt) =>
+            Ok(ArrangementCellComplexOutcome::Materialized(result, attempt))
+                if arrangement_cell_complex_result_is_certified_for_preflight(
+                    &result, &attempt,
+                ) =>
             {
                 return Ok(true);
             }
@@ -3026,6 +3037,7 @@ fn arrangement_open_surface_recovery_outcome(
     )?;
     attempt.stage = ExactArrangementBooleanStage::Materialized;
     attempt.decline = None;
+    attempt.materialized_shortcut = Some(ExactBooleanShortcutKind::ArrangementCellComplex);
     attempt.output_vertices = result.mesh.vertices().len();
     attempt.output_triangles = result.mesh.triangles().len();
     Ok(Some(ArrangementCellComplexOutcome::materialized(
@@ -9605,8 +9617,8 @@ mod tests {
             Some(validation),
             true,
         ) {
-            Ok(ArrangementCellComplexOutcome::Materialized(_, attempt)) => {
-                arrangement_cell_complex_attempt_is_certified_for_preflight(&attempt)
+            Ok(ArrangementCellComplexOutcome::Materialized(result, attempt)) => {
+                arrangement_cell_complex_result_is_certified_for_preflight(&result, &attempt)
             }
             Ok(ArrangementCellComplexOutcome::Declined(_)) | Err(_) => false,
         }
@@ -9731,10 +9743,17 @@ mod tests {
                 ExactArrangementBooleanStage::Materialized,
                 "{operation:?}: {attempt:?}"
             );
+            assert_eq!(
+                attempt.materialized_shortcut,
+                Some(ExactBooleanShortcutKind::ArrangementCellComplex),
+                "{operation:?}: {attempt:?}"
+            );
             assert!(attempt.decline.is_none(), "{operation:?}: {attempt:?}");
             if !matches!(operation, ExactBooleanOperation::Intersection) {
                 assert!(attempt.output_triangles > 0, "{operation:?}: {attempt:?}");
             }
+            attempt.validate().unwrap();
+            attempt.validate_against_sources(&left, &right).unwrap();
 
             let result = boolean_exact(&left, &right, operation, ValidationPolicy::ALLOW_BOUNDARY)
                 .expect("open-surface crossing should materialize");

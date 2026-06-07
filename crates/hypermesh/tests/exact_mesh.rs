@@ -1168,6 +1168,25 @@ fn exact_open_surface_arrangement_is_publicly_replayable() {
         ExactBooleanOperation::Intersection,
         ExactBooleanOperation::Difference,
     ] {
+        let attempt = exact_arrangement_boolean_attempt_report(
+            &left,
+            &right,
+            operation,
+            ExactRegularizationPolicy::REGULARIZED_SOLID,
+        )
+        .unwrap();
+        assert_eq!(
+            attempt.materialized_shortcut,
+            Some(hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex),
+            "{operation:?}: {attempt:?}"
+        );
+        attempt.validate().unwrap();
+        attempt.validate_against_sources(&left, &right).unwrap();
+        assert_eq!(
+            attempt.freshness_against_sources(&left, &right),
+            ExactReportFreshness::Current
+        );
+
         let result = materialize_open_surface_arrangement(
             &left,
             &right,
