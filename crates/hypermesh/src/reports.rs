@@ -1255,6 +1255,16 @@ impl ExactBooleanResult {
         }
         if let ExactBooleanResultKind::CertifiedShortcut {
             operation,
+            shortcut:
+                shortcut @ (ExactBooleanShortcutKind::ClosedWindingSeparated
+                | ExactBooleanShortcutKind::ClosedWindingContainment),
+        } = self.kind
+            && !closed_winding_output_matches_sources(shortcut, operation, &self.mesh, left, right)?
+        {
+            return Err(ExactReportValidationError::SourceReplayMismatch);
+        }
+        if let ExactBooleanResultKind::CertifiedShortcut {
+            operation,
             shortcut,
         } = self.kind
             && !certified_shortcut_sources_match(
@@ -1785,6 +1795,107 @@ fn closed_winding_sources_match(
                 || right_in_left.relation == ClosedMeshWindingMeshRelation::StrictlyInside
         }
         _ => unreachable!("only closed winding shortcuts are replayed here"),
+    })
+}
+
+fn closed_winding_output_matches_sources(
+    shortcut: ExactBooleanShortcutKind,
+    operation: ExactBooleanOperation,
+    mesh: &ExactMesh,
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Result<bool, ExactReportValidationError> {
+    let Some(relation) = certified_closed_winding_relation_from_sources(left, right)? else {
+        return Ok(false);
+    };
+    match relation {
+        ReportClosedWindingRelation::Separated => {
+            if shortcut != ExactBooleanShortcutKind::ClosedWindingSeparated {
+                return Ok(false);
+            }
+            Ok(match operation {
+                ExactBooleanOperation::Union => {
+                    concatenated_mesh_output_matches(mesh, left, right, false)
+                }
+                ExactBooleanOperation::Intersection => mesh_output_is_empty(mesh),
+                ExactBooleanOperation::Difference => mesh_output_matches(mesh, left),
+                ExactBooleanOperation::SelectedRegions(_) => false,
+            })
+        }
+        ReportClosedWindingRelation::LeftInsideRight => {
+            if shortcut != ExactBooleanShortcutKind::ClosedWindingContainment {
+                return Ok(false);
+            }
+            Ok(match operation {
+                ExactBooleanOperation::Union => mesh_output_matches(mesh, right),
+                ExactBooleanOperation::Intersection => mesh_output_matches(mesh, left),
+                ExactBooleanOperation::Difference => mesh_output_is_empty(mesh),
+                ExactBooleanOperation::SelectedRegions(_) => false,
+            })
+        }
+        ReportClosedWindingRelation::RightInsideLeft => {
+            if shortcut != ExactBooleanShortcutKind::ClosedWindingContainment {
+                return Ok(false);
+            }
+            Ok(match operation {
+                ExactBooleanOperation::Union => mesh_output_matches(mesh, left),
+                ExactBooleanOperation::Intersection => mesh_output_matches(mesh, right),
+                ExactBooleanOperation::Difference => {
+                    concatenated_mesh_output_matches(mesh, left, right, true)
+                }
+                ExactBooleanOperation::SelectedRegions(_) => false,
+            })
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum ReportClosedWindingRelation {
+    Separated,
+    LeftInsideRight,
+    RightInsideLeft,
+}
+
+fn certified_closed_winding_relation_from_sources(
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Result<Option<ReportClosedWindingRelation>, ExactReportValidationError> {
+    if !mesh_is_closed_solid(left) || !mesh_is_closed_solid(right) {
+        return Ok(None);
+    }
+    let graph = build_intersection_graph(left, right)
+        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+    graph
+        .validate_against_sources(left, right)
+        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+    let counts = blocker_source_counts(&graph);
+    if graph.has_unknowns()
+        || !graph.face_pairs.is_empty()
+        || counts.construction_failed_events != 0
+    {
+        return Ok(None);
+    }
+
+    let left_in_right = classify_mesh_vertices_against_closed_mesh_winding_report(left, right);
+    left_in_right
+        .validate_against_sources(left, right)
+        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+    let right_in_left = classify_mesh_vertices_against_closed_mesh_winding_report(right, left);
+    right_in_left
+        .validate_against_sources(right, left)
+        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+
+    Ok(match (left_in_right.relation, right_in_left.relation) {
+        (ClosedMeshWindingMeshRelation::Outside, ClosedMeshWindingMeshRelation::Outside) => {
+            Some(ReportClosedWindingRelation::Separated)
+        }
+        (ClosedMeshWindingMeshRelation::StrictlyInside, _) => {
+            Some(ReportClosedWindingRelation::LeftInsideRight)
+        }
+        (_, ClosedMeshWindingMeshRelation::StrictlyInside) => {
+            Some(ReportClosedWindingRelation::RightInsideLeft)
+        }
+        _ => None,
     })
 }
 

@@ -2143,6 +2143,16 @@ fn closed_winding_shortcuts_are_publicly_replayable() {
             result.freshness_against_sources(&separated_left, &intersecting_right),
             ExactReportFreshness::SourceReplayMismatch
         );
+        if operation == ExactBooleanOperation::Intersection {
+            let mut stale_output = result.clone();
+            stale_output.mesh = separated_left.clone();
+            assert!(stale_output.validate().is_ok(), "{stale_output:?}");
+            assert_eq!(
+                stale_output.freshness_against_sources(&separated_left, &separated_right),
+                ExactReportFreshness::SourceReplayMismatch,
+                "{stale_output:?}"
+            );
+        }
         result
             .validate_operation_against_sources(
                 &separated_left,
@@ -2196,6 +2206,16 @@ fn closed_winding_shortcuts_are_publicly_replayable() {
             result.freshness_against_sources(&container, &uncontained),
             ExactReportFreshness::SourceReplayMismatch
         );
+        if operation == ExactBooleanOperation::Difference {
+            let mut stale_output = result.clone();
+            stale_output.mesh = container.clone();
+            assert!(stale_output.validate().is_ok(), "{stale_output:?}");
+            assert_eq!(
+                stale_output.freshness_against_sources(&container, &contained),
+                ExactReportFreshness::SourceReplayMismatch,
+                "{stale_output:?}"
+            );
+        }
         result
             .validate_operation_against_sources(
                 &container,
