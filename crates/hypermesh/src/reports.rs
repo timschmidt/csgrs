@@ -11,6 +11,7 @@ use hyperlimit::{Point3, compare_reals};
 use std::cmp::Ordering;
 
 use super::ExactMesh;
+use super::adjacent::materialize_full_face_adjacent_union;
 use super::boolean::{
     ExactBooleanOperation, ExactBoundaryBooleanPolicy, boolean_exact_with_boundary_policy,
     certify_adjacent_union_completion_report, certify_boundary_touching_report,
@@ -24,6 +25,7 @@ use super::boolean::{
     replay_volumetric_winding_region_plan,
 };
 use super::bounds::AabbIntersectionKind;
+use super::contained_adjacent::materialize_contained_face_adjacent_union;
 use super::convex::{
     intersect_closed_convex_solids, subtract_closed_convex_solids, union_closed_convex_solids,
 };
@@ -1240,6 +1242,21 @@ impl ExactBooleanResult {
         }
         if let ExactBooleanResultKind::CertifiedShortcut {
             operation,
+            shortcut: ExactBooleanShortcutKind::ArrangementCellComplex,
+        } = self.kind
+            && let Some(matches_output) = arrangement_cell_complex_output_matches_sources(
+                operation,
+                self.mesh.validation_policy(),
+                &self.mesh,
+                left,
+                right,
+            )?
+            && !matches_output
+        {
+            return Err(ExactReportValidationError::SourceReplayMismatch);
+        }
+        if let ExactBooleanResultKind::CertifiedShortcut {
+            operation,
             shortcut:
                 shortcut @ (ExactBooleanShortcutKind::ConvexUnion
                 | ExactBooleanShortcutKind::ConvexIntersection
@@ -2068,6 +2085,71 @@ fn arrangement_cell_complex_sources_match(
         .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
     preflight.validate()?;
     Ok(preflight.support == ExactBooleanSupport::CertifiedArrangementCellComplex)
+}
+
+fn arrangement_cell_complex_output_matches_sources(
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+    mesh: &ExactMesh,
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Result<Option<bool>, ExactReportValidationError> {
+    if operation != ExactBooleanOperation::Union {
+        return Ok(None);
+    }
+
+    let adjacent_report = certify_adjacent_union_completion_report(left, right, operation)
+        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+    adjacent_report.validate()?;
+    match adjacent_report.status {
+        ExactAdjacentUnionCompletionStatus::CertifiedFullFace => {
+            let Some(replay) = materialize_full_face_adjacent_union(left, right, validation) else {
+                return Ok(Some(false));
+            };
+            replay
+                .validate_against_sources(left, right)
+                .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+            return Ok(Some(mesh_output_matches(mesh, &replay.mesh)));
+        }
+        ExactAdjacentUnionCompletionStatus::CertifiedContainedFace => {
+            let Some(replay) = materialize_contained_face_adjacent_union(left, right, validation)
+            else {
+                return Ok(Some(false));
+            };
+            replay
+                .validate_against_sources(left, right)
+                .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+            return Ok(Some(mesh_output_matches(mesh, &replay.mesh)));
+        }
+        _ => {}
+    }
+    if adjacent_report.status != ExactAdjacentUnionCompletionStatus::NoAdjacencyCertificate {
+        return Ok(None);
+    }
+
+    if !mesh_is_closed_solid(left) || !mesh_is_closed_solid(right) {
+        return Ok(None);
+    }
+    let graph = build_intersection_graph(left, right)
+        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+    graph
+        .validate_against_sources(left, right)
+        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+    if graph.has_unknowns() || graph.face_pairs.is_empty() {
+        return Ok(None);
+    }
+    let evidence = CoplanarVolumetricCellEvidenceReport::from_graph(&graph, left, right);
+    evidence
+        .validate()
+        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+    if evidence.obstacle == CoplanarVolumetricCellObstacle::BoundaryOnlyContact
+        && evidence.positive_area_coplanar_overlapping_pairs > 0
+    {
+        return Ok(Some(concatenated_mesh_output_matches(
+            mesh, left, right, false,
+        )));
+    }
+    Ok(None)
 }
 
 fn mesh_is_closed_solid(mesh: &ExactMesh) -> bool {

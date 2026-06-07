@@ -1134,6 +1134,14 @@ fn adjacent_union_completion_boolean_is_publicly_replayable() {
         result.freshness_against_sources(&left, &right),
         ExactReportFreshness::Current
     );
+    let mut stale_output = result.clone();
+    stale_output.mesh = left.clone();
+    assert!(stale_output.validate().is_ok(), "{stale_output:?}");
+    assert_eq!(
+        stale_output.freshness_against_sources(&left, &right),
+        ExactReportFreshness::SourceReplayMismatch,
+        "{stale_output:?}"
+    );
     assert_eq!(
         result.freshness_against_sources(&left, &separated_right),
         ExactReportFreshness::SourceReplayMismatch
@@ -2096,6 +2104,16 @@ fn closed_no_volume_overlap_regularized_boolean_is_publicly_replayable() {
             result.freshness_against_sources(&left, &right),
             ExactReportFreshness::Current
         );
+        if operation == ExactBooleanOperation::Union {
+            let mut stale_output = result.clone();
+            stale_output.mesh = left.clone();
+            assert!(stale_output.validate().is_ok(), "{stale_output:?}");
+            assert_eq!(
+                stale_output.freshness_against_sources(&left, &right),
+                ExactReportFreshness::SourceReplayMismatch,
+                "{stale_output:?}"
+            );
+        }
         assert_eq!(
             result.freshness_against_sources(&left, &separated_right),
             ExactReportFreshness::SourceReplayMismatch
@@ -2740,6 +2758,14 @@ fn exact_contained_face_adjacent_union_is_publicly_replayable() {
     assert_eq!(
         result.freshness_against_sources(&container, &right),
         ExactReportFreshness::Current
+    );
+    let mut stale_output = result.clone();
+    stale_output.mesh = container.clone();
+    assert!(stale_output.validate().is_ok(), "{stale_output:?}");
+    assert_eq!(
+        stale_output.freshness_against_sources(&container, &right),
+        ExactReportFreshness::SourceReplayMismatch,
+        "{stale_output:?}"
     );
     assert_eq!(
         result.freshness_against_sources(&container, &separated_right),
