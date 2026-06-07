@@ -347,6 +347,12 @@ fn resolved_linear_overlap_traversal_materializes_native_and_retained_regions() 
         .expect("line role report keeps loop sources");
     assert_eq!(report_sources.len(), 1);
     assert_eq!(report_sources[0].as_deref(), Some(retained_sources));
+    let signed_report = decided(retained.signed_area_role_report(&policy()).unwrap());
+    let signed_report_sources = signed_report
+        .loop_arrangement_sources()
+        .expect("signed-area role report keeps counted loop sources");
+    assert_eq!(signed_report_sources.len(), 1);
+    assert_eq!(signed_report_sources[0].as_deref(), Some(retained_sources));
 
     let native = decided(BezierRegion2::from_retained_linear_overlap_traversal(
         &traversal,
@@ -531,6 +537,16 @@ fn retained_role_report_constructors_reject_mismatched_evidence() {
         .unwrap()
         .with_loop_arrangement_sources(vec![Some(Vec::new())]),
     );
+    assert_topology_error(
+        BezierRetainedSignedAreaRoleReport2::new(
+            vec![BezierRetainedRegionLoopRole::Material],
+            vec![r(-1)],
+        )
+        .unwrap()
+        .with_loop_arrangement_sources(vec![Some(vec![
+            BezierRetainedFragmentSource2::new(0, 0, 0),
+        ])]),
+    );
     assert_topology_error(BezierRetainedCurvedNestingRoleReport2::new(
         roles.clone(),
         vec![0],
@@ -558,6 +574,18 @@ fn retained_role_report_constructors_reject_mismatched_evidence() {
         )
         .unwrap()
         .with_loop_arrangement_sources(vec![Some(Vec::new())]),
+    );
+    assert_topology_error(
+        BezierRetainedCurvedNestingRoleReport2::new(
+            vec![BezierRetainedRegionLoopRole::Material],
+            vec![0],
+            vec![r(-1)],
+            vec![p(0, 0)],
+        )
+        .unwrap()
+        .with_loop_arrangement_sources(vec![Some(vec![
+            BezierRetainedFragmentSource2::new(0, 0, 0),
+        ])]),
     );
 }
 

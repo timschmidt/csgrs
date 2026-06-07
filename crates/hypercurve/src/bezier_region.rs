@@ -153,6 +153,7 @@ pub struct BezierRetainedLineRegionRoleReport2 {
 pub struct BezierRetainedSignedAreaRoleReport2 {
     roles: Vec<BezierRetainedRegionLoopRole>,
     signed_areas: Vec<Real>,
+    loop_fragment_counts: Option<Vec<usize>>,
     loop_arrangement_sources: Option<Vec<Option<Vec<BezierRetainedFragmentSource2>>>>,
 }
 
@@ -177,6 +178,7 @@ pub struct BezierRetainedCurvedNestingRoleReport2 {
     nesting_depths: Vec<usize>,
     signed_areas: Vec<Real>,
     sample_points: Vec<Point2>,
+    loop_fragment_counts: Option<Vec<usize>>,
     loop_arrangement_sources: Option<Vec<Option<Vec<BezierRetainedFragmentSource2>>>>,
 }
 
@@ -307,8 +309,15 @@ impl BezierRetainedSignedAreaRoleReport2 {
         Ok(Self {
             roles,
             signed_areas,
+            loop_fragment_counts: None,
             loop_arrangement_sources: None,
         })
+    }
+
+    fn with_loop_fragment_counts(mut self, loop_fragment_counts: Vec<usize>) -> CurveResult<Self> {
+        validate_loop_fragment_counts(self.roles.len(), &loop_fragment_counts)?;
+        self.loop_fragment_counts = Some(loop_fragment_counts);
+        Ok(self)
     }
 
     /// Attaches one optional arrangement source trail per retained loop.
@@ -317,6 +326,10 @@ impl BezierRetainedSignedAreaRoleReport2 {
         loop_arrangement_sources: Vec<Option<Vec<BezierRetainedFragmentSource2>>>,
     ) -> CurveResult<Self> {
         validate_loop_arrangement_sources(self.roles.len(), &loop_arrangement_sources)?;
+        validate_counted_loop_arrangement_source_counts(
+            self.loop_fragment_counts.as_deref(),
+            &loop_arrangement_sources,
+        )?;
         self.loop_arrangement_sources = Some(loop_arrangement_sources);
         Ok(self)
     }
@@ -379,8 +392,15 @@ impl BezierRetainedCurvedNestingRoleReport2 {
             nesting_depths,
             signed_areas,
             sample_points,
+            loop_fragment_counts: None,
             loop_arrangement_sources: None,
         })
+    }
+
+    fn with_loop_fragment_counts(mut self, loop_fragment_counts: Vec<usize>) -> CurveResult<Self> {
+        validate_loop_fragment_counts(self.roles.len(), &loop_fragment_counts)?;
+        self.loop_fragment_counts = Some(loop_fragment_counts);
+        Ok(self)
     }
 
     /// Attaches one optional arrangement source trail per retained loop.
@@ -389,6 +409,10 @@ impl BezierRetainedCurvedNestingRoleReport2 {
         loop_arrangement_sources: Vec<Option<Vec<BezierRetainedFragmentSource2>>>,
     ) -> CurveResult<Self> {
         validate_loop_arrangement_sources(self.roles.len(), &loop_arrangement_sources)?;
+        validate_counted_loop_arrangement_source_counts(
+            self.loop_fragment_counts.as_deref(),
+            &loop_arrangement_sources,
+        )?;
         self.loop_arrangement_sources = Some(loop_arrangement_sources);
         Ok(self)
     }
@@ -1058,6 +1082,7 @@ impl BezierRetainedRegion2 {
             signed_areas.push(area);
         }
         let report = BezierRetainedSignedAreaRoleReport2::new(roles, signed_areas)?
+            .with_loop_fragment_counts(retained_loop_fragment_counts(&self.boundary_loops))?
             .with_loop_arrangement_sources(retained_loop_arrangement_sources(
                 &self.boundary_loops,
             ))?;
@@ -1135,6 +1160,7 @@ impl BezierRetainedRegion2 {
             signed_areas,
             sample_points,
         )?
+        .with_loop_fragment_counts(retained_loop_fragment_counts(&self.boundary_loops))?
         .with_loop_arrangement_sources(retained_loop_arrangement_sources(&self.boundary_loops))?;
         Ok(Classification::Decided(report))
     }
@@ -1195,6 +1221,30 @@ fn retained_loop_arrangement_sources(
         .collect()
 }
 
+fn retained_loop_fragment_counts(boundary_loops: &[BezierRetainedBoundaryLoop2]) -> Vec<usize> {
+    boundary_loops
+        .iter()
+        .map(BezierRetainedBoundaryLoop2::len)
+        .collect()
+}
+
+fn validate_loop_fragment_counts(
+    loop_count: usize,
+    loop_fragment_counts: &[usize],
+) -> CurveResult<()> {
+    validate_report_length(
+        loop_count,
+        "loop fragment count",
+        loop_fragment_counts.len(),
+    )?;
+    if loop_fragment_counts.contains(&0) {
+        return Err(CurveError::Topology(
+            "retained role report loop fragment counts must be nonzero".into(),
+        ));
+    }
+    Ok(())
+}
+
 fn validate_loop_arrangement_sources(
     loop_count: usize,
     loop_arrangement_sources: &[Option<Vec<BezierRetainedFragmentSource2>>],
@@ -1222,6 +1272,32 @@ fn validate_loop_arrangement_sources(
         indices,
         "retained role report loop arrangement sources must not reuse arrangement fragments",
     )
+}
+
+fn validate_counted_loop_arrangement_source_counts(
+    loop_fragment_counts: Option<&[usize]>,
+    loop_arrangement_sources: &[Option<Vec<BezierRetainedFragmentSource2>>],
+) -> CurveResult<()> {
+    let Some(loop_fragment_counts) = loop_fragment_counts else {
+        if loop_arrangement_sources.iter().any(Option::is_some) {
+            return Err(CurveError::Topology(
+                "retained role report present loop arrangement sources require loop fragment count evidence"
+                    .into(),
+            ));
+        }
+        return Ok(());
+    };
+
+    for (fragment_count, sources) in loop_fragment_counts.iter().zip(loop_arrangement_sources) {
+        if let Some(sources) = sources
+            && sources.len() != *fragment_count
+        {
+            return Err(CurveError::Topology(
+                "retained role report loop source count does not match loop fragment count".into(),
+            ));
+        }
+    }
+    Ok(())
 }
 
 fn validate_unique_arrangement_source_indices(
