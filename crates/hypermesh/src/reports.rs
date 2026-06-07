@@ -3281,7 +3281,18 @@ impl ExactOpenSurfaceDisjointReport {
         {
             return Err(ExactReportValidationError::GraphUnknownStatusMismatch);
         }
-        self.blocker.validate_for_kind(self.blocker.kind)?;
+        let expected_kind = match self.status {
+            ExactOpenSurfaceDisjointStatus::GraphUnknowns => {
+                ExactBooleanBlockerKind::NeedsRefinement
+            }
+            ExactOpenSurfaceDisjointStatus::NotOpenSurface
+            | ExactOpenSurfaceDisjointStatus::GraphHasFacePairs
+            | ExactOpenSurfaceDisjointStatus::Certified => {
+                retained_blocker_kind_from_counts(&self.blocker)
+            }
+        };
+        blocker_kind(Some(&self.blocker), expected_kind)?;
+        self.blocker.validate_for_kind(expected_kind)?;
         validate_refinement_partition(
             matches!(self.status, ExactOpenSurfaceDisjointStatus::GraphUnknowns),
             &self.blocker,

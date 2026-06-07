@@ -2576,6 +2576,13 @@ fn open_surface_disjoint_report_classifies_retained_coplanar_overlap_blocker() {
     assert!(report.retained_face_pairs > 0);
     report.validate().unwrap();
     report.validate_against_sources(&left, &right).unwrap();
+
+    let mut relabeled = report;
+    relabeled.blocker.kind = ExactBooleanBlockerKind::NeedsBoundaryPolicy;
+    assert_eq!(
+        relabeled.validate(),
+        Err(hypermesh::ExactReportValidationError::WrongBlockerKind)
+    );
 }
 
 #[test]
