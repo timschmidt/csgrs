@@ -2496,6 +2496,17 @@ fn declined_output_validation_attempt_outcome(
     ArrangementCellComplexOutcome::Declined(attempt.clone())
 }
 
+fn declined_output_validation_attempt_outcome_with_counts(
+    attempt: &mut ExactArrangementBooleanAttempt,
+    output_counts: Option<(usize, usize)>,
+) -> ArrangementCellComplexOutcome {
+    if let Some((vertices, triangles)) = output_counts {
+        attempt.output_vertices = vertices;
+        attempt.output_triangles = triangles;
+    }
+    declined_output_validation_attempt_outcome(attempt)
+}
+
 /// Report how far the arrangement/cell-complex Boolean pipeline gets for an
 /// operation under an explicit output validation policy, without falling
 /// through to specialized materializers.
@@ -2826,7 +2837,13 @@ fn run_arrangement_cell_complex_attempt(
                 ));
             }
             Ok(None) => {}
-            Err(_) => return Ok(declined_output_validation_attempt_outcome(&mut attempt)),
+            Err(_) => {
+                let output_counts = coplanar_mesh_overlay_candidate_counts(left, right, operation);
+                return Ok(declined_output_validation_attempt_outcome_with_counts(
+                    &mut attempt,
+                    output_counts,
+                ));
+            }
         }
     }
 
@@ -2862,7 +2879,13 @@ fn run_arrangement_cell_complex_attempt(
                 ));
             }
             Ok(None) => {}
-            Err(_) => return Ok(declined_output_validation_attempt_outcome(&mut attempt)),
+            Err(_) => {
+                let output_counts = coplanar_mesh_overlay_candidate_counts(left, right, operation);
+                return Ok(declined_output_validation_attempt_outcome_with_counts(
+                    &mut attempt,
+                    output_counts,
+                ));
+            }
         }
         if regularize_unregularized_sheet_complex
             && arrangement_blockers_are_unregularized_sheet_complex(&arrangement.blockers)
@@ -4977,28 +5000,13 @@ fn boolean_coplanar_mesh_overlay_optional(
     if coplanar_mesh_overlay_should_yield_to_closed_boundary_shortcut(left, right, operation)? {
         return Ok(None);
     }
-    let allow_empty_overlay = matches!(
-        operation,
-        ExactBooleanOperation::Intersection | ExactBooleanOperation::Difference
-    );
-    let boundary_policy = match operation {
-        ExactBooleanOperation::Difference => {
-            coplanar_mesh_overlay_materialized_difference_boundary_policy(left, right)
-                .unwrap_or(ExactArrangement2dBoundaryPolicy::SimplifyCollinear)
-        }
-        ExactBooleanOperation::Intersection => {
-            coplanar_mesh_overlay_surface_intersection_boundary_policy(left, right)
-                .unwrap_or(ExactArrangement2dBoundaryPolicy::SimplifyCollinear)
-        }
-        ExactBooleanOperation::Union | ExactBooleanOperation::SelectedRegions(_) => {
-            ExactArrangement2dBoundaryPolicy::SimplifyCollinear
-        }
+    let allow_empty_overlay = coplanar_mesh_overlay_allows_empty(operation);
+    let Some(boundary_policy) = coplanar_mesh_overlay_boundary_policy(left, right, operation)
+    else {
+        return Ok(None);
     };
-    let set_operation = match operation {
-        ExactBooleanOperation::Union => ExactArrangement2dSetOperation::Union,
-        ExactBooleanOperation::Intersection => ExactArrangement2dSetOperation::Intersection,
-        ExactBooleanOperation::Difference => ExactArrangement2dSetOperation::Difference,
-        ExactBooleanOperation::SelectedRegions(_) => return Ok(None),
+    let Some(set_operation) = coplanar_mesh_overlay_set_operation(operation) else {
+        return Ok(None);
     };
     let Some(mesh) = materialize_coplanar_mesh_overlay_mesh(
         left,
@@ -5020,6 +5028,65 @@ fn boolean_coplanar_mesh_overlay_optional(
         operation,
         ExactBooleanShortcutKind::ArrangementCellComplex,
     )))
+}
+
+fn coplanar_mesh_overlay_candidate_counts(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+) -> Option<(usize, usize)> {
+    if !coplanar_mesh_overlay_should_preempt_surface_paths(left, right, operation) {
+        return None;
+    }
+    let allow_empty_overlay = coplanar_mesh_overlay_allows_empty(operation);
+    let boundary_policy = coplanar_mesh_overlay_boundary_policy(left, right, operation)?;
+    let set_operation = coplanar_mesh_overlay_set_operation(operation)?;
+    materialize_coplanar_mesh_overlay_mesh(
+        left,
+        right,
+        set_operation,
+        boundary_policy,
+        "exact coplanar mesh overlay arrangement",
+        allow_empty_overlay,
+    )
+    .map(|mesh| (mesh.vertices().len(), mesh.triangles().len()))
+}
+
+fn coplanar_mesh_overlay_allows_empty(operation: ExactBooleanOperation) -> bool {
+    matches!(
+        operation,
+        ExactBooleanOperation::Intersection | ExactBooleanOperation::Difference
+    )
+}
+
+fn coplanar_mesh_overlay_boundary_policy(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+) -> Option<ExactArrangement2dBoundaryPolicy> {
+    Some(match operation {
+        ExactBooleanOperation::Difference => {
+            coplanar_mesh_overlay_materialized_difference_boundary_policy(left, right)
+                .unwrap_or(ExactArrangement2dBoundaryPolicy::SimplifyCollinear)
+        }
+        ExactBooleanOperation::Intersection => {
+            coplanar_mesh_overlay_surface_intersection_boundary_policy(left, right)
+                .unwrap_or(ExactArrangement2dBoundaryPolicy::SimplifyCollinear)
+        }
+        ExactBooleanOperation::Union => ExactArrangement2dBoundaryPolicy::SimplifyCollinear,
+        ExactBooleanOperation::SelectedRegions(_) => return None,
+    })
+}
+
+fn coplanar_mesh_overlay_set_operation(
+    operation: ExactBooleanOperation,
+) -> Option<ExactArrangement2dSetOperation> {
+    Some(match operation {
+        ExactBooleanOperation::Union => ExactArrangement2dSetOperation::Union,
+        ExactBooleanOperation::Intersection => ExactArrangement2dSetOperation::Intersection,
+        ExactBooleanOperation::Difference => ExactArrangement2dSetOperation::Difference,
+        ExactBooleanOperation::SelectedRegions(_) => return None,
+    })
 }
 
 /// Certify and materialize a named coplanar mesh-overlay arrangement boolean.

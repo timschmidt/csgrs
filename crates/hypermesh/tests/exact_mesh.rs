@@ -1315,6 +1315,16 @@ fn arrangement_attempt_output_validation_is_publicly_replayable() {
             ),
             "{operation:?}: {closed_attempt:?}"
         );
+        assert!(
+            closed_attempt.output_vertices > 0,
+            "{operation:?}: {closed_attempt:?}"
+        );
+        if operation == ExactBooleanOperation::Union {
+            assert!(
+                closed_attempt.output_triangles > 0,
+                "{operation:?}: {closed_attempt:?}"
+            );
+        }
         closed_attempt.validate().unwrap();
         closed_attempt
             .validate_against_sources(&left, &right)
