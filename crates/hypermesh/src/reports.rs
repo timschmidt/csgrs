@@ -156,6 +156,9 @@ pub enum ExactReportValidationError {
     /// A selected-region result retained output triangles from a source side
     /// excluded by its declared selection policy.
     SelectedRegionAssemblyViolatesSelection,
+    /// A selected-region result did not retain materialized evidence for a
+    /// source region selected by its declared policy.
+    SelectedRegionAssemblyMissingSelectedRegion,
     /// A volumetric materialized result retained output triangles that do not
     /// match the declared operation's per-cell volumetric retention policy.
     VolumetricMaterializedAssemblyViolatesOperation,
@@ -288,6 +291,7 @@ impl From<ExactReportValidationError> for ExactReportFreshness {
             | ExactReportValidationError::UnexpectedGraphEvents => Self::StaleGraphUnknownStatus,
             ExactReportValidationError::OutputSourceReplayMismatch => Self::SourceReplayMismatch,
             ExactReportValidationError::SelectedRegionAssemblyViolatesSelection
+            | ExactReportValidationError::SelectedRegionAssemblyMissingSelectedRegion
             | ExactReportValidationError::VolumetricMaterializedAssemblyViolatesOperation => {
                 Self::StaleStatusEvidence
             }
@@ -1137,6 +1141,11 @@ impl ExactBooleanResult {
         {
             return Err(ExactReportValidationError::SelectedRegionAssemblyViolatesSelection);
         }
+        validate_selected_region_assembly_covers_selection(
+            selection,
+            &self.triangulations,
+            &self.assembly,
+        )?;
 
         Ok(())
     }
@@ -2542,6 +2551,39 @@ fn validate_volumetric_materialized_assembly_matches_operation(
                 }
                 VolumetricCellRetention::Drop => {}
             }
+        }
+    }
+
+    Ok(())
+}
+
+fn validate_selected_region_assembly_covers_selection(
+    selection: ExactRegionSelection,
+    triangulations: &[FaceRegionTriangulation],
+    assembly: &ExactBooleanAssemblyPlan,
+) -> Result<(), ExactReportValidationError> {
+    for triangulation in triangulations {
+        if !selection_keeps(selection, triangulation.side) || triangulation.triangles.is_empty() {
+            continue;
+        }
+        if assembly.triangles.iter().any(|output| {
+            output.source_side == triangulation.side && output.source_face == triangulation.face
+        }) {
+            continue;
+        }
+
+        // Duplicate exact cells may be canonicalized to one retained
+        // topological copy after both sides have supplied the predicate
+        // evidence proving coincidence. If no triangle keeps this source
+        // label, every selected cell must still be present geometrically.
+        let duplicate_cells_retained = triangulation.triangles.chunks_exact(3).all(|triangle| {
+            let triangle = [triangle[0], triangle[1], triangle[2]];
+            assembly.triangles.iter().any(|output| {
+                output_triangle_matches_triangulated_cell(output, assembly, triangulation, triangle)
+            })
+        });
+        if !duplicate_cells_retained {
+            return Err(ExactReportValidationError::SelectedRegionAssemblyMissingSelectedRegion);
         }
     }
 
@@ -5589,6 +5631,12 @@ mod tests {
         assert_eq!(
             ExactReportFreshness::from(
                 ExactReportValidationError::SelectedRegionAssemblyViolatesSelection
+            ),
+            ExactReportFreshness::StaleStatusEvidence
+        );
+        assert_eq!(
+            ExactReportFreshness::from(
+                ExactReportValidationError::SelectedRegionAssemblyMissingSelectedRegion
             ),
             ExactReportFreshness::StaleStatusEvidence
         );

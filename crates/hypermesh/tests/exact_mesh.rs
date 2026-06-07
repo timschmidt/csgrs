@@ -1536,12 +1536,12 @@ fn exact_open_surface_arrangement_is_publicly_replayable() {
     stale_materialization.assembly = difference.assembly;
     stale_materialization.mesh = difference.mesh;
     assert!(
-        stale_materialization.validate().is_ok(),
+        stale_materialization.validate().is_err(),
         "{stale_materialization:?}"
     );
     assert_eq!(
         stale_materialization.freshness_against_sources(&left, &right),
-        ExactReportFreshness::SourceReplayMismatch,
+        ExactReportFreshness::StaleStatusEvidence,
         "{stale_materialization:?}"
     );
 }
@@ -1740,12 +1740,12 @@ fn exact_selected_region_boolean_is_publicly_replayable() {
     stale_materialization.assembly = keep_left.assembly;
     stale_materialization.mesh = keep_left.mesh;
     assert!(
-        stale_materialization.validate().is_ok(),
+        stale_materialization.validate().is_err(),
         "{stale_materialization:?}"
     );
     assert_eq!(
         stale_materialization.freshness_against_sources(&left, &right),
-        ExactReportFreshness::SourceReplayMismatch,
+        ExactReportFreshness::StaleStatusEvidence,
         "{stale_materialization:?}"
     );
 }
