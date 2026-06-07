@@ -4423,7 +4423,24 @@ pub fn materialize_volumetric_winding_arrangement(
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
-    boolean_arrangement_volumetric_split_cell_recovery(left, right, operation, validation)
+    let Some(result) =
+        boolean_arrangement_volumetric_split_cell_recovery(left, right, operation, validation)?
+    else {
+        return Ok(None);
+    };
+    if result
+        .validate_operation_against_sources(
+            left,
+            right,
+            operation,
+            validation,
+            ExactBoundaryBooleanPolicy::Reject,
+        )
+        .is_err()
+    {
+        return Ok(None);
+    }
+    Ok(Some(result))
 }
 
 pub(crate) fn materialize_volumetric_coplanar_boundary_closure_output(

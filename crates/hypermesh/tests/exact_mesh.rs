@@ -2732,6 +2732,20 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
         result.freshness_against_sources(&left, &separated_right),
         ExactReportFreshness::SourceReplayMismatch
     );
+
+    let convex_left = tetra_from_corners([0, 0, 0], [6, 0, 0], [0, 6, 0], [0, 0, 6]);
+    let convex_right = tetra_from_corners([1, 1, 1], [5, 1, 2], [1, 5, 1], [2, 1, 5]);
+    assert!(
+        materialize_volumetric_winding_arrangement(
+            &convex_left,
+            &convex_right,
+            ExactBooleanOperation::Intersection,
+            ValidationPolicy::CLOSED,
+        )
+        .unwrap()
+        .is_none(),
+        "direct volumetric wrapper should yield when public replay is a convex shortcut"
+    );
 }
 
 #[test]
