@@ -138,6 +138,8 @@ pub struct RetainedPlanarFaceEdgeUseReport2 {
     trim_loop_index: Option<usize>,
     trim_segment_index: Option<usize>,
     segment_count: usize,
+    trim_role_loop_count: Option<usize>,
+    trim_loop_segment_count: Option<usize>,
 }
 
 impl RetainedPlanarSurfaceIdentity2 {
@@ -621,6 +623,10 @@ impl RetainedPlanarFaceEdgeUseRelation2 {
 
 impl RetainedPlanarFaceEdgeUseReport2 {
     /// Constructs a retained planar face edge-use report.
+    ///
+    /// Boundary reports are produced by retained-face query methods because
+    /// they require face extent evidence to certify trim-loop and segment
+    /// indices. This constructor accepts only self-contained blocker reports.
     pub fn new(
         relation: RetainedPlanarFaceEdgeUseRelation2,
         surface: Option<RetainedPlanarSurfaceIdentity2>,
@@ -636,6 +642,8 @@ impl RetainedPlanarFaceEdgeUseReport2 {
             trim_loop_index,
             trim_segment_index,
             segment_count,
+            None,
+            None,
         )?;
         Ok(Self {
             relation,
@@ -644,6 +652,41 @@ impl RetainedPlanarFaceEdgeUseReport2 {
             trim_loop_index,
             trim_segment_index,
             segment_count,
+            trim_role_loop_count: None,
+            trim_loop_segment_count: None,
+        })
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn new_with_face_extent_evidence(
+        relation: RetainedPlanarFaceEdgeUseRelation2,
+        surface: RetainedPlanarSurfaceIdentity2,
+        trim_role: RetainedPlanarTrimLoopRole2,
+        trim_loop_index: usize,
+        trim_segment_index: usize,
+        segment_count: usize,
+        trim_role_loop_count: usize,
+        trim_loop_segment_count: usize,
+    ) -> CurveResult<Self> {
+        validate_planar_face_edge_use_report(
+            relation,
+            Some(surface),
+            Some(trim_role),
+            Some(trim_loop_index),
+            Some(trim_segment_index),
+            segment_count,
+            Some(trim_role_loop_count),
+            Some(trim_loop_segment_count),
+        )?;
+        Ok(Self {
+            relation,
+            surface: Some(surface),
+            trim_role: Some(trim_role),
+            trim_loop_index: Some(trim_loop_index),
+            trim_segment_index: Some(trim_segment_index),
+            segment_count,
+            trim_role_loop_count: Some(trim_role_loop_count),
+            trim_loop_segment_count: Some(trim_loop_segment_count),
         })
     }
 
@@ -791,6 +834,8 @@ fn validate_planar_face_edge_use_report(
     trim_loop_index: Option<usize>,
     trim_segment_index: Option<usize>,
     segment_count: usize,
+    trim_role_loop_count: Option<usize>,
+    trim_loop_segment_count: Option<usize>,
 ) -> CurveResult<()> {
     match relation {
         RetainedPlanarFaceEdgeUseRelation2::SurfaceMismatch => {
@@ -799,6 +844,8 @@ fn validate_planar_face_edge_use_report(
                 || trim_loop_index.is_some()
                 || trim_segment_index.is_some()
                 || segment_count != 0
+                || trim_role_loop_count.is_some()
+                || trim_loop_segment_count.is_some()
             {
                 return Err(CurveError::Topology(
                     "surface-mismatch edge-use report must not carry trim evidence".into(),
@@ -811,6 +858,8 @@ fn validate_planar_face_edge_use_report(
                 || trim_loop_index.is_some()
                 || trim_segment_index.is_some()
                 || segment_count != 0
+                || trim_role_loop_count.is_some()
+                || trim_loop_segment_count.is_some()
             {
                 return Err(CurveError::Topology(
                     "non-boundary edge-use report must carry only matching-surface evidence".into(),
@@ -824,9 +873,26 @@ fn validate_planar_face_edge_use_report(
                 || trim_loop_index.is_none()
                 || trim_segment_index.is_none()
                 || segment_count == 0
+                || trim_role_loop_count.is_none()
+                || trim_loop_segment_count.is_none()
             {
                 return Err(CurveError::Topology(
                     "boundary edge-use report must carry complete positive trim evidence".into(),
+                ));
+            }
+            let trim_loop_index = trim_loop_index.expect("checked above");
+            let trim_segment_index = trim_segment_index.expect("checked above");
+            let trim_role_loop_count = trim_role_loop_count.expect("checked above");
+            let trim_loop_segment_count = trim_loop_segment_count.expect("checked above");
+            if trim_role_loop_count == 0
+                || trim_loop_segment_count == 0
+                || trim_loop_index >= trim_role_loop_count
+                || trim_segment_index >= trim_loop_segment_count
+                || segment_count > trim_loop_segment_count
+            {
+                return Err(CurveError::Topology(
+                    "boundary edge-use report trim indices must be certified by face extent evidence"
+                        .into(),
                 ));
             }
         }
@@ -880,13 +946,15 @@ fn face_edge_use_report_from_loops(
         if let Some((relation, segment_index)) =
             segment_subchain_relation(query_segments, trim.contour.segments())
         {
-            return RetainedPlanarFaceEdgeUseReport2::new(
+            return RetainedPlanarFaceEdgeUseReport2::new_with_face_extent_evidence(
                 relation,
-                Some(face.surface),
-                Some(RetainedPlanarTrimLoopRole2::Material),
-                Some(loop_index),
-                Some(segment_index),
+                face.surface,
+                RetainedPlanarTrimLoopRole2::Material,
+                loop_index,
+                segment_index,
                 query_segments.len(),
+                face.material_loops.len(),
+                trim.contour.len(),
             )
             .expect("material edge-use match has complete trim evidence");
         }
@@ -895,13 +963,15 @@ fn face_edge_use_report_from_loops(
         if let Some((relation, segment_index)) =
             segment_subchain_relation(query_segments, trim.contour.segments())
         {
-            return RetainedPlanarFaceEdgeUseReport2::new(
+            return RetainedPlanarFaceEdgeUseReport2::new_with_face_extent_evidence(
                 relation,
-                Some(face.surface),
-                Some(RetainedPlanarTrimLoopRole2::Hole),
-                Some(loop_index),
-                Some(segment_index),
+                face.surface,
+                RetainedPlanarTrimLoopRole2::Hole,
+                loop_index,
+                segment_index,
                 query_segments.len(),
+                face.hole_loops.len(),
+                trim.contour.len(),
             )
             .expect("hole edge-use match has complete trim evidence");
         }

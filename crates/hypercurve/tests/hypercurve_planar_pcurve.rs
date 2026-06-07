@@ -422,6 +422,14 @@ fn retained_planar_face_edge_use_report_constructor_rejects_inconsistent_evidenc
         0,
     ));
     assert_topology_error(RetainedPlanarFaceEdgeUseReport2::new(
+        RetainedPlanarFaceEdgeUseRelation2::BoundarySameDirected,
+        Some(surface),
+        Some(RetainedPlanarTrimLoopRole2::Material),
+        Some(0),
+        Some(0),
+        1,
+    ));
+    assert_topology_error(RetainedPlanarFaceEdgeUseReport2::new(
         RetainedPlanarFaceEdgeUseRelation2::NotTrimBoundary,
         Some(surface),
         Some(RetainedPlanarTrimLoopRole2::Material),
