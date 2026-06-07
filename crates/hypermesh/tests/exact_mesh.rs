@@ -1309,6 +1309,17 @@ fn exact_open_surface_arrangement_is_publicly_replayable() {
                 ),
                 ExactReportFreshness::SourceReplayMismatch
             );
+            assert!(
+                materialize_open_surface_arrangement(
+                    &left,
+                    &right,
+                    operation,
+                    ValidationPolicy::CLOSED,
+                )
+                .unwrap()
+                .is_none(),
+                "{operation:?} should decline direct materialization when open-surface output cannot satisfy CLOSED validation"
+            );
         }
 
         let attempt = exact_arrangement_boolean_attempt_report(

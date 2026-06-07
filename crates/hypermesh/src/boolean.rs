@@ -3257,7 +3257,19 @@ fn arrangement_open_surface_recovery_outcome(
         graph.has_unknowns(),
         plan.clone(),
     ) {
-        Ok(result) => result,
+        Ok(Some(result)) => result,
+        Ok(None) => {
+            let output_counts = open_surface_arrangement_candidate_counts(
+                left,
+                right,
+                operation,
+                graph.has_unknowns(),
+                plan,
+            );
+            return Ok(Some(
+                declined_output_validation_attempt_outcome_with_counts(attempt, output_counts),
+            ));
+        }
         Err(error) => {
             let output_counts = open_surface_arrangement_candidate_counts(
                 left,
@@ -6206,6 +6218,9 @@ pub fn materialize_open_surface_arrangement(
         graph.has_unknowns(),
         plan,
     )?;
+    let Some(result) = result else {
+        return Ok(None);
+    };
     result
         .validate_against_sources(left, right)
         .map_err(|error| {
@@ -6238,7 +6253,6 @@ pub(crate) fn replay_open_surface_arrangement_result(
         graph.has_unknowns(),
         plan,
     )
-    .map(Some)
 }
 
 /// Materialize a named arrangement boolean for crossing open surfaces.
@@ -6258,7 +6272,7 @@ fn materialize_open_surface_arrangement_plan(
     validation: ValidationPolicy,
     graph_had_unknowns: bool,
     plan: OpenSurfaceArrangementPlan,
-) -> Result<ExactBooleanResult, MeshError> {
+) -> Result<Option<ExactBooleanResult>, MeshError> {
     let (_support, region_classifications, triangulations) = plan;
     let selection = match operation {
         ExactBooleanOperation::Union => ExactRegionSelection::KeepAll,
@@ -6293,7 +6307,9 @@ fn materialize_open_surface_arrangement_plan(
                 format!("open-surface arrangement assembly canonicalization failed: {error}"),
             ))
         })?;
-    let mesh = assembly.checked_to_exact_mesh_with_sources(left, right, validation)?;
+    let Ok(mesh) = assembly.checked_to_exact_mesh_with_sources(left, right, validation) else {
+        return Ok(None);
+    };
     let result = ExactBooleanResult {
         kind: ExactBooleanResultKind::OpenSurfaceArrangement { operation },
         graph_had_unknowns,
@@ -6310,7 +6326,7 @@ fn materialize_open_surface_arrangement_plan(
             format!("open-surface arrangement validation failed: {error:?}"),
         ))
     })?;
-    Ok(result)
+    Ok(Some(result))
 }
 
 fn open_surface_arrangement_candidate_counts(
@@ -6329,6 +6345,7 @@ fn open_surface_arrangement_candidate_counts(
         plan,
     )
     .ok()
+    .flatten()
     .map(|result| (result.mesh.vertices().len(), result.mesh.triangles().len()))
 }
 
