@@ -1,18 +1,20 @@
-use hyperlimit::{Point3, SourceProvenance};
+use hyperlimit::{Point2, Point3, SourceProvenance};
 use hypermesh::{
     AffineOrthogonalSolidFreshness, AxisAlignedOrthogonalSolidFreshness, ClosedMeshOrientation,
     ContainedFaceAdjacentUnionFreshness, ConvexSolidMeshRelation, ConvexSolidPointRelation,
     ConvexSolidReportFreshness, CoplanarArrangementReadinessFreshness,
     CoplanarOverlapGraphFreshness, CoplanarOverlapSplitFreshness,
-    CoplanarVolumetricCellEvidenceFreshness, ExactArrangement, ExactArrangementFreshness,
-    ExactBooleanOperation, ExactBooleanResult, ExactBooleanResultKind, ExactBoundaryBooleanPolicy,
-    ExactI64MeshInputReadiness, ExactLabeledCellComplexFreshness, ExactMesh,
-    ExactRegularizationPolicy, ExactReportFreshness, ExactSelectedCellComplexFreshness,
+    CoplanarVolumetricCellEvidenceFreshness, ExactArrangement, ExactArrangement2dBoundaryPolicy,
+    ExactArrangement2dRegion, ExactArrangement2dRegionRing, ExactArrangement2dSetOperation,
+    ExactArrangementFreshness, ExactBooleanOperation, ExactBooleanResult, ExactBooleanResultKind,
+    ExactBoundaryBooleanPolicy, ExactI64MeshInputReadiness, ExactLabeledCellComplexFreshness,
+    ExactMesh, ExactRegularizationPolicy, ExactReportFreshness, ExactSelectedCellComplexFreshness,
     ExactSimplifiedCellComplexFreshness, ExactVolumetricRegionFreshness,
     ExactVolumetricRegionRelation, FullFaceAdjacentUnionFreshness, IntersectionGraphFreshness,
     MeshFacePairFreshness, MeshFacePairRelation, MeshFacePairValidationError, SplitPlanFreshness,
     TriangleTriangleFreshness, TriangleTriangleRelation, ValidationPolicy, WindingReportFreshness,
-    boolean_exact, boolean_exact_with_boundary_policy, build_intersection_graph,
+    boolean_exact, boolean_exact_with_boundary_policy, build_exact_arrangement2d_overlay,
+    build_exact_arrangement2d_overlay_with_boundary_policy, build_intersection_graph,
     certify_boundary_touching_report, certify_convex_solid,
     certify_coplanar_volumetric_cell_evidence, classify_mesh_face_pair,
     classify_mesh_vertices_against_closed_mesh_winding_report,
@@ -40,6 +42,10 @@ use hyperreal::Real;
 
 fn p(x: i64, y: i64, z: i64) -> Point3 {
     Point3::new(Real::from(x), Real::from(y), Real::from(z))
+}
+
+fn p2(x: i64, y: i64) -> Point2 {
+    Point2::new(Real::from(x), Real::from(y))
 }
 
 fn rational_point(numerators: [i64; 3], denominator: i64) -> Point3 {
@@ -115,6 +121,37 @@ fn combine_exact_meshes(left: &ExactMesh, right: &ExactMesh, label: &'static str
         SourceProvenance::exact(label),
     )
     .unwrap()
+}
+
+#[test]
+fn exact_arrangement2d_boundary_policy_is_publicly_available() {
+    let rings = [
+        ExactArrangement2dRegionRing::new(
+            ExactArrangement2dRegion::Left,
+            vec![p2(0, 0), p2(4, 0), p2(4, 2), p2(0, 2)],
+        ),
+        ExactArrangement2dRegionRing::new(
+            ExactArrangement2dRegion::Right,
+            vec![p2(2, 0), p2(6, 0), p2(6, 2), p2(2, 2)],
+        ),
+    ];
+
+    let simplified =
+        build_exact_arrangement2d_overlay(&rings, ExactArrangement2dSetOperation::Union);
+    let preserved = build_exact_arrangement2d_overlay_with_boundary_policy(
+        &rings,
+        ExactArrangement2dSetOperation::Union,
+        ExactArrangement2dBoundaryPolicy::PreserveCollinear,
+    );
+
+    assert!(simplified.is_complete(), "{:?}", simplified.blockers);
+    assert!(preserved.is_complete(), "{:?}", preserved.blockers);
+    assert_eq!(simplified.output_loops.len(), 1);
+    assert_eq!(preserved.output_loops.len(), 1);
+    assert_eq!(simplified.output_loops[0].points.len(), 4);
+    assert_eq!(preserved.output_loops[0].points.len(), 8);
+    assert_eq!(simplified.output_loops[0].signed_area_twice, Real::from(24));
+    assert_eq!(preserved.output_loops[0].signed_area_twice, Real::from(24));
 }
 
 fn skew_affine_box(min: [i64; 3], max: [i64; 3]) -> ExactMesh {

@@ -76,12 +76,13 @@ pub use affine_solid::{
     materialize_affine_orthogonal_solid_intersection, materialize_affine_orthogonal_solid_union,
 };
 pub use arrangement2d::{
-    ExactArrangement2d, ExactArrangement2dBlocker, ExactArrangement2dEdge, ExactArrangement2dFace,
-    ExactArrangement2dInputSegment, ExactArrangement2dOutputComponent,
-    ExactArrangement2dOutputLoop, ExactArrangement2dOverlay, ExactArrangement2dOverlayFace,
-    ExactArrangement2dRegion, ExactArrangement2dRegionRing, ExactArrangement2dSegmentSource,
-    ExactArrangement2dSetOperation, ExactArrangement2dVertex, build_exact_arrangement2d,
-    build_exact_arrangement2d_overlay, exact_arrangement2d_face_witness,
+    ExactArrangement2d, ExactArrangement2dBlocker, ExactArrangement2dBoundaryPolicy,
+    ExactArrangement2dEdge, ExactArrangement2dFace, ExactArrangement2dInputSegment,
+    ExactArrangement2dOutputComponent, ExactArrangement2dOutputLoop, ExactArrangement2dOverlay,
+    ExactArrangement2dOverlayFace, ExactArrangement2dRegion, ExactArrangement2dRegionRing,
+    ExactArrangement2dSegmentSource, ExactArrangement2dSetOperation, ExactArrangement2dVertex,
+    build_exact_arrangement2d, build_exact_arrangement2d_overlay,
+    build_exact_arrangement2d_overlay_with_boundary_policy, exact_arrangement2d_face_witness,
 };
 pub use arrangement3d::{
     ArrangementCarrierPlaneOverlay, ArrangementEdge, ArrangementEdgeProvenance,
