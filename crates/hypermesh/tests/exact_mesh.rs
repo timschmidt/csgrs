@@ -2026,6 +2026,63 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
         .is_err()
     );
 
+    let preflight = hypermesh::preflight_boolean_exact_with_validation(
+        &left,
+        &right,
+        ExactBooleanOperation::Union,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    assert_eq!(
+        preflight.support,
+        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex,
+        "{preflight:?}"
+    );
+    preflight.validate().unwrap();
+    preflight
+        .validate_against_sources_with_validation(&left, &right, ValidationPolicy::ALLOW_BOUNDARY)
+        .unwrap();
+
+    let readiness = certify_winding_readiness_report_with_validation(
+        &left,
+        &right,
+        ExactBooleanOperation::Union,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    assert_eq!(
+        readiness.status,
+        ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized,
+        "{readiness:?}"
+    );
+    assert_eq!(
+        readiness.retained_face_pairs,
+        graph.face_pairs.len(),
+        "{readiness:?}"
+    );
+    assert_eq!(readiness.retained_events, graph.event_count());
+    assert_eq!(readiness.region_count, 0);
+    readiness.validate().unwrap();
+    readiness
+        .validate_against_sources_with_validation(&left, &right, ValidationPolicy::ALLOW_BOUNDARY)
+        .unwrap();
+    assert_eq!(
+        readiness.freshness_against_sources_with_validation(
+            &left,
+            &right,
+            ValidationPolicy::ALLOW_BOUNDARY,
+        ),
+        ExactReportFreshness::Current
+    );
+    assert_eq!(
+        readiness.freshness_against_sources_with_validation(
+            &left,
+            &separated_right,
+            ValidationPolicy::ALLOW_BOUNDARY,
+        ),
+        ExactReportFreshness::SourceReplayMismatch
+    );
+
     let result = materialize_volumetric_winding_arrangement(
         &left,
         &right,

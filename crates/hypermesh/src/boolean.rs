@@ -6669,7 +6669,51 @@ pub fn certify_winding_readiness_report_with_validation(
             None,
         ));
     }
-    certify_winding_readiness_report(left, right, operation)
+    let readiness = certify_winding_readiness_report(left, right, operation)?;
+    if validation == ValidationPolicy::CLOSED
+        || matches!(operation, ExactBooleanOperation::SelectedRegions(_))
+        || !matches!(
+            readiness.status,
+            ExactWindingReadinessStatus::VolumetricAssemblyRequired
+                | ExactWindingReadinessStatus::CoplanarVolumetricCellsRequired
+        )
+    {
+        return Ok(readiness);
+    }
+
+    let graph = build_intersection_graph(left, right)?;
+    validate_graph_source_handoff(&graph, left, right)?;
+    if boolean_arrangement_volumetric_split_cell_recovery_from_graph(
+        &graph, left, right, operation, validation,
+    )?
+    .is_some()
+    {
+        let counts = graph_relation_counts(&graph);
+        let needs_coplanar_volumetric =
+            graph_requires_coplanar_volumetric_cells_for_sources(&graph, left, right);
+        let blocker_kind = if needs_coplanar_volumetric {
+            ExactBooleanBlockerKind::NeedsCoplanarVolumetricCells
+        } else {
+            ExactBooleanBlockerKind::NeedsWinding
+        };
+        return Ok(winding_readiness_report(
+            operation,
+            ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized,
+            graph.has_unknowns(),
+            graph.face_pairs.len(),
+            graph.event_count(),
+            0,
+            Vec::new(),
+            counts.into_blocker(blocker_kind),
+            None,
+            if needs_coplanar_volumetric {
+                coplanar_volumetric_evidence_if_required(&graph, left, right)
+            } else {
+                None
+            },
+        ));
+    }
+    Ok(readiness)
 }
 
 /// Prepare and report exact winding handoff facts for explicit output
@@ -9971,6 +10015,52 @@ mod tests {
         assert!(readiness.region_count > 0, "{readiness:?}");
         readiness.validate().unwrap();
         readiness.validate_against_sources(&left, &right).unwrap();
+
+        let boundary_readiness = certify_winding_readiness_report_with_validation(
+            &left,
+            &right,
+            ExactBooleanOperation::Union,
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        assert_eq!(
+            boundary_readiness.status,
+            ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized,
+            "{boundary_readiness:?}"
+        );
+        assert_eq!(
+            boundary_readiness.blocker.kind,
+            ExactBooleanBlockerKind::NeedsWinding,
+            "{boundary_readiness:?}"
+        );
+        assert_eq!(
+            boundary_readiness.retained_face_pairs,
+            graph.face_pairs.len()
+        );
+        assert_eq!(boundary_readiness.retained_events, graph.event_count());
+        assert_eq!(boundary_readiness.region_count, 0);
+        assert!(winding_readiness_status_already_materialized(
+            &boundary_readiness.status
+        ));
+        assert!(
+            winding_readiness_status_materializes_arrangement_cell_complex(
+                &boundary_readiness.status
+            )
+        );
+        boundary_readiness.validate().unwrap();
+        boundary_readiness
+            .validate_against_sources_with_validation(
+                &left,
+                &right,
+                ValidationPolicy::ALLOW_BOUNDARY,
+            )
+            .unwrap();
+        assert!(
+            boundary_readiness
+                .validate_against_sources(&left, &right)
+                .is_err(),
+            "closed replay should not certify allow-boundary readiness"
+        );
 
         let result = boolean_exact(
             &left,
