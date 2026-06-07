@@ -476,6 +476,15 @@ pub fn boolean_selected_regions(
 ) -> Result<ExactBooleanResult, MeshError> {
     let graph = build_intersection_graph(left, right)?;
     validate_graph_source_handoff(&graph, left, right)?;
+    materialize_selected_region_result_from_graph(&graph, left, right, policy)
+}
+
+fn materialize_selected_region_result_from_graph(
+    graph: &super::graph::ExactIntersectionGraph,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    policy: ExactBooleanPolicy,
+) -> Result<ExactBooleanResult, MeshError> {
     let graph_had_unknowns = graph.has_unknowns();
     if policy.reject_unknowns && graph_had_unknowns {
         return Err(MeshError::one(MeshDiagnostic::new(
@@ -540,6 +549,26 @@ pub fn boolean_selected_regions(
         ))
     })?;
     Ok(result)
+}
+
+pub(crate) fn replay_selected_region_boolean_result(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    selection: ExactRegionSelection,
+    validation: ValidationPolicy,
+) -> Result<ExactBooleanResult, MeshError> {
+    let graph = build_intersection_graph(left, right)?;
+    validate_graph_source_handoff(&graph, left, right)?;
+    materialize_selected_region_result_from_graph(
+        &graph,
+        left,
+        right,
+        ExactBooleanPolicy {
+            selection,
+            validation,
+            reject_unknowns: true,
+        },
+    )
 }
 
 /// Preflight an exact boolean operation without materializing output topology.
@@ -6187,6 +6216,29 @@ pub fn materialize_open_surface_arrangement(
             ))
         })?;
     Ok(Some(result))
+}
+
+pub(crate) fn replay_open_surface_arrangement_result(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+) -> Result<Option<ExactBooleanResult>, MeshError> {
+    let graph = build_intersection_graph(left, right)?;
+    validate_graph_source_handoff(&graph, left, right)?;
+    let Some(plan) = open_surface_arrangement_plan_from_graph(&graph, left, right, operation)?
+    else {
+        return Ok(None);
+    };
+    materialize_open_surface_arrangement_plan(
+        left,
+        right,
+        operation,
+        validation,
+        graph.has_unknowns(),
+        plan,
+    )
+    .map(Some)
 }
 
 /// Materialize a named arrangement boolean for crossing open surfaces.

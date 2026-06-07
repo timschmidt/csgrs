@@ -1384,6 +1384,35 @@ fn exact_open_surface_arrangement_is_publicly_replayable() {
             ExactReportFreshness::SourceReplayMismatch
         );
     }
+
+    let union = materialize_open_surface_arrangement(
+        &left,
+        &right,
+        ExactBooleanOperation::Union,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap()
+    .unwrap();
+    let difference = materialize_open_surface_arrangement(
+        &left,
+        &right,
+        ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap()
+    .unwrap();
+    let mut stale_materialization = union.clone();
+    stale_materialization.assembly = difference.assembly;
+    stale_materialization.mesh = difference.mesh;
+    assert!(
+        stale_materialization.validate().is_ok(),
+        "{stale_materialization:?}"
+    );
+    assert_eq!(
+        stale_materialization.freshness_against_sources(&left, &right),
+        ExactReportFreshness::SourceReplayMismatch,
+        "{stale_materialization:?}"
+    );
 }
 
 #[test]
@@ -1565,6 +1594,29 @@ fn exact_selected_region_boolean_is_publicly_replayable() {
         selection: ExactRegionSelection::KeepLeft,
     };
     assert!(stale_kind.validate_against_sources(&left, &right).is_err());
+
+    let keep_left = boolean_selected_regions(
+        &left,
+        &right,
+        ExactBooleanPolicy {
+            selection: ExactRegionSelection::KeepLeft,
+            validation: ValidationPolicy::ALLOW_BOUNDARY,
+            reject_unknowns: true,
+        },
+    )
+    .unwrap();
+    let mut stale_materialization = result.clone();
+    stale_materialization.assembly = keep_left.assembly;
+    stale_materialization.mesh = keep_left.mesh;
+    assert!(
+        stale_materialization.validate().is_ok(),
+        "{stale_materialization:?}"
+    );
+    assert_eq!(
+        stale_materialization.freshness_against_sources(&left, &right),
+        ExactReportFreshness::SourceReplayMismatch,
+        "{stale_materialization:?}"
+    );
 }
 
 #[test]

@@ -27,7 +27,8 @@ use super::boolean::{
     materialize_coplanar_mesh_overlay_arrangement,
     materialize_volumetric_coplanar_boundary_closure_output, preflight_boolean_exact,
     preflight_boolean_exact_with_boundary_policy, preflight_boolean_exact_with_validation,
-    replay_materialized_volumetric_winding_region_plan,
+    replay_materialized_volumetric_winding_region_plan, replay_open_surface_arrangement_result,
+    replay_selected_region_boolean_result,
 };
 use super::bounds::AabbIntersectionKind;
 use super::contained_adjacent::materialize_contained_face_adjacent_union;
@@ -48,7 +49,7 @@ use super::orthogonal_solid::{
 use super::region::{
     ExactBooleanAssemblyPlan, ExactOutputTriangle, ExactRegionSelection,
     FaceRegionPlaneClassification, FaceRegionPlaneValidationError, FaceRegionTriangulation,
-    boundary_node_point, replay_region_facts_against_sources,
+    boundary_node_point,
 };
 use super::regularization::ExactArrangementBlocker;
 use super::solid::{
@@ -1137,14 +1138,28 @@ impl ExactBooleanResult {
         right: &ExactMesh,
     ) -> Result<(), ExactReportValidationError> {
         self.validate()?;
-        if matches!(
-            self.kind,
-            ExactBooleanResultKind::SelectedRegions { .. }
-                | ExactBooleanResultKind::OpenSurfaceArrangement { .. }
-        ) {
-            let replay = replay_region_facts_against_sources(left, right)
-                .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
-            if self.region_classifications != replay.0 || self.triangulations != replay.1 {
+        if let ExactBooleanResultKind::SelectedRegions { selection } = self.kind {
+            let replay = replay_selected_region_boolean_result(
+                left,
+                right,
+                selection,
+                self.mesh.validation_policy(),
+            )
+            .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+            if !retained_split_region_result_matches(self, &replay) {
+                return Err(ExactReportValidationError::SourceReplayMismatch);
+            }
+        }
+        if let ExactBooleanResultKind::OpenSurfaceArrangement { operation } = self.kind {
+            let replay = replay_open_surface_arrangement_result(
+                left,
+                right,
+                operation,
+                self.mesh.validation_policy(),
+            )
+            .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
+            .ok_or(ExactReportValidationError::SourceReplayMismatch)?;
+            if !retained_split_region_result_matches(self, &replay) {
                 return Err(ExactReportValidationError::SourceReplayMismatch);
             }
         }
@@ -1158,12 +1173,16 @@ impl ExactBooleanResult {
             )
             .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
             .ok_or(ExactReportValidationError::SourceReplayMismatch)?;
-            if self.region_classifications != replay.region_classifications
-                || self.triangulations != replay.triangulations
-                || self.volumetric_classifications != replay.volumetric_classifications
-                || self.assembly != replay.assembly
-                || !mesh_output_matches(&self.mesh, &replay.mesh)
-            {
+            let replay = ExactBooleanResult {
+                kind: self.kind,
+                graph_had_unknowns: false,
+                region_classifications: replay.region_classifications,
+                triangulations: replay.triangulations,
+                volumetric_classifications: replay.volumetric_classifications,
+                assembly: replay.assembly,
+                mesh: replay.mesh,
+            };
+            if !retained_split_region_result_matches(self, &replay) {
                 return Err(ExactReportValidationError::SourceReplayMismatch);
             }
         }
@@ -1461,6 +1480,19 @@ fn certified_shortcut_sources_match(
             arrangement_cell_complex_sources_match(operation, validation, left, right)
         }
     }
+}
+
+fn retained_split_region_result_matches(
+    retained: &ExactBooleanResult,
+    replay: &ExactBooleanResult,
+) -> bool {
+    retained.kind == replay.kind
+        && retained.graph_had_unknowns == replay.graph_had_unknowns
+        && retained.region_classifications == replay.region_classifications
+        && retained.triangulations == replay.triangulations
+        && retained.volumetric_classifications == replay.volumetric_classifications
+        && retained.assembly == replay.assembly
+        && mesh_output_matches(&retained.mesh, &replay.mesh)
 }
 
 fn convex_operation_output_matches_sources(
