@@ -2068,6 +2068,43 @@ fn mixed_dimensional_regularized_solid_boolean_is_publicly_replayable() {
                 !keeps_solid,
                 "{operation:?}: {result:?}"
             );
+
+            assert!(
+                materialize_mixed_dimensional_regularized_solid_boolean(
+                    left,
+                    right,
+                    operation,
+                    ValidationPolicy::ALLOW_BOUNDARY,
+                )
+                .unwrap()
+                .is_none(),
+                "{operation:?} should yield to bounds-disjoint provenance for boundary-valid output"
+            );
+            let boundary_preflight = preflight_boolean_exact(left, right, operation).unwrap();
+            assert_eq!(
+                boundary_preflight.support,
+                hypermesh::ExactBooleanSupport::CertifiedBoundsDisjoint,
+                "{operation:?}: {boundary_preflight:?}"
+            );
+            let boundary_result =
+                boolean_exact(left, right, operation, ValidationPolicy::ALLOW_BOUNDARY).unwrap();
+            assert_eq!(
+                boundary_result.kind,
+                ExactBooleanResultKind::CertifiedShortcut {
+                    operation,
+                    shortcut: hypermesh::ExactBooleanShortcutKind::BoundsDisjoint
+                },
+                "{operation:?}: {boundary_result:?}"
+            );
+            boundary_result
+                .validate_operation_against_sources(
+                    left,
+                    right,
+                    operation,
+                    ValidationPolicy::ALLOW_BOUNDARY,
+                    ExactBoundaryBooleanPolicy::Reject,
+                )
+                .unwrap();
         }
     }
 }

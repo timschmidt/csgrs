@@ -8553,6 +8553,8 @@ pub fn materialize_mixed_dimensional_regularized_solid_boolean(
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
     if matches!(operation, ExactBooleanOperation::SelectedRegions(_))
         || certified_mixed_dimensional_regularized_solid_support(left, right).is_none()
+        || (validation != ValidationPolicy::CLOSED
+            && meshes_are_certified_bounds_disjoint(left, right))
     {
         return Ok(None);
     }
