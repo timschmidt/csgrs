@@ -1684,6 +1684,11 @@ fn closed_no_volume_overlap_regularized_boolean_is_publicly_replayable() {
             preflight.retained_face_pairs > 0,
             "positive-area no-volume shortcut should retain graph evidence: {operation:?}: {preflight:?}"
         );
+        assert_eq!(
+            preflight.coplanar_volumetric_evidence.as_ref(),
+            Some(&evidence),
+            "{operation:?}: positive-area no-volume shortcut should retain source-aware boundary-only evidence"
+        );
         preflight.validate().unwrap();
         preflight.validate_against_sources(&left, &right).unwrap();
 

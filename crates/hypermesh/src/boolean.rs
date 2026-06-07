@@ -545,7 +545,7 @@ pub fn preflight_boolean_exact(
             region_classifications: Vec::new(),
             blocker: None,
             arrangement_readiness: None,
-            coplanar_volumetric_evidence: coplanar_volumetric_evidence_if_required(
+            coplanar_volumetric_evidence: coplanar_volumetric_evidence_for_certified_arrangement(
                 &graph, left, right,
             ),
         });
@@ -686,11 +686,11 @@ pub fn preflight_boolean_exact(
             &graph, left, right, operation,
         )?
     {
-        return Ok(certified_shortcut_preflight_from_graph(
-            operation,
-            boundary_support,
-            &graph,
-        ));
+        let mut preflight =
+            certified_shortcut_preflight_from_graph(operation, boundary_support, &graph);
+        preflight.coplanar_volumetric_evidence =
+            coplanar_boundary_only_evidence_if_consumed(&graph, left, right)?;
+        return Ok(preflight);
     }
     if support == ExactBooleanSupport::RequiresCertifiedWinding
         && let Some(preflight) = cached_certified_arrangement_cell_complex_preflight(
@@ -776,7 +776,7 @@ pub fn preflight_boolean_exact(
             region_classifications: Vec::new(),
             blocker: None,
             arrangement_readiness: None,
-            coplanar_volumetric_evidence: coplanar_volumetric_evidence_if_required(
+            coplanar_volumetric_evidence: coplanar_volumetric_evidence_for_certified_arrangement(
                 &graph, left, right,
             ),
         });
@@ -887,7 +887,7 @@ pub fn preflight_boolean_exact(
             region_classifications: Vec::new(),
             blocker: None,
             arrangement_readiness: None,
-            coplanar_volumetric_evidence: coplanar_volumetric_evidence_if_required(
+            coplanar_volumetric_evidence: coplanar_volumetric_evidence_for_certified_arrangement(
                 &graph, left, right,
             ),
         });
@@ -905,7 +905,7 @@ pub fn preflight_boolean_exact(
             region_classifications: Vec::new(),
             blocker: None,
             arrangement_readiness: None,
-            coplanar_volumetric_evidence: coplanar_volumetric_evidence_if_required(
+            coplanar_volumetric_evidence: coplanar_volumetric_evidence_for_certified_arrangement(
                 &graph, left, right,
             ),
         });
@@ -1497,7 +1497,9 @@ fn certified_arrangement_cell_complex_preflight_from_graph(
         region_classifications: Vec::new(),
         blocker: None,
         arrangement_readiness: None,
-        coplanar_volumetric_evidence: coplanar_volumetric_evidence_if_required(graph, left, right),
+        coplanar_volumetric_evidence: coplanar_volumetric_evidence_for_certified_arrangement(
+            graph, left, right,
+        ),
     }
 }
 
@@ -1720,6 +1722,42 @@ fn coplanar_volumetric_evidence_if_required(
         .obstacle
         .requires_coplanar_volumetric_cells()
         .then_some(evidence)
+}
+
+fn coplanar_volumetric_evidence_for_certified_arrangement(
+    graph: &super::graph::ExactIntersectionGraph,
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Option<CoplanarVolumetricCellEvidenceReport> {
+    let counts = graph_relation_counts(graph);
+    if !graph_requires_coplanar_volumetric_cells(&counts) {
+        return None;
+    }
+    let evidence = CoplanarVolumetricCellEvidenceReport::from_graph(graph, left, right);
+    (evidence.obstacle.requires_coplanar_volumetric_cells()
+        || (evidence.obstacle == CoplanarVolumetricCellObstacle::BoundaryOnlyContact
+            && evidence.positive_area_coplanar_overlapping_pairs != 0))
+        .then_some(evidence)
+}
+
+fn coplanar_boundary_only_evidence_if_consumed(
+    graph: &super::graph::ExactIntersectionGraph,
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Result<Option<CoplanarVolumetricCellEvidenceReport>, MeshError> {
+    let evidence = CoplanarVolumetricCellEvidenceReport::from_graph(graph, left, right);
+    evidence.validate().map_err(|error| {
+        MeshError::one(MeshDiagnostic::new(
+            Severity::Error,
+            DiagnosticKind::UnsupportedExactOperation,
+            format!("exact boundary-only coplanar evidence validation failed: {error:?}"),
+        ))
+    })?;
+    Ok(
+        (evidence.obstacle == CoplanarVolumetricCellObstacle::BoundaryOnlyContact
+            && evidence.positive_area_coplanar_overlapping_pairs != 0)
+            .then_some(evidence),
+    )
 }
 
 fn graph_has_only_boundary_contact_pairs(

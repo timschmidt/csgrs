@@ -565,7 +565,7 @@ fn validate_coplanar_volumetric_evidence_matches_blocker(
     Ok(())
 }
 
-fn validate_coplanar_volumetric_evidence_shape(
+fn validate_coplanar_volumetric_evidence_counts(
     evidence: &CoplanarVolumetricCellEvidenceReport,
     retained_face_pairs: usize,
     retained_events: usize,
@@ -573,9 +573,53 @@ fn validate_coplanar_volumetric_evidence_shape(
     evidence
         .validate()
         .map_err(|_| ExactReportValidationError::InvalidCoplanarVolumetricEvidence)?;
-    if !evidence.obstacle.requires_coplanar_volumetric_cells()
-        || evidence.retained_face_pair_count != retained_face_pairs
+    if evidence.retained_face_pair_count != retained_face_pairs
         || coplanar_volumetric_evidence_event_count(evidence) != retained_events
+    {
+        return Err(ExactReportValidationError::CoplanarVolumetricEvidenceMismatch);
+    }
+    Ok(())
+}
+
+fn validate_coplanar_volumetric_evidence_shape(
+    evidence: &CoplanarVolumetricCellEvidenceReport,
+    retained_face_pairs: usize,
+    retained_events: usize,
+) -> Result<(), ExactReportValidationError> {
+    validate_coplanar_volumetric_evidence_counts(evidence, retained_face_pairs, retained_events)?;
+    if !evidence.obstacle.requires_coplanar_volumetric_cells() {
+        return Err(ExactReportValidationError::CoplanarVolumetricEvidenceMismatch);
+    }
+    Ok(())
+}
+
+fn coplanar_boundary_only_evidence_is_positive_area(
+    evidence: &CoplanarVolumetricCellEvidenceReport,
+) -> bool {
+    evidence.obstacle == CoplanarVolumetricCellObstacle::BoundaryOnlyContact
+        && evidence.positive_area_coplanar_overlapping_pairs != 0
+}
+
+fn validate_coplanar_boundary_only_evidence_shape(
+    evidence: &CoplanarVolumetricCellEvidenceReport,
+    retained_face_pairs: usize,
+    retained_events: usize,
+) -> Result<(), ExactReportValidationError> {
+    validate_coplanar_volumetric_evidence_counts(evidence, retained_face_pairs, retained_events)?;
+    if !coplanar_boundary_only_evidence_is_positive_area(evidence) {
+        return Err(ExactReportValidationError::CoplanarVolumetricEvidenceMismatch);
+    }
+    Ok(())
+}
+
+fn validate_certified_arrangement_coplanar_evidence_shape(
+    evidence: &CoplanarVolumetricCellEvidenceReport,
+    retained_face_pairs: usize,
+    retained_events: usize,
+) -> Result<(), ExactReportValidationError> {
+    validate_coplanar_volumetric_evidence_counts(evidence, retained_face_pairs, retained_events)?;
+    if !evidence.obstacle.requires_coplanar_volumetric_cells()
+        && !coplanar_boundary_only_evidence_is_positive_area(evidence)
     {
         return Err(ExactReportValidationError::CoplanarVolumetricEvidenceMismatch);
     }
@@ -1946,8 +1990,9 @@ pub struct ExactBooleanPreflight {
     ///
     /// This report separates boundary-only opposite-side shared faces from
     /// same-side or undecided positive-area coplanar overlap. Retaining it
-    /// exact object evidence that authorized either a blocker or a
-    /// arrangement-materialized consumption of coplanar source-face cells.
+    /// exact object evidence that authorized a blocker, a no-volume boundary
+    /// shortcut, or an arrangement-materialized consumption of coplanar
+    /// source-face cells.
     pub coplanar_volumetric_evidence: Option<CoplanarVolumetricCellEvidenceReport>,
 }
 
@@ -2351,6 +2396,8 @@ impl ExactBooleanPreflight {
             && !matches!(
                 self.support,
                 ExactBooleanSupport::CertifiedArrangementCellComplex
+                    | ExactBooleanSupport::CertifiedClosedBoundaryTouchingIntersection
+                    | ExactBooleanSupport::CertifiedClosedBoundaryTouchingDifference
                     | ExactBooleanSupport::RequiresCoplanarVolumetricCells
             )
         {
@@ -2401,6 +2448,22 @@ impl ExactBooleanPreflight {
                 {
                     return Err(ExactReportValidationError::StatusEvidenceMismatch);
                 }
+                if let Some(evidence) = self.coplanar_volumetric_evidence.as_ref() {
+                    if !matches!(
+                        self.support,
+                        ExactBooleanSupport::CertifiedClosedBoundaryTouchingIntersection
+                            | ExactBooleanSupport::CertifiedClosedBoundaryTouchingDifference
+                    ) {
+                        return Err(
+                            ExactReportValidationError::UnexpectedCoplanarVolumetricEvidence,
+                        );
+                    }
+                    validate_coplanar_boundary_only_evidence_shape(
+                        evidence,
+                        self.retained_face_pairs,
+                        self.retained_events,
+                    )?;
+                }
                 no_region_facts(self.region_count, &self.region_classifications)
             }
             ExactBooleanSupport::CertifiedBoundaryPolicyShortcut => {
@@ -2426,7 +2489,7 @@ impl ExactBooleanPreflight {
                     return Err(ExactReportValidationError::UnexpectedArrangementReadiness);
                 }
                 if let Some(evidence) = self.coplanar_volumetric_evidence.as_ref() {
-                    validate_coplanar_volumetric_evidence_shape(
+                    validate_certified_arrangement_coplanar_evidence_shape(
                         evidence,
                         self.retained_face_pairs,
                         self.retained_events,
