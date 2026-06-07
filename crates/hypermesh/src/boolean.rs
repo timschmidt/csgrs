@@ -4349,6 +4349,44 @@ pub fn materialize_volumetric_winding_arrangement(
     boolean_arrangement_volumetric_split_cell_recovery(left, right, operation, validation)
 }
 
+pub(crate) fn materialize_volumetric_coplanar_boundary_closure_output(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+) -> Result<Option<(ExactMesh, ExactVolumetricBoundaryClosureReport)>, MeshError> {
+    let graph = build_intersection_graph(left, right)?;
+    validate_graph_source_handoff(&graph, left, right)?;
+    let Some(materialized) = materialize_volumetric_winding_region_plan_from_graph(
+        &graph,
+        left,
+        right,
+        operation,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )?
+    else {
+        return Ok(None);
+    };
+    if materialized.mesh.facts().mesh.closed_manifold || materialized.mesh.triangles().is_empty() {
+        return Ok(None);
+    }
+    let Some(mesh) = close_exact_coplanar_boundary_loops_without_self_contact(
+        &materialized.mesh,
+        "exact volumetric split-cell coplanar boundary closure",
+        validation,
+    ) else {
+        return Ok(None);
+    };
+    let closure_report =
+        volumetric_boundary_closure_report_from_materialized(&materialized, operation)?;
+    if closure_report.status != ExactVolumetricBoundaryClosureStatus::CoplanarClosureAvailable
+        || closure_report.validate().is_err()
+    {
+        return Ok(None);
+    }
+    Ok(Some((mesh, closure_report)))
+}
+
 fn boolean_arrangement_volumetric_split_cell_recovery(
     left: &ExactMesh,
     right: &ExactMesh,

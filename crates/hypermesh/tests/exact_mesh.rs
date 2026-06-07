@@ -2549,6 +2549,17 @@ fn exact_volumetric_winding_coplanar_cap_is_publicly_certified() {
             ExactReportFreshness::Current,
             "{operation:?}: {result:?}"
         );
+        let mut stale_output = result.clone();
+        stale_output.mesh = left.clone();
+        assert!(
+            stale_output.validate().is_ok(),
+            "{operation:?}: {stale_output:?}"
+        );
+        assert_eq!(
+            stale_output.freshness_against_sources(&left, &right),
+            ExactReportFreshness::SourceReplayMismatch,
+            "{operation:?}: {stale_output:?}"
+        );
     }
 }
 

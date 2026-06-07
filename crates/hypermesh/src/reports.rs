@@ -24,7 +24,8 @@ use super::boolean::{
     certify_volumetric_boundary_closure_report, certify_winding_readiness_report,
     certify_winding_readiness_report_with_boundary_policy,
     certify_winding_readiness_report_with_validation, materialize_closed_same_surface_boolean,
-    materialize_coplanar_mesh_overlay_arrangement, preflight_boolean_exact,
+    materialize_coplanar_mesh_overlay_arrangement,
+    materialize_volumetric_coplanar_boundary_closure_output, preflight_boolean_exact,
     preflight_boolean_exact_with_boundary_policy, preflight_boolean_exact_with_validation,
     replay_volumetric_winding_region_plan,
 };
@@ -2124,6 +2125,14 @@ fn arrangement_cell_complex_output_matches_sources(
             .validate_against_sources(left, right)
             .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
         return Ok(Some(mesh_output_matches(mesh, &replay.mesh)));
+    }
+
+    if let Some((replay, closure_report)) =
+        materialize_volumetric_coplanar_boundary_closure_output(left, right, operation, validation)
+            .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
+    {
+        closure_report.validate()?;
+        return Ok(Some(mesh_output_matches(mesh, &replay)));
     }
 
     if operation != ExactBooleanOperation::Union {
