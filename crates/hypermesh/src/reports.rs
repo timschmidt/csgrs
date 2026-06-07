@@ -1509,6 +1509,9 @@ fn validate_shortcut_output_shape(
     if shortcut_requires_empty_output(shortcut, operation) && !mesh_output_is_empty(mesh) {
         return Err(ExactReportValidationError::StatusEvidenceMismatch);
     }
+    if shortcut_requires_nonempty_output(shortcut, operation) && mesh.triangles().is_empty() {
+        return Err(ExactReportValidationError::StatusEvidenceMismatch);
+    }
     if shortcut_requires_closed_solid_output(shortcut, operation) && !mesh_is_closed_solid(mesh) {
         return Err(ExactReportValidationError::StatusEvidenceMismatch);
     }
@@ -1540,6 +1543,19 @@ const fn shortcut_requires_empty_output(
         ) | (
             ExactBooleanShortcutKind::Identical | ExactBooleanShortcutKind::SameSurface,
             ExactBooleanOperation::Difference
+        )
+    )
+}
+
+const fn shortcut_requires_nonempty_output(
+    shortcut: ExactBooleanShortcutKind,
+    operation: ExactBooleanOperation,
+) -> bool {
+    matches!(
+        (shortcut, operation),
+        (
+            ExactBooleanShortcutKind::ArrangementCellComplex,
+            ExactBooleanOperation::Union
         )
     )
 }
@@ -5766,6 +5782,35 @@ mod tests {
                 &report_test_tetra([3, 0, 0])
             ),
             ExactReportFreshness::StaleStatusEvidence
+        );
+    }
+
+    #[test]
+    fn arrangement_union_shortcut_rejects_empty_output() {
+        let result = ExactBooleanResult {
+            kind: ExactBooleanResultKind::CertifiedShortcut {
+                operation: ExactBooleanOperation::Union,
+                shortcut: ExactBooleanShortcutKind::ArrangementCellComplex,
+            },
+            graph_had_unknowns: false,
+            region_classifications: Vec::new(),
+            triangulations: Vec::new(),
+            assembly: ExactBooleanAssemblyPlan {
+                vertices: Vec::new(),
+                triangles: Vec::new(),
+            },
+            volumetric_classifications: Vec::new(),
+            mesh: ExactMesh::new(
+                Vec::new(),
+                Vec::new(),
+                hyperlimit::SourceProvenance::exact("test empty arrangement union shortcut"),
+            )
+            .unwrap(),
+        };
+
+        assert_eq!(
+            result.validate(),
+            Err(ExactReportValidationError::StatusEvidenceMismatch)
         );
     }
 

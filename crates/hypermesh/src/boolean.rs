@@ -10686,7 +10686,10 @@ mod tests {
             )
             .unwrap(),
         };
-        fake_shortcut.validate().unwrap();
+        assert!(
+            fake_shortcut.validate().is_err(),
+            "empty arrangement-cell union shortcut must fail local shape validation"
+        );
         assert!(
             fake_shortcut
                 .validate_against_sources(&left, &right)
