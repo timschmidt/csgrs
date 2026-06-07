@@ -3951,6 +3951,17 @@ fn arrangement_volumetric_split_cell_recovery_outcome(
         graph, left, right, operation, validation,
     )?
     else {
+        if validation == ValidationPolicy::CLOSED
+            && let Some(output_counts) =
+                volumetric_winding_open_boundary_candidate_counts(graph, left, right, operation)?
+        {
+            return Ok(Some(
+                declined_output_validation_attempt_outcome_with_counts(
+                    attempt,
+                    Some(output_counts),
+                ),
+            ));
+        }
         return Ok(None);
     };
     Ok(Some(materialized_arrangement_attempt_outcome(
@@ -4412,6 +4423,38 @@ fn boolean_arrangement_volumetric_split_cell_recovery_from_graph(
         return Ok(None);
     }
     Ok(Some(result))
+}
+
+fn volumetric_winding_open_boundary_candidate_counts(
+    graph: &super::graph::ExactIntersectionGraph,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+) -> Result<Option<(usize, usize)>, MeshError> {
+    let Some(materialized) = materialize_volumetric_winding_region_plan_from_graph(
+        graph,
+        left,
+        right,
+        operation,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )?
+    else {
+        return Ok(None);
+    };
+    if materialized.mesh.facts().mesh.closed_manifold || materialized.mesh.triangles().is_empty() {
+        return Ok(None);
+    }
+    if matches!(
+        volumetric_boundary_closure_report_from_materialized(&materialized, operation)?.status,
+        ExactVolumetricBoundaryClosureStatus::AlreadyClosed
+            | ExactVolumetricBoundaryClosureStatus::CoplanarClosureAvailable
+    ) {
+        return Ok(None);
+    }
+    Ok(Some((
+        materialized.mesh.vertices().len(),
+        materialized.mesh.triangles().len(),
+    )))
 }
 
 fn volumetric_arrangement_cell_complex_result(

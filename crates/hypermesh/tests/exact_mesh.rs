@@ -2297,6 +2297,47 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
             operation: ExactBooleanOperation::Union
         }
     );
+
+    let closed_attempt = exact_arrangement_boolean_attempt_report_with_validation(
+        &left,
+        &right,
+        ExactBooleanOperation::Union,
+        ExactRegularizationPolicy::REGULARIZED_SOLID,
+        ValidationPolicy::CLOSED,
+    )
+    .unwrap();
+    assert_eq!(closed_attempt.output_validation, ValidationPolicy::CLOSED);
+    assert_eq!(
+        closed_attempt.decline,
+        Some(hypermesh::ExactArrangementBooleanDecline::OutputValidation),
+        "{closed_attempt:?}"
+    );
+    assert_eq!(closed_attempt.output_vertices, result.mesh.vertices().len());
+    assert_eq!(
+        closed_attempt.output_triangles,
+        result.mesh.triangles().len()
+    );
+    closed_attempt.validate().unwrap();
+    closed_attempt
+        .validate_against_sources_with_validation(&left, &right, ValidationPolicy::CLOSED)
+        .unwrap();
+    assert_eq!(
+        closed_attempt.freshness_against_sources_with_validation(
+            &left,
+            &right,
+            ValidationPolicy::CLOSED,
+        ),
+        ExactReportFreshness::Current
+    );
+    assert_eq!(
+        closed_attempt.freshness_against_sources_with_validation(
+            &left,
+            &right,
+            ValidationPolicy::ALLOW_BOUNDARY,
+        ),
+        ExactReportFreshness::SourceReplayMismatch
+    );
+
     result.validate().unwrap();
     result.validate_against_sources(&left, &right).unwrap();
     assert_eq!(
