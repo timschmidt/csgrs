@@ -23,6 +23,15 @@ pub enum RetainedImportFormat2 {
     Application,
 }
 
+/// Source topology for a lossy retained curve import record.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum RetainedImportTopology2 {
+    /// The source evidence was an open finite line string.
+    OpenLineString,
+    /// The source evidence was a closed finite ring.
+    ClosedRing,
+}
+
 /// Absolute/relative tolerance carried from an import source.
 ///
 /// These are evidence values only. They may explain why the source was lossy,
@@ -38,6 +47,7 @@ pub struct RetainedSourceTolerance2 {
 #[derive(Clone, Debug, PartialEq)]
 pub struct RetainedImportRecord2 {
     format: RetainedImportFormat2,
+    source_topology: RetainedImportTopology2,
     source_index: u64,
     source_tolerance: Option<RetainedSourceTolerance2>,
     input_point_count: usize,
@@ -72,13 +82,33 @@ impl RetainedSourceTolerance2 {
 }
 
 impl RetainedImportRecord2 {
-    /// Constructs a retained lossy-import audit record.
+    /// Constructs an open-line-string retained lossy-import audit record.
     ///
     /// `discarded_duplicate_count` records finite duplicate samples that were
     /// consumed as file/import metadata rather than emitted as zero-length
     /// topology. The topology status is always [`RetainedTopologyStatus::ImportedLossy`]
     /// because this record crosses a finite or external file-format boundary.
+    /// Use [`Self::try_new_closed_ring`] for closed-ring evidence.
     pub fn try_new(
+        format: RetainedImportFormat2,
+        source_index: u64,
+        source_tolerance: Option<RetainedSourceTolerance2>,
+        input_point_count: usize,
+        emitted_segment_count: usize,
+        discarded_duplicate_count: usize,
+    ) -> CurveResult<Self> {
+        Self::try_new_open_line_string(
+            format,
+            source_index,
+            source_tolerance,
+            input_point_count,
+            emitted_segment_count,
+            discarded_duplicate_count,
+        )
+    }
+
+    /// Constructs an open-line-string retained lossy-import audit record.
+    pub fn try_new_open_line_string(
         format: RetainedImportFormat2,
         source_index: u64,
         source_tolerance: Option<RetainedSourceTolerance2>,
@@ -89,30 +119,76 @@ impl RetainedImportRecord2 {
         let edge_evidence_count = emitted_segment_count
             .checked_add(discarded_duplicate_count)
             .ok_or(CurveError::InvalidImportRecord)?;
-        let open_chain_edge_count = input_point_count.saturating_sub(1);
-        let closed_ring_edge_count = input_point_count;
-        let has_open_chain_evidence = edge_evidence_count == open_chain_edge_count;
-        let has_closed_ring_evidence = input_point_count >= 3
-            && emitted_segment_count >= 3
-            && edge_evidence_count == closed_ring_edge_count;
         if input_point_count < 2
             || emitted_segment_count == 0
-            || (!has_open_chain_evidence && !has_closed_ring_evidence)
+            || edge_evidence_count != input_point_count - 1
         {
             return Err(CurveError::InvalidImportRecord);
         }
-        Ok(Self {
+
+        Ok(Self::from_validated_counts(
             format,
+            RetainedImportTopology2::OpenLineString,
+            source_index,
+            source_tolerance,
+            input_point_count,
+            emitted_segment_count,
+            discarded_duplicate_count,
+        ))
+    }
+
+    /// Constructs a closed-ring retained lossy-import audit record.
+    pub fn try_new_closed_ring(
+        format: RetainedImportFormat2,
+        source_index: u64,
+        source_tolerance: Option<RetainedSourceTolerance2>,
+        input_point_count: usize,
+        emitted_segment_count: usize,
+        discarded_duplicate_count: usize,
+    ) -> CurveResult<Self> {
+        let edge_evidence_count = emitted_segment_count
+            .checked_add(discarded_duplicate_count)
+            .ok_or(CurveError::InvalidImportRecord)?;
+        if input_point_count < 3
+            || emitted_segment_count < 3
+            || edge_evidence_count != input_point_count
+        {
+            return Err(CurveError::InvalidImportRecord);
+        }
+
+        Ok(Self::from_validated_counts(
+            format,
+            RetainedImportTopology2::ClosedRing,
+            source_index,
+            source_tolerance,
+            input_point_count,
+            emitted_segment_count,
+            discarded_duplicate_count,
+        ))
+    }
+
+    fn from_validated_counts(
+        format: RetainedImportFormat2,
+        source_topology: RetainedImportTopology2,
+        source_index: u64,
+        source_tolerance: Option<RetainedSourceTolerance2>,
+        input_point_count: usize,
+        emitted_segment_count: usize,
+        discarded_duplicate_count: usize,
+    ) -> Self {
+        Self {
+            format,
+            source_topology,
             source_index,
             source_tolerance,
             input_point_count,
             emitted_segment_count,
             discarded_duplicate_count,
             topology_status: RetainedTopologyStatus::ImportedLossy,
-        })
+        }
     }
 
-    /// Constructs a STEP import record.
+    /// Constructs an open-line-string STEP import record.
     pub fn step(
         entity_id: u64,
         source_tolerance: Option<RetainedSourceTolerance2>,
@@ -120,7 +196,7 @@ impl RetainedImportRecord2 {
         emitted_segment_count: usize,
         discarded_duplicate_count: usize,
     ) -> CurveResult<Self> {
-        Self::try_new(
+        Self::try_new_open_line_string(
             RetainedImportFormat2::Step,
             entity_id,
             source_tolerance,
@@ -130,7 +206,7 @@ impl RetainedImportRecord2 {
         )
     }
 
-    /// Constructs a DXF import record.
+    /// Constructs an open-line-string DXF import record.
     pub fn dxf(
         handle_index: u64,
         source_tolerance: Option<RetainedSourceTolerance2>,
@@ -138,7 +214,7 @@ impl RetainedImportRecord2 {
         emitted_segment_count: usize,
         discarded_duplicate_count: usize,
     ) -> CurveResult<Self> {
-        Self::try_new(
+        Self::try_new_open_line_string(
             RetainedImportFormat2::Dxf,
             handle_index,
             source_tolerance,
@@ -151,6 +227,11 @@ impl RetainedImportRecord2 {
     /// Returns the retained import format.
     pub const fn format(&self) -> RetainedImportFormat2 {
         self.format
+    }
+
+    /// Returns whether the retained source evidence was open or closed.
+    pub const fn source_topology(&self) -> RetainedImportTopology2 {
+        self.source_topology
     }
 
     /// Returns the opaque source index.

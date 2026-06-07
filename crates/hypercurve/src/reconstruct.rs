@@ -297,7 +297,7 @@ impl CurveString2 {
             }
         }
         let curve = Self::try_new(segments)?;
-        let record = RetainedImportRecord2::try_new(
+        let record = RetainedImportRecord2::try_new_open_line_string(
             format,
             source_index,
             source_tolerance,
@@ -448,7 +448,7 @@ impl Contour2 {
             .collect::<CurveResult<Vec<_>>>()?;
         let contour = Self::from_bulge_vertices_with_fill_rule(&vertices, fill_rule)?;
         let discarded_duplicate_count = usize::from(repeated_closing_point);
-        let record = RetainedImportRecord2::try_new(
+        let record = RetainedImportRecord2::try_new_closed_ring(
             format,
             source_index,
             source_tolerance,

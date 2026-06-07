@@ -1,7 +1,7 @@
 use hypercurve::{
     BulgeVertex2, Contour2, CurveError, CurveString2, FillRule, Point2,
     PolylineReconstructionOptions, Real, RetainedImportFormat2, RetainedImportRecord2,
-    RetainedSourceTolerance2, Segment2,
+    RetainedImportTopology2, RetainedSourceTolerance2, Segment2,
 };
 
 fn r(value: f64) -> Real {
@@ -188,6 +188,10 @@ fn finite_line_string_import_preserves_step_tolerance_evidence() {
 
     assert_eq!(import.curve_string().len(), 1);
     assert_eq!(record.format(), RetainedImportFormat2::Step);
+    assert_eq!(
+        record.source_topology(),
+        RetainedImportTopology2::OpenLineString
+    );
     assert_eq!(record.source_index(), 42);
     assert_eq!(record.source_tolerance(), Some(tolerance));
     assert_eq!(record.input_point_count(), 3);
@@ -212,6 +216,10 @@ fn finite_ring_import_preserves_dxf_handle_and_closure_evidence() {
     assert_eq!(import.contour().len(), 3);
     assert_eq!(import.contour().fill_rule(), FillRule::EvenOdd);
     assert_eq!(record.format(), RetainedImportFormat2::Dxf);
+    assert_eq!(
+        record.source_topology(),
+        RetainedImportTopology2::ClosedRing
+    );
     assert_eq!(record.source_index(), 0xabc);
     assert_eq!(record.source_tolerance().unwrap().relative(), 1.0e-7);
     assert_eq!(record.discarded_duplicate_count(), 1);
@@ -232,6 +240,10 @@ fn finite_ring_import_accepts_unrepeated_closed_edge_accounting() {
 
     assert_eq!(import.contour().len(), 4);
     assert_eq!(record.input_point_count(), 4);
+    assert_eq!(
+        record.source_topology(),
+        RetainedImportTopology2::ClosedRing
+    );
     assert_eq!(record.emitted_segment_count(), 4);
     assert_eq!(record.discarded_duplicate_count(), 0);
 }
@@ -265,9 +277,11 @@ fn retained_import_record_rejects_inconsistent_counts() {
             .unwrap_err(),
         CurveError::InvalidImportRecord
     );
-    RetainedImportRecord2::try_new(RetainedImportFormat2::Dxf, 0, None, 3, 3, 0).unwrap();
+    RetainedImportRecord2::try_new_closed_ring(RetainedImportFormat2::Dxf, 0, None, 3, 3, 0)
+        .unwrap();
     assert_eq!(
-        RetainedImportRecord2::try_new(RetainedImportFormat2::Dxf, 0, None, 3, 1, 2).unwrap_err(),
+        RetainedImportRecord2::try_new_closed_ring(RetainedImportFormat2::Dxf, 0, None, 3, 1, 2)
+            .unwrap_err(),
         CurveError::InvalidImportRecord
     );
     assert_eq!(
@@ -291,5 +305,61 @@ fn retained_import_record_rejects_inconsistent_counts() {
         )
         .unwrap_err(),
         CurveError::InvalidImportRecord
+    );
+}
+
+#[test]
+fn retained_import_record_rejects_cross_topology_edge_evidence() {
+    assert_eq!(
+        RetainedImportRecord2::try_new_open_line_string(
+            RetainedImportFormat2::FinitePolyline,
+            0,
+            None,
+            3,
+            3,
+            0
+        )
+        .unwrap_err(),
+        CurveError::InvalidImportRecord
+    );
+    assert_eq!(
+        RetainedImportRecord2::try_new_closed_ring(
+            RetainedImportFormat2::FinitePolyline,
+            0,
+            None,
+            3,
+            2,
+            0
+        )
+        .unwrap_err(),
+        CurveError::InvalidImportRecord
+    );
+
+    let open = RetainedImportRecord2::try_new_open_line_string(
+        RetainedImportFormat2::FinitePolyline,
+        7,
+        None,
+        3,
+        1,
+        1,
+    )
+    .unwrap();
+    let closed = RetainedImportRecord2::try_new_closed_ring(
+        RetainedImportFormat2::FinitePolyline,
+        7,
+        None,
+        4,
+        3,
+        1,
+    )
+    .unwrap();
+
+    assert_eq!(
+        open.source_topology(),
+        RetainedImportTopology2::OpenLineString
+    );
+    assert_eq!(
+        closed.source_topology(),
+        RetainedImportTopology2::ClosedRing
     );
 }
