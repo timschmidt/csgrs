@@ -11,19 +11,22 @@ use hypermesh::{
     ExactBooleanPolicy, ExactBooleanResult, ExactBooleanResultKind, ExactBoundaryBooleanPolicy,
     ExactI64MeshInputReadiness, ExactLabeledCellComplexFreshness, ExactMesh,
     ExactMeshConsumerDomain, ExactMeshDomainSummaryFreshness, ExactMeshHandoffPackageFreshness,
-    ExactMeshProposalAcceptance, ExactMeshProposalSourceKind, ExactRegionSelection,
-    ExactRegularizationPolicy, ExactReportFreshness, ExactSelectedCellComplexFreshness,
-    ExactSimplifiedCellComplexFreshness, ExactVolumetricRegionFreshness,
-    ExactVolumetricRegionRelation, FaceRegionPlaneRelation, FullFaceAdjacentUnionFreshness,
-    IntersectionGraphFreshness, MeshArtifactBlocker, MeshArtifactManifest, MeshArtifactRole,
-    MeshArtifactSourceKind, MeshCoordinateEvidence, MeshFacePairFreshness, MeshFacePairRelation,
-    MeshFacePairValidationError, SplitPlanFreshness, TriangleTriangleFreshness,
-    TriangleTriangleRelation, ValidationPolicy, WindingReportFreshness, approximate_mesh_f64_view,
-    boolean_exact, boolean_exact_with_boundary_policy, boolean_selected_regions,
-    build_exact_arrangement2d_overlay, build_exact_arrangement2d_overlay_with_boundary_policy,
-    build_intersection_graph, certify_adjacent_union_completion_report,
-    certify_boundary_touching_report, certify_convex_solid,
-    certify_coplanar_volumetric_cell_evidence, certify_exact_mesh_proposal,
+    ExactMeshProposalAcceptance, ExactMeshProposalSourceKind, ExactOpenSurfaceDisjointStatus,
+    ExactPlanarArrangementStatus, ExactRefinementStatus, ExactRegionSelection,
+    ExactRegularizationPolicy, ExactReportFreshness, ExactSameSurfaceStatus,
+    ExactSelectedCellComplexFreshness, ExactSimplifiedCellComplexFreshness,
+    ExactVolumetricRegionFreshness, ExactVolumetricRegionRelation, FaceRegionPlaneRelation,
+    FullFaceAdjacentUnionFreshness, IntersectionGraphFreshness, MeshArtifactBlocker,
+    MeshArtifactManifest, MeshArtifactRole, MeshArtifactSourceKind, MeshCoordinateEvidence,
+    MeshFacePairFreshness, MeshFacePairRelation, MeshFacePairValidationError, SplitPlanFreshness,
+    TriangleTriangleFreshness, TriangleTriangleRelation, ValidationPolicy, WindingReportFreshness,
+    approximate_mesh_f64_view, boolean_exact, boolean_exact_with_boundary_policy,
+    boolean_selected_regions, build_exact_arrangement2d_overlay,
+    build_exact_arrangement2d_overlay_with_boundary_policy, build_intersection_graph,
+    certify_adjacent_union_completion_report, certify_boundary_touching_report,
+    certify_convex_solid, certify_coplanar_volumetric_cell_evidence, certify_exact_mesh_proposal,
+    certify_open_surface_disjoint_report, certify_planar_arrangement_report,
+    certify_refinement_report, certify_same_surface_report,
     certify_volumetric_boundary_closure_report, certify_winding_readiness_report,
     checked_classify_face_regions_against_opposite_planes,
     checked_triangulate_face_regions_with_earcut, classify_mesh_face_pair,
@@ -2406,6 +2409,105 @@ fn exact_face_pair_classifier_matches_local_triangle_report() {
     assert_eq!(
         readiness.freshness_against_sources(&left, &separated_right),
         CoplanarArrangementReadinessFreshness::SourceReplayMismatch
+    );
+}
+
+#[test]
+fn public_exact_blocker_reports_replay_remaining_decisions() {
+    let left = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 0, 2, 0, 0, 0, 2, 0],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let overlapping_right = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 0, 1, 0, 0, 0, 1, 0],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let separated_right = ExactMesh::from_i64_triangles_with_policy(
+        &[9, 0, 0, 10, 0, 0, 9, 1, 0],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+
+    let refinement =
+        certify_refinement_report(&left, &overlapping_right, ExactBooleanOperation::Union).unwrap();
+    assert_eq!(refinement.status, ExactRefinementStatus::NotRequired);
+    assert!(!refinement.is_required());
+    refinement.validate().unwrap();
+    refinement
+        .validate_against_sources(&left, &overlapping_right)
+        .unwrap();
+    assert_eq!(
+        refinement.freshness_against_sources(&left, &overlapping_right),
+        ExactReportFreshness::Current
+    );
+    assert_eq!(
+        refinement.freshness_against_sources(&left, &separated_right),
+        ExactReportFreshness::SourceReplayMismatch
+    );
+
+    let planar =
+        certify_planar_arrangement_report(&left, &overlapping_right, ExactBooleanOperation::Union)
+            .unwrap();
+    assert_eq!(
+        planar.status,
+        ExactPlanarArrangementStatus::AlreadyMaterialized
+    );
+    assert!(!planar.is_required());
+    planar.validate().unwrap();
+    planar
+        .validate_against_sources(&left, &overlapping_right)
+        .unwrap();
+    assert_eq!(
+        planar.freshness_against_sources(&left, &overlapping_right),
+        ExactReportFreshness::Current
+    );
+    assert_eq!(
+        planar.freshness_against_sources(&left, &separated_right),
+        ExactReportFreshness::SourceReplayMismatch
+    );
+
+    let same_surface = certify_same_surface_report(&left, &left);
+    assert_eq!(same_surface.status, ExactSameSurfaceStatus::Certified);
+    assert!(same_surface.is_certified());
+    same_surface.validate().unwrap();
+    same_surface.validate_against_sources(&left, &left).unwrap();
+    assert_eq!(
+        same_surface.freshness_against_sources(&left, &left),
+        ExactReportFreshness::Current
+    );
+    assert_eq!(
+        same_surface.freshness_against_sources(&left, &separated_right),
+        ExactReportFreshness::SourceReplayMismatch
+    );
+
+    let parallel_right = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 1, 2, 0, 1, 0, 2, 1],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let open_disjoint = certify_open_surface_disjoint_report(&left, &parallel_right).unwrap();
+    assert_eq!(
+        open_disjoint.status,
+        ExactOpenSurfaceDisjointStatus::Certified
+    );
+    assert!(open_disjoint.is_certified());
+    open_disjoint.validate().unwrap();
+    open_disjoint
+        .validate_against_sources(&left, &parallel_right)
+        .unwrap();
+    assert_eq!(
+        open_disjoint.freshness_against_sources(&left, &parallel_right),
+        ExactReportFreshness::Current
+    );
+    assert_eq!(
+        open_disjoint.freshness_against_sources(&left, &overlapping_right),
+        ExactReportFreshness::SourceReplayMismatch
     );
 }
 
