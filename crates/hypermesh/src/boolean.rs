@@ -6782,6 +6782,7 @@ fn winding_readiness_report_from_graph(
     let graph_had_unknowns = graph.has_unknowns();
     let counts = graph_relation_counts(graph);
     if matches!(operation, ExactBooleanOperation::SelectedRegions(_)) {
+        let blocker_kind = not_named_operation_blocker_kind(counts);
         return Ok(winding_readiness_report(
             operation,
             ExactWindingReadinessStatus::NotNamedOperation,
@@ -6790,7 +6791,7 @@ fn winding_readiness_report_from_graph(
             graph.event_count(),
             0,
             Vec::new(),
-            counts.into_blocker(ExactBooleanBlockerKind::NeedsWinding),
+            counts.into_blocker(blocker_kind),
             None,
             None,
         ));
@@ -7184,6 +7185,22 @@ fn winding_readiness_report_from_graph(
         None,
         None,
     ))
+}
+
+fn not_named_operation_blocker_kind(counts: GraphRelationCounts) -> ExactBooleanBlockerKind {
+    if counts.unknown_pairs > 0 || counts.construction_failed_events > 0 {
+        ExactBooleanBlockerKind::NeedsRefinement
+    } else if counts.coplanar_overlapping_pairs + counts.coplanar_touching_pairs > 0 {
+        if counts.candidate_pairs == 0 && counts.coplanar_overlapping_pairs > 0 {
+            ExactBooleanBlockerKind::NeedsPlanarArrangement
+        } else if counts.candidate_pairs == 0 {
+            ExactBooleanBlockerKind::NeedsBoundaryPolicy
+        } else {
+            ExactBooleanBlockerKind::NeedsCoplanarVolumetricCells
+        }
+    } else {
+        ExactBooleanBlockerKind::NeedsWinding
+    }
 }
 
 fn winding_readiness_report(
@@ -8405,6 +8422,47 @@ mod tests {
         );
         readiness.validate().unwrap();
         readiness.validate_against_sources(&left, &right).unwrap();
+    }
+
+    #[test]
+    fn selected_region_winding_readiness_classifies_retained_graph_blocker() {
+        let left = ExactMesh::from_i64_triangles_with_policy(
+            &[0, 0, 0, 4, 0, 0, 4, 4, 0, 0, 4, 0],
+            &[0, 1, 2, 0, 2, 3],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let right = ExactMesh::from_i64_triangles_with_policy(
+            &[2, 0, 0, 4, 0, 0, 4, 2, 0, 2, 2, 0],
+            &[0, 1, 2, 0, 2, 3],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let readiness = certify_winding_readiness_report(
+            &left,
+            &right,
+            ExactBooleanOperation::SelectedRegions(ExactRegionSelection::KeepAll),
+        )
+        .unwrap();
+        assert_eq!(
+            readiness.status,
+            ExactWindingReadinessStatus::NotNamedOperation
+        );
+        assert_eq!(
+            readiness.blocker.kind,
+            ExactBooleanBlockerKind::NeedsPlanarArrangement
+        );
+        assert_eq!(readiness.blocker.coplanar_overlapping_pairs, 1);
+        assert_eq!(readiness.blocker.coplanar_touching_pairs, 2);
+        readiness.validate().unwrap();
+        readiness.validate_against_sources(&left, &right).unwrap();
+
+        let mut stale = readiness.clone();
+        stale.blocker.kind = ExactBooleanBlockerKind::NeedsWinding;
+        assert_eq!(
+            stale.validate(),
+            Err(crate::ExactReportValidationError::InvalidBlockerCounts)
+        );
     }
 
     #[test]

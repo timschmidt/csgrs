@@ -4057,11 +4057,14 @@ impl ExactWindingReadinessReport {
     pub fn validate(&self) -> Result<(), ExactReportValidationError> {
         if matches!(self.status, ExactWindingReadinessStatus::GraphUnknowns)
             != self.graph_had_unknowns
+            && !matches!(self.status, ExactWindingReadinessStatus::NotNamedOperation)
         {
             return Err(ExactReportValidationError::GraphUnknownStatusMismatch);
         }
         validate_refinement_partition(
-            matches!(self.status, ExactWindingReadinessStatus::GraphUnknowns),
+            matches!(self.status, ExactWindingReadinessStatus::GraphUnknowns)
+                || (matches!(self.status, ExactWindingReadinessStatus::NotNamedOperation)
+                    && self.graph_had_unknowns),
             &self.blocker,
         )?;
         if self.coplanar_volumetric_evidence.is_some()
@@ -4504,7 +4507,13 @@ impl ExactWindingReadinessReport {
                     }
                     _ => {}
                 }
-                blocker_kind(Some(&self.blocker), ExactBooleanBlockerKind::NeedsWinding)?;
+                if matches!(self.status, ExactWindingReadinessStatus::NotNamedOperation) {
+                    self.blocker.validate_for_kind(self.blocker.kind)?;
+                } else {
+                    blocker_kind(Some(&self.blocker), ExactBooleanBlockerKind::NeedsWinding)?;
+                    self.blocker
+                        .validate_for_kind(ExactBooleanBlockerKind::NeedsWinding)?;
+                }
                 validate_blocker_count_bounds(
                     &self.blocker,
                     self.retained_face_pairs,
