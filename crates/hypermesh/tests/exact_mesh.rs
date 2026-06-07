@@ -1757,6 +1757,8 @@ fn trivial_boolean_materializers_are_publicly_replayable() {
     .unwrap();
     let solid = tetra([0, 0, 0]);
     let disjoint_solid = tetra([3, 0, 0]);
+    let far_solid = tetra([20, 0, 0]);
+    let farther_solid = tetra([30, 0, 0]);
 
     let open_identical_left = ExactMesh::from_i64_triangles_with_policy(
         &[0, 0, 0, 4, 0, 0, 0, 4, 0],
@@ -1779,6 +1781,31 @@ fn trivial_boolean_materializers_are_publicly_replayable() {
     .unwrap();
     let open_disjoint_right = ExactMesh::from_i64_triangles_with_policy(
         &[0, 0, 1, 4, 0, 5, 0, 4, 1],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let open_identical_alt_left = ExactMesh::from_i64_triangles_with_policy(
+        &[10, 0, 0, 14, 0, 0, 10, 4, 0],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let open_identical_alt_right = open_identical_alt_left.clone();
+    let open_same_surface_alt_right = ExactMesh::from_i64_triangles_with_policy(
+        &[14, 0, 0, 10, 4, 0, 10, 0, 0],
+        &[2, 0, 1],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let open_disjoint_alt_left = ExactMesh::from_i64_triangles_with_policy(
+        &[10, 0, 0, 14, 0, 4, 10, 4, 0],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let open_disjoint_alt_right = ExactMesh::from_i64_triangles_with_policy(
+        &[10, 0, 1, 14, 0, 5, 10, 4, 1],
         &[0, 1, 2],
         ValidationPolicy::ALLOW_BOUNDARY,
     )
@@ -1840,6 +1867,12 @@ fn trivial_boolean_materializers_are_publicly_replayable() {
             ValidationPolicy::CLOSED,
             hypermesh::ExactBooleanShortcutKind::EmptyOperand,
         );
+        if operation == ExactBooleanOperation::Union {
+            assert_eq!(
+                empty_result.freshness_against_sources(&empty, &disjoint_solid),
+                ExactReportFreshness::SourceReplayMismatch
+            );
+        }
 
         let disjoint_result = materialize_bounds_disjoint_boolean(
             &solid,
@@ -1859,6 +1892,15 @@ fn trivial_boolean_materializers_are_publicly_replayable() {
             ValidationPolicy::CLOSED,
             hypermesh::ExactBooleanShortcutKind::BoundsDisjoint,
         );
+        if matches!(
+            operation,
+            ExactBooleanOperation::Union | ExactBooleanOperation::Difference
+        ) {
+            assert_eq!(
+                disjoint_result.freshness_against_sources(&far_solid, &farther_solid),
+                ExactReportFreshness::SourceReplayMismatch
+            );
+        }
 
         let identical_result = materialize_identical_mesh_boolean(
             &open_identical_left,
@@ -1878,6 +1920,16 @@ fn trivial_boolean_materializers_are_publicly_replayable() {
             ValidationPolicy::ALLOW_BOUNDARY,
             hypermesh::ExactBooleanShortcutKind::Identical,
         );
+        if matches!(
+            operation,
+            ExactBooleanOperation::Union | ExactBooleanOperation::Intersection
+        ) {
+            assert_eq!(
+                identical_result
+                    .freshness_against_sources(&open_identical_alt_left, &open_identical_alt_right),
+                ExactReportFreshness::SourceReplayMismatch
+            );
+        }
 
         let same_surface_result = materialize_same_surface_boolean(
             &open_identical_left,
@@ -1897,6 +1949,18 @@ fn trivial_boolean_materializers_are_publicly_replayable() {
             ValidationPolicy::ALLOW_BOUNDARY,
             hypermesh::ExactBooleanShortcutKind::SameSurface,
         );
+        if matches!(
+            operation,
+            ExactBooleanOperation::Union | ExactBooleanOperation::Intersection
+        ) {
+            assert_eq!(
+                same_surface_result.freshness_against_sources(
+                    &open_identical_alt_left,
+                    &open_same_surface_alt_right,
+                ),
+                ExactReportFreshness::SourceReplayMismatch
+            );
+        }
 
         let open_disjoint_result = materialize_open_surface_disjoint_boolean(
             &open_disjoint_left,
@@ -1916,6 +1980,16 @@ fn trivial_boolean_materializers_are_publicly_replayable() {
             ValidationPolicy::ALLOW_BOUNDARY,
             hypermesh::ExactBooleanShortcutKind::OpenSurfaceDisjoint,
         );
+        if matches!(
+            operation,
+            ExactBooleanOperation::Union | ExactBooleanOperation::Difference
+        ) {
+            assert_eq!(
+                open_disjoint_result
+                    .freshness_against_sources(&open_disjoint_alt_left, &open_disjoint_alt_right),
+                ExactReportFreshness::SourceReplayMismatch
+            );
+        }
     }
 
     assert!(

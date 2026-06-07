@@ -1115,7 +1115,12 @@ impl ExactBooleanResult {
         if let ExactBooleanResultKind::CertifiedShortcut {
             operation,
             shortcut:
-                ExactBooleanShortcutKind::MixedDimensionalRegularizedSolid
+                ExactBooleanShortcutKind::EmptyOperand
+                | ExactBooleanShortcutKind::BoundsDisjoint
+                | ExactBooleanShortcutKind::Identical
+                | ExactBooleanShortcutKind::SameSurface
+                | ExactBooleanShortcutKind::OpenSurfaceDisjoint
+                | ExactBooleanShortcutKind::MixedDimensionalRegularizedSolid
                 | ExactBooleanShortcutKind::LowerDimensionalRegularizedSolid,
         } = self.kind
         {
