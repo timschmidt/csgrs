@@ -2437,10 +2437,7 @@ impl ExactBooleanPreflight {
             | ExactBooleanSupport::CertifiedOpenSurfaceDisjoint
             | ExactBooleanSupport::CertifiedClosedWindingSeparated
             | ExactBooleanSupport::CertifiedClosedWindingContainment
-            | ExactBooleanSupport::CertifiedMixedDimensionalRegularizedSolid
-            | ExactBooleanSupport::CertifiedConvexUnion
-            | ExactBooleanSupport::CertifiedConvexIntersection
-            | ExactBooleanSupport::CertifiedConvexDifference => {
+            | ExactBooleanSupport::CertifiedMixedDimensionalRegularizedSolid => {
                 if self.blocker.is_some() {
                     return Err(ExactReportValidationError::CertifiedReportHasBlocker);
                 }
@@ -2451,6 +2448,23 @@ impl ExactBooleanPreflight {
                     || self.graph_had_unknowns
                     || self.retained_face_pairs != 0
                     || self.retained_events != 0
+                    || !certified_preflight_support_matches_operation(self.support, self.operation)
+                {
+                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                }
+                no_region_facts(self.region_count, &self.region_classifications)
+            }
+            ExactBooleanSupport::CertifiedConvexUnion
+            | ExactBooleanSupport::CertifiedConvexIntersection
+            | ExactBooleanSupport::CertifiedConvexDifference => {
+                if self.blocker.is_some() {
+                    return Err(ExactReportValidationError::CertifiedReportHasBlocker);
+                }
+                if self.arrangement_readiness.is_some() {
+                    return Err(ExactReportValidationError::UnexpectedArrangementReadiness);
+                }
+                if operation_is_selected_region(self.operation)
+                    || self.graph_had_unknowns
                     || !certified_preflight_support_matches_operation(self.support, self.operation)
                 {
                     return Err(ExactReportValidationError::StatusEvidenceMismatch);
@@ -4326,14 +4340,17 @@ impl ExactWindingReadinessReport {
                     || self.coplanar_volumetric_evidence.is_some()
                     || matches!(self.operation, ExactBooleanOperation::SelectedRegions(_))
                     || self.graph_had_unknowns
-                    || self.retained_face_pairs != 0
-                    || self.retained_events != 0
                 {
                     return Err(ExactReportValidationError::StatusEvidenceMismatch);
                 }
                 blocker_kind(Some(&self.blocker), ExactBooleanBlockerKind::NeedsWinding)?;
                 self.blocker
                     .validate_for_kind(ExactBooleanBlockerKind::NeedsWinding)?;
+                validate_blocker_count_bounds(
+                    &self.blocker,
+                    self.retained_face_pairs,
+                    self.retained_events,
+                )?;
                 no_region_facts(self.region_count, &self.region_classifications)
             }
             ExactWindingReadinessStatus::OpenSurfaceArrangementAlreadyMaterialized => {

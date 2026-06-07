@@ -641,7 +641,11 @@ pub fn preflight_boolean_exact(
         && let Some(convex_support) =
             certified_convex_materialized_boolean_support(left, right, operation)
     {
-        return Ok(certified_shortcut_preflight(operation, convex_support));
+        return Ok(certified_shortcut_preflight_from_graph(
+            operation,
+            convex_support,
+            &graph,
+        ));
     }
     if support == ExactBooleanSupport::RequiresCertifiedWinding
         && let Some(convex_support) =
@@ -6612,24 +6616,6 @@ pub fn certify_winding_readiness_report(
             None,
         ));
     }
-    if !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
-        && preflight_tail_shortcut_support(left, right, operation)
-            != Some(ExactBooleanSupport::CertifiedArrangementCellComplex)
-        && certified_convex_materialized_boolean_support(left, right, operation).is_some()
-    {
-        return Ok(winding_readiness_report(
-            operation,
-            ExactWindingReadinessStatus::ConvexBooleanAlreadyMaterialized,
-            false,
-            0,
-            0,
-            0,
-            Vec::new(),
-            GraphRelationCounts::default().into_blocker(ExactBooleanBlockerKind::NeedsWinding),
-            None,
-            None,
-        ));
-    }
     let graph = build_intersection_graph(left, right)?;
     validate_graph_source_handoff(&graph, left, right)?;
     winding_readiness_report_from_graph(&graph, left, right, operation)
@@ -6819,6 +6805,36 @@ fn winding_readiness_report_from_graph(
             0,
             Vec::new(),
             counts.into_blocker(ExactBooleanBlockerKind::NeedsRefinement),
+            None,
+            None,
+        ));
+    }
+    if preflight_tail_shortcut_support(left, right, operation)
+        != Some(ExactBooleanSupport::CertifiedArrangementCellComplex)
+        && certified_convex_materialized_boolean_support(left, right, operation).is_some()
+    {
+        let blocker = counts.into_blocker(ExactBooleanBlockerKind::NeedsWinding);
+        let (retained_face_pairs, retained_events, blocker) = if blocker
+            .validate_for_kind(ExactBooleanBlockerKind::NeedsWinding)
+            .is_ok()
+        {
+            (graph.face_pairs.len(), graph.event_count(), blocker)
+        } else {
+            (
+                0,
+                0,
+                GraphRelationCounts::default().into_blocker(ExactBooleanBlockerKind::NeedsWinding),
+            )
+        };
+        return Ok(winding_readiness_report(
+            operation,
+            ExactWindingReadinessStatus::ConvexBooleanAlreadyMaterialized,
+            graph_had_unknowns,
+            retained_face_pairs,
+            retained_events,
+            0,
+            Vec::new(),
+            blocker,
             None,
             None,
         ));
@@ -10515,6 +10531,8 @@ mod tests {
             ExactBooleanSupport::CertifiedConvexDifference
         );
         assert!(preflight.blocker.is_none(), "{preflight:?}");
+        assert!(preflight.retained_face_pairs > 0, "{preflight:?}");
+        assert!(preflight.retained_events > 0, "{preflight:?}");
         let mut relabeled_preflight = preflight.clone();
         relabeled_preflight.operation = ExactBooleanOperation::Union;
         assert_eq!(
@@ -10570,6 +10588,58 @@ mod tests {
     }
 
     #[test]
+    fn noncoplanar_convex_shortcut_reports_retain_graph_counts() {
+        let left = tetrahedron_i64([0, 0, 0], [6, 0, 0], [0, 6, 0], [0, 0, 6]);
+        let right = tetrahedron_i64([1, 1, 1], [5, 1, 2], [1, 5, 1], [2, 1, 5]);
+        let graph = build_intersection_graph(&left, &right).unwrap();
+        validate_graph_source_handoff(&graph, &left, &right).unwrap();
+        assert!(!graph.has_unknowns());
+        assert_eq!(graph.face_pairs.len(), 3);
+        assert_eq!(graph.event_count(), 12);
+
+        for operation in [
+            ExactBooleanOperation::Union,
+            ExactBooleanOperation::Intersection,
+            ExactBooleanOperation::Difference,
+        ] {
+            let expected_support = match operation {
+                ExactBooleanOperation::Union => ExactBooleanSupport::CertifiedConvexUnion,
+                ExactBooleanOperation::Intersection => {
+                    ExactBooleanSupport::CertifiedConvexIntersection
+                }
+                ExactBooleanOperation::Difference => ExactBooleanSupport::CertifiedConvexDifference,
+                ExactBooleanOperation::SelectedRegions(_) => unreachable!(),
+            };
+            let preflight = preflight_boolean_exact(&left, &right, operation).unwrap();
+            assert_eq!(
+                preflight.support, expected_support,
+                "{operation:?}: {preflight:?}"
+            );
+            assert_eq!(preflight.retained_face_pairs, graph.face_pairs.len());
+            assert_eq!(preflight.retained_events, graph.event_count());
+            assert!(preflight.blocker.is_none(), "{operation:?}: {preflight:?}");
+            preflight.validate().unwrap();
+            preflight.validate_against_sources(&left, &right).unwrap();
+
+            let readiness = certify_winding_readiness_report(&left, &right, operation).unwrap();
+            assert_eq!(
+                readiness.status,
+                ExactWindingReadinessStatus::ConvexBooleanAlreadyMaterialized,
+                "{operation:?}: {readiness:?}"
+            );
+            assert_eq!(readiness.retained_face_pairs, graph.face_pairs.len());
+            assert_eq!(readiness.retained_events, graph.event_count());
+            assert_eq!(
+                readiness.blocker.kind,
+                ExactBooleanBlockerKind::NeedsWinding
+            );
+            assert_eq!(readiness.blocker.candidate_pairs, graph.face_pairs.len());
+            readiness.validate().unwrap();
+            readiness.validate_against_sources(&left, &right).unwrap();
+        }
+    }
+
+    #[test]
     fn straddling_coplanar_crossing_tetrahedron_boundary_attempt_materializes() {
         let left = tetrahedron_i64([0, 0, 0], [6, 0, 0], [0, 6, 0], [0, 0, 6]);
         let right = tetrahedron_i64([2, 2, 2], [8, -1, -1], [-1, 8, -1], [3, 2, 0]);
@@ -10600,6 +10670,14 @@ mod tests {
                 "{operation:?}: {preflight:?}"
             );
             assert!(preflight.blocker.is_none(), "{operation:?}: {preflight:?}");
+            assert!(
+                preflight.retained_face_pairs > 0,
+                "{operation:?}: {preflight:?}"
+            );
+            assert!(
+                preflight.retained_events > 0,
+                "{operation:?}: {preflight:?}"
+            );
 
             let readiness = certify_winding_readiness_report(&left, &right, operation).unwrap();
             assert_eq!(
