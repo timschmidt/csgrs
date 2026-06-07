@@ -4527,18 +4527,20 @@ impl ExactPlanarArrangementReport {
             ExactPlanarArrangementStatus::AlreadyMaterialized
             | ExactPlanarArrangementStatus::NoPositiveOverlap
             | ExactPlanarArrangementStatus::BoundaryPolicyRequired => {
-                if let Some(readiness) = &self.arrangement_readiness {
-                    readiness
-                        .validate()
-                        .map_err(|_| ExactReportValidationError::InvalidArrangementReadiness)?;
-                    validate_arrangement_readiness_matches_blocker(readiness, &self.blocker)?;
-                    if readiness.status == CoplanarArrangementReadinessStatus::NoCoplanarOverlap
-                        && self.blocker.coplanar_overlapping_pairs
-                            + self.blocker.coplanar_touching_pairs
-                            != 0
-                    {
-                        return Err(ExactReportValidationError::ArrangementReadinessMismatch);
-                    }
+                let readiness = self
+                    .arrangement_readiness
+                    .as_ref()
+                    .ok_or(ExactReportValidationError::MissingArrangementReadiness)?;
+                readiness
+                    .validate()
+                    .map_err(|_| ExactReportValidationError::InvalidArrangementReadiness)?;
+                validate_arrangement_readiness_matches_blocker(readiness, &self.blocker)?;
+                if readiness.status == CoplanarArrangementReadinessStatus::NoCoplanarOverlap
+                    && self.blocker.coplanar_overlapping_pairs
+                        + self.blocker.coplanar_touching_pairs
+                        != 0
+                {
+                    return Err(ExactReportValidationError::ArrangementReadinessMismatch);
                 }
             }
             ExactPlanarArrangementStatus::NotNamedOperation
@@ -5959,6 +5961,108 @@ mod tests {
         report.blocker.kind = ExactBooleanBlockerKind::NeedsCoplanarVolumetricCells;
         report.blocker.candidate_pairs = 1;
         report.validate().unwrap();
+    }
+
+    #[test]
+    fn planar_arrangement_named_statuses_require_retained_readiness() {
+        let mut already_materialized = ExactPlanarArrangementReport {
+            operation: ExactBooleanOperation::Union,
+            status: ExactPlanarArrangementStatus::AlreadyMaterialized,
+            graph_had_unknowns: false,
+            retained_face_pairs: 1,
+            retained_events: 1,
+            blocker: ExactBooleanBlocker {
+                kind: ExactBooleanBlockerKind::NeedsPlanarArrangement,
+                candidate_pairs: 0,
+                coplanar_overlapping_pairs: 1,
+                coplanar_touching_pairs: 0,
+                unknown_pairs: 0,
+                construction_failed_events: 0,
+            },
+            arrangement_readiness: Some(CoplanarArrangementReadinessReport {
+                status: CoplanarArrangementReadinessStatus::NeedsPlanarCells,
+                graph_count: 1,
+                overlapping_graphs: 1,
+                touching_graphs: 0,
+                edge_overlap_count: 1,
+                vertex_overlap_count: 0,
+                point_split_count: 0,
+                interval_overlap_count: 0,
+                interval_endpoint_count: 0,
+            }),
+        };
+        already_materialized.validate().unwrap();
+        already_materialized.arrangement_readiness = None;
+        assert_eq!(
+            already_materialized.validate(),
+            Err(ExactReportValidationError::MissingArrangementReadiness)
+        );
+
+        let mut no_positive_overlap = ExactPlanarArrangementReport {
+            operation: ExactBooleanOperation::Intersection,
+            status: ExactPlanarArrangementStatus::NoPositiveOverlap,
+            graph_had_unknowns: false,
+            retained_face_pairs: 1,
+            retained_events: 1,
+            blocker: ExactBooleanBlocker {
+                kind: ExactBooleanBlockerKind::NeedsWinding,
+                candidate_pairs: 1,
+                coplanar_overlapping_pairs: 0,
+                coplanar_touching_pairs: 0,
+                unknown_pairs: 0,
+                construction_failed_events: 0,
+            },
+            arrangement_readiness: Some(CoplanarArrangementReadinessReport {
+                status: CoplanarArrangementReadinessStatus::NoCoplanarOverlap,
+                graph_count: 0,
+                overlapping_graphs: 0,
+                touching_graphs: 0,
+                edge_overlap_count: 0,
+                vertex_overlap_count: 0,
+                point_split_count: 0,
+                interval_overlap_count: 0,
+                interval_endpoint_count: 0,
+            }),
+        };
+        no_positive_overlap.validate().unwrap();
+        no_positive_overlap.arrangement_readiness = None;
+        assert_eq!(
+            no_positive_overlap.validate(),
+            Err(ExactReportValidationError::MissingArrangementReadiness)
+        );
+
+        let mut boundary_policy = ExactPlanarArrangementReport {
+            operation: ExactBooleanOperation::Difference,
+            status: ExactPlanarArrangementStatus::BoundaryPolicyRequired,
+            graph_had_unknowns: false,
+            retained_face_pairs: 1,
+            retained_events: 1,
+            blocker: ExactBooleanBlocker {
+                kind: ExactBooleanBlockerKind::NeedsBoundaryPolicy,
+                candidate_pairs: 0,
+                coplanar_overlapping_pairs: 0,
+                coplanar_touching_pairs: 1,
+                unknown_pairs: 0,
+                construction_failed_events: 0,
+            },
+            arrangement_readiness: Some(CoplanarArrangementReadinessReport {
+                status: CoplanarArrangementReadinessStatus::BoundaryOnly,
+                graph_count: 1,
+                overlapping_graphs: 0,
+                touching_graphs: 1,
+                edge_overlap_count: 1,
+                vertex_overlap_count: 0,
+                point_split_count: 0,
+                interval_overlap_count: 0,
+                interval_endpoint_count: 0,
+            }),
+        };
+        boundary_policy.validate().unwrap();
+        boundary_policy.arrangement_readiness = None;
+        assert_eq!(
+            boundary_policy.validate(),
+            Err(ExactReportValidationError::MissingArrangementReadiness)
+        );
     }
 
     #[test]
