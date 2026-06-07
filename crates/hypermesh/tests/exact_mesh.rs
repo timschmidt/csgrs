@@ -841,12 +841,12 @@ fn exact_axis_aligned_orthogonal_solid_materializer_is_publicly_replayable() {
         let mut stale_output = result.clone();
         stale_output.mesh = left.clone();
         assert!(
-            stale_output.validate().is_ok(),
+            stale_output.validate().is_err(),
             "{operation:?}: {stale_output:?}"
         );
         assert_eq!(
             stale_output.freshness_against_sources(&left, &right),
-            ExactReportFreshness::SourceReplayMismatch,
+            ExactReportFreshness::StaleRegionFacts,
             "{operation:?}: {stale_output:?}"
         );
         assert_eq!(
