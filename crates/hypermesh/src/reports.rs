@@ -7,7 +7,7 @@
 //! decision was certified, unsupported, or blocked on an application-level
 //! policy.
 
-use hyperlimit::{Point3, compare_reals};
+use hyperlimit::{ApproximationPolicy, MeshSource, Point3, compare_reals};
 use std::cmp::Ordering;
 
 use super::ExactMesh;
@@ -139,6 +139,9 @@ pub enum ExactReportValidationError {
     VolumetricClassificationNotDecided,
     /// The materialized output mesh failed retained-state validation.
     InvalidOutputMesh,
+    /// The materialized output mesh was not constructed at a boolean-output
+    /// exact provenance boundary.
+    InvalidOutputMeshProvenance,
     /// A selected-region result's assembly and materialized mesh disagree.
     OutputMeshAssemblyMismatch,
     /// A selected-region result's retained output assembly no longer replays
@@ -284,6 +287,7 @@ impl From<ExactReportValidationError> for ExactReportFreshness {
             | ExactReportValidationError::VolumetricClassificationOrderMismatch
             | ExactReportValidationError::VolumetricClassificationNotDecided
             | ExactReportValidationError::InvalidOutputMesh
+            | ExactReportValidationError::InvalidOutputMeshProvenance
             | ExactReportValidationError::ShortcutResultHasAssemblyArtifacts
             | ExactReportValidationError::OutputMeshAssemblyMismatch => Self::StaleRegionFacts,
             ExactReportValidationError::ShortcutResultHasUnknownGraph
@@ -1107,6 +1111,9 @@ impl ExactBooleanResult {
         self.mesh
             .validate_retained_state()
             .map_err(|_| ExactReportValidationError::InvalidOutputMesh)?;
+        if !mesh_has_boolean_output_provenance(&self.mesh) {
+            return Err(ExactReportValidationError::InvalidOutputMeshProvenance);
+        }
 
         if retains_region_artifacts {
             validate_output_mesh_matches_assembly(&self.assembly, &self.mesh)?;
@@ -1569,6 +1576,17 @@ fn validate_shortcut_output_shape(
         return Err(ExactReportValidationError::StatusEvidenceMismatch);
     }
     Ok(())
+}
+
+fn mesh_has_boolean_output_provenance(mesh: &ExactMesh) -> bool {
+    let source = &mesh.provenance().source;
+    source.source == MeshSource::Exact
+        && source.approximation == ApproximationPolicy::ExactOnly
+        && exact_boolean_output_label(&source.label)
+}
+
+fn exact_boolean_output_label(label: &str) -> bool {
+    label.starts_with("exact ") || label.starts_with("empty exact ")
 }
 
 const fn shortcut_requires_empty_output(
@@ -5587,6 +5605,7 @@ mod tests {
             ExactReportValidationError::UnclassifiedVolumetricTriangulation,
             ExactReportValidationError::VolumetricClassificationNotDecided,
             ExactReportValidationError::InvalidOutputMesh,
+            ExactReportValidationError::InvalidOutputMeshProvenance,
             ExactReportValidationError::ShortcutResultHasAssemblyArtifacts,
         ];
         for error in stale_region_errors {

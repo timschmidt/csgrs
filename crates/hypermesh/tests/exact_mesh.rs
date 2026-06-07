@@ -695,12 +695,12 @@ fn exact_affine_orthogonal_solid_materializer_is_publicly_replayable() {
         let mut stale_output = result.clone();
         stale_output.mesh = left.clone();
         assert!(
-            stale_output.validate().is_ok(),
+            stale_output.validate().is_err(),
             "{operation:?}: {stale_output:?}"
         );
         assert_eq!(
             stale_output.freshness_against_sources(&left, &right),
-            ExactReportFreshness::SourceReplayMismatch,
+            ExactReportFreshness::StaleRegionFacts,
             "{operation:?}: {stale_output:?}"
         );
         assert_eq!(
@@ -945,12 +945,12 @@ fn exact_closed_convex_boolean_materializer_is_publicly_replayable() {
         let mut stale_output = result.clone();
         stale_output.mesh = left.clone();
         assert!(
-            stale_output.validate().is_ok(),
+            stale_output.validate().is_err(),
             "{operation:?}: {stale_output:?}"
         );
         assert_eq!(
             stale_output.freshness_against_sources(&left, &right),
-            ExactReportFreshness::SourceReplayMismatch,
+            ExactReportFreshness::StaleRegionFacts,
             "{operation:?}: {stale_output:?}"
         );
         result
@@ -1073,12 +1073,12 @@ fn exact_closed_convex_boolean_materializer_is_publicly_replayable() {
     let mut stale_containment_output = containment.clone();
     stale_containment_output.mesh = container.clone();
     assert!(
-        stale_containment_output.validate().is_ok(),
+        stale_containment_output.validate().is_err(),
         "{stale_containment_output:?}"
     );
     assert_eq!(
         stale_containment_output.freshness_against_sources(&contained_on_boundary, &container),
-        ExactReportFreshness::SourceReplayMismatch,
+        ExactReportFreshness::StaleRegionFacts,
         "{stale_containment_output:?}"
     );
     containment
@@ -1200,10 +1200,10 @@ fn adjacent_union_completion_boolean_is_publicly_replayable() {
     );
     let mut stale_output = result.clone();
     stale_output.mesh = left.clone();
-    assert!(stale_output.validate().is_ok(), "{stale_output:?}");
+    assert!(stale_output.validate().is_err(), "{stale_output:?}");
     assert_eq!(
         stale_output.freshness_against_sources(&left, &right),
-        ExactReportFreshness::SourceReplayMismatch,
+        ExactReportFreshness::StaleRegionFacts,
         "{stale_output:?}"
     );
     assert_eq!(
@@ -1813,9 +1813,13 @@ fn exact_coplanar_mesh_overlay_arrangement_is_publicly_replayable() {
         );
         let mut stale_output = result.clone();
         stale_output.mesh = left.clone();
+        assert!(
+            stale_output.validate().is_err(),
+            "{operation:?}: {stale_output:?}"
+        );
         assert_eq!(
             stale_output.freshness_against_sources(&left, &right),
-            ExactReportFreshness::SourceReplayMismatch
+            ExactReportFreshness::StaleRegionFacts
         );
     }
 
@@ -2465,10 +2469,10 @@ fn closed_boundary_touching_regularized_boolean_is_publicly_replayable() {
         if operation == ExactBooleanOperation::Difference {
             let mut stale_output = result.clone();
             stale_output.mesh = right.clone();
-            assert!(stale_output.validate().is_ok(), "{stale_output:?}");
+            assert!(stale_output.validate().is_err(), "{stale_output:?}");
             assert_eq!(
                 stale_output.freshness_against_sources(&left, &right),
-                ExactReportFreshness::SourceReplayMismatch,
+                ExactReportFreshness::StaleRegionFacts,
                 "{stale_output:?}"
             );
         }
@@ -2589,10 +2593,10 @@ fn closed_no_volume_overlap_regularized_boolean_is_publicly_replayable() {
         if operation == ExactBooleanOperation::Union {
             let mut stale_output = result.clone();
             stale_output.mesh = left.clone();
-            assert!(stale_output.validate().is_ok(), "{stale_output:?}");
+            assert!(stale_output.validate().is_err(), "{stale_output:?}");
             assert_eq!(
                 stale_output.freshness_against_sources(&left, &right),
-                ExactReportFreshness::SourceReplayMismatch,
+                ExactReportFreshness::StaleRegionFacts,
                 "{stale_output:?}"
             );
         }
@@ -2729,10 +2733,10 @@ fn closed_winding_shortcuts_are_publicly_replayable() {
         if operation == ExactBooleanOperation::Difference {
             let mut stale_output = result.clone();
             stale_output.mesh = container.clone();
-            assert!(stale_output.validate().is_ok(), "{stale_output:?}");
+            assert!(stale_output.validate().is_err(), "{stale_output:?}");
             assert_eq!(
                 stale_output.freshness_against_sources(&container, &contained),
-                ExactReportFreshness::SourceReplayMismatch,
+                ExactReportFreshness::StaleRegionFacts,
                 "{stale_output:?}"
             );
         }
@@ -3128,12 +3132,12 @@ fn exact_volumetric_winding_coplanar_cap_is_publicly_certified() {
         let mut stale_output = result.clone();
         stale_output.mesh = left.clone();
         assert!(
-            stale_output.validate().is_ok(),
+            stale_output.validate().is_err(),
             "{operation:?}: {stale_output:?}"
         );
         assert_eq!(
             stale_output.freshness_against_sources(&left, &right),
-            ExactReportFreshness::SourceReplayMismatch,
+            ExactReportFreshness::StaleRegionFacts,
             "{operation:?}: {stale_output:?}"
         );
     }
@@ -3370,10 +3374,10 @@ fn exact_contained_face_adjacent_union_is_publicly_replayable() {
     );
     let mut stale_output = result.clone();
     stale_output.mesh = container.clone();
-    assert!(stale_output.validate().is_ok(), "{stale_output:?}");
+    assert!(stale_output.validate().is_err(), "{stale_output:?}");
     assert_eq!(
         stale_output.freshness_against_sources(&container, &right),
-        ExactReportFreshness::SourceReplayMismatch,
+        ExactReportFreshness::StaleRegionFacts,
         "{stale_output:?}"
     );
     assert_eq!(
@@ -4528,10 +4532,10 @@ fn closed_same_surface_boolean_is_publicly_replayable() {
             );
             let mut stale_output = result.clone();
             stale_output.mesh = stale_right.clone();
-            assert!(stale_output.validate().is_ok(), "{stale_output:?}");
+            assert!(stale_output.validate().is_err(), "{stale_output:?}");
             assert_eq!(
                 stale_output.freshness_against_sources(&left, right),
-                ExactReportFreshness::SourceReplayMismatch,
+                ExactReportFreshness::StaleRegionFacts,
                 "{stale_output:?}"
             );
             assert_eq!(

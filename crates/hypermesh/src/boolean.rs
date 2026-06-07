@@ -9163,7 +9163,7 @@ mod tests {
         projected.validate_against_sources(&left, &right).unwrap();
         let mut stale_mesh = projected.clone();
         stale_mesh.mesh = empty_mesh(
-            "stale boundary-policy projection",
+            "empty exact stale boundary-policy projection",
             ValidationPolicy::ALLOW_BOUNDARY,
         )
         .unwrap();
