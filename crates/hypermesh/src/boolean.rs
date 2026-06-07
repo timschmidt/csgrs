@@ -3220,14 +3220,31 @@ fn arrangement_open_surface_recovery_outcome(
     else {
         return Ok(None);
     };
-    let result = materialize_open_surface_arrangement_plan(
+    let result = match materialize_open_surface_arrangement_plan(
         left,
         right,
         operation,
         validation,
         graph.has_unknowns(),
-        plan,
-    )?;
+        plan.clone(),
+    ) {
+        Ok(result) => result,
+        Err(error) => {
+            let output_counts = open_surface_arrangement_candidate_counts(
+                left,
+                right,
+                operation,
+                graph.has_unknowns(),
+                plan,
+            );
+            if output_counts.is_some() {
+                return Ok(Some(
+                    declined_output_validation_attempt_outcome_with_counts(attempt, output_counts),
+                ));
+            }
+            return Err(error);
+        }
+    };
     Ok(Some(materialized_arrangement_attempt_outcome(
         attempt, result, false,
     )))
@@ -6161,6 +6178,25 @@ fn materialize_open_surface_arrangement_plan(
         ))
     })?;
     Ok(result)
+}
+
+fn open_surface_arrangement_candidate_counts(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    graph_had_unknowns: bool,
+    plan: OpenSurfaceArrangementPlan,
+) -> Option<(usize, usize)> {
+    materialize_open_surface_arrangement_plan(
+        left,
+        right,
+        operation,
+        ValidationPolicy::ALLOW_BOUNDARY,
+        graph_had_unknowns,
+        plan,
+    )
+    .ok()
+    .map(|result| (result.mesh.vertices().len(), result.mesh.triangles().len()))
 }
 
 /// Build the retained exact split-region plan for open-surface arrangement.

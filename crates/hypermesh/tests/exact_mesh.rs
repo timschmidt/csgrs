@@ -1201,6 +1201,53 @@ fn exact_open_surface_arrangement_is_publicly_replayable() {
         ExactBooleanOperation::Intersection,
         ExactBooleanOperation::Difference,
     ] {
+        if !matches!(operation, ExactBooleanOperation::Intersection) {
+            let closed_attempt = exact_arrangement_boolean_attempt_report_with_validation(
+                &left,
+                &right,
+                operation,
+                ExactRegularizationPolicy::REGULARIZED_SOLID,
+                ValidationPolicy::CLOSED,
+            )
+            .unwrap();
+            assert_eq!(closed_attempt.output_validation, ValidationPolicy::CLOSED);
+            assert!(
+                matches!(
+                    closed_attempt.decline,
+                    Some(hypermesh::ExactArrangementBooleanDecline::OutputValidation)
+                ),
+                "{operation:?}: {closed_attempt:?}"
+            );
+            assert!(
+                closed_attempt.output_vertices > 0,
+                "{operation:?}: {closed_attempt:?}"
+            );
+            assert!(
+                closed_attempt.output_triangles > 0,
+                "{operation:?}: {closed_attempt:?}"
+            );
+            closed_attempt.validate().unwrap();
+            closed_attempt
+                .validate_against_sources_with_validation(&left, &right, ValidationPolicy::CLOSED)
+                .unwrap();
+            assert_eq!(
+                closed_attempt.freshness_against_sources_with_validation(
+                    &left,
+                    &right,
+                    ValidationPolicy::CLOSED,
+                ),
+                ExactReportFreshness::Current
+            );
+            assert_eq!(
+                closed_attempt.freshness_against_sources_with_validation(
+                    &left,
+                    &right,
+                    ValidationPolicy::ALLOW_BOUNDARY,
+                ),
+                ExactReportFreshness::SourceReplayMismatch
+            );
+        }
+
         let attempt = exact_arrangement_boolean_attempt_report(
             &left,
             &right,
