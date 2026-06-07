@@ -4147,11 +4147,15 @@ fn boolean_arrangement_convex_regularized_sheet_recovery(
 /// Certify and materialize a closed-solid arrangement boolean from exact
 /// volumetric winding region classifications.
 ///
-/// The result retains the split-region plane classifications, triangulations,
-/// volumetric classifications, assembly plan, output mesh, and source-replay
-/// freshness checks needed to audit the named cell-complex decision. Cases
-/// outside the currently supportable exact winding arrangement path return
-/// `None` rather than falling back to approximate winding.
+/// Directly closed or boundary-valid output retains the split-region plane
+/// classifications, triangulations, volumetric classifications, assembly plan,
+/// output mesh, and source-replay freshness checks needed to audit the named
+/// cell-complex decision. Closed outputs whose boundary-valid split-cell
+/// assembly has exact non-self-contacting coplanar cap loops materialize as a
+/// certified arrangement-cell-complex shortcut; callers can audit that cap
+/// decision with [`certify_volumetric_boundary_closure_report`]. Cases outside
+/// the currently supportable exact winding arrangement path return `None`
+/// rather than falling back to approximate winding.
 pub fn materialize_volumetric_winding_arrangement(
     left: &ExactMesh,
     right: &ExactMesh,

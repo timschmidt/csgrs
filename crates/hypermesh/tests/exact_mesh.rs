@@ -24,7 +24,8 @@ use hypermesh::{
     build_intersection_graph, certify_adjacent_union_completion_report,
     certify_boundary_touching_report, certify_convex_solid,
     certify_coplanar_volumetric_cell_evidence, certify_exact_mesh_proposal,
-    certify_winding_readiness_report, checked_classify_face_regions_against_opposite_planes,
+    certify_volumetric_boundary_closure_report, certify_winding_readiness_report,
+    checked_classify_face_regions_against_opposite_planes,
     checked_triangulate_face_regions_with_earcut, classify_mesh_face_pair,
     classify_mesh_vertices_against_closed_mesh_winding_report,
     classify_mesh_vertices_against_convex_solid_report,
@@ -1957,6 +1958,75 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
     assert_eq!(
         result.freshness_against_sources(&left, &separated_right),
         ExactReportFreshness::SourceReplayMismatch
+    );
+}
+
+#[test]
+fn exact_volumetric_winding_coplanar_cap_is_publicly_certified() {
+    let left = ExactMesh::from_i64_triangles(
+        &[
+            0, 0, 0, //
+            4, 0, 0, //
+            0, 4, 0, //
+            0, 0, 4, //
+            2, 2, 3,
+        ],
+        &[
+            0, 2, 1, //
+            1, 2, 3, //
+            2, 0, 3, //
+            0, 1, 4, //
+            1, 3, 4, //
+            3, 0, 4,
+        ],
+    )
+    .unwrap();
+    let right = tetra_from_corners([-1, 1, 0], [3, 1, 0], [-1, 5, 0], [-1, 1, 4]);
+
+    let closure = certify_volumetric_boundary_closure_report(
+        &left,
+        &right,
+        ExactBooleanOperation::Intersection,
+    )
+    .unwrap();
+    assert_eq!(
+        closure.status,
+        hypermesh::ExactVolumetricBoundaryClosureStatus::CoplanarClosureAvailable,
+        "{closure:?}"
+    );
+    closure.validate().unwrap();
+    closure.validate_against_sources(&left, &right).unwrap();
+
+    let preflight =
+        preflight_boolean_exact(&left, &right, ExactBooleanOperation::Intersection).unwrap();
+    assert_eq!(
+        preflight.support,
+        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex,
+        "{preflight:?}"
+    );
+    preflight.validate().unwrap();
+    preflight.validate_against_sources(&left, &right).unwrap();
+
+    let result = materialize_volumetric_winding_arrangement(
+        &left,
+        &right,
+        ExactBooleanOperation::Intersection,
+        ValidationPolicy::CLOSED,
+    )
+    .unwrap()
+    .expect("exact coplanar boundary cap should materialize closed volumetric output");
+    assert_eq!(
+        result.kind,
+        ExactBooleanResultKind::CertifiedShortcut {
+            operation: ExactBooleanOperation::Intersection,
+            shortcut: hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex,
+        }
+    );
+    result.validate().unwrap();
+    assert!(
+        result.mesh.facts().mesh.closed_manifold || result.mesh.triangles().is_empty(),
+        "{:?}",
+        result.mesh.facts().mesh
     );
 }
 
