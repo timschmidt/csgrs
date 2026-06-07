@@ -882,6 +882,99 @@ fn exact_closed_convex_boolean_materializer_is_publicly_replayable() {
         assert!(result.mesh.facts().mesh.closed_manifold);
     }
 
+    let separated_left = tetra_from_corners([0, 0, 0], [2, 0, 0], [0, 2, 0], [0, 0, 2]);
+    let separated_right = tetra_from_corners([1, 1, 1], [3, 1, 1], [1, 3, 1], [1, 1, 3]);
+    let preflight = preflight_boolean_exact(
+        &separated_left,
+        &separated_right,
+        ExactBooleanOperation::Intersection,
+    )
+    .unwrap();
+    assert_eq!(
+        preflight.support,
+        hypermesh::ExactBooleanSupport::CertifiedConvexSeparated,
+        "{preflight:?}"
+    );
+    let separated = materialize_closed_convex_boolean(
+        &separated_left,
+        &separated_right,
+        ExactBooleanOperation::Intersection,
+        ValidationPolicy::CLOSED,
+    )
+    .unwrap()
+    .expect("separated closed convex intersection should retain convex relation provenance");
+    assert_eq!(
+        separated.kind,
+        ExactBooleanResultKind::CertifiedShortcut {
+            operation: ExactBooleanOperation::Intersection,
+            shortcut: hypermesh::ExactBooleanShortcutKind::ConvexSeparated
+        }
+    );
+    separated.validate().unwrap();
+    separated
+        .validate_against_sources(&separated_left, &separated_right)
+        .unwrap();
+    separated
+        .validate_operation_against_sources(
+            &separated_left,
+            &separated_right,
+            ExactBooleanOperation::Intersection,
+            ValidationPolicy::CLOSED,
+            ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    let dispatched = boolean_exact(
+        &separated_left,
+        &separated_right,
+        ExactBooleanOperation::Intersection,
+        ValidationPolicy::CLOSED,
+    )
+    .unwrap();
+    assert_eq!(dispatched.kind, separated.kind);
+
+    let contained_on_boundary = tetra_from_corners([1, 1, 0], [2, 1, 0], [1, 2, 0], [1, 1, 1]);
+    let container = tetra_from_corners([0, 0, 0], [10, 0, 0], [0, 10, 0], [0, 0, 10]);
+    let preflight = preflight_boolean_exact(
+        &contained_on_boundary,
+        &container,
+        ExactBooleanOperation::Difference,
+    )
+    .unwrap();
+    assert_eq!(
+        preflight.support,
+        hypermesh::ExactBooleanSupport::CertifiedConvexContainment,
+        "{preflight:?}"
+    );
+    let containment = materialize_closed_convex_boolean(
+        &contained_on_boundary,
+        &container,
+        ExactBooleanOperation::Difference,
+        ValidationPolicy::CLOSED,
+    )
+    .unwrap()
+    .expect("boundary-contained closed convex difference should certify as empty");
+    assert_eq!(
+        containment.kind,
+        ExactBooleanResultKind::CertifiedShortcut {
+            operation: ExactBooleanOperation::Difference,
+            shortcut: hypermesh::ExactBooleanShortcutKind::ConvexContainment
+        }
+    );
+    containment.validate().unwrap();
+    containment
+        .validate_against_sources(&contained_on_boundary, &container)
+        .unwrap();
+    containment
+        .validate_operation_against_sources(
+            &contained_on_boundary,
+            &container,
+            ExactBooleanOperation::Difference,
+            ValidationPolicy::CLOSED,
+            ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert!(containment.mesh.triangles().is_empty());
+
     assert!(
         materialize_closed_convex_boolean(
             &axis_aligned_box([0, 0, 0], [2, 2, 2]),

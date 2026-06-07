@@ -2212,6 +2212,11 @@ pub fn boolean_exact_with_boundary_policy(
         return Ok(result);
     }
     if let Some(result) =
+        boolean_convex_relation_meshes_optional(left, right, operation, validation)?
+    {
+        return Ok(result);
+    }
+    if let Some(result) =
         boolean_closed_winding_separated_meshes(left, right, operation, validation)?
     {
         return Ok(result);
@@ -3801,13 +3806,183 @@ fn boolean_convex_meshes_optional(
     Ok(Some(result))
 }
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum ConvexRelationShortcut {
+    LeftInsideRight,
+    RightInsideLeft,
+    Separated,
+}
+
+fn certified_convex_relation_shortcut_from_graph(
+    graph: &super::graph::ExactIntersectionGraph,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+) -> Result<Option<ConvexRelationShortcut>, MeshError> {
+    if matches!(operation, ExactBooleanOperation::SelectedRegions(_)) {
+        return Ok(None);
+    }
+    let relation_counts = graph_relation_counts(graph);
+    if graph.has_unknowns() || relation_counts.construction_failed_events > 0 {
+        return Ok(None);
+    }
+
+    let left_in_right = classify_mesh_vertices_against_convex_solid_report(left, right);
+    left_in_right
+        .validate_against_sources(left, right)
+        .map_err(|error| {
+            MeshError::one(MeshDiagnostic::new(
+                Severity::Error,
+                DiagnosticKind::UnsupportedExactOperation,
+                format!("left convex relation replay failed: {error:?}"),
+            ))
+        })?;
+    let right_in_left = classify_mesh_vertices_against_convex_solid_report(right, left);
+    right_in_left
+        .validate_against_sources(right, left)
+        .map_err(|error| {
+            MeshError::one(MeshDiagnostic::new(
+                Severity::Error,
+                DiagnosticKind::UnsupportedExactOperation,
+                format!("right convex relation replay failed: {error:?}"),
+            ))
+        })?;
+
+    if graph.face_pairs.is_empty() {
+        return Ok(match (left_in_right.relation, right_in_left.relation) {
+            (ConvexSolidMeshRelation::StrictlyInside, _) => {
+                Some(ConvexRelationShortcut::LeftInsideRight)
+            }
+            (_, ConvexSolidMeshRelation::StrictlyInside) => {
+                Some(ConvexRelationShortcut::RightInsideLeft)
+            }
+            (ConvexSolidMeshRelation::Outside, ConvexSolidMeshRelation::Outside) => {
+                Some(ConvexRelationShortcut::Separated)
+            }
+            _ => None,
+        });
+    }
+
+    let left_boundary_inside_right =
+        convex_boundary_containment_is_supported(&left_in_right, &right_in_left);
+    let right_boundary_inside_left =
+        convex_boundary_containment_is_supported(&right_in_left, &left_in_right);
+    Ok(match operation {
+        ExactBooleanOperation::Union | ExactBooleanOperation::Intersection
+            if left_boundary_inside_right =>
+        {
+            Some(ConvexRelationShortcut::LeftInsideRight)
+        }
+        ExactBooleanOperation::Union | ExactBooleanOperation::Intersection
+            if right_boundary_inside_left =>
+        {
+            Some(ConvexRelationShortcut::RightInsideLeft)
+        }
+        ExactBooleanOperation::Difference if left_boundary_inside_right => {
+            Some(ConvexRelationShortcut::LeftInsideRight)
+        }
+        _ => None,
+    })
+}
+
+fn boolean_convex_relation_meshes_optional(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+) -> Result<Option<ExactBooleanResult>, MeshError> {
+    let graph = build_intersection_graph(left, right)?;
+    validate_graph_source_handoff(&graph, left, right)?;
+    let Some(relation) =
+        certified_convex_relation_shortcut_from_graph(&graph, left, right, operation)?
+    else {
+        return Ok(None);
+    };
+
+    let (mesh, shortcut) = match relation {
+        ConvexRelationShortcut::Separated => {
+            let mesh = match operation {
+                ExactBooleanOperation::Union => concatenate_meshes_with_options(
+                    left,
+                    right,
+                    false,
+                    "exact closed-convex separated union",
+                    validation,
+                )?,
+                ExactBooleanOperation::Intersection => empty_mesh(
+                    "empty exact closed-convex separated intersection",
+                    validation,
+                )?,
+                ExactBooleanOperation::Difference => copy_mesh(
+                    left,
+                    "exact closed-convex separated difference keeps left",
+                    validation,
+                )?,
+                ExactBooleanOperation::SelectedRegions(_) => unreachable!("handled by caller"),
+            };
+            (mesh, ExactBooleanShortcutKind::ConvexSeparated)
+        }
+        ConvexRelationShortcut::LeftInsideRight => {
+            let mesh = match operation {
+                ExactBooleanOperation::Union => copy_mesh(
+                    right,
+                    "exact closed-convex containment union keeps right",
+                    validation,
+                )?,
+                ExactBooleanOperation::Intersection => copy_mesh(
+                    left,
+                    "exact closed-convex containment intersection keeps left",
+                    validation,
+                )?,
+                ExactBooleanOperation::Difference => empty_mesh(
+                    "empty exact closed-convex containment difference",
+                    validation,
+                )?,
+                ExactBooleanOperation::SelectedRegions(_) => unreachable!("handled by caller"),
+            };
+            (mesh, ExactBooleanShortcutKind::ConvexContainment)
+        }
+        ConvexRelationShortcut::RightInsideLeft => {
+            let mesh = match operation {
+                ExactBooleanOperation::Union => copy_mesh(
+                    left,
+                    "exact closed-convex containment union keeps left",
+                    validation,
+                )?,
+                ExactBooleanOperation::Intersection => copy_mesh(
+                    right,
+                    "exact closed-convex containment intersection keeps right",
+                    validation,
+                )?,
+                ExactBooleanOperation::Difference if graph.face_pairs.is_empty() => {
+                    concatenate_meshes_with_options(
+                        left,
+                        right,
+                        true,
+                        "exact closed-convex containment difference with cavity",
+                        validation,
+                    )?
+                }
+                ExactBooleanOperation::Difference => return Ok(None),
+                ExactBooleanOperation::SelectedRegions(_) => unreachable!("handled by caller"),
+            };
+            (mesh, ExactBooleanShortcutKind::ConvexContainment)
+        }
+    };
+    let result = certified_shortcut_result(mesh, operation, shortcut);
+    if result.validate().is_err() || result.validate_against_sources(left, right).is_err() {
+        return Ok(None);
+    }
+    Ok(Some(result))
+}
+
 /// Certify and materialize a named boolean for closed convex solids.
 ///
 /// This public wrapper follows [`boolean_exact`] precedence: it only
 /// materializes when preflight certifies the requested operation as a direct
-/// convex union, intersection, or difference. Inputs handled by earlier exact
-/// shortcuts, such as orthogonal-cell recovery or bounds disjointness, return
-/// `None` so replay provenance remains stable.
+/// convex operation or convex relation shortcut. Inputs handled by earlier
+/// exact shortcuts, such as orthogonal-cell recovery or bounds disjointness,
+/// return `None` so replay provenance remains stable.
 pub fn materialize_closed_convex_boolean(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -3815,15 +3990,18 @@ pub fn materialize_closed_convex_boolean(
     validation: ValidationPolicy,
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
     let preflight = preflight_boolean_exact(left, right, operation)?;
-    if !matches!(
-        preflight.support,
+    match preflight.support {
         ExactBooleanSupport::CertifiedConvexUnion
-            | ExactBooleanSupport::CertifiedConvexIntersection
-            | ExactBooleanSupport::CertifiedConvexDifference
-    ) {
-        return Ok(None);
+        | ExactBooleanSupport::CertifiedConvexIntersection
+        | ExactBooleanSupport::CertifiedConvexDifference => {
+            boolean_convex_meshes_optional(left, right, operation, validation)
+        }
+        ExactBooleanSupport::CertifiedConvexContainment
+        | ExactBooleanSupport::CertifiedConvexSeparated => {
+            boolean_convex_relation_meshes_optional(left, right, operation, validation)
+        }
+        _ => Ok(None),
     }
-    boolean_convex_meshes_optional(left, right, operation, validation)
 }
 
 fn boolean_arrangement_convex_regularized_sheet_recovery(
