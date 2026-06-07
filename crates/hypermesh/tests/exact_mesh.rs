@@ -650,6 +650,27 @@ fn exact_affine_orthogonal_solid_materializer_is_publicly_replayable() {
         ExactBooleanOperation::Intersection,
         ExactBooleanOperation::Difference,
     ] {
+        assert!(
+            materialize_affine_orthogonal_solid_boolean(
+                &left,
+                &separated_right,
+                operation,
+                ValidationPolicy::CLOSED,
+            )
+            .unwrap()
+            .is_none(),
+            "{operation:?} should yield to bounds-disjoint provenance"
+        );
+        let disjoint_replay =
+            boolean_exact(&left, &separated_right, operation, ValidationPolicy::CLOSED).unwrap();
+        assert_eq!(
+            disjoint_replay.kind,
+            ExactBooleanResultKind::CertifiedShortcut {
+                operation,
+                shortcut: hypermesh::ExactBooleanShortcutKind::BoundsDisjoint
+            }
+        );
+
         let result = materialize_affine_orthogonal_solid_boolean(
             &left,
             &right,
@@ -775,6 +796,27 @@ fn exact_axis_aligned_orthogonal_solid_materializer_is_publicly_replayable() {
         ExactBooleanOperation::Intersection,
         ExactBooleanOperation::Difference,
     ] {
+        assert!(
+            materialize_axis_aligned_orthogonal_solid_boolean(
+                &left,
+                &separated_right,
+                operation,
+                ValidationPolicy::CLOSED,
+            )
+            .unwrap()
+            .is_none(),
+            "{operation:?} should yield to bounds-disjoint provenance"
+        );
+        let disjoint_replay =
+            boolean_exact(&left, &separated_right, operation, ValidationPolicy::CLOSED).unwrap();
+        assert_eq!(
+            disjoint_replay.kind,
+            ExactBooleanResultKind::CertifiedShortcut {
+                operation,
+                shortcut: hypermesh::ExactBooleanShortcutKind::BoundsDisjoint
+            }
+        );
+
         let result = materialize_axis_aligned_orthogonal_solid_boolean(
             &left,
             &right,

@@ -3227,7 +3227,25 @@ pub fn materialize_axis_aligned_orthogonal_solid_boolean(
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
-    boolean_arrangement_orthogonal_solid_cell_recovery(left, right, operation, validation, false)
+    let Some(result) = boolean_arrangement_orthogonal_solid_cell_recovery(
+        left, right, operation, validation, false,
+    )?
+    else {
+        return Ok(None);
+    };
+    if result
+        .validate_operation_against_sources(
+            left,
+            right,
+            operation,
+            validation,
+            ExactBoundaryBooleanPolicy::Reject,
+        )
+        .is_err()
+    {
+        return Ok(None);
+    }
+    Ok(Some(result))
 }
 
 fn arrangement_orthogonal_solid_cell_recovery_outcome(
@@ -6076,7 +6094,24 @@ pub fn materialize_affine_orthogonal_solid_boolean(
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
-    boolean_arrangement_affine_orthogonal_solid_recovery(left, right, operation, validation)
+    let Some(result) =
+        boolean_arrangement_affine_orthogonal_solid_recovery(left, right, operation, validation)?
+    else {
+        return Ok(None);
+    };
+    if result
+        .validate_operation_against_sources(
+            left,
+            right,
+            operation,
+            validation,
+            ExactBoundaryBooleanPolicy::Reject,
+        )
+        .is_err()
+    {
+        return Ok(None);
+    }
+    Ok(Some(result))
 }
 
 fn materialize_open_surface_disjoint_meshes(
