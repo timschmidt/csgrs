@@ -3015,12 +3015,12 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
         let mut stale_volumetric_order = result.clone();
         stale_volumetric_order.volumetric_classifications.swap(0, 1);
         assert!(
-            stale_volumetric_order.validate().is_ok(),
+            stale_volumetric_order.validate().is_err(),
             "{stale_volumetric_order:?}"
         );
         assert_eq!(
             stale_volumetric_order.freshness_against_sources(&left, &right),
-            ExactReportFreshness::SourceReplayMismatch,
+            ExactReportFreshness::StaleRegionFacts,
             "{stale_volumetric_order:?}"
         );
     }

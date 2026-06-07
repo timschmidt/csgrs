@@ -132,6 +132,8 @@ pub enum ExactReportValidationError {
     /// A retained source-region triangulation has no matching volumetric
     /// classification.
     UnclassifiedVolumetricTriangulation,
+    /// Volumetric classifications are not in retained triangulation/cell order.
+    VolumetricClassificationOrderMismatch,
     /// An arrangement-materialized result retained boundary, unknown, or nonclosed
     /// region evidence.
     VolumetricClassificationNotDecided,
@@ -276,6 +278,7 @@ impl From<ExactReportValidationError> for ExactReportFreshness {
             | ExactReportValidationError::UnexpectedVolumetricClassifications
             | ExactReportValidationError::OrphanedVolumetricClassification
             | ExactReportValidationError::UnclassifiedVolumetricTriangulation
+            | ExactReportValidationError::VolumetricClassificationOrderMismatch
             | ExactReportValidationError::VolumetricClassificationNotDecided
             | ExactReportValidationError::InvalidOutputMesh
             | ExactReportValidationError::ShortcutResultHasAssemblyArtifacts
@@ -1022,6 +1025,14 @@ impl ExactBooleanResult {
         {
             return Err(ExactReportValidationError::OrphanedVolumetricClassification);
         }
+        if retains_volumetric_artifacts
+            && !volumetric_classifications_follow_triangulation_order(
+                &self.triangulations,
+                &self.volumetric_classifications,
+            )
+        {
+            return Err(ExactReportValidationError::VolumetricClassificationOrderMismatch);
+        }
         if retains_volumetric_artifacts {
             for classification in &self.volumetric_classifications {
                 let Some(triangulation) = self.triangulations.iter().find(|triangulation| {
@@ -1499,6 +1510,30 @@ fn retained_split_region_result_matches(
         && retained.volumetric_classifications == replay.volumetric_classifications
         && retained.assembly == replay.assembly
         && mesh_output_matches(&retained.mesh, &replay.mesh)
+}
+
+fn volumetric_classifications_follow_triangulation_order(
+    triangulations: &[FaceRegionTriangulation],
+    classifications: &[ExactVolumetricRegionClassification],
+) -> bool {
+    let expected = triangulations
+        .iter()
+        .flat_map(|triangulation| {
+            triangulation
+                .triangles
+                .chunks_exact(3)
+                .map(move |triangle| (triangulation.side, triangulation.face, triangle))
+        })
+        .collect::<Vec<_>>();
+    expected.len() == classifications.len()
+        && expected
+            .iter()
+            .zip(classifications)
+            .all(|(&(side, face, triangle), classification)| {
+                classification.region_side == side
+                    && classification.region_face == face
+                    && classification.triangle == [triangle[0], triangle[1], triangle[2]]
+            })
 }
 
 fn validate_shortcut_output_shape(
