@@ -1265,6 +1265,19 @@ impl ExactBooleanResult {
         }
         if let ExactBooleanResultKind::CertifiedShortcut {
             operation,
+            shortcut:
+                shortcut @ (ExactBooleanShortcutKind::ClosedBoundaryTouchingUnion
+                | ExactBooleanShortcutKind::ClosedBoundaryTouchingIntersection
+                | ExactBooleanShortcutKind::ClosedBoundaryTouchingDifference),
+        } = self.kind
+            && !closed_boundary_touching_output_matches_sources(
+                shortcut, operation, &self.mesh, left, right,
+            )?
+        {
+            return Err(ExactReportValidationError::SourceReplayMismatch);
+        }
+        if let ExactBooleanResultKind::CertifiedShortcut {
+            operation,
             shortcut,
         } = self.kind
             && !certified_shortcut_sources_match(
@@ -1757,6 +1770,32 @@ fn closed_boundary_touching_sources_match(
         }
     }
     Ok(true)
+}
+
+fn closed_boundary_touching_output_matches_sources(
+    shortcut: ExactBooleanShortcutKind,
+    operation: ExactBooleanOperation,
+    mesh: &ExactMesh,
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Result<bool, ExactReportValidationError> {
+    if !closed_boundary_touching_sources_match(shortcut, left, right)? {
+        return Ok(false);
+    }
+    Ok(match (shortcut, operation) {
+        (ExactBooleanShortcutKind::ClosedBoundaryTouchingUnion, ExactBooleanOperation::Union) => {
+            concatenated_mesh_output_matches(mesh, left, right, false)
+        }
+        (
+            ExactBooleanShortcutKind::ClosedBoundaryTouchingIntersection,
+            ExactBooleanOperation::Intersection,
+        ) => mesh_output_is_empty(mesh),
+        (
+            ExactBooleanShortcutKind::ClosedBoundaryTouchingDifference,
+            ExactBooleanOperation::Difference,
+        ) => mesh_output_matches(mesh, left),
+        _ => false,
+    })
 }
 
 fn closed_winding_sources_match(

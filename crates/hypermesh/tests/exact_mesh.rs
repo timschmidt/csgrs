@@ -1962,6 +1962,26 @@ fn closed_boundary_touching_regularized_boolean_is_publicly_replayable() {
             result.freshness_against_sources(&left, &separated_right),
             ExactReportFreshness::SourceReplayMismatch
         );
+        if operation == ExactBooleanOperation::Intersection {
+            let mut stale_output = result.clone();
+            stale_output.mesh = left.clone();
+            assert!(stale_output.validate().is_ok(), "{stale_output:?}");
+            assert_eq!(
+                stale_output.freshness_against_sources(&left, &right),
+                ExactReportFreshness::SourceReplayMismatch,
+                "{stale_output:?}"
+            );
+        }
+        if operation == ExactBooleanOperation::Difference {
+            let mut stale_output = result.clone();
+            stale_output.mesh = right.clone();
+            assert!(stale_output.validate().is_ok(), "{stale_output:?}");
+            assert_eq!(
+                stale_output.freshness_against_sources(&left, &right),
+                ExactReportFreshness::SourceReplayMismatch,
+                "{stale_output:?}"
+            );
+        }
         result
             .validate_operation_against_sources(
                 &left,
