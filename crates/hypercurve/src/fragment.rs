@@ -204,6 +204,8 @@ pub(crate) fn split_contour_at_intersections(
     operand: crate::ContourOperand,
     policy: &CurvePolicy,
 ) -> CurveResult<Classification<ContourFragmentSet>> {
+    validate_contour_intersection_evidence_against_contour(contour, intersections, &[operand])?;
+
     let markers =
         match ContourSplitMarkers::from_intersections(contour, intersections, operand, policy) {
             Classification::Decided(markers) => markers,
@@ -218,6 +220,12 @@ pub(crate) fn split_contour_at_self_intersections(
     intersections: &crate::ContourIntersectionSet,
     policy: &CurvePolicy,
 ) -> CurveResult<Classification<ContourFragmentSet>> {
+    validate_contour_intersection_evidence_against_contour(
+        contour,
+        intersections,
+        &[crate::ContourOperand::First, crate::ContourOperand::Second],
+    )?;
+
     let markers = match ContourSplitMarkers::from_self_intersections(contour, intersections, policy)
     {
         Classification::Decided(markers) => markers,
@@ -225,6 +233,28 @@ pub(crate) fn split_contour_at_self_intersections(
     };
 
     ContourFragmentSet::from_split_markers(contour, &markers, policy)
+}
+
+fn validate_contour_intersection_evidence_against_contour(
+    contour: &Contour2,
+    intersections: &crate::ContourIntersectionSet,
+    operands: &[crate::ContourOperand],
+) -> CurveResult<()> {
+    for event in intersections.events() {
+        for operand in operands {
+            let Some(segment_index) = event.segment_index(*operand) else {
+                return Err(CurveError::Topology(
+                    "contour intersection event must carry segment index evidence".into(),
+                ));
+            };
+            if segment_index >= contour.len() {
+                return Err(CurveError::Topology(
+                    "contour intersection event references segment outside supplied contour".into(),
+                ));
+            }
+        }
+    }
+    Ok(())
 }
 
 fn append_segment_fragments(

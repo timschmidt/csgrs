@@ -118,6 +118,27 @@ fn contour_fragment_set_constructor_rejects_duplicate_fragments() {
 }
 
 #[test]
+fn contour_split_rejects_events_outside_supplied_contour() {
+    let a = rectangle(0, 0, 4, 4);
+    let b = contour(&[
+        vertex(3, -1, 0),
+        vertex(3, 1, 0),
+        vertex(1, 1, 0),
+        vertex(1, -1, 0),
+    ]);
+    let events = a.intersect_contour(&b, &policy()).unwrap();
+    let mut forged_events = events.events().to_vec();
+    match &mut forged_events[0] {
+        ContourIntersection::Point(point) => point.a_segment_index = a.len(),
+        ContourIntersection::Overlap(overlap) => overlap.a_segment_index = a.len(),
+        ContourIntersection::Uncertain(uncertain) => uncertain.a_segment_index = a.len(),
+    }
+    let forged = hypercurve::ContourIntersectionSet::new(forged_events).unwrap();
+
+    assert_topology_error(a.split_at_intersections(&forged, ContourOperand::First, &policy()));
+}
+
+#[test]
 fn contour_fragment_set_constructor_validates_source_ranges() {
     let base = ContourFragment {
         source_segment_index: 0,
@@ -312,6 +333,29 @@ fn contour_self_fragments_split_nonadjacent_line_arc_crossing() {
     assert_arc(&fragments.fragments()[1].segment, p(1, -1), p(2, 0));
     assert_line(&fragments.fragments()[4].segment, p(1, 2), p(1, -1));
     assert_line(&fragments.fragments()[5].segment, p(1, -1), p(1, -2));
+}
+
+#[test]
+fn contour_self_split_rejects_events_outside_supplied_contour() {
+    let contour = contour(&[
+        vertex(0, 0, 1),
+        vertex(2, 0, 0),
+        vertex(3, 2, 0),
+        vertex(1, 2, 0),
+        vertex(1, -2, 0),
+        vertex(3, -3, 0),
+        vertex(-1, -3, 0),
+    ]);
+    let events = contour.intersect_self(&policy()).unwrap();
+    let mut forged_events = events.events().to_vec();
+    match &mut forged_events[0] {
+        ContourIntersection::Point(point) => point.b_segment_index = contour.len(),
+        ContourIntersection::Overlap(overlap) => overlap.b_segment_index = contour.len(),
+        ContourIntersection::Uncertain(uncertain) => uncertain.b_segment_index = contour.len(),
+    }
+    let forged = hypercurve::ContourIntersectionSet::new(forged_events).unwrap();
+
+    assert_topology_error(contour.split_at_self_intersections(&forged, &policy()));
 }
 
 #[test]
