@@ -2135,6 +2135,13 @@ fn arrangement_cell_complex_output_matches_sources(
         return Ok(Some(mesh_output_matches(mesh, &replay)));
     }
 
+    if let Some(replay) =
+        materialize_closed_same_surface_boolean(left, right, operation, validation)
+            .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
+    {
+        return Ok(Some(mesh_output_matches(mesh, &replay.mesh)));
+    }
+
     if operation != ExactBooleanOperation::Union {
         return Ok(None);
     }

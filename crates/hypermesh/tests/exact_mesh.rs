@@ -3638,6 +3638,14 @@ fn closed_same_surface_boolean_is_publicly_replayable() {
                 result.freshness_against_sources(&left, right),
                 ExactReportFreshness::Current
             );
+            let mut stale_output = result.clone();
+            stale_output.mesh = stale_right.clone();
+            assert!(stale_output.validate().is_ok(), "{stale_output:?}");
+            assert_eq!(
+                stale_output.freshness_against_sources(&left, right),
+                ExactReportFreshness::SourceReplayMismatch,
+                "{stale_output:?}"
+            );
             assert_eq!(
                 result.freshness_against_sources(&left, &stale_right),
                 ExactReportFreshness::SourceReplayMismatch
