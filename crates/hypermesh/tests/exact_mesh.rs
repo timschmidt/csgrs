@@ -25,7 +25,8 @@ use hypermesh::{
     materialize_axis_aligned_orthogonal_solid_intersection,
     materialize_axis_aligned_orthogonal_solid_union, materialize_boundary_touching_policy_boolean,
     materialize_bounds_disjoint_boolean, materialize_closed_boundary_touching_regularized_boolean,
-    materialize_closed_convex_boolean, materialize_closed_regularized_lower_dimensional_boolean,
+    materialize_closed_convex_boolean, materialize_closed_no_volume_overlap_regularized_boolean,
+    materialize_closed_regularized_lower_dimensional_boolean,
     materialize_closed_same_surface_boolean, materialize_closed_winding_containment_boolean,
     materialize_closed_winding_separated_boolean, materialize_contained_face_adjacent_union,
     materialize_coplanar_mesh_overlay_arrangement, materialize_empty_operand_boolean,
@@ -1028,6 +1029,93 @@ fn closed_boundary_touching_regularized_boolean_is_publicly_replayable() {
         )
         .unwrap()
         .expect("closed boundary-only contact should materialize by exact regularization");
+        assert_eq!(
+            result.kind,
+            ExactBooleanResultKind::CertifiedShortcut {
+                operation,
+                shortcut
+            }
+        );
+        result.validate().unwrap();
+        result.validate_against_sources(&left, &right).unwrap();
+        assert_eq!(
+            result.freshness_against_sources(&left, &right),
+            ExactReportFreshness::Current
+        );
+        assert_eq!(
+            result.freshness_against_sources(&left, &separated_right),
+            ExactReportFreshness::SourceReplayMismatch
+        );
+        result
+            .validate_operation_against_sources(
+                &left,
+                &right,
+                operation,
+                ValidationPolicy::CLOSED,
+                ExactBoundaryBooleanPolicy::Reject,
+            )
+            .unwrap();
+    }
+}
+
+#[test]
+fn closed_no_volume_overlap_regularized_boolean_is_publicly_replayable() {
+    let left_a = tetra_from_corners([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]);
+    let left_b = tetra_from_corners([10, 0, 0], [12, 0, 0], [10, 2, 0], [10, 0, 2]);
+    let left = combine_exact_meshes(
+        &left_a,
+        &left_b,
+        "test disconnected positive-area boundary fixture",
+    );
+    let right = tetra_from_corners([2, 0, 0], [6, 0, 0], [2, 4, 0], [2, 0, -4]);
+    let separated_right = tetra_from_corners([20, 0, 0], [24, 0, 0], [20, 4, 0], [20, 0, -4]);
+
+    let evidence = certify_coplanar_volumetric_cell_evidence(&left, &right).unwrap();
+    evidence.validate().unwrap();
+    evidence.validate_against_sources(&left, &right).unwrap();
+    assert!(evidence.positive_area_coplanar_overlapping_pairs > 0);
+
+    assert!(
+        materialize_closed_no_volume_overlap_regularized_boolean(
+            &left,
+            &right,
+            ExactBooleanOperation::Union,
+            ValidationPolicy::CLOSED,
+        )
+        .unwrap()
+        .is_none()
+    );
+
+    for (operation, shortcut) in [
+        (
+            ExactBooleanOperation::Intersection,
+            hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex,
+        ),
+        (
+            ExactBooleanOperation::Difference,
+            hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex,
+        ),
+    ] {
+        assert!(
+            materialize_closed_boundary_touching_regularized_boolean(
+                &left,
+                &right,
+                operation,
+                ValidationPolicy::CLOSED,
+            )
+            .unwrap()
+            .is_none()
+        );
+        let result = materialize_closed_no_volume_overlap_regularized_boolean(
+            &left,
+            &right,
+            operation,
+            ValidationPolicy::CLOSED,
+        )
+        .unwrap()
+        .expect(
+            "positive-area boundary-only contact should materialize by exact no-volume overlap",
+        );
         assert_eq!(
             result.kind,
             ExactBooleanResultKind::CertifiedShortcut {

@@ -107,6 +107,7 @@ pub use boolean::{
     materialize_axis_aligned_orthogonal_solid_boolean,
     materialize_boundary_touching_policy_boolean, materialize_bounds_disjoint_boolean,
     materialize_closed_boundary_touching_regularized_boolean, materialize_closed_convex_boolean,
+    materialize_closed_no_volume_overlap_regularized_boolean,
     materialize_closed_regularized_lower_dimensional_boolean,
     materialize_closed_same_surface_boolean, materialize_closed_winding_containment_boolean,
     materialize_closed_winding_separated_boolean, materialize_coplanar_mesh_overlay_arrangement,

@@ -3207,6 +3207,45 @@ fn boolean_arrangement_regularized_no_volume_overlap_from_graph(
     Ok(Some(result))
 }
 
+/// Certify and materialize a regularized closed-solid boolean for positive-area
+/// boundary contact with no shared volume.
+///
+/// This exposes the exact arrangement boundary-contact recovery path for
+/// closed solids whose coplanar overlap is boundary-only but not the zero-area
+/// case handled by [`materialize_closed_boundary_touching_regularized_boolean`].
+/// The retained coplanar-volumetric evidence must certify positive-area
+/// boundary contact. Union yields to adjacent-union completion or the full
+/// arrangement path when that stronger topology certificate owns dispatcher
+/// provenance.
+pub fn materialize_closed_no_volume_overlap_regularized_boolean(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+) -> Result<Option<ExactBooleanResult>, MeshError> {
+    if operation == ExactBooleanOperation::Union {
+        return Ok(None);
+    }
+    let graph = build_intersection_graph(left, right)?;
+    validate_graph_source_handoff(&graph, left, right)?;
+    let evidence = CoplanarVolumetricCellEvidenceReport::from_graph(&graph, left, right);
+    evidence.validate().map_err(|error| {
+        MeshError::one(MeshDiagnostic::new(
+            Severity::Error,
+            DiagnosticKind::UnsupportedExactOperation,
+            format!("exact no-volume-overlap evidence validation failed: {error:?}"),
+        ))
+    })?;
+    if evidence.obstacle != CoplanarVolumetricCellObstacle::BoundaryOnlyContact
+        || evidence.positive_area_coplanar_overlapping_pairs == 0
+    {
+        return Ok(None);
+    }
+    boolean_arrangement_regularized_boundary_contact_from_graph(
+        &graph, left, right, operation, validation,
+    )
+}
+
 fn arrangement_difference_preserves_source_surface(
     result: &ExactBooleanResult,
     source: &ExactMesh,
