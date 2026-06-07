@@ -878,6 +878,17 @@ fn exact_closed_convex_boolean_materializer_is_publicly_replayable() {
             result.freshness_against_sources(&left, &stale_open_right),
             ExactReportFreshness::SourceReplayMismatch
         );
+        let mut stale_output = result.clone();
+        stale_output.mesh = left.clone();
+        assert!(
+            stale_output.validate().is_ok(),
+            "{operation:?}: {stale_output:?}"
+        );
+        assert_eq!(
+            stale_output.freshness_against_sources(&left, &right),
+            ExactReportFreshness::SourceReplayMismatch,
+            "{operation:?}: {stale_output:?}"
+        );
         result
             .validate_operation_against_sources(
                 &left,

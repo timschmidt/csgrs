@@ -1240,6 +1240,19 @@ impl ExactBooleanResult {
         }
         if let ExactBooleanResultKind::CertifiedShortcut {
             operation,
+            shortcut:
+                shortcut @ (ExactBooleanShortcutKind::ConvexUnion
+                | ExactBooleanShortcutKind::ConvexIntersection
+                | ExactBooleanShortcutKind::ConvexDifference),
+        } = self.kind
+            && !convex_operation_output_matches_sources(
+                shortcut, operation, &self.mesh, left, right,
+            )?
+        {
+            return Err(ExactReportValidationError::SourceReplayMismatch);
+        }
+        if let ExactBooleanResultKind::CertifiedShortcut {
+            operation,
             shortcut,
         } = self.kind
             && !certified_shortcut_sources_match(
@@ -1388,6 +1401,46 @@ fn certified_shortcut_sources_match(
             arrangement_cell_complex_sources_match(operation, validation, left, right)
         }
     }
+}
+
+fn convex_operation_output_matches_sources(
+    shortcut: ExactBooleanShortcutKind,
+    operation: ExactBooleanOperation,
+    mesh: &ExactMesh,
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Result<bool, ExactReportValidationError> {
+    if !shortcut_operation_matches(shortcut, operation) {
+        return Ok(false);
+    }
+    let Some(replay) = (match shortcut {
+        ExactBooleanShortcutKind::ConvexUnion => {
+            union_closed_convex_solids(left, right).map(|result| result.mesh)
+        }
+        ExactBooleanShortcutKind::ConvexIntersection => {
+            intersect_closed_convex_solids(left, right).map(|result| result.mesh)
+        }
+        ExactBooleanShortcutKind::ConvexDifference => {
+            subtract_closed_convex_solids(left, right).map(|result| result.mesh)
+        }
+        _ => unreachable!("only direct convex operation shortcuts are replayed here"),
+    }) else {
+        return Ok(false);
+    };
+    replay
+        .validate_retained_state()
+        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+    Ok(exact_mesh_output_matches(mesh, &replay))
+}
+
+fn exact_mesh_output_matches(left: &ExactMesh, right: &ExactMesh) -> bool {
+    left.vertices().len() == right.vertices().len()
+        && left.triangles() == right.triangles()
+        && left
+            .vertices()
+            .iter()
+            .zip(right.vertices())
+            .all(|(left, right)| points_equal(left, right))
 }
 
 const fn shortcut_operation_matches(
