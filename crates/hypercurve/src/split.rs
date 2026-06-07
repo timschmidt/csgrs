@@ -439,6 +439,11 @@ fn insert_unique_sorted_marker(
 }
 
 fn validate_split_params(segment_splits: &[Vec<Real>]) -> CurveResult<()> {
+    if segment_splits.is_empty() {
+        return Err(CurveError::Topology(
+            "contour split evidence must carry at least one source segment".to_owned(),
+        ));
+    }
     for params in segment_splits {
         validate_split_param_sequence(params)?;
     }
@@ -446,6 +451,11 @@ fn validate_split_params(segment_splits: &[Vec<Real>]) -> CurveResult<()> {
 }
 
 fn validate_split_markers(segment_markers: &[Vec<SegmentSplitMarker>]) -> CurveResult<()> {
+    if segment_markers.is_empty() {
+        return Err(CurveError::Topology(
+            "contour split marker evidence must carry at least one source segment".to_owned(),
+        ));
+    }
     for (segment_index, markers) in segment_markers.iter().enumerate() {
         validate_split_marker_sequence(segment_index, markers)?;
     }

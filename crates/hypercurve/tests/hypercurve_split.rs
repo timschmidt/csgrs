@@ -138,6 +138,7 @@ fn split_map_preserves_same_circle_arc_overlap_endpoints() {
 
 #[test]
 fn split_constructors_reject_unnormalized_evidence() {
+    assert_topology_error(ContourSplitMap::new(Vec::new()));
     ContourSplitMap::new(vec![vec![s(0), q(1, 2), s(1)]]).unwrap();
     assert_topology_error(ContourSplitMap::new(vec![vec![s(0)]]));
     assert_topology_error(ContourSplitMap::new(vec![vec![
@@ -148,6 +149,7 @@ fn split_constructors_reject_unnormalized_evidence() {
     ]]));
     assert_topology_error(ContourSplitMap::new(vec![vec![s(0), s(2), s(1)]]));
 
+    assert_topology_error(ContourSplitMarkers::new(Vec::new()));
     ContourSplitMarkers::new(vec![vec![
         SegmentSplitMarker {
             segment_index: 0,
