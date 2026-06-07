@@ -704,6 +704,30 @@ pub fn preflight_boolean_exact(
             &graph, left, right, operation,
         )?
     {
+        if operation == ExactBooleanOperation::Union {
+            let evidence = CoplanarVolumetricCellEvidenceReport::from_graph(&graph, left, right);
+            evidence.validate().map_err(|error| {
+                MeshError::one(MeshDiagnostic::new(
+                    Severity::Error,
+                    DiagnosticKind::UnsupportedExactOperation,
+                    format!("exact no-volume-overlap union evidence validation failed: {error:?}"),
+                ))
+            })?;
+            if evidence.positive_area_coplanar_overlapping_pairs != 0 {
+                return Ok(ExactBooleanPreflight {
+                    operation,
+                    support: ExactBooleanSupport::CertifiedArrangementCellComplex,
+                    graph_had_unknowns,
+                    retained_face_pairs,
+                    retained_events,
+                    region_count: 0,
+                    region_classifications: Vec::new(),
+                    blocker: None,
+                    arrangement_readiness: None,
+                    coplanar_volumetric_evidence: Some(evidence),
+                });
+            }
+        }
         return Ok(certified_shortcut_preflight(operation, boundary_support));
     }
     if support == ExactBooleanSupport::RequiresCertifiedWinding
@@ -3141,6 +3165,37 @@ fn boolean_arrangement_regularized_no_volume_overlap_from_graph(
     {
         return Ok(None);
     }
+    if operation == ExactBooleanOperation::Union {
+        let evidence = CoplanarVolumetricCellEvidenceReport::from_graph(graph, left, right);
+        evidence.validate().map_err(|error| {
+            MeshError::one(MeshDiagnostic::new(
+                Severity::Error,
+                DiagnosticKind::UnsupportedExactOperation,
+                format!("exact no-volume-overlap union evidence validation failed: {error:?}"),
+            ))
+        })?;
+        if evidence.obstacle != CoplanarVolumetricCellObstacle::BoundaryOnlyContact
+            || evidence.positive_area_coplanar_overlapping_pairs == 0
+        {
+            return Ok(None);
+        }
+        let mesh = concatenate_meshes_with_options(
+            left,
+            right,
+            false,
+            "exact arrangement no-volume-overlap regularized union preserving separate shells",
+            validation,
+        )?;
+        let result = certified_shortcut_result(
+            mesh,
+            operation,
+            ExactBooleanShortcutKind::ArrangementCellComplex,
+        );
+        if result.validate().is_err() {
+            return Ok(None);
+        }
+        return Ok(Some(result));
+    }
 
     let Some(left_minus_right) = boolean_arrangement_volumetric_split_cell_recovery_from_graph(
         graph,
@@ -3181,7 +3236,7 @@ fn boolean_arrangement_regularized_no_volume_overlap_from_graph(
                 "exact arrangement no-volume-overlap regularized union preserving separate shells",
                 validation,
             )?,
-            ExactBooleanShortcutKind::ClosedBoundaryTouchingUnion,
+            ExactBooleanShortcutKind::ArrangementCellComplex,
         ),
         ExactBooleanOperation::Intersection => (
             empty_mesh(
@@ -3214,16 +3269,16 @@ fn boolean_arrangement_regularized_no_volume_overlap_from_graph(
 /// closed solids whose coplanar overlap is boundary-only but not the zero-area
 /// case handled by [`materialize_closed_boundary_touching_regularized_boolean`].
 /// The retained coplanar-volumetric evidence must certify positive-area
-/// boundary contact. Union yields to adjacent-union completion or the full
-/// arrangement path when that stronger topology certificate owns dispatcher
-/// provenance.
+/// boundary contact, including separate-shell union when retained
+/// coplanar-volumetric evidence proves boundary-only contact with no shared
+/// positive volume.
 pub fn materialize_closed_no_volume_overlap_regularized_boolean(
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
-    if operation == ExactBooleanOperation::Union {
+    if matches!(operation, ExactBooleanOperation::SelectedRegions(_)) {
         return Ok(None);
     }
     let graph = build_intersection_graph(left, right)?;
@@ -3240,6 +3295,11 @@ pub fn materialize_closed_no_volume_overlap_regularized_boolean(
         || evidence.positive_area_coplanar_overlapping_pairs == 0
     {
         return Ok(None);
+    }
+    if operation == ExactBooleanOperation::Union {
+        return boolean_arrangement_regularized_no_volume_overlap_from_graph(
+            &graph, left, right, operation, validation,
+        );
     }
     boolean_arrangement_regularized_boundary_contact_from_graph(
         &graph, left, right, operation, validation,

@@ -1491,18 +1491,11 @@ fn closed_no_volume_overlap_regularized_boolean_is_publicly_replayable() {
     evidence.validate_against_sources(&left, &right).unwrap();
     assert!(evidence.positive_area_coplanar_overlapping_pairs > 0);
 
-    assert!(
-        materialize_closed_no_volume_overlap_regularized_boolean(
-            &left,
-            &right,
-            ExactBooleanOperation::Union,
-            ValidationPolicy::CLOSED,
-        )
-        .unwrap()
-        .is_none()
-    );
-
     for (operation, shortcut) in [
+        (
+            ExactBooleanOperation::Union,
+            hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex,
+        ),
         (
             ExactBooleanOperation::Intersection,
             hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex,
@@ -1529,9 +1522,11 @@ fn closed_no_volume_overlap_regularized_boolean_is_publicly_replayable() {
             ValidationPolicy::CLOSED,
         )
         .unwrap()
-        .expect(
-            "positive-area boundary-only contact should materialize by exact no-volume overlap",
-        );
+        .unwrap_or_else(|| {
+            panic!(
+                "{operation:?}: positive-area boundary-only contact should materialize by exact no-volume overlap"
+            )
+        });
         assert_eq!(
             result.kind,
             ExactBooleanResultKind::CertifiedShortcut {
@@ -1558,6 +1553,13 @@ fn closed_no_volume_overlap_regularized_boolean_is_publicly_replayable() {
                 ExactBoundaryBooleanPolicy::Reject,
             )
             .unwrap();
+        if operation == ExactBooleanOperation::Union {
+            assert_eq!(
+                result.mesh.triangles().len(),
+                left.triangles().len() + right.triangles().len()
+            );
+            assert!(result.mesh.facts().mesh.closed_manifold);
+        }
     }
 }
 
