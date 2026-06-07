@@ -15,16 +15,17 @@ use hypermesh::{
     ExactPlanarArrangementStatus, ExactRefinementStatus, ExactRegionSelection,
     ExactRegularizationPolicy, ExactReportFreshness, ExactSameSurfaceStatus,
     ExactSelectedCellComplexFreshness, ExactSimplifiedCellComplexFreshness,
-    ExactVolumetricRegionFreshness, ExactVolumetricRegionRelation, FaceRegionPlaneRelation,
-    FullFaceAdjacentUnionFreshness, IntersectionGraphFreshness, MeshArtifactBlocker,
-    MeshArtifactManifest, MeshArtifactRole, MeshArtifactSourceKind, MeshCoordinateEvidence,
-    MeshFacePairFreshness, MeshFacePairRelation, MeshFacePairValidationError, SplitPlanFreshness,
-    TriangleTriangleFreshness, TriangleTriangleRelation, ValidationPolicy, WindingReportFreshness,
-    approximate_mesh_f64_view, boolean_exact, boolean_exact_with_boundary_policy,
-    boolean_selected_regions, build_exact_arrangement2d_overlay,
-    build_exact_arrangement2d_overlay_with_boundary_policy, build_intersection_graph,
-    certify_adjacent_union_completion_report, certify_boundary_touching_report,
-    certify_convex_solid, certify_coplanar_volumetric_cell_evidence, certify_exact_mesh_proposal,
+    ExactVolumetricRegionFreshness, ExactVolumetricRegionRelation, ExactWindingReadinessStatus,
+    FaceRegionPlaneRelation, FullFaceAdjacentUnionFreshness, IntersectionGraphFreshness,
+    MeshArtifactBlocker, MeshArtifactManifest, MeshArtifactRole, MeshArtifactSourceKind,
+    MeshCoordinateEvidence, MeshFacePairFreshness, MeshFacePairRelation,
+    MeshFacePairValidationError, SplitPlanFreshness, TriangleTriangleFreshness,
+    TriangleTriangleRelation, ValidationPolicy, WindingReportFreshness, approximate_mesh_f64_view,
+    boolean_exact, boolean_exact_with_boundary_policy, boolean_selected_regions,
+    build_exact_arrangement2d_overlay, build_exact_arrangement2d_overlay_with_boundary_policy,
+    build_intersection_graph, certify_adjacent_union_completion_report,
+    certify_boundary_touching_report, certify_convex_solid,
+    certify_coplanar_volumetric_cell_evidence, certify_exact_mesh_proposal,
     certify_open_surface_disjoint_report, certify_planar_arrangement_report,
     certify_refinement_report, certify_same_surface_report,
     certify_volumetric_boundary_closure_report, certify_winding_readiness_report,
@@ -2007,6 +2008,15 @@ fn exact_volumetric_winding_coplanar_cap_is_publicly_certified() {
         );
         preflight.validate().unwrap();
         preflight.validate_against_sources(&left, &right).unwrap();
+
+        let readiness = certify_winding_readiness_report(&left, &right, operation).unwrap();
+        assert_eq!(
+            readiness.status,
+            ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized,
+            "{operation:?}: {readiness:?}"
+        );
+        readiness.validate().unwrap();
+        readiness.validate_against_sources(&left, &right).unwrap();
 
         let result = materialize_volumetric_winding_arrangement(
             &left,

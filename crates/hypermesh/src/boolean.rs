@@ -4225,19 +4225,11 @@ fn boolean_arrangement_volumetric_split_cell_recovery_from_graph(
             }
             return Ok(Some(result));
         }
-        if let Some(mesh) = close_exact_coplanar_boundary_loops_without_self_contact(
-            &materialized.mesh,
-            "exact volumetric split-cell coplanar boundary closure",
+        if let Some(mesh) = certified_coplanar_boundary_closure_from_materialized(
+            &materialized,
+            operation,
             validation,
-        ) {
-            let closure_report =
-                volumetric_boundary_closure_report_from_materialized(&materialized, operation)?;
-            if closure_report.status
-                != ExactVolumetricBoundaryClosureStatus::CoplanarClosureAvailable
-                || closure_report.validate().is_err()
-            {
-                return Ok(None);
-            }
+        )? {
             let result = certified_shortcut_result(
                 mesh,
                 operation,
@@ -4320,6 +4312,28 @@ fn close_exact_coplanar_boundary_loops_without_self_contact(
         }
     }
     close_exact_coplanar_boundary_loops_from_loops(mesh, boundary_loops, label, validation)
+}
+
+fn certified_coplanar_boundary_closure_from_materialized(
+    materialized: &MaterializedVolumetricWindingRegionPlan,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+) -> Result<Option<ExactMesh>, MeshError> {
+    let Some(mesh) = close_exact_coplanar_boundary_loops_without_self_contact(
+        &materialized.mesh,
+        "exact volumetric split-cell coplanar boundary closure",
+        validation,
+    ) else {
+        return Ok(None);
+    };
+    let closure_report =
+        volumetric_boundary_closure_report_from_materialized(materialized, operation)?;
+    if closure_report.status != ExactVolumetricBoundaryClosureStatus::CoplanarClosureAvailable
+        || closure_report.validate().is_err()
+    {
+        return Ok(None);
+    }
+    Ok(Some(mesh))
 }
 
 fn close_exact_coplanar_boundary_loops_from_loops(
@@ -6990,7 +7004,7 @@ fn winding_readiness_report_from_graph(
                 coplanar_volumetric_evidence_if_required(graph, left, right),
             ));
         }
-        if materialize_volumetric_winding_region_plan(
+        if let Some(materialized) = materialize_volumetric_winding_region_plan(
             region_classifications.clone(),
             triangulations.clone(),
             volumetric_classifications.clone(),
@@ -6998,14 +7012,11 @@ fn winding_readiness_report_from_graph(
             right,
             operation,
             ValidationPolicy::ALLOW_BOUNDARY,
+        )? && certified_coplanar_boundary_closure_from_materialized(
+            &materialized,
+            operation,
+            ValidationPolicy::CLOSED,
         )?
-        .and_then(|materialized| {
-            close_exact_coplanar_boundary_loops_without_self_contact(
-                &materialized.mesh,
-                "exact volumetric split-cell coplanar boundary closure",
-                ValidationPolicy::CLOSED,
-            )
-        })
         .is_some()
         {
             return Ok(winding_readiness_report(
@@ -7241,11 +7252,11 @@ fn materialize_closed_volumetric_winding_boundary_caps_from_graph(
     else {
         return Ok(None);
     };
-    Ok(close_exact_coplanar_boundary_loops_without_self_contact(
-        &materialized.mesh,
-        "exact volumetric split-cell coplanar boundary closure",
+    certified_coplanar_boundary_closure_from_materialized(
+        &materialized,
+        operation,
         ValidationPolicy::CLOSED,
-    ))
+    )
 }
 
 fn materialize_volumetric_winding_region_plan(
