@@ -2347,11 +2347,9 @@ impl ExactBooleanPreflight {
             | ExactBooleanSupport::CertifiedClosedWindingSeparated
             | ExactBooleanSupport::CertifiedClosedWindingContainment
             | ExactBooleanSupport::CertifiedMixedDimensionalRegularizedSolid
-            | ExactBooleanSupport::CertifiedConvexContainment
             | ExactBooleanSupport::CertifiedConvexUnion
             | ExactBooleanSupport::CertifiedConvexIntersection
-            | ExactBooleanSupport::CertifiedConvexDifference
-            | ExactBooleanSupport::CertifiedConvexSeparated => {
+            | ExactBooleanSupport::CertifiedConvexDifference => {
                 if self.blocker.is_some() {
                     return Err(ExactReportValidationError::CertifiedReportHasBlocker);
                 }
@@ -2362,6 +2360,22 @@ impl ExactBooleanPreflight {
                     || self.graph_had_unknowns
                     || self.retained_face_pairs != 0
                     || self.retained_events != 0
+                    || !certified_preflight_support_matches_operation(self.support, self.operation)
+                {
+                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                }
+                no_region_facts(self.region_count, &self.region_classifications)
+            }
+            ExactBooleanSupport::CertifiedConvexContainment
+            | ExactBooleanSupport::CertifiedConvexSeparated => {
+                if self.blocker.is_some() {
+                    return Err(ExactReportValidationError::CertifiedReportHasBlocker);
+                }
+                if self.arrangement_readiness.is_some() {
+                    return Err(ExactReportValidationError::UnexpectedArrangementReadiness);
+                }
+                if operation_is_selected_region(self.operation)
+                    || self.graph_had_unknowns
                     || !certified_preflight_support_matches_operation(self.support, self.operation)
                 {
                     return Err(ExactReportValidationError::StatusEvidenceMismatch);

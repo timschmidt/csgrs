@@ -895,6 +895,10 @@ fn exact_closed_convex_boolean_materializer_is_publicly_replayable() {
         hypermesh::ExactBooleanSupport::CertifiedConvexSeparated,
         "{preflight:?}"
     );
+    preflight.validate().unwrap();
+    preflight
+        .validate_against_sources(&separated_left, &separated_right)
+        .unwrap();
     let separated = materialize_closed_convex_boolean(
         &separated_left,
         &separated_right,
@@ -945,6 +949,14 @@ fn exact_closed_convex_boolean_materializer_is_publicly_replayable() {
         hypermesh::ExactBooleanSupport::CertifiedConvexContainment,
         "{preflight:?}"
     );
+    assert!(
+        preflight.retained_face_pairs > 0,
+        "boundary-contained convex relation should retain graph evidence: {preflight:?}"
+    );
+    preflight.validate().unwrap();
+    preflight
+        .validate_against_sources(&contained_on_boundary, &container)
+        .unwrap();
     let containment = materialize_closed_convex_boolean(
         &contained_on_boundary,
         &container,

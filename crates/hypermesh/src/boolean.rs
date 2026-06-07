@@ -647,7 +647,11 @@ pub fn preflight_boolean_exact(
         && let Some(convex_support) =
             certified_convex_boolean_support_from_graph(&graph, left, right, operation)?
     {
-        return Ok(certified_shortcut_preflight(operation, convex_support));
+        return Ok(certified_shortcut_preflight_from_graph(
+            operation,
+            convex_support,
+            &graph,
+        ));
     }
     if support == ExactBooleanSupport::RequiresCertifiedWinding
         && let Some(separated_support) =
@@ -736,20 +740,32 @@ pub fn preflight_boolean_exact(
         && let Some(convex_support) =
             certified_convex_boolean_support_from_graph(&graph, left, right, operation)?
     {
-        return Ok(certified_shortcut_preflight(operation, convex_support));
+        return Ok(certified_shortcut_preflight_from_graph(
+            operation,
+            convex_support,
+            &graph,
+        ));
     }
     if support == ExactBooleanSupport::RequiresCertifiedWinding
         && operation == ExactBooleanOperation::Difference
         && let Some(convex_support) =
             certified_convex_boolean_support_from_graph(&graph, left, right, operation)?
     {
-        return Ok(certified_shortcut_preflight(operation, convex_support));
+        return Ok(certified_shortcut_preflight_from_graph(
+            operation,
+            convex_support,
+            &graph,
+        ));
     }
     if support == ExactBooleanSupport::RequiresCertifiedWinding
         && let Some(convex_support) =
             certified_convex_boolean_support_from_graph(&graph, left, right, operation)?
     {
-        return Ok(certified_shortcut_preflight(operation, convex_support));
+        return Ok(certified_shortcut_preflight_from_graph(
+            operation,
+            convex_support,
+            &graph,
+        ));
     }
     if support == ExactBooleanSupport::RequiresCertifiedWinding
         && operation == ExactBooleanOperation::Union
@@ -1442,6 +1458,25 @@ fn certified_shortcut_preflight(
         graph_had_unknowns: false,
         retained_face_pairs: 0,
         retained_events: 0,
+        region_count: 0,
+        region_classifications: Vec::new(),
+        blocker: None,
+        arrangement_readiness: None,
+        coplanar_volumetric_evidence: None,
+    }
+}
+
+fn certified_shortcut_preflight_from_graph(
+    operation: ExactBooleanOperation,
+    support: ExactBooleanSupport,
+    graph: &super::graph::ExactIntersectionGraph,
+) -> ExactBooleanPreflight {
+    ExactBooleanPreflight {
+        operation,
+        support,
+        graph_had_unknowns: graph.has_unknowns(),
+        retained_face_pairs: graph.face_pairs.len(),
+        retained_events: graph.event_count(),
         region_count: 0,
         region_classifications: Vec::new(),
         blocker: None,
