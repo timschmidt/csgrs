@@ -110,6 +110,52 @@ pub fn triangulate_all_face_cells_with_cdt(
     Ok(Some((ExactFaceRegionPlan { regions }, triangulations)))
 }
 
+/// Validate a retained constrained face-cell triangulation by source replay.
+///
+/// [`ExactFaceRegionPlan::validate_against_sources`] replays the simpler
+/// split-region boundary plan. CDT face cells intentionally add retained
+/// interior constraints and possible exact Steiner vertices, so their
+/// provenance must replay through [`triangulate_all_face_cells_with_cdt`]
+/// instead of the basic boundary-loop path.
+pub fn validate_face_cell_cdt_against_sources(
+    regions: &ExactFaceRegionPlan,
+    triangulations: &[FaceRegionTriangulation],
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> hypertri::Result<()> {
+    if !regions.validate(left, right).is_valid() {
+        return Err(hypertri::Error::InvalidInput {
+            reason: "face-cell CDT region plan failed exact validation",
+        });
+    }
+    if triangulations.len() != regions.regions.len() {
+        return Err(hypertri::Error::InvalidInput {
+            reason: "face-cell CDT triangulation count does not match region plan",
+        });
+    }
+    for triangulation in triangulations {
+        triangulation.validate()?;
+    }
+
+    let graph = super::graph::build_intersection_graph(left, right).map_err(|_| {
+        hypertri::Error::InvalidInput {
+            reason: "face-cell CDT source replay could not rebuild intersection graph",
+        }
+    })?;
+    let replay = triangulate_all_face_cells_with_cdt(&graph, left, right)?.ok_or(
+        hypertri::Error::InvalidInput {
+            reason: "face-cell CDT source replay did not materialize",
+        },
+    )?;
+    if replay.0 == *regions && replay.1 == triangulations {
+        Ok(())
+    } else {
+        Err(hypertri::Error::InvalidInput {
+            reason: "face-cell CDT source replay mismatch",
+        })
+    }
+}
+
 fn triangulate_one_face_cell_graph(
     graph: &ExactIntersectionGraph,
     topology: &ExactSplitTopologyPlan,

@@ -124,6 +124,7 @@ pub use cell_complex::{
     ExactLabeledCellComplex, ExactLabeledCellComplexFreshness, ExactOppositeRegionLabel,
     ExactSelectedCellComplex, ExactSelectedCellComplexFreshness, ExactSelectedFaceOrientation,
 };
+pub use cells::{triangulate_all_face_cells_with_cdt, validate_face_cell_cdt_against_sources};
 pub use construction::{
     intersect_segment_with_face_plane, intersect_segment_with_retained_face_plane,
 };

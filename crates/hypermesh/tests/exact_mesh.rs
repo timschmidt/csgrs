@@ -39,7 +39,8 @@ use hypermesh::{
     materialize_mixed_dimensional_regularized_solid_boolean, materialize_open_surface_arrangement,
     materialize_open_surface_disjoint_boolean, materialize_same_surface_boolean,
     materialize_volumetric_winding_arrangement, preflight_boolean_exact,
-    preflight_boolean_exact_with_boundary_policy,
+    preflight_boolean_exact_with_boundary_policy, triangulate_all_face_cells_with_cdt,
+    validate_face_cell_cdt_against_sources,
 };
 use hyperreal::Real;
 
@@ -1375,6 +1376,30 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
         &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
     )
     .unwrap();
+    let separated_right = tetra([10, 10, 10]);
+
+    let graph = build_intersection_graph(&left, &right).unwrap();
+    let (cell_regions, cell_triangulations) =
+        triangulate_all_face_cells_with_cdt(&graph, &left, &right)
+            .unwrap()
+            .expect("overlapping closed solids should expose exact CDT face cells");
+    assert_eq!(
+        cell_regions.regions.len(),
+        left.triangles().len() + right.triangles().len()
+    );
+    assert_eq!(cell_triangulations.len(), cell_regions.regions.len());
+    assert!(cell_regions.validate(&left, &right).is_valid());
+    validate_face_cell_cdt_against_sources(&cell_regions, &cell_triangulations, &left, &right)
+        .unwrap();
+    assert!(
+        validate_face_cell_cdt_against_sources(
+            &cell_regions,
+            &cell_triangulations,
+            &left,
+            &separated_right
+        )
+        .is_err()
+    );
 
     let result = materialize_volumetric_winding_arrangement(
         &left,
@@ -1402,8 +1427,6 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
     assert!(!result.volumetric_classifications.is_empty());
     assert!(!result.assembly.triangles.is_empty());
     assert!(!result.mesh.triangles().is_empty());
-
-    let separated_right = tetra([10, 10, 10]);
     assert_eq!(
         result.freshness_against_sources(&left, &separated_right),
         ExactReportFreshness::SourceReplayMismatch
