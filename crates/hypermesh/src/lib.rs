@@ -190,6 +190,8 @@ pub use region::{
     ExactBooleanAssemblyPlan, ExactOutputTriangle, ExactOutputTriangleOrientation,
     ExactOutputVertex, ExactRegionRetention, ExactRegionSelection, FaceRegionPlaneClassification,
     FaceRegionPlaneRelation, FaceRegionPlaneValidationError, FaceRegionTriangulation,
+    checked_classify_face_regions_against_opposite_planes,
+    checked_triangulate_face_regions_with_earcut,
 };
 pub use regularization::{
     ExactArrangementBlocker, ExactLowerDimensionalPolicy, ExactRegularizationPolicy,

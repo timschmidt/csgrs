@@ -10,13 +10,16 @@ use hypermesh::{
     ExactBoundaryBooleanPolicy, ExactI64MeshInputReadiness, ExactLabeledCellComplexFreshness,
     ExactMesh, ExactRegularizationPolicy, ExactReportFreshness, ExactSelectedCellComplexFreshness,
     ExactSimplifiedCellComplexFreshness, ExactVolumetricRegionFreshness,
-    ExactVolumetricRegionRelation, FullFaceAdjacentUnionFreshness, IntersectionGraphFreshness,
-    MeshFacePairFreshness, MeshFacePairRelation, MeshFacePairValidationError, SplitPlanFreshness,
-    TriangleTriangleFreshness, TriangleTriangleRelation, ValidationPolicy, WindingReportFreshness,
-    boolean_exact, boolean_exact_with_boundary_policy, build_exact_arrangement2d_overlay,
+    ExactVolumetricRegionRelation, FaceRegionPlaneRelation, FullFaceAdjacentUnionFreshness,
+    IntersectionGraphFreshness, MeshFacePairFreshness, MeshFacePairRelation,
+    MeshFacePairValidationError, SplitPlanFreshness, TriangleTriangleFreshness,
+    TriangleTriangleRelation, ValidationPolicy, WindingReportFreshness, boolean_exact,
+    boolean_exact_with_boundary_policy, build_exact_arrangement2d_overlay,
     build_exact_arrangement2d_overlay_with_boundary_policy, build_intersection_graph,
     certify_boundary_touching_report, certify_convex_solid,
-    certify_coplanar_volumetric_cell_evidence, classify_mesh_face_pair,
+    certify_coplanar_volumetric_cell_evidence,
+    checked_classify_face_regions_against_opposite_planes,
+    checked_triangulate_face_regions_with_earcut, classify_mesh_face_pair,
     classify_mesh_vertices_against_closed_mesh_winding_report,
     classify_mesh_vertices_against_convex_solid_report,
     classify_point_against_closed_mesh_winding_report, classify_point_against_convex_solid_report,
@@ -152,6 +155,62 @@ fn exact_arrangement2d_boundary_policy_is_publicly_available() {
     assert_eq!(preserved.output_loops[0].points.len(), 8);
     assert_eq!(simplified.output_loops[0].signed_area_twice, Real::from(24));
     assert_eq!(preserved.output_loops[0].signed_area_twice, Real::from(24));
+}
+
+#[test]
+fn exact_face_region_stage_is_publicly_replayable() {
+    let left = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 0, 4, 0, 0, 0, 4, 0],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let right = ExactMesh::from_i64_triangles_with_policy(
+        &[1, -1, -1, 1, 3, 1, 1, 3, -1],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let stale_right = ExactMesh::from_i64_triangles_with_policy(
+        &[8, -1, -1, 8, 3, 1, 8, 3, -1],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let graph = build_intersection_graph(&left, &right).unwrap();
+    let geometry = graph.face_split_geometry_plan(&left, &right).unwrap();
+    let regions = geometry.region_plan(&left, &right);
+
+    let classifications =
+        checked_classify_face_regions_against_opposite_planes(&regions, &left, &right).unwrap();
+    let triangulations =
+        checked_triangulate_face_regions_with_earcut(&regions, &left, &right).unwrap();
+
+    assert!(!classifications.is_empty());
+    assert!(!triangulations.is_empty());
+    classifications[0]
+        .validate_against_sources(&left, &right)
+        .unwrap();
+    triangulations[0]
+        .validate_against_sources(&left, &right)
+        .unwrap();
+    assert!(
+        classifications[0]
+            .validate_against_sources(&left, &stale_right)
+            .is_err()
+    );
+    assert!(
+        triangulations[0]
+            .validate_against_sources(&left, &stale_right)
+            .is_err()
+    );
+
+    let mut stale_classification = classifications[0].clone();
+    stale_classification.relation = match stale_classification.relation {
+        FaceRegionPlaneRelation::StrictlyAbove => FaceRegionPlaneRelation::StrictlyBelow,
+        _ => FaceRegionPlaneRelation::StrictlyAbove,
+    };
+    assert!(stale_classification.validate().is_err());
 }
 
 fn skew_affine_box(min: [i64; 3], max: [i64; 3]) -> ExactMesh {
