@@ -2854,6 +2854,7 @@ impl ExactVolumetricBoundaryClosureReport {
                     || self.self_contact_topological_vertices != 0
                     || self.self_contact_degenerate_cycles != 0
                     || self.self_contact_nondegenerate_cycles != 0
+                    || self.coplanar_loop_groups != 0
                 {
                     return Err(ExactReportValidationError::StatusEvidenceMismatch);
                 }
@@ -2875,6 +2876,7 @@ impl ExactVolumetricBoundaryClosureReport {
                     || self.boundary_edges == 0
                     || self.boundary_loops != 0
                     || !self.has_boundary_topology_failure_evidence()
+                    || self.noncoplanar_boundary_loops != 0
                     || self.repeated_exact_boundary_points != 0
                     || self.self_contact_exact_points != 0
                     || self.self_contact_topological_vertices != 0
@@ -5706,6 +5708,26 @@ mod tests {
         }
     }
 
+    fn valid_noncoplanar_closure_report() -> ExactVolumetricBoundaryClosureReport {
+        ExactVolumetricBoundaryClosureReport {
+            operation: ExactBooleanOperation::Union,
+            status: ExactVolumetricBoundaryClosureStatus::NonCoplanarBoundaryClosureRequired,
+            output_triangles: 1,
+            boundary_edges: 3,
+            boundary_loops: 1,
+            boundary_vertices_with_invalid_outgoing_degree: 0,
+            boundary_vertices_with_invalid_incoming_degree: 0,
+            overused_boundary_edges: 0,
+            noncoplanar_boundary_loops: 1,
+            repeated_exact_boundary_points: 0,
+            self_contact_exact_points: 0,
+            self_contact_topological_vertices: 0,
+            self_contact_degenerate_cycles: 0,
+            self_contact_nondegenerate_cycles: 0,
+            coplanar_loop_groups: 0,
+        }
+    }
+
     #[test]
     fn volumetric_boundary_already_closed_report_accepts_empty_output() {
         let report = ExactVolumetricBoundaryClosureReport {
@@ -5848,6 +5870,25 @@ mod tests {
 
         let mut report = valid_topology_not_loop_closure_report();
         report.boundary_loops = 1;
+        assert_eq!(
+            report.validate(),
+            Err(ExactReportValidationError::StatusEvidenceMismatch)
+        );
+
+        let mut report = valid_topology_not_loop_closure_report();
+        report.noncoplanar_boundary_loops = 1;
+        assert_eq!(
+            report.validate(),
+            Err(ExactReportValidationError::StatusEvidenceMismatch)
+        );
+    }
+
+    #[test]
+    fn volumetric_boundary_noncoplanar_report_rejects_stale_coplanar_grouping() {
+        let mut report = valid_noncoplanar_closure_report();
+        report.validate().unwrap();
+
+        report.coplanar_loop_groups = 1;
         assert_eq!(
             report.validate(),
             Err(ExactReportValidationError::StatusEvidenceMismatch)
