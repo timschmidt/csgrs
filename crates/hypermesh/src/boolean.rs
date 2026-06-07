@@ -760,38 +760,6 @@ pub fn preflight_boolean_exact(
         ));
     }
     if support == ExactBooleanSupport::RequiresCertifiedWinding
-        && operation != ExactBooleanOperation::Difference
-        && let Some(convex_support) =
-            certified_convex_boolean_support_from_graph(&graph, left, right, operation)?
-    {
-        return Ok(certified_shortcut_preflight_from_graph(
-            operation,
-            convex_support,
-            &graph,
-        ));
-    }
-    if support == ExactBooleanSupport::RequiresCertifiedWinding
-        && operation == ExactBooleanOperation::Difference
-        && let Some(convex_support) =
-            certified_convex_boolean_support_from_graph(&graph, left, right, operation)?
-    {
-        return Ok(certified_shortcut_preflight_from_graph(
-            operation,
-            convex_support,
-            &graph,
-        ));
-    }
-    if support == ExactBooleanSupport::RequiresCertifiedWinding
-        && let Some(convex_support) =
-            certified_convex_boolean_support_from_graph(&graph, left, right, operation)?
-    {
-        return Ok(certified_shortcut_preflight_from_graph(
-            operation,
-            convex_support,
-            &graph,
-        ));
-    }
-    if support == ExactBooleanSupport::RequiresCertifiedWinding
         && operation == ExactBooleanOperation::Union
         && has_non_empty_axis_aligned_orthogonal_solid_cell_intersection(left, right)
         && !graph_requires_coplanar_volumetric_cells_for_sources(&graph, left, right)
