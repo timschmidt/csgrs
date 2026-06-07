@@ -503,6 +503,14 @@ fn retained_role_report_constructors_reject_mismatched_evidence() {
         vec![BezierRetainedRegionLoopRole::Material],
         vec![r(0)],
     ));
+    assert_topology_error(
+        BezierRetainedSignedAreaRoleReport2::new(
+            vec![BezierRetainedRegionLoopRole::Material],
+            vec![r(-1)],
+        )
+        .unwrap()
+        .with_loop_arrangement_sources(vec![Some(Vec::new())]),
+    );
     assert_topology_error(BezierRetainedCurvedNestingRoleReport2::new(
         roles.clone(),
         vec![0],
@@ -521,6 +529,16 @@ fn retained_role_report_constructors_reject_mismatched_evidence() {
         vec![r(0)],
         vec![p(0, 0)],
     ));
+    assert_topology_error(
+        BezierRetainedCurvedNestingRoleReport2::new(
+            vec![BezierRetainedRegionLoopRole::Material],
+            vec![0],
+            vec![r(-1)],
+            vec![p(0, 0)],
+        )
+        .unwrap()
+        .with_loop_arrangement_sources(vec![Some(Vec::new())]),
+    );
 }
 
 #[test]

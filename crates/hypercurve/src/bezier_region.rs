@@ -1209,6 +1209,11 @@ fn validate_loop_arrangement_sources(
         "loop arrangement source",
         loop_arrangement_sources.len(),
     )?;
+    if loop_arrangement_sources.iter().flatten().any(Vec::is_empty) {
+        return Err(CurveError::Topology(
+            "retained role report present loop arrangement sources must be nonempty".into(),
+        ));
+    }
     let indices = loop_arrangement_sources
         .iter()
         .filter_map(Option::as_ref)
