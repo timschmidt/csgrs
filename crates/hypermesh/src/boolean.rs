@@ -6324,15 +6324,18 @@ pub fn materialize_open_surface_arrangement(
     let Some(result) = result else {
         return Ok(None);
     };
-    result
-        .validate_against_sources(left, right)
-        .map_err(|error| {
-            MeshError::one(MeshDiagnostic::new(
-                Severity::Error,
-                DiagnosticKind::UnsupportedExactOperation,
-                format!("open-surface arrangement source replay failed: {error:?}"),
-            ))
-        })?;
+    if result
+        .validate_operation_against_sources(
+            left,
+            right,
+            operation,
+            validation,
+            ExactBoundaryBooleanPolicy::Reject,
+        )
+        .is_err()
+    {
+        return Ok(None);
+    }
     Ok(Some(result))
 }
 
@@ -6968,14 +6971,24 @@ pub fn materialize_boundary_touching_policy_boolean(
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
     let graph = build_intersection_graph(left, right)?;
     validate_graph_source_handoff(&graph, left, right)?;
-    boolean_boundary_touching_meshes_from_graph(
+    let Some(result) = boolean_boundary_touching_meshes_from_graph(
         &graph,
         left,
         right,
         operation,
         validation,
         boundary_policy,
-    )
+    )?
+    else {
+        return Ok(None);
+    };
+    if result
+        .validate_operation_against_sources(left, right, operation, validation, boundary_policy)
+        .is_err()
+    {
+        return Ok(None);
+    }
+    Ok(Some(result))
 }
 
 /// Certify whether retained graph pairs are exclusively boundary-only contacts.

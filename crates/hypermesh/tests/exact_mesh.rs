@@ -1394,6 +1394,36 @@ fn exact_open_surface_arrangement_is_publicly_replayable() {
             result.freshness_against_sources(&left, &separated_right),
             ExactReportFreshness::SourceReplayMismatch
         );
+        if matches!(operation, ExactBooleanOperation::Intersection) {
+            assert!(
+                materialize_open_surface_arrangement(
+                    &left,
+                    &right,
+                    operation,
+                    ValidationPolicy::CLOSED,
+                )
+                .unwrap()
+                .is_none(),
+                "{operation:?} should yield to closed lower-dimensional provenance"
+            );
+            let replay = boolean_exact(&left, &right, operation, ValidationPolicy::CLOSED).unwrap();
+            assert_eq!(
+                replay.kind,
+                ExactBooleanResultKind::CertifiedShortcut {
+                    operation,
+                    shortcut: hypermesh::ExactBooleanShortcutKind::LowerDimensionalRegularizedSolid
+                }
+            );
+            replay
+                .validate_operation_against_sources(
+                    &left,
+                    &right,
+                    operation,
+                    ValidationPolicy::CLOSED,
+                    ExactBoundaryBooleanPolicy::Reject,
+                )
+                .unwrap();
+        }
     }
 
     let union = materialize_open_surface_arrangement(
@@ -2203,6 +2233,66 @@ fn boundary_touching_policy_boolean_is_publicly_replayable() {
                 &right,
                 operation,
                 ValidationPolicy::ALLOW_BOUNDARY,
+                ExactBoundaryBooleanPolicy::PreserveSeparateShells,
+            )
+            .unwrap();
+    }
+
+    let closed_left_a = tetra_from_corners([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]);
+    let closed_left_b = tetra_from_corners([10, 0, 0], [12, 0, 0], [10, 2, 0], [10, 0, 2]);
+    let closed_left = combine_exact_meshes(
+        &closed_left_a,
+        &closed_left_b,
+        "test boundary policy closed replay left",
+    );
+    let closed_right = tetra_from_corners([0, 0, 0], [-4, 0, 0], [0, -4, 0], [0, 0, -4]);
+    for (operation, shortcut) in [
+        (
+            ExactBooleanOperation::Union,
+            hypermesh::ExactBooleanShortcutKind::ClosedBoundaryTouchingUnion,
+        ),
+        (
+            ExactBooleanOperation::Intersection,
+            hypermesh::ExactBooleanShortcutKind::ClosedBoundaryTouchingIntersection,
+        ),
+        (
+            ExactBooleanOperation::Difference,
+            hypermesh::ExactBooleanShortcutKind::ClosedBoundaryTouchingDifference,
+        ),
+    ] {
+        assert!(
+            materialize_boundary_touching_policy_boolean(
+                &closed_left,
+                &closed_right,
+                operation,
+                ValidationPolicy::CLOSED,
+                ExactBoundaryBooleanPolicy::PreserveSeparateShells,
+            )
+            .unwrap()
+            .is_none(),
+            "{operation:?} should yield to closed-solid regularized provenance"
+        );
+        let replay = boolean_exact_with_boundary_policy(
+            &closed_left,
+            &closed_right,
+            operation,
+            ValidationPolicy::CLOSED,
+            ExactBoundaryBooleanPolicy::PreserveSeparateShells,
+        )
+        .unwrap();
+        assert_eq!(
+            replay.kind,
+            ExactBooleanResultKind::CertifiedShortcut {
+                operation,
+                shortcut
+            }
+        );
+        replay
+            .validate_operation_against_sources(
+                &closed_left,
+                &closed_right,
+                operation,
+                ValidationPolicy::CLOSED,
                 ExactBoundaryBooleanPolicy::PreserveSeparateShells,
             )
             .unwrap();
