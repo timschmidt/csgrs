@@ -27,7 +27,7 @@ use super::boolean::{
     materialize_coplanar_mesh_overlay_arrangement,
     materialize_volumetric_coplanar_boundary_closure_output, preflight_boolean_exact,
     preflight_boolean_exact_with_boundary_policy, preflight_boolean_exact_with_validation,
-    replay_volumetric_winding_region_plan,
+    replay_materialized_volumetric_winding_region_plan,
 };
 use super::bounds::AabbIntersectionKind;
 use super::contained_adjacent::materialize_contained_face_adjacent_union;
@@ -1148,14 +1148,22 @@ impl ExactBooleanResult {
                 return Err(ExactReportValidationError::SourceReplayMismatch);
             }
         }
-        if matches!(
-            self.kind,
-            ExactBooleanResultKind::ArrangementCellComplexMaterialized { .. }
-        ) {
-            let replay = replay_volumetric_winding_region_plan(left, right)
-                .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
-                .ok_or(ExactReportValidationError::SourceReplayMismatch)?;
-            if self.region_classifications != replay.0 || self.triangulations != replay.1 {
+        if let ExactBooleanResultKind::ArrangementCellComplexMaterialized { operation } = self.kind
+        {
+            let replay = replay_materialized_volumetric_winding_region_plan(
+                left,
+                right,
+                operation,
+                self.mesh.validation_policy(),
+            )
+            .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
+            .ok_or(ExactReportValidationError::SourceReplayMismatch)?;
+            if self.region_classifications != replay.region_classifications
+                || self.triangulations != replay.triangulations
+                || self.volumetric_classifications != replay.volumetric_classifications
+                || self.assembly != replay.assembly
+                || !mesh_output_matches(&self.mesh, &replay.mesh)
+            {
                 return Err(ExactReportValidationError::SourceReplayMismatch);
             }
         }

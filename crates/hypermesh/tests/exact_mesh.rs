@@ -2462,6 +2462,19 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
     assert!(!result.volumetric_classifications.is_empty());
     assert!(!result.assembly.triangles.is_empty());
     assert!(!result.mesh.triangles().is_empty());
+    if result.volumetric_classifications.len() > 1 {
+        let mut stale_volumetric_order = result.clone();
+        stale_volumetric_order.volumetric_classifications.swap(0, 1);
+        assert!(
+            stale_volumetric_order.validate().is_ok(),
+            "{stale_volumetric_order:?}"
+        );
+        assert_eq!(
+            stale_volumetric_order.freshness_against_sources(&left, &right),
+            ExactReportFreshness::SourceReplayMismatch,
+            "{stale_volumetric_order:?}"
+        );
+    }
     assert_eq!(
         result.freshness_against_sources(&left, &separated_right),
         ExactReportFreshness::SourceReplayMismatch

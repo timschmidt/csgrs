@@ -7683,12 +7683,12 @@ type VolumetricWindingRegionPlan = (
     Vec<ExactVolumetricRegionClassification>,
 );
 
-struct MaterializedVolumetricWindingRegionPlan {
-    region_classifications: Vec<FaceRegionPlaneClassification>,
-    triangulations: Vec<FaceRegionTriangulation>,
-    volumetric_classifications: Vec<ExactVolumetricRegionClassification>,
-    assembly: ExactBooleanAssemblyPlan,
-    mesh: ExactMesh,
+pub(crate) struct MaterializedVolumetricWindingRegionPlan {
+    pub(crate) region_classifications: Vec<FaceRegionPlaneClassification>,
+    pub(crate) triangulations: Vec<FaceRegionTriangulation>,
+    pub(crate) volumetric_classifications: Vec<ExactVolumetricRegionClassification>,
+    pub(crate) assembly: ExactBooleanAssemblyPlan,
+    pub(crate) mesh: ExactMesh,
 }
 
 fn materialize_volumetric_winding_region_plan_from_graph(
@@ -7871,22 +7871,16 @@ fn volumetric_winding_region_plan_from_graph(
     )))
 }
 
-pub(crate) fn replay_volumetric_winding_region_plan(
+pub(crate) fn replay_materialized_volumetric_winding_region_plan(
     left: &ExactMesh,
     right: &ExactMesh,
-) -> Result<
-    Option<(
-        Vec<FaceRegionPlaneClassification>,
-        Vec<FaceRegionTriangulation>,
-    )>,
-    MeshError,
-> {
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+) -> Result<Option<MaterializedVolumetricWindingRegionPlan>, MeshError> {
     let graph = build_intersection_graph(left, right)?;
     validate_graph_source_handoff(&graph, left, right)?;
-    Ok(
-        volumetric_winding_region_plan_from_graph(&graph, left, right)?.map(
-            |(region_classifications, triangulations, _)| (region_classifications, triangulations),
-        ),
+    materialize_volumetric_winding_region_plan_from_graph(
+        &graph, left, right, operation, validation,
     )
 }
 
