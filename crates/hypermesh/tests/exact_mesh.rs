@@ -30,9 +30,10 @@ use hypermesh::{
     materialize_closed_winding_separated_boolean, materialize_contained_face_adjacent_union,
     materialize_coplanar_mesh_overlay_arrangement, materialize_empty_operand_boolean,
     materialize_full_face_adjacent_union, materialize_identical_mesh_boolean,
-    materialize_open_surface_arrangement, materialize_open_surface_disjoint_boolean,
-    materialize_same_surface_boolean, materialize_volumetric_winding_arrangement,
-    preflight_boolean_exact, preflight_boolean_exact_with_boundary_policy,
+    materialize_mixed_dimensional_regularized_solid_boolean, materialize_open_surface_arrangement,
+    materialize_open_surface_disjoint_boolean, materialize_same_surface_boolean,
+    materialize_volumetric_winding_arrangement, preflight_boolean_exact,
+    preflight_boolean_exact_with_boundary_policy,
 };
 use hyperreal::Real;
 
@@ -815,6 +816,109 @@ fn lower_dimensional_regularized_boolean_is_publicly_replayable() {
             )
             .unwrap();
     }
+}
+
+#[test]
+fn mixed_dimensional_regularized_solid_boolean_is_publicly_replayable() {
+    let solid = axis_aligned_box([0, 0, 0], [4, 4, 4]);
+    let sheet = ExactMesh::from_i64_triangles_with_policy(
+        &[1, 1, 1, 3, 1, 1, 1, 3, 1],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let stale_solid = axis_aligned_box([10, 0, 0], [14, 4, 4]);
+
+    for (left, right, stale_left, stale_right, solid_is_left) in [
+        (&solid, &sheet, &stale_solid, &sheet, true),
+        (&sheet, &solid, &sheet, &stale_solid, false),
+    ] {
+        for operation in [
+            ExactBooleanOperation::Union,
+            ExactBooleanOperation::Intersection,
+            ExactBooleanOperation::Difference,
+        ] {
+            let result = materialize_mixed_dimensional_regularized_solid_boolean(
+                left,
+                right,
+                operation,
+                ValidationPolicy::CLOSED,
+            )
+            .unwrap()
+            .expect("mixed-dimensional regularized solid should materialize");
+            assert_eq!(
+                result.kind,
+                ExactBooleanResultKind::CertifiedShortcut {
+                    operation,
+                    shortcut: hypermesh::ExactBooleanShortcutKind::MixedDimensionalRegularizedSolid
+                }
+            );
+            result.validate().unwrap();
+            result.validate_against_sources(left, right).unwrap();
+            assert_eq!(
+                result.freshness_against_sources(left, right),
+                ExactReportFreshness::Current
+            );
+            assert_eq!(
+                result.freshness_against_sources(stale_left, stale_right),
+                ExactReportFreshness::SourceReplayMismatch
+            );
+            result
+                .validate_operation_against_sources(
+                    left,
+                    right,
+                    operation,
+                    ValidationPolicy::CLOSED,
+                    ExactBoundaryBooleanPolicy::Reject,
+                )
+                .unwrap();
+
+            let keeps_solid = matches!(operation, ExactBooleanOperation::Union)
+                || (solid_is_left && matches!(operation, ExactBooleanOperation::Difference));
+            if keeps_solid {
+                assert!(result.mesh.facts().mesh.closed_manifold);
+                assert!(!result.mesh.triangles().is_empty());
+            } else {
+                assert!(
+                    result.mesh.triangles().is_empty(),
+                    "{operation:?}: {result:?}"
+                );
+            }
+        }
+    }
+
+    let lower_left = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 0, 4, 0, 0, 0, 4, 0],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let lower_right = ExactMesh::from_i64_triangles_with_policy(
+        &[1, -1, -1, 1, 3, 1, 1, 3, -1],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    assert!(
+        materialize_mixed_dimensional_regularized_solid_boolean(
+            &lower_left,
+            &lower_right,
+            ExactBooleanOperation::Union,
+            ValidationPolicy::CLOSED,
+        )
+        .unwrap()
+        .is_none()
+    );
+    assert!(
+        materialize_closed_regularized_lower_dimensional_boolean(
+            &lower_left,
+            &lower_right,
+            ExactBooleanOperation::Union,
+            ValidationPolicy::CLOSED,
+        )
+        .unwrap()
+        .is_some()
+    );
 }
 
 #[test]

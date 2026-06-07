@@ -7111,6 +7111,29 @@ pub fn materialize_closed_regularized_lower_dimensional_boolean(
     boolean_closed_regularized_lower_dimensional_optional(left, right, operation, validation)
 }
 
+/// Certify and materialize a named regularized boolean between a closed solid
+/// and a lower-dimensional operand.
+///
+/// This exposes the mixed-dimensional exact regularization path used by
+/// [`boolean_exact`]. A closed solid combined with an open surface contributes
+/// no additional closed volume: union keeps the solid, intersection is empty,
+/// and difference keeps or drops the solid according to operand order.
+/// Lower-dimensional-only inputs return `None` here so the lower-dimensional
+/// regularized materializer keeps that provenance.
+pub fn materialize_mixed_dimensional_regularized_solid_boolean(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+) -> Result<Option<ExactBooleanResult>, MeshError> {
+    if matches!(operation, ExactBooleanOperation::SelectedRegions(_))
+        || certified_mixed_dimensional_regularized_solid_support(left, right).is_none()
+    {
+        return Ok(None);
+    }
+    boolean_closed_regularized_lower_dimensional_optional(left, right, operation, validation)
+}
+
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum ClosedRegularizedOperandKind {
     ClosedSolid,

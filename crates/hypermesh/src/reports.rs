@@ -1114,6 +1114,25 @@ impl ExactBooleanResult {
         }
         if let ExactBooleanResultKind::CertifiedShortcut {
             operation,
+            shortcut:
+                ExactBooleanShortcutKind::MixedDimensionalRegularizedSolid
+                | ExactBooleanShortcutKind::LowerDimensionalRegularizedSolid,
+        } = self.kind
+        {
+            let replay = boolean_exact_with_boundary_policy(
+                left,
+                right,
+                operation,
+                self.mesh.validation_policy(),
+                ExactBoundaryBooleanPolicy::Reject,
+            )
+            .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+            if self != &replay {
+                return Err(ExactReportValidationError::SourceReplayMismatch);
+            }
+        }
+        if let ExactBooleanResultKind::CertifiedShortcut {
+            operation,
             shortcut,
         } = self.kind
             && !certified_shortcut_sources_match(
