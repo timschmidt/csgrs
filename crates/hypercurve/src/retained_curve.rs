@@ -422,5 +422,10 @@ fn validate_curve_profile_evidence(
             "native retained curve profile must not report retained unsupported spans".into(),
         ));
     }
+    if topology_status.is_retained_evidence() && cache_summary.retained_span_count() == 0 {
+        return Err(CurveError::Topology(
+            "non-native retained curve profile must report retained evidence spans".into(),
+        ));
+    }
     Ok(())
 }

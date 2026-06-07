@@ -560,12 +560,35 @@ fn retained_curve_profile_rejects_mismatched_endpoint_evidence_without_blocking_
     let endpoints = RetainedEndpointEvidence2::new(&domain, p(0, 0), p(2, 0));
     assert_topology_error(RetainedCurveProfile2::new(
         identity,
-        domain,
+        domain.clone(),
         full_trim,
         RetainedCurvePeriodicity1::NonPeriodic,
         RetainedTopologyStatus::NativeExact,
         endpoints,
         mixed_cache,
+    ));
+
+    let endpoints = RetainedEndpointEvidence2::new(&domain, p(0, 0), p(2, 0));
+    assert_topology_error(RetainedCurveProfile2::new(
+        identity,
+        domain.clone(),
+        decided(RetainedTrimInterval1::try_new(r(0), r(2), &domain, &policy).unwrap()),
+        RetainedCurvePeriodicity1::NonPeriodic,
+        RetainedTopologyStatus::Unsupported,
+        endpoints,
+        cache.clone(),
+    ));
+    let endpoints = RetainedEndpointEvidence2::new(&domain, p(0, 0), p(2, 0));
+    let retained_trim =
+        decided(RetainedTrimInterval1::try_new(r(0), r(2), &domain, &policy).unwrap());
+    assert_topology_error(RetainedCurveProfile2::new(
+        identity,
+        domain.clone(),
+        retained_trim,
+        RetainedCurvePeriodicity1::NonPeriodic,
+        RetainedTopologyStatus::Unresolved,
+        endpoints,
+        cache,
     ));
 }
 
