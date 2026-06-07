@@ -2160,6 +2160,13 @@ fn boolean_closed_winding_containment_meshes(
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
+    if matches!(operation, ExactBooleanOperation::SelectedRegions(_))
+        || left.triangles().is_empty()
+        || right.triangles().is_empty()
+        || meshes_are_certified_bounds_disjoint(left, right)
+    {
+        return Ok(None);
+    }
     let graph = build_intersection_graph(left, right)?;
     validate_graph_source_handoff(&graph, left, right)?;
     let Some(containment) =
@@ -2245,6 +2252,13 @@ fn boolean_closed_winding_separated_meshes(
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
+    if matches!(operation, ExactBooleanOperation::SelectedRegions(_))
+        || left.triangles().is_empty()
+        || right.triangles().is_empty()
+        || meshes_are_certified_bounds_disjoint(left, right)
+    {
+        return Ok(None);
+    }
     let graph = build_intersection_graph(left, right)?;
     validate_graph_source_handoff(&graph, left, right)?;
     if certified_closed_winding_separated_support_from_graph(&graph, left, right, operation)?
@@ -3847,7 +3861,24 @@ pub fn materialize_closed_no_volume_overlap_regularized_boolean(
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
-    boolean_closed_no_volume_overlap_regularized_meshes(left, right, operation, validation)
+    let Some(result) =
+        boolean_closed_no_volume_overlap_regularized_meshes(left, right, operation, validation)?
+    else {
+        return Ok(None);
+    };
+    if result
+        .validate_operation_against_sources(
+            left,
+            right,
+            operation,
+            validation,
+            ExactBoundaryBooleanPolicy::Reject,
+        )
+        .is_err()
+    {
+        return Ok(None);
+    }
+    Ok(Some(result))
 }
 
 fn boolean_closed_no_volume_overlap_regularized_meshes(
@@ -6801,7 +6832,24 @@ pub fn materialize_closed_boundary_touching_regularized_boolean(
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
-    boolean_closed_boundary_touching_regularized_meshes(left, right, operation, validation)
+    let Some(result) =
+        boolean_closed_boundary_touching_regularized_meshes(left, right, operation, validation)?
+    else {
+        return Ok(None);
+    };
+    if result
+        .validate_operation_against_sources(
+            left,
+            right,
+            operation,
+            validation,
+            ExactBoundaryBooleanPolicy::Reject,
+        )
+        .is_err()
+    {
+        return Ok(None);
+    }
+    Ok(Some(result))
 }
 
 fn validate_consumed_boundary_touching_report(
@@ -8621,6 +8669,8 @@ pub fn materialize_bounds_disjoint_boolean(
     validation: ValidationPolicy,
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
     if matches!(operation, ExactBooleanOperation::SelectedRegions(_))
+        || left.triangles().is_empty()
+        || right.triangles().is_empty()
         || !meshes_are_certified_bounds_disjoint(left, right)
         || (validation == ValidationPolicy::CLOSED
             && certified_closed_validation_regularized_solid_support(left, right).is_some())
