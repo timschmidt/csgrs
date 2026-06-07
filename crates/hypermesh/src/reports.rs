@@ -2563,10 +2563,7 @@ impl ExactBooleanPreflight {
                 no_region_facts(self.region_count, &self.region_classifications)
             }
             ExactBooleanSupport::RequiresPlanarArrangement => {
-                if operation_is_selected_region(self.operation)
-                    || matches!(self.operation, ExactBooleanOperation::Intersection)
-                    || self.graph_had_unknowns
-                {
+                if operation_is_selected_region(self.operation) || self.graph_had_unknowns {
                     return Err(ExactReportValidationError::StatusEvidenceMismatch);
                 }
                 blocker_kind(
@@ -3770,10 +3767,7 @@ impl ExactPlanarArrangementReport {
                 }
             }
             ExactPlanarArrangementStatus::Required => {
-                if matches!(
-                    self.operation,
-                    ExactBooleanOperation::SelectedRegions(_) | ExactBooleanOperation::Intersection
-                ) {
+                if matches!(self.operation, ExactBooleanOperation::SelectedRegions(_)) {
                     return Err(ExactReportValidationError::StatusEvidenceMismatch);
                 }
             }
@@ -4974,7 +4968,7 @@ mod tests {
     }
 
     #[test]
-    fn planar_arrangement_required_rejects_intersection_relabel() {
+    fn planar_arrangement_required_accepts_named_intersection_but_rejects_selected_regions() {
         let mut report = ExactPlanarArrangementReport {
             operation: ExactBooleanOperation::Difference,
             status: ExactPlanarArrangementStatus::Required,
@@ -5004,8 +4998,34 @@ mod tests {
         report.validate().unwrap();
 
         report.operation = ExactBooleanOperation::Intersection;
+        report.validate().unwrap();
+
+        report.operation = ExactBooleanOperation::SelectedRegions(ExactRegionSelection::KeepAll);
         assert_eq!(
             report.validate(),
+            Err(ExactReportValidationError::StatusEvidenceMismatch)
+        );
+
+        let mut preflight = ExactBooleanPreflight {
+            operation: ExactBooleanOperation::Difference,
+            support: ExactBooleanSupport::RequiresPlanarArrangement,
+            graph_had_unknowns: false,
+            retained_face_pairs: 1,
+            retained_events: 1,
+            region_count: 0,
+            region_classifications: Vec::new(),
+            blocker: Some(report.blocker.clone()),
+            arrangement_readiness: report.arrangement_readiness.clone(),
+            coplanar_volumetric_evidence: None,
+        };
+        preflight.validate().unwrap();
+
+        preflight.operation = ExactBooleanOperation::Intersection;
+        preflight.validate().unwrap();
+
+        preflight.operation = ExactBooleanOperation::SelectedRegions(ExactRegionSelection::KeepAll);
+        assert_eq!(
+            preflight.validate(),
             Err(ExactReportValidationError::StatusEvidenceMismatch)
         );
     }
