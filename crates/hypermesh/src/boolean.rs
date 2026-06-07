@@ -4554,7 +4554,7 @@ pub(crate) fn materialize_volumetric_coplanar_boundary_closure_output(
     if materialized.mesh.facts().mesh.closed_manifold || materialized.mesh.triangles().is_empty() {
         return Ok(None);
     }
-    let Some(mesh) = close_exact_coplanar_boundary_loops_without_self_contact(
+    let Some(mesh) = close_exact_coplanar_boundary_loops(
         &materialized.mesh,
         "exact volumetric split-cell coplanar boundary closure",
         validation,
@@ -4699,23 +4699,20 @@ fn close_exact_coplanar_boundary_loops(
     label: &'static str,
     validation: ValidationPolicy,
 ) -> Option<ExactMesh> {
-    close_exact_coplanar_boundary_loops_from_loops(
-        mesh,
-        directed_boundary_loops(mesh)?,
-        label,
-        validation,
-    )
-}
-
-fn close_exact_coplanar_boundary_loops_without_self_contact(
-    mesh: &ExactMesh,
-    label: &'static str,
-    validation: ValidationPolicy,
-) -> Option<ExactMesh> {
     if mesh.facts().mesh.closed_manifold || mesh.facts().mesh.boundary_edges == 0 {
         return None;
     }
     let boundary_loops = directed_boundary_loops(mesh)?;
+    if !boundary_loops_are_exactly_coplanar_without_self_contact(mesh, &boundary_loops)? {
+        return None;
+    }
+    close_exact_coplanar_boundary_loops_from_loops(mesh, boundary_loops, label, validation)
+}
+
+fn boundary_loops_are_exactly_coplanar_without_self_contact(
+    mesh: &ExactMesh,
+    boundary_loops: &[Vec<usize>],
+) -> Option<bool> {
     let boundary_points = boundary_loops
         .iter()
         .map(|boundary_loop| {
@@ -4734,7 +4731,7 @@ fn close_exact_coplanar_boundary_loops_without_self_contact(
             return None;
         }
     }
-    close_exact_coplanar_boundary_loops_from_loops(mesh, boundary_loops, label, validation)
+    Some(true)
 }
 
 fn certified_coplanar_boundary_closure_from_materialized(
@@ -4742,7 +4739,7 @@ fn certified_coplanar_boundary_closure_from_materialized(
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
 ) -> Result<Option<ExactMesh>, MeshError> {
-    let Some(mesh) = close_exact_coplanar_boundary_loops_without_self_contact(
+    let Some(mesh) = close_exact_coplanar_boundary_loops(
         &materialized.mesh,
         "exact volumetric split-cell coplanar boundary closure",
         validation,
@@ -10815,6 +10812,15 @@ mod tests {
         materialized.mesh.validate_retained_state().unwrap();
         assert!(!materialized.mesh.facts().mesh.closed_manifold);
         assert!(!materialized.assembly.triangles.is_empty());
+        assert!(
+            close_exact_coplanar_boundary_loops(
+                &materialized.mesh,
+                "test self-contacting boundary must not close by coordinate dedup",
+                ValidationPolicy::CLOSED,
+            )
+            .is_none(),
+            "self-contacting boundary caps require a topology-preserving quotient before closure"
+        );
 
         let closure =
             certify_volumetric_boundary_closure_report(&left, &right, ExactBooleanOperation::Union)
