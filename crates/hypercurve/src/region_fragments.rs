@@ -69,6 +69,8 @@ pub(crate) fn split_region_views_at_intersections(
     intersections: &RegionIntersectionSet,
     policy: &CurvePolicy,
 ) -> CurveResult<Classification<RegionFragmentSet>> {
+    validate_region_intersection_evidence_against_views(first, second, intersections)?;
+
     let mut contours = Vec::new();
 
     match append_region_contours(
@@ -128,6 +130,66 @@ fn validate_region_fragment_keys(contours: &[RegionContourFragments]) -> CurveRe
     if keys.windows(2).any(|window| window[0] == window[1]) {
         return Err(CurveError::Topology(
             "region fragment set must not contain duplicate contour keys".into(),
+        ));
+    }
+    Ok(())
+}
+
+fn validate_region_intersection_evidence_against_views(
+    first: &RegionView2<'_>,
+    second: &RegionView2<'_>,
+    intersections: &RegionIntersectionSet,
+) -> CurveResult<()> {
+    for pair in intersections.pairs() {
+        let first_contour = contour_for_key(first, RegionSide::First, pair.first)?;
+        let second_contour = contour_for_key(second, RegionSide::Second, pair.second)?;
+        for event in pair.intersections.events() {
+            validate_event_segment_index(
+                event.segment_index(ContourOperand::First),
+                first_contour.len(),
+            )?;
+            validate_event_segment_index(
+                event.segment_index(ContourOperand::Second),
+                second_contour.len(),
+            )?;
+        }
+    }
+    Ok(())
+}
+
+fn contour_for_key<'a>(
+    view: &'a RegionView2<'_>,
+    expected_side: RegionSide,
+    key: RegionContourKey,
+) -> CurveResult<&'a Contour2> {
+    if key.side != expected_side {
+        return Err(CurveError::Topology(
+            "region intersection pair references the wrong region side".into(),
+        ));
+    }
+    let contours = match key.role {
+        RegionContourRole::Material => view.material_contours(),
+        RegionContourRole::Hole => view.hole_contours(),
+    };
+    contours.get(key.index).copied().ok_or_else(|| {
+        CurveError::Topology(
+            "region intersection pair references contour outside supplied region view".into(),
+        )
+    })
+}
+
+fn validate_event_segment_index(
+    segment_index: Option<usize>,
+    segment_count: usize,
+) -> CurveResult<()> {
+    let Some(segment_index) = segment_index else {
+        return Err(CurveError::Topology(
+            "region intersection event must carry segment index evidence".into(),
+        ));
+    };
+    if segment_index >= segment_count {
+        return Err(CurveError::Topology(
+            "region intersection event references segment outside supplied contour".into(),
         ));
     }
     Ok(())

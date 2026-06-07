@@ -1,7 +1,7 @@
 use hypercurve::{
-    BulgeVertex2, Classification, Contour2, ContourIntersectionSet, ContourOperand,
-    ContourSplitMap, CurvePolicy, Real, Region2, RegionContourIntersection, RegionContourKey,
-    RegionContourRole, RegionIntersectionSet, RegionSide,
+    BulgeVertex2, Classification, Contour2, ContourIntersection, ContourIntersectionSet,
+    ContourOperand, ContourSplitMap, CurvePolicy, Real, Region2, RegionContourIntersection,
+    RegionContourKey, RegionContourRole, RegionIntersectionSet, RegionSide,
 };
 
 fn s(value: i32) -> Real {
@@ -88,6 +88,44 @@ fn region_intersection_set_constructor_validates_pair_ownership() {
             intersections: ContourIntersectionSet::new(Vec::new()).unwrap(),
         },
     ]));
+}
+
+#[test]
+fn region_split_rejects_events_outside_supplied_views() {
+    let first = Region2::from_material_contours(vec![rectangle(0, 0, 4, 4)]);
+    let second = Region2::from_material_contours(vec![rectangle(2, -1, 6, 3)]);
+    let events = first.intersect_region(&second, &policy()).unwrap();
+    let pair = events.pairs()[0].clone();
+
+    let forged_key_set = RegionIntersectionSet::new(vec![RegionContourIntersection {
+        first: RegionContourKey::new(RegionSide::First, RegionContourRole::Material, 1),
+        second: pair.second,
+        intersections: pair.intersections.clone(),
+    }])
+    .unwrap();
+    assert_topology_error(forged_key_set.split_regions(
+        &first.as_view(),
+        &second.as_view(),
+        &policy(),
+    ));
+
+    let mut forged_events = pair.intersections.events().to_vec();
+    match &mut forged_events[0] {
+        ContourIntersection::Point(point) => point.a_segment_index = 99,
+        ContourIntersection::Overlap(overlap) => overlap.a_segment_index = 99,
+        ContourIntersection::Uncertain(uncertain) => uncertain.a_segment_index = 99,
+    }
+    let forged_segment_set = RegionIntersectionSet::new(vec![RegionContourIntersection {
+        first: pair.first,
+        second: pair.second,
+        intersections: ContourIntersectionSet::new(forged_events).unwrap(),
+    }])
+    .unwrap();
+    assert_topology_error(forged_segment_set.split_regions(
+        &first.as_view(),
+        &second.as_view(),
+        &policy(),
+    ));
 }
 
 #[test]
