@@ -6654,17 +6654,25 @@ pub(crate) fn boundary_touching_report_from_graph(
     } else {
         ExactBoundaryTouchingStatus::NotBoundaryOnly
     };
+    let blocker_kind = boundary_touching_blocker_kind(&status, counts);
     Ok(ExactBoundaryTouchingReport {
         status,
         graph_had_unknowns,
         retained_face_pairs: graph.face_pairs.len(),
         retained_events: graph.event_count(),
-        blocker: counts.into_blocker(if graph_had_unknowns {
-            ExactBooleanBlockerKind::NeedsRefinement
-        } else {
-            ExactBooleanBlockerKind::NeedsBoundaryPolicy
-        }),
+        blocker: counts.into_blocker(blocker_kind),
     })
+}
+
+fn boundary_touching_blocker_kind(
+    status: &ExactBoundaryTouchingStatus,
+    counts: GraphRelationCounts,
+) -> ExactBooleanBlockerKind {
+    match status {
+        ExactBoundaryTouchingStatus::GraphUnknowns => ExactBooleanBlockerKind::NeedsRefinement,
+        ExactBoundaryTouchingStatus::Certified => ExactBooleanBlockerKind::NeedsBoundaryPolicy,
+        ExactBoundaryTouchingStatus::NotBoundaryOnly => retained_graph_blocker_kind(counts),
+    }
 }
 
 fn refinement_report_from_graph(

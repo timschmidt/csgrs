@@ -456,6 +456,27 @@ fn validate_refinement_partition(
     }
 }
 
+fn boundary_touching_not_boundary_blocker_kind(
+    blocker: &ExactBooleanBlocker,
+) -> Result<ExactBooleanBlockerKind, ExactReportValidationError> {
+    let coplanar_pairs = blocker.coplanar_overlapping_pairs + blocker.coplanar_touching_pairs;
+    if blocker_has_refinement_evidence(blocker) {
+        Ok(ExactBooleanBlockerKind::NeedsRefinement)
+    } else if blocker.candidate_pairs == 0 && coplanar_pairs == 0 {
+        Ok(ExactBooleanBlockerKind::NeedsWinding)
+    } else if blocker.candidate_pairs == 0 && blocker.coplanar_overlapping_pairs == 0 {
+        Err(ExactReportValidationError::StatusEvidenceMismatch)
+    } else if coplanar_pairs > 0 {
+        if blocker.candidate_pairs == 0 && blocker.coplanar_overlapping_pairs > 0 {
+            Ok(ExactBooleanBlockerKind::NeedsPlanarArrangement)
+        } else {
+            Ok(ExactBooleanBlockerKind::NeedsCoplanarVolumetricCells)
+        }
+    } else {
+        Ok(ExactBooleanBlockerKind::NeedsWinding)
+    }
+}
+
 fn operation_is_selected_region(operation: ExactBooleanOperation) -> bool {
     matches!(operation, ExactBooleanOperation::SelectedRegions(_))
 }
@@ -3585,20 +3606,17 @@ impl ExactBoundaryTouchingReport {
         {
             return Err(ExactReportValidationError::GraphUnknownStatusMismatch);
         }
-        // A boundary-only policy is meaningful only after the graph is
-        // resolved. Unknown graph events remain refinement blockers, preserving
-        // application-level topology policy. Positive-area coplanar overlaps
-        // can still be boundary-only for closed solids, but that certification
-        // is source-replayed by the report constructor; local validation only
-        // audits the retained relation-count shape.
-        let expected_kind = if matches!(self.status, ExactBoundaryTouchingStatus::GraphUnknowns) {
-            ExactBooleanBlockerKind::NeedsRefinement
-        } else {
-            ExactBooleanBlockerKind::NeedsBoundaryPolicy
+        let expected_kind = match self.status {
+            ExactBoundaryTouchingStatus::GraphUnknowns => ExactBooleanBlockerKind::NeedsRefinement,
+            ExactBoundaryTouchingStatus::Certified => ExactBooleanBlockerKind::NeedsBoundaryPolicy,
+            ExactBoundaryTouchingStatus::NotBoundaryOnly => {
+                boundary_touching_not_boundary_blocker_kind(&self.blocker)?
+            }
         };
         if self.blocker.kind != expected_kind {
             return Err(ExactReportValidationError::WrongBlockerKind);
         }
+        self.blocker.validate_for_kind(expected_kind)?;
         validate_refinement_partition(
             matches!(self.status, ExactBoundaryTouchingStatus::GraphUnknowns),
             &self.blocker,
@@ -3612,18 +3630,7 @@ impl ExactBoundaryTouchingReport {
         // evidence separated from graph refinement and non-boundary winding
         match self.status {
             ExactBoundaryTouchingStatus::GraphUnknowns => {}
-            ExactBoundaryTouchingStatus::NotBoundaryOnly => {
-                if self.retained_face_pairs != 0
-                    && self.blocker.candidate_pairs == 0
-                    && self.blocker.coplanar_overlapping_pairs == 0
-                    && self
-                        .blocker
-                        .validate_for_kind(ExactBooleanBlockerKind::NeedsBoundaryPolicy)
-                        .is_ok()
-                {
-                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
-                }
-            }
+            ExactBoundaryTouchingStatus::NotBoundaryOnly => {}
             ExactBoundaryTouchingStatus::Certified => {}
         }
         if self.is_certified()

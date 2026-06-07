@@ -9,12 +9,12 @@ use hypermesh::{
     ExactArrangement2dBoundaryPolicy, ExactArrangement2dRegion, ExactArrangement2dRegionRing,
     ExactArrangement2dSetOperation, ExactArrangementFreshness, ExactBooleanBlockerKind,
     ExactBooleanOperation, ExactBooleanPolicy, ExactBooleanResult, ExactBooleanResultKind,
-    ExactBoundaryBooleanPolicy, ExactI64MeshInputReadiness, ExactLabeledCellComplexFreshness,
-    ExactMesh, ExactMeshConsumerDomain, ExactMeshDomainSummaryFreshness,
-    ExactMeshHandoffPackageFreshness, ExactMeshProposalAcceptance, ExactMeshProposalSourceKind,
-    ExactOpenSurfaceDisjointStatus, ExactPlanarArrangementStatus, ExactRefinementStatus,
-    ExactRegionSelection, ExactRegularizationPolicy, ExactReportFreshness, ExactSameSurfaceStatus,
-    ExactSelectedCellComplexFreshness, ExactSimplifiedCellComplexFreshness,
+    ExactBoundaryBooleanPolicy, ExactBoundaryTouchingStatus, ExactI64MeshInputReadiness,
+    ExactLabeledCellComplexFreshness, ExactMesh, ExactMeshConsumerDomain,
+    ExactMeshDomainSummaryFreshness, ExactMeshHandoffPackageFreshness, ExactMeshProposalAcceptance,
+    ExactMeshProposalSourceKind, ExactOpenSurfaceDisjointStatus, ExactPlanarArrangementStatus,
+    ExactRefinementStatus, ExactRegionSelection, ExactRegularizationPolicy, ExactReportFreshness,
+    ExactSameSurfaceStatus, ExactSelectedCellComplexFreshness, ExactSimplifiedCellComplexFreshness,
     ExactVolumetricRegionFreshness, ExactVolumetricRegionRelation, ExactWindingReadinessStatus,
     FaceRegionPlaneRelation, FullFaceAdjacentUnionFreshness, IntersectionGraphFreshness,
     MeshArtifactBlocker, MeshArtifactManifest, MeshArtifactRole, MeshArtifactSourceKind,
@@ -3489,4 +3489,32 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
             )
             .is_err()
     );
+}
+
+#[test]
+fn boundary_touching_report_classifies_proper_crossing_as_winding_blocker() {
+    let left = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 0, 4, 0, 0, 0, 4, 0],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let right = ExactMesh::from_i64_triangles_with_policy(
+        &[1, -1, -1, 1, 3, 1, 1, 3, -1],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+
+    let report = certify_boundary_touching_report(&left, &right).unwrap();
+
+    assert_eq!(report.status, ExactBoundaryTouchingStatus::NotBoundaryOnly);
+    assert_eq!(report.blocker.kind, ExactBooleanBlockerKind::NeedsWinding);
+    assert!(report.blocker.candidate_pairs > 0);
+    report.validate().unwrap();
+    report.validate_against_sources(&left, &right).unwrap();
+
+    let mut stale = report;
+    stale.blocker.kind = ExactBooleanBlockerKind::NeedsBoundaryPolicy;
+    assert!(stale.validate().is_err());
 }
