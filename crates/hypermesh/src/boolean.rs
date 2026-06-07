@@ -6745,6 +6745,26 @@ fn winding_readiness_report_from_graph(
             None,
         ));
     }
+    if !tail_shortcut_materializes
+        && matches!(
+            operation,
+            ExactBooleanOperation::Intersection | ExactBooleanOperation::Difference
+        )
+        && certified_closed_boundary_only_contact_from_graph(graph, left, right)?
+    {
+        return Ok(winding_readiness_report(
+            operation,
+            ExactWindingReadinessStatus::ClosedBoundaryTouchingAlreadyMaterialized,
+            graph_had_unknowns,
+            graph.face_pairs.len(),
+            graph.event_count(),
+            0,
+            Vec::new(),
+            counts.into_blocker(ExactBooleanBlockerKind::NeedsBoundaryPolicy),
+            None,
+            coplanar_boundary_only_evidence_if_consumed(graph, left, right)?,
+        ));
+    }
     if tail_shortcut_materializes && boundary_policy_required {
         return Ok(winding_readiness_report(
             operation,

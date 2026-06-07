@@ -24,7 +24,7 @@ use hypermesh::{
     build_intersection_graph, certify_adjacent_union_completion_report,
     certify_boundary_touching_report, certify_convex_solid,
     certify_coplanar_volumetric_cell_evidence, certify_exact_mesh_proposal,
-    checked_classify_face_regions_against_opposite_planes,
+    certify_winding_readiness_report, checked_classify_face_regions_against_opposite_planes,
     checked_triangulate_face_regions_with_earcut, classify_mesh_face_pair,
     classify_mesh_vertices_against_closed_mesh_winding_report,
     classify_mesh_vertices_against_convex_solid_report,
@@ -1691,6 +1691,25 @@ fn closed_no_volume_overlap_regularized_boolean_is_publicly_replayable() {
         );
         preflight.validate().unwrap();
         preflight.validate_against_sources(&left, &right).unwrap();
+
+        if matches!(
+            operation,
+            ExactBooleanOperation::Intersection | ExactBooleanOperation::Difference
+        ) {
+            let readiness = certify_winding_readiness_report(&left, &right, operation).unwrap();
+            assert_eq!(
+                readiness.status,
+                hypermesh::ExactWindingReadinessStatus::ClosedBoundaryTouchingAlreadyMaterialized,
+                "{operation:?}: {readiness:?}"
+            );
+            assert_eq!(
+                readiness.coplanar_volumetric_evidence.as_ref(),
+                Some(&evidence),
+                "{operation:?}: no-volume readiness should retain consumed source-aware evidence"
+            );
+            readiness.validate().unwrap();
+            readiness.validate_against_sources(&left, &right).unwrap();
+        }
 
         assert!(
             materialize_closed_boundary_touching_regularized_boolean(

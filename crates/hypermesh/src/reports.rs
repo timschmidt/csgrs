@@ -4038,6 +4038,7 @@ impl ExactWindingReadinessReport {
                     | ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized
                     | ExactWindingReadinessStatus::CoplanarVolumetricCellsAlreadyMaterialized
                     | ExactWindingReadinessStatus::CoplanarVolumetricCellsRequired
+                    | ExactWindingReadinessStatus::ClosedBoundaryTouchingAlreadyMaterialized
             )
         {
             return Err(ExactReportValidationError::UnexpectedCoplanarVolumetricEvidence);
@@ -4351,7 +4352,6 @@ impl ExactWindingReadinessReport {
             }
             ExactWindingReadinessStatus::ClosedBoundaryTouchingAlreadyMaterialized => {
                 if self.arrangement_readiness.is_some()
-                    || self.coplanar_volumetric_evidence.is_some()
                     || matches!(self.operation, ExactBooleanOperation::SelectedRegions(_))
                     || self.graph_had_unknowns
                     || self.retained_face_pairs == 0
@@ -4369,6 +4369,13 @@ impl ExactWindingReadinessReport {
                     self.retained_face_pairs,
                     self.retained_events,
                 )?;
+                if let Some(evidence) = self.coplanar_volumetric_evidence.as_ref() {
+                    validate_coplanar_boundary_only_evidence_shape(
+                        evidence,
+                        self.retained_face_pairs,
+                        self.retained_events,
+                    )?;
+                }
                 no_region_facts(self.region_count, &self.region_classifications)
             }
             ExactWindingReadinessStatus::EmptyOperandAlreadyMaterialized
