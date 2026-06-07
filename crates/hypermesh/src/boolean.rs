@@ -678,6 +678,21 @@ pub fn preflight_boolean_exact(
         ));
     }
     if support == ExactBooleanSupport::RequiresCertifiedWinding
+        && matches!(
+            operation,
+            ExactBooleanOperation::Intersection | ExactBooleanOperation::Difference
+        )
+        && let Some(boundary_support) = certified_closed_boundary_only_contact_support_from_graph(
+            &graph, left, right, operation,
+        )?
+    {
+        return Ok(certified_shortcut_preflight_from_graph(
+            operation,
+            boundary_support,
+            &graph,
+        ));
+    }
+    if support == ExactBooleanSupport::RequiresCertifiedWinding
         && let Some(preflight) = cached_certified_arrangement_cell_complex_preflight(
             &mut certified_arrangement_preflight,
             operation,
@@ -709,6 +724,7 @@ pub fn preflight_boolean_exact(
         ));
     }
     if support == ExactBooleanSupport::RequiresCertifiedWinding
+        && operation == ExactBooleanOperation::Union
         && let Some(boundary_support) = certified_closed_boundary_only_contact_support_from_graph(
             &graph, left, right, operation,
         )?
@@ -737,7 +753,11 @@ pub fn preflight_boolean_exact(
                 });
             }
         }
-        return Ok(certified_shortcut_preflight(operation, boundary_support));
+        return Ok(certified_shortcut_preflight_from_graph(
+            operation,
+            boundary_support,
+            &graph,
+        ));
     }
     if support == ExactBooleanSupport::RequiresCertifiedWinding
         && operation != ExactBooleanOperation::Difference
@@ -2274,6 +2294,12 @@ pub fn boolean_exact_with_boundary_policy(
     {
         return Ok(result);
     }
+    if operation != ExactBooleanOperation::Union
+        && let Some(result) =
+            boolean_closed_no_volume_overlap_regularized_meshes(left, right, operation, validation)?
+    {
+        return Ok(result);
+    }
     if let Some(result) =
         boolean_arrangement_volumetric_split_cell_recovery(left, right, operation, validation)?
     {
@@ -3591,6 +3617,15 @@ pub fn materialize_closed_no_volume_overlap_regularized_boolean(
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
+    boolean_closed_no_volume_overlap_regularized_meshes(left, right, operation, validation)
+}
+
+fn boolean_closed_no_volume_overlap_regularized_meshes(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+) -> Result<Option<ExactBooleanResult>, MeshError> {
     if matches!(operation, ExactBooleanOperation::SelectedRegions(_)) {
         return Ok(None);
     }
@@ -3609,14 +3644,45 @@ pub fn materialize_closed_no_volume_overlap_regularized_boolean(
     {
         return Ok(None);
     }
-    if operation == ExactBooleanOperation::Union {
-        return boolean_arrangement_regularized_no_volume_overlap_from_graph(
-            &graph, left, right, operation, validation,
-        );
+    match operation {
+        ExactBooleanOperation::Union => {
+            boolean_arrangement_regularized_no_volume_overlap_from_graph(
+                &graph, left, right, operation, validation,
+            )
+        }
+        ExactBooleanOperation::Intersection => {
+            let mesh = empty_mesh(
+                "empty exact no-volume-overlap regularized intersection",
+                validation,
+            )?;
+            let result = certified_shortcut_result(
+                mesh,
+                operation,
+                ExactBooleanShortcutKind::ClosedBoundaryTouchingIntersection,
+            );
+            if result.validate().is_err() || result.validate_against_sources(left, right).is_err() {
+                return Ok(None);
+            }
+            Ok(Some(result))
+        }
+        ExactBooleanOperation::Difference => {
+            let mesh = copy_mesh(
+                left,
+                "exact no-volume-overlap difference preserving left shell",
+                validation,
+            )?;
+            let result = certified_shortcut_result(
+                mesh,
+                operation,
+                ExactBooleanShortcutKind::ClosedBoundaryTouchingDifference,
+            );
+            if result.validate().is_err() || result.validate_against_sources(left, right).is_err() {
+                return Ok(None);
+            }
+            Ok(Some(result))
+        }
+        ExactBooleanOperation::SelectedRegions(_) => unreachable!("handled above"),
     }
-    boolean_arrangement_regularized_boundary_contact_from_graph(
-        &graph, left, right, operation, validation,
-    )
 }
 
 fn arrangement_difference_preserves_source_surface(
@@ -9801,17 +9867,25 @@ mod tests {
             preflight_boolean_exact(&left, &right, ExactBooleanOperation::Intersection).unwrap();
         assert_eq!(
             intersection.support,
-            ExactBooleanSupport::CertifiedArrangementCellComplex
+            ExactBooleanSupport::CertifiedClosedBoundaryTouchingIntersection
         );
+        assert!(intersection.retained_face_pairs > 0, "{intersection:?}");
         assert!(intersection.blocker.is_none());
+        intersection.validate().unwrap();
+        intersection
+            .validate_against_sources(&left, &right)
+            .unwrap();
 
         let difference =
             preflight_boolean_exact(&left, &right, ExactBooleanOperation::Difference).unwrap();
         assert_eq!(
             difference.support,
-            ExactBooleanSupport::CertifiedArrangementCellComplex
+            ExactBooleanSupport::CertifiedClosedBoundaryTouchingDifference
         );
+        assert!(difference.retained_face_pairs > 0, "{difference:?}");
         assert!(difference.blocker.is_none());
+        difference.validate().unwrap();
+        difference.validate_against_sources(&left, &right).unwrap();
 
         let intersection = boolean_exact(
             &left,
@@ -9820,6 +9894,13 @@ mod tests {
             ValidationPolicy::CLOSED,
         )
         .unwrap();
+        assert_eq!(
+            intersection.kind,
+            ExactBooleanResultKind::CertifiedShortcut {
+                operation: ExactBooleanOperation::Intersection,
+                shortcut: ExactBooleanShortcutKind::ClosedBoundaryTouchingIntersection
+            }
+        );
         assert!(intersection.mesh.triangles().is_empty());
 
         let difference = boolean_exact(
@@ -9829,6 +9910,13 @@ mod tests {
             ValidationPolicy::CLOSED,
         )
         .unwrap();
+        assert_eq!(
+            difference.kind,
+            ExactBooleanResultKind::CertifiedShortcut {
+                operation: ExactBooleanOperation::Difference,
+                shortcut: ExactBooleanShortcutKind::ClosedBoundaryTouchingDifference
+            }
+        );
         assert!(exact_meshes_have_same_shape(&difference.mesh, &left));
     }
 

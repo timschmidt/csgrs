@@ -43,7 +43,9 @@ use super::solid::{
 };
 use super::validation::ValidationPolicy;
 use super::volumetric::{ExactVolumetricRegionClassification, ExactVolumetricRegionError};
-use super::volumetric_cells::CoplanarVolumetricCellEvidenceReport;
+use super::volumetric_cells::{
+    CoplanarVolumetricCellEvidenceReport, CoplanarVolumetricCellObstacle,
+};
 use super::winding::{
     ClosedMeshWindingMeshRelation, classify_mesh_vertices_against_closed_mesh_winding_report,
 };
@@ -1373,6 +1375,25 @@ fn closed_boundary_touching_sources_match(
         .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
     report.validate()?;
     if !report.is_certified() {
+        if matches!(
+            shortcut,
+            ExactBooleanShortcutKind::ClosedBoundaryTouchingIntersection
+                | ExactBooleanShortcutKind::ClosedBoundaryTouchingDifference
+        ) {
+            let graph = build_intersection_graph(left, right)
+                .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+            graph
+                .validate_against_sources(left, right)
+                .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+            let evidence = CoplanarVolumetricCellEvidenceReport::from_graph(&graph, left, right);
+            evidence
+                .validate()
+                .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+            return Ok(
+                evidence.obstacle == CoplanarVolumetricCellObstacle::BoundaryOnlyContact
+                    && evidence.positive_area_coplanar_overlapping_pairs != 0,
+            );
+        }
         return Ok(false);
     }
     if shortcut == ExactBooleanShortcutKind::ClosedBoundaryTouchingUnion

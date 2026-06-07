@@ -1642,20 +1642,32 @@ fn closed_no_volume_overlap_regularized_boolean_is_publicly_replayable() {
     evidence.validate_against_sources(&left, &right).unwrap();
     assert!(evidence.positive_area_coplanar_overlapping_pairs > 0);
 
-    for (operation, shortcut) in [
+    for (operation, support, shortcut) in [
         (
             ExactBooleanOperation::Union,
+            hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex,
             hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex,
         ),
         (
             ExactBooleanOperation::Intersection,
-            hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex,
+            hypermesh::ExactBooleanSupport::CertifiedClosedBoundaryTouchingIntersection,
+            hypermesh::ExactBooleanShortcutKind::ClosedBoundaryTouchingIntersection,
         ),
         (
             ExactBooleanOperation::Difference,
-            hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex,
+            hypermesh::ExactBooleanSupport::CertifiedClosedBoundaryTouchingDifference,
+            hypermesh::ExactBooleanShortcutKind::ClosedBoundaryTouchingDifference,
         ),
     ] {
+        let preflight = preflight_boolean_exact(&left, &right, operation).unwrap();
+        assert_eq!(preflight.support, support, "{operation:?}: {preflight:?}");
+        assert!(
+            preflight.retained_face_pairs > 0,
+            "positive-area no-volume shortcut should retain graph evidence: {operation:?}: {preflight:?}"
+        );
+        preflight.validate().unwrap();
+        preflight.validate_against_sources(&left, &right).unwrap();
+
         assert!(
             materialize_closed_boundary_touching_regularized_boolean(
                 &left,
