@@ -21,10 +21,11 @@ pub type FiniteTriangle2 = [[f64; 2]; 3];
 /// Triangulates a finite material ring with owned finite hole rings.
 ///
 /// This function is the low-level adapter for consumers that already hold
-/// projected profile rings. It normalizes repeated closing vertices, lifts
-/// finite coordinates into hyperreal-backed hypertri points, and returns finite
-/// triangles by index into the original boundary vertices. Exact predicate
-/// decisions happen in hypertri rather than in downstream crates.
+/// projected profile rings. It normalizes repeated adjacent and closing
+/// vertices, lifts finite coordinates into hyperreal-backed hypertri points,
+/// and returns finite triangles by index into the normalized boundary vertices.
+/// Exact predicate decisions happen in hypertri rather than in downstream
+/// crates.
 pub fn triangulate_finite_rings(
     material: &[[f64; 2]],
     holes: &[&[[f64; 2]]],
@@ -34,19 +35,13 @@ pub fn triangulate_finite_rings(
         vertices: &mut Vec<[f64; 2]>,
         exact: &mut Vec<hypertri::Point2>,
     ) -> CurveResult<Option<usize>> {
-        let start = vertices.len();
-        let end = if ring.len() > 1 && ring.first() == ring.last() {
-            ring.len() - 1
-        } else {
-            ring.len()
-        };
-        if end < 3 {
+        let normalized = normalize_finite_ring_vertices(ring)?;
+        if normalized.len() < 3 {
             return Ok(None);
         }
-        for &[x, y] in ring.iter().take(end) {
-            if !x.is_finite() || !y.is_finite() {
-                return Err(CurveError::NonFiniteProjectionPoint);
-            }
+
+        let start = vertices.len();
+        for [x, y] in normalized {
             vertices.push([x, y]);
             exact.push(hypertri::Point2::new(
                 Real::try_from(x).map_err(|err| CurveError::Real(err.to_string()))?,
@@ -81,6 +76,24 @@ pub fn triangulate_finite_rings(
             ])
         })
         .collect())
+}
+
+fn normalize_finite_ring_vertices(ring: &[[f64; 2]]) -> CurveResult<Vec<[f64; 2]>> {
+    let mut normalized = Vec::with_capacity(ring.len());
+    for &[x, y] in ring {
+        if !x.is_finite() || !y.is_finite() {
+            return Err(CurveError::NonFiniteProjectionPoint);
+        }
+        let point = [x, y];
+        if normalized.last() == Some(&point) {
+            continue;
+        }
+        normalized.push(point);
+    }
+    if normalized.len() > 1 && normalized.first() == normalized.last() {
+        normalized.pop();
+    }
+    Ok(normalized)
 }
 
 impl FiniteRegionProfile2 {
