@@ -1243,7 +1243,9 @@ impl ExactBooleanResult {
             shortcut:
                 shortcut @ (ExactBooleanShortcutKind::ConvexUnion
                 | ExactBooleanShortcutKind::ConvexIntersection
-                | ExactBooleanShortcutKind::ConvexDifference),
+                | ExactBooleanShortcutKind::ConvexDifference
+                | ExactBooleanShortcutKind::ConvexContainment
+                | ExactBooleanShortcutKind::ConvexSeparated),
         } = self.kind
             && !convex_operation_output_matches_sources(
                 shortcut, operation, &self.mesh, left, right,
@@ -1413,6 +1415,12 @@ fn convex_operation_output_matches_sources(
     if !shortcut_operation_matches(shortcut, operation) {
         return Ok(false);
     }
+    if matches!(
+        shortcut,
+        ExactBooleanShortcutKind::ConvexContainment | ExactBooleanShortcutKind::ConvexSeparated
+    ) {
+        return convex_relation_output_matches_sources(shortcut, operation, mesh, left, right);
+    }
     let Some(replay) = (match shortcut {
         ExactBooleanShortcutKind::ConvexUnion => {
             union_closed_convex_solids(left, right).map(|result| result.mesh)
@@ -1430,10 +1438,133 @@ fn convex_operation_output_matches_sources(
     replay
         .validate_retained_state()
         .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
-    Ok(exact_mesh_output_matches(mesh, &replay))
+    Ok(mesh_output_matches(mesh, &replay))
 }
 
-fn exact_mesh_output_matches(left: &ExactMesh, right: &ExactMesh) -> bool {
+fn convex_relation_output_matches_sources(
+    shortcut: ExactBooleanShortcutKind,
+    operation: ExactBooleanOperation,
+    mesh: &ExactMesh,
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Result<bool, ExactReportValidationError> {
+    let Some(relation) = certified_convex_relation_from_sources(operation, left, right)? else {
+        return Ok(false);
+    };
+    match relation {
+        ReportConvexRelation::Separated => {
+            if shortcut != ExactBooleanShortcutKind::ConvexSeparated {
+                return Ok(false);
+            }
+            Ok(match operation {
+                ExactBooleanOperation::Union => {
+                    concatenated_mesh_output_matches(mesh, left, right, false)
+                }
+                ExactBooleanOperation::Intersection => mesh_output_is_empty(mesh),
+                ExactBooleanOperation::Difference => mesh_output_matches(mesh, left),
+                ExactBooleanOperation::SelectedRegions(_) => false,
+            })
+        }
+        ReportConvexRelation::LeftInsideRight => {
+            if shortcut != ExactBooleanShortcutKind::ConvexContainment {
+                return Ok(false);
+            }
+            Ok(match operation {
+                ExactBooleanOperation::Union => mesh_output_matches(mesh, right),
+                ExactBooleanOperation::Intersection => mesh_output_matches(mesh, left),
+                ExactBooleanOperation::Difference => mesh_output_is_empty(mesh),
+                ExactBooleanOperation::SelectedRegions(_) => false,
+            })
+        }
+        ReportConvexRelation::RightInsideLeft { graph_empty } => {
+            if shortcut != ExactBooleanShortcutKind::ConvexContainment {
+                return Ok(false);
+            }
+            Ok(match operation {
+                ExactBooleanOperation::Union => mesh_output_matches(mesh, left),
+                ExactBooleanOperation::Intersection => mesh_output_matches(mesh, right),
+                ExactBooleanOperation::Difference if graph_empty => {
+                    concatenated_mesh_output_matches(mesh, left, right, true)
+                }
+                ExactBooleanOperation::Difference | ExactBooleanOperation::SelectedRegions(_) => {
+                    false
+                }
+            })
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum ReportConvexRelation {
+    Separated,
+    LeftInsideRight,
+    RightInsideLeft { graph_empty: bool },
+}
+
+fn certified_convex_relation_from_sources(
+    operation: ExactBooleanOperation,
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Result<Option<ReportConvexRelation>, ExactReportValidationError> {
+    if matches!(operation, ExactBooleanOperation::SelectedRegions(_)) {
+        return Ok(None);
+    }
+    let graph = build_intersection_graph(left, right)
+        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+    graph
+        .validate_against_sources(left, right)
+        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+    if graph.has_unknowns() {
+        return Ok(None);
+    }
+
+    let left_in_right = classify_mesh_vertices_against_convex_solid_report(left, right);
+    left_in_right
+        .validate_against_sources(left, right)
+        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+    let right_in_left = classify_mesh_vertices_against_convex_solid_report(right, left);
+    right_in_left
+        .validate_against_sources(right, left)
+        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+
+    if graph.face_pairs.is_empty() {
+        return Ok(match (left_in_right.relation, right_in_left.relation) {
+            (ConvexSolidMeshRelation::StrictlyInside, _) => {
+                Some(ReportConvexRelation::LeftInsideRight)
+            }
+            (_, ConvexSolidMeshRelation::StrictlyInside) => {
+                Some(ReportConvexRelation::RightInsideLeft { graph_empty: true })
+            }
+            (ConvexSolidMeshRelation::Outside, ConvexSolidMeshRelation::Outside) => {
+                Some(ReportConvexRelation::Separated)
+            }
+            _ => None,
+        });
+    }
+
+    let left_boundary_inside_right =
+        convex_boundary_containment_sources_match(&left_in_right, &right_in_left);
+    let right_boundary_inside_left =
+        convex_boundary_containment_sources_match(&right_in_left, &left_in_right);
+    Ok(match operation {
+        ExactBooleanOperation::Union | ExactBooleanOperation::Intersection
+            if left_boundary_inside_right =>
+        {
+            Some(ReportConvexRelation::LeftInsideRight)
+        }
+        ExactBooleanOperation::Union | ExactBooleanOperation::Intersection
+            if right_boundary_inside_left =>
+        {
+            Some(ReportConvexRelation::RightInsideLeft { graph_empty: false })
+        }
+        ExactBooleanOperation::Difference if left_boundary_inside_right => {
+            Some(ReportConvexRelation::LeftInsideRight)
+        }
+        _ => None,
+    })
+}
+
+fn mesh_output_matches(left: &ExactMesh, right: &ExactMesh) -> bool {
     left.vertices().len() == right.vertices().len()
         && left.triangles() == right.triangles()
         && left
@@ -1441,6 +1572,57 @@ fn exact_mesh_output_matches(left: &ExactMesh, right: &ExactMesh) -> bool {
             .iter()
             .zip(right.vertices())
             .all(|(left, right)| points_equal(left, right))
+}
+
+fn mesh_output_is_empty(mesh: &ExactMesh) -> bool {
+    mesh.vertices().is_empty() && mesh.triangles().is_empty()
+}
+
+fn concatenated_mesh_output_matches(
+    mesh: &ExactMesh,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    reverse_right: bool,
+) -> bool {
+    if mesh.vertices().len() != left.vertices().len() + right.vertices().len()
+        || mesh.triangles().len() != left.triangles().len() + right.triangles().len()
+    {
+        return false;
+    }
+    if !mesh
+        .vertices()
+        .iter()
+        .take(left.vertices().len())
+        .zip(left.vertices())
+        .all(|(candidate, expected)| points_equal(candidate, expected))
+    {
+        return false;
+    }
+    if !mesh
+        .vertices()
+        .iter()
+        .skip(left.vertices().len())
+        .zip(right.vertices())
+        .all(|(candidate, expected)| points_equal(candidate, expected))
+    {
+        return false;
+    }
+    if mesh.triangles()[..left.triangles().len()] != *left.triangles() {
+        return false;
+    }
+    let right_offset = left.vertices().len();
+    mesh.triangles()[left.triangles().len()..]
+        .iter()
+        .zip(right.triangles())
+        .all(|(candidate, expected)| {
+            let [a, b, c] = expected.0;
+            let expected = if reverse_right {
+                [a + right_offset, c + right_offset, b + right_offset]
+            } else {
+                [a + right_offset, b + right_offset, c + right_offset]
+            };
+            candidate.0 == expected
+        })
 }
 
 const fn shortcut_operation_matches(

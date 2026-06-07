@@ -937,6 +937,17 @@ fn exact_closed_convex_boolean_materializer_is_publicly_replayable() {
     separated
         .validate_against_sources(&separated_left, &separated_right)
         .unwrap();
+    let mut stale_separated_output = separated.clone();
+    stale_separated_output.mesh = separated_left.clone();
+    assert!(
+        stale_separated_output.validate().is_ok(),
+        "{stale_separated_output:?}"
+    );
+    assert_eq!(
+        stale_separated_output.freshness_against_sources(&separated_left, &separated_right),
+        ExactReportFreshness::SourceReplayMismatch,
+        "{stale_separated_output:?}"
+    );
     separated
         .validate_operation_against_sources(
             &separated_left,
@@ -995,6 +1006,17 @@ fn exact_closed_convex_boolean_materializer_is_publicly_replayable() {
     containment
         .validate_against_sources(&contained_on_boundary, &container)
         .unwrap();
+    let mut stale_containment_output = containment.clone();
+    stale_containment_output.mesh = container.clone();
+    assert!(
+        stale_containment_output.validate().is_ok(),
+        "{stale_containment_output:?}"
+    );
+    assert_eq!(
+        stale_containment_output.freshness_against_sources(&contained_on_boundary, &container),
+        ExactReportFreshness::SourceReplayMismatch,
+        "{stale_containment_output:?}"
+    );
     containment
         .validate_operation_against_sources(
             &contained_on_boundary,
