@@ -671,6 +671,17 @@ fn exact_affine_orthogonal_solid_materializer_is_publicly_replayable() {
             result.freshness_against_sources(&left, &right),
             ExactReportFreshness::Current
         );
+        let mut stale_output = result.clone();
+        stale_output.mesh = left.clone();
+        assert!(
+            stale_output.validate().is_ok(),
+            "{operation:?}: {stale_output:?}"
+        );
+        assert_eq!(
+            stale_output.freshness_against_sources(&left, &right),
+            ExactReportFreshness::SourceReplayMismatch,
+            "{operation:?}: {stale_output:?}"
+        );
         assert_eq!(
             result.freshness_against_sources(&left, &separated_right),
             ExactReportFreshness::SourceReplayMismatch
@@ -784,6 +795,17 @@ fn exact_axis_aligned_orthogonal_solid_materializer_is_publicly_replayable() {
         assert_eq!(
             result.freshness_against_sources(&left, &right),
             ExactReportFreshness::Current
+        );
+        let mut stale_output = result.clone();
+        stale_output.mesh = left.clone();
+        assert!(
+            stale_output.validate().is_ok(),
+            "{operation:?}: {stale_output:?}"
+        );
+        assert_eq!(
+            stale_output.freshness_against_sources(&left, &right),
+            ExactReportFreshness::SourceReplayMismatch,
+            "{operation:?}: {stale_output:?}"
         );
         assert_eq!(
             result.freshness_against_sources(&left, &separated_right),
