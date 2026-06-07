@@ -2133,8 +2133,7 @@ impl ExactVolumetricBoundaryClosureReport {
                 }
             }
             ExactVolumetricBoundaryClosureStatus::AlreadyClosed => {
-                if self.output_triangles == 0
-                    || self.boundary_edges != 0
+                if self.boundary_edges != 0
                     || self.boundary_loops != 0
                     || self.has_boundary_topology_failure_evidence()
                     || self.noncoplanar_boundary_loops != 0
@@ -4822,6 +4821,35 @@ mod tests {
             self_contact_nondegenerate_cycles: 0,
             coplanar_loop_groups: 0,
         }
+    }
+
+    #[test]
+    fn volumetric_boundary_already_closed_report_accepts_empty_output() {
+        let report = ExactVolumetricBoundaryClosureReport {
+            operation: ExactBooleanOperation::Intersection,
+            status: ExactVolumetricBoundaryClosureStatus::AlreadyClosed,
+            output_triangles: 0,
+            boundary_edges: 0,
+            boundary_loops: 0,
+            boundary_vertices_with_invalid_outgoing_degree: 0,
+            boundary_vertices_with_invalid_incoming_degree: 0,
+            overused_boundary_edges: 0,
+            noncoplanar_boundary_loops: 0,
+            repeated_exact_boundary_points: 0,
+            self_contact_exact_points: 0,
+            self_contact_topological_vertices: 0,
+            self_contact_degenerate_cycles: 0,
+            self_contact_nondegenerate_cycles: 0,
+            coplanar_loop_groups: 0,
+        };
+        report.validate().unwrap();
+
+        let mut stale = report;
+        stale.boundary_edges = 1;
+        assert_eq!(
+            stale.validate(),
+            Err(ExactReportValidationError::StatusEvidenceMismatch)
+        );
     }
 
     #[test]
