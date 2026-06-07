@@ -1125,7 +1125,7 @@ pub fn preflight_boolean_exact_with_validation(
 ) -> Result<ExactBooleanPreflight, MeshError> {
     if validation == ValidationPolicy::CLOSED
         && !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
-        && let Some(support) = certified_lower_dimensional_regularized_solid_support(left, right)
+        && let Some(support) = certified_closed_validation_regularized_solid_support(left, right)
     {
         return Ok(certified_shortcut_preflight(operation, support));
     }
@@ -2363,6 +2363,11 @@ pub fn boolean_exact_with_boundary_policy(
                 reject_unknowns: true,
             },
         );
+    }
+    if let Some(result) =
+        boolean_closed_validation_regularized_meshes(left, right, operation, validation)?
+    {
+        return Ok(result);
     }
     if left.triangles().is_empty() || right.triangles().is_empty() {
         return boolean_empty_operand(left, right, operation, validation);
@@ -6052,6 +6057,8 @@ pub fn materialize_open_surface_disjoint_boolean(
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
     if matches!(operation, ExactBooleanOperation::SelectedRegions(_))
         || meshes_are_certified_bounds_disjoint(left, right)
+        || (validation == ValidationPolicy::CLOSED
+            && certified_closed_validation_regularized_solid_support(left, right).is_some())
     {
         return Ok(None);
     }
@@ -6160,8 +6167,8 @@ fn certified_mixed_dimensional_regularized_solid_support(
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> Option<ExactBooleanSupport> {
-    let left_closed = left.facts().mesh.closed_manifold;
-    let right_closed = right.facts().mesh.closed_manifold;
+    let left_closed = !left.triangles().is_empty() && left.facts().mesh.closed_manifold;
+    let right_closed = !right.triangles().is_empty() && right.facts().mesh.closed_manifold;
     let left_open_surface = mesh_is_open_surface(left);
     let right_open_surface = mesh_is_open_surface(right);
     if (left_closed && right_open_surface) || (left_open_surface && right_closed) {
@@ -6182,6 +6189,29 @@ fn certified_lower_dimensional_regularized_solid_support(
     let right_kind = closed_regularized_operand_kind(right)?;
     (!left_kind.has_volume() && !right_kind.has_volume())
         .then_some(ExactBooleanSupport::CertifiedLowerDimensionalRegularizedSolid)
+}
+
+fn certified_closed_validation_regularized_solid_support(
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Option<ExactBooleanSupport> {
+    certified_lower_dimensional_regularized_solid_support(left, right)
+        .or_else(|| certified_mixed_dimensional_regularized_solid_support(left, right))
+}
+
+fn boolean_closed_validation_regularized_meshes(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+) -> Result<Option<ExactBooleanResult>, MeshError> {
+    if validation != ValidationPolicy::CLOSED
+        || matches!(operation, ExactBooleanOperation::SelectedRegions(_))
+        || certified_closed_validation_regularized_solid_support(left, right).is_none()
+    {
+        return Ok(None);
+    }
+    boolean_closed_regularized_lower_dimensional_optional(left, right, operation, validation)
 }
 
 /// Retained split-region artifacts that certify an open-surface arrangement.
@@ -7014,11 +7044,20 @@ pub fn certify_winding_readiness_report_with_validation(
 ) -> Result<ExactWindingReadinessReport, MeshError> {
     if validation == ValidationPolicy::CLOSED
         && !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
-        && certified_lower_dimensional_regularized_solid_support(left, right).is_some()
+        && let Some(support) = certified_closed_validation_regularized_solid_support(left, right)
     {
+        let status = match support {
+            ExactBooleanSupport::CertifiedMixedDimensionalRegularizedSolid => {
+                ExactWindingReadinessStatus::MixedDimensionalRegularizedSolidAlreadyMaterialized
+            }
+            ExactBooleanSupport::CertifiedLowerDimensionalRegularizedSolid => {
+                ExactWindingReadinessStatus::LowerDimensionalRegularizedSolidAlreadyMaterialized
+            }
+            _ => unreachable!("closed validation gate only certifies regularized support"),
+        };
         return Ok(winding_readiness_report(
             operation,
-            ExactWindingReadinessStatus::LowerDimensionalRegularizedSolidAlreadyMaterialized,
+            status,
             false,
             0,
             0,
@@ -8396,6 +8435,9 @@ fn boolean_closed_regularized_lower_dimensional_optional(
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
+    if left.triangles().is_empty() || right.triangles().is_empty() {
+        return Ok(None);
+    }
     let Some(left_kind) = closed_regularized_operand_kind(left) else {
         return Ok(None);
     };
@@ -8574,6 +8616,8 @@ pub fn materialize_bounds_disjoint_boolean(
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
     if matches!(operation, ExactBooleanOperation::SelectedRegions(_))
         || !meshes_are_certified_bounds_disjoint(left, right)
+        || (validation == ValidationPolicy::CLOSED
+            && certified_closed_validation_regularized_solid_support(left, right).is_some())
     {
         return Ok(None);
     }
@@ -8587,12 +8631,30 @@ fn boolean_empty_operand(
     validation: ValidationPolicy,
 ) -> Result<ExactBooleanResult, MeshError> {
     let mesh = match operation {
+        ExactBooleanOperation::Union
+            if empty_operand_union_regularizes_to_empty_closed_output(left, right, validation) =>
+        {
+            empty_mesh(
+                "empty exact closed regularized union with empty operand",
+                validation,
+            )?
+        }
         ExactBooleanOperation::Union => concatenate_meshes(left, right, validation)?,
         ExactBooleanOperation::Intersection => {
             empty_mesh("empty exact intersection with empty operand", validation)?
         }
         ExactBooleanOperation::Difference if left.triangles().is_empty() => {
             empty_mesh("empty exact difference from empty left operand", validation)?
+        }
+        ExactBooleanOperation::Difference
+            if empty_right_difference_regularizes_to_empty_closed_output(
+                left, right, validation,
+            ) =>
+        {
+            empty_mesh(
+                "empty exact closed regularized difference with empty right operand",
+                validation,
+            )?
         }
         ExactBooleanOperation::Difference => ExactMesh::new_with_policy(
             left.vertices().to_vec(),
@@ -8608,6 +8670,36 @@ fn boolean_empty_operand(
         operation,
         ExactBooleanShortcutKind::EmptyOperand,
     ))
+}
+
+fn empty_operand_union_regularizes_to_empty_closed_output(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    validation: ValidationPolicy,
+) -> bool {
+    validation == ValidationPolicy::CLOSED
+        && (left.triangles().is_empty() || right.triangles().is_empty())
+        && matches!(
+            (
+                closed_regularized_operand_kind(left),
+                closed_regularized_operand_kind(right),
+            ),
+            (
+                Some(ClosedRegularizedOperandKind::LowerDimensional),
+                Some(ClosedRegularizedOperandKind::LowerDimensional)
+            )
+        )
+}
+
+fn empty_right_difference_regularizes_to_empty_closed_output(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    validation: ValidationPolicy,
+) -> bool {
+    validation == ValidationPolicy::CLOSED
+        && right.triangles().is_empty()
+        && closed_regularized_operand_kind(left)
+            == Some(ClosedRegularizedOperandKind::LowerDimensional)
 }
 
 /// Certify and materialize a named boolean when either operand has no

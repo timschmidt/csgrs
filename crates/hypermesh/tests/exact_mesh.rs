@@ -1705,6 +1705,12 @@ fn lower_dimensional_regularized_boolean_is_publicly_replayable() {
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
+    let disjoint_right = ExactMesh::from_i64_triangles_with_policy(
+        &[10, 0, 0, 14, 0, 0, 10, 4, 0],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
     let closed_right = tetra([0, 0, 0]);
 
     for operation in [
@@ -1813,6 +1819,70 @@ fn lower_dimensional_regularized_boolean_is_publicly_replayable() {
                 ExactBoundaryBooleanPolicy::Reject,
             )
             .unwrap();
+
+        let disjoint_preflight = hypermesh::preflight_boolean_exact_with_validation(
+            &left,
+            &disjoint_right,
+            operation,
+            ValidationPolicy::CLOSED,
+        )
+        .unwrap();
+        assert_eq!(
+            disjoint_preflight.support,
+            hypermesh::ExactBooleanSupport::CertifiedLowerDimensionalRegularizedSolid,
+            "{operation:?}: {disjoint_preflight:?}"
+        );
+        disjoint_preflight
+            .validate_against_sources_with_validation(
+                &left,
+                &disjoint_right,
+                ValidationPolicy::CLOSED,
+            )
+            .unwrap();
+        let disjoint_readiness = certify_winding_readiness_report_with_validation(
+            &left,
+            &disjoint_right,
+            operation,
+            ValidationPolicy::CLOSED,
+        )
+        .unwrap();
+        assert_eq!(
+            disjoint_readiness.status,
+            ExactWindingReadinessStatus::LowerDimensionalRegularizedSolidAlreadyMaterialized,
+            "{operation:?}: {disjoint_readiness:?}"
+        );
+        assert!(
+            materialize_bounds_disjoint_boolean(
+                &left,
+                &disjoint_right,
+                operation,
+                ValidationPolicy::CLOSED,
+            )
+            .unwrap()
+            .is_none(),
+            "{operation:?} should yield to closed lower-dimensional provenance"
+        );
+        let disjoint_result =
+            boolean_exact(&left, &disjoint_right, operation, ValidationPolicy::CLOSED).unwrap();
+        assert_eq!(
+            disjoint_result.kind,
+            ExactBooleanResultKind::CertifiedShortcut {
+                operation,
+                shortcut: hypermesh::ExactBooleanShortcutKind::LowerDimensionalRegularizedSolid
+            },
+            "{operation:?}: {disjoint_result:?}"
+        );
+        assert!(disjoint_result.mesh.triangles().is_empty());
+        assert!(disjoint_result.mesh.facts().mesh.closed_manifold);
+        disjoint_result
+            .validate_operation_against_sources(
+                &left,
+                &disjoint_right,
+                operation,
+                ValidationPolicy::CLOSED,
+                ExactBoundaryBooleanPolicy::Reject,
+            )
+            .unwrap();
     }
 }
 
@@ -1857,9 +1927,16 @@ fn mixed_dimensional_regularized_solid_boolean_is_publicly_replayable() {
                 result.freshness_against_sources(left, right),
                 ExactReportFreshness::Current
             );
+            let keeps_solid = matches!(operation, ExactBooleanOperation::Union)
+                || (solid_is_left && matches!(operation, ExactBooleanOperation::Difference));
+            let expected_stale_freshness = if keeps_solid {
+                ExactReportFreshness::SourceReplayMismatch
+            } else {
+                ExactReportFreshness::Current
+            };
             assert_eq!(
                 result.freshness_against_sources(stale_left, stale_right),
-                ExactReportFreshness::SourceReplayMismatch
+                expected_stale_freshness
             );
             result
                 .validate_operation_against_sources(
@@ -1871,8 +1948,6 @@ fn mixed_dimensional_regularized_solid_boolean_is_publicly_replayable() {
                 )
                 .unwrap();
 
-            let keeps_solid = matches!(operation, ExactBooleanOperation::Union)
-                || (solid_is_left && matches!(operation, ExactBooleanOperation::Difference));
             if keeps_solid {
                 assert!(result.mesh.facts().mesh.closed_manifold);
                 assert!(!result.mesh.triangles().is_empty());
@@ -1917,6 +1992,84 @@ fn mixed_dimensional_regularized_solid_boolean_is_publicly_replayable() {
         .unwrap()
         .is_some()
     );
+
+    let disjoint_sheet = ExactMesh::from_i64_triangles_with_policy(
+        &[10, 0, 0, 14, 0, 0, 10, 4, 0],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    for (left, right, solid_is_left) in [
+        (&solid, &disjoint_sheet, true),
+        (&disjoint_sheet, &solid, false),
+    ] {
+        for operation in [
+            ExactBooleanOperation::Union,
+            ExactBooleanOperation::Intersection,
+            ExactBooleanOperation::Difference,
+        ] {
+            let preflight = hypermesh::preflight_boolean_exact_with_validation(
+                left,
+                right,
+                operation,
+                ValidationPolicy::CLOSED,
+            )
+            .unwrap();
+            assert_eq!(
+                preflight.support,
+                hypermesh::ExactBooleanSupport::CertifiedMixedDimensionalRegularizedSolid,
+                "{operation:?}: {preflight:?}"
+            );
+            let readiness = certify_winding_readiness_report_with_validation(
+                left,
+                right,
+                operation,
+                ValidationPolicy::CLOSED,
+            )
+            .unwrap();
+            assert_eq!(
+                readiness.status,
+                ExactWindingReadinessStatus::MixedDimensionalRegularizedSolidAlreadyMaterialized,
+                "{operation:?}: {readiness:?}"
+            );
+            assert!(
+                materialize_bounds_disjoint_boolean(
+                    left,
+                    right,
+                    operation,
+                    ValidationPolicy::CLOSED,
+                )
+                .unwrap()
+                .is_none(),
+                "{operation:?} should yield to mixed-dimensional regularized provenance"
+            );
+            let result = boolean_exact(left, right, operation, ValidationPolicy::CLOSED).unwrap();
+            assert_eq!(
+                result.kind,
+                ExactBooleanResultKind::CertifiedShortcut {
+                    operation,
+                    shortcut: hypermesh::ExactBooleanShortcutKind::MixedDimensionalRegularizedSolid
+                },
+                "{operation:?}: {result:?}"
+            );
+            result
+                .validate_operation_against_sources(
+                    left,
+                    right,
+                    operation,
+                    ValidationPolicy::CLOSED,
+                    ExactBoundaryBooleanPolicy::Reject,
+                )
+                .unwrap();
+            let keeps_solid = matches!(operation, ExactBooleanOperation::Union)
+                || (solid_is_left && matches!(operation, ExactBooleanOperation::Difference));
+            assert_eq!(
+                result.mesh.triangles().is_empty(),
+                !keeps_solid,
+                "{operation:?}: {result:?}"
+            );
+        }
+    }
 }
 
 #[test]
@@ -3490,6 +3643,74 @@ fn trivial_boolean_materializers_are_publicly_replayable() {
                 ExactReportFreshness::SourceReplayMismatch
             );
         }
+
+        let empty_open_result = boolean_exact(
+            &empty,
+            &open_disjoint_left,
+            operation,
+            ValidationPolicy::CLOSED,
+        )
+        .unwrap();
+        assert_shortcut(
+            &empty_open_result,
+            &empty,
+            &open_disjoint_left,
+            &solid,
+            &open_disjoint_left,
+            operation,
+            ValidationPolicy::CLOSED,
+            hypermesh::ExactBooleanShortcutKind::EmptyOperand,
+        );
+        assert!(empty_open_result.mesh.triangles().is_empty());
+        assert!(empty_open_result.mesh.facts().mesh.closed_manifold);
+
+        let direct_empty_open = materialize_empty_operand_boolean(
+            &empty,
+            &open_disjoint_left,
+            operation,
+            ValidationPolicy::CLOSED,
+        )
+        .unwrap()
+        .expect("empty/open closed-output shortcut should materialize as empty");
+        assert_eq!(direct_empty_open.kind, empty_open_result.kind);
+        assert!(direct_empty_open.mesh.triangles().is_empty());
+        assert!(
+            materialize_closed_regularized_lower_dimensional_boolean(
+                &empty,
+                &open_disjoint_left,
+                operation,
+                ValidationPolicy::CLOSED,
+            )
+            .unwrap()
+            .is_none(),
+            "{operation:?} should preserve empty-operand provenance"
+        );
+
+        let open_empty_result = boolean_exact(
+            &open_disjoint_left,
+            &empty,
+            operation,
+            ValidationPolicy::CLOSED,
+        )
+        .unwrap();
+        assert_eq!(
+            open_empty_result.kind,
+            ExactBooleanResultKind::CertifiedShortcut {
+                operation,
+                shortcut: hypermesh::ExactBooleanShortcutKind::EmptyOperand
+            }
+        );
+        assert!(open_empty_result.mesh.triangles().is_empty());
+        assert!(open_empty_result.mesh.facts().mesh.closed_manifold);
+        open_empty_result
+            .validate_operation_against_sources(
+                &open_disjoint_left,
+                &empty,
+                operation,
+                ValidationPolicy::CLOSED,
+                ExactBoundaryBooleanPolicy::Reject,
+            )
+            .unwrap();
 
         let disjoint_result = materialize_bounds_disjoint_boolean(
             &solid,
