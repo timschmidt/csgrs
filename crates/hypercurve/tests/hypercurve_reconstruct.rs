@@ -219,6 +219,24 @@ fn finite_ring_import_preserves_dxf_handle_and_closure_evidence() {
 }
 
 #[test]
+fn finite_ring_import_accepts_unrepeated_closed_edge_accounting() {
+    let import = Contour2::import_finite_ring_with_source(
+        &[[0.0, 0.0], [4.0, 0.0], [4.0, 3.0], [0.0, 3.0]],
+        FillRule::NonZero,
+        RetainedImportFormat2::Dxf,
+        0xdef,
+        None,
+    )
+    .unwrap();
+    let record = import.record();
+
+    assert_eq!(import.contour().len(), 4);
+    assert_eq!(record.input_point_count(), 4);
+    assert_eq!(record.emitted_segment_count(), 4);
+    assert_eq!(record.discarded_duplicate_count(), 0);
+}
+
+#[test]
 fn source_tolerance_rejects_nonfinite_or_negative_values() {
     assert_eq!(
         RetainedSourceTolerance2::try_new(f64::NAN, 0.0).unwrap_err(),
@@ -245,6 +263,11 @@ fn retained_import_record_rejects_inconsistent_counts() {
     assert_eq!(
         RetainedImportRecord2::try_new(RetainedImportFormat2::FinitePolyline, 0, None, 2, 2, 0)
             .unwrap_err(),
+        CurveError::InvalidImportRecord
+    );
+    RetainedImportRecord2::try_new(RetainedImportFormat2::Dxf, 0, None, 3, 3, 0).unwrap();
+    assert_eq!(
+        RetainedImportRecord2::try_new(RetainedImportFormat2::Dxf, 0, None, 3, 1, 2).unwrap_err(),
         CurveError::InvalidImportRecord
     );
     assert_eq!(

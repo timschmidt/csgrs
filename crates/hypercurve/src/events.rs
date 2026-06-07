@@ -460,6 +460,7 @@ fn append_segment_relation_events(
                 b_segment,
                 hit.point,
                 hit.kind,
+                policy,
             )?;
         }
         SegmentIntersection::ArcArc(ArcArcIntersection::TwoPoints { first, second }) => {
@@ -471,6 +472,7 @@ fn append_segment_relation_events(
                 b_segment,
                 first.point,
                 first.kind,
+                policy,
             )?;
             append_point_from_segments(
                 events,
@@ -480,6 +482,7 @@ fn append_segment_relation_events(
                 b_segment,
                 second.point,
                 second.kind,
+                policy,
             )?;
         }
         SegmentIntersection::ArcArc(ArcArcIntersection::Overlap {
@@ -523,6 +526,7 @@ fn append_line_arc_events(
                 b_segment,
                 order,
                 hit,
+                policy,
             )?;
         }
         LineArcIntersection::TwoPoints { first, second } => {
@@ -534,6 +538,7 @@ fn append_line_arc_events(
                 b_segment,
                 order,
                 first,
+                policy,
             )?;
             append_line_arc_hit(
                 events,
@@ -543,6 +548,7 @@ fn append_line_arc_events(
                 b_segment,
                 order,
                 second,
+                policy,
             )?;
         }
         LineArcIntersection::Uncertain { reason } => {
@@ -550,7 +556,6 @@ fn append_line_arc_events(
         }
     }
 
-    let _ = policy;
     Ok(())
 }
 
@@ -562,6 +567,7 @@ fn append_line_arc_hit(
     b_segment: &Segment2,
     order: LineArcOrder,
     hit: crate::LineArcIntersectionPoint,
+    policy: &CurvePolicy,
 ) -> CurveResult<()> {
     let point = hit.point;
     let (a_param, b_param) = match order {
@@ -575,14 +581,16 @@ fn append_line_arc_hit(
         }
     };
 
-    events.push(ContourIntersection::Point(ContourPointIntersection {
+    append_certified_point_event(
+        events,
         a_segment_index,
         b_segment_index,
         point,
         a_param,
         b_param,
-        kind: hit.kind,
-    }));
+        hit.kind,
+        policy,
+    );
 
     Ok(())
 }
@@ -595,18 +603,52 @@ fn append_point_from_segments(
     b_segment: &Segment2,
     point: Point2,
     kind: IntersectionKind,
+    policy: &CurvePolicy,
 ) -> CurveResult<()> {
     let a_param = segment_chord_param(a_segment, &point)?;
     let b_param = segment_chord_param(b_segment, &point)?;
-    events.push(ContourIntersection::Point(ContourPointIntersection {
+    append_certified_point_event(
+        events,
         a_segment_index,
         b_segment_index,
         point,
         a_param,
         b_param,
         kind,
-    }));
+        policy,
+    );
     Ok(())
+}
+
+fn append_certified_point_event(
+    events: &mut Vec<ContourIntersection>,
+    a_segment_index: usize,
+    b_segment_index: usize,
+    point: Point2,
+    a_param: Real,
+    b_param: Real,
+    kind: IntersectionKind,
+    policy: &CurvePolicy,
+) {
+    if in_closed_unit_interval(&a_param, policy) == Some(true)
+        && in_closed_unit_interval(&b_param, policy) == Some(true)
+    {
+        events.push(ContourIntersection::Point(ContourPointIntersection {
+            a_segment_index,
+            b_segment_index,
+            point,
+            a_param,
+            b_param,
+            kind,
+        }));
+    } else {
+        append_uncertain(
+            events,
+            a_segment_index,
+            b_segment_index,
+            UncertaintyReason::Ordering,
+        );
+    }
 }
 
 fn append_uncertain(

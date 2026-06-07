@@ -86,18 +86,18 @@ impl RetainedImportRecord2 {
         emitted_segment_count: usize,
         discarded_duplicate_count: usize,
     ) -> CurveResult<Self> {
+        let edge_evidence_count = emitted_segment_count
+            .checked_add(discarded_duplicate_count)
+            .ok_or(CurveError::InvalidImportRecord)?;
+        let open_chain_edge_count = input_point_count.saturating_sub(1);
+        let closed_ring_edge_count = input_point_count;
+        let has_open_chain_evidence = edge_evidence_count == open_chain_edge_count;
+        let has_closed_ring_evidence = input_point_count >= 3
+            && emitted_segment_count >= 3
+            && edge_evidence_count == closed_ring_edge_count;
         if input_point_count < 2
             || emitted_segment_count == 0
-            || emitted_segment_count >= input_point_count
-            || discarded_duplicate_count > input_point_count
-            || emitted_segment_count
-                .checked_add(discarded_duplicate_count)
-                .is_none_or(|count| {
-                    count > input_point_count
-                        || count
-                            .checked_add(1)
-                            .is_none_or(|edge_count| edge_count < input_point_count)
-                })
+            || (!has_open_chain_evidence && !has_closed_ring_evidence)
         {
             return Err(CurveError::InvalidImportRecord);
         }
