@@ -502,6 +502,31 @@ fn retained_planar_face_rejects_missing_material_or_mixed_surface_trims() {
     );
 }
 
+#[test]
+fn retained_planar_face_rejects_unowned_or_crossing_holes() {
+    let surface = RetainedPlanarSurfaceIdentity2::new(111);
+    let material = trim(surface, &[(0, 0), (4, 0), (4, 4), (0, 4)]);
+
+    assert_eq!(
+        RetainedPlanarFace2::try_new(
+            surface,
+            vec![material.clone()],
+            vec![trim(surface, &[(5, 5), (6, 5), (6, 6), (5, 6)])],
+        )
+        .unwrap_err(),
+        CurveError::InvalidPlanarFace
+    );
+    assert_eq!(
+        RetainedPlanarFace2::try_new(
+            surface,
+            vec![material],
+            vec![trim(surface, &[(2, 2), (5, 2), (5, 3), (2, 3)])],
+        )
+        .unwrap_err(),
+        CurveError::InvalidPlanarFace
+    );
+}
+
 fn decided<T>(classification: Classification<T>) -> T {
     match classification {
         Classification::Decided(value) => value,

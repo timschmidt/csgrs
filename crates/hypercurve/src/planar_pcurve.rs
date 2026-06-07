@@ -9,8 +9,9 @@
 //! representation used in Piegl and Tiller, *The NURBS Book* (2nd ed., 1997).
 
 use crate::{
-    Classification, Contour2, CurveError, CurvePolicy, CurveResult, CurveString2, Point2,
-    PreparedRegionView2, RegionPointLocation, RegionView2, Segment2, UncertaintyReason,
+    Classification, Contour2, ContourPointLocation, CurveError, CurvePolicy, CurveResult,
+    CurveString2, Point2, PreparedRegionView2, RegionPointLocation, RegionView2, Segment2,
+    UncertaintyReason,
 };
 
 /// Opaque identity of a retained planar support surface.
@@ -310,6 +311,7 @@ impl RetainedPlanarFace2 {
             return Err(CurveError::InvalidPlanarFace);
         }
         validate_planar_face_distinct_trim_loops(&material_loops, &hole_loops)?;
+        validate_planar_face_hole_ownership(&material_loops, &hole_loops)?;
         Ok(Self {
             surface,
             material_loops,
@@ -537,6 +539,46 @@ fn validate_planar_face_distinct_trim_loops(
     }
     for (index, trim) in hole_loops.iter().enumerate() {
         if hole_loops[index + 1..].contains(trim) {
+            return Err(CurveError::InvalidPlanarFace);
+        }
+    }
+    Ok(())
+}
+
+fn validate_planar_face_hole_ownership(
+    material_loops: &[RetainedPlanarTrimLoop2],
+    hole_loops: &[RetainedPlanarTrimLoop2],
+) -> CurveResult<()> {
+    let policy = CurvePolicy::certified();
+    for hole in hole_loops {
+        let Some(point) = hole
+            .contour
+            .segments()
+            .first()
+            .map(|segment| segment.start())
+        else {
+            return Err(CurveError::InvalidPlanarFace);
+        };
+        let mut owned_by_material = false;
+        for material in material_loops {
+            if !material
+                .contour
+                .intersect_contour(&hole.contour, &policy)?
+                .is_empty()
+            {
+                return Err(CurveError::InvalidPlanarFace);
+            }
+            match material.contour.classify_point(point, &policy) {
+                Classification::Decided(ContourPointLocation::Inside) => {
+                    owned_by_material = true;
+                }
+                Classification::Decided(
+                    ContourPointLocation::Boundary | ContourPointLocation::Outside,
+                ) => {}
+                Classification::Uncertain(_) => return Err(CurveError::InvalidPlanarFace),
+            }
+        }
+        if !owned_by_material {
             return Err(CurveError::InvalidPlanarFace);
         }
     }
