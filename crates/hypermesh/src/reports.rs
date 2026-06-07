@@ -1506,7 +1506,7 @@ fn validate_shortcut_output_shape(
     operation: ExactBooleanOperation,
     mesh: &ExactMesh,
 ) -> Result<(), ExactReportValidationError> {
-    if shortcut_requires_empty_output(shortcut, operation) && !mesh.triangles().is_empty() {
+    if shortcut_requires_empty_output(shortcut, operation) && !mesh_output_is_empty(mesh) {
         return Err(ExactReportValidationError::StatusEvidenceMismatch);
     }
     if shortcut_requires_closed_solid_output(shortcut, operation) && !mesh_is_closed_solid(mesh) {
@@ -5732,6 +5732,40 @@ mod tests {
                 ExactBoundaryBooleanPolicy::Reject,
             ),
             ExactReportFreshness::OperationReplayMismatch
+        );
+    }
+
+    #[test]
+    fn empty_shortcut_result_rejects_retained_orphan_vertices() {
+        let mesh = ExactMesh::from_i64_triangles(&[0, 0, 0], &[]).unwrap();
+        assert!(mesh.triangles().is_empty());
+        assert!(!mesh.vertices().is_empty());
+        let result = ExactBooleanResult {
+            kind: ExactBooleanResultKind::CertifiedShortcut {
+                operation: ExactBooleanOperation::Intersection,
+                shortcut: ExactBooleanShortcutKind::BoundsDisjoint,
+            },
+            graph_had_unknowns: false,
+            region_classifications: Vec::new(),
+            triangulations: Vec::new(),
+            assembly: ExactBooleanAssemblyPlan {
+                vertices: Vec::new(),
+                triangles: Vec::new(),
+            },
+            volumetric_classifications: Vec::new(),
+            mesh,
+        };
+
+        assert_eq!(
+            result.validate(),
+            Err(ExactReportValidationError::StatusEvidenceMismatch)
+        );
+        assert_eq!(
+            result.freshness_against_sources(
+                &report_test_tetra([0, 0, 0]),
+                &report_test_tetra([3, 0, 0])
+            ),
+            ExactReportFreshness::StaleStatusEvidence
         );
     }
 
