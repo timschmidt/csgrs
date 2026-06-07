@@ -5227,12 +5227,22 @@ impl ExactWindingReadinessReport {
                     self.retained_face_pairs,
                     self.retained_events,
                 )?;
-                if let Some(evidence) = self.coplanar_volumetric_evidence.as_ref() {
-                    validate_coplanar_boundary_only_evidence_shape(
-                        evidence,
-                        self.retained_face_pairs,
-                        self.retained_events,
-                    )?;
+                match self.coplanar_volumetric_evidence.as_ref() {
+                    Some(evidence) => {
+                        validate_coplanar_volumetric_evidence_matches_blocker(
+                            evidence,
+                            &self.blocker,
+                        )?;
+                        validate_coplanar_boundary_only_evidence_shape(
+                            evidence,
+                            self.retained_face_pairs,
+                            self.retained_events,
+                        )?;
+                    }
+                    None if self.blocker.coplanar_overlapping_pairs != 0 => {
+                        return Err(ExactReportValidationError::MissingCoplanarVolumetricEvidence);
+                    }
+                    None => {}
                 }
                 no_region_facts(self.region_count, &self.region_classifications)
             }
@@ -6103,6 +6113,73 @@ mod tests {
         assert_eq!(
             report.validate(),
             Err(ExactReportValidationError::MissingArrangementReadiness)
+        );
+    }
+
+    #[test]
+    fn winding_closed_boundary_touching_materialized_requires_positive_area_evidence() {
+        let evidence = CoplanarVolumetricCellEvidenceReport {
+            left_closed_manifold: true,
+            right_closed_manifold: true,
+            retained_face_pair_count: 1,
+            candidate_pairs: 0,
+            proper_crossing_candidate_pairs: 0,
+            coplanar_touching_pairs: 0,
+            coplanar_overlapping_pairs: 1,
+            positive_area_coplanar_overlapping_pairs: 1,
+            opposite_side_coplanar_overlapping_pairs: 1,
+            same_side_coplanar_overlapping_pairs: 0,
+            undecided_side_coplanar_overlapping_pairs: 0,
+            unknown_pairs: 0,
+            segment_plane_events: 0,
+            proper_crossing_events: 0,
+            boundary_segment_events: 0,
+            construction_failed_events: 0,
+            unknown_segment_plane_events: 0,
+            unknown_events: 0,
+            coplanar_edge_events: 1,
+            coplanar_vertex_events: 0,
+            obstacle: CoplanarVolumetricCellObstacle::BoundaryOnlyContact,
+        };
+        evidence.validate().unwrap();
+
+        let mut report = ExactWindingReadinessReport {
+            operation: ExactBooleanOperation::Intersection,
+            status: ExactWindingReadinessStatus::ClosedBoundaryTouchingAlreadyMaterialized,
+            graph_had_unknowns: false,
+            retained_face_pairs: 1,
+            retained_events: 1,
+            region_count: 0,
+            region_classifications: Vec::new(),
+            blocker: ExactBooleanBlocker {
+                kind: ExactBooleanBlockerKind::NeedsBoundaryPolicy,
+                candidate_pairs: 0,
+                coplanar_overlapping_pairs: 1,
+                coplanar_touching_pairs: 0,
+                unknown_pairs: 0,
+                construction_failed_events: 0,
+            },
+            arrangement_readiness: None,
+            coplanar_volumetric_evidence: Some(evidence.clone()),
+        };
+        report.validate().unwrap();
+
+        report.coplanar_volumetric_evidence = None;
+        assert_eq!(
+            report.validate(),
+            Err(ExactReportValidationError::MissingCoplanarVolumetricEvidence)
+        );
+
+        let mut relabeled_evidence = evidence;
+        relabeled_evidence.coplanar_overlapping_pairs = 0;
+        relabeled_evidence.coplanar_touching_pairs = 1;
+        relabeled_evidence.positive_area_coplanar_overlapping_pairs = 0;
+        relabeled_evidence.opposite_side_coplanar_overlapping_pairs = 0;
+        relabeled_evidence.validate().unwrap();
+        report.coplanar_volumetric_evidence = Some(relabeled_evidence);
+        assert_eq!(
+            report.validate(),
+            Err(ExactReportValidationError::CoplanarVolumetricEvidenceMismatch)
         );
     }
 
