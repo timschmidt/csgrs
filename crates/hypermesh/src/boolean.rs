@@ -5333,6 +5333,33 @@ pub fn materialize_same_surface_boolean(
     boolean_same_surface_meshes(left, operation, validation).map(Some)
 }
 
+/// Certify and materialize the closed same-surface arrangement boolean.
+///
+/// Closed solids with identical or same-surface boundaries can route through
+/// the arrangement cell-complex path in [`boolean_exact`], rather than the
+/// non-closed same-surface shortcut. This exposes that named materializer when
+/// preflight certifies arrangement provenance, while yielding to earlier exact
+/// paths such as direct convex materialization.
+pub fn materialize_closed_same_surface_boolean(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+) -> Result<Option<ExactBooleanResult>, MeshError> {
+    if matches!(operation, ExactBooleanOperation::SelectedRegions(_))
+        || !left.facts().mesh.closed_manifold
+        || !right.facts().mesh.closed_manifold
+        || !meshes_are_certified_same_surface(left, right)
+    {
+        return Ok(None);
+    }
+    let preflight = preflight_boolean_exact_with_validation(left, right, operation, validation)?;
+    if preflight.support != ExactBooleanSupport::CertifiedArrangementCellComplex {
+        return Ok(None);
+    }
+    boolean_arrangement_cell_complex_meshes(left, right, operation, validation)
+}
+
 fn certified_closed_boundary_touching_union_report_from_graph(
     graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,

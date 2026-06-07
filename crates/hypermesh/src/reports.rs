@@ -16,9 +16,9 @@ use super::boolean::{
     certify_boundary_touching_report, certify_open_surface_disjoint_report,
     certify_planar_arrangement_report, certify_refinement_report, certify_same_surface_report,
     certify_volumetric_boundary_closure_report, certify_winding_readiness_report,
-    materialize_adjacent_union_completion_boolean, preflight_boolean_exact,
-    preflight_boolean_exact_with_boundary_policy, preflight_boolean_exact_with_validation,
-    replay_volumetric_winding_region_plan,
+    materialize_adjacent_union_completion_boolean, materialize_closed_same_surface_boolean,
+    preflight_boolean_exact, preflight_boolean_exact_with_boundary_policy,
+    preflight_boolean_exact_with_validation, replay_volumetric_winding_region_plan,
 };
 use super::bounds::AabbIntersectionKind;
 use super::convex::{
@@ -1500,6 +1500,12 @@ fn arrangement_cell_complex_sources_match(
         && materialize_adjacent_union_completion_boolean(left, right, operation, validation)
             .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
             .is_some()
+    {
+        return Ok(true);
+    }
+    if materialize_closed_same_surface_boolean(left, right, operation, validation)
+        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
+        .is_some()
     {
         return Ok(true);
     }

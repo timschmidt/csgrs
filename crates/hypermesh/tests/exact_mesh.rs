@@ -26,13 +26,13 @@ use hypermesh::{
     materialize_axis_aligned_orthogonal_solid_union, materialize_boundary_touching_policy_boolean,
     materialize_bounds_disjoint_boolean, materialize_closed_boundary_touching_regularized_boolean,
     materialize_closed_convex_boolean, materialize_closed_regularized_lower_dimensional_boolean,
-    materialize_closed_winding_containment_boolean, materialize_closed_winding_separated_boolean,
-    materialize_contained_face_adjacent_union, materialize_coplanar_mesh_overlay_arrangement,
-    materialize_empty_operand_boolean, materialize_full_face_adjacent_union,
-    materialize_identical_mesh_boolean, materialize_open_surface_arrangement,
-    materialize_open_surface_disjoint_boolean, materialize_same_surface_boolean,
-    materialize_volumetric_winding_arrangement, preflight_boolean_exact,
-    preflight_boolean_exact_with_boundary_policy,
+    materialize_closed_same_surface_boolean, materialize_closed_winding_containment_boolean,
+    materialize_closed_winding_separated_boolean, materialize_contained_face_adjacent_union,
+    materialize_coplanar_mesh_overlay_arrangement, materialize_empty_operand_boolean,
+    materialize_full_face_adjacent_union, materialize_identical_mesh_boolean,
+    materialize_open_surface_arrangement, materialize_open_surface_disjoint_boolean,
+    materialize_same_surface_boolean, materialize_volumetric_winding_arrangement,
+    preflight_boolean_exact, preflight_boolean_exact_with_boundary_policy,
 };
 use hyperreal::Real;
 
@@ -1715,6 +1715,165 @@ fn trivial_boolean_materializers_are_publicly_replayable() {
         )
         .unwrap()
         .is_none()
+    );
+}
+
+#[test]
+fn closed_same_surface_boolean_is_publicly_replayable() {
+    let left_a = tetra_from_corners([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]);
+    let left_b = tetra_from_corners([10, 0, 0], [14, 0, 0], [10, 4, 0], [10, 0, 4]);
+    let left = combine_exact_meshes(&left_a, &left_b, "test disconnected same-surface left");
+    let same_surface_a = ExactMesh::from_i64_triangles(
+        &[
+            4, 0, 0, //
+            0, 0, 0, //
+            0, 4, 0, //
+            0, 0, 4,
+        ],
+        &[
+            1, 2, 0, //
+            1, 0, 3, //
+            0, 2, 3, //
+            2, 1, 3,
+        ],
+    )
+    .unwrap();
+    let same_surface_b = ExactMesh::from_i64_triangles(
+        &[
+            14, 0, 0, //
+            10, 0, 0, //
+            10, 4, 0, //
+            10, 0, 4,
+        ],
+        &[
+            1, 2, 0, //
+            1, 0, 3, //
+            0, 2, 3, //
+            2, 1, 3,
+        ],
+    )
+    .unwrap();
+    let same_surface = combine_exact_meshes(
+        &same_surface_a,
+        &same_surface_b,
+        "test disconnected same-surface right",
+    );
+    let stale_right = combine_exact_meshes(
+        &tetra([20, 0, 0]),
+        &tetra([30, 0, 0]),
+        "test stale disconnected right",
+    );
+
+    for (right_index, right) in [&same_surface, &left].into_iter().enumerate() {
+        for operation in [
+            ExactBooleanOperation::Union,
+            ExactBooleanOperation::Intersection,
+            ExactBooleanOperation::Difference,
+        ] {
+            let result = materialize_closed_same_surface_boolean(
+                &left,
+                right,
+                operation,
+                ValidationPolicy::CLOSED,
+            )
+            .unwrap()
+            .expect("closed same-surface solids should materialize through arrangement");
+            assert_eq!(
+                result.kind,
+                ExactBooleanResultKind::CertifiedShortcut {
+                    operation,
+                    shortcut: hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex
+                }
+            );
+            result.validate().unwrap();
+            result.validate_against_sources(&left, right).unwrap();
+            assert_eq!(
+                result.freshness_against_sources(&left, right),
+                ExactReportFreshness::Current
+            );
+            assert_eq!(
+                result.freshness_against_sources(&left, &stale_right),
+                ExactReportFreshness::SourceReplayMismatch
+            );
+            result
+                .validate_operation_against_sources(
+                    &left,
+                    right,
+                    operation,
+                    ValidationPolicy::CLOSED,
+                    ExactBoundaryBooleanPolicy::Reject,
+                )
+                .unwrap_or_else(|error| {
+                    let replay = boolean_exact_with_boundary_policy(
+                        &left,
+                        right,
+                        operation,
+                        ValidationPolicy::CLOSED,
+                        ExactBoundaryBooleanPolicy::Reject,
+                    )
+                    .unwrap();
+                    panic!(
+                        "right_index={right_index} operation={operation:?} error={error:?} result={:?} replay={:?}",
+                        result.kind, replay.kind
+                    );
+                });
+        }
+    }
+
+    let open_left = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 0, 4, 0, 0, 0, 4, 0],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let open_right = ExactMesh::from_i64_triangles_with_policy(
+        &[4, 0, 0, 0, 4, 0, 0, 0, 0],
+        &[2, 0, 1],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    assert!(
+        materialize_closed_same_surface_boolean(
+            &open_left,
+            &open_right,
+            ExactBooleanOperation::Union,
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap()
+        .is_none()
+    );
+    assert!(
+        materialize_closed_same_surface_boolean(
+            &left,
+            &stale_right,
+            ExactBooleanOperation::Union,
+            ValidationPolicy::CLOSED,
+        )
+        .unwrap()
+        .is_none()
+    );
+
+    let convex_left = tetra_from_corners([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]);
+    let convex_same_surface = same_surface_a;
+    assert!(
+        materialize_closed_same_surface_boolean(
+            &convex_left,
+            &convex_same_surface,
+            ExactBooleanOperation::Intersection,
+            ValidationPolicy::CLOSED,
+        )
+        .unwrap()
+        .is_none()
+    );
+    assert!(
+        materialize_closed_convex_boolean(
+            &convex_left,
+            &convex_same_surface,
+            ExactBooleanOperation::Intersection,
+            ValidationPolicy::CLOSED,
+        )
+        .unwrap()
+        .is_some()
     );
 }
 
