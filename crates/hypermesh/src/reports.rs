@@ -4541,7 +4541,9 @@ impl ExactWindingReadinessReport {
                     _ => {}
                 }
                 if matches!(self.status, ExactWindingReadinessStatus::NotNamedOperation) {
-                    self.blocker.validate_for_kind(self.blocker.kind)?;
+                    let expected = retained_blocker_kind_from_counts(&self.blocker);
+                    blocker_kind(Some(&self.blocker), expected)?;
+                    self.blocker.validate_for_kind(expected)?;
                 } else {
                     blocker_kind(Some(&self.blocker), ExactBooleanBlockerKind::NeedsWinding)?;
                     self.blocker

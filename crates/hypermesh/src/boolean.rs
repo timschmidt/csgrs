@@ -8467,7 +8467,40 @@ mod tests {
         stale.blocker.kind = ExactBooleanBlockerKind::NeedsWinding;
         assert_eq!(
             stale.validate(),
-            Err(crate::ExactReportValidationError::InvalidBlockerCounts)
+            Err(crate::ExactReportValidationError::WrongBlockerKind)
+        );
+
+        let disjoint_right = ExactMesh::from_i64_triangles_with_policy(
+            &[8, 0, 0, 12, 0, 0, 12, 4, 0, 8, 4, 0],
+            &[0, 1, 2, 0, 2, 3],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let disjoint_readiness = certify_winding_readiness_report(
+            &left,
+            &disjoint_right,
+            ExactBooleanOperation::SelectedRegions(ExactRegionSelection::KeepAll),
+        )
+        .unwrap();
+        assert_eq!(
+            disjoint_readiness.status,
+            ExactWindingReadinessStatus::NotNamedOperation
+        );
+        assert_eq!(
+            disjoint_readiness.blocker.kind,
+            ExactBooleanBlockerKind::NeedsWinding
+        );
+        assert_eq!(disjoint_readiness.retained_face_pairs, 0);
+        disjoint_readiness.validate().unwrap();
+        disjoint_readiness
+            .validate_against_sources(&left, &disjoint_right)
+            .unwrap();
+
+        let mut relabeled_empty = disjoint_readiness;
+        relabeled_empty.blocker.kind = ExactBooleanBlockerKind::NeedsBoundaryPolicy;
+        assert_eq!(
+            relabeled_empty.validate(),
+            Err(crate::ExactReportValidationError::WrongBlockerKind)
         );
     }
 
