@@ -2210,11 +2210,22 @@ impl ExactVolumetricBoundaryClosureReport {
                     || self.boundary_edges == 0
                     || self.boundary_loops == 0
                     || self.has_boundary_topology_failure_evidence()
-                    || self.coplanar_loop_groups != 0
                     || !self.has_valid_optional_self_contact_evidence()
                     || !volumetric_boundary_closure_blocker_is_supported(blocker)
                 {
                     return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                }
+                if self.coplanar_loop_groups != 0 {
+                    if *blocker != ExactArrangementBlocker::NonManifoldCellComplex
+                        || self.noncoplanar_boundary_loops != 0
+                        || self.repeated_exact_boundary_points != 0
+                        || self.self_contact_exact_points != 0
+                        || self.self_contact_topological_vertices != 0
+                        || self.self_contact_degenerate_cycles != 0
+                        || self.self_contact_nondegenerate_cycles != 0
+                    {
+                        return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                    }
                 }
             }
         }
@@ -4895,6 +4906,21 @@ mod tests {
         report.validate().unwrap();
 
         report.coplanar_loop_groups = 1;
+        assert_eq!(
+            report.validate(),
+            Err(ExactReportValidationError::StatusEvidenceMismatch)
+        );
+
+        let mut report = valid_blocked_closure_report();
+        report.status = ExactVolumetricBoundaryClosureStatus::BoundaryClosureBlocked(
+            ExactArrangementBlocker::NonManifoldCellComplex,
+        );
+        report.coplanar_loop_groups = 1;
+        report.validate().unwrap();
+        report.repeated_exact_boundary_points = 1;
+        report.self_contact_exact_points = 1;
+        report.self_contact_topological_vertices = 2;
+        report.self_contact_degenerate_cycles = 2;
         assert_eq!(
             report.validate(),
             Err(ExactReportValidationError::StatusEvidenceMismatch)
