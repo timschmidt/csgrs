@@ -4184,6 +4184,145 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
             )
             .is_err()
     );
+
+    let closed_intersection_preflight = preflight_boolean_exact_with_boundary_policy(
+        &left,
+        &right,
+        ExactBooleanOperation::Intersection,
+        ValidationPolicy::CLOSED,
+        ExactBoundaryBooleanPolicy::PreserveSeparateShells,
+    )
+    .unwrap();
+    assert_eq!(
+        closed_intersection_preflight.support,
+        hypermesh::ExactBooleanSupport::CertifiedLowerDimensionalRegularizedSolid,
+        "{closed_intersection_preflight:?}"
+    );
+    closed_intersection_preflight
+        .validate_against_sources_with_boundary_policy(
+            &left,
+            &right,
+            ValidationPolicy::CLOSED,
+            ExactBoundaryBooleanPolicy::PreserveSeparateShells,
+        )
+        .unwrap();
+
+    let closed_intersection_readiness = certify_winding_readiness_report_with_boundary_policy(
+        &left,
+        &right,
+        ExactBooleanOperation::Intersection,
+        ValidationPolicy::CLOSED,
+        ExactBoundaryBooleanPolicy::PreserveSeparateShells,
+    )
+    .unwrap();
+    assert_eq!(
+        closed_intersection_readiness.status,
+        ExactWindingReadinessStatus::LowerDimensionalRegularizedSolidAlreadyMaterialized,
+        "{closed_intersection_readiness:?}"
+    );
+    closed_intersection_readiness
+        .validate_against_sources_with_boundary_policy(
+            &left,
+            &right,
+            ValidationPolicy::CLOSED,
+            ExactBoundaryBooleanPolicy::PreserveSeparateShells,
+        )
+        .unwrap();
+
+    let closed_intersection = boolean_exact_with_boundary_policy(
+        &left,
+        &right,
+        ExactBooleanOperation::Intersection,
+        ValidationPolicy::CLOSED,
+        ExactBoundaryBooleanPolicy::PreserveSeparateShells,
+    )
+    .unwrap();
+    assert_eq!(
+        closed_intersection.kind,
+        ExactBooleanResultKind::CertifiedShortcut {
+            operation: ExactBooleanOperation::Intersection,
+            shortcut: hypermesh::ExactBooleanShortcutKind::LowerDimensionalRegularizedSolid
+        }
+    );
+    assert!(closed_intersection.mesh.triangles().is_empty());
+    assert!(closed_intersection.mesh.facts().mesh.closed_manifold);
+    closed_intersection
+        .validate_operation_against_sources(
+            &left,
+            &right,
+            ExactBooleanOperation::Intersection,
+            ValidationPolicy::CLOSED,
+            ExactBoundaryBooleanPolicy::PreserveSeparateShells,
+        )
+        .unwrap();
+
+    for operation in [
+        ExactBooleanOperation::Union,
+        ExactBooleanOperation::Difference,
+    ] {
+        let closed_policy_preflight = preflight_boolean_exact_with_boundary_policy(
+            &left,
+            &right,
+            operation,
+            ValidationPolicy::CLOSED,
+            ExactBoundaryBooleanPolicy::PreserveSeparateShells,
+        )
+        .unwrap();
+        assert_eq!(
+            closed_policy_preflight.support,
+            hypermesh::ExactBooleanSupport::CertifiedLowerDimensionalRegularizedSolid,
+            "{operation:?}: {closed_policy_preflight:?}"
+        );
+        closed_policy_preflight
+            .validate_against_sources_with_boundary_policy(
+                &left,
+                &right,
+                ValidationPolicy::CLOSED,
+                ExactBoundaryBooleanPolicy::PreserveSeparateShells,
+            )
+            .unwrap();
+        let closed_policy_readiness = certify_winding_readiness_report_with_boundary_policy(
+            &left,
+            &right,
+            operation,
+            ValidationPolicy::CLOSED,
+            ExactBoundaryBooleanPolicy::PreserveSeparateShells,
+        )
+        .unwrap();
+        assert_eq!(
+            closed_policy_readiness.status,
+            ExactWindingReadinessStatus::LowerDimensionalRegularizedSolidAlreadyMaterialized,
+            "{operation:?}: {closed_policy_readiness:?}"
+        );
+        assert!(
+            materialize_boundary_touching_policy_boolean(
+                &left,
+                &right,
+                operation,
+                ValidationPolicy::CLOSED,
+                ExactBoundaryBooleanPolicy::PreserveSeparateShells,
+            )
+            .unwrap()
+            .is_none(),
+            "{operation:?} should remain blocked because preserving open shells cannot satisfy CLOSED output validation"
+        );
+        let closed_regularized = boolean_exact_with_boundary_policy(
+            &left,
+            &right,
+            operation,
+            ValidationPolicy::CLOSED,
+            ExactBoundaryBooleanPolicy::PreserveSeparateShells,
+        )
+        .unwrap();
+        assert_eq!(
+            closed_regularized.kind,
+            ExactBooleanResultKind::CertifiedShortcut {
+                operation,
+                shortcut: hypermesh::ExactBooleanShortcutKind::LowerDimensionalRegularizedSolid
+            },
+            "{operation:?}: {closed_regularized:?}"
+        );
+    }
 }
 
 #[test]

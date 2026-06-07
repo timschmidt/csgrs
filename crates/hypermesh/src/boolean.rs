@@ -6790,17 +6790,20 @@ fn boolean_boundary_touching_meshes_from_graph(
             false,
             "exact boundary-touch union preserving separate shells",
             validation,
-        )?,
+        ),
         ExactBooleanOperation::Intersection => empty_mesh(
             "empty exact boundary-touch lower-dimensional intersection",
             validation,
-        )?,
+        ),
         ExactBooleanOperation::Difference => copy_mesh(
             left,
             "exact boundary-touch difference preserving left shell",
             validation,
-        )?,
+        ),
         ExactBooleanOperation::SelectedRegions(_) => unreachable!("handled by caller"),
+    };
+    let Ok(mesh) = mesh else {
+        return Ok(None);
     };
 
     Ok(Some(boundary_policy_shortcut_result(mesh, operation)))
