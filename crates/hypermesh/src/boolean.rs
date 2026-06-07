@@ -2345,6 +2345,22 @@ impl ArrangementCellComplexOutcome {
     }
 }
 
+fn materialized_arrangement_attempt_outcome(
+    attempt: &mut ExactArrangementBooleanAttempt,
+    result: ExactBooleanResult,
+    clear_arrangement_blockers: bool,
+) -> ArrangementCellComplexOutcome {
+    attempt.stage = ExactArrangementBooleanStage::Materialized;
+    attempt.decline = None;
+    attempt.materialized_shortcut = Some(ExactBooleanShortcutKind::ArrangementCellComplex);
+    if clear_arrangement_blockers {
+        attempt.arrangement_blockers = 0;
+    }
+    attempt.output_vertices = result.mesh.vertices().len();
+    attempt.output_triangles = result.mesh.triangles().len();
+    ArrangementCellComplexOutcome::materialized(result, attempt.clone())
+}
+
 /// Report how far the arrangement/cell-complex Boolean pipeline gets for an
 /// operation without falling through to specialized materializers.
 pub fn exact_arrangement_boolean_attempt_report(
@@ -2615,11 +2631,11 @@ fn run_arrangement_cell_complex_attempt(
         && let Some(result) =
             boolean_arrangement_adjacency_union_completion(left, right, operation, validation)?
     {
-        attempt.stage = ExactArrangementBooleanStage::Materialized;
-        attempt.materialized_shortcut = Some(ExactBooleanShortcutKind::ArrangementCellComplex);
-        attempt.output_vertices = result.mesh.vertices().len();
-        attempt.output_triangles = result.mesh.triangles().len();
-        return Ok(ArrangementCellComplexOutcome::materialized(result, attempt));
+        return Ok(materialized_arrangement_attempt_outcome(
+            &mut attempt,
+            result,
+            false,
+        ));
     }
 
     if let Some(validation) = validation
@@ -2631,11 +2647,11 @@ fn run_arrangement_cell_complex_attempt(
             validation,
         )?
     {
-        attempt.stage = ExactArrangementBooleanStage::Materialized;
-        attempt.materialized_shortcut = Some(ExactBooleanShortcutKind::ArrangementCellComplex);
-        attempt.output_vertices = result.mesh.vertices().len();
-        attempt.output_triangles = result.mesh.triangles().len();
-        return Ok(ArrangementCellComplexOutcome::materialized(result, attempt));
+        return Ok(materialized_arrangement_attempt_outcome(
+            &mut attempt,
+            result,
+            false,
+        ));
     }
 
     if !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
@@ -2643,11 +2659,11 @@ fn run_arrangement_cell_complex_attempt(
         && let Some(result) =
             boolean_coplanar_mesh_overlay_optional(left, right, operation, validation)?
     {
-        attempt.stage = ExactArrangementBooleanStage::Materialized;
-        attempt.materialized_shortcut = Some(ExactBooleanShortcutKind::ArrangementCellComplex);
-        attempt.output_vertices = result.mesh.vertices().len();
-        attempt.output_triangles = result.mesh.triangles().len();
-        return Ok(ArrangementCellComplexOutcome::materialized(result, attempt));
+        return Ok(materialized_arrangement_attempt_outcome(
+            &mut attempt,
+            result,
+            false,
+        ));
     }
 
     if let Some(validation) = validation
@@ -2674,11 +2690,11 @@ fn run_arrangement_cell_complex_attempt(
             validation,
             &arrangement,
         )? {
-            attempt.stage = ExactArrangementBooleanStage::Materialized;
-            attempt.materialized_shortcut = Some(ExactBooleanShortcutKind::ArrangementCellComplex);
-            attempt.output_vertices = result.mesh.vertices().len();
-            attempt.output_triangles = result.mesh.triangles().len();
-            return Ok(ArrangementCellComplexOutcome::materialized(result, attempt));
+            return Ok(materialized_arrangement_attempt_outcome(
+                &mut attempt,
+                result,
+                false,
+            ));
         }
         if regularize_unregularized_sheet_complex
             && arrangement_blockers_are_unregularized_sheet_complex(&arrangement.blockers)
@@ -2691,12 +2707,11 @@ fn run_arrangement_cell_complex_attempt(
                 validation,
             )?
         {
-            attempt.stage = ExactArrangementBooleanStage::Materialized;
-            attempt.materialized_shortcut = Some(ExactBooleanShortcutKind::ArrangementCellComplex);
-            attempt.arrangement_blockers = 0;
-            attempt.output_vertices = result.mesh.vertices().len();
-            attempt.output_triangles = result.mesh.triangles().len();
-            return Ok(ArrangementCellComplexOutcome::materialized(result, attempt));
+            return Ok(materialized_arrangement_attempt_outcome(
+                &mut attempt,
+                result,
+                true,
+            ));
         }
         if let Some(outcome) = arrangement_cell_complex_recovery_outcome_if_available(
             regularize_unregularized_sheet_complex,
@@ -2881,18 +2896,15 @@ fn run_arrangement_cell_complex_attempt(
                     validation,
                 )
             {
-                attempt.stage = ExactArrangementBooleanStage::Materialized;
-                attempt.materialized_shortcut =
-                    Some(ExactBooleanShortcutKind::ArrangementCellComplex);
-                attempt.output_vertices = mesh.vertices().len();
-                attempt.output_triangles = mesh.triangles().len();
-                return Ok(ArrangementCellComplexOutcome::materialized(
-                    certified_shortcut_result(
-                        mesh,
-                        operation,
-                        ExactBooleanShortcutKind::ArrangementCellComplex,
-                    ),
-                    attempt,
+                let result = certified_shortcut_result(
+                    mesh,
+                    operation,
+                    ExactBooleanShortcutKind::ArrangementCellComplex,
+                );
+                return Ok(materialized_arrangement_attempt_outcome(
+                    &mut attempt,
+                    result,
+                    false,
                 ));
             }
             if let Some(outcome) = arrangement_cell_complex_recovery_outcome_if_available(
@@ -2911,18 +2923,15 @@ fn run_arrangement_cell_complex_attempt(
             return Ok(ArrangementCellComplexOutcome::Declined(attempt));
         }
     };
-    attempt.stage = ExactArrangementBooleanStage::Materialized;
-    attempt.materialized_shortcut = Some(ExactBooleanShortcutKind::ArrangementCellComplex);
-    if volume_resolves_region_classification {
-        attempt.arrangement_blockers = 0;
-    }
-    Ok(ArrangementCellComplexOutcome::materialized(
-        certified_shortcut_result(
-            mesh,
-            operation,
-            ExactBooleanShortcutKind::ArrangementCellComplex,
-        ),
-        attempt,
+    let result = certified_shortcut_result(
+        mesh,
+        operation,
+        ExactBooleanShortcutKind::ArrangementCellComplex,
+    );
+    Ok(materialized_arrangement_attempt_outcome(
+        &mut attempt,
+        result,
+        volume_resolves_region_classification,
     ))
 }
 
@@ -3000,15 +3009,8 @@ fn arrangement_orthogonal_solid_cell_recovery_outcome(
     else {
         return Ok(None);
     };
-    attempt.stage = ExactArrangementBooleanStage::Materialized;
-    attempt.decline = None;
-    attempt.materialized_shortcut = Some(ExactBooleanShortcutKind::ArrangementCellComplex);
-    attempt.arrangement_blockers = 0;
-    attempt.output_vertices = result.mesh.vertices().len();
-    attempt.output_triangles = result.mesh.triangles().len();
-    Ok(Some(ArrangementCellComplexOutcome::materialized(
-        result,
-        attempt.clone(),
+    Ok(Some(materialized_arrangement_attempt_outcome(
+        attempt, result, true,
     )))
 }
 
@@ -3035,14 +3037,8 @@ fn arrangement_open_surface_recovery_outcome(
         graph.has_unknowns(),
         plan,
     )?;
-    attempt.stage = ExactArrangementBooleanStage::Materialized;
-    attempt.decline = None;
-    attempt.materialized_shortcut = Some(ExactBooleanShortcutKind::ArrangementCellComplex);
-    attempt.output_vertices = result.mesh.vertices().len();
-    attempt.output_triangles = result.mesh.triangles().len();
-    Ok(Some(ArrangementCellComplexOutcome::materialized(
-        result,
-        attempt.clone(),
+    Ok(Some(materialized_arrangement_attempt_outcome(
+        attempt, result, false,
     )))
 }
 
@@ -3058,15 +3054,8 @@ fn arrangement_affine_orthogonal_solid_recovery_outcome(
     else {
         return Ok(None);
     };
-    attempt.stage = ExactArrangementBooleanStage::Materialized;
-    attempt.decline = None;
-    attempt.materialized_shortcut = Some(ExactBooleanShortcutKind::ArrangementCellComplex);
-    attempt.arrangement_blockers = 0;
-    attempt.output_vertices = result.mesh.vertices().len();
-    attempt.output_triangles = result.mesh.triangles().len();
-    Ok(Some(ArrangementCellComplexOutcome::materialized(
-        result,
-        attempt.clone(),
+    Ok(Some(materialized_arrangement_attempt_outcome(
+        attempt, result, true,
     )))
 }
 
@@ -3749,15 +3738,8 @@ fn arrangement_volumetric_split_cell_recovery_outcome(
     else {
         return Ok(None);
     };
-    attempt.stage = ExactArrangementBooleanStage::Materialized;
-    attempt.decline = None;
-    attempt.materialized_shortcut = Some(ExactBooleanShortcutKind::ArrangementCellComplex);
-    attempt.arrangement_blockers = 0;
-    attempt.output_vertices = result.mesh.vertices().len();
-    attempt.output_triangles = result.mesh.triangles().len();
-    Ok(Some(ArrangementCellComplexOutcome::materialized(
-        result,
-        attempt.clone(),
+    Ok(Some(materialized_arrangement_attempt_outcome(
+        attempt, result, true,
     )))
 }
 
@@ -3773,15 +3755,8 @@ fn arrangement_convex_regularized_sheet_recovery_outcome(
     else {
         return Ok(None);
     };
-    attempt.stage = ExactArrangementBooleanStage::Materialized;
-    attempt.decline = None;
-    attempt.materialized_shortcut = Some(ExactBooleanShortcutKind::ArrangementCellComplex);
-    attempt.arrangement_blockers = 0;
-    attempt.output_vertices = result.mesh.vertices().len();
-    attempt.output_triangles = result.mesh.triangles().len();
-    Ok(Some(ArrangementCellComplexOutcome::materialized(
-        result,
-        attempt.clone(),
+    Ok(Some(materialized_arrangement_attempt_outcome(
+        attempt, result, true,
     )))
 }
 
@@ -3802,29 +3777,15 @@ fn arrangement_cell_complex_recovery_outcome_if_available(
         if let Some(result) = boolean_arrangement_regularized_sheet_or_boundary_from_graph(
             graph, left, right, operation, validation,
         )? {
-            attempt.stage = ExactArrangementBooleanStage::Materialized;
-            attempt.decline = None;
-            attempt.materialized_shortcut = Some(ExactBooleanShortcutKind::ArrangementCellComplex);
-            attempt.arrangement_blockers = 0;
-            attempt.output_vertices = result.mesh.vertices().len();
-            attempt.output_triangles = result.mesh.triangles().len();
-            return Ok(Some(ArrangementCellComplexOutcome::materialized(
-                result,
-                attempt.clone(),
+            return Ok(Some(materialized_arrangement_attempt_outcome(
+                attempt, result, true,
             )));
         }
         if let Some(result) = boolean_arrangement_convex_regularized_sheet_recovery(
             left, right, operation, validation,
         )? {
-            attempt.stage = ExactArrangementBooleanStage::Materialized;
-            attempt.decline = None;
-            attempt.materialized_shortcut = Some(ExactBooleanShortcutKind::ArrangementCellComplex);
-            attempt.arrangement_blockers = 0;
-            attempt.output_vertices = result.mesh.vertices().len();
-            attempt.output_triangles = result.mesh.triangles().len();
-            return Ok(Some(ArrangementCellComplexOutcome::materialized(
-                result,
-                attempt.clone(),
+            return Ok(Some(materialized_arrangement_attempt_outcome(
+                attempt, result, true,
             )));
         }
     }
@@ -7986,6 +7947,20 @@ fn concatenate_meshes(
 mod tests {
     use super::*;
 
+    fn assert_current_arrangement_attempt(
+        attempt: &ExactArrangementBooleanAttempt,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) {
+        attempt.validate().unwrap();
+        attempt.validate_against_sources(left, right).unwrap();
+        assert_eq!(
+            attempt.freshness_against_sources(left, right),
+            ExactReportFreshness::Current,
+            "{attempt:?}"
+        );
+    }
+
     #[test]
     fn exact_mesh_shape_accepts_same_boundary_with_different_triangulation() {
         let diagonal = ExactMesh::from_i64_triangles_with_policy(
@@ -9752,8 +9727,7 @@ mod tests {
             if !matches!(operation, ExactBooleanOperation::Intersection) {
                 assert!(attempt.output_triangles > 0, "{operation:?}: {attempt:?}");
             }
-            attempt.validate().unwrap();
-            attempt.validate_against_sources(&left, &right).unwrap();
+            assert_current_arrangement_attempt(&attempt, &left, &right);
 
             let result = boolean_exact(&left, &right, operation, ValidationPolicy::ALLOW_BOUNDARY)
                 .expect("open-surface crossing should materialize");
@@ -9972,6 +9946,7 @@ mod tests {
                 "{operation:?}: {attempt:?}"
             );
             assert!(attempt.decline.is_none(), "{operation:?}: {attempt:?}");
+            assert_current_arrangement_attempt(&attempt, &left, &right);
 
             let result = boolean_exact(&left, &right, operation, ValidationPolicy::CLOSED).unwrap();
             assert_eq!(
@@ -10028,6 +10003,7 @@ mod tests {
             "{attempt:?}"
         );
         assert!(attempt.decline.is_none(), "{attempt:?}");
+        assert_current_arrangement_attempt(&attempt, &left, &right);
 
         let result = boolean_exact(
             &left,
@@ -10318,6 +10294,7 @@ mod tests {
             );
             assert_eq!(attempt.decline, None, "{operation:?}: {attempt:?}");
             assert!(attempt.output_triangles > 0, "{operation:?}: {attempt:?}");
+            assert_current_arrangement_attempt(&attempt, &left, &right);
         }
     }
 
@@ -10486,6 +10463,7 @@ mod tests {
             attempt.materialized_shortcut,
             Some(ExactBooleanShortcutKind::ArrangementCellComplex)
         );
+        assert_current_arrangement_attempt(&attempt, &left, &right);
 
         let preflight =
             preflight_boolean_exact(&left, &right, ExactBooleanOperation::Union).unwrap();
@@ -10557,6 +10535,7 @@ mod tests {
         assert_eq!(union_attempt.decline, None);
         assert_eq!(union_attempt.selected_faces, 4);
         assert_eq!(union_attempt.output_triangles, 4);
+        assert_current_arrangement_attempt(&union_attempt, &left, &right);
 
         let difference_attempt = exact_arrangement_boolean_attempt_report(
             &left,
@@ -10568,6 +10547,7 @@ mod tests {
         assert_eq!(difference_attempt.decline, None);
         assert_eq!(difference_attempt.selected_faces, 0);
         assert_eq!(difference_attempt.output_triangles, 0);
+        assert_current_arrangement_attempt(&difference_attempt, &left, &right);
 
         let union = boolean_exact(
             &left,
