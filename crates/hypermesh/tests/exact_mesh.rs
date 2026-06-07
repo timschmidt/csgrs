@@ -3768,6 +3768,43 @@ fn trivial_boolean_materializers_are_publicly_replayable() {
                 ExactReportFreshness::SourceReplayMismatch
             );
         }
+        assert!(
+            materialize_identical_mesh_boolean(
+                &open_identical_left,
+                &open_identical_right,
+                operation,
+                ValidationPolicy::CLOSED,
+            )
+            .unwrap()
+            .is_none(),
+            "{operation:?} should yield to closed lower-dimensional regularization"
+        );
+        let closed_identical_result = boolean_exact(
+            &open_identical_left,
+            &open_identical_right,
+            operation,
+            ValidationPolicy::CLOSED,
+        )
+        .unwrap();
+        assert_eq!(
+            closed_identical_result.kind,
+            ExactBooleanResultKind::CertifiedShortcut {
+                operation,
+                shortcut: hypermesh::ExactBooleanShortcutKind::LowerDimensionalRegularizedSolid
+            },
+            "{operation:?}: {closed_identical_result:?}"
+        );
+        assert!(closed_identical_result.mesh.triangles().is_empty());
+        assert!(closed_identical_result.mesh.facts().mesh.closed_manifold);
+        closed_identical_result
+            .validate_operation_against_sources(
+                &open_identical_left,
+                &open_identical_right,
+                operation,
+                ValidationPolicy::CLOSED,
+                ExactBoundaryBooleanPolicy::Reject,
+            )
+            .unwrap();
 
         let same_surface_result = materialize_same_surface_boolean(
             &open_identical_left,
@@ -3799,6 +3836,43 @@ fn trivial_boolean_materializers_are_publicly_replayable() {
                 ExactReportFreshness::SourceReplayMismatch
             );
         }
+        assert!(
+            materialize_same_surface_boolean(
+                &open_identical_left,
+                &open_same_surface_right,
+                operation,
+                ValidationPolicy::CLOSED,
+            )
+            .unwrap()
+            .is_none(),
+            "{operation:?} should yield to closed lower-dimensional regularization"
+        );
+        let closed_same_surface_result = boolean_exact(
+            &open_identical_left,
+            &open_same_surface_right,
+            operation,
+            ValidationPolicy::CLOSED,
+        )
+        .unwrap();
+        assert_eq!(
+            closed_same_surface_result.kind,
+            ExactBooleanResultKind::CertifiedShortcut {
+                operation,
+                shortcut: hypermesh::ExactBooleanShortcutKind::LowerDimensionalRegularizedSolid
+            },
+            "{operation:?}: {closed_same_surface_result:?}"
+        );
+        assert!(closed_same_surface_result.mesh.triangles().is_empty());
+        assert!(closed_same_surface_result.mesh.facts().mesh.closed_manifold);
+        closed_same_surface_result
+            .validate_operation_against_sources(
+                &open_identical_left,
+                &open_same_surface_right,
+                operation,
+                ValidationPolicy::CLOSED,
+                ExactBoundaryBooleanPolicy::Reject,
+            )
+            .unwrap();
 
         let open_disjoint_result = materialize_open_surface_disjoint_boolean(
             &open_disjoint_left,

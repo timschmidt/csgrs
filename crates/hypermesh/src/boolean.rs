@@ -6494,6 +6494,8 @@ pub fn materialize_identical_mesh_boolean(
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
     if matches!(operation, ExactBooleanOperation::SelectedRegions(_))
         || (left.facts().mesh.closed_manifold && right.facts().mesh.closed_manifold)
+        || (validation == ValidationPolicy::CLOSED
+            && certified_closed_validation_regularized_solid_support(left, right).is_some())
         || !meshes_are_certified_identical(left, right)
     {
         return Ok(None);
@@ -6516,6 +6518,8 @@ pub fn materialize_same_surface_boolean(
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
     if matches!(operation, ExactBooleanOperation::SelectedRegions(_))
         || (left.facts().mesh.closed_manifold && right.facts().mesh.closed_manifold)
+        || (validation == ValidationPolicy::CLOSED
+            && certified_closed_validation_regularized_solid_support(left, right).is_some())
         || meshes_are_certified_identical(left, right)
         || !meshes_are_certified_same_surface(left, right)
     {
