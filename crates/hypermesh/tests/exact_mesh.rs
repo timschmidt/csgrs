@@ -7,13 +7,13 @@ use hypermesh::{
     CoplanarOverlapGraphFreshness, CoplanarOverlapSplitFreshness,
     CoplanarVolumetricCellEvidenceFreshness, ExactAdjacentUnionCompletionStatus, ExactArrangement,
     ExactArrangement2dBoundaryPolicy, ExactArrangement2dRegion, ExactArrangement2dRegionRing,
-    ExactArrangement2dSetOperation, ExactArrangementFreshness, ExactBooleanOperation,
-    ExactBooleanPolicy, ExactBooleanResult, ExactBooleanResultKind, ExactBoundaryBooleanPolicy,
-    ExactI64MeshInputReadiness, ExactLabeledCellComplexFreshness, ExactMesh,
-    ExactMeshConsumerDomain, ExactMeshDomainSummaryFreshness, ExactMeshHandoffPackageFreshness,
-    ExactMeshProposalAcceptance, ExactMeshProposalSourceKind, ExactOpenSurfaceDisjointStatus,
-    ExactPlanarArrangementStatus, ExactRefinementStatus, ExactRegionSelection,
-    ExactRegularizationPolicy, ExactReportFreshness, ExactSameSurfaceStatus,
+    ExactArrangement2dSetOperation, ExactArrangementFreshness, ExactBooleanBlockerKind,
+    ExactBooleanOperation, ExactBooleanPolicy, ExactBooleanResult, ExactBooleanResultKind,
+    ExactBoundaryBooleanPolicy, ExactI64MeshInputReadiness, ExactLabeledCellComplexFreshness,
+    ExactMesh, ExactMeshConsumerDomain, ExactMeshDomainSummaryFreshness,
+    ExactMeshHandoffPackageFreshness, ExactMeshProposalAcceptance, ExactMeshProposalSourceKind,
+    ExactOpenSurfaceDisjointStatus, ExactPlanarArrangementStatus, ExactRefinementStatus,
+    ExactRegionSelection, ExactRegularizationPolicy, ExactReportFreshness, ExactSameSurfaceStatus,
     ExactSelectedCellComplexFreshness, ExactSimplifiedCellComplexFreshness,
     ExactVolumetricRegionFreshness, ExactVolumetricRegionRelation, ExactWindingReadinessStatus,
     FaceRegionPlaneRelation, FullFaceAdjacentUnionFreshness, IntersectionGraphFreshness,
@@ -2520,6 +2520,37 @@ fn public_exact_blocker_reports_replay_remaining_decisions() {
         open_disjoint.freshness_against_sources(&left, &overlapping_right),
         ExactReportFreshness::SourceReplayMismatch
     );
+}
+
+#[test]
+fn open_surface_disjoint_report_classifies_retained_coplanar_overlap_blocker() {
+    let left = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 0, 4, 0, 0, 4, 4, 0, 0, 4, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let right = ExactMesh::from_i64_triangles_with_policy(
+        &[2, 0, 0, 4, 0, 0, 4, 2, 0, 2, 2, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+
+    let report = certify_open_surface_disjoint_report(&left, &right).unwrap();
+
+    assert_eq!(
+        report.status,
+        ExactOpenSurfaceDisjointStatus::GraphHasFacePairs
+    );
+    assert_eq!(
+        report.blocker.kind,
+        ExactBooleanBlockerKind::NeedsPlanarArrangement
+    );
+    assert!(report.blocker.coplanar_overlapping_pairs > 0);
+    assert!(report.retained_face_pairs > 0);
+    report.validate().unwrap();
+    report.validate_against_sources(&left, &right).unwrap();
 }
 
 #[test]

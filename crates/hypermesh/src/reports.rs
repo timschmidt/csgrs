@@ -3244,18 +3244,7 @@ impl ExactOpenSurfaceDisjointReport {
         {
             return Err(ExactReportValidationError::GraphUnknownStatusMismatch);
         }
-        // Graph unknowns are refinement state, not open-surface topology
-        // later policy stage must not consume an unresolved predicate as if it
-        // were certified no-intersection or winding evidence.
-        let expected_kind = if matches!(self.status, ExactOpenSurfaceDisjointStatus::GraphUnknowns)
-        {
-            ExactBooleanBlockerKind::NeedsRefinement
-        } else {
-            ExactBooleanBlockerKind::NeedsWinding
-        };
-        if self.blocker.kind != expected_kind {
-            return Err(ExactReportValidationError::WrongBlockerKind);
-        }
+        self.blocker.validate_for_kind(self.blocker.kind)?;
         validate_refinement_partition(
             matches!(self.status, ExactOpenSurfaceDisjointStatus::GraphUnknowns),
             &self.blocker,

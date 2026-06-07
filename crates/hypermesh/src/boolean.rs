@@ -5819,11 +5819,7 @@ fn open_surface_disjoint_report(
     retained_events: usize,
     counts: GraphRelationCounts,
 ) -> ExactOpenSurfaceDisjointReport {
-    let blocker_kind = if matches!(status, ExactOpenSurfaceDisjointStatus::GraphUnknowns) {
-        ExactBooleanBlockerKind::NeedsRefinement
-    } else {
-        ExactBooleanBlockerKind::NeedsWinding
-    };
+    let blocker_kind = retained_graph_blocker_kind(counts);
     ExactOpenSurfaceDisjointReport {
         status,
         left_open_surface,
@@ -6782,7 +6778,7 @@ fn winding_readiness_report_from_graph(
     let graph_had_unknowns = graph.has_unknowns();
     let counts = graph_relation_counts(graph);
     if matches!(operation, ExactBooleanOperation::SelectedRegions(_)) {
-        let blocker_kind = not_named_operation_blocker_kind(counts);
+        let blocker_kind = retained_graph_blocker_kind(counts);
         return Ok(winding_readiness_report(
             operation,
             ExactWindingReadinessStatus::NotNamedOperation,
@@ -7187,7 +7183,7 @@ fn winding_readiness_report_from_graph(
     ))
 }
 
-fn not_named_operation_blocker_kind(counts: GraphRelationCounts) -> ExactBooleanBlockerKind {
+fn retained_graph_blocker_kind(counts: GraphRelationCounts) -> ExactBooleanBlockerKind {
     if counts.unknown_pairs > 0 || counts.construction_failed_events > 0 {
         ExactBooleanBlockerKind::NeedsRefinement
     } else if counts.coplanar_overlapping_pairs + counts.coplanar_touching_pairs > 0 {
