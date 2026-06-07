@@ -1135,6 +1135,13 @@ pub fn certify_volumetric_boundary_closure_report(
             coplanar_loop_groups: 0,
         });
     };
+    volumetric_boundary_closure_report_from_materialized(&materialized, operation)
+}
+
+fn volumetric_boundary_closure_report_from_materialized(
+    materialized: &MaterializedVolumetricWindingRegionPlan,
+    operation: ExactBooleanOperation,
+) -> Result<ExactVolumetricBoundaryClosureReport, MeshError> {
     materialized
         .mesh
         .validate_retained_state()
@@ -4223,11 +4230,23 @@ fn boolean_arrangement_volumetric_split_cell_recovery_from_graph(
             "exact volumetric split-cell coplanar boundary closure",
             validation,
         ) {
-            return Ok(Some(certified_shortcut_result(
+            let closure_report =
+                volumetric_boundary_closure_report_from_materialized(&materialized, operation)?;
+            if closure_report.status
+                != ExactVolumetricBoundaryClosureStatus::CoplanarClosureAvailable
+                || closure_report.validate().is_err()
+            {
+                return Ok(None);
+            }
+            let result = certified_shortcut_result(
                 mesh,
                 operation,
                 ExactBooleanShortcutKind::ArrangementCellComplex,
-            )));
+            );
+            if result.validate().is_err() {
+                return Ok(None);
+            }
+            return Ok(Some(result));
         }
         return Ok(None);
     }
@@ -9833,7 +9852,10 @@ mod tests {
         );
         difference_closure.validate().unwrap();
 
-        for operation in [ExactBooleanOperation::Intersection] {
+        for operation in [
+            ExactBooleanOperation::Intersection,
+            ExactBooleanOperation::Difference,
+        ] {
             let closure =
                 certify_volumetric_boundary_closure_report(&left, &right, operation).unwrap();
             assert_eq!(

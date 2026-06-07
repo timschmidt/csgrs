@@ -1986,56 +1986,57 @@ fn exact_volumetric_winding_coplanar_cap_is_publicly_certified() {
     .unwrap();
     let right = tetra_from_corners([-1, 1, 0], [3, 1, 0], [-1, 5, 0], [-1, 1, 4]);
 
-    let closure = certify_volumetric_boundary_closure_report(
-        &left,
-        &right,
+    for operation in [
         ExactBooleanOperation::Intersection,
-    )
-    .unwrap();
-    assert_eq!(
-        closure.status,
-        hypermesh::ExactVolumetricBoundaryClosureStatus::CoplanarClosureAvailable,
-        "{closure:?}"
-    );
-    closure.validate().unwrap();
-    closure.validate_against_sources(&left, &right).unwrap();
+        ExactBooleanOperation::Difference,
+    ] {
+        let closure = certify_volumetric_boundary_closure_report(&left, &right, operation).unwrap();
+        assert_eq!(
+            closure.status,
+            hypermesh::ExactVolumetricBoundaryClosureStatus::CoplanarClosureAvailable,
+            "{operation:?}: {closure:?}"
+        );
+        closure.validate().unwrap();
+        closure.validate_against_sources(&left, &right).unwrap();
 
-    let preflight =
-        preflight_boolean_exact(&left, &right, ExactBooleanOperation::Intersection).unwrap();
-    assert_eq!(
-        preflight.support,
-        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex,
-        "{preflight:?}"
-    );
-    preflight.validate().unwrap();
-    preflight.validate_against_sources(&left, &right).unwrap();
+        let preflight = preflight_boolean_exact(&left, &right, operation).unwrap();
+        assert_eq!(
+            preflight.support,
+            hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex,
+            "{operation:?}: {preflight:?}"
+        );
+        preflight.validate().unwrap();
+        preflight.validate_against_sources(&left, &right).unwrap();
 
-    let result = materialize_volumetric_winding_arrangement(
-        &left,
-        &right,
-        ExactBooleanOperation::Intersection,
-        ValidationPolicy::CLOSED,
-    )
-    .unwrap()
-    .expect("exact coplanar boundary cap should materialize closed volumetric output");
-    assert_eq!(
-        result.kind,
-        ExactBooleanResultKind::CertifiedShortcut {
-            operation: ExactBooleanOperation::Intersection,
-            shortcut: hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex,
-        }
-    );
-    result.validate().unwrap();
-    assert!(
-        result.mesh.facts().mesh.closed_manifold || result.mesh.triangles().is_empty(),
-        "{:?}",
-        result.mesh.facts().mesh
-    );
-    result.validate_against_sources(&left, &right).unwrap();
-    assert_eq!(
-        result.freshness_against_sources(&left, &right),
-        ExactReportFreshness::Current
-    );
+        let result = materialize_volumetric_winding_arrangement(
+            &left,
+            &right,
+            operation,
+            ValidationPolicy::CLOSED,
+        )
+        .unwrap()
+        .expect("exact coplanar boundary cap should materialize closed volumetric output");
+        assert_eq!(
+            result.kind,
+            ExactBooleanResultKind::CertifiedShortcut {
+                operation,
+                shortcut: hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex,
+            },
+            "{operation:?}: {result:?}"
+        );
+        result.validate().unwrap();
+        assert!(
+            result.mesh.facts().mesh.closed_manifold || result.mesh.triangles().is_empty(),
+            "{operation:?}: {:?}",
+            result.mesh.facts().mesh
+        );
+        result.validate_against_sources(&left, &right).unwrap();
+        assert_eq!(
+            result.freshness_against_sources(&left, &right),
+            ExactReportFreshness::Current,
+            "{operation:?}: {result:?}"
+        );
+    }
 }
 
 #[test]
