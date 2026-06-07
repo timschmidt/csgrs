@@ -2028,6 +2028,11 @@ fn exact_volumetric_winding_coplanar_cap_is_publicly_certified() {
         "{:?}",
         result.mesh.facts().mesh
     );
+    result.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(
+        result.freshness_against_sources(&left, &right),
+        ExactReportFreshness::Current
+    );
 }
 
 #[test]
