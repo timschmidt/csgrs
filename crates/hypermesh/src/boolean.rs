@@ -2248,16 +2248,14 @@ pub fn materialize_closed_winding_containment_boolean(
     else {
         return Ok(None);
     };
-    if result
-        .validate_operation_against_sources(
-            left,
-            right,
-            operation,
-            validation,
-            ExactBoundaryBooleanPolicy::Reject,
-        )
-        .is_err()
-    {
+    if !exact_boolean_result_matches_public_operation_replay(
+        &result,
+        left,
+        right,
+        operation,
+        validation,
+        ExactBoundaryBooleanPolicy::Reject,
+    ) {
         return Ok(None);
     }
     Ok(Some(result))
@@ -2327,19 +2325,30 @@ pub fn materialize_closed_winding_separated_boolean(
     else {
         return Ok(None);
     };
-    if result
-        .validate_operation_against_sources(
-            left,
-            right,
-            operation,
-            validation,
-            ExactBoundaryBooleanPolicy::Reject,
-        )
-        .is_err()
-    {
+    if !exact_boolean_result_matches_public_operation_replay(
+        &result,
+        left,
+        right,
+        operation,
+        validation,
+        ExactBoundaryBooleanPolicy::Reject,
+    ) {
         return Ok(None);
     }
     Ok(Some(result))
+}
+
+fn exact_boolean_result_matches_public_operation_replay(
+    result: &ExactBooleanResult,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+    boundary_policy: ExactBoundaryBooleanPolicy,
+) -> bool {
+    result
+        .validate_operation_against_sources(left, right, operation, validation, boundary_policy)
+        .is_ok()
 }
 
 fn mesh_vertices_are_boundary_or_outside(report: &ClosedMeshWindingMeshReport) -> bool {
@@ -4411,18 +4420,32 @@ pub fn materialize_closed_convex_boolean(
     validation: ValidationPolicy,
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
     let preflight = preflight_boolean_exact(left, right, operation)?;
-    match preflight.support {
+    let result = match preflight.support {
         ExactBooleanSupport::CertifiedConvexUnion
         | ExactBooleanSupport::CertifiedConvexIntersection
         | ExactBooleanSupport::CertifiedConvexDifference => {
-            boolean_convex_meshes_optional(left, right, operation, validation)
+            boolean_convex_meshes_optional(left, right, operation, validation)?
         }
         ExactBooleanSupport::CertifiedConvexContainment
         | ExactBooleanSupport::CertifiedConvexSeparated => {
-            boolean_convex_relation_meshes_optional(left, right, operation, validation)
+            boolean_convex_relation_meshes_optional(left, right, operation, validation)?
         }
-        _ => Ok(None),
+        _ => return Ok(None),
+    };
+    let Some(result) = result else {
+        return Ok(None);
+    };
+    if !exact_boolean_result_matches_public_operation_replay(
+        &result,
+        left,
+        right,
+        operation,
+        validation,
+        ExactBoundaryBooleanPolicy::Reject,
+    ) {
+        return Ok(None);
     }
+    Ok(Some(result))
 }
 
 fn boolean_arrangement_convex_regularized_sheet_recovery(
