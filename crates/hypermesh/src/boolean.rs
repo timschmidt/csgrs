@@ -2978,6 +2978,9 @@ fn boolean_arrangement_adjacency_union_completion(
     {
         return Ok(None);
     }
+    if certified_convex_materialized_boolean_support(left, right, operation).is_some() {
+        return Ok(None);
+    }
 
     if let Some(certificate) = full_face_adjacent_certificate(left, right)
         && let Some(union) = materialize_full_face_adjacent_union_from_certificate(
@@ -3013,6 +3016,21 @@ fn boolean_arrangement_adjacency_union_completion(
     }
 
     Ok(None)
+}
+
+/// Certify and materialize a union for adjacent closed solids that complete by
+/// exact full-face or contained-face adjacency.
+///
+/// This is the boolean-result wrapper around the existing adjacency union
+/// certificates. Only union is supportable for this completion path; other
+/// operations and cases handled by stronger kernels return `None`.
+pub fn materialize_adjacent_union_completion_boolean(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+) -> Result<Option<ExactBooleanResult>, MeshError> {
+    boolean_arrangement_adjacency_union_completion(left, right, operation, validation)
 }
 
 fn arrangement_blockers_are_unregularized_sheet_complex(

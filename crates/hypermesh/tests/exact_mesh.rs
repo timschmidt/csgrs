@@ -19,7 +19,8 @@ use hypermesh::{
     classify_mesh_vertices_against_convex_solid_report,
     classify_point_against_closed_mesh_winding_report, classify_point_against_convex_solid_report,
     classify_triangle_triangle, exact_arrangement_boolean_attempt_report, inspect_i64_mesh_input,
-    materialize_affine_orthogonal_solid_boolean, materialize_affine_orthogonal_solid_intersection,
+    materialize_adjacent_union_completion_boolean, materialize_affine_orthogonal_solid_boolean,
+    materialize_affine_orthogonal_solid_intersection,
     materialize_axis_aligned_orthogonal_solid_boolean,
     materialize_axis_aligned_orthogonal_solid_intersection,
     materialize_axis_aligned_orthogonal_solid_union, materialize_boundary_touching_policy_boolean,
@@ -579,6 +580,72 @@ fn exact_full_face_adjacent_union_is_publicly_replayable() {
 }
 
 #[test]
+fn adjacent_union_completion_boolean_is_publicly_replayable() {
+    let left_a = tetra_from_corners([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]);
+    let left_b = tetra_from_corners([10, 0, 0], [12, 0, 0], [10, 2, 0], [10, 0, 2]);
+    let left = combine_exact_meshes(&left_a, &left_b, "test disconnected full-face fixture");
+    let right = tetra_from_corners([0, 0, 0], [0, 4, 0], [4, 0, 0], [0, 0, -4]);
+    let separated_right = tetra_from_corners([20, 0, 0], [24, 0, 0], [20, 4, 0], [20, 0, 4]);
+
+    let result = materialize_adjacent_union_completion_boolean(
+        &left,
+        &right,
+        ExactBooleanOperation::Union,
+        ValidationPolicy::CLOSED,
+    )
+    .unwrap()
+    .expect("non-axis full-face adjacent solids should complete as a boolean union");
+    assert_eq!(
+        result.kind,
+        ExactBooleanResultKind::CertifiedShortcut {
+            operation: ExactBooleanOperation::Union,
+            shortcut: hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex
+        }
+    );
+    result.validate().unwrap();
+    result.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(
+        result.freshness_against_sources(&left, &right),
+        ExactReportFreshness::Current
+    );
+    assert_eq!(
+        result.freshness_against_sources(&left, &separated_right),
+        ExactReportFreshness::SourceReplayMismatch
+    );
+    result
+        .validate_operation_against_sources(
+            &left,
+            &right,
+            ExactBooleanOperation::Union,
+            ValidationPolicy::CLOSED,
+            ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert!(result.mesh.facts().mesh.closed_manifold);
+
+    assert!(
+        materialize_adjacent_union_completion_boolean(
+            &left,
+            &right,
+            ExactBooleanOperation::Intersection,
+            ValidationPolicy::CLOSED,
+        )
+        .unwrap()
+        .is_none()
+    );
+    assert!(
+        materialize_adjacent_union_completion_boolean(
+            &axis_aligned_box([0, 0, 0], [1, 1, 1]),
+            &axis_aligned_box([1, 0, 0], [2, 1, 1]),
+            ExactBooleanOperation::Union,
+            ValidationPolicy::CLOSED,
+        )
+        .unwrap()
+        .is_none()
+    );
+}
+
+#[test]
 fn exact_open_surface_arrangement_is_publicly_replayable() {
     let left = ExactMesh::from_i64_triangles_with_policy(
         &[0, 0, 0, 4, 0, 0, 0, 4, 0],
@@ -1059,6 +1126,7 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
 fn exact_contained_face_adjacent_union_is_publicly_replayable() {
     let left = tetra_from_corners([0, 0, 0], [10, 0, 0], [0, 10, 0], [0, 0, 10]);
     let right = tetra_from_corners([1, 1, 0], [1, 3, 0], [3, 1, 0], [1, 1, -2]);
+    let separated_right = tetra([20, 0, 0]);
 
     let union = materialize_contained_face_adjacent_union(&left, &right, ValidationPolicy::CLOSED)
         .expect("contained coplanar cap should materialize as a holed union");
@@ -1085,11 +1153,62 @@ fn exact_contained_face_adjacent_union_is_publicly_replayable() {
         ContainedFaceAdjacentUnionFreshness::InvalidOutput
     );
 
-    let separated_right = tetra([20, 0, 0]);
     assert_eq!(
         union.freshness_against_sources(&left, &separated_right),
         ContainedFaceAdjacentUnionFreshness::SourceReplayMismatch
     );
+
+    assert!(
+        materialize_adjacent_union_completion_boolean(
+            &left,
+            &right,
+            ExactBooleanOperation::Union,
+            ValidationPolicy::CLOSED,
+        )
+        .unwrap()
+        .is_none()
+    );
+
+    let disjoint_shell = tetra_from_corners([40, 0, 0], [41, 0, 0], [40, 1, 0], [40, 0, 1]);
+    let container = combine_exact_meshes(
+        &left,
+        &disjoint_shell,
+        "test disconnected contained-face fixture",
+    );
+    let result = materialize_adjacent_union_completion_boolean(
+        &container,
+        &right,
+        ExactBooleanOperation::Union,
+        ValidationPolicy::CLOSED,
+    )
+    .unwrap()
+    .expect("contained-face adjacent solids should complete as a boolean union");
+    assert_eq!(
+        result.kind,
+        ExactBooleanResultKind::CertifiedShortcut {
+            operation: ExactBooleanOperation::Union,
+            shortcut: hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex
+        }
+    );
+    result.validate().unwrap();
+    result.validate_against_sources(&container, &right).unwrap();
+    assert_eq!(
+        result.freshness_against_sources(&container, &right),
+        ExactReportFreshness::Current
+    );
+    assert_eq!(
+        result.freshness_against_sources(&container, &separated_right),
+        ExactReportFreshness::SourceReplayMismatch
+    );
+    result
+        .validate_operation_against_sources(
+            &container,
+            &right,
+            ExactBooleanOperation::Union,
+            ValidationPolicy::CLOSED,
+            ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
 }
 
 #[test]
