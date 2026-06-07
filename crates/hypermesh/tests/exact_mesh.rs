@@ -1243,16 +1243,41 @@ fn adjacent_union_completion_boolean_is_publicly_replayable() {
     );
     assert!(!intersection_report.is_certified());
     intersection_report.validate().unwrap();
+    let axis_left = axis_aligned_box([0, 0, 0], [1, 1, 1]);
+    let axis_right = axis_aligned_box([1, 0, 0], [2, 1, 1]);
     assert!(
         materialize_adjacent_union_completion_boolean(
-            &axis_aligned_box([0, 0, 0], [1, 1, 1]),
-            &axis_aligned_box([1, 0, 0], [2, 1, 1]),
+            &axis_left,
+            &axis_right,
             ExactBooleanOperation::Union,
             ValidationPolicy::CLOSED,
         )
         .unwrap()
         .is_none()
     );
+    let axis_replay = boolean_exact(
+        &axis_left,
+        &axis_right,
+        ExactBooleanOperation::Union,
+        ValidationPolicy::CLOSED,
+    )
+    .unwrap();
+    assert_eq!(
+        axis_replay.kind,
+        ExactBooleanResultKind::CertifiedShortcut {
+            operation: ExactBooleanOperation::Union,
+            shortcut: hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex
+        }
+    );
+    axis_replay
+        .validate_operation_against_sources(
+            &axis_left,
+            &axis_right,
+            ExactBooleanOperation::Union,
+            ValidationPolicy::CLOSED,
+            ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
 
     let crossing_right = tetra_from_corners([1, 1, -1], [5, 1, -1], [1, 5, -1], [1, 1, 3]);
     let crossing_report = certify_adjacent_union_completion_report(

@@ -3681,7 +3681,24 @@ pub fn materialize_adjacent_union_completion_boolean(
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
-    boolean_arrangement_adjacency_union_completion(left, right, operation, validation)
+    let Some(result) =
+        boolean_arrangement_adjacency_union_completion(left, right, operation, validation)?
+    else {
+        return Ok(None);
+    };
+    if result
+        .validate_operation_against_sources(
+            left,
+            right,
+            operation,
+            validation,
+            ExactBoundaryBooleanPolicy::Reject,
+        )
+        .is_err()
+    {
+        return Ok(None);
+    }
+    Ok(Some(result))
 }
 
 fn arrangement_blockers_are_unregularized_sheet_complex(
