@@ -2324,6 +2324,32 @@ fn boolean_arrangement_cell_complex_meshes(
     }
 }
 
+/// Certify and materialize a named boolean through the arrangement cell-complex
+/// pipeline.
+///
+/// This exposes the same arrangement-certified materialization used by
+/// [`boolean_exact`]. It only runs when policy-aware preflight has already
+/// certified [`ExactBooleanSupport::CertifiedArrangementCellComplex`], so
+/// stronger exact paths such as convex, boundary-touching, winding, and trivial
+/// shortcuts keep their dispatcher provenance. After that guard it delegates to
+/// [`boolean_exact`] so earlier arrangement materializers keep their retained
+/// result kind.
+pub fn materialize_arrangement_cell_complex_boolean(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+) -> Result<Option<ExactBooleanResult>, MeshError> {
+    if matches!(operation, ExactBooleanOperation::SelectedRegions(_)) {
+        return Ok(None);
+    }
+    let preflight = preflight_boolean_exact_with_validation(left, right, operation, validation)?;
+    if preflight.support != ExactBooleanSupport::CertifiedArrangementCellComplex {
+        return Ok(None);
+    }
+    boolean_exact(left, right, operation, validation).map(Some)
+}
+
 fn arrangement_cell_complex_attempt_is_certified_for_preflight(
     attempt: &ExactArrangementBooleanAttempt,
 ) -> bool {

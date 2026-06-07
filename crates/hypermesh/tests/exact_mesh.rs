@@ -20,7 +20,7 @@ use hypermesh::{
     classify_point_against_closed_mesh_winding_report, classify_point_against_convex_solid_report,
     classify_triangle_triangle, exact_arrangement_boolean_attempt_report, inspect_i64_mesh_input,
     materialize_adjacent_union_completion_boolean, materialize_affine_orthogonal_solid_boolean,
-    materialize_affine_orthogonal_solid_intersection,
+    materialize_affine_orthogonal_solid_intersection, materialize_arrangement_cell_complex_boolean,
     materialize_axis_aligned_orthogonal_solid_boolean,
     materialize_axis_aligned_orthogonal_solid_intersection,
     materialize_axis_aligned_orthogonal_solid_union, materialize_boundary_touching_policy_boolean,
@@ -1119,6 +1119,134 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
     assert_eq!(
         result.freshness_against_sources(&left, &separated_right),
         ExactReportFreshness::SourceReplayMismatch
+    );
+}
+
+#[test]
+fn arrangement_cell_complex_boolean_is_publicly_replayable() {
+    let left = ExactMesh::from_i64_triangles(
+        &[
+            0, 0, 0, //
+            4, 0, 0, //
+            0, 4, 0, //
+            0, 0, 4, //
+            2, 2, 3,
+        ],
+        &[
+            0, 2, 1, //
+            1, 2, 3, //
+            2, 0, 3, //
+            0, 1, 4, //
+            1, 3, 4, //
+            3, 0, 4,
+        ],
+    )
+    .unwrap();
+    let right = ExactMesh::from_i64_triangles(
+        &[1, 1, 1, 5, 1, 1, 1, 5, 1, 1, 1, 5],
+        &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
+    )
+    .unwrap();
+    let stale_right = tetra([10, 10, 10]);
+
+    let result = materialize_arrangement_cell_complex_boolean(
+        &left,
+        &right,
+        ExactBooleanOperation::Union,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap()
+    .expect("certified arrangement cell-complex boolean should materialize");
+    let replay = boolean_exact(
+        &left,
+        &right,
+        ExactBooleanOperation::Union,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    assert_eq!(result, replay);
+    assert_eq!(
+        result.kind,
+        ExactBooleanResultKind::ArrangementCellComplexMaterialized {
+            operation: ExactBooleanOperation::Union
+        }
+    );
+    result.validate().unwrap();
+    result.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(
+        result.freshness_against_sources(&left, &right),
+        ExactReportFreshness::Current
+    );
+    assert_eq!(
+        result.freshness_against_sources(&left, &stale_right),
+        ExactReportFreshness::SourceReplayMismatch
+    );
+    result
+        .validate_operation_against_sources(
+            &left,
+            &right,
+            ExactBooleanOperation::Union,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert!(!result.region_classifications.is_empty());
+    assert!(!result.triangulations.is_empty());
+    assert!(!result.volumetric_classifications.is_empty());
+    assert!(!result.assembly.triangles.is_empty());
+
+    let horizontal = axis_aligned_box([0, 0, 0], [2, 1, 1]);
+    let vertical = axis_aligned_box([0, 1, 0], [1, 2, 1]);
+    let shortcut = materialize_arrangement_cell_complex_boolean(
+        &horizontal,
+        &vertical,
+        ExactBooleanOperation::Union,
+        ValidationPolicy::CLOSED,
+    )
+    .unwrap()
+    .expect("orthogonal arrangement shortcut should materialize");
+    assert_eq!(
+        shortcut.kind,
+        ExactBooleanResultKind::CertifiedShortcut {
+            operation: ExactBooleanOperation::Union,
+            shortcut: hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex
+        }
+    );
+    shortcut.validate().unwrap();
+    shortcut
+        .validate_against_sources(&horizontal, &vertical)
+        .unwrap();
+    shortcut
+        .validate_operation_against_sources(
+            &horizontal,
+            &vertical,
+            ExactBooleanOperation::Union,
+            ValidationPolicy::CLOSED,
+            ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+
+    let convex_left = tetra_from_corners([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]);
+    let convex_right = tetra_from_corners([1, 1, 1], [5, 1, 1], [1, 5, 1], [1, 1, 5]);
+    assert!(
+        materialize_arrangement_cell_complex_boolean(
+            &convex_left,
+            &convex_right,
+            ExactBooleanOperation::Intersection,
+            ValidationPolicy::CLOSED,
+        )
+        .unwrap()
+        .is_none()
+    );
+    assert!(
+        materialize_closed_convex_boolean(
+            &convex_left,
+            &convex_right,
+            ExactBooleanOperation::Intersection,
+            ValidationPolicy::CLOSED,
+        )
+        .unwrap()
+        .is_some()
     );
 }
 
