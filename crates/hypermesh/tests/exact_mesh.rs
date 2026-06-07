@@ -8,16 +8,17 @@ use hypermesh::{
     ExactArrangement2dRegion, ExactArrangement2dRegionRing, ExactArrangement2dSetOperation,
     ExactArrangementFreshness, ExactBooleanOperation, ExactBooleanResult, ExactBooleanResultKind,
     ExactBoundaryBooleanPolicy, ExactI64MeshInputReadiness, ExactLabeledCellComplexFreshness,
-    ExactMesh, ExactRegularizationPolicy, ExactReportFreshness, ExactSelectedCellComplexFreshness,
-    ExactSimplifiedCellComplexFreshness, ExactVolumetricRegionFreshness,
-    ExactVolumetricRegionRelation, FaceRegionPlaneRelation, FullFaceAdjacentUnionFreshness,
-    IntersectionGraphFreshness, MeshFacePairFreshness, MeshFacePairRelation,
-    MeshFacePairValidationError, SplitPlanFreshness, TriangleTriangleFreshness,
-    TriangleTriangleRelation, ValidationPolicy, WindingReportFreshness, boolean_exact,
-    boolean_exact_with_boundary_policy, build_exact_arrangement2d_overlay,
+    ExactMesh, ExactMeshProposalAcceptance, ExactMeshProposalSourceKind, ExactRegularizationPolicy,
+    ExactReportFreshness, ExactSelectedCellComplexFreshness, ExactSimplifiedCellComplexFreshness,
+    ExactVolumetricRegionFreshness, ExactVolumetricRegionRelation, FaceRegionPlaneRelation,
+    FullFaceAdjacentUnionFreshness, IntersectionGraphFreshness, MeshArtifactBlocker,
+    MeshArtifactManifest, MeshArtifactRole, MeshArtifactSourceKind, MeshCoordinateEvidence,
+    MeshFacePairFreshness, MeshFacePairRelation, MeshFacePairValidationError, SplitPlanFreshness,
+    TriangleTriangleFreshness, TriangleTriangleRelation, ValidationPolicy, WindingReportFreshness,
+    boolean_exact, boolean_exact_with_boundary_policy, build_exact_arrangement2d_overlay,
     build_exact_arrangement2d_overlay_with_boundary_policy, build_intersection_graph,
     certify_boundary_touching_report, certify_convex_solid,
-    certify_coplanar_volumetric_cell_evidence,
+    certify_coplanar_volumetric_cell_evidence, certify_exact_mesh_proposal,
     checked_classify_face_regions_against_opposite_planes,
     checked_triangulate_face_regions_with_earcut, classify_mesh_face_pair,
     classify_mesh_vertices_against_closed_mesh_winding_report,
@@ -38,7 +39,8 @@ use hypermesh::{
     materialize_full_face_adjacent_union, materialize_identical_mesh_boolean,
     materialize_mixed_dimensional_regularized_solid_boolean, materialize_open_surface_arrangement,
     materialize_open_surface_disjoint_boolean, materialize_same_surface_boolean,
-    materialize_volumetric_winding_arrangement, preflight_boolean_exact,
+    materialize_volumetric_winding_arrangement, mesh_artifact_from_exact_mesh,
+    mesh_artifact_from_exact_mesh_proposal, preflight_boolean_exact,
     preflight_boolean_exact_with_boundary_policy, triangulate_all_face_cells_with_cdt,
     validate_face_cell_cdt_against_sources,
 };
@@ -261,6 +263,89 @@ fn exact_mesh_construction_retains_valid_public_facts() {
     let readiness = report.readiness();
     assert_eq!(readiness, ExactI64MeshInputReadiness::Ready);
     assert!(report.edge_ready());
+}
+
+#[test]
+fn exact_mesh_proposal_and_artifact_reports_are_publicly_replayable() {
+    let exact = tetra([0, 0, 0]);
+    let proposal = certify_exact_mesh_proposal(&exact).unwrap();
+
+    proposal.validate().unwrap();
+    proposal.validate_against_mesh(&exact).unwrap();
+    assert_eq!(
+        proposal.source_kind,
+        ExactMeshProposalSourceKind::ExactConstruction
+    );
+    assert_eq!(
+        proposal.acceptance,
+        ExactMeshProposalAcceptance::ExactInputReplayed
+    );
+
+    let mut stale_proposal = proposal.clone();
+    stale_proposal.source_label.push_str(" stale");
+    assert!(stale_proposal.validate_against_mesh(&exact).is_err());
+
+    let artifact = mesh_artifact_from_exact_mesh(&exact).unwrap();
+    assert_eq!(artifact.source_kind, MeshArtifactSourceKind::HypermeshExact);
+    assert_eq!(artifact.role, MeshArtifactRole::SolidHandoff);
+    assert!(artifact.validation_handoff_ready, "{:?}", artifact.blockers);
+    assert!(artifact.blockers.is_empty());
+
+    let proposal_artifact = mesh_artifact_from_exact_mesh_proposal(&exact, &proposal).unwrap();
+    assert_eq!(proposal_artifact, artifact);
+
+    let lossy = ExactMesh::from_f64_triangles(
+        &[0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0],
+        &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
+    )
+    .unwrap();
+    let lossy_proposal = certify_exact_mesh_proposal(&lossy).unwrap();
+    lossy_proposal.validate_against_mesh(&lossy).unwrap();
+    assert_eq!(
+        lossy_proposal.source_kind,
+        ExactMeshProposalSourceKind::LossyPrimitiveFloatProposal
+    );
+    assert_eq!(
+        lossy_proposal.acceptance,
+        ExactMeshProposalAcceptance::ProposalAcceptedAfterExactReplay
+    );
+
+    let lossy_artifact = mesh_artifact_from_exact_mesh(&lossy).unwrap();
+    assert_eq!(
+        lossy_artifact.source_kind,
+        MeshArtifactSourceKind::HypermeshLossyF64Replay
+    );
+    assert!(lossy_artifact.validation_handoff_ready);
+    assert!(lossy_artifact.numeric_contract.primitive_float_lowering);
+    assert!(lossy_artifact.numeric_contract.lossy_adapter_route);
+    assert_eq!(
+        lossy_artifact.numeric_contract.coordinate_evidence,
+        MeshCoordinateEvidence::ExactDyadicFromLossyFloat
+    );
+
+    let preview = MeshArtifactManifest::sdf_surface_nets_preview("preview", 3, 1).report();
+    assert!(preview.preview_only);
+    assert!(!preview.validation_handoff_ready);
+    assert!(
+        preview
+            .blockers
+            .contains(&MeshArtifactBlocker::PreviewOrExportOnly)
+    );
+    assert!(
+        preview
+            .blockers
+            .contains(&MeshArtifactBlocker::PreviewOrExportSource)
+    );
+    assert!(
+        preview
+            .blockers
+            .contains(&MeshArtifactBlocker::MissingExactCoordinateReplay)
+    );
+    assert!(
+        preview
+            .blockers
+            .contains(&MeshArtifactBlocker::MissingExactTopologyReplay)
+    );
 }
 
 #[test]

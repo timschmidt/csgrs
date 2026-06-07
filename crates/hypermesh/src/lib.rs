@@ -93,6 +93,12 @@ pub use arrangement3d::{
     ArrangementVolumeAdjacency, ArrangementVolumeFaceSide, ArrangementVolumeRegion,
     ExactArrangement, ExactArrangement3d, ExactArrangementFreshness,
 };
+pub use artifact::{
+    MeshArtifactBlocker, MeshArtifactFaceRecord, MeshArtifactManifest, MeshArtifactReport,
+    MeshArtifactRole, MeshArtifactSourceKind, MeshArtifactVertexRecord, MeshCoordinateEvidence,
+    MeshNumericAdapterContract, MeshTopologyEvidence, mesh_artifact_from_exact_mesh,
+    mesh_artifact_from_exact_mesh_proposal,
+};
 pub use audit::{
     ExactMeshAuditError, ExactMeshAuditFreshness, ExactMeshAuditReport, audit_exact_mesh,
 };
@@ -182,6 +188,10 @@ pub use package::{
     ExactMeshConsumerDomain, ExactMeshDomainReportRef, ExactMeshDomainSummary,
     ExactMeshDomainSummaryError, ExactMeshDomainSummaryFreshness, ExactMeshHandoffPackage,
     ExactMeshHandoffPackageError, ExactMeshHandoffPackageFreshness, exact_mesh_handoff_package,
+};
+pub use proposal::{
+    ExactMeshProposalAcceptance, ExactMeshProposalReport, ExactMeshProposalReportError,
+    ExactMeshProposalSourceKind, certify_exact_mesh_proposal,
 };
 pub use readiness::{
     ExactMeshConsumerReadinessError, ExactMeshConsumerReadinessFreshness,
