@@ -105,7 +105,8 @@ pub use audit::{
 pub use boolean::{
     ExactArrangementBooleanAttempt, ExactArrangementBooleanDecline, ExactArrangementBooleanStage,
     ExactBooleanOperation, ExactBooleanPolicy, ExactBoundaryBooleanPolicy, boolean_exact,
-    boolean_exact_with_boundary_policy, boolean_selected_regions, certify_boundary_touching_report,
+    boolean_exact_with_boundary_policy, boolean_selected_regions,
+    certify_adjacent_union_completion_report, certify_boundary_touching_report,
     certify_open_surface_disjoint_report, certify_planar_arrangement_report,
     certify_refinement_report, certify_same_surface_report,
     certify_volumetric_boundary_closure_report, certify_winding_readiness_report,
@@ -209,11 +210,12 @@ pub use regularization::{
     ExactUnresolvedPolicy,
 };
 pub use reports::{
-    ExactBooleanBlocker, ExactBooleanBlockerKind, ExactBooleanPreflight, ExactBooleanResult,
-    ExactBooleanResultKind, ExactBooleanShortcutKind, ExactBooleanSupport,
-    ExactBoundaryTouchingReport, ExactBoundaryTouchingStatus, ExactOpenSurfaceDisjointReport,
-    ExactOpenSurfaceDisjointStatus, ExactPlanarArrangementReport, ExactPlanarArrangementStatus,
-    ExactRefinementReport, ExactRefinementStatus, ExactReportFreshness, ExactReportValidationError,
+    ExactAdjacentUnionCompletionReport, ExactAdjacentUnionCompletionStatus, ExactBooleanBlocker,
+    ExactBooleanBlockerKind, ExactBooleanPreflight, ExactBooleanResult, ExactBooleanResultKind,
+    ExactBooleanShortcutKind, ExactBooleanSupport, ExactBoundaryTouchingReport,
+    ExactBoundaryTouchingStatus, ExactOpenSurfaceDisjointReport, ExactOpenSurfaceDisjointStatus,
+    ExactPlanarArrangementReport, ExactPlanarArrangementStatus, ExactRefinementReport,
+    ExactRefinementStatus, ExactReportFreshness, ExactReportValidationError,
     ExactSameSurfaceReport, ExactSameSurfaceStatus, ExactVolumetricBoundaryClosureReport,
     ExactVolumetricBoundaryClosureStatus, ExactWindingReadinessReport, ExactWindingReadinessStatus,
 };

@@ -5,22 +5,23 @@ use hypermesh::{
     ContainedFaceAdjacentUnionFreshness, ConvexSolidMeshRelation, ConvexSolidPointRelation,
     ConvexSolidReportFreshness, CoplanarArrangementReadinessFreshness,
     CoplanarOverlapGraphFreshness, CoplanarOverlapSplitFreshness,
-    CoplanarVolumetricCellEvidenceFreshness, ExactArrangement, ExactArrangement2dBoundaryPolicy,
-    ExactArrangement2dRegion, ExactArrangement2dRegionRing, ExactArrangement2dSetOperation,
-    ExactArrangementFreshness, ExactBooleanOperation, ExactBooleanPolicy, ExactBooleanResult,
-    ExactBooleanResultKind, ExactBoundaryBooleanPolicy, ExactI64MeshInputReadiness,
-    ExactLabeledCellComplexFreshness, ExactMesh, ExactMeshConsumerDomain,
-    ExactMeshDomainSummaryFreshness, ExactMeshHandoffPackageFreshness, ExactMeshProposalAcceptance,
-    ExactMeshProposalSourceKind, ExactRegionSelection, ExactRegularizationPolicy,
-    ExactReportFreshness, ExactSelectedCellComplexFreshness, ExactSimplifiedCellComplexFreshness,
-    ExactVolumetricRegionFreshness, ExactVolumetricRegionRelation, FaceRegionPlaneRelation,
-    FullFaceAdjacentUnionFreshness, IntersectionGraphFreshness, MeshArtifactBlocker,
-    MeshArtifactManifest, MeshArtifactRole, MeshArtifactSourceKind, MeshCoordinateEvidence,
-    MeshFacePairFreshness, MeshFacePairRelation, MeshFacePairValidationError, SplitPlanFreshness,
-    TriangleTriangleFreshness, TriangleTriangleRelation, ValidationPolicy, WindingReportFreshness,
-    approximate_mesh_f64_view, boolean_exact, boolean_exact_with_boundary_policy,
-    boolean_selected_regions, build_exact_arrangement2d_overlay,
-    build_exact_arrangement2d_overlay_with_boundary_policy, build_intersection_graph,
+    CoplanarVolumetricCellEvidenceFreshness, ExactAdjacentUnionCompletionStatus, ExactArrangement,
+    ExactArrangement2dBoundaryPolicy, ExactArrangement2dRegion, ExactArrangement2dRegionRing,
+    ExactArrangement2dSetOperation, ExactArrangementFreshness, ExactBooleanOperation,
+    ExactBooleanPolicy, ExactBooleanResult, ExactBooleanResultKind, ExactBoundaryBooleanPolicy,
+    ExactI64MeshInputReadiness, ExactLabeledCellComplexFreshness, ExactMesh,
+    ExactMeshConsumerDomain, ExactMeshDomainSummaryFreshness, ExactMeshHandoffPackageFreshness,
+    ExactMeshProposalAcceptance, ExactMeshProposalSourceKind, ExactRegionSelection,
+    ExactRegularizationPolicy, ExactReportFreshness, ExactSelectedCellComplexFreshness,
+    ExactSimplifiedCellComplexFreshness, ExactVolumetricRegionFreshness,
+    ExactVolumetricRegionRelation, FaceRegionPlaneRelation, FullFaceAdjacentUnionFreshness,
+    IntersectionGraphFreshness, MeshArtifactBlocker, MeshArtifactManifest, MeshArtifactRole,
+    MeshArtifactSourceKind, MeshCoordinateEvidence, MeshFacePairFreshness, MeshFacePairRelation,
+    MeshFacePairValidationError, SplitPlanFreshness, TriangleTriangleFreshness,
+    TriangleTriangleRelation, ValidationPolicy, WindingReportFreshness, approximate_mesh_f64_view,
+    boolean_exact, boolean_exact_with_boundary_policy, boolean_selected_regions,
+    build_exact_arrangement2d_overlay, build_exact_arrangement2d_overlay_with_boundary_policy,
+    build_intersection_graph, certify_adjacent_union_completion_report,
     certify_boundary_touching_report, certify_convex_solid,
     certify_coplanar_volumetric_cell_evidence, certify_exact_mesh_proposal,
     checked_classify_face_regions_against_opposite_planes,
@@ -945,6 +946,27 @@ fn adjacent_union_completion_boolean_is_publicly_replayable() {
     let right = tetra_from_corners([0, 0, 0], [0, 4, 0], [4, 0, 0], [0, 0, -4]);
     let separated_right = tetra_from_corners([20, 0, 0], [24, 0, 0], [20, 4, 0], [20, 0, 4]);
 
+    let report =
+        certify_adjacent_union_completion_report(&left, &right, ExactBooleanOperation::Union)
+            .unwrap();
+    assert_eq!(
+        report.status,
+        ExactAdjacentUnionCompletionStatus::CertifiedFullFace
+    );
+    assert!(report.is_certified());
+    assert!(report.full_face_shared_faces + report.full_face_shared_patches > 0);
+    assert_eq!(report.contained_faces, 0);
+    report.validate().unwrap();
+    report.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(
+        report.freshness_against_sources(&left, &right),
+        ExactReportFreshness::Current
+    );
+    assert_eq!(
+        report.freshness_against_sources(&left, &separated_right),
+        ExactReportFreshness::SourceReplayMismatch
+    );
+
     let result = materialize_adjacent_union_completion_boolean(
         &left,
         &right,
@@ -991,6 +1013,18 @@ fn adjacent_union_completion_boolean_is_publicly_replayable() {
         .unwrap()
         .is_none()
     );
+    let intersection_report = certify_adjacent_union_completion_report(
+        &left,
+        &right,
+        ExactBooleanOperation::Intersection,
+    )
+    .unwrap();
+    assert_eq!(
+        intersection_report.status,
+        ExactAdjacentUnionCompletionStatus::NotUnion
+    );
+    assert!(!intersection_report.is_certified());
+    intersection_report.validate().unwrap();
     assert!(
         materialize_adjacent_union_completion_boolean(
             &axis_aligned_box([0, 0, 0], [1, 1, 1]),
@@ -1934,6 +1968,33 @@ fn exact_contained_face_adjacent_union_is_publicly_replayable() {
         &left,
         &disjoint_shell,
         "test disconnected contained-face fixture",
+    );
+    let completion_report =
+        certify_adjacent_union_completion_report(&container, &right, ExactBooleanOperation::Union)
+            .unwrap();
+    assert_eq!(
+        completion_report.status,
+        ExactAdjacentUnionCompletionStatus::CertifiedContainedFace
+    );
+    assert!(completion_report.is_certified());
+    assert_eq!(
+        completion_report.full_face_shared_faces + completion_report.full_face_shared_patches,
+        0
+    );
+    assert!(completion_report.contained_faces > 0);
+    assert!(completion_report.containing_faces > 0);
+    assert!(completion_report.contained_containing_side.is_some());
+    completion_report.validate().unwrap();
+    completion_report
+        .validate_against_sources(&container, &right)
+        .unwrap();
+    assert_eq!(
+        completion_report.freshness_against_sources(&container, &right),
+        ExactReportFreshness::Current
+    );
+    assert_eq!(
+        completion_report.freshness_against_sources(&container, &separated_right),
+        ExactReportFreshness::SourceReplayMismatch
     );
     let result = materialize_adjacent_union_completion_boolean(
         &container,

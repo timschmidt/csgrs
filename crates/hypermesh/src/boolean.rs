@@ -74,11 +74,12 @@ use super::regularization::{
     ExactArrangementBlocker, ExactRegularizationPolicy, ExactUnresolvedPolicy,
 };
 use super::reports::{
-    ExactBooleanBlocker, ExactBooleanBlockerKind, ExactBooleanPreflight, ExactBooleanResult,
-    ExactBooleanResultKind, ExactBooleanShortcutKind, ExactBooleanSupport,
-    ExactBoundaryTouchingReport, ExactBoundaryTouchingStatus, ExactOpenSurfaceDisjointReport,
-    ExactOpenSurfaceDisjointStatus, ExactPlanarArrangementReport, ExactPlanarArrangementStatus,
-    ExactRefinementReport, ExactRefinementStatus, ExactReportFreshness, ExactReportValidationError,
+    ExactAdjacentUnionCompletionReport, ExactAdjacentUnionCompletionStatus, ExactBooleanBlocker,
+    ExactBooleanBlockerKind, ExactBooleanPreflight, ExactBooleanResult, ExactBooleanResultKind,
+    ExactBooleanShortcutKind, ExactBooleanSupport, ExactBoundaryTouchingReport,
+    ExactBoundaryTouchingStatus, ExactOpenSurfaceDisjointReport, ExactOpenSurfaceDisjointStatus,
+    ExactPlanarArrangementReport, ExactPlanarArrangementStatus, ExactRefinementReport,
+    ExactRefinementStatus, ExactReportFreshness, ExactReportValidationError,
     ExactSameSurfaceReport, ExactSameSurfaceStatus, ExactVolumetricBoundaryClosureReport,
     ExactVolumetricBoundaryClosureStatus, ExactWindingReadinessReport, ExactWindingReadinessStatus,
 };
@@ -3066,6 +3067,270 @@ fn boolean_arrangement_adjacency_union_completion(
     }
 
     Ok(None)
+}
+
+fn adjacent_union_completion_blocker_kind(
+    status: &ExactAdjacentUnionCompletionStatus,
+    counts: GraphRelationCounts,
+) -> ExactBooleanBlockerKind {
+    if matches!(status, ExactAdjacentUnionCompletionStatus::GraphUnresolved) {
+        ExactBooleanBlockerKind::NeedsRefinement
+    } else if counts.candidate_pairs
+        + counts.coplanar_touching_pairs
+        + counts.coplanar_overlapping_pairs
+        > 0
+    {
+        ExactBooleanBlockerKind::NeedsBoundaryPolicy
+    } else {
+        ExactBooleanBlockerKind::NeedsWinding
+    }
+}
+
+fn adjacent_union_completion_report(
+    operation: ExactBooleanOperation,
+    status: ExactAdjacentUnionCompletionStatus,
+    left_closed: bool,
+    right_closed: bool,
+    axis_aligned_box_pair: bool,
+    stronger_kernel_available: bool,
+    graph_had_unknowns: bool,
+    retained_face_pairs: usize,
+    retained_events: usize,
+    counts: GraphRelationCounts,
+    full_face_shared_faces: usize,
+    full_face_shared_patches: usize,
+    contained_containing_side: Option<MeshSide>,
+    contained_faces: usize,
+    containing_faces: usize,
+) -> ExactAdjacentUnionCompletionReport {
+    let blocker_kind = adjacent_union_completion_blocker_kind(&status, counts);
+    ExactAdjacentUnionCompletionReport {
+        operation,
+        status,
+        left_closed,
+        right_closed,
+        axis_aligned_box_pair,
+        stronger_kernel_available,
+        graph_had_unknowns,
+        retained_face_pairs,
+        retained_events,
+        blocker: counts.into_blocker(blocker_kind),
+        full_face_shared_faces,
+        full_face_shared_patches,
+        contained_containing_side,
+        contained_faces,
+        containing_faces,
+    }
+}
+
+/// Certify whether adjacent closed-solid union completion can materialize.
+///
+/// This is the report form of [`materialize_adjacent_union_completion_boolean`].
+/// It follows the same dispatcher precedence, preserving stronger-kernel
+/// handoff decisions while retaining exact graph counts and consumed
+/// adjacency topology for certified full-face and contained-face completions.
+pub fn certify_adjacent_union_completion_report(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+) -> Result<ExactAdjacentUnionCompletionReport, MeshError> {
+    let left_closed = left.facts().mesh.closed_manifold;
+    let right_closed = right.facts().mesh.closed_manifold;
+    if operation != ExactBooleanOperation::Union {
+        return Ok(adjacent_union_completion_report(
+            operation,
+            ExactAdjacentUnionCompletionStatus::NotUnion,
+            left_closed,
+            right_closed,
+            false,
+            false,
+            false,
+            0,
+            0,
+            GraphRelationCounts::default(),
+            0,
+            0,
+            None,
+            0,
+            0,
+        ));
+    }
+    if !left_closed || !right_closed {
+        return Ok(adjacent_union_completion_report(
+            operation,
+            ExactAdjacentUnionCompletionStatus::NotClosedSolid,
+            left_closed,
+            right_closed,
+            false,
+            false,
+            false,
+            0,
+            0,
+            GraphRelationCounts::default(),
+            0,
+            0,
+            None,
+            0,
+            0,
+        ));
+    }
+    let axis_aligned_box_pair = both_axis_aligned_boxes(left, right);
+    if axis_aligned_box_pair {
+        return Ok(adjacent_union_completion_report(
+            operation,
+            ExactAdjacentUnionCompletionStatus::AxisAlignedBoxPair,
+            left_closed,
+            right_closed,
+            true,
+            false,
+            false,
+            0,
+            0,
+            GraphRelationCounts::default(),
+            0,
+            0,
+            None,
+            0,
+            0,
+        ));
+    }
+    if certified_convex_materialized_boolean_support(left, right, operation).is_some() {
+        return Ok(adjacent_union_completion_report(
+            operation,
+            ExactAdjacentUnionCompletionStatus::StrongerKernelAvailable,
+            left_closed,
+            right_closed,
+            false,
+            true,
+            false,
+            0,
+            0,
+            GraphRelationCounts::default(),
+            0,
+            0,
+            None,
+            0,
+            0,
+        ));
+    }
+
+    let graph = build_intersection_graph(left, right)?;
+    validate_graph_source_handoff(&graph, left, right)?;
+    let graph_had_unknowns = graph.has_unknowns();
+    let retained_face_pairs = graph.face_pairs.len();
+    let retained_events = graph.event_count();
+    let counts = graph_relation_counts(&graph);
+    if graph_had_unknowns || counts.construction_failed_events != 0 {
+        return Ok(adjacent_union_completion_report(
+            operation,
+            ExactAdjacentUnionCompletionStatus::GraphUnresolved,
+            left_closed,
+            right_closed,
+            false,
+            false,
+            graph_had_unknowns,
+            retained_face_pairs,
+            retained_events,
+            counts,
+            0,
+            0,
+            None,
+            0,
+            0,
+        ));
+    }
+
+    if let Some(certificate) = full_face_adjacent_certificate(left, right)
+        && let Some(union) = materialize_full_face_adjacent_union_from_certificate(
+            left,
+            right,
+            &certificate,
+            ValidationPolicy::CLOSED,
+        )
+    {
+        return Ok(adjacent_union_completion_report(
+            operation,
+            ExactAdjacentUnionCompletionStatus::CertifiedFullFace,
+            left_closed,
+            right_closed,
+            false,
+            false,
+            graph_had_unknowns,
+            retained_face_pairs,
+            retained_events,
+            counts,
+            union.shared_faces.len(),
+            union.shared_patches.len(),
+            None,
+            0,
+            0,
+        ));
+    }
+
+    if contained_face_adjacency_should_yield_to_stronger_kernel(left, right, operation) {
+        return Ok(adjacent_union_completion_report(
+            operation,
+            ExactAdjacentUnionCompletionStatus::StrongerKernelAvailable,
+            left_closed,
+            right_closed,
+            false,
+            true,
+            graph_had_unknowns,
+            retained_face_pairs,
+            retained_events,
+            counts,
+            0,
+            0,
+            None,
+            0,
+            0,
+        ));
+    }
+
+    if let Some(certificate) = contained_face_adjacent_certificate(left, right)
+        && let Some(union) = materialize_contained_face_adjacent_union_from_certificate(
+            left,
+            right,
+            &certificate,
+            ValidationPolicy::CLOSED,
+        )
+    {
+        return Ok(adjacent_union_completion_report(
+            operation,
+            ExactAdjacentUnionCompletionStatus::CertifiedContainedFace,
+            left_closed,
+            right_closed,
+            false,
+            false,
+            graph_had_unknowns,
+            retained_face_pairs,
+            retained_events,
+            counts,
+            0,
+            0,
+            Some(union.containing_side),
+            union.contained_faces.len(),
+            union.containing_faces.len(),
+        ));
+    }
+
+    Ok(adjacent_union_completion_report(
+        operation,
+        ExactAdjacentUnionCompletionStatus::NoAdjacencyCertificate,
+        left_closed,
+        right_closed,
+        false,
+        false,
+        graph_had_unknowns,
+        retained_face_pairs,
+        retained_events,
+        counts,
+        0,
+        0,
+        None,
+        0,
+        0,
+    ))
 }
 
 /// Certify and materialize a union for adjacent closed solids that complete by

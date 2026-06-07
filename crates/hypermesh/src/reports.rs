@@ -13,8 +13,9 @@ use std::cmp::Ordering;
 use super::ExactMesh;
 use super::boolean::{
     ExactBooleanOperation, ExactBoundaryBooleanPolicy, boolean_exact_with_boundary_policy,
-    certify_boundary_touching_report, certify_open_surface_disjoint_report,
-    certify_planar_arrangement_report, certify_refinement_report, certify_same_surface_report,
+    certify_adjacent_union_completion_report, certify_boundary_touching_report,
+    certify_open_surface_disjoint_report, certify_planar_arrangement_report,
+    certify_refinement_report, certify_same_surface_report,
     certify_volumetric_boundary_closure_report, certify_winding_readiness_report,
     materialize_adjacent_union_completion_boolean, materialize_closed_same_surface_boolean,
     preflight_boolean_exact, preflight_boolean_exact_with_boundary_policy,
@@ -3204,6 +3205,247 @@ pub struct ExactBoundaryTouchingReport {
     pub retained_events: usize,
     /// Relation counts for retained face pairs.
     pub blocker: ExactBooleanBlocker,
+}
+
+/// Certification status for closed-solid adjacent union completion.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum ExactAdjacentUnionCompletionStatus {
+    /// The requested operation is not union, so this completion path cannot
+    /// apply.
+    NotUnion,
+    /// At least one source mesh is not a closed manifold.
+    NotClosedSolid,
+    /// The operands are axis-aligned boxes handled by a stronger orthogonal
+    /// solid certificate.
+    AxisAlignedBoxPair,
+    /// Another exact materializer owns dispatcher provenance for this case.
+    StrongerKernelAvailable,
+    /// Exact graph extraction retained unresolved or failed construction
+    /// evidence.
+    GraphUnresolved,
+    /// No supported full-face or contained-face adjacency certificate replayed
+    /// from these sources.
+    NoAdjacencyCertificate,
+    /// A full-face or full-patch adjacency certificate replays and can
+    /// materialize the union.
+    CertifiedFullFace,
+    /// A contained-face adjacency certificate replays and can materialize the
+    /// union.
+    CertifiedContainedFace,
+}
+
+/// Auditable report for adjacent closed-solid union completion.
+///
+/// This report is the decision certificate for the boolean wrapper around the
+/// full-face and contained-face adjacency union artifacts. It retains exact
+/// graph counts plus the public consumed topology counts, while
+/// [`Self::validate_against_sources`] recomputes the private adjacency
+/// certificates to prove the report still belongs to the supplied sources.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ExactAdjacentUnionCompletionReport {
+    /// Requested named operation.
+    pub operation: ExactBooleanOperation,
+    /// Coarse certification status.
+    pub status: ExactAdjacentUnionCompletionStatus,
+    /// Whether the left source mesh was a closed manifold.
+    pub left_closed: bool,
+    /// Whether the right source mesh was a closed manifold.
+    pub right_closed: bool,
+    /// Whether the stronger axis-aligned box path owns this pair.
+    pub axis_aligned_box_pair: bool,
+    /// Whether another exact kernel should materialize this union first.
+    pub stronger_kernel_available: bool,
+    /// Whether graph extraction retained unknown events.
+    pub graph_had_unknowns: bool,
+    /// Retained face-pair records after exact scheduling.
+    pub retained_face_pairs: usize,
+    /// Total retained event records.
+    pub retained_events: usize,
+    /// Relation counts for retained face pairs.
+    pub blocker: ExactBooleanBlocker,
+    /// Count of exact whole-face pairs consumed by full-face completion.
+    pub full_face_shared_faces: usize,
+    /// Count of exact source-owned full patches consumed by full-face
+    /// completion.
+    pub full_face_shared_patches: usize,
+    /// Source side whose faces contain the opposite caps for contained-face
+    /// completion.
+    pub contained_containing_side: Option<MeshSide>,
+    /// Count of opposite-source faces removed by contained-face completion.
+    pub contained_faces: usize,
+    /// Count of source faces replaced by holed remnants in contained-face
+    /// completion.
+    pub containing_faces: usize,
+}
+
+impl ExactAdjacentUnionCompletionReport {
+    /// Return whether adjacent union completion was certified.
+    pub const fn is_certified(&self) -> bool {
+        matches!(
+            self.status,
+            ExactAdjacentUnionCompletionStatus::CertifiedFullFace
+                | ExactAdjacentUnionCompletionStatus::CertifiedContainedFace
+        )
+    }
+
+    /// Validate status, graph counts, and consumed topology counts.
+    pub fn validate(&self) -> Result<(), ExactReportValidationError> {
+        if matches!(
+            self.status,
+            ExactAdjacentUnionCompletionStatus::GraphUnresolved
+        ) && !self.graph_had_unknowns
+            && self.blocker.construction_failed_events == 0
+        {
+            return Err(ExactReportValidationError::GraphUnknownStatusMismatch);
+        }
+        if !matches!(
+            self.status,
+            ExactAdjacentUnionCompletionStatus::GraphUnresolved
+        ) && (self.graph_had_unknowns || self.blocker.construction_failed_events != 0)
+        {
+            return Err(ExactReportValidationError::GraphUnknownStatusMismatch);
+        }
+        self.blocker.validate_for_kind(self.blocker.kind)?;
+        validate_refinement_partition(
+            matches!(
+                self.status,
+                ExactAdjacentUnionCompletionStatus::GraphUnresolved
+            ),
+            &self.blocker,
+        )?;
+        validate_blocker_count_bounds(
+            &self.blocker,
+            self.retained_face_pairs,
+            self.retained_events,
+        )?;
+
+        let full_face_counts = self.full_face_shared_faces + self.full_face_shared_patches;
+        let contained_counts = self.contained_faces + self.containing_faces;
+        match self.status {
+            ExactAdjacentUnionCompletionStatus::NotUnion => {
+                if matches!(self.operation, ExactBooleanOperation::Union) {
+                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                }
+            }
+            ExactAdjacentUnionCompletionStatus::NotClosedSolid => {
+                if self.operation != ExactBooleanOperation::Union
+                    || (self.left_closed && self.right_closed)
+                {
+                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                }
+            }
+            ExactAdjacentUnionCompletionStatus::AxisAlignedBoxPair => {
+                if self.operation != ExactBooleanOperation::Union
+                    || !self.left_closed
+                    || !self.right_closed
+                    || !self.axis_aligned_box_pair
+                {
+                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                }
+            }
+            ExactAdjacentUnionCompletionStatus::StrongerKernelAvailable => {
+                if self.operation != ExactBooleanOperation::Union
+                    || !self.left_closed
+                    || !self.right_closed
+                    || self.axis_aligned_box_pair
+                    || !self.stronger_kernel_available
+                {
+                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                }
+            }
+            ExactAdjacentUnionCompletionStatus::GraphUnresolved => {
+                if self.operation != ExactBooleanOperation::Union
+                    || !self.left_closed
+                    || !self.right_closed
+                    || self.axis_aligned_box_pair
+                    || self.stronger_kernel_available
+                {
+                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                }
+            }
+            ExactAdjacentUnionCompletionStatus::NoAdjacencyCertificate => {
+                if self.operation != ExactBooleanOperation::Union
+                    || !self.left_closed
+                    || !self.right_closed
+                    || self.axis_aligned_box_pair
+                    || self.stronger_kernel_available
+                {
+                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                }
+            }
+            ExactAdjacentUnionCompletionStatus::CertifiedFullFace => {
+                if self.operation != ExactBooleanOperation::Union
+                    || !self.left_closed
+                    || !self.right_closed
+                    || self.axis_aligned_box_pair
+                    || self.stronger_kernel_available
+                    || full_face_counts == 0
+                    || contained_counts != 0
+                    || self.contained_containing_side.is_some()
+                {
+                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                }
+                self.blocker
+                    .validate_for_kind(ExactBooleanBlockerKind::NeedsBoundaryPolicy)?;
+            }
+            ExactAdjacentUnionCompletionStatus::CertifiedContainedFace => {
+                if self.operation != ExactBooleanOperation::Union
+                    || !self.left_closed
+                    || !self.right_closed
+                    || self.axis_aligned_box_pair
+                    || self.stronger_kernel_available
+                    || full_face_counts != 0
+                    || self.contained_faces == 0
+                    || self.containing_faces == 0
+                    || self.contained_containing_side.is_none()
+                {
+                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                }
+                self.blocker
+                    .validate_for_kind(ExactBooleanBlockerKind::NeedsBoundaryPolicy)?;
+            }
+        }
+        if !self.is_certified()
+            && (full_face_counts != 0
+                || contained_counts != 0
+                || self.contained_containing_side.is_some())
+        {
+            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+        }
+        Ok(())
+    }
+
+    /// Validate this report by replaying adjacency completion from source
+    /// operands.
+    pub fn validate_against_sources(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> Result<(), ExactReportValidationError> {
+        self.validate()?;
+        let replay = certify_adjacent_union_completion_report(left, right, self.operation)
+            .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+        if self == &replay {
+            Ok(())
+        } else {
+            Err(ExactReportValidationError::SourceReplayMismatch)
+        }
+    }
+
+    /// Classify whether this retained report is fresh for the source operands.
+    pub fn freshness_against_sources(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> ExactReportFreshness {
+        if let Err(error) = self.validate() {
+            return error.into();
+        }
+        match certify_adjacent_union_completion_report(left, right, self.operation) {
+            Ok(replay) if self == &replay => ExactReportFreshness::Current,
+            Ok(_) | Err(_) => ExactReportFreshness::SourceReplayMismatch,
+        }
+    }
 }
 
 impl ExactBoundaryTouchingReport {
