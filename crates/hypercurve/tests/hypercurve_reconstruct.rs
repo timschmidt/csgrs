@@ -249,6 +249,36 @@ fn finite_ring_import_accepts_unrepeated_closed_edge_accounting() {
 }
 
 #[test]
+fn finite_ring_import_discards_adjacent_duplicate_source_edges() {
+    let import = Contour2::import_finite_ring_with_source(
+        &[[0.0, 0.0], [0.0, 0.0], [4.0, 0.0], [4.0, 3.0], [0.0, 0.0]],
+        FillRule::NonZero,
+        RetainedImportFormat2::Dxf,
+        0xbeef,
+        None,
+    )
+    .unwrap();
+    let record = import.record();
+
+    assert_eq!(import.contour().len(), 3);
+    assert_eq!(record.input_point_count(), 5);
+    assert_eq!(record.emitted_segment_count(), 3);
+    assert_eq!(record.discarded_duplicate_count(), 2);
+    assert_eq!(
+        record.source_topology(),
+        RetainedImportTopology2::ClosedRing
+    );
+}
+
+#[test]
+fn finite_ring_import_rejects_all_duplicate_source_edges() {
+    assert_eq!(
+        Contour2::import_finite_ring(&[[0.0, 0.0], [0.0, 0.0], [0.0, 0.0]]).unwrap_err(),
+        CurveError::InsufficientVertices
+    );
+}
+
+#[test]
 fn source_tolerance_rejects_nonfinite_or_negative_values() {
     assert_eq!(
         RetainedSourceTolerance2::try_new(f64::NAN, 0.0).unwrap_err(),

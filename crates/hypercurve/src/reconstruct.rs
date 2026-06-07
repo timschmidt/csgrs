@@ -412,9 +412,10 @@ impl Contour2 {
 
     /// Imports a closed finite ring with retained source metadata.
     ///
-    /// A repeated closing point is counted as discarded source metadata in the
-    /// retained record. It is not allowed to become a zero-length native edge,
-    /// matching the exact-object boundary described by Yap.
+    /// Repeated finite source points, including a repeated closing point, are
+    /// counted as discarded source-edge metadata in the retained record. They
+    /// are not allowed to become zero-length native edges, matching the
+    /// exact-object boundary described by Yap.
     pub fn import_finite_ring_with_source(
         points: &[[f64; 2]],
         fill_rule: FillRule,
@@ -426,28 +427,8 @@ impl Contour2 {
             return Err(CurveError::InsufficientVertices);
         }
 
-        let repeated_closing_point = points.len() > 1 && points.first() == points.last();
-        let end = if repeated_closing_point {
-            points.len() - 1
-        } else {
-            points.len()
-        };
-        if end < 3 {
-            return Err(CurveError::InsufficientVertices);
-        }
-
-        let vertices = points
-            .iter()
-            .take(end)
-            .map(|point| {
-                Ok(BulgeVertex2::new(
-                    point_from_finite_xy(*point)?,
-                    Real::zero(),
-                ))
-            })
-            .collect::<CurveResult<Vec<_>>>()?;
+        let (vertices, discarded_duplicate_count) = finite_ring_vertices(points)?;
         let contour = Self::from_bulge_vertices_with_fill_rule(&vertices, fill_rule)?;
-        let discarded_duplicate_count = usize::from(repeated_closing_point);
         let record = RetainedImportRecord2::try_new_closed_ring(
             format,
             source_index,
@@ -495,6 +476,50 @@ impl Contour2 {
         let curve = CurveString2::reconstruct_from_polyline(&closed_points, options)?;
         Self::try_new_with_fill_rule(curve.into_segments(), fill_rule)
     }
+}
+
+fn finite_ring_vertices(points: &[[f64; 2]]) -> CurveResult<(Vec<BulgeVertex2>, usize)> {
+    let source_points = points
+        .iter()
+        .map(|point| point_from_finite_xy(*point))
+        .collect::<CurveResult<Vec<_>>>()?;
+    let discarded_duplicate_count = cyclic_duplicate_edge_count(&source_points);
+
+    let mut unique_points: Vec<Point2> = Vec::with_capacity(source_points.len());
+    for point in source_points {
+        if unique_points
+            .last()
+            .is_some_and(|previous| previous == &point)
+        {
+            continue;
+        }
+        unique_points.push(point);
+    }
+    if unique_points.len() > 1 && unique_points.first() == unique_points.last() {
+        unique_points.pop();
+    }
+    if unique_points.len() < 3 {
+        return Err(CurveError::InsufficientVertices);
+    }
+
+    let vertices = unique_points
+        .into_iter()
+        .map(|point| BulgeVertex2::new(point, Real::zero()))
+        .collect();
+    Ok((vertices, discarded_duplicate_count))
+}
+
+fn cyclic_duplicate_edge_count(points: &[Point2]) -> usize {
+    if points.is_empty() {
+        return 0;
+    }
+
+    points
+        .iter()
+        .zip(points.iter().cycle().skip(1))
+        .take(points.len())
+        .filter(|(start, end)| crate::LineSeg2::try_new((*start).clone(), (*end).clone()).is_err())
+        .count()
 }
 
 #[derive(Clone, Debug)]
