@@ -3180,16 +3180,15 @@ fn adjacent_union_completion_blocker_kind(
     status: &ExactAdjacentUnionCompletionStatus,
     counts: GraphRelationCounts,
 ) -> ExactBooleanBlockerKind {
-    if matches!(status, ExactAdjacentUnionCompletionStatus::GraphUnresolved) {
-        ExactBooleanBlockerKind::NeedsRefinement
-    } else if counts.candidate_pairs
-        + counts.coplanar_touching_pairs
-        + counts.coplanar_overlapping_pairs
-        > 0
-    {
-        ExactBooleanBlockerKind::NeedsBoundaryPolicy
-    } else {
-        ExactBooleanBlockerKind::NeedsWinding
+    match status {
+        ExactAdjacentUnionCompletionStatus::GraphUnresolved => {
+            ExactBooleanBlockerKind::NeedsRefinement
+        }
+        ExactAdjacentUnionCompletionStatus::CertifiedFullFace
+        | ExactAdjacentUnionCompletionStatus::CertifiedContainedFace => {
+            ExactBooleanBlockerKind::NeedsBoundaryPolicy
+        }
+        _ => retained_graph_blocker_kind(counts),
     }
 }
 

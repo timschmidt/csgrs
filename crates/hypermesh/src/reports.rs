@@ -3466,7 +3466,20 @@ impl ExactAdjacentUnionCompletionReport {
         {
             return Err(ExactReportValidationError::GraphUnknownStatusMismatch);
         }
-        self.blocker.validate_for_kind(self.blocker.kind)?;
+        let expected_kind = match self.status {
+            ExactAdjacentUnionCompletionStatus::GraphUnresolved => {
+                ExactBooleanBlockerKind::NeedsRefinement
+            }
+            ExactAdjacentUnionCompletionStatus::CertifiedFullFace
+            | ExactAdjacentUnionCompletionStatus::CertifiedContainedFace => {
+                ExactBooleanBlockerKind::NeedsBoundaryPolicy
+            }
+            _ => retained_blocker_kind_from_counts(&self.blocker),
+        };
+        if self.blocker.kind != expected_kind {
+            return Err(ExactReportValidationError::WrongBlockerKind);
+        }
+        self.blocker.validate_for_kind(expected_kind)?;
         validate_refinement_partition(
             matches!(
                 self.status,

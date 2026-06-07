@@ -1145,6 +1145,31 @@ fn adjacent_union_completion_boolean_is_publicly_replayable() {
         .unwrap()
         .is_none()
     );
+
+    let crossing_right = tetra_from_corners([1, 1, -1], [5, 1, -1], [1, 5, -1], [1, 1, 3]);
+    let crossing_report = certify_adjacent_union_completion_report(
+        &left,
+        &crossing_right,
+        ExactBooleanOperation::Union,
+    )
+    .unwrap();
+    assert_eq!(
+        crossing_report.status,
+        ExactAdjacentUnionCompletionStatus::NoAdjacencyCertificate
+    );
+    assert_eq!(
+        crossing_report.blocker.kind,
+        ExactBooleanBlockerKind::NeedsWinding
+    );
+    assert!(crossing_report.blocker.candidate_pairs > 0);
+    crossing_report.validate().unwrap();
+    crossing_report
+        .validate_against_sources(&left, &crossing_right)
+        .unwrap();
+
+    let mut stale_crossing = crossing_report;
+    stale_crossing.blocker.kind = ExactBooleanBlockerKind::NeedsBoundaryPolicy;
+    assert!(stale_crossing.validate().is_err());
 }
 
 #[test]
