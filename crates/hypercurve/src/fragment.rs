@@ -12,7 +12,9 @@ use std::cmp::Ordering;
 
 use hyperreal::Real;
 
-use crate::classify::{compare_reals_for_split_ordering, in_closed_unit_interval, is_zero};
+use crate::classify::{
+    compare_reals, compare_reals_for_split_ordering, in_closed_unit_interval, is_zero,
+};
 use crate::{
     CircularArc2, Classification, Contour2, ContourSplitMarkers, CurveError, CurvePolicy,
     CurveResult, LineSeg2, NumericMode, ParamRange, Segment2, SegmentSplitMarker,
@@ -55,6 +57,10 @@ impl ContourFragmentSet {
     ) -> CurveResult<Classification<Self>> {
         if contour.len() != markers.segment_count() {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        }
+        match validate_split_markers_against_contour(contour, markers, policy)? {
+            Classification::Decided(()) => {}
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         }
 
         let mut fragments = Vec::new();
@@ -196,6 +202,154 @@ fn validate_contour_fragment_source_ranges_disjoint(
         ));
     }
     Ok(())
+}
+
+fn validate_split_markers_against_contour(
+    contour: &Contour2,
+    markers: &ContourSplitMarkers,
+    policy: &CurvePolicy,
+) -> CurveResult<Classification<()>> {
+    for (segment_index, source_segment) in contour.segments().iter().enumerate() {
+        let Some(segment_markers) = markers.markers_for_segment(segment_index) else {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        };
+        for marker in segment_markers {
+            if marker.segment_index != segment_index {
+                return Err(CurveError::Topology(
+                    "contour split marker references a different source segment".into(),
+                ));
+            }
+            match split_marker_matches_source_segment(source_segment, marker, policy)? {
+                Classification::Decided(()) => {}
+                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+            }
+        }
+    }
+    Ok(Classification::Decided(()))
+}
+
+fn split_marker_matches_source_segment(
+    source_segment: &Segment2,
+    marker: &SegmentSplitMarker,
+    policy: &CurvePolicy,
+) -> CurveResult<Classification<()>> {
+    match source_segment {
+        Segment2::Line(line) => {
+            let expected = line.point_at(marker.param.clone());
+            let distance = marker.point.distance_squared(&expected);
+            match point_distance_is_zero(&distance, &marker.point, &expected, policy) {
+                Some(true) => Ok(Classification::Decided(())),
+                Some(false) if matches!(policy.numeric_mode, NumericMode::EdgePreview) => {
+                    Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
+                }
+                Some(false) => Err(CurveError::Topology(
+                    "contour split marker point does not match source line parameter".into(),
+                )),
+                None => Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+            }
+        }
+        Segment2::Arc(arc) => split_marker_matches_source_arc(arc, marker, policy),
+    }
+}
+
+fn point_distance_is_zero(
+    distance_squared: &Real,
+    left: &crate::Point2,
+    right: &crate::Point2,
+    policy: &CurvePolicy,
+) -> Option<bool> {
+    if is_zero(distance_squared, policy) == Some(true) {
+        return Some(true);
+    }
+
+    if matches!(policy.numeric_mode, NumericMode::EdgePreview)
+        && let (Some(distance_squared), Some(left_scale), Some(right_scale)) = (
+            distance_squared.to_f64_lossy(),
+            point_coordinate_scale(left),
+            point_coordinate_scale(right),
+        )
+        && distance_squared.is_finite()
+    {
+        let (absolute, relative) = policy
+            .tolerance
+            .map(|tolerance| (tolerance.absolute, tolerance.relative))
+            .unwrap_or((1e-12, 1e-12));
+        let scale = left_scale.max(right_scale).max(1.0);
+        let tolerance = absolute.max(relative * scale);
+        return Some(distance_squared <= tolerance * tolerance);
+    }
+
+    is_zero(distance_squared, policy)
+}
+
+fn point_coordinate_scale(point: &crate::Point2) -> Option<f64> {
+    let x = point.x().to_f64_lossy()?;
+    let y = point.y().to_f64_lossy()?;
+    if x.is_finite() && y.is_finite() {
+        Some(x.abs().max(y.abs()))
+    } else {
+        None
+    }
+}
+
+fn split_marker_matches_source_arc(
+    source_arc: &CircularArc2,
+    marker: &SegmentSplitMarker,
+    policy: &CurvePolicy,
+) -> CurveResult<Classification<()>> {
+    let radius_squared = source_arc.radius_squared();
+    let radius_delta = marker.point.distance_squared(source_arc.center()) - &radius_squared;
+    match radius_delta_is_zero(&radius_delta, &radius_squared, policy) {
+        Some(true) => {}
+        Some(false) if matches!(policy.numeric_mode, NumericMode::EdgePreview) => {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        }
+        Some(false) => {
+            return Err(CurveError::Topology(
+                "contour split marker point does not lie on source arc circle".into(),
+            ));
+        }
+        None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+    }
+
+    match source_arc.contains_sweep_point(&marker.point, policy) {
+        Classification::Decided(true) => {}
+        Classification::Decided(false)
+            if matches!(policy.numeric_mode, NumericMode::EdgePreview) =>
+        {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        }
+        Classification::Decided(false) => {
+            return Err(CurveError::Topology(
+                "contour split marker point does not lie on source arc sweep".into(),
+            ));
+        }
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    }
+
+    let expected_param = segment_chord_param(source_arc.start(), source_arc.end(), &marker.point)?;
+    match compare_reals(&marker.param, &expected_param, policy) {
+        Some(Ordering::Equal) => Ok(Classification::Decided(())),
+        Some(_) if matches!(policy.numeric_mode, NumericMode::EdgePreview) => {
+            Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
+        }
+        Some(_) => Err(CurveError::Topology(
+            "contour split marker parameter does not match source arc chord evidence".into(),
+        )),
+        None => Ok(Classification::Uncertain(UncertaintyReason::Ordering)),
+    }
+}
+
+fn segment_chord_param(
+    start: &crate::Point2,
+    end: &crate::Point2,
+    point: &crate::Point2,
+) -> CurveResult<Real> {
+    let (dx, dy) = end.delta_from(start);
+    let (px, py) = point.delta_from(start);
+    let numerator = (&px * &dx) + (&py * &dy);
+    let denominator = (&dx * &dx) + (&dy * &dy);
+    (numerator / denominator).map_err(Into::into)
 }
 
 pub(crate) fn split_contour_at_intersections(

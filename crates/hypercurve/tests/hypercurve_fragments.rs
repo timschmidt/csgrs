@@ -139,6 +139,73 @@ fn contour_split_rejects_events_outside_supplied_contour() {
 }
 
 #[test]
+fn contour_fragments_reject_forged_line_split_marker_geometry() {
+    let contour = rectangle(0, 0, 4, 4);
+    let markers = ContourSplitMarkers::new(vec![
+        vec![
+            SegmentSplitMarker {
+                segment_index: 0,
+                param: s(0),
+                point: p(0, 0),
+            },
+            SegmentSplitMarker {
+                segment_index: 0,
+                param: q(1, 2),
+                point: p(2, 1),
+            },
+            SegmentSplitMarker {
+                segment_index: 0,
+                param: s(1),
+                point: p(4, 0),
+            },
+        ],
+        vec![
+            SegmentSplitMarker {
+                segment_index: 1,
+                param: s(0),
+                point: p(4, 0),
+            },
+            SegmentSplitMarker {
+                segment_index: 1,
+                param: s(1),
+                point: p(4, 4),
+            },
+        ],
+        vec![
+            SegmentSplitMarker {
+                segment_index: 2,
+                param: s(0),
+                point: p(4, 4),
+            },
+            SegmentSplitMarker {
+                segment_index: 2,
+                param: s(1),
+                point: p(0, 4),
+            },
+        ],
+        vec![
+            SegmentSplitMarker {
+                segment_index: 3,
+                param: s(0),
+                point: p(0, 4),
+            },
+            SegmentSplitMarker {
+                segment_index: 3,
+                param: s(1),
+                point: p(0, 0),
+            },
+        ],
+    ])
+    .unwrap();
+
+    assert_topology_error(ContourFragmentSet::from_split_markers(
+        &contour,
+        &markers,
+        &policy(),
+    ));
+}
+
+#[test]
 fn contour_fragment_set_constructor_validates_source_ranges() {
     let base = ContourFragment {
         source_segment_index: 0,
@@ -225,6 +292,49 @@ fn contour_fragments_split_arc_segments_at_event_points() {
     assert_arc(&fragments.fragments()[1].segment, p(1, -1), p(2, 0));
     assert_arc(&fragments.fragments()[2].segment, p(2, 0), p(1, 1));
     assert_arc(&fragments.fragments()[3].segment, p(1, 1), p(0, 0));
+}
+
+#[test]
+fn contour_fragments_reject_forged_arc_split_marker_geometry() {
+    let contour = contour(&[vertex(0, 0, 1), vertex(2, 0, 1)]);
+    let markers = ContourSplitMarkers::new(vec![
+        vec![
+            SegmentSplitMarker {
+                segment_index: 0,
+                param: s(0),
+                point: p(0, 0),
+            },
+            SegmentSplitMarker {
+                segment_index: 0,
+                param: q(1, 2),
+                point: p(1, 1),
+            },
+            SegmentSplitMarker {
+                segment_index: 0,
+                param: s(1),
+                point: p(2, 0),
+            },
+        ],
+        vec![
+            SegmentSplitMarker {
+                segment_index: 1,
+                param: s(0),
+                point: p(2, 0),
+            },
+            SegmentSplitMarker {
+                segment_index: 1,
+                param: s(1),
+                point: p(0, 0),
+            },
+        ],
+    ])
+    .unwrap();
+
+    assert_topology_error(ContourFragmentSet::from_split_markers(
+        &contour,
+        &markers,
+        &policy(),
+    ));
 }
 
 #[test]
