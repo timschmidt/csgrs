@@ -1391,6 +1391,7 @@ const fn winding_readiness_status_already_materialized(
             | ExactWindingReadinessStatus::CoplanarVolumetricCellsAlreadyMaterialized
             | ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized
             | ExactWindingReadinessStatus::MixedDimensionalRegularizedSolidAlreadyMaterialized
+            | ExactWindingReadinessStatus::LowerDimensionalRegularizedSolidAlreadyMaterialized
             | ExactWindingReadinessStatus::ConvexBooleanAlreadyMaterialized
             | ExactWindingReadinessStatus::OpenSurfaceArrangementAlreadyMaterialized
             | ExactWindingReadinessStatus::SurfaceEqualityAlreadyMaterialized
@@ -6635,6 +6636,41 @@ pub fn certify_winding_readiness_report(
     winding_readiness_report_from_graph(&graph, left, right, operation)
 }
 
+/// Prepare and report exact winding handoff facts for a specific output
+/// validation policy.
+///
+/// The default winding readiness report preserves surface-arrangement
+/// semantics for lower-dimensional operands. This policy-aware variant mirrors
+/// [`preflight_boolean_exact_with_validation`] for closed-output requests: when
+/// two lower-dimensional operands regularize to an empty closed solid, the
+/// handoff is certified as already materialized instead of asking callers to
+/// inspect open-surface split regions.
+pub fn certify_winding_readiness_report_with_validation(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+) -> Result<ExactWindingReadinessReport, MeshError> {
+    if validation == ValidationPolicy::CLOSED
+        && !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
+        && certified_lower_dimensional_regularized_solid_support(left, right).is_some()
+    {
+        return Ok(winding_readiness_report(
+            operation,
+            ExactWindingReadinessStatus::LowerDimensionalRegularizedSolidAlreadyMaterialized,
+            false,
+            0,
+            0,
+            0,
+            Vec::new(),
+            GraphRelationCounts::default().into_blocker(ExactBooleanBlockerKind::NeedsWinding),
+            None,
+            None,
+        ));
+    }
+    certify_winding_readiness_report(left, right, operation)
+}
+
 /// Validate the retained graph/source-handle handoff for public reports.
 ///
 /// Boolean preflight and report constructors are public exact computation
@@ -9257,6 +9293,7 @@ mod tests {
             ExactWindingReadinessStatus::CoplanarVolumetricCellsAlreadyMaterialized,
             ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized,
             ExactWindingReadinessStatus::MixedDimensionalRegularizedSolidAlreadyMaterialized,
+            ExactWindingReadinessStatus::LowerDimensionalRegularizedSolidAlreadyMaterialized,
             ExactWindingReadinessStatus::ConvexBooleanAlreadyMaterialized,
             ExactWindingReadinessStatus::OpenSurfaceArrangementAlreadyMaterialized,
             ExactWindingReadinessStatus::SurfaceEqualityAlreadyMaterialized,
@@ -9294,6 +9331,11 @@ mod tests {
         assert!(
             !winding_readiness_status_materializes_arrangement_cell_complex(
                 &ExactWindingReadinessStatus::MixedDimensionalRegularizedSolidAlreadyMaterialized,
+            )
+        );
+        assert!(
+            !winding_readiness_status_materializes_arrangement_cell_complex(
+                &ExactWindingReadinessStatus::LowerDimensionalRegularizedSolidAlreadyMaterialized,
             )
         );
         assert!(
@@ -9703,6 +9745,59 @@ mod tests {
                     );
                 }
             }
+        }
+    }
+
+    #[test]
+    fn lower_dimensional_regularized_solid_reports_materialized_readiness() {
+        let left = ExactMesh::from_i64_triangles_with_policy(
+            &[0, 0, 0, 4, 0, 0, 0, 4, 0],
+            &[0, 1, 2],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let right = ExactMesh::from_i64_triangles_with_policy(
+            &[1, -1, -1, 1, 3, 1, 1, 3, -1],
+            &[0, 1, 2],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+
+        for operation in [
+            ExactBooleanOperation::Union,
+            ExactBooleanOperation::Intersection,
+            ExactBooleanOperation::Difference,
+        ] {
+            let readiness = certify_winding_readiness_report_with_validation(
+                &left,
+                &right,
+                operation,
+                ValidationPolicy::CLOSED,
+            )
+            .unwrap();
+            assert_eq!(
+                readiness.status,
+                ExactWindingReadinessStatus::LowerDimensionalRegularizedSolidAlreadyMaterialized,
+                "{operation:?}: {readiness:?}"
+            );
+            assert_eq!(
+                readiness.blocker.kind,
+                ExactBooleanBlockerKind::NeedsWinding,
+                "{operation:?}: {readiness:?}"
+            );
+            assert_eq!(readiness.retained_face_pairs, 0);
+            assert_eq!(readiness.retained_events, 0);
+            assert_eq!(readiness.region_count, 0);
+            assert!(winding_readiness_status_already_materialized(
+                &readiness.status
+            ));
+            assert!(
+                !winding_readiness_status_materializes_arrangement_cell_complex(&readiness.status)
+            );
+            readiness.validate().unwrap();
+            readiness
+                .validate_against_sources_with_validation(&left, &right, ValidationPolicy::CLOSED)
+                .unwrap();
         }
     }
 

@@ -17,9 +17,9 @@ use super::boolean::{
     certify_open_surface_disjoint_report, certify_planar_arrangement_report,
     certify_refinement_report, certify_same_surface_report,
     certify_volumetric_boundary_closure_report, certify_winding_readiness_report,
-    materialize_closed_same_surface_boolean, preflight_boolean_exact,
-    preflight_boolean_exact_with_boundary_policy, preflight_boolean_exact_with_validation,
-    replay_volumetric_winding_region_plan,
+    certify_winding_readiness_report_with_validation, materialize_closed_same_surface_boolean,
+    preflight_boolean_exact, preflight_boolean_exact_with_boundary_policy,
+    preflight_boolean_exact_with_validation, replay_volumetric_winding_region_plan,
 };
 use super::bounds::AabbIntersectionKind;
 use super::convex::{
@@ -3978,6 +3978,9 @@ pub enum ExactWindingReadinessStatus {
     /// for one closed solid and one lower-dimensional open surface, so no
     /// winding handoff is needed.
     MixedDimensionalRegularizedSolidAlreadyMaterialized,
+    /// The named Boolean was already answered by closed-output regularization
+    /// of two lower-dimensional operands, so no winding handoff is needed.
+    LowerDimensionalRegularizedSolidAlreadyMaterialized,
     /// The named Boolean was already answered by closed-convex exact
     /// materialization, so no winding handoff is needed.
     ConvexBooleanAlreadyMaterialized,
@@ -4076,6 +4079,33 @@ impl ExactWindingReadinessReport {
         }
     }
 
+    /// Validate this winding-readiness report against source meshes and an
+    /// explicit output validation policy.
+    ///
+    /// This mirrors [`certify_winding_readiness_report_with_validation`] for
+    /// policy-aware handoff states such as closed regularization of
+    /// lower-dimensional operands.
+    pub fn validate_against_sources_with_validation(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+        validation: ValidationPolicy,
+    ) -> Result<(), ExactReportValidationError> {
+        self.validate()?;
+        let replay = certify_winding_readiness_report_with_validation(
+            left,
+            right,
+            self.operation,
+            validation,
+        )
+        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+        if self == &replay {
+            Ok(())
+        } else {
+            Err(ExactReportValidationError::SourceReplayMismatch)
+        }
+    }
+
     /// Classify whether this retained winding handoff is fresh for the source meshes.
     ///
     /// Local integrity is checked before source replay so copied reports can
@@ -4090,6 +4120,28 @@ impl ExactWindingReadinessReport {
             return error.into();
         }
         match certify_winding_readiness_report(left, right, self.operation) {
+            Ok(replay) if self == &replay => ExactReportFreshness::Current,
+            Ok(_) | Err(_) => ExactReportFreshness::SourceReplayMismatch,
+        }
+    }
+
+    /// Classify freshness for a source replay under an explicit output
+    /// validation policy.
+    pub fn freshness_against_sources_with_validation(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+        validation: ValidationPolicy,
+    ) -> ExactReportFreshness {
+        if let Err(error) = self.validate() {
+            return error.into();
+        }
+        match certify_winding_readiness_report_with_validation(
+            left,
+            right,
+            self.operation,
+            validation,
+        ) {
             Ok(replay) if self == &replay => ExactReportFreshness::Current,
             Ok(_) | Err(_) => ExactReportFreshness::SourceReplayMismatch,
         }
@@ -4372,7 +4424,8 @@ impl ExactWindingReadinessReport {
                 }
                 no_region_facts(self.region_count, &self.region_classifications)
             }
-            ExactWindingReadinessStatus::MixedDimensionalRegularizedSolidAlreadyMaterialized => {
+            ExactWindingReadinessStatus::MixedDimensionalRegularizedSolidAlreadyMaterialized
+            | ExactWindingReadinessStatus::LowerDimensionalRegularizedSolidAlreadyMaterialized => {
                 if self.arrangement_readiness.is_some()
                     || self.coplanar_volumetric_evidence.is_some()
                     || matches!(self.operation, ExactBooleanOperation::SelectedRegions(_))

@@ -29,6 +29,7 @@ use hypermesh::{
     certify_open_surface_disjoint_report, certify_planar_arrangement_report,
     certify_refinement_report, certify_same_surface_report,
     certify_volumetric_boundary_closure_report, certify_winding_readiness_report,
+    certify_winding_readiness_report_with_validation,
     checked_classify_face_regions_against_opposite_planes,
     checked_triangulate_face_regions_with_earcut, classify_mesh_face_pair,
     classify_mesh_vertices_against_closed_mesh_winding_report,
@@ -1408,6 +1409,47 @@ fn lower_dimensional_regularized_boolean_is_publicly_replayable() {
                     ValidationPolicy::CLOSED,
                 )
                 .is_err()
+        );
+
+        let readiness = certify_winding_readiness_report_with_validation(
+            &left,
+            &right,
+            operation,
+            ValidationPolicy::CLOSED,
+        )
+        .unwrap();
+        assert_eq!(
+            readiness.status,
+            ExactWindingReadinessStatus::LowerDimensionalRegularizedSolidAlreadyMaterialized,
+            "{operation:?}: {readiness:?}"
+        );
+        assert_eq!(
+            readiness.blocker.kind,
+            ExactBooleanBlockerKind::NeedsWinding,
+            "{operation:?}: {readiness:?}"
+        );
+        assert_eq!(readiness.retained_face_pairs, 0);
+        assert_eq!(readiness.retained_events, 0);
+        assert_eq!(readiness.region_count, 0);
+        readiness.validate().unwrap();
+        readiness
+            .validate_against_sources_with_validation(&left, &right, ValidationPolicy::CLOSED)
+            .unwrap();
+        assert_eq!(
+            readiness.freshness_against_sources_with_validation(
+                &left,
+                &right,
+                ValidationPolicy::CLOSED,
+            ),
+            ExactReportFreshness::Current
+        );
+        assert_eq!(
+            readiness.freshness_against_sources_with_validation(
+                &left,
+                &closed_right,
+                ValidationPolicy::CLOSED,
+            ),
+            ExactReportFreshness::SourceReplayMismatch
         );
 
         let result = materialize_closed_regularized_lower_dimensional_boolean(
