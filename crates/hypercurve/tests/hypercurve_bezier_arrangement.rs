@@ -76,6 +76,34 @@ fn arrangement_graph_rejects_duplicate_source_fragment_evidence() {
 }
 
 #[test]
+fn arrangement_graph_rejects_invalid_unique_source_fragment_ranges() {
+    let curve = BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(0, 0), p(1, 1), p(2, 0)));
+
+    assert_topology_error(BezierArrangementGraph2::new(vec![
+        hypercurve::BezierArrangementFragment2::new(
+            0,
+            0,
+            BezierSplitFragment2::Materialized {
+                start: exact(r(1)),
+                end: exact(r(0)),
+                curve: curve.clone(),
+            },
+        ),
+    ]));
+    assert_topology_error(BezierArrangementGraph2::new(vec![
+        hypercurve::BezierArrangementFragment2::new(
+            1,
+            0,
+            BezierSplitFragment2::Materialized {
+                start: exact(q(1, 2)),
+                end: exact(q(1, 2)),
+                curve,
+            },
+        ),
+    ]));
+}
+
+#[test]
 fn arrangement_graph_accepts_adjacent_reused_source_fragment_ranges() {
     let first = BezierSplitFragment2::Materialized {
         start: exact(r(0)),

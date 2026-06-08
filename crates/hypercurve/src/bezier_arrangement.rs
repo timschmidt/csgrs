@@ -314,6 +314,7 @@ fn validate_arrangement_fragment_provenance(
 ) -> CurveResult<()> {
     let policy = CurvePolicy::certified();
     for (index, fragment) in fragments.iter().enumerate() {
+        validate_arrangement_fragment_source_range(fragment, &policy)?;
         for other in &fragments[index + 1..] {
             if fragment.source_curve_index() == other.source_curve_index()
                 && fragment.source_fragment_index() == other.source_fragment_index()
@@ -323,6 +324,27 @@ fn validate_arrangement_fragment_provenance(
         }
     }
     Ok(())
+}
+
+fn validate_arrangement_fragment_source_range(
+    fragment: &BezierArrangementFragment2,
+    policy: &CurvePolicy,
+) -> CurveResult<()> {
+    let BezierSplitFragment2::Materialized { start, end, .. } = fragment.fragment() else {
+        return Ok(());
+    };
+    match start.cmp_by_interval(end, policy)? {
+        Classification::Decided(std::cmp::Ordering::Less) => Ok(()),
+        Classification::Decided(std::cmp::Ordering::Equal | std::cmp::Ordering::Greater) => {
+            Err(CurveError::Topology(
+                "retained Bezier arrangement fragment source range must be certified strictly increasing"
+                    .to_owned(),
+            ))
+        }
+        Classification::Uncertain(reason) => Err(CurveError::Topology(format!(
+            "retained Bezier arrangement fragment source range ordering is uncertain: {reason:?}"
+        ))),
+    }
 }
 
 fn validate_reused_source_fragment_ranges(
