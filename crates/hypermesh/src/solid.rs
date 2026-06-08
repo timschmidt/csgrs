@@ -332,6 +332,34 @@ impl ConvexSolidMeshClassification {
         if matches!(self.relation, ConvexSolidMeshRelation::NotCertifiedConvex) {
             return Err(ConvexSolidReportError::CertifiedMeshRelationWithoutCertifiedSolid);
         }
+
+        if matches!(self.relation, ConvexSolidMeshRelation::Unknown) {
+            if self.vertices.is_empty() {
+                return Err(ConvexSolidReportError::MeshRelationMismatch);
+            }
+            for (index, vertex) in self.vertices.iter().enumerate() {
+                vertex
+                    .validate()
+                    .map_err(|_| ConvexSolidReportError::NestedReport)?;
+                match vertex.relation {
+                    ConvexSolidPointRelation::Inside
+                    | ConvexSolidPointRelation::Boundary
+                    | ConvexSolidPointRelation::Outside => {}
+                    ConvexSolidPointRelation::Unknown => {
+                        return if index + 1 == self.vertices.len() {
+                            Ok(())
+                        } else {
+                            Err(ConvexSolidReportError::MeshRelationMismatch)
+                        };
+                    }
+                    ConvexSolidPointRelation::NotCertifiedConvex => {
+                        return Err(ConvexSolidReportError::UnexpectedVertexRelation);
+                    }
+                }
+            }
+            return Err(ConvexSolidReportError::MeshRelationMismatch);
+        }
+
         let mut inside = 0_usize;
         let mut boundary = 0_usize;
         let mut outside = 0_usize;
@@ -344,11 +372,7 @@ impl ConvexSolidMeshClassification {
                 ConvexSolidPointRelation::Boundary => boundary += 1,
                 ConvexSolidPointRelation::Outside => outside += 1,
                 ConvexSolidPointRelation::Unknown => {
-                    return if matches!(self.relation, ConvexSolidMeshRelation::Unknown) {
-                        Ok(())
-                    } else {
-                        Err(ConvexSolidReportError::MeshRelationMismatch)
-                    };
+                    return Err(ConvexSolidReportError::MeshRelationMismatch);
                 }
                 ConvexSolidPointRelation::NotCertifiedConvex => {
                     return Err(ConvexSolidReportError::UnexpectedVertexRelation);
@@ -661,4 +685,58 @@ fn side_is_outside(orientation: ClosedMeshOrientation, side: PlaneSide) -> bool 
         (ClosedMeshOrientation::Positive, PlaneSide::Below)
             | (ClosedMeshOrientation::Negative, PlaneSide::Above)
     )
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn certified_facts() -> ConvexSolidFacts {
+        ConvexSolidFacts {
+            orientation: ClosedMeshOrientation::Positive,
+            convexity: ConvexSolidClassification::Convex,
+            predicates: Vec::new(),
+        }
+    }
+
+    fn point(relation: ConvexSolidPointRelation) -> ConvexSolidPointClassification {
+        ConvexSolidPointClassification {
+            relation,
+            predicates: Vec::new(),
+        }
+    }
+
+    #[test]
+    fn convex_mesh_report_accepts_unknown_prefix_evidence() {
+        let inside = point(ConvexSolidPointRelation::Inside);
+        let unknown = point(ConvexSolidPointRelation::Unknown);
+        let outside = point(ConvexSolidPointRelation::Outside);
+
+        let report = ConvexSolidMeshClassification {
+            relation: ConvexSolidMeshRelation::Unknown,
+            solid_facts: certified_facts(),
+            vertices: vec![inside.clone(), unknown.clone()],
+        };
+        assert!(report.validate().is_ok());
+
+        let stale_prefix = ConvexSolidMeshClassification {
+            relation: ConvexSolidMeshRelation::Unknown,
+            solid_facts: certified_facts(),
+            vertices: vec![inside],
+        };
+        assert_eq!(
+            stale_prefix.validate(),
+            Err(ConvexSolidReportError::MeshRelationMismatch)
+        );
+
+        let stale_suffix = ConvexSolidMeshClassification {
+            relation: ConvexSolidMeshRelation::Unknown,
+            solid_facts: certified_facts(),
+            vertices: vec![unknown, outside],
+        };
+        assert_eq!(
+            stale_suffix.validate(),
+            Err(ConvexSolidReportError::MeshRelationMismatch)
+        );
+    }
 }
