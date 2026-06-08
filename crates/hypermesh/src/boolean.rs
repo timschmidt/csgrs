@@ -824,9 +824,8 @@ pub fn preflight_boolean_exact(
     ) && certified_arrangement_regularized_boundary_contact_from_graph(
         &graph, left, right, operation,
     )? {
-        return Ok(certified_shortcut_preflight(
-            operation,
-            ExactBooleanSupport::CertifiedArrangementCellComplex,
+        return Ok(certified_arrangement_cell_complex_preflight_from_graph(
+            operation, &graph, left, right,
         ));
     }
     if support == ExactBooleanSupport::RequiresCertifiedWinding
@@ -910,9 +909,8 @@ pub fn preflight_boolean_exact(
         && operation == ExactBooleanOperation::Intersection
         && has_empty_axis_aligned_orthogonal_solid_intersection(left, right)?
     {
-        return Ok(certified_shortcut_preflight(
-            operation,
-            ExactBooleanSupport::CertifiedArrangementCellComplex,
+        return Ok(certified_arrangement_cell_complex_preflight_from_graph(
+            operation, &graph, left, right,
         ));
     }
     if let Some((support, region_classifications, _triangulations)) =
@@ -12498,6 +12496,8 @@ mod tests {
         )
         .unwrap()
         .expect("regularized boundary-touch intersection should materialize through overlay");
+        let graph = build_intersection_graph(&left, &right).unwrap();
+        validate_graph_source_handoff(&graph, &left, &right).unwrap();
         let preflight =
             preflight_boolean_exact(&left, &right, ExactBooleanOperation::Intersection).unwrap();
         assert_eq!(
@@ -12506,6 +12506,8 @@ mod tests {
             "{preflight:?}"
         );
         assert!(preflight.blocker.is_none(), "{preflight:?}");
+        assert_eq!(preflight.retained_face_pairs, graph.face_pairs.len());
+        assert_eq!(preflight.retained_events, graph.event_count());
         preflight.validate_against_sources(&left, &right).unwrap();
         assert_eq!(
             result.kind,
