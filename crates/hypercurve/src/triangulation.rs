@@ -40,6 +40,7 @@ pub fn triangulate_finite_rings(
         if normalized.len() < 3 {
             return Ok(None);
         }
+        validate_no_repeated_ring_vertices(&normalized)?;
 
         let start = vertices.len();
         for [x, y] in normalized {
@@ -77,6 +78,17 @@ pub fn triangulate_finite_rings(
             ])
         })
         .collect())
+}
+
+fn validate_no_repeated_ring_vertices(ring: &[[f64; 2]]) -> CurveResult<()> {
+    for (index, point) in ring.iter().enumerate() {
+        if ring[index + 1..].iter().any(|candidate| candidate == point) {
+            return Err(CurveError::Topology(
+                "finite triangulation ring must not contain repeated non-adjacent vertices".into(),
+            ));
+        }
+    }
+    Ok(())
 }
 
 impl FiniteRegionProfile2 {

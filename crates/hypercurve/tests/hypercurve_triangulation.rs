@@ -80,6 +80,22 @@ fn triangulate_finite_rings_ignores_all_duplicate_rings() {
 }
 
 #[test]
+fn triangulate_finite_rings_rejects_nonadjacent_repeated_vertices() {
+    let repeated_material = [[0.0, 0.0], [4.0, 0.0], [0.0, 0.0], [0.0, 4.0]];
+    assert!(matches!(
+        triangulate_finite_rings(&repeated_material, &[]),
+        Err(CurveError::Topology(_))
+    ));
+
+    let material = [[0.0, 0.0], [6.0, 0.0], [6.0, 6.0], [0.0, 6.0]];
+    let repeated_hole = [[1.0, 1.0], [2.0, 1.0], [1.0, 1.0], [1.0, 2.0]];
+    assert!(matches!(
+        triangulate_finite_rings(&material, &[&repeated_hole]),
+        Err(CurveError::Topology(_))
+    ));
+}
+
+#[test]
 fn finite_region_profile_triangulates_material_with_owned_hole() {
     let region = Region2::new(vec![rectangle(0, 0, 6, 6)], vec![rectangle(2, 2, 4, 4)]);
     let profiles = region
