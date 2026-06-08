@@ -980,6 +980,7 @@ impl RetainedBSplineSpanFacts2 {
             topology_status,
             x_monotonicity,
             y_monotonicity,
+            weight_domain.as_ref(),
         )?;
         Ok(Self {
             span_index,
@@ -1151,14 +1152,22 @@ fn validate_span_fact_evidence(
     topology_status: RetainedTopologyStatus,
     x_monotonicity: RetainedSpanAxisMonotonicity,
     y_monotonicity: RetainedSpanAxisMonotonicity,
+    weight_domain: Option<&RetainedSpanWeightDomainReport2>,
 ) -> CurveResult<()> {
     validate_positive_knot_interval(knot_start, knot_end)?;
-    if topology_status == RetainedTopologyStatus::Unsupported
+    if !topology_status.is_native_exact()
         && (x_monotonicity != RetainedSpanAxisMonotonicity::Unsupported
             || y_monotonicity != RetainedSpanAxisMonotonicity::Unsupported)
     {
         return Err(CurveError::Topology(
-            "unsupported retained span facts must not claim certified monotonicity".into(),
+            "non-native retained span facts must not claim certified monotonicity".into(),
+        ));
+    }
+    if topology_status.is_native_exact()
+        && weight_domain.is_some_and(|domain| !domain.all_weights_certified_nonzero())
+    {
+        return Err(CurveError::Topology(
+            "native retained rational span facts must carry all-nonzero weight evidence".into(),
         ));
     }
     Ok(())
