@@ -10,7 +10,9 @@
 
 use std::{cmp::Ordering, collections::BTreeMap};
 
-use hyperlimit::{PlaneSide, Point3, orient3d_report, point_on_segment};
+use hyperlimit::{
+    PlaneSide, Point3, TriangleLocation, classify_point_triangle, orient3d_report, point_on_segment,
+};
 use hyperlimit::{Point2 as PredicatePoint2, Sign, compare_reals, orient2d_report, project_point3};
 
 use super::error::{DiagnosticKind, MeshDiagnostic, MeshError, Severity};
@@ -1249,6 +1251,11 @@ fn validate_assembly_source_face_incidence(
                 right,
                 replayed_region_plan.as_ref(),
             )?;
+            validate_assembly_face_interior_source_against_face(
+                &output_vertex.source,
+                mesh,
+                triangle.source_face,
+            )?;
             match orient3d_report(&a, &b, &c, &output_vertex.point).value() {
                 Some(hyperlimit::Sign::Zero) => {}
                 Some(hyperlimit::Sign::Negative | hyperlimit::Sign::Positive) => {
@@ -1365,6 +1372,40 @@ fn validate_assembly_graph_vertex_source_against_region_plan(
     Err(hypertri::Error::InvalidInput {
         reason: "assembled output graph vertex point does not match source replay",
     })
+}
+
+fn validate_assembly_face_interior_source_against_face(
+    source: &FaceSplitBoundaryNode,
+    mesh: &ExactMesh,
+    source_face: usize,
+) -> hypertri::Result<()> {
+    let FaceSplitBoundaryNode::FaceInterior { point } = source else {
+        return Ok(());
+    };
+    let projection = choose_region_projection(mesh, source_face)?;
+    let Some(source_triangle) = mesh.triangles().get(source_face).map(|triangle| triangle.0) else {
+        return Err(hypertri::Error::InvalidInput {
+            reason: "assembled output triangle references a missing source face",
+        });
+    };
+    let location = classify_point_triangle(
+        &project_for_predicate(&mesh.vertices()[source_triangle[0]], projection),
+        &project_for_predicate(&mesh.vertices()[source_triangle[1]], projection),
+        &project_for_predicate(&mesh.vertices()[source_triangle[2]], projection),
+        &project_for_predicate(point, projection),
+    )
+    .value()
+    .ok_or(hypertri::Error::PredicateUndecided {
+        predicate: "assembly_face_interior_source_containment",
+    })?;
+    match location {
+        TriangleLocation::Inside | TriangleLocation::OnEdge | TriangleLocation::OnVertex => Ok(()),
+        TriangleLocation::Outside | TriangleLocation::Degenerate => {
+            Err(hypertri::Error::InvalidInput {
+                reason: "assembled output face-interior source point is outside its source triangle",
+            })
+        }
+    }
 }
 
 /// Validate that an output triangle preserves its retained source-face
@@ -2133,6 +2174,49 @@ mod tests {
             panic!("crossing split-region assembly should retain a graph vertex source");
         };
         *graph_vertex = usize::MAX;
+
+        assembly.validate().unwrap();
+        assert!(
+            assembly
+                .validate_source_face_incidence(&left, &right)
+                .is_err()
+        );
+    }
+
+    #[test]
+    fn assembly_source_incidence_rejects_face_interior_source_outside_triangle() {
+        let left = ExactMesh::from_i64_triangles_with_policy(
+            &[0, 0, 0, 2, 0, 0, 0, 2, 0],
+            &[0, 1, 2],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let right =
+            ExactMesh::from_i64_triangles_with_policy(&[], &[], ValidationPolicy::ALLOW_BOUNDARY)
+                .unwrap();
+
+        let assembly = ExactBooleanAssemblyPlan {
+            vertices: vec![
+                ExactOutputVertex {
+                    point: p(0, 0, 0),
+                    source: original(0, p(0, 0, 0)),
+                },
+                ExactOutputVertex {
+                    point: p(3, 0, 0),
+                    source: face_interior(p(3, 0, 0)),
+                },
+                ExactOutputVertex {
+                    point: p(0, 2, 0),
+                    source: original(2, p(0, 2, 0)),
+                },
+            ],
+            triangles: vec![ExactOutputTriangle {
+                vertices: [0, 1, 2],
+                source_side: MeshSide::Left,
+                source_face: 0,
+                orientation: ExactOutputTriangleOrientation::PreserveSource,
+            }],
+        };
 
         assembly.validate().unwrap();
         assert!(
