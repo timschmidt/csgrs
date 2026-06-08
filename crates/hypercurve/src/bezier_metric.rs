@@ -307,7 +307,7 @@ fn prefix_length_bounds_for_controls(
         Some(false) => return Err(CurveError::InvalidBezierParameter),
         None => return Ok(Classification::Uncertain(UncertaintyReason::Ordering)),
     }
-    let (prefix, _) = subdivide_controls_at(&controls, t);
+    let (prefix, _) = subdivide_controls_at(&controls, t)?;
     refined_length_bounds_for_controls(prefix, max_depth).map(Classification::Decided)
 }
 
@@ -490,15 +490,21 @@ fn accumulate_refined_length_bounds(
         return Ok(());
     }
 
-    let (left, right) = subdivide_controls_half(&controls);
+    let (left, right) = subdivide_controls_half(&controls)?;
     accumulate_refined_length_bounds(left, remaining_depth - 1, lower, upper)?;
     accumulate_refined_length_bounds(right, remaining_depth - 1, lower, upper)
 }
 
-fn subdivide_controls_half(controls: &[Point2]) -> (Vec<Point2>, Vec<Point2>) {
+fn subdivide_controls_half(controls: &[Point2]) -> CurveResult<(Vec<Point2>, Vec<Point2>)> {
+    if controls.is_empty() {
+        return Err(CurveError::InvalidBezierRange);
+    }
+
     let mut levels = vec![controls.to_vec()];
     while levels.last().map(|level| level.len()).unwrap_or(0) > 1 {
-        let previous = levels.last().expect("level exists");
+        let Some(previous) = levels.last() else {
+            return Err(CurveError::InvalidBezierRange);
+        };
         let next = previous
             .windows(2)
             .map(|pair| midpoint_point(&pair[0], &pair[1]))
@@ -515,13 +521,19 @@ fn subdivide_controls_half(controls: &[Point2]) -> (Vec<Point2>, Vec<Point2>) {
         .rev()
         .map(|level| level[level.len() - 1].clone())
         .collect::<Vec<_>>();
-    (left, right)
+    Ok((left, right))
 }
 
-fn subdivide_controls_at(controls: &[Point2], t: Real) -> (Vec<Point2>, Vec<Point2>) {
+fn subdivide_controls_at(controls: &[Point2], t: Real) -> CurveResult<(Vec<Point2>, Vec<Point2>)> {
+    if controls.is_empty() {
+        return Err(CurveError::InvalidBezierRange);
+    }
+
     let mut levels = vec![controls.to_vec()];
     while levels.last().map(|level| level.len()).unwrap_or(0) > 1 {
-        let previous = levels.last().expect("level exists");
+        let Some(previous) = levels.last() else {
+            return Err(CurveError::InvalidBezierRange);
+        };
         let next = previous
             .windows(2)
             .map(|pair| pair[0].lerp(&pair[1], t.clone()))
@@ -538,7 +550,7 @@ fn subdivide_controls_at(controls: &[Point2], t: Real) -> (Vec<Point2>, Vec<Poin
         .rev()
         .map(|level| level[level.len() - 1].clone())
         .collect::<Vec<_>>();
-    (left, right)
+    Ok((left, right))
 }
 
 fn midpoint_point(first: &Point2, second: &Point2) -> Point2 {
@@ -596,5 +608,17 @@ mod tests {
         assert_eq!(region.parameter_span().end(), &half);
         assert_eq!(region.prefix_bounds_at_span_end().lower(), &Real::one());
         assert_eq!(region.prefix_bounds_at_span_end().upper(), &Real::one());
+    }
+
+    #[test]
+    fn metric_subdivision_rejects_empty_controls() {
+        assert_eq!(
+            subdivide_controls_half(&[]),
+            Err(CurveError::InvalidBezierRange)
+        );
+        assert_eq!(
+            subdivide_controls_at(&[], Real::zero()),
+            Err(CurveError::InvalidBezierRange)
+        );
     }
 }
