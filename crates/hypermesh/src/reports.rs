@@ -2951,23 +2951,19 @@ fn validate_selected_region_assembly_covers_selection(
         if !selection_keeps(selection, triangulation.side) || triangulation.triangles.is_empty() {
             continue;
         }
-        if assembly.triangles.iter().any(|output| {
-            output.source_side == triangulation.side && output.source_face == triangulation.face
-        }) {
-            continue;
-        }
 
         // Duplicate exact cells may be canonicalized to one retained
         // topological copy after both sides have supplied the predicate
-        // evidence proving coincidence. If no triangle keeps this source
-        // label, every selected cell must still be present geometrically.
-        let duplicate_cells_retained = triangulation.triangles.chunks_exact(3).all(|triangle| {
+        // evidence proving coincidence. Every selected cell must still be
+        // represented either by its own source label or by an exact duplicate
+        // retained from the opposite side.
+        let selected_cells_retained = triangulation.triangles.chunks_exact(3).all(|triangle| {
             let triangle = [triangle[0], triangle[1], triangle[2]];
             assembly.triangles.iter().any(|output| {
                 output_triangle_matches_triangulated_cell(output, assembly, triangulation, triangle)
             })
         });
-        if !duplicate_cells_retained {
+        if !selected_cells_retained {
             return Err(ExactReportValidationError::SelectedRegionAssemblyMissingSelectedRegion);
         }
     }
@@ -6017,6 +6013,8 @@ impl ExactWindingReadinessReport {
 mod tests {
     use super::*;
     use crate::boolean::{ExactBooleanPolicy, boolean_selected_regions};
+    use crate::graph::FaceSplitBoundaryNode;
+    use crate::region::{ExactOutputVertex, FaceRegionPlaneRelation};
 
     #[test]
     fn freshness_classifies_retained_region_provenance_drift() {
@@ -6317,6 +6315,100 @@ mod tests {
             result.freshness_against_sources(&left, &right),
             ExactReportFreshness::StaleRegionFacts
         );
+    }
+
+    #[test]
+    fn selected_region_result_rejects_missing_assembly_cell_with_retained_source_label() {
+        let left = report_test_triangle(&[[0, 0, 0], [2, 0, 0], [0, 2, 0]]);
+        let right = report_test_triangle(&[[0, 0, 1], [2, 0, 1], [0, 2, 1]]);
+        let p0 = point(0, 0, 0);
+        let p1 = point(2, 0, 0);
+        let p2 = point(2, 2, 0);
+        let p3 = point(0, 2, 0);
+        let boundary = vec![
+            FaceSplitBoundaryNode::FaceInterior { point: p0.clone() },
+            FaceSplitBoundaryNode::FaceInterior { point: p1.clone() },
+            FaceSplitBoundaryNode::FaceInterior { point: p2.clone() },
+            FaceSplitBoundaryNode::FaceInterior { point: p3.clone() },
+        ];
+        let triangulation = FaceRegionTriangulation {
+            side: MeshSide::Left,
+            face: 0,
+            projection: hyperlimit::CoplanarProjection::Xy,
+            vertices: vec![
+                hypertri::ExactPoint::new(p0.x.clone(), p0.y.clone()),
+                hypertri::ExactPoint::new(p1.x.clone(), p1.y.clone()),
+                hypertri::ExactPoint::new(p2.x.clone(), p2.y.clone()),
+                hypertri::ExactPoint::new(p3.x.clone(), p3.y.clone()),
+            ],
+            boundary: boundary.clone(),
+            triangles: vec![0, 1, 2, 0, 2, 3],
+        };
+        let proof = PredicateUse::from_certificate(
+            hyperlimit::orient3d_report(&p0, &p1, &p2, &point(0, 0, 1)).certificate,
+        );
+        let classification = FaceRegionPlaneClassification {
+            region_side: MeshSide::Left,
+            region_face: 0,
+            plane_side: MeshSide::Right,
+            plane_face: 0,
+            relation: FaceRegionPlaneRelation::StrictlyAbove,
+            node_sides: vec![Some(hyperlimit::PlaneSide::Above); 4],
+            predicates: vec![proof; 4],
+        };
+        let assembly = ExactBooleanAssemblyPlan {
+            vertices: vec![
+                ExactOutputVertex {
+                    point: p0,
+                    source: boundary[0].clone(),
+                },
+                ExactOutputVertex {
+                    point: p1,
+                    source: boundary[1].clone(),
+                },
+                ExactOutputVertex {
+                    point: p2,
+                    source: boundary[2].clone(),
+                },
+            ],
+            triangles: vec![ExactOutputTriangle {
+                vertices: [0, 1, 2],
+                source_side: MeshSide::Left,
+                source_face: 0,
+                orientation: ExactOutputTriangleOrientation::PreserveSource,
+            }],
+        };
+        let mesh = assembly
+            .to_exact_mesh(ValidationPolicy::ALLOW_BOUNDARY)
+            .unwrap();
+        let result = ExactBooleanResult {
+            kind: ExactBooleanResultKind::SelectedRegions {
+                selection: ExactRegionSelection::KeepAll,
+            },
+            graph_had_unknowns: false,
+            region_classifications: vec![classification],
+            triangulations: vec![triangulation],
+            assembly,
+            volumetric_classifications: Vec::new(),
+            mesh,
+        };
+
+        assert_eq!(
+            result.validate(),
+            Err(ExactReportValidationError::SelectedRegionAssemblyMissingSelectedRegion)
+        );
+        assert_eq!(
+            result.freshness_against_sources(&left, &right),
+            ExactReportFreshness::StaleStatusEvidence
+        );
+    }
+
+    fn point(x: i64, y: i64, z: i64) -> Point3 {
+        Point3::new(
+            hyperreal::Real::from(x),
+            hyperreal::Real::from(y),
+            hyperreal::Real::from(z),
+        )
     }
 
     #[test]
