@@ -386,6 +386,11 @@ fn validate_cache_summary_counts(
             "retained curve cache summary must carry nonempty controls, knots, and spans".into(),
         ));
     }
+    if knot_count <= control_count {
+        return Err(CurveError::Topology(
+            "retained B-spline cache summary must carry more knots than controls".into(),
+        ));
+    }
     if native_span_count
         .checked_add(retained_span_count)
         .is_none_or(|count| count != span_count)
