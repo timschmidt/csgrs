@@ -511,6 +511,31 @@ fn retained_planar_face_rejects_missing_material_or_mixed_surface_trims() {
 }
 
 #[test]
+fn retained_planar_face_rejects_self_contacting_trims() {
+    let surface = RetainedPlanarSurfaceIdentity2::new(51);
+
+    assert_eq!(
+        RetainedPlanarFace2::try_new(
+            surface,
+            vec![trim(surface, &[(0, 0), (4, 4), (0, 4), (4, 0)])],
+            Vec::new(),
+        )
+        .unwrap_err(),
+        CurveError::InvalidPlanarFace
+    );
+
+    assert_eq!(
+        RetainedPlanarFace2::try_new(
+            surface,
+            vec![trim(surface, &[(0, 0), (8, 0), (8, 8), (0, 8)])],
+            vec![trim(surface, &[(2, 2), (6, 6), (2, 6), (6, 2)])],
+        )
+        .unwrap_err(),
+        CurveError::InvalidPlanarFace
+    );
+}
+
+#[test]
 fn retained_planar_face_rejects_unowned_or_crossing_holes() {
     let surface = RetainedPlanarSurfaceIdentity2::new(111);
     let material = trim(surface, &[(0, 0), (4, 0), (4, 4), (0, 4)]);

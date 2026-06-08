@@ -314,6 +314,8 @@ impl RetainedPlanarFace2 {
         {
             return Err(CurveError::InvalidPlanarFace);
         }
+        validate_planar_face_simple_trim_loops(&material_loops)?;
+        validate_planar_face_simple_trim_loops(&hole_loops)?;
         validate_planar_face_distinct_trim_loops(&material_loops, &hole_loops)?;
         validate_planar_face_same_role_trim_separation(&material_loops)?;
         validate_planar_face_same_role_trim_separation(&hole_loops)?;
@@ -544,6 +546,19 @@ fn validate_planar_face_distinct_trim_loops(
     for (index, trim) in hole_loops.iter().enumerate() {
         if hole_loops[index + 1..].contains(trim) {
             return Err(CurveError::InvalidPlanarFace);
+        }
+    }
+    Ok(())
+}
+
+fn validate_planar_face_simple_trim_loops(loops: &[RetainedPlanarTrimLoop2]) -> CurveResult<()> {
+    let policy = CurvePolicy::certified();
+    for trim in loops {
+        match trim.contour.has_self_contacts(&policy)? {
+            Classification::Decided(false) => {}
+            Classification::Decided(true) | Classification::Uncertain(_) => {
+                return Err(CurveError::InvalidPlanarFace);
+            }
         }
     }
     Ok(())
