@@ -2507,7 +2507,7 @@ fn arrangement_volume_face_sides(
     sides
 }
 
-fn exact_node_loops_equivalent(
+pub(crate) fn exact_node_loops_equivalent(
     left: &[ArrangementFaceCellNode],
     right: &[ArrangementFaceCellNode],
 ) -> bool {

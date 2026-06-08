@@ -7,7 +7,7 @@
 
 use super::arrangement3d::{
     ArrangementFaceCell, ArrangementLowerDimensionalArtifact, ArrangementVolumeAdjacency,
-    ArrangementVolumeRegion, ExactArrangement, ExactArrangement3d,
+    ArrangementVolumeRegion, ExactArrangement, ExactArrangement3d, exact_node_loops_equivalent,
 };
 use super::boolean::ExactBooleanOperation;
 use super::graph::MeshSide;
@@ -266,7 +266,7 @@ impl ExactLabeledCellComplex {
         }
         let selected_volume_regions = selected_volume_regions(&self.volume_regions, operation);
         let volume_selected = select_faces_from_volume_adjacencies(
-            self.faces.len(),
+            &self.faces,
             &self.volume_regions,
             &self.volume_adjacencies,
             operation,
@@ -326,7 +326,7 @@ impl ExactLabeledCellComplex {
         }
         let Some((selected_faces, selected_face_orientations)) =
             select_faces_from_volume_adjacencies(
-                self.faces.len(),
+                &self.faces,
                 &self.volume_regions,
                 &self.volume_adjacencies,
                 operation,
@@ -581,7 +581,7 @@ fn select_faces_from_face_labels(
 }
 
 fn select_faces_from_volume_adjacencies(
-    face_count: usize,
+    faces: &[ExactCellComplexFace],
     volume_regions: &[ExactCellComplexVolumeRegion],
     volume_adjacencies: &[ArrangementVolumeAdjacency],
     operation: ExactBooleanOperation,
@@ -597,9 +597,10 @@ fn select_faces_from_volume_adjacencies(
         .iter()
         .map(|region| select_volume_region(region, operation))
         .collect::<Vec<_>>();
+    let face_count = faces.len();
     let mut selected = Vec::<ExactSelectedFaceOrientation>::new();
     for adjacency in volume_adjacencies {
-        validate_volume_adjacency_face_provenance(face_count, adjacency)?;
+        validate_volume_adjacency_face_provenance(faces, adjacency)?;
         let exterior_selected = *selected_volumes
             .get(adjacency.exterior_volume)
             .ok_or(ExactArrangementBlocker::NonManifoldCellComplex)?;
@@ -660,9 +661,10 @@ fn validate_volume_regions_for_selection(
 }
 
 pub(crate) fn validate_volume_adjacency_face_provenance(
-    face_count: usize,
+    faces: &[ExactCellComplexFace],
     adjacency: &ArrangementVolumeAdjacency,
 ) -> Result<(), ExactArrangementBlocker> {
+    let face_count = faces.len();
     if adjacency.exterior_volume == adjacency.interior_volume
         || adjacency.oriented_face_sides.is_empty()
         || adjacency
@@ -680,6 +682,13 @@ pub(crate) fn validate_volume_adjacency_face_provenance(
         {
             return Err(ExactArrangementBlocker::NonManifoldCellComplex);
         }
+        let face = &faces[side.face_cell];
+        if side.source != face.cell.carrier.side
+            || side.source_face != face.cell.carrier.face
+            || side.boundary != face.cell.boundary
+        {
+            return Err(ExactArrangementBlocker::NonManifoldCellComplex);
+        }
         side_faces.push(side.face_cell);
     }
     side_faces.sort_unstable();
@@ -690,10 +699,24 @@ pub(crate) fn validate_volume_adjacency_face_provenance(
     if side_faces
         .iter()
         .any(|face| separating_face_cells.binary_search(face).is_err())
+        || separating_face_cells.iter().any(|&face| {
+            side_faces.binary_search(&face).is_err()
+                && !oriented_volume_side_covers_face_boundary(&faces[face], adjacency)
+        })
     {
         return Err(ExactArrangementBlocker::NonManifoldCellComplex);
     }
     Ok(())
+}
+
+fn oriented_volume_side_covers_face_boundary(
+    face: &ExactCellComplexFace,
+    adjacency: &ArrangementVolumeAdjacency,
+) -> bool {
+    adjacency
+        .oriented_face_sides
+        .iter()
+        .any(|side| exact_node_loops_equivalent(&face.cell.boundary, &side.boundary))
 }
 
 fn selected_face_orientations_from_operation(
@@ -797,6 +820,17 @@ mod tests {
             opposite: ExactOppositeRegionLabel::Boundary,
             ..labeled_face(side)
         }
+    }
+
+    fn unoriented_labeled_face(side: MeshSide) -> ExactCellComplexFace {
+        let mut face = labeled_face(side);
+        face.cell.carrier.face = 1;
+        face.cell.carrier.triangle = [1, 2, 3];
+        face.cell.boundary = [1, 2, 3]
+            .into_iter()
+            .map(|vertex| ArrangementFaceCellNode::SourceVertex { side, vertex })
+            .collect();
+        face
     }
 
     fn tetrahedron_i64(a: [i64; 3], b: [i64; 3], c: [i64; 3], d: [i64; 3]) -> ExactMesh {
@@ -1038,6 +1072,29 @@ mod tests {
     }
 
     #[test]
+    fn named_operation_rejects_unoriented_separating_face() {
+        let mut labeled = labeled_with_volume_adjacency_face(0, Vec::new());
+        labeled.faces.push(unoriented_labeled_face(MeshSide::Left));
+        labeled.volume_adjacencies[0].separating_face_cells = vec![0, 1];
+
+        assert_eq!(
+            labeled.select(ExactBooleanOperation::Union),
+            Err(ExactArrangementBlocker::NonManifoldCellComplex)
+        );
+    }
+
+    #[test]
+    fn named_operation_rejects_stale_oriented_side_source_face() {
+        let mut labeled = labeled_with_volume_adjacency_face(0, Vec::new());
+        labeled.volume_adjacencies[0].oriented_face_sides[0].source_face = 1;
+
+        assert_eq!(
+            labeled.select(ExactBooleanOperation::Union),
+            Err(ExactArrangementBlocker::NonManifoldCellComplex)
+        );
+    }
+
+    #[test]
     fn named_operation_validates_unselected_volume_adjacency_provenance() {
         let mut labeled = labeled_with_volume_adjacency_face(0, Vec::new());
         labeled.volume_regions[0].in_left = true;
@@ -1109,6 +1166,24 @@ mod tests {
             vec![ExactArrangementBlocker::UnresolvedRegionClassification],
         );
         labeled.volume_adjacencies[0].separating_face_cells.clear();
+
+        assert_eq!(
+            labeled.select_volume_resolved_with_policy(
+                ExactBooleanOperation::Union,
+                ExactRegularizationPolicy::REGULARIZED_SOLID,
+            ),
+            Err(ExactArrangementBlocker::NonManifoldCellComplex)
+        );
+    }
+
+    #[test]
+    fn volume_resolved_selection_rejects_unoriented_separating_face() {
+        let mut labeled = labeled_with_volume_adjacency_face(
+            0,
+            vec![ExactArrangementBlocker::UnresolvedRegionClassification],
+        );
+        labeled.faces.push(unoriented_labeled_face(MeshSide::Left));
+        labeled.volume_adjacencies[0].separating_face_cells = vec![0, 1];
 
         assert_eq!(
             labeled.select_volume_resolved_with_policy(

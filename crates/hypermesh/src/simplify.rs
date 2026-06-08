@@ -172,7 +172,7 @@ pub fn simplify_selected_cell_complex(
         ExactBooleanOperation::SelectedRegions(_)
     ) && !selected.volume_adjacencies.is_empty();
     let volume_adjacency_faces = volume_adjacency_face_membership(
-        selected.faces.len(),
+        &selected.faces,
         &selected.volume_adjacencies,
         require_volume_orientations,
         &mut blockers,
@@ -810,17 +810,18 @@ fn selected_face_reverse_orientation(
 }
 
 fn volume_adjacency_face_membership(
-    face_count: usize,
+    faces: &[ExactCellComplexFace],
     volume_adjacencies: &[super::arrangement3d::ArrangementVolumeAdjacency],
     enabled: bool,
     blockers: &mut Vec<ExactArrangementBlocker>,
 ) -> Vec<bool> {
+    let face_count = faces.len();
     let mut membership = vec![false; face_count];
     if !enabled {
         return membership;
     }
     for adjacency in volume_adjacencies {
-        if validate_volume_adjacency_face_provenance(face_count, adjacency).is_err() {
+        if validate_volume_adjacency_face_provenance(faces, adjacency).is_err() {
             blockers.push(ExactArrangementBlocker::NonManifoldCellComplex);
             continue;
         }
@@ -1221,6 +1222,14 @@ mod tests {
     }
 
     fn dummy_volume_adjacency(face_cell: usize) -> ArrangementVolumeAdjacency {
+        dummy_volume_adjacency_for(face_cell, MeshSide::Right, &[0, 1, 2])
+    }
+
+    fn dummy_volume_adjacency_for(
+        face_cell: usize,
+        side: MeshSide,
+        vertices: &[usize],
+    ) -> ArrangementVolumeAdjacency {
         ArrangementVolumeAdjacency {
             shell_region: 0,
             exterior_volume: 0,
@@ -1228,13 +1237,12 @@ mod tests {
             separating_face_cells: vec![face_cell],
             oriented_face_sides: vec![ArrangementVolumeFaceSide {
                 face_cell,
-                source: MeshSide::Right,
+                source: side,
                 source_face: 0,
-                boundary: vec![
-                    source_node_on(MeshSide::Right, 0),
-                    source_node_on(MeshSide::Right, 1),
-                    source_node_on(MeshSide::Right, 2),
-                ],
+                boundary: vertices
+                    .iter()
+                    .map(|vertex| source_node_on(side, *vertex))
+                    .collect(),
                 exterior_volume: 0,
                 interior_volume: 1,
             }],
@@ -1580,7 +1588,7 @@ mod tests {
                 ),
             ],
             volume_regions: Vec::new(),
-            volume_adjacencies: vec![dummy_volume_adjacency(0)],
+            volume_adjacencies: vec![dummy_volume_adjacency_for(0, MeshSide::Left, &[0, 1, 2])],
             lower_dimensional_artifacts: Vec::new(),
             selected_faces: vec![0, 1],
             selected_face_orientations: vec![
@@ -1983,7 +1991,10 @@ mod tests {
                 selected_face(1, &[4, 5, 6, 7], &hole),
             ],
             volume_regions: Vec::new(),
-            volume_adjacencies: vec![dummy_volume_adjacency(0), dummy_volume_adjacency(1)],
+            volume_adjacencies: vec![
+                dummy_volume_adjacency_for(0, MeshSide::Left, &[0, 1, 2, 3]),
+                dummy_volume_adjacency_for(1, MeshSide::Left, &[4, 5, 6, 7]),
+            ],
             lower_dimensional_artifacts: Vec::new(),
             selected_faces: vec![0, 1],
             selected_face_orientations: vec![
