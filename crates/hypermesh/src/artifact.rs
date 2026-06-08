@@ -281,6 +281,8 @@ pub enum MeshArtifactBlocker {
     FaceIndexMismatch,
     /// A face has fewer than three vertex references.
     FaceArityTooSmall,
+    /// A face repeats a vertex reference and cannot replay as exact topology.
+    FaceRepeatedVertex,
     /// A face references a missing vertex.
     FaceVertexOutOfRange,
     /// Coordinates cannot be replayed as exact values.
@@ -588,6 +590,9 @@ impl MeshArtifactManifest {
             if face.vertices.len() < 3 {
                 blockers.push(MeshArtifactBlocker::FaceArityTooSmall);
             }
+            if face_has_repeated_vertex(&face.vertices) {
+                blockers.push(MeshArtifactBlocker::FaceRepeatedVertex);
+            }
             if face
                 .vertices
                 .iter()
@@ -669,6 +674,13 @@ impl MeshArtifactManifest {
             blockers,
         }
     }
+}
+
+fn face_has_repeated_vertex(vertices: &[usize]) -> bool {
+    vertices
+        .iter()
+        .enumerate()
+        .any(|(index, vertex)| vertices.iter().skip(index + 1).any(|other| other == vertex))
 }
 
 /// Build a shared mesh artifact report from an accepted exact mesh.

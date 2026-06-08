@@ -18,11 +18,12 @@ use hypermesh::{
     ExactSelectedCellComplexFreshness, ExactSimplifiedCellComplexFreshness,
     ExactVolumetricRegionFreshness, ExactVolumetricRegionRelation, ExactWindingReadinessStatus,
     FaceRegionPlaneRelation, FullFaceAdjacentUnionFreshness, IntersectionGraphFreshness,
-    MeshArtifactBlocker, MeshArtifactManifest, MeshArtifactRole, MeshArtifactSourceKind,
-    MeshCoordinateEvidence, MeshFacePairFreshness, MeshFacePairRelation,
-    MeshFacePairValidationError, SplitPlanFreshness, TriangleTriangleFreshness,
-    TriangleTriangleRelation, ValidationPolicy, WindingReportFreshness, approximate_mesh_f64_view,
-    boolean_exact, boolean_exact_with_boundary_policy, boolean_selected_regions,
+    MeshArtifactBlocker, MeshArtifactFaceRecord, MeshArtifactManifest, MeshArtifactRole,
+    MeshArtifactSourceKind, MeshArtifactVertexRecord, MeshCoordinateEvidence,
+    MeshFacePairFreshness, MeshFacePairRelation, MeshFacePairValidationError, MeshTopologyEvidence,
+    SplitPlanFreshness, TriangleTriangleFreshness, TriangleTriangleRelation, ValidationPolicy,
+    WindingReportFreshness, approximate_mesh_f64_view, boolean_exact,
+    boolean_exact_with_boundary_policy, boolean_selected_regions,
     build_exact_arrangement2d_overlay, build_exact_arrangement2d_overlay_with_boundary_policy,
     build_intersection_graph, certify_adjacent_union_completion_report,
     certify_boundary_touching_report, certify_convex_solid,
@@ -362,6 +363,38 @@ fn exact_mesh_proposal_and_artifact_reports_are_publicly_replayable() {
         preview
             .blockers
             .contains(&MeshArtifactBlocker::MissingExactTopologyReplay)
+    );
+
+    let repeated_vertex_handoff = MeshArtifactManifest::brep_exact_triangle_handoff(
+        "brep exact triangle handoff",
+        1,
+        vec![
+            MeshArtifactVertexRecord {
+                index: 0,
+                coordinate_evidence: MeshCoordinateEvidence::CertifiedDerivedExact,
+            },
+            MeshArtifactVertexRecord {
+                index: 1,
+                coordinate_evidence: MeshCoordinateEvidence::CertifiedDerivedExact,
+            },
+            MeshArtifactVertexRecord {
+                index: 2,
+                coordinate_evidence: MeshCoordinateEvidence::CertifiedDerivedExact,
+            },
+        ],
+        vec![MeshArtifactFaceRecord {
+            index: 0,
+            vertices: vec![0, 1, 1],
+            topology_evidence: MeshTopologyEvidence::DerivedExactSurfaceHandoff,
+        }],
+    )
+    .report();
+    assert!(!repeated_vertex_handoff.validation_handoff_ready);
+    assert!(
+        repeated_vertex_handoff
+            .blockers
+            .contains(&MeshArtifactBlocker::FaceRepeatedVertex),
+        "{repeated_vertex_handoff:?}"
     );
 }
 
