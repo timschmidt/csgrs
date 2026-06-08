@@ -910,11 +910,11 @@ fn triangulate_simplified_face_group(
 ) -> Result<(), ExactArrangementBlocker> {
     let mut boundaries = Vec::new();
     for &face_index in face_indices {
-        let boundary = complex.faces[face_index].face.cell.boundary_points.clone();
-        if boundary.len() < 3 {
+        let face = &complex.faces[face_index].face.cell;
+        if face.boundary.len() != face.boundary_points.len() || face.boundary.len() < 3 {
             return Err(ExactArrangementBlocker::NonManifoldCellComplex);
         }
-        boundaries.push(boundary);
+        boundaries.push(face.boundary_points.clone());
     }
     triangulate_exact_loop_group(&boundaries, vertices, triangles)
 }
@@ -1983,6 +1983,17 @@ mod tests {
         let simplified =
             simplify_selected_cell_complex(selected, ExactRegularizationPolicy::REGULARIZED_SOLID)
                 .unwrap();
+
+        assert_eq!(
+            simplified.triangulate(),
+            Err(ExactArrangementBlocker::NonManifoldCellComplex)
+        );
+    }
+
+    #[test]
+    fn triangulation_rejects_boundary_node_point_mismatch() {
+        let mut simplified = simplified_square();
+        simplified.faces[0].face.cell.boundary.pop();
 
         assert_eq!(
             simplified.triangulate(),
