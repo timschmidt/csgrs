@@ -1,7 +1,7 @@
 use hyperlimit::{Point2, Point3, SourceProvenance};
 use hypermesh::{
     AffineOrthogonalSolidFreshness, ApproximateMeshF64ViewFreshness,
-    AxisAlignedOrthogonalSolidFreshness, ClosedMeshOrientation,
+    AxisAlignedOrthogonalSolidFreshness, ClosedMeshOrientation, ContainedFaceAdjacentUnionError,
     ContainedFaceAdjacentUnionFreshness, ConvexSolidMeshRelation, ConvexSolidPointRelation,
     ConvexSolidReportFreshness, CoplanarArrangementReadinessFreshness,
     CoplanarOverlapGraphFreshness, CoplanarOverlapSplitFreshness,
@@ -3457,6 +3457,33 @@ fn exact_contained_face_adjacent_union_is_publicly_replayable() {
     assert!(!union.contained_faces.is_empty());
     assert!(!union.containing_faces.is_empty());
     assert!(!union.mesh.triangles().is_empty());
+
+    let mut missing_contained = union.clone();
+    missing_contained.contained_faces.clear();
+    assert_eq!(
+        missing_contained.validate(),
+        Err(ContainedFaceAdjacentUnionError::InvalidCertificate)
+    );
+    assert_eq!(
+        missing_contained.freshness_against_sources(&left, &right),
+        ContainedFaceAdjacentUnionFreshness::InvalidCertificate
+    );
+
+    let mut relabeled_containing = union.clone();
+    relabeled_containing.containing_face = usize::MAX;
+    assert_eq!(
+        relabeled_containing.validate(),
+        Err(ContainedFaceAdjacentUnionError::InvalidCertificate)
+    );
+
+    let mut duplicate_containing = union.clone();
+    duplicate_containing
+        .containing_faces
+        .push(duplicate_containing.containing_faces[0]);
+    assert_eq!(
+        duplicate_containing.validate(),
+        Err(ContainedFaceAdjacentUnionError::InvalidCertificate)
+    );
 
     let mut invalid_output = union.clone();
     invalid_output.mesh = ExactMesh::from_i64_triangles_with_policy(

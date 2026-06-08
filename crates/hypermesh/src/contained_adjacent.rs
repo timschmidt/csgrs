@@ -70,6 +70,8 @@ pub(crate) struct ContainedFaceAdjacentCertificate {
 /// Validation failure for a retained contained-face adjacency materialization.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ContainedFaceAdjacentUnionError {
+    /// The retained source-face certificate shape is internally incoherent.
+    InvalidCertificate,
     /// The retained output mesh no longer validates as an exact mesh.
     OutputMesh(ExactMeshValidationError),
     /// The retained output mesh is locally valid but is not a closed manifold.
@@ -83,6 +85,8 @@ pub enum ContainedFaceAdjacentUnionError {
 pub enum ContainedFaceAdjacentUnionFreshness {
     /// The retained union locally validates and replays from source operands.
     Current,
+    /// The retained source-face certificate shape is internally incoherent.
+    InvalidCertificate,
     /// The retained output mesh no longer passes local exact output validation.
     InvalidOutput,
     /// The artifact is locally valid but no longer replays from source operands.
@@ -95,11 +99,37 @@ impl ContainedFaceAdjacentUnion {
     /// Local output validation and copied topology must first be a coherent
     /// exact object before boolean code consumes the retained certificate.
     pub fn validate(&self) -> Result<(), ContainedFaceAdjacentUnionError> {
+        self.validate_certificate_shape()?;
         self.mesh
             .validate_retained_state()
             .map_err(ContainedFaceAdjacentUnionError::OutputMesh)?;
         if !self.mesh.facts().mesh.closed_manifold {
             return Err(ContainedFaceAdjacentUnionError::OutputNotClosed);
+        }
+        Ok(())
+    }
+
+    fn validate_certificate_shape(&self) -> Result<(), ContainedFaceAdjacentUnionError> {
+        if self.contained_faces.is_empty() || self.containing_faces.is_empty() {
+            return Err(ContainedFaceAdjacentUnionError::InvalidCertificate);
+        }
+        if !self.contained_faces.contains(&self.contained_face)
+            || !self.containing_faces.contains(&self.containing_face)
+        {
+            return Err(ContainedFaceAdjacentUnionError::InvalidCertificate);
+        }
+
+        let mut contained = std::collections::BTreeSet::new();
+        for &face in &self.contained_faces {
+            if !contained.insert(face) {
+                return Err(ContainedFaceAdjacentUnionError::InvalidCertificate);
+            }
+        }
+        let mut containing = std::collections::BTreeSet::new();
+        for &face in &self.containing_faces {
+            if !containing.insert(face) {
+                return Err(ContainedFaceAdjacentUnionError::InvalidCertificate);
+            }
         }
         Ok(())
     }
@@ -128,8 +158,16 @@ impl ContainedFaceAdjacentUnion {
         left: &ExactMesh,
         right: &ExactMesh,
     ) -> ContainedFaceAdjacentUnionFreshness {
-        if self.validate().is_err() {
-            return ContainedFaceAdjacentUnionFreshness::InvalidOutput;
+        match self.validate() {
+            Ok(()) => {}
+            Err(ContainedFaceAdjacentUnionError::InvalidCertificate) => {
+                return ContainedFaceAdjacentUnionFreshness::InvalidCertificate;
+            }
+            Err(
+                ContainedFaceAdjacentUnionError::OutputMesh(_)
+                | ContainedFaceAdjacentUnionError::OutputNotClosed
+                | ContainedFaceAdjacentUnionError::SourceReplayMismatch,
+            ) => return ContainedFaceAdjacentUnionFreshness::InvalidOutput,
         }
         match materialize_contained_face_adjacent_union(left, right, self.mesh.validation_policy())
         {
