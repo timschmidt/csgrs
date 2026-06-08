@@ -875,6 +875,7 @@ fn retained_overlap_split_constructors_validate_range_evidence() {
     let zero = ParamRange::new(q(1, 2), q(1, 2));
     let outside_unit = ParamRange::new(r(-1), r(1));
     let partial = ParamRange::new(r(0), q(1, 2));
+    let zero_segment = LineSeg2::new_unchecked(p(0, 0), p(0, 0));
 
     BezierRetainedLineOverlapSplit2::new(
         0,
@@ -885,6 +886,22 @@ fn retained_overlap_split_constructors_validate_range_evidence() {
         BezierRetainedLineOverlapExtent2::FullBoth,
     )
     .unwrap();
+    assert_topology_error(BezierRetainedLineOverlapSplit2::new(
+        0,
+        1,
+        zero_segment.clone(),
+        full.clone(),
+        reversed_full.clone(),
+        BezierRetainedLineOverlapExtent2::FullBoth,
+    ));
+    assert_topology_error(BezierRetainedLinearOverlapSplit2::new(
+        0,
+        1,
+        zero_segment.clone(),
+        full.clone(),
+        reversed_full,
+        BezierRetainedLineOverlapExtent2::FullBoth,
+    ));
     assert_topology_error(BezierRetainedLineOverlapSplit2::new(
         0,
         1,
@@ -909,6 +926,17 @@ fn retained_overlap_split_constructors_validate_range_evidence() {
         partial,
         full,
         overlap_segment,
+        BezierRetainedOverlapOrientation2::Same,
+        BezierRetainedLineOverlapExtent2::FullBoth,
+    ));
+    assert_topology_error(BezierRetainedResolvedLinearOverlap2::new(
+        0,
+        1,
+        0,
+        1,
+        ParamRange::new(r(0), r(1)),
+        ParamRange::new(r(0), r(1)),
+        zero_segment,
         BezierRetainedOverlapOrientation2::Same,
         BezierRetainedLineOverlapExtent2::FullBoth,
     ));

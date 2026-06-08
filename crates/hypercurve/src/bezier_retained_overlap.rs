@@ -178,23 +178,22 @@ fn validate_overlap_relation_evidence(
         };
         validate_positive_unit_overlap_range(a_range)?;
         validate_positive_unit_overlap_range(b_range)?;
-        let policy = CurvePolicy::certified();
-        match is_zero(&segment.length_squared(), &policy) {
-            Some(false) => {}
-            Some(true) => {
-                return Err(CurveError::Topology(
-                    "retained line-segment overlap relation must carry nonzero overlap geometry"
-                        .to_owned(),
-                ));
-            }
-            None => {
-                return Err(CurveError::Topology(
-                    "retained line-segment overlap geometry length must be certified".to_owned(),
-                ));
-            }
-        }
+        validate_line_overlap_segment_geometry(segment)?;
     }
     Ok(())
+}
+
+fn validate_line_overlap_segment_geometry(segment: &LineSeg2) -> CurveResult<()> {
+    let policy = CurvePolicy::certified();
+    match is_zero(&segment.length_squared(), &policy) {
+        Some(false) => Ok(()),
+        Some(true) => Err(CurveError::Topology(
+            "retained line-overlap evidence must carry nonzero overlap geometry".to_owned(),
+        )),
+        None => Err(CurveError::Topology(
+            "retained line-overlap geometry length must be certified".to_owned(),
+        )),
+    }
 }
 
 /// Exact overlap report for materialized retained Bezier arrangement fragments.
@@ -357,6 +356,7 @@ impl BezierRetainedLinearOverlapSplit2 {
         extent: BezierRetainedLineOverlapExtent2,
     ) -> CurveResult<Self> {
         validate_ordered_overlap_indices(first_fragment_index, second_fragment_index)?;
+        validate_line_overlap_segment_geometry(&overlap_segment)?;
         validate_positive_unit_overlap_ranges(&first_bezier_range, &second_bezier_range, extent)?;
         Ok(Self {
             first_fragment_index,
@@ -712,6 +712,7 @@ impl BezierRetainedResolvedLinearOverlap2 {
             first_original_fragment_index,
             second_original_fragment_index,
         )?;
+        validate_line_overlap_segment_geometry(&overlap_segment)?;
         validate_positive_unit_overlap_ranges(&first_local_range, &second_local_range, extent)?;
         Ok(Self {
             first_refined_fragment_index,
@@ -822,6 +823,7 @@ impl BezierRetainedLineOverlapSplit2 {
         extent: BezierRetainedLineOverlapExtent2,
     ) -> CurveResult<Self> {
         validate_ordered_overlap_indices(first_fragment_index, second_fragment_index)?;
+        validate_line_overlap_segment_geometry(&overlap_segment)?;
         validate_positive_unit_overlap_ranges(&first_line_range, &second_line_range, extent)?;
         Ok(Self {
             first_fragment_index,
