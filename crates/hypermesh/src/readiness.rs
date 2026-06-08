@@ -88,11 +88,60 @@ impl ExactMeshConsumerReadinessReport {
         &self,
         mesh: &ExactMesh,
     ) -> Result<(), ExactMeshConsumerReadinessError> {
+        self.validate()?;
         let replay = Self::from_mesh(mesh)?;
         if self != &replay {
             return Err(ExactMeshConsumerReadinessError::ReportMismatch {
                 field: "exact_mesh_consumer_readiness",
             });
+        }
+        Ok(())
+    }
+
+    /// Validate readiness-internal consistency without access to the source mesh.
+    pub fn validate(&self) -> Result<(), ExactMeshConsumerReadinessError> {
+        expect_summary_bool(
+            "nonempty_topology",
+            self.audit.vertex_count > 0 && self.audit.face_count > 0,
+            self.nonempty_topology,
+        )?;
+        expect_summary_bool(
+            "closed_manifold",
+            self.audit.closed_manifold,
+            self.closed_manifold,
+        )?;
+        expect_summary_bool(
+            "boundary_allowed",
+            self.audit.validation_policy == ValidationPolicy::ALLOW_BOUNDARY,
+            self.boundary_allowed,
+        )?;
+        expect_summary_bool(
+            "exact_rational_coordinates",
+            self.audit.fixed_coordinates_exact_rational,
+            self.exact_rational_coordinates,
+        )?;
+        expect_summary_bool(
+            "exact_source",
+            matches!(self.audit.source, MeshSource::Exact),
+            self.exact_source,
+        )?;
+        if self.surface_handoff_ready
+            && (!self.nonempty_topology || !self.exact_rational_coordinates)
+        {
+            return Err(ExactMeshConsumerReadinessError::ReportMismatch {
+                field: "surface_handoff_ready",
+            });
+        }
+        if self.solid_handoff_ready {
+            if !self.surface_handoff_ready
+                || !self.closed_manifold
+                || self.boundary_allowed
+                || !self.exact_rational_coordinates
+            {
+                return Err(ExactMeshConsumerReadinessError::ReportMismatch {
+                    field: "solid_handoff_ready",
+                });
+            }
         }
         Ok(())
     }
@@ -116,4 +165,16 @@ pub fn exact_mesh_consumer_readiness(
     mesh: &ExactMesh,
 ) -> Result<ExactMeshConsumerReadinessReport, ExactMeshConsumerReadinessError> {
     ExactMeshConsumerReadinessReport::from_mesh(mesh)
+}
+
+fn expect_summary_bool(
+    field: &'static str,
+    expected: bool,
+    actual: bool,
+) -> Result<(), ExactMeshConsumerReadinessError> {
+    if expected == actual {
+        Ok(())
+    } else {
+        Err(ExactMeshConsumerReadinessError::ReportMismatch { field })
+    }
 }

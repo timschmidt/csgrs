@@ -424,6 +424,17 @@ fn exact_mesh_handoff_package_domains_are_publicly_replayable() {
     assert_eq!(preferred.domain(), ExactMeshConsumerDomain::Solid);
     assert_eq!(preferred.audit(), &package.audit);
 
+    let mut invalid_readiness_package = package.clone();
+    invalid_readiness_package.readiness.closed_manifold = false;
+    assert!(matches!(
+        invalid_readiness_package.validate_internal(),
+        Err(ExactMeshHandoffPackageError::InternalMismatch { field: "readiness" })
+    ));
+    assert_eq!(
+        invalid_readiness_package.freshness_against_mesh(&solid),
+        ExactMeshHandoffPackageFreshness::StalePackage
+    );
+
     let mut invalid_surface_package = package.clone();
     invalid_surface_package
         .surface
@@ -478,6 +489,30 @@ fn exact_mesh_handoff_package_domains_are_publicly_replayable() {
         .unwrap();
     assert!(summary.require_lossy_adapter().is_ok());
     assert!(summary.require_closed_volume().is_ok());
+
+    let mut invalid_summary = summary.clone();
+    invalid_summary
+        .available_domains
+        .push(ExactMeshConsumerDomain::Surface);
+    assert!(matches!(
+        invalid_summary.validate(),
+        Err(hypermesh::ExactMeshDomainSummaryError::SummaryMismatch {
+            field: "available_domains"
+        })
+    ));
+    assert_eq!(
+        invalid_summary.freshness_against_package(&package),
+        ExactMeshDomainSummaryFreshness::StaleSummary
+    );
+
+    let mut contradictory_summary = summary.clone();
+    contradictory_summary.exact_geometry_domains.clear();
+    assert!(matches!(
+        contradictory_summary.validate(),
+        Err(hypermesh::ExactMeshDomainSummaryError::SummaryMismatch {
+            field: "exact_geometry_domains"
+        })
+    ));
 
     let stale_source = tetra([2, 0, 0]);
     assert_eq!(

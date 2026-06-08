@@ -289,6 +289,7 @@ impl ExactMeshDomainSummary {
         &self,
         package: &ExactMeshHandoffPackage,
     ) -> Result<(), ExactMeshDomainSummaryError> {
+        self.validate()?;
         let replay = package.domain_summary();
         if self.available_domains != replay.available_domains {
             return Err(ExactMeshDomainSummaryError::SummaryMismatch {
@@ -316,6 +317,53 @@ impl ExactMeshDomainSummary {
             });
         }
         if self.closed_volume_ready != replay.closed_volume_ready {
+            return Err(ExactMeshDomainSummaryError::SummaryMismatch {
+                field: "closed_volume_ready",
+            });
+        }
+        Ok(())
+    }
+
+    /// Validate summary-internal domain consistency without access to a package.
+    pub fn validate(&self) -> Result<(), ExactMeshDomainSummaryError> {
+        if has_duplicate_domains(&self.available_domains) {
+            return Err(ExactMeshDomainSummaryError::SummaryMismatch {
+                field: "available_domains",
+            });
+        }
+        let exact_geometry_domains = self
+            .available_domains
+            .iter()
+            .copied()
+            .filter(|domain| domain.is_exact_geometry())
+            .collect::<Vec<_>>();
+        if self.exact_geometry_domains != exact_geometry_domains {
+            return Err(ExactMeshDomainSummaryError::SummaryMismatch {
+                field: "exact_geometry_domains",
+            });
+        }
+        let lossy_adapter_domains = self
+            .available_domains
+            .iter()
+            .copied()
+            .filter(|domain| domain.is_lossy_adapter())
+            .collect::<Vec<_>>();
+        if self.lossy_adapter_domains != lossy_adapter_domains {
+            return Err(ExactMeshDomainSummaryError::SummaryMismatch {
+                field: "lossy_adapter_domains",
+            });
+        }
+        if self.exact_geometry_count != self.exact_geometry_domains.len() {
+            return Err(ExactMeshDomainSummaryError::SummaryMismatch {
+                field: "exact_geometry_count",
+            });
+        }
+        if self.lossy_adapter_count != self.lossy_adapter_domains.len() {
+            return Err(ExactMeshDomainSummaryError::SummaryMismatch {
+                field: "lossy_adapter_count",
+            });
+        }
+        if self.closed_volume_ready != self.has_domain(ExactMeshConsumerDomain::Solid) {
             return Err(ExactMeshDomainSummaryError::SummaryMismatch {
                 field: "closed_volume_ready",
             });
@@ -539,6 +587,9 @@ impl ExactMeshHandoffPackage {
             return Err(ExactMeshHandoffPackageError::InternalMismatch {
                 field: "readiness.audit",
             });
+        }
+        if self.readiness.validate().is_err() {
+            return Err(ExactMeshHandoffPackageError::InternalMismatch { field: "readiness" });
         }
         if self.readiness.surface_handoff_ready != self.surface.is_some() {
             return Err(ExactMeshHandoffPackageError::InternalMismatch {
@@ -839,4 +890,11 @@ pub fn exact_mesh_handoff_package(
     mesh: &ExactMesh,
 ) -> Result<ExactMeshHandoffPackage, ExactMeshHandoffPackageError> {
     ExactMeshHandoffPackage::from_mesh(mesh)
+}
+
+fn has_duplicate_domains(domains: &[ExactMeshConsumerDomain]) -> bool {
+    domains
+        .iter()
+        .enumerate()
+        .any(|(index, domain)| domains[index + 1..].contains(domain))
 }
