@@ -1304,25 +1304,23 @@ impl ExactBooleanResult {
         if let ExactBooleanResultKind::CertifiedShortcut {
             operation,
             shortcut:
-                ExactBooleanShortcutKind::EmptyOperand
+                shortcut @ (ExactBooleanShortcutKind::EmptyOperand
                 | ExactBooleanShortcutKind::BoundsDisjoint
                 | ExactBooleanShortcutKind::Identical
                 | ExactBooleanShortcutKind::SameSurface
                 | ExactBooleanShortcutKind::MixedDimensionalRegularizedSolid
-                | ExactBooleanShortcutKind::LowerDimensionalRegularizedSolid,
+                | ExactBooleanShortcutKind::LowerDimensionalRegularizedSolid),
         } = self.kind
-        {
-            let replay = boolean_exact_with_boundary_policy(
-                left,
-                right,
+            && !certified_shortcut_output_matches_sources(
+                shortcut,
                 operation,
                 self.mesh.validation_policy(),
-                ExactBoundaryBooleanPolicy::Reject,
-            )
-            .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
-            if self != &replay {
-                return Err(ExactReportValidationError::SourceReplayMismatch);
-            }
+                &self.mesh,
+                left,
+                right,
+            )?
+        {
+            return Err(ExactReportValidationError::SourceReplayMismatch);
         }
         if let ExactBooleanResultKind::CertifiedShortcut {
             operation,
@@ -1572,6 +1570,193 @@ fn certified_shortcut_sources_match(
             arrangement_cell_complex_sources_match(operation, validation, left, right)
         }
     }
+}
+
+fn certified_shortcut_output_matches_sources(
+    shortcut: ExactBooleanShortcutKind,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+    mesh: &ExactMesh,
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Result<bool, ExactReportValidationError> {
+    if !certified_shortcut_sources_match(shortcut, operation, validation, left, right)? {
+        return Ok(false);
+    }
+    Ok(match shortcut {
+        ExactBooleanShortcutKind::EmptyOperand => {
+            empty_operand_output_matches_sources(operation, validation, mesh, left, right)
+        }
+        ExactBooleanShortcutKind::BoundsDisjoint => {
+            bounds_disjoint_output_matches_sources(operation, validation, mesh, left, right)
+        }
+        ExactBooleanShortcutKind::Identical => {
+            identical_output_matches_sources(operation, validation, mesh, left, right)
+        }
+        ExactBooleanShortcutKind::SameSurface => {
+            same_surface_output_matches_sources(operation, validation, mesh, left, right)
+        }
+        ExactBooleanShortcutKind::MixedDimensionalRegularizedSolid => {
+            mixed_dimensional_regularized_output_matches_sources(
+                operation, validation, mesh, left, right,
+            )
+        }
+        ExactBooleanShortcutKind::LowerDimensionalRegularizedSolid => {
+            lower_dimensional_regularized_output_matches_sources(
+                operation, validation, mesh, left, right,
+            )
+        }
+        ExactBooleanShortcutKind::OpenSurfaceDisjoint
+        | ExactBooleanShortcutKind::ClosedBoundaryTouchingUnion
+        | ExactBooleanShortcutKind::ClosedBoundaryTouchingIntersection
+        | ExactBooleanShortcutKind::ClosedBoundaryTouchingDifference
+        | ExactBooleanShortcutKind::ClosedWindingSeparated
+        | ExactBooleanShortcutKind::ClosedWindingContainment
+        | ExactBooleanShortcutKind::ConvexContainment
+        | ExactBooleanShortcutKind::ConvexUnion
+        | ExactBooleanShortcutKind::ConvexIntersection
+        | ExactBooleanShortcutKind::ConvexDifference
+        | ExactBooleanShortcutKind::ConvexSeparated
+        | ExactBooleanShortcutKind::ArrangementCellComplex => false,
+    })
+}
+
+fn empty_operand_output_matches_sources(
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+    mesh: &ExactMesh,
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> bool {
+    if !left.triangles().is_empty() && !right.triangles().is_empty() {
+        return false;
+    }
+    match operation {
+        ExactBooleanOperation::Union
+            if validation == ValidationPolicy::CLOSED
+                && mesh_is_lower_dimensional(left)
+                && mesh_is_lower_dimensional(right) =>
+        {
+            mesh_output_is_empty(mesh)
+        }
+        ExactBooleanOperation::Union => concatenated_mesh_output_matches(mesh, left, right, false),
+        ExactBooleanOperation::Intersection => mesh_output_is_empty(mesh),
+        ExactBooleanOperation::Difference if left.triangles().is_empty() => {
+            mesh_output_is_empty(mesh)
+        }
+        ExactBooleanOperation::Difference
+            if validation == ValidationPolicy::CLOSED
+                && right.triangles().is_empty()
+                && mesh_is_lower_dimensional(left) =>
+        {
+            mesh_output_is_empty(mesh)
+        }
+        ExactBooleanOperation::Difference => mesh_output_matches(mesh, left),
+        ExactBooleanOperation::SelectedRegions(_) => false,
+    }
+}
+
+fn bounds_disjoint_output_matches_sources(
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+    mesh: &ExactMesh,
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> bool {
+    if left.triangles().is_empty()
+        || right.triangles().is_empty()
+        || (validation == ValidationPolicy::CLOSED
+            && closed_validation_regularized_solid_sources(left, right))
+    {
+        return false;
+    }
+    match operation {
+        ExactBooleanOperation::Union => concatenated_mesh_output_matches(mesh, left, right, false),
+        ExactBooleanOperation::Intersection => mesh_output_is_empty(mesh),
+        ExactBooleanOperation::Difference => mesh_output_matches(mesh, left),
+        ExactBooleanOperation::SelectedRegions(_) => false,
+    }
+}
+
+fn identical_output_matches_sources(
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+    mesh: &ExactMesh,
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> bool {
+    if (mesh_is_closed_solid(left) && mesh_is_closed_solid(right))
+        || (validation == ValidationPolicy::CLOSED
+            && closed_validation_regularized_solid_sources(left, right))
+    {
+        return false;
+    }
+    match operation {
+        ExactBooleanOperation::Union | ExactBooleanOperation::Intersection => {
+            mesh_output_matches(mesh, left)
+        }
+        ExactBooleanOperation::Difference => mesh_output_is_empty(mesh),
+        ExactBooleanOperation::SelectedRegions(_) => false,
+    }
+}
+
+fn same_surface_output_matches_sources(
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+    mesh: &ExactMesh,
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> bool {
+    if meshes_are_certified_identical(left, right) {
+        return false;
+    }
+    identical_output_matches_sources(operation, validation, mesh, left, right)
+}
+
+fn mixed_dimensional_regularized_output_matches_sources(
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+    mesh: &ExactMesh,
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> bool {
+    if validation != ValidationPolicy::CLOSED && meshes_are_certified_bounds_disjoint(left, right) {
+        return false;
+    }
+    let left_closed = mesh_is_closed_solid(left);
+    let right_closed = mesh_is_closed_solid(right);
+    match operation {
+        ExactBooleanOperation::Union => {
+            (left_closed && mesh_output_matches(mesh, left))
+                || (right_closed && mesh_output_matches(mesh, right))
+        }
+        ExactBooleanOperation::Intersection => mesh_output_is_empty(mesh),
+        ExactBooleanOperation::Difference => {
+            if left_closed {
+                mesh_output_matches(mesh, left)
+            } else {
+                mesh_output_is_empty(mesh)
+            }
+        }
+        ExactBooleanOperation::SelectedRegions(_) => false,
+    }
+}
+
+fn lower_dimensional_regularized_output_matches_sources(
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+    mesh: &ExactMesh,
+    _left: &ExactMesh,
+    _right: &ExactMesh,
+) -> bool {
+    validation == ValidationPolicy::CLOSED
+        && !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
+        && mesh_output_is_empty(mesh)
+}
+
+fn closed_validation_regularized_solid_sources(left: &ExactMesh, right: &ExactMesh) -> bool {
+    lower_dimensional_regularized_sources(left, right)
+        || mixed_dimensional_regularized_sources(left, right)
 }
 
 fn retained_split_region_result_matches(
