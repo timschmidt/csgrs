@@ -4502,6 +4502,12 @@ impl ExactAdjacentUnionCompletionReport {
 
         let full_face_counts = self.full_face_shared_faces + self.full_face_shared_patches;
         let contained_counts = self.contained_faces + self.containing_faces;
+        if full_face_counts > self.retained_face_pairs
+            || self.contained_faces > self.retained_face_pairs
+            || self.containing_faces > self.retained_face_pairs
+        {
+            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+        }
         if matches!(
             self.status,
             ExactAdjacentUnionCompletionStatus::NotUnion
@@ -6574,6 +6580,64 @@ mod tests {
         };
         assert_eq!(
             adjacent.validate(),
+            Err(ExactReportValidationError::StatusEvidenceMismatch)
+        );
+
+        let certified_full_face = ExactAdjacentUnionCompletionReport {
+            operation: ExactBooleanOperation::Union,
+            status: ExactAdjacentUnionCompletionStatus::CertifiedFullFace,
+            left_closed: true,
+            right_closed: true,
+            axis_aligned_box_pair: false,
+            stronger_kernel_available: false,
+            graph_had_unknowns: false,
+            retained_face_pairs: 2,
+            retained_events: 2,
+            blocker: ExactBooleanBlocker {
+                kind: ExactBooleanBlockerKind::NeedsBoundaryPolicy,
+                candidate_pairs: 2,
+                coplanar_overlapping_pairs: 0,
+                coplanar_touching_pairs: 0,
+                unknown_pairs: 0,
+                construction_failed_events: 0,
+            },
+            full_face_shared_faces: 3,
+            full_face_shared_patches: 0,
+            contained_containing_side: None,
+            contained_faces: 0,
+            containing_faces: 0,
+        };
+        assert_eq!(
+            certified_full_face.validate(),
+            Err(ExactReportValidationError::StatusEvidenceMismatch)
+        );
+
+        let certified_contained_face = ExactAdjacentUnionCompletionReport {
+            operation: ExactBooleanOperation::Union,
+            status: ExactAdjacentUnionCompletionStatus::CertifiedContainedFace,
+            left_closed: true,
+            right_closed: true,
+            axis_aligned_box_pair: false,
+            stronger_kernel_available: false,
+            graph_had_unknowns: false,
+            retained_face_pairs: 2,
+            retained_events: 2,
+            blocker: ExactBooleanBlocker {
+                kind: ExactBooleanBlockerKind::NeedsBoundaryPolicy,
+                candidate_pairs: 2,
+                coplanar_overlapping_pairs: 0,
+                coplanar_touching_pairs: 0,
+                unknown_pairs: 0,
+                construction_failed_events: 0,
+            },
+            full_face_shared_faces: 0,
+            full_face_shared_patches: 0,
+            contained_containing_side: Some(MeshSide::Left),
+            contained_faces: 1,
+            containing_faces: 3,
+        };
+        assert_eq!(
+            certified_contained_face.validate(),
             Err(ExactReportValidationError::StatusEvidenceMismatch)
         );
 
