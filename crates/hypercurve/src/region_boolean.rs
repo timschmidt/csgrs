@@ -209,7 +209,10 @@ fn strip_boolean_region(
         return Classification::Uncertain(overlaps.unwrap_err());
     };
     if !overlaps {
-        let touches = real_eq(&overlap_min, &overlap_max, policy).unwrap_or(false);
+        let touches = match real_eq(&overlap_min, &overlap_max, policy) {
+            Some(touches) => touches,
+            None => return Classification::Uncertain(UncertaintyReason::Ordering),
+        };
         if touches && matches!(op, BooleanOp::Union | BooleanOp::Xor) {
             // A zero-width overlap here means two same-width strips share an
             // entire edge. Regularized polygon clipping removes that internal
@@ -358,7 +361,11 @@ fn strip_difference_contours(
         let Ok(end) = end else {
             return Classification::Uncertain(end.unwrap_err());
         };
-        if real_lt(&first_min, &end, policy).unwrap_or(false) {
+        let has_positive_width = match real_lt(&first_min, &end, policy) {
+            Some(has_positive_width) => has_positive_width,
+            None => return Classification::Uncertain(UncertaintyReason::Ordering),
+        };
+        if has_positive_width {
             match required_strip_rect((
                 first_min.clone(),
                 cross_min.clone(),
@@ -380,7 +387,11 @@ fn strip_difference_contours(
         let Ok(start) = start else {
             return Classification::Uncertain(start.unwrap_err());
         };
-        if real_lt(&start, &first_max, policy).unwrap_or(false) {
+        let has_positive_width = match real_lt(&start, &first_max, policy) {
+            Some(has_positive_width) => has_positive_width,
+            None => return Classification::Uncertain(UncertaintyReason::Ordering),
+        };
+        if has_positive_width {
             match required_strip_rect((start, cross_min, first_max, cross_max, horizontal)) {
                 Classification::Decided(contour) => contours.push(contour),
                 Classification::Uncertain(reason) => return Classification::Uncertain(reason),
