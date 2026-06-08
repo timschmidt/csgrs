@@ -342,7 +342,7 @@ fn prefix_signed_area_for_controls(
         Some(false) => return Err(CurveError::InvalidBezierParameter),
         None => return Ok(Classification::Uncertain(UncertaintyReason::Ordering)),
     }
-    let (prefix, _) = subdivide_controls_at(&controls, t);
+    let (prefix, _) = subdivide_controls_at(&controls, t)?;
     let refs = prefix.iter().collect::<Vec<_>>();
     area_moments_for_controls(&refs).map(|moments| Classification::Decided(moments.signed_area))
 }
@@ -357,7 +357,7 @@ fn prefix_area_moments_for_controls(
         Some(false) => return Err(CurveError::InvalidBezierParameter),
         None => return Ok(Classification::Uncertain(UncertaintyReason::Ordering)),
     }
-    let (prefix, _) = subdivide_controls_at(&controls, t);
+    let (prefix, _) = subdivide_controls_at(&controls, t)?;
     let refs = prefix.iter().collect::<Vec<_>>();
     area_moments_for_controls(&refs).map(Classification::Decided)
 }
@@ -368,15 +368,15 @@ fn area_moments_for_controls(controls: &[&Point2]) -> CurveResult<BezierAreaMome
             .iter()
             .map(|point| point.x().clone())
             .collect::<Vec<_>>(),
-    );
+    )?;
     let y = bernstein_to_power(
         controls
             .iter()
             .map(|point| point.y().clone())
             .collect::<Vec<_>>(),
-    );
-    let dx = derivative_coefficients(&x);
-    let dy = derivative_coefficients(&y);
+    )?;
+    let dx = derivative_coefficients(&x)?;
+    let dy = derivative_coefficients(&y)?;
     let first = polynomial_product(&x, &dy);
     let second = polynomial_product(&y, &dx);
     let signed_area_integral = integrate_polynomial_difference(&first, &second)?;
@@ -419,9 +419,11 @@ fn rational_quadratic_signed_area_contribution(
     ]);
     let nx = quadratic_bernstein_power_coefficients(x_weighted);
     let ny = quadratic_bernstein_power_coefficients(y_weighted);
+    let dnx = derivative_coefficients(&nx)?;
+    let dny = derivative_coefficients(&ny)?;
     let numerator = polynomial_difference(
-        &polynomial_product(&nx, &derivative_coefficients(&ny)),
-        &polynomial_product(&ny, &derivative_coefficients(&nx)),
+        &polynomial_product(&nx, &dny),
+        &polynomial_product(&ny, &dnx),
     );
 
     let Some(integral) = integrate_quadratic_over_quadratic_square(&numerator, &w, &policy)? else {
@@ -713,7 +715,7 @@ fn integrate_polynomial_difference(first: &[Real], second: &[Real]) -> CurveResu
     for degree in 0..first.len().max(second.len()) {
         let value = first.get(degree).cloned().unwrap_or_else(Real::zero)
             - second.get(degree).cloned().unwrap_or_else(Real::zero);
-        integral = &integral + (value / Real::from((degree + 1) as i32))?;
+        integral = &integral + (value / positive_degree_denominator(degree)?)?;
     }
     Ok(integral)
 }
@@ -721,34 +723,54 @@ fn integrate_polynomial_difference(first: &[Real], second: &[Real]) -> CurveResu
 fn integrate_polynomial(coefficients: &[Real]) -> CurveResult<Real> {
     let mut integral = Real::zero();
     for (degree, coefficient) in coefficients.iter().enumerate() {
-        integral = &integral + (coefficient.clone() / Real::from((degree + 1) as i32))?;
+        integral = &integral + (coefficient.clone() / positive_degree_denominator(degree)?)?;
     }
     Ok(integral)
 }
 
-fn bernstein_to_power(values: Vec<Real>) -> Vec<Real> {
-    let degree = values.len() - 1;
+fn positive_degree_denominator(zero_based_degree: usize) -> CurveResult<Real> {
+    let denominator = zero_based_degree
+        .checked_add(1)
+        .ok_or(CurveError::InvalidBezierPolynomial)?;
+    let denominator =
+        i32::try_from(denominator).map_err(|_| CurveError::InvalidBezierPolynomial)?;
+    Ok(Real::from(denominator))
+}
+
+fn bernstein_to_power(values: Vec<Real>) -> CurveResult<Vec<Real>> {
+    let Some(degree) = values.len().checked_sub(1) else {
+        return Err(CurveError::InvalidBezierRange);
+    };
     let mut coeffs = vec![Real::zero(); values.len()];
     for (i, value) in values.into_iter().enumerate() {
         for (k, coefficient) in coeffs.iter_mut().enumerate().take(degree + 1).skip(i) {
-            let magnitude = binomial(degree, i) * binomial(degree - i, k - i);
+            let magnitude = binomial(degree, i)?
+                .checked_mul(binomial(degree - i, k - i)?)
+                .ok_or(CurveError::InvalidBezierPolynomial)?;
+            let magnitude =
+                i32::try_from(magnitude).map_err(|_| CurveError::InvalidBezierPolynomial)?;
             let signed = if (k - i) % 2 == 0 {
-                magnitude as i32
+                magnitude
             } else {
-                -(magnitude as i32)
+                magnitude
+                    .checked_neg()
+                    .ok_or(CurveError::InvalidBezierPolynomial)?
             };
             *coefficient = &*coefficient + (&value * &Real::from(signed));
         }
     }
-    coeffs
+    Ok(coeffs)
 }
 
-fn derivative_coefficients(coefficients: &[Real]) -> Vec<Real> {
+fn derivative_coefficients(coefficients: &[Real]) -> CurveResult<Vec<Real>> {
     coefficients
         .iter()
         .enumerate()
         .skip(1)
-        .map(|(degree, coefficient)| coefficient * &Real::from(degree as i32))
+        .map(|(degree, coefficient)| {
+            let degree = i32::try_from(degree).map_err(|_| CurveError::InvalidBezierPolynomial)?;
+            Ok(coefficient * &Real::from(degree))
+        })
         .collect()
 }
 
@@ -765,10 +787,16 @@ fn polynomial_product(first: &[Real], second: &[Real]) -> Vec<Real> {
     product
 }
 
-fn subdivide_controls_at(controls: &[Point2], t: Real) -> (Vec<Point2>, Vec<Point2>) {
+fn subdivide_controls_at(controls: &[Point2], t: Real) -> CurveResult<(Vec<Point2>, Vec<Point2>)> {
+    if controls.is_empty() {
+        return Err(CurveError::InvalidBezierRange);
+    }
+
     let mut levels = vec![controls.to_vec()];
     while levels.last().map(|level| level.len()).unwrap_or(0) > 1 {
-        let previous = levels.last().expect("level exists");
+        let Some(previous) = levels.last() else {
+            return Err(CurveError::InvalidBezierRange);
+        };
         let next = previous
             .windows(2)
             .map(|pair| pair[0].lerp(&pair[1], t.clone()))
@@ -785,15 +813,85 @@ fn subdivide_controls_at(controls: &[Point2], t: Real) -> (Vec<Point2>, Vec<Poin
         .rev()
         .map(|level| level[level.len() - 1].clone())
         .collect::<Vec<_>>();
-    (left, right)
+    Ok((left, right))
 }
 
-fn binomial(n: usize, k: usize) -> usize {
-    match (n, k) {
-        (_, 0) => 1,
-        (n, k) if n == k => 1,
-        (2, 1) => 2,
-        (3, 1 | 2) => 3,
-        _ => unreachable!("Bezier moment support is currently quadratic/cubic"),
+fn binomial(n: usize, k: usize) -> CurveResult<usize> {
+    if k > n {
+        return Ok(0);
+    }
+
+    let k = k.min(n - k);
+    let mut value = 1usize;
+    for step in 1..=k {
+        let numerator = n
+            .checked_add(1)
+            .and_then(|value| value.checked_sub(step))
+            .ok_or(CurveError::InvalidBezierPolynomial)?;
+        value = value
+            .checked_mul(numerator)
+            .ok_or(CurveError::InvalidBezierPolynomial)?
+            / step;
+    }
+    Ok(value)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn point(x: i32, y: i32) -> Point2 {
+        Point2::new(Real::from(x), Real::from(y))
+    }
+
+    #[test]
+    fn moment_subdivision_rejects_empty_controls() {
+        assert_eq!(
+            subdivide_controls_at(&[], Real::zero()),
+            Err(CurveError::InvalidBezierRange)
+        );
+    }
+
+    #[test]
+    fn area_moments_reject_empty_controls() {
+        let controls = Vec::<&Point2>::new();
+        assert_eq!(
+            area_moments_for_controls(&controls),
+            Err(CurveError::InvalidBezierRange)
+        );
+    }
+
+    #[test]
+    fn bernstein_to_power_handles_supported_higher_degree() {
+        let coefficients = bernstein_to_power(vec![
+            Real::zero(),
+            Real::zero(),
+            Real::zero(),
+            Real::zero(),
+            Real::one(),
+        ])
+        .unwrap();
+
+        assert_eq!(
+            coefficients,
+            vec![
+                Real::zero(),
+                Real::zero(),
+                Real::zero(),
+                Real::zero(),
+                Real::one()
+            ]
+        );
+        assert_eq!(binomial(4, 2), Ok(6));
+    }
+
+    #[test]
+    fn area_moments_accept_constant_control() {
+        let control = point(3, 5);
+        let controls = vec![&control];
+        assert_eq!(
+            area_moments_for_controls(&controls).unwrap(),
+            BezierAreaMoments2::zero()
+        );
     }
 }
