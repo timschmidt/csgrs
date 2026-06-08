@@ -522,20 +522,20 @@ pub(crate) fn boolean_boundary_loops_between(
             BooleanBoundaryLoopSet::from_contours(match op {
                 BooleanOp::Union | BooleanOp::Intersection => clone_boundary_contours(first),
                 BooleanOp::Difference | BooleanOp::Xor => Vec::new(),
-            }),
+            })?,
         ));
     }
     if first.is_empty() || second.is_empty() {
         return Ok(Classification::Decided(
             BooleanBoundaryLoopSet::from_contours(empty_operand_boundary_contours(
                 first, second, op,
-            )),
+            ))?,
         ));
     }
     match coextensive_axis_rect_region_boolean(first, second, op, policy)? {
         Classification::Decided(Some(region)) => {
             return Ok(Classification::Decided(
-                BooleanBoundaryLoopSet::from_contours(clone_boundary_contours(&region.as_view())),
+                BooleanBoundaryLoopSet::from_contours(clone_boundary_contours(&region.as_view()))?,
             ));
         }
         Classification::Decided(None) => {}
@@ -556,7 +556,7 @@ pub(crate) fn boolean_boundary_loops_between(
                 policy,
                 kind,
             )
-            .map(|contours| contours.map(BooleanBoundaryLoopSet::from_contours));
+            .and_then(BooleanBoundaryLoopSet::from_contour_classification);
         }
         Classification::Decided(Some(BoundaryContactResolution::Containment {
             relation,
@@ -570,7 +570,7 @@ pub(crate) fn boolean_boundary_loops_between(
             // Geosciences 35(6), 1177-1185, 2009.
             if let Some(contours) = containment_boundary_contours(first, second, op, relation) {
                 return Ok(Classification::Decided(
-                    BooleanBoundaryLoopSet::from_contours(contours),
+                    BooleanBoundaryLoopSet::from_contours(contours)?,
                 ));
             }
             if relation == BoundaryContainmentRelation::FirstContainsSecond
@@ -583,7 +583,7 @@ pub(crate) fn boolean_boundary_loops_between(
                     FillRule::NonZero,
                     policy,
                 )
-                .map(|contours| contours.map(BooleanBoundaryLoopSet::from_contours));
+                .and_then(BooleanBoundaryLoopSet::from_contour_classification);
             }
         }
         Classification::Decided(None) => {
@@ -598,7 +598,7 @@ pub(crate) fn boolean_boundary_loops_between(
                     FillRule::NonZero,
                     policy,
                 )
-                .map(|contours| contours.map(BooleanBoundaryLoopSet::from_contours));
+                .and_then(BooleanBoundaryLoopSet::from_contour_classification);
             }
         }
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
@@ -606,7 +606,7 @@ pub(crate) fn boolean_boundary_loops_between(
 
     if op == BooleanOp::Xor {
         return xor_boundary_contours_by_region(first, second, FillRule::NonZero, policy)
-            .map(|contours| contours.map(BooleanBoundaryLoopSet::from_contours));
+            .and_then(BooleanBoundaryLoopSet::from_contour_classification);
     }
 
     let intersections = first.intersect_region(second, policy)?;

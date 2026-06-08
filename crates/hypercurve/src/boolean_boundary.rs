@@ -355,7 +355,7 @@ impl BooleanBoundaryLoopSet {
     ///
     /// Greiner and Hormann, "Efficient clipping of arbitrary polygons," ACM TOG 17(2),
     /// 71-83, 1998.
-    pub fn from_contours(contours: Vec<Contour2>) -> Self {
+    pub fn from_contours(contours: Vec<Contour2>) -> CurveResult<Self> {
         let mut loops = Vec::with_capacity(contours.len());
 
         for (index, contour) in contours.into_iter().enumerate() {
@@ -373,13 +373,23 @@ impl BooleanBoundaryLoopSet {
                     segment: segment.clone(),
                 })
                 .collect();
-            loops.push(
-                BooleanBoundaryLoop::new(fragments)
-                    .expect("closed contours mint nonempty boolean boundary loops"),
-            );
+            loops.push(BooleanBoundaryLoop::new(fragments)?);
         }
 
-        Self::new(loops).expect("closed contours mint uniquely owned boolean boundary loops")
+        Self::new(loops)
+    }
+
+    /// Converts a decided contour set into a checked loop set while preserving
+    /// upstream uncertainty.
+    pub fn from_contour_classification(
+        contours: Classification<Vec<Contour2>>,
+    ) -> CurveResult<Classification<Self>> {
+        match contours {
+            Classification::Decided(contours) => {
+                Self::from_contours(contours).map(Classification::Decided)
+            }
+            Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
+        }
     }
 
     /// Returns loops in extraction order.

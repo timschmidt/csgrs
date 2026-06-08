@@ -43,7 +43,7 @@ pub(crate) fn boolean_boundary_loops_between_prepared(
                     crate::region_boolean::clone_boundary_contours(&first_view)
                 }
                 BooleanOp::Difference | BooleanOp::Xor => Vec::new(),
-            }),
+            })?,
         ));
     }
     if first_view.is_empty() || second_view.is_empty() {
@@ -54,7 +54,7 @@ pub(crate) fn boolean_boundary_loops_between_prepared(
                     &second_view,
                     op,
                 ),
-            ),
+            )?,
         ));
     }
     match crate::region_boolean::coextensive_axis_rect_region_boolean(
@@ -67,7 +67,7 @@ pub(crate) fn boolean_boundary_loops_between_prepared(
             return Ok(Classification::Decided(
                 BooleanBoundaryLoopSet::from_contours(
                     crate::region_boolean::clone_boundary_contours(&region.as_view()),
-                ),
+                )?,
             ));
         }
         Classification::Decided(None) => {}
@@ -93,7 +93,7 @@ pub(crate) fn boolean_boundary_loops_between_prepared(
                 policy,
                 kind,
             )
-            .map(|contours| contours.map(BooleanBoundaryLoopSet::from_contours));
+            .and_then(BooleanBoundaryLoopSet::from_contour_classification);
         }
         Classification::Decided(Some(PreparedBoundaryContactResolution::Containment {
             relation,
@@ -103,7 +103,7 @@ pub(crate) fn boolean_boundary_loops_between_prepared(
                 containment_boundary_contours_prepared(first, second, op, relation)
             {
                 return Ok(Classification::Decided(
-                    BooleanBoundaryLoopSet::from_contours(contours),
+                    BooleanBoundaryLoopSet::from_contours(contours)?,
                 ));
             }
             if relation == crate::region_boolean::BoundaryContainmentRelation::FirstContainsSecond
@@ -116,7 +116,7 @@ pub(crate) fn boolean_boundary_loops_between_prepared(
                     FillRule::NonZero,
                     policy,
                 )
-                .map(|contours| contours.map(BooleanBoundaryLoopSet::from_contours));
+                .and_then(BooleanBoundaryLoopSet::from_contour_classification);
             }
         }
         Classification::Decided(None) => {
@@ -136,14 +136,14 @@ pub(crate) fn boolean_boundary_loops_between_prepared(
                     FillRule::NonZero,
                     policy,
                 )
-                .map(|contours| contours.map(BooleanBoundaryLoopSet::from_contours));
+                .and_then(BooleanBoundaryLoopSet::from_contour_classification);
             }
         }
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     }
     if op == BooleanOp::Xor {
         return xor_boundary_contours_by_prepared_region(first, second, FillRule::NonZero, policy)
-            .map(|contours| contours.map(BooleanBoundaryLoopSet::from_contours));
+            .and_then(BooleanBoundaryLoopSet::from_contour_classification);
     }
 
     let intersections = first.intersect_prepared_region(second, policy)?;

@@ -497,6 +497,23 @@ fn boolean_boundary_loop_constructors_validate_fragment_ownership() {
 }
 
 #[test]
+fn boolean_boundary_loop_set_checks_contour_transfer() {
+    let loops = BooleanBoundaryLoopSet::from_contours(vec![rectangle(0, 0, 2, 2)]).unwrap();
+    assert_eq!(loops.len(), 1);
+
+    let empty = BooleanBoundaryLoopSet::from_contours(Vec::new()).unwrap();
+    assert!(empty.is_empty());
+
+    assert_eq!(
+        BooleanBoundaryLoopSet::from_contour_classification(Classification::Uncertain(
+            UncertaintyReason::Boundary,
+        ))
+        .unwrap(),
+        Classification::Uncertain(UncertaintyReason::Boundary)
+    );
+}
+
+#[test]
 fn boundary_chain_assembly_rejects_branch_points() {
     let key = RegionContourKey::new(RegionSide::First, RegionContourRole::Material, 0);
     let fragments = BooleanBoundaryFragmentSet::new(
