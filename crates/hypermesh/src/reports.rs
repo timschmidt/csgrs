@@ -353,11 +353,11 @@ fn no_region_facts(
     }
 }
 
-fn blocker_pair_count(blocker: &ExactBooleanBlocker) -> usize {
-    blocker.candidate_pairs
-        + blocker.coplanar_overlapping_pairs
-        + blocker.coplanar_touching_pairs
-        + blocker.unknown_pairs
+fn blocker_has_pair_evidence(blocker: &ExactBooleanBlocker) -> bool {
+    blocker.candidate_pairs != 0
+        || blocker.coplanar_overlapping_pairs != 0
+        || blocker.coplanar_touching_pairs != 0
+        || blocker.unknown_pairs != 0
 }
 
 fn validate_blocker_count_bounds(
@@ -365,14 +365,20 @@ fn validate_blocker_count_bounds(
     retained_face_pairs: usize,
     retained_events: usize,
 ) -> Result<(), ExactReportValidationError> {
-    let classified_relation_pairs = blocker
+    let Some(classified_relation_pairs) = blocker
         .candidate_pairs
-        .saturating_add(blocker.coplanar_overlapping_pairs)
-        .saturating_add(blocker.coplanar_touching_pairs);
+        .checked_add(blocker.coplanar_overlapping_pairs)
+        .and_then(|count| count.checked_add(blocker.coplanar_touching_pairs))
+    else {
+        return Err(ExactReportValidationError::InvalidBlockerCounts);
+    };
     // `unknown_pairs` can overlap a classified relation when a candidate pair
     // carries an unknown event, but every retained graph pair must still be
     // covered by either a classified relation counter or unknown evidence.
-    let covered_relation_pairs = classified_relation_pairs.saturating_add(blocker.unknown_pairs);
+    let Some(covered_relation_pairs) = classified_relation_pairs.checked_add(blocker.unknown_pairs)
+    else {
+        return Err(ExactReportValidationError::InvalidBlockerCounts);
+    };
     if retained_face_pairs == 0 && retained_events != 0
         || retained_face_pairs != 0 && retained_events == 0
         || (retained_face_pairs != 0 && !blocker_has_any_evidence(blocker))
@@ -411,7 +417,10 @@ fn validate_arrangement_readiness_matches_blocker(
     if readiness.overlapping_graphs != blocker.coplanar_overlapping_pairs
         || readiness.touching_graphs != blocker.coplanar_touching_pairs
         || readiness.graph_count
-            != blocker.coplanar_overlapping_pairs + blocker.coplanar_touching_pairs
+            != blocker
+                .coplanar_overlapping_pairs
+                .checked_add(blocker.coplanar_touching_pairs)
+                .ok_or(ExactReportValidationError::ArrangementReadinessMismatch)?
     {
         Err(ExactReportValidationError::ArrangementReadinessMismatch)
     } else {
@@ -420,7 +429,7 @@ fn validate_arrangement_readiness_matches_blocker(
 }
 
 fn blocker_has_any_evidence(blocker: &ExactBooleanBlocker) -> bool {
-    blocker_pair_count(blocker) != 0 || blocker.construction_failed_events != 0
+    blocker_has_pair_evidence(blocker) || blocker.construction_failed_events != 0
 }
 
 fn blocker_has_refinement_evidence(blocker: &ExactBooleanBlocker) -> bool {
@@ -506,7 +515,7 @@ fn validate_refinement_partition(
 fn retained_blocker_kind_from_counts(blocker: &ExactBooleanBlocker) -> ExactBooleanBlockerKind {
     if blocker_has_refinement_evidence(blocker) {
         ExactBooleanBlockerKind::NeedsRefinement
-    } else if blocker.coplanar_overlapping_pairs + blocker.coplanar_touching_pairs > 0 {
+    } else if blocker.coplanar_overlapping_pairs != 0 || blocker.coplanar_touching_pairs != 0 {
         if blocker.candidate_pairs == 0 && blocker.coplanar_overlapping_pairs > 0 {
             ExactBooleanBlockerKind::NeedsPlanarArrangement
         } else if blocker.candidate_pairs == 0 {
@@ -522,14 +531,15 @@ fn retained_blocker_kind_from_counts(blocker: &ExactBooleanBlocker) -> ExactBool
 fn boundary_touching_not_boundary_blocker_kind(
     blocker: &ExactBooleanBlocker,
 ) -> Result<ExactBooleanBlockerKind, ExactReportValidationError> {
-    let coplanar_pairs = blocker.coplanar_overlapping_pairs + blocker.coplanar_touching_pairs;
+    let coplanar_pairs =
+        blocker.coplanar_overlapping_pairs != 0 || blocker.coplanar_touching_pairs != 0;
     if blocker_has_refinement_evidence(blocker) {
         Ok(ExactBooleanBlockerKind::NeedsRefinement)
-    } else if blocker.candidate_pairs == 0 && coplanar_pairs == 0 {
+    } else if blocker.candidate_pairs == 0 && !coplanar_pairs {
         Ok(ExactBooleanBlockerKind::NeedsWinding)
     } else if blocker.candidate_pairs == 0 && blocker.coplanar_overlapping_pairs == 0 {
         Err(ExactReportValidationError::StatusEvidenceMismatch)
-    } else if coplanar_pairs > 0 {
+    } else if coplanar_pairs {
         if blocker.candidate_pairs == 0 && blocker.coplanar_overlapping_pairs > 0 {
             Ok(ExactBooleanBlockerKind::NeedsPlanarArrangement)
         } else {
@@ -658,8 +668,11 @@ fn validate_coplanar_volumetric_evidence_counts(
     evidence
         .validate()
         .map_err(|_| ExactReportValidationError::InvalidCoplanarVolumetricEvidence)?;
+    let Some(retained_evidence_events) = coplanar_volumetric_evidence_event_count(evidence) else {
+        return Err(ExactReportValidationError::CoplanarVolumetricEvidenceMismatch);
+    };
     if evidence.retained_face_pair_count != retained_face_pairs
-        || coplanar_volumetric_evidence_event_count(evidence) != retained_events
+        || retained_evidence_events != retained_events
     {
         return Err(ExactReportValidationError::CoplanarVolumetricEvidenceMismatch);
     }
@@ -713,15 +726,15 @@ fn validate_certified_arrangement_coplanar_evidence_shape(
 
 fn coplanar_volumetric_evidence_event_count(
     evidence: &CoplanarVolumetricCellEvidenceReport,
-) -> usize {
+) -> Option<usize> {
     let explicit_unknown_events = evidence
         .unknown_events
-        .saturating_sub(evidence.unknown_segment_plane_events);
+        .checked_sub(evidence.unknown_segment_plane_events)?;
     evidence
         .segment_plane_events
-        .saturating_add(evidence.coplanar_edge_events)
-        .saturating_add(evidence.coplanar_vertex_events)
-        .saturating_add(explicit_unknown_events)
+        .checked_add(evidence.coplanar_edge_events)
+        .and_then(|count| count.checked_add(evidence.coplanar_vertex_events))
+        .and_then(|count| count.checked_add(explicit_unknown_events))
 }
 
 /// Auditable result of an exact selected-region boolean pipeline.
@@ -3290,13 +3303,22 @@ impl ExactVolumetricBoundaryClosureReport {
     }
 
     fn has_valid_self_contact_evidence(&self) -> bool {
+        let Some(min_topological_vertices) = 2_usize.checked_mul(self.self_contact_exact_points)
+        else {
+            return false;
+        };
+        let Some(cycle_count) = self
+            .self_contact_degenerate_cycles
+            .checked_add(self.self_contact_nondegenerate_cycles)
+        else {
+            return false;
+        };
         self.repeated_exact_boundary_points != 0
             && self.self_contact_exact_points != 0
-            && self.self_contact_topological_vertices >= 2 * self.self_contact_exact_points
+            && self.self_contact_topological_vertices >= min_topological_vertices
             && self.repeated_exact_boundary_points
                 >= self.self_contact_topological_vertices - self.self_contact_exact_points
-            && self.self_contact_degenerate_cycles + self.self_contact_nondegenerate_cycles
-                == self.self_contact_topological_vertices
+            && cycle_count == self.self_contact_topological_vertices
     }
 }
 
@@ -3804,10 +3826,9 @@ impl ExactBooleanBlocker {
                 self.unknown_pairs > 0 || self.construction_failed_events > 0
             }
             ExactBooleanBlockerKind::NeedsBoundaryPolicy => {
-                self.candidate_pairs
-                    + self.coplanar_touching_pairs
-                    + self.coplanar_overlapping_pairs
-                    > 0
+                (self.candidate_pairs != 0
+                    || self.coplanar_touching_pairs != 0
+                    || self.coplanar_overlapping_pairs != 0)
                     && self.unknown_pairs == 0
                     && self.construction_failed_events == 0
             }
@@ -3818,7 +3839,7 @@ impl ExactBooleanBlocker {
                     && self.candidate_pairs == 0
             }
             ExactBooleanBlockerKind::NeedsCoplanarVolumetricCells => {
-                self.coplanar_touching_pairs + self.coplanar_overlapping_pairs > 0
+                (self.coplanar_touching_pairs != 0 || self.coplanar_overlapping_pairs != 0)
                     && self.unknown_pairs == 0
                     && self.construction_failed_events == 0
             }
@@ -4503,8 +4524,15 @@ impl ExactAdjacentUnionCompletionReport {
             self.retained_events,
         )?;
 
-        let full_face_counts = self.full_face_shared_faces + self.full_face_shared_patches;
-        let contained_counts = self.contained_faces + self.containing_faces;
+        let Some(full_face_counts) = self
+            .full_face_shared_faces
+            .checked_add(self.full_face_shared_patches)
+        else {
+            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+        };
+        let Some(contained_counts) = self.contained_faces.checked_add(self.containing_faces) else {
+            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+        };
         if full_face_counts > self.retained_face_pairs
             || self.contained_faces > self.retained_face_pairs
             || self.containing_faces > self.retained_face_pairs
@@ -4518,7 +4546,7 @@ impl ExactAdjacentUnionCompletionReport {
                 | ExactAdjacentUnionCompletionStatus::AxisAlignedBoxPair
         ) && (self.retained_face_pairs != 0
             || self.retained_events != 0
-            || blocker_pair_count(&self.blocker) != 0)
+            || blocker_has_pair_evidence(&self.blocker))
         {
             return Err(ExactReportValidationError::StatusEvidenceMismatch);
         }
@@ -4691,10 +4719,9 @@ impl ExactBoundaryTouchingReport {
             ExactBoundaryTouchingStatus::Certified => {}
         }
         if self.is_certified()
-            && self.blocker.candidate_pairs
-                + self.blocker.coplanar_touching_pairs
-                + self.blocker.coplanar_overlapping_pairs
-                == 0
+            && self.blocker.candidate_pairs == 0
+            && self.blocker.coplanar_touching_pairs == 0
+            && self.blocker.coplanar_overlapping_pairs == 0
         {
             return Err(ExactReportValidationError::MissingRelationCount);
         }
@@ -4880,9 +4907,7 @@ impl ExactPlanarArrangementReport {
                 validate_arrangement_readiness_matches_blocker(readiness, &self.blocker)?;
                 if !readiness.needs_planar_cells()
                     || self.blocker.coplanar_touching_pairs != 0
-                    || readiness.graph_count
-                        != self.blocker.coplanar_overlapping_pairs
-                            + self.blocker.coplanar_touching_pairs
+                    || readiness.graph_count != self.blocker.coplanar_overlapping_pairs
                 {
                     return Err(ExactReportValidationError::ArrangementReadinessMismatch);
                 }
@@ -4899,9 +4924,8 @@ impl ExactPlanarArrangementReport {
                     .map_err(|_| ExactReportValidationError::InvalidArrangementReadiness)?;
                 validate_arrangement_readiness_matches_blocker(readiness, &self.blocker)?;
                 if readiness.status == CoplanarArrangementReadinessStatus::NoCoplanarOverlap
-                    && self.blocker.coplanar_overlapping_pairs
-                        + self.blocker.coplanar_touching_pairs
-                        != 0
+                    && (self.blocker.coplanar_overlapping_pairs != 0
+                        || self.blocker.coplanar_touching_pairs != 0)
                 {
                     return Err(ExactReportValidationError::ArrangementReadinessMismatch);
                 }
@@ -6543,6 +6567,26 @@ mod tests {
             Err(ExactReportValidationError::InvalidBlockerCounts)
         );
 
+        let overflowing_blocker = ExactRefinementReport {
+            operation: ExactBooleanOperation::Union,
+            status: ExactRefinementStatus::Required,
+            graph_had_unknowns: true,
+            retained_face_pairs: usize::MAX,
+            retained_events: usize::MAX,
+            blocker: Some(ExactBooleanBlocker {
+                kind: ExactBooleanBlockerKind::NeedsRefinement,
+                candidate_pairs: usize::MAX,
+                coplanar_overlapping_pairs: 1,
+                coplanar_touching_pairs: 0,
+                unknown_pairs: 1,
+                construction_failed_events: 0,
+            }),
+        };
+        assert_eq!(
+            overflowing_blocker.validate(),
+            Err(ExactReportValidationError::InvalidBlockerCounts)
+        );
+
         let open_disjoint = ExactOpenSurfaceDisjointReport {
             status: ExactOpenSurfaceDisjointStatus::GraphHasFacePairs,
             left_open_surface: true,
@@ -7077,6 +7121,20 @@ mod tests {
         readiness.validate().unwrap();
 
         readiness.retained_events = 5;
+        assert_eq!(
+            readiness.validate(),
+            Err(ExactReportValidationError::CoplanarVolumetricEvidenceMismatch)
+        );
+
+        let mut overflowing_evidence = readiness
+            .coplanar_volumetric_evidence
+            .as_ref()
+            .unwrap()
+            .clone();
+        overflowing_evidence.segment_plane_events = usize::MAX;
+        overflowing_evidence.validate().unwrap();
+        readiness.retained_events = usize::MAX;
+        readiness.coplanar_volumetric_evidence = Some(overflowing_evidence);
         assert_eq!(
             readiness.validate(),
             Err(ExactReportValidationError::CoplanarVolumetricEvidenceMismatch)

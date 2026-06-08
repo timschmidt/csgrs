@@ -578,16 +578,28 @@ impl CoplanarArrangementReadinessReport {
     /// model requires those retained numerical-structure summaries to be
     /// auditable before they influence combinatorial output.
     pub fn validate(&self) -> Result<(), CoplanarArrangementReadinessValidationError> {
-        if self.graph_count != self.overlapping_graphs + self.touching_graphs {
+        let Some(graph_count) = self.overlapping_graphs.checked_add(self.touching_graphs) else {
+            return Err(CoplanarArrangementReadinessValidationError::GraphCountMismatch);
+        };
+        if self.graph_count != graph_count {
             return Err(CoplanarArrangementReadinessValidationError::GraphCountMismatch);
         }
         // exact state. A compact planar-readiness report is therefore allowed
         // to summarize split constructions, but those summaries must still be
         // dominated by the edge contacts that produced them.
-        if self.point_split_count + self.interval_overlap_count > self.edge_overlap_count {
+        let Some(edge_split_constructions) = self
+            .point_split_count
+            .checked_add(self.interval_overlap_count)
+        else {
+            return Err(CoplanarArrangementReadinessValidationError::SplitCountExceedsEdgeEvidence);
+        };
+        if edge_split_constructions > self.edge_overlap_count {
             return Err(CoplanarArrangementReadinessValidationError::SplitCountExceedsEdgeEvidence);
         }
-        if self.interval_endpoint_count != self.interval_overlap_count.saturating_mul(2) {
+        let Some(interval_endpoint_count) = self.interval_overlap_count.checked_mul(2) else {
+            return Err(CoplanarArrangementReadinessValidationError::IntervalEndpointCountMismatch);
+        };
+        if self.interval_endpoint_count != interval_endpoint_count {
             return Err(CoplanarArrangementReadinessValidationError::IntervalEndpointCountMismatch);
         }
         if self.graph_count > 0 && self.edge_overlap_count == 0 && self.vertex_overlap_count == 0 {
@@ -4327,6 +4339,57 @@ mod tests {
         assert_eq!(
             coplanar_with_segment_plane_event.validate(),
             Err(IntersectionGraphValidationError::CoplanarPairHasSegmentPlaneEvent)
+        );
+    }
+
+    #[test]
+    fn coplanar_arrangement_readiness_rejects_overflowing_counts() {
+        let graph_overflow = CoplanarArrangementReadinessReport {
+            status: CoplanarArrangementReadinessStatus::NeedsPlanarCells,
+            graph_count: usize::MAX,
+            overlapping_graphs: usize::MAX,
+            touching_graphs: 1,
+            edge_overlap_count: 1,
+            vertex_overlap_count: 0,
+            point_split_count: 0,
+            interval_overlap_count: 0,
+            interval_endpoint_count: 0,
+        };
+        assert_eq!(
+            graph_overflow.validate(),
+            Err(CoplanarArrangementReadinessValidationError::GraphCountMismatch)
+        );
+
+        let split_overflow = CoplanarArrangementReadinessReport {
+            status: CoplanarArrangementReadinessStatus::NeedsPlanarCells,
+            graph_count: 1,
+            overlapping_graphs: 1,
+            touching_graphs: 0,
+            edge_overlap_count: usize::MAX,
+            vertex_overlap_count: 0,
+            point_split_count: usize::MAX,
+            interval_overlap_count: 1,
+            interval_endpoint_count: 2,
+        };
+        assert_eq!(
+            split_overflow.validate(),
+            Err(CoplanarArrangementReadinessValidationError::SplitCountExceedsEdgeEvidence)
+        );
+
+        let interval_overflow = CoplanarArrangementReadinessReport {
+            status: CoplanarArrangementReadinessStatus::NeedsPlanarCells,
+            graph_count: 1,
+            overlapping_graphs: 1,
+            touching_graphs: 0,
+            edge_overlap_count: usize::MAX,
+            vertex_overlap_count: 0,
+            point_split_count: 0,
+            interval_overlap_count: usize::MAX,
+            interval_endpoint_count: usize::MAX,
+        };
+        assert_eq!(
+            interval_overflow.validate(),
+            Err(CoplanarArrangementReadinessValidationError::IntervalEndpointCountMismatch)
         );
     }
 }
