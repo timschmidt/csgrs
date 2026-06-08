@@ -9,6 +9,7 @@
 //! basis is Meisters, "Polygons Have Ears," *American Mathematical Monthly*
 //! 82(6), 1975 (<https://doi.org/10.2307/2319703>).
 
+use crate::finite_projection::normalize_finite_ring_vertices;
 use crate::{CurveError, CurveResult, FiniteRegionProfile2, Real};
 
 /// A finite triangle emitted from a projected region profile.
@@ -76,24 +77,6 @@ pub fn triangulate_finite_rings(
             ])
         })
         .collect())
-}
-
-fn normalize_finite_ring_vertices(ring: &[[f64; 2]]) -> CurveResult<Vec<[f64; 2]>> {
-    let mut normalized = Vec::with_capacity(ring.len());
-    for &[x, y] in ring {
-        if !x.is_finite() || !y.is_finite() {
-            return Err(CurveError::NonFiniteProjectionPoint);
-        }
-        let point = [x, y];
-        if normalized.last() == Some(&point) {
-            continue;
-        }
-        normalized.push(point);
-    }
-    if normalized.len() > 1 && normalized.first() == normalized.last() {
-        normalized.pop();
-    }
-    Ok(normalized)
 }
 
 impl FiniteRegionProfile2 {

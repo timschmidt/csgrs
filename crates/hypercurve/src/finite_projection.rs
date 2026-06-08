@@ -109,6 +109,11 @@ impl FinitePolyline2 {
         finite_ring_signed_area(&self.points)
     }
 
+    /// Returns the checked finite signed shoelace area of this projected ring.
+    pub fn try_signed_ring_area(&self) -> CurveResult<f64> {
+        try_finite_ring_signed_area(&self.points)
+    }
+
     /// Returns the arithmetic centroid of this finite projected polyline.
     ///
     /// This is a boundary-product measurement over emitted finite vertices, not
@@ -120,6 +125,11 @@ impl FinitePolyline2 {
     /// 1997 (<https://doi.org/10.1016/0925-7721(95)00040-2>).
     pub fn vertex_centroid(&self) -> Option<[f64; 2]> {
         finite_polyline_vertex_centroid(&self.points)
+    }
+
+    /// Returns the checked arithmetic centroid of this projected polyline.
+    pub fn try_vertex_centroid(&self) -> CurveResult<Option<[f64; 2]>> {
+        try_finite_polyline_vertex_centroid(&self.points)
     }
 }
 
@@ -173,6 +183,21 @@ impl FiniteRegionProfile2 {
             .sum::<f64>();
         material - holes
     }
+
+    /// Returns the checked finite projected material-minus-hole area.
+    pub fn try_projected_filled_area(&self) -> CurveResult<f64> {
+        let material = self.material.try_signed_ring_area()?.abs();
+        let holes = self.holes.iter().try_fold(0.0, |sum, hole| {
+            let next = sum + hole.try_signed_ring_area()?.abs();
+            next.is_finite()
+                .then_some(next)
+                .ok_or(CurveError::NonFiniteProjectionPoint)
+        })?;
+        let area = material - holes;
+        area.is_finite()
+            .then_some(area)
+            .ok_or(CurveError::NonFiniteProjectionPoint)
+    }
 }
 
 /// Returns the finite signed shoelace area of projected ring vertices.
@@ -197,6 +222,29 @@ pub fn finite_ring_signed_area(ring: &[[f64; 2]]) -> f64 {
     0.5 * area
 }
 
+/// Returns the checked finite signed shoelace area of projected ring vertices.
+///
+/// Non-finite coordinates or arithmetic overflow are reported explicitly
+/// instead of leaking `NaN`/`inf` through a finite-boundary measurement.
+pub fn try_finite_ring_signed_area(ring: &[[f64; 2]]) -> CurveResult<f64> {
+    let ring = normalize_finite_ring_vertices(ring)?;
+    if ring.len() < 3 {
+        return Ok(0.0);
+    }
+
+    let mut area = 0.0;
+    for edge in ring.windows(2) {
+        area = checked_shoelace_sum(area, edge[0], edge[1])?;
+    }
+    if let (Some(first), Some(last)) = (ring.first(), ring.last()) {
+        area = checked_shoelace_sum(area, *last, *first)?;
+    }
+    let area = 0.5 * area;
+    area.is_finite()
+        .then_some(area)
+        .ok_or(CurveError::NonFiniteProjectionPoint)
+}
+
 /// Returns the arithmetic centroid of finite polyline vertices.
 ///
 /// A repeated final closing point is ignored so closed-ring projections do not
@@ -219,6 +267,67 @@ pub fn finite_polyline_vertex_centroid(points: &[[f64; 2]]) -> Option<[f64; 2]> 
         .iter()
         .fold((0.0, 0.0), |(x, y), point| (x + point[0], y + point[1]));
     Some([sum_x / count, sum_y / count])
+}
+
+/// Returns the checked arithmetic centroid of finite polyline vertices.
+///
+/// A repeated final closing point is ignored. Non-finite coordinates or
+/// arithmetic overflow are reported explicitly.
+pub fn try_finite_polyline_vertex_centroid(points: &[[f64; 2]]) -> CurveResult<Option<[f64; 2]>> {
+    let unique = finite_unique_polyline_vertices(points)?;
+    if unique.is_empty() {
+        return Ok(None);
+    }
+    let count = unique.len() as f64;
+    let (sum_x, sum_y) = unique.iter().try_fold((0.0, 0.0), |(x, y), point| {
+        let next_x = x + point[0];
+        let next_y = y + point[1];
+        (next_x.is_finite() && next_y.is_finite())
+            .then_some((next_x, next_y))
+            .ok_or(CurveError::NonFiniteProjectionPoint)
+    })?;
+    let centroid = [sum_x / count, sum_y / count];
+    centroid
+        .iter()
+        .all(|value| value.is_finite())
+        .then_some(Some(centroid))
+        .ok_or(CurveError::NonFiniteProjectionPoint)
+}
+
+pub(crate) fn normalize_finite_ring_vertices(ring: &[[f64; 2]]) -> CurveResult<Vec<[f64; 2]>> {
+    let mut normalized = Vec::with_capacity(ring.len());
+    for point in finite_unique_polyline_vertices(ring)? {
+        if normalized.last() == Some(&point) {
+            continue;
+        }
+        normalized.push(point);
+    }
+    if normalized.len() > 1 && normalized.first() == normalized.last() {
+        normalized.pop();
+    }
+    Ok(normalized)
+}
+
+fn finite_unique_polyline_vertices(points: &[[f64; 2]]) -> CurveResult<Vec<[f64; 2]>> {
+    let mut unique = Vec::with_capacity(points.len());
+    for (index, &[x, y]) in points.iter().enumerate() {
+        if !x.is_finite() || !y.is_finite() {
+            return Err(CurveError::NonFiniteProjectionPoint);
+        }
+        let point = [x, y];
+        if index + 1 != points.len() || Some(&point) != points.first() {
+            unique.push(point);
+        }
+    }
+    Ok(unique)
+}
+
+fn checked_shoelace_sum(sum: f64, start: [f64; 2], end: [f64; 2]) -> CurveResult<f64> {
+    let term = start[0] * end[1] - end[0] * start[1];
+    let next = sum + term;
+    next.is_finite()
+        .then_some(next)
+        .ok_or(CurveError::NonFiniteProjectionPoint)
 }
 
 impl CurveString2 {

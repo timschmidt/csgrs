@@ -150,7 +150,8 @@ pub use facts::{
 };
 pub use finite_projection::{
     FinitePolyline2, FiniteProjectionOptions, FiniteRegionProfile2, FiniteRegionProjection2,
-    finite_polyline_vertex_centroid, finite_ring_signed_area,
+    finite_polyline_vertex_centroid, finite_ring_signed_area, try_finite_polyline_vertex_centroid,
+    try_finite_ring_signed_area,
 };
 pub use fragment::{ContourFragment, ContourFragmentSet};
 pub use intersect::{

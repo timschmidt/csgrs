@@ -1,7 +1,8 @@
 use hypercurve::{
     BulgeVertex2, CircularArc2, Classification, Contour2, CurveError, CurvePolicy, CurveString2,
     FiniteProjectionOptions, Real, Region2, RegionPointLocation, RegionView2, Segment2,
-    UncertaintyReason, finite_ring_signed_area,
+    UncertaintyReason, finite_polyline_vertex_centroid, finite_ring_signed_area,
+    try_finite_polyline_vertex_centroid, try_finite_ring_signed_area,
 };
 use proptest::prelude::*;
 
@@ -272,8 +273,34 @@ fn contour_projection_closes_finite_ring_without_owning_topology() {
     assert_eq!(ring.points().first(), ring.points().last());
     assert_eq!(ring.points().len(), 5);
     assert_eq!(ring.signed_ring_area(), 100.0);
+    assert_eq!(ring.try_signed_ring_area().unwrap(), 100.0);
     assert_eq!(finite_ring_signed_area(ring.points()), 100.0);
     assert_eq!(ring.vertex_centroid(), Some([5.0, 5.0]));
+    assert_eq!(ring.try_vertex_centroid().unwrap(), Some([5.0, 5.0]));
+}
+
+#[test]
+fn finite_projection_checked_measurements_reject_nonfinite_or_overflow() {
+    assert_eq!(
+        try_finite_ring_signed_area(&[[0.0, 0.0], [f64::NAN, 1.0], [1.0, 0.0]]).unwrap_err(),
+        CurveError::NonFiniteProjectionPoint
+    );
+    assert_eq!(
+        try_finite_polyline_vertex_centroid(&[[0.0, 0.0], [f64::INFINITY, 1.0]]).unwrap_err(),
+        CurveError::NonFiniteProjectionPoint
+    );
+    assert_eq!(
+        try_finite_ring_signed_area(&[[1.0e308, 0.0], [0.0, 1.0e308], [0.0, 0.0]]).unwrap_err(),
+        CurveError::NonFiniteProjectionPoint
+    );
+    assert_eq!(
+        try_finite_polyline_vertex_centroid(&[[1.0e308, 0.0], [1.0e308, 0.0], [0.0, 0.0]])
+            .unwrap_err(),
+        CurveError::NonFiniteProjectionPoint
+    );
+
+    assert!(finite_ring_signed_area(&[[0.0, 0.0], [f64::NAN, 1.0], [1.0, 0.0]]).is_nan());
+    assert!(finite_polyline_vertex_centroid(&[[0.0, 0.0], [f64::INFINITY, 1.0]]).is_some());
 }
 
 #[test]
@@ -398,6 +425,8 @@ fn finite_profile_projection_preserves_exact_hole_ownership() {
     assert_eq!(profiles[1].holes()[0].points()[0], [22.0, 2.0]);
     assert_eq!(profiles[0].projected_filled_area(), 96.0);
     assert_eq!(profiles[1].projected_filled_area(), 96.0);
+    assert_eq!(profiles[0].try_projected_filled_area().unwrap(), 96.0);
+    assert_eq!(profiles[1].try_projected_filled_area().unwrap(), 96.0);
 }
 
 #[test]
