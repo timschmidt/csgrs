@@ -528,6 +528,51 @@ impl ExactArrangement3d {
         self.blockers.is_empty()
     }
 
+    /// Validate arrangement-internal consistency without replaying source meshes.
+    pub fn validate(&self) -> Result<(), ExactArrangementBlocker> {
+        self.graph
+            .validate()
+            .map_err(ExactArrangementBlocker::InvalidIntersectionGraph)?;
+        if self.graph.has_unknowns()
+            && !self
+                .blockers
+                .contains(&ExactArrangementBlocker::UnresolvedIntersection)
+        {
+            return Err(ExactArrangementBlocker::UnresolvedIntersection);
+        }
+        if let Some(topology) = &self.topology {
+            let report = topology.validate();
+            if !report.is_valid() {
+                let mut blockers = Vec::new();
+                extend_split_plan_blockers(&mut blockers, &report);
+                return Err(blockers
+                    .into_iter()
+                    .next()
+                    .unwrap_or(ExactArrangementBlocker::UnresolvedIntersection));
+            }
+        } else if self.blockers.is_empty() {
+            return Err(ExactArrangementBlocker::UnresolvedIntersection);
+        }
+        if self.region_plan.is_some() && self.topology.is_none() {
+            return Err(ExactArrangementBlocker::UnresolvedIntersection);
+        }
+        let Some(shells_or_regions) = &self.shells_or_regions else {
+            return Err(ExactArrangementBlocker::NonManifoldCellComplex);
+        };
+        if let Some(blocker) = self.retained_volume_graph_blockers().into_iter().next() {
+            return Err(blocker);
+        }
+        if shells_or_regions.iter().any(|region| {
+            region
+                .face_cells
+                .iter()
+                .any(|&face_cell| face_cell >= self.face_cells.len())
+        }) {
+            return Err(ExactArrangementBlocker::NonManifoldCellComplex);
+        }
+        Ok(())
+    }
+
     /// Validate retained volume-region labels against shell orientation and
     /// volume adjacency evidence already stored in this arrangement.
     pub(crate) fn retained_volume_graph_blockers(&self) -> Vec<ExactArrangementBlocker> {
@@ -559,6 +604,7 @@ impl ExactArrangement3d {
         right: &ExactMesh,
         policy: ExactRegularizationPolicy,
     ) -> Result<(), ExactArrangementBlocker> {
+        self.validate()?;
         let replay = Self::from_meshes_with_policy(left, right, policy)
             .map_err(|_| ExactArrangementBlocker::UnresolvedIntersection)?;
         if replay == *self {
@@ -588,6 +634,9 @@ impl ExactArrangement3d {
         right: &ExactMesh,
         policy: ExactRegularizationPolicy,
     ) -> ExactArrangementFreshness {
+        if self.validate().is_err() {
+            return ExactArrangementFreshness::StaleArrangement;
+        }
         match Self::from_meshes_with_policy(left, right, policy) {
             Ok(replay) if replay == *self => ExactArrangementFreshness::Current,
             Ok(_) => ExactArrangementFreshness::StaleArrangement,
@@ -3863,6 +3912,39 @@ mod tests {
         assert_eq!(
             blockers,
             vec![ExactArrangementBlocker::NonManifoldCellComplex]
+        );
+    }
+
+    #[test]
+    fn arrangement_validate_rejects_missing_volume_adjacency() {
+        let left = tetrahedron_i64([0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1]);
+        let right = tetrahedron_i64([3, 0, 0], [4, 0, 0], [3, 1, 0], [3, 0, 1]);
+        let mut arrangement = ExactArrangement::from_meshes(&left, &right).unwrap();
+        arrangement.validate().unwrap();
+        arrangement.volume_adjacencies.as_mut().unwrap().pop();
+
+        assert_eq!(
+            arrangement.validate(),
+            Err(ExactArrangementBlocker::NonManifoldCellComplex)
+        );
+        assert_eq!(
+            arrangement.freshness_against_sources(&left, &right),
+            ExactArrangementFreshness::StaleArrangement
+        );
+    }
+
+    #[test]
+    fn arrangement_validate_rejects_missing_unblocked_topology() {
+        let left = tetrahedron_i64([0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1]);
+        let right = tetrahedron_i64([3, 0, 0], [4, 0, 0], [3, 1, 0], [3, 0, 1]);
+        let mut arrangement = ExactArrangement::from_meshes(&left, &right).unwrap();
+        arrangement.validate().unwrap();
+        arrangement.topology = None;
+        arrangement.blockers.clear();
+
+        assert_eq!(
+            arrangement.validate(),
+            Err(ExactArrangementBlocker::UnresolvedIntersection)
         );
     }
 
