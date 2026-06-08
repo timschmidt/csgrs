@@ -592,6 +592,7 @@ fn select_faces_from_volume_adjacencies(
     {
         return Ok(None);
     }
+    validate_volume_regions_for_selection(volume_regions)?;
     let selected_volumes = volume_regions
         .iter()
         .map(|region| select_volume_region(region, operation))
@@ -638,6 +639,24 @@ fn select_faces_from_volume_adjacencies(
         .map(|orientation| orientation.face)
         .collect::<Vec<_>>();
     Ok(Some((selected_faces, selected)))
+}
+
+fn validate_volume_regions_for_selection(
+    volume_regions: &[ExactCellComplexVolumeRegion],
+) -> Result<(), ExactArrangementBlocker> {
+    if volume_regions
+        .iter()
+        .enumerate()
+        .any(|(index, region)| region.index != index)
+        || volume_regions
+            .iter()
+            .filter(|region| region.exterior)
+            .count()
+            != 1
+    {
+        return Err(ExactArrangementBlocker::NonManifoldCellComplex);
+    }
+    Ok(())
 }
 
 pub(crate) fn validate_volume_adjacency_face_provenance(
@@ -1031,6 +1050,17 @@ mod tests {
     }
 
     #[test]
+    fn named_operation_rejects_stale_volume_region_index() {
+        let mut labeled = labeled_with_volume_adjacency_face(0, Vec::new());
+        labeled.volume_regions[1].index = 7;
+
+        assert_eq!(
+            labeled.select(ExactBooleanOperation::Union),
+            Err(ExactArrangementBlocker::NonManifoldCellComplex)
+        );
+    }
+
+    #[test]
     fn volume_resolved_selection_consumes_only_region_classification_blockers() {
         let labeled = labeled_with_volume_adjacency_face(
             0,
@@ -1079,6 +1109,23 @@ mod tests {
             vec![ExactArrangementBlocker::UnresolvedRegionClassification],
         );
         labeled.volume_adjacencies[0].separating_face_cells.clear();
+
+        assert_eq!(
+            labeled.select_volume_resolved_with_policy(
+                ExactBooleanOperation::Union,
+                ExactRegularizationPolicy::REGULARIZED_SOLID,
+            ),
+            Err(ExactArrangementBlocker::NonManifoldCellComplex)
+        );
+    }
+
+    #[test]
+    fn volume_resolved_selection_rejects_stale_volume_region_index() {
+        let mut labeled = labeled_with_volume_adjacency_face(
+            0,
+            vec![ExactArrangementBlocker::UnresolvedRegionClassification],
+        );
+        labeled.volume_regions[1].index = 7;
 
         assert_eq!(
             labeled.select_volume_resolved_with_policy(
