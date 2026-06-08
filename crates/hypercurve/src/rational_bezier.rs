@@ -1568,7 +1568,7 @@ fn isolate_scalar_bernstein_roots(
     }
 
     let mid = ((&start + &end) / Real::from(2_i8)).map_err(|_| UncertaintyReason::Unsupported)?;
-    let (left, right) = subdivide_scalar_bernstein_half(&controls);
+    let (left, right) = subdivide_scalar_bernstein_half(&controls)?;
     if is_zero(&left[left.len() - 1], policy) == Some(true) {
         push_unique_graph_parameter(exact_parameters, mid.clone(), policy);
     }
@@ -1594,7 +1594,13 @@ fn isolate_scalar_bernstein_roots(
     isolate_scalar_bernstein_roots(right, mid, end, depth + 1, policy, exact_parameters, spans)
 }
 
-fn subdivide_scalar_bernstein_half(controls: &[Real]) -> (Vec<Real>, Vec<Real>) {
+fn subdivide_scalar_bernstein_half(
+    controls: &[Real],
+) -> Result<(Vec<Real>, Vec<Real>), UncertaintyReason> {
+    if controls.is_empty() {
+        return Err(UncertaintyReason::Unsupported);
+    }
+
     let degree = controls.len() - 1;
     let mut levels = Vec::with_capacity(controls.len());
     levels.push(controls.to_vec());
@@ -1603,7 +1609,7 @@ fn subdivide_scalar_bernstein_half(controls: &[Real]) -> (Vec<Real>, Vec<Real>) 
         let next = previous
             .windows(2)
             .map(|pair| midpoint_real(&pair[0], &pair[1]))
-            .collect::<Vec<_>>();
+            .collect::<Result<Vec<_>, _>>()?;
         levels.push(next);
     }
 
@@ -1613,7 +1619,7 @@ fn subdivide_scalar_bernstein_half(controls: &[Real]) -> (Vec<Real>, Vec<Real>) 
     let right = (0..=degree)
         .map(|level| levels[degree - level][level].clone())
         .collect::<Vec<_>>();
-    (left, right)
+    Ok((left, right))
 }
 
 fn strict_rational_graph_order_from_degree4_weighted_signs(
@@ -2993,7 +2999,7 @@ fn isolate_scalar_quadratic_roots(
     }
 
     let mid = ((&start + &end) / Real::from(2_i8)).map_err(|_| UncertaintyReason::Unsupported)?;
-    let mid_value = scalar_quadratic_at_half(&controls);
+    let mid_value = scalar_quadratic_at_half(&controls)?;
     if is_zero(&mid_value, policy) == Some(true) {
         push_unique_graph_parameter(exact_parameters, mid.clone(), policy);
     }
@@ -3007,7 +3013,7 @@ fn isolate_scalar_quadratic_roots(
         return Ok(());
     }
 
-    let (left, right) = subdivide_scalar_quadratic_half(controls);
+    let (left, right) = subdivide_scalar_quadratic_half(controls)?;
     isolate_scalar_quadratic_roots(
         left,
         start,
@@ -3020,20 +3026,23 @@ fn isolate_scalar_quadratic_roots(
     isolate_scalar_quadratic_roots(right, mid, end, depth + 1, policy, exact_parameters, spans)
 }
 
-fn scalar_quadratic_at_half(controls: &[Real; 3]) -> Real {
-    let four = Real::from(4_i8);
-    ((controls[0].clone() + (&Real::from(2_i8) * &controls[1]) + controls[2].clone()) / four)
-        .expect("division by positive integer constant is defined")
+fn scalar_quadratic_at_half(controls: &[Real; 3]) -> Result<Real, UncertaintyReason> {
+    divide_by_positive_integer(
+        controls[0].clone() + (&Real::from(2_i8) * &controls[1]) + controls[2].clone(),
+        4,
+    )
 }
 
-fn subdivide_scalar_quadratic_half(controls: [Real; 3]) -> ([Real; 3], [Real; 3]) {
-    let p01 = midpoint_real(&controls[0], &controls[1]);
-    let p12 = midpoint_real(&controls[1], &controls[2]);
-    let p012 = midpoint_real(&p01, &p12);
-    (
+fn subdivide_scalar_quadratic_half(
+    controls: [Real; 3],
+) -> Result<([Real; 3], [Real; 3]), UncertaintyReason> {
+    let p01 = midpoint_real(&controls[0], &controls[1])?;
+    let p12 = midpoint_real(&controls[1], &controls[2])?;
+    let p012 = midpoint_real(&p01, &p12)?;
+    Ok((
         [controls[0].clone(), p01.clone(), p012.clone()],
         [p012, p12, controls[2].clone()],
-    )
+    ))
 }
 
 fn push_unique_graph_parameter(values: &mut Vec<Real>, value: Real, policy: &CurvePolicy) {
@@ -3506,7 +3515,7 @@ fn split_rational_controls_half(
         let next = previous
             .windows(2)
             .map(|pair| midpoint_homogeneous(&pair[0], &pair[1]))
-            .collect::<Vec<_>>();
+            .collect::<Result<Vec<_>, _>>()?;
         levels.push(next);
     }
 
@@ -3543,7 +3552,7 @@ fn split_polynomial_controls_half(
         let next = previous
             .windows(2)
             .map(|pair| midpoint_point(&pair[0], &pair[1]))
-            .collect::<Vec<_>>();
+            .collect::<Result<Vec<_>, _>>()?;
         levels.push(next);
     }
 
@@ -3585,12 +3594,12 @@ fn homogeneous_controls(controls: &[Point2], weights: &[Real]) -> Vec<Homogeneou
 fn midpoint_homogeneous(
     first: &HomogeneousControl,
     second: &HomogeneousControl,
-) -> HomogeneousControl {
-    HomogeneousControl {
-        x: midpoint_real(&first.x, &second.x),
-        y: midpoint_real(&first.y, &second.y),
-        weight: midpoint_real(&first.weight, &second.weight),
-    }
+) -> Result<HomogeneousControl, UncertaintyReason> {
+    Ok(HomogeneousControl {
+        x: midpoint_real(&first.x, &second.x)?,
+        y: midpoint_real(&first.y, &second.y)?,
+        weight: midpoint_real(&first.weight, &second.weight)?,
+    })
 }
 
 fn project_homogeneous_controls(
@@ -3613,16 +3622,15 @@ fn project_homogeneous_controls(
     Ok((points, weights))
 }
 
-fn midpoint_point(first: &Point2, second: &Point2) -> Point2 {
-    first.lerp(second, half())
+fn midpoint_point(first: &Point2, second: &Point2) -> Result<Point2, UncertaintyReason> {
+    Ok(Point2::new(
+        midpoint_real(first.x(), second.x())?,
+        midpoint_real(first.y(), second.y())?,
+    ))
 }
 
-fn midpoint_real(first: &Real, second: &Real) -> Real {
-    ((first + second) / Real::from(2_i8)).expect("division by positive integer constant is defined")
-}
-
-fn half() -> Real {
-    (Real::one() / Real::from(2_i8)).expect("division by positive integer constant is defined")
+fn midpoint_real(first: &Real, second: &Real) -> Result<Real, UncertaintyReason> {
+    divide_by_positive_integer(first + second, 2)
 }
 
 fn point_equal(a: &Point2, b: &Point2, policy: &CurvePolicy) -> Option<bool> {
@@ -3683,6 +3691,31 @@ mod tests {
                 Real::one(),
                 Real::one()
             ]
+        );
+    }
+
+    #[test]
+    fn rational_midpoint_subdivision_reports_empty_controls() {
+        assert_eq!(
+            subdivide_scalar_bernstein_half(&[]),
+            Err(UncertaintyReason::Unsupported)
+        );
+    }
+
+    #[test]
+    fn rational_midpoint_subdivision_keeps_exact_de_casteljau_values() {
+        let (left, right) =
+            subdivide_scalar_quadratic_half([Real::zero(), Real::from(2_i8), Real::from(4_i8)])
+                .unwrap();
+
+        assert_eq!(left, [Real::zero(), Real::one(), Real::from(2_i8)]);
+        assert_eq!(
+            right,
+            [Real::from(2_i8), Real::from(3_i8), Real::from(4_i8)]
+        );
+        assert_eq!(
+            scalar_quadratic_at_half(&[Real::zero(), Real::from(2_i8), Real::from(4_i8)]).unwrap(),
+            Real::from(2_i8)
         );
     }
 }
