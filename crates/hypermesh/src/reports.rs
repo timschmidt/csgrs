@@ -3889,11 +3889,8 @@ impl ExactRefinementReport {
 
     /// Validate status, retained counts, and refinement blocker consistency.
     pub fn validate(&self) -> Result<(), ExactReportValidationError> {
-        if (self.retained_face_pairs == 0 && self.retained_events != 0)
-            || (self.retained_face_pairs != 0 && self.retained_events == 0)
-        {
-            return Err(ExactReportValidationError::InvalidBlockerCounts);
-        }
+        validate_retained_graph_count_shape(self.retained_face_pairs, self.retained_events)
+            .map_err(|_| ExactReportValidationError::InvalidBlockerCounts)?;
         match self.status {
             ExactRefinementStatus::Required => {
                 blocker_kind(
@@ -4182,6 +4179,7 @@ impl ExactOpenSurfaceDisjointReport {
 
     /// Validate status, graph counts, and blocker consistency.
     pub fn validate(&self) -> Result<(), ExactReportValidationError> {
+        validate_retained_graph_count_shape(self.retained_face_pairs, self.retained_events)?;
         if matches!(self.status, ExactOpenSurfaceDisjointStatus::GraphUnknowns)
             != self.graph_had_unknowns
         {
@@ -4368,6 +4366,7 @@ impl ExactAdjacentUnionCompletionReport {
 
     /// Validate status, graph counts, and consumed topology counts.
     pub fn validate(&self) -> Result<(), ExactReportValidationError> {
+        validate_retained_graph_count_shape(self.retained_face_pairs, self.retained_events)?;
         if matches!(
             self.status,
             ExactAdjacentUnionCompletionStatus::GraphUnresolved
@@ -4558,6 +4557,7 @@ impl ExactBoundaryTouchingReport {
 
     /// Validate status, retained relation counts, and blocker consistency.
     pub fn validate(&self) -> Result<(), ExactReportValidationError> {
+        validate_retained_graph_count_shape(self.retained_face_pairs, self.retained_events)?;
         if matches!(self.status, ExactBoundaryTouchingStatus::GraphUnknowns)
             != self.graph_had_unknowns
         {
@@ -4695,6 +4695,7 @@ impl ExactPlanarArrangementReport {
 
     /// Validate status, retained relation counts, and blocker consistency.
     pub fn validate(&self) -> Result<(), ExactReportValidationError> {
+        validate_retained_graph_count_shape(self.retained_face_pairs, self.retained_events)?;
         if matches!(self.status, ExactPlanarArrangementStatus::GraphUnknowns)
             != self.graph_had_unknowns
         {
@@ -5877,7 +5878,7 @@ mod tests {
         stale_boundary.retained_events = 0;
         assert_eq!(
             stale_boundary.freshness_against_sources(&open_left, &touching_right),
-            ExactReportFreshness::StaleBlockerEvidence
+            ExactReportFreshness::StaleStatusEvidence
         );
     }
 
@@ -6407,6 +6408,7 @@ mod tests {
         );
 
         report.retained_face_pairs = 2;
+        report.retained_events = 2;
         report.blocker.kind = ExactBooleanBlockerKind::NeedsCoplanarVolumetricCells;
         report.blocker.candidate_pairs = 1;
         report.validate().unwrap();
@@ -6414,6 +6416,126 @@ mod tests {
 
     #[test]
     fn retained_graph_reports_reject_impossible_event_totals() {
+        let refinement = ExactRefinementReport {
+            operation: ExactBooleanOperation::Union,
+            status: ExactRefinementStatus::Required,
+            graph_had_unknowns: true,
+            retained_face_pairs: 2,
+            retained_events: 1,
+            blocker: Some(ExactBooleanBlocker {
+                kind: ExactBooleanBlockerKind::NeedsRefinement,
+                candidate_pairs: 0,
+                coplanar_overlapping_pairs: 0,
+                coplanar_touching_pairs: 0,
+                unknown_pairs: 2,
+                construction_failed_events: 0,
+            }),
+        };
+        assert_eq!(
+            refinement.validate(),
+            Err(ExactReportValidationError::InvalidBlockerCounts)
+        );
+
+        let open_disjoint = ExactOpenSurfaceDisjointReport {
+            status: ExactOpenSurfaceDisjointStatus::GraphHasFacePairs,
+            left_open_surface: true,
+            right_open_surface: true,
+            graph_had_unknowns: false,
+            retained_face_pairs: 2,
+            retained_events: 1,
+            blocker: ExactBooleanBlocker {
+                kind: ExactBooleanBlockerKind::NeedsWinding,
+                candidate_pairs: 2,
+                coplanar_overlapping_pairs: 0,
+                coplanar_touching_pairs: 0,
+                unknown_pairs: 0,
+                construction_failed_events: 0,
+            },
+        };
+        assert_eq!(
+            open_disjoint.validate(),
+            Err(ExactReportValidationError::StatusEvidenceMismatch)
+        );
+
+        let adjacent = ExactAdjacentUnionCompletionReport {
+            operation: ExactBooleanOperation::Union,
+            status: ExactAdjacentUnionCompletionStatus::NoAdjacencyCertificate,
+            left_closed: true,
+            right_closed: true,
+            axis_aligned_box_pair: false,
+            stronger_kernel_available: false,
+            graph_had_unknowns: false,
+            retained_face_pairs: 2,
+            retained_events: 1,
+            blocker: ExactBooleanBlocker {
+                kind: ExactBooleanBlockerKind::NeedsWinding,
+                candidate_pairs: 2,
+                coplanar_overlapping_pairs: 0,
+                coplanar_touching_pairs: 0,
+                unknown_pairs: 0,
+                construction_failed_events: 0,
+            },
+            full_face_shared_faces: 0,
+            full_face_shared_patches: 0,
+            contained_containing_side: None,
+            contained_faces: 0,
+            containing_faces: 0,
+        };
+        assert_eq!(
+            adjacent.validate(),
+            Err(ExactReportValidationError::StatusEvidenceMismatch)
+        );
+
+        let boundary = ExactBoundaryTouchingReport {
+            status: ExactBoundaryTouchingStatus::NotBoundaryOnly,
+            graph_had_unknowns: false,
+            retained_face_pairs: 2,
+            retained_events: 1,
+            blocker: ExactBooleanBlocker {
+                kind: ExactBooleanBlockerKind::NeedsWinding,
+                candidate_pairs: 2,
+                coplanar_overlapping_pairs: 0,
+                coplanar_touching_pairs: 0,
+                unknown_pairs: 0,
+                construction_failed_events: 0,
+            },
+        };
+        assert_eq!(
+            boundary.validate(),
+            Err(ExactReportValidationError::StatusEvidenceMismatch)
+        );
+
+        let planar = ExactPlanarArrangementReport {
+            operation: ExactBooleanOperation::Union,
+            status: ExactPlanarArrangementStatus::NoPositiveOverlap,
+            graph_had_unknowns: false,
+            retained_face_pairs: 2,
+            retained_events: 1,
+            blocker: ExactBooleanBlocker {
+                kind: ExactBooleanBlockerKind::NeedsWinding,
+                candidate_pairs: 2,
+                coplanar_overlapping_pairs: 0,
+                coplanar_touching_pairs: 0,
+                unknown_pairs: 0,
+                construction_failed_events: 0,
+            },
+            arrangement_readiness: Some(CoplanarArrangementReadinessReport {
+                status: CoplanarArrangementReadinessStatus::NoCoplanarOverlap,
+                graph_count: 0,
+                overlapping_graphs: 0,
+                touching_graphs: 0,
+                edge_overlap_count: 0,
+                vertex_overlap_count: 0,
+                point_split_count: 0,
+                interval_overlap_count: 0,
+                interval_endpoint_count: 0,
+            }),
+        };
+        assert_eq!(
+            planar.validate(),
+            Err(ExactReportValidationError::StatusEvidenceMismatch)
+        );
+
         let preflight = ExactBooleanPreflight {
             operation: ExactBooleanOperation::Union,
             support: ExactBooleanSupport::CertifiedConvexUnion,
