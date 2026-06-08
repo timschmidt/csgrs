@@ -1145,10 +1145,19 @@ impl BezierRetainedOverlapReport2 {
         };
         let mut promoted = Vec::new();
         for split in line_splits {
-            if !fragment_is_linearly_parameterized(graph, split.first_fragment_index(), policy)
-                || !fragment_is_linearly_parameterized(graph, split.second_fragment_index(), policy)
-            {
-                return Classification::Uncertain(UncertaintyReason::Unsupported);
+            match fragment_is_linearly_parameterized(graph, split.first_fragment_index(), policy) {
+                Classification::Decided(true) => {}
+                Classification::Decided(false) => {
+                    return Classification::Uncertain(UncertaintyReason::Unsupported);
+                }
+                Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+            }
+            match fragment_is_linearly_parameterized(graph, split.second_fragment_index(), policy) {
+                Classification::Decided(true) => {}
+                Classification::Decided(false) => {
+                    return Classification::Uncertain(UncertaintyReason::Unsupported);
+                }
+                Classification::Uncertain(reason) => return Classification::Uncertain(reason),
             }
             let promoted_split = match BezierRetainedLinearOverlapSplit2::new(
                 split.first_fragment_index(),
@@ -1188,51 +1197,66 @@ fn fragment_is_linearly_parameterized(
     graph: &BezierArrangementGraph2,
     fragment_index: usize,
     policy: &CurvePolicy,
-) -> bool {
+) -> Classification<bool> {
     let Some(fragment) = graph.fragments().get(fragment_index) else {
-        return false;
+        return Classification::Decided(false);
     };
     let BezierSplitFragment2::Materialized { curve, .. } = fragment.fragment() else {
-        return false;
+        return Classification::Decided(false);
     };
     match curve {
         BezierSubcurve2::Quadratic(curve) => {
-            point_coordinates_equal(
-                curve.control(),
-                &midpoint(curve.start(), curve.end()),
-                policy,
-            ) == Some(true)
+            let midpoint = match midpoint(curve.start(), curve.end()) {
+                Ok(point) => point,
+                Err(reason) => return Classification::Uncertain(reason),
+            };
+            match point_coordinates_equal(curve.control(), &midpoint, policy) {
+                Some(equal) => Classification::Decided(equal),
+                None => Classification::Uncertain(UncertaintyReason::RealSign),
+            }
         }
         BezierSubcurve2::Cubic(curve) => {
-            point_coordinates_equal(
-                curve.control1(),
-                &linear_control(curve.start(), curve.end(), 1, 3),
-                policy,
-            ) == Some(true)
-                && point_coordinates_equal(
-                    curve.control2(),
-                    &linear_control(curve.start(), curve.end(), 2, 3),
-                    policy,
-                ) == Some(true)
+            let first_control = match linear_control(curve.start(), curve.end(), 1, 3) {
+                Ok(point) => point,
+                Err(reason) => return Classification::Uncertain(reason),
+            };
+            match point_coordinates_equal(curve.control1(), &first_control, policy) {
+                Some(true) => {}
+                Some(false) => return Classification::Decided(false),
+                None => return Classification::Uncertain(UncertaintyReason::RealSign),
+            }
+            let second_control = match linear_control(curve.start(), curve.end(), 2, 3) {
+                Ok(point) => point,
+                Err(reason) => return Classification::Uncertain(reason),
+            };
+            match point_coordinates_equal(curve.control2(), &second_control, policy) {
+                Some(equal) => Classification::Decided(equal),
+                None => Classification::Uncertain(UncertaintyReason::RealSign),
+            }
         }
-        BezierSubcurve2::RationalQuadratic(_) => false,
+        BezierSubcurve2::RationalQuadratic(_) => Classification::Decided(false),
     }
 }
 
-fn midpoint(start: &Point2, end: &Point2) -> Point2 {
+fn midpoint(start: &Point2, end: &Point2) -> Result<Point2, UncertaintyReason> {
     linear_control(start, end, 1, 2)
 }
 
-fn linear_control(start: &Point2, end: &Point2, numerator: i32, denominator: i32) -> Point2 {
+fn linear_control(
+    start: &Point2,
+    end: &Point2,
+    numerator: i32,
+    denominator: i32,
+) -> Result<Point2, UncertaintyReason> {
     let numerator = Real::from(numerator);
     let denominator = Real::from(denominator);
     let complement = &denominator - &numerator;
-    Point2::new(
+    Ok(Point2::new(
         (((&complement * start.x()) + (&numerator * end.x())) / &denominator)
-            .expect("positive integer denominator is nonzero"),
+            .map_err(|_| UncertaintyReason::Unsupported)?,
         (((&complement * start.y()) + (&numerator * end.y())) / denominator)
-            .expect("positive integer denominator is nonzero"),
-    )
+            .map_err(|_| UncertaintyReason::Unsupported)?,
+    ))
 }
 
 fn point_coordinates_equal(left: &Point2, right: &Point2, policy: &CurvePolicy) -> Option<bool> {
