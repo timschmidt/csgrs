@@ -25,6 +25,10 @@ pub struct ExactMeshConsumerReadinessReport {
     pub solid_handoff_ready: bool,
     /// Whether a lossy `f64` display/export view currently replays.
     pub approximate_f64_view_ready: bool,
+    /// Number of retained exact face-plane equations available for handoff.
+    pub retained_face_planes: usize,
+    /// Whether mesh-wide exact AABB bounds are retained for handoff.
+    pub retained_mesh_bounds: bool,
     /// Whether the artifact has at least one vertex and one face.
     pub nonempty_topology: bool,
     /// Whether retained topology is closed-manifold evidence.
@@ -70,10 +74,14 @@ impl ExactMeshConsumerReadinessReport {
     /// "mesh exists" as equivalent to "solid exists" or "lossy view exists."
     pub fn from_mesh(mesh: &ExactMesh) -> Result<Self, ExactMeshConsumerReadinessError> {
         let audit = audit_exact_mesh(mesh).map_err(ExactMeshConsumerReadinessError::Audit)?;
+        let retained_face_planes = mesh.facts().faces.len();
+        let retained_mesh_bounds = mesh.bounds().mesh.is_some();
         Ok(Self {
             surface_handoff_ready: exact_surface_handoff(mesh).is_ok(),
             solid_handoff_ready: exact_solid_handoff(mesh).is_ok(),
             approximate_f64_view_ready: approximate_mesh_f64_view(mesh).is_ok(),
+            retained_face_planes,
+            retained_mesh_bounds,
             nonempty_topology: audit.vertex_count > 0 && audit.face_count > 0,
             closed_manifold: audit.closed_manifold,
             boundary_allowed: audit.validation_policy == ValidationPolicy::ALLOW_BOUNDARY,
@@ -105,6 +113,12 @@ impl ExactMeshConsumerReadinessReport {
             self.audit.vertex_count > 0 && self.audit.face_count > 0,
             self.nonempty_topology,
         )?;
+        expect_summary_usize(
+            "retained_face_planes",
+            self.audit.face_count,
+            self.retained_face_planes,
+        )?;
+        expect_summary_bool("retained_mesh_bounds", true, self.retained_mesh_bounds)?;
         expect_summary_bool(
             "closed_manifold",
             self.audit.closed_manifold,
@@ -125,24 +139,16 @@ impl ExactMeshConsumerReadinessReport {
             matches!(self.audit.source, MeshSource::Exact),
             self.exact_source,
         )?;
-        if self.surface_handoff_ready
-            && (!self.nonempty_topology || !self.exact_rational_coordinates)
-        {
-            return Err(ExactMeshConsumerReadinessError::ReportMismatch {
-                field: "surface_handoff_ready",
-            });
-        }
-        if self.solid_handoff_ready {
-            if !self.surface_handoff_ready
-                || !self.closed_manifold
-                || self.boundary_allowed
-                || !self.exact_rational_coordinates
-            {
-                return Err(ExactMeshConsumerReadinessError::ReportMismatch {
-                    field: "solid_handoff_ready",
-                });
-            }
-        }
+        expect_summary_bool(
+            "surface_handoff_ready",
+            self.expected_surface_handoff_ready(),
+            self.surface_handoff_ready,
+        )?;
+        expect_summary_bool(
+            "solid_handoff_ready",
+            self.expected_solid_handoff_ready(),
+            self.solid_handoff_ready,
+        )?;
         Ok(())
     }
 
@@ -158,6 +164,19 @@ impl ExactMeshConsumerReadinessReport {
             }
         }
     }
+
+    fn expected_surface_handoff_ready(&self) -> bool {
+        self.nonempty_topology
+            && self.exact_rational_coordinates
+            && self.retained_face_planes == self.audit.face_count
+            && self.retained_mesh_bounds
+    }
+
+    fn expected_solid_handoff_ready(&self) -> bool {
+        self.expected_surface_handoff_ready()
+            && self.closed_manifold
+            && self.audit.validation_policy == ValidationPolicy::CLOSED
+    }
 }
 
 /// Build a common-consumer readiness summary for an exact mesh.
@@ -171,6 +190,18 @@ fn expect_summary_bool(
     field: &'static str,
     expected: bool,
     actual: bool,
+) -> Result<(), ExactMeshConsumerReadinessError> {
+    if expected == actual {
+        Ok(())
+    } else {
+        Err(ExactMeshConsumerReadinessError::ReportMismatch { field })
+    }
+}
+
+fn expect_summary_usize(
+    field: &'static str,
+    expected: usize,
+    actual: usize,
 ) -> Result<(), ExactMeshConsumerReadinessError> {
     if expected == actual {
         Ok(())

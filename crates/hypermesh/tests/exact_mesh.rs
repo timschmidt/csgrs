@@ -11,11 +11,12 @@ use hypermesh::{
     ExactBooleanOperation, ExactBooleanPolicy, ExactBooleanResult, ExactBooleanResultKind,
     ExactBoundaryBooleanPolicy, ExactBoundaryTouchingStatus, ExactI64MeshInputReadiness,
     ExactI64MeshInputReportValidationError, ExactLabeledCellComplexFreshness, ExactMesh,
-    ExactMeshConsumerDomain, ExactMeshDomainSummaryFreshness, ExactMeshHandoffPackageError,
-    ExactMeshHandoffPackageFreshness, ExactMeshProposalAcceptance, ExactMeshProposalSourceKind,
-    ExactOpenSurfaceDisjointStatus, ExactOutputTriangleOrientation, ExactPlanarArrangementStatus,
-    ExactRefinementStatus, ExactRegionSelection, ExactRegularizationPolicy, ExactReportFreshness,
-    ExactSameSurfaceStatus, ExactSelectedCellComplexFreshness, ExactSimplifiedCellComplexFreshness,
+    ExactMeshConsumerDomain, ExactMeshConsumerReadinessError, ExactMeshDomainSummaryFreshness,
+    ExactMeshHandoffPackageError, ExactMeshHandoffPackageFreshness, ExactMeshProposalAcceptance,
+    ExactMeshProposalSourceKind, ExactOpenSurfaceDisjointStatus, ExactOutputTriangleOrientation,
+    ExactPlanarArrangementStatus, ExactRefinementStatus, ExactRegionSelection,
+    ExactRegularizationPolicy, ExactReportFreshness, ExactSameSurfaceStatus,
+    ExactSelectedCellComplexFreshness, ExactSimplifiedCellComplexFreshness,
     ExactVolumetricRegionFreshness, ExactVolumetricRegionRelation, ExactWindingReadinessStatus,
     FaceRegionPlaneRelation, FullFaceAdjacentUnionFreshness, IntersectionGraphFreshness,
     LossyF64MeshInputReadiness, LossyF64MeshInputReportValidationError, MeshArtifactBlocker,
@@ -528,6 +529,33 @@ fn exact_mesh_handoff_package_domains_are_publicly_replayable() {
     assert_eq!(
         invalid_readiness_package.freshness_against_mesh(&solid),
         ExactMeshHandoffPackageFreshness::StalePackage
+    );
+
+    let mut understated_surface_readiness = package.readiness.clone();
+    understated_surface_readiness.surface_handoff_ready = false;
+    assert_eq!(
+        understated_surface_readiness.validate(),
+        Err(ExactMeshConsumerReadinessError::ReportMismatch {
+            field: "surface_handoff_ready"
+        })
+    );
+
+    let mut stale_face_plane_readiness = package.readiness.clone();
+    stale_face_plane_readiness.retained_face_planes -= 1;
+    assert_eq!(
+        stale_face_plane_readiness.validate(),
+        Err(ExactMeshConsumerReadinessError::ReportMismatch {
+            field: "retained_face_planes"
+        })
+    );
+
+    let mut missing_bounds_readiness = package.readiness.clone();
+    missing_bounds_readiness.retained_mesh_bounds = false;
+    assert_eq!(
+        missing_bounds_readiness.validate(),
+        Err(ExactMeshConsumerReadinessError::ReportMismatch {
+            field: "retained_mesh_bounds"
+        })
     );
 
     let mut invalid_surface_package = package.clone();
