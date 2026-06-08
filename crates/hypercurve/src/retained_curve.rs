@@ -460,6 +460,11 @@ fn validate_curve_profile_evidence(
             "non-native retained curve profile must report retained evidence spans".into(),
         ));
     }
+    if !topology_status.is_native_exact() && !topology_status.is_retained_evidence() {
+        return Err(CurveError::Topology(
+            "retained curve profile must carry exact native or retained evidence status".into(),
+        ));
+    }
     Ok(())
 }
 
