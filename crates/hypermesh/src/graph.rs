@@ -1801,6 +1801,9 @@ pub enum SplitPlanDiagnosticKind {
     BoundaryNodeOffFacePlane,
     /// A public split-region artifact no longer matches source replay.
     SourceReplayMismatch,
+    /// A retained split face or region carried a source triangle that no
+    /// longer matches the retained source face handle.
+    SourceTriangleMismatch,
     /// A split face region has fewer than three boundary nodes.
     EmptyOrShortRegionBoundary,
     /// A split face region contains consecutive duplicate boundary nodes.
@@ -1967,6 +1970,10 @@ fn validate_split_plan_diagnostic(
         | SplitPlanDiagnosticKind::UnresolvedEquality
         | SplitPlanDiagnosticKind::UnresolvedVertexLookup
         | SplitPlanDiagnosticKind::SourceReplayMismatch => Ok(()),
+        SplitPlanDiagnosticKind::SourceTriangleMismatch => {
+            require_side(diagnostic)?;
+            require_face(diagnostic)
+        }
         SplitPlanDiagnosticKind::MissingEndpointSideFacts
         | SplitPlanDiagnosticKind::NonCrossingEndpointSideFacts
         | SplitPlanDiagnosticKind::InvalidConstructionRatio
@@ -3403,6 +3410,17 @@ fn validate_face_split_geometry_incidence(
         }
 
         let triangle = mesh.triangles()[face.face].0;
+        if face.triangle != triangle {
+            diagnostics.push(
+                SplitPlanDiagnostic::new(
+                    SplitPlanDiagnosticKind::SourceTriangleMismatch,
+                    "split-face geometry source triangle does not match its source face",
+                )
+                .with_side(face.side)
+                .with_face(face.face),
+            );
+            continue;
+        }
         let a = mesh.vertices()[triangle[0]].clone();
         let b = mesh.vertices()[triangle[1]].clone();
         let c = mesh.vertices()[triangle[2]].clone();
@@ -3561,6 +3579,17 @@ fn validate_face_region_plan(
         }
 
         let triangle = mesh.triangles()[region.face].0;
+        if region.triangle != triangle {
+            diagnostics.push(
+                SplitPlanDiagnostic::new(
+                    SplitPlanDiagnosticKind::SourceTriangleMismatch,
+                    "face region source triangle does not match its source face",
+                )
+                .with_side(region.side)
+                .with_face(region.face),
+            );
+            continue;
+        }
         let a = mesh.vertices()[triangle[0]].clone();
         let b = mesh.vertices()[triangle[1]].clone();
         let c = mesh.vertices()[triangle[2]].clone();

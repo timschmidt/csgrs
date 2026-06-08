@@ -3811,10 +3811,36 @@ fn exact_face_pair_candidate_retains_source_plane_split_events() {
         geometry.freshness_against_sources(&left, &right),
         SplitPlanFreshness::Current
     );
+    let mut relabeled_geometry = geometry.clone();
+    relabeled_geometry.faces[0].triangle.swap(0, 1);
+    let geometry_report = relabeled_geometry.validate_boundary_incidence(&left, &right);
+    assert!(
+        geometry_report.diagnostics.iter().any(|diagnostic| {
+            diagnostic.kind == hypermesh::SplitPlanDiagnosticKind::SourceTriangleMismatch
+        }),
+        "{geometry_report:?}"
+    );
+    assert_eq!(
+        relabeled_geometry.freshness_against_sources(&left, &right),
+        SplitPlanFreshness::InvalidPlan
+    );
     let regions = geometry.region_plan(&left, &right);
     assert_eq!(
         regions.freshness_against_sources(&left, &right),
         SplitPlanFreshness::Current
+    );
+    let mut relabeled_regions = regions.clone();
+    relabeled_regions.regions[0].triangle.swap(0, 1);
+    let region_report = relabeled_regions.validate(&left, &right);
+    assert!(
+        region_report.diagnostics.iter().any(|diagnostic| {
+            diagnostic.kind == hypermesh::SplitPlanDiagnosticKind::SourceTriangleMismatch
+        }),
+        "{region_report:?}"
+    );
+    assert_eq!(
+        relabeled_regions.freshness_against_sources(&left, &right),
+        SplitPlanFreshness::InvalidPlan
     );
 
     let mut truncated = pair.clone();
