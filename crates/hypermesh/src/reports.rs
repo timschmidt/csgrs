@@ -3014,6 +3014,9 @@ impl ExactVolumetricBoundaryClosureReport {
 
     /// Validate status and retained closure counts.
     pub fn validate(&self) -> Result<(), ExactReportValidationError> {
+        if self.has_impossible_boundary_count_bounds() {
+            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+        }
         match &self.status {
             ExactVolumetricBoundaryClosureStatus::NoMaterializedBoundaryOutput => {
                 if self.output_triangles != 0
@@ -3137,6 +3140,32 @@ impl ExactVolumetricBoundaryClosureReport {
         self.boundary_vertices_with_invalid_outgoing_degree != 0
             || self.boundary_vertices_with_invalid_incoming_degree != 0
             || self.overused_boundary_edges != 0
+    }
+
+    fn has_impossible_boundary_count_bounds(&self) -> bool {
+        if self.boundary_loops != 0 && self.boundary_loops > self.boundary_edges / 3 {
+            return true;
+        }
+        if self.boundary_vertices_with_invalid_outgoing_degree > self.boundary_edges
+            || self.boundary_vertices_with_invalid_incoming_degree > self.boundary_edges
+            || self.noncoplanar_boundary_loops > self.boundary_loops
+            || self.coplanar_loop_groups > self.boundary_loops
+        {
+            return true;
+        }
+        if self.overused_boundary_edges > self.output_triangles.saturating_mul(3) {
+            return true;
+        }
+        if self.self_contact_topological_vertices > self.boundary_edges
+            || self.self_contact_exact_points > self.self_contact_topological_vertices / 2
+        {
+            return true;
+        }
+        let max_repeated = self
+            .self_contact_topological_vertices
+            .saturating_mul(self.self_contact_topological_vertices.saturating_sub(1))
+            / 2;
+        self.repeated_exact_boundary_points > max_repeated
     }
 
     fn has_valid_optional_self_contact_evidence(&self) -> bool {
@@ -6103,6 +6132,55 @@ mod tests {
 
         let mut report = valid_self_contact_closure_report();
         report.self_contact_degenerate_cycles = 1;
+        assert_eq!(
+            report.validate(),
+            Err(ExactReportValidationError::StatusEvidenceMismatch)
+        );
+    }
+
+    #[test]
+    fn volumetric_boundary_report_rejects_impossible_count_bounds() {
+        let mut report = valid_noncoplanar_closure_report();
+        report.boundary_loops = 2;
+        assert_eq!(
+            report.validate(),
+            Err(ExactReportValidationError::StatusEvidenceMismatch)
+        );
+
+        let mut report = valid_noncoplanar_closure_report();
+        report.noncoplanar_boundary_loops = 2;
+        assert_eq!(
+            report.validate(),
+            Err(ExactReportValidationError::StatusEvidenceMismatch)
+        );
+
+        let mut report = valid_topology_not_loop_closure_report();
+        report.boundary_vertices_with_invalid_outgoing_degree = 3;
+        assert_eq!(
+            report.validate(),
+            Err(ExactReportValidationError::StatusEvidenceMismatch)
+        );
+
+        let mut report = valid_self_contact_closure_report();
+        report.repeated_exact_boundary_points = 2;
+        assert_eq!(
+            report.validate(),
+            Err(ExactReportValidationError::StatusEvidenceMismatch)
+        );
+
+        let mut report = valid_self_contact_closure_report();
+        report.repeated_exact_boundary_points = 3;
+        report.self_contact_topological_vertices = 4;
+        report.self_contact_degenerate_cycles = 4;
+        assert_eq!(
+            report.validate(),
+            Err(ExactReportValidationError::StatusEvidenceMismatch)
+        );
+
+        let mut report = valid_noncoplanar_closure_report();
+        report.status = ExactVolumetricBoundaryClosureStatus::CoplanarClosureAvailable;
+        report.noncoplanar_boundary_loops = 0;
+        report.coplanar_loop_groups = 2;
         assert_eq!(
             report.validate(),
             Err(ExactReportValidationError::StatusEvidenceMismatch)
