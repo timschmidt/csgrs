@@ -498,6 +498,9 @@ fn retained_curve_cache_summary_rejects_inconsistent_span_counts() {
     assert_topology_error(RetainedCurveCacheSummary2::new(0, 9, 2, 2, 0));
     assert_topology_error(RetainedCurveCacheSummary2::new(5, 5, 2, 2, 0));
     assert_topology_error(RetainedCurveCacheSummary2::new(5, 4, 2, 2, 0));
+    assert_topology_error(RetainedCurveCacheSummary2::new(5, 9, 4, 4, 0));
+    assert_topology_error(RetainedCurveCacheSummary2::new(5, 9, 5, 5, 0));
+    assert_topology_error(RetainedCurveCacheSummary2::new(5, 9, 6, 6, 0));
 }
 
 #[test]

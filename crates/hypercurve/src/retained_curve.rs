@@ -391,6 +391,15 @@ fn validate_cache_summary_counts(
             "retained B-spline cache summary must carry more knots than controls".into(),
         ));
     }
+    if span_count
+        .checked_add(2)
+        .is_none_or(|minimum_control_count| control_count < minimum_control_count)
+    {
+        return Err(CurveError::Topology(
+            "retained B-spline cache summary must carry at least two more controls than spans"
+                .into(),
+        ));
+    }
     if native_span_count
         .checked_add(retained_span_count)
         .is_none_or(|count| count != span_count)
