@@ -326,6 +326,25 @@ fn curve_string_projection_subdivides_arc_and_keeps_exact_endpoints() {
 }
 
 #[test]
+fn curve_string_projection_rejects_nonfinite_arc_samples() {
+    use hypercurve::Point2;
+
+    let huge = Real::try_from(1.1e308).unwrap();
+    let start = Point2::new(Real::zero(), Real::zero());
+    let end = Point2::new(huge.clone(), huge.clone());
+    let center = Point2::new(huge, Real::zero());
+    let arc = CircularArc2::try_from_center(start, end, center, false).unwrap();
+    let curve = CurveString2::try_new(vec![Segment2::Arc(arc)]).unwrap();
+
+    assert_eq!(
+        curve
+            .project_to_finite_polyline(&FiniteProjectionOptions::try_new(0.01).unwrap())
+            .unwrap_err(),
+        CurveError::NonFiniteProjectionPoint
+    );
+}
+
+#[test]
 fn finite_line_string_import_promotes_boundary_f64_to_native_lines() {
     let curve =
         CurveString2::from_finite_line_string(&[[0.0, 0.0], [2.0, 0.0], [2.0, 1.0]]).unwrap();

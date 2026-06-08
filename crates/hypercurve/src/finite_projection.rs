@@ -515,13 +515,14 @@ fn append_arc_samples(
     for step in 1..=steps {
         let t = step as f64 / steps as f64;
         let angle = a0 + sweep * t;
-        push_if_new(
-            points,
-            [
-                center[0] + radius * angle.cos(),
-                center[1] + radius * angle.sin(),
-            ],
-        );
+        let point = [
+            center[0] + radius * angle.cos(),
+            center[1] + radius * angle.sin(),
+        ];
+        if !point[0].is_finite() || !point[1].is_finite() {
+            return Err(CurveError::NonFiniteProjectionPoint);
+        }
+        push_if_new(points, point);
     }
     Ok(points.len() - before)
 }
