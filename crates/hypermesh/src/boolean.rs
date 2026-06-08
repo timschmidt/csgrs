@@ -220,7 +220,10 @@ impl ExactArrangementBooleanAttempt {
     /// retained counts must describe one path through that state machine rather
     /// than an arbitrary mix of successful output and blockers.
     pub fn validate(&self) -> Result<(), ExactReportValidationError> {
-        if self.selected_volume_regions != 0 && self.volume_regions == 0 {
+        if self.selected_faces > self.face_cells
+            || self.selected_volume_regions > self.volume_regions
+            || (self.selected_volume_regions != 0 && self.volume_regions == 0)
+        {
             return Err(ExactReportValidationError::StatusEvidenceMismatch);
         }
 
@@ -12106,6 +12109,18 @@ mod tests {
         assert_eq!(union_attempt.selected_faces, 4);
         assert_eq!(union_attempt.output_triangles, 4);
         assert_current_arrangement_attempt(&union_attempt, &left, &right);
+        let mut stale_selected_faces = union_attempt.clone();
+        stale_selected_faces.selected_faces = stale_selected_faces.face_cells + 1;
+        assert_eq!(
+            stale_selected_faces.validate(),
+            Err(ExactReportValidationError::StatusEvidenceMismatch)
+        );
+        let mut stale_selected_volumes = union_attempt.clone();
+        stale_selected_volumes.selected_volume_regions = stale_selected_volumes.volume_regions + 1;
+        assert_eq!(
+            stale_selected_volumes.validate(),
+            Err(ExactReportValidationError::StatusEvidenceMismatch)
+        );
         let mut stale_union_counts = union_attempt.clone();
         stale_union_counts.output_vertices = 0;
         stale_union_counts.output_triangles = 0;
