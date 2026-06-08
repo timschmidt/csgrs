@@ -1964,8 +1964,10 @@ fn same_parameter_dyadic_rational_polynomial_relation(
     let denominator = Real::from(RATIONAL_POLYNOMIAL_DYADIC_CANDIDATE_DENOMINATOR);
     let mut points = Vec::new();
     for numerator in 1..RATIONAL_POLYNOMIAL_DYADIC_CANDIDATE_DENOMINATOR {
-        let parameter = (Real::from(numerator) / &denominator)
-            .expect("division by positive dyadic-grid denominator is defined");
+        let parameter = match Real::from(numerator) / &denominator {
+            Ok(parameter) => parameter,
+            Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
+        };
         let rational_point = match rational.point_at(parameter.clone(), policy) {
             Classification::Decided(point) => point,
             // Denominator-boundary candidates are not promoted. The caller keeps
@@ -3717,5 +3719,40 @@ mod tests {
             scalar_quadratic_at_half(&[Real::zero(), Real::from(2_i8), Real::from(4_i8)]).unwrap(),
             Real::from(2_i8)
         );
+    }
+
+    #[test]
+    fn rational_polynomial_dyadic_promotion_uses_checked_parameters() {
+        let rational = RationalQuadraticBezier2::try_new(
+            point(0, 0),
+            point(1, 2),
+            point(2, 0),
+            Real::one(),
+            Real::from(2_i8),
+            Real::one(),
+        )
+        .unwrap();
+        let y_mid = (Real::from(8_i8) / Real::from(3_i8)).unwrap();
+        let p0 = point(0, 0);
+        let p1 = Point2::new(Real::one(), y_mid);
+        let p2 = point(2, 0);
+        let controls = vec![&p0, &p1, &p2];
+
+        let relation = same_parameter_dyadic_rational_polynomial_relation(
+            &rational,
+            &controls,
+            &CurvePolicy::certified(),
+        );
+
+        match relation {
+            Classification::Decided(Some(BezierCurveRelation::IntersectionPoints { points })) => {
+                assert_eq!(points.len(), 1);
+                assert_eq!(
+                    points[0].point(),
+                    &Point2::new(Real::one(), (Real::from(4_i8) / Real::from(3_i8)).unwrap())
+                );
+            }
+            other => panic!("expected exact dyadic promotion, got {other:?}"),
+        }
     }
 }
