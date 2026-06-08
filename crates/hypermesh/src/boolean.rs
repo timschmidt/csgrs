@@ -6241,10 +6241,33 @@ fn boolean_open_surface_disjoint_meshes_from_graph(
     }
     let disjoint_report = open_surface_disjoint_report_from_graph(graph, left, right);
     if disjoint_report.is_certified() {
-        return materialize_open_surface_disjoint_meshes(left, right, operation, validation)
-            .map(Some);
+        let result = materialize_open_surface_disjoint_meshes(left, right, operation, validation)?;
+        return Ok(open_surface_disjoint_result_matches_sources(
+            &result, left, right, operation, validation,
+        )
+        .then_some(result));
     }
     Ok(None)
+}
+
+fn open_surface_disjoint_result_matches_sources(
+    result: &ExactBooleanResult,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+) -> bool {
+    let Ok(report) = certify_open_surface_disjoint_report(left, right) else {
+        return false;
+    };
+    if report.validate().is_err() || !report.is_certified() {
+        return false;
+    }
+    let Ok(expected) = materialize_open_surface_disjoint_meshes(left, right, operation, validation)
+    else {
+        return false;
+    };
+    expected.validate().is_ok() && result == &expected
 }
 
 /// Certify and materialize a named boolean for open surfaces with no retained
@@ -9189,6 +9212,53 @@ mod tests {
         assert_eq!(
             projected.validate(),
             Err(crate::ExactReportValidationError::StatusEvidenceMismatch)
+        );
+    }
+
+    #[test]
+    fn open_surface_disjoint_graph_shortcut_replays_sources_before_acceptance() {
+        let left = ExactMesh::from_i64_triangles_with_policy(
+            &[0, 0, 0, 4, 0, 4, 0, 4, 0],
+            &[0, 1, 2],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let separated_right = ExactMesh::from_i64_triangles_with_policy(
+            &[0, 0, 1, 4, 0, 5, 0, 4, 1],
+            &[0, 1, 2],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let overlapping_right = ExactMesh::from_i64_triangles_with_policy(
+            &[0, 0, 0, 4, 0, 4, 0, 4, 0],
+            &[0, 1, 2],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+
+        let stale_graph = build_intersection_graph(&left, &separated_right).unwrap();
+        assert!(
+            boolean_open_surface_disjoint_meshes_from_graph(
+                &stale_graph,
+                &left,
+                &separated_right,
+                ExactBooleanOperation::Union,
+                ValidationPolicy::ALLOW_BOUNDARY,
+            )
+            .unwrap()
+            .is_some()
+        );
+
+        assert!(
+            boolean_open_surface_disjoint_meshes_from_graph(
+                &stale_graph,
+                &left,
+                &overlapping_right,
+                ExactBooleanOperation::Union,
+                ValidationPolicy::ALLOW_BOUNDARY,
+            )
+            .unwrap()
+            .is_none()
         );
     }
 
