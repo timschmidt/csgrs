@@ -366,11 +366,16 @@ fn validate_blocker_count_bounds(
         .candidate_pairs
         .saturating_add(blocker.coplanar_overlapping_pairs)
         .saturating_add(blocker.coplanar_touching_pairs);
+    // `unknown_pairs` can overlap a classified relation when a candidate pair
+    // carries an unknown event, but every retained graph pair must still be
+    // covered by either a classified relation counter or unknown evidence.
+    let covered_relation_pairs = classified_relation_pairs.saturating_add(blocker.unknown_pairs);
     if retained_face_pairs == 0 && retained_events != 0
         || retained_face_pairs != 0 && retained_events == 0
         || (retained_face_pairs != 0 && !blocker_has_any_evidence(blocker))
         || classified_relation_pairs > retained_face_pairs
         || blocker.unknown_pairs > retained_face_pairs
+        || covered_relation_pairs < retained_face_pairs
         || blocker.construction_failed_events > retained_events
     {
         Err(ExactReportValidationError::InvalidBlockerCounts)
@@ -6575,6 +6580,60 @@ mod tests {
         assert_eq!(
             readiness.validate(),
             Err(ExactReportValidationError::StatusEvidenceMismatch)
+        );
+    }
+
+    #[test]
+    fn retained_graph_reports_reject_unaccounted_face_pairs() {
+        let mut refinement = ExactRefinementReport {
+            operation: ExactBooleanOperation::Union,
+            status: ExactRefinementStatus::Required,
+            graph_had_unknowns: true,
+            retained_face_pairs: 2,
+            retained_events: 2,
+            blocker: Some(ExactBooleanBlocker {
+                kind: ExactBooleanBlockerKind::NeedsRefinement,
+                candidate_pairs: 0,
+                coplanar_overlapping_pairs: 0,
+                coplanar_touching_pairs: 0,
+                unknown_pairs: 1,
+                construction_failed_events: 0,
+            }),
+        };
+        assert_eq!(
+            refinement.validate(),
+            Err(ExactReportValidationError::InvalidBlockerCounts)
+        );
+
+        let blocker = refinement.blocker.as_mut().unwrap();
+        blocker.candidate_pairs = 1;
+        assert!(
+            refinement.validate().is_ok(),
+            "unknown-event evidence can overlap a classified candidate pair"
+        );
+
+        let readiness = ExactWindingReadinessReport {
+            operation: ExactBooleanOperation::Union,
+            status: ExactWindingReadinessStatus::ConvexBooleanAlreadyMaterialized,
+            graph_had_unknowns: false,
+            retained_face_pairs: 2,
+            retained_events: 2,
+            region_count: 0,
+            region_classifications: Vec::new(),
+            blocker: ExactBooleanBlocker {
+                kind: ExactBooleanBlockerKind::NeedsWinding,
+                candidate_pairs: 1,
+                coplanar_overlapping_pairs: 0,
+                coplanar_touching_pairs: 0,
+                unknown_pairs: 0,
+                construction_failed_events: 0,
+            },
+            arrangement_readiness: None,
+            coplanar_volumetric_evidence: None,
+        };
+        assert_eq!(
+            readiness.validate(),
+            Err(ExactReportValidationError::InvalidBlockerCounts)
         );
     }
 
