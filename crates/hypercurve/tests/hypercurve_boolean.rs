@@ -2,7 +2,7 @@ use hypercurve::{
     BooleanBoundaryChain, BooleanBoundaryChainSet, BooleanBoundaryFragmentSet, BooleanBoundaryLoop,
     BooleanBoundaryLoopSet, BooleanFragmentAction, BooleanFragmentClassification,
     BooleanFragmentSelection, BooleanOp, BulgeVertex2, Classification, Contour2, CurveError,
-    CurvePolicy, DirectedBooleanFragment, FillRule, Real, Region2, RegionContourKey,
+    CurvePolicy, DirectedBooleanFragment, FillRule, LineSeg2, Real, Region2, RegionContourKey,
     RegionContourRole, RegionPointLocation, RegionSide, Segment2, UncertaintyReason,
 };
 
@@ -437,6 +437,22 @@ fn boolean_boundary_fragment_set_constructor_validates_source_ownership() {
             BooleanFragmentAction::KeepSourceDirection,
         )],
     ));
+}
+
+#[test]
+fn boolean_boundary_constructors_reject_zero_length_directed_fragments() {
+    let zero = DirectedBooleanFragment {
+        key: RegionContourKey::new(RegionSide::First, RegionContourRole::Material, 0),
+        fragment_index: 0,
+        segment: Segment2::Line(LineSeg2::new_unchecked(p(0, 0), p(0, 0))),
+    };
+
+    assert_topology_error(BooleanBoundaryFragmentSet::new(
+        vec![zero.clone()],
+        Vec::new(),
+    ));
+    assert_topology_error(BooleanBoundaryChain::new(vec![zero.clone()], true));
+    assert_topology_error(BooleanBoundaryLoop::new(vec![zero]));
 }
 
 #[test]

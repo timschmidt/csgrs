@@ -460,6 +460,29 @@ fn validate_directed_boolean_fragments(
             "{owner} directed fragment ownership must be unique"
         )));
     }
+    validate_directed_boolean_fragment_geometry(fragments, owner)?;
+    Ok(())
+}
+
+fn validate_directed_boolean_fragment_geometry(
+    fragments: &[DirectedBooleanFragment],
+    owner: &str,
+) -> CurveResult<()> {
+    let policy = CurvePolicy::certified();
+    for fragment in fragments {
+        if is_zero(
+            &fragment
+                .segment
+                .start()
+                .distance_squared(fragment.segment.end()),
+            &policy,
+        ) == Some(true)
+        {
+            return Err(CurveError::Topology(format!(
+                "{owner} directed fragment must carry nonzero geometry"
+            )));
+        }
+    }
     Ok(())
 }
 
@@ -586,6 +609,10 @@ fn validate_boolean_boundary_fragment_set(
     directed_fragments: &[DirectedBooleanFragment],
     unresolved_boundaries: &[BooleanFragmentClassification],
 ) -> CurveResult<()> {
+    validate_directed_boolean_fragment_geometry(
+        directed_fragments,
+        "boolean boundary fragment set",
+    )?;
     for unresolved in unresolved_boundaries {
         validate_boolean_fragment_classification_boundary_action(unresolved)?;
     }
