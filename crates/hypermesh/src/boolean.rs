@@ -222,6 +222,8 @@ impl ExactArrangementBooleanAttempt {
     pub fn validate(&self) -> Result<(), ExactReportValidationError> {
         if self.selected_faces > self.face_cells
             || self.selected_volume_regions > self.volume_regions
+            || (self.volume_regions != 0 && self.regions == 0)
+            || (self.volume_adjacencies != 0 && self.volume_regions < 2)
             || (self.selected_volume_regions != 0 && self.volume_regions == 0)
         {
             return Err(ExactReportValidationError::StatusEvidenceMismatch);
@@ -12119,6 +12121,19 @@ mod tests {
         stale_selected_volumes.selected_volume_regions = stale_selected_volumes.volume_regions + 1;
         assert_eq!(
             stale_selected_volumes.validate(),
+            Err(ExactReportValidationError::StatusEvidenceMismatch)
+        );
+        let mut stale_volume_regions = union_attempt.clone();
+        stale_volume_regions.regions = 0;
+        assert_eq!(
+            stale_volume_regions.validate(),
+            Err(ExactReportValidationError::StatusEvidenceMismatch)
+        );
+        let mut stale_volume_adjacencies = union_attempt.clone();
+        stale_volume_adjacencies.volume_regions = 1;
+        stale_volume_adjacencies.volume_adjacencies = 1;
+        assert_eq!(
+            stale_volume_adjacencies.validate(),
             Err(ExactReportValidationError::StatusEvidenceMismatch)
         );
         let mut stale_union_counts = union_attempt.clone();
