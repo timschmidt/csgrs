@@ -11,11 +11,11 @@ use hypermesh::{
     ExactBooleanOperation, ExactBooleanPolicy, ExactBooleanResult, ExactBooleanResultKind,
     ExactBoundaryBooleanPolicy, ExactBoundaryTouchingStatus, ExactI64MeshInputReadiness,
     ExactLabeledCellComplexFreshness, ExactMesh, ExactMeshConsumerDomain,
-    ExactMeshDomainSummaryFreshness, ExactMeshHandoffPackageFreshness, ExactMeshProposalAcceptance,
-    ExactMeshProposalSourceKind, ExactOpenSurfaceDisjointStatus, ExactOutputTriangleOrientation,
-    ExactPlanarArrangementStatus, ExactRefinementStatus, ExactRegionSelection,
-    ExactRegularizationPolicy, ExactReportFreshness, ExactSameSurfaceStatus,
-    ExactSelectedCellComplexFreshness, ExactSimplifiedCellComplexFreshness,
+    ExactMeshDomainSummaryFreshness, ExactMeshHandoffPackageError,
+    ExactMeshHandoffPackageFreshness, ExactMeshProposalAcceptance, ExactMeshProposalSourceKind,
+    ExactOpenSurfaceDisjointStatus, ExactOutputTriangleOrientation, ExactPlanarArrangementStatus,
+    ExactRefinementStatus, ExactRegionSelection, ExactRegularizationPolicy, ExactReportFreshness,
+    ExactSameSurfaceStatus, ExactSelectedCellComplexFreshness, ExactSimplifiedCellComplexFreshness,
     ExactVolumetricRegionFreshness, ExactVolumetricRegionRelation, ExactWindingReadinessStatus,
     FaceRegionPlaneRelation, FullFaceAdjacentUnionFreshness, IntersectionGraphFreshness,
     MeshArtifactBlocker, MeshArtifactFaceRecord, MeshArtifactManifest, MeshArtifactRole,
@@ -423,6 +423,45 @@ fn exact_mesh_handoff_package_domains_are_publicly_replayable() {
         .unwrap();
     assert_eq!(preferred.domain(), ExactMeshConsumerDomain::Solid);
     assert_eq!(preferred.audit(), &package.audit);
+
+    let mut invalid_surface_package = package.clone();
+    invalid_surface_package
+        .surface
+        .as_mut()
+        .unwrap()
+        .nonempty_topology = false;
+    assert!(matches!(
+        invalid_surface_package.validate_internal(),
+        Err(ExactMeshHandoffPackageError::InternalMismatch { field: "surface" })
+    ));
+    assert_eq!(
+        invalid_surface_package.freshness_against_mesh(&solid),
+        ExactMeshHandoffPackageFreshness::StalePackage
+    );
+
+    let mut invalid_solid_package = package.clone();
+    invalid_solid_package
+        .solid
+        .as_mut()
+        .unwrap()
+        .retained_face_planes -= 1;
+    assert!(matches!(
+        invalid_solid_package.validate_internal(),
+        Err(ExactMeshHandoffPackageError::InternalMismatch { field: "solid" })
+    ));
+
+    let mut invalid_view_package = package.clone();
+    invalid_view_package
+        .approximate_f64_view
+        .as_mut()
+        .unwrap()
+        .exported_coordinates += 1;
+    assert!(matches!(
+        invalid_view_package.validate_internal(),
+        Err(ExactMeshHandoffPackageError::InternalMismatch {
+            field: "approximate_f64_view"
+        })
+    ));
 
     let summary = package.domain_summary();
     summary.validate_against_mesh(&package, &solid).unwrap();

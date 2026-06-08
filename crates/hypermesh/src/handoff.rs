@@ -193,10 +193,42 @@ impl ExactSolidHandoffReport {
 
     /// Validate that this handoff report still replays against `mesh`.
     pub fn validate_against_mesh(&self, mesh: &ExactMesh) -> Result<(), ExactSolidHandoffError> {
+        self.validate()?;
         let replay = Self::from_mesh(mesh)?;
         if self != &replay {
             return Err(ExactSolidHandoffError::ReportMismatch {
                 field: "exact_solid_handoff",
+            });
+        }
+        Ok(())
+    }
+
+    /// Validate report-internal solid handoff consistency without a source mesh.
+    pub fn validate(&self) -> Result<(), ExactSolidHandoffError> {
+        if self.audit.vertex_count == 0 || self.audit.face_count == 0 || !self.nonempty_topology {
+            return Err(ExactSolidHandoffError::EmptyTopology);
+        }
+        if !self.audit.closed_manifold {
+            return Err(ExactSolidHandoffError::NotClosedManifold);
+        }
+        if self.audit.validation_policy != super::ValidationPolicy::CLOSED {
+            return Err(ExactSolidHandoffError::NotClosedManifold);
+        }
+        if !self.audit.fixed_coordinates_exact_rational {
+            return Err(ExactSolidHandoffError::NonExactRationalCoordinates);
+        }
+        if self.retained_face_planes != self.audit.face_count {
+            return Err(ExactSolidHandoffError::FacePlaneCountMismatch {
+                expected: self.audit.face_count,
+                actual: self.retained_face_planes,
+            });
+        }
+        if !self.retained_mesh_bounds {
+            return Err(ExactSolidHandoffError::MissingMeshBounds);
+        }
+        if self.proof_predicate_ready != self.audit.all_predicates_proof_producing() {
+            return Err(ExactSolidHandoffError::ReportMismatch {
+                field: "proof_predicate_ready",
             });
         }
         Ok(())
@@ -272,10 +304,46 @@ impl ExactSurfaceHandoffReport {
 
     /// Validate that this surface handoff report still replays against `mesh`.
     pub fn validate_against_mesh(&self, mesh: &ExactMesh) -> Result<(), ExactSurfaceHandoffError> {
+        self.validate()?;
         let replay = Self::from_mesh(mesh)?;
         if self != &replay {
             return Err(ExactSurfaceHandoffError::ReportMismatch {
                 field: "exact_surface_handoff",
+            });
+        }
+        Ok(())
+    }
+
+    /// Validate report-internal surface handoff consistency without a source mesh.
+    pub fn validate(&self) -> Result<(), ExactSurfaceHandoffError> {
+        if self.audit.vertex_count == 0 || self.audit.face_count == 0 || !self.nonempty_topology {
+            return Err(ExactSurfaceHandoffError::EmptyTopology);
+        }
+        if !self.audit.fixed_coordinates_exact_rational {
+            return Err(ExactSurfaceHandoffError::NonExactRationalCoordinates);
+        }
+        if self.retained_face_planes != self.audit.face_count {
+            return Err(ExactSurfaceHandoffError::FacePlaneCountMismatch {
+                expected: self.audit.face_count,
+                actual: self.retained_face_planes,
+            });
+        }
+        if !self.retained_mesh_bounds {
+            return Err(ExactSurfaceHandoffError::MissingMeshBounds);
+        }
+        if self.closed_manifold != self.audit.closed_manifold {
+            return Err(ExactSurfaceHandoffError::ReportMismatch {
+                field: "closed_manifold",
+            });
+        }
+        if self.validation_policy != self.audit.validation_policy {
+            return Err(ExactSurfaceHandoffError::ReportMismatch {
+                field: "validation_policy",
+            });
+        }
+        if self.proof_predicate_ready != self.audit.all_predicates_proof_producing() {
+            return Err(ExactSurfaceHandoffError::ReportMismatch {
+                field: "proof_predicate_ready",
             });
         }
         Ok(())

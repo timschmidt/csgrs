@@ -532,7 +532,8 @@ impl ExactMeshHandoffPackage {
     /// the package is fresh for a current mesh; only
     /// [`ExactMeshHandoffPackage::validate_against_mesh`] can do that. It does
     /// reject self-contradictory packages where readiness flags, inner audits,
-    /// replay checks rather than being trusted because they are well-typed.
+    /// and optional member reports disagree rather than trusting them because
+    /// they are well-typed.
     pub fn validate_internal(&self) -> Result<(), ExactMeshHandoffPackageError> {
         if self.readiness.audit != self.audit {
             return Err(ExactMeshHandoffPackageError::InternalMismatch {
@@ -561,6 +562,11 @@ impl ExactMeshHandoffPackage {
                 field: "surface.audit",
             });
         }
+        if let Some(surface) = &self.surface
+            && surface.validate().is_err()
+        {
+            return Err(ExactMeshHandoffPackageError::InternalMismatch { field: "surface" });
+        }
         if let Some(solid) = &self.solid
             && solid.audit != self.audit
         {
@@ -568,11 +574,23 @@ impl ExactMeshHandoffPackage {
                 field: "solid.audit",
             });
         }
+        if let Some(solid) = &self.solid
+            && solid.validate().is_err()
+        {
+            return Err(ExactMeshHandoffPackageError::InternalMismatch { field: "solid" });
+        }
         if let Some(view) = &self.approximate_f64_view
             && view.audit != self.audit
         {
             return Err(ExactMeshHandoffPackageError::InternalMismatch {
                 field: "approximate_f64_view.audit",
+            });
+        }
+        if let Some(view) = &self.approximate_f64_view
+            && view.validate().is_err()
+        {
+            return Err(ExactMeshHandoffPackageError::InternalMismatch {
+                field: "approximate_f64_view",
             });
         }
         Ok(())

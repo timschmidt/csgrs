@@ -150,35 +150,8 @@ impl ApproximateMeshF64View {
         self.audit
             .validate_against_mesh(mesh)
             .map_err(ApproximateMeshF64ViewError::AuditReplay)?;
-        if !self.lossy_view {
-            return Err(ApproximateMeshF64ViewError::MissingLossyViewFlag);
-        }
-        let expected_positions = mesh.vertices().len() * 3;
-        if self.positions.len() != expected_positions {
-            return Err(ApproximateMeshF64ViewError::PositionCountMismatch {
-                expected: expected_positions,
-                actual: self.positions.len(),
-            });
-        }
-        if self.exported_coordinates != self.positions.len() {
-            return Err(
-                ApproximateMeshF64ViewError::ExportedCoordinateCountMismatch {
-                    expected: self.positions.len(),
-                    actual: self.exported_coordinates,
-                },
-            );
-        }
-        let expected_indices = mesh.triangles().len() * 3;
-        if self.indices.len() != expected_indices {
-            return Err(ApproximateMeshF64ViewError::IndexCountMismatch {
-                expected: expected_indices,
-                actual: self.indices.len(),
-            });
-        }
+        self.validate()?;
         for (coordinate, value) in self.positions.iter().copied().enumerate() {
-            if !value.is_finite() {
-                return Err(ApproximateMeshF64ViewError::NonFiniteCoordinate { coordinate });
-            }
             let vertex = coordinate / 3;
             let lane = coordinate % 3;
             let Some(expected) = point_coordinate(&mesh.vertices()[vertex], lane).to_f64_lossy()
@@ -195,6 +168,56 @@ impl ApproximateMeshF64View {
         for (index, value) in self.indices.iter().copied().enumerate() {
             let triangle = mesh.triangles()[index / 3].0[index % 3];
             if value != triangle {
+                return Err(ApproximateMeshF64ViewError::IndexReplayMismatch { index });
+            }
+        }
+        Ok(())
+    }
+
+    /// Validate view-internal row and lossy-adapter consistency without a source mesh.
+    pub fn validate(&self) -> Result<(), ApproximateMeshF64ViewError> {
+        if !self.lossy_view {
+            return Err(ApproximateMeshF64ViewError::MissingLossyViewFlag);
+        }
+        let Some(expected_positions) = self.audit.vertex_count.checked_mul(3) else {
+            return Err(ApproximateMeshF64ViewError::PositionCountMismatch {
+                expected: usize::MAX,
+                actual: self.positions.len(),
+            });
+        };
+        if self.positions.len() != expected_positions {
+            return Err(ApproximateMeshF64ViewError::PositionCountMismatch {
+                expected: expected_positions,
+                actual: self.positions.len(),
+            });
+        }
+        if self.exported_coordinates != self.positions.len() {
+            return Err(
+                ApproximateMeshF64ViewError::ExportedCoordinateCountMismatch {
+                    expected: self.positions.len(),
+                    actual: self.exported_coordinates,
+                },
+            );
+        }
+        let Some(expected_indices) = self.audit.face_count.checked_mul(3) else {
+            return Err(ApproximateMeshF64ViewError::IndexCountMismatch {
+                expected: usize::MAX,
+                actual: self.indices.len(),
+            });
+        };
+        if self.indices.len() != expected_indices {
+            return Err(ApproximateMeshF64ViewError::IndexCountMismatch {
+                expected: expected_indices,
+                actual: self.indices.len(),
+            });
+        }
+        for (coordinate, value) in self.positions.iter().copied().enumerate() {
+            if !value.is_finite() {
+                return Err(ApproximateMeshF64ViewError::NonFiniteCoordinate { coordinate });
+            }
+        }
+        for (index, value) in self.indices.iter().copied().enumerate() {
+            if value >= self.audit.vertex_count {
                 return Err(ApproximateMeshF64ViewError::IndexReplayMismatch { index });
             }
         }
