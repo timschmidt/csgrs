@@ -311,7 +311,8 @@ impl CoplanarVolumetricCellEvidenceReport {
 
     /// Return the number of retained coplanar face pairs.
     pub const fn coplanar_face_pairs(&self) -> usize {
-        self.coplanar_touching_pairs + self.coplanar_overlapping_pairs
+        self.coplanar_touching_pairs
+            .saturating_add(self.coplanar_overlapping_pairs)
     }
 
     /// Validate the compact report without source meshes.
@@ -320,25 +321,46 @@ impl CoplanarVolumetricCellEvidenceReport {
     /// separate because exact object handles must be compared against the
     /// operands that produced them before the report can authorize topology.
     pub fn validate(&self) -> Result<(), CoplanarVolumetricCellEvidenceError> {
-        let relation_count = self.candidate_pairs + self.coplanar_face_pairs() + self.unknown_pairs;
+        let Some(coplanar_face_pairs) = self
+            .coplanar_touching_pairs
+            .checked_add(self.coplanar_overlapping_pairs)
+        else {
+            return Err(CoplanarVolumetricCellEvidenceError::FacePairCountMismatch);
+        };
+        let Some(relation_count) = self
+            .candidate_pairs
+            .checked_add(coplanar_face_pairs)
+            .and_then(|count| count.checked_add(self.unknown_pairs))
+        else {
+            return Err(CoplanarVolumetricCellEvidenceError::FacePairCountMismatch);
+        };
         if relation_count != self.retained_face_pair_count {
             return Err(CoplanarVolumetricCellEvidenceError::FacePairCountMismatch);
         }
         if self.proper_crossing_candidate_pairs > self.candidate_pairs {
             return Err(CoplanarVolumetricCellEvidenceError::CandidatePairCountMismatch);
         }
-        if self
+        let Some(segment_plane_partition) = self
             .proper_crossing_events
-            .saturating_add(self.boundary_segment_events)
-            .saturating_add(self.construction_failed_events)
-            .saturating_add(self.unknown_segment_plane_events)
-            > self.segment_plane_events
+            .checked_add(self.boundary_segment_events)
+            .and_then(|count| count.checked_add(self.construction_failed_events))
+            .and_then(|count| count.checked_add(self.unknown_segment_plane_events))
+        else {
+            return Err(CoplanarVolumetricCellEvidenceError::SegmentPlaneEventCountMismatch);
+        };
+        if segment_plane_partition > self.segment_plane_events
             || self.unknown_segment_plane_events > self.unknown_events
         {
             return Err(CoplanarVolumetricCellEvidenceError::SegmentPlaneEventCountMismatch);
         }
-        if self.coplanar_face_pairs() == 0
-            && (self.coplanar_edge_events > 0 || self.coplanar_vertex_events > 0)
+        let Some(coplanar_event_count) = self
+            .coplanar_edge_events
+            .checked_add(self.coplanar_vertex_events)
+        else {
+            return Err(CoplanarVolumetricCellEvidenceError::CoplanarEvidenceMismatch);
+        };
+        if (coplanar_face_pairs == 0 && coplanar_event_count > 0)
+            || coplanar_face_pairs > coplanar_event_count
         {
             return Err(CoplanarVolumetricCellEvidenceError::CoplanarEvidenceMismatch);
         }
@@ -906,6 +928,45 @@ mod tests {
         assert_eq!(
             report.validate(),
             Err(CoplanarVolumetricCellEvidenceError::SegmentPlaneEventCountMismatch)
+        );
+    }
+
+    #[test]
+    fn coplanar_face_pairs_require_retained_coplanar_event_evidence() {
+        let mut report = crossing_with_coplanar_overlap_report();
+        report.opposite_side_coplanar_overlapping_pairs = 1;
+        report.coplanar_edge_events = 0;
+        report.obstacle = derive_obstacle(&report);
+
+        assert_eq!(
+            report.validate(),
+            Err(CoplanarVolumetricCellEvidenceError::CoplanarEvidenceMismatch)
+        );
+    }
+
+    #[test]
+    fn coplanar_volumetric_evidence_rejects_overflowing_count_partitions() {
+        let mut report = crossing_with_coplanar_overlap_report();
+        report.opposite_side_coplanar_overlapping_pairs = 1;
+        report.proper_crossing_events = usize::MAX;
+        report.boundary_segment_events = 1;
+        report.segment_plane_events = usize::MAX;
+        report.obstacle = derive_obstacle(&report);
+
+        assert_eq!(
+            report.validate(),
+            Err(CoplanarVolumetricCellEvidenceError::SegmentPlaneEventCountMismatch)
+        );
+
+        let mut report = crossing_with_coplanar_overlap_report();
+        report.retained_face_pair_count = usize::MAX;
+        report.candidate_pairs = 0;
+        report.coplanar_touching_pairs = usize::MAX;
+        report.coplanar_overlapping_pairs = 1;
+
+        assert_eq!(
+            report.validate(),
+            Err(CoplanarVolumetricCellEvidenceError::FacePairCountMismatch)
         );
     }
 
