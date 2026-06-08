@@ -510,16 +510,10 @@ fn validate_linear_overlap_refinement_provenance(
     }
 
     for split in split_plan {
-        if !overlap_report.overlaps().iter().any(|overlap| {
-            overlap.first_fragment_index() == split.first_fragment_index()
-                && overlap.second_fragment_index() == split.second_fragment_index()
-                && matches!(
-                    overlap.relation(),
-                    BezierRetainedOverlapRelation2::LineSegmentOverlap { .. }
-                )
-        }) {
+        if !overlap_report_has_linear_split(overlap_report, split) {
             return Err(CurveError::Topology(
-                "retained linear-overlap split lacks source overlap report evidence".to_owned(),
+                "retained linear-overlap split does not match source overlap report evidence"
+                    .to_owned(),
             ));
         }
         if !refined_fragment_carries_range(
@@ -590,6 +584,35 @@ fn validate_linear_overlap_refinement_provenance(
     }
 
     Ok(())
+}
+
+fn overlap_report_has_linear_split(
+    overlap_report: &BezierRetainedOverlapReport2,
+    split: &BezierRetainedLinearOverlapSplit2,
+) -> bool {
+    overlap_report.overlaps().iter().any(|overlap| {
+        let BezierRetainedOverlapRelation2::LineSegmentOverlap { intersection } =
+            overlap.relation()
+        else {
+            return false;
+        };
+        let LineLineIntersection::Overlap {
+            segment,
+            a_range,
+            b_range,
+        } = intersection.as_ref()
+        else {
+            return false;
+        };
+
+        overlap.first_fragment_index() == split.first_fragment_index()
+            && overlap.second_fragment_index() == split.second_fragment_index()
+            && segment == split.overlap_segment()
+            && a_range == split.first_bezier_range()
+            && b_range == split.second_bezier_range()
+            && line_overlap_extent(a_range, b_range, &CurvePolicy::certified())
+                == Some(split.extent())
+    })
 }
 
 fn refined_fragment_carries_range(

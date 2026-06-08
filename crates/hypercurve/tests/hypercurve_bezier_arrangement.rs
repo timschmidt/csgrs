@@ -1088,6 +1088,46 @@ fn retained_linear_overlap_split_graph_rejects_missing_split_report_evidence() {
 }
 
 #[test]
+fn retained_linear_overlap_split_graph_rejects_forged_split_report_geometry() {
+    let graph = partial_line_overlap_graph();
+    let refinement = decided(graph.split_retained_linear_overlaps(&policy()));
+    let (refined_graph, refined_fragments, overlap_report, split_plan, resolved_overlaps) =
+        refinement.into_parts();
+    let split = &split_plan[0];
+    let resolved = &resolved_overlaps[0];
+    let forged_segment = LineSeg2::try_new(p(10, 0), p(12, 0)).unwrap();
+    let forged_split = BezierRetainedLinearOverlapSplit2::new(
+        split.first_fragment_index(),
+        split.second_fragment_index(),
+        forged_segment.clone(),
+        split.first_bezier_range().clone(),
+        split.second_bezier_range().clone(),
+        split.extent(),
+    )
+    .unwrap();
+    let forged_resolved = BezierRetainedResolvedLinearOverlap2::new(
+        resolved.first_refined_fragment_index(),
+        resolved.second_refined_fragment_index(),
+        resolved.first_original_fragment_index(),
+        resolved.second_original_fragment_index(),
+        resolved.first_local_range().clone(),
+        resolved.second_local_range().clone(),
+        forged_segment,
+        resolved.orientation(),
+        resolved.extent(),
+    )
+    .unwrap();
+
+    assert_topology_error(BezierRetainedLinearOverlapSplitGraph2::new(
+        refined_graph,
+        refined_fragments,
+        overlap_report,
+        vec![forged_split],
+        vec![forged_resolved],
+    ));
+}
+
+#[test]
 fn retained_linear_overlap_traversal_rejects_indices_outside_refinement() {
     let fragment = BezierSplitFragment2::Materialized {
         start: exact(r(0)),
