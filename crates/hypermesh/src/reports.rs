@@ -379,6 +379,20 @@ fn validate_blocker_count_bounds(
     }
 }
 
+fn validate_retained_graph_count_shape(
+    retained_face_pairs: usize,
+    retained_events: usize,
+) -> Result<(), ExactReportValidationError> {
+    if (retained_face_pairs == 0 && retained_events != 0)
+        || (retained_face_pairs != 0 && retained_events == 0)
+        || retained_events < retained_face_pairs
+    {
+        Err(ExactReportValidationError::StatusEvidenceMismatch)
+    } else {
+        Ok(())
+    }
+}
+
 fn validate_arrangement_readiness_matches_blocker(
     readiness: &CoplanarArrangementReadinessReport,
     blocker: &ExactBooleanBlocker,
@@ -3343,11 +3357,7 @@ impl ExactBooleanPreflight {
         // Preflight is the public contract between exact graph construction and
         // expose exact state rather than hide contradictions behind a boolean
         // success/failure bit.
-        if (self.retained_face_pairs == 0 && self.retained_events != 0)
-            || (self.retained_face_pairs != 0 && self.retained_events == 0)
-        {
-            return Err(ExactReportValidationError::StatusEvidenceMismatch);
-        }
+        validate_retained_graph_count_shape(self.retained_face_pairs, self.retained_events)?;
         if self.coplanar_volumetric_evidence.is_some()
             && !matches!(
                 self.support,
@@ -5119,6 +5129,7 @@ impl ExactWindingReadinessReport {
 
     /// Validate status, blocker, and checked-region artifact consistency.
     pub fn validate(&self) -> Result<(), ExactReportValidationError> {
+        validate_retained_graph_count_shape(self.retained_face_pairs, self.retained_events)?;
         if matches!(self.status, ExactWindingReadinessStatus::GraphUnknowns)
             != self.graph_had_unknowns
             && !matches!(self.status, ExactWindingReadinessStatus::NotNamedOperation)
@@ -6399,6 +6410,50 @@ mod tests {
         report.blocker.kind = ExactBooleanBlockerKind::NeedsCoplanarVolumetricCells;
         report.blocker.candidate_pairs = 1;
         report.validate().unwrap();
+    }
+
+    #[test]
+    fn retained_graph_reports_reject_impossible_event_totals() {
+        let preflight = ExactBooleanPreflight {
+            operation: ExactBooleanOperation::Union,
+            support: ExactBooleanSupport::CertifiedConvexUnion,
+            graph_had_unknowns: false,
+            retained_face_pairs: 2,
+            retained_events: 1,
+            region_count: 0,
+            region_classifications: Vec::new(),
+            blocker: None,
+            arrangement_readiness: None,
+            coplanar_volumetric_evidence: None,
+        };
+        assert_eq!(
+            preflight.validate(),
+            Err(ExactReportValidationError::StatusEvidenceMismatch)
+        );
+
+        let readiness = ExactWindingReadinessReport {
+            operation: ExactBooleanOperation::Union,
+            status: ExactWindingReadinessStatus::ConvexBooleanAlreadyMaterialized,
+            graph_had_unknowns: false,
+            retained_face_pairs: 2,
+            retained_events: 1,
+            region_count: 0,
+            region_classifications: Vec::new(),
+            blocker: ExactBooleanBlocker {
+                kind: ExactBooleanBlockerKind::NeedsWinding,
+                candidate_pairs: 2,
+                coplanar_overlapping_pairs: 0,
+                coplanar_touching_pairs: 0,
+                unknown_pairs: 0,
+                construction_failed_events: 0,
+            },
+            arrangement_readiness: None,
+            coplanar_volumetric_evidence: None,
+        };
+        assert_eq!(
+            readiness.validate(),
+            Err(ExactReportValidationError::StatusEvidenceMismatch)
+        );
     }
 
     #[test]
