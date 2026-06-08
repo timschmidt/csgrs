@@ -1820,6 +1820,16 @@ pub enum SplitPlanDiagnosticKind {
     EmptyOrShortRegionBoundary,
     /// A split face region contains consecutive duplicate boundary nodes.
     DuplicateConsecutiveRegionNode,
+    /// A split-boundary chain references an edge that is not on the retained
+    /// source triangle.
+    BoundaryChainEdgeNotOnTriangle,
+    /// A split-boundary chain original node references a missing source vertex.
+    BoundaryNodeSourceVertexOutOfRange,
+    /// A retained original boundary node point no longer matches its source
+    /// vertex coordinate.
+    BoundaryNodeSourcePointMismatch,
+    /// A split-boundary chain contains consecutive duplicate nodes.
+    DuplicateConsecutiveBoundaryNode,
 }
 
 /// One split-plan validation diagnostic.
@@ -2010,6 +2020,14 @@ fn validate_split_plan_diagnostic(
         | SplitPlanDiagnosticKind::DuplicateConsecutiveRegionNode => {
             require_side(diagnostic)?;
             require_face(diagnostic)
+        }
+        SplitPlanDiagnosticKind::BoundaryChainEdgeNotOnTriangle
+        | SplitPlanDiagnosticKind::BoundaryNodeSourceVertexOutOfRange
+        | SplitPlanDiagnosticKind::BoundaryNodeSourcePointMismatch
+        | SplitPlanDiagnosticKind::DuplicateConsecutiveBoundaryNode => {
+            require_side(diagnostic)?;
+            require_face(diagnostic)?;
+            require_edge(diagnostic)
         }
         SplitPlanDiagnosticKind::EmptyFaceSplitEdge
         | SplitPlanDiagnosticKind::DuplicateFaceSplitEdge => {
@@ -3433,10 +3451,56 @@ fn validate_face_split_geometry_incidence(
             );
             continue;
         }
+
+        if face.boundary_chains.is_empty() {
+            diagnostics.push(
+                SplitPlanDiagnostic::new(
+                    SplitPlanDiagnosticKind::EmptyFaceSplit,
+                    "split-face geometry has no retained boundary chains",
+                )
+                .with_side(face.side)
+                .with_face(face.face),
+            );
+        }
+
+        let triangle_edge_set = triangle_edges(triangle)
+            .into_iter()
+            .collect::<BTreeSet<_>>();
+        let mut seen_edges = BTreeSet::new();
         let a = mesh.vertices()[triangle[0]].clone();
         let b = mesh.vertices()[triangle[1]].clone();
         let c = mesh.vertices()[triangle[2]].clone();
         for chain in &face.boundary_chains {
+            if !seen_edges.insert(chain.edge) {
+                diagnostics.push(
+                    SplitPlanDiagnostic::new(
+                        SplitPlanDiagnosticKind::DuplicateFaceSplitEdge,
+                        "split-face geometry repeats a retained boundary chain edge",
+                    )
+                    .with_side(face.side)
+                    .with_face(face.face)
+                    .with_edge(chain.edge),
+                );
+            }
+            if !triangle_edge_set.contains(&chain.edge) {
+                diagnostics.push(
+                    SplitPlanDiagnostic::new(
+                        SplitPlanDiagnosticKind::BoundaryChainEdgeNotOnTriangle,
+                        "split-face geometry boundary chain edge is not on its source triangle",
+                    )
+                    .with_side(face.side)
+                    .with_face(face.face)
+                    .with_edge(chain.edge),
+                );
+                continue;
+            }
+            validate_face_split_boundary_chain_shape(
+                &mut diagnostics,
+                mesh,
+                face.side,
+                face.face,
+                chain,
+            );
             for node in &chain.nodes {
                 let point = boundary_node_point(node);
                 match orient3d_report(&a, &b, &c, point).value() {
@@ -3465,6 +3529,105 @@ fn validate_face_split_geometry_incidence(
     }
 
     SplitPlanValidationReport { diagnostics }
+}
+
+fn validate_face_split_boundary_chain_shape(
+    diagnostics: &mut Vec<SplitPlanDiagnostic>,
+    mesh: &ExactMesh,
+    side: MeshSide,
+    face: usize,
+    chain: &FaceSplitBoundaryChain,
+) {
+    if chain.nodes.len() < 2 {
+        diagnostics.push(
+            SplitPlanDiagnostic::new(
+                SplitPlanDiagnosticKind::EmptyOrShortEdgeChain,
+                "split-face geometry boundary chain does not connect both edge endpoints",
+            )
+            .with_side(side)
+            .with_face(face)
+            .with_edge(chain.edge),
+        );
+        return;
+    }
+
+    let expected_start = Some(chain.edge[0]);
+    let expected_end = Some(chain.edge[1]);
+    if original_boundary_vertex(chain.nodes.first()) != expected_start {
+        diagnostics.push(
+            SplitPlanDiagnostic::new(
+                SplitPlanDiagnosticKind::WrongChainStart,
+                "split-face geometry boundary chain does not start at its source edge start",
+            )
+            .with_side(side)
+            .with_face(face)
+            .with_edge(chain.edge),
+        );
+    }
+    if original_boundary_vertex(chain.nodes.last()) != expected_end {
+        diagnostics.push(
+            SplitPlanDiagnostic::new(
+                SplitPlanDiagnosticKind::WrongChainEnd,
+                "split-face geometry boundary chain does not end at its source edge end",
+            )
+            .with_side(side)
+            .with_face(face)
+            .with_edge(chain.edge),
+        );
+    }
+
+    for window in chain.nodes.windows(2) {
+        if boundary_nodes_equal(&window[0], &window[1]) == Some(true) {
+            diagnostics.push(
+                SplitPlanDiagnostic::new(
+                    SplitPlanDiagnosticKind::DuplicateConsecutiveBoundaryNode,
+                    "split-face geometry boundary chain contains consecutive duplicate nodes",
+                )
+                .with_side(side)
+                .with_face(face)
+                .with_edge(chain.edge),
+            );
+        }
+    }
+
+    for node in &chain.nodes {
+        let FaceSplitBoundaryNode::OriginalVertex { vertex, point } = node else {
+            continue;
+        };
+        let Some(source_point) = mesh.vertices().get(*vertex) else {
+            diagnostics.push(
+                SplitPlanDiagnostic::new(
+                    SplitPlanDiagnosticKind::BoundaryNodeSourceVertexOutOfRange,
+                    "split-face geometry boundary node references a missing source vertex",
+                )
+                .with_side(side)
+                .with_face(face)
+                .with_edge(chain.edge),
+            );
+            continue;
+        };
+        if points_equal(point, source_point) != Some(true) {
+            diagnostics.push(
+                SplitPlanDiagnostic::new(
+                    SplitPlanDiagnosticKind::BoundaryNodeSourcePointMismatch,
+                    "split-face geometry original boundary node point does not match its source vertex",
+                )
+                .with_side(side)
+                .with_face(face)
+                .with_edge(chain.edge),
+            );
+        }
+    }
+}
+
+fn original_boundary_vertex(node: Option<&FaceSplitBoundaryNode>) -> Option<usize> {
+    match node {
+        Some(FaceSplitBoundaryNode::OriginalVertex { vertex, .. }) => Some(*vertex),
+        Some(
+            FaceSplitBoundaryNode::GraphVertex { .. } | FaceSplitBoundaryNode::FaceInterior { .. },
+        )
+        | None => None,
+    }
 }
 
 fn validate_face_split_geometry_against_sources(

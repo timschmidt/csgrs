@@ -3944,6 +3944,64 @@ fn exact_face_pair_candidate_retains_source_plane_split_events() {
         geometry.freshness_against_sources(&left, &right),
         SplitPlanFreshness::Current
     );
+    let mut noncanonical_chain_geometry = geometry.clone();
+    noncanonical_chain_geometry.faces[0].boundary_chains[0]
+        .nodes
+        .rotate_left(1);
+    let noncanonical_chain_report =
+        noncanonical_chain_geometry.validate_boundary_incidence(&left, &right);
+    assert!(
+        noncanonical_chain_report
+            .diagnostics
+            .iter()
+            .any(|diagnostic| {
+                diagnostic.kind == hypermesh::SplitPlanDiagnosticKind::WrongChainStart
+            }),
+        "{noncanonical_chain_report:?}"
+    );
+    assert_eq!(
+        noncanonical_chain_geometry.freshness_against_sources(&left, &right),
+        SplitPlanFreshness::InvalidPlan
+    );
+    let mut duplicate_chain_geometry = geometry.clone();
+    let duplicate_chain = duplicate_chain_geometry.faces[0].boundary_chains[0].clone();
+    duplicate_chain_geometry.faces[0]
+        .boundary_chains
+        .push(duplicate_chain);
+    let duplicate_chain_report =
+        duplicate_chain_geometry.validate_boundary_incidence(&left, &right);
+    assert!(
+        duplicate_chain_report.diagnostics.iter().any(|diagnostic| {
+            diagnostic.kind == hypermesh::SplitPlanDiagnosticKind::DuplicateFaceSplitEdge
+        }),
+        "{duplicate_chain_report:?}"
+    );
+    assert_eq!(
+        duplicate_chain_geometry.freshness_against_sources(&left, &right),
+        SplitPlanFreshness::InvalidPlan
+    );
+    let mut stale_original_point_geometry = geometry.clone();
+    if let hypermesh::FaceSplitBoundaryNode::OriginalVertex { point, .. } =
+        &mut stale_original_point_geometry.faces[0].boundary_chains[0].nodes[0]
+    {
+        *point = p(2, 0, 0);
+    }
+    let stale_original_point_report =
+        stale_original_point_geometry.validate_boundary_incidence(&left, &right);
+    assert!(
+        stale_original_point_report
+            .diagnostics
+            .iter()
+            .any(|diagnostic| {
+                diagnostic.kind
+                    == hypermesh::SplitPlanDiagnosticKind::BoundaryNodeSourcePointMismatch
+            }),
+        "{stale_original_point_report:?}"
+    );
+    assert_eq!(
+        stale_original_point_geometry.freshness_against_sources(&left, &right),
+        SplitPlanFreshness::InvalidPlan
+    );
     let mut relabeled_geometry = geometry.clone();
     relabeled_geometry.faces[0].triangle.swap(0, 1);
     let geometry_report = relabeled_geometry.validate_boundary_incidence(&left, &right);
