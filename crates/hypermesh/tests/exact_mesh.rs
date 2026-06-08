@@ -10,24 +10,24 @@ use hypermesh::{
     ExactArrangement2dSetOperation, ExactArrangementFreshness, ExactBooleanBlockerKind,
     ExactBooleanOperation, ExactBooleanPolicy, ExactBooleanResult, ExactBooleanResultKind,
     ExactBoundaryBooleanPolicy, ExactBoundaryTouchingStatus, ExactI64MeshInputReadiness,
-    ExactLabeledCellComplexFreshness, ExactMesh, ExactMeshConsumerDomain,
-    ExactMeshDomainSummaryFreshness, ExactMeshHandoffPackageError,
+    ExactI64MeshInputReportValidationError, ExactLabeledCellComplexFreshness, ExactMesh,
+    ExactMeshConsumerDomain, ExactMeshDomainSummaryFreshness, ExactMeshHandoffPackageError,
     ExactMeshHandoffPackageFreshness, ExactMeshProposalAcceptance, ExactMeshProposalSourceKind,
     ExactOpenSurfaceDisjointStatus, ExactOutputTriangleOrientation, ExactPlanarArrangementStatus,
     ExactRefinementStatus, ExactRegionSelection, ExactRegularizationPolicy, ExactReportFreshness,
     ExactSameSurfaceStatus, ExactSelectedCellComplexFreshness, ExactSimplifiedCellComplexFreshness,
     ExactVolumetricRegionFreshness, ExactVolumetricRegionRelation, ExactWindingReadinessStatus,
     FaceRegionPlaneRelation, FullFaceAdjacentUnionFreshness, IntersectionGraphFreshness,
-    MeshArtifactBlocker, MeshArtifactFaceRecord, MeshArtifactManifest, MeshArtifactRole,
-    MeshArtifactSourceKind, MeshArtifactVertexRecord, MeshCoordinateEvidence,
-    MeshFacePairFreshness, MeshFacePairRelation, MeshFacePairValidationError, MeshTopologyEvidence,
-    SplitPlanFreshness, TriangleTriangleFreshness, TriangleTriangleRelation, ValidationPolicy,
-    WindingReportFreshness, approximate_mesh_f64_view, boolean_exact,
-    boolean_exact_with_boundary_policy, boolean_selected_regions,
-    build_exact_arrangement2d_overlay, build_exact_arrangement2d_overlay_with_boundary_policy,
-    build_intersection_graph, certify_adjacent_union_completion_report,
-    certify_boundary_touching_report, certify_convex_solid,
-    certify_coplanar_volumetric_cell_evidence, certify_exact_mesh_proposal,
+    LossyF64MeshInputReadiness, LossyF64MeshInputReportValidationError, MeshArtifactBlocker,
+    MeshArtifactFaceRecord, MeshArtifactManifest, MeshArtifactRole, MeshArtifactSourceKind,
+    MeshArtifactVertexRecord, MeshCoordinateEvidence, MeshFacePairFreshness, MeshFacePairRelation,
+    MeshFacePairValidationError, MeshTopologyEvidence, SplitPlanFreshness,
+    TriangleTriangleFreshness, TriangleTriangleRelation, ValidationPolicy, WindingReportFreshness,
+    approximate_mesh_f64_view, boolean_exact, boolean_exact_with_boundary_policy,
+    boolean_selected_regions, build_exact_arrangement2d_overlay,
+    build_exact_arrangement2d_overlay_with_boundary_policy, build_intersection_graph,
+    certify_adjacent_union_completion_report, certify_boundary_touching_report,
+    certify_convex_solid, certify_coplanar_volumetric_cell_evidence, certify_exact_mesh_proposal,
     certify_open_surface_disjoint_report, certify_planar_arrangement_report,
     certify_refinement_report, certify_same_surface_report,
     certify_volumetric_boundary_closure_report, certify_winding_readiness_report,
@@ -40,7 +40,7 @@ use hypermesh::{
     classify_point_against_closed_mesh_winding_report, classify_point_against_convex_solid_report,
     classify_triangle_triangle, exact_arrangement_boolean_attempt_report,
     exact_arrangement_boolean_attempt_report_with_validation, exact_mesh_consumer_readiness,
-    exact_mesh_handoff_package, inspect_i64_mesh_input,
+    exact_mesh_handoff_package, inspect_f64_mesh_input, inspect_i64_mesh_input,
     materialize_adjacent_union_completion_boolean, materialize_affine_orthogonal_solid_boolean,
     materialize_affine_orthogonal_solid_difference,
     materialize_affine_orthogonal_solid_intersection, materialize_arrangement_cell_complex_boolean,
@@ -281,6 +281,64 @@ fn exact_mesh_construction_retains_valid_public_facts() {
     let readiness = report.readiness();
     assert_eq!(readiness, ExactI64MeshInputReadiness::Ready);
     assert!(report.edge_ready());
+
+    let mut missing_integer_evidence = report.clone();
+    missing_integer_evidence.exact_integer_coordinates -= 1;
+    assert_eq!(
+        missing_integer_evidence.validate(),
+        Err(ExactI64MeshInputReportValidationError::ExactCoordinateCountMismatch)
+    );
+    assert_eq!(
+        missing_integer_evidence.readiness(),
+        ExactI64MeshInputReadiness::InvalidReport
+    );
+
+    let mut missing_checked_indices = report.clone();
+    missing_checked_indices.checked_indices -= 1;
+    assert_eq!(
+        missing_checked_indices.validate(),
+        Err(ExactI64MeshInputReportValidationError::CheckedIndexCountMismatch)
+    );
+
+    let mut missing_arity_diagnostic = inspect_i64_mesh_input(&[0, 0], &[0, 1, 2]);
+    missing_arity_diagnostic.diagnostics.clear();
+    assert_eq!(
+        missing_arity_diagnostic.validate(),
+        Err(ExactI64MeshInputReportValidationError::MissingCoordinateArityDiagnostic)
+    );
+
+    let mut missing_index_arity_diagnostic = inspect_i64_mesh_input(&[0, 0, 0], &[0, 1]);
+    missing_index_arity_diagnostic.diagnostics.clear();
+    assert_eq!(
+        missing_index_arity_diagnostic.validate(),
+        Err(ExactI64MeshInputReportValidationError::MissingIndexArityDiagnostic)
+    );
+
+    let lossy_report =
+        inspect_f64_mesh_input(&[0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0], &[0, 1, 2]);
+    assert_eq!(lossy_report.readiness(), LossyF64MeshInputReadiness::Ready);
+
+    let mut missing_dyadic_evidence = lossy_report.clone();
+    missing_dyadic_evidence.exact_dyadic_coordinates -= 1;
+    assert_eq!(
+        missing_dyadic_evidence.validate(),
+        Err(LossyF64MeshInputReportValidationError::ExactCoordinateCountMismatch)
+    );
+    assert_eq!(
+        missing_dyadic_evidence.readiness(),
+        LossyF64MeshInputReadiness::InvalidReport
+    );
+
+    let mut missing_float_diagnostic = inspect_f64_mesh_input(&[0.0, f64::NAN, 0.0], &[0, 1, 2]);
+    assert_eq!(
+        missing_float_diagnostic.readiness(),
+        LossyF64MeshInputReadiness::InvalidCoordinate
+    );
+    missing_float_diagnostic.diagnostics.clear();
+    assert_eq!(
+        missing_float_diagnostic.validate(),
+        Err(LossyF64MeshInputReportValidationError::ExactCoordinateCountMismatch)
+    );
 }
 
 #[test]

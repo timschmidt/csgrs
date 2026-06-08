@@ -66,10 +66,18 @@ pub struct ExactI64MeshInputReport {
 pub enum LossyF64MeshInputReportValidationError {
     /// The source provenance is not the required lossy-float edge policy.
     SourcePolicyMismatch,
+    /// Invalid coordinate arity was retained without the required diagnostic.
+    MissingCoordinateArityDiagnostic,
+    /// Invalid index arity was retained without the required diagnostic.
+    MissingIndexArityDiagnostic,
     /// Coordinate arity and retained vertex count disagree.
     CoordinateCountMismatch,
     /// Index arity and retained face count disagree.
     IndexCountMismatch,
+    /// Exact coordinate evidence and retained coordinate diagnostics disagree.
+    ExactCoordinateCountMismatch,
+    /// Checked-index evidence does not match the checkable input range.
+    CheckedIndexCountMismatch,
     /// A coordinate diagnostic references an out-of-range coordinate.
     CoordinateDiagnosticOutOfRange {
         /// Coordinate index stored in the diagnostic.
@@ -102,10 +110,18 @@ pub enum LossyF64MeshInputReportValidationError {
 pub enum ExactI64MeshInputReportValidationError {
     /// The source provenance is not the required exact-input policy.
     SourcePolicyMismatch,
+    /// Invalid coordinate arity was retained without the required diagnostic.
+    MissingCoordinateArityDiagnostic,
+    /// Invalid index arity was retained without the required diagnostic.
+    MissingIndexArityDiagnostic,
     /// Coordinate arity and retained vertex count disagree.
     CoordinateCountMismatch,
     /// Index arity and retained face count disagree.
     IndexCountMismatch,
+    /// Exact coordinate evidence does not cover the retained coordinate stream.
+    ExactCoordinateCountMismatch,
+    /// Checked-index evidence does not match the checkable input range.
+    CheckedIndexCountMismatch,
     /// A face diagnostic references an out-of-range face.
     FaceDiagnosticOutOfRange {
         /// Face index stored in the diagnostic.
@@ -287,6 +303,16 @@ impl LossyF64MeshInputReport {
         {
             return Err(LossyF64MeshInputReportValidationError::SourcePolicyMismatch);
         }
+        if !self.coordinate_count.is_multiple_of(3)
+            && !has_error_diagnostic(&self.diagnostics, DiagnosticKind::VertexBufferArity)
+        {
+            return Err(LossyF64MeshInputReportValidationError::MissingCoordinateArityDiagnostic);
+        }
+        if !self.index_count.is_multiple_of(3)
+            && !has_error_diagnostic(&self.diagnostics, DiagnosticKind::IndexBufferArity)
+        {
+            return Err(LossyF64MeshInputReportValidationError::MissingIndexArityDiagnostic);
+        }
         if self.vertex_count
             != self
                 .coordinate_count
@@ -308,6 +334,17 @@ impl LossyF64MeshInputReport {
         }
         if self.checked_indices > self.index_count {
             return Err(LossyF64MeshInputReportValidationError::CheckedIndexCountOverflow);
+        }
+        if self
+            .exact_dyadic_coordinates
+            .checked_add(failed_f64_coordinate_count(&self.diagnostics))
+            != Some(self.coordinate_count)
+        {
+            return Err(LossyF64MeshInputReportValidationError::ExactCoordinateCountMismatch);
+        }
+        if self.checked_indices != expected_checked_index_count(self.vertex_count, self.index_count)
+        {
+            return Err(LossyF64MeshInputReportValidationError::CheckedIndexCountMismatch);
         }
         for diagnostic in &self.diagnostics {
             if let Some(coordinate) = diagnostic.coordinate
@@ -454,6 +491,16 @@ impl ExactI64MeshInputReport {
         {
             return Err(ExactI64MeshInputReportValidationError::SourcePolicyMismatch);
         }
+        if !self.coordinate_count.is_multiple_of(3)
+            && !has_error_diagnostic(&self.diagnostics, DiagnosticKind::VertexBufferArity)
+        {
+            return Err(ExactI64MeshInputReportValidationError::MissingCoordinateArityDiagnostic);
+        }
+        if !self.index_count.is_multiple_of(3)
+            && !has_error_diagnostic(&self.diagnostics, DiagnosticKind::IndexBufferArity)
+        {
+            return Err(ExactI64MeshInputReportValidationError::MissingIndexArityDiagnostic);
+        }
         if self.vertex_count
             != self
                 .coordinate_count
@@ -475,6 +522,13 @@ impl ExactI64MeshInputReport {
         }
         if self.checked_indices > self.index_count {
             return Err(ExactI64MeshInputReportValidationError::CheckedIndexCountOverflow);
+        }
+        if self.exact_integer_coordinates != self.coordinate_count {
+            return Err(ExactI64MeshInputReportValidationError::ExactCoordinateCountMismatch);
+        }
+        if self.checked_indices != expected_checked_index_count(self.vertex_count, self.index_count)
+        {
+            return Err(ExactI64MeshInputReportValidationError::CheckedIndexCountMismatch);
         }
         for diagnostic in &self.diagnostics {
             if let Some(face) = diagnostic.face
@@ -513,4 +567,35 @@ pub fn inspect_f64_mesh_input(pos: &[f64], idx: &[usize]) -> LossyF64MeshInputRe
 /// Audit an exact-integer mesh input stream before exact construction.
 pub fn inspect_i64_mesh_input(pos: &[i64], idx: &[usize]) -> ExactI64MeshInputReport {
     ExactI64MeshInputReport::inspect(pos, idx)
+}
+
+fn has_error_diagnostic(diagnostics: &[MeshDiagnostic], kind: DiagnosticKind) -> bool {
+    diagnostics
+        .iter()
+        .any(|diagnostic| diagnostic.severity == Severity::Error && diagnostic.kind == kind)
+}
+
+fn failed_f64_coordinate_count(diagnostics: &[MeshDiagnostic]) -> usize {
+    let mut coordinates = diagnostics
+        .iter()
+        .filter(|diagnostic| {
+            diagnostic.severity == Severity::Error
+                && matches!(
+                    diagnostic.kind,
+                    DiagnosticKind::NonFiniteCoordinate | DiagnosticKind::CoordinateImportFailed
+                )
+        })
+        .filter_map(|diagnostic| diagnostic.coordinate)
+        .collect::<Vec<_>>();
+    coordinates.sort_unstable();
+    coordinates.dedup();
+    coordinates.len()
+}
+
+fn expected_checked_index_count(vertex_count: Option<usize>, index_count: usize) -> usize {
+    if vertex_count.is_some() {
+        index_count / 3 * 3
+    } else {
+        0
+    }
 }
