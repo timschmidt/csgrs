@@ -29,9 +29,9 @@ use hypersolve::{
 
 use crate::classify::{is_zero, real_sign};
 use crate::{
-    BezierAlgebraicSameTangentOrderStatus, BezierAlgebraicTangentOrderStatus,
-    BezierAlgebraicTangentVector2, BezierEndpoint, BezierEndpointPointImage2,
-    BezierEndpointTangentImage2, BezierParameter2, BezierSplitFragment2,
+    BezierAlgebraicEndpointImage2, BezierAlgebraicSameTangentOrderStatus,
+    BezierAlgebraicTangentOrderStatus, BezierAlgebraicTangentVector2, BezierEndpoint,
+    BezierEndpointPointImage2, BezierEndpointTangentImage2, BezierParameter2, BezierSplitFragment2,
     BezierSplitMaterialization2, BezierSubcurve2, BezierTangentTurnOrdering2, Classification,
     CurveError, CurvePolicy, CurveResult, Point2, UncertaintyReason, ZeroStatus,
     compare_algebraic_same_tangent_second_order, compare_algebraic_same_tangent_third_order,
@@ -330,19 +330,98 @@ fn validate_arrangement_fragment_source_range(
     fragment: &BezierArrangementFragment2,
     policy: &CurvePolicy,
 ) -> CurveResult<()> {
-    let BezierSplitFragment2::Materialized { start, end, .. } = fragment.fragment() else {
+    match fragment.fragment() {
+        BezierSplitFragment2::Materialized { start, end, .. }
+        | BezierSplitFragment2::AlgebraicEndpointImages {
+            start,
+            end,
+            source_curve: Some(_),
+            ..
+        } => match start.cmp_by_interval(end, policy)? {
+            Classification::Decided(std::cmp::Ordering::Less) => {}
+            Classification::Decided(std::cmp::Ordering::Equal | std::cmp::Ordering::Greater) => {
+                return Err(CurveError::Topology(
+                    "retained Bezier arrangement fragment source range must be certified strictly increasing"
+                        .to_owned(),
+                ));
+            }
+            Classification::Uncertain(reason) => {
+                return Err(CurveError::Topology(format!(
+                    "retained Bezier arrangement fragment source range ordering is uncertain: {reason:?}"
+                )));
+            }
+        },
+        BezierSplitFragment2::AlgebraicEndpointImages {
+            source_curve: None, ..
+        }
+        | BezierSplitFragment2::Unresolved { .. } => {}
+    }
+
+    let BezierSplitFragment2::AlgebraicEndpointImages {
+        start,
+        end,
+        source_curve,
+        start_image,
+        end_image,
+    } = fragment.fragment()
+    else {
         return Ok(());
     };
-    match start.cmp_by_interval(end, policy)? {
-        Classification::Decided(std::cmp::Ordering::Less) => Ok(()),
-        Classification::Decided(std::cmp::Ordering::Equal | std::cmp::Ordering::Greater) => {
-            Err(CurveError::Topology(
-                "retained Bezier arrangement fragment source range must be certified strictly increasing"
-                    .to_owned(),
-            ))
+    validate_arrangement_algebraic_endpoint_image(
+        "start",
+        start,
+        start_image.as_ref(),
+        source_curve.as_ref(),
+        policy,
+    )?;
+    validate_arrangement_algebraic_endpoint_image(
+        "end",
+        end,
+        end_image.as_ref(),
+        source_curve.as_ref(),
+        policy,
+    )
+}
+
+fn validate_arrangement_algebraic_endpoint_image(
+    name: &str,
+    boundary: &BezierParameter2,
+    image: Option<&BezierAlgebraicEndpointImage2>,
+    source_curve: Option<&BezierSubcurve2>,
+    policy: &CurvePolicy,
+) -> CurveResult<()> {
+    match (boundary, image) {
+        (BezierParameter2::Exact(_), None) => Ok(()),
+        (BezierParameter2::Exact(_), Some(_)) => Err(CurveError::Topology(format!(
+            "exact {name} Bezier arrangement boundary must not carry algebraic endpoint image evidence"
+        ))),
+        (BezierParameter2::Algebraic(parameter), Some(image)) => {
+            if image.parameter() != parameter {
+                return Err(CurveError::Topology(format!(
+                    "algebraic {name} Bezier arrangement endpoint image parameter does not match boundary"
+                )));
+            }
+            if !image.is_transformed() {
+                return Err(CurveError::Topology(format!(
+                    "algebraic {name} Bezier arrangement endpoint image must be exact transformed evidence"
+                )));
+            }
+            if let Some(source_curve) = source_curve {
+                let expected = BezierAlgebraicEndpointImage2::from_source_curve(
+                    source_curve,
+                    parameter,
+                    policy,
+                )?;
+                if &expected != image {
+                    return Err(CurveError::Topology(format!(
+                        "algebraic {name} Bezier arrangement endpoint image does not match retained source curve"
+                    )));
+                }
+            }
+            Ok(())
         }
-        Classification::Uncertain(reason) => Err(CurveError::Topology(format!(
-            "retained Bezier arrangement fragment source range ordering is uncertain: {reason:?}"
+        (BezierParameter2::Algebraic(_), None) => Err(CurveError::Topology(format!(
+            "algebraic {name} Bezier arrangement boundary must carry endpoint image evidence"
         ))),
     }
 }

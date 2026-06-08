@@ -104,6 +104,44 @@ fn arrangement_graph_rejects_invalid_unique_source_fragment_ranges() {
 }
 
 #[test]
+fn arrangement_graph_rejects_forged_algebraic_endpoint_image_evidence() {
+    let parameter = algebraic_midpoint_parameter();
+    let algebraic = BezierParameter2::algebraic(parameter.clone());
+    let source_curve = QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 0));
+    let forged_image = algebraic_endpoint_image(
+        &QuadraticBezier2::new(p(0, 1), p(1, 1), p(2, 1)),
+        &parameter,
+    );
+
+    assert_topology_error(BezierArrangementGraph2::new(vec![
+        hypercurve::BezierArrangementFragment2::new(
+            0,
+            0,
+            BezierSplitFragment2::AlgebraicEndpointImages {
+                start: exact(r(0)),
+                end: algebraic.clone(),
+                source_curve: Some(BezierSubcurve2::Quadratic(source_curve)),
+                start_image: None,
+                end_image: Some(forged_image.clone()),
+            },
+        ),
+    ]));
+    assert_topology_error(BezierArrangementGraph2::new(vec![
+        hypercurve::BezierArrangementFragment2::new(
+            1,
+            0,
+            BezierSplitFragment2::AlgebraicEndpointImages {
+                start: exact(r(0)),
+                end: exact(r(1)),
+                source_curve: None,
+                start_image: Some(forged_image),
+                end_image: None,
+            },
+        ),
+    ]));
+}
+
+#[test]
 fn arrangement_graph_accepts_adjacent_reused_source_fragment_ranges() {
     let first = BezierSplitFragment2::Materialized {
         start: exact(r(0)),

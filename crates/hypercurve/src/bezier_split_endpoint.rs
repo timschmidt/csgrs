@@ -15,8 +15,8 @@
 
 use crate::{
     BezierAlgebraicImageStatus, BezierAlgebraicParameter2, BezierAlgebraicPointImage2,
-    BezierAlgebraicTangentImage2, CubicBezier2, CurvePolicy, CurveResult, QuadraticBezier2,
-    RationalBezierAlgebraicPointImage2, RationalBezierAlgebraicTangentImage2,
+    BezierAlgebraicTangentImage2, BezierSubcurve2, CubicBezier2, CurvePolicy, CurveResult,
+    QuadraticBezier2, RationalBezierAlgebraicPointImage2, RationalBezierAlgebraicTangentImage2,
     RationalQuadraticBezier2,
 };
 
@@ -81,6 +81,21 @@ pub struct BezierAlgebraicEndpointImage2 {
 }
 
 impl BezierAlgebraicEndpointImage2 {
+    /// Constructs endpoint evidence for any retained source Bezier family.
+    pub fn from_source_curve(
+        source_curve: &BezierSubcurve2,
+        parameter: &BezierAlgebraicParameter2,
+        policy: &CurvePolicy,
+    ) -> CurveResult<Self> {
+        match source_curve {
+            BezierSubcurve2::Quadratic(curve) => Self::quadratic(curve, parameter, policy),
+            BezierSubcurve2::Cubic(curve) => Self::cubic(curve, parameter, policy),
+            BezierSubcurve2::RationalQuadratic(curve) => {
+                Self::rational_quadratic(curve, parameter, policy)
+            }
+        }
+    }
+
     /// Constructs endpoint evidence for a polynomial quadratic Bezier.
     pub fn quadratic(
         curve: &QuadraticBezier2,

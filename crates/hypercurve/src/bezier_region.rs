@@ -847,19 +847,11 @@ fn validate_retained_source_endpoint_image(
                 ));
             }
             if let Some(source_curve) = source_curve {
-                let expected = match source_curve {
-                    BezierSubcurve2::Quadratic(curve) => {
-                        crate::BezierAlgebraicEndpointImage2::quadratic(curve, parameter, policy)
-                    }
-                    BezierSubcurve2::Cubic(curve) => {
-                        crate::BezierAlgebraicEndpointImage2::cubic(curve, parameter, policy)
-                    }
-                    BezierSubcurve2::RationalQuadratic(curve) => {
-                        crate::BezierAlgebraicEndpointImage2::rational_quadratic(
-                            curve, parameter, policy,
-                        )
-                    }
-                }?;
+                let expected = crate::BezierAlgebraicEndpointImage2::from_source_curve(
+                    source_curve,
+                    parameter,
+                    policy,
+                )?;
                 if &expected != image {
                     return Err(CurveError::Topology(
                         "retained algebraic endpoint image does not match retained source curve"

@@ -324,7 +324,8 @@ fn validate_algebraic_endpoint_image_boundary(
                     "algebraic {name} Bezier split endpoint image must be exact transformed evidence"
                 )));
             }
-            let expected = algebraic_endpoint_image_from_source(source_curve, parameter, policy)?;
+            let expected =
+                BezierAlgebraicEndpointImage2::from_source_curve(source_curve, parameter, policy)?;
             if &expected != image {
                 return Err(CurveError::Topology(format!(
                     "algebraic {name} Bezier split endpoint image does not match retained source curve"
@@ -335,24 +336,6 @@ fn validate_algebraic_endpoint_image_boundary(
         (BezierParameter2::Algebraic(_), None) => Err(CurveError::Topology(format!(
             "algebraic {name} Bezier split boundary must carry endpoint image evidence"
         ))),
-    }
-}
-
-fn algebraic_endpoint_image_from_source(
-    source_curve: &BezierSubcurve2,
-    parameter: &BezierAlgebraicParameter2,
-    policy: &CurvePolicy,
-) -> CurveResult<BezierAlgebraicEndpointImage2> {
-    match source_curve {
-        BezierSubcurve2::Quadratic(curve) => {
-            BezierAlgebraicEndpointImage2::quadratic(curve, parameter, policy)
-        }
-        BezierSubcurve2::Cubic(curve) => {
-            BezierAlgebraicEndpointImage2::cubic(curve, parameter, policy)
-        }
-        BezierSubcurve2::RationalQuadratic(curve) => {
-            BezierAlgebraicEndpointImage2::rational_quadratic(curve, parameter, policy)
-        }
     }
 }
 
