@@ -249,6 +249,15 @@ impl ExactArrangementBooleanAttempt {
                 return Err(ExactReportValidationError::StatusEvidenceMismatch);
             }
         }
+        if self.output_triangles != 0 && self.output_vertices == 0 {
+            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+        }
+        if self.decline.is_none()
+            && self.operation == ExactBooleanOperation::Union
+            && self.output_triangles == 0
+        {
+            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+        }
         if !arrangement_attempt_counts_match_stage(self) {
             return Err(ExactReportValidationError::StatusEvidenceMismatch);
         }
@@ -12097,6 +12106,19 @@ mod tests {
         assert_eq!(union_attempt.selected_faces, 4);
         assert_eq!(union_attempt.output_triangles, 4);
         assert_current_arrangement_attempt(&union_attempt, &left, &right);
+        let mut stale_union_counts = union_attempt.clone();
+        stale_union_counts.output_vertices = 0;
+        stale_union_counts.output_triangles = 0;
+        assert_eq!(
+            stale_union_counts.validate(),
+            Err(ExactReportValidationError::StatusEvidenceMismatch)
+        );
+        let mut impossible_output_counts = union_attempt.clone();
+        impossible_output_counts.output_vertices = 0;
+        assert_eq!(
+            impossible_output_counts.validate(),
+            Err(ExactReportValidationError::StatusEvidenceMismatch)
+        );
 
         let difference_attempt = exact_arrangement_boolean_attempt_report(
             &left,
