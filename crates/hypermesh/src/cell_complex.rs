@@ -8,7 +8,7 @@
 use super::arrangement3d::{
     ArrangementFaceCell, ArrangementLowerDimensionalArtifact, ArrangementVolumeAdjacency,
     ArrangementVolumeRegion, ExactArrangement, ExactArrangement3d, exact_node_loops_equivalent,
-    sorted_unique_usize_set,
+    sorted_unique_usize_set, validate_lower_dimensional_artifacts,
 };
 use super::boolean::ExactBooleanOperation;
 use super::graph::MeshSide;
@@ -211,6 +211,7 @@ impl ExactCellComplex {
 impl ExactLabeledCellComplex {
     /// Validate local labeled-cell consistency without replaying source meshes.
     pub fn validate(&self) -> Result<(), ExactArrangementBlocker> {
+        validate_lower_dimensional_artifacts(&self.lower_dimensional_artifacts)?;
         validate_cell_complex_parts(&self.faces, &self.volume_regions, &self.volume_adjacencies)
     }
 
@@ -371,6 +372,7 @@ impl ExactLabeledCellComplex {
 impl ExactSelectedCellComplex {
     /// Validate local selected-cell consistency without replaying source meshes.
     pub fn validate(&self) -> Result<(), ExactArrangementBlocker> {
+        validate_lower_dimensional_artifacts(&self.lower_dimensional_artifacts)?;
         validate_cell_complex_parts(&self.faces, &self.volume_regions, &self.volume_adjacencies)?;
         validate_selected_indices(&self.selected_faces, self.faces.len())?;
         validate_selected_indices(&self.selected_volume_regions, self.volume_regions.len())?;

@@ -9,6 +9,7 @@ use std::cmp::Ordering;
 
 use super::arrangement3d::{
     ArrangementFaceCellNode, ArrangementLowerDimensionalArtifact, ExactArrangement,
+    validate_lower_dimensional_artifacts,
 };
 use super::boolean::ExactBooleanOperation;
 use super::cell_complex::{
@@ -79,6 +80,7 @@ pub enum ExactSimplifiedCellComplexFreshness {
 impl ExactSimplifiedCellComplex {
     /// Validate local simplified-cell consistency without replaying source meshes.
     pub fn validate(&self) -> Result<(), ExactArrangementBlocker> {
+        validate_lower_dimensional_artifacts(&self.lower_dimensional_artifacts)?;
         for face in &self.faces {
             validate_simplified_face(face)?;
         }
@@ -2367,6 +2369,62 @@ mod tests {
                 .unwrap();
 
         assert_eq!(simplified.lower_dimensional_artifacts, vec![artifact]);
+    }
+
+    #[test]
+    fn simplification_validation_rejects_degenerate_lower_dimensional_edge_artifact() {
+        let artifact = ArrangementLowerDimensionalArtifact::EdgeContact {
+            left_face: 0,
+            right_face: 1,
+            endpoints: [p(0, 0, 0), p(0, 0, 0)],
+        };
+        let simplified = ExactSimplifiedCellComplex {
+            operation: ExactBooleanOperation::Intersection,
+            faces: Vec::new(),
+            lower_dimensional_artifacts: vec![artifact],
+            duplicate_cells_removed: 0,
+            duplicate_boundary_nodes_removed: 0,
+            collinear_boundary_nodes_removed: 0,
+            zero_area_cells_removed: 0,
+            interior_edges_removed: 0,
+            blockers: Vec::new(),
+        };
+
+        assert_eq!(
+            simplified.validate(),
+            Err(ExactArrangementBlocker::NonManifoldCellComplex)
+        );
+    }
+
+    #[test]
+    fn simplification_validation_rejects_reversed_duplicate_lower_dimensional_edge_artifact() {
+        let simplified = ExactSimplifiedCellComplex {
+            operation: ExactBooleanOperation::Intersection,
+            faces: Vec::new(),
+            lower_dimensional_artifacts: vec![
+                ArrangementLowerDimensionalArtifact::EdgeContact {
+                    left_face: 0,
+                    right_face: 1,
+                    endpoints: [p(0, 0, 0), p(1, 0, 0)],
+                },
+                ArrangementLowerDimensionalArtifact::EdgeContact {
+                    left_face: 0,
+                    right_face: 1,
+                    endpoints: [p(1, 0, 0), p(0, 0, 0)],
+                },
+            ],
+            duplicate_cells_removed: 0,
+            duplicate_boundary_nodes_removed: 0,
+            collinear_boundary_nodes_removed: 0,
+            zero_area_cells_removed: 0,
+            interior_edges_removed: 0,
+            blockers: Vec::new(),
+        };
+
+        assert_eq!(
+            simplified.validate(),
+            Err(ExactArrangementBlocker::NonManifoldCellComplex)
+        );
     }
 
     #[test]

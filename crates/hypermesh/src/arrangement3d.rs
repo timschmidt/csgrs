@@ -166,6 +166,94 @@ pub enum ArrangementLowerDimensionalArtifact {
     },
 }
 
+/// Validate retained lower-dimensional contact evidence.
+pub(crate) fn validate_lower_dimensional_artifacts(
+    artifacts: &[ArrangementLowerDimensionalArtifact],
+) -> Result<(), ExactArrangementBlocker> {
+    for artifact in artifacts {
+        if let ArrangementLowerDimensionalArtifact::EdgeContact { endpoints, .. } = artifact {
+            match point3_equal(&endpoints[0], &endpoints[1]).value() {
+                Some(false) => {}
+                Some(true) => return Err(ExactArrangementBlocker::NonManifoldCellComplex),
+                None => return Err(ExactArrangementBlocker::UndecidableOrdering),
+            }
+        }
+    }
+
+    for (index, artifact) in artifacts.iter().enumerate() {
+        for other in &artifacts[index + 1..] {
+            if lower_dimensional_artifacts_duplicate(artifact, other)? {
+                return Err(ExactArrangementBlocker::NonManifoldCellComplex);
+            }
+        }
+    }
+    Ok(())
+}
+
+fn lower_dimensional_artifacts_duplicate(
+    left: &ArrangementLowerDimensionalArtifact,
+    right: &ArrangementLowerDimensionalArtifact,
+) -> Result<bool, ExactArrangementBlocker> {
+    match (left, right) {
+        (
+            ArrangementLowerDimensionalArtifact::PointContact {
+                left_face: left_left_face,
+                right_face: left_right_face,
+                point: left_point,
+            },
+            ArrangementLowerDimensionalArtifact::PointContact {
+                left_face: right_left_face,
+                right_face: right_right_face,
+                point: right_point,
+            },
+        ) if left_left_face == right_left_face && left_right_face == right_right_face => {
+            match point3_equal(left_point, right_point).value() {
+                Some(duplicate) => Ok(duplicate),
+                None => Err(ExactArrangementBlocker::UndecidableOrdering),
+            }
+        }
+        (
+            ArrangementLowerDimensionalArtifact::EdgeContact {
+                left_face: left_left_face,
+                right_face: left_right_face,
+                endpoints: left_endpoints,
+            },
+            ArrangementLowerDimensionalArtifact::EdgeContact {
+                left_face: right_left_face,
+                right_face: right_right_face,
+                endpoints: right_endpoints,
+            },
+        ) if left_left_face == right_left_face && left_right_face == right_right_face => {
+            let same = endpoint_pairs_equal(left_endpoints, right_endpoints, false);
+            let reversed = endpoint_pairs_equal(left_endpoints, right_endpoints, true);
+            match (same, reversed) {
+                (Some(true), _) | (_, Some(true)) => Ok(true),
+                (Some(false), Some(false)) => Ok(false),
+                _ => Err(ExactArrangementBlocker::UndecidableOrdering),
+            }
+        }
+        _ => Ok(false),
+    }
+}
+
+fn endpoint_pairs_equal(
+    left: &[Point3; 2],
+    right: &[Point3; 2],
+    reverse_right: bool,
+) -> Option<bool> {
+    let right_first = if reverse_right { &right[1] } else { &right[0] };
+    let right_second = if reverse_right { &right[0] } else { &right[1] };
+    let first = point3_equal(&left[0], right_first).value();
+    let second = point3_equal(&left[1], right_second).value();
+    if first == Some(false) || second == Some(false) {
+        Some(false)
+    } else if first == Some(true) && second == Some(true) {
+        Some(true)
+    } else {
+        None
+    }
+}
+
 /// Retained 2D arrangement for one coplanar carrier-plane face pair.
 #[derive(Clone, Debug, PartialEq)]
 pub struct ArrangementCarrierPlaneOverlay {
@@ -530,6 +618,7 @@ impl ExactArrangement3d {
 
     /// Validate arrangement-internal consistency without replaying source meshes.
     pub fn validate(&self) -> Result<(), ExactArrangementBlocker> {
+        validate_lower_dimensional_artifacts(&self.lower_dimensional_artifacts)?;
         self.graph
             .validate()
             .map_err(ExactArrangementBlocker::InvalidIntersectionGraph)?;
@@ -4887,6 +4976,15 @@ mod tests {
                     ExactRegularizationPolicy::RETAIN_ARTIFACTS
                 )
                 .is_ok()
+        );
+
+        let mut duplicated = retained.clone();
+        duplicated
+            .lower_dimensional_artifacts
+            .push(retained.lower_dimensional_artifacts[0].clone());
+        assert_eq!(
+            duplicated.validate(),
+            Err(ExactArrangementBlocker::NonManifoldCellComplex)
         );
 
         let reported = ExactArrangement::from_meshes_with_policy(
