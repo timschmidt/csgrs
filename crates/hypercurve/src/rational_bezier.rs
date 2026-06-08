@@ -600,11 +600,15 @@ impl RationalQuadraticBezier2 {
         if self.weights_known_same_nonzero_sign(policy) == Some(true)
             && other.weights_known_same_nonzero_sign(policy) == Some(true)
         {
-            return isolate_curve_regions(
-                RationalSubdivisionNode::from_rational(self),
-                RationalSubdivisionNode::from_rational(other),
-                policy,
-            );
+            let first = match RationalSubdivisionNode::from_rational(self) {
+                Ok(node) => node,
+                Err(reason) => return Classification::Uncertain(reason),
+            };
+            let second = match RationalSubdivisionNode::from_rational(other) {
+                Ok(node) => node,
+                Err(reason) => return Classification::Uncertain(reason),
+            };
+            return isolate_curve_regions(first, second, policy);
         }
 
         Classification::Decided(BezierCurveRelation::Unresolved)
@@ -1897,11 +1901,15 @@ fn relation_to_polynomial_bezier(
     }
 
     if rational.weights_known_same_nonzero_sign(policy) == Some(true) {
-        return isolate_curve_regions(
-            RationalSubdivisionNode::from_rational(rational),
-            RationalSubdivisionNode::from_polynomial(polynomial_controls),
-            policy,
-        );
+        let rational_node = match RationalSubdivisionNode::from_rational(rational) {
+            Ok(node) => node,
+            Err(reason) => return Classification::Uncertain(reason),
+        };
+        let polynomial_node = match RationalSubdivisionNode::from_polynomial(polynomial_controls) {
+            Ok(node) => node,
+            Err(reason) => return Classification::Uncertain(reason),
+        };
+        return isolate_curve_regions(rational_node, polynomial_node, policy);
     }
 
     Classification::Decided(BezierCurveRelation::Unresolved)
@@ -3327,22 +3335,20 @@ struct RationalSubdivisionNode {
 }
 
 impl RationalSubdivisionNode {
-    fn from_rational(curve: &RationalQuadraticBezier2) -> Self {
-        Self {
+    fn from_rational(curve: &RationalQuadraticBezier2) -> Result<Self, UncertaintyReason> {
+        Ok(Self {
             controls: curve.control_points().into_iter().cloned().collect(),
             weights: Some(curve.weights().into_iter().cloned().collect()),
-            span: BezierMonotoneSpan::new(Real::zero(), Real::one())
-                .expect("unit subdivision span is ordered"),
-        }
+            span: subdivision_span(Real::zero(), Real::one())?,
+        })
     }
 
-    fn from_polynomial(controls: &[&Point2]) -> Self {
-        Self {
+    fn from_polynomial(controls: &[&Point2]) -> Result<Self, UncertaintyReason> {
+        Ok(Self {
             controls: controls.iter().map(|point| (*point).clone()).collect(),
             weights: None,
-            span: BezierMonotoneSpan::new(Real::zero(), Real::one())
-                .expect("unit subdivision span is ordered"),
-        }
+            span: subdivision_span(Real::zero(), Real::one())?,
+        })
     }
 
     fn with_span(
@@ -3350,13 +3356,12 @@ impl RationalSubdivisionNode {
         weights: Option<Vec<Real>>,
         start: Real,
         end: Real,
-    ) -> Self {
-        Self {
+    ) -> Result<Self, UncertaintyReason> {
+        Ok(Self {
             controls,
             weights,
-            span: BezierMonotoneSpan::new(start, end)
-                .expect("subdivision child span endpoints are ordered"),
-        }
+            span: subdivision_span(start, end)?,
+        })
     }
 
     fn control_box(&self, policy: &CurvePolicy) -> Classification<Aabb2> {
@@ -3368,7 +3373,7 @@ impl RationalSubdivisionNode {
             match self.weights.as_ref() {
                 Some(weights) => split_rational_controls_half(&self.controls, weights, policy)?,
                 None => {
-                    let (left, right) = split_polynomial_controls_half(&self.controls);
+                    let (left, right) = split_polynomial_controls_half(&self.controls)?;
                     (left, None, right, None)
                 }
             };
@@ -3380,8 +3385,8 @@ impl RationalSubdivisionNode {
                 left_weights,
                 self.span.start().clone(),
                 mid.clone(),
-            ),
-            Self::with_span(right_controls, right_weights, mid, self.span.end().clone()),
+            )?,
+            Self::with_span(right_controls, right_weights, mid, self.span.end().clone())?,
         ))
     }
 }
@@ -3457,9 +3462,14 @@ fn split_rational_controls_half(
     weights: &[Real],
     policy: &CurvePolicy,
 ) -> Result<RationalSplit, UncertaintyReason> {
+    if controls.is_empty() {
+        return Err(UncertaintyReason::Unsupported);
+    }
     let mut levels = vec![homogeneous_controls(controls, weights)];
     while levels.last().map(|level| level.len()).unwrap_or(0) > 1 {
-        let previous = levels.last().expect("level exists");
+        let Some(previous) = levels.last() else {
+            return Err(UncertaintyReason::Unsupported);
+        };
         let next = previous
             .windows(2)
             .map(|pair| midpoint_homogeneous(&pair[0], &pair[1]))
@@ -3486,10 +3496,17 @@ fn split_rational_controls_half(
     ))
 }
 
-fn split_polynomial_controls_half(points: &[Point2]) -> (Vec<Point2>, Vec<Point2>) {
+fn split_polynomial_controls_half(
+    points: &[Point2],
+) -> Result<(Vec<Point2>, Vec<Point2>), UncertaintyReason> {
+    if points.is_empty() {
+        return Err(UncertaintyReason::Unsupported);
+    }
     let mut levels = vec![points.to_vec()];
     while levels.last().map(|level| level.len()).unwrap_or(0) > 1 {
-        let previous = levels.last().expect("level exists");
+        let Some(previous) = levels.last() else {
+            return Err(UncertaintyReason::Unsupported);
+        };
         let next = previous
             .windows(2)
             .map(|pair| midpoint_point(&pair[0], &pair[1]))
@@ -3506,7 +3523,11 @@ fn split_polynomial_controls_half(points: &[Point2]) -> (Vec<Point2>, Vec<Point2
         .rev()
         .map(|level| level[level.len() - 1].clone())
         .collect::<Vec<_>>();
-    (left, right)
+    Ok((left, right))
+}
+
+fn subdivision_span(start: Real, end: Real) -> Result<BezierMonotoneSpan, UncertaintyReason> {
+    BezierMonotoneSpan::new(start, end).map_err(|_| UncertaintyReason::Ordering)
 }
 
 #[derive(Clone, Debug)]

@@ -836,7 +836,7 @@ where
 trait BezierCurveLike {
     fn control_points_vec(&self) -> Vec<&Point2>;
     fn certified_bounds(&self, policy: &CurvePolicy) -> Classification<Aabb2>;
-    fn subdivision_node(&self) -> BezierSubdivisionNode;
+    fn subdivision_node(&self) -> Result<BezierSubdivisionNode, UncertaintyReason>;
     fn point_at(&self, t: Real) -> Point2;
     fn exact_point_query_is_complete(&self) -> bool;
     fn exact_parameters_for_point(
@@ -855,7 +855,7 @@ impl BezierCurveLike for QuadraticBezier2 {
         Self::certified_bounds(self, policy)
     }
 
-    fn subdivision_node(&self) -> BezierSubdivisionNode {
+    fn subdivision_node(&self) -> Result<BezierSubdivisionNode, UncertaintyReason> {
         BezierSubdivisionNode::new(self.control_points().into_iter().cloned().collect())
     }
 
@@ -889,7 +889,7 @@ impl BezierCurveLike for CubicBezier2 {
         Self::certified_bounds(self, policy)
     }
 
-    fn subdivision_node(&self) -> BezierSubdivisionNode {
+    fn subdivision_node(&self) -> Result<BezierSubdivisionNode, UncertaintyReason> {
         BezierSubdivisionNode::new(self.control_points().into_iter().cloned().collect())
     }
 
@@ -1236,8 +1236,14 @@ where
     }
 
     match isolate_curve_intersection_regions(
-        first.subdivision_node(),
-        second.subdivision_node(),
+        match first.subdivision_node() {
+            Ok(node) => node,
+            Err(reason) => return Classification::Uncertain(reason),
+        },
+        match second.subdivision_node() {
+            Ok(node) => node,
+            Err(reason) => return Classification::Uncertain(reason),
+        },
         policy,
     ) {
         Classification::Decided(regions) if !regions.is_empty() => {
@@ -2602,20 +2608,18 @@ struct BezierSubdivisionNode {
 }
 
 impl BezierSubdivisionNode {
-    fn new(controls: Vec<Point2>) -> Self {
-        Self {
+    fn new(controls: Vec<Point2>) -> Result<Self, UncertaintyReason> {
+        Ok(Self {
             controls,
-            span: BezierMonotoneSpan::new(Real::zero(), Real::one())
-                .expect("unit subdivision span is ordered"),
-        }
+            span: subdivision_span(Real::zero(), Real::one())?,
+        })
     }
 
-    fn with_span(controls: Vec<Point2>, start: Real, end: Real) -> Self {
-        Self {
+    fn with_span(controls: Vec<Point2>, start: Real, end: Real) -> Result<Self, UncertaintyReason> {
+        Ok(Self {
             controls,
-            span: BezierMonotoneSpan::new(start, end)
-                .expect("subdivision child span endpoints are ordered"),
-        }
+            span: subdivision_span(start, end)?,
+        })
     }
 
     fn control_box(&self, policy: &CurvePolicy) -> Classification<Aabb2> {
@@ -2623,12 +2627,12 @@ impl BezierSubdivisionNode {
     }
 
     fn split_half(&self) -> Result<(Self, Self), UncertaintyReason> {
-        let (left_controls, right_controls) = subdivide_points_half(&self.controls);
+        let (left_controls, right_controls) = subdivide_points_half(&self.controls)?;
         let mid = ((self.span.start() + self.span.end()) / Real::from(2_i8))
             .map_err(|_| UncertaintyReason::Unsupported)?;
         Ok((
-            Self::with_span(left_controls, self.span.start().clone(), mid.clone()),
-            Self::with_span(right_controls, mid, self.span.end().clone()),
+            Self::with_span(left_controls, self.span.start().clone(), mid.clone())?,
+            Self::with_span(right_controls, mid, self.span.end().clone())?,
         ))
     }
 }
@@ -2713,10 +2717,17 @@ fn isolate_curve_intersection_regions_recursive(
     }
 }
 
-fn subdivide_points_half(points: &[Point2]) -> (Vec<Point2>, Vec<Point2>) {
+fn subdivide_points_half(
+    points: &[Point2],
+) -> Result<(Vec<Point2>, Vec<Point2>), UncertaintyReason> {
+    if points.is_empty() {
+        return Err(UncertaintyReason::Unsupported);
+    }
     let mut levels = vec![points.to_vec()];
     while levels.last().map(|level| level.len()).unwrap_or(0) > 1 {
-        let previous = levels.last().expect("level exists");
+        let Some(previous) = levels.last() else {
+            return Err(UncertaintyReason::Unsupported);
+        };
         let next = previous
             .windows(2)
             .map(|pair| midpoint_point(&pair[0], &pair[1]))
@@ -2733,7 +2744,11 @@ fn subdivide_points_half(points: &[Point2]) -> (Vec<Point2>, Vec<Point2>) {
         .rev()
         .map(|level| level[level.len() - 1].clone())
         .collect::<Vec<_>>();
-    (left, right)
+    Ok((left, right))
+}
+
+fn subdivision_span(start: Real, end: Real) -> Result<BezierMonotoneSpan, UncertaintyReason> {
+    BezierMonotoneSpan::new(start, end).map_err(|_| UncertaintyReason::Ordering)
 }
 
 fn midpoint_point(first: &Point2, second: &Point2) -> Point2 {
