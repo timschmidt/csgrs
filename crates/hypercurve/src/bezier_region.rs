@@ -821,36 +821,53 @@ fn validate_retained_source_endpoint_image(
     image: Option<&crate::BezierAlgebraicEndpointImage2>,
     policy: &CurvePolicy,
 ) -> CurveResult<()> {
-    let (Some(source_curve), BezierParameter2::Algebraic(parameter), Some(image)) =
-        (source_curve, boundary, image)
-    else {
-        return Ok(());
-    };
-    if image.parameter() != parameter {
-        return Err(CurveError::Topology(
-            "retained algebraic endpoint image parameter does not match boundary".into(),
-        ));
-    }
-    if !image.is_transformed() {
-        return Err(CurveError::Topology(
-            "retained algebraic endpoint image must be exact transformed evidence".into(),
-        ));
-    }
-    let expected = match source_curve {
-        BezierSubcurve2::Quadratic(curve) => {
-            crate::BezierAlgebraicEndpointImage2::quadratic(curve, parameter, policy)
+    match boundary {
+        BezierParameter2::Exact(_) => {
+            if image.is_some() {
+                return Err(CurveError::Topology(
+                    "retained exact endpoint must not carry algebraic endpoint image evidence"
+                        .into(),
+                ));
+            }
         }
-        BezierSubcurve2::Cubic(curve) => {
-            crate::BezierAlgebraicEndpointImage2::cubic(curve, parameter, policy)
+        BezierParameter2::Algebraic(parameter) => {
+            let Some(image) = image else {
+                return Err(CurveError::Topology(
+                    "retained algebraic boundary must carry endpoint image evidence".into(),
+                ));
+            };
+            if image.parameter() != parameter {
+                return Err(CurveError::Topology(
+                    "retained algebraic endpoint image parameter does not match boundary".into(),
+                ));
+            }
+            if !image.is_transformed() {
+                return Err(CurveError::Topology(
+                    "retained algebraic endpoint image must be exact transformed evidence".into(),
+                ));
+            }
+            if let Some(source_curve) = source_curve {
+                let expected = match source_curve {
+                    BezierSubcurve2::Quadratic(curve) => {
+                        crate::BezierAlgebraicEndpointImage2::quadratic(curve, parameter, policy)
+                    }
+                    BezierSubcurve2::Cubic(curve) => {
+                        crate::BezierAlgebraicEndpointImage2::cubic(curve, parameter, policy)
+                    }
+                    BezierSubcurve2::RationalQuadratic(curve) => {
+                        crate::BezierAlgebraicEndpointImage2::rational_quadratic(
+                            curve, parameter, policy,
+                        )
+                    }
+                }?;
+                if &expected != image {
+                    return Err(CurveError::Topology(
+                        "retained algebraic endpoint image does not match retained source curve"
+                            .into(),
+                    ));
+                }
+            }
         }
-        BezierSubcurve2::RationalQuadratic(curve) => {
-            crate::BezierAlgebraicEndpointImage2::rational_quadratic(curve, parameter, policy)
-        }
-    }?;
-    if &expected != image {
-        return Err(CurveError::Topology(
-            "retained algebraic endpoint image does not match retained source curve".into(),
-        ));
     }
     Ok(())
 }

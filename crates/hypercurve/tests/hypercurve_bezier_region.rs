@@ -1288,6 +1288,22 @@ fn retained_boundary_loop_constructor_rejects_incomplete_algebraic_endpoint_evid
     assert_topology_error(BezierRetainedBoundaryLoop2::new(vec![partial]));
 }
 
+#[test]
+fn retained_boundary_loop_constructor_rejects_source_only_algebraic_endpoint_evidence() {
+    let parameter = BezierParameter2::algebraic(algebraic_midpoint_parameter());
+    let source_curve =
+        hypercurve::BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 0)));
+    let source_only = BezierSplitFragment2::AlgebraicEndpointImages {
+        start: parameter.clone(),
+        end: parameter,
+        source_curve: Some(source_curve),
+        start_image: None,
+        end_image: None,
+    };
+
+    assert_topology_error(BezierRetainedBoundaryLoop2::new(vec![source_only]));
+}
+
 proptest! {
     #[test]
     fn symmetric_quadratic_lens_area_scales_exactly(
