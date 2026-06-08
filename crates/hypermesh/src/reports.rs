@@ -613,10 +613,10 @@ fn checked_region_facts(
 fn validate_coplanar_volumetric_evidence_matches_blocker(
     evidence: &CoplanarVolumetricCellEvidenceReport,
     blocker: &ExactBooleanBlocker,
+    retained_face_pairs: usize,
+    retained_events: usize,
 ) -> Result<(), ExactReportValidationError> {
-    evidence
-        .validate()
-        .map_err(|_| ExactReportValidationError::InvalidCoplanarVolumetricEvidence)?;
+    validate_coplanar_volumetric_evidence_counts(evidence, retained_face_pairs, retained_events)?;
     if evidence.candidate_pairs != blocker.candidate_pairs
         || evidence.coplanar_touching_pairs != blocker.coplanar_touching_pairs
         || evidence.coplanar_overlapping_pairs != blocker.coplanar_overlapping_pairs
@@ -3551,6 +3551,8 @@ impl ExactBooleanPreflight {
                 validate_coplanar_volumetric_evidence_matches_blocker(
                     evidence,
                     self.blocker.as_ref().unwrap(),
+                    self.retained_face_pairs,
+                    self.retained_events,
                 )?;
                 if !evidence.obstacle.requires_coplanar_volumetric_cells() {
                     return Err(ExactReportValidationError::CoplanarVolumetricEvidenceMismatch);
@@ -5229,7 +5231,12 @@ impl ExactWindingReadinessReport {
                     .coplanar_volumetric_evidence
                     .as_ref()
                     .ok_or(ExactReportValidationError::MissingCoplanarVolumetricEvidence)?;
-                validate_coplanar_volumetric_evidence_matches_blocker(evidence, &self.blocker)?;
+                validate_coplanar_volumetric_evidence_matches_blocker(
+                    evidence,
+                    &self.blocker,
+                    self.retained_face_pairs,
+                    self.retained_events,
+                )?;
                 if !evidence.obstacle.requires_coplanar_volumetric_cells() {
                     return Err(ExactReportValidationError::CoplanarVolumetricEvidenceMismatch);
                 }
@@ -5257,7 +5264,12 @@ impl ExactWindingReadinessReport {
                     .coplanar_volumetric_evidence
                     .as_ref()
                     .ok_or(ExactReportValidationError::MissingCoplanarVolumetricEvidence)?;
-                validate_coplanar_volumetric_evidence_matches_blocker(evidence, &self.blocker)?;
+                validate_coplanar_volumetric_evidence_matches_blocker(
+                    evidence,
+                    &self.blocker,
+                    self.retained_face_pairs,
+                    self.retained_events,
+                )?;
                 if !evidence.obstacle.requires_coplanar_volumetric_cells() {
                     return Err(ExactReportValidationError::CoplanarVolumetricEvidenceMismatch);
                 }
@@ -5293,6 +5305,8 @@ impl ExactWindingReadinessReport {
                         validate_coplanar_volumetric_evidence_matches_blocker(
                             evidence,
                             &self.blocker,
+                            self.retained_face_pairs,
+                            self.retained_events,
                         )?;
                         if !evidence.obstacle.requires_coplanar_volumetric_cells() {
                             return Err(
@@ -5342,6 +5356,8 @@ impl ExactWindingReadinessReport {
                         validate_coplanar_volumetric_evidence_matches_blocker(
                             evidence,
                             &self.blocker,
+                            self.retained_face_pairs,
+                            self.retained_events,
                         )?;
                         if !evidence.obstacle.requires_coplanar_volumetric_cells() {
                             return Err(
@@ -5453,6 +5469,8 @@ impl ExactWindingReadinessReport {
                         validate_coplanar_volumetric_evidence_matches_blocker(
                             evidence,
                             &self.blocker,
+                            self.retained_face_pairs,
+                            self.retained_events,
                         )?;
                         validate_coplanar_boundary_only_evidence_shape(
                             evidence,
@@ -5538,6 +5556,8 @@ impl ExactWindingReadinessReport {
                         validate_coplanar_volumetric_evidence_matches_blocker(
                             evidence,
                             &self.blocker,
+                            self.retained_face_pairs,
+                            self.retained_events,
                         )?;
                         if !evidence.obstacle.requires_coplanar_volumetric_cells() {
                             return Err(
@@ -6509,6 +6529,82 @@ mod tests {
         report.coplanar_volumetric_evidence = Some(relabeled_evidence);
         assert_eq!(
             report.validate(),
+            Err(ExactReportValidationError::CoplanarVolumetricEvidenceMismatch)
+        );
+    }
+
+    #[test]
+    fn coplanar_volumetric_evidence_must_match_retained_graph_totals() {
+        let evidence = CoplanarVolumetricCellEvidenceReport {
+            left_closed_manifold: true,
+            right_closed_manifold: true,
+            retained_face_pair_count: 2,
+            candidate_pairs: 1,
+            proper_crossing_candidate_pairs: 1,
+            coplanar_touching_pairs: 0,
+            coplanar_overlapping_pairs: 1,
+            positive_area_coplanar_overlapping_pairs: 1,
+            opposite_side_coplanar_overlapping_pairs: 0,
+            same_side_coplanar_overlapping_pairs: 1,
+            undecided_side_coplanar_overlapping_pairs: 0,
+            unknown_pairs: 0,
+            segment_plane_events: 1,
+            proper_crossing_events: 1,
+            boundary_segment_events: 0,
+            construction_failed_events: 0,
+            unknown_segment_plane_events: 0,
+            unknown_events: 0,
+            coplanar_edge_events: 3,
+            coplanar_vertex_events: 0,
+            obstacle: CoplanarVolumetricCellObstacle::MixedCoplanarAndCrossingCells,
+        };
+        evidence.validate().unwrap();
+
+        let blocker = ExactBooleanBlocker {
+            kind: ExactBooleanBlockerKind::NeedsCoplanarVolumetricCells,
+            candidate_pairs: 1,
+            coplanar_overlapping_pairs: 1,
+            coplanar_touching_pairs: 0,
+            unknown_pairs: 0,
+            construction_failed_events: 0,
+        };
+        let mut preflight = ExactBooleanPreflight {
+            operation: ExactBooleanOperation::Intersection,
+            support: ExactBooleanSupport::RequiresCoplanarVolumetricCells,
+            graph_had_unknowns: false,
+            retained_face_pairs: 2,
+            retained_events: 4,
+            region_count: 0,
+            region_classifications: Vec::new(),
+            blocker: Some(blocker.clone()),
+            arrangement_readiness: None,
+            coplanar_volumetric_evidence: Some(evidence.clone()),
+        };
+        preflight.validate().unwrap();
+
+        preflight.retained_events = 5;
+        assert_eq!(
+            preflight.validate(),
+            Err(ExactReportValidationError::CoplanarVolumetricEvidenceMismatch)
+        );
+
+        let mut readiness = ExactWindingReadinessReport {
+            operation: ExactBooleanOperation::Intersection,
+            status: ExactWindingReadinessStatus::CoplanarVolumetricCellsRequired,
+            graph_had_unknowns: false,
+            retained_face_pairs: 2,
+            retained_events: 4,
+            region_count: 0,
+            region_classifications: Vec::new(),
+            blocker,
+            arrangement_readiness: None,
+            coplanar_volumetric_evidence: Some(evidence),
+        };
+        readiness.validate().unwrap();
+
+        readiness.retained_events = 5;
+        assert_eq!(
+            readiness.validate(),
             Err(ExactReportValidationError::CoplanarVolumetricEvidenceMismatch)
         );
     }
