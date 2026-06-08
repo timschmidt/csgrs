@@ -3582,20 +3582,6 @@ fn validate_face_split_boundary_chain_shape(
         );
     }
 
-    for window in chain.nodes.windows(2) {
-        if boundary_nodes_equal(&window[0], &window[1]) == Some(true) {
-            diagnostics.push(
-                SplitPlanDiagnostic::new(
-                    SplitPlanDiagnosticKind::DuplicateConsecutiveBoundaryNode,
-                    "split-face geometry boundary chain contains consecutive duplicate nodes",
-                )
-                .with_side(side)
-                .with_face(face)
-                .with_edge(chain.edge),
-            );
-        }
-    }
-
     for node in &chain.nodes {
         let FaceSplitBoundaryNode::OriginalVertex { vertex, point } = node else {
             continue;

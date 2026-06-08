@@ -1230,6 +1230,7 @@ fn validate_assembly_source_face_incidence(
                     reason: "assembled output triangle references a missing vertex",
                 });
             };
+            validate_assembly_output_vertex_source_against_sources(output_vertex, left, right)?;
             match orient3d_report(&a, &b, &c, &output_vertex.point).value() {
                 Some(hyperlimit::Sign::Zero) => {}
                 Some(hyperlimit::Sign::Negative | hyperlimit::Sign::Positive) => {
@@ -1247,6 +1248,46 @@ fn validate_assembly_source_face_incidence(
         validate_output_triangle_source_orientation(assembly, triangle, mesh, source_triangle)?;
     }
     Ok(())
+}
+
+fn validate_assembly_output_vertex_source_against_sources(
+    vertex: &ExactOutputVertex,
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> hypertri::Result<()> {
+    let FaceSplitBoundaryNode::OriginalVertex {
+        vertex: source_vertex,
+        point,
+    } = &vertex.source
+    else {
+        return Ok(());
+    };
+    let mut saw_source_vertex = false;
+    let mut saw_unknown_equality = false;
+    for mesh in [left, right] {
+        let Some(source_point) = mesh.vertices().get(*source_vertex) else {
+            continue;
+        };
+        saw_source_vertex = true;
+        match points_equal(point, source_point) {
+            Some(true) => return Ok(()),
+            Some(false) => {}
+            None => saw_unknown_equality = true,
+        }
+    }
+    if !saw_source_vertex {
+        return Err(hypertri::Error::InvalidInput {
+            reason: "assembled output vertex references a missing original source vertex",
+        });
+    }
+    if saw_unknown_equality {
+        return Err(hypertri::Error::PredicateUndecided {
+            predicate: "assembly_output_vertex_source_equality",
+        });
+    }
+    Err(hypertri::Error::InvalidInput {
+        reason: "assembled output vertex original source point does not match source meshes",
+    })
 }
 
 /// Validate that an output triangle preserves its retained source-face

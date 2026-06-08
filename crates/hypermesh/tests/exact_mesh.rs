@@ -1828,6 +1828,32 @@ fn exact_selected_region_boolean_is_publicly_replayable() {
         ValidationPolicy::ALLOW_BOUNDARY
     );
 
+    let mut stale_assembly_source_vertex = result.clone();
+    let Some(hypermesh::FaceSplitBoundaryNode::OriginalVertex { vertex, .. }) =
+        stale_assembly_source_vertex
+            .assembly
+            .vertices
+            .iter_mut()
+            .find_map(|output_vertex| match &mut output_vertex.source {
+                source @ hypermesh::FaceSplitBoundaryNode::OriginalVertex { .. } => Some(source),
+                hypermesh::FaceSplitBoundaryNode::GraphVertex { .. }
+                | hypermesh::FaceSplitBoundaryNode::FaceInterior { .. } => None,
+            })
+    else {
+        panic!("selected-region assembly should retain at least one original source vertex");
+    };
+    *vertex = usize::MAX;
+    stale_assembly_source_vertex.validate().unwrap();
+    assert!(
+        stale_assembly_source_vertex
+            .validate_against_sources(&left, &right)
+            .is_err()
+    );
+    assert_eq!(
+        stale_assembly_source_vertex.freshness_against_sources(&left, &right),
+        ExactReportFreshness::SourceReplayMismatch
+    );
+
     let mut stale_kind = result.clone();
     stale_kind.kind = ExactBooleanResultKind::SelectedRegions {
         selection: ExactRegionSelection::KeepLeft,
