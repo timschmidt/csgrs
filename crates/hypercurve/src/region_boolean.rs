@@ -226,29 +226,24 @@ fn strip_boolean_region(
             let Ok(max) = max else {
                 return Classification::Uncertain(max.unwrap_err());
             };
-            return Classification::Decided(Region2::from_material_contours(vec![
-                oriented_strip_rect(min, cross_min, max, cross_max, horizontal).unwrap(),
-            ]));
+            return required_strip_region(vec![(min, cross_min, max, cross_max, horizontal)]);
         }
-        return Classification::Decided(match op {
-            BooleanOp::Union | BooleanOp::Xor => Region2::from_material_contours(vec![
-                oriented_strip_rect(
+        return match op {
+            BooleanOp::Union | BooleanOp::Xor => required_strip_region(vec![
+                (
                     first_min,
                     cross_min.clone(),
                     first_max,
                     cross_max.clone(),
                     horizontal,
-                )
-                .unwrap(),
-                oriented_strip_rect(second_min, cross_min, second_max, cross_max, horizontal)
-                    .unwrap(),
+                ),
+                (second_min, cross_min, second_max, cross_max, horizontal),
             ]),
-            BooleanOp::Difference => Region2::from_material_contours(vec![
-                oriented_strip_rect(first_min, cross_min, first_max, cross_max, horizontal)
-                    .unwrap(),
-            ]),
-            BooleanOp::Intersection => Region2::empty(),
-        });
+            BooleanOp::Difference => required_strip_region(vec![(
+                first_min, cross_min, first_max, cross_max, horizontal,
+            )]),
+            BooleanOp::Intersection => Classification::Decided(Region2::empty()),
+        };
     }
 
     let contours = match op {
@@ -261,12 +256,23 @@ fn strip_boolean_region(
             let Ok(max) = max else {
                 return Classification::Uncertain(max.unwrap_err());
             };
-            vec![oriented_strip_rect(min, cross_min, max, cross_max, horizontal).unwrap()]
+            match required_strip_rects(vec![(min, cross_min, max, cross_max, horizontal)]) {
+                Classification::Decided(contours) => contours,
+                Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+            }
         }
-        BooleanOp::Intersection => vec![
-            oriented_strip_rect(overlap_min, cross_min, overlap_max, cross_max, horizontal)
-                .unwrap(),
-        ],
+        BooleanOp::Intersection => {
+            match required_strip_rects(vec![(
+                overlap_min,
+                cross_min,
+                overlap_max,
+                cross_max,
+                horizontal,
+            )]) {
+                Classification::Decided(contours) => contours,
+                Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+            }
+        }
         BooleanOp::Difference => match strip_difference_contours(
             first_min, first_max, second_min, second_max, cross_min, cross_max, horizontal, policy,
         ) {
@@ -301,6 +307,36 @@ fn strip_boolean_region(
     Classification::Decided(Region2::from_material_contours(contours))
 }
 
+type StripRectBounds = (Real, Real, Real, Real, bool);
+
+fn required_strip_region(bounds: Vec<StripRectBounds>) -> Classification<Region2> {
+    match required_strip_rects(bounds) {
+        Classification::Decided(contours) => {
+            Classification::Decided(Region2::from_material_contours(contours))
+        }
+        Classification::Uncertain(reason) => Classification::Uncertain(reason),
+    }
+}
+
+fn required_strip_rects(bounds: Vec<StripRectBounds>) -> Classification<Vec<Contour2>> {
+    let mut contours = Vec::with_capacity(bounds.len());
+    for bound in bounds {
+        match required_strip_rect(bound) {
+            Classification::Decided(contour) => contours.push(contour),
+            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+        }
+    }
+    Classification::Decided(contours)
+}
+
+fn required_strip_rect(bounds: StripRectBounds) -> Classification<Contour2> {
+    let (along_min, cross_min, along_max, cross_max, horizontal) = bounds;
+    match oriented_strip_rect(along_min, cross_min, along_max, cross_max, horizontal) {
+        Some(contour) => Classification::Decided(contour),
+        None => Classification::Uncertain(UncertaintyReason::Unsupported),
+    }
+}
+
 #[allow(clippy::too_many_arguments)]
 fn strip_difference_contours(
     first_min: Real,
@@ -322,16 +358,17 @@ fn strip_difference_contours(
         let Ok(end) = end else {
             return Classification::Uncertain(end.unwrap_err());
         };
-        if real_lt(&first_min, &end, policy).unwrap_or(false)
-            && let Some(contour) = oriented_strip_rect(
+        if real_lt(&first_min, &end, policy).unwrap_or(false) {
+            match required_strip_rect((
                 first_min.clone(),
                 cross_min.clone(),
                 end,
                 cross_max.clone(),
                 horizontal,
-            )
-        {
-            contours.push(contour);
+            )) {
+                Classification::Decided(contour) => contours.push(contour),
+                Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+            }
         }
     }
     let right_kept = real_lt(&second_max, &first_max, policy).ok_or(UncertaintyReason::Ordering);
@@ -343,11 +380,11 @@ fn strip_difference_contours(
         let Ok(start) = start else {
             return Classification::Uncertain(start.unwrap_err());
         };
-        if real_lt(&start, &first_max, policy).unwrap_or(false)
-            && let Some(contour) =
-                oriented_strip_rect(start, cross_min, first_max, cross_max, horizontal)
-        {
-            contours.push(contour);
+        if real_lt(&start, &first_max, policy).unwrap_or(false) {
+            match required_strip_rect((start, cross_min, first_max, cross_max, horizontal)) {
+                Classification::Decided(contour) => contours.push(contour),
+                Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+            }
         }
     }
     Classification::Decided(contours)
@@ -1606,5 +1643,23 @@ mod tests {
         .unwrap();
 
         assert_eq!(result, Classification::Decided(Vec::new()));
+    }
+
+    #[test]
+    fn strip_boolean_reports_degenerate_required_rectangle_as_uncertainty() {
+        assert_eq!(
+            strip_boolean_region(
+                real(0),
+                real(1),
+                real(0),
+                real(1),
+                real(0),
+                real(0),
+                true,
+                BooleanOp::Union,
+                &CurvePolicy::certified(),
+            ),
+            Classification::Uncertain(UncertaintyReason::Unsupported)
+        );
     }
 }

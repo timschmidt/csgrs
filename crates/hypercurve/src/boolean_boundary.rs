@@ -458,12 +458,9 @@ fn validate_boolean_boundary_chain_geometry(
     closed: bool,
 ) -> CurveResult<()> {
     validate_directed_boolean_fragment_connectivity(fragments, "boolean boundary chain")?;
+    let (first, last) = directed_fragment_endpoints(fragments, "boolean boundary chain")?;
 
-    let endpoints_close = certified_endpoint_match(
-        fragments.last().unwrap(),
-        fragments.first().unwrap(),
-        "boolean boundary chain",
-    )?;
+    let endpoints_close = certified_endpoint_match(last, first, "boolean boundary chain")?;
     if endpoints_close != closed {
         return Err(CurveError::Topology(
             "boolean boundary chain closed flag must match endpoint evidence".to_owned(),
@@ -476,12 +473,9 @@ fn validate_boolean_boundary_loop_geometry(
     fragments: &[DirectedBooleanFragment],
 ) -> CurveResult<()> {
     validate_directed_boolean_fragment_connectivity(fragments, "boolean boundary loop")?;
+    let (first, last) = directed_fragment_endpoints(fragments, "boolean boundary loop")?;
 
-    if !certified_endpoint_match(
-        fragments.last().unwrap(),
-        fragments.first().unwrap(),
-        "boolean boundary loop",
-    )? {
+    if !certified_endpoint_match(last, first, "boolean boundary loop")? {
         return Err(CurveError::Topology(
             "boolean boundary loop must close back to its first fragment".to_owned(),
         ));
@@ -501,6 +495,19 @@ fn validate_directed_boolean_fragment_connectivity(
         }
     }
     Ok(())
+}
+
+fn directed_fragment_endpoints<'a>(
+    fragments: &'a [DirectedBooleanFragment],
+    owner: &str,
+) -> CurveResult<(&'a DirectedBooleanFragment, &'a DirectedBooleanFragment)> {
+    let first = fragments.first().ok_or_else(|| {
+        CurveError::Topology(format!("{owner} must carry at least one directed fragment"))
+    })?;
+    let last = fragments.last().ok_or_else(|| {
+        CurveError::Topology(format!("{owner} must carry at least one directed fragment"))
+    })?;
+    Ok((first, last))
 }
 
 fn certified_endpoint_match(
