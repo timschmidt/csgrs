@@ -19,9 +19,15 @@ hyperreal = { path = "../hyperreal" }
 hypertri = { path = "../hypertri", default-features = false, features = ["earcut", "cdt"] }
 # hyperlimit = { version = "0.4.0" }
 # hyperreal = { version = "0.13.0" }
-# hypertri = { version = "0.3.0", default-features = false, features = ["earcut", "cdt"] }
+# hypertri = { version = "0.4.0", default-features = false, features = ["earcut", "cdt"] }
 bevy = { version = "0.16.1", optional = true }
 bevy_panorbit_camera = { version = "0.26.0", optional = true }
+
+# Keep transitive sibling crates unified while using local path development mode.
+[patch.crates-io]
+hyperlattice = { path = "../hyperlattice" }
+hyperlimit = { path = "../hyperlimit" }
+hyperreal = { path = "../hyperreal" }
 
 [dev-dependencies]
 proptest = "1.7.0"

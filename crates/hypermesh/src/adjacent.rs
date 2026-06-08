@@ -774,11 +774,12 @@ fn fan_faces_cover_triangle(
     fan_mesh: &ExactMesh,
     consumed_fan_faces: &BTreeSet<usize>,
 ) -> Option<Option<Vec<usize>>> {
-    // This is intentionally a bounded certificate, not a general planar
-    // arrangement. One source triangle may be consumed by exactly three
-    // opposite-oriented coplanar triangles sharing one strict interior fan
-    // point and covering the three boundary edges. The exact projected area
-    // equality is a construction replay guard; the topological decision still
+    // This is intentionally a source-triangle disk certificate, not a general
+    // planar arrangement. One source triangle may be consumed by an
+    // opposite-oriented coplanar triangulated disk whose boundary is exactly
+    // the source triangle boundary and whose exact projected area matches.
+    // Extra vertices must be interior to the deleted disk; boundary split
+    // vertices would require refining adjacent side faces before mesh handoff.
     let whole_triangle = whole_mesh.triangles().get(whole_face)?.0;
     let whole_points = triangle_points(whole_mesh, whole_triangle)?;
     let projection = choose_triangle_projection(&whole_points)?;
@@ -786,15 +787,14 @@ fn fan_faces_cover_triangle(
     let whole_sign = real_sign(&whole_area)?;
 
     let mut fan_faces = Vec::new();
-    let mut covered_edges = BTreeSet::new();
-    let mut interior_point = None::<Point3>;
+    let mut edge_counts = BTreeMap::<(usize, usize), usize>::new();
     let mut area_sum = Real::from(0);
 
     for (fan_face, fan_triangle) in fan_mesh.triangles().iter().enumerate() {
         if consumed_fan_faces.contains(&fan_face) {
             continue;
         }
-        let Some(candidate) = fan_triangle_in_whole_triangle(
+        let Some(area_abs) = fan_triangle_in_whole_triangle(
             &whole_points,
             projection,
             whole_sign,
@@ -805,35 +805,48 @@ fn fan_faces_cover_triangle(
             continue;
         };
 
-        if !covered_edges.insert(candidate.covered_edge) {
-            return Some(None);
-        }
-        match &interior_point {
-            Some(existing) if points_equal(existing, &candidate.interior_point) != Some(true) => {
+        for edge in normalized_triangle_edges(fan_triangle.0) {
+            let count = edge_counts.entry(edge).or_default();
+            *count += 1;
+            if *count > 2 {
                 return Some(None);
             }
-            Some(_) => {}
-            None => interior_point = Some(candidate.interior_point),
         }
-        area_sum += candidate.area_abs;
+        area_sum += area_abs;
         fan_faces.push(fan_face);
     }
 
-    if fan_faces.len() != 3 || covered_edges.len() != 3 {
+    if fan_faces.len() < 3 {
         return Some(None);
     }
     let whole_area_abs = real_abs(&whole_area)?;
     if compare_reals(&area_sum, &whole_area_abs).value() != Some(Ordering::Equal) {
         return Some(None);
     }
+    let boundary_edges = edge_counts
+        .iter()
+        .filter_map(|(&edge, &count)| (count == 1).then_some(edge))
+        .collect::<Vec<_>>();
+    if boundary_edges.len() != 3 {
+        return Some(None);
+    }
+    let boundary_vertices = boundary_edges
+        .iter()
+        .flat_map(|&(a, b)| [a, b])
+        .collect::<BTreeSet<_>>();
+    if boundary_vertices.len() != 3 {
+        return Some(None);
+    }
+    for vertex in boundary_vertices {
+        let point = fan_mesh.vertices().get(vertex)?;
+        if !whole_points
+            .iter()
+            .any(|whole_point| points_equal(whole_point, point) == Some(true))
+        {
+            return Some(None);
+        }
+    }
     Some(Some(fan_faces))
-}
-
-#[derive(Clone, Debug, PartialEq)]
-struct FanTriangleCandidate {
-    covered_edge: usize,
-    interior_point: Point3,
-    area_abs: Real,
 }
 
 fn fan_triangle_in_whole_triangle(
@@ -842,7 +855,7 @@ fn fan_triangle_in_whole_triangle(
     whole_sign: Sign,
     fan_mesh: &ExactMesh,
     fan_triangle: [usize; 3],
-) -> Option<Option<FanTriangleCandidate>> {
+) -> Option<Option<Real>> {
     let fan_points = triangle_points(fan_mesh, fan_triangle)?;
     if !fan_points
         .iter()
@@ -857,16 +870,7 @@ fn fan_triangle_in_whole_triangle(
         return Some(None);
     }
 
-    let mut labels = Vec::new();
-    let mut interior = None::<Point3>;
     for fan_point in &fan_points {
-        if let Some(label) = whole_points
-            .iter()
-            .position(|whole_point| points_equal(whole_point, fan_point) == Some(true))
-        {
-            labels.push(label);
-            continue;
-        }
         let projected = project_point3(fan_point, projection);
         let location = classify_point_triangle(
             &project_point3(&whole_points[0], projection),
@@ -875,31 +879,30 @@ fn fan_triangle_in_whole_triangle(
             &projected,
         )
         .value()?;
-        if location != TriangleLocation::Inside || interior.is_some() {
+        if !matches!(
+            location,
+            TriangleLocation::Inside | TriangleLocation::OnEdge | TriangleLocation::OnVertex
+        ) {
             return Some(None);
         }
-        interior = Some(fan_point.clone());
     }
-
-    if labels.len() != 2 {
-        return Some(None);
-    }
-    labels.sort_unstable();
-    let covered_edge = match labels.as_slice() {
-        [0, 1] => 0,
-        [1, 2] => 1,
-        [0, 2] => 2,
-        _ => return Some(None),
-    };
     let area_abs = real_abs(&fan_area)?;
     if compare_reals(&area_abs, &Real::from(0)).value() != Some(Ordering::Greater) {
         return Some(None);
     }
-    Some(Some(FanTriangleCandidate {
-        covered_edge,
-        interior_point: interior?,
-        area_abs,
-    }))
+    Some(Some(area_abs))
+}
+
+fn normalized_triangle_edges(triangle: [usize; 3]) -> [(usize, usize); 3] {
+    [
+        normalized_edge(triangle[0], triangle[1]),
+        normalized_edge(triangle[1], triangle[2]),
+        normalized_edge(triangle[2], triangle[0]),
+    ]
+}
+
+const fn normalized_edge(a: usize, b: usize) -> (usize, usize) {
+    if a < b { (a, b) } else { (b, a) }
 }
 
 /// Discover bounded cross-triangulated full-face adjacency patches.

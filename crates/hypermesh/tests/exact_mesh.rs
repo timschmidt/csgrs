@@ -1568,6 +1568,39 @@ fn exact_full_face_adjacent_union_is_publicly_replayable() {
 }
 
 #[test]
+fn full_face_adjacent_union_accepts_interior_subdivided_shared_face() {
+    let left = tetra_from_corners([0, 0, 0], [6, 0, 0], [0, 6, 0], [0, 0, 6]);
+    let right = ExactMesh::from_i64_triangles(
+        &[0, 0, 0, 6, 0, 0, 0, 6, 0, 2, 1, 0, 1, 2, 0, 0, 0, -6],
+        &[
+            0, 1, 3, //
+            0, 3, 4, //
+            1, 4, 3, //
+            1, 2, 4, //
+            2, 0, 4, //
+            0, 5, 1, //
+            1, 5, 2, //
+            2, 5, 0,
+        ],
+    )
+    .unwrap();
+
+    let union = materialize_full_face_adjacent_union(&left, &right, ValidationPolicy::CLOSED)
+        .expect("interior-subdivided shared face should certify as a retained patch");
+    assert!(union.shared_faces.is_empty(), "{union:?}");
+    assert_eq!(union.shared_patches.len(), 1, "{union:?}");
+    assert_eq!(union.shared_patches[0].left_faces, vec![0]);
+    assert_eq!(union.shared_patches[0].right_faces, vec![0, 1, 2, 3, 4]);
+    assert!(union.mesh.facts().mesh.closed_manifold);
+    union.validate().unwrap();
+    union.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(
+        union.freshness_against_sources(&left, &right),
+        FullFaceAdjacentUnionFreshness::Current
+    );
+}
+
+#[test]
 fn adjacent_union_completion_boolean_is_publicly_replayable() {
     let left_a = tetra_from_corners([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]);
     let left_b = tetra_from_corners([10, 0, 0], [12, 0, 0], [10, 2, 0], [10, 0, 2]);
