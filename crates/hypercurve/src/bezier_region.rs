@@ -1429,6 +1429,11 @@ fn validate_report_length(
     evidence_name: &str,
     evidence_count: usize,
 ) -> CurveResult<()> {
+    if loop_count == 0 {
+        return Err(CurveError::Topology(
+            "retained role report must carry at least one loop".into(),
+        ));
+    }
     if loop_count != evidence_count {
         return Err(CurveError::Topology(format!(
             "retained role report {evidence_name} count does not match loop count"
