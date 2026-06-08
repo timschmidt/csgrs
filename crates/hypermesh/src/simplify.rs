@@ -174,10 +174,25 @@ pub fn simplify_selected_cell_complex(
         selected.faces.len(),
         &selected.volume_adjacencies,
         require_volume_orientations,
+        &mut blockers,
+    );
+    let selected_face_set = retained_selected_face_membership(
+        selected.faces.len(),
+        &selected.selected_faces,
+        &mut blockers,
+    );
+    validate_selected_face_orientations(
+        selected.faces.len(),
+        &selected_face_set,
+        &selected_face_orientations,
+        &mut blockers,
     );
 
     for source_face in selected.selected_faces {
-        let mut face = selected.faces[source_face].clone();
+        let Some(mut face) = selected.faces.get(source_face).cloned() else {
+            blockers.push(ExactArrangementBlocker::NonManifoldCellComplex);
+            continue;
+        };
         let require_volume_orientation = require_volume_orientations
             && volume_adjacency_faces
                 .get(source_face)
@@ -797,6 +812,7 @@ fn volume_adjacency_face_membership(
     face_count: usize,
     volume_adjacencies: &[super::arrangement3d::ArrangementVolumeAdjacency],
     enabled: bool,
+    blockers: &mut Vec<ExactArrangementBlocker>,
 ) -> Vec<bool> {
     let mut membership = vec![false; face_count];
     if !enabled {
@@ -804,12 +820,46 @@ fn volume_adjacency_face_membership(
     }
     for adjacency in volume_adjacencies {
         for side in &adjacency.oriented_face_sides {
-            if let Some(member) = membership.get_mut(side.face_cell) {
-                *member = true;
+            match membership.get_mut(side.face_cell) {
+                Some(member) => *member = true,
+                None => blockers.push(ExactArrangementBlocker::NonManifoldCellComplex),
             }
         }
     }
     membership
+}
+
+fn retained_selected_face_membership(
+    face_count: usize,
+    selected_faces: &[usize],
+    blockers: &mut Vec<ExactArrangementBlocker>,
+) -> Vec<bool> {
+    let mut membership = vec![false; face_count];
+    for &face in selected_faces {
+        match membership.get_mut(face) {
+            Some(member) => *member = true,
+            None => blockers.push(ExactArrangementBlocker::NonManifoldCellComplex),
+        }
+    }
+    membership
+}
+
+fn validate_selected_face_orientations(
+    face_count: usize,
+    selected_faces: &[bool],
+    orientations: &[ExactSelectedFaceOrientation],
+    blockers: &mut Vec<ExactArrangementBlocker>,
+) {
+    for orientation in orientations {
+        if orientation.face >= face_count
+            || !selected_faces
+                .get(orientation.face)
+                .copied()
+                .unwrap_or(false)
+        {
+            blockers.push(ExactArrangementBlocker::NonManifoldCellComplex);
+        }
+    }
 }
 
 const fn side_key(side: super::graph::MeshSide) -> usize {
@@ -1709,6 +1759,81 @@ mod tests {
         assert_eq!(
             simplify_selected_cell_complex(selected, ExactRegularizationPolicy::REGULARIZED_SOLID),
             Err(ExactArrangementBlocker::UnresolvedRegionClassification)
+        );
+    }
+
+    #[test]
+    fn simplification_rejects_out_of_range_selected_face() {
+        let points = [p(0, 0, 0), p(1, 0, 0), p(0, 1, 0)];
+        let selected = ExactSelectedCellComplex {
+            faces: vec![selected_face(0, &[0, 1, 2], &points)],
+            volume_regions: Vec::new(),
+            volume_adjacencies: Vec::new(),
+            lower_dimensional_artifacts: Vec::new(),
+            selected_faces: vec![1],
+            selected_face_orientations: Vec::new(),
+            selected_volume_regions: Vec::new(),
+            operation: ExactBooleanOperation::Union,
+            blockers: Vec::new(),
+        };
+
+        assert_eq!(
+            simplify_selected_cell_complex(selected, ExactRegularizationPolicy::REGULARIZED_SOLID),
+            Err(ExactArrangementBlocker::NonManifoldCellComplex)
+        );
+    }
+
+    #[test]
+    fn simplification_rejects_orientation_for_unselected_face() {
+        let left = [p(0, 0, 0), p(1, 0, 0), p(0, 1, 0)];
+        let right = [p(2, 0, 0), p(3, 0, 0), p(2, 1, 0)];
+        let selected = ExactSelectedCellComplex {
+            faces: vec![
+                selected_face(0, &[0, 1, 2], &left),
+                selected_face(1, &[3, 4, 5], &right),
+            ],
+            volume_regions: Vec::new(),
+            volume_adjacencies: Vec::new(),
+            lower_dimensional_artifacts: Vec::new(),
+            selected_faces: vec![0],
+            selected_face_orientations: vec![ExactSelectedFaceOrientation {
+                face: 1,
+                reverse: false,
+                from_volume_adjacency: false,
+            }],
+            selected_volume_regions: Vec::new(),
+            operation: ExactBooleanOperation::Union,
+            blockers: Vec::new(),
+        };
+
+        assert_eq!(
+            simplify_selected_cell_complex(selected, ExactRegularizationPolicy::REGULARIZED_SOLID),
+            Err(ExactArrangementBlocker::NonManifoldCellComplex)
+        );
+    }
+
+    #[test]
+    fn simplification_rejects_out_of_range_volume_adjacency_face() {
+        let points = [p(0, 0, 0), p(1, 0, 0), p(0, 1, 0)];
+        let selected = ExactSelectedCellComplex {
+            faces: vec![selected_face(0, &[0, 1, 2], &points)],
+            volume_regions: Vec::new(),
+            volume_adjacencies: vec![dummy_volume_adjacency(1)],
+            lower_dimensional_artifacts: Vec::new(),
+            selected_faces: vec![0],
+            selected_face_orientations: vec![ExactSelectedFaceOrientation {
+                face: 0,
+                reverse: false,
+                from_volume_adjacency: false,
+            }],
+            selected_volume_regions: Vec::new(),
+            operation: ExactBooleanOperation::Union,
+            blockers: Vec::new(),
+        };
+
+        assert_eq!(
+            simplify_selected_cell_complex(selected, ExactRegularizationPolicy::REGULARIZED_SOLID),
+            Err(ExactArrangementBlocker::NonManifoldCellComplex)
         );
     }
 
