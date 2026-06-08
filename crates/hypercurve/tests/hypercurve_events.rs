@@ -8,6 +8,10 @@ fn s(value: i32) -> Real {
     value.into()
 }
 
+fn q(numerator: i32, denominator: i32) -> Real {
+    (Real::from(numerator) / Real::from(denominator)).unwrap()
+}
+
 fn p(x: i32, y: i32) -> hypercurve::Point2 {
     hypercurve::Point2::new(s(x), s(y))
 }
@@ -100,8 +104,8 @@ fn contour_intersection_set_constructor_validates_event_parameters() {
         a_segment_index: 0,
         b_segment_index: 1,
         point: p(1, 0),
-        a_param: s(0),
-        b_param: s(1),
+        a_param: q(1, 2),
+        b_param: q(1, 2),
         kind: IntersectionKind::Crossing,
     });
     ContourIntersectionSet::new(vec![point.clone()]).unwrap();
@@ -112,6 +116,27 @@ fn contour_intersection_set_constructor_validates_event_parameters() {
     };
     outside.a_param = s(-1);
     assert_topology_error(ContourIntersectionSet::new(vec![outside_point]));
+
+    let mut endpoint_crossing = point.clone();
+    let ContourIntersection::Point(endpoint) = &mut endpoint_crossing else {
+        panic!("expected point event");
+    };
+    endpoint.a_param = s(0);
+    assert_topology_error(ContourIntersectionSet::new(vec![endpoint_crossing]));
+
+    let mut interior_endpoint = point.clone();
+    let ContourIntersection::Point(interior) = &mut interior_endpoint else {
+        panic!("expected point event");
+    };
+    interior.kind = IntersectionKind::Endpoint;
+    assert_topology_error(ContourIntersectionSet::new(vec![interior_endpoint]));
+
+    let mut overlap_kind = point;
+    let ContourIntersection::Point(overlap) = &mut overlap_kind else {
+        panic!("expected point event");
+    };
+    overlap.kind = IntersectionKind::Overlap;
+    assert_topology_error(ContourIntersectionSet::new(vec![overlap_kind]));
 
     let overlap_segment = Segment2::Line(LineSeg2::try_new(p(0, 0), p(1, 0)).unwrap());
     let overlap = ContourIntersection::Overlap(ContourOverlapIntersection {

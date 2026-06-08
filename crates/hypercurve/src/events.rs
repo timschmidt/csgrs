@@ -12,7 +12,8 @@ use hyperreal::Real;
 
 use crate::bbox::{Aabb2, aabbs_decided_disjoint, decided_contour_aabb, decided_segment_aabb};
 use crate::classify::{
-    compare_reals, compare_reals_for_split_ordering, in_closed_unit_interval, is_zero, min_real,
+    at_unit_interval_endpoint, compare_reals, compare_reals_for_split_ordering,
+    in_closed_unit_interval, is_zero, min_real,
 };
 use crate::{
     ArcArcIntersection, Classification, Contour2, CurveError, CurvePolicy, CurveResult,
@@ -124,7 +125,8 @@ fn validate_contour_intersection_event(
     match event {
         ContourIntersection::Point(point) => {
             validate_event_unit_parameter(&point.a_param, policy, "first point")?;
-            validate_event_unit_parameter(&point.b_param, policy, "second point")
+            validate_event_unit_parameter(&point.b_param, policy, "second point")?;
+            validate_point_event_kind(point, policy)
         }
         ContourIntersection::Overlap(overlap) => {
             validate_overlap_event_geometry(&overlap.segment, policy)?;
@@ -132,6 +134,39 @@ fn validate_contour_intersection_event(
             validate_event_unit_range(&overlap.b_range, policy, "second overlap")
         }
         ContourIntersection::Uncertain(_) => Ok(()),
+    }
+}
+
+fn validate_point_event_kind(
+    point: &ContourPointIntersection,
+    policy: &CurvePolicy,
+) -> CurveResult<()> {
+    let Some(a_endpoint) = at_unit_interval_endpoint(&point.a_param, policy) else {
+        return Err(CurveError::Topology(
+            "contour point event first endpoint status must be certified".into(),
+        ));
+    };
+    let Some(b_endpoint) = at_unit_interval_endpoint(&point.b_param, policy) else {
+        return Err(CurveError::Topology(
+            "contour point event second endpoint status must be certified".into(),
+        ));
+    };
+    let endpoint_contact = a_endpoint || b_endpoint;
+    match (point.kind, endpoint_contact) {
+        (IntersectionKind::Endpoint, true)
+        | (IntersectionKind::Crossing | IntersectionKind::Tangent, false) => Ok(()),
+        (IntersectionKind::Overlap, _) => Err(CurveError::Topology(
+            "contour point event must not carry overlap contact kind".into(),
+        )),
+        (IntersectionKind::Endpoint, false) => Err(CurveError::Topology(
+            "contour endpoint event kind must carry endpoint parameter evidence".into(),
+        )),
+        (IntersectionKind::Crossing | IntersectionKind::Tangent, true) => {
+            Err(CurveError::Topology(
+                "contour interior point event kind must not carry endpoint parameter evidence"
+                    .into(),
+            ))
+        }
     }
 }
 
