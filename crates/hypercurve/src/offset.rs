@@ -552,7 +552,7 @@ fn classify_joined_topology_error<T>(error: CurveError) -> Classification<T> {
         CurveError::AmbiguousCurveStringConnection => {
             Classification::Uncertain(UncertaintyReason::RealSign)
         }
-        error => unreachable!("joined offset construction returned unexpected error: {error}"),
+        _ => Classification::Uncertain(UncertaintyReason::Unsupported),
     }
 }
 
@@ -695,16 +695,12 @@ fn joined_offset_segments(
             Classification::Decided(segment) => segment,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
+        let adjusted_end = adjusted.end().clone();
         joined.push(adjusted);
 
         if let Some(OffsetJoin::Round { center }) = joins.get(index) {
-            let from = joined
-                .last()
-                .expect("current adjusted offset segment was just pushed")
-                .end()
-                .clone();
             let to = offsets[(index + 1) % offsets.len()].start().clone();
-            match append_round_join_if_needed(&mut joined, &from, &to, center, policy)? {
+            match append_round_join_if_needed(&mut joined, &adjusted_end, &to, center, policy)? {
                 Classification::Decided(()) => {}
                 Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
             }
@@ -883,9 +879,7 @@ fn round_join_arc(
         Err(CurveError::ZeroRadiusArc | CurveError::RadiusMismatch) => {
             Classification::Uncertain(UncertaintyReason::Unsupported)
         }
-        Err(error) => {
-            unreachable!("round join arc construction returned unexpected error: {error}")
-        }
+        Err(_) => Classification::Uncertain(UncertaintyReason::Unsupported),
     }
 }
 
