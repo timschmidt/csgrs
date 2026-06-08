@@ -228,6 +228,37 @@ fn boolean_fragment_selection_emits_directed_boundary_fragments() {
 }
 
 #[test]
+fn boolean_fragment_selection_emit_rejects_incomplete_or_foreign_inventory() {
+    let (first, second, fragments) = overlapping_fragments();
+    let Classification::Decided(union) = fragments
+        .classify_for_boolean(
+            &first.as_view(),
+            &second.as_view(),
+            BooleanOp::Union,
+            &policy(),
+        )
+        .unwrap()
+    else {
+        panic!("expected decided union selection");
+    };
+
+    let mut incomplete = union.classifications().to_vec();
+    incomplete.pop();
+    let incomplete = BooleanFragmentSelection::new(incomplete).unwrap();
+    assert_topology_error(incomplete.emit_boundary_fragments(&fragments));
+
+    let mut foreign = union.classifications().to_vec();
+    foreign.push(BooleanFragmentClassification {
+        key: RegionContourKey::new(RegionSide::First, RegionContourRole::Material, 99),
+        fragment_index: 0,
+        opposite_location: RegionPointLocation::Outside,
+        action: BooleanFragmentAction::Discard,
+    });
+    let foreign = BooleanFragmentSelection::new(foreign).unwrap();
+    assert_topology_error(foreign.emit_boundary_fragments(&fragments));
+}
+
+#[test]
 fn boolean_boundary_chain_assembly_keeps_disjoint_loops_separate() {
     let first = Region2::from_material_contours(vec![rectangle(0, 0, 2, 2)]);
     let second = Region2::from_material_contours(vec![rectangle(4, 4, 6, 6)]);

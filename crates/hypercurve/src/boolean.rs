@@ -118,6 +118,8 @@ impl BooleanFragmentSelection {
         &self,
         fragments: &RegionFragmentSet,
     ) -> CurveResult<BooleanBoundaryFragmentSet> {
+        validate_boolean_selection_matches_fragments(&self.classifications, fragments)?;
+
         let mut directed_fragments = Vec::new();
         let mut unresolved_boundaries = Vec::new();
 
@@ -250,6 +252,45 @@ fn validate_boolean_fragment_classifications(
             "boolean fragment selection must not classify the same source fragment twice".into(),
         ));
     }
+    Ok(())
+}
+
+fn validate_boolean_selection_matches_fragments(
+    classifications: &[BooleanFragmentClassification],
+    fragments: &RegionFragmentSet,
+) -> CurveResult<()> {
+    let mut classified_owners = Vec::with_capacity(classifications.len());
+    for classification in classifications {
+        let Some(contour_fragments) = fragments.fragments_for_contour(classification.key) else {
+            return Err(CurveError::Topology(
+                "boolean classification references a contour outside supplied fragments".into(),
+            ));
+        };
+        if classification.fragment_index >= contour_fragments.fragments.len() {
+            return Err(CurveError::Topology(
+                "boolean classification references a fragment outside supplied fragments".into(),
+            ));
+        }
+        classified_owners.push((classification.key, classification.fragment_index));
+    }
+
+    let mut expected_owners = Vec::new();
+    for contour_fragments in fragments.contours() {
+        expected_owners.reserve(contour_fragments.fragments.len());
+        for fragment_index in 0..contour_fragments.fragments.len() {
+            expected_owners.push((contour_fragments.key, fragment_index));
+        }
+    }
+
+    classified_owners.sort_unstable();
+    expected_owners.sort_unstable();
+    if classified_owners != expected_owners {
+        return Err(CurveError::Topology(
+            "boolean fragment selection must classify every supplied source fragment exactly once"
+                .into(),
+        ));
+    }
+
     Ok(())
 }
 
