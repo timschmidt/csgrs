@@ -217,7 +217,8 @@ fn closed_polynomial_arrangement_materializes_retained_region_with_exact_area() 
             .split_at_parameters(&[exact(q(1, 2))], &policy())
             .unwrap(),
     );
-    let graph = BezierArrangementGraph2::from_split_materializations(&[upper_split, lower_split]);
+    let graph =
+        BezierArrangementGraph2::from_split_materializations(&[upper_split, lower_split]).unwrap();
     let traversal = decided(graph.traverse_branch_free(&policy()));
     let region = decided(BezierRegion2::from_arrangement_traversal(
         &graph, &traversal,
@@ -234,7 +235,8 @@ fn open_arrangement_chain_does_not_materialize_region() {
     let second = QuadraticBezier2::new(p(2, 0), p(3, -1), p(4, 0));
     let first_split = decided(first.split_at_parameters(&[], &policy()).unwrap());
     let second_split = decided(second.split_at_parameters(&[], &policy()).unwrap());
-    let graph = BezierArrangementGraph2::from_split_materializations(&[first_split, second_split]);
+    let graph =
+        BezierArrangementGraph2::from_split_materializations(&[first_split, second_split]).unwrap();
     let traversal = decided(graph.traverse_branch_free(&policy()));
 
     assert_eq!(
@@ -289,7 +291,8 @@ fn conic_region_boundary_materializes_with_exact_area() {
             .split_at_parameters(&[exact(q(1, 2))], &policy())
             .unwrap(),
     );
-    let graph = BezierArrangementGraph2::from_split_materializations(&[upper_split, lower_split]);
+    let graph =
+        BezierArrangementGraph2::from_split_materializations(&[upper_split, lower_split]).unwrap();
     let traversal = decided(graph.traverse_branch_free(&policy()));
     let region = decided(BezierRegion2::from_arrangement_traversal(
         &graph, &traversal,
@@ -989,7 +992,8 @@ fn retained_curve_envelope_includes_native_bezier_interior_extrema() {
     let graph = BezierArrangementGraph2::from_split_materializations(&[
         decided(upper.split_at_parameters(&[], &policy()).unwrap()),
         decided(lower.split_at_parameters(&[], &policy()).unwrap()),
-    ]);
+    ])
+    .unwrap();
     let traversal = decided(graph.traverse_retained_with_tangent_order(&policy()));
     let retained = decided(BezierRetainedRegion2::from_retained_arrangement_traversal(
         &graph, &traversal,
@@ -1262,7 +1266,8 @@ proptest! {
         let graph = BezierArrangementGraph2::from_split_materializations(&[
             decided(upper.split_at_parameters(&[exact(q(1, 2))], &policy()).unwrap()),
             decided(lower.split_at_parameters(&[exact(q(1, 2))], &policy()).unwrap()),
-        ]);
+        ])
+        .unwrap();
         let traversal = decided(graph.traverse_branch_free(&policy()));
         let region = decided(BezierRegion2::from_arrangement_traversal(&graph, &traversal));
 

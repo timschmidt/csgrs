@@ -97,7 +97,9 @@ impl BezierArrangementFragment2 {
 
 impl BezierArrangementGraph2 {
     /// Constructs a retained graph from split materializations in source order.
-    pub fn from_split_materializations(materializations: &[BezierSplitMaterialization2]) -> Self {
+    pub fn from_split_materializations(
+        materializations: &[BezierSplitMaterialization2],
+    ) -> CurveResult<Self> {
         let fragments = materializations
             .iter()
             .enumerate()
@@ -114,7 +116,6 @@ impl BezierArrangementGraph2 {
             })
             .collect();
         Self::new(fragments)
-            .expect("split materializations generate unique retained Bezier arrangement provenance")
     }
 
     /// Constructs a graph from already-retained fragments.

@@ -221,7 +221,8 @@ fn exact_split_fragments_traverse_as_one_closed_bezier_chain() {
             .unwrap(),
     );
 
-    let graph = BezierArrangementGraph2::from_split_materializations(&[upper_split, lower_split]);
+    let graph =
+        BezierArrangementGraph2::from_split_materializations(&[upper_split, lower_split]).unwrap();
     let traversal = decided(graph.traverse_branch_free(&policy()));
 
     assert_eq!(graph.len(), 4);
@@ -506,7 +507,7 @@ fn algebraic_split_boundary_blocks_graph_traversal() {
             .split_at_parameters(&[algebraic_sqrt_half(), exact(q(4, 5))], &policy())
             .unwrap(),
     );
-    let graph = BezierArrangementGraph2::from_split_materializations(&[split]);
+    let graph = BezierArrangementGraph2::from_split_materializations(&[split]).unwrap();
 
     assert_eq!(
         graph.traverse_branch_free(&policy()),
@@ -1633,7 +1634,9 @@ proptest! {
         let second = QuadraticBezier2::new(p(2, 0), p(3, -middle_y), p(4, 0));
         let first_split = decided(first.split_at_parameters(&[], &policy()).unwrap());
         let second_split = decided(second.split_at_parameters(&[], &policy()).unwrap());
-        let graph = BezierArrangementGraph2::from_split_materializations(&[first_split, second_split]);
+        let graph =
+            BezierArrangementGraph2::from_split_materializations(&[first_split, second_split])
+                .unwrap();
         let traversal = match graph.traverse_branch_free(&policy()) {
             Classification::Decided(value) => value,
             Classification::Uncertain(reason) => {
