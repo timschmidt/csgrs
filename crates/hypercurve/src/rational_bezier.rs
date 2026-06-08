@@ -1544,10 +1544,10 @@ fn isolate_scalar_bernstein_roots(
         .collect::<Result<Vec<_>, _>>()?;
 
     if signs[0] == RealSign::Zero {
-        push_unique_graph_parameter(exact_parameters, start.clone(), policy);
+        push_unique_graph_parameter(exact_parameters, start.clone(), policy)?;
     }
     if signs[signs.len() - 1] == RealSign::Zero {
-        push_unique_graph_parameter(exact_parameters, end.clone(), policy);
+        push_unique_graph_parameter(exact_parameters, end.clone(), policy)?;
     }
 
     let strict_signs = signs
@@ -1560,7 +1560,7 @@ fn isolate_scalar_bernstein_roots(
             spans,
             BezierMonotoneSpan::new(start, end).map_err(|_| UncertaintyReason::Ordering)?,
             policy,
-        );
+        )?;
         return Ok(());
     }
     if strict_signs.iter().all(|sign| *sign == strict_signs[0]) {
@@ -1570,7 +1570,7 @@ fn isolate_scalar_bernstein_roots(
     let mid = ((&start + &end) / Real::from(2_i8)).map_err(|_| UncertaintyReason::Unsupported)?;
     let (left, right) = subdivide_scalar_bernstein_half(&controls)?;
     if is_zero(&left[left.len() - 1], policy) == Some(true) {
-        push_unique_graph_parameter(exact_parameters, mid.clone(), policy);
+        push_unique_graph_parameter(exact_parameters, mid.clone(), policy)?;
     }
 
     if depth >= 32 {
@@ -1578,7 +1578,7 @@ fn isolate_scalar_bernstein_roots(
             spans,
             BezierMonotoneSpan::new(start, end).map_err(|_| UncertaintyReason::Ordering)?,
             policy,
-        );
+        )?;
         return Ok(());
     }
 
@@ -2136,7 +2136,7 @@ fn relation_from_mixed_graph_order(
             }
 
             for parameter in parameters {
-                push_unique_graph_region_span(&mut spans, zero_width_span(parameter)?, policy);
+                push_unique_graph_region_span(&mut spans, zero_width_span(parameter)?, policy)?;
             }
             let regions = spans
                 .into_iter()
@@ -2759,7 +2759,9 @@ fn isolate_rational_quadratic_line_roots(
                 Ok(span) => span,
                 Err(reason) => return Classification::Uncertain(reason),
             };
-            push_unique_graph_region_span(&mut spans, span, policy);
+            if let Err(reason) = push_unique_graph_region_span(&mut spans, span, policy) {
+                return Classification::Uncertain(reason);
+            }
         }
         return Classification::Decided(BezierLineRelation::IsolatedIntersections { spans });
     }
@@ -2795,7 +2797,9 @@ fn rational_line_contact_relation_from_isolation(
                 Ok(span) => span,
                 Err(reason) => return Classification::Uncertain(reason),
             };
-            push_unique_graph_region_span(&mut spans, span, policy);
+            if let Err(reason) = push_unique_graph_region_span(&mut spans, span, policy) {
+                return Classification::Uncertain(reason);
+            }
         }
         return Classification::Decided(BezierLineContactRelation::IsolatedIntersections { spans });
     }
@@ -2826,7 +2830,9 @@ fn rational_line_contacts_from_parameters(
             Ok(contact) => contact,
             Err(_) => return Classification::Uncertain(UncertaintyReason::Ordering),
         };
-        push_unique_rational_line_contact(&mut contacts, contact, policy);
+        if let Err(reason) = push_unique_rational_line_contact(&mut contacts, contact, policy) {
+            return Classification::Uncertain(reason);
+        }
     }
     Classification::Decided(BezierLineContactRelation::Contacts { contacts })
 }
@@ -2883,16 +2889,21 @@ fn push_unique_rational_line_contact(
     contacts: &mut Vec<BezierLineContact>,
     contact: BezierLineContact,
     policy: &CurvePolicy,
-) {
-    if contacts.iter().any(|existing| {
-        compare_reals(existing.parameter(), contact.parameter(), policy) == Some(Ordering::Equal)
-    }) {
-        return;
+) -> Result<(), UncertaintyReason> {
+    let mut insert_at = contacts.len();
+    for (index, existing) in contacts.iter().enumerate() {
+        match compare_reals(existing.parameter(), contact.parameter(), policy) {
+            Some(Ordering::Equal) => return Ok(()),
+            Some(Ordering::Greater) => {
+                insert_at = index;
+                break;
+            }
+            Some(Ordering::Less) => {}
+            None => return Err(UncertaintyReason::Ordering),
+        }
     }
-    contacts.push(contact);
-    contacts.sort_by(|a, b| {
-        compare_reals(a.parameter(), b.parameter(), policy).unwrap_or(Ordering::Equal)
-    });
+    contacts.insert(insert_at, contact);
+    Ok(())
 }
 
 fn same_parameter_candidates_from_root_sets(
@@ -2951,7 +2962,7 @@ fn relation_from_matching_weight_graph_root_cover(
 
             let mut regions = spans;
             for parameter in exact {
-                push_unique_graph_region_span(&mut regions, zero_width_span(parameter)?, policy);
+                push_unique_graph_region_span(&mut regions, zero_width_span(parameter)?, policy)?;
             }
             let regions = regions
                 .into_iter()
@@ -2977,10 +2988,10 @@ fn isolate_scalar_quadratic_roots(
         .collect::<Result<Vec<_>, _>>()?;
 
     if signs[0] == RealSign::Zero {
-        push_unique_graph_parameter(exact_parameters, start.clone(), policy);
+        push_unique_graph_parameter(exact_parameters, start.clone(), policy)?;
     }
     if signs[2] == RealSign::Zero {
-        push_unique_graph_parameter(exact_parameters, end.clone(), policy);
+        push_unique_graph_parameter(exact_parameters, end.clone(), policy)?;
     }
 
     let strict_signs = signs
@@ -2993,7 +3004,7 @@ fn isolate_scalar_quadratic_roots(
             spans,
             BezierMonotoneSpan::new(start, end).map_err(|_| UncertaintyReason::Ordering)?,
             policy,
-        );
+        )?;
         return Ok(());
     }
     if strict_signs.iter().all(|sign| *sign == strict_signs[0]) {
@@ -3003,7 +3014,7 @@ fn isolate_scalar_quadratic_roots(
     let mid = ((&start + &end) / Real::from(2_i8)).map_err(|_| UncertaintyReason::Unsupported)?;
     let mid_value = scalar_quadratic_at_half(&controls)?;
     if is_zero(&mid_value, policy) == Some(true) {
-        push_unique_graph_parameter(exact_parameters, mid.clone(), policy);
+        push_unique_graph_parameter(exact_parameters, mid.clone(), policy)?;
     }
 
     if depth >= 32 {
@@ -3011,7 +3022,7 @@ fn isolate_scalar_quadratic_roots(
             spans,
             BezierMonotoneSpan::new(start, end).map_err(|_| UncertaintyReason::Ordering)?,
             policy,
-        );
+        )?;
         return Ok(());
     }
 
@@ -3047,30 +3058,54 @@ fn subdivide_scalar_quadratic_half(
     ))
 }
 
-fn push_unique_graph_parameter(values: &mut Vec<Real>, value: Real, policy: &CurvePolicy) {
-    if values
-        .iter()
-        .any(|existing| compare_reals(existing, &value, policy) == Some(Ordering::Equal))
-    {
-        return;
+fn push_unique_graph_parameter(
+    values: &mut Vec<Real>,
+    value: Real,
+    policy: &CurvePolicy,
+) -> Result<(), UncertaintyReason> {
+    let mut insert_at = values.len();
+    for (index, existing) in values.iter().enumerate() {
+        match compare_reals(existing, &value, policy) {
+            Some(Ordering::Equal) => return Ok(()),
+            Some(Ordering::Greater) => {
+                insert_at = index;
+                break;
+            }
+            Some(Ordering::Less) => {}
+            None => return Err(UncertaintyReason::Ordering),
+        }
     }
-    values.push(value);
-    values.sort_by(|a, b| compare_reals(a, b, policy).unwrap_or(Ordering::Equal));
+    values.insert(insert_at, value);
+    Ok(())
 }
 
 fn push_unique_graph_region_span(
     spans: &mut Vec<BezierMonotoneSpan>,
     span: BezierMonotoneSpan,
     policy: &CurvePolicy,
-) {
-    if spans.iter().any(|existing| {
-        compare_reals(existing.start(), span.start(), policy) == Some(Ordering::Equal)
-            && compare_reals(existing.end(), span.end(), policy) == Some(Ordering::Equal)
-    }) {
-        return;
+) -> Result<(), UncertaintyReason> {
+    let mut insert_at = spans.len();
+    for (index, existing) in spans.iter().enumerate() {
+        match compare_reals(existing.start(), span.start(), policy) {
+            Some(Ordering::Less) => {}
+            Some(Ordering::Greater) => {
+                insert_at = index;
+                break;
+            }
+            Some(Ordering::Equal) => match compare_reals(existing.end(), span.end(), policy) {
+                Some(Ordering::Equal) => return Ok(()),
+                Some(Ordering::Greater) => {
+                    insert_at = index;
+                    break;
+                }
+                Some(Ordering::Less) => {}
+                None => return Err(UncertaintyReason::Ordering),
+            },
+            None => return Err(UncertaintyReason::Ordering),
+        }
     }
-    spans.push(span);
-    spans.sort_by(|a, b| compare_reals(a.start(), b.start(), policy).unwrap_or(Ordering::Equal));
+    spans.insert(insert_at, span);
+    Ok(())
 }
 
 fn rational_polynomial_endpoint_intersections(

@@ -1736,7 +1736,7 @@ fn spans_with_exact_parameters(
 ) -> Result<Vec<BezierMonotoneSpan>, UncertaintyReason> {
     let mut all = spans.to_vec();
     for parameter in exact {
-        push_unique_span(&mut all, zero_width_span(parameter.clone())?, policy);
+        push_unique_span(&mut all, zero_width_span(parameter.clone())?, policy)?;
     }
     Ok(all)
 }
@@ -1835,7 +1835,11 @@ fn cubic_dyadic_parameters_for_point(
     };
     for parameter in candidates {
         match point_coordinates_equal(&curve.point_at(parameter.clone()), point, policy) {
-            Some(true) => push_unique_sorted(&mut parameters, parameter, policy),
+            Some(true) => {
+                if let Err(reason) = push_unique_sorted(&mut parameters, parameter, policy) {
+                    return Classification::Uncertain(reason);
+                }
+            }
             Some(false) => {}
             None => return Classification::Uncertain(UncertaintyReason::RealSign),
         }
@@ -2335,7 +2339,9 @@ fn graph_contact_order_over_shared_axis(
                         Ok(contact) => contact,
                         Err(_) => return Classification::Uncertain(UncertaintyReason::Ordering),
                     };
-                    push_unique_graph_contact(&mut contacts, contact, policy);
+                    if let Err(reason) = push_unique_graph_contact(&mut contacts, contact, policy) {
+                        return Classification::Uncertain(reason);
+                    }
                 }
                 Classification::Decided(BezierMonotoneGraphContactOrder::IntersectsOrTouches {
                     contacts,
@@ -2975,7 +2981,9 @@ fn quadratic_line_contact_relation(
             Ok(contact) => contact,
             Err(_) => return Classification::Uncertain(UncertaintyReason::Ordering),
         };
-        push_unique_line_contact(&mut contacts, contact, policy);
+        if let Err(reason) = push_unique_line_contact(&mut contacts, contact, policy) {
+            return Classification::Uncertain(reason);
+        }
     }
     Classification::Decided(BezierLineContactRelation::Contacts { contacts })
 }
@@ -3024,7 +3032,9 @@ fn cubic_line_contact_relation(
             Ok(contact) => contact,
             Err(_) => return Classification::Uncertain(UncertaintyReason::Ordering),
         };
-        push_unique_line_contact(&mut contacts, contact, policy);
+        if let Err(reason) = push_unique_line_contact(&mut contacts, contact, policy) {
+            return Classification::Uncertain(reason);
+        }
     }
     Classification::Decided(BezierLineContactRelation::Contacts { contacts })
 }
@@ -3061,32 +3071,42 @@ fn push_unique_line_contact(
     contacts: &mut Vec<BezierLineContact>,
     contact: BezierLineContact,
     policy: &CurvePolicy,
-) {
-    if contacts.iter().any(|existing| {
-        compare_reals(existing.parameter(), contact.parameter(), policy) == Some(Ordering::Equal)
-    }) {
-        return;
+) -> Result<(), UncertaintyReason> {
+    let mut insert_at = contacts.len();
+    for (index, existing) in contacts.iter().enumerate() {
+        match compare_reals(existing.parameter(), contact.parameter(), policy) {
+            Some(Ordering::Equal) => return Ok(()),
+            Some(Ordering::Greater) => {
+                insert_at = index;
+                break;
+            }
+            Some(Ordering::Less) => {}
+            None => return Err(UncertaintyReason::Ordering),
+        }
     }
-    contacts.push(contact);
-    contacts.sort_by(|a, b| {
-        compare_reals(a.parameter(), b.parameter(), policy).unwrap_or(Ordering::Equal)
-    });
+    contacts.insert(insert_at, contact);
+    Ok(())
 }
 
 fn push_unique_graph_contact(
     contacts: &mut Vec<BezierGraphContact>,
     contact: BezierGraphContact,
     policy: &CurvePolicy,
-) {
-    if contacts.iter().any(|existing| {
-        compare_reals(existing.parameter(), contact.parameter(), policy) == Some(Ordering::Equal)
-    }) {
-        return;
+) -> Result<(), UncertaintyReason> {
+    let mut insert_at = contacts.len();
+    for (index, existing) in contacts.iter().enumerate() {
+        match compare_reals(existing.parameter(), contact.parameter(), policy) {
+            Some(Ordering::Equal) => return Ok(()),
+            Some(Ordering::Greater) => {
+                insert_at = index;
+                break;
+            }
+            Some(Ordering::Less) => {}
+            None => return Err(UncertaintyReason::Ordering),
+        }
     }
-    contacts.push(contact);
-    contacts.sort_by(|a, b| {
-        compare_reals(a.parameter(), b.parameter(), policy).unwrap_or(Ordering::Equal)
-    });
+    contacts.insert(insert_at, contact);
+    Ok(())
 }
 
 fn quadratic_parameters_for_point(
@@ -3167,7 +3187,11 @@ fn quadratic_point_parameters_from_root_sets(
     for candidate in candidates {
         let curve_point = quadratic_point_at_controls(controls, candidate.clone());
         match point_equal(&curve_point, point, policy) {
-            Some(true) => push_unique_sorted(&mut parameters, candidate, policy),
+            Some(true) => {
+                if let Err(reason) = push_unique_sorted(&mut parameters, candidate, policy) {
+                    return Classification::Uncertain(reason);
+                }
+            }
             Some(false) => {}
             None => return Classification::Uncertain(UncertaintyReason::RealSign),
         }
@@ -3271,7 +3295,7 @@ fn merge_exact_parameters_into_spans(
     // and later topology decisions; see Yap, "Towards Exact Geometric
     // Computation," Computational Geometry 7.1-2 (1997).
     for parameter in exact_parameters {
-        push_unique_span(spans, zero_width_span(parameter)?, policy);
+        push_unique_span(spans, zero_width_span(parameter)?, policy)?;
     }
     Ok(())
 }
@@ -3299,10 +3323,10 @@ fn isolate_scalar_cubic_roots(
         .collect::<Result<Vec<_>, _>>()?;
 
     if signs[0] == RealSign::Zero {
-        push_unique_sorted(exact_parameters, start.clone(), policy);
+        push_unique_sorted(exact_parameters, start.clone(), policy)?;
     }
     if signs[3] == RealSign::Zero {
-        push_unique_sorted(exact_parameters, end.clone(), policy);
+        push_unique_sorted(exact_parameters, end.clone(), policy)?;
     }
 
     let strict_signs = signs
@@ -3315,7 +3339,7 @@ fn isolate_scalar_cubic_roots(
             spans,
             BezierMonotoneSpan::new(start, end).map_err(|_| UncertaintyReason::Ordering)?,
             policy,
-        );
+        )?;
         return Ok(());
     }
     if strict_signs.iter().all(|sign| *sign == strict_signs[0]) {
@@ -3325,7 +3349,7 @@ fn isolate_scalar_cubic_roots(
     let mid = ((&start + &end) / Real::from(2_i8)).map_err(|_| UncertaintyReason::Unsupported)?;
     let mid_value = scalar_cubic_at_half(&controls)?;
     if is_zero(&mid_value, policy) == Some(true) {
-        push_unique_sorted(exact_parameters, mid.clone(), policy);
+        push_unique_sorted(exact_parameters, mid.clone(), policy)?;
     }
 
     if depth >= 32 {
@@ -3333,7 +3357,7 @@ fn isolate_scalar_cubic_roots(
             spans,
             BezierMonotoneSpan::new(start, end).map_err(|_| UncertaintyReason::Ordering)?,
             policy,
-        );
+        )?;
         return Ok(());
     }
 
@@ -3612,7 +3636,11 @@ fn retain_unit_roots(roots: Vec<Real>, policy: &CurvePolicy) -> Classification<V
     let mut retained = Vec::new();
     for root in roots {
         match in_closed_unit_interval(&root, policy) {
-            Some(true) => push_unique_sorted(&mut retained, root, policy),
+            Some(true) => {
+                if let Err(reason) = push_unique_sorted(&mut retained, root, policy) {
+                    return Classification::Uncertain(reason);
+                }
+            }
             Some(false) => {}
             None => return Classification::Uncertain(UncertaintyReason::Ordering),
         }
@@ -3620,30 +3648,54 @@ fn retain_unit_roots(roots: Vec<Real>, policy: &CurvePolicy) -> Classification<V
     Classification::Decided(retained)
 }
 
-fn push_unique_sorted(values: &mut Vec<Real>, value: Real, policy: &CurvePolicy) {
-    if values
-        .iter()
-        .any(|existing| compare_reals(existing, &value, policy) == Some(Ordering::Equal))
-    {
-        return;
+fn push_unique_sorted(
+    values: &mut Vec<Real>,
+    value: Real,
+    policy: &CurvePolicy,
+) -> Result<(), UncertaintyReason> {
+    let mut insert_at = values.len();
+    for (index, existing) in values.iter().enumerate() {
+        match compare_reals(existing, &value, policy) {
+            Some(Ordering::Equal) => return Ok(()),
+            Some(Ordering::Greater) => {
+                insert_at = index;
+                break;
+            }
+            Some(Ordering::Less) => {}
+            None => return Err(UncertaintyReason::Ordering),
+        }
     }
-    values.push(value);
-    values.sort_by(|a, b| compare_reals(a, b, policy).unwrap_or(Ordering::Equal));
+    values.insert(insert_at, value);
+    Ok(())
 }
 
 fn push_unique_span(
     spans: &mut Vec<BezierMonotoneSpan>,
     span: BezierMonotoneSpan,
     policy: &CurvePolicy,
-) {
-    if spans.iter().any(|existing| {
-        compare_reals(existing.start(), span.start(), policy) == Some(Ordering::Equal)
-            && compare_reals(existing.end(), span.end(), policy) == Some(Ordering::Equal)
-    }) {
-        return;
+) -> Result<(), UncertaintyReason> {
+    let mut insert_at = spans.len();
+    for (index, existing) in spans.iter().enumerate() {
+        match compare_reals(existing.start(), span.start(), policy) {
+            Some(Ordering::Less) => {}
+            Some(Ordering::Greater) => {
+                insert_at = index;
+                break;
+            }
+            Some(Ordering::Equal) => match compare_reals(existing.end(), span.end(), policy) {
+                Some(Ordering::Equal) => return Ok(()),
+                Some(Ordering::Greater) => {
+                    insert_at = index;
+                    break;
+                }
+                Some(Ordering::Less) => {}
+                None => return Err(UncertaintyReason::Ordering),
+            },
+            None => return Err(UncertaintyReason::Ordering),
+        }
     }
-    spans.push(span);
-    spans.sort_by(|a, b| compare_reals(a.start(), b.start(), policy).unwrap_or(Ordering::Equal));
+    spans.insert(insert_at, span);
+    Ok(())
 }
 
 pub(crate) fn monotone_spans_from_parameters(
@@ -3657,7 +3709,9 @@ pub(crate) fn monotone_spans_from_parameters(
             Classification::Uncertain(reason) => return Classification::Uncertain(reason),
         };
         for root in roots {
-            push_unique_sorted(&mut split_parameters, root, policy);
+            if let Err(reason) = push_unique_sorted(&mut split_parameters, root, policy) {
+                return Classification::Uncertain(reason);
+            }
         }
     }
 
@@ -3716,7 +3770,9 @@ fn common_parameters(left: &[Real], right: &[Real], policy: &CurvePolicy) -> Opt
     for a in left {
         for b in right {
             match compare_reals(a, b, policy)? {
-                Ordering::Equal => push_unique_sorted(&mut common, a.clone(), policy),
+                Ordering::Equal => {
+                    push_unique_sorted(&mut common, a.clone(), policy).ok()?;
+                }
                 Ordering::Less | Ordering::Greater => {}
             }
         }
