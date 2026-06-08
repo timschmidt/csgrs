@@ -571,27 +571,40 @@ impl MeshArtifactManifest {
         if self.declared_face_count == 0 {
             blockers.push(MeshArtifactBlocker::EmptyFaceSet);
         }
-        if self.vertices.len() != self.declared_vertex_count {
+        let vertex_records_complete =
+            self.declared_vertex_count != 0 && self.vertices.len() == self.declared_vertex_count;
+        if !vertex_records_complete {
             blockers.push(MeshArtifactBlocker::MissingOrMismatchedVertexRecords);
         }
-        if self.faces.len() != self.declared_face_count {
+        let face_records_complete =
+            self.declared_face_count != 0 && self.faces.len() == self.declared_face_count;
+        if !face_records_complete {
             blockers.push(MeshArtifactBlocker::MissingOrMismatchedFaceRecords);
         }
+        let mut vertex_indices_match = true;
         for (expected, vertex) in self.vertices.iter().enumerate() {
             if vertex.index != expected {
                 blockers.push(MeshArtifactBlocker::VertexIndexMismatch);
+                vertex_indices_match = false;
                 break;
             }
         }
+        let mut face_indices_match = true;
+        let mut face_arities_valid = true;
+        let mut face_vertices_unique = true;
+        let mut face_vertices_in_range = true;
         for (expected, face) in self.faces.iter().enumerate() {
             if face.index != expected {
                 blockers.push(MeshArtifactBlocker::FaceIndexMismatch);
+                face_indices_match = false;
             }
             if face.vertices.len() < 3 {
                 blockers.push(MeshArtifactBlocker::FaceArityTooSmall);
+                face_arities_valid = false;
             }
             if face_has_repeated_vertex(&face.vertices) {
                 blockers.push(MeshArtifactBlocker::FaceRepeatedVertex);
+                face_vertices_unique = false;
             }
             if face
                 .vertices
@@ -599,6 +612,7 @@ impl MeshArtifactManifest {
                 .any(|&vertex| vertex >= self.declared_vertex_count)
             {
                 blockers.push(MeshArtifactBlocker::FaceVertexOutOfRange);
+                face_vertices_in_range = false;
             }
         }
 
@@ -614,7 +628,9 @@ impl MeshArtifactManifest {
             blockers.push(MeshArtifactBlocker::MissingSourceReplay);
         }
 
-        let coordinates_exact_replay_ready = self.numeric_contract.exact_coordinate_replay
+        let vertex_records_replayable = vertex_records_complete && vertex_indices_match;
+        let coordinates_exact_replay_ready = vertex_records_replayable
+            && self.numeric_contract.exact_coordinate_replay
             && self.numeric_contract.source_replay_ready
             && coordinate_evidence_consistent
             && contract_coordinate_evidence_supports_exact_replay(
@@ -629,10 +645,16 @@ impl MeshArtifactManifest {
             blockers.push(MeshArtifactBlocker::MissingExactCoordinateReplay);
         }
 
-        let topology_validation_replay_ready = self
-            .faces
-            .iter()
-            .all(|face| face.topology_evidence.supports_validation_handoff())
+        let face_records_replayable = face_records_complete
+            && face_indices_match
+            && face_arities_valid
+            && face_vertices_unique
+            && face_vertices_in_range;
+        let topology_validation_replay_ready = face_records_replayable
+            && self
+                .faces
+                .iter()
+                .all(|face| face.topology_evidence.supports_validation_handoff())
             && !self.faces.is_empty();
         if !topology_validation_replay_ready {
             blockers.push(MeshArtifactBlocker::MissingExactTopologyReplay);

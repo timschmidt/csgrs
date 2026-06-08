@@ -365,36 +365,73 @@ fn exact_mesh_proposal_and_artifact_reports_are_publicly_replayable() {
             .contains(&MeshArtifactBlocker::MissingExactTopologyReplay)
     );
 
-    let repeated_vertex_handoff = MeshArtifactManifest::brep_exact_triangle_handoff(
-        "brep exact triangle handoff",
-        1,
-        vec![
-            MeshArtifactVertexRecord {
-                index: 0,
-                coordinate_evidence: MeshCoordinateEvidence::CertifiedDerivedExact,
-            },
-            MeshArtifactVertexRecord {
-                index: 1,
-                coordinate_evidence: MeshCoordinateEvidence::CertifiedDerivedExact,
-            },
-            MeshArtifactVertexRecord {
-                index: 2,
-                coordinate_evidence: MeshCoordinateEvidence::CertifiedDerivedExact,
-            },
-        ],
-        vec![MeshArtifactFaceRecord {
-            index: 0,
-            vertices: vec![0, 1, 1],
-            topology_evidence: MeshTopologyEvidence::DerivedExactSurfaceHandoff,
-        }],
-    )
+    let brep_triangle_handoff = |face| {
+        MeshArtifactManifest::brep_exact_triangle_handoff(
+            "brep exact triangle handoff",
+            1,
+            vec![
+                MeshArtifactVertexRecord {
+                    index: 0,
+                    coordinate_evidence: MeshCoordinateEvidence::CertifiedDerivedExact,
+                },
+                MeshArtifactVertexRecord {
+                    index: 1,
+                    coordinate_evidence: MeshCoordinateEvidence::CertifiedDerivedExact,
+                },
+                MeshArtifactVertexRecord {
+                    index: 2,
+                    coordinate_evidence: MeshCoordinateEvidence::CertifiedDerivedExact,
+                },
+            ],
+            vec![face],
+        )
+    };
+
+    let repeated_vertex_handoff = brep_triangle_handoff(MeshArtifactFaceRecord {
+        index: 0,
+        vertices: vec![0, 1, 1],
+        topology_evidence: MeshTopologyEvidence::DerivedExactSurfaceHandoff,
+    })
     .report();
     assert!(!repeated_vertex_handoff.validation_handoff_ready);
+    assert!(!repeated_vertex_handoff.topology_validation_replay_ready);
     assert!(
         repeated_vertex_handoff
             .blockers
             .contains(&MeshArtifactBlocker::FaceRepeatedVertex),
         "{repeated_vertex_handoff:?}"
+    );
+
+    let mut missing_vertex_record_manifest = brep_triangle_handoff(MeshArtifactFaceRecord {
+        index: 0,
+        vertices: vec![0, 1, 2],
+        topology_evidence: MeshTopologyEvidence::DerivedExactSurfaceHandoff,
+    });
+    missing_vertex_record_manifest.declared_vertex_count += 1;
+    let missing_vertex_record = missing_vertex_record_manifest.report();
+    assert!(!missing_vertex_record.validation_handoff_ready);
+    assert!(!missing_vertex_record.coordinates_exact_replay_ready);
+    assert!(
+        missing_vertex_record
+            .blockers
+            .contains(&MeshArtifactBlocker::MissingOrMismatchedVertexRecords),
+        "{missing_vertex_record:?}"
+    );
+
+    let mut stale_face_index_manifest = brep_triangle_handoff(MeshArtifactFaceRecord {
+        index: 0,
+        vertices: vec![0, 1, 2],
+        topology_evidence: MeshTopologyEvidence::DerivedExactSurfaceHandoff,
+    });
+    stale_face_index_manifest.faces[0].index = 1;
+    let stale_face_index = stale_face_index_manifest.report();
+    assert!(!stale_face_index.validation_handoff_ready);
+    assert!(!stale_face_index.topology_validation_replay_ready);
+    assert!(
+        stale_face_index
+            .blockers
+            .contains(&MeshArtifactBlocker::FaceIndexMismatch),
+        "{stale_face_index:?}"
     );
 }
 
