@@ -893,8 +893,18 @@ impl RationalBSplineBezierExtraction2 {
                     };
                     (
                         bounds,
-                        subcurve_axis_monotonicity(native, Axis2::X, policy),
-                        subcurve_axis_monotonicity(native, Axis2::Y, policy),
+                        match subcurve_axis_monotonicity(native, Axis2::X, policy) {
+                            Classification::Decided(monotonicity) => monotonicity,
+                            Classification::Uncertain(reason) => {
+                                return Ok(Classification::Uncertain(reason));
+                            }
+                        },
+                        match subcurve_axis_monotonicity(native, Axis2::Y, policy) {
+                            Classification::Decided(monotonicity) => monotonicity,
+                            Classification::Uncertain(reason) => {
+                                return Ok(Classification::Uncertain(reason));
+                            }
+                        },
                     )
                 } else {
                     let bounds = match Aabb2::from_points(span.control_points(), policy) {
@@ -1161,6 +1171,14 @@ fn validate_span_fact_evidence(
     {
         return Err(CurveError::Topology(
             "non-native retained span facts must not claim certified monotonicity".into(),
+        ));
+    }
+    if topology_status.is_native_exact()
+        && (x_monotonicity == RetainedSpanAxisMonotonicity::Unsupported
+            || y_monotonicity == RetainedSpanAxisMonotonicity::Unsupported)
+    {
+        return Err(CurveError::Topology(
+            "native retained span facts must carry exact monotonicity evidence".into(),
         ));
     }
     if topology_status.is_native_exact()
@@ -1629,8 +1647,14 @@ fn native_span_fact_report(
             refined_knots[knot_index].clone(),
             refined_knots[knot_index + 1].clone(),
             bounds,
-            subcurve_axis_monotonicity(span, Axis2::X, policy),
-            subcurve_axis_monotonicity(span, Axis2::Y, policy),
+            match subcurve_axis_monotonicity(span, Axis2::X, policy) {
+                Classification::Decided(monotonicity) => monotonicity,
+                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+            },
+            match subcurve_axis_monotonicity(span, Axis2::Y, policy) {
+                Classification::Decided(monotonicity) => monotonicity,
+                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+            },
             RetainedTopologyStatus::NativeExact,
             None,
         )?);
@@ -1659,7 +1683,7 @@ fn subcurve_axis_monotonicity(
     curve: &BezierSubcurve2,
     axis: Axis2,
     policy: &CurvePolicy,
-) -> RetainedSpanAxisMonotonicity {
+) -> Classification<RetainedSpanAxisMonotonicity> {
     let roots = match curve {
         BezierSubcurve2::Quadratic(curve) => curve.axis_monotone_parameters(axis, policy),
         BezierSubcurve2::Cubic(curve) => curve.axis_monotone_parameters(axis, policy),
@@ -1667,10 +1691,12 @@ fn subcurve_axis_monotonicity(
     };
     match roots {
         Classification::Decided(roots) if roots.is_empty() => {
-            RetainedSpanAxisMonotonicity::CertifiedMonotone
+            Classification::Decided(RetainedSpanAxisMonotonicity::CertifiedMonotone)
         }
-        Classification::Decided(_) => RetainedSpanAxisMonotonicity::HasInteriorExtrema,
-        Classification::Uncertain(_) => RetainedSpanAxisMonotonicity::Unsupported,
+        Classification::Decided(_) => {
+            Classification::Decided(RetainedSpanAxisMonotonicity::HasInteriorExtrema)
+        }
+        Classification::Uncertain(reason) => Classification::Uncertain(reason),
     }
 }
 
