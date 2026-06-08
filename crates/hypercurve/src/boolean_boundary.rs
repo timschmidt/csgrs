@@ -470,17 +470,24 @@ fn validate_directed_boolean_fragment_geometry(
 ) -> CurveResult<()> {
     let policy = CurvePolicy::certified();
     for fragment in fragments {
-        if is_zero(
+        match is_zero(
             &fragment
                 .segment
                 .start()
                 .distance_squared(fragment.segment.end()),
             &policy,
-        ) == Some(true)
-        {
-            return Err(CurveError::Topology(format!(
-                "{owner} directed fragment must carry nonzero geometry"
-            )));
+        ) {
+            Some(false) => {}
+            Some(true) => {
+                return Err(CurveError::Topology(format!(
+                    "{owner} directed fragment must carry nonzero geometry"
+                )));
+            }
+            None => {
+                return Err(CurveError::Topology(format!(
+                    "{owner} directed fragment geometry must be certified nonzero"
+                )));
+            }
         }
     }
     Ok(())
