@@ -190,6 +190,7 @@ where
 {
     let mut points = vec![curve.start().clone()];
     let max_error_squared = options.max_error() * options.max_error();
+    let mut max_depth_used = 0_usize;
     if let Err(reason) = flatten_recursive(
         curve,
         &max_error_squared,
@@ -197,6 +198,7 @@ where
         0,
         policy,
         &mut points,
+        &mut max_depth_used,
     ) {
         return Classification::Uncertain(reason);
     }
@@ -206,7 +208,7 @@ where
         certificate: BezierFlatteningCertificate {
             max_error: options.max_error().clone(),
             segment_count,
-            max_depth: options.max_depth(),
+            max_depth: max_depth_used,
         },
     })
 }
@@ -218,10 +220,12 @@ fn flatten_recursive<C>(
     depth: usize,
     policy: &CurvePolicy,
     points: &mut Vec<Point2>,
+    max_depth_used: &mut usize,
 ) -> Result<(), UncertaintyReason>
 where
     C: FlattenableBezier,
 {
+    *max_depth_used = (*max_depth_used).max(depth);
     if curve_is_flat(&curve, max_error_squared, policy)? {
         points.push(curve.end().clone());
         return Ok(());
@@ -237,6 +241,7 @@ where
         depth + 1,
         policy,
         points,
+        max_depth_used,
     )?;
     flatten_recursive(
         right,
@@ -245,6 +250,7 @@ where
         depth + 1,
         policy,
         points,
+        max_depth_used,
     )
 }
 
@@ -331,5 +337,20 @@ mod tests {
             right_controls,
             vec![point(3, 0), point(4, 0), point(5, 0), point(6, 0)]
         );
+    }
+
+    #[test]
+    fn flatten_certificate_reports_actual_depth_used() {
+        let policy = CurvePolicy::certified();
+        let options = BezierFlatteningOptions::try_new(Real::one(), 8, &policy).unwrap();
+        let curve = QuadraticBezier2::new(point(0, 0), point(1, 0), point(2, 0));
+
+        let Classification::Decided(polyline) = curve.flatten_certified(&options, &policy) else {
+            panic!("flat line-image quadratic should certify without subdivision");
+        };
+
+        assert_eq!(polyline.points(), &[point(0, 0), point(2, 0)]);
+        assert_eq!(polyline.certificate().segment_count(), 1);
+        assert_eq!(polyline.certificate().max_depth(), 0);
     }
 }
