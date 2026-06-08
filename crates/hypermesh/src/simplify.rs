@@ -77,6 +77,34 @@ pub enum ExactSimplifiedCellComplexFreshness {
 }
 
 impl ExactSimplifiedCellComplex {
+    /// Validate local simplified-cell consistency without replaying source meshes.
+    pub fn validate(&self) -> Result<(), ExactArrangementBlocker> {
+        for face in &self.faces {
+            validate_simplified_face(face)?;
+        }
+        for pair in self.faces.windows(2) {
+            let left = simplified_sort_key(&pair[0]);
+            let right = simplified_sort_key(&pair[1]);
+            if left > right {
+                return Err(ExactArrangementBlocker::NonManifoldCellComplex);
+            }
+        }
+        for (index, face) in self.faces.iter().enumerate() {
+            if self.faces[index + 1..].iter().any(|other| {
+                exact_boundary_loops_same_orientation(
+                    &face.face.cell.boundary_points,
+                    &other.face.cell.boundary_points,
+                ) || exact_boundary_loops_opposite_orientation(
+                    &face.face.cell.boundary_points,
+                    &other.face.cell.boundary_points,
+                )
+            }) {
+                return Err(ExactArrangementBlocker::NonManifoldCellComplex);
+            }
+        }
+        Ok(())
+    }
+
     /// Validate this simplified complex by replaying the full arrangement,
     /// label, selection, and simplification pipeline from source operands.
     pub fn validate_against_sources(
@@ -85,6 +113,7 @@ impl ExactSimplifiedCellComplex {
         right: &ExactMesh,
         policy: ExactRegularizationPolicy,
     ) -> Result<(), ExactArrangementBlocker> {
+        self.validate()?;
         let arrangement = ExactArrangement::from_meshes_with_policy(left, right, policy)
             .map_err(|_| ExactArrangementBlocker::UnresolvedIntersection)?;
         let replay = select_arrangement_for_replay(arrangement, self.operation, policy)?
@@ -103,6 +132,9 @@ impl ExactSimplifiedCellComplex {
         right: &ExactMesh,
         policy: ExactRegularizationPolicy,
     ) -> ExactSimplifiedCellComplexFreshness {
+        if self.validate().is_err() {
+            return ExactSimplifiedCellComplexFreshness::StaleSimplifiedCells;
+        }
         let arrangement = match ExactArrangement::from_meshes_with_policy(left, right, policy) {
             Ok(arrangement) => arrangement,
             Err(_) => return ExactSimplifiedCellComplexFreshness::SourceReplayBlocked,
@@ -152,6 +184,55 @@ impl ExactSimplifiedCellComplex {
             }
         }
     }
+}
+
+fn validate_simplified_face(face: &ExactSimplifiedFaceCell) -> Result<(), ExactArrangementBlocker> {
+    if face.face.cell.boundary.len() != face.face.cell.boundary_points.len()
+        || face.face.cell.boundary.len() < 3
+    {
+        return Err(ExactArrangementBlocker::NonManifoldCellComplex);
+    }
+    if face
+        .face
+        .cell
+        .boundary
+        .windows(2)
+        .any(|pair| pair[0] == pair[1])
+        || face.face.cell.boundary.first() == face.face.cell.boundary.last()
+    {
+        return Err(ExactArrangementBlocker::NonManifoldCellComplex);
+    }
+    if !boundary_has_nonzero_area(&face.face.cell.boundary_points)? {
+        return Err(ExactArrangementBlocker::NonManifoldCellComplex);
+    }
+    let Some(first_key) = face
+        .face
+        .cell
+        .boundary
+        .first()
+        .map(|node| format!("{node:?}"))
+    else {
+        return Err(ExactArrangementBlocker::NonManifoldCellComplex);
+    };
+    if face
+        .face
+        .cell
+        .boundary
+        .iter()
+        .map(|node| format!("{node:?}"))
+        .any(|key| key < first_key)
+    {
+        return Err(ExactArrangementBlocker::NonManifoldCellComplex);
+    }
+    Ok(())
+}
+
+fn simplified_sort_key(face: &ExactSimplifiedFaceCell) -> (usize, usize, usize) {
+    (
+        side_key(face.face.cell.carrier.side),
+        face.face.cell.carrier.face,
+        face.source_face,
+    )
 }
 
 /// Simplify a selected cell complex by exact canonicalization.
@@ -269,13 +350,7 @@ pub fn simplify_selected_cell_complex(
     collinear_boundary_nodes_removed += merged.collinear_boundary_nodes_removed;
     zero_area_cells_removed += merged.zero_area_cells_removed;
 
-    faces.sort_by_key(|face| {
-        (
-            side_key(face.face.cell.carrier.side),
-            face.face.cell.carrier.face,
-            face.source_face,
-        )
-    });
+    faces.sort_by_key(simplified_sort_key);
 
     if !blockers.is_empty()
         && policy.unresolved == super::regularization::ExactUnresolvedPolicy::Block
@@ -1279,12 +1354,50 @@ mod tests {
     #[test]
     fn simplification_removes_internal_edge_between_same_label_cells() {
         let simplified = simplified_square();
+        simplified.validate().unwrap();
         assert_eq!(simplified.faces.len(), 1);
         assert_eq!(simplified.interior_edges_removed, 1);
         assert_eq!(simplified.faces[0].face.cell.boundary.len(), 4);
         let mesh = simplified.triangulate().unwrap();
         assert_eq!(mesh.vertices().len(), 4);
         assert_eq!(mesh.triangles().len(), 2);
+    }
+
+    #[test]
+    fn simplified_cell_complex_validate_rejects_mismatched_boundary_rows() {
+        let mut simplified = simplified_square();
+        simplified.validate().unwrap();
+        simplified.faces[0].face.cell.boundary_points.pop();
+
+        assert_eq!(
+            simplified.validate(),
+            Err(ExactArrangementBlocker::NonManifoldCellComplex)
+        );
+    }
+
+    #[test]
+    fn simplified_cell_complex_validate_rejects_duplicate_retained_loop() {
+        let mut simplified = simplified_square();
+        simplified.validate().unwrap();
+        simplified.faces.push(simplified.faces[0].clone());
+
+        assert_eq!(
+            simplified.validate(),
+            Err(ExactArrangementBlocker::NonManifoldCellComplex)
+        );
+    }
+
+    #[test]
+    fn simplified_cell_complex_validate_rejects_noncanonical_boundary_start() {
+        let mut simplified = simplified_square();
+        simplified.validate().unwrap();
+        simplified.faces[0].face.cell.boundary.rotate_left(1);
+        simplified.faces[0].face.cell.boundary_points.rotate_left(1);
+
+        assert_eq!(
+            simplified.validate(),
+            Err(ExactArrangementBlocker::NonManifoldCellComplex)
+        );
     }
 
     #[test]
