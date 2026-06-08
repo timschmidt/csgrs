@@ -598,7 +598,7 @@ fn select_faces_from_volume_adjacencies(
         .collect::<Vec<_>>();
     let mut selected = Vec::<ExactSelectedFaceOrientation>::new();
     for adjacency in volume_adjacencies {
-        validate_volume_adjacency_for_selection(face_count, adjacency)?;
+        validate_volume_adjacency_face_provenance(face_count, adjacency)?;
         let exterior_selected = *selected_volumes
             .get(adjacency.exterior_volume)
             .ok_or(ExactArrangementBlocker::NonManifoldCellComplex)?;
@@ -640,7 +640,7 @@ fn select_faces_from_volume_adjacencies(
     Ok(Some((selected_faces, selected)))
 }
 
-fn validate_volume_adjacency_for_selection(
+pub(crate) fn validate_volume_adjacency_face_provenance(
     face_count: usize,
     adjacency: &ArrangementVolumeAdjacency,
 ) -> Result<(), ExactArrangementBlocker> {
