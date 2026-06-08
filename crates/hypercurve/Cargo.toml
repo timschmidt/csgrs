@@ -15,15 +15,15 @@ all-features = true
 
 [dependencies]
 # Hyper sibling dependency switch: keep both local path and crates.io lines; do not remove either.
-# Development mode uses the local path lines. For release, comment those and uncomment the crates.io lines.
-hyperreal = { path = "../hyperreal", default-features = false }
-hypersolve = { path = "../hypersolve", default-features = false }
-hyperlimit = { path = "../hyperlimit", default-features = false, features = ["std"], optional = true }
-hypertri = { path = "../hypertri", default-features = false, features = ["earcut"], optional = true }
-# hyperreal = { version = "0.13.0", default-features = false }
-# hypersolve = { version = "0.3.0", default-features = false }
-# hyperlimit = { version = "0.4.0", default-features = false, features = ["std"], optional = true }
-# hypertri = { version = "0.3.0", default-features = false, features = ["earcut"], optional = true }
+# Release mode uses crates.io version lines. For local development, comment those and uncomment the path lines.
+# hyperreal = { path = "../hyperreal", default-features = false }
+# hypersolve = { path = "../hypersolve", default-features = false }
+# hyperlimit = { path = "../hyperlimit", default-features = false, features = ["std"], optional = true }
+# hypertri = { path = "../hypertri", default-features = false, features = ["earcut"], optional = true }
+hyperreal = { version = "0.13.0", default-features = false }
+hypersolve = { version = "0.3.0", default-features = false }
+hyperlimit = { version = "0.4.0", default-features = false, features = ["std"], optional = true }
+hypertri = { version = "0.4.0", default-features = false, features = ["earcut"], optional = true }
 [dev-dependencies]
 geo = "0.32"
 proptest = "1"
