@@ -130,6 +130,13 @@ fn contour_intersection_set_constructor_validates_event_parameters() {
     zero.a_range = ParamRange::new(s(1), s(1));
     assert_topology_error(ContourIntersectionSet::new(vec![zero_overlap]));
 
+    let mut degenerate_geometry = overlap.clone();
+    let ContourIntersection::Overlap(degenerate) = &mut degenerate_geometry else {
+        panic!("expected overlap event");
+    };
+    degenerate.segment = Segment2::Line(LineSeg2::new_unchecked(p(0, 0), p(0, 0)));
+    assert_topology_error(ContourIntersectionSet::new(vec![degenerate_geometry]));
+
     let mut outside_overlap = overlap;
     let ContourIntersection::Overlap(outside) = &mut outside_overlap else {
         panic!("expected overlap event");

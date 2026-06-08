@@ -127,6 +127,7 @@ fn validate_contour_intersection_event(
             validate_event_unit_parameter(&point.b_param, policy, "second point")
         }
         ContourIntersection::Overlap(overlap) => {
+            validate_overlap_event_geometry(&overlap.segment, policy)?;
             validate_event_unit_range(&overlap.a_range, policy, "first overlap")?;
             validate_event_unit_range(&overlap.b_range, policy, "second overlap")
         }
@@ -162,6 +163,22 @@ fn validate_event_unit_range(
         None => Err(CurveError::Topology(format!(
             "contour intersection {name} range ordering must be certified"
         ))),
+    }
+}
+
+fn validate_overlap_event_geometry(segment: &Segment2, policy: &CurvePolicy) -> CurveResult<()> {
+    let value = match segment {
+        Segment2::Line(line) => line.length_squared(),
+        Segment2::Arc(arc) => arc.radius_squared(),
+    };
+    match is_zero(&value, policy) {
+        Some(false) => Ok(()),
+        Some(true) => Err(CurveError::Topology(
+            "contour overlap event must carry nondegenerate overlap geometry".into(),
+        )),
+        None => Err(CurveError::Topology(
+            "contour overlap event geometry must be certified nondegenerate".into(),
+        )),
     }
 }
 
