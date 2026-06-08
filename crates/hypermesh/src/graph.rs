@@ -823,6 +823,10 @@ pub enum IntersectionGraphValidationError {
     CoplanarPairMissingProjection,
     /// A non-coplanar relation retained a coplanar projection.
     NonCoplanarPairHasProjection,
+    /// A coplanar face-pair relation retained non-coplanar segment-plane evidence.
+    CoplanarPairHasSegmentPlaneEvent,
+    /// A non-coplanar face-pair relation retained coplanar edge or vertex evidence.
+    NonCoplanarPairHasCoplanarEvent,
     /// A segment/plane graph event retained a disjoint relation.
     DisjointSegmentPlaneEvent,
     /// A segment/plane event has inconsistent side facts or construction data.
@@ -859,6 +863,8 @@ impl From<IntersectionGraphValidationError> for IntersectionGraphFreshness {
             | IntersectionGraphValidationError::UnknownPairMissingUnknownEvent
             | IntersectionGraphValidationError::CoplanarPairMissingProjection
             | IntersectionGraphValidationError::NonCoplanarPairHasProjection
+            | IntersectionGraphValidationError::CoplanarPairHasSegmentPlaneEvent
+            | IntersectionGraphValidationError::NonCoplanarPairHasCoplanarEvent
             | IntersectionGraphValidationError::DisjointSegmentPlaneEvent
             | IntersectionGraphValidationError::InvalidSegmentPlaneEvent
             | IntersectionGraphValidationError::DisjointCoplanarEdgeEvent
@@ -944,6 +950,7 @@ impl FacePairEvents {
         }
 
         for event in &self.events {
+            validate_event_family_matches_pair_relation(self.relation, event)?;
             validate_intersection_event(event)?;
         }
         Ok(())
@@ -2527,6 +2534,23 @@ fn validate_intersection_event(
             }
         },
         IntersectionEvent::Unknown => Ok(()),
+    }
+}
+
+fn validate_event_family_matches_pair_relation(
+    relation: MeshFacePairRelation,
+    event: &IntersectionEvent,
+) -> Result<(), IntersectionGraphValidationError> {
+    match (relation, event) {
+        (
+            MeshFacePairRelation::CoplanarTouching | MeshFacePairRelation::CoplanarOverlapping,
+            IntersectionEvent::SegmentPlane { .. },
+        ) => Err(IntersectionGraphValidationError::CoplanarPairHasSegmentPlaneEvent),
+        (
+            MeshFacePairRelation::Candidate | MeshFacePairRelation::Unknown,
+            IntersectionEvent::CoplanarEdge { .. } | IntersectionEvent::CoplanarVertex { .. },
+        ) => Err(IntersectionGraphValidationError::NonCoplanarPairHasCoplanarEvent),
+        _ => Ok(()),
     }
 }
 
@@ -4231,5 +4255,49 @@ mod tests {
 
         assert!(graph.validate().is_ok());
         assert!(graph.has_unknowns());
+    }
+
+    #[test]
+    fn face_pair_validation_rejects_relation_event_family_mismatch() {
+        let candidate_with_coplanar_event = FacePairEvents {
+            left_face: 0,
+            right_face: 0,
+            relation: MeshFacePairRelation::Candidate,
+            projection: None,
+            events: vec![IntersectionEvent::CoplanarVertex {
+                vertex_side: MeshSide::Left,
+                vertex: 0,
+                triangle_side: MeshSide::Right,
+                triangle_face: 0,
+                location: TriangleLocation::Inside,
+            }],
+        };
+        assert_eq!(
+            candidate_with_coplanar_event.validate(),
+            Err(IntersectionGraphValidationError::NonCoplanarPairHasCoplanarEvent)
+        );
+
+        let coplanar_with_segment_plane_event = FacePairEvents {
+            left_face: 0,
+            right_face: 0,
+            relation: MeshFacePairRelation::CoplanarTouching,
+            projection: Some(CoplanarProjection::Xy),
+            events: vec![IntersectionEvent::SegmentPlane {
+                segment_side: MeshSide::Left,
+                edge: [0, 1],
+                plane_side: MeshSide::Right,
+                plane_face: 0,
+                relation: SegmentPlaneRelation::Unknown,
+                point: None,
+                parameter: None,
+                parameter_ratio: None,
+                construction_failure: None,
+                endpoint_sides: [None, Some(PlaneSide::Above)],
+            }],
+        };
+        assert_eq!(
+            coplanar_with_segment_plane_event.validate(),
+            Err(IntersectionGraphValidationError::CoplanarPairHasSegmentPlaneEvent)
+        );
     }
 }
