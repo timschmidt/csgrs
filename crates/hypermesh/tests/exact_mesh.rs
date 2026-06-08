@@ -1629,6 +1629,23 @@ fn full_face_adjacent_union_refines_side_faces_for_boundary_subdivided_shared_fa
         FullFaceAdjacentUnionFreshness::Current
     );
     assert!(union.mesh.facts().mesh.closed_manifold);
+
+    let report =
+        certify_adjacent_union_completion_report(&left, &right, ExactBooleanOperation::Union)
+            .unwrap();
+    assert_eq!(
+        report.status,
+        ExactAdjacentUnionCompletionStatus::CertifiedFullFace
+    );
+    assert_eq!(report.full_face_shared_faces, 0);
+    assert_eq!(report.full_face_shared_patches, 1);
+    assert!(!report.stronger_kernel_available);
+    report.validate().unwrap();
+    report.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(
+        report.freshness_against_sources(&left, &right),
+        ExactReportFreshness::Current
+    );
 }
 
 #[test]

@@ -1164,13 +1164,7 @@ fn triangulate_source_triangle_with_collinear_constraint_refinement(
         return Ok(None);
     }
     let mut triangles = vec![0, 1, 2];
-    let max_passes = constraints.len().saturating_mul(vertices.len()).max(1);
-    refine_missing_constraint_edges_with_pass_limit(
-        vertices,
-        &mut triangles,
-        constraints,
-        max_passes,
-    )?;
+    refine_missing_constraint_edges(vertices, &mut triangles, constraints)?;
     if constraints
         .iter()
         .all(|constraint| triangles_have_edge(&triangles, constraint.from, constraint.to))
@@ -1186,25 +1180,30 @@ fn refine_missing_constraint_edges(
     triangles: &mut Vec<usize>,
     constraints: &[Constraint],
 ) -> hypertri::Result<()> {
-    let max_passes = constraints.len().saturating_mul(vertices.len()).max(1);
-    refine_missing_constraint_edges_with_pass_limit(vertices, triangles, constraints, max_passes)
-}
-
-fn refine_missing_constraint_edges_with_pass_limit(
-    vertices: &[hypertri::ExactPoint],
-    triangles: &mut Vec<usize>,
-    constraints: &[Constraint],
-    max_passes: usize,
-) -> hypertri::Result<()> {
-    for _ in 0..max_passes {
+    while let Some(missing) = constraints
+        .iter()
+        .find(|constraint| !triangles_have_edge(triangles, constraint.from, constraint.to))
+    {
+        let prior_triangle_count = triangles.len();
+        let prior_first_missing = *missing;
+        if !split_collinear_triangle_edge(
+            vertices,
+            triangles,
+            prior_first_missing.from,
+            prior_first_missing.to,
+        )? {
+            return Ok(());
+        }
         let Some(missing) = constraints
             .iter()
             .find(|constraint| !triangles_have_edge(triangles, constraint.from, constraint.to))
         else {
             return Ok(());
         };
-        if !split_collinear_triangle_edge(vertices, triangles, missing.from, missing.to)? {
-            return Ok(());
+        if triangles.len() <= prior_triangle_count && *missing == prior_first_missing {
+            return Err(hypertri::Error::InvalidInput {
+                reason: "face-cell collinear constraint refinement made no progress",
+            });
         }
     }
     Ok(())

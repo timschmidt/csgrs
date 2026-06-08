@@ -3422,10 +3422,6 @@ fn boolean_arrangement_adjacency_union_completion(
     {
         return Ok(None);
     }
-    if certified_convex_materialized_boolean_support(left, right, operation).is_some() {
-        return Ok(None);
-    }
-
     if let Some(certificate) = full_face_adjacent_certificate(left, right)
         && let Some(union) = materialize_full_face_adjacent_union_from_certificate(
             left,
@@ -3443,6 +3439,10 @@ fn boolean_arrangement_adjacency_union_completion(
             return Ok(None);
         }
         return Ok(Some(result));
+    }
+
+    if certified_convex_materialized_boolean_support(left, right, operation).is_some() {
+        return Ok(None);
     }
 
     if contained_face_adjacency_should_yield_to_stronger_kernel(left, right, operation) {
@@ -3594,26 +3594,6 @@ pub fn certify_adjacent_union_completion_report(
             0,
         ));
     }
-    if certified_convex_materialized_boolean_support(left, right, operation).is_some() {
-        return Ok(adjacent_union_completion_report(
-            operation,
-            ExactAdjacentUnionCompletionStatus::StrongerKernelAvailable,
-            left_closed,
-            right_closed,
-            false,
-            true,
-            false,
-            0,
-            0,
-            GraphRelationCounts::default(),
-            0,
-            0,
-            None,
-            0,
-            0,
-        ));
-    }
-
     let graph = build_intersection_graph(left, right)?;
     validate_graph_source_handoff(&graph, left, right)?;
     let graph_had_unknowns = graph.has_unknowns();
@@ -3661,6 +3641,26 @@ pub fn certify_adjacent_union_completion_report(
             counts,
             union.shared_faces.len(),
             union.shared_patches.len(),
+            None,
+            0,
+            0,
+        ));
+    }
+
+    if certified_convex_materialized_boolean_support(left, right, operation).is_some() {
+        return Ok(adjacent_union_completion_report(
+            operation,
+            ExactAdjacentUnionCompletionStatus::StrongerKernelAvailable,
+            left_closed,
+            right_closed,
+            false,
+            true,
+            graph_had_unknowns,
+            retained_face_pairs,
+            retained_events,
+            counts,
+            0,
+            0,
             None,
             0,
             0,

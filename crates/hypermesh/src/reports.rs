@@ -442,6 +442,19 @@ fn blocker_has_refinement_evidence(blocker: &ExactBooleanBlocker) -> bool {
     blocker.unknown_pairs != 0 || blocker.construction_failed_events != 0
 }
 
+fn validate_adjacent_certified_boundary_blocker(
+    blocker: &ExactBooleanBlocker,
+    retained_face_pairs: usize,
+    retained_events: usize,
+) -> Result<(), ExactReportValidationError> {
+    if retained_face_pairs == 0 && retained_events == 0 && !blocker_has_any_evidence(blocker) {
+        return (blocker.kind == ExactBooleanBlockerKind::NeedsBoundaryPolicy)
+            .then_some(())
+            .ok_or(ExactReportValidationError::WrongBlockerKind);
+    }
+    blocker.validate_for_kind(ExactBooleanBlockerKind::NeedsBoundaryPolicy)
+}
+
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
 struct BlockerSourceCounts {
     candidate_pairs: usize,
@@ -4819,7 +4832,19 @@ impl ExactAdjacentUnionCompletionReport {
         if self.blocker.kind != expected_kind {
             return Err(ExactReportValidationError::WrongBlockerKind);
         }
-        self.blocker.validate_for_kind(expected_kind)?;
+        if matches!(
+            self.status,
+            ExactAdjacentUnionCompletionStatus::CertifiedFullFace
+                | ExactAdjacentUnionCompletionStatus::CertifiedContainedFace
+        ) {
+            validate_adjacent_certified_boundary_blocker(
+                &self.blocker,
+                self.retained_face_pairs,
+                self.retained_events,
+            )?;
+        } else {
+            self.blocker.validate_for_kind(expected_kind)?;
+        }
         validate_refinement_partition(
             matches!(
                 self.status,
@@ -4842,7 +4867,7 @@ impl ExactAdjacentUnionCompletionReport {
         let Some(contained_counts) = self.contained_faces.checked_add(self.containing_faces) else {
             return Err(ExactReportValidationError::StatusEvidenceMismatch);
         };
-        if full_face_counts > self.retained_face_pairs
+        if (self.retained_face_pairs != 0 && full_face_counts > self.retained_face_pairs)
             || self.contained_faces > self.retained_face_pairs
             || self.containing_faces > self.retained_face_pairs
         {
@@ -4923,8 +4948,11 @@ impl ExactAdjacentUnionCompletionReport {
                 {
                     return Err(ExactReportValidationError::StatusEvidenceMismatch);
                 }
-                self.blocker
-                    .validate_for_kind(ExactBooleanBlockerKind::NeedsBoundaryPolicy)?;
+                validate_adjacent_certified_boundary_blocker(
+                    &self.blocker,
+                    self.retained_face_pairs,
+                    self.retained_events,
+                )?;
             }
             ExactAdjacentUnionCompletionStatus::CertifiedContainedFace => {
                 if self.operation != ExactBooleanOperation::Union
@@ -4939,8 +4967,11 @@ impl ExactAdjacentUnionCompletionReport {
                 {
                     return Err(ExactReportValidationError::StatusEvidenceMismatch);
                 }
-                self.blocker
-                    .validate_for_kind(ExactBooleanBlockerKind::NeedsBoundaryPolicy)?;
+                validate_adjacent_certified_boundary_blocker(
+                    &self.blocker,
+                    self.retained_face_pairs,
+                    self.retained_events,
+                )?;
             }
         }
         if !self.is_certified()

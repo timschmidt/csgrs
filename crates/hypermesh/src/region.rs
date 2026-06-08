@@ -893,22 +893,21 @@ impl ExactBooleanAssemblyPlan {
         left: &ExactMesh,
         right: &ExactMesh,
     ) -> hypertri::Result<usize> {
-        let max_passes = self
-            .triangles
-            .len()
-            .saturating_mul(self.vertices.len())
-            .saturating_mul(3)
-            .max(1);
-        for splits in 0..max_passes {
+        let mut splits = 0;
+        loop {
             let Some(split) = find_existing_vertex_edge_split(self, left, right)? else {
                 self.validate()?;
                 return Ok(splits);
             };
+            let prior_triangle_count = self.triangles.len();
             apply_existing_vertex_edge_split(self, split, left, right)?;
+            if self.triangles.len() <= prior_triangle_count {
+                return Err(hypertri::Error::InvalidInput {
+                    reason: "assembly edge refinement did not make progress",
+                });
+            }
+            splits += 1;
         }
-        Err(hypertri::Error::InvalidInput {
-            reason: "assembly edge refinement did not converge",
-        })
     }
 
     /// Remove duplicate exact triangle handles after cell refinement.
