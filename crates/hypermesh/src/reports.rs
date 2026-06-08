@@ -3248,6 +3248,9 @@ impl ExactVolumetricBoundaryClosureReport {
     }
 
     fn has_impossible_boundary_count_bounds(&self) -> bool {
+        if self.boundary_edges > self.output_triangles.saturating_mul(3) {
+            return true;
+        }
         if self.boundary_loops != 0 && self.boundary_loops > self.boundary_edges / 3 {
             return true;
         }
@@ -6258,6 +6261,13 @@ mod tests {
 
         let mut report = valid_noncoplanar_closure_report();
         report.noncoplanar_boundary_loops = 2;
+        assert_eq!(
+            report.validate(),
+            Err(ExactReportValidationError::StatusEvidenceMismatch)
+        );
+
+        let mut report = valid_noncoplanar_closure_report();
+        report.boundary_edges = 4;
         assert_eq!(
             report.validate(),
             Err(ExactReportValidationError::StatusEvidenceMismatch)
