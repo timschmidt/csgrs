@@ -388,8 +388,6 @@ impl<'a> PreparedCurveStringView2<'a> {
         intersect_prepared_segment_pairs_with_cached_aabbs(
             &self.prepared_segments,
             &other.prepared_segments,
-            self.curve.segments(),
-            other.curve.segments(),
             self.segment_boxes(),
             other.segment_boxes(),
             policy,
@@ -1034,8 +1032,6 @@ fn prepared_segments(segments: &[Segment2]) -> Vec<PreparedSegment2<'_>> {
 fn intersect_prepared_segment_pairs_with_cached_aabbs(
     first_prepared_segments: &[PreparedSegment2<'_>],
     second_prepared_segments: &[PreparedSegment2<'_>],
-    first_segments: &[Segment2],
-    second_segments: &[Segment2],
     first_segment_boxes: &[Option<Aabb2>],
     second_segment_boxes: &[Option<Aabb2>],
     policy: &CurvePolicy,
@@ -1065,13 +1061,6 @@ fn intersect_prepared_segment_pairs_with_cached_aabbs(
                     a_segment.intersect_prepared_segment(b_segment, policy)?
                 }
             };
-
-            debug_assert_eq!(
-                relation,
-                first_segments[a_segment_index]
-                    .intersect_segment(&second_segments[b_segment_index], policy)
-                    .expect("ordinary segment intersection should match prepared segment pair")
-            );
 
             if !relation.is_none() {
                 intersections.push(CurveStringIntersection {
