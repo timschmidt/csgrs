@@ -373,6 +373,11 @@ pub enum CoplanarOverlapSplitValidationError {
     /// A retained split point could not be certified against replayed source
     /// edge interpolation.
     UnknownSplitPointEquality,
+    /// A retained copied vertex-overlap fact does not connect left and right
+    /// meshes.
+    SameSideVertexOverlap,
+    /// A retained copied vertex-overlap fact is outside or degenerate.
+    NonConstructiveVertexOverlap,
     /// Recomputing coplanar split constructions from the supplied source
     /// meshes did not reproduce this retained split artifact.
     SourceReplayMismatch,
@@ -456,7 +461,11 @@ impl From<CoplanarOverlapSplitValidationError> for CoplanarOverlapSplitFreshness
             | CoplanarOverlapSplitValidationError::UnknownIntervalOrder
             | CoplanarOverlapSplitValidationError::SplitPointDoesNotMatchLeftParameter
             | CoplanarOverlapSplitValidationError::SplitPointDoesNotMatchRightParameter
-            | CoplanarOverlapSplitValidationError::UnknownSplitPointEquality => Self::InvalidSplit,
+            | CoplanarOverlapSplitValidationError::UnknownSplitPointEquality
+            | CoplanarOverlapSplitValidationError::SameSideVertexOverlap
+            | CoplanarOverlapSplitValidationError::NonConstructiveVertexOverlap => {
+                Self::InvalidSplit
+            }
         }
     }
 }
@@ -748,6 +757,9 @@ impl CoplanarOverlapSplitGraph {
     pub fn validate(&self) -> Result<(), CoplanarOverlapSplitValidationError> {
         for split in &self.edge_splits {
             validate_coplanar_edge_split(split)?;
+        }
+        for vertex in &self.vertex_overlaps {
+            validate_split_vertex_overlap(vertex)?;
         }
         Ok(())
     }
@@ -4012,6 +4024,21 @@ fn validate_coplanar_edge_split(
     }
 }
 
+fn validate_split_vertex_overlap(
+    vertex: &CoplanarVertexOverlap,
+) -> Result<(), CoplanarOverlapSplitValidationError> {
+    if vertex.vertex_side == vertex.triangle_side {
+        return Err(CoplanarOverlapSplitValidationError::SameSideVertexOverlap);
+    }
+    if matches!(
+        vertex.location,
+        TriangleLocation::Outside | TriangleLocation::Degenerate
+    ) {
+        return Err(CoplanarOverlapSplitValidationError::NonConstructiveVertexOverlap);
+    }
+    Ok(())
+}
+
 fn validate_interval_endpoint(
     point: &CoplanarEdgeSplitPoint,
 ) -> Result<(), CoplanarOverlapSplitValidationError> {
@@ -4553,6 +4580,45 @@ mod tests {
         assert_eq!(
             coplanar_with_segment_plane_event.validate(),
             Err(IntersectionGraphValidationError::CoplanarPairHasSegmentPlaneEvent)
+        );
+    }
+
+    #[test]
+    fn coplanar_split_validation_rejects_invalid_vertex_overlap_facts() {
+        let same_side_vertex = CoplanarOverlapSplitGraph {
+            left_face: 0,
+            right_face: 0,
+            projection: CoplanarProjection::Xy,
+            edge_splits: Vec::new(),
+            vertex_overlaps: vec![CoplanarVertexOverlap {
+                vertex_side: MeshSide::Left,
+                vertex: 0,
+                triangle_side: MeshSide::Left,
+                triangle_face: 0,
+                location: TriangleLocation::Inside,
+            }],
+        };
+        assert_eq!(
+            same_side_vertex.validate(),
+            Err(CoplanarOverlapSplitValidationError::SameSideVertexOverlap)
+        );
+
+        let nonconstructive_vertex = CoplanarOverlapSplitGraph {
+            left_face: 0,
+            right_face: 0,
+            projection: CoplanarProjection::Xy,
+            edge_splits: Vec::new(),
+            vertex_overlaps: vec![CoplanarVertexOverlap {
+                vertex_side: MeshSide::Left,
+                vertex: 0,
+                triangle_side: MeshSide::Right,
+                triangle_face: 0,
+                location: TriangleLocation::Outside,
+            }],
+        };
+        assert_eq!(
+            nonconstructive_vertex.validate(),
+            Err(CoplanarOverlapSplitValidationError::NonConstructiveVertexOverlap)
         );
     }
 
