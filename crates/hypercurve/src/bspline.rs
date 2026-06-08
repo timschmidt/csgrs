@@ -342,7 +342,7 @@ impl PolynomialBSplineCurve2 {
             trim,
             RetainedCurvePeriodicity1::NonPeriodic,
             RetainedTopologyStatus::NativeExact,
-            endpoint_evidence(&self.control_points, &domain),
+            endpoint_evidence(&self.control_points, &domain)?,
             cache_summary,
         )?))
     }
@@ -531,7 +531,7 @@ impl RationalQuadraticBSplineCurve2 {
             trim,
             RetainedCurvePeriodicity1::NonPeriodic,
             RetainedTopologyStatus::NativeExact,
-            endpoint_evidence(&self.control_points, &domain),
+            endpoint_evidence(&self.control_points, &domain)?,
             cache_summary,
         )?))
     }
@@ -778,7 +778,7 @@ impl RationalBSplineCurve2 {
             trim,
             RetainedCurvePeriodicity1::NonPeriodic,
             topology_status,
-            endpoint_evidence(&self.control_points, &domain),
+            endpoint_evidence(&self.control_points, &domain)?,
             cache_summary,
         )?))
     }
@@ -1709,16 +1709,20 @@ fn default_trim(
 fn endpoint_evidence(
     control_points: &[Point2],
     domain: &RetainedParameterDomain1,
-) -> RetainedEndpointEvidence2 {
+) -> CurveResult<RetainedEndpointEvidence2> {
     let start_point = control_points
         .first()
-        .expect("validated B-spline has at least one control point")
+        .ok_or(CurveError::InvalidBSpline)?
         .clone();
     let end_point = control_points
         .last()
-        .expect("validated B-spline has at least one control point")
+        .ok_or(CurveError::InvalidBSpline)?
         .clone();
-    RetainedEndpointEvidence2::new(domain, start_point, end_point)
+    Ok(RetainedEndpointEvidence2::new(
+        domain,
+        start_point,
+        end_point,
+    ))
 }
 
 fn distinct_interior_knots(
