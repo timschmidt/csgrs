@@ -1710,6 +1710,10 @@ fn relation_to_polynomial_bezier(
     polynomial_controls: &[&Point2],
     policy: &CurvePolicy,
 ) -> Classification<BezierCurveRelation> {
+    if polynomial_controls.is_empty() {
+        return Classification::Uncertain(UncertaintyReason::Unsupported);
+    }
+
     if polynomial_controls.len() == 3 {
         match rational.same_polynomial_quadratic_controls(polynomial_controls, policy) {
             Some(true) => return Classification::Decided(BezierCurveRelation::SameControlPolygon),
@@ -1921,7 +1925,9 @@ fn same_parameter_dyadic_rational_polynomial_relation(
             // the conservative subdivision/uncertainty path for topology.
             Classification::Uncertain(_) => continue,
         };
-        let polynomial_point = polynomial_point_at(polynomial_controls, parameter);
+        let Some(polynomial_point) = polynomial_point_at(polynomial_controls, parameter) else {
+            return Classification::Uncertain(UncertaintyReason::Unsupported);
+        };
         match point_coordinates_equal(&rational_point, &polynomial_point, policy) {
             Some(true) => push_unique_intersection_point(&mut points, rational_point, policy),
             Some(false) => {}
@@ -3207,7 +3213,9 @@ fn line_image_polynomial_relation(
         BezierLineRelation::Intersects { parameters } => {
             let mut points = Vec::new();
             for parameter in parameters {
-                let point = polynomial_point_at(controls, parameter);
+                let Some(point) = polynomial_point_at(controls, parameter) else {
+                    return Classification::Uncertain(UncertaintyReason::Unsupported);
+                };
                 match line.contains_point(&point, policy) {
                     Classification::Decided(true) => {
                         push_unique_intersection_point(&mut points, point, policy)
@@ -3271,7 +3279,7 @@ fn polynomial_relation_to_line(
     }
 }
 
-fn polynomial_point_at(controls: &[&Point2], t: Real) -> Point2 {
+fn polynomial_point_at(controls: &[&Point2], t: Real) -> Option<Point2> {
     let mut level = controls
         .iter()
         .map(|point| (*point).clone())
@@ -3282,9 +3290,7 @@ fn polynomial_point_at(controls: &[&Point2], t: Real) -> Point2 {
             .map(|pair| pair[0].lerp(&pair[1], t.clone()))
             .collect();
     }
-    level
-        .pop()
-        .expect("polynomial Bezier evaluation requires at least one control")
+    level.pop()
 }
 
 fn push_unique_intersection_point(
@@ -3576,4 +3582,32 @@ fn half() -> Real {
 
 fn point_equal(a: &Point2, b: &Point2, policy: &CurvePolicy) -> Option<bool> {
     is_zero(&a.distance_squared(b), policy)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn point(x: i32, y: i32) -> Point2 {
+        Point2::new(Real::from(x), Real::from(y))
+    }
+
+    #[test]
+    fn empty_polynomial_control_relation_reports_unsupported() {
+        let rational = RationalQuadraticBezier2::try_new(
+            point(0, 0),
+            point(1, 1),
+            point(2, 0),
+            Real::one(),
+            Real::one(),
+            Real::one(),
+        )
+        .unwrap();
+
+        assert_eq!(
+            relation_to_polynomial_bezier(&rational, &[], &CurvePolicy::certified()),
+            Classification::Uncertain(UncertaintyReason::Unsupported)
+        );
+        assert_eq!(polynomial_point_at(&[], Real::zero()), None);
+    }
 }
