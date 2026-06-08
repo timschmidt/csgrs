@@ -996,22 +996,22 @@ fn split_contour_for_slices(
 
     match markers.merge_intersections(pair_events, operand, &policy) {
         Classification::Decided(()) => {}
-        Classification::Uncertain(_) => return Ok(source_contour_fragments(contour)),
+        Classification::Uncertain(_) => return source_contour_fragments(contour),
     }
     match markers.merge_self_intersections(&self_events, &policy) {
         Classification::Decided(()) => {}
-        Classification::Uncertain(_) => return Ok(source_contour_fragments(contour)),
+        Classification::Uncertain(_) => return source_contour_fragments(contour),
     }
 
     match ContourFragmentSet::from_split_markers(contour, &markers, &policy)
         .map_err(|error| error.to_string())?
     {
         Classification::Decided(fragments) => Ok(fragments),
-        Classification::Uncertain(_) => Ok(source_contour_fragments(contour)),
+        Classification::Uncertain(_) => source_contour_fragments(contour),
     }
 }
 
-fn source_contour_fragments(contour: &HContour) -> ContourFragmentSet {
+fn source_contour_fragments(contour: &HContour) -> Result<ContourFragmentSet, String> {
     ContourFragmentSet::new(
         contour
             .segments()
@@ -1027,6 +1027,7 @@ fn source_contour_fragments(contour: &HContour) -> ContourFragmentSet {
             )
             .collect(),
     )
+    .map_err(|error| error.to_string())
 }
 
 fn signed_area_of_points(points: &[[f64; 2]]) -> f64 {
