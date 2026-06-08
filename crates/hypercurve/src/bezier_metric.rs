@@ -456,16 +456,24 @@ fn controls_are_degree_elevated_linear_parameterization(
     // `P_i = lerp(P0, P_n, i/n)`. This is the standard Bernstein
     // degree-elevation identity in Farin (2002), used as a certified metric
     // fact under Yap's exact-computation boundary (1997).
-    let degree = controls.len() - 1;
-    let denominator = Real::from(degree as i32);
+    let degree = match positive_usize_as_real(controls.len() - 1) {
+        Ok(degree) => degree,
+        Err(reason) => return Classification::Uncertain(reason),
+    };
     for (index, control) in controls
         .iter()
         .enumerate()
         .skip(1)
         .take(controls.len().saturating_sub(2))
     {
-        let parameter = (Real::from(index as i32) / &denominator)
-            .expect("division by positive degree is defined");
+        let index = match positive_usize_as_real(index) {
+            Ok(index) => index,
+            Err(reason) => return Classification::Uncertain(reason),
+        };
+        let parameter = match index / &degree {
+            Ok(parameter) => parameter,
+            Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
+        };
         let expected = start.lerp(end, parameter);
         match is_zero(&expected.distance_squared(control), policy) {
             Some(true) => {}
@@ -508,7 +516,7 @@ fn subdivide_controls_half(controls: &[Point2]) -> CurveResult<(Vec<Point2>, Vec
         let next = previous
             .windows(2)
             .map(|pair| midpoint_point(&pair[0], &pair[1]))
-            .collect::<Vec<_>>();
+            .collect::<CurveResult<Vec<_>>>()?;
         levels.push(next);
     }
 
@@ -553,12 +561,18 @@ fn subdivide_controls_at(controls: &[Point2], t: Real) -> CurveResult<(Vec<Point
     Ok((left, right))
 }
 
-fn midpoint_point(first: &Point2, second: &Point2) -> Point2 {
+fn positive_usize_as_real(value: usize) -> Result<Real, UncertaintyReason> {
+    i32::try_from(value)
+        .map(Real::from)
+        .map_err(|_| UncertaintyReason::Unsupported)
+}
+
+fn midpoint_point(first: &Point2, second: &Point2) -> CurveResult<Point2> {
     let two = Real::from(2_i8);
-    Point2::new(
-        ((first.x() + second.x()) / &two).expect("division by two is valid"),
-        ((first.y() + second.y()) / two).expect("division by two is valid"),
-    )
+    Ok(Point2::new(
+        ((first.x() + second.x()) / &two)?,
+        ((first.y() + second.y()) / two)?,
+    ))
 }
 
 #[cfg(test)]
@@ -619,6 +633,27 @@ mod tests {
         assert_eq!(
             subdivide_controls_at(&[], Real::zero()),
             Err(CurveError::InvalidBezierRange)
+        );
+    }
+
+    #[test]
+    fn degree_elevated_linear_certificate_checks_parameters_exactly() {
+        let linear = vec![point(0, 0), point(1, 0), point(2, 0), point(3, 0)];
+        assert_eq!(
+            controls_are_degree_elevated_linear_parameterization(
+                &linear,
+                &CurvePolicy::certified()
+            ),
+            Classification::Decided(true)
+        );
+
+        let nonlinear_speed = vec![point(0, 0), point(1, 0), point(4, 0)];
+        assert_eq!(
+            controls_are_degree_elevated_linear_parameterization(
+                &nonlinear_speed,
+                &CurvePolicy::certified()
+            ),
+            Classification::Decided(false)
         );
     }
 }
