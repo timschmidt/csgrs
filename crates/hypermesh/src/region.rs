@@ -8,7 +8,10 @@
 //! predicate facts, and undecided cases remain explicit.
 //!
 
-use std::{cmp::Ordering, collections::BTreeMap};
+use std::{
+    cmp::Ordering,
+    collections::{BTreeMap, BTreeSet},
+};
 
 use hyperlimit::{
     PlaneSide, Point3, TriangleLocation, classify_point_triangle, orient3d_report, point_on_segment,
@@ -307,6 +310,7 @@ impl FaceRegionTriangulation {
             validate_projected_boundary_vertex(vertex, source, self.projection)?;
         }
 
+        let mut retained_cells = BTreeSet::<[usize; 3]>::new();
         for tri in self.triangles.chunks_exact(3) {
             if tri.iter().any(|&index| index >= self.vertices.len()) {
                 return Err(hypertri::Error::InvalidInput {
@@ -316,6 +320,13 @@ impl FaceRegionTriangulation {
             if tri[0] == tri[1] || tri[1] == tri[2] || tri[2] == tri[0] {
                 return Err(hypertri::Error::InvalidInput {
                     reason: "region triangulation has repeated vertex handles",
+                });
+            }
+            let mut cell = [tri[0], tri[1], tri[2]];
+            cell.sort_unstable();
+            if !retained_cells.insert(cell) {
+                return Err(hypertri::Error::InvalidInput {
+                    reason: "region triangulation retained a duplicate triangle cell",
                 });
             }
             validate_projected_triangle(
@@ -2086,6 +2097,29 @@ mod tests {
 
     fn face_interior(point: Point3) -> FaceSplitBoundaryNode {
         FaceSplitBoundaryNode::FaceInterior { point }
+    }
+
+    #[test]
+    fn region_triangulation_rejects_duplicate_triangle_cell() {
+        let boundary = vec![
+            original(0, p(0, 0, 0)),
+            original(1, p(1, 0, 0)),
+            original(2, p(0, 1, 0)),
+        ];
+        let vertices = boundary
+            .iter()
+            .map(|node| project_for_hypertri(boundary_node_point(node), CoplanarProjection::Xy))
+            .collect();
+        let triangulation = FaceRegionTriangulation {
+            side: MeshSide::Left,
+            face: 0,
+            projection: CoplanarProjection::Xy,
+            boundary,
+            vertices,
+            triangles: vec![0, 1, 2, 2, 1, 0],
+        };
+
+        assert!(triangulation.validate().is_err());
     }
 
     #[test]
