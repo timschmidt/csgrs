@@ -123,6 +123,9 @@ pub enum ExactReportValidationError {
     InvalidTriangulation,
     /// A retained output assembly plan failed its own audit.
     InvalidAssembly,
+    /// A retained output assembly plan contains a duplicate topological
+    /// triangle.
+    DuplicateAssemblyTriangle,
     /// A retained volumetric winding region classification failed its audit.
     InvalidVolumetricClassification(ExactVolumetricRegionError),
     /// An arrangement-materialized result did not retain volumetric region facts.
@@ -283,6 +286,7 @@ impl From<ExactReportValidationError> for ExactReportFreshness {
             | ExactReportValidationError::DuplicateRegionTriangulation
             | ExactReportValidationError::InvalidTriangulation
             | ExactReportValidationError::InvalidAssembly
+            | ExactReportValidationError::DuplicateAssemblyTriangle
             | ExactReportValidationError::InvalidVolumetricClassification(_)
             | ExactReportValidationError::MissingVolumetricClassifications
             | ExactReportValidationError::UnexpectedVolumetricClassifications
@@ -1144,6 +1148,9 @@ impl ExactBooleanResult {
         self.assembly
             .validate()
             .map_err(|_| ExactReportValidationError::InvalidAssembly)?;
+        if retains_region_artifacts && assembly_has_duplicate_triangle_vertex_sets(&self.assembly) {
+            return Err(ExactReportValidationError::DuplicateAssemblyTriangle);
+        }
         self.mesh
             .validate_retained_state()
             .map_err(|_| ExactReportValidationError::InvalidOutputMesh)?;
@@ -1570,6 +1577,20 @@ fn certified_shortcut_sources_match(
             arrangement_cell_complex_sources_match(operation, validation, left, right)
         }
     }
+}
+
+fn assembly_has_duplicate_triangle_vertex_sets(assembly: &ExactBooleanAssemblyPlan) -> bool {
+    let mut seen = Vec::<[usize; 3]>::new();
+    assembly.triangles.iter().any(|triangle| {
+        let mut vertices = triangle.vertices;
+        vertices.sort_unstable();
+        if seen.contains(&vertices) {
+            true
+        } else {
+            seen.push(vertices);
+            false
+        }
+    })
 }
 
 fn certified_shortcut_output_matches_sources(
@@ -5995,6 +6016,7 @@ impl ExactWindingReadinessReport {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::boolean::{ExactBooleanPolicy, boolean_selected_regions};
 
     #[test]
     fn freshness_classifies_retained_region_provenance_drift() {
@@ -6005,6 +6027,7 @@ mod tests {
             ExactReportValidationError::AssemblyVertexOutsideTriangulation,
             ExactReportValidationError::UnreferencedAssemblyVertex,
             ExactReportValidationError::InvalidAssembly,
+            ExactReportValidationError::DuplicateAssemblyTriangle,
             ExactReportValidationError::OutputMeshAssemblyMismatch,
             ExactReportValidationError::InvalidRegionClassification(
                 FaceRegionPlaneValidationError::EmptyNodeSides,
@@ -6263,6 +6286,36 @@ mod tests {
                 ExactBoundaryBooleanPolicy::Reject,
             ),
             ExactReportFreshness::OperationReplayMismatch
+        );
+    }
+
+    #[test]
+    fn selected_region_result_rejects_duplicate_assembly_triangle() {
+        let left = report_test_triangle(&[[0, 0, 0], [4, 0, 0], [0, 4, 0]]);
+        let right = report_test_triangle(&[[1, -1, -1], [1, 3, 1], [1, 3, -1]]);
+        let mut result = boolean_selected_regions(
+            &left,
+            &right,
+            ExactBooleanPolicy {
+                selection: ExactRegionSelection::KeepAll,
+                validation: ValidationPolicy::ALLOW_BOUNDARY,
+                reject_unknowns: true,
+            },
+        )
+        .unwrap();
+        result.validate().unwrap();
+        assert!(!result.assembly.triangles.is_empty());
+
+        let duplicate = result.assembly.triangles[0].clone();
+        result.assembly.triangles.push(duplicate);
+
+        assert_eq!(
+            result.validate(),
+            Err(ExactReportValidationError::DuplicateAssemblyTriangle)
+        );
+        assert_eq!(
+            result.freshness_against_sources(&left, &right),
+            ExactReportFreshness::StaleRegionFacts
         );
     }
 
