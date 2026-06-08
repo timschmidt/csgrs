@@ -39,6 +39,22 @@ fn promote_ring(points: Vec<[f64; 2]>, label: &str) -> Result<Vec<[Real; 2]>, Js
         .collect()
 }
 
+fn promote_polyline(points: Vec<[f64; 2]>, label: &str) -> Result<Vec<[Real; 2]>, JsValue> {
+    points
+        .into_iter()
+        .enumerate()
+        .map(|(index, [x, y])| {
+            let x = real_from_js(x).ok_or_else(|| {
+                JsValue::from_str(&format!("{label}[{index}] has invalid x"))
+            })?;
+            let y = real_from_js(y).ok_or_else(|| {
+                JsValue::from_str(&format!("{label}[{index}] has invalid y"))
+            })?;
+            Ok([x, y])
+        })
+        .collect()
+}
+
 #[wasm_bindgen]
 pub struct SketchJs {
     pub(crate) inner: Profile<Option<String>>,
@@ -149,7 +165,18 @@ impl SketchJs {
     /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
     #[wasm_bindgen(js_name = wirePolylines)]
     pub fn wire_polylines(&self) -> Result<JsValue, JsValue> {
-        to_value(&self.inner.wire_polylines()).map_err(|e| {
+        let polylines = self
+            .inner
+            .wire_polylines()
+            .into_iter()
+            .map(|polyline| {
+                polyline
+                    .into_iter()
+                    .map(|point| [real_to_js(&point[0]), real_to_js(&point[1])])
+                    .collect::<Vec<_>>()
+            })
+            .collect::<Vec<_>>();
+        to_value(&polylines).map_err(|e| {
             JsValue::from_str(&format!("Failed to serialize wire polylines: {e}"))
         })
     }
@@ -272,10 +299,12 @@ impl SketchJs {
         polylines: JsValue,
         metadata: JsValue,
     ) -> Result<Self, JsValue> {
-        let polylines: Vec<Vec<[Real; 2]>> = from_value(polylines)
+        let polylines: Vec<Vec<[f64; 2]>> = from_value(polylines)
             .map_err(|e| JsValue::from_str(&format!("Failed to parse wire polylines: {e}")))?;
         let mut wires = Vec::with_capacity(polylines.len());
-        for polyline in polylines {
+        for (polyline_index, polyline) in polylines.into_iter().enumerate() {
+            let polyline =
+                promote_polyline(polyline, &format!("polylines[{polyline_index}]"))?;
             let wire = CurveString2::from_real_point_iter(polyline)
                 .map_err(|_| JsValue::from_str("Invalid wire polyline"))?;
             wires.push(wire);
