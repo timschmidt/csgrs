@@ -12,7 +12,7 @@
 use hyperreal::{Real, RealSign};
 
 use crate::classify::{is_zero, real_sign};
-use crate::contour::Contour2;
+use crate::contour::{Contour2, FillRule};
 use crate::curve_string::CurveString2;
 use crate::segment::{CircularArc2, LineSeg2, Segment2};
 use crate::{Classification, CurveError, CurvePolicy, CurveResult, Point2, UncertaintyReason};
@@ -154,7 +154,7 @@ impl CurveString2 {
             Classification::Decided(joined) => joined,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
-        Ok(Classification::Decided(CurveString2::new_unchecked(joined)))
+        Ok(checked_joined_curve_string(joined))
     }
 
     /// Returns a raw joined left offset, rejecting self-contacting output.
@@ -406,10 +406,7 @@ impl Contour2 {
             Classification::Decided(joined) => joined,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
-        Ok(Classification::Decided(Contour2::new_unchecked(
-            CurveString2::new_unchecked(joined),
-            self.fill_rule(),
-        )))
+        Ok(checked_joined_contour(joined, self.fill_rule()))
     }
 
     /// Returns a raw joined left offset, rejecting self-contacting output.
@@ -529,6 +526,33 @@ fn checked_outline_contour(
             Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
         }
         Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
+    }
+}
+
+fn checked_joined_curve_string(segments: Vec<Segment2>) -> Classification<CurveString2> {
+    CurveString2::try_new(segments)
+        .map(Classification::Decided)
+        .unwrap_or_else(classify_joined_topology_error)
+}
+
+fn checked_joined_contour(
+    segments: Vec<Segment2>,
+    fill_rule: FillRule,
+) -> Classification<Contour2> {
+    Contour2::try_new_with_fill_rule(segments, fill_rule)
+        .map(Classification::Decided)
+        .unwrap_or_else(classify_joined_topology_error)
+}
+
+fn classify_joined_topology_error<T>(error: CurveError) -> Classification<T> {
+    match error {
+        CurveError::DisconnectedCurveString => {
+            Classification::Uncertain(UncertaintyReason::Unsupported)
+        }
+        CurveError::AmbiguousCurveStringConnection => {
+            Classification::Uncertain(UncertaintyReason::RealSign)
+        }
+        error => unreachable!("joined offset construction returned unexpected error: {error}"),
     }
 }
 

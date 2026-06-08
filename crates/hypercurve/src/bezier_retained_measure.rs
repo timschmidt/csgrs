@@ -699,14 +699,20 @@ impl EndpointEnvelopeAccumulator {
         Some(())
     }
 
-    fn finish(self, _policy: &CurvePolicy) -> Classification<BezierRetainedEndpointEnvelope2> {
+    fn finish(self, policy: &CurvePolicy) -> Classification<BezierRetainedEndpointEnvelope2> {
         let (Some(min_x), Some(min_y), Some(max_x), Some(max_y)) =
             (self.min_x, self.min_y, self.max_x, self.max_y)
         else {
             return Classification::Uncertain(UncertaintyReason::Unsupported);
         };
+        let min = Point2::new(min_x, min_y);
+        let max = Point2::new(max_x, max_y);
+        let envelope = match Aabb2::from_points([&min, &max], policy) {
+            Classification::Decided(envelope) => envelope,
+            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+        };
         Classification::Decided(BezierRetainedEndpointEnvelope2 {
-            envelope: Aabb2::new_unchecked(Point2::new(min_x, min_y), Point2::new(max_x, max_y)),
+            envelope,
             native_endpoint_count: self.native_endpoint_count,
             algebraic_endpoint_count: self.algebraic_endpoint_count,
             endpoint_source_kinds: self.endpoint_source_kinds,
