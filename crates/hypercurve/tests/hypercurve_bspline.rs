@@ -498,9 +498,11 @@ fn retained_curve_cache_summary_rejects_inconsistent_span_counts() {
     assert_topology_error(RetainedCurveCacheSummary2::new(0, 9, 2, 2, 0));
     assert_topology_error(RetainedCurveCacheSummary2::new(5, 5, 2, 2, 0));
     assert_topology_error(RetainedCurveCacheSummary2::new(5, 4, 2, 2, 0));
+    assert_topology_error(RetainedCurveCacheSummary2::new(5, 9, 3, 3, 0));
     assert_topology_error(RetainedCurveCacheSummary2::new(5, 9, 4, 4, 0));
     assert_topology_error(RetainedCurveCacheSummary2::new(5, 9, 5, 5, 0));
     assert_topology_error(RetainedCurveCacheSummary2::new(5, 9, 6, 6, 0));
+    assert_topology_error(RetainedCurveCacheSummary2::new(5, 11, 1, 1, 0));
 }
 
 #[test]
@@ -613,6 +615,30 @@ fn retained_curve_profile_rejects_mismatched_endpoint_evidence_without_blocking_
             native_only_cache,
         ));
     }
+
+    let cubic_cache = RetainedCurveCacheSummary2::new(5, 9, 2, 2, 0).unwrap();
+    let endpoints = RetainedEndpointEvidence2::new(&domain, p(0, 0), p(2, 0));
+    assert_topology_error(RetainedCurveProfile2::new(
+        RetainedCurveIdentity2::new(RetainedCurveFamily2::RationalQuadraticBSpline, 43),
+        domain.clone(),
+        decided(RetainedTrimInterval1::try_new(r(0), r(2), &domain, &policy).unwrap()),
+        RetainedCurvePeriodicity1::NonPeriodic,
+        RetainedTopologyStatus::NativeExact,
+        endpoints,
+        cubic_cache,
+    ));
+
+    let quartic_cache = RetainedCurveCacheSummary2::new(5, 10, 1, 1, 0).unwrap();
+    let endpoints = RetainedEndpointEvidence2::new(&domain, p(0, 0), p(2, 0));
+    assert_topology_error(RetainedCurveProfile2::new(
+        identity,
+        domain.clone(),
+        decided(RetainedTrimInterval1::try_new(r(0), r(2), &domain, &policy).unwrap()),
+        RetainedCurvePeriodicity1::NonPeriodic,
+        RetainedTopologyStatus::NativeExact,
+        endpoints,
+        quartic_cache,
+    ));
 }
 
 #[test]

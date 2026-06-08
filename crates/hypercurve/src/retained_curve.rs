@@ -321,6 +321,7 @@ impl RetainedCurveProfile2 {
         cache_summary: RetainedCurveCacheSummary2,
     ) -> CurveResult<Self> {
         validate_curve_profile_evidence(
+            identity,
             &domain,
             &trim,
             topology_status,
@@ -400,6 +401,22 @@ fn validate_cache_summary_counts(
                 .into(),
         ));
     }
+    let Some(order) = knot_count.checked_sub(control_count) else {
+        return Err(CurveError::Topology(
+            "retained B-spline cache summary knot/control counts are inconsistent".into(),
+        ));
+    };
+    if order < 3 || control_count < order {
+        return Err(CurveError::Topology(
+            "retained B-spline cache summary must carry a supported degree shape".into(),
+        ));
+    }
+    let degree = order - 1;
+    if span_count > control_count - degree {
+        return Err(CurveError::Topology(
+            "retained B-spline cache summary span count exceeds the degree-implied maximum".into(),
+        ));
+    }
     if native_span_count
         .checked_add(retained_span_count)
         .is_none_or(|count| count != span_count)
@@ -412,12 +429,14 @@ fn validate_cache_summary_counts(
 }
 
 fn validate_curve_profile_evidence(
+    identity: RetainedCurveIdentity2,
     domain: &RetainedParameterDomain1,
     trim: &RetainedTrimInterval1,
     topology_status: RetainedTopologyStatus,
     endpoints: &RetainedEndpointEvidence2,
     cache_summary: &RetainedCurveCacheSummary2,
 ) -> CurveResult<()> {
+    validate_profile_family_shape(identity, cache_summary)?;
     let policy = CurvePolicy::certified();
     for parameter in [trim.start(), trim.end()] {
         if domain.contains(parameter, &policy) != Classification::Decided(true) {
@@ -442,4 +461,30 @@ fn validate_curve_profile_evidence(
         ));
     }
     Ok(())
+}
+
+fn validate_profile_family_shape(
+    identity: RetainedCurveIdentity2,
+    cache_summary: &RetainedCurveCacheSummary2,
+) -> CurveResult<()> {
+    let degree = cache_summary
+        .knot_count()
+        .checked_sub(cache_summary.control_count())
+        .and_then(|order| order.checked_sub(1))
+        .ok_or_else(|| {
+            CurveError::Topology(
+                "retained curve profile cache summary has no certified B-spline degree".into(),
+            )
+        })?;
+    match identity.family() {
+        RetainedCurveFamily2::PolynomialBSpline if !(2..=3).contains(&degree) => {
+            Err(CurveError::Topology(
+                "polynomial B-spline profile must carry quadratic or cubic cache evidence".into(),
+            ))
+        }
+        RetainedCurveFamily2::RationalQuadraticBSpline if degree != 2 => Err(CurveError::Topology(
+            "rational quadratic B-spline profile must carry quadratic cache evidence".into(),
+        )),
+        _ => Ok(()),
+    }
 }
