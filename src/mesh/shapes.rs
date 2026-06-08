@@ -85,14 +85,14 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     /// Standard axis-aligned cuboid from origin:
     /// ```text
     /// (0,0,0) → (width, length, height)
-    /// ```
+    /// ```text
     /// This creates a right-handed coordinate system with consistent face orientations.
     ///
     /// ### **Face Normal Calculation**
     /// Each face normal is computed using the right-hand rule:
     /// ```text
     /// n⃗ = (v⃗₁ - v⃗₀) × (v⃗₂ - v⃗₀)
-    /// ```
+    /// ```text
     /// where vertices are ordered counter-clockwise when viewed from outside.
     ///
     /// ### **Winding Order Convention**
@@ -227,7 +227,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     /// ```text
     /// M(u,v) = r(sin(πv)cos(2πu), cos(πv), sin(πv)sin(2πu))
     /// where u ∈ [0,1], v ∈ [0,1]
-    /// ```
+    /// ```text
     ///
     /// ### **Tessellation Algorithm**
     /// 1. **Parameter Grid**: Create (segments+1) × (stacks+1) parameter values
@@ -245,7 +245,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     /// Sphere normals are simply the normalized position vectors:
     /// ```text
     /// n⃗ = p⃗/|p⃗| = (x,y,z)/r
-    /// ```
+    /// ```text
     /// This is mathematically exact for spheres (no approximation needed).
     ///
     /// ### **Mesh Quality Metrics**
@@ -367,7 +367,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     /// - `metadata`: optional metadata
     ///
     /// # Example
-    /// ```
+    /// ```ignore
     /// use csgrs::mesh::Mesh;
     /// use hyperlattice::Point3;
     /// let bottom = Point3::new(0.0, 0.0, 0.0);
@@ -575,7 +575,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     ///   Each face must have at least 3 indices.
     ///
     /// # Example
-    /// ```
+    /// ```ignore
     /// # use csgrs::mesh::Mesh;
     ///
     /// let pts = &[

@@ -1,6 +1,7 @@
 //! Mesh smoothing and refinement operations.
 
 use crate::mesh::Mesh;
+use crate::mesh::connectivity::VertexIndexMap;
 use hyperlattice::{Point3, Real};
 use std::collections::HashMap;
 use std::fmt::Debug;
@@ -40,15 +41,16 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         preserve_boundaries: bool,
     ) -> Mesh<M> {
         let (vertex_map, adjacency) = self.build_connectivity();
+        let polygon_vertex_indices = self.polygon_vertex_indices(&vertex_map);
         let mut smoothed_polygons = self.polygons.clone();
 
         for iteration in 0..iterations {
             // Build current vertex position mapping
             let mut current_positions: HashMap<usize, Point3> = HashMap::new();
-            for polygon in &smoothed_polygons {
-                for vertex in &polygon.vertices {
-                    if let Some(idx) = vertex_map.find_index(&vertex.position) {
-                        current_positions.insert(idx, vertex.position.clone());
+            for (polygon, indices) in smoothed_polygons.iter().zip(&polygon_vertex_indices) {
+                for (vertex, idx) in polygon.vertices.iter().zip(indices) {
+                    if let Some(idx) = idx {
+                        current_positions.insert(*idx, vertex.position.clone());
                     }
                 }
             }
@@ -81,16 +83,15 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             }
 
             // Apply updates to mesh vertices
-            for polygon in &mut smoothed_polygons {
-                for vertex in &mut polygon.vertices {
-                    if let Some(idx) = vertex_map.find_index(&vertex.position) {
-                        if let Some(new_position) = laplacian_updates.get(&idx) {
+            for (polygon, indices) in smoothed_polygons.iter_mut().zip(&polygon_vertex_indices)
+            {
+                for (vertex, idx) in polygon.vertices.iter_mut().zip(indices) {
+                    if let Some(idx) = idx {
+                        if let Some(new_position) = laplacian_updates.get(idx) {
                             vertex.position = new_position.clone();
                         }
                     }
                 }
-                // Recompute polygon plane and normals after smoothing
-                polygon.set_new_normal();
             }
 
             // Progress feedback for long smoothing operations
@@ -130,15 +131,16 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         preserve_boundaries: bool,
     ) -> Mesh<M> {
         let (vertex_map, adjacency) = self.build_connectivity();
+        let polygon_vertex_indices = self.polygon_vertex_indices(&vertex_map);
         let mut smoothed_polygons = self.polygons.clone();
 
         for _ in 0..iterations {
             // --- Lambda (shrinking) pass ---
             let mut current_positions: HashMap<usize, Point3> = HashMap::new();
-            for polygon in &smoothed_polygons {
-                for vertex in &polygon.vertices {
-                    if let Some(idx) = vertex_map.find_index(&vertex.position) {
-                        current_positions.insert(idx, vertex.position.clone());
+            for (polygon, indices) in smoothed_polygons.iter().zip(&polygon_vertex_indices) {
+                for (vertex, idx) in polygon.vertices.iter().zip(indices) {
+                    if let Some(idx) = idx {
+                        current_positions.insert(*idx, vertex.position.clone());
                     }
                 }
             }
@@ -165,10 +167,11 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
                 }
             }
 
-            for polygon in &mut smoothed_polygons {
-                for vertex in &mut polygon.vertices {
-                    if let Some(idx) = vertex_map.find_index(&vertex.position) {
-                        if let Some(new_position) = updates.get(&idx) {
+            for (polygon, indices) in smoothed_polygons.iter_mut().zip(&polygon_vertex_indices)
+            {
+                for (vertex, idx) in polygon.vertices.iter_mut().zip(indices) {
+                    if let Some(idx) = idx {
+                        if let Some(new_position) = updates.get(idx) {
                             vertex.position = new_position.clone();
                         }
                     }
@@ -177,10 +180,10 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
 
             // --- Mu (inflating) pass ---
             current_positions.clear();
-            for polygon in &smoothed_polygons {
-                for vertex in &polygon.vertices {
-                    if let Some(idx) = vertex_map.find_index(&vertex.position) {
-                        current_positions.insert(idx, vertex.position.clone());
+            for (polygon, indices) in smoothed_polygons.iter().zip(&polygon_vertex_indices) {
+                for (vertex, idx) in polygon.vertices.iter().zip(indices) {
+                    if let Some(idx) = idx {
+                        current_positions.insert(*idx, vertex.position.clone());
                     }
                 }
             }
@@ -206,10 +209,11 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
                 }
             }
 
-            for polygon in &mut smoothed_polygons {
-                for vertex in &mut polygon.vertices {
-                    if let Some(idx) = vertex_map.find_index(&vertex.position) {
-                        if let Some(new_position) = updates.get(&idx) {
+            for (polygon, indices) in smoothed_polygons.iter_mut().zip(&polygon_vertex_indices)
+            {
+                for (vertex, idx) in polygon.vertices.iter_mut().zip(indices) {
+                    if let Some(idx) = idx {
+                        if let Some(new_position) = updates.get(idx) {
                             vertex.position = new_position.clone();
                         }
                     }
@@ -217,11 +221,19 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             }
         }
 
-        // Final pass to recompute normals
-        for polygon in &mut smoothed_polygons {
-            polygon.set_new_normal();
-        }
-
         Mesh::from_polygons(&smoothed_polygons, self.metadata.clone())
+    }
+
+    fn polygon_vertex_indices(&self, vertex_map: &VertexIndexMap) -> Vec<Vec<Option<usize>>> {
+        self.polygons
+            .iter()
+            .map(|polygon| {
+                polygon
+                    .vertices
+                    .iter()
+                    .map(|vertex| vertex_map.find_index(&vertex.position))
+                    .collect()
+            })
+            .collect()
     }
 }

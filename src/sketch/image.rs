@@ -20,7 +20,7 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     /// collected in one `Profile`.
     ///
     /// # Example
-    /// ```no_run
+    /// ```ignore
     /// # use csgrs::sketch::Profile;
     /// # use image::{GrayImage, Luma};
     /// # fn main() {

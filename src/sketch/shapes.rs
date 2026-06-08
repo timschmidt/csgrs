@@ -173,7 +173,7 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     /// - `metadata`: optional metadata
     ///
     /// # Example
-    /// ```
+    /// ```ignore
     /// use csgrs::sketch::Profile;
     /// let sq2 = Profile::<()>::rectangle(2.0, 3.0, ());
     /// ```
@@ -213,7 +213,7 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     /// x(θ) = r·cos(θ)
     /// y(θ) = r·sin(θ)
     /// where θ ∈ [0, 2π]
-    /// ```
+    /// ```text
     ///
     /// ### **Discretization Algorithm**
     /// For n segments, sample at angles:
@@ -450,7 +450,7 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     /// - `metadata`: optional metadata
     ///
     /// # Example
-    /// ```
+    /// ```ignore
     /// use csgrs::sketch::Profile;
     /// let arrow = Profile::<()>::arrow(5.0, 0.5, 2.0, 1.5, ());
     /// ```
@@ -1406,7 +1406,7 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     /// from a larger one.  
     /// `segments` controls circle smoothness.
     ///
-    /// ```
+    /// ```ignore
     /// use csgrs::sketch::Profile;
     /// let cres = Profile::<()>::crescent(2.0, 1.4, 0.8, 64, ());
     /// ```

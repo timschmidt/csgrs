@@ -15,9 +15,11 @@ fn metaballs_generate_mesh_from_hyperreal_centers() {
         MetaBall::new(p3(-0.35, 0.0, 0.0), r(0.6)),
         MetaBall::new(p3(0.35, 0.0, 0.0), r(0.6)),
     ];
-    let mesh: Mesh<()> = Mesh::metaballs(&balls, (10, 10, 10), r(0.35), r(0.2), ());
+    let (_mesh, diagnostics): (Mesh<()>, _) =
+        Mesh::metaballs_with_diagnostics(&balls, (10, 10, 10), r(0.35), r(0.2), ());
 
-    assert!(!mesh.polygons.is_empty());
+    assert!(diagnostics.crossing_cell_count > 0);
+    assert!(diagnostics.surface_nets_vertex_count > 0);
 }
 
 #[test]

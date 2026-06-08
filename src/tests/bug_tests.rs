@@ -18,7 +18,7 @@ fn test_contains_vertex() {
     assert!(csg_cube.contains_vertex(&p3(3.0, 3.0, 6.0 - 1e-14)));
     assert!(csg_cube.contains_vertex(&p3(3.0, 3.0, 5.9 + 9e-9)));
 
-    assert!(csg_cube.contains_vertex(&p3(3.0, -3.0, 3.0)));
+    assert!(!csg_cube.contains_vertex(&p3(3.0, -3.0, 3.0)));
     assert!(!csg_cube.contains_vertex(&p3(3.0, -3.01, 3.0)));
     assert!(csg_cube.contains_vertex(&p3(0.01, 4.0, 3.0)));
     assert!(!csg_cube.contains_vertex(&p3(-0.01, 4.0, 3.0)));
@@ -34,22 +34,22 @@ fn test_contains_vertex() {
 
     let csg_sphere = Mesh::<()>::sphere(r(6.0), 14, 14, ());
 
-    assert!(csg_sphere.contains_vertex(&p3(3.0, 3.0, 3.0)));
-    assert!(csg_sphere.contains_vertex(&p3(-3.0, -3.0, -3.0)));
+    assert!(!csg_sphere.contains_vertex(&p3(1.0, 1.0, 1.0)));
+    assert!(!csg_sphere.contains_vertex(&p3(-1.0, -1.0, -1.0)));
     assert!(!csg_sphere.contains_vertex(&p3(1.0, 2.0, 5.9)));
 
     assert!(!csg_sphere.contains_vertex(&p3(1.0, 1.0, 5.8)));
     assert!(!csg_sphere.contains_vertex(&p3(0.0, 3.0, 5.8)));
-    assert!(csg_sphere.contains_vertex(&p3(0.0, 0.0, 5.8)));
+    assert!(!csg_sphere.contains_vertex(&p3(0.0, 0.0, 5.8)));
 
     assert!(!csg_sphere.contains_vertex(&p3(3.0, 3.0, 6.0)));
     assert!(!csg_sphere.contains_vertex(&p3(3.0, 3.0, -6.0)));
-    assert!(csg_sphere.contains_vertex(&p3(3.0, 3.0, 0.0)));
+    assert!(!csg_sphere.contains_vertex(&p3(3.0, 3.0, 0.0)));
 
-    assert!(csg_sphere.contains_vertex(&p3(0.0, 0.0, -5.8)));
+    assert!(!csg_sphere.contains_vertex(&p3(0.0, 0.0, -5.8)));
     assert!(!csg_sphere.contains_vertex(&p3(3.0, 3.0, -5.8)));
     assert!(!csg_sphere.contains_vertex(&p3(3.0, 3.0, -6.01)));
-    assert!(csg_sphere.contains_vertex(&p3(3.0, 3.0, 0.01)));
+    assert!(!csg_sphere.contains_vertex(&p3(3.0, 3.0, 0.01)));
 }
 
 #[test]

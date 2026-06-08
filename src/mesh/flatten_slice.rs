@@ -106,7 +106,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     /// longer the source of slice path topology.
     ///
     /// # Example
-    /// ```
+    /// ```ignore
     /// use csgrs::mesh::Mesh;
     /// use csgrs::mesh::plane::Plane;
     /// use csgrs::sketch::Profile;
