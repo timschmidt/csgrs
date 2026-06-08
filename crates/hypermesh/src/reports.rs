@@ -49,9 +49,9 @@ use super::orthogonal_solid::{
     materialize_axis_aligned_orthogonal_solid_union,
 };
 use super::region::{
-    ExactBooleanAssemblyPlan, ExactOutputTriangle, ExactRegionSelection,
-    FaceRegionPlaneClassification, FaceRegionPlaneValidationError, FaceRegionTriangulation,
-    boundary_node_point,
+    ExactBooleanAssemblyPlan, ExactOutputTriangle, ExactOutputTriangleOrientation,
+    ExactRegionSelection, FaceRegionPlaneClassification, FaceRegionPlaneValidationError,
+    FaceRegionTriangulation, boundary_node_point,
 };
 use super::regularization::ExactArrangementBlocker;
 use super::solid::{
@@ -2615,6 +2615,32 @@ fn validate_volumetric_materialized_assembly_matches_operation(
                         )
                 })
                 .count();
+            let expected_orientation = match expected {
+                VolumetricCellRetention::Keep => {
+                    Some(ExactOutputTriangleOrientation::PreserveSource)
+                }
+                VolumetricCellRetention::KeepReversed => {
+                    Some(ExactOutputTriangleOrientation::ReverseSource)
+                }
+                VolumetricCellRetention::Drop => None,
+            };
+            if let Some(expected_orientation) = expected_orientation
+                && assembly.triangles.iter().any(|output| {
+                    output.source_side == triangulation.side
+                        && output.source_face == triangulation.face
+                        && output_triangle_lies_in_triangulated_cell(
+                            output,
+                            assembly,
+                            triangulation,
+                            triangle,
+                        )
+                        && output.orientation != expected_orientation
+                })
+            {
+                return Err(
+                    ExactReportValidationError::VolumetricMaterializedAssemblyViolatesOperation,
+                );
+            }
             match expected {
                 VolumetricCellRetention::Drop
                     if retained_source_cells != 0 || retained_source_subcells != 0 =>

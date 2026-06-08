@@ -12,9 +12,10 @@ use hypermesh::{
     ExactBoundaryBooleanPolicy, ExactBoundaryTouchingStatus, ExactI64MeshInputReadiness,
     ExactLabeledCellComplexFreshness, ExactMesh, ExactMeshConsumerDomain,
     ExactMeshDomainSummaryFreshness, ExactMeshHandoffPackageFreshness, ExactMeshProposalAcceptance,
-    ExactMeshProposalSourceKind, ExactOpenSurfaceDisjointStatus, ExactPlanarArrangementStatus,
-    ExactRefinementStatus, ExactRegionSelection, ExactRegularizationPolicy, ExactReportFreshness,
-    ExactSameSurfaceStatus, ExactSelectedCellComplexFreshness, ExactSimplifiedCellComplexFreshness,
+    ExactMeshProposalSourceKind, ExactOpenSurfaceDisjointStatus, ExactOutputTriangleOrientation,
+    ExactPlanarArrangementStatus, ExactRefinementStatus, ExactRegionSelection,
+    ExactRegularizationPolicy, ExactReportFreshness, ExactSameSurfaceStatus,
+    ExactSelectedCellComplexFreshness, ExactSimplifiedCellComplexFreshness,
     ExactVolumetricRegionFreshness, ExactVolumetricRegionRelation, ExactWindingReadinessStatus,
     FaceRegionPlaneRelation, FullFaceAdjacentUnionFreshness, IntersectionGraphFreshness,
     MeshArtifactBlocker, MeshArtifactManifest, MeshArtifactRole, MeshArtifactSourceKind,
@@ -3037,6 +3038,31 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
             "{stale_volumetric_order:?}"
         );
     }
+
+    let difference = materialize_volumetric_winding_arrangement(
+        &left,
+        &right,
+        ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap()
+    .expect("overlapping closed solids should materialize exact volumetric difference");
+    difference.validate().unwrap();
+    let Some(reversed_triangle) =
+        difference.assembly.triangles.iter().position(|triangle| {
+            triangle.orientation == ExactOutputTriangleOrientation::ReverseSource
+        })
+    else {
+        panic!("volumetric difference should retain a reversed source triangle");
+    };
+    let mut stale_difference_orientation = difference.clone();
+    stale_difference_orientation.assembly.triangles[reversed_triangle].orientation =
+        ExactOutputTriangleOrientation::PreserveSource;
+    assert_eq!(
+        stale_difference_orientation.validate(),
+        Err(hypermesh::ExactReportValidationError::VolumetricMaterializedAssemblyViolatesOperation),
+        "{stale_difference_orientation:?}"
+    );
     assert_eq!(
         result.freshness_against_sources(&left, &separated_right),
         ExactReportFreshness::SourceReplayMismatch
