@@ -322,13 +322,12 @@ fn inverse_length_parameter_region_for_controls(
         Some(Ordering::Less) => return Err(CurveError::InvalidBezierArcLengthTarget),
         Some(Ordering::Equal) => {
             let zero_bounds = BezierLengthBounds2::new(Real::zero(), Real::zero());
+            let span = match arc_length_span(Real::zero(), Real::zero()) {
+                Ok(span) => span,
+                Err(reason) => return Ok(Classification::Uncertain(reason)),
+            };
             return Ok(Classification::Decided(
-                BezierArcLengthParameterRegion2::new(
-                    target_length,
-                    BezierMonotoneSpan::new(Real::zero(), Real::zero())
-                        .expect("zero arc-length parameter span is ordered"),
-                    zero_bounds,
-                ),
+                BezierArcLengthParameterRegion2::new(target_length, span, zero_bounds),
             ));
         }
         Some(Ordering::Greater) => {}
@@ -366,13 +365,12 @@ fn inverse_length_parameter_region_for_controls(
         let upper_cmp = compare_reals(&target_length, mid_bounds.upper(), policy);
         match (lower_cmp, upper_cmp) {
             (Some(Ordering::Equal), Some(Ordering::Equal)) => {
+                let span = match arc_length_span(mid.clone(), mid) {
+                    Ok(span) => span,
+                    Err(reason) => return Ok(Classification::Uncertain(reason)),
+                };
                 return Ok(Classification::Decided(
-                    BezierArcLengthParameterRegion2::new(
-                        target_length,
-                        BezierMonotoneSpan::new(mid.clone(), mid)
-                            .expect("zero-width bisection span is ordered"),
-                        mid_bounds,
-                    ),
+                    BezierArcLengthParameterRegion2::new(target_length, span, mid_bounds),
                 ));
             }
             (Some(Ordering::Less), _) => high = mid,
@@ -387,13 +385,12 @@ fn inverse_length_parameter_region_for_controls(
             Classification::Decided(bounds) => bounds,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
+    let span = match arc_length_span(low, high) {
+        Ok(span) => span,
+        Err(reason) => return Ok(Classification::Uncertain(reason)),
+    };
     Ok(Classification::Decided(
-        BezierArcLengthParameterRegion2::new(
-            target_length,
-            BezierMonotoneSpan::new(low, high)
-                .expect("inverse length search maintains ordered bounds"),
-            high_bounds,
-        ),
+        BezierArcLengthParameterRegion2::new(target_length, span, high_bounds),
     ))
 }
 
@@ -408,14 +405,10 @@ fn exact_linear_parameter_inverse_length_region(
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     }
 
-    let total = distance(
-        controls
-            .first()
-            .expect("Bezier controls always contain a start point"),
-        controls
-            .last()
-            .expect("Bezier controls always contain an end point"),
-    )?;
+    let (Some(start), Some(end)) = (controls.first(), controls.last()) else {
+        return Ok(Classification::Decided(None));
+    };
+    let total = distance(start, end)?;
     match compare_reals(&target_length, &total, policy) {
         Some(Ordering::Greater) => return Err(CurveError::InvalidBezierArcLengthTarget),
         Some(Ordering::Less | Ordering::Equal) => {}
@@ -430,14 +423,17 @@ fn exact_linear_parameter_inverse_length_region(
 
     let parameter = (target_length.clone() / total)?;
     let bounds = BezierLengthBounds2::new(target_length.clone(), target_length.clone());
+    let span = match arc_length_span(parameter.clone(), parameter) {
+        Ok(span) => span,
+        Err(reason) => return Ok(Classification::Uncertain(reason)),
+    };
     Ok(Classification::Decided(Some(
-        BezierArcLengthParameterRegion2::new(
-            target_length,
-            BezierMonotoneSpan::new(parameter.clone(), parameter)
-                .expect("zero-width exact inverse length span is ordered"),
-            bounds,
-        ),
+        BezierArcLengthParameterRegion2::new(target_length, span, bounds),
     )))
+}
+
+fn arc_length_span(start: Real, end: Real) -> Result<BezierMonotoneSpan, UncertaintyReason> {
+    BezierMonotoneSpan::new(start, end).map_err(|_| UncertaintyReason::Ordering)
 }
 
 fn controls_are_degree_elevated_linear_parameterization(
@@ -551,4 +547,54 @@ fn midpoint_point(first: &Point2, second: &Point2) -> Point2 {
         ((first.x() + second.x()) / &two).expect("division by two is valid"),
         ((first.y() + second.y()) / two).expect("division by two is valid"),
     )
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn point(x: i32, y: i32) -> Point2 {
+        Point2::new(Real::from(x), Real::from(y))
+    }
+
+    fn linear_quadratic() -> QuadraticBezier2 {
+        QuadraticBezier2::new(point(0, 0), point(1, 0), point(2, 0))
+    }
+
+    fn decided<T>(value: Classification<T>) -> T {
+        match value {
+            Classification::Decided(value) => value,
+            Classification::Uncertain(reason) => panic!("unexpected uncertainty: {reason:?}"),
+        }
+    }
+
+    #[test]
+    fn inverse_length_zero_target_returns_zero_parameter_certificate() {
+        let curve = linear_quadratic();
+        let region = decided(
+            curve
+                .inverse_length_parameter_region(Real::zero(), 4, 2, &CurvePolicy::certified())
+                .unwrap(),
+        );
+
+        assert_eq!(region.parameter_span().start(), &Real::zero());
+        assert_eq!(region.parameter_span().end(), &Real::zero());
+        assert!(region.prefix_bounds_at_span_end().is_exact());
+    }
+
+    #[test]
+    fn inverse_length_linear_image_keeps_exact_parameter_certificate() {
+        let curve = linear_quadratic();
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let region = decided(
+            curve
+                .inverse_length_parameter_region(Real::one(), 4, 2, &CurvePolicy::certified())
+                .unwrap(),
+        );
+
+        assert_eq!(region.parameter_span().start(), &half);
+        assert_eq!(region.parameter_span().end(), &half);
+        assert_eq!(region.prefix_bounds_at_span_end().lower(), &Real::one());
+        assert_eq!(region.prefix_bounds_at_span_end().upper(), &Real::one());
+    }
 }
