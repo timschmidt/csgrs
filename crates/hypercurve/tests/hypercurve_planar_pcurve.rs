@@ -53,7 +53,7 @@ fn planar_open_pcurve_equality_reports_directed_and_reversed_images() {
     let same = RetainedPlanarPcurve2::new(surface, open_curve(&[(0, 0), (2, 0), (2, 3)]));
     let reversed = RetainedPlanarPcurve2::new(surface, open_curve(&[(2, 3), (2, 0), (0, 0)]));
 
-    let same_report = directed.image_equality_report(&same);
+    let same_report = directed.image_equality_report(&same).unwrap();
     assert_eq!(
         same_report.relation(),
         PlanarPcurveImageRelation2::SameDirected
@@ -61,7 +61,7 @@ fn planar_open_pcurve_equality_reports_directed_and_reversed_images() {
     assert_eq!(same_report.surface(), Some(surface));
     assert_eq!(same_report.segment_count(), 2);
 
-    let reversed_report = directed.image_equality_report(&reversed);
+    let reversed_report = directed.image_equality_report(&reversed).unwrap();
     assert_eq!(
         reversed_report.relation(),
         PlanarPcurveImageRelation2::SameReversed
@@ -81,7 +81,7 @@ fn planar_pcurve_equality_blocks_surface_mismatch_before_uv_match() {
         open_curve(&[(0, 0), (1, 0)]),
     );
 
-    let report = first.image_equality_report(&second);
+    let report = first.image_equality_report(&second).unwrap();
     assert_eq!(
         report.relation(),
         PlanarPcurveImageRelation2::SurfaceMismatch
@@ -123,7 +123,7 @@ fn planar_trim_loop_equality_accepts_cyclic_rotation_and_ignores_fill_rule() {
         rectangle(&[(4, 3), (0, 3), (0, 0), (4, 0)], FillRule::EvenOdd),
     );
 
-    let report = first.image_equality_report(&rotated);
+    let report = first.image_equality_report(&rotated).unwrap();
     assert_eq!(report.relation(), PlanarPcurveImageRelation2::SameDirected);
     assert_eq!(report.segment_count(), 4);
 }
@@ -145,11 +145,11 @@ fn planar_trim_loop_equality_reports_reversed_and_different_images() {
     );
 
     assert_eq!(
-        first.image_equality_report(&reversed).relation(),
+        first.image_equality_report(&reversed).unwrap().relation(),
         PlanarPcurveImageRelation2::SameReversed
     );
     assert_eq!(
-        first.image_equality_report(&different).relation(),
+        first.image_equality_report(&different).unwrap().relation(),
         PlanarPcurveImageRelation2::Different
     );
 }
@@ -315,7 +315,7 @@ fn retained_planar_face_reports_material_and_hole_edge_uses() {
     .unwrap();
 
     let material = RetainedPlanarPcurve2::new(surface, open_curve(&[(10, 0), (10, 10)]));
-    let material_report = face.edge_use_report(&material);
+    let material_report = face.edge_use_report(&material).unwrap();
     assert_eq!(
         material_report.relation(),
         RetainedPlanarFaceEdgeUseRelation2::BoundarySameDirected
@@ -332,7 +332,7 @@ fn retained_planar_face_reports_material_and_hole_edge_uses() {
     assert_eq!(material_report.segment_count(), 1);
 
     let reversed_hole = RetainedPlanarPcurve2::new(surface, open_curve(&[(7, 7), (7, 3)]));
-    let hole_report = face.edge_use_report(&reversed_hole);
+    let hole_report = face.edge_use_report(&reversed_hole).unwrap();
     assert_eq!(
         hole_report.relation(),
         RetainedPlanarFaceEdgeUseRelation2::BoundarySameReversed
@@ -358,7 +358,7 @@ fn retained_planar_face_edge_use_accepts_cyclic_multisegment_subchains() {
     .unwrap();
 
     let wraps_closure = RetainedPlanarPcurve2::new(surface, open_curve(&[(0, 4), (0, 0), (4, 0)]));
-    let report = face.edge_use_report(&wraps_closure);
+    let report = face.edge_use_report(&wraps_closure).unwrap();
     assert_eq!(
         report.relation(),
         RetainedPlanarFaceEdgeUseRelation2::BoundarySameDirected
@@ -367,7 +367,7 @@ fn retained_planar_face_edge_use_accepts_cyclic_multisegment_subchains() {
     assert_eq!(report.segment_count(), 2);
 
     let reversed_wrap = RetainedPlanarPcurve2::new(surface, open_curve(&[(4, 0), (0, 0), (0, 4)]));
-    let report = face.edge_use_report(&reversed_wrap);
+    let report = face.edge_use_report(&reversed_wrap).unwrap();
     assert_eq!(
         report.relation(),
         RetainedPlanarFaceEdgeUseRelation2::BoundarySameReversed
@@ -390,7 +390,7 @@ fn retained_planar_face_edge_use_rejects_surface_mismatch_and_nonboundary_chords
         RetainedPlanarSurfaceIdentity2::new(92),
         open_curve(&[(0, 0), (4, 0)]),
     );
-    let report = face.edge_use_report(&wrong_surface);
+    let report = face.edge_use_report(&wrong_surface).unwrap();
     assert_eq!(
         report.relation(),
         RetainedPlanarFaceEdgeUseRelation2::SurfaceMismatch
@@ -399,7 +399,7 @@ fn retained_planar_face_edge_use_rejects_surface_mismatch_and_nonboundary_chords
     assert_eq!(report.segment_count(), 0);
 
     let diagonal = RetainedPlanarPcurve2::new(surface, open_curve(&[(0, 0), (4, 4)]));
-    let report = face.edge_use_report(&diagonal);
+    let report = face.edge_use_report(&diagonal).unwrap();
     assert_eq!(
         report.relation(),
         RetainedPlanarFaceEdgeUseRelation2::NotTrimBoundary
@@ -470,8 +470,8 @@ fn prepared_retained_planar_face_edge_use_matches_plain_report() {
 
     for query in &queries {
         assert_eq!(
-            prepared.edge_use_report(query),
-            face.edge_use_report(query),
+            prepared.edge_use_report(query).unwrap(),
+            face.edge_use_report(query).unwrap(),
             "prepared edge-use report diverged for {query:?}"
         );
     }

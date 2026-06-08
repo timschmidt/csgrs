@@ -220,14 +220,16 @@ impl RetainedPlanarPcurve2 {
     /// the same order or in exact reverse order. It deliberately does not
     /// sample or merge unsplit overlaps; those remain later trim-splitting
     /// work under Yap's construction/predicate boundary.
-    pub fn image_equality_report(&self, other: &Self) -> PlanarPcurveImageEqualityReport2 {
+    pub fn image_equality_report(
+        &self,
+        other: &Self,
+    ) -> CurveResult<PlanarPcurveImageEqualityReport2> {
         if self.surface != other.surface {
             return PlanarPcurveImageEqualityReport2::new(
                 PlanarPcurveImageRelation2::SurfaceMismatch,
                 None,
                 0,
-            )
-            .expect("surface-mismatch pcurve report has no surface evidence");
+            );
         }
         let relation = if same_directed_segments(self.curve.segments(), other.curve.segments()) {
             PlanarPcurveImageRelation2::SameDirected
@@ -238,7 +240,6 @@ impl RetainedPlanarPcurve2 {
         };
         let segment_count = usize::from(relation.is_same_image()) * self.curve.len();
         PlanarPcurveImageEqualityReport2::new(relation, Some(self.surface), segment_count)
-            .expect("same-surface pcurve report has consistent image evidence")
     }
 }
 
@@ -264,14 +265,16 @@ impl RetainedPlanarTrimLoop2 {
     /// cyclic rotations as well as opposite traversal direction. Fill rules are
     /// not part of pcurve image equality; this is only the support-surface/UV
     /// image predicate needed before face-role policy can run.
-    pub fn image_equality_report(&self, other: &Self) -> PlanarPcurveImageEqualityReport2 {
+    pub fn image_equality_report(
+        &self,
+        other: &Self,
+    ) -> CurveResult<PlanarPcurveImageEqualityReport2> {
         if self.surface != other.surface {
             return PlanarPcurveImageEqualityReport2::new(
                 PlanarPcurveImageRelation2::SurfaceMismatch,
                 None,
                 0,
-            )
-            .expect("surface-mismatch trim-loop report has no surface evidence");
+            );
         }
         let relation =
             if same_directed_segment_cycle(self.contour.segments(), other.contour.segments()) {
@@ -284,7 +287,6 @@ impl RetainedPlanarTrimLoop2 {
             };
         let segment_count = usize::from(relation.is_same_image()) * self.contour.len();
         PlanarPcurveImageEqualityReport2::new(relation, Some(self.surface), segment_count)
-            .expect("same-surface trim-loop report has consistent image evidence")
     }
 }
 
@@ -429,7 +431,7 @@ impl RetainedPlanarFace2 {
     pub fn edge_use_report(
         &self,
         pcurve: &RetainedPlanarPcurve2,
-    ) -> RetainedPlanarFaceEdgeUseReport2 {
+    ) -> CurveResult<RetainedPlanarFaceEdgeUseReport2> {
         if pcurve.surface != self.surface {
             return RetainedPlanarFaceEdgeUseReport2::new(
                 RetainedPlanarFaceEdgeUseRelation2::SurfaceMismatch,
@@ -438,8 +440,7 @@ impl RetainedPlanarFace2 {
                 None,
                 None,
                 0,
-            )
-            .expect("surface-mismatch edge-use report has no trim evidence");
+            );
         }
 
         face_edge_use_report_from_loops(self, pcurve.curve.segments())
@@ -513,7 +514,7 @@ impl<'a> PreparedRetainedPlanarFace2<'a> {
     pub fn edge_use_report(
         &self,
         pcurve: &RetainedPlanarPcurve2,
-    ) -> RetainedPlanarFaceEdgeUseReport2 {
+    ) -> CurveResult<RetainedPlanarFaceEdgeUseReport2> {
         if pcurve.surface != self.face.surface {
             return RetainedPlanarFaceEdgeUseReport2::new(
                 RetainedPlanarFaceEdgeUseRelation2::SurfaceMismatch,
@@ -522,8 +523,7 @@ impl<'a> PreparedRetainedPlanarFace2<'a> {
                 None,
                 None,
                 0,
-            )
-            .expect("surface-mismatch prepared edge-use report has no trim evidence");
+            );
         }
 
         face_edge_use_report_from_loops(self.face, pcurve.curve.segments())
@@ -953,7 +953,7 @@ fn same_reversed_segment_cycle(first: &[Segment2], second: &[Segment2]) -> bool 
 fn face_edge_use_report_from_loops(
     face: &RetainedPlanarFace2,
     query_segments: &[Segment2],
-) -> RetainedPlanarFaceEdgeUseReport2 {
+) -> CurveResult<RetainedPlanarFaceEdgeUseReport2> {
     for (loop_index, trim) in face.material_loops.iter().enumerate() {
         if let Some((relation, segment_index)) =
             segment_subchain_relation(query_segments, trim.contour.segments())
@@ -967,8 +967,7 @@ fn face_edge_use_report_from_loops(
                 query_segments.len(),
                 face.material_loops.len(),
                 trim.contour.len(),
-            )
-            .expect("material edge-use match has complete trim evidence");
+            );
         }
     }
     for (loop_index, trim) in face.hole_loops.iter().enumerate() {
@@ -984,8 +983,7 @@ fn face_edge_use_report_from_loops(
                 query_segments.len(),
                 face.hole_loops.len(),
                 trim.contour.len(),
-            )
-            .expect("hole edge-use match has complete trim evidence");
+            );
         }
     }
 
@@ -997,7 +995,6 @@ fn face_edge_use_report_from_loops(
         None,
         0,
     )
-    .expect("not-trim-boundary edge-use report has only surface evidence")
 }
 
 fn segment_subchain_relation(
