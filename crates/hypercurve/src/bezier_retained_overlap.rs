@@ -872,7 +872,11 @@ impl BezierArrangementGraph2 {
                 Classification::Uncertain(reason) => return Classification::Uncertain(reason),
             }
         } else {
-            let (filtered, original_indices) = filtered_graph(self, &shadowed_fragment_indices);
+            let (filtered, original_indices) =
+                match filtered_graph(self, &shadowed_fragment_indices) {
+                    Ok(filtered) => filtered,
+                    Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
+                };
             if filtered.is_empty() {
                 return Classification::Uncertain(UncertaintyReason::Boundary);
             }
@@ -1636,7 +1640,10 @@ fn traverse_consuming_resolved_linear_overlaps(
         return Classification::Uncertain(UncertaintyReason::Boundary);
     }
     let (filtered, original_indices) =
-        filtered_graph(refinement.graph(), &consumed_fragment_indices);
+        match filtered_graph(refinement.graph(), &consumed_fragment_indices) {
+            Ok(filtered) => filtered,
+            Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
+        };
     if filtered.is_empty() {
         return Classification::Uncertain(UncertaintyReason::Boundary);
     }
@@ -1751,7 +1758,7 @@ fn points_equal(left: &Point2, right: &Point2, policy: &CurvePolicy) -> Option<b
 fn filtered_graph(
     graph: &BezierArrangementGraph2,
     shadowed_fragment_indices: &[usize],
-) -> (BezierArrangementGraph2, Vec<usize>) {
+) -> CurveResult<(BezierArrangementGraph2, Vec<usize>)> {
     let mut original_indices = Vec::new();
     let mut fragments = Vec::new();
     for (index, fragment) in graph.fragments().iter().enumerate() {
@@ -1761,11 +1768,7 @@ fn filtered_graph(
         original_indices.push(index);
         fragments.push(fragment.clone());
     }
-    (
-        BezierArrangementGraph2::new(fragments)
-            .expect("filtered retained Bezier graph preserves distinct fragment evidence"),
-        original_indices,
-    )
+    Ok((BezierArrangementGraph2::new(fragments)?, original_indices))
 }
 
 fn remap_traversal_indices(
