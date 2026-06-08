@@ -934,11 +934,15 @@ fn same_polynomial_image_by_degree_elevation(
     let mut forward_equal = true;
     let mut reversed_equal = true;
     for axis in [Axis2::X, Axis2::Y] {
-        let Some(first_values) = cubic_axis_values(first_controls, axis) else {
-            return Classification::Decided(false);
+        let first_values = match cubic_axis_values(first_controls, axis) {
+            Ok(Some(values)) => values,
+            Ok(None) => return Classification::Decided(false),
+            Err(reason) => return Classification::Uncertain(reason),
         };
-        let Some(second_values) = cubic_axis_values(second_controls, axis) else {
-            return Classification::Decided(false);
+        let second_values = match cubic_axis_values(second_controls, axis) {
+            Ok(Some(values)) => values,
+            Ok(None) => return Classification::Decided(false),
+            Err(reason) => return Classification::Uncertain(reason),
         };
         match cubic_axis_values_equal(&first_values, &second_values, policy) {
             Ok(equal) => forward_equal &= equal,
@@ -1407,7 +1411,13 @@ where
         // one de Casteljau point as the witness without rebuilding a second
         // nested expression tree and asking the scalar layer to rediscover the
         // same equality.
-        let parameter = candidate.parameter();
+        let parameter = match candidate.parameter() {
+            Ok(parameter) => parameter,
+            Err(_) => {
+                undecided_candidate = true;
+                continue;
+            }
+        };
         push_unique_intersection_point(&mut points, first.point_at(parameter), policy);
     }
 
@@ -1799,10 +1809,10 @@ fn shared_axis_controls_equal(
     axis: Axis2,
     policy: &CurvePolicy,
 ) -> bool {
-    let Some(first_values) = cubic_axis_values(first_controls, axis) else {
+    let Some(first_values) = cubic_axis_values(first_controls, axis).ok().flatten() else {
         return false;
     };
-    let Some(second_values) = cubic_axis_values(second_controls, axis) else {
+    let Some(second_values) = cubic_axis_values(second_controls, axis).ok().flatten() else {
         return false;
     };
     first_values
@@ -1819,7 +1829,11 @@ fn cubic_dyadic_parameters_for_point(
     policy: &CurvePolicy,
 ) -> Classification<Vec<Real>> {
     let mut parameters = Vec::new();
-    for parameter in dyadic_subdivision_candidate_parameters() {
+    let candidates = match dyadic_subdivision_candidate_parameters() {
+        Ok(candidates) => candidates,
+        Err(reason) => return Classification::Uncertain(reason),
+    };
+    for parameter in candidates {
         match point_coordinates_equal(&curve.point_at(parameter.clone()), point, policy) {
             Some(true) => push_unique_sorted(&mut parameters, parameter, policy),
             Some(false) => {}
@@ -1829,7 +1843,7 @@ fn cubic_dyadic_parameters_for_point(
     Classification::Decided(parameters)
 }
 
-fn dyadic_subdivision_candidate_parameters() -> Vec<Real> {
+fn dyadic_subdivision_candidate_parameters() -> Result<Vec<Real>, UncertaintyReason> {
     (1_i32..DYADIC_CANDIDATE_DENOMINATOR)
         .map(dyadic_subdivision_candidate_parameter)
         .collect()
@@ -1902,7 +1916,7 @@ fn collect_sign_pruned_dyadic_numerators(
         return Some(());
     }
     let midpoint = (start + end) / 2;
-    let (left, right) = subdivide_cubic_controls_half(controls);
+    let (left, right) = subdivide_cubic_controls_half(controls).ok()?;
     collect_sign_pruned_dyadic_numerators(left, start, midpoint, policy, numerators)?;
     collect_sign_pruned_dyadic_numerators(right, midpoint, end, policy, numerators)
 }
@@ -1921,14 +1935,16 @@ fn controls_have_common_strict_sign(controls: &[Real; 4], policy: &CurvePolicy) 
     Some(common_sign.is_some())
 }
 
-fn subdivide_cubic_controls_half(controls: [Real; 4]) -> ([Real; 4], [Real; 4]) {
-    let p01 = midpoint_real(&controls[0], &controls[1]);
-    let p12 = midpoint_real(&controls[1], &controls[2]);
-    let p23 = midpoint_real(&controls[2], &controls[3]);
-    let p012 = midpoint_real(&p01, &p12);
-    let p123 = midpoint_real(&p12, &p23);
-    let p0123 = midpoint_real(&p012, &p123);
-    (
+fn subdivide_cubic_controls_half(
+    controls: [Real; 4],
+) -> Result<([Real; 4], [Real; 4]), UncertaintyReason> {
+    let p01 = midpoint_real(&controls[0], &controls[1])?;
+    let p12 = midpoint_real(&controls[1], &controls[2])?;
+    let p23 = midpoint_real(&controls[2], &controls[3])?;
+    let p012 = midpoint_real(&p01, &p12)?;
+    let p123 = midpoint_real(&p12, &p23)?;
+    let p0123 = midpoint_real(&p012, &p123)?;
+    Ok((
         [
             controls[0].clone(),
             p01.clone(),
@@ -1936,7 +1952,7 @@ fn subdivide_cubic_controls_half(controls: [Real; 4]) -> ([Real; 4], [Real; 4]) 
             p0123.clone(),
         ],
         [p0123, p123, p23, controls[3].clone()],
-    )
+    ))
 }
 
 fn cubic_axis_difference_controls(
@@ -1944,8 +1960,8 @@ fn cubic_axis_difference_controls(
     second_controls: &[&Point2],
     axis: Axis2,
 ) -> Option<[Real; 4]> {
-    let first = cubic_axis_values(first_controls, axis)?;
-    let second = cubic_axis_values(second_controls, axis)?;
+    let first = cubic_axis_values(first_controls, axis).ok().flatten()?;
+    let second = cubic_axis_values(second_controls, axis).ok().flatten()?;
     Some([
         &first[0] - &second[0],
         &first[1] - &second[1],
@@ -1954,10 +1970,9 @@ fn cubic_axis_difference_controls(
     ])
 }
 
-fn dyadic_subdivision_candidate_parameter(numerator: i32) -> Real {
-    let frontier_unit = (Real::one() / Real::from(DYADIC_CANDIDATE_DENOMINATOR))
-        .expect("division by positive integer constant is defined");
-    &frontier_unit * &Real::from(numerator)
+fn dyadic_subdivision_candidate_parameter(numerator: i32) -> Result<Real, UncertaintyReason> {
+    let frontier_unit = divide_by_positive_integer(Real::one(), DYADIC_CANDIDATE_DENOMINATOR)?;
+    Ok(&frontier_unit * &Real::from(numerator))
 }
 
 struct DyadicBezierCandidate {
@@ -1986,7 +2001,7 @@ impl DyadicBezierCandidate {
         }
     }
 
-    fn parameter(&self) -> Real {
+    fn parameter(&self) -> Result<Real, UncertaintyReason> {
         dyadic_subdivision_candidate_parameter(self.numerator)
     }
 }
@@ -2374,10 +2389,10 @@ fn control_differences_have_common_strict_sign(
     axis: Axis2,
     policy: &CurvePolicy,
 ) -> bool {
-    let Some(first_values) = cubic_axis_values(first_controls, axis) else {
+    let Some(first_values) = cubic_axis_values(first_controls, axis).ok().flatten() else {
         return false;
     };
-    let Some(second_values) = cubic_axis_values(second_controls, axis) else {
+    let Some(second_values) = cubic_axis_values(second_controls, axis).ok().flatten() else {
         return false;
     };
     let mut common_sign = None;
@@ -2402,11 +2417,15 @@ fn shared_strictly_monotone_axis(
     axis: Axis2,
     policy: &CurvePolicy,
 ) -> Classification<bool> {
-    let Some(first_values) = cubic_axis_values(first_controls, axis) else {
-        return Classification::Decided(false);
+    let first_values = match cubic_axis_values(first_controls, axis) {
+        Ok(Some(values)) => values,
+        Ok(None) => return Classification::Decided(false),
+        Err(reason) => return Classification::Uncertain(reason),
     };
-    let Some(second_values) = cubic_axis_values(second_controls, axis) else {
-        return Classification::Decided(false);
+    let second_values = match cubic_axis_values(second_controls, axis) {
+        Ok(Some(values)) => values,
+        Ok(None) => return Classification::Decided(false),
+        Err(reason) => return Classification::Uncertain(reason),
     };
 
     for (first, second) in first_values.iter().zip(second_values.iter()) {
@@ -2443,29 +2462,29 @@ fn shared_strictly_monotone_axis(
     Classification::Decided(common_sign.is_some())
 }
 
-fn cubic_axis_values(points: &[&Point2], axis: Axis2) -> Option<[Real; 4]> {
+fn cubic_axis_values(
+    points: &[&Point2],
+    axis: Axis2,
+) -> Result<Option<[Real; 4]>, UncertaintyReason> {
     match points.len() {
         3 => {
             let p0 = coordinate(points[0], axis);
             let p1 = coordinate(points[1], axis);
             let p2 = coordinate(points[2], axis);
-            let three = Real::from(3_i8);
-            Some([
+            Ok(Some([
                 p0.clone(),
-                ((p0 + &(&Real::from(2_i8) * p1)) / three.clone())
-                    .expect("division by positive integer constant is defined"),
-                (((&Real::from(2_i8) * p1) + p2) / three)
-                    .expect("division by positive integer constant is defined"),
+                divide_by_positive_integer(p0 + &(&Real::from(2_i8) * p1), 3)?,
+                divide_by_positive_integer((&Real::from(2_i8) * p1) + p2, 3)?,
                 p2.clone(),
-            ])
+            ]))
         }
-        4 => Some([
+        4 => Ok(Some([
             coordinate(points[0], axis).clone(),
             coordinate(points[1], axis).clone(),
             coordinate(points[2], axis).clone(),
             coordinate(points[3], axis).clone(),
-        ]),
-        _ => None,
+        ])),
+        _ => Ok(None),
     }
 }
 
@@ -2731,7 +2750,7 @@ fn subdivide_points_half(
         let next = previous
             .windows(2)
             .map(|pair| midpoint_point(&pair[0], &pair[1]))
-            .collect::<Vec<_>>();
+            .collect::<Result<Vec<_>, _>>()?;
         levels.push(next);
     }
 
@@ -2751,10 +2770,9 @@ fn subdivision_span(start: Real, end: Real) -> Result<BezierMonotoneSpan, Uncert
     BezierMonotoneSpan::new(start, end).map_err(|_| UncertaintyReason::Ordering)
 }
 
-fn midpoint_point(first: &Point2, second: &Point2) -> Point2 {
-    let half =
-        (Real::one() / Real::from(2_i8)).expect("division by positive integer constant is defined");
-    first.lerp(second, half)
+fn midpoint_point(first: &Point2, second: &Point2) -> Result<Point2, UncertaintyReason> {
+    let half = divide_by_positive_integer(Real::one(), 2)?;
+    Ok(first.lerp(second, half))
 }
 
 fn span_width(start: &Real, end: &Real, policy: &CurvePolicy) -> Result<Real, UncertaintyReason> {
@@ -3305,7 +3323,7 @@ fn isolate_scalar_cubic_roots(
     }
 
     let mid = ((&start + &end) / Real::from(2_i8)).map_err(|_| UncertaintyReason::Unsupported)?;
-    let mid_value = scalar_cubic_at_half(&controls);
+    let mid_value = scalar_cubic_at_half(&controls)?;
     if is_zero(&mid_value, policy) == Some(true) {
         push_unique_sorted(exact_parameters, mid.clone(), policy);
     }
@@ -3319,7 +3337,7 @@ fn isolate_scalar_cubic_roots(
         return Ok(());
     }
 
-    let (left, right) = subdivide_scalar_cubic_half(controls);
+    let (left, right) = subdivide_scalar_cubic_half(controls)?;
     isolate_scalar_cubic_roots(
         left,
         start,
@@ -3332,24 +3350,26 @@ fn isolate_scalar_cubic_roots(
     isolate_scalar_cubic_roots(right, mid, end, depth + 1, policy, exact_parameters, spans)
 }
 
-fn scalar_cubic_at_half(controls: &[Real; 4]) -> Real {
-    let eight = Real::from(8_i8);
-    ((controls[0].clone()
-        + (&Real::from(3_i8) * &controls[1])
-        + (&Real::from(3_i8) * &controls[2])
-        + controls[3].clone())
-        / eight)
-        .expect("division by positive integer constant is defined")
+fn scalar_cubic_at_half(controls: &[Real; 4]) -> Result<Real, UncertaintyReason> {
+    divide_by_positive_integer(
+        controls[0].clone()
+            + (&Real::from(3_i8) * &controls[1])
+            + (&Real::from(3_i8) * &controls[2])
+            + controls[3].clone(),
+        8,
+    )
 }
 
-fn subdivide_scalar_cubic_half(controls: [Real; 4]) -> ([Real; 4], [Real; 4]) {
-    let p01 = midpoint_real(&controls[0], &controls[1]);
-    let p12 = midpoint_real(&controls[1], &controls[2]);
-    let p23 = midpoint_real(&controls[2], &controls[3]);
-    let p012 = midpoint_real(&p01, &p12);
-    let p123 = midpoint_real(&p12, &p23);
-    let p0123 = midpoint_real(&p012, &p123);
-    (
+fn subdivide_scalar_cubic_half(
+    controls: [Real; 4],
+) -> Result<([Real; 4], [Real; 4]), UncertaintyReason> {
+    let p01 = midpoint_real(&controls[0], &controls[1])?;
+    let p12 = midpoint_real(&controls[1], &controls[2])?;
+    let p23 = midpoint_real(&controls[2], &controls[3])?;
+    let p012 = midpoint_real(&p01, &p12)?;
+    let p123 = midpoint_real(&p12, &p23)?;
+    let p0123 = midpoint_real(&p012, &p123)?;
+    Ok((
         [
             controls[0].clone(),
             p01.clone(),
@@ -3357,11 +3377,18 @@ fn subdivide_scalar_cubic_half(controls: [Real; 4]) -> ([Real; 4], [Real; 4]) {
             p0123.clone(),
         ],
         [p0123, p123, p23, controls[3].clone()],
-    )
+    ))
 }
 
-fn midpoint_real(left: &Real, right: &Real) -> Real {
-    ((left + right) / Real::from(2_i8)).expect("division by positive integer constant is defined")
+fn midpoint_real(left: &Real, right: &Real) -> Result<Real, UncertaintyReason> {
+    divide_by_positive_integer(left + right, 2)
+}
+
+fn divide_by_positive_integer(
+    numerator: Real,
+    denominator: i32,
+) -> Result<Real, UncertaintyReason> {
+    (numerator / Real::from(denominator)).map_err(|_| UncertaintyReason::Unsupported)
 }
 
 fn classify_quadratic_cusp(
@@ -3788,6 +3815,46 @@ mod tests {
         assert!(
             numerators.len() < 64,
             "Bezier sign pruning should avoid the full 1/512 candidate grid"
+        );
+    }
+
+    #[test]
+    fn scalar_cubic_half_subdivision_keeps_exact_de_casteljau_values() {
+        let controls = [
+            Real::zero(),
+            Real::from(2_i8),
+            Real::from(4_i8),
+            Real::from(6_i8),
+        ];
+        let (left, right) = subdivide_scalar_cubic_half(controls).unwrap();
+
+        assert_eq!(
+            left,
+            [
+                Real::zero(),
+                Real::one(),
+                Real::from(2_i8),
+                Real::from(3_i8)
+            ]
+        );
+        assert_eq!(
+            right,
+            [
+                Real::from(3_i8),
+                Real::from(4_i8),
+                Real::from(5_i8),
+                Real::from(6_i8)
+            ]
+        );
+        assert_eq!(
+            scalar_cubic_at_half(&[
+                Real::zero(),
+                Real::from(2_i8),
+                Real::from(4_i8),
+                Real::from(6_i8)
+            ])
+            .unwrap(),
+            Real::from(3_i8)
         );
     }
 }
