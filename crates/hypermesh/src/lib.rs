@@ -95,9 +95,9 @@ pub use arrangement3d::{
 };
 pub use artifact::{
     MeshArtifactBlocker, MeshArtifactFaceRecord, MeshArtifactManifest, MeshArtifactReport,
-    MeshArtifactRole, MeshArtifactSourceKind, MeshArtifactVertexRecord, MeshCoordinateEvidence,
-    MeshNumericAdapterContract, MeshTopologyEvidence, mesh_artifact_from_exact_mesh,
-    mesh_artifact_from_exact_mesh_proposal,
+    MeshArtifactReportError, MeshArtifactRole, MeshArtifactSourceKind, MeshArtifactVertexRecord,
+    MeshCoordinateEvidence, MeshNumericAdapterContract, MeshTopologyEvidence,
+    mesh_artifact_from_exact_mesh, mesh_artifact_from_exact_mesh_proposal,
 };
 pub use audit::{
     ExactMeshAuditError, ExactMeshAuditFreshness, ExactMeshAuditReport, audit_exact_mesh,

@@ -21,15 +21,16 @@ use hypermesh::{
     ExactVolumetricRegionFreshness, ExactVolumetricRegionRelation, ExactWindingReadinessStatus,
     FaceRegionPlaneRelation, FullFaceAdjacentUnionFreshness, IntersectionGraphFreshness,
     LossyF64MeshInputReadiness, LossyF64MeshInputReportValidationError, MeshArtifactBlocker,
-    MeshArtifactFaceRecord, MeshArtifactManifest, MeshArtifactRole, MeshArtifactSourceKind,
-    MeshArtifactVertexRecord, MeshCoordinateEvidence, MeshFacePairFreshness, MeshFacePairRelation,
-    MeshFacePairValidationError, MeshTopologyEvidence, SplitPlanFreshness,
-    TriangleTriangleFreshness, TriangleTriangleRelation, ValidationPolicy, WindingReportFreshness,
-    approximate_mesh_f64_view, audit_exact_mesh, boolean_exact, boolean_exact_with_boundary_policy,
-    boolean_selected_regions, build_exact_arrangement2d_overlay,
-    build_exact_arrangement2d_overlay_with_boundary_policy, build_intersection_graph,
-    certify_adjacent_union_completion_report, certify_boundary_touching_report,
-    certify_convex_solid, certify_coplanar_volumetric_cell_evidence, certify_exact_mesh_proposal,
+    MeshArtifactFaceRecord, MeshArtifactManifest, MeshArtifactReportError, MeshArtifactRole,
+    MeshArtifactSourceKind, MeshArtifactVertexRecord, MeshCoordinateEvidence,
+    MeshFacePairFreshness, MeshFacePairRelation, MeshFacePairValidationError, MeshTopologyEvidence,
+    SplitPlanFreshness, TriangleTriangleFreshness, TriangleTriangleRelation, ValidationPolicy,
+    WindingReportFreshness, approximate_mesh_f64_view, audit_exact_mesh, boolean_exact,
+    boolean_exact_with_boundary_policy, boolean_selected_regions,
+    build_exact_arrangement2d_overlay, build_exact_arrangement2d_overlay_with_boundary_policy,
+    build_intersection_graph, certify_adjacent_union_completion_report,
+    certify_boundary_touching_report, certify_convex_solid,
+    certify_coplanar_volumetric_cell_evidence, certify_exact_mesh_proposal,
     certify_open_surface_disjoint_report, certify_planar_arrangement_report,
     certify_refinement_report, certify_same_surface_report,
     certify_volumetric_boundary_closure_report, certify_winding_readiness_report,
@@ -422,12 +423,23 @@ fn exact_mesh_proposal_and_artifact_reports_are_publicly_replayable() {
     );
 
     let artifact = mesh_artifact_from_exact_mesh(&exact).unwrap();
+    artifact.validate().unwrap();
     assert_eq!(artifact.source_kind, MeshArtifactSourceKind::HypermeshExact);
     assert_eq!(artifact.role, MeshArtifactRole::SolidHandoff);
     assert!(artifact.validation_handoff_ready, "{:?}", artifact.blockers);
     assert!(artifact.blockers.is_empty());
 
+    let mut forged_handoff_ready = artifact.clone();
+    forged_handoff_ready.validation_handoff_ready = false;
+    assert_eq!(
+        forged_handoff_ready.validate(),
+        Err(MeshArtifactReportError::ReportMismatch {
+            field: "validation_handoff_ready"
+        })
+    );
+
     let proposal_artifact = mesh_artifact_from_exact_mesh_proposal(&exact, &proposal).unwrap();
+    proposal_artifact.validate().unwrap();
     assert_eq!(proposal_artifact, artifact);
 
     let lossy = ExactMesh::from_f64_triangles(
@@ -447,6 +459,7 @@ fn exact_mesh_proposal_and_artifact_reports_are_publicly_replayable() {
     );
 
     let lossy_artifact = mesh_artifact_from_exact_mesh(&lossy).unwrap();
+    lossy_artifact.validate().unwrap();
     assert_eq!(
         lossy_artifact.source_kind,
         MeshArtifactSourceKind::HypermeshLossyF64Replay
@@ -460,6 +473,7 @@ fn exact_mesh_proposal_and_artifact_reports_are_publicly_replayable() {
     );
 
     let preview = MeshArtifactManifest::sdf_surface_nets_preview("preview", 3, 1).report();
+    preview.validate().unwrap();
     assert!(preview.preview_only);
     assert!(!preview.validation_handoff_ready);
     assert!(
@@ -481,6 +495,26 @@ fn exact_mesh_proposal_and_artifact_reports_are_publicly_replayable() {
         preview
             .blockers
             .contains(&MeshArtifactBlocker::MissingExactTopologyReplay)
+    );
+    let mut preview_missing_blocker = preview.clone();
+    preview_missing_blocker
+        .blockers
+        .retain(|blocker| *blocker != MeshArtifactBlocker::MissingExactCoordinateReplay);
+    assert_eq!(
+        preview_missing_blocker.validate(),
+        Err(MeshArtifactReportError::MissingBlocker {
+            blocker: MeshArtifactBlocker::MissingExactCoordinateReplay
+        })
+    );
+    let mut duplicate_preview_blocker = preview.clone();
+    duplicate_preview_blocker
+        .blockers
+        .push(MeshArtifactBlocker::PreviewOrExportOnly);
+    assert_eq!(
+        duplicate_preview_blocker.validate(),
+        Err(MeshArtifactReportError::DuplicateBlocker {
+            blocker: MeshArtifactBlocker::PreviewOrExportOnly
+        })
     );
 
     let brep_triangle_handoff = |face| {
@@ -511,6 +545,7 @@ fn exact_mesh_proposal_and_artifact_reports_are_publicly_replayable() {
         topology_evidence: MeshTopologyEvidence::DerivedExactSurfaceHandoff,
     })
     .report();
+    repeated_vertex_handoff.validate().unwrap();
     assert!(!repeated_vertex_handoff.validation_handoff_ready);
     assert!(!repeated_vertex_handoff.topology_validation_replay_ready);
     assert!(
@@ -527,6 +562,7 @@ fn exact_mesh_proposal_and_artifact_reports_are_publicly_replayable() {
     });
     missing_vertex_record_manifest.declared_vertex_count += 1;
     let missing_vertex_record = missing_vertex_record_manifest.report();
+    missing_vertex_record.validate().unwrap();
     assert!(!missing_vertex_record.validation_handoff_ready);
     assert!(!missing_vertex_record.coordinates_exact_replay_ready);
     assert!(
@@ -543,6 +579,7 @@ fn exact_mesh_proposal_and_artifact_reports_are_publicly_replayable() {
     });
     stale_face_index_manifest.faces[0].index = 1;
     let stale_face_index = stale_face_index_manifest.report();
+    stale_face_index.validate().unwrap();
     assert!(!stale_face_index.validation_handoff_ready);
     assert!(!stale_face_index.topology_validation_replay_ready);
     assert!(

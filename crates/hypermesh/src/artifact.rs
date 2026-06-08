@@ -331,6 +331,31 @@ pub struct MeshArtifactReport {
     pub blockers: Vec<MeshArtifactBlocker>,
 }
 
+/// Error returned when a copied mesh artifact report is self-contradictory.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum MeshArtifactReportError {
+    /// A blocker appears more than once.
+    DuplicateBlocker {
+        /// Repeated blocker.
+        blocker: MeshArtifactBlocker,
+    },
+    /// A blocker required by the retained summary is absent.
+    MissingBlocker {
+        /// Required blocker.
+        blocker: MeshArtifactBlocker,
+    },
+    /// A blocker contradicts the retained summary.
+    UnexpectedBlocker {
+        /// Contradictory blocker.
+        blocker: MeshArtifactBlocker,
+    },
+    /// A retained summary field contradicts other report fields.
+    ReportMismatch {
+        /// Name of the mismatched field.
+        field: &'static str,
+    },
+}
+
 impl MeshArtifactManifest {
     /// Build a manifest from an accepted [`ExactMesh`].
     ///
@@ -698,6 +723,121 @@ impl MeshArtifactManifest {
     }
 }
 
+impl MeshArtifactReport {
+    /// Validate report-internal artifact consistency without producer records.
+    ///
+    /// A summary report cannot re-check face rows after the manifest has been
+    /// collapsed, but it can still reject copied reports whose blockers,
+    /// readiness flags, preview/source evidence, and final handoff decision do
+    /// not agree.
+    pub fn validate(&self) -> Result<(), MeshArtifactReportError> {
+        validate_report_blockers_are_unique(&self.blockers)?;
+        expect_report_blocker(
+            &self.blockers,
+            self.source_label.trim().is_empty(),
+            MeshArtifactBlocker::EmptySourceLabel,
+        )?;
+        expect_report_blocker(
+            &self.blockers,
+            self.source_kind.is_unknown(),
+            MeshArtifactBlocker::UnknownSourceKind,
+        )?;
+        expect_report_blocker(
+            &self.blockers,
+            !self.source_current,
+            MeshArtifactBlocker::SourceVersionMismatch,
+        )?;
+        expect_report_blocker(
+            &self.blockers,
+            self.vertex_count == 0,
+            MeshArtifactBlocker::EmptyVertexSet,
+        )?;
+        expect_report_blocker(
+            &self.blockers,
+            self.face_count == 0,
+            MeshArtifactBlocker::EmptyFaceSet,
+        )?;
+        expect_report_blocker(
+            &self.blockers,
+            !self.numeric_contract.source_replay_ready,
+            MeshArtifactBlocker::MissingSourceReplay,
+        )?;
+
+        let preview_source = self.source_kind.is_preview_or_export_source();
+        expect_report_blocker(
+            &self.blockers,
+            preview_source,
+            MeshArtifactBlocker::PreviewOrExportSource,
+        )?;
+        let expected_preview_only = self.role.is_preview_or_export()
+            || self.numeric_contract.preview_only
+            || preview_source;
+        if self.preview_only != expected_preview_only {
+            return Err(MeshArtifactReportError::ReportMismatch {
+                field: "preview_only",
+            });
+        }
+        expect_report_blocker(
+            &self.blockers,
+            self.preview_only,
+            MeshArtifactBlocker::PreviewOrExportOnly,
+        )?;
+
+        if self.coordinates_exact_replay_ready {
+            if self.vertex_count == 0
+                || !self.numeric_contract.exact_coordinate_replay
+                || !self.numeric_contract.source_replay_ready
+                || !report_coordinate_contract_can_be_exact(
+                    self.numeric_contract.coordinate_evidence,
+                )
+                || self
+                    .blockers
+                    .iter()
+                    .any(|blocker| blocker_prevents_coordinate_replay(*blocker))
+            {
+                return Err(MeshArtifactReportError::ReportMismatch {
+                    field: "coordinates_exact_replay_ready",
+                });
+            }
+        }
+        expect_report_blocker(
+            &self.blockers,
+            !self.coordinates_exact_replay_ready,
+            MeshArtifactBlocker::MissingExactCoordinateReplay,
+        )?;
+
+        if self.topology_validation_replay_ready {
+            if self.face_count == 0
+                || self
+                    .blockers
+                    .iter()
+                    .any(|blocker| blocker_prevents_topology_replay(*blocker))
+            {
+                return Err(MeshArtifactReportError::ReportMismatch {
+                    field: "topology_validation_replay_ready",
+                });
+            }
+        }
+        expect_report_blocker(
+            &self.blockers,
+            !self.topology_validation_replay_ready,
+            MeshArtifactBlocker::MissingExactTopologyReplay,
+        )?;
+
+        let expected_validation_handoff_ready = self.blockers.is_empty()
+            && self.source_current
+            && self.coordinates_exact_replay_ready
+            && self.topology_validation_replay_ready
+            && !self.preview_only;
+        if self.validation_handoff_ready != expected_validation_handoff_ready {
+            return Err(MeshArtifactReportError::ReportMismatch {
+                field: "validation_handoff_ready",
+            });
+        }
+        Ok(())
+    }
+}
+
 fn face_has_repeated_vertex(vertices: &[usize]) -> bool {
     vertices
         .iter()
@@ -779,4 +919,57 @@ fn contract_coordinate_evidence_supports_exact_replay(
         }
         evidence => evidence.supports_exact_replay(),
     }
+}
+
+fn validate_report_blockers_are_unique(
+    blockers: &[MeshArtifactBlocker],
+) -> Result<(), MeshArtifactReportError> {
+    for (index, blocker) in blockers.iter().enumerate() {
+        if blockers[index + 1..].contains(blocker) {
+            return Err(MeshArtifactReportError::DuplicateBlocker { blocker: *blocker });
+        }
+    }
+    Ok(())
+}
+
+fn expect_report_blocker(
+    blockers: &[MeshArtifactBlocker],
+    required: bool,
+    blocker: MeshArtifactBlocker,
+) -> Result<(), MeshArtifactReportError> {
+    let present = blockers.contains(&blocker);
+    match (required, present) {
+        (true, false) => Err(MeshArtifactReportError::MissingBlocker { blocker }),
+        (false, true) => Err(MeshArtifactReportError::UnexpectedBlocker { blocker }),
+        _ => Ok(()),
+    }
+}
+
+fn report_coordinate_contract_can_be_exact(evidence: MeshCoordinateEvidence) -> bool {
+    matches!(evidence, MeshCoordinateEvidence::Mixed) || evidence.supports_exact_replay()
+}
+
+fn blocker_prevents_coordinate_replay(blocker: MeshArtifactBlocker) -> bool {
+    matches!(
+        blocker,
+        MeshArtifactBlocker::EmptyVertexSet
+            | MeshArtifactBlocker::MissingOrMismatchedVertexRecords
+            | MeshArtifactBlocker::VertexIndexMismatch
+            | MeshArtifactBlocker::MissingExactCoordinateReplay
+            | MeshArtifactBlocker::MissingSourceReplay
+            | MeshArtifactBlocker::CoordinateEvidenceMismatch
+    )
+}
+
+fn blocker_prevents_topology_replay(blocker: MeshArtifactBlocker) -> bool {
+    matches!(
+        blocker,
+        MeshArtifactBlocker::EmptyFaceSet
+            | MeshArtifactBlocker::MissingOrMismatchedFaceRecords
+            | MeshArtifactBlocker::FaceIndexMismatch
+            | MeshArtifactBlocker::FaceArityTooSmall
+            | MeshArtifactBlocker::FaceRepeatedVertex
+            | MeshArtifactBlocker::FaceVertexOutOfRange
+            | MeshArtifactBlocker::MissingExactTopologyReplay
+    )
 }
