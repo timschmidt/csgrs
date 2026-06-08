@@ -4640,7 +4640,7 @@ fn boolean_arrangement_volumetric_split_cell_recovery_from_graph(
                 operation,
                 ExactBooleanShortcutKind::ArrangementCellComplex,
             );
-            if result.validate().is_err() {
+            if result.validate().is_err() || result.validate_against_sources(left, right).is_err() {
                 return Ok(None);
             }
             return Ok(Some(result));
@@ -11054,6 +11054,11 @@ mod tests {
                 result.mesh.facts().mesh.closed_manifold || result.mesh.triangles().is_empty(),
                 "{operation:?}: {:?}",
                 result.mesh.facts().mesh
+            );
+            result.validate_against_sources(&left, &right).unwrap();
+            assert!(
+                result.validate_against_sources(&right, &left).is_err(),
+                "closed cap shortcut must retain source-owned provenance"
             );
 
             let public = boolean_exact(&left, &right, operation, ValidationPolicy::CLOSED)

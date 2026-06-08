@@ -1206,6 +1206,7 @@ impl ExactBooleanResult {
         right: &ExactMesh,
     ) -> Result<(), ExactReportValidationError> {
         self.validate()?;
+        let mut arrangement_cell_complex_output_replayed = false;
         if let ExactBooleanResultKind::SelectedRegions { selection } = self.kind {
             let replay = replay_selected_region_boolean_result(
                 left,
@@ -1334,31 +1335,38 @@ impl ExactBooleanResult {
             operation,
             shortcut: ExactBooleanShortcutKind::ArrangementCellComplex,
         } = self.kind
-            && let Some(replay) = replay_coplanar_mesh_overlay_result(
+        {
+            if let Some(replay) = replay_coplanar_mesh_overlay_result(
                 left,
                 right,
                 operation,
                 self.mesh.validation_policy(),
             )
             .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
-            && self != &replay
-        {
-            return Err(ExactReportValidationError::SourceReplayMismatch);
+            {
+                if self != &replay {
+                    return Err(ExactReportValidationError::SourceReplayMismatch);
+                }
+                arrangement_cell_complex_output_replayed = true;
+            }
         }
         if let ExactBooleanResultKind::CertifiedShortcut {
             operation,
             shortcut: ExactBooleanShortcutKind::ArrangementCellComplex,
         } = self.kind
-            && let Some(matches_output) = arrangement_cell_complex_output_matches_sources(
+        {
+            if let Some(matches_output) = arrangement_cell_complex_output_matches_sources(
                 operation,
                 self.mesh.validation_policy(),
                 &self.mesh,
                 left,
                 right,
-            )?
-            && !matches_output
-        {
-            return Err(ExactReportValidationError::SourceReplayMismatch);
+            )? {
+                if !matches_output {
+                    return Err(ExactReportValidationError::SourceReplayMismatch);
+                }
+                arrangement_cell_complex_output_replayed = true;
+            }
         }
         if let ExactBooleanResultKind::CertifiedShortcut {
             operation,
@@ -1402,6 +1410,7 @@ impl ExactBooleanResult {
             operation,
             shortcut,
         } = self.kind
+            && shortcut != ExactBooleanShortcutKind::ArrangementCellComplex
             && !certified_shortcut_sources_match(
                 shortcut,
                 operation,
@@ -1409,6 +1418,14 @@ impl ExactBooleanResult {
                 left,
                 right,
             )?
+        {
+            return Err(ExactReportValidationError::SourceReplayMismatch);
+        }
+        if let ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: ExactBooleanShortcutKind::ArrangementCellComplex,
+            ..
+        } = self.kind
+            && !arrangement_cell_complex_output_replayed
         {
             return Err(ExactReportValidationError::SourceReplayMismatch);
         }
