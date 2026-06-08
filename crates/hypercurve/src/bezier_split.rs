@@ -250,7 +250,29 @@ fn validate_adjacent_bezier_split_fragments(
             "Bezier split materialization fragments must be contiguous and ordered".into(),
         ));
     }
+    if let (
+        BezierSplitFragment2::Materialized {
+            curve: left_curve, ..
+        },
+        BezierSplitFragment2::Materialized {
+            curve: right_curve, ..
+        },
+    ) = (left, right)
+    {
+        let left_endpoint = left_curve.end_point();
+        let right_endpoint = right_curve.start_point();
+        if !certified_split_points_equal(&left_endpoint, &right_endpoint, &CurvePolicy::certified())
+        {
+            return Err(CurveError::Topology(
+                "adjacent materialized Bezier split fragments must be endpoint-connected".into(),
+            ));
+        }
+    }
     Ok(())
+}
+
+fn certified_split_points_equal(left: &Point2, right: &Point2, policy: &CurvePolicy) -> bool {
+    is_zero(&left.distance_squared(right), policy) == Some(true)
 }
 
 fn bezier_split_fragment_range(

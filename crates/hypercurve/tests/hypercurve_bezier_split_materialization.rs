@@ -301,6 +301,31 @@ fn split_materialization_constructor_rejects_noncontiguous_fragments() {
 }
 
 #[test]
+fn split_materialization_constructor_rejects_disconnected_materialized_fragments() {
+    let curve = QuadraticBezier2::new(p(0, 0), p(2, 4), p(4, 0));
+    let first_curve = BezierSubcurve2::Quadratic(
+        curve
+            .subcurve_between_exact(&r(0), &q(1, 2), &policy())
+            .unwrap(),
+    );
+    let disconnected_second_curve =
+        BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(10, 0), p(11, 0), p(12, 0)));
+
+    assert_topology_error(BezierSplitMaterialization2::new(vec![
+        BezierSplitFragment2::Materialized {
+            start: exact(r(0)),
+            end: exact(q(1, 2)),
+            curve: first_curve,
+        },
+        BezierSplitFragment2::Materialized {
+            start: exact(q(1, 2)),
+            end: exact(r(1)),
+            curve: disconnected_second_curve,
+        },
+    ]));
+}
+
+#[test]
 fn split_materialization_constructor_rejects_materialized_algebraic_range() {
     let curve = QuadraticBezier2::new(p(0, 0), p(2, 4), p(4, 0));
     let materialized = BezierSubcurve2::Quadratic(
