@@ -4131,6 +4131,55 @@ fn exact_face_pair_candidate_retains_source_plane_split_events() {
 }
 
 #[test]
+fn exact_face_pair_plane_separation_retains_triangle_evidence() {
+    let left = ExactMesh::from_i64_triangles_with_policy(
+        &[1, 0, 0, 0, 1, 0, 0, 0, 1],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let right = ExactMesh::from_i64_triangles_with_policy(
+        &[1, 1, 0, 1, 0, 1, 0, 1, 1],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+
+    let pair = classify_mesh_face_pair(&left, 0, &right, 0).unwrap();
+    assert_eq!(pair.relation, MeshFacePairRelation::PlaneSeparated);
+    let triangle = pair.triangle.as_ref().unwrap();
+    assert!(matches!(
+        triangle.relation,
+        TriangleTriangleRelation::SeparatedByFirstPlane
+            | TriangleTriangleRelation::SeparatedBySecondPlane
+    ));
+    pair.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(
+        pair.freshness_against_sources(&left, &right),
+        MeshFacePairFreshness::Current
+    );
+
+    let mut missing_triangle = pair.clone();
+    missing_triangle.triangle = None;
+    assert_eq!(
+        missing_triangle.validate(),
+        Err(MeshFacePairValidationError::MissingTriangleClassification)
+    );
+
+    let mut invalid_triangle = pair;
+    invalid_triangle
+        .triangle
+        .as_mut()
+        .unwrap()
+        .right_against_left_plane
+        .vertex_sides[0] = None;
+    assert_eq!(
+        invalid_triangle.validate(),
+        Err(MeshFacePairValidationError::InvalidTriangleClassification)
+    );
+}
+
+#[test]
 fn exact_boolean_public_shortcuts_handle_disjoint_operands() {
     let left = tetra([0, 0, 0]);
     let right = tetra([3, 0, 0]);

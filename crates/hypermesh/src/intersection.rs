@@ -40,6 +40,8 @@ pub enum MeshFacePairValidationError {
     /// The retained triangle classifier relation does not map to the retained
     /// mesh face-pair relation.
     TriangleRelationMismatch,
+    /// The retained triangle classifier is internally inconsistent.
+    InvalidTriangleClassification,
     /// A candidate pair did not retain both triangle-edge event sets.
     CandidateMissingEdgeEvents,
     /// A non-candidate pair retained segment/plane split events.
@@ -84,7 +86,10 @@ impl From<MeshFacePairValidationError> for MeshFacePairFreshness {
             MeshFacePairValidationError::MissingTriangleClassification => {
                 Self::MissingTriangleEvidence
             }
-            MeshFacePairValidationError::TriangleRelationMismatch => Self::StaleTriangleEvidence,
+            MeshFacePairValidationError::TriangleRelationMismatch
+            | MeshFacePairValidationError::InvalidTriangleClassification => {
+                Self::StaleTriangleEvidence
+            }
             MeshFacePairValidationError::CandidateMissingEdgeEvents
             | MeshFacePairValidationError::InvalidSegmentPlaneEvent => Self::StaleCandidateEvidence,
             MeshFacePairValidationError::CoplanarRelationMissingCoplanarClassifier
@@ -167,21 +172,22 @@ impl MeshFacePairClassification {
         }
 
         let Some(triangle) = &self.triangle else {
-            return if self.relation == MeshFacePairRelation::PlaneSeparated {
-                Ok(())
-            } else {
-                Err(MeshFacePairValidationError::MissingTriangleClassification)
-            };
+            return Err(MeshFacePairValidationError::MissingTriangleClassification);
         };
+        if self.relation == MeshFacePairRelation::Candidate
+            && (triangle.left_edge_events.len() != 3 || triangle.right_edge_events.len() != 3)
+        {
+            return Err(MeshFacePairValidationError::CandidateMissingEdgeEvents);
+        }
+        triangle
+            .validate()
+            .map_err(|_| MeshFacePairValidationError::InvalidTriangleClassification)?;
         if mesh_relation_from_triangle(triangle.relation) != self.relation {
             return Err(MeshFacePairValidationError::TriangleRelationMismatch);
         }
 
         match self.relation {
             MeshFacePairRelation::Candidate => {
-                if triangle.left_edge_events.len() != 3 || triangle.right_edge_events.len() != 3 {
-                    return Err(MeshFacePairValidationError::CandidateMissingEdgeEvents);
-                }
                 validate_segment_events(&triangle.left_edge_events)?;
                 validate_segment_events(&triangle.right_edge_events)?;
                 if triangle.coplanar.is_some() {
@@ -288,7 +294,9 @@ pub fn classify_mesh_face_pair(
             left_face,
             right_face,
             bounds,
-            triangle: None,
+            triangle: Some(classify_mesh_triangles_without_candidate_events(
+                left, left_face, right, right_face,
+            )),
             relation: MeshFacePairRelation::PlaneSeparated,
         });
     }
@@ -300,23 +308,15 @@ pub fn classify_mesh_face_pair(
             left_face,
             right_face,
             bounds,
-            triangle: None,
+            triangle: Some(classify_mesh_triangles_without_candidate_events(
+                left, left_face, right, right_face,
+            )),
             relation: MeshFacePairRelation::PlaneSeparated,
         });
     }
 
-    let left_tri = left.triangles()[left_face].0;
-    let right_tri = right.triangles()[right_face].0;
-    let points = [
-        left.vertices()[left_tri[0]].clone(),
-        left.vertices()[left_tri[1]].clone(),
-        left.vertices()[left_tri[2]].clone(),
-        right.vertices()[right_tri[0]].clone(),
-        right.vertices()[right_tri[1]].clone(),
-        right.vertices()[right_tri[2]].clone(),
-    ];
     let mut triangle =
-        classify_triangle_triangle_without_candidate_events(&points, [0, 1, 2], [3, 4, 5]);
+        classify_mesh_triangles_without_candidate_events(left, left_face, right, right_face);
     if triangle.relation == TriangleTriangleRelation::Candidate {
         triangle.right_edge_events =
             retained_triangle_edge_events(left, left_face, right, right_face);
@@ -360,6 +360,25 @@ fn triangle_is_strictly_one_sided(relation: TrianglePlaneRelation) -> bool {
         relation,
         TrianglePlaneRelation::StrictlyAbove | TrianglePlaneRelation::StrictlyBelow
     )
+}
+
+fn classify_mesh_triangles_without_candidate_events(
+    left: &ExactMesh,
+    left_face: usize,
+    right: &ExactMesh,
+    right_face: usize,
+) -> TriangleTriangleClassification {
+    let left_tri = left.triangles()[left_face].0;
+    let right_tri = right.triangles()[right_face].0;
+    let points = [
+        left.vertices()[left_tri[0]].clone(),
+        left.vertices()[left_tri[1]].clone(),
+        left.vertices()[left_tri[2]].clone(),
+        right.vertices()[right_tri[0]].clone(),
+        right.vertices()[right_tri[1]].clone(),
+        right.vertices()[right_tri[2]].clone(),
+    ];
+    classify_triangle_triangle_without_candidate_events(&points, [0, 1, 2], [3, 4, 5])
 }
 
 fn validate_segment_events(
