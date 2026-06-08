@@ -361,28 +361,29 @@ impl ClosedMeshWindingMeshReport {
         }
 
         if self.relation == ClosedMeshWindingMeshRelation::Unknown {
-            if self.vertices.is_empty() || self.vertices.len() > self.subject_vertex_count {
+            if self.vertices.len() != self.subject_vertex_count {
                 return Err(WindingReportError::VertexCountMismatch);
             }
-            for (index, vertex) in self.vertices.iter().enumerate() {
+            let mut has_unknown = false;
+            for vertex in &self.vertices {
                 vertex.validate()?;
                 match vertex.relation {
                     ClosedMeshWindingRelation::Inside
                     | ClosedMeshWindingRelation::Outside
                     | ClosedMeshWindingRelation::Boundary => {}
                     ClosedMeshWindingRelation::Unknown => {
-                        return if index + 1 == self.vertices.len() {
-                            Ok(())
-                        } else {
-                            Err(WindingReportError::StatusEvidenceMismatch)
-                        };
+                        has_unknown = true;
                     }
                     ClosedMeshWindingRelation::NotClosed => {
                         return Err(WindingReportError::StatusEvidenceMismatch);
                     }
                 }
             }
-            return Err(WindingReportError::StatusEvidenceMismatch);
+            return if has_unknown {
+                Ok(())
+            } else {
+                Err(WindingReportError::StatusEvidenceMismatch)
+            };
         }
 
         if self.vertices.len() != self.subject_vertex_count {
@@ -673,6 +674,7 @@ pub fn classify_mesh_vertices_against_closed_mesh_winding_report(
     let mut inside = 0_usize;
     let mut outside = 0_usize;
     let mut boundary = 0_usize;
+    let mut unknown = 0_usize;
     let mut vertices = Vec::with_capacity(subject.vertices().len());
     for vertex in subject.vertices() {
         let report = classify_point_against_closed_mesh_winding_report(&vertex.clone(), target);
@@ -680,25 +682,20 @@ pub fn classify_mesh_vertices_against_closed_mesh_winding_report(
             ClosedMeshWindingRelation::Inside => inside += 1,
             ClosedMeshWindingRelation::Outside => outside += 1,
             ClosedMeshWindingRelation::Boundary => boundary += 1,
-            ClosedMeshWindingRelation::Unknown => {
-                vertices.push(report);
-                return ClosedMeshWindingMeshReport {
-                    relation: ClosedMeshWindingMeshRelation::Unknown,
-                    target_closed: true,
-                    subject_vertex_count: subject.vertices().len(),
-                    vertices,
-                };
-            }
+            ClosedMeshWindingRelation::Unknown => unknown += 1,
             ClosedMeshWindingRelation::NotClosed => unreachable!("target closure checked above"),
         }
         vertices.push(report);
     }
 
-    let relation = match (inside, outside, boundary) {
-        (_, 0, 0) if inside == subject.vertices().len() => {
+    let relation = match (inside, outside, boundary, unknown) {
+        (_, _, _, 1..) => ClosedMeshWindingMeshRelation::Unknown,
+        (_, 0, 0, 0) if inside == subject.vertices().len() => {
             ClosedMeshWindingMeshRelation::StrictlyInside
         }
-        (0, _, 0) if outside == subject.vertices().len() => ClosedMeshWindingMeshRelation::Outside,
+        (0, _, 0, 0) if outside == subject.vertices().len() => {
+            ClosedMeshWindingMeshRelation::Outside
+        }
         _ => ClosedMeshWindingMeshRelation::BoundaryOrMixed,
     };
     ClosedMeshWindingMeshReport {
@@ -1169,7 +1166,7 @@ mod tests {
     }
 
     #[test]
-    fn mesh_winding_report_accepts_unknown_prefix_evidence() {
+    fn mesh_winding_report_requires_complete_unknown_vertex_evidence() {
         let candidate_count = winding_ray_candidate_count();
         let inside = PointMeshWindingReport {
             relation: ClosedMeshWindingRelation::Inside,
@@ -1198,29 +1195,29 @@ mod tests {
             relation: ClosedMeshWindingMeshRelation::Unknown,
             target_closed: true,
             subject_vertex_count: 3,
-            vertices: vec![inside.clone(), unknown.clone()],
+            vertices: vec![inside.clone(), unknown.clone(), inside.clone()],
         };
         assert!(report.validate().is_ok());
 
-        let stale_prefix = ClosedMeshWindingMeshReport {
+        let incomplete = ClosedMeshWindingMeshReport {
             relation: ClosedMeshWindingMeshRelation::Unknown,
             target_closed: true,
             subject_vertex_count: 3,
-            vertices: vec![inside.clone()],
+            vertices: vec![inside.clone(), unknown.clone()],
         };
         assert_eq!(
-            stale_prefix.validate(),
-            Err(WindingReportError::StatusEvidenceMismatch)
+            incomplete.validate(),
+            Err(WindingReportError::VertexCountMismatch)
         );
 
-        let stale_suffix = ClosedMeshWindingMeshReport {
+        let missing_unknown_vertex = ClosedMeshWindingMeshReport {
             relation: ClosedMeshWindingMeshRelation::Unknown,
             target_closed: true,
             subject_vertex_count: 3,
-            vertices: vec![unknown, inside],
+            vertices: vec![inside.clone(), inside.clone(), inside],
         };
         assert_eq!(
-            stale_suffix.validate(),
+            missing_unknown_vertex.validate(),
             Err(WindingReportError::StatusEvidenceMismatch)
         );
     }
