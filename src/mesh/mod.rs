@@ -22,9 +22,6 @@ use hyperphysics::{
 use hyperreal::RealSign;
 use std::{cmp::PartialEq, fmt::Debug, num::NonZeroU32, sync::OnceLock};
 
-#[cfg(feature = "parallel")]
-use rayon::{iter::IntoParallelRefIterator, prelude::*};
-
 #[cfg(feature = "chull")]
 pub mod convex_hull;
 #[cfg(feature = "sketch")]
@@ -356,19 +353,9 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
     }
 
     /// Helper to collect all vertices from the CSG.
-    #[cfg(not(feature = "parallel"))]
     pub fn vertices(&self) -> Vec<Vertex> {
         self.polygons
             .iter()
-            .flat_map(|p| p.vertices.clone())
-            .collect()
-    }
-
-    /// Parallel helper to collect all vertices from the CSG.
-    #[cfg(feature = "parallel")]
-    pub fn vertices(&self) -> Vec<Vertex> {
-        self.polygons
-            .par_iter()
             .flat_map(|p| p.vertices.clone())
             .collect()
     }
@@ -391,23 +378,6 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
     /// Subdivide all polygons in this Mesh 'levels' times, returning a new Mesh.
     /// This results in a triangular mesh with more detail.
     pub fn subdivide_triangles(&self, levels: NonZeroU32) -> Mesh<M> {
-        #[cfg(feature = "parallel")]
-        let new_polygons: Vec<Polygon<M>> = self
-            .polygons
-            .par_iter()
-            .flat_map(|poly| {
-                let sub_tris = poly.subdivide_triangles(levels);
-                // Convert each small tri back to a Polygon
-                sub_tris.into_par_iter().map(move |tri| {
-                    Polygon::new(
-                        vec![tri[0].clone(), tri[1].clone(), tri[2].clone()],
-                        poly.metadata.clone(),
-                    )
-                })
-            })
-            .collect();
-
-        #[cfg(not(feature = "parallel"))]
         let new_polygons: Vec<Polygon<M>> = self
             .polygons
             .iter()
@@ -443,34 +413,16 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
     /// assert_eq!(cube.polygons.len(), 192);
     /// ```
     pub fn subdivide_triangles_mut(&mut self, levels: NonZeroU32) {
-        #[cfg(feature = "parallel")]
-        {
-            self.polygons = self
-                .polygons
-                .par_iter_mut()
-                .flat_map(|poly| {
-                    let sub_tris = poly.subdivide_triangles(levels);
-                    // Convert each small tri back to a Polygon
-                    sub_tris
-                        .into_par_iter()
-                        .map(move |tri| Polygon::new(tri.to_vec(), poly.metadata.clone()))
-                })
-                .collect();
-        }
-
-        #[cfg(not(feature = "parallel"))]
-        {
-            self.polygons = self
-                .polygons
-                .iter()
-                .flat_map(|poly| {
-                    let polytri = poly.subdivide_triangles(levels);
-                    polytri
-                        .into_iter()
-                        .map(move |tri| Polygon::new(tri.to_vec(), poly.metadata.clone()))
-                })
-                .collect();
-        }
+        self.polygons = self
+            .polygons
+            .iter()
+            .flat_map(|poly| {
+                let polytri = poly.subdivide_triangles(levels);
+                polytri
+                    .into_iter()
+                    .map(move |tri| Polygon::new(tri.to_vec(), poly.metadata.clone()))
+            })
+            .collect();
     }
 
     /// Renormalize all polygons in this Mesh by re-computing each polygon’s plane

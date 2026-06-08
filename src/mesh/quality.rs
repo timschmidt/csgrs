@@ -7,9 +7,6 @@ use hyperreal::RealSign;
 use std::cmp::Ordering;
 use std::fmt::Debug;
 
-#[cfg(feature = "parallel")]
-use rayon::prelude::*;
-
 fn degenerate_triangle_quality() -> TriangleQuality {
     let sentinel = Real::from(1_000_000_000_u64);
     TriangleQuality {
@@ -320,14 +317,6 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     pub fn analyze_triangle_quality(&self) -> Vec<TriangleQuality> {
         let triangulated = self.triangulate();
 
-        #[cfg(feature = "parallel")]
-        let qualities: Vec<TriangleQuality> = triangulated
-            .polygons
-            .par_iter()
-            .map(|poly| Self::compute_triangle_quality(&poly.vertices))
-            .collect();
-
-        #[cfg(not(feature = "parallel"))]
         let qualities: Vec<TriangleQuality> = triangulated
             .polygons
             .iter()
