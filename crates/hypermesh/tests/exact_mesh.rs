@@ -262,6 +262,39 @@ fn skew_affine_box(min: [i64; 3], max: [i64; 3]) -> ExactMesh {
     .unwrap()
 }
 
+fn skew_affine_mesh_from_axis_aligned(mesh: &ExactMesh, label: &'static str) -> ExactMesh {
+    let ten = Real::from(10);
+    ExactMesh::new(
+        mesh.vertices()
+            .iter()
+            .map(|point| {
+                Point3::new(
+                    point.x.clone() + &(point.y.clone() * &ten),
+                    point.y.clone(),
+                    point.z.clone(),
+                )
+            })
+            .collect(),
+        mesh.triangles().to_vec(),
+        SourceProvenance::exact(label),
+    )
+    .unwrap()
+}
+
+fn axis_aligned_l_solid(offset: [i64; 3]) -> ExactMesh {
+    let [ox, oy, oz] = offset;
+    let horizontal = axis_aligned_box([ox, oy, oz], [ox + 2, oy + 1, oz + 1]);
+    let vertical = axis_aligned_box([ox, oy + 1, oz], [ox + 1, oy + 2, oz + 1]);
+    materialize_axis_aligned_orthogonal_solid_union(
+        &horizontal,
+        &vertical,
+        ValidationPolicy::CLOSED,
+    )
+    .unwrap()
+    .expect("test L solid should materialize")
+    .mesh
+}
+
 #[test]
 fn exact_mesh_construction_retains_valid_public_facts() {
     let mesh = tetra([0, 0, 0]);
@@ -1043,6 +1076,65 @@ fn exact_affine_orthogonal_solid_materializer_is_publicly_replayable() {
                 ExactBoundaryBooleanPolicy::Reject,
             )
             .unwrap();
+        assert!(result.mesh.facts().mesh.closed_manifold);
+    }
+}
+
+#[test]
+fn affine_orthogonal_solid_recovers_multi_cell_basis_without_sampling_limits() {
+    let left_axis = axis_aligned_l_solid([0, 0, 0]);
+    let right_axis = axis_aligned_l_solid([1, 0, 0]);
+    let left = skew_affine_mesh_from_axis_aligned(&left_axis, "test skew affine left L solid");
+    let right = skew_affine_mesh_from_axis_aligned(&right_axis, "test skew affine right L solid");
+
+    assert!(left.vertices().len() > 8);
+    assert!(right.vertices().len() > 8);
+
+    for operation in [
+        ExactBooleanOperation::Union,
+        ExactBooleanOperation::Intersection,
+        ExactBooleanOperation::Difference,
+    ] {
+        let preflight = preflight_boolean_exact(&left, &right, operation).unwrap();
+        assert_eq!(
+            preflight.support,
+            hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex,
+            "{operation:?}: {preflight:?}"
+        );
+        assert!(preflight.blocker.is_none(), "{operation:?}: {preflight:?}");
+        preflight.validate().unwrap();
+        preflight.validate_against_sources(&left, &right).unwrap();
+
+        let result = materialize_affine_orthogonal_solid_boolean(
+            &left,
+            &right,
+            operation,
+            ValidationPolicy::CLOSED,
+        )
+        .unwrap()
+        .expect("skew affine L-cell solids should materialize by exact cell replay");
+        assert_eq!(
+            result.kind,
+            ExactBooleanResultKind::CertifiedShortcut {
+                operation,
+                shortcut: hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex
+            }
+        );
+        result.validate().unwrap();
+        result.validate_against_sources(&left, &right).unwrap();
+        result
+            .validate_operation_against_sources(
+                &left,
+                &right,
+                operation,
+                ValidationPolicy::CLOSED,
+                ExactBoundaryBooleanPolicy::Reject,
+            )
+            .unwrap();
+        assert_eq!(
+            result.freshness_against_sources(&left, &right),
+            ExactReportFreshness::Current
+        );
         assert!(result.mesh.facts().mesh.closed_manifold);
     }
 }

@@ -25,20 +25,6 @@ use super::validation::ValidationPolicy;
 use core::cmp::Ordering;
 use hyperreal::Real;
 
-/// Maximum origin vertices sampled when recovering an affine cell frame.
-///
-/// The limit keeps basis discovery bounded. Soundness does not depend on
-/// exhaustiveness because every candidate is accepted only after exact replay
-/// proves the complete mesh is an axis-aligned orthogonal solid.
-const MAX_CELL_BASIS_ORIGINS: usize = 8;
-
-/// Maximum incident directions sampled per origin during frame discovery.
-///
-/// Directions are ranked by exact mesh-edge frequency so repeated grid axes
-/// enforced after sampling by [`mesh_to_uvw`] plus orthogonal-solid replay, not
-/// by this heuristic ordering.
-const MAX_CELL_BASIS_DIRECTIONS: usize = 8;
-
 /// Named operation retained by an affine orthogonal-solid materialization.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum AffineOrthogonalSolidOperation {
@@ -271,28 +257,13 @@ fn certify_affine_orthogonal_solid_inputs(
     right: &ExactMesh,
     operation: AffineOrthogonalSolidOperation,
 ) -> Option<AffineOrthogonalSolidInputs> {
-    if is_axis_aligned_orthogonal_solid(left) && is_axis_aligned_orthogonal_solid(right) {
-        return None;
-    }
-    for basis in candidate_shared_bases(left, right) {
-        let Some(left_uvw) = mesh_to_uvw(left, &basis, ValidationPolicy::CLOSED) else {
-            continue;
-        };
-        let Some(right_uvw) = mesh_to_uvw(right, &basis, ValidationPolicy::CLOSED) else {
-            continue;
-        };
-        if let Some(uvw_output_plan) = axis_aligned_orthogonal_solid_cell_plan(
-            &left_uvw,
-            &right_uvw,
-            operation.to_axis_aligned(),
-        ) {
-            return Some(AffineOrthogonalSolidInputs {
-                basis,
-                uvw_output_plan,
-            });
-        }
-    }
-    None
+    find_affine_orthogonal_solid_basis(left, right, |left_uvw, right_uvw| {
+        axis_aligned_orthogonal_solid_cell_plan(&left_uvw, &right_uvw, operation.to_axis_aligned())
+    })
+    .map(|(basis, uvw_output_plan)| AffineOrthogonalSolidInputs {
+        basis,
+        uvw_output_plan,
+    })
 }
 
 fn affine_orthogonal_solid_operation_is_supported(
@@ -308,72 +279,83 @@ fn affine_orthogonal_solid_selected_count(
     right: &ExactMesh,
     operation: AffineOrthogonalSolidOperation,
 ) -> Option<usize> {
-    if is_axis_aligned_orthogonal_solid(left) && is_axis_aligned_orthogonal_solid(right) {
-        return None;
-    }
-    for basis in candidate_shared_bases(left, right) {
-        let Some(left_uvw) = mesh_to_uvw(left, &basis, ValidationPolicy::CLOSED) else {
-            continue;
-        };
-        let Some(right_uvw) = mesh_to_uvw(right, &basis, ValidationPolicy::CLOSED) else {
-            continue;
-        };
-        if let Some(selected_count) = axis_aligned_orthogonal_solid_cell_selected_count(
+    find_affine_orthogonal_solid_basis(left, right, |left_uvw, right_uvw| {
+        axis_aligned_orthogonal_solid_cell_selected_count(
             &left_uvw,
             &right_uvw,
             operation.to_axis_aligned(),
-        ) {
-            return Some(selected_count);
-        }
-    }
-    None
+        )
+    })
+    .map(|(_basis, selected_count)| selected_count)
 }
 
-/// Return exact affine bases that are plausible for both source meshes.
-///
-/// Retained box evidence is tried first because it is already a construction
-/// artifact. Cell-complex evidence is secondary and must be rediscovered from
-/// exact edge structure before the pair replay below can certify it.
-fn candidate_shared_bases(left: &ExactMesh, right: &ExactMesh) -> Vec<AffineBoxBasis> {
-    let mut bases = candidate_affine_box_bases(left);
-    bases.extend(candidate_affine_box_bases(right));
-    bases.extend(candidate_affine_cell_bases(left));
-    bases.extend(candidate_affine_cell_bases(right));
-    let mut unique = Vec::new();
-    for basis in bases {
+fn find_affine_orthogonal_solid_basis<T>(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    mut accept: impl FnMut(ExactMesh, ExactMesh) -> Option<T>,
+) -> Option<(AffineBoxBasis, T)> {
+    if is_axis_aligned_orthogonal_solid(left) && is_axis_aligned_orthogonal_solid(right) {
+        return None;
+    }
+    let mut seen = Vec::new();
+    let mut accept_basis = |basis: AffineBoxBasis| -> Option<(AffineBoxBasis, T)> {
         if compare_reals(&basis.determinant(), &Real::from(0)).value() == Some(Ordering::Equal)
-            || unique.contains(&basis)
+            || seen.contains(&basis)
         {
-            continue;
+            return None;
         }
-        unique.push(basis);
+        seen.push(basis.clone());
+        let Some(left_uvw) = mesh_to_uvw(left, &basis, ValidationPolicy::CLOSED) else {
+            return None;
+        };
+        let Some(right_uvw) = mesh_to_uvw(right, &basis, ValidationPolicy::CLOSED) else {
+            return None;
+        };
+        accept(left_uvw, right_uvw).map(|accepted| (basis, accepted))
+    };
+
+    for basis in candidate_affine_box_bases(left) {
+        if let Some(accepted) = accept_basis(basis) {
+            return Some(accepted);
+        }
     }
-    unique
+    for basis in candidate_affine_box_bases(right) {
+        if let Some(accepted) = accept_basis(basis) {
+            return Some(accepted);
+        }
+    }
+    if let Some(accepted) = find_affine_cell_basis(left, &mut accept_basis) {
+        return Some(accepted);
+    }
+    find_affine_cell_basis(right, &mut accept_basis)
 }
 
-/// Recover exact affine bases from a single orthogonal-solid cell complex.
+/// Search exact affine bases from a single orthogonal-solid cell complex.
 ///
-/// The search uses the mesh's retained triangle-edge graph to propose three
-/// frame is not trusted as a numeric fit: it becomes evidence only if exact
+/// The search uses the complete retained triangle-edge graph to propose three
+/// independent frame directions at every source vertex. A proposed frame is not
+/// trusted as a numeric fit: it becomes evidence only if exact
 /// determinant-ratio normalization and orthogonal-solid replay accept the full
-/// source mesh.
-fn candidate_affine_cell_bases(mesh: &ExactMesh) -> Vec<AffineBoxBasis> {
-    let mut bases = Vec::new();
+/// source mesh. This deliberately favors completeness over heuristic sampling
+/// because supportable exact cell complexes must not depend on vertex order.
+fn find_affine_cell_basis<T>(
+    mesh: &ExactMesh,
+    accept_basis: &mut impl FnMut(AffineBoxBasis) -> Option<T>,
+) -> Option<T> {
     if mesh.vertices().len() < 8 || mesh.triangles().len() < 12 {
-        return bases;
+        return None;
     }
     let adjacency = vertex_adjacency(mesh);
     let direction_counts = mesh_direction_counts(mesh);
     let mut origins = (0..adjacency.len()).collect::<Vec<_>>();
     origins.sort_by_key(|&origin| adjacency[origin].len());
-    for origin in origins.into_iter().take(MAX_CELL_BASIS_ORIGINS) {
+    for origin in origins {
         let neighbors = &adjacency[origin];
         let origin_point = mesh.vertices()[origin].clone();
         let mut directions = unique_edge_directions(mesh, origin, neighbors);
         directions.sort_by_key(|direction| {
             core::cmp::Reverse(direction_weight(direction, &direction_counts))
         });
-        directions.truncate(MAX_CELL_BASIS_DIRECTIONS);
         for u in 0..directions.len() {
             for v in u + 1..directions.len() {
                 for w in v + 1..directions.len() {
@@ -385,24 +367,17 @@ fn candidate_affine_cell_bases(mesh: &ExactMesh) -> Vec<AffineBoxBasis> {
                     };
                     if compare_reals(&basis.determinant(), &Real::from(0)).value()
                         == Some(Ordering::Equal)
-                        || bases.contains(&basis)
                     {
                         continue;
                     }
-                    // infer from retained combinatorial edges, then accept
-                    // only through exact replay, never through angle
-                    // tolerances or floating-point least-squares fitting.
-                    if mesh_to_uvw(mesh, &basis, ValidationPolicy::CLOSED)
-                        .as_ref()
-                        .is_some_and(is_axis_aligned_orthogonal_solid)
-                    {
-                        bases.push(basis);
+                    if let Some(accepted) = accept_basis(basis) {
+                        return Some(accepted);
                     }
                 }
             }
         }
     }
-    bases
+    None
 }
 
 /// Count undirected exact triangle-edge directions in mesh space.
