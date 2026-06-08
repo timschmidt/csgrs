@@ -535,6 +535,37 @@ fn retained_planar_face_rejects_unowned_or_crossing_holes() {
     );
 }
 
+#[test]
+fn retained_planar_face_rejects_crossing_same_role_trims() {
+    let surface = RetainedPlanarSurfaceIdentity2::new(121);
+
+    assert_eq!(
+        RetainedPlanarFace2::try_new(
+            surface,
+            vec![
+                trim(surface, &[(0, 0), (4, 0), (4, 4), (0, 4)]),
+                trim(surface, &[(2, 2), (6, 2), (6, 6), (2, 6)]),
+            ],
+            Vec::new(),
+        )
+        .unwrap_err(),
+        CurveError::InvalidPlanarFace
+    );
+
+    assert_eq!(
+        RetainedPlanarFace2::try_new(
+            surface,
+            vec![trim(surface, &[(0, 0), (10, 0), (10, 10), (0, 10)])],
+            vec![
+                trim(surface, &[(2, 2), (6, 2), (6, 6), (2, 6)]),
+                trim(surface, &[(4, 4), (8, 4), (8, 8), (4, 8)]),
+            ],
+        )
+        .unwrap_err(),
+        CurveError::InvalidPlanarFace
+    );
+}
+
 fn decided<T>(classification: Classification<T>) -> T {
     match classification {
         Classification::Decided(value) => value,
