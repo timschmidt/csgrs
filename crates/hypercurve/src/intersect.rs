@@ -882,13 +882,19 @@ fn sort_same_circle_candidates(
     candidates: &mut [SameCircleArcCandidate],
     policy: &CurvePolicy,
 ) -> Option<UncertaintyReason> {
-    candidates.sort_by(|left, right| {
-        compare_reals(&left.a_param, &right.a_param, policy).unwrap_or(Ordering::Equal)
-    });
-
-    for adjacent in candidates.windows(2) {
-        if compare_reals(&adjacent[0].a_param, &adjacent[1].a_param, policy).is_none() {
-            return Some(UncertaintyReason::Ordering);
+    for index in 1..candidates.len() {
+        let mut cursor = index;
+        while cursor > 0 {
+            match compare_reals(
+                &candidates[cursor - 1].a_param,
+                &candidates[cursor].a_param,
+                policy,
+            ) {
+                Some(Ordering::Greater) => candidates.swap(cursor - 1, cursor),
+                Some(Ordering::Less | Ordering::Equal) => break,
+                None => return Some(UncertaintyReason::Ordering),
+            }
+            cursor -= 1;
         }
     }
 
