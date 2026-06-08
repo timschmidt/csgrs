@@ -784,6 +784,30 @@ fn retained_overlap_pair_constructor_rejects_non_overlap_line_evidence() {
             }),
         },
     ));
+
+    assert_topology_error(BezierRetainedOverlap2::new(
+        0,
+        1,
+        BezierRetainedOverlapRelation2::LineSegmentOverlap {
+            intersection: Box::new(LineLineIntersection::Overlap {
+                segment: LineSeg2::try_new(p(0, 0), p(1, 0)).unwrap(),
+                a_range: ParamRange::new(q(1, 2), q(1, 2)),
+                b_range: ParamRange::new(r(0), r(1)),
+            }),
+        },
+    ));
+
+    assert_topology_error(BezierRetainedOverlap2::new(
+        0,
+        1,
+        BezierRetainedOverlapRelation2::LineSegmentOverlap {
+            intersection: Box::new(LineLineIntersection::Overlap {
+                segment: LineSeg2::new_unchecked(p(0, 0), p(0, 0)),
+                a_range: ParamRange::new(r(0), r(1)),
+                b_range: ParamRange::new(r(0), r(1)),
+            }),
+        },
+    ));
 }
 
 #[test]

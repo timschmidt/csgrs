@@ -164,13 +164,35 @@ fn validate_refined_fragment_local_range(range: &ParamRange) -> CurveResult<()> 
 fn validate_overlap_relation_evidence(
     relation: &BezierRetainedOverlapRelation2,
 ) -> CurveResult<()> {
-    if let BezierRetainedOverlapRelation2::LineSegmentOverlap { intersection } = relation
-        && !matches!(intersection.as_ref(), LineLineIntersection::Overlap { .. })
-    {
-        return Err(CurveError::Topology(
-            "retained line-segment overlap relation must carry positive-dimensional overlap evidence"
-                .to_owned(),
-        ));
+    if let BezierRetainedOverlapRelation2::LineSegmentOverlap { intersection } = relation {
+        let LineLineIntersection::Overlap {
+            segment,
+            a_range,
+            b_range,
+        } = intersection.as_ref()
+        else {
+            return Err(CurveError::Topology(
+                "retained line-segment overlap relation must carry positive-dimensional overlap evidence"
+                    .to_owned(),
+            ));
+        };
+        validate_positive_unit_overlap_range(a_range)?;
+        validate_positive_unit_overlap_range(b_range)?;
+        let policy = CurvePolicy::certified();
+        match is_zero(&segment.length_squared(), &policy) {
+            Some(false) => {}
+            Some(true) => {
+                return Err(CurveError::Topology(
+                    "retained line-segment overlap relation must carry nonzero overlap geometry"
+                        .to_owned(),
+                ));
+            }
+            None => {
+                return Err(CurveError::Topology(
+                    "retained line-segment overlap geometry length must be certified".to_owned(),
+                ));
+            }
+        }
     }
     Ok(())
 }
