@@ -590,6 +590,24 @@ fn retained_curve_profile_rejects_mismatched_endpoint_evidence_without_blocking_
         endpoints,
         cache,
     ));
+
+    for topology_status in [
+        RetainedTopologyStatus::CertifiedApproximation,
+        RetainedTopologyStatus::DisplayOrExport,
+        RetainedTopologyStatus::ImportedLossy,
+    ] {
+        let endpoints = RetainedEndpointEvidence2::new(&domain, p(0, 0), p(2, 0));
+        let native_only_cache = RetainedCurveCacheSummary2::new(5, 9, 2, 2, 0).unwrap();
+        assert_topology_error(RetainedCurveProfile2::new(
+            identity,
+            domain.clone(),
+            decided(RetainedTrimInterval1::try_new(r(0), r(2), &domain, &policy).unwrap()),
+            RetainedCurvePeriodicity1::NonPeriodic,
+            topology_status,
+            endpoints,
+            native_only_cache,
+        ));
+    }
 }
 
 #[test]
