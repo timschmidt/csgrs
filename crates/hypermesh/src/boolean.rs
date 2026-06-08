@@ -7087,23 +7087,12 @@ fn validate_consumed_boundary_touching_report(
     })
 }
 
-fn boolean_boundary_touching_meshes_from_graph(
-    graph: &super::graph::ExactIntersectionGraph,
+fn materialize_boundary_policy_shortcut_result(
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
-    boundary_policy: ExactBoundaryBooleanPolicy,
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
-    if boundary_policy == ExactBoundaryBooleanPolicy::Reject {
-        return Ok(None);
-    }
-    let report = boundary_touching_report_from_graph(graph, left, right)?;
-    if !report.is_certified() {
-        return Ok(None);
-    }
-    validate_consumed_boundary_touching_report(&report, "boundary-policy projection")?;
-
     let mesh = match operation {
         ExactBooleanOperation::Union => concatenate_meshes_with_options(
             left,
@@ -7121,13 +7110,70 @@ fn boolean_boundary_touching_meshes_from_graph(
             "exact boundary-touch difference preserving left shell",
             validation,
         ),
-        ExactBooleanOperation::SelectedRegions(_) => unreachable!("handled by caller"),
+        ExactBooleanOperation::SelectedRegions(_) => return Ok(None),
     };
     let Ok(mesh) = mesh else {
         return Ok(None);
     };
-
     Ok(Some(boundary_policy_shortcut_result(mesh, operation)))
+}
+
+fn boundary_policy_shortcut_result_matches_sources(
+    result: &ExactBooleanResult,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+    boundary_policy: ExactBoundaryBooleanPolicy,
+) -> bool {
+    if boundary_policy != ExactBoundaryBooleanPolicy::PreserveSeparateShells {
+        return false;
+    }
+    let Ok(report) = certify_boundary_touching_report(left, right) else {
+        return false;
+    };
+    if report.validate().is_err() || !report.is_certified() {
+        return false;
+    }
+    let Ok(Some(expected)) =
+        materialize_boundary_policy_shortcut_result(left, right, operation, validation)
+    else {
+        return false;
+    };
+    expected.validate().is_ok() && result == &expected
+}
+
+fn boolean_boundary_touching_meshes_from_graph(
+    graph: &super::graph::ExactIntersectionGraph,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+    boundary_policy: ExactBoundaryBooleanPolicy,
+) -> Result<Option<ExactBooleanResult>, MeshError> {
+    if boundary_policy == ExactBoundaryBooleanPolicy::Reject {
+        return Ok(None);
+    }
+    let report = boundary_touching_report_from_graph(graph, left, right)?;
+    if !report.is_certified() {
+        return Ok(None);
+    }
+    validate_consumed_boundary_touching_report(&report, "boundary-policy projection")?;
+
+    let Some(result) =
+        materialize_boundary_policy_shortcut_result(left, right, operation, validation)?
+    else {
+        return Ok(None);
+    };
+    Ok(boundary_policy_shortcut_result_matches_sources(
+        &result,
+        left,
+        right,
+        operation,
+        validation,
+        boundary_policy,
+    )
+    .then_some(result))
 }
 
 /// Certify and materialize a named boolean for exact boundary-only contact
@@ -11622,6 +11668,7 @@ mod tests {
             .expect("disconnected nonconvex boundary fixture should validate");
         let right = tetrahedron_i64([0, 0, 0], [-4, 0, 0], [0, -4, 0], [0, 0, -4]);
         let separated_right = tetrahedron_i64([100, 0, 0], [104, 0, 0], [100, 4, 0], [100, 0, 4]);
+        let overlapping_right = tetrahedron_i64([1, 1, 1], [2, 1, 1], [1, 2, 1], [1, 1, 2]);
         let graph = build_intersection_graph(&left, &right).unwrap();
         validate_graph_source_handoff(&graph, &left, &right).unwrap();
         assert!(!graph.has_unknowns());
@@ -11630,6 +11677,35 @@ mod tests {
             boundary_touching_report_from_graph(&graph, &left, &right)
                 .unwrap()
                 .is_certified()
+        );
+        assert!(
+            !certify_boundary_touching_report(&left, &overlapping_right)
+                .unwrap()
+                .is_certified()
+        );
+        assert!(
+            boolean_boundary_touching_meshes_from_graph(
+                &graph,
+                &left,
+                &right,
+                ExactBooleanOperation::Difference,
+                ValidationPolicy::CLOSED,
+                ExactBoundaryBooleanPolicy::PreserveSeparateShells,
+            )
+            .unwrap()
+            .is_some()
+        );
+        assert!(
+            boolean_boundary_touching_meshes_from_graph(
+                &graph,
+                &left,
+                &overlapping_right,
+                ExactBooleanOperation::Difference,
+                ValidationPolicy::CLOSED,
+                ExactBoundaryBooleanPolicy::PreserveSeparateShells,
+            )
+            .unwrap()
+            .is_none()
         );
 
         for (operation, support, shortcut) in [
