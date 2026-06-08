@@ -7,7 +7,10 @@
 //! decision was certified, unsupported, or blocked on an application-level
 //! policy.
 
-use hyperlimit::{ApproximationPolicy, MeshSource, Point3, compare_reals};
+use hyperlimit::{
+    ApproximationPolicy, MeshSource, Point3, TriangleLocation, classify_point_triangle,
+    compare_reals, project_point3,
+};
 use std::cmp::Ordering;
 
 use super::ExactMesh;
@@ -2570,7 +2573,7 @@ fn validate_volumetric_materialized_assembly_matches_operation(
                 triangle,
                 classifications,
             );
-            let source_matches = assembly
+            let retained_source_cells = assembly
                 .triangles
                 .iter()
                 .filter(|output| {
@@ -2583,34 +2586,91 @@ fn validate_volumetric_materialized_assembly_matches_operation(
                             triangle,
                         )
                 })
-                .collect::<Vec<_>>();
-            let geometric_matches = assembly
+                .count();
+            let retained_source_subcells = assembly
                 .triangles
                 .iter()
                 .filter(|output| {
-                    output_triangle_matches_triangulated_cell(
-                        output,
-                        assembly,
-                        triangulation,
-                        triangle,
-                    )
+                    output.source_side == triangulation.side
+                        && output.source_face == triangulation.face
+                        && output_triangle_lies_in_triangulated_cell(
+                            output,
+                            assembly,
+                            triangulation,
+                            triangle,
+                        )
                 })
-                .collect::<Vec<_>>();
+                .count();
+            let retained_duplicate_cells = assembly
+                .triangles
+                .iter()
+                .filter(|output| {
+                    (output.source_side != triangulation.side
+                        || output.source_face != triangulation.face)
+                        && output_triangle_matches_triangulated_cell(
+                            output,
+                            assembly,
+                            triangulation,
+                            triangle,
+                        )
+                })
+                .count();
             match expected {
-                VolumetricCellRetention::Drop if !source_matches.is_empty() => {
+                VolumetricCellRetention::Drop
+                    if retained_source_cells != 0 || retained_source_subcells != 0 =>
+                {
                     return Err(
                         ExactReportValidationError::VolumetricMaterializedAssemblyViolatesOperation,
                     );
                 }
-                VolumetricCellRetention::Keep | VolumetricCellRetention::KeepReversed => {
-                    let _ = geometric_matches;
+                VolumetricCellRetention::Keep | VolumetricCellRetention::KeepReversed
+                    if retained_source_subcells == 0 && retained_duplicate_cells == 0 =>
+                {
+                    return Err(
+                        ExactReportValidationError::VolumetricMaterializedAssemblyViolatesOperation,
+                    );
                 }
-                VolumetricCellRetention::Drop => {}
+                VolumetricCellRetention::Keep
+                | VolumetricCellRetention::KeepReversed
+                | VolumetricCellRetention::Drop => {}
             }
         }
     }
 
     Ok(())
+}
+
+fn output_triangle_lies_in_triangulated_cell(
+    output: &ExactOutputTriangle,
+    assembly: &ExactBooleanAssemblyPlan,
+    triangulation: &FaceRegionTriangulation,
+    triangle: [usize; 3],
+) -> bool {
+    let Some(cell_points) = triangle
+        .iter()
+        .map(|&vertex| triangulation.boundary.get(vertex).map(boundary_node_point))
+        .collect::<Option<Vec<_>>>()
+    else {
+        return false;
+    };
+    output.vertices.iter().all(|&vertex| {
+        let Some(output_point) = assembly.vertices.get(vertex).map(|vertex| &vertex.point) else {
+            return false;
+        };
+        classify_point_triangle(
+            &project_point3(cell_points[0], triangulation.projection),
+            &project_point3(cell_points[1], triangulation.projection),
+            &project_point3(cell_points[2], triangulation.projection),
+            &project_point3(output_point, triangulation.projection),
+        )
+        .value()
+        .is_some_and(|location| {
+            matches!(
+                location,
+                TriangleLocation::Inside | TriangleLocation::OnEdge | TriangleLocation::OnVertex
+            )
+        })
+    })
 }
 
 fn validate_selected_region_assembly_covers_selection(

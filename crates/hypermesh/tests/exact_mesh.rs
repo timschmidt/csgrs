@@ -3015,6 +3015,15 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
     assert!(!result.volumetric_classifications.is_empty());
     assert!(!result.assembly.triangles.is_empty());
     assert!(!result.mesh.triangles().is_empty());
+    let mut relabeled_operation = result.clone();
+    relabeled_operation.kind = ExactBooleanResultKind::ArrangementCellComplexMaterialized {
+        operation: ExactBooleanOperation::Intersection,
+    };
+    assert_eq!(
+        relabeled_operation.validate(),
+        Err(hypermesh::ExactReportValidationError::VolumetricMaterializedAssemblyViolatesOperation),
+        "{relabeled_operation:?}"
+    );
     if result.volumetric_classifications.len() > 1 {
         let mut stale_volumetric_order = result.clone();
         stale_volumetric_order.volumetric_classifications.swap(0, 1);
