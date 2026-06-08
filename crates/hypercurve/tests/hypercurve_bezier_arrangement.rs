@@ -1320,6 +1320,28 @@ fn retained_overlap_report_extracts_partial_line_image_split_ranges() {
         BezierRetainedLineOverlapExtent2::PartialBoth
     );
 
+    let forged_overlap = BezierRetainedOverlap2::new(
+        0,
+        1,
+        BezierRetainedOverlapRelation2::LineSegmentOverlap {
+            intersection: Box::new(LineLineIntersection::Overlap {
+                segment: LineSeg2::try_new(p(0, 0), p(1, 0)).unwrap(),
+                a_range: ParamRange::new(q(1, 2), r(1)),
+                b_range: ParamRange::new(r(0), q(1, 2)),
+            }),
+        },
+    )
+    .unwrap();
+    let forged_report = BezierRetainedOverlapReport2::new(vec![forged_overlap]).unwrap();
+    assert_eq!(
+        decided(forged_report.line_overlap_splits(&policy())).len(),
+        1
+    );
+    assert_eq!(
+        forged_report.linear_bezier_overlap_splits(&graph, &policy()),
+        Classification::Uncertain(UncertaintyReason::Unsupported)
+    );
+
     let refinement = decided(graph.split_retained_linear_overlaps(&policy()));
     assert_eq!(refinement.overlap_report().len(), 1);
     assert_eq!(refinement.split_plan().len(), 1);

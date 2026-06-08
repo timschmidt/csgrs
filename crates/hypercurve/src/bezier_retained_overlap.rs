@@ -1206,6 +1206,32 @@ impl BezierRetainedOverlapReport2 {
                 }
                 Classification::Uncertain(reason) => return Classification::Uncertain(reason),
             }
+            match retained_line_overlap_range_matches_fragment(
+                graph,
+                split.first_fragment_index(),
+                split.first_line_range(),
+                split.overlap_segment(),
+                policy,
+            ) {
+                Classification::Decided(true) => {}
+                Classification::Decided(false) => {
+                    return Classification::Uncertain(UncertaintyReason::Unsupported);
+                }
+                Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+            }
+            match retained_line_overlap_range_matches_fragment(
+                graph,
+                split.second_fragment_index(),
+                split.second_line_range(),
+                split.overlap_segment(),
+                policy,
+            ) {
+                Classification::Decided(true) => {}
+                Classification::Decided(false) => {
+                    return Classification::Uncertain(UncertaintyReason::Unsupported);
+                }
+                Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+            }
             let promoted_split = match BezierRetainedLinearOverlapSplit2::new(
                 split.first_fragment_index(),
                 split.second_fragment_index(),
@@ -1238,6 +1264,50 @@ fn validate_overlap_report_order(overlaps: &[BezierRetainedOverlap2]) -> CurveRe
         previous_pair = Some(pair);
     }
     Ok(())
+}
+
+fn retained_line_overlap_range_matches_fragment(
+    graph: &BezierArrangementGraph2,
+    fragment_index: usize,
+    range: &ParamRange,
+    segment: &LineSeg2,
+    policy: &CurvePolicy,
+) -> Classification<bool> {
+    let Some(fragment) = graph.fragments().get(fragment_index) else {
+        return Classification::Decided(false);
+    };
+    let BezierSplitFragment2::Materialized { curve, .. } = fragment.fragment() else {
+        return Classification::Decided(false);
+    };
+    let start = match retained_overlap_subcurve_point_at(curve, range.start().clone(), policy) {
+        Classification::Decided(point) => point,
+        Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+    };
+    let end = match retained_overlap_subcurve_point_at(curve, range.end().clone(), policy) {
+        Classification::Decided(point) => point,
+        Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+    };
+    match (
+        point_coordinates_equal(&start, segment.start(), policy),
+        point_coordinates_equal(&end, segment.end(), policy),
+    ) {
+        (Some(start_matches), Some(end_matches)) => {
+            Classification::Decided(start_matches && end_matches)
+        }
+        _ => Classification::Uncertain(UncertaintyReason::RealSign),
+    }
+}
+
+fn retained_overlap_subcurve_point_at(
+    curve: &BezierSubcurve2,
+    parameter: Real,
+    policy: &CurvePolicy,
+) -> Classification<Point2> {
+    match curve {
+        BezierSubcurve2::Quadratic(curve) => Classification::Decided(curve.point_at(parameter)),
+        BezierSubcurve2::Cubic(curve) => Classification::Decided(curve.point_at(parameter)),
+        BezierSubcurve2::RationalQuadratic(curve) => curve.point_at(parameter, policy),
+    }
 }
 
 fn fragment_is_linearly_parameterized(
