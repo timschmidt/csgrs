@@ -2774,29 +2774,33 @@ fn spans_equal(
         && compare_reals(first.end(), second.end(), policy) == Some(Ordering::Equal)
 }
 
+fn control_sides_against_line(
+    controls: &[&Point2],
+    line: &LineSeg2,
+    policy: &CurvePolicy,
+) -> Classification<Vec<LineSide>> {
+    let mut sides = Vec::with_capacity(controls.len());
+    for side in controls
+        .iter()
+        .map(|point| classify_oriented_line(line.start(), line.end(), point, policy))
+    {
+        match side {
+            Classification::Decided(side) => sides.push(side),
+            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+        }
+    }
+    Classification::Decided(sides)
+}
+
 fn relation_to_line(
     controls: &[&Point2],
     line: &LineSeg2,
     policy: &CurvePolicy,
 ) -> Classification<BezierLineRelation> {
-    let sides = controls
-        .iter()
-        .map(|point| classify_oriented_line(line.start(), line.end(), point, policy))
-        .collect::<Vec<_>>();
-    if let Some(reason) = sides.iter().find_map(|side| match side {
-        Classification::Uncertain(reason) => Some(*reason),
-        Classification::Decided(_) => None,
-    }) {
-        return Classification::Uncertain(reason);
-    }
-
-    let decided_sides = sides
-        .into_iter()
-        .map(|side| match side {
-            Classification::Decided(side) => side,
-            Classification::Uncertain(_) => unreachable!(),
-        })
-        .collect::<Vec<_>>();
+    let decided_sides = match control_sides_against_line(controls, line, policy) {
+        Classification::Decided(sides) => sides,
+        Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+    };
 
     if decided_sides.iter().all(|side| *side == LineSide::On) {
         return Classification::Decided(BezierLineRelation::OnSupportingLine);
@@ -2864,24 +2868,10 @@ fn relation_to_line_with_contacts(
     line: &LineSeg2,
     policy: &CurvePolicy,
 ) -> Classification<BezierLineContactRelation> {
-    let sides = controls
-        .iter()
-        .map(|point| classify_oriented_line(line.start(), line.end(), point, policy))
-        .collect::<Vec<_>>();
-    if let Some(reason) = sides.iter().find_map(|side| match side {
-        Classification::Uncertain(reason) => Some(*reason),
-        Classification::Decided(_) => None,
-    }) {
-        return Classification::Uncertain(reason);
-    }
-
-    let decided_sides = sides
-        .into_iter()
-        .map(|side| match side {
-            Classification::Decided(side) => side,
-            Classification::Uncertain(_) => unreachable!(),
-        })
-        .collect::<Vec<_>>();
+    let decided_sides = match control_sides_against_line(controls, line, policy) {
+        Classification::Decided(sides) => sides,
+        Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+    };
 
     if decided_sides.iter().all(|side| *side == LineSide::On) {
         return Classification::Decided(BezierLineContactRelation::OnSupportingLine);

@@ -881,21 +881,14 @@ fn choose_retained_tangent_successor(
         return Classification::Uncertain(UncertaintyReason::Boundary);
     };
     let mut best = candidates[0];
-    for candidate in candidates {
-        if endpoints[*candidate].start_tangent.is_none() {
-            return Classification::Uncertain(UncertaintyReason::Boundary);
-        }
-    }
 
     for candidate in candidates.iter().copied().skip(1) {
-        let first = endpoints[candidate]
-            .start_tangent
-            .as_ref()
-            .expect("candidate tangent checked above");
-        let second = endpoints[best]
-            .start_tangent
-            .as_ref()
-            .expect("candidate tangent checked above");
+        let Some(first) = endpoints[candidate].start_tangent.as_ref() else {
+            return Classification::Uncertain(UncertaintyReason::Boundary);
+        };
+        let Some(second) = endpoints[best].start_tangent.as_ref() else {
+            return Classification::Uncertain(UncertaintyReason::Boundary);
+        };
         match compare_retained_turn_from_base(base, first, second, policy) {
             Classification::Decided(TurnOrdering::FirstBeforeSecond) => best = candidate,
             Classification::Decided(TurnOrdering::SecondBeforeFirst) => {}
