@@ -176,6 +176,9 @@ impl ApproximateMeshF64View {
 
     /// Validate view-internal row and lossy-adapter consistency without a source mesh.
     pub fn validate(&self) -> Result<(), ApproximateMeshF64ViewError> {
+        self.audit
+            .validate()
+            .map_err(ApproximateMeshF64ViewError::AuditReplay)?;
         if !self.lossy_view {
             return Err(ApproximateMeshF64ViewError::MissingLossyViewFlag);
         }

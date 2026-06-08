@@ -11,8 +11,9 @@ use hypermesh::{
     ExactBooleanOperation, ExactBooleanPolicy, ExactBooleanResult, ExactBooleanResultKind,
     ExactBoundaryBooleanPolicy, ExactBoundaryTouchingStatus, ExactI64MeshInputReadiness,
     ExactI64MeshInputReportValidationError, ExactLabeledCellComplexFreshness, ExactMesh,
-    ExactMeshConsumerDomain, ExactMeshConsumerReadinessError, ExactMeshDomainSummaryFreshness,
-    ExactMeshHandoffPackageError, ExactMeshHandoffPackageFreshness, ExactMeshProposalAcceptance,
+    ExactMeshAuditError, ExactMeshConsumerDomain, ExactMeshConsumerReadinessError,
+    ExactMeshDomainSummaryFreshness, ExactMeshHandoffPackageError,
+    ExactMeshHandoffPackageFreshness, ExactMeshProposalAcceptance, ExactMeshProposalReportError,
     ExactMeshProposalSourceKind, ExactOpenSurfaceDisjointStatus, ExactOutputTriangleOrientation,
     ExactPlanarArrangementStatus, ExactRefinementStatus, ExactRegionSelection,
     ExactRegularizationPolicy, ExactReportFreshness, ExactSameSurfaceStatus,
@@ -24,7 +25,7 @@ use hypermesh::{
     MeshArtifactVertexRecord, MeshCoordinateEvidence, MeshFacePairFreshness, MeshFacePairRelation,
     MeshFacePairValidationError, MeshTopologyEvidence, SplitPlanFreshness,
     TriangleTriangleFreshness, TriangleTriangleRelation, ValidationPolicy, WindingReportFreshness,
-    approximate_mesh_f64_view, boolean_exact, boolean_exact_with_boundary_policy,
+    approximate_mesh_f64_view, audit_exact_mesh, boolean_exact, boolean_exact_with_boundary_policy,
     boolean_selected_regions, build_exact_arrangement2d_overlay,
     build_exact_arrangement2d_overlay_with_boundary_policy, build_intersection_graph,
     certify_adjacent_union_completion_report, certify_boundary_touching_report,
@@ -275,6 +276,49 @@ fn exact_mesh_construction_retains_valid_public_facts() {
             .all(|face| face.triangle.non_degenerate)
     );
 
+    let audit = audit_exact_mesh(&mesh).unwrap();
+    audit.validate().unwrap();
+    audit.validate_against_mesh(&mesh).unwrap();
+
+    let mut impossible_predicate_counts = audit.clone();
+    impossible_predicate_counts.proof_predicates =
+        impossible_predicate_counts.predicate_uses.saturating_add(1);
+    assert_eq!(
+        impossible_predicate_counts.validate(),
+        Err(ExactMeshAuditError::InvalidPredicateCounts {
+            predicate_uses: impossible_predicate_counts.predicate_uses,
+            proof_predicates: impossible_predicate_counts.proof_predicates
+        })
+    );
+    assert_eq!(
+        impossible_predicate_counts.validate_against_mesh(&mesh),
+        Err(ExactMeshAuditError::InvalidPredicateCounts {
+            predicate_uses: impossible_predicate_counts.predicate_uses,
+            proof_predicates: impossible_predicate_counts.proof_predicates
+        })
+    );
+
+    let mut empty_topology_audit = audit.clone();
+    empty_topology_audit.vertex_count = 0;
+    assert_eq!(
+        empty_topology_audit.validate(),
+        Err(ExactMeshAuditError::EmptyTopology)
+    );
+
+    let mut empty_source_audit = audit.clone();
+    empty_source_audit.source_label.clear();
+    assert_eq!(
+        empty_source_audit.validate(),
+        Err(ExactMeshAuditError::EmptySourceLabel)
+    );
+
+    let mut invalid_version_audit = audit.clone();
+    invalid_version_audit.construction_version = 0;
+    assert_eq!(
+        invalid_version_audit.validate(),
+        Err(ExactMeshAuditError::InvalidConstructionVersion)
+    );
+
     let report = inspect_i64_mesh_input(
         &[0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1],
         &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
@@ -361,6 +405,21 @@ fn exact_mesh_proposal_and_artifact_reports_are_publicly_replayable() {
     let mut stale_proposal = proposal.clone();
     stale_proposal.source_label.push_str(" stale");
     assert!(stale_proposal.validate_against_mesh(&exact).is_err());
+
+    let mut invalid_proposal_audit = proposal.clone();
+    invalid_proposal_audit.audit.proof_predicates = invalid_proposal_audit
+        .audit
+        .predicate_uses
+        .saturating_add(1);
+    assert_eq!(
+        invalid_proposal_audit.validate(),
+        Err(ExactMeshProposalReportError::AuditReplay(
+            ExactMeshAuditError::InvalidPredicateCounts {
+                predicate_uses: invalid_proposal_audit.audit.predicate_uses,
+                proof_predicates: invalid_proposal_audit.audit.proof_predicates
+            }
+        ))
+    );
 
     let artifact = mesh_artifact_from_exact_mesh(&exact).unwrap();
     assert_eq!(artifact.source_kind, MeshArtifactSourceKind::HypermeshExact);

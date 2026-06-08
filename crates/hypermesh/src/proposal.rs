@@ -137,6 +137,9 @@ impl ExactMeshProposalReport {
     /// Source replay against an [`ExactMesh`] is handled by
     /// [`Self::validate_against_mesh`].
     pub fn validate(&self) -> Result<(), ExactMeshProposalReportError> {
+        self.audit
+            .validate()
+            .map_err(ExactMeshProposalReportError::AuditReplay)?;
         if !self.accepted_topology {
             return Err(ExactMeshProposalReportError::TopologyNotAccepted);
         }

@@ -49,6 +49,19 @@ pub struct ExactMeshAuditReport {
 pub enum ExactMeshAuditError {
     /// The source mesh failed its whole-object retained-state replay.
     RetainedState(ExactMeshValidationError),
+    /// The retained source label is empty after trimming.
+    EmptySourceLabel,
+    /// The retained construction version is zero.
+    InvalidConstructionVersion,
+    /// The audit claims accepted topology without vertices or faces.
+    EmptyTopology,
+    /// The proof-producing predicate count exceeds retained predicate uses.
+    InvalidPredicateCounts {
+        /// Number of retained predicate-use records.
+        predicate_uses: usize,
+        /// Number of proof-producing predicate-use records.
+        proof_predicates: usize,
+    },
     /// A count stored in the audit report disagrees with the mesh.
     CountMismatch {
         /// Name of the mismatched field.
@@ -147,8 +160,34 @@ impl ExactMeshAuditReport {
         })
     }
 
+    /// Validate audit-internal count and topology shape without a source mesh.
+    ///
+    /// This is a local guard for copied audit summaries. It cannot prove that
+    /// the audit is fresh for a specific [`ExactMesh`], but it rejects
+    /// impossible retained facts before downstream handoff and package reports
+    /// derive readiness from them.
+    pub fn validate(&self) -> Result<(), ExactMeshAuditError> {
+        if self.source_label.trim().is_empty() {
+            return Err(ExactMeshAuditError::EmptySourceLabel);
+        }
+        if self.construction_version == 0 {
+            return Err(ExactMeshAuditError::InvalidConstructionVersion);
+        }
+        if self.vertex_count == 0 || self.face_count == 0 {
+            return Err(ExactMeshAuditError::EmptyTopology);
+        }
+        if self.proof_predicates > self.predicate_uses {
+            return Err(ExactMeshAuditError::InvalidPredicateCounts {
+                predicate_uses: self.predicate_uses,
+                proof_predicates: self.proof_predicates,
+            });
+        }
+        Ok(())
+    }
+
     /// Validate that this report still replays against `mesh`.
     pub fn validate_against_mesh(&self, mesh: &ExactMesh) -> Result<(), ExactMeshAuditError> {
+        self.validate()?;
         mesh.validate_retained_state()
             .map_err(ExactMeshAuditError::RetainedState)?;
         expect_count("vertex_count", mesh.vertices().len(), self.vertex_count)?;
@@ -214,10 +253,16 @@ impl ExactMeshAuditReport {
         match self.validate_against_mesh(mesh) {
             Ok(()) => ExactMeshAuditFreshness::Current,
             Err(ExactMeshAuditError::RetainedState(_)) => ExactMeshAuditFreshness::InvalidMeshState,
-            Err(ExactMeshAuditError::CountMismatch { .. }) => ExactMeshAuditFreshness::StaleCounts,
-            Err(ExactMeshAuditError::SourceMismatch { .. })
+            Err(ExactMeshAuditError::EmptyTopology)
+            | Err(ExactMeshAuditError::InvalidPredicateCounts { .. })
+            | Err(ExactMeshAuditError::CountMismatch { .. }) => {
+                ExactMeshAuditFreshness::StaleCounts
+            }
+            Err(ExactMeshAuditError::EmptySourceLabel)
+            | Err(ExactMeshAuditError::SourceMismatch { .. })
             | Err(ExactMeshAuditError::SourceLabelMismatch) => ExactMeshAuditFreshness::StaleSource,
-            Err(ExactMeshAuditError::ConstructionVersionMismatch { .. }) => {
+            Err(ExactMeshAuditError::InvalidConstructionVersion)
+            | Err(ExactMeshAuditError::ConstructionVersionMismatch { .. }) => {
                 ExactMeshAuditFreshness::StaleConstructionVersion
             }
             Err(ExactMeshAuditError::ClosedManifoldMismatch { .. })

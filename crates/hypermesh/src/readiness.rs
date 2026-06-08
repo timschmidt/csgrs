@@ -108,6 +108,9 @@ impl ExactMeshConsumerReadinessReport {
 
     /// Validate readiness-internal consistency without access to the source mesh.
     pub fn validate(&self) -> Result<(), ExactMeshConsumerReadinessError> {
+        self.audit
+            .validate()
+            .map_err(|_| ExactMeshConsumerReadinessError::ReportMismatch { field: "audit" })?;
         expect_summary_bool(
             "nonempty_topology",
             self.audit.vertex_count > 0 && self.audit.face_count > 0,

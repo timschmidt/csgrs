@@ -205,6 +205,9 @@ impl ExactSolidHandoffReport {
 
     /// Validate report-internal solid handoff consistency without a source mesh.
     pub fn validate(&self) -> Result<(), ExactSolidHandoffError> {
+        self.audit
+            .validate()
+            .map_err(|_| ExactSolidHandoffError::ReportMismatch { field: "audit" })?;
         if self.audit.vertex_count == 0 || self.audit.face_count == 0 || !self.nonempty_topology {
             return Err(ExactSolidHandoffError::EmptyTopology);
         }
@@ -316,6 +319,9 @@ impl ExactSurfaceHandoffReport {
 
     /// Validate report-internal surface handoff consistency without a source mesh.
     pub fn validate(&self) -> Result<(), ExactSurfaceHandoffError> {
+        self.audit
+            .validate()
+            .map_err(|_| ExactSurfaceHandoffError::ReportMismatch { field: "audit" })?;
         if self.audit.vertex_count == 0 || self.audit.face_count == 0 || !self.nonempty_topology {
             return Err(ExactSurfaceHandoffError::EmptyTopology);
         }
