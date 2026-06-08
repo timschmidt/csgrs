@@ -598,6 +598,7 @@ fn select_faces_from_volume_adjacencies(
         .collect::<Vec<_>>();
     let mut selected = Vec::<ExactSelectedFaceOrientation>::new();
     for adjacency in volume_adjacencies {
+        validate_volume_adjacency_for_selection(face_count, adjacency)?;
         let exterior_selected = *selected_volumes
             .get(adjacency.exterior_volume)
             .ok_or(ExactArrangementBlocker::NonManifoldCellComplex)?;
@@ -637,6 +638,43 @@ fn select_faces_from_volume_adjacencies(
         .map(|orientation| orientation.face)
         .collect::<Vec<_>>();
     Ok(Some((selected_faces, selected)))
+}
+
+fn validate_volume_adjacency_for_selection(
+    face_count: usize,
+    adjacency: &ArrangementVolumeAdjacency,
+) -> Result<(), ExactArrangementBlocker> {
+    if adjacency.exterior_volume == adjacency.interior_volume
+        || adjacency.oriented_face_sides.is_empty()
+        || adjacency
+            .separating_face_cells
+            .iter()
+            .any(|&face| face >= face_count)
+    {
+        return Err(ExactArrangementBlocker::NonManifoldCellComplex);
+    }
+    let mut side_faces = Vec::with_capacity(adjacency.oriented_face_sides.len());
+    for side in &adjacency.oriented_face_sides {
+        if side.exterior_volume != adjacency.exterior_volume
+            || side.interior_volume != adjacency.interior_volume
+            || side.face_cell >= face_count
+        {
+            return Err(ExactArrangementBlocker::NonManifoldCellComplex);
+        }
+        side_faces.push(side.face_cell);
+    }
+    side_faces.sort_unstable();
+    side_faces.dedup();
+    let mut separating_face_cells = adjacency.separating_face_cells.clone();
+    separating_face_cells.sort_unstable();
+    separating_face_cells.dedup();
+    if side_faces
+        .iter()
+        .any(|face| separating_face_cells.binary_search(face).is_err())
+    {
+        return Err(ExactArrangementBlocker::NonManifoldCellComplex);
+    }
+    Ok(())
 }
 
 fn selected_face_orientations_from_operation(
@@ -970,6 +1008,29 @@ mod tests {
     }
 
     #[test]
+    fn named_operation_rejects_out_of_range_volume_adjacency_separating_face() {
+        let mut labeled = labeled_with_volume_adjacency_face(0, Vec::new());
+        labeled.volume_adjacencies[0].separating_face_cells = vec![1];
+
+        assert_eq!(
+            labeled.select(ExactBooleanOperation::Union),
+            Err(ExactArrangementBlocker::NonManifoldCellComplex)
+        );
+    }
+
+    #[test]
+    fn named_operation_validates_unselected_volume_adjacency_provenance() {
+        let mut labeled = labeled_with_volume_adjacency_face(0, Vec::new());
+        labeled.volume_regions[0].in_left = true;
+        labeled.volume_adjacencies[0].separating_face_cells = vec![1];
+
+        assert_eq!(
+            labeled.select(ExactBooleanOperation::Union),
+            Err(ExactArrangementBlocker::NonManifoldCellComplex)
+        );
+    }
+
+    #[test]
     fn volume_resolved_selection_consumes_only_region_classification_blockers() {
         let labeled = labeled_with_volume_adjacency_face(
             0,
@@ -1001,6 +1062,23 @@ mod tests {
             1,
             vec![ExactArrangementBlocker::UnresolvedRegionClassification],
         );
+
+        assert_eq!(
+            labeled.select_volume_resolved_with_policy(
+                ExactBooleanOperation::Union,
+                ExactRegularizationPolicy::REGULARIZED_SOLID,
+            ),
+            Err(ExactArrangementBlocker::NonManifoldCellComplex)
+        );
+    }
+
+    #[test]
+    fn volume_resolved_selection_rejects_mismatched_volume_adjacency_face_sets() {
+        let mut labeled = labeled_with_volume_adjacency_face(
+            0,
+            vec![ExactArrangementBlocker::UnresolvedRegionClassification],
+        );
+        labeled.volume_adjacencies[0].separating_face_cells.clear();
 
         assert_eq!(
             labeled.select_volume_resolved_with_policy(
