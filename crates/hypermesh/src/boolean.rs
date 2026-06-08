@@ -236,6 +236,11 @@ impl ExactArrangementBooleanAttempt {
                 {
                     return Err(ExactReportValidationError::StatusEvidenceMismatch);
                 }
+                if let ExactArrangementBooleanDecline::ArrangementBlockers(blockers) = decline
+                    && (blockers.is_empty() || blockers.len() != self.arrangement_blockers)
+                {
+                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                }
                 if !arrangement_attempt_decline_matches_stage(decline, self.stage) {
                     return Err(ExactReportValidationError::StatusEvidenceMismatch);
                 }

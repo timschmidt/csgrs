@@ -5352,6 +5352,32 @@ fn exact_arrangement_public_path_reports_blockers_or_cells() {
         stale_attempt.freshness_against_sources(&left, &right),
         ExactReportFreshness::SourceReplayMismatch
     );
+
+    let mut blocked_attempt = attempt.clone();
+    blocked_attempt.stage = hypermesh::ExactArrangementBooleanStage::ArrangementBuilt;
+    blocked_attempt.decline =
+        Some(hypermesh::ExactArrangementBooleanDecline::ArrangementBlockers(Vec::new()));
+    blocked_attempt.materialized_shortcut = None;
+    blocked_attempt.arrangement_blockers = 1;
+    blocked_attempt.selected_faces = 0;
+    blocked_attempt.selected_volume_regions = 0;
+    blocked_attempt.output_vertices = 0;
+    blocked_attempt.output_triangles = 0;
+    assert_eq!(
+        blocked_attempt.validate(),
+        Err(hypermesh::ExactReportValidationError::StatusEvidenceMismatch)
+    );
+
+    blocked_attempt.decline = Some(
+        hypermesh::ExactArrangementBooleanDecline::ArrangementBlockers(vec![
+            hypermesh::ExactArrangementBlocker::UnresolvedIntersection,
+            hypermesh::ExactArrangementBlocker::UndecidableOrdering,
+        ]),
+    );
+    assert_eq!(
+        blocked_attempt.validate(),
+        Err(hypermesh::ExactReportValidationError::StatusEvidenceMismatch)
+    );
 }
 
 #[test]
