@@ -2087,12 +2087,7 @@ fn relation_from_mixed_graph_order(
             }
 
             for parameter in parameters {
-                push_unique_graph_region_span(
-                    &mut spans,
-                    BezierMonotoneSpan::new(parameter.clone(), parameter)
-                        .expect("zero-width exact parameter span is ordered"),
-                    policy,
-                );
+                push_unique_graph_region_span(&mut spans, zero_width_span(parameter)?, policy);
             }
             let regions = spans
                 .into_iter()
@@ -2711,12 +2706,11 @@ fn isolate_rational_quadratic_line_roots(
     }
     if !spans.is_empty() {
         for parameter in exact_parameters {
-            push_unique_graph_region_span(
-                &mut spans,
-                BezierMonotoneSpan::new(parameter.clone(), parameter)
-                    .expect("zero-width exact parameter span is ordered"),
-                policy,
-            );
+            let span = match zero_width_span(parameter) {
+                Ok(span) => span,
+                Err(reason) => return Classification::Uncertain(reason),
+            };
+            push_unique_graph_region_span(&mut spans, span, policy);
         }
         return Classification::Decided(BezierLineRelation::IsolatedIntersections { spans });
     }
@@ -2748,12 +2742,11 @@ fn rational_line_contact_relation_from_isolation(
     }
     if !spans.is_empty() {
         for parameter in exact_parameters {
-            push_unique_graph_region_span(
-                &mut spans,
-                BezierMonotoneSpan::new(parameter.clone(), parameter)
-                    .expect("zero-width exact parameter span is ordered"),
-                policy,
-            );
+            let span = match zero_width_span(parameter) {
+                Ok(span) => span,
+                Err(reason) => return Classification::Uncertain(reason),
+            };
+            push_unique_graph_region_span(&mut spans, span, policy);
         }
         return Classification::Decided(BezierLineContactRelation::IsolatedIntersections { spans });
     }
@@ -2909,12 +2902,7 @@ fn relation_from_matching_weight_graph_root_cover(
 
             let mut regions = spans;
             for parameter in exact {
-                push_unique_graph_region_span(
-                    &mut regions,
-                    BezierMonotoneSpan::new(parameter.clone(), parameter)
-                        .expect("zero-width exact parameter span is ordered"),
-                    policy,
-                );
+                push_unique_graph_region_span(&mut regions, zero_width_span(parameter)?, policy);
             }
             let regions = regions
                 .into_iter()
@@ -3180,10 +3168,7 @@ fn line_image_rational_relation(
             }
         }
         Classification::Decided(BezierLineRelation::IsolatedIntersections { spans }) => {
-            Classification::Decided(Some(line_image_regions_from_curve_spans(
-                spans,
-                line_is_first,
-            )))
+            line_image_regions_from_curve_spans(spans, line_is_first).map(Some)
         }
         Classification::Decided(
             BezierLineRelation::OnSupportingLine | BezierLineRelation::Unresolved,
@@ -3230,9 +3215,9 @@ fn line_image_polynomial_relation(
                 Classification::Decided(Some(BezierCurveRelation::IntersectionPoints { points }))
             }
         }
-        BezierLineRelation::IsolatedIntersections { spans } => Classification::Decided(Some(
-            line_image_regions_from_curve_spans(spans, line_is_first),
-        )),
+        BezierLineRelation::IsolatedIntersections { spans } => {
+            line_image_regions_from_curve_spans(spans, line_is_first).map(Some)
+        }
         BezierLineRelation::OnSupportingLine | BezierLineRelation::Unresolved => {
             Classification::Decided(None)
         }
@@ -3242,9 +3227,11 @@ fn line_image_polynomial_relation(
 fn line_image_regions_from_curve_spans(
     spans: Vec<BezierMonotoneSpan>,
     line_is_first: bool,
-) -> BezierCurveRelation {
-    let line_span =
-        BezierMonotoneSpan::new(Real::zero(), Real::one()).expect("unit line span is ordered");
+) -> Classification<BezierCurveRelation> {
+    let line_span = match BezierMonotoneSpan::new(Real::zero(), Real::one()) {
+        Ok(span) => span,
+        Err(_) => return Classification::Uncertain(UncertaintyReason::Ordering),
+    };
     let regions = spans
         .into_iter()
         .map(|curve_span| {
@@ -3255,7 +3242,11 @@ fn line_image_regions_from_curve_spans(
             }
         })
         .collect();
-    BezierCurveRelation::IntersectionRegions { regions }
+    Classification::Decided(BezierCurveRelation::IntersectionRegions { regions })
+}
+
+fn zero_width_span(parameter: Real) -> Result<BezierMonotoneSpan, UncertaintyReason> {
+    BezierMonotoneSpan::new(parameter.clone(), parameter).map_err(|_| UncertaintyReason::Ordering)
 }
 
 fn polynomial_relation_to_line(
