@@ -15,7 +15,7 @@ without digging through a large demo binary.
 
 ## Utility Examples
 
-- `adjacency_demo.rs`: mesh connectivity, smoothing, and quality analysis.
+- `adjacency_demo.rs`: mesh connectivity and smoothing.
 - `multi_format_export.rs`: OBJ, PLY, AMF, GLTF, and related export checks.
 - `readme_renders.rs`: pure-Rust software renderer for regenerating the PNG
   assets referenced by the README.

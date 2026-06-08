@@ -2,13 +2,12 @@
 
 pub use crate::csg::CSG;
 pub use crate::errors::ValidationError;
-pub(crate) use crate::hyper_math::{frac_pi_2, hreal_from_f64, pi};
+pub(crate) use crate::hyper_math::hreal_from_f64;
 pub use crate::mesh::Mesh;
 pub use crate::mesh::plane::Plane;
 pub use crate::polygon::Polygon;
 pub use crate::sketch::Profile;
-pub use crate::vertex::{Vertex, VertexCluster};
-pub use hashbrown::HashMap;
+pub use crate::vertex::Vertex;
 pub use hyperlattice::{Matrix4, Point3, Real, Vector3};
 
 pub fn r(value: impl crate::hyper_math::IntoReal) -> Real {

@@ -588,29 +588,6 @@ impl MeshJs {
         Self { inner: smoothed }
     }
 
-    #[wasm_bindgen(js_name=adaptiveRefine)]
-    pub fn adaptive_refine(
-        &self,
-        quality_threshold: f64,
-        max_edge_length: f64,
-        curvature_threshold_deg: f64,
-    ) -> Self {
-        let refined = self.inner.adaptive_refine(
-            real_from_js_or_zero(quality_threshold),
-            real_from_js_or_zero(max_edge_length),
-            real_from_js_or_zero(curvature_threshold_deg),
-        );
-        Self { inner: refined }
-    }
-
-    #[wasm_bindgen(js_name=removePoorTriangles)]
-    pub fn remove_poor_triangles(&self, min_quality: f64) -> Self {
-        let cleaned = self
-            .inner
-            .remove_poor_triangles(real_from_js_or_zero(min_quality));
-        Self { inner: cleaned }
-    }
-
     // Distribute functions
     #[wasm_bindgen(js_name = distributeLinear)]
     pub fn distribute_linear(

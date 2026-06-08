@@ -546,7 +546,7 @@ if let Some(data_mut) = poly.metadata_mut() {
 core is hypermesh-backed `Mesh`, hypercurve-backed `Profile`, hypertri polygon
 triangulation, common 2D/3D primitive construction, extrusion/revolve/sweep/loft
 operations, transformations, metadata propagation, cached bounding boxes,
-TriMesh query conversion, ray intersection helpers, mesh quality utilities, and
+TriMesh query conversion, ray intersection helpers, and
 import/export for common mesh and manufacturing formats behind Cargo features.
 
 The project is also intentionally experimental in several areas:

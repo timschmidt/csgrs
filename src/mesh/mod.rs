@@ -33,7 +33,6 @@ pub mod manifold;
 #[cfg(feature = "metaballs")]
 pub mod metaballs;
 pub mod plane;
-pub mod quality;
 #[cfg(feature = "sdf")]
 pub mod sdf;
 pub mod shapes;
