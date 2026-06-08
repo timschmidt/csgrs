@@ -725,6 +725,16 @@ fn retained_span_fact_constructors_reject_forged_evidence() {
         RetainedTopologyStatus::NativeExact,
         None,
     ));
+    assert_topology_error(RetainedBSplineSpanFacts2::new(
+        0,
+        r(0),
+        r(1),
+        Aabb2::new_unchecked(p(1, 0), p(0, 0)),
+        RetainedSpanAxisMonotonicity::CertifiedMonotone,
+        RetainedSpanAxisMonotonicity::CertifiedMonotone,
+        RetainedTopologyStatus::NativeExact,
+        None,
+    ));
 
     let first_fact = RetainedBSplineSpanFacts2::new(
         0,

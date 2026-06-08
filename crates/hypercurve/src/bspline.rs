@@ -987,6 +987,7 @@ impl RetainedBSplineSpanFacts2 {
         validate_span_fact_evidence(
             &knot_start,
             &knot_end,
+            &bounds,
             topology_status,
             x_monotonicity,
             y_monotonicity,
@@ -1159,12 +1160,26 @@ fn validate_weight_domain_report(
 fn validate_span_fact_evidence(
     knot_start: &Real,
     knot_end: &Real,
+    bounds: &Aabb2,
     topology_status: RetainedTopologyStatus,
     x_monotonicity: RetainedSpanAxisMonotonicity,
     y_monotonicity: RetainedSpanAxisMonotonicity,
     weight_domain: Option<&RetainedSpanWeightDomainReport2>,
 ) -> CurveResult<()> {
     validate_positive_knot_interval(knot_start, knot_end)?;
+    match bounds.has_valid_ordering(&CurvePolicy::certified()) {
+        Classification::Decided(true) => {}
+        Classification::Decided(false) => {
+            return Err(CurveError::Topology(
+                "retained span facts must carry a well-ordered bounding box".into(),
+            ));
+        }
+        Classification::Uncertain(reason) => {
+            return Err(CurveError::Topology(format!(
+                "retained span fact bounds ordering is uncertified: {reason:?}"
+            )));
+        }
+    }
     if !topology_status.is_native_exact()
         && (x_monotonicity != RetainedSpanAxisMonotonicity::Unsupported
             || y_monotonicity != RetainedSpanAxisMonotonicity::Unsupported)

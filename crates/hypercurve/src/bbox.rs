@@ -281,6 +281,22 @@ impl Aabb2 {
         self.max.y()
     }
 
+    /// Classifies whether the stored corners satisfy `min <= max` on both axes.
+    ///
+    /// This certifies boxes that entered through [`Self::new_unchecked`] before
+    /// they are retained as provenance-bearing evidence.
+    pub fn has_valid_ordering(&self, policy: &CurvePolicy) -> Classification<bool> {
+        let Some(x_order) = compare_reals(self.min_x(), self.max_x(), policy) else {
+            return Classification::Uncertain(UncertaintyReason::Ordering);
+        };
+        let Some(y_order) = compare_reals(self.min_y(), self.max_y(), policy) else {
+            return Classification::Uncertain(UncertaintyReason::Ordering);
+        };
+        Classification::Decided(
+            !matches!(x_order, Ordering::Greater) && !matches!(y_order, Ordering::Greater),
+        )
+    }
+
     /// Expands this box so it contains `point`.
     pub fn include_point(&mut self, point: &Point2, policy: &CurvePolicy) -> Classification<()> {
         let mut min_x = self.min.x().clone();

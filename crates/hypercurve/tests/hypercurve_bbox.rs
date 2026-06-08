@@ -29,6 +29,26 @@ fn assert_bbox(bbox: &Aabb2, min: Point2, max: Point2) {
 }
 
 #[test]
+fn aabb_ordering_classifier_rejects_reversed_unchecked_box() {
+    let valid = Aabb2::new_unchecked(p(0, -1), p(2, 3));
+    let reversed_x = Aabb2::new_unchecked(p(2, -1), p(0, 3));
+    let reversed_y = Aabb2::new_unchecked(p(0, 3), p(2, -1));
+
+    assert_eq!(
+        valid.has_valid_ordering(&policy()),
+        Classification::Decided(true)
+    );
+    assert_eq!(
+        reversed_x.has_valid_ordering(&policy()),
+        Classification::Decided(false)
+    );
+    assert_eq!(
+        reversed_y.has_valid_ordering(&policy()),
+        Classification::Decided(false)
+    );
+}
+
+#[test]
 fn line_aabb_sorts_reversed_endpoint_coordinates() {
     let Classification::Decided(bbox) = Aabb2::from_line(&line(5, -2, -1, 3), &policy()) else {
         panic!("line bbox should be decided");
