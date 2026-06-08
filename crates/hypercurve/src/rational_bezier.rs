@@ -1110,8 +1110,14 @@ fn rational_quadratic_graph_order_to_quadratic(
         return Classification::Uncertain(UncertaintyReason::RealSign);
     };
 
-    let shared_difference =
-        rational_polynomial_axis_difference_degree4_controls(rational, polynomial, shared_axis);
+    let shared_difference = match rational_polynomial_axis_difference_degree4_controls(
+        rational,
+        polynomial,
+        shared_axis,
+    ) {
+        Ok(difference) => difference,
+        Err(reason) => return Classification::Uncertain(reason),
+    };
     match degree4_controls_all_zero(&shared_difference, policy) {
         Classification::Decided(true) => {}
         Classification::Decided(false) => {
@@ -1128,8 +1134,12 @@ fn rational_quadratic_graph_order_to_quadratic(
     }
 
     let order_axis = other_axis(shared_axis);
-    let order_difference =
-        rational_polynomial_axis_difference_degree4_controls(rational, polynomial, order_axis);
+    let order_difference = match rational_polynomial_axis_difference_degree4_controls(
+        rational, polynomial, order_axis,
+    ) {
+        Ok(difference) => difference,
+        Err(reason) => return Classification::Uncertain(reason),
+    };
     match degree4_controls_all_zero(&order_difference, policy) {
         Classification::Decided(true) => {
             return Classification::Decided(BezierMonotoneGraphOrder::Coincident);
@@ -1203,7 +1213,10 @@ fn rational_quadratic_graph_order_to_cubic(
     };
 
     let shared_difference =
-        rational_cubic_axis_difference_degree5_controls(rational, polynomial, shared_axis);
+        match rational_cubic_axis_difference_degree5_controls(rational, polynomial, shared_axis) {
+            Ok(difference) => difference,
+            Err(reason) => return Classification::Uncertain(reason),
+        };
     match degree5_controls_all_zero(&shared_difference, policy) {
         Classification::Decided(true) => {}
         Classification::Decided(false) => {
@@ -1221,7 +1234,10 @@ fn rational_quadratic_graph_order_to_cubic(
 
     let order_axis = other_axis(shared_axis);
     let order_difference =
-        rational_cubic_axis_difference_degree5_controls(rational, polynomial, order_axis);
+        match rational_cubic_axis_difference_degree5_controls(rational, polynomial, order_axis) {
+            Ok(difference) => difference,
+            Err(reason) => return Classification::Uncertain(reason),
+        };
     match degree5_controls_all_zero(&order_difference, policy) {
         Classification::Decided(true) => {
             return Classification::Decided(BezierMonotoneGraphOrder::Coincident);
@@ -1274,7 +1290,7 @@ fn rational_polynomial_axis_difference_degree4_controls(
     rational: &RationalQuadraticBezier2,
     polynomial: &QuadraticBezier2,
     axis: Axis2,
-) -> [Real; 5] {
+) -> Result<[Real; 5], UncertaintyReason> {
     let rational_controls = rational.control_points();
     let weights = rational.weights();
     let rational_weighted_axis = [
@@ -1282,7 +1298,7 @@ fn rational_polynomial_axis_difference_degree4_controls(
         weights[1] * coordinate(rational_controls[1], axis),
         weights[2] * coordinate(rational_controls[2], axis),
     ];
-    let numerator = elevate_quadratic_bernstein_to_quartic(rational_weighted_axis);
+    let numerator = elevate_quadratic_bernstein_to_quartic(rational_weighted_axis)?;
     let polynomial_controls = polynomial.control_points();
     let polynomial_axis = [
         coordinate(polynomial_controls[0], axis).clone(),
@@ -1290,21 +1306,21 @@ fn rational_polynomial_axis_difference_degree4_controls(
         coordinate(polynomial_controls[2], axis).clone(),
     ];
     let denominator = [weights[0].clone(), weights[1].clone(), weights[2].clone()];
-    let product = multiply_quadratic_bernstein_to_quartic(polynomial_axis, denominator);
-    [
+    let product = multiply_quadratic_bernstein_to_quartic(polynomial_axis, denominator)?;
+    Ok([
         &numerator[0] - &product[0],
         &numerator[1] - &product[1],
         &numerator[2] - &product[2],
         &numerator[3] - &product[3],
         &numerator[4] - &product[4],
-    ]
+    ])
 }
 
 fn rational_cubic_axis_difference_degree5_controls(
     rational: &RationalQuadraticBezier2,
     polynomial: &CubicBezier2,
     axis: Axis2,
-) -> [Real; 6] {
+) -> Result<[Real; 6], UncertaintyReason> {
     let rational_controls = rational.control_points();
     let weights = rational.weights();
     let rational_weighted_axis = [
@@ -1312,7 +1328,7 @@ fn rational_cubic_axis_difference_degree5_controls(
         weights[1] * coordinate(rational_controls[1], axis),
         weights[2] * coordinate(rational_controls[2], axis),
     ];
-    let numerator = elevate_quadratic_bernstein_to_quintic(rational_weighted_axis);
+    let numerator = elevate_quadratic_bernstein_to_quintic(rational_weighted_axis)?;
     let polynomial_controls = polynomial.control_points();
     let polynomial_axis = [
         coordinate(polynomial_controls[0], axis).clone(),
@@ -1321,92 +1337,109 @@ fn rational_cubic_axis_difference_degree5_controls(
         coordinate(polynomial_controls[3], axis).clone(),
     ];
     let denominator = [weights[0].clone(), weights[1].clone(), weights[2].clone()];
-    let product = multiply_cubic_quadratic_bernstein_to_quintic(polynomial_axis, denominator);
-    [
+    let product = multiply_cubic_quadratic_bernstein_to_quintic(polynomial_axis, denominator)?;
+    Ok([
         &numerator[0] - &product[0],
         &numerator[1] - &product[1],
         &numerator[2] - &product[2],
         &numerator[3] - &product[3],
         &numerator[4] - &product[4],
         &numerator[5] - &product[5],
-    ]
+    ])
 }
 
-fn elevate_quadratic_bernstein_to_quartic(values: [Real; 3]) -> [Real; 5] {
-    let two = Real::from(2_i8);
-    let six = Real::from(6_i8);
-    [
+fn elevate_quadratic_bernstein_to_quartic(
+    values: [Real; 3],
+) -> Result<[Real; 5], UncertaintyReason> {
+    Ok([
         values[0].clone(),
-        ((&values[0] + &values[1]) / &two)
-            .expect("division by positive integer constant is defined"),
-        ((&values[0] + (&Real::from(4_i8) * &values[1]) + &values[2]) / &six)
-            .expect("division by positive integer constant is defined"),
-        ((&values[1] + &values[2]) / &two)
-            .expect("division by positive integer constant is defined"),
+        divide_by_positive_integer(&values[0] + &values[1], 2)?,
+        divide_by_positive_integer(
+            &values[0] + (&Real::from(4_i8) * &values[1]) + &values[2],
+            6,
+        )?,
+        divide_by_positive_integer(&values[1] + &values[2], 2)?,
         values[2].clone(),
-    ]
+    ])
 }
 
-fn elevate_quadratic_bernstein_to_quintic(values: [Real; 3]) -> [Real; 6] {
-    let five = Real::from(5_i8);
-    let ten = Real::from(10_i8);
-    [
+fn elevate_quadratic_bernstein_to_quintic(
+    values: [Real; 3],
+) -> Result<[Real; 6], UncertaintyReason> {
+    Ok([
         values[0].clone(),
-        (((Real::from(3_i8) * &values[0]) + (Real::from(2_i8) * &values[1])) / &five)
-            .expect("division by positive integer constant is defined"),
-        (((Real::from(3_i8) * &values[0]) + (Real::from(6_i8) * &values[1]) + &values[2]) / &ten)
-            .expect("division by positive integer constant is defined"),
-        ((&values[0] + (Real::from(6_i8) * &values[1]) + (Real::from(3_i8) * &values[2])) / &ten)
-            .expect("division by positive integer constant is defined"),
-        (((Real::from(2_i8) * &values[1]) + (Real::from(3_i8) * &values[2])) / &five)
-            .expect("division by positive integer constant is defined"),
+        divide_by_positive_integer(
+            (Real::from(3_i8) * &values[0]) + (Real::from(2_i8) * &values[1]),
+            5,
+        )?,
+        divide_by_positive_integer(
+            (Real::from(3_i8) * &values[0]) + (Real::from(6_i8) * &values[1]) + &values[2],
+            10,
+        )?,
+        divide_by_positive_integer(
+            &values[0] + (Real::from(6_i8) * &values[1]) + (Real::from(3_i8) * &values[2]),
+            10,
+        )?,
+        divide_by_positive_integer(
+            (Real::from(2_i8) * &values[1]) + (Real::from(3_i8) * &values[2]),
+            5,
+        )?,
         values[2].clone(),
-    ]
+    ])
 }
 
-fn multiply_quadratic_bernstein_to_quartic(first: [Real; 3], second: [Real; 3]) -> [Real; 5] {
-    let two = Real::from(2_i8);
-    let six = Real::from(6_i8);
-    [
+fn multiply_quadratic_bernstein_to_quartic(
+    first: [Real; 3],
+    second: [Real; 3],
+) -> Result<[Real; 5], UncertaintyReason> {
+    Ok([
         &first[0] * &second[0],
-        (((&first[0] * &second[1]) + (&first[1] * &second[0])) / &two)
-            .expect("division by positive integer constant is defined"),
-        (((&first[0] * &second[2])
-            + (Real::from(4_i8) * &first[1] * &second[1])
-            + (&first[2] * &second[0]))
-            / &six)
-            .expect("division by positive integer constant is defined"),
-        (((&first[1] * &second[2]) + (&first[2] * &second[1])) / &two)
-            .expect("division by positive integer constant is defined"),
+        divide_by_positive_integer((&first[0] * &second[1]) + (&first[1] * &second[0]), 2)?,
+        divide_by_positive_integer(
+            (&first[0] * &second[2])
+                + (Real::from(4_i8) * &first[1] * &second[1])
+                + (&first[2] * &second[0]),
+            6,
+        )?,
+        divide_by_positive_integer((&first[1] * &second[2]) + (&first[2] * &second[1]), 2)?,
         &first[2] * &second[2],
-    ]
+    ])
 }
 
-fn multiply_cubic_quadratic_bernstein_to_quintic(first: [Real; 4], second: [Real; 3]) -> [Real; 6] {
-    let five = Real::from(5_i8);
-    let ten = Real::from(10_i8);
-    [
+fn multiply_cubic_quadratic_bernstein_to_quintic(
+    first: [Real; 4],
+    second: [Real; 3],
+) -> Result<[Real; 6], UncertaintyReason> {
+    Ok([
         &first[0] * &second[0],
-        (((Real::from(2_i8) * &first[0] * &second[1])
-            + (Real::from(3_i8) * &first[1] * &second[0]))
-            / &five)
-            .expect("division by positive integer constant is defined"),
-        (((&first[0] * &second[2])
-            + (Real::from(6_i8) * &first[1] * &second[1])
-            + (Real::from(3_i8) * &first[2] * &second[0]))
-            / &ten)
-            .expect("division by positive integer constant is defined"),
-        (((Real::from(3_i8) * &first[1] * &second[2])
-            + (Real::from(6_i8) * &first[2] * &second[1])
-            + (&first[3] * &second[0]))
-            / &ten)
-            .expect("division by positive integer constant is defined"),
-        (((Real::from(3_i8) * &first[2] * &second[2])
-            + (Real::from(2_i8) * &first[3] * &second[1]))
-            / &five)
-            .expect("division by positive integer constant is defined"),
+        divide_by_positive_integer(
+            (Real::from(2_i8) * &first[0] * &second[1])
+                + (Real::from(3_i8) * &first[1] * &second[0]),
+            5,
+        )?,
+        divide_by_positive_integer(
+            (&first[0] * &second[2])
+                + (Real::from(6_i8) * &first[1] * &second[1])
+                + (Real::from(3_i8) * &first[2] * &second[0]),
+            10,
+        )?,
+        divide_by_positive_integer(
+            (Real::from(3_i8) * &first[1] * &second[2])
+                + (Real::from(6_i8) * &first[2] * &second[1])
+                + (&first[3] * &second[0]),
+            10,
+        )?,
+        divide_by_positive_integer(
+            (Real::from(3_i8) * &first[2] * &second[2])
+                + (Real::from(2_i8) * &first[3] * &second[1]),
+            5,
+        )?,
         &first[3] * &second[2],
-    ]
+    ])
+}
+
+fn divide_by_positive_integer(numerator: Real, denominator: i8) -> Result<Real, UncertaintyReason> {
+    (numerator / Real::from(denominator)).map_err(|_| UncertaintyReason::Unsupported)
 }
 
 fn degree4_controls_all_zero(controls: &[Real; 5], policy: &CurvePolicy) -> Classification<bool> {
@@ -3621,5 +3654,35 @@ mod tests {
             Classification::Uncertain(UncertaintyReason::Unsupported)
         );
         assert_eq!(polynomial_point_at(&[], Real::zero()), None);
+    }
+
+    #[test]
+    fn rational_polynomial_bernstein_helpers_keep_exact_weights() {
+        assert_eq!(
+            elevate_quadratic_bernstein_to_quartic([Real::zero(), Real::zero(), Real::one()])
+                .unwrap(),
+            [
+                Real::zero(),
+                Real::zero(),
+                (Real::one() / Real::from(6_i8)).unwrap(),
+                (Real::one() / Real::from(2_i8)).unwrap(),
+                Real::one()
+            ]
+        );
+
+        assert_eq!(
+            multiply_quadratic_bernstein_to_quartic(
+                [Real::one(), Real::one(), Real::one()],
+                [Real::one(), Real::one(), Real::one()],
+            )
+            .unwrap(),
+            [
+                Real::one(),
+                Real::one(),
+                Real::one(),
+                Real::one(),
+                Real::one()
+            ]
+        );
     }
 }
