@@ -2332,12 +2332,11 @@ fn validate_arrangement_volume_graph(
     if shell_adjacency_counts.into_iter().any(|count| count != 1) {
         push_unique_blocker(blockers, ExactArrangementBlocker::NonManifoldCellComplex);
     }
-    if volume_regions.iter().any(|region| {
-        region
-            .boundary_shells
-            .iter()
-            .any(|shell| *shell >= shell_regions.len())
-    }) {
+    if !volume_region_boundary_shells_match_adjacencies(
+        shell_regions.len(),
+        volume_regions,
+        volume_adjacencies,
+    ) {
         push_unique_blocker(blockers, ExactArrangementBlocker::NonManifoldCellComplex);
     }
     validate_volume_region_source_labels(
@@ -2347,6 +2346,45 @@ fn validate_arrangement_volume_graph(
         volume_adjacencies,
         blockers,
     );
+}
+
+fn volume_region_boundary_shells_match_adjacencies(
+    shell_count: usize,
+    volume_regions: &[ArrangementVolumeRegion],
+    volume_adjacencies: &[ArrangementVolumeAdjacency],
+) -> bool {
+    let mut expected = vec![Vec::<usize>::new(); volume_regions.len()];
+    for adjacency in volume_adjacencies {
+        if adjacency.shell_region >= shell_count
+            || adjacency.exterior_volume >= volume_regions.len()
+            || adjacency.interior_volume >= volume_regions.len()
+            || adjacency.exterior_volume == adjacency.interior_volume
+        {
+            return false;
+        }
+        expected[adjacency.exterior_volume].push(adjacency.shell_region);
+        expected[adjacency.interior_volume].push(adjacency.shell_region);
+    }
+
+    for shells in &mut expected {
+        shells.sort_unstable();
+        shells.dedup();
+    }
+
+    volume_regions.iter().enumerate().all(|(index, region)| {
+        let Some(boundary_shells) = sorted_unique_shells(&region.boundary_shells) else {
+            return false;
+        };
+        boundary_shells == expected[index]
+    })
+}
+
+fn sorted_unique_shells(shells: &[usize]) -> Option<Vec<usize>> {
+    let mut sorted = shells.to_vec();
+    sorted.sort_unstable();
+    let mut unique = sorted.clone();
+    unique.dedup();
+    (unique.len() == sorted.len()).then_some(sorted)
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -3859,11 +3897,78 @@ mod tests {
     }
 
     #[test]
+    fn volume_graph_validation_rejects_extra_boundary_shell() {
+        let left = tetrahedron_i64([0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1]);
+        let right = tetrahedron_i64([3, 0, 0], [4, 0, 0], [3, 1, 0], [3, 0, 1]);
+        let arrangement = ExactArrangement::from_meshes(&left, &right).unwrap();
+        let shell_regions = arrangement.shells_or_regions.as_ref().unwrap();
+        let mut stale_volume_regions = arrangement.volume_regions.clone().unwrap();
+        stale_volume_regions[1].boundary_shells.push(1);
+        let volume_adjacencies = arrangement.volume_adjacencies.as_ref().unwrap();
+        let mut blockers = Vec::new();
+
+        validate_arrangement_volume_graph(
+            shell_regions,
+            &arrangement.face_cells,
+            Some(&stale_volume_regions),
+            Some(volume_adjacencies),
+            &mut blockers,
+        );
+
+        assert_eq!(
+            blockers,
+            vec![ExactArrangementBlocker::NonManifoldCellComplex]
+        );
+    }
+
+    #[test]
+    fn volume_graph_validation_rejects_duplicate_boundary_shell() {
+        let left = tetrahedron_i64([0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1]);
+        let right = tetrahedron_i64([3, 0, 0], [4, 0, 0], [3, 1, 0], [3, 0, 1]);
+        let arrangement = ExactArrangement::from_meshes(&left, &right).unwrap();
+        let shell_regions = arrangement.shells_or_regions.as_ref().unwrap();
+        let mut stale_volume_regions = arrangement.volume_regions.clone().unwrap();
+        stale_volume_regions[1].boundary_shells.push(0);
+        let volume_adjacencies = arrangement.volume_adjacencies.as_ref().unwrap();
+        let mut blockers = Vec::new();
+
+        validate_arrangement_volume_graph(
+            shell_regions,
+            &arrangement.face_cells,
+            Some(&stale_volume_regions),
+            Some(volume_adjacencies),
+            &mut blockers,
+        );
+
+        assert_eq!(
+            blockers,
+            vec![ExactArrangementBlocker::NonManifoldCellComplex]
+        );
+    }
+
+    #[test]
     fn label_regions_rejects_relabelled_volume_source_sides() {
         let left = tetrahedron_i64([0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1]);
         let right = tetrahedron_i64([3, 0, 0], [4, 0, 0], [3, 1, 0], [3, 0, 1]);
         let mut arrangement = ExactArrangement::from_meshes(&left, &right).unwrap();
         arrangement.volume_regions.as_mut().unwrap()[1].source_sides = vec![MeshSide::Right];
+
+        assert_eq!(
+            arrangement
+                .label_regions(ExactRegularizationPolicy::REGULARIZED_SOLID)
+                .unwrap_err(),
+            ExactArrangementBlocker::NonManifoldCellComplex
+        );
+    }
+
+    #[test]
+    fn label_regions_rejects_stale_volume_boundary_shells() {
+        let left = tetrahedron_i64([0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1]);
+        let right = tetrahedron_i64([3, 0, 0], [4, 0, 0], [3, 1, 0], [3, 0, 1]);
+        let mut arrangement = ExactArrangement::from_meshes(&left, &right).unwrap();
+        arrangement.volume_regions.as_mut().unwrap()[1]
+            .boundary_shells
+            .push(1);
 
         assert_eq!(
             arrangement
