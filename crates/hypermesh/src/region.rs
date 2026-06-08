@@ -1207,6 +1207,19 @@ fn validate_assembly_source_face_incidence(
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> hypertri::Result<()> {
+    let has_graph_vertex_source = assembly
+        .vertices
+        .iter()
+        .any(|vertex| matches!(vertex.source, FaceSplitBoundaryNode::GraphVertex { .. }));
+    let replayed_region_plan = if has_graph_vertex_source {
+        let region_plan =
+            replay_region_plan(left, right).map_err(|_| hypertri::Error::InvalidInput {
+                reason: "assembled output graph vertex source replay could not rebuild region plan",
+            })?;
+        Some(region_plan)
+    } else {
+        None
+    };
     for triangle in &assembly.triangles {
         let mesh = match triangle.source_side {
             MeshSide::Left => left,
@@ -1230,7 +1243,12 @@ fn validate_assembly_source_face_incidence(
                     reason: "assembled output triangle references a missing vertex",
                 });
             };
-            validate_assembly_output_vertex_source_against_sources(output_vertex, left, right)?;
+            validate_assembly_output_vertex_source_against_sources(
+                output_vertex,
+                left,
+                right,
+                replayed_region_plan.as_ref(),
+            )?;
             match orient3d_report(&a, &b, &c, &output_vertex.point).value() {
                 Some(hyperlimit::Sign::Zero) => {}
                 Some(hyperlimit::Sign::Negative | hyperlimit::Sign::Positive) => {
@@ -1254,39 +1272,98 @@ fn validate_assembly_output_vertex_source_against_sources(
     vertex: &ExactOutputVertex,
     left: &ExactMesh,
     right: &ExactMesh,
+    replayed_region_plan: Option<&ExactFaceRegionPlan>,
 ) -> hypertri::Result<()> {
-    let FaceSplitBoundaryNode::OriginalVertex {
-        vertex: source_vertex,
-        point,
-    } = &vertex.source
-    else {
-        return Ok(());
+    match &vertex.source {
+        FaceSplitBoundaryNode::OriginalVertex {
+            vertex: source_vertex,
+            point,
+        } => {
+            let mut saw_source_vertex = false;
+            let mut saw_unknown_equality = false;
+            for mesh in [left, right] {
+                let Some(source_point) = mesh.vertices().get(*source_vertex) else {
+                    continue;
+                };
+                saw_source_vertex = true;
+                match points_equal(point, source_point) {
+                    Some(true) => return Ok(()),
+                    Some(false) => {}
+                    None => saw_unknown_equality = true,
+                }
+            }
+            if !saw_source_vertex {
+                return Err(hypertri::Error::InvalidInput {
+                    reason: "assembled output vertex references a missing original source vertex",
+                });
+            }
+            if saw_unknown_equality {
+                return Err(hypertri::Error::PredicateUndecided {
+                    predicate: "assembly_output_vertex_source_equality",
+                });
+            }
+            Err(hypertri::Error::InvalidInput {
+                reason: "assembled output vertex original source point does not match source meshes",
+            })
+        }
+        FaceSplitBoundaryNode::GraphVertex {
+            graph_vertex,
+            point,
+        } => validate_assembly_graph_vertex_source_against_region_plan(
+            *graph_vertex,
+            point,
+            replayed_region_plan,
+        ),
+        FaceSplitBoundaryNode::FaceInterior { .. } => Ok(()),
+    }
+}
+
+fn validate_assembly_graph_vertex_source_against_region_plan(
+    graph_vertex: usize,
+    point: &Point3,
+    replayed_region_plan: Option<&ExactFaceRegionPlan>,
+) -> hypertri::Result<()> {
+    let Some(replayed_region_plan) = replayed_region_plan else {
+        return Err(hypertri::Error::InvalidInput {
+            reason: "assembled output graph vertex source replay is missing",
+        });
     };
-    let mut saw_source_vertex = false;
+    let mut saw_graph_vertex = false;
     let mut saw_unknown_equality = false;
-    for mesh in [left, right] {
-        let Some(source_point) = mesh.vertices().get(*source_vertex) else {
+    for replayed_node in replayed_region_plan
+        .regions
+        .iter()
+        .flat_map(|region| region.boundary.iter())
+    {
+        let FaceSplitBoundaryNode::GraphVertex {
+            graph_vertex: replayed_graph_vertex,
+            point: replayed_point,
+        } = replayed_node
+        else {
             continue;
         };
-        saw_source_vertex = true;
-        match points_equal(point, source_point) {
+        if *replayed_graph_vertex != graph_vertex {
+            continue;
+        }
+        saw_graph_vertex = true;
+        match points_equal(point, replayed_point) {
             Some(true) => return Ok(()),
             Some(false) => {}
             None => saw_unknown_equality = true,
         }
     }
-    if !saw_source_vertex {
+    if !saw_graph_vertex {
         return Err(hypertri::Error::InvalidInput {
-            reason: "assembled output vertex references a missing original source vertex",
+            reason: "assembled output vertex references a missing graph vertex",
         });
     }
     if saw_unknown_equality {
         return Err(hypertri::Error::PredicateUndecided {
-            predicate: "assembly_output_vertex_source_equality",
+            predicate: "assembly_output_graph_vertex_source_equality",
         });
     }
     Err(hypertri::Error::InvalidInput {
-        reason: "assembled output vertex original source point does not match source meshes",
+        reason: "assembled output graph vertex point does not match source replay",
     })
 }
 
@@ -1954,6 +2031,7 @@ fn points_equal(left: &Point3, right: &Point3) -> Option<bool> {
 
 #[cfg(test)]
 mod tests {
+    use super::super::graph::build_intersection_graph;
     use super::*;
     use hyperreal::Real;
 
@@ -1967,6 +2045,101 @@ mod tests {
 
     fn face_interior(point: Point3) -> FaceSplitBoundaryNode {
         FaceSplitBoundaryNode::FaceInterior { point }
+    }
+
+    #[test]
+    fn assembly_source_incidence_rejects_stale_graph_vertex_source() {
+        let left = ExactMesh::from_i64_triangles_with_policy(
+            &[0, 0, 0, 4, 0, 0, 0, 4, 0],
+            &[0, 1, 2],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let right = ExactMesh::from_i64_triangles_with_policy(
+            &[1, -1, -1, 1, 3, 1, 1, 3, -1],
+            &[0, 1, 2],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+
+        let graph = build_intersection_graph(&left, &right).unwrap();
+        let geometry = graph.face_split_geometry_plan(&left, &right).unwrap();
+        let region_plan = geometry.region_plan(&left, &right);
+        let triangulations =
+            checked_triangulate_face_regions_with_earcut(&region_plan, &left, &right).unwrap();
+
+        let mut assembly = None;
+        'search: for triangulation in &triangulations {
+            for graph_node in 0..triangulation.boundary.len() {
+                if !matches!(
+                    triangulation.boundary[graph_node],
+                    FaceSplitBoundaryNode::GraphVertex { .. }
+                ) {
+                    continue;
+                }
+                for first in 0..triangulation.boundary.len() {
+                    for second in 0..triangulation.boundary.len() {
+                        if graph_node == first || graph_node == second || first == second {
+                            continue;
+                        }
+                        for orientation in [
+                            ExactOutputTriangleOrientation::PreserveSource,
+                            ExactOutputTriangleOrientation::ReverseSource,
+                        ] {
+                            let candidate = ExactBooleanAssemblyPlan {
+                                vertices: [graph_node, first, second]
+                                    .into_iter()
+                                    .map(|index| {
+                                        let source = triangulation.boundary[index].clone();
+                                        ExactOutputVertex {
+                                            point: boundary_node_point(&source).clone(),
+                                            source,
+                                        }
+                                    })
+                                    .collect(),
+                                triangles: vec![ExactOutputTriangle {
+                                    vertices: [0, 1, 2],
+                                    source_side: triangulation.side,
+                                    source_face: triangulation.face,
+                                    orientation,
+                                }],
+                            };
+                            if candidate.validate().is_ok()
+                                && candidate
+                                    .validate_source_face_incidence(&left, &right)
+                                    .is_ok()
+                            {
+                                assembly = Some(candidate);
+                                break 'search;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        let mut assembly = assembly.expect(
+            "crossing split-region triangulations should provide a valid graph-vertex assembly",
+        );
+
+        let Some(FaceSplitBoundaryNode::GraphVertex { graph_vertex, .. }) = assembly
+            .vertices
+            .iter_mut()
+            .find_map(|vertex| match &mut vertex.source {
+                source @ FaceSplitBoundaryNode::GraphVertex { .. } => Some(source),
+                FaceSplitBoundaryNode::OriginalVertex { .. }
+                | FaceSplitBoundaryNode::FaceInterior { .. } => None,
+            })
+        else {
+            panic!("crossing split-region assembly should retain a graph vertex source");
+        };
+        *graph_vertex = usize::MAX;
+
+        assembly.validate().unwrap();
+        assert!(
+            assembly
+                .validate_source_face_incidence(&left, &right)
+                .is_err()
+        );
     }
 
     #[test]
