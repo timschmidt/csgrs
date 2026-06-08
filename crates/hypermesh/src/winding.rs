@@ -269,16 +269,23 @@ impl PointMeshWindingReport {
     fn validate_hit_count_bounds(&self) -> Result<(), WindingReportError> {
         let selected_axis_hits = self
             .crossings
-            .saturating_add(self.boundary_hits)
-            .saturating_add(self.parallel_faces);
+            .checked_add(self.boundary_hits)
+            .and_then(|count| count.checked_add(self.parallel_faces))
+            .ok_or(WindingReportError::StatusEvidenceMismatch)?;
         if selected_axis_hits > self.triangle_count {
             return Err(WindingReportError::StatusEvidenceMismatch);
         }
 
         // Boundary fallback and unknown reports may carry degeneracy or
         // undecidable evidence accumulated across several attempted rays.
-        let dependent_hits = self.degenerate_hits.saturating_add(self.unknown_hits);
-        let max_dependent_hits = self.tested_axes.saturating_mul(self.triangle_count);
+        let dependent_hits = self
+            .degenerate_hits
+            .checked_add(self.unknown_hits)
+            .ok_or(WindingReportError::StatusEvidenceMismatch)?;
+        let max_dependent_hits = self
+            .tested_axes
+            .checked_mul(self.triangle_count)
+            .unwrap_or(usize::MAX);
         if dependent_hits > max_dependent_hits {
             return Err(WindingReportError::StatusEvidenceMismatch);
         }
@@ -1086,6 +1093,22 @@ mod tests {
             relabeled.validate(),
             Err(WindingReportError::StatusEvidenceMismatch)
         );
+
+        let overflow = PointMeshWindingReport {
+            relation: ClosedMeshWindingRelation::Boundary,
+            axis: Some(WindingRayAxis::X),
+            tested_axes: 1,
+            triangle_count: usize::MAX,
+            crossings: usize::MAX,
+            boundary_hits: 1,
+            degenerate_hits: 0,
+            parallel_faces: 0,
+            unknown_hits: 0,
+        };
+        assert_eq!(
+            overflow.validate(),
+            Err(WindingReportError::StatusEvidenceMismatch)
+        );
     }
 
     #[test]
@@ -1125,6 +1148,22 @@ mod tests {
         impossible_crossing.crossings = 1;
         assert_eq!(
             impossible_crossing.validate(),
+            Err(WindingReportError::StatusEvidenceMismatch)
+        );
+
+        let overflowing_unresolved = PointMeshWindingReport {
+            relation: ClosedMeshWindingRelation::Unknown,
+            axis: None,
+            tested_axes: candidate_count,
+            triangle_count: usize::MAX,
+            crossings: 0,
+            boundary_hits: 0,
+            degenerate_hits: usize::MAX,
+            parallel_faces: 0,
+            unknown_hits: 1,
+        };
+        assert_eq!(
+            overflowing_unresolved.validate(),
             Err(WindingReportError::StatusEvidenceMismatch)
         );
     }
