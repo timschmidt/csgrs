@@ -631,6 +631,38 @@ fn retained_boundary_loop_constructor_rejects_open_fragment_cycle() {
 }
 
 #[test]
+fn retained_boundary_loop_constructor_rejects_forged_materialized_range_order() {
+    assert_topology_error(BezierRetainedBoundaryLoop2::new(vec![
+        BezierSplitFragment2::Materialized {
+            start: BezierParameter2::Exact(r(1)),
+            end: BezierParameter2::Exact(r(0)),
+            curve: hypercurve::BezierSubcurve2::Quadratic(QuadraticBezier2::new(
+                p(0, 0),
+                p(1, 1),
+                p(0, 0),
+            )),
+        },
+    ]));
+}
+
+#[test]
+fn retained_boundary_loop_constructor_rejects_forged_source_endpoint_image() {
+    let parameter = BezierParameter2::algebraic(algebraic_midpoint_parameter());
+    let source_curve = QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 0));
+    let forged_image = algebraic_image(&QuadraticBezier2::new(p(0, 1), p(1, 1), p(2, 1)));
+
+    assert_topology_error(BezierRetainedBoundaryLoop2::new(vec![
+        BezierSplitFragment2::AlgebraicEndpointImages {
+            start: parameter.clone(),
+            end: parameter,
+            source_curve: Some(hypercurve::BezierSubcurve2::Quadratic(source_curve)),
+            start_image: Some(forged_image.clone()),
+            end_image: Some(forged_image),
+        },
+    ]));
+}
+
+#[test]
 fn retained_boundary_loop_constructor_rejects_duplicate_arrangement_sources() {
     assert_topology_error(
         BezierRetainedBoundaryLoop2::try_new_with_arrangement_sources(

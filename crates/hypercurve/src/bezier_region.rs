@@ -756,7 +756,103 @@ fn validate_retained_boundary_loop(fragments: &[BezierSplitFragment2]) -> CurveR
             "retained Bezier boundary loop requires nonempty fragments".to_owned(),
         ));
     }
+    for fragment in fragments {
+        validate_retained_fragment_provenance(fragment, &CurvePolicy::certified())?;
+    }
     validate_retained_boundary_loop_connectivity(fragments, &CurvePolicy::certified())
+}
+
+fn validate_retained_fragment_provenance(
+    fragment: &BezierSplitFragment2,
+    policy: &CurvePolicy,
+) -> CurveResult<()> {
+    match fragment {
+        BezierSplitFragment2::Materialized { start, end, .. } => {
+            if !start.is_exact() || !end.is_exact() {
+                return Err(CurveError::Topology(
+                    "retained materialized Bezier fragment must carry exact range boundaries"
+                        .into(),
+                ));
+            }
+            validate_retained_fragment_parameter_order(start, end, policy)
+        }
+        BezierSplitFragment2::AlgebraicEndpointImages {
+            start,
+            end,
+            source_curve,
+            start_image,
+            end_image,
+        } => {
+            validate_retained_source_endpoint_image(
+                start,
+                source_curve,
+                start_image.as_ref(),
+                policy,
+            )?;
+            validate_retained_source_endpoint_image(end, source_curve, end_image.as_ref(), policy)
+        }
+        BezierSplitFragment2::Unresolved { .. } => Err(CurveError::Topology(
+            "retained Bezier region boundary loops must not contain unresolved carriers".into(),
+        )),
+    }
+}
+
+fn validate_retained_fragment_parameter_order(
+    start: &BezierParameter2,
+    end: &BezierParameter2,
+    policy: &CurvePolicy,
+) -> CurveResult<()> {
+    match start.cmp_by_interval(end, policy)? {
+        Classification::Decided(std::cmp::Ordering::Less) => Ok(()),
+        Classification::Decided(std::cmp::Ordering::Equal | std::cmp::Ordering::Greater) => {
+            Err(CurveError::Topology(
+                "retained Bezier fragment range must be certified strictly increasing".into(),
+            ))
+        }
+        Classification::Uncertain(reason) => Err(CurveError::Topology(format!(
+            "retained Bezier fragment range ordering is uncertain: {reason:?}"
+        ))),
+    }
+}
+
+fn validate_retained_source_endpoint_image(
+    boundary: &BezierParameter2,
+    source_curve: &Option<BezierSubcurve2>,
+    image: Option<&crate::BezierAlgebraicEndpointImage2>,
+    policy: &CurvePolicy,
+) -> CurveResult<()> {
+    let (Some(source_curve), BezierParameter2::Algebraic(parameter), Some(image)) =
+        (source_curve, boundary, image)
+    else {
+        return Ok(());
+    };
+    if image.parameter() != parameter {
+        return Err(CurveError::Topology(
+            "retained algebraic endpoint image parameter does not match boundary".into(),
+        ));
+    }
+    if !image.is_transformed() {
+        return Err(CurveError::Topology(
+            "retained algebraic endpoint image must be exact transformed evidence".into(),
+        ));
+    }
+    let expected = match source_curve {
+        BezierSubcurve2::Quadratic(curve) => {
+            crate::BezierAlgebraicEndpointImage2::quadratic(curve, parameter, policy)
+        }
+        BezierSubcurve2::Cubic(curve) => {
+            crate::BezierAlgebraicEndpointImage2::cubic(curve, parameter, policy)
+        }
+        BezierSubcurve2::RationalQuadratic(curve) => {
+            crate::BezierAlgebraicEndpointImage2::rational_quadratic(curve, parameter, policy)
+        }
+    }?;
+    if &expected != image {
+        return Err(CurveError::Topology(
+            "retained algebraic endpoint image does not match retained source curve".into(),
+        ));
+    }
+    Ok(())
 }
 
 fn validate_retained_boundary_loop_sources(
