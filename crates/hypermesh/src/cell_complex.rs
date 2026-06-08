@@ -168,7 +168,12 @@ impl ExactCellComplex {
         self,
         policy: ExactRegularizationPolicy,
     ) -> Result<ExactLabeledCellComplex, ExactArrangementBlocker> {
-        let blockers = self.arrangement.blockers.clone();
+        let mut blockers = self.arrangement.blockers.clone();
+        for blocker in self.arrangement.retained_volume_graph_blockers() {
+            if !blockers.contains(&blocker) {
+                blockers.push(blocker);
+            }
+        }
         let faces = self
             .arrangement
             .face_cells
@@ -678,7 +683,7 @@ mod tests {
     use super::*;
     use crate::arrangement3d::{
         ArrangementFaceCarrier, ArrangementFaceCell, ArrangementFaceCellNode,
-        ArrangementVolumeFaceSide, ArrangementVolumeRegion,
+        ArrangementVolumeFaceSide,
     };
     use crate::mesh::ExactMesh;
     use crate::region::ExactRegionSelection;
@@ -734,41 +739,6 @@ mod tests {
         let left = tetrahedron_i64([0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1]);
         let right = tetrahedron_i64([3, 0, 0], [4, 0, 0], [3, 1, 0], [3, 0, 1]);
         let mut arrangement = ExactArrangement::from_meshes(&left, &right).unwrap();
-        arrangement.face_cells = vec![labeled_face(MeshSide::Left).cell];
-        arrangement.volume_regions = Some(vec![
-            ArrangementVolumeRegion {
-                index: 0,
-                exterior: true,
-                boundary_shells: vec![0],
-                source_sides: Vec::new(),
-            },
-            ArrangementVolumeRegion {
-                index: 1,
-                exterior: false,
-                boundary_shells: vec![0],
-                source_sides: vec![MeshSide::Left],
-            },
-        ]);
-        arrangement.volume_adjacencies = Some(vec![ArrangementVolumeAdjacency {
-            shell_region: 0,
-            exterior_volume: 0,
-            interior_volume: 1,
-            separating_face_cells: vec![0],
-            oriented_face_sides: vec![ArrangementVolumeFaceSide {
-                face_cell: 0,
-                source: MeshSide::Left,
-                source_face: 0,
-                boundary: [0, 1, 2]
-                    .into_iter()
-                    .map(|vertex| ArrangementFaceCellNode::SourceVertex {
-                        side: MeshSide::Left,
-                        vertex,
-                    })
-                    .collect(),
-                exterior_volume: 0,
-                interior_volume: 1,
-            }],
-        }]);
         arrangement.blockers = vec![blocker];
         arrangement
     }
@@ -1061,8 +1031,8 @@ mod tests {
         )
         .unwrap();
 
-        assert_eq!(selected.selected_faces, vec![0]);
-        assert_eq!(selected.selected_volume_regions, vec![1]);
+        assert_eq!(selected.selected_faces.len(), 8);
+        assert_eq!(selected.selected_volume_regions, vec![1, 2]);
         assert!(selected.blockers.is_empty());
         assert!(
             selected
