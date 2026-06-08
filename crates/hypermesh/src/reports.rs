@@ -21,13 +21,14 @@ use super::affine_solid::{
 };
 use super::boolean::{
     ExactBooleanOperation, ExactBoundaryBooleanPolicy, boolean_exact_with_boundary_policy,
-    certify_adjacent_union_completion_report, certify_boundary_touching_report,
-    certify_open_surface_disjoint_report, certify_planar_arrangement_report,
-    certify_refinement_report, certify_same_surface_report,
+    boundary_policy_shortcut_result_matches_sources, certify_adjacent_union_completion_report,
+    certify_boundary_touching_report, certify_open_surface_disjoint_report,
+    certify_planar_arrangement_report, certify_refinement_report, certify_same_surface_report,
     certify_volumetric_boundary_closure_report, certify_winding_readiness_report,
     certify_winding_readiness_report_with_boundary_policy,
     certify_winding_readiness_report_with_validation, materialize_closed_same_surface_boolean,
-    materialize_volumetric_coplanar_boundary_closure_output, preflight_boolean_exact,
+    materialize_volumetric_coplanar_boundary_closure_output,
+    open_surface_disjoint_result_matches_sources, preflight_boolean_exact,
     preflight_boolean_exact_with_boundary_policy, preflight_boolean_exact_with_validation,
     replay_coplanar_mesh_overlay_result, replay_materialized_volumetric_winding_region_plan,
     replay_open_surface_arrangement_result, replay_selected_region_boolean_result,
@@ -1289,21 +1290,14 @@ impl ExactBooleanResult {
             }
         }
         if let ExactBooleanResultKind::BoundaryPolicyShortcut { operation } = self.kind {
-            let replay = certify_boundary_touching_report(left, right)
-                .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
-            replay.validate()?;
-            if !replay.is_certified() {
-                return Err(ExactReportValidationError::SourceReplayMismatch);
-            }
-            let replay = boolean_exact_with_boundary_policy(
+            if !boundary_policy_shortcut_result_matches_sources(
+                self,
                 left,
                 right,
                 operation,
                 self.mesh.validation_policy(),
                 ExactBoundaryBooleanPolicy::PreserveSeparateShells,
-            )
-            .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
-            if self != &replay {
+            ) {
                 return Err(ExactReportValidationError::SourceReplayMismatch);
             }
         }
@@ -1314,7 +1308,6 @@ impl ExactBooleanResult {
                 | ExactBooleanShortcutKind::BoundsDisjoint
                 | ExactBooleanShortcutKind::Identical
                 | ExactBooleanShortcutKind::SameSurface
-                | ExactBooleanShortcutKind::OpenSurfaceDisjoint
                 | ExactBooleanShortcutKind::MixedDimensionalRegularizedSolid
                 | ExactBooleanShortcutKind::LowerDimensionalRegularizedSolid,
         } = self.kind
@@ -1330,6 +1323,20 @@ impl ExactBooleanResult {
             if self != &replay {
                 return Err(ExactReportValidationError::SourceReplayMismatch);
             }
+        }
+        if let ExactBooleanResultKind::CertifiedShortcut {
+            operation,
+            shortcut: ExactBooleanShortcutKind::OpenSurfaceDisjoint,
+        } = self.kind
+            && !open_surface_disjoint_result_matches_sources(
+                self,
+                left,
+                right,
+                operation,
+                self.mesh.validation_policy(),
+            )
+        {
+            return Err(ExactReportValidationError::SourceReplayMismatch);
         }
         if let ExactBooleanResultKind::CertifiedShortcut {
             operation,

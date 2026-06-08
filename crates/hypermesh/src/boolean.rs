@@ -6250,7 +6250,7 @@ fn boolean_open_surface_disjoint_meshes_from_graph(
     Ok(None)
 }
 
-fn open_surface_disjoint_result_matches_sources(
+pub(crate) fn open_surface_disjoint_result_matches_sources(
     result: &ExactBooleanResult,
     left: &ExactMesh,
     right: &ExactMesh,
@@ -7118,7 +7118,7 @@ fn materialize_boundary_policy_shortcut_result(
     Ok(Some(boundary_policy_shortcut_result(mesh, operation)))
 }
 
-fn boundary_policy_shortcut_result_matches_sources(
+pub(crate) fn boundary_policy_shortcut_result_matches_sources(
     result: &ExactBooleanResult,
     left: &ExactMesh,
     right: &ExactMesh,
