@@ -1486,7 +1486,11 @@ where
         }
 
         if !spans.is_empty() {
-            merge_exact_parameters_into_spans(&mut spans, exact_parameters, policy);
+            if let Err(reason) =
+                merge_exact_parameters_into_spans(&mut spans, exact_parameters, policy)
+            {
+                return Classification::Uncertain(reason);
+            }
             let regions = spans
                 .into_iter()
                 .map(|span| BezierCurveIntersectionRegion::new(span.clone(), span))
@@ -1669,7 +1673,7 @@ fn collect_same_parameter_cubic_regions(
             if spans.is_empty() {
                 return Ok(());
             }
-            for span in spans_with_exact_parameters(exact, spans, policy) {
+            for span in spans_with_exact_parameters(exact, spans, policy)? {
                 push_unique_curve_region(
                     regions,
                     BezierCurveIntersectionRegion::new(span.clone(), span),
@@ -1690,8 +1694,8 @@ fn collect_same_parameter_cubic_regions(
             if x_spans.is_empty() && y_spans.is_empty() {
                 return Ok(());
             }
-            let x_all = spans_with_exact_parameters(x_exact, x_spans, policy);
-            let y_all = spans_with_exact_parameters(y_exact, y_spans, policy);
+            let x_all = spans_with_exact_parameters(x_exact, x_spans, policy)?;
+            let y_all = spans_with_exact_parameters(y_exact, y_spans, policy)?;
             for x_span in &x_all {
                 for y_span in &y_all {
                     let Some(overlap) = span_intersection(x_span, y_span, policy)? else {
@@ -1713,17 +1717,12 @@ fn spans_with_exact_parameters(
     exact: &[Real],
     spans: &[BezierMonotoneSpan],
     policy: &CurvePolicy,
-) -> Vec<BezierMonotoneSpan> {
+) -> Result<Vec<BezierMonotoneSpan>, UncertaintyReason> {
     let mut all = spans.to_vec();
     for parameter in exact {
-        push_unique_span(
-            &mut all,
-            BezierMonotoneSpan::new(parameter.clone(), parameter.clone())
-                .expect("zero-width exact parameter span is ordered"),
-            policy,
-        );
+        push_unique_span(&mut all, zero_width_span(parameter.clone())?, policy);
     }
-    all
+    Ok(all)
 }
 
 fn span_intersection(
@@ -2311,12 +2310,11 @@ fn graph_contact_order_over_shared_axis(
                     let Some(kind) = contact_kind_from_derivative(&derivative, policy) else {
                         return Classification::Uncertain(UncertaintyReason::RealSign);
                     };
-                    push_unique_graph_contact(
-                        &mut contacts,
-                        BezierGraphContact::new(parameter, kind)
-                            .expect("same-parameter graph roots are isolated in the unit interval"),
-                        policy,
-                    );
+                    let contact = match BezierGraphContact::new(parameter, kind) {
+                        Ok(contact) => contact,
+                        Err(_) => return Classification::Uncertain(UncertaintyReason::Ordering),
+                    };
+                    push_unique_graph_contact(&mut contacts, contact, policy);
                 }
                 Classification::Decided(BezierMonotoneGraphContactOrder::IntersectsOrTouches {
                     contacts,
@@ -2514,8 +2512,10 @@ where
                 Classification::Decided(false) => {}
                 Classification::Uncertain(reason) => return Classification::Uncertain(reason),
             }
-            let line_span = BezierMonotoneSpan::new(Real::zero(), Real::one())
-                .expect("unit line span is ordered");
+            let line_span = match unit_span() {
+                Ok(span) => span,
+                Err(reason) => return Classification::Uncertain(reason),
+            };
             let regions = spans
                 .into_iter()
                 .map(|curve_span| {
@@ -2971,7 +2971,10 @@ fn cubic_line_contact_relation(
         return Classification::Uncertain(reason);
     }
     if !spans.is_empty() {
-        merge_exact_parameters_into_spans(&mut spans, exact_parameters, policy);
+        if let Err(reason) = merge_exact_parameters_into_spans(&mut spans, exact_parameters, policy)
+        {
+            return Classification::Uncertain(reason);
+        }
         return Classification::Decided(BezierLineContactRelation::IsolatedIntersections { spans });
     }
     if exact_parameters.is_empty() {
@@ -2984,12 +2987,11 @@ fn cubic_line_contact_relation(
         let Some(kind) = contact_kind_from_derivative(&derivative, policy) else {
             return Classification::Uncertain(UncertaintyReason::RealSign);
         };
-        push_unique_line_contact(
-            &mut contacts,
-            BezierLineContact::new(parameter, kind)
-                .expect("isolated cubic line contact roots are in the unit interval"),
-            policy,
-        );
+        let contact = match BezierLineContact::new(parameter, kind) {
+            Ok(contact) => contact,
+            Err(_) => return Classification::Uncertain(UncertaintyReason::Ordering),
+        };
+        push_unique_line_contact(&mut contacts, contact, policy);
     }
     Classification::Decided(BezierLineContactRelation::Contacts { contacts })
 }
@@ -3210,7 +3212,10 @@ fn isolate_cubic_line_roots(
         return Classification::Uncertain(reason);
     }
     if !spans.is_empty() {
-        merge_exact_parameters_into_spans(&mut spans, exact_parameters, policy);
+        if let Err(reason) = merge_exact_parameters_into_spans(&mut spans, exact_parameters, policy)
+        {
+            return Classification::Uncertain(reason);
+        }
         return Classification::Decided(BezierLineRelation::IsolatedIntersections { spans });
     }
     if !exact_parameters.is_empty() {
@@ -3225,7 +3230,7 @@ fn merge_exact_parameters_into_spans(
     spans: &mut Vec<BezierMonotoneSpan>,
     exact_parameters: Vec<Real>,
     policy: &CurvePolicy,
-) {
+) -> Result<(), UncertaintyReason> {
     // When a scalar cubic has both represented roots and non-represented
     // algebraic roots, expose one uniform isolating-span shape by embedding
     // represented roots as zero-width spans. This preserves all candidates as
@@ -3233,13 +3238,17 @@ fn merge_exact_parameters_into_spans(
     // and later topology decisions; see Yap, "Towards Exact Geometric
     // Computation," Computational Geometry 7.1-2 (1997).
     for parameter in exact_parameters {
-        push_unique_span(
-            spans,
-            BezierMonotoneSpan::new(parameter.clone(), parameter)
-                .expect("zero-width exact parameter span is ordered"),
-            policy,
-        );
+        push_unique_span(spans, zero_width_span(parameter)?, policy);
     }
+    Ok(())
+}
+
+fn zero_width_span(parameter: Real) -> Result<BezierMonotoneSpan, UncertaintyReason> {
+    BezierMonotoneSpan::new(parameter.clone(), parameter).map_err(|_| UncertaintyReason::Ordering)
+}
+
+fn unit_span() -> Result<BezierMonotoneSpan, UncertaintyReason> {
+    BezierMonotoneSpan::new(Real::zero(), Real::one()).map_err(|_| UncertaintyReason::Ordering)
 }
 
 fn isolate_scalar_cubic_roots(
