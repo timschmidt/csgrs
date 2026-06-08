@@ -580,20 +580,20 @@ fn containment_boundary_contours_prepared(
     match (relation, op) {
         (
             crate::region_boolean::BoundaryContainmentRelation::FirstContainsSecond,
-            BooleanOp::Union | BooleanOp::Intersection,
-        ) => Some(match op {
-            BooleanOp::Union => crate::region_boolean::clone_boundary_contours(&first_view),
-            BooleanOp::Intersection => crate::region_boolean::clone_boundary_contours(&second_view),
-            _ => unreachable!(),
-        }),
+            BooleanOp::Union,
+        ) => Some(crate::region_boolean::clone_boundary_contours(&first_view)),
+        (
+            crate::region_boolean::BoundaryContainmentRelation::FirstContainsSecond,
+            BooleanOp::Intersection,
+        ) => Some(crate::region_boolean::clone_boundary_contours(&second_view)),
         (
             crate::region_boolean::BoundaryContainmentRelation::SecondContainsFirst,
-            BooleanOp::Union | BooleanOp::Intersection,
-        ) => Some(match op {
-            BooleanOp::Union => crate::region_boolean::clone_boundary_contours(&second_view),
-            BooleanOp::Intersection => crate::region_boolean::clone_boundary_contours(&first_view),
-            _ => unreachable!(),
-        }),
+            BooleanOp::Union,
+        ) => Some(crate::region_boolean::clone_boundary_contours(&second_view)),
+        (
+            crate::region_boolean::BoundaryContainmentRelation::SecondContainsFirst,
+            BooleanOp::Intersection,
+        ) => Some(crate::region_boolean::clone_boundary_contours(&first_view)),
         (
             crate::region_boolean::BoundaryContainmentRelation::SecondContainsFirst,
             BooleanOp::Difference,
@@ -621,20 +621,20 @@ fn containment_region_prepared(
     match (relation, op) {
         (
             crate::region_boolean::BoundaryContainmentRelation::FirstContainsSecond,
-            BooleanOp::Union | BooleanOp::Intersection,
-        ) => Some(match op {
-            BooleanOp::Union => crate::region_boolean::clone_region(&first_view),
-            BooleanOp::Intersection => crate::region_boolean::clone_region(&second_view),
-            _ => unreachable!(),
-        }),
+            BooleanOp::Union,
+        ) => Some(crate::region_boolean::clone_region(&first_view)),
+        (
+            crate::region_boolean::BoundaryContainmentRelation::FirstContainsSecond,
+            BooleanOp::Intersection,
+        ) => Some(crate::region_boolean::clone_region(&second_view)),
         (
             crate::region_boolean::BoundaryContainmentRelation::SecondContainsFirst,
-            BooleanOp::Union | BooleanOp::Intersection,
-        ) => Some(match op {
-            BooleanOp::Union => crate::region_boolean::clone_region(&second_view),
-            BooleanOp::Intersection => crate::region_boolean::clone_region(&first_view),
-            _ => unreachable!(),
-        }),
+            BooleanOp::Union,
+        ) => Some(crate::region_boolean::clone_region(&second_view)),
+        (
+            crate::region_boolean::BoundaryContainmentRelation::SecondContainsFirst,
+            BooleanOp::Intersection,
+        ) => Some(crate::region_boolean::clone_region(&first_view)),
         (
             crate::region_boolean::BoundaryContainmentRelation::SecondContainsFirst,
             BooleanOp::Difference,

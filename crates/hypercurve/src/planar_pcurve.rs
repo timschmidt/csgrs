@@ -880,10 +880,22 @@ fn validate_planar_face_edge_use_report(
                     "boundary edge-use report must carry complete positive trim evidence".into(),
                 ));
             }
-            let trim_loop_index = trim_loop_index.expect("checked above");
-            let trim_segment_index = trim_segment_index.expect("checked above");
-            let trim_role_loop_count = trim_role_loop_count.expect("checked above");
-            let trim_loop_segment_count = trim_loop_segment_count.expect("checked above");
+            let (
+                Some(trim_loop_index),
+                Some(trim_segment_index),
+                Some(trim_role_loop_count),
+                Some(trim_loop_segment_count),
+            ) = (
+                trim_loop_index,
+                trim_segment_index,
+                trim_role_loop_count,
+                trim_loop_segment_count,
+            )
+            else {
+                return Err(CurveError::Topology(
+                    "boundary edge-use report must carry complete positive trim evidence".into(),
+                ));
+            };
             if trim_role_loop_count == 0
                 || trim_loop_segment_count == 0
                 || trim_loop_index >= trim_role_loop_count

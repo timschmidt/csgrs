@@ -1134,22 +1134,18 @@ fn containment_boundary_contours(
     // case is handled by the certified overlap rebuild below, where coincident
     // zero-area edges are dropped before the remaining boundary is assembled.
     match (relation, op) {
-        (
-            BoundaryContainmentRelation::FirstContainsSecond,
-            BooleanOp::Union | BooleanOp::Intersection,
-        ) => Some(match op {
-            BooleanOp::Union => clone_boundary_contours(first),
-            BooleanOp::Intersection => clone_boundary_contours(second),
-            _ => unreachable!(),
-        }),
-        (
-            BoundaryContainmentRelation::SecondContainsFirst,
-            BooleanOp::Union | BooleanOp::Intersection,
-        ) => Some(match op {
-            BooleanOp::Union => clone_boundary_contours(second),
-            BooleanOp::Intersection => clone_boundary_contours(first),
-            _ => unreachable!(),
-        }),
+        (BoundaryContainmentRelation::FirstContainsSecond, BooleanOp::Union) => {
+            Some(clone_boundary_contours(first))
+        }
+        (BoundaryContainmentRelation::FirstContainsSecond, BooleanOp::Intersection) => {
+            Some(clone_boundary_contours(second))
+        }
+        (BoundaryContainmentRelation::SecondContainsFirst, BooleanOp::Union) => {
+            Some(clone_boundary_contours(second))
+        }
+        (BoundaryContainmentRelation::SecondContainsFirst, BooleanOp::Intersection) => {
+            Some(clone_boundary_contours(first))
+        }
         (BoundaryContainmentRelation::SecondContainsFirst, BooleanOp::Difference) => {
             Some(Vec::new())
         }
@@ -1170,22 +1166,18 @@ fn containment_region(
     relation: BoundaryContainmentRelation,
 ) -> Option<Region2> {
     match (relation, op) {
-        (
-            BoundaryContainmentRelation::FirstContainsSecond,
-            BooleanOp::Union | BooleanOp::Intersection,
-        ) => Some(match op {
-            BooleanOp::Union => clone_region(first),
-            BooleanOp::Intersection => clone_region(second),
-            _ => unreachable!(),
-        }),
-        (
-            BoundaryContainmentRelation::SecondContainsFirst,
-            BooleanOp::Union | BooleanOp::Intersection,
-        ) => Some(match op {
-            BooleanOp::Union => clone_region(second),
-            BooleanOp::Intersection => clone_region(first),
-            _ => unreachable!(),
-        }),
+        (BoundaryContainmentRelation::FirstContainsSecond, BooleanOp::Union) => {
+            Some(clone_region(first))
+        }
+        (BoundaryContainmentRelation::FirstContainsSecond, BooleanOp::Intersection) => {
+            Some(clone_region(second))
+        }
+        (BoundaryContainmentRelation::SecondContainsFirst, BooleanOp::Union) => {
+            Some(clone_region(second))
+        }
+        (BoundaryContainmentRelation::SecondContainsFirst, BooleanOp::Intersection) => {
+            Some(clone_region(first))
+        }
         (BoundaryContainmentRelation::SecondContainsFirst, BooleanOp::Difference) => {
             Some(Region2::empty())
         }

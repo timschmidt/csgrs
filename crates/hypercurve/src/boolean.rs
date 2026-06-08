@@ -130,12 +130,12 @@ impl BooleanFragmentSelection {
                 BooleanFragmentAction::KeepSourceDirection
                 | BooleanFragmentAction::KeepReversed => {
                     let source = fragment_for_classification(fragments, classification)?;
-                    let segment = match classification.action {
-                        BooleanFragmentAction::KeepSourceDirection => source.segment.clone(),
-                        BooleanFragmentAction::KeepReversed => source.segment.reversed(),
-                        BooleanFragmentAction::Discard
-                        | BooleanFragmentAction::BoundaryNeedsResolution => unreachable!(),
-                    };
+                    let segment =
+                        if classification.action == BooleanFragmentAction::KeepSourceDirection {
+                            source.segment.clone()
+                        } else {
+                            source.segment.reversed()
+                        };
                     directed_fragments.push(DirectedBooleanFragment {
                         key: classification.key,
                         fragment_index: classification.fragment_index,
