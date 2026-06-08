@@ -843,6 +843,9 @@ fn retained_selected_face_membership(
     let mut membership = vec![false; face_count];
     for &face in selected_faces {
         match membership.get_mut(face) {
+            Some(member) if *member => {
+                blockers.push(ExactArrangementBlocker::NonManifoldCellComplex)
+            }
             Some(member) => *member = true,
             None => blockers.push(ExactArrangementBlocker::NonManifoldCellComplex),
         }
@@ -1784,6 +1787,27 @@ mod tests {
             volume_adjacencies: Vec::new(),
             lower_dimensional_artifacts: Vec::new(),
             selected_faces: vec![1],
+            selected_face_orientations: Vec::new(),
+            selected_volume_regions: Vec::new(),
+            operation: ExactBooleanOperation::Union,
+            blockers: Vec::new(),
+        };
+
+        assert_eq!(
+            simplify_selected_cell_complex(selected, ExactRegularizationPolicy::REGULARIZED_SOLID),
+            Err(ExactArrangementBlocker::NonManifoldCellComplex)
+        );
+    }
+
+    #[test]
+    fn simplification_rejects_duplicate_selected_face() {
+        let points = [p(0, 0, 0), p(1, 0, 0), p(0, 1, 0)];
+        let selected = ExactSelectedCellComplex {
+            faces: vec![selected_face(0, &[0, 1, 2], &points)],
+            volume_regions: Vec::new(),
+            volume_adjacencies: Vec::new(),
+            lower_dimensional_artifacts: Vec::new(),
+            selected_faces: vec![0, 0],
             selected_face_orientations: Vec::new(),
             selected_volume_regions: Vec::new(),
             operation: ExactBooleanOperation::Union,
