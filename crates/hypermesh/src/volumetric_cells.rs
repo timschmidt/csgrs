@@ -340,6 +340,9 @@ impl CoplanarVolumetricCellEvidenceReport {
         if self.proper_crossing_candidate_pairs > self.candidate_pairs {
             return Err(CoplanarVolumetricCellEvidenceError::CandidatePairCountMismatch);
         }
+        if self.proper_crossing_candidate_pairs > self.proper_crossing_events {
+            return Err(CoplanarVolumetricCellEvidenceError::CandidatePairCountMismatch);
+        }
         let Some(segment_plane_partition) = self
             .proper_crossing_events
             .checked_add(self.boundary_segment_events)
@@ -348,7 +351,7 @@ impl CoplanarVolumetricCellEvidenceReport {
         else {
             return Err(CoplanarVolumetricCellEvidenceError::SegmentPlaneEventCountMismatch);
         };
-        if segment_plane_partition > self.segment_plane_events
+        if segment_plane_partition != self.segment_plane_events
             || self.unknown_segment_plane_events > self.unknown_events
         {
             return Err(CoplanarVolumetricCellEvidenceError::SegmentPlaneEventCountMismatch);
@@ -912,6 +915,7 @@ mod tests {
     fn unknown_segment_plane_events_are_validated_as_segment_partition() {
         let mut report = crossing_with_coplanar_overlap_report();
         report.proper_crossing_events = 0;
+        report.proper_crossing_candidate_pairs = 0;
         report.opposite_side_coplanar_overlapping_pairs = 1;
         report.unknown_segment_plane_events = 1;
         report.unknown_events = 1;
@@ -928,6 +932,33 @@ mod tests {
         assert_eq!(
             report.validate(),
             Err(CoplanarVolumetricCellEvidenceError::SegmentPlaneEventCountMismatch)
+        );
+    }
+
+    #[test]
+    fn segment_plane_events_must_be_fully_partitioned() {
+        let mut report = crossing_with_coplanar_overlap_report();
+        report.opposite_side_coplanar_overlapping_pairs = 1;
+        report.segment_plane_events = 2;
+        report.obstacle = derive_obstacle(&report);
+
+        assert_eq!(
+            report.validate(),
+            Err(CoplanarVolumetricCellEvidenceError::SegmentPlaneEventCountMismatch)
+        );
+    }
+
+    #[test]
+    fn proper_crossing_candidate_pairs_require_crossing_events() {
+        let mut report = crossing_with_coplanar_overlap_report();
+        report.opposite_side_coplanar_overlapping_pairs = 1;
+        report.proper_crossing_events = 0;
+        report.boundary_segment_events = 1;
+        report.obstacle = derive_obstacle(&report);
+
+        assert_eq!(
+            report.validate(),
+            Err(CoplanarVolumetricCellEvidenceError::CandidatePairCountMismatch)
         );
     }
 

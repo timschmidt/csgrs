@@ -7661,6 +7661,7 @@ mod tests {
             .unwrap()
             .clone();
         overflowing_evidence.segment_plane_events = usize::MAX;
+        overflowing_evidence.proper_crossing_events = usize::MAX;
         overflowing_evidence.validate().unwrap();
         readiness.retained_events = usize::MAX;
         readiness.coplanar_volumetric_evidence = Some(overflowing_evidence);
