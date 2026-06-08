@@ -27,8 +27,6 @@ use hyperreal::Real;
 
 const MAX_POLYGON_PATCH_ENUMERATION_FACES: usize = 9;
 const MAX_POLYGON_PATCH_ENUMERATION_BOUNDARY: usize = 9;
-const MAX_POLYGON_PATCH_COMPONENT_FACES: usize = 32;
-const MAX_POLYGON_PATCH_COMPONENT_BOUNDARY: usize = 32;
 
 #[derive(Clone, Debug, PartialEq)]
 struct PolygonPatchCandidate {
@@ -108,15 +106,10 @@ fn polygon_patch_candidates(
             continue;
         }
         let mut seen = BTreeSet::<Vec<usize>>::new();
-        // The old bounded search rejected a valid full-face adjacency whenever a
-        // connected component is a concrete exact object and may be certified
-        // directly. It is still a bounded certificate, so adversarial components
-        // above the explicit face/boundary caps must wait for the general planar
-        // arrangement path instead of triggering unbounded loop checks.
-        if component.len() <= MAX_POLYGON_PATCH_COMPONENT_FACES
-            && let Some(candidate) =
-                polygon_patch_candidate(mesh, &component, MAX_POLYGON_PATCH_COMPONENT_BOUNDARY)?
-        {
+        // A whole connected component is a concrete source-owned object, not a
+        // guessed subset. Certify it directly regardless of size; only the
+        // combinatorial subpatch search below remains bounded.
+        if let Some(candidate) = polygon_patch_candidate(mesh, &component, usize::MAX)? {
             seen.insert(component.clone());
             candidates.push(candidate);
         }
@@ -566,6 +559,8 @@ mod tests {
     use crate::ValidationPolicy;
     use proptest::prelude::*;
 
+    const OVERSIZED_COMPONENT_FACES: usize = 33;
+
     fn open_mesh(points: &[[i64; 3]], triangles: &[usize]) -> ExactMesh {
         let mut coordinates = Vec::with_capacity(points.len() * 3);
         for point in points {
@@ -609,7 +604,7 @@ mod tests {
         (left, right)
     }
 
-    fn oversized_component_fan(face_count: usize) -> ExactMesh {
+    fn oversized_component_fan(face_count: usize, reversed: bool) -> ExactMesh {
         let mut points = Vec::new();
         points.push([0, 0, 0]);
         for index in 0..=face_count {
@@ -617,7 +612,11 @@ mod tests {
         }
         let mut triangles = Vec::new();
         for index in 1..points.len() - 1 {
-            triangles.extend([0, index, index + 1]);
+            if reversed {
+                triangles.extend([0, index + 1, index]);
+            } else {
+                triangles.extend([0, index, index + 1]);
+            }
         }
         open_mesh(&points, &triangles)
     }
@@ -633,15 +632,32 @@ mod tests {
     }
 
     #[test]
-    fn polygon_patch_candidates_do_not_emit_unbounded_whole_components() {
-        let mesh = oversized_component_fan(MAX_POLYGON_PATCH_COMPONENT_FACES + 1);
+    fn polygon_patch_candidates_emit_oversized_whole_components() {
+        let mesh = oversized_component_fan(OVERSIZED_COMPONENT_FACES, false);
         let candidates = polygon_patch_candidates(&mesh, &BTreeSet::new())
-            .expect("bounded subpatch candidates should still be searched");
+            .expect("source-disk candidates should be available");
 
         assert!(
             candidates
                 .iter()
-                .all(|candidate| candidate.faces.len() <= MAX_POLYGON_PATCH_ENUMERATION_FACES)
+                .any(|candidate| candidate.faces.len() == OVERSIZED_COMPONENT_FACES)
+        );
+    }
+
+    #[test]
+    fn polygon_patch_pairs_match_oversized_whole_components() {
+        let left = oversized_component_fan(OVERSIZED_COMPONENT_FACES, false);
+        let right = oversized_component_fan(OVERSIZED_COMPONENT_FACES, true);
+
+        let pairs = polygon_patch_pairs(&left, &BTreeSet::new(), &right, &BTreeSet::new())
+            .expect("oversized source-disk pair should be available");
+
+        assert_eq!(
+            pairs,
+            vec![(
+                (0..OVERSIZED_COMPONENT_FACES).collect(),
+                (0..OVERSIZED_COMPONENT_FACES).collect()
+            )]
         );
     }
 
@@ -662,17 +678,18 @@ mod tests {
         }
 
         #[test]
-        fn generated_oversized_components_remain_bounded(
+        fn generated_oversized_whole_components_are_retained(
             extra_faces in 1_usize..12,
         ) {
-            let mesh = oversized_component_fan(MAX_POLYGON_PATCH_COMPONENT_FACES + extra_faces);
+            let face_count = OVERSIZED_COMPONENT_FACES + extra_faces;
+            let mesh = oversized_component_fan(face_count, false);
             let candidates = polygon_patch_candidates(&mesh, &BTreeSet::new())
-                .expect("bounded subpatch candidates should still be searched");
+                .expect("source-disk candidates should be available");
 
             prop_assert!(
                 candidates
                     .iter()
-                    .all(|candidate| candidate.faces.len() <= MAX_POLYGON_PATCH_ENUMERATION_FACES)
+                    .any(|candidate| candidate.faces.len() == face_count)
             );
         }
     }
