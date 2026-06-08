@@ -205,9 +205,8 @@ impl CurveString2 {
         for edge in points.windows(2) {
             let start = point_from_real_xy(&edge[0]);
             let end = point_from_real_xy(&edge[1]);
-            if let Ok(line) = crate::LineSeg2::try_new(start, end) {
-                segments.push(crate::Segment2::Line(line));
-            }
+            let line = crate::LineSeg2::try_new(start, end)?;
+            segments.push(crate::Segment2::Line(line));
         }
         Self::try_new(segments)
     }

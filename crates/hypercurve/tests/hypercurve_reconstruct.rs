@@ -149,6 +149,16 @@ fn reconstruction_accepts_closed_polyline_with_repeated_first_point() {
 }
 
 #[test]
+fn real_line_string_rejects_zero_length_source_edges_without_import_record() {
+    let points = [[r(0.0), r(0.0)], [r(0.0), r(0.0)], [r(1.0), r(0.0)]];
+
+    assert_eq!(
+        CurveString2::from_real_line_string(&points).unwrap_err(),
+        CurveError::ZeroLengthLine
+    );
+}
+
+#[test]
 fn reconstruction_removes_adjacent_duplicate_samples() {
     let points = [p(0.0, 0.0), p(0.0, 0.0), p(1.0, 0.0), p(2.0, 0.0)];
 
