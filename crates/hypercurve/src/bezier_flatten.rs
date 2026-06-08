@@ -124,7 +124,7 @@ trait FlattenableBezier: Clone {
     fn start(&self) -> &Point2;
     fn end(&self) -> &Point2;
     fn controls(&self) -> Vec<&Point2>;
-    fn split_half(&self) -> (Self, Self);
+    fn split_half(&self) -> Result<(Self, Self), UncertaintyReason>;
 }
 
 impl FlattenableBezier for QuadraticBezier2 {
@@ -140,15 +140,15 @@ impl FlattenableBezier for QuadraticBezier2 {
         self.control_points().into_iter().collect()
     }
 
-    fn split_half(&self) -> (Self, Self) {
-        let half = half();
+    fn split_half(&self) -> Result<(Self, Self), UncertaintyReason> {
+        let half = half()?;
         let p01 = self.start().lerp(self.control(), half.clone());
         let p12 = self.control().lerp(self.end(), half);
-        let mid = midpoint_point(&p01, &p12);
-        (
+        let mid = midpoint_point(&p01, &p12)?;
+        Ok((
             QuadraticBezier2::new(self.start().clone(), p01, mid.clone()),
             QuadraticBezier2::new(mid, p12, self.end().clone()),
-        )
+        ))
     }
 }
 
@@ -165,18 +165,18 @@ impl FlattenableBezier for CubicBezier2 {
         self.control_points().into_iter().collect()
     }
 
-    fn split_half(&self) -> (Self, Self) {
-        let half = half();
+    fn split_half(&self) -> Result<(Self, Self), UncertaintyReason> {
+        let half = half()?;
         let p01 = self.start().lerp(self.control1(), half.clone());
         let p12 = self.control1().lerp(self.control2(), half.clone());
         let p23 = self.control2().lerp(self.end(), half);
-        let p012 = midpoint_point(&p01, &p12);
-        let p123 = midpoint_point(&p12, &p23);
-        let mid = midpoint_point(&p012, &p123);
-        (
+        let p012 = midpoint_point(&p01, &p12)?;
+        let p123 = midpoint_point(&p12, &p23)?;
+        let mid = midpoint_point(&p012, &p123)?;
+        Ok((
             CubicBezier2::new(self.start().clone(), p01, p012, mid.clone()),
             CubicBezier2::new(mid, p123, p23, self.end().clone()),
-        )
+        ))
     }
 }
 
@@ -229,7 +229,7 @@ where
     if depth >= max_depth {
         return Err(UncertaintyReason::Unsupported);
     }
-    let (left, right) = curve.split_half();
+    let (left, right) = curve.split_half()?;
     flatten_recursive(
         left,
         max_error_squared,
@@ -292,10 +292,44 @@ fn squared_distance_within(
     }
 }
 
-fn midpoint_point(first: &Point2, second: &Point2) -> Point2 {
-    first.lerp(second, half())
+fn midpoint_point(first: &Point2, second: &Point2) -> Result<Point2, UncertaintyReason> {
+    Ok(first.lerp(second, half()?))
 }
 
-fn half() -> Real {
-    (Real::one() / Real::from(2_i8)).expect("division by positive integer constant is defined")
+fn half() -> Result<Real, UncertaintyReason> {
+    (Real::one() / Real::from(2_i8)).map_err(|_| UncertaintyReason::Unsupported)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn point(x: i32, y: i32) -> Point2 {
+        Point2::new(Real::from(x), Real::from(y))
+    }
+
+    #[test]
+    fn cubic_half_split_keeps_exact_de_casteljau_values() {
+        let curve = CubicBezier2::new(point(0, 0), point(2, 0), point(4, 0), point(6, 0));
+        let (left, right) = curve.split_half().unwrap();
+
+        let left_controls = left
+            .control_points()
+            .into_iter()
+            .cloned()
+            .collect::<Vec<_>>();
+        let right_controls = right
+            .control_points()
+            .into_iter()
+            .cloned()
+            .collect::<Vec<_>>();
+        assert_eq!(
+            left_controls,
+            vec![point(0, 0), point(1, 0), point(2, 0), point(3, 0)]
+        );
+        assert_eq!(
+            right_controls,
+            vec![point(3, 0), point(4, 0), point(5, 0), point(6, 0)]
+        );
+    }
 }

@@ -1666,8 +1666,10 @@ fn native_loop_sample_point(
     let Some(fragment) = boundary_loop.fragments().first() else {
         return Classification::Uncertain(UncertaintyReason::Unsupported);
     };
-    let half =
-        (Real::one() / Real::from(2_i8)).expect("division by positive integer constant is defined");
+    let half = match Real::one() / Real::from(2_i8) {
+        Ok(half) => half,
+        Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
+    };
     subcurve_point_at(fragment, half, policy)
 }
 
