@@ -209,6 +209,11 @@ impl ExactCellComplex {
 }
 
 impl ExactLabeledCellComplex {
+    /// Validate local labeled-cell consistency without replaying source meshes.
+    pub fn validate(&self) -> Result<(), ExactArrangementBlocker> {
+        validate_cell_complex_parts(&self.faces, &self.volume_regions, &self.volume_adjacencies)
+    }
+
     /// Validate this labeled complex by replaying arrangement construction and
     /// region labeling from source operands.
     pub fn validate_against_sources(
@@ -217,6 +222,7 @@ impl ExactLabeledCellComplex {
         right: &super::mesh::ExactMesh,
         policy: ExactRegularizationPolicy,
     ) -> Result<(), ExactArrangementBlocker> {
+        self.validate()?;
         let replay = ExactArrangement::from_meshes_with_policy(left, right, policy)
             .map_err(|_| ExactArrangementBlocker::UnresolvedIntersection)?
             .label_regions(policy)?;
@@ -234,6 +240,9 @@ impl ExactLabeledCellComplex {
         right: &super::mesh::ExactMesh,
         policy: ExactRegularizationPolicy,
     ) -> ExactLabeledCellComplexFreshness {
+        if self.validate().is_err() {
+            return ExactLabeledCellComplexFreshness::StaleLabeledCells;
+        }
         let arrangement = match ExactArrangement::from_meshes_with_policy(left, right, policy) {
             Ok(arrangement) => arrangement,
             Err(_) => return ExactLabeledCellComplexFreshness::SourceReplayBlocked,
@@ -360,6 +369,68 @@ impl ExactLabeledCellComplex {
 }
 
 impl ExactSelectedCellComplex {
+    /// Validate local selected-cell consistency without replaying source meshes.
+    pub fn validate(&self) -> Result<(), ExactArrangementBlocker> {
+        validate_cell_complex_parts(&self.faces, &self.volume_regions, &self.volume_adjacencies)?;
+        validate_selected_indices(&self.selected_faces, self.faces.len())?;
+        validate_selected_indices(&self.selected_volume_regions, self.volume_regions.len())?;
+        if self.selected_face_orientations.len() != self.selected_faces.len() {
+            return Err(ExactArrangementBlocker::NonManifoldCellComplex);
+        }
+        let orientation_faces = self
+            .selected_face_orientations
+            .iter()
+            .map(|orientation| orientation.face)
+            .collect::<Vec<_>>();
+        if orientation_faces != self.selected_faces
+            || sorted_unique_usize_set(&orientation_faces).is_none()
+        {
+            return Err(ExactArrangementBlocker::NonManifoldCellComplex);
+        }
+        if self
+            .selected_face_orientations
+            .iter()
+            .any(|orientation| orientation.face >= self.faces.len())
+        {
+            return Err(ExactArrangementBlocker::NonManifoldCellComplex);
+        }
+        let expected_selected_volume_regions =
+            selected_volume_regions(&self.volume_regions, self.operation);
+        if self.selected_volume_regions != expected_selected_volume_regions {
+            return Err(ExactArrangementBlocker::NonManifoldCellComplex);
+        }
+        if self
+            .selected_face_orientations
+            .iter()
+            .any(|orientation| orientation.from_volume_adjacency)
+        {
+            let Some((selected_faces, selected_face_orientations)) =
+                select_faces_from_volume_adjacencies(
+                    &self.faces,
+                    &self.volume_regions,
+                    &self.volume_adjacencies,
+                    self.operation,
+                )?
+            else {
+                return Err(ExactArrangementBlocker::NonManifoldCellComplex);
+            };
+            if self.selected_faces != selected_faces
+                || self.selected_face_orientations != selected_face_orientations
+            {
+                return Err(ExactArrangementBlocker::NonManifoldCellComplex);
+            }
+        } else {
+            for orientation in &self.selected_face_orientations {
+                if orientation.reverse
+                    != operation_reverses_face(&self.faces[orientation.face], self.operation)
+                {
+                    return Err(ExactArrangementBlocker::NonManifoldCellComplex);
+                }
+            }
+        }
+        Ok(())
+    }
+
     /// Validate this selected complex by replaying arrangement construction,
     /// labeling, and selection from source operands.
     pub fn validate_against_sources(
@@ -368,6 +439,7 @@ impl ExactSelectedCellComplex {
         right: &super::mesh::ExactMesh,
         policy: ExactRegularizationPolicy,
     ) -> Result<(), ExactArrangementBlocker> {
+        self.validate()?;
         let arrangement = ExactArrangement::from_meshes_with_policy(left, right, policy)
             .map_err(|_| ExactArrangementBlocker::UnresolvedIntersection)?;
         let replay = select_arrangement_for_replay(arrangement, self.operation, policy)?;
@@ -385,6 +457,9 @@ impl ExactSelectedCellComplex {
         right: &super::mesh::ExactMesh,
         policy: ExactRegularizationPolicy,
     ) -> ExactSelectedCellComplexFreshness {
+        if self.validate().is_err() {
+            return ExactSelectedCellComplexFreshness::StaleSelectedCells;
+        }
         let arrangement = match ExactArrangement::from_meshes_with_policy(left, right, policy) {
             Ok(arrangement) => arrangement,
             Err(_) => return ExactSelectedCellComplexFreshness::SourceReplayBlocked,
@@ -641,6 +716,37 @@ fn select_faces_from_volume_adjacencies(
         .map(|orientation| orientation.face)
         .collect::<Vec<_>>();
     Ok(Some((selected_faces, selected)))
+}
+
+fn validate_cell_complex_parts(
+    faces: &[ExactCellComplexFace],
+    volume_regions: &[ExactCellComplexVolumeRegion],
+    volume_adjacencies: &[ArrangementVolumeAdjacency],
+) -> Result<(), ExactArrangementBlocker> {
+    if !volume_regions.is_empty() {
+        validate_volume_regions_for_selection(volume_regions)?;
+    }
+    for adjacency in volume_adjacencies {
+        if adjacency.exterior_volume >= volume_regions.len()
+            || adjacency.interior_volume >= volume_regions.len()
+        {
+            return Err(ExactArrangementBlocker::NonManifoldCellComplex);
+        }
+        validate_volume_adjacency_face_provenance(faces, adjacency)?;
+    }
+    Ok(())
+}
+
+fn validate_selected_indices(
+    selected: &[usize],
+    upper_bound: usize,
+) -> Result<(), ExactArrangementBlocker> {
+    if selected.iter().any(|&index| index >= upper_bound)
+        || sorted_unique_usize_set(selected).is_none()
+    {
+        return Err(ExactArrangementBlocker::NonManifoldCellComplex);
+    }
+    Ok(())
 }
 
 fn validate_volume_regions_for_selection(
@@ -1126,6 +1232,64 @@ mod tests {
 
         assert_eq!(
             labeled.select(ExactBooleanOperation::Union),
+            Err(ExactArrangementBlocker::NonManifoldCellComplex)
+        );
+    }
+
+    #[test]
+    fn labeled_cell_complex_validate_rejects_stale_volume_adjacency_provenance() {
+        let mut labeled = labeled_with_volume_adjacency_face(0, Vec::new());
+        labeled.validate().unwrap();
+        labeled.volume_adjacencies[0].oriented_face_sides[0].source_face = 1;
+
+        assert_eq!(
+            labeled.validate(),
+            Err(ExactArrangementBlocker::NonManifoldCellComplex)
+        );
+    }
+
+    #[test]
+    fn selected_cell_complex_validate_rejects_duplicate_selected_face() {
+        let labeled = ExactLabeledCellComplex {
+            faces: vec![labeled_face(MeshSide::Left)],
+            volume_regions: Vec::new(),
+            volume_adjacencies: Vec::new(),
+            lower_dimensional_artifacts: Vec::new(),
+            blockers: Vec::new(),
+        };
+        let mut selected = labeled
+            .select(ExactBooleanOperation::SelectedRegions(
+                ExactRegionSelection::KeepLeft,
+            ))
+            .unwrap();
+        selected.validate().unwrap();
+        selected.selected_faces.push(0);
+        selected
+            .selected_face_orientations
+            .push(ExactSelectedFaceOrientation {
+                face: 0,
+                reverse: false,
+                from_volume_adjacency: false,
+            });
+
+        assert_eq!(
+            selected.validate(),
+            Err(ExactArrangementBlocker::NonManifoldCellComplex)
+        );
+    }
+
+    #[test]
+    fn selected_cell_complex_validate_rejects_stale_volume_adjacency_orientation() {
+        let labeled = labeled_with_volume_adjacency_face(
+            0,
+            vec![ExactArrangementBlocker::UnresolvedRegionClassification],
+        );
+        let mut selected = labeled.select(ExactBooleanOperation::Union).unwrap();
+        selected.validate().unwrap();
+        selected.selected_face_orientations[0].reverse = true;
+
+        assert_eq!(
+            selected.validate(),
             Err(ExactArrangementBlocker::NonManifoldCellComplex)
         );
     }
