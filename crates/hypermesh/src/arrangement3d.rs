@@ -2317,7 +2317,7 @@ fn validate_arrangement_volume_graph(
         }
         shell_adjacency_counts[adjacency.shell_region] += 1;
         let shell = &shell_regions[adjacency.shell_region];
-        if !same_usize_set(&adjacency.separating_face_cells, &shell.face_cells)
+        if !same_unique_usize_set(&adjacency.separating_face_cells, &shell.face_cells)
             || !volume_face_sides_match_shell(adjacency, shell)
             || !volume_regions[adjacency.exterior_volume]
                 .boundary_shells
@@ -2372,15 +2372,20 @@ fn volume_region_boundary_shells_match_adjacencies(
     }
 
     volume_regions.iter().enumerate().all(|(index, region)| {
-        let Some(boundary_shells) = sorted_unique_shells(&region.boundary_shells) else {
+        let Some(boundary_shells) = sorted_unique_usize_set(&region.boundary_shells) else {
             return false;
         };
         boundary_shells == expected[index]
     })
 }
 
-fn sorted_unique_shells(shells: &[usize]) -> Option<Vec<usize>> {
-    let mut sorted = shells.to_vec();
+fn same_unique_usize_set(left: &[usize], right: &[usize]) -> bool {
+    sorted_unique_usize_set(left)
+        .is_some_and(|left| sorted_unique_usize_set(right).is_some_and(|right| left == right))
+}
+
+pub(crate) fn sorted_unique_usize_set(values: &[usize]) -> Option<Vec<usize>> {
+    let mut sorted = values.to_vec();
     sorted.sort_unstable();
     let mut unique = sorted.clone();
     unique.dedup();
@@ -2481,16 +2486,6 @@ fn validate_volume_region_source_labels(
             _ => push_unique_blocker(blockers, ExactArrangementBlocker::NonManifoldCellComplex),
         }
     }
-}
-
-fn same_usize_set(left: &[usize], right: &[usize]) -> bool {
-    let mut left = left.to_vec();
-    let mut right = right.to_vec();
-    left.sort_unstable();
-    left.dedup();
-    right.sort_unstable();
-    right.dedup();
-    left == right
 }
 
 fn volume_face_sides_match_shell(
@@ -3912,6 +3907,32 @@ mod tests {
             &arrangement.face_cells,
             Some(&stale_volume_regions),
             Some(volume_adjacencies),
+            &mut blockers,
+        );
+
+        assert_eq!(
+            blockers,
+            vec![ExactArrangementBlocker::NonManifoldCellComplex]
+        );
+    }
+
+    #[test]
+    fn volume_graph_validation_rejects_duplicate_separating_face() {
+        let left = tetrahedron_i64([0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1]);
+        let right = tetrahedron_i64([3, 0, 0], [4, 0, 0], [3, 1, 0], [3, 0, 1]);
+        let arrangement = ExactArrangement::from_meshes(&left, &right).unwrap();
+        let shell_regions = arrangement.shells_or_regions.as_ref().unwrap();
+        let volume_regions = arrangement.volume_regions.as_ref().unwrap();
+        let mut stale_adjacencies = arrangement.volume_adjacencies.clone().unwrap();
+        let duplicate = stale_adjacencies[0].separating_face_cells[0];
+        stale_adjacencies[0].separating_face_cells.push(duplicate);
+        let mut blockers = Vec::new();
+
+        validate_arrangement_volume_graph(
+            shell_regions,
+            &arrangement.face_cells,
+            Some(volume_regions),
+            Some(&stale_adjacencies),
             &mut blockers,
         );
 

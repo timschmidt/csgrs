@@ -8,6 +8,7 @@
 use super::arrangement3d::{
     ArrangementFaceCell, ArrangementLowerDimensionalArtifact, ArrangementVolumeAdjacency,
     ArrangementVolumeRegion, ExactArrangement, ExactArrangement3d, exact_node_loops_equivalent,
+    sorted_unique_usize_set,
 };
 use super::boolean::ExactBooleanOperation;
 use super::graph::MeshSide;
@@ -693,9 +694,10 @@ pub(crate) fn validate_volume_adjacency_face_provenance(
     }
     side_faces.sort_unstable();
     side_faces.dedup();
-    let mut separating_face_cells = adjacency.separating_face_cells.clone();
-    separating_face_cells.sort_unstable();
-    separating_face_cells.dedup();
+    let Some(separating_face_cells) = sorted_unique_usize_set(&adjacency.separating_face_cells)
+    else {
+        return Err(ExactArrangementBlocker::NonManifoldCellComplex);
+    };
     if side_faces
         .iter()
         .any(|face| separating_face_cells.binary_search(face).is_err())
@@ -1072,6 +1074,17 @@ mod tests {
     }
 
     #[test]
+    fn named_operation_rejects_duplicate_volume_adjacency_separating_face() {
+        let mut labeled = labeled_with_volume_adjacency_face(0, Vec::new());
+        labeled.volume_adjacencies[0].separating_face_cells = vec![0, 0];
+
+        assert_eq!(
+            labeled.select(ExactBooleanOperation::Union),
+            Err(ExactArrangementBlocker::NonManifoldCellComplex)
+        );
+    }
+
+    #[test]
     fn named_operation_rejects_unoriented_separating_face() {
         let mut labeled = labeled_with_volume_adjacency_face(0, Vec::new());
         labeled.faces.push(unoriented_labeled_face(MeshSide::Left));
@@ -1166,6 +1179,23 @@ mod tests {
             vec![ExactArrangementBlocker::UnresolvedRegionClassification],
         );
         labeled.volume_adjacencies[0].separating_face_cells.clear();
+
+        assert_eq!(
+            labeled.select_volume_resolved_with_policy(
+                ExactBooleanOperation::Union,
+                ExactRegularizationPolicy::REGULARIZED_SOLID,
+            ),
+            Err(ExactArrangementBlocker::NonManifoldCellComplex)
+        );
+    }
+
+    #[test]
+    fn volume_resolved_selection_rejects_duplicate_volume_adjacency_separating_face() {
+        let mut labeled = labeled_with_volume_adjacency_face(
+            0,
+            vec![ExactArrangementBlocker::UnresolvedRegionClassification],
+        );
+        labeled.volume_adjacencies[0].separating_face_cells = vec![0, 0];
 
         assert_eq!(
             labeled.select_volume_resolved_with_policy(
