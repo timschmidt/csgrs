@@ -1823,9 +1823,11 @@ pub enum SplitPlanDiagnosticKind {
     /// A split-boundary chain references an edge that is not on the retained
     /// source triangle.
     BoundaryChainEdgeNotOnTriangle,
-    /// A split-boundary chain original node references a missing source vertex.
+    /// A retained boundary original node references a missing source vertex.
     BoundaryNodeSourceVertexOutOfRange,
-    /// A retained original boundary node point no longer matches its source
+    /// A retained boundary original node is not part of its source triangle.
+    BoundaryNodeSourceVertexNotOnTriangle,
+    /// A retained boundary original node point no longer matches its source
     /// vertex coordinate.
     BoundaryNodeSourcePointMismatch,
     /// A split-boundary chain contains consecutive duplicate nodes.
@@ -2021,9 +2023,13 @@ fn validate_split_plan_diagnostic(
             require_side(diagnostic)?;
             require_face(diagnostic)
         }
+        SplitPlanDiagnosticKind::BoundaryNodeSourceVertexOutOfRange
+        | SplitPlanDiagnosticKind::BoundaryNodeSourceVertexNotOnTriangle
+        | SplitPlanDiagnosticKind::BoundaryNodeSourcePointMismatch => {
+            require_side(diagnostic)?;
+            require_face(diagnostic)
+        }
         SplitPlanDiagnosticKind::BoundaryChainEdgeNotOnTriangle
-        | SplitPlanDiagnosticKind::BoundaryNodeSourceVertexOutOfRange
-        | SplitPlanDiagnosticKind::BoundaryNodeSourcePointMismatch
         | SplitPlanDiagnosticKind::DuplicateConsecutiveBoundaryNode => {
             require_side(diagnostic)?;
             require_face(diagnostic)?;
@@ -3739,6 +3745,21 @@ fn validate_face_region_plan(
                 );
             }
         }
+        if region
+            .boundary
+            .first()
+            .zip(region.boundary.last())
+            .is_some_and(|(first, last)| boundary_nodes_equal(first, last) == Some(true))
+        {
+            diagnostics.push(
+                SplitPlanDiagnostic::new(
+                    SplitPlanDiagnosticKind::DuplicateConsecutiveRegionNode,
+                    "face region boundary repeats its first node at the end",
+                )
+                .with_side(region.side)
+                .with_face(region.face),
+            );
+        }
 
         let mesh = mesh_for_side(region.side, left, right);
         if region.face >= mesh.triangles().len() {
@@ -3765,6 +3786,7 @@ fn validate_face_region_plan(
             );
             continue;
         }
+        validate_face_region_original_boundary_nodes(&mut diagnostics, mesh, region);
         let a = mesh.vertices()[triangle[0]].clone();
         let b = mesh.vertices()[triangle[1]].clone();
         let c = mesh.vertices()[triangle[2]].clone();
@@ -3793,6 +3815,49 @@ fn validate_face_region_plan(
     }
 
     SplitPlanValidationReport { diagnostics }
+}
+
+fn validate_face_region_original_boundary_nodes(
+    diagnostics: &mut Vec<SplitPlanDiagnostic>,
+    mesh: &ExactMesh,
+    region: &FaceRegionBoundary,
+) {
+    for node in &region.boundary {
+        let FaceSplitBoundaryNode::OriginalVertex { vertex, point } = node else {
+            continue;
+        };
+        let Some(source_point) = mesh.vertices().get(*vertex) else {
+            diagnostics.push(
+                SplitPlanDiagnostic::new(
+                    SplitPlanDiagnosticKind::BoundaryNodeSourceVertexOutOfRange,
+                    "face region original boundary node references a missing source vertex",
+                )
+                .with_side(region.side)
+                .with_face(region.face),
+            );
+            continue;
+        };
+        if !region.triangle.contains(vertex) {
+            diagnostics.push(
+                SplitPlanDiagnostic::new(
+                    SplitPlanDiagnosticKind::BoundaryNodeSourceVertexNotOnTriangle,
+                    "face region original boundary node is not part of its source triangle",
+                )
+                .with_side(region.side)
+                .with_face(region.face),
+            );
+        }
+        if points_equal(point, source_point) != Some(true) {
+            diagnostics.push(
+                SplitPlanDiagnostic::new(
+                    SplitPlanDiagnosticKind::BoundaryNodeSourcePointMismatch,
+                    "face region original boundary node point does not match its source vertex",
+                )
+                .with_side(region.side)
+                .with_face(region.face),
+            );
+        }
+    }
 }
 
 fn validate_face_region_plan_against_sources(

@@ -4020,6 +4020,68 @@ fn exact_face_pair_candidate_retains_source_plane_split_events() {
         regions.freshness_against_sources(&left, &right),
         SplitPlanFreshness::Current
     );
+    let mut closed_duplicate_regions = regions.clone();
+    let first_region_node = closed_duplicate_regions.regions[0].boundary[0].clone();
+    closed_duplicate_regions.regions[0]
+        .boundary
+        .push(first_region_node);
+    let closed_duplicate_report = closed_duplicate_regions.validate(&left, &right);
+    assert!(
+        closed_duplicate_report
+            .diagnostics
+            .iter()
+            .any(|diagnostic| {
+                diagnostic.kind
+                    == hypermesh::SplitPlanDiagnosticKind::DuplicateConsecutiveRegionNode
+            }),
+        "{closed_duplicate_report:?}"
+    );
+    assert_eq!(
+        closed_duplicate_regions.freshness_against_sources(&left, &right),
+        SplitPlanFreshness::InvalidPlan
+    );
+    let mut stale_region_point = regions.clone();
+    if let hypermesh::FaceSplitBoundaryNode::OriginalVertex { point, .. } =
+        &mut stale_region_point.regions[0].boundary[0]
+    {
+        *point = p(2, 0, 0);
+    }
+    let stale_region_point_report = stale_region_point.validate(&left, &right);
+    assert!(
+        stale_region_point_report
+            .diagnostics
+            .iter()
+            .any(|diagnostic| {
+                diagnostic.kind
+                    == hypermesh::SplitPlanDiagnosticKind::BoundaryNodeSourcePointMismatch
+            }),
+        "{stale_region_point_report:?}"
+    );
+    assert_eq!(
+        stale_region_point.freshness_against_sources(&left, &right),
+        SplitPlanFreshness::InvalidPlan
+    );
+    let mut missing_region_vertex = regions.clone();
+    if let hypermesh::FaceSplitBoundaryNode::OriginalVertex { vertex, .. } =
+        &mut missing_region_vertex.regions[0].boundary[0]
+    {
+        *vertex = usize::MAX;
+    }
+    let missing_region_vertex_report = missing_region_vertex.validate(&left, &right);
+    assert!(
+        missing_region_vertex_report
+            .diagnostics
+            .iter()
+            .any(|diagnostic| {
+                diagnostic.kind
+                    == hypermesh::SplitPlanDiagnosticKind::BoundaryNodeSourceVertexOutOfRange
+            }),
+        "{missing_region_vertex_report:?}"
+    );
+    assert_eq!(
+        missing_region_vertex.freshness_against_sources(&left, &right),
+        SplitPlanFreshness::InvalidPlan
+    );
     let mut relabeled_regions = regions.clone();
     relabeled_regions.regions[0].triangle.swap(0, 1);
     let region_report = relabeled_regions.validate(&left, &right);

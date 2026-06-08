@@ -236,9 +236,16 @@ fn region_plan_report_to_mesh_error(report: SplitPlanValidationReport) -> MeshEr
                     SplitPlanDiagnosticKind::UnknownBoundaryIncidence => {
                         DiagnosticKind::UnsupportedExactOperation
                     }
+                    SplitPlanDiagnosticKind::BoundaryNodeSourceVertexOutOfRange => {
+                        DiagnosticKind::IndexOutOfBounds
+                    }
                     SplitPlanDiagnosticKind::BoundaryNodeOffFacePlane
                     | SplitPlanDiagnosticKind::EmptyOrShortRegionBoundary
-                    | SplitPlanDiagnosticKind::DuplicateConsecutiveRegionNode => {
+                    | SplitPlanDiagnosticKind::DuplicateConsecutiveRegionNode
+                    | SplitPlanDiagnosticKind::BoundaryNodeSourceVertexNotOnTriangle
+                    | SplitPlanDiagnosticKind::BoundaryNodeSourcePointMismatch
+                    | SplitPlanDiagnosticKind::DuplicateConsecutiveBoundaryNode
+                    | SplitPlanDiagnosticKind::BoundaryChainEdgeNotOnTriangle => {
                         DiagnosticKind::DegenerateTriangle
                     }
                     _ => DiagnosticKind::UnsupportedExactOperation,
