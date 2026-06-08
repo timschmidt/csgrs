@@ -1,6 +1,6 @@
 use hypercurve::{
-    BulgeVertex2, CircularArc2, CurvePolicy, CurveString2, LineArcIntersection, LineArcOrder,
-    LineSeg2, Point2, Real, Segment2, SegmentIntersection,
+    BulgeVertex2, CircularArc2, Contour2, CurveError, CurvePolicy, CurveString2,
+    LineArcIntersection, LineArcOrder, LineSeg2, Point2, Real, Segment2, SegmentIntersection,
 };
 
 fn s(value: i32) -> Real {
@@ -31,6 +31,25 @@ fn sparse_zigzag(segment_count: i32) -> CurveString2 {
         previous = next;
     }
     CurveString2::try_new(segments).unwrap()
+}
+
+#[test]
+fn curve_string_and_contour_reject_forged_zero_length_segments() {
+    let zero = Segment2::Line(LineSeg2::new_unchecked(p(0, 0), p(0, 0)));
+
+    assert_eq!(
+        CurveString2::try_new(vec![zero.clone()]).unwrap_err(),
+        CurveError::ZeroLengthLine
+    );
+    assert_eq!(
+        Contour2::try_new(vec![
+            line_segment(0, 0, 1, 0),
+            line_segment(1, 0, 0, 1),
+            zero,
+        ])
+        .unwrap_err(),
+        CurveError::ZeroLengthLine
+    );
 }
 
 #[test]

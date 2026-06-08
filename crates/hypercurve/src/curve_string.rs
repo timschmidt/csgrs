@@ -29,6 +29,17 @@ impl CurveString2 {
             return Err(CurveError::EmptyCurveString);
         }
 
+        for segment in &segments {
+            match segment
+                .start()
+                .distance_squared(segment.end())
+                .zero_status()
+            {
+                hyperreal::ZeroKnowledge::Zero => return Err(CurveError::ZeroLengthLine),
+                hyperreal::ZeroKnowledge::NonZero | hyperreal::ZeroKnowledge::Unknown => {}
+            }
+        }
+
         for adjacent in segments.windows(2) {
             let distance = adjacent[0].end().distance_squared(adjacent[1].start());
             match distance.zero_status() {
