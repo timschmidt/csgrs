@@ -46,9 +46,10 @@ use hyperlimit::SourceProvenance;
 use std::collections::{BTreeMap, BTreeSet};
 
 use hyperlimit::{
-    Point2, Point3, SegmentIntersection, TriangleLocation, classify_point_triangle,
-    classify_segment_intersection, compare_point2_lexicographic, compare_reals, point_on_segment,
-    point2_equal, point3_equal, project_point3, proper_segment_intersection_point,
+    Point2, Point3, SegmentIntersection, Sign, TriangleLocation, classify_point_triangle,
+    classify_segment_intersection, compare_point2_lexicographic, compare_reals, orient3d_report,
+    point_on_segment, point2_equal, point3_equal, project_point3,
+    proper_segment_intersection_point,
 };
 use hyperreal::Real;
 
@@ -188,6 +189,126 @@ pub(crate) fn validate_lower_dimensional_artifacts(
         }
     }
     Ok(())
+}
+
+fn validate_lower_dimensional_artifact_graph_pairs(
+    artifacts: &[ArrangementLowerDimensionalArtifact],
+    graph: &ExactIntersectionGraph,
+) -> Result<(), ExactArrangementBlocker> {
+    for artifact in artifacts {
+        let (left_face, right_face) = lower_dimensional_artifact_faces(artifact);
+        let Some(pair) = graph
+            .face_pairs
+            .iter()
+            .find(|pair| pair.left_face == left_face && pair.right_face == right_face)
+        else {
+            return Err(ExactArrangementBlocker::NonManifoldCellComplex);
+        };
+        if !matches!(
+            pair.relation,
+            super::intersection::MeshFacePairRelation::Candidate
+                | super::intersection::MeshFacePairRelation::CoplanarTouching
+        ) {
+            return Err(ExactArrangementBlocker::NonManifoldCellComplex);
+        }
+    }
+    Ok(())
+}
+
+fn validate_lower_dimensional_artifacts_against_sources(
+    artifacts: &[ArrangementLowerDimensionalArtifact],
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Result<(), ExactArrangementBlocker> {
+    for artifact in artifacts {
+        match artifact {
+            ArrangementLowerDimensionalArtifact::PointContact {
+                left_face,
+                right_face,
+                point,
+            } => {
+                validate_lower_dimensional_point_on_source_face(left, *left_face, point)?;
+                validate_lower_dimensional_point_on_source_face(right, *right_face, point)?;
+            }
+            ArrangementLowerDimensionalArtifact::EdgeContact {
+                left_face,
+                right_face,
+                endpoints,
+            } => {
+                for endpoint in endpoints {
+                    validate_lower_dimensional_point_on_source_face(left, *left_face, endpoint)?;
+                    validate_lower_dimensional_point_on_source_face(right, *right_face, endpoint)?;
+                }
+            }
+        }
+    }
+    Ok(())
+}
+
+fn lower_dimensional_artifact_faces(
+    artifact: &ArrangementLowerDimensionalArtifact,
+) -> (usize, usize) {
+    match artifact {
+        ArrangementLowerDimensionalArtifact::PointContact {
+            left_face,
+            right_face,
+            ..
+        }
+        | ArrangementLowerDimensionalArtifact::EdgeContact {
+            left_face,
+            right_face,
+            ..
+        } => (*left_face, *right_face),
+    }
+}
+
+fn validate_lower_dimensional_point_on_source_face(
+    mesh: &ExactMesh,
+    face: usize,
+    point: &Point3,
+) -> Result<(), ExactArrangementBlocker> {
+    let triangle = mesh
+        .triangles()
+        .get(face)
+        .ok_or(ExactArrangementBlocker::NonManifoldCellComplex)?
+        .0;
+    let [Some(a), Some(b), Some(c)] = [
+        mesh.vertices().get(triangle[0]),
+        mesh.vertices().get(triangle[1]),
+        mesh.vertices().get(triangle[2]),
+    ] else {
+        return Err(ExactArrangementBlocker::NonManifoldCellComplex);
+    };
+    match orient3d_report(a, b, c, point).value() {
+        Some(Sign::Zero) => {}
+        Some(Sign::Positive | Sign::Negative) => {
+            return Err(ExactArrangementBlocker::NonManifoldCellComplex);
+        }
+        None => return Err(ExactArrangementBlocker::UndecidableOrdering),
+    }
+
+    let mut blockers = Vec::new();
+    let projection =
+        choose_triangle_projection(mesh, triangle, &mut blockers).ok_or_else(|| {
+            blockers
+                .into_iter()
+                .next()
+                .unwrap_or(ExactArrangementBlocker::NonManifoldCellComplex)
+        })?;
+    let location = classify_point_triangle(
+        &project_point3(a, projection),
+        &project_point3(b, projection),
+        &project_point3(c, projection),
+        &project_point3(point, projection),
+    )
+    .value()
+    .ok_or(ExactArrangementBlocker::UndecidableOrdering)?;
+    match location {
+        TriangleLocation::Inside | TriangleLocation::OnEdge | TriangleLocation::OnVertex => Ok(()),
+        TriangleLocation::Outside | TriangleLocation::Degenerate => {
+            Err(ExactArrangementBlocker::NonManifoldCellComplex)
+        }
+    }
 }
 
 fn lower_dimensional_artifacts_duplicate(
@@ -622,6 +743,10 @@ impl ExactArrangement3d {
         self.graph
             .validate()
             .map_err(ExactArrangementBlocker::InvalidIntersectionGraph)?;
+        validate_lower_dimensional_artifact_graph_pairs(
+            &self.lower_dimensional_artifacts,
+            &self.graph,
+        )?;
         if self.graph.has_unknowns()
             && !self
                 .blockers
@@ -694,6 +819,11 @@ impl ExactArrangement3d {
         policy: ExactRegularizationPolicy,
     ) -> Result<(), ExactArrangementBlocker> {
         self.validate()?;
+        validate_lower_dimensional_artifacts_against_sources(
+            &self.lower_dimensional_artifacts,
+            left,
+            right,
+        )?;
         let replay = Self::from_meshes_with_policy(left, right, policy)
             .map_err(|_| ExactArrangementBlocker::UnresolvedIntersection)?;
         if replay == *self {
@@ -4987,6 +5117,44 @@ mod tests {
             Err(ExactArrangementBlocker::NonManifoldCellComplex)
         );
 
+        let mut stale_face_pair = retained.clone();
+        match &mut stale_face_pair.lower_dimensional_artifacts[0] {
+            ArrangementLowerDimensionalArtifact::PointContact { left_face, .. }
+            | ArrangementLowerDimensionalArtifact::EdgeContact { left_face, .. } => {
+                *left_face = usize::MAX;
+            }
+        }
+        assert_eq!(
+            stale_face_pair.validate(),
+            Err(ExactArrangementBlocker::NonManifoldCellComplex)
+        );
+
+        let mut off_source_face = retained.clone();
+        let point_artifact = off_source_face
+            .lower_dimensional_artifacts
+            .iter_mut()
+            .find(|artifact| {
+                matches!(
+                    artifact,
+                    ArrangementLowerDimensionalArtifact::PointContact { .. }
+                )
+            })
+            .unwrap();
+        match point_artifact {
+            ArrangementLowerDimensionalArtifact::PointContact { point, .. } => {
+                *point = p3(2, 0, 1);
+            }
+            ArrangementLowerDimensionalArtifact::EdgeContact { .. } => unreachable!(),
+        }
+        assert_eq!(
+            off_source_face.validate_against_sources_with_policy(
+                &left,
+                &right,
+                ExactRegularizationPolicy::RETAIN_ARTIFACTS
+            ),
+            Err(ExactArrangementBlocker::NonManifoldCellComplex)
+        );
+
         let reported = ExactArrangement::from_meshes_with_policy(
             &left,
             &right,
@@ -5154,6 +5322,32 @@ mod tests {
                     ExactRegularizationPolicy::RETAIN_ARTIFACTS
                 )
                 .is_ok()
+        );
+
+        let mut stale_edge_source = retained.clone();
+        let edge_artifact = stale_edge_source
+            .lower_dimensional_artifacts
+            .iter_mut()
+            .find(|artifact| {
+                matches!(
+                    artifact,
+                    ArrangementLowerDimensionalArtifact::EdgeContact { .. }
+                )
+            })
+            .unwrap();
+        match edge_artifact {
+            ArrangementLowerDimensionalArtifact::EdgeContact { endpoints, .. } => {
+                endpoints[1] = p3(3, 0, 0);
+            }
+            ArrangementLowerDimensionalArtifact::PointContact { .. } => unreachable!(),
+        }
+        assert_eq!(
+            stale_edge_source.validate_against_sources_with_policy(
+                &left,
+                &right,
+                ExactRegularizationPolicy::RETAIN_ARTIFACTS
+            ),
+            Err(ExactArrangementBlocker::NonManifoldCellComplex)
         );
     }
 }
