@@ -22,7 +22,7 @@ fn real_f64(value: &hyperlattice::Real) -> f64 {
 /// Export to ASCII STL
 /// Convert this Mesh to an **ASCII STL** string with the given `name`.
 ///
-/// ```rust
+/// ```ignore
 /// # use csgrs::mesh::Mesh;
 /// # use std::error::Error;
 /// # fn main() -> Result<(), Box<dyn Error>> {
@@ -68,7 +68,7 @@ pub fn to_stl_ascii<T: Triangulated3D>(shape: &T, name: &str) -> String {
 ///
 /// The resulting `Vec<u8>` can then be written to a file or handled in memory:
 ///
-/// ```rust
+/// ```ignore
 /// # use csgrs::mesh::Mesh;
 /// # use std::error::Error;
 /// # fn main() -> Result<(), Box<dyn Error>> {

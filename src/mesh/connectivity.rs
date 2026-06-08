@@ -119,21 +119,16 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         let mut vertex_map = VertexIndexMap::new();
         let mut adjacency: HashMap<usize, Vec<usize>> = HashMap::new();
 
-        let Ok(mesh) = self.to_hypermesh_exact_with_policy(
-            ::hypermesh::exact::ValidationPolicy::ALLOW_BOUNDARY,
-        ) else {
+        let Ok(mesh) =
+            self.to_hypermesh_exact_with_policy(::hypermesh::ValidationPolicy::ALLOW_BOUNDARY)
+        else {
             return (vertex_map, adjacency);
         };
         if mesh.validate_retained_state().is_err() {
             return (vertex_map, adjacency);
         }
         for (index, point) in mesh.vertices().iter().enumerate() {
-            let coordinates = point.coordinates();
-            let position = Point3::new(
-                coordinates.0[0].clone(),
-                coordinates.0[1].clone(),
-                coordinates.0[2].clone(),
-            );
+            let position = Point3::new(point.x.clone(), point.y.clone(), point.z.clone());
             vertex_map.position_to_index.push((position.clone(), index));
             vertex_map.index_to_position.insert(index, position);
         }

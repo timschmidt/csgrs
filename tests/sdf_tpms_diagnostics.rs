@@ -26,7 +26,7 @@ fn sdf_boundary_converts_only_at_sampling_boundary() {
 #[test]
 fn tpms_solid_accepts_positive_hyperreal_period_and_thickness() {
     let volume = Mesh::<()>::cube(r(2.0), ());
-    let gyroid = volume.gyroid_solid(8, r(2.0), r(0.0), r(0.15), ());
+    let gyroid = volume.gyroid_solid(16, r(2.0), r(0.0), r(0.15), ());
 
     assert!(!gyroid.polygons.is_empty());
 }

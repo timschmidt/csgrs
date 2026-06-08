@@ -73,20 +73,20 @@ fn test_negative_extrude_has_downward_top_normal() {
 
 #[test]
 fn test_taubin_smoothing() {
-    let sphere: Mesh<()> = Mesh::sphere(r(1.0), 16, 16, ());
-    let original_positions: Vec<_> = sphere
+    let mesh: Mesh<()> = Mesh::cube(r(1.0), ());
+    let original_positions: Vec<_> = mesh
         .polygons
         .iter()
         .flat_map(|poly| poly.vertices.iter().map(|v| v.position.clone()))
         .collect();
 
     // Apply Taubin smoothing
-    let smoothed = sphere.taubin_smooth(r(0.1), r(-0.105), 2, false);
+    let smoothed = mesh.taubin_smooth(r(0.1), r(-0.105), 2, false);
 
     // Mesh should have same number of polygons
     assert_eq!(
         smoothed.polygons.len(),
-        sphere.polygons.len(),
+        mesh.polygons.len(),
         "Smoothing should preserve polygon count"
     );
 

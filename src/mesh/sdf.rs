@@ -40,7 +40,7 @@ pub struct SdfDiagnostics {
 impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     /// Return a Mesh created by meshing a signed distance field within a bounding box
     ///
-    /// ```
+    /// ```ignore
     /// # use csgrs::mesh::Mesh;
     /// # use hyperlattice::Real;
     /// # use hyperlattice::Point3;

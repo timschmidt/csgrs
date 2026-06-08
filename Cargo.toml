@@ -64,7 +64,7 @@ chull = { version = "0.2.4", optional = true }
 hypercurve = { path = "../hypercurve", features = ["triangulation"] }
 hyperlattice = { path = "../hyperlattice" }
 hyperlimit = { path = "../hyperlimit" }
-hypermesh = { path = "../hypermesh", default-features = false, features = ["exact", "legacy-boolean"] }
+hypermesh = { path = "../hypermesh" }
 hyperphysics = { path = "../hyperphysics" }
 hyperreal = { path = "../hyperreal", default-features = false }
 hypersdf = { path = "../hypersdf", optional = true }
@@ -130,13 +130,7 @@ mesh = [
   # hypermesh backed Mesh datatype
   "sketch",
 ]
-mesh-bbopt = [
-  # Compatibility feature retained while Mesh booleans move to hypermesh.
-  "mesh",
-]
-bmesh = [
-  # Compatibility feature for downstream crates that request the BMesh module.
-]
+# Legacy BSP transition compatibility features removed after full hypermesh migration.
 sketch = [
   # hypercurve backed Profile datatype
 ]

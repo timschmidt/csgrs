@@ -34,7 +34,6 @@ for features in "${feature_sets[@]}"; do
   run cargo check --no-default-features --features "$features"
 done
 
-expect_fail cargo check --no-default-features --features "bmesh"
 expect_fail cargo check --no-default-features --features "geo"
 
 run cargo check --manifest-path fuzz/Cargo.toml --locked

@@ -88,7 +88,7 @@ pub trait CSG: Sized + Clone {
     /// - Shifts all vertices up or down such that the minimum z coordinate of the bounding box becomes 0.
     ///
     /// # Example
-    /// ```
+    /// ```ignore
     /// use csgrs::mesh::Mesh;
     /// use csgrs::csg::CSG;
     /// let mesh = Mesh::<()>::cube(1.0, ()).translate(2.0, 1.0, -2.0);

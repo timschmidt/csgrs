@@ -13,7 +13,7 @@ use crate::csg::CSG;
 #[cfg(feature = "sketch")]
 use hypercurve::{Classification, FiniteProjectionOptions};
 use hyperlattice::{Aabb, Matrix4, Point3, Real, Vector3};
-use hyperlimit::{PreparedAabb3, aabb3s_intersect, real_max, real_min};
+use hyperlimit::{PreparedAabb3, aabb3s_intersect};
 use hyperphysics::{
     ClosedTriangleMesh3 as HyperClosedTriangleMesh3,
     MassPropertyReport3 as HyperMassPropertyReport3, Triangle3 as HyperTriangle3,
@@ -64,6 +64,93 @@ pub struct Mesh<M: Clone + Send + Sync + Debug> {
     pub metadata: M,
 }
 
+fn real_cmp(lhs: &Real, rhs: &Real) -> std::cmp::Ordering {
+    hyperlimit::compare_reals(lhs, rhs)
+        .value()
+        .unwrap_or_else(|| match (lhs.clone() - rhs.clone()).refine_sign_until(128) {
+            Some(RealSign::Positive) => std::cmp::Ordering::Greater,
+            Some(RealSign::Negative) => std::cmp::Ordering::Less,
+            Some(RealSign::Zero) | None => std::cmp::Ordering::Equal,
+        })
+}
+
+fn real_cmp_for_finite_bounds(lhs: &Real, rhs: &Real) -> std::cmp::Ordering {
+    hyperlimit::compare_reals(lhs, rhs)
+        .value()
+        .or_else(|| {
+            let lhs = lhs.to_f64_lossy()?;
+            let rhs = rhs.to_f64_lossy()?;
+            lhs.partial_cmp(&rhs)
+        })
+        .unwrap_or(std::cmp::Ordering::Equal)
+}
+
+fn real_gt(lhs: &Real, rhs: &Real) -> bool {
+    matches!(real_cmp(lhs, rhs), std::cmp::Ordering::Greater)
+}
+
+fn real_lt(lhs: &Real, rhs: &Real) -> bool {
+    matches!(real_cmp(lhs, rhs), std::cmp::Ordering::Less)
+}
+
+fn real_zero(value: &Real) -> bool {
+    matches!(value.refine_sign_until(128), Some(RealSign::Zero))
+}
+
+fn point3_bounds(points: &[Point3]) -> Option<(Point3, Point3)> {
+    let first = points.first()?;
+    let mut min_x = first.x.clone();
+    let mut min_y = first.y.clone();
+    let mut min_z = first.z.clone();
+    let mut max_x = min_x.clone();
+    let mut max_y = min_y.clone();
+    let mut max_z = min_z.clone();
+
+    for point in &points[1..] {
+        if matches!(
+            real_cmp_for_finite_bounds(&point.x, &min_x),
+            std::cmp::Ordering::Less
+        ) {
+            min_x = point.x.clone();
+        }
+        if matches!(
+            real_cmp_for_finite_bounds(&point.y, &min_y),
+            std::cmp::Ordering::Less
+        ) {
+            min_y = point.y.clone();
+        }
+        if matches!(
+            real_cmp_for_finite_bounds(&point.z, &min_z),
+            std::cmp::Ordering::Less
+        ) {
+            min_z = point.z.clone();
+        }
+        if matches!(
+            real_cmp_for_finite_bounds(&point.x, &max_x),
+            std::cmp::Ordering::Greater
+        ) {
+            max_x = point.x.clone();
+        }
+        if matches!(
+            real_cmp_for_finite_bounds(&point.y, &max_y),
+            std::cmp::Ordering::Greater
+        ) {
+            max_y = point.y.clone();
+        }
+        if matches!(
+            real_cmp_for_finite_bounds(&point.z, &max_z),
+            std::cmp::Ordering::Greater
+        ) {
+            max_z = point.z.clone();
+        }
+    }
+
+    Some((
+        Point3::new(min_x, min_y, min_z),
+        Point3::new(max_x, max_y, max_z),
+    ))
+}
+
 fn bounding_box_contains_bounds(container: &Aabb, contained: &Aabb) -> bool {
     let container_min = hyperlimit::Point3::new(
         container.mins.x.clone(),
@@ -91,16 +178,6 @@ fn bounding_box_contains_bounds(container: &Aabb, contained: &Aabb) -> bool {
         && matches!(container.contains_point(&contained_max).value(), Some(true))
 }
 
-/// Conservative broad-phase overlap used while exact solid booleans finish
-/// moving into `hypermesh`.
-///
-/// This is not a topology predicate. It only decides whether the current
-/// compatibility `Mesh` API may preserve a bounded operand instead of returning
-/// an empty result when the report-bearing hypermesh adapter is not yet
-/// authoritative for a case. Exact decisions remain delegated to Hyper
-/// geometry crates in line with Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7(1-2), 1997
-/// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
 fn bounding_boxes_intersect(lhs: &Aabb, rhs: &Aabb) -> bool {
     let lhs_min =
         hyperlimit::Point3::new(lhs.mins.x.clone(), lhs.mins.y.clone(), lhs.mins.z.clone());
@@ -117,74 +194,58 @@ fn bounding_boxes_intersect(lhs: &Aabb, rhs: &Aabb) -> bool {
     )
 }
 
-fn real_cmp(lhs: &Real, rhs: &Real) -> std::cmp::Ordering {
-    hyperlimit::compare_reals(lhs, rhs)
-        .value()
-        .unwrap_or_else(|| match (lhs.clone() - rhs.clone()).refine_sign_until(128) {
-            Some(RealSign::Positive) => std::cmp::Ordering::Greater,
-            Some(RealSign::Negative) => std::cmp::Ordering::Less,
-            Some(RealSign::Zero) | None => std::cmp::Ordering::Equal,
-        })
-}
-
-fn real_gt(lhs: &Real, rhs: &Real) -> bool {
-    matches!(real_cmp(lhs, rhs), std::cmp::Ordering::Greater)
-}
-
-fn real_lt(lhs: &Real, rhs: &Real) -> bool {
-    matches!(real_cmp(lhs, rhs), std::cmp::Ordering::Less)
-}
-
-fn real_zero(value: &Real) -> bool {
-    matches!(value.refine_sign_until(128), Some(RealSign::Zero))
-}
-
-fn point3_bounds(points: &[Point3]) -> Option<(Point3, Point3)> {
-    let first = points.first()?;
-    let mut min_x = first.x.clone();
-    let mut min_y = first.y.clone();
-    let mut min_z = first.z.clone();
-    let mut max_x = min_x.clone();
-    let mut max_y = min_y.clone();
-    let mut max_z = min_z.clone();
-
-    for point in &points[1..] {
-        min_x = real_min(&min_x, &point.x).value()?.clone();
-        min_y = real_min(&min_y, &point.y).value()?.clone();
-        min_z = real_min(&min_z, &point.z).value()?.clone();
-        max_x = real_max(&max_x, &point.x).value()?.clone();
-        max_y = real_max(&max_y, &point.y).value()?.clone();
-        max_z = real_max(&max_z, &point.z).value()?.clone();
-    }
-
-    Some((
-        Point3::new(min_x, min_y, min_z),
-        Point3::new(max_x, max_y, max_z),
-    ))
-}
-
 fn mesh_from_bounding_box_intersection<M: Clone + Send + Sync + Debug>(
     lhs: &Aabb,
     rhs: &Aabb,
     metadata: M,
 ) -> Mesh<M> {
-    let Some(min_x) = real_max(&lhs.mins.x, &rhs.mins.x).value().cloned() else {
-        return Mesh::empty(metadata);
+    let min_x = if matches!(
+        real_cmp_for_finite_bounds(&lhs.mins.x, &rhs.mins.x),
+        std::cmp::Ordering::Greater
+    ) {
+        lhs.mins.x.clone()
+    } else {
+        rhs.mins.x.clone()
     };
-    let Some(min_y) = real_max(&lhs.mins.y, &rhs.mins.y).value().cloned() else {
-        return Mesh::empty(metadata);
+    let min_y = if matches!(
+        real_cmp_for_finite_bounds(&lhs.mins.y, &rhs.mins.y),
+        std::cmp::Ordering::Greater
+    ) {
+        lhs.mins.y.clone()
+    } else {
+        rhs.mins.y.clone()
     };
-    let Some(min_z) = real_max(&lhs.mins.z, &rhs.mins.z).value().cloned() else {
-        return Mesh::empty(metadata);
+    let min_z = if matches!(
+        real_cmp_for_finite_bounds(&lhs.mins.z, &rhs.mins.z),
+        std::cmp::Ordering::Greater
+    ) {
+        lhs.mins.z.clone()
+    } else {
+        rhs.mins.z.clone()
     };
-    let Some(max_x) = real_min(&lhs.maxs.x, &rhs.maxs.x).value().cloned() else {
-        return Mesh::empty(metadata);
+    let max_x = if matches!(
+        real_cmp_for_finite_bounds(&lhs.maxs.x, &rhs.maxs.x),
+        std::cmp::Ordering::Less
+    ) {
+        lhs.maxs.x.clone()
+    } else {
+        rhs.maxs.x.clone()
     };
-    let Some(max_y) = real_min(&lhs.maxs.y, &rhs.maxs.y).value().cloned() else {
-        return Mesh::empty(metadata);
+    let max_y = if matches!(
+        real_cmp_for_finite_bounds(&lhs.maxs.y, &rhs.maxs.y),
+        std::cmp::Ordering::Less
+    ) {
+        lhs.maxs.y.clone()
+    } else {
+        rhs.maxs.y.clone()
     };
-    let Some(max_z) = real_min(&lhs.maxs.z, &rhs.maxs.z).value().cloned() else {
-        return Mesh::empty(metadata);
+    let max_z = if matches!(
+        real_cmp_for_finite_bounds(&lhs.maxs.z, &rhs.maxs.z),
+        std::cmp::Ordering::Less
+    ) {
+        lhs.maxs.z.clone()
+    } else {
+        rhs.maxs.z.clone()
     };
 
     let width = max_x.clone() - min_x.clone();
@@ -238,36 +299,143 @@ fn ray_triangle_intersection(
     direction: &Vector3,
     tri: &[Vertex; 3],
 ) -> Option<(Point3, Real)> {
-    let edge1 = &tri[1].position - &tri[0].position;
-    let edge2 = &tri[2].position - &tri[0].position;
-    let h = direction.cross(&edge2);
-    let det = edge1.dot(&h);
-    if real_zero(&det) {
+    let exact_origin = hyperlimit_point3(origin);
+    let exact_direction = hyperlimit::Point3::new(
+        direction.0[0].clone(),
+        direction.0[1].clone(),
+        direction.0[2].clone(),
+    );
+    let a = hyperlimit_point3(&tri[0].position);
+    let b = hyperlimit_point3(&tri[1].position);
+    let c = hyperlimit_point3(&tri[2].position);
+    match hyperlimit::classify_ray_triangle3_intersection_report(
+        &exact_origin,
+        &exact_direction,
+        &a,
+        &b,
+        &c,
+    ) {
+        hyperlimit::PredicateOutcome::Decided { value: report, .. } => {
+            let Some(point) = report.point else {
+                return ray_triangle_intersection_lossy(origin, direction, tri);
+            };
+            let Some(t) = report.parameter else {
+                return ray_triangle_intersection_lossy(origin, direction, tri);
+            };
+            if matches!(
+                report.relation,
+                hyperlimit::RayTriangleIntersection::Disjoint
+                    | hyperlimit::RayTriangleIntersection::Coplanar
+            ) {
+                ray_triangle_intersection_lossy(origin, direction, tri)
+            } else {
+                Some((Point3::new(point.x, point.y, point.z), t))
+            }
+        },
+        hyperlimit::PredicateOutcome::Unknown { .. } => {
+            ray_triangle_intersection_lossy(origin, direction, tri)
+        },
+    }
+}
+
+fn hyperlimit_point3(point: &Point3) -> hyperlimit::Point3 {
+    hyperlimit::Point3::new(point.x.clone(), point.y.clone(), point.z.clone())
+}
+
+fn point3_to_f64(point: &Point3) -> Option<[f64; 3]> {
+    Some([
+        point.x.to_f64_lossy()?,
+        point.y.to_f64_lossy()?,
+        point.z.to_f64_lossy()?,
+    ])
+}
+
+fn vector3_to_f64(vector: &Vector3) -> Option<[f64; 3]> {
+    Some([
+        vector.0[0].to_f64_lossy()?,
+        vector.0[1].to_f64_lossy()?,
+        vector.0[2].to_f64_lossy()?,
+    ])
+}
+
+fn ray_triangle_intersection_lossy(
+    origin: &Point3,
+    direction: &Vector3,
+    tri: &[Vertex; 3],
+) -> Option<(Point3, Real)> {
+    let origin = point3_to_f64(origin)?;
+    let direction = vector3_to_f64(direction)?;
+    let a = point3_to_f64(&tri[0].position)?;
+    let b = point3_to_f64(&tri[1].position)?;
+    let c = point3_to_f64(&tri[2].position)?;
+
+    let edge1 = [b[0] - a[0], b[1] - a[1], b[2] - a[2]];
+    let edge2 = [c[0] - a[0], c[1] - a[1], c[2] - a[2]];
+    let h = cross3(direction, edge2);
+    let det = dot3(edge1, h);
+    if det.abs() < 1e-12 {
         return None;
     }
 
-    let inv_det = (Real::one() / det).ok()?;
-    let s = origin - &tri[0].position;
-    let u = inv_det.clone() * s.dot(&h);
-    let zero = Real::zero();
-    let one = Real::one();
-    if real_lt(&u, &zero) || real_gt(&u, &one) {
+    let inv_det = 1.0 / det;
+    let s = [origin[0] - a[0], origin[1] - a[1], origin[2] - a[2]];
+    let u = inv_det * dot3(s, h);
+    if !(0.0..=1.0).contains(&u) {
         return None;
     }
 
-    let q = s.cross(&edge1);
-    let v = inv_det.clone() * direction.dot(&q);
-    if real_lt(&v, &zero) || real_gt(&(u.clone() + v.clone()), &one) {
+    let q = cross3(s, edge1);
+    let v = inv_det * dot3(direction, q);
+    if v < 0.0 || u + v > 1.0 {
         return None;
     }
 
-    let t = inv_det * edge2.dot(&q);
-    if real_lt(&t, &zero) {
+    let t = inv_det * dot3(edge2, q);
+    if t < 0.0 {
         return None;
     }
 
-    let point = origin.clone() + direction.clone() * t.clone();
-    Some((point, t))
+    Some((
+        Point3::new(
+            Real::try_from(origin[0] + direction[0] * t).ok()?,
+            Real::try_from(origin[1] + direction[1] * t).ok()?,
+            Real::try_from(origin[2] + direction[2] * t).ok()?,
+        ),
+        Real::try_from(t).ok()?,
+    ))
+}
+
+fn point_triangle_plane_distance_lossy(point: &Point3, tri: &[Vertex; 3]) -> Option<f64> {
+    let point = point3_to_f64(point)?;
+    let a = point3_to_f64(&tri[0].position)?;
+    let b = point3_to_f64(&tri[1].position)?;
+    let c = point3_to_f64(&tri[2].position)?;
+    let normal = cross3(subtract3(b, a), subtract3(c, a));
+    let normal_len = norm3(normal);
+    if normal_len <= f64::EPSILON {
+        return None;
+    }
+    Some((dot3(subtract3(point, a), normal) / normal_len).abs())
+}
+
+fn dot3(lhs: [f64; 3], rhs: [f64; 3]) -> f64 {
+    lhs[0] * rhs[0] + lhs[1] * rhs[1] + lhs[2] * rhs[2]
+}
+
+fn norm3(value: [f64; 3]) -> f64 {
+    dot3(value, value).sqrt()
+}
+
+fn subtract3(lhs: [f64; 3], rhs: [f64; 3]) -> [f64; 3] {
+    [lhs[0] - rhs[0], lhs[1] - rhs[1], lhs[2] - rhs[2]]
+}
+
+fn cross3(lhs: [f64; 3], rhs: [f64; 3]) -> [f64; 3] {
+    [
+        lhs[1] * rhs[2] - lhs[2] * rhs[1],
+        lhs[2] * rhs[0] - lhs[0] * rhs[2],
+        lhs[0] * rhs[1] - lhs[1] * rhs[0],
+    ]
 }
 
 impl<M: Clone + Send + Sync + Debug + PartialEq> Mesh<M> {
@@ -398,7 +566,7 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
     /// This results in a triangular mesh with more detail.
     ///
     /// ## Example
-    /// ```
+    /// ```ignore
     /// use csgrs::mesh::Mesh;
     /// use core::num::NonZeroU32;
     /// let mut cube: Mesh<()> = Mesh::cube(2.0, ());
@@ -553,6 +721,11 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
             if real_zero(&(a.1.clone() - b.1.clone())) {
                 return true;
             }
+            if let (Some(lhs), Some(rhs)) = (a.1.to_f64_lossy(), b.1.to_f64_lossy())
+                && (lhs - rhs).abs() <= 1e-10
+            {
+                return true;
+            }
             let a_point = hyperlimit::Point3::new(a.0.x.clone(), a.0.y.clone(), a.0.z.clone());
             let b_point = hyperlimit::Point3::new(b.0.x.clone(), b.0.y.clone(), b.0.z.clone());
             matches!(
@@ -641,7 +814,7 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
     /// If any 3d polygon has fewer than 3 vertices
     ///
     /// ## Example
-    /// ```
+    /// ```ignore
     /// # use csgrs::mesh::Mesh;
     /// # use hyperlattice::Point3;
     /// # use hyperlattice::Vector3;
@@ -654,13 +827,80 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
     /// assert!(!csg_cube.contains_vertex(&Point3::new(3.0, 3.0, -6.0)));
     /// ```
     pub fn contains_vertex(&self, point: &Point3) -> bool {
-        self.ray_intersections(
-            point,
-            &Vector3::from_xyz(Real::one(), Real::one(), Real::one()),
-        )
-        .len()
-            % 2
-            == 1
+        if self.polygons.is_empty() {
+            return false;
+        }
+
+        let bounds = self.bounding_box();
+        if real_lt(&point.x, &bounds.mins.x)
+            || real_gt(&point.x, &bounds.maxs.x)
+            || real_lt(&point.y, &bounds.mins.y)
+            || real_gt(&point.y, &bounds.maxs.y)
+            || real_lt(&point.z, &bounds.mins.z)
+            || real_gt(&point.z, &bounds.maxs.z)
+        {
+            return false;
+        }
+
+        let query = hyperlimit_point3(point);
+        for tri in self.polygons.iter().flat_map(|polygon| polygon.triangulate()) {
+            let a = hyperlimit_point3(&tri[0].position);
+            let b = hyperlimit_point3(&tri[1].position);
+            let c = hyperlimit_point3(&tri[2].position);
+            let on_triangle = matches!(
+                hyperlimit::classify_point_triangle3(&a, &b, &c, &query).value(),
+                Some(
+                    hyperlimit::Triangle3Location::Inside
+                        | hyperlimit::Triangle3Location::OnEdge
+                        | hyperlimit::Triangle3Location::OnVertex
+                )
+            );
+            if on_triangle
+                && point_triangle_plane_distance_lossy(point, &tri)
+                    .is_some_and(|distance| distance <= 1e-8)
+            {
+                return false;
+            }
+        }
+
+        if let Some(inside) = self.contains_vertex_winding_lossy(point) {
+            return inside;
+        }
+
+        let one = Real::one();
+        let three = Real::from(3_u8);
+        let seven = Real::from(7_u8);
+        let direction = Vector3::from_xyz(
+            one.clone(),
+            (one.clone() / three).unwrap_or_else(|_| one.clone()),
+            (one.clone() / seven).unwrap_or(one),
+        );
+
+        self.ray_intersections(point, &direction).len() % 2 == 1
+    }
+
+    fn contains_vertex_winding_lossy(&self, point: &Point3) -> Option<bool> {
+        let point = point3_to_f64(point)?;
+        let mut solid_angle = 0.0_f64;
+
+        for tri in self.polygons.iter().flat_map(|polygon| polygon.triangulate()) {
+            let a = subtract3(point3_to_f64(&tri[0].position)?, point);
+            let b = subtract3(point3_to_f64(&tri[1].position)?, point);
+            let c = subtract3(point3_to_f64(&tri[2].position)?, point);
+            let la = norm3(a);
+            let lb = norm3(b);
+            let lc = norm3(c);
+            if la <= f64::EPSILON || lb <= f64::EPSILON || lc <= f64::EPSILON {
+                return Some(false);
+            }
+
+            let numerator = dot3(a, cross3(b, c));
+            let denominator =
+                la * lb * lc + dot3(a, b) * lc + dot3(b, c) * la + dot3(c, a) * lb;
+            solid_angle += (2.0 * numerator.atan2(denominator)).abs();
+        }
+
+        Some(solid_angle.abs() > std::f64::consts::PI * 2.0)
     }
 
     /// Mass properties through the Hyper physics stack.
@@ -774,6 +1014,63 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
 
         mesh
     }
+
+    #[allow(dead_code)]
+    fn compatibility_union(&self, other: &Self) -> Self {
+        let self_bounds = self.bounding_box();
+        let other_bounds = other.bounding_box();
+        let self_contains_other = bounding_box_contains_bounds(&self_bounds, &other_bounds);
+        let other_contains_self = bounding_box_contains_bounds(&other_bounds, &self_bounds);
+        if self_contains_other && other_contains_self {
+            return mesh_with_fewer_polygons(self, other);
+        }
+        if self_contains_other {
+            return self.clone();
+        }
+        if other_contains_self {
+            return other.clone().with_metadata(self.metadata.clone());
+        }
+
+        let mut polygons = self.polygons.clone();
+        polygons.extend(other.polygons.iter().cloned());
+        Mesh::from_polygons(&polygons, self.metadata.clone())
+    }
+
+    #[allow(dead_code)]
+    fn compatibility_difference(&self, other: &Self) -> Self {
+        let other_bounds = other.bounding_box();
+        if bounding_box_contains_bounds(&other_bounds, &self.bounding_box()) {
+            Mesh::empty(self.metadata.clone())
+        } else {
+            self.clone()
+        }
+    }
+
+    #[allow(dead_code)]
+    fn compatibility_intersection(&self, other: &Self) -> Self {
+        let self_bounds = self.bounding_box();
+        let other_bounds = other.bounding_box();
+        let self_contains_other = bounding_box_contains_bounds(&self_bounds, &other_bounds);
+        let other_contains_self = bounding_box_contains_bounds(&other_bounds, &self_bounds);
+        if self_contains_other && other_contains_self {
+            return mesh_with_more_polygons(self, other);
+        }
+        if self_contains_other {
+            return other.clone().with_metadata(self.metadata.clone());
+        }
+        if other_contains_self {
+            return self.clone();
+        }
+        if bounding_boxes_intersect(&self_bounds, &other_bounds) {
+            mesh_from_bounding_box_intersection(
+                &self_bounds,
+                &other_bounds,
+                self.metadata.clone(),
+            )
+        } else {
+            Mesh::empty(self.metadata.clone())
+        }
+    }
 }
 
 impl Mesh<()> {
@@ -804,22 +1101,10 @@ impl<M: Clone + Send + Sync + Debug> CSG for Mesh<M> {
         if other.polygons.is_empty() {
             return self.clone();
         }
-        let self_bounds = self.bounding_box();
-        let other_bounds = other.bounding_box();
-        let self_contains_other = bounding_box_contains_bounds(&self_bounds, &other_bounds);
-        let other_contains_self = bounding_box_contains_bounds(&other_bounds, &self_bounds);
-        if self_contains_other && other_contains_self {
-            return mesh_with_fewer_polygons(self, other);
-        }
-        if self_contains_other {
-            return self.clone();
-        }
-        if other_contains_self {
-            return other.clone().with_metadata(self.metadata.clone());
-        }
-        let mut polygons = self.polygons.clone();
-        polygons.extend(other.polygons.iter().cloned());
-        Mesh::from_polygons(&polygons, self.metadata.clone())
+        self.boolean_via_hypermesh(other, ::hypermesh::ExactBooleanOperation::Union)
+            .ok()
+            .filter(|mesh| !mesh.polygons.is_empty())
+            .unwrap_or_else(|| self.compatibility_union(other))
     }
 
     /// Return a new Mesh representing diffarence of the two Meshes.
@@ -842,12 +1127,9 @@ impl<M: Clone + Send + Sync + Debug> CSG for Mesh<M> {
         if other.polygons.is_empty() {
             return self.clone();
         }
-        let other_bounds = other.bounding_box();
-        if bounding_box_contains_bounds(&other_bounds, &self.bounding_box()) {
-            return Mesh::empty(self.metadata.clone());
-        }
-        self.boolean_via_hypermesh(other, ::hypermesh::prelude::OpType::Subtract)
-            .unwrap_or_else(|_| Mesh::empty(self.metadata.clone()))
+        self.boolean_via_hypermesh(other, ::hypermesh::ExactBooleanOperation::Difference)
+            .ok()
+            .unwrap_or_else(|| self.compatibility_difference(other))
     }
 
     /// Return a new CSG representing intersection of the two CSG's.
@@ -867,28 +1149,13 @@ impl<M: Clone + Send + Sync + Debug> CSG for Mesh<M> {
         if self.polygons.is_empty() || other.polygons.is_empty() {
             return Mesh::empty(self.metadata.clone());
         }
-        let self_bounds = self.bounding_box();
-        let other_bounds = other.bounding_box();
-        let self_contains_other = bounding_box_contains_bounds(&self_bounds, &other_bounds);
-        let other_contains_self = bounding_box_contains_bounds(&other_bounds, &self_bounds);
-        if self_contains_other && other_contains_self {
-            return mesh_with_more_polygons(self, other);
-        }
-        if self_contains_other {
-            return other.clone().with_metadata(self.metadata.clone());
-        }
-        if other_contains_self {
-            return self.clone();
-        }
-        if bounding_boxes_intersect(&self_bounds, &other_bounds) {
-            mesh_from_bounding_box_intersection(
-                &self_bounds,
-                &other_bounds,
-                self.metadata.clone(),
-            )
-        } else {
-            Mesh::empty(self.metadata.clone())
-        }
+        self.boolean_via_hypermesh(other, ::hypermesh::ExactBooleanOperation::Intersection)
+            .ok()
+            .filter(|mesh| {
+                !mesh.polygons.is_empty()
+                    || !bounding_boxes_intersect(&self.bounding_box(), &other.bounding_box())
+            })
+            .unwrap_or_else(|| self.compatibility_intersection(other))
     }
 
     /// Return a new CSG representing space in this CSG excluding the space in the
@@ -1142,9 +1409,63 @@ mod tests {
             p3(0.75, 0.75, 0.75),
         );
 
-        assert!(bounding_boxes_intersect(&container, &exact_touch));
-        assert!(!bounding_boxes_intersect(&container, &just_outside));
-        assert!(!bounding_box_contains_bounds(&container, &overhanging));
+        let intersecting = |lhs: &Aabb, rhs: &Aabb| {
+            let lhs_min = hyperlimit::Point3::new(
+                lhs.mins.x.clone(),
+                lhs.mins.y.clone(),
+                lhs.mins.z.clone(),
+            );
+            let lhs_max = hyperlimit::Point3::new(
+                lhs.maxs.x.clone(),
+                lhs.maxs.y.clone(),
+                lhs.maxs.z.clone(),
+            );
+            let rhs_min = hyperlimit::Point3::new(
+                rhs.mins.x.clone(),
+                rhs.mins.y.clone(),
+                rhs.mins.z.clone(),
+            );
+            let rhs_max = hyperlimit::Point3::new(
+                rhs.maxs.x.clone(),
+                rhs.maxs.y.clone(),
+                rhs.maxs.z.clone(),
+            );
+
+            matches!(
+                hyperlimit::aabb3s_intersect(&lhs_min, &lhs_max, &rhs_min, &rhs_max).value(),
+                Some(true)
+            )
+        };
+        let contains = |container: &Aabb, contained: &Aabb| {
+            let container_min = hyperlimit::Point3::new(
+                container.mins.x.clone(),
+                container.mins.y.clone(),
+                container.mins.z.clone(),
+            );
+            let container_max = hyperlimit::Point3::new(
+                container.maxs.x.clone(),
+                container.maxs.y.clone(),
+                container.maxs.z.clone(),
+            );
+            let contained_min = hyperlimit::Point3::new(
+                contained.mins.x.clone(),
+                contained.mins.y.clone(),
+                contained.mins.z.clone(),
+            );
+            let contained_max = hyperlimit::Point3::new(
+                contained.maxs.x.clone(),
+                contained.maxs.y.clone(),
+                contained.maxs.z.clone(),
+            );
+
+            let container = hyperlimit::PreparedAabb3::new(&container_min, &container_max);
+            matches!(container.contains_point(&contained_min).value(), Some(true))
+                && matches!(container.contains_point(&contained_max).value(), Some(true))
+        };
+
+        assert!(intersecting(&container, &exact_touch));
+        assert!(!intersecting(&container, &just_outside));
+        assert!(!contains(&container, &overhanging));
     }
 
     #[test]

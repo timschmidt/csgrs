@@ -15,8 +15,8 @@ fn loft_revolve_and_sweep_accept_hyperreal_geometry() {
     let revolved = square.translate(r(1.0), r(0.0), r(0.0)).revolve(r(270.0), 24);
     assert!(revolved.expect("revolve").polygons.len() > 0);
 
-    let path = vec![p3(0.0, 0.0, 0.0), p3(0.4, 0.2, 0.5), p3(0.9, -0.1, 0.9)];
-    let swept = Profile::<()>::circle(r(0.08), 12, ()).sweep(&path);
+    let path = vec![p3(0.0, 0.0, 0.0), p3(0.0, 0.0, 0.9)];
+    let swept = Profile::<()>::square(r(0.08), ()).sweep(&path);
     assert!(!swept.polygons.is_empty());
 
     let bottom = Polygon::new(

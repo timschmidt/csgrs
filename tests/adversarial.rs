@@ -29,6 +29,30 @@ fn boolean_pipeline_accepts_hyperreal_transforms() {
 }
 
 #[test]
+fn translated_union_does_not_emit_origin_fallback_vertices() {
+    let left = Mesh::<()>::sphere(r(1.0), 16, 8, ()).translate(r(10.0), r(0.0), r(0.0));
+    let right = Mesh::<()>::sphere(r(1.0), 16, 8, ()).translate(r(13.0), r(0.0), r(0.0));
+
+    let result = left.union(&right);
+
+    assert!(!result.polygons.is_empty());
+    for polygon in &result.polygons {
+        for vertex in &polygon.vertices {
+            let x = vertex
+                .position
+                .x
+                .to_f64_lossy()
+                .expect("sphere coordinates should export to finite f64");
+            assert!(
+                x >= 9.0,
+                "union emitted an un-translated or origin fallback vertex: x={x}, position={:?}",
+                vertex.position
+            );
+        }
+    }
+}
+
+#[test]
 fn plane_split_uses_exact_hyperreal_side_classification() {
     let mut mesh = Mesh::<()>::cube(r(2.0), ());
     let polygon = mesh.polygons.remove(0);

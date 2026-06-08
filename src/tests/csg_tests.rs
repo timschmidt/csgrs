@@ -66,8 +66,8 @@ fn test_csg_union2() {
     let bb_union = unioned.bounding_box();
     let bb_cube = c1.bounding_box();
     let bb_sphere = c2.bounding_box();
-    assert!(bb_union.mins.x <= bb_cube.mins.x.min(bb_sphere.mins.x));
-    assert!(bb_union.maxs.x >= bb_cube.maxs.x.max(bb_sphere.maxs.x));
+    assert!(bb_union.mins.x <= *bb_cube.mins.x.min(&bb_sphere.mins.x));
+    assert!(bb_union.maxs.x >= *bb_cube.maxs.x.max(&bb_sphere.maxs.x));
 }
 
 #[test]
