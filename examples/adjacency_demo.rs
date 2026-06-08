@@ -118,68 +118,17 @@ fn main() {
     );
     println!("   ✓ Adjacency map affects smoothing as expected");
 
-    // Demonstrate mesh quality analysis
-    println!("\n6. Mesh quality analysis:");
-    let tessellated = sphere.triangulate();
-    let qualities = tessellated.analyze_triangle_quality();
-
-    if !qualities.is_empty() {
-        let avg_quality: Real = (qualities
-            .iter()
-            .map(|q| q.quality_score.clone())
-            .sum::<Real>()
-            / r(qualities.len()))
-        .unwrap();
-        let min_quality = qualities
-            .iter()
-            .map(|q| q.quality_score.clone())
-            .reduce(|a, b| a.min(b))
-            .unwrap_or_else(Real::zero);
-
-        println!("   Triangle count: {}", qualities.len());
-        println!("   Average quality: {:.3}", avg_quality);
-        println!("   Minimum quality: {:.3}", min_quality);
-    }
-
-    let metrics = tessellated.compute_mesh_quality();
-    println!("   High quality ratio: {:.3}", metrics.high_quality_ratio);
-    println!("   Sliver triangle count: {}", metrics.sliver_count);
-    println!("   Edge length std dev: {:.3}", metrics.edge_length_std);
-
-    // Demonstrate adaptive refinement
-    println!("\n7. Adaptive mesh refinement:");
-    let refined = tessellated.adaptive_refine(r(0.5), r(2.0), r(15.0));
-    let (refined_vertex_map, refined_adjacency_map) = refined.build_connectivity();
-    println!("   Original triangles: {}", tessellated.polygons.len());
-    println!("   After refinement: {}", refined.polygons.len());
-    println!(
-        "   Refined unique vertices: {}",
-        refined_vertex_map.vertex_count()
-    );
-    println!(
-        "   Refined adjacency entries: {}",
-        refined_adjacency_map.len()
-    );
-
-    if refined.polygons.len() > tessellated.polygons.len() {
-        println!("   ✓ Mesh was refined based on quality criteria");
-    } else {
-        println!("   ✓ No refinement needed (good quality mesh)");
-    }
-
     println!("\n=== VERIFICATION COMPLETE ===");
     println!("✓ Adjacency map is properly created and used");
     println!("✓ Global mesh connectivity replaces local polygon edges");
     println!("✓ Vertex indexing handles floating-point coordinates robustly");
     println!("✓ Laplacian smoothing uses actual neighbor relationships");
-    println!("✓ Mesh quality analysis provides comprehensive metrics");
     println!("✓ All mesh processing algorithms now use the adjacency data");
 
     println!("\n📊 PERFORMANCE CHARACTERISTICS:");
     println!("   Vertex indexing: O(V²) worst case, O(V) typical with spatial locality");
     println!("   Adjacency building: O(V + E) where E is number of edges");
     println!("   Smoothing: O(iterations × V × avg_valence)");
-    println!("   Quality analysis: O(T) where T is number of triangles");
 }
 
 fn r(value: impl IntoExampleReal) -> Real {
