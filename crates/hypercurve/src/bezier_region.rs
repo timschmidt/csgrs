@@ -1780,8 +1780,12 @@ fn classify_point_against_native_loop(
     };
     let mut crossings = 0_usize;
     for fragment in boundary_loop.fragments() {
-        if subcurve_contains_point(fragment, point, policy)? {
-            return Ok(Classification::Decided(ContourPointLocation::Boundary));
+        match subcurve_contains_point(fragment, point, policy) {
+            Classification::Decided(true) => {
+                return Ok(Classification::Decided(ContourPointLocation::Boundary));
+            }
+            Classification::Decided(false) => {}
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         }
         let relation = match subcurve_relation_to_line_with_contacts(fragment, &ray, policy) {
             Classification::Decided(relation) => relation,
@@ -1885,18 +1889,11 @@ fn subcurve_contains_point(
     curve: &BezierSubcurve2,
     point: &Point2,
     policy: &CurvePolicy,
-) -> CurveResult<bool> {
-    let classification = match curve {
+) -> Classification<bool> {
+    match curve {
         BezierSubcurve2::Quadratic(curve) => curve.contains_point(point, policy),
         BezierSubcurve2::Cubic(_) => Classification::Decided(false),
         BezierSubcurve2::RationalQuadratic(curve) => curve.contains_point(point, policy),
-    };
-    match classification {
-        Classification::Decided(value) => Ok(value),
-        Classification::Uncertain(UncertaintyReason::Unsupported) => Ok(false),
-        Classification::Uncertain(reason) => Err(crate::CurveError::Topology(format!(
-            "could not certify retained curved-loop boundary point query: {reason:?}"
-        ))),
     }
 }
 
@@ -1922,5 +1919,34 @@ impl BezierSubcurve2 {
             Self::Cubic(curve) => curve.signed_area_contribution().map(Some),
             Self::RationalQuadratic(curve) => curve.signed_area_contribution(),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::RationalQuadraticBezier2;
+
+    fn p(x: i32, y: i32) -> Point2 {
+        Point2::new(Real::from(x), Real::from(y))
+    }
+
+    #[test]
+    fn retained_subcurve_point_query_preserves_projective_denominator_uncertainty() {
+        let conic = RationalQuadraticBezier2::try_new(
+            p(0, 0),
+            p(1, 0),
+            p(2, 0),
+            1.into(),
+            (-1).into(),
+            1.into(),
+        )
+        .unwrap();
+        let subcurve = BezierSubcurve2::RationalQuadratic(conic);
+
+        assert_eq!(
+            subcurve_contains_point(&subcurve, &p(100, 0), &CurvePolicy::certified()),
+            Classification::Uncertain(UncertaintyReason::Boundary)
+        );
     }
 }
