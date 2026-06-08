@@ -201,7 +201,12 @@ impl PointMeshWindingReport {
             }
             ClosedMeshWindingRelation::Inside => {
                 self.validate_axis_was_tested()?;
-                if self.crossings % 2 == 1 && self.boundary_hits == 0 && self.unknown_hits == 0 {
+                self.validate_hit_count_bounds()?;
+                if self.crossings % 2 == 1
+                    && self.boundary_hits == 0
+                    && self.degenerate_hits == 0
+                    && self.unknown_hits == 0
+                {
                     Ok(())
                 } else {
                     Err(WindingReportError::StatusEvidenceMismatch)
@@ -209,8 +214,10 @@ impl PointMeshWindingReport {
             }
             ClosedMeshWindingRelation::Outside => {
                 self.validate_axis_was_tested()?;
+                self.validate_hit_count_bounds()?;
                 if self.crossings.is_multiple_of(2)
                     && self.boundary_hits == 0
+                    && self.degenerate_hits == 0
                     && self.unknown_hits == 0
                 {
                     Ok(())
@@ -220,6 +227,7 @@ impl PointMeshWindingReport {
             }
             ClosedMeshWindingRelation::Boundary => {
                 self.validate_axis_was_tested()?;
+                self.validate_hit_count_bounds()?;
                 if self.boundary_hits != 0 {
                     Ok(())
                 } else {
@@ -229,8 +237,12 @@ impl PointMeshWindingReport {
             ClosedMeshWindingRelation::Unknown => {
                 if self.axis.is_none()
                     && self.tested_axes == candidate_count
+                    && self.crossings == 0
+                    && self.boundary_hits == 0
+                    && self.parallel_faces == 0
                     && (self.degenerate_hits != 0 || self.unknown_hits != 0)
                 {
+                    self.validate_hit_count_bounds()?;
                     Ok(())
                 } else {
                     Err(WindingReportError::StatusEvidenceMismatch)
@@ -252,6 +264,25 @@ impl PointMeshWindingReport {
         } else {
             Err(WindingReportError::StatusEvidenceMismatch)
         }
+    }
+
+    fn validate_hit_count_bounds(&self) -> Result<(), WindingReportError> {
+        let selected_axis_hits = self
+            .crossings
+            .saturating_add(self.boundary_hits)
+            .saturating_add(self.parallel_faces);
+        if selected_axis_hits > self.triangle_count {
+            return Err(WindingReportError::StatusEvidenceMismatch);
+        }
+
+        // Boundary fallback and unknown reports may carry degeneracy or
+        // undecidable evidence accumulated across several attempted rays.
+        let dependent_hits = self.degenerate_hits.saturating_add(self.unknown_hits);
+        let max_dependent_hits = self.tested_axes.saturating_mul(self.triangle_count);
+        if dependent_hits > max_dependent_hits {
+            return Err(WindingReportError::StatusEvidenceMismatch);
+        }
+        Ok(())
     }
 
     /// Validate this report by recomputing it from the source point and mesh.
@@ -1003,6 +1034,75 @@ mod tests {
 
         assert_eq!(
             report.validate(),
+            Err(WindingReportError::StatusEvidenceMismatch)
+        );
+    }
+
+    #[test]
+    fn winding_report_rejects_impossible_selected_axis_hit_totals() {
+        let report = PointMeshWindingReport {
+            relation: ClosedMeshWindingRelation::Inside,
+            axis: Some(WindingRayAxis::X),
+            tested_axes: 1,
+            triangle_count: 1,
+            crossings: 1,
+            boundary_hits: 0,
+            degenerate_hits: 0,
+            parallel_faces: 1,
+            unknown_hits: 0,
+        };
+
+        assert_eq!(
+            report.validate(),
+            Err(WindingReportError::StatusEvidenceMismatch)
+        );
+
+        let mut relabeled = report;
+        relabeled.parallel_faces = 0;
+        relabeled.degenerate_hits = 1;
+        assert_eq!(
+            relabeled.validate(),
+            Err(WindingReportError::StatusEvidenceMismatch)
+        );
+    }
+
+    #[test]
+    fn winding_report_bounds_accumulated_unresolved_ray_evidence() {
+        let candidate_count = winding_ray_candidate_count();
+        let fallback_boundary = PointMeshWindingReport {
+            relation: ClosedMeshWindingRelation::Boundary,
+            axis: Some(WindingRayAxis::X),
+            tested_axes: candidate_count,
+            triangle_count: 1,
+            crossings: 0,
+            boundary_hits: 1,
+            degenerate_hits: candidate_count - 1,
+            parallel_faces: 0,
+            unknown_hits: 0,
+        };
+        assert!(fallback_boundary.validate().is_ok());
+
+        let impossible_unknown = PointMeshWindingReport {
+            relation: ClosedMeshWindingRelation::Unknown,
+            axis: None,
+            tested_axes: candidate_count,
+            triangle_count: 1,
+            crossings: 0,
+            boundary_hits: 0,
+            degenerate_hits: candidate_count + 1,
+            parallel_faces: 0,
+            unknown_hits: 0,
+        };
+        assert_eq!(
+            impossible_unknown.validate(),
+            Err(WindingReportError::StatusEvidenceMismatch)
+        );
+
+        let mut impossible_crossing = impossible_unknown;
+        impossible_crossing.degenerate_hits = 1;
+        impossible_crossing.crossings = 1;
+        assert_eq!(
+            impossible_crossing.validate(),
             Err(WindingReportError::StatusEvidenceMismatch)
         );
     }
