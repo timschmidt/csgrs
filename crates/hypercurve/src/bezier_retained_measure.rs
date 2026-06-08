@@ -746,11 +746,11 @@ fn algebraic_endpoint_interval(point: &BezierEndpointPointImage2) -> Option<Endp
             x: polynomial_coordinate_interval(
                 point.x()?,
                 point.parameter().polynomial_coefficients.as_slice(),
-            ),
+            )?,
             y: polynomial_coordinate_interval(
                 point.y()?,
                 point.parameter().polynomial_coefficients.as_slice(),
-            ),
+            )?,
             kind: BezierRetainedEnvelopeSourceKind::Algebraic,
         }),
         BezierEndpointPointImage2::RationalQuadratic(point) => Some(EndpointInterval {
@@ -774,20 +774,18 @@ fn algebraic_endpoint_interval(point: &BezierEndpointPointImage2) -> Option<Endp
 fn polynomial_coordinate_interval(
     coordinate: &crate::BezierAlgebraicCoordinateImage,
     parameter_polynomial: &[Real],
-) -> CoordinateInterval {
+) -> Option<CoordinateInterval> {
     if let Some(exact) =
         polynomial_image_constant_remainder(coordinate.coefficients(), parameter_polynomial)
     {
-        return CoordinateInterval {
+        return Some(CoordinateInterval {
             lower: exact.clone(),
             upper: exact,
-        };
+        });
     }
-    represented_coordinate_interval(
-        coordinate
-            .representation()
-            .expect("transformed polynomial endpoint image has a coordinate representation"),
-    )
+    Some(represented_coordinate_interval(
+        coordinate.representation()?,
+    ))
 }
 
 fn polynomial_image_constant_remainder(coefficients: &[Real], modulus: &[Real]) -> Option<Real> {
