@@ -122,6 +122,15 @@ pub(crate) fn split_region_views_at_intersections(
 }
 
 fn validate_region_fragment_keys(contours: &[RegionContourFragments]) -> CurveResult<()> {
+    if contours
+        .iter()
+        .any(|contour_fragments| contour_fragments.fragments.is_empty())
+    {
+        return Err(CurveError::Topology(
+            "region fragment set keyed contour evidence must carry fragments".into(),
+        ));
+    }
+
     let mut keys = contours
         .iter()
         .map(|contour_fragments| contour_fragments.key)

@@ -87,6 +87,10 @@ fn region_fragments_split_all_keyed_contours() {
 #[test]
 fn region_fragment_set_constructor_validates_unique_contour_keys() {
     RegionFragmentSet::new(Vec::new()).unwrap();
+    assert_topology_error(RegionFragmentSet::new(vec![RegionContourFragments {
+        key: RegionContourKey::new(RegionSide::First, RegionContourRole::Material, 0),
+        fragments: hypercurve::ContourFragmentSet::new(Vec::new()).unwrap(),
+    }]));
 
     let first = Region2::from_material_contours(vec![rectangle(0, 0, 2, 2)]);
     let second = Region2::from_material_contours(vec![rectangle(4, 4, 6, 6)]);
