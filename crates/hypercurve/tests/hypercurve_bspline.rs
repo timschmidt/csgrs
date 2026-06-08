@@ -707,6 +707,42 @@ fn retained_span_fact_constructors_reject_forged_evidence() {
         r(1),
         bounds.clone(),
         RetainedSpanAxisMonotonicity::Unsupported,
+        RetainedSpanAxisMonotonicity::Unsupported,
+        RetainedTopologyStatus::Unsupported,
+        None,
+    ));
+    assert_topology_error(RetainedBSplineSpanFacts2::new(
+        0,
+        r(0),
+        r(1),
+        bounds.clone(),
+        RetainedSpanAxisMonotonicity::Unsupported,
+        RetainedSpanAxisMonotonicity::Unsupported,
+        RetainedTopologyStatus::Unresolved,
+        None,
+    ));
+    for topology_status in [
+        RetainedTopologyStatus::CertifiedApproximation,
+        RetainedTopologyStatus::DisplayOrExport,
+        RetainedTopologyStatus::ImportedLossy,
+    ] {
+        assert_topology_error(RetainedBSplineSpanFacts2::new(
+            0,
+            r(0),
+            r(1),
+            bounds.clone(),
+            RetainedSpanAxisMonotonicity::Unsupported,
+            RetainedSpanAxisMonotonicity::Unsupported,
+            topology_status,
+            Some(RetainedSpanWeightDomainReport2::new(3, 3, true).unwrap()),
+        ));
+    }
+    assert_topology_error(RetainedBSplineSpanFacts2::new(
+        0,
+        r(0),
+        r(1),
+        bounds.clone(),
+        RetainedSpanAxisMonotonicity::Unsupported,
         RetainedSpanAxisMonotonicity::CertifiedMonotone,
         RetainedTopologyStatus::NativeExact,
         None,

@@ -1188,6 +1188,18 @@ fn validate_span_fact_evidence(
             "non-native retained span facts must not claim certified monotonicity".into(),
         ));
     }
+    if !topology_status.is_native_exact() && !topology_status.is_retained_evidence() {
+        return Err(CurveError::Topology(
+            "retained B-spline span facts must carry exact native or retained evidence status"
+                .into(),
+        ));
+    }
+    if topology_status.is_retained_evidence() && weight_domain.is_none() {
+        return Err(CurveError::Topology(
+            "retained non-native B-spline span facts must carry rational weight-domain evidence"
+                .into(),
+        ));
+    }
     if topology_status.is_native_exact()
         && (x_monotonicity == RetainedSpanAxisMonotonicity::Unsupported
             || y_monotonicity == RetainedSpanAxisMonotonicity::Unsupported)
