@@ -1601,6 +1601,48 @@ fn full_face_adjacent_union_accepts_interior_subdivided_shared_face() {
 }
 
 #[test]
+fn full_face_adjacent_union_uses_polygon_patch_for_dual_subdivided_shared_face() {
+    let left = ExactMesh::from_i64_triangles(
+        &[0, 0, 0, 6, 0, 0, 0, 6, 0, 2, 2, 0, 0, 0, 6],
+        &[
+            0, 3, 1, //
+            1, 3, 2, //
+            2, 3, 0, //
+            0, 1, 4, //
+            1, 2, 4, //
+            2, 0, 4,
+        ],
+    )
+    .unwrap();
+    let right = ExactMesh::from_i64_triangles(
+        &[0, 0, 0, 6, 0, 0, 0, 6, 0, 1, 1, 0, 0, 0, -6],
+        &[
+            0, 1, 3, //
+            1, 2, 3, //
+            2, 0, 3, //
+            0, 4, 1, //
+            1, 4, 2, //
+            2, 4, 0,
+        ],
+    )
+    .unwrap();
+
+    let union = materialize_full_face_adjacent_union(&left, &right, ValidationPolicy::CLOSED)
+        .expect("opposite source-owned triangulated disks should certify as one patch");
+    assert!(union.shared_faces.is_empty(), "{union:?}");
+    assert_eq!(union.shared_patches.len(), 1, "{union:?}");
+    assert_eq!(union.shared_patches[0].left_faces, vec![0, 1, 2]);
+    assert_eq!(union.shared_patches[0].right_faces, vec![0, 1, 2]);
+    union.validate().unwrap();
+    union.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(
+        union.freshness_against_sources(&left, &right),
+        FullFaceAdjacentUnionFreshness::Current
+    );
+    assert!(union.mesh.facts().mesh.closed_manifold);
+}
+
+#[test]
 fn adjacent_union_completion_boolean_is_publicly_replayable() {
     let left_a = tetra_from_corners([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]);
     let left_b = tetra_from_corners([10, 0, 0], [12, 0, 0], [10, 2, 0], [10, 0, 2]);
