@@ -9,8 +9,9 @@
 
 use hyperlimit::{
     ApproximationPolicy, MeshSource, Point3, TriangleLocation, classify_point_triangle,
-    compare_reals, project_point3,
+    compare_reals, project_point3, projected_polygon_area2_value,
 };
+use hyperreal::Real;
 use std::cmp::Ordering;
 
 use super::ExactMesh;
@@ -2884,6 +2885,25 @@ fn validate_volumetric_materialized_assembly_matches_operation(
                     ExactReportValidationError::VolumetricMaterializedAssemblyViolatesOperation,
                 );
             }
+            let retained_source_subcells_cover_cell =
+                expected_orientation.is_some_and(|expected_orientation| {
+                    output_triangles_cover_triangulated_cell(
+                        assembly.triangles.iter().filter(|output| {
+                            output.source_side == triangulation.side
+                                && output.source_face == triangulation.face
+                                && output.orientation == expected_orientation
+                                && output_triangle_lies_in_triangulated_cell(
+                                    output,
+                                    assembly,
+                                    triangulation,
+                                    triangle,
+                                )
+                        }),
+                        assembly,
+                        triangulation,
+                        triangle,
+                    )
+                });
             match expected {
                 VolumetricCellRetention::Drop
                     if retained_source_cells != 0 || retained_source_subcells != 0 =>
@@ -2893,7 +2913,7 @@ fn validate_volumetric_materialized_assembly_matches_operation(
                     );
                 }
                 VolumetricCellRetention::Keep | VolumetricCellRetention::KeepReversed
-                    if retained_source_subcells == 0 && retained_duplicate_cells == 0 =>
+                    if !retained_source_subcells_cover_cell && retained_duplicate_cells == 0 =>
                 {
                     return Err(
                         ExactReportValidationError::VolumetricMaterializedAssemblyViolatesOperation,
@@ -2907,6 +2927,69 @@ fn validate_volumetric_materialized_assembly_matches_operation(
     }
 
     Ok(())
+}
+
+fn output_triangles_cover_triangulated_cell<'a>(
+    outputs: impl Iterator<Item = &'a ExactOutputTriangle>,
+    assembly: &ExactBooleanAssemblyPlan,
+    triangulation: &FaceRegionTriangulation,
+    triangle: [usize; 3],
+) -> bool {
+    let Some(cell_area) = triangulated_cell_projected_area2_abs(triangulation, triangle) else {
+        return false;
+    };
+    let mut output_area = Real::from(0);
+    let mut found = false;
+    for output in outputs {
+        let Some(area) = output_triangle_projected_area2_abs(output, assembly, triangulation)
+        else {
+            return false;
+        };
+        output_area += &area;
+        found = true;
+    }
+    found && compare_reals(&output_area, &cell_area).value() == Some(Ordering::Equal)
+}
+
+fn triangulated_cell_projected_area2_abs(
+    triangulation: &FaceRegionTriangulation,
+    triangle: [usize; 3],
+) -> Option<Real> {
+    let points = triangle
+        .iter()
+        .map(|&vertex| triangulation.boundary.get(vertex).map(boundary_node_point))
+        .collect::<Option<Vec<_>>>()?;
+    projected_points_area2_abs([points[0], points[1], points[2]], triangulation.projection)
+}
+
+fn output_triangle_projected_area2_abs(
+    output: &ExactOutputTriangle,
+    assembly: &ExactBooleanAssemblyPlan,
+    triangulation: &FaceRegionTriangulation,
+) -> Option<Real> {
+    let points = output
+        .vertices
+        .iter()
+        .map(|&vertex| assembly.vertices.get(vertex).map(|vertex| &vertex.point))
+        .collect::<Option<Vec<_>>>()?;
+    projected_points_area2_abs([points[0], points[1], points[2]], triangulation.projection)
+}
+
+fn projected_points_area2_abs(
+    points: [&Point3; 3],
+    projection: hyperlimit::CoplanarProjection,
+) -> Option<Real> {
+    real_abs(&projected_polygon_area2_value(
+        &[points[0].clone(), points[1].clone(), points[2].clone()],
+        projection,
+    ))
+}
+
+fn real_abs(value: &Real) -> Option<Real> {
+    match compare_reals(value, &Real::from(0)).value()? {
+        Ordering::Less => Some(-value.clone()),
+        Ordering::Equal | Ordering::Greater => Some(value.clone()),
+    }
 }
 
 fn output_triangle_lies_in_triangulated_cell(
@@ -6401,6 +6484,98 @@ mod tests {
             result.freshness_against_sources(&left, &right),
             ExactReportFreshness::StaleStatusEvidence
         );
+    }
+
+    #[test]
+    fn volumetric_cell_coverage_rejects_partial_retained_subcell() {
+        let p0 = point(0, 0, 0);
+        let p1 = point(2, 0, 0);
+        let p2 = point(0, 2, 0);
+        let p3 = point(1, 0, 0);
+        let p4 = point(0, 1, 0);
+        let boundary = vec![
+            FaceSplitBoundaryNode::FaceInterior { point: p0.clone() },
+            FaceSplitBoundaryNode::FaceInterior { point: p1.clone() },
+            FaceSplitBoundaryNode::FaceInterior { point: p2.clone() },
+        ];
+        let triangulation = FaceRegionTriangulation {
+            side: MeshSide::Left,
+            face: 0,
+            projection: hyperlimit::CoplanarProjection::Xy,
+            vertices: vec![
+                hypertri::ExactPoint::new(p0.x.clone(), p0.y.clone()),
+                hypertri::ExactPoint::new(p1.x.clone(), p1.y.clone()),
+                hypertri::ExactPoint::new(p2.x.clone(), p2.y.clone()),
+            ],
+            boundary: boundary.clone(),
+            triangles: vec![0, 1, 2],
+        };
+        let partial = ExactBooleanAssemblyPlan {
+            vertices: vec![
+                ExactOutputVertex {
+                    point: p0.clone(),
+                    source: boundary[0].clone(),
+                },
+                ExactOutputVertex {
+                    point: p3.clone(),
+                    source: FaceSplitBoundaryNode::FaceInterior { point: p3 },
+                },
+                ExactOutputVertex {
+                    point: p4.clone(),
+                    source: FaceSplitBoundaryNode::FaceInterior { point: p4 },
+                },
+            ],
+            triangles: vec![ExactOutputTriangle {
+                vertices: [0, 1, 2],
+                source_side: MeshSide::Left,
+                source_face: 0,
+                orientation: ExactOutputTriangleOrientation::PreserveSource,
+            }],
+        };
+        let whole = ExactBooleanAssemblyPlan {
+            vertices: vec![
+                ExactOutputVertex {
+                    point: p0,
+                    source: boundary[0].clone(),
+                },
+                ExactOutputVertex {
+                    point: p1,
+                    source: boundary[1].clone(),
+                },
+                ExactOutputVertex {
+                    point: p2,
+                    source: boundary[2].clone(),
+                },
+            ],
+            triangles: vec![ExactOutputTriangle {
+                vertices: [0, 1, 2],
+                source_side: MeshSide::Left,
+                source_face: 0,
+                orientation: ExactOutputTriangleOrientation::PreserveSource,
+            }],
+        };
+
+        assert!(!output_triangles_cover_triangulated_cell(
+            partial.triangles.iter().filter(|output| {
+                output_triangle_lies_in_triangulated_cell(
+                    output,
+                    &partial,
+                    &triangulation,
+                    [0, 1, 2],
+                )
+            }),
+            &partial,
+            &triangulation,
+            [0, 1, 2],
+        ));
+        assert!(output_triangles_cover_triangulated_cell(
+            whole.triangles.iter().filter(|output| {
+                output_triangle_lies_in_triangulated_cell(output, &whole, &triangulation, [0, 1, 2])
+            }),
+            &whole,
+            &triangulation,
+            [0, 1, 2],
+        ));
     }
 
     fn point(x: i64, y: i64, z: i64) -> Point3 {
