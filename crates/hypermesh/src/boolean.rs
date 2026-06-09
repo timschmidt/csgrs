@@ -5251,9 +5251,6 @@ fn boolean_coplanar_mesh_overlay_optional(
     if !coplanar_mesh_overlay_should_preempt_surface_paths(left, right, operation) {
         return Ok(None);
     }
-    if coplanar_mesh_overlay_should_yield_to_closed_boundary_shortcut(left, right, operation)? {
-        return Ok(None);
-    }
     let allow_empty_overlay = coplanar_mesh_overlay_allows_empty(operation);
     let Some(boundary_policy) = coplanar_mesh_overlay_boundary_policy(left, right, operation)
     else {
@@ -5382,29 +5379,6 @@ pub(crate) fn replay_coplanar_mesh_overlay_result(
     validation: ValidationPolicy,
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
     boolean_coplanar_mesh_overlay_optional(left, right, operation, validation)
-}
-
-fn coplanar_mesh_overlay_should_yield_to_closed_boundary_shortcut(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-) -> Result<bool, MeshError> {
-    if matches!(operation, ExactBooleanOperation::SelectedRegions(_))
-        || !left.facts().mesh.closed_manifold
-        || !right.facts().mesh.closed_manifold
-    {
-        return Ok(false);
-    }
-
-    let graph = build_intersection_graph(left, right)?;
-    validate_graph_source_handoff(&graph, left, right)?;
-    Ok(
-        certified_closed_boundary_only_contact_from_graph(&graph, left, right)?
-            || certified_closed_boundary_touching_support_from_graph(
-                &graph, left, right, operation,
-            )?
-            .is_some(),
-    )
 }
 
 pub(crate) fn materialize_coplanar_mesh_overlay_mesh(
