@@ -480,6 +480,272 @@ pub enum ExactBoundaryBooleanPolicy {
     PreserveSeparateShells,
 }
 
+/// Complete policy for an exact boolean request.
+///
+/// The request keeps operation semantics, output validation, and
+/// lower-dimensional boundary projection policy together so preflight,
+/// certification, and materialization replay the same exact contract.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct ExactBooleanRequest {
+    /// Named or selected-region operation to evaluate.
+    pub operation: ExactBooleanOperation,
+    /// Output mesh validation policy.
+    pub validation: ValidationPolicy,
+    /// Explicit boundary-only projection policy.
+    pub boundary_policy: ExactBoundaryBooleanPolicy,
+}
+
+impl ExactBooleanRequest {
+    /// Creates a request using the default strict boundary policy.
+    pub const fn new(operation: ExactBooleanOperation, validation: ValidationPolicy) -> Self {
+        Self {
+            operation,
+            validation,
+            boundary_policy: ExactBoundaryBooleanPolicy::Reject,
+        }
+    }
+
+    /// Creates a request with an explicit boundary projection policy.
+    pub const fn with_boundary_policy(
+        operation: ExactBooleanOperation,
+        validation: ValidationPolicy,
+        boundary_policy: ExactBoundaryBooleanPolicy,
+    ) -> Self {
+        Self {
+            operation,
+            validation,
+            boundary_policy,
+        }
+    }
+
+    /// Preflight this request against source meshes.
+    pub fn preflight(
+        self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> Result<ExactBooleanPreflight, MeshError> {
+        preflight_boolean_exact_request(left, right, self)
+    }
+
+    /// Evaluate this request into a certified result or retained exact
+    /// blockers/provenance.
+    pub fn evaluate(
+        self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> Result<ExactBooleanEvaluation, MeshError> {
+        evaluate_boolean_exact(left, right, self)
+    }
+
+    /// Materialize this request, returning an error when the retained exact
+    /// state is blocked by policy, refinement, or unsupported topology.
+    pub fn materialize(
+        self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> Result<ExactBooleanResult, MeshError> {
+        boolean_exact_with_boundary_policy(
+            left,
+            right,
+            self.operation,
+            self.validation,
+            self.boundary_policy,
+        )
+    }
+}
+
+/// Replayable certification bundle for an exact boolean request.
+///
+/// These reports are intentionally redundant with the preflight summary. The
+/// summary is the scheduling decision, while this bundle keeps the Yap-style
+/// exact facts that explain which stage certified, blocked, or declined the
+/// requested operation.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ExactBooleanCertificationSet {
+    /// Exact graph refinement status.
+    pub refinement: ExactRefinementReport,
+    /// Boundary-contact policy status.
+    pub boundary_touching: ExactBoundaryTouchingReport,
+    /// Planar-arrangement readiness for coplanar surface output.
+    pub planar_arrangement: ExactPlanarArrangementReport,
+    /// Winding/inside-outside readiness for named volumetric output.
+    pub winding_readiness: ExactWindingReadinessReport,
+    /// Volumetric boundary closure readiness, when meaningful for the request.
+    pub volumetric_boundary_closure: Option<ExactVolumetricBoundaryClosureReport>,
+    /// Arrangement/cell-complex materialization attempt.
+    pub arrangement_attempt: Option<ExactArrangementBooleanAttempt>,
+}
+
+impl ExactBooleanCertificationSet {
+    fn from_sources(
+        left: &ExactMesh,
+        right: &ExactMesh,
+        request: ExactBooleanRequest,
+    ) -> Result<Self, MeshError> {
+        let refinement = certify_refinement_report(left, right, request.operation)?;
+        let boundary_touching = certify_boundary_touching_report(left, right)?;
+        let planar_arrangement =
+            certify_planar_arrangement_report(left, right, request.operation)?;
+        let winding_readiness = certify_winding_readiness_report_with_boundary_policy(
+            left,
+            right,
+            request.operation,
+            request.validation,
+            request.boundary_policy,
+        )?;
+        let volumetric_boundary_closure =
+            if matches!(request.operation, ExactBooleanOperation::SelectedRegions(_)) {
+                None
+            } else {
+                Some(certify_volumetric_boundary_closure_report(
+                    left,
+                    right,
+                    request.operation,
+                )?)
+            };
+        let arrangement_attempt =
+            if matches!(request.operation, ExactBooleanOperation::SelectedRegions(_)) {
+                None
+            } else {
+                Some(exact_arrangement_boolean_attempt_report_with_validation(
+                    left,
+                    right,
+                    request.operation,
+                    ExactRegularizationPolicy::REGULARIZED_SOLID,
+                    request.validation,
+                )?)
+            };
+        Ok(Self {
+            refinement,
+            boundary_touching,
+            planar_arrangement,
+            winding_readiness,
+            volumetric_boundary_closure,
+            arrangement_attempt,
+        })
+    }
+}
+
+/// Complete exact boolean evaluation outcome.
+///
+/// `result` is present only when the request materialized under retained exact
+/// evidence. When it is absent, `preflight` and `certifications` retain the
+/// blocker/provenance facts instead of collapsing the request to an
+/// approximate or prose-only error.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ExactBooleanEvaluation {
+    /// Request policy evaluated.
+    pub request: ExactBooleanRequest,
+    /// Exact preflight/scheduling result.
+    pub preflight: ExactBooleanPreflight,
+    /// Replayable exact certification reports for the request.
+    pub certifications: ExactBooleanCertificationSet,
+    /// Materialized exact result, when certified under `request`.
+    pub result: Option<ExactBooleanResult>,
+}
+
+impl ExactBooleanEvaluation {
+    /// Returns whether this request produced a materialized exact result.
+    pub fn is_materialized(&self) -> bool {
+        self.result.is_some()
+    }
+
+    /// Returns whether exact support was certified for this request.
+    pub fn is_certified(&self) -> bool {
+        self.preflight.is_certified()
+    }
+
+    /// Returns the retained blocker kind when materialization did not proceed.
+    pub fn required_blocker_kind(&self) -> Option<ExactBooleanBlockerKind> {
+        self.preflight.required_blocker_kind()
+    }
+
+    /// Validate the retained evaluation shape without replaying sources.
+    pub fn validate(&self) -> Result<(), ExactReportValidationError> {
+        self.preflight.validate()?;
+        self.certifications.refinement.validate()?;
+        self.certifications.boundary_touching.validate()?;
+        self.certifications.planar_arrangement.validate()?;
+        self.certifications.winding_readiness.validate()?;
+        if let Some(report) = self.certifications.volumetric_boundary_closure.as_ref() {
+            report.validate()?;
+        }
+        if let Some(attempt) = self.certifications.arrangement_attempt.as_ref() {
+            attempt.validate()?;
+        }
+        if let Some(result) = self.result.as_ref() {
+            result.validate()?;
+        } else if self.preflight.is_certified() {
+            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+        }
+        Ok(())
+    }
+}
+
+/// Preflight an exact boolean request.
+pub fn preflight_boolean_exact_request(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    request: ExactBooleanRequest,
+) -> Result<ExactBooleanPreflight, MeshError> {
+    preflight_boolean_exact_with_boundary_policy(
+        left,
+        right,
+        request.operation,
+        request.validation,
+        request.boundary_policy,
+    )
+}
+
+/// Evaluate an exact boolean request into either a certified result or retained
+/// exact blockers/provenance.
+pub fn evaluate_boolean_exact(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    request: ExactBooleanRequest,
+) -> Result<ExactBooleanEvaluation, MeshError> {
+    let preflight = preflight_boolean_exact_request(left, right, request)?;
+    let certifications = ExactBooleanCertificationSet::from_sources(left, right, request)?;
+    let result = if preflight.is_certified() {
+        Some(boolean_exact_with_boundary_policy(
+            left,
+            right,
+            request.operation,
+            request.validation,
+            request.boundary_policy,
+        )?)
+    } else {
+        None
+    };
+    let evaluation = ExactBooleanEvaluation {
+        request,
+        preflight,
+        certifications,
+        result,
+    };
+    evaluation.validate().map_err(|error| {
+        MeshError::one(MeshDiagnostic::new(
+            Severity::Error,
+            DiagnosticKind::UnsupportedExactOperation,
+            format!("exact boolean evaluation validation failed: {error:?}"),
+        ))
+    })?;
+    Ok(evaluation)
+}
+
+/// Materialize an exact boolean request.
+///
+/// This is the request-shaped replacement for the argument-list boolean entry
+/// points. Use [`evaluate_boolean_exact`] when blocked exact states should be
+/// returned as retained provenance instead of an error.
+pub fn boolean_exact_request(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    request: ExactBooleanRequest,
+) -> Result<ExactBooleanResult, MeshError> {
+    request.materialize(left, right)
+}
+
 /// Run the exact selected-region boolean pipeline.
 ///
 /// The returned report keeps the audit artifacts needed to inspect why an
@@ -2362,13 +2628,7 @@ pub fn boolean_exact(
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
 ) -> Result<ExactBooleanResult, MeshError> {
-    boolean_exact_with_boundary_policy(
-        left,
-        right,
-        operation,
-        validation,
-        ExactBoundaryBooleanPolicy::Reject,
-    )
+    boolean_exact_request(left, right, ExactBooleanRequest::new(operation, validation))
 }
 
 /// Run an exact boolean operation request with an explicit boundary policy.

@@ -3306,6 +3306,68 @@ pub enum ExactBooleanSupport {
     UnresolvedGraph,
 }
 
+impl ExactBooleanSupport {
+    /// Returns whether this support state represents an executable exact
+    /// decision rather than a retained blocker.
+    pub const fn is_certified(self) -> bool {
+        matches!(
+            self,
+            Self::SelectedRegionPolicy
+                | Self::CertifiedEmptyOperand
+                | Self::CertifiedBoundsDisjoint
+                | Self::CertifiedIdentical
+                | Self::CertifiedSameSurface
+                | Self::CertifiedClosedBoundaryTouchingUnion
+                | Self::CertifiedClosedBoundaryTouchingIntersection
+                | Self::CertifiedClosedBoundaryTouchingDifference
+                | Self::CertifiedOpenSurfaceDisjoint
+                | Self::CertifiedClosedWindingSeparated
+                | Self::CertifiedClosedWindingContainment
+                | Self::CertifiedMixedDimensionalRegularizedSolid
+                | Self::CertifiedLowerDimensionalRegularizedSolid
+                | Self::CertifiedOpenSurfaceArrangementUnion
+                | Self::CertifiedOpenSurfaceArrangementIntersection
+                | Self::CertifiedOpenSurfaceArrangementDifference
+                | Self::CertifiedConvexContainment
+                | Self::CertifiedConvexUnion
+                | Self::CertifiedConvexIntersection
+                | Self::CertifiedConvexDifference
+                | Self::CertifiedConvexSeparated
+                | Self::CertifiedArrangementCellComplex
+                | Self::CertifiedBoundaryPolicyShortcut
+        )
+    }
+
+    /// Returns the blocker class required by this support state, when the
+    /// operation is not yet executable under the current request policy.
+    pub const fn required_blocker_kind(self) -> Option<ExactBooleanBlockerKind> {
+        match self {
+            Self::RequiresBoundaryPolicy => Some(ExactBooleanBlockerKind::NeedsBoundaryPolicy),
+            Self::RequiresPlanarArrangement => {
+                Some(ExactBooleanBlockerKind::NeedsPlanarArrangement)
+            }
+            Self::RequiresCoplanarVolumetricCells => {
+                Some(ExactBooleanBlockerKind::NeedsCoplanarVolumetricCells)
+            }
+            Self::RequiresCertifiedWinding => Some(ExactBooleanBlockerKind::NeedsWinding),
+            Self::UnresolvedGraph => Some(ExactBooleanBlockerKind::NeedsRefinement),
+            _ => None,
+        }
+    }
+
+    /// Returns whether this support state can become materialized by changing
+    /// caller policy instead of refining geometry.
+    pub const fn requires_caller_policy(self) -> bool {
+        matches!(self, Self::RequiresBoundaryPolicy)
+    }
+
+    /// Returns whether exact predicate/construction refinement is required
+    /// before topology policy can safely consume the graph.
+    pub const fn requires_refinement(self) -> bool {
+        matches!(self, Self::UnresolvedGraph)
+    }
+}
+
 /// Preflight report for an exact boolean operation request.
 ///
 /// The report gives callers a stable way to audit the current implementation
@@ -3653,6 +3715,51 @@ fn volumetric_boundary_closure_blocker_is_supported(blocker: &ExactArrangementBl
 }
 
 impl ExactBooleanPreflight {
+    /// Returns whether this preflight has certified support for materializing
+    /// the requested operation under the policy used to produce the report.
+    pub fn is_certified(&self) -> bool {
+        self.support.is_certified() && self.blocker.is_none()
+    }
+
+    /// Returns the exact blocker class retained by this preflight, if any.
+    pub fn required_blocker_kind(&self) -> Option<ExactBooleanBlockerKind> {
+        self.support
+            .required_blocker_kind()
+            .or_else(|| self.blocker.as_ref().map(|blocker| blocker.kind))
+    }
+
+    /// Returns whether this preflight is blocked by unresolved exact
+    /// predicate or construction evidence.
+    pub fn requires_refinement(&self) -> bool {
+        self.support.requires_refinement()
+            || self
+                .blocker
+                .as_ref()
+                .is_some_and(|blocker| blocker.kind == ExactBooleanBlockerKind::NeedsRefinement)
+    }
+
+    /// Returns whether a caller-supplied policy can unlock this exact state
+    /// without changing source geometry.
+    pub fn requires_caller_policy(&self) -> bool {
+        self.support.requires_caller_policy()
+            || self
+                .blocker
+                .as_ref()
+                .is_some_and(|blocker| blocker.kind == ExactBooleanBlockerKind::NeedsBoundaryPolicy)
+    }
+
+    /// Returns whether retained graph/classification/provenance evidence is
+    /// present for downstream exact policy decisions.
+    pub fn has_retained_exact_evidence(&self) -> bool {
+        self.retained_face_pairs != 0
+            || self.retained_events != 0
+            || self.region_count != 0
+            || !self.region_classifications.is_empty()
+            || self.arrangement_readiness.is_some()
+            || self.coplanar_volumetric_evidence.is_some()
+            || self.blocker.is_some()
+    }
+
     /// Validate this preflight report against the supplied source meshes.
     ///
     /// [`validate`](Self::validate) checks internal consistency. This method

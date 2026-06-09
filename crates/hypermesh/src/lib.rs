@@ -104,15 +104,16 @@ pub use audit::{
 };
 pub use boolean::{
     ExactArrangementBooleanAttempt, ExactArrangementBooleanDecline, ExactArrangementBooleanStage,
-    ExactBooleanOperation, ExactBooleanPolicy, ExactBoundaryBooleanPolicy, boolean_exact,
-    boolean_exact_with_boundary_policy, boolean_selected_regions,
+    ExactBooleanCertificationSet, ExactBooleanEvaluation, ExactBooleanOperation,
+    ExactBooleanPolicy, ExactBooleanRequest, ExactBoundaryBooleanPolicy, boolean_exact,
+    boolean_exact_request, boolean_exact_with_boundary_policy, boolean_selected_regions,
     certify_adjacent_union_completion_report, certify_boundary_touching_report,
     certify_open_surface_disjoint_report, certify_planar_arrangement_report,
     certify_refinement_report, certify_same_surface_report,
     certify_volumetric_boundary_closure_report, certify_winding_readiness_report,
     certify_winding_readiness_report_with_boundary_policy,
-    certify_winding_readiness_report_with_validation, exact_arrangement_boolean_attempt_report,
-    exact_arrangement_boolean_attempt_report_with_validation,
+    certify_winding_readiness_report_with_validation, evaluate_boolean_exact,
+    exact_arrangement_boolean_attempt_report, exact_arrangement_boolean_attempt_report_with_validation,
     materialize_adjacent_union_completion_boolean,
     materialize_adjacent_union_completion_boolean_with_report,
     materialize_affine_orthogonal_solid_boolean, materialize_arrangement_cell_complex_boolean,
@@ -130,7 +131,8 @@ pub use boolean::{
     materialize_open_surface_disjoint_boolean, materialize_same_surface_boolean,
     materialize_volumetric_coplanar_boundary_closure_boolean,
     materialize_volumetric_winding_arrangement, preflight_boolean_exact,
-    preflight_boolean_exact_with_boundary_policy, preflight_boolean_exact_with_validation,
+    preflight_boolean_exact_request, preflight_boolean_exact_with_boundary_policy,
+    preflight_boolean_exact_with_validation,
 };
 pub use bounds::{AabbIntersectionKind, BoundsValidationError, ExactAabb3, MeshBounds};
 pub use cell_complex::{
