@@ -13,7 +13,7 @@
 
 use hyperlimit::{Point3, compare_reals};
 
-use super::affine_box::{AffineBoxBasis, candidate_affine_box_bases, mesh_from_uvw, mesh_to_uvw};
+use super::affine_box::{AffineBoxBasis, mesh_from_uvw, mesh_to_uvw};
 use super::error::{DiagnosticKind, MeshDiagnostic, MeshError, Severity};
 use super::mesh::ExactMesh;
 use super::orthogonal_solid::{
@@ -314,16 +314,6 @@ fn find_affine_orthogonal_solid_basis<T>(
         accept(left_uvw, right_uvw).map(|accepted| (basis, accepted))
     };
 
-    for basis in candidate_affine_box_bases(left) {
-        if let Some(accepted) = accept_basis(basis) {
-            return Some(accepted);
-        }
-    }
-    for basis in candidate_affine_box_bases(right) {
-        if let Some(accepted) = accept_basis(basis) {
-            return Some(accepted);
-        }
-    }
     if let Some(accepted) = find_affine_cell_basis(left, &mut accept_basis) {
         return Some(accepted);
     }

@@ -129,6 +129,31 @@ fn axis_aligned_box(min: [i64; 3], max: [i64; 3]) -> ExactMesh {
     .unwrap()
 }
 
+fn face_fan_box() -> ExactMesh {
+    ExactMesh::from_i64_triangles(
+        &[
+            0, 0, 0, 2, 0, 0, 2, 2, 0, 0, 2, 0, 0, 0, 2, 2, 0, 2, 2, 2, 2, 0, 2, 2, 1, 1, 0,
+        ],
+        &[
+            0, 8, 1, //
+            1, 8, 2, //
+            2, 8, 3, //
+            3, 8, 0, //
+            4, 5, 6, //
+            4, 6, 7, //
+            0, 1, 5, //
+            0, 5, 4, //
+            1, 2, 6, //
+            1, 6, 5, //
+            2, 3, 7, //
+            2, 7, 6, //
+            3, 0, 4, //
+            3, 4, 7,
+        ],
+    )
+    .unwrap()
+}
+
 fn combine_exact_meshes(left: &ExactMesh, right: &ExactMesh, label: &'static str) -> ExactMesh {
     let right_offset = left.vertices().len();
     ExactMesh::new(
@@ -1287,28 +1312,7 @@ fn exact_axis_aligned_orthogonal_solid_materializer_is_publicly_replayable() {
 
 #[test]
 fn axis_aligned_orthogonal_solid_accepts_face_fan_triangulated_box() {
-    let fan_box = ExactMesh::from_i64_triangles(
-        &[
-            0, 0, 0, 2, 0, 0, 2, 2, 0, 0, 2, 0, 0, 0, 2, 2, 0, 2, 2, 2, 2, 0, 2, 2, 1, 1, 0,
-        ],
-        &[
-            0, 8, 1, //
-            1, 8, 2, //
-            2, 8, 3, //
-            3, 8, 0, //
-            4, 5, 6, //
-            4, 6, 7, //
-            0, 1, 5, //
-            0, 5, 4, //
-            1, 2, 6, //
-            1, 6, 5, //
-            2, 3, 7, //
-            2, 7, 6, //
-            3, 0, 4, //
-            3, 4, 7,
-        ],
-    )
-    .unwrap();
+    let fan_box = face_fan_box();
     let cutter = axis_aligned_box([1, 0, 0], [3, 2, 2]);
 
     let arrangement = materialize_axis_aligned_orthogonal_solid_intersection(
@@ -1325,6 +1329,32 @@ fn axis_aligned_orthogonal_solid_accepts_face_fan_triangulated_box() {
     assert_eq!(
         arrangement.freshness_against_sources(&fan_box, &cutter),
         AxisAlignedOrthogonalSolidFreshness::Current
+    );
+    assert!(arrangement.mesh.facts().mesh.closed_manifold);
+}
+
+#[test]
+fn affine_orthogonal_solid_recovers_face_fan_basis_from_cell_edges() {
+    let fan_box = skew_affine_mesh_from_axis_aligned(
+        &face_fan_box(),
+        "test skew affine face-fan orthogonal box",
+    );
+    let cutter = skew_affine_box([1, 0, 0], [3, 2, 2]);
+
+    let arrangement = materialize_affine_orthogonal_solid_intersection(
+        &fan_box,
+        &cutter,
+        ValidationPolicy::CLOSED,
+    )
+    .unwrap()
+    .expect("affine face-fan box should recover an exact cell-edge basis");
+    arrangement.validate().unwrap();
+    arrangement
+        .validate_against_sources(&fan_box, &cutter)
+        .unwrap();
+    assert_eq!(
+        arrangement.freshness_against_sources(&fan_box, &cutter),
+        AffineOrthogonalSolidFreshness::Current
     );
     assert!(arrangement.mesh.facts().mesh.closed_manifold);
 }
