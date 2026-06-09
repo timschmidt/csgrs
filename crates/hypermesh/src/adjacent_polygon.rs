@@ -26,7 +26,6 @@ use super::topology::triangle_edges_tuple;
 use hyperreal::Real;
 
 const MAX_POLYGON_PATCH_ENUMERATION_FACES: usize = 9;
-const MAX_POLYGON_PATCH_ENUMERATION_BOUNDARY: usize = 9;
 
 #[derive(Clone, Debug, PartialEq)]
 struct PolygonPatchCandidate {
@@ -38,8 +37,9 @@ struct PolygonPatchCandidate {
 
 /// Discover source-owned simple-polygon adjacency patch pairs.
 ///
-/// The input triangles are split into edge-connected components, and each component is
-/// exhaustively searched for triangulated-disk candidates within practical bounds.
+/// The input triangles are split into edge-connected components. Each component
+/// is certified directly, while connected subpatches are exhaustively searched
+/// within the face-count bound that keeps subset enumeration practical.
 ///
 /// object/predicate split: source topology is replayed from combinatorial adjacency,
 /// while exact predicates certify coplanarity, interior inclusion, and signed-area
@@ -95,7 +95,6 @@ fn polygon_patch_candidates(
         return None;
     }
     let max_faces = available.len().min(MAX_POLYGON_PATCH_ENUMERATION_FACES);
-    let max_boundary = MAX_POLYGON_PATCH_ENUMERATION_BOUNDARY;
     let neighbors = edge_connected_face_neighbors(mesh, &available)?;
     let mut unassigned = available.iter().copied().collect::<BTreeSet<_>>();
     while let Some(start_face) = unassigned.iter().next().copied() {
@@ -109,7 +108,7 @@ fn polygon_patch_candidates(
         // A whole connected component is a concrete source-owned object, not a
         // guessed subset. Certify it directly regardless of size; only the
         // combinatorial subpatch search below remains bounded.
-        if let Some(candidate) = polygon_patch_candidate(mesh, &component, usize::MAX)? {
+        if let Some(candidate) = polygon_patch_candidate(mesh, &component)? {
             seen.insert(component.clone());
             candidates.push(candidate);
         }
@@ -127,7 +126,6 @@ fn polygon_patch_candidates(
                 &mut vec![start_face],
                 &mut seen,
                 &mut candidates,
-                max_boundary,
             )?;
         }
     }
@@ -151,13 +149,12 @@ fn collect_polygon_patch_candidates(
     selected: &mut Vec<usize>,
     seen: &mut BTreeSet<Vec<usize>>,
     candidates: &mut Vec<PolygonPatchCandidate>,
-    max_boundary: usize,
 ) -> Option<()> {
     if (2..=max_faces).contains(&selected.len()) {
         let mut key = selected.clone();
         key.sort_unstable();
         if seen.insert(key.clone())
-            && let Some(candidate) = polygon_patch_candidate(mesh, &key, max_boundary)?
+            && let Some(candidate) = polygon_patch_candidate(mesh, &key)?
         {
             candidates.push(candidate);
         }
@@ -178,14 +175,7 @@ fn collect_polygon_patch_candidates(
     for extension in extensions {
         selected.push(extension);
         collect_polygon_patch_candidates(
-            mesh,
-            neighbors,
-            start_face,
-            max_faces,
-            selected,
-            seen,
-            candidates,
-            max_boundary,
+            mesh, neighbors, start_face, max_faces, selected, seen, candidates,
         )?;
         selected.pop();
     }
@@ -195,7 +185,6 @@ fn collect_polygon_patch_candidates(
 fn polygon_patch_candidate(
     mesh: &ExactMesh,
     faces: &[usize],
-    max_boundary: usize,
 ) -> Option<Option<PolygonPatchCandidate>> {
     if faces.len() < 2 {
         return Some(None);
@@ -221,7 +210,7 @@ fn polygon_patch_candidate(
         .iter()
         .filter_map(|(&edge, &count)| (count == 1).then_some(edge))
         .collect::<Vec<_>>();
-    if boundary_edges.len() < 3 || boundary_edges.len() > max_boundary {
+    if boundary_edges.len() < 3 {
         return Some(None);
     }
     let Some(boundary_vertices) = order_boundary_vertices(&boundary_edges) else {
@@ -343,7 +332,7 @@ fn extract_polygon_patch_component(
     available: &mut BTreeSet<usize>,
 ) -> Option<Vec<usize>> {
     // Traverse a source-owned connected component to avoid enumerating disconnected
-    // unions; each component is still searched exhaustively inside bounded limits.
+    // unions; connected subpatches are searched from the component faces above.
     let mut stack = vec![start_face];
     let mut component = Vec::new();
     while let Some(face) = stack.pop() {
@@ -621,6 +610,30 @@ mod tests {
         open_mesh(&points, &triangles)
     }
 
+    fn wide_boundary_subpatch_pair() -> (ExactMesh, ExactMesh) {
+        let mut left_points = vec![[0, 0, 0]];
+        for index in 0..=9 {
+            left_points.push([index, 1, 0]);
+        }
+        let mut left_triangles = Vec::new();
+        for index in 1..10 {
+            left_triangles.extend([0, index, index + 1]);
+        }
+        let left = open_mesh(&left_points, &left_triangles);
+
+        let mut right_points = vec![[0, 0, 0]];
+        for index in 1..=9 {
+            right_points.push([index, 1, 0]);
+        }
+        let mut right_triangles = Vec::new();
+        for index in 1..9 {
+            right_triangles.extend([0, index + 1, index]);
+        }
+        let right = open_mesh(&right_points, &right_triangles);
+
+        (left, right)
+    }
+
     #[test]
     fn polygon_patch_pairs_find_subpatch_not_rooted_at_component_minimum() {
         let (left, right) = shifted_square_subpatch_pair(1, 4, 4);
@@ -659,6 +672,26 @@ mod tests {
                 (0..OVERSIZED_COMPONENT_FACES).collect()
             )]
         );
+    }
+
+    #[test]
+    fn polygon_patch_pairs_accept_subpatch_with_large_boundary() {
+        let (left, right) = wide_boundary_subpatch_pair();
+        let left_candidates = polygon_patch_candidates(&left, &BTreeSet::new())
+            .expect("left source-disk candidates should be available");
+
+        assert!(
+            left_candidates
+                .iter()
+                .any(|candidate| candidate.faces == (1..9).collect::<Vec<_>>()
+                    && candidate.boundary_points.len() == 10),
+            "{left_candidates:?}"
+        );
+
+        let pairs = polygon_patch_pairs(&left, &BTreeSet::new(), &right, &BTreeSet::new())
+            .expect("large-boundary source-disk pair should be available");
+
+        assert_eq!(pairs, vec![((1..9).collect(), (0..8).collect())]);
     }
 
     proptest! {
