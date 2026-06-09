@@ -239,7 +239,7 @@ fn exact_boolean_evaluation_materializes_certified_result_publicly() {
 }
 
 #[test]
-fn exact_boolean_evaluation_retains_boundary_policy_blocker_publicly() {
+fn exact_boolean_evaluation_materializes_boundary_policy_shortcut_by_default() {
     let left = ExactMesh::from_i64_triangles_with_policy(
         &[0, 0, 0, 2, 0, 0, 0, 2, 0],
         &[0, 1, 2],
@@ -260,14 +260,19 @@ fn exact_boolean_evaluation_retains_boundary_policy_blocker_publicly() {
     let evaluation = evaluate_boolean_exact(&left, &right, request).unwrap();
 
     evaluation.validate().unwrap();
-    assert!(!evaluation.is_certified());
-    assert!(!evaluation.is_materialized());
-    assert_eq!(
-        evaluation.required_blocker_kind(),
-        Some(ExactBooleanBlockerKind::NeedsBoundaryPolicy)
-    );
-    assert!(evaluation.preflight.requires_caller_policy());
+    assert!(evaluation.is_certified());
+    assert!(evaluation.is_materialized());
+    assert_eq!(evaluation.required_blocker_kind(), None);
+    assert!(evaluation.preflight.is_certified());
     assert!(evaluation.preflight.has_retained_exact_evidence());
+    assert!(evaluation.result.as_ref().is_some_and(|result| {
+        matches!(
+            result.kind,
+            ExactBooleanResultKind::BoundaryPolicyShortcut {
+                operation: ExactBooleanOperation::Union
+            }
+        )
+    }));
 }
 
 #[test]
@@ -6392,15 +6397,20 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
             .is_err(),
         "strict replay should not certify a boundary-policy readiness report"
     );
-    assert!(
-        boolean_exact(
-            &left,
-            &right,
-            ExactBooleanOperation::Union,
-            ValidationPolicy::ALLOW_BOUNDARY
-        )
-        .is_err()
-    );
+    let default_result = boolean_exact(
+        &left,
+        &right,
+        ExactBooleanOperation::Union,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    default_result.validate().unwrap();
+    assert!(matches!(
+        default_result.kind,
+        ExactBooleanResultKind::BoundaryPolicyShortcut {
+            operation: ExactBooleanOperation::Union
+        }
+    ));
 
     let projected = boolean_exact_with_boundary_policy(
         &left,

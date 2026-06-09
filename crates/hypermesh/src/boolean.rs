@@ -496,12 +496,19 @@ pub struct ExactBooleanRequest {
 }
 
 impl ExactBooleanRequest {
-    /// Creates a request using the default strict boundary policy.
+    /// Creates a request using the default exact materialization policy.
+    ///
+    /// Certified boundary-only contact is supportable by the triangle-mesh
+    /// output contract: union preserves separate shells, difference keeps the
+    /// left shell, and intersection yields the representable empty triangle
+    /// mesh for lower-dimensional contact. Call
+    /// [`Self::with_boundary_policy`] with [`ExactBoundaryBooleanPolicy::Reject`]
+    /// when a caller wants to retain that state as an explicit blocker.
     pub const fn new(operation: ExactBooleanOperation, validation: ValidationPolicy) -> Self {
         Self {
             operation,
             validation,
-            boundary_policy: ExactBoundaryBooleanPolicy::Reject,
+            boundary_policy: ExactBoundaryBooleanPolicy::PreserveSeparateShells,
         }
     }
 
