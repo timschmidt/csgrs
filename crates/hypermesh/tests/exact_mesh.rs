@@ -60,6 +60,7 @@ use hypermesh::{
     materialize_full_face_adjacent_union, materialize_identical_mesh_boolean,
     materialize_mixed_dimensional_regularized_solid_boolean, materialize_open_surface_arrangement,
     materialize_open_surface_disjoint_boolean, materialize_same_surface_boolean,
+    materialize_volumetric_coplanar_boundary_closure_boolean,
     materialize_volumetric_winding_arrangement, mesh_artifact_from_exact_mesh,
     mesh_artifact_from_exact_mesh_proposal, preflight_boolean_exact,
     preflight_boolean_exact_with_boundary_policy, triangulate_all_face_cells_with_cdt,
@@ -3931,6 +3932,33 @@ fn exact_volumetric_winding_coplanar_cap_is_publicly_certified() {
             result.mesh.facts().mesh
         );
         result.validate_against_sources(&left, &right).unwrap();
+
+        let (cap_result, cap_report) = materialize_volumetric_coplanar_boundary_closure_boolean(
+            &left,
+            &right,
+            operation,
+            ValidationPolicy::CLOSED,
+        )
+        .unwrap()
+        .expect("public coplanar cap materializer should retain closure provenance");
+        assert_eq!(cap_report, closure, "{operation:?}: {cap_report:?}");
+        cap_report.validate().unwrap();
+        assert_eq!(
+            cap_result.kind, result.kind,
+            "{operation:?}: {cap_result:?}"
+        );
+        assert_eq!(
+            cap_result.mesh.vertices().len(),
+            result.mesh.vertices().len(),
+            "{operation:?}: {cap_result:?}"
+        );
+        assert_eq!(
+            cap_result.mesh.triangles().len(),
+            result.mesh.triangles().len(),
+            "{operation:?}: {cap_result:?}"
+        );
+        cap_result.validate().unwrap();
+
         assert_eq!(
             result.freshness_against_sources(&left, &right),
             ExactReportFreshness::Current,
