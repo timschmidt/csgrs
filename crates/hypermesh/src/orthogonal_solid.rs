@@ -83,32 +83,6 @@ struct UnitFaceKey {
     v: usize,
 }
 
-/// Rectangular source face before it is expanded into unit grid faces.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-struct RectFaceKey {
-    axis: Axis,
-    plane: usize,
-    u_min: usize,
-    u_max: usize,
-    v_min: usize,
-    v_max: usize,
-}
-
-#[derive(Clone, Debug)]
-struct RectFaceAccumulator {
-    key: RectFaceKey,
-    triangle_count: usize,
-    normal_sign: Option<i8>,
-    corners: Vec<(usize, usize)>,
-}
-
-#[derive(Clone, Debug)]
-struct RectFaceSample {
-    key: RectFaceKey,
-    normal_sign: i8,
-    corners: [(usize, usize); 3],
-}
-
 #[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
 struct FacePlaneKey {
     axis: Axis,
@@ -556,137 +530,20 @@ fn orthogonal_cell_selected(
 /// the accepted mesh is a retained cell complex, not merely a triangle soup
 /// whose samples happen to look orthogonal.
 fn certify_axis_aligned_orthogonal_solid(mesh: &ExactMesh) -> Option<AxisAlignedOrthogonalSolid> {
-    certify_axis_aligned_orthogonal_solid_rect_faces(mesh)
-        .or_else(|| certify_axis_aligned_orthogonal_solid_face_cells(mesh))
+    certify_axis_aligned_orthogonal_solid_face_cells(mesh)
 }
 
-fn certify_axis_aligned_orthogonal_solid_rect_faces(
-    mesh: &ExactMesh,
-) -> Option<AxisAlignedOrthogonalSolid> {
-    if mesh.vertices().is_empty() || mesh.triangles().is_empty() {
-        return None;
-    }
-    let x = collect_sorted_unique_axis_coords(mesh, Axis::X)?;
-    let y = collect_sorted_unique_axis_coords(mesh, Axis::Y)?;
-    let z = collect_sorted_unique_axis_coords(mesh, Axis::Z)?;
-    let nx = x.len().checked_sub(1)?;
-    let ny = y.len().checked_sub(1)?;
-    let nz = z.len().checked_sub(1)?;
-    if nx == 0 || ny == 0 || nz == 0 {
-        return None;
-    }
-
-    let mut rects = Vec::<RectFaceAccumulator>::new();
-    for triangle in mesh.triangles() {
-        let sample = triangle_rect_face_sample(mesh, triangle, &x, &y, &z)?;
-        let accumulator = match rects.iter_mut().find(|rect| rect.key == sample.key) {
-            Some(accumulator) => accumulator,
-            None => {
-                rects.push(RectFaceAccumulator {
-                    key: sample.key,
-                    triangle_count: 0,
-                    normal_sign: None,
-                    corners: Vec::new(),
-                });
-                rects.last_mut()?
-            }
-        };
-        accumulator.triangle_count += 1;
-        if accumulator
-            .normal_sign
-            .is_some_and(|normal| normal != sample.normal_sign)
-        {
-            return None;
-        }
-        accumulator.normal_sign = Some(sample.normal_sign);
-        for corner in sample.corners {
-            if !accumulator.corners.contains(&corner) {
-                accumulator.corners.push(corner);
-            }
-        }
-    }
-
-    let mut faces = BTreeMap::<UnitFaceKey, i8>::new();
-    for rect in rects {
-        if rect.triangle_count != 2 || !rect_has_all_corners(&rect) {
-            return None;
-        }
-        let normal = rect.normal_sign?;
-        for u in rect.key.u_min..rect.key.u_max {
-            for v in rect.key.v_min..rect.key.v_max {
-                let key = UnitFaceKey {
-                    axis: rect.key.axis,
-                    plane: rect.key.plane,
-                    u,
-                    v,
-                };
-                if faces.insert(key, normal).is_some() {
-                    return None;
-                }
-            }
-        }
-    }
-    if faces.is_empty() {
-        return None;
-    }
-
-    let components = connected_components(nx, ny, nz, &faces)?;
-    let component_count = components.iter().copied().max()?.checked_add(1)?;
-    let mut component_occupancy = vec![None; component_count];
-    for (&face, &normal) in &faces {
-        constrain_face_side(
-            face_side_cell(face, false, nx, ny, nz),
-            normal > 0,
-            &components,
-            &mut component_occupancy,
-            ny,
-            nz,
-        )?;
-        constrain_face_side(
-            face_side_cell(face, true, nx, ny, nz),
-            normal < 0,
-            &components,
-            &mut component_occupancy,
-            ny,
-            nz,
-        )?;
-    }
-    if component_occupancy.iter().any(Option::is_none) {
-        return None;
-    }
-
-    let occupied = components
-        .iter()
-        .map(|component| component_occupancy[*component].unwrap_or(false))
-        .collect::<Vec<_>>();
-    if !occupied.iter().any(|occupied| *occupied) {
-        return None;
-    }
-    validate_face_set_against_occupancy(nx, ny, nz, &occupied, &faces)?;
-    Some(AxisAlignedOrthogonalSolid {
-        x,
-        y,
-        z,
-        occupied,
-        nx,
-        ny,
-        nz,
-    })
-}
-
-/// Certify an orthogonal solid whose source faces are triangulated over cells.
+/// Certify an orthogonal solid from exact axis-aligned face-cell replay.
 ///
-/// The strict importer above requires every rectangular source face to arrive
-/// as exactly two triangles. This fallback keeps the same retained-cell model
-/// but accepts a broader exact face triangulation: every triangle must lie on
-/// one axis-aligned grid plane, each triangle is replayed over the exact
-/// projected grid cells on that plane, and the selected unit-face cells must
-/// have exactly the same projected area as the source triangles on the plane.
-/// Only after that replay do we reuse the same inside/outside occupancy
-/// certification as the rectangular importer.
+/// Every source triangle must lie on one axis-aligned grid plane. Each triangle
+/// is replayed over the exact projected grid cells on that plane, and the
+/// selected unit-face cells must have exactly the same projected area as the
+/// source triangles on the plane.
+/// Only after that replay do we reconstruct inside/outside occupancy from
+/// retained oriented unit faces.
 ///
-/// This is the volumetric analogue of a planar cell arrangement. It follows
-/// area equality, not from a tolerance repair of a triangle soup. The grid-cell
+/// This is the volumetric analogue of a planar cell arrangement: certification
+/// follows from exact area equality, not from tolerance repair of triangle soup.
 fn certify_axis_aligned_orthogonal_solid_face_cells(
     mesh: &ExactMesh,
 ) -> Option<AxisAlignedOrthogonalSolid> {
@@ -770,98 +627,6 @@ fn certify_axis_aligned_orthogonal_solid_face_cells(
         }
     }
     certify_axis_aligned_orthogonal_solid_from_faces(x, y, z, faces)
-}
-
-fn triangle_rect_face_sample(
-    mesh: &ExactMesh,
-    triangle: &Triangle,
-    x: &[Real],
-    y: &[Real],
-    z: &[Real],
-) -> Option<RectFaceSample> {
-    let points = triangle
-        .0
-        .map(|index| mesh.vertices().get(index).cloned())
-        .into_iter()
-        .collect::<Option<Vec<_>>>()?;
-    let points: [Point3; 3] = points.try_into().ok()?;
-    let constant_axes = [Axis::X, Axis::Y, Axis::Z]
-        .into_iter()
-        .filter(|&axis| {
-            real_eq(axis_coord(&points[0], axis), axis_coord(&points[1], axis))
-                && real_eq(axis_coord(&points[0], axis), axis_coord(&points[2], axis))
-        })
-        .collect::<Vec<_>>();
-    if constant_axes.len() != 1 {
-        return None;
-    }
-    let axis = constant_axes[0];
-    let plane = coord_index(axis_coords(x, y, z, axis), axis_coord(&points[0], axis))?;
-    let (canonical_u_axis, canonical_v_axis) = canonical_face_axes(axis);
-    let canonical = points
-        .iter()
-        .map(|point| {
-            Some((
-                coord_index(
-                    axis_coords(x, y, z, canonical_u_axis),
-                    axis_coord(point, canonical_u_axis),
-                )?,
-                coord_index(
-                    axis_coords(x, y, z, canonical_v_axis),
-                    axis_coord(point, canonical_v_axis),
-                )?,
-            ))
-        })
-        .collect::<Option<Vec<_>>>()?;
-    let u_min = canonical.iter().map(|(u, _)| *u).min()?;
-    let u_max = canonical.iter().map(|(u, _)| *u).max()?;
-    let v_min = canonical.iter().map(|(_, v)| *v).min()?;
-    let v_max = canonical.iter().map(|(_, v)| *v).max()?;
-    if u_min == u_max || v_min == v_max {
-        return None;
-    }
-    let mut unique_corners = Vec::new();
-    for &(u, v) in &canonical {
-        if (u != u_min && u != u_max) || (v != v_min && v != v_max) {
-            return None;
-        }
-        if !unique_corners.contains(&(u, v)) {
-            unique_corners.push((u, v));
-        }
-    }
-    if unique_corners.len() != 3 {
-        return None;
-    }
-
-    let (oriented_u_axis, oriented_v_axis) = oriented_face_axes(axis);
-    let oriented = points
-        .iter()
-        .map(|point| {
-            Some((
-                coord_index(
-                    axis_coords(x, y, z, oriented_u_axis),
-                    axis_coord(point, oriented_u_axis),
-                )?,
-                coord_index(
-                    axis_coords(x, y, z, oriented_v_axis),
-                    axis_coord(point, oriented_v_axis),
-                )?,
-            ))
-        })
-        .collect::<Option<Vec<_>>>()?;
-    let normal_sign = projected_orientation([oriented[0], oriented[1], oriented[2]])?;
-    Some(RectFaceSample {
-        key: RectFaceKey {
-            axis,
-            plane,
-            u_min,
-            u_max,
-            v_min,
-            v_max,
-        },
-        normal_sign,
-        corners: [canonical[0], canonical[1], canonical[2]],
-    })
 }
 
 fn triangle_face_cell_sample(
@@ -1010,16 +775,6 @@ fn certify_axis_aligned_orthogonal_solid_from_faces(
         ny,
         nz,
     })
-}
-
-fn rect_has_all_corners(rect: &RectFaceAccumulator) -> bool {
-    let required = [
-        (rect.key.u_min, rect.key.v_min),
-        (rect.key.u_max, rect.key.v_min),
-        (rect.key.u_max, rect.key.v_max),
-        (rect.key.u_min, rect.key.v_max),
-    ];
-    rect.corners.len() == 4 && required.iter().all(|corner| rect.corners.contains(corner))
 }
 
 fn connected_components(

@@ -1286,6 +1286,50 @@ fn exact_axis_aligned_orthogonal_solid_materializer_is_publicly_replayable() {
 }
 
 #[test]
+fn axis_aligned_orthogonal_solid_accepts_face_fan_triangulated_box() {
+    let fan_box = ExactMesh::from_i64_triangles(
+        &[
+            0, 0, 0, 2, 0, 0, 2, 2, 0, 0, 2, 0, 0, 0, 2, 2, 0, 2, 2, 2, 2, 0, 2, 2, 1, 1, 0,
+        ],
+        &[
+            0, 8, 1, //
+            1, 8, 2, //
+            2, 8, 3, //
+            3, 8, 0, //
+            4, 5, 6, //
+            4, 6, 7, //
+            0, 1, 5, //
+            0, 5, 4, //
+            1, 2, 6, //
+            1, 6, 5, //
+            2, 3, 7, //
+            2, 7, 6, //
+            3, 0, 4, //
+            3, 4, 7,
+        ],
+    )
+    .unwrap();
+    let cutter = axis_aligned_box([1, 0, 0], [3, 2, 2]);
+
+    let arrangement = materialize_axis_aligned_orthogonal_solid_intersection(
+        &fan_box,
+        &cutter,
+        ValidationPolicy::CLOSED,
+    )
+    .unwrap()
+    .expect("face-fan triangulated orthogonal box should certify by exact cells");
+    arrangement.validate().unwrap();
+    arrangement
+        .validate_against_sources(&fan_box, &cutter)
+        .unwrap();
+    assert_eq!(
+        arrangement.freshness_against_sources(&fan_box, &cutter),
+        AxisAlignedOrthogonalSolidFreshness::Current
+    );
+    assert!(arrangement.mesh.facts().mesh.closed_manifold);
+}
+
+#[test]
 fn exact_coplanar_volumetric_cell_evidence_is_publicly_replayable() {
     let left = tetra_from_corners([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]);
     let right = tetra_from_corners([0, 0, 0], [8, 0, 0], [0, 8, 0], [0, 0, 8]);
