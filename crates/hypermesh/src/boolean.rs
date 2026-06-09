@@ -37,9 +37,7 @@ use super::arrangement2d::{
 };
 use super::arrangement3d::ExactArrangement;
 use super::bounds::AabbIntersectionKind;
-use super::box_solid::{
-    has_axis_aligned_box_cell_difference, has_axis_aligned_box_cell_union, is_axis_aligned_box,
-};
+use super::box_solid::is_axis_aligned_box;
 use super::cell_complex::{
     arrangement_region_classification_blockers_are_volume_resolved,
     selected_region_selection_ignores_opposite_classification,
@@ -979,31 +977,6 @@ pub fn preflight_boolean_exact(
         )?
     {
         return Ok(preflight);
-    }
-    let eager_axis_aligned_cell_support = match operation {
-        ExactBooleanOperation::Union if has_axis_aligned_box_cell_union(left, right) => {
-            Some(ExactBooleanSupport::CertifiedArrangementCellComplex)
-        }
-        ExactBooleanOperation::Difference if has_axis_aligned_box_cell_difference(left, right) => {
-            Some(ExactBooleanSupport::CertifiedArrangementCellComplex)
-        }
-        _ => None,
-    };
-    if let Some(support) = eager_axis_aligned_cell_support {
-        return Ok(ExactBooleanPreflight {
-            operation,
-            support,
-            graph_had_unknowns,
-            retained_face_pairs,
-            retained_events,
-            region_count: 0,
-            region_classifications: Vec::new(),
-            blocker: None,
-            arrangement_readiness: None,
-            coplanar_volumetric_evidence: coplanar_volumetric_evidence_for_certified_arrangement(
-                &graph, left, right,
-            ),
-        });
     }
     if let Some(solid_operation) = axis_aligned_orthogonal_solid_operation(operation)
         && has_axis_aligned_orthogonal_solid_cells(left, right, solid_operation)
@@ -2031,11 +2004,9 @@ fn contained_face_adjacency_should_yield_to_stronger_kernel(
     }
     match operation {
         ExactBooleanOperation::Union => {
-            has_axis_aligned_box_cell_union(left, right)
-                || axis_aligned_orthogonal_solid_operation(operation).is_some_and(|operation| {
-                    has_axis_aligned_orthogonal_solid_cells(left, right, operation)
-                })
-                || has_affine_box_union(left, right)
+            axis_aligned_orthogonal_solid_operation(operation).is_some_and(|operation| {
+                has_axis_aligned_orthogonal_solid_cells(left, right, operation)
+            }) || has_affine_box_union(left, right)
                 || has_affine_orthogonal_solid_cells(
                     left,
                     right,

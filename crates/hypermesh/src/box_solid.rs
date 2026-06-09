@@ -76,16 +76,6 @@ pub(crate) fn has_axis_aligned_box_operation(
     axis_aligned_box_operation_is_supported(&inputs, operation)
 }
 
-/// Return whether an orthogonal cell union is certified for the operands.
-pub(crate) fn has_axis_aligned_box_cell_union(left: &ExactMesh, right: &ExactMesh) -> bool {
-    has_axis_aligned_box_cell_operation(left, right, BoxCellOperation::Union)
-}
-
-/// Return whether an orthogonal cell difference is certified for the operands.
-pub(crate) fn has_axis_aligned_box_cell_difference(left: &ExactMesh, right: &ExactMesh) -> bool {
-    has_axis_aligned_box_cell_operation(left, right, BoxCellOperation::Difference)
-}
-
 /// Return whether one mesh certifies as a retained exact axis-aligned box.
 ///
 /// Affine-normalized solid shortcuts use this as their local replay boundary:
@@ -256,18 +246,6 @@ fn empty_difference_axis_aligned_box_bounds_from_boxes(
     right: &AxisAlignedBox,
 ) -> bool {
     box_contains(right, left) == Some(true)
-}
-
-fn has_axis_aligned_box_cell_operation(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: BoxCellOperation,
-) -> bool {
-    let Some(inputs) = certify_axis_aligned_box_inputs(left, right) else {
-        return false;
-    };
-    axis_aligned_box_cell_selected_count_from_boxes(&inputs.left, &inputs.right, operation)
-        .is_some_and(|selected_count| selected_count != 0)
 }
 
 fn axis_aligned_box_cell_grid_from_boxes(
