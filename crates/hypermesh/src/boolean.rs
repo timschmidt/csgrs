@@ -962,21 +962,7 @@ fn preflight_boolean_exact_reject_boundary_policy(
     let retained_events = graph.event_count();
     let relation_counts = ExactBooleanBlocker::from_graph_counts(&graph, ExactBooleanBlockerKind::NeedsWinding);
     let mut certified_arrangement_preflight = None;
-    if graph_had_unknowns {
-        return Ok(ExactBooleanPreflight {
-            operation,
-            support: ExactBooleanSupport::UnresolvedGraph,
-            graph_had_unknowns,
-            retained_face_pairs,
-            retained_events,
-            region_count: 0,
-            region_classifications: Vec::new(),
-            blocker: Some(relation_counts.into_blocker(ExactBooleanBlockerKind::NeedsRefinement)),
-            arrangement_readiness: None,
-            coplanar_volumetric_evidence: None,
-        });
-    }
-    if relation_counts.construction_failed_events > 0 {
+    if graph_had_unknowns || relation_counts.construction_failed_events > 0 {
         return Ok(ExactBooleanPreflight {
             operation,
             support: ExactBooleanSupport::UnresolvedGraph,
