@@ -3933,6 +3933,11 @@ fn exact_contained_face_adjacent_union_is_publicly_replayable() {
         tetra_from_corners([2, 2, 0], [6, 2, 0], [2, 6, 0], [2, 2, -2]);
     let square_cap_right = tetra_from_corners([2, 2, 0], [2, 6, 0], [6, 2, 0], [2, 2, -2]);
     let square_disk_cap_right = downward_square_pyramid_with_base([2, 2], [6, 6], -2);
+    let two_caps_right = combine_exact_meshes(
+        &tetra_from_corners([1, 1, 0], [1, 2, 0], [2, 1, 0], [1, 1, -2]),
+        &tetra_from_corners([4, 1, 0], [4, 2, 0], [5, 1, 0], [4, 1, -2]),
+        "test two contained caps",
+    );
 
     let union = materialize_contained_face_adjacent_union(&left, &right, ValidationPolicy::CLOSED)
         .expect("contained coplanar cap should materialize as a holed union");
@@ -3994,6 +3999,32 @@ fn exact_contained_face_adjacent_union_is_publicly_replayable() {
     assert_eq!(square_disk_union.containing_faces.len(), 2);
     assert_eq!(square_disk_union.contained_faces.len(), 2);
     assert!(square_disk_union.mesh.facts().mesh.closed_manifold);
+    let multi_hole_union =
+        materialize_contained_face_adjacent_union(&left, &two_caps_right, ValidationPolicy::CLOSED)
+            .expect("two contained caps on one source face should materialize");
+    multi_hole_union.validate().unwrap();
+    multi_hole_union
+        .validate_against_sources(&left, &two_caps_right)
+        .unwrap();
+    assert_eq!(multi_hole_union.containing_faces.len(), 1);
+    assert_eq!(multi_hole_union.contained_faces.len(), 2);
+    assert!(multi_hole_union.mesh.facts().mesh.closed_manifold);
+    let multi_hole_report = certify_adjacent_union_completion_report(
+        &left,
+        &two_caps_right,
+        ExactBooleanOperation::Union,
+    )
+    .unwrap();
+    assert_eq!(
+        multi_hole_report.status,
+        ExactAdjacentUnionCompletionStatus::CertifiedContainedFace
+    );
+    assert_eq!(multi_hole_report.containing_faces, 1);
+    assert_eq!(multi_hole_report.contained_faces, 2);
+    multi_hole_report.validate().unwrap();
+    multi_hole_report
+        .validate_against_sources(&left, &two_caps_right)
+        .unwrap();
 
     let mut missing_contained = union.clone();
     missing_contained.contained_faces.clear();
