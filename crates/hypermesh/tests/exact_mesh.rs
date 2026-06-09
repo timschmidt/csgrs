@@ -1720,6 +1720,24 @@ fn square_pyramid_with_base() -> ExactMesh {
     .unwrap()
 }
 
+fn downward_square_pyramid_with_base(min: [i64; 2], max: [i64; 2], z: i64) -> ExactMesh {
+    ExactMesh::from_i64_triangles(
+        &[
+            min[0], min[1], 0, max[0], min[1], 0, max[0], max[1], 0, min[0], max[1], 0, min[0],
+            min[1], z,
+        ],
+        &[
+            0, 1, 2, //
+            0, 2, 3, //
+            0, 4, 1, //
+            1, 4, 2, //
+            2, 4, 3, //
+            3, 4, 0,
+        ],
+    )
+    .unwrap()
+}
+
 #[test]
 fn adjacent_union_completion_boolean_is_publicly_replayable() {
     let left_a = tetra_from_corners([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]);
@@ -3914,6 +3932,7 @@ fn exact_contained_face_adjacent_union_is_publicly_replayable() {
     let same_orientation_square_cap =
         tetra_from_corners([2, 2, 0], [6, 2, 0], [2, 6, 0], [2, 2, -2]);
     let square_cap_right = tetra_from_corners([2, 2, 0], [2, 6, 0], [6, 2, 0], [2, 2, -2]);
+    let square_disk_cap_right = downward_square_pyramid_with_base([2, 2], [6, 6], -2);
 
     let union = materialize_contained_face_adjacent_union(&left, &right, ValidationPolicy::CLOSED)
         .expect("contained coplanar cap should materialize as a holed union");
@@ -3962,6 +3981,19 @@ fn exact_contained_face_adjacent_union_is_publicly_replayable() {
         )
         .is_none()
     );
+    let square_disk_union = materialize_contained_face_adjacent_union(
+        &square_base_left,
+        &square_disk_cap_right,
+        ValidationPolicy::CLOSED,
+    )
+    .expect("multi-face contained cap inside a non-triangular patch should materialize");
+    square_disk_union.validate().unwrap();
+    square_disk_union
+        .validate_against_sources(&square_base_left, &square_disk_cap_right)
+        .unwrap();
+    assert_eq!(square_disk_union.containing_faces.len(), 2);
+    assert_eq!(square_disk_union.contained_faces.len(), 2);
+    assert!(square_disk_union.mesh.facts().mesh.closed_manifold);
 
     let mut missing_contained = union.clone();
     missing_contained.contained_faces.clear();
@@ -4039,6 +4071,28 @@ fn exact_contained_face_adjacent_union_is_publicly_replayable() {
     split_report.validate().unwrap();
     split_report
         .validate_against_sources(&split_container, &split_crossing_right)
+        .unwrap();
+
+    let square_disk_container = combine_exact_meshes(
+        &square_base_left,
+        &disjoint_shell,
+        "test disconnected multi-face contained-cap fixture",
+    );
+    let square_disk_report = certify_adjacent_union_completion_report(
+        &square_disk_container,
+        &square_disk_cap_right,
+        ExactBooleanOperation::Union,
+    )
+    .unwrap();
+    assert_eq!(
+        square_disk_report.status,
+        ExactAdjacentUnionCompletionStatus::CertifiedContainedFace
+    );
+    assert_eq!(square_disk_report.containing_faces, 2);
+    assert_eq!(square_disk_report.contained_faces, 2);
+    square_disk_report.validate().unwrap();
+    square_disk_report
+        .validate_against_sources(&square_disk_container, &square_disk_cap_right)
         .unwrap();
 
     let container = combine_exact_meshes(
