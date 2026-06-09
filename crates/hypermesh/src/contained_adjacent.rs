@@ -17,7 +17,7 @@
 
 use hyperlimit::{
     CoplanarProjection, Point3, SegmentIntersection, SegmentPlaneRelation, Sign, TriangleLocation,
-    classify_point_triangle, compare_reals, orient3d_report, point_on_segment3, project_point3,
+    classify_point_triangle, compare_reals, point_on_segment3, project_point3,
     projected_polygon_area2_value,
 };
 
@@ -291,70 +291,11 @@ fn contained_face_adjacency_certificate(
     right: &ExactMesh,
     pairs: &[FacePairEvents],
 ) -> Option<ContainedFaceAdjacencyCertificate> {
-    [
-        single_face_contained_adjacency_certificate(left, right, pairs),
-        component_contained_adjacency_certificate(left, right, pairs),
-    ]
-    .into_iter()
-    .flatten()
-    .find(|certificate| {
+    component_contained_adjacency_certificate(left, right, pairs).filter(|certificate| {
         pairs
             .iter()
             .all(|pair| contained_adjacency_contact_pair(left, right, pair, certificate))
     })
-}
-
-fn single_face_contained_adjacency_certificate(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    pairs: &[FacePairEvents],
-) -> Option<ContainedFaceAdjacencyCertificate> {
-    let mut certificate = None;
-    for pair in pairs {
-        if pair.relation != MeshFacePairRelation::CoplanarOverlapping {
-            continue;
-        }
-        let candidate = contained_face_pair(left, right, pair)?;
-        match &mut certificate {
-            Some(existing) => merge_contained_face_candidate(existing, candidate)?,
-            None => certificate = Some(candidate),
-        }
-    }
-    certificate
-}
-
-fn contained_face_pair(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    pair: &FacePairEvents,
-) -> Option<ContainedFaceAdjacencyCertificate> {
-    if let Some((projection, sign)) =
-        face_strictly_contains_opposite_face(left, pair.left_face, right, pair.right_face)?
-    {
-        return Some(ContainedFaceAdjacencyCertificate {
-            containing_side: MeshSide::Left,
-            patches: vec![ContainedFacePatch {
-                containing_faces: vec![pair.left_face],
-                contained_faces: vec![pair.right_face],
-                projection,
-                containing_projected_sign: sign,
-            }],
-        });
-    }
-    if let Some((projection, sign)) =
-        face_strictly_contains_opposite_face(right, pair.right_face, left, pair.left_face)?
-    {
-        return Some(ContainedFaceAdjacencyCertificate {
-            containing_side: MeshSide::Right,
-            patches: vec![ContainedFacePatch {
-                containing_faces: vec![pair.right_face],
-                contained_faces: vec![pair.left_face],
-                projection,
-                containing_projected_sign: sign,
-            }],
-        });
-    }
-    None
 }
 
 /// Certify one connected coplanar containing component with one or more
@@ -375,7 +316,7 @@ fn component_contained_adjacency_certificate(
         .iter()
         .filter(|pair| pair.relation == MeshFacePairRelation::CoplanarOverlapping)
         .collect::<Vec<_>>();
-    if overlapping.len() < 2 {
+    if overlapping.is_empty() {
         return None;
     }
 
@@ -518,55 +459,6 @@ fn push_unique_face(faces: &mut Vec<usize>, face: usize) {
     }
 }
 
-/// Merge one contained-face candidate into a bounded multi-patch certificate.
-///
-/// The accepted topology replaces several independent source faces with
-/// one-hole remnants, or several contained caps on the same source face, with
-/// source-owned caps whose projection and orientation replay exactly. Arbitrary
-/// branch graphs still remain explicit planar/coplanar-volumetric blockers.
-fn merge_contained_face_candidate(
-    existing: &mut ContainedFaceAdjacencyCertificate,
-    candidate: ContainedFaceAdjacencyCertificate,
-) -> Option<()> {
-    if existing.containing_side != candidate.containing_side {
-        return None;
-    }
-    for mut patch in candidate.patches {
-        patch.containing_faces.sort_unstable();
-        patch.contained_faces.sort_unstable();
-        if existing
-            .patches
-            .iter()
-            .any(|existing| faces_overlap(&existing.contained_faces, &patch.contained_faces))
-        {
-            return None;
-        }
-        if existing.patches.iter().any(|existing| {
-            existing.containing_faces == patch.containing_faces
-                && (existing.projection != patch.projection
-                    || existing.containing_projected_sign != patch.containing_projected_sign)
-        }) {
-            return None;
-        }
-        if let Some(existing) = existing.patches.iter_mut().find(|existing| {
-            existing.containing_faces == patch.containing_faces
-                && existing.projection == patch.projection
-                && existing.containing_projected_sign == patch.containing_projected_sign
-        }) {
-            existing.contained_faces.extend(patch.contained_faces);
-            existing.contained_faces.sort_unstable();
-            existing.contained_faces.dedup();
-        } else {
-            existing.patches.push(patch);
-        }
-    }
-    Some(())
-}
-
-fn faces_overlap(left: &[usize], right: &[usize]) -> bool {
-    left.iter().any(|face| right.contains(face))
-}
-
 fn contained_adjacency_contact_pair(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -666,39 +558,6 @@ fn retained_plane_crossing_is_not_inside_plane_face(
     )
     .value()
     .is_some_and(|location| location != TriangleLocation::Inside)
-}
-
-fn face_strictly_contains_opposite_face(
-    containing_mesh: &ExactMesh,
-    containing_face: usize,
-    contained_mesh: &ExactMesh,
-    contained_face: usize,
-) -> Option<Option<(CoplanarProjection, Sign)>> {
-    let containing = triangle_points(containing_mesh, containing_face)?;
-    let contained = triangle_points(contained_mesh, contained_face)?;
-    if !contained
-        .iter()
-        .all(|point| point_on_triangle_plane(&containing, point) == Some(true))
-    {
-        return Some(None);
-    }
-    let projection = choose_triangle_projection(&containing)?;
-    let containing_sign = projected_triangle_sign(&containing, projection)?;
-    let contained_sign = projected_triangle_sign(&contained, projection)?;
-    if containing_sign == contained_sign {
-        return Some(None);
-    }
-
-    let a = project_point3(&containing[0], projection);
-    let b = project_point3(&containing[1], projection);
-    let c = project_point3(&containing[2], projection);
-    if !contained.iter().all(|point| {
-        classify_point_triangle(&a, &b, &c, &project_point3(point, projection)).value()
-            == Some(TriangleLocation::Inside)
-    }) {
-        return Some(None);
-    }
-    Some(Some((projection, containing_sign)))
 }
 
 fn contained_face_union_mesh(
@@ -1105,10 +964,6 @@ fn triangle_points(mesh: &ExactMesh, face: usize) -> Option<[Point3; 3]> {
         mesh.vertices().get(triangle[1])?.clone(),
         mesh.vertices().get(triangle[2])?.clone(),
     ])
-}
-
-fn point_on_triangle_plane(triangle: &[Point3; 3], point: &Point3) -> Option<bool> {
-    Some(orient3d_report(&triangle[0], &triangle[1], &triangle[2], point).value()? == Sign::Zero)
 }
 
 fn choose_triangle_projection(points: &[Point3; 3]) -> Option<CoplanarProjection> {
