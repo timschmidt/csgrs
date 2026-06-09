@@ -1,0 +1,576 @@
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn display() {
+        let many: Rational = "12345".parse().unwrap();
+        let s = format!("{many}");
+        assert_eq!(s, "12345");
+        let five: Rational = "5".parse().unwrap();
+        let third: Rational = "1/3".parse().unwrap();
+        let s = format!("{}", five * third);
+        assert_eq!(s, "1 2/3");
+    }
+
+    #[test]
+    fn decimals() {
+        let first: Rational = "0.0".parse().unwrap();
+        assert_eq!(first, Rational::zero());
+        let a: Rational = "0.4".parse().unwrap();
+        let b: Rational = "2.5".parse().unwrap();
+        let answer = a * b;
+        assert_eq!(answer, Rational::one());
+    }
+
+    #[test]
+    /// See e.g. https://discussions.apple.com/thread/252474975
+    /// Apple calculator is not trustworthy if you are a programmer
+    fn parse() {
+        let big: Rational = "288230376151711743".parse().unwrap();
+        let small: Rational = "45".parse().unwrap();
+        let expected: Rational = "12970366926827028435".parse().unwrap();
+        assert_eq!(big * small, expected);
+    }
+
+    #[test]
+    fn parse_fractions() {
+        let third: Rational = "1/3".parse().unwrap();
+        let minus_four: Rational = "-4".parse().unwrap();
+        let twelve: Rational = "12/20".parse().unwrap();
+        let answer = third + minus_four * twelve;
+        let expected: Rational = "-31/15".parse().unwrap();
+        assert_eq!(answer, expected);
+    }
+
+    #[test]
+    fn parse_fraction_rejects_zero_denominator_and_reduces() {
+        assert_eq!("1/0".parse::<Rational>(), Err(Problem::DivideByZero));
+        assert_eq!("0/0".parse::<Rational>(), Err(Problem::DivideByZero));
+
+        let reduced: Rational = "9/18".parse().unwrap();
+        assert_eq!(reduced, Rational::fraction(1, 2).unwrap());
+        assert_eq!(format!("{reduced}"), "1/2");
+    }
+
+    #[cfg(feature = "serde")]
+    #[test]
+    fn serde_rejects_invalid_or_uncanonical_rational_state() {
+        let bad = r#"{"sign":1,"numerator":[1],"denominator":[]}"#;
+        assert!(serde_json::from_str::<Rational>(bad).is_err());
+
+        let unreduced = r#"{"sign":1,"numerator":[9],"denominator":[18]}"#;
+        let decoded: Rational = serde_json::from_str(unreduced).unwrap();
+        assert_eq!(decoded, Rational::fraction(1, 2).unwrap());
+        assert_eq!(format!("{decoded}"), "1/2");
+    }
+
+    #[test]
+    fn square_reduced() {
+        let thirty_two = Rational::new(32);
+        let (square, rest) = thirty_two.extract_square_reduced();
+        let four = Rational::new(4);
+        assert_eq!(square, four);
+        let two = Rational::new(2);
+        assert_eq!(rest, two);
+        let minus_one = Rational::new(-1);
+        let (square, rest) = minus_one.clone().extract_square_reduced();
+        assert_eq!(square, Rational::one());
+        assert_eq!(rest, minus_one);
+    }
+
+    #[test]
+    fn signs() {
+        let half: Rational = "4/8".parse().unwrap();
+        let one = Rational::one();
+        let minus_half = half - one;
+        let two = Rational::new(2);
+        let zero = Rational::zero();
+        let minus_two = zero - two;
+        let i2 = minus_two.inverse().unwrap();
+        assert_eq!(i2, minus_half);
+    }
+
+    #[test]
+    fn half_plus_one_times_two() {
+        let two = Rational::new(2);
+        let half = two.inverse().unwrap();
+        let one = Rational::one();
+        let two = Rational::new(2);
+        let three = Rational::new(3);
+        let sum = half + one;
+        assert_eq!(sum * two, three);
+    }
+
+    #[test]
+    fn three_divided_by_six() {
+        let three = Rational::new(3);
+        let six = Rational::new(6);
+        let half: Rational = "1/2".parse().unwrap();
+        assert_eq!(three / six, half);
+    }
+
+    #[test]
+    fn one_plus_two() {
+        let one = Rational::one();
+        let two = Rational::new(2);
+        let three = Rational::new(3);
+        assert_eq!(one + two, three);
+    }
+
+    #[test]
+    fn two_minus_one() {
+        let two = Rational::new(2);
+        let one = Rational::one();
+        assert_eq!(two - one, Rational::one());
+    }
+
+    #[test]
+    fn two_times_three() {
+        let two = Rational::new(2);
+        let three = Rational::new(3);
+        assert_eq!(two * three, Rational::new(6));
+    }
+
+    #[test]
+    fn fract() {
+        let seventy_ninths = Rational::fraction(70, 9).unwrap();
+        assert_eq!(seventy_ninths.fract(), Rational::fraction(7, 9).unwrap());
+        assert_eq!(
+            seventy_ninths.neg().fract(),
+            Rational::fraction(-7, 9).unwrap()
+        );
+        let six = Rational::new(6);
+        assert_eq!(six.fract(), Rational::zero());
+    }
+
+    #[test]
+    fn trunc() {
+        let seventy_ninths = Rational::fraction(70, 9).unwrap();
+        let whole = seventy_ninths.trunc();
+        let frac = seventy_ninths.fract();
+        assert_eq!(whole + frac, seventy_ninths);
+        let shrink = Rational::fraction(-405, 11).unwrap();
+        let whole = shrink.trunc();
+        let frac = shrink.fract();
+        assert_eq!(whole + frac, shrink);
+        let zero = Rational::zero();
+        let whole = zero.trunc();
+        let frac = zero.fract();
+        assert_eq!(whole, frac);
+        assert_eq!(whole + frac, zero);
+    }
+
+    #[test]
+    fn power() {
+        let one_two_five = Rational::new(5).powi(BigInt::from(-3));
+        assert_eq!(one_two_five, Rational::fraction(1, 125));
+        let more = Rational::new(7).powi(11i32.into()).unwrap();
+        assert_eq!(more, Rational::new(1_977_326_743));
+    }
+
+    #[test]
+    fn sqrt_trouble() {
+        for (n, root, rest) in [
+            (1, 1, 1),
+            (2, 1, 2),
+            (3, 1, 3),
+            (4, 2, 1),
+            (16, 4, 1),
+            (400, 20, 1),
+            (1323, 21, 3),
+            (4761, 69, 1),
+            (123456, 8, 1929),
+            (715716, 846, 1),
+        ] {
+            let n = Rational::new(n);
+            let reduced = n.extract_square_reduced();
+            assert_eq!(reduced, (Rational::new(root), Rational::new(rest)));
+        }
+    }
+
+    #[test]
+    fn decimal() {
+        let decimal: Rational = "7.125".parse().unwrap();
+        assert!(!decimal.prefer_fraction());
+        let half: Rational = "4/8".parse().unwrap();
+        assert!(!half.prefer_fraction());
+        let third: Rational = "2/6".parse().unwrap();
+        assert!(third.prefer_fraction());
+    }
+
+    #[test]
+    fn power_of_two_shift_detects_only_power_of_two_ratios() {
+        assert_eq!(
+            Rational::fraction(8, 1).unwrap().power_of_two_shift(),
+            Some((3, Plus))
+        );
+        assert_eq!(
+            Rational::fraction(1, 8).unwrap().power_of_two_shift(),
+            Some((-3, Plus))
+        );
+        assert_eq!(
+            Rational::fraction(-4, 32).unwrap().power_of_two_shift(),
+            Some((-3, Minus))
+        );
+        assert_eq!(Rational::fraction(7, 8).unwrap().power_of_two_shift(), None);
+        assert_eq!(Rational::fraction(5, 6).unwrap().power_of_two_shift(), None);
+        assert_eq!(Rational::zero().power_of_two_shift(), None);
+    }
+
+    #[test]
+    fn add_and_subtract_one_helpers_match_generic_arithmetic() {
+        for value in [
+            Rational::zero(),
+            Rational::one(),
+            Rational::new(-1),
+            Rational::fraction(7, 4).unwrap(),
+            Rational::fraction(3, 5).unwrap(),
+            Rational::fraction(-7, 4).unwrap(),
+            Rational::fraction(-3, 5).unwrap(),
+        ] {
+            assert_eq!(value.add_one(), value.clone() + Rational::one());
+            assert_eq!(value.subtract_one(), value.clone() - Rational::one());
+        }
+    }
+
+    #[test]
+    fn magnitude_at_least_power_of_two_handles_threshold_boundaries() {
+        assert!(
+            !Rational::fraction(7, 1)
+                .unwrap()
+                .magnitude_at_least_power_of_two(3)
+        );
+        assert!(
+            Rational::fraction(8, 1)
+                .unwrap()
+                .magnitude_at_least_power_of_two(3)
+        );
+        assert!(
+            Rational::fraction(-9, 1)
+                .unwrap()
+                .magnitude_at_least_power_of_two(3)
+        );
+        assert!(
+            !Rational::fraction(15, 2)
+                .unwrap()
+                .magnitude_at_least_power_of_two(3)
+        );
+        assert!(
+            Rational::fraction(16, 2)
+                .unwrap()
+                .magnitude_at_least_power_of_two(3)
+        );
+        assert!(!Rational::zero().magnitude_at_least_power_of_two(3));
+    }
+
+    #[test]
+    fn dyadic_add_sub_stay_reduced() {
+        let three_eighths = Rational::fraction(3, 8).unwrap();
+        let five_sixteenths = Rational::fraction(5, 16).unwrap();
+
+        assert_eq!(
+            &three_eighths + &five_sixteenths,
+            Rational::fraction(11, 16).unwrap()
+        );
+        assert_eq!(
+            &three_eighths - &five_sixteenths,
+            Rational::fraction(1, 16).unwrap()
+        );
+        assert_eq!(
+            &five_sixteenths - &three_eighths,
+            Rational::fraction(-1, 16).unwrap()
+        );
+        assert_eq!(&three_eighths - &three_eighths, Rational::zero());
+    }
+
+    #[test]
+    fn same_denominator_reports_reduced_common_scale() {
+        let a = Rational::fraction(3, 10).unwrap();
+        let b = Rational::fraction(-7, 10).unwrap();
+        let reduced = Rational::fraction(6, 20).unwrap();
+        let c = Rational::fraction(1, 3).unwrap();
+
+        assert!(a.same_denominator(&b));
+        assert!(a.same_denominator(&reduced));
+        assert!(!a.same_denominator(&c));
+    }
+
+    #[test]
+    fn dot_products_match_pairwise_arithmetic() {
+        let left = [
+            Rational::fraction(3, 8).unwrap(),
+            Rational::fraction(-5, 16).unwrap(),
+            Rational::zero(),
+            Rational::fraction(7, 10).unwrap(),
+        ];
+        let right = [
+            Rational::fraction(11, 32).unwrap(),
+            Rational::fraction(13, 64).unwrap(),
+            Rational::fraction(17, 19).unwrap(),
+            Rational::fraction(-23, 25).unwrap(),
+        ];
+        let expected = &(&left[0] * &right[0])
+            + &(&left[1] * &right[1])
+            + &(&left[2] * &right[2])
+            + &(&left[3] * &right[3]);
+
+        assert_eq!(
+            Rational::dot_products(
+                [&left[0], &left[1], &left[2], &left[3]],
+                [&right[0], &right[1], &right[2], &right[3]],
+            ),
+            expected
+        );
+    }
+
+    #[test]
+    fn dot_products_preserve_dyadic_exactness() {
+        let left = [
+            Rational::fraction(1, 8).unwrap(),
+            Rational::fraction(3, 16).unwrap(),
+            Rational::fraction(-5, 32).unwrap(),
+        ];
+        let right = [
+            Rational::fraction(7, 4).unwrap(),
+            Rational::fraction(-11, 8).unwrap(),
+            Rational::fraction(13, 16).unwrap(),
+        ];
+
+        let dot = Rational::dot_products(
+            [&left[0], &left[1], &left[2]],
+            [&right[0], &right[1], &right[2]],
+        );
+        assert!(dot.is_dyadic());
+        assert_eq!(
+            dot,
+            &(&left[0] * &right[0]) + &(&left[1] * &right[1]) + &(&left[2] * &right[2])
+        );
+    }
+
+    #[test]
+    fn dot_products_handle_equal_non_dyadic_denominators() {
+        let left = [
+            Rational::fraction(7, 10).unwrap(),
+            Rational::fraction(-9, 10).unwrap(),
+            Rational::fraction(11, 10).unwrap(),
+        ];
+        let right = [
+            Rational::fraction(13, 7).unwrap(),
+            Rational::fraction(5, 7).unwrap(),
+            Rational::fraction(-3, 7).unwrap(),
+        ];
+
+        assert_eq!(
+            Rational::dot_products(
+                [&left[0], &left[1], &left[2]],
+                [&right[0], &right[1], &right[2]],
+            ),
+            &(&left[0] * &right[0]) + &(&left[1] * &right[1]) + &(&left[2] * &right[2])
+        );
+    }
+
+    #[test]
+    fn signed_product_sum_matches_pairwise_arithmetic() {
+        let terms = [
+            [
+                Rational::fraction(3, 8).unwrap(),
+                Rational::fraction(-5, 12).unwrap(),
+                Rational::fraction(7, 11).unwrap(),
+            ],
+            [
+                Rational::fraction(13, 9).unwrap(),
+                Rational::fraction(17, 25).unwrap(),
+                Rational::fraction(-19, 6).unwrap(),
+            ],
+            [
+                Rational::fraction(-23, 10).unwrap(),
+                Rational::fraction(29, 14).unwrap(),
+                Rational::fraction(31, 15).unwrap(),
+            ],
+        ];
+        let expected = &(&terms[0][0] * &terms[0][1] * &terms[0][2])
+            - &(&terms[1][0] * &terms[1][1] * &terms[1][2])
+            + &(&terms[2][0] * &terms[2][1] * &terms[2][2]);
+
+        assert_eq!(
+            Rational::signed_product_sum(
+                [true, false, true],
+                [
+                    [&terms[0][0], &terms[0][1], &terms[0][2]],
+                    [&terms[1][0], &terms[1][1], &terms[1][2]],
+                    [&terms[2][0], &terms[2][1], &terms[2][2]],
+                ],
+            ),
+            expected
+        );
+    }
+
+    #[test]
+    fn signed_product_sum_preserves_dyadic_exactness() {
+        let terms = [
+            [
+                Rational::fraction(1, 8).unwrap(),
+                Rational::fraction(3, 16).unwrap(),
+            ],
+            [
+                Rational::fraction(5, 32).unwrap(),
+                Rational::fraction(7, 64).unwrap(),
+            ],
+            [
+                Rational::fraction(-9, 4).unwrap(),
+                Rational::fraction(11, 8).unwrap(),
+            ],
+        ];
+        let sum = Rational::signed_product_sum(
+            [true, false, true],
+            [
+                [&terms[0][0], &terms[0][1]],
+                [&terms[1][0], &terms[1][1]],
+                [&terms[2][0], &terms[2][1]],
+            ],
+        );
+
+        assert!(sum.is_dyadic());
+        assert_eq!(
+            sum,
+            &(&terms[0][0] * &terms[0][1]) - &(&terms[1][0] * &terms[1][1])
+                + &(&terms[2][0] * &terms[2][1])
+        );
+    }
+
+    #[test]
+    fn signed_product_sum_handles_equal_non_dyadic_denominators() {
+        let terms = [
+            [
+                Rational::fraction(7, 10).unwrap(),
+                Rational::fraction(13, 7).unwrap(),
+            ],
+            [
+                Rational::fraction(9, 10).unwrap(),
+                Rational::fraction(5, 7).unwrap(),
+            ],
+            [
+                Rational::fraction(11, 10).unwrap(),
+                Rational::fraction(3, 7).unwrap(),
+            ],
+        ];
+
+        assert_eq!(
+            Rational::signed_product_sum(
+                [true, false, true],
+                [
+                    [&terms[0][0], &terms[0][1]],
+                    [&terms[1][0], &terms[1][1]],
+                    [&terms[2][0], &terms[2][1]],
+                ],
+            ),
+            &(&terms[0][0] * &terms[0][1]) - &(&terms[1][0] * &terms[1][1])
+                + &(&terms[2][0] * &terms[2][1])
+        );
+    }
+
+    #[test]
+    fn signed_product_sum_shared_denominator_consumes_common_scale() {
+        let terms = [
+            [
+                Rational::fraction(7, 15).unwrap(),
+                Rational::fraction(13, 15).unwrap(),
+            ],
+            [
+                Rational::fraction(8, 15).unwrap(),
+                Rational::fraction(-2, 15).unwrap(),
+            ],
+            [
+                Rational::fraction(11, 15).unwrap(),
+                Rational::fraction(14, 15).unwrap(),
+            ],
+        ];
+        let expected = &(&terms[0][0] * &terms[0][1]) - &(&terms[1][0] * &terms[1][1])
+            + &(&terms[2][0] * &terms[2][1]);
+
+        assert_eq!(
+            Rational::signed_product_sum_shared_denominator(
+                [true, false, true],
+                [
+                    [&terms[0][0], &terms[0][1]],
+                    [&terms[1][0], &terms[1][1]],
+                    [&terms[2][0], &terms[2][1]],
+                ],
+            ),
+            Some(expected)
+        );
+
+        let mixed = Rational::fraction(1, 7).unwrap();
+        assert_eq!(
+            Rational::signed_product_sum_shared_denominator(
+                [true, false, true],
+                [
+                    [&terms[0][0], &terms[0][1]],
+                    [&terms[1][0], &mixed],
+                    [&terms[2][0], &terms[2][1]],
+                ],
+            ),
+            None
+        );
+    }
+
+    #[test]
+    fn compare() {
+        assert!(Rational::one() > Rational::zero());
+        assert!(Rational::new(5) > Rational::new(4));
+        assert!(Rational::new(-10) < Rational::new(5));
+        assert!(Rational::fraction(1, 4).unwrap() < Rational::fraction(1, 3).unwrap());
+    }
+
+    #[test]
+    fn same() {
+        use std::cmp::Ordering;
+
+        assert_eq!(
+            Rational::zero().partial_cmp(&Rational::zero()),
+            Some(Ordering::Equal)
+        );
+        assert_eq!(
+            Rational::one().partial_cmp(&Rational::one()),
+            Some(Ordering::Equal)
+        );
+        assert_eq!(
+            Rational::new(-10).partial_cmp(&Rational::new(-10)),
+            Some(Ordering::Equal)
+        );
+    }
+
+    #[test]
+    fn divide_by_zero() {
+        let err = Rational::fraction(1, 0).unwrap_err();
+        assert_eq!(err, Problem::DivideByZero);
+        let zero = Rational::zero();
+        let err = zero.inverse().unwrap_err();
+        assert_eq!(err, Problem::DivideByZero);
+    }
+
+    #[test]
+    fn operations_work_on_refs_on_rhs() {
+        let a = Rational::new(2);
+        let b = Rational::new(3);
+        let c = Rational::new(6);
+        assert_eq!(a.clone() * &b, c.clone());
+        assert_eq!(c.clone() / &b, a.clone());
+        assert_eq!(c.clone() - &a, Rational::new(4));
+        assert_eq!(-&c, Rational::new(-6));
+        assert_eq!(a.clone() + &b, Rational::new(5));
+    }
+
+    #[test]
+    fn operations_work_on_refs() {
+        let a = Rational::new(2);
+        let b = Rational::new(3);
+        let c = Rational::new(6);
+        assert_eq!(&a * &b, c.clone());
+        assert_eq!(&c / &b, a.clone());
+        assert_eq!(&c - &a, Rational::new(4));
+        assert_eq!(-&c, Rational::new(-6));
+        assert_eq!(&a + &b, Rational::new(5));
+    }
+}
