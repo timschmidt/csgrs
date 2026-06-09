@@ -8,8 +8,9 @@ use hypermesh::{
     CoplanarVolumetricCellEvidenceFreshness, ExactAdjacentUnionCompletionStatus, ExactArrangement,
     ExactArrangement2dBoundaryPolicy, ExactArrangement2dRegion, ExactArrangement2dRegionRing,
     ExactArrangement2dSetOperation, ExactArrangementFreshness, ExactBooleanBlockerKind,
-    ExactBooleanOperation, ExactBooleanPolicy, ExactBooleanResult, ExactBooleanResultKind,
-    ExactBoundaryBooleanPolicy, ExactBoundaryTouchingStatus, ExactI64MeshInputReadiness,
+    ExactBooleanOperation, ExactBooleanPolicy, ExactBooleanRequest, ExactBooleanResult,
+    ExactBooleanResultKind, ExactBoundaryBooleanPolicy, ExactBoundaryTouchingStatus,
+    ExactI64MeshInputReadiness,
     ExactI64MeshInputReportValidationError, ExactLabeledCellComplexFreshness, ExactMesh,
     ExactMeshAuditError, ExactMeshConsumerDomain, ExactMeshConsumerReadinessError,
     ExactMeshDomainSummaryFreshness, ExactMeshHandoffPackageError,
@@ -41,7 +42,7 @@ use hypermesh::{
     classify_mesh_vertices_against_closed_mesh_winding_report,
     classify_mesh_vertices_against_convex_solid_report,
     classify_point_against_closed_mesh_winding_report, classify_point_against_convex_solid_report,
-    classify_triangle_triangle, exact_arrangement_boolean_attempt_report,
+    classify_triangle_triangle, evaluate_boolean_exact, exact_arrangement_boolean_attempt_report,
     exact_arrangement_boolean_attempt_report_with_validation, exact_mesh_consumer_readiness,
     exact_mesh_handoff_package, inspect_f64_mesh_input, inspect_i64_mesh_input,
     materialize_adjacent_union_completion_boolean,
@@ -208,6 +209,65 @@ fn exact_arrangement2d_boundary_policy_is_publicly_available() {
     assert_eq!(preserved.output_loops[0].points.len(), 8);
     assert_eq!(simplified.output_loops[0].signed_area_twice, Real::from(24));
     assert_eq!(preserved.output_loops[0].signed_area_twice, Real::from(24));
+}
+
+#[test]
+fn exact_boolean_evaluation_materializes_certified_result_publicly() {
+    let left = tetra([0, 0, 0]);
+    let right = tetra([4, 0, 0]);
+    let request = ExactBooleanRequest::new(
+        ExactBooleanOperation::Union,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    );
+
+    let evaluation = evaluate_boolean_exact(&left, &right, request).unwrap();
+
+    evaluation.validate().unwrap();
+    assert!(evaluation.is_certified());
+    assert!(evaluation.is_materialized());
+    assert_eq!(evaluation.required_blocker_kind(), None);
+    assert!(evaluation.preflight.is_certified());
+    assert!(evaluation.result.as_ref().is_some_and(|result| {
+        matches!(
+            result.kind,
+            ExactBooleanResultKind::CertifiedShortcut {
+                operation: ExactBooleanOperation::Union,
+                ..
+            }
+        )
+    }));
+}
+
+#[test]
+fn exact_boolean_evaluation_retains_boundary_policy_blocker_publicly() {
+    let left = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 0, 2, 0, 0, 0, 2, 0],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let right = ExactMesh::from_i64_triangles_with_policy(
+        &[2, 0, 0, 0, 2, 0, 2, 2, 2],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let request = ExactBooleanRequest::new(
+        ExactBooleanOperation::Union,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    );
+
+    let evaluation = evaluate_boolean_exact(&left, &right, request).unwrap();
+
+    evaluation.validate().unwrap();
+    assert!(!evaluation.is_certified());
+    assert!(!evaluation.is_materialized());
+    assert_eq!(
+        evaluation.required_blocker_kind(),
+        Some(ExactBooleanBlockerKind::NeedsBoundaryPolicy)
+    );
+    assert!(evaluation.preflight.requires_caller_policy());
+    assert!(evaluation.preflight.has_retained_exact_evidence());
 }
 
 #[test]
