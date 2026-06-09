@@ -1093,23 +1093,6 @@ impl OrthogonalCellPlan {
                 &mut vertex_indices,
                 &mut triangles,
             );
-        } else if let Some((outer, cavity)) = self.selected_rectangular_shell_bounds() {
-            emit_rectangular_box_faces(
-                self,
-                outer,
-                1,
-                &mut vertices,
-                &mut vertex_indices,
-                &mut triangles,
-            );
-            emit_rectangular_box_faces(
-                self,
-                cavity,
-                -1,
-                &mut vertices,
-                &mut vertex_indices,
-                &mut triangles,
-            );
         } else {
             for i in 0..self.nx {
                 for j in 0..self.ny {
@@ -1243,95 +1226,6 @@ impl OrthogonalCellPlan {
             }
         }
         Some((i_min, i_max, j_min, j_max, k_min, k_max))
-    }
-
-    fn selected_rectangular_shell_bounds(&self) -> Option<(GridBoxBounds, GridBoxBounds)> {
-        if self.selected_count == 0 {
-            return None;
-        }
-        let mut i_min = self.nx;
-        let mut i_max = 0usize;
-        let mut j_min = self.ny;
-        let mut j_max = 0usize;
-        let mut k_min = self.nz;
-        let mut k_max = 0usize;
-        for i in 0..self.nx {
-            for j in 0..self.ny {
-                for k in 0..self.nz {
-                    if !self.is_selected(i, j, k) {
-                        continue;
-                    }
-                    i_min = i_min.min(i);
-                    i_max = i_max.max(i + 1);
-                    j_min = j_min.min(j);
-                    j_max = j_max.max(j + 1);
-                    k_min = k_min.min(k);
-                    k_max = k_max.max(k + 1);
-                }
-            }
-        }
-        let mut ci_min = self.nx;
-        let mut ci_max = 0usize;
-        let mut cj_min = self.ny;
-        let mut cj_max = 0usize;
-        let mut ck_min = self.nz;
-        let mut ck_max = 0usize;
-        let mut cavity_count = 0usize;
-        for i in i_min..i_max {
-            for j in j_min..j_max {
-                for k in k_min..k_max {
-                    if self.is_selected(i, j, k) {
-                        continue;
-                    }
-                    cavity_count += 1;
-                    ci_min = ci_min.min(i);
-                    ci_max = ci_max.max(i + 1);
-                    cj_min = cj_min.min(j);
-                    cj_max = cj_max.max(j + 1);
-                    ck_min = ck_min.min(k);
-                    ck_max = ck_max.max(k + 1);
-                }
-            }
-        }
-        if cavity_count == 0
-            || ci_min == i_min
-            || ci_max == i_max
-            || cj_min == j_min
-            || cj_max == j_max
-            || ck_min == k_min
-            || ck_max == k_max
-        {
-            return None;
-        }
-        let outer_volume = i_max
-            .checked_sub(i_min)?
-            .checked_mul(j_max.checked_sub(j_min)?)?
-            .checked_mul(k_max.checked_sub(k_min)?)?;
-        let cavity_volume = ci_max
-            .checked_sub(ci_min)?
-            .checked_mul(cj_max.checked_sub(cj_min)?)?
-            .checked_mul(ck_max.checked_sub(ck_min)?)?;
-        if cavity_volume != cavity_count
-            || outer_volume.checked_sub(cavity_volume)? != self.selected_count
-        {
-            return None;
-        }
-        for i in i_min..i_max {
-            for j in j_min..j_max {
-                for k in k_min..k_max {
-                    let in_cavity = (ci_min..ci_max).contains(&i)
-                        && (cj_min..cj_max).contains(&j)
-                        && (ck_min..ck_max).contains(&k);
-                    if self.is_selected(i, j, k) == in_cavity {
-                        return None;
-                    }
-                }
-            }
-        }
-        Some((
-            (i_min, i_max, j_min, j_max, k_min, k_max),
-            (ci_min, ci_max, cj_min, cj_max, ck_min, ck_max),
-        ))
     }
 }
 

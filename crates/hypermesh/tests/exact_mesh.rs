@@ -1334,6 +1334,35 @@ fn axis_aligned_orthogonal_solid_accepts_face_fan_triangulated_box() {
 }
 
 #[test]
+fn axis_aligned_orthogonal_solid_materializes_multiple_cavities() {
+    let outer = axis_aligned_box([0, 0, 0], [5, 2, 2]);
+    let left_cavity = axis_aligned_box([1, 1, 1], [2, 2, 2]);
+    let right_cavity = axis_aligned_box([3, 1, 1], [4, 2, 2]);
+    let cavities = combine_exact_meshes(
+        &left_cavity,
+        &right_cavity,
+        "test disjoint orthogonal cavity cutters",
+    );
+
+    let arrangement = materialize_axis_aligned_orthogonal_solid_difference(
+        &outer,
+        &cavities,
+        ValidationPolicy::CLOSED,
+    )
+    .unwrap()
+    .expect("orthogonal cell difference should retain two disjoint cavities");
+    arrangement.validate().unwrap();
+    arrangement
+        .validate_against_sources(&outer, &cavities)
+        .unwrap();
+    assert_eq!(
+        arrangement.freshness_against_sources(&outer, &cavities),
+        AxisAlignedOrthogonalSolidFreshness::Current
+    );
+    assert!(arrangement.mesh.facts().mesh.closed_manifold);
+}
+
+#[test]
 fn affine_orthogonal_solid_recovers_face_fan_basis_from_cell_edges() {
     let fan_box = skew_affine_mesh_from_axis_aligned(
         &face_fan_box(),
