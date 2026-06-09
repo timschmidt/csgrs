@@ -401,10 +401,6 @@ pub(crate) fn materialize_axis_aligned_orthogonal_solid_cell_plan(
     plan.to_mesh(label, validation)
 }
 
-pub(crate) fn orthogonal_cell_plan_is_single_rectangular_block(plan: &OrthogonalCellPlan) -> bool {
-    plan.selected_rectangular_block_bounds().is_some()
-}
-
 fn orthogonal_solid_error(message: impl Into<String>) -> MeshError {
     MeshError::one(MeshDiagnostic::new(
         Severity::Error,
