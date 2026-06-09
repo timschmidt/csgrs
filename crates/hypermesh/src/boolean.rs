@@ -10124,6 +10124,9 @@ mod tests {
         assert!(has_empty_affine_orthogonal_solid_cell_intersection(
             &left, &right
         ));
+        assert!(has_affine_box_union(&left, &right));
+        assert!(has_affine_box_intersection(&left, &right));
+        assert!(has_affine_box_difference(&left, &right));
 
         let preflight =
             preflight_boolean_exact(&left, &right, ExactBooleanOperation::Intersection).unwrap();

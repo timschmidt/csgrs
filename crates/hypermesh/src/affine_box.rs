@@ -15,11 +15,12 @@ use core::cmp::Ordering;
 
 use hyperlimit::{Point3, compare_reals};
 
-use super::box_solid::{
-    AxisAlignedBoxOperation, has_axis_aligned_box_operation, is_axis_aligned_box,
-};
+use super::box_solid::is_axis_aligned_box;
 use super::error::MeshError;
 use super::mesh::{ExactMesh, Triangle};
+use super::orthogonal_solid::{
+    AxisAlignedOrthogonalSolidOperation, has_axis_aligned_orthogonal_solid_cells,
+};
 use super::validation::ValidationPolicy;
 use hyperlimit::SourceProvenance;
 use hyperreal::Real;
@@ -81,7 +82,7 @@ fn has_normalized_affine_box_operation(
     right: &ExactMesh,
     operation: AffineBoxOperation,
 ) -> bool {
-    has_axis_aligned_box_operation(left, right, operation.into())
+    has_axis_aligned_orthogonal_solid_cells(left, right, operation.into())
 }
 
 fn affine_box_operation_is_supported(
@@ -317,7 +318,7 @@ impl AffineBoxBasis {
     }
 }
 
-impl From<AffineBoxOperation> for AxisAlignedBoxOperation {
+impl From<AffineBoxOperation> for AxisAlignedOrthogonalSolidOperation {
     fn from(operation: AffineBoxOperation) -> Self {
         match operation {
             AffineBoxOperation::Union => Self::Union,
