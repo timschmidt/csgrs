@@ -50,11 +50,21 @@ pub(crate) fn polygon_patch_pairs(
 ) -> Option<Vec<(Vec<usize>, Vec<usize>)>> {
     let left_candidates = polygon_patch_candidates(left, consumed_left_faces)?;
     let right_candidates = polygon_patch_candidates(right, consumed_right_faces)?;
+    Some(pair_polygon_patch_candidates(
+        &left_candidates,
+        &right_candidates,
+    ))
+}
+
+fn pair_polygon_patch_candidates(
+    left_candidates: &[PolygonPatchCandidate],
+    right_candidates: &[PolygonPatchCandidate],
+) -> Vec<(Vec<usize>, Vec<usize>)> {
     let mut pairs = Vec::new();
     let mut used_left = BTreeSet::new();
     let mut used_right = BTreeSet::new();
 
-    for left_candidate in &left_candidates {
+    for left_candidate in left_candidates {
         if left_candidate
             .faces
             .iter()
@@ -62,23 +72,21 @@ pub(crate) fn polygon_patch_pairs(
         {
             continue;
         }
-        let Some((right_index, right_candidate)) =
-            right_candidates
+        let Some(right_candidate) = right_candidates.iter().find(|candidate| {
+            candidate
+                .faces
                 .iter()
-                .enumerate()
-                .find(|(right_index, candidate)| {
-                    !used_right.contains(right_index)
-                        && polygon_patch_candidates_match(left_candidate, candidate)
-                })
-        else {
+                .all(|face| !used_right.contains(face))
+                && polygon_patch_candidates_match(left_candidate, candidate)
+        }) else {
             continue;
         };
         used_left.extend(left_candidate.faces.iter().copied());
-        used_right.insert(right_index);
+        used_right.extend(right_candidate.faces.iter().copied());
         pairs.push((left_candidate.faces.clone(), right_candidate.faces.clone()));
     }
 
-    Some(pairs)
+    pairs
 }
 
 fn polygon_patch_candidates(
@@ -626,6 +634,19 @@ mod tests {
         .unwrap()
     }
 
+    fn point(x: i64, y: i64, z: i64) -> Point3 {
+        Point3::new(Real::from(x), Real::from(y), Real::from(z))
+    }
+
+    fn patch_candidate(faces: Vec<usize>, signed_area2: i64) -> PolygonPatchCandidate {
+        PolygonPatchCandidate {
+            faces,
+            boundary_points: vec![point(0, 0, 0), point(1, 0, 0), point(0, 1, 0)],
+            signed_area2: Real::from(signed_area2),
+            area_abs: Real::from(signed_area2.abs()),
+        }
+    }
+
     fn shifted_square_subpatch_pair(
         prefix: i64,
         width: i64,
@@ -729,6 +750,26 @@ mod tests {
             .expect("source-disk candidates should be available");
 
         assert_eq!(pairs, vec![(vec![1, 2], vec![0, 1])]);
+    }
+
+    #[test]
+    fn polygon_patch_pairing_reserves_right_source_faces() {
+        let left_candidates = vec![
+            patch_candidate(vec![0, 1], 1),
+            patch_candidate(vec![2, 3], 1),
+        ];
+        let right_candidates = vec![
+            patch_candidate(vec![10, 11], -1),
+            patch_candidate(vec![11, 12], -1),
+            patch_candidate(vec![12, 13], -1),
+        ];
+
+        let pairs = pair_polygon_patch_candidates(&left_candidates, &right_candidates);
+
+        assert_eq!(
+            pairs,
+            vec![(vec![0, 1], vec![10, 11]), (vec![2, 3], vec![12, 13])]
+        );
     }
 
     #[test]
