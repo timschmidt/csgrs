@@ -917,20 +917,9 @@ fn preflight_boolean_exact_reject_boundary_policy(
     if support == ExactBooleanSupport::CertifiedArrangementCellComplex {
         let graph = build_intersection_graph(left, right)?;
         validate_graph_source_handoff(&graph, left, right)?;
-        return Ok(ExactBooleanPreflight {
-            operation,
-            support,
-            graph_had_unknowns: graph.has_unknowns(),
-            retained_face_pairs: graph.face_pairs.len(),
-            retained_events: graph.event_count(),
-            region_count: 0,
-            region_classifications: Vec::new(),
-            blocker: None,
-            arrangement_readiness: None,
-            coplanar_volumetric_evidence: coplanar_volumetric_evidence_for_certified_arrangement(
-                &graph, left, right,
-            ),
-        });
+        return Ok(certified_arrangement_cell_complex_preflight_from_graph(
+            operation, &graph, left, right,
+        ));
     }
 
     if matches!(
@@ -1124,18 +1113,11 @@ fn preflight_boolean_exact_reject_boundary_policy(
                 ))
             })?;
             if evidence.positive_area_coplanar_overlapping_pairs != 0 {
-                return Ok(ExactBooleanPreflight {
-                    operation,
-                    support: ExactBooleanSupport::CertifiedArrangementCellComplex,
-                    graph_had_unknowns,
-                    retained_face_pairs,
-                    retained_events,
-                    region_count: 0,
-                    region_classifications: Vec::new(),
-                    blocker: None,
-                    arrangement_readiness: None,
-                    coplanar_volumetric_evidence: Some(evidence),
-                });
+                let mut preflight = certified_arrangement_cell_complex_preflight_from_graph(
+                    operation, &graph, left, right,
+                );
+                preflight.coplanar_volumetric_evidence = Some(evidence);
+                return Ok(preflight);
             }
         }
         return Ok(certified_shortcut_preflight_from_graph(
@@ -1151,20 +1133,9 @@ fn preflight_boolean_exact_reject_boundary_policy(
         && let Some(solid_operation) = axis_aligned_orthogonal_solid_operation(operation)
         && has_axis_aligned_orthogonal_solid_cells(left, right, solid_operation)
     {
-        return Ok(ExactBooleanPreflight {
-            operation,
-            support: ExactBooleanSupport::CertifiedArrangementCellComplex,
-            graph_had_unknowns,
-            retained_face_pairs,
-            retained_events,
-            region_count: 0,
-            region_classifications: Vec::new(),
-            blocker: None,
-            arrangement_readiness: None,
-            coplanar_volumetric_evidence: coplanar_volumetric_evidence_for_certified_arrangement(
-                &graph, left, right,
-            ),
-        });
+        return Ok(certified_arrangement_cell_complex_preflight_from_graph(
+            operation, &graph, left, right,
+        ));
     }
     if support == ExactBooleanSupport::RequiresCertifiedWinding
         && let Some(boundary_support) =
@@ -1254,20 +1225,9 @@ fn preflight_boolean_exact_reject_boundary_policy(
     if let Some(solid_operation) = axis_aligned_orthogonal_solid_operation(operation)
         && has_axis_aligned_orthogonal_solid_cells(left, right, solid_operation)
     {
-        return Ok(ExactBooleanPreflight {
-            operation,
-            support: ExactBooleanSupport::CertifiedArrangementCellComplex,
-            graph_had_unknowns,
-            retained_face_pairs,
-            retained_events,
-            region_count: 0,
-            region_classifications: Vec::new(),
-            blocker: None,
-            arrangement_readiness: None,
-            coplanar_volumetric_evidence: coplanar_volumetric_evidence_for_certified_arrangement(
-                &graph, left, right,
-            ),
-        });
+        return Ok(certified_arrangement_cell_complex_preflight_from_graph(
+            operation, &graph, left, right,
+        ));
     }
     if support == ExactBooleanSupport::RequiresCertifiedWinding
         && !graph_requires_coplanar_volumetric_cells_for_sources(&graph, left, right)
