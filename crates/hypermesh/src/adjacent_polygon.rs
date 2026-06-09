@@ -18,7 +18,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use hyperlimit::{
     CoplanarProjection, Point2, Point3, RingPointLocation, SegmentIntersection, Sign,
     classify_point_ring_even_odd, classify_segment_intersection, compare_reals, orient3d_report,
-    project_point3, projected_polygon_area2_value,
+    point_on_segment3, project_point3, projected_polygon_area2_value,
 };
 
 use super::mesh::ExactMesh;
@@ -535,7 +535,7 @@ fn polygon_patch_candidates_match(
     left: &PolygonPatchCandidate,
     right: &PolygonPatchCandidate,
 ) -> bool {
-    boundary_point_sets_equal_slice(&left.boundary_points, &right.boundary_points) == Some(true)
+    boundary_loops_equivalent(&left.boundary_points, &right.boundary_points) == Some(true)
         && compare_reals(&left.area_abs, &right.area_abs).value() == Some(Ordering::Equal)
         && compare_reals(
             &(left.signed_area2.clone() + right.signed_area2.clone()),
@@ -545,19 +545,36 @@ fn polygon_patch_candidates_match(
             == Some(Ordering::Equal)
 }
 
-fn boundary_point_sets_equal_slice(left: &[Point3], right: &[Point3]) -> Option<bool> {
-    if left.len() != right.len() {
+fn boundary_loops_equivalent(left: &[Point3], right: &[Point3]) -> Option<bool> {
+    if left.len() < 3 || right.len() < 3 {
         return Some(false);
     }
-    for right_point in right {
-        if !left
-            .iter()
-            .any(|left_point| points_equal(left_point, right_point) == Some(true))
-        {
+    for point in left {
+        if !point_on_boundary_loop(point, right)? {
+            return Some(false);
+        }
+    }
+    for point in right {
+        if !point_on_boundary_loop(point, left)? {
             return Some(false);
         }
     }
     Some(true)
+}
+
+fn point_on_boundary_loop(point: &Point3, boundary: &[Point3]) -> Option<bool> {
+    for index in 0..boundary.len() {
+        if point_on_segment3(
+            &boundary[index],
+            &boundary[(index + 1) % boundary.len()],
+            point,
+        )
+        .value()?
+        {
+            return Some(true);
+        }
+    }
+    Some(false)
 }
 
 fn point_on_triangle_plane_vec(points: &[Point3], point: &Point3) -> Option<bool> {

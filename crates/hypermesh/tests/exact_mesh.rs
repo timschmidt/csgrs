@@ -1690,6 +1690,60 @@ fn full_face_adjacent_union_uses_polygon_patch_for_dual_subdivided_shared_face()
     assert!(union.mesh.facts().mesh.closed_manifold);
 }
 
+#[test]
+fn full_face_adjacent_union_accepts_dual_boundary_subdivided_shared_face() {
+    let left = ExactMesh::from_i64_triangles(
+        &[0, 0, 0, 6, 0, 0, 0, 6, 0, 3, 0, 0, 0, 0, 6],
+        &[
+            0, 2, 3, //
+            3, 2, 1, //
+            0, 3, 4, //
+            3, 1, 4, //
+            1, 2, 4, //
+            2, 0, 4,
+        ],
+    )
+    .unwrap();
+    let right = ExactMesh::from_i64_triangles(
+        &[0, 0, 0, 6, 0, 0, 0, 6, 0, 0, 3, 0, 0, 0, -6],
+        &[
+            0, 1, 3, //
+            3, 1, 2, //
+            0, 4, 1, //
+            1, 4, 2, //
+            2, 4, 3, //
+            3, 4, 0,
+        ],
+    )
+    .unwrap();
+
+    let union = materialize_full_face_adjacent_union(&left, &right, ValidationPolicy::CLOSED)
+        .expect("opposite shared disks with different boundary splits should certify");
+    assert!(union.shared_faces.is_empty(), "{union:?}");
+    assert_eq!(union.shared_patches.len(), 1, "{union:?}");
+    assert_eq!(union.shared_patches[0].left_faces, vec![0, 1]);
+    assert_eq!(union.shared_patches[0].right_faces, vec![0, 1]);
+    union.validate().unwrap();
+    union.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(
+        union.freshness_against_sources(&left, &right),
+        FullFaceAdjacentUnionFreshness::Current
+    );
+    assert!(union.mesh.facts().mesh.closed_manifold);
+
+    let report =
+        certify_adjacent_union_completion_report(&left, &right, ExactBooleanOperation::Union)
+            .unwrap();
+    assert_eq!(
+        report.status,
+        ExactAdjacentUnionCompletionStatus::CertifiedFullFace
+    );
+    assert_eq!(report.full_face_shared_faces, 0);
+    assert_eq!(report.full_face_shared_patches, 1);
+    report.validate().unwrap();
+    report.validate_against_sources(&left, &right).unwrap();
+}
+
 fn tetra_with_subdivided_base() -> ExactMesh {
     ExactMesh::from_i64_triangles(
         &[0, 0, 0, 10, 0, 0, 0, 10, 0, 0, 0, 10, 5, 0, 0],
