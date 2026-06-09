@@ -971,7 +971,7 @@ fn preflight_boolean_exact_reject_boundary_policy(
     let graph_had_unknowns = graph.has_unknowns();
     let retained_face_pairs = graph.face_pairs.len();
     let retained_events = graph.event_count();
-    let relation_counts = graph_relation_counts(&graph);
+    let relation_counts = ExactBooleanBlocker::from_graph_counts(&graph, ExactBooleanBlockerKind::NeedsWinding);
     let mut certified_arrangement_preflight = None;
     if graph_had_unknowns {
         return Ok(ExactBooleanPreflight {
@@ -1973,12 +1973,6 @@ fn cached_certified_arrangement_cell_complex_preflight(
     Ok(cache.clone().flatten())
 }
 
-type GraphRelationCounts = ExactBooleanBlocker;
-
-fn graph_relation_counts(graph: &super::graph::ExactIntersectionGraph) -> GraphRelationCounts {
-    ExactBooleanBlocker::from_graph_counts(graph, ExactBooleanBlockerKind::NeedsWinding)
-}
-
 fn unique_classified_region_count(classifications: &[FaceRegionPlaneClassification]) -> usize {
     let mut unique = Vec::new();
     for classification in classifications {
@@ -2001,7 +1995,7 @@ fn graph_requires_boundary_policy(
     if !graph_has_only_boundary_contact_pairs(graph, left, right) {
         return Ok(false);
     }
-    let counts = graph_relation_counts(graph);
+    let counts = ExactBooleanBlocker::from_graph_counts(graph, ExactBooleanBlockerKind::NeedsWinding);
     if counts.coplanar_overlapping_pairs == 0
         && (mesh_is_open_surface(left) || mesh_is_open_surface(right))
     {
@@ -2047,7 +2041,7 @@ fn graph_requires_planar_arrangement(graph: &super::graph::ExactIntersectionGrap
     graph_has_only_coplanar_contact_pairs(graph)
 }
 
-fn graph_requires_coplanar_volumetric_cells(counts: &GraphRelationCounts) -> bool {
+fn graph_requires_coplanar_volumetric_cells(counts: &ExactBooleanBlocker) -> bool {
     // Coplanar source-face cells inside a closed volumetric overlap are not a
     // planar-surface output problem and not ordinary non-coplanar winding
     // state instead of approximating the cells or relabeling them as generic
@@ -2060,7 +2054,7 @@ fn graph_requires_coplanar_volumetric_cells_for_sources(
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> bool {
-    let counts = graph_relation_counts(graph);
+    let counts = ExactBooleanBlocker::from_graph_counts(graph, ExactBooleanBlockerKind::NeedsWinding);
     if !graph_requires_coplanar_volumetric_cells(&counts) {
         return false;
     }
@@ -2080,7 +2074,7 @@ fn coplanar_volumetric_evidence_if_required(
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> Option<CoplanarVolumetricCellEvidenceReport> {
-    let counts = graph_relation_counts(graph);
+    let counts = ExactBooleanBlocker::from_graph_counts(graph, ExactBooleanBlockerKind::NeedsWinding);
     if !graph_requires_coplanar_volumetric_cells(&counts) {
         return None;
     }
@@ -2096,7 +2090,7 @@ fn coplanar_volumetric_evidence_for_certified_arrangement(
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> Option<CoplanarVolumetricCellEvidenceReport> {
-    let counts = graph_relation_counts(graph);
+    let counts = ExactBooleanBlocker::from_graph_counts(graph, ExactBooleanBlockerKind::NeedsWinding);
     if !graph_requires_coplanar_volumetric_cells(&counts) {
         return None;
     }
@@ -2339,7 +2333,7 @@ fn closed_winding_vertex_relations_from_empty_graph(
     {
         return Ok(None);
     }
-    let counts = graph_relation_counts(graph);
+    let counts = ExactBooleanBlocker::from_graph_counts(graph, ExactBooleanBlockerKind::NeedsWinding);
     if counts.construction_failed_events != 0 {
         return Ok(None);
     }
@@ -3679,7 +3673,7 @@ fn boolean_arrangement_adjacency_union_completion(
 
 fn adjacent_union_completion_blocker_kind(
     status: &ExactAdjacentUnionCompletionStatus,
-    counts: GraphRelationCounts,
+    counts: ExactBooleanBlocker,
 ) -> ExactBooleanBlockerKind {
     match status {
         ExactAdjacentUnionCompletionStatus::GraphUnresolved => {
@@ -3703,7 +3697,7 @@ fn adjacent_union_completion_report(
     graph_had_unknowns: bool,
     retained_face_pairs: usize,
     retained_events: usize,
-    counts: GraphRelationCounts,
+    counts: ExactBooleanBlocker,
     full_face_shared_faces: usize,
     full_face_shared_patches: usize,
     contained_containing_side: Option<MeshSide>,
@@ -3754,7 +3748,7 @@ pub fn certify_adjacent_union_completion_report(
             false,
             0,
             0,
-            GraphRelationCounts::default(),
+            ExactBooleanBlocker::default(),
             0,
             0,
             None,
@@ -3773,7 +3767,7 @@ pub fn certify_adjacent_union_completion_report(
             false,
             0,
             0,
-            GraphRelationCounts::default(),
+            ExactBooleanBlocker::default(),
             0,
             0,
             None,
@@ -3793,7 +3787,7 @@ pub fn certify_adjacent_union_completion_report(
             false,
             0,
             0,
-            GraphRelationCounts::default(),
+            ExactBooleanBlocker::default(),
             0,
             0,
             None,
@@ -3806,7 +3800,7 @@ pub fn certify_adjacent_union_completion_report(
     let graph_had_unknowns = graph.has_unknowns();
     let retained_face_pairs = graph.face_pairs.len();
     let retained_events = graph.event_count();
-    let counts = graph_relation_counts(&graph);
+    let counts = ExactBooleanBlocker::from_graph_counts(&graph, ExactBooleanBlockerKind::NeedsWinding);
     if graph_had_unknowns || counts.construction_failed_events != 0 {
         return Ok(adjacent_union_completion_report(
             operation,
@@ -4554,7 +4548,7 @@ fn certified_convex_relation_shortcut_from_graph(
     if matches!(operation, ExactBooleanOperation::SelectedRegions(_)) {
         return Ok(None);
     }
-    let relation_counts = graph_relation_counts(graph);
+    let relation_counts = ExactBooleanBlocker::from_graph_counts(graph, ExactBooleanBlockerKind::NeedsWinding);
     if graph.has_unknowns() || relation_counts.construction_failed_events > 0 {
         return Ok(None);
     }
@@ -6619,11 +6613,11 @@ fn open_surface_disjoint_report_from_graph(
             false,
             0,
             0,
-            GraphRelationCounts::default(),
+            ExactBooleanBlocker::default(),
         );
     }
     let graph_had_unknowns = graph.has_unknowns();
-    let counts = graph_relation_counts(graph);
+    let counts = ExactBooleanBlocker::from_graph_counts(graph, ExactBooleanBlockerKind::NeedsWinding);
     let status = if graph_had_unknowns {
         ExactOpenSurfaceDisjointStatus::GraphUnknowns
     } else if graph.face_pairs.is_empty() {
@@ -6663,7 +6657,7 @@ fn open_surface_disjoint_report(
     graph_had_unknowns: bool,
     retained_face_pairs: usize,
     retained_events: usize,
-    counts: GraphRelationCounts,
+    counts: ExactBooleanBlocker,
 ) -> ExactOpenSurfaceDisjointReport {
     let blocker_kind = retained_graph_blocker_kind(counts);
     ExactOpenSurfaceDisjointReport {
@@ -6929,7 +6923,7 @@ fn open_surface_arrangement_plan_from_graph(
     if !mesh_is_open_surface(left) || !mesh_is_open_surface(right) {
         return Ok(None);
     }
-    let counts = graph_relation_counts(graph);
+    let counts = ExactBooleanBlocker::from_graph_counts(graph, ExactBooleanBlockerKind::NeedsWinding);
     if graph.has_unknowns()
         || graph.face_pairs.is_empty()
         || counts.unknown_pairs != 0
@@ -7592,7 +7586,7 @@ pub fn certify_planar_arrangement_report(
             false,
             0,
             0,
-            GraphRelationCounts::default(),
+            ExactBooleanBlocker::default(),
             None,
         ));
     }
@@ -7640,7 +7634,7 @@ pub fn certify_winding_readiness_report(
             0,
             0,
             Vec::new(),
-            GraphRelationCounts::default().into_blocker(ExactBooleanBlockerKind::NeedsWinding),
+            ExactBooleanBlocker::default().into_blocker(ExactBooleanBlockerKind::NeedsWinding),
             None,
             None,
         ));
@@ -7656,7 +7650,7 @@ pub fn certify_winding_readiness_report(
             0,
             0,
             Vec::new(),
-            GraphRelationCounts::default().into_blocker(ExactBooleanBlockerKind::NeedsWinding),
+            ExactBooleanBlocker::default().into_blocker(ExactBooleanBlockerKind::NeedsWinding),
             None,
             None,
         ));
@@ -7674,7 +7668,7 @@ pub fn certify_winding_readiness_report(
             0,
             0,
             Vec::new(),
-            GraphRelationCounts::default().into_blocker(ExactBooleanBlockerKind::NeedsWinding),
+            ExactBooleanBlocker::default().into_blocker(ExactBooleanBlockerKind::NeedsWinding),
             None,
             None,
         ));
@@ -7690,7 +7684,7 @@ pub fn certify_winding_readiness_report(
             0,
             0,
             Vec::new(),
-            GraphRelationCounts::default().into_blocker(ExactBooleanBlockerKind::NeedsWinding),
+            ExactBooleanBlocker::default().into_blocker(ExactBooleanBlockerKind::NeedsWinding),
             None,
             None,
         ));
@@ -7736,7 +7730,7 @@ pub fn certify_winding_readiness_report_with_validation(
             0,
             0,
             Vec::new(),
-            GraphRelationCounts::default().into_blocker(ExactBooleanBlockerKind::NeedsWinding),
+            ExactBooleanBlocker::default().into_blocker(ExactBooleanBlockerKind::NeedsWinding),
             None,
             None,
         ));
@@ -7760,7 +7754,7 @@ pub fn certify_winding_readiness_report_with_validation(
     )?
     .is_some()
     {
-        let counts = graph_relation_counts(&graph);
+        let counts = ExactBooleanBlocker::from_graph_counts(&graph, ExactBooleanBlockerKind::NeedsWinding);
         let needs_coplanar_volumetric =
             graph_requires_coplanar_volumetric_cells_for_sources(&graph, left, right);
         let blocker_kind = if needs_coplanar_volumetric {
@@ -7825,7 +7819,7 @@ pub fn certify_winding_readiness_report_with_boundary_policy(
     )?
     .is_some()
     {
-        let counts = graph_relation_counts(&graph);
+        let counts = ExactBooleanBlocker::from_graph_counts(&graph, ExactBooleanBlockerKind::NeedsWinding);
         return Ok(winding_readiness_report(
             operation,
             ExactWindingReadinessStatus::BoundaryPolicyShortcutAlreadyMaterialized,
@@ -7871,7 +7865,7 @@ pub(crate) fn boundary_touching_report_from_graph(
     right: &ExactMesh,
 ) -> Result<ExactBoundaryTouchingReport, MeshError> {
     let graph_had_unknowns = graph.has_unknowns();
-    let counts = graph_relation_counts(graph);
+    let counts = ExactBooleanBlocker::from_graph_counts(graph, ExactBooleanBlockerKind::NeedsWinding);
     let status = if graph_had_unknowns {
         ExactBoundaryTouchingStatus::GraphUnknowns
     } else if graph_requires_boundary_policy(graph, left, right)? {
@@ -7891,7 +7885,7 @@ pub(crate) fn boundary_touching_report_from_graph(
 
 fn boundary_touching_blocker_kind(
     status: &ExactBoundaryTouchingStatus,
-    counts: GraphRelationCounts,
+    counts: ExactBooleanBlocker,
 ) -> ExactBooleanBlockerKind {
     match status {
         ExactBoundaryTouchingStatus::GraphUnknowns => ExactBooleanBlockerKind::NeedsRefinement,
@@ -7904,7 +7898,7 @@ fn refinement_report_from_graph(
     graph: &super::graph::ExactIntersectionGraph,
     operation: ExactBooleanOperation,
 ) -> ExactRefinementReport {
-    let counts = graph_relation_counts(graph);
+    let counts = ExactBooleanBlocker::from_graph_counts(graph, ExactBooleanBlockerKind::NeedsWinding);
     let graph_had_unknowns = graph.has_unknowns();
     let needs_refinement = graph_had_unknowns || counts.construction_failed_events > 0;
     ExactRefinementReport {
@@ -7929,7 +7923,7 @@ fn planar_arrangement_report_from_graph(
     operation: ExactBooleanOperation,
 ) -> Result<ExactPlanarArrangementReport, MeshError> {
     let graph_had_unknowns = graph.has_unknowns();
-    let counts = graph_relation_counts(graph);
+    let counts = ExactBooleanBlocker::from_graph_counts(graph, ExactBooleanBlockerKind::NeedsWinding);
     let arrangement_readiness = if graph_had_unknowns {
         None
     } else {
@@ -7972,7 +7966,7 @@ fn planar_arrangement_report(
     graph_had_unknowns: bool,
     retained_face_pairs: usize,
     retained_events: usize,
-    counts: GraphRelationCounts,
+    counts: ExactBooleanBlocker,
     arrangement_readiness: Option<super::graph::CoplanarArrangementReadinessReport>,
 ) -> ExactPlanarArrangementReport {
     let blocker_kind = match status {
@@ -8012,7 +8006,7 @@ fn winding_readiness_report_from_graph(
     operation: ExactBooleanOperation,
 ) -> Result<ExactWindingReadinessReport, MeshError> {
     let graph_had_unknowns = graph.has_unknowns();
-    let counts = graph_relation_counts(graph);
+    let counts = ExactBooleanBlocker::from_graph_counts(graph, ExactBooleanBlockerKind::NeedsWinding);
     if matches!(operation, ExactBooleanOperation::SelectedRegions(_)) {
         let blocker_kind = retained_graph_blocker_kind(counts);
         return Ok(winding_readiness_report(
@@ -8056,7 +8050,7 @@ fn winding_readiness_report_from_graph(
             (
                 0,
                 0,
-                GraphRelationCounts::default().into_blocker(ExactBooleanBlockerKind::NeedsWinding),
+                ExactBooleanBlocker::default().into_blocker(ExactBooleanBlockerKind::NeedsWinding),
             )
         };
         return Ok(winding_readiness_report(
@@ -8419,7 +8413,7 @@ fn winding_readiness_report_from_graph(
     ))
 }
 
-fn retained_graph_blocker_kind(counts: GraphRelationCounts) -> ExactBooleanBlockerKind {
+fn retained_graph_blocker_kind(counts: ExactBooleanBlocker) -> ExactBooleanBlockerKind {
     if counts.unknown_pairs > 0 || counts.construction_failed_events > 0 {
         ExactBooleanBlockerKind::NeedsRefinement
     } else if counts.coplanar_overlapping_pairs + counts.coplanar_touching_pairs > 0 {
@@ -8609,7 +8603,7 @@ fn volumetric_winding_region_plan_from_graph(
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> Result<Option<VolumetricWindingRegionPlan>, MeshError> {
-    let counts = graph_relation_counts(graph);
+    let counts = ExactBooleanBlocker::from_graph_counts(graph, ExactBooleanBlockerKind::NeedsWinding);
     if graph.has_unknowns()
         || graph.face_pairs.is_empty()
         || counts.unknown_pairs != 0
@@ -8796,7 +8790,7 @@ fn certified_convex_boolean_support_from_graph(
     right: &ExactMesh,
     operation: ExactBooleanOperation,
 ) -> Result<Option<ExactBooleanSupport>, MeshError> {
-    let relation_counts = graph_relation_counts(graph);
+    let relation_counts = ExactBooleanBlocker::from_graph_counts(graph, ExactBooleanBlockerKind::NeedsWinding);
     if graph.has_unknowns() || relation_counts.construction_failed_events > 0 {
         return Ok(None);
     }
@@ -9657,7 +9651,7 @@ mod tests {
         let boundary_right = axis_aligned_box_i64([2, 0, 0], [4, 2, 2]);
         let boundary_graph = build_intersection_graph(&boundary_left, &boundary_right).unwrap();
         assert!(graph_requires_coplanar_volumetric_cells(
-            &graph_relation_counts(&boundary_graph)
+            &ExactBooleanBlocker::from_graph_counts(&boundary_graph, ExactBooleanBlockerKind::NeedsWinding)
         ));
         assert!(!graph_requires_coplanar_volumetric_cells_for_sources(
             &boundary_graph,
@@ -9676,7 +9670,7 @@ mod tests {
     }
 
     #[test]
-    fn graph_relation_counts_include_unknown_segment_plane_events() {
+    fn exact_boolean_blocker_counts_include_unknown_segment_plane_events() {
         let graph = super::super::graph::ExactIntersectionGraph {
             face_pairs: vec![FacePairEvents {
                 left_face: 0,
@@ -9698,7 +9692,7 @@ mod tests {
             }],
         };
 
-        let counts = graph_relation_counts(&graph);
+        let counts = ExactBooleanBlocker::from_graph_counts(&graph, ExactBooleanBlockerKind::NeedsWinding);
         assert_eq!(counts.candidate_pairs, 1);
         assert_eq!(counts.unknown_pairs, 1);
         assert_eq!(
