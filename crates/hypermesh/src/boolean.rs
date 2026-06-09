@@ -21,6 +21,7 @@ use hyperlimit::SegmentPlaneRelation;
 use super::adjacent::{
     full_face_adjacent_certificate, materialize_full_face_adjacent_union_from_certificate,
 };
+#[cfg(test)]
 use super::affine_box::{
     has_affine_box_difference, has_affine_box_intersection, has_affine_box_union,
 };
@@ -1509,15 +1510,6 @@ fn preflight_tail_shortcut_support(
         return Some(ExactBooleanSupport::CertifiedArrangementCellComplex);
     }
     match operation {
-        ExactBooleanOperation::Union if has_affine_box_union(left, right) => {
-            Some(ExactBooleanSupport::CertifiedArrangementCellComplex)
-        }
-        ExactBooleanOperation::Intersection if has_affine_box_intersection(left, right) => {
-            Some(ExactBooleanSupport::CertifiedArrangementCellComplex)
-        }
-        ExactBooleanOperation::Difference if has_affine_box_difference(left, right) => {
-            Some(ExactBooleanSupport::CertifiedArrangementCellComplex)
-        }
         ExactBooleanOperation::Union
             if has_affine_orthogonal_solid_cells(
                 left,
@@ -2006,22 +1998,20 @@ fn contained_face_adjacency_should_yield_to_stronger_kernel(
         ExactBooleanOperation::Union => {
             axis_aligned_orthogonal_solid_operation(operation).is_some_and(|operation| {
                 has_axis_aligned_orthogonal_solid_cells(left, right, operation)
-            }) || has_affine_box_union(left, right)
-                || has_affine_orthogonal_solid_cells(
-                    left,
-                    right,
-                    AffineOrthogonalSolidOperation::Union,
-                )
+            }) || has_affine_orthogonal_solid_cells(
+                left,
+                right,
+                AffineOrthogonalSolidOperation::Union,
+            )
         }
         ExactBooleanOperation::Intersection => {
             axis_aligned_orthogonal_solid_operation(operation).is_some_and(|operation| {
                 has_axis_aligned_orthogonal_solid_cells(left, right, operation)
-            }) || has_affine_box_intersection(left, right)
-                || has_affine_orthogonal_solid_cells(
-                    left,
-                    right,
-                    AffineOrthogonalSolidOperation::Intersection,
-                )
+            }) || has_affine_orthogonal_solid_cells(
+                left,
+                right,
+                AffineOrthogonalSolidOperation::Intersection,
+            )
         }
         ExactBooleanOperation::Difference => true,
         ExactBooleanOperation::SelectedRegions(_) => true,
