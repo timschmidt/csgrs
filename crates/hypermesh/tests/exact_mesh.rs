@@ -1705,6 +1705,21 @@ fn tetra_with_subdivided_base() -> ExactMesh {
     .unwrap()
 }
 
+fn square_pyramid_with_base() -> ExactMesh {
+    ExactMesh::from_i64_triangles(
+        &[0, 0, 0, 10, 0, 0, 10, 10, 0, 0, 10, 0, 5, 5, 10],
+        &[
+            0, 3, 2, //
+            0, 2, 1, //
+            0, 1, 4, //
+            1, 2, 4, //
+            2, 3, 4, //
+            3, 0, 4,
+        ],
+    )
+    .unwrap()
+}
+
 #[test]
 fn adjacent_union_completion_boolean_is_publicly_replayable() {
     let left_a = tetra_from_corners([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]);
@@ -3895,6 +3910,10 @@ fn exact_contained_face_adjacent_union_is_publicly_replayable() {
     let separated_right = tetra([20, 0, 0]);
     let subdivided_left = tetra_with_subdivided_base();
     let split_crossing_right = tetra_from_corners([1, 1, 0], [1, 4, 0], [4, 3, 0], [1, 1, -2]);
+    let square_base_left = square_pyramid_with_base();
+    let same_orientation_square_cap =
+        tetra_from_corners([2, 2, 0], [6, 2, 0], [2, 6, 0], [2, 2, -2]);
+    let square_cap_right = tetra_from_corners([2, 2, 0], [2, 6, 0], [6, 2, 0], [2, 2, -2]);
 
     let union = materialize_contained_face_adjacent_union(&left, &right, ValidationPolicy::CLOSED)
         .expect("contained coplanar cap should materialize as a holed union");
@@ -3922,6 +3941,28 @@ fn exact_contained_face_adjacent_union_is_publicly_replayable() {
     assert_eq!(split_union.containing_faces.len(), 2);
     assert_eq!(split_union.contained_faces.len(), 1);
     assert!(split_union.mesh.facts().mesh.closed_manifold);
+    let square_union = materialize_contained_face_adjacent_union(
+        &square_base_left,
+        &square_cap_right,
+        ValidationPolicy::CLOSED,
+    )
+    .expect("contained cap inside a non-triangular source patch should materialize");
+    square_union.validate().unwrap();
+    square_union
+        .validate_against_sources(&square_base_left, &square_cap_right)
+        .unwrap();
+    assert_eq!(square_union.containing_faces.len(), 2);
+    assert_eq!(square_union.contained_faces.len(), 1);
+    assert!(square_union.mesh.facts().mesh.closed_manifold);
+    assert!(
+        materialize_contained_face_adjacent_union(
+            &square_base_left,
+            &same_orientation_square_cap,
+            ValidationPolicy::CLOSED,
+        )
+        .is_none()
+    );
+
     let mut missing_contained = union.clone();
     missing_contained.contained_faces.clear();
     assert_eq!(

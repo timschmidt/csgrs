@@ -492,6 +492,15 @@ fn component_contained_adjacency_for_side(
     let (_, arrangement_projection) =
         materialize_contained_patch_difference(&containing_mesh, &contained_mesh)?;
     let sign = first_projected_mesh_triangle_sign(&containing_mesh, arrangement_projection)?;
+    if !mesh_projected_triangle_signs_match(&containing_mesh, arrangement_projection, sign)?
+        || !mesh_projected_triangle_signs_match(
+            &contained_mesh,
+            arrangement_projection,
+            opposite_sign(sign),
+        )?
+    {
+        return None;
+    }
     Some(ContainedFaceAdjacencyCertificate {
         containing_side,
         patches: vec![ContainedFacePatch {
@@ -1132,6 +1141,32 @@ fn first_projected_mesh_triangle_sign(
         ];
         projected_triangle_sign(&points, projection)
     })
+}
+
+fn mesh_projected_triangle_signs_match(
+    mesh: &ExactMesh,
+    projection: CoplanarProjection,
+    expected: Sign,
+) -> Option<bool> {
+    for triangle in mesh.triangles() {
+        let points = [
+            mesh.vertices().get(triangle.0[0])?.clone(),
+            mesh.vertices().get(triangle.0[1])?.clone(),
+            mesh.vertices().get(triangle.0[2])?.clone(),
+        ];
+        if projected_triangle_sign(&points, projection)? != expected {
+            return Some(false);
+        }
+    }
+    Some(true)
+}
+
+const fn opposite_sign(sign: Sign) -> Sign {
+    match sign {
+        Sign::Negative => Sign::Positive,
+        Sign::Positive => Sign::Negative,
+        Sign::Zero => Sign::Zero,
+    }
 }
 
 fn real_sign(value: &Real) -> Option<Sign> {
