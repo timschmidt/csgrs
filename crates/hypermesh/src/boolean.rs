@@ -1973,60 +1973,10 @@ fn cached_certified_arrangement_cell_complex_preflight(
     Ok(cache.clone().flatten())
 }
 
-#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
-struct GraphRelationCounts {
-    candidate_pairs: usize,
-    coplanar_overlapping_pairs: usize,
-    coplanar_touching_pairs: usize,
-    unknown_pairs: usize,
-    construction_failed_events: usize,
-}
-
-impl GraphRelationCounts {
-    const fn into_blocker(self, kind: ExactBooleanBlockerKind) -> ExactBooleanBlocker {
-        ExactBooleanBlocker {
-            kind,
-            candidate_pairs: self.candidate_pairs,
-            coplanar_overlapping_pairs: self.coplanar_overlapping_pairs,
-            coplanar_touching_pairs: self.coplanar_touching_pairs,
-            unknown_pairs: self.unknown_pairs,
-            construction_failed_events: self.construction_failed_events,
-        }
-    }
-}
+type GraphRelationCounts = ExactBooleanBlocker;
 
 fn graph_relation_counts(graph: &super::graph::ExactIntersectionGraph) -> GraphRelationCounts {
-    let mut counts = GraphRelationCounts::default();
-    for pair in &graph.face_pairs {
-        let pair_has_unknown_event = pair
-            .events
-            .iter()
-            .any(IntersectionEvent::has_unknown_relation);
-        match pair.relation {
-            MeshFacePairRelation::Candidate => counts.candidate_pairs += 1,
-            MeshFacePairRelation::CoplanarOverlapping => counts.coplanar_overlapping_pairs += 1,
-            MeshFacePairRelation::CoplanarTouching => counts.coplanar_touching_pairs += 1,
-            MeshFacePairRelation::Unknown => counts.unknown_pairs += 1,
-            MeshFacePairRelation::BoundsDisjoint | MeshFacePairRelation::PlaneSeparated => {}
-        }
-        if pair.relation != MeshFacePairRelation::Unknown && pair_has_unknown_event {
-            counts.unknown_pairs += 1;
-        }
-        counts.construction_failed_events += pair
-            .events
-            .iter()
-            .filter(|event| {
-                matches!(
-                    event,
-                    super::graph::IntersectionEvent::SegmentPlane {
-                        relation: SegmentPlaneRelation::ConstructionFailed,
-                        ..
-                    }
-                )
-            })
-            .count();
-    }
-    counts
+    ExactBooleanBlocker::from_graph_counts(graph, ExactBooleanBlockerKind::NeedsWinding)
 }
 
 fn unique_classified_region_count(classifications: &[FaceRegionPlaneClassification]) -> usize {

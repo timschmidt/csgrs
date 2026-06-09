@@ -4163,7 +4163,7 @@ impl ExactBooleanPreflight {
 /// be able to distinguish "needs exact winding" from "needs a boundary output
 /// policy" or "needs predicate refinement" without interpreting prose
 /// diagnostics.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct ExactBooleanBlocker {
     /// Missing policy or refinement class.
     pub kind: ExactBooleanBlockerKind,
@@ -4180,7 +4180,26 @@ pub struct ExactBooleanBlocker {
     pub construction_failed_events: usize,
 }
 
+impl Default for ExactBooleanBlocker {
+    fn default() -> Self {
+        Self {
+            kind: ExactBooleanBlockerKind::NeedsWinding,
+            candidate_pairs: 0,
+            coplanar_overlapping_pairs: 0,
+            coplanar_touching_pairs: 0,
+            unknown_pairs: 0,
+            construction_failed_events: 0,
+        }
+    }
+}
+
 impl ExactBooleanBlocker {
+    /// Return this exact graph-count blocker with a different semantic kind.
+    pub(crate) fn into_blocker(mut self, kind: ExactBooleanBlockerKind) -> Self {
+        self.kind = kind;
+        self
+    }
+
     /// Build a blocker of `kind` from exact intersection-graph relation
     /// counts.
     ///
