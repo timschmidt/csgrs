@@ -44,8 +44,9 @@ use hypermesh::{
     classify_triangle_triangle, exact_arrangement_boolean_attempt_report,
     exact_arrangement_boolean_attempt_report_with_validation, exact_mesh_consumer_readiness,
     exact_mesh_handoff_package, inspect_f64_mesh_input, inspect_i64_mesh_input,
-    materialize_adjacent_union_completion_boolean, materialize_affine_orthogonal_solid_boolean,
-    materialize_affine_orthogonal_solid_difference,
+    materialize_adjacent_union_completion_boolean,
+    materialize_adjacent_union_completion_boolean_with_report,
+    materialize_affine_orthogonal_solid_boolean, materialize_affine_orthogonal_solid_difference,
     materialize_affine_orthogonal_solid_intersection, materialize_arrangement_cell_complex_boolean,
     materialize_axis_aligned_orthogonal_solid_boolean,
     materialize_axis_aligned_orthogonal_solid_difference,
@@ -1944,6 +1945,30 @@ fn adjacent_union_completion_boolean_is_publicly_replayable() {
     );
     result.validate().unwrap();
     result.validate_against_sources(&left, &right).unwrap();
+
+    let (reported_result, consumed_report) =
+        materialize_adjacent_union_completion_boolean_with_report(
+            &left,
+            &right,
+            ExactBooleanOperation::Union,
+            ValidationPolicy::CLOSED,
+        )
+        .unwrap()
+        .expect("non-axis full-face adjacent union should retain consumed report");
+    assert_eq!(
+        consumed_report, report,
+        "full-face adjacent completion should return the certified report it consumed"
+    );
+    consumed_report.validate().unwrap();
+    consumed_report
+        .validate_against_sources(&left, &right)
+        .unwrap();
+    assert_eq!(reported_result, result);
+    reported_result.validate().unwrap();
+    reported_result
+        .validate_against_sources(&left, &right)
+        .unwrap();
+
     assert_eq!(
         result.freshness_against_sources(&left, &right),
         ExactReportFreshness::Current
@@ -1973,6 +1998,16 @@ fn adjacent_union_completion_boolean_is_publicly_replayable() {
 
     assert!(
         materialize_adjacent_union_completion_boolean(
+            &left,
+            &right,
+            ExactBooleanOperation::Intersection,
+            ValidationPolicy::CLOSED,
+        )
+        .unwrap()
+        .is_none()
+    );
+    assert!(
+        materialize_adjacent_union_completion_boolean_with_report(
             &left,
             &right,
             ExactBooleanOperation::Intersection,
@@ -2020,6 +2055,16 @@ fn adjacent_union_completion_boolean_is_publicly_replayable() {
 
     assert!(
         materialize_adjacent_union_completion_boolean(
+            &axis_left,
+            &axis_right,
+            ExactBooleanOperation::Union,
+            ValidationPolicy::CLOSED,
+        )
+        .unwrap()
+        .is_none()
+    );
+    assert!(
+        materialize_adjacent_union_completion_boolean_with_report(
             &axis_left,
             &axis_right,
             ExactBooleanOperation::Union,
@@ -2076,6 +2121,16 @@ fn adjacent_union_completion_boolean_is_publicly_replayable() {
     let mut stale_crossing = crossing_report;
     stale_crossing.blocker.kind = ExactBooleanBlockerKind::NeedsBoundaryPolicy;
     assert!(stale_crossing.validate().is_err());
+    assert!(
+        materialize_adjacent_union_completion_boolean_with_report(
+            &left,
+            &crossing_right,
+            ExactBooleanOperation::Union,
+            ValidationPolicy::CLOSED,
+        )
+        .unwrap()
+        .is_none()
+    );
 }
 
 #[test]
@@ -4437,6 +4492,30 @@ fn exact_contained_face_adjacent_union_is_publicly_replayable() {
     );
     result.validate().unwrap();
     result.validate_against_sources(&container, &right).unwrap();
+
+    let (reported_result, consumed_report) =
+        materialize_adjacent_union_completion_boolean_with_report(
+            &container,
+            &right,
+            ExactBooleanOperation::Union,
+            ValidationPolicy::CLOSED,
+        )
+        .unwrap()
+        .expect("contained-face adjacent union should retain consumed report");
+    assert_eq!(
+        consumed_report, completion_report,
+        "contained-face adjacent completion should return the certified report it consumed"
+    );
+    consumed_report.validate().unwrap();
+    consumed_report
+        .validate_against_sources(&container, &right)
+        .unwrap();
+    assert_eq!(reported_result, result);
+    reported_result.validate().unwrap();
+    reported_result
+        .validate_against_sources(&container, &right)
+        .unwrap();
+
     assert_eq!(
         result.freshness_against_sources(&container, &right),
         ExactReportFreshness::Current

@@ -3690,6 +3690,40 @@ pub fn materialize_adjacent_union_completion_boolean(
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
+    Ok(materialize_adjacent_union_completion_boolean_with_report(
+        left, right, operation, validation,
+    )?
+    .map(|(result, _)| result))
+}
+
+/// Certify and materialize an adjacent closed-solid union, returning the exact
+/// completion report consumed by the materializer.
+///
+/// This is the provenance-retaining form of
+/// [`materialize_adjacent_union_completion_boolean`]. The returned report
+/// identifies whether full-face or contained-face adjacency completed the
+/// union and keeps the retained graph counts and adjacency topology replay
+/// used to decide that no more general winding/cell path owned the result.
+pub fn materialize_adjacent_union_completion_boolean_with_report(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+) -> Result<Option<(ExactBooleanResult, ExactAdjacentUnionCompletionReport)>, MeshError> {
+    let report = certify_adjacent_union_completion_report(left, right, operation)?;
+    if !report.is_certified() {
+        return Ok(None);
+    }
+    report.validate().map_err(|error| {
+        MeshError::one(MeshDiagnostic::new(
+            Severity::Error,
+            DiagnosticKind::UnsupportedExactOperation,
+            format!("exact adjacent-union completion report validation failed: {error:?}"),
+        ))
+    })?;
+    if report.validate_against_sources(left, right).is_err() {
+        return Ok(None);
+    }
     let Some(result) =
         boolean_arrangement_adjacency_union_completion(left, right, operation, validation)?
     else {
@@ -3707,7 +3741,7 @@ pub fn materialize_adjacent_union_completion_boolean(
     {
         return Ok(None);
     }
-    Ok(Some(result))
+    Ok(Some((result, report)))
 }
 
 fn arrangement_blockers_are_unregularized_sheet_complex(
