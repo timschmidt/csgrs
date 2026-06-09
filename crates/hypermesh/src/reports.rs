@@ -455,62 +455,6 @@ fn validate_adjacent_certified_boundary_blocker(
     blocker.validate_for_kind(ExactBooleanBlockerKind::NeedsBoundaryPolicy)
 }
 
-#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
-struct BlockerSourceCounts {
-    candidate_pairs: usize,
-    coplanar_overlapping_pairs: usize,
-    coplanar_touching_pairs: usize,
-    unknown_pairs: usize,
-    construction_failed_events: usize,
-}
-
-impl BlockerSourceCounts {
-    const fn into_blocker(self, kind: ExactBooleanBlockerKind) -> ExactBooleanBlocker {
-        ExactBooleanBlocker {
-            kind,
-            candidate_pairs: self.candidate_pairs,
-            coplanar_overlapping_pairs: self.coplanar_overlapping_pairs,
-            coplanar_touching_pairs: self.coplanar_touching_pairs,
-            unknown_pairs: self.unknown_pairs,
-            construction_failed_events: self.construction_failed_events,
-        }
-    }
-}
-
-fn blocker_source_counts(graph: &ExactIntersectionGraph) -> BlockerSourceCounts {
-    let mut counts = BlockerSourceCounts::default();
-    for pair in &graph.face_pairs {
-        let pair_has_unknown_event = pair
-            .events
-            .iter()
-            .any(IntersectionEvent::has_unknown_relation);
-        match pair.relation {
-            MeshFacePairRelation::Candidate => counts.candidate_pairs += 1,
-            MeshFacePairRelation::CoplanarOverlapping => counts.coplanar_overlapping_pairs += 1,
-            MeshFacePairRelation::CoplanarTouching => counts.coplanar_touching_pairs += 1,
-            MeshFacePairRelation::Unknown => counts.unknown_pairs += 1,
-            MeshFacePairRelation::BoundsDisjoint | MeshFacePairRelation::PlaneSeparated => {}
-        }
-        if pair.relation != MeshFacePairRelation::Unknown && pair_has_unknown_event {
-            counts.unknown_pairs += 1;
-        }
-        counts.construction_failed_events += pair
-            .events
-            .iter()
-            .filter(|event| {
-                matches!(
-                    event,
-                    IntersectionEvent::SegmentPlane {
-                        relation: hyperlimit::SegmentPlaneRelation::ConstructionFailed,
-                        ..
-                    }
-                )
-            })
-            .count();
-    }
-    counts
-}
-
 fn validate_refinement_partition(
     graph_unknown_status: bool,
     blocker: &ExactBooleanBlocker,
@@ -2438,7 +2382,8 @@ fn certified_closed_winding_relation_from_sources(
     graph
         .validate_against_sources(left, right)
         .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
-    let counts = blocker_source_counts(&graph);
+    let counts =
+        ExactBooleanBlocker::from_graph_counts(&graph, ExactBooleanBlockerKind::NeedsWinding);
     if graph.has_unknowns()
         || !graph.face_pairs.is_empty()
         || counts.construction_failed_events != 0
@@ -4236,6 +4181,61 @@ pub struct ExactBooleanBlocker {
 }
 
 impl ExactBooleanBlocker {
+    /// Build a blocker of `kind` from exact intersection-graph relation
+    /// counts.
+    ///
+    /// This is the shared provenance-count boundary for preflight blockers and
+    /// source replay. Keeping the counts on the public blocker shape prevents
+    /// executor and report code from drifting on how unknown candidate events
+    /// and failed exact constructions are retained.
+    pub(crate) fn from_graph_counts(
+        graph: &ExactIntersectionGraph,
+        kind: ExactBooleanBlockerKind,
+    ) -> Self {
+        let mut blocker = Self {
+            kind,
+            candidate_pairs: 0,
+            coplanar_overlapping_pairs: 0,
+            coplanar_touching_pairs: 0,
+            unknown_pairs: 0,
+            construction_failed_events: 0,
+        };
+        for pair in &graph.face_pairs {
+            let pair_has_unknown_event = pair
+                .events
+                .iter()
+                .any(IntersectionEvent::has_unknown_relation);
+            match pair.relation {
+                MeshFacePairRelation::Candidate => blocker.candidate_pairs += 1,
+                MeshFacePairRelation::CoplanarOverlapping => {
+                    blocker.coplanar_overlapping_pairs += 1;
+                }
+                MeshFacePairRelation::CoplanarTouching => {
+                    blocker.coplanar_touching_pairs += 1;
+                }
+                MeshFacePairRelation::Unknown => blocker.unknown_pairs += 1,
+                MeshFacePairRelation::BoundsDisjoint | MeshFacePairRelation::PlaneSeparated => {}
+            }
+            if pair.relation != MeshFacePairRelation::Unknown && pair_has_unknown_event {
+                blocker.unknown_pairs += 1;
+            }
+            blocker.construction_failed_events += pair
+                .events
+                .iter()
+                .filter(|event| {
+                    matches!(
+                        event,
+                        IntersectionEvent::SegmentPlane {
+                            relation: hyperlimit::SegmentPlaneRelation::ConstructionFailed,
+                            ..
+                        }
+                    )
+                })
+                .count();
+        }
+        blocker
+    }
+
     /// Validate that this blocker kind is justified by retained graph relation
     /// counts.
     ///
@@ -4304,7 +4304,7 @@ impl ExactBooleanBlocker {
         graph
             .validate_against_sources(left, right)
             .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
-        let replay = blocker_source_counts(&graph).into_blocker(self.kind);
+        let replay = ExactBooleanBlocker::from_graph_counts(&graph, self.kind);
         if replay.validate_for_kind(self.kind).is_ok() && self == &replay {
             Ok(())
         } else {
@@ -4327,7 +4327,7 @@ impl ExactBooleanBlocker {
         if graph.validate_against_sources(left, right).is_err() {
             return ExactReportFreshness::SourceReplayMismatch;
         }
-        let replay = blocker_source_counts(&graph).into_blocker(self.kind);
+        let replay = ExactBooleanBlocker::from_graph_counts(&graph, self.kind);
         if replay.validate_for_kind(self.kind).is_ok() && self == &replay {
             ExactReportFreshness::Current
         } else {
@@ -7832,8 +7832,10 @@ mod tests {
             }],
         };
 
-        let blocker =
-            blocker_source_counts(&graph).into_blocker(ExactBooleanBlockerKind::NeedsRefinement);
+        let blocker = ExactBooleanBlocker::from_graph_counts(
+            &graph,
+            ExactBooleanBlockerKind::NeedsRefinement,
+        );
         assert_eq!(blocker.candidate_pairs, 1);
         assert_eq!(blocker.unknown_pairs, 1);
         assert_eq!(blocker.construction_failed_events, 0);
