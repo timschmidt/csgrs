@@ -1690,6 +1690,21 @@ fn full_face_adjacent_union_uses_polygon_patch_for_dual_subdivided_shared_face()
     assert!(union.mesh.facts().mesh.closed_manifold);
 }
 
+fn tetra_with_subdivided_base() -> ExactMesh {
+    ExactMesh::from_i64_triangles(
+        &[0, 0, 0, 10, 0, 0, 0, 10, 0, 0, 0, 10, 5, 0, 0],
+        &[
+            0, 2, 4, //
+            4, 2, 1, //
+            0, 4, 3, //
+            4, 1, 3, //
+            1, 2, 3, //
+            2, 0, 3,
+        ],
+    )
+    .unwrap()
+}
+
 #[test]
 fn adjacent_union_completion_boolean_is_publicly_replayable() {
     let left_a = tetra_from_corners([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]);
@@ -3878,6 +3893,8 @@ fn exact_contained_face_adjacent_union_is_publicly_replayable() {
     let left = tetra_from_corners([0, 0, 0], [10, 0, 0], [0, 10, 0], [0, 0, 10]);
     let right = tetra_from_corners([1, 1, 0], [1, 3, 0], [3, 1, 0], [1, 1, -2]);
     let separated_right = tetra([20, 0, 0]);
+    let subdivided_left = tetra_with_subdivided_base();
+    let split_crossing_right = tetra_from_corners([1, 1, 0], [1, 4, 0], [4, 3, 0], [1, 1, -2]);
 
     let union = materialize_contained_face_adjacent_union(&left, &right, ValidationPolicy::CLOSED)
         .expect("contained coplanar cap should materialize as a holed union");
@@ -3892,6 +3909,19 @@ fn exact_contained_face_adjacent_union_is_publicly_replayable() {
     assert!(!union.containing_faces.is_empty());
     assert!(!union.mesh.triangles().is_empty());
 
+    let split_union = materialize_contained_face_adjacent_union(
+        &subdivided_left,
+        &split_crossing_right,
+        ValidationPolicy::CLOSED,
+    )
+    .expect("contained cap crossing a source subdivision should materialize");
+    split_union.validate().unwrap();
+    split_union
+        .validate_against_sources(&subdivided_left, &split_crossing_right)
+        .unwrap();
+    assert_eq!(split_union.containing_faces.len(), 2);
+    assert_eq!(split_union.contained_faces.len(), 1);
+    assert!(split_union.mesh.facts().mesh.closed_manifold);
     let mut missing_contained = union.clone();
     missing_contained.contained_faces.clear();
     assert_eq!(
@@ -3948,6 +3978,28 @@ fn exact_contained_face_adjacent_union_is_publicly_replayable() {
     );
 
     let disjoint_shell = tetra_from_corners([40, 0, 0], [41, 0, 0], [40, 1, 0], [40, 0, 1]);
+    let split_container = combine_exact_meshes(
+        &subdivided_left,
+        &disjoint_shell,
+        "test disconnected subdivided contained-face fixture",
+    );
+    let split_report = certify_adjacent_union_completion_report(
+        &split_container,
+        &split_crossing_right,
+        ExactBooleanOperation::Union,
+    )
+    .unwrap();
+    assert_eq!(
+        split_report.status,
+        ExactAdjacentUnionCompletionStatus::CertifiedContainedFace
+    );
+    assert_eq!(split_report.containing_faces, 2);
+    assert_eq!(split_report.contained_faces, 1);
+    split_report.validate().unwrap();
+    split_report
+        .validate_against_sources(&split_container, &split_crossing_right)
+        .unwrap();
+
     let container = combine_exact_meshes(
         &left,
         &disjoint_shell,

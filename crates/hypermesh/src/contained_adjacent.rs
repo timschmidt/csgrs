@@ -17,7 +17,7 @@
 
 use hyperlimit::{
     CoplanarProjection, Point3, SegmentIntersection, SegmentPlaneRelation, Sign, TriangleLocation,
-    classify_point_triangle, compare_reals, orient3d_report, project_point3,
+    classify_point_triangle, compare_reals, orient3d_report, point_on_segment3, project_point3,
     projected_polygon_area2_value,
 };
 
@@ -35,6 +35,7 @@ use hyperlimit::SourceProvenance;
 use hyperreal::Real;
 
 use std::cmp::Ordering;
+use std::collections::BTreeMap;
 
 /// Exact materialization of a closed-solid union across contained boundary caps.
 #[derive(Clone, Debug, PartialEq)]
@@ -797,8 +798,8 @@ fn materialize_contained_patch_difference(
 ) -> Option<(ExactMesh, CoplanarProjection)> {
     let (_, projection) = coplanar_mesh_overlay_carrier(containing_mesh, contained_mesh)?;
     for boundary_policy in [
-        ExactArrangement2dBoundaryPolicy::SimplifyCollinear,
         ExactArrangement2dBoundaryPolicy::PreserveCollinear,
+        ExactArrangement2dBoundaryPolicy::SimplifyCollinear,
     ] {
         if let Some(mesh) = materialize_coplanar_mesh_overlay_mesh(
             containing_mesh,
@@ -932,18 +933,123 @@ fn append_holed_replacement(
     let source_sign = first_projected_mesh_triangle_sign(mesh, projection)?;
     let flip = source_sign != target_sign;
     for triangle in mesh.triangles() {
-        let mapped = [
-            map_point(vertices, &mesh.vertices().get(triangle.0[0])?.clone())?,
-            map_point(vertices, &mesh.vertices().get(triangle.0[1])?.clone())?,
-            map_point(vertices, &mesh.vertices().get(triangle.0[2])?.clone())?,
+        let points = [
+            mesh.vertices().get(triangle.0[0])?.clone(),
+            mesh.vertices().get(triangle.0[1])?.clone(),
+            mesh.vertices().get(triangle.0[2])?.clone(),
         ];
-        triangles.push(if flip {
-            Triangle([mapped[0], mapped[2], mapped[1]])
+        let mapped = [
+            map_point(vertices, &points[0])?,
+            map_point(vertices, &points[1])?,
+            map_point(vertices, &points[2])?,
+        ];
+        let (triangle_points, mapped_triangle) = if flip {
+            (
+                [points[0].clone(), points[2].clone(), points[1].clone()],
+                [mapped[0], mapped[2], mapped[1]],
+            )
         } else {
-            Triangle(mapped)
-        });
+            (points, mapped)
+        };
+        append_triangle_with_existing_edge_splits(
+            &triangle_points,
+            mapped_triangle,
+            vertices,
+            triangles,
+        )?;
     }
     Some(())
+}
+
+fn append_triangle_with_existing_edge_splits(
+    triangle_points: &[Point3; 3],
+    mapped_triangle: [usize; 3],
+    vertices: &[Point3],
+    triangles: &mut Vec<Triangle>,
+) -> Option<()> {
+    let mut point_by_vertex = BTreeMap::<usize, Point3>::new();
+    for index in 0..3 {
+        point_by_vertex.insert(mapped_triangle[index], triangle_points[index].clone());
+    }
+    let mut split_vertices = Vec::new();
+    for (candidate, point) in vertices.iter().enumerate() {
+        if mapped_triangle.contains(&candidate) {
+            continue;
+        }
+        if triangle_edge_contains_strict_point(triangle_points, point)? {
+            point_by_vertex.insert(candidate, point.clone());
+            split_vertices.push(candidate);
+        }
+    }
+    if split_vertices.is_empty() {
+        triangles.push(Triangle(mapped_triangle));
+        return Some(());
+    }
+
+    let mut refined = vec![Triangle(mapped_triangle)];
+    for split_vertex in split_vertices {
+        split_output_triangle_edge(&point_by_vertex, &mut refined, split_vertex)?;
+    }
+    triangles.extend(refined);
+    Some(())
+}
+
+fn triangle_edge_contains_strict_point(
+    triangle_points: &[Point3; 3],
+    point: &Point3,
+) -> Option<bool> {
+    for edge in 0..3 {
+        if point_lies_strictly_on_segment3(
+            &triangle_points[edge],
+            &triangle_points[(edge + 1) % 3],
+            point,
+        )? {
+            return Some(true);
+        }
+    }
+    Some(false)
+}
+
+fn split_output_triangle_edge(
+    point_by_vertex: &BTreeMap<usize, Point3>,
+    triangles: &mut Vec<Triangle>,
+    split_vertex: usize,
+) -> Option<()> {
+    let split_point = point_by_vertex.get(&split_vertex)?;
+    let mut triangle_index = 0;
+    while triangle_index < triangles.len() {
+        let triangle = triangles[triangle_index].0;
+        if triangle.contains(&split_vertex) {
+            triangle_index += 1;
+            continue;
+        }
+        for edge in 0..3 {
+            let a = triangle[edge];
+            let b = triangle[(edge + 1) % 3];
+            let opposite = triangle[(edge + 2) % 3];
+            let a_point = point_by_vertex.get(&a)?;
+            let b_point = point_by_vertex.get(&b)?;
+            if point_lies_strictly_on_segment3(a_point, b_point, split_point)? {
+                triangles.splice(
+                    triangle_index..triangle_index + 1,
+                    [
+                        Triangle([a, split_vertex, opposite]),
+                        Triangle([split_vertex, b, opposite]),
+                    ],
+                );
+                return Some(());
+            }
+        }
+        triangle_index += 1;
+    }
+    None
+}
+
+fn point_lies_strictly_on_segment3(start: &Point3, end: &Point3, point: &Point3) -> Option<bool> {
+    if points_equal(point, start)? || points_equal(point, end)? {
+        return Some(false);
+    }
+    point_on_segment3(start, end, point).value()
 }
 
 fn map_point(vertices: &mut Vec<Point3>, point: &Point3) -> Option<usize> {
