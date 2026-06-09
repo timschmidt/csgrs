@@ -25,8 +25,6 @@ use super::mesh::ExactMesh;
 use super::topology::triangle_edges_tuple;
 use hyperreal::Real;
 
-const MAX_POLYGON_PATCH_ENUMERATION_FACES: usize = 9;
-
 #[derive(Clone, Debug, PartialEq)]
 struct PolygonPatchCandidate {
     faces: Vec<usize>,
@@ -39,7 +37,7 @@ struct PolygonPatchCandidate {
 ///
 /// The input triangles are split into edge-connected components. Each component
 /// is certified directly, while connected subpatches are exhaustively searched
-/// within the face-count bound that keeps subset enumeration practical.
+/// inside that finite component.
 ///
 /// object/predicate split: source topology is replayed from combinatorial adjacency,
 /// while exact predicates certify coplanarity, interior inclusion, and signed-area
@@ -94,7 +92,6 @@ fn polygon_patch_candidates(
     if available.is_empty() {
         return None;
     }
-    let max_faces = available.len().min(MAX_POLYGON_PATCH_ENUMERATION_FACES);
     let neighbors = edge_connected_face_neighbors(mesh, &available)?;
     let mut unassigned = available.iter().copied().collect::<BTreeSet<_>>();
     while let Some(start_face) = unassigned.iter().next().copied() {
@@ -106,8 +103,8 @@ fn polygon_patch_candidates(
         }
         let mut seen = BTreeSet::<Vec<usize>>::new();
         // A whole connected component is a concrete source-owned object, not a
-        // guessed subset. Certify it directly regardless of size; only the
-        // combinatorial subpatch search below remains bounded.
+        // guessed subset. Certify it directly before enumerating proper connected
+        // subpatches.
         if let Some(candidate) = polygon_patch_candidate(mesh, &component)? {
             seen.insert(component.clone());
             candidates.push(candidate);
@@ -117,16 +114,19 @@ fn polygon_patch_candidates(
         // subset has a unique minimum-face root. Starting only at component[0]
         // misses valid source disks nested inside a larger coplanar source
         // component, which is exactly the kind of retained evidence/topology split
-        for &start_face in &component {
-            collect_polygon_patch_candidates(
-                mesh,
-                &neighbors,
-                start_face,
-                max_faces,
-                &mut vec![start_face],
-                &mut seen,
-                &mut candidates,
-            )?;
+        if let Some(path) = ordered_dual_path_component(&neighbors, &component) {
+            collect_path_polygon_patch_candidates(mesh, &path, &mut seen, &mut candidates)?;
+        } else {
+            for &start_face in &component {
+                collect_polygon_patch_candidates(
+                    mesh,
+                    &neighbors,
+                    start_face,
+                    &mut vec![start_face],
+                    &mut seen,
+                    &mut candidates,
+                )?;
+            }
         }
     }
 
@@ -141,16 +141,35 @@ fn polygon_patch_candidates(
     Some(candidates)
 }
 
+fn collect_path_polygon_patch_candidates(
+    mesh: &ExactMesh,
+    path: &[usize],
+    seen: &mut BTreeSet<Vec<usize>>,
+    candidates: &mut Vec<PolygonPatchCandidate>,
+) -> Option<()> {
+    for start in 0..path.len() {
+        for end in start + 2..=path.len() {
+            let mut key = path[start..end].to_vec();
+            key.sort_unstable();
+            if seen.insert(key.clone())
+                && let Some(candidate) = polygon_patch_candidate(mesh, &key)?
+            {
+                candidates.push(candidate);
+            }
+        }
+    }
+    Some(())
+}
+
 fn collect_polygon_patch_candidates(
     mesh: &ExactMesh,
     neighbors: &BTreeMap<usize, BTreeSet<usize>>,
     start_face: usize,
-    max_faces: usize,
     selected: &mut Vec<usize>,
     seen: &mut BTreeSet<Vec<usize>>,
     candidates: &mut Vec<PolygonPatchCandidate>,
 ) -> Option<()> {
-    if (2..=max_faces).contains(&selected.len()) {
+    if selected.len() >= 2 {
         let mut key = selected.clone();
         key.sort_unstable();
         if seen.insert(key.clone())
@@ -158,9 +177,6 @@ fn collect_polygon_patch_candidates(
         {
             candidates.push(candidate);
         }
-    }
-    if selected.len() == max_faces {
-        return Some(());
     }
 
     let selected_set = selected.iter().copied().collect::<BTreeSet<_>>();
@@ -174,9 +190,7 @@ fn collect_polygon_patch_candidates(
     }
     for extension in extensions {
         selected.push(extension);
-        collect_polygon_patch_candidates(
-            mesh, neighbors, start_face, max_faces, selected, seen, candidates,
-        )?;
+        collect_polygon_patch_candidates(mesh, neighbors, start_face, selected, seen, candidates)?;
         selected.pop();
     }
     Some(())
@@ -306,6 +320,55 @@ fn edge_connected_face_neighbors(
         }
     }
     Some(neighbors)
+}
+
+fn ordered_dual_path_component(
+    neighbors: &BTreeMap<usize, BTreeSet<usize>>,
+    component: &[usize],
+) -> Option<Vec<usize>> {
+    if component.len() < 2 {
+        return Some(component.to_vec());
+    }
+    let component_set = component.iter().copied().collect::<BTreeSet<_>>();
+    let mut endpoints = Vec::new();
+    for &face in component {
+        let degree = neighbors
+            .get(&face)?
+            .iter()
+            .filter(|neighbor| component_set.contains(neighbor))
+            .count();
+        match degree {
+            0 => return None,
+            1 => endpoints.push(face),
+            2 => {}
+            _ => return None,
+        }
+    }
+    if endpoints.len() != 2 {
+        return None;
+    }
+
+    let mut ordered = Vec::with_capacity(component.len());
+    let mut previous = usize::MAX;
+    let mut current = endpoints[0].min(endpoints[1]);
+    loop {
+        ordered.push(current);
+        let next = neighbors
+            .get(&current)?
+            .iter()
+            .copied()
+            .filter(|neighbor| component_set.contains(neighbor) && *neighbor != previous)
+            .min();
+        let Some(next) = next else {
+            break;
+        };
+        previous = current;
+        current = next;
+        if ordered.contains(&current) {
+            return None;
+        }
+    }
+    (ordered.len() == component.len()).then_some(ordered)
 }
 
 fn faces_are_coplanar(mesh: &ExactMesh, left_face: usize, right_face: usize) -> Option<bool> {
@@ -634,12 +697,36 @@ mod tests {
         (left, right)
     }
 
+    fn wide_face_subpatch_pair() -> (ExactMesh, ExactMesh) {
+        let mut left_points = vec![[0, 0, 0]];
+        for index in 0..=11 {
+            left_points.push([index, 1, 0]);
+        }
+        let mut left_triangles = Vec::new();
+        for index in 1..12 {
+            left_triangles.extend([0, index, index + 1]);
+        }
+        let left = open_mesh(&left_points, &left_triangles);
+
+        let mut right_points = vec![[0, 0, 0]];
+        for index in 1..=11 {
+            right_points.push([index, 1, 0]);
+        }
+        let mut right_triangles = Vec::new();
+        for index in 1..11 {
+            right_triangles.extend([0, index + 1, index]);
+        }
+        let right = open_mesh(&right_points, &right_triangles);
+
+        (left, right)
+    }
+
     #[test]
     fn polygon_patch_pairs_find_subpatch_not_rooted_at_component_minimum() {
         let (left, right) = shifted_square_subpatch_pair(1, 4, 4);
 
         let pairs = polygon_patch_pairs(&left, &BTreeSet::new(), &right, &BTreeSet::new())
-            .expect("bounded source-disk candidates should be available");
+            .expect("source-disk candidates should be available");
 
         assert_eq!(pairs, vec![(vec![1, 2], vec![0, 1])]);
     }
@@ -694,6 +781,25 @@ mod tests {
         assert_eq!(pairs, vec![((1..9).collect(), (0..8).collect())]);
     }
 
+    #[test]
+    fn polygon_patch_pairs_accept_subpatch_with_many_faces() {
+        let (left, right) = wide_face_subpatch_pair();
+        let left_candidates = polygon_patch_candidates(&left, &BTreeSet::new())
+            .expect("left source-disk candidates should be available");
+
+        assert!(
+            left_candidates
+                .iter()
+                .any(|candidate| candidate.faces == (1..11).collect::<Vec<_>>()),
+            "{left_candidates:?}"
+        );
+
+        let pairs = polygon_patch_pairs(&left, &BTreeSet::new(), &right, &BTreeSet::new())
+            .expect("many-face source-disk pair should be available");
+
+        assert_eq!(pairs, vec![((1..11).collect(), (0..10).collect())]);
+    }
+
     proptest! {
         #![proptest_config(ProptestConfig::with_cases(32))]
 
@@ -705,7 +811,7 @@ mod tests {
         ) {
             let (left, right) = shifted_square_subpatch_pair(prefix, width, height);
             let pairs = polygon_patch_pairs(&left, &BTreeSet::new(), &right, &BTreeSet::new())
-                .expect("bounded source-disk candidates should be available");
+                .expect("source-disk candidates should be available");
 
             prop_assert_eq!(pairs, vec![(vec![1, 2], vec![0, 1])]);
         }
@@ -716,14 +822,11 @@ mod tests {
         ) {
             let face_count = OVERSIZED_COMPONENT_FACES + extra_faces;
             let mesh = oversized_component_fan(face_count, false);
-            let candidates = polygon_patch_candidates(&mesh, &BTreeSet::new())
-                .expect("source-disk candidates should be available");
+            let faces = (0..face_count).collect::<Vec<_>>();
+            let candidate = polygon_patch_candidate(&mesh, &faces)
+                .expect("whole source-disk candidate should be decidable");
 
-            prop_assert!(
-                candidates
-                    .iter()
-                    .any(|candidate| candidate.faces.len() == face_count)
-            );
+            prop_assert!(candidate.is_some());
         }
     }
 }
