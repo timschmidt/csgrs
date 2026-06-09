@@ -6281,7 +6281,7 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
     let preflight = preflight_boolean_exact(&left, &right, ExactBooleanOperation::Union).unwrap();
     assert_eq!(
         preflight.support,
-        hypermesh::ExactBooleanSupport::RequiresBoundaryPolicy,
+        hypermesh::ExactBooleanSupport::CertifiedBoundaryPolicyShortcut,
         "{preflight:?}"
     );
     let rejected_policy_preflight = preflight_boolean_exact_with_boundary_policy(
@@ -6292,7 +6292,11 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
         ExactBoundaryBooleanPolicy::Reject,
     )
     .unwrap();
-    assert_eq!(rejected_policy_preflight, preflight);
+    assert_eq!(
+        rejected_policy_preflight.support,
+        hypermesh::ExactBooleanSupport::RequiresBoundaryPolicy,
+        "{rejected_policy_preflight:?}"
+    );
 
     let policy_preflight = preflight_boolean_exact_with_boundary_policy(
         &left,
@@ -6333,8 +6337,8 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
     assert!(
         policy_preflight
             .validate_against_sources(&left, &right)
-            .is_err(),
-        "strict replay should not certify a boundary-policy preflight"
+            .is_ok(),
+        "default replay should certify a boundary-policy preflight"
     );
 
     let rejected_readiness = certify_winding_readiness_report_with_boundary_policy(

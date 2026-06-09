@@ -868,7 +868,7 @@ pub(crate) fn replay_selected_region_boolean_result(
 /// booleans that still need unresolved inside/outside semantics, it returns
 /// [`ExactBooleanSupport::RequiresCertifiedWinding`] with replayable facts
 /// instead of approximating them.
-pub fn preflight_boolean_exact(
+fn preflight_boolean_exact_reject_boundary_policy(
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
@@ -1380,7 +1380,7 @@ pub fn preflight_boolean_exact(
 /// for `CLOSED`, but can also certify exact arrangement/cell-complex support
 /// when the same retained split-cell facts materialize under a less restrictive
 /// output policy such as [`ValidationPolicy::ALLOW_BOUNDARY`].
-pub fn preflight_boolean_exact_with_validation(
+fn preflight_boolean_exact_with_validation_reject_boundary_policy(
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
@@ -1392,7 +1392,7 @@ pub fn preflight_boolean_exact_with_validation(
     {
         return Ok(certified_shortcut_preflight(operation, support));
     }
-    let preflight = preflight_boolean_exact(left, right, operation)?;
+    let preflight = preflight_boolean_exact_reject_boundary_policy(left, right, operation)?;
     if validation == ValidationPolicy::CLOSED
         || matches!(operation, ExactBooleanOperation::SelectedRegions(_))
         || !matches!(
@@ -1418,6 +1418,51 @@ pub fn preflight_boolean_exact_with_validation(
     Ok(preflight)
 }
 
+/// Preflight an exact boolean operation using the default exact materialization
+/// policy.
+///
+/// This mirrors [`ExactBooleanRequest::new`]: certified boundary-only contacts
+/// are reported as supportable boundary-policy shortcuts. Use
+/// [`preflight_boolean_exact_with_boundary_policy`] with
+/// [`ExactBoundaryBooleanPolicy::Reject`] to retain boundary-only contact as an
+/// explicit blocker.
+pub fn preflight_boolean_exact(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+) -> Result<ExactBooleanPreflight, MeshError> {
+    let preflight = preflight_boolean_exact_reject_boundary_policy(left, right, operation)?;
+    if matches!(operation, ExactBooleanOperation::SelectedRegions(_))
+        || preflight.support != ExactBooleanSupport::RequiresBoundaryPolicy
+    {
+        return Ok(preflight);
+    }
+    preflight_boolean_exact_with_boundary_policy(
+        left,
+        right,
+        operation,
+        ValidationPolicy::ALLOW_BOUNDARY,
+        ExactBoundaryBooleanPolicy::PreserveSeparateShells,
+    )
+}
+
+/// Preflight an exact boolean operation for a specific output validation policy
+/// using the default exact materialization boundary policy.
+pub fn preflight_boolean_exact_with_validation(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+) -> Result<ExactBooleanPreflight, MeshError> {
+    preflight_boolean_exact_with_boundary_policy(
+        left,
+        right,
+        operation,
+        validation,
+        ExactBoundaryBooleanPolicy::PreserveSeparateShells,
+    )
+}
+
 /// Preflight an exact boolean operation for explicit output validation and
 /// boundary-only projection policies.
 ///
@@ -1433,7 +1478,7 @@ pub fn preflight_boolean_exact_with_boundary_policy(
     validation: ValidationPolicy,
     boundary_policy: ExactBoundaryBooleanPolicy,
 ) -> Result<ExactBooleanPreflight, MeshError> {
-    let preflight = preflight_boolean_exact_with_validation(left, right, operation, validation)?;
+    let preflight = preflight_boolean_exact_with_validation_reject_boundary_policy(left, right, operation, validation)?;
     if boundary_policy == ExactBoundaryBooleanPolicy::Reject
         || matches!(operation, ExactBooleanOperation::SelectedRegions(_))
         || preflight.support != ExactBooleanSupport::RequiresBoundaryPolicy
