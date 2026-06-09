@@ -3905,11 +3905,50 @@ pub fn materialize_closed_no_volume_overlap_regularized_boolean(
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
+    Ok(
+        materialize_closed_no_volume_overlap_regularized_boolean_with_evidence(
+            left, right, operation, validation,
+        )?
+        .map(|(result, _)| result),
+    )
+}
+
+/// Certify and materialize a regularized closed-solid boolean for positive-area
+/// boundary contact, returning the exact coplanar-volumetric evidence consumed
+/// by the decision.
+///
+/// This is the provenance-retaining form of
+/// [`materialize_closed_no_volume_overlap_regularized_boolean`]. The returned
+/// evidence certifies boundary-only positive-area coplanar contact with no
+/// shared volume; unsupported or non-boundary-only contact states return
+/// `None`.
+pub fn materialize_closed_no_volume_overlap_regularized_boolean_with_evidence(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+) -> Result<Option<(ExactBooleanResult, CoplanarVolumetricCellEvidenceReport)>, MeshError> {
     let Some(result) =
         boolean_closed_no_volume_overlap_regularized_meshes(left, right, operation, validation)?
     else {
         return Ok(None);
     };
+    let graph = build_intersection_graph(left, right)?;
+    validate_graph_source_handoff(&graph, left, right)?;
+    let evidence = CoplanarVolumetricCellEvidenceReport::from_graph(&graph, left, right);
+    evidence.validate().map_err(|error| {
+        MeshError::one(MeshDiagnostic::new(
+            Severity::Error,
+            DiagnosticKind::UnsupportedExactOperation,
+            format!("exact no-volume-overlap evidence validation failed: {error:?}"),
+        ))
+    })?;
+    if evidence.obstacle != CoplanarVolumetricCellObstacle::BoundaryOnlyContact
+        || evidence.positive_area_coplanar_overlapping_pairs == 0
+        || evidence.validate_against_sources(left, right).is_err()
+    {
+        return Ok(None);
+    }
     if result
         .validate_operation_against_sources(
             left,
@@ -3922,7 +3961,7 @@ pub fn materialize_closed_no_volume_overlap_regularized_boolean(
     {
         return Ok(None);
     }
-    Ok(Some(result))
+    Ok(Some((result, evidence)))
 }
 
 fn boolean_closed_no_volume_overlap_regularized_meshes(

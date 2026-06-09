@@ -53,6 +53,7 @@ use hypermesh::{
     materialize_axis_aligned_orthogonal_solid_union, materialize_boundary_touching_policy_boolean,
     materialize_bounds_disjoint_boolean, materialize_closed_boundary_touching_regularized_boolean,
     materialize_closed_convex_boolean, materialize_closed_no_volume_overlap_regularized_boolean,
+    materialize_closed_no_volume_overlap_regularized_boolean_with_evidence,
     materialize_closed_regularized_lower_dimensional_boolean,
     materialize_closed_same_surface_boolean, materialize_closed_winding_containment_boolean,
     materialize_closed_winding_separated_boolean, materialize_contained_face_adjacent_union,
@@ -3360,6 +3361,35 @@ fn closed_no_volume_overlap_regularized_boolean_is_publicly_replayable() {
         );
         result.validate().unwrap();
         result.validate_against_sources(&left, &right).unwrap();
+        let (evidenced_result, consumed_evidence) =
+            materialize_closed_no_volume_overlap_regularized_boolean_with_evidence(
+                &left,
+                &right,
+                operation,
+                ValidationPolicy::CLOSED,
+            )
+            .unwrap()
+            .expect("positive-area no-volume materializer should retain consumed evidence");
+        assert_eq!(
+            consumed_evidence, evidence,
+            "{operation:?}: consumed evidence should match certified no-volume report"
+        );
+        consumed_evidence.validate().unwrap();
+        assert_eq!(
+            evidenced_result.kind, result.kind,
+            "{operation:?}: {evidenced_result:?}"
+        );
+        assert_eq!(
+            evidenced_result.mesh.vertices().len(),
+            result.mesh.vertices().len(),
+            "{operation:?}: {evidenced_result:?}"
+        );
+        assert_eq!(
+            evidenced_result.mesh.triangles().len(),
+            result.mesh.triangles().len(),
+            "{operation:?}: {evidenced_result:?}"
+        );
+        evidenced_result.validate().unwrap();
         assert_eq!(
             result.freshness_against_sources(&left, &right),
             ExactReportFreshness::Current
