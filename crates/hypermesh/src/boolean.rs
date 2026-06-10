@@ -5120,35 +5120,24 @@ fn close_exact_coplanar_boundary_loops_from_loops(
         .ok();
     }
 
-    let cap_groups = group_exact_coplanar_loops(
-        split_boundary_loops
-            .into_iter()
+    let cap_groups = group_exact_coplanar_vertex_loops(mesh, split_boundary_loops).ok()?;
+    let mut vertices = mesh.vertices().to_vec();
+    let mut cap_triangles = Vec::new();
+    for vertex_loops in cap_groups {
+        let loops = vertex_loops
+            .iter()
             .map(|boundary_loop| {
-                if boundary_loop.len() < 3 {
-                    return None;
-                }
                 boundary_loop
                     .iter()
                     .map(|&vertex| mesh.vertices().get(vertex).cloned())
                     .collect::<Option<Vec<_>>>()
-                    .and_then(|points| split_boundary_self_contact_cycles(points).ok())
             })
-            .collect::<Option<Vec<_>>>()?
-            .into_iter()
-            .flatten()
-            .collect::<Vec<_>>(),
-    )
-    .ok()?;
-    let mut vertices = mesh.vertices().to_vec();
-    let mut cap_triangles = Vec::new();
-    for loops in cap_groups {
+            .collect::<Option<Vec<_>>>()?;
         let mut group_vertices = Vec::new();
         let mut group_triangles = Vec::new();
         triangulate_exact_loop_group(&loops, &mut group_vertices, &mut group_triangles).ok()?;
-        let local_to_global = group_vertices
-            .into_iter()
-            .map(|point| find_or_insert_exact_mesh_vertex(&mut vertices, point))
-            .collect::<Option<Vec<_>>>()?;
+        let local_to_global =
+            map_cap_vertices_to_boundary_or_insert(mesh, &vertex_loops, &mut vertices, group_vertices)?;
         let triangles = group_triangles.into_iter().map(|triangle| {
             Triangle([
                 local_to_global[triangle.0[0]],
@@ -5184,6 +5173,92 @@ fn find_or_insert_exact_mesh_vertex(vertices: &mut Vec<Point3>, point: Point3) -
     let index = vertices.len();
     vertices.push(point);
     Some(index)
+}
+
+fn group_exact_coplanar_vertex_loops(
+    mesh: &ExactMesh,
+    boundaries: Vec<Vec<usize>>,
+) -> Result<Vec<Vec<Vec<usize>>>, ExactArrangementBlocker> {
+    let mut groups = Vec::<([Point3; 3], Vec<Vec<usize>>)>::new();
+    for boundary in boundaries {
+        if boundary.len() < 3 {
+            return Err(ExactArrangementBlocker::NonManifoldCellComplex);
+        }
+        let points = boundary
+            .iter()
+            .map(|&vertex| {
+                mesh.vertices()
+                    .get(vertex)
+                    .cloned()
+                    .ok_or(ExactArrangementBlocker::NonManifoldCellComplex)
+            })
+            .collect::<Result<Vec<_>, _>>()?;
+        let carrier =
+            exact_loop_carrier(&points)?.ok_or(ExactArrangementBlocker::NonManifoldCellComplex)?;
+        let mut group_index = None;
+        for (index, (group_carrier, _)) in groups.iter().enumerate() {
+            if exact_loop_is_coplanar_with_carrier(&points, group_carrier)? {
+                group_index = Some(index);
+                break;
+            }
+        }
+        if let Some(index) = group_index {
+            groups[index].1.push(boundary);
+        } else {
+            groups.push((carrier, vec![boundary]));
+        }
+    }
+    Ok(groups.into_iter().map(|(_, loops)| loops).collect())
+}
+
+fn exact_loop_is_coplanar_with_carrier(
+    points: &[Point3],
+    carrier: &[Point3; 3],
+) -> Result<bool, ExactArrangementBlocker> {
+    for point in points {
+        match orient3d_report(&carrier[0], &carrier[1], &carrier[2], point).value() {
+            Some(Sign::Zero) => {}
+            Some(Sign::Negative | Sign::Positive) => return Ok(false),
+            None => return Err(ExactArrangementBlocker::UndecidableOrdering),
+        }
+    }
+    Ok(true)
+}
+
+fn map_cap_vertices_to_boundary_or_insert(
+    mesh: &ExactMesh,
+    boundary_loops: &[Vec<usize>],
+    vertices: &mut Vec<Point3>,
+    cap_vertices: Vec<Point3>,
+) -> Option<Vec<usize>> {
+    let boundary_vertices = boundary_loops
+        .iter()
+        .flatten()
+        .copied()
+        .collect::<Vec<_>>();
+    let mut used_boundary_vertices = vec![false; boundary_vertices.len()];
+    cap_vertices
+        .into_iter()
+        .map(|point| {
+            for (index, &boundary_vertex) in boundary_vertices.iter().enumerate() {
+                if used_boundary_vertices[index] {
+                    continue;
+                }
+                let Some(existing) = mesh.vertices().get(boundary_vertex) else {
+                    return None;
+                };
+                match point3_exact_equal(existing, &point) {
+                    Some(true) => {
+                        used_boundary_vertices[index] = true;
+                        return Some(boundary_vertex);
+                    }
+                    Some(false) => {}
+                    None => return None,
+                }
+            }
+            find_or_insert_exact_mesh_vertex(vertices, point)
+        })
+        .collect()
 }
 
 fn find_exact_mesh_vertex(vertices: &[Point3], point: &Point3) -> Option<usize> {
