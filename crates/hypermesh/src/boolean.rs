@@ -3459,24 +3459,14 @@ pub fn materialize_axis_aligned_orthogonal_solid_boolean(
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
-    let Some(result) =
-        boolean_arrangement_orthogonal_solid_cell_recovery(left, right, operation, validation)?
-    else {
-        return Ok(None);
-    };
-    if result
-        .validate_operation_against_sources(
-            left,
-            right,
-            operation,
-            validation,
-            ExactBoundaryBooleanPolicy::Reject,
-        )
-        .is_err()
-    {
-        return Ok(None);
-    }
-    Ok(Some(result))
+    Ok(public_operation_replayable_result(
+        boolean_arrangement_orthogonal_solid_cell_recovery(left, right, operation, validation)?,
+        left,
+        right,
+        operation,
+        validation,
+        ExactBoundaryBooleanPolicy::Reject,
+    ))
 }
 
 fn arrangement_orthogonal_solid_cell_recovery_outcome(
@@ -4764,24 +4754,14 @@ pub fn materialize_volumetric_winding_arrangement(
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
-    let Some(result) =
-        boolean_arrangement_volumetric_split_cell_recovery(left, right, operation, validation)?
-    else {
-        return Ok(None);
-    };
-    if result
-        .validate_operation_against_sources(
-            left,
-            right,
-            operation,
-            validation,
-            ExactBoundaryBooleanPolicy::Reject,
-        )
-        .is_err()
-    {
-        return Ok(None);
-    }
-    Ok(Some(result))
+    Ok(public_operation_replayable_result(
+        boolean_arrangement_volumetric_split_cell_recovery(left, right, operation, validation)?,
+        left,
+        right,
+        operation,
+        validation,
+        ExactBoundaryBooleanPolicy::Reject,
+    ))
 }
 
 /// Certify and materialize a closed volumetric winding arrangement whose
@@ -6989,22 +6969,14 @@ pub fn materialize_open_surface_arrangement(
         graph.has_unknowns(),
         plan,
     )?;
-    let Some(result) = result else {
-        return Ok(None);
-    };
-    if result
-        .validate_operation_against_sources(
-            left,
-            right,
-            operation,
-            validation,
-            ExactBoundaryBooleanPolicy::Reject,
-        )
-        .is_err()
-    {
-        return Ok(None);
-    }
-    Ok(Some(result))
+    Ok(public_operation_replayable_result(
+        result,
+        left,
+        right,
+        operation,
+        validation,
+        ExactBoundaryBooleanPolicy::Reject,
+    ))
 }
 
 pub(crate) fn replay_open_surface_arrangement_result(
@@ -7757,18 +7729,26 @@ pub fn materialize_boundary_touching_policy_boolean(
     if let Some(result) =
         boolean_closed_validation_regularized_meshes(left, right, operation, validation)?
     {
-        return Ok(result
-            .validate_operation_against_sources(left, right, operation, validation, boundary_policy)
-            .is_ok()
-            .then_some(result));
+        return Ok(public_operation_replayable_result(
+            Some(result),
+            left,
+            right,
+            operation,
+            validation,
+            boundary_policy,
+        ));
     }
     if let Some(result) =
         materialize_closed_boundary_touching_regularized_boolean(left, right, operation, validation)?
     {
-        return Ok(result
-            .validate_operation_against_sources(left, right, operation, validation, boundary_policy)
-            .is_ok()
-            .then_some(result));
+        return Ok(public_operation_replayable_result(
+            Some(result),
+            left,
+            right,
+            operation,
+            validation,
+            boundary_policy,
+        ));
     }
     let graph = build_intersection_graph(left, right)?;
     validate_graph_source_handoff(&graph, left, right)?;
@@ -7783,13 +7763,14 @@ pub fn materialize_boundary_touching_policy_boolean(
     else {
         return Ok(None);
     };
-    if result
-        .validate_operation_against_sources(left, right, operation, validation, boundary_policy)
-        .is_err()
-    {
-        return Ok(None);
-    }
-    Ok(Some(result))
+    Ok(public_operation_replayable_result(
+        Some(result),
+        left,
+        right,
+        operation,
+        validation,
+        boundary_policy,
+    ))
 }
 
 /// Certify whether retained graph pairs are exclusively boundary-only contacts.
