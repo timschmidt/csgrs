@@ -7862,6 +7862,14 @@ pub fn materialize_boundary_touching_policy_boolean(
             .is_ok()
             .then_some(result));
     }
+    if let Some(result) =
+        materialize_closed_boundary_touching_regularized_boolean(left, right, operation, validation)?
+    {
+        return Ok(result
+            .validate_operation_against_sources(left, right, operation, validation, boundary_policy)
+            .is_ok()
+            .then_some(result));
+    }
     let graph = build_intersection_graph(left, right)?;
     validate_graph_source_handoff(&graph, left, right)?;
     let Some(result) = boolean_boundary_touching_meshes_from_graph(

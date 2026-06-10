@@ -3250,18 +3250,32 @@ fn boundary_touching_policy_boolean_is_publicly_replayable() {
             hypermesh::ExactBooleanShortcutKind::ClosedBoundaryTouchingDifference,
         ),
     ] {
-        assert!(
-            materialize_boundary_touching_policy_boolean(
+        let direct = materialize_boundary_touching_policy_boolean(
+            &closed_left,
+            &closed_right,
+            operation,
+            ValidationPolicy::CLOSED,
+            ExactBoundaryBooleanPolicy::PreserveSeparateShells,
+        )
+        .unwrap()
+        .expect("closed boundary-touching regularization should materialize directly");
+        assert_eq!(
+            direct.kind,
+            ExactBooleanResultKind::CertifiedShortcut {
+                operation,
+                shortcut
+            },
+            "{operation:?}: {direct:?}"
+        );
+        direct
+            .validate_operation_against_sources(
                 &closed_left,
                 &closed_right,
                 operation,
                 ValidationPolicy::CLOSED,
                 ExactBoundaryBooleanPolicy::PreserveSeparateShells,
             )
-            .unwrap()
-            .is_none(),
-            "{operation:?} should yield to closed-solid regularized provenance"
-        );
+            .unwrap();
         let replay = boolean_exact_with_boundary_policy(
             &closed_left,
             &closed_right,
