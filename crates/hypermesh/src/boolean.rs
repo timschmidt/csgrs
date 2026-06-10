@@ -607,7 +607,8 @@ impl ExactBooleanCertificationSet {
             if matches!(request.operation, ExactBooleanOperation::SelectedRegions(_)) {
                 None
             } else {
-                Some(certify_volumetric_boundary_closure_report(
+                Some(volumetric_boundary_closure_report_from_graph(
+                    &graph,
                     left,
                     right,
                     request.operation,
@@ -1489,8 +1490,17 @@ pub fn certify_volumetric_boundary_closure_report(
 ) -> Result<ExactVolumetricBoundaryClosureReport, MeshError> {
     let graph = build_intersection_graph(left, right)?;
     validate_graph_source_handoff(&graph, left, right)?;
+    volumetric_boundary_closure_report_from_graph(&graph, left, right, operation)
+}
+
+fn volumetric_boundary_closure_report_from_graph(
+    graph: &super::graph::ExactIntersectionGraph,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+) -> Result<ExactVolumetricBoundaryClosureReport, MeshError> {
     let Some(materialized) = materialize_volumetric_winding_region_plan_from_graph(
-        &graph,
+        graph,
         left,
         right,
         operation,
@@ -4840,8 +4850,20 @@ pub(crate) fn materialize_volumetric_coplanar_boundary_closure_output(
 ) -> Result<Option<(ExactMesh, ExactVolumetricBoundaryClosureReport)>, MeshError> {
     let graph = build_intersection_graph(left, right)?;
     validate_graph_source_handoff(&graph, left, right)?;
+    materialize_volumetric_coplanar_boundary_closure_output_from_graph(
+        &graph, left, right, operation, validation,
+    )
+}
+
+fn materialize_volumetric_coplanar_boundary_closure_output_from_graph(
+    graph: &super::graph::ExactIntersectionGraph,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+) -> Result<Option<(ExactMesh, ExactVolumetricBoundaryClosureReport)>, MeshError> {
     let Some(materialized) = materialize_volumetric_winding_region_plan_from_graph(
-        &graph,
+        graph,
         left,
         right,
         operation,
@@ -4860,8 +4882,7 @@ pub(crate) fn materialize_volumetric_coplanar_boundary_closure_output(
     ) else {
         return Ok(None);
     };
-    let closure_report =
-        volumetric_boundary_closure_report_from_materialized(&materialized, operation)?;
+    let closure_report = volumetric_boundary_closure_report_from_graph(graph, left, right, operation)?;
     if closure_report.status != ExactVolumetricBoundaryClosureStatus::CoplanarClosureAvailable
         || closure_report.validate().is_err()
     {
