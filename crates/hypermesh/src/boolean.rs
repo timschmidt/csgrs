@@ -4159,27 +4159,15 @@ pub fn materialize_closed_no_volume_overlap_regularized_boolean_with_evidence(
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
 ) -> Result<Option<(ExactBooleanResult, CoplanarVolumetricCellEvidenceReport)>, MeshError> {
-    let Some(result) =
-        boolean_closed_no_volume_overlap_regularized_meshes(left, right, operation, validation)?
+    let graph = build_intersection_graph(left, right)?;
+    validate_graph_source_handoff(&graph, left, right)?;
+    let Some((result, evidence)) =
+        materialize_closed_no_volume_overlap_regularized_boolean_with_evidence_from_graph(
+            &graph, left, right, operation, validation,
+        )?
     else {
         return Ok(None);
     };
-    let graph = build_intersection_graph(left, right)?;
-    validate_graph_source_handoff(&graph, left, right)?;
-    let evidence = CoplanarVolumetricCellEvidenceReport::from_graph(&graph, left, right);
-    evidence.validate().map_err(|error| {
-        MeshError::one(MeshDiagnostic::new(
-            Severity::Error,
-            DiagnosticKind::UnsupportedExactOperation,
-            format!("exact no-volume-overlap evidence validation failed: {error:?}"),
-        ))
-    })?;
-    if evidence.obstacle != CoplanarVolumetricCellObstacle::BoundaryOnlyContact
-        || evidence.positive_area_coplanar_overlapping_pairs == 0
-        || evidence.validate_against_sources(left, right).is_err()
-    {
-        return Ok(None);
-    }
     if result
         .validate_operation_against_sources(
             left,
@@ -4189,24 +4177,24 @@ pub fn materialize_closed_no_volume_overlap_regularized_boolean_with_evidence(
             ExactBoundaryBooleanPolicy::Reject,
         )
         .is_err()
+        || evidence.validate_against_sources(left, right).is_err()
     {
         return Ok(None);
     }
     Ok(Some((result, evidence)))
 }
 
-fn boolean_closed_no_volume_overlap_regularized_meshes(
+fn materialize_closed_no_volume_overlap_regularized_boolean_with_evidence_from_graph(
+    graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
-) -> Result<Option<ExactBooleanResult>, MeshError> {
+) -> Result<Option<(ExactBooleanResult, CoplanarVolumetricCellEvidenceReport)>, MeshError> {
     if matches!(operation, ExactBooleanOperation::SelectedRegions(_)) {
         return Ok(None);
     }
-    let graph = build_intersection_graph(left, right)?;
-    validate_graph_source_handoff(&graph, left, right)?;
-    let evidence = CoplanarVolumetricCellEvidenceReport::from_graph(&graph, left, right);
+    let evidence = CoplanarVolumetricCellEvidenceReport::from_graph(graph, left, right);
     evidence.validate().map_err(|error| {
         MeshError::one(MeshDiagnostic::new(
             Severity::Error,
@@ -4219,10 +4207,49 @@ fn boolean_closed_no_volume_overlap_regularized_meshes(
     {
         return Ok(None);
     }
+    let Some(result) = materialize_closed_no_volume_overlap_regularized_result_from_evidence(
+        graph, left, right, operation, validation, &evidence,
+    )?
+    else {
+        return Ok(None);
+    };
+    Ok(Some((result, evidence)))
+}
+
+fn boolean_closed_no_volume_overlap_regularized_meshes(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+) -> Result<Option<ExactBooleanResult>, MeshError> {
+    let graph = build_intersection_graph(left, right)?;
+    validate_graph_source_handoff(&graph, left, right)?;
+    Ok(
+        materialize_closed_no_volume_overlap_regularized_boolean_with_evidence_from_graph(
+            &graph, left, right, operation, validation,
+        )?
+        .map(|(result, _evidence)| result),
+    )
+}
+
+fn materialize_closed_no_volume_overlap_regularized_result_from_evidence(
+    graph: &super::graph::ExactIntersectionGraph,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+    evidence: &CoplanarVolumetricCellEvidenceReport,
+) -> Result<Option<ExactBooleanResult>, MeshError> {
+    if matches!(operation, ExactBooleanOperation::SelectedRegions(_))
+        || evidence.obstacle != CoplanarVolumetricCellObstacle::BoundaryOnlyContact
+        || evidence.positive_area_coplanar_overlapping_pairs == 0
+    {
+        return Ok(None);
+    }
     match operation {
         ExactBooleanOperation::Union => {
             boolean_arrangement_regularized_no_volume_overlap_from_graph(
-                &graph, left, right, operation, validation,
+                graph, left, right, operation, validation,
             )
         }
         ExactBooleanOperation::Intersection => {
