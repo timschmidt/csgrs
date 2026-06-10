@@ -5329,7 +5329,7 @@ fn boundary_loop_self_contact_evidence(
         for index in 0..class.len() {
             let start = class[index];
             let end = class[(index + 1) % class.len()];
-            if cyclic_interval_distinct_exact_points(points, start, end)? < 3 {
+            if cyclic_interval_distinct_items(points, start, end, &point3s_exact_equal)? < 3 {
                 evidence.degenerate_cycles += 1;
             } else {
                 evidence.nondegenerate_cycles += 1;
@@ -5339,125 +5339,48 @@ fn boundary_loop_self_contact_evidence(
     Ok(evidence)
 }
 
+#[cfg(test)]
 fn canonicalize_degenerate_boundary_self_contact(
-    mut points: Vec<Point3>,
+    points: Vec<Point3>,
 ) -> Result<Vec<Point3>, ExactArrangementBlocker> {
-    loop {
-        let mut removed = false;
-        'scan: for left in 0..points.len() {
-            for right in left + 1..points.len() {
-                match point3_exact_equal(&points[left], &points[right]) {
-                    Some(true) => {
-                        if cyclic_interval_distinct_exact_points(&points, left, right)? < 3 {
-                            points = remove_degenerate_cyclic_interval(points, left, right);
-                            removed = true;
-                            break 'scan;
-                        }
-                        if cyclic_interval_distinct_exact_points(&points, right, left)? < 3 {
-                            points = remove_degenerate_cyclic_interval(points, right, left);
-                            removed = true;
-                            break 'scan;
-                        }
-                    }
-                    Some(false) => {}
-                    None => return Err(ExactArrangementBlocker::UndecidableOrdering),
-                }
-            }
-        }
-        if !removed {
-            return Ok(points);
-        }
-    }
+    canonicalize_degenerate_cyclic_self_contact(points, &point3s_exact_equal)
 }
 
 fn split_boundary_self_contact_cycles(
     points: Vec<Point3>,
 ) -> Result<Vec<Vec<Point3>>, ExactArrangementBlocker> {
-    let points = canonicalize_degenerate_boundary_self_contact(points)?;
-    if points.len() < 3 {
-        return Err(ExactArrangementBlocker::NonManifoldCellComplex);
-    }
-    for left in 0..points.len() {
-        for right in left + 1..points.len() {
-            match point3_exact_equal(&points[left], &points[right]) {
-                Some(true) => {
-                    let left_to_right = cyclic_interval_distinct_exact_points(&points, left, right)?;
-                    let right_to_left = cyclic_interval_distinct_exact_points(&points, right, left)?;
-                    if left_to_right < 3 || right_to_left < 3 {
-                        return Err(ExactArrangementBlocker::NonManifoldCellComplex);
-                    }
-                    let mut split = split_boundary_self_contact_cycles(cyclic_interval_points(
-                        &points, left, right,
-                    )?)?;
-                    split.extend(split_boundary_self_contact_cycles(cyclic_interval_points(
-                        &points, right, left,
-                    )?)?);
-                    return Ok(split);
-                }
-                Some(false) => {}
-                None => return Err(ExactArrangementBlocker::UndecidableOrdering),
-            }
-        }
-    }
-    Ok(vec![points])
+    split_cyclic_self_contact_cycles(points, &point3s_exact_equal)
 }
 
 fn split_boundary_vertex_self_contact_cycles(
     mesh: &ExactMesh,
     vertices: Vec<usize>,
 ) -> Result<Vec<Vec<usize>>, ExactArrangementBlocker> {
-    let vertices = canonicalize_degenerate_boundary_vertex_self_contact(mesh, vertices)?;
-    if vertices.len() < 3 {
-        return Err(ExactArrangementBlocker::NonManifoldCellComplex);
-    }
-    for left in 0..vertices.len() {
-        for right in left + 1..vertices.len() {
-            match boundary_vertices_exact_equal(mesh, vertices[left], vertices[right])? {
-                true => {
-                    let left_to_right =
-                        cyclic_vertex_interval_distinct_exact_points(mesh, &vertices, left, right)?;
-                    let right_to_left =
-                        cyclic_vertex_interval_distinct_exact_points(mesh, &vertices, right, left)?;
-                    if left_to_right < 3 || right_to_left < 3 {
-                        return Err(ExactArrangementBlocker::NonManifoldCellComplex);
-                    }
-                    let mut split = split_boundary_vertex_self_contact_cycles(
-                        mesh,
-                        cyclic_interval_vertices(&vertices, left, right)?,
-                    )?;
-                    split.extend(split_boundary_vertex_self_contact_cycles(
-                        mesh,
-                        cyclic_interval_vertices(&vertices, right, left)?,
-                    )?);
-                    return Ok(split);
-                }
-                false => {}
-            }
-        }
-    }
-    Ok(vec![vertices])
+    split_cyclic_self_contact_cycles(vertices, &|left, right| {
+        boundary_vertices_exact_equal(mesh, *left, *right)
+    })
 }
 
-fn canonicalize_degenerate_boundary_vertex_self_contact(
-    mesh: &ExactMesh,
-    mut vertices: Vec<usize>,
-) -> Result<Vec<usize>, ExactArrangementBlocker> {
+fn point3s_exact_equal(left: &Point3, right: &Point3) -> Result<bool, ExactArrangementBlocker> {
+    point3_exact_equal(left, right).ok_or(ExactArrangementBlocker::UndecidableOrdering)
+}
+
+fn canonicalize_degenerate_cyclic_self_contact<T: Clone>(
+    mut items: Vec<T>,
+    equal: &impl Fn(&T, &T) -> Result<bool, ExactArrangementBlocker>,
+) -> Result<Vec<T>, ExactArrangementBlocker> {
     loop {
         let mut removed = false;
-        'scan: for left in 0..vertices.len() {
-            for right in left + 1..vertices.len() {
-                if boundary_vertices_exact_equal(mesh, vertices[left], vertices[right])? {
-                    if cyclic_vertex_interval_distinct_exact_points(mesh, &vertices, left, right)?
-                        < 3
-                    {
-                        vertices = remove_degenerate_cyclic_interval(vertices, left, right);
+        'scan: for left in 0..items.len() {
+            for right in left + 1..items.len() {
+                if equal(&items[left], &items[right])? {
+                    if cyclic_interval_distinct_items(&items, left, right, equal)? < 3 {
+                        items = remove_degenerate_cyclic_interval(items, left, right);
                         removed = true;
                         break 'scan;
                     }
-                    if cyclic_vertex_interval_distinct_exact_points(mesh, &vertices, right, left)?
-                        < 3
-                    {
-                        vertices = remove_degenerate_cyclic_interval(vertices, right, left);
+                    if cyclic_interval_distinct_items(&items, right, left, equal)? < 3 {
+                        items = remove_degenerate_cyclic_interval(items, right, left);
                         removed = true;
                         break 'scan;
                     }
@@ -5465,9 +5388,40 @@ fn canonicalize_degenerate_boundary_vertex_self_contact(
             }
         }
         if !removed {
-            return Ok(vertices);
+            return Ok(items);
         }
     }
+}
+
+fn split_cyclic_self_contact_cycles<T: Clone>(
+    items: Vec<T>,
+    equal: &impl Fn(&T, &T) -> Result<bool, ExactArrangementBlocker>,
+) -> Result<Vec<Vec<T>>, ExactArrangementBlocker> {
+    let items = canonicalize_degenerate_cyclic_self_contact(items, equal)?;
+    if items.len() < 3 {
+        return Err(ExactArrangementBlocker::NonManifoldCellComplex);
+    }
+    for left in 0..items.len() {
+        for right in left + 1..items.len() {
+            if equal(&items[left], &items[right])? {
+                let left_to_right = cyclic_interval_distinct_items(&items, left, right, equal)?;
+                let right_to_left = cyclic_interval_distinct_items(&items, right, left, equal)?;
+                if left_to_right < 3 || right_to_left < 3 {
+                    return Err(ExactArrangementBlocker::NonManifoldCellComplex);
+                }
+                let mut split = split_cyclic_self_contact_cycles(
+                    cyclic_interval_items(&items, left, right)?,
+                    equal,
+                )?;
+                split.extend(split_cyclic_self_contact_cycles(
+                    cyclic_interval_items(&items, right, left)?,
+                    equal,
+                )?);
+                return Ok(split);
+            }
+        }
+    }
+    Ok(vec![items])
 }
 
 fn boundary_vertices_exact_equal(
@@ -5486,64 +5440,21 @@ fn boundary_vertices_exact_equal(
     point3_exact_equal(left, right).ok_or(ExactArrangementBlocker::UndecidableOrdering)
 }
 
-fn cyclic_vertex_interval_distinct_exact_points(
-    mesh: &ExactMesh,
-    vertices: &[usize],
+fn cyclic_interval_items<T: Clone>(
+    items: &[T],
     start: usize,
     end: usize,
-) -> Result<usize, ExactArrangementBlocker> {
-    let mut distinct = Vec::<usize>::new();
-    for vertex in cyclic_interval_vertices(vertices, start, end)? {
-        let mut already_seen = false;
-        for existing in &distinct {
-            if boundary_vertices_exact_equal(mesh, *existing, vertex)? {
-                already_seen = true;
-                break;
-            }
-        }
-        if !already_seen {
-            distinct.push(vertex);
-        }
-    }
-    Ok(distinct.len())
-}
-
-fn cyclic_interval_vertices(
-    vertices: &[usize],
-    start: usize,
-    end: usize,
-) -> Result<Vec<usize>, ExactArrangementBlocker> {
+) -> Result<Vec<T>, ExactArrangementBlocker> {
     let span = if end >= start {
         end - start
     } else {
-        vertices.len() - start + end
+        items.len() - start + end
     };
     let mut interval = Vec::with_capacity(span + 1);
     for offset in 0..=span {
         interval.push(
-            *vertices
-                .get((start + offset) % vertices.len())
-                .ok_or(ExactArrangementBlocker::NonManifoldCellComplex)?,
-        );
-    }
-    Ok(interval)
-}
-
-fn cyclic_interval_points(
-    points: &[Point3],
-    start: usize,
-    end: usize,
-) -> Result<Vec<Point3>, ExactArrangementBlocker> {
-    let span = if end >= start {
-        end - start
-    } else {
-        points.len() - start + end
-    };
-    let mut interval = Vec::with_capacity(span + 1);
-    for offset in 0..=span {
-        interval.push(
-            points
-                .get((start + offset) % points.len())
+            items
+                .get((start + offset) % items.len())
                 .ok_or(ExactArrangementBlocker::NonManifoldCellComplex)?
                 .clone(),
         );
@@ -5570,34 +5481,23 @@ fn remove_degenerate_cyclic_interval<T: Clone>(
     retained
 }
 
-fn cyclic_interval_distinct_exact_points(
-    points: &[Point3],
+fn cyclic_interval_distinct_items<T: Clone>(
+    items: &[T],
     start: usize,
     end: usize,
+    equal: &impl Fn(&T, &T) -> Result<bool, ExactArrangementBlocker>,
 ) -> Result<usize, ExactArrangementBlocker> {
-    let mut distinct = Vec::<&Point3>::new();
-    let span = if end >= start {
-        end - start
-    } else {
-        points.len() - start + end
-    };
-    for offset in 0..=span {
-        let point = points
-            .get((start + offset) % points.len())
-            .ok_or(ExactArrangementBlocker::NonManifoldCellComplex)?;
+    let mut distinct = Vec::<T>::new();
+    for item in cyclic_interval_items(items, start, end)? {
         let mut already_seen = false;
         for existing in &distinct {
-            match point3_exact_equal(existing, point) {
-                Some(true) => {
-                    already_seen = true;
-                    break;
-                }
-                Some(false) => {}
-                None => return Err(ExactArrangementBlocker::UndecidableOrdering),
+            if equal(existing, &item)? {
+                already_seen = true;
+                break;
             }
         }
         if !already_seen {
-            distinct.push(point);
+            distinct.push(item);
         }
     }
     Ok(distinct.len())
