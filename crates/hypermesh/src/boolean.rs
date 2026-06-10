@@ -7854,6 +7854,14 @@ pub fn materialize_boundary_touching_policy_boolean(
     validation: ValidationPolicy,
     boundary_policy: ExactBoundaryBooleanPolicy,
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
+    if let Some(result) =
+        boolean_closed_validation_regularized_meshes(left, right, operation, validation)?
+    {
+        return Ok(result
+            .validate_operation_against_sources(left, right, operation, validation, boundary_policy)
+            .is_ok()
+            .then_some(result));
+    }
     let graph = build_intersection_graph(left, right)?;
     validate_graph_source_handoff(&graph, left, right)?;
     let Some(result) = boolean_boundary_touching_meshes_from_graph(

@@ -6564,18 +6564,32 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
             ExactWindingReadinessStatus::LowerDimensionalRegularizedSolidAlreadyMaterialized,
             "{operation:?}: {closed_policy_readiness:?}"
         );
-        assert!(
-            materialize_boundary_touching_policy_boolean(
+        let materialized = materialize_boundary_touching_policy_boolean(
+            &left,
+            &right,
+            operation,
+            ValidationPolicy::CLOSED,
+            ExactBoundaryBooleanPolicy::PreserveSeparateShells,
+        )
+        .unwrap()
+        .expect("closed lower-dimensional regularization should materialize directly");
+        assert_eq!(
+            materialized.kind,
+            ExactBooleanResultKind::CertifiedShortcut {
+                operation,
+                shortcut: hypermesh::ExactBooleanShortcutKind::LowerDimensionalRegularizedSolid
+            },
+            "{operation:?}: {materialized:?}"
+        );
+        materialized
+            .validate_operation_against_sources(
                 &left,
                 &right,
                 operation,
                 ValidationPolicy::CLOSED,
                 ExactBoundaryBooleanPolicy::PreserveSeparateShells,
             )
-            .unwrap()
-            .is_none(),
-            "{operation:?} should remain blocked because preserving open shells cannot satisfy CLOSED output validation"
-        );
+            .unwrap();
         let closed_regularized = boolean_exact_with_boundary_policy(
             &left,
             &right,
