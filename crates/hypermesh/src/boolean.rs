@@ -5074,8 +5074,65 @@ fn close_exact_coplanar_boundary_loops_from_loops(
         return None;
     }
 
+    let boundary_edges = directed_boundary_edges(mesh);
+    let split_boundary_loop_groups = boundary_loops
+        .into_iter()
+        .map(|boundary_loop| {
+            let had_self_contact =
+                boundary_vertex_loop_has_repeated_exact_point(mesh, &boundary_loop).ok()?;
+            split_boundary_vertex_self_contact_cycles(mesh, boundary_loop)
+                .ok()
+                .map(|split| (had_self_contact, split))
+        })
+        .collect::<Option<Vec<_>>>()?;
+    let split_self_contact = split_boundary_loop_groups
+        .iter()
+        .any(|(had_self_contact, split)| *had_self_contact && split.len() > 1);
+    let split_boundary_loops = split_boundary_loop_groups
+        .into_iter()
+        .flat_map(|(_, split)| split)
+        .collect::<Vec<_>>();
+    if split_boundary_loops.is_empty() {
+        return None;
+    }
+    if split_self_contact
+        && split_boundary_loops
+        .iter()
+        .all(|boundary_loop| boundary_loop.len() == 3)
+    {
+        let cap_triangles = split_boundary_loops
+            .iter()
+            .map(|boundary_loop| {
+                let points = boundary_loop
+                    .iter()
+                    .map(|&vertex| mesh.vertices().get(vertex).cloned())
+                    .collect::<Option<Vec<_>>>()?;
+                if boundary_loop_self_contact_evidence(&points)
+                    .ok()?
+                    .repeated_exact_point_pairs
+                    != 0
+                    || !exact_loop_is_coplanar(&points).ok()?
+                {
+                    return None;
+                }
+                Some(Triangle([boundary_loop[0], boundary_loop[1], boundary_loop[2]]))
+            })
+            .collect::<Option<Vec<_>>>()?;
+        let cap_triangles =
+            orient_cap_group_against_mesh_boundary(&boundary_edges, cap_triangles)?;
+        let mut triangles = mesh.triangles().to_vec();
+        triangles.extend(cap_triangles);
+        return ExactMesh::new_with_policy(
+            mesh.vertices().to_vec(),
+            triangles,
+            SourceProvenance::exact(label),
+            validation,
+        )
+        .ok();
+    }
+
     let cap_groups = group_exact_coplanar_loops(
-        boundary_loops
+        split_boundary_loops
             .into_iter()
             .map(|boundary_loop| {
                 if boundary_loop.len() < 3 {
@@ -5093,7 +5150,6 @@ fn close_exact_coplanar_boundary_loops_from_loops(
             .collect::<Vec<_>>(),
     )
     .ok()?;
-    let boundary_edges = directed_boundary_edges(mesh);
     let mut vertices = mesh.vertices().to_vec();
     let mut cap_triangles = Vec::new();
     for loops in cap_groups {
@@ -5282,6 +5338,147 @@ fn split_boundary_self_contact_cycles(
     Ok(vec![points])
 }
 
+fn split_boundary_vertex_self_contact_cycles(
+    mesh: &ExactMesh,
+    vertices: Vec<usize>,
+) -> Result<Vec<Vec<usize>>, ExactArrangementBlocker> {
+    let vertices = canonicalize_degenerate_boundary_vertex_self_contact(mesh, vertices)?;
+    if vertices.len() < 3 {
+        return Err(ExactArrangementBlocker::NonManifoldCellComplex);
+    }
+    for left in 0..vertices.len() {
+        for right in left + 1..vertices.len() {
+            match boundary_vertices_exact_equal(mesh, vertices[left], vertices[right])? {
+                true => {
+                    let left_to_right =
+                        cyclic_vertex_interval_distinct_exact_points(mesh, &vertices, left, right)?;
+                    let right_to_left =
+                        cyclic_vertex_interval_distinct_exact_points(mesh, &vertices, right, left)?;
+                    if left_to_right < 3 || right_to_left < 3 {
+                        return Err(ExactArrangementBlocker::NonManifoldCellComplex);
+                    }
+                    let mut split = split_boundary_vertex_self_contact_cycles(
+                        mesh,
+                        cyclic_interval_vertices(&vertices, left, right)?,
+                    )?;
+                    split.extend(split_boundary_vertex_self_contact_cycles(
+                        mesh,
+                        cyclic_interval_vertices(&vertices, right, left)?,
+                    )?);
+                    return Ok(split);
+                }
+                false => {}
+            }
+        }
+    }
+    Ok(vec![vertices])
+}
+
+fn canonicalize_degenerate_boundary_vertex_self_contact(
+    mesh: &ExactMesh,
+    mut vertices: Vec<usize>,
+) -> Result<Vec<usize>, ExactArrangementBlocker> {
+    loop {
+        let mut removed = false;
+        'scan: for left in 0..vertices.len() {
+            for right in left + 1..vertices.len() {
+                if boundary_vertices_exact_equal(mesh, vertices[left], vertices[right])? {
+                    if cyclic_vertex_interval_distinct_exact_points(mesh, &vertices, left, right)?
+                        < 3
+                    {
+                        vertices = remove_degenerate_cyclic_interval(vertices, left, right);
+                        removed = true;
+                        break 'scan;
+                    }
+                    if cyclic_vertex_interval_distinct_exact_points(mesh, &vertices, right, left)?
+                        < 3
+                    {
+                        vertices = remove_degenerate_cyclic_interval(vertices, right, left);
+                        removed = true;
+                        break 'scan;
+                    }
+                }
+            }
+        }
+        if !removed {
+            return Ok(vertices);
+        }
+    }
+}
+
+fn boundary_vertices_exact_equal(
+    mesh: &ExactMesh,
+    left: usize,
+    right: usize,
+) -> Result<bool, ExactArrangementBlocker> {
+    let left = mesh
+        .vertices()
+        .get(left)
+        .ok_or(ExactArrangementBlocker::NonManifoldCellComplex)?;
+    let right = mesh
+        .vertices()
+        .get(right)
+        .ok_or(ExactArrangementBlocker::NonManifoldCellComplex)?;
+    point3_exact_equal(left, right).ok_or(ExactArrangementBlocker::UndecidableOrdering)
+}
+
+fn boundary_vertex_loop_has_repeated_exact_point(
+    mesh: &ExactMesh,
+    vertices: &[usize],
+) -> Result<bool, ExactArrangementBlocker> {
+    for left in 0..vertices.len() {
+        for right in left + 1..vertices.len() {
+            if boundary_vertices_exact_equal(mesh, vertices[left], vertices[right])? {
+                return Ok(true);
+            }
+        }
+    }
+    Ok(false)
+}
+
+fn cyclic_vertex_interval_distinct_exact_points(
+    mesh: &ExactMesh,
+    vertices: &[usize],
+    start: usize,
+    end: usize,
+) -> Result<usize, ExactArrangementBlocker> {
+    let mut distinct = Vec::<usize>::new();
+    for vertex in cyclic_interval_vertices(vertices, start, end)? {
+        let mut already_seen = false;
+        for existing in &distinct {
+            if boundary_vertices_exact_equal(mesh, *existing, vertex)? {
+                already_seen = true;
+                break;
+            }
+        }
+        if !already_seen {
+            distinct.push(vertex);
+        }
+    }
+    Ok(distinct.len())
+}
+
+fn cyclic_interval_vertices(
+    vertices: &[usize],
+    start: usize,
+    end: usize,
+) -> Result<Vec<usize>, ExactArrangementBlocker> {
+    let span = if end >= start {
+        end - start
+    } else {
+        vertices.len() - start + end
+    };
+    let mut interval = Vec::with_capacity(span + 1);
+    for offset in 0..=span {
+        interval.push(
+            *vertices
+                .get((start + offset) % vertices.len())
+                .ok_or(ExactArrangementBlocker::NonManifoldCellComplex)?,
+        );
+    }
+    Ok(interval)
+}
+
 fn cyclic_interval_points(
     points: &[Point3],
     start: usize,
@@ -5304,11 +5501,11 @@ fn cyclic_interval_points(
     Ok(interval)
 }
 
-fn remove_degenerate_cyclic_interval(
-    points: Vec<Point3>,
+fn remove_degenerate_cyclic_interval<T: Clone>(
+    points: Vec<T>,
     start: usize,
     end: usize,
-) -> Vec<Point3> {
+) -> Vec<T> {
     if points.len() < 2 || start == end {
         return points;
     }
