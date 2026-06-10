@@ -1567,6 +1567,19 @@ fn volumetric_boundary_closure_report_from_materialized(
                 "volumetric boundary closure report referenced a missing output vertex",
             ))
         })?;
+    let boundary_points = boundary_points
+        .into_iter()
+        .map(canonicalize_degenerate_boundary_self_contact)
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|blocker| {
+            MeshError::one(MeshDiagnostic::new(
+                Severity::Error,
+                DiagnosticKind::UnsupportedExactOperation,
+                format!(
+                    "volumetric boundary closure self-contact canonicalization failed: {blocker:?}"
+                ),
+            ))
+        })?;
     let mut self_contact = BoundaryLoopSelfContactEvidence::default();
     for boundary in &boundary_points {
         match boundary_loop_self_contact_evidence(boundary) {
@@ -5001,9 +5014,13 @@ fn boundary_loops_are_exactly_coplanar_without_self_contact(
                 .iter()
                 .map(|&vertex| mesh.vertices().get(vertex).cloned())
                 .collect::<Option<Vec<_>>>()
+                .and_then(|points| canonicalize_degenerate_boundary_self_contact(points).ok())
         })
         .collect::<Option<Vec<_>>>()?;
     for boundary in &boundary_points {
+        if boundary.len() < 3 {
+            return None;
+        }
         let self_contact = boundary_loop_self_contact_evidence(boundary).ok()?;
         if self_contact.repeated_exact_point_pairs != 0 {
             return None;
@@ -5061,6 +5078,8 @@ fn close_exact_coplanar_boundary_loops_from_loops(
                     .iter()
                     .map(|&vertex| mesh.vertices().get(vertex).cloned())
                     .collect::<Option<Vec<_>>>()
+                    .and_then(|points| canonicalize_degenerate_boundary_self_contact(points).ok())
+                    .filter(|points| points.len() >= 3)
             })
             .collect::<Option<Vec<_>>>()?,
     )
@@ -5189,6 +5208,56 @@ fn boundary_loop_self_contact_evidence(
         }
     }
     Ok(evidence)
+}
+
+fn canonicalize_degenerate_boundary_self_contact(
+    mut points: Vec<Point3>,
+) -> Result<Vec<Point3>, ExactArrangementBlocker> {
+    loop {
+        let mut removed = false;
+        'scan: for left in 0..points.len() {
+            for right in left + 1..points.len() {
+                match point3_exact_equal(&points[left], &points[right]) {
+                    Some(true) => {
+                        if cyclic_interval_distinct_exact_points(&points, left, right)? < 3 {
+                            points = remove_degenerate_cyclic_interval(points, left, right);
+                            removed = true;
+                            break 'scan;
+                        }
+                        if cyclic_interval_distinct_exact_points(&points, right, left)? < 3 {
+                            points = remove_degenerate_cyclic_interval(points, right, left);
+                            removed = true;
+                            break 'scan;
+                        }
+                    }
+                    Some(false) => {}
+                    None => return Err(ExactArrangementBlocker::UndecidableOrdering),
+                }
+            }
+        }
+        if !removed {
+            return Ok(points);
+        }
+    }
+}
+
+fn remove_degenerate_cyclic_interval(
+    points: Vec<Point3>,
+    start: usize,
+    end: usize,
+) -> Vec<Point3> {
+    if points.len() < 2 || start == end {
+        return points;
+    }
+    let mut retained = Vec::with_capacity(points.len().saturating_sub(1));
+    retained.push(points[start].clone());
+    if end > start {
+        retained.extend(points[end + 1..].iter().cloned());
+        retained.extend(points[..start].iter().cloned());
+    } else {
+        retained.extend(points[end + 1..start].iter().cloned());
+    }
+    retained
 }
 
 fn cyclic_interval_distinct_exact_points(
@@ -11271,11 +11340,11 @@ mod tests {
         );
         assert_eq!(closure.boundary_loops, 1, "{closure:?}");
         assert_eq!(closure.noncoplanar_boundary_loops, 0, "{closure:?}");
-        assert_eq!(closure.repeated_exact_boundary_points, 10, "{closure:?}");
-        assert_eq!(closure.self_contact_exact_points, 5, "{closure:?}");
-        assert_eq!(closure.self_contact_topological_vertices, 12, "{closure:?}");
-        assert_eq!(closure.self_contact_degenerate_cycles, 2, "{closure:?}");
-        assert_eq!(closure.self_contact_nondegenerate_cycles, 10, "{closure:?}");
+        assert_eq!(closure.repeated_exact_boundary_points, 4, "{closure:?}");
+        assert_eq!(closure.self_contact_exact_points, 4, "{closure:?}");
+        assert_eq!(closure.self_contact_topological_vertices, 8, "{closure:?}");
+        assert_eq!(closure.self_contact_degenerate_cycles, 0, "{closure:?}");
+        assert_eq!(closure.self_contact_nondegenerate_cycles, 8, "{closure:?}");
         assert!(closure.boundary_edges > 0, "{closure:?}");
         assert!(closure.output_triangles > 0, "{closure:?}");
         closure.validate().unwrap();
@@ -12346,6 +12415,46 @@ mod tests {
         .expect("exact cap triangulation vertex should be appendable");
         assert_eq!(inserted, 3);
         assert_eq!(vertices.len(), 4);
+    }
+
+    #[test]
+    fn exact_coplanar_boundary_canonicalizes_only_degenerate_self_contact_spurs() {
+        let a = Point3::new(Real::from(0), Real::from(0), Real::from(0));
+        let b = Point3::new(Real::from(1), Real::from(0), Real::from(0));
+        let c = Point3::new(Real::from(1), Real::from(1), Real::from(0));
+        let d = Point3::new(Real::from(0), Real::from(1), Real::from(0));
+        let e = Point3::new(Real::from(-1), Real::from(0), Real::from(0));
+
+        let degenerate_spur = canonicalize_degenerate_boundary_self_contact(vec![
+            a.clone(),
+            b.clone(),
+            a.clone(),
+            c.clone(),
+            d.clone(),
+        ])
+        .expect("exact degenerate spur canonicalization should decide");
+        assert_eq!(degenerate_spur.len(), 3);
+        assert_eq!(point3_exact_equal(&degenerate_spur[0], &a), Some(true));
+        assert_eq!(point3_exact_equal(&degenerate_spur[1], &c), Some(true));
+        assert_eq!(point3_exact_equal(&degenerate_spur[2], &d), Some(true));
+        assert_eq!(
+            boundary_loop_self_contact_evidence(&degenerate_spur)
+                .unwrap()
+                .repeated_exact_point_pairs,
+            0
+        );
+        assert!(exact_loop_is_coplanar(&degenerate_spur).unwrap());
+
+        let nondegenerate_self_contact =
+            canonicalize_degenerate_boundary_self_contact(vec![a.clone(), b, c, a, d, e])
+                .expect("exact nondegenerate self-contact classification should decide");
+        assert_eq!(nondegenerate_self_contact.len(), 6);
+        assert_eq!(
+            boundary_loop_self_contact_evidence(&nondegenerate_self_contact)
+                .unwrap()
+                .nondegenerate_cycles,
+            2
+        );
     }
 
     #[test]
