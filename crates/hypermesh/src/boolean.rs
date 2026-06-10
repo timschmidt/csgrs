@@ -589,11 +589,14 @@ impl ExactBooleanCertificationSet {
         right: &ExactMesh,
         request: ExactBooleanRequest,
     ) -> Result<Self, MeshError> {
-        let refinement = certify_refinement_report(left, right, request.operation)?;
-        let boundary_touching = certify_boundary_touching_report(left, right)?;
+        let graph = build_intersection_graph(left, right)?;
+        validate_graph_source_handoff(&graph, left, right)?;
+        let refinement = refinement_report_from_graph(&graph, request.operation);
+        let boundary_touching = boundary_touching_report_from_graph(&graph, left, right)?;
         let planar_arrangement =
-            certify_planar_arrangement_report(left, right, request.operation)?;
-        let winding_readiness = certify_winding_readiness_report_with_boundary_policy(
+            planar_arrangement_certification_from_graph(&graph, left, right, request.operation)?;
+        let winding_readiness = winding_readiness_report_with_boundary_policy_from_graph(
+            &graph,
             left,
             right,
             request.operation,
@@ -630,6 +633,27 @@ impl ExactBooleanCertificationSet {
             volumetric_boundary_closure,
             arrangement_attempt,
         })
+    }
+}
+
+fn planar_arrangement_certification_from_graph(
+    graph: &super::graph::ExactIntersectionGraph,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+) -> Result<ExactPlanarArrangementReport, MeshError> {
+    if matches!(operation, ExactBooleanOperation::SelectedRegions(_)) {
+        Ok(planar_arrangement_report(
+            operation,
+            ExactPlanarArrangementStatus::NotNamedOperation,
+            false,
+            0,
+            0,
+            ExactBooleanBlocker::default(),
+            None,
+        ))
+    } else {
+        planar_arrangement_report_from_graph(graph, left, right, operation)
     }
 }
 
@@ -7845,71 +7869,8 @@ pub fn certify_winding_readiness_report(
     right: &ExactMesh,
     operation: ExactBooleanOperation,
 ) -> Result<ExactWindingReadinessReport, MeshError> {
-    if !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
-        && (left.triangles().is_empty() || right.triangles().is_empty())
-    {
-        return Ok(winding_readiness_report(
-            operation,
-            ExactWindingReadinessStatus::EmptyOperandAlreadyMaterialized,
-            false,
-            0,
-            0,
-            0,
-            Vec::new(),
-            ExactBooleanBlocker::default().into_blocker(ExactBooleanBlockerKind::NeedsWinding),
-            None,
-            None,
-        ));
-    }
-    if !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
-        && meshes_are_certified_bounds_disjoint(left, right)
-    {
-        return Ok(winding_readiness_report(
-            operation,
-            ExactWindingReadinessStatus::BoundsDisjointAlreadyMaterialized,
-            false,
-            0,
-            0,
-            0,
-            Vec::new(),
-            ExactBooleanBlocker::default().into_blocker(ExactBooleanBlockerKind::NeedsWinding),
-            None,
-            None,
-        ));
-    }
-    if !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
-        && (!left.facts().mesh.closed_manifold || !right.facts().mesh.closed_manifold)
-        && (meshes_are_certified_identical(left, right)
-            || meshes_are_certified_same_surface(left, right))
-    {
-        return Ok(winding_readiness_report(
-            operation,
-            ExactWindingReadinessStatus::SurfaceEqualityAlreadyMaterialized,
-            false,
-            0,
-            0,
-            0,
-            Vec::new(),
-            ExactBooleanBlocker::default().into_blocker(ExactBooleanBlockerKind::NeedsWinding),
-            None,
-            None,
-        ));
-    }
-    if !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
-        && certified_mixed_dimensional_regularized_solid_support(left, right).is_some()
-    {
-        return Ok(winding_readiness_report(
-            operation,
-            ExactWindingReadinessStatus::MixedDimensionalRegularizedSolidAlreadyMaterialized,
-            false,
-            0,
-            0,
-            0,
-            Vec::new(),
-            ExactBooleanBlocker::default().into_blocker(ExactBooleanBlockerKind::NeedsWinding),
-            None,
-            None,
-        ));
+    if let Some(report) = winding_readiness_shortcut_report(left, right, operation) {
+        return Ok(report);
     }
     let graph = build_intersection_graph(left, right)?;
     validate_graph_source_handoff(&graph, left, right)?;
@@ -7926,6 +7887,93 @@ pub fn certify_winding_readiness_report(
 /// handoff is certified as already materialized instead of asking callers to
 /// inspect open-surface split regions.
 pub fn certify_winding_readiness_report_with_validation(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+) -> Result<ExactWindingReadinessReport, MeshError> {
+    let graph = build_intersection_graph(left, right)?;
+    validate_graph_source_handoff(&graph, left, right)?;
+    winding_readiness_report_with_validation_from_graph(
+        &graph, left, right, operation, validation,
+    )
+}
+
+/// Prepare and report exact winding handoff facts for explicit output
+/// validation and boundary-only projection policies.
+///
+/// The strict readiness report keeps boundary-only contact blocked on
+/// [`ExactWindingReadinessStatus::BoundaryPolicyRequired`]. This policy-aware
+/// variant mirrors [`preflight_boolean_exact_with_boundary_policy`]: when the
+/// caller supplies [`ExactBoundaryBooleanPolicy::PreserveSeparateShells`] and
+/// the retained graph certifies boundary-only contact, the winding handoff is
+/// marked as already materialized by that explicit projection policy.
+pub fn certify_winding_readiness_report_with_boundary_policy(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+    boundary_policy: ExactBoundaryBooleanPolicy,
+) -> Result<ExactWindingReadinessReport, MeshError> {
+    let graph = build_intersection_graph(left, right)?;
+    validate_graph_source_handoff(&graph, left, right)?;
+    winding_readiness_report_with_boundary_policy_from_graph(
+        &graph,
+        left,
+        right,
+        operation,
+        validation,
+        boundary_policy,
+    )
+}
+
+fn winding_readiness_report_with_boundary_policy_from_graph(
+    graph: &super::graph::ExactIntersectionGraph,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+    boundary_policy: ExactBoundaryBooleanPolicy,
+) -> Result<ExactWindingReadinessReport, MeshError> {
+    let readiness =
+        winding_readiness_report_with_validation_from_graph(graph, left, right, operation, validation)?;
+    if boundary_policy == ExactBoundaryBooleanPolicy::Reject
+        || matches!(operation, ExactBooleanOperation::SelectedRegions(_))
+        || readiness.status != ExactWindingReadinessStatus::BoundaryPolicyRequired
+    {
+        return Ok(readiness);
+    }
+
+    if boolean_boundary_touching_meshes_from_graph(
+        graph,
+        left,
+        right,
+        operation,
+        validation,
+        boundary_policy,
+    )?
+    .is_some()
+    {
+        let counts =
+            ExactBooleanBlocker::from_graph_counts(graph, ExactBooleanBlockerKind::NeedsWinding);
+        return Ok(winding_readiness_report(
+            operation,
+            ExactWindingReadinessStatus::BoundaryPolicyShortcutAlreadyMaterialized,
+            graph.has_unknowns(),
+            graph.face_pairs.len(),
+            graph.event_count(),
+            0,
+            Vec::new(),
+            counts.into_blocker(ExactBooleanBlockerKind::NeedsBoundaryPolicy),
+            None,
+            None,
+        ));
+    }
+    Ok(readiness)
+}
+
+fn winding_readiness_report_with_validation_from_graph(
+    graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
@@ -7957,7 +8005,8 @@ pub fn certify_winding_readiness_report_with_validation(
             None,
         ));
     }
-    let readiness = certify_winding_readiness_report(left, right, operation)?;
+
+    let readiness = winding_readiness_report_with_shortcuts_from_graph(graph, left, right, operation)?;
     if validation == ValidationPolicy::CLOSED
         || matches!(operation, ExactBooleanOperation::SelectedRegions(_))
         || !matches!(
@@ -7969,16 +8018,15 @@ pub fn certify_winding_readiness_report_with_validation(
         return Ok(readiness);
     }
 
-    let graph = build_intersection_graph(left, right)?;
-    validate_graph_source_handoff(&graph, left, right)?;
     if boolean_arrangement_volumetric_split_cell_recovery_from_graph(
-        &graph, left, right, operation, validation,
+        graph, left, right, operation, validation,
     )?
     .is_some()
     {
-        let counts = ExactBooleanBlocker::from_graph_counts(&graph, ExactBooleanBlockerKind::NeedsWinding);
+        let counts =
+            ExactBooleanBlocker::from_graph_counts(graph, ExactBooleanBlockerKind::NeedsWinding);
         let needs_coplanar_volumetric =
-            graph_requires_coplanar_volumetric_cells_for_sources(&graph, left, right);
+            graph_requires_coplanar_volumetric_cells_for_sources(graph, left, right);
         let blocker_kind = if needs_coplanar_volumetric {
             ExactBooleanBlockerKind::NeedsCoplanarVolumetricCells
         } else {
@@ -7995,7 +8043,7 @@ pub fn certify_winding_readiness_report_with_validation(
             counts.into_blocker(blocker_kind),
             None,
             if needs_coplanar_volumetric {
-                coplanar_volumetric_evidence_if_required(&graph, left, right)
+                coplanar_volumetric_evidence_if_required(graph, left, right)
             } else {
                 None
             },
@@ -8004,58 +8052,90 @@ pub fn certify_winding_readiness_report_with_validation(
     Ok(readiness)
 }
 
-/// Prepare and report exact winding handoff facts for explicit output
-/// validation and boundary-only projection policies.
-///
-/// The strict readiness report keeps boundary-only contact blocked on
-/// [`ExactWindingReadinessStatus::BoundaryPolicyRequired`]. This policy-aware
-/// variant mirrors [`preflight_boolean_exact_with_boundary_policy`]: when the
-/// caller supplies [`ExactBoundaryBooleanPolicy::PreserveSeparateShells`] and
-/// the retained graph certifies boundary-only contact, the winding handoff is
-/// marked as already materialized by that explicit projection policy.
-pub fn certify_winding_readiness_report_with_boundary_policy(
+fn winding_readiness_report_with_shortcuts_from_graph(
+    graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
-    validation: ValidationPolicy,
-    boundary_policy: ExactBoundaryBooleanPolicy,
 ) -> Result<ExactWindingReadinessReport, MeshError> {
-    let readiness =
-        certify_winding_readiness_report_with_validation(left, right, operation, validation)?;
-    if boundary_policy == ExactBoundaryBooleanPolicy::Reject
-        || matches!(operation, ExactBooleanOperation::SelectedRegions(_))
-        || readiness.status != ExactWindingReadinessStatus::BoundaryPolicyRequired
-    {
-        return Ok(readiness);
+    if let Some(report) = winding_readiness_shortcut_report(left, right, operation) {
+        return Ok(report);
     }
+    winding_readiness_report_from_graph(graph, left, right, operation)
+}
 
-    let graph = build_intersection_graph(left, right)?;
-    validate_graph_source_handoff(&graph, left, right)?;
-    if boolean_boundary_touching_meshes_from_graph(
-        &graph,
-        left,
-        right,
-        operation,
-        validation,
-        boundary_policy,
-    )?
-    .is_some()
+fn winding_readiness_shortcut_report(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+) -> Option<ExactWindingReadinessReport> {
+    if !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
+        && (left.triangles().is_empty() || right.triangles().is_empty())
     {
-        let counts = ExactBooleanBlocker::from_graph_counts(&graph, ExactBooleanBlockerKind::NeedsWinding);
-        return Ok(winding_readiness_report(
+        return Some(winding_readiness_report(
             operation,
-            ExactWindingReadinessStatus::BoundaryPolicyShortcutAlreadyMaterialized,
-            graph.has_unknowns(),
-            graph.face_pairs.len(),
-            graph.event_count(),
+            ExactWindingReadinessStatus::EmptyOperandAlreadyMaterialized,
+            false,
+            0,
+            0,
             0,
             Vec::new(),
-            counts.into_blocker(ExactBooleanBlockerKind::NeedsBoundaryPolicy),
+            ExactBooleanBlocker::default().into_blocker(ExactBooleanBlockerKind::NeedsWinding),
             None,
             None,
         ));
     }
-    Ok(readiness)
+    if !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
+        && meshes_are_certified_bounds_disjoint(left, right)
+    {
+        return Some(winding_readiness_report(
+            operation,
+            ExactWindingReadinessStatus::BoundsDisjointAlreadyMaterialized,
+            false,
+            0,
+            0,
+            0,
+            Vec::new(),
+            ExactBooleanBlocker::default().into_blocker(ExactBooleanBlockerKind::NeedsWinding),
+            None,
+            None,
+        ));
+    }
+    if !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
+        && (!left.facts().mesh.closed_manifold || !right.facts().mesh.closed_manifold)
+        && (meshes_are_certified_identical(left, right)
+            || meshes_are_certified_same_surface(left, right))
+    {
+        return Some(winding_readiness_report(
+            operation,
+            ExactWindingReadinessStatus::SurfaceEqualityAlreadyMaterialized,
+            false,
+            0,
+            0,
+            0,
+            Vec::new(),
+            ExactBooleanBlocker::default().into_blocker(ExactBooleanBlockerKind::NeedsWinding),
+            None,
+            None,
+        ));
+    }
+    if !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
+        && certified_mixed_dimensional_regularized_solid_support(left, right).is_some()
+    {
+        return Some(winding_readiness_report(
+            operation,
+            ExactWindingReadinessStatus::MixedDimensionalRegularizedSolidAlreadyMaterialized,
+            false,
+            0,
+            0,
+            0,
+            Vec::new(),
+            ExactBooleanBlocker::default().into_blocker(ExactBooleanBlockerKind::NeedsWinding),
+            None,
+            None,
+        ));
+    }
+    None
 }
 
 /// Validate the retained graph/source-handle handoff for public reports.
