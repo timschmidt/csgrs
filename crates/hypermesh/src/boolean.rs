@@ -1569,8 +1569,9 @@ fn volumetric_boundary_closure_report_from_materialized(
         })?;
     let boundary_points = boundary_points
         .into_iter()
-        .map(canonicalize_degenerate_boundary_self_contact)
+        .map(split_boundary_self_contact_cycles)
         .collect::<Result<Vec<_>, _>>()
+        .map(|split| split.into_iter().flatten().collect::<Vec<_>>())
         .map_err(|blocker| {
             MeshError::one(MeshDiagnostic::new(
                 Severity::Error,
@@ -5014,9 +5015,15 @@ fn boundary_loops_are_exactly_coplanar_without_self_contact(
                 .iter()
                 .map(|&vertex| mesh.vertices().get(vertex).cloned())
                 .collect::<Option<Vec<_>>>()
-                .and_then(|points| canonicalize_degenerate_boundary_self_contact(points).ok())
+                .and_then(|points| split_boundary_self_contact_cycles(points).ok())
         })
-        .collect::<Option<Vec<_>>>()?;
+        .collect::<Option<Vec<_>>>()?
+        .into_iter()
+        .flatten()
+        .collect::<Vec<_>>();
+    if boundary_points.is_empty() {
+        return None;
+    }
     for boundary in &boundary_points {
         if boundary.len() < 3 {
             return None;
@@ -5078,10 +5085,12 @@ fn close_exact_coplanar_boundary_loops_from_loops(
                     .iter()
                     .map(|&vertex| mesh.vertices().get(vertex).cloned())
                     .collect::<Option<Vec<_>>>()
-                    .and_then(|points| canonicalize_degenerate_boundary_self_contact(points).ok())
-                    .filter(|points| points.len() >= 3)
+                    .and_then(|points| split_boundary_self_contact_cycles(points).ok())
             })
-            .collect::<Option<Vec<_>>>()?,
+            .collect::<Option<Vec<_>>>()?
+            .into_iter()
+            .flatten()
+            .collect::<Vec<_>>(),
     )
     .ok()?;
     let boundary_edges = directed_boundary_edges(mesh);
@@ -5239,6 +5248,60 @@ fn canonicalize_degenerate_boundary_self_contact(
             return Ok(points);
         }
     }
+}
+
+fn split_boundary_self_contact_cycles(
+    points: Vec<Point3>,
+) -> Result<Vec<Vec<Point3>>, ExactArrangementBlocker> {
+    let points = canonicalize_degenerate_boundary_self_contact(points)?;
+    if points.len() < 3 {
+        return Err(ExactArrangementBlocker::NonManifoldCellComplex);
+    }
+    for left in 0..points.len() {
+        for right in left + 1..points.len() {
+            match point3_exact_equal(&points[left], &points[right]) {
+                Some(true) => {
+                    let left_to_right = cyclic_interval_distinct_exact_points(&points, left, right)?;
+                    let right_to_left = cyclic_interval_distinct_exact_points(&points, right, left)?;
+                    if left_to_right < 3 || right_to_left < 3 {
+                        return Err(ExactArrangementBlocker::NonManifoldCellComplex);
+                    }
+                    let mut split = split_boundary_self_contact_cycles(cyclic_interval_points(
+                        &points, left, right,
+                    )?)?;
+                    split.extend(split_boundary_self_contact_cycles(cyclic_interval_points(
+                        &points, right, left,
+                    )?)?);
+                    return Ok(split);
+                }
+                Some(false) => {}
+                None => return Err(ExactArrangementBlocker::UndecidableOrdering),
+            }
+        }
+    }
+    Ok(vec![points])
+}
+
+fn cyclic_interval_points(
+    points: &[Point3],
+    start: usize,
+    end: usize,
+) -> Result<Vec<Point3>, ExactArrangementBlocker> {
+    let span = if end >= start {
+        end - start
+    } else {
+        points.len() - start + end
+    };
+    let mut interval = Vec::with_capacity(span + 1);
+    for offset in 0..=span {
+        interval.push(
+            points
+                .get((start + offset) % points.len())
+                .ok_or(ExactArrangementBlocker::NonManifoldCellComplex)?
+                .clone(),
+        );
+    }
+    Ok(interval)
 }
 
 fn remove_degenerate_cyclic_interval(
@@ -11335,16 +11398,19 @@ mod tests {
                 .unwrap();
         assert_eq!(
             closure.status,
-            ExactVolumetricBoundaryClosureStatus::BoundaryLoopExactSelfContact,
+            ExactVolumetricBoundaryClosureStatus::BoundaryClosureBlocked(
+                ExactArrangementBlocker::NonManifoldCellComplex
+            ),
             "{closure:?}"
         );
         assert_eq!(closure.boundary_loops, 1, "{closure:?}");
         assert_eq!(closure.noncoplanar_boundary_loops, 0, "{closure:?}");
-        assert_eq!(closure.repeated_exact_boundary_points, 4, "{closure:?}");
-        assert_eq!(closure.self_contact_exact_points, 4, "{closure:?}");
-        assert_eq!(closure.self_contact_topological_vertices, 8, "{closure:?}");
+        assert_eq!(closure.repeated_exact_boundary_points, 0, "{closure:?}");
+        assert_eq!(closure.self_contact_exact_points, 0, "{closure:?}");
+        assert_eq!(closure.self_contact_topological_vertices, 0, "{closure:?}");
         assert_eq!(closure.self_contact_degenerate_cycles, 0, "{closure:?}");
-        assert_eq!(closure.self_contact_nondegenerate_cycles, 8, "{closure:?}");
+        assert_eq!(closure.self_contact_nondegenerate_cycles, 0, "{closure:?}");
+        assert_eq!(closure.coplanar_loop_groups, 1, "{closure:?}");
         assert!(closure.boundary_edges > 0, "{closure:?}");
         assert!(closure.output_triangles > 0, "{closure:?}");
         closure.validate().unwrap();
@@ -12455,6 +12521,15 @@ mod tests {
                 .nondegenerate_cycles,
             2
         );
+
+        let split = split_boundary_self_contact_cycles(nondegenerate_self_contact)
+            .expect("exact self-contact cycle splitting should decide");
+        assert_eq!(split.len(), 2);
+        assert!(split.iter().all(|cycle| cycle.len() == 3));
+        assert!(split.iter().all(|cycle| boundary_loop_self_contact_evidence(cycle)
+            .unwrap()
+            .repeated_exact_point_pairs
+            == 0));
     }
 
     #[test]
