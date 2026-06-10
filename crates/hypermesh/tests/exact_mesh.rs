@@ -45,7 +45,6 @@ use hypermesh::{
     classify_triangle_triangle, evaluate_boolean_exact, exact_arrangement_boolean_attempt_report,
     exact_arrangement_boolean_attempt_report_with_validation, exact_mesh_consumer_readiness,
     exact_mesh_handoff_package, inspect_f64_mesh_input, inspect_i64_mesh_input,
-    materialize_adjacent_union_completion_boolean,
     materialize_adjacent_union_completion_boolean_with_report,
     materialize_affine_orthogonal_solid_boolean, materialize_affine_orthogonal_solid_difference,
     materialize_affine_orthogonal_solid_intersection, materialize_arrangement_cell_complex_boolean,
@@ -53,9 +52,9 @@ use hypermesh::{
     materialize_axis_aligned_orthogonal_solid_difference,
     materialize_axis_aligned_orthogonal_solid_intersection,
     materialize_axis_aligned_orthogonal_solid_union, materialize_boundary_touching_policy_boolean,
-    materialize_bounds_disjoint_boolean, materialize_closed_boundary_touching_regularized_boolean,
+    materialize_bounds_disjoint_boolean,
     materialize_closed_boundary_touching_regularized_boolean_with_evidence,
-    materialize_closed_convex_boolean, materialize_closed_no_volume_overlap_regularized_boolean,
+    materialize_closed_convex_boolean,
     materialize_closed_no_volume_overlap_regularized_boolean_with_evidence,
     materialize_closed_regularized_lower_dimensional_boolean,
     materialize_closed_same_surface_boolean, materialize_closed_winding_containment_boolean,
@@ -1993,7 +1992,7 @@ fn adjacent_union_completion_boolean_is_publicly_replayable() {
         ExactReportFreshness::SourceReplayMismatch
     );
 
-    let result = materialize_adjacent_union_completion_boolean(
+    let (result, _completion_report) = materialize_adjacent_union_completion_boolean_with_report(
         &left,
         &right,
         ExactBooleanOperation::Union,
@@ -2062,7 +2061,7 @@ fn adjacent_union_completion_boolean_is_publicly_replayable() {
     assert!(result.mesh.facts().mesh.closed_manifold);
 
     assert!(
-        materialize_adjacent_union_completion_boolean(
+        materialize_adjacent_union_completion_boolean_with_report(
             &left,
             &right,
             ExactBooleanOperation::Intersection,
@@ -2119,7 +2118,7 @@ fn adjacent_union_completion_boolean_is_publicly_replayable() {
     assert!(stale_axis_report.validate().is_err());
 
     assert!(
-        materialize_adjacent_union_completion_boolean(
+        materialize_adjacent_union_completion_boolean_with_report(
             &axis_left,
             &axis_right,
             ExactBooleanOperation::Union,
@@ -3350,7 +3349,8 @@ fn closed_boundary_touching_regularized_boolean_is_publicly_replayable() {
         preflight.validate().unwrap();
         preflight.validate_against_sources(&left, &right).unwrap();
 
-        let result = materialize_closed_boundary_touching_regularized_boolean(
+        let (result, _consumed_evidence) =
+            materialize_closed_boundary_touching_regularized_boolean_with_evidence(
             &left,
             &right,
             operation,
@@ -3512,7 +3512,7 @@ fn closed_no_volume_overlap_regularized_boolean_is_publicly_replayable() {
         }
 
         assert!(
-            materialize_closed_boundary_touching_regularized_boolean(
+            materialize_closed_boundary_touching_regularized_boolean_with_evidence(
                 &left,
                 &right,
                 operation,
@@ -3521,7 +3521,8 @@ fn closed_no_volume_overlap_regularized_boolean_is_publicly_replayable() {
             .unwrap()
             .is_none()
         );
-        let result = materialize_closed_no_volume_overlap_regularized_boolean(
+        let (result, _consumed_evidence) =
+            materialize_closed_no_volume_overlap_regularized_boolean_with_evidence(
             &left,
             &right,
             operation,
@@ -4467,7 +4468,7 @@ fn exact_contained_face_adjacent_union_is_publicly_replayable() {
     );
 
     assert!(
-        materialize_adjacent_union_completion_boolean(
+        materialize_adjacent_union_completion_boolean_with_report(
             &left,
             &right,
             ExactBooleanOperation::Union,
@@ -4554,7 +4555,7 @@ fn exact_contained_face_adjacent_union_is_publicly_replayable() {
         completion_report.freshness_against_sources(&container, &separated_right),
         ExactReportFreshness::SourceReplayMismatch
     );
-    let result = materialize_adjacent_union_completion_boolean(
+    let (result, _completion_report) = materialize_adjacent_union_completion_boolean_with_report(
         &container,
         &right,
         ExactBooleanOperation::Union,
@@ -5737,14 +5738,6 @@ fn direct_boolean_materializers_yield_to_public_operation_replay() {
             materialize_open_surface_disjoint_boolean,
         ),
         (
-            "closed_boundary_touching_regularized",
-            materialize_closed_boundary_touching_regularized_boolean,
-        ),
-        (
-            "closed_no_volume_overlap_regularized",
-            materialize_closed_no_volume_overlap_regularized_boolean,
-        ),
-        (
             "closed_winding_separated",
             materialize_closed_winding_separated_boolean,
         ),
@@ -5760,10 +5753,6 @@ fn direct_boolean_materializers_yield_to_public_operation_replay() {
         (
             "affine_orthogonal_solid",
             materialize_affine_orthogonal_solid_boolean,
-        ),
-        (
-            "adjacent_union_completion",
-            materialize_adjacent_union_completion_boolean,
         ),
     ];
 

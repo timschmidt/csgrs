@@ -3710,8 +3710,7 @@ fn adjacent_union_completion_report(
 
 /// Certify whether adjacent closed-solid union completion can materialize.
 ///
-/// This is the report form of [`materialize_adjacent_union_completion_boolean`].
-/// It follows the same dispatcher precedence, preserving stronger-kernel
+/// This follows the same dispatcher precedence, preserving stronger-kernel
 /// handoff decisions while retaining exact graph counts and consumed
 /// adjacency topology for certified full-face and contained-face completions.
 pub fn certify_adjacent_union_completion_report(
@@ -3918,29 +3917,10 @@ pub fn certify_adjacent_union_completion_report(
     ))
 }
 
-/// Certify and materialize a union for adjacent closed solids that complete by
-/// exact full-face or contained-face adjacency.
-///
-/// This is the boolean-result wrapper around the existing adjacency union
-/// certificates. Only union is supportable for this completion path; other
-/// operations and cases handled by stronger kernels return `None`.
-pub fn materialize_adjacent_union_completion_boolean(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: ValidationPolicy,
-) -> Result<Option<ExactBooleanResult>, MeshError> {
-    Ok(materialize_adjacent_union_completion_boolean_with_report(
-        left, right, operation, validation,
-    )?
-    .map(|(result, _)| result))
-}
-
 /// Certify and materialize an adjacent closed-solid union, returning the exact
 /// completion report consumed by the materializer.
 ///
-/// This is the provenance-retaining form of
-/// [`materialize_adjacent_union_completion_boolean`]. The returned report
+/// The returned report
 /// identifies whether full-face or contained-face adjacency completed the
 /// union and keeps the retained graph counts and adjacency topology replay
 /// used to decide that no more general winding/cell path owned the result.
@@ -4166,33 +4146,10 @@ fn boolean_arrangement_regularized_no_volume_overlap_from_graph(
 /// Certify and materialize a regularized closed-solid boolean for positive-area
 /// boundary contact with no shared volume.
 ///
-/// This exposes the exact arrangement boundary-contact recovery path for
-/// closed solids whose coplanar overlap is boundary-only but not the zero-area
-/// case handled by [`materialize_closed_boundary_touching_regularized_boolean`].
-/// The retained coplanar-volumetric evidence must certify positive-area
-/// boundary contact, including separate-shell union when retained
-/// coplanar-volumetric evidence proves boundary-only contact with no shared
-/// positive volume.
-pub fn materialize_closed_no_volume_overlap_regularized_boolean(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: ValidationPolicy,
-) -> Result<Option<ExactBooleanResult>, MeshError> {
-    Ok(
-        materialize_closed_no_volume_overlap_regularized_boolean_with_evidence(
-            left, right, operation, validation,
-        )?
-        .map(|(result, _)| result),
-    )
-}
-
 /// Certify and materialize a regularized closed-solid boolean for positive-area
 /// boundary contact, returning the exact coplanar-volumetric evidence consumed
 /// by the decision.
 ///
-/// This is the provenance-retaining form of
-/// [`materialize_closed_no_volume_overlap_regularized_boolean`]. The returned
 /// evidence certifies boundary-only positive-area coplanar contact with no
 /// shared volume; unsupported or non-boundary-only contact states return
 /// `None`.
@@ -7589,33 +7546,9 @@ fn boolean_closed_boundary_touching_regularized_meshes(
     )
 }
 
-/// Certify and materialize a named regularized boolean for closed solids that
-/// touch only at exact boundary features.
-///
-/// The retained graph and boundary-touching report must prove there is no
-/// shared interior volume. In that supportable case union preserves both
-/// shells, intersection is empty, and difference preserves the left shell.
-/// Non-boundary-only contacts return `None` rather than falling back to
-/// tolerance geometry.
-pub fn materialize_closed_boundary_touching_regularized_boolean(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: ValidationPolicy,
-) -> Result<Option<ExactBooleanResult>, MeshError> {
-    Ok(
-        materialize_closed_boundary_touching_regularized_boolean_with_evidence(
-            left, right, operation, validation,
-        )?
-        .map(|(result, _)| result),
-    )
-}
-
 /// Certify and materialize a named regularized boolean for zero-area closed
 /// boundary contact, returning the exact coplanar volumetric evidence consumed.
 ///
-/// This is the provenance-retaining form of
-/// [`materialize_closed_boundary_touching_regularized_boolean`]. The returned
 /// evidence proves the contact is boundary-only and has no positive-area
 /// coplanar overlap, separating this zero-area shortcut from the positive-area
 /// no-volume-overlap materializer.
@@ -7784,8 +7717,10 @@ pub fn materialize_boundary_touching_policy_boolean(
             boundary_policy,
         ));
     }
-    if let Some(result) =
-        materialize_closed_boundary_touching_regularized_boolean(left, right, operation, validation)?
+    if let Some((result, _evidence)) =
+        materialize_closed_boundary_touching_regularized_boolean_with_evidence(
+            left, right, operation, validation,
+        )?
     {
         return Ok(public_operation_replayable_result(
             Some(result),
