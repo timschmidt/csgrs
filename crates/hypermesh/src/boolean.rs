@@ -5075,28 +5075,17 @@ fn close_exact_coplanar_boundary_loops_from_loops(
     }
 
     let boundary_edges = directed_boundary_edges(mesh);
-    let split_boundary_loop_groups = boundary_loops
+    let split_boundary_loops = boundary_loops
         .into_iter()
-        .map(|boundary_loop| {
-            let had_self_contact =
-                boundary_vertex_loop_has_repeated_exact_point(mesh, &boundary_loop).ok()?;
-            split_boundary_vertex_self_contact_cycles(mesh, boundary_loop)
-                .ok()
-                .map(|split| (had_self_contact, split))
-        })
-        .collect::<Option<Vec<_>>>()?;
-    let split_self_contact = split_boundary_loop_groups
-        .iter()
-        .any(|(had_self_contact, split)| *had_self_contact && split.len() > 1);
-    let split_boundary_loops = split_boundary_loop_groups
+        .map(|boundary_loop| split_boundary_vertex_self_contact_cycles(mesh, boundary_loop).ok())
+        .collect::<Option<Vec<_>>>()?
         .into_iter()
-        .flat_map(|(_, split)| split)
+        .flatten()
         .collect::<Vec<_>>();
     if split_boundary_loops.is_empty() {
         return None;
     }
-    if split_self_contact
-        && split_boundary_loops
+    if split_boundary_loops
         .iter()
         .all(|boundary_loop| boundary_loop.len() == 3)
     {
@@ -5420,20 +5409,6 @@ fn boundary_vertices_exact_equal(
         .get(right)
         .ok_or(ExactArrangementBlocker::NonManifoldCellComplex)?;
     point3_exact_equal(left, right).ok_or(ExactArrangementBlocker::UndecidableOrdering)
-}
-
-fn boundary_vertex_loop_has_repeated_exact_point(
-    mesh: &ExactMesh,
-    vertices: &[usize],
-) -> Result<bool, ExactArrangementBlocker> {
-    for left in 0..vertices.len() {
-        for right in left + 1..vertices.len() {
-            if boundary_vertices_exact_equal(mesh, vertices[left], vertices[right])? {
-                return Ok(true);
-            }
-        }
-    }
-    Ok(false)
 }
 
 fn cyclic_vertex_interval_distinct_exact_points(
@@ -11664,7 +11639,7 @@ mod tests {
     }
 
     #[test]
-    fn volumetric_boundary_closure_report_rejects_unmaterializable_coplanar_cap() {
+    fn volumetric_boundary_closure_report_certifies_triangular_coplanar_cap() {
         let left = ExactMesh::from_i64_triangles(
             &[
                 0, 0, 0, //
@@ -11690,9 +11665,7 @@ mod tests {
                 .unwrap();
         assert_eq!(
             closure.status,
-            ExactVolumetricBoundaryClosureStatus::BoundaryClosureBlocked(
-                ExactArrangementBlocker::NonManifoldCellComplex
-            ),
+            ExactVolumetricBoundaryClosureStatus::CoplanarClosureAvailable,
             "{closure:?}"
         );
         assert_eq!(closure.boundary_loops, 1, "{closure:?}");
@@ -11730,11 +11703,13 @@ mod tests {
                 .unwrap();
         assert_eq!(
             union_closure.status,
-            ExactVolumetricBoundaryClosureStatus::BoundaryClosureBlocked(
-                ExactArrangementBlocker::NonManifoldCellComplex
-            ),
+            ExactVolumetricBoundaryClosureStatus::CoplanarClosureAvailable,
             "{union_closure:?}"
         );
+        union_closure.validate().unwrap();
+        union_closure
+            .validate_against_sources(&left, &right)
+            .unwrap();
 
         let difference_closure = certify_volumetric_boundary_closure_report(
             &left,
@@ -11750,6 +11725,7 @@ mod tests {
         difference_closure.validate().unwrap();
 
         for operation in [
+            ExactBooleanOperation::Union,
             ExactBooleanOperation::Intersection,
             ExactBooleanOperation::Difference,
         ] {
