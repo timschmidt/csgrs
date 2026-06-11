@@ -569,6 +569,8 @@ impl ExactBooleanRequest {
 /// requested operation.
 #[derive(Clone, Debug, PartialEq)]
 pub struct ExactBooleanCertificationSet {
+    /// Source-shape facts used by trivial shortcut supports.
+    pub trivial: ExactTrivialBooleanFacts,
     /// Exact graph refinement status.
     pub refinement: ExactRefinementReport,
     /// Boundary-contact policy status.
@@ -603,6 +605,7 @@ impl ExactBooleanCertificationSet {
     ) -> Result<Self, MeshError> {
         let graph = build_intersection_graph(left, right)?;
         validate_graph_source_handoff(&graph, left, right)?;
+        let trivial = ExactTrivialBooleanFacts::from_sources(left, right);
         let refinement = refinement_report_from_graph(&graph, request.operation);
         let boundary_touching = boundary_touching_report_from_graph(&graph, left, right)?;
         let open_surface_disjoint = open_surface_disjoint_report_from_graph(&graph, left, right);
@@ -647,6 +650,7 @@ impl ExactBooleanCertificationSet {
                 )?)
             };
         Ok(Self {
+            trivial,
             refinement,
             boundary_touching,
             open_surface_disjoint,
@@ -668,6 +672,7 @@ impl ExactBooleanCertificationSet {
         &self,
         request: ExactBooleanRequest,
     ) -> Result<(), ExactReportValidationError> {
+        self.trivial.validate()?;
         self.refinement.validate()?;
         self.boundary_touching.validate()?;
         self.open_surface_disjoint.validate()?;
@@ -760,6 +765,48 @@ impl ExactBooleanCertificationSet {
             Ok(()) => ExactReportFreshness::Current,
             Err(error) => error.into(),
         }
+    }
+}
+
+/// Replayable source-shape facts for exact boolean shortcuts that do not need
+/// graph topology.
+///
+/// These facts deliberately mirror preflight shortcut semantics rather than the
+/// lower-level bounds helper: an empty operand is certified as empty, not as a
+/// bounds-disjoint non-empty pair even when it has no mesh bounds.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct ExactTrivialBooleanFacts {
+    /// The left source has no input triangles.
+    pub left_empty: bool,
+    /// The right source has no input triangles.
+    pub right_empty: bool,
+    /// Both sources are non-empty and their exact mesh AABBs are disjoint.
+    pub bounds_disjoint: bool,
+}
+
+impl ExactTrivialBooleanFacts {
+    fn from_sources(left: &ExactMesh, right: &ExactMesh) -> Self {
+        let left_empty = left.triangles().is_empty();
+        let right_empty = right.triangles().is_empty();
+        Self {
+            left_empty,
+            right_empty,
+            bounds_disjoint: !left_empty
+                && !right_empty
+                && meshes_are_certified_bounds_disjoint(left, right),
+        }
+    }
+
+    fn validate(&self) -> Result<(), ExactReportValidationError> {
+        if self.bounds_disjoint && (self.left_empty || self.right_empty) {
+            Err(ExactReportValidationError::StatusEvidenceMismatch)
+        } else {
+            Ok(())
+        }
+    }
+
+    fn has_empty_operand(&self) -> bool {
+        self.left_empty || self.right_empty
     }
 }
 
@@ -927,9 +974,11 @@ fn exact_boolean_preflight_matches_certifications(
         }
         ExactBooleanSupport::CertifiedEmptyOperand => {
             *status == ExactWindingReadinessStatus::EmptyOperandAlreadyMaterialized
+                && certifications.trivial.has_empty_operand()
         }
         ExactBooleanSupport::CertifiedBoundsDisjoint => {
             *status == ExactWindingReadinessStatus::BoundsDisjointAlreadyMaterialized
+                && certifications.trivial.bounds_disjoint
         }
         ExactBooleanSupport::CertifiedIdentical | ExactBooleanSupport::CertifiedSameSurface => {
             *status == ExactWindingReadinessStatus::SurfaceEqualityAlreadyMaterialized

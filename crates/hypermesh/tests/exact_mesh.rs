@@ -5623,6 +5623,21 @@ fn trivial_boolean_materializers_are_publicly_replayable() {
             ValidationPolicy::CLOSED,
             hypermesh::ExactBooleanShortcutKind::EmptyOperand,
         );
+        let empty_evaluation = evaluate_boolean_exact(
+            &empty,
+            &solid,
+            ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
+        )
+        .unwrap();
+        empty_evaluation.validate().unwrap();
+        let mut relabeled_empty_facts = empty_evaluation.clone();
+        relabeled_empty_facts.certifications.trivial.left_empty = false;
+        relabeled_empty_facts.certifications.trivial.right_empty = false;
+        assert_eq!(
+            relabeled_empty_facts.validate(),
+            Err(hypermesh::ExactReportValidationError::StatusEvidenceMismatch),
+            "{operation:?}: {relabeled_empty_facts:?}"
+        );
         if operation == ExactBooleanOperation::Union {
             assert_eq!(
                 empty_result.freshness_against_sources(&empty, &disjoint_solid),
@@ -5715,6 +5730,20 @@ fn trivial_boolean_materializers_are_publicly_replayable() {
             operation,
             ValidationPolicy::CLOSED,
             hypermesh::ExactBooleanShortcutKind::BoundsDisjoint,
+        );
+        let disjoint_evaluation = evaluate_boolean_exact(
+            &solid,
+            &disjoint_solid,
+            ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
+        )
+        .unwrap();
+        disjoint_evaluation.validate().unwrap();
+        let mut relabeled_disjoint_facts = disjoint_evaluation.clone();
+        relabeled_disjoint_facts.certifications.trivial.bounds_disjoint = false;
+        assert_eq!(
+            relabeled_disjoint_facts.validate(),
+            Err(hypermesh::ExactReportValidationError::StatusEvidenceMismatch),
+            "{operation:?}: {relabeled_disjoint_facts:?}"
         );
         if matches!(
             operation,
