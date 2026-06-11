@@ -551,6 +551,16 @@ impl ExactBooleanRequest {
     ) -> Result<ExactWindingReadinessReport, MeshError> {
         winding_readiness_report_for_request(left, right, self)
     }
+
+    /// Certify whether retained volumetric boundary output for this request can
+    /// be closed by the existing exact cap generators.
+    pub fn volumetric_boundary_closure(
+        self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> Result<ExactVolumetricBoundaryClosureReport, MeshError> {
+        volumetric_boundary_closure_report_for_request(left, right, self)
+    }
 }
 
 /// Replayable certification bundle for an exact boolean request.
@@ -2572,14 +2582,14 @@ fn preflight_boolean_exact_request(
 /// [`ValidationPolicy::ALLOW_BOUNDARY`], then audits the remaining boundary
 /// loops for the existing coplanar cap generator. Non-coplanar loops remain an
 /// explicit topology-construction obligation rather than a silent closure.
-pub fn certify_volumetric_boundary_closure_report(
+fn volumetric_boundary_closure_report_for_request(
     left: &ExactMesh,
     right: &ExactMesh,
-    operation: ExactBooleanOperation,
+    request: ExactBooleanRequest,
 ) -> Result<ExactVolumetricBoundaryClosureReport, MeshError> {
     let graph = build_intersection_graph(left, right)?;
     validate_graph_source_handoff(&graph, left, right)?;
-    volumetric_boundary_closure_report_from_graph(&graph, left, right, operation)
+    volumetric_boundary_closure_report_from_graph(&graph, left, right, request.operation)
 }
 
 fn volumetric_boundary_closure_report_from_graph(
@@ -5823,7 +5833,7 @@ fn boolean_arrangement_convex_regularized_sheet_recovery(
 /// cell-complex decision. Closed outputs whose boundary-valid split-cell
 /// assembly has exact non-self-contacting coplanar cap loops materialize as a
 /// certified arrangement-cell-complex shortcut; callers can audit that cap
-/// decision with [`certify_volumetric_boundary_closure_report`]. Cases outside
+/// decision with [`ExactBooleanRequest::volumetric_boundary_closure`]. Cases outside
 /// the currently supportable exact winding arrangement path return `None`
 /// rather than falling back to approximate winding.
 pub fn materialize_volumetric_winding_arrangement(
@@ -12844,9 +12854,12 @@ mod tests {
             "self-contacting boundary caps require a topology-preserving quotient before closure"
         );
 
-        let closure =
-            certify_volumetric_boundary_closure_report(&left, &right, ExactBooleanOperation::Union)
-                .unwrap();
+        let closure = ExactBooleanRequest::new(
+            ExactBooleanOperation::Union,
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .volumetric_boundary_closure(&left, &right)
+        .unwrap();
         assert_eq!(
             closure.status,
             ExactVolumetricBoundaryClosureStatus::BoundaryClosureBlocked(
@@ -12938,9 +12951,12 @@ mod tests {
         .unwrap();
         let right = tetrahedron_i64([-1, 1, 0], [3, 1, 0], [-1, 5, 0], [-1, 1, 4]);
 
-        let closure =
-            certify_volumetric_boundary_closure_report(&left, &right, ExactBooleanOperation::Union)
-                .unwrap();
+        let closure = ExactBooleanRequest::new(
+            ExactBooleanOperation::Union,
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .volumetric_boundary_closure(&left, &right)
+        .unwrap();
         assert_eq!(
             closure.status,
             ExactVolumetricBoundaryClosureStatus::CoplanarClosureAvailable,
@@ -12976,9 +12992,12 @@ mod tests {
         let graph = build_intersection_graph(&left, &right).unwrap();
         validate_graph_source_handoff(&graph, &left, &right).unwrap();
 
-        let union_closure =
-            certify_volumetric_boundary_closure_report(&left, &right, ExactBooleanOperation::Union)
-                .unwrap();
+        let union_closure = ExactBooleanRequest::new(
+            ExactBooleanOperation::Union,
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .volumetric_boundary_closure(&left, &right)
+        .unwrap();
         assert_eq!(
             union_closure.status,
             ExactVolumetricBoundaryClosureStatus::CoplanarClosureAvailable,
@@ -12989,11 +13008,11 @@ mod tests {
             .validate_against_sources(&left, &right)
             .unwrap();
 
-        let difference_closure = certify_volumetric_boundary_closure_report(
-            &left,
-            &right,
+        let difference_closure = ExactBooleanRequest::new(
             ExactBooleanOperation::Difference,
+            ValidationPolicy::ALLOW_BOUNDARY,
         )
+        .volumetric_boundary_closure(&left, &right)
         .unwrap();
         assert_eq!(
             difference_closure.status,
@@ -13007,8 +13026,9 @@ mod tests {
             ExactBooleanOperation::Intersection,
             ExactBooleanOperation::Difference,
         ] {
-            let closure =
-                certify_volumetric_boundary_closure_report(&left, &right, operation).unwrap();
+            let closure = ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY)
+                .volumetric_boundary_closure(&left, &right)
+                .unwrap();
             assert_eq!(
                 closure.status,
                 ExactVolumetricBoundaryClosureStatus::CoplanarClosureAvailable,

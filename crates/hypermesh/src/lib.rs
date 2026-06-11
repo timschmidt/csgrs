@@ -111,7 +111,6 @@ pub use boolean::{
     certify_boundary_touching_report, certify_identical_mesh_report,
     certify_open_surface_disjoint_report, certify_planar_arrangement_report,
     certify_refinement_report, certify_same_surface_report,
-    certify_volumetric_boundary_closure_report,
     materialize_adjacent_union_completion_boolean_with_report,
     materialize_affine_orthogonal_solid_boolean, materialize_arrangement_cell_complex_boolean,
     materialize_axis_aligned_orthogonal_solid_boolean,

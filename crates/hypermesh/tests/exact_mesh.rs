@@ -32,7 +32,6 @@ use hypermesh::{
     certify_coplanar_volumetric_cell_evidence, certify_exact_mesh_proposal,
     certify_open_surface_disjoint_report, certify_planar_arrangement_report,
     certify_refinement_report, certify_same_surface_report,
-    certify_volumetric_boundary_closure_report,
     checked_classify_face_regions_against_opposite_planes,
     checked_triangulate_face_regions_with_earcut, classify_mesh_face_pair,
     classify_mesh_vertices_against_closed_mesh_winding_report,
@@ -4421,7 +4420,9 @@ fn exact_volumetric_winding_coplanar_cap_is_publicly_certified() {
         ExactBooleanOperation::Intersection,
         ExactBooleanOperation::Difference,
     ] {
-        let closure = certify_volumetric_boundary_closure_report(&left, &right, operation).unwrap();
+        let closure = ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY)
+            .volumetric_boundary_closure(&left, &right)
+            .unwrap();
         assert_eq!(
             closure.status,
             hypermesh::ExactVolumetricBoundaryClosureStatus::CoplanarClosureAvailable,

@@ -25,8 +25,7 @@ use super::boolean::{
     boundary_policy_shortcut_result_matches_sources, certify_adjacent_union_completion_report,
     certify_boundary_touching_report, certify_open_surface_disjoint_report,
     certify_planar_arrangement_report, certify_refinement_report, certify_same_surface_report,
-    certify_volumetric_boundary_closure_report, certify_winding_readiness_report,
-    materialize_closed_same_surface_boolean,
+    certify_winding_readiness_report, materialize_closed_same_surface_boolean,
     materialize_volumetric_coplanar_boundary_closure_output,
     open_surface_disjoint_result_matches_sources, replay_coplanar_mesh_overlay_result,
     replay_materialized_volumetric_winding_region_plan, replay_open_surface_arrangement_result,
@@ -3428,7 +3427,8 @@ impl ExactVolumetricBoundaryClosureReport {
         right: &ExactMesh,
     ) -> Result<(), ExactReportValidationError> {
         self.validate()?;
-        let replay = certify_volumetric_boundary_closure_report(left, right, self.operation)
+        let replay = ExactBooleanRequest::new(self.operation, ValidationPolicy::ALLOW_BOUNDARY)
+            .volumetric_boundary_closure(left, right)
             .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
         if self == &replay {
             Ok(())
@@ -3449,7 +3449,9 @@ impl ExactVolumetricBoundaryClosureReport {
         if let Err(error) = self.validate() {
             return error.into();
         }
-        match certify_volumetric_boundary_closure_report(left, right, self.operation) {
+        match ExactBooleanRequest::new(self.operation, ValidationPolicy::ALLOW_BOUNDARY)
+            .volumetric_boundary_closure(left, right)
+        {
             Ok(replay) if self == &replay => ExactReportFreshness::Current,
             Ok(_) | Err(_) => ExactReportFreshness::SourceReplayMismatch,
         }
@@ -6380,9 +6382,12 @@ mod tests {
             ExactReportFreshness::SourceReplayMismatch
         );
 
-        let closure =
-            certify_volumetric_boundary_closure_report(&left, &right, ExactBooleanOperation::Union)
-                .unwrap();
+        let closure = ExactBooleanRequest::new(
+            ExactBooleanOperation::Union,
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .volumetric_boundary_closure(&left, &right)
+        .unwrap();
         assert_eq!(
             closure.freshness_against_sources(&left, &right),
             ExactReportFreshness::Current
