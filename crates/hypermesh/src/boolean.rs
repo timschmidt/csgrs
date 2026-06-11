@@ -1054,6 +1054,7 @@ impl ExactBooleanEvaluation {
             if !exact_boolean_result_kind_matches_request(result, self.request)
                 || result.mesh.validation_policy() != self.request.validation
                 || !exact_boolean_result_facts_match_preflight(result, &self.preflight)
+                || !exact_boolean_result_matches_certifications(result, &self.certifications)
                 || !exact_boolean_result_kind_matches_preflight_support(
                     result,
                     self.preflight.support,
@@ -1610,6 +1611,24 @@ fn exact_boolean_result_facts_match_preflight(
         ExactBooleanResultKind::ArrangementCellComplexMaterialized { .. }
         | ExactBooleanResultKind::BoundaryPolicyShortcut { .. }
         | ExactBooleanResultKind::CertifiedShortcut { .. } => true,
+    }
+}
+
+fn exact_boolean_result_matches_certifications(
+    result: &ExactBooleanResult,
+    certifications: &ExactBooleanCertificationSet,
+) -> bool {
+    match result.kind {
+        ExactBooleanResultKind::ArrangementCellComplexMaterialized { .. } => {
+            exact_boolean_arrangement_attempt_materialized(&certifications.arrangement_attempt)
+        }
+        ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: ExactBooleanShortcutKind::ArrangementCellComplex,
+            ..
+        } => certifications.arrangement_attempt.as_ref().is_none_or(|_| {
+            exact_boolean_arrangement_attempt_materialized(&certifications.arrangement_attempt)
+        }),
+        _ => true,
     }
 }
 
