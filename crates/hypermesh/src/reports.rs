@@ -6244,7 +6244,7 @@ impl ExactWindingReadinessReport {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::boolean::{ExactBooleanPolicy, boolean_selected_regions};
+    use crate::boolean::ExactBooleanRequest;
     use crate::graph::FaceSplitBoundaryNode;
     use crate::region::{ExactOutputVertex, FaceRegionPlaneRelation};
 
@@ -6526,15 +6526,11 @@ mod tests {
     fn selected_region_result_rejects_duplicate_assembly_triangle() {
         let left = report_test_triangle(&[[0, 0, 0], [4, 0, 0], [0, 4, 0]]);
         let right = report_test_triangle(&[[1, -1, -1], [1, 3, 1], [1, 3, -1]]);
-        let mut result = boolean_selected_regions(
-            &left,
-            &right,
-            ExactBooleanPolicy {
-                selection: ExactRegionSelection::KeepAll,
-                validation: ValidationPolicy::ALLOW_BOUNDARY,
-                reject_unknowns: true,
-            },
+        let mut result = ExactBooleanRequest::new(
+            ExactBooleanOperation::SelectedRegions(ExactRegionSelection::KeepAll),
+            ValidationPolicy::ALLOW_BOUNDARY,
         )
+        .materialize(&left, &right)
         .unwrap();
         result.validate().unwrap();
         assert!(!result.assembly.triangles.is_empty());

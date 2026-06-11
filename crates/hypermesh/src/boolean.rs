@@ -115,25 +115,6 @@ use std::cmp::Ordering;
 /// records the currently certified operation semantics: retain selected split
 /// regions, optionally reject unresolved graph events, then validate the
 /// materialized exact output mesh.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub struct ExactBooleanPolicy {
-    /// Which source-side regions should be retained in the output assembly.
-    pub selection: ExactRegionSelection,
-    /// Validation policy for the materialized output mesh.
-    pub validation: ValidationPolicy,
-    /// Reject the operation if graph extraction retained unknown events.
-    pub reject_unknowns: bool,
-}
-
-impl ExactBooleanPolicy {
-    /// Keep all selected-region output and allow boundary meshes.
-    pub const KEEP_ALL_BOUNDARY: Self = Self {
-        selection: ExactRegionSelection::KeepAll,
-        validation: ValidationPolicy::ALLOW_BOUNDARY,
-        reject_unknowns: true,
-    };
-}
-
 /// Stage reached by an arrangement/cell-complex Boolean attempt.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ExactArrangementBooleanStage {
@@ -1819,14 +1800,8 @@ fn materialize_certified_boolean_support(
             let ExactBooleanOperation::SelectedRegions(selection) = operation else {
                 return Err(certified_boolean_support_did_not_materialize_error(support));
             };
-            Some(boolean_selected_regions(
-                left,
-                right,
-                ExactBooleanPolicy {
-                    selection,
-                    validation,
-                    reject_unknowns: true,
-                },
+            Some(materialize_selected_region_boolean(
+                left, right, selection, validation,
             )?)
         }
         ExactBooleanSupport::CertifiedBoundaryPolicyShortcut => {
@@ -1940,30 +1915,26 @@ fn materialize_certified_arrangement_cell_complex_support(
     boolean_arrangement_cell_complex_meshes(left, right, operation, validation)
 }
 
-/// Run the exact selected-region boolean pipeline.
-///
-/// The returned report keeps the audit artifacts needed to inspect why an
-/// output mesh was produced. It does not use primitive-float representatives
-/// for topology, and it does not hide unresolved exact predicates unless the
-/// caller explicitly disables [`ExactBooleanPolicy::reject_unknowns`].
-pub fn boolean_selected_regions(
+fn materialize_selected_region_boolean(
     left: &ExactMesh,
     right: &ExactMesh,
-    policy: ExactBooleanPolicy,
+    selection: ExactRegionSelection,
+    validation: ValidationPolicy,
 ) -> Result<ExactBooleanResult, MeshError> {
     let graph = build_intersection_graph(left, right)?;
     validate_graph_source_handoff(&graph, left, right)?;
-    materialize_selected_region_result_from_graph(&graph, left, right, policy)
+    materialize_selected_region_result_from_graph(&graph, left, right, selection, validation)
 }
 
 fn materialize_selected_region_result_from_graph(
     graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
-    policy: ExactBooleanPolicy,
+    selection: ExactRegionSelection,
+    validation: ValidationPolicy,
 ) -> Result<ExactBooleanResult, MeshError> {
     let graph_had_unknowns = graph.has_unknowns();
-    if policy.reject_unknowns && graph_had_unknowns {
+    if graph_had_unknowns {
         return Err(MeshError::one(MeshDiagnostic::new(
             Severity::Error,
             DiagnosticKind::UnsupportedExactOperation,
@@ -1985,7 +1956,7 @@ fn materialize_selected_region_result_from_graph(
         })?;
     let mut assembly = ExactBooleanAssemblyPlan::from_region_triangulations_with_sources(
         &triangulations,
-        policy.selection,
+        selection,
         left,
         right,
     )
@@ -2005,12 +1976,10 @@ fn materialize_selected_region_result_from_graph(
                 format!("exact boolean assembly canonicalization failed: {error}"),
             ))
         })?;
-    let mesh = assembly.checked_to_exact_mesh_with_sources(left, right, policy.validation)?;
+    let mesh = assembly.checked_to_exact_mesh_with_sources(left, right, validation)?;
 
     let result = ExactBooleanResult {
-        kind: ExactBooleanResultKind::SelectedRegions {
-            selection: policy.selection,
-        },
+        kind: ExactBooleanResultKind::SelectedRegions { selection },
         graph_had_unknowns,
         region_classifications,
         triangulations,
@@ -2036,16 +2005,7 @@ pub(crate) fn replay_selected_region_boolean_result(
 ) -> Result<ExactBooleanResult, MeshError> {
     let graph = build_intersection_graph(left, right)?;
     validate_graph_source_handoff(&graph, left, right)?;
-    materialize_selected_region_result_from_graph(
-        &graph,
-        left,
-        right,
-        ExactBooleanPolicy {
-            selection,
-            validation,
-            reject_unknowns: true,
-        },
-    )
+    materialize_selected_region_result_from_graph(&graph, left, right, selection, validation)
 }
 
 /// Preflight an exact boolean operation without materializing output topology.
@@ -3747,15 +3707,7 @@ fn materialize_boolean_exact_request(
     let validation = request.validation;
     let boundary_policy = request.boundary_policy;
     if let ExactBooleanOperation::SelectedRegions(selection) = operation {
-        return boolean_selected_regions(
-            left,
-            right,
-            ExactBooleanPolicy {
-                selection,
-                validation,
-                reject_unknowns: true,
-            },
-        );
+        return materialize_selected_region_boolean(left, right, selection, validation);
     }
     if let Some(result) =
         boolean_closed_validation_regularized_meshes(left, right, operation, validation)?

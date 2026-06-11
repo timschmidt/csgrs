@@ -8,11 +8,11 @@ use hypermesh::{
     CoplanarVolumetricCellEvidenceFreshness, ExactAdjacentUnionCompletionStatus, ExactArrangement,
     ExactArrangement2dBoundaryPolicy, ExactArrangement2dRegion, ExactArrangement2dRegionRing,
     ExactArrangement2dSetOperation, ExactArrangementFreshness, ExactBooleanBlockerKind,
-    ExactBooleanOperation, ExactBooleanPolicy, ExactBooleanRequest, ExactBooleanResult,
-    ExactBooleanResultKind, ExactBoundaryBooleanPolicy, ExactBoundaryTouchingStatus,
-    ExactI64MeshInputReadiness, ExactI64MeshInputReportValidationError,
-    ExactLabeledCellComplexFreshness, ExactMesh, ExactMeshAuditError, ExactMeshConsumerDomain,
-    ExactMeshConsumerReadinessError, ExactMeshDomainSummaryFreshness, ExactMeshHandoffPackageError,
+    ExactBooleanOperation, ExactBooleanRequest, ExactBooleanResult, ExactBooleanResultKind,
+    ExactBoundaryBooleanPolicy, ExactBoundaryTouchingStatus, ExactI64MeshInputReadiness,
+    ExactI64MeshInputReportValidationError, ExactLabeledCellComplexFreshness, ExactMesh,
+    ExactMeshAuditError, ExactMeshConsumerDomain, ExactMeshConsumerReadinessError,
+    ExactMeshDomainSummaryFreshness, ExactMeshHandoffPackageError,
     ExactMeshHandoffPackageFreshness, ExactMeshProposalAcceptance, ExactMeshProposalReportError,
     ExactMeshProposalSourceKind, ExactOpenSurfaceDisjointStatus, ExactOutputTriangleOrientation,
     ExactPlanarArrangementStatus, ExactRefinementStatus, ExactRegionSelection,
@@ -25,7 +25,7 @@ use hypermesh::{
     MeshArtifactSourceKind, MeshArtifactVertexRecord, MeshCoordinateEvidence,
     MeshFacePairFreshness, MeshFacePairRelation, MeshFacePairValidationError, MeshTopologyEvidence,
     SplitPlanFreshness, TriangleTriangleFreshness, TriangleTriangleRelation, ValidationPolicy,
-    WindingReportFreshness, approximate_mesh_f64_view, audit_exact_mesh, boolean_selected_regions,
+    WindingReportFreshness, approximate_mesh_f64_view, audit_exact_mesh,
     build_exact_arrangement2d_overlay, build_exact_arrangement2d_overlay_with_boundary_policy,
     build_intersection_graph, certify_adjacent_union_completion_report,
     certify_boundary_touching_report, certify_convex_solid,
@@ -2763,13 +2763,15 @@ fn exact_selected_region_boolean_is_publicly_replayable() {
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let policy = ExactBooleanPolicy {
-        selection: ExactRegionSelection::KeepAll,
-        validation: ValidationPolicy::ALLOW_BOUNDARY,
-        reject_unknowns: true,
-    };
+    let selection = ExactRegionSelection::KeepAll;
+    let validation = ValidationPolicy::ALLOW_BOUNDARY;
 
-    let result = boolean_selected_regions(&left, &right, policy).unwrap();
+    let result = ExactBooleanRequest::new(
+        ExactBooleanOperation::SelectedRegions(selection),
+        validation,
+    )
+    .materialize(&left, &right)
+    .unwrap();
 
     assert_eq!(
         result.kind,
@@ -2796,8 +2798,8 @@ fn exact_selected_region_boolean_is_publicly_replayable() {
         ValidationPolicy::ALLOW_BOUNDARY
     );
     let evaluation = (ExactBooleanRequest::new(
-        ExactBooleanOperation::SelectedRegions(policy.selection),
-        policy.validation,
+        ExactBooleanOperation::SelectedRegions(selection),
+        validation,
     ))
     .evaluate(&left, &right)
     .unwrap();
@@ -2877,15 +2879,11 @@ fn exact_selected_region_boolean_is_publicly_replayable() {
     };
     assert!(stale_kind.validate_against_sources(&left, &right).is_err());
 
-    let keep_left = boolean_selected_regions(
-        &left,
-        &right,
-        ExactBooleanPolicy {
-            selection: ExactRegionSelection::KeepLeft,
-            validation: ValidationPolicy::ALLOW_BOUNDARY,
-            reject_unknowns: true,
-        },
+    let keep_left = ExactBooleanRequest::new(
+        ExactBooleanOperation::SelectedRegions(ExactRegionSelection::KeepLeft),
+        ValidationPolicy::ALLOW_BOUNDARY,
     )
+    .materialize(&left, &right)
     .unwrap();
     let mut stale_materialization = result.clone();
     stale_materialization.assembly = keep_left.assembly;
