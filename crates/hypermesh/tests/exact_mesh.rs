@@ -40,8 +40,7 @@ use hypermesh::{
     classify_mesh_vertices_against_closed_mesh_winding_report,
     classify_mesh_vertices_against_convex_solid_report,
     classify_point_against_closed_mesh_winding_report, classify_point_against_convex_solid_report,
-    classify_triangle_triangle, evaluate_boolean_exact, exact_arrangement_boolean_attempt_report,
-    exact_arrangement_boolean_attempt_report_with_validation, exact_mesh_consumer_readiness,
+    classify_triangle_triangle, evaluate_boolean_exact, exact_mesh_consumer_readiness,
     exact_mesh_handoff_package, inspect_f64_mesh_input, inspect_i64_mesh_input,
     materialize_adjacent_union_completion_boolean_with_report,
     materialize_affine_orthogonal_solid_boolean, materialize_affine_orthogonal_solid_difference,
@@ -2445,14 +2444,9 @@ fn exact_open_surface_arrangement_is_publicly_replayable() {
         ExactBooleanOperation::Difference,
     ] {
         if !matches!(operation, ExactBooleanOperation::Intersection) {
-            let closed_attempt = exact_arrangement_boolean_attempt_report_with_validation(
-                &left,
-                &right,
-                operation,
-                ExactRegularizationPolicy::REGULARIZED_SOLID,
-                ValidationPolicy::CLOSED,
-            )
-            .unwrap();
+            let closed_attempt = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED)
+                .arrangement_attempt(&left, &right, ExactRegularizationPolicy::REGULARIZED_SOLID)
+                .unwrap();
             assert_eq!(closed_attempt.output_validation, ValidationPolicy::CLOSED);
             assert!(
                 matches!(
@@ -2502,13 +2496,9 @@ fn exact_open_surface_arrangement_is_publicly_replayable() {
             );
         }
 
-        let attempt = exact_arrangement_boolean_attempt_report(
-            &left,
-            &right,
-            operation,
-            ExactRegularizationPolicy::REGULARIZED_SOLID,
-        )
-        .unwrap();
+        let attempt = ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY)
+            .arrangement_attempt(&left, &right, ExactRegularizationPolicy::REGULARIZED_SOLID)
+            .unwrap();
         assert_eq!(
             attempt.materialized_shortcut,
             Some(hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex),
@@ -2672,14 +2662,9 @@ fn arrangement_attempt_output_validation_is_publicly_replayable() {
         ExactBooleanOperation::Union,
         ExactBooleanOperation::Intersection,
     ] {
-        let closed_attempt = exact_arrangement_boolean_attempt_report_with_validation(
-            &left,
-            &right,
-            operation,
-            ExactRegularizationPolicy::REGULARIZED_SOLID,
-            ValidationPolicy::CLOSED,
-        )
-        .unwrap();
+        let closed_attempt = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED)
+            .arrangement_attempt(&left, &right, ExactRegularizationPolicy::REGULARIZED_SOLID)
+            .unwrap();
         assert_eq!(closed_attempt.output_validation, ValidationPolicy::CLOSED);
         assert!(
             closed_attempt.materialized_shortcut.is_none(),
@@ -2726,14 +2711,10 @@ fn arrangement_attempt_output_validation_is_publicly_replayable() {
             ExactReportFreshness::SourceReplayMismatch
         );
 
-        let boundary_attempt = exact_arrangement_boolean_attempt_report_with_validation(
-            &left,
-            &right,
-            operation,
-            ExactRegularizationPolicy::REGULARIZED_SOLID,
-            ValidationPolicy::ALLOW_BOUNDARY,
-        )
-        .unwrap();
+        let boundary_attempt =
+            ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY)
+                .arrangement_attempt(&left, &right, ExactRegularizationPolicy::REGULARIZED_SOLID)
+                .unwrap();
         assert_eq!(
             boundary_attempt.output_validation,
             ValidationPolicy::ALLOW_BOUNDARY
@@ -4300,14 +4281,10 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
         }
     );
 
-    let closed_attempt = exact_arrangement_boolean_attempt_report_with_validation(
-        &left,
-        &right,
-        ExactBooleanOperation::Union,
-        ExactRegularizationPolicy::REGULARIZED_SOLID,
-        ValidationPolicy::CLOSED,
-    )
-    .unwrap();
+    let closed_attempt =
+        ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED)
+            .arrangement_attempt(&left, &right, ExactRegularizationPolicy::REGULARIZED_SOLID)
+            .unwrap();
     assert_eq!(closed_attempt.output_validation, ValidationPolicy::CLOSED);
     assert_eq!(
         closed_attempt.decline,
@@ -6685,12 +6662,11 @@ fn exact_arrangement_public_path_reports_blockers_or_cells() {
         ExactSimplifiedCellComplexFreshness::StaleSimplifiedCells
     );
 
-    let attempt = exact_arrangement_boolean_attempt_report(
-        &left,
-        &right,
+    let attempt = ExactBooleanRequest::new(
         ExactBooleanOperation::Union,
-        ExactRegularizationPolicy::REGULARIZED_SOLID,
+        ValidationPolicy::ALLOW_BOUNDARY,
     )
+    .arrangement_attempt(&left, &right, ExactRegularizationPolicy::REGULARIZED_SOLID)
     .unwrap();
     attempt.validate().unwrap();
     attempt.validate_against_sources(&left, &right).unwrap();
