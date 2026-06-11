@@ -671,6 +671,46 @@ impl ExactBooleanRequest {
         materialize_same_surface_for_request(left, right, self)
     }
 
+    /// Materialize closed-output lower-dimensional regularization for this
+    /// request, when it owns the replay provenance.
+    pub fn materialize_closed_regularized_lower_dimensional(
+        self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> Result<Option<ExactBooleanResult>, MeshError> {
+        materialize_closed_regularized_lower_dimensional_for_request(left, right, self)
+    }
+
+    /// Materialize mixed-dimensional closed-solid regularization for this
+    /// request, when it owns the replay provenance.
+    pub fn materialize_mixed_dimensional_regularized_solid(
+        self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> Result<Option<ExactBooleanResult>, MeshError> {
+        materialize_mixed_dimensional_regularized_solid_for_request(left, right, self)
+    }
+
+    /// Materialize the open-surface disjoint shortcut for this request, when
+    /// exact graph facts prove the shortcut owns the replay provenance.
+    pub fn materialize_open_surface_disjoint(
+        self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> Result<Option<ExactBooleanResult>, MeshError> {
+        materialize_open_surface_disjoint_for_request(left, right, self)
+    }
+
+    /// Materialize explicit boundary-only projection for this request, when
+    /// its boundary policy allows that projection.
+    pub fn materialize_boundary_touching_policy(
+        self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> Result<Option<ExactBooleanResult>, MeshError> {
+        materialize_boundary_touching_policy_for_request(left, right, self)
+    }
+
     /// Materialize adjacent closed-solid union completion for this request,
     /// returning the exact report consumed by the materializer.
     pub fn materialize_adjacent_union_completion(
@@ -1944,13 +1984,7 @@ fn materialize_certified_boolean_support(
             )?)
         }
         ExactBooleanSupport::CertifiedBoundaryPolicyShortcut => {
-            materialize_boundary_touching_policy_boolean(
-                left,
-                right,
-                operation,
-                validation,
-                request.boundary_policy,
-            )?
+            ExactBooleanRequest::with_boundary_policy(operation, validation, request.boundary_policy,).materialize_boundary_touching_policy(left, right)?
         }
         ExactBooleanSupport::CertifiedOpenSurfaceArrangementUnion
         | ExactBooleanSupport::CertifiedOpenSurfaceArrangementIntersection
@@ -8009,12 +8043,13 @@ fn open_surface_disjoint_result_consumes_report(
 /// Bounds-disjoint inputs are handled by an earlier exact shortcut, so this
 /// function returns `None` for that case and only materializes the graph-backed
 /// open-surface disjoint certificate used by [`ExactBooleanRequest::materialize`].
-pub fn materialize_open_surface_disjoint_boolean(
+fn materialize_open_surface_disjoint_for_request(
     left: &ExactMesh,
     right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: ValidationPolicy,
+    request: ExactBooleanRequest,
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
+    let operation = request.operation;
+    let validation = request.validation;
     if matches!(operation, ExactBooleanOperation::SelectedRegions(_))
         || meshes_are_certified_bounds_disjoint(left, right)
         || (validation == ValidationPolicy::CLOSED
@@ -8997,13 +9032,14 @@ fn boolean_boundary_touching_meshes_from_graph(
 /// [`ExactBoundaryBooleanPolicy::PreserveSeparateShells`]. Unsupported contact
 /// states or rejected policies return `None` rather than projecting
 /// lower-dimensional contact implicitly.
-pub fn materialize_boundary_touching_policy_boolean(
+fn materialize_boundary_touching_policy_for_request(
     left: &ExactMesh,
     right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: ValidationPolicy,
-    boundary_policy: ExactBoundaryBooleanPolicy,
+    request: ExactBooleanRequest,
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
+    let operation = request.operation;
+    let validation = request.validation;
+    let boundary_policy = request.boundary_policy;
     if let Some(result) =
         boolean_closed_validation_regularized_meshes(left, right, operation, validation)?
     {
@@ -10813,12 +10849,13 @@ fn boolean_closed_regularized_lower_dimensional_optional(
 /// operands regularize to an empty closed-solid result. Unsupported operands or
 /// validation policies return `None` rather than falling back to tolerance
 /// geometry.
-pub fn materialize_closed_regularized_lower_dimensional_boolean(
+fn materialize_closed_regularized_lower_dimensional_for_request(
     left: &ExactMesh,
     right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: ValidationPolicy,
+    request: ExactBooleanRequest,
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
+    let operation = request.operation;
+    let validation = request.validation;
     Ok(public_operation_replayable_result(
         boolean_closed_regularized_lower_dimensional_optional(left, right, operation, validation)?,
         left,
@@ -10838,12 +10875,13 @@ pub fn materialize_closed_regularized_lower_dimensional_boolean(
 /// and difference keeps or drops the solid according to operand order.
 /// Lower-dimensional-only inputs return `None` here so the lower-dimensional
 /// regularized materializer keeps that provenance.
-pub fn materialize_mixed_dimensional_regularized_solid_boolean(
+fn materialize_mixed_dimensional_regularized_solid_for_request(
     left: &ExactMesh,
     right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: ValidationPolicy,
+    request: ExactBooleanRequest,
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
+    let operation = request.operation;
+    let validation = request.validation;
     if matches!(operation, ExactBooleanOperation::SelectedRegions(_))
         || certified_mixed_dimensional_regularized_solid_support(left, right).is_none()
         || (validation != ValidationPolicy::CLOSED

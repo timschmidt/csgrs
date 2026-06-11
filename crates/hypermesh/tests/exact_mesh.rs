@@ -41,16 +41,14 @@ use hypermesh::{
     materialize_axis_aligned_orthogonal_solid_boolean,
     materialize_axis_aligned_orthogonal_solid_difference,
     materialize_axis_aligned_orthogonal_solid_intersection,
-    materialize_axis_aligned_orthogonal_solid_union, materialize_boundary_touching_policy_boolean,
+    materialize_axis_aligned_orthogonal_solid_union,
     materialize_closed_boundary_touching_regularized_boolean_with_evidence,
     materialize_closed_convex_boolean,
     materialize_closed_no_volume_overlap_regularized_boolean_with_evidence,
-    materialize_closed_regularized_lower_dimensional_boolean,
     materialize_closed_same_surface_boolean, materialize_closed_winding_containment_boolean,
     materialize_closed_winding_separated_boolean, materialize_contained_face_adjacent_union,
     materialize_coplanar_mesh_overlay_arrangement, materialize_full_face_adjacent_union,
-    materialize_mixed_dimensional_regularized_solid_boolean, materialize_open_surface_arrangement,
-    materialize_open_surface_disjoint_boolean, materialize_volumetric_coplanar_boundary_closure_boolean,
+    materialize_open_surface_arrangement, materialize_volumetric_coplanar_boundary_closure_boolean,
     materialize_volumetric_winding_arrangement, mesh_artifact_from_exact_mesh,
     mesh_artifact_from_exact_mesh_proposal, triangulate_all_face_cells_with_cdt,
     validate_face_cell_cdt_against_sources,
@@ -3019,12 +3017,7 @@ fn lower_dimensional_regularized_boolean_is_publicly_replayable() {
             ExactReportFreshness::SourceReplayMismatch
         );
 
-        let result = materialize_closed_regularized_lower_dimensional_boolean(
-            &left,
-            &right,
-            operation,
-            ValidationPolicy::CLOSED,
-        )
+        let result = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED,).materialize_closed_regularized_lower_dimensional(&left, &right)
         .unwrap()
         .expect("lower-dimensional operands should regularize to exact empty solid output");
         assert_eq!(
@@ -3130,12 +3123,7 @@ fn mixed_dimensional_regularized_solid_boolean_is_publicly_replayable() {
             ExactBooleanOperation::Intersection,
             ExactBooleanOperation::Difference,
         ] {
-            let result = materialize_mixed_dimensional_regularized_solid_boolean(
-                left,
-                right,
-                operation,
-                ValidationPolicy::CLOSED,
-            )
+            let result = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED,).materialize_mixed_dimensional_regularized_solid(left, right)
             .unwrap()
             .expect("mixed-dimensional regularized solid should materialize");
             assert_eq!(
@@ -3197,22 +3185,12 @@ fn mixed_dimensional_regularized_solid_boolean_is_publicly_replayable() {
     )
     .unwrap();
     assert!(
-        materialize_mixed_dimensional_regularized_solid_boolean(
-            &lower_left,
-            &lower_right,
-            ExactBooleanOperation::Union,
-            ValidationPolicy::CLOSED,
-        )
+        ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED,).materialize_mixed_dimensional_regularized_solid(&lower_left, &lower_right)
         .unwrap()
         .is_none()
     );
     assert!(
-        materialize_closed_regularized_lower_dimensional_boolean(
-            &lower_left,
-            &lower_right,
-            ExactBooleanOperation::Union,
-            ValidationPolicy::CLOSED,
-        )
+        ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED,).materialize_closed_regularized_lower_dimensional(&lower_left, &lower_right)
         .unwrap()
         .is_some()
     );
@@ -3284,12 +3262,7 @@ fn mixed_dimensional_regularized_solid_boolean_is_publicly_replayable() {
             );
 
             assert!(
-                materialize_mixed_dimensional_regularized_solid_boolean(
-                    left,
-                    right,
-                    operation,
-                    ValidationPolicy::ALLOW_BOUNDARY,
-                )
+                ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY,).materialize_mixed_dimensional_regularized_solid(left, right)
                 .unwrap()
                 .is_none(),
                 "{operation:?} should yield to bounds-disjoint provenance for boundary-valid output"
@@ -3355,24 +3328,12 @@ fn boundary_touching_policy_boolean_is_publicly_replayable() {
         ExactBooleanOperation::Difference,
     ] {
         assert!(
-            materialize_boundary_touching_policy_boolean(
-                &left,
-                &right,
-                operation,
-                ValidationPolicy::ALLOW_BOUNDARY,
-                ExactBoundaryBooleanPolicy::Reject,
-            )
+            ExactBooleanRequest::with_boundary_policy(operation, ValidationPolicy::ALLOW_BOUNDARY, ExactBoundaryBooleanPolicy::Reject,).materialize_boundary_touching_policy(&left, &right)
             .unwrap()
             .is_none()
         );
 
-        let result = materialize_boundary_touching_policy_boolean(
-            &left,
-            &right,
-            operation,
-            ValidationPolicy::ALLOW_BOUNDARY,
-            ExactBoundaryBooleanPolicy::PreserveSeparateShells,
-        )
+        let result = ExactBooleanRequest::with_boundary_policy(operation, ValidationPolicy::ALLOW_BOUNDARY, ExactBoundaryBooleanPolicy::PreserveSeparateShells,).materialize_boundary_touching_policy(&left, &right)
         .unwrap()
         .expect("certified boundary-only contact should materialize under explicit policy");
         assert_eq!(
@@ -3422,13 +3383,7 @@ fn boundary_touching_policy_boolean_is_publicly_replayable() {
             hypermesh::ExactBooleanShortcutKind::ClosedBoundaryTouchingDifference,
         ),
     ] {
-        let direct = materialize_boundary_touching_policy_boolean(
-            &closed_left,
-            &closed_right,
-            operation,
-            ValidationPolicy::CLOSED,
-            ExactBoundaryBooleanPolicy::PreserveSeparateShells,
-        )
+        let direct = ExactBooleanRequest::with_boundary_policy(operation, ValidationPolicy::CLOSED, ExactBoundaryBooleanPolicy::PreserveSeparateShells,).materialize_boundary_touching_policy(&closed_left, &closed_right)
         .unwrap()
         .expect("closed boundary-touching regularization should materialize directly");
         assert_eq!(
@@ -5707,12 +5662,7 @@ fn trivial_boolean_materializers_are_publicly_replayable() {
         assert_eq!(direct_empty_open.kind, empty_open_result.kind);
         assert!(direct_empty_open.mesh.triangles().is_empty());
         assert!(
-            materialize_closed_regularized_lower_dimensional_boolean(
-                &empty,
-                &open_disjoint_left,
-                operation,
-                ValidationPolicy::CLOSED,
-            )
+            ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED,).materialize_closed_regularized_lower_dimensional(&empty, &open_disjoint_left)
             .unwrap()
             .is_none(),
             "{operation:?} should preserve empty-operand provenance"
@@ -5962,12 +5912,7 @@ fn trivial_boolean_materializers_are_publicly_replayable() {
             "{operation:?}: {relabeled_lower_dimensional_facts:?}"
         );
 
-        let mixed_dimensional_result = materialize_mixed_dimensional_regularized_solid_boolean(
-            &solid,
-            &open_disjoint_left,
-            operation,
-            ValidationPolicy::CLOSED,
-        )
+        let mixed_dimensional_result = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED,).materialize_mixed_dimensional_regularized_solid(&solid, &open_disjoint_left)
         .unwrap()
         .expect("closed solid/open surface should materialize as mixed-dimensional regularization");
         assert_shortcut(
@@ -5996,12 +5941,7 @@ fn trivial_boolean_materializers_are_publicly_replayable() {
             "{operation:?}: {relabeled_mixed_dimensional_facts:?}"
         );
 
-        let open_disjoint_result = materialize_open_surface_disjoint_boolean(
-            &open_disjoint_left,
-            &open_disjoint_right,
-            operation,
-            ValidationPolicy::ALLOW_BOUNDARY,
-        )
+        let open_disjoint_result = ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY,).materialize_open_surface_disjoint(&open_disjoint_left, &open_disjoint_right)
         .unwrap()
         .expect("open surfaces with an empty exact graph should materialize as disjoint");
         assert_shortcut(
@@ -6061,12 +6001,7 @@ fn trivial_boolean_materializers_are_publicly_replayable() {
         .is_none()
     );
     assert!(
-        materialize_open_surface_disjoint_boolean(
-            &solid,
-            &disjoint_solid,
-            ExactBooleanOperation::Union,
-            ValidationPolicy::CLOSED,
-        )
+        ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED,).materialize_open_surface_disjoint(&solid, &disjoint_solid)
         .unwrap()
         .is_none()
     );
@@ -6083,18 +6018,6 @@ fn direct_boolean_materializers_yield_to_public_operation_replay() {
         -> Result<Option<ExactBooleanResult>, hypermesh::MeshError>;
 
     let materializers: &[(&str, DirectBooleanMaterializer)] = &[
-        (
-            "closed_regularized_lower_dimensional",
-            materialize_closed_regularized_lower_dimensional_boolean,
-        ),
-        (
-            "mixed_dimensional_regularized_solid",
-            materialize_mixed_dimensional_regularized_solid_boolean,
-        ),
-        (
-            "open_surface_disjoint",
-            materialize_open_surface_disjoint_boolean,
-        ),
         (
             "closed_winding_separated",
             materialize_closed_winding_separated_boolean,
@@ -6911,13 +6834,7 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
             ExactWindingReadinessStatus::LowerDimensionalRegularizedSolidAlreadyMaterialized,
             "{operation:?}: {closed_policy_readiness:?}"
         );
-        let materialized = materialize_boundary_touching_policy_boolean(
-            &left,
-            &right,
-            operation,
-            ValidationPolicy::CLOSED,
-            ExactBoundaryBooleanPolicy::PreserveSeparateShells,
-        )
+        let materialized = ExactBooleanRequest::with_boundary_policy(operation, ValidationPolicy::CLOSED, ExactBoundaryBooleanPolicy::PreserveSeparateShells,).materialize_boundary_touching_policy(&left, &right)
         .unwrap()
         .expect("closed lower-dimensional regularization should materialize directly");
         assert_eq!(
