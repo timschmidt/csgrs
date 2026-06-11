@@ -4884,6 +4884,7 @@ fn materialize_volumetric_coplanar_boundary_closure_output_from_graph(
         volumetric_boundary_closure_report_from_materialized(&materialized, operation)?;
     if closure_report.status != ExactVolumetricBoundaryClosureStatus::CoplanarClosureAvailable
         || closure_report.validate().is_err()
+        || closure_report.validate_against_sources(left, right).is_err()
     {
         return Ok(None);
     }
@@ -4937,6 +4938,8 @@ fn boolean_arrangement_volumetric_split_cell_recovery_from_graph(
         }
         if let Some(mesh) = certified_coplanar_boundary_closure_from_materialized(
             &materialized,
+            left,
+            right,
             operation,
             validation,
         )? {
@@ -5065,6 +5068,8 @@ fn boundary_loops_are_exactly_coplanar_without_self_contact(
 
 fn certified_coplanar_boundary_closure_from_materialized(
     materialized: &MaterializedVolumetricWindingRegionPlan,
+    left: &ExactMesh,
+    right: &ExactMesh,
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
 ) -> Result<Option<ExactMesh>, MeshError> {
@@ -5079,6 +5084,7 @@ fn certified_coplanar_boundary_closure_from_materialized(
         volumetric_boundary_closure_report_from_materialized(materialized, operation)?;
     if closure_report.status != ExactVolumetricBoundaryClosureStatus::CoplanarClosureAvailable
         || closure_report.validate().is_err()
+        || closure_report.validate_against_sources(left, right).is_err()
     {
         return Ok(None);
     }
@@ -8650,6 +8656,8 @@ fn winding_readiness_report_from_graph(
             ValidationPolicy::ALLOW_BOUNDARY,
         )? && certified_coplanar_boundary_closure_from_materialized(
             &materialized,
+            left,
+            right,
             operation,
             ValidationPolicy::CLOSED,
         )?
@@ -8906,6 +8914,8 @@ fn materialize_closed_volumetric_winding_boundary_caps_from_graph(
     };
     certified_coplanar_boundary_closure_from_materialized(
         &materialized,
+        left,
+        right,
         operation,
         ValidationPolicy::CLOSED,
     )
