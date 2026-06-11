@@ -1705,6 +1705,49 @@ fn exact_closed_convex_boolean_materializer_is_publicly_replayable() {
             ExactBoundaryBooleanPolicy::Reject,
         )
         .unwrap();
+    let separated_evaluation = evaluate_boolean_exact(
+        &separated_left,
+        &separated_right,
+        ExactBooleanRequest::new(ExactBooleanOperation::Intersection, ValidationPolicy::CLOSED),
+    )
+    .unwrap();
+    separated_evaluation.validate().unwrap();
+    let mut relabeled_convex_report = separated_evaluation.clone();
+    relabeled_convex_report
+        .certifications
+        .convex_left_in_right
+        .relation = ConvexSolidMeshRelation::NotCertifiedConvex;
+    relabeled_convex_report
+        .certifications
+        .convex_left_in_right
+        .solid_facts
+        .orientation = ClosedMeshOrientation::NotClosed;
+    relabeled_convex_report
+        .certifications
+        .convex_left_in_right
+        .solid_facts
+        .convexity = hypermesh::ConvexSolidClassification::NotClosed;
+    relabeled_convex_report
+        .certifications
+        .convex_left_in_right
+        .solid_facts
+        .predicates
+        .clear();
+    relabeled_convex_report
+        .certifications
+        .convex_left_in_right
+        .vertices
+        .clear();
+    relabeled_convex_report
+        .certifications
+        .convex_left_in_right
+        .validate()
+        .unwrap();
+    assert_eq!(
+        relabeled_convex_report.validate(),
+        Err(hypermesh::ExactReportValidationError::StatusEvidenceMismatch),
+        "{relabeled_convex_report:?}"
+    );
     let dispatched = boolean_exact(
         &separated_left,
         &separated_right,

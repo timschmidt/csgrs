@@ -581,6 +581,10 @@ pub struct ExactBooleanCertificationSet {
     pub closed_winding_left_in_right: ClosedMeshWindingMeshReport,
     /// Right vertices classified against the left closed mesh.
     pub closed_winding_right_in_left: ClosedMeshWindingMeshReport,
+    /// Left vertices classified against the right convex solid.
+    pub convex_left_in_right: ConvexSolidMeshClassification,
+    /// Right vertices classified against the left convex solid.
+    pub convex_right_in_left: ConvexSolidMeshClassification,
     /// Planar-arrangement readiness for coplanar surface output.
     pub planar_arrangement: ExactPlanarArrangementReport,
     /// Winding/inside-outside readiness for named volumetric output.
@@ -607,6 +611,8 @@ impl ExactBooleanCertificationSet {
             classify_mesh_vertices_against_closed_mesh_winding_report(left, right);
         let closed_winding_right_in_left =
             classify_mesh_vertices_against_closed_mesh_winding_report(right, left);
+        let convex_left_in_right = classify_mesh_vertices_against_convex_solid_report(left, right);
+        let convex_right_in_left = classify_mesh_vertices_against_convex_solid_report(right, left);
         let planar_arrangement =
             planar_arrangement_certification_from_graph(&graph, left, right, request.operation)?;
         let winding_readiness = winding_readiness_report_with_boundary_policy_from_graph(
@@ -647,6 +653,8 @@ impl ExactBooleanCertificationSet {
             same_surface,
             closed_winding_left_in_right,
             closed_winding_right_in_left,
+            convex_left_in_right,
+            convex_right_in_left,
             planar_arrangement,
             winding_readiness,
             volumetric_boundary_closure,
@@ -668,6 +676,12 @@ impl ExactBooleanCertificationSet {
             .validate()
             .map_err(|_| ExactReportValidationError::StatusEvidenceMismatch)?;
         self.closed_winding_right_in_left
+            .validate()
+            .map_err(|_| ExactReportValidationError::StatusEvidenceMismatch)?;
+        self.convex_left_in_right
+            .validate()
+            .map_err(|_| ExactReportValidationError::StatusEvidenceMismatch)?;
+        self.convex_right_in_left
             .validate()
             .map_err(|_| ExactReportValidationError::StatusEvidenceMismatch)?;
         self.planar_arrangement.validate()?;
@@ -949,12 +963,25 @@ fn exact_boolean_preflight_matches_certifications(
             *status
                 == ExactWindingReadinessStatus::LowerDimensionalRegularizedSolidAlreadyMaterialized
         }
-        ExactBooleanSupport::CertifiedConvexContainment
-        | ExactBooleanSupport::CertifiedConvexUnion
+        ExactBooleanSupport::CertifiedConvexUnion
         | ExactBooleanSupport::CertifiedConvexIntersection
-        | ExactBooleanSupport::CertifiedConvexDifference
-        | ExactBooleanSupport::CertifiedConvexSeparated => {
+        | ExactBooleanSupport::CertifiedConvexDifference => {
             *status == ExactWindingReadinessStatus::ConvexBooleanAlreadyMaterialized
+                && exact_boolean_convex_reports_match_support(preflight, certifications)
+        }
+        ExactBooleanSupport::CertifiedConvexSeparated => {
+            matches!(
+                status,
+                ExactWindingReadinessStatus::ConvexBooleanAlreadyMaterialized
+                    | ExactWindingReadinessStatus::ClosedWindingSeparatedAlreadyMaterialized
+            ) && exact_boolean_convex_reports_match_support(preflight, certifications)
+        }
+        ExactBooleanSupport::CertifiedConvexContainment => {
+            matches!(
+                status,
+                ExactWindingReadinessStatus::ConvexBooleanAlreadyMaterialized
+                    | ExactWindingReadinessStatus::ClosedWindingContainmentAlreadyMaterialized
+            ) && exact_boolean_convex_reports_match_support(preflight, certifications)
         }
         ExactBooleanSupport::RequiresBoundaryPolicy => {
             certifications.boundary_touching.is_certified()
@@ -1030,6 +1057,31 @@ fn exact_boolean_closed_winding_reports_containment(
         == ClosedMeshWindingMeshRelation::StrictlyInside
         || certifications.closed_winding_right_in_left.relation
             == ClosedMeshWindingMeshRelation::StrictlyInside
+}
+
+fn exact_boolean_convex_reports_match_support(
+    preflight: &ExactBooleanPreflight,
+    certifications: &ExactBooleanCertificationSet,
+) -> bool {
+    if !certifications
+        .convex_left_in_right
+        .solid_facts
+        .is_certified_convex()
+        || !certifications
+            .convex_right_in_left
+            .solid_facts
+            .is_certified_convex()
+    {
+        return false;
+    }
+    match preflight.support {
+        ExactBooleanSupport::CertifiedConvexUnion
+        | ExactBooleanSupport::CertifiedConvexIntersection
+        | ExactBooleanSupport::CertifiedConvexDifference
+        | ExactBooleanSupport::CertifiedConvexSeparated
+        | ExactBooleanSupport::CertifiedConvexContainment => true,
+        _ => false,
+    }
 }
 
 fn exact_boolean_preflight_matches_open_surface_arrangement(
@@ -1269,13 +1321,31 @@ pub fn evaluate_boolean_exact(
     let preflight = preflight_boolean_exact_request(left, right, request)?;
     let certifications = ExactBooleanCertificationSet::from_sources(left, right, request)?;
     let result = if preflight.is_certified() {
-        Some(boolean_exact_with_boundary_policy(
-            left,
-            right,
-            request.operation,
-            request.validation,
-            request.boundary_policy,
-        )?)
+        Some(match preflight.support {
+            ExactBooleanSupport::CertifiedConvexSeparated
+            | ExactBooleanSupport::CertifiedConvexContainment => {
+                materialize_closed_convex_boolean(
+                    left,
+                    right,
+                    request.operation,
+                    request.validation,
+                )?
+                .ok_or_else(|| {
+                    MeshError::one(MeshDiagnostic::new(
+                        Severity::Error,
+                        DiagnosticKind::UnsupportedExactOperation,
+                        "certified convex relation preflight did not materialize",
+                    ))
+                })?
+            }
+            _ => boolean_exact_with_boundary_policy(
+                left,
+                right,
+                request.operation,
+                request.validation,
+                request.boundary_policy,
+            )?,
+        })
     } else {
         None
     };
