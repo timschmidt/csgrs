@@ -575,6 +575,8 @@ pub struct ExactBooleanCertificationSet {
     pub boundary_touching: ExactBoundaryTouchingReport,
     /// Open-surface disjointness shortcut status.
     pub open_surface_disjoint: ExactOpenSurfaceDisjointReport,
+    /// Same-surface shortcut status.
+    pub same_surface: ExactSameSurfaceReport,
     /// Planar-arrangement readiness for coplanar surface output.
     pub planar_arrangement: ExactPlanarArrangementReport,
     /// Winding/inside-outside readiness for named volumetric output.
@@ -596,6 +598,7 @@ impl ExactBooleanCertificationSet {
         let refinement = refinement_report_from_graph(&graph, request.operation);
         let boundary_touching = boundary_touching_report_from_graph(&graph, left, right)?;
         let open_surface_disjoint = open_surface_disjoint_report_from_graph(&graph, left, right);
+        let same_surface = certify_same_surface_report(left, right);
         let planar_arrangement =
             planar_arrangement_certification_from_graph(&graph, left, right, request.operation)?;
         let winding_readiness = winding_readiness_report_with_boundary_policy_from_graph(
@@ -633,6 +636,7 @@ impl ExactBooleanCertificationSet {
             refinement,
             boundary_touching,
             open_surface_disjoint,
+            same_surface,
             planar_arrangement,
             winding_readiness,
             volumetric_boundary_closure,
@@ -649,6 +653,7 @@ impl ExactBooleanCertificationSet {
         self.refinement.validate()?;
         self.boundary_touching.validate()?;
         self.open_surface_disjoint.validate()?;
+        self.same_surface.validate()?;
         self.planar_arrangement.validate()?;
         self.winding_readiness.validate()?;
         if self.refinement.operation != request.operation
@@ -898,6 +903,7 @@ fn exact_boolean_preflight_matches_certifications(
         }
         ExactBooleanSupport::CertifiedIdentical | ExactBooleanSupport::CertifiedSameSurface => {
             *status == ExactWindingReadinessStatus::SurfaceEqualityAlreadyMaterialized
+                && certifications.same_surface.is_certified()
         }
         ExactBooleanSupport::CertifiedClosedBoundaryTouchingUnion
         | ExactBooleanSupport::CertifiedClosedBoundaryTouchingIntersection

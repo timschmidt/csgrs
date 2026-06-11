@@ -5736,6 +5736,51 @@ fn trivial_boolean_materializers_are_publicly_replayable() {
             ValidationPolicy::ALLOW_BOUNDARY,
             hypermesh::ExactBooleanShortcutKind::SameSurface,
         );
+        let same_surface_evaluation = evaluate_boolean_exact(
+            &open_identical_left,
+            &open_same_surface_right,
+            ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
+        )
+        .unwrap();
+        same_surface_evaluation.validate().unwrap();
+        let mut relabeled_same_surface_report = same_surface_evaluation.clone();
+        relabeled_same_surface_report.certifications.same_surface.status =
+            ExactSameSurfaceStatus::VertexCountMismatch;
+        relabeled_same_surface_report
+            .certifications
+            .same_surface
+            .left_to_right
+            .clear();
+        relabeled_same_surface_report
+            .certifications
+            .same_surface
+            .right_to_left
+            .clear();
+        relabeled_same_surface_report
+            .certifications
+            .same_surface
+            .left_triangles
+            .clear();
+        relabeled_same_surface_report
+            .certifications
+            .same_surface
+            .right_triangles
+            .clear();
+        relabeled_same_surface_report
+            .certifications
+            .same_surface
+            .predicates
+            .clear();
+        relabeled_same_surface_report
+            .certifications
+            .same_surface
+            .validate()
+            .unwrap();
+        assert_eq!(
+            relabeled_same_surface_report.validate(),
+            Err(hypermesh::ExactReportValidationError::StatusEvidenceMismatch),
+            "{operation:?}: {relabeled_same_surface_report:?}"
+        );
         if matches!(
             operation,
             ExactBooleanOperation::Union | ExactBooleanOperation::Intersection
