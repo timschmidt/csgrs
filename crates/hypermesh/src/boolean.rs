@@ -557,13 +557,7 @@ impl ExactBooleanRequest {
         left: &ExactMesh,
         right: &ExactMesh,
     ) -> Result<ExactBooleanResult, MeshError> {
-        boolean_exact_with_boundary_policy(
-            left,
-            right,
-            self.operation,
-            self.validation,
-            self.boundary_policy,
-        )
+        materialize_boolean_exact_request(left, right, self)
     }
 }
 
@@ -1161,12 +1155,13 @@ impl ExactBooleanEvaluation {
         right: &ExactMesh,
     ) -> Result<(), ExactReportValidationError> {
         self.validate()?;
-        self.preflight.validate_against_sources_with_boundary_policy(
-            left,
-            right,
-            self.request.validation,
-            self.request.boundary_policy,
-        )?;
+        self.preflight
+            .validate_against_sources_with_boundary_policy(
+                left,
+                right,
+                self.request.validation,
+                self.request.boundary_policy,
+            )?;
         self.certifications
             .validate_against_sources(left, right, self.request)?;
         if let Some(result) = self.result.as_ref() {
@@ -1209,8 +1204,7 @@ fn exact_boolean_preflight_matches_certifications(
         }
         ExactBooleanSupport::CertifiedBoundaryPolicyShortcut => {
             certifications.boundary_touching.is_certified()
-                && *status
-                    == ExactWindingReadinessStatus::BoundaryPolicyShortcutAlreadyMaterialized
+                && *status == ExactWindingReadinessStatus::BoundaryPolicyShortcutAlreadyMaterialized
                 && exact_boolean_preflight_matches_boundary_report(
                     preflight,
                     &certifications.boundary_touching,
@@ -1377,8 +1371,10 @@ fn exact_boolean_preflight_matches_selected_region_policy(
     preflight: &ExactBooleanPreflight,
     certifications: &ExactBooleanCertificationSet,
 ) -> bool {
-    matches!(preflight.operation, ExactBooleanOperation::SelectedRegions(_))
-        && preflight.graph_had_unknowns == certifications.refinement.graph_had_unknowns
+    matches!(
+        preflight.operation,
+        ExactBooleanOperation::SelectedRegions(_)
+    ) && preflight.graph_had_unknowns == certifications.refinement.graph_had_unknowns
         && preflight.retained_face_pairs == certifications.refinement.retained_face_pairs
         && preflight.retained_events == certifications.refinement.retained_events
         && preflight.graph_had_unknowns == certifications.winding_readiness.graph_had_unknowns
@@ -1392,7 +1388,10 @@ fn exact_boolean_preflight_matches_selected_region_policy(
             .winding_readiness
             .region_classifications
             .is_empty()
-        && certifications.winding_readiness.arrangement_readiness.is_none()
+        && certifications
+            .winding_readiness
+            .arrangement_readiness
+            .is_none()
         && certifications
             .winding_readiness
             .coplanar_volumetric_evidence
@@ -1434,9 +1433,9 @@ fn exact_boolean_convex_reports_match_support(
     match preflight.support {
         ExactBooleanSupport::CertifiedConvexUnion
         | ExactBooleanSupport::CertifiedConvexIntersection
-        | ExactBooleanSupport::CertifiedConvexDifference => {
-            certifications.convex_capabilities.supports(preflight.support)
-        }
+        | ExactBooleanSupport::CertifiedConvexDifference => certifications
+            .convex_capabilities
+            .supports(preflight.support),
         ExactBooleanSupport::CertifiedConvexSeparated
         | ExactBooleanSupport::CertifiedConvexContainment => true,
         _ => false,
@@ -1471,8 +1470,7 @@ fn exact_boolean_preflight_matches_closed_boundary_coplanar_handoff(
         && preflight.blocker.is_none()
         && preflight.arrangement_readiness.is_none()
         && preflight.coplanar_volumetric_evidence.is_some()
-        && preflight.coplanar_volumetric_evidence
-            == winding_readiness.coplanar_volumetric_evidence
+        && preflight.coplanar_volumetric_evidence == winding_readiness.coplanar_volumetric_evidence
 }
 
 fn exact_boolean_preflight_matches_open_surface_arrangement(
@@ -1577,8 +1575,7 @@ fn exact_boolean_preflight_matches_winding_handoff(
         && preflight.region_classifications == winding_readiness.region_classifications
         && preflight.blocker.as_ref() == Some(&winding_readiness.blocker)
         && preflight.arrangement_readiness.is_none()
-        && preflight.coplanar_volumetric_evidence
-            == winding_readiness.coplanar_volumetric_evidence
+        && preflight.coplanar_volumetric_evidence == winding_readiness.coplanar_volumetric_evidence
 }
 
 fn exact_boolean_result_kind_matches_request(
@@ -1628,14 +1625,12 @@ fn exact_boolean_result_kind_matches_preflight_support(
                     ..
                 }
         ),
-        ExactBooleanSupport::CertifiedEmptyOperand => exact_boolean_result_has_shortcut(
-            result,
-            ExactBooleanShortcutKind::EmptyOperand,
-        ),
-        ExactBooleanSupport::CertifiedBoundsDisjoint => exact_boolean_result_has_shortcut(
-            result,
-            ExactBooleanShortcutKind::BoundsDisjoint,
-        ),
+        ExactBooleanSupport::CertifiedEmptyOperand => {
+            exact_boolean_result_has_shortcut(result, ExactBooleanShortcutKind::EmptyOperand)
+        }
+        ExactBooleanSupport::CertifiedBoundsDisjoint => {
+            exact_boolean_result_has_shortcut(result, ExactBooleanShortcutKind::BoundsDisjoint)
+        }
         ExactBooleanSupport::CertifiedIdentical => {
             exact_boolean_result_has_shortcut(result, ExactBooleanShortcutKind::Identical)
         }
@@ -1660,16 +1655,18 @@ fn exact_boolean_result_kind_matches_preflight_support(
                 ExactBooleanShortcutKind::ClosedBoundaryTouchingDifference,
             )
         }
-        ExactBooleanSupport::CertifiedOpenSurfaceDisjoint => exact_boolean_result_has_shortcut(
-            result,
-            ExactBooleanShortcutKind::OpenSurfaceDisjoint,
-        ),
+        ExactBooleanSupport::CertifiedOpenSurfaceDisjoint => {
+            exact_boolean_result_has_shortcut(result, ExactBooleanShortcutKind::OpenSurfaceDisjoint)
+        }
         ExactBooleanSupport::CertifiedClosedWindingSeparated => exact_boolean_result_has_shortcut(
             result,
             ExactBooleanShortcutKind::ClosedWindingSeparated,
         ),
         ExactBooleanSupport::CertifiedClosedWindingContainment => {
-            exact_boolean_result_has_shortcut(result, ExactBooleanShortcutKind::ClosedWindingContainment)
+            exact_boolean_result_has_shortcut(
+                result,
+                ExactBooleanShortcutKind::ClosedWindingContainment,
+            )
         }
         ExactBooleanSupport::CertifiedMixedDimensionalRegularizedSolid => {
             exact_boolean_result_has_shortcut(
@@ -1790,19 +1787,19 @@ pub fn evaluate_boolean_exact(
             format!("exact boolean evaluation local validation failed: {error:?}"),
         ))
     })?;
-    evaluation.validate_against_sources(left, right).map_err(|error| {
-        MeshError::one(MeshDiagnostic::new(
-            Severity::Error,
-            DiagnosticKind::UnsupportedExactOperation,
-            format!("exact boolean evaluation source replay failed: {error:?}"),
-        ))
-    })?;
+    evaluation
+        .validate_against_sources(left, right)
+        .map_err(|error| {
+            MeshError::one(MeshDiagnostic::new(
+                Severity::Error,
+                DiagnosticKind::UnsupportedExactOperation,
+                format!("exact boolean evaluation source replay failed: {error:?}"),
+            ))
+        })?;
     Ok(evaluation)
 }
 
-fn certified_boolean_support_did_not_materialize_error(
-    support: ExactBooleanSupport,
-) -> MeshError {
+fn certified_boolean_support_did_not_materialize_error(support: ExactBooleanSupport) -> MeshError {
     MeshError::one(MeshDiagnostic::new(
         Severity::Error,
         DiagnosticKind::UnsupportedExactOperation,
@@ -1936,11 +1933,9 @@ fn materialize_certified_arrangement_cell_complex_support(
     {
         return Ok(Some(result));
     }
-    if let Some((result, _closure)) =
-        materialize_volumetric_coplanar_boundary_closure_boolean(
-            left, right, operation, validation,
-        )?
-    {
+    if let Some((result, _closure)) = materialize_volumetric_coplanar_boundary_closure_boolean(
+        left, right, operation, validation,
+    )? {
         return Ok(Some(result));
     }
     boolean_arrangement_cell_complex_meshes(left, right, operation, validation)
@@ -2617,7 +2612,9 @@ pub fn preflight_boolean_exact_with_boundary_policy(
     validation: ValidationPolicy,
     boundary_policy: ExactBoundaryBooleanPolicy,
 ) -> Result<ExactBooleanPreflight, MeshError> {
-    let preflight = preflight_boolean_exact_with_validation_reject_boundary_policy(left, right, operation, validation)?;
+    let preflight = preflight_boolean_exact_with_validation_reject_boundary_policy(
+        left, right, operation, validation,
+    )?;
     if boundary_policy == ExactBoundaryBooleanPolicy::Reject
         || matches!(operation, ExactBooleanOperation::SelectedRegions(_))
         || preflight.support != ExactBooleanSupport::RequiresBoundaryPolicy
@@ -3774,24 +3771,9 @@ fn mesh_vertices_touch_boundary(report: &ClosedMeshWindingMeshReport) -> bool {
         .any(|vertex| vertex.relation == ClosedMeshWindingRelation::Boundary)
 }
 
-/// Run an exact boolean operation request.
+/// Materialize an exact boolean request.
 ///
-/// This entry point makes unsupported named booleans explicit rather than
-/// silently dispatching to specialized tolerance code. That is a deliberate
-/// exact computation boundary: unsupported topology semantics are diagnostics,
-/// not approximate decisions.
-pub fn boolean_exact(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: ValidationPolicy,
-) -> Result<ExactBooleanResult, MeshError> {
-    ExactBooleanRequest::new(operation, validation).materialize(left, right)
-}
-
-/// Run an exact boolean operation request with an explicit boundary policy.
-///
-/// This entry point is still strict about general winding. The additional
+/// This path is still strict about general winding. The additional
 /// policy only applies when the exact event graph contains certified
 /// boundary-only contact: coplanar touching, closed-solid coplanar boundary
 /// overlap, or closed-solid edge/vertex contact whose retained candidate
@@ -3802,13 +3784,14 @@ pub fn boolean_exact(
 /// intersection and difference do not need that projection policy once the
 /// same exact boundary-touch report proves no shared interior volume; those
 /// two operations use certified shortcuts before the policy layer.
-pub fn boolean_exact_with_boundary_policy(
+fn materialize_boolean_exact_request(
     left: &ExactMesh,
     right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: ValidationPolicy,
-    boundary_policy: ExactBoundaryBooleanPolicy,
+    request: ExactBooleanRequest,
 ) -> Result<ExactBooleanResult, MeshError> {
+    let operation = request.operation;
+    let validation = request.validation;
+    let boundary_policy = request.boundary_policy;
     if let ExactBooleanOperation::SelectedRegions(selection) = operation {
         return boolean_selected_regions(
             left,
@@ -4090,7 +4073,9 @@ pub fn materialize_arrangement_cell_complex_boolean(
     if preflight.support != ExactBooleanSupport::CertifiedArrangementCellComplex {
         return Ok(None);
     }
-    boolean_exact(left, right, operation, validation).map(Some)
+    ExactBooleanRequest::new(operation, validation)
+        .materialize(left, right)
+        .map(Some)
 }
 
 fn arrangement_cell_complex_result_is_certified_for_preflight(
@@ -4959,16 +4944,15 @@ fn adjacent_union_completion_certification(
     {
         let full_face_shared_faces = union.shared_faces.len();
         let full_face_shared_patches = union.shared_patches.len();
-        let result = materialization_validation
-            .and_then(|_| {
-                let result = certified_shortcut_result(
-                    union.mesh,
-                    ExactBooleanOperation::Union,
-                    ExactBooleanShortcutKind::ArrangementCellComplex,
-                );
-                (result.validate().is_ok() && result.validate_against_sources(left, right).is_ok())
-                    .then_some(result)
-            });
+        let result = materialization_validation.and_then(|_| {
+            let result = certified_shortcut_result(
+                union.mesh,
+                ExactBooleanOperation::Union,
+                ExactBooleanShortcutKind::ArrangementCellComplex,
+            );
+            (result.validate().is_ok() && result.validate_against_sources(left, right).is_ok())
+                .then_some(result)
+        });
         return Ok((
             adjacent_union_completion_report(
                 operation,
@@ -5048,16 +5032,15 @@ fn adjacent_union_completion_certification(
         let contained_containing_side = Some(union.containing_side);
         let contained_faces = union.contained_faces.len();
         let containing_faces = union.containing_faces.len();
-        let result = materialization_validation
-            .and_then(|_| {
-                let result = certified_shortcut_result(
-                    union.mesh,
-                    ExactBooleanOperation::Union,
-                    ExactBooleanShortcutKind::ArrangementCellComplex,
-                );
-                (result.validate().is_ok() && result.validate_against_sources(left, right).is_ok())
-                    .then_some(result)
-            });
+        let result = materialization_validation.and_then(|_| {
+            let result = certified_shortcut_result(
+                union.mesh,
+                ExactBooleanOperation::Union,
+                ExactBooleanShortcutKind::ArrangementCellComplex,
+            );
+            (result.validate().is_ok() && result.validate_against_sources(left, right).is_ok())
+                .then_some(result)
+        });
         return Ok((
             adjacent_union_completion_report(
                 operation,
@@ -6054,7 +6037,9 @@ fn materialize_volumetric_coplanar_boundary_closure_output_from_graph(
         volumetric_boundary_closure_report_from_materialized(&materialized, operation)?;
     if closure_report.status != ExactVolumetricBoundaryClosureStatus::CoplanarClosureAvailable
         || closure_report.validate().is_err()
-        || closure_report.validate_against_sources(left, right).is_err()
+        || closure_report
+            .validate_against_sources(left, right)
+            .is_err()
     {
         return Ok(None);
     }
@@ -6254,7 +6239,9 @@ fn certified_coplanar_boundary_closure_from_materialized(
         volumetric_boundary_closure_report_from_materialized(materialized, operation)?;
     if closure_report.status != ExactVolumetricBoundaryClosureStatus::CoplanarClosureAvailable
         || closure_report.validate().is_err()
-        || closure_report.validate_against_sources(left, right).is_err()
+        || closure_report
+            .validate_against_sources(left, right)
+            .is_err()
     {
         return Ok(None);
     }
@@ -6304,11 +6291,14 @@ fn close_exact_coplanar_boundary_loops_from_loops(
                 {
                     return None;
                 }
-                Some(Triangle([boundary_loop[0], boundary_loop[1], boundary_loop[2]]))
+                Some(Triangle([
+                    boundary_loop[0],
+                    boundary_loop[1],
+                    boundary_loop[2],
+                ]))
             })
             .collect::<Option<Vec<_>>>()?;
-        let cap_triangles =
-            orient_cap_group_against_mesh_boundary(&boundary_edges, cap_triangles)?;
+        let cap_triangles = orient_cap_group_against_mesh_boundary(&boundary_edges, cap_triangles)?;
         let mut triangles = mesh.triangles().to_vec();
         triangles.extend(cap_triangles);
         return ExactMesh::new_with_policy(
@@ -6336,8 +6326,12 @@ fn close_exact_coplanar_boundary_loops_from_loops(
         let mut group_vertices = Vec::new();
         let mut group_triangles = Vec::new();
         triangulate_exact_loop_group(&loops, &mut group_vertices, &mut group_triangles).ok()?;
-        let local_to_global =
-            map_cap_vertices_to_boundary_or_insert(mesh, &vertex_loops, &mut vertices, group_vertices)?;
+        let local_to_global = map_cap_vertices_to_boundary_or_insert(
+            mesh,
+            &vertex_loops,
+            &mut vertices,
+            group_vertices,
+        )?;
         let triangles = group_triangles.into_iter().map(|triangle| {
             Triangle([
                 local_to_global[triangle.0[0]],
@@ -6431,11 +6425,7 @@ fn map_cap_vertices_to_boundary_or_insert(
     vertices: &mut Vec<Point3>,
     cap_vertices: Vec<Point3>,
 ) -> Option<Vec<usize>> {
-    let boundary_vertices = boundary_loops
-        .iter()
-        .flatten()
-        .copied()
-        .collect::<Vec<_>>();
+    let boundary_vertices = boundary_loops.iter().flatten().copied().collect::<Vec<_>>();
     let mut used_boundary_vertices = vec![false; boundary_vertices.len()];
     cap_vertices
         .into_iter()
@@ -6662,11 +6652,7 @@ fn cyclic_interval_items<T: Clone>(
     Ok(interval)
 }
 
-fn remove_degenerate_cyclic_interval<T: Clone>(
-    points: Vec<T>,
-    start: usize,
-    end: usize,
-) -> Vec<T> {
+fn remove_degenerate_cyclic_interval<T: Clone>(points: Vec<T>, start: usize, end: usize) -> Vec<T> {
     if points.len() < 2 || start == end {
         return points;
     }
@@ -8795,8 +8781,7 @@ fn materialize_closed_boundary_touching_regularized_boolean_with_evidence_from_g
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
 ) -> Result<Option<(ExactBooleanResult, CoplanarVolumetricCellEvidenceReport)>, MeshError> {
-    let Some(evidence) =
-        closed_zero_area_boundary_contact_evidence_from_graph(graph, left, right)?
+    let Some(evidence) = closed_zero_area_boundary_contact_evidence_from_graph(graph, left, right)?
     else {
         return Ok(None);
     };
@@ -8852,13 +8837,15 @@ fn validate_consumed_boundary_touching_report(
     right: &ExactMesh,
     label: &str,
 ) -> Result<(), MeshError> {
-    report.validate_against_sources(left, right).map_err(|error| {
-        MeshError::one(MeshDiagnostic::new(
-            Severity::Error,
-            DiagnosticKind::UnsupportedExactOperation,
-            format!("exact {label} consumed invalid certificate: {error:?}"),
-        ))
-    })
+    report
+        .validate_against_sources(left, right)
+        .map_err(|error| {
+            MeshError::one(MeshDiagnostic::new(
+                Severity::Error,
+                DiagnosticKind::UnsupportedExactOperation,
+                format!("exact {label} consumed invalid certificate: {error:?}"),
+            ))
+        })
 }
 
 fn materialize_boundary_policy_shortcut_result(
@@ -8963,12 +8950,7 @@ fn boolean_boundary_touching_meshes_from_graph(
     if !report.is_certified() {
         return Ok(None);
     }
-    validate_consumed_boundary_touching_report(
-        &report,
-        left,
-        right,
-        "boundary-policy projection",
-    )?;
+    validate_consumed_boundary_touching_report(&report, left, right, "boundary-policy projection")?;
 
     let Some(result) =
         materialize_boundary_policy_shortcut_result(left, right, operation, validation)?
@@ -9161,9 +9143,7 @@ pub fn certify_winding_readiness_report_with_validation(
 ) -> Result<ExactWindingReadinessReport, MeshError> {
     let graph = build_intersection_graph(left, right)?;
     validate_graph_source_handoff(&graph, left, right)?;
-    winding_readiness_report_with_validation_from_graph(
-        &graph, left, right, operation, validation,
-    )
+    winding_readiness_report_with_validation_from_graph(&graph, left, right, operation, validation)
 }
 
 /// Prepare and report exact winding handoff facts for explicit output
@@ -9202,8 +9182,9 @@ fn winding_readiness_report_with_boundary_policy_from_graph(
     validation: ValidationPolicy,
     boundary_policy: ExactBoundaryBooleanPolicy,
 ) -> Result<ExactWindingReadinessReport, MeshError> {
-    let readiness =
-        winding_readiness_report_with_validation_from_graph(graph, left, right, operation, validation)?;
+    let readiness = winding_readiness_report_with_validation_from_graph(
+        graph, left, right, operation, validation,
+    )?;
     if boundary_policy == ExactBoundaryBooleanPolicy::Reject
         || matches!(operation, ExactBooleanOperation::SelectedRegions(_))
         || readiness.status != ExactWindingReadinessStatus::BoundaryPolicyRequired
@@ -9221,8 +9202,7 @@ fn winding_readiness_report_with_boundary_policy_from_graph(
     )?
     .is_some()
     {
-        let counts =
-            retained_graph_counts(graph);
+        let counts = retained_graph_counts(graph);
         return Ok(winding_readiness_report(
             operation,
             ExactWindingReadinessStatus::BoundaryPolicyShortcutAlreadyMaterialized,
@@ -9273,7 +9253,8 @@ fn winding_readiness_report_with_validation_from_graph(
         ));
     }
 
-    let readiness = winding_readiness_report_with_shortcuts_from_graph(graph, left, right, operation)?;
+    let readiness =
+        winding_readiness_report_with_shortcuts_from_graph(graph, left, right, operation)?;
     if validation == ValidationPolicy::CLOSED
         || matches!(operation, ExactBooleanOperation::SelectedRegions(_))
         || !matches!(
@@ -9290,8 +9271,7 @@ fn winding_readiness_report_with_validation_from_graph(
     )?
     .is_some()
     {
-        let counts =
-            retained_graph_counts(graph);
+        let counts = retained_graph_counts(graph);
         let needs_coplanar_volumetric =
             graph_requires_coplanar_volumetric_cells_for_sources(graph, left, right);
         let blocker_kind = if needs_coplanar_volumetric {
@@ -11215,13 +11195,12 @@ mod tests {
             ValidationPolicy::ALLOW_BOUNDARY,
         )
         .unwrap();
-        let mut projected = boolean_exact_with_boundary_policy(
-            &left,
-            &right,
+        let mut projected = ExactBooleanRequest::with_boundary_policy(
             ExactBooleanOperation::Union,
             ValidationPolicy::ALLOW_BOUNDARY,
             ExactBoundaryBooleanPolicy::PreserveSeparateShells,
         )
+        .materialize(&left, &right)
         .unwrap();
         projected.validate_against_sources(&left, &right).unwrap();
         let mut stale_mesh = projected.clone();
@@ -11294,7 +11273,10 @@ mod tests {
         let boundary_right = axis_aligned_box_i64([2, 0, 0], [4, 2, 2]);
         let boundary_graph = build_intersection_graph(&boundary_left, &boundary_right).unwrap();
         assert!(graph_requires_coplanar_volumetric_cells(
-            &ExactBooleanBlocker::from_graph_counts(&boundary_graph, ExactBooleanBlockerKind::NeedsWinding)
+            &ExactBooleanBlocker::from_graph_counts(
+                &boundary_graph,
+                ExactBooleanBlockerKind::NeedsWinding
+            )
         ));
         assert!(!graph_requires_coplanar_volumetric_cells_for_sources(
             &boundary_graph,
@@ -11965,12 +11947,11 @@ mod tests {
             ValidationPolicy::ALLOW_BOUNDARY,
         )
         .unwrap();
-        let union = boolean_exact(
-            &inner,
-            &left,
+        let union = ExactBooleanRequest::new(
             ExactBooleanOperation::Union,
             ValidationPolicy::ALLOW_BOUNDARY,
         )
+        .materialize(&inner, &left)
         .expect("contained coplanar union should materialize through arrangement");
         assert_eq!(
             union.kind,
@@ -12096,7 +12077,8 @@ mod tests {
                 "{operation:?}: {attempt:?}"
             );
 
-            let result = boolean_exact(&left, &right, operation, ValidationPolicy::CLOSED)
+            let result = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED)
+                .materialize(&left, &right)
                 .expect("certified orthogonal cell support should materialize");
             assert_eq!(
                 result.kind,
@@ -12138,7 +12120,8 @@ mod tests {
             );
             assert!(preflight.blocker.is_none(), "{operation:?}: {preflight:?}");
 
-            let result = boolean_exact(&left, &right, operation, ValidationPolicy::CLOSED)
+            let result = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED)
+                .materialize(&left, &right)
                 .expect("certified affine-box support should materialize");
             assert_eq!(
                 result.kind,
@@ -12184,12 +12167,11 @@ mod tests {
         );
         assert!(preflight.blocker.is_none(), "{preflight:?}");
 
-        let result = boolean_exact(
-            &left,
-            &right,
+        let result = ExactBooleanRequest::new(
             ExactBooleanOperation::Intersection,
             ValidationPolicy::CLOSED,
         )
+        .materialize(&left, &right)
         .expect("empty affine-normalized intersection should materialize");
         assert_eq!(
             result.kind,
@@ -12419,7 +12401,9 @@ mod tests {
                 readiness.validate().unwrap();
                 readiness.validate_against_sources(left, right).unwrap();
 
-                let result = boolean_exact(left, right, operation, validation).unwrap();
+                let result = ExactBooleanRequest::new(operation, validation)
+                    .materialize(left, right)
+                    .unwrap();
                 assert_eq!(
                     result.kind,
                     ExactBooleanResultKind::CertifiedShortcut {
@@ -12496,7 +12480,8 @@ mod tests {
                 readiness.validate().unwrap();
                 readiness.validate_against_sources(left, right).unwrap();
 
-                let result = boolean_exact(left, right, operation, ValidationPolicy::CLOSED)
+                let result = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED)
+                    .materialize(left, right)
                     .expect("strict closed containment should materialize");
                 assert_eq!(
                     result.kind,
@@ -12596,7 +12581,9 @@ mod tests {
             readiness.validate().unwrap();
             readiness.validate_against_sources(&left, &right).unwrap();
 
-            let result = boolean_exact(&left, &right, operation, ValidationPolicy::CLOSED).unwrap();
+            let result = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED)
+                .materialize(&left, &right)
+                .unwrap();
             assert_eq!(
                 result.kind,
                 ExactBooleanResultKind::CertifiedShortcut {
@@ -12679,7 +12666,8 @@ mod tests {
                 readiness.validate().unwrap();
                 readiness.validate_against_sources(left, right).unwrap();
 
-                let result = boolean_exact(left, right, operation, ValidationPolicy::CLOSED)
+                let result = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED)
+                    .materialize(left, right)
                     .expect("mixed-dimensional regularized solid should shortcut");
                 assert_eq!(
                     result.kind,
@@ -12923,12 +12911,9 @@ mod tests {
             "closed replay should not certify allow-boundary readiness"
         );
 
-        let result = boolean_exact(
-            &left,
-            &right,
-            ExactBooleanOperation::Union,
-            ValidationPolicy::CLOSED,
-        );
+        let result =
+            ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED)
+                .materialize(&left, &right);
         assert!(result.is_err(), "{result:?}");
 
         let materialized = materialize_volumetric_winding_region_plan_from_graph(
@@ -12981,12 +12966,11 @@ mod tests {
         closure.validate().unwrap();
         closure.validate_against_sources(&left, &right).unwrap();
 
-        let boundary_result = boolean_exact(
-            &left,
-            &right,
+        let boundary_result = ExactBooleanRequest::new(
             ExactBooleanOperation::Union,
             ValidationPolicy::ALLOW_BOUNDARY,
         )
+        .materialize(&left, &right)
         .expect("public exact boolean should support boundary output");
         assert_eq!(
             boundary_result.kind,
@@ -13184,7 +13168,8 @@ mod tests {
                 "closed cap shortcut must retain source-owned provenance"
             );
 
-            let public = boolean_exact(&left, &right, operation, ValidationPolicy::CLOSED)
+            let public = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED)
+                .materialize(&left, &right)
                 .expect("closed exact boolean should consume coplanar cap support");
             assert_eq!(public.kind, result.kind, "{operation:?}: {public:?}");
             public.validate().unwrap();
@@ -13342,7 +13327,8 @@ mod tests {
             }
             assert_current_arrangement_attempt(&attempt, &left, &right);
 
-            let result = boolean_exact(&left, &right, operation, ValidationPolicy::ALLOW_BOUNDARY)
+            let result = ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY)
+                .materialize(&left, &right)
                 .expect("open-surface crossing should materialize");
             assert_eq!(
                 result.kind,
@@ -13461,12 +13447,11 @@ mod tests {
         difference.validate().unwrap();
         difference.validate_against_sources(&left, &right).unwrap();
 
-        let intersection = boolean_exact(
-            &left,
-            &right,
+        let intersection = ExactBooleanRequest::new(
             ExactBooleanOperation::Intersection,
             ValidationPolicy::CLOSED,
         )
+        .materialize(&left, &right)
         .unwrap();
         assert_eq!(
             intersection.kind,
@@ -13477,13 +13462,10 @@ mod tests {
         );
         assert!(intersection.mesh.triangles().is_empty());
 
-        let difference = boolean_exact(
-            &left,
-            &right,
-            ExactBooleanOperation::Difference,
-            ValidationPolicy::CLOSED,
-        )
-        .unwrap();
+        let difference =
+            ExactBooleanRequest::new(ExactBooleanOperation::Difference, ValidationPolicy::CLOSED)
+                .materialize(&left, &right)
+                .unwrap();
         assert_eq!(
             difference.kind,
             ExactBooleanResultKind::CertifiedShortcut {
@@ -13561,7 +13543,9 @@ mod tests {
             assert!(attempt.decline.is_none(), "{operation:?}: {attempt:?}");
             assert_current_arrangement_attempt(&attempt, &left, &right);
 
-            let result = boolean_exact(&left, &right, operation, ValidationPolicy::CLOSED).unwrap();
+            let result = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED)
+                .materialize(&left, &right)
+                .unwrap();
             assert_eq!(
                 result.kind,
                 ExactBooleanResultKind::CertifiedShortcut {
@@ -13618,13 +13602,10 @@ mod tests {
         assert!(attempt.decline.is_none(), "{attempt:?}");
         assert_current_arrangement_attempt(&attempt, &left, &right);
 
-        let result = boolean_exact(
-            &left,
-            &right,
-            ExactBooleanOperation::Union,
-            ValidationPolicy::CLOSED,
-        )
-        .expect("face-touching closed union should materialize");
+        let result =
+            ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED)
+                .materialize(&left, &right)
+                .expect("face-touching closed union should materialize");
         result.validate().unwrap();
         result.validate_against_sources(&left, &right).unwrap();
         assert!(result.mesh.facts().mesh.closed_manifold);
@@ -13755,7 +13736,9 @@ mod tests {
             readiness.validate().unwrap();
             readiness.validate_against_sources(&left, &right).unwrap();
 
-            let result = boolean_exact(&left, &right, operation, ValidationPolicy::CLOSED).unwrap();
+            let result = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED)
+                .materialize(&left, &right)
+                .unwrap();
             assert_eq!(
                 result.kind,
                 ExactBooleanResultKind::CertifiedShortcut {
@@ -13821,13 +13804,10 @@ mod tests {
         readiness.validate().unwrap();
         readiness.validate_against_sources(&left, &right).unwrap();
 
-        let difference = boolean_exact(
-            &left,
-            &right,
-            ExactBooleanOperation::Difference,
-            ValidationPolicy::CLOSED,
-        )
-        .unwrap();
+        let difference =
+            ExactBooleanRequest::new(ExactBooleanOperation::Difference, ValidationPolicy::CLOSED)
+                .materialize(&left, &right)
+                .unwrap();
         assert_eq!(
             difference.kind,
             ExactBooleanResultKind::CertifiedShortcut {
@@ -13959,7 +13939,9 @@ mod tests {
             readiness.validate().unwrap();
             readiness.validate_against_sources(&left, &right).unwrap();
 
-            let result = boolean_exact(&left, &right, operation, ValidationPolicy::CLOSED).unwrap();
+            let result = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED)
+                .materialize(&left, &right)
+                .unwrap();
             assert_eq!(
                 result.kind,
                 ExactBooleanResultKind::CertifiedShortcut {
@@ -14092,10 +14074,12 @@ mod tests {
             .expect("exact self-contact cycle splitting should decide");
         assert_eq!(split.len(), 2);
         assert!(split.iter().all(|cycle| cycle.len() == 3));
-        assert!(split.iter().all(|cycle| boundary_loop_self_contact_evidence(cycle)
-            .unwrap()
-            .repeated_exact_point_pairs
-            == 0));
+        assert!(split.iter().all(|cycle| {
+            boundary_loop_self_contact_evidence(cycle)
+                .unwrap()
+                .repeated_exact_point_pairs
+                == 0
+        }));
     }
 
     #[test]
@@ -14179,13 +14163,10 @@ mod tests {
             ExactBooleanSupport::CertifiedArrangementCellComplex
         );
 
-        let union = boolean_exact(
-            &left,
-            &right,
-            ExactBooleanOperation::Union,
-            ValidationPolicy::CLOSED,
-        )
-        .unwrap();
+        let union =
+            ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED)
+                .materialize(&left, &right)
+                .unwrap();
         assert_eq!(
             union.kind,
             ExactBooleanResultKind::CertifiedShortcut {
@@ -14195,13 +14176,10 @@ mod tests {
         );
         assert!(exact_meshes_have_same_shape(&union.mesh, &left));
 
-        let difference = boolean_exact(
-            &left,
-            &right,
-            ExactBooleanOperation::Difference,
-            ValidationPolicy::CLOSED,
-        )
-        .unwrap();
+        let difference =
+            ExactBooleanRequest::new(ExactBooleanOperation::Difference, ValidationPolicy::CLOSED)
+                .materialize(&left, &right)
+                .unwrap();
         assert_eq!(
             difference.kind,
             ExactBooleanResultKind::CertifiedShortcut {
@@ -14254,13 +14232,10 @@ mod tests {
             ExactBooleanSupport::CertifiedArrangementCellComplex
         );
 
-        let union = boolean_exact(
-            &left,
-            &right,
-            ExactBooleanOperation::Union,
-            ValidationPolicy::CLOSED,
-        )
-        .unwrap();
+        let union =
+            ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED)
+                .materialize(&left, &right)
+                .unwrap();
         assert_eq!(
             union.kind,
             ExactBooleanResultKind::CertifiedShortcut {
@@ -14270,13 +14245,10 @@ mod tests {
         );
         assert!(exact_meshes_have_same_shape(&union.mesh, &left));
 
-        let difference = boolean_exact(
-            &left,
-            &right,
-            ExactBooleanOperation::Difference,
-            ValidationPolicy::CLOSED,
-        )
-        .unwrap();
+        let difference =
+            ExactBooleanRequest::new(ExactBooleanOperation::Difference, ValidationPolicy::CLOSED)
+                .materialize(&left, &right)
+                .unwrap();
         assert_eq!(
             difference.kind,
             ExactBooleanResultKind::CertifiedShortcut {
@@ -14369,13 +14341,10 @@ mod tests {
         assert_eq!(difference_attempt.output_triangles, 0);
         assert_current_arrangement_attempt(&difference_attempt, &left, &right);
 
-        let union = boolean_exact(
-            &left,
-            &right,
-            ExactBooleanOperation::Union,
-            ValidationPolicy::CLOSED,
-        )
-        .unwrap();
+        let union =
+            ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED)
+                .materialize(&left, &right)
+                .unwrap();
         assert_eq!(
             union.kind,
             ExactBooleanResultKind::CertifiedShortcut {
@@ -14385,13 +14354,10 @@ mod tests {
         );
         assert!(exact_meshes_have_same_shape(&union.mesh, &left));
 
-        let difference = boolean_exact(
-            &left,
-            &right,
-            ExactBooleanOperation::Difference,
-            ValidationPolicy::CLOSED,
-        )
-        .unwrap();
+        let difference =
+            ExactBooleanRequest::new(ExactBooleanOperation::Difference, ValidationPolicy::CLOSED)
+                .materialize(&left, &right)
+                .unwrap();
         assert_eq!(
             difference.kind,
             ExactBooleanResultKind::CertifiedShortcut {
@@ -14440,8 +14406,9 @@ mod tests {
             readiness.validate().unwrap();
             readiness.validate_against_sources(&left, &right).unwrap();
 
-            let result =
-                boolean_exact(&left, &right, operation, ValidationPolicy::ALLOW_BOUNDARY).unwrap();
+            let result = ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY)
+                .materialize(&left, &right)
+                .unwrap();
             assert_eq!(
                 result.kind,
                 ExactBooleanResultKind::CertifiedShortcut {
@@ -14492,12 +14459,11 @@ mod tests {
         readiness.validate().unwrap();
         readiness.validate_against_sources(&left, &right).unwrap();
 
-        let union = boolean_exact(
-            &left,
-            &right,
+        let union = ExactBooleanRequest::new(
             ExactBooleanOperation::Union,
             ValidationPolicy::ALLOW_BOUNDARY,
         )
+        .materialize(&left, &right)
         .unwrap();
         assert_eq!(
             union.kind,

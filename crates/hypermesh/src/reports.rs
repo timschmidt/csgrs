@@ -21,7 +21,7 @@ use super::affine_solid::{
     materialize_affine_orthogonal_solid_intersection, materialize_affine_orthogonal_solid_union,
 };
 use super::boolean::{
-    ExactBooleanOperation, ExactBoundaryBooleanPolicy, boolean_exact_with_boundary_policy,
+    ExactBooleanOperation, ExactBooleanRequest, ExactBoundaryBooleanPolicy,
     boundary_policy_shortcut_result_matches_sources, certify_adjacent_union_completion_report,
     certify_boundary_touching_report, certify_open_surface_disjoint_report,
     certify_planar_arrangement_report, certify_refinement_report, certify_same_surface_report,
@@ -1446,7 +1446,8 @@ impl ExactBooleanResult {
         }
         self.validate_against_sources(left, right)?;
         let replay =
-            boolean_exact_with_boundary_policy(left, right, operation, validation, boundary_policy)
+            ExactBooleanRequest::with_boundary_policy(operation, validation, boundary_policy)
+                .materialize(left, right)
                 .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
         if self == &replay {
             Ok(())
@@ -1467,13 +1468,9 @@ impl ExactBooleanResult {
         if let Err(error) = self.validate_against_sources(left, right) {
             return error.into();
         }
-        match boolean_exact_with_boundary_policy(
-            left,
-            right,
-            operation,
-            validation,
-            boundary_policy,
-        ) {
+        match ExactBooleanRequest::with_boundary_policy(operation, validation, boundary_policy)
+            .materialize(left, right)
+        {
             Ok(replay) if self == &replay => ExactReportFreshness::Current,
             Ok(_) | Err(_) => ExactReportFreshness::OperationReplayMismatch,
         }
@@ -6480,13 +6477,12 @@ mod tests {
     fn boolean_result_freshness_classifies_local_source_and_operation_drift() {
         let left = report_test_tetra([0, 0, 0]);
         let right = report_test_tetra([3, 0, 0]);
-        let result = boolean_exact_with_boundary_policy(
-            &left,
-            &right,
+        let result = ExactBooleanRequest::with_boundary_policy(
             ExactBooleanOperation::Union,
             ValidationPolicy::CLOSED,
             ExactBoundaryBooleanPolicy::Reject,
         )
+        .materialize(&left, &right)
         .unwrap();
 
         assert_eq!(

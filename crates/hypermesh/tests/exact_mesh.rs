@@ -10,10 +10,9 @@ use hypermesh::{
     ExactArrangement2dSetOperation, ExactArrangementFreshness, ExactBooleanBlockerKind,
     ExactBooleanOperation, ExactBooleanPolicy, ExactBooleanRequest, ExactBooleanResult,
     ExactBooleanResultKind, ExactBoundaryBooleanPolicy, ExactBoundaryTouchingStatus,
-    ExactI64MeshInputReadiness,
-    ExactI64MeshInputReportValidationError, ExactLabeledCellComplexFreshness, ExactMesh,
-    ExactMeshAuditError, ExactMeshConsumerDomain, ExactMeshConsumerReadinessError,
-    ExactMeshDomainSummaryFreshness, ExactMeshHandoffPackageError,
+    ExactI64MeshInputReadiness, ExactI64MeshInputReportValidationError,
+    ExactLabeledCellComplexFreshness, ExactMesh, ExactMeshAuditError, ExactMeshConsumerDomain,
+    ExactMeshConsumerReadinessError, ExactMeshDomainSummaryFreshness, ExactMeshHandoffPackageError,
     ExactMeshHandoffPackageFreshness, ExactMeshProposalAcceptance, ExactMeshProposalReportError,
     ExactMeshProposalSourceKind, ExactOpenSurfaceDisjointStatus, ExactOutputTriangleOrientation,
     ExactPlanarArrangementStatus, ExactRefinementStatus, ExactRegionSelection,
@@ -26,8 +25,7 @@ use hypermesh::{
     MeshArtifactSourceKind, MeshArtifactVertexRecord, MeshCoordinateEvidence,
     MeshFacePairFreshness, MeshFacePairRelation, MeshFacePairValidationError, MeshTopologyEvidence,
     SplitPlanFreshness, TriangleTriangleFreshness, TriangleTriangleRelation, ValidationPolicy,
-    WindingReportFreshness, approximate_mesh_f64_view, audit_exact_mesh, boolean_exact,
-    boolean_exact_with_boundary_policy, boolean_selected_regions,
+    WindingReportFreshness, approximate_mesh_f64_view, audit_exact_mesh, boolean_selected_regions,
     build_exact_arrangement2d_overlay, build_exact_arrangement2d_overlay_with_boundary_policy,
     build_intersection_graph, certify_adjacent_union_completion_report,
     certify_boundary_touching_report, certify_convex_solid,
@@ -278,8 +276,10 @@ fn exact_boolean_evaluation_materializes_certified_result_publicly() {
         Err(hypermesh::ExactReportValidationError::StatusEvidenceMismatch)
     );
     let mut relabeled_winding_status = evaluation.clone();
-    relabeled_winding_status.certifications.winding_readiness.status =
-        ExactWindingReadinessStatus::EmptyOperandAlreadyMaterialized;
+    relabeled_winding_status
+        .certifications
+        .winding_readiness
+        .status = ExactWindingReadinessStatus::EmptyOperandAlreadyMaterialized;
     relabeled_winding_status
         .certifications
         .winding_readiness
@@ -328,8 +328,14 @@ fn exact_boolean_evaluation_materializes_boundary_policy_shortcut_by_default() {
         )
     }));
     let mut mixed_graph_snapshot = evaluation.clone();
-    mixed_graph_snapshot.certifications.refinement.retained_face_pairs = 0;
-    mixed_graph_snapshot.certifications.refinement.retained_events = 0;
+    mixed_graph_snapshot
+        .certifications
+        .refinement
+        .retained_face_pairs = 0;
+    mixed_graph_snapshot
+        .certifications
+        .refinement
+        .retained_events = 0;
     mixed_graph_snapshot
         .certifications
         .refinement
@@ -340,8 +346,10 @@ fn exact_boolean_evaluation_materializes_boundary_policy_shortcut_by_default() {
         Err(hypermesh::ExactReportValidationError::StatusEvidenceMismatch)
     );
     let mut relabeled_winding_status = evaluation.clone();
-    relabeled_winding_status.certifications.winding_readiness.status =
-        ExactWindingReadinessStatus::BoundaryPolicyRequired;
+    relabeled_winding_status
+        .certifications
+        .winding_readiness
+        .status = ExactWindingReadinessStatus::BoundaryPolicyRequired;
     relabeled_winding_status
         .certifications
         .winding_readiness
@@ -1208,8 +1216,9 @@ fn exact_affine_orthogonal_solid_materializer_is_publicly_replayable() {
             .is_none(),
             "{operation:?} should yield to bounds-disjoint provenance"
         );
-        let disjoint_replay =
-            boolean_exact(&left, &separated_right, operation, ValidationPolicy::CLOSED).unwrap();
+        let disjoint_replay = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED)
+            .materialize(&left, &separated_right)
+            .unwrap();
         assert_eq!(
             disjoint_replay.kind,
             ExactBooleanResultKind::CertifiedShortcut {
@@ -1448,8 +1457,9 @@ fn exact_axis_aligned_orthogonal_solid_materializer_is_publicly_replayable() {
             .is_none(),
             "{operation:?} should yield to bounds-disjoint provenance"
         );
-        let disjoint_replay =
-            boolean_exact(&left, &separated_right, operation, ValidationPolicy::CLOSED).unwrap();
+        let disjoint_replay = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED)
+            .materialize(&left, &separated_right)
+            .unwrap();
         assert_eq!(
             disjoint_replay.kind,
             ExactBooleanResultKind::CertifiedShortcut {
@@ -1782,7 +1792,10 @@ fn exact_closed_convex_boolean_materializer_is_publicly_replayable() {
     let separated_evaluation = evaluate_boolean_exact(
         &separated_left,
         &separated_right,
-        ExactBooleanRequest::new(ExactBooleanOperation::Intersection, ValidationPolicy::CLOSED),
+        ExactBooleanRequest::new(
+            ExactBooleanOperation::Intersection,
+            ValidationPolicy::CLOSED,
+        ),
     )
     .unwrap();
     separated_evaluation.validate().unwrap();
@@ -1822,12 +1835,11 @@ fn exact_closed_convex_boolean_materializer_is_publicly_replayable() {
         Err(hypermesh::ExactReportValidationError::StatusEvidenceMismatch),
         "{relabeled_convex_report:?}"
     );
-    let dispatched = boolean_exact(
-        &separated_left,
-        &separated_right,
+    let dispatched = ExactBooleanRequest::new(
         ExactBooleanOperation::Intersection,
         ValidationPolicy::CLOSED,
     )
+    .materialize(&separated_left, &separated_right)
     .unwrap();
     assert_eq!(dispatched.kind, separated.kind);
 
@@ -2348,13 +2360,10 @@ fn adjacent_union_completion_boolean_is_publicly_replayable() {
         .unwrap()
         .is_none()
     );
-    let axis_replay = boolean_exact(
-        &axis_left,
-        &axis_right,
-        ExactBooleanOperation::Union,
-        ValidationPolicy::CLOSED,
-    )
-    .unwrap();
+    let axis_replay =
+        ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED)
+            .materialize(&axis_left, &axis_right)
+            .unwrap();
     assert_eq!(
         axis_replay.kind,
         ExactBooleanResultKind::CertifiedShortcut {
@@ -2591,7 +2600,9 @@ fn exact_open_surface_arrangement_is_publicly_replayable() {
                 .is_none(),
                 "{operation:?} should yield to closed lower-dimensional provenance"
             );
-            let replay = boolean_exact(&left, &right, operation, ValidationPolicy::CLOSED).unwrap();
+            let replay = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED)
+                .materialize(&left, &right)
+                .unwrap();
             assert_eq!(
                 replay.kind,
                 ExactBooleanResultKind::CertifiedShortcut {
@@ -2817,7 +2828,10 @@ fn exact_selected_region_boolean_is_publicly_replayable() {
     let evaluation = evaluate_boolean_exact(
         &left,
         &right,
-        ExactBooleanRequest::new(ExactBooleanOperation::SelectedRegions(policy.selection), policy.validation),
+        ExactBooleanRequest::new(
+            ExactBooleanOperation::SelectedRegions(policy.selection),
+            policy.validation,
+        ),
     )
     .unwrap();
     evaluation.validate().unwrap();
@@ -3183,8 +3197,9 @@ fn lower_dimensional_regularized_boolean_is_publicly_replayable() {
             .is_none(),
             "{operation:?} should yield to closed lower-dimensional provenance"
         );
-        let disjoint_result =
-            boolean_exact(&left, &disjoint_right, operation, ValidationPolicy::CLOSED).unwrap();
+        let disjoint_result = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED)
+            .materialize(&left, &disjoint_right)
+            .unwrap();
         assert_eq!(
             disjoint_result.kind,
             ExactBooleanResultKind::CertifiedShortcut {
@@ -3364,7 +3379,9 @@ fn mixed_dimensional_regularized_solid_boolean_is_publicly_replayable() {
                 .is_none(),
                 "{operation:?} should yield to mixed-dimensional regularized provenance"
             );
-            let result = boolean_exact(left, right, operation, ValidationPolicy::CLOSED).unwrap();
+            let result = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED)
+                .materialize(left, right)
+                .unwrap();
             assert_eq!(
                 result.kind,
                 ExactBooleanResultKind::CertifiedShortcut {
@@ -3408,7 +3425,9 @@ fn mixed_dimensional_regularized_solid_boolean_is_publicly_replayable() {
                 "{operation:?}: {boundary_preflight:?}"
             );
             let boundary_result =
-                boolean_exact(left, right, operation, ValidationPolicy::ALLOW_BOUNDARY).unwrap();
+                ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY)
+                    .materialize(left, right)
+                    .unwrap();
             assert_eq!(
                 boundary_result.kind,
                 ExactBooleanResultKind::CertifiedShortcut {
@@ -3550,13 +3569,12 @@ fn boundary_touching_policy_boolean_is_publicly_replayable() {
                 ExactBoundaryBooleanPolicy::PreserveSeparateShells,
             )
             .unwrap();
-        let replay = boolean_exact_with_boundary_policy(
-            &closed_left,
-            &closed_right,
+        let replay = ExactBooleanRequest::with_boundary_policy(
             operation,
             ValidationPolicy::CLOSED,
             ExactBoundaryBooleanPolicy::PreserveSeparateShells,
         )
+        .materialize(&closed_left, &closed_right)
         .unwrap();
         assert_eq!(
             replay.kind,
@@ -3626,13 +3644,13 @@ fn closed_boundary_touching_regularized_boolean_is_publicly_replayable() {
 
         let (result, _consumed_evidence) =
             materialize_closed_boundary_touching_regularized_boolean_with_evidence(
-            &left,
-            &right,
-            operation,
-            ValidationPolicy::CLOSED,
-        )
-        .unwrap()
-        .expect("closed boundary-only contact should materialize by exact regularization");
+                &left,
+                &right,
+                operation,
+                ValidationPolicy::CLOSED,
+            )
+            .unwrap()
+            .expect("closed boundary-only contact should materialize by exact regularization");
         assert_eq!(
             result.kind,
             ExactBooleanResultKind::CertifiedShortcut {
@@ -4099,13 +4117,9 @@ fn closed_winding_materializers_yield_to_earlier_public_convex_replay() {
             .is_none(),
             "{operation:?} should yield to convex-separated public provenance"
         );
-        let separated_replay = boolean_exact(
-            &separated_left,
-            &separated_right,
-            operation,
-            ValidationPolicy::CLOSED,
-        )
-        .unwrap();
+        let separated_replay = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED)
+            .materialize(&separated_left, &separated_right)
+            .unwrap();
         assert_convex_public_replay(&separated_replay, operation);
         separated_replay
             .validate_operation_against_sources(
@@ -4128,8 +4142,9 @@ fn closed_winding_materializers_yield_to_earlier_public_convex_replay() {
             .is_none(),
             "{operation:?} should yield to convex-containment public provenance"
         );
-        let containment_replay =
-            boolean_exact(&container, &contained, operation, ValidationPolicy::CLOSED).unwrap();
+        let containment_replay = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED)
+            .materialize(&container, &contained)
+            .unwrap();
         assert_convex_public_replay(&containment_replay, operation);
         containment_replay
             .validate_operation_against_sources(
@@ -4605,12 +4620,11 @@ fn arrangement_cell_complex_boolean_is_publicly_replayable() {
     )
     .unwrap()
     .expect("certified arrangement cell-complex boolean should materialize");
-    let replay = boolean_exact(
-        &left,
-        &right,
+    let replay = ExactBooleanRequest::new(
         ExactBooleanOperation::Union,
         ValidationPolicy::ALLOW_BOUNDARY,
     )
+    .materialize(&left, &right)
     .unwrap();
     assert_eq!(result, replay);
     assert_eq!(
@@ -5627,13 +5641,9 @@ fn exact_boolean_public_shortcuts_handle_disjoint_operands() {
     let preflight = preflight_boolean_exact(&left, &right, ExactBooleanOperation::Union).unwrap();
     assert!(!preflight.graph_had_unknowns);
 
-    let union = boolean_exact(
-        &left,
-        &right,
-        ExactBooleanOperation::Union,
-        ValidationPolicy::CLOSED,
-    )
-    .unwrap();
+    let union = ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED)
+        .materialize(&left, &right)
+        .unwrap();
     assert_eq!(
         union.kind,
         ExactBooleanResultKind::CertifiedShortcut {
@@ -5661,12 +5671,11 @@ fn exact_boolean_public_shortcuts_handle_disjoint_operands() {
             .is_err()
     );
 
-    let intersection = boolean_exact(
-        &left,
-        &right,
+    let intersection = ExactBooleanRequest::new(
         ExactBooleanOperation::Intersection,
         ValidationPolicy::ALLOW_BOUNDARY,
     )
+    .materialize(&left, &right)
     .unwrap();
     assert!(intersection.mesh.triangles().is_empty());
 }
@@ -5813,13 +5822,9 @@ fn trivial_boolean_materializers_are_publicly_replayable() {
             );
         }
 
-        let empty_open_result = boolean_exact(
-            &empty,
-            &open_disjoint_left,
-            operation,
-            ValidationPolicy::CLOSED,
-        )
-        .unwrap();
+        let empty_open_result = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED)
+            .materialize(&empty, &open_disjoint_left)
+            .unwrap();
         assert_shortcut(
             &empty_open_result,
             &empty,
@@ -5855,13 +5860,9 @@ fn trivial_boolean_materializers_are_publicly_replayable() {
             "{operation:?} should preserve empty-operand provenance"
         );
 
-        let open_empty_result = boolean_exact(
-            &open_disjoint_left,
-            &empty,
-            operation,
-            ValidationPolicy::CLOSED,
-        )
-        .unwrap();
+        let open_empty_result = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED)
+            .materialize(&open_disjoint_left, &empty)
+            .unwrap();
         assert_eq!(
             open_empty_result.kind,
             ExactBooleanResultKind::CertifiedShortcut {
@@ -5907,7 +5908,10 @@ fn trivial_boolean_materializers_are_publicly_replayable() {
         .unwrap();
         disjoint_evaluation.validate().unwrap();
         let mut relabeled_disjoint_facts = disjoint_evaluation.clone();
-        relabeled_disjoint_facts.certifications.trivial.bounds_disjoint = false;
+        relabeled_disjoint_facts
+            .certifications
+            .trivial
+            .bounds_disjoint = false;
         assert_eq!(
             relabeled_disjoint_facts.validate(),
             Err(hypermesh::ExactReportValidationError::StatusEvidenceMismatch),
@@ -5982,13 +5986,9 @@ fn trivial_boolean_materializers_are_publicly_replayable() {
             .is_none(),
             "{operation:?} should yield to closed lower-dimensional regularization"
         );
-        let closed_identical_result = boolean_exact(
-            &open_identical_left,
-            &open_identical_right,
-            operation,
-            ValidationPolicy::CLOSED,
-        )
-        .unwrap();
+        let closed_identical_result = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED)
+            .materialize(&open_identical_left, &open_identical_right)
+            .unwrap();
         assert_eq!(
             closed_identical_result.kind,
             ExactBooleanResultKind::CertifiedShortcut {
@@ -6035,8 +6035,10 @@ fn trivial_boolean_materializers_are_publicly_replayable() {
         .unwrap();
         same_surface_evaluation.validate().unwrap();
         let mut relabeled_same_surface_report = same_surface_evaluation.clone();
-        relabeled_same_surface_report.certifications.same_surface.status =
-            ExactSameSurfaceStatus::VertexCountMismatch;
+        relabeled_same_surface_report
+            .certifications
+            .same_surface
+            .status = ExactSameSurfaceStatus::VertexCountMismatch;
         relabeled_same_surface_report
             .certifications
             .same_surface
@@ -6095,13 +6097,10 @@ fn trivial_boolean_materializers_are_publicly_replayable() {
             .is_none(),
             "{operation:?} should yield to closed lower-dimensional regularization"
         );
-        let closed_same_surface_result = boolean_exact(
-            &open_identical_left,
-            &open_same_surface_right,
-            operation,
-            ValidationPolicy::CLOSED,
-        )
-        .unwrap();
+        let closed_same_surface_result =
+            ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED)
+                .materialize(&open_identical_left, &open_same_surface_right)
+                .unwrap();
         assert_eq!(
             closed_same_surface_result.kind,
             ExactBooleanResultKind::CertifiedShortcut {
@@ -6402,7 +6401,7 @@ fn direct_boolean_materializers_yield_to_public_operation_replay() {
                         )
                         .unwrap_or_else(|error| {
                             let replay =
-                                boolean_exact(left, right, operation, validation).unwrap_or_else(
+                                ExactBooleanRequest::new(operation, validation).materialize(left, right).unwrap_or_else(
                                     |replay_error| {
                                         panic!(
                                             "{materializer_name} produced unreplayable result for {fixture_name} {operation:?} {validation:?}: {error:?}; replay errored: {replay_error:?}; result={:?}",
@@ -6515,13 +6514,7 @@ fn closed_same_surface_boolean_is_publicly_replayable() {
                     ExactBoundaryBooleanPolicy::Reject,
                 )
                 .unwrap_or_else(|error| {
-                    let replay = boolean_exact_with_boundary_policy(
-                        &left,
-                        right,
-                        operation,
-                        ValidationPolicy::CLOSED,
-                        ExactBoundaryBooleanPolicy::Reject,
-                    )
+                    let replay = ExactBooleanRequest::with_boundary_policy(operation, ValidationPolicy::CLOSED, ExactBoundaryBooleanPolicy::Reject).materialize(&left, right)
                     .unwrap();
                     panic!(
                         "right_index={right_index} operation={operation:?} error={error:?} result={:?} replay={:?}",
@@ -6761,12 +6754,11 @@ fn exact_volumetric_region_reports_classify_freshness_publicly() {
     )
     .unwrap();
 
-    let result = boolean_exact(
-        &left,
-        &right,
+    let result = ExactBooleanRequest::new(
         ExactBooleanOperation::Union,
         ValidationPolicy::ALLOW_BOUNDARY,
     )
+    .materialize(&left, &right)
     .unwrap();
     assert!(!result.volumetric_classifications.is_empty(), "{result:?}");
     let classification = result
@@ -6957,12 +6949,11 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
             .is_err(),
         "strict replay should not certify a boundary-policy readiness report"
     );
-    let default_result = boolean_exact(
-        &left,
-        &right,
+    let default_result = ExactBooleanRequest::new(
         ExactBooleanOperation::Union,
         ValidationPolicy::ALLOW_BOUNDARY,
     )
+    .materialize(&left, &right)
     .unwrap();
     default_result.validate().unwrap();
     assert!(matches!(
@@ -6972,13 +6963,12 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
         }
     ));
 
-    let projected = boolean_exact_with_boundary_policy(
-        &left,
-        &right,
+    let projected = ExactBooleanRequest::with_boundary_policy(
         ExactBooleanOperation::Union,
         ValidationPolicy::ALLOW_BOUNDARY,
         ExactBoundaryBooleanPolicy::PreserveSeparateShells,
     )
+    .materialize(&left, &right)
     .unwrap();
     assert_eq!(
         projected.kind,
@@ -7055,13 +7045,12 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
         )
         .unwrap();
 
-    let closed_intersection = boolean_exact_with_boundary_policy(
-        &left,
-        &right,
+    let closed_intersection = ExactBooleanRequest::with_boundary_policy(
         ExactBooleanOperation::Intersection,
         ValidationPolicy::CLOSED,
         ExactBoundaryBooleanPolicy::PreserveSeparateShells,
     )
+    .materialize(&left, &right)
     .unwrap();
     assert_eq!(
         closed_intersection.kind,
@@ -7146,13 +7135,12 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
                 ExactBoundaryBooleanPolicy::PreserveSeparateShells,
             )
             .unwrap();
-        let closed_regularized = boolean_exact_with_boundary_policy(
-            &left,
-            &right,
+        let closed_regularized = ExactBooleanRequest::with_boundary_policy(
             operation,
             ValidationPolicy::CLOSED,
             ExactBoundaryBooleanPolicy::PreserveSeparateShells,
         )
+        .materialize(&left, &right)
         .unwrap();
         assert_eq!(
             closed_regularized.kind,
