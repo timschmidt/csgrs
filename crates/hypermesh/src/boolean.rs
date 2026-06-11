@@ -1042,6 +1042,10 @@ fn exact_boolean_preflight_matches_certifications(
         | ExactBooleanSupport::CertifiedClosedBoundaryTouchingIntersection
         | ExactBooleanSupport::CertifiedClosedBoundaryTouchingDifference => {
             *status == ExactWindingReadinessStatus::ClosedBoundaryTouchingAlreadyMaterialized
+                && exact_boolean_preflight_matches_closed_boundary_touching(
+                    preflight,
+                    certifications,
+                )
         }
         ExactBooleanSupport::CertifiedOpenSurfaceDisjoint => {
             *status == ExactWindingReadinessStatus::OpenSurfaceDisjointAlreadyMaterialized
@@ -1191,6 +1195,38 @@ fn exact_boolean_convex_reports_match_support(
         | ExactBooleanSupport::CertifiedConvexContainment => true,
         _ => false,
     }
+}
+
+fn exact_boolean_preflight_matches_closed_boundary_touching(
+    preflight: &ExactBooleanPreflight,
+    certifications: &ExactBooleanCertificationSet,
+) -> bool {
+    (certifications.boundary_touching.is_certified()
+        && exact_boolean_preflight_matches_boundary_report(
+            preflight,
+            &certifications.boundary_touching,
+            false,
+        ))
+        || exact_boolean_preflight_matches_closed_boundary_coplanar_handoff(
+            preflight,
+            &certifications.winding_readiness,
+        )
+}
+
+fn exact_boolean_preflight_matches_closed_boundary_coplanar_handoff(
+    preflight: &ExactBooleanPreflight,
+    winding_readiness: &ExactWindingReadinessReport,
+) -> bool {
+    preflight.graph_had_unknowns == winding_readiness.graph_had_unknowns
+        && preflight.retained_face_pairs == winding_readiness.retained_face_pairs
+        && preflight.retained_events == winding_readiness.retained_events
+        && preflight.region_count == winding_readiness.region_count
+        && preflight.region_classifications == winding_readiness.region_classifications
+        && preflight.blocker.is_none()
+        && preflight.arrangement_readiness.is_none()
+        && preflight.coplanar_volumetric_evidence.is_some()
+        && preflight.coplanar_volumetric_evidence
+            == winding_readiness.coplanar_volumetric_evidence
 }
 
 fn exact_boolean_preflight_matches_open_surface_arrangement(

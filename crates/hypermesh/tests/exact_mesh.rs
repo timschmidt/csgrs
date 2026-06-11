@@ -3519,6 +3519,22 @@ fn closed_boundary_touching_regularized_boolean_is_publicly_replayable() {
         );
         result.validate().unwrap();
         result.validate_against_sources(&left, &right).unwrap();
+        let evaluation = evaluate_boolean_exact(
+            &left,
+            &right,
+            ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
+        )
+        .unwrap();
+        evaluation.validate().unwrap();
+        let mut relabeled_boundary_report = evaluation.clone();
+        relabeled_boundary_report
+            .certifications
+            .boundary_touching
+            .status = ExactBoundaryTouchingStatus::NotBoundaryOnly;
+        assert!(
+            relabeled_boundary_report.validate().is_err(),
+            "{operation:?}: {relabeled_boundary_report:?}"
+        );
 
         let (evidenced_result, consumed_evidence) =
             materialize_closed_boundary_touching_regularized_boolean_with_evidence(
@@ -3661,6 +3677,22 @@ fn closed_no_volume_overlap_regularized_boolean_is_publicly_replayable() {
             );
             readiness.validate().unwrap();
             readiness.validate_against_sources(&left, &right).unwrap();
+            let evaluation = evaluate_boolean_exact(
+                &left,
+                &right,
+                ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
+            )
+            .unwrap();
+            evaluation.validate().unwrap();
+            let mut cleared_handoff_evidence = evaluation.clone();
+            cleared_handoff_evidence
+                .certifications
+                .winding_readiness
+                .coplanar_volumetric_evidence = None;
+            assert!(
+                cleared_handoff_evidence.validate().is_err(),
+                "{operation:?}: {cleared_handoff_evidence:?}"
+            );
         }
 
         assert!(
