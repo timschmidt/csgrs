@@ -922,17 +922,45 @@ fn exact_boolean_preflight_matches_certifications(
         }
         ExactBooleanSupport::RequiresCoplanarVolumetricCells => {
             *status == ExactWindingReadinessStatus::CoplanarVolumetricCellsRequired
+                && exact_boolean_preflight_matches_winding_handoff(
+                    preflight,
+                    &certifications.winding_readiness,
+                )
         }
         ExactBooleanSupport::UnresolvedGraph => {
             *status == ExactWindingReadinessStatus::GraphUnknowns
+                && exact_boolean_preflight_matches_winding_handoff(
+                    preflight,
+                    &certifications.winding_readiness,
+                )
         }
-        ExactBooleanSupport::RequiresCertifiedWinding => matches!(
-            status,
-            ExactWindingReadinessStatus::Ready
-                | ExactWindingReadinessStatus::NoNontrivialOverlap
-                | ExactWindingReadinessStatus::VolumetricAssemblyRequired
-        ),
+        ExactBooleanSupport::RequiresCertifiedWinding => {
+            matches!(
+                status,
+                ExactWindingReadinessStatus::Ready
+                    | ExactWindingReadinessStatus::NoNontrivialOverlap
+                    | ExactWindingReadinessStatus::VolumetricAssemblyRequired
+            ) && exact_boolean_preflight_matches_winding_handoff(
+                preflight,
+                &certifications.winding_readiness,
+            )
+        }
     }
+}
+
+fn exact_boolean_preflight_matches_winding_handoff(
+    preflight: &ExactBooleanPreflight,
+    winding_readiness: &ExactWindingReadinessReport,
+) -> bool {
+    preflight.graph_had_unknowns == winding_readiness.graph_had_unknowns
+        && preflight.retained_face_pairs == winding_readiness.retained_face_pairs
+        && preflight.retained_events == winding_readiness.retained_events
+        && preflight.region_count == winding_readiness.region_count
+        && preflight.region_classifications == winding_readiness.region_classifications
+        && preflight.blocker.as_ref() == Some(&winding_readiness.blocker)
+        && preflight.arrangement_readiness.is_none()
+        && preflight.coplanar_volumetric_evidence
+            == winding_readiness.coplanar_volumetric_evidence
 }
 
 fn exact_boolean_result_kind_matches_request(
