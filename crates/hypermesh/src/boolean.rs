@@ -631,6 +631,46 @@ impl ExactBooleanRequest {
         same_surface_report_for_request(left, right, self)
     }
 
+    /// Materialize the empty-operand shortcut for this request, when it owns
+    /// the replay provenance.
+    pub fn materialize_empty_operand(
+        self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> Result<Option<ExactBooleanResult>, MeshError> {
+        materialize_empty_operand_for_request(left, right, self)
+    }
+
+    /// Materialize the bounds-disjoint shortcut for this request, when exact
+    /// AABB facts prove the shortcut owns the replay provenance.
+    pub fn materialize_bounds_disjoint(
+        self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> Result<Option<ExactBooleanResult>, MeshError> {
+        materialize_bounds_disjoint_for_request(left, right, self)
+    }
+
+    /// Materialize the identical-mesh shortcut for this request, when it owns
+    /// the replay provenance.
+    pub fn materialize_identical_mesh(
+        self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> Result<Option<ExactBooleanResult>, MeshError> {
+        materialize_identical_mesh_for_request(left, right, self)
+    }
+
+    /// Materialize the same-surface shortcut for this request, when it owns
+    /// the replay provenance.
+    pub fn materialize_same_surface(
+        self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> Result<Option<ExactBooleanResult>, MeshError> {
+        materialize_same_surface_for_request(left, right, self)
+    }
+
     /// Materialize adjacent closed-solid union completion for this request,
     /// returning the exact report consumed by the materializer.
     pub fn materialize_adjacent_union_completion(
@@ -8411,12 +8451,13 @@ fn boolean_same_surface_meshes(
 /// so this function returns `None` for those cases to preserve dispatcher
 /// provenance. Unsupported operations or non-identical sources also return
 /// `None`.
-pub fn materialize_identical_mesh_boolean(
+fn materialize_identical_mesh_for_request(
     left: &ExactMesh,
     right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: ValidationPolicy,
+    request: ExactBooleanRequest,
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
+    let operation = request.operation;
+    let validation = request.validation;
     if matches!(operation, ExactBooleanOperation::SelectedRegions(_))
         || (left.facts().mesh.closed_manifold && right.facts().mesh.closed_manifold)
         || (validation == ValidationPolicy::CLOSED
@@ -8442,12 +8483,13 @@ pub fn materialize_identical_mesh_boolean(
 /// triangle-set equality after vertex remapping. Byte-identical meshes and
 /// closed solids are deliberately left to their earlier exact dispatcher paths,
 /// so they return `None` here instead of changing replay provenance.
-pub fn materialize_same_surface_boolean(
+fn materialize_same_surface_for_request(
     left: &ExactMesh,
     right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: ValidationPolicy,
+    request: ExactBooleanRequest,
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
+    let operation = request.operation;
+    let validation = request.validation;
     if matches!(operation, ExactBooleanOperation::SelectedRegions(_))
         || (left.facts().mesh.closed_manifold && right.facts().mesh.closed_manifold)
         || (validation == ValidationPolicy::CLOSED
@@ -10872,12 +10914,13 @@ fn boolean_disjoint_meshes(
 /// The AABB intersection classification is an exact retained fact. Unsupported
 /// selected-region operations or sources whose bounds are not certified
 /// disjoint return `None` rather than invoking later topology paths.
-pub fn materialize_bounds_disjoint_boolean(
+fn materialize_bounds_disjoint_for_request(
     left: &ExactMesh,
     right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: ValidationPolicy,
+    request: ExactBooleanRequest,
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
+    let operation = request.operation;
+    let validation = request.validation;
     if matches!(operation, ExactBooleanOperation::SelectedRegions(_))
         || left.triangles().is_empty()
         || right.triangles().is_empty()
@@ -10981,12 +11024,13 @@ fn empty_right_difference_regularizes_to_empty_closed_output(
 /// Empty-source handling is the first exact named-boolean shortcut in the
 /// dispatcher. Unsupported selected-region operations or non-empty operand
 /// pairs return `None`.
-pub fn materialize_empty_operand_boolean(
+fn materialize_empty_operand_for_request(
     left: &ExactMesh,
     right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: ValidationPolicy,
+    request: ExactBooleanRequest,
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
+    let operation = request.operation;
+    let validation = request.validation;
     if matches!(operation, ExactBooleanOperation::SelectedRegions(_))
         || (!left.triangles().is_empty() && !right.triangles().is_empty())
     {
