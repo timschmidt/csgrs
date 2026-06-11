@@ -3758,6 +3758,37 @@ fn closed_winding_shortcuts_are_publicly_replayable() {
             result.freshness_against_sources(&separated_left, &separated_right),
             ExactReportFreshness::Current
         );
+        let separated_evaluation = evaluate_boolean_exact(
+            &separated_left,
+            &separated_right,
+            ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
+        )
+        .unwrap();
+        separated_evaluation.validate().unwrap();
+        let mut relabeled_winding_report = separated_evaluation.clone();
+        relabeled_winding_report
+            .certifications
+            .closed_winding_left_in_right
+            .relation = hypermesh::ClosedMeshWindingMeshRelation::NotClosed;
+        relabeled_winding_report
+            .certifications
+            .closed_winding_left_in_right
+            .target_closed = false;
+        relabeled_winding_report
+            .certifications
+            .closed_winding_left_in_right
+            .vertices
+            .clear();
+        relabeled_winding_report
+            .certifications
+            .closed_winding_left_in_right
+            .validate()
+            .unwrap();
+        assert_eq!(
+            relabeled_winding_report.validate(),
+            Err(hypermesh::ExactReportValidationError::StatusEvidenceMismatch),
+            "{operation:?}: {relabeled_winding_report:?}"
+        );
         assert_eq!(
             result.freshness_against_sources(&separated_left, &intersecting_right),
             ExactReportFreshness::SourceReplayMismatch

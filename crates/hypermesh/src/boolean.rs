@@ -577,6 +577,10 @@ pub struct ExactBooleanCertificationSet {
     pub open_surface_disjoint: ExactOpenSurfaceDisjointReport,
     /// Same-surface shortcut status.
     pub same_surface: ExactSameSurfaceReport,
+    /// Left vertices classified against the right closed mesh.
+    pub closed_winding_left_in_right: ClosedMeshWindingMeshReport,
+    /// Right vertices classified against the left closed mesh.
+    pub closed_winding_right_in_left: ClosedMeshWindingMeshReport,
     /// Planar-arrangement readiness for coplanar surface output.
     pub planar_arrangement: ExactPlanarArrangementReport,
     /// Winding/inside-outside readiness for named volumetric output.
@@ -599,6 +603,10 @@ impl ExactBooleanCertificationSet {
         let boundary_touching = boundary_touching_report_from_graph(&graph, left, right)?;
         let open_surface_disjoint = open_surface_disjoint_report_from_graph(&graph, left, right);
         let same_surface = certify_same_surface_report(left, right);
+        let closed_winding_left_in_right =
+            classify_mesh_vertices_against_closed_mesh_winding_report(left, right);
+        let closed_winding_right_in_left =
+            classify_mesh_vertices_against_closed_mesh_winding_report(right, left);
         let planar_arrangement =
             planar_arrangement_certification_from_graph(&graph, left, right, request.operation)?;
         let winding_readiness = winding_readiness_report_with_boundary_policy_from_graph(
@@ -637,6 +645,8 @@ impl ExactBooleanCertificationSet {
             boundary_touching,
             open_surface_disjoint,
             same_surface,
+            closed_winding_left_in_right,
+            closed_winding_right_in_left,
             planar_arrangement,
             winding_readiness,
             volumetric_boundary_closure,
@@ -654,6 +664,12 @@ impl ExactBooleanCertificationSet {
         self.boundary_touching.validate()?;
         self.open_surface_disjoint.validate()?;
         self.same_surface.validate()?;
+        self.closed_winding_left_in_right
+            .validate()
+            .map_err(|_| ExactReportValidationError::StatusEvidenceMismatch)?;
+        self.closed_winding_right_in_left
+            .validate()
+            .map_err(|_| ExactReportValidationError::StatusEvidenceMismatch)?;
         self.planar_arrangement.validate()?;
         self.winding_readiness.validate()?;
         if self.refinement.operation != request.operation
@@ -919,9 +935,11 @@ fn exact_boolean_preflight_matches_certifications(
         }
         ExactBooleanSupport::CertifiedClosedWindingSeparated => {
             *status == ExactWindingReadinessStatus::ClosedWindingSeparatedAlreadyMaterialized
+                && exact_boolean_closed_winding_reports_separated(certifications)
         }
         ExactBooleanSupport::CertifiedClosedWindingContainment => {
             *status == ExactWindingReadinessStatus::ClosedWindingContainmentAlreadyMaterialized
+                && exact_boolean_closed_winding_reports_containment(certifications)
         }
         ExactBooleanSupport::CertifiedMixedDimensionalRegularizedSolid => {
             *status
@@ -995,6 +1013,23 @@ fn exact_boolean_preflight_matches_open_surface_disjoint(
         && preflight.blocker.is_none()
         && preflight.arrangement_readiness.is_none()
         && preflight.coplanar_volumetric_evidence.is_none()
+}
+
+fn exact_boolean_closed_winding_reports_separated(
+    certifications: &ExactBooleanCertificationSet,
+) -> bool {
+    certifications.closed_winding_left_in_right.relation == ClosedMeshWindingMeshRelation::Outside
+        && certifications.closed_winding_right_in_left.relation
+            == ClosedMeshWindingMeshRelation::Outside
+}
+
+fn exact_boolean_closed_winding_reports_containment(
+    certifications: &ExactBooleanCertificationSet,
+) -> bool {
+    certifications.closed_winding_left_in_right.relation
+        == ClosedMeshWindingMeshRelation::StrictlyInside
+        || certifications.closed_winding_right_in_left.relation
+            == ClosedMeshWindingMeshRelation::StrictlyInside
 }
 
 fn exact_boolean_preflight_matches_open_surface_arrangement(
