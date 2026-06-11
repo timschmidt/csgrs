@@ -308,6 +308,21 @@ fn exact_boolean_evaluation_materializes_boundary_policy_shortcut_by_default() {
             }
         )
     }));
+    let rejected_request = ExactBooleanRequest::with_boundary_policy(
+        ExactBooleanOperation::Union,
+        ValidationPolicy::ALLOW_BOUNDARY,
+        ExactBoundaryBooleanPolicy::Reject,
+    );
+    let rejected = evaluate_boolean_exact(&left, &right, rejected_request).unwrap();
+    rejected.validate().unwrap();
+    assert!(!rejected.is_certified());
+    assert!(!rejected.is_materialized());
+    let mut impossible_materialization = rejected.clone();
+    impossible_materialization.result = evaluation.result.clone();
+    assert_eq!(
+        impossible_materialization.validate(),
+        Err(hypermesh::ExactReportValidationError::StatusEvidenceMismatch)
+    );
 }
 
 #[test]

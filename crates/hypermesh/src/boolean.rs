@@ -774,6 +774,9 @@ impl ExactBooleanEvaluation {
         self.preflight.validate()?;
         self.certifications.validate_for_request(self.request)?;
         if let Some(result) = self.result.as_ref() {
+            if !self.preflight.is_certified() {
+                return Err(ExactReportValidationError::StatusEvidenceMismatch);
+            }
             result.validate()?;
             if !exact_boolean_result_kind_matches_request(result, self.request)
                 || result.mesh.validation_policy() != self.request.validation
