@@ -4090,6 +4090,35 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
         result.freshness_against_sources(&left, &right),
         ExactReportFreshness::Current
     );
+    let evaluation = evaluate_boolean_exact(
+        &left,
+        &right,
+        ExactBooleanRequest::new(
+            ExactBooleanOperation::Union,
+            ValidationPolicy::ALLOW_BOUNDARY,
+        ),
+    )
+    .unwrap();
+    evaluation.validate().unwrap();
+    assert_eq!(
+        evaluation.preflight.support,
+        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex,
+        "{evaluation:?}"
+    );
+    let mut declined_arrangement_attempt = evaluation.clone();
+    let attempt = declined_arrangement_attempt
+        .certifications
+        .arrangement_attempt
+        .as_mut()
+        .expect("named evaluation should retain arrangement attempt");
+    attempt.stage = hypermesh::ExactArrangementBooleanStage::Triangulated;
+    attempt.decline = Some(hypermesh::ExactArrangementBooleanDecline::OutputValidation);
+    attempt.materialized_shortcut = None;
+    attempt.validate().unwrap();
+    assert_eq!(
+        declined_arrangement_attempt.validate(),
+        Err(hypermesh::ExactReportValidationError::StatusEvidenceMismatch)
+    );
     assert!(!result.region_classifications.is_empty());
     assert!(!result.triangulations.is_empty());
     assert!(!result.volumetric_classifications.is_empty());

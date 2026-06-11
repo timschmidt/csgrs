@@ -879,6 +879,7 @@ fn exact_boolean_preflight_matches_certifications(
         }
         ExactBooleanSupport::CertifiedArrangementCellComplex => {
             winding_readiness_status_materializes_arrangement_cell_complex(status)
+                && exact_boolean_arrangement_attempt_materialized(&certifications.arrangement_attempt)
         }
         ExactBooleanSupport::CertifiedEmptyOperand => {
             *status == ExactWindingReadinessStatus::EmptyOperandAlreadyMaterialized
@@ -960,6 +961,17 @@ fn exact_boolean_preflight_matches_certifications(
             )
         }
     }
+}
+
+fn exact_boolean_arrangement_attempt_materialized(
+    attempt: &Option<ExactArrangementBooleanAttempt>,
+) -> bool {
+    attempt.as_ref().is_some_and(|attempt| {
+        attempt.stage == ExactArrangementBooleanStage::Materialized
+            && attempt.decline.is_none()
+            && attempt.materialized_shortcut
+                == Some(ExactBooleanShortcutKind::ArrangementCellComplex)
+    })
 }
 
 fn exact_boolean_preflight_matches_boundary_report(
