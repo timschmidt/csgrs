@@ -42,8 +42,7 @@ use hypermesh::{
     materialize_axis_aligned_orthogonal_solid_difference,
     materialize_axis_aligned_orthogonal_solid_intersection,
     materialize_axis_aligned_orthogonal_solid_union, materialize_closed_convex_boolean,
-    materialize_closed_winding_containment_boolean,
-    materialize_closed_winding_separated_boolean, materialize_contained_face_adjacent_union,
+    materialize_contained_face_adjacent_union,
     materialize_coplanar_mesh_overlay_arrangement, materialize_full_face_adjacent_union,
     materialize_open_surface_arrangement, materialize_volumetric_coplanar_boundary_closure_boolean,
     materialize_volumetric_winding_arrangement, mesh_artifact_from_exact_mesh,
@@ -3757,12 +3756,7 @@ fn closed_winding_shortcuts_are_publicly_replayable() {
         ExactBooleanOperation::Intersection,
         ExactBooleanOperation::Difference,
     ] {
-        let result = materialize_closed_winding_separated_boolean(
-            &separated_left,
-            &separated_right,
-            operation,
-            ValidationPolicy::CLOSED,
-        )
+        let result = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED,).materialize_closed_winding_separated(&separated_left, &separated_right)
         .unwrap()
         .expect("empty graph separated solids should materialize by exact winding");
         assert_eq!(
@@ -3848,12 +3842,7 @@ fn closed_winding_shortcuts_are_publicly_replayable() {
         ExactBooleanOperation::Intersection,
         ExactBooleanOperation::Difference,
     ] {
-        let result = materialize_closed_winding_containment_boolean(
-            &container,
-            &contained,
-            operation,
-            ValidationPolicy::CLOSED,
-        )
+        let result = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED,).materialize_closed_winding_containment(&container, &contained)
         .unwrap()
         .expect("empty graph contained solids should materialize by exact winding");
         assert_eq!(
@@ -3910,12 +3899,7 @@ fn closed_winding_materializers_yield_to_earlier_public_convex_replay() {
         ExactBooleanOperation::Difference,
     ] {
         assert!(
-            materialize_closed_winding_separated_boolean(
-                &separated_left,
-                &separated_right,
-                operation,
-                ValidationPolicy::CLOSED,
-            )
+            ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED,).materialize_closed_winding_separated(&separated_left, &separated_right)
             .unwrap()
             .is_none(),
             "{operation:?} should yield to convex-separated public provenance"
@@ -3935,12 +3919,7 @@ fn closed_winding_materializers_yield_to_earlier_public_convex_replay() {
             .unwrap();
 
         assert!(
-            materialize_closed_winding_containment_boolean(
-                &container,
-                &contained,
-                operation,
-                ValidationPolicy::CLOSED,
-            )
+            ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED,).materialize_closed_winding_containment(&container, &contained)
             .unwrap()
             .is_none(),
             "{operation:?} should yield to convex-containment public provenance"
@@ -5990,14 +5969,6 @@ fn direct_boolean_materializers_yield_to_public_operation_replay() {
         -> Result<Option<ExactBooleanResult>, hypermesh::MeshError>;
 
     let materializers: &[(&str, DirectBooleanMaterializer)] = &[
-        (
-            "closed_winding_separated",
-            materialize_closed_winding_separated_boolean,
-        ),
-        (
-            "closed_winding_containment",
-            materialize_closed_winding_containment_boolean,
-        ),
         ("closed_convex", materialize_closed_convex_boolean),
         (
             "axis_aligned_orthogonal_solid",

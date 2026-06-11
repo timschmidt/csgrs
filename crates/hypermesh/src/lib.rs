@@ -111,9 +111,7 @@ pub use boolean::{
     materialize_arrangement_cell_complex_boolean,
     materialize_axis_aligned_orthogonal_solid_boolean,
     materialize_closed_convex_boolean,
-    materialize_closed_winding_containment_boolean,
-    materialize_closed_winding_separated_boolean, materialize_coplanar_mesh_overlay_arrangement,
-    materialize_open_surface_arrangement,
+    materialize_coplanar_mesh_overlay_arrangement, materialize_open_surface_arrangement,
     materialize_volumetric_coplanar_boundary_closure_boolean,
     materialize_volumetric_winding_arrangement,
 };

@@ -745,6 +745,26 @@ impl ExactBooleanRequest {
         )
     }
 
+    /// Materialize the closed-winding containment shortcut for this request,
+    /// when exact winding facts own the replay provenance.
+    pub fn materialize_closed_winding_containment(
+        self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> Result<Option<ExactBooleanResult>, MeshError> {
+        materialize_closed_winding_containment_for_request(left, right, self)
+    }
+
+    /// Materialize the closed-winding separation shortcut for this request,
+    /// when exact winding facts own the replay provenance.
+    pub fn materialize_closed_winding_separated(
+        self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> Result<Option<ExactBooleanResult>, MeshError> {
+        materialize_closed_winding_separated_for_request(left, right, self)
+    }
+
     /// Materialize adjacent closed-solid union completion for this request,
     /// returning the exact report consumed by the materializer.
     pub fn materialize_adjacent_union_completion(
@@ -3756,12 +3776,13 @@ fn boolean_closed_winding_containment_meshes(
 /// winding classifications to prove one closed operand lies strictly inside
 /// the other. Unsupported contacts or non-containment relations return `None`
 /// rather than falling back to tolerance geometry.
-pub fn materialize_closed_winding_containment_boolean(
+fn materialize_closed_winding_containment_for_request(
     left: &ExactMesh,
     right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: ValidationPolicy,
+    request: ExactBooleanRequest,
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
+    let operation = request.operation;
+    let validation = request.validation;
     Ok(public_operation_replayable_result(
         boolean_closed_winding_containment_meshes(left, right, operation, validation)?,
         left,
@@ -3826,12 +3847,13 @@ fn boolean_closed_winding_separated_meshes(
 /// classifications must prove both operands are outside the other. Unsupported
 /// contacts or containment relations return `None` rather than falling back to
 /// tolerance geometry.
-pub fn materialize_closed_winding_separated_boolean(
+fn materialize_closed_winding_separated_for_request(
     left: &ExactMesh,
     right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: ValidationPolicy,
+    request: ExactBooleanRequest,
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
+    let operation = request.operation;
+    let validation = request.validation;
     Ok(public_operation_replayable_result(
         boolean_closed_winding_separated_meshes(left, right, operation, validation)?,
         left,
