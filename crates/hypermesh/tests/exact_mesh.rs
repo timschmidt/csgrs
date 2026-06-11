@@ -2740,6 +2740,22 @@ fn exact_selected_region_boolean_is_publicly_replayable() {
         result.mesh.validation_policy(),
         ValidationPolicy::ALLOW_BOUNDARY
     );
+    let evaluation = evaluate_boolean_exact(
+        &left,
+        &right,
+        ExactBooleanRequest::new(ExactBooleanOperation::SelectedRegions(policy.selection), policy.validation),
+    )
+    .unwrap();
+    evaluation.validate().unwrap();
+    let mut stale_winding_handoff = evaluation.clone();
+    stale_winding_handoff
+        .certifications
+        .winding_readiness
+        .retained_events += 1;
+    assert!(
+        stale_winding_handoff.validate().is_err(),
+        "{stale_winding_handoff:?}"
+    );
 
     let mut stale_assembly_source_vertex = result.clone();
     let Some(hypermesh::FaceSplitBoundaryNode::OriginalVertex { vertex, .. }) =

@@ -1078,8 +1078,8 @@ fn exact_boolean_preflight_matches_certifications(
     let status = &certifications.winding_readiness.status;
     match preflight.support {
         ExactBooleanSupport::SelectedRegionPolicy => {
-            matches!(preflight.operation, ExactBooleanOperation::SelectedRegions(_))
-                && *status == ExactWindingReadinessStatus::NotNamedOperation
+            *status == ExactWindingReadinessStatus::NotNamedOperation
+                && exact_boolean_preflight_matches_selected_region_policy(preflight, certifications)
         }
         ExactBooleanSupport::CertifiedBoundaryPolicyShortcut => {
             certifications.boundary_touching.is_certified()
@@ -1240,6 +1240,32 @@ fn exact_boolean_preflight_matches_open_surface_disjoint(
         && preflight.blocker.is_none()
         && preflight.arrangement_readiness.is_none()
         && preflight.coplanar_volumetric_evidence.is_none()
+}
+
+fn exact_boolean_preflight_matches_selected_region_policy(
+    preflight: &ExactBooleanPreflight,
+    certifications: &ExactBooleanCertificationSet,
+) -> bool {
+    matches!(preflight.operation, ExactBooleanOperation::SelectedRegions(_))
+        && preflight.graph_had_unknowns == certifications.refinement.graph_had_unknowns
+        && preflight.retained_face_pairs == certifications.refinement.retained_face_pairs
+        && preflight.retained_events == certifications.refinement.retained_events
+        && preflight.graph_had_unknowns == certifications.winding_readiness.graph_had_unknowns
+        && preflight.retained_face_pairs == certifications.winding_readiness.retained_face_pairs
+        && preflight.retained_events == certifications.winding_readiness.retained_events
+        && preflight.blocker.is_none()
+        && preflight.arrangement_readiness.is_none()
+        && preflight.coplanar_volumetric_evidence.is_none()
+        && certifications.winding_readiness.region_count == 0
+        && certifications
+            .winding_readiness
+            .region_classifications
+            .is_empty()
+        && certifications.winding_readiness.arrangement_readiness.is_none()
+        && certifications
+            .winding_readiness
+            .coplanar_volumetric_evidence
+            .is_none()
 }
 
 fn exact_boolean_closed_winding_reports_separated(
