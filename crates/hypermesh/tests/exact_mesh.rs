@@ -5933,6 +5933,59 @@ fn trivial_boolean_materializers_are_publicly_replayable() {
                 ExactBoundaryBooleanPolicy::Reject,
             )
             .unwrap();
+        let lower_dimensional_evaluation = evaluate_boolean_exact(
+            &open_identical_left,
+            &open_same_surface_right,
+            ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
+        )
+        .unwrap();
+        lower_dimensional_evaluation.validate().unwrap();
+        let mut relabeled_lower_dimensional_facts = lower_dimensional_evaluation.clone();
+        relabeled_lower_dimensional_facts
+            .certifications
+            .regularized_solid
+            .left_open_surface = false;
+        assert_eq!(
+            relabeled_lower_dimensional_facts.validate(),
+            Err(hypermesh::ExactReportValidationError::StatusEvidenceMismatch),
+            "{operation:?}: {relabeled_lower_dimensional_facts:?}"
+        );
+
+        let mixed_dimensional_result = materialize_mixed_dimensional_regularized_solid_boolean(
+            &solid,
+            &open_disjoint_left,
+            operation,
+            ValidationPolicy::CLOSED,
+        )
+        .unwrap()
+        .expect("closed solid/open surface should materialize as mixed-dimensional regularization");
+        assert_shortcut(
+            &mixed_dimensional_result,
+            &solid,
+            &open_disjoint_left,
+            &open_disjoint_left,
+            &open_disjoint_right,
+            operation,
+            ValidationPolicy::CLOSED,
+            hypermesh::ExactBooleanShortcutKind::MixedDimensionalRegularizedSolid,
+        );
+        let mixed_dimensional_evaluation = evaluate_boolean_exact(
+            &solid,
+            &open_disjoint_left,
+            ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
+        )
+        .unwrap();
+        mixed_dimensional_evaluation.validate().unwrap();
+        let mut relabeled_mixed_dimensional_facts = mixed_dimensional_evaluation.clone();
+        relabeled_mixed_dimensional_facts
+            .certifications
+            .regularized_solid
+            .right_open_surface = false;
+        assert_eq!(
+            relabeled_mixed_dimensional_facts.validate(),
+            Err(hypermesh::ExactReportValidationError::StatusEvidenceMismatch),
+            "{operation:?}: {relabeled_mixed_dimensional_facts:?}"
+        );
 
         let open_disjoint_result = materialize_open_surface_disjoint_boolean(
             &open_disjoint_left,

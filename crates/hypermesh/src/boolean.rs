@@ -571,6 +571,8 @@ impl ExactBooleanRequest {
 pub struct ExactBooleanCertificationSet {
     /// Source-shape facts used by trivial shortcut supports.
     pub trivial: ExactTrivialBooleanFacts,
+    /// Source-shape facts used by closed regularized-solid shortcut supports.
+    pub regularized_solid: ExactRegularizedSolidBooleanFacts,
     /// Exact graph refinement status.
     pub refinement: ExactRefinementReport,
     /// Boundary-contact policy status.
@@ -606,6 +608,7 @@ impl ExactBooleanCertificationSet {
         let graph = build_intersection_graph(left, right)?;
         validate_graph_source_handoff(&graph, left, right)?;
         let trivial = ExactTrivialBooleanFacts::from_sources(left, right);
+        let regularized_solid = ExactRegularizedSolidBooleanFacts::from_sources(left, right);
         let refinement = refinement_report_from_graph(&graph, request.operation);
         let boundary_touching = boundary_touching_report_from_graph(&graph, left, right)?;
         let open_surface_disjoint = open_surface_disjoint_report_from_graph(&graph, left, right);
@@ -651,6 +654,7 @@ impl ExactBooleanCertificationSet {
             };
         Ok(Self {
             trivial,
+            regularized_solid,
             refinement,
             boundary_touching,
             open_surface_disjoint,
@@ -673,6 +677,7 @@ impl ExactBooleanCertificationSet {
         request: ExactBooleanRequest,
     ) -> Result<(), ExactReportValidationError> {
         self.trivial.validate()?;
+        self.regularized_solid.validate()?;
         self.refinement.validate()?;
         self.boundary_touching.validate()?;
         self.open_surface_disjoint.validate()?;
@@ -782,6 +787,55 @@ pub struct ExactTrivialBooleanFacts {
     pub right_empty: bool,
     /// Both sources are non-empty and their exact mesh AABBs are disjoint.
     pub bounds_disjoint: bool,
+}
+
+/// Replayable source-shape facts for closed regularized-solid shortcut
+/// supports.
+///
+/// These facts retain the exact mesh-topology predicates used to classify
+/// whether an operand contributes closed volume. Empty operands are not
+/// represented as lower-dimensional here because the public dispatcher gives
+/// them distinct empty-operand provenance before regularized-solid shortcuts.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct ExactRegularizedSolidBooleanFacts {
+    /// The left source is a non-empty closed manifold solid.
+    pub left_closed_solid: bool,
+    /// The right source is a non-empty closed manifold solid.
+    pub right_closed_solid: bool,
+    /// The left source is a supported non-empty open manifold surface.
+    pub left_open_surface: bool,
+    /// The right source is a supported non-empty open manifold surface.
+    pub right_open_surface: bool,
+}
+
+impl ExactRegularizedSolidBooleanFacts {
+    fn from_sources(left: &ExactMesh, right: &ExactMesh) -> Self {
+        Self {
+            left_closed_solid: !left.triangles().is_empty() && left.facts().mesh.closed_manifold,
+            right_closed_solid: !right.triangles().is_empty() && right.facts().mesh.closed_manifold,
+            left_open_surface: mesh_is_open_surface(left),
+            right_open_surface: mesh_is_open_surface(right),
+        }
+    }
+
+    fn validate(&self) -> Result<(), ExactReportValidationError> {
+        if (self.left_closed_solid && self.left_open_surface)
+            || (self.right_closed_solid && self.right_open_surface)
+        {
+            Err(ExactReportValidationError::StatusEvidenceMismatch)
+        } else {
+            Ok(())
+        }
+    }
+
+    fn supports_mixed_dimensional_regularized_solid(&self) -> bool {
+        (self.left_closed_solid && self.right_open_surface)
+            || (self.left_open_surface && self.right_closed_solid)
+    }
+
+    fn supports_lower_dimensional_regularized_solid(&self) -> bool {
+        self.left_open_surface && self.right_open_surface
+    }
 }
 
 impl ExactTrivialBooleanFacts {
@@ -1007,10 +1061,16 @@ fn exact_boolean_preflight_matches_certifications(
         ExactBooleanSupport::CertifiedMixedDimensionalRegularizedSolid => {
             *status
                 == ExactWindingReadinessStatus::MixedDimensionalRegularizedSolidAlreadyMaterialized
+                && certifications
+                    .regularized_solid
+                    .supports_mixed_dimensional_regularized_solid()
         }
         ExactBooleanSupport::CertifiedLowerDimensionalRegularizedSolid => {
             *status
                 == ExactWindingReadinessStatus::LowerDimensionalRegularizedSolidAlreadyMaterialized
+                && certifications
+                    .regularized_solid
+                    .supports_lower_dimensional_regularized_solid()
         }
         ExactBooleanSupport::CertifiedConvexUnion
         | ExactBooleanSupport::CertifiedConvexIntersection
