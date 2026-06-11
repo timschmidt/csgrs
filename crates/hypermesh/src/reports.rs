@@ -22,8 +22,7 @@ use super::affine_solid::{
 };
 use super::boolean::{
     ExactBooleanOperation, ExactBooleanRequest, ExactBoundaryBooleanPolicy,
-    boundary_policy_shortcut_result_matches_sources, certify_winding_readiness_report,
-    materialize_closed_same_surface_boolean,
+    boundary_policy_shortcut_result_matches_sources, materialize_closed_same_surface_boolean,
     materialize_volumetric_coplanar_boundary_closure_output,
     open_surface_disjoint_result_matches_sources, replay_coplanar_mesh_overlay_result,
     replay_materialized_volumetric_winding_region_plan, replay_open_surface_arrangement_result,
@@ -5608,7 +5607,7 @@ impl ExactWindingReadinessReport {
         right: &ExactMesh,
     ) -> Result<(), ExactReportValidationError> {
         self.validate()?;
-        let replay = certify_winding_readiness_report(left, right, self.operation)
+        let replay = ExactBooleanRequest::with_boundary_policy(self.operation, ValidationPolicy::ALLOW_BOUNDARY, ExactBoundaryBooleanPolicy::Reject).winding_readiness(left, right)
             .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
         if self == &replay {
             Ok(())
@@ -5674,7 +5673,7 @@ impl ExactWindingReadinessReport {
         if let Err(error) = self.validate() {
             return error.into();
         }
-        match certify_winding_readiness_report(left, right, self.operation) {
+        match ExactBooleanRequest::with_boundary_policy(self.operation, ValidationPolicy::ALLOW_BOUNDARY, ExactBoundaryBooleanPolicy::Reject).winding_readiness(left, right) {
             Ok(replay) if self == &replay => ExactReportFreshness::Current,
             Ok(_) | Err(_) => ExactReportFreshness::SourceReplayMismatch,
         }

@@ -9087,25 +9087,6 @@ fn refinement_report_for_request(
     Ok(refinement_report_from_graph(&graph, request.operation))
 }
 
-/// Prepare and report the exact facts needed by a future winding policy.
-///
-/// This function stops at the same boundary as unsupported nontrivial named
-/// booleans: it extracts the certified graph, rejects unresolved/boundary/
-/// planar-arrangement cases into explicit statuses, then validates split
-/// regions and records opposite-plane classifications. It is an auditable
-pub(crate) fn certify_winding_readiness_report(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-) -> Result<ExactWindingReadinessReport, MeshError> {
-    if let Some(report) = winding_readiness_shortcut_report(left, right, operation) {
-        return Ok(report);
-    }
-    let graph = build_intersection_graph(left, right)?;
-    validate_graph_source_handoff(&graph, left, right)?;
-    winding_readiness_report_from_graph(&graph, left, right, operation)
-}
-
 /// Prepare and report exact winding handoff facts for explicit output
 /// validation and boundary-only projection policies.
 ///
@@ -9122,6 +9103,16 @@ fn winding_readiness_report_for_request(
 ) -> Result<ExactWindingReadinessReport, MeshError> {
     let graph = build_intersection_graph(left, right)?;
     validate_graph_source_handoff(&graph, left, right)?;
+    if request.validation == ValidationPolicy::ALLOW_BOUNDARY
+        && request.boundary_policy == ExactBoundaryBooleanPolicy::Reject
+    {
+        return winding_readiness_report_with_shortcuts_from_graph(
+            &graph,
+            left,
+            right,
+            request.operation,
+        );
+    }
     winding_readiness_report_with_boundary_policy_from_graph(
         &graph,
         left,
@@ -11353,7 +11344,7 @@ mod tests {
         );
 
         let readiness =
-            certify_winding_readiness_report(&left, &right, ExactBooleanOperation::Difference)
+            ExactBooleanRequest::with_boundary_policy(ExactBooleanOperation::Difference, ValidationPolicy::ALLOW_BOUNDARY, ExactBoundaryBooleanPolicy::Reject).winding_readiness(&left, &right)
                 .unwrap();
         assert_eq!(
             readiness.status,
@@ -11382,11 +11373,7 @@ mod tests {
             ValidationPolicy::ALLOW_BOUNDARY,
         )
         .unwrap();
-        let readiness = certify_winding_readiness_report(
-            &left,
-            &right,
-            ExactBooleanOperation::SelectedRegions(ExactRegionSelection::KeepAll),
-        )
+        let readiness = ExactBooleanRequest::with_boundary_policy(ExactBooleanOperation::SelectedRegions(ExactRegionSelection::KeepAll), ValidationPolicy::ALLOW_BOUNDARY, ExactBoundaryBooleanPolicy::Reject).winding_readiness(&left, &right)
         .unwrap();
         assert_eq!(
             readiness.status,
@@ -11414,11 +11401,7 @@ mod tests {
             ValidationPolicy::ALLOW_BOUNDARY,
         )
         .unwrap();
-        let disjoint_readiness = certify_winding_readiness_report(
-            &left,
-            &disjoint_right,
-            ExactBooleanOperation::SelectedRegions(ExactRegionSelection::KeepAll),
-        )
+        let disjoint_readiness = ExactBooleanRequest::with_boundary_policy(ExactBooleanOperation::SelectedRegions(ExactRegionSelection::KeepAll), ValidationPolicy::ALLOW_BOUNDARY, ExactBoundaryBooleanPolicy::Reject).winding_readiness(&left, &disjoint_right)
         .unwrap();
         assert_eq!(
             disjoint_readiness.status,
@@ -11996,7 +11979,7 @@ mod tests {
                 "{operation:?}: {stale_preflight:?}"
             );
 
-            let readiness = certify_winding_readiness_report(&left, &right, operation).unwrap();
+            let readiness = ExactBooleanRequest::with_boundary_policy(operation, ValidationPolicy::ALLOW_BOUNDARY, ExactBoundaryBooleanPolicy::Reject).winding_readiness(&left, &right).unwrap();
             assert_eq!(
                 readiness.status,
                 ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized,
@@ -12179,7 +12162,7 @@ mod tests {
                 "{operation:?}: {preflight:?}"
             );
 
-            let readiness = certify_winding_readiness_report(&left, &right, operation).unwrap();
+            let readiness = ExactBooleanRequest::with_boundary_policy(operation, ValidationPolicy::ALLOW_BOUNDARY, ExactBoundaryBooleanPolicy::Reject).winding_readiness(&left, &right).unwrap();
             assert_eq!(
                 readiness.status,
                 ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized,
@@ -12362,7 +12345,7 @@ mod tests {
                 assert_eq!(preflight.support, support, "{operation:?}: {preflight:?}");
                 assert!(preflight.blocker.is_none(), "{operation:?}: {preflight:?}");
 
-                let readiness = certify_winding_readiness_report(left, right, operation).unwrap();
+                let readiness = ExactBooleanRequest::with_boundary_policy(operation, ValidationPolicy::ALLOW_BOUNDARY, ExactBoundaryBooleanPolicy::Reject).winding_readiness(left, right).unwrap();
                 assert_eq!(readiness.status, status, "{operation:?}: {readiness:?}");
                 assert_eq!(
                     readiness.blocker.kind,
@@ -12441,7 +12424,7 @@ mod tests {
                 preflight.validate().unwrap();
                 preflight.validate_against_sources(left, right).unwrap();
 
-                let readiness = certify_winding_readiness_report(left, right, operation).unwrap();
+                let readiness = ExactBooleanRequest::with_boundary_policy(operation, ValidationPolicy::ALLOW_BOUNDARY, ExactBoundaryBooleanPolicy::Reject).winding_readiness(left, right).unwrap();
                 assert_eq!(
                     readiness.status,
                     ExactWindingReadinessStatus::ClosedWindingContainmentAlreadyMaterialized,
@@ -12546,7 +12529,7 @@ mod tests {
             preflight.validate().unwrap();
             preflight.validate_against_sources(&left, &right).unwrap();
 
-            let readiness = certify_winding_readiness_report(&left, &right, operation).unwrap();
+            let readiness = ExactBooleanRequest::with_boundary_policy(operation, ValidationPolicy::ALLOW_BOUNDARY, ExactBoundaryBooleanPolicy::Reject).winding_readiness(&left, &right).unwrap();
             assert_eq!(
                 readiness.status,
                 ExactWindingReadinessStatus::ClosedWindingSeparatedAlreadyMaterialized,
@@ -12632,7 +12615,7 @@ mod tests {
                 );
                 assert!(preflight.blocker.is_none(), "{operation:?}: {preflight:?}");
 
-                let readiness = certify_winding_readiness_report(left, right, operation).unwrap();
+                let readiness = ExactBooleanRequest::with_boundary_policy(operation, ValidationPolicy::ALLOW_BOUNDARY, ExactBoundaryBooleanPolicy::Reject).winding_readiness(left, right).unwrap();
                 assert_eq!(
                     readiness.status,
                     ExactWindingReadinessStatus::MixedDimensionalRegularizedSolidAlreadyMaterialized,
@@ -12857,7 +12840,7 @@ mod tests {
         );
 
         let readiness =
-            certify_winding_readiness_report(&left, &right, ExactBooleanOperation::Union).unwrap();
+            ExactBooleanRequest::with_boundary_policy(ExactBooleanOperation::Union, ValidationPolicy::ALLOW_BOUNDARY, ExactBoundaryBooleanPolicy::Reject).winding_readiness(&left, &right).unwrap();
         assert_eq!(
             readiness.status,
             ExactWindingReadinessStatus::VolumetricAssemblyRequired,
@@ -13144,7 +13127,7 @@ mod tests {
             preflight.validate().unwrap();
             preflight.validate_against_sources(&left, &right).unwrap();
 
-            let readiness = certify_winding_readiness_report(&left, &right, operation).unwrap();
+            let readiness = ExactBooleanRequest::with_boundary_policy(operation, ValidationPolicy::ALLOW_BOUNDARY, ExactBoundaryBooleanPolicy::Reject).winding_readiness(&left, &right).unwrap();
             assert_eq!(
                 readiness.status,
                 ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized,
@@ -13294,7 +13277,7 @@ mod tests {
             assert!(preflight.validate().is_ok(), "{operation:?}: {preflight:?}");
             preflight.validate_against_sources(&left, &right).unwrap();
 
-            let readiness = certify_winding_readiness_report(&left, &right, operation).unwrap();
+            let readiness = ExactBooleanRequest::with_boundary_policy(operation, ValidationPolicy::ALLOW_BOUNDARY, ExactBoundaryBooleanPolicy::Reject).winding_readiness(&left, &right).unwrap();
             assert_eq!(
                 readiness.status,
                 ExactWindingReadinessStatus::OpenSurfaceArrangementAlreadyMaterialized,
@@ -13533,7 +13516,7 @@ mod tests {
                 "{operation:?}: {preflight:?}"
             );
 
-            let readiness = certify_winding_readiness_report(&left, &right, operation).unwrap();
+            let readiness = ExactBooleanRequest::with_boundary_policy(operation, ValidationPolicy::ALLOW_BOUNDARY, ExactBoundaryBooleanPolicy::Reject).winding_readiness(&left, &right).unwrap();
             assert_eq!(
                 readiness.status,
                 ExactWindingReadinessStatus::ConvexBooleanAlreadyMaterialized,
@@ -13651,7 +13634,7 @@ mod tests {
             );
             assert!(preflight.blocker.is_none(), "{operation:?}: {preflight:?}");
 
-            let readiness = certify_winding_readiness_report(&left, &right, operation).unwrap();
+            let readiness = ExactBooleanRequest::with_boundary_policy(operation, ValidationPolicy::ALLOW_BOUNDARY, ExactBoundaryBooleanPolicy::Reject).winding_readiness(&left, &right).unwrap();
             assert_eq!(
                 readiness.status,
                 ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized,
@@ -13743,7 +13726,7 @@ mod tests {
             preflight.validate().unwrap();
             preflight.validate_against_sources(&left, &right).unwrap();
 
-            let readiness = certify_winding_readiness_report(&left, &right, operation).unwrap();
+            let readiness = ExactBooleanRequest::with_boundary_policy(operation, ValidationPolicy::ALLOW_BOUNDARY, ExactBoundaryBooleanPolicy::Reject).winding_readiness(&left, &right).unwrap();
             assert_eq!(
                 readiness.status,
                 ExactWindingReadinessStatus::ClosedBoundaryTouchingAlreadyMaterialized,
@@ -13822,7 +13805,7 @@ mod tests {
             Err(crate::ExactReportValidationError::StatusEvidenceMismatch)
         );
         let readiness =
-            certify_winding_readiness_report(&left, &right, ExactBooleanOperation::Difference)
+            ExactBooleanRequest::with_boundary_policy(ExactBooleanOperation::Difference, ValidationPolicy::ALLOW_BOUNDARY, ExactBoundaryBooleanPolicy::Reject).winding_readiness(&left, &right)
                 .unwrap();
         assert_eq!(
             readiness.status,
@@ -13902,7 +13885,7 @@ mod tests {
             preflight.validate().unwrap();
             preflight.validate_against_sources(&left, &right).unwrap();
 
-            let readiness = certify_winding_readiness_report(&left, &right, operation).unwrap();
+            let readiness = ExactBooleanRequest::with_boundary_policy(operation, ValidationPolicy::ALLOW_BOUNDARY, ExactBoundaryBooleanPolicy::Reject).winding_readiness(&left, &right).unwrap();
             assert_eq!(
                 readiness.status,
                 ExactWindingReadinessStatus::ConvexBooleanAlreadyMaterialized,
@@ -13962,7 +13945,7 @@ mod tests {
                 "{operation:?}: {preflight:?}"
             );
 
-            let readiness = certify_winding_readiness_report(&left, &right, operation).unwrap();
+            let readiness = ExactBooleanRequest::with_boundary_policy(operation, ValidationPolicy::ALLOW_BOUNDARY, ExactBoundaryBooleanPolicy::Reject).winding_readiness(&left, &right).unwrap();
             assert_eq!(
                 readiness.status,
                 ExactWindingReadinessStatus::ConvexBooleanAlreadyMaterialized,
@@ -14430,7 +14413,7 @@ mod tests {
                 ExactBooleanSupport::CertifiedSameSurface,
                 "{operation:?}: {preflight:?}"
             );
-            let readiness = certify_winding_readiness_report(&left, &right, operation).unwrap();
+            let readiness = ExactBooleanRequest::with_boundary_policy(operation, ValidationPolicy::ALLOW_BOUNDARY, ExactBoundaryBooleanPolicy::Reject).winding_readiness(&left, &right).unwrap();
             assert_eq!(
                 readiness.status,
                 ExactWindingReadinessStatus::SurfaceEqualityAlreadyMaterialized,
@@ -14489,7 +14472,7 @@ mod tests {
         .unwrap();
         assert_eq!(preflight.support, ExactBooleanSupport::CertifiedIdentical);
         let readiness =
-            certify_winding_readiness_report(&left, &right, ExactBooleanOperation::Union).unwrap();
+            ExactBooleanRequest::with_boundary_policy(ExactBooleanOperation::Union, ValidationPolicy::ALLOW_BOUNDARY, ExactBoundaryBooleanPolicy::Reject).winding_readiness(&left, &right).unwrap();
         assert_eq!(
             readiness.status,
             ExactWindingReadinessStatus::SurfaceEqualityAlreadyMaterialized,
