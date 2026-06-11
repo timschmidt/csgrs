@@ -41,11 +41,8 @@ use hypermesh::{
     materialize_axis_aligned_orthogonal_solid_boolean,
     materialize_axis_aligned_orthogonal_solid_difference,
     materialize_axis_aligned_orthogonal_solid_intersection,
-    materialize_axis_aligned_orthogonal_solid_union,
-    materialize_closed_boundary_touching_regularized_boolean_with_evidence,
-    materialize_closed_convex_boolean,
-    materialize_closed_no_volume_overlap_regularized_boolean_with_evidence,
-    materialize_closed_same_surface_boolean, materialize_closed_winding_containment_boolean,
+    materialize_axis_aligned_orthogonal_solid_union, materialize_closed_convex_boolean,
+    materialize_closed_winding_containment_boolean,
     materialize_closed_winding_separated_boolean, materialize_contained_face_adjacent_union,
     materialize_coplanar_mesh_overlay_arrangement, materialize_full_face_adjacent_union,
     materialize_open_surface_arrangement, materialize_volumetric_coplanar_boundary_closure_boolean,
@@ -3479,12 +3476,7 @@ fn closed_boundary_touching_regularized_boolean_is_publicly_replayable() {
         preflight.validate_against_sources(&left, &right).unwrap();
 
         let (result, _consumed_evidence) =
-            materialize_closed_boundary_touching_regularized_boolean_with_evidence(
-                &left,
-                &right,
-                operation,
-                ValidationPolicy::CLOSED,
-            )
+            ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED,).materialize_closed_boundary_touching_regularized_with_evidence(&left, &right)
             .unwrap()
             .expect("closed boundary-only contact should materialize by exact regularization");
         assert_eq!(
@@ -3511,12 +3503,7 @@ fn closed_boundary_touching_regularized_boolean_is_publicly_replayable() {
         );
 
         let (evidenced_result, consumed_evidence) =
-            materialize_closed_boundary_touching_regularized_boolean_with_evidence(
-                &left,
-                &right,
-                operation,
-                ValidationPolicy::CLOSED,
-            )
+            ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED,).materialize_closed_boundary_touching_regularized_with_evidence(&left, &right)
             .unwrap()
             .expect("closed zero-area boundary contact should retain consumed evidence");
         assert_eq!(
@@ -3671,22 +3658,12 @@ fn closed_no_volume_overlap_regularized_boolean_is_publicly_replayable() {
         }
 
         assert!(
-            materialize_closed_boundary_touching_regularized_boolean_with_evidence(
-                &left,
-                &right,
-                operation,
-                ValidationPolicy::CLOSED,
-            )
+            ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED,).materialize_closed_boundary_touching_regularized_with_evidence(&left, &right)
             .unwrap()
             .is_none()
         );
         let (result, _consumed_evidence) =
-            materialize_closed_no_volume_overlap_regularized_boolean_with_evidence(
-            &left,
-            &right,
-            operation,
-            ValidationPolicy::CLOSED,
-        )
+            ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED,).materialize_closed_no_volume_overlap_regularized_with_evidence(&left, &right)
         .unwrap()
         .unwrap_or_else(|| {
             panic!(
@@ -3703,12 +3680,7 @@ fn closed_no_volume_overlap_regularized_boolean_is_publicly_replayable() {
         result.validate().unwrap();
         result.validate_against_sources(&left, &right).unwrap();
         let (evidenced_result, consumed_evidence) =
-            materialize_closed_no_volume_overlap_regularized_boolean_with_evidence(
-                &left,
-                &right,
-                operation,
-                ValidationPolicy::CLOSED,
-            )
+            ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED,).materialize_closed_no_volume_overlap_regularized_with_evidence(&left, &right)
             .unwrap()
             .expect("positive-area no-volume materializer should retain consumed evidence");
         assert_eq!(
@@ -6201,12 +6173,7 @@ fn closed_same_surface_boolean_is_publicly_replayable() {
             ExactBooleanOperation::Intersection,
             ExactBooleanOperation::Difference,
         ] {
-            let result = materialize_closed_same_surface_boolean(
-                &left,
-                right,
-                operation,
-                ValidationPolicy::CLOSED,
-            )
+            let result = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED,).materialize_closed_same_surface(&left, right)
             .unwrap()
             .expect("closed same-surface solids should materialize through arrangement");
             assert_eq!(
@@ -6266,22 +6233,12 @@ fn closed_same_surface_boolean_is_publicly_replayable() {
     )
     .unwrap();
     assert!(
-        materialize_closed_same_surface_boolean(
-            &open_left,
-            &open_right,
-            ExactBooleanOperation::Union,
-            ValidationPolicy::ALLOW_BOUNDARY,
-        )
+        ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::ALLOW_BOUNDARY,).materialize_closed_same_surface(&open_left, &open_right)
         .unwrap()
         .is_none()
     );
     assert!(
-        materialize_closed_same_surface_boolean(
-            &left,
-            &stale_right,
-            ExactBooleanOperation::Union,
-            ValidationPolicy::CLOSED,
-        )
+        ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED,).materialize_closed_same_surface(&left, &stale_right)
         .unwrap()
         .is_none()
     );
@@ -6289,12 +6246,7 @@ fn closed_same_surface_boolean_is_publicly_replayable() {
     let convex_left = tetra_from_corners([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]);
     let convex_same_surface = same_surface_a;
     assert!(
-        materialize_closed_same_surface_boolean(
-            &convex_left,
-            &convex_same_surface,
-            ExactBooleanOperation::Intersection,
-            ValidationPolicy::CLOSED,
-        )
+        ExactBooleanRequest::new(ExactBooleanOperation::Intersection, ValidationPolicy::CLOSED,).materialize_closed_same_surface(&convex_left, &convex_same_surface)
         .unwrap()
         .is_none()
     );

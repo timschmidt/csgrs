@@ -22,7 +22,7 @@ use super::affine_solid::{
 };
 use super::boolean::{
     ExactBooleanOperation, ExactBooleanRequest, ExactBoundaryBooleanPolicy,
-    boundary_policy_shortcut_result_matches_sources, materialize_closed_same_surface_boolean,
+    boundary_policy_shortcut_result_matches_sources,
     materialize_volumetric_coplanar_boundary_closure_output,
     open_surface_disjoint_result_matches_sources, replay_coplanar_mesh_overlay_result,
     replay_materialized_volumetric_winding_region_plan, replay_open_surface_arrangement_result,
@@ -2509,7 +2509,7 @@ fn arrangement_cell_complex_sources_match(
             return Ok(true);
         }
     }
-    if materialize_closed_same_surface_boolean(left, right, operation, validation)
+    if ExactBooleanRequest::new(operation, validation).materialize_closed_same_surface(left, right)
         .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
         .is_some()
     {
@@ -2581,7 +2581,7 @@ fn arrangement_cell_complex_output_matches_sources(
     }
 
     if let Some(replay) =
-        materialize_closed_same_surface_boolean(left, right, operation, validation)
+        ExactBooleanRequest::new(operation, validation).materialize_closed_same_surface(left, right)
             .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
     {
         return Ok(Some(mesh_output_matches(mesh, &replay.mesh)));

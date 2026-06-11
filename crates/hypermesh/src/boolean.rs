@@ -711,6 +711,40 @@ impl ExactBooleanRequest {
         materialize_boundary_touching_policy_for_request(left, right, self)
     }
 
+    /// Materialize closed same-surface arrangement output for this request,
+    /// when that shortcut owns replay provenance.
+    pub fn materialize_closed_same_surface(
+        self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> Result<Option<ExactBooleanResult>, MeshError> {
+        materialize_closed_same_surface_for_request(left, right, self)
+    }
+
+    /// Materialize positive-area closed boundary contact with no shared
+    /// volume, returning the exact evidence consumed by this request.
+    pub fn materialize_closed_no_volume_overlap_regularized_with_evidence(
+        self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> Result<Option<(ExactBooleanResult, CoplanarVolumetricCellEvidenceReport)>, MeshError> {
+        materialize_closed_no_volume_overlap_regularized_with_evidence_for_request(
+            left, right, self,
+        )
+    }
+
+    /// Materialize zero-area closed boundary contact, returning the exact
+    /// evidence consumed by this request.
+    pub fn materialize_closed_boundary_touching_regularized_with_evidence(
+        self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> Result<Option<(ExactBooleanResult, CoplanarVolumetricCellEvidenceReport)>, MeshError> {
+        materialize_closed_boundary_touching_regularized_with_evidence_for_request(
+            left, right, self,
+        )
+    }
+
     /// Materialize adjacent closed-solid union completion for this request,
     /// returning the exact report consumed by the materializer.
     pub fn materialize_adjacent_union_completion(
@@ -5366,12 +5400,13 @@ fn boolean_arrangement_regularized_no_volume_overlap_from_graph(
 /// evidence certifies boundary-only positive-area coplanar contact with no
 /// shared volume; unsupported or non-boundary-only contact states return
 /// `None`.
-pub fn materialize_closed_no_volume_overlap_regularized_boolean_with_evidence(
+fn materialize_closed_no_volume_overlap_regularized_with_evidence_for_request(
     left: &ExactMesh,
     right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: ValidationPolicy,
+    request: ExactBooleanRequest,
 ) -> Result<Option<(ExactBooleanResult, CoplanarVolumetricCellEvidenceReport)>, MeshError> {
+    let operation = request.operation;
+    let validation = request.validation;
     let graph = build_intersection_graph(left, right)?;
     validate_graph_source_handoff(&graph, left, right)?;
     let Some((result, evidence)) =
@@ -8551,12 +8586,13 @@ fn materialize_same_surface_for_request(
 /// non-closed same-surface shortcut. This exposes that named materializer when
 /// preflight certifies arrangement provenance, while yielding to earlier exact
 /// paths such as direct convex materialization.
-pub fn materialize_closed_same_surface_boolean(
+fn materialize_closed_same_surface_for_request(
     left: &ExactMesh,
     right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: ValidationPolicy,
+    request: ExactBooleanRequest,
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
+    let operation = request.operation;
+    let validation = request.validation;
     if matches!(operation, ExactBooleanOperation::SelectedRegions(_))
         || !left.facts().mesh.closed_manifold
         || !right.facts().mesh.closed_manifold
@@ -8853,12 +8889,13 @@ fn materialize_closed_boundary_touching_regularized_boolean_with_evidence_from_g
 /// evidence proves the contact is boundary-only and has no positive-area
 /// coplanar overlap, separating this zero-area shortcut from the positive-area
 /// no-volume-overlap materializer.
-pub fn materialize_closed_boundary_touching_regularized_boolean_with_evidence(
+fn materialize_closed_boundary_touching_regularized_with_evidence_for_request(
     left: &ExactMesh,
     right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: ValidationPolicy,
+    request: ExactBooleanRequest,
 ) -> Result<Option<(ExactBooleanResult, CoplanarVolumetricCellEvidenceReport)>, MeshError> {
+    let operation = request.operation;
+    let validation = request.validation;
     let graph = build_intersection_graph(left, right)?;
     validate_graph_source_handoff(&graph, left, right)?;
     let Some((result, evidence)) =
