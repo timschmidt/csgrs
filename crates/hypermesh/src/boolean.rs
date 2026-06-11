@@ -537,7 +537,7 @@ impl ExactBooleanRequest {
         left: &ExactMesh,
         right: &ExactMesh,
     ) -> Result<ExactBooleanEvaluation, MeshError> {
-        evaluate_boolean_exact(left, right, self)
+        evaluate_boolean_exact_request(left, right, self)
     }
 
     /// Materialize this request, returning an error when the retained exact
@@ -1756,7 +1756,7 @@ fn exact_boolean_result_has_shortcut(
 
 /// Evaluate an exact boolean request into either a certified result or retained
 /// exact blockers/provenance.
-pub fn evaluate_boolean_exact(
+fn evaluate_boolean_exact_request(
     left: &ExactMesh,
     right: &ExactMesh,
     request: ExactBooleanRequest,

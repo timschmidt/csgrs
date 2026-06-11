@@ -40,8 +40,8 @@ use hypermesh::{
     classify_mesh_vertices_against_closed_mesh_winding_report,
     classify_mesh_vertices_against_convex_solid_report,
     classify_point_against_closed_mesh_winding_report, classify_point_against_convex_solid_report,
-    classify_triangle_triangle, evaluate_boolean_exact, exact_mesh_consumer_readiness,
-    exact_mesh_handoff_package, inspect_f64_mesh_input, inspect_i64_mesh_input,
+    classify_triangle_triangle, exact_mesh_consumer_readiness, exact_mesh_handoff_package,
+    inspect_f64_mesh_input, inspect_i64_mesh_input,
     materialize_adjacent_union_completion_boolean_with_report,
     materialize_affine_orthogonal_solid_boolean, materialize_affine_orthogonal_solid_difference,
     materialize_affine_orthogonal_solid_intersection, materialize_arrangement_cell_complex_boolean,
@@ -215,7 +215,7 @@ fn exact_boolean_evaluation_materializes_certified_result_publicly() {
         ValidationPolicy::ALLOW_BOUNDARY,
     );
 
-    let evaluation = evaluate_boolean_exact(&left, &right, request).unwrap();
+    let evaluation = (request).evaluate(&left, &right).unwrap();
 
     evaluation.validate().unwrap();
     evaluation.validate_against_sources(&left, &right).unwrap();
@@ -308,7 +308,7 @@ fn exact_boolean_evaluation_materializes_boundary_policy_shortcut_by_default() {
         ValidationPolicy::ALLOW_BOUNDARY,
     );
 
-    let evaluation = evaluate_boolean_exact(&left, &right, request).unwrap();
+    let evaluation = (request).evaluate(&left, &right).unwrap();
 
     evaluation.validate().unwrap();
     evaluation.validate_against_sources(&left, &right).unwrap();
@@ -362,7 +362,7 @@ fn exact_boolean_evaluation_materializes_boundary_policy_shortcut_by_default() {
         ValidationPolicy::ALLOW_BOUNDARY,
         ExactBoundaryBooleanPolicy::Reject,
     );
-    let rejected = evaluate_boolean_exact(&left, &right, rejected_request).unwrap();
+    let rejected = (rejected_request).evaluate(&left, &right).unwrap();
     rejected.validate().unwrap();
     assert!(!rejected.is_certified());
     assert!(!rejected.is_materialized());
@@ -1319,12 +1319,9 @@ fn affine_orthogonal_solid_recovers_multi_cell_basis_without_sampling_limits() {
         result.validate().unwrap();
         result.validate_against_sources(&left, &right).unwrap();
         if matches!(operation, ExactBooleanOperation::Union) {
-            let evaluation = evaluate_boolean_exact(
-                &left,
-                &right,
-                ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
-            )
-            .unwrap();
+            let evaluation = (ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED))
+                .evaluate(&left, &right)
+                .unwrap();
             evaluation.validate().unwrap();
             assert_eq!(
                 evaluation
@@ -1692,12 +1689,9 @@ fn exact_closed_convex_boolean_materializer_is_publicly_replayable() {
             )
             .unwrap();
         assert!(result.mesh.facts().mesh.closed_manifold);
-        let direct_evaluation = evaluate_boolean_exact(
-            &left,
-            &right,
-            ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
-        )
-        .unwrap();
+        let direct_evaluation = (ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED))
+            .evaluate(&left, &right)
+            .unwrap();
         direct_evaluation.validate().unwrap();
         let mut relabeled_convex_capability = direct_evaluation.clone();
         match operation {
@@ -1789,14 +1783,11 @@ fn exact_closed_convex_boolean_materializer_is_publicly_replayable() {
             ExactBoundaryBooleanPolicy::Reject,
         )
         .unwrap();
-    let separated_evaluation = evaluate_boolean_exact(
-        &separated_left,
-        &separated_right,
-        ExactBooleanRequest::new(
-            ExactBooleanOperation::Intersection,
-            ValidationPolicy::CLOSED,
-        ),
-    )
+    let separated_evaluation = (ExactBooleanRequest::new(
+        ExactBooleanOperation::Intersection,
+        ValidationPolicy::CLOSED,
+    ))
+    .evaluate(&separated_left, &separated_right)
     .unwrap();
     separated_evaluation.validate().unwrap();
     let mut relabeled_convex_report = separated_evaluation.clone();
@@ -2553,12 +2544,9 @@ fn exact_open_surface_arrangement_is_publicly_replayable() {
             result.freshness_against_sources(&left, &right),
             ExactReportFreshness::Current
         );
-        let evaluation = evaluate_boolean_exact(
-            &left,
-            &right,
-            ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
-        )
-        .unwrap();
+        let evaluation = (ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY))
+            .evaluate(&left, &right)
+            .unwrap();
         evaluation.validate().unwrap();
         let mut stale_preflight_counts = evaluation.clone();
         stale_preflight_counts.preflight.retained_events += 1;
@@ -2807,14 +2795,11 @@ fn exact_selected_region_boolean_is_publicly_replayable() {
         result.mesh.validation_policy(),
         ValidationPolicy::ALLOW_BOUNDARY
     );
-    let evaluation = evaluate_boolean_exact(
-        &left,
-        &right,
-        ExactBooleanRequest::new(
-            ExactBooleanOperation::SelectedRegions(policy.selection),
-            policy.validation,
-        ),
-    )
+    let evaluation = (ExactBooleanRequest::new(
+        ExactBooleanOperation::SelectedRegions(policy.selection),
+        policy.validation,
+    ))
+    .evaluate(&left, &right)
     .unwrap();
     evaluation.validate().unwrap();
     let mut stale_evaluation_region_fact = evaluation.clone();
@@ -3637,12 +3622,9 @@ fn closed_boundary_touching_regularized_boolean_is_publicly_replayable() {
         );
         result.validate().unwrap();
         result.validate_against_sources(&left, &right).unwrap();
-        let evaluation = evaluate_boolean_exact(
-            &left,
-            &right,
-            ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
-        )
-        .unwrap();
+        let evaluation = (ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED))
+            .evaluate(&left, &right)
+            .unwrap();
         evaluation.validate().unwrap();
         let mut relabeled_boundary_report = evaluation.clone();
         relabeled_boundary_report
@@ -3797,12 +3779,9 @@ fn closed_no_volume_overlap_regularized_boolean_is_publicly_replayable() {
             );
             readiness.validate().unwrap();
             readiness.validate_against_sources(&left, &right).unwrap();
-            let evaluation = evaluate_boolean_exact(
-                &left,
-                &right,
-                ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
-            )
-            .unwrap();
+            let evaluation = (ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED))
+                .evaluate(&left, &right)
+                .unwrap();
             evaluation.validate().unwrap();
             let mut cleared_handoff_evidence = evaluation.clone();
             cleared_handoff_evidence
@@ -3953,12 +3932,9 @@ fn closed_winding_shortcuts_are_publicly_replayable() {
             result.freshness_against_sources(&separated_left, &separated_right),
             ExactReportFreshness::Current
         );
-        let separated_evaluation = evaluate_boolean_exact(
-            &separated_left,
-            &separated_right,
-            ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
-        )
-        .unwrap();
+        let separated_evaluation = (ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED))
+            .evaluate(&separated_left, &separated_right)
+            .unwrap();
         separated_evaluation.validate().unwrap();
         let mut relabeled_winding_report = separated_evaluation.clone();
         relabeled_winding_report
@@ -4323,14 +4299,11 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
         result.freshness_against_sources(&left, &right),
         ExactReportFreshness::Current
     );
-    let evaluation = evaluate_boolean_exact(
-        &left,
-        &right,
-        ExactBooleanRequest::new(
-            ExactBooleanOperation::Union,
-            ValidationPolicy::ALLOW_BOUNDARY,
-        ),
-    )
+    let evaluation = (ExactBooleanRequest::new(
+        ExactBooleanOperation::Union,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    ))
+    .evaluate(&left, &right)
     .unwrap();
     evaluation.validate().unwrap();
     assert_eq!(
@@ -5781,12 +5754,9 @@ fn trivial_boolean_materializers_are_publicly_replayable() {
             ValidationPolicy::CLOSED,
             hypermesh::ExactBooleanShortcutKind::EmptyOperand,
         );
-        let empty_evaluation = evaluate_boolean_exact(
-            &empty,
-            &solid,
-            ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
-        )
-        .unwrap();
+        let empty_evaluation = (ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED))
+            .evaluate(&empty, &solid)
+            .unwrap();
         empty_evaluation.validate().unwrap();
         let mut relabeled_empty_facts = empty_evaluation.clone();
         relabeled_empty_facts.certifications.trivial.left_empty = false;
@@ -5881,12 +5851,9 @@ fn trivial_boolean_materializers_are_publicly_replayable() {
             ValidationPolicy::CLOSED,
             hypermesh::ExactBooleanShortcutKind::BoundsDisjoint,
         );
-        let disjoint_evaluation = evaluate_boolean_exact(
-            &solid,
-            &disjoint_solid,
-            ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
-        )
-        .unwrap();
+        let disjoint_evaluation = (ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED))
+            .evaluate(&solid, &disjoint_solid)
+            .unwrap();
         disjoint_evaluation.validate().unwrap();
         let mut relabeled_disjoint_facts = disjoint_evaluation.clone();
         relabeled_disjoint_facts
@@ -5926,12 +5893,10 @@ fn trivial_boolean_materializers_are_publicly_replayable() {
             ValidationPolicy::ALLOW_BOUNDARY,
             hypermesh::ExactBooleanShortcutKind::Identical,
         );
-        let identical_evaluation = evaluate_boolean_exact(
-            &open_identical_left,
-            &open_identical_right,
-            ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
-        )
-        .unwrap();
+        let identical_evaluation =
+            (ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY))
+                .evaluate(&open_identical_left, &open_identical_right)
+                .unwrap();
         identical_evaluation.validate().unwrap();
         let mut relabeled_identity_report = identical_evaluation.clone();
         relabeled_identity_report.certifications.identical.status =
@@ -6008,12 +5973,10 @@ fn trivial_boolean_materializers_are_publicly_replayable() {
             ValidationPolicy::ALLOW_BOUNDARY,
             hypermesh::ExactBooleanShortcutKind::SameSurface,
         );
-        let same_surface_evaluation = evaluate_boolean_exact(
-            &open_identical_left,
-            &open_same_surface_right,
-            ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
-        )
-        .unwrap();
+        let same_surface_evaluation =
+            (ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY))
+                .evaluate(&open_identical_left, &open_same_surface_right)
+                .unwrap();
         same_surface_evaluation.validate().unwrap();
         let mut relabeled_same_surface_report = same_surface_evaluation.clone();
         relabeled_same_surface_report
@@ -6101,12 +6064,10 @@ fn trivial_boolean_materializers_are_publicly_replayable() {
                 ExactBoundaryBooleanPolicy::Reject,
             )
             .unwrap();
-        let lower_dimensional_evaluation = evaluate_boolean_exact(
-            &open_identical_left,
-            &open_same_surface_right,
-            ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
-        )
-        .unwrap();
+        let lower_dimensional_evaluation =
+            (ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED))
+                .evaluate(&open_identical_left, &open_same_surface_right)
+                .unwrap();
         lower_dimensional_evaluation.validate().unwrap();
         let mut relabeled_lower_dimensional_facts = lower_dimensional_evaluation.clone();
         relabeled_lower_dimensional_facts
@@ -6137,12 +6098,10 @@ fn trivial_boolean_materializers_are_publicly_replayable() {
             ValidationPolicy::CLOSED,
             hypermesh::ExactBooleanShortcutKind::MixedDimensionalRegularizedSolid,
         );
-        let mixed_dimensional_evaluation = evaluate_boolean_exact(
-            &solid,
-            &open_disjoint_left,
-            ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
-        )
-        .unwrap();
+        let mixed_dimensional_evaluation =
+            (ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED))
+                .evaluate(&solid, &open_disjoint_left)
+                .unwrap();
         mixed_dimensional_evaluation.validate().unwrap();
         let mut relabeled_mixed_dimensional_facts = mixed_dimensional_evaluation.clone();
         relabeled_mixed_dimensional_facts
@@ -6173,12 +6132,10 @@ fn trivial_boolean_materializers_are_publicly_replayable() {
             ValidationPolicy::ALLOW_BOUNDARY,
             hypermesh::ExactBooleanShortcutKind::OpenSurfaceDisjoint,
         );
-        let open_disjoint_evaluation = evaluate_boolean_exact(
-            &open_disjoint_left,
-            &open_disjoint_right,
-            ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
-        )
-        .unwrap();
+        let open_disjoint_evaluation =
+            (ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY))
+                .evaluate(&open_disjoint_left, &open_disjoint_right)
+                .unwrap();
         open_disjoint_evaluation.validate().unwrap();
         let mut relabeled_disjoint_report = open_disjoint_evaluation.clone();
         relabeled_disjoint_report
