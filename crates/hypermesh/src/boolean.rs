@@ -652,11 +652,23 @@ impl ExactBooleanCertificationSet {
         {
             return Err(ExactReportValidationError::StatusEvidenceMismatch);
         }
+        if self.refinement.graph_had_unknowns != self.boundary_touching.graph_had_unknowns
+            || self.refinement.retained_face_pairs != self.boundary_touching.retained_face_pairs
+            || self.refinement.retained_events != self.boundary_touching.retained_events
+        {
+            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+        }
         if matches!(request.operation, ExactBooleanOperation::SelectedRegions(_)) {
             if self.volumetric_boundary_closure.is_some() || self.arrangement_attempt.is_some() {
                 return Err(ExactReportValidationError::StatusEvidenceMismatch);
             }
             return Ok(());
+        }
+        if self.refinement.graph_had_unknowns != self.planar_arrangement.graph_had_unknowns
+            || self.refinement.retained_face_pairs != self.planar_arrangement.retained_face_pairs
+            || self.refinement.retained_events != self.planar_arrangement.retained_events
+        {
+            return Err(ExactReportValidationError::StatusEvidenceMismatch);
         }
         let Some(report) = self.volumetric_boundary_closure.as_ref() else {
             return Err(ExactReportValidationError::StatusEvidenceMismatch);

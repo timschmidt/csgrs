@@ -308,6 +308,18 @@ fn exact_boolean_evaluation_materializes_boundary_policy_shortcut_by_default() {
             }
         )
     }));
+    let mut mixed_graph_snapshot = evaluation.clone();
+    mixed_graph_snapshot.certifications.refinement.retained_face_pairs = 0;
+    mixed_graph_snapshot.certifications.refinement.retained_events = 0;
+    mixed_graph_snapshot
+        .certifications
+        .refinement
+        .validate()
+        .unwrap();
+    assert_eq!(
+        mixed_graph_snapshot.validate(),
+        Err(hypermesh::ExactReportValidationError::StatusEvidenceMismatch)
+    );
     let rejected_request = ExactBooleanRequest::with_boundary_policy(
         ExactBooleanOperation::Union,
         ValidationPolicy::ALLOW_BOUNDARY,
