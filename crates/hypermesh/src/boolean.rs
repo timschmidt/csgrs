@@ -7563,14 +7563,33 @@ fn boolean_closed_boundary_touching_regularized_meshes(
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
     let graph = build_intersection_graph(left, right)?;
     validate_graph_source_handoff(&graph, left, right)?;
+    Ok(
+        materialize_closed_boundary_touching_regularized_boolean_with_evidence_from_graph(
+            &graph, left, right, operation, validation,
+        )?
+        .map(|(result, _evidence)| result),
+    )
+}
+
+fn materialize_closed_boundary_touching_regularized_boolean_with_evidence_from_graph(
+    graph: &super::graph::ExactIntersectionGraph,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+) -> Result<Option<(ExactBooleanResult, CoplanarVolumetricCellEvidenceReport)>, MeshError> {
     let Some(evidence) =
-        closed_zero_area_boundary_contact_evidence_from_graph(&graph, left, right)?
+        closed_zero_area_boundary_contact_evidence_from_graph(graph, left, right)?
     else {
         return Ok(None);
     };
-    materialize_closed_boundary_touching_regularized_result_from_evidence(
+    let Some(result) = materialize_closed_boundary_touching_regularized_result_from_evidence(
         left, right, operation, validation, &evidence,
-    )
+    )?
+    else {
+        return Ok(None);
+    };
+    Ok(Some((result, evidence)))
 }
 
 /// Certify and materialize a named regularized boolean for zero-area closed
@@ -7587,14 +7606,10 @@ pub fn materialize_closed_boundary_touching_regularized_boolean_with_evidence(
 ) -> Result<Option<(ExactBooleanResult, CoplanarVolumetricCellEvidenceReport)>, MeshError> {
     let graph = build_intersection_graph(left, right)?;
     validate_graph_source_handoff(&graph, left, right)?;
-    let Some(evidence) =
-        closed_zero_area_boundary_contact_evidence_from_graph(&graph, left, right)?
-    else {
-        return Ok(None);
-    };
-    let Some(result) = materialize_closed_boundary_touching_regularized_result_from_evidence(
-        left, right, operation, validation, &evidence,
-    )?
+    let Some((result, evidence)) =
+        materialize_closed_boundary_touching_regularized_boolean_with_evidence_from_graph(
+            &graph, left, right, operation, validation,
+        )?
     else {
         return Ok(None);
     };
