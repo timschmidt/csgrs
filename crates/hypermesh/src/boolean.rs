@@ -1025,6 +1025,10 @@ fn exact_boolean_preflight_matches_certifications(
         ExactBooleanSupport::CertifiedArrangementCellComplex => {
             winding_readiness_status_materializes_arrangement_cell_complex(status)
                 && exact_boolean_arrangement_attempt_materialized(&certifications.arrangement_attempt)
+                && exact_boolean_preflight_matches_arrangement_cell_complex(
+                    preflight,
+                    &certifications.winding_readiness,
+                )
         }
         ExactBooleanSupport::CertifiedEmptyOperand => {
             *status == ExactWindingReadinessStatus::EmptyOperandAlreadyMaterialized
@@ -1253,6 +1257,20 @@ fn exact_boolean_arrangement_attempt_materialized(
             && attempt.materialized_shortcut
                 == Some(ExactBooleanShortcutKind::ArrangementCellComplex)
     })
+}
+
+fn exact_boolean_preflight_matches_arrangement_cell_complex(
+    preflight: &ExactBooleanPreflight,
+    winding_readiness: &ExactWindingReadinessReport,
+) -> bool {
+    preflight.graph_had_unknowns == winding_readiness.graph_had_unknowns
+        && preflight.retained_face_pairs == winding_readiness.retained_face_pairs
+        && preflight.retained_events == winding_readiness.retained_events
+        && preflight.region_count == winding_readiness.region_count
+        && preflight.region_classifications == winding_readiness.region_classifications
+        && preflight.blocker.is_none()
+        && preflight.arrangement_readiness == winding_readiness.arrangement_readiness
+        && preflight.coplanar_volumetric_evidence == winding_readiness.coplanar_volumetric_evidence
 }
 
 fn exact_boolean_preflight_matches_boundary_report(

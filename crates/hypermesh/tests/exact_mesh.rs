@@ -4240,6 +4240,19 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
         declined_arrangement_attempt.validate(),
         Err(hypermesh::ExactReportValidationError::StatusEvidenceMismatch)
     );
+    let mut stale_readiness_counts = evaluation.clone();
+    stale_readiness_counts
+        .certifications
+        .winding_readiness
+        .retained_face_pairs += 1;
+    stale_readiness_counts
+        .certifications
+        .winding_readiness
+        .retained_events += 1;
+    assert!(
+        stale_readiness_counts.validate().is_err(),
+        "{stale_readiness_counts:?}"
+    );
     assert!(!result.region_classifications.is_empty());
     assert!(!result.triangulations.is_empty());
     assert!(!result.volumetric_classifications.is_empty());
