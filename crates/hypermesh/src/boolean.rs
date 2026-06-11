@@ -1775,31 +1775,12 @@ pub fn evaluate_boolean_exact(
     let preflight = preflight_boolean_exact_request(left, right, request)?;
     let certifications = ExactBooleanCertificationSet::from_sources(left, right, request)?;
     let result = if preflight.is_certified() {
-        Some(match preflight.support {
-            ExactBooleanSupport::CertifiedConvexSeparated
-            | ExactBooleanSupport::CertifiedConvexContainment => {
-                materialize_closed_convex_boolean(
-                    left,
-                    right,
-                    request.operation,
-                    request.validation,
-                )?
-                .ok_or_else(|| {
-                    MeshError::one(MeshDiagnostic::new(
-                        Severity::Error,
-                        DiagnosticKind::UnsupportedExactOperation,
-                        "certified convex relation preflight did not materialize",
-                    ))
-                })?
-            }
-            _ => boolean_exact_with_boundary_policy(
-                left,
-                right,
-                request.operation,
-                request.validation,
-                request.boundary_policy,
-            )?,
-        })
+        Some(materialize_certified_boolean_support(
+            left,
+            right,
+            request,
+            preflight.support,
+        )?)
     } else {
         None
     };
@@ -1817,6 +1798,152 @@ pub fn evaluate_boolean_exact(
         ))
     })?;
     Ok(evaluation)
+}
+
+fn certified_boolean_support_did_not_materialize_error(
+    support: ExactBooleanSupport,
+) -> MeshError {
+    MeshError::one(MeshDiagnostic::new(
+        Severity::Error,
+        DiagnosticKind::UnsupportedExactOperation,
+        format!("certified exact boolean support did not materialize: {support:?}"),
+    ))
+}
+
+fn materialize_certified_boolean_support(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    request: ExactBooleanRequest,
+    support: ExactBooleanSupport,
+) -> Result<ExactBooleanResult, MeshError> {
+    let operation = request.operation;
+    let validation = request.validation;
+    let result = match support {
+        ExactBooleanSupport::SelectedRegionPolicy => {
+            let ExactBooleanOperation::SelectedRegions(selection) = operation else {
+                return Err(certified_boolean_support_did_not_materialize_error(support));
+            };
+            Some(boolean_selected_regions(
+                left,
+                right,
+                ExactBooleanPolicy {
+                    selection,
+                    validation,
+                    reject_unknowns: true,
+                },
+            )?)
+        }
+        ExactBooleanSupport::CertifiedBoundaryPolicyShortcut => {
+            materialize_boundary_touching_policy_boolean(
+                left,
+                right,
+                operation,
+                validation,
+                request.boundary_policy,
+            )?
+        }
+        ExactBooleanSupport::CertifiedOpenSurfaceArrangementUnion
+        | ExactBooleanSupport::CertifiedOpenSurfaceArrangementIntersection
+        | ExactBooleanSupport::CertifiedOpenSurfaceArrangementDifference => {
+            materialize_open_surface_arrangement(left, right, operation, validation)?
+        }
+        ExactBooleanSupport::CertifiedArrangementCellComplex => {
+            materialize_certified_arrangement_cell_complex_support(
+                left, right, operation, validation,
+            )?
+        }
+        ExactBooleanSupport::CertifiedEmptyOperand => {
+            Some(boolean_empty_operand(left, right, operation, validation)?)
+        }
+        ExactBooleanSupport::CertifiedBoundsDisjoint => {
+            Some(boolean_disjoint_meshes(left, right, operation, validation)?)
+        }
+        ExactBooleanSupport::CertifiedIdentical => {
+            Some(boolean_identical_meshes(left, operation, validation)?)
+        }
+        ExactBooleanSupport::CertifiedSameSurface => {
+            Some(boolean_same_surface_meshes(left, operation, validation)?)
+        }
+        ExactBooleanSupport::CertifiedClosedBoundaryTouchingUnion
+        | ExactBooleanSupport::CertifiedClosedBoundaryTouchingIntersection
+        | ExactBooleanSupport::CertifiedClosedBoundaryTouchingDifference => {
+            let result = boolean_closed_boundary_touching_regularized_meshes(
+                left, right, operation, validation,
+            )?;
+            if result.is_some() {
+                result
+            } else {
+                boolean_closed_no_volume_overlap_regularized_meshes(
+                    left, right, operation, validation,
+                )?
+            }
+        }
+        ExactBooleanSupport::CertifiedOpenSurfaceDisjoint => {
+            let graph = build_intersection_graph(left, right)?;
+            validate_graph_source_handoff(&graph, left, right)?;
+            boolean_open_surface_disjoint_meshes_from_graph(
+                &graph, left, right, operation, validation,
+            )?
+        }
+        ExactBooleanSupport::CertifiedClosedWindingSeparated => {
+            boolean_closed_winding_separated_meshes(left, right, operation, validation)?
+        }
+        ExactBooleanSupport::CertifiedClosedWindingContainment => {
+            boolean_closed_winding_containment_meshes(left, right, operation, validation)?
+        }
+        ExactBooleanSupport::CertifiedMixedDimensionalRegularizedSolid
+        | ExactBooleanSupport::CertifiedLowerDimensionalRegularizedSolid => {
+            boolean_closed_regularized_lower_dimensional_optional(
+                left, right, operation, validation,
+            )?
+        }
+        ExactBooleanSupport::CertifiedConvexUnion
+        | ExactBooleanSupport::CertifiedConvexIntersection
+        | ExactBooleanSupport::CertifiedConvexDifference => {
+            boolean_convex_meshes_optional(left, right, operation, validation)?
+        }
+        ExactBooleanSupport::CertifiedConvexSeparated
+        | ExactBooleanSupport::CertifiedConvexContainment => {
+            boolean_convex_relation_meshes_optional(left, right, operation, validation)?
+        }
+        ExactBooleanSupport::RequiresBoundaryPolicy
+        | ExactBooleanSupport::RequiresPlanarArrangement
+        | ExactBooleanSupport::RequiresCoplanarVolumetricCells
+        | ExactBooleanSupport::RequiresCertifiedWinding
+        | ExactBooleanSupport::UnresolvedGraph => None,
+    };
+    result.ok_or_else(|| certified_boolean_support_did_not_materialize_error(support))
+}
+
+fn materialize_certified_arrangement_cell_complex_support(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+) -> Result<Option<ExactBooleanResult>, MeshError> {
+    if let Some(result) =
+        boolean_arrangement_orthogonal_solid_cell_recovery(left, right, operation, validation)?
+    {
+        return Ok(Some(result));
+    }
+    if let Some(result) =
+        boolean_arrangement_affine_orthogonal_solid_recovery(left, right, operation, validation)?
+    {
+        return Ok(Some(result));
+    }
+    if let Some(result) =
+        boolean_arrangement_volumetric_split_cell_recovery(left, right, operation, validation)?
+    {
+        return Ok(Some(result));
+    }
+    if let Some((result, _closure)) =
+        materialize_volumetric_coplanar_boundary_closure_boolean(
+            left, right, operation, validation,
+        )?
+    {
+        return Ok(Some(result));
+    }
+    boolean_arrangement_cell_complex_meshes(left, right, operation, validation)
 }
 
 /// Materialize an exact boolean request.
