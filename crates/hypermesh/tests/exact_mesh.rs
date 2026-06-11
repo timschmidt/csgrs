@@ -30,8 +30,7 @@ use hypermesh::{
     build_intersection_graph, certify_adjacent_union_completion_report,
     certify_boundary_touching_report, certify_convex_solid,
     certify_coplanar_volumetric_cell_evidence, certify_exact_mesh_proposal,
-    certify_open_surface_disjoint_report, certify_planar_arrangement_report,
-    certify_refinement_report, certify_same_surface_report,
+    certify_open_surface_disjoint_report, certify_same_surface_report,
     checked_classify_face_regions_against_opposite_planes,
     checked_triangulate_face_regions_with_earcut, classify_mesh_face_pair,
     classify_mesh_vertices_against_closed_mesh_winding_report,
@@ -5105,8 +5104,12 @@ fn public_exact_blocker_reports_replay_remaining_decisions() {
     )
     .unwrap();
 
-    let refinement =
-        certify_refinement_report(&left, &overlapping_right, ExactBooleanOperation::Union).unwrap();
+    let refinement = ExactBooleanRequest::new(
+        ExactBooleanOperation::Union,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .refinement_report(&left, &overlapping_right)
+    .unwrap();
     assert_eq!(refinement.status, ExactRefinementStatus::NotRequired);
     assert!(!refinement.is_required());
     refinement.validate().unwrap();
@@ -5122,9 +5125,12 @@ fn public_exact_blocker_reports_replay_remaining_decisions() {
         ExactReportFreshness::SourceReplayMismatch
     );
 
-    let planar =
-        certify_planar_arrangement_report(&left, &overlapping_right, ExactBooleanOperation::Union)
-            .unwrap();
+    let planar = ExactBooleanRequest::new(
+        ExactBooleanOperation::Union,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .planar_arrangement_report(&left, &overlapping_right)
+    .unwrap();
     assert_eq!(
         planar.status,
         ExactPlanarArrangementStatus::AlreadyMaterialized
@@ -5236,8 +5242,12 @@ fn planar_arrangement_report_classifies_noncoplanar_candidates_as_winding_blocke
     )
     .unwrap();
 
-    let report =
-        certify_planar_arrangement_report(&left, &right, ExactBooleanOperation::Union).unwrap();
+    let report = ExactBooleanRequest::new(
+        ExactBooleanOperation::Union,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .planar_arrangement_report(&left, &right)
+    .unwrap();
 
     assert_eq!(
         report.status,

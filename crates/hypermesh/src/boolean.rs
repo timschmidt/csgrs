@@ -561,6 +561,26 @@ impl ExactBooleanRequest {
     ) -> Result<ExactVolumetricBoundaryClosureReport, MeshError> {
         volumetric_boundary_closure_report_for_request(left, right, self)
     }
+
+    /// Report whether exact graph extraction retained unresolved predicate or
+    /// construction evidence before topology policy is considered.
+    pub fn refinement_report(
+        self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> Result<ExactRefinementReport, MeshError> {
+        refinement_report_for_request(left, right, self)
+    }
+
+    /// Report whether this request is blocked on exact planar-arrangement
+    /// output for positive-area coplanar topology.
+    pub fn planar_arrangement_report(
+        self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> Result<ExactPlanarArrangementReport, MeshError> {
+        planar_arrangement_report_for_request(left, right, self)
+    }
 }
 
 /// Replayable certification bundle for an exact boolean request.
@@ -8972,11 +8992,12 @@ pub fn certify_boundary_touching_report(
 /// single-triangle and convex multi-face coplanar shortcuts are reported as
 /// already materialized so callers can distinguish a missing output model from
 /// a handled certified fragment.
-pub fn certify_planar_arrangement_report(
+fn planar_arrangement_report_for_request(
     left: &ExactMesh,
     right: &ExactMesh,
-    operation: ExactBooleanOperation,
+    request: ExactBooleanRequest,
 ) -> Result<ExactPlanarArrangementReport, MeshError> {
+    let operation = request.operation;
     if matches!(operation, ExactBooleanOperation::SelectedRegions(_)) {
         return Ok(planar_arrangement_report(
             operation,
@@ -9000,14 +9021,14 @@ pub fn certify_planar_arrangement_report(
 /// branch. It separates unknown predicate outcomes and failed exact
 /// constructions from later boundary, planar-arrangement, or winding policy,
 /// rather than being folded into a generic unsupported boolean.
-pub fn certify_refinement_report(
+fn refinement_report_for_request(
     left: &ExactMesh,
     right: &ExactMesh,
-    operation: ExactBooleanOperation,
+    request: ExactBooleanRequest,
 ) -> Result<ExactRefinementReport, MeshError> {
     let graph = build_intersection_graph(left, right)?;
     validate_graph_source_handoff(&graph, left, right)?;
-    Ok(refinement_report_from_graph(&graph, operation))
+    Ok(refinement_report_from_graph(&graph, request.operation))
 }
 
 /// Prepare and report the exact facts needed by a future winding policy.
@@ -11927,7 +11948,9 @@ mod tests {
             readiness.validate().unwrap();
             readiness.validate_against_sources(&left, &right).unwrap();
 
-            let planar = certify_planar_arrangement_report(&left, &right, operation).unwrap();
+            let planar = ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY)
+                .planar_arrangement_report(&left, &right)
+                .unwrap();
             planar.validate().unwrap();
             planar.validate_against_sources(&left, &right).unwrap();
 
@@ -12108,7 +12131,9 @@ mod tests {
             readiness.validate().unwrap();
             readiness.validate_against_sources(&left, &right).unwrap();
 
-            let planar = certify_planar_arrangement_report(&left, &right, operation).unwrap();
+            let planar = ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY)
+                .planar_arrangement_report(&left, &right)
+                .unwrap();
             planar.validate().unwrap();
             planar.validate_against_sources(&left, &right).unwrap();
         }
