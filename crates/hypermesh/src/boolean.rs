@@ -593,6 +593,9 @@ pub struct ExactBooleanCertificationSet {
     pub convex_right_in_left: ConvexSolidMeshClassification,
     /// Direct closed-convex boolean capabilities.
     pub convex_capabilities: ExactConvexBooleanCapabilityFacts,
+    /// Direct arrangement-cell shortcut capabilities that do not consume the
+    /// full arrangement attempt report.
+    pub arrangement_cell_complex_shortcuts: ExactArrangementCellComplexShortcutFacts,
     /// Planar-arrangement readiness for coplanar surface output.
     pub planar_arrangement: ExactPlanarArrangementReport,
     /// Winding/inside-outside readiness for named volumetric output.
@@ -625,6 +628,8 @@ impl ExactBooleanCertificationSet {
         let convex_left_in_right = classify_mesh_vertices_against_convex_solid_report(left, right);
         let convex_right_in_left = classify_mesh_vertices_against_convex_solid_report(right, left);
         let convex_capabilities = ExactConvexBooleanCapabilityFacts::from_sources(left, right);
+        let arrangement_cell_complex_shortcuts =
+            ExactArrangementCellComplexShortcutFacts::from_sources(left, right);
         let planar_arrangement =
             planar_arrangement_certification_from_graph(&graph, left, right, request.operation)?;
         let winding_readiness = winding_readiness_report_with_boundary_policy_from_graph(
@@ -671,6 +676,7 @@ impl ExactBooleanCertificationSet {
             convex_left_in_right,
             convex_right_in_left,
             convex_capabilities,
+            arrangement_cell_complex_shortcuts,
             planar_arrangement,
             winding_readiness,
             volumetric_boundary_closure,
@@ -704,6 +710,7 @@ impl ExactBooleanCertificationSet {
             .validate()
             .map_err(|_| ExactReportValidationError::StatusEvidenceMismatch)?;
         self.convex_capabilities.validate()?;
+        self.arrangement_cell_complex_shortcuts.validate()?;
         self.planar_arrangement.validate()?;
         self.winding_readiness.validate()?;
         if self.refinement.operation != request.operation
@@ -878,6 +885,78 @@ impl ExactConvexBooleanCapabilityFacts {
             ExactBooleanSupport::CertifiedConvexIntersection => self.can_intersection,
             ExactBooleanSupport::CertifiedConvexDifference => self.can_difference,
             _ => false,
+        }
+    }
+}
+
+/// Replayable source facts for direct arrangement-cell-complex shortcut
+/// materializers that do not consume the general arrangement attempt report.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ExactArrangementCellComplexShortcutFacts {
+    /// Axis-aligned orthogonal cell decomposition supports union.
+    pub axis_aligned_union: bool,
+    /// Axis-aligned orthogonal cell decomposition supports intersection.
+    pub axis_aligned_intersection: bool,
+    /// Axis-aligned orthogonal cell decomposition supports difference.
+    pub axis_aligned_difference: bool,
+    /// Affine orthogonal cell decomposition supports union.
+    pub affine_union: bool,
+    /// Affine orthogonal cell decomposition supports intersection.
+    pub affine_intersection: bool,
+    /// Affine orthogonal cell decomposition supports difference.
+    pub affine_difference: bool,
+}
+
+impl ExactArrangementCellComplexShortcutFacts {
+    fn from_sources(left: &ExactMesh, right: &ExactMesh) -> Self {
+        Self {
+            axis_aligned_union: has_axis_aligned_orthogonal_solid_cells(
+                left,
+                right,
+                AxisAlignedOrthogonalSolidOperation::Union,
+            ),
+            axis_aligned_intersection: has_axis_aligned_orthogonal_solid_cells(
+                left,
+                right,
+                AxisAlignedOrthogonalSolidOperation::Intersection,
+            ),
+            axis_aligned_difference: has_axis_aligned_orthogonal_solid_cells(
+                left,
+                right,
+                AxisAlignedOrthogonalSolidOperation::Difference,
+            ),
+            affine_union: has_affine_orthogonal_solid_cells(
+                left,
+                right,
+                AffineOrthogonalSolidOperation::Union,
+            ),
+            affine_intersection: has_affine_orthogonal_solid_cells(
+                left,
+                right,
+                AffineOrthogonalSolidOperation::Intersection,
+            ),
+            affine_difference: has_affine_orthogonal_solid_cells(
+                left,
+                right,
+                AffineOrthogonalSolidOperation::Difference,
+            ),
+        }
+    }
+
+    pub fn validate(&self) -> Result<(), ExactReportValidationError> {
+        Ok(())
+    }
+
+    fn supports(&self, operation: ExactBooleanOperation) -> bool {
+        match operation {
+            ExactBooleanOperation::Union => self.axis_aligned_union || self.affine_union,
+            ExactBooleanOperation::Intersection => {
+                self.axis_aligned_intersection || self.affine_intersection
+            }
+            ExactBooleanOperation::Difference => {
+                self.axis_aligned_difference || self.affine_difference
+            }
+            ExactBooleanOperation::SelectedRegions(_) => false,
         }
     }
 }
@@ -1142,12 +1221,17 @@ fn exact_boolean_preflight_matches_certifications(
                 )
         }
         ExactBooleanSupport::CertifiedArrangementCellComplex => {
-            winding_readiness_status_materializes_arrangement_cell_complex(status)
-                && exact_boolean_arrangement_attempt_materialized(&certifications.arrangement_attempt)
+            exact_boolean_preflight_matches_direct_arrangement_cell_complex_shortcut(
+                preflight,
+                certifications,
+            ) || (winding_readiness_status_materializes_arrangement_cell_complex(status)
+                && exact_boolean_arrangement_attempt_materialized(
+                    &certifications.arrangement_attempt,
+                )
                 && exact_boolean_preflight_matches_arrangement_cell_complex(
                     preflight,
                     &certifications.winding_readiness,
-                )
+                ))
         }
         ExactBooleanSupport::CertifiedEmptyOperand => {
             *status == ExactWindingReadinessStatus::EmptyOperandAlreadyMaterialized
@@ -1411,6 +1495,22 @@ fn exact_boolean_arrangement_attempt_materialized(
     })
 }
 
+fn exact_boolean_preflight_matches_direct_arrangement_cell_complex_shortcut(
+    preflight: &ExactBooleanPreflight,
+    certifications: &ExactBooleanCertificationSet,
+) -> bool {
+    certifications
+        .arrangement_cell_complex_shortcuts
+        .supports(preflight.operation)
+        && preflight.graph_had_unknowns == certifications.refinement.graph_had_unknowns
+        && preflight.retained_face_pairs == certifications.refinement.retained_face_pairs
+        && preflight.retained_events == certifications.refinement.retained_events
+        && preflight.region_count == 0
+        && preflight.region_classifications.is_empty()
+        && preflight.blocker.is_none()
+        && preflight.arrangement_readiness.is_none()
+}
+
 fn exact_boolean_preflight_matches_arrangement_cell_complex(
     preflight: &ExactBooleanPreflight,
     winding_readiness: &ExactWindingReadinessReport,
@@ -1624,10 +1724,15 @@ fn exact_boolean_result_matches_certifications(
         }
         ExactBooleanResultKind::CertifiedShortcut {
             shortcut: ExactBooleanShortcutKind::ArrangementCellComplex,
-            ..
-        } => certifications.arrangement_attempt.as_ref().is_none_or(|_| {
-            exact_boolean_arrangement_attempt_materialized(&certifications.arrangement_attempt)
-        }),
+            operation,
+        } => {
+            certifications
+                .arrangement_cell_complex_shortcuts
+                .supports(operation)
+                || exact_boolean_arrangement_attempt_materialized(
+                    &certifications.arrangement_attempt,
+                )
+        }
         _ => true,
     }
 }

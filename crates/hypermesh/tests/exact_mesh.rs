@@ -1309,6 +1309,41 @@ fn affine_orthogonal_solid_recovers_multi_cell_basis_without_sampling_limits() {
         );
         result.validate().unwrap();
         result.validate_against_sources(&left, &right).unwrap();
+        if matches!(operation, ExactBooleanOperation::Union) {
+            let evaluation = evaluate_boolean_exact(
+                &left,
+                &right,
+                ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
+            )
+            .unwrap();
+            evaluation.validate().unwrap();
+            assert_eq!(
+                evaluation
+                    .result
+                    .as_ref()
+                    .expect("affine arrangement shortcut evaluation should retain result")
+                    .kind,
+                ExactBooleanResultKind::CertifiedShortcut {
+                    operation,
+                    shortcut: hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex
+                },
+                "{evaluation:?}"
+            );
+            let mut stale_arrangement_cell_facts = evaluation.clone();
+            stale_arrangement_cell_facts
+                .certifications
+                .arrangement_cell_complex_shortcuts
+                .affine_union = false;
+            stale_arrangement_cell_facts
+                .certifications
+                .arrangement_cell_complex_shortcuts
+                .axis_aligned_union = false;
+            assert_eq!(
+                stale_arrangement_cell_facts.validate(),
+                Err(hypermesh::ExactReportValidationError::StatusEvidenceMismatch),
+                "{stale_arrangement_cell_facts:?}"
+            );
+        }
         result
             .validate_operation_against_sources(
                 &left,
