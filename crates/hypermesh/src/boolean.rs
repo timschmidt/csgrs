@@ -765,6 +765,36 @@ impl ExactBooleanRequest {
         materialize_closed_winding_separated_for_request(left, right, self)
     }
 
+    /// Materialize a closed-convex shortcut for this request, when convex facts
+    /// own the replay provenance.
+    pub fn materialize_closed_convex(
+        self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> Result<Option<ExactBooleanResult>, MeshError> {
+        materialize_closed_convex_for_request(left, right, self)
+    }
+
+    /// Materialize axis-aligned orthogonal solid recovery for this request,
+    /// when the orthogonal-cell model owns replay provenance.
+    pub fn materialize_axis_aligned_orthogonal_solid(
+        self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> Result<Option<ExactBooleanResult>, MeshError> {
+        materialize_axis_aligned_orthogonal_solid_for_request(left, right, self)
+    }
+
+    /// Materialize affine orthogonal solid recovery for this request, when the
+    /// affine-cell model owns replay provenance.
+    pub fn materialize_affine_orthogonal_solid(
+        self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> Result<Option<ExactBooleanResult>, MeshError> {
+        materialize_affine_orthogonal_solid_for_request(left, right, self)
+    }
+
     /// Materialize adjacent closed-solid union completion for this request,
     /// returning the exact report consumed by the materializer.
     pub fn materialize_adjacent_union_completion(
@@ -4753,12 +4783,13 @@ fn boolean_arrangement_orthogonal_solid_cell_recovery(
 /// arrangement-cell shortcut provenance. Inputs outside the supportable
 /// orthogonal cell model return `None` rather than falling through to unrelated
 /// topology paths.
-pub fn materialize_axis_aligned_orthogonal_solid_boolean(
+fn materialize_axis_aligned_orthogonal_solid_for_request(
     left: &ExactMesh,
     right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: ValidationPolicy,
+    request: ExactBooleanRequest,
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
+    let operation = request.operation;
+    let validation = request.validation;
     Ok(public_operation_replayable_result(
         boolean_arrangement_orthogonal_solid_cell_recovery(left, right, operation, validation)?,
         left,
@@ -5947,12 +5978,13 @@ fn boolean_convex_relation_meshes_optional(
 /// convex operation or convex relation shortcut. Inputs handled by earlier
 /// exact shortcuts, such as orthogonal-cell recovery or bounds disjointness,
 /// return `None` so replay provenance remains stable.
-pub fn materialize_closed_convex_boolean(
+fn materialize_closed_convex_for_request(
     left: &ExactMesh,
     right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: ValidationPolicy,
+    request: ExactBooleanRequest,
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
+    let operation = request.operation;
+    let validation = request.validation;
     let preflight = ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY)
         .preflight(left, right)?;
     let result = match preflight.support {
@@ -7966,12 +7998,13 @@ fn boolean_arrangement_affine_orthogonal_solid_recovery(
 /// The output is the boolean-result wrapper around the exact affine-cell
 /// materializer, so callers can validate both the output mesh and the retained
 /// decision provenance through [`ExactBooleanResult`] replay.
-pub fn materialize_affine_orthogonal_solid_boolean(
+fn materialize_affine_orthogonal_solid_for_request(
     left: &ExactMesh,
     right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: ValidationPolicy,
+    request: ExactBooleanRequest,
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
+    let operation = request.operation;
+    let validation = request.validation;
     let Some(result) =
         boolean_arrangement_affine_orthogonal_solid_recovery(left, right, operation, validation)?
     else {

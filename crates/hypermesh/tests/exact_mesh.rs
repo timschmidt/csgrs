@@ -36,13 +36,11 @@ use hypermesh::{
     classify_point_against_closed_mesh_winding_report, classify_point_against_convex_solid_report,
     classify_triangle_triangle, exact_mesh_consumer_readiness, exact_mesh_handoff_package,
     inspect_f64_mesh_input, inspect_i64_mesh_input,
-    materialize_affine_orthogonal_solid_boolean, materialize_affine_orthogonal_solid_difference,
+    materialize_affine_orthogonal_solid_difference,
     materialize_affine_orthogonal_solid_intersection, materialize_arrangement_cell_complex_boolean,
-    materialize_axis_aligned_orthogonal_solid_boolean,
     materialize_axis_aligned_orthogonal_solid_difference,
     materialize_axis_aligned_orthogonal_solid_intersection,
-    materialize_axis_aligned_orthogonal_solid_union, materialize_closed_convex_boolean,
-    materialize_contained_face_adjacent_union,
+    materialize_axis_aligned_orthogonal_solid_union, materialize_contained_face_adjacent_union,
     materialize_coplanar_mesh_overlay_arrangement, materialize_full_face_adjacent_union,
     materialize_open_surface_arrangement, materialize_volumetric_coplanar_boundary_closure_boolean,
     materialize_volumetric_winding_arrangement, mesh_artifact_from_exact_mesh,
@@ -1188,12 +1186,7 @@ fn exact_affine_orthogonal_solid_materializer_is_publicly_replayable() {
         ExactBooleanOperation::Difference,
     ] {
         assert!(
-            materialize_affine_orthogonal_solid_boolean(
-                &left,
-                &separated_right,
-                operation,
-                ValidationPolicy::CLOSED,
-            )
+            ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED,).materialize_affine_orthogonal_solid(&left, &separated_right)
             .unwrap()
             .is_none(),
             "{operation:?} should yield to bounds-disjoint provenance"
@@ -1209,12 +1202,7 @@ fn exact_affine_orthogonal_solid_materializer_is_publicly_replayable() {
             }
         );
 
-        let result = materialize_affine_orthogonal_solid_boolean(
-            &left,
-            &right,
-            operation,
-            ValidationPolicy::CLOSED,
-        )
+        let result = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED,).materialize_affine_orthogonal_solid(&left, &right)
         .unwrap()
         .expect("skew affine boxes should materialize as a boolean result");
         assert_eq!(
@@ -1285,12 +1273,7 @@ fn affine_orthogonal_solid_recovers_multi_cell_basis_without_sampling_limits() {
         preflight.validate().unwrap();
         preflight.validate_against_sources(&left, &right).unwrap();
 
-        let result = materialize_affine_orthogonal_solid_boolean(
-            &left,
-            &right,
-            operation,
-            ValidationPolicy::CLOSED,
-        )
+        let result = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED,).materialize_affine_orthogonal_solid(&left, &right)
         .unwrap()
         .expect("skew affine L-cell solids should materialize by exact cell replay");
         assert_eq!(
@@ -1428,12 +1411,7 @@ fn exact_axis_aligned_orthogonal_solid_materializer_is_publicly_replayable() {
         ExactBooleanOperation::Difference,
     ] {
         assert!(
-            materialize_axis_aligned_orthogonal_solid_boolean(
-                &left,
-                &separated_right,
-                operation,
-                ValidationPolicy::CLOSED,
-            )
+            ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED,).materialize_axis_aligned_orthogonal_solid(&left, &separated_right)
             .unwrap()
             .is_none(),
             "{operation:?} should yield to bounds-disjoint provenance"
@@ -1449,12 +1427,7 @@ fn exact_axis_aligned_orthogonal_solid_materializer_is_publicly_replayable() {
             }
         );
 
-        let result = materialize_axis_aligned_orthogonal_solid_boolean(
-            &left,
-            &right,
-            operation,
-            ValidationPolicy::CLOSED,
-        )
+        let result = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED,).materialize_axis_aligned_orthogonal_solid(&left, &right)
         .unwrap()
         .expect("L solid and box should materialize as a boolean result");
         assert_eq!(
@@ -1632,7 +1605,7 @@ fn exact_closed_convex_boolean_materializer_is_publicly_replayable() {
         ),
     ] {
         let result =
-            materialize_closed_convex_boolean(&left, &right, operation, ValidationPolicy::CLOSED)
+            ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED).materialize_closed_convex(&left, &right)
                 .unwrap()
                 .expect("nonorthogonal closed convex solids should materialize directly");
         assert_eq!(
@@ -1728,12 +1701,7 @@ fn exact_closed_convex_boolean_materializer_is_publicly_replayable() {
     preflight
         .validate_against_sources(&separated_left, &separated_right)
         .unwrap();
-    let separated = materialize_closed_convex_boolean(
-        &separated_left,
-        &separated_right,
-        ExactBooleanOperation::Intersection,
-        ValidationPolicy::CLOSED,
-    )
+    let separated = ExactBooleanRequest::new(ExactBooleanOperation::Intersection, ValidationPolicy::CLOSED,).materialize_closed_convex(&separated_left, &separated_right)
     .unwrap()
     .expect("separated closed convex intersection should retain convex relation provenance");
     assert_eq!(
@@ -1839,12 +1807,7 @@ fn exact_closed_convex_boolean_materializer_is_publicly_replayable() {
     preflight
         .validate_against_sources(&contained_on_boundary, &container)
         .unwrap();
-    let containment = materialize_closed_convex_boolean(
-        &contained_on_boundary,
-        &container,
-        ExactBooleanOperation::Difference,
-        ValidationPolicy::CLOSED,
-    )
+    let containment = ExactBooleanRequest::new(ExactBooleanOperation::Difference, ValidationPolicy::CLOSED,).materialize_closed_convex(&contained_on_boundary, &container)
     .unwrap()
     .expect("boundary-contained closed convex difference should certify as empty");
     assert_eq!(
@@ -1881,14 +1844,13 @@ fn exact_closed_convex_boolean_materializer_is_publicly_replayable() {
     assert!(containment.mesh.triangles().is_empty());
 
     assert!(
-        materialize_closed_convex_boolean(
-            &axis_aligned_box([0, 0, 0], [2, 2, 2]),
-            &axis_aligned_box([1, 1, 1], [3, 3, 3]),
-            ExactBooleanOperation::Union,
-            ValidationPolicy::CLOSED,
-        )
-        .unwrap()
-        .is_none()
+        ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED)
+            .materialize_closed_convex(
+                &axis_aligned_box([0, 0, 0], [2, 2, 2]),
+                &axis_aligned_box([1, 1, 1], [3, 3, 3]),
+            )
+            .unwrap()
+            .is_none()
     );
 }
 
@@ -4480,12 +4442,7 @@ fn arrangement_cell_complex_boolean_is_publicly_replayable() {
         .is_none()
     );
     assert!(
-        materialize_closed_convex_boolean(
-            &convex_left,
-            &convex_right,
-            ExactBooleanOperation::Intersection,
-            ValidationPolicy::CLOSED,
-        )
+        ExactBooleanRequest::new(ExactBooleanOperation::Intersection, ValidationPolicy::CLOSED,).materialize_closed_convex(&convex_left, &convex_right)
         .unwrap()
         .is_some()
     );
@@ -5969,15 +5926,6 @@ fn direct_boolean_materializers_yield_to_public_operation_replay() {
         -> Result<Option<ExactBooleanResult>, hypermesh::MeshError>;
 
     let materializers: &[(&str, DirectBooleanMaterializer)] = &[
-        ("closed_convex", materialize_closed_convex_boolean),
-        (
-            "axis_aligned_orthogonal_solid",
-            materialize_axis_aligned_orthogonal_solid_boolean,
-        ),
-        (
-            "affine_orthogonal_solid",
-            materialize_affine_orthogonal_solid_boolean,
-        ),
     ];
 
     let empty = ExactMesh::new(
@@ -6222,12 +6170,7 @@ fn closed_same_surface_boolean_is_publicly_replayable() {
         .is_none()
     );
     assert!(
-        materialize_closed_convex_boolean(
-            &convex_left,
-            &convex_same_surface,
-            ExactBooleanOperation::Intersection,
-            ValidationPolicy::CLOSED,
-        )
+        ExactBooleanRequest::new(ExactBooleanOperation::Intersection, ValidationPolicy::CLOSED,).materialize_closed_convex(&convex_left, &convex_same_surface)
         .unwrap()
         .is_some()
     );
