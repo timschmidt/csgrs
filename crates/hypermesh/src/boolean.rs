@@ -635,6 +635,47 @@ impl ExactBooleanCertificationSet {
             arrangement_attempt,
         })
     }
+
+    /// Validate this retained certification bundle by replaying every report
+    /// from the source meshes under the request policy that produced it.
+    pub fn validate_against_sources(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+        request: ExactBooleanRequest,
+    ) -> Result<(), ExactReportValidationError> {
+        self.refinement.validate()?;
+        self.boundary_touching.validate()?;
+        self.planar_arrangement.validate()?;
+        self.winding_readiness.validate()?;
+        if let Some(report) = self.volumetric_boundary_closure.as_ref() {
+            report.validate()?;
+        }
+        if let Some(attempt) = self.arrangement_attempt.as_ref() {
+            attempt.validate()?;
+        }
+        let replay = Self::from_sources(left, right, request)
+            .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+        if self == &replay {
+            Ok(())
+        } else {
+            Err(ExactReportValidationError::SourceReplayMismatch)
+        }
+    }
+
+    /// Classify whether this retained certification bundle is fresh for the
+    /// source meshes and request policy.
+    pub fn freshness_against_sources(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+        request: ExactBooleanRequest,
+    ) -> ExactReportFreshness {
+        match self.validate_against_sources(left, right, request) {
+            Ok(()) => ExactReportFreshness::Current,
+            Err(error) => error.into(),
+        }
+    }
 }
 
 fn planar_arrangement_certification_from_graph(
@@ -712,6 +753,49 @@ impl ExactBooleanEvaluation {
         }
         Ok(())
     }
+
+    /// Validate the retained evaluation by replaying all source-bound reports
+    /// and the materialized result under the original request policy.
+    pub fn validate_against_sources(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> Result<(), ExactReportValidationError> {
+        self.validate()?;
+        self.preflight.validate_against_sources_with_boundary_policy(
+            left,
+            right,
+            self.request.validation,
+            self.request.boundary_policy,
+        )?;
+        self.certifications
+            .validate_against_sources(left, right, self.request)?;
+        if let Some(result) = self.result.as_ref() {
+            result.validate_operation_against_sources(
+                left,
+                right,
+                self.request.operation,
+                self.request.validation,
+                self.request.boundary_policy,
+            )?;
+        } else if self.preflight.is_certified() {
+            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+        }
+        Ok(())
+    }
+
+    /// Classify whether this retained evaluation is fresh for the source
+    /// meshes under its original request policy.
+    pub fn freshness_against_sources(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> ExactReportFreshness {
+        match self.validate_against_sources(left, right) {
+            Ok(()) => ExactReportFreshness::Current,
+            Err(error) => error.into(),
+        }
+    }
 }
 
 /// Preflight an exact boolean request.
@@ -755,7 +839,7 @@ pub fn evaluate_boolean_exact(
         certifications,
         result,
     };
-    evaluation.validate().map_err(|error| {
+    evaluation.validate_against_sources(left, right).map_err(|error| {
         MeshError::one(MeshDiagnostic::new(
             Severity::Error,
             DiagnosticKind::UnsupportedExactOperation,

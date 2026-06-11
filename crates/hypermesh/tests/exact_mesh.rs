@@ -222,6 +222,11 @@ fn exact_boolean_evaluation_materializes_certified_result_publicly() {
     let evaluation = evaluate_boolean_exact(&left, &right, request).unwrap();
 
     evaluation.validate().unwrap();
+    evaluation.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(
+        evaluation.freshness_against_sources(&left, &right),
+        hypermesh::ExactReportFreshness::Current
+    );
     assert!(evaluation.is_certified());
     assert!(evaluation.is_materialized());
     assert_eq!(evaluation.required_blocker_kind(), None);
@@ -235,6 +240,16 @@ fn exact_boolean_evaluation_materializes_certified_result_publicly() {
             }
         )
     }));
+    let stale_right = tetra([8, 0, 0]);
+    assert!(
+        evaluation
+            .validate_against_sources(&left, &stale_right)
+            .is_err()
+    );
+    assert_eq!(
+        evaluation.freshness_against_sources(&left, &stale_right),
+        hypermesh::ExactReportFreshness::SourceReplayMismatch
+    );
 }
 
 #[test]
@@ -259,6 +274,7 @@ fn exact_boolean_evaluation_materializes_boundary_policy_shortcut_by_default() {
     let evaluation = evaluate_boolean_exact(&left, &right, request).unwrap();
 
     evaluation.validate().unwrap();
+    evaluation.validate_against_sources(&left, &right).unwrap();
     assert!(evaluation.is_certified());
     assert!(evaluation.is_materialized());
     assert_eq!(evaluation.required_blocker_kind(), None);
