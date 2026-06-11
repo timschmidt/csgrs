@@ -531,7 +531,13 @@ impl ExactBooleanRequest {
         left: &ExactMesh,
         right: &ExactMesh,
     ) -> Result<ExactBooleanPreflight, MeshError> {
-        preflight_boolean_exact_request(left, right, self)
+        preflight_boolean_exact_with_boundary_policy(
+            left,
+            right,
+            self.operation,
+            self.validation,
+            self.boundary_policy,
+        )
     }
 
     /// Evaluate this request into a certified result or retained exact
@@ -1750,21 +1756,6 @@ fn exact_boolean_result_has_shortcut(
     )
 }
 
-/// Preflight an exact boolean request.
-pub fn preflight_boolean_exact_request(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    request: ExactBooleanRequest,
-) -> Result<ExactBooleanPreflight, MeshError> {
-    preflight_boolean_exact_with_boundary_policy(
-        left,
-        right,
-        request.operation,
-        request.validation,
-        request.boundary_policy,
-    )
-}
-
 /// Evaluate an exact boolean request into either a certified result or retained
 /// exact blockers/provenance.
 pub fn evaluate_boolean_exact(
@@ -1772,7 +1763,7 @@ pub fn evaluate_boolean_exact(
     right: &ExactMesh,
     request: ExactBooleanRequest,
 ) -> Result<ExactBooleanEvaluation, MeshError> {
-    let preflight = preflight_boolean_exact_request(left, right, request)?;
+    let preflight = request.preflight(left, right)?;
     let certifications = ExactBooleanCertificationSet::from_sources(left, right, request)?;
     let result = if preflight.is_certified() {
         Some(materialize_certified_boolean_support(
@@ -1944,19 +1935,6 @@ fn materialize_certified_arrangement_cell_complex_support(
         return Ok(Some(result));
     }
     boolean_arrangement_cell_complex_meshes(left, right, operation, validation)
-}
-
-/// Materialize an exact boolean request.
-///
-/// This is the request-shaped replacement for the argument-list boolean entry
-/// points. Use [`evaluate_boolean_exact`] when blocked exact states should be
-/// returned as retained provenance instead of an error.
-pub fn boolean_exact_request(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    request: ExactBooleanRequest,
-) -> Result<ExactBooleanResult, MeshError> {
-    request.materialize(left, right)
 }
 
 /// Run the exact selected-region boolean pipeline.
@@ -3799,7 +3777,7 @@ pub fn boolean_exact(
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
 ) -> Result<ExactBooleanResult, MeshError> {
-    boolean_exact_request(left, right, ExactBooleanRequest::new(operation, validation))
+    ExactBooleanRequest::new(operation, validation).materialize(left, right)
 }
 
 /// Run an exact boolean operation request with an explicit boundary policy.
