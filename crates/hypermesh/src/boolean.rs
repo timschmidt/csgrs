@@ -3083,6 +3083,8 @@ fn boolean_arrangement_regularized_boundary_contact_from_graph(
     {
         validate_consumed_boundary_touching_report(
             &report,
+            left,
+            right,
             "arrangement regularized boundary contact",
         )?;
     } else if !certified_arrangement_regularized_boundary_contact_from_graph(
@@ -3131,10 +3133,10 @@ fn certified_arrangement_regularized_boundary_contact_from_graph(
     ) {
         return Ok(false);
     }
-    if certified_closed_boundary_touching_regularized_report_from_graph(graph, left, right)?
-        .is_some()
+    if let Some(report) =
+        certified_closed_boundary_touching_regularized_report_from_graph(graph, left, right)?
     {
-        return Ok(true);
+        return Ok(report.validate_against_sources(left, right).is_ok());
     }
     if !certified_closed_boundary_only_contact_from_graph(graph, left, right)? {
         return Ok(false);
@@ -7762,9 +7764,11 @@ pub fn materialize_closed_boundary_touching_regularized_boolean_with_evidence(
 
 fn validate_consumed_boundary_touching_report(
     report: &ExactBoundaryTouchingReport,
+    left: &ExactMesh,
+    right: &ExactMesh,
     label: &str,
 ) -> Result<(), MeshError> {
-    report.validate().map_err(|error| {
+    report.validate_against_sources(left, right).map_err(|error| {
         MeshError::one(MeshDiagnostic::new(
             Severity::Error,
             DiagnosticKind::UnsupportedExactOperation,
@@ -7875,7 +7879,12 @@ fn boolean_boundary_touching_meshes_from_graph(
     if !report.is_certified() {
         return Ok(None);
     }
-    validate_consumed_boundary_touching_report(&report, "boundary-policy projection")?;
+    validate_consumed_boundary_touching_report(
+        &report,
+        left,
+        right,
+        "boundary-policy projection",
+    )?;
 
     let Some(result) =
         materialize_boundary_policy_shortcut_result(left, right, operation, validation)?
