@@ -32,9 +32,7 @@ use hypermesh::{
     certify_coplanar_volumetric_cell_evidence, certify_exact_mesh_proposal,
     certify_open_surface_disjoint_report, certify_planar_arrangement_report,
     certify_refinement_report, certify_same_surface_report,
-    certify_volumetric_boundary_closure_report, certify_winding_readiness_report,
-    certify_winding_readiness_report_with_boundary_policy,
-    certify_winding_readiness_report_with_validation,
+    certify_volumetric_boundary_closure_report,
     checked_classify_face_regions_against_opposite_planes,
     checked_triangulate_face_regions_with_earcut, classify_mesh_face_pair,
     classify_mesh_vertices_against_closed_mesh_winding_report,
@@ -3039,13 +3037,9 @@ fn lower_dimensional_regularized_boolean_is_publicly_replayable() {
                 .is_err()
         );
 
-        let readiness = certify_winding_readiness_report_with_validation(
-            &left,
-            &right,
-            operation,
-            ValidationPolicy::CLOSED,
-        )
-        .unwrap();
+        let readiness = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED)
+            .winding_readiness(&left, &right)
+            .unwrap();
         assert_eq!(
             readiness.status,
             ExactWindingReadinessStatus::LowerDimensionalRegularizedSolidAlreadyMaterialized,
@@ -3132,13 +3126,9 @@ fn lower_dimensional_regularized_boolean_is_publicly_replayable() {
                 ValidationPolicy::CLOSED,
             )
             .unwrap();
-        let disjoint_readiness = certify_winding_readiness_report_with_validation(
-            &left,
-            &disjoint_right,
-            operation,
-            ValidationPolicy::CLOSED,
-        )
-        .unwrap();
+        let disjoint_readiness = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED)
+            .winding_readiness(&left, &disjoint_right)
+            .unwrap();
         assert_eq!(
             disjoint_readiness.status,
             ExactWindingReadinessStatus::LowerDimensionalRegularizedSolidAlreadyMaterialized,
@@ -3311,13 +3301,9 @@ fn mixed_dimensional_regularized_solid_boolean_is_publicly_replayable() {
                 hypermesh::ExactBooleanSupport::CertifiedMixedDimensionalRegularizedSolid,
                 "{operation:?}: {preflight:?}"
             );
-            let readiness = certify_winding_readiness_report_with_validation(
-                left,
-                right,
-                operation,
-                ValidationPolicy::CLOSED,
-            )
-            .unwrap();
+            let readiness = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED)
+                .winding_readiness(left, right)
+                .unwrap();
             assert_eq!(
                 readiness.status,
                 ExactWindingReadinessStatus::MixedDimensionalRegularizedSolidAlreadyMaterialized,
@@ -3764,7 +3750,9 @@ fn closed_no_volume_overlap_regularized_boolean_is_publicly_replayable() {
             operation,
             ExactBooleanOperation::Intersection | ExactBooleanOperation::Difference
         ) {
-            let readiness = certify_winding_readiness_report(&left, &right, operation).unwrap();
+            let readiness = ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY)
+                .winding_readiness(&left, &right)
+                .unwrap();
             assert_eq!(
                 readiness.status,
                 hypermesh::ExactWindingReadinessStatus::ClosedBoundaryTouchingAlreadyMaterialized,
@@ -4199,12 +4187,11 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
         .validate_against_sources_with_validation(&left, &right, ValidationPolicy::ALLOW_BOUNDARY)
         .unwrap();
 
-    let readiness = certify_winding_readiness_report_with_validation(
-        &left,
-        &right,
+    let readiness = ExactBooleanRequest::new(
         ExactBooleanOperation::Union,
         ValidationPolicy::ALLOW_BOUNDARY,
     )
+    .winding_readiness(&left, &right)
     .unwrap();
     assert_eq!(
         readiness.status,
@@ -4454,7 +4441,9 @@ fn exact_volumetric_winding_coplanar_cap_is_publicly_certified() {
         preflight.validate().unwrap();
         preflight.validate_against_sources(&left, &right).unwrap();
 
-        let readiness = certify_winding_readiness_report(&left, &right, operation).unwrap();
+        let readiness = ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY)
+            .winding_readiness(&left, &right)
+            .unwrap();
         assert_eq!(
             readiness.status,
             ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized,
@@ -6827,13 +6816,12 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
         "default replay should certify a boundary-policy preflight"
     );
 
-    let rejected_readiness = certify_winding_readiness_report_with_boundary_policy(
-        &left,
-        &right,
+    let rejected_readiness = ExactBooleanRequest::with_boundary_policy(
         ExactBooleanOperation::Union,
         ValidationPolicy::ALLOW_BOUNDARY,
         ExactBoundaryBooleanPolicy::Reject,
     )
+    .winding_readiness(&left, &right)
     .unwrap();
     assert_eq!(
         rejected_readiness.status,
@@ -6841,13 +6829,12 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
         "{rejected_readiness:?}"
     );
 
-    let policy_readiness = certify_winding_readiness_report_with_boundary_policy(
-        &left,
-        &right,
+    let policy_readiness = ExactBooleanRequest::with_boundary_policy(
         ExactBooleanOperation::Union,
         ValidationPolicy::ALLOW_BOUNDARY,
         ExactBoundaryBooleanPolicy::PreserveSeparateShells,
     )
+    .winding_readiness(&left, &right)
     .unwrap();
     assert_eq!(
         policy_readiness.status,
@@ -6960,13 +6947,12 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
         )
         .unwrap();
 
-    let closed_intersection_readiness = certify_winding_readiness_report_with_boundary_policy(
-        &left,
-        &right,
+    let closed_intersection_readiness = ExactBooleanRequest::with_boundary_policy(
         ExactBooleanOperation::Intersection,
         ValidationPolicy::CLOSED,
         ExactBoundaryBooleanPolicy::PreserveSeparateShells,
     )
+    .winding_readiness(&left, &right)
     .unwrap();
     assert_eq!(
         closed_intersection_readiness.status,
@@ -7032,13 +7018,12 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
                 ExactBoundaryBooleanPolicy::PreserveSeparateShells,
             )
             .unwrap();
-        let closed_policy_readiness = certify_winding_readiness_report_with_boundary_policy(
-            &left,
-            &right,
+        let closed_policy_readiness = ExactBooleanRequest::with_boundary_policy(
             operation,
             ValidationPolicy::CLOSED,
             ExactBoundaryBooleanPolicy::PreserveSeparateShells,
         )
+        .winding_readiness(&left, &right)
         .unwrap();
         assert_eq!(
             closed_policy_readiness.status,

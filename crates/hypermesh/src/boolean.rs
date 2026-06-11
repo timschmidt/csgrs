@@ -541,6 +541,16 @@ impl ExactBooleanRequest {
     ) -> Result<ExactArrangementBooleanAttempt, MeshError> {
         arrangement_boolean_attempt_report(left, right, self, policy)
     }
+
+    /// Report exact winding/inside-outside readiness under this request's
+    /// validation and boundary projection policy.
+    pub fn winding_readiness(
+        self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> Result<ExactWindingReadinessReport, MeshError> {
+        winding_readiness_report_for_request(left, right, self)
+    }
 }
 
 /// Replayable certification bundle for an exact boolean request.
@@ -8996,7 +9006,7 @@ pub fn certify_refinement_report(
 /// booleans: it extracts the certified graph, rejects unresolved/boundary/
 /// planar-arrangement cases into explicit statuses, then validates split
 /// regions and records opposite-plane classifications. It is an auditable
-pub fn certify_winding_readiness_report(
+pub(crate) fn certify_winding_readiness_report(
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
@@ -9009,26 +9019,6 @@ pub fn certify_winding_readiness_report(
     winding_readiness_report_from_graph(&graph, left, right, operation)
 }
 
-/// Prepare and report exact winding handoff facts for a specific output
-/// validation policy.
-///
-/// The default winding readiness report preserves surface-arrangement
-/// semantics for lower-dimensional operands. This policy-aware variant mirrors
-/// [`ExactBooleanRequest::new`] and [`ExactBooleanRequest::preflight`] for closed-output requests: when
-/// two lower-dimensional operands regularize to an empty closed solid, the
-/// handoff is certified as already materialized instead of asking callers to
-/// inspect open-surface split regions.
-pub fn certify_winding_readiness_report_with_validation(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: ValidationPolicy,
-) -> Result<ExactWindingReadinessReport, MeshError> {
-    let graph = build_intersection_graph(left, right)?;
-    validate_graph_source_handoff(&graph, left, right)?;
-    winding_readiness_report_with_validation_from_graph(&graph, left, right, operation, validation)
-}
-
 /// Prepare and report exact winding handoff facts for explicit output
 /// validation and boundary-only projection policies.
 ///
@@ -9038,12 +9028,10 @@ pub fn certify_winding_readiness_report_with_validation(
 /// caller supplies [`ExactBoundaryBooleanPolicy::PreserveSeparateShells`] and
 /// the retained graph certifies boundary-only contact, the winding handoff is
 /// marked as already materialized by that explicit projection policy.
-pub fn certify_winding_readiness_report_with_boundary_policy(
+fn winding_readiness_report_for_request(
     left: &ExactMesh,
     right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: ValidationPolicy,
-    boundary_policy: ExactBoundaryBooleanPolicy,
+    request: ExactBooleanRequest,
 ) -> Result<ExactWindingReadinessReport, MeshError> {
     let graph = build_intersection_graph(left, right)?;
     validate_graph_source_handoff(&graph, left, right)?;
@@ -9051,9 +9039,9 @@ pub fn certify_winding_readiness_report_with_boundary_policy(
         &graph,
         left,
         right,
-        operation,
-        validation,
-        boundary_policy,
+        request.operation,
+        request.validation,
+        request.boundary_policy,
     )
 }
 
@@ -12621,13 +12609,9 @@ mod tests {
             ExactBooleanOperation::Intersection,
             ExactBooleanOperation::Difference,
         ] {
-            let readiness = certify_winding_readiness_report_with_validation(
-                &left,
-                &right,
-                operation,
-                ValidationPolicy::CLOSED,
-            )
-            .unwrap();
+            let readiness = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED)
+                .winding_readiness(&left, &right)
+                .unwrap();
             assert_eq!(
                 readiness.status,
                 ExactWindingReadinessStatus::LowerDimensionalRegularizedSolidAlreadyMaterialized,
@@ -12783,12 +12767,11 @@ mod tests {
         readiness.validate().unwrap();
         readiness.validate_against_sources(&left, &right).unwrap();
 
-        let boundary_readiness = certify_winding_readiness_report_with_validation(
-            &left,
-            &right,
+        let boundary_readiness = ExactBooleanRequest::new(
             ExactBooleanOperation::Union,
             ValidationPolicy::ALLOW_BOUNDARY,
         )
+        .winding_readiness(&left, &right)
         .unwrap();
         assert_eq!(
             boundary_readiness.status,

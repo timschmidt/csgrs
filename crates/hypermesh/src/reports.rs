@@ -26,8 +26,7 @@ use super::boolean::{
     certify_boundary_touching_report, certify_open_surface_disjoint_report,
     certify_planar_arrangement_report, certify_refinement_report, certify_same_surface_report,
     certify_volumetric_boundary_closure_report, certify_winding_readiness_report,
-    certify_winding_readiness_report_with_boundary_policy,
-    certify_winding_readiness_report_with_validation, materialize_closed_same_surface_boolean,
+    materialize_closed_same_surface_boolean,
     materialize_volumetric_coplanar_boundary_closure_output,
     open_surface_disjoint_result_matches_sources, replay_coplanar_mesh_overlay_result,
     replay_materialized_volumetric_winding_region_plan, replay_open_surface_arrangement_result,
@@ -5589,7 +5588,7 @@ impl ExactWindingReadinessReport {
     /// Validate this winding-readiness report against source meshes and an
     /// explicit output validation policy.
     ///
-    /// This mirrors [`certify_winding_readiness_report_with_validation`] for
+    /// This mirrors [`ExactBooleanRequest::winding_readiness`] for
     /// policy-aware handoff states such as closed regularization of
     /// lower-dimensional operands.
     pub fn validate_against_sources_with_validation(
@@ -5599,13 +5598,9 @@ impl ExactWindingReadinessReport {
         validation: ValidationPolicy,
     ) -> Result<(), ExactReportValidationError> {
         self.validate()?;
-        let replay = certify_winding_readiness_report_with_validation(
-            left,
-            right,
-            self.operation,
-            validation,
-        )
-        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+        let replay = ExactBooleanRequest::new(self.operation, validation)
+            .winding_readiness(left, right)
+            .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
         if self == &replay {
             Ok(())
         } else {
@@ -5623,14 +5618,10 @@ impl ExactWindingReadinessReport {
         boundary_policy: ExactBoundaryBooleanPolicy,
     ) -> Result<(), ExactReportValidationError> {
         self.validate()?;
-        let replay = certify_winding_readiness_report_with_boundary_policy(
-            left,
-            right,
-            self.operation,
-            validation,
-            boundary_policy,
-        )
-        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+        let replay =
+            ExactBooleanRequest::with_boundary_policy(self.operation, validation, boundary_policy)
+                .winding_readiness(left, right)
+                .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
         if self == &replay {
             Ok(())
         } else {
@@ -5668,12 +5659,7 @@ impl ExactWindingReadinessReport {
         if let Err(error) = self.validate() {
             return error.into();
         }
-        match certify_winding_readiness_report_with_validation(
-            left,
-            right,
-            self.operation,
-            validation,
-        ) {
+        match ExactBooleanRequest::new(self.operation, validation).winding_readiness(left, right) {
             Ok(replay) if self == &replay => ExactReportFreshness::Current,
             Ok(_) | Err(_) => ExactReportFreshness::SourceReplayMismatch,
         }
@@ -5691,13 +5677,9 @@ impl ExactWindingReadinessReport {
         if let Err(error) = self.validate() {
             return error.into();
         }
-        match certify_winding_readiness_report_with_boundary_policy(
-            left,
-            right,
-            self.operation,
-            validation,
-            boundary_policy,
-        ) {
+        match ExactBooleanRequest::with_boundary_policy(self.operation, validation, boundary_policy)
+            .winding_readiness(left, right)
+        {
             Ok(replay) if self == &replay => ExactReportFreshness::Current,
             Ok(_) | Err(_) => ExactReportFreshness::SourceReplayMismatch,
         }
