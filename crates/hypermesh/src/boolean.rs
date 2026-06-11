@@ -866,6 +866,11 @@ fn exact_boolean_preflight_matches_certifications(
             certifications.boundary_touching.is_certified()
                 && *status
                     == ExactWindingReadinessStatus::BoundaryPolicyShortcutAlreadyMaterialized
+                && exact_boolean_preflight_matches_boundary_report(
+                    preflight,
+                    &certifications.boundary_touching,
+                    false,
+                )
         }
         ExactBooleanSupport::CertifiedOpenSurfaceArrangementUnion
         | ExactBooleanSupport::CertifiedOpenSurfaceArrangementIntersection
@@ -916,9 +921,18 @@ fn exact_boolean_preflight_matches_certifications(
         ExactBooleanSupport::RequiresBoundaryPolicy => {
             certifications.boundary_touching.is_certified()
                 && *status == ExactWindingReadinessStatus::BoundaryPolicyRequired
+                && exact_boolean_preflight_matches_boundary_report(
+                    preflight,
+                    &certifications.boundary_touching,
+                    true,
+                )
         }
         ExactBooleanSupport::RequiresPlanarArrangement => {
             *status == ExactWindingReadinessStatus::PlanarArrangementRequired
+                && exact_boolean_preflight_matches_planar_report(
+                    preflight,
+                    &certifications.planar_arrangement,
+                )
         }
         ExactBooleanSupport::RequiresCoplanarVolumetricCells => {
             *status == ExactWindingReadinessStatus::CoplanarVolumetricCellsRequired
@@ -946,6 +960,39 @@ fn exact_boolean_preflight_matches_certifications(
             )
         }
     }
+}
+
+fn exact_boolean_preflight_matches_boundary_report(
+    preflight: &ExactBooleanPreflight,
+    boundary_touching: &ExactBoundaryTouchingReport,
+    requires_blocker: bool,
+) -> bool {
+    preflight.graph_had_unknowns == boundary_touching.graph_had_unknowns
+        && preflight.retained_face_pairs == boundary_touching.retained_face_pairs
+        && preflight.retained_events == boundary_touching.retained_events
+        && preflight.region_count == 0
+        && preflight.region_classifications.is_empty()
+        && preflight.arrangement_readiness.is_none()
+        && preflight.coplanar_volumetric_evidence.is_none()
+        && if requires_blocker {
+            preflight.blocker.as_ref() == Some(&boundary_touching.blocker)
+        } else {
+            preflight.blocker.is_none()
+        }
+}
+
+fn exact_boolean_preflight_matches_planar_report(
+    preflight: &ExactBooleanPreflight,
+    planar_arrangement: &ExactPlanarArrangementReport,
+) -> bool {
+    preflight.graph_had_unknowns == planar_arrangement.graph_had_unknowns
+        && preflight.retained_face_pairs == planar_arrangement.retained_face_pairs
+        && preflight.retained_events == planar_arrangement.retained_events
+        && preflight.region_count == 0
+        && preflight.region_classifications.is_empty()
+        && preflight.blocker.as_ref() == Some(&planar_arrangement.blocker)
+        && preflight.arrangement_readiness == planar_arrangement.arrangement_readiness
+        && preflight.coplanar_volumetric_evidence.is_none()
 }
 
 fn exact_boolean_preflight_matches_winding_handoff(
