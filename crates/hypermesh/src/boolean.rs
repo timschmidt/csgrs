@@ -581,6 +581,26 @@ impl ExactBooleanRequest {
     ) -> Result<ExactPlanarArrangementReport, MeshError> {
         planar_arrangement_report_for_request(left, right, self)
     }
+
+    /// Certify whether adjacent closed-solid union completion can materialize
+    /// this request.
+    pub fn adjacent_union_completion_report(
+        self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> Result<ExactAdjacentUnionCompletionReport, MeshError> {
+        adjacent_union_completion_report_for_request(left, right, self)
+    }
+
+    /// Materialize adjacent closed-solid union completion for this request,
+    /// returning the exact report consumed by the materializer.
+    pub fn materialize_adjacent_union_completion(
+        self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> Result<Option<(ExactBooleanResult, ExactAdjacentUnionCompletionReport)>, MeshError> {
+        materialize_adjacent_union_completion_for_request(left, right, self)
+    }
 }
 
 /// Replayable certification bundle for an exact boolean request.
@@ -4733,17 +4753,12 @@ fn adjacent_union_completion_report(
     }
 }
 
-/// Certify whether adjacent closed-solid union completion can materialize.
-///
-/// This follows the same dispatcher precedence, preserving stronger-kernel
-/// handoff decisions while retaining exact graph counts and consumed
-/// adjacency topology for certified full-face and contained-face completions.
-pub fn certify_adjacent_union_completion_report(
+fn adjacent_union_completion_report_for_request(
     left: &ExactMesh,
     right: &ExactMesh,
-    operation: ExactBooleanOperation,
+    request: ExactBooleanRequest,
 ) -> Result<ExactAdjacentUnionCompletionReport, MeshError> {
-    Ok(adjacent_union_completion_certification(left, right, operation, None)?.0)
+    Ok(adjacent_union_completion_certification(left, right, request.operation, None)?.0)
 }
 
 fn adjacent_union_completion_certification(
@@ -5007,21 +5022,17 @@ fn adjacent_union_completion_certification(
     ))
 }
 
-/// Certify and materialize an adjacent closed-solid union, returning the exact
-/// completion report consumed by the materializer.
-///
-/// The returned report
-/// identifies whether full-face or contained-face adjacency completed the
-/// union and keeps the retained graph counts and adjacency topology replay
-/// used to decide that no more general winding/cell path owned the result.
-pub fn materialize_adjacent_union_completion_boolean_with_report(
+fn materialize_adjacent_union_completion_for_request(
     left: &ExactMesh,
     right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: ValidationPolicy,
+    request: ExactBooleanRequest,
 ) -> Result<Option<(ExactBooleanResult, ExactAdjacentUnionCompletionReport)>, MeshError> {
-    let (report, result) =
-        adjacent_union_completion_certification(left, right, operation, Some(validation))?;
+    let (report, result) = adjacent_union_completion_certification(
+        left,
+        right,
+        request.operation,
+        Some(request.validation),
+    )?;
     if !report.is_certified() {
         return Ok(None);
     }
@@ -5042,8 +5053,8 @@ pub fn materialize_adjacent_union_completion_boolean_with_report(
         .validate_operation_against_sources(
             left,
             right,
-            operation,
-            validation,
+            request.operation,
+            request.validation,
             ExactBoundaryBooleanPolicy::Reject,
         )
         .is_err()

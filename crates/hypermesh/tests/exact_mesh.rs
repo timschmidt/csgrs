@@ -27,8 +27,7 @@ use hypermesh::{
     SplitPlanFreshness, TriangleTriangleFreshness, TriangleTriangleRelation, ValidationPolicy,
     WindingReportFreshness, approximate_mesh_f64_view, audit_exact_mesh,
     build_exact_arrangement2d_overlay, build_exact_arrangement2d_overlay_with_boundary_policy,
-    build_intersection_graph, certify_adjacent_union_completion_report,
-    certify_boundary_touching_report, certify_convex_solid,
+    build_intersection_graph, certify_boundary_touching_report, certify_convex_solid,
     certify_coplanar_volumetric_cell_evidence, certify_exact_mesh_proposal,
     certify_open_surface_disjoint_report, certify_same_surface_report,
     checked_classify_face_regions_against_opposite_planes,
@@ -38,7 +37,6 @@ use hypermesh::{
     classify_point_against_closed_mesh_winding_report, classify_point_against_convex_solid_report,
     classify_triangle_triangle, exact_mesh_consumer_readiness, exact_mesh_handoff_package,
     inspect_f64_mesh_input, inspect_i64_mesh_input,
-    materialize_adjacent_union_completion_boolean_with_report,
     materialize_affine_orthogonal_solid_boolean, materialize_affine_orthogonal_solid_difference,
     materialize_affine_orthogonal_solid_intersection, materialize_arrangement_cell_complex_boolean,
     materialize_axis_aligned_orthogonal_solid_boolean,
@@ -2012,7 +2010,7 @@ fn full_face_adjacent_union_refines_side_faces_for_boundary_subdivided_shared_fa
     assert!(union.mesh.facts().mesh.closed_manifold);
 
     let report =
-        certify_adjacent_union_completion_report(&left, &right, ExactBooleanOperation::Union)
+        ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED).adjacent_union_completion_report(&left, &right)
             .unwrap();
     assert_eq!(
         report.status,
@@ -2113,7 +2111,7 @@ fn full_face_adjacent_union_accepts_dual_boundary_subdivided_shared_face() {
     assert!(union.mesh.facts().mesh.closed_manifold);
 
     let report =
-        certify_adjacent_union_completion_report(&left, &right, ExactBooleanOperation::Union)
+        ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED).adjacent_union_completion_report(&left, &right)
             .unwrap();
     assert_eq!(
         report.status,
@@ -2182,7 +2180,7 @@ fn adjacent_union_completion_boolean_is_publicly_replayable() {
     let separated_right = tetra_from_corners([20, 0, 0], [24, 0, 0], [20, 4, 0], [20, 0, 4]);
 
     let report =
-        certify_adjacent_union_completion_report(&left, &right, ExactBooleanOperation::Union)
+        ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED).adjacent_union_completion_report(&left, &right)
             .unwrap();
     assert_eq!(
         report.status,
@@ -2202,12 +2200,7 @@ fn adjacent_union_completion_boolean_is_publicly_replayable() {
         ExactReportFreshness::SourceReplayMismatch
     );
 
-    let (result, _completion_report) = materialize_adjacent_union_completion_boolean_with_report(
-        &left,
-        &right,
-        ExactBooleanOperation::Union,
-        ValidationPolicy::CLOSED,
-    )
+    let (result, _completion_report) = ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED,).materialize_adjacent_union_completion(&left, &right)
     .unwrap()
     .expect("non-axis full-face adjacent solids should complete as a boolean union");
     assert_eq!(
@@ -2221,12 +2214,7 @@ fn adjacent_union_completion_boolean_is_publicly_replayable() {
     result.validate_against_sources(&left, &right).unwrap();
 
     let (reported_result, consumed_report) =
-        materialize_adjacent_union_completion_boolean_with_report(
-            &left,
-            &right,
-            ExactBooleanOperation::Union,
-            ValidationPolicy::CLOSED,
-        )
+        ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED,).materialize_adjacent_union_completion(&left, &right)
         .unwrap()
         .expect("non-axis full-face adjacent union should retain consumed report");
     assert_eq!(
@@ -2271,30 +2259,16 @@ fn adjacent_union_completion_boolean_is_publicly_replayable() {
     assert!(result.mesh.facts().mesh.closed_manifold);
 
     assert!(
-        materialize_adjacent_union_completion_boolean_with_report(
-            &left,
-            &right,
-            ExactBooleanOperation::Intersection,
-            ValidationPolicy::CLOSED,
-        )
+        ExactBooleanRequest::new(ExactBooleanOperation::Intersection, ValidationPolicy::CLOSED,).materialize_adjacent_union_completion(&left, &right)
         .unwrap()
         .is_none()
     );
     assert!(
-        materialize_adjacent_union_completion_boolean_with_report(
-            &left,
-            &right,
-            ExactBooleanOperation::Intersection,
-            ValidationPolicy::CLOSED,
-        )
+        ExactBooleanRequest::new(ExactBooleanOperation::Intersection, ValidationPolicy::CLOSED,).materialize_adjacent_union_completion(&left, &right)
         .unwrap()
         .is_none()
     );
-    let intersection_report = certify_adjacent_union_completion_report(
-        &left,
-        &right,
-        ExactBooleanOperation::Intersection,
-    )
+    let intersection_report = ExactBooleanRequest::new(ExactBooleanOperation::Intersection, ValidationPolicy::CLOSED).adjacent_union_completion_report(&left, &right)
     .unwrap();
     assert_eq!(
         intersection_report.status,
@@ -2310,11 +2284,7 @@ fn adjacent_union_completion_boolean_is_publicly_replayable() {
 
     let axis_left = axis_aligned_box([0, 0, 0], [1, 1, 1]);
     let axis_right = axis_aligned_box([1, 0, 0], [2, 1, 1]);
-    let axis_report = certify_adjacent_union_completion_report(
-        &axis_left,
-        &axis_right,
-        ExactBooleanOperation::Union,
-    )
+    let axis_report = ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED).adjacent_union_completion_report(&axis_left, &axis_right)
     .unwrap();
     assert_eq!(
         axis_report.status,
@@ -2328,22 +2298,12 @@ fn adjacent_union_completion_boolean_is_publicly_replayable() {
     assert!(stale_axis_report.validate().is_err());
 
     assert!(
-        materialize_adjacent_union_completion_boolean_with_report(
-            &axis_left,
-            &axis_right,
-            ExactBooleanOperation::Union,
-            ValidationPolicy::CLOSED,
-        )
+        ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED,).materialize_adjacent_union_completion(&axis_left, &axis_right)
         .unwrap()
         .is_none()
     );
     assert!(
-        materialize_adjacent_union_completion_boolean_with_report(
-            &axis_left,
-            &axis_right,
-            ExactBooleanOperation::Union,
-            ValidationPolicy::CLOSED,
-        )
+        ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED,).materialize_adjacent_union_completion(&axis_left, &axis_right)
         .unwrap()
         .is_none()
     );
@@ -2369,11 +2329,7 @@ fn adjacent_union_completion_boolean_is_publicly_replayable() {
         .unwrap();
 
     let crossing_right = tetra_from_corners([1, 1, -1], [5, 1, -1], [1, 5, -1], [1, 1, 3]);
-    let crossing_report = certify_adjacent_union_completion_report(
-        &left,
-        &crossing_right,
-        ExactBooleanOperation::Union,
-    )
+    let crossing_report = ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED).adjacent_union_completion_report(&left, &crossing_right)
     .unwrap();
     assert_eq!(
         crossing_report.status,
@@ -2393,12 +2349,7 @@ fn adjacent_union_completion_boolean_is_publicly_replayable() {
     stale_crossing.blocker.kind = ExactBooleanBlockerKind::NeedsBoundaryPolicy;
     assert!(stale_crossing.validate().is_err());
     assert!(
-        materialize_adjacent_union_completion_boolean_with_report(
-            &left,
-            &crossing_right,
-            ExactBooleanOperation::Union,
-            ValidationPolicy::CLOSED,
-        )
+        ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED,).materialize_adjacent_union_completion(&left, &crossing_right)
         .unwrap()
         .is_none()
     );
@@ -4736,11 +4687,7 @@ fn exact_contained_face_adjacent_union_is_publicly_replayable() {
     assert_eq!(multi_hole_union.containing_faces.len(), 1);
     assert_eq!(multi_hole_union.contained_faces.len(), 2);
     assert!(multi_hole_union.mesh.facts().mesh.closed_manifold);
-    let multi_hole_report = certify_adjacent_union_completion_report(
-        &left,
-        &two_caps_right,
-        ExactBooleanOperation::Union,
-    )
+    let multi_hole_report = ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED).adjacent_union_completion_report(&left, &two_caps_right)
     .unwrap();
     assert_eq!(
         multi_hole_report.status,
@@ -4798,12 +4745,7 @@ fn exact_contained_face_adjacent_union_is_publicly_replayable() {
     );
 
     assert!(
-        materialize_adjacent_union_completion_boolean_with_report(
-            &left,
-            &right,
-            ExactBooleanOperation::Union,
-            ValidationPolicy::CLOSED,
-        )
+        ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED,).materialize_adjacent_union_completion(&left, &right)
         .unwrap()
         .is_none()
     );
@@ -4814,11 +4756,7 @@ fn exact_contained_face_adjacent_union_is_publicly_replayable() {
         &disjoint_shell,
         "test disconnected subdivided contained-face fixture",
     );
-    let split_report = certify_adjacent_union_completion_report(
-        &split_container,
-        &split_crossing_right,
-        ExactBooleanOperation::Union,
-    )
+    let split_report = ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED).adjacent_union_completion_report(&split_container, &split_crossing_right)
     .unwrap();
     assert_eq!(
         split_report.status,
@@ -4836,11 +4774,7 @@ fn exact_contained_face_adjacent_union_is_publicly_replayable() {
         &disjoint_shell,
         "test disconnected multi-face contained-cap fixture",
     );
-    let square_disk_report = certify_adjacent_union_completion_report(
-        &square_disk_container,
-        &square_disk_cap_right,
-        ExactBooleanOperation::Union,
-    )
+    let square_disk_report = ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED).adjacent_union_completion_report(&square_disk_container, &square_disk_cap_right)
     .unwrap();
     assert_eq!(
         square_disk_report.status,
@@ -4859,7 +4793,7 @@ fn exact_contained_face_adjacent_union_is_publicly_replayable() {
         "test disconnected contained-face fixture",
     );
     let completion_report =
-        certify_adjacent_union_completion_report(&container, &right, ExactBooleanOperation::Union)
+        ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED).adjacent_union_completion_report(&container, &right)
             .unwrap();
     assert_eq!(
         completion_report.status,
@@ -4885,12 +4819,7 @@ fn exact_contained_face_adjacent_union_is_publicly_replayable() {
         completion_report.freshness_against_sources(&container, &separated_right),
         ExactReportFreshness::SourceReplayMismatch
     );
-    let (result, _completion_report) = materialize_adjacent_union_completion_boolean_with_report(
-        &container,
-        &right,
-        ExactBooleanOperation::Union,
-        ValidationPolicy::CLOSED,
-    )
+    let (result, _completion_report) = ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED,).materialize_adjacent_union_completion(&container, &right)
     .unwrap()
     .expect("contained-face adjacent solids should complete as a boolean union");
     assert_eq!(
@@ -4904,12 +4833,7 @@ fn exact_contained_face_adjacent_union_is_publicly_replayable() {
     result.validate_against_sources(&container, &right).unwrap();
 
     let (reported_result, consumed_report) =
-        materialize_adjacent_union_completion_boolean_with_report(
-            &container,
-            &right,
-            ExactBooleanOperation::Union,
-            ValidationPolicy::CLOSED,
-        )
+        ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED,).materialize_adjacent_union_completion(&container, &right)
         .unwrap()
         .expect("contained-face adjacent union should retain consumed report");
     assert_eq!(

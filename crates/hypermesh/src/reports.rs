@@ -22,9 +22,9 @@ use super::affine_solid::{
 };
 use super::boolean::{
     ExactBooleanOperation, ExactBooleanRequest, ExactBoundaryBooleanPolicy,
-    boundary_policy_shortcut_result_matches_sources, certify_adjacent_union_completion_report,
-    certify_boundary_touching_report, certify_open_surface_disjoint_report,
-    certify_same_surface_report, certify_winding_readiness_report,
+    boundary_policy_shortcut_result_matches_sources, certify_boundary_touching_report,
+    certify_open_surface_disjoint_report, certify_same_surface_report,
+    certify_winding_readiness_report,
     materialize_closed_same_surface_boolean,
     materialize_volumetric_coplanar_boundary_closure_output,
     open_surface_disjoint_result_matches_sources, replay_coplanar_mesh_overlay_result,
@@ -2497,7 +2497,8 @@ fn arrangement_cell_complex_sources_match(
     right: &ExactMesh,
 ) -> Result<bool, ExactReportValidationError> {
     if operation == ExactBooleanOperation::Union {
-        let report = certify_adjacent_union_completion_report(left, right, operation)
+        let report = ExactBooleanRequest::new(operation, validation)
+            .adjacent_union_completion_report(left, right)
             .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
         report.validate()?;
         if matches!(
@@ -2590,7 +2591,8 @@ fn arrangement_cell_complex_output_matches_sources(
         return Ok(None);
     }
 
-    let adjacent_report = certify_adjacent_union_completion_report(left, right, operation)
+    let adjacent_report = ExactBooleanRequest::new(operation, validation)
+        .adjacent_union_completion_report(left, right)
         .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
     adjacent_report.validate()?;
     match adjacent_report.status {
@@ -5114,7 +5116,8 @@ impl ExactAdjacentUnionCompletionReport {
         right: &ExactMesh,
     ) -> Result<(), ExactReportValidationError> {
         self.validate()?;
-        let replay = certify_adjacent_union_completion_report(left, right, self.operation)
+        let replay = ExactBooleanRequest::new(self.operation, ValidationPolicy::ALLOW_BOUNDARY)
+            .adjacent_union_completion_report(left, right)
             .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
         if self == &replay {
             Ok(())
@@ -5132,7 +5135,9 @@ impl ExactAdjacentUnionCompletionReport {
         if let Err(error) = self.validate() {
             return error.into();
         }
-        match certify_adjacent_union_completion_report(left, right, self.operation) {
+        match ExactBooleanRequest::new(self.operation, ValidationPolicy::ALLOW_BOUNDARY)
+            .adjacent_union_completion_report(left, right)
+        {
             Ok(replay) if self == &replay => ExactReportFreshness::Current,
             Ok(_) | Err(_) => ExactReportFreshness::SourceReplayMismatch,
         }
