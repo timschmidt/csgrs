@@ -1053,6 +1053,7 @@ impl ExactBooleanEvaluation {
             result.validate()?;
             if !exact_boolean_result_kind_matches_request(result, self.request)
                 || result.mesh.validation_policy() != self.request.validation
+                || !exact_boolean_result_facts_match_preflight(result, &self.preflight)
                 || !exact_boolean_result_kind_matches_preflight_support(
                     result,
                     self.preflight.support,
@@ -1593,6 +1594,22 @@ fn exact_boolean_result_kind_matches_preflight_support(
         | ExactBooleanSupport::RequiresCoplanarVolumetricCells
         | ExactBooleanSupport::RequiresCertifiedWinding
         | ExactBooleanSupport::UnresolvedGraph => false,
+    }
+}
+
+fn exact_boolean_result_facts_match_preflight(
+    result: &ExactBooleanResult,
+    preflight: &ExactBooleanPreflight,
+) -> bool {
+    match result.kind {
+        ExactBooleanResultKind::SelectedRegions { .. }
+        | ExactBooleanResultKind::OpenSurfaceArrangement { .. } => {
+            result.graph_had_unknowns == preflight.graph_had_unknowns
+                && result.region_classifications == preflight.region_classifications
+        }
+        ExactBooleanResultKind::ArrangementCellComplexMaterialized { .. }
+        | ExactBooleanResultKind::BoundaryPolicyShortcut { .. }
+        | ExactBooleanResultKind::CertifiedShortcut { .. } => true,
     }
 }
 

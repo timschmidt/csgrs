@@ -2786,6 +2786,39 @@ fn exact_selected_region_boolean_is_publicly_replayable() {
     )
     .unwrap();
     evaluation.validate().unwrap();
+    let mut stale_evaluation_region_fact = evaluation.clone();
+    let classification = stale_evaluation_region_fact
+        .result
+        .as_mut()
+        .expect("selected-region evaluation should materialize")
+        .region_classifications
+        .first_mut()
+        .expect("selected-region result should retain region facts");
+    match classification.relation {
+        FaceRegionPlaneRelation::StrictlyAbove => {
+            classification.relation = FaceRegionPlaneRelation::StrictlyBelow;
+            classification
+                .node_sides
+                .fill(Some(hyperlimit::PlaneSide::Below));
+        }
+        _ => {
+            classification.relation = FaceRegionPlaneRelation::StrictlyAbove;
+            classification
+                .node_sides
+                .fill(Some(hyperlimit::PlaneSide::Above));
+        }
+    }
+    stale_evaluation_region_fact
+        .result
+        .as_ref()
+        .unwrap()
+        .validate()
+        .unwrap();
+    assert_eq!(
+        stale_evaluation_region_fact.validate(),
+        Err(hypermesh::ExactReportValidationError::StatusEvidenceMismatch),
+        "{stale_evaluation_region_fact:?}"
+    );
     let mut stale_winding_handoff = evaluation.clone();
     stale_winding_handoff
         .certifications
