@@ -29,10 +29,9 @@ use super::boolean::{
     certify_winding_readiness_report_with_boundary_policy,
     certify_winding_readiness_report_with_validation, materialize_closed_same_surface_boolean,
     materialize_volumetric_coplanar_boundary_closure_output,
-    open_surface_disjoint_result_matches_sources, preflight_boolean_exact,
-    preflight_boolean_exact_with_boundary_policy, preflight_boolean_exact_with_validation,
-    replay_coplanar_mesh_overlay_result, replay_materialized_volumetric_winding_region_plan,
-    replay_open_surface_arrangement_result, replay_selected_region_boolean_result,
+    open_surface_disjoint_result_matches_sources, replay_coplanar_mesh_overlay_result,
+    replay_materialized_volumetric_winding_region_plan, replay_open_surface_arrangement_result,
+    replay_selected_region_boolean_result,
 };
 use super::bounds::AabbIntersectionKind;
 use super::contained_adjacent::materialize_contained_face_adjacent_union;
@@ -2537,7 +2536,8 @@ fn arrangement_cell_complex_sources_match(
             return Ok(true);
         }
     }
-    let preflight = preflight_boolean_exact_with_validation(left, right, operation, validation)
+    let preflight = ExactBooleanRequest::new(operation, validation)
+        .preflight(left, right)
         .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
     preflight.validate()?;
     Ok(preflight.support == ExactBooleanSupport::CertifiedArrangementCellComplex)
@@ -3313,7 +3313,7 @@ impl ExactBooleanSupport {
 /// Preflight report for an exact boolean operation request.
 ///
 /// The report gives callers a stable way to audit the current implementation
-/// boundary. Shortcut variants are executable by `boolean_exact`. For
+/// boundary. Shortcut variants are executable by [`ExactBooleanRequest::materialize`]. For
 /// nontrivial named booleans, the report exposes the certified split-region
 /// plane classifications that a future exact winding/inside-outside rule must
 /// consume, without dispatching to the specialized tolerance kernel.
@@ -3715,7 +3715,8 @@ impl ExactBooleanPreflight {
         right: &ExactMesh,
     ) -> Result<(), ExactReportValidationError> {
         self.validate()?;
-        let replay = preflight_boolean_exact(left, right, self.operation)
+        let replay = ExactBooleanRequest::new(self.operation, ValidationPolicy::ALLOW_BOUNDARY)
+            .preflight(left, right)
             .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
         if self == &replay {
             Ok(())
@@ -3739,9 +3740,9 @@ impl ExactBooleanPreflight {
         validation: ValidationPolicy,
     ) -> Result<(), ExactReportValidationError> {
         self.validate()?;
-        let replay =
-            preflight_boolean_exact_with_validation(left, right, self.operation, validation)
-                .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+        let replay = ExactBooleanRequest::new(self.operation, validation)
+            .preflight(left, right)
+            .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
         if self == &replay {
             Ok(())
         } else {
@@ -3765,14 +3766,10 @@ impl ExactBooleanPreflight {
         boundary_policy: ExactBoundaryBooleanPolicy,
     ) -> Result<(), ExactReportValidationError> {
         self.validate()?;
-        let replay = preflight_boolean_exact_with_boundary_policy(
-            left,
-            right,
-            self.operation,
-            validation,
-            boundary_policy,
-        )
-        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+        let replay =
+            ExactBooleanRequest::with_boundary_policy(self.operation, validation, boundary_policy)
+                .preflight(left, right)
+                .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
         if self == &replay {
             Ok(())
         } else {
@@ -3793,7 +3790,9 @@ impl ExactBooleanPreflight {
         if let Err(error) = self.validate() {
             return error.into();
         }
-        match preflight_boolean_exact(left, right, self.operation) {
+        match ExactBooleanRequest::new(self.operation, ValidationPolicy::ALLOW_BOUNDARY)
+            .preflight(left, right)
+        {
             Ok(replay) if self == &replay => ExactReportFreshness::Current,
             Ok(_) | Err(_) => ExactReportFreshness::SourceReplayMismatch,
         }
@@ -3809,7 +3808,7 @@ impl ExactBooleanPreflight {
         if let Err(error) = self.validate() {
             return error.into();
         }
-        match preflight_boolean_exact_with_validation(left, right, self.operation, validation) {
+        match ExactBooleanRequest::new(self.operation, validation).preflight(left, right) {
             Ok(replay) if self == &replay => ExactReportFreshness::Current,
             Ok(_) | Err(_) => ExactReportFreshness::SourceReplayMismatch,
         }
@@ -3827,13 +3826,9 @@ impl ExactBooleanPreflight {
         if let Err(error) = self.validate() {
             return error.into();
         }
-        match preflight_boolean_exact_with_boundary_policy(
-            left,
-            right,
-            self.operation,
-            validation,
-            boundary_policy,
-        ) {
+        match ExactBooleanRequest::with_boundary_policy(self.operation, validation, boundary_policy)
+            .preflight(left, right)
+        {
             Ok(replay) if self == &replay => ExactReportFreshness::Current,
             Ok(_) | Err(_) => ExactReportFreshness::SourceReplayMismatch,
         }
@@ -6371,8 +6366,12 @@ mod tests {
         let left = report_test_tetra([0, 0, 0]);
         let right = report_test_tetra([3, 0, 0]);
 
-        let preflight =
-            preflight_boolean_exact(&left, &right, ExactBooleanOperation::Union).unwrap();
+        let preflight = ExactBooleanRequest::new(
+            ExactBooleanOperation::Union,
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .preflight(&left, &right)
+        .unwrap();
         assert_eq!(
             preflight.freshness_against_sources(&left, &right),
             ExactReportFreshness::Current

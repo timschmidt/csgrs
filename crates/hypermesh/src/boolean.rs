@@ -531,13 +531,7 @@ impl ExactBooleanRequest {
         left: &ExactMesh,
         right: &ExactMesh,
     ) -> Result<ExactBooleanPreflight, MeshError> {
-        preflight_boolean_exact_with_boundary_policy(
-            left,
-            right,
-            self.operation,
-            self.validation,
-            self.boundary_policy,
-        )
+        preflight_boolean_exact_request(left, right, self)
     }
 
     /// Evaluate this request into a certified result or retained exact
@@ -2509,7 +2503,7 @@ fn preflight_boolean_exact_reject_boundary_policy(
 
 /// Preflight an exact boolean operation for a specific output validation policy.
 ///
-/// [`preflight_boolean_exact`] preserves the strict closed-output boundary for
+/// [`ExactBooleanRequest::preflight`] preserves the strict closed-output boundary for
 /// named solid booleans. This policy-aware variant keeps that default contract
 /// for `CLOSED`, but can also certify exact arrangement/cell-complex support
 /// when the same retained split-cell facts materialize under a less restrictive
@@ -2552,66 +2546,21 @@ fn preflight_boolean_exact_with_validation_reject_boundary_policy(
     Ok(preflight)
 }
 
-/// Preflight an exact boolean operation using the default exact materialization
-/// policy.
-///
-/// This mirrors [`ExactBooleanRequest::new`]: certified boundary-only contacts
-/// are reported as supportable boundary-policy shortcuts. Use
-/// [`preflight_boolean_exact_with_boundary_policy`] with
-/// [`ExactBoundaryBooleanPolicy::Reject`] to retain boundary-only contact as an
-/// explicit blocker.
-pub fn preflight_boolean_exact(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-) -> Result<ExactBooleanPreflight, MeshError> {
-    let preflight = preflight_boolean_exact_reject_boundary_policy(left, right, operation)?;
-    if matches!(operation, ExactBooleanOperation::SelectedRegions(_))
-        || preflight.support != ExactBooleanSupport::RequiresBoundaryPolicy
-    {
-        return Ok(preflight);
-    }
-    preflight_boolean_exact_with_boundary_policy(
-        left,
-        right,
-        operation,
-        ValidationPolicy::ALLOW_BOUNDARY,
-        ExactBoundaryBooleanPolicy::PreserveSeparateShells,
-    )
-}
-
-/// Preflight an exact boolean operation for a specific output validation policy
-/// using the default exact materialization boundary policy.
-pub fn preflight_boolean_exact_with_validation(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: ValidationPolicy,
-) -> Result<ExactBooleanPreflight, MeshError> {
-    preflight_boolean_exact_with_boundary_policy(
-        left,
-        right,
-        operation,
-        validation,
-        ExactBoundaryBooleanPolicy::PreserveSeparateShells,
-    )
-}
-
-/// Preflight an exact boolean operation for explicit output validation and
+/// Preflight an exact boolean request for explicit output validation and
 /// boundary-only projection policies.
 ///
-/// The strict [`preflight_boolean_exact`] contract keeps lower-dimensional
-/// boundary contact as [`ExactBooleanSupport::RequiresBoundaryPolicy`]. This
-/// variant lets callers prove that their chosen boundary policy is sufficient
-/// for the current graph and validation policy, mirroring
-/// [`boolean_exact_with_boundary_policy`] without hiding the policy decision.
-pub fn preflight_boolean_exact_with_boundary_policy(
+/// A rejecting boundary policy keeps lower-dimensional boundary contact as
+/// [`ExactBooleanSupport::RequiresBoundaryPolicy`]. The default request policy
+/// proves when the chosen boundary projection is sufficient for the current
+/// graph and validation contract.
+fn preflight_boolean_exact_request(
     left: &ExactMesh,
     right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: ValidationPolicy,
-    boundary_policy: ExactBoundaryBooleanPolicy,
+    request: ExactBooleanRequest,
 ) -> Result<ExactBooleanPreflight, MeshError> {
+    let operation = request.operation;
+    let validation = request.validation;
+    let boundary_policy = request.boundary_policy;
     let preflight = preflight_boolean_exact_with_validation_reject_boundary_policy(
         left, right, operation, validation,
     )?;
@@ -2643,7 +2592,7 @@ pub fn preflight_boolean_exact_with_boundary_policy(
 
 /// Certify why retained volumetric boundary output can or cannot become closed.
 ///
-/// This report is intentionally narrower than `boolean_exact`: it asks whether
+/// This report is intentionally narrower than [`ExactBooleanRequest::materialize`]: it asks whether
 /// the exact split-cell materializer can produce boundary output under
 /// [`ValidationPolicy::ALLOW_BOUNDARY`], then audits the remaining boundary
 /// loops for the existing coplanar cap generator. Non-coplanar loops remain an
@@ -4054,11 +4003,11 @@ fn boolean_arrangement_cell_complex_meshes(
 /// pipeline.
 ///
 /// This exposes the same arrangement-certified materialization used by
-/// [`boolean_exact`]. It only runs when policy-aware preflight has already
+/// [`ExactBooleanRequest::materialize`]. It only runs when policy-aware preflight has already
 /// certified [`ExactBooleanSupport::CertifiedArrangementCellComplex`], so
 /// stronger exact paths such as convex, boundary-touching, winding, and trivial
 /// shortcuts keep their dispatcher provenance. After that guard it delegates to
-/// [`boolean_exact`] so earlier arrangement materializers keep their retained
+/// [`ExactBooleanRequest::materialize`] so earlier arrangement materializers keep their retained
 /// result kind.
 pub fn materialize_arrangement_cell_complex_boolean(
     left: &ExactMesh,
@@ -4069,7 +4018,7 @@ pub fn materialize_arrangement_cell_complex_boolean(
     if matches!(operation, ExactBooleanOperation::SelectedRegions(_)) {
         return Ok(None);
     }
-    let preflight = preflight_boolean_exact_with_validation(left, right, operation, validation)?;
+    let preflight = ExactBooleanRequest::new(operation, validation).preflight(left, right)?;
     if preflight.support != ExactBooleanSupport::CertifiedArrangementCellComplex {
         return Ok(None);
     }
@@ -4637,7 +4586,7 @@ fn boolean_arrangement_orthogonal_solid_cell_recovery(
 
 /// Certify and materialize a named boolean for axis-aligned orthogonal solids.
 ///
-/// This exposes the exact cell-recovery path used by [`boolean_exact`] as an
+/// This exposes the exact cell-recovery path used by [`ExactBooleanRequest::materialize`] as an
 /// [`ExactBooleanResult`], retaining the named operation and the
 /// arrangement-cell shortcut provenance. Inputs outside the supportable
 /// orthogonal cell model return `None` rather than falling through to unrelated
@@ -5839,7 +5788,7 @@ fn boolean_convex_relation_meshes_optional(
 
 /// Certify and materialize a named boolean for closed convex solids.
 ///
-/// This public wrapper follows [`boolean_exact`] precedence: it only
+/// This public wrapper follows [`ExactBooleanRequest::materialize`] precedence: it only
 /// materializes when preflight certifies the requested operation as a direct
 /// convex operation or convex relation shortcut. Inputs handled by earlier
 /// exact shortcuts, such as orthogonal-cell recovery or bounds disjointness,
@@ -5850,7 +5799,8 @@ pub fn materialize_closed_convex_boolean(
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
-    let preflight = preflight_boolean_exact(left, right, operation)?;
+    let preflight = ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY)
+        .preflight(left, right)?;
     let result = match preflight.support {
         ExactBooleanSupport::CertifiedConvexUnion
         | ExactBooleanSupport::CertifiedConvexIntersection
@@ -7993,7 +7943,7 @@ fn open_surface_disjoint_result_consumes_report(
 ///
 /// Bounds-disjoint inputs are handled by an earlier exact shortcut, so this
 /// function returns `None` for that case and only materializes the graph-backed
-/// open-surface disjoint certificate used by [`boolean_exact`].
+/// open-surface disjoint certificate used by [`ExactBooleanRequest::materialize`].
 pub fn materialize_open_surface_disjoint_boolean(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -8430,7 +8380,7 @@ fn boolean_same_surface_meshes(
 
 /// Certify and materialize a named boolean for identical non-closed meshes.
 ///
-/// This exposes the same exact shortcut used by [`boolean_exact`]. Closed
+/// This exposes the same exact shortcut used by [`ExactBooleanRequest::materialize`]. Closed
 /// solids that are identical route through the closed arrangement path instead,
 /// so this function returns `None` for those cases to preserve dispatcher
 /// provenance. Unsupported operations or non-identical sources also return
@@ -8494,7 +8444,7 @@ pub fn materialize_same_surface_boolean(
 /// Certify and materialize the closed same-surface arrangement boolean.
 ///
 /// Closed solids with identical or same-surface boundaries can route through
-/// the arrangement cell-complex path in [`boolean_exact`], rather than the
+/// the arrangement cell-complex path in [`ExactBooleanRequest::materialize`], rather than the
 /// non-closed same-surface shortcut. This exposes that named materializer when
 /// preflight certifies arrangement provenance, while yielding to earlier exact
 /// paths such as direct convex materialization.
@@ -8511,7 +8461,7 @@ pub fn materialize_closed_same_surface_boolean(
     {
         return Ok(None);
     }
-    let preflight = preflight_boolean_exact_with_validation(left, right, operation, validation)?;
+    let preflight = ExactBooleanRequest::new(operation, validation).preflight(left, right)?;
     if preflight.support != ExactBooleanSupport::CertifiedArrangementCellComplex {
         return Ok(None);
     }
@@ -8972,7 +8922,7 @@ fn boolean_boundary_touching_meshes_from_graph(
 /// under an explicit boundary-output policy.
 ///
 /// This is the direct materializer form of
-/// [`preflight_boolean_exact_with_boundary_policy`]: strict boundary-only
+/// [`ExactBooleanRequest::with_boundary_policy`] and [`ExactBooleanRequest::preflight`]: strict boundary-only
 /// contact remains blocked until the caller chooses
 /// [`ExactBoundaryBooleanPolicy::PreserveSeparateShells`]. Unsupported contact
 /// states or rejected policies return `None` rather than projecting
@@ -9049,7 +8999,7 @@ pub fn materialize_boundary_touching_policy_boolean(
 /// Certify whether retained graph pairs are exclusively boundary-only contacts.
 ///
 /// The report keeps the exact graph relation counts used by boundary-policy
-/// preflight and by [`boolean_exact_with_boundary_policy`]. Boundary-only
+/// preflight and by [`ExactBooleanRequest::with_boundary_policy`] and [`ExactBooleanRequest::materialize`]. Boundary-only
 /// topology is intentionally not silently materialized by the default named
 /// triangle-mesh-only result to be an explicit caller policy.
 pub fn certify_boundary_touching_report(
@@ -9131,7 +9081,7 @@ pub fn certify_winding_readiness_report(
 ///
 /// The default winding readiness report preserves surface-arrangement
 /// semantics for lower-dimensional operands. This policy-aware variant mirrors
-/// [`preflight_boolean_exact_with_validation`] for closed-output requests: when
+/// [`ExactBooleanRequest::new`] and [`ExactBooleanRequest::preflight`] for closed-output requests: when
 /// two lower-dimensional operands regularize to an empty closed solid, the
 /// handoff is certified as already materialized instead of asking callers to
 /// inspect open-surface split regions.
@@ -9151,7 +9101,7 @@ pub fn certify_winding_readiness_report_with_validation(
 ///
 /// The strict readiness report keeps boundary-only contact blocked on
 /// [`ExactWindingReadinessStatus::BoundaryPolicyRequired`]. This policy-aware
-/// variant mirrors [`preflight_boolean_exact_with_boundary_policy`]: when the
+/// variant mirrors [`ExactBooleanRequest::with_boundary_policy`] and [`ExactBooleanRequest::preflight`]: when the
 /// caller supplies [`ExactBoundaryBooleanPolicy::PreserveSeparateShells`] and
 /// the retained graph certifies boundary-only contact, the winding handoff is
 /// marked as already materialized by that explicit projection policy.
@@ -10807,7 +10757,7 @@ fn boolean_closed_regularized_lower_dimensional_optional(
 /// Certify and materialize a named closed-regularized boolean when at least
 /// one operand has no closed-volume contribution.
 ///
-/// This exposes the exact regularization path used by [`boolean_exact`]: a
+/// This exposes the exact regularization path used by [`ExactBooleanRequest::materialize`]: a
 /// closed solid combined with a lower-dimensional surface keeps or drops the
 /// solid according to the named operation, while two lower-dimensional
 /// operands regularize to an empty closed-solid result. Unsupported operands or
@@ -10833,7 +10783,7 @@ pub fn materialize_closed_regularized_lower_dimensional_boolean(
 /// and a lower-dimensional operand.
 ///
 /// This exposes the mixed-dimensional exact regularization path used by
-/// [`boolean_exact`]. A closed solid combined with an open surface contributes
+/// [`ExactBooleanRequest::materialize`]. A closed solid combined with an open surface contributes
 /// no additional closed volume: union keeps the solid, intersection is empty,
 /// and difference keeps or drops the solid according to operand order.
 /// Lower-dimensional-only inputs return `None` here so the lower-dimensional
@@ -11783,9 +11733,12 @@ mod tests {
             &left,
             &opening_plus_hole
         ));
-        let preflight =
-            preflight_boolean_exact(&left, &opening_plus_hole, ExactBooleanOperation::Difference)
-                .unwrap();
+        let preflight = ExactBooleanRequest::new(
+            ExactBooleanOperation::Difference,
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .preflight(&left, &opening_plus_hole)
+        .unwrap();
         assert_eq!(
             preflight.support,
             ExactBooleanSupport::CertifiedArrangementCellComplex,
@@ -12006,7 +11959,9 @@ mod tests {
                 "{operation:?}"
             );
 
-            let preflight = preflight_boolean_exact(&left, &right, operation).unwrap();
+            let preflight = ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY)
+                .preflight(&left, &right)
+                .unwrap();
             assert_eq!(
                 preflight.support,
                 ExactBooleanSupport::CertifiedArrangementCellComplex,
@@ -12112,7 +12067,9 @@ mod tests {
             ExactBooleanOperation::Intersection,
             ExactBooleanOperation::Difference,
         ] {
-            let preflight = preflight_boolean_exact(&left, &right, operation).unwrap();
+            let preflight = ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY)
+                .preflight(&left, &right)
+                .unwrap();
             assert_eq!(
                 preflight.support,
                 ExactBooleanSupport::CertifiedArrangementCellComplex,
@@ -12158,8 +12115,12 @@ mod tests {
         assert!(has_affine_box_intersection(&left, &right));
         assert!(has_affine_box_difference(&left, &right));
 
-        let preflight =
-            preflight_boolean_exact(&left, &right, ExactBooleanOperation::Intersection).unwrap();
+        let preflight = ExactBooleanRequest::new(
+            ExactBooleanOperation::Intersection,
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .preflight(&left, &right)
+        .unwrap();
         assert_eq!(
             preflight.support,
             ExactBooleanSupport::CertifiedArrangementCellComplex,
@@ -12195,7 +12156,9 @@ mod tests {
             ExactBooleanOperation::Intersection,
             ExactBooleanOperation::Difference,
         ] {
-            let preflight = preflight_boolean_exact(&left, &right, operation).unwrap();
+            let preflight = ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY)
+                .preflight(&left, &right)
+                .unwrap();
             assert_eq!(
                 preflight.support,
                 ExactBooleanSupport::CertifiedArrangementCellComplex,
@@ -12376,7 +12339,10 @@ mod tests {
                 ExactBooleanOperation::Intersection,
                 ExactBooleanOperation::Difference,
             ] {
-                let preflight = preflight_boolean_exact(left, right, operation).unwrap();
+                let preflight =
+                    ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY)
+                        .preflight(left, right)
+                        .unwrap();
                 assert_eq!(preflight.support, support, "{operation:?}: {preflight:?}");
                 assert!(preflight.blocker.is_none(), "{operation:?}: {preflight:?}");
 
@@ -12446,7 +12412,10 @@ mod tests {
                 ExactBooleanOperation::Intersection,
                 ExactBooleanOperation::Difference,
             ] {
-                let preflight = preflight_boolean_exact(left, right, operation).unwrap();
+                let preflight =
+                    ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY)
+                        .preflight(left, right)
+                        .unwrap();
                 assert_eq!(
                     preflight.support,
                     ExactBooleanSupport::CertifiedClosedWindingContainment,
@@ -12549,7 +12518,9 @@ mod tests {
             ExactBooleanOperation::Intersection,
             ExactBooleanOperation::Difference,
         ] {
-            let preflight = preflight_boolean_exact(&left, &right, operation).unwrap();
+            let preflight = ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY)
+                .preflight(&left, &right)
+                .unwrap();
             assert_eq!(
                 preflight.support,
                 ExactBooleanSupport::CertifiedClosedWindingSeparated,
@@ -12634,7 +12605,10 @@ mod tests {
                 ExactBooleanOperation::Intersection,
                 ExactBooleanOperation::Difference,
             ] {
-                let preflight = preflight_boolean_exact(left, right, operation).unwrap();
+                let preflight =
+                    ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY)
+                        .preflight(left, right)
+                        .unwrap();
                 assert_eq!(
                     preflight.support,
                     ExactBooleanSupport::CertifiedMixedDimensionalRegularizedSolid,
@@ -12778,8 +12752,13 @@ mod tests {
         let graph = build_intersection_graph(&left, &right).unwrap();
         validate_graph_source_handoff(&graph, &left, &right).unwrap();
 
-        let preflight =
-            preflight_boolean_exact(&left, &right, ExactBooleanOperation::Union).unwrap();
+        let preflight = ExactBooleanRequest::with_boundary_policy(
+            ExactBooleanOperation::Union,
+            ValidationPolicy::CLOSED,
+            ExactBoundaryBooleanPolicy::Reject,
+        )
+        .preflight(&left, &right)
+        .unwrap();
         assert_eq!(
             preflight.support,
             ExactBooleanSupport::RequiresCertifiedWinding,
@@ -12787,7 +12766,14 @@ mod tests {
         );
         assert!(preflight.blocker.is_some(), "{preflight:?}");
         preflight.validate().unwrap();
-        preflight.validate_against_sources(&left, &right).unwrap();
+        preflight
+            .validate_against_sources_with_boundary_policy(
+                &left,
+                &right,
+                ValidationPolicy::CLOSED,
+                ExactBoundaryBooleanPolicy::Reject,
+            )
+            .unwrap();
         let fake_shortcut = ExactBooleanResult {
             kind: ExactBooleanResultKind::CertifiedShortcut {
                 operation: ExactBooleanOperation::Union,
@@ -12818,12 +12804,11 @@ mod tests {
             "resolved graph alone must not certify an arrangement-cell shortcut"
         );
 
-        let boundary_preflight = preflight_boolean_exact_with_validation(
-            &left,
-            &right,
+        let boundary_preflight = ExactBooleanRequest::new(
             ExactBooleanOperation::Union,
             ValidationPolicy::ALLOW_BOUNDARY,
         )
+        .preflight(&left, &right)
         .unwrap();
         assert_eq!(
             boundary_preflight.support,
@@ -12849,7 +12834,12 @@ mod tests {
             .unwrap();
         assert!(
             boundary_preflight
-                .validate_against_sources(&left, &right)
+                .validate_against_sources_with_boundary_policy(
+                    &left,
+                    &right,
+                    ValidationPolicy::CLOSED,
+                    ExactBoundaryBooleanPolicy::Reject,
+                )
                 .is_err(),
             "closed replay should not certify an allow-boundary preflight"
         );
@@ -13121,7 +13111,9 @@ mod tests {
             closure.validate().unwrap();
             closure.validate_against_sources(&left, &right).unwrap();
 
-            let preflight = preflight_boolean_exact(&left, &right, operation).unwrap();
+            let preflight = ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY)
+                .preflight(&left, &right)
+                .unwrap();
             assert_eq!(
                 preflight.support,
                 ExactBooleanSupport::CertifiedArrangementCellComplex,
@@ -13269,7 +13261,9 @@ mod tests {
                 }
                 ExactBooleanOperation::SelectedRegions(_) => unreachable!(),
             };
-            let preflight = preflight_boolean_exact(&left, &right, operation).unwrap();
+            let preflight = ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY)
+                .preflight(&left, &right)
+                .unwrap();
             assert_eq!(
                 preflight.support, expected_support,
                 "{operation:?}: {preflight:?}"
@@ -13423,8 +13417,12 @@ mod tests {
         let left = tetrahedron_i64([0, 0, 0], [6, 0, 0], [0, 6, 0], [0, 0, 6]);
         let right = tetrahedron_i64([2, 2, 2], [4, 1, 1], [1, 4, 1], [3, 3, 3]);
 
-        let intersection =
-            preflight_boolean_exact(&left, &right, ExactBooleanOperation::Intersection).unwrap();
+        let intersection = ExactBooleanRequest::new(
+            ExactBooleanOperation::Intersection,
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .preflight(&left, &right)
+        .unwrap();
         assert_eq!(
             intersection.support,
             ExactBooleanSupport::CertifiedClosedBoundaryTouchingIntersection
@@ -13436,8 +13434,12 @@ mod tests {
             .validate_against_sources(&left, &right)
             .unwrap();
 
-        let difference =
-            preflight_boolean_exact(&left, &right, ExactBooleanOperation::Difference).unwrap();
+        let difference = ExactBooleanRequest::new(
+            ExactBooleanOperation::Difference,
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .preflight(&left, &right)
+        .unwrap();
         assert_eq!(
             difference.support,
             ExactBooleanSupport::CertifiedClosedBoundaryTouchingDifference
@@ -13501,7 +13503,9 @@ mod tests {
                 ),
                 ExactBooleanOperation::SelectedRegions(_) => unreachable!(),
             };
-            let preflight = preflight_boolean_exact(&left, &right, operation).unwrap();
+            let preflight = ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY)
+                .preflight(&left, &right)
+                .unwrap();
             assert_eq!(
                 preflight.support, expected_support,
                 "{operation:?}: {preflight:?}"
@@ -13578,8 +13582,12 @@ mod tests {
         let left = axis_aligned_box_i64([0, 0, 0], [1, 1, 1]);
         let right = axis_aligned_box_i64([1, 0, 0], [2, 1, 1]);
 
-        let preflight = preflight_boolean_exact(&left, &right, ExactBooleanOperation::Union)
-            .expect("preflight should certify face-touching closed union");
+        let preflight = ExactBooleanRequest::new(
+            ExactBooleanOperation::Union,
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .preflight(&left, &right)
+        .expect("preflight should certify face-touching closed union");
         assert_eq!(
             preflight.support,
             ExactBooleanSupport::CertifiedArrangementCellComplex,
@@ -13621,7 +13629,9 @@ mod tests {
             ExactBooleanOperation::Intersection,
             ExactBooleanOperation::Difference,
         ] {
-            let preflight = preflight_boolean_exact(&left, &right, operation).unwrap();
+            let preflight = ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY)
+                .preflight(&left, &right)
+                .unwrap();
             assert_eq!(
                 preflight.support,
                 ExactBooleanSupport::CertifiedArrangementCellComplex,
@@ -13713,7 +13723,9 @@ mod tests {
                 ExactBooleanShortcutKind::ClosedBoundaryTouchingDifference,
             ),
         ] {
-            let preflight = preflight_boolean_exact(&left, &right, operation).unwrap();
+            let preflight = ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY)
+                .preflight(&left, &right)
+                .unwrap();
             assert_eq!(preflight.support, support, "{operation:?}: {preflight:?}");
             assert!(preflight.blocker.is_none(), "{operation:?}: {preflight:?}");
             preflight.validate().unwrap();
@@ -13778,8 +13790,12 @@ mod tests {
         let left = tetrahedron_i64([0, 0, 0], [6, 0, 0], [0, 6, 0], [0, 0, 6]);
         let right = tetrahedron_i64([2, 2, 2], [4, 1, 1], [1, 4, 1], [1, 1, 1]);
 
-        let preflight =
-            preflight_boolean_exact(&left, &right, ExactBooleanOperation::Difference).unwrap();
+        let preflight = ExactBooleanRequest::new(
+            ExactBooleanOperation::Difference,
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .preflight(&left, &right)
+        .unwrap();
         assert_eq!(
             preflight.support,
             ExactBooleanSupport::CertifiedConvexDifference
@@ -13861,7 +13877,9 @@ mod tests {
                 ExactBooleanOperation::Difference => ExactBooleanSupport::CertifiedConvexDifference,
                 ExactBooleanOperation::SelectedRegions(_) => unreachable!(),
             };
-            let preflight = preflight_boolean_exact(&left, &right, operation).unwrap();
+            let preflight = ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY)
+                .preflight(&left, &right)
+                .unwrap();
             assert_eq!(
                 preflight.support, expected_support,
                 "{operation:?}: {preflight:?}"
@@ -13915,7 +13933,9 @@ mod tests {
                 ),
                 ExactBooleanOperation::SelectedRegions(_) => unreachable!(),
             };
-            let preflight = preflight_boolean_exact(&left, &right, operation).unwrap();
+            let preflight = ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY)
+                .preflight(&left, &right)
+                .unwrap();
             assert_eq!(
                 preflight.support, expected_support,
                 "{operation:?}: {preflight:?}"
@@ -14156,8 +14176,12 @@ mod tests {
         let left = tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]);
         let right = left.clone();
 
-        let preflight =
-            preflight_boolean_exact(&left, &right, ExactBooleanOperation::Union).unwrap();
+        let preflight = ExactBooleanRequest::new(
+            ExactBooleanOperation::Union,
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .preflight(&left, &right)
+        .unwrap();
         assert_eq!(
             preflight.support,
             ExactBooleanSupport::CertifiedArrangementCellComplex
@@ -14225,8 +14249,12 @@ mod tests {
         );
         assert_current_arrangement_attempt(&attempt, &left, &right);
 
-        let preflight =
-            preflight_boolean_exact(&left, &right, ExactBooleanOperation::Union).unwrap();
+        let preflight = ExactBooleanRequest::new(
+            ExactBooleanOperation::Union,
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .preflight(&left, &right)
+        .unwrap();
         assert_eq!(
             preflight.support,
             ExactBooleanSupport::CertifiedArrangementCellComplex
@@ -14389,7 +14417,9 @@ mod tests {
             ExactBooleanOperation::Intersection,
             ExactBooleanOperation::Difference,
         ] {
-            let preflight = preflight_boolean_exact(&left, &right, operation).unwrap();
+            let preflight = ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY)
+                .preflight(&left, &right)
+                .unwrap();
             assert_eq!(
                 preflight.support,
                 ExactBooleanSupport::CertifiedSameSurface,
@@ -14446,8 +14476,12 @@ mod tests {
         .unwrap();
         let right = left.clone();
 
-        let preflight =
-            preflight_boolean_exact(&left, &right, ExactBooleanOperation::Union).unwrap();
+        let preflight = ExactBooleanRequest::new(
+            ExactBooleanOperation::Union,
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .preflight(&left, &right)
+        .unwrap();
         assert_eq!(preflight.support, ExactBooleanSupport::CertifiedIdentical);
         let readiness =
             certify_winding_readiness_report(&left, &right, ExactBooleanOperation::Union).unwrap();
@@ -14517,8 +14551,12 @@ mod tests {
         .expect("regularized boundary-touch intersection should materialize through overlay");
         let graph = build_intersection_graph(&left, &right).unwrap();
         validate_graph_source_handoff(&graph, &left, &right).unwrap();
-        let preflight =
-            preflight_boolean_exact(&left, &right, ExactBooleanOperation::Intersection).unwrap();
+        let preflight = ExactBooleanRequest::new(
+            ExactBooleanOperation::Intersection,
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .preflight(&left, &right)
+        .unwrap();
         assert_eq!(
             preflight.support,
             ExactBooleanSupport::CertifiedArrangementCellComplex,

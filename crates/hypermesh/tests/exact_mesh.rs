@@ -63,8 +63,7 @@ use hypermesh::{
     materialize_open_surface_disjoint_boolean, materialize_same_surface_boolean,
     materialize_volumetric_coplanar_boundary_closure_boolean,
     materialize_volumetric_winding_arrangement, mesh_artifact_from_exact_mesh,
-    mesh_artifact_from_exact_mesh_proposal, preflight_boolean_exact,
-    preflight_boolean_exact_with_boundary_policy, triangulate_all_face_cells_with_cdt,
+    mesh_artifact_from_exact_mesh_proposal, triangulate_all_face_cells_with_cdt,
     validate_face_cell_cdt_against_sources,
 };
 use hyperreal::Real;
@@ -1291,7 +1290,9 @@ fn affine_orthogonal_solid_recovers_multi_cell_basis_without_sampling_limits() {
         ExactBooleanOperation::Intersection,
         ExactBooleanOperation::Difference,
     ] {
-        let preflight = preflight_boolean_exact(&left, &right, operation).unwrap();
+        let preflight = ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY)
+            .preflight(&left, &right)
+            .unwrap();
         assert_eq!(
             preflight.support,
             hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex,
@@ -1735,11 +1736,11 @@ fn exact_closed_convex_boolean_materializer_is_publicly_replayable() {
 
     let separated_left = tetra_from_corners([0, 0, 0], [2, 0, 0], [0, 2, 0], [0, 0, 2]);
     let separated_right = tetra_from_corners([1, 1, 1], [3, 1, 1], [1, 3, 1], [1, 1, 3]);
-    let preflight = preflight_boolean_exact(
-        &separated_left,
-        &separated_right,
+    let preflight = ExactBooleanRequest::new(
         ExactBooleanOperation::Intersection,
+        ValidationPolicy::ALLOW_BOUNDARY,
     )
+    .preflight(&separated_left, &separated_right)
     .unwrap();
     assert_eq!(
         preflight.support,
@@ -1845,11 +1846,11 @@ fn exact_closed_convex_boolean_materializer_is_publicly_replayable() {
 
     let contained_on_boundary = tetra_from_corners([1, 1, 0], [2, 1, 0], [1, 2, 0], [1, 1, 1]);
     let container = tetra_from_corners([0, 0, 0], [10, 0, 0], [0, 10, 0], [0, 0, 10]);
-    let preflight = preflight_boolean_exact(
-        &contained_on_boundary,
-        &container,
+    let preflight = ExactBooleanRequest::new(
         ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
     )
+    .preflight(&contained_on_boundary, &container)
     .unwrap();
     assert_eq!(
         preflight.support,
@@ -3053,13 +3054,9 @@ fn lower_dimensional_regularized_boolean_is_publicly_replayable() {
         ExactBooleanOperation::Intersection,
         ExactBooleanOperation::Difference,
     ] {
-        let preflight = hypermesh::preflight_boolean_exact_with_validation(
-            &left,
-            &right,
-            operation,
-            ValidationPolicy::CLOSED,
-        )
-        .unwrap();
+        let preflight = hypermesh::ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED)
+            .preflight(&left, &right)
+            .unwrap();
         assert_eq!(
             preflight.support,
             hypermesh::ExactBooleanSupport::CertifiedLowerDimensionalRegularizedSolid
@@ -3155,13 +3152,10 @@ fn lower_dimensional_regularized_boolean_is_publicly_replayable() {
             )
             .unwrap();
 
-        let disjoint_preflight = hypermesh::preflight_boolean_exact_with_validation(
-            &left,
-            &disjoint_right,
-            operation,
-            ValidationPolicy::CLOSED,
-        )
-        .unwrap();
+        let disjoint_preflight =
+            hypermesh::ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED)
+                .preflight(&left, &disjoint_right)
+                .unwrap();
         assert_eq!(
             disjoint_preflight.support,
             hypermesh::ExactBooleanSupport::CertifiedLowerDimensionalRegularizedSolid,
@@ -3344,13 +3338,10 @@ fn mixed_dimensional_regularized_solid_boolean_is_publicly_replayable() {
             ExactBooleanOperation::Intersection,
             ExactBooleanOperation::Difference,
         ] {
-            let preflight = hypermesh::preflight_boolean_exact_with_validation(
-                left,
-                right,
-                operation,
-                ValidationPolicy::CLOSED,
-            )
-            .unwrap();
+            let preflight =
+                hypermesh::ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED)
+                    .preflight(left, right)
+                    .unwrap();
             assert_eq!(
                 preflight.support,
                 hypermesh::ExactBooleanSupport::CertifiedMixedDimensionalRegularizedSolid,
@@ -3418,7 +3409,10 @@ fn mixed_dimensional_regularized_solid_boolean_is_publicly_replayable() {
                 .is_none(),
                 "{operation:?} should yield to bounds-disjoint provenance for boundary-valid output"
             );
-            let boundary_preflight = preflight_boolean_exact(left, right, operation).unwrap();
+            let boundary_preflight =
+                ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY)
+                    .preflight(left, right)
+                    .unwrap();
             assert_eq!(
                 boundary_preflight.support,
                 hypermesh::ExactBooleanSupport::CertifiedBoundsDisjoint,
@@ -3633,7 +3627,9 @@ fn closed_boundary_touching_regularized_boolean_is_publicly_replayable() {
             hypermesh::ExactBooleanShortcutKind::ClosedBoundaryTouchingDifference,
         ),
     ] {
-        let preflight = preflight_boolean_exact(&left, &right, operation).unwrap();
+        let preflight = ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY)
+            .preflight(&left, &right)
+            .unwrap();
         assert_eq!(preflight.support, support, "{operation:?}: {preflight:?}");
         assert!(
             preflight.retained_face_pairs > 0,
@@ -3787,7 +3783,9 @@ fn closed_no_volume_overlap_regularized_boolean_is_publicly_replayable() {
             hypermesh::ExactBooleanShortcutKind::ClosedBoundaryTouchingDifference,
         ),
     ] {
-        let preflight = preflight_boolean_exact(&left, &right, operation).unwrap();
+        let preflight = ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY)
+            .preflight(&left, &right)
+            .unwrap();
         assert_eq!(preflight.support, support, "{operation:?}: {preflight:?}");
         assert!(
             preflight.retained_face_pairs > 0,
@@ -4230,12 +4228,11 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
         .is_err()
     );
 
-    let preflight = hypermesh::preflight_boolean_exact_with_validation(
-        &left,
-        &right,
+    let preflight = hypermesh::ExactBooleanRequest::new(
         ExactBooleanOperation::Union,
         ValidationPolicy::ALLOW_BOUNDARY,
     )
+    .preflight(&left, &right)
     .unwrap();
     assert_eq!(
         preflight.support,
@@ -4498,7 +4495,9 @@ fn exact_volumetric_winding_coplanar_cap_is_publicly_certified() {
         closure.validate().unwrap();
         closure.validate_against_sources(&left, &right).unwrap();
 
-        let preflight = preflight_boolean_exact(&left, &right, operation).unwrap();
+        let preflight = ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY)
+            .preflight(&left, &right)
+            .unwrap();
         assert_eq!(
             preflight.support,
             hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex,
@@ -5638,7 +5637,12 @@ fn exact_boolean_public_shortcuts_handle_disjoint_operands() {
     let left = tetra([0, 0, 0]);
     let right = tetra([3, 0, 0]);
 
-    let preflight = preflight_boolean_exact(&left, &right, ExactBooleanOperation::Union).unwrap();
+    let preflight = ExactBooleanRequest::new(
+        ExactBooleanOperation::Union,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .preflight(&left, &right)
+    .unwrap();
     assert!(!preflight.graph_had_unknowns);
 
     let union = ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED)
@@ -6826,19 +6830,23 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
     report.validate().unwrap();
     report.validate_against_sources(&left, &right).unwrap();
 
-    let preflight = preflight_boolean_exact(&left, &right, ExactBooleanOperation::Union).unwrap();
+    let preflight = ExactBooleanRequest::new(
+        ExactBooleanOperation::Union,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .preflight(&left, &right)
+    .unwrap();
     assert_eq!(
         preflight.support,
         hypermesh::ExactBooleanSupport::CertifiedBoundaryPolicyShortcut,
         "{preflight:?}"
     );
-    let rejected_policy_preflight = preflight_boolean_exact_with_boundary_policy(
-        &left,
-        &right,
+    let rejected_policy_preflight = ExactBooleanRequest::with_boundary_policy(
         ExactBooleanOperation::Union,
         ValidationPolicy::ALLOW_BOUNDARY,
         ExactBoundaryBooleanPolicy::Reject,
     )
+    .preflight(&left, &right)
     .unwrap();
     assert_eq!(
         rejected_policy_preflight.support,
@@ -6846,13 +6854,12 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
         "{rejected_policy_preflight:?}"
     );
 
-    let policy_preflight = preflight_boolean_exact_with_boundary_policy(
-        &left,
-        &right,
+    let policy_preflight = ExactBooleanRequest::with_boundary_policy(
         ExactBooleanOperation::Union,
         ValidationPolicy::ALLOW_BOUNDARY,
         ExactBoundaryBooleanPolicy::PreserveSeparateShells,
     )
+    .preflight(&left, &right)
     .unwrap();
     assert_eq!(
         policy_preflight.support,
@@ -7001,13 +7008,12 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
             .is_err()
     );
 
-    let closed_intersection_preflight = preflight_boolean_exact_with_boundary_policy(
-        &left,
-        &right,
+    let closed_intersection_preflight = ExactBooleanRequest::with_boundary_policy(
         ExactBooleanOperation::Intersection,
         ValidationPolicy::CLOSED,
         ExactBoundaryBooleanPolicy::PreserveSeparateShells,
     )
+    .preflight(&left, &right)
     .unwrap();
     assert_eq!(
         closed_intersection_preflight.support,
@@ -7075,13 +7081,12 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
         ExactBooleanOperation::Union,
         ExactBooleanOperation::Difference,
     ] {
-        let closed_policy_preflight = preflight_boolean_exact_with_boundary_policy(
-            &left,
-            &right,
+        let closed_policy_preflight = ExactBooleanRequest::with_boundary_policy(
             operation,
             ValidationPolicy::CLOSED,
             ExactBoundaryBooleanPolicy::PreserveSeparateShells,
         )
+        .preflight(&left, &right)
         .unwrap();
         assert_eq!(
             closed_policy_preflight.support,

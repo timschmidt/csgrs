@@ -130,8 +130,7 @@ pub use boolean::{
     materialize_mixed_dimensional_regularized_solid_boolean, materialize_open_surface_arrangement,
     materialize_open_surface_disjoint_boolean, materialize_same_surface_boolean,
     materialize_volumetric_coplanar_boundary_closure_boolean,
-    materialize_volumetric_winding_arrangement, preflight_boolean_exact,
-    preflight_boolean_exact_with_boundary_policy, preflight_boolean_exact_with_validation,
+    materialize_volumetric_winding_arrangement,
 };
 pub use bounds::{AabbIntersectionKind, BoundsValidationError, ExactAabb3, MeshBounds};
 pub use cell_complex::{
