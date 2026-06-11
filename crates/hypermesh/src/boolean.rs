@@ -1521,11 +1521,13 @@ fn exact_boolean_preflight_matches_arrangement_cell_complex(
     preflight: &ExactBooleanPreflight,
     winding_readiness: &ExactWindingReadinessReport,
 ) -> bool {
+    let region_handoff_matches = (preflight.region_count == winding_readiness.region_count
+        && preflight.region_classifications == winding_readiness.region_classifications)
+        || (preflight.region_count == 0 && preflight.region_classifications.is_empty());
     preflight.graph_had_unknowns == winding_readiness.graph_had_unknowns
         && preflight.retained_face_pairs == winding_readiness.retained_face_pairs
         && preflight.retained_events == winding_readiness.retained_events
-        && preflight.region_count == winding_readiness.region_count
-        && preflight.region_classifications == winding_readiness.region_classifications
+        && region_handoff_matches
         && preflight.blocker.is_none()
         && preflight.arrangement_readiness == winding_readiness.arrangement_readiness
         && preflight.coplanar_volumetric_evidence == winding_readiness.coplanar_volumetric_evidence
@@ -1781,11 +1783,18 @@ pub fn evaluate_boolean_exact(
         certifications,
         result,
     };
+    evaluation.validate().map_err(|error| {
+        MeshError::one(MeshDiagnostic::new(
+            Severity::Error,
+            DiagnosticKind::UnsupportedExactOperation,
+            format!("exact boolean evaluation local validation failed: {error:?}"),
+        ))
+    })?;
     evaluation.validate_against_sources(left, right).map_err(|error| {
         MeshError::one(MeshDiagnostic::new(
             Severity::Error,
             DiagnosticKind::UnsupportedExactOperation,
-            format!("exact boolean evaluation validation failed: {error:?}"),
+            format!("exact boolean evaluation source replay failed: {error:?}"),
         ))
     })?;
     Ok(evaluation)
