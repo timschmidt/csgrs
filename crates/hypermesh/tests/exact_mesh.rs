@@ -250,6 +250,26 @@ fn exact_boolean_evaluation_materializes_certified_result_publicly() {
         evaluation.freshness_against_sources(&left, &stale_right),
         hypermesh::ExactReportFreshness::SourceReplayMismatch
     );
+    let mut relabeled_request = evaluation.clone();
+    relabeled_request.request = ExactBooleanRequest::new(
+        ExactBooleanOperation::Intersection,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    );
+    assert_eq!(
+        relabeled_request.validate(),
+        Err(hypermesh::ExactReportValidationError::StatusEvidenceMismatch)
+    );
+    let mut stale_attempt_policy = evaluation.clone();
+    stale_attempt_policy
+        .certifications
+        .arrangement_attempt
+        .as_mut()
+        .expect("named evaluation should retain arrangement attempt")
+        .output_validation = ValidationPolicy::CLOSED;
+    assert_eq!(
+        stale_attempt_policy.validate(),
+        Err(hypermesh::ExactReportValidationError::StatusEvidenceMismatch)
+    );
 }
 
 #[test]

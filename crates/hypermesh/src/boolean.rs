@@ -636,6 +636,48 @@ impl ExactBooleanCertificationSet {
         })
     }
 
+    /// Validate this certification bundle against the request it claims to
+    /// explain, without replaying source geometry.
+    pub fn validate_for_request(
+        &self,
+        request: ExactBooleanRequest,
+    ) -> Result<(), ExactReportValidationError> {
+        self.refinement.validate()?;
+        self.boundary_touching.validate()?;
+        self.planar_arrangement.validate()?;
+        self.winding_readiness.validate()?;
+        if self.refinement.operation != request.operation
+            || self.planar_arrangement.operation != request.operation
+            || self.winding_readiness.operation != request.operation
+        {
+            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+        }
+        if matches!(request.operation, ExactBooleanOperation::SelectedRegions(_)) {
+            if self.volumetric_boundary_closure.is_some() || self.arrangement_attempt.is_some() {
+                return Err(ExactReportValidationError::StatusEvidenceMismatch);
+            }
+            return Ok(());
+        }
+        let Some(report) = self.volumetric_boundary_closure.as_ref() else {
+            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+        };
+        report.validate()?;
+        if report.operation != request.operation {
+            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+        }
+        let Some(attempt) = self.arrangement_attempt.as_ref() else {
+            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+        };
+        attempt.validate()?;
+        if attempt.operation != request.operation
+            || attempt.policy != ExactRegularizationPolicy::REGULARIZED_SOLID
+            || attempt.output_validation != request.validation
+        {
+            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+        }
+        Ok(())
+    }
+
     /// Validate this retained certification bundle by replaying every report
     /// from the source meshes under the request policy that produced it.
     pub fn validate_against_sources(
@@ -644,16 +686,7 @@ impl ExactBooleanCertificationSet {
         right: &ExactMesh,
         request: ExactBooleanRequest,
     ) -> Result<(), ExactReportValidationError> {
-        self.refinement.validate()?;
-        self.boundary_touching.validate()?;
-        self.planar_arrangement.validate()?;
-        self.winding_readiness.validate()?;
-        if let Some(report) = self.volumetric_boundary_closure.as_ref() {
-            report.validate()?;
-        }
-        if let Some(attempt) = self.arrangement_attempt.as_ref() {
-            attempt.validate()?;
-        }
+        self.validate_for_request(request)?;
         let replay = Self::from_sources(left, right, request)
             .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
         if self == &replay {
@@ -735,19 +768,18 @@ impl ExactBooleanEvaluation {
 
     /// Validate the retained evaluation shape without replaying sources.
     pub fn validate(&self) -> Result<(), ExactReportValidationError> {
+        if self.preflight.operation != self.request.operation {
+            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+        }
         self.preflight.validate()?;
-        self.certifications.refinement.validate()?;
-        self.certifications.boundary_touching.validate()?;
-        self.certifications.planar_arrangement.validate()?;
-        self.certifications.winding_readiness.validate()?;
-        if let Some(report) = self.certifications.volumetric_boundary_closure.as_ref() {
-            report.validate()?;
-        }
-        if let Some(attempt) = self.certifications.arrangement_attempt.as_ref() {
-            attempt.validate()?;
-        }
+        self.certifications.validate_for_request(self.request)?;
         if let Some(result) = self.result.as_ref() {
             result.validate()?;
+            if !exact_boolean_result_kind_matches_request(result, self.request)
+                || result.mesh.validation_policy() != self.request.validation
+            {
+                return Err(ExactReportValidationError::StatusEvidenceMismatch);
+            }
         } else if self.preflight.is_certified() {
             return Err(ExactReportValidationError::StatusEvidenceMismatch);
         }
@@ -794,6 +826,23 @@ impl ExactBooleanEvaluation {
         match self.validate_against_sources(left, right) {
             Ok(()) => ExactReportFreshness::Current,
             Err(error) => error.into(),
+        }
+    }
+}
+
+fn exact_boolean_result_kind_matches_request(
+    result: &ExactBooleanResult,
+    request: ExactBooleanRequest,
+) -> bool {
+    match result.kind {
+        ExactBooleanResultKind::SelectedRegions { selection } => {
+            request.operation == ExactBooleanOperation::SelectedRegions(selection)
+        }
+        ExactBooleanResultKind::CertifiedShortcut { operation, .. }
+        | ExactBooleanResultKind::BoundaryPolicyShortcut { operation }
+        | ExactBooleanResultKind::OpenSurfaceArrangement { operation }
+        | ExactBooleanResultKind::ArrangementCellComplexMaterialized { operation } => {
+            operation == request.operation
         }
     }
 }
