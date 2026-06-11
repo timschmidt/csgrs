@@ -7704,12 +7704,38 @@ pub(crate) fn boundary_policy_shortcut_result_matches_sources(
     if report.validate().is_err() || !report.is_certified() {
         return false;
     }
+    if !boundary_policy_shortcut_result_consumes_report(
+        result,
+        operation,
+        boundary_policy,
+        &report,
+    ) {
+        return false;
+    }
     let Ok(Some(expected)) =
         materialize_boundary_policy_shortcut_result(left, right, operation, validation)
     else {
         return false;
     };
     expected.validate().is_ok() && result == &expected
+}
+
+fn boundary_policy_shortcut_result_consumes_report(
+    result: &ExactBooleanResult,
+    operation: ExactBooleanOperation,
+    boundary_policy: ExactBoundaryBooleanPolicy,
+    report: &ExactBoundaryTouchingReport,
+) -> bool {
+    boundary_policy == ExactBoundaryBooleanPolicy::PreserveSeparateShells
+        && report.validate().is_ok()
+        && report.is_certified()
+        && matches!(
+            result.kind,
+            ExactBooleanResultKind::BoundaryPolicyShortcut {
+                operation: result_operation
+            } if result_operation == operation
+        )
+        && result.validate().is_ok()
 }
 
 fn boolean_boundary_touching_meshes_from_graph(
@@ -7734,13 +7760,11 @@ fn boolean_boundary_touching_meshes_from_graph(
     else {
         return Ok(None);
     };
-    Ok(boundary_policy_shortcut_result_matches_sources(
+    Ok(boundary_policy_shortcut_result_consumes_report(
         &result,
-        left,
-        right,
         operation,
-        validation,
         boundary_policy,
+        &report,
     )
     .then_some(result))
 }
@@ -7773,11 +7797,26 @@ pub fn materialize_boundary_touching_policy_boolean(
             boundary_policy,
         ));
     }
-    if let Some((result, _evidence)) =
-        materialize_closed_boundary_touching_regularized_boolean_with_evidence(
-            left, right, operation, validation,
+    let graph = build_intersection_graph(left, right)?;
+    validate_graph_source_handoff(&graph, left, right)?;
+    if let Some((result, evidence)) =
+        materialize_closed_boundary_touching_regularized_boolean_with_evidence_from_graph(
+            &graph, left, right, operation, validation,
         )?
     {
+        if result
+            .validate_operation_against_sources(
+                left,
+                right,
+                operation,
+                validation,
+                ExactBoundaryBooleanPolicy::Reject,
+            )
+            .is_err()
+            || evidence.validate_against_sources(left, right).is_err()
+        {
+            return Ok(None);
+        }
         return Ok(public_operation_replayable_result(
             Some(result),
             left,
@@ -7787,8 +7826,6 @@ pub fn materialize_boundary_touching_policy_boolean(
             boundary_policy,
         ));
     }
-    let graph = build_intersection_graph(left, right)?;
-    validate_graph_source_handoff(&graph, left, right)?;
     let Some(result) = boolean_boundary_touching_meshes_from_graph(
         &graph,
         left,
