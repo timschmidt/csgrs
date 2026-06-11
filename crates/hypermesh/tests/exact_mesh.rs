@@ -1647,6 +1647,45 @@ fn exact_closed_convex_boolean_materializer_is_publicly_replayable() {
             )
             .unwrap();
         assert!(result.mesh.facts().mesh.closed_manifold);
+        let direct_evaluation = evaluate_boolean_exact(
+            &left,
+            &right,
+            ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
+        )
+        .unwrap();
+        direct_evaluation.validate().unwrap();
+        let mut relabeled_convex_capability = direct_evaluation.clone();
+        match operation {
+            ExactBooleanOperation::Union => {
+                relabeled_convex_capability
+                    .certifications
+                    .convex_capabilities
+                    .can_union = false;
+            }
+            ExactBooleanOperation::Intersection => {
+                relabeled_convex_capability
+                    .certifications
+                    .convex_capabilities
+                    .can_intersection = false;
+            }
+            ExactBooleanOperation::Difference => {
+                relabeled_convex_capability
+                    .certifications
+                    .convex_capabilities
+                    .can_difference = false;
+            }
+            ExactBooleanOperation::SelectedRegions(_) => unreachable!(),
+        }
+        relabeled_convex_capability
+            .certifications
+            .convex_capabilities
+            .validate()
+            .unwrap();
+        assert_eq!(
+            relabeled_convex_capability.validate(),
+            Err(hypermesh::ExactReportValidationError::StatusEvidenceMismatch),
+            "{operation:?}: {relabeled_convex_capability:?}"
+        );
     }
 
     let separated_left = tetra_from_corners([0, 0, 0], [2, 0, 0], [0, 2, 0], [0, 0, 2]);

@@ -591,6 +591,8 @@ pub struct ExactBooleanCertificationSet {
     pub convex_left_in_right: ConvexSolidMeshClassification,
     /// Right vertices classified against the left convex solid.
     pub convex_right_in_left: ConvexSolidMeshClassification,
+    /// Direct closed-convex boolean capabilities.
+    pub convex_capabilities: ExactConvexBooleanCapabilityFacts,
     /// Planar-arrangement readiness for coplanar surface output.
     pub planar_arrangement: ExactPlanarArrangementReport,
     /// Winding/inside-outside readiness for named volumetric output.
@@ -622,6 +624,7 @@ impl ExactBooleanCertificationSet {
             classify_mesh_vertices_against_closed_mesh_winding_report(right, left);
         let convex_left_in_right = classify_mesh_vertices_against_convex_solid_report(left, right);
         let convex_right_in_left = classify_mesh_vertices_against_convex_solid_report(right, left);
+        let convex_capabilities = ExactConvexBooleanCapabilityFacts::from_sources(left, right);
         let planar_arrangement =
             planar_arrangement_certification_from_graph(&graph, left, right, request.operation)?;
         let winding_readiness = winding_readiness_report_with_boundary_policy_from_graph(
@@ -667,6 +670,7 @@ impl ExactBooleanCertificationSet {
             closed_winding_right_in_left,
             convex_left_in_right,
             convex_right_in_left,
+            convex_capabilities,
             planar_arrangement,
             winding_readiness,
             volumetric_boundary_closure,
@@ -699,6 +703,7 @@ impl ExactBooleanCertificationSet {
         self.convex_right_in_left
             .validate()
             .map_err(|_| ExactReportValidationError::StatusEvidenceMismatch)?;
+        self.convex_capabilities.validate()?;
         self.planar_arrangement.validate()?;
         self.winding_readiness.validate()?;
         if self.refinement.operation != request.operation
@@ -823,7 +828,7 @@ impl ExactRegularizedSolidBooleanFacts {
         }
     }
 
-    fn validate(&self) -> Result<(), ExactReportValidationError> {
+    pub fn validate(&self) -> Result<(), ExactReportValidationError> {
         if (self.left_closed_solid && self.left_open_surface)
             || (self.right_closed_solid && self.right_open_surface)
         {
@@ -840,6 +845,40 @@ impl ExactRegularizedSolidBooleanFacts {
 
     fn supports_lower_dimensional_regularized_solid(&self) -> bool {
         self.left_open_surface && self.right_open_surface
+    }
+}
+
+/// Replayable source facts for direct closed-convex boolean materialization.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ExactConvexBooleanCapabilityFacts {
+    /// Exact closed-convex union can be materialized directly.
+    pub can_union: bool,
+    /// Exact closed-convex intersection can be materialized directly.
+    pub can_intersection: bool,
+    /// Exact closed-convex difference can be materialized directly.
+    pub can_difference: bool,
+}
+
+impl ExactConvexBooleanCapabilityFacts {
+    fn from_sources(left: &ExactMesh, right: &ExactMesh) -> Self {
+        Self {
+            can_union: union_closed_convex_solids(left, right).is_some(),
+            can_intersection: intersect_closed_convex_solids(left, right).is_some(),
+            can_difference: subtract_closed_convex_solids(left, right).is_some(),
+        }
+    }
+
+    pub fn validate(&self) -> Result<(), ExactReportValidationError> {
+        Ok(())
+    }
+
+    fn supports(&self, support: ExactBooleanSupport) -> bool {
+        match support {
+            ExactBooleanSupport::CertifiedConvexUnion => self.can_union,
+            ExactBooleanSupport::CertifiedConvexIntersection => self.can_intersection,
+            ExactBooleanSupport::CertifiedConvexDifference => self.can_difference,
+            _ => false,
+        }
     }
 }
 
@@ -1303,8 +1342,10 @@ fn exact_boolean_convex_reports_match_support(
     match preflight.support {
         ExactBooleanSupport::CertifiedConvexUnion
         | ExactBooleanSupport::CertifiedConvexIntersection
-        | ExactBooleanSupport::CertifiedConvexDifference
-        | ExactBooleanSupport::CertifiedConvexSeparated
+        | ExactBooleanSupport::CertifiedConvexDifference => {
+            certifications.convex_capabilities.supports(preflight.support)
+        }
+        ExactBooleanSupport::CertifiedConvexSeparated
         | ExactBooleanSupport::CertifiedConvexContainment => true,
         _ => false,
     }
