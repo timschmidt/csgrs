@@ -270,6 +270,13 @@ fn exact_boolean_evaluation_materializes_certified_result_publicly() {
         stale_attempt_policy.validate(),
         Err(hypermesh::ExactReportValidationError::StatusEvidenceMismatch)
     );
+    let mut relabeled_support = evaluation.clone();
+    relabeled_support.preflight.support = hypermesh::ExactBooleanSupport::CertifiedConvexUnion;
+    relabeled_support.preflight.validate().unwrap();
+    assert_eq!(
+        relabeled_support.validate(),
+        Err(hypermesh::ExactReportValidationError::StatusEvidenceMismatch)
+    );
 }
 
 #[test]
