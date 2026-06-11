@@ -5818,6 +5818,26 @@ fn trivial_boolean_materializers_are_publicly_replayable() {
             ValidationPolicy::ALLOW_BOUNDARY,
             hypermesh::ExactBooleanShortcutKind::Identical,
         );
+        let identical_evaluation = evaluate_boolean_exact(
+            &open_identical_left,
+            &open_identical_right,
+            ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
+        )
+        .unwrap();
+        identical_evaluation.validate().unwrap();
+        let mut relabeled_identity_report = identical_evaluation.clone();
+        relabeled_identity_report.certifications.identical.status =
+            hypermesh::ExactIdenticalMeshStatus::TriangleSequenceMismatch;
+        relabeled_identity_report
+            .certifications
+            .identical
+            .validate()
+            .unwrap();
+        assert_eq!(
+            relabeled_identity_report.validate(),
+            Err(hypermesh::ExactReportValidationError::StatusEvidenceMismatch),
+            "{operation:?}: {relabeled_identity_report:?}"
+        );
         if matches!(
             operation,
             ExactBooleanOperation::Union | ExactBooleanOperation::Intersection

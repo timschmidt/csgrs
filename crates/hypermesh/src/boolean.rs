@@ -579,6 +579,8 @@ pub struct ExactBooleanCertificationSet {
     pub boundary_touching: ExactBoundaryTouchingReport,
     /// Open-surface disjointness shortcut status.
     pub open_surface_disjoint: ExactOpenSurfaceDisjointReport,
+    /// Identical-mesh shortcut status.
+    pub identical: ExactIdenticalMeshReport,
     /// Same-surface shortcut status.
     pub same_surface: ExactSameSurfaceReport,
     /// Left vertices classified against the right closed mesh.
@@ -612,6 +614,7 @@ impl ExactBooleanCertificationSet {
         let refinement = refinement_report_from_graph(&graph, request.operation);
         let boundary_touching = boundary_touching_report_from_graph(&graph, left, right)?;
         let open_surface_disjoint = open_surface_disjoint_report_from_graph(&graph, left, right);
+        let identical = certify_identical_mesh_report(left, right);
         let same_surface = certify_same_surface_report(left, right);
         let closed_winding_left_in_right =
             classify_mesh_vertices_against_closed_mesh_winding_report(left, right);
@@ -658,6 +661,7 @@ impl ExactBooleanCertificationSet {
             refinement,
             boundary_touching,
             open_surface_disjoint,
+            identical,
             same_surface,
             closed_winding_left_in_right,
             closed_winding_right_in_left,
@@ -681,6 +685,7 @@ impl ExactBooleanCertificationSet {
         self.refinement.validate()?;
         self.boundary_touching.validate()?;
         self.open_surface_disjoint.validate()?;
+        self.identical.validate()?;
         self.same_surface.validate()?;
         self.closed_winding_left_in_right
             .validate()
@@ -835,6 +840,79 @@ impl ExactRegularizedSolidBooleanFacts {
 
     fn supports_lower_dimensional_regularized_solid(&self) -> bool {
         self.left_open_surface && self.right_open_surface
+    }
+}
+
+/// Replayable exact identity certificate for the identical-mesh shortcut.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ExactIdenticalMeshReport {
+    /// Coarse identity status.
+    pub status: ExactIdenticalMeshStatus,
+    /// Number of left source vertices compared in original order.
+    pub left_vertices: usize,
+    /// Number of right source vertices compared in original order.
+    pub right_vertices: usize,
+    /// Number of left source triangles compared in original order.
+    pub left_triangles: usize,
+    /// Number of right source triangles compared in original order.
+    pub right_triangles: usize,
+    /// Exact coordinate comparison predicates used for original-order vertex
+    /// identity.
+    pub predicates: Vec<PredicateUse>,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum ExactIdenticalMeshStatus {
+    /// Vertex counts differ.
+    VertexCountMismatch,
+    /// A coordinate comparison was undecided.
+    VertexCoordinateUndecided,
+    /// At least one same-index vertex coordinate differs.
+    VertexCoordinateMismatch,
+    /// Triangle counts or same-index triangle records differ.
+    TriangleSequenceMismatch,
+    /// Vertices and triangles are exactly identical in source order.
+    Certified,
+}
+
+impl ExactIdenticalMeshReport {
+    pub const fn is_certified(&self) -> bool {
+        matches!(self.status, ExactIdenticalMeshStatus::Certified)
+    }
+
+    pub fn validate(&self) -> Result<(), ExactReportValidationError> {
+        if self.predicates.len() > self.left_vertices.saturating_mul(3) {
+            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+        }
+        match self.status {
+            ExactIdenticalMeshStatus::VertexCountMismatch => {
+                if self.left_vertices == self.right_vertices || !self.predicates.is_empty() {
+                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                }
+            }
+            ExactIdenticalMeshStatus::VertexCoordinateUndecided
+            | ExactIdenticalMeshStatus::VertexCoordinateMismatch => {
+                if self.left_vertices != self.right_vertices || self.predicates.is_empty() {
+                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                }
+            }
+            ExactIdenticalMeshStatus::TriangleSequenceMismatch => {
+                if self.left_vertices != self.right_vertices
+                    || self.predicates.len() != self.left_vertices.saturating_mul(3)
+                {
+                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                }
+            }
+            ExactIdenticalMeshStatus::Certified => {
+                if self.left_vertices != self.right_vertices
+                    || self.left_triangles != self.right_triangles
+                    || self.predicates.len() != self.left_vertices.saturating_mul(3)
+                {
+                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                }
+            }
+        }
+        Ok(())
     }
 }
 
@@ -1038,7 +1116,12 @@ fn exact_boolean_preflight_matches_certifications(
             *status == ExactWindingReadinessStatus::BoundsDisjointAlreadyMaterialized
                 && certifications.trivial.bounds_disjoint
         }
-        ExactBooleanSupport::CertifiedIdentical | ExactBooleanSupport::CertifiedSameSurface => {
+        ExactBooleanSupport::CertifiedIdentical => {
+            *status == ExactWindingReadinessStatus::SurfaceEqualityAlreadyMaterialized
+                && certifications.identical.is_certified()
+                && certifications.same_surface.is_certified()
+        }
+        ExactBooleanSupport::CertifiedSameSurface => {
             *status == ExactWindingReadinessStatus::SurfaceEqualityAlreadyMaterialized
                 && certifications.same_surface.is_certified()
         }
@@ -10100,9 +10183,7 @@ fn meshes_are_certified_bounds_disjoint(left: &ExactMesh, right: &ExactMesh) -> 
 }
 
 fn meshes_are_certified_identical(left: &ExactMesh, right: &ExactMesh) -> bool {
-    left.triangles() == right.triangles()
-        && left.vertices().len() == right.vertices().len()
-        && vertices_are_certified_equal(left, right)
+    certify_identical_mesh_report(left, right).is_certified()
 }
 
 fn meshes_are_certified_same_surface(left: &ExactMesh, right: &ExactMesh) -> bool {
@@ -10159,6 +10240,87 @@ pub fn certify_same_surface_report(left: &ExactMesh, right: &ExactMesh) -> Exact
     }
 }
 
+/// Certify whether two meshes are exactly identical in source vertex and
+/// triangle order.
+pub fn certify_identical_mesh_report(
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> ExactIdenticalMeshReport {
+    let mut predicates = Vec::new();
+    if left.vertices().len() != right.vertices().len() {
+        return identical_mesh_report(
+            ExactIdenticalMeshStatus::VertexCountMismatch,
+            left,
+            right,
+            predicates,
+        );
+    }
+
+    for (left_vertex, right_vertex) in left.vertices().iter().zip(right.vertices()) {
+        let x = compare_reals_report(&left_vertex.x, &right_vertex.x);
+        let y = compare_reals_report(&left_vertex.y, &right_vertex.y);
+        let z = compare_reals_report(&left_vertex.z, &right_vertex.z);
+        predicates.push(PredicateUse::from_certificate(x.certificate));
+        predicates.push(PredicateUse::from_certificate(y.certificate));
+        predicates.push(PredicateUse::from_certificate(z.certificate));
+        let Some(x_value) = x.outcome.value() else {
+            return identical_mesh_report(
+                ExactIdenticalMeshStatus::VertexCoordinateUndecided,
+                left,
+                right,
+                predicates,
+            );
+        };
+        let Some(y_value) = y.outcome.value() else {
+            return identical_mesh_report(
+                ExactIdenticalMeshStatus::VertexCoordinateUndecided,
+                left,
+                right,
+                predicates,
+            );
+        };
+        let Some(z_value) = z.outcome.value() else {
+            return identical_mesh_report(
+                ExactIdenticalMeshStatus::VertexCoordinateUndecided,
+                left,
+                right,
+                predicates,
+            );
+        };
+        if x_value != Ordering::Equal || y_value != Ordering::Equal || z_value != Ordering::Equal {
+            return identical_mesh_report(
+                ExactIdenticalMeshStatus::VertexCoordinateMismatch,
+                left,
+                right,
+                predicates,
+            );
+        }
+    }
+
+    let status = if left.triangles() == right.triangles() {
+        ExactIdenticalMeshStatus::Certified
+    } else {
+        ExactIdenticalMeshStatus::TriangleSequenceMismatch
+    };
+    identical_mesh_report(status, left, right, predicates)
+}
+
+fn identical_mesh_report(
+    status: ExactIdenticalMeshStatus,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    predicates: Vec<PredicateUse>,
+) -> ExactIdenticalMeshReport {
+    ExactIdenticalMeshReport {
+        status,
+        left_vertices: left.vertices().len(),
+        right_vertices: right.vertices().len(),
+        left_triangles: left.triangles().len(),
+        right_triangles: right.triangles().len(),
+        predicates,
+    }
+}
+
 fn same_surface_report(
     status: ExactSameSurfaceStatus,
     left_to_right: Vec<usize>,
@@ -10173,19 +10335,6 @@ fn same_surface_report(
         right_triangles: Vec::new(),
         predicates,
     }
-}
-
-fn vertices_are_certified_equal(left: &ExactMesh, right: &ExactMesh) -> bool {
-    left.vertices()
-        .iter()
-        .zip(right.vertices())
-        .all(|(left, right)| {
-            let left = left.clone();
-            let right = right.clone();
-            compare_reals(&left.x, &right.x).value() == Some(Ordering::Equal)
-                && compare_reals(&left.y, &right.y).value() == Some(Ordering::Equal)
-                && compare_reals(&left.z, &right.z).value() == Some(Ordering::Equal)
-        })
 }
 
 fn certified_vertex_permutation_report(
