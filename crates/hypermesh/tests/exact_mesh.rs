@@ -27,9 +27,8 @@ use hypermesh::{
     SplitPlanFreshness, TriangleTriangleFreshness, TriangleTriangleRelation, ValidationPolicy,
     WindingReportFreshness, approximate_mesh_f64_view, audit_exact_mesh,
     build_exact_arrangement2d_overlay, build_exact_arrangement2d_overlay_with_boundary_policy,
-    build_intersection_graph, certify_boundary_touching_report, certify_convex_solid,
-    certify_coplanar_volumetric_cell_evidence, certify_exact_mesh_proposal,
-    certify_open_surface_disjoint_report, certify_same_surface_report,
+    build_intersection_graph, certify_convex_solid, certify_coplanar_volumetric_cell_evidence,
+    certify_exact_mesh_proposal, certify_same_surface_report,
     checked_classify_face_regions_against_opposite_planes,
     checked_triangulate_face_regions_with_earcut, classify_mesh_face_pair,
     classify_mesh_vertices_against_closed_mesh_winding_report,
@@ -5093,7 +5092,7 @@ fn public_exact_blocker_reports_replay_remaining_decisions() {
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let open_disjoint = certify_open_surface_disjoint_report(&left, &parallel_right).unwrap();
+    let open_disjoint = ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::ALLOW_BOUNDARY).open_surface_disjoint_report(&left, &parallel_right).unwrap();
     assert_eq!(
         open_disjoint.status,
         ExactOpenSurfaceDisjointStatus::Certified
@@ -5128,7 +5127,7 @@ fn open_surface_disjoint_report_classifies_retained_coplanar_overlap_blocker() {
     )
     .unwrap();
 
-    let report = certify_open_surface_disjoint_report(&left, &right).unwrap();
+    let report = ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::ALLOW_BOUNDARY).open_surface_disjoint_report(&left, &right).unwrap();
 
     assert_eq!(
         report.status,
@@ -6680,7 +6679,7 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let report = certify_boundary_touching_report(&left, &right).unwrap();
+    let report = ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::ALLOW_BOUNDARY).boundary_touching_report(&left, &right).unwrap();
     assert!(report.is_certified(), "{report:?}");
     report.validate().unwrap();
     report.validate_against_sources(&left, &right).unwrap();
@@ -7024,7 +7023,7 @@ fn boundary_touching_report_classifies_proper_crossing_as_winding_blocker() {
     )
     .unwrap();
 
-    let report = certify_boundary_touching_report(&left, &right).unwrap();
+    let report = ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::ALLOW_BOUNDARY).boundary_touching_report(&left, &right).unwrap();
 
     assert_eq!(report.status, ExactBoundaryTouchingStatus::NotBoundaryOnly);
     assert_eq!(report.blocker.kind, ExactBooleanBlockerKind::NeedsWinding);

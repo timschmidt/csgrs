@@ -592,6 +592,25 @@ impl ExactBooleanRequest {
         adjacent_union_completion_report_for_request(left, right, self)
     }
 
+    /// Certify whether this request's retained graph is boundary-only contact.
+    pub fn boundary_touching_report(
+        self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> Result<ExactBoundaryTouchingReport, MeshError> {
+        boundary_touching_report_for_request(left, right, self)
+    }
+
+    /// Certify whether open-surface operands are graph-disjoint for this
+    /// request.
+    pub fn open_surface_disjoint_report(
+        self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> Result<ExactOpenSurfaceDisjointReport, MeshError> {
+        open_surface_disjoint_report_for_request(left, right, self)
+    }
+
     /// Materialize adjacent closed-solid union completion for this request,
     /// returning the exact report consumed by the materializer.
     pub fn materialize_adjacent_union_completion(
@@ -7886,7 +7905,9 @@ pub(crate) fn open_surface_disjoint_result_matches_sources(
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
 ) -> bool {
-    let Ok(report) = certify_open_surface_disjoint_report(left, right) else {
+    let Ok(report) = ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY)
+        .open_surface_disjoint_report(left, right)
+    else {
         return false;
     };
     if report.validate().is_err() || !report.is_certified() {
@@ -7961,9 +7982,10 @@ pub fn materialize_open_surface_disjoint_boolean(
 /// validates the open-surface precondition from exact mesh facts, then records
 /// the retained graph relation counts that prove no face pair survived exact
 /// graph fact, not a tolerance side effect.
-pub fn certify_open_surface_disjoint_report(
+fn open_surface_disjoint_report_for_request(
     left: &ExactMesh,
     right: &ExactMesh,
+    _request: ExactBooleanRequest,
 ) -> Result<ExactOpenSurfaceDisjointReport, MeshError> {
     let graph = build_intersection_graph(left, right)?;
     validate_graph_source_handoff(&graph, left, right)?;
@@ -8824,7 +8846,9 @@ pub(crate) fn boundary_policy_shortcut_result_matches_sources(
     if boundary_policy != ExactBoundaryBooleanPolicy::PreserveSeparateShells {
         return false;
     }
-    let Ok(report) = certify_boundary_touching_report(left, right) else {
+    let Ok(report) = ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY)
+        .boundary_touching_report(left, right)
+    else {
         return false;
     };
     if report.validate().is_err() || !report.is_certified() {
@@ -8986,9 +9010,10 @@ pub fn materialize_boundary_touching_policy_boolean(
 /// preflight and by [`ExactBooleanRequest::with_boundary_policy`] and [`ExactBooleanRequest::materialize`]. Boundary-only
 /// topology is intentionally not silently materialized by the default named
 /// triangle-mesh-only result to be an explicit caller policy.
-pub fn certify_boundary_touching_report(
+fn boundary_touching_report_for_request(
     left: &ExactMesh,
     right: &ExactMesh,
+    _request: ExactBooleanRequest,
 ) -> Result<ExactBoundaryTouchingReport, MeshError> {
     let graph = build_intersection_graph(left, right)?;
     validate_graph_source_handoff(&graph, left, right)?;
@@ -13635,7 +13660,7 @@ mod tests {
                 .is_certified()
         );
         assert!(
-            !certify_boundary_touching_report(&left, &overlapping_right)
+            !ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::ALLOW_BOUNDARY).boundary_touching_report(&left, &overlapping_right)
                 .unwrap()
                 .is_certified()
         );

@@ -22,8 +22,7 @@ use super::affine_solid::{
 };
 use super::boolean::{
     ExactBooleanOperation, ExactBooleanRequest, ExactBoundaryBooleanPolicy,
-    boundary_policy_shortcut_result_matches_sources, certify_boundary_touching_report,
-    certify_open_surface_disjoint_report, certify_same_surface_report,
+    boundary_policy_shortcut_result_matches_sources, certify_same_surface_report,
     certify_winding_readiness_report,
     materialize_closed_same_surface_boolean,
     materialize_volumetric_coplanar_boundary_closure_output,
@@ -1498,7 +1497,8 @@ fn certified_shortcut_sources_match(
             Ok(report.is_certified())
         }
         ExactBooleanShortcutKind::OpenSurfaceDisjoint => {
-            let report = certify_open_surface_disjoint_report(left, right)
+            let report = ExactBooleanRequest::new(operation, validation)
+                .open_surface_disjoint_report(left, right)
                 .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
             report.validate()?;
             Ok(report.is_certified())
@@ -2197,7 +2197,8 @@ fn closed_boundary_touching_sources_match(
     if !mesh_is_closed_solid(left) || !mesh_is_closed_solid(right) {
         return Ok(false);
     }
-    let report = certify_boundary_touching_report(left, right)
+    let report = ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::ALLOW_BOUNDARY)
+        .boundary_touching_report(left, right)
         .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
     report.validate()?;
     if !report.is_certified() {
@@ -4714,7 +4715,8 @@ impl ExactOpenSurfaceDisjointReport {
         right: &ExactMesh,
     ) -> Result<(), ExactReportValidationError> {
         self.validate()?;
-        let replay = certify_open_surface_disjoint_report(left, right)
+        let replay = ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::ALLOW_BOUNDARY)
+            .open_surface_disjoint_report(left, right)
             .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
         if self == &replay {
             Ok(())
@@ -4732,7 +4734,9 @@ impl ExactOpenSurfaceDisjointReport {
         if let Err(error) = self.validate() {
             return error.into();
         }
-        match certify_open_surface_disjoint_report(left, right) {
+        match ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::ALLOW_BOUNDARY)
+            .open_surface_disjoint_report(left, right)
+        {
             Ok(replay) if self == &replay => ExactReportFreshness::Current,
             Ok(_) | Err(_) => ExactReportFreshness::SourceReplayMismatch,
         }
@@ -5209,7 +5213,8 @@ impl ExactBoundaryTouchingReport {
         right: &ExactMesh,
     ) -> Result<(), ExactReportValidationError> {
         self.validate()?;
-        let replay = certify_boundary_touching_report(left, right)
+        let replay = ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::ALLOW_BOUNDARY)
+            .boundary_touching_report(left, right)
             .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
         if self == &replay {
             Ok(())
@@ -5227,7 +5232,9 @@ impl ExactBoundaryTouchingReport {
         if let Err(error) = self.validate() {
             return error.into();
         }
-        match certify_boundary_touching_report(left, right) {
+        match ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::ALLOW_BOUNDARY)
+            .boundary_touching_report(left, right)
+        {
             Ok(replay) if self == &replay => ExactReportFreshness::Current,
             Ok(_) | Err(_) => ExactReportFreshness::SourceReplayMismatch,
         }
@@ -6447,14 +6454,14 @@ mod tests {
 
         let open_left = report_test_triangle(&[[0, 0, 0], [2, 0, 0], [0, 2, 0]]);
         let open_right = report_test_triangle(&[[5, 0, 0], [7, 0, 0], [5, 2, 0]]);
-        let open_disjoint = certify_open_surface_disjoint_report(&open_left, &open_right).unwrap();
+        let open_disjoint = ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::ALLOW_BOUNDARY).open_surface_disjoint_report(&open_left, &open_right).unwrap();
         assert_eq!(
             open_disjoint.freshness_against_sources(&open_left, &open_right),
             ExactReportFreshness::Current
         );
 
         let touching_right = report_test_triangle(&[[2, 0, 0], [0, 2, 0], [2, 2, 2]]);
-        let boundary = certify_boundary_touching_report(&open_left, &touching_right).unwrap();
+        let boundary = ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::ALLOW_BOUNDARY).boundary_touching_report(&open_left, &touching_right).unwrap();
         assert_eq!(
             boundary.freshness_against_sources(&open_left, &touching_right),
             ExactReportFreshness::Current
