@@ -277,6 +277,18 @@ fn exact_boolean_evaluation_materializes_certified_result_publicly() {
         relabeled_support.validate(),
         Err(hypermesh::ExactReportValidationError::StatusEvidenceMismatch)
     );
+    let mut relabeled_winding_status = evaluation.clone();
+    relabeled_winding_status.certifications.winding_readiness.status =
+        ExactWindingReadinessStatus::EmptyOperandAlreadyMaterialized;
+    relabeled_winding_status
+        .certifications
+        .winding_readiness
+        .validate()
+        .unwrap();
+    assert_eq!(
+        relabeled_winding_status.validate(),
+        Err(hypermesh::ExactReportValidationError::StatusEvidenceMismatch)
+    );
 }
 
 #[test]

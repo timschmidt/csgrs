@@ -856,18 +856,82 @@ fn exact_boolean_preflight_matches_certifications(
     preflight: &ExactBooleanPreflight,
     certifications: &ExactBooleanCertificationSet,
 ) -> bool {
+    let status = &certifications.winding_readiness.status;
     match preflight.support {
+        ExactBooleanSupport::SelectedRegionPolicy => {
+            matches!(preflight.operation, ExactBooleanOperation::SelectedRegions(_))
+                && *status == ExactWindingReadinessStatus::NotNamedOperation
+        }
         ExactBooleanSupport::CertifiedBoundaryPolicyShortcut => {
             certifications.boundary_touching.is_certified()
-                && certifications.winding_readiness.status
+                && *status
                     == ExactWindingReadinessStatus::BoundaryPolicyShortcutAlreadyMaterialized
+        }
+        ExactBooleanSupport::CertifiedOpenSurfaceArrangementUnion
+        | ExactBooleanSupport::CertifiedOpenSurfaceArrangementIntersection
+        | ExactBooleanSupport::CertifiedOpenSurfaceArrangementDifference => {
+            *status == ExactWindingReadinessStatus::OpenSurfaceArrangementAlreadyMaterialized
+        }
+        ExactBooleanSupport::CertifiedArrangementCellComplex => {
+            winding_readiness_status_materializes_arrangement_cell_complex(status)
+        }
+        ExactBooleanSupport::CertifiedEmptyOperand => {
+            *status == ExactWindingReadinessStatus::EmptyOperandAlreadyMaterialized
+        }
+        ExactBooleanSupport::CertifiedBoundsDisjoint => {
+            *status == ExactWindingReadinessStatus::BoundsDisjointAlreadyMaterialized
+        }
+        ExactBooleanSupport::CertifiedIdentical | ExactBooleanSupport::CertifiedSameSurface => {
+            *status == ExactWindingReadinessStatus::SurfaceEqualityAlreadyMaterialized
+        }
+        ExactBooleanSupport::CertifiedClosedBoundaryTouchingUnion
+        | ExactBooleanSupport::CertifiedClosedBoundaryTouchingIntersection
+        | ExactBooleanSupport::CertifiedClosedBoundaryTouchingDifference => {
+            *status == ExactWindingReadinessStatus::ClosedBoundaryTouchingAlreadyMaterialized
+        }
+        ExactBooleanSupport::CertifiedOpenSurfaceDisjoint => {
+            *status == ExactWindingReadinessStatus::OpenSurfaceDisjointAlreadyMaterialized
+        }
+        ExactBooleanSupport::CertifiedClosedWindingSeparated => {
+            *status == ExactWindingReadinessStatus::ClosedWindingSeparatedAlreadyMaterialized
+        }
+        ExactBooleanSupport::CertifiedClosedWindingContainment => {
+            *status == ExactWindingReadinessStatus::ClosedWindingContainmentAlreadyMaterialized
+        }
+        ExactBooleanSupport::CertifiedMixedDimensionalRegularizedSolid => {
+            *status
+                == ExactWindingReadinessStatus::MixedDimensionalRegularizedSolidAlreadyMaterialized
+        }
+        ExactBooleanSupport::CertifiedLowerDimensionalRegularizedSolid => {
+            *status
+                == ExactWindingReadinessStatus::LowerDimensionalRegularizedSolidAlreadyMaterialized
+        }
+        ExactBooleanSupport::CertifiedConvexContainment
+        | ExactBooleanSupport::CertifiedConvexUnion
+        | ExactBooleanSupport::CertifiedConvexIntersection
+        | ExactBooleanSupport::CertifiedConvexDifference
+        | ExactBooleanSupport::CertifiedConvexSeparated => {
+            *status == ExactWindingReadinessStatus::ConvexBooleanAlreadyMaterialized
         }
         ExactBooleanSupport::RequiresBoundaryPolicy => {
             certifications.boundary_touching.is_certified()
-                && certifications.winding_readiness.status
-                    == ExactWindingReadinessStatus::BoundaryPolicyRequired
+                && *status == ExactWindingReadinessStatus::BoundaryPolicyRequired
         }
-        _ => true,
+        ExactBooleanSupport::RequiresPlanarArrangement => {
+            *status == ExactWindingReadinessStatus::PlanarArrangementRequired
+        }
+        ExactBooleanSupport::RequiresCoplanarVolumetricCells => {
+            *status == ExactWindingReadinessStatus::CoplanarVolumetricCellsRequired
+        }
+        ExactBooleanSupport::UnresolvedGraph => {
+            *status == ExactWindingReadinessStatus::GraphUnknowns
+        }
+        ExactBooleanSupport::RequiresCertifiedWinding => matches!(
+            status,
+            ExactWindingReadinessStatus::Ready
+                | ExactWindingReadinessStatus::NoNontrivialOverlap
+                | ExactWindingReadinessStatus::VolumetricAssemblyRequired
+        ),
     }
 }
 
