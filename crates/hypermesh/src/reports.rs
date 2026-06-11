@@ -22,8 +22,7 @@ use super::affine_solid::{
 };
 use super::boolean::{
     ExactBooleanOperation, ExactBooleanRequest, ExactBoundaryBooleanPolicy,
-    boundary_policy_shortcut_result_matches_sources, certify_same_surface_report,
-    certify_winding_readiness_report,
+    boundary_policy_shortcut_result_matches_sources, certify_winding_readiness_report,
     materialize_closed_same_surface_boolean,
     materialize_volumetric_coplanar_boundary_closure_output,
     open_surface_disjoint_result_matches_sources, replay_coplanar_mesh_overlay_result,
@@ -1492,7 +1491,8 @@ fn certified_shortcut_sources_match(
         }
         ExactBooleanShortcutKind::Identical => Ok(meshes_are_certified_identical(left, right)),
         ExactBooleanShortcutKind::SameSurface => {
-            let report = certify_same_surface_report(left, right);
+            let report = ExactBooleanRequest::new(operation, validation)
+                .same_surface_report(left, right);
             report.validate()?;
             Ok(report.is_certified())
         }
@@ -4614,7 +4614,13 @@ impl ExactSameSurfaceReport {
         right: &ExactMesh,
     ) -> Result<(), ExactReportValidationError> {
         self.validate()?;
-        if self == &certify_same_surface_report(left, right) {
+        if self
+            == &ExactBooleanRequest::new(
+                ExactBooleanOperation::Union,
+                ValidationPolicy::ALLOW_BOUNDARY,
+            )
+            .same_surface_report(left, right)
+        {
             Ok(())
         } else {
             Err(ExactReportValidationError::SourceReplayMismatch)
@@ -4630,7 +4636,13 @@ impl ExactSameSurfaceReport {
         if let Err(error) = self.validate() {
             return error.into();
         }
-        if self == &certify_same_surface_report(left, right) {
+        if self
+            == &ExactBooleanRequest::new(
+                ExactBooleanOperation::Union,
+                ValidationPolicy::ALLOW_BOUNDARY,
+            )
+            .same_surface_report(left, right)
+        {
             ExactReportFreshness::Current
         } else {
             ExactReportFreshness::SourceReplayMismatch
@@ -6442,7 +6454,11 @@ mod tests {
             ExactReportFreshness::StaleBlockerEvidence
         );
 
-        let same_surface = certify_same_surface_report(&left, &left);
+        let same_surface = ExactBooleanRequest::new(
+            ExactBooleanOperation::Union,
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .same_surface_report(&left, &left);
         assert_eq!(
             same_surface.freshness_against_sources(&left, &left),
             ExactReportFreshness::Current

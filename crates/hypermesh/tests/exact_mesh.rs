@@ -28,7 +28,7 @@ use hypermesh::{
     WindingReportFreshness, approximate_mesh_f64_view, audit_exact_mesh,
     build_exact_arrangement2d_overlay, build_exact_arrangement2d_overlay_with_boundary_policy,
     build_intersection_graph, certify_convex_solid, certify_coplanar_volumetric_cell_evidence,
-    certify_exact_mesh_proposal, certify_same_surface_report,
+    certify_exact_mesh_proposal,
     checked_classify_face_regions_against_opposite_planes,
     checked_triangulate_face_regions_with_earcut, classify_mesh_face_pair,
     classify_mesh_vertices_against_closed_mesh_winding_report,
@@ -5072,7 +5072,11 @@ fn public_exact_blocker_reports_replay_remaining_decisions() {
         ExactReportFreshness::SourceReplayMismatch
     );
 
-    let same_surface = certify_same_surface_report(&left, &left);
+    let same_surface = ExactBooleanRequest::new(
+        ExactBooleanOperation::Union,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .same_surface_report(&left, &left);
     assert_eq!(same_surface.status, ExactSameSurfaceStatus::Certified);
     assert!(same_surface.is_certified());
     same_surface.validate().unwrap();

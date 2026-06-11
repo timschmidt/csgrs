@@ -611,6 +611,26 @@ impl ExactBooleanRequest {
         open_surface_disjoint_report_for_request(left, right, self)
     }
 
+    /// Certify whether source meshes are exactly identical for boolean
+    /// shortcut replay.
+    pub fn identical_mesh_report(
+        self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> ExactIdenticalMeshReport {
+        identical_mesh_report_for_request(left, right, self)
+    }
+
+    /// Certify whether source meshes represent the same triangle surface for
+    /// boolean shortcut replay.
+    pub fn same_surface_report(
+        self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> ExactSameSurfaceReport {
+        same_surface_report_for_request(left, right, self)
+    }
+
     /// Materialize adjacent closed-solid union completion for this request,
     /// returning the exact report consumed by the materializer.
     pub fn materialize_adjacent_union_completion(
@@ -680,8 +700,8 @@ impl ExactBooleanCertificationSet {
         let refinement = refinement_report_from_graph(&graph, request.operation);
         let boundary_touching = boundary_touching_report_from_graph(&graph, left, right)?;
         let open_surface_disjoint = open_surface_disjoint_report_from_graph(&graph, left, right);
-        let identical = certify_identical_mesh_report(left, right);
-        let same_surface = certify_same_surface_report(left, right);
+        let identical = request.identical_mesh_report(left, right);
+        let same_surface = request.same_surface_report(left, right);
         let closed_winding_left_in_right =
             classify_mesh_vertices_against_closed_mesh_winding_report(left, right);
         let closed_winding_right_in_left =
@@ -10423,11 +10443,15 @@ fn meshes_are_certified_bounds_disjoint(left: &ExactMesh, right: &ExactMesh) -> 
 }
 
 fn meshes_are_certified_identical(left: &ExactMesh, right: &ExactMesh) -> bool {
-    certify_identical_mesh_report(left, right).is_certified()
+    ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::ALLOW_BOUNDARY)
+        .identical_mesh_report(left, right)
+        .is_certified()
 }
 
 fn meshes_are_certified_same_surface(left: &ExactMesh, right: &ExactMesh) -> bool {
-    certify_same_surface_report(left, right).is_certified()
+    ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::ALLOW_BOUNDARY)
+        .same_surface_report(left, right)
+        .is_certified()
 }
 
 /// Certify whether two meshes represent the same triangle surface.
@@ -10436,7 +10460,11 @@ fn meshes_are_certified_same_surface(left: &ExactMesh, right: &ExactMesh) -> boo
 /// used to find a vertex bijection and the sorted triangle sets compared after
 /// remapping. This is the auditable form of the same-surface shortcut used by
 /// expose the predicate facts that justify them.
-pub fn certify_same_surface_report(left: &ExactMesh, right: &ExactMesh) -> ExactSameSurfaceReport {
+fn same_surface_report_for_request(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    _request: ExactBooleanRequest,
+) -> ExactSameSurfaceReport {
     if left.vertices().len() != right.vertices().len() {
         return same_surface_report(
             ExactSameSurfaceStatus::VertexCountMismatch,
@@ -10482,9 +10510,10 @@ pub fn certify_same_surface_report(left: &ExactMesh, right: &ExactMesh) -> Exact
 
 /// Certify whether two meshes are exactly identical in source vertex and
 /// triangle order.
-pub fn certify_identical_mesh_report(
+fn identical_mesh_report_for_request(
     left: &ExactMesh,
     right: &ExactMesh,
+    _request: ExactBooleanRequest,
 ) -> ExactIdenticalMeshReport {
     let mut predicates = Vec::new();
     if left.vertices().len() != right.vertices().len() {
