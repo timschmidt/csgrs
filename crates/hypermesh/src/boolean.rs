@@ -876,6 +876,10 @@ fn exact_boolean_preflight_matches_certifications(
         | ExactBooleanSupport::CertifiedOpenSurfaceArrangementIntersection
         | ExactBooleanSupport::CertifiedOpenSurfaceArrangementDifference => {
             *status == ExactWindingReadinessStatus::OpenSurfaceArrangementAlreadyMaterialized
+                && exact_boolean_preflight_matches_open_surface_arrangement(
+                    preflight,
+                    &certifications.winding_readiness,
+                )
         }
         ExactBooleanSupport::CertifiedArrangementCellComplex => {
             winding_readiness_status_materializes_arrangement_cell_complex(status)
@@ -961,6 +965,21 @@ fn exact_boolean_preflight_matches_certifications(
             )
         }
     }
+}
+
+fn exact_boolean_preflight_matches_open_surface_arrangement(
+    preflight: &ExactBooleanPreflight,
+    winding_readiness: &ExactWindingReadinessReport,
+) -> bool {
+    preflight.graph_had_unknowns == winding_readiness.graph_had_unknowns
+        && preflight.retained_face_pairs == winding_readiness.retained_face_pairs
+        && preflight.retained_events == winding_readiness.retained_events
+        && preflight.region_count == winding_readiness.region_count
+        && preflight.region_classifications == winding_readiness.region_classifications
+        && preflight.blocker.is_none()
+        && preflight.arrangement_readiness.is_none()
+        && preflight.coplanar_volumetric_evidence.is_none()
+        && winding_readiness.coplanar_volumetric_evidence.is_none()
 }
 
 fn exact_boolean_arrangement_attempt_materialized(

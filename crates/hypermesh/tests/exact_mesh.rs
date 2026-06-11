@@ -2436,6 +2436,21 @@ fn exact_open_surface_arrangement_is_publicly_replayable() {
             result.freshness_against_sources(&left, &right),
             ExactReportFreshness::Current
         );
+        let evaluation = evaluate_boolean_exact(
+            &left,
+            &right,
+            ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
+        )
+        .unwrap();
+        evaluation.validate().unwrap();
+        let mut stale_preflight_counts = evaluation.clone();
+        stale_preflight_counts.preflight.retained_events += 1;
+        stale_preflight_counts.preflight.validate().unwrap();
+        assert_eq!(
+            stale_preflight_counts.validate(),
+            Err(hypermesh::ExactReportValidationError::StatusEvidenceMismatch),
+            "{operation:?}: {stale_preflight_counts:?}"
+        );
         assert!(!result.region_classifications.is_empty());
         assert!(!result.triangulations.is_empty());
         if matches!(operation, ExactBooleanOperation::Intersection) {
