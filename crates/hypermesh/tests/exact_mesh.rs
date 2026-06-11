@@ -5804,6 +5804,32 @@ fn trivial_boolean_materializers_are_publicly_replayable() {
             ValidationPolicy::ALLOW_BOUNDARY,
             hypermesh::ExactBooleanShortcutKind::OpenSurfaceDisjoint,
         );
+        let open_disjoint_evaluation = evaluate_boolean_exact(
+            &open_disjoint_left,
+            &open_disjoint_right,
+            ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
+        )
+        .unwrap();
+        open_disjoint_evaluation.validate().unwrap();
+        let mut relabeled_disjoint_report = open_disjoint_evaluation.clone();
+        relabeled_disjoint_report
+            .certifications
+            .open_surface_disjoint
+            .status = ExactOpenSurfaceDisjointStatus::NotOpenSurface;
+        relabeled_disjoint_report
+            .certifications
+            .open_surface_disjoint
+            .left_open_surface = false;
+        relabeled_disjoint_report
+            .certifications
+            .open_surface_disjoint
+            .validate()
+            .unwrap();
+        assert_eq!(
+            relabeled_disjoint_report.validate(),
+            Err(hypermesh::ExactReportValidationError::StatusEvidenceMismatch),
+            "{operation:?}: {relabeled_disjoint_report:?}"
+        );
         if matches!(
             operation,
             ExactBooleanOperation::Union | ExactBooleanOperation::Difference

@@ -573,6 +573,8 @@ pub struct ExactBooleanCertificationSet {
     pub refinement: ExactRefinementReport,
     /// Boundary-contact policy status.
     pub boundary_touching: ExactBoundaryTouchingReport,
+    /// Open-surface disjointness shortcut status.
+    pub open_surface_disjoint: ExactOpenSurfaceDisjointReport,
     /// Planar-arrangement readiness for coplanar surface output.
     pub planar_arrangement: ExactPlanarArrangementReport,
     /// Winding/inside-outside readiness for named volumetric output.
@@ -593,6 +595,7 @@ impl ExactBooleanCertificationSet {
         validate_graph_source_handoff(&graph, left, right)?;
         let refinement = refinement_report_from_graph(&graph, request.operation);
         let boundary_touching = boundary_touching_report_from_graph(&graph, left, right)?;
+        let open_surface_disjoint = open_surface_disjoint_report_from_graph(&graph, left, right);
         let planar_arrangement =
             planar_arrangement_certification_from_graph(&graph, left, right, request.operation)?;
         let winding_readiness = winding_readiness_report_with_boundary_policy_from_graph(
@@ -629,6 +632,7 @@ impl ExactBooleanCertificationSet {
         Ok(Self {
             refinement,
             boundary_touching,
+            open_surface_disjoint,
             planar_arrangement,
             winding_readiness,
             volumetric_boundary_closure,
@@ -644,6 +648,7 @@ impl ExactBooleanCertificationSet {
     ) -> Result<(), ExactReportValidationError> {
         self.refinement.validate()?;
         self.boundary_touching.validate()?;
+        self.open_surface_disjoint.validate()?;
         self.planar_arrangement.validate()?;
         self.winding_readiness.validate()?;
         if self.refinement.operation != request.operation
@@ -901,6 +906,10 @@ fn exact_boolean_preflight_matches_certifications(
         }
         ExactBooleanSupport::CertifiedOpenSurfaceDisjoint => {
             *status == ExactWindingReadinessStatus::OpenSurfaceDisjointAlreadyMaterialized
+                && exact_boolean_preflight_matches_open_surface_disjoint(
+                    preflight,
+                    &certifications.open_surface_disjoint,
+                )
         }
         ExactBooleanSupport::CertifiedClosedWindingSeparated => {
             *status == ExactWindingReadinessStatus::ClosedWindingSeparatedAlreadyMaterialized
@@ -965,6 +974,21 @@ fn exact_boolean_preflight_matches_certifications(
             )
         }
     }
+}
+
+fn exact_boolean_preflight_matches_open_surface_disjoint(
+    preflight: &ExactBooleanPreflight,
+    open_surface_disjoint: &ExactOpenSurfaceDisjointReport,
+) -> bool {
+    open_surface_disjoint.is_certified()
+        && preflight.graph_had_unknowns == open_surface_disjoint.graph_had_unknowns
+        && preflight.retained_face_pairs == open_surface_disjoint.retained_face_pairs
+        && preflight.retained_events == open_surface_disjoint.retained_events
+        && preflight.region_count == 0
+        && preflight.region_classifications.is_empty()
+        && preflight.blocker.is_none()
+        && preflight.arrangement_readiness.is_none()
+        && preflight.coplanar_volumetric_evidence.is_none()
 }
 
 fn exact_boolean_preflight_matches_open_surface_arrangement(
