@@ -7733,6 +7733,8 @@ pub(crate) fn boundary_policy_shortcut_result_matches_sources(
     }
     if !boundary_policy_shortcut_result_consumes_report(
         result,
+        left,
+        right,
         operation,
         boundary_policy,
         &report,
@@ -7749,6 +7751,8 @@ pub(crate) fn boundary_policy_shortcut_result_matches_sources(
 
 fn boundary_policy_shortcut_result_consumes_report(
     result: &ExactBooleanResult,
+    left: &ExactMesh,
+    right: &ExactMesh,
     operation: ExactBooleanOperation,
     boundary_policy: ExactBoundaryBooleanPolicy,
     report: &ExactBoundaryTouchingReport,
@@ -7756,6 +7760,7 @@ fn boundary_policy_shortcut_result_consumes_report(
     boundary_policy == ExactBoundaryBooleanPolicy::PreserveSeparateShells
         && report.validate().is_ok()
         && report.is_certified()
+        && report.validate_against_sources(left, right).is_ok()
         && matches!(
             result.kind,
             ExactBooleanResultKind::BoundaryPolicyShortcut {
@@ -7789,6 +7794,8 @@ fn boolean_boundary_touching_meshes_from_graph(
     };
     Ok(boundary_policy_shortcut_result_consumes_report(
         &result,
+        left,
+        right,
         operation,
         boundary_policy,
         &report,
