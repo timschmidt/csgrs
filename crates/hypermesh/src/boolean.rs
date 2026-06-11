@@ -785,6 +785,9 @@ impl ExactBooleanEvaluation {
         }
         self.preflight.validate()?;
         self.certifications.validate_for_request(self.request)?;
+        if !exact_boolean_preflight_matches_certifications(&self.preflight, &self.certifications) {
+            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+        }
         if let Some(result) = self.result.as_ref() {
             if !self.preflight.is_certified() {
                 return Err(ExactReportValidationError::StatusEvidenceMismatch);
@@ -846,6 +849,25 @@ impl ExactBooleanEvaluation {
             Ok(()) => ExactReportFreshness::Current,
             Err(error) => error.into(),
         }
+    }
+}
+
+fn exact_boolean_preflight_matches_certifications(
+    preflight: &ExactBooleanPreflight,
+    certifications: &ExactBooleanCertificationSet,
+) -> bool {
+    match preflight.support {
+        ExactBooleanSupport::CertifiedBoundaryPolicyShortcut => {
+            certifications.boundary_touching.is_certified()
+                && certifications.winding_readiness.status
+                    == ExactWindingReadinessStatus::BoundaryPolicyShortcutAlreadyMaterialized
+        }
+        ExactBooleanSupport::RequiresBoundaryPolicy => {
+            certifications.boundary_touching.is_certified()
+                && certifications.winding_readiness.status
+                    == ExactWindingReadinessStatus::BoundaryPolicyRequired
+        }
+        _ => true,
     }
 }
 

@@ -327,6 +327,18 @@ fn exact_boolean_evaluation_materializes_boundary_policy_shortcut_by_default() {
         mixed_graph_snapshot.validate(),
         Err(hypermesh::ExactReportValidationError::StatusEvidenceMismatch)
     );
+    let mut relabeled_winding_status = evaluation.clone();
+    relabeled_winding_status.certifications.winding_readiness.status =
+        ExactWindingReadinessStatus::BoundaryPolicyRequired;
+    relabeled_winding_status
+        .certifications
+        .winding_readiness
+        .validate()
+        .unwrap();
+    assert_eq!(
+        relabeled_winding_status.validate(),
+        Err(hypermesh::ExactReportValidationError::StatusEvidenceMismatch)
+    );
     let rejected_request = ExactBooleanRequest::with_boundary_policy(
         ExactBooleanOperation::Union,
         ValidationPolicy::ALLOW_BOUNDARY,
