@@ -6771,8 +6771,12 @@ fn boolean_open_surface_disjoint_meshes_from_graph(
     let disjoint_report = open_surface_disjoint_report_from_graph(graph, left, right);
     if disjoint_report.is_certified() {
         let result = materialize_open_surface_disjoint_meshes(left, right, operation, validation)?;
-        return Ok(open_surface_disjoint_result_matches_sources(
-            &result, left, right, operation, validation,
+        return Ok(open_surface_disjoint_result_consumes_report(
+            &result,
+            left,
+            right,
+            operation,
+            &disjoint_report,
         )
         .then_some(result));
     }
@@ -6792,11 +6796,34 @@ pub(crate) fn open_surface_disjoint_result_matches_sources(
     if report.validate().is_err() || !report.is_certified() {
         return false;
     }
+    if !open_surface_disjoint_result_consumes_report(result, left, right, operation, &report) {
+        return false;
+    }
     let Ok(expected) = materialize_open_surface_disjoint_meshes(left, right, operation, validation)
     else {
         return false;
     };
     expected.validate().is_ok() && result == &expected
+}
+
+fn open_surface_disjoint_result_consumes_report(
+    result: &ExactBooleanResult,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    report: &ExactOpenSurfaceDisjointReport,
+) -> bool {
+    report.validate().is_ok()
+        && report.is_certified()
+        && report.validate_against_sources(left, right).is_ok()
+        && matches!(
+            result.kind,
+            ExactBooleanResultKind::CertifiedShortcut {
+                operation: result_operation,
+                shortcut: ExactBooleanShortcutKind::OpenSurfaceDisjoint
+            } if result_operation == operation
+        )
+        && result.validate().is_ok()
 }
 
 /// Certify and materialize a named boolean for open surfaces with no retained
