@@ -136,9 +136,13 @@ impl ExactSimplifiedCellComplex {
         else {
             return Err(ExactArrangementBlocker::NonManifoldCellComplex);
         };
+        let Some(min_selected_boundary_nodes) =
+            self.selected_faces_before_simplification.checked_mul(3)
+        else {
+            return Err(ExactArrangementBlocker::NonManifoldCellComplex);
+        };
         if self.faces.len() > self.selected_faces_before_simplification
-            || self.selected_boundary_nodes_before_simplification
-                < self.selected_faces_before_simplification.saturating_mul(3)
+            || self.selected_boundary_nodes_before_simplification < min_selected_boundary_nodes
             || simplified_boundary_nodes > self.selected_boundary_nodes_before_simplification
             || removed_boundary_nodes > self.selected_boundary_nodes_before_simplification
             || accounted_boundary_nodes > self.selected_boundary_nodes_before_simplification
@@ -1639,6 +1643,13 @@ mod tests {
         stale_boundary_count.collinear_boundary_nodes_removed += 3;
         assert_eq!(
             stale_boundary_count.validate(),
+            Err(ExactArrangementBlocker::NonManifoldCellComplex)
+        );
+        let mut overflowing_boundary_minimum = simplified;
+        overflowing_boundary_minimum.selected_faces_before_simplification = usize::MAX;
+        overflowing_boundary_minimum.selected_boundary_nodes_before_simplification = usize::MAX;
+        assert_eq!(
+            overflowing_boundary_minimum.validate(),
             Err(ExactArrangementBlocker::NonManifoldCellComplex)
         );
     }
