@@ -43,6 +43,15 @@ fn main() {
             iterations: 8,
         },
         BenchCase {
+            name: "closed_arrangement_cell_complex",
+            left: nonconvex_closed_arrangement_left(),
+            right: tetra_from_corners([1, 1, 1], [5, 1, 1], [1, 5, 1], [1, 1, 5]),
+            operation: ExactBooleanOperation::Union,
+            validation: ValidationPolicy::ALLOW_BOUNDARY,
+            regularization: ExactRegularizationPolicy::REGULARIZED_SOLID,
+            iterations: 4,
+        },
+        BenchCase {
             name: "open_coplanar_disjoint_sheets",
             left: open_triangle_xy(),
             right: open_triangle_xy_far_corner(),
@@ -248,7 +257,7 @@ fn run_case(case: &BenchCase) {
     });
 
     time_stage(case, "boolean_evaluate", || {
-        black_box(request.evaluate(&case.left, &case.right).unwrap());
+        black_box(request.evaluate(&case.left, &case.right).ok());
     });
 
     time_stage(case, "boolean_materialize_or_block", || {
@@ -1168,6 +1177,27 @@ fn tetra_from_corners(a: [i64; 3], b: [i64; 3], c: [i64; 3], d: [i64; 3]) -> Exa
             a[0], a[1], a[2], b[0], b[1], b[2], c[0], c[1], c[2], d[0], d[1], d[2],
         ],
         &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
+    )
+    .unwrap()
+}
+
+fn nonconvex_closed_arrangement_left() -> ExactMesh {
+    ExactMesh::from_i64_triangles(
+        &[
+            0, 0, 0, //
+            4, 0, 0, //
+            0, 4, 0, //
+            0, 0, 4, //
+            2, 2, 3,
+        ],
+        &[
+            0, 2, 1, //
+            1, 2, 3, //
+            2, 0, 3, //
+            0, 1, 4, //
+            1, 3, 4, //
+            3, 0, 4,
+        ],
     )
     .unwrap()
 }
