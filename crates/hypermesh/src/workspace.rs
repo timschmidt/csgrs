@@ -1564,16 +1564,6 @@ impl<'a> ExactBooleanWorkspace<'a> {
         request: ExactBooleanRequest,
         certifications: &ExactBooleanCertificationSet,
     ) -> Result<(), ExactReportValidationError> {
-        if self
-            .certifications
-            .iter()
-            .any(|(stored_request, stored_certifications)| {
-                *stored_request == request && stored_certifications == certifications
-            })
-        {
-            certifications.validate_for_request(request)?;
-            return Ok(());
-        }
         self.graph()
             .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
         let graph = self
