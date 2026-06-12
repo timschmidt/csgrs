@@ -2723,22 +2723,9 @@ fn materialize_certified_arrangement_cell_complex_support_with_arrangement(
         return Ok(Some(result));
     }
     if let Some(graph) = retained_graph {
-        let outcome = match run_arrangement_cell_complex_attempt_from_graph(
-            graph,
-            left,
-            right,
-            operation,
-            ExactRegularizationPolicy::REGULARIZED_SOLID,
-            Some(validation),
-            true,
-        ) {
-            Ok(outcome) => outcome,
-            Err(_) => return Ok(None),
-        };
-        match outcome {
-            ArrangementCellComplexOutcome::Materialized(result, _) => Ok(Some(*result)),
-            ArrangementCellComplexOutcome::Declined(_) => Ok(None),
-        }
+        boolean_arrangement_cell_complex_meshes_from_graph(
+            graph, left, right, operation, validation,
+        )
     } else {
         boolean_arrangement_cell_complex_meshes(left, right, operation, validation)
     }
@@ -4908,7 +4895,9 @@ fn arrangement_boolean_attempt_report(
     request: ExactBooleanRequest,
     policy: ExactRegularizationPolicy,
 ) -> Result<ExactArrangementBooleanAttempt, MeshError> {
-    let outcome = run_arrangement_cell_complex_attempt(
+    let graph = build_intersection_graph(left, right)?;
+    let outcome = run_arrangement_cell_complex_attempt_from_graph(
+        &graph,
         left,
         right,
         request.operation,
@@ -4953,7 +4942,19 @@ fn boolean_arrangement_cell_complex_meshes(
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
-    let outcome = match run_arrangement_cell_complex_attempt(
+    let graph = build_intersection_graph(left, right)?;
+    boolean_arrangement_cell_complex_meshes_from_graph(&graph, left, right, operation, validation)
+}
+
+fn boolean_arrangement_cell_complex_meshes_from_graph(
+    graph: &ExactIntersectionGraph,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+) -> Result<Option<ExactBooleanResult>, MeshError> {
+    let outcome = match run_arrangement_cell_complex_attempt_from_graph(
+        graph,
         left,
         right,
         operation,
@@ -5245,6 +5246,7 @@ fn arrangement_pre_cell_complex_recovery_outcome_if_available(
     Ok(None)
 }
 
+#[cfg(test)]
 fn run_arrangement_cell_complex_attempt(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -9801,11 +9803,18 @@ fn materialize_closed_same_surface_for_request(
     {
         return Ok(None);
     }
-    let preflight = ExactBooleanRequest::new(operation, validation).preflight(left, right)?;
+    let graph = build_intersection_graph(left, right)?;
+    validate_graph_source_handoff(&graph, left, right)?;
+    let preflight = preflight_boolean_exact_request_from_graph(
+        &graph,
+        left,
+        right,
+        ExactBooleanRequest::new(operation, validation),
+    )?;
     if preflight.support != ExactBooleanSupport::CertifiedArrangementCellComplex {
         return Ok(None);
     }
-    boolean_arrangement_cell_complex_meshes(left, right, operation, validation)
+    boolean_arrangement_cell_complex_meshes_from_graph(&graph, left, right, operation, validation)
 }
 
 fn certified_closed_boundary_touching_union_report_from_graph(
