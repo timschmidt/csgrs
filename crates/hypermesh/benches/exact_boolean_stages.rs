@@ -2,13 +2,13 @@ use std::hint::black_box;
 use std::time::{Duration, Instant};
 
 use hypermesh::{
-    build_intersection_graph, triangulate_all_face_cells_with_cdt, ExactArrangement,
-    ExactArrangementBooleanAttempt, ExactBooleanEvaluation, ExactBooleanOperation,
-    ExactBooleanPreflight, ExactBooleanRequest, ExactBooleanResult, ExactBooleanWorkspace,
-    ExactBoundaryTouchingReport, ExactMesh, ExactOpenSurfaceDisjointReport,
-    ExactPlanarArrangementReport, ExactRefinementReport, ExactRegularizationPolicy,
-    ExactSelectedCellComplex, ExactSimplifiedCellComplex, ExactWindingReadinessReport,
-    ValidationPolicy,
+    build_intersection_graph, triangulate_all_face_cells_with_cdt,
+    ExactAdjacentUnionCompletionReport, ExactArrangement, ExactArrangementBooleanAttempt,
+    ExactBooleanEvaluation, ExactBooleanOperation, ExactBooleanPreflight, ExactBooleanRequest,
+    ExactBooleanResult, ExactBooleanWorkspace, ExactBoundaryTouchingReport, ExactMesh,
+    ExactOpenSurfaceDisjointReport, ExactPlanarArrangementReport, ExactRefinementReport,
+    ExactRegularizationPolicy, ExactSelectedCellComplex, ExactSimplifiedCellComplex,
+    ExactWindingReadinessReport, ValidationPolicy,
 };
 
 struct BenchCase {
@@ -456,6 +456,19 @@ fn run_case(case: &BenchCase) {
 
     time_prepared_stage(
         case,
+        "workspace_validate_adjacent_union_from_retained_artifacts",
+        || retained_workspace_and_adjacent_union_for_case(case, request),
+        |(retained_workspace, report)| {
+            black_box(
+                retained_workspace
+                    .validate_adjacent_union_completion_report(request, report)
+                    .ok(),
+            );
+        },
+    );
+
+    time_prepared_stage(
+        case,
         "workspace_validate_boundary_touching_from_retained_artifacts",
         || retained_workspace_and_boundary_touching_for_case(case, request),
         |(retained_workspace, report)| {
@@ -593,6 +606,21 @@ fn retained_workspace_and_refinement_for_case<'a>(
     let mut retained_workspace = retained_workspace_for_case(case, request);
     let report = retained_workspace
         .refinement_report(request)
+        .unwrap()
+        .clone();
+    (retained_workspace, report)
+}
+
+fn retained_workspace_and_adjacent_union_for_case<'a>(
+    case: &'a BenchCase,
+    request: ExactBooleanRequest,
+) -> (
+    ExactBooleanWorkspace<'a>,
+    ExactAdjacentUnionCompletionReport,
+) {
+    let mut retained_workspace = retained_workspace_for_case(case, request);
+    let report = retained_workspace
+        .adjacent_union_completion_report(request)
         .unwrap()
         .clone();
     (retained_workspace, report)

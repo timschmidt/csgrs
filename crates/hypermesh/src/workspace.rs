@@ -15,9 +15,10 @@ use super::graph::{build_intersection_graph, ExactIntersectionGraph};
 use super::mesh::ExactMesh;
 use super::regularization::{ExactArrangementBlocker, ExactRegularizationPolicy};
 use super::reports::{
-    ExactBooleanPreflight, ExactBooleanResult, ExactBoundaryTouchingReport,
-    ExactOpenSurfaceDisjointReport, ExactPlanarArrangementReport, ExactRefinementReport,
-    ExactReportFreshness, ExactReportValidationError, ExactWindingReadinessReport,
+    ExactAdjacentUnionCompletionReport, ExactBooleanPreflight, ExactBooleanResult,
+    ExactBoundaryTouchingReport, ExactOpenSurfaceDisjointReport, ExactPlanarArrangementReport,
+    ExactRefinementReport, ExactReportFreshness, ExactReportValidationError,
+    ExactWindingReadinessReport,
 };
 use super::simplify::{ExactSimplifiedCellComplex, ExactSimplifiedCellComplexFreshness};
 
@@ -50,6 +51,8 @@ pub struct ExactBooleanWorkspace<'a> {
         ExactSimplifiedCellComplex,
     )>,
     refinement_reports: Vec<(ExactBooleanRequest, ExactRefinementReport)>,
+    adjacent_union_completion_reports:
+        Vec<(ExactBooleanRequest, ExactAdjacentUnionCompletionReport)>,
     boundary_touching_reports: Vec<(ExactBooleanRequest, ExactBoundaryTouchingReport)>,
     open_surface_disjoint_reports: Vec<(ExactBooleanRequest, ExactOpenSurfaceDisjointReport)>,
     preflights: Vec<(ExactBooleanRequest, ExactBooleanPreflight)>,
@@ -73,6 +76,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
             selected_cell_complexes: Vec::new(),
             simplified_cell_complexes: Vec::new(),
             refinement_reports: Vec::new(),
+            adjacent_union_completion_reports: Vec::new(),
             boundary_touching_reports: Vec::new(),
             open_surface_disjoint_reports: Vec::new(),
             preflights: Vec::new(),
@@ -587,6 +591,66 @@ impl<'a> ExactBooleanWorkspace<'a> {
         report: &ExactRefinementReport,
     ) -> ExactReportFreshness {
         match self.validate_refinement_report(request, report) {
+            Ok(()) => ExactReportFreshness::Current,
+            Err(error) => error.into(),
+        }
+    }
+
+    /// Returns adjacent-union completion evidence for `request`, building it
+    /// once per request.
+    pub fn adjacent_union_completion_report(
+        &mut self,
+        request: ExactBooleanRequest,
+    ) -> Result<&ExactAdjacentUnionCompletionReport, MeshError> {
+        if let Some(index) = self
+            .adjacent_union_completion_reports
+            .iter()
+            .position(|(stored_request, _)| *stored_request == request)
+        {
+            return Ok(&self.adjacent_union_completion_reports[index].1);
+        }
+
+        let report = request.adjacent_union_completion_report(self.left, self.right)?;
+        self.adjacent_union_completion_reports
+            .push((request, report));
+        Ok(&self
+            .adjacent_union_completion_reports
+            .last()
+            .expect("adjacent-union completion report cache was just populated")
+            .1)
+    }
+
+    /// Validate adjacent-union completion evidence against this workspace's
+    /// source meshes.
+    pub fn validate_adjacent_union_completion_report(
+        &mut self,
+        request: ExactBooleanRequest,
+        report: &ExactAdjacentUnionCompletionReport,
+    ) -> Result<(), ExactReportValidationError> {
+        if report.operation != request.operation {
+            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+        }
+        if self
+            .adjacent_union_completion_reports
+            .iter()
+            .any(|(stored_request, stored_report)| {
+                *stored_request == request && stored_report == report
+            })
+        {
+            report.validate()?;
+            return Ok(());
+        }
+        report.validate_against_sources(self.left, self.right)
+    }
+
+    /// Classify adjacent-union completion freshness in this retained source
+    /// session.
+    pub fn adjacent_union_completion_report_freshness(
+        &mut self,
+        request: ExactBooleanRequest,
+        report: &ExactAdjacentUnionCompletionReport,
+    ) -> ExactReportFreshness {
+        match self.validate_adjacent_union_completion_report(request, report) {
             Ok(()) => ExactReportFreshness::Current,
             Err(error) => error.into(),
         }
@@ -1431,6 +1495,47 @@ mod tests {
         relabeled_refinement_report.operation = ExactBooleanOperation::Difference;
         assert_eq!(
             workspace.validate_refinement_report(request, &relabeled_refinement_report),
+            Err(ExactReportValidationError::StatusEvidenceMismatch)
+        );
+
+        let first_adjacent_report = workspace.adjacent_union_completion_report(request).unwrap()
+            as *const ExactAdjacentUnionCompletionReport;
+        let second_adjacent_report = workspace.adjacent_union_completion_report(request).unwrap()
+            as *const ExactAdjacentUnionCompletionReport;
+        assert_eq!(first_adjacent_report, second_adjacent_report);
+        assert_eq!(
+            workspace.adjacent_union_completion_report(request).unwrap(),
+            &request
+                .adjacent_union_completion_report(&left, &right)
+                .unwrap()
+        );
+        let adjacent_report = workspace
+            .adjacent_union_completion_report(request)
+            .unwrap()
+            .clone();
+        workspace
+            .validate_adjacent_union_completion_report(request, &adjacent_report)
+            .unwrap();
+        assert_eq!(
+            workspace.adjacent_union_completion_report_freshness(request, &adjacent_report),
+            ExactReportFreshness::Current
+        );
+        let mut stale_adjacent_report = adjacent_report.clone();
+        stale_adjacent_report.stronger_kernel_available =
+            !stale_adjacent_report.stronger_kernel_available;
+        assert_eq!(
+            workspace.validate_adjacent_union_completion_report(request, &stale_adjacent_report),
+            Err(ExactReportValidationError::StatusEvidenceMismatch)
+        );
+        assert_ne!(
+            workspace.adjacent_union_completion_report_freshness(request, &stale_adjacent_report),
+            ExactReportFreshness::Current
+        );
+        let mut relabeled_adjacent_report = adjacent_report.clone();
+        relabeled_adjacent_report.operation = ExactBooleanOperation::Difference;
+        assert_eq!(
+            workspace
+                .validate_adjacent_union_completion_report(request, &relabeled_adjacent_report),
             Err(ExactReportValidationError::StatusEvidenceMismatch)
         );
 
