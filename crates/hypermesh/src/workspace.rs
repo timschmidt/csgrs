@@ -202,14 +202,6 @@ impl<'a> ExactBooleanWorkspace<'a> {
         &mut self,
         report: &CoplanarVolumetricCellEvidenceReport,
     ) -> Result<(), CoplanarVolumetricCellEvidenceError> {
-        if self
-            .coplanar_volumetric_cell_evidence
-            .as_ref()
-            .is_some_and(|stored_report| stored_report == report)
-        {
-            report.validate()?;
-            return Ok(());
-        }
         report.validate_against_sources(self.left, self.right)
     }
 
@@ -940,16 +932,6 @@ impl<'a> ExactBooleanWorkspace<'a> {
         if preflight.operation != request.operation {
             return Err(ExactReportValidationError::StatusEvidenceMismatch);
         }
-        if self
-            .preflights
-            .iter()
-            .any(|(stored_request, stored_preflight)| {
-                *stored_request == request && stored_preflight == preflight
-            })
-        {
-            preflight.validate()?;
-            return Ok(());
-        }
         preflight.validate_against_sources_with_boundary_policy(
             self.left,
             self.right,
@@ -1002,16 +984,6 @@ impl<'a> ExactBooleanWorkspace<'a> {
     ) -> Result<(), ExactReportValidationError> {
         if report.operation != request.operation {
             return Err(ExactReportValidationError::StatusEvidenceMismatch);
-        }
-        if self
-            .refinement_reports
-            .iter()
-            .any(|(stored_request, stored_report)| {
-                *stored_request == request && stored_report == report
-            })
-        {
-            report.validate()?;
-            return Ok(());
         }
         report.validate_against_sources(self.left, self.right)
     }
@@ -1071,16 +1043,6 @@ impl<'a> ExactBooleanWorkspace<'a> {
         if report.operation != request.operation {
             return Err(ExactReportValidationError::StatusEvidenceMismatch);
         }
-        if self
-            .adjacent_union_completion_reports
-            .iter()
-            .any(|(stored_request, stored_report)| {
-                *stored_request == request && stored_report == report
-            })
-        {
-            report.validate()?;
-            return Ok(());
-        }
         report.validate_against_sources(self.left, self.right)
     }
 
@@ -1124,19 +1086,9 @@ impl<'a> ExactBooleanWorkspace<'a> {
     /// meshes.
     pub fn validate_identical_mesh_report(
         &mut self,
-        request: ExactBooleanRequest,
+        _request: ExactBooleanRequest,
         report: &ExactIdenticalMeshReport,
     ) -> Result<(), ExactReportValidationError> {
-        if self
-            .identical_mesh_reports
-            .iter()
-            .any(|(stored_request, stored_report)| {
-                *stored_request == request && stored_report == report
-            })
-        {
-            report.validate()?;
-            return Ok(());
-        }
         report.validate_against_sources(self.left, self.right)
     }
 
@@ -1175,19 +1127,9 @@ impl<'a> ExactBooleanWorkspace<'a> {
     /// Validate same-surface evidence against this workspace's source meshes.
     pub fn validate_same_surface_report(
         &mut self,
-        request: ExactBooleanRequest,
+        _request: ExactBooleanRequest,
         report: &ExactSameSurfaceReport,
     ) -> Result<(), ExactReportValidationError> {
-        if self
-            .same_surface_reports
-            .iter()
-            .any(|(stored_request, stored_report)| {
-                *stored_request == request && stored_report == report
-            })
-        {
-            report.validate()?;
-            return Ok(());
-        }
         report.validate_against_sources(self.left, self.right)
     }
 
@@ -1233,19 +1175,9 @@ impl<'a> ExactBooleanWorkspace<'a> {
     /// meshes.
     pub fn validate_boundary_touching_report(
         &mut self,
-        request: ExactBooleanRequest,
+        _request: ExactBooleanRequest,
         report: &ExactBoundaryTouchingReport,
     ) -> Result<(), ExactReportValidationError> {
-        if self
-            .boundary_touching_reports
-            .iter()
-            .any(|(stored_request, stored_report)| {
-                *stored_request == request && stored_report == report
-            })
-        {
-            report.validate()?;
-            return Ok(());
-        }
         report.validate_against_sources(self.left, self.right)
     }
 
@@ -1291,19 +1223,9 @@ impl<'a> ExactBooleanWorkspace<'a> {
     /// source meshes.
     pub fn validate_open_surface_disjoint_report(
         &mut self,
-        request: ExactBooleanRequest,
+        _request: ExactBooleanRequest,
         report: &ExactOpenSurfaceDisjointReport,
     ) -> Result<(), ExactReportValidationError> {
-        if self
-            .open_surface_disjoint_reports
-            .iter()
-            .any(|(stored_request, stored_report)| {
-                *stored_request == request && stored_report == report
-            })
-        {
-            report.validate()?;
-            return Ok(());
-        }
         report.validate_against_sources(self.left, self.right)
     }
 
@@ -1358,16 +1280,6 @@ impl<'a> ExactBooleanWorkspace<'a> {
         if report.operation != request.operation {
             return Err(ExactReportValidationError::StatusEvidenceMismatch);
         }
-        if self
-            .volumetric_boundary_closure_reports
-            .iter()
-            .any(|(stored_request, stored_report)| {
-                *stored_request == request && stored_report == report
-            })
-        {
-            report.validate()?;
-            return Ok(());
-        }
         report.validate_against_sources(self.left, self.right)
     }
 
@@ -1420,16 +1332,6 @@ impl<'a> ExactBooleanWorkspace<'a> {
     ) -> Result<(), ExactReportValidationError> {
         if readiness.operation != request.operation {
             return Err(ExactReportValidationError::StatusEvidenceMismatch);
-        }
-        if self
-            .winding_readiness_reports
-            .iter()
-            .any(|(stored_request, stored_readiness)| {
-                *stored_request == request && stored_readiness == readiness
-            })
-        {
-            readiness.validate()?;
-            return Ok(());
         }
         readiness.validate_against_sources_with_boundary_policy(
             self.left,
@@ -1486,16 +1388,6 @@ impl<'a> ExactBooleanWorkspace<'a> {
     ) -> Result<(), ExactReportValidationError> {
         if report.operation != request.operation {
             return Err(ExactReportValidationError::StatusEvidenceMismatch);
-        }
-        if self
-            .planar_arrangement_reports
-            .iter()
-            .any(|(stored_request, stored_report)| {
-                *stored_request == request && stored_report == report
-            })
-        {
-            report.validate()?;
-            return Ok(());
         }
         report.validate_against_sources(self.left, self.right)
     }
