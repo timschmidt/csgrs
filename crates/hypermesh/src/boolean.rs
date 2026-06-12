@@ -2889,7 +2889,7 @@ pub(crate) fn materialize_certified_boolean_support_with_artifacts(
                     graph, left, right, selection, validation,
                 )?
             } else {
-                materialize_selected_region_boolean(left, right, selection, validation)?
+                replay_selected_region_boolean_result(left, right, selection, validation)?
             })
         }
         ExactBooleanSupport::CertifiedBoundaryPolicyShortcut => {
@@ -3094,17 +3094,6 @@ fn materialize_certified_arrangement_cell_complex_support_with_arrangement(
     } else {
         boolean_arrangement_cell_complex_meshes(left, right, operation, validation)
     }
-}
-
-fn materialize_selected_region_boolean(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    selection: ExactRegionSelection,
-    validation: ValidationPolicy,
-) -> Result<ExactBooleanResult, MeshError> {
-    let graph = build_intersection_graph(left, right)?;
-    validate_graph_source_handoff(&graph, left, right)?;
-    materialize_selected_region_result_from_graph(&graph, left, right, selection, validation)
 }
 
 fn materialize_selected_region_result_from_graph(
@@ -4958,7 +4947,7 @@ fn materialize_boolean_exact_request(
     let validation = request.validation;
     let boundary_policy = request.boundary_policy;
     if let ExactBooleanOperation::SelectedRegions(selection) = operation {
-        return materialize_selected_region_boolean(left, right, selection, validation);
+        return replay_selected_region_boolean_result(left, right, selection, validation);
     }
     if let Some(result) =
         boolean_closed_validation_regularized_meshes(left, right, operation, validation)?
