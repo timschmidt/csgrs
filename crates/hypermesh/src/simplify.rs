@@ -1120,6 +1120,7 @@ const fn side_key(side: super::graph::MeshSide) -> usize {
 fn triangulate_simplified_cell_complex(
     complex: &ExactSimplifiedCellComplex,
 ) -> Result<ExactMesh, ExactArrangementBlocker> {
+    complex.validate()?;
     let mut vertices = Vec::<Point3>::new();
     let mut triangles = Vec::<Triangle>::new();
 
@@ -1562,6 +1563,19 @@ mod tests {
 
         assert_eq!(
             simplified.validate(),
+            Err(ExactArrangementBlocker::NonManifoldCellComplex)
+        );
+    }
+
+    #[test]
+    fn triangulation_rejects_stale_simplified_report_counts() {
+        let mut simplified = simplified_square();
+        simplified.validate().unwrap();
+        simplified.triangulate().unwrap();
+        simplified.selected_faces_before_simplification = 0;
+
+        assert_eq!(
+            simplified.triangulate(),
             Err(ExactArrangementBlocker::NonManifoldCellComplex)
         );
     }
