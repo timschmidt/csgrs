@@ -1,7 +1,8 @@
 use super::arrangement3d::{ExactArrangement, ExactTopologyAssemblyReport};
 use super::boolean::{
     ExactArrangementBooleanAttempt, ExactBooleanEvaluation, ExactBooleanRequest,
-    ExactIdenticalMeshReport, arrangement_boolean_attempt_report_from_arrangement,
+    ExactIdenticalMeshReport, adjacent_union_completion_certification_from_graph,
+    arrangement_boolean_attempt_report_from_arrangement,
     boolean_closed_validation_regularized_meshes,
     evaluate_boolean_exact_request_with_artifacts_and_arrangement_replay,
     materialize_boundary_touching_policy_from_graph_for_request,
@@ -61,6 +62,10 @@ pub struct ExactBooleanWorkspace<'a> {
         Vec<(ExactBooleanRequest, Option<ExactBooleanResult>)>,
     closed_winding_separated_materializations:
         Vec<(ExactBooleanRequest, Option<ExactBooleanResult>)>,
+    adjacent_union_completion_materializations: Vec<(
+        ExactBooleanRequest,
+        Option<(ExactBooleanResult, ExactAdjacentUnionCompletionReport)>,
+    )>,
     arrangements: Vec<(ExactRegularizationPolicy, ExactArrangement)>,
     topology_assembly_reports: Vec<(ExactRegularizationPolicy, ExactTopologyAssemblyReport)>,
     region_ownership_reports: Vec<(ExactRegularizationPolicy, ExactRegionOwnershipReport)>,
@@ -109,6 +114,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
             boundary_touching_policy_materializations: Vec::new(),
             closed_winding_containment_materializations: Vec::new(),
             closed_winding_separated_materializations: Vec::new(),
+            adjacent_union_completion_materializations: Vec::new(),
             arrangements: Vec::new(),
             topology_assembly_reports: Vec::new(),
             region_ownership_reports: Vec::new(),
@@ -419,6 +425,66 @@ impl<'a> ExactBooleanWorkspace<'a> {
         )?;
         validate_cached_optional_result(&materialized)?;
         self.closed_winding_separated_materializations
+            .push((request, materialized.clone()));
+        Ok(materialized)
+    }
+
+    /// Materializes adjacent closed-solid union completion from the retained
+    /// graph, returning the consumed completion report.
+    pub fn materialize_adjacent_union_completion(
+        &mut self,
+        request: ExactBooleanRequest,
+    ) -> Result<Option<(ExactBooleanResult, ExactAdjacentUnionCompletionReport)>, MeshError> {
+        if let Some((_, cached)) = self
+            .adjacent_union_completion_materializations
+            .iter()
+            .find(|(stored_request, _)| *stored_request == request)
+        {
+            validate_cached_result_with_adjacent_report(cached)?;
+            return Ok(cached.clone());
+        }
+
+        self.graph()?;
+        let graph = self
+            .graph
+            .as_ref()
+            .expect("intersection graph cache was just populated");
+        graph
+            .validate_against_meshes(self.left, self.right)
+            .map_err(workspace_graph_validation_error)?;
+        let (report, result) = adjacent_union_completion_certification_from_graph(
+            graph,
+            self.left,
+            self.right,
+            request.operation,
+            Some(request.validation),
+        )?;
+        let materialized = if report.is_certified() {
+            report
+                .validate()
+                .map_err(workspace_report_validation_error)?;
+            if report
+                .validate_against_sources(self.left, self.right)
+                .is_err()
+            {
+                None
+            } else if let Some(result) = result {
+                if result
+                    .validate_against_sources(self.left, self.right)
+                    .is_ok()
+                {
+                    Some((result, report))
+                } else {
+                    None
+                }
+            } else {
+                None
+            }
+        } else {
+            None
+        };
+        validate_cached_result_with_adjacent_report(&materialized)?;
+        self.adjacent_union_completion_materializations
             .push((request, materialized.clone()));
         Ok(materialized)
     }
@@ -1649,6 +1715,20 @@ fn validate_cached_result_with_evidence(
     Ok(())
 }
 
+fn validate_cached_result_with_adjacent_report(
+    materialized: &Option<(ExactBooleanResult, ExactAdjacentUnionCompletionReport)>,
+) -> Result<(), MeshError> {
+    if let Some((result, report)) = materialized {
+        result
+            .validate()
+            .map_err(workspace_report_validation_error)?;
+        report
+            .validate()
+            .map_err(workspace_report_validation_error)?;
+    }
+    Ok(())
+}
+
 fn validate_cached_optional_result(
     materialized: &Option<ExactBooleanResult>,
 ) -> Result<(), MeshError> {
@@ -2778,6 +2858,61 @@ mod tests {
                 .materialize_closed_winding_separated(request)
                 .is_err(),
             "cached closed-winding separation materialization must validate before reuse"
+        );
+    }
+
+    #[test]
+    fn exact_boolean_workspace_reuses_adjacent_union_completion_materialization() {
+        let left_a = tetra_from_corners([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]);
+        let left_b = tetra_from_corners([10, 0, 0], [12, 0, 0], [10, 2, 0], [10, 0, 2]);
+        let left = combine_exact_meshes(
+            &left_a,
+            &left_b,
+            "workspace disconnected full-face adjacent fixture",
+        );
+        let right = tetra_from_corners([0, 0, 0], [0, 4, 0], [4, 0, 0], [0, 0, -4]);
+        let request =
+            ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED);
+        let mut workspace = ExactBooleanWorkspace::new(&left, &right);
+
+        let materialized = workspace
+            .materialize_adjacent_union_completion(request)
+            .unwrap()
+            .expect("adjacent closed solids should complete from retained graph");
+        assert_eq!(
+            materialized,
+            request
+                .materialize_adjacent_union_completion(&left, &right)
+                .unwrap()
+                .unwrap()
+        );
+        assert_eq!(
+            workspace.adjacent_union_completion_materializations.len(),
+            1
+        );
+        assert_eq!(
+            workspace
+                .materialize_adjacent_union_completion(request)
+                .unwrap()
+                .unwrap(),
+            materialized
+        );
+        assert_eq!(
+            workspace.adjacent_union_completion_materializations.len(),
+            1
+        );
+
+        let cached = &mut workspace.adjacent_union_completion_materializations[0]
+            .1
+            .as_mut()
+            .unwrap()
+            .0;
+        cached.graph_had_unknowns = !cached.graph_had_unknowns;
+        assert!(
+            workspace
+                .materialize_adjacent_union_completion(request)
+                .is_err(),
+            "cached adjacent-union materialization must validate before reuse"
         );
     }
 

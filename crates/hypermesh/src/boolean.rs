@@ -4585,6 +4585,12 @@ fn materialize_boolean_exact_request(
     {
         return Ok(result);
     }
+    if operation == ExactBooleanOperation::Union
+        && let Some((result, _report)) =
+            materialize_adjacent_union_completion_for_request(left, right, request)?
+    {
+        return Ok(result);
+    }
     if let Some(result) =
         boolean_closed_boundary_touching_regularized_meshes(left, right, operation, validation)?
     {
@@ -5743,10 +5749,102 @@ fn adjacent_union_completion_certification(
     }
     let graph = build_intersection_graph(left, right)?;
     validate_graph_source_handoff(&graph, left, right)?;
+    adjacent_union_completion_certification_from_graph(
+        &graph,
+        left,
+        right,
+        operation,
+        materialization_validation,
+    )
+}
+
+pub(crate) fn adjacent_union_completion_certification_from_graph(
+    graph: &super::graph::ExactIntersectionGraph,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    materialization_validation: Option<ValidationPolicy>,
+) -> Result<
+    (
+        ExactAdjacentUnionCompletionReport,
+        Option<ExactBooleanResult>,
+    ),
+    MeshError,
+> {
+    let left_closed = left.facts().mesh.closed_manifold;
+    let right_closed = right.facts().mesh.closed_manifold;
+    if operation != ExactBooleanOperation::Union {
+        return Ok((
+            adjacent_union_completion_report(
+                operation,
+                ExactAdjacentUnionCompletionStatus::NotUnion,
+                left_closed,
+                right_closed,
+                false,
+                false,
+                false,
+                0,
+                0,
+                ExactBooleanBlocker::default(),
+                0,
+                0,
+                None,
+                0,
+                0,
+            ),
+            None,
+        ));
+    }
+    if !left_closed || !right_closed {
+        return Ok((
+            adjacent_union_completion_report(
+                operation,
+                ExactAdjacentUnionCompletionStatus::NotClosedSolid,
+                left_closed,
+                right_closed,
+                false,
+                false,
+                false,
+                0,
+                0,
+                ExactBooleanBlocker::default(),
+                0,
+                0,
+                None,
+                0,
+                0,
+            ),
+            None,
+        ));
+    }
+    let axis_aligned_box_pair = both_axis_aligned_boxes(left, right);
+    if axis_aligned_box_pair {
+        return Ok((
+            adjacent_union_completion_report(
+                operation,
+                ExactAdjacentUnionCompletionStatus::AxisAlignedBoxPair,
+                left_closed,
+                right_closed,
+                true,
+                false,
+                false,
+                0,
+                0,
+                ExactBooleanBlocker::default(),
+                0,
+                0,
+                None,
+                0,
+                0,
+            ),
+            None,
+        ));
+    }
+
     let graph_had_unknowns = graph.has_unknowns();
     let retained_face_pairs = graph.face_pairs.len();
     let retained_events = graph.event_count();
-    let counts = retained_graph_counts(&graph);
+    let counts = retained_graph_counts(graph);
     if graph_had_unknowns || counts.construction_failed_events != 0 {
         return Ok((
             adjacent_union_completion_report(
@@ -5811,30 +5909,9 @@ fn adjacent_union_completion_certification(
         ));
     }
 
-    if certified_convex_materialized_boolean_support(left, right, operation).is_some() {
-        return Ok((
-            adjacent_union_completion_report(
-                operation,
-                ExactAdjacentUnionCompletionStatus::StrongerKernelAvailable,
-                left_closed,
-                right_closed,
-                false,
-                true,
-                graph_had_unknowns,
-                retained_face_pairs,
-                retained_events,
-                counts,
-                0,
-                0,
-                None,
-                0,
-                0,
-            ),
-            None,
-        ));
-    }
-
-    if contained_face_adjacency_should_yield_to_stronger_kernel(left, right, operation) {
+    if certified_convex_materialized_boolean_support(left, right, operation).is_some()
+        || contained_face_adjacency_should_yield_to_stronger_kernel(left, right, operation)
+    {
         return Ok((
             adjacent_union_completion_report(
                 operation,
@@ -5948,16 +6025,7 @@ fn materialize_adjacent_union_completion_for_request(
     let Some(result) = result else {
         return Ok(None);
     };
-    if result
-        .validate_operation_against_sources(
-            left,
-            right,
-            request.operation,
-            request.validation,
-            ExactBoundaryBooleanPolicy::Reject,
-        )
-        .is_err()
-    {
+    if result.validate_against_sources(left, right).is_err() {
         return Ok(None);
     }
     Ok(Some((result, report)))

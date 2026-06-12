@@ -303,6 +303,19 @@ fn run_case(case: &BenchCase) {
         },
     );
 
+    time_prepared_stage(
+        case,
+        "workspace_materialize_adjacent_union_completion_from_retained_graph",
+        || retained_workspace_for_case(case, request),
+        |retained_workspace| {
+            black_box(
+                retained_workspace
+                    .materialize_adjacent_union_completion(request)
+                    .ok(),
+            );
+        },
+    );
+
     workspace.arrangement(case.regularization).unwrap();
     time_stage(case, "workspace_arrangement_cached", || {
         let arrangement = workspace.arrangement(case.regularization).unwrap();
