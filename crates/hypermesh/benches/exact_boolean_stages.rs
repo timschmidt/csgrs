@@ -42,6 +42,24 @@ fn main() {
             regularization: ExactRegularizationPolicy::REGULARIZED_SOLID,
             iterations: 8,
         },
+        BenchCase {
+            name: "open_coplanar_disjoint_sheets",
+            left: open_triangle_xy(),
+            right: open_triangle_xy_far_corner(),
+            operation: ExactBooleanOperation::Union,
+            validation: ValidationPolicy::ALLOW_BOUNDARY,
+            regularization: ExactRegularizationPolicy::RETAIN_ARTIFACTS,
+            iterations: 64,
+        },
+        BenchCase {
+            name: "closed_vertex_touching_tetrahedra",
+            left: tetra([0, 0, 0]),
+            right: mirrored_tetra_at_origin(),
+            operation: ExactBooleanOperation::Union,
+            validation: ValidationPolicy::CLOSED,
+            regularization: ExactRegularizationPolicy::REGULARIZED_SOLID,
+            iterations: 8,
+        },
     ];
 
     println!("hypermesh exact boolean stage timings");
@@ -1086,10 +1104,27 @@ fn open_triangle_yz() -> ExactMesh {
     .unwrap()
 }
 
+fn open_triangle_xy_far_corner() -> ExactMesh {
+    ExactMesh::from_i64_triangles_with_policy(
+        &[3, 3, 0, 5, 3, 0, 3, 5, 0],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap()
+}
+
 fn tetra(offset: [i64; 3]) -> ExactMesh {
     let [ox, oy, oz] = offset;
     ExactMesh::from_i64_triangles(
         &[ox, oy, oz, ox + 1, oy, oz, ox, oy + 1, oz, ox, oy, oz + 1],
+        &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
+    )
+    .unwrap()
+}
+
+fn mirrored_tetra_at_origin() -> ExactMesh {
+    ExactMesh::from_i64_triangles(
+        &[0, 0, 0, -1, 0, 0, 0, -1, 0, 0, 0, -1],
         &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
     )
     .unwrap()
