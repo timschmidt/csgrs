@@ -1,17 +1,17 @@
 use super::arrangement3d::{ExactArrangement, ExactTopologyAssemblyReport};
 use super::boolean::{
-    ExactArrangementBooleanAttempt, ExactBooleanEvaluation, ExactBooleanRequest,
     arrangement_boolean_attempt_report_from_arrangement,
     evaluate_boolean_exact_request_with_artifacts_and_arrangement_replay,
     materialize_certified_boolean_support_with_arrangement,
-    validate_boolean_result_against_sources_with_artifacts,
+    validate_boolean_result_against_sources_with_artifacts, ExactArrangementBooleanAttempt,
+    ExactBooleanEvaluation, ExactBooleanRequest,
 };
 use super::cell_complex::{
-    ExactRegionOwnershipReport, ExactSelectedCellComplex, ExactSelectedCellComplexFreshness,
-    select_arrangement_for_replay,
+    select_arrangement_for_replay, ExactRegionOwnershipReport, ExactSelectedCellComplex,
+    ExactSelectedCellComplexFreshness,
 };
 use super::error::{DiagnosticKind, MeshDiagnostic, MeshError, Severity};
-use super::graph::{ExactIntersectionGraph, build_intersection_graph};
+use super::graph::{build_intersection_graph, ExactIntersectionGraph};
 use super::mesh::ExactMesh;
 use super::regularization::{ExactArrangementBlocker, ExactRegularizationPolicy};
 use super::reports::{
@@ -483,6 +483,46 @@ impl<'a> ExactBooleanWorkspace<'a> {
             .1)
     }
 
+    /// Validate preflight scheduling evidence against this workspace's source
+    /// meshes.
+    pub fn validate_preflight(
+        &mut self,
+        request: ExactBooleanRequest,
+        preflight: &ExactBooleanPreflight,
+    ) -> Result<(), ExactReportValidationError> {
+        if preflight.operation != request.operation {
+            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+        }
+        if self
+            .preflights
+            .iter()
+            .any(|(stored_request, stored_preflight)| {
+                *stored_request == request && stored_preflight == preflight
+            })
+        {
+            preflight.validate()?;
+            return Ok(());
+        }
+        preflight.validate_against_sources_with_boundary_policy(
+            self.left,
+            self.right,
+            request.validation,
+            request.boundary_policy,
+        )
+    }
+
+    /// Classify preflight freshness in this retained source session.
+    pub fn preflight_freshness(
+        &mut self,
+        request: ExactBooleanRequest,
+        preflight: &ExactBooleanPreflight,
+    ) -> ExactReportFreshness {
+        match self.validate_preflight(request, preflight) {
+            Ok(()) => ExactReportFreshness::Current,
+            Err(error) => error.into(),
+        }
+    }
+
     /// Returns an exact boolean evaluation for `request`, building it once per
     /// request.
     pub fn evaluate(
@@ -903,15 +943,13 @@ mod tests {
             .unwrap()
             .graph_events += 1;
         stale_attempt.validate().unwrap();
-        assert!(
-            workspace
-                .validate_arrangement_attempt(
-                    request,
-                    ExactRegularizationPolicy::REGULARIZED_SOLID,
-                    &stale_attempt,
-                )
-                .is_err()
-        );
+        assert!(workspace
+            .validate_arrangement_attempt(
+                request,
+                ExactRegularizationPolicy::REGULARIZED_SOLID,
+                &stale_attempt,
+            )
+            .is_err());
         assert_ne!(
             workspace.arrangement_attempt_freshness(
                 request,
@@ -959,15 +997,13 @@ mod tests {
             .as_mut()
             .unwrap()
             .graph_events += 1;
-        assert!(
-            workspace
-                .validate_selected_cell_complex(
-                    request,
-                    ExactRegularizationPolicy::REGULARIZED_SOLID,
-                    &stale_selected,
-                )
-                .is_err()
-        );
+        assert!(workspace
+            .validate_selected_cell_complex(
+                request,
+                ExactRegularizationPolicy::REGULARIZED_SOLID,
+                &stale_selected,
+            )
+            .is_err());
         assert_ne!(
             workspace.selected_cell_complex_freshness(
                 request,
@@ -1015,15 +1051,13 @@ mod tests {
             .as_mut()
             .unwrap()
             .graph_events += 1;
-        assert!(
-            workspace
-                .validate_simplified_cell_complex(
-                    request,
-                    ExactRegularizationPolicy::REGULARIZED_SOLID,
-                    &stale_simplified,
-                )
-                .is_err()
-        );
+        assert!(workspace
+            .validate_simplified_cell_complex(
+                request,
+                ExactRegularizationPolicy::REGULARIZED_SOLID,
+                &stale_simplified,
+            )
+            .is_err());
         assert_ne!(
             workspace.simplified_cell_complex_freshness(
                 request,
@@ -1040,6 +1074,28 @@ mod tests {
         assert_eq!(
             workspace.preflight(request).unwrap(),
             &request.preflight(&left, &right).unwrap()
+        );
+        let preflight = workspace.preflight(request).unwrap().clone();
+        workspace.validate_preflight(request, &preflight).unwrap();
+        assert_eq!(
+            workspace.preflight_freshness(request, &preflight),
+            ExactReportFreshness::Current
+        );
+        let mut stale_preflight = preflight.clone();
+        stale_preflight.retained_events += 1;
+        assert_eq!(
+            workspace.validate_preflight(request, &stale_preflight),
+            Err(ExactReportValidationError::SourceReplayMismatch)
+        );
+        assert_ne!(
+            workspace.preflight_freshness(request, &stale_preflight),
+            ExactReportFreshness::Current
+        );
+        let mut relabeled_preflight = preflight.clone();
+        relabeled_preflight.operation = ExactBooleanOperation::Difference;
+        assert_eq!(
+            workspace.validate_preflight(request, &relabeled_preflight),
+            Err(ExactReportValidationError::StatusEvidenceMismatch)
         );
 
         let mut materialize_workspace = ExactBooleanWorkspace::new(&left, &right);
@@ -1081,11 +1137,9 @@ mod tests {
         let mut locally_invalid_cached_result = materialized.clone();
         locally_invalid_cached_result.graph_had_unknowns =
             !locally_invalid_cached_result.graph_had_unknowns;
-        assert!(
-            materialize_workspace
-                .validate_result(request, &locally_invalid_cached_result)
-                .is_err()
-        );
+        assert!(materialize_workspace
+            .validate_result(request, &locally_invalid_cached_result)
+            .is_err());
         if materialized.topology_assembly_report.is_some() {
             let mut stale_gate_report = materialized.clone();
             stale_gate_report
@@ -1106,11 +1160,9 @@ mod tests {
         stale_result.kind = ExactBooleanResultKind::ArrangementCellComplexMaterialized {
             operation: ExactBooleanOperation::Difference,
         };
-        assert!(
-            materialize_workspace
-                .validate_result(request, &stale_result)
-                .is_err()
-        );
+        assert!(materialize_workspace
+            .validate_result(request, &stale_result)
+            .is_err());
         assert_ne!(
             materialize_workspace.result_freshness(request, &stale_result),
             ExactReportFreshness::Current

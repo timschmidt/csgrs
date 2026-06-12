@@ -2,10 +2,11 @@ use std::hint::black_box;
 use std::time::{Duration, Instant};
 
 use hypermesh::{
-    ExactArrangement, ExactArrangementBooleanAttempt, ExactBooleanEvaluation,
-    ExactBooleanOperation, ExactBooleanRequest, ExactBooleanResult, ExactBooleanWorkspace,
+    build_intersection_graph, triangulate_all_face_cells_with_cdt, ExactArrangement,
+    ExactArrangementBooleanAttempt, ExactBooleanEvaluation, ExactBooleanOperation,
+    ExactBooleanPreflight, ExactBooleanRequest, ExactBooleanResult, ExactBooleanWorkspace,
     ExactMesh, ExactRegularizationPolicy, ExactSelectedCellComplex, ExactSimplifiedCellComplex,
-    ValidationPolicy, build_intersection_graph, triangulate_all_face_cells_with_cdt,
+    ValidationPolicy,
 };
 
 struct BenchCase {
@@ -427,6 +428,19 @@ fn run_case(case: &BenchCase) {
 
     time_prepared_stage(
         case,
+        "workspace_validate_preflight_from_retained_artifacts",
+        || retained_workspace_and_preflight_for_case(case, request),
+        |(retained_workspace, preflight)| {
+            black_box(
+                retained_workspace
+                    .validate_preflight(request, preflight)
+                    .ok(),
+            );
+        },
+    );
+
+    time_prepared_stage(
+        case,
         "workspace_evaluation_from_retained_artifacts",
         || retained_workspace_for_case(case, request),
         |retained_workspace| {
@@ -494,6 +508,15 @@ fn retained_workspace_for_case<'a>(
         .unwrap();
     retained_workspace.preflight(request).unwrap();
     retained_workspace
+}
+
+fn retained_workspace_and_preflight_for_case<'a>(
+    case: &'a BenchCase,
+    request: ExactBooleanRequest,
+) -> (ExactBooleanWorkspace<'a>, ExactBooleanPreflight) {
+    let mut retained_workspace = retained_workspace_for_case(case, request);
+    let preflight = retained_workspace.preflight(request).unwrap().clone();
+    (retained_workspace, preflight)
 }
 
 fn retained_workspace_and_evaluation_for_case<'a>(
