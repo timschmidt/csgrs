@@ -1,7 +1,7 @@
 use super::arrangement3d::{ExactArrangement, ExactTopologyAssemblyReport};
 use super::boolean::{
     ExactArrangementBooleanAttempt, ExactBooleanCertificationSet, ExactBooleanEvaluation,
-    ExactBooleanRequest, ExactIdenticalMeshReport,
+    ExactBooleanOperation, ExactBooleanRequest, ExactIdenticalMeshReport,
     adjacent_union_completion_certification_from_graph,
     arrangement_boolean_attempt_report_from_arrangement,
     boolean_closed_validation_regularized_meshes, boundary_touching_report_from_graph,
@@ -29,9 +29,10 @@ use super::mesh::ExactMesh;
 use super::regularization::{ExactArrangementBlocker, ExactRegularizationPolicy};
 use super::reports::{
     ExactAdjacentUnionCompletionReport, ExactBooleanPreflight, ExactBooleanResult,
-    ExactBoundaryTouchingReport, ExactOpenSurfaceDisjointReport, ExactPlanarArrangementReport,
-    ExactRefinementReport, ExactReportFreshness, ExactReportValidationError,
-    ExactSameSurfaceReport, ExactVolumetricBoundaryClosureReport, ExactWindingReadinessReport,
+    ExactBooleanResultKind, ExactBoundaryTouchingReport, ExactOpenSurfaceDisjointReport,
+    ExactPlanarArrangementReport, ExactRefinementReport, ExactReportFreshness,
+    ExactReportValidationError, ExactSameSurfaceReport, ExactVolumetricBoundaryClosureReport,
+    ExactWindingReadinessReport,
 };
 use super::simplify::{ExactSimplifiedCellComplex, ExactSimplifiedCellComplexFreshness};
 use super::volumetric_cells::{
@@ -1622,8 +1623,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
                 .iter()
                 .find(|(stored_request, _)| *stored_request == request)
             {
-                result
-                    .validate()
+                validate_cached_result_for_request(request, result)
                     .map_err(workspace_report_validation_error)?;
                 Some(result.clone())
             } else {
@@ -1668,8 +1668,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
             .iter()
             .find(|(stored_request, _)| *stored_request == request)
         {
-            result
-                .validate()
+            validate_cached_result_for_request(request, result)
                 .map_err(workspace_report_validation_error)?;
             return Ok(result.clone());
         }
@@ -1682,6 +1681,8 @@ impl<'a> ExactBooleanWorkspace<'a> {
         {
             evaluation
                 .validate()
+                .map_err(workspace_report_validation_error)?;
+            validate_cached_result_for_request(request, result)
                 .map_err(workspace_report_validation_error)?;
             return Ok(result.clone());
         }
@@ -1804,7 +1805,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
                 .filter_map(|(_, evaluation)| evaluation.result.as_ref())
                 .any(|stored_result| stored_result == result)
         {
-            result.validate()?;
+            validate_cached_result_for_request(request, result)?;
             return Ok(());
         }
 
@@ -1919,6 +1920,36 @@ fn validate_cached_optional_result(
             .map_err(workspace_report_validation_error)?;
     }
     Ok(())
+}
+
+fn validate_cached_result_for_request(
+    request: ExactBooleanRequest,
+    result: &ExactBooleanResult,
+) -> Result<(), ExactReportValidationError> {
+    result.validate()?;
+    if result.mesh.validation_policy() != request.validation
+        || !cached_result_kind_matches_request(result, request)
+    {
+        return Err(ExactReportValidationError::StatusEvidenceMismatch);
+    }
+    Ok(())
+}
+
+fn cached_result_kind_matches_request(
+    result: &ExactBooleanResult,
+    request: ExactBooleanRequest,
+) -> bool {
+    match result.kind {
+        ExactBooleanResultKind::SelectedRegions { selection } => {
+            request.operation == ExactBooleanOperation::SelectedRegions(selection)
+        }
+        ExactBooleanResultKind::CertifiedShortcut { operation, .. }
+        | ExactBooleanResultKind::BoundaryPolicyShortcut { operation }
+        | ExactBooleanResultKind::OpenSurfaceArrangement { operation }
+        | ExactBooleanResultKind::ArrangementCellComplexMaterialized { operation } => {
+            operation == request.operation
+        }
+    }
 }
 
 fn workspace_report_validation_error(error: ExactReportValidationError) -> MeshError {
@@ -2815,6 +2846,48 @@ mod tests {
         assert!(
             corrupt_workspace.evaluate(request).is_err(),
             "cached materialization must validate before evaluation reuse"
+        );
+    }
+
+    #[test]
+    fn exact_boolean_workspace_rejects_relabelled_cached_materialization() {
+        let left = ExactMesh::from_i64_triangles_with_policy(
+            &[0, 0, 0, 2, 0, 0, 0, 2, 0],
+            &[0, 1, 2],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let right = ExactMesh::from_i64_triangles_with_policy(
+            &[2, 0, 0, 0, 2, 0, 2, 2, 2],
+            &[0, 1, 2],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let request = ExactBooleanRequest::with_boundary_policy(
+            ExactBooleanOperation::Union,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            ExactBoundaryBooleanPolicy::PreserveSeparateShells,
+        );
+        let mut workspace = ExactBooleanWorkspace::new(&left, &right);
+
+        let materialized = workspace.materialize(request).unwrap();
+        assert_eq!(
+            materialized.kind,
+            ExactBooleanResultKind::BoundaryPolicyShortcut {
+                operation: ExactBooleanOperation::Union
+            }
+        );
+        workspace.materializations[0].1.kind = ExactBooleanResultKind::BoundaryPolicyShortcut {
+            operation: ExactBooleanOperation::Difference,
+        };
+        let relabelled = workspace.materializations[0].1.clone();
+        assert!(
+            workspace.validate_result(request, &relabelled).is_err(),
+            "cached result validation must reject relabelled operations"
+        );
+        assert!(
+            workspace.materialize(request).is_err(),
+            "cached materialization must match the request operation before reuse"
         );
     }
 
