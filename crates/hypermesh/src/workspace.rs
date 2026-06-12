@@ -551,6 +551,9 @@ impl<'a> ExactBooleanWorkspace<'a> {
             .iter()
             .find(|(stored_request, _)| *stored_request == request)
         {
+            result
+                .validate()
+                .map_err(workspace_report_validation_error)?;
             return Ok(result.clone());
         }
         if let Some(result) = self
@@ -559,6 +562,9 @@ impl<'a> ExactBooleanWorkspace<'a> {
             .find(|(stored_request, _)| *stored_request == request)
             .and_then(|(_, evaluation)| evaluation.result.as_ref())
         {
+            result
+                .validate()
+                .map_err(workspace_report_validation_error)?;
             return Ok(result.clone());
         }
         self.preflight(request)?;
@@ -719,6 +725,14 @@ fn workspace_arrangement_blocker_error(blocker: ExactArrangementBlocker) -> Mesh
         Severity::Error,
         DiagnosticKind::UnsupportedExactOperation,
         format!("exact boolean workspace arrangement report failed: {blocker:?}"),
+    ))
+}
+
+fn workspace_report_validation_error(error: ExactReportValidationError) -> MeshError {
+    MeshError::one(MeshDiagnostic::new(
+        Severity::Error,
+        DiagnosticKind::UnsupportedExactOperation,
+        format!("exact boolean workspace cached report failed validation: {error:?}"),
     ))
 }
 
@@ -1050,6 +1064,17 @@ mod tests {
             1,
             "repeated materialize should reuse the cached result"
         );
+        let mut corrupt_materialization_cache = ExactBooleanWorkspace::new(&left, &right);
+        corrupt_materialization_cache.materialize(request).unwrap();
+        corrupt_materialization_cache.materializations[0]
+            .1
+            .graph_had_unknowns = !corrupt_materialization_cache.materializations[0]
+            .1
+            .graph_had_unknowns;
+        assert!(
+            corrupt_materialization_cache.materialize(request).is_err(),
+            "cached materialization results must validate before reuse"
+        );
         materialize_workspace
             .validate_result(request, &materialized)
             .unwrap();
@@ -1114,6 +1139,18 @@ mod tests {
             .unwrap()
             .validate_against_sources(&left, &right)
             .unwrap();
+        let mut corrupt_evaluation_cache = ExactBooleanWorkspace::new(&left, &right);
+        corrupt_evaluation_cache.evaluate(request).unwrap();
+        let cached_result = corrupt_evaluation_cache.evaluations[0]
+            .1
+            .result
+            .as_mut()
+            .expect("certified test request should retain a result");
+        cached_result.graph_had_unknowns = !cached_result.graph_had_unknowns;
+        assert!(
+            corrupt_evaluation_cache.materialize(request).is_err(),
+            "cached evaluation results must validate before materialization reuse"
+        );
         assert_eq!(
             workspace.evaluate(request).unwrap(),
             &request.evaluate(&left, &right).unwrap()
