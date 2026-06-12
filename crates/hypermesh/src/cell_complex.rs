@@ -254,7 +254,13 @@ impl ExactRegionOwnershipReport {
         if self.status != expected_status {
             return Err(ExactArrangementBlocker::UnresolvedRegionClassification);
         }
-        if self.face_cells != self.left_boundary_faces + self.right_boundary_faces {
+        let Some(boundary_faces) = self
+            .left_boundary_faces
+            .checked_add(self.right_boundary_faces)
+        else {
+            return Err(ExactArrangementBlocker::UnresolvedRegionClassification);
+        };
+        if self.face_cells != boundary_faces {
             return Err(ExactArrangementBlocker::UnresolvedRegionClassification);
         }
         let Some(min_face_cell_boundary_nodes) = self.face_cells.checked_mul(3) else {
@@ -267,12 +273,15 @@ impl ExactRegionOwnershipReport {
         {
             return Err(ExactArrangementBlocker::UnresolvedRegionClassification);
         }
-        if self.face_cells
-            != self.opposite_inside_faces
-                + self.opposite_outside_faces
-                + self.opposite_boundary_faces
-                + self.opposite_unknown_faces
-        {
+        let Some(opposite_classified_faces) = self
+            .opposite_inside_faces
+            .checked_add(self.opposite_outside_faces)
+            .and_then(|count| count.checked_add(self.opposite_boundary_faces))
+            .and_then(|count| count.checked_add(self.opposite_unknown_faces))
+        else {
+            return Err(ExactArrangementBlocker::UnresolvedRegionClassification);
+        };
+        if self.face_cells != opposite_classified_faces {
             return Err(ExactArrangementBlocker::UnresolvedRegionClassification);
         }
         if self.exterior_volume_regions > self.volume_regions
@@ -1574,6 +1583,54 @@ mod tests {
                 ))
                 .unwrap_err(),
             ExactArrangementBlocker::NonManifoldCellComplex
+        );
+    }
+
+    #[test]
+    fn region_ownership_report_validation_rejects_overflowing_count_partitions() {
+        let report = ExactRegionOwnershipReport {
+            status: ExactRegionOwnershipStatus::FaceResolved,
+            freshness: ExactLabeledCellComplexFreshness::Current,
+            blockers: Vec::new(),
+            face_cells: 1,
+            face_cell_boundary_nodes: 3,
+            face_cell_boundary_points: 3,
+            left_boundary_faces: 1,
+            right_boundary_faces: 0,
+            opposite_inside_faces: 0,
+            opposite_outside_faces: 1,
+            opposite_boundary_faces: 0,
+            opposite_unknown_faces: 0,
+            volume_regions: 0,
+            exterior_volume_regions: 0,
+            left_owned_volumes: 0,
+            right_owned_volumes: 0,
+            shared_owned_volumes: 0,
+            unowned_bounded_volumes: 0,
+            volume_adjacencies: 0,
+            volume_adjacency_face_sides: 0,
+            volume_adjacency_separating_faces: 0,
+            lower_dimensional_artifacts: 0,
+            lower_dimensional_point_contacts: 0,
+            lower_dimensional_edge_contacts: 0,
+            lower_dimensional_edge_endpoints: 0,
+        };
+        report.validate().unwrap();
+
+        let mut overflowing_boundary_partition = report.clone();
+        overflowing_boundary_partition.left_boundary_faces = usize::MAX;
+        overflowing_boundary_partition.right_boundary_faces = 1;
+        assert_eq!(
+            overflowing_boundary_partition.validate(),
+            Err(ExactArrangementBlocker::UnresolvedRegionClassification)
+        );
+
+        let mut overflowing_opposite_partition = report;
+        overflowing_opposite_partition.opposite_inside_faces = usize::MAX;
+        overflowing_opposite_partition.opposite_outside_faces = 1;
+        assert_eq!(
+            overflowing_opposite_partition.validate(),
+            Err(ExactArrangementBlocker::UnresolvedRegionClassification)
         );
     }
 
