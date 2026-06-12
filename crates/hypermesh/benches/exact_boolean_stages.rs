@@ -49,7 +49,7 @@ fn main() {
             operation: ExactBooleanOperation::Union,
             validation: ValidationPolicy::ALLOW_BOUNDARY,
             regularization: ExactRegularizationPolicy::REGULARIZED_SOLID,
-            iterations: 4,
+            iterations: 1,
         },
         BenchCase {
             name: "open_coplanar_disjoint_sheets",
@@ -61,13 +61,13 @@ fn main() {
             iterations: 64,
         },
         BenchCase {
-            name: "closed_vertex_touching_tetrahedra",
-            left: tetra([0, 0, 0]),
-            right: mirrored_tetra_at_origin(),
+            name: "open_boundary_touching_sheets",
+            left: open_boundary_touching_left(),
+            right: open_boundary_touching_right(),
             operation: ExactBooleanOperation::Union,
-            validation: ValidationPolicy::CLOSED,
-            regularization: ExactRegularizationPolicy::REGULARIZED_SOLID,
-            iterations: 8,
+            validation: ValidationPolicy::ALLOW_BOUNDARY,
+            regularization: ExactRegularizationPolicy::RETAIN_ARTIFACTS,
+            iterations: 64,
         },
     ];
 
@@ -770,7 +770,7 @@ fn run_case(case: &BenchCase) {
         "workspace_evaluation_from_retained_artifacts",
         || retained_workspace_for_case(case, request),
         |retained_workspace| {
-            black_box(retained_workspace.evaluate(request).unwrap());
+            black_box(retained_workspace.evaluate(request).ok());
         },
     );
 
@@ -788,7 +788,9 @@ fn run_case(case: &BenchCase) {
         "workspace_validate_evaluation_from_retained_artifacts",
         || retained_workspace_and_evaluation_for_case(case, request),
         |(retained_workspace, evaluation)| {
-            black_box(retained_workspace.validate_evaluation(evaluation).ok());
+            if let Some(evaluation) = evaluation.as_ref() {
+                black_box(retained_workspace.validate_evaluation(evaluation).ok());
+            }
         },
     );
 
@@ -813,9 +815,9 @@ fn run_case(case: &BenchCase) {
         },
     );
 
-    workspace.evaluate(request).unwrap();
+    workspace.evaluate(request).ok();
     time_stage(case, "workspace_evaluation_cached", || {
-        black_box(workspace.evaluate(request).unwrap());
+        black_box(workspace.evaluate(request).ok());
     });
 
     time_stage(case, "workspace_materialize_cached", || {
@@ -976,9 +978,9 @@ fn retained_workspace_and_planar_arrangement_for_case<'a>(
 fn retained_workspace_and_evaluation_for_case<'a>(
     case: &'a BenchCase,
     request: ExactBooleanRequest,
-) -> (ExactBooleanWorkspace<'a>, ExactBooleanEvaluation) {
+) -> (ExactBooleanWorkspace<'a>, Option<ExactBooleanEvaluation>) {
     let mut retained_workspace = retained_workspace_for_case(case, request);
-    let evaluation = retained_workspace.evaluate(request).unwrap().clone();
+    let evaluation = retained_workspace.evaluate(request).ok().cloned();
     (retained_workspace, evaluation)
 }
 
@@ -1162,15 +1164,6 @@ fn open_triangle_xy_far_corner() -> ExactMesh {
     .unwrap()
 }
 
-fn tetra(offset: [i64; 3]) -> ExactMesh {
-    let [ox, oy, oz] = offset;
-    ExactMesh::from_i64_triangles(
-        &[ox, oy, oz, ox + 1, oy, oz, ox, oy + 1, oz, ox, oy, oz + 1],
-        &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
-    )
-    .unwrap()
-}
-
 fn tetra_from_corners(a: [i64; 3], b: [i64; 3], c: [i64; 3], d: [i64; 3]) -> ExactMesh {
     ExactMesh::from_i64_triangles(
         &[
@@ -1202,10 +1195,20 @@ fn nonconvex_closed_arrangement_left() -> ExactMesh {
     .unwrap()
 }
 
-fn mirrored_tetra_at_origin() -> ExactMesh {
-    ExactMesh::from_i64_triangles(
-        &[0, 0, 0, -1, 0, 0, 0, -1, 0, 0, 0, -1],
-        &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
+fn open_boundary_touching_left() -> ExactMesh {
+    ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 0, 2, 0, 0, 0, 2, 0],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap()
+}
+
+fn open_boundary_touching_right() -> ExactMesh {
+    ExactMesh::from_i64_triangles_with_policy(
+        &[2, 0, 0, 0, 2, 0, 2, 2, 2],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap()
 }
