@@ -4742,41 +4742,66 @@ fn materialize_boolean_exact_request(
     {
         return Ok(result);
     }
-    if let Some(result) =
-        boolean_closed_winding_separated_meshes(left, right, operation, validation)?
-    {
+
+    let graph = build_intersection_graph(left, right)?;
+    validate_graph_source_handoff(&graph, left, right)?;
+
+    if let Some(result) = boolean_closed_winding_separated_meshes_from_graph(
+        &graph, left, right, operation, validation,
+    )? {
         return Ok(result);
     }
-    if let Some(result) =
-        boolean_closed_winding_containment_meshes(left, right, operation, validation)?
-    {
+    if let Some(result) = boolean_closed_winding_containment_meshes_from_graph(
+        &graph, left, right, operation, validation,
+    )? {
         return Ok(result);
     }
-    if operation == ExactBooleanOperation::Union
-        && let Some((result, _report)) =
-            materialize_adjacent_union_completion_for_request(left, right, request)?
-    {
-        return Ok(result);
+    if operation == ExactBooleanOperation::Union {
+        let (report, result) = adjacent_union_completion_certification_from_graph(
+            &graph,
+            left,
+            right,
+            operation,
+            Some(validation),
+        )?;
+        if report.is_certified() {
+            report.validate().map_err(|error| {
+                MeshError::one(MeshDiagnostic::new(
+                    Severity::Error,
+                    DiagnosticKind::UnsupportedExactOperation,
+                    format!("exact adjacent-union completion report validation failed: {error:?}"),
+                ))
+            })?;
+            if let Some(result) = result
+                && result.validate_against_sources(left, right).is_ok()
+            {
+                return Ok(result);
+            }
+        }
     }
-    if let Some(result) =
-        boolean_closed_boundary_touching_regularized_meshes(left, right, operation, validation)?
+    if let Some((result, _evidence)) =
+        materialize_closed_boundary_touching_regularized_boolean_with_evidence_from_graph(
+            &graph, left, right, operation, validation,
+        )?
     {
         return Ok(result);
     }
     if operation != ExactBooleanOperation::Union
-        && let Some(result) =
-            boolean_closed_no_volume_overlap_regularized_meshes(left, right, operation, validation)?
+        && let Some((result, _evidence)) =
+            materialize_closed_no_volume_overlap_regularized_boolean_with_evidence_from_graph(
+                &graph, left, right, operation, validation,
+            )?
     {
         return Ok(result);
     }
-    if let Some(result) =
-        boolean_arrangement_volumetric_split_cell_recovery(left, right, operation, validation)?
-    {
+    if let Some(result) = boolean_arrangement_volumetric_split_cell_recovery_from_graph(
+        &graph, left, right, operation, validation,
+    )? {
         return Ok(result);
     }
-    if let Some(result) =
-        boolean_arrangement_cell_complex_meshes(left, right, operation, validation)?
-    {
+    if let Some(result) = boolean_arrangement_cell_complex_meshes_from_graph(
+        &graph, left, right, operation, validation,
+    )? {
         return Ok(result);
     }
     match operation {
@@ -4784,8 +4809,6 @@ fn materialize_boolean_exact_request(
         ExactBooleanOperation::Union
         | ExactBooleanOperation::Intersection
         | ExactBooleanOperation::Difference => {
-            let graph = build_intersection_graph(left, right)?;
-            validate_graph_source_handoff(&graph, left, right)?;
             match operation {
                 ExactBooleanOperation::Union => {}
                 ExactBooleanOperation::Intersection => {
