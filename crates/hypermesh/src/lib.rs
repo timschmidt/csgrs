@@ -55,6 +55,7 @@ mod volumetric;
 mod volumetric_cells;
 mod winding;
 mod witness;
+mod workspace;
 
 pub use adapter::{
     ExactI64MeshInputReadiness, ExactI64MeshInputReport, ExactI64MeshInputReportValidationError,
@@ -92,6 +93,7 @@ pub use arrangement3d::{
     ArrangementRegionSide, ArrangementVertex, ArrangementVertexProvenance,
     ArrangementVolumeAdjacency, ArrangementVolumeFaceSide, ArrangementVolumeRegion,
     ExactArrangement, ExactArrangement3d, ExactArrangementFreshness,
+    ExactTopologyAssemblyReport, ExactTopologyAssemblyStatus,
 };
 pub use artifact::{
     MeshArtifactBlocker, MeshArtifactFaceRecord, MeshArtifactManifest, MeshArtifactReport,
@@ -116,7 +118,8 @@ pub use bounds::{AabbIntersectionKind, BoundsValidationError, ExactAabb3, MeshBo
 pub use cell_complex::{
     ExactCellComplex, ExactCellComplexFace, ExactCellComplexVolumeRegion, ExactCellRegionLabel,
     ExactLabeledCellComplex, ExactLabeledCellComplexFreshness, ExactOppositeRegionLabel,
-    ExactSelectedCellComplex, ExactSelectedCellComplexFreshness, ExactSelectedFaceOrientation,
+    ExactRegionOwnershipReport, ExactRegionOwnershipStatus, ExactSelectedCellComplex,
+    ExactSelectedCellComplexFreshness, ExactSelectedFaceOrientation,
 };
 pub use cells::{triangulate_all_face_cells_with_cdt, validate_face_cell_cdt_against_sources};
 pub use construction::{
@@ -245,3 +248,4 @@ pub use winding::{
     classify_mesh_vertices_against_closed_mesh_winding_report,
     classify_point_against_closed_mesh_winding, classify_point_against_closed_mesh_winding_report,
 };
+pub use workspace::ExactBooleanWorkspace;

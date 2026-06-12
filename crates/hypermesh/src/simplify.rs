@@ -9,12 +9,13 @@ use std::cmp::Ordering;
 
 use super::arrangement3d::{
     ArrangementFaceCellNode, ArrangementLowerDimensionalArtifact, ExactArrangement,
-    validate_lower_dimensional_artifacts,
+    ExactTopologyAssemblyReport, validate_lower_dimensional_artifacts,
 };
 use super::boolean::ExactBooleanOperation;
 use super::cell_complex::{
-    ExactCellComplexFace, ExactCellRegionLabel, ExactOppositeRegionLabel, ExactSelectedCellComplex,
-    ExactSelectedFaceOrientation, select_arrangement_for_replay,
+    ExactCellComplexFace, ExactCellRegionLabel, ExactOppositeRegionLabel,
+    ExactRegionOwnershipReport, ExactSelectedCellComplex, ExactSelectedFaceOrientation,
+    select_arrangement_for_replay, validate_selected_gate_reports,
     validate_volume_adjacency_face_provenance,
 };
 use super::loop_triangulation::{choose_polygon_projection, triangulate_exact_loop_group};
@@ -48,6 +49,22 @@ pub struct ExactSimplifiedCellComplex {
     pub faces: Vec<ExactSimplifiedFaceCell>,
     /// Retained lower-dimensional arrangement artifacts under policy.
     pub lower_dimensional_artifacts: Vec<ArrangementLowerDimensionalArtifact>,
+    /// Topology assembly report consumed before the selected cells were simplified.
+    pub topology_assembly_report: Option<ExactTopologyAssemblyReport>,
+    /// Region ownership report consumed before the selected cells were simplified.
+    pub region_ownership_report: Option<ExactRegionOwnershipReport>,
+    /// Selected face count consumed before simplification merged or dissolved cells.
+    pub selected_faces_before_simplification: usize,
+    /// Boundary-node count across selected faces before simplification.
+    pub selected_boundary_nodes_before_simplification: usize,
+    /// Selected faces with explicit orientation evidence before simplification.
+    pub oriented_selected_faces_before_simplification: usize,
+    /// Selected oriented faces whose output orientation was reversed before simplification.
+    pub reversed_selected_faces_before_simplification: usize,
+    /// Selected oriented faces justified by volume adjacency evidence before simplification.
+    pub volume_oriented_selected_faces_before_simplification: usize,
+    /// Selected oriented faces justified by source-label operation rules before simplification.
+    pub label_oriented_selected_faces_before_simplification: usize,
     /// Number of duplicate selected cells removed.
     pub duplicate_cells_removed: usize,
     /// Number of consecutive duplicate boundary nodes removed.
@@ -81,6 +98,59 @@ impl ExactSimplifiedCellComplex {
     /// Validate local simplified-cell consistency without replaying source meshes.
     pub fn validate(&self) -> Result<(), ExactArrangementBlocker> {
         validate_lower_dimensional_artifacts(&self.lower_dimensional_artifacts)?;
+        validate_selected_gate_reports(
+            self.topology_assembly_report.as_ref(),
+            self.region_ownership_report.as_ref(),
+            self.operation,
+        )?;
+        let Some(oriented_selected_faces) = self
+            .volume_oriented_selected_faces_before_simplification
+            .checked_add(self.label_oriented_selected_faces_before_simplification)
+        else {
+            return Err(ExactArrangementBlocker::NonManifoldCellComplex);
+        };
+        let Some(removed_selected_faces) = self
+            .duplicate_cells_removed
+            .checked_add(self.zero_area_cells_removed)
+        else {
+            return Err(ExactArrangementBlocker::NonManifoldCellComplex);
+        };
+        let Some(accounted_selected_faces) = self.faces.len().checked_add(removed_selected_faces)
+        else {
+            return Err(ExactArrangementBlocker::NonManifoldCellComplex);
+        };
+        let Some(simplified_boundary_nodes) = self.faces.iter().try_fold(0usize, |total, face| {
+            total.checked_add(face.face.cell.boundary.len())
+        }) else {
+            return Err(ExactArrangementBlocker::NonManifoldCellComplex);
+        };
+        let Some(removed_boundary_nodes) = self
+            .duplicate_boundary_nodes_removed
+            .checked_add(self.collinear_boundary_nodes_removed)
+        else {
+            return Err(ExactArrangementBlocker::NonManifoldCellComplex);
+        };
+        let Some(accounted_boundary_nodes) =
+            simplified_boundary_nodes.checked_add(removed_boundary_nodes)
+        else {
+            return Err(ExactArrangementBlocker::NonManifoldCellComplex);
+        };
+        if self.faces.len() > self.selected_faces_before_simplification
+            || self.selected_boundary_nodes_before_simplification
+                < self.selected_faces_before_simplification.saturating_mul(3)
+            || simplified_boundary_nodes > self.selected_boundary_nodes_before_simplification
+            || removed_boundary_nodes > self.selected_boundary_nodes_before_simplification
+            || accounted_boundary_nodes > self.selected_boundary_nodes_before_simplification
+            || self.oriented_selected_faces_before_simplification
+                > self.selected_faces_before_simplification
+            || self.reversed_selected_faces_before_simplification
+                > self.oriented_selected_faces_before_simplification
+            || oriented_selected_faces != self.oriented_selected_faces_before_simplification
+            || removed_selected_faces > self.selected_faces_before_simplification
+            || accounted_selected_faces > self.selected_faces_before_simplification
+        {
+            return Err(ExactArrangementBlocker::NonManifoldCellComplex);
+        }
         for face in &self.faces {
             validate_simplified_face(face)?;
         }
@@ -118,9 +188,28 @@ impl ExactSimplifiedCellComplex {
         self.validate()?;
         let arrangement = ExactArrangement::from_meshes_with_policy(left, right, policy)
             .map_err(|_| ExactArrangementBlocker::UnresolvedIntersection)?;
-        let replay = select_arrangement_for_replay(arrangement, self.operation, policy)?
-            .simplify_exact_with_policy(policy)?;
-        if replay == *self {
+        let replay =
+            select_arrangement_for_replay(arrangement, left, right, self.operation, policy)?
+                .simplify_exact_with_policy(policy)?;
+        if simplified_cell_complex_matches_replay(self, &replay) {
+            Ok(())
+        } else {
+            Err(ExactArrangementBlocker::NonManifoldCellComplex)
+        }
+    }
+
+    pub(crate) fn validate_against_arrangement(
+        &self,
+        arrangement: ExactArrangement,
+        left: &ExactMesh,
+        right: &ExactMesh,
+        policy: ExactRegularizationPolicy,
+    ) -> Result<(), ExactArrangementBlocker> {
+        self.validate()?;
+        let replay =
+            select_arrangement_for_replay(arrangement, left, right, self.operation, policy)?
+                .simplify_exact_with_policy(policy)?;
+        if simplified_cell_complex_matches_replay(self, &replay) {
             Ok(())
         } else {
             Err(ExactArrangementBlocker::NonManifoldCellComplex)
@@ -141,12 +230,15 @@ impl ExactSimplifiedCellComplex {
             Ok(arrangement) => arrangement,
             Err(_) => return ExactSimplifiedCellComplexFreshness::SourceReplayBlocked,
         };
-        let selected = match select_arrangement_for_replay(arrangement, self.operation, policy) {
-            Ok(selected) => selected,
-            Err(_) => return ExactSimplifiedCellComplexFreshness::SelectionReplayBlocked,
-        };
+        let selected =
+            match select_arrangement_for_replay(arrangement, left, right, self.operation, policy) {
+                Ok(selected) => selected,
+                Err(_) => return ExactSimplifiedCellComplexFreshness::SelectionReplayBlocked,
+            };
         match selected.simplify_exact_with_policy(policy) {
-            Ok(replay) if replay == *self => ExactSimplifiedCellComplexFreshness::Current,
+            Ok(replay) if simplified_cell_complex_matches_replay(self, &replay) => {
+                ExactSimplifiedCellComplexFreshness::Current
+            }
             Ok(_) => ExactSimplifiedCellComplexFreshness::StaleSimplifiedCells,
             Err(_) => ExactSimplifiedCellComplexFreshness::SimplificationReplayBlocked,
         }
@@ -242,6 +334,11 @@ pub fn simplify_selected_cell_complex(
     selected: ExactSelectedCellComplex,
     policy: ExactRegularizationPolicy,
 ) -> Result<ExactSimplifiedCellComplex, ExactArrangementBlocker> {
+    validate_selected_gate_reports(
+        selected.topology_assembly_report.as_ref(),
+        selected.region_ownership_report.as_ref(),
+        selected.operation,
+    )?;
     let mut blockers = selected.blockers;
     let mut faces = Vec::new();
     let mut duplicate_cells_removed = 0;
@@ -250,6 +347,31 @@ pub fn simplify_selected_cell_complex(
     let mut zero_area_cells_removed = 0;
     let mut interior_edges_removed = 0;
     let selected_face_orientations = selected.selected_face_orientations.clone();
+    let selected_faces_before_simplification = selected.selected_faces.len();
+    let mut selected_boundary_nodes_before_simplification = 0usize;
+    for &source_face in &selected.selected_faces {
+        if let Some(face) = selected.faces.get(source_face) {
+            let Some(next_count) =
+                selected_boundary_nodes_before_simplification.checked_add(face.cell.boundary.len())
+            else {
+                blockers.push(ExactArrangementBlocker::NonManifoldCellComplex);
+                continue;
+            };
+            selected_boundary_nodes_before_simplification = next_count;
+        }
+    }
+    let oriented_selected_faces_before_simplification = selected_face_orientations.len();
+    let reversed_selected_faces_before_simplification = selected_face_orientations
+        .iter()
+        .filter(|orientation| orientation.reverse)
+        .count();
+    let volume_oriented_selected_faces_before_simplification = selected_face_orientations
+        .iter()
+        .filter(|orientation| orientation.from_volume_adjacency)
+        .count();
+    let label_oriented_selected_faces_before_simplification =
+        oriented_selected_faces_before_simplification
+            .saturating_sub(volume_oriented_selected_faces_before_simplification);
     let require_volume_orientations = !matches!(
         selected.operation,
         ExactBooleanOperation::SelectedRegions(_)
@@ -364,6 +486,14 @@ pub fn simplify_selected_cell_complex(
         operation: selected.operation,
         faces,
         lower_dimensional_artifacts: selected.lower_dimensional_artifacts,
+        topology_assembly_report: selected.topology_assembly_report,
+        region_ownership_report: selected.region_ownership_report,
+        selected_faces_before_simplification,
+        selected_boundary_nodes_before_simplification,
+        oriented_selected_faces_before_simplification,
+        reversed_selected_faces_before_simplification,
+        volume_oriented_selected_faces_before_simplification,
+        label_oriented_selected_faces_before_simplification,
         duplicate_cells_removed,
         duplicate_boundary_nodes_removed,
         collinear_boundary_nodes_removed,
@@ -371,6 +501,22 @@ pub fn simplify_selected_cell_complex(
         interior_edges_removed,
         blockers,
     })
+}
+
+fn simplified_cell_complex_matches_replay(
+    retained: &ExactSimplifiedCellComplex,
+    replay: &ExactSimplifiedCellComplex,
+) -> bool {
+    if retained == replay {
+        return true;
+    }
+    if retained.topology_assembly_report.is_some() || retained.region_ownership_report.is_some() {
+        return false;
+    }
+    let mut replay_without_gate_reports = replay.clone();
+    replay_without_gate_reports.topology_assembly_report = None;
+    replay_without_gate_reports.region_ownership_report = None;
+    retained == &replay_without_gate_reports
 }
 
 #[derive(Clone)]
@@ -1342,6 +1488,8 @@ mod tests {
             volume_regions: Vec::new(),
             volume_adjacencies: Vec::new(),
             lower_dimensional_artifacts: Vec::new(),
+            topology_assembly_report: None,
+            region_ownership_report: None,
             selected_faces: vec![0, 1],
             selected_face_orientations: Vec::new(),
             selected_volume_regions: Vec::new(),
@@ -1424,6 +1572,8 @@ mod tests {
             volume_regions: Vec::new(),
             volume_adjacencies: Vec::new(),
             lower_dimensional_artifacts: Vec::new(),
+            topology_assembly_report: None,
+            region_ownership_report: None,
             selected_faces: vec![0, 1],
             selected_face_orientations: vec![
                 ExactSelectedFaceOrientation {
@@ -1448,8 +1598,37 @@ mod tests {
 
         assert_eq!(simplified.faces.len(), 1);
         assert_eq!(simplified.interior_edges_removed, 1);
+        assert_eq!(simplified.selected_faces_before_simplification, 2);
+        assert_eq!(simplified.selected_boundary_nodes_before_simplification, 6);
+        assert_eq!(simplified.oriented_selected_faces_before_simplification, 2);
+        assert_eq!(
+            simplified.volume_oriented_selected_faces_before_simplification,
+            0
+        );
+        assert_eq!(
+            simplified.label_oriented_selected_faces_before_simplification,
+            2
+        );
         assert!(simplified.blockers.is_empty());
         assert_eq!(simplified.faces[0].face.cell.boundary_points.len(), 4);
+        let mut stale_orientation_count = simplified.clone();
+        stale_orientation_count.label_oriented_selected_faces_before_simplification += 1;
+        assert_eq!(
+            stale_orientation_count.validate(),
+            Err(ExactArrangementBlocker::NonManifoldCellComplex)
+        );
+        let mut stale_removed_count = simplified.clone();
+        stale_removed_count.duplicate_cells_removed += 2;
+        assert_eq!(
+            stale_removed_count.validate(),
+            Err(ExactArrangementBlocker::NonManifoldCellComplex)
+        );
+        let mut stale_boundary_count = simplified.clone();
+        stale_boundary_count.collinear_boundary_nodes_removed += 3;
+        assert_eq!(
+            stale_boundary_count.validate(),
+            Err(ExactArrangementBlocker::NonManifoldCellComplex)
+        );
     }
 
     #[test]
@@ -1475,6 +1654,8 @@ mod tests {
             volume_regions: Vec::new(),
             volume_adjacencies: Vec::new(),
             lower_dimensional_artifacts: Vec::new(),
+            topology_assembly_report: None,
+            region_ownership_report: None,
             selected_faces: vec![0, 1],
             selected_face_orientations: Vec::new(),
             selected_volume_regions: Vec::new(),
@@ -1514,6 +1695,8 @@ mod tests {
             volume_regions: Vec::new(),
             volume_adjacencies: Vec::new(),
             lower_dimensional_artifacts: Vec::new(),
+            topology_assembly_report: None,
+            region_ownership_report: None,
             selected_faces: vec![0, 1],
             selected_face_orientations: Vec::new(),
             selected_volume_regions: Vec::new(),
@@ -1551,6 +1734,8 @@ mod tests {
             volume_regions: Vec::new(),
             volume_adjacencies: Vec::new(),
             lower_dimensional_artifacts: Vec::new(),
+            topology_assembly_report: None,
+            region_ownership_report: None,
             selected_faces: vec![0, 1],
             selected_face_orientations: vec![
                 ExactSelectedFaceOrientation {
@@ -1599,6 +1784,8 @@ mod tests {
             volume_regions: Vec::new(),
             volume_adjacencies: Vec::new(),
             lower_dimensional_artifacts: Vec::new(),
+            topology_assembly_report: None,
+            region_ownership_report: None,
             selected_faces: vec![0, 1],
             selected_face_orientations: vec![
                 ExactSelectedFaceOrientation {
@@ -1634,6 +1821,8 @@ mod tests {
             volume_regions: Vec::new(),
             volume_adjacencies: Vec::new(),
             lower_dimensional_artifacts: Vec::new(),
+            topology_assembly_report: None,
+            region_ownership_report: None,
             selected_faces: vec![0],
             selected_face_orientations: vec![ExactSelectedFaceOrientation {
                 face: 0,
@@ -1673,6 +1862,8 @@ mod tests {
             volume_regions: Vec::new(),
             volume_adjacencies: vec![dummy_volume_adjacency(0)],
             lower_dimensional_artifacts: Vec::new(),
+            topology_assembly_report: None,
+            region_ownership_report: None,
             selected_faces: vec![0],
             selected_face_orientations: Vec::new(),
             selected_volume_regions: Vec::new(),
@@ -1708,6 +1899,8 @@ mod tests {
             volume_regions: Vec::new(),
             volume_adjacencies: vec![dummy_volume_adjacency_for(0, MeshSide::Left, &[0, 1, 2])],
             lower_dimensional_artifacts: Vec::new(),
+            topology_assembly_report: None,
+            region_ownership_report: None,
             selected_faces: vec![0, 1],
             selected_face_orientations: vec![
                 ExactSelectedFaceOrientation {
@@ -1747,6 +1940,8 @@ mod tests {
             volume_regions: Vec::new(),
             volume_adjacencies: vec![dummy_volume_adjacency(0)],
             lower_dimensional_artifacts: Vec::new(),
+            topology_assembly_report: None,
+            region_ownership_report: None,
             selected_faces: vec![0],
             selected_face_orientations: vec![ExactSelectedFaceOrientation {
                 face: 0,
@@ -1785,6 +1980,8 @@ mod tests {
             volume_regions: Vec::new(),
             volume_adjacencies: vec![dummy_volume_adjacency(0)],
             lower_dimensional_artifacts: Vec::new(),
+            topology_assembly_report: None,
+            region_ownership_report: None,
             selected_faces: vec![0],
             selected_face_orientations: vec![
                 ExactSelectedFaceOrientation {
@@ -1830,6 +2027,8 @@ mod tests {
             volume_regions: Vec::new(),
             volume_adjacencies: vec![dummy_volume_adjacency(0)],
             lower_dimensional_artifacts: Vec::new(),
+            topology_assembly_report: None,
+            region_ownership_report: None,
             selected_faces: vec![0],
             selected_face_orientations: vec![
                 ExactSelectedFaceOrientation {
@@ -1869,6 +2068,8 @@ mod tests {
             volume_regions: Vec::new(),
             volume_adjacencies: vec![dummy_volume_adjacency(0)],
             lower_dimensional_artifacts: Vec::new(),
+            topology_assembly_report: None,
+            region_ownership_report: None,
             selected_faces: vec![0],
             selected_face_orientations: vec![
                 ExactSelectedFaceOrientation {
@@ -1901,6 +2102,8 @@ mod tests {
             volume_regions: Vec::new(),
             volume_adjacencies: Vec::new(),
             lower_dimensional_artifacts: Vec::new(),
+            topology_assembly_report: None,
+            region_ownership_report: None,
             selected_faces: vec![1],
             selected_face_orientations: Vec::new(),
             selected_volume_regions: Vec::new(),
@@ -1922,6 +2125,8 @@ mod tests {
             volume_regions: Vec::new(),
             volume_adjacencies: Vec::new(),
             lower_dimensional_artifacts: Vec::new(),
+            topology_assembly_report: None,
+            region_ownership_report: None,
             selected_faces: vec![0, 0],
             selected_face_orientations: Vec::new(),
             selected_volume_regions: Vec::new(),
@@ -1947,6 +2152,8 @@ mod tests {
             volume_regions: Vec::new(),
             volume_adjacencies: Vec::new(),
             lower_dimensional_artifacts: Vec::new(),
+            topology_assembly_report: None,
+            region_ownership_report: None,
             selected_faces: vec![0],
             selected_face_orientations: vec![ExactSelectedFaceOrientation {
                 face: 1,
@@ -1972,6 +2179,8 @@ mod tests {
             volume_regions: Vec::new(),
             volume_adjacencies: vec![dummy_volume_adjacency(1)],
             lower_dimensional_artifacts: Vec::new(),
+            topology_assembly_report: None,
+            region_ownership_report: None,
             selected_faces: vec![0],
             selected_face_orientations: vec![ExactSelectedFaceOrientation {
                 face: 0,
@@ -1999,6 +2208,8 @@ mod tests {
             volume_regions: Vec::new(),
             volume_adjacencies: vec![adjacency],
             lower_dimensional_artifacts: Vec::new(),
+            topology_assembly_report: None,
+            region_ownership_report: None,
             selected_faces: vec![0],
             selected_face_orientations: vec![ExactSelectedFaceOrientation {
                 face: 0,
@@ -2026,6 +2237,8 @@ mod tests {
             volume_regions: Vec::new(),
             volume_adjacencies: vec![adjacency],
             lower_dimensional_artifacts: Vec::new(),
+            topology_assembly_report: None,
+            region_ownership_report: None,
             selected_faces: vec![0],
             selected_face_orientations: vec![ExactSelectedFaceOrientation {
                 face: 0,
@@ -2076,6 +2289,8 @@ mod tests {
             volume_regions: Vec::new(),
             volume_adjacencies: Vec::new(),
             lower_dimensional_artifacts: Vec::new(),
+            topology_assembly_report: None,
+            region_ownership_report: None,
             selected_faces: vec![0, 1],
             selected_face_orientations: Vec::new(),
             selected_volume_regions: Vec::new(),
@@ -2104,6 +2319,8 @@ mod tests {
             volume_regions: Vec::new(),
             volume_adjacencies: Vec::new(),
             lower_dimensional_artifacts: Vec::new(),
+            topology_assembly_report: None,
+            region_ownership_report: None,
             selected_faces: vec![0, 1],
             selected_face_orientations: Vec::new(),
             selected_volume_regions: Vec::new(),
@@ -2135,6 +2352,8 @@ mod tests {
                 dummy_volume_adjacency_for(1, MeshSide::Left, &[4, 5, 6, 7]),
             ],
             lower_dimensional_artifacts: Vec::new(),
+            topology_assembly_report: None,
+            region_ownership_report: None,
             selected_faces: vec![0, 1],
             selected_face_orientations: vec![
                 ExactSelectedFaceOrientation {
@@ -2182,6 +2401,8 @@ mod tests {
             volume_regions: Vec::new(),
             volume_adjacencies: Vec::new(),
             lower_dimensional_artifacts: Vec::new(),
+            topology_assembly_report: None,
+            region_ownership_report: None,
             selected_faces: vec![0, 1],
             selected_face_orientations: Vec::new(),
             selected_volume_regions: Vec::new(),
@@ -2233,6 +2454,8 @@ mod tests {
             volume_regions: Vec::new(),
             volume_adjacencies: Vec::new(),
             lower_dimensional_artifacts: Vec::new(),
+            topology_assembly_report: None,
+            region_ownership_report: None,
             selected_faces: vec![0, 1],
             selected_face_orientations: Vec::new(),
             selected_volume_regions: Vec::new(),
@@ -2262,6 +2485,8 @@ mod tests {
             volume_regions: Vec::new(),
             volume_adjacencies: Vec::new(),
             lower_dimensional_artifacts: Vec::new(),
+            topology_assembly_report: None,
+            region_ownership_report: None,
             selected_faces: vec![0, 1],
             selected_face_orientations: Vec::new(),
             selected_volume_regions: Vec::new(),
@@ -2292,6 +2517,8 @@ mod tests {
             volume_regions: Vec::new(),
             volume_adjacencies: Vec::new(),
             lower_dimensional_artifacts: Vec::new(),
+            topology_assembly_report: None,
+            region_ownership_report: None,
             selected_faces: vec![0, 1, 2],
             selected_face_orientations: Vec::new(),
             selected_volume_regions: Vec::new(),
@@ -2331,6 +2558,8 @@ mod tests {
             volume_regions: Vec::new(),
             volume_adjacencies: Vec::new(),
             lower_dimensional_artifacts: vec![artifact.clone()],
+            topology_assembly_report: None,
+            region_ownership_report: None,
             selected_faces: Vec::new(),
             selected_face_orientations: Vec::new(),
             selected_volume_regions: Vec::new(),
@@ -2357,6 +2586,8 @@ mod tests {
             volume_regions: Vec::new(),
             volume_adjacencies: Vec::new(),
             lower_dimensional_artifacts: vec![artifact.clone()],
+            topology_assembly_report: None,
+            region_ownership_report: None,
             selected_faces: Vec::new(),
             selected_face_orientations: Vec::new(),
             selected_volume_regions: Vec::new(),
@@ -2382,6 +2613,14 @@ mod tests {
             operation: ExactBooleanOperation::Intersection,
             faces: Vec::new(),
             lower_dimensional_artifacts: vec![artifact],
+            topology_assembly_report: None,
+            region_ownership_report: None,
+            selected_faces_before_simplification: 0,
+            selected_boundary_nodes_before_simplification: 0,
+            oriented_selected_faces_before_simplification: 0,
+            reversed_selected_faces_before_simplification: 0,
+            volume_oriented_selected_faces_before_simplification: 0,
+            label_oriented_selected_faces_before_simplification: 0,
             duplicate_cells_removed: 0,
             duplicate_boundary_nodes_removed: 0,
             collinear_boundary_nodes_removed: 0,
@@ -2413,6 +2652,14 @@ mod tests {
                     endpoints: [p(1, 0, 0), p(0, 0, 0)],
                 },
             ],
+            topology_assembly_report: None,
+            region_ownership_report: None,
+            selected_faces_before_simplification: 0,
+            selected_boundary_nodes_before_simplification: 0,
+            oriented_selected_faces_before_simplification: 0,
+            reversed_selected_faces_before_simplification: 0,
+            volume_oriented_selected_faces_before_simplification: 0,
+            label_oriented_selected_faces_before_simplification: 0,
             duplicate_cells_removed: 0,
             duplicate_boundary_nodes_removed: 0,
             collinear_boundary_nodes_removed: 0,

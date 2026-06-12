@@ -20,6 +20,7 @@ use super::affine_solid::{
     AffineOrthogonalSolidOperation, materialize_affine_orthogonal_solid_difference,
     materialize_affine_orthogonal_solid_intersection, materialize_affine_orthogonal_solid_union,
 };
+use super::arrangement3d::{ExactArrangement, ExactTopologyAssemblyReport};
 use super::boolean::{
     ExactBooleanOperation, ExactBooleanRequest, ExactBoundaryBooleanPolicy,
     boundary_policy_shortcut_result_matches_sources,
@@ -29,6 +30,9 @@ use super::boolean::{
     replay_selected_region_boolean_result,
 };
 use super::bounds::AabbIntersectionKind;
+use super::cell_complex::{
+    ExactRegionOwnershipReport, arrangement_region_classification_blockers_are_volume_resolved,
+};
 use super::contained_adjacent::materialize_contained_face_adjacent_union;
 use super::convex::{
     intersect_closed_convex_solids, subtract_closed_convex_solids, union_closed_convex_solids,
@@ -50,6 +54,7 @@ use super::region::{
     FaceRegionTriangulation, boundary_node_point,
 };
 use super::regularization::ExactArrangementBlocker;
+use super::regularization::{ExactRegularizationPolicy, ExactUnresolvedPolicy};
 use super::solid::{
     ConvexSolidMeshClassification, ConvexSolidMeshRelation, ConvexSolidPointRelation,
     classify_mesh_vertices_against_convex_solid_report,
@@ -710,6 +715,12 @@ pub struct ExactBooleanResult {
     pub assembly: ExactBooleanAssemblyPlan,
     /// Exact winding classifications used by volumetric arrangement materialization.
     pub volumetric_classifications: Vec<ExactVolumetricRegionClassification>,
+    /// Topology assembly report consumed by an arrangement/cell-complex output,
+    /// when the materialization path retained that gate evidence.
+    pub topology_assembly_report: Option<ExactTopologyAssemblyReport>,
+    /// Region ownership report consumed by an arrangement/cell-complex output,
+    /// when the materialization path retained that gate evidence.
+    pub region_ownership_report: Option<ExactRegionOwnershipReport>,
     /// Materialized exact output mesh validated under the requested policy.
     pub mesh: ExactMesh,
 }
@@ -908,6 +919,7 @@ impl ExactBooleanResult {
         {
             return Err(ExactReportValidationError::StatusEvidenceMismatch);
         }
+        self.validate_arrangement_cell_complex_gate_reports()?;
         if retains_region_artifacts && self.graph_had_unknowns {
             return Err(ExactReportValidationError::SelectedRegionResultHasUnknownGraph);
         }
@@ -1152,6 +1164,48 @@ impl ExactBooleanResult {
         Ok(())
     }
 
+    fn validate_arrangement_cell_complex_gate_reports(
+        &self,
+    ) -> Result<(), ExactReportValidationError> {
+        let carries_reports =
+            self.topology_assembly_report.is_some() || self.region_ownership_report.is_some();
+        if !carries_reports {
+            return Ok(());
+        }
+        let arrangement_cell_complex_result = matches!(
+            self.kind,
+            ExactBooleanResultKind::ArrangementCellComplexMaterialized { .. }
+                | ExactBooleanResultKind::CertifiedShortcut {
+                    shortcut: ExactBooleanShortcutKind::ArrangementCellComplex,
+                    ..
+                }
+        );
+        if !arrangement_cell_complex_result {
+            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+        }
+        let topology = self
+            .topology_assembly_report
+            .as_ref()
+            .ok_or(ExactReportValidationError::StatusEvidenceMismatch)?;
+        topology
+            .validate()
+            .map_err(|_| ExactReportValidationError::StatusEvidenceMismatch)?;
+        if !topology.is_complete() {
+            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+        }
+        let ownership = self
+            .region_ownership_report
+            .as_ref()
+            .ok_or(ExactReportValidationError::StatusEvidenceMismatch)?;
+        ownership
+            .validate()
+            .map_err(|_| ExactReportValidationError::StatusEvidenceMismatch)?;
+        if !ownership.is_resolved() {
+            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+        }
+        Ok(())
+    }
+
     /// Validate this result and replay retained source-face provenance.
     ///
     /// [`Self::validate`] audits the report as a self-contained artifact. This
@@ -1166,6 +1220,7 @@ impl ExactBooleanResult {
         right: &ExactMesh,
     ) -> Result<(), ExactReportValidationError> {
         self.validate()?;
+        self.validate_arrangement_cell_complex_gate_reports_against_sources(left, right)?;
         let mut arrangement_cell_complex_output_replayed = false;
         if let ExactBooleanResultKind::SelectedRegions { selection } = self.kind {
             let replay = replay_selected_region_boolean_result(
@@ -1208,6 +1263,8 @@ impl ExactBooleanResult {
                 region_classifications: replay.region_classifications,
                 triangulations: replay.triangulations,
                 volumetric_classifications: replay.volumetric_classifications,
+                topology_assembly_report: None,
+                region_ownership_report: None,
                 assembly: replay.assembly,
                 mesh: replay.mesh,
             };
@@ -1412,16 +1469,68 @@ impl ExactBooleanResult {
         }
     }
 
+    pub(crate) fn validate_arrangement_cell_complex_gate_reports_against_sources(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> Result<(), ExactReportValidationError> {
+        let arrangement = ExactArrangement::from_meshes_with_policy(
+            left,
+            right,
+            ExactRegularizationPolicy::REGULARIZED_SOLID,
+        )
+        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+        self.validate_arrangement_cell_complex_gate_reports_against_arrangement(
+            &arrangement,
+            left,
+            right,
+        )
+    }
+
+    pub(crate) fn validate_arrangement_cell_complex_gate_reports_against_arrangement(
+        &self,
+        arrangement: &ExactArrangement,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> Result<(), ExactReportValidationError> {
+        if self.topology_assembly_report.is_none() && self.region_ownership_report.is_none() {
+            return Ok(());
+        }
+        let replay_topology = arrangement.topology_assembly_report_with_policy(
+            left,
+            right,
+            ExactRegularizationPolicy::REGULARIZED_SOLID,
+        );
+        if self.topology_assembly_report.as_ref() != Some(&replay_topology) {
+            return Err(ExactReportValidationError::SourceReplayMismatch);
+        }
+        let ownership_policy =
+            if arrangement_region_classification_blockers_are_volume_resolved(&arrangement) {
+                ExactRegularizationPolicy {
+                    unresolved: ExactUnresolvedPolicy::RetainArtifacts,
+                    ..ExactRegularizationPolicy::REGULARIZED_SOLID
+                }
+            } else {
+                ExactRegularizationPolicy::REGULARIZED_SOLID
+            };
+        let replay_ownership = arrangement
+            .region_ownership_report_with_policy(left, right, ownership_policy)
+            .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+        if self.region_ownership_report.as_ref() != Some(&replay_ownership) {
+            return Err(ExactReportValidationError::SourceReplayMismatch);
+        }
+        Ok(())
+    }
+
     /// Validate this result against the operation and policies that produced it.
     ///
-    /// [`Self::validate_against_sources`] audits retained source provenance for
-    /// selected-region assembly and local mesh state for shortcuts. This
+    /// [`Self::validate_against_sources`] audits retained source provenance,
+    /// including arrangement-cell-complex gate reports when present. This
     /// stronger replay recomputes the public exact boolean entry point for the
     /// same operands, operation, validation policy, and boundary policy, then
     /// requires the whole result object to match. That closes the shortcut
     /// replay gap: a certified output mesh cannot be relabeled as a different
     /// named operation or shortcut kind while still passing the source audit.
-    /// itself as part of the exact computation history.
     pub fn validate_operation_against_sources(
         &self,
         left: &ExactMesh,
@@ -1490,8 +1599,8 @@ fn certified_shortcut_sources_match(
         }
         ExactBooleanShortcutKind::Identical => Ok(meshes_are_certified_identical(left, right)),
         ExactBooleanShortcutKind::SameSurface => {
-            let report = ExactBooleanRequest::new(operation, validation)
-                .same_surface_report(left, right);
+            let report =
+                ExactBooleanRequest::new(operation, validation).same_surface_report(left, right);
             report.validate()?;
             Ok(report.is_certified())
         }
@@ -2196,9 +2305,12 @@ fn closed_boundary_touching_sources_match(
     if !mesh_is_closed_solid(left) || !mesh_is_closed_solid(right) {
         return Ok(false);
     }
-    let report = ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::ALLOW_BOUNDARY)
-        .boundary_touching_report(left, right)
-        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+    let report = ExactBooleanRequest::new(
+        ExactBooleanOperation::Union,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .boundary_touching_report(left, right)
+    .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
     report.validate()?;
     if !report.is_certified() {
         if matches!(
@@ -2509,7 +2621,8 @@ fn arrangement_cell_complex_sources_match(
             return Ok(true);
         }
     }
-    if ExactBooleanRequest::new(operation, validation).materialize_closed_same_surface(left, right)
+    if ExactBooleanRequest::new(operation, validation)
+        .materialize_closed_same_surface(left, right)
         .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
         .is_some()
     {
@@ -2580,9 +2693,9 @@ fn arrangement_cell_complex_output_matches_sources(
         return Ok(Some(mesh_output_matches(mesh, &replay)));
     }
 
-    if let Some(replay) =
-        ExactBooleanRequest::new(operation, validation).materialize_closed_same_surface(left, right)
-            .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
+    if let Some(replay) = ExactBooleanRequest::new(operation, validation)
+        .materialize_closed_same_surface(left, right)
+        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
     {
         return Ok(Some(mesh_output_matches(mesh, &replay.mesh)));
     }
@@ -4726,9 +4839,12 @@ impl ExactOpenSurfaceDisjointReport {
         right: &ExactMesh,
     ) -> Result<(), ExactReportValidationError> {
         self.validate()?;
-        let replay = ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::ALLOW_BOUNDARY)
-            .open_surface_disjoint_report(left, right)
-            .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+        let replay = ExactBooleanRequest::new(
+            ExactBooleanOperation::Union,
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .open_surface_disjoint_report(left, right)
+        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
         if self == &replay {
             Ok(())
         } else {
@@ -4745,8 +4861,11 @@ impl ExactOpenSurfaceDisjointReport {
         if let Err(error) = self.validate() {
             return error.into();
         }
-        match ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::ALLOW_BOUNDARY)
-            .open_surface_disjoint_report(left, right)
+        match ExactBooleanRequest::new(
+            ExactBooleanOperation::Union,
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .open_surface_disjoint_report(left, right)
         {
             Ok(replay) if self == &replay => ExactReportFreshness::Current,
             Ok(_) | Err(_) => ExactReportFreshness::SourceReplayMismatch,
@@ -5224,9 +5343,12 @@ impl ExactBoundaryTouchingReport {
         right: &ExactMesh,
     ) -> Result<(), ExactReportValidationError> {
         self.validate()?;
-        let replay = ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::ALLOW_BOUNDARY)
-            .boundary_touching_report(left, right)
-            .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+        let replay = ExactBooleanRequest::new(
+            ExactBooleanOperation::Union,
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .boundary_touching_report(left, right)
+        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
         if self == &replay {
             Ok(())
         } else {
@@ -5243,8 +5365,11 @@ impl ExactBoundaryTouchingReport {
         if let Err(error) = self.validate() {
             return error.into();
         }
-        match ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::ALLOW_BOUNDARY)
-            .boundary_touching_report(left, right)
+        match ExactBooleanRequest::new(
+            ExactBooleanOperation::Union,
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .boundary_touching_report(left, right)
         {
             Ok(replay) if self == &replay => ExactReportFreshness::Current,
             Ok(_) | Err(_) => ExactReportFreshness::SourceReplayMismatch,
@@ -5607,8 +5732,13 @@ impl ExactWindingReadinessReport {
         right: &ExactMesh,
     ) -> Result<(), ExactReportValidationError> {
         self.validate()?;
-        let replay = ExactBooleanRequest::with_boundary_policy(self.operation, ValidationPolicy::ALLOW_BOUNDARY, ExactBoundaryBooleanPolicy::Reject).winding_readiness(left, right)
-            .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+        let replay = ExactBooleanRequest::with_boundary_policy(
+            self.operation,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            ExactBoundaryBooleanPolicy::Reject,
+        )
+        .winding_readiness(left, right)
+        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
         if self == &replay {
             Ok(())
         } else {
@@ -5673,7 +5803,13 @@ impl ExactWindingReadinessReport {
         if let Err(error) = self.validate() {
             return error.into();
         }
-        match ExactBooleanRequest::with_boundary_policy(self.operation, ValidationPolicy::ALLOW_BOUNDARY, ExactBoundaryBooleanPolicy::Reject).winding_readiness(left, right) {
+        match ExactBooleanRequest::with_boundary_policy(
+            self.operation,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            ExactBoundaryBooleanPolicy::Reject,
+        )
+        .winding_readiness(left, right)
+        {
             Ok(replay) if self == &replay => ExactReportFreshness::Current,
             Ok(_) | Err(_) => ExactReportFreshness::SourceReplayMismatch,
         }
@@ -6469,14 +6605,24 @@ mod tests {
 
         let open_left = report_test_triangle(&[[0, 0, 0], [2, 0, 0], [0, 2, 0]]);
         let open_right = report_test_triangle(&[[5, 0, 0], [7, 0, 0], [5, 2, 0]]);
-        let open_disjoint = ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::ALLOW_BOUNDARY).open_surface_disjoint_report(&open_left, &open_right).unwrap();
+        let open_disjoint = ExactBooleanRequest::new(
+            ExactBooleanOperation::Union,
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .open_surface_disjoint_report(&open_left, &open_right)
+        .unwrap();
         assert_eq!(
             open_disjoint.freshness_against_sources(&open_left, &open_right),
             ExactReportFreshness::Current
         );
 
         let touching_right = report_test_triangle(&[[2, 0, 0], [0, 2, 0], [2, 2, 2]]);
-        let boundary = ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::ALLOW_BOUNDARY).boundary_touching_report(&open_left, &touching_right).unwrap();
+        let boundary = ExactBooleanRequest::new(
+            ExactBooleanOperation::Union,
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .boundary_touching_report(&open_left, &touching_right)
+        .unwrap();
         assert_eq!(
             boundary.freshness_against_sources(&open_left, &touching_right),
             ExactReportFreshness::Current
@@ -6645,6 +6791,8 @@ mod tests {
             triangulations: vec![triangulation],
             assembly,
             volumetric_classifications: Vec::new(),
+            topology_assembly_report: None,
+            region_ownership_report: None,
             mesh,
         };
 
@@ -6776,6 +6924,8 @@ mod tests {
                 triangles: Vec::new(),
             },
             volumetric_classifications: Vec::new(),
+            topology_assembly_report: None,
+            region_ownership_report: None,
             mesh,
         };
 
@@ -6807,6 +6957,8 @@ mod tests {
                 triangles: Vec::new(),
             },
             volumetric_classifications: Vec::new(),
+            topology_assembly_report: None,
+            region_ownership_report: None,
             mesh: ExactMesh::new(
                 Vec::new(),
                 Vec::new(),

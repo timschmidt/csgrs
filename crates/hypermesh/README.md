@@ -101,9 +101,86 @@ DOPs, coplanar arrangement reports, and handoff packages are intended to narrow 
 before expensive predicates or topology rebuilds. Feature flags are reserved for
 diagnostic/probing hooks and Bevy/demo surfaces.
 
-Future benchmarks should separate broad phase, narrow classification, split planning,
-region assembly, and simplification so exactness work can be optimized without hiding
-where time is spent.
+`ExactBooleanWorkspace` provides a native exact session for a fixed mesh pair. It
+caches replayable graph, arrangement, arrangement-attempt, selected cell-complex,
+simplified cell-complex, preflight, evaluation, topology-assembly report,
+region-ownership report, and certified materialization artifacts while keeping
+source freshness tied to the borrowed exact meshes.
+Workspace evaluation reuses the retained regularized arrangement for boolean
+certification evidence instead of reconstructing that object internally. First-call
+workspace materialization also consumes retained graph, preflight, and arrangement
+artifacts directly for certified supports before falling back to request-level
+materialization, and repeat materialization reuses a separate result cache without
+forcing the evaluation cache to exist. Workspace evaluation performs local
+proof-bundle validation first, and workspace replay validation reuses retained
+graph and regularized-arrangement artifacts for evaluations, plus retained graph
+artifacts for materialized result replay, while preserving stale-evidence checks.
+Workspace arrangement-attempt validation replays against the retained arrangement,
+and selected and simplified cell-complex accessors retain the topology and
+ownership reports consumed by the selection gate, giving benchmarks a direct view
+of local gate-report validation, workspace session validation, and full source
+replay validation costs.
+Public request evaluation keeps standalone source replay semantics. Volumetric
+split-cell recovery reuses its retained graph for internal result proof before
+exposing the strict public `validate_against_sources` replay API.
+
+`ExactTopologyAssemblyReport` records the retained bridge from intersection graph
+events through split topology and face-region loops into arrangement vertices,
+edges, face cells, and volume adjacency evidence. Face-cell topology includes
+boundary-node and boundary-coordinate counts, so retained cells must prove a
+matched boundary loop before selection or simplification consumes them.
+Connected shell/region topology includes face-cell membership, adjacency,
+edge-incidence, oriented-side, boundary-edge, and non-manifold-edge counts, so
+local validation can reject stale region partitions before volume ownership uses
+them.
+Volume-adjacency topology now includes oriented face-side and separating-face
+counts, so local bridge validation requires explicit adjacency witnesses when
+volume adjacencies are present. Lower-dimensional point and edge contacts are
+also reported separately, including edge-contact endpoint counts, so retained
+regularization artifacts have auditable shape instead of only a total count.
+Arrangement-cell-complex output now requires this bridge to validate as complete
+before it consumes labeled cells, selected/simplified cell replay uses the same
+topology gate, and arrangement attempt reports retain the topology report and
+status observed at that gate. Arrangement attempts also retain selected-face
+orientation counts split between volume-adjacency evidence and source-label
+operation rules, plus the number of reversed selected faces.
+Selected and simplified cell-complex artifacts produced through replay now carry
+the consumed topology report forward as retained evidence, and simplification
+validates retained gate reports before canonicalizing selected cells. Simplified
+cell-complex artifacts also retain the selected-face, selected-boundary-node, and
+selected-orientation counts consumed before merge/dissolve canonicalization,
+including the same volume-adjacency/source-label orientation split and
+reversed-face count. Topology
+assembly reports validate directly against source operands and through workspace
+retained-arrangement sessions.
+
+`ExactRegionOwnershipReport` records whether labeled arrangement cells are
+volume-resolved, face-label-resolved, still waiting on exact winding, or blocked by
+other arrangement evidence. Volume-resolved reports also retain adjacency
+face-side and separating-face counts, so local validation requires explicit
+volume-boundary proof instead of only region counts, and they carry the same
+lower-dimensional artifact shape counts as the topology bridge. Ownership reports
+also retain face-cell boundary-node and boundary-coordinate counts for the
+labeled cell-complex view. They validate directly against source operands and
+through workspace retained-arrangement sessions. Named exact boolean evaluations
+retain this report in their certification bundle so materializers can reject
+stale or missing ownership proof before consuming arrangement-cell-complex
+output. Retained arrangement attempts try topology/label/selection before bounded
+recovery materializers; those attempts now retain the ownership report and status
+observed before selection, while recoveries remain fallback paths when the exact
+cell-complex stage declines.
+Replay-selected and simplified cell-complex artifacts likewise carry the consumed
+ownership report when it is available. Arrangement-cell-complex results can also
+carry those consumed gate reports at the materialized result boundary, and result
+source replay now recomputes the gate reports from the current operands before
+accepting retained topology/ownership evidence as fresh. Workspace retained-result
+validation can reuse its cached regularized arrangement for that gate-report replay,
+and exact matches against materialization/evaluation cache entries are accepted as
+session-local replay evidence after local result validation.
+
+Benchmarks should keep broad phase, narrow classification, split planning, region
+assembly, simplification, triangulation, and materialization visible as separate stages
+so exactness work can be optimized without hiding where time is spent.
 
 ## Current Status
 
@@ -112,8 +189,8 @@ Implemented today:
 - exact mesh topology path;
 - exact mesh, bounds, facts, provenance, validation, audit, face-pair, coplanar,
   construction, split-plan, support, surface, winding, convex-solid, exact arrangement,
-  cell-complex simplification, consumer-readiness, handoff-package, preflight, and
-  exact-boolean APIs;
+  cell-complex simplification, consumer-readiness, handoff-package, preflight,
+  exact-boolean workspace, and exact-boolean APIs;
 - tests, proptests, fuzz targets, examples, and exact-validation benchmarks.
 
 Known limits: unsupported boolean/intersection/simplification topology is reported as a
@@ -232,5 +309,6 @@ Useful local checks:
 ```sh
 cargo test
 cargo test --no-default-features
+cargo bench --bench exact_boolean_stages
 cargo fuzz run exact_arrangement
 ```

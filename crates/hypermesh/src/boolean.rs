@@ -36,10 +36,13 @@ use super::arrangement2d::{
     ExactArrangement2dRegion, ExactArrangement2dRegionRing, ExactArrangement2dSetOperation,
     build_exact_arrangement2d_overlay, build_exact_arrangement2d_overlay_with_boundary_policy,
 };
-use super::arrangement3d::ExactArrangement;
+use super::arrangement3d::{
+    ExactArrangement, ExactTopologyAssemblyReport, ExactTopologyAssemblyStatus,
+};
 use super::bounds::AabbIntersectionKind;
 use super::box_solid::is_axis_aligned_box;
 use super::cell_complex::{
+    ExactRegionOwnershipReport, ExactRegionOwnershipStatus, ExactSelectedCellComplex,
     arrangement_region_classification_blockers_are_volume_resolved,
     selected_region_selection_ignores_opposite_classification,
 };
@@ -51,7 +54,9 @@ use super::convex::{
     intersect_closed_convex_solids, subtract_closed_convex_solids, union_closed_convex_solids,
 };
 use super::error::{DiagnosticKind, MeshDiagnostic, MeshError, Severity};
-use super::graph::{FacePairEvents, IntersectionEvent, MeshSide, build_intersection_graph};
+use super::graph::{
+    ExactIntersectionGraph, FacePairEvents, IntersectionEvent, MeshSide, build_intersection_graph,
+};
 use super::intersection::MeshFacePairRelation;
 use super::loop_triangulation::{group_exact_coplanar_loops, triangulate_exact_loop_group};
 use super::mesh::{ExactMesh, Triangle};
@@ -143,6 +148,10 @@ pub enum ExactArrangementBooleanDecline {
     ArrangementBlockers(Vec<ExactArrangementBlocker>),
     /// Cell labeling failed.
     Labeling(ExactArrangementBlocker),
+    /// Exact topology assembly was not complete enough for cell output.
+    TopologyAssembly(ExactTopologyAssemblyStatus),
+    /// Region ownership was not resolved enough for named boolean selection.
+    RegionOwnership(ExactRegionOwnershipStatus),
     /// Boolean cell selection failed.
     Selection(ExactArrangementBlocker),
     /// Exact simplification failed.
@@ -180,8 +189,22 @@ pub struct ExactArrangementBooleanAttempt {
     pub volume_adjacencies: usize,
     /// Retained lower-dimensional artifact count.
     pub lower_dimensional_artifacts: usize,
+    /// Topology assembly status observed before consuming labeled cells.
+    pub topology_assembly: Option<ExactTopologyAssemblyStatus>,
+    /// Full topology assembly report consumed before labeled-cell output.
+    pub topology_assembly_report: Option<ExactTopologyAssemblyReport>,
+    /// Region ownership status observed before named cell selection.
+    pub region_ownership: Option<ExactRegionOwnershipStatus>,
+    /// Full region ownership report consumed before named cell selection.
+    pub region_ownership_report: Option<ExactRegionOwnershipReport>,
     /// Selected face-cell count, when selection succeeded.
     pub selected_faces: usize,
+    /// Selected faces whose output orientation is reversed.
+    pub reversed_selected_faces: usize,
+    /// Selected faces oriented by explicit volume adjacency evidence.
+    pub volume_oriented_selected_faces: usize,
+    /// Selected faces oriented by source-label operation rules.
+    pub label_oriented_selected_faces: usize,
     /// Selected volume-region count, when selection succeeded.
     pub selected_volume_regions: usize,
     /// Output vertex count, when triangulation succeeded.
@@ -199,11 +222,21 @@ impl ExactArrangementBooleanAttempt {
     /// retained counts must describe one path through that state machine rather
     /// than an arbitrary mix of successful output and blockers.
     pub fn validate(&self) -> Result<(), ExactReportValidationError> {
+        let Some(oriented_selected_faces) = self
+            .volume_oriented_selected_faces
+            .checked_add(self.label_oriented_selected_faces)
+        else {
+            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+        };
         if self.selected_faces > self.face_cells
             || self.selected_volume_regions > self.volume_regions
             || (self.volume_regions != 0 && self.regions == 0)
             || (self.volume_adjacencies != 0 && self.volume_regions < 2)
             || (self.selected_volume_regions != 0 && self.volume_regions == 0)
+            || self.reversed_selected_faces > self.selected_faces
+            || self.volume_oriented_selected_faces > self.selected_faces
+            || self.label_oriented_selected_faces > self.selected_faces
+            || oriented_selected_faces != self.selected_faces
         {
             return Err(ExactReportValidationError::StatusEvidenceMismatch);
         }
@@ -237,6 +270,9 @@ impl ExactArrangementBooleanAttempt {
             if shortcut != ExactBooleanShortcutKind::ArrangementCellComplex {
                 return Err(ExactReportValidationError::StatusEvidenceMismatch);
             }
+        }
+        if !arrangement_attempt_gate_statuses_match_stage(self) {
+            return Err(ExactReportValidationError::StatusEvidenceMismatch);
         }
         if self.output_triangles != 0 && self.output_vertices == 0 {
             return Err(ExactReportValidationError::StatusEvidenceMismatch);
@@ -357,10 +393,12 @@ fn arrangement_attempt_decline_matches_stage(
             ExactArrangementBooleanStage::NotAttempted
         ) | (
             ExactArrangementBooleanDecline::ArrangementBlockers(_)
-                | ExactArrangementBooleanDecline::Labeling(_),
+                | ExactArrangementBooleanDecline::Labeling(_)
+                | ExactArrangementBooleanDecline::TopologyAssembly(_),
             ExactArrangementBooleanStage::ArrangementBuilt
         ) | (
-            ExactArrangementBooleanDecline::Selection(_),
+            ExactArrangementBooleanDecline::RegionOwnership(_)
+                | ExactArrangementBooleanDecline::Selection(_),
             ExactArrangementBooleanStage::Labeled
         ) | (
             ExactArrangementBooleanDecline::Simplification(_),
@@ -385,18 +423,132 @@ fn arrangement_attempt_counts_match_stage(attempt: &ExactArrangementBooleanAttem
             && attempt.volume_adjacencies == 0
             && attempt.lower_dimensional_artifacts == 0
             && attempt.selected_faces == 0
+            && attempt.reversed_selected_faces == 0
+            && attempt.volume_oriented_selected_faces == 0
+            && attempt.label_oriented_selected_faces == 0
             && attempt.selected_volume_regions == 0
             && attempt.output_vertices == 0
             && attempt.output_triangles == 0;
     }
     if !arrangement_attempt_stage_reaches(stage, ExactArrangementBooleanStage::Labeled)
-        && (attempt.selected_faces != 0 || attempt.selected_volume_regions != 0)
+        && (attempt.selected_faces != 0
+            || attempt.reversed_selected_faces != 0
+            || attempt.volume_oriented_selected_faces != 0
+            || attempt.label_oriented_selected_faces != 0
+            || attempt.selected_volume_regions != 0)
     {
         return false;
     }
     if !arrangement_attempt_stage_reaches(stage, ExactArrangementBooleanStage::Triangulated)
         && (attempt.output_vertices != 0 || attempt.output_triangles != 0)
     {
+        return false;
+    }
+    true
+}
+
+fn record_selected_orientation_counts(
+    attempt: &mut ExactArrangementBooleanAttempt,
+    selected: &ExactSelectedCellComplex,
+) {
+    attempt.selected_faces = selected.selected_faces.len();
+    attempt.selected_volume_regions = selected.selected_volume_regions.len();
+    attempt.reversed_selected_faces = selected
+        .selected_face_orientations
+        .iter()
+        .filter(|orientation| orientation.reverse)
+        .count();
+    attempt.volume_oriented_selected_faces = selected
+        .selected_face_orientations
+        .iter()
+        .filter(|orientation| orientation.from_volume_adjacency)
+        .count();
+    attempt.label_oriented_selected_faces = selected
+        .selected_face_orientations
+        .len()
+        .saturating_sub(attempt.volume_oriented_selected_faces);
+}
+
+fn arrangement_attempt_gate_statuses_match_stage(attempt: &ExactArrangementBooleanAttempt) -> bool {
+    if attempt.stage == ExactArrangementBooleanStage::NotAttempted {
+        return attempt.topology_assembly.is_none() && attempt.region_ownership.is_none();
+    }
+    if attempt.region_ownership.is_some() && attempt.topology_assembly.is_none() {
+        return false;
+    }
+    if !arrangement_attempt_gate_reports_match_statuses(attempt) {
+        return false;
+    }
+    match attempt.decline.as_ref() {
+        Some(ExactArrangementBooleanDecline::TopologyAssembly(status)) => {
+            if attempt.topology_assembly != Some(*status) || attempt.region_ownership.is_some() {
+                return false;
+            }
+        }
+        Some(ExactArrangementBooleanDecline::Labeling(_)) => {
+            if attempt.topology_assembly.is_none() || attempt.region_ownership.is_some() {
+                return false;
+            }
+        }
+        Some(ExactArrangementBooleanDecline::RegionOwnership(status)) => {
+            if attempt.region_ownership != Some(*status) {
+                return false;
+            }
+        }
+        Some(
+            ExactArrangementBooleanDecline::Selection(_)
+            | ExactArrangementBooleanDecline::Simplification(_)
+            | ExactArrangementBooleanDecline::Triangulation(_)
+            | ExactArrangementBooleanDecline::OutputValidation,
+        ) => {
+            if attempt.region_ownership.is_none() {
+                return false;
+            }
+        }
+        _ => {}
+    }
+    if attempt.decline.is_none()
+        && !matches!(attempt.operation, ExactBooleanOperation::SelectedRegions(_))
+        && let Some(status) = attempt.region_ownership
+        && !matches!(
+            status,
+            ExactRegionOwnershipStatus::VolumeResolved | ExactRegionOwnershipStatus::FaceResolved
+        )
+    {
+        return false;
+    }
+    if (attempt.stage == ExactArrangementBooleanStage::Selected
+        || attempt.stage == ExactArrangementBooleanStage::Simplified
+        || attempt.stage == ExactArrangementBooleanStage::Triangulated
+        || attempt.selected_faces != 0
+        || attempt.reversed_selected_faces != 0
+        || attempt.volume_oriented_selected_faces != 0
+        || attempt.label_oriented_selected_faces != 0
+        || attempt.selected_volume_regions != 0)
+        && attempt.region_ownership.is_none()
+    {
+        return false;
+    }
+    true
+}
+
+fn arrangement_attempt_gate_reports_match_statuses(
+    attempt: &ExactArrangementBooleanAttempt,
+) -> bool {
+    match (
+        &attempt.topology_assembly,
+        &attempt.topology_assembly_report,
+    ) {
+        (Some(status), Some(report)) if report.status == *status && report.validate().is_ok() => {}
+        (None, None) => {}
+        _ => return false,
+    }
+    match (&attempt.region_ownership, &attempt.region_ownership_report) {
+        (Some(status), Some(report)) if report.status == *status && report.validate().is_ok() => {}
+        (None, None) => {}
+        _ => return false,
+    }
+    if attempt.region_ownership_report.is_some() && attempt.topology_assembly_report.is_none() {
         return false;
     }
     true
@@ -845,6 +997,11 @@ pub struct ExactBooleanCertificationSet {
     pub planar_arrangement: ExactPlanarArrangementReport,
     /// Winding/inside-outside readiness for named volumetric output.
     pub winding_readiness: ExactWindingReadinessReport,
+    /// Retained graph/split/region bridge into arrangement topology.
+    pub topology_assembly: Option<ExactTopologyAssemblyReport>,
+    /// Arrangement/cell ownership evidence derived from exact face labels and
+    /// volume regions.
+    pub region_ownership: Option<ExactRegionOwnershipReport>,
     /// Volumetric boundary closure readiness, when meaningful for the request.
     pub volumetric_boundary_closure: Option<ExactVolumetricBoundaryClosureReport>,
     /// Arrangement/cell-complex materialization attempt.
@@ -859,11 +1016,31 @@ impl ExactBooleanCertificationSet {
     ) -> Result<Self, MeshError> {
         let graph = build_intersection_graph(left, right)?;
         validate_graph_source_handoff(&graph, left, right)?;
+        Self::from_graph(&graph, left, right, request)
+    }
+
+    pub(crate) fn from_graph(
+        graph: &ExactIntersectionGraph,
+        left: &ExactMesh,
+        right: &ExactMesh,
+        request: ExactBooleanRequest,
+    ) -> Result<Self, MeshError> {
+        Self::from_graph_and_regularized_arrangement(graph, left, right, request, None)
+    }
+
+    pub(crate) fn from_graph_and_regularized_arrangement(
+        graph: &ExactIntersectionGraph,
+        left: &ExactMesh,
+        right: &ExactMesh,
+        request: ExactBooleanRequest,
+        retained_regularized_arrangement: Option<&ExactArrangement>,
+    ) -> Result<Self, MeshError> {
+        validate_graph_source_handoff(graph, left, right)?;
         let trivial = ExactTrivialBooleanFacts::from_sources(left, right);
         let regularized_solid = ExactRegularizedSolidBooleanFacts::from_sources(left, right);
-        let refinement = refinement_report_from_graph(&graph, request.operation);
-        let boundary_touching = boundary_touching_report_from_graph(&graph, left, right)?;
-        let open_surface_disjoint = open_surface_disjoint_report_from_graph(&graph, left, right);
+        let refinement = refinement_report_from_graph(graph, request.operation);
+        let boundary_touching = boundary_touching_report_from_graph(graph, left, right)?;
+        let open_surface_disjoint = open_surface_disjoint_report_from_graph(graph, left, right);
         let identical = request.identical_mesh_report(left, right);
         let same_surface = request.same_surface_report(left, right);
         let closed_winding_left_in_right =
@@ -876,9 +1053,9 @@ impl ExactBooleanCertificationSet {
         let arrangement_cell_complex_shortcuts =
             ExactArrangementCellComplexShortcutFacts::from_sources(left, right);
         let planar_arrangement =
-            planar_arrangement_certification_from_graph(&graph, left, right, request.operation)?;
+            planar_arrangement_certification_from_graph(graph, left, right, request.operation)?;
         let winding_readiness = winding_readiness_report_with_boundary_policy_from_graph(
-            &graph,
+            graph,
             left,
             right,
             request.operation,
@@ -890,22 +1067,54 @@ impl ExactBooleanCertificationSet {
                 None
             } else {
                 Some(volumetric_boundary_closure_report_from_graph(
-                    &graph,
+                    graph,
                     left,
                     right,
                     request.operation,
                 )?)
             };
-        let arrangement_attempt =
+        let owned_regularized_arrangement;
+        let regularized_arrangement =
             if matches!(request.operation, ExactBooleanOperation::SelectedRegions(_)) {
                 None
+            } else if let Some(arrangement) = retained_regularized_arrangement {
+                Some(arrangement)
             } else {
-                Some(request.arrangement_attempt(
+                owned_regularized_arrangement = ExactArrangement::from_meshes_with_policy(
                     left,
                     right,
                     ExactRegularizationPolicy::REGULARIZED_SOLID,
-                )?)
+                )?;
+                Some(&owned_regularized_arrangement)
             };
+        let topology_assembly = regularized_arrangement.map(|arrangement| {
+            arrangement.topology_assembly_report_with_policy(
+                left,
+                right,
+                ExactRegularizationPolicy::REGULARIZED_SOLID,
+            )
+        });
+        let region_ownership = regularized_arrangement
+            .map(|arrangement| {
+                arrangement.region_ownership_report_with_policy(
+                    left,
+                    right,
+                    ExactRegularizationPolicy::REGULARIZED_SOLID,
+                )
+            })
+            .transpose()
+            .map_err(region_ownership_report_error)?;
+        let arrangement_attempt = regularized_arrangement
+            .map(|arrangement| {
+                arrangement_boolean_attempt_report_from_arrangement(
+                    left,
+                    right,
+                    request,
+                    ExactRegularizationPolicy::REGULARIZED_SOLID,
+                    arrangement,
+                )
+            })
+            .transpose()?;
         Ok(Self {
             trivial,
             regularized_solid,
@@ -922,6 +1131,8 @@ impl ExactBooleanCertificationSet {
             arrangement_cell_complex_shortcuts,
             planar_arrangement,
             winding_readiness,
+            topology_assembly,
+            region_ownership,
             volumetric_boundary_closure,
             arrangement_attempt,
         })
@@ -956,6 +1167,16 @@ impl ExactBooleanCertificationSet {
         self.arrangement_cell_complex_shortcuts.validate()?;
         self.planar_arrangement.validate()?;
         self.winding_readiness.validate()?;
+        if let Some(region_ownership) = self.region_ownership.as_ref() {
+            region_ownership
+                .validate()
+                .map_err(|_| ExactReportValidationError::StatusEvidenceMismatch)?;
+        }
+        if let Some(topology_assembly) = self.topology_assembly.as_ref() {
+            topology_assembly
+                .validate()
+                .map_err(|_| ExactReportValidationError::StatusEvidenceMismatch)?;
+        }
         if self.refinement.operation != request.operation
             || self.planar_arrangement.operation != request.operation
             || self.winding_readiness.operation != request.operation
@@ -969,10 +1190,20 @@ impl ExactBooleanCertificationSet {
             return Err(ExactReportValidationError::StatusEvidenceMismatch);
         }
         if matches!(request.operation, ExactBooleanOperation::SelectedRegions(_)) {
-            if self.volumetric_boundary_closure.is_some() || self.arrangement_attempt.is_some() {
+            if self.topology_assembly.is_some()
+                || self.region_ownership.is_some()
+                || self.volumetric_boundary_closure.is_some()
+                || self.arrangement_attempt.is_some()
+            {
                 return Err(ExactReportValidationError::StatusEvidenceMismatch);
             }
             return Ok(());
+        }
+        if self.region_ownership.is_none() {
+            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+        }
+        if self.topology_assembly.is_none() {
+            return Err(ExactReportValidationError::StatusEvidenceMismatch);
         }
         if self.refinement.graph_had_unknowns != self.planar_arrangement.graph_had_unknowns
             || self.refinement.retained_face_pairs != self.planar_arrangement.retained_face_pairs
@@ -1018,6 +1249,30 @@ impl ExactBooleanCertificationSet {
         }
     }
 
+    fn validate_against_sources_with_graph_and_regularized_arrangement(
+        &self,
+        graph: &ExactIntersectionGraph,
+        left: &ExactMesh,
+        right: &ExactMesh,
+        request: ExactBooleanRequest,
+        retained_regularized_arrangement: Option<&ExactArrangement>,
+    ) -> Result<(), ExactReportValidationError> {
+        self.validate_for_request(request)?;
+        let replay = Self::from_graph_and_regularized_arrangement(
+            graph,
+            left,
+            right,
+            request,
+            retained_regularized_arrangement,
+        )
+        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+        if self == &replay {
+            Ok(())
+        } else {
+            Err(ExactReportValidationError::SourceReplayMismatch)
+        }
+    }
+
     /// Classify whether this retained certification bundle is fresh for the
     /// source meshes and request policy.
     pub fn freshness_against_sources(
@@ -1031,6 +1286,14 @@ impl ExactBooleanCertificationSet {
             Err(error) => error.into(),
         }
     }
+}
+
+fn region_ownership_report_error(blocker: ExactArrangementBlocker) -> MeshError {
+    MeshError::one(MeshDiagnostic::new(
+        Severity::Error,
+        DiagnosticKind::UnsupportedExactOperation,
+        format!("exact region ownership report failed: {blocker:?}"),
+    ))
 }
 
 /// Replayable source-shape facts for exact boolean shortcuts that do not need
@@ -1421,6 +1684,46 @@ impl ExactBooleanEvaluation {
         Ok(())
     }
 
+    pub(crate) fn validate_against_sources_with_artifacts(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+        graph: &ExactIntersectionGraph,
+        retained_regularized_arrangement: Option<&ExactArrangement>,
+    ) -> Result<(), ExactReportValidationError> {
+        self.validate()?;
+        self.preflight
+            .validate_against_sources_with_boundary_policy(
+                left,
+                right,
+                self.request.validation,
+                self.request.boundary_policy,
+            )?;
+        self.certifications
+            .validate_against_sources_with_graph_and_regularized_arrangement(
+                graph,
+                left,
+                right,
+                self.request,
+                retained_regularized_arrangement,
+            )?;
+        if let Some(result) = self.result.as_ref() {
+            validate_boolean_result_against_sources_with_artifacts(
+                result,
+                graph,
+                retained_regularized_arrangement,
+                left,
+                right,
+                self.request.operation,
+                self.request.validation,
+                self.request.boundary_policy,
+            )?;
+        } else if self.preflight.is_certified() {
+            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+        }
+        Ok(())
+    }
+
     /// Classify whether this retained evaluation is fresh for the source
     /// meshes under its original request policy.
     pub fn freshness_against_sources(
@@ -1464,17 +1767,19 @@ fn exact_boolean_preflight_matches_certifications(
                 )
         }
         ExactBooleanSupport::CertifiedArrangementCellComplex => {
-            exact_boolean_preflight_matches_direct_arrangement_cell_complex_shortcut(
-                preflight,
-                certifications,
-            ) || (winding_readiness_status_materializes_arrangement_cell_complex(status)
-                && exact_boolean_arrangement_attempt_materialized(
-                    &certifications.arrangement_attempt,
-                )
-                && exact_boolean_preflight_matches_arrangement_cell_complex(
+            exact_boolean_region_ownership_resolved(certifications)
+                && exact_boolean_topology_assembly_complete(certifications)
+                && (exact_boolean_preflight_matches_direct_arrangement_cell_complex_shortcut(
                     preflight,
-                    &certifications.winding_readiness,
-                ))
+                    certifications,
+                ) || (winding_readiness_status_materializes_arrangement_cell_complex(status)
+                    && exact_boolean_arrangement_attempt_materialized(
+                        &certifications.arrangement_attempt,
+                    )
+                    && exact_boolean_preflight_matches_arrangement_cell_complex(
+                        preflight,
+                        &certifications.winding_readiness,
+                    )))
         }
         ExactBooleanSupport::CertifiedEmptyOperand => {
             *status == ExactWindingReadinessStatus::EmptyOperandAlreadyMaterialized
@@ -1742,6 +2047,20 @@ fn exact_boolean_arrangement_attempt_materialized(
     })
 }
 
+fn exact_boolean_region_ownership_resolved(certifications: &ExactBooleanCertificationSet) -> bool {
+    certifications
+        .region_ownership
+        .as_ref()
+        .is_some_and(|ownership| ownership.validate().is_ok() && ownership.is_resolved())
+}
+
+fn exact_boolean_topology_assembly_complete(certifications: &ExactBooleanCertificationSet) -> bool {
+    certifications
+        .topology_assembly
+        .as_ref()
+        .is_some_and(|topology| topology.validate().is_ok() && topology.is_complete())
+}
+
 fn exact_boolean_preflight_matches_direct_arrangement_cell_complex_shortcut(
     preflight: &ExactBooleanPreflight,
     certifications: &ExactBooleanCertificationSet,
@@ -1968,18 +2287,24 @@ fn exact_boolean_result_matches_certifications(
 ) -> bool {
     match result.kind {
         ExactBooleanResultKind::ArrangementCellComplexMaterialized { .. } => {
-            exact_boolean_arrangement_attempt_materialized(&certifications.arrangement_attempt)
+            exact_boolean_region_ownership_resolved(certifications)
+                && exact_boolean_topology_assembly_complete(certifications)
+                && exact_boolean_arrangement_attempt_materialized(
+                    &certifications.arrangement_attempt,
+                )
         }
         ExactBooleanResultKind::CertifiedShortcut {
             shortcut: ExactBooleanShortcutKind::ArrangementCellComplex,
             operation,
         } => {
-            certifications
-                .arrangement_cell_complex_shortcuts
-                .supports(operation)
-                || exact_boolean_arrangement_attempt_materialized(
-                    &certifications.arrangement_attempt,
-                )
+            exact_boolean_region_ownership_resolved(certifications)
+                && exact_boolean_topology_assembly_complete(certifications)
+                && (certifications
+                    .arrangement_cell_complex_shortcuts
+                    .supports(operation)
+                    || exact_boolean_arrangement_attempt_materialized(
+                        &certifications.arrangement_attempt,
+                    ))
         }
         _ => true,
     }
@@ -2006,20 +2331,105 @@ fn evaluate_boolean_exact_request(
     request: ExactBooleanRequest,
 ) -> Result<ExactBooleanEvaluation, MeshError> {
     let preflight = request.preflight(left, right)?;
-    let certifications = ExactBooleanCertificationSet::from_sources(left, right, request)?;
+    let graph = build_intersection_graph(left, right)?;
+    evaluate_boolean_exact_request_with_artifacts(left, right, request, &preflight, &graph)
+}
+
+pub(crate) fn evaluate_boolean_exact_request_with_artifacts(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    request: ExactBooleanRequest,
+    preflight: &ExactBooleanPreflight,
+    graph: &ExactIntersectionGraph,
+) -> Result<ExactBooleanEvaluation, MeshError> {
+    evaluate_boolean_exact_request_with_artifacts_and_arrangement(
+        left, right, request, preflight, graph, None,
+    )
+}
+
+pub(crate) fn evaluate_boolean_exact_request_with_artifacts_and_arrangement(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    request: ExactBooleanRequest,
+    preflight: &ExactBooleanPreflight,
+    graph: &ExactIntersectionGraph,
+    retained_regularized_arrangement: Option<&ExactArrangement>,
+) -> Result<ExactBooleanEvaluation, MeshError> {
+    evaluate_boolean_exact_request_with_artifacts_and_arrangement_replay(
+        left,
+        right,
+        request,
+        preflight,
+        graph,
+        retained_regularized_arrangement,
+        true,
+    )
+}
+
+pub(crate) fn evaluate_boolean_exact_request_with_artifacts_and_arrangement_replay(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    request: ExactBooleanRequest,
+    preflight: &ExactBooleanPreflight,
+    graph: &ExactIntersectionGraph,
+    retained_regularized_arrangement: Option<&ExactArrangement>,
+    replay_sources: bool,
+) -> Result<ExactBooleanEvaluation, MeshError> {
+    if preflight.operation != request.operation {
+        return Err(MeshError::one(MeshDiagnostic::new(
+            Severity::Error,
+            DiagnosticKind::UnsupportedExactOperation,
+            "exact boolean evaluation preflight operation does not match request",
+        )));
+    }
+    preflight.validate().map_err(|error| {
+        MeshError::one(MeshDiagnostic::new(
+            Severity::Error,
+            DiagnosticKind::UnsupportedExactOperation,
+            format!("exact boolean evaluation preflight validation failed: {error:?}"),
+        ))
+    })?;
+    validate_graph_source_handoff(graph, left, right)?;
+    let owned_regularized_arrangement;
+    let regularized_arrangement =
+        if matches!(request.operation, ExactBooleanOperation::SelectedRegions(_)) {
+            None
+        } else if let Some(arrangement) = retained_regularized_arrangement {
+            Some(arrangement)
+        } else {
+            owned_regularized_arrangement = ExactArrangement::from_meshes_with_policy(
+                left,
+                right,
+                ExactRegularizationPolicy::REGULARIZED_SOLID,
+            )?;
+            Some(&owned_regularized_arrangement)
+        };
+    let certifications = ExactBooleanCertificationSet::from_graph_and_regularized_arrangement(
+        graph,
+        left,
+        right,
+        request,
+        regularized_arrangement,
+    )?;
     let result = if preflight.is_certified() {
-        Some(materialize_certified_boolean_support(
+        let materialization_arrangement = if replay_sources {
+            retained_regularized_arrangement
+        } else {
+            regularized_arrangement
+        };
+        Some(materialize_certified_boolean_support_with_arrangement(
             left,
             right,
             request,
             preflight.support,
+            materialization_arrangement,
         )?)
     } else {
         None
     };
     let evaluation = ExactBooleanEvaluation {
         request,
-        preflight,
+        preflight: preflight.clone(),
         certifications,
         result,
     };
@@ -2030,15 +2440,17 @@ fn evaluate_boolean_exact_request(
             format!("exact boolean evaluation local validation failed: {error:?}"),
         ))
     })?;
-    evaluation
-        .validate_against_sources(left, right)
-        .map_err(|error| {
-            MeshError::one(MeshDiagnostic::new(
-                Severity::Error,
-                DiagnosticKind::UnsupportedExactOperation,
-                format!("exact boolean evaluation source replay failed: {error:?}"),
-            ))
-        })?;
+    if replay_sources {
+        evaluation
+            .validate_against_sources(left, right)
+            .map_err(|error| {
+                MeshError::one(MeshDiagnostic::new(
+                    Severity::Error,
+                    DiagnosticKind::UnsupportedExactOperation,
+                    format!("exact boolean evaluation source replay failed: {error:?}"),
+                ))
+            })?;
+    }
     Ok(evaluation)
 }
 
@@ -2050,11 +2462,12 @@ fn certified_boolean_support_did_not_materialize_error(support: ExactBooleanSupp
     ))
 }
 
-fn materialize_certified_boolean_support(
+pub(crate) fn materialize_certified_boolean_support_with_arrangement(
     left: &ExactMesh,
     right: &ExactMesh,
     request: ExactBooleanRequest,
     support: ExactBooleanSupport,
+    retained_regularized_arrangement: Option<&ExactArrangement>,
 ) -> Result<ExactBooleanResult, MeshError> {
     let operation = request.operation;
     let validation = request.validation;
@@ -2068,7 +2481,12 @@ fn materialize_certified_boolean_support(
             )?)
         }
         ExactBooleanSupport::CertifiedBoundaryPolicyShortcut => {
-            ExactBooleanRequest::with_boundary_policy(operation, validation, request.boundary_policy,).materialize_boundary_touching_policy(left, right)?
+            ExactBooleanRequest::with_boundary_policy(
+                operation,
+                validation,
+                request.boundary_policy,
+            )
+            .materialize_boundary_touching_policy(left, right)?
         }
         ExactBooleanSupport::CertifiedOpenSurfaceArrangementUnion
         | ExactBooleanSupport::CertifiedOpenSurfaceArrangementIntersection
@@ -2076,8 +2494,12 @@ fn materialize_certified_boolean_support(
             materialize_open_surface_arrangement(left, right, operation, validation)?
         }
         ExactBooleanSupport::CertifiedArrangementCellComplex => {
-            materialize_certified_arrangement_cell_complex_support(
-                left, right, operation, validation,
+            materialize_certified_arrangement_cell_complex_support_with_arrangement(
+                left,
+                right,
+                operation,
+                validation,
+                retained_regularized_arrangement,
             )?
         }
         ExactBooleanSupport::CertifiedEmptyOperand => {
@@ -2143,12 +2565,27 @@ fn materialize_certified_boolean_support(
     result.ok_or_else(|| certified_boolean_support_did_not_materialize_error(support))
 }
 
-fn materialize_certified_arrangement_cell_complex_support(
+fn materialize_certified_arrangement_cell_complex_support_with_arrangement(
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
+    retained_regularized_arrangement: Option<&ExactArrangement>,
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
+    if let Some(arrangement) = retained_regularized_arrangement {
+        let outcome = run_arrangement_cell_complex_attempt_from_arrangement(
+            arrangement,
+            left,
+            right,
+            operation,
+            ExactRegularizationPolicy::REGULARIZED_SOLID,
+            Some(validation),
+            true,
+        )?;
+        if let ArrangementCellComplexOutcome::Materialized(result, _) = outcome {
+            return Ok(Some(*result));
+        }
+    }
     if let Some(result) =
         boolean_arrangement_orthogonal_solid_cell_recovery(left, right, operation, validation)?
     {
@@ -2242,6 +2679,8 @@ fn materialize_selected_region_result_from_graph(
         triangulations,
         assembly,
         volumetric_classifications: Vec::new(),
+        topology_assembly_report: None,
+        region_ownership_report: None,
         mesh,
     };
     result.validate().map_err(|error| {
@@ -4112,12 +4551,18 @@ impl ArrangementCellComplexOutcome {
 
 fn materialized_arrangement_attempt_outcome(
     attempt: &mut ExactArrangementBooleanAttempt,
-    result: ExactBooleanResult,
+    mut result: ExactBooleanResult,
     clear_arrangement_blockers: bool,
 ) -> ArrangementCellComplexOutcome {
     attempt.stage = ExactArrangementBooleanStage::Materialized;
     attempt.decline = None;
     attempt.materialized_shortcut = Some(ExactBooleanShortcutKind::ArrangementCellComplex);
+    if result.topology_assembly_report.is_none() {
+        result.topology_assembly_report = attempt.topology_assembly_report.clone();
+    }
+    if result.region_ownership_report.is_none() {
+        result.region_ownership_report = attempt.region_ownership_report.clone();
+    }
     if clear_arrangement_blockers {
         attempt.arrangement_blockers = 0;
     }
@@ -4153,19 +4598,43 @@ fn arrangement_boolean_attempt_report(
     request: ExactBooleanRequest,
     policy: ExactRegularizationPolicy,
 ) -> Result<ExactArrangementBooleanAttempt, MeshError> {
-    Ok(
-        match run_arrangement_cell_complex_attempt(
-            left,
-            right,
-            request.operation,
-            policy,
-            Some(request.validation),
-            true,
-        )? {
-            ArrangementCellComplexOutcome::Materialized(_, attempt)
-            | ArrangementCellComplexOutcome::Declined(attempt) => attempt,
-        },
-    )
+    let outcome = run_arrangement_cell_complex_attempt(
+        left,
+        right,
+        request.operation,
+        policy,
+        Some(request.validation),
+        true,
+    )?;
+    Ok(arrangement_attempt_from_outcome(outcome))
+}
+
+pub(crate) fn arrangement_boolean_attempt_report_from_arrangement(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    request: ExactBooleanRequest,
+    policy: ExactRegularizationPolicy,
+    arrangement: &ExactArrangement,
+) -> Result<ExactArrangementBooleanAttempt, MeshError> {
+    let outcome = run_arrangement_cell_complex_attempt_from_arrangement(
+        arrangement,
+        left,
+        right,
+        request.operation,
+        policy,
+        Some(request.validation),
+        true,
+    )?;
+    Ok(arrangement_attempt_from_outcome(outcome))
+}
+
+fn arrangement_attempt_from_outcome(
+    outcome: ArrangementCellComplexOutcome,
+) -> ExactArrangementBooleanAttempt {
+    match outcome {
+        ArrangementCellComplexOutcome::Materialized(_, attempt)
+        | ArrangementCellComplexOutcome::Declined(attempt) => attempt,
+    }
 }
 
 fn boolean_arrangement_cell_complex_meshes(
@@ -4354,6 +4823,71 @@ fn certified_arrangement_regularized_boundary_contact_from_graph(
     Ok(true)
 }
 
+fn arrangement_pre_cell_complex_recovery_outcome_if_available(
+    validation: Option<ValidationPolicy>,
+    attempt: &mut ExactArrangementBooleanAttempt,
+    graph: &super::graph::ExactIntersectionGraph,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+) -> Result<Option<ArrangementCellComplexOutcome>, MeshError> {
+    if let Some(validation) = validation
+        && let Some(outcome) = arrangement_orthogonal_solid_cell_recovery_outcome(
+            attempt, left, right, operation, validation,
+        )?
+    {
+        return Ok(Some(outcome));
+    }
+
+    if let Some(validation) = validation
+        && let Some(result) =
+            boolean_arrangement_adjacency_union_completion(left, right, operation, validation)?
+    {
+        return Ok(Some(materialized_arrangement_attempt_outcome(
+            attempt, result, false,
+        )));
+    }
+
+    if let Some(validation) = validation
+        && let Some(result) = boolean_arrangement_regularized_boundary_contact_from_graph(
+            graph, left, right, operation, validation,
+        )?
+    {
+        return Ok(Some(materialized_arrangement_attempt_outcome(
+            attempt, result, false,
+        )));
+    }
+
+    if !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
+        && let Some(validation) = validation
+    {
+        match boolean_coplanar_mesh_overlay_optional(left, right, operation, validation) {
+            Ok(Some(result)) => {
+                return Ok(Some(materialized_arrangement_attempt_outcome(
+                    attempt, result, false,
+                )));
+            }
+            Ok(None) => {}
+            Err(_) => {
+                let output_counts = coplanar_mesh_overlay_candidate_counts(left, right, operation);
+                return Ok(Some(
+                    declined_output_validation_attempt_outcome_with_counts(attempt, output_counts),
+                ));
+            }
+        }
+    }
+
+    if let Some(validation) = validation
+        && let Some(outcome) = arrangement_open_surface_recovery_outcome(
+            attempt, graph, left, right, operation, validation,
+        )?
+    {
+        return Ok(Some(outcome));
+    }
+
+    Ok(None)
+}
+
 fn run_arrangement_cell_complex_attempt(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -4363,6 +4897,49 @@ fn run_arrangement_cell_complex_attempt(
     regularize_unregularized_sheet_complex: bool,
 ) -> Result<ArrangementCellComplexOutcome, MeshError> {
     let arrangement = ExactArrangement::from_meshes_with_policy(left, right, policy)?;
+    run_arrangement_cell_complex_attempt_from_arrangement_with_recovery_timing(
+        &arrangement,
+        left,
+        right,
+        operation,
+        policy,
+        validation,
+        regularize_unregularized_sheet_complex,
+        false,
+    )
+}
+
+fn run_arrangement_cell_complex_attempt_from_arrangement(
+    arrangement: &ExactArrangement,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    policy: ExactRegularizationPolicy,
+    validation: Option<ValidationPolicy>,
+    regularize_unregularized_sheet_complex: bool,
+) -> Result<ArrangementCellComplexOutcome, MeshError> {
+    run_arrangement_cell_complex_attempt_from_arrangement_with_recovery_timing(
+        arrangement,
+        left,
+        right,
+        operation,
+        policy,
+        validation,
+        regularize_unregularized_sheet_complex,
+        false,
+    )
+}
+
+fn run_arrangement_cell_complex_attempt_from_arrangement_with_recovery_timing(
+    arrangement: &ExactArrangement,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    policy: ExactRegularizationPolicy,
+    validation: Option<ValidationPolicy>,
+    regularize_unregularized_sheet_complex: bool,
+    try_recoveries_before_cell_complex: bool,
+) -> Result<ArrangementCellComplexOutcome, MeshError> {
     let mut attempt = ExactArrangementBooleanAttempt {
         operation,
         policy,
@@ -4385,15 +4962,22 @@ fn run_arrangement_cell_complex_attempt(
             .as_ref()
             .map_or(0, |adjacencies| adjacencies.len()),
         lower_dimensional_artifacts: arrangement.lower_dimensional_artifacts.len(),
+        topology_assembly: None,
+        topology_assembly_report: None,
+        region_ownership: None,
+        region_ownership_report: None,
         selected_faces: 0,
+        reversed_selected_faces: 0,
+        volume_oriented_selected_faces: 0,
+        label_oriented_selected_faces: 0,
         selected_volume_regions: 0,
         output_vertices: 0,
         output_triangles: 0,
     };
     let regularized_sheet_recovery_surface =
-        arrangement_has_regularized_closed_sheet_recovery_surface(&arrangement, left, right);
+        arrangement_has_regularized_closed_sheet_recovery_surface(arrangement, left, right);
     let volume_resolves_region_classification =
-        arrangement_region_classification_blockers_are_volume_resolved(&arrangement);
+        arrangement_region_classification_blockers_are_volume_resolved(arrangement);
     let selected_regions_ignore_unresolved_classification =
         selected_region_selection_ignores_opposite_classification(operation)
             && arrangement
@@ -4401,75 +4985,14 @@ fn run_arrangement_cell_complex_attempt(
                 .iter()
                 .all(|blocker| *blocker == ExactArrangementBlocker::UnresolvedRegionClassification);
 
-    if let Some(validation) = validation
-        && let Some(outcome) = arrangement_orthogonal_solid_cell_recovery_outcome(
-            &mut attempt,
-            left,
-            right,
-            operation,
+    if try_recoveries_before_cell_complex
+        && let Some(outcome) = arrangement_pre_cell_complex_recovery_outcome_if_available(
             validation,
-        )?
-    {
-        return Ok(outcome);
-    }
-
-    if let Some(validation) = validation
-        && let Some(result) =
-            boolean_arrangement_adjacency_union_completion(left, right, operation, validation)?
-    {
-        return Ok(materialized_arrangement_attempt_outcome(
-            &mut attempt,
-            result,
-            false,
-        ));
-    }
-
-    if let Some(validation) = validation
-        && let Some(result) = boolean_arrangement_regularized_boundary_contact_from_graph(
-            &arrangement.graph,
-            left,
-            right,
-            operation,
-            validation,
-        )?
-    {
-        return Ok(materialized_arrangement_attempt_outcome(
-            &mut attempt,
-            result,
-            false,
-        ));
-    }
-
-    if !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
-        && let Some(validation) = validation
-    {
-        match boolean_coplanar_mesh_overlay_optional(left, right, operation, validation) {
-            Ok(Some(result)) => {
-                return Ok(materialized_arrangement_attempt_outcome(
-                    &mut attempt,
-                    result,
-                    false,
-                ));
-            }
-            Ok(None) => {}
-            Err(_) => {
-                let output_counts = coplanar_mesh_overlay_candidate_counts(left, right, operation);
-                return Ok(declined_output_validation_attempt_outcome_with_counts(
-                    &mut attempt,
-                    output_counts,
-                ));
-            }
-        }
-    }
-
-    if let Some(validation) = validation
-        && let Some(outcome) = arrangement_open_surface_recovery_outcome(
             &mut attempt,
             &arrangement.graph,
             left,
             right,
             operation,
-            validation,
         )?
     {
         return Ok(outcome);
@@ -4484,7 +5007,7 @@ fn run_arrangement_cell_complex_attempt(
             right,
             operation,
             validation,
-            &arrangement,
+            arrangement,
         ) {
             Ok(Some(result)) => {
                 return Ok(materialized_arrangement_attempt_outcome(
@@ -4549,6 +5072,28 @@ fn run_arrangement_cell_complex_attempt(
         return Ok(ArrangementCellComplexOutcome::Declined(attempt));
     }
 
+    let topology_report = arrangement.topology_assembly_report_with_policy(left, right, policy);
+    attempt.topology_assembly = Some(topology_report.status);
+    attempt.topology_assembly_report = Some(topology_report.clone());
+    if topology_report.validate().is_err() || !topology_report.is_complete() {
+        if let Some(outcome) = arrangement_cell_complex_recovery_outcome_if_available(
+            regularize_unregularized_sheet_complex,
+            regularized_sheet_recovery_surface,
+            validation,
+            &mut attempt,
+            &arrangement.graph,
+            left,
+            right,
+            operation,
+        )? {
+            return Ok(outcome);
+        }
+        attempt.decline = Some(ExactArrangementBooleanDecline::TopologyAssembly(
+            topology_report.status,
+        ));
+        return Ok(ArrangementCellComplexOutcome::Declined(attempt));
+    }
+
     let labeling_policy = if volume_resolves_region_classification
         || selected_regions_ignore_unresolved_classification
     {
@@ -4579,15 +5124,44 @@ fn run_arrangement_cell_complex_attempt(
         }
     };
     attempt.stage = ExactArrangementBooleanStage::Labeled;
-    let selected_result = if volume_resolves_region_classification {
+    let ownership_report = labeled.region_ownership_report(left, right, labeling_policy);
+    attempt.region_ownership = Some(ownership_report.status);
+    attempt.region_ownership_report = Some(ownership_report.clone());
+    if ownership_report.validate().is_err() {
+        attempt.decline = Some(ExactArrangementBooleanDecline::RegionOwnership(
+            ownership_report.status,
+        ));
+        return Ok(ArrangementCellComplexOutcome::Declined(attempt));
+    }
+    let ownership_resolves_named_selection = ownership_report.is_resolved()
+        || matches!(operation, ExactBooleanOperation::SelectedRegions(_));
+    if !ownership_resolves_named_selection {
+        if let Some(outcome) = arrangement_cell_complex_recovery_outcome_if_available(
+            regularize_unregularized_sheet_complex,
+            regularized_sheet_recovery_surface,
+            validation,
+            &mut attempt,
+            &arrangement.graph,
+            left,
+            right,
+            operation,
+        )? {
+            return Ok(outcome);
+        }
+        attempt.decline = Some(ExactArrangementBooleanDecline::RegionOwnership(
+            ownership_report.status,
+        ));
+        return Ok(ArrangementCellComplexOutcome::Declined(attempt));
+    }
+    let selected_result = if ownership_report.status == ExactRegionOwnershipStatus::VolumeResolved {
         labeled.select_volume_resolved_with_policy(operation, policy)
     } else {
         labeled.select_with_policy(operation, policy)
     };
-    let selected = match selected_result {
+    let mut selected = match selected_result {
         Ok(selected) if selected.blockers.is_empty() => selected,
         Ok(selected) => {
-            attempt.selected_faces = selected.selected_faces.len();
+            record_selected_orientation_counts(&mut attempt, &selected);
             if let Some(outcome) = arrangement_cell_complex_recovery_outcome_if_available(
                 regularize_unregularized_sheet_complex,
                 regularized_sheet_recovery_surface,
@@ -4622,9 +5196,10 @@ fn run_arrangement_cell_complex_attempt(
             return Ok(ArrangementCellComplexOutcome::Declined(attempt));
         }
     };
+    selected.topology_assembly_report = Some(topology_report.clone());
+    selected.region_ownership_report = Some(ownership_report.clone());
     attempt.stage = ExactArrangementBooleanStage::Selected;
-    attempt.selected_faces = selected.selected_faces.len();
-    attempt.selected_volume_regions = selected.selected_volume_regions.len();
+    record_selected_orientation_counts(&mut attempt, &selected);
     let simplified = match selected.simplify_exact_with_policy(policy) {
         Ok(simplified) if simplified.blockers.is_empty() => simplified,
         Ok(simplified) => {
@@ -5744,6 +6319,11 @@ fn arrangement_cell_complex_recovery_outcome_if_available(
     let Some(validation) = validation else {
         return Ok(None);
     };
+    if let Some(outcome) = arrangement_open_surface_recovery_outcome(
+        attempt, graph, left, right, operation, validation,
+    )? {
+        return Ok(Some(outcome));
+    }
     if let Some(outcome) = arrangement_orthogonal_solid_cell_recovery_outcome(
         attempt, left, right, operation, validation,
     )? {
@@ -6222,7 +6802,11 @@ fn boolean_arrangement_volumetric_split_cell_recovery_from_graph(
                 validation,
             )?;
             let result = volumetric_arrangement_cell_complex_result(operation, materialized);
-            if result.validate().is_err() || result.validate_against_sources(left, right).is_err() {
+            if validate_volumetric_arrangement_result_against_graph(
+                &result, graph, None, left, right, operation, validation,
+            )
+            .is_err()
+            {
                 return Ok(None);
             }
             return Ok(Some(result));
@@ -6254,10 +6838,85 @@ fn boolean_arrangement_volumetric_split_cell_recovery_from_graph(
         return Ok(None);
     };
     let result = volumetric_arrangement_cell_complex_result(operation, materialized);
-    if result.validate().is_err() || result.validate_against_sources(left, right).is_err() {
+    if validate_volumetric_arrangement_result_against_graph(
+        &result, graph, None, left, right, operation, validation,
+    )
+    .is_err()
+    {
         return Ok(None);
     }
     Ok(Some(result))
+}
+
+fn validate_volumetric_arrangement_result_against_graph(
+    result: &ExactBooleanResult,
+    graph: &super::graph::ExactIntersectionGraph,
+    retained_regularized_arrangement: Option<&ExactArrangement>,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+) -> Result<(), ExactReportValidationError> {
+    result.validate()?;
+    if let Some(arrangement) = retained_regularized_arrangement {
+        result.validate_arrangement_cell_complex_gate_reports_against_arrangement(
+            arrangement,
+            left,
+            right,
+        )?;
+    } else {
+        result.validate_arrangement_cell_complex_gate_reports_against_sources(left, right)?;
+    }
+    if result.mesh.validation_policy() != validation {
+        return Err(ExactReportValidationError::StatusEvidenceMismatch);
+    }
+    let Some(materialized) = materialize_volumetric_winding_region_plan_from_graph(
+        graph, left, right, operation, validation,
+    )
+    .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
+    else {
+        return Err(ExactReportValidationError::SourceReplayMismatch);
+    };
+    let mut replay = volumetric_arrangement_cell_complex_result(operation, materialized);
+    replay.topology_assembly_report = result.topology_assembly_report.clone();
+    replay.region_ownership_report = result.region_ownership_report.clone();
+    replay.validate()?;
+    if result == &replay {
+        Ok(())
+    } else {
+        Err(ExactReportValidationError::SourceReplayMismatch)
+    }
+}
+
+pub(crate) fn validate_boolean_result_against_sources_with_artifacts(
+    result: &ExactBooleanResult,
+    graph: &super::graph::ExactIntersectionGraph,
+    retained_regularized_arrangement: Option<&ExactArrangement>,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+    boundary_policy: ExactBoundaryBooleanPolicy,
+) -> Result<(), ExactReportValidationError> {
+    if let ExactBooleanResultKind::ArrangementCellComplexMaterialized {
+        operation: result_operation,
+    } = result.kind
+        && result_operation == operation
+        && !result.volumetric_classifications.is_empty()
+        && validate_volumetric_arrangement_result_against_graph(
+            result,
+            graph,
+            retained_regularized_arrangement,
+            left,
+            right,
+            operation,
+            validation,
+        )
+        .is_ok()
+    {
+        return Ok(());
+    }
+    result.validate_operation_against_sources(left, right, operation, validation, boundary_policy)
 }
 
 fn volumetric_winding_open_boundary_candidate_counts(
@@ -6303,6 +6962,8 @@ fn volumetric_arrangement_cell_complex_result(
         triangulations: materialized.triangulations,
         assembly: materialized.assembly,
         volumetric_classifications: materialized.volumetric_classifications,
+        topology_assembly_report: None,
+        region_ownership_report: None,
         mesh: materialized.mesh,
     }
 }
@@ -8437,6 +9098,8 @@ fn materialize_open_surface_arrangement_plan(
         triangulations,
         assembly,
         volumetric_classifications: Vec::new(),
+        topology_assembly_report: None,
+        region_ownership_report: None,
         mesh,
     };
     result.validate().map_err(|error| {
@@ -10604,15 +11267,21 @@ fn meshes_are_certified_bounds_disjoint(left: &ExactMesh, right: &ExactMesh) -> 
 }
 
 fn meshes_are_certified_identical(left: &ExactMesh, right: &ExactMesh) -> bool {
-    ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::ALLOW_BOUNDARY)
-        .identical_mesh_report(left, right)
-        .is_certified()
+    ExactBooleanRequest::new(
+        ExactBooleanOperation::Union,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .identical_mesh_report(left, right)
+    .is_certified()
 }
 
 fn meshes_are_certified_same_surface(left: &ExactMesh, right: &ExactMesh) -> bool {
-    ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::ALLOW_BOUNDARY)
-        .same_surface_report(left, right)
-        .is_certified()
+    ExactBooleanRequest::new(
+        ExactBooleanOperation::Union,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .same_surface_report(left, right)
+    .is_certified()
 }
 
 /// Certify whether two meshes represent the same triangle surface.
@@ -11233,6 +11902,8 @@ fn certified_shortcut_result(
             triangles: Vec::new(),
         },
         volumetric_classifications: Vec::new(),
+        topology_assembly_report: None,
+        region_ownership_report: None,
         mesh,
     }
 }
@@ -11251,6 +11922,8 @@ fn boundary_policy_shortcut_result(
             triangles: Vec::new(),
         },
         volumetric_classifications: Vec::new(),
+        topology_assembly_report: None,
+        region_ownership_report: None,
         mesh,
     }
 }
@@ -11291,6 +11964,23 @@ mod tests {
             attempt.freshness_against_sources(left, right),
             ExactReportFreshness::Current,
             "{attempt:?}"
+        );
+    }
+
+    fn assert_result_retains_attempt_gate_reports(
+        result: &ExactBooleanResult,
+        attempt: &ExactArrangementBooleanAttempt,
+    ) {
+        result.validate().unwrap();
+        assert!(result.topology_assembly_report.is_some(), "{result:?}");
+        assert!(result.region_ownership_report.is_some(), "{result:?}");
+        assert_eq!(
+            result.topology_assembly_report,
+            attempt.topology_assembly_report
+        );
+        assert_eq!(
+            result.region_ownership_report,
+            attempt.region_ownership_report
         );
     }
 
@@ -11517,9 +12207,13 @@ mod tests {
             canonical.facts().mesh.boundary_edges
         );
 
-        let readiness =
-            ExactBooleanRequest::with_boundary_policy(ExactBooleanOperation::Difference, ValidationPolicy::ALLOW_BOUNDARY, ExactBoundaryBooleanPolicy::Reject).winding_readiness(&left, &right)
-                .unwrap();
+        let readiness = ExactBooleanRequest::with_boundary_policy(
+            ExactBooleanOperation::Difference,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            ExactBoundaryBooleanPolicy::Reject,
+        )
+        .winding_readiness(&left, &right)
+        .unwrap();
         assert_eq!(
             readiness.status,
             ExactWindingReadinessStatus::PlanarArrangementAlreadyMaterialized,
@@ -11547,7 +12241,12 @@ mod tests {
             ValidationPolicy::ALLOW_BOUNDARY,
         )
         .unwrap();
-        let readiness = ExactBooleanRequest::with_boundary_policy(ExactBooleanOperation::SelectedRegions(ExactRegionSelection::KeepAll), ValidationPolicy::ALLOW_BOUNDARY, ExactBoundaryBooleanPolicy::Reject).winding_readiness(&left, &right)
+        let readiness = ExactBooleanRequest::with_boundary_policy(
+            ExactBooleanOperation::SelectedRegions(ExactRegionSelection::KeepAll),
+            ValidationPolicy::ALLOW_BOUNDARY,
+            ExactBoundaryBooleanPolicy::Reject,
+        )
+        .winding_readiness(&left, &right)
         .unwrap();
         assert_eq!(
             readiness.status,
@@ -11575,7 +12274,12 @@ mod tests {
             ValidationPolicy::ALLOW_BOUNDARY,
         )
         .unwrap();
-        let disjoint_readiness = ExactBooleanRequest::with_boundary_policy(ExactBooleanOperation::SelectedRegions(ExactRegionSelection::KeepAll), ValidationPolicy::ALLOW_BOUNDARY, ExactBoundaryBooleanPolicy::Reject).winding_readiness(&left, &disjoint_right)
+        let disjoint_readiness = ExactBooleanRequest::with_boundary_policy(
+            ExactBooleanOperation::SelectedRegions(ExactRegionSelection::KeepAll),
+            ValidationPolicy::ALLOW_BOUNDARY,
+            ExactBoundaryBooleanPolicy::Reject,
+        )
+        .winding_readiness(&left, &disjoint_right)
         .unwrap();
         assert_eq!(
             disjoint_readiness.status,
@@ -12153,7 +12857,13 @@ mod tests {
                 "{operation:?}: {stale_preflight:?}"
             );
 
-            let readiness = ExactBooleanRequest::with_boundary_policy(operation, ValidationPolicy::ALLOW_BOUNDARY, ExactBoundaryBooleanPolicy::Reject).winding_readiness(&left, &right).unwrap();
+            let readiness = ExactBooleanRequest::with_boundary_policy(
+                operation,
+                ValidationPolicy::ALLOW_BOUNDARY,
+                ExactBoundaryBooleanPolicy::Reject,
+            )
+            .winding_readiness(&left, &right)
+            .unwrap();
             assert_eq!(
                 readiness.status,
                 ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized,
@@ -12336,7 +13046,13 @@ mod tests {
                 "{operation:?}: {preflight:?}"
             );
 
-            let readiness = ExactBooleanRequest::with_boundary_policy(operation, ValidationPolicy::ALLOW_BOUNDARY, ExactBoundaryBooleanPolicy::Reject).winding_readiness(&left, &right).unwrap();
+            let readiness = ExactBooleanRequest::with_boundary_policy(
+                operation,
+                ValidationPolicy::ALLOW_BOUNDARY,
+                ExactBoundaryBooleanPolicy::Reject,
+            )
+            .winding_readiness(&left, &right)
+            .unwrap();
             assert_eq!(
                 readiness.status,
                 ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized,
@@ -12519,7 +13235,13 @@ mod tests {
                 assert_eq!(preflight.support, support, "{operation:?}: {preflight:?}");
                 assert!(preflight.blocker.is_none(), "{operation:?}: {preflight:?}");
 
-                let readiness = ExactBooleanRequest::with_boundary_policy(operation, ValidationPolicy::ALLOW_BOUNDARY, ExactBoundaryBooleanPolicy::Reject).winding_readiness(left, right).unwrap();
+                let readiness = ExactBooleanRequest::with_boundary_policy(
+                    operation,
+                    ValidationPolicy::ALLOW_BOUNDARY,
+                    ExactBoundaryBooleanPolicy::Reject,
+                )
+                .winding_readiness(left, right)
+                .unwrap();
                 assert_eq!(readiness.status, status, "{operation:?}: {readiness:?}");
                 assert_eq!(
                     readiness.blocker.kind,
@@ -12598,7 +13320,13 @@ mod tests {
                 preflight.validate().unwrap();
                 preflight.validate_against_sources(left, right).unwrap();
 
-                let readiness = ExactBooleanRequest::with_boundary_policy(operation, ValidationPolicy::ALLOW_BOUNDARY, ExactBoundaryBooleanPolicy::Reject).winding_readiness(left, right).unwrap();
+                let readiness = ExactBooleanRequest::with_boundary_policy(
+                    operation,
+                    ValidationPolicy::ALLOW_BOUNDARY,
+                    ExactBoundaryBooleanPolicy::Reject,
+                )
+                .winding_readiness(left, right)
+                .unwrap();
                 assert_eq!(
                     readiness.status,
                     ExactWindingReadinessStatus::ClosedWindingContainmentAlreadyMaterialized,
@@ -12703,7 +13431,13 @@ mod tests {
             preflight.validate().unwrap();
             preflight.validate_against_sources(&left, &right).unwrap();
 
-            let readiness = ExactBooleanRequest::with_boundary_policy(operation, ValidationPolicy::ALLOW_BOUNDARY, ExactBoundaryBooleanPolicy::Reject).winding_readiness(&left, &right).unwrap();
+            let readiness = ExactBooleanRequest::with_boundary_policy(
+                operation,
+                ValidationPolicy::ALLOW_BOUNDARY,
+                ExactBoundaryBooleanPolicy::Reject,
+            )
+            .winding_readiness(&left, &right)
+            .unwrap();
             assert_eq!(
                 readiness.status,
                 ExactWindingReadinessStatus::ClosedWindingSeparatedAlreadyMaterialized,
@@ -12789,7 +13523,13 @@ mod tests {
                 );
                 assert!(preflight.blocker.is_none(), "{operation:?}: {preflight:?}");
 
-                let readiness = ExactBooleanRequest::with_boundary_policy(operation, ValidationPolicy::ALLOW_BOUNDARY, ExactBoundaryBooleanPolicy::Reject).winding_readiness(left, right).unwrap();
+                let readiness = ExactBooleanRequest::with_boundary_policy(
+                    operation,
+                    ValidationPolicy::ALLOW_BOUNDARY,
+                    ExactBoundaryBooleanPolicy::Reject,
+                )
+                .winding_readiness(left, right)
+                .unwrap();
                 assert_eq!(
                     readiness.status,
                     ExactWindingReadinessStatus::MixedDimensionalRegularizedSolidAlreadyMaterialized,
@@ -12956,6 +13696,8 @@ mod tests {
                 triangles: Vec::new(),
             },
             volumetric_classifications: Vec::new(),
+            topology_assembly_report: None,
+            region_ownership_report: None,
             mesh: empty_mesh(
                 "fake closed arrangement shortcut for unresolved winding case",
                 ValidationPolicy::CLOSED,
@@ -13013,8 +13755,13 @@ mod tests {
             "closed replay should not certify an allow-boundary preflight"
         );
 
-        let readiness =
-            ExactBooleanRequest::with_boundary_policy(ExactBooleanOperation::Union, ValidationPolicy::ALLOW_BOUNDARY, ExactBoundaryBooleanPolicy::Reject).winding_readiness(&left, &right).unwrap();
+        let readiness = ExactBooleanRequest::with_boundary_policy(
+            ExactBooleanOperation::Union,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            ExactBoundaryBooleanPolicy::Reject,
+        )
+        .winding_readiness(&left, &right)
+        .unwrap();
         assert_eq!(
             readiness.status,
             ExactWindingReadinessStatus::VolumetricAssemblyRequired,
@@ -13301,7 +14048,13 @@ mod tests {
             preflight.validate().unwrap();
             preflight.validate_against_sources(&left, &right).unwrap();
 
-            let readiness = ExactBooleanRequest::with_boundary_policy(operation, ValidationPolicy::ALLOW_BOUNDARY, ExactBoundaryBooleanPolicy::Reject).winding_readiness(&left, &right).unwrap();
+            let readiness = ExactBooleanRequest::with_boundary_policy(
+                operation,
+                ValidationPolicy::ALLOW_BOUNDARY,
+                ExactBoundaryBooleanPolicy::Reject,
+            )
+            .winding_readiness(&left, &right)
+            .unwrap();
             assert_eq!(
                 readiness.status,
                 ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized,
@@ -13376,7 +14129,7 @@ mod tests {
         )
         .unwrap();
         let right = ExactMesh::from_i64_triangles_with_policy(
-            &[1, 1, 0, 5, 1, 0, 1, 5, 0],
+            &[1, -1, -1, 1, 3, 1, 1, 3, -1],
             &[0, 1, 2],
             ValidationPolicy::ALLOW_BOUNDARY,
         )
@@ -13405,6 +14158,102 @@ mod tests {
                     .unwrap()
             );
         }
+    }
+
+    #[test]
+    fn arrangement_result_retains_consumed_topology_and_ownership_reports() {
+        let left = tetrahedron_i64([0, 0, 0], [2, 0, 0], [0, 2, 0], [0, 0, 2]);
+        let right = tetrahedron_i64([1, 0, 0], [3, 0, 0], [1, 2, 0], [1, 0, 2]);
+
+        let mut attempt =
+            ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED)
+                .arrangement_attempt(&left, &right, ExactRegularizationPolicy::REGULARIZED_SOLID)
+                .unwrap();
+        assert!(attempt.topology_assembly_report.is_some(), "{attempt:?}");
+        assert!(attempt.region_ownership_report.is_some(), "{attempt:?}");
+        let mesh = copy_mesh(
+            &left,
+            "exact arrangement cell-complex boolean result",
+            ValidationPolicy::CLOSED,
+        )
+        .unwrap();
+        let result = certified_shortcut_result(
+            mesh,
+            ExactBooleanOperation::Union,
+            ExactBooleanShortcutKind::ArrangementCellComplex,
+        );
+
+        let outcome = materialized_arrangement_attempt_outcome(&mut attempt, result, false);
+        let ArrangementCellComplexOutcome::Materialized(result, retained_attempt) = outcome else {
+            panic!("materialized helper should return a result");
+        };
+        assert_result_retains_attempt_gate_reports(&result, &retained_attempt);
+
+        let mut stale_result = (*result).clone();
+        stale_result
+            .region_ownership_report
+            .as_mut()
+            .unwrap()
+            .status = ExactRegionOwnershipStatus::RequiresWinding;
+        assert_eq!(
+            stale_result.validate(),
+            Err(ExactReportValidationError::StatusEvidenceMismatch)
+        );
+
+        let report_attempt = ExactBooleanRequest::new(
+            ExactBooleanOperation::Union,
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .arrangement_attempt(&left, &right, ExactRegularizationPolicy::REGULARIZED_SOLID)
+        .unwrap();
+        let mut replayable_result = materialize_volumetric_winding_arrangement(
+            &left,
+            &right,
+            ExactBooleanOperation::Union,
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap()
+        .expect("allow-boundary volumetric arrangement should materialize");
+        replayable_result.topology_assembly_report =
+            report_attempt.topology_assembly_report.clone();
+        replayable_result.region_ownership_report = report_attempt.region_ownership_report.clone();
+        replayable_result
+            .validate_against_sources(&left, &right)
+            .unwrap();
+        let graph = build_intersection_graph(&left, &right).unwrap();
+        validate_volumetric_arrangement_result_against_graph(
+            &replayable_result,
+            &graph,
+            None,
+            &left,
+            &right,
+            ExactBooleanOperation::Union,
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let mut stale_replay_report = replayable_result.clone();
+        stale_replay_report
+            .topology_assembly_report
+            .as_mut()
+            .unwrap()
+            .graph_events += 1;
+        stale_replay_report.validate().unwrap();
+        assert_eq!(
+            stale_replay_report.validate_against_sources(&left, &right),
+            Err(ExactReportValidationError::SourceReplayMismatch)
+        );
+        assert_eq!(
+            validate_volumetric_arrangement_result_against_graph(
+                &stale_replay_report,
+                &graph,
+                None,
+                &left,
+                &right,
+                ExactBooleanOperation::Union,
+                ValidationPolicy::ALLOW_BOUNDARY,
+            ),
+            Err(ExactReportValidationError::SourceReplayMismatch)
+        );
     }
 
     #[test]
@@ -13451,7 +14300,13 @@ mod tests {
             assert!(preflight.validate().is_ok(), "{operation:?}: {preflight:?}");
             preflight.validate_against_sources(&left, &right).unwrap();
 
-            let readiness = ExactBooleanRequest::with_boundary_policy(operation, ValidationPolicy::ALLOW_BOUNDARY, ExactBoundaryBooleanPolicy::Reject).winding_readiness(&left, &right).unwrap();
+            let readiness = ExactBooleanRequest::with_boundary_policy(
+                operation,
+                ValidationPolicy::ALLOW_BOUNDARY,
+                ExactBoundaryBooleanPolicy::Reject,
+            )
+            .winding_readiness(&left, &right)
+            .unwrap();
             assert_eq!(
                 readiness.status,
                 ExactWindingReadinessStatus::OpenSurfaceArrangementAlreadyMaterialized,
@@ -13690,7 +14545,13 @@ mod tests {
                 "{operation:?}: {preflight:?}"
             );
 
-            let readiness = ExactBooleanRequest::with_boundary_policy(operation, ValidationPolicy::ALLOW_BOUNDARY, ExactBoundaryBooleanPolicy::Reject).winding_readiness(&left, &right).unwrap();
+            let readiness = ExactBooleanRequest::with_boundary_policy(
+                operation,
+                ValidationPolicy::ALLOW_BOUNDARY,
+                ExactBoundaryBooleanPolicy::Reject,
+            )
+            .winding_readiness(&left, &right)
+            .unwrap();
             assert_eq!(
                 readiness.status,
                 ExactWindingReadinessStatus::ConvexBooleanAlreadyMaterialized,
@@ -13808,7 +14669,13 @@ mod tests {
             );
             assert!(preflight.blocker.is_none(), "{operation:?}: {preflight:?}");
 
-            let readiness = ExactBooleanRequest::with_boundary_policy(operation, ValidationPolicy::ALLOW_BOUNDARY, ExactBoundaryBooleanPolicy::Reject).winding_readiness(&left, &right).unwrap();
+            let readiness = ExactBooleanRequest::with_boundary_policy(
+                operation,
+                ValidationPolicy::ALLOW_BOUNDARY,
+                ExactBoundaryBooleanPolicy::Reject,
+            )
+            .winding_readiness(&left, &right)
+            .unwrap();
             assert_eq!(
                 readiness.status,
                 ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized,
@@ -13846,9 +14713,13 @@ mod tests {
                 .is_certified()
         );
         assert!(
-            !ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::ALLOW_BOUNDARY).boundary_touching_report(&left, &overlapping_right)
-                .unwrap()
-                .is_certified()
+            !ExactBooleanRequest::new(
+                ExactBooleanOperation::Union,
+                ValidationPolicy::ALLOW_BOUNDARY
+            )
+            .boundary_touching_report(&left, &overlapping_right)
+            .unwrap()
+            .is_certified()
         );
         assert!(
             boolean_boundary_touching_meshes_from_graph(
@@ -13900,7 +14771,13 @@ mod tests {
             preflight.validate().unwrap();
             preflight.validate_against_sources(&left, &right).unwrap();
 
-            let readiness = ExactBooleanRequest::with_boundary_policy(operation, ValidationPolicy::ALLOW_BOUNDARY, ExactBoundaryBooleanPolicy::Reject).winding_readiness(&left, &right).unwrap();
+            let readiness = ExactBooleanRequest::with_boundary_policy(
+                operation,
+                ValidationPolicy::ALLOW_BOUNDARY,
+                ExactBoundaryBooleanPolicy::Reject,
+            )
+            .winding_readiness(&left, &right)
+            .unwrap();
             assert_eq!(
                 readiness.status,
                 ExactWindingReadinessStatus::ClosedBoundaryTouchingAlreadyMaterialized,
@@ -13978,9 +14855,13 @@ mod tests {
             relabeled_preflight.validate(),
             Err(crate::ExactReportValidationError::StatusEvidenceMismatch)
         );
-        let readiness =
-            ExactBooleanRequest::with_boundary_policy(ExactBooleanOperation::Difference, ValidationPolicy::ALLOW_BOUNDARY, ExactBoundaryBooleanPolicy::Reject).winding_readiness(&left, &right)
-                .unwrap();
+        let readiness = ExactBooleanRequest::with_boundary_policy(
+            ExactBooleanOperation::Difference,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            ExactBoundaryBooleanPolicy::Reject,
+        )
+        .winding_readiness(&left, &right)
+        .unwrap();
         assert_eq!(
             readiness.status,
             ExactWindingReadinessStatus::ConvexBooleanAlreadyMaterialized,
@@ -14059,7 +14940,13 @@ mod tests {
             preflight.validate().unwrap();
             preflight.validate_against_sources(&left, &right).unwrap();
 
-            let readiness = ExactBooleanRequest::with_boundary_policy(operation, ValidationPolicy::ALLOW_BOUNDARY, ExactBoundaryBooleanPolicy::Reject).winding_readiness(&left, &right).unwrap();
+            let readiness = ExactBooleanRequest::with_boundary_policy(
+                operation,
+                ValidationPolicy::ALLOW_BOUNDARY,
+                ExactBoundaryBooleanPolicy::Reject,
+            )
+            .winding_readiness(&left, &right)
+            .unwrap();
             assert_eq!(
                 readiness.status,
                 ExactWindingReadinessStatus::ConvexBooleanAlreadyMaterialized,
@@ -14119,7 +15006,13 @@ mod tests {
                 "{operation:?}: {preflight:?}"
             );
 
-            let readiness = ExactBooleanRequest::with_boundary_policy(operation, ValidationPolicy::ALLOW_BOUNDARY, ExactBoundaryBooleanPolicy::Reject).winding_readiness(&left, &right).unwrap();
+            let readiness = ExactBooleanRequest::with_boundary_policy(
+                operation,
+                ValidationPolicy::ALLOW_BOUNDARY,
+                ExactBoundaryBooleanPolicy::Reject,
+            )
+            .winding_readiness(&left, &right)
+            .unwrap();
             assert_eq!(
                 readiness.status,
                 ExactWindingReadinessStatus::ConvexBooleanAlreadyMaterialized,
@@ -14479,6 +15372,12 @@ mod tests {
         .unwrap();
         assert_eq!(union_attempt.decline, None);
         assert_eq!(union_attempt.selected_faces, 4);
+        assert_eq!(
+            union_attempt.volume_oriented_selected_faces
+                + union_attempt.label_oriented_selected_faces,
+            union_attempt.selected_faces
+        );
+        assert!(union_attempt.reversed_selected_faces <= union_attempt.selected_faces);
         assert_eq!(union_attempt.output_triangles, 4);
         assert_current_arrangement_attempt(&union_attempt, &left, &right);
         let mut stale_selected_faces = union_attempt.clone();
@@ -14491,6 +15390,18 @@ mod tests {
         stale_selected_volumes.selected_volume_regions = stale_selected_volumes.volume_regions + 1;
         assert_eq!(
             stale_selected_volumes.validate(),
+            Err(ExactReportValidationError::StatusEvidenceMismatch)
+        );
+        let mut stale_orientation_split = union_attempt.clone();
+        stale_orientation_split.label_oriented_selected_faces += 1;
+        assert_eq!(
+            stale_orientation_split.validate(),
+            Err(ExactReportValidationError::StatusEvidenceMismatch)
+        );
+        let mut stale_reversed_faces = union_attempt.clone();
+        stale_reversed_faces.reversed_selected_faces = stale_reversed_faces.selected_faces + 1;
+        assert_eq!(
+            stale_reversed_faces.validate(),
             Err(ExactReportValidationError::StatusEvidenceMismatch)
         );
         let mut stale_volume_regions = union_attempt.clone();
@@ -14587,7 +15498,13 @@ mod tests {
                 ExactBooleanSupport::CertifiedSameSurface,
                 "{operation:?}: {preflight:?}"
             );
-            let readiness = ExactBooleanRequest::with_boundary_policy(operation, ValidationPolicy::ALLOW_BOUNDARY, ExactBoundaryBooleanPolicy::Reject).winding_readiness(&left, &right).unwrap();
+            let readiness = ExactBooleanRequest::with_boundary_policy(
+                operation,
+                ValidationPolicy::ALLOW_BOUNDARY,
+                ExactBoundaryBooleanPolicy::Reject,
+            )
+            .winding_readiness(&left, &right)
+            .unwrap();
             assert_eq!(
                 readiness.status,
                 ExactWindingReadinessStatus::SurfaceEqualityAlreadyMaterialized,
@@ -14645,8 +15562,13 @@ mod tests {
         .preflight(&left, &right)
         .unwrap();
         assert_eq!(preflight.support, ExactBooleanSupport::CertifiedIdentical);
-        let readiness =
-            ExactBooleanRequest::with_boundary_policy(ExactBooleanOperation::Union, ValidationPolicy::ALLOW_BOUNDARY, ExactBoundaryBooleanPolicy::Reject).winding_readiness(&left, &right).unwrap();
+        let readiness = ExactBooleanRequest::with_boundary_policy(
+            ExactBooleanOperation::Union,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            ExactBoundaryBooleanPolicy::Reject,
+        )
+        .winding_readiness(&left, &right)
+        .unwrap();
         assert_eq!(
             readiness.status,
             ExactWindingReadinessStatus::SurfaceEqualityAlreadyMaterialized,

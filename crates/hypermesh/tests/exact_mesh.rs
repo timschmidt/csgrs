@@ -5,20 +5,21 @@ use hypermesh::{
     ContainedFaceAdjacentUnionFreshness, ConvexSolidMeshRelation, ConvexSolidPointRelation,
     ConvexSolidReportFreshness, CoplanarArrangementReadinessFreshness,
     CoplanarOverlapGraphFreshness, CoplanarOverlapSplitFreshness,
-    CoplanarVolumetricCellEvidenceFreshness, ExactAdjacentUnionCompletionStatus, ExactArrangement,
-    ExactArrangement2dBoundaryPolicy, ExactArrangement2dRegion, ExactArrangement2dRegionRing,
-    ExactArrangement2dSetOperation, ExactArrangementFreshness, ExactBooleanBlockerKind,
-    ExactBooleanOperation, ExactBooleanRequest, ExactBooleanResult, ExactBooleanResultKind,
-    ExactBoundaryBooleanPolicy, ExactBoundaryTouchingStatus, ExactI64MeshInputReadiness,
-    ExactI64MeshInputReportValidationError, ExactLabeledCellComplexFreshness, ExactMesh,
-    ExactMeshAuditError, ExactMeshConsumerDomain, ExactMeshConsumerReadinessError,
-    ExactMeshDomainSummaryFreshness, ExactMeshHandoffPackageError,
+    CoplanarVolumetricCellEvidenceFreshness, ExactAdjacentUnionCompletionStatus,
+    ExactArrangement, ExactArrangement2dBoundaryPolicy, ExactArrangement2dRegion,
+    ExactArrangement2dRegionRing, ExactArrangement2dSetOperation, ExactArrangementBlocker,
+    ExactArrangementFreshness, ExactBooleanBlockerKind, ExactBooleanOperation,
+    ExactBooleanRequest, ExactBooleanResult, ExactBooleanResultKind, ExactBoundaryBooleanPolicy,
+    ExactBoundaryTouchingStatus, ExactI64MeshInputReadiness, ExactI64MeshInputReportValidationError,
+    ExactLabeledCellComplexFreshness, ExactMesh, ExactMeshAuditError, ExactMeshConsumerDomain,
+    ExactMeshConsumerReadinessError, ExactMeshDomainSummaryFreshness, ExactMeshHandoffPackageError,
     ExactMeshHandoffPackageFreshness, ExactMeshProposalAcceptance, ExactMeshProposalReportError,
     ExactMeshProposalSourceKind, ExactOpenSurfaceDisjointStatus, ExactOutputTriangleOrientation,
-    ExactPlanarArrangementStatus, ExactRefinementStatus, ExactRegionSelection,
-    ExactRegularizationPolicy, ExactReportFreshness, ExactSameSurfaceStatus,
+    ExactPlanarArrangementStatus, ExactRefinementStatus, ExactRegionOwnershipStatus,
+    ExactRegionSelection, ExactRegularizationPolicy, ExactReportFreshness, ExactSameSurfaceStatus,
     ExactSelectedCellComplexFreshness, ExactSimplifiedCellComplexFreshness,
-    ExactVolumetricRegionFreshness, ExactVolumetricRegionRelation, ExactWindingReadinessStatus,
+    ExactTopologyAssemblyStatus, ExactVolumetricRegionFreshness, ExactVolumetricRegionRelation,
+    ExactWindingReadinessStatus,
     FaceRegionPlaneRelation, FullFaceAdjacentUnionFreshness, IntersectionGraphFreshness,
     LossyF64MeshInputReadiness, LossyF64MeshInputReportValidationError, MeshArtifactBlocker,
     MeshArtifactFaceRecord, MeshArtifactManifest, MeshArtifactReportError, MeshArtifactRole,
@@ -267,6 +268,45 @@ fn exact_boolean_evaluation_materializes_certified_result_publicly() {
         .unwrap();
     assert_eq!(
         relabeled_winding_status.validate(),
+        Err(hypermesh::ExactReportValidationError::StatusEvidenceMismatch)
+    );
+}
+
+#[test]
+fn exact_boolean_certifications_retain_region_ownership_report() {
+    let left = tetra_from_corners([0, 0, 0], [10, 0, 0], [0, 10, 0], [0, 0, 10]);
+    let right = tetra_from_corners([1, 1, 1], [2, 1, 1], [1, 2, 1], [1, 1, 2]);
+    let request = ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED);
+
+    let evaluation = request.evaluate(&left, &right).unwrap();
+
+    evaluation.validate().unwrap();
+    evaluation.validate_against_sources(&left, &right).unwrap();
+    let ownership = evaluation
+        .certifications
+        .region_ownership
+        .as_ref()
+        .expect("named boolean certifications should retain region ownership");
+    ownership.validate().unwrap();
+    assert_eq!(
+        ownership.status,
+        ExactRegionOwnershipStatus::VolumeResolved
+    );
+    assert!(ownership.is_resolved());
+    assert_eq!(ownership.volume_regions, 3);
+    assert_eq!(ownership.shared_owned_volumes, 1);
+
+    let mut missing_ownership = evaluation.clone();
+    missing_ownership.certifications.region_ownership = None;
+    assert_eq!(
+        missing_ownership.validate(),
+        Err(hypermesh::ExactReportValidationError::StatusEvidenceMismatch)
+    );
+
+    let mut missing_topology = evaluation.clone();
+    missing_topology.certifications.topology_assembly = None;
+    assert_eq!(
+        missing_topology.validate(),
         Err(hypermesh::ExactReportValidationError::StatusEvidenceMismatch)
     );
 }
@@ -4055,6 +4095,32 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
         Some(hypermesh::ExactArrangementBooleanDecline::OutputValidation),
         "{closed_attempt:?}"
     );
+    assert_eq!(
+        closed_attempt.topology_assembly,
+        Some(ExactTopologyAssemblyStatus::Complete),
+        "{closed_attempt:?}"
+    );
+    assert_eq!(
+        closed_attempt
+            .topology_assembly_report
+            .as_ref()
+            .map(|report| report.status),
+        closed_attempt.topology_assembly,
+        "{closed_attempt:?}"
+    );
+    assert_eq!(
+        closed_attempt.region_ownership,
+        Some(ExactRegionOwnershipStatus::FaceResolved),
+        "{closed_attempt:?}"
+    );
+    assert_eq!(
+        closed_attempt
+            .region_ownership_report
+            .as_ref()
+            .map(|report| report.status),
+        closed_attempt.region_ownership,
+        "{closed_attempt:?}"
+    );
     assert_eq!(closed_attempt.output_vertices, result.mesh.vertices().len());
     assert_eq!(
         closed_attempt.output_triangles,
@@ -4099,6 +4165,41 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
         hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex,
         "{evaluation:?}"
     );
+    let mut unresolved_ownership = evaluation.clone();
+    let ownership = unresolved_ownership
+        .certifications
+        .region_ownership
+        .as_mut()
+        .expect("named arrangement evaluation should retain ownership evidence");
+    ownership.status = ExactRegionOwnershipStatus::RequiresWinding;
+    ownership.blockers = vec![ExactArrangementBlocker::UnresolvedRegionClassification];
+    ownership.volume_regions = 0;
+    ownership.exterior_volume_regions = 0;
+    ownership.left_owned_volumes = 0;
+    ownership.right_owned_volumes = 0;
+    ownership.shared_owned_volumes = 0;
+    ownership.unowned_bounded_volumes = 0;
+    ownership.volume_adjacencies = 0;
+    ownership.volume_adjacency_face_sides = 0;
+    ownership.volume_adjacency_separating_faces = 0;
+    ownership.validate().unwrap();
+    assert_eq!(
+        unresolved_ownership.validate(),
+        Err(hypermesh::ExactReportValidationError::StatusEvidenceMismatch)
+    );
+    let mut incomplete_topology = evaluation.clone();
+    let topology = incomplete_topology
+        .certifications
+        .topology_assembly
+        .as_mut()
+        .expect("named arrangement evaluation should retain topology assembly evidence");
+    topology.status = ExactTopologyAssemblyStatus::MissingRegionPlan;
+    topology.region_boundaries = 0;
+    topology.validate().unwrap();
+    assert_eq!(
+        incomplete_topology.validate(),
+        Err(hypermesh::ExactReportValidationError::StatusEvidenceMismatch)
+    );
     let mut declined_arrangement_attempt = evaluation.clone();
     let attempt = declined_arrangement_attempt
         .certifications
@@ -4111,6 +4212,40 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
     attempt.validate().unwrap();
     assert_eq!(
         declined_arrangement_attempt.validate(),
+        Err(hypermesh::ExactReportValidationError::StatusEvidenceMismatch)
+    );
+    let mut stale_attempt_gate = evaluation.clone();
+    let attempt = stale_attempt_gate
+        .certifications
+        .arrangement_attempt
+        .as_mut()
+        .expect("named evaluation should retain arrangement attempt");
+    attempt.region_ownership = Some(ExactRegionOwnershipStatus::RequiresWinding);
+    assert_eq!(
+        attempt.validate(),
+        Err(hypermesh::ExactReportValidationError::StatusEvidenceMismatch)
+    );
+    assert_eq!(
+        stale_attempt_gate.validate(),
+        Err(hypermesh::ExactReportValidationError::StatusEvidenceMismatch)
+    );
+    let mut stale_attempt_report = evaluation.clone();
+    let attempt = stale_attempt_report
+        .certifications
+        .arrangement_attempt
+        .as_mut()
+        .expect("named evaluation should retain arrangement attempt");
+    attempt
+        .topology_assembly_report
+        .as_mut()
+        .expect("named attempt should retain topology report")
+        .status = ExactTopologyAssemblyStatus::MissingRegionPlan;
+    assert_eq!(
+        attempt.validate(),
+        Err(hypermesh::ExactReportValidationError::StatusEvidenceMismatch)
+    );
+    assert_eq!(
+        stale_attempt_report.validate(),
         Err(hypermesh::ExactReportValidationError::StatusEvidenceMismatch)
     );
     let mut stale_readiness_counts = evaluation.clone();
@@ -6283,6 +6418,32 @@ fn exact_arrangement_public_path_reports_blockers_or_cells() {
     .arrangement_attempt(&left, &right, ExactRegularizationPolicy::REGULARIZED_SOLID)
     .unwrap();
     attempt.validate().unwrap();
+    assert_eq!(
+        attempt.topology_assembly,
+        Some(ExactTopologyAssemblyStatus::Complete),
+        "{attempt:?}"
+    );
+    assert_eq!(
+        attempt
+            .topology_assembly_report
+            .as_ref()
+            .map(|report| report.status),
+        attempt.topology_assembly,
+        "{attempt:?}"
+    );
+    assert_eq!(
+        attempt.region_ownership,
+        Some(ExactRegionOwnershipStatus::VolumeResolved),
+        "{attempt:?}"
+    );
+    assert_eq!(
+        attempt
+            .region_ownership_report
+            .as_ref()
+            .map(|report| report.status),
+        attempt.region_ownership,
+        "{attempt:?}"
+    );
     attempt.validate_against_sources(&left, &right).unwrap();
     assert_eq!(
         attempt.freshness_against_sources(&left, &right),
@@ -6294,6 +6455,22 @@ fn exact_arrangement_public_path_reports_blockers_or_cells() {
         stale_attempt.freshness_against_sources(&left, &right),
         ExactReportFreshness::SourceReplayMismatch
     );
+    let mut stale_attempt_gate = attempt.clone();
+    stale_attempt_gate.topology_assembly = Some(ExactTopologyAssemblyStatus::MissingRegionPlan);
+    assert_eq!(
+        stale_attempt_gate.freshness_against_sources(&left, &right),
+        ExactReportFreshness::StaleStatusEvidence
+    );
+    let mut stale_attempt_report = attempt.clone();
+    stale_attempt_report
+        .region_ownership_report
+        .as_mut()
+        .expect("attempt should retain ownership report")
+        .status = ExactRegionOwnershipStatus::RequiresWinding;
+    assert_eq!(
+        stale_attempt_report.validate(),
+        Err(hypermesh::ExactReportValidationError::StatusEvidenceMismatch)
+    );
 
     let mut blocked_attempt = attempt.clone();
     blocked_attempt.stage = hypermesh::ExactArrangementBooleanStage::ArrangementBuilt;
@@ -6302,6 +6479,9 @@ fn exact_arrangement_public_path_reports_blockers_or_cells() {
     blocked_attempt.materialized_shortcut = None;
     blocked_attempt.arrangement_blockers = 1;
     blocked_attempt.selected_faces = 0;
+    blocked_attempt.reversed_selected_faces = 0;
+    blocked_attempt.volume_oriented_selected_faces = 0;
+    blocked_attempt.label_oriented_selected_faces = 0;
     blocked_attempt.selected_volume_regions = 0;
     blocked_attempt.output_vertices = 0;
     blocked_attempt.output_triangles = 0;

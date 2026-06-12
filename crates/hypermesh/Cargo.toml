@@ -49,3 +49,7 @@ required-features = ["bevy"]
 name = "multiple_models"
 path = "examples/multiple_models.rs"
 required-features = ["bevy"]
+
+[[bench]]
+name = "exact_boolean_stages"
+harness = false
