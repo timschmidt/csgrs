@@ -4212,23 +4212,15 @@ fn certified_closed_winding_containment_support_from_graph(
     )
 }
 
-fn boolean_closed_winding_containment_meshes(
+fn boolean_closed_winding_containment_meshes_from_graph(
+    graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
-    if matches!(operation, ExactBooleanOperation::SelectedRegions(_))
-        || left.triangles().is_empty()
-        || right.triangles().is_empty()
-        || meshes_are_certified_bounds_disjoint(left, right)
-    {
-        return Ok(None);
-    }
-    let graph = build_intersection_graph(left, right)?;
-    validate_graph_source_handoff(&graph, left, right)?;
     let Some(containment) =
-        certified_closed_winding_containment_relation_from_graph(&graph, left, right)?
+        certified_closed_winding_containment_relation_from_graph(graph, left, right)?
     else {
         return Ok(None);
     };
@@ -4288,6 +4280,51 @@ fn boolean_closed_winding_containment_meshes(
     )))
 }
 
+pub(crate) fn materialize_closed_winding_containment_from_graph_for_request(
+    graph: &super::graph::ExactIntersectionGraph,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    request: ExactBooleanRequest,
+) -> Result<Option<ExactBooleanResult>, MeshError> {
+    let operation = request.operation;
+    let validation = request.validation;
+    if matches!(operation, ExactBooleanOperation::SelectedRegions(_))
+        || left.triangles().is_empty()
+        || right.triangles().is_empty()
+        || meshes_are_certified_bounds_disjoint(left, right)
+    {
+        return Ok(None);
+    }
+    Ok(public_operation_replayable_result(
+        boolean_closed_winding_containment_meshes_from_graph(
+            graph, left, right, operation, validation,
+        )?,
+        left,
+        right,
+        operation,
+        validation,
+        ExactBoundaryBooleanPolicy::Reject,
+    ))
+}
+
+fn boolean_closed_winding_containment_meshes(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+) -> Result<Option<ExactBooleanResult>, MeshError> {
+    if matches!(operation, ExactBooleanOperation::SelectedRegions(_))
+        || left.triangles().is_empty()
+        || right.triangles().is_empty()
+        || meshes_are_certified_bounds_disjoint(left, right)
+    {
+        return Ok(None);
+    }
+    let graph = build_intersection_graph(left, right)?;
+    validate_graph_source_handoff(&graph, left, right)?;
+    boolean_closed_winding_containment_meshes_from_graph(&graph, left, right, operation, validation)
+}
+
 /// Certify and materialize a named boolean for closed solids with empty graph
 /// containment proven by exact winding reports.
 ///
@@ -4312,22 +4349,14 @@ fn materialize_closed_winding_containment_for_request(
     ))
 }
 
-fn boolean_closed_winding_separated_meshes(
+fn boolean_closed_winding_separated_meshes_from_graph(
+    graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
-    if matches!(operation, ExactBooleanOperation::SelectedRegions(_))
-        || left.triangles().is_empty()
-        || right.triangles().is_empty()
-        || meshes_are_certified_bounds_disjoint(left, right)
-    {
-        return Ok(None);
-    }
-    let graph = build_intersection_graph(left, right)?;
-    validate_graph_source_handoff(&graph, left, right)?;
-    if certified_closed_winding_separated_support_from_graph(&graph, left, right, operation)?
+    if certified_closed_winding_separated_support_from_graph(graph, left, right, operation)?
         .is_none()
     {
         return Ok(None);
@@ -4357,6 +4386,51 @@ fn boolean_closed_winding_separated_meshes(
         operation,
         ExactBooleanShortcutKind::ClosedWindingSeparated,
     )))
+}
+
+pub(crate) fn materialize_closed_winding_separated_from_graph_for_request(
+    graph: &super::graph::ExactIntersectionGraph,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    request: ExactBooleanRequest,
+) -> Result<Option<ExactBooleanResult>, MeshError> {
+    let operation = request.operation;
+    let validation = request.validation;
+    if matches!(operation, ExactBooleanOperation::SelectedRegions(_))
+        || left.triangles().is_empty()
+        || right.triangles().is_empty()
+        || meshes_are_certified_bounds_disjoint(left, right)
+    {
+        return Ok(None);
+    }
+    Ok(public_operation_replayable_result(
+        boolean_closed_winding_separated_meshes_from_graph(
+            graph, left, right, operation, validation,
+        )?,
+        left,
+        right,
+        operation,
+        validation,
+        ExactBoundaryBooleanPolicy::Reject,
+    ))
+}
+
+fn boolean_closed_winding_separated_meshes(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+) -> Result<Option<ExactBooleanResult>, MeshError> {
+    if matches!(operation, ExactBooleanOperation::SelectedRegions(_))
+        || left.triangles().is_empty()
+        || right.triangles().is_empty()
+        || meshes_are_certified_bounds_disjoint(left, right)
+    {
+        return Ok(None);
+    }
+    let graph = build_intersection_graph(left, right)?;
+    validate_graph_source_handoff(&graph, left, right)?;
+    boolean_closed_winding_separated_meshes_from_graph(&graph, left, right, operation, validation)
 }
 
 /// Certify and materialize a named boolean for closed solids with empty graph
