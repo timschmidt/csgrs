@@ -1721,6 +1721,17 @@ impl<'a> ExactBooleanWorkspace<'a> {
         &mut self,
         evaluation: &ExactBooleanEvaluation,
     ) -> Result<(), ExactReportValidationError> {
+        if self
+            .evaluations
+            .iter()
+            .any(|(stored_request, stored_evaluation)| {
+                *stored_request == evaluation.request && stored_evaluation == evaluation
+            })
+        {
+            evaluation.validate()?;
+            return Ok(());
+        }
+
         self.graph()
             .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
         if !matches!(
@@ -2703,6 +2714,54 @@ mod tests {
         assert_ne!(
             workspace.certification_set_freshness(request, &stale),
             ExactReportFreshness::Current
+        );
+    }
+
+    #[test]
+    fn exact_boolean_workspace_validates_cached_evaluation_locally() {
+        let left = tetra([0, 0, 0]);
+        let right = tetra([1, 0, 0]);
+        let request =
+            ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED);
+        let mut workspace = ExactBooleanWorkspace::new(&left, &right);
+        workspace.graph().unwrap();
+        workspace
+            .arrangement(ExactRegularizationPolicy::REGULARIZED_SOLID)
+            .unwrap();
+        workspace.preflight(request).unwrap();
+
+        let retained = workspace.evaluate(request).unwrap().clone();
+        workspace.validate_evaluation(&retained).unwrap();
+        assert_eq!(
+            workspace.evaluation_freshness(&retained),
+            ExactReportFreshness::Current
+        );
+
+        let mut stale = retained.clone();
+        stale.preflight.retained_events += 1;
+        assert_eq!(
+            workspace.validate_evaluation(&stale),
+            Err(ExactReportValidationError::StatusEvidenceMismatch)
+        );
+        assert_ne!(
+            workspace.evaluation_freshness(&stale),
+            ExactReportFreshness::Current
+        );
+
+        let cached_result = workspace.evaluations[0]
+            .1
+            .result
+            .as_mut()
+            .expect("certified test request should retain a result");
+        cached_result.graph_had_unknowns = !cached_result.graph_had_unknowns;
+        let corrupted = workspace.evaluations[0].1.clone();
+        assert!(
+            workspace.validate_evaluation(&corrupted).is_err(),
+            "cached evaluation validation must still enforce local invariants"
+        );
+        assert!(
+            workspace.materialize(request).is_err(),
+            "cached evaluation results must validate before materialization reuse"
         );
     }
 
