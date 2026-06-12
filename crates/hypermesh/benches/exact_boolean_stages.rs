@@ -5,8 +5,8 @@ use hypermesh::{
     build_intersection_graph, triangulate_all_face_cells_with_cdt, ExactArrangement,
     ExactArrangementBooleanAttempt, ExactBooleanEvaluation, ExactBooleanOperation,
     ExactBooleanPreflight, ExactBooleanRequest, ExactBooleanResult, ExactBooleanWorkspace,
-    ExactMesh, ExactRegularizationPolicy, ExactSelectedCellComplex, ExactSimplifiedCellComplex,
-    ExactWindingReadinessReport, ValidationPolicy,
+    ExactMesh, ExactPlanarArrangementReport, ExactRegularizationPolicy, ExactSelectedCellComplex,
+    ExactSimplifiedCellComplex, ExactWindingReadinessReport, ValidationPolicy,
 };
 
 struct BenchCase {
@@ -454,6 +454,19 @@ fn run_case(case: &BenchCase) {
 
     time_prepared_stage(
         case,
+        "workspace_validate_planar_arrangement_from_retained_artifacts",
+        || retained_workspace_and_planar_arrangement_for_case(case, request),
+        |(retained_workspace, report)| {
+            black_box(
+                retained_workspace
+                    .validate_planar_arrangement_report(request, report)
+                    .ok(),
+            );
+        },
+    );
+
+    time_prepared_stage(
+        case,
         "workspace_evaluation_from_retained_artifacts",
         || retained_workspace_for_case(case, request),
         |retained_workspace| {
@@ -542,6 +555,18 @@ fn retained_workspace_and_winding_readiness_for_case<'a>(
         .unwrap()
         .clone();
     (retained_workspace, readiness)
+}
+
+fn retained_workspace_and_planar_arrangement_for_case<'a>(
+    case: &'a BenchCase,
+    request: ExactBooleanRequest,
+) -> (ExactBooleanWorkspace<'a>, ExactPlanarArrangementReport) {
+    let mut retained_workspace = retained_workspace_for_case(case, request);
+    let report = retained_workspace
+        .planar_arrangement_report(request)
+        .unwrap()
+        .clone();
+    (retained_workspace, report)
 }
 
 fn retained_workspace_and_evaluation_for_case<'a>(

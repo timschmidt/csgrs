@@ -15,8 +15,8 @@ use super::graph::{build_intersection_graph, ExactIntersectionGraph};
 use super::mesh::ExactMesh;
 use super::regularization::{ExactArrangementBlocker, ExactRegularizationPolicy};
 use super::reports::{
-    ExactBooleanPreflight, ExactBooleanResult, ExactReportFreshness, ExactReportValidationError,
-    ExactWindingReadinessReport,
+    ExactBooleanPreflight, ExactBooleanResult, ExactPlanarArrangementReport, ExactReportFreshness,
+    ExactReportValidationError, ExactWindingReadinessReport,
 };
 use super::simplify::{ExactSimplifiedCellComplex, ExactSimplifiedCellComplexFreshness};
 
@@ -50,6 +50,7 @@ pub struct ExactBooleanWorkspace<'a> {
     )>,
     preflights: Vec<(ExactBooleanRequest, ExactBooleanPreflight)>,
     winding_readiness_reports: Vec<(ExactBooleanRequest, ExactWindingReadinessReport)>,
+    planar_arrangement_reports: Vec<(ExactBooleanRequest, ExactPlanarArrangementReport)>,
     evaluations: Vec<(ExactBooleanRequest, ExactBooleanEvaluation)>,
     materializations: Vec<(ExactBooleanRequest, ExactBooleanResult)>,
 }
@@ -69,6 +70,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
             simplified_cell_complexes: Vec::new(),
             preflights: Vec::new(),
             winding_readiness_reports: Vec::new(),
+            planar_arrangement_reports: Vec::new(),
             evaluations: Vec::new(),
             materializations: Vec::new(),
         }
@@ -584,6 +586,65 @@ impl<'a> ExactBooleanWorkspace<'a> {
         readiness: &ExactWindingReadinessReport,
     ) -> ExactReportFreshness {
         match self.validate_winding_readiness(request, readiness) {
+            Ok(()) => ExactReportFreshness::Current,
+            Err(error) => error.into(),
+        }
+    }
+
+    /// Returns planar-arrangement readiness evidence for `request`, building
+    /// it once per request.
+    pub fn planar_arrangement_report(
+        &mut self,
+        request: ExactBooleanRequest,
+    ) -> Result<&ExactPlanarArrangementReport, MeshError> {
+        if let Some(index) = self
+            .planar_arrangement_reports
+            .iter()
+            .position(|(stored_request, _)| *stored_request == request)
+        {
+            return Ok(&self.planar_arrangement_reports[index].1);
+        }
+
+        let report = request.planar_arrangement_report(self.left, self.right)?;
+        self.planar_arrangement_reports.push((request, report));
+        Ok(&self
+            .planar_arrangement_reports
+            .last()
+            .expect("planar-arrangement report cache was just populated")
+            .1)
+    }
+
+    /// Validate planar-arrangement readiness evidence against this workspace's
+    /// source meshes.
+    pub fn validate_planar_arrangement_report(
+        &mut self,
+        request: ExactBooleanRequest,
+        report: &ExactPlanarArrangementReport,
+    ) -> Result<(), ExactReportValidationError> {
+        if report.operation != request.operation {
+            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+        }
+        if self
+            .planar_arrangement_reports
+            .iter()
+            .any(|(stored_request, stored_report)| {
+                *stored_request == request && stored_report == report
+            })
+        {
+            report.validate()?;
+            return Ok(());
+        }
+        report.validate_against_sources(self.left, self.right)
+    }
+
+    /// Classify planar-arrangement readiness freshness in this retained source
+    /// session.
+    pub fn planar_arrangement_report_freshness(
+        &mut self,
+        request: ExactBooleanRequest,
+        report: &ExactPlanarArrangementReport,
+    ) -> ExactReportFreshness {
+        match self.validate_planar_arrangement_report(request, report) {
             Ok(()) => ExactReportFreshness::Current,
             Err(error) => error.into(),
         }
@@ -1195,6 +1256,43 @@ mod tests {
         relabeled_readiness.operation = ExactBooleanOperation::Difference;
         assert_eq!(
             workspace.validate_winding_readiness(request, &relabeled_readiness),
+            Err(ExactReportValidationError::StatusEvidenceMismatch)
+        );
+
+        let first_planar_report = workspace.planar_arrangement_report(request).unwrap()
+            as *const ExactPlanarArrangementReport;
+        let second_planar_report = workspace.planar_arrangement_report(request).unwrap()
+            as *const ExactPlanarArrangementReport;
+        assert_eq!(first_planar_report, second_planar_report);
+        assert_eq!(
+            workspace.planar_arrangement_report(request).unwrap(),
+            &request.planar_arrangement_report(&left, &right).unwrap()
+        );
+        let planar_report = workspace
+            .planar_arrangement_report(request)
+            .unwrap()
+            .clone();
+        workspace
+            .validate_planar_arrangement_report(request, &planar_report)
+            .unwrap();
+        assert_eq!(
+            workspace.planar_arrangement_report_freshness(request, &planar_report),
+            ExactReportFreshness::Current
+        );
+        let mut stale_planar_report = planar_report.clone();
+        stale_planar_report.retained_events += 1;
+        assert_eq!(
+            workspace.validate_planar_arrangement_report(request, &stale_planar_report),
+            Err(ExactReportValidationError::SourceReplayMismatch)
+        );
+        assert_ne!(
+            workspace.planar_arrangement_report_freshness(request, &stale_planar_report),
+            ExactReportFreshness::Current
+        );
+        let mut relabeled_planar_report = planar_report.clone();
+        relabeled_planar_report.operation = ExactBooleanOperation::Difference;
+        assert_eq!(
+            workspace.validate_planar_arrangement_report(request, &relabeled_planar_report),
             Err(ExactReportValidationError::StatusEvidenceMismatch)
         );
 
