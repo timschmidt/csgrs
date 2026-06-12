@@ -104,9 +104,29 @@ fn run_case(case: &BenchCase) {
         ));
     });
 
-    let arrangement =
-        ExactArrangement::from_meshes_with_policy(&case.left, &case.right, case.regularization)
-            .unwrap();
+    time_stage(case, "arrangement_build_from_retained_graph", || {
+        let arrangement = ExactArrangement::from_intersection_graph_with_policy(
+            graph.clone(),
+            &case.left,
+            &case.right,
+            case.regularization,
+        )
+        .unwrap();
+        black_box((
+            arrangement.vertices.len(),
+            arrangement.edges.len(),
+            arrangement.face_cells.len(),
+            arrangement.blockers.len(),
+        ));
+    });
+
+    let arrangement = ExactArrangement::from_intersection_graph_with_policy(
+        graph.clone(),
+        &case.left,
+        &case.right,
+        case.regularization,
+    )
+    .unwrap();
     time_stage(case, "topology_assembly_report", || {
         let report = arrangement.topology_assembly_report_with_policy(
             &case.left,

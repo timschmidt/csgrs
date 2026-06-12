@@ -2448,7 +2448,8 @@ pub(crate) fn evaluate_boolean_exact_request_with_artifacts_and_arrangement_repl
         } else if let Some(arrangement) = retained_regularized_arrangement {
             Some(arrangement)
         } else {
-            owned_regularized_arrangement = ExactArrangement::from_meshes_with_policy(
+            owned_regularized_arrangement = ExactArrangement::from_intersection_graph_with_policy(
+                graph.clone(),
                 left,
                 right,
                 ExactRegularizationPolicy::REGULARIZED_SOLID,

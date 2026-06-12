@@ -511,7 +511,10 @@ impl<'a> ExactBooleanWorkspace<'a> {
             return Ok(&self.arrangements[index].1);
         }
 
-        let arrangement = ExactArrangement::from_meshes_with_policy(self.left, self.right, policy)?;
+        let graph = self.validated_graph()?.clone();
+        let arrangement = ExactArrangement::from_intersection_graph_with_policy(
+            graph, self.left, self.right, policy,
+        )?;
         self.arrangements.push((policy, arrangement));
         Ok(&self
             .arrangements

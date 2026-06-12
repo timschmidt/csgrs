@@ -18,6 +18,7 @@ use super::cell_complex::{
     ExactRegionOwnershipReport, region_ownership_status,
     selected_region_selection_ignores_opposite_classification,
 };
+use super::error::{DiagnosticKind, MeshDiagnostic, MeshError, Severity};
 use super::graph::{
     CoplanarEdgeSplitConstruction, CoplanarOverlapGraph, ExactFaceRegionPlan,
     ExactIntersectionGraph, ExactSplitTopologyPlan, FaceRegionBoundary, FaceSplitBoundaryNode,
@@ -940,10 +941,7 @@ impl ExactTopologyAssemblyReport {
 
 impl ExactArrangement3d {
     /// Build a retained exact arrangement from two meshes.
-    pub fn from_meshes(
-        left: &ExactMesh,
-        right: &ExactMesh,
-    ) -> Result<Self, super::error::MeshError> {
+    pub fn from_meshes(left: &ExactMesh, right: &ExactMesh) -> Result<Self, MeshError> {
         Self::from_meshes_with_policy(left, right, ExactRegularizationPolicy::default())
     }
 
@@ -952,8 +950,33 @@ impl ExactArrangement3d {
         left: &ExactMesh,
         right: &ExactMesh,
         policy: ExactRegularizationPolicy,
-    ) -> Result<Self, super::error::MeshError> {
+    ) -> Result<Self, MeshError> {
         let graph = build_intersection_graph(left, right)?;
+        Self::from_intersection_graph_with_policy(graph, left, right, policy)
+    }
+
+    /// Build a retained exact arrangement from an already retained
+    /// intersection graph.
+    ///
+    /// This validates the graph's source handles against `left` and `right`,
+    /// then consumes it directly without replay-building the graph. Public
+    /// exact-computation boundaries that require full source replay should
+    /// perform that check before calling this constructor.
+    pub fn from_intersection_graph_with_policy(
+        graph: ExactIntersectionGraph,
+        left: &ExactMesh,
+        right: &ExactMesh,
+        policy: ExactRegularizationPolicy,
+    ) -> Result<Self, MeshError> {
+        graph
+            .validate_against_meshes(left, right)
+            .map_err(|error| {
+                MeshError::one(MeshDiagnostic::new(
+                    Severity::Error,
+                    DiagnosticKind::UnsupportedExactOperation,
+                    format!("retained exact intersection graph failed mesh handoff: {error:?}"),
+                ))
+            })?;
         let mut blockers = blockers_from_graph_validation(&graph);
         if graph.has_unknowns() {
             blockers.push(ExactArrangementBlocker::UnresolvedIntersection);
@@ -4450,6 +4473,30 @@ mod tests {
             ]);
         }
         ExactMesh::from_i64_triangles(&vertices, &triangles).unwrap()
+    }
+
+    #[test]
+    fn arrangement_from_retained_graph_matches_mesh_construction() {
+        let left = tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]);
+        let right = tetrahedron_i64([1, 1, 1], [5, 1, 1], [1, 5, 1], [1, 1, 5]);
+        let graph = build_intersection_graph(&left, &right).unwrap();
+
+        let from_meshes = ExactArrangement::from_meshes_with_policy(
+            &left,
+            &right,
+            ExactRegularizationPolicy::REGULARIZED_SOLID,
+        )
+        .unwrap();
+        let from_graph = ExactArrangement::from_intersection_graph_with_policy(
+            graph,
+            &left,
+            &right,
+            ExactRegularizationPolicy::REGULARIZED_SOLID,
+        )
+        .unwrap();
+
+        assert_eq!(from_graph, from_meshes);
+        from_graph.validate().unwrap();
     }
 
     fn tetrahedron_with_reversed_inner_i64(
