@@ -5161,6 +5161,7 @@ fn arrangement_boolean_attempt_report(
         return Ok(attempt);
     }
     let graph = build_intersection_graph(left, right)?;
+    validate_graph_source_handoff(&graph, left, right)?;
     let outcome = run_arrangement_cell_complex_attempt_from_graph(
         &graph,
         left,
@@ -5263,6 +5264,7 @@ fn boolean_arrangement_cell_complex_meshes(
     validation: ValidationPolicy,
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
     let graph = build_intersection_graph(left, right)?;
+    validate_graph_source_handoff(&graph, left, right)?;
     boolean_arrangement_cell_complex_meshes_from_graph(&graph, left, right, operation, validation)
 }
 
