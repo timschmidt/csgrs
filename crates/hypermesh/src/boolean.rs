@@ -9021,7 +9021,7 @@ fn certified_closed_validation_regularized_solid_support(
         .or_else(|| certified_mixed_dimensional_regularized_solid_support(left, right))
 }
 
-fn boolean_closed_validation_regularized_meshes(
+pub(crate) fn boolean_closed_validation_regularized_meshes(
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
@@ -9875,9 +9875,21 @@ fn materialize_boundary_touching_policy_for_request(
     }
     let graph = build_intersection_graph(left, right)?;
     validate_graph_source_handoff(&graph, left, right)?;
+    materialize_boundary_touching_policy_from_graph_for_request(&graph, left, right, request)
+}
+
+pub(crate) fn materialize_boundary_touching_policy_from_graph_for_request(
+    graph: &super::graph::ExactIntersectionGraph,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    request: ExactBooleanRequest,
+) -> Result<Option<ExactBooleanResult>, MeshError> {
+    let operation = request.operation;
+    let validation = request.validation;
+    let boundary_policy = request.boundary_policy;
     if let Some((result, evidence)) =
         materialize_closed_boundary_touching_regularized_boolean_with_evidence_from_graph(
-            &graph, left, right, operation, validation,
+            graph, left, right, operation, validation,
         )?
     {
         if result
@@ -9903,7 +9915,7 @@ fn materialize_boundary_touching_policy_for_request(
         ));
     }
     let Some(result) = boolean_boundary_touching_meshes_from_graph(
-        &graph,
+        graph,
         left,
         right,
         operation,

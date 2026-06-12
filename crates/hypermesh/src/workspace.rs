@@ -2,7 +2,9 @@ use super::arrangement3d::{ExactArrangement, ExactTopologyAssemblyReport};
 use super::boolean::{
     ExactArrangementBooleanAttempt, ExactBooleanEvaluation, ExactBooleanRequest,
     ExactIdenticalMeshReport, arrangement_boolean_attempt_report_from_arrangement,
+    boolean_closed_validation_regularized_meshes,
     evaluate_boolean_exact_request_with_artifacts_and_arrangement_replay,
+    materialize_boundary_touching_policy_from_graph_for_request,
     materialize_certified_boolean_support_with_arrangement,
     materialize_closed_boundary_touching_regularized_boolean_with_evidence_from_graph,
     materialize_closed_no_volume_overlap_regularized_boolean_with_evidence_from_graph,
@@ -51,6 +53,8 @@ pub struct ExactBooleanWorkspace<'a> {
         Option<(ExactBooleanResult, CoplanarVolumetricCellEvidenceReport)>,
     )>,
     open_surface_disjoint_materializations: Vec<(ExactBooleanRequest, Option<ExactBooleanResult>)>,
+    boundary_touching_policy_materializations:
+        Vec<(ExactBooleanRequest, Option<ExactBooleanResult>)>,
     arrangements: Vec<(ExactRegularizationPolicy, ExactArrangement)>,
     topology_assembly_reports: Vec<(ExactRegularizationPolicy, ExactTopologyAssemblyReport)>,
     region_ownership_reports: Vec<(ExactRegularizationPolicy, ExactRegionOwnershipReport)>,
@@ -96,6 +100,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
             closed_boundary_touching_regularized_materializations: Vec::new(),
             closed_no_volume_overlap_regularized_materializations: Vec::new(),
             open_surface_disjoint_materializations: Vec::new(),
+            boundary_touching_policy_materializations: Vec::new(),
             arrangements: Vec::new(),
             topology_assembly_reports: Vec::new(),
             region_ownership_reports: Vec::new(),
@@ -296,6 +301,52 @@ impl<'a> ExactBooleanWorkspace<'a> {
         )?;
         validate_cached_optional_result(&materialized)?;
         self.open_surface_disjoint_materializations
+            .push((request, materialized.clone()));
+        Ok(materialized)
+    }
+
+    /// Materializes explicit boundary-only projection, preserving the public
+    /// closed-validation shortcut and reusing the retained graph for
+    /// boundary-policy replay.
+    pub fn materialize_boundary_touching_policy(
+        &mut self,
+        request: ExactBooleanRequest,
+    ) -> Result<Option<ExactBooleanResult>, MeshError> {
+        if let Some((_, cached)) = self
+            .boundary_touching_policy_materializations
+            .iter()
+            .find(|(stored_request, _)| *stored_request == request)
+        {
+            validate_cached_optional_result(cached)?;
+            return Ok(cached.clone());
+        }
+
+        if let Some(result) = boolean_closed_validation_regularized_meshes(
+            self.left,
+            self.right,
+            request.operation,
+            request.validation,
+        )? {
+            let materialized = Some(result);
+            validate_cached_optional_result(&materialized)?;
+            self.boundary_touching_policy_materializations
+                .push((request, materialized.clone()));
+            return Ok(materialized);
+        }
+
+        self.graph()?;
+        let graph = self
+            .graph
+            .as_ref()
+            .expect("intersection graph cache was just populated");
+        graph
+            .validate_against_meshes(self.left, self.right)
+            .map_err(workspace_graph_validation_error)?;
+        let materialized = materialize_boundary_touching_policy_from_graph_for_request(
+            graph, self.left, self.right, request,
+        )?;
+        validate_cached_optional_result(&materialized)?;
+        self.boundary_touching_policy_materializations
             .push((request, materialized.clone()));
         Ok(materialized)
     }
@@ -1552,7 +1603,7 @@ mod tests {
     use crate::validation::ValidationPolicy;
     use crate::{
         CoplanarVolumetricCellEvidenceError, CoplanarVolumetricCellEvidenceFreshness,
-        ExactBooleanResultKind, ExactReportValidationError, Triangle,
+        ExactBooleanResultKind, ExactBoundaryBooleanPolicy, ExactReportValidationError, Triangle,
         certify_coplanar_volumetric_cell_evidence,
     };
 
@@ -2498,6 +2549,61 @@ mod tests {
                 .materialize_open_surface_disjoint(request)
                 .is_err(),
             "cached open-surface disjoint materialization must validate before reuse"
+        );
+    }
+
+    #[test]
+    fn exact_boolean_workspace_reuses_boundary_touching_policy_materialization() {
+        let left = ExactMesh::from_i64_triangles_with_policy(
+            &[0, 0, 0, 2, 0, 0, 0, 2, 0],
+            &[0, 1, 2],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let right = ExactMesh::from_i64_triangles_with_policy(
+            &[2, 0, 0, 0, 2, 0, 2, 2, 2],
+            &[0, 1, 2],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let request = ExactBooleanRequest::with_boundary_policy(
+            ExactBooleanOperation::Union,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            ExactBoundaryBooleanPolicy::PreserveSeparateShells,
+        );
+        let mut workspace = ExactBooleanWorkspace::new(&left, &right);
+
+        let materialized = workspace
+            .materialize_boundary_touching_policy(request)
+            .unwrap()
+            .expect("boundary policy should materialize from retained graph");
+        assert_eq!(
+            materialized,
+            request
+                .materialize_boundary_touching_policy(&left, &right)
+                .unwrap()
+                .unwrap()
+        );
+        assert_eq!(workspace.boundary_touching_policy_materializations.len(), 1);
+        assert_eq!(
+            workspace
+                .materialize_boundary_touching_policy(request)
+                .unwrap()
+                .unwrap(),
+            materialized
+        );
+        assert_eq!(workspace.boundary_touching_policy_materializations.len(), 1);
+
+        let cached = workspace.boundary_touching_policy_materializations[0]
+            .1
+            .as_mut()
+            .unwrap();
+        cached.graph_had_unknowns = !cached.graph_had_unknowns;
+        assert!(
+            workspace
+                .materialize_boundary_touching_policy(request)
+                .is_err(),
+            "cached boundary-policy materialization must validate before reuse"
         );
     }
 
