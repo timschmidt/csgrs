@@ -1546,6 +1546,48 @@ impl ExactIdenticalMeshReport {
         }
         Ok(())
     }
+
+    /// Validate this report against the source meshes that produced it.
+    pub fn validate_against_sources(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> Result<(), ExactReportValidationError> {
+        self.validate()?;
+        if self
+            == &ExactBooleanRequest::new(
+                ExactBooleanOperation::Union,
+                ValidationPolicy::ALLOW_BOUNDARY,
+            )
+            .identical_mesh_report(left, right)
+        {
+            Ok(())
+        } else {
+            Err(ExactReportValidationError::SourceReplayMismatch)
+        }
+    }
+
+    /// Classify whether this retained identical-mesh report is fresh.
+    pub fn freshness_against_sources(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> ExactReportFreshness {
+        if let Err(error) = self.validate() {
+            return error.into();
+        }
+        if self
+            == &ExactBooleanRequest::new(
+                ExactBooleanOperation::Union,
+                ValidationPolicy::ALLOW_BOUNDARY,
+            )
+            .identical_mesh_report(left, right)
+        {
+            ExactReportFreshness::Current
+        } else {
+            ExactReportFreshness::SourceReplayMismatch
+        }
+    }
 }
 
 impl ExactTrivialBooleanFacts {

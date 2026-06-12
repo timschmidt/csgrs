@@ -2,13 +2,14 @@ use std::hint::black_box;
 use std::time::{Duration, Instant};
 
 use hypermesh::{
-    build_intersection_graph, triangulate_all_face_cells_with_cdt,
     ExactAdjacentUnionCompletionReport, ExactArrangement, ExactArrangementBooleanAttempt,
     ExactBooleanEvaluation, ExactBooleanOperation, ExactBooleanPreflight, ExactBooleanRequest,
-    ExactBooleanResult, ExactBooleanWorkspace, ExactBoundaryTouchingReport, ExactMesh,
-    ExactOpenSurfaceDisjointReport, ExactPlanarArrangementReport, ExactRefinementReport,
-    ExactRegularizationPolicy, ExactSelectedCellComplex, ExactSimplifiedCellComplex,
+    ExactBooleanResult, ExactBooleanWorkspace, ExactBoundaryTouchingReport,
+    ExactIdenticalMeshReport, ExactMesh, ExactOpenSurfaceDisjointReport,
+    ExactPlanarArrangementReport, ExactRefinementReport, ExactRegularizationPolicy,
+    ExactSameSurfaceReport, ExactSelectedCellComplex, ExactSimplifiedCellComplex,
     ExactVolumetricBoundaryClosureReport, ExactWindingReadinessReport, ValidationPolicy,
+    build_intersection_graph, triangulate_all_face_cells_with_cdt,
 };
 
 struct BenchCase {
@@ -469,6 +470,32 @@ fn run_case(case: &BenchCase) {
 
     time_prepared_stage(
         case,
+        "workspace_validate_identical_mesh_from_retained_artifacts",
+        || retained_workspace_and_identical_mesh_for_case(case, request),
+        |(retained_workspace, report)| {
+            black_box(
+                retained_workspace
+                    .validate_identical_mesh_report(request, report)
+                    .ok(),
+            );
+        },
+    );
+
+    time_prepared_stage(
+        case,
+        "workspace_validate_same_surface_from_retained_artifacts",
+        || retained_workspace_and_same_surface_for_case(case, request),
+        |(retained_workspace, report)| {
+            black_box(
+                retained_workspace
+                    .validate_same_surface_report(request, report)
+                    .ok(),
+            );
+        },
+    );
+
+    time_prepared_stage(
+        case,
         "workspace_validate_boundary_touching_from_retained_artifacts",
         || retained_workspace_and_boundary_touching_for_case(case, request),
         |(retained_workspace, report)| {
@@ -636,6 +663,24 @@ fn retained_workspace_and_adjacent_union_for_case<'a>(
         .adjacent_union_completion_report(request)
         .unwrap()
         .clone();
+    (retained_workspace, report)
+}
+
+fn retained_workspace_and_identical_mesh_for_case<'a>(
+    case: &'a BenchCase,
+    request: ExactBooleanRequest,
+) -> (ExactBooleanWorkspace<'a>, ExactIdenticalMeshReport) {
+    let mut retained_workspace = retained_workspace_for_case(case, request);
+    let report = retained_workspace.identical_mesh_report(request).clone();
+    (retained_workspace, report)
+}
+
+fn retained_workspace_and_same_surface_for_case<'a>(
+    case: &'a BenchCase,
+    request: ExactBooleanRequest,
+) -> (ExactBooleanWorkspace<'a>, ExactSameSurfaceReport) {
+    let mut retained_workspace = retained_workspace_for_case(case, request);
+    let report = retained_workspace.same_surface_report(request).clone();
     (retained_workspace, report)
 }
 
