@@ -14241,6 +14241,17 @@ mod tests {
             stale_gate_count.validate(),
             Err(ExactReportValidationError::StatusEvidenceMismatch)
         );
+        let mut stale_ownership_shape = replayable_result.clone();
+        let ownership = stale_ownership_shape
+            .region_ownership_report
+            .as_mut()
+            .unwrap();
+        ownership.lower_dimensional_artifacts += 1;
+        ownership.lower_dimensional_point_contacts += 1;
+        assert_eq!(
+            stale_ownership_shape.validate(),
+            Err(ExactReportValidationError::StatusEvidenceMismatch)
+        );
         let mut stale_replay_report = replayable_result.clone();
         stale_replay_report
             .topology_assembly_report
