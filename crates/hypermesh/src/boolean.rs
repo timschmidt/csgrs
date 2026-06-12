@@ -9675,14 +9675,27 @@ pub(crate) fn replay_open_surface_arrangement_result(
     else {
         return Ok(None);
     };
-    materialize_open_surface_arrangement_plan(
+    let Some(result) = materialize_open_surface_arrangement_plan(
         left,
         right,
         operation,
         validation,
         graph.has_unknowns(),
         plan,
-    )
+    )?
+    else {
+        return Ok(None);
+    };
+    if !matches!(
+        result.kind,
+        ExactBooleanResultKind::OpenSurfaceArrangement {
+            operation: retained_operation
+        } if retained_operation == operation
+    ) || result.mesh.validation_policy() != validation
+    {
+        return Ok(None);
+    }
+    Ok(Some(result))
 }
 
 /// Materialize a named arrangement boolean for crossing open surfaces.
