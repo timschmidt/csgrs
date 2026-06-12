@@ -1662,13 +1662,14 @@ impl<'a> ExactBooleanWorkspace<'a> {
                 .map_err(workspace_report_validation_error)?;
             return Ok(result.clone());
         }
-        if let Some(result) = self
+        if let Some(evaluation) = self
             .evaluations
             .iter()
             .find(|(stored_request, _)| *stored_request == request)
-            .and_then(|(_, evaluation)| evaluation.result.as_ref())
+            .map(|(_, evaluation)| evaluation)
+            && let Some(result) = evaluation.result.as_ref()
         {
-            result
+            evaluation
                 .validate()
                 .map_err(workspace_report_validation_error)?;
             return Ok(result.clone());
@@ -2746,6 +2747,17 @@ mod tests {
         assert_ne!(
             workspace.evaluation_freshness(&stale),
             ExactReportFreshness::Current
+        );
+
+        let mut corrupt_proof_workspace = ExactBooleanWorkspace::new(&left, &right);
+        corrupt_proof_workspace.evaluate(request).unwrap();
+        corrupt_proof_workspace.evaluations[0]
+            .1
+            .preflight
+            .retained_events += 1;
+        assert!(
+            corrupt_proof_workspace.materialize(request).is_err(),
+            "cached evaluation proof must validate before materialization reuse"
         );
 
         let cached_result = workspace.evaluations[0]
