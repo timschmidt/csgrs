@@ -284,13 +284,31 @@ impl ExactRegionOwnershipReport {
         if self.face_cells != opposite_classified_faces {
             return Err(ExactArrangementBlocker::UnresolvedRegionClassification);
         }
-        if self.exterior_volume_regions > self.volume_regions
+        let Some(bounded_volume_regions) = self
+            .volume_regions
+            .checked_sub(self.exterior_volume_regions)
+        else {
+            return Err(ExactArrangementBlocker::UnresolvedRegionClassification);
+        };
+        let Some(owned_volume_union) = self
+            .left_owned_volumes
+            .checked_add(self.right_owned_volumes)
+            .and_then(|count| count.checked_sub(self.shared_owned_volumes))
+        else {
+            return Err(ExactArrangementBlocker::UnresolvedRegionClassification);
+        };
+        let Some(classified_bounded_volumes) =
+            owned_volume_union.checked_add(self.unowned_bounded_volumes)
+        else {
+            return Err(ExactArrangementBlocker::UnresolvedRegionClassification);
+        };
+        if self.left_owned_volumes > bounded_volume_regions
+            || self.right_owned_volumes > bounded_volume_regions
             || self.shared_owned_volumes > self.left_owned_volumes
             || self.shared_owned_volumes > self.right_owned_volumes
-            || self.unowned_bounded_volumes
-                > self
-                    .volume_regions
-                    .saturating_sub(self.exterior_volume_regions)
+            || self.shared_owned_volumes > bounded_volume_regions
+            || self.unowned_bounded_volumes > bounded_volume_regions
+            || classified_bounded_volumes > bounded_volume_regions
         {
             return Err(ExactArrangementBlocker::UnresolvedRegionClassification);
         }
@@ -1625,11 +1643,38 @@ mod tests {
             Err(ExactArrangementBlocker::UnresolvedRegionClassification)
         );
 
-        let mut overflowing_opposite_partition = report;
+        let mut overflowing_opposite_partition = report.clone();
         overflowing_opposite_partition.opposite_inside_faces = usize::MAX;
         overflowing_opposite_partition.opposite_outside_faces = 1;
         assert_eq!(
             overflowing_opposite_partition.validate(),
+            Err(ExactArrangementBlocker::UnresolvedRegionClassification)
+        );
+
+        let mut impossible_owned_volume_count = report.clone();
+        impossible_owned_volume_count.volume_regions = 1;
+        impossible_owned_volume_count.left_owned_volumes = 2;
+        assert_eq!(
+            impossible_owned_volume_count.validate(),
+            Err(ExactArrangementBlocker::UnresolvedRegionClassification)
+        );
+
+        let mut impossible_volume_partition = report.clone();
+        impossible_volume_partition.volume_regions = 1;
+        impossible_volume_partition.left_owned_volumes = 1;
+        impossible_volume_partition.right_owned_volumes = 1;
+        impossible_volume_partition.shared_owned_volumes = 0;
+        assert_eq!(
+            impossible_volume_partition.validate(),
+            Err(ExactArrangementBlocker::UnresolvedRegionClassification)
+        );
+
+        let mut overflowing_volume_partition = report;
+        overflowing_volume_partition.volume_regions = usize::MAX;
+        overflowing_volume_partition.left_owned_volumes = usize::MAX;
+        overflowing_volume_partition.right_owned_volumes = 1;
+        assert_eq!(
+            overflowing_volume_partition.validate(),
             Err(ExactArrangementBlocker::UnresolvedRegionClassification)
         );
     }
