@@ -1107,16 +1107,15 @@ impl ExactBooleanRequest {
         left: &ExactMesh,
         right: &ExactMesh,
     ) -> Result<Option<ExactBooleanResult>, MeshError> {
-        let operation = self.operation;
-        let validation = self.validation;
-        Ok(public_operation_replayable_result(
-            boolean_closed_winding_containment_meshes(left, right, operation, validation)?,
+        let graph = build_intersection_graph(left, right)?;
+        validate_graph_source_handoff(&graph, left, right)?;
+        materialize_closed_winding_from_graph_for_request(
+            &graph,
             left,
             right,
-            operation,
-            validation,
-            ExactBoundaryBooleanPolicy::Reject,
-        ))
+            self,
+            ClosedWindingMaterialization::Containment,
+        )
     }
 
     /// Materialize the closed-winding separation shortcut for this request,
@@ -1126,16 +1125,15 @@ impl ExactBooleanRequest {
         left: &ExactMesh,
         right: &ExactMesh,
     ) -> Result<Option<ExactBooleanResult>, MeshError> {
-        let operation = self.operation;
-        let validation = self.validation;
-        Ok(public_operation_replayable_result(
-            boolean_closed_winding_separated_meshes(left, right, operation, validation)?,
+        let graph = build_intersection_graph(left, right)?;
+        validate_graph_source_handoff(&graph, left, right)?;
+        materialize_closed_winding_from_graph_for_request(
+            &graph,
             left,
             right,
-            operation,
-            validation,
-            ExactBoundaryBooleanPolicy::Reject,
-        ))
+            self,
+            ClosedWindingMaterialization::Separated,
+        )
     }
 
     /// Materialize a closed-convex shortcut for this request, when convex facts
@@ -2986,7 +2984,7 @@ pub(crate) fn materialize_certified_boolean_support_with_artifacts(
                     graph, left, right, operation, validation,
                 )?
             } else {
-                boolean_closed_winding_separated_meshes(left, right, operation, validation)?
+                request.materialize_closed_winding_separated(left, right)?
             }
         }
         ExactBooleanSupport::CertifiedClosedWindingContainment => {
@@ -2995,7 +2993,7 @@ pub(crate) fn materialize_certified_boolean_support_with_artifacts(
                     graph, left, right, operation, validation,
                 )?
             } else {
-                boolean_closed_winding_containment_meshes(left, right, operation, validation)?
+                request.materialize_closed_winding_containment(left, right)?
             }
         }
         ExactBooleanSupport::CertifiedMixedDimensionalRegularizedSolid
@@ -4847,20 +4845,6 @@ pub(crate) fn materialize_closed_winding_from_graph_for_request(
     ))
 }
 
-fn boolean_closed_winding_containment_meshes(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: ValidationPolicy,
-) -> Result<Option<ExactBooleanResult>, MeshError> {
-    if closed_winding_shortcut_preconditions_fail(left, right, operation) {
-        return Ok(None);
-    }
-    let graph = build_intersection_graph(left, right)?;
-    validate_graph_source_handoff(&graph, left, right)?;
-    boolean_closed_winding_containment_meshes_from_graph(&graph, left, right, operation, validation)
-}
-
 fn boolean_closed_winding_separated_meshes_from_graph(
     graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
@@ -4898,20 +4882,6 @@ fn boolean_closed_winding_separated_meshes_from_graph(
         operation,
         ExactBooleanShortcutKind::ClosedWindingSeparated,
     )))
-}
-
-fn boolean_closed_winding_separated_meshes(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: ValidationPolicy,
-) -> Result<Option<ExactBooleanResult>, MeshError> {
-    if closed_winding_shortcut_preconditions_fail(left, right, operation) {
-        return Ok(None);
-    }
-    let graph = build_intersection_graph(left, right)?;
-    validate_graph_source_handoff(&graph, left, right)?;
-    boolean_closed_winding_separated_meshes_from_graph(&graph, left, right, operation, validation)
 }
 
 fn public_operation_replayable_result(
