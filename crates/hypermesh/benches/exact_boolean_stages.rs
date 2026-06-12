@@ -63,13 +63,43 @@ fn main() {
     ];
 
     println!("hypermesh exact boolean stage timings");
-    println!("case,stage,iterations,total_ns,avg_ns");
+    println!("case,stage,detail,iterations,total_ns,avg_ns");
     for case in &cases {
         run_case(case);
     }
 }
 
 fn run_case(case: &BenchCase) {
+    let request = ExactBooleanRequest::new(case.operation, case.validation);
+    print_metadata(
+        case.name,
+        "request",
+        format!("{:?}/{:?}", case.operation, case.validation),
+    );
+    match request.preflight(&case.left, &case.right) {
+        Ok(preflight) => print_metadata(
+            case.name,
+            "preflight_support",
+            format!(
+                "{:?};pairs={};events={}",
+                preflight.support, preflight.retained_face_pairs, preflight.retained_events
+            ),
+        ),
+        Err(error) => print_metadata(case.name, "preflight_support", format!("error:{error:?}")),
+    }
+    match request.materialize(&case.left, &case.right) {
+        Ok(result) => print_metadata(
+            case.name,
+            "materialize_kind",
+            format!(
+                "{:?};triangles={}",
+                result.kind,
+                result.mesh.triangles().len()
+            ),
+        ),
+        Err(error) => print_metadata(case.name, "materialize_kind", format!("error:{error:?}")),
+    }
+
     time_stage(case, "mesh_retained_state", || {
         black_box(case.left.validate_retained_state().unwrap());
         black_box(case.right.validate_retained_state().unwrap());
@@ -205,7 +235,6 @@ fn run_case(case: &BenchCase) {
         }
     }
 
-    let request = ExactBooleanRequest::new(case.operation, case.validation);
     time_stage(case, "arrangement_attempt", || {
         black_box(
             request
@@ -1083,7 +1112,18 @@ where
 fn print_timing(case: &str, stage: &str, iterations: usize, elapsed: Duration) {
     let total_ns = elapsed.as_nanos();
     let avg_ns = total_ns / iterations.max(1) as u128;
-    println!("{case},{stage},{iterations},{total_ns},{avg_ns}");
+    println!("{case},{stage},,{iterations},{total_ns},{avg_ns}");
+}
+
+fn print_metadata(case: &str, stage: &str, detail: String) {
+    let detail: String = detail
+        .chars()
+        .map(|ch| match ch {
+            ',' | '\n' | '\r' => ' ',
+            _ => ch,
+        })
+        .collect();
+    println!("{case},{stage},{detail},0,0,0");
 }
 
 fn open_triangle_xy() -> ExactMesh {
