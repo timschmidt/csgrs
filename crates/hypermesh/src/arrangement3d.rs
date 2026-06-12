@@ -841,6 +841,23 @@ impl ExactTopologyAssemblyReport {
         {
             return Err(ExactArrangementBlocker::UnresolvedRegionClassification);
         }
+        if (self.split_graph_vertices == 0
+            && (self.split_edge_chains != 0 || self.split_graph_vertex_references != 0))
+            || (self.split_edge_chains == 0 && self.split_graph_vertex_references != 0)
+            || (self.split_edge_chains != 0
+                && self.split_graph_vertex_references < self.split_edge_chains)
+        {
+            return Err(ExactArrangementBlocker::UnresolvedRegionClassification);
+        }
+        let Some(min_region_boundary_nodes) = self.region_boundaries.checked_mul(3) else {
+            return Err(ExactArrangementBlocker::UnresolvedRegionClassification);
+        };
+        if (self.region_boundaries == 0 && self.region_boundary_nodes != 0)
+            || (self.region_boundaries != 0
+                && self.region_boundary_nodes < min_region_boundary_nodes)
+        {
+            return Err(ExactArrangementBlocker::UnresolvedRegionClassification);
+        }
         let Some(expected_edge_endpoints) = self.lower_dimensional_edge_contacts.checked_mul(2)
         else {
             return Err(ExactArrangementBlocker::UnresolvedRegionClassification);
@@ -6115,9 +6132,24 @@ mod tests {
             report.split_graph_vertices,
             arrangement.topology.as_ref().unwrap().graph_vertices.len()
         );
+        assert!(report.split_edge_chains > 0);
+        assert!(report.split_graph_vertex_references >= report.split_edge_chains);
+        let mut stale_split_report = report.clone();
+        stale_split_report.split_graph_vertex_references = stale_split_report.split_edge_chains - 1;
+        assert_eq!(
+            stale_split_report.validate(),
+            Err(ExactArrangementBlocker::UnresolvedRegionClassification)
+        );
         assert_eq!(
             report.region_boundaries,
             arrangement.region_plan.as_ref().unwrap().regions.len()
+        );
+        assert!(report.region_boundary_nodes >= report.region_boundaries * 3);
+        let mut stale_region_boundary_report = report.clone();
+        stale_region_boundary_report.region_boundary_nodes = report.region_boundaries * 3 - 1;
+        assert_eq!(
+            stale_region_boundary_report.validate(),
+            Err(ExactArrangementBlocker::UnresolvedRegionClassification)
         );
         assert_eq!(report.volume_regions, 0);
         assert_eq!(report.volume_adjacencies, 0);
