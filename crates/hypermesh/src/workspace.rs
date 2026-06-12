@@ -15,8 +15,9 @@ use super::graph::{build_intersection_graph, ExactIntersectionGraph};
 use super::mesh::ExactMesh;
 use super::regularization::{ExactArrangementBlocker, ExactRegularizationPolicy};
 use super::reports::{
-    ExactBooleanPreflight, ExactBooleanResult, ExactPlanarArrangementReport, ExactRefinementReport,
-    ExactReportFreshness, ExactReportValidationError, ExactWindingReadinessReport,
+    ExactBooleanPreflight, ExactBooleanResult, ExactBoundaryTouchingReport,
+    ExactPlanarArrangementReport, ExactRefinementReport, ExactReportFreshness,
+    ExactReportValidationError, ExactWindingReadinessReport,
 };
 use super::simplify::{ExactSimplifiedCellComplex, ExactSimplifiedCellComplexFreshness};
 
@@ -49,6 +50,7 @@ pub struct ExactBooleanWorkspace<'a> {
         ExactSimplifiedCellComplex,
     )>,
     refinement_reports: Vec<(ExactBooleanRequest, ExactRefinementReport)>,
+    boundary_touching_reports: Vec<(ExactBooleanRequest, ExactBoundaryTouchingReport)>,
     preflights: Vec<(ExactBooleanRequest, ExactBooleanPreflight)>,
     winding_readiness_reports: Vec<(ExactBooleanRequest, ExactWindingReadinessReport)>,
     planar_arrangement_reports: Vec<(ExactBooleanRequest, ExactPlanarArrangementReport)>,
@@ -70,6 +72,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
             selected_cell_complexes: Vec::new(),
             simplified_cell_complexes: Vec::new(),
             refinement_reports: Vec::new(),
+            boundary_touching_reports: Vec::new(),
             preflights: Vec::new(),
             winding_readiness_reports: Vec::new(),
             planar_arrangement_reports: Vec::new(),
@@ -582,6 +585,61 @@ impl<'a> ExactBooleanWorkspace<'a> {
         report: &ExactRefinementReport,
     ) -> ExactReportFreshness {
         match self.validate_refinement_report(request, report) {
+            Ok(()) => ExactReportFreshness::Current,
+            Err(error) => error.into(),
+        }
+    }
+
+    /// Returns boundary-touching evidence for `request`, building it once per
+    /// request.
+    pub fn boundary_touching_report(
+        &mut self,
+        request: ExactBooleanRequest,
+    ) -> Result<&ExactBoundaryTouchingReport, MeshError> {
+        if let Some(index) = self
+            .boundary_touching_reports
+            .iter()
+            .position(|(stored_request, _)| *stored_request == request)
+        {
+            return Ok(&self.boundary_touching_reports[index].1);
+        }
+
+        let report = request.boundary_touching_report(self.left, self.right)?;
+        self.boundary_touching_reports.push((request, report));
+        Ok(&self
+            .boundary_touching_reports
+            .last()
+            .expect("boundary-touching report cache was just populated")
+            .1)
+    }
+
+    /// Validate boundary-touching evidence against this workspace's source
+    /// meshes.
+    pub fn validate_boundary_touching_report(
+        &mut self,
+        request: ExactBooleanRequest,
+        report: &ExactBoundaryTouchingReport,
+    ) -> Result<(), ExactReportValidationError> {
+        if self
+            .boundary_touching_reports
+            .iter()
+            .any(|(stored_request, stored_report)| {
+                *stored_request == request && stored_report == report
+            })
+        {
+            report.validate()?;
+            return Ok(());
+        }
+        report.validate_against_sources(self.left, self.right)
+    }
+
+    /// Classify boundary-touching freshness in this retained source session.
+    pub fn boundary_touching_report_freshness(
+        &mut self,
+        request: ExactBooleanRequest,
+        report: &ExactBoundaryTouchingReport,
+    ) -> ExactReportFreshness {
+        match self.validate_boundary_touching_report(request, report) {
             Ok(()) => ExactReportFreshness::Current,
             Err(error) => error.into(),
         }
@@ -1316,6 +1374,34 @@ mod tests {
         assert_eq!(
             workspace.validate_refinement_report(request, &relabeled_refinement_report),
             Err(ExactReportValidationError::StatusEvidenceMismatch)
+        );
+
+        let first_boundary_report = workspace.boundary_touching_report(request).unwrap()
+            as *const ExactBoundaryTouchingReport;
+        let second_boundary_report = workspace.boundary_touching_report(request).unwrap()
+            as *const ExactBoundaryTouchingReport;
+        assert_eq!(first_boundary_report, second_boundary_report);
+        assert_eq!(
+            workspace.boundary_touching_report(request).unwrap(),
+            &request.boundary_touching_report(&left, &right).unwrap()
+        );
+        let boundary_report = workspace.boundary_touching_report(request).unwrap().clone();
+        workspace
+            .validate_boundary_touching_report(request, &boundary_report)
+            .unwrap();
+        assert_eq!(
+            workspace.boundary_touching_report_freshness(request, &boundary_report),
+            ExactReportFreshness::Current
+        );
+        let mut stale_boundary_report = boundary_report.clone();
+        stale_boundary_report.retained_events += 1;
+        assert_eq!(
+            workspace.validate_boundary_touching_report(request, &stale_boundary_report),
+            Err(ExactReportValidationError::SourceReplayMismatch)
+        );
+        assert_ne!(
+            workspace.boundary_touching_report_freshness(request, &stale_boundary_report),
+            ExactReportFreshness::Current
         );
 
         let first_readiness =
