@@ -4756,28 +4756,13 @@ fn materialize_boolean_exact_request(
     )? {
         return Ok(result);
     }
-    if operation == ExactBooleanOperation::Union {
-        let (report, result) = adjacent_union_completion_certification_from_graph(
-            &graph,
-            left,
-            right,
-            operation,
-            Some(validation),
-        )?;
-        if report.is_certified() {
-            report.validate().map_err(|error| {
-                MeshError::one(MeshDiagnostic::new(
-                    Severity::Error,
-                    DiagnosticKind::UnsupportedExactOperation,
-                    format!("exact adjacent-union completion report validation failed: {error:?}"),
-                ))
-            })?;
-            if let Some(result) = result
-                && result.validate_against_sources(left, right).is_ok()
-            {
-                return Ok(result);
-            }
-        }
+    if operation == ExactBooleanOperation::Union
+        && let Some((result, _report)) =
+            materialize_adjacent_union_completion_from_graph_for_request(
+                &graph, left, right, request,
+            )?
+    {
+        return Ok(result);
     }
     if let Some((result, _evidence)) =
         materialize_closed_boundary_touching_regularized_boolean_with_evidence_from_graph(
@@ -6278,7 +6263,19 @@ fn materialize_adjacent_union_completion_for_request(
     right: &ExactMesh,
     request: ExactBooleanRequest,
 ) -> Result<Option<(ExactBooleanResult, ExactAdjacentUnionCompletionReport)>, MeshError> {
-    let (report, result) = adjacent_union_completion_certification(
+    let graph = build_intersection_graph(left, right)?;
+    validate_graph_source_handoff(&graph, left, right)?;
+    materialize_adjacent_union_completion_from_graph_for_request(&graph, left, right, request)
+}
+
+fn materialize_adjacent_union_completion_from_graph_for_request(
+    graph: &ExactIntersectionGraph,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    request: ExactBooleanRequest,
+) -> Result<Option<(ExactBooleanResult, ExactAdjacentUnionCompletionReport)>, MeshError> {
+    let (report, result) = adjacent_union_completion_certification_from_graph(
+        graph,
         left,
         right,
         request.operation,
