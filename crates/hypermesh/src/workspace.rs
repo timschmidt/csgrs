@@ -1816,7 +1816,7 @@ fn workspace_report_validation_error(error: ExactReportValidationError) -> MeshE
     MeshError::one(MeshDiagnostic::new(
         Severity::Error,
         DiagnosticKind::UnsupportedExactOperation,
-        format!("exact boolean workspace cached report failed validation: {error:?}"),
+        format!("exact boolean workspace retained report failed replay validation: {error:?}"),
     ))
 }
 

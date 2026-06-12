@@ -439,7 +439,7 @@ fn run_case(case: &BenchCase) {
 
     time_prepared_stage(
         case,
-        "workspace_validate_topology_assembly_report_cached",
+        "workspace_replay_validate_topology_assembly_report",
         || retained_workspace_and_topology_for_case(case),
         |(retained_workspace, report)| {
             black_box(
@@ -473,7 +473,7 @@ fn run_case(case: &BenchCase) {
 
     time_prepared_stage(
         case,
-        "workspace_validate_region_ownership_report_cached",
+        "workspace_replay_validate_region_ownership_report",
         || retained_workspace_and_region_ownership_for_case(case),
         |(retained_workspace, report)| {
             black_box(
@@ -503,7 +503,7 @@ fn run_case(case: &BenchCase) {
 
     time_prepared_stage(
         case,
-        "workspace_validate_arrangement_attempt_cached",
+        "workspace_replay_validate_arrangement_attempt",
         || retained_workspace_and_arrangement_attempt_for_case(case, request),
         |(retained_workspace, attempt)| {
             black_box(
