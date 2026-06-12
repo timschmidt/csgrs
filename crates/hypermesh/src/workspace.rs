@@ -11,7 +11,9 @@ use super::cell_complex::{
     select_arrangement_for_replay,
 };
 use super::error::{DiagnosticKind, MeshDiagnostic, MeshError, Severity};
-use super::graph::{ExactIntersectionGraph, build_intersection_graph};
+use super::graph::{
+    ExactIntersectionGraph, IntersectionGraphValidationError, build_intersection_graph,
+};
 use super::mesh::ExactMesh;
 use super::regularization::{ExactArrangementBlocker, ExactRegularizationPolicy};
 use super::reports::{
@@ -21,6 +23,10 @@ use super::reports::{
     ExactSameSurfaceReport, ExactVolumetricBoundaryClosureReport, ExactWindingReadinessReport,
 };
 use super::simplify::{ExactSimplifiedCellComplex, ExactSimplifiedCellComplexFreshness};
+use super::volumetric_cells::{
+    CoplanarVolumetricCellEvidenceError, CoplanarVolumetricCellEvidenceFreshness,
+    CoplanarVolumetricCellEvidenceReport,
+};
 
 /// Reusable exact boolean session for a fixed source-mesh pair.
 ///
@@ -32,6 +38,7 @@ pub struct ExactBooleanWorkspace<'a> {
     left: &'a ExactMesh,
     right: &'a ExactMesh,
     graph: Option<ExactIntersectionGraph>,
+    coplanar_volumetric_cell_evidence: Option<CoplanarVolumetricCellEvidenceReport>,
     arrangements: Vec<(ExactRegularizationPolicy, ExactArrangement)>,
     topology_assembly_reports: Vec<(ExactRegularizationPolicy, ExactTopologyAssemblyReport)>,
     region_ownership_reports: Vec<(ExactRegularizationPolicy, ExactRegionOwnershipReport)>,
@@ -73,6 +80,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
             left,
             right,
             graph: None,
+            coplanar_volumetric_cell_evidence: None,
             arrangements: Vec::new(),
             topology_assembly_reports: Vec::new(),
             region_ownership_reports: Vec::new(),
@@ -113,6 +121,62 @@ impl<'a> ExactBooleanWorkspace<'a> {
             .graph
             .as_ref()
             .expect("intersection graph was just initialized"))
+    }
+
+    /// Returns retained coplanar volumetric-cell evidence, deriving it from
+    /// the workspace's cached exact intersection graph.
+    pub fn coplanar_volumetric_cell_evidence(
+        &mut self,
+    ) -> Result<&CoplanarVolumetricCellEvidenceReport, MeshError> {
+        if self.coplanar_volumetric_cell_evidence.is_none() {
+            self.graph()?;
+            let graph = self
+                .graph
+                .as_ref()
+                .expect("intersection graph cache was just populated");
+            graph
+                .validate_against_meshes(self.left, self.right)
+                .map_err(workspace_graph_validation_error)?;
+            let report =
+                CoplanarVolumetricCellEvidenceReport::from_graph(graph, self.left, self.right);
+            report
+                .validate()
+                .map_err(workspace_coplanar_volumetric_cell_error)?;
+            self.coplanar_volumetric_cell_evidence = Some(report);
+        }
+        Ok(self
+            .coplanar_volumetric_cell_evidence
+            .as_ref()
+            .expect("coplanar volumetric-cell evidence cache was just populated"))
+    }
+
+    /// Validate coplanar volumetric-cell evidence against this workspace's
+    /// retained source session.
+    pub fn validate_coplanar_volumetric_cell_evidence(
+        &mut self,
+        report: &CoplanarVolumetricCellEvidenceReport,
+    ) -> Result<(), CoplanarVolumetricCellEvidenceError> {
+        if self
+            .coplanar_volumetric_cell_evidence
+            .as_ref()
+            .is_some_and(|stored_report| stored_report == report)
+        {
+            report.validate()?;
+            return Ok(());
+        }
+        report.validate_against_sources(self.left, self.right)
+    }
+
+    /// Classify coplanar volumetric-cell evidence freshness in this retained
+    /// source session.
+    pub fn coplanar_volumetric_cell_evidence_freshness(
+        &mut self,
+        report: &CoplanarVolumetricCellEvidenceReport,
+    ) -> CoplanarVolumetricCellEvidenceFreshness {
+        match self.validate_coplanar_volumetric_cell_evidence(report) {
+            Ok(()) => CoplanarVolumetricCellEvidenceFreshness::Current,
+            Err(error) => error.into(),
+        }
     }
 
     /// Returns the exact arrangement for `policy`, building it once per policy.
@@ -1307,6 +1371,26 @@ fn workspace_arrangement_blocker_error(blocker: ExactArrangementBlocker) -> Mesh
     ))
 }
 
+fn workspace_graph_validation_error(error: IntersectionGraphValidationError) -> MeshError {
+    MeshError::one(MeshDiagnostic::new(
+        Severity::Error,
+        DiagnosticKind::UnsupportedExactOperation,
+        format!("exact boolean workspace graph failed validation: {error:?}"),
+    ))
+}
+
+fn workspace_coplanar_volumetric_cell_error(
+    error: CoplanarVolumetricCellEvidenceError,
+) -> MeshError {
+    MeshError::one(MeshDiagnostic::new(
+        Severity::Error,
+        DiagnosticKind::UnsupportedExactOperation,
+        format!(
+            "exact boolean workspace coplanar volumetric evidence failed validation: {error:?}"
+        ),
+    ))
+}
+
 fn workspace_report_validation_error(error: ExactReportValidationError) -> MeshError {
     MeshError::one(MeshDiagnostic::new(
         Severity::Error,
@@ -1320,7 +1404,11 @@ mod tests {
     use super::*;
     use crate::boolean::ExactBooleanOperation;
     use crate::validation::ValidationPolicy;
-    use crate::{ExactBooleanResultKind, ExactReportValidationError};
+    use crate::{
+        CoplanarVolumetricCellEvidenceError, CoplanarVolumetricCellEvidenceFreshness,
+        ExactBooleanResultKind, ExactReportValidationError,
+        certify_coplanar_volumetric_cell_evidence,
+    };
 
     #[test]
     fn exact_boolean_workspace_reuses_graph_arrangement_preflight_and_evaluation() {
@@ -1341,6 +1429,44 @@ mod tests {
             .unwrap()
             .validate_against_meshes(&left, &right)
             .unwrap();
+
+        let first_coplanar_volumetric_evidence =
+            workspace.coplanar_volumetric_cell_evidence().unwrap()
+                as *const CoplanarVolumetricCellEvidenceReport;
+        let second_coplanar_volumetric_evidence =
+            workspace.coplanar_volumetric_cell_evidence().unwrap()
+                as *const CoplanarVolumetricCellEvidenceReport;
+        assert_eq!(
+            first_coplanar_volumetric_evidence,
+            second_coplanar_volumetric_evidence
+        );
+        assert_eq!(
+            workspace.coplanar_volumetric_cell_evidence().unwrap(),
+            &certify_coplanar_volumetric_cell_evidence(&left, &right).unwrap()
+        );
+        let coplanar_volumetric_evidence = workspace
+            .coplanar_volumetric_cell_evidence()
+            .unwrap()
+            .clone();
+        workspace
+            .validate_coplanar_volumetric_cell_evidence(&coplanar_volumetric_evidence)
+            .unwrap();
+        assert_eq!(
+            workspace.coplanar_volumetric_cell_evidence_freshness(&coplanar_volumetric_evidence),
+            CoplanarVolumetricCellEvidenceFreshness::Current
+        );
+        let mut stale_coplanar_volumetric_evidence = coplanar_volumetric_evidence.clone();
+        stale_coplanar_volumetric_evidence.retained_face_pair_count += 1;
+        assert_eq!(
+            workspace
+                .validate_coplanar_volumetric_cell_evidence(&stale_coplanar_volumetric_evidence),
+            Err(CoplanarVolumetricCellEvidenceError::FacePairCountMismatch)
+        );
+        assert_eq!(
+            workspace
+                .coplanar_volumetric_cell_evidence_freshness(&stale_coplanar_volumetric_evidence),
+            CoplanarVolumetricCellEvidenceFreshness::StaleFacePairCounts
+        );
 
         let first_arrangement = workspace
             .arrangement(ExactRegularizationPolicy::REGULARIZED_SOLID)

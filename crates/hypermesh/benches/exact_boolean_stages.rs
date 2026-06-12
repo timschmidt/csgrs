@@ -2,14 +2,14 @@ use std::hint::black_box;
 use std::time::{Duration, Instant};
 
 use hypermesh::{
-    ExactAdjacentUnionCompletionReport, ExactArrangement, ExactArrangementBooleanAttempt,
-    ExactBooleanEvaluation, ExactBooleanOperation, ExactBooleanPreflight, ExactBooleanRequest,
-    ExactBooleanResult, ExactBooleanWorkspace, ExactBoundaryTouchingReport,
-    ExactIdenticalMeshReport, ExactMesh, ExactOpenSurfaceDisjointReport,
-    ExactPlanarArrangementReport, ExactRefinementReport, ExactRegularizationPolicy,
-    ExactSameSurfaceReport, ExactSelectedCellComplex, ExactSimplifiedCellComplex,
-    ExactVolumetricBoundaryClosureReport, ExactWindingReadinessReport, ValidationPolicy,
-    build_intersection_graph, triangulate_all_face_cells_with_cdt,
+    CoplanarVolumetricCellEvidenceReport, ExactAdjacentUnionCompletionReport, ExactArrangement,
+    ExactArrangementBooleanAttempt, ExactBooleanEvaluation, ExactBooleanOperation,
+    ExactBooleanPreflight, ExactBooleanRequest, ExactBooleanResult, ExactBooleanWorkspace,
+    ExactBoundaryTouchingReport, ExactIdenticalMeshReport, ExactMesh,
+    ExactOpenSurfaceDisjointReport, ExactPlanarArrangementReport, ExactRefinementReport,
+    ExactRegularizationPolicy, ExactSameSurfaceReport, ExactSelectedCellComplex,
+    ExactSimplifiedCellComplex, ExactVolumetricBoundaryClosureReport, ExactWindingReadinessReport,
+    ValidationPolicy, build_intersection_graph, triangulate_all_face_cells_with_cdt,
 };
 
 struct BenchCase {
@@ -194,6 +194,36 @@ fn run_case(case: &BenchCase) {
         let graph = workspace.graph().unwrap();
         black_box((graph.face_pairs.len(), graph.event_count()));
     });
+
+    workspace.coplanar_volumetric_cell_evidence().unwrap();
+    time_stage(
+        case,
+        "workspace_coplanar_volumetric_evidence_cached",
+        || {
+            let report = workspace.coplanar_volumetric_cell_evidence().unwrap();
+            black_box((
+                report.obstacle,
+                report.retained_face_pair_count,
+                report.candidate_pairs,
+                report.coplanar_overlapping_pairs,
+                report.positive_area_coplanar_overlapping_pairs,
+                report.same_side_coplanar_overlapping_pairs,
+            ));
+        },
+    );
+
+    time_prepared_stage(
+        case,
+        "workspace_validate_coplanar_volumetric_evidence_from_retained_graph",
+        || retained_workspace_and_coplanar_volumetric_evidence_for_case(case, request),
+        |(retained_workspace, report)| {
+            black_box(
+                retained_workspace
+                    .validate_coplanar_volumetric_cell_evidence(report)
+                    .ok(),
+            );
+        },
+    );
 
     workspace.arrangement(case.regularization).unwrap();
     time_stage(case, "workspace_arrangement_cached", || {
@@ -637,6 +667,21 @@ fn retained_workspace_and_preflight_for_case<'a>(
     let mut retained_workspace = retained_workspace_for_case(case, request);
     let preflight = retained_workspace.preflight(request).unwrap().clone();
     (retained_workspace, preflight)
+}
+
+fn retained_workspace_and_coplanar_volumetric_evidence_for_case<'a>(
+    case: &'a BenchCase,
+    request: ExactBooleanRequest,
+) -> (
+    ExactBooleanWorkspace<'a>,
+    CoplanarVolumetricCellEvidenceReport,
+) {
+    let mut retained_workspace = retained_workspace_for_case(case, request);
+    let report = retained_workspace
+        .coplanar_volumetric_cell_evidence()
+        .unwrap()
+        .clone();
+    (retained_workspace, report)
 }
 
 fn retained_workspace_and_refinement_for_case<'a>(
