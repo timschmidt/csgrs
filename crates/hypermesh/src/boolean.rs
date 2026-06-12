@@ -3177,7 +3177,22 @@ pub(crate) fn replay_selected_region_boolean_result(
 ) -> Result<ExactBooleanResult, MeshError> {
     let graph = build_intersection_graph(left, right)?;
     validate_graph_source_handoff(&graph, left, right)?;
-    materialize_selected_region_result_from_graph(&graph, left, right, selection, validation)
+    let result =
+        materialize_selected_region_result_from_graph(&graph, left, right, selection, validation)?;
+    if !matches!(
+        result.kind,
+        ExactBooleanResultKind::SelectedRegions {
+            selection: retained_selection
+        } if retained_selection == selection
+    ) || result.mesh.validation_policy() != validation
+    {
+        return Err(MeshError::one(MeshDiagnostic::new(
+            Severity::Error,
+            DiagnosticKind::UnsupportedExactOperation,
+            "exact selected-region replay returned mismatched operation or validation policy",
+        )));
+    }
+    Ok(result)
 }
 
 /// Preflight an exact boolean operation without materializing output topology.
