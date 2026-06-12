@@ -4950,12 +4950,13 @@ fn boolean_arrangement_cell_complex_meshes(
 /// pipeline.
 ///
 /// This exposes the same arrangement-certified materialization used by
-/// [`ExactBooleanRequest::materialize`]. It only runs when policy-aware preflight has already
-/// certified [`ExactBooleanSupport::CertifiedArrangementCellComplex`], so
-/// stronger exact paths such as convex, boundary-touching, winding, and trivial
-/// shortcuts keep their dispatcher provenance. After that guard it delegates to
-/// [`ExactBooleanRequest::materialize`] so earlier arrangement materializers keep their retained
-/// result kind.
+/// [`ExactBooleanRequest::materialize`]. It only runs when retained-graph,
+/// policy-aware preflight has already certified
+/// [`ExactBooleanSupport::CertifiedArrangementCellComplex`], so stronger exact
+/// paths such as convex, boundary-touching, winding, and trivial shortcuts keep
+/// their dispatcher provenance. After that guard it reuses the retained graph
+/// for graph-backed arrangement recovery before falling back to full
+/// arrangement cell-complex materialization.
 pub fn materialize_arrangement_cell_complex_boolean(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -4965,13 +4966,22 @@ pub fn materialize_arrangement_cell_complex_boolean(
     if matches!(operation, ExactBooleanOperation::SelectedRegions(_)) {
         return Ok(None);
     }
-    let preflight = ExactBooleanRequest::new(operation, validation).preflight(left, right)?;
+    let request = ExactBooleanRequest::new(operation, validation);
+    let graph = build_intersection_graph(left, right)?;
+    validate_graph_source_handoff(&graph, left, right)?;
+    let preflight = preflight_boolean_exact_request_from_graph(&graph, left, right, request)?;
     if preflight.support != ExactBooleanSupport::CertifiedArrangementCellComplex {
         return Ok(None);
     }
-    ExactBooleanRequest::new(operation, validation)
-        .materialize(left, right)
-        .map(Some)
+    materialize_certified_boolean_support_with_artifacts(
+        left,
+        right,
+        request,
+        preflight.support,
+        Some(&graph),
+        None,
+    )
+    .map(Some)
 }
 
 fn arrangement_cell_complex_result_is_certified_for_preflight(
