@@ -35,8 +35,8 @@ fn main() {
         },
         BenchCase {
             name: "closed_overlapping_tetrahedra",
-            left: tetra([0, 0, 0]),
-            right: tetra([1, 0, 0]),
+            left: tetra_from_corners([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]),
+            right: tetra_from_corners([1, 1, 1], [5, 1, 1], [1, 5, 1], [1, 1, 5]),
             operation: ExactBooleanOperation::Union,
             validation: ValidationPolicy::CLOSED,
             regularization: ExactRegularizationPolicy::REGULARIZED_SOLID,
@@ -1117,6 +1117,16 @@ fn tetra(offset: [i64; 3]) -> ExactMesh {
     let [ox, oy, oz] = offset;
     ExactMesh::from_i64_triangles(
         &[ox, oy, oz, ox + 1, oy, oz, ox, oy + 1, oz, ox, oy, oz + 1],
+        &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
+    )
+    .unwrap()
+}
+
+fn tetra_from_corners(a: [i64; 3], b: [i64; 3], c: [i64; 3], d: [i64; 3]) -> ExactMesh {
+    ExactMesh::from_i64_triangles(
+        &[
+            a[0], a[1], a[2], b[0], b[1], b[2], c[0], c[1], c[2], d[0], d[1], d[2],
+        ],
         &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
     )
     .unwrap()
