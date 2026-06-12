@@ -14231,6 +14231,16 @@ mod tests {
             ValidationPolicy::ALLOW_BOUNDARY,
         )
         .unwrap();
+        let mut stale_gate_count = replayable_result.clone();
+        stale_gate_count
+            .topology_assembly_report
+            .as_mut()
+            .unwrap()
+            .arrangement_face_cells += 1;
+        assert_eq!(
+            stale_gate_count.validate(),
+            Err(ExactReportValidationError::StatusEvidenceMismatch)
+        );
         let mut stale_replay_report = replayable_result.clone();
         stale_replay_report
             .topology_assembly_report

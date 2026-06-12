@@ -165,7 +165,10 @@ labeled cell-complex view. They validate directly against source operands and
 through workspace retained-arrangement sessions. Named exact boolean evaluations
 retain this report in their certification bundle so materializers can reject
 stale or missing ownership proof before consuming arrangement-cell-complex
-output. Retained arrangement attempts try topology/label/selection before bounded
+output, and materialized arrangement outputs locally cross-check retained
+topology and ownership report counts for face cells, boundary nodes, and
+lower-dimensional artifact shape before source replay. Retained arrangement
+attempts try topology/label/selection before bounded
 recovery materializers; those attempts now retain the ownership report and status
 observed before selection, while recoveries remain fallback paths when the exact
 cell-complex stage declines.

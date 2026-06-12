@@ -1203,6 +1203,28 @@ impl ExactBooleanResult {
         if !ownership.is_resolved() {
             return Err(ExactReportValidationError::StatusEvidenceMismatch);
         }
+        self.validate_arrangement_cell_complex_gate_report_counts(topology, ownership)?;
+        Ok(())
+    }
+
+    fn validate_arrangement_cell_complex_gate_report_counts(
+        &self,
+        topology: &ExactTopologyAssemblyReport,
+        ownership: &ExactRegionOwnershipReport,
+    ) -> Result<(), ExactReportValidationError> {
+        if topology.arrangement_face_cells != ownership.face_cells
+            || topology.arrangement_face_cell_boundary_nodes != ownership.face_cell_boundary_nodes
+            || topology.arrangement_face_cell_boundary_points != ownership.face_cell_boundary_points
+            || topology.lower_dimensional_artifacts != ownership.lower_dimensional_artifacts
+            || topology.lower_dimensional_point_contacts
+                != ownership.lower_dimensional_point_contacts
+            || topology.lower_dimensional_edge_contacts != ownership.lower_dimensional_edge_contacts
+            || topology.lower_dimensional_edge_endpoints
+                != ownership.lower_dimensional_edge_endpoints
+            || self.triangulations.len() > topology.arrangement_face_cells
+        {
+            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+        }
         Ok(())
     }
 
