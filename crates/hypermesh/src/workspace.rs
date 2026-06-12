@@ -3,7 +3,7 @@ use super::boolean::{
     ExactArrangementBooleanAttempt, ExactBooleanEvaluation, ExactBooleanRequest,
     ExactIdenticalMeshReport, adjacent_union_completion_certification_from_graph,
     arrangement_boolean_attempt_report_from_arrangement,
-    boolean_closed_validation_regularized_meshes,
+    boolean_closed_validation_regularized_meshes, boundary_touching_report_from_graph,
     evaluate_boolean_exact_request_with_artifacts_and_arrangement_replay,
     materialize_boundary_touching_policy_from_graph_for_request,
     materialize_certified_boolean_support_with_arrangement,
@@ -12,7 +12,9 @@ use super::boolean::{
     materialize_closed_winding_containment_from_graph_for_request,
     materialize_closed_winding_separated_from_graph_for_request,
     materialize_open_surface_disjoint_from_graph_for_request,
-    validate_boolean_result_against_sources_with_artifacts,
+    open_surface_disjoint_report_from_graph, planar_arrangement_report_from_graph,
+    refinement_report_from_graph, validate_boolean_result_against_sources_with_artifacts,
+    volumetric_boundary_closure_report_from_graph, winding_readiness_report_for_request_from_graph,
 };
 use super::cell_complex::{
     ExactRegionOwnershipReport, ExactSelectedCellComplex, ExactSelectedCellComplexFreshness,
@@ -157,22 +159,28 @@ impl<'a> ExactBooleanWorkspace<'a> {
             .expect("intersection graph was just initialized"))
     }
 
+    fn validated_graph(&mut self) -> Result<&ExactIntersectionGraph, MeshError> {
+        self.graph()?;
+        let graph = self
+            .graph
+            .as_ref()
+            .expect("intersection graph cache was just populated");
+        graph
+            .validate_against_meshes(self.left, self.right)
+            .map_err(workspace_graph_validation_error)?;
+        Ok(graph)
+    }
+
     /// Returns retained coplanar volumetric-cell evidence, deriving it from
     /// the workspace's cached exact intersection graph.
     pub fn coplanar_volumetric_cell_evidence(
         &mut self,
     ) -> Result<&CoplanarVolumetricCellEvidenceReport, MeshError> {
         if self.coplanar_volumetric_cell_evidence.is_none() {
-            self.graph()?;
-            let graph = self
-                .graph
-                .as_ref()
-                .expect("intersection graph cache was just populated");
-            graph
-                .validate_against_meshes(self.left, self.right)
-                .map_err(workspace_graph_validation_error)?;
-            let report =
-                CoplanarVolumetricCellEvidenceReport::from_graph(graph, self.left, self.right);
+            let left = self.left;
+            let right = self.right;
+            let graph = self.validated_graph()?;
+            let report = CoplanarVolumetricCellEvidenceReport::from_graph(graph, left, right);
             report
                 .validate()
                 .map_err(workspace_coplanar_volumetric_cell_error)?;
@@ -934,7 +942,8 @@ impl<'a> ExactBooleanWorkspace<'a> {
             return Ok(&self.refinement_reports[index].1);
         }
 
-        let report = request.refinement_report(self.left, self.right)?;
+        let graph = self.validated_graph()?;
+        let report = refinement_report_from_graph(graph, request.operation);
         self.refinement_reports.push((request, report));
         Ok(&self
             .refinement_reports
@@ -991,7 +1000,16 @@ impl<'a> ExactBooleanWorkspace<'a> {
             return Ok(&self.adjacent_union_completion_reports[index].1);
         }
 
-        let report = request.adjacent_union_completion_report(self.left, self.right)?;
+        let left = self.left;
+        let right = self.right;
+        let graph = self.validated_graph()?;
+        let (report, _) = adjacent_union_completion_certification_from_graph(
+            graph,
+            left,
+            right,
+            request.operation,
+            None,
+        )?;
         self.adjacent_union_completion_reports
             .push((request, report));
         Ok(&self
@@ -1157,7 +1175,10 @@ impl<'a> ExactBooleanWorkspace<'a> {
             return Ok(&self.boundary_touching_reports[index].1);
         }
 
-        let report = request.boundary_touching_report(self.left, self.right)?;
+        let left = self.left;
+        let right = self.right;
+        let graph = self.validated_graph()?;
+        let report = boundary_touching_report_from_graph(graph, left, right)?;
         self.boundary_touching_reports.push((request, report));
         Ok(&self
             .boundary_touching_reports
@@ -1212,7 +1233,10 @@ impl<'a> ExactBooleanWorkspace<'a> {
             return Ok(&self.open_surface_disjoint_reports[index].1);
         }
 
-        let report = request.open_surface_disjoint_report(self.left, self.right)?;
+        let left = self.left;
+        let right = self.right;
+        let graph = self.validated_graph()?;
+        let report = open_surface_disjoint_report_from_graph(graph, left, right);
         self.open_surface_disjoint_reports.push((request, report));
         Ok(&self
             .open_surface_disjoint_reports
@@ -1268,7 +1292,11 @@ impl<'a> ExactBooleanWorkspace<'a> {
             return Ok(&self.volumetric_boundary_closure_reports[index].1);
         }
 
-        let report = request.volumetric_boundary_closure(self.left, self.right)?;
+        let left = self.left;
+        let right = self.right;
+        let graph = self.validated_graph()?;
+        let report =
+            volumetric_boundary_closure_report_from_graph(graph, left, right, request.operation)?;
         self.volumetric_boundary_closure_reports
             .push((request, report));
         Ok(&self
@@ -1328,7 +1356,11 @@ impl<'a> ExactBooleanWorkspace<'a> {
             return Ok(&self.winding_readiness_reports[index].1);
         }
 
-        let readiness = request.winding_readiness(self.left, self.right)?;
+        let left = self.left;
+        let right = self.right;
+        let graph = self.validated_graph()?;
+        let readiness =
+            winding_readiness_report_for_request_from_graph(graph, left, right, request)?;
         self.winding_readiness_reports.push((request, readiness));
         Ok(&self
             .winding_readiness_reports
@@ -1391,7 +1423,10 @@ impl<'a> ExactBooleanWorkspace<'a> {
             return Ok(&self.planar_arrangement_reports[index].1);
         }
 
-        let report = request.planar_arrangement_report(self.left, self.right)?;
+        let left = self.left;
+        let right = self.right;
+        let graph = self.validated_graph()?;
+        let report = planar_arrangement_report_from_graph(graph, left, right, request.operation)?;
         self.planar_arrangement_reports.push((request, report));
         Ok(&self
             .planar_arrangement_reports

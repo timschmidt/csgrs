@@ -3318,7 +3318,7 @@ fn volumetric_boundary_closure_report_for_request(
     volumetric_boundary_closure_report_from_graph(&graph, left, right, request.operation)
 }
 
-fn volumetric_boundary_closure_report_from_graph(
+pub(crate) fn volumetric_boundary_closure_report_from_graph(
     graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
@@ -9046,7 +9046,7 @@ fn open_surface_disjoint_report_for_request(
     Ok(open_surface_disjoint_report_from_graph(&graph, left, right))
 }
 
-fn open_surface_disjoint_report_from_graph(
+pub(crate) fn open_surface_disjoint_report_from_graph(
     graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
@@ -10156,18 +10156,27 @@ fn winding_readiness_report_for_request(
 ) -> Result<ExactWindingReadinessReport, MeshError> {
     let graph = build_intersection_graph(left, right)?;
     validate_graph_source_handoff(&graph, left, right)?;
+    winding_readiness_report_for_request_from_graph(&graph, left, right, request)
+}
+
+pub(crate) fn winding_readiness_report_for_request_from_graph(
+    graph: &super::graph::ExactIntersectionGraph,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    request: ExactBooleanRequest,
+) -> Result<ExactWindingReadinessReport, MeshError> {
     if request.validation == ValidationPolicy::ALLOW_BOUNDARY
         && request.boundary_policy == ExactBoundaryBooleanPolicy::Reject
     {
         return winding_readiness_report_with_shortcuts_from_graph(
-            &graph,
+            graph,
             left,
             right,
             request.operation,
         );
     }
     winding_readiness_report_with_boundary_policy_from_graph(
-        &graph,
+        graph,
         left,
         right,
         request.operation,
@@ -10449,7 +10458,7 @@ fn boundary_touching_blocker_kind(
     }
 }
 
-fn refinement_report_from_graph(
+pub(crate) fn refinement_report_from_graph(
     graph: &super::graph::ExactIntersectionGraph,
     operation: ExactBooleanOperation,
 ) -> ExactRefinementReport {
@@ -10471,7 +10480,7 @@ fn refinement_report_from_graph(
     }
 }
 
-fn planar_arrangement_report_from_graph(
+pub(crate) fn planar_arrangement_report_from_graph(
     graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
