@@ -1080,11 +1080,13 @@ impl ExactBooleanCertificationSet {
             } else if let Some(arrangement) = retained_regularized_arrangement {
                 Some(arrangement)
             } else {
-                owned_regularized_arrangement = ExactArrangement::from_meshes_with_policy(
-                    left,
-                    right,
-                    ExactRegularizationPolicy::REGULARIZED_SOLID,
-                )?;
+                owned_regularized_arrangement =
+                    ExactArrangement::from_intersection_graph_with_policy(
+                        graph.clone(),
+                        left,
+                        right,
+                        ExactRegularizationPolicy::REGULARIZED_SOLID,
+                    )?;
                 Some(&owned_regularized_arrangement)
             };
         let topology_assembly = regularized_arrangement.map(|arrangement| {
@@ -2720,7 +2722,26 @@ fn materialize_certified_arrangement_cell_complex_support_with_arrangement(
     if let Some((result, _closure)) = coplanar_boundary_closure {
         return Ok(Some(result));
     }
-    boolean_arrangement_cell_complex_meshes(left, right, operation, validation)
+    if let Some(graph) = retained_graph {
+        let outcome = match run_arrangement_cell_complex_attempt_from_graph(
+            graph,
+            left,
+            right,
+            operation,
+            ExactRegularizationPolicy::REGULARIZED_SOLID,
+            Some(validation),
+            true,
+        ) {
+            Ok(outcome) => outcome,
+            Err(_) => return Ok(None),
+        };
+        match outcome {
+            ArrangementCellComplexOutcome::Materialized(result, _) => Ok(Some(*result)),
+            ArrangementCellComplexOutcome::Declined(_) => Ok(None),
+        }
+    } else {
+        boolean_arrangement_cell_complex_meshes(left, right, operation, validation)
+    }
 }
 
 fn materialize_selected_region_boolean(
@@ -3920,9 +3941,11 @@ fn certified_arrangement_cell_complex_preflight_if_materialized(
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> Result<Option<ExactBooleanPreflight>, MeshError> {
-    if arrangement_cell_complex_materializes_for_preflight(left, right, operation, false)?
-        || arrangement_cell_complex_materializes_for_preflight(left, right, operation, true)?
-        || coplanar_surface_output_materializes_for_preflight(left, right, operation)?
+    if arrangement_cell_complex_materializes_for_preflight_from_graph(
+        graph, left, right, operation, false,
+    )? || arrangement_cell_complex_materializes_for_preflight_from_graph(
+        graph, left, right, operation, true,
+    )? || coplanar_surface_output_materializes_for_preflight(left, right, operation)?
     {
         Ok(Some(
             certified_arrangement_cell_complex_preflight_from_graph(operation, graph, left, right),
@@ -5003,6 +5026,7 @@ fn arrangement_cell_complex_result_is_certified_for_preflight(
         )
 }
 
+#[cfg(test)]
 fn arrangement_cell_complex_materializes_for_preflight(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -5017,6 +5041,42 @@ fn arrangement_cell_complex_materializes_for_preflight(
         };
     for &validation in validation_policies {
         match run_arrangement_cell_complex_attempt(
+            left,
+            right,
+            operation,
+            ExactRegularizationPolicy::REGULARIZED_SOLID,
+            Some(validation),
+            regularize_unregularized_sheet_complex,
+        ) {
+            Ok(ArrangementCellComplexOutcome::Materialized(result, attempt))
+                if arrangement_cell_complex_result_is_certified_for_preflight(
+                    &result, &attempt,
+                ) =>
+            {
+                return Ok(true);
+            }
+            Ok(_) | Err(_) => {}
+        }
+    }
+    Ok(false)
+}
+
+fn arrangement_cell_complex_materializes_for_preflight_from_graph(
+    graph: &ExactIntersectionGraph,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    regularize_unregularized_sheet_complex: bool,
+) -> Result<bool, MeshError> {
+    let validation_policies: &[ValidationPolicy] =
+        if left.facts().mesh.closed_manifold && right.facts().mesh.closed_manifold {
+            &[ValidationPolicy::CLOSED]
+        } else {
+            &[ValidationPolicy::CLOSED, ValidationPolicy::ALLOW_BOUNDARY]
+        };
+    for &validation in validation_policies {
+        match run_arrangement_cell_complex_attempt_from_graph(
+            graph,
             left,
             right,
             operation,
@@ -5194,6 +5254,29 @@ fn run_arrangement_cell_complex_attempt(
     regularize_unregularized_sheet_complex: bool,
 ) -> Result<ArrangementCellComplexOutcome, MeshError> {
     let arrangement = ExactArrangement::from_meshes_with_policy(left, right, policy)?;
+    run_arrangement_cell_complex_attempt_from_arrangement_with_recovery_timing(
+        &arrangement,
+        left,
+        right,
+        operation,
+        policy,
+        validation,
+        regularize_unregularized_sheet_complex,
+        false,
+    )
+}
+
+fn run_arrangement_cell_complex_attempt_from_graph(
+    graph: &ExactIntersectionGraph,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    policy: ExactRegularizationPolicy,
+    validation: Option<ValidationPolicy>,
+    regularize_unregularized_sheet_complex: bool,
+) -> Result<ArrangementCellComplexOutcome, MeshError> {
+    let arrangement =
+        ExactArrangement::from_intersection_graph_with_policy(graph.clone(), left, right, policy)?;
     run_arrangement_cell_complex_attempt_from_arrangement_with_recovery_timing(
         &arrangement,
         left,
