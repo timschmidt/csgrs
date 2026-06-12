@@ -16,8 +16,8 @@ use super::mesh::ExactMesh;
 use super::regularization::{ExactArrangementBlocker, ExactRegularizationPolicy};
 use super::reports::{
     ExactBooleanPreflight, ExactBooleanResult, ExactBoundaryTouchingReport,
-    ExactPlanarArrangementReport, ExactRefinementReport, ExactReportFreshness,
-    ExactReportValidationError, ExactWindingReadinessReport,
+    ExactOpenSurfaceDisjointReport, ExactPlanarArrangementReport, ExactRefinementReport,
+    ExactReportFreshness, ExactReportValidationError, ExactWindingReadinessReport,
 };
 use super::simplify::{ExactSimplifiedCellComplex, ExactSimplifiedCellComplexFreshness};
 
@@ -51,6 +51,7 @@ pub struct ExactBooleanWorkspace<'a> {
     )>,
     refinement_reports: Vec<(ExactBooleanRequest, ExactRefinementReport)>,
     boundary_touching_reports: Vec<(ExactBooleanRequest, ExactBoundaryTouchingReport)>,
+    open_surface_disjoint_reports: Vec<(ExactBooleanRequest, ExactOpenSurfaceDisjointReport)>,
     preflights: Vec<(ExactBooleanRequest, ExactBooleanPreflight)>,
     winding_readiness_reports: Vec<(ExactBooleanRequest, ExactWindingReadinessReport)>,
     planar_arrangement_reports: Vec<(ExactBooleanRequest, ExactPlanarArrangementReport)>,
@@ -73,6 +74,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
             simplified_cell_complexes: Vec::new(),
             refinement_reports: Vec::new(),
             boundary_touching_reports: Vec::new(),
+            open_surface_disjoint_reports: Vec::new(),
             preflights: Vec::new(),
             winding_readiness_reports: Vec::new(),
             planar_arrangement_reports: Vec::new(),
@@ -640,6 +642,62 @@ impl<'a> ExactBooleanWorkspace<'a> {
         report: &ExactBoundaryTouchingReport,
     ) -> ExactReportFreshness {
         match self.validate_boundary_touching_report(request, report) {
+            Ok(()) => ExactReportFreshness::Current,
+            Err(error) => error.into(),
+        }
+    }
+
+    /// Returns open-surface disjointness evidence for `request`, building it
+    /// once per request.
+    pub fn open_surface_disjoint_report(
+        &mut self,
+        request: ExactBooleanRequest,
+    ) -> Result<&ExactOpenSurfaceDisjointReport, MeshError> {
+        if let Some(index) = self
+            .open_surface_disjoint_reports
+            .iter()
+            .position(|(stored_request, _)| *stored_request == request)
+        {
+            return Ok(&self.open_surface_disjoint_reports[index].1);
+        }
+
+        let report = request.open_surface_disjoint_report(self.left, self.right)?;
+        self.open_surface_disjoint_reports.push((request, report));
+        Ok(&self
+            .open_surface_disjoint_reports
+            .last()
+            .expect("open-surface disjoint report cache was just populated")
+            .1)
+    }
+
+    /// Validate open-surface disjointness evidence against this workspace's
+    /// source meshes.
+    pub fn validate_open_surface_disjoint_report(
+        &mut self,
+        request: ExactBooleanRequest,
+        report: &ExactOpenSurfaceDisjointReport,
+    ) -> Result<(), ExactReportValidationError> {
+        if self
+            .open_surface_disjoint_reports
+            .iter()
+            .any(|(stored_request, stored_report)| {
+                *stored_request == request && stored_report == report
+            })
+        {
+            report.validate()?;
+            return Ok(());
+        }
+        report.validate_against_sources(self.left, self.right)
+    }
+
+    /// Classify open-surface disjointness freshness in this retained source
+    /// session.
+    pub fn open_surface_disjoint_report_freshness(
+        &mut self,
+        request: ExactBooleanRequest,
+        report: &ExactOpenSurfaceDisjointReport,
+    ) -> ExactReportFreshness {
+        match self.validate_open_surface_disjoint_report(request, report) {
             Ok(()) => ExactReportFreshness::Current,
             Err(error) => error.into(),
         }
@@ -1401,6 +1459,37 @@ mod tests {
         );
         assert_ne!(
             workspace.boundary_touching_report_freshness(request, &stale_boundary_report),
+            ExactReportFreshness::Current
+        );
+
+        let first_open_surface_report = workspace.open_surface_disjoint_report(request).unwrap()
+            as *const ExactOpenSurfaceDisjointReport;
+        let second_open_surface_report = workspace.open_surface_disjoint_report(request).unwrap()
+            as *const ExactOpenSurfaceDisjointReport;
+        assert_eq!(first_open_surface_report, second_open_surface_report);
+        assert_eq!(
+            workspace.open_surface_disjoint_report(request).unwrap(),
+            &request.open_surface_disjoint_report(&left, &right).unwrap()
+        );
+        let open_surface_report = workspace
+            .open_surface_disjoint_report(request)
+            .unwrap()
+            .clone();
+        workspace
+            .validate_open_surface_disjoint_report(request, &open_surface_report)
+            .unwrap();
+        assert_eq!(
+            workspace.open_surface_disjoint_report_freshness(request, &open_surface_report),
+            ExactReportFreshness::Current
+        );
+        let mut stale_open_surface_report = open_surface_report.clone();
+        stale_open_surface_report.left_open_surface = !stale_open_surface_report.left_open_surface;
+        assert_eq!(
+            workspace.validate_open_surface_disjoint_report(request, &stale_open_surface_report),
+            Err(ExactReportValidationError::SourceReplayMismatch)
+        );
+        assert_ne!(
+            workspace.open_surface_disjoint_report_freshness(request, &stale_open_surface_report),
             ExactReportFreshness::Current
         );
 

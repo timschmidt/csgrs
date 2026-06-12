@@ -5,9 +5,10 @@ use hypermesh::{
     build_intersection_graph, triangulate_all_face_cells_with_cdt, ExactArrangement,
     ExactArrangementBooleanAttempt, ExactBooleanEvaluation, ExactBooleanOperation,
     ExactBooleanPreflight, ExactBooleanRequest, ExactBooleanResult, ExactBooleanWorkspace,
-    ExactBoundaryTouchingReport, ExactMesh, ExactPlanarArrangementReport, ExactRefinementReport,
-    ExactRegularizationPolicy, ExactSelectedCellComplex, ExactSimplifiedCellComplex,
-    ExactWindingReadinessReport, ValidationPolicy,
+    ExactBoundaryTouchingReport, ExactMesh, ExactOpenSurfaceDisjointReport,
+    ExactPlanarArrangementReport, ExactRefinementReport, ExactRegularizationPolicy,
+    ExactSelectedCellComplex, ExactSimplifiedCellComplex, ExactWindingReadinessReport,
+    ValidationPolicy,
 };
 
 struct BenchCase {
@@ -468,6 +469,19 @@ fn run_case(case: &BenchCase) {
 
     time_prepared_stage(
         case,
+        "workspace_validate_open_surface_disjoint_from_retained_artifacts",
+        || retained_workspace_and_open_surface_disjoint_for_case(case, request),
+        |(retained_workspace, report)| {
+            black_box(
+                retained_workspace
+                    .validate_open_surface_disjoint_report(request, report)
+                    .ok(),
+            );
+        },
+    );
+
+    time_prepared_stage(
+        case,
         "workspace_validate_winding_readiness_from_retained_artifacts",
         || retained_workspace_and_winding_readiness_for_case(case, request),
         |(retained_workspace, readiness)| {
@@ -591,6 +605,18 @@ fn retained_workspace_and_boundary_touching_for_case<'a>(
     let mut retained_workspace = retained_workspace_for_case(case, request);
     let report = retained_workspace
         .boundary_touching_report(request)
+        .unwrap()
+        .clone();
+    (retained_workspace, report)
+}
+
+fn retained_workspace_and_open_surface_disjoint_for_case<'a>(
+    case: &'a BenchCase,
+    request: ExactBooleanRequest,
+) -> (ExactBooleanWorkspace<'a>, ExactOpenSurfaceDisjointReport) {
+    let mut retained_workspace = retained_workspace_for_case(case, request);
+    let report = retained_workspace
+        .open_surface_disjoint_report(request)
         .unwrap()
         .clone();
     (retained_workspace, report)
