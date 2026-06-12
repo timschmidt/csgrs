@@ -1617,14 +1617,25 @@ impl<'a> ExactBooleanWorkspace<'a> {
             })
             .map(|(_, arrangement)| arrangement);
         let result = if preflight.is_certified() {
-            Some(materialize_certified_boolean_support_with_artifacts(
-                self.left,
-                self.right,
-                request,
-                preflight.support,
-                Some(graph),
-                regularized_arrangement,
-            )?)
+            if let Some((_, result)) = self
+                .materializations
+                .iter()
+                .find(|(stored_request, _)| *stored_request == request)
+            {
+                result
+                    .validate()
+                    .map_err(workspace_report_validation_error)?;
+                Some(result.clone())
+            } else {
+                Some(materialize_certified_boolean_support_with_artifacts(
+                    self.left,
+                    self.right,
+                    request,
+                    preflight.support,
+                    Some(graph),
+                    regularized_arrangement,
+                )?)
+            }
         } else {
             None
         };
@@ -2774,6 +2785,36 @@ mod tests {
         assert!(
             workspace.materialize(request).is_err(),
             "cached evaluation results must validate before materialization reuse"
+        );
+    }
+
+    #[test]
+    fn exact_boolean_workspace_evaluation_reuses_materialization_cache() {
+        let left = tetra([0, 0, 0]);
+        let right = tetra([1, 0, 0]);
+        let request =
+            ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED);
+        let mut workspace = ExactBooleanWorkspace::new(&left, &right);
+        workspace.graph().unwrap();
+        workspace
+            .arrangement(ExactRegularizationPolicy::REGULARIZED_SOLID)
+            .unwrap();
+        workspace.preflight(request).unwrap();
+
+        let materialized = workspace.materialize(request).unwrap();
+        assert_eq!(workspace.materializations.len(), 1);
+        let evaluation = workspace.evaluate(request).unwrap().clone();
+        assert_eq!(evaluation.result.as_ref(), Some(&materialized));
+        assert_eq!(workspace.materializations.len(), 1);
+        evaluation.validate().unwrap();
+
+        let mut corrupt_workspace = ExactBooleanWorkspace::new(&left, &right);
+        corrupt_workspace.materialize(request).unwrap();
+        corrupt_workspace.materializations[0].1.graph_had_unknowns =
+            !corrupt_workspace.materializations[0].1.graph_had_unknowns;
+        assert!(
+            corrupt_workspace.evaluate(request).is_err(),
+            "cached materialization must validate before evaluation reuse"
         );
     }
 
