@@ -3725,7 +3725,10 @@ impl ExactVolumetricBoundaryClosureReport {
     }
 
     fn has_impossible_boundary_count_bounds(&self) -> bool {
-        if self.boundary_edges > self.output_triangles.saturating_mul(3) {
+        let Some(max_triangle_edges) = self.output_triangles.checked_mul(3) else {
+            return true;
+        };
+        if self.boundary_edges > max_triangle_edges {
             return true;
         }
         if self.boundary_loops != 0 && self.boundary_loops > self.boundary_edges / 3 {
@@ -3738,7 +3741,7 @@ impl ExactVolumetricBoundaryClosureReport {
         {
             return true;
         }
-        if self.overused_boundary_edges > self.output_triangles.saturating_mul(3) {
+        if self.overused_boundary_edges > max_triangle_edges {
             return true;
         }
         if self.self_contact_topological_vertices > self.boundary_edges
@@ -3746,10 +3749,13 @@ impl ExactVolumetricBoundaryClosureReport {
         {
             return true;
         }
-        let max_repeated = self
+        let Some(max_repeated_ordered_pairs) = self
             .self_contact_topological_vertices
-            .saturating_mul(self.self_contact_topological_vertices.saturating_sub(1))
-            / 2;
+            .checked_mul(self.self_contact_topological_vertices.saturating_sub(1))
+        else {
+            return true;
+        };
+        let max_repeated = max_repeated_ordered_pairs / 2;
         self.repeated_exact_boundary_points > max_repeated
     }
 
@@ -7172,6 +7178,14 @@ mod tests {
             Err(ExactReportValidationError::StatusEvidenceMismatch)
         );
 
+        let mut report = valid_noncoplanar_closure_report();
+        report.output_triangles = usize::MAX;
+        report.boundary_edges = usize::MAX;
+        assert_eq!(
+            report.validate(),
+            Err(ExactReportValidationError::StatusEvidenceMismatch)
+        );
+
         let mut report = valid_topology_not_loop_closure_report();
         report.boundary_vertices_with_invalid_outgoing_degree = 3;
         assert_eq!(
@@ -7190,6 +7204,17 @@ mod tests {
         report.repeated_exact_boundary_points = 3;
         report.self_contact_topological_vertices = 4;
         report.self_contact_degenerate_cycles = 4;
+        assert_eq!(
+            report.validate(),
+            Err(ExactReportValidationError::StatusEvidenceMismatch)
+        );
+
+        let mut report = valid_self_contact_closure_report();
+        report.output_triangles = usize::MAX;
+        report.boundary_edges = usize::MAX;
+        report.repeated_exact_boundary_points = usize::MAX;
+        report.self_contact_topological_vertices = usize::MAX;
+        report.self_contact_degenerate_cycles = usize::MAX;
         assert_eq!(
             report.validate(),
             Err(ExactReportValidationError::StatusEvidenceMismatch)
