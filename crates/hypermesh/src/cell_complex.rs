@@ -754,10 +754,21 @@ impl ExactSelectedCellComplex {
     pub fn validate(&self) -> Result<(), ExactArrangementBlocker> {
         validate_lower_dimensional_artifacts(&self.lower_dimensional_artifacts)?;
         validate_cell_complex_parts(&self.faces, &self.volume_regions, &self.volume_adjacencies)?;
+        let gate_counts = selected_cell_complex_gate_counts(
+            &self.faces,
+            &self.volume_regions,
+            &self.volume_adjacencies,
+            &self.lower_dimensional_artifacts,
+        );
         validate_selected_gate_reports(
             self.topology_assembly_report.as_ref(),
             self.region_ownership_report.as_ref(),
             self.operation,
+        )?;
+        validate_selected_gate_reports_against_counts(
+            self.topology_assembly_report.as_ref(),
+            self.region_ownership_report.as_ref(),
+            &gate_counts,
         )?;
         validate_selected_indices(&self.selected_faces, self.faces.len())?;
         validate_selected_indices(&self.selected_volume_regions, self.volume_regions.len())?;
@@ -982,6 +993,144 @@ pub(crate) fn validate_selected_gate_reports(
         }
     }
     Ok(())
+}
+
+pub(crate) fn validate_selected_gate_reports_against_counts(
+    topology_assembly_report: Option<&ExactTopologyAssemblyReport>,
+    region_ownership_report: Option<&ExactRegionOwnershipReport>,
+    counts: &SelectedCellComplexGateCounts,
+) -> Result<(), ExactArrangementBlocker> {
+    if let Some(topology_report) = topology_assembly_report {
+        if topology_report.arrangement_face_cells != counts.face_cells
+            || topology_report.arrangement_face_cell_boundary_nodes
+                != counts.face_cell_boundary_nodes
+            || topology_report.arrangement_face_cell_boundary_points
+                != counts.face_cell_boundary_points
+            || topology_report.volume_regions != counts.volume_regions
+            || topology_report.volume_adjacencies != counts.volume_adjacencies
+            || topology_report.volume_adjacency_face_sides != counts.volume_adjacency_face_sides
+            || topology_report.volume_adjacency_separating_faces
+                != counts.volume_adjacency_separating_faces
+            || topology_report.lower_dimensional_artifacts != counts.lower_dimensional_artifacts
+            || topology_report.lower_dimensional_point_contacts
+                != counts.lower_dimensional_point_contacts
+            || topology_report.lower_dimensional_edge_contacts
+                != counts.lower_dimensional_edge_contacts
+            || topology_report.lower_dimensional_edge_endpoints
+                != counts.lower_dimensional_edge_endpoints
+        {
+            return Err(ExactArrangementBlocker::NonManifoldCellComplex);
+        }
+    }
+    if let Some(ownership_report) = region_ownership_report {
+        if ownership_report.face_cells != counts.face_cells
+            || ownership_report.face_cell_boundary_nodes != counts.face_cell_boundary_nodes
+            || ownership_report.face_cell_boundary_points != counts.face_cell_boundary_points
+            || ownership_report.volume_regions != counts.volume_regions
+            || ownership_report.exterior_volume_regions != counts.exterior_volume_regions
+            || ownership_report.left_owned_volumes != counts.left_owned_volumes
+            || ownership_report.right_owned_volumes != counts.right_owned_volumes
+            || ownership_report.shared_owned_volumes != counts.shared_owned_volumes
+            || ownership_report.unowned_bounded_volumes != counts.unowned_bounded_volumes
+            || ownership_report.volume_adjacencies != counts.volume_adjacencies
+            || ownership_report.volume_adjacency_face_sides != counts.volume_adjacency_face_sides
+            || ownership_report.volume_adjacency_separating_faces
+                != counts.volume_adjacency_separating_faces
+            || ownership_report.lower_dimensional_artifacts != counts.lower_dimensional_artifacts
+            || ownership_report.lower_dimensional_point_contacts
+                != counts.lower_dimensional_point_contacts
+            || ownership_report.lower_dimensional_edge_contacts
+                != counts.lower_dimensional_edge_contacts
+            || ownership_report.lower_dimensional_edge_endpoints
+                != counts.lower_dimensional_edge_endpoints
+        {
+            return Err(ExactArrangementBlocker::NonManifoldCellComplex);
+        }
+    }
+    Ok(())
+}
+
+pub(crate) struct SelectedCellComplexGateCounts {
+    face_cells: usize,
+    face_cell_boundary_nodes: usize,
+    face_cell_boundary_points: usize,
+    volume_regions: usize,
+    exterior_volume_regions: usize,
+    left_owned_volumes: usize,
+    right_owned_volumes: usize,
+    shared_owned_volumes: usize,
+    unowned_bounded_volumes: usize,
+    volume_adjacencies: usize,
+    volume_adjacency_face_sides: usize,
+    volume_adjacency_separating_faces: usize,
+    lower_dimensional_artifacts: usize,
+    lower_dimensional_point_contacts: usize,
+    lower_dimensional_edge_contacts: usize,
+    lower_dimensional_edge_endpoints: usize,
+}
+
+pub(crate) fn selected_cell_complex_gate_counts(
+    faces: &[ExactCellComplexFace],
+    volume_regions: &[ExactCellComplexVolumeRegion],
+    volume_adjacencies: &[ArrangementVolumeAdjacency],
+    lower_dimensional_artifacts: &[ArrangementLowerDimensionalArtifact],
+) -> SelectedCellComplexGateCounts {
+    let face_cell_boundary_nodes = faces.iter().map(|face| face.cell.boundary.len()).sum();
+    let face_cell_boundary_points = faces
+        .iter()
+        .map(|face| face.cell.boundary_points.len())
+        .sum();
+    let exterior_volume_regions = volume_regions
+        .iter()
+        .filter(|region| region.exterior)
+        .count();
+    let left_owned_volumes = volume_regions
+        .iter()
+        .filter(|region| !region.exterior && region.in_left)
+        .count();
+    let right_owned_volumes = volume_regions
+        .iter()
+        .filter(|region| !region.exterior && region.in_right)
+        .count();
+    let shared_owned_volumes = volume_regions
+        .iter()
+        .filter(|region| !region.exterior && region.in_left && region.in_right)
+        .count();
+    let unowned_bounded_volumes = volume_regions
+        .iter()
+        .filter(|region| !region.exterior && !region.in_left && !region.in_right)
+        .count();
+    let volume_adjacency_face_sides = volume_adjacencies
+        .iter()
+        .map(|adjacency| adjacency.oriented_face_sides.len())
+        .sum();
+    let volume_adjacency_separating_faces = volume_adjacencies
+        .iter()
+        .map(|adjacency| adjacency.separating_face_cells.len())
+        .sum();
+    let (
+        lower_dimensional_point_contacts,
+        lower_dimensional_edge_contacts,
+        lower_dimensional_edge_endpoints,
+    ) = lower_dimensional_artifact_counts(lower_dimensional_artifacts);
+    SelectedCellComplexGateCounts {
+        face_cells: faces.len(),
+        face_cell_boundary_nodes,
+        face_cell_boundary_points,
+        volume_regions: volume_regions.len(),
+        exterior_volume_regions,
+        left_owned_volumes,
+        right_owned_volumes,
+        shared_owned_volumes,
+        unowned_bounded_volumes,
+        volume_adjacencies: volume_adjacencies.len(),
+        volume_adjacency_face_sides,
+        volume_adjacency_separating_faces,
+        lower_dimensional_artifacts: lower_dimensional_artifacts.len(),
+        lower_dimensional_point_contacts,
+        lower_dimensional_edge_contacts,
+        lower_dimensional_edge_endpoints,
+    }
 }
 
 pub(crate) fn arrangement_region_classification_blockers_are_volume_resolved(
@@ -2097,6 +2246,20 @@ mod tests {
         assert_eq!(
             stale_topology.simplify_exact_with_policy(ExactRegularizationPolicy::REGULARIZED_SOLID),
             Err(ExactArrangementBlocker::UnresolvedRegionClassification)
+        );
+
+        let mut stale_payload_counts = selected.clone();
+        stale_payload_counts
+            .faces
+            .push(labeled_face(MeshSide::Left));
+        assert_eq!(
+            stale_payload_counts.validate(),
+            Err(ExactArrangementBlocker::NonManifoldCellComplex)
+        );
+        assert_eq!(
+            stale_payload_counts
+                .simplify_exact_with_policy(ExactRegularizationPolicy::REGULARIZED_SOLID),
+            Err(ExactArrangementBlocker::NonManifoldCellComplex)
         );
 
         let mut missing_topology = selected;

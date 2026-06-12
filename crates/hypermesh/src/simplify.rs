@@ -15,7 +15,8 @@ use super::boolean::ExactBooleanOperation;
 use super::cell_complex::{
     ExactCellComplexFace, ExactCellRegionLabel, ExactOppositeRegionLabel,
     ExactRegionOwnershipReport, ExactSelectedCellComplex, ExactSelectedFaceOrientation,
-    select_arrangement_for_replay, validate_selected_gate_reports,
+    select_arrangement_for_replay, selected_cell_complex_gate_counts,
+    validate_selected_gate_reports, validate_selected_gate_reports_against_counts,
     validate_volume_adjacency_face_provenance,
 };
 use super::loop_triangulation::{choose_polygon_projection, triangulate_exact_loop_group};
@@ -334,10 +335,21 @@ pub fn simplify_selected_cell_complex(
     selected: ExactSelectedCellComplex,
     policy: ExactRegularizationPolicy,
 ) -> Result<ExactSimplifiedCellComplex, ExactArrangementBlocker> {
+    let gate_counts = selected_cell_complex_gate_counts(
+        &selected.faces,
+        &selected.volume_regions,
+        &selected.volume_adjacencies,
+        &selected.lower_dimensional_artifacts,
+    );
     validate_selected_gate_reports(
         selected.topology_assembly_report.as_ref(),
         selected.region_ownership_report.as_ref(),
         selected.operation,
+    )?;
+    validate_selected_gate_reports_against_counts(
+        selected.topology_assembly_report.as_ref(),
+        selected.region_ownership_report.as_ref(),
+        &gate_counts,
     )?;
     let mut blockers = selected.blockers;
     let mut faces = Vec::new();
