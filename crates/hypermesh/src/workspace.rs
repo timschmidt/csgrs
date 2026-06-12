@@ -4,6 +4,8 @@ use super::boolean::{
     ExactIdenticalMeshReport, arrangement_boolean_attempt_report_from_arrangement,
     evaluate_boolean_exact_request_with_artifacts_and_arrangement_replay,
     materialize_certified_boolean_support_with_arrangement,
+    materialize_closed_boundary_touching_regularized_boolean_with_evidence_from_graph,
+    materialize_closed_no_volume_overlap_regularized_boolean_with_evidence_from_graph,
     validate_boolean_result_against_sources_with_artifacts,
 };
 use super::cell_complex::{
@@ -39,6 +41,14 @@ pub struct ExactBooleanWorkspace<'a> {
     right: &'a ExactMesh,
     graph: Option<ExactIntersectionGraph>,
     coplanar_volumetric_cell_evidence: Option<CoplanarVolumetricCellEvidenceReport>,
+    closed_boundary_touching_regularized_materializations: Vec<(
+        ExactBooleanRequest,
+        Option<(ExactBooleanResult, CoplanarVolumetricCellEvidenceReport)>,
+    )>,
+    closed_no_volume_overlap_regularized_materializations: Vec<(
+        ExactBooleanRequest,
+        Option<(ExactBooleanResult, CoplanarVolumetricCellEvidenceReport)>,
+    )>,
     arrangements: Vec<(ExactRegularizationPolicy, ExactArrangement)>,
     topology_assembly_reports: Vec<(ExactRegularizationPolicy, ExactTopologyAssemblyReport)>,
     region_ownership_reports: Vec<(ExactRegularizationPolicy, ExactRegionOwnershipReport)>,
@@ -81,6 +91,8 @@ impl<'a> ExactBooleanWorkspace<'a> {
             right,
             graph: None,
             coplanar_volumetric_cell_evidence: None,
+            closed_boundary_touching_regularized_materializations: Vec::new(),
+            closed_no_volume_overlap_regularized_materializations: Vec::new(),
             arrangements: Vec::new(),
             topology_assembly_reports: Vec::new(),
             region_ownership_reports: Vec::new(),
@@ -177,6 +189,80 @@ impl<'a> ExactBooleanWorkspace<'a> {
             Ok(()) => CoplanarVolumetricCellEvidenceFreshness::Current,
             Err(error) => error.into(),
         }
+    }
+
+    /// Materializes zero-area closed boundary contact from the retained exact
+    /// graph, caching both certified output and consumed coplanar evidence.
+    pub fn materialize_closed_boundary_touching_regularized_with_evidence(
+        &mut self,
+        request: ExactBooleanRequest,
+    ) -> Result<Option<(ExactBooleanResult, CoplanarVolumetricCellEvidenceReport)>, MeshError> {
+        if let Some((_, cached)) = self
+            .closed_boundary_touching_regularized_materializations
+            .iter()
+            .find(|(stored_request, _)| *stored_request == request)
+        {
+            validate_cached_result_with_evidence(cached)?;
+            return Ok(cached.clone());
+        }
+
+        self.graph()?;
+        let graph = self
+            .graph
+            .as_ref()
+            .expect("intersection graph cache was just populated");
+        graph
+            .validate_against_meshes(self.left, self.right)
+            .map_err(workspace_graph_validation_error)?;
+        let materialized =
+            materialize_closed_boundary_touching_regularized_boolean_with_evidence_from_graph(
+                graph,
+                self.left,
+                self.right,
+                request.operation,
+                request.validation,
+            )?;
+        validate_cached_result_with_evidence(&materialized)?;
+        self.closed_boundary_touching_regularized_materializations
+            .push((request, materialized.clone()));
+        Ok(materialized)
+    }
+
+    /// Materializes positive-area closed boundary contact with no shared
+    /// volume from the retained exact graph, caching output and evidence.
+    pub fn materialize_closed_no_volume_overlap_regularized_with_evidence(
+        &mut self,
+        request: ExactBooleanRequest,
+    ) -> Result<Option<(ExactBooleanResult, CoplanarVolumetricCellEvidenceReport)>, MeshError> {
+        if let Some((_, cached)) = self
+            .closed_no_volume_overlap_regularized_materializations
+            .iter()
+            .find(|(stored_request, _)| *stored_request == request)
+        {
+            validate_cached_result_with_evidence(cached)?;
+            return Ok(cached.clone());
+        }
+
+        self.graph()?;
+        let graph = self
+            .graph
+            .as_ref()
+            .expect("intersection graph cache was just populated");
+        graph
+            .validate_against_meshes(self.left, self.right)
+            .map_err(workspace_graph_validation_error)?;
+        let materialized =
+            materialize_closed_no_volume_overlap_regularized_boolean_with_evidence_from_graph(
+                graph,
+                self.left,
+                self.right,
+                request.operation,
+                request.validation,
+            )?;
+        validate_cached_result_with_evidence(&materialized)?;
+        self.closed_no_volume_overlap_regularized_materializations
+            .push((request, materialized.clone()));
+        Ok(materialized)
     }
 
     /// Returns the exact arrangement for `policy`, building it once per policy.
@@ -1391,6 +1477,20 @@ fn workspace_coplanar_volumetric_cell_error(
     ))
 }
 
+fn validate_cached_result_with_evidence(
+    materialized: &Option<(ExactBooleanResult, CoplanarVolumetricCellEvidenceReport)>,
+) -> Result<(), MeshError> {
+    if let Some((result, evidence)) = materialized {
+        result
+            .validate()
+            .map_err(workspace_report_validation_error)?;
+        evidence
+            .validate()
+            .map_err(workspace_coplanar_volumetric_cell_error)?;
+    }
+    Ok(())
+}
+
 fn workspace_report_validation_error(error: ExactReportValidationError) -> MeshError {
     MeshError::one(MeshDiagnostic::new(
         Severity::Error,
@@ -1406,7 +1506,7 @@ mod tests {
     use crate::validation::ValidationPolicy;
     use crate::{
         CoplanarVolumetricCellEvidenceError, CoplanarVolumetricCellEvidenceFreshness,
-        ExactBooleanResultKind, ExactReportValidationError,
+        ExactBooleanResultKind, ExactReportValidationError, Triangle,
         certify_coplanar_volumetric_cell_evidence,
     };
 
@@ -2181,11 +2281,162 @@ mod tests {
         );
     }
 
+    #[test]
+    fn exact_boolean_workspace_reuses_closed_boundary_touching_regularized_materialization() {
+        let left_a = tetra_from_corners([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]);
+        let left_b = tetra_from_corners([10, 0, 0], [12, 0, 0], [10, 2, 0], [10, 0, 2]);
+        let left = combine_exact_meshes(
+            &left_a,
+            &left_b,
+            "workspace disconnected closed boundary fixture",
+        );
+        let right = tetra_from_corners([0, 0, 0], [-4, 0, 0], [0, -4, 0], [0, 0, -4]);
+        let request =
+            ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED);
+        let mut workspace = ExactBooleanWorkspace::new(&left, &right);
+
+        let materialized = workspace
+            .materialize_closed_boundary_touching_regularized_with_evidence(request)
+            .unwrap()
+            .expect("closed boundary contact should materialize from retained graph");
+        assert_eq!(
+            materialized,
+            request
+                .materialize_closed_boundary_touching_regularized_with_evidence(&left, &right)
+                .unwrap()
+                .unwrap()
+        );
+        assert_eq!(
+            workspace
+                .closed_boundary_touching_regularized_materializations
+                .len(),
+            1
+        );
+        assert_eq!(
+            workspace
+                .materialize_closed_boundary_touching_regularized_with_evidence(request)
+                .unwrap()
+                .unwrap(),
+            materialized
+        );
+        assert_eq!(
+            workspace
+                .closed_boundary_touching_regularized_materializations
+                .len(),
+            1
+        );
+
+        let cached_result = &mut workspace.closed_boundary_touching_regularized_materializations[0]
+            .1
+            .as_mut()
+            .unwrap()
+            .0;
+        cached_result.graph_had_unknowns = !cached_result.graph_had_unknowns;
+        assert!(
+            workspace
+                .materialize_closed_boundary_touching_regularized_with_evidence(request)
+                .is_err(),
+            "cached boundary-touching materialization must validate before reuse"
+        );
+    }
+
+    #[test]
+    fn exact_boolean_workspace_reuses_closed_no_volume_overlap_materialization() {
+        let left_a = tetra_from_corners([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]);
+        let left_b = tetra_from_corners([10, 0, 0], [12, 0, 0], [10, 2, 0], [10, 0, 2]);
+        let left = combine_exact_meshes(
+            &left_a,
+            &left_b,
+            "workspace disconnected positive-area boundary fixture",
+        );
+        let right = tetra_from_corners([2, 0, 0], [6, 0, 0], [2, 4, 0], [2, 0, -4]);
+        let request = ExactBooleanRequest::new(
+            ExactBooleanOperation::Intersection,
+            ValidationPolicy::CLOSED,
+        );
+        let mut workspace = ExactBooleanWorkspace::new(&left, &right);
+
+        let materialized = workspace
+            .materialize_closed_no_volume_overlap_regularized_with_evidence(request)
+            .unwrap()
+            .expect("positive-area boundary contact should materialize from retained graph");
+        assert_eq!(
+            materialized,
+            request
+                .materialize_closed_no_volume_overlap_regularized_with_evidence(&left, &right)
+                .unwrap()
+                .unwrap()
+        );
+        assert_eq!(
+            workspace
+                .closed_no_volume_overlap_regularized_materializations
+                .len(),
+            1
+        );
+        assert_eq!(
+            workspace
+                .materialize_closed_no_volume_overlap_regularized_with_evidence(request)
+                .unwrap()
+                .unwrap(),
+            materialized
+        );
+        assert_eq!(
+            workspace
+                .closed_no_volume_overlap_regularized_materializations
+                .len(),
+            1
+        );
+
+        workspace.closed_no_volume_overlap_regularized_materializations[0]
+            .1
+            .as_mut()
+            .unwrap()
+            .1
+            .retained_face_pair_count += 1;
+        assert!(
+            workspace
+                .materialize_closed_no_volume_overlap_regularized_with_evidence(request)
+                .is_err(),
+            "cached no-volume materialization evidence must validate before reuse"
+        );
+    }
+
     fn tetra(offset: [i64; 3]) -> ExactMesh {
         let [ox, oy, oz] = offset;
         ExactMesh::from_i64_triangles(
             &[ox, oy, oz, ox + 1, oy, oz, ox, oy + 1, oz, ox, oy, oz + 1],
             &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
+        )
+        .unwrap()
+    }
+
+    fn tetra_from_corners(a: [i64; 3], b: [i64; 3], c: [i64; 3], d: [i64; 3]) -> ExactMesh {
+        ExactMesh::from_i64_triangles(
+            &[
+                a[0], a[1], a[2], b[0], b[1], b[2], c[0], c[1], c[2], d[0], d[1], d[2],
+            ],
+            &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
+        )
+        .unwrap()
+    }
+
+    fn combine_exact_meshes(left: &ExactMesh, right: &ExactMesh, label: &'static str) -> ExactMesh {
+        let right_offset = left.vertices().len();
+        ExactMesh::new(
+            left.vertices()
+                .iter()
+                .chain(right.vertices())
+                .cloned()
+                .collect(),
+            left.triangles()
+                .iter()
+                .copied()
+                .chain(right.triangles().iter().map(|triangle| {
+                    let [a, b, c] = triangle.0;
+                    Triangle([a + right_offset, b + right_offset, c + right_offset])
+                }))
+                .collect(),
+            hyperlimit::SourceProvenance::exact(label),
         )
         .unwrap()
     }

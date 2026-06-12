@@ -6110,7 +6110,7 @@ fn materialize_closed_no_volume_overlap_regularized_with_evidence_for_request(
     Ok(Some((result, evidence)))
 }
 
-fn materialize_closed_no_volume_overlap_regularized_boolean_with_evidence_from_graph(
+pub(crate) fn materialize_closed_no_volume_overlap_regularized_boolean_with_evidence_from_graph(
     graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
@@ -9631,7 +9631,7 @@ fn boolean_closed_boundary_touching_regularized_meshes(
     )
 }
 
-fn materialize_closed_boundary_touching_regularized_boolean_with_evidence_from_graph(
+pub(crate) fn materialize_closed_boundary_touching_regularized_boolean_with_evidence_from_graph(
     graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
