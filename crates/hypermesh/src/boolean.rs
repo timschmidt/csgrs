@@ -4765,16 +4765,16 @@ fn materialize_boolean_exact_request(
         return Ok(result);
     }
     if let Some((result, _evidence)) =
-        materialize_closed_boundary_touching_regularized_boolean_with_evidence_from_graph(
-            &graph, left, right, operation, validation,
+        materialize_closed_boundary_touching_regularized_with_evidence_from_graph_for_request(
+            &graph, left, right, request,
         )?
     {
         return Ok(result);
     }
     if operation != ExactBooleanOperation::Union
         && let Some((result, _evidence)) =
-            materialize_closed_no_volume_overlap_regularized_boolean_with_evidence_from_graph(
-                &graph, left, right, operation, validation,
+            materialize_closed_no_volume_overlap_regularized_with_evidence_from_graph_for_request(
+                &graph, left, right, request,
             )?
     {
         return Ok(result);
@@ -6497,13 +6497,24 @@ fn materialize_closed_no_volume_overlap_regularized_with_evidence_for_request(
     right: &ExactMesh,
     request: ExactBooleanRequest,
 ) -> Result<Option<(ExactBooleanResult, CoplanarVolumetricCellEvidenceReport)>, MeshError> {
-    let operation = request.operation;
-    let validation = request.validation;
     let graph = build_intersection_graph(left, right)?;
     validate_graph_source_handoff(&graph, left, right)?;
+    materialize_closed_no_volume_overlap_regularized_with_evidence_from_graph_for_request(
+        &graph, left, right, request,
+    )
+}
+
+fn materialize_closed_no_volume_overlap_regularized_with_evidence_from_graph_for_request(
+    graph: &ExactIntersectionGraph,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    request: ExactBooleanRequest,
+) -> Result<Option<(ExactBooleanResult, CoplanarVolumetricCellEvidenceReport)>, MeshError> {
+    let operation = request.operation;
+    let validation = request.validation;
     let Some((result, evidence)) =
         materialize_closed_no_volume_overlap_regularized_boolean_with_evidence_from_graph(
-            &graph, left, right, operation, validation,
+            graph, left, right, operation, validation,
         )?
     else {
         return Ok(None);
@@ -10124,13 +10135,24 @@ fn materialize_closed_boundary_touching_regularized_with_evidence_for_request(
     right: &ExactMesh,
     request: ExactBooleanRequest,
 ) -> Result<Option<(ExactBooleanResult, CoplanarVolumetricCellEvidenceReport)>, MeshError> {
-    let operation = request.operation;
-    let validation = request.validation;
     let graph = build_intersection_graph(left, right)?;
     validate_graph_source_handoff(&graph, left, right)?;
+    materialize_closed_boundary_touching_regularized_with_evidence_from_graph_for_request(
+        &graph, left, right, request,
+    )
+}
+
+fn materialize_closed_boundary_touching_regularized_with_evidence_from_graph_for_request(
+    graph: &ExactIntersectionGraph,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    request: ExactBooleanRequest,
+) -> Result<Option<(ExactBooleanResult, CoplanarVolumetricCellEvidenceReport)>, MeshError> {
+    let operation = request.operation;
+    let validation = request.validation;
     let Some((result, evidence)) =
         materialize_closed_boundary_touching_regularized_boolean_with_evidence_from_graph(
-            &graph, left, right, operation, validation,
+            graph, left, right, operation, validation,
         )?
     else {
         return Ok(None);
