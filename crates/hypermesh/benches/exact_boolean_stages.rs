@@ -6,7 +6,7 @@ use hypermesh::{
     ExactArrangementBooleanAttempt, ExactBooleanEvaluation, ExactBooleanOperation,
     ExactBooleanPreflight, ExactBooleanRequest, ExactBooleanResult, ExactBooleanWorkspace,
     ExactMesh, ExactRegularizationPolicy, ExactSelectedCellComplex, ExactSimplifiedCellComplex,
-    ValidationPolicy,
+    ExactWindingReadinessReport, ValidationPolicy,
 };
 
 struct BenchCase {
@@ -441,6 +441,19 @@ fn run_case(case: &BenchCase) {
 
     time_prepared_stage(
         case,
+        "workspace_validate_winding_readiness_from_retained_artifacts",
+        || retained_workspace_and_winding_readiness_for_case(case, request),
+        |(retained_workspace, readiness)| {
+            black_box(
+                retained_workspace
+                    .validate_winding_readiness(request, readiness)
+                    .ok(),
+            );
+        },
+    );
+
+    time_prepared_stage(
+        case,
         "workspace_evaluation_from_retained_artifacts",
         || retained_workspace_for_case(case, request),
         |retained_workspace| {
@@ -517,6 +530,18 @@ fn retained_workspace_and_preflight_for_case<'a>(
     let mut retained_workspace = retained_workspace_for_case(case, request);
     let preflight = retained_workspace.preflight(request).unwrap().clone();
     (retained_workspace, preflight)
+}
+
+fn retained_workspace_and_winding_readiness_for_case<'a>(
+    case: &'a BenchCase,
+    request: ExactBooleanRequest,
+) -> (ExactBooleanWorkspace<'a>, ExactWindingReadinessReport) {
+    let mut retained_workspace = retained_workspace_for_case(case, request);
+    let readiness = retained_workspace
+        .winding_readiness(request)
+        .unwrap()
+        .clone();
+    (retained_workspace, readiness)
 }
 
 fn retained_workspace_and_evaluation_for_case<'a>(

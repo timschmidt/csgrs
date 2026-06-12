@@ -16,6 +16,7 @@ use super::mesh::ExactMesh;
 use super::regularization::{ExactArrangementBlocker, ExactRegularizationPolicy};
 use super::reports::{
     ExactBooleanPreflight, ExactBooleanResult, ExactReportFreshness, ExactReportValidationError,
+    ExactWindingReadinessReport,
 };
 use super::simplify::{ExactSimplifiedCellComplex, ExactSimplifiedCellComplexFreshness};
 
@@ -48,6 +49,7 @@ pub struct ExactBooleanWorkspace<'a> {
         ExactSimplifiedCellComplex,
     )>,
     preflights: Vec<(ExactBooleanRequest, ExactBooleanPreflight)>,
+    winding_readiness_reports: Vec<(ExactBooleanRequest, ExactWindingReadinessReport)>,
     evaluations: Vec<(ExactBooleanRequest, ExactBooleanEvaluation)>,
     materializations: Vec<(ExactBooleanRequest, ExactBooleanResult)>,
 }
@@ -66,6 +68,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
             selected_cell_complexes: Vec::new(),
             simplified_cell_complexes: Vec::new(),
             preflights: Vec::new(),
+            winding_readiness_reports: Vec::new(),
             evaluations: Vec::new(),
             materializations: Vec::new(),
         }
@@ -518,6 +521,69 @@ impl<'a> ExactBooleanWorkspace<'a> {
         preflight: &ExactBooleanPreflight,
     ) -> ExactReportFreshness {
         match self.validate_preflight(request, preflight) {
+            Ok(()) => ExactReportFreshness::Current,
+            Err(error) => error.into(),
+        }
+    }
+
+    /// Returns winding-readiness evidence for `request`, building it once per
+    /// request.
+    pub fn winding_readiness(
+        &mut self,
+        request: ExactBooleanRequest,
+    ) -> Result<&ExactWindingReadinessReport, MeshError> {
+        if let Some(index) = self
+            .winding_readiness_reports
+            .iter()
+            .position(|(stored_request, _)| *stored_request == request)
+        {
+            return Ok(&self.winding_readiness_reports[index].1);
+        }
+
+        let readiness = request.winding_readiness(self.left, self.right)?;
+        self.winding_readiness_reports.push((request, readiness));
+        Ok(&self
+            .winding_readiness_reports
+            .last()
+            .expect("winding-readiness cache was just populated")
+            .1)
+    }
+
+    /// Validate winding-readiness evidence against this workspace's source
+    /// meshes.
+    pub fn validate_winding_readiness(
+        &mut self,
+        request: ExactBooleanRequest,
+        readiness: &ExactWindingReadinessReport,
+    ) -> Result<(), ExactReportValidationError> {
+        if readiness.operation != request.operation {
+            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+        }
+        if self
+            .winding_readiness_reports
+            .iter()
+            .any(|(stored_request, stored_readiness)| {
+                *stored_request == request && stored_readiness == readiness
+            })
+        {
+            readiness.validate()?;
+            return Ok(());
+        }
+        readiness.validate_against_sources_with_boundary_policy(
+            self.left,
+            self.right,
+            request.validation,
+            request.boundary_policy,
+        )
+    }
+
+    /// Classify winding-readiness freshness in this retained source session.
+    pub fn winding_readiness_freshness(
+        &mut self,
+        request: ExactBooleanRequest,
+        readiness: &ExactWindingReadinessReport,
+    ) -> ExactReportFreshness {
+        match self.validate_winding_readiness(request, readiness) {
             Ok(()) => ExactReportFreshness::Current,
             Err(error) => error.into(),
         }
@@ -1095,6 +1161,40 @@ mod tests {
         relabeled_preflight.operation = ExactBooleanOperation::Difference;
         assert_eq!(
             workspace.validate_preflight(request, &relabeled_preflight),
+            Err(ExactReportValidationError::StatusEvidenceMismatch)
+        );
+
+        let first_readiness =
+            workspace.winding_readiness(request).unwrap() as *const ExactWindingReadinessReport;
+        let second_readiness =
+            workspace.winding_readiness(request).unwrap() as *const ExactWindingReadinessReport;
+        assert_eq!(first_readiness, second_readiness);
+        assert_eq!(
+            workspace.winding_readiness(request).unwrap(),
+            &request.winding_readiness(&left, &right).unwrap()
+        );
+        let readiness = workspace.winding_readiness(request).unwrap().clone();
+        workspace
+            .validate_winding_readiness(request, &readiness)
+            .unwrap();
+        assert_eq!(
+            workspace.winding_readiness_freshness(request, &readiness),
+            ExactReportFreshness::Current
+        );
+        let mut stale_readiness = readiness.clone();
+        stale_readiness.retained_events += 1;
+        assert_eq!(
+            workspace.validate_winding_readiness(request, &stale_readiness),
+            Err(ExactReportValidationError::SourceReplayMismatch)
+        );
+        assert_ne!(
+            workspace.winding_readiness_freshness(request, &stale_readiness),
+            ExactReportFreshness::Current
+        );
+        let mut relabeled_readiness = readiness.clone();
+        relabeled_readiness.operation = ExactBooleanOperation::Difference;
+        assert_eq!(
+            workspace.validate_winding_readiness(request, &relabeled_readiness),
             Err(ExactReportValidationError::StatusEvidenceMismatch)
         );
 
