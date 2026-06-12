@@ -2568,6 +2568,7 @@ pub(crate) fn materialize_certified_boolean_support_with_artifacts(
                 right,
                 operation,
                 validation,
+                retained_graph,
                 retained_regularized_arrangement,
             )?
         }
@@ -2669,6 +2670,7 @@ fn materialize_certified_arrangement_cell_complex_support_with_arrangement(
     right: &ExactMesh,
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
+    retained_graph: Option<&ExactIntersectionGraph>,
     retained_regularized_arrangement: Option<&ExactArrangement>,
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
     if let Some(arrangement) = retained_regularized_arrangement {
@@ -2695,14 +2697,26 @@ fn materialize_certified_arrangement_cell_complex_support_with_arrangement(
     {
         return Ok(Some(result));
     }
-    if let Some(result) =
+    let volumetric_split_cell = if let Some(graph) = retained_graph {
+        boolean_arrangement_volumetric_split_cell_recovery_from_graph(
+            graph, left, right, operation, validation,
+        )?
+    } else {
         boolean_arrangement_volumetric_split_cell_recovery(left, right, operation, validation)?
-    {
+    };
+    if let Some(result) = volumetric_split_cell {
         return Ok(Some(result));
     }
-    if let Some((result, _closure)) = materialize_volumetric_coplanar_boundary_closure_boolean(
-        left, right, operation, validation,
-    )? {
+    let coplanar_boundary_closure = if let Some(graph) = retained_graph {
+        materialize_volumetric_coplanar_boundary_closure_boolean_from_graph(
+            graph, left, right, operation, validation,
+        )?
+    } else {
+        materialize_volumetric_coplanar_boundary_closure_boolean(
+            left, right, operation, validation,
+        )?
+    };
+    if let Some((result, _closure)) = coplanar_boundary_closure {
         return Ok(Some(result));
     }
     boolean_arrangement_cell_complex_meshes(left, right, operation, validation)
@@ -7014,9 +7028,24 @@ pub fn materialize_volumetric_coplanar_boundary_closure_boolean(
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
 ) -> Result<Option<(ExactBooleanResult, ExactVolumetricBoundaryClosureReport)>, MeshError> {
-    let Some((mesh, closure_report)) = materialize_volumetric_coplanar_boundary_closure_output(
-        left, right, operation, validation,
-    )?
+    let graph = build_intersection_graph(left, right)?;
+    validate_graph_source_handoff(&graph, left, right)?;
+    materialize_volumetric_coplanar_boundary_closure_boolean_from_graph(
+        &graph, left, right, operation, validation,
+    )
+}
+
+fn materialize_volumetric_coplanar_boundary_closure_boolean_from_graph(
+    graph: &super::graph::ExactIntersectionGraph,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+) -> Result<Option<(ExactBooleanResult, ExactVolumetricBoundaryClosureReport)>, MeshError> {
+    let Some((mesh, closure_report)) =
+        materialize_volumetric_coplanar_boundary_closure_output_from_graph(
+            graph, left, right, operation, validation,
+        )?
     else {
         return Ok(None);
     };
