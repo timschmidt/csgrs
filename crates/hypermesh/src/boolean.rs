@@ -6577,7 +6577,7 @@ pub(crate) fn adjacent_union_completion_certification_from_graph(
     ))
 }
 
-fn materialize_adjacent_union_completion_from_graph_for_request(
+pub(crate) fn materialize_adjacent_union_completion_from_graph_for_request(
     graph: &ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
