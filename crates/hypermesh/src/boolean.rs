@@ -2761,12 +2761,12 @@ pub(crate) fn replay_selected_region_boolean_result(
 /// booleans that still need unresolved inside/outside semantics, it returns
 /// [`ExactBooleanSupport::RequiresCertifiedWinding`] with replayable facts
 /// instead of approximating them.
-fn preflight_boolean_exact_reject_boundary_policy(
+fn initial_reject_boundary_preflight_support(
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
-) -> Result<ExactBooleanPreflight, MeshError> {
-    let support = match operation {
+) -> ExactBooleanSupport {
+    match operation {
         ExactBooleanOperation::SelectedRegions(_) => ExactBooleanSupport::SelectedRegionPolicy,
         ExactBooleanOperation::Union
         | ExactBooleanOperation::Intersection
@@ -2805,17 +2805,14 @@ fn preflight_boolean_exact_reject_boundary_policy(
                 .or_else(|| certified_mixed_dimensional_regularized_solid_support(left, right))
                 .unwrap_or(ExactBooleanSupport::RequiresCertifiedWinding)
         }
-    };
-
-    if support == ExactBooleanSupport::CertifiedArrangementCellComplex {
-        let graph = build_intersection_graph(left, right)?;
-        validate_graph_source_handoff(&graph, left, right)?;
-        return Ok(certified_arrangement_cell_complex_preflight_from_graph(
-            operation, &graph, left, right,
-        ));
     }
+}
 
-    if matches!(
+fn preflight_without_graph_if_supported(
+    operation: ExactBooleanOperation,
+    support: ExactBooleanSupport,
+) -> Option<ExactBooleanPreflight> {
+    matches!(
         support,
         ExactBooleanSupport::CertifiedEmptyOperand
             | ExactBooleanSupport::CertifiedBoundsDisjoint
@@ -2833,27 +2830,69 @@ fn preflight_boolean_exact_reject_boundary_policy(
             | ExactBooleanSupport::CertifiedConvexDifference
             | ExactBooleanSupport::CertifiedConvexContainment
             | ExactBooleanSupport::CertifiedConvexSeparated
-    ) {
-        return Ok(ExactBooleanPreflight {
-            operation,
-            support,
-            graph_had_unknowns: false,
-            retained_face_pairs: 0,
-            retained_events: 0,
-            region_count: 0,
-            region_classifications: Vec::new(),
-            blocker: None,
-            arrangement_readiness: None,
-            coplanar_volumetric_evidence: None,
-        });
+    )
+    .then(|| ExactBooleanPreflight {
+        operation,
+        support,
+        graph_had_unknowns: false,
+        retained_face_pairs: 0,
+        retained_events: 0,
+        region_count: 0,
+        region_classifications: Vec::new(),
+        blocker: None,
+        arrangement_readiness: None,
+        coplanar_volumetric_evidence: None,
+    })
+}
+
+fn preflight_boolean_exact_reject_boundary_policy(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+) -> Result<ExactBooleanPreflight, MeshError> {
+    let support = initial_reject_boundary_preflight_support(left, right, operation);
+
+    if let Some(preflight) = preflight_without_graph_if_supported(operation, support) {
+        return Ok(preflight);
     }
 
     let graph = build_intersection_graph(left, right)?;
     validate_graph_source_handoff(&graph, left, right)?;
+    preflight_boolean_exact_reject_boundary_policy_from_graph(&graph, left, right, operation)
+}
+
+fn preflight_boolean_exact_reject_boundary_policy_from_graph(
+    graph: &super::graph::ExactIntersectionGraph,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+) -> Result<ExactBooleanPreflight, MeshError> {
+    let support = initial_reject_boundary_preflight_support(left, right, operation);
+    if let Some(preflight) = preflight_without_graph_if_supported(operation, support) {
+        return Ok(preflight);
+    }
+    preflight_boolean_exact_reject_boundary_policy_from_graph_with_support(
+        graph, left, right, operation, support,
+    )
+}
+
+fn preflight_boolean_exact_reject_boundary_policy_from_graph_with_support(
+    graph: &super::graph::ExactIntersectionGraph,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    support: ExactBooleanSupport,
+) -> Result<ExactBooleanPreflight, MeshError> {
+    if support == ExactBooleanSupport::CertifiedArrangementCellComplex {
+        return Ok(certified_arrangement_cell_complex_preflight_from_graph(
+            operation, graph, left, right,
+        ));
+    }
+
     let graph_had_unknowns = graph.has_unknowns();
     let retained_face_pairs = graph.face_pairs.len();
     let retained_events = graph.event_count();
-    let relation_counts = retained_graph_counts(&graph);
+    let relation_counts = retained_graph_counts(graph);
     let mut certified_arrangement_preflight = None;
     if graph_had_unknowns || relation_counts.construction_failed_events > 0 {
         return Ok(ExactBooleanPreflight {
@@ -3245,13 +3284,44 @@ fn preflight_boolean_exact_with_validation_reject_boundary_policy(
 
     let graph = build_intersection_graph(left, right)?;
     validate_graph_source_handoff(&graph, left, right)?;
-    if boolean_arrangement_volumetric_split_cell_recovery_from_graph(
+    preflight_boolean_exact_with_validation_reject_boundary_policy_from_graph(
         &graph, left, right, operation, validation,
+    )
+}
+
+fn preflight_boolean_exact_with_validation_reject_boundary_policy_from_graph(
+    graph: &super::graph::ExactIntersectionGraph,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+) -> Result<ExactBooleanPreflight, MeshError> {
+    if validation == ValidationPolicy::CLOSED
+        && !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
+        && let Some(support) = certified_closed_validation_regularized_solid_support(left, right)
+    {
+        return Ok(certified_shortcut_preflight(operation, support));
+    }
+    let preflight =
+        preflight_boolean_exact_reject_boundary_policy_from_graph(graph, left, right, operation)?;
+    if validation == ValidationPolicy::CLOSED
+        || matches!(operation, ExactBooleanOperation::SelectedRegions(_))
+        || !matches!(
+            preflight.support,
+            ExactBooleanSupport::RequiresCertifiedWinding
+                | ExactBooleanSupport::RequiresCoplanarVolumetricCells
+        )
+    {
+        return Ok(preflight);
+    }
+
+    if boolean_arrangement_volumetric_split_cell_recovery_from_graph(
+        graph, left, right, operation, validation,
     )?
     .is_some()
     {
         return Ok(certified_arrangement_cell_complex_preflight_from_graph(
-            operation, &graph, left, right,
+            operation, graph, left, right,
         ));
     }
     Ok(preflight)
@@ -3284,8 +3354,31 @@ fn preflight_boolean_exact_request(
 
     let graph = build_intersection_graph(left, right)?;
     validate_graph_source_handoff(&graph, left, right)?;
+    preflight_boolean_exact_request_from_graph(&graph, left, right, request)
+}
+
+pub(crate) fn preflight_boolean_exact_request_from_graph(
+    graph: &super::graph::ExactIntersectionGraph,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    request: ExactBooleanRequest,
+) -> Result<ExactBooleanPreflight, MeshError> {
+    validate_graph_source_handoff(graph, left, right)?;
+    let operation = request.operation;
+    let validation = request.validation;
+    let boundary_policy = request.boundary_policy;
+    let preflight = preflight_boolean_exact_with_validation_reject_boundary_policy_from_graph(
+        graph, left, right, operation, validation,
+    )?;
+    if boundary_policy == ExactBoundaryBooleanPolicy::Reject
+        || matches!(operation, ExactBooleanOperation::SelectedRegions(_))
+        || preflight.support != ExactBooleanSupport::RequiresBoundaryPolicy
+    {
+        return Ok(preflight);
+    }
+
     if boolean_boundary_touching_meshes_from_graph(
-        &graph,
+        graph,
         left,
         right,
         operation,
@@ -3295,7 +3388,7 @@ fn preflight_boolean_exact_request(
     .is_some()
     {
         return Ok(certified_boundary_policy_preflight_from_graph(
-            operation, &graph,
+            operation, graph,
         ));
     }
     Ok(preflight)

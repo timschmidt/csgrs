@@ -195,6 +195,15 @@ fn run_case(case: &BenchCase) {
         black_box((graph.face_pairs.len(), graph.event_count()));
     });
 
+    time_prepared_stage(
+        case,
+        "workspace_preflight_from_retained_graph",
+        || retained_graph_workspace_for_case(case),
+        |retained_workspace| {
+            black_box(retained_workspace.preflight(request).unwrap());
+        },
+    );
+
     workspace.coplanar_volumetric_cell_evidence().unwrap();
     time_stage(
         case,
@@ -738,12 +747,17 @@ fn run_case(case: &BenchCase) {
     });
 }
 
+fn retained_graph_workspace_for_case<'a>(case: &'a BenchCase) -> ExactBooleanWorkspace<'a> {
+    let mut retained_workspace = ExactBooleanWorkspace::new(&case.left, &case.right);
+    retained_workspace.graph().unwrap();
+    retained_workspace
+}
+
 fn retained_workspace_for_case<'a>(
     case: &'a BenchCase,
     request: ExactBooleanRequest,
 ) -> ExactBooleanWorkspace<'a> {
-    let mut retained_workspace = ExactBooleanWorkspace::new(&case.left, &case.right);
-    retained_workspace.graph().unwrap();
+    let mut retained_workspace = retained_graph_workspace_for_case(case);
     retained_workspace
         .arrangement(ExactRegularizationPolicy::REGULARIZED_SOLID)
         .unwrap();

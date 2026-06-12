@@ -13,7 +13,8 @@ use super::boolean::{
     materialize_closed_winding_separated_from_graph_for_request,
     materialize_open_surface_disjoint_from_graph_for_request,
     open_surface_disjoint_report_from_graph, planar_arrangement_report_from_graph,
-    refinement_report_from_graph, validate_boolean_result_against_sources_with_artifacts,
+    preflight_boolean_exact_request_from_graph, refinement_report_from_graph,
+    validate_boolean_result_against_sources_with_artifacts,
     volumetric_boundary_closure_report_from_graph, winding_readiness_report_for_request_from_graph,
 };
 use super::cell_complex::{
@@ -879,7 +880,10 @@ impl<'a> ExactBooleanWorkspace<'a> {
             return Ok(&self.preflights[index].1);
         }
 
-        let preflight = request.preflight(self.left, self.right)?;
+        let left = self.left;
+        let right = self.right;
+        let graph = self.validated_graph()?;
+        let preflight = preflight_boolean_exact_request_from_graph(graph, left, right, request)?;
         self.preflights.push((request, preflight));
         Ok(&self
             .preflights
