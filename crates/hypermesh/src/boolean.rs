@@ -1450,6 +1450,14 @@ impl ExactArrangementCellComplexShortcutFacts {
     }
 
     pub fn validate(&self) -> Result<(), ExactReportValidationError> {
+        let has_axis_aligned_support = self.axis_aligned_union
+            || self.axis_aligned_intersection
+            || self.axis_aligned_difference;
+        let has_affine_support =
+            self.affine_union || self.affine_intersection || self.affine_difference;
+        if has_axis_aligned_support && has_affine_support {
+            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+        }
         Ok(())
     }
 
@@ -12932,6 +12940,22 @@ mod tests {
                 result.mesh.facts().mesh
             );
         }
+    }
+
+    #[test]
+    fn arrangement_cell_complex_shortcut_facts_reject_mixed_axis_and_affine_families() {
+        let facts = ExactArrangementCellComplexShortcutFacts {
+            axis_aligned_union: true,
+            axis_aligned_intersection: true,
+            axis_aligned_difference: true,
+            affine_union: true,
+            affine_intersection: false,
+            affine_difference: false,
+        };
+        assert_eq!(
+            facts.validate(),
+            Err(ExactReportValidationError::StatusEvidenceMismatch)
+        );
     }
 
     #[test]
