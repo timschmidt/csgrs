@@ -1496,6 +1496,9 @@ impl ExactBooleanResult {
         left: &ExactMesh,
         right: &ExactMesh,
     ) -> Result<(), ExactReportValidationError> {
+        if self.topology_assembly_report.is_none() && self.region_ownership_report.is_none() {
+            return Ok(());
+        }
         let arrangement = ExactArrangement::from_meshes_with_policy(
             left,
             right,
@@ -2690,9 +2693,6 @@ fn arrangement_cell_complex_output_matches_sources(
     if let Some(replay) =
         axis_aligned_orthogonal_output_from_sources(axis_operation, validation, left, right)?
     {
-        replay
-            .validate_against_sources(left, right)
-            .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
         return Ok(Some(mesh_output_matches(mesh, &replay.mesh)));
     }
 
@@ -2701,9 +2701,6 @@ fn arrangement_cell_complex_output_matches_sources(
     if let Some(replay) =
         affine_orthogonal_output_from_sources(affine_operation, validation, left, right)?
     {
-        replay
-            .validate_against_sources(left, right)
-            .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
         return Ok(Some(mesh_output_matches(mesh, &replay.mesh)));
     }
 

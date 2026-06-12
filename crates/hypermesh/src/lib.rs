@@ -92,8 +92,8 @@ pub use arrangement3d::{
     ArrangementOppositeClassification, ArrangementRegion, ArrangementRegionEdgeIncidence,
     ArrangementRegionSide, ArrangementVertex, ArrangementVertexProvenance,
     ArrangementVolumeAdjacency, ArrangementVolumeFaceSide, ArrangementVolumeRegion,
-    ExactArrangement, ExactArrangement3d, ExactArrangementFreshness,
-    ExactTopologyAssemblyReport, ExactTopologyAssemblyStatus,
+    ExactArrangement, ExactArrangement3d, ExactArrangementFreshness, ExactTopologyAssemblyReport,
+    ExactTopologyAssemblyStatus,
 };
 pub use artifact::{
     MeshArtifactBlocker, MeshArtifactFaceRecord, MeshArtifactManifest, MeshArtifactReport,

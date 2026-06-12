@@ -1,16 +1,16 @@
 use super::arrangement3d::{ExactArrangement, ExactTopologyAssemblyReport};
 use super::boolean::{
-    ExactArrangementBooleanAttempt, ExactBooleanCertificationSet, ExactBooleanEvaluation,
-    ExactBooleanOperation, ExactBooleanRequest, ExactIdenticalMeshReport,
+    ClosedWindingMaterialization, ExactArrangementBooleanAttempt, ExactBooleanCertificationSet,
+    ExactBooleanEvaluation, ExactBooleanOperation, ExactBooleanRequest, ExactIdenticalMeshReport,
     adjacent_union_completion_certification_from_graph,
     arrangement_boolean_attempt_report_from_arrangement,
     boolean_closed_validation_regularized_meshes, boundary_touching_report_from_graph,
+    direct_arrangement_cell_complex_attempt,
     materialize_boundary_touching_policy_from_graph_for_request,
     materialize_certified_boolean_support_with_artifacts,
     materialize_closed_boundary_touching_regularized_boolean_with_evidence_from_graph,
     materialize_closed_no_volume_overlap_regularized_boolean_with_evidence_from_graph,
-    materialize_closed_winding_containment_from_graph_for_request,
-    materialize_closed_winding_separated_from_graph_for_request,
+    materialize_closed_winding_from_graph_for_request,
     materialize_open_surface_disjoint_from_graph_for_request,
     open_surface_disjoint_report_from_graph, planar_arrangement_report_from_graph,
     preflight_boolean_exact_request_from_graph, refinement_report_from_graph,
@@ -236,7 +236,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
             .iter()
             .find(|(stored_request, _)| *stored_request == request)
         {
-            validate_cached_result_with_evidence(cached)?;
+            validate_cached_result_with_evidence(cached, self.left, self.right)?;
             return Ok(cached.clone());
         }
 
@@ -256,7 +256,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
                 request.operation,
                 request.validation,
             )?;
-        validate_cached_result_with_evidence(&materialized)?;
+        validate_cached_result_with_evidence(&materialized, self.left, self.right)?;
         self.closed_boundary_touching_regularized_materializations
             .push((request, materialized.clone()));
         Ok(materialized)
@@ -273,7 +273,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
             .iter()
             .find(|(stored_request, _)| *stored_request == request)
         {
-            validate_cached_result_with_evidence(cached)?;
+            validate_cached_result_with_evidence(cached, self.left, self.right)?;
             return Ok(cached.clone());
         }
 
@@ -293,7 +293,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
                 request.operation,
                 request.validation,
             )?;
-        validate_cached_result_with_evidence(&materialized)?;
+        validate_cached_result_with_evidence(&materialized, self.left, self.right)?;
         self.closed_no_volume_overlap_regularized_materializations
             .push((request, materialized.clone()));
         Ok(materialized)
@@ -310,7 +310,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
             .iter()
             .find(|(stored_request, _)| *stored_request == request)
         {
-            validate_cached_optional_result(cached)?;
+            validate_cached_optional_result(cached, self.left, self.right, request)?;
             return Ok(cached.clone());
         }
 
@@ -325,7 +325,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
         let materialized = materialize_open_surface_disjoint_from_graph_for_request(
             graph, self.left, self.right, request,
         )?;
-        validate_cached_optional_result(&materialized)?;
+        validate_cached_optional_result(&materialized, self.left, self.right, request)?;
         self.open_surface_disjoint_materializations
             .push((request, materialized.clone()));
         Ok(materialized)
@@ -343,7 +343,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
             .iter()
             .find(|(stored_request, _)| *stored_request == request)
         {
-            validate_cached_optional_result(cached)?;
+            validate_cached_optional_result(cached, self.left, self.right, request)?;
             return Ok(cached.clone());
         }
 
@@ -354,7 +354,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
             request.validation,
         )? {
             let materialized = Some(result);
-            validate_cached_optional_result(&materialized)?;
+            validate_cached_optional_result(&materialized, self.left, self.right, request)?;
             self.boundary_touching_policy_materializations
                 .push((request, materialized.clone()));
             return Ok(materialized);
@@ -371,7 +371,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
         let materialized = materialize_boundary_touching_policy_from_graph_for_request(
             graph, self.left, self.right, request,
         )?;
-        validate_cached_optional_result(&materialized)?;
+        validate_cached_optional_result(&materialized, self.left, self.right, request)?;
         self.boundary_touching_policy_materializations
             .push((request, materialized.clone()));
         Ok(materialized)
@@ -388,7 +388,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
             .iter()
             .find(|(stored_request, _)| *stored_request == request)
         {
-            validate_cached_optional_result(cached)?;
+            validate_cached_optional_result(cached, self.left, self.right, request)?;
             return Ok(cached.clone());
         }
 
@@ -400,10 +400,14 @@ impl<'a> ExactBooleanWorkspace<'a> {
         graph
             .validate_against_meshes(self.left, self.right)
             .map_err(workspace_graph_validation_error)?;
-        let materialized = materialize_closed_winding_containment_from_graph_for_request(
-            graph, self.left, self.right, request,
+        let materialized = materialize_closed_winding_from_graph_for_request(
+            graph,
+            self.left,
+            self.right,
+            request,
+            ClosedWindingMaterialization::Containment,
         )?;
-        validate_cached_optional_result(&materialized)?;
+        validate_cached_optional_result(&materialized, self.left, self.right, request)?;
         self.closed_winding_containment_materializations
             .push((request, materialized.clone()));
         Ok(materialized)
@@ -420,7 +424,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
             .iter()
             .find(|(stored_request, _)| *stored_request == request)
         {
-            validate_cached_optional_result(cached)?;
+            validate_cached_optional_result(cached, self.left, self.right, request)?;
             return Ok(cached.clone());
         }
 
@@ -432,10 +436,14 @@ impl<'a> ExactBooleanWorkspace<'a> {
         graph
             .validate_against_meshes(self.left, self.right)
             .map_err(workspace_graph_validation_error)?;
-        let materialized = materialize_closed_winding_separated_from_graph_for_request(
-            graph, self.left, self.right, request,
+        let materialized = materialize_closed_winding_from_graph_for_request(
+            graph,
+            self.left,
+            self.right,
+            request,
+            ClosedWindingMaterialization::Separated,
         )?;
-        validate_cached_optional_result(&materialized)?;
+        validate_cached_optional_result(&materialized, self.left, self.right, request)?;
         self.closed_winding_separated_materializations
             .push((request, materialized.clone()));
         Ok(materialized)
@@ -452,7 +460,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
             .iter()
             .find(|(stored_request, _)| *stored_request == request)
         {
-            validate_cached_result_with_adjacent_report(cached)?;
+            validate_cached_result_with_adjacent_report(cached, self.left, self.right)?;
             return Ok(cached.clone());
         }
 
@@ -495,7 +503,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
         } else {
             None
         };
-        validate_cached_result_with_adjacent_report(&materialized)?;
+        validate_cached_result_with_adjacent_report(&materialized, self.left, self.right)?;
         self.adjacent_union_completion_materializations
             .push((request, materialized.clone()));
         Ok(materialized)
@@ -654,6 +662,17 @@ impl<'a> ExactBooleanWorkspace<'a> {
             return Ok(&self.arrangement_attempts[index].2);
         }
 
+        if let Some(attempt) =
+            direct_arrangement_cell_complex_attempt(self.left, self.right, request, policy)?
+        {
+            self.arrangement_attempts.push((request, policy, attempt));
+            return Ok(&self
+                .arrangement_attempts
+                .last()
+                .expect("arrangement attempt cache was just populated")
+                .2);
+        }
+
         self.arrangement(policy)?;
         let arrangement_index = self
             .arrangements
@@ -690,6 +709,19 @@ impl<'a> ExactBooleanWorkspace<'a> {
         ) {
             attempt.validate()?;
             return Ok(());
+        }
+
+        if let Some(replay) =
+            direct_arrangement_cell_complex_attempt(self.left, self.right, request, policy)
+                .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
+        {
+            attempt.validate()?;
+            replay.validate()?;
+            return if attempt == &replay {
+                Ok(())
+            } else {
+                Err(ExactReportValidationError::SourceReplayMismatch)
+            };
         }
 
         self.arrangement(policy)
@@ -1496,12 +1528,6 @@ impl<'a> ExactBooleanWorkspace<'a> {
         }
 
         self.graph()?;
-        if !matches!(
-            request.operation,
-            super::boolean::ExactBooleanOperation::SelectedRegions(_)
-        ) {
-            self.arrangement(ExactRegularizationPolicy::REGULARIZED_SOLID)?;
-        }
         let graph = self
             .graph
             .as_ref()
@@ -1550,13 +1576,6 @@ impl<'a> ExactBooleanWorkspace<'a> {
         }
         self.graph()
             .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
-        if !matches!(
-            request.operation,
-            super::boolean::ExactBooleanOperation::SelectedRegions(_)
-        ) {
-            self.arrangement(ExactRegularizationPolicy::REGULARIZED_SOLID)
-                .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
-        }
         let graph = self
             .graph
             .as_ref()
@@ -1623,7 +1642,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
                 .iter()
                 .find(|(stored_request, _)| *stored_request == request)
             {
-                validate_cached_result_for_request(request, result)
+                validate_cached_result_for_request(self.left, self.right, request, result)
                     .map_err(workspace_report_validation_error)?;
                 Some(result.clone())
             } else {
@@ -1668,7 +1687,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
             .iter()
             .find(|(stored_request, _)| *stored_request == request)
         {
-            validate_cached_result_for_request(request, result)
+            validate_cached_result_for_request(self.left, self.right, request, result)
                 .map_err(workspace_report_validation_error)?;
             return Ok(result.clone());
         }
@@ -1682,18 +1701,12 @@ impl<'a> ExactBooleanWorkspace<'a> {
             evaluation
                 .validate()
                 .map_err(workspace_report_validation_error)?;
-            validate_cached_result_for_request(request, result)
+            validate_cached_result_for_request(self.left, self.right, request, result)
                 .map_err(workspace_report_validation_error)?;
             return Ok(result.clone());
         }
         self.preflight(request)?;
         self.graph()?;
-        if !matches!(
-            request.operation,
-            super::boolean::ExactBooleanOperation::SelectedRegions(_)
-        ) {
-            self.arrangement(ExactRegularizationPolicy::REGULARIZED_SOLID)?;
-        }
         let preflight_index = self
             .preflights
             .iter()
@@ -1747,13 +1760,6 @@ impl<'a> ExactBooleanWorkspace<'a> {
 
         self.graph()
             .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
-        if !matches!(
-            evaluation.request.operation,
-            super::boolean::ExactBooleanOperation::SelectedRegions(_)
-        ) {
-            self.arrangement(ExactRegularizationPolicy::REGULARIZED_SOLID)
-                .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
-        }
         let graph = self
             .graph
             .as_ref()
@@ -1805,7 +1811,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
                 .filter_map(|(_, evaluation)| evaluation.result.as_ref())
                 .any(|stored_result| stored_result == result)
         {
-            validate_cached_result_for_request(request, result)?;
+            validate_cached_result_for_request(self.left, self.right, request, result)?;
             return Ok(());
         }
 
@@ -1885,6 +1891,8 @@ fn workspace_coplanar_volumetric_cell_error(
 
 fn validate_cached_result_with_evidence(
     materialized: &Option<(ExactBooleanResult, CoplanarVolumetricCellEvidenceReport)>,
+    left: &ExactMesh,
+    right: &ExactMesh,
 ) -> Result<(), MeshError> {
     if let Some((result, evidence)) = materialized {
         result
@@ -1893,12 +1901,20 @@ fn validate_cached_result_with_evidence(
         evidence
             .validate()
             .map_err(workspace_coplanar_volumetric_cell_error)?;
+        result
+            .validate_against_sources(left, right)
+            .map_err(workspace_report_validation_error)?;
+        evidence
+            .validate_against_sources(left, right)
+            .map_err(workspace_coplanar_volumetric_cell_error)?;
     }
     Ok(())
 }
 
 fn validate_cached_result_with_adjacent_report(
     materialized: &Option<(ExactBooleanResult, ExactAdjacentUnionCompletionReport)>,
+    left: &ExactMesh,
+    right: &ExactMesh,
 ) -> Result<(), MeshError> {
     if let Some((result, report)) = materialized {
         result
@@ -1907,32 +1923,54 @@ fn validate_cached_result_with_adjacent_report(
         report
             .validate()
             .map_err(workspace_report_validation_error)?;
+        result
+            .validate_against_sources(left, right)
+            .map_err(workspace_report_validation_error)?;
+        report
+            .validate_against_sources(left, right)
+            .map_err(workspace_report_validation_error)?;
     }
     Ok(())
 }
 
 fn validate_cached_optional_result(
     materialized: &Option<ExactBooleanResult>,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    request: ExactBooleanRequest,
 ) -> Result<(), MeshError> {
     if let Some(result) = materialized {
         result
-            .validate()
+            .validate_operation_against_sources(
+                left,
+                right,
+                request.operation,
+                request.validation,
+                request.boundary_policy,
+            )
             .map_err(workspace_report_validation_error)?;
     }
     Ok(())
 }
 
 fn validate_cached_result_for_request(
+    left: &ExactMesh,
+    right: &ExactMesh,
     request: ExactBooleanRequest,
     result: &ExactBooleanResult,
 ) -> Result<(), ExactReportValidationError> {
-    result.validate()?;
     if result.mesh.validation_policy() != request.validation
         || !cached_result_kind_matches_request(result, request)
     {
         return Err(ExactReportValidationError::StatusEvidenceMismatch);
     }
-    Ok(())
+    result.validate_operation_against_sources(
+        left,
+        right,
+        request.operation,
+        request.validation,
+        request.boundary_policy,
+    )
 }
 
 fn cached_result_kind_matches_request(
@@ -1967,7 +2005,8 @@ mod tests {
     use crate::validation::ValidationPolicy;
     use crate::{
         CoplanarVolumetricCellEvidenceError, CoplanarVolumetricCellEvidenceFreshness,
-        ExactBooleanResultKind, ExactBoundaryBooleanPolicy, ExactReportValidationError, Triangle,
+        ExactArrangementBooleanStage, ExactBooleanResultKind, ExactBooleanShortcutKind,
+        ExactBoundaryBooleanPolicy, ExactReportValidationError, Triangle,
         certify_coplanar_volumetric_cell_evidence,
     };
 
@@ -2761,6 +2800,79 @@ mod tests {
     }
 
     #[test]
+    fn exact_boolean_workspace_arrangement_attempt_uses_orthogonal_shortcut_without_arrangement() {
+        let left = axis_aligned_box_i64([0, 0, 0], [2, 2, 2]);
+        let right = axis_aligned_box_i64([1, 1, 0], [3, 3, 2]);
+        let request =
+            ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED);
+        let mut workspace = ExactBooleanWorkspace::new(&left, &right);
+
+        let attempt = workspace
+            .arrangement_attempt(request, ExactRegularizationPolicy::REGULARIZED_SOLID)
+            .unwrap()
+            .clone();
+        assert_eq!(workspace.arrangements.len(), 0);
+        assert_eq!(workspace.arrangement_attempts.len(), 1);
+        assert_eq!(attempt.stage, ExactArrangementBooleanStage::Materialized);
+        assert_eq!(
+            attempt.materialized_shortcut,
+            Some(ExactBooleanShortcutKind::ArrangementCellComplex)
+        );
+        attempt.validate().unwrap();
+        attempt.validate_against_sources(&left, &right).unwrap();
+
+        workspace
+            .validate_arrangement_attempt(
+                request,
+                ExactRegularizationPolicy::REGULARIZED_SOLID,
+                &attempt,
+            )
+            .unwrap();
+        assert_eq!(
+            workspace.arrangement_attempt_freshness(
+                request,
+                ExactRegularizationPolicy::REGULARIZED_SOLID,
+                &attempt,
+            ),
+            ExactReportFreshness::Current
+        );
+        assert_eq!(workspace.arrangements.len(), 0);
+
+        let evaluation = workspace.evaluate(request).unwrap().clone();
+        evaluation.validate().unwrap();
+        assert!(evaluation.preflight.is_certified());
+        assert!(evaluation.result.is_some());
+        assert!(evaluation.certifications.topology_assembly.is_none());
+        assert!(evaluation.certifications.region_ownership.is_none());
+        assert!(evaluation.certifications.arrangement_attempt.is_some());
+        assert_eq!(workspace.arrangements.len(), 0);
+
+        let result = workspace.materialize(request).unwrap();
+        assert_eq!(
+            result.kind,
+            ExactBooleanResultKind::CertifiedShortcut {
+                operation: ExactBooleanOperation::Union,
+                shortcut: ExactBooleanShortcutKind::ArrangementCellComplex,
+            }
+        );
+        result.validate_against_sources(&left, &right).unwrap();
+        assert_eq!(workspace.arrangements.len(), 0);
+
+        let mut stale_attempt = attempt.clone();
+        stale_attempt.output_triangles += 1;
+        stale_attempt.validate().unwrap();
+        assert_eq!(
+            workspace.validate_arrangement_attempt(
+                request,
+                ExactRegularizationPolicy::REGULARIZED_SOLID,
+                &stale_attempt,
+            ),
+            Err(ExactReportValidationError::SourceReplayMismatch)
+        );
+        assert_eq!(workspace.arrangements.len(), 0);
+    }
+
+    #[test]
     fn exact_boolean_workspace_validates_cached_evaluation_locally() {
         let left = tetra([0, 0, 0]);
         let right = tetra([1, 0, 0]);
@@ -3292,6 +3404,22 @@ mod tests {
                 a[0], a[1], a[2], b[0], b[1], b[2], c[0], c[1], c[2], d[0], d[1], d[2],
             ],
             &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
+        )
+        .unwrap()
+    }
+
+    fn axis_aligned_box_i64(min: [i64; 3], max: [i64; 3]) -> ExactMesh {
+        let [x0, y0, z0] = min;
+        let [x1, y1, z1] = max;
+        ExactMesh::from_i64_triangles(
+            &[
+                x0, y0, z0, x1, y0, z0, x1, y1, z0, x0, y1, z0, x0, y0, z1, x1, y0, z1, x1, y1, z1,
+                x0, y1, z1,
+            ],
+            &[
+                0, 2, 1, 0, 3, 2, 4, 5, 6, 4, 6, 7, 0, 1, 5, 0, 5, 4, 1, 2, 6, 1, 6, 5, 2, 3, 7, 2,
+                7, 6, 3, 0, 4, 3, 4, 7,
+            ],
         )
         .unwrap()
     }

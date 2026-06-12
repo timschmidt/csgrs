@@ -2397,6 +2397,8 @@ fn edge_split_plan(graph: &ExactIntersectionGraph) -> ExactEdgeSplitPlan {
 
 fn graph_vertex_plan(split_plan: &ExactEdgeSplitPlan) -> ExactGraphVertexPlan {
     let mut vertices = Vec::<ExactGraphVertex>::new();
+    let mut integer_key_buckets = BTreeMap::<ExactIntegerPointKey, Vec<usize>>::new();
+    let mut unkeyed_vertices = Vec::<usize>::new();
     let mut unresolved_equalities = 0;
 
     for split in &split_plan.splits {
@@ -2411,21 +2413,25 @@ fn graph_vertex_plan(split_plan: &ExactEdgeSplitPlan) -> ExactGraphVertexPlan {
                 endpoint_sides: point.endpoint_sides,
             };
 
-            let mut matched = None;
-            for (index, vertex) in vertices.iter().enumerate() {
-                match points_equal(&point.point, &vertex.point) {
-                    Some(true) => {
-                        matched = Some(index);
-                        break;
-                    }
-                    Some(false) => {}
-                    None => unresolved_equalities += 1,
-                }
-            }
+            let point_key = exact_integer_point_key(&point.point);
+            let matched = find_matching_graph_vertex(
+                &point.point,
+                point_key.as_ref(),
+                &vertices,
+                &integer_key_buckets,
+                &unkeyed_vertices,
+                &mut unresolved_equalities,
+            );
 
             if let Some(index) = matched {
                 vertices[index].uses.push(vertex_use);
             } else {
+                let index = vertices.len();
+                if let Some(key) = point_key {
+                    integer_key_buckets.entry(key).or_default().push(index);
+                } else {
+                    unkeyed_vertices.push(index);
+                }
                 vertices.push(ExactGraphVertex {
                     point: point.point.clone(),
                     uses: vec![vertex_use],
@@ -2438,6 +2444,73 @@ fn graph_vertex_plan(split_plan: &ExactEdgeSplitPlan) -> ExactGraphVertexPlan {
         vertices,
         unresolved_equalities,
     }
+}
+
+#[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
+struct ExactIntegerPointKey {
+    x: String,
+    y: String,
+    z: String,
+}
+
+fn exact_integer_point_key(point: &Point3) -> Option<ExactIntegerPointKey> {
+    Some(ExactIntegerPointKey {
+        x: point.x.exact_rational_ref()?.to_big_integer()?.to_string(),
+        y: point.y.exact_rational_ref()?.to_big_integer()?.to_string(),
+        z: point.z.exact_rational_ref()?.to_big_integer()?.to_string(),
+    })
+}
+
+fn find_matching_graph_vertex(
+    point: &Point3,
+    point_key: Option<&ExactIntegerPointKey>,
+    vertices: &[ExactGraphVertex],
+    integer_key_buckets: &BTreeMap<ExactIntegerPointKey, Vec<usize>>,
+    unkeyed_vertices: &[usize],
+    unresolved_equalities: &mut usize,
+) -> Option<usize> {
+    if let Some(key) = point_key {
+        if let Some(bucket) = integer_key_buckets.get(key) {
+            if let Some(index) = find_matching_graph_vertex_in_indices(
+                point,
+                vertices,
+                bucket,
+                unresolved_equalities,
+            ) {
+                return Some(index);
+            }
+        }
+        return find_matching_graph_vertex_in_indices(
+            point,
+            vertices,
+            unkeyed_vertices,
+            unresolved_equalities,
+        );
+    }
+    for bucket in integer_key_buckets.values() {
+        if let Some(index) =
+            find_matching_graph_vertex_in_indices(point, vertices, bucket, unresolved_equalities)
+        {
+            return Some(index);
+        }
+    }
+    find_matching_graph_vertex_in_indices(point, vertices, unkeyed_vertices, unresolved_equalities)
+}
+
+fn find_matching_graph_vertex_in_indices(
+    point: &Point3,
+    vertices: &[ExactGraphVertex],
+    candidates: &[usize],
+    unresolved_equalities: &mut usize,
+) -> Option<usize> {
+    for &index in candidates {
+        match points_equal(point, &vertices[index].point) {
+            Some(true) => return Some(index),
+            Some(false) => {}
+            None => *unresolved_equalities += 1,
+        }
+    }
+    None
 }
 
 fn validate_graph_vertex_plan(plan: &ExactGraphVertexPlan) -> SplitPlanValidationReport {

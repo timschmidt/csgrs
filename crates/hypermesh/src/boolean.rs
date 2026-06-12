@@ -470,6 +470,13 @@ fn record_selected_orientation_counts(
 }
 
 fn arrangement_attempt_gate_statuses_match_stage(attempt: &ExactArrangementBooleanAttempt) -> bool {
+    let pre_gate_output_validation = matches!(
+        attempt.decline,
+        Some(ExactArrangementBooleanDecline::OutputValidation)
+    ) && attempt.stage
+        == ExactArrangementBooleanStage::Triangulated
+        && attempt.topology_assembly.is_none()
+        && attempt.region_ownership.is_none();
     if attempt.stage == ExactArrangementBooleanStage::NotAttempted {
         return attempt.topology_assembly.is_none() && attempt.region_ownership.is_none();
     }
@@ -498,10 +505,14 @@ fn arrangement_attempt_gate_statuses_match_stage(attempt: &ExactArrangementBoole
         Some(
             ExactArrangementBooleanDecline::Selection(_)
             | ExactArrangementBooleanDecline::Simplification(_)
-            | ExactArrangementBooleanDecline::Triangulation(_)
-            | ExactArrangementBooleanDecline::OutputValidation,
+            | ExactArrangementBooleanDecline::Triangulation(_),
         ) => {
             if attempt.region_ownership.is_none() {
+                return false;
+            }
+        }
+        Some(ExactArrangementBooleanDecline::OutputValidation) => {
+            if !pre_gate_output_validation && attempt.region_ownership.is_none() {
                 return false;
             }
         }
@@ -526,6 +537,7 @@ fn arrangement_attempt_gate_statuses_match_stage(attempt: &ExactArrangementBoole
         || attempt.label_oriented_selected_faces != 0
         || attempt.selected_volume_regions != 0)
         && attempt.region_ownership.is_none()
+        && !pre_gate_output_validation
     {
         return false;
     }
@@ -701,7 +713,9 @@ impl ExactBooleanRequest {
         left: &ExactMesh,
         right: &ExactMesh,
     ) -> Result<ExactWindingReadinessReport, MeshError> {
-        winding_readiness_report_for_request(left, right, self)
+        let graph = build_intersection_graph(left, right)?;
+        validate_graph_source_handoff(&graph, left, right)?;
+        winding_readiness_report_for_request_from_graph(&graph, left, right, self)
     }
 
     /// Certify whether retained volumetric boundary output for this request can
@@ -711,7 +725,9 @@ impl ExactBooleanRequest {
         left: &ExactMesh,
         right: &ExactMesh,
     ) -> Result<ExactVolumetricBoundaryClosureReport, MeshError> {
-        volumetric_boundary_closure_report_for_request(left, right, self)
+        let graph = build_intersection_graph(left, right)?;
+        validate_graph_source_handoff(&graph, left, right)?;
+        volumetric_boundary_closure_report_from_graph(&graph, left, right, self.operation)
     }
 
     /// Report whether exact graph extraction retained unresolved predicate or
@@ -721,7 +737,9 @@ impl ExactBooleanRequest {
         left: &ExactMesh,
         right: &ExactMesh,
     ) -> Result<ExactRefinementReport, MeshError> {
-        refinement_report_for_request(left, right, self)
+        let graph = build_intersection_graph(left, right)?;
+        validate_graph_source_handoff(&graph, left, right)?;
+        Ok(refinement_report_from_graph(&graph, self.operation))
     }
 
     /// Report whether this request is blocked on exact planar-arrangement
@@ -731,7 +749,22 @@ impl ExactBooleanRequest {
         left: &ExactMesh,
         right: &ExactMesh,
     ) -> Result<ExactPlanarArrangementReport, MeshError> {
-        planar_arrangement_report_for_request(left, right, self)
+        let operation = self.operation;
+        if matches!(operation, ExactBooleanOperation::SelectedRegions(_)) {
+            return Ok(planar_arrangement_report(
+                operation,
+                ExactPlanarArrangementStatus::NotNamedOperation,
+                false,
+                0,
+                0,
+                ExactBooleanBlocker::default(),
+                None,
+            ));
+        }
+
+        let graph = build_intersection_graph(left, right)?;
+        validate_graph_source_handoff(&graph, left, right)?;
+        planar_arrangement_report_from_graph(&graph, left, right, operation)
     }
 
     /// Certify whether adjacent closed-solid union completion can materialize
@@ -741,7 +774,7 @@ impl ExactBooleanRequest {
         left: &ExactMesh,
         right: &ExactMesh,
     ) -> Result<ExactAdjacentUnionCompletionReport, MeshError> {
-        adjacent_union_completion_report_for_request(left, right, self)
+        Ok(adjacent_union_completion_certification(left, right, self.operation, None)?.0)
     }
 
     /// Certify whether this request's retained graph is boundary-only contact.
@@ -750,7 +783,9 @@ impl ExactBooleanRequest {
         left: &ExactMesh,
         right: &ExactMesh,
     ) -> Result<ExactBoundaryTouchingReport, MeshError> {
-        boundary_touching_report_for_request(left, right, self)
+        let graph = build_intersection_graph(left, right)?;
+        validate_graph_source_handoff(&graph, left, right)?;
+        boundary_touching_report_from_graph(&graph, left, right)
     }
 
     /// Certify whether open-surface operands are graph-disjoint for this
@@ -760,7 +795,9 @@ impl ExactBooleanRequest {
         left: &ExactMesh,
         right: &ExactMesh,
     ) -> Result<ExactOpenSurfaceDisjointReport, MeshError> {
-        open_surface_disjoint_report_for_request(left, right, self)
+        let graph = build_intersection_graph(left, right)?;
+        validate_graph_source_handoff(&graph, left, right)?;
+        Ok(open_surface_disjoint_report_from_graph(&graph, left, right))
     }
 
     /// Certify whether source meshes are exactly identical for boolean
@@ -770,7 +807,7 @@ impl ExactBooleanRequest {
         left: &ExactMesh,
         right: &ExactMesh,
     ) -> ExactIdenticalMeshReport {
-        identical_mesh_report_for_request(left, right, self)
+        identical_mesh_report_from_sources(left, right)
     }
 
     /// Certify whether source meshes represent the same triangle surface for
@@ -780,7 +817,7 @@ impl ExactBooleanRequest {
         left: &ExactMesh,
         right: &ExactMesh,
     ) -> ExactSameSurfaceReport {
-        same_surface_report_for_request(left, right, self)
+        same_surface_report_from_sources(left, right)
     }
 
     /// Materialize the empty-operand shortcut for this request, when it owns
@@ -790,7 +827,21 @@ impl ExactBooleanRequest {
         left: &ExactMesh,
         right: &ExactMesh,
     ) -> Result<Option<ExactBooleanResult>, MeshError> {
-        materialize_empty_operand_for_request(left, right, self)
+        let operation = self.operation;
+        let validation = self.validation;
+        if matches!(operation, ExactBooleanOperation::SelectedRegions(_))
+            || (!left.triangles().is_empty() && !right.triangles().is_empty())
+        {
+            return Ok(None);
+        }
+        Ok(public_operation_replayable_result(
+            Some(boolean_empty_operand(left, right, operation, validation)?),
+            left,
+            right,
+            operation,
+            validation,
+            ExactBoundaryBooleanPolicy::Reject,
+        ))
     }
 
     /// Materialize the bounds-disjoint shortcut for this request, when exact
@@ -800,7 +851,25 @@ impl ExactBooleanRequest {
         left: &ExactMesh,
         right: &ExactMesh,
     ) -> Result<Option<ExactBooleanResult>, MeshError> {
-        materialize_bounds_disjoint_for_request(left, right, self)
+        let operation = self.operation;
+        let validation = self.validation;
+        if matches!(operation, ExactBooleanOperation::SelectedRegions(_))
+            || left.triangles().is_empty()
+            || right.triangles().is_empty()
+            || !meshes_are_certified_bounds_disjoint(left, right)
+            || (validation == ValidationPolicy::CLOSED
+                && certified_closed_validation_regularized_solid_support(left, right).is_some())
+        {
+            return Ok(None);
+        }
+        Ok(public_operation_replayable_result(
+            Some(boolean_disjoint_meshes(left, right, operation, validation)?),
+            left,
+            right,
+            operation,
+            validation,
+            ExactBoundaryBooleanPolicy::Reject,
+        ))
     }
 
     /// Materialize the identical-mesh shortcut for this request, when it owns
@@ -810,7 +879,24 @@ impl ExactBooleanRequest {
         left: &ExactMesh,
         right: &ExactMesh,
     ) -> Result<Option<ExactBooleanResult>, MeshError> {
-        materialize_identical_mesh_for_request(left, right, self)
+        let operation = self.operation;
+        let validation = self.validation;
+        if matches!(operation, ExactBooleanOperation::SelectedRegions(_))
+            || (left.facts().mesh.closed_manifold && right.facts().mesh.closed_manifold)
+            || (validation == ValidationPolicy::CLOSED
+                && certified_closed_validation_regularized_solid_support(left, right).is_some())
+            || !meshes_are_certified_identical(left, right)
+        {
+            return Ok(None);
+        }
+        Ok(public_operation_replayable_result(
+            Some(boolean_identical_meshes(left, operation, validation)?),
+            left,
+            right,
+            operation,
+            validation,
+            ExactBoundaryBooleanPolicy::Reject,
+        ))
     }
 
     /// Materialize the same-surface shortcut for this request, when it owns
@@ -820,7 +906,25 @@ impl ExactBooleanRequest {
         left: &ExactMesh,
         right: &ExactMesh,
     ) -> Result<Option<ExactBooleanResult>, MeshError> {
-        materialize_same_surface_for_request(left, right, self)
+        let operation = self.operation;
+        let validation = self.validation;
+        if matches!(operation, ExactBooleanOperation::SelectedRegions(_))
+            || (left.facts().mesh.closed_manifold && right.facts().mesh.closed_manifold)
+            || (validation == ValidationPolicy::CLOSED
+                && certified_closed_validation_regularized_solid_support(left, right).is_some())
+            || meshes_are_certified_identical(left, right)
+            || !meshes_are_certified_same_surface(left, right)
+        {
+            return Ok(None);
+        }
+        Ok(public_operation_replayable_result(
+            Some(boolean_same_surface_meshes(left, operation, validation)?),
+            left,
+            right,
+            operation,
+            validation,
+            ExactBoundaryBooleanPolicy::Reject,
+        ))
     }
 
     /// Materialize closed-output lower-dimensional regularization for this
@@ -830,7 +934,18 @@ impl ExactBooleanRequest {
         left: &ExactMesh,
         right: &ExactMesh,
     ) -> Result<Option<ExactBooleanResult>, MeshError> {
-        materialize_closed_regularized_lower_dimensional_for_request(left, right, self)
+        let operation = self.operation;
+        let validation = self.validation;
+        Ok(public_operation_replayable_result(
+            boolean_closed_regularized_lower_dimensional_optional(
+                left, right, operation, validation,
+            )?,
+            left,
+            right,
+            operation,
+            validation,
+            ExactBoundaryBooleanPolicy::Reject,
+        ))
     }
 
     /// Materialize mixed-dimensional closed-solid regularization for this
@@ -840,7 +955,25 @@ impl ExactBooleanRequest {
         left: &ExactMesh,
         right: &ExactMesh,
     ) -> Result<Option<ExactBooleanResult>, MeshError> {
-        materialize_mixed_dimensional_regularized_solid_for_request(left, right, self)
+        let operation = self.operation;
+        let validation = self.validation;
+        if matches!(operation, ExactBooleanOperation::SelectedRegions(_))
+            || certified_mixed_dimensional_regularized_solid_support(left, right).is_none()
+            || (validation != ValidationPolicy::CLOSED
+                && meshes_are_certified_bounds_disjoint(left, right))
+        {
+            return Ok(None);
+        }
+        Ok(public_operation_replayable_result(
+            boolean_closed_regularized_lower_dimensional_optional(
+                left, right, operation, validation,
+            )?,
+            left,
+            right,
+            operation,
+            validation,
+            ExactBoundaryBooleanPolicy::Reject,
+        ))
     }
 
     /// Materialize the open-surface disjoint shortcut for this request, when
@@ -850,7 +983,18 @@ impl ExactBooleanRequest {
         left: &ExactMesh,
         right: &ExactMesh,
     ) -> Result<Option<ExactBooleanResult>, MeshError> {
-        materialize_open_surface_disjoint_for_request(left, right, self)
+        let operation = self.operation;
+        let validation = self.validation;
+        if matches!(operation, ExactBooleanOperation::SelectedRegions(_))
+            || meshes_are_certified_bounds_disjoint(left, right)
+            || (validation == ValidationPolicy::CLOSED
+                && certified_closed_validation_regularized_solid_support(left, right).is_some())
+        {
+            return Ok(None);
+        }
+        let graph = build_intersection_graph(left, right)?;
+        validate_graph_source_handoff(&graph, left, right)?;
+        materialize_open_surface_disjoint_from_graph_for_request(&graph, left, right, self)
     }
 
     /// Materialize explicit boundary-only projection for this request, when
@@ -860,7 +1004,24 @@ impl ExactBooleanRequest {
         left: &ExactMesh,
         right: &ExactMesh,
     ) -> Result<Option<ExactBooleanResult>, MeshError> {
-        materialize_boundary_touching_policy_for_request(left, right, self)
+        let operation = self.operation;
+        let validation = self.validation;
+        let boundary_policy = self.boundary_policy;
+        if let Some(result) =
+            boolean_closed_validation_regularized_meshes(left, right, operation, validation)?
+        {
+            return Ok(public_operation_replayable_result(
+                Some(result),
+                left,
+                right,
+                operation,
+                validation,
+                boundary_policy,
+            ));
+        }
+        let graph = build_intersection_graph(left, right)?;
+        validate_graph_source_handoff(&graph, left, right)?;
+        materialize_boundary_touching_policy_from_graph_for_request(&graph, left, right, self)
     }
 
     /// Materialize closed same-surface arrangement output for this request,
@@ -870,7 +1031,29 @@ impl ExactBooleanRequest {
         left: &ExactMesh,
         right: &ExactMesh,
     ) -> Result<Option<ExactBooleanResult>, MeshError> {
-        materialize_closed_same_surface_for_request(left, right, self)
+        let operation = self.operation;
+        let validation = self.validation;
+        if matches!(operation, ExactBooleanOperation::SelectedRegions(_))
+            || !left.facts().mesh.closed_manifold
+            || !right.facts().mesh.closed_manifold
+            || !meshes_are_certified_same_surface(left, right)
+        {
+            return Ok(None);
+        }
+        let graph = build_intersection_graph(left, right)?;
+        validate_graph_source_handoff(&graph, left, right)?;
+        let preflight = preflight_boolean_exact_request_from_graph(
+            &graph,
+            left,
+            right,
+            ExactBooleanRequest::new(operation, validation),
+        )?;
+        if preflight.support != ExactBooleanSupport::CertifiedArrangementCellComplex {
+            return Ok(None);
+        }
+        boolean_arrangement_cell_complex_meshes_from_graph(
+            &graph, left, right, operation, validation,
+        )
     }
 
     /// Materialize positive-area closed boundary contact with no shared
@@ -880,9 +1063,19 @@ impl ExactBooleanRequest {
         left: &ExactMesh,
         right: &ExactMesh,
     ) -> Result<Option<(ExactBooleanResult, CoplanarVolumetricCellEvidenceReport)>, MeshError> {
-        materialize_closed_no_volume_overlap_regularized_with_evidence_for_request(
-            left, right, self,
-        )
+        let graph = build_intersection_graph(left, right)?;
+        validate_graph_source_handoff(&graph, left, right)?;
+        Ok(materialized_result_with_evidence_replays_sources(
+            materialize_closed_no_volume_overlap_regularized_boolean_with_evidence_from_graph(
+                &graph,
+                left,
+                right,
+                self.operation,
+                self.validation,
+            )?,
+            left,
+            right,
+        ))
     }
 
     /// Materialize zero-area closed boundary contact, returning the exact
@@ -892,9 +1085,19 @@ impl ExactBooleanRequest {
         left: &ExactMesh,
         right: &ExactMesh,
     ) -> Result<Option<(ExactBooleanResult, CoplanarVolumetricCellEvidenceReport)>, MeshError> {
-        materialize_closed_boundary_touching_regularized_with_evidence_for_request(
-            left, right, self,
-        )
+        let graph = build_intersection_graph(left, right)?;
+        validate_graph_source_handoff(&graph, left, right)?;
+        Ok(materialized_result_with_evidence_replays_sources(
+            materialize_closed_boundary_touching_regularized_boolean_with_evidence_from_graph(
+                &graph,
+                left,
+                right,
+                self.operation,
+                self.validation,
+            )?,
+            left,
+            right,
+        ))
     }
 
     /// Materialize the closed-winding containment shortcut for this request,
@@ -904,7 +1107,16 @@ impl ExactBooleanRequest {
         left: &ExactMesh,
         right: &ExactMesh,
     ) -> Result<Option<ExactBooleanResult>, MeshError> {
-        materialize_closed_winding_containment_for_request(left, right, self)
+        let operation = self.operation;
+        let validation = self.validation;
+        Ok(public_operation_replayable_result(
+            boolean_closed_winding_containment_meshes(left, right, operation, validation)?,
+            left,
+            right,
+            operation,
+            validation,
+            ExactBoundaryBooleanPolicy::Reject,
+        ))
     }
 
     /// Materialize the closed-winding separation shortcut for this request,
@@ -914,7 +1126,16 @@ impl ExactBooleanRequest {
         left: &ExactMesh,
         right: &ExactMesh,
     ) -> Result<Option<ExactBooleanResult>, MeshError> {
-        materialize_closed_winding_separated_for_request(left, right, self)
+        let operation = self.operation;
+        let validation = self.validation;
+        Ok(public_operation_replayable_result(
+            boolean_closed_winding_separated_meshes(left, right, operation, validation)?,
+            left,
+            right,
+            operation,
+            validation,
+            ExactBoundaryBooleanPolicy::Reject,
+        ))
     }
 
     /// Materialize a closed-convex shortcut for this request, when convex facts
@@ -924,7 +1145,30 @@ impl ExactBooleanRequest {
         left: &ExactMesh,
         right: &ExactMesh,
     ) -> Result<Option<ExactBooleanResult>, MeshError> {
-        materialize_closed_convex_for_request(left, right, self)
+        let operation = self.operation;
+        let validation = self.validation;
+        let preflight = ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY)
+            .preflight(left, right)?;
+        let result = match preflight.support {
+            ExactBooleanSupport::CertifiedConvexUnion
+            | ExactBooleanSupport::CertifiedConvexIntersection
+            | ExactBooleanSupport::CertifiedConvexDifference => {
+                boolean_convex_meshes_optional(left, right, operation, validation)?
+            }
+            ExactBooleanSupport::CertifiedConvexContainment
+            | ExactBooleanSupport::CertifiedConvexSeparated => {
+                boolean_convex_relation_meshes_optional(left, right, operation, validation)?
+            }
+            _ => return Ok(None),
+        };
+        Ok(public_operation_replayable_result(
+            result,
+            left,
+            right,
+            operation,
+            validation,
+            ExactBoundaryBooleanPolicy::Reject,
+        ))
     }
 
     /// Materialize axis-aligned orthogonal solid recovery for this request,
@@ -934,7 +1178,16 @@ impl ExactBooleanRequest {
         left: &ExactMesh,
         right: &ExactMesh,
     ) -> Result<Option<ExactBooleanResult>, MeshError> {
-        materialize_axis_aligned_orthogonal_solid_for_request(left, right, self)
+        let operation = self.operation;
+        let validation = self.validation;
+        Ok(public_operation_replayable_result(
+            boolean_arrangement_orthogonal_solid_cell_recovery(left, right, operation, validation)?,
+            left,
+            right,
+            operation,
+            validation,
+            ExactBoundaryBooleanPolicy::Reject,
+        ))
     }
 
     /// Materialize affine orthogonal solid recovery for this request, when the
@@ -944,7 +1197,27 @@ impl ExactBooleanRequest {
         left: &ExactMesh,
         right: &ExactMesh,
     ) -> Result<Option<ExactBooleanResult>, MeshError> {
-        materialize_affine_orthogonal_solid_for_request(left, right, self)
+        let operation = self.operation;
+        let validation = self.validation;
+        let Some(result) = boolean_arrangement_affine_orthogonal_solid_recovery(
+            left, right, operation, validation,
+        )?
+        else {
+            return Ok(None);
+        };
+        if result
+            .validate_operation_against_sources(
+                left,
+                right,
+                operation,
+                validation,
+                ExactBoundaryBooleanPolicy::Reject,
+            )
+            .is_err()
+        {
+            return Ok(None);
+        }
+        Ok(Some(result))
     }
 
     /// Materialize adjacent closed-solid union completion for this request,
@@ -954,7 +1227,9 @@ impl ExactBooleanRequest {
         left: &ExactMesh,
         right: &ExactMesh,
     ) -> Result<Option<(ExactBooleanResult, ExactAdjacentUnionCompletionReport)>, MeshError> {
-        materialize_adjacent_union_completion_for_request(left, right, self)
+        let graph = build_intersection_graph(left, right)?;
+        validate_graph_source_handoff(&graph, left, right)?;
+        materialize_adjacent_union_completion_from_graph_for_request(&graph, left, right, self)
     }
 }
 
@@ -1073,9 +1348,21 @@ impl ExactBooleanCertificationSet {
                     request.operation,
                 )?)
             };
+        let direct_arrangement_cell_complex_attempt_report =
+            direct_arrangement_cell_complex_attempt(
+                left,
+                right,
+                request,
+                ExactRegularizationPolicy::REGULARIZED_SOLID,
+            )?;
+        let direct_arrangement_cell_complex_certified =
+            direct_arrangement_cell_complex_attempt_report.is_some()
+                && arrangement_cell_complex_shortcuts.supports(request.operation);
         let owned_regularized_arrangement;
         let regularized_arrangement =
-            if matches!(request.operation, ExactBooleanOperation::SelectedRegions(_)) {
+            if matches!(request.operation, ExactBooleanOperation::SelectedRegions(_))
+                || direct_arrangement_cell_complex_certified
+            {
                 None
             } else if let Some(arrangement) = retained_regularized_arrangement {
                 Some(arrangement)
@@ -1106,17 +1393,21 @@ impl ExactBooleanCertificationSet {
             })
             .transpose()
             .map_err(region_ownership_report_error)?;
-        let arrangement_attempt = regularized_arrangement
-            .map(|arrangement| {
-                arrangement_boolean_attempt_report_from_arrangement(
-                    left,
-                    right,
-                    request,
-                    ExactRegularizationPolicy::REGULARIZED_SOLID,
-                    arrangement,
-                )
-            })
-            .transpose()?;
+        let arrangement_attempt = if direct_arrangement_cell_complex_certified {
+            direct_arrangement_cell_complex_attempt_report
+        } else {
+            regularized_arrangement
+                .map(|arrangement| {
+                    arrangement_boolean_attempt_report_from_arrangement(
+                        left,
+                        right,
+                        request,
+                        ExactRegularizationPolicy::REGULARIZED_SOLID,
+                        arrangement,
+                    )
+                })
+                .transpose()?
+        };
         Ok(Self {
             trivial,
             regularized_solid,
@@ -1196,6 +1487,31 @@ impl ExactBooleanCertificationSet {
                 || self.region_ownership.is_some()
                 || self.volumetric_boundary_closure.is_some()
                 || self.arrangement_attempt.is_some()
+            {
+                return Err(ExactReportValidationError::StatusEvidenceMismatch);
+            }
+            return Ok(());
+        }
+        let direct_arrangement_cell_complex_certified =
+            exact_boolean_direct_arrangement_cell_complex_shortcut_certified(self, request);
+        if direct_arrangement_cell_complex_certified {
+            if self.region_ownership.is_some() || self.topology_assembly.is_some() {
+                return Err(ExactReportValidationError::StatusEvidenceMismatch);
+            }
+            let Some(report) = self.volumetric_boundary_closure.as_ref() else {
+                return Err(ExactReportValidationError::StatusEvidenceMismatch);
+            };
+            report.validate()?;
+            if report.operation != request.operation {
+                return Err(ExactReportValidationError::StatusEvidenceMismatch);
+            }
+            let Some(attempt) = self.arrangement_attempt.as_ref() else {
+                return Err(ExactReportValidationError::StatusEvidenceMismatch);
+            };
+            attempt.validate()?;
+            if attempt.operation != request.operation
+                || attempt.policy != ExactRegularizationPolicy::REGULARIZED_SOLID
+                || attempt.output_validation != request.validation
             {
                 return Err(ExactReportValidationError::StatusEvidenceMismatch);
             }
@@ -1819,19 +2135,22 @@ fn exact_boolean_preflight_matches_certifications(
                 )
         }
         ExactBooleanSupport::CertifiedArrangementCellComplex => {
-            exact_boolean_region_ownership_resolved(certifications)
+            (exact_boolean_direct_arrangement_cell_complex_shortcut_certified_for_operation(
+                certifications,
+                preflight.operation,
+            ) && exact_boolean_preflight_matches_direct_arrangement_cell_complex_shortcut(
+                preflight,
+                certifications,
+            )) || (exact_boolean_region_ownership_resolved(certifications)
                 && exact_boolean_topology_assembly_complete(certifications)
-                && (exact_boolean_preflight_matches_direct_arrangement_cell_complex_shortcut(
+                && winding_readiness_status_materializes_arrangement_cell_complex(status)
+                && exact_boolean_arrangement_attempt_materialized(
+                    &certifications.arrangement_attempt,
+                )
+                && exact_boolean_preflight_matches_arrangement_cell_complex(
                     preflight,
-                    certifications,
-                ) || (winding_readiness_status_materializes_arrangement_cell_complex(status)
-                    && exact_boolean_arrangement_attempt_materialized(
-                        &certifications.arrangement_attempt,
-                    )
-                    && exact_boolean_preflight_matches_arrangement_cell_complex(
-                        preflight,
-                        &certifications.winding_readiness,
-                    )))
+                    &certifications.winding_readiness,
+                ))
         }
         ExactBooleanSupport::CertifiedEmptyOperand => {
             *status == ExactWindingReadinessStatus::EmptyOperandAlreadyMaterialized
@@ -2099,6 +2418,41 @@ fn exact_boolean_arrangement_attempt_materialized(
     })
 }
 
+fn exact_boolean_direct_arrangement_cell_complex_shortcut_certified(
+    certifications: &ExactBooleanCertificationSet,
+    request: ExactBooleanRequest,
+) -> bool {
+    exact_boolean_direct_arrangement_cell_complex_shortcut_certified_for_operation(
+        certifications,
+        request.operation,
+    ) && certifications
+        .arrangement_attempt
+        .as_ref()
+        .is_some_and(|attempt| attempt.output_validation == request.validation)
+}
+
+fn exact_boolean_direct_arrangement_cell_complex_shortcut_certified_for_operation(
+    certifications: &ExactBooleanCertificationSet,
+    operation: ExactBooleanOperation,
+) -> bool {
+    certifications
+        .arrangement_cell_complex_shortcuts
+        .supports(operation)
+        && certifications.region_ownership.is_none()
+        && certifications.topology_assembly.is_none()
+        && certifications
+            .arrangement_attempt
+            .as_ref()
+            .is_some_and(|attempt| {
+                attempt.operation == operation
+                    && attempt.policy == ExactRegularizationPolicy::REGULARIZED_SOLID
+                    && attempt.stage == ExactArrangementBooleanStage::Materialized
+                    && attempt.decline.is_none()
+                    && attempt.materialized_shortcut
+                        == Some(ExactBooleanShortcutKind::ArrangementCellComplex)
+            })
+}
+
 fn exact_boolean_region_ownership_resolved(certifications: &ExactBooleanCertificationSet) -> bool {
     certifications
         .region_ownership
@@ -2349,14 +2703,14 @@ fn exact_boolean_result_matches_certifications(
             shortcut: ExactBooleanShortcutKind::ArrangementCellComplex,
             operation,
         } => {
-            exact_boolean_region_ownership_resolved(certifications)
+            exact_boolean_direct_arrangement_cell_complex_shortcut_certified_for_operation(
+                certifications,
+                operation,
+            ) || (exact_boolean_region_ownership_resolved(certifications)
                 && exact_boolean_topology_assembly_complete(certifications)
-                && (certifications
-                    .arrangement_cell_complex_shortcuts
-                    .supports(operation)
-                    || exact_boolean_arrangement_attempt_materialized(
-                        &certifications.arrangement_attempt,
-                    ))
+                && exact_boolean_arrangement_attempt_materialized(
+                    &certifications.arrangement_attempt,
+                ))
         }
         _ => true,
     }
@@ -2720,6 +3074,17 @@ fn materialize_certified_arrangement_cell_complex_support_with_arrangement(
         )?
     };
     if let Some((result, _closure)) = coplanar_boundary_closure {
+        return Ok(Some(result));
+    }
+    let no_volume_overlap = if let Some(graph) = retained_graph {
+        materialize_closed_no_volume_overlap_regularized_boolean_with_evidence_from_graph(
+            graph, left, right, operation, validation,
+        )?
+        .map(|(result, _evidence)| result)
+    } else {
+        boolean_closed_no_volume_overlap_regularized_meshes(left, right, operation, validation)?
+    };
+    if let Some(result) = no_volume_overlap {
         return Ok(Some(result));
     }
     if let Some(graph) = retained_graph {
@@ -3465,23 +3830,6 @@ pub(crate) fn preflight_boolean_exact_request_from_graph(
         ));
     }
     Ok(preflight)
-}
-
-/// Certify why retained volumetric boundary output can or cannot become closed.
-///
-/// This report is intentionally narrower than [`ExactBooleanRequest::materialize`]: it asks whether
-/// the exact split-cell materializer can produce boundary output under
-/// [`ValidationPolicy::ALLOW_BOUNDARY`], then audits the remaining boundary
-/// loops for the existing coplanar cap generator. Non-coplanar loops remain an
-/// explicit topology-construction obligation rather than a silent closure.
-fn volumetric_boundary_closure_report_for_request(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    request: ExactBooleanRequest,
-) -> Result<ExactVolumetricBoundaryClosureReport, MeshError> {
-    let graph = build_intersection_graph(left, right)?;
-    validate_graph_source_handoff(&graph, left, right)?;
-    volumetric_boundary_closure_report_from_graph(&graph, left, right, request.operation)
 }
 
 pub(crate) fn volumetric_boundary_closure_report_from_graph(
@@ -4344,6 +4692,12 @@ enum ClosedWindingContainmentRelation {
     RightInsideLeft,
 }
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(crate) enum ClosedWindingMaterialization {
+    Containment,
+    Separated,
+}
+
 fn certified_closed_winding_containment_relation_from_graph(
     graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
@@ -4448,25 +4802,43 @@ fn boolean_closed_winding_containment_meshes_from_graph(
     )))
 }
 
-pub(crate) fn materialize_closed_winding_containment_from_graph_for_request(
+fn closed_winding_shortcut_preconditions_fail(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+) -> bool {
+    matches!(operation, ExactBooleanOperation::SelectedRegions(_))
+        || left.triangles().is_empty()
+        || right.triangles().is_empty()
+        || meshes_are_certified_bounds_disjoint(left, right)
+}
+
+pub(crate) fn materialize_closed_winding_from_graph_for_request(
     graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
     request: ExactBooleanRequest,
+    materialization: ClosedWindingMaterialization,
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
     let operation = request.operation;
     let validation = request.validation;
-    if matches!(operation, ExactBooleanOperation::SelectedRegions(_))
-        || left.triangles().is_empty()
-        || right.triangles().is_empty()
-        || meshes_are_certified_bounds_disjoint(left, right)
-    {
+    if closed_winding_shortcut_preconditions_fail(left, right, operation) {
         return Ok(None);
     }
+    let result = match materialization {
+        ClosedWindingMaterialization::Containment => {
+            boolean_closed_winding_containment_meshes_from_graph(
+                graph, left, right, operation, validation,
+            )?
+        }
+        ClosedWindingMaterialization::Separated => {
+            boolean_closed_winding_separated_meshes_from_graph(
+                graph, left, right, operation, validation,
+            )?
+        }
+    };
     Ok(public_operation_replayable_result(
-        boolean_closed_winding_containment_meshes_from_graph(
-            graph, left, right, operation, validation,
-        )?,
+        result,
         left,
         right,
         operation,
@@ -4481,40 +4853,12 @@ fn boolean_closed_winding_containment_meshes(
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
-    if matches!(operation, ExactBooleanOperation::SelectedRegions(_))
-        || left.triangles().is_empty()
-        || right.triangles().is_empty()
-        || meshes_are_certified_bounds_disjoint(left, right)
-    {
+    if closed_winding_shortcut_preconditions_fail(left, right, operation) {
         return Ok(None);
     }
     let graph = build_intersection_graph(left, right)?;
     validate_graph_source_handoff(&graph, left, right)?;
     boolean_closed_winding_containment_meshes_from_graph(&graph, left, right, operation, validation)
-}
-
-/// Certify and materialize a named boolean for closed solids with empty graph
-/// containment proven by exact winding reports.
-///
-/// This path requires no retained face intersections and replays vertex
-/// winding classifications to prove one closed operand lies strictly inside
-/// the other. Unsupported contacts or non-containment relations return `None`
-/// rather than falling back to tolerance geometry.
-fn materialize_closed_winding_containment_for_request(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    request: ExactBooleanRequest,
-) -> Result<Option<ExactBooleanResult>, MeshError> {
-    let operation = request.operation;
-    let validation = request.validation;
-    Ok(public_operation_replayable_result(
-        boolean_closed_winding_containment_meshes(left, right, operation, validation)?,
-        left,
-        right,
-        operation,
-        validation,
-        ExactBoundaryBooleanPolicy::Reject,
-    ))
 }
 
 fn boolean_closed_winding_separated_meshes_from_graph(
@@ -4556,73 +4900,18 @@ fn boolean_closed_winding_separated_meshes_from_graph(
     )))
 }
 
-pub(crate) fn materialize_closed_winding_separated_from_graph_for_request(
-    graph: &super::graph::ExactIntersectionGraph,
-    left: &ExactMesh,
-    right: &ExactMesh,
-    request: ExactBooleanRequest,
-) -> Result<Option<ExactBooleanResult>, MeshError> {
-    let operation = request.operation;
-    let validation = request.validation;
-    if matches!(operation, ExactBooleanOperation::SelectedRegions(_))
-        || left.triangles().is_empty()
-        || right.triangles().is_empty()
-        || meshes_are_certified_bounds_disjoint(left, right)
-    {
-        return Ok(None);
-    }
-    Ok(public_operation_replayable_result(
-        boolean_closed_winding_separated_meshes_from_graph(
-            graph, left, right, operation, validation,
-        )?,
-        left,
-        right,
-        operation,
-        validation,
-        ExactBoundaryBooleanPolicy::Reject,
-    ))
-}
-
 fn boolean_closed_winding_separated_meshes(
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
-    if matches!(operation, ExactBooleanOperation::SelectedRegions(_))
-        || left.triangles().is_empty()
-        || right.triangles().is_empty()
-        || meshes_are_certified_bounds_disjoint(left, right)
-    {
+    if closed_winding_shortcut_preconditions_fail(left, right, operation) {
         return Ok(None);
     }
     let graph = build_intersection_graph(left, right)?;
     validate_graph_source_handoff(&graph, left, right)?;
     boolean_closed_winding_separated_meshes_from_graph(&graph, left, right, operation, validation)
-}
-
-/// Certify and materialize a named boolean for closed solids with empty graph
-/// separation proven by exact winding reports.
-///
-/// The retained empty intersection graph and bidirectional closed-mesh winding
-/// classifications must prove both operands are outside the other. Unsupported
-/// contacts or containment relations return `None` rather than falling back to
-/// tolerance geometry.
-fn materialize_closed_winding_separated_for_request(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    request: ExactBooleanRequest,
-) -> Result<Option<ExactBooleanResult>, MeshError> {
-    let operation = request.operation;
-    let validation = request.validation;
-    Ok(public_operation_replayable_result(
-        boolean_closed_winding_separated_meshes(left, right, operation, validation)?,
-        left,
-        right,
-        operation,
-        validation,
-        ExactBoundaryBooleanPolicy::Reject,
-    ))
 }
 
 fn public_operation_replayable_result(
@@ -4765,19 +5054,22 @@ fn materialize_boolean_exact_request(
     {
         return Ok(result);
     }
-    if let Some((result, _evidence)) =
-        materialize_closed_boundary_touching_regularized_with_evidence_from_graph_for_request(
-            &graph, left, right, request,
-        )?
-    {
+    if let Some((result, _evidence)) = materialized_result_with_evidence_replays_sources(
+        materialize_closed_boundary_touching_regularized_boolean_with_evidence_from_graph(
+            &graph, left, right, operation, validation,
+        )?,
+        left,
+        right,
+    ) {
         return Ok(result);
     }
-    if operation != ExactBooleanOperation::Union
-        && let Some((result, _evidence)) =
-            materialize_closed_no_volume_overlap_regularized_with_evidence_from_graph_for_request(
-                &graph, left, right, request,
-            )?
-    {
+    if let Some((result, _evidence)) = materialized_result_with_evidence_replays_sources(
+        materialize_closed_no_volume_overlap_regularized_boolean_with_evidence_from_graph(
+            &graph, left, right, operation, validation,
+        )?,
+        left,
+        right,
+    ) {
         return Ok(result);
     }
     if let Some(result) = boolean_arrangement_volumetric_split_cell_recovery_from_graph(
@@ -4904,6 +5196,9 @@ fn arrangement_boolean_attempt_report(
     request: ExactBooleanRequest,
     policy: ExactRegularizationPolicy,
 ) -> Result<ExactArrangementBooleanAttempt, MeshError> {
+    if let Some(attempt) = direct_arrangement_cell_complex_attempt(left, right, request, policy)? {
+        return Ok(attempt);
+    }
     let graph = build_intersection_graph(left, right)?;
     let outcome = run_arrangement_cell_complex_attempt_from_graph(
         &graph,
@@ -4915,6 +5210,61 @@ fn arrangement_boolean_attempt_report(
         true,
     )?;
     Ok(arrangement_attempt_from_outcome(outcome))
+}
+
+fn direct_arrangement_cell_complex_result(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+) -> Result<Option<ExactBooleanResult>, MeshError> {
+    if let Some(result) =
+        boolean_arrangement_orthogonal_solid_cell_recovery(left, right, operation, validation)?
+    {
+        return Ok(Some(result));
+    }
+    boolean_arrangement_affine_orthogonal_solid_recovery(left, right, operation, validation)
+}
+
+pub(crate) fn direct_arrangement_cell_complex_attempt(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    request: ExactBooleanRequest,
+    policy: ExactRegularizationPolicy,
+) -> Result<Option<ExactArrangementBooleanAttempt>, MeshError> {
+    if policy != ExactRegularizationPolicy::REGULARIZED_SOLID {
+        return Ok(None);
+    }
+    let Some(result) =
+        direct_arrangement_cell_complex_result(left, right, request.operation, request.validation)?
+    else {
+        return Ok(None);
+    };
+    Ok(Some(ExactArrangementBooleanAttempt {
+        operation: request.operation,
+        policy,
+        output_validation: request.validation,
+        stage: ExactArrangementBooleanStage::Materialized,
+        decline: None,
+        materialized_shortcut: Some(ExactBooleanShortcutKind::ArrangementCellComplex),
+        arrangement_blockers: 0,
+        face_cells: 0,
+        regions: 0,
+        volume_regions: 0,
+        volume_adjacencies: 0,
+        lower_dimensional_artifacts: 0,
+        topology_assembly: None,
+        topology_assembly_report: None,
+        region_ownership: None,
+        region_ownership_report: None,
+        selected_faces: 0,
+        reversed_selected_faces: 0,
+        volume_oriented_selected_faces: 0,
+        label_oriented_selected_faces: 0,
+        selected_volume_regions: 0,
+        output_vertices: result.mesh.vertices().len(),
+        output_triangles: result.mesh.triangles().len(),
+    }))
 }
 
 pub(crate) fn arrangement_boolean_attempt_report_from_arrangement(
@@ -5736,34 +6086,10 @@ fn boolean_arrangement_orthogonal_solid_cell_recovery(
         operation,
         ExactBooleanShortcutKind::ArrangementCellComplex,
     );
-    if result.validate().is_err() || result.validate_against_sources(left, right).is_err() {
+    if result.validate().is_err() {
         return Ok(None);
     }
     Ok(Some(result))
-}
-
-/// Certify and materialize a named boolean for axis-aligned orthogonal solids.
-///
-/// This exposes the exact cell-recovery path used by [`ExactBooleanRequest::materialize`] as an
-/// [`ExactBooleanResult`], retaining the named operation and the
-/// arrangement-cell shortcut provenance. Inputs outside the supportable
-/// orthogonal cell model return `None` rather than falling through to unrelated
-/// topology paths.
-fn materialize_axis_aligned_orthogonal_solid_for_request(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    request: ExactBooleanRequest,
-) -> Result<Option<ExactBooleanResult>, MeshError> {
-    let operation = request.operation;
-    let validation = request.validation;
-    Ok(public_operation_replayable_result(
-        boolean_arrangement_orthogonal_solid_cell_recovery(left, right, operation, validation)?,
-        left,
-        right,
-        operation,
-        validation,
-        ExactBoundaryBooleanPolicy::Reject,
-    ))
 }
 
 fn arrangement_orthogonal_solid_cell_recovery_outcome(
@@ -5917,14 +6243,6 @@ fn adjacent_union_completion_report(
         contained_faces,
         containing_faces,
     }
-}
-
-fn adjacent_union_completion_report_for_request(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    request: ExactBooleanRequest,
-) -> Result<ExactAdjacentUnionCompletionReport, MeshError> {
-    Ok(adjacent_union_completion_certification(left, right, request.operation, None)?.0)
 }
 
 fn adjacent_union_completion_certification(
@@ -6259,16 +6577,6 @@ pub(crate) fn adjacent_union_completion_certification_from_graph(
     ))
 }
 
-fn materialize_adjacent_union_completion_for_request(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    request: ExactBooleanRequest,
-) -> Result<Option<(ExactBooleanResult, ExactAdjacentUnionCompletionReport)>, MeshError> {
-    let graph = build_intersection_graph(left, right)?;
-    validate_graph_source_handoff(&graph, left, right)?;
-    materialize_adjacent_union_completion_from_graph_for_request(&graph, left, right, request)
-}
-
 fn materialize_adjacent_union_completion_from_graph_for_request(
     graph: &ExactIntersectionGraph,
     left: &ExactMesh,
@@ -6483,57 +6791,20 @@ fn boolean_arrangement_regularized_no_volume_overlap_from_graph(
     Ok(Some(result))
 }
 
-/// Certify and materialize a regularized closed-solid boolean for positive-area
-/// boundary contact with no shared volume.
-///
-/// Certify and materialize a regularized closed-solid boolean for positive-area
-/// boundary contact, returning the exact coplanar-volumetric evidence consumed
-/// by the decision.
-///
-/// evidence certifies boundary-only positive-area coplanar contact with no
-/// shared volume; unsupported or non-boundary-only contact states return
-/// `None`.
-fn materialize_closed_no_volume_overlap_regularized_with_evidence_for_request(
+fn materialized_result_with_evidence_replays_sources(
+    materialized: Option<(ExactBooleanResult, CoplanarVolumetricCellEvidenceReport)>,
     left: &ExactMesh,
     right: &ExactMesh,
-    request: ExactBooleanRequest,
-) -> Result<Option<(ExactBooleanResult, CoplanarVolumetricCellEvidenceReport)>, MeshError> {
-    let graph = build_intersection_graph(left, right)?;
-    validate_graph_source_handoff(&graph, left, right)?;
-    materialize_closed_no_volume_overlap_regularized_with_evidence_from_graph_for_request(
-        &graph, left, right, request,
-    )
-}
-
-fn materialize_closed_no_volume_overlap_regularized_with_evidence_from_graph_for_request(
-    graph: &ExactIntersectionGraph,
-    left: &ExactMesh,
-    right: &ExactMesh,
-    request: ExactBooleanRequest,
-) -> Result<Option<(ExactBooleanResult, CoplanarVolumetricCellEvidenceReport)>, MeshError> {
-    let operation = request.operation;
-    let validation = request.validation;
-    let Some((result, evidence)) =
-        materialize_closed_no_volume_overlap_regularized_boolean_with_evidence_from_graph(
-            graph, left, right, operation, validation,
-        )?
-    else {
-        return Ok(None);
+) -> Option<(ExactBooleanResult, CoplanarVolumetricCellEvidenceReport)> {
+    let Some((result, evidence)) = materialized else {
+        return None;
     };
-    if result
-        .validate_operation_against_sources(
-            left,
-            right,
-            operation,
-            validation,
-            ExactBoundaryBooleanPolicy::Reject,
-        )
-        .is_err()
+    if result.validate_against_sources(left, right).is_err()
         || evidence.validate_against_sources(left, right).is_err()
     {
-        return Ok(None);
+        return None;
     }
-    Ok(Some((result, evidence)))
+    Some((result, evidence))
 }
 
 pub(crate) fn materialize_closed_no_volume_overlap_regularized_boolean_with_evidence_from_graph(
@@ -6795,6 +7066,24 @@ fn arrangement_cell_complex_recovery_outcome_if_available(
     let Some(validation) = validation else {
         return Ok(None);
     };
+    if !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
+        && !open_surface_disjoint_report_from_graph(graph, left, right).is_certified()
+    {
+        match boolean_coplanar_mesh_overlay_optional(left, right, operation, validation) {
+            Ok(Some(result)) => {
+                return Ok(Some(materialized_arrangement_attempt_outcome(
+                    attempt, result, false,
+                )));
+            }
+            Ok(None) => {}
+            Err(_) => {
+                let output_counts = coplanar_mesh_overlay_candidate_counts(left, right, operation);
+                return Ok(Some(
+                    declined_output_validation_attempt_outcome_with_counts(attempt, output_counts),
+                ));
+            }
+        }
+    }
     if let Some(outcome) = arrangement_open_surface_recovery_outcome(
         attempt, graph, left, right, operation, validation,
     )? {
@@ -7034,37 +7323,6 @@ fn boolean_convex_relation_meshes_optional(
 /// convex operation or convex relation shortcut. Inputs handled by earlier
 /// exact shortcuts, such as orthogonal-cell recovery or bounds disjointness,
 /// return `None` so replay provenance remains stable.
-fn materialize_closed_convex_for_request(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    request: ExactBooleanRequest,
-) -> Result<Option<ExactBooleanResult>, MeshError> {
-    let operation = request.operation;
-    let validation = request.validation;
-    let preflight = ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY)
-        .preflight(left, right)?;
-    let result = match preflight.support {
-        ExactBooleanSupport::CertifiedConvexUnion
-        | ExactBooleanSupport::CertifiedConvexIntersection
-        | ExactBooleanSupport::CertifiedConvexDifference => {
-            boolean_convex_meshes_optional(left, right, operation, validation)?
-        }
-        ExactBooleanSupport::CertifiedConvexContainment
-        | ExactBooleanSupport::CertifiedConvexSeparated => {
-            boolean_convex_relation_meshes_optional(left, right, operation, validation)?
-        }
-        _ => return Ok(None),
-    };
-    Ok(public_operation_replayable_result(
-        result,
-        left,
-        right,
-        operation,
-        validation,
-        ExactBoundaryBooleanPolicy::Reject,
-    ))
-}
-
 fn boolean_arrangement_convex_regularized_sheet_recovery(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -9145,38 +9403,6 @@ fn boolean_arrangement_affine_orthogonal_solid_recovery(
     Ok(Some(result))
 }
 
-/// Certify and materialize a named boolean for affine orthogonal solids.
-///
-/// The output is the boolean-result wrapper around the exact affine-cell
-/// materializer, so callers can validate both the output mesh and the retained
-/// decision provenance through [`ExactBooleanResult`] replay.
-fn materialize_affine_orthogonal_solid_for_request(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    request: ExactBooleanRequest,
-) -> Result<Option<ExactBooleanResult>, MeshError> {
-    let operation = request.operation;
-    let validation = request.validation;
-    let Some(result) =
-        boolean_arrangement_affine_orthogonal_solid_recovery(left, right, operation, validation)?
-    else {
-        return Ok(None);
-    };
-    if result
-        .validate_operation_against_sources(
-            left,
-            right,
-            operation,
-            validation,
-            ExactBoundaryBooleanPolicy::Reject,
-        )
-        .is_err()
-    {
-        return Ok(None);
-    }
-    Ok(Some(result))
-}
-
 fn materialize_open_surface_disjoint_meshes(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -9302,47 +9528,6 @@ fn open_surface_disjoint_result_consumes_report(
             } if result_operation == operation
         )
         && result.validate().is_ok()
-}
-
-/// Certify and materialize a named boolean for open surfaces with no retained
-/// exact face-pair intersections.
-///
-/// Bounds-disjoint inputs are handled by an earlier exact shortcut, so this
-/// function returns `None` for that case and only materializes the graph-backed
-/// open-surface disjoint certificate used by [`ExactBooleanRequest::materialize`].
-fn materialize_open_surface_disjoint_for_request(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    request: ExactBooleanRequest,
-) -> Result<Option<ExactBooleanResult>, MeshError> {
-    let operation = request.operation;
-    let validation = request.validation;
-    if matches!(operation, ExactBooleanOperation::SelectedRegions(_))
-        || meshes_are_certified_bounds_disjoint(left, right)
-        || (validation == ValidationPolicy::CLOSED
-            && certified_closed_validation_regularized_solid_support(left, right).is_some())
-    {
-        return Ok(None);
-    }
-    let graph = build_intersection_graph(left, right)?;
-    validate_graph_source_handoff(&graph, left, right)?;
-    materialize_open_surface_disjoint_from_graph_for_request(&graph, left, right, request)
-}
-
-/// Certify whether two open surface meshes are disjoint by exact graph facts.
-///
-/// This is the report form of the open-surface named-boolean shortcut. It
-/// validates the open-surface precondition from exact mesh facts, then records
-/// the retained graph relation counts that prove no face pair survived exact
-/// graph fact, not a tolerance side effect.
-fn open_surface_disjoint_report_for_request(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    _request: ExactBooleanRequest,
-) -> Result<ExactOpenSurfaceDisjointReport, MeshError> {
-    let graph = build_intersection_graph(left, right)?;
-    validate_graph_source_handoff(&graph, left, right)?;
-    Ok(open_surface_disjoint_report_from_graph(&graph, left, right))
 }
 
 pub(crate) fn open_surface_disjoint_report_from_graph(
@@ -9749,106 +9934,6 @@ fn boolean_same_surface_meshes(
     ))
 }
 
-/// Certify and materialize a named boolean for identical non-closed meshes.
-///
-/// This exposes the same exact shortcut used by [`ExactBooleanRequest::materialize`]. Closed
-/// solids that are identical route through the closed arrangement path instead,
-/// so this function returns `None` for those cases to preserve dispatcher
-/// provenance. Unsupported operations or non-identical sources also return
-/// `None`.
-fn materialize_identical_mesh_for_request(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    request: ExactBooleanRequest,
-) -> Result<Option<ExactBooleanResult>, MeshError> {
-    let operation = request.operation;
-    let validation = request.validation;
-    if matches!(operation, ExactBooleanOperation::SelectedRegions(_))
-        || (left.facts().mesh.closed_manifold && right.facts().mesh.closed_manifold)
-        || (validation == ValidationPolicy::CLOSED
-            && certified_closed_validation_regularized_solid_support(left, right).is_some())
-        || !meshes_are_certified_identical(left, right)
-    {
-        return Ok(None);
-    }
-    Ok(public_operation_replayable_result(
-        Some(boolean_identical_meshes(left, operation, validation)?),
-        left,
-        right,
-        operation,
-        validation,
-        ExactBoundaryBooleanPolicy::Reject,
-    ))
-}
-
-/// Certify and materialize a named boolean for equal non-closed surfaces with
-/// different retained mesh encodings.
-///
-/// The retained same-surface report proves exact coordinate equality and
-/// triangle-set equality after vertex remapping. Byte-identical meshes and
-/// closed solids are deliberately left to their earlier exact dispatcher paths,
-/// so they return `None` here instead of changing replay provenance.
-fn materialize_same_surface_for_request(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    request: ExactBooleanRequest,
-) -> Result<Option<ExactBooleanResult>, MeshError> {
-    let operation = request.operation;
-    let validation = request.validation;
-    if matches!(operation, ExactBooleanOperation::SelectedRegions(_))
-        || (left.facts().mesh.closed_manifold && right.facts().mesh.closed_manifold)
-        || (validation == ValidationPolicy::CLOSED
-            && certified_closed_validation_regularized_solid_support(left, right).is_some())
-        || meshes_are_certified_identical(left, right)
-        || !meshes_are_certified_same_surface(left, right)
-    {
-        return Ok(None);
-    }
-    Ok(public_operation_replayable_result(
-        Some(boolean_same_surface_meshes(left, operation, validation)?),
-        left,
-        right,
-        operation,
-        validation,
-        ExactBoundaryBooleanPolicy::Reject,
-    ))
-}
-
-/// Certify and materialize the closed same-surface arrangement boolean.
-///
-/// Closed solids with identical or same-surface boundaries can route through
-/// the arrangement cell-complex path in [`ExactBooleanRequest::materialize`], rather than the
-/// non-closed same-surface shortcut. This exposes that named materializer when
-/// preflight certifies arrangement provenance, while yielding to earlier exact
-/// paths such as direct convex materialization.
-fn materialize_closed_same_surface_for_request(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    request: ExactBooleanRequest,
-) -> Result<Option<ExactBooleanResult>, MeshError> {
-    let operation = request.operation;
-    let validation = request.validation;
-    if matches!(operation, ExactBooleanOperation::SelectedRegions(_))
-        || !left.facts().mesh.closed_manifold
-        || !right.facts().mesh.closed_manifold
-        || !meshes_are_certified_same_surface(left, right)
-    {
-        return Ok(None);
-    }
-    let graph = build_intersection_graph(left, right)?;
-    validate_graph_source_handoff(&graph, left, right)?;
-    let preflight = preflight_boolean_exact_request_from_graph(
-        &graph,
-        left,
-        right,
-        ExactBooleanRequest::new(operation, validation),
-    )?;
-    if preflight.support != ExactBooleanSupport::CertifiedArrangementCellComplex {
-        return Ok(None);
-    }
-    boolean_arrangement_cell_complex_meshes_from_graph(&graph, left, right, operation, validation)
-}
-
 fn certified_closed_boundary_touching_union_report_from_graph(
     graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
@@ -10125,55 +10210,6 @@ pub(crate) fn materialize_closed_boundary_touching_regularized_boolean_with_evid
     Ok(Some((result, evidence)))
 }
 
-/// Certify and materialize a named regularized boolean for zero-area closed
-/// boundary contact, returning the exact coplanar volumetric evidence consumed.
-///
-/// evidence proves the contact is boundary-only and has no positive-area
-/// coplanar overlap, separating this zero-area shortcut from the positive-area
-/// no-volume-overlap materializer.
-fn materialize_closed_boundary_touching_regularized_with_evidence_for_request(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    request: ExactBooleanRequest,
-) -> Result<Option<(ExactBooleanResult, CoplanarVolumetricCellEvidenceReport)>, MeshError> {
-    let graph = build_intersection_graph(left, right)?;
-    validate_graph_source_handoff(&graph, left, right)?;
-    materialize_closed_boundary_touching_regularized_with_evidence_from_graph_for_request(
-        &graph, left, right, request,
-    )
-}
-
-fn materialize_closed_boundary_touching_regularized_with_evidence_from_graph_for_request(
-    graph: &ExactIntersectionGraph,
-    left: &ExactMesh,
-    right: &ExactMesh,
-    request: ExactBooleanRequest,
-) -> Result<Option<(ExactBooleanResult, CoplanarVolumetricCellEvidenceReport)>, MeshError> {
-    let operation = request.operation;
-    let validation = request.validation;
-    let Some((result, evidence)) =
-        materialize_closed_boundary_touching_regularized_boolean_with_evidence_from_graph(
-            graph, left, right, operation, validation,
-        )?
-    else {
-        return Ok(None);
-    };
-    if result
-        .validate_operation_against_sources(
-            left,
-            right,
-            operation,
-            validation,
-            ExactBoundaryBooleanPolicy::Reject,
-        )
-        .is_err()
-        || evidence.validate_against_sources(left, right).is_err()
-    {
-        return Ok(None);
-    }
-    Ok(Some((result, evidence)))
-}
-
 fn validate_consumed_boundary_touching_report(
     report: &ExactBoundaryTouchingReport,
     left: &ExactMesh,
@@ -10313,40 +10349,6 @@ fn boolean_boundary_touching_meshes_from_graph(
     .then_some(result))
 }
 
-/// Certify and materialize a named boolean for exact boundary-only contact
-/// under an explicit boundary-output policy.
-///
-/// This is the direct materializer form of
-/// [`ExactBooleanRequest::with_boundary_policy`] and [`ExactBooleanRequest::preflight`]: strict boundary-only
-/// contact remains blocked until the caller chooses
-/// [`ExactBoundaryBooleanPolicy::PreserveSeparateShells`]. Unsupported contact
-/// states or rejected policies return `None` rather than projecting
-/// lower-dimensional contact implicitly.
-fn materialize_boundary_touching_policy_for_request(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    request: ExactBooleanRequest,
-) -> Result<Option<ExactBooleanResult>, MeshError> {
-    let operation = request.operation;
-    let validation = request.validation;
-    let boundary_policy = request.boundary_policy;
-    if let Some(result) =
-        boolean_closed_validation_regularized_meshes(left, right, operation, validation)?
-    {
-        return Ok(public_operation_replayable_result(
-            Some(result),
-            left,
-            right,
-            operation,
-            validation,
-            boundary_policy,
-        ));
-    }
-    let graph = build_intersection_graph(left, right)?;
-    validate_graph_source_handoff(&graph, left, right)?;
-    materialize_boundary_touching_policy_from_graph_for_request(&graph, left, right, request)
-}
-
 pub(crate) fn materialize_boundary_touching_policy_from_graph_for_request(
     graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
@@ -10402,88 +10404,6 @@ pub(crate) fn materialize_boundary_touching_policy_from_graph_for_request(
         validation,
         boundary_policy,
     ))
-}
-
-/// Certify whether retained graph pairs are exclusively boundary-only contacts.
-///
-/// The report keeps the exact graph relation counts used by boundary-policy
-/// preflight and by [`ExactBooleanRequest::with_boundary_policy`] and [`ExactBooleanRequest::materialize`]. Boundary-only
-/// topology is intentionally not silently materialized by the default named
-/// triangle-mesh-only result to be an explicit caller policy.
-fn boundary_touching_report_for_request(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    _request: ExactBooleanRequest,
-) -> Result<ExactBoundaryTouchingReport, MeshError> {
-    let graph = build_intersection_graph(left, right)?;
-    validate_graph_source_handoff(&graph, left, right)?;
-    boundary_touching_report_from_graph(&graph, left, right)
-}
-
-/// Certify whether a named operation needs planar arrangement output.
-///
-/// The report is intentionally narrower than full winding preflight. It only
-/// answers the coplanar positive-area case where exact graph facts prove that
-/// intersection, union, or difference output is a planar arrangement problem. Existing
-/// single-triangle and convex multi-face coplanar shortcuts are reported as
-/// already materialized so callers can distinguish a missing output model from
-/// a handled certified fragment.
-fn planar_arrangement_report_for_request(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    request: ExactBooleanRequest,
-) -> Result<ExactPlanarArrangementReport, MeshError> {
-    let operation = request.operation;
-    if matches!(operation, ExactBooleanOperation::SelectedRegions(_)) {
-        return Ok(planar_arrangement_report(
-            operation,
-            ExactPlanarArrangementStatus::NotNamedOperation,
-            false,
-            0,
-            0,
-            ExactBooleanBlocker::default(),
-            None,
-        ));
-    }
-
-    let graph = build_intersection_graph(left, right)?;
-    validate_graph_source_handoff(&graph, left, right)?;
-    planar_arrangement_report_from_graph(&graph, left, right, operation)
-}
-
-/// Certify whether exact graph construction needs refinement.
-///
-/// This is the standalone report form of the `UnresolvedGraph` preflight
-/// branch. It separates unknown predicate outcomes and failed exact
-/// constructions from later boundary, planar-arrangement, or winding policy,
-/// rather than being folded into a generic unsupported boolean.
-fn refinement_report_for_request(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    request: ExactBooleanRequest,
-) -> Result<ExactRefinementReport, MeshError> {
-    let graph = build_intersection_graph(left, right)?;
-    validate_graph_source_handoff(&graph, left, right)?;
-    Ok(refinement_report_from_graph(&graph, request.operation))
-}
-
-/// Prepare and report exact winding handoff facts for explicit output
-/// validation and boundary-only projection policies.
-///
-/// The strict readiness report keeps boundary-only contact blocked on
-/// [`ExactWindingReadinessStatus::BoundaryPolicyRequired`]. This policy-aware
-/// variant mirrors [`ExactBooleanRequest::with_boundary_policy`] and [`ExactBooleanRequest::preflight`]: when the
-/// caller supplies [`ExactBoundaryBooleanPolicy::PreserveSeparateShells`] and
-/// the retained graph certifies boundary-only contact, the winding handoff is
-/// marked as already materialized by that explicit projection policy.
-fn winding_readiness_report_for_request(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    request: ExactBooleanRequest,
-) -> Result<ExactWindingReadinessReport, MeshError> {
-    let graph = build_intersection_graph(left, right)?;
-    validate_graph_source_handoff(&graph, left, right)?;
-    winding_readiness_report_for_request_from_graph(&graph, left, right, request)
 }
 
 pub(crate) fn winding_readiness_report_for_request_from_graph(
@@ -11846,11 +11766,7 @@ fn meshes_are_certified_same_surface(left: &ExactMesh, right: &ExactMesh) -> boo
 /// used to find a vertex bijection and the sorted triangle sets compared after
 /// remapping. This is the auditable form of the same-surface shortcut used by
 /// expose the predicate facts that justify them.
-fn same_surface_report_for_request(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    _request: ExactBooleanRequest,
-) -> ExactSameSurfaceReport {
+fn same_surface_report_from_sources(left: &ExactMesh, right: &ExactMesh) -> ExactSameSurfaceReport {
     if left.vertices().len() != right.vertices().len() {
         return same_surface_report(
             ExactSameSurfaceStatus::VertexCountMismatch,
@@ -11896,10 +11812,9 @@ fn same_surface_report_for_request(
 
 /// Certify whether two meshes are exactly identical in source vertex and
 /// triangle order.
-fn identical_mesh_report_for_request(
+fn identical_mesh_report_from_sources(
     left: &ExactMesh,
     right: &ExactMesh,
-    _request: ExactBooleanRequest,
 ) -> ExactIdenticalMeshReport {
     let mut predicates = Vec::new();
     if left.vertices().len() != right.vertices().len() {
@@ -12157,65 +12072,6 @@ fn boolean_closed_regularized_lower_dimensional_optional(
     Ok(Some(certified_shortcut_result(mesh, operation, shortcut)))
 }
 
-/// Certify and materialize a named closed-regularized boolean when at least
-/// one operand has no closed-volume contribution.
-///
-/// This exposes the exact regularization path used by [`ExactBooleanRequest::materialize`]: a
-/// closed solid combined with a lower-dimensional surface keeps or drops the
-/// solid according to the named operation, while two lower-dimensional
-/// operands regularize to an empty closed-solid result. Unsupported operands or
-/// validation policies return `None` rather than falling back to tolerance
-/// geometry.
-fn materialize_closed_regularized_lower_dimensional_for_request(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    request: ExactBooleanRequest,
-) -> Result<Option<ExactBooleanResult>, MeshError> {
-    let operation = request.operation;
-    let validation = request.validation;
-    Ok(public_operation_replayable_result(
-        boolean_closed_regularized_lower_dimensional_optional(left, right, operation, validation)?,
-        left,
-        right,
-        operation,
-        validation,
-        ExactBoundaryBooleanPolicy::Reject,
-    ))
-}
-
-/// Certify and materialize a named regularized boolean between a closed solid
-/// and a lower-dimensional operand.
-///
-/// This exposes the mixed-dimensional exact regularization path used by
-/// [`ExactBooleanRequest::materialize`]. A closed solid combined with an open surface contributes
-/// no additional closed volume: union keeps the solid, intersection is empty,
-/// and difference keeps or drops the solid according to operand order.
-/// Lower-dimensional-only inputs return `None` here so the lower-dimensional
-/// regularized materializer keeps that provenance.
-fn materialize_mixed_dimensional_regularized_solid_for_request(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    request: ExactBooleanRequest,
-) -> Result<Option<ExactBooleanResult>, MeshError> {
-    let operation = request.operation;
-    let validation = request.validation;
-    if matches!(operation, ExactBooleanOperation::SelectedRegions(_))
-        || certified_mixed_dimensional_regularized_solid_support(left, right).is_none()
-        || (validation != ValidationPolicy::CLOSED
-            && meshes_are_certified_bounds_disjoint(left, right))
-    {
-        return Ok(None);
-    }
-    Ok(public_operation_replayable_result(
-        boolean_closed_regularized_lower_dimensional_optional(left, right, operation, validation)?,
-        left,
-        right,
-        operation,
-        validation,
-        ExactBoundaryBooleanPolicy::Reject,
-    ))
-}
-
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum ClosedRegularizedOperandKind {
     ClosedSolid,
@@ -12260,38 +12116,6 @@ fn boolean_disjoint_meshes(
         mesh,
         operation,
         ExactBooleanShortcutKind::BoundsDisjoint,
-    ))
-}
-
-/// Certify and materialize a named boolean for operands whose exact mesh bounds
-/// are disjoint.
-///
-/// The AABB intersection classification is an exact retained fact. Unsupported
-/// selected-region operations or sources whose bounds are not certified
-/// disjoint return `None` rather than invoking later topology paths.
-fn materialize_bounds_disjoint_for_request(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    request: ExactBooleanRequest,
-) -> Result<Option<ExactBooleanResult>, MeshError> {
-    let operation = request.operation;
-    let validation = request.validation;
-    if matches!(operation, ExactBooleanOperation::SelectedRegions(_))
-        || left.triangles().is_empty()
-        || right.triangles().is_empty()
-        || !meshes_are_certified_bounds_disjoint(left, right)
-        || (validation == ValidationPolicy::CLOSED
-            && certified_closed_validation_regularized_solid_support(left, right).is_some())
-    {
-        return Ok(None);
-    }
-    Ok(public_operation_replayable_result(
-        Some(boolean_disjoint_meshes(left, right, operation, validation)?),
-        left,
-        right,
-        operation,
-        validation,
-        ExactBoundaryBooleanPolicy::Reject,
     ))
 }
 
@@ -12371,34 +12195,6 @@ fn empty_right_difference_regularizes_to_empty_closed_output(
         && right.triangles().is_empty()
         && closed_regularized_operand_kind(left)
             == Some(ClosedRegularizedOperandKind::LowerDimensional)
-}
-
-/// Certify and materialize a named boolean when either operand has no
-/// triangles.
-///
-/// Empty-source handling is the first exact named-boolean shortcut in the
-/// dispatcher. Unsupported selected-region operations or non-empty operand
-/// pairs return `None`.
-fn materialize_empty_operand_for_request(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    request: ExactBooleanRequest,
-) -> Result<Option<ExactBooleanResult>, MeshError> {
-    let operation = request.operation;
-    let validation = request.validation;
-    if matches!(operation, ExactBooleanOperation::SelectedRegions(_))
-        || (!left.triangles().is_empty() && !right.triangles().is_empty())
-    {
-        return Ok(None);
-    }
-    Ok(public_operation_replayable_result(
-        Some(boolean_empty_operand(left, right, operation, validation)?),
-        left,
-        right,
-        operation,
-        validation,
-        ExactBoundaryBooleanPolicy::Reject,
-    ))
 }
 
 fn boolean_identical_meshes(
