@@ -564,16 +564,6 @@ impl<'a> ExactBooleanWorkspace<'a> {
         policy: ExactRegularizationPolicy,
         report: &ExactTopologyAssemblyReport,
     ) -> Result<(), ExactArrangementBlocker> {
-        if self
-            .topology_assembly_reports
-            .iter()
-            .any(|(stored_policy, stored_report)| {
-                *stored_policy == policy && stored_report == report
-            })
-        {
-            report.validate()?;
-            return Ok(());
-        }
         let arrangement = self
             .arrangement(policy)
             .map_err(|_| ExactArrangementBlocker::UnresolvedIntersection)?
@@ -620,16 +610,6 @@ impl<'a> ExactBooleanWorkspace<'a> {
         policy: ExactRegularizationPolicy,
         report: &ExactRegionOwnershipReport,
     ) -> Result<(), ExactArrangementBlocker> {
-        if self
-            .region_ownership_reports
-            .iter()
-            .any(|(stored_policy, stored_report)| {
-                *stored_policy == policy && stored_report == report
-            })
-        {
-            report.validate()?;
-            return Ok(());
-        }
         let arrangement = self
             .arrangement(policy)
             .map_err(|_| ExactArrangementBlocker::UnresolvedIntersection)?
@@ -694,15 +674,6 @@ impl<'a> ExactBooleanWorkspace<'a> {
         policy: ExactRegularizationPolicy,
         attempt: &ExactArrangementBooleanAttempt,
     ) -> Result<(), ExactReportValidationError> {
-        if self.arrangement_attempts.iter().any(
-            |(stored_request, stored_policy, stored_attempt)| {
-                *stored_request == request && *stored_policy == policy && stored_attempt == attempt
-            },
-        ) {
-            attempt.validate()?;
-            return Ok(());
-        }
-
         if let Some(replay) =
             direct_arrangement_cell_complex_attempt(self.left, self.right, request, policy)
                 .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
@@ -823,20 +794,10 @@ impl<'a> ExactBooleanWorkspace<'a> {
     /// retained source session.
     pub fn validate_selected_cell_complex(
         &mut self,
-        request: ExactBooleanRequest,
+        _request: ExactBooleanRequest,
         policy: ExactRegularizationPolicy,
         selected: &ExactSelectedCellComplex,
     ) -> Result<(), ExactArrangementBlocker> {
-        if self.selected_cell_complexes.iter().any(
-            |(stored_request, stored_policy, stored_selected)| {
-                *stored_request == request
-                    && *stored_policy == policy
-                    && stored_selected == selected
-            },
-        ) {
-            selected.validate()?;
-            return Ok(());
-        }
         let arrangement = self
             .arrangement(policy)
             .map_err(|_| ExactArrangementBlocker::UnresolvedIntersection)?
@@ -862,20 +823,10 @@ impl<'a> ExactBooleanWorkspace<'a> {
     /// retained source session.
     pub fn validate_simplified_cell_complex(
         &mut self,
-        request: ExactBooleanRequest,
+        _request: ExactBooleanRequest,
         policy: ExactRegularizationPolicy,
         simplified: &ExactSimplifiedCellComplex,
     ) -> Result<(), ExactArrangementBlocker> {
-        if self.simplified_cell_complexes.iter().any(
-            |(stored_request, stored_policy, stored_simplified)| {
-                *stored_request == request
-                    && *stored_policy == policy
-                    && stored_simplified == simplified
-            },
-        ) {
-            simplified.validate()?;
-            return Ok(());
-        }
         let arrangement = self
             .arrangement(policy)
             .map_err(|_| ExactArrangementBlocker::UnresolvedIntersection)?
