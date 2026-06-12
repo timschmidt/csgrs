@@ -14437,7 +14437,7 @@ mod tests {
         }
     }
 
-    fn arrangement_attempt_certified_for_preflight_with_validation(
+    fn arrangement_attempt_certified_as_cell_complex_for_preflight_with_validation(
         left: &ExactMesh,
         right: &ExactMesh,
         operation: ExactBooleanOperation,
@@ -14459,7 +14459,7 @@ mod tests {
     }
 
     #[test]
-    fn arrangement_preflight_probe_accepts_boundary_valid_open_output() {
+    fn arrangement_preflight_probe_keeps_boundary_valid_open_output_separate() {
         let left = ExactMesh::from_i64_triangles_with_policy(
             &[0, 0, 0, 4, 0, 0, 0, 4, 0],
             &[0, 1, 2],
@@ -14478,22 +14478,37 @@ mod tests {
             ExactBooleanOperation::Intersection,
         ] {
             assert!(
-                !arrangement_attempt_certified_for_preflight_with_validation(
+                !arrangement_attempt_certified_as_cell_complex_for_preflight_with_validation(
                     &left,
                     &right,
                     operation,
                     ValidationPolicy::CLOSED
                 )
             );
-            assert!(arrangement_attempt_certified_for_preflight_with_validation(
-                &left,
-                &right,
-                operation,
-                ValidationPolicy::ALLOW_BOUNDARY
-            ));
             assert!(
-                arrangement_cell_complex_materializes_for_preflight(&left, &right, operation, true)
-                    .unwrap()
+                !arrangement_attempt_certified_as_cell_complex_for_preflight_with_validation(
+                    &left,
+                    &right,
+                    operation,
+                    ValidationPolicy::ALLOW_BOUNDARY
+                )
+            );
+            assert!(
+                !arrangement_cell_complex_materializes_for_preflight(
+                    &left, &right, operation, true
+                )
+                .unwrap()
+            );
+            let preflight = ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY)
+                .preflight(&left, &right)
+                .unwrap();
+            assert!(
+                matches!(
+                    preflight.support,
+                    ExactBooleanSupport::CertifiedOpenSurfaceArrangementUnion
+                        | ExactBooleanSupport::CertifiedOpenSurfaceArrangementIntersection
+                ),
+                "{operation:?}: {preflight:?}"
             );
         }
     }
