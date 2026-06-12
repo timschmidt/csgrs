@@ -15,8 +15,8 @@ use super::graph::{build_intersection_graph, ExactIntersectionGraph};
 use super::mesh::ExactMesh;
 use super::regularization::{ExactArrangementBlocker, ExactRegularizationPolicy};
 use super::reports::{
-    ExactBooleanPreflight, ExactBooleanResult, ExactPlanarArrangementReport, ExactReportFreshness,
-    ExactReportValidationError, ExactWindingReadinessReport,
+    ExactBooleanPreflight, ExactBooleanResult, ExactPlanarArrangementReport, ExactRefinementReport,
+    ExactReportFreshness, ExactReportValidationError, ExactWindingReadinessReport,
 };
 use super::simplify::{ExactSimplifiedCellComplex, ExactSimplifiedCellComplexFreshness};
 
@@ -48,6 +48,7 @@ pub struct ExactBooleanWorkspace<'a> {
         ExactRegularizationPolicy,
         ExactSimplifiedCellComplex,
     )>,
+    refinement_reports: Vec<(ExactBooleanRequest, ExactRefinementReport)>,
     preflights: Vec<(ExactBooleanRequest, ExactBooleanPreflight)>,
     winding_readiness_reports: Vec<(ExactBooleanRequest, ExactWindingReadinessReport)>,
     planar_arrangement_reports: Vec<(ExactBooleanRequest, ExactPlanarArrangementReport)>,
@@ -68,6 +69,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
             arrangement_attempts: Vec::new(),
             selected_cell_complexes: Vec::new(),
             simplified_cell_complexes: Vec::new(),
+            refinement_reports: Vec::new(),
             preflights: Vec::new(),
             winding_readiness_reports: Vec::new(),
             planar_arrangement_reports: Vec::new(),
@@ -523,6 +525,63 @@ impl<'a> ExactBooleanWorkspace<'a> {
         preflight: &ExactBooleanPreflight,
     ) -> ExactReportFreshness {
         match self.validate_preflight(request, preflight) {
+            Ok(()) => ExactReportFreshness::Current,
+            Err(error) => error.into(),
+        }
+    }
+
+    /// Returns refinement evidence for `request`, building it once per
+    /// request.
+    pub fn refinement_report(
+        &mut self,
+        request: ExactBooleanRequest,
+    ) -> Result<&ExactRefinementReport, MeshError> {
+        if let Some(index) = self
+            .refinement_reports
+            .iter()
+            .position(|(stored_request, _)| *stored_request == request)
+        {
+            return Ok(&self.refinement_reports[index].1);
+        }
+
+        let report = request.refinement_report(self.left, self.right)?;
+        self.refinement_reports.push((request, report));
+        Ok(&self
+            .refinement_reports
+            .last()
+            .expect("refinement report cache was just populated")
+            .1)
+    }
+
+    /// Validate refinement evidence against this workspace's source meshes.
+    pub fn validate_refinement_report(
+        &mut self,
+        request: ExactBooleanRequest,
+        report: &ExactRefinementReport,
+    ) -> Result<(), ExactReportValidationError> {
+        if report.operation != request.operation {
+            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+        }
+        if self
+            .refinement_reports
+            .iter()
+            .any(|(stored_request, stored_report)| {
+                *stored_request == request && stored_report == report
+            })
+        {
+            report.validate()?;
+            return Ok(());
+        }
+        report.validate_against_sources(self.left, self.right)
+    }
+
+    /// Classify refinement-report freshness in this retained source session.
+    pub fn refinement_report_freshness(
+        &mut self,
+        request: ExactBooleanRequest,
+        report: &ExactRefinementReport,
+    ) -> ExactReportFreshness {
+        match self.validate_refinement_report(request, report) {
             Ok(()) => ExactReportFreshness::Current,
             Err(error) => error.into(),
         }
@@ -1222,6 +1281,40 @@ mod tests {
         relabeled_preflight.operation = ExactBooleanOperation::Difference;
         assert_eq!(
             workspace.validate_preflight(request, &relabeled_preflight),
+            Err(ExactReportValidationError::StatusEvidenceMismatch)
+        );
+
+        let first_refinement_report =
+            workspace.refinement_report(request).unwrap() as *const ExactRefinementReport;
+        let second_refinement_report =
+            workspace.refinement_report(request).unwrap() as *const ExactRefinementReport;
+        assert_eq!(first_refinement_report, second_refinement_report);
+        assert_eq!(
+            workspace.refinement_report(request).unwrap(),
+            &request.refinement_report(&left, &right).unwrap()
+        );
+        let refinement_report = workspace.refinement_report(request).unwrap().clone();
+        workspace
+            .validate_refinement_report(request, &refinement_report)
+            .unwrap();
+        assert_eq!(
+            workspace.refinement_report_freshness(request, &refinement_report),
+            ExactReportFreshness::Current
+        );
+        let mut stale_refinement_report = refinement_report.clone();
+        stale_refinement_report.retained_events += 1;
+        assert_eq!(
+            workspace.validate_refinement_report(request, &stale_refinement_report),
+            Err(ExactReportValidationError::SourceReplayMismatch)
+        );
+        assert_ne!(
+            workspace.refinement_report_freshness(request, &stale_refinement_report),
+            ExactReportFreshness::Current
+        );
+        let mut relabeled_refinement_report = refinement_report.clone();
+        relabeled_refinement_report.operation = ExactBooleanOperation::Difference;
+        assert_eq!(
+            workspace.validate_refinement_report(request, &relabeled_refinement_report),
             Err(ExactReportValidationError::StatusEvidenceMismatch)
         );
 

@@ -5,8 +5,9 @@ use hypermesh::{
     build_intersection_graph, triangulate_all_face_cells_with_cdt, ExactArrangement,
     ExactArrangementBooleanAttempt, ExactBooleanEvaluation, ExactBooleanOperation,
     ExactBooleanPreflight, ExactBooleanRequest, ExactBooleanResult, ExactBooleanWorkspace,
-    ExactMesh, ExactPlanarArrangementReport, ExactRegularizationPolicy, ExactSelectedCellComplex,
-    ExactSimplifiedCellComplex, ExactWindingReadinessReport, ValidationPolicy,
+    ExactMesh, ExactPlanarArrangementReport, ExactRefinementReport, ExactRegularizationPolicy,
+    ExactSelectedCellComplex, ExactSimplifiedCellComplex, ExactWindingReadinessReport,
+    ValidationPolicy,
 };
 
 struct BenchCase {
@@ -441,6 +442,19 @@ fn run_case(case: &BenchCase) {
 
     time_prepared_stage(
         case,
+        "workspace_validate_refinement_from_retained_artifacts",
+        || retained_workspace_and_refinement_for_case(case, request),
+        |(retained_workspace, report)| {
+            black_box(
+                retained_workspace
+                    .validate_refinement_report(request, report)
+                    .ok(),
+            );
+        },
+    );
+
+    time_prepared_stage(
+        case,
         "workspace_validate_winding_readiness_from_retained_artifacts",
         || retained_workspace_and_winding_readiness_for_case(case, request),
         |(retained_workspace, readiness)| {
@@ -543,6 +557,18 @@ fn retained_workspace_and_preflight_for_case<'a>(
     let mut retained_workspace = retained_workspace_for_case(case, request);
     let preflight = retained_workspace.preflight(request).unwrap().clone();
     (retained_workspace, preflight)
+}
+
+fn retained_workspace_and_refinement_for_case<'a>(
+    case: &'a BenchCase,
+    request: ExactBooleanRequest,
+) -> (ExactBooleanWorkspace<'a>, ExactRefinementReport) {
+    let mut retained_workspace = retained_workspace_for_case(case, request);
+    let report = retained_workspace
+        .refinement_report(request)
+        .unwrap()
+        .clone();
+    (retained_workspace, report)
 }
 
 fn retained_workspace_and_winding_readiness_for_case<'a>(
