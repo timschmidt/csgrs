@@ -56,7 +56,7 @@ fn matrix_division_and_inverse_are_consistent_under_cached_determinant_warming()
         [frac(-13, 10), frac(14, 10), frac(-15, 10), frac(19, 10)],
     ]);
     let warmed_det = matrix.determinant();
-    let _ = warmed_det.to_f64_approx();
+    let _ = warmed_det.to_f64_lossy();
 
     assert_eq!(
         matrix.clone() * matrix.clone().inverse_checked().unwrap(),

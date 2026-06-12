@@ -109,7 +109,7 @@ fn scalar_fuzz(input: Input) {
     // ── No-panic: query and classification methods ───────────────────────────
     let _ = a.zero_status();
     let _ = a.structural_facts();
-    let _ = a.to_f64_approx();
+    let _ = a.to_f64_lossy();
     let _ = a.definitely_zero();
     let _ = a.refine_sign_until(0);
     let _ = a.refine_sign_until(53);

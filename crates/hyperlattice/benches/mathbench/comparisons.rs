@@ -285,25 +285,25 @@ fn bench_matrix3(c: &mut Criterion) {
             let transformed = black_box(
                 black_box(rational_lhs.clone()).transform_vec3_batch(black_box(&rational_vec3_batch)),
             );
-            black_box(transformed[0][0].to_f64_approx());
+            black_box(transformed[0][0].to_f64_lossy());
         });
         trace_dispatch_row("matrix3/hyperreal-rational/mat3 transform vec3 batch all-coord approx", || {
             let transformed = black_box(
                 black_box(rational_lhs.clone()).transform_vec3_batch(black_box(&rational_vec3_batch)),
             );
                 black_box((
-                    transformed[0][0].to_f64_approx(),
-                    transformed[0][1].to_f64_approx(),
-                    transformed[0][2].to_f64_approx(),
-                    transformed[1][0].to_f64_approx(),
-                    transformed[1][1].to_f64_approx(),
-                    transformed[1][2].to_f64_approx(),
-                    transformed[2][0].to_f64_approx(),
-                    transformed[2][1].to_f64_approx(),
-                    transformed[2][2].to_f64_approx(),
-                    transformed[3][0].to_f64_approx(),
-                    transformed[3][1].to_f64_approx(),
-                    transformed[3][2].to_f64_approx(),
+                    transformed[0][0].to_f64_lossy(),
+                    transformed[0][1].to_f64_lossy(),
+                    transformed[0][2].to_f64_lossy(),
+                    transformed[1][0].to_f64_lossy(),
+                    transformed[1][1].to_f64_lossy(),
+                    transformed[1][2].to_f64_lossy(),
+                    transformed[2][0].to_f64_lossy(),
+                    transformed[2][1].to_f64_lossy(),
+                    transformed[2][2].to_f64_lossy(),
+                    transformed[3][0].to_f64_lossy(),
+                    transformed[3][1].to_f64_lossy(),
+                    transformed[3][2].to_f64_lossy(),
                 ));
         });
         // Demand-driven approximation check: one requested component should not
@@ -311,15 +311,15 @@ fn bench_matrix3(c: &mut Criterion) {
         trace_dispatch_row("matrix3/hyperreal-rational/mat3 transform vec3 one-coord approx", || {
             let transformed =
                 black_box(black_box(rational_lhs.clone()) * black_box(rational_vector.clone()));
-            black_box(transformed[0].to_f64_approx());
+            black_box(transformed[0].to_f64_lossy());
         });
         trace_dispatch_row("matrix3/hyperreal-rational/mat3 transform vec3 all-coord approx", || {
             let transformed =
                 black_box(black_box(rational_lhs.clone()) * black_box(rational_vector.clone()));
             black_box((
-                transformed[0].to_f64_approx(),
-                transformed[1].to_f64_approx(),
-                transformed[2].to_f64_approx(),
+                transformed[0].to_f64_lossy(),
+                transformed[1].to_f64_lossy(),
+                transformed[2].to_f64_lossy(),
             ));
         });
         // Symbolic transform probes ensure the same fast path is used when matrix/point
@@ -335,7 +335,7 @@ fn bench_matrix3(c: &mut Criterion) {
                 let transformed = black_box(
                     black_box(symbolic_mat3.clone()) * black_box(symbolic_vector.clone()),
                 );
-                black_box(transformed[0].to_f64_approx());
+                black_box(transformed[0].to_f64_lossy());
             },
         );
         trace_dispatch_row(
@@ -345,9 +345,9 @@ fn bench_matrix3(c: &mut Criterion) {
                     black_box(symbolic_mat3.clone()) * black_box(symbolic_vector.clone()),
                 );
                 black_box((
-                    transformed[0].to_f64_approx(),
-                    transformed[1].to_f64_approx(),
-                    transformed[2].to_f64_approx(),
+                    transformed[0].to_f64_lossy(),
+                    transformed[1].to_f64_lossy(),
+                    transformed[2].to_f64_lossy(),
                 ));
             },
         );
@@ -362,22 +362,22 @@ fn bench_matrix3(c: &mut Criterion) {
             let transformed = black_box(
                 black_box(symbolic_mat3.clone()).transform_vec3_batch(black_box(&symbolic_vec3_batch)),
             );
-            black_box(transformed[0][0].to_f64_approx());
+            black_box(transformed[0][0].to_f64_lossy());
         });
         trace_dispatch_row("matrix3/hyperreal-symbolic/mat3 transform vec3 batch all-coord approx", || {
             let transformed = black_box(
                 black_box(symbolic_mat3.clone()).transform_vec3_batch(black_box(&symbolic_vec3_batch)),
             );
             black_box((
-                transformed[0][0].to_f64_approx(),
-                transformed[0][1].to_f64_approx(),
-                transformed[0][2].to_f64_approx(),
-                transformed[1][0].to_f64_approx(),
-                transformed[1][1].to_f64_approx(),
-                transformed[1][2].to_f64_approx(),
-                transformed[2][0].to_f64_approx(),
-                transformed[2][1].to_f64_approx(),
-                transformed[2][2].to_f64_approx(),
+                transformed[0][0].to_f64_lossy(),
+                transformed[0][1].to_f64_lossy(),
+                transformed[0][2].to_f64_lossy(),
+                transformed[1][0].to_f64_lossy(),
+                transformed[1][1].to_f64_lossy(),
+                transformed[1][2].to_f64_lossy(),
+                transformed[2][0].to_f64_lossy(),
+                transformed[2][1].to_f64_lossy(),
+                transformed[2][2].to_f64_lossy(),
             ));
         });
         // Structural-fact rows should remain side-effecting only through predicate queries.
@@ -495,7 +495,7 @@ fn bench_matrix3(c: &mut Criterion) {
                 let transformed = black_box(
                     black_box(rational_lhs.clone()).transform_vec3_batch(black_box(&rational_vec3_batch)),
                 );
-                black_box(transformed[0][0].to_f64_approx())
+                black_box(transformed[0][0].to_f64_lossy())
             })
         });
         group.bench_function("hyperreal-rational/mat3 transform vec3 batch all-coord approx", |b| {
@@ -504,18 +504,18 @@ fn bench_matrix3(c: &mut Criterion) {
                     black_box(rational_lhs.clone()).transform_vec3_batch(black_box(&rational_vec3_batch)),
                 );
                 black_box((
-                    transformed[0][0].to_f64_approx(),
-                    transformed[0][1].to_f64_approx(),
-                    transformed[0][2].to_f64_approx(),
-                    transformed[1][0].to_f64_approx(),
-                    transformed[1][1].to_f64_approx(),
-                    transformed[1][2].to_f64_approx(),
-                    transformed[2][0].to_f64_approx(),
-                    transformed[2][1].to_f64_approx(),
-                    transformed[2][2].to_f64_approx(),
-                    transformed[3][0].to_f64_approx(),
-                    transformed[3][1].to_f64_approx(),
-                    transformed[3][2].to_f64_approx(),
+                    transformed[0][0].to_f64_lossy(),
+                    transformed[0][1].to_f64_lossy(),
+                    transformed[0][2].to_f64_lossy(),
+                    transformed[1][0].to_f64_lossy(),
+                    transformed[1][1].to_f64_lossy(),
+                    transformed[1][2].to_f64_lossy(),
+                    transformed[2][0].to_f64_lossy(),
+                    transformed[2][1].to_f64_lossy(),
+                    transformed[2][2].to_f64_lossy(),
+                    transformed[3][0].to_f64_lossy(),
+                    transformed[3][1].to_f64_lossy(),
+                    transformed[3][2].to_f64_lossy(),
                 ))
             })
         });
@@ -537,7 +537,7 @@ fn bench_matrix3(c: &mut Criterion) {
             b.iter(|| {
                 let transformed =
                     black_box(black_box(rational_lhs.clone()) * black_box(rational_vector.clone()));
-                black_box(transformed[0].to_f64_approx())
+                black_box(transformed[0].to_f64_lossy())
             })
         });
         group.bench_function("hyperreal-rational/mat3 transform vec3 all-coord approx", |b| {
@@ -545,9 +545,9 @@ fn bench_matrix3(c: &mut Criterion) {
                 let transformed =
                     black_box(black_box(rational_lhs.clone()) * black_box(rational_vector.clone()));
                 black_box((
-                    transformed[0].to_f64_approx(),
-                    transformed[1].to_f64_approx(),
-                    transformed[2].to_f64_approx(),
+                    transformed[0].to_f64_lossy(),
+                    transformed[1].to_f64_lossy(),
+                    transformed[2].to_f64_lossy(),
                 ))
             })
         });
@@ -573,7 +573,7 @@ fn bench_matrix3(c: &mut Criterion) {
             b.iter(|| {
                 let transformed =
                     black_box(black_box(symbolic_mat3.clone()) * black_box(symbolic_vector.clone()));
-                black_box(transformed[0].to_f64_approx())
+                black_box(transformed[0].to_f64_lossy())
             })
         });
         group.bench_function("hyperreal-symbolic/mat3 transform vec3 all-coord approx", |b| {
@@ -581,9 +581,9 @@ fn bench_matrix3(c: &mut Criterion) {
                 let transformed =
                     black_box(black_box(symbolic_mat3.clone()) * black_box(symbolic_vector.clone()));
                 black_box((
-                    transformed[0].to_f64_approx(),
-                    transformed[1].to_f64_approx(),
-                    transformed[2].to_f64_approx(),
+                    transformed[0].to_f64_lossy(),
+                    transformed[1].to_f64_lossy(),
+                    transformed[2].to_f64_lossy(),
                 ))
             })
         });
@@ -599,7 +599,7 @@ fn bench_matrix3(c: &mut Criterion) {
                 let transformed = black_box(
                     black_box(symbolic_mat3.clone()).transform_vec3_batch(black_box(&symbolic_vec3_batch)),
                 );
-                black_box(transformed[0][0].to_f64_approx())
+                black_box(transformed[0][0].to_f64_lossy())
             })
         });
         group.bench_function("hyperreal-symbolic/mat3 transform vec3 batch all-coord approx", |b| {
@@ -608,15 +608,15 @@ fn bench_matrix3(c: &mut Criterion) {
                     black_box(symbolic_mat3.clone()).transform_vec3_batch(black_box(&symbolic_vec3_batch)),
                 );
                 black_box((
-                    transformed[0][0].to_f64_approx(),
-                    transformed[0][1].to_f64_approx(),
-                    transformed[0][2].to_f64_approx(),
-                    transformed[1][0].to_f64_approx(),
-                    transformed[1][1].to_f64_approx(),
-                    transformed[1][2].to_f64_approx(),
-                    transformed[2][0].to_f64_approx(),
-                    transformed[2][1].to_f64_approx(),
-                    transformed[2][2].to_f64_approx(),
+                    transformed[0][0].to_f64_lossy(),
+                    transformed[0][1].to_f64_lossy(),
+                    transformed[0][2].to_f64_lossy(),
+                    transformed[1][0].to_f64_lossy(),
+                    transformed[1][1].to_f64_lossy(),
+                    transformed[1][2].to_f64_lossy(),
+                    transformed[2][0].to_f64_lossy(),
+                    transformed[2][1].to_f64_lossy(),
+                    transformed[2][2].to_f64_lossy(),
                 ))
             })
         });
@@ -968,29 +968,29 @@ fn bench_matrix4(c: &mut Criterion) {
             let transformed = black_box(
                 black_box(rational_lhs.clone()).transform_vec4_batch(black_box(&rational_vec_batch)),
             );
-            black_box(transformed[0][0].to_f64_approx());
+            black_box(transformed[0][0].to_f64_lossy());
         });
         trace_dispatch_row("matrix4/hyperreal-rational/mat4 transform vec4 batch all-coord approx", || {
             let transformed = black_box(
                 black_box(rational_lhs.clone()).transform_vec4_batch(black_box(&rational_vec_batch)),
             );
                 black_box((
-                    transformed[0][0].to_f64_approx(),
-                    transformed[0][1].to_f64_approx(),
-                    transformed[0][2].to_f64_approx(),
-                    transformed[0][3].to_f64_approx(),
-                    transformed[1][0].to_f64_approx(),
-                    transformed[1][1].to_f64_approx(),
-                    transformed[1][2].to_f64_approx(),
-                    transformed[1][3].to_f64_approx(),
-                    transformed[2][0].to_f64_approx(),
-                    transformed[2][1].to_f64_approx(),
-                    transformed[2][2].to_f64_approx(),
-                    transformed[2][3].to_f64_approx(),
-                    transformed[3][0].to_f64_approx(),
-                    transformed[3][1].to_f64_approx(),
-                    transformed[3][2].to_f64_approx(),
-                    transformed[3][3].to_f64_approx(),
+                    transformed[0][0].to_f64_lossy(),
+                    transformed[0][1].to_f64_lossy(),
+                    transformed[0][2].to_f64_lossy(),
+                    transformed[0][3].to_f64_lossy(),
+                    transformed[1][0].to_f64_lossy(),
+                    transformed[1][1].to_f64_lossy(),
+                    transformed[1][2].to_f64_lossy(),
+                    transformed[1][3].to_f64_lossy(),
+                    transformed[2][0].to_f64_lossy(),
+                    transformed[2][1].to_f64_lossy(),
+                    transformed[2][2].to_f64_lossy(),
+                    transformed[2][3].to_f64_lossy(),
+                    transformed[3][0].to_f64_lossy(),
+                    transformed[3][1].to_f64_lossy(),
+                    transformed[3][2].to_f64_lossy(),
+                    transformed[3][3].to_f64_lossy(),
                 ));
         });
         // Structural-fact extraction should not request full-coordinate approximation.
@@ -1051,7 +1051,7 @@ fn bench_matrix4(c: &mut Criterion) {
                     black_box(rational_lhs.clone())
                         .transform_vec4_batch(black_box(&rational_direction_batch)),
                 );
-                black_box(transformed[0][0].to_f64_approx());
+                black_box(transformed[0][0].to_f64_lossy());
             },
         );
         trace_dispatch_row(
@@ -1062,22 +1062,22 @@ fn bench_matrix4(c: &mut Criterion) {
                         .transform_vec4_batch(black_box(&rational_direction_batch)),
                 );
                 black_box((
-                    transformed[0][0].to_f64_approx(),
-                    transformed[0][1].to_f64_approx(),
-                    transformed[0][2].to_f64_approx(),
-                    transformed[0][3].to_f64_approx(),
-                    transformed[1][0].to_f64_approx(),
-                    transformed[1][1].to_f64_approx(),
-                    transformed[1][2].to_f64_approx(),
-                    transformed[1][3].to_f64_approx(),
-                    transformed[2][0].to_f64_approx(),
-                    transformed[2][1].to_f64_approx(),
-                    transformed[2][2].to_f64_approx(),
-                    transformed[2][3].to_f64_approx(),
-                    transformed[3][0].to_f64_approx(),
-                    transformed[3][1].to_f64_approx(),
-                    transformed[3][2].to_f64_approx(),
-                    transformed[3][3].to_f64_approx(),
+                    transformed[0][0].to_f64_lossy(),
+                    transformed[0][1].to_f64_lossy(),
+                    transformed[0][2].to_f64_lossy(),
+                    transformed[0][3].to_f64_lossy(),
+                    transformed[1][0].to_f64_lossy(),
+                    transformed[1][1].to_f64_lossy(),
+                    transformed[1][2].to_f64_lossy(),
+                    transformed[1][3].to_f64_lossy(),
+                    transformed[2][0].to_f64_lossy(),
+                    transformed[2][1].to_f64_lossy(),
+                    transformed[2][2].to_f64_lossy(),
+                    transformed[2][3].to_f64_lossy(),
+                    transformed[3][0].to_f64_lossy(),
+                    transformed[3][1].to_f64_lossy(),
+                    transformed[3][2].to_f64_lossy(),
+                    transformed[3][3].to_f64_lossy(),
                 ));
             },
         );
@@ -1138,7 +1138,7 @@ fn bench_matrix4(c: &mut Criterion) {
                 let transformed = black_box(
                     black_box(rational_linear_lhs.clone()) * black_box(rational_vector.clone()),
                 );
-                black_box(transformed[0].to_f64_approx());
+                black_box(transformed[0].to_f64_lossy());
             },
         );
         trace_dispatch_row(
@@ -1148,10 +1148,10 @@ fn bench_matrix4(c: &mut Criterion) {
                     black_box(rational_linear_lhs.clone()) * black_box(rational_vector.clone()),
                 );
                 black_box((
-                    transformed[0].to_f64_approx(),
-                    transformed[1].to_f64_approx(),
-                    transformed[2].to_f64_approx(),
-                    transformed[3].to_f64_approx(),
+                    transformed[0].to_f64_lossy(),
+                    transformed[1].to_f64_lossy(),
+                    transformed[2].to_f64_lossy(),
+                    transformed[3].to_f64_lossy(),
                 ));
             },
         );
@@ -1196,17 +1196,17 @@ fn bench_matrix4(c: &mut Criterion) {
             || {
                 let transformed =
                     black_box(black_box(rational_lhs.clone()) * black_box(rational_vector.clone()));
-                black_box(transformed[0].to_f64_approx());
+                black_box(transformed[0].to_f64_lossy());
             },
         );
         trace_dispatch_row("matrix4/hyperreal-rational/mat4 transform vec4 all-coord approx", || {
             let transformed =
                 black_box(black_box(rational_lhs.clone()) * black_box(rational_vector.clone()));
             black_box((
-                transformed[0].to_f64_approx(),
-                transformed[1].to_f64_approx(),
-                transformed[2].to_f64_approx(),
-                transformed[3].to_f64_approx(),
+                transformed[0].to_f64_lossy(),
+                transformed[1].to_f64_lossy(),
+                transformed[2].to_f64_lossy(),
+                transformed[3].to_f64_lossy(),
             ));
         });
         // Symbolic matrix+vector probes exercise transform fast paths when
@@ -1220,7 +1220,7 @@ fn bench_matrix4(c: &mut Criterion) {
                 let transformed = black_box(
                     black_box(symbolic_mat4.clone()) * black_box(symbolic_vector.clone()),
                 );
-                black_box(transformed[0].to_f64_approx());
+                black_box(transformed[0].to_f64_lossy());
             },
         );
         trace_dispatch_row(
@@ -1230,10 +1230,10 @@ fn bench_matrix4(c: &mut Criterion) {
                     black_box(symbolic_mat4.clone()) * black_box(symbolic_vector.clone()),
                 );
                 black_box((
-                    transformed[0].to_f64_approx(),
-                    transformed[1].to_f64_approx(),
-                    transformed[2].to_f64_approx(),
-                    transformed[3].to_f64_approx(),
+                    transformed[0].to_f64_lossy(),
+                    transformed[1].to_f64_lossy(),
+                    transformed[2].to_f64_lossy(),
+                    transformed[3].to_f64_lossy(),
                 ));
             },
         );
@@ -1249,7 +1249,7 @@ fn bench_matrix4(c: &mut Criterion) {
             let transformed = black_box(
                 black_box(symbolic_mat4.clone()).transform_vec4_batch(black_box(&symbolic_vec_batch)),
             );
-            black_box(transformed[0][0].to_f64_approx());
+            black_box(transformed[0][0].to_f64_lossy());
         });
         trace_dispatch_row(
             "matrix4/hyperreal-symbolic/mat4 transform vec4 batch all-coord approx",
@@ -1258,22 +1258,22 @@ fn bench_matrix4(c: &mut Criterion) {
                     black_box(symbolic_mat4.clone()).transform_vec4_batch(black_box(&symbolic_vec_batch)),
                 );
                 black_box((
-                    transformed[0][0].to_f64_approx(),
-                    transformed[0][1].to_f64_approx(),
-                    transformed[0][2].to_f64_approx(),
-                    transformed[0][3].to_f64_approx(),
-                    transformed[1][0].to_f64_approx(),
-                    transformed[1][1].to_f64_approx(),
-                    transformed[1][2].to_f64_approx(),
-                    transformed[1][3].to_f64_approx(),
-                    transformed[2][0].to_f64_approx(),
-                    transformed[2][1].to_f64_approx(),
-                    transformed[2][2].to_f64_approx(),
-                    transformed[2][3].to_f64_approx(),
-                    transformed[3][0].to_f64_approx(),
-                    transformed[3][1].to_f64_approx(),
-                    transformed[3][2].to_f64_approx(),
-                    transformed[3][3].to_f64_approx(),
+                    transformed[0][0].to_f64_lossy(),
+                    transformed[0][1].to_f64_lossy(),
+                    transformed[0][2].to_f64_lossy(),
+                    transformed[0][3].to_f64_lossy(),
+                    transformed[1][0].to_f64_lossy(),
+                    transformed[1][1].to_f64_lossy(),
+                    transformed[1][2].to_f64_lossy(),
+                    transformed[1][3].to_f64_lossy(),
+                    transformed[2][0].to_f64_lossy(),
+                    transformed[2][1].to_f64_lossy(),
+                    transformed[2][2].to_f64_lossy(),
+                    transformed[2][3].to_f64_lossy(),
+                    transformed[3][0].to_f64_lossy(),
+                    transformed[3][1].to_f64_lossy(),
+                    transformed[3][2].to_f64_lossy(),
+                    transformed[3][3].to_f64_lossy(),
                 ));
             },
         );
@@ -1376,7 +1376,7 @@ fn bench_matrix4(c: &mut Criterion) {
                     black_box(symbolic_mat4.clone())
                         .transform_vec4_batch(black_box(&symbolic_direction_batch)),
                 );
-                black_box(transformed[0][0].to_f64_approx());
+                black_box(transformed[0][0].to_f64_lossy());
             },
         );
         trace_dispatch_row(
@@ -1387,22 +1387,22 @@ fn bench_matrix4(c: &mut Criterion) {
                         .transform_vec4_batch(black_box(&symbolic_direction_batch)),
                 );
                 black_box((
-                    transformed[0][0].to_f64_approx(),
-                    transformed[0][1].to_f64_approx(),
-                    transformed[0][2].to_f64_approx(),
-                    transformed[0][3].to_f64_approx(),
-                    transformed[1][0].to_f64_approx(),
-                    transformed[1][1].to_f64_approx(),
-                    transformed[1][2].to_f64_approx(),
-                    transformed[1][3].to_f64_approx(),
-                    transformed[2][0].to_f64_approx(),
-                    transformed[2][1].to_f64_approx(),
-                    transformed[2][2].to_f64_approx(),
-                    transformed[2][3].to_f64_approx(),
-                    transformed[3][0].to_f64_approx(),
-                    transformed[3][1].to_f64_approx(),
-                    transformed[3][2].to_f64_approx(),
-                    transformed[3][3].to_f64_approx(),
+                    transformed[0][0].to_f64_lossy(),
+                    transformed[0][1].to_f64_lossy(),
+                    transformed[0][2].to_f64_lossy(),
+                    transformed[0][3].to_f64_lossy(),
+                    transformed[1][0].to_f64_lossy(),
+                    transformed[1][1].to_f64_lossy(),
+                    transformed[1][2].to_f64_lossy(),
+                    transformed[1][3].to_f64_lossy(),
+                    transformed[2][0].to_f64_lossy(),
+                    transformed[2][1].to_f64_lossy(),
+                    transformed[2][2].to_f64_lossy(),
+                    transformed[2][3].to_f64_lossy(),
+                    transformed[3][0].to_f64_lossy(),
+                    transformed[3][1].to_f64_lossy(),
+                    transformed[3][2].to_f64_lossy(),
+                    transformed[3][3].to_f64_lossy(),
                 ));
             },
         );
@@ -1431,7 +1431,7 @@ fn bench_matrix4(c: &mut Criterion) {
                 let transformed = black_box(
                     black_box(symbolic_linear_lhs.clone()) * black_box(symbolic_vector.clone()),
                 );
-                black_box(transformed[0].to_f64_approx());
+                black_box(transformed[0].to_f64_lossy());
             },
         );
         trace_dispatch_row(
@@ -1441,10 +1441,10 @@ fn bench_matrix4(c: &mut Criterion) {
                     black_box(symbolic_linear_lhs.clone()) * black_box(symbolic_vector.clone()),
                 );
                 black_box((
-                    transformed[0].to_f64_approx(),
-                    transformed[1].to_f64_approx(),
-                    transformed[2].to_f64_approx(),
-                    transformed[3].to_f64_approx(),
+                    transformed[0].to_f64_lossy(),
+                    transformed[1].to_f64_lossy(),
+                    transformed[2].to_f64_lossy(),
+                    transformed[3].to_f64_lossy(),
                 ));
             },
         );
@@ -1524,7 +1524,7 @@ fn bench_matrix4(c: &mut Criterion) {
                 let transformed = black_box(
                     black_box(symbolic_mat4.clone()) * black_box(symbolic_direction.clone()),
                 );
-                black_box(transformed[0].to_f64_approx());
+                black_box(transformed[0].to_f64_lossy());
             },
         );
         trace_dispatch_row(
@@ -1534,10 +1534,10 @@ fn bench_matrix4(c: &mut Criterion) {
                     black_box(symbolic_mat4.clone()) * black_box(symbolic_direction.clone()),
                 );
                 black_box((
-                    transformed[0].to_f64_approx(),
-                    transformed[1].to_f64_approx(),
-                    transformed[2].to_f64_approx(),
-                    transformed[3].to_f64_approx(),
+                    transformed[0].to_f64_lossy(),
+                    transformed[1].to_f64_lossy(),
+                    transformed[2].to_f64_lossy(),
+                    transformed[3].to_f64_lossy(),
                 ));
             },
         );
@@ -1567,7 +1567,7 @@ fn bench_matrix4(c: &mut Criterion) {
                 let transformed = black_box(
                     black_box(rational_lhs.clone()).transform_vec4_batch(black_box(&rational_vec_batch)),
                 );
-                black_box(transformed[0][0].to_f64_approx())
+                black_box(transformed[0][0].to_f64_lossy())
             })
         });
         group.bench_function("hyperreal-rational/mat4 transform vec4 batch structural facts", |b| {
@@ -1617,22 +1617,22 @@ fn bench_matrix4(c: &mut Criterion) {
                     black_box(rational_lhs.clone()).transform_vec4_batch(black_box(&rational_vec_batch)),
                 );
                 black_box((
-                    transformed[0][0].to_f64_approx(),
-                    transformed[0][1].to_f64_approx(),
-                    transformed[0][2].to_f64_approx(),
-                    transformed[0][3].to_f64_approx(),
-                    transformed[1][0].to_f64_approx(),
-                    transformed[1][1].to_f64_approx(),
-                    transformed[1][2].to_f64_approx(),
-                    transformed[1][3].to_f64_approx(),
-                    transformed[2][0].to_f64_approx(),
-                    transformed[2][1].to_f64_approx(),
-                    transformed[2][2].to_f64_approx(),
-                    transformed[2][3].to_f64_approx(),
-                    transformed[3][0].to_f64_approx(),
-                    transformed[3][1].to_f64_approx(),
-                    transformed[3][2].to_f64_approx(),
-                    transformed[3][3].to_f64_approx(),
+                    transformed[0][0].to_f64_lossy(),
+                    transformed[0][1].to_f64_lossy(),
+                    transformed[0][2].to_f64_lossy(),
+                    transformed[0][3].to_f64_lossy(),
+                    transformed[1][0].to_f64_lossy(),
+                    transformed[1][1].to_f64_lossy(),
+                    transformed[1][2].to_f64_lossy(),
+                    transformed[1][3].to_f64_lossy(),
+                    transformed[2][0].to_f64_lossy(),
+                    transformed[2][1].to_f64_lossy(),
+                    transformed[2][2].to_f64_lossy(),
+                    transformed[2][3].to_f64_lossy(),
+                    transformed[3][0].to_f64_lossy(),
+                    transformed[3][1].to_f64_lossy(),
+                    transformed[3][2].to_f64_lossy(),
+                    transformed[3][3].to_f64_lossy(),
                 ))
             })
         });
@@ -1652,7 +1652,7 @@ fn bench_matrix4(c: &mut Criterion) {
                         black_box(rational_lhs.clone())
                             .transform_vec4_batch(black_box(&rational_direction_batch)),
                     );
-                    black_box(transformed[0][0].to_f64_approx())
+                    black_box(transformed[0][0].to_f64_lossy())
                 })
             },
         );
@@ -1665,22 +1665,22 @@ fn bench_matrix4(c: &mut Criterion) {
                             .transform_vec4_batch(black_box(&rational_direction_batch)),
                     );
                     black_box((
-                        transformed[0][0].to_f64_approx(),
-                        transformed[0][1].to_f64_approx(),
-                        transformed[0][2].to_f64_approx(),
-                        transformed[0][3].to_f64_approx(),
-                        transformed[1][0].to_f64_approx(),
-                        transformed[1][1].to_f64_approx(),
-                        transformed[1][2].to_f64_approx(),
-                        transformed[1][3].to_f64_approx(),
-                        transformed[2][0].to_f64_approx(),
-                        transformed[2][1].to_f64_approx(),
-                        transformed[2][2].to_f64_approx(),
-                        transformed[2][3].to_f64_approx(),
-                        transformed[3][0].to_f64_approx(),
-                        transformed[3][1].to_f64_approx(),
-                        transformed[3][2].to_f64_approx(),
-                        transformed[3][3].to_f64_approx(),
+                        transformed[0][0].to_f64_lossy(),
+                        transformed[0][1].to_f64_lossy(),
+                        transformed[0][2].to_f64_lossy(),
+                        transformed[0][3].to_f64_lossy(),
+                        transformed[1][0].to_f64_lossy(),
+                        transformed[1][1].to_f64_lossy(),
+                        transformed[1][2].to_f64_lossy(),
+                        transformed[1][3].to_f64_lossy(),
+                        transformed[2][0].to_f64_lossy(),
+                        transformed[2][1].to_f64_lossy(),
+                        transformed[2][2].to_f64_lossy(),
+                        transformed[2][3].to_f64_lossy(),
+                        transformed[3][0].to_f64_lossy(),
+                        transformed[3][1].to_f64_lossy(),
+                        transformed[3][2].to_f64_lossy(),
+                        transformed[3][3].to_f64_lossy(),
                     ))
                 })
             },
@@ -1746,7 +1746,7 @@ fn bench_matrix4(c: &mut Criterion) {
                     let transformed = black_box(
                         black_box(rational_linear_lhs.clone()) * black_box(rational_vector.clone()),
                     );
-                    black_box(transformed[0].to_f64_approx())
+                    black_box(transformed[0].to_f64_lossy())
                 })
             },
         );
@@ -1758,10 +1758,10 @@ fn bench_matrix4(c: &mut Criterion) {
                         black_box(rational_linear_lhs.clone()) * black_box(rational_vector.clone()),
                     );
                     black_box((
-                        transformed[0].to_f64_approx(),
-                        transformed[1].to_f64_approx(),
-                        transformed[2].to_f64_approx(),
-                        transformed[3].to_f64_approx(),
+                        transformed[0].to_f64_lossy(),
+                        transformed[1].to_f64_lossy(),
+                        transformed[2].to_f64_lossy(),
+                        transformed[3].to_f64_lossy(),
                     ))
                 })
             },
@@ -1805,7 +1805,7 @@ fn bench_matrix4(c: &mut Criterion) {
             b.iter(|| {
                 let transformed =
                     black_box(black_box(rational_lhs.clone()) * black_box(rational_vector.clone()));
-                black_box(transformed[0].to_f64_approx())
+                black_box(transformed[0].to_f64_lossy())
             })
         });
         group.bench_function("hyperreal-rational/mat4 transform vec4 all-coord approx", |b| {
@@ -1813,10 +1813,10 @@ fn bench_matrix4(c: &mut Criterion) {
                 let transformed =
                     black_box(black_box(rational_lhs.clone()) * black_box(rational_vector.clone()));
                 black_box((
-                    transformed[0].to_f64_approx(),
-                    transformed[1].to_f64_approx(),
-                    transformed[2].to_f64_approx(),
-                    transformed[3].to_f64_approx(),
+                    transformed[0].to_f64_lossy(),
+                    transformed[1].to_f64_lossy(),
+                    transformed[2].to_f64_lossy(),
+                    transformed[3].to_f64_lossy(),
                 ))
             })
         });
@@ -1836,7 +1836,7 @@ fn bench_matrix4(c: &mut Criterion) {
                     let transformed = black_box(
                         black_box(symbolic_linear_lhs.clone()) * black_box(symbolic_vector.clone()),
                     );
-                    black_box(transformed[0].to_f64_approx())
+                    black_box(transformed[0].to_f64_lossy())
                 })
             },
         );
@@ -1848,10 +1848,10 @@ fn bench_matrix4(c: &mut Criterion) {
                         black_box(symbolic_linear_lhs.clone()) * black_box(symbolic_vector.clone()),
                     );
                     black_box((
-                        transformed[0].to_f64_approx(),
-                        transformed[1].to_f64_approx(),
-                        transformed[2].to_f64_approx(),
-                        transformed[3].to_f64_approx(),
+                        transformed[0].to_f64_lossy(),
+                        transformed[1].to_f64_lossy(),
+                        transformed[2].to_f64_lossy(),
+                        transformed[3].to_f64_lossy(),
                     ))
                 })
             },
@@ -1878,7 +1878,7 @@ fn bench_matrix4(c: &mut Criterion) {
             b.iter(|| {
                 let transformed =
                     black_box(black_box(symbolic_mat4.clone()) * black_box(symbolic_vector.clone()));
-                black_box(transformed[0].to_f64_approx())
+                black_box(transformed[0].to_f64_lossy())
             })
         });
         group.bench_function("hyperreal-symbolic/mat4 transform vec4 all-coord approx", |b| {
@@ -1886,10 +1886,10 @@ fn bench_matrix4(c: &mut Criterion) {
                 let transformed =
                     black_box(black_box(symbolic_mat4.clone()) * black_box(symbolic_vector.clone()));
                 black_box((
-                    transformed[0].to_f64_approx(),
-                    transformed[1].to_f64_approx(),
-                    transformed[2].to_f64_approx(),
-                    transformed[3].to_f64_approx(),
+                    transformed[0].to_f64_lossy(),
+                    transformed[1].to_f64_lossy(),
+                    transformed[2].to_f64_lossy(),
+                    transformed[3].to_f64_lossy(),
                 ))
             })
         });
@@ -1947,7 +1947,7 @@ fn bench_matrix4(c: &mut Criterion) {
                 let transformed = black_box(
                     black_box(symbolic_mat4.clone()).transform_vec4_batch(black_box(&symbolic_vec_batch)),
                 );
-                black_box(transformed[0][0].to_f64_approx())
+                black_box(transformed[0][0].to_f64_lossy())
             })
         });
         group.bench_function("hyperreal-symbolic/mat4 transform vec4 batch all-coord approx", |b| {
@@ -1956,22 +1956,22 @@ fn bench_matrix4(c: &mut Criterion) {
                     black_box(symbolic_mat4.clone()).transform_vec4_batch(black_box(&symbolic_vec_batch)),
                 );
                 black_box((
-                    transformed[0][0].to_f64_approx(),
-                    transformed[0][1].to_f64_approx(),
-                    transformed[0][2].to_f64_approx(),
-                    transformed[0][3].to_f64_approx(),
-                    transformed[1][0].to_f64_approx(),
-                    transformed[1][1].to_f64_approx(),
-                    transformed[1][2].to_f64_approx(),
-                    transformed[1][3].to_f64_approx(),
-                    transformed[2][0].to_f64_approx(),
-                    transformed[2][1].to_f64_approx(),
-                    transformed[2][2].to_f64_approx(),
-                    transformed[2][3].to_f64_approx(),
-                    transformed[3][0].to_f64_approx(),
-                    transformed[3][1].to_f64_approx(),
-                    transformed[3][2].to_f64_approx(),
-                    transformed[3][3].to_f64_approx(),
+                    transformed[0][0].to_f64_lossy(),
+                    transformed[0][1].to_f64_lossy(),
+                    transformed[0][2].to_f64_lossy(),
+                    transformed[0][3].to_f64_lossy(),
+                    transformed[1][0].to_f64_lossy(),
+                    transformed[1][1].to_f64_lossy(),
+                    transformed[1][2].to_f64_lossy(),
+                    transformed[1][3].to_f64_lossy(),
+                    transformed[2][0].to_f64_lossy(),
+                    transformed[2][1].to_f64_lossy(),
+                    transformed[2][2].to_f64_lossy(),
+                    transformed[2][3].to_f64_lossy(),
+                    transformed[3][0].to_f64_lossy(),
+                    transformed[3][1].to_f64_lossy(),
+                    transformed[3][2].to_f64_lossy(),
+                    transformed[3][3].to_f64_lossy(),
                 ))
             })
         });
@@ -1991,7 +1991,7 @@ fn bench_matrix4(c: &mut Criterion) {
                         black_box(symbolic_mat4.clone())
                             .transform_vec4_batch(black_box(&symbolic_direction_batch)),
                     );
-                    black_box(transformed[0][0].to_f64_approx())
+                    black_box(transformed[0][0].to_f64_lossy())
                 })
             },
         );
@@ -2004,22 +2004,22 @@ fn bench_matrix4(c: &mut Criterion) {
                             .transform_vec4_batch(black_box(&symbolic_direction_batch)),
                     );
                     black_box((
-                        transformed[0][0].to_f64_approx(),
-                        transformed[0][1].to_f64_approx(),
-                        transformed[0][2].to_f64_approx(),
-                        transformed[0][3].to_f64_approx(),
-                        transformed[1][0].to_f64_approx(),
-                        transformed[1][1].to_f64_approx(),
-                        transformed[1][2].to_f64_approx(),
-                        transformed[1][3].to_f64_approx(),
-                        transformed[2][0].to_f64_approx(),
-                        transformed[2][1].to_f64_approx(),
-                        transformed[2][2].to_f64_approx(),
-                        transformed[2][3].to_f64_approx(),
-                        transformed[3][0].to_f64_approx(),
-                        transformed[3][1].to_f64_approx(),
-                        transformed[3][2].to_f64_approx(),
-                        transformed[3][3].to_f64_approx(),
+                        transformed[0][0].to_f64_lossy(),
+                        transformed[0][1].to_f64_lossy(),
+                        transformed[0][2].to_f64_lossy(),
+                        transformed[0][3].to_f64_lossy(),
+                        transformed[1][0].to_f64_lossy(),
+                        transformed[1][1].to_f64_lossy(),
+                        transformed[1][2].to_f64_lossy(),
+                        transformed[1][3].to_f64_lossy(),
+                        transformed[2][0].to_f64_lossy(),
+                        transformed[2][1].to_f64_lossy(),
+                        transformed[2][2].to_f64_lossy(),
+                        transformed[2][3].to_f64_lossy(),
+                        transformed[3][0].to_f64_lossy(),
+                        transformed[3][1].to_f64_lossy(),
+                        transformed[3][2].to_f64_lossy(),
+                        transformed[3][3].to_f64_lossy(),
                     ))
                 })
             },
@@ -2105,7 +2105,7 @@ fn bench_matrix4(c: &mut Criterion) {
                     let transformed = black_box(
                         black_box(symbolic_mat4.clone()) * black_box(symbolic_direction.clone()),
                     );
-                    black_box(transformed[0].to_f64_approx())
+                    black_box(transformed[0].to_f64_lossy())
                 })
             },
         );
@@ -2117,10 +2117,10 @@ fn bench_matrix4(c: &mut Criterion) {
                         black_box(symbolic_mat4.clone()) * black_box(symbolic_direction.clone()),
                     );
                     black_box((
-                        transformed[0].to_f64_approx(),
-                        transformed[1].to_f64_approx(),
-                        transformed[2].to_f64_approx(),
-                        transformed[3].to_f64_approx(),
+                        transformed[0].to_f64_lossy(),
+                        transformed[1].to_f64_lossy(),
+                        transformed[2].to_f64_lossy(),
+                        transformed[3].to_f64_lossy(),
                     ))
                 })
             },

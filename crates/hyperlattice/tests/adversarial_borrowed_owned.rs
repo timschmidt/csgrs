@@ -35,8 +35,8 @@ fn complex_owned_and_borrowed_division_paths_match_after_cache_warming() {
     let rhs = Complex::new(frac(7, 5), frac(-17, 11));
     let scalar = frac(13, 8);
 
-    let _ = lhs.norm_squared().to_f64_approx();
-    let _ = rhs.norm_squared().to_f64_approx();
+    let _ = lhs.norm_squared().to_f64_lossy();
+    let _ = rhs.norm_squared().to_f64_lossy();
 
     assert_eq!(&lhs + &rhs, lhs.clone() + rhs.clone());
     assert_eq!(&lhs - &rhs, lhs.clone() - rhs.clone());
@@ -51,7 +51,7 @@ fn vector_owned_borrowed_and_cached_paths_are_semantically_flat() {
     let rhs = Vector4::new([frac(-5, 7), frac(17, 11), r(0), frac(99, 70)]);
     let scalar = frac(9, 4);
 
-    let _ = lhs.dot(&rhs).to_f64_approx();
+    let _ = lhs.dot(&rhs).to_f64_lossy();
 
     assert_eq!(&lhs + &rhs, lhs.clone() + rhs.clone());
     assert_eq!(&lhs - &rhs, lhs.clone() - rhs.clone());
@@ -73,7 +73,7 @@ fn matrix_owned_borrowed_and_checked_paths_match_on_mixed_forms() {
     let vector = Vector3::new([frac(2, 3), Real::pi(), r(-1)]);
     let scalar = frac(7, 3);
 
-    let _ = lhs.determinant().to_f64_approx();
+    let _ = lhs.determinant().to_f64_lossy();
 
     assert_eq!(&lhs + &rhs, lhs.clone() + rhs.clone());
     assert_eq!(&lhs - &rhs, lhs.clone() - rhs.clone());

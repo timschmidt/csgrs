@@ -74,9 +74,9 @@ fn scalar_structural_facts_classify_basic_values() {
 }
 
 #[test]
-fn scalar_to_f64_approx_is_borrowed() {
+fn scalar_to_f64_lossy_is_borrowed() {
     let value = r(7);
-    assert_eq!(value.to_f64_approx(), Some(7.0));
+    assert_eq!(value.to_f64_lossy(), Some(7.0));
     assert_eq!(value, r(7));
 }
 
