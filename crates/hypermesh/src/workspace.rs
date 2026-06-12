@@ -18,7 +18,7 @@ use super::reports::{
     ExactAdjacentUnionCompletionReport, ExactBooleanPreflight, ExactBooleanResult,
     ExactBoundaryTouchingReport, ExactOpenSurfaceDisjointReport, ExactPlanarArrangementReport,
     ExactRefinementReport, ExactReportFreshness, ExactReportValidationError,
-    ExactWindingReadinessReport,
+    ExactVolumetricBoundaryClosureReport, ExactWindingReadinessReport,
 };
 use super::simplify::{ExactSimplifiedCellComplex, ExactSimplifiedCellComplexFreshness};
 
@@ -55,6 +55,8 @@ pub struct ExactBooleanWorkspace<'a> {
         Vec<(ExactBooleanRequest, ExactAdjacentUnionCompletionReport)>,
     boundary_touching_reports: Vec<(ExactBooleanRequest, ExactBoundaryTouchingReport)>,
     open_surface_disjoint_reports: Vec<(ExactBooleanRequest, ExactOpenSurfaceDisjointReport)>,
+    volumetric_boundary_closure_reports:
+        Vec<(ExactBooleanRequest, ExactVolumetricBoundaryClosureReport)>,
     preflights: Vec<(ExactBooleanRequest, ExactBooleanPreflight)>,
     winding_readiness_reports: Vec<(ExactBooleanRequest, ExactWindingReadinessReport)>,
     planar_arrangement_reports: Vec<(ExactBooleanRequest, ExactPlanarArrangementReport)>,
@@ -79,6 +81,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
             adjacent_union_completion_reports: Vec::new(),
             boundary_touching_reports: Vec::new(),
             open_surface_disjoint_reports: Vec::new(),
+            volumetric_boundary_closure_reports: Vec::new(),
             preflights: Vec::new(),
             winding_readiness_reports: Vec::new(),
             planar_arrangement_reports: Vec::new(),
@@ -762,6 +765,66 @@ impl<'a> ExactBooleanWorkspace<'a> {
         report: &ExactOpenSurfaceDisjointReport,
     ) -> ExactReportFreshness {
         match self.validate_open_surface_disjoint_report(request, report) {
+            Ok(()) => ExactReportFreshness::Current,
+            Err(error) => error.into(),
+        }
+    }
+
+    /// Returns volumetric boundary-closure evidence for `request`, building it
+    /// once per request.
+    pub fn volumetric_boundary_closure(
+        &mut self,
+        request: ExactBooleanRequest,
+    ) -> Result<&ExactVolumetricBoundaryClosureReport, MeshError> {
+        if let Some(index) = self
+            .volumetric_boundary_closure_reports
+            .iter()
+            .position(|(stored_request, _)| *stored_request == request)
+        {
+            return Ok(&self.volumetric_boundary_closure_reports[index].1);
+        }
+
+        let report = request.volumetric_boundary_closure(self.left, self.right)?;
+        self.volumetric_boundary_closure_reports
+            .push((request, report));
+        Ok(&self
+            .volumetric_boundary_closure_reports
+            .last()
+            .expect("volumetric boundary-closure report cache was just populated")
+            .1)
+    }
+
+    /// Validate volumetric boundary-closure evidence against this workspace's
+    /// source meshes.
+    pub fn validate_volumetric_boundary_closure(
+        &mut self,
+        request: ExactBooleanRequest,
+        report: &ExactVolumetricBoundaryClosureReport,
+    ) -> Result<(), ExactReportValidationError> {
+        if report.operation != request.operation {
+            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+        }
+        if self
+            .volumetric_boundary_closure_reports
+            .iter()
+            .any(|(stored_request, stored_report)| {
+                *stored_request == request && stored_report == report
+            })
+        {
+            report.validate()?;
+            return Ok(());
+        }
+        report.validate_against_sources(self.left, self.right)
+    }
+
+    /// Classify volumetric boundary-closure freshness in this retained source
+    /// session.
+    pub fn volumetric_boundary_closure_freshness(
+        &mut self,
+        request: ExactBooleanRequest,
+        report: &ExactVolumetricBoundaryClosureReport,
+    ) -> ExactReportFreshness {
+        match self.validate_volumetric_boundary_closure(request, report) {
             Ok(()) => ExactReportFreshness::Current,
             Err(error) => error.into(),
         }
@@ -1595,6 +1658,37 @@ mod tests {
         );
         assert_ne!(
             workspace.open_surface_disjoint_report_freshness(request, &stale_open_surface_report),
+            ExactReportFreshness::Current
+        );
+
+        let first_closure_report = workspace.volumetric_boundary_closure(request).unwrap()
+            as *const ExactVolumetricBoundaryClosureReport;
+        let second_closure_report = workspace.volumetric_boundary_closure(request).unwrap()
+            as *const ExactVolumetricBoundaryClosureReport;
+        assert_eq!(first_closure_report, second_closure_report);
+        assert_eq!(
+            workspace.volumetric_boundary_closure(request).unwrap(),
+            &request.volumetric_boundary_closure(&left, &right).unwrap()
+        );
+        let closure_report = workspace
+            .volumetric_boundary_closure(request)
+            .unwrap()
+            .clone();
+        workspace
+            .validate_volumetric_boundary_closure(request, &closure_report)
+            .unwrap();
+        assert_eq!(
+            workspace.volumetric_boundary_closure_freshness(request, &closure_report),
+            ExactReportFreshness::Current
+        );
+        let mut stale_closure_report = closure_report.clone();
+        stale_closure_report.operation = ExactBooleanOperation::Difference;
+        assert_eq!(
+            workspace.validate_volumetric_boundary_closure(request, &stale_closure_report),
+            Err(ExactReportValidationError::StatusEvidenceMismatch)
+        );
+        assert_ne!(
+            workspace.volumetric_boundary_closure_freshness(request, &stale_closure_report),
             ExactReportFreshness::Current
         );
 
