@@ -8793,6 +8793,31 @@ fn boolean_open_surface_disjoint_meshes_from_graph(
     Ok(None)
 }
 
+pub(crate) fn materialize_open_surface_disjoint_from_graph_for_request(
+    graph: &super::graph::ExactIntersectionGraph,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    request: ExactBooleanRequest,
+) -> Result<Option<ExactBooleanResult>, MeshError> {
+    let operation = request.operation;
+    let validation = request.validation;
+    if matches!(operation, ExactBooleanOperation::SelectedRegions(_))
+        || meshes_are_certified_bounds_disjoint(left, right)
+        || (validation == ValidationPolicy::CLOSED
+            && certified_closed_validation_regularized_solid_support(left, right).is_some())
+    {
+        return Ok(None);
+    }
+    Ok(public_operation_replayable_result(
+        boolean_open_surface_disjoint_meshes_from_graph(graph, left, right, operation, validation)?,
+        left,
+        right,
+        operation,
+        validation,
+        ExactBoundaryBooleanPolicy::Reject,
+    ))
+}
+
 pub(crate) fn open_surface_disjoint_result_matches_sources(
     result: &ExactBooleanResult,
     left: &ExactMesh,
@@ -8860,16 +8885,7 @@ fn materialize_open_surface_disjoint_for_request(
     }
     let graph = build_intersection_graph(left, right)?;
     validate_graph_source_handoff(&graph, left, right)?;
-    Ok(public_operation_replayable_result(
-        boolean_open_surface_disjoint_meshes_from_graph(
-            &graph, left, right, operation, validation,
-        )?,
-        left,
-        right,
-        operation,
-        validation,
-        ExactBoundaryBooleanPolicy::Reject,
-    ))
+    materialize_open_surface_disjoint_from_graph_for_request(&graph, left, right, request)
 }
 
 /// Certify whether two open surface meshes are disjoint by exact graph facts.

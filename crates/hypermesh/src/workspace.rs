@@ -6,6 +6,7 @@ use super::boolean::{
     materialize_certified_boolean_support_with_arrangement,
     materialize_closed_boundary_touching_regularized_boolean_with_evidence_from_graph,
     materialize_closed_no_volume_overlap_regularized_boolean_with_evidence_from_graph,
+    materialize_open_surface_disjoint_from_graph_for_request,
     validate_boolean_result_against_sources_with_artifacts,
 };
 use super::cell_complex::{
@@ -49,6 +50,7 @@ pub struct ExactBooleanWorkspace<'a> {
         ExactBooleanRequest,
         Option<(ExactBooleanResult, CoplanarVolumetricCellEvidenceReport)>,
     )>,
+    open_surface_disjoint_materializations: Vec<(ExactBooleanRequest, Option<ExactBooleanResult>)>,
     arrangements: Vec<(ExactRegularizationPolicy, ExactArrangement)>,
     topology_assembly_reports: Vec<(ExactRegularizationPolicy, ExactTopologyAssemblyReport)>,
     region_ownership_reports: Vec<(ExactRegularizationPolicy, ExactRegionOwnershipReport)>,
@@ -93,6 +95,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
             coplanar_volumetric_cell_evidence: None,
             closed_boundary_touching_regularized_materializations: Vec::new(),
             closed_no_volume_overlap_regularized_materializations: Vec::new(),
+            open_surface_disjoint_materializations: Vec::new(),
             arrangements: Vec::new(),
             topology_assembly_reports: Vec::new(),
             region_ownership_reports: Vec::new(),
@@ -261,6 +264,38 @@ impl<'a> ExactBooleanWorkspace<'a> {
             )?;
         validate_cached_result_with_evidence(&materialized)?;
         self.closed_no_volume_overlap_regularized_materializations
+            .push((request, materialized.clone()));
+        Ok(materialized)
+    }
+
+    /// Materializes graph-disjoint open surfaces from the retained exact
+    /// graph, caching certified output and declined outcomes per request.
+    pub fn materialize_open_surface_disjoint(
+        &mut self,
+        request: ExactBooleanRequest,
+    ) -> Result<Option<ExactBooleanResult>, MeshError> {
+        if let Some((_, cached)) = self
+            .open_surface_disjoint_materializations
+            .iter()
+            .find(|(stored_request, _)| *stored_request == request)
+        {
+            validate_cached_optional_result(cached)?;
+            return Ok(cached.clone());
+        }
+
+        self.graph()?;
+        let graph = self
+            .graph
+            .as_ref()
+            .expect("intersection graph cache was just populated");
+        graph
+            .validate_against_meshes(self.left, self.right)
+            .map_err(workspace_graph_validation_error)?;
+        let materialized = materialize_open_surface_disjoint_from_graph_for_request(
+            graph, self.left, self.right, request,
+        )?;
+        validate_cached_optional_result(&materialized)?;
+        self.open_surface_disjoint_materializations
             .push((request, materialized.clone()));
         Ok(materialized)
     }
@@ -1491,6 +1526,17 @@ fn validate_cached_result_with_evidence(
     Ok(())
 }
 
+fn validate_cached_optional_result(
+    materialized: &Option<ExactBooleanResult>,
+) -> Result<(), MeshError> {
+    if let Some(result) = materialized {
+        result
+            .validate()
+            .map_err(workspace_report_validation_error)?;
+    }
+    Ok(())
+}
+
 fn workspace_report_validation_error(error: ExactReportValidationError) -> MeshError {
     MeshError::one(MeshDiagnostic::new(
         Severity::Error,
@@ -2398,6 +2444,60 @@ mod tests {
                 .materialize_closed_no_volume_overlap_regularized_with_evidence(request)
                 .is_err(),
             "cached no-volume materialization evidence must validate before reuse"
+        );
+    }
+
+    #[test]
+    fn exact_boolean_workspace_reuses_open_surface_disjoint_materialization() {
+        let left = ExactMesh::from_i64_triangles_with_policy(
+            &[0, 0, 0, 4, 0, 4, 0, 4, 0],
+            &[0, 1, 2],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let right = ExactMesh::from_i64_triangles_with_policy(
+            &[0, 0, 1, 4, 0, 5, 0, 4, 1],
+            &[0, 1, 2],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let request = ExactBooleanRequest::new(
+            ExactBooleanOperation::Union,
+            ValidationPolicy::ALLOW_BOUNDARY,
+        );
+        let mut workspace = ExactBooleanWorkspace::new(&left, &right);
+
+        let materialized = workspace
+            .materialize_open_surface_disjoint(request)
+            .unwrap()
+            .expect("graph-disjoint open surfaces should materialize from retained graph");
+        assert_eq!(
+            materialized,
+            request
+                .materialize_open_surface_disjoint(&left, &right)
+                .unwrap()
+                .unwrap()
+        );
+        assert_eq!(workspace.open_surface_disjoint_materializations.len(), 1);
+        assert_eq!(
+            workspace
+                .materialize_open_surface_disjoint(request)
+                .unwrap()
+                .unwrap(),
+            materialized
+        );
+        assert_eq!(workspace.open_surface_disjoint_materializations.len(), 1);
+
+        let cached = workspace.open_surface_disjoint_materializations[0]
+            .1
+            .as_mut()
+            .unwrap();
+        cached.graph_had_unknowns = !cached.graph_had_unknowns;
+        assert!(
+            workspace
+                .materialize_open_surface_disjoint(request)
+                .is_err(),
+            "cached open-surface disjoint materialization must validate before reuse"
         );
     }
 
