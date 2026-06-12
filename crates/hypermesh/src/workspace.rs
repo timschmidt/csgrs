@@ -1747,17 +1747,6 @@ impl<'a> ExactBooleanWorkspace<'a> {
         &mut self,
         evaluation: &ExactBooleanEvaluation,
     ) -> Result<(), ExactReportValidationError> {
-        if self
-            .evaluations
-            .iter()
-            .any(|(stored_request, stored_evaluation)| {
-                *stored_request == evaluation.request && stored_evaluation == evaluation
-            })
-        {
-            evaluation.validate()?;
-            return Ok(());
-        }
-
         self.graph()
             .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
         let graph = self
