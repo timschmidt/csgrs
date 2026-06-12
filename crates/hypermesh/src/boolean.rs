@@ -3058,6 +3058,16 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph_with_support(
         return Ok(preflight);
     }
     if support == ExactBooleanSupport::RequiresCertifiedWinding
+        && let Some(open_surface_support) =
+            certified_open_surface_disjoint_support_from_graph(&graph, left, right, operation)
+    {
+        return Ok(certified_shortcut_preflight_from_graph(
+            operation,
+            open_surface_support,
+            &graph,
+        ));
+    }
+    if support == ExactBooleanSupport::RequiresCertifiedWinding
         && let Some(preflight) = cached_certified_arrangement_cell_complex_preflight(
             &mut certified_arrangement_preflight,
             operation,
@@ -3076,15 +3086,6 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph_with_support(
     )? {
         return Ok(certified_arrangement_cell_complex_preflight_from_graph(
             operation, &graph, left, right,
-        ));
-    }
-    if support == ExactBooleanSupport::RequiresCertifiedWinding
-        && let Some(open_surface_support) =
-            certified_open_surface_disjoint_support_from_graph(&graph, left, right, operation)
-    {
-        return Ok(certified_shortcut_preflight(
-            operation,
-            open_surface_support,
         ));
     }
     if support == ExactBooleanSupport::RequiresCertifiedWinding
@@ -12642,6 +12643,57 @@ mod tests {
             .unwrap()
             .is_none()
         );
+    }
+
+    #[test]
+    fn open_surface_disjoint_preflight_prefers_specific_support_over_cell_complex() {
+        let left = ExactMesh::from_i64_triangles_with_policy(
+            &[0, 0, 0, 4, 0, 0, 0, 4, 0],
+            &[0, 1, 2],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let right = ExactMesh::from_i64_triangles_with_policy(
+            &[3, 3, 0, 5, 3, 0, 3, 5, 0],
+            &[0, 1, 2],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        assert!(!meshes_are_certified_bounds_disjoint(&left, &right));
+
+        let request = ExactBooleanRequest::new(
+            ExactBooleanOperation::Union,
+            ValidationPolicy::ALLOW_BOUNDARY,
+        );
+        let preflight = request.preflight(&left, &right).unwrap();
+        assert_eq!(
+            preflight.support,
+            ExactBooleanSupport::CertifiedOpenSurfaceDisjoint,
+            "{preflight:?}"
+        );
+        assert!(preflight.blocker.is_none(), "{preflight:?}");
+        preflight.validate().unwrap();
+        preflight.validate_against_sources(&left, &right).unwrap();
+
+        let result = request.evaluate(&left, &right).unwrap();
+        assert_eq!(
+            result.preflight.support,
+            ExactBooleanSupport::CertifiedOpenSurfaceDisjoint,
+            "{result:?}"
+        );
+        let materialized = result
+            .result
+            .as_ref()
+            .expect("open-surface disjoint support should materialize");
+        assert_eq!(
+            materialized.kind,
+            ExactBooleanResultKind::CertifiedShortcut {
+                operation: ExactBooleanOperation::Union,
+                shortcut: ExactBooleanShortcutKind::OpenSurfaceDisjoint,
+            }
+        );
+        result.validate().unwrap();
+        result.validate_against_sources(&left, &right).unwrap();
     }
 
     #[test]
