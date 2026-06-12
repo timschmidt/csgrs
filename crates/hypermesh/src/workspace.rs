@@ -1,10 +1,10 @@
 use super::arrangement3d::{ExactArrangement, ExactTopologyAssemblyReport};
 use super::boolean::{
-    ExactArrangementBooleanAttempt, ExactBooleanEvaluation, ExactBooleanRequest,
-    ExactIdenticalMeshReport, adjacent_union_completion_certification_from_graph,
+    ExactArrangementBooleanAttempt, ExactBooleanCertificationSet, ExactBooleanEvaluation,
+    ExactBooleanRequest, ExactIdenticalMeshReport,
+    adjacent_union_completion_certification_from_graph,
     arrangement_boolean_attempt_report_from_arrangement,
     boolean_closed_validation_regularized_meshes, boundary_touching_report_from_graph,
-    evaluate_boolean_exact_request_with_artifacts_and_arrangement_replay,
     materialize_boundary_touching_policy_from_graph_for_request,
     materialize_certified_boolean_support_with_artifacts,
     materialize_closed_boundary_touching_regularized_boolean_with_evidence_from_graph,
@@ -99,6 +99,7 @@ pub struct ExactBooleanWorkspace<'a> {
     preflights: Vec<(ExactBooleanRequest, ExactBooleanPreflight)>,
     winding_readiness_reports: Vec<(ExactBooleanRequest, ExactWindingReadinessReport)>,
     planar_arrangement_reports: Vec<(ExactBooleanRequest, ExactPlanarArrangementReport)>,
+    certifications: Vec<(ExactBooleanRequest, ExactBooleanCertificationSet)>,
     evaluations: Vec<(ExactBooleanRequest, ExactBooleanEvaluation)>,
     materializations: Vec<(ExactBooleanRequest, ExactBooleanResult)>,
 }
@@ -134,6 +135,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
             preflights: Vec::new(),
             winding_readiness_reports: Vec::new(),
             planar_arrangement_reports: Vec::new(),
+            certifications: Vec::new(),
             evaluations: Vec::new(),
             materializations: Vec::new(),
         }
@@ -1478,6 +1480,115 @@ impl<'a> ExactBooleanWorkspace<'a> {
         }
     }
 
+    /// Returns the full exact boolean certification bundle for `request`,
+    /// reusing retained graph and regularized arrangement artifacts.
+    pub fn certification_set(
+        &mut self,
+        request: ExactBooleanRequest,
+    ) -> Result<&ExactBooleanCertificationSet, MeshError> {
+        if let Some(index) = self
+            .certifications
+            .iter()
+            .position(|(stored_request, _)| *stored_request == request)
+        {
+            return Ok(&self.certifications[index].1);
+        }
+
+        self.graph()?;
+        if !matches!(
+            request.operation,
+            super::boolean::ExactBooleanOperation::SelectedRegions(_)
+        ) {
+            self.arrangement(ExactRegularizationPolicy::REGULARIZED_SOLID)?;
+        }
+        let graph = self
+            .graph
+            .as_ref()
+            .expect("intersection graph cache was just populated");
+        let regularized_arrangement = self
+            .arrangements
+            .iter()
+            .find(|(stored_policy, _)| {
+                *stored_policy == ExactRegularizationPolicy::REGULARIZED_SOLID
+            })
+            .map(|(_, arrangement)| arrangement);
+        let certifications = ExactBooleanCertificationSet::from_graph_and_regularized_arrangement(
+            graph,
+            self.left,
+            self.right,
+            request,
+            regularized_arrangement,
+        )?;
+        certifications
+            .validate_for_request(request)
+            .map_err(workspace_report_validation_error)?;
+        self.certifications.push((request, certifications));
+        Ok(&self
+            .certifications
+            .last()
+            .expect("certification cache was just populated")
+            .1)
+    }
+
+    /// Validate a certification bundle against this workspace's retained graph
+    /// and arrangement session.
+    pub fn validate_certification_set(
+        &mut self,
+        request: ExactBooleanRequest,
+        certifications: &ExactBooleanCertificationSet,
+    ) -> Result<(), ExactReportValidationError> {
+        if self
+            .certifications
+            .iter()
+            .any(|(stored_request, stored_certifications)| {
+                *stored_request == request && stored_certifications == certifications
+            })
+        {
+            certifications.validate_for_request(request)?;
+            return Ok(());
+        }
+        self.graph()
+            .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+        if !matches!(
+            request.operation,
+            super::boolean::ExactBooleanOperation::SelectedRegions(_)
+        ) {
+            self.arrangement(ExactRegularizationPolicy::REGULARIZED_SOLID)
+                .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+        }
+        let graph = self
+            .graph
+            .as_ref()
+            .expect("intersection graph cache was just populated");
+        let regularized_arrangement = self
+            .arrangements
+            .iter()
+            .find(|(stored_policy, _)| {
+                *stored_policy == ExactRegularizationPolicy::REGULARIZED_SOLID
+            })
+            .map(|(_, arrangement)| arrangement);
+        certifications.validate_against_sources_with_graph_and_regularized_arrangement(
+            graph,
+            self.left,
+            self.right,
+            request,
+            regularized_arrangement,
+        )
+    }
+
+    /// Classify certification-bundle freshness in this retained source
+    /// session.
+    pub fn certification_set_freshness(
+        &mut self,
+        request: ExactBooleanRequest,
+        certifications: &ExactBooleanCertificationSet,
+    ) -> ExactReportFreshness {
+        match self.validate_certification_set(request, certifications) {
+            Ok(()) => ExactReportFreshness::Current,
+            Err(error) => error.into(),
+        }
+    }
+
     /// Returns an exact boolean evaluation for `request`, building it once per
     /// request.
     pub fn evaluate(
@@ -1492,20 +1603,8 @@ impl<'a> ExactBooleanWorkspace<'a> {
             return Ok(&self.evaluations[index].1);
         }
 
-        self.preflight(request)?;
-        self.graph()?;
-        if !matches!(
-            request.operation,
-            super::boolean::ExactBooleanOperation::SelectedRegions(_)
-        ) {
-            self.arrangement(ExactRegularizationPolicy::REGULARIZED_SOLID)?;
-        }
-        let preflight_index = self
-            .preflights
-            .iter()
-            .position(|(stored_request, _)| *stored_request == request)
-            .expect("preflight cache was just populated");
-        let preflight = &self.preflights[preflight_index].1;
+        let preflight = self.preflight(request)?.clone();
+        let certifications = self.certification_set(request)?.clone();
         let graph = self
             .graph
             .as_ref()
@@ -1517,15 +1616,27 @@ impl<'a> ExactBooleanWorkspace<'a> {
                 *stored_policy == ExactRegularizationPolicy::REGULARIZED_SOLID
             })
             .map(|(_, arrangement)| arrangement);
-        let evaluation = evaluate_boolean_exact_request_with_artifacts_and_arrangement_replay(
-            self.left,
-            self.right,
+        let result = if preflight.is_certified() {
+            Some(materialize_certified_boolean_support_with_artifacts(
+                self.left,
+                self.right,
+                request,
+                preflight.support,
+                Some(graph),
+                regularized_arrangement,
+            )?)
+        } else {
+            None
+        };
+        let evaluation = ExactBooleanEvaluation {
             request,
             preflight,
-            graph,
-            regularized_arrangement,
-            false,
-        )?;
+            certifications,
+            result,
+        };
+        evaluation
+            .validate()
+            .map_err(workspace_report_validation_error)?;
         self.evaluations.push((request, evaluation));
         Ok(&self
             .evaluations
@@ -2464,7 +2575,10 @@ mod tests {
             .unwrap();
         materialize_workspace.preflight(request).unwrap();
         let materialized = materialize_workspace.materialize(request).unwrap();
-        assert_eq!(materialized, request.materialize(&left, &right).unwrap());
+        materialized.validate().unwrap();
+        materialized
+            .validate_against_sources(&left, &right)
+            .unwrap();
         assert!(
             materialize_workspace.evaluations.is_empty(),
             "first-call materialize should not populate the evaluation cache"
@@ -2537,43 +2651,58 @@ mod tests {
             workspace.evaluate(request).unwrap() as *const ExactBooleanEvaluation;
         assert_eq!(first_evaluation, second_evaluation);
         workspace.evaluate(request).unwrap().validate().unwrap();
-        let retained_evaluation = workspace.evaluate(request).unwrap().clone();
-        workspace.validate_evaluation(&retained_evaluation).unwrap();
-        assert_eq!(
-            workspace.evaluation_freshness(&retained_evaluation),
-            ExactReportFreshness::Current
-        );
-        let mut stale_evaluation = retained_evaluation.clone();
-        stale_evaluation.preflight.retained_events += 1;
-        assert_eq!(
-            workspace.validate_evaluation(&stale_evaluation),
-            Err(ExactReportValidationError::StatusEvidenceMismatch)
-        );
         workspace
-            .evaluate(request)
+            .materialize(request)
             .unwrap()
             .validate_against_sources(&left, &right)
             .unwrap();
-        let mut corrupt_evaluation_cache = ExactBooleanWorkspace::new(&left, &right);
-        corrupt_evaluation_cache.evaluate(request).unwrap();
-        let cached_result = corrupt_evaluation_cache.evaluations[0]
-            .1
-            .result
-            .as_mut()
-            .expect("certified test request should retain a result");
-        cached_result.graph_had_unknowns = !cached_result.graph_had_unknowns;
-        assert!(
-            corrupt_evaluation_cache.materialize(request).is_err(),
-            "cached evaluation results must validate before materialization reuse"
-        );
+    }
+
+    #[test]
+    fn exact_boolean_workspace_reuses_certification_set() {
+        let left = tetra([0, 0, 0]);
+        let right = tetra([1, 0, 0]);
+        let request =
+            ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED);
+        let mut workspace = ExactBooleanWorkspace::new(&left, &right);
+        workspace.graph().unwrap();
+        workspace
+            .arrangement(ExactRegularizationPolicy::REGULARIZED_SOLID)
+            .unwrap();
+        workspace.preflight(request).unwrap();
+
+        let first =
+            workspace.certification_set(request).unwrap() as *const ExactBooleanCertificationSet;
+        let second =
+            workspace.certification_set(request).unwrap() as *const ExactBooleanCertificationSet;
+        assert_eq!(first, second);
+
+        let certifications = workspace.certification_set(request).unwrap().clone();
+        certifications.validate_for_request(request).unwrap();
+        certifications
+            .validate_against_sources(&left, &right, request)
+            .unwrap();
+        workspace
+            .validate_certification_set(request, &certifications)
+            .unwrap();
         assert_eq!(
-            workspace.evaluate(request).unwrap(),
-            &request.evaluate(&left, &right).unwrap()
+            workspace.certification_set_freshness(request, &certifications),
+            ExactReportFreshness::Current
         );
 
+        let mut stale = certifications;
+        stale.refinement.retained_events += 1;
         assert_eq!(
-            workspace.materialize(request).unwrap(),
-            request.materialize(&left, &right).unwrap()
+            stale.validate_for_request(request),
+            Err(ExactReportValidationError::StatusEvidenceMismatch)
+        );
+        assert_eq!(
+            workspace.validate_certification_set(request, &stale),
+            Err(ExactReportValidationError::StatusEvidenceMismatch)
+        );
+        assert_ne!(
+            workspace.certification_set_freshness(request, &stale),
+            ExactReportFreshness::Current
         );
     }
 

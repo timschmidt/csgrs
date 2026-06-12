@@ -1251,7 +1251,7 @@ impl ExactBooleanCertificationSet {
         }
     }
 
-    fn validate_against_sources_with_graph_and_regularized_arrangement(
+    pub(crate) fn validate_against_sources_with_graph_and_regularized_arrangement(
         &self,
         graph: &ExactIntersectionGraph,
         left: &ExactMesh,

@@ -3,9 +3,9 @@ use std::time::{Duration, Instant};
 
 use hypermesh::{
     CoplanarVolumetricCellEvidenceReport, ExactAdjacentUnionCompletionReport, ExactArrangement,
-    ExactArrangementBooleanAttempt, ExactBooleanEvaluation, ExactBooleanOperation,
-    ExactBooleanPreflight, ExactBooleanRequest, ExactBooleanResult, ExactBooleanWorkspace,
-    ExactBoundaryTouchingReport, ExactIdenticalMeshReport, ExactMesh,
+    ExactArrangementBooleanAttempt, ExactBooleanCertificationSet, ExactBooleanEvaluation,
+    ExactBooleanOperation, ExactBooleanPreflight, ExactBooleanRequest, ExactBooleanResult,
+    ExactBooleanWorkspace, ExactBoundaryTouchingReport, ExactIdenticalMeshReport, ExactMesh,
     ExactOpenSurfaceDisjointReport, ExactPlanarArrangementReport, ExactRefinementReport,
     ExactRegularizationPolicy, ExactSameSurfaceReport, ExactSelectedCellComplex,
     ExactSimplifiedCellComplex, ExactVolumetricBoundaryClosureReport, ExactWindingReadinessReport,
@@ -767,6 +767,28 @@ fn run_case(case: &BenchCase) {
 
     time_prepared_stage(
         case,
+        "workspace_certification_set_from_retained_artifacts",
+        || retained_workspace_for_case(case, request),
+        |retained_workspace| {
+            black_box(retained_workspace.certification_set(request).ok());
+        },
+    );
+
+    time_prepared_stage(
+        case,
+        "workspace_validate_certification_set_from_retained_artifacts",
+        || retained_workspace_and_certification_set_for_case(case, request),
+        |(retained_workspace, certifications)| {
+            black_box(
+                retained_workspace
+                    .validate_certification_set(request, certifications)
+                    .ok(),
+            );
+        },
+    );
+
+    time_prepared_stage(
+        case,
         "workspace_evaluation_from_retained_artifacts",
         || retained_workspace_for_case(case, request),
         |retained_workspace| {
@@ -973,6 +995,18 @@ fn retained_workspace_and_planar_arrangement_for_case<'a>(
         .unwrap()
         .clone();
     (retained_workspace, report)
+}
+
+fn retained_workspace_and_certification_set_for_case<'a>(
+    case: &'a BenchCase,
+    request: ExactBooleanRequest,
+) -> (ExactBooleanWorkspace<'a>, ExactBooleanCertificationSet) {
+    let mut retained_workspace = retained_workspace_for_case(case, request);
+    let certifications = retained_workspace
+        .certification_set(request)
+        .unwrap()
+        .clone();
+    (retained_workspace, certifications)
 }
 
 fn retained_workspace_and_evaluation_for_case<'a>(
