@@ -2468,11 +2468,12 @@ pub(crate) fn evaluate_boolean_exact_request_with_artifacts_and_arrangement_repl
         } else {
             regularized_arrangement
         };
-        Some(materialize_certified_boolean_support_with_arrangement(
+        Some(materialize_certified_boolean_support_with_artifacts(
             left,
             right,
             request,
             preflight.support,
+            Some(graph),
             materialization_arrangement,
         )?)
     } else {
@@ -2513,11 +2514,12 @@ fn certified_boolean_support_did_not_materialize_error(support: ExactBooleanSupp
     ))
 }
 
-pub(crate) fn materialize_certified_boolean_support_with_arrangement(
+pub(crate) fn materialize_certified_boolean_support_with_artifacts(
     left: &ExactMesh,
     right: &ExactMesh,
     request: ExactBooleanRequest,
     support: ExactBooleanSupport,
+    retained_graph: Option<&ExactIntersectionGraph>,
     retained_regularized_arrangement: Option<&ExactArrangement>,
 ) -> Result<ExactBooleanResult, MeshError> {
     let operation = request.operation;
@@ -2527,22 +2529,38 @@ pub(crate) fn materialize_certified_boolean_support_with_arrangement(
             let ExactBooleanOperation::SelectedRegions(selection) = operation else {
                 return Err(certified_boolean_support_did_not_materialize_error(support));
             };
-            Some(materialize_selected_region_boolean(
-                left, right, selection, validation,
-            )?)
+            Some(if let Some(graph) = retained_graph {
+                materialize_selected_region_result_from_graph(
+                    graph, left, right, selection, validation,
+                )?
+            } else {
+                materialize_selected_region_boolean(left, right, selection, validation)?
+            })
         }
         ExactBooleanSupport::CertifiedBoundaryPolicyShortcut => {
-            ExactBooleanRequest::with_boundary_policy(
+            let request = ExactBooleanRequest::with_boundary_policy(
                 operation,
                 validation,
                 request.boundary_policy,
-            )
-            .materialize_boundary_touching_policy(left, right)?
+            );
+            if let Some(graph) = retained_graph {
+                materialize_boundary_touching_policy_from_graph_for_request(
+                    graph, left, right, request,
+                )?
+            } else {
+                request.materialize_boundary_touching_policy(left, right)?
+            }
         }
         ExactBooleanSupport::CertifiedOpenSurfaceArrangementUnion
         | ExactBooleanSupport::CertifiedOpenSurfaceArrangementIntersection
         | ExactBooleanSupport::CertifiedOpenSurfaceArrangementDifference => {
-            materialize_open_surface_arrangement(left, right, operation, validation)?
+            if let Some(graph) = retained_graph {
+                materialize_open_surface_arrangement_from_graph(
+                    graph, left, right, operation, validation,
+                )?
+            } else {
+                materialize_open_surface_arrangement(left, right, operation, validation)?
+            }
         }
         ExactBooleanSupport::CertifiedArrangementCellComplex => {
             materialize_certified_arrangement_cell_complex_support_with_arrangement(
@@ -2568,11 +2586,23 @@ pub(crate) fn materialize_certified_boolean_support_with_arrangement(
         ExactBooleanSupport::CertifiedClosedBoundaryTouchingUnion
         | ExactBooleanSupport::CertifiedClosedBoundaryTouchingIntersection
         | ExactBooleanSupport::CertifiedClosedBoundaryTouchingDifference => {
-            let result = boolean_closed_boundary_touching_regularized_meshes(
-                left, right, operation, validation,
-            )?;
+            let result = if let Some(graph) = retained_graph {
+                materialize_closed_boundary_touching_regularized_boolean_with_evidence_from_graph(
+                    graph, left, right, operation, validation,
+                )?
+                .map(|(result, _)| result)
+            } else {
+                boolean_closed_boundary_touching_regularized_meshes(
+                    left, right, operation, validation,
+                )?
+            };
             if result.is_some() {
                 result
+            } else if let Some(graph) = retained_graph {
+                materialize_closed_no_volume_overlap_regularized_boolean_with_evidence_from_graph(
+                    graph, left, right, operation, validation,
+                )?
+                .map(|(result, _)| result)
             } else {
                 boolean_closed_no_volume_overlap_regularized_meshes(
                     left, right, operation, validation,
@@ -2580,17 +2610,35 @@ pub(crate) fn materialize_certified_boolean_support_with_arrangement(
             }
         }
         ExactBooleanSupport::CertifiedOpenSurfaceDisjoint => {
-            let graph = build_intersection_graph(left, right)?;
-            validate_graph_source_handoff(&graph, left, right)?;
-            boolean_open_surface_disjoint_meshes_from_graph(
-                &graph, left, right, operation, validation,
-            )?
+            if let Some(graph) = retained_graph {
+                boolean_open_surface_disjoint_meshes_from_graph(
+                    graph, left, right, operation, validation,
+                )?
+            } else {
+                let graph = build_intersection_graph(left, right)?;
+                validate_graph_source_handoff(&graph, left, right)?;
+                boolean_open_surface_disjoint_meshes_from_graph(
+                    &graph, left, right, operation, validation,
+                )?
+            }
         }
         ExactBooleanSupport::CertifiedClosedWindingSeparated => {
-            boolean_closed_winding_separated_meshes(left, right, operation, validation)?
+            if let Some(graph) = retained_graph {
+                boolean_closed_winding_separated_meshes_from_graph(
+                    graph, left, right, operation, validation,
+                )?
+            } else {
+                boolean_closed_winding_separated_meshes(left, right, operation, validation)?
+            }
         }
         ExactBooleanSupport::CertifiedClosedWindingContainment => {
-            boolean_closed_winding_containment_meshes(left, right, operation, validation)?
+            if let Some(graph) = retained_graph {
+                boolean_closed_winding_containment_meshes_from_graph(
+                    graph, left, right, operation, validation,
+                )?
+            } else {
+                boolean_closed_winding_containment_meshes(left, right, operation, validation)?
+            }
         }
         ExactBooleanSupport::CertifiedMixedDimensionalRegularizedSolid
         | ExactBooleanSupport::CertifiedLowerDimensionalRegularizedSolid => {
@@ -9294,7 +9342,17 @@ pub fn materialize_open_surface_arrangement(
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
     let graph = build_intersection_graph(left, right)?;
     validate_graph_source_handoff(&graph, left, right)?;
-    let Some(plan) = open_surface_arrangement_plan_from_graph(&graph, left, right, operation)?
+    materialize_open_surface_arrangement_from_graph(&graph, left, right, operation, validation)
+}
+
+fn materialize_open_surface_arrangement_from_graph(
+    graph: &super::graph::ExactIntersectionGraph,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+) -> Result<Option<ExactBooleanResult>, MeshError> {
+    let Some(plan) = open_surface_arrangement_plan_from_graph(graph, left, right, operation)?
     else {
         return Ok(None);
     };

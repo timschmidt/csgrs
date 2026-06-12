@@ -6,7 +6,7 @@ use super::boolean::{
     boolean_closed_validation_regularized_meshes, boundary_touching_report_from_graph,
     evaluate_boolean_exact_request_with_artifacts_and_arrangement_replay,
     materialize_boundary_touching_policy_from_graph_for_request,
-    materialize_certified_boolean_support_with_arrangement,
+    materialize_certified_boolean_support_with_artifacts,
     materialize_closed_boundary_touching_regularized_boolean_with_evidence_from_graph,
     materialize_closed_no_volume_overlap_regularized_boolean_with_evidence_from_graph,
     materialize_closed_winding_containment_from_graph_for_request,
@@ -1581,11 +1581,16 @@ impl<'a> ExactBooleanWorkspace<'a> {
                     *stored_policy == ExactRegularizationPolicy::REGULARIZED_SOLID
                 })
                 .map(|(_, arrangement)| arrangement);
-            let result = materialize_certified_boolean_support_with_arrangement(
+            let graph = self
+                .graph
+                .as_ref()
+                .expect("intersection graph cache was just populated");
+            let result = materialize_certified_boolean_support_with_artifacts(
                 self.left,
                 self.right,
                 request,
                 preflight.support,
+                Some(graph),
                 regularized_arrangement,
             )?;
             self.materializations.push((request, result.clone()));
