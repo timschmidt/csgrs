@@ -2380,8 +2380,9 @@ fn evaluate_boolean_exact_request(
     right: &ExactMesh,
     request: ExactBooleanRequest,
 ) -> Result<ExactBooleanEvaluation, MeshError> {
-    let preflight = request.preflight(left, right)?;
     let graph = build_intersection_graph(left, right)?;
+    validate_graph_source_handoff(&graph, left, right)?;
+    let preflight = preflight_boolean_exact_request_from_graph(&graph, left, right, request)?;
     evaluate_boolean_exact_request_with_artifacts(left, right, request, &preflight, &graph)
 }
 
