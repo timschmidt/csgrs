@@ -6231,7 +6231,9 @@ pub(crate) fn adjacent_union_completion_certification_from_graph(
                 ExactBooleanOperation::Union,
                 ExactBooleanShortcutKind::ArrangementCellComplex,
             );
-            (result.validate().is_ok() && result.validate_against_sources(left, right).is_ok())
+            result
+                .validate_against_sources(left, right)
+                .is_ok()
                 .then_some(result)
         });
         return Ok((
@@ -6298,7 +6300,9 @@ pub(crate) fn adjacent_union_completion_certification_from_graph(
                 ExactBooleanOperation::Union,
                 ExactBooleanShortcutKind::ArrangementCellComplex,
             );
-            (result.validate().is_ok() && result.validate_against_sources(left, right).is_ok())
+            result
+                .validate_against_sources(left, right)
+                .is_ok()
                 .then_some(result)
         });
         return Ok((
@@ -6488,7 +6492,7 @@ fn boolean_arrangement_regularized_no_volume_overlap_from_graph(
             operation,
             ExactBooleanShortcutKind::ArrangementCellComplex,
         );
-        if result.validate().is_err() || result.validate_against_sources(left, right).is_err() {
+        if result.validate_against_sources(left, right).is_err() {
             return Ok(None);
         }
         return Ok(Some(result));
@@ -6553,7 +6557,7 @@ fn boolean_arrangement_regularized_no_volume_overlap_from_graph(
         ExactBooleanOperation::SelectedRegions(_) => unreachable!("handled above"),
     };
     let result = certified_shortcut_result(mesh, operation, shortcut);
-    if result.validate().is_err() || result.validate_against_sources(left, right).is_err() {
+    if result.validate_against_sources(left, right).is_err() {
         return Ok(None);
     }
     Ok(Some(result))
@@ -6637,7 +6641,7 @@ fn materialize_closed_no_volume_overlap_regularized_result_from_evidence(
                 operation,
                 ExactBooleanShortcutKind::ClosedBoundaryTouchingIntersection,
             );
-            if result.validate().is_err() || result.validate_against_sources(left, right).is_err() {
+            if result.validate_against_sources(left, right).is_err() {
                 return Ok(None);
             }
             Ok(Some(result))
@@ -6653,7 +6657,7 @@ fn materialize_closed_no_volume_overlap_regularized_result_from_evidence(
                 operation,
                 ExactBooleanShortcutKind::ClosedBoundaryTouchingDifference,
             );
-            if result.validate().is_err() || result.validate_against_sources(left, right).is_err() {
+            if result.validate_against_sources(left, right).is_err() {
                 return Ok(None);
             }
             Ok(Some(result))
@@ -6892,7 +6896,7 @@ fn boolean_convex_meshes_optional(
     };
     let mesh = copy_mesh(&mesh, label, validation)?;
     let result = certified_shortcut_result(mesh, operation, shortcut);
-    if result.validate().is_err() || result.validate_against_sources(left, right).is_err() {
+    if result.validate_against_sources(left, right).is_err() {
         return Ok(None);
     }
     Ok(Some(result))
@@ -7062,7 +7066,7 @@ fn boolean_convex_relation_meshes_optional(
         }
     };
     let result = certified_shortcut_result(mesh, operation, shortcut);
-    if result.validate().is_err() || result.validate_against_sources(left, right).is_err() {
+    if result.validate_against_sources(left, right).is_err() {
         return Ok(None);
     }
     Ok(Some(result))
@@ -7117,7 +7121,7 @@ fn boolean_arrangement_convex_regularized_sheet_recovery(
         operation,
         ExactBooleanShortcutKind::ArrangementCellComplex,
     );
-    if result.validate().is_err() || result.validate_against_sources(left, right).is_err() {
+    if result.validate_against_sources(left, right).is_err() {
         return Ok(None);
     }
     Ok(Some(result))
@@ -7324,7 +7328,7 @@ fn boolean_arrangement_volumetric_split_cell_recovery_from_graph(
                 operation,
                 ExactBooleanShortcutKind::ArrangementCellComplex,
             );
-            if result.validate().is_err() || result.validate_against_sources(left, right).is_err() {
+            if result.validate_against_sources(left, right).is_err() {
                 return Ok(None);
             }
             return Ok(Some(result));
@@ -9149,7 +9153,7 @@ fn boolean_arrangement_affine_orthogonal_solid_recovery(
         operation,
         ExactBooleanShortcutKind::ArrangementCellComplex,
     );
-    if result.validate().is_err() || result.validate_against_sources(left, right).is_err() {
+    if result.validate_against_sources(left, right).is_err() {
         return Ok(None);
     }
     Ok(Some(result))
@@ -9249,9 +9253,6 @@ pub(crate) fn open_surface_disjoint_result_matches_sources(
     else {
         return false;
     };
-    if report.validate().is_err() || !report.is_certified() {
-        return false;
-    }
     if !open_surface_disjoint_result_consumes_report(result, left, right, operation, &report) {
         return false;
     }
@@ -9269,8 +9270,7 @@ fn open_surface_disjoint_result_consumes_report(
     operation: ExactBooleanOperation,
     report: &ExactOpenSurfaceDisjointReport,
 ) -> bool {
-    report.validate().is_ok()
-        && report.is_certified()
+    report.is_certified()
         && report.validate_against_sources(left, right).is_ok()
         && matches!(
             result.kind,
@@ -9933,7 +9933,7 @@ fn materialize_closed_boundary_touching_regularized_result_from_evidence(
         ExactBooleanOperation::SelectedRegions(_) => unreachable!("handled by evidence check"),
     };
     let result = certified_shortcut_result(mesh, operation, shortcut);
-    if result.validate().is_err() || result.validate_against_sources(left, right).is_err() {
+    if result.validate_against_sources(left, right).is_err() {
         return Ok(None);
     }
     Ok(Some(result))
@@ -10023,9 +10023,6 @@ pub(crate) fn boundary_policy_shortcut_result_matches_sources(
     else {
         return false;
     };
-    if report.validate().is_err() || !report.is_certified() {
-        return false;
-    }
     if !boundary_policy_shortcut_result_consumes_report(
         result,
         left,
@@ -10053,7 +10050,6 @@ fn boundary_policy_shortcut_result_consumes_report(
     report: &ExactBoundaryTouchingReport,
 ) -> bool {
     boundary_policy == ExactBoundaryBooleanPolicy::PreserveSeparateShells
-        && report.validate().is_ok()
         && report.is_certified()
         && report.validate_against_sources(left, right).is_ok()
         && matches!(

@@ -1581,12 +1581,6 @@ fn validate_retained_result_with_evidence(
 ) -> Result<(), MeshError> {
     if let Some((result, evidence)) = materialized {
         result
-            .validate()
-            .map_err(workspace_report_validation_error)?;
-        evidence
-            .validate()
-            .map_err(workspace_coplanar_volumetric_cell_error)?;
-        result
             .validate_against_sources(left, right)
             .map_err(workspace_report_validation_error)?;
         evidence
@@ -1602,12 +1596,6 @@ fn validate_retained_result_with_adjacent_report(
     right: &ExactMesh,
 ) -> Result<(), MeshError> {
     if let Some((result, report)) = materialized {
-        result
-            .validate()
-            .map_err(workspace_report_validation_error)?;
-        report
-            .validate()
-            .map_err(workspace_report_validation_error)?;
         result
             .validate_against_sources(left, right)
             .map_err(workspace_report_validation_error)?;
