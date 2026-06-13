@@ -4887,14 +4887,6 @@ fn materialized_arrangement_attempt_outcome(
     ArrangementCellComplexOutcome::materialized(result, attempt.clone())
 }
 
-fn declined_output_validation_attempt_outcome(
-    attempt: &mut ExactArrangementBooleanAttempt,
-) -> ArrangementCellComplexOutcome {
-    attempt.stage = ExactArrangementBooleanStage::Triangulated;
-    attempt.decline = Some(ExactArrangementBooleanDecline::OutputValidation);
-    ArrangementCellComplexOutcome::Declined(attempt.clone())
-}
-
 fn declined_output_validation_attempt_outcome_with_counts(
     attempt: &mut ExactArrangementBooleanAttempt,
     output_counts: Option<(usize, usize)>,
@@ -4903,7 +4895,9 @@ fn declined_output_validation_attempt_outcome_with_counts(
         attempt.output_vertices = vertices;
         attempt.output_triangles = triangles;
     }
-    declined_output_validation_attempt_outcome(attempt)
+    attempt.stage = ExactArrangementBooleanStage::Triangulated;
+    attempt.decline = Some(ExactArrangementBooleanDecline::OutputValidation);
+    ArrangementCellComplexOutcome::Declined(attempt.clone())
 }
 
 /// Report how far the arrangement/cell-complex Boolean pipeline gets for a
