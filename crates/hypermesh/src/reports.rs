@@ -5425,6 +5425,15 @@ impl ExactPlanarArrangementReport {
         matches!(self.status, ExactPlanarArrangementStatus::Required)
     }
 
+    /// Return whether planar arrangement topology has already been
+    /// materialized by a narrower certified path.
+    pub const fn is_already_materialized(&self) -> bool {
+        matches!(
+            self.status,
+            ExactPlanarArrangementStatus::AlreadyMaterialized
+        )
+    }
+
     /// Validate status, retained relation counts, and blocker consistency.
     pub fn validate(&self) -> Result<(), ExactReportValidationError> {
         validate_retained_graph_count_shape(self.retained_face_pairs, self.retained_events)?;
@@ -7746,6 +7755,8 @@ mod tests {
             }),
         };
         already_materialized.validate().unwrap();
+        assert!(already_materialized.is_already_materialized());
+        assert!(!already_materialized.is_required());
         already_materialized.arrangement_readiness = None;
         assert_eq!(
             already_materialized.validate(),
@@ -7779,6 +7790,8 @@ mod tests {
             }),
         };
         no_positive_overlap.validate().unwrap();
+        assert!(!no_positive_overlap.is_already_materialized());
+        assert!(!no_positive_overlap.is_required());
         no_positive_overlap.arrangement_readiness = None;
         assert_eq!(
             no_positive_overlap.validate(),

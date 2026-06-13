@@ -3312,7 +3312,7 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph_with_support(
             coplanar_volumetric_evidence: None,
         });
     }
-    if planar_report.status == ExactPlanarArrangementStatus::AlreadyMaterialized
+    if planar_report.is_already_materialized()
         && let Some(preflight) = cached_certified_arrangement_cell_complex_preflight(
             &mut certified_arrangement_preflight,
             operation,
@@ -10380,7 +10380,7 @@ fn winding_readiness_report_from_graph(
             None,
         ));
     }
-    if planar_report.status == ExactPlanarArrangementStatus::AlreadyMaterialized {
+    if planar_report.is_already_materialized() {
         return Ok(winding_readiness_report(
             operation,
             ExactWindingReadinessStatus::PlanarArrangementAlreadyMaterialized,
