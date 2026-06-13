@@ -5100,32 +5100,14 @@ fn arrangement_cell_complex_materializes_for_preflight(
     operation: ExactBooleanOperation,
     regularize_unregularized_sheet_complex: bool,
 ) -> Result<bool, MeshError> {
-    let validation_policies: &[ValidationPolicy] =
-        if left.facts().mesh.closed_manifold && right.facts().mesh.closed_manifold {
-            &[ValidationPolicy::CLOSED]
-        } else {
-            &[ValidationPolicy::CLOSED, ValidationPolicy::ALLOW_BOUNDARY]
-        };
-    for &validation in validation_policies {
-        match run_arrangement_cell_complex_attempt(
-            left,
-            right,
-            operation,
-            ExactRegularizationPolicy::REGULARIZED_SOLID,
-            Some(validation),
-            regularize_unregularized_sheet_complex,
-        ) {
-            Ok(ArrangementCellComplexOutcome::Materialized(result, attempt))
-                if arrangement_cell_complex_result_is_certified_for_preflight(
-                    &result, &attempt,
-                ) =>
-            {
-                return Ok(true);
-            }
-            Ok(_) | Err(_) => {}
-        }
-    }
-    Ok(false)
+    let graph = validated_intersection_graph(left, right)?;
+    arrangement_cell_complex_materializes_for_preflight_from_graph(
+        &graph,
+        left,
+        right,
+        operation,
+        regularize_unregularized_sheet_complex,
+    )
 }
 
 fn arrangement_cell_complex_materializes_for_preflight_from_graph(
@@ -5311,28 +5293,6 @@ fn arrangement_pre_cell_complex_recovery_outcome_if_available(
     }
 
     Ok(None)
-}
-
-#[cfg(test)]
-fn run_arrangement_cell_complex_attempt(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    policy: ExactRegularizationPolicy,
-    validation: Option<ValidationPolicy>,
-    regularize_unregularized_sheet_complex: bool,
-) -> Result<ArrangementCellComplexOutcome, MeshError> {
-    let arrangement = ExactArrangement::from_meshes_with_policy(left, right, policy)?;
-    run_arrangement_cell_complex_attempt_from_arrangement_with_recovery_timing(
-        &arrangement,
-        left,
-        right,
-        operation,
-        policy,
-        validation,
-        regularize_unregularized_sheet_complex,
-        false,
-    )
 }
 
 fn run_arrangement_cell_complex_attempt_from_graph(
@@ -14050,7 +14010,11 @@ mod tests {
         operation: ExactBooleanOperation,
         validation: ValidationPolicy,
     ) -> bool {
-        match run_arrangement_cell_complex_attempt(
+        let Ok(graph) = validated_intersection_graph(left, right) else {
+            return false;
+        };
+        match run_arrangement_cell_complex_attempt_from_graph(
+            &graph,
             left,
             right,
             operation,
