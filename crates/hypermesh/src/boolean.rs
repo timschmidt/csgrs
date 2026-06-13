@@ -3046,6 +3046,18 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph_with_support(
     operation: ExactBooleanOperation,
     support: ExactBooleanSupport,
 ) -> Result<ExactBooleanPreflight, MeshError> {
+    if support == ExactBooleanSupport::RequiresCertifiedWinding
+        && operation == ExactBooleanOperation::Difference
+        && let Some(evidence) = coplanar_boundary_only_evidence_if_consumed(graph, left, right)?
+    {
+        let mut preflight = certified_shortcut_preflight_from_graph(
+            operation,
+            ExactBooleanSupport::CertifiedClosedBoundaryTouchingDifference,
+            graph,
+        );
+        preflight.coplanar_volumetric_evidence = Some(evidence);
+        return Ok(preflight);
+    }
     if support == ExactBooleanSupport::CertifiedArrangementCellComplex {
         return Ok(certified_arrangement_cell_complex_preflight_from_graph(
             operation, graph, left, right,
@@ -3170,12 +3182,11 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph_with_support(
             &graph,
         ));
     }
-    if matches!(
-        operation,
-        ExactBooleanOperation::Intersection | ExactBooleanOperation::Difference
-    ) && certified_arrangement_regularized_boundary_contact_from_graph(
-        &graph, left, right, operation,
-    )? {
+    if operation == ExactBooleanOperation::Intersection
+        && certified_arrangement_regularized_boundary_contact_from_graph(
+            &graph, left, right, operation,
+        )?
+    {
         return Ok(certified_arrangement_cell_complex_preflight_from_graph(
             operation, &graph, left, right,
         ));
@@ -4674,6 +4685,14 @@ fn materialize_boolean_exact_request(
         && meshes_are_certified_same_surface(left, right)
     {
         return boolean_same_surface_meshes(left, operation, validation);
+    }
+    if matches!(
+        operation,
+        ExactBooleanOperation::Intersection | ExactBooleanOperation::Difference
+    ) && let Some(result) =
+        materialize_closed_no_volume_overlap_regularized_result(left, right, request, None)?
+    {
+        return Ok(result);
     }
     if let Some(result) =
         boolean_arrangement_orthogonal_solid_cell_recovery(left, right, operation, validation)?
@@ -6344,13 +6363,11 @@ fn boolean_arrangement_regularized_no_volume_overlap_from_graph(
 }
 
 fn materialized_result_with_evidence_replays_sources(
-    materialized: Option<(ExactBooleanResult, CoplanarVolumetricCellEvidenceReport)>,
+    result: ExactBooleanResult,
+    evidence: CoplanarVolumetricCellEvidenceReport,
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> Option<(ExactBooleanResult, CoplanarVolumetricCellEvidenceReport)> {
-    let Some((result, evidence)) = materialized else {
-        return None;
-    };
     if result.validate_against_sources(left, right).is_err()
         || evidence.validate_against_sources(left, right).is_err()
     {
@@ -6381,6 +6398,15 @@ pub(crate) fn materialize_closed_no_volume_overlap_regularized_boolean_with_evid
         || evidence.positive_area_coplanar_overlapping_pairs == 0
     {
         return Ok(None);
+    }
+    if operation == ExactBooleanOperation::Union
+        && let Some(result) = certified_arrangement_cell_complex_result_from_graph(
+            graph, left, right, operation, validation, true,
+        )?
+    {
+        return Ok(materialized_result_with_evidence_replays_sources(
+            result, evidence, left, right,
+        ));
     }
     let result = match operation {
         ExactBooleanOperation::Union => {
@@ -6418,9 +6444,7 @@ pub(crate) fn materialize_closed_no_volume_overlap_regularized_boolean_with_evid
         ExactBooleanOperation::SelectedRegions(_) => unreachable!("handled above"),
     };
     Ok(materialized_result_with_evidence_replays_sources(
-        Some((result, evidence)),
-        left,
-        right,
+        result, evidence, left, right,
     ))
 }
 
@@ -9666,9 +9690,7 @@ pub(crate) fn materialize_closed_boundary_touching_regularized_boolean_with_evid
     };
     let result = certified_shortcut_result(mesh, operation, shortcut);
     Ok(materialized_result_with_evidence_replays_sources(
-        Some((result, evidence)),
-        left,
-        right,
+        result, evidence, left, right,
     ))
 }
 
@@ -10290,6 +10312,24 @@ fn winding_readiness_report_from_graph(
             counts.into_blocker(ExactBooleanBlockerKind::NeedsRefinement),
             None,
             None,
+        ));
+    }
+    if operation == ExactBooleanOperation::Difference
+        && preflight_tail_shortcut_support(left, right, operation)
+            != Some(ExactBooleanSupport::CertifiedArrangementCellComplex)
+        && let Some(evidence) = coplanar_boundary_only_evidence_if_consumed(graph, left, right)?
+    {
+        return Ok(winding_readiness_report(
+            operation,
+            ExactWindingReadinessStatus::ClosedBoundaryTouchingAlreadyMaterialized,
+            graph_had_unknowns,
+            graph.face_pairs.len(),
+            graph.event_count(),
+            0,
+            Vec::new(),
+            counts.into_blocker(ExactBooleanBlockerKind::NeedsBoundaryPolicy),
+            None,
+            Some(evidence),
         ));
     }
     if !graph.face_pairs.is_empty()
