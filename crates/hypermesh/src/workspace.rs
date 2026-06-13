@@ -175,6 +175,15 @@ impl<'a> ExactBooleanWorkspace<'a> {
         Ok(graph)
     }
 
+    fn validated_graph_with_sources(
+        &mut self,
+    ) -> Result<(&ExactIntersectionGraph, &'a ExactMesh, &'a ExactMesh), MeshError> {
+        let left = self.left;
+        let right = self.right;
+        let graph = self.validated_graph()?;
+        Ok((graph, left, right))
+    }
+
     /// Returns retained coplanar volumetric-cell evidence, deriving it from
     /// the workspace's cached exact intersection graph.
     pub fn coplanar_volumetric_cell_evidence(
@@ -232,19 +241,12 @@ impl<'a> ExactBooleanWorkspace<'a> {
             return Ok(cached.clone());
         }
 
-        self.graph()?;
-        let graph = self
-            .graph
-            .as_ref()
-            .expect("intersection graph cache was just populated");
-        graph
-            .validate_against_meshes(self.left, self.right)
-            .map_err(workspace_graph_validation_error)?;
+        let (graph, left, right) = self.validated_graph_with_sources()?;
         let materialized =
             materialize_closed_boundary_touching_regularized_boolean_with_evidence_from_graph(
                 graph,
-                self.left,
-                self.right,
+                left,
+                right,
                 request.operation,
                 request.validation,
             )?;
@@ -269,19 +271,12 @@ impl<'a> ExactBooleanWorkspace<'a> {
             return Ok(cached.clone());
         }
 
-        self.graph()?;
-        let graph = self
-            .graph
-            .as_ref()
-            .expect("intersection graph cache was just populated");
-        graph
-            .validate_against_meshes(self.left, self.right)
-            .map_err(workspace_graph_validation_error)?;
+        let (graph, left, right) = self.validated_graph_with_sources()?;
         let materialized =
             materialize_closed_no_volume_overlap_regularized_boolean_with_evidence_from_graph(
                 graph,
-                self.left,
-                self.right,
+                left,
+                right,
                 request.operation,
                 request.validation,
             )?;
@@ -306,17 +301,9 @@ impl<'a> ExactBooleanWorkspace<'a> {
             return Ok(cached.clone());
         }
 
-        self.graph()?;
-        let graph = self
-            .graph
-            .as_ref()
-            .expect("intersection graph cache was just populated");
-        graph
-            .validate_against_meshes(self.left, self.right)
-            .map_err(workspace_graph_validation_error)?;
-        let materialized = materialize_open_surface_disjoint_from_graph_for_request(
-            graph, self.left, self.right, request,
-        )?;
+        let (graph, left, right) = self.validated_graph_with_sources()?;
+        let materialized =
+            materialize_open_surface_disjoint_from_graph_for_request(graph, left, right, request)?;
         validate_retained_optional_result(&materialized, self.left, self.right, request)?;
         self.open_surface_disjoint_materializations
             .push((request, materialized.clone()));
@@ -352,16 +339,9 @@ impl<'a> ExactBooleanWorkspace<'a> {
             return Ok(materialized);
         }
 
-        self.graph()?;
-        let graph = self
-            .graph
-            .as_ref()
-            .expect("intersection graph cache was just populated");
-        graph
-            .validate_against_meshes(self.left, self.right)
-            .map_err(workspace_graph_validation_error)?;
+        let (graph, left, right) = self.validated_graph_with_sources()?;
         let materialized = materialize_boundary_touching_policy_from_graph_for_request(
-            graph, self.left, self.right, request,
+            graph, left, right, request,
         )?;
         validate_retained_optional_result(&materialized, self.left, self.right, request)?;
         self.boundary_touching_policy_materializations
@@ -384,18 +364,11 @@ impl<'a> ExactBooleanWorkspace<'a> {
             return Ok(cached.clone());
         }
 
-        self.graph()?;
-        let graph = self
-            .graph
-            .as_ref()
-            .expect("intersection graph cache was just populated");
-        graph
-            .validate_against_meshes(self.left, self.right)
-            .map_err(workspace_graph_validation_error)?;
+        let (graph, left, right) = self.validated_graph_with_sources()?;
         let materialized = materialize_closed_winding_from_graph_for_request(
             graph,
-            self.left,
-            self.right,
+            left,
+            right,
             request,
             ClosedWindingMaterialization::Containment,
         )?;
@@ -420,18 +393,11 @@ impl<'a> ExactBooleanWorkspace<'a> {
             return Ok(cached.clone());
         }
 
-        self.graph()?;
-        let graph = self
-            .graph
-            .as_ref()
-            .expect("intersection graph cache was just populated");
-        graph
-            .validate_against_meshes(self.left, self.right)
-            .map_err(workspace_graph_validation_error)?;
+        let (graph, left, right) = self.validated_graph_with_sources()?;
         let materialized = materialize_closed_winding_from_graph_for_request(
             graph,
-            self.left,
-            self.right,
+            left,
+            right,
             request,
             ClosedWindingMaterialization::Separated,
         )?;
@@ -456,16 +422,9 @@ impl<'a> ExactBooleanWorkspace<'a> {
             return Ok(cached.clone());
         }
 
-        self.graph()?;
-        let graph = self
-            .graph
-            .as_ref()
-            .expect("intersection graph cache was just populated");
-        graph
-            .validate_against_meshes(self.left, self.right)
-            .map_err(workspace_graph_validation_error)?;
+        let (graph, left, right) = self.validated_graph_with_sources()?;
         let materialized = materialize_adjacent_union_completion_from_graph_for_request(
-            graph, self.left, self.right, request,
+            graph, left, right, request,
         )?;
         validate_retained_result_with_adjacent_report(&materialized, self.left, self.right)?;
         self.adjacent_union_completion_materializations
