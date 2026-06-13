@@ -85,6 +85,7 @@ use super::reports::{
     ExactRefinementStatus, ExactReportFreshness, ExactReportValidationError,
     ExactSameSurfaceReport, ExactSameSurfaceStatus, ExactVolumetricBoundaryClosureReport,
     ExactVolumetricBoundaryClosureStatus, ExactWindingReadinessReport, ExactWindingReadinessStatus,
+    exact_report_freshness,
 };
 use super::solid::{
     ConvexSolidMeshClassification, ConvexSolidMeshRelation, ConvexSolidPointRelation,
@@ -355,15 +356,6 @@ impl ExactArrangementBooleanAttempt {
         exact_report_freshness(
             self.validate_against_sources_with_validation(left, right, validation),
         )
-    }
-}
-
-fn exact_report_freshness(
-    validation: Result<(), ExactReportValidationError>,
-) -> ExactReportFreshness {
-    match validation {
-        Ok(()) => ExactReportFreshness::Current,
-        Err(error) => error.into(),
     }
 }
 

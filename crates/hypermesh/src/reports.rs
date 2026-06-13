@@ -336,7 +336,7 @@ impl From<ExactReportValidationError> for ExactReportFreshness {
     }
 }
 
-fn exact_report_freshness(
+pub(crate) fn exact_report_freshness(
     validation: Result<(), ExactReportValidationError>,
 ) -> ExactReportFreshness {
     match validation {

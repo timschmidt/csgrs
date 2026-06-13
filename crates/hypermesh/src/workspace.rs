@@ -33,6 +33,7 @@ use super::reports::{
     ExactBoundaryTouchingReport, ExactOpenSurfaceDisjointReport, ExactPlanarArrangementReport,
     ExactRefinementReport, ExactReportFreshness, ExactReportValidationError,
     ExactSameSurfaceReport, ExactVolumetricBoundaryClosureReport, ExactWindingReadinessReport,
+    exact_report_freshness,
 };
 use super::simplify::{ExactSimplifiedCellComplex, ExactSimplifiedCellComplexFreshness};
 use super::volumetric_cells::{
@@ -1571,15 +1572,6 @@ fn workspace_coplanar_volumetric_cell_error(
             "exact boolean workspace coplanar volumetric evidence failed validation: {error:?}"
         ),
     ))
-}
-
-fn exact_report_freshness(
-    validation: Result<(), ExactReportValidationError>,
-) -> ExactReportFreshness {
-    match validation {
-        Ok(()) => ExactReportFreshness::Current,
-        Err(error) => error.into(),
-    }
 }
 
 fn validate_retained_result_with_evidence(
