@@ -1285,14 +1285,13 @@ impl<'a> ExactBooleanWorkspace<'a> {
             .expect("intersection graph cache was just populated");
         let regularized_arrangement = self.regularized_solid_arrangement();
         let result = if preflight.is_certified() {
-            if let Some((_, result)) = self
-                .materializations
-                .iter()
-                .find(|(stored_request, _)| *stored_request == request)
+            if let Some(result) =
+                cached_materialization(&self.materializations, request, |result| {
+                    validate_retained_result_for_request(self.left, self.right, request, result)
+                        .map_err(workspace_report_validation_error)
+                })?
             {
-                validate_retained_result_for_request(self.left, self.right, request, result)
-                    .map_err(workspace_report_validation_error)?;
-                Some(result.clone())
+                Some(result)
             } else {
                 Some(materialize_certified_boolean_support_with_artifacts(
                     self.left,
@@ -1330,14 +1329,11 @@ impl<'a> ExactBooleanWorkspace<'a> {
         &mut self,
         request: ExactBooleanRequest,
     ) -> Result<ExactBooleanResult, MeshError> {
-        if let Some((_, result)) = self
-            .materializations
-            .iter()
-            .find(|(stored_request, _)| *stored_request == request)
-        {
+        if let Some(result) = cached_materialization(&self.materializations, request, |result| {
             validate_retained_result_for_request(self.left, self.right, request, result)
-                .map_err(workspace_report_validation_error)?;
-            return Ok(result.clone());
+                .map_err(workspace_report_validation_error)
+        })? {
+            return Ok(result);
         }
         if let Some(evaluation) = self
             .evaluations
