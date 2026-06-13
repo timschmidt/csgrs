@@ -250,9 +250,13 @@ impl<'a> ExactBooleanWorkspace<'a> {
                 request.operation,
                 request.validation,
             )?;
-        self.closed_boundary_touching_regularized_materializations
-            .push((request, materialized.clone()));
-        Ok(materialized)
+        store_retained_result_pair(
+            &mut self.closed_boundary_touching_regularized_materializations,
+            left,
+            right,
+            request,
+            materialized,
+        )
     }
 
     /// Materializes positive-area closed boundary contact with no shared
@@ -279,9 +283,13 @@ impl<'a> ExactBooleanWorkspace<'a> {
                 request.operation,
                 request.validation,
             )?;
-        self.closed_no_volume_overlap_regularized_materializations
-            .push((request, materialized.clone()));
-        Ok(materialized)
+        store_retained_result_pair(
+            &mut self.closed_no_volume_overlap_regularized_materializations,
+            left,
+            right,
+            request,
+            materialized,
+        )
     }
 
     /// Materializes graph-disjoint open surfaces from the retained exact
@@ -302,9 +310,13 @@ impl<'a> ExactBooleanWorkspace<'a> {
         let (graph, left, right) = self.validated_graph_with_sources()?;
         let materialized =
             materialize_open_surface_disjoint_from_graph_for_request(graph, left, right, request)?;
-        self.open_surface_disjoint_materializations
-            .push((request, materialized.clone()));
-        Ok(materialized)
+        store_retained_optional_result(
+            &mut self.open_surface_disjoint_materializations,
+            left,
+            right,
+            request,
+            materialized,
+        )
     }
 
     /// Materializes explicit boundary-only projection, preserving the public
@@ -330,19 +342,26 @@ impl<'a> ExactBooleanWorkspace<'a> {
             request.validation,
         )? {
             let materialized = Some(result);
-            validate_retained_optional_result(&materialized, self.left, self.right, request)?;
-            self.boundary_touching_policy_materializations
-                .push((request, materialized.clone()));
-            return Ok(materialized);
+            return store_retained_optional_result(
+                &mut self.boundary_touching_policy_materializations,
+                self.left,
+                self.right,
+                request,
+                materialized,
+            );
         }
 
         let (graph, left, right) = self.validated_graph_with_sources()?;
         let materialized = materialize_boundary_touching_policy_from_graph_for_request(
             graph, left, right, request,
         )?;
-        self.boundary_touching_policy_materializations
-            .push((request, materialized.clone()));
-        Ok(materialized)
+        store_retained_optional_result(
+            &mut self.boundary_touching_policy_materializations,
+            left,
+            right,
+            request,
+            materialized,
+        )
     }
 
     /// Materializes closed-solid containment certified by exact winding and an
@@ -364,9 +383,13 @@ impl<'a> ExactBooleanWorkspace<'a> {
         let materialized = materialize_closed_winding_containment_from_graph_for_request(
             graph, left, right, request,
         )?;
-        self.closed_winding_containment_materializations
-            .push((request, materialized.clone()));
-        Ok(materialized)
+        store_retained_optional_result(
+            &mut self.closed_winding_containment_materializations,
+            left,
+            right,
+            request,
+            materialized,
+        )
     }
 
     /// Materializes closed-solid separation certified by exact winding and an
@@ -388,9 +411,13 @@ impl<'a> ExactBooleanWorkspace<'a> {
         let materialized = materialize_closed_winding_separated_from_graph_for_request(
             graph, left, right, request,
         )?;
-        self.closed_winding_separated_materializations
-            .push((request, materialized.clone()));
-        Ok(materialized)
+        store_retained_optional_result(
+            &mut self.closed_winding_separated_materializations,
+            left,
+            right,
+            request,
+            materialized,
+        )
     }
 
     /// Materializes adjacent closed-solid union completion from the retained
@@ -412,9 +439,13 @@ impl<'a> ExactBooleanWorkspace<'a> {
         let materialized = materialize_adjacent_union_completion_from_graph_for_request(
             graph, left, right, request,
         )?;
-        self.adjacent_union_completion_materializations
-            .push((request, materialized.clone()));
-        Ok(materialized)
+        store_retained_result_pair(
+            &mut self.adjacent_union_completion_materializations,
+            left,
+            right,
+            request,
+            materialized,
+        )
     }
 
     /// Returns the exact arrangement for `policy`, building it once per policy.
@@ -1512,6 +1543,30 @@ fn validate_retained_optional_result(
             .map_err(workspace_report_validation_error)?;
     }
     Ok(())
+}
+
+fn store_retained_optional_result(
+    cache: &mut Vec<(ExactBooleanRequest, OptionalMaterializedResult)>,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    request: ExactBooleanRequest,
+    materialized: OptionalMaterializedResult,
+) -> Result<OptionalMaterializedResult, MeshError> {
+    validate_retained_optional_result(&materialized, left, right, request)?;
+    cache.push((request, materialized.clone()));
+    Ok(materialized)
+}
+
+fn store_retained_result_pair<T: Clone + RetainedMaterializationArtifact>(
+    cache: &mut Vec<(ExactBooleanRequest, Option<(ExactBooleanResult, T)>)>,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    request: ExactBooleanRequest,
+    materialized: Option<(ExactBooleanResult, T)>,
+) -> Result<Option<(ExactBooleanResult, T)>, MeshError> {
+    validate_retained_result_pair(&materialized, left, right, request)?;
+    cache.push((request, materialized.clone()));
+    Ok(materialized)
 }
 
 fn cached_retained_result(
