@@ -6962,7 +6962,7 @@ fn materialize_volumetric_coplanar_boundary_closure_output_from_graph(
     };
     let closure_report =
         volumetric_boundary_closure_report_from_materialized(&materialized, operation)?;
-    if closure_report.status != ExactVolumetricBoundaryClosureStatus::CoplanarClosureAvailable
+    if !closure_report.is_coplanar_closure_available()
         || closure_report.validate().is_err()
         || closure_report
             .validate_against_sources(left, right)
@@ -7232,7 +7232,7 @@ fn certified_coplanar_boundary_closure_from_materialized(
     };
     let closure_report =
         volumetric_boundary_closure_report_from_materialized(materialized, operation)?;
-    if closure_report.status != ExactVolumetricBoundaryClosureStatus::CoplanarClosureAvailable
+    if !closure_report.is_coplanar_closure_available()
         || closure_report.validate().is_err()
         || closure_report
             .validate_against_sources(left, right)

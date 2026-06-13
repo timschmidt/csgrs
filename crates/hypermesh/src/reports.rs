@@ -3616,6 +3616,15 @@ pub struct ExactVolumetricBoundaryClosureReport {
 }
 
 impl ExactVolumetricBoundaryClosureReport {
+    /// Return whether retained evidence proves coplanar boundary closure is
+    /// available for the materialized volumetric output.
+    pub const fn is_coplanar_closure_available(&self) -> bool {
+        matches!(
+            self.status,
+            ExactVolumetricBoundaryClosureStatus::CoplanarClosureAvailable
+        )
+    }
+
     /// Validate this report against the source meshes that produced it.
     pub fn validate_against_sources(
         &self,
@@ -7142,6 +7151,13 @@ mod tests {
 
     #[test]
     fn volumetric_boundary_report_rejects_impossible_count_bounds() {
+        let mut report = valid_noncoplanar_closure_report();
+        report.status = ExactVolumetricBoundaryClosureStatus::CoplanarClosureAvailable;
+        report.noncoplanar_boundary_loops = 0;
+        report.coplanar_loop_groups = 1;
+        report.validate().unwrap();
+        assert!(report.is_coplanar_closure_available());
+
         let mut report = valid_noncoplanar_closure_report();
         report.boundary_loops = 2;
         assert_eq!(
