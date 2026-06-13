@@ -2854,7 +2854,10 @@ fn materialize_certified_arrangement_cell_complex_support_with_arrangement(
             graph, left, right, operation, validation,
         )
     } else {
-        boolean_arrangement_cell_complex_meshes(left, right, operation, validation)
+        let graph = validated_intersection_graph(left, right)?;
+        boolean_arrangement_cell_complex_meshes_from_graph(
+            &graph, left, right, operation, validation,
+        )
     }
 }
 
@@ -5005,16 +5008,6 @@ fn arrangement_attempt_from_outcome(
         ArrangementCellComplexOutcome::Materialized(_, attempt)
         | ArrangementCellComplexOutcome::Declined(attempt) => attempt,
     }
-}
-
-fn boolean_arrangement_cell_complex_meshes(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: ValidationPolicy,
-) -> Result<Option<ExactBooleanResult>, MeshError> {
-    let graph = validated_intersection_graph(left, right)?;
-    boolean_arrangement_cell_complex_meshes_from_graph(&graph, left, right, operation, validation)
 }
 
 fn boolean_arrangement_cell_complex_meshes_from_graph(
