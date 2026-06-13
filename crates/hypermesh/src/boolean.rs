@@ -2683,16 +2683,16 @@ pub(crate) fn materialize_certified_boolean_support_with_artifacts(
             )?
         }
         ExactBooleanSupport::CertifiedEmptyOperand => {
-            Some(boolean_empty_operand(left, right, operation, validation)?)
+            request.materialize_empty_operand(left, right)?
         }
         ExactBooleanSupport::CertifiedBoundsDisjoint => {
-            Some(boolean_disjoint_meshes(left, right, operation, validation)?)
+            request.materialize_bounds_disjoint(left, right)?
         }
         ExactBooleanSupport::CertifiedIdentical => {
-            Some(boolean_identical_meshes(left, operation, validation)?)
+            request.materialize_identical_mesh(left, right)?
         }
         ExactBooleanSupport::CertifiedSameSurface => {
-            Some(boolean_same_surface_meshes(left, operation, validation)?)
+            request.materialize_same_surface(left, right)?
         }
         ExactBooleanSupport::CertifiedClosedBoundaryTouchingUnion
         | ExactBooleanSupport::CertifiedClosedBoundaryTouchingIntersection
@@ -2764,11 +2764,11 @@ pub(crate) fn materialize_certified_boolean_support_with_artifacts(
         ExactBooleanSupport::CertifiedConvexUnion
         | ExactBooleanSupport::CertifiedConvexIntersection
         | ExactBooleanSupport::CertifiedConvexDifference => {
-            boolean_convex_meshes_optional(left, right, operation, validation)?
+            request.materialize_closed_convex(left, right)?
         }
         ExactBooleanSupport::CertifiedConvexSeparated
         | ExactBooleanSupport::CertifiedConvexContainment => {
-            boolean_convex_relation_meshes_optional(left, right, operation, validation)?
+            request.materialize_closed_convex(left, right)?
         }
         ExactBooleanSupport::RequiresBoundaryPolicy
         | ExactBooleanSupport::RequiresPlanarArrangement
