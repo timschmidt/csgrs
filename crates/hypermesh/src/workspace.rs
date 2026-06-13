@@ -215,15 +215,6 @@ impl<'a> ExactBooleanWorkspace<'a> {
             .expect("coplanar volumetric-cell evidence cache was just populated"))
     }
 
-    /// Validate coplanar volumetric-cell evidence against this workspace's
-    /// retained source session.
-    pub fn validate_coplanar_volumetric_cell_evidence(
-        &mut self,
-        report: &CoplanarVolumetricCellEvidenceReport,
-    ) -> Result<(), CoplanarVolumetricCellEvidenceError> {
-        report.validate_against_sources(self.left, self.right)
-    }
-
     /// Classify coplanar volumetric-cell evidence freshness in this retained
     /// source session.
     pub fn coplanar_volumetric_cell_evidence_freshness(
@@ -1699,8 +1690,8 @@ mod tests {
             .coplanar_volumetric_cell_evidence()
             .unwrap()
             .clone();
-        workspace
-            .validate_coplanar_volumetric_cell_evidence(&coplanar_volumetric_evidence)
+        coplanar_volumetric_evidence
+            .validate_against_sources(&left, &right)
             .unwrap();
         assert_eq!(
             workspace.coplanar_volumetric_cell_evidence_freshness(&coplanar_volumetric_evidence),
@@ -1709,8 +1700,7 @@ mod tests {
         let mut stale_coplanar_volumetric_evidence = coplanar_volumetric_evidence.clone();
         stale_coplanar_volumetric_evidence.retained_face_pair_count += 1;
         assert_eq!(
-            workspace
-                .validate_coplanar_volumetric_cell_evidence(&stale_coplanar_volumetric_evidence),
+            stale_coplanar_volumetric_evidence.validate_against_sources(&left, &right),
             Err(CoplanarVolumetricCellEvidenceError::FacePairCountMismatch)
         );
         assert_eq!(

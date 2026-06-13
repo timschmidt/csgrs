@@ -303,8 +303,8 @@ fn run_case(case: &BenchCase) {
         || retained_workspace_and_coplanar_volumetric_evidence_for_case(case, request),
         |(retained_workspace, report)| {
             black_box(
-                retained_workspace
-                    .validate_coplanar_volumetric_cell_evidence(report)
+                report
+                    .validate_against_sources(retained_workspace.left(), retained_workspace.right())
                     .ok(),
             );
         },
