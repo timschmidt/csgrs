@@ -6430,15 +6430,11 @@ pub(crate) fn materialize_closed_no_volume_overlap_regularized_boolean_with_evid
                 "empty exact no-volume-overlap regularized intersection",
                 validation,
             )?;
-            let result = certified_shortcut_result(
+            certified_shortcut_result(
                 mesh,
                 operation,
                 ExactBooleanShortcutKind::ClosedBoundaryTouchingIntersection,
-            );
-            if result.validate_against_sources(left, right).is_err() {
-                return Ok(None);
-            }
-            result
+            )
         }
         ExactBooleanOperation::Difference => {
             let mesh = copy_mesh(
@@ -6446,19 +6442,19 @@ pub(crate) fn materialize_closed_no_volume_overlap_regularized_boolean_with_evid
                 "exact no-volume-overlap difference preserving left shell",
                 validation,
             )?;
-            let result = certified_shortcut_result(
+            certified_shortcut_result(
                 mesh,
                 operation,
                 ExactBooleanShortcutKind::ClosedBoundaryTouchingDifference,
-            );
-            if result.validate_against_sources(left, right).is_err() {
-                return Ok(None);
-            }
-            result
+            )
         }
         ExactBooleanOperation::SelectedRegions(_) => unreachable!("handled above"),
     };
-    Ok(Some((result, evidence)))
+    Ok(materialized_result_with_evidence_replays_sources(
+        Some((result, evidence)),
+        left,
+        right,
+    ))
 }
 
 fn arrangement_difference_preserves_source_surface(
@@ -9686,10 +9682,11 @@ pub(crate) fn materialize_closed_boundary_touching_regularized_boolean_with_evid
         ExactBooleanOperation::SelectedRegions(_) => unreachable!("handled above"),
     };
     let result = certified_shortcut_result(mesh, operation, shortcut);
-    if result.validate_against_sources(left, right).is_err() {
-        return Ok(None);
-    }
-    Ok(Some((result, evidence)))
+    Ok(materialized_result_with_evidence_replays_sources(
+        Some((result, evidence)),
+        left,
+        right,
+    ))
 }
 
 fn validate_consumed_boundary_touching_report(
