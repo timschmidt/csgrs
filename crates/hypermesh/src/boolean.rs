@@ -3053,21 +3053,6 @@ fn preflight_without_graph_if_supported(
     })
 }
 
-fn preflight_boolean_exact_reject_boundary_policy(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-) -> Result<ExactBooleanPreflight, MeshError> {
-    let support = initial_reject_boundary_preflight_support(left, right, operation);
-
-    if let Some(preflight) = preflight_without_graph_if_supported(operation, support) {
-        return Ok(preflight);
-    }
-
-    let graph = validated_intersection_graph(left, right)?;
-    preflight_boolean_exact_reject_boundary_policy_from_graph(&graph, left, right, operation)
-}
-
 fn preflight_boolean_exact_reject_boundary_policy_from_graph(
     graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
@@ -3481,15 +3466,8 @@ fn preflight_boolean_exact_with_validation_reject_boundary_policy(
     {
         return Ok(certified_shortcut_preflight(operation, support));
     }
-    let preflight = preflight_boolean_exact_reject_boundary_policy(left, right, operation)?;
-    if validation == ValidationPolicy::CLOSED
-        || matches!(operation, ExactBooleanOperation::SelectedRegions(_))
-        || !matches!(
-            preflight.support,
-            ExactBooleanSupport::RequiresCertifiedWinding
-                | ExactBooleanSupport::RequiresCoplanarVolumetricCells
-        )
-    {
+    let support = initial_reject_boundary_preflight_support(left, right, operation);
+    if let Some(preflight) = preflight_without_graph_if_supported(operation, support) {
         return Ok(preflight);
     }
 
