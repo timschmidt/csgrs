@@ -5514,15 +5514,16 @@ fn run_arrangement_cell_complex_attempt_from_arrangement_with_recovery_timing(
         }
         if arrangement_blockers_are_unregularized_sheet_complex(&arrangement.blockers)
             && let Some(validation) = validation
-            && let Some(outcome) = arrangement_convex_regularized_sheet_recovery_outcome(
-                &mut attempt,
-                left,
-                right,
-                operation,
-                validation,
-            )?
         {
-            return Ok(outcome);
+            if let Some(result) = boolean_arrangement_convex_regularized_sheet_recovery(
+                left, right, operation, validation,
+            )? {
+                return Ok(materialized_arrangement_attempt_outcome(
+                    &mut attempt,
+                    result,
+                    true,
+                ));
+            }
         }
         attempt.decline = Some(ExactArrangementBooleanDecline::ArrangementBlockers(
             arrangement.blockers.clone(),
@@ -6656,23 +6657,6 @@ fn arrangement_volumetric_split_cell_recovery_outcome(
                 ),
             ));
         }
-        return Ok(None);
-    };
-    Ok(Some(materialized_arrangement_attempt_outcome(
-        attempt, result, true,
-    )))
-}
-
-fn arrangement_convex_regularized_sheet_recovery_outcome(
-    attempt: &mut ExactArrangementBooleanAttempt,
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: ValidationPolicy,
-) -> Result<Option<ArrangementCellComplexOutcome>, MeshError> {
-    let Some(result) =
-        boolean_arrangement_convex_regularized_sheet_recovery(left, right, operation, validation)?
-    else {
         return Ok(None);
     };
     Ok(Some(materialized_arrangement_attempt_outcome(
