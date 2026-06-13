@@ -2176,15 +2176,11 @@ fn exact_boolean_preflight_matches_certifications(
                 )
         }
         ExactBooleanSupport::RequiresCertifiedWinding => {
-            matches!(
-                status,
-                ExactWindingReadinessStatus::Ready
-                    | ExactWindingReadinessStatus::NoNontrivialOverlap
-                    | ExactWindingReadinessStatus::VolumetricAssemblyRequired
-            ) && exact_boolean_preflight_matches_winding_handoff(
-                preflight,
-                &certifications.winding_readiness,
-            )
+            status.routes_to_certified_winding()
+                && exact_boolean_preflight_matches_winding_handoff(
+                    preflight,
+                    &certifications.winding_readiness,
+                )
         }
     }
 }
@@ -12969,6 +12965,39 @@ mod tests {
             ExactWindingReadinessStatus::ClosedWindingContainmentAlreadyMaterialized,
         ] {
             assert!(!status.materializes_arrangement_cell_complex());
+        }
+
+        for status in [
+            ExactWindingReadinessStatus::Ready,
+            ExactWindingReadinessStatus::NoNontrivialOverlap,
+            ExactWindingReadinessStatus::VolumetricAssemblyRequired,
+        ] {
+            assert!(status.routes_to_certified_winding());
+        }
+
+        for status in [
+            ExactWindingReadinessStatus::NotNamedOperation,
+            ExactWindingReadinessStatus::GraphUnknowns,
+            ExactWindingReadinessStatus::BoundaryPolicyRequired,
+            ExactWindingReadinessStatus::PlanarArrangementRequired,
+            ExactWindingReadinessStatus::PlanarArrangementAlreadyMaterialized,
+            ExactWindingReadinessStatus::CoplanarVolumetricCellsRequired,
+            ExactWindingReadinessStatus::CoplanarVolumetricCellsAlreadyMaterialized,
+            ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized,
+            ExactWindingReadinessStatus::MixedDimensionalRegularizedSolidAlreadyMaterialized,
+            ExactWindingReadinessStatus::LowerDimensionalRegularizedSolidAlreadyMaterialized,
+            ExactWindingReadinessStatus::ConvexBooleanAlreadyMaterialized,
+            ExactWindingReadinessStatus::OpenSurfaceArrangementAlreadyMaterialized,
+            ExactWindingReadinessStatus::SurfaceEqualityAlreadyMaterialized,
+            ExactWindingReadinessStatus::ClosedBoundaryTouchingAlreadyMaterialized,
+            ExactWindingReadinessStatus::BoundaryPolicyShortcutAlreadyMaterialized,
+            ExactWindingReadinessStatus::EmptyOperandAlreadyMaterialized,
+            ExactWindingReadinessStatus::BoundsDisjointAlreadyMaterialized,
+            ExactWindingReadinessStatus::OpenSurfaceDisjointAlreadyMaterialized,
+            ExactWindingReadinessStatus::ClosedWindingSeparatedAlreadyMaterialized,
+            ExactWindingReadinessStatus::ClosedWindingContainmentAlreadyMaterialized,
+        ] {
+            assert!(!status.routes_to_certified_winding());
         }
     }
 

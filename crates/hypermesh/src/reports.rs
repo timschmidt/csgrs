@@ -5716,6 +5716,16 @@ impl ExactWindingReadinessStatus {
                 | Self::ArrangementCellComplexAlreadyMaterialized
         )
     }
+
+    /// Returns whether this state belongs to the certified-winding handoff
+    /// support path rather than to a shortcut, caller policy, or arrangement
+    /// prerequisite.
+    pub const fn routes_to_certified_winding(&self) -> bool {
+        matches!(
+            self,
+            Self::Ready | Self::NoNontrivialOverlap | Self::VolumetricAssemblyRequired
+        )
+    }
 }
 
 /// Auditable report for the nontrivial overlap winding handoff.
