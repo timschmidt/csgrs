@@ -3352,8 +3352,7 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph_with_support(
     }
     if support == ExactBooleanSupport::RequiresCertifiedWinding
         && !graph_requires_coplanar_volumetric_cells_for_sources(&graph, left, right)
-        && let Some(convex_support) =
-            certified_direct_convex_boolean_support(left, right, operation)
+        && let Some(convex_support) = certified_convex_intersection_support(left, right, operation)
     {
         return Ok(certified_shortcut_preflight(operation, convex_support));
     }
@@ -3380,8 +3379,7 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph_with_support(
         if let Some(convex_support) = certified_convex_union_support(left, right, operation) {
             return Ok(certified_shortcut_preflight(operation, convex_support));
         }
-        if let Some(convex_support) =
-            certified_direct_convex_boolean_support(left, right, operation)
+        if let Some(convex_support) = certified_convex_intersection_support(left, right, operation)
         {
             return Ok(certified_shortcut_preflight(operation, convex_support));
         }
@@ -11033,14 +11031,6 @@ fn certified_convex_materialized_boolean_support(
     certified_convex_union_support(left, right, operation)
         .or_else(|| certified_convex_intersection_support(left, right, operation))
         .or_else(|| certified_convex_difference_support(left, right, operation))
-}
-
-fn certified_direct_convex_boolean_support(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-) -> Option<ExactBooleanSupport> {
-    certified_convex_intersection_support(left, right, operation)
 }
 
 fn certified_convex_boolean_support_from_graph(
