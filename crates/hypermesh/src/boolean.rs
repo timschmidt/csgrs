@@ -9677,12 +9677,6 @@ fn certified_closed_boundary_touching_regularized_report_from_graph(
         return Ok(None);
     }
     let report = boundary_touching_report_from_graph(graph, left, right)?;
-    certified_closed_boundary_touching_regularized_report_from_report(report)
-}
-
-fn certified_closed_boundary_touching_regularized_report_from_report(
-    report: ExactBoundaryTouchingReport,
-) -> Result<Option<ExactBoundaryTouchingReport>, MeshError> {
     if !report.is_certified() {
         return Ok(None);
     }
