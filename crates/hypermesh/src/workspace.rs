@@ -300,7 +300,6 @@ impl<'a> ExactBooleanWorkspace<'a> {
         let (graph, left, right) = self.validated_graph_with_sources()?;
         let materialized =
             materialize_open_surface_disjoint_from_graph_for_request(graph, left, right, request)?;
-        validate_retained_optional_result(&materialized, self.left, self.right, request)?;
         self.open_surface_disjoint_materializations
             .push((request, materialized.clone()));
         Ok(materialized)
@@ -339,7 +338,6 @@ impl<'a> ExactBooleanWorkspace<'a> {
         let materialized = materialize_boundary_touching_policy_from_graph_for_request(
             graph, left, right, request,
         )?;
-        validate_retained_optional_result(&materialized, self.left, self.right, request)?;
         self.boundary_touching_policy_materializations
             .push((request, materialized.clone()));
         Ok(materialized)
@@ -368,7 +366,6 @@ impl<'a> ExactBooleanWorkspace<'a> {
             request,
             ClosedWindingMaterialization::Containment,
         )?;
-        validate_retained_optional_result(&materialized, self.left, self.right, request)?;
         self.closed_winding_containment_materializations
             .push((request, materialized.clone()));
         Ok(materialized)
@@ -397,7 +394,6 @@ impl<'a> ExactBooleanWorkspace<'a> {
             request,
             ClosedWindingMaterialization::Separated,
         )?;
-        validate_retained_optional_result(&materialized, self.left, self.right, request)?;
         self.closed_winding_separated_materializations
             .push((request, materialized.clone()));
         Ok(materialized)
