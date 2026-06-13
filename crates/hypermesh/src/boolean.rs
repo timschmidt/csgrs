@@ -2529,37 +2529,8 @@ fn evaluate_boolean_exact_request(
 ) -> Result<ExactBooleanEvaluation, MeshError> {
     let graph = validated_intersection_graph(left, right)?;
     let preflight = preflight_boolean_exact_request_from_graph(&graph, left, right, request)?;
-    evaluate_boolean_exact_request_with_artifacts(left, right, request, &preflight, &graph)
-}
-
-pub(crate) fn evaluate_boolean_exact_request_with_artifacts(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    request: ExactBooleanRequest,
-    preflight: &ExactBooleanPreflight,
-    graph: &ExactIntersectionGraph,
-) -> Result<ExactBooleanEvaluation, MeshError> {
-    evaluate_boolean_exact_request_with_artifacts_and_arrangement(
-        left, right, request, preflight, graph, None,
-    )
-}
-
-pub(crate) fn evaluate_boolean_exact_request_with_artifacts_and_arrangement(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    request: ExactBooleanRequest,
-    preflight: &ExactBooleanPreflight,
-    graph: &ExactIntersectionGraph,
-    retained_regularized_arrangement: Option<&ExactArrangement>,
-) -> Result<ExactBooleanEvaluation, MeshError> {
     evaluate_boolean_exact_request_with_artifacts_and_arrangement_replay(
-        left,
-        right,
-        request,
-        preflight,
-        graph,
-        retained_regularized_arrangement,
-        true,
+        left, right, request, &preflight, &graph, None, true,
     )
 }
 
