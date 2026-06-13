@@ -418,12 +418,9 @@ impl CoplanarVolumetricCellEvidenceReport {
         left: &ExactMesh,
         right: &ExactMesh,
     ) -> CoplanarVolumetricCellEvidenceFreshness {
-        if let Err(error) = self.validate() {
-            return error.into();
-        }
-        match certify_coplanar_volumetric_cell_evidence(left, right) {
-            Ok(replay) if self == &replay => CoplanarVolumetricCellEvidenceFreshness::Current,
-            Ok(_) | Err(_) => CoplanarVolumetricCellEvidenceFreshness::SourceReplayMismatch,
+        match self.validate_against_sources(left, right) {
+            Ok(()) => CoplanarVolumetricCellEvidenceFreshness::Current,
+            Err(error) => error.into(),
         }
     }
 }

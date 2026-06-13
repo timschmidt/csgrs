@@ -230,10 +230,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
         &mut self,
         report: &CoplanarVolumetricCellEvidenceReport,
     ) -> CoplanarVolumetricCellEvidenceFreshness {
-        match self.validate_coplanar_volumetric_cell_evidence(report) {
-            Ok(()) => CoplanarVolumetricCellEvidenceFreshness::Current,
-            Err(error) => error.into(),
-        }
+        report.freshness_against_sources(self.left, self.right)
     }
 
     /// Materializes zero-area closed boundary contact from the retained exact
