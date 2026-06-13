@@ -2783,6 +2783,7 @@ fn materialize_certified_arrangement_cell_complex_support_with_arrangement(
     retained_graph: Option<&ExactIntersectionGraph>,
     retained_regularized_arrangement: Option<&ExactArrangement>,
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
+    let request = ExactBooleanRequest::new(operation, validation);
     if let Some(arrangement) = retained_regularized_arrangement {
         let outcome = run_arrangement_cell_complex_attempt_from_arrangement_with_recovery_timing(
             arrangement,
@@ -2798,14 +2799,10 @@ fn materialize_certified_arrangement_cell_complex_support_with_arrangement(
             return Ok(Some(*result));
         }
     }
-    if let Some(result) =
-        boolean_arrangement_orthogonal_solid_cell_recovery(left, right, operation, validation)?
-    {
+    if let Some(result) = request.materialize_axis_aligned_orthogonal_solid(left, right)? {
         return Ok(Some(result));
     }
-    if let Some(result) =
-        boolean_arrangement_affine_orthogonal_solid_recovery(left, right, operation, validation)?
-    {
+    if let Some(result) = request.materialize_affine_orthogonal_solid(left, right)? {
         return Ok(Some(result));
     }
     let volumetric_split_cell = if let Some(graph) = retained_graph {
@@ -2836,7 +2833,7 @@ fn materialize_certified_arrangement_cell_complex_support_with_arrangement(
     let no_volume_overlap = materialize_closed_no_volume_overlap_regularized_result(
         left,
         right,
-        ExactBooleanRequest::new(operation, validation),
+        request,
         retained_graph,
     )?;
     if let Some(result) = no_volume_overlap {
