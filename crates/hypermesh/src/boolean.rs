@@ -4981,26 +4981,9 @@ fn certified_arrangement_cell_complex_meshes_from_graph_for_priority(
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
-    let outcome = match run_arrangement_cell_complex_attempt_from_graph(
-        graph,
-        left,
-        right,
-        operation,
-        ExactRegularizationPolicy::REGULARIZED_SOLID,
-        Some(validation),
-        true,
-    ) {
-        Ok(outcome) => outcome,
-        Err(_) => return Ok(None),
-    };
-    let ArrangementCellComplexOutcome::Materialized(result, attempt) = outcome else {
-        return Ok(None);
-    };
-    if arrangement_cell_complex_result_is_certified_for_preflight(&result, &attempt, left, right) {
-        Ok(Some(*result))
-    } else {
-        Ok(None)
-    }
+    certified_arrangement_cell_complex_result_from_graph(
+        graph, left, right, operation, validation, true,
+    )
 }
 
 /// Certify and materialize a named boolean through the arrangement cell-complex
@@ -5091,26 +5074,50 @@ fn arrangement_cell_complex_materializes_for_preflight_from_graph(
             &[ValidationPolicy::CLOSED, ValidationPolicy::ALLOW_BOUNDARY]
         };
     for &validation in validation_policies {
-        match run_arrangement_cell_complex_attempt_from_graph(
+        if certified_arrangement_cell_complex_result_from_graph(
             graph,
             left,
             right,
             operation,
-            ExactRegularizationPolicy::REGULARIZED_SOLID,
-            Some(validation),
+            validation,
             regularize_unregularized_sheet_complex,
-        ) {
-            Ok(ArrangementCellComplexOutcome::Materialized(result, attempt))
-                if arrangement_cell_complex_result_is_certified_for_preflight(
-                    &result, &attempt, left, right,
-                ) =>
-            {
-                return Ok(true);
-            }
-            Ok(_) | Err(_) => {}
+        )?
+        .is_some()
+        {
+            return Ok(true);
         }
     }
     Ok(false)
+}
+
+fn certified_arrangement_cell_complex_result_from_graph(
+    graph: &ExactIntersectionGraph,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+    regularize_unregularized_sheet_complex: bool,
+) -> Result<Option<ExactBooleanResult>, MeshError> {
+    let outcome = match run_arrangement_cell_complex_attempt_from_graph(
+        graph,
+        left,
+        right,
+        operation,
+        ExactRegularizationPolicy::REGULARIZED_SOLID,
+        Some(validation),
+        regularize_unregularized_sheet_complex,
+    ) {
+        Ok(outcome) => outcome,
+        Err(_) => return Ok(None),
+    };
+    let ArrangementCellComplexOutcome::Materialized(result, attempt) = outcome else {
+        return Ok(None);
+    };
+    if arrangement_cell_complex_result_is_certified_for_preflight(&result, &attempt, left, right) {
+        Ok(Some(*result))
+    } else {
+        Ok(None)
+    }
 }
 
 fn boolean_arrangement_regularized_boundary_contact_from_graph(
