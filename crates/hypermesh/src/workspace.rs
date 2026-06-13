@@ -42,6 +42,9 @@ use super::volumetric_cells::{
     CoplanarVolumetricCellEvidenceReport,
 };
 
+type MaterializedResultWithEvidence =
+    Option<(ExactBooleanResult, CoplanarVolumetricCellEvidenceReport)>;
+
 /// Reusable exact boolean session for a fixed source-mesh pair.
 ///
 /// The workspace keeps source meshes borrowed and caches replayable exact
@@ -53,14 +56,10 @@ pub struct ExactBooleanWorkspace<'a> {
     right: &'a ExactMesh,
     graph: Option<ExactIntersectionGraph>,
     coplanar_volumetric_cell_evidence: Option<CoplanarVolumetricCellEvidenceReport>,
-    closed_boundary_touching_regularized_materializations: Vec<(
-        ExactBooleanRequest,
-        Option<(ExactBooleanResult, CoplanarVolumetricCellEvidenceReport)>,
-    )>,
-    closed_no_volume_overlap_regularized_materializations: Vec<(
-        ExactBooleanRequest,
-        Option<(ExactBooleanResult, CoplanarVolumetricCellEvidenceReport)>,
-    )>,
+    closed_boundary_touching_regularized_materializations:
+        Vec<(ExactBooleanRequest, MaterializedResultWithEvidence)>,
+    closed_no_volume_overlap_regularized_materializations:
+        Vec<(ExactBooleanRequest, MaterializedResultWithEvidence)>,
     open_surface_disjoint_materializations: Vec<(ExactBooleanRequest, Option<ExactBooleanResult>)>,
     boundary_touching_policy_materializations:
         Vec<(ExactBooleanRequest, Option<ExactBooleanResult>)>,
@@ -231,13 +230,13 @@ impl<'a> ExactBooleanWorkspace<'a> {
         &mut self,
         request: ExactBooleanRequest,
     ) -> Result<Option<(ExactBooleanResult, CoplanarVolumetricCellEvidenceReport)>, MeshError> {
-        if let Some((_, cached)) = self
-            .closed_boundary_touching_regularized_materializations
-            .iter()
-            .find(|(stored_request, _)| *stored_request == request)
-        {
-            validate_retained_result_with_evidence(cached, self.left, self.right)?;
-            return Ok(cached.clone());
+        if let Some(cached) = cached_result_with_evidence(
+            &self.closed_boundary_touching_regularized_materializations,
+            request,
+            self.left,
+            self.right,
+        )? {
+            return Ok(cached);
         }
 
         let (graph, left, right) = self.validated_graph_with_sources()?;
@@ -260,13 +259,13 @@ impl<'a> ExactBooleanWorkspace<'a> {
         &mut self,
         request: ExactBooleanRequest,
     ) -> Result<Option<(ExactBooleanResult, CoplanarVolumetricCellEvidenceReport)>, MeshError> {
-        if let Some((_, cached)) = self
-            .closed_no_volume_overlap_regularized_materializations
-            .iter()
-            .find(|(stored_request, _)| *stored_request == request)
-        {
-            validate_retained_result_with_evidence(cached, self.left, self.right)?;
-            return Ok(cached.clone());
+        if let Some(cached) = cached_result_with_evidence(
+            &self.closed_no_volume_overlap_regularized_materializations,
+            request,
+            self.left,
+            self.right,
+        )? {
+            return Ok(cached);
         }
 
         let (graph, left, right) = self.validated_graph_with_sources()?;
@@ -1511,7 +1510,7 @@ fn workspace_coplanar_volumetric_cell_error(
 }
 
 fn validate_retained_result_with_evidence(
-    materialized: &Option<(ExactBooleanResult, CoplanarVolumetricCellEvidenceReport)>,
+    materialized: &MaterializedResultWithEvidence,
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> Result<(), MeshError> {
@@ -1524,6 +1523,22 @@ fn validate_retained_result_with_evidence(
             .map_err(workspace_coplanar_volumetric_cell_error)?;
     }
     Ok(())
+}
+
+fn cached_result_with_evidence(
+    cache: &[(ExactBooleanRequest, MaterializedResultWithEvidence)],
+    request: ExactBooleanRequest,
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Result<Option<MaterializedResultWithEvidence>, MeshError> {
+    if let Some((_, cached)) = cache
+        .iter()
+        .find(|(stored_request, _)| *stored_request == request)
+    {
+        validate_retained_result_with_evidence(cached, left, right)?;
+        return Ok(Some(cached.clone()));
+    }
+    Ok(None)
 }
 
 fn validate_retained_result_with_adjacent_report(
