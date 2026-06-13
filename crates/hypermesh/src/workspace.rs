@@ -1,7 +1,7 @@
 use super::arrangement3d::{ExactArrangement, ExactTopologyAssemblyReport};
 use super::boolean::{
-    ClosedWindingMaterialization, ExactArrangementBooleanAttempt, ExactBooleanCertificationSet,
-    ExactBooleanEvaluation, ExactBooleanRequest, ExactIdenticalMeshReport,
+    ExactArrangementBooleanAttempt, ExactBooleanCertificationSet, ExactBooleanEvaluation,
+    ExactBooleanRequest, ExactIdenticalMeshReport,
     adjacent_union_completion_certification_from_graph,
     arrangement_boolean_attempt_report_from_arrangement,
     boolean_closed_validation_regularized_meshes, boundary_touching_report_from_graph,
@@ -11,7 +11,8 @@ use super::boolean::{
     materialize_certified_boolean_support_with_artifacts,
     materialize_closed_boundary_touching_regularized_boolean_with_evidence_from_graph,
     materialize_closed_no_volume_overlap_regularized_boolean_with_evidence_from_graph,
-    materialize_closed_winding_from_graph_for_request,
+    materialize_closed_winding_containment_from_graph_for_request,
+    materialize_closed_winding_separated_from_graph_for_request,
     materialize_open_surface_disjoint_from_graph_for_request,
     open_surface_disjoint_report_from_graph, planar_arrangement_report_from_graph,
     preflight_boolean_exact_request_from_graph, refinement_report_from_graph,
@@ -359,12 +360,8 @@ impl<'a> ExactBooleanWorkspace<'a> {
         }
 
         let (graph, left, right) = self.validated_graph_with_sources()?;
-        let materialized = materialize_closed_winding_from_graph_for_request(
-            graph,
-            left,
-            right,
-            request,
-            ClosedWindingMaterialization::Containment,
+        let materialized = materialize_closed_winding_containment_from_graph_for_request(
+            graph, left, right, request,
         )?;
         self.closed_winding_containment_materializations
             .push((request, materialized.clone()));
@@ -387,12 +384,8 @@ impl<'a> ExactBooleanWorkspace<'a> {
         }
 
         let (graph, left, right) = self.validated_graph_with_sources()?;
-        let materialized = materialize_closed_winding_from_graph_for_request(
-            graph,
-            left,
-            right,
-            request,
-            ClosedWindingMaterialization::Separated,
+        let materialized = materialize_closed_winding_separated_from_graph_for_request(
+            graph, left, right, request,
         )?;
         self.closed_winding_separated_materializations
             .push((request, materialized.clone()));

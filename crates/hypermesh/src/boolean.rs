@@ -1063,13 +1063,7 @@ impl ExactBooleanRequest {
         right: &ExactMesh,
     ) -> Result<Option<ExactBooleanResult>, MeshError> {
         let graph = validated_intersection_graph(left, right)?;
-        materialize_closed_winding_from_graph_for_request(
-            &graph,
-            left,
-            right,
-            self,
-            ClosedWindingMaterialization::Containment,
-        )
+        materialize_closed_winding_containment_from_graph_for_request(&graph, left, right, self)
     }
 
     /// Materialize the closed-winding separation shortcut for this request,
@@ -1080,13 +1074,7 @@ impl ExactBooleanRequest {
         right: &ExactMesh,
     ) -> Result<Option<ExactBooleanResult>, MeshError> {
         let graph = validated_intersection_graph(left, right)?;
-        materialize_closed_winding_from_graph_for_request(
-            &graph,
-            left,
-            right,
-            self,
-            ClosedWindingMaterialization::Separated,
-        )
+        materialize_closed_winding_separated_from_graph_for_request(&graph, left, right, self)
     }
 
     /// Materialize a closed-convex shortcut for this request, when convex facts
@@ -2714,30 +2702,27 @@ pub(crate) fn materialize_certified_boolean_support_with_artifacts(
                 request.materialize_open_surface_disjoint(left, right)?
             }
         }
-        ExactBooleanSupport::CertifiedClosedWindingSeparated
-        | ExactBooleanSupport::CertifiedClosedWindingContainment => {
-            let materialization = if support == ExactBooleanSupport::CertifiedClosedWindingSeparated
-            {
-                ClosedWindingMaterialization::Separated
-            } else {
-                ClosedWindingMaterialization::Containment
-            };
+        ExactBooleanSupport::CertifiedClosedWindingSeparated => {
             if let Some(graph) = retained_graph {
-                materialize_closed_winding_from_graph_for_request(
-                    graph,
-                    left,
-                    right,
-                    request,
-                    materialization,
+                materialize_closed_winding_separated_from_graph_for_request(
+                    graph, left, right, request,
                 )?
             } else {
                 let graph = validated_intersection_graph(left, right)?;
-                materialize_closed_winding_from_graph_for_request(
-                    &graph,
-                    left,
-                    right,
-                    request,
-                    materialization,
+                materialize_closed_winding_separated_from_graph_for_request(
+                    &graph, left, right, request,
+                )?
+            }
+        }
+        ExactBooleanSupport::CertifiedClosedWindingContainment => {
+            if let Some(graph) = retained_graph {
+                materialize_closed_winding_containment_from_graph_for_request(
+                    graph, left, right, request,
+                )?
+            } else {
+                let graph = validated_intersection_graph(left, right)?;
+                materialize_closed_winding_containment_from_graph_for_request(
+                    &graph, left, right, request,
                 )?
             }
         }
@@ -4406,12 +4391,6 @@ enum ClosedWindingContainmentRelation {
     RightInsideLeft,
 }
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub(crate) enum ClosedWindingMaterialization {
-    Containment,
-    Separated,
-}
-
 fn certified_closed_winding_containment_relation_from_graph(
     graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
@@ -4527,30 +4506,44 @@ fn closed_winding_shortcut_preconditions_fail(
         || meshes_are_certified_bounds_disjoint(left, right)
 }
 
-pub(crate) fn materialize_closed_winding_from_graph_for_request(
+pub(crate) fn materialize_closed_winding_containment_from_graph_for_request(
     graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
     request: ExactBooleanRequest,
-    materialization: ClosedWindingMaterialization,
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
     let operation = request.operation;
     let validation = request.validation;
     if closed_winding_shortcut_preconditions_fail(left, right, operation) {
         return Ok(None);
     }
-    let result = match materialization {
-        ClosedWindingMaterialization::Containment => {
-            boolean_closed_winding_containment_meshes_from_graph(
-                graph, left, right, operation, validation,
-            )?
-        }
-        ClosedWindingMaterialization::Separated => {
-            boolean_closed_winding_separated_meshes_from_graph(
-                graph, left, right, operation, validation,
-            )?
-        }
-    };
+    let result = boolean_closed_winding_containment_meshes_from_graph(
+        graph, left, right, operation, validation,
+    )?;
+    Ok(public_operation_replayable_result(
+        result,
+        left,
+        right,
+        operation,
+        validation,
+        ExactBoundaryBooleanPolicy::Reject,
+    ))
+}
+
+pub(crate) fn materialize_closed_winding_separated_from_graph_for_request(
+    graph: &super::graph::ExactIntersectionGraph,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    request: ExactBooleanRequest,
+) -> Result<Option<ExactBooleanResult>, MeshError> {
+    let operation = request.operation;
+    let validation = request.validation;
+    if closed_winding_shortcut_preconditions_fail(left, right, operation) {
+        return Ok(None);
+    }
+    let result = boolean_closed_winding_separated_meshes_from_graph(
+        graph, left, right, operation, validation,
+    )?;
     Ok(public_operation_replayable_result(
         result,
         left,
