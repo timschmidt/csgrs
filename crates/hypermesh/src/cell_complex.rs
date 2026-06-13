@@ -883,13 +883,23 @@ impl ExactSelectedCellComplex {
         right: &super::mesh::ExactMesh,
         policy: ExactRegularizationPolicy,
     ) -> ExactSelectedCellComplexFreshness {
-        if self.validate().is_err() {
-            return ExactSelectedCellComplexFreshness::StaleSelectedCells;
-        }
         let arrangement = match ExactArrangement::from_meshes_with_policy(left, right, policy) {
             Ok(arrangement) => arrangement,
             Err(_) => return ExactSelectedCellComplexFreshness::SourceReplayBlocked,
         };
+        self.freshness_against_arrangement(arrangement, left, right, policy)
+    }
+
+    pub(crate) fn freshness_against_arrangement(
+        &self,
+        arrangement: ExactArrangement,
+        left: &super::mesh::ExactMesh,
+        right: &super::mesh::ExactMesh,
+        policy: ExactRegularizationPolicy,
+    ) -> ExactSelectedCellComplexFreshness {
+        if self.validate().is_err() {
+            return ExactSelectedCellComplexFreshness::StaleSelectedCells;
+        }
         match select_arrangement_for_replay(arrangement, left, right, self.operation, policy) {
             Ok(replay) if selected_cell_complex_matches_replay(self, &replay) => {
                 ExactSelectedCellComplexFreshness::Current

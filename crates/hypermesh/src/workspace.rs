@@ -662,10 +662,13 @@ impl<'a> ExactBooleanWorkspace<'a> {
     /// retained source session.
     pub fn validate_selected_cell_complex(
         &mut self,
-        _request: ExactBooleanRequest,
+        request: ExactBooleanRequest,
         policy: ExactRegularizationPolicy,
         selected: &ExactSelectedCellComplex,
     ) -> Result<(), ExactArrangementBlocker> {
+        if selected.operation != request.operation {
+            return Err(ExactArrangementBlocker::UnresolvedRegionClassification);
+        }
         let arrangement = self
             .arrangement(policy)
             .map_err(|_| ExactArrangementBlocker::UnresolvedIntersection)?
@@ -681,10 +684,14 @@ impl<'a> ExactBooleanWorkspace<'a> {
         policy: ExactRegularizationPolicy,
         selected: &ExactSelectedCellComplex,
     ) -> ExactSelectedCellComplexFreshness {
-        match self.validate_selected_cell_complex(request, policy, selected) {
-            Ok(()) => ExactSelectedCellComplexFreshness::Current,
-            Err(_) => ExactSelectedCellComplexFreshness::StaleSelectedCells,
+        if selected.operation != request.operation {
+            return ExactSelectedCellComplexFreshness::StaleSelectedCells;
         }
+        let arrangement = match self.arrangement(policy) {
+            Ok(arrangement) => arrangement.clone(),
+            Err(_) => return ExactSelectedCellComplexFreshness::SourceReplayBlocked,
+        };
+        selected.freshness_against_arrangement(arrangement, self.left, self.right, policy)
     }
 
     /// Validate simplified cell-complex evidence against this workspace's
@@ -1798,6 +1805,24 @@ mod tests {
             ),
             ExactSelectedCellComplexFreshness::Current
         );
+        let mismatched_request =
+            ExactBooleanRequest::new(ExactBooleanOperation::Difference, ValidationPolicy::CLOSED);
+        assert_eq!(
+            workspace.validate_selected_cell_complex(
+                mismatched_request,
+                ExactRegularizationPolicy::REGULARIZED_SOLID,
+                &selected,
+            ),
+            Err(ExactArrangementBlocker::UnresolvedRegionClassification)
+        );
+        assert_eq!(
+            workspace.selected_cell_complex_freshness(
+                mismatched_request,
+                ExactRegularizationPolicy::REGULARIZED_SOLID,
+                &selected,
+            ),
+            ExactSelectedCellComplexFreshness::StaleSelectedCells
+        );
         let mut stale_selected = selected.clone();
         stale_selected
             .topology_assembly_report
@@ -1813,13 +1838,13 @@ mod tests {
                 )
                 .is_err()
         );
-        assert_ne!(
+        assert_eq!(
             workspace.selected_cell_complex_freshness(
                 request,
                 ExactRegularizationPolicy::REGULARIZED_SOLID,
                 &stale_selected,
             ),
-            ExactSelectedCellComplexFreshness::Current
+            ExactSelectedCellComplexFreshness::StaleSelectedCells
         );
 
         let first_simplified = workspace
