@@ -1245,10 +1245,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
         let regularized_arrangement = self.regularized_solid_arrangement();
         let result = if preflight.is_certified() {
             if let Some(result) =
-                cached_materialization(&self.materializations, request, |result| {
-                    validate_retained_result_for_request(self.left, self.right, request, result)
-                        .map_err(workspace_report_validation_error)
-                })?
+                cached_retained_result(&self.materializations, self.left, self.right, request)?
             {
                 Some(result)
             } else {
@@ -1288,10 +1285,9 @@ impl<'a> ExactBooleanWorkspace<'a> {
         &mut self,
         request: ExactBooleanRequest,
     ) -> Result<ExactBooleanResult, MeshError> {
-        if let Some(result) = cached_materialization(&self.materializations, request, |result| {
-            validate_retained_result_for_request(self.left, self.right, request, result)
-                .map_err(workspace_report_validation_error)
-        })? {
+        if let Some(result) =
+            cached_retained_result(&self.materializations, self.left, self.right, request)?
+        {
             return Ok(result);
         }
         if let Some(evaluation) = self
@@ -1510,6 +1506,18 @@ fn validate_retained_optional_result(
             .map_err(workspace_report_validation_error)?;
     }
     Ok(())
+}
+
+fn cached_retained_result(
+    cache: &[(ExactBooleanRequest, ExactBooleanResult)],
+    left: &ExactMesh,
+    right: &ExactMesh,
+    request: ExactBooleanRequest,
+) -> Result<Option<ExactBooleanResult>, MeshError> {
+    cached_materialization(cache, request, |result| {
+        validate_retained_result_for_request(left, right, request, result)
+            .map_err(workspace_report_validation_error)
+    })
 }
 
 fn cached_materialization<T: Clone>(
