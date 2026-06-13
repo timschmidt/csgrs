@@ -336,6 +336,15 @@ impl From<ExactReportValidationError> for ExactReportFreshness {
     }
 }
 
+fn exact_report_freshness(
+    validation: Result<(), ExactReportValidationError>,
+) -> ExactReportFreshness {
+    match validation {
+        Ok(()) => ExactReportFreshness::Current,
+        Err(error) => error.into(),
+    }
+}
+
 fn blocker_kind(
     blocker: Option<&ExactBooleanBlocker>,
     expected: ExactBooleanBlockerKind,
@@ -1598,10 +1607,7 @@ impl ExactBooleanResult {
         left: &ExactMesh,
         right: &ExactMesh,
     ) -> ExactReportFreshness {
-        match self.validate_against_sources(left, right) {
-            Ok(()) => ExactReportFreshness::Current,
-            Err(error) => error.into(),
-        }
+        exact_report_freshness(self.validate_against_sources(left, right))
     }
 
     pub(crate) fn validate_arrangement_cell_complex_gate_reports_against_sources(
@@ -3686,15 +3692,7 @@ impl ExactVolumetricBoundaryClosureReport {
         left: &ExactMesh,
         right: &ExactMesh,
     ) -> ExactReportFreshness {
-        if let Err(error) = self.validate() {
-            return error.into();
-        }
-        match ExactBooleanRequest::new(self.operation, ValidationPolicy::ALLOW_BOUNDARY)
-            .volumetric_boundary_closure(left, right)
-        {
-            Ok(replay) if self == &replay => ExactReportFreshness::Current,
-            Ok(_) | Err(_) => ExactReportFreshness::SourceReplayMismatch,
-        }
+        exact_report_freshness(self.validate_against_sources(left, right))
     }
 
     /// Validate status and retained closure counts.
@@ -4034,15 +4032,7 @@ impl ExactBooleanPreflight {
         left: &ExactMesh,
         right: &ExactMesh,
     ) -> ExactReportFreshness {
-        if let Err(error) = self.validate() {
-            return error.into();
-        }
-        match ExactBooleanRequest::new(self.operation, ValidationPolicy::ALLOW_BOUNDARY)
-            .preflight(left, right)
-        {
-            Ok(replay) if self == &replay => ExactReportFreshness::Current,
-            Ok(_) | Err(_) => ExactReportFreshness::SourceReplayMismatch,
-        }
+        exact_report_freshness(self.validate_against_sources(left, right))
     }
 
     /// Classify whether this retained preflight is fresh under `validation`.
@@ -4052,13 +4042,9 @@ impl ExactBooleanPreflight {
         right: &ExactMesh,
         validation: ValidationPolicy,
     ) -> ExactReportFreshness {
-        if let Err(error) = self.validate() {
-            return error.into();
-        }
-        match ExactBooleanRequest::new(self.operation, validation).preflight(left, right) {
-            Ok(replay) if self == &replay => ExactReportFreshness::Current,
-            Ok(_) | Err(_) => ExactReportFreshness::SourceReplayMismatch,
-        }
+        exact_report_freshness(
+            self.validate_against_sources_with_validation(left, right, validation),
+        )
     }
 
     /// Classify whether this retained preflight is fresh under `validation`
@@ -4070,15 +4056,12 @@ impl ExactBooleanPreflight {
         validation: ValidationPolicy,
         boundary_policy: ExactBoundaryBooleanPolicy,
     ) -> ExactReportFreshness {
-        if let Err(error) = self.validate() {
-            return error.into();
-        }
-        match ExactBooleanRequest::with_boundary_policy(self.operation, validation, boundary_policy)
-            .preflight(left, right)
-        {
-            Ok(replay) if self == &replay => ExactReportFreshness::Current,
-            Ok(_) | Err(_) => ExactReportFreshness::SourceReplayMismatch,
-        }
+        exact_report_freshness(self.validate_against_sources_with_boundary_policy(
+            left,
+            right,
+            validation,
+            boundary_policy,
+        ))
     }
 
     /// Validate support, blocker, and retained artifact consistency.
@@ -4681,15 +4664,7 @@ impl ExactRefinementReport {
         left: &ExactMesh,
         right: &ExactMesh,
     ) -> ExactReportFreshness {
-        if let Err(error) = self.validate() {
-            return error.into();
-        }
-        match ExactBooleanRequest::new(self.operation, ValidationPolicy::ALLOW_BOUNDARY)
-            .refinement_report(left, right)
-        {
-            Ok(replay) if self == &replay => ExactReportFreshness::Current,
-            Ok(_) | Err(_) => ExactReportFreshness::SourceReplayMismatch,
-        }
+        exact_report_freshness(self.validate_against_sources(left, right))
     }
 
     /// Validate status, retained counts, and refinement blocker consistency.
@@ -4876,20 +4851,7 @@ impl ExactSameSurfaceReport {
         left: &ExactMesh,
         right: &ExactMesh,
     ) -> ExactReportFreshness {
-        if let Err(error) = self.validate() {
-            return error.into();
-        }
-        if self
-            == &ExactBooleanRequest::new(
-                ExactBooleanOperation::Union,
-                ValidationPolicy::ALLOW_BOUNDARY,
-            )
-            .same_surface_report(left, right)
-        {
-            ExactReportFreshness::Current
-        } else {
-            ExactReportFreshness::SourceReplayMismatch
-        }
+        exact_report_freshness(self.validate_against_sources(left, right))
     }
 }
 
@@ -4989,18 +4951,7 @@ impl ExactOpenSurfaceDisjointReport {
         left: &ExactMesh,
         right: &ExactMesh,
     ) -> ExactReportFreshness {
-        if let Err(error) = self.validate() {
-            return error.into();
-        }
-        match ExactBooleanRequest::new(
-            ExactBooleanOperation::Union,
-            ValidationPolicy::ALLOW_BOUNDARY,
-        )
-        .open_surface_disjoint_report(left, right)
-        {
-            Ok(replay) if self == &replay => ExactReportFreshness::Current,
-            Ok(_) | Err(_) => ExactReportFreshness::SourceReplayMismatch,
-        }
+        exact_report_freshness(self.validate_against_sources(left, right))
     }
 
     /// Validate status, graph counts, and blocker consistency.
@@ -5397,15 +5348,7 @@ impl ExactAdjacentUnionCompletionReport {
         left: &ExactMesh,
         right: &ExactMesh,
     ) -> ExactReportFreshness {
-        if let Err(error) = self.validate() {
-            return error.into();
-        }
-        match ExactBooleanRequest::new(self.operation, ValidationPolicy::ALLOW_BOUNDARY)
-            .adjacent_union_completion_report(left, right)
-        {
-            Ok(replay) if self == &replay => ExactReportFreshness::Current,
-            Ok(_) | Err(_) => ExactReportFreshness::SourceReplayMismatch,
-        }
+        exact_report_freshness(self.validate_against_sources(left, right))
     }
 }
 
@@ -5493,18 +5436,7 @@ impl ExactBoundaryTouchingReport {
         left: &ExactMesh,
         right: &ExactMesh,
     ) -> ExactReportFreshness {
-        if let Err(error) = self.validate() {
-            return error.into();
-        }
-        match ExactBooleanRequest::new(
-            ExactBooleanOperation::Union,
-            ValidationPolicy::ALLOW_BOUNDARY,
-        )
-        .boundary_touching_report(left, right)
-        {
-            Ok(replay) if self == &replay => ExactReportFreshness::Current,
-            Ok(_) | Err(_) => ExactReportFreshness::SourceReplayMismatch,
-        }
+        exact_report_freshness(self.validate_against_sources(left, right))
     }
 }
 
@@ -5721,15 +5653,7 @@ impl ExactPlanarArrangementReport {
         left: &ExactMesh,
         right: &ExactMesh,
     ) -> ExactReportFreshness {
-        if let Err(error) = self.validate() {
-            return error.into();
-        }
-        match ExactBooleanRequest::new(self.operation, ValidationPolicy::ALLOW_BOUNDARY)
-            .planar_arrangement_report(left, right)
-        {
-            Ok(replay) if self == &replay => ExactReportFreshness::Current,
-            Ok(_) | Err(_) => ExactReportFreshness::SourceReplayMismatch,
-        }
+        exact_report_freshness(self.validate_against_sources(left, right))
     }
 }
 
@@ -5931,19 +5855,7 @@ impl ExactWindingReadinessReport {
         left: &ExactMesh,
         right: &ExactMesh,
     ) -> ExactReportFreshness {
-        if let Err(error) = self.validate() {
-            return error.into();
-        }
-        match ExactBooleanRequest::with_boundary_policy(
-            self.operation,
-            ValidationPolicy::ALLOW_BOUNDARY,
-            ExactBoundaryBooleanPolicy::Reject,
-        )
-        .winding_readiness(left, right)
-        {
-            Ok(replay) if self == &replay => ExactReportFreshness::Current,
-            Ok(_) | Err(_) => ExactReportFreshness::SourceReplayMismatch,
-        }
+        exact_report_freshness(self.validate_against_sources(left, right))
     }
 
     /// Classify freshness for a source replay under an explicit output
@@ -5954,13 +5866,9 @@ impl ExactWindingReadinessReport {
         right: &ExactMesh,
         validation: ValidationPolicy,
     ) -> ExactReportFreshness {
-        if let Err(error) = self.validate() {
-            return error.into();
-        }
-        match ExactBooleanRequest::new(self.operation, validation).winding_readiness(left, right) {
-            Ok(replay) if self == &replay => ExactReportFreshness::Current,
-            Ok(_) | Err(_) => ExactReportFreshness::SourceReplayMismatch,
-        }
+        exact_report_freshness(
+            self.validate_against_sources_with_validation(left, right, validation),
+        )
     }
 
     /// Classify freshness for a source replay under explicit output
@@ -5972,15 +5880,12 @@ impl ExactWindingReadinessReport {
         validation: ValidationPolicy,
         boundary_policy: ExactBoundaryBooleanPolicy,
     ) -> ExactReportFreshness {
-        if let Err(error) = self.validate() {
-            return error.into();
-        }
-        match ExactBooleanRequest::with_boundary_policy(self.operation, validation, boundary_policy)
-            .winding_readiness(left, right)
-        {
-            Ok(replay) if self == &replay => ExactReportFreshness::Current,
-            Ok(_) | Err(_) => ExactReportFreshness::SourceReplayMismatch,
-        }
+        exact_report_freshness(self.validate_against_sources_with_boundary_policy(
+            left,
+            right,
+            validation,
+            boundary_policy,
+        ))
     }
 
     /// Return whether every retained predicate route was proof-producing.
