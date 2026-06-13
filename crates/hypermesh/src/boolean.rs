@@ -3298,7 +3298,10 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph_with_support(
     }
     if support == ExactBooleanSupport::RequiresCertifiedWinding
         && operation == ExactBooleanOperation::Intersection
-        && has_empty_axis_aligned_orthogonal_solid_intersection(left, right)?
+        // The empty cavity case can have overlapping AABBs and no graph
+        // events, so this retained evidence witness is checked before falling
+        // through to winding.
+        && has_empty_axis_aligned_orthogonal_solid_cell_intersection(left, right)
     {
         return Ok(certified_arrangement_cell_complex_preflight_from_graph(
             operation, &graph, left, right,
@@ -9060,22 +9063,6 @@ fn vector_between(from: &Point3, to: &Point3) -> Point3 {
         to.y.clone() - &from.y,
         to.z.clone() - &from.z,
     )
-}
-
-/// Return whether exact orthogonal occupancy certifies an empty intersection.
-///
-/// This is intentionally narrower than the general orthogonal-cell shortcut:
-/// ordinary nonempty unions/intersections/differences should keep the more
-/// specific graph, box-cell, and boundary-touch certificates when available.
-/// The empty cavity case can have overlapping AABBs and no graph events, so
-/// this retained evidence witness is checked before falling through to winding,
-fn has_empty_axis_aligned_orthogonal_solid_intersection(
-    left: &ExactMesh,
-    right: &ExactMesh,
-) -> Result<bool, MeshError> {
-    Ok(has_empty_axis_aligned_orthogonal_solid_cell_intersection(
-        left, right,
-    ))
 }
 
 const fn axis_aligned_orthogonal_solid_operation(
