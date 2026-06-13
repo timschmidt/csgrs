@@ -215,6 +215,14 @@ pub struct ExactArrangementBooleanAttempt {
 }
 
 impl ExactArrangementBooleanAttempt {
+    /// Return whether this attempt reached the materialized arrangement
+    /// cell-complex shortcut state.
+    pub fn materialized_arrangement_cell_complex_shortcut(&self) -> bool {
+        self.stage == ExactArrangementBooleanStage::Materialized
+            && self.decline.is_none()
+            && self.materialized_shortcut == Some(ExactBooleanShortcutKind::ArrangementCellComplex)
+    }
+
     /// Validate this retained arrangement/cell-complex attempt as a coherent
     /// audit artifact.
     ///
@@ -2324,12 +2332,9 @@ fn exact_boolean_preflight_matches_open_surface_arrangement(
 fn exact_boolean_arrangement_attempt_materialized(
     attempt: &Option<ExactArrangementBooleanAttempt>,
 ) -> bool {
-    attempt.as_ref().is_some_and(|attempt| {
-        attempt.stage == ExactArrangementBooleanStage::Materialized
-            && attempt.decline.is_none()
-            && attempt.materialized_shortcut
-                == Some(ExactBooleanShortcutKind::ArrangementCellComplex)
-    })
+    attempt
+        .as_ref()
+        .is_some_and(ExactArrangementBooleanAttempt::materialized_arrangement_cell_complex_shortcut)
 }
 
 fn exact_boolean_direct_arrangement_cell_complex_shortcut_certified(
@@ -2360,10 +2365,7 @@ fn exact_boolean_direct_arrangement_cell_complex_shortcut_certified_for_operatio
             .is_some_and(|attempt| {
                 attempt.operation == operation
                     && attempt.policy == ExactRegularizationPolicy::REGULARIZED_SOLID
-                    && attempt.stage == ExactArrangementBooleanStage::Materialized
-                    && attempt.decline.is_none()
-                    && attempt.materialized_shortcut
-                        == Some(ExactBooleanShortcutKind::ArrangementCellComplex)
+                    && attempt.materialized_arrangement_cell_complex_shortcut()
             })
 }
 
@@ -5001,8 +5003,7 @@ fn arrangement_cell_complex_result_is_certified_for_preflight(
 ) -> bool {
     attempt.decline.is_none()
         && (attempt.arrangement_blockers == 0
-            || attempt.materialized_shortcut
-                == Some(ExactBooleanShortcutKind::ArrangementCellComplex))
+            || attempt.materialized_arrangement_cell_complex_shortcut())
         && matches!(
             result.kind,
             ExactBooleanResultKind::ArrangementCellComplexMaterialized { .. }
