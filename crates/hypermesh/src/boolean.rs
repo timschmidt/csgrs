@@ -1197,25 +1197,16 @@ impl ExactBooleanRequest {
     ) -> Result<Option<ExactBooleanResult>, MeshError> {
         let operation = self.operation;
         let validation = self.validation;
-        let Some(result) = boolean_arrangement_affine_orthogonal_solid_recovery(
-            left, right, operation, validation,
-        )?
-        else {
-            return Ok(None);
-        };
-        if result
-            .validate_operation_against_sources(
-                left,
-                right,
-                operation,
-                validation,
-                ExactBoundaryBooleanPolicy::Reject,
-            )
-            .is_err()
-        {
-            return Ok(None);
-        }
-        Ok(Some(result))
+        Ok(public_operation_replayable_result(
+            boolean_arrangement_affine_orthogonal_solid_recovery(
+                left, right, operation, validation,
+            )?,
+            left,
+            right,
+            operation,
+            validation,
+            ExactBoundaryBooleanPolicy::Reject,
+        ))
     }
 
     /// Materialize adjacent closed-solid union completion for this request,
@@ -4758,28 +4749,10 @@ fn public_operation_replayable_result(
     boundary_policy: ExactBoundaryBooleanPolicy,
 ) -> Option<ExactBooleanResult> {
     let result = result?;
-    exact_boolean_result_matches_public_operation_replay(
-        &result,
-        left,
-        right,
-        operation,
-        validation,
-        boundary_policy,
-    )
-    .then_some(result)
-}
-
-fn exact_boolean_result_matches_public_operation_replay(
-    result: &ExactBooleanResult,
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: ValidationPolicy,
-    boundary_policy: ExactBoundaryBooleanPolicy,
-) -> bool {
     result
         .validate_operation_against_sources(left, right, operation, validation, boundary_policy)
         .is_ok()
+        .then_some(result)
 }
 
 fn mesh_vertices_are_boundary_or_outside(report: &ClosedMeshWindingMeshReport) -> bool {

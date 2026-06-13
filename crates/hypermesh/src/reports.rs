@@ -1702,12 +1702,15 @@ impl ExactBooleanResult {
         validation: ValidationPolicy,
         boundary_policy: ExactBoundaryBooleanPolicy,
     ) -> ExactReportFreshness {
+        let request =
+            ExactBooleanRequest::with_boundary_policy(operation, validation, boundary_policy);
+        if !self.matches_request(request) {
+            return ExactReportFreshness::OperationReplayMismatch;
+        }
         if let Err(error) = self.validate_against_sources(left, right) {
             return error.into();
         }
-        match ExactBooleanRequest::with_boundary_policy(operation, validation, boundary_policy)
-            .materialize(left, right)
-        {
+        match request.materialize(left, right) {
             Ok(replay) if self == &replay => ExactReportFreshness::Current,
             Ok(_) | Err(_) => ExactReportFreshness::OperationReplayMismatch,
         }
