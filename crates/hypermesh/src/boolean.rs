@@ -5266,11 +5266,12 @@ fn arrangement_pre_cell_complex_recovery_outcome_if_available(
     operation: ExactBooleanOperation,
 ) -> Result<Option<ArrangementCellComplexOutcome>, MeshError> {
     if let Some(validation) = validation
-        && let Some(outcome) = arrangement_orthogonal_solid_cell_recovery_outcome(
-            attempt, left, right, operation, validation,
-        )?
+        && let Some(result) =
+            boolean_arrangement_orthogonal_solid_cell_recovery(left, right, operation, validation)?
     {
-        return Ok(Some(outcome));
+        return Ok(Some(materialized_arrangement_attempt_outcome(
+            attempt, result, true,
+        )));
     }
 
     if let Some(validation) = validation
@@ -5808,23 +5809,6 @@ fn boolean_arrangement_orthogonal_solid_cell_recovery(
         return Ok(None);
     }
     Ok(Some(result))
-}
-
-fn arrangement_orthogonal_solid_cell_recovery_outcome(
-    attempt: &mut ExactArrangementBooleanAttempt,
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: ValidationPolicy,
-) -> Result<Option<ArrangementCellComplexOutcome>, MeshError> {
-    let Some(result) =
-        boolean_arrangement_orthogonal_solid_cell_recovery(left, right, operation, validation)?
-    else {
-        return Ok(None);
-    };
-    Ok(Some(materialized_arrangement_attempt_outcome(
-        attempt, result, true,
-    )))
 }
 
 fn arrangement_open_surface_recovery_outcome(
@@ -6711,10 +6695,12 @@ fn arrangement_cell_complex_recovery_outcome_if_available(
     )? {
         return Ok(Some(outcome));
     }
-    if let Some(outcome) = arrangement_orthogonal_solid_cell_recovery_outcome(
-        attempt, left, right, operation, validation,
-    )? {
-        return Ok(Some(outcome));
+    if let Some(result) =
+        boolean_arrangement_orthogonal_solid_cell_recovery(left, right, operation, validation)?
+    {
+        return Ok(Some(materialized_arrangement_attempt_outcome(
+            attempt, result, true,
+        )));
     }
     let Some(result) =
         boolean_arrangement_affine_orthogonal_solid_recovery(left, right, operation, validation)?
