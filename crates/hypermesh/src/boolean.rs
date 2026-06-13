@@ -341,20 +341,7 @@ impl ExactArrangementBooleanAttempt {
         left: &ExactMesh,
         right: &ExactMesh,
     ) -> ExactReportFreshness {
-        if let Err(error) = self.validate() {
-            return error.into();
-        }
-        match arrangement_boolean_attempt_report(
-            left,
-            right,
-            ExactBooleanRequest::new(self.operation, self.output_validation),
-            self.policy,
-        ) {
-            Ok(replay) if replay.validate().is_ok() && self == &replay => {
-                ExactReportFreshness::Current
-            }
-            Ok(_) | Err(_) => ExactReportFreshness::SourceReplayMismatch,
-        }
+        exact_report_freshness(self.validate_against_sources(left, right))
     }
 
     /// Classify whether this retained arrangement attempt is fresh under an
@@ -365,20 +352,18 @@ impl ExactArrangementBooleanAttempt {
         right: &ExactMesh,
         validation: ValidationPolicy,
     ) -> ExactReportFreshness {
-        if let Err(error) = self.validate() {
-            return error.into();
-        }
-        match arrangement_boolean_attempt_report(
-            left,
-            right,
-            ExactBooleanRequest::new(self.operation, validation),
-            self.policy,
-        ) {
-            Ok(replay) if replay.validate().is_ok() && self == &replay => {
-                ExactReportFreshness::Current
-            }
-            Ok(_) | Err(_) => ExactReportFreshness::SourceReplayMismatch,
-        }
+        exact_report_freshness(
+            self.validate_against_sources_with_validation(left, right, validation),
+        )
+    }
+}
+
+fn exact_report_freshness(
+    validation: Result<(), ExactReportValidationError>,
+) -> ExactReportFreshness {
+    match validation {
+        Ok(()) => ExactReportFreshness::Current,
+        Err(error) => error.into(),
     }
 }
 
@@ -1588,10 +1573,7 @@ impl ExactBooleanCertificationSet {
         right: &ExactMesh,
         request: ExactBooleanRequest,
     ) -> ExactReportFreshness {
-        match self.validate_against_sources(left, right, request) {
-            Ok(()) => ExactReportFreshness::Current,
-            Err(error) => error.into(),
-        }
+        exact_report_freshness(self.validate_against_sources(left, right, request))
     }
 }
 
@@ -1880,20 +1862,7 @@ impl ExactIdenticalMeshReport {
         left: &ExactMesh,
         right: &ExactMesh,
     ) -> ExactReportFreshness {
-        if let Err(error) = self.validate() {
-            return error.into();
-        }
-        if self
-            == &ExactBooleanRequest::new(
-                ExactBooleanOperation::Union,
-                ValidationPolicy::ALLOW_BOUNDARY,
-            )
-            .identical_mesh_report(left, right)
-        {
-            ExactReportFreshness::Current
-        } else {
-            ExactReportFreshness::SourceReplayMismatch
-        }
+        exact_report_freshness(self.validate_against_sources(left, right))
     }
 }
 
@@ -2085,10 +2054,7 @@ impl ExactBooleanEvaluation {
         left: &ExactMesh,
         right: &ExactMesh,
     ) -> ExactReportFreshness {
-        match self.validate_against_sources(left, right) {
-            Ok(()) => ExactReportFreshness::Current,
-            Err(error) => error.into(),
-        }
+        exact_report_freshness(self.validate_against_sources(left, right))
     }
 }
 
