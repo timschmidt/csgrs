@@ -659,10 +659,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
         policy: ExactRegularizationPolicy,
         attempt: &ExactArrangementBooleanAttempt,
     ) -> ExactReportFreshness {
-        match self.validate_arrangement_attempt(request, policy, attempt) {
-            Ok(()) => ExactReportFreshness::Current,
-            Err(error) => error.into(),
-        }
+        exact_report_freshness(self.validate_arrangement_attempt(request, policy, attempt))
     }
 
     /// Returns selected exact cell-complex evidence for `request` and `policy`,
@@ -837,10 +834,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
         request: ExactBooleanRequest,
         preflight: &ExactBooleanPreflight,
     ) -> ExactReportFreshness {
-        match self.validate_preflight(request, preflight) {
-            Ok(()) => ExactReportFreshness::Current,
-            Err(error) => error.into(),
-        }
+        exact_report_freshness(self.validate_preflight(request, preflight))
     }
 
     /// Returns refinement evidence for `request`, building it once per
@@ -885,10 +879,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
         request: ExactBooleanRequest,
         report: &ExactRefinementReport,
     ) -> ExactReportFreshness {
-        match self.validate_refinement_report(request, report) {
-            Ok(()) => ExactReportFreshness::Current,
-            Err(error) => error.into(),
-        }
+        exact_report_freshness(self.validate_refinement_report(request, report))
     }
 
     /// Returns adjacent-union completion evidence for `request`, building it
@@ -944,10 +935,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
         request: ExactBooleanRequest,
         report: &ExactAdjacentUnionCompletionReport,
     ) -> ExactReportFreshness {
-        match self.validate_adjacent_union_completion_report(request, report) {
-            Ok(()) => ExactReportFreshness::Current,
-            Err(error) => error.into(),
-        }
+        exact_report_freshness(self.validate_adjacent_union_completion_report(request, report))
     }
 
     /// Returns identical-mesh evidence for `request`, building it once per
@@ -989,10 +977,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
         request: ExactBooleanRequest,
         report: &ExactIdenticalMeshReport,
     ) -> ExactReportFreshness {
-        match self.validate_identical_mesh_report(request, report) {
-            Ok(()) => ExactReportFreshness::Current,
-            Err(error) => error.into(),
-        }
+        exact_report_freshness(self.validate_identical_mesh_report(request, report))
     }
 
     /// Returns same-surface evidence for `request`, building it once per
@@ -1030,10 +1015,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
         request: ExactBooleanRequest,
         report: &ExactSameSurfaceReport,
     ) -> ExactReportFreshness {
-        match self.validate_same_surface_report(request, report) {
-            Ok(()) => ExactReportFreshness::Current,
-            Err(error) => error.into(),
-        }
+        exact_report_freshness(self.validate_same_surface_report(request, report))
     }
 
     /// Returns boundary-touching evidence for `request`, building it once per
@@ -1078,10 +1060,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
         request: ExactBooleanRequest,
         report: &ExactBoundaryTouchingReport,
     ) -> ExactReportFreshness {
-        match self.validate_boundary_touching_report(request, report) {
-            Ok(()) => ExactReportFreshness::Current,
-            Err(error) => error.into(),
-        }
+        exact_report_freshness(self.validate_boundary_touching_report(request, report))
     }
 
     /// Returns open-surface disjointness evidence for `request`, building it
@@ -1127,10 +1106,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
         request: ExactBooleanRequest,
         report: &ExactOpenSurfaceDisjointReport,
     ) -> ExactReportFreshness {
-        match self.validate_open_surface_disjoint_report(request, report) {
-            Ok(()) => ExactReportFreshness::Current,
-            Err(error) => error.into(),
-        }
+        exact_report_freshness(self.validate_open_surface_disjoint_report(request, report))
     }
 
     /// Returns volumetric boundary-closure evidence for `request`, building it
@@ -1181,10 +1157,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
         request: ExactBooleanRequest,
         report: &ExactVolumetricBoundaryClosureReport,
     ) -> ExactReportFreshness {
-        match self.validate_volumetric_boundary_closure(request, report) {
-            Ok(()) => ExactReportFreshness::Current,
-            Err(error) => error.into(),
-        }
+        exact_report_freshness(self.validate_volumetric_boundary_closure(request, report))
     }
 
     /// Returns winding-readiness evidence for `request`, building it once per
@@ -1238,10 +1211,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
         request: ExactBooleanRequest,
         readiness: &ExactWindingReadinessReport,
     ) -> ExactReportFreshness {
-        match self.validate_winding_readiness(request, readiness) {
-            Ok(()) => ExactReportFreshness::Current,
-            Err(error) => error.into(),
-        }
+        exact_report_freshness(self.validate_winding_readiness(request, readiness))
     }
 
     /// Returns planar-arrangement readiness evidence for `request`, building
@@ -1290,10 +1260,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
         request: ExactBooleanRequest,
         report: &ExactPlanarArrangementReport,
     ) -> ExactReportFreshness {
-        match self.validate_planar_arrangement_report(request, report) {
-            Ok(()) => ExactReportFreshness::Current,
-            Err(error) => error.into(),
-        }
+        exact_report_freshness(self.validate_planar_arrangement_report(request, report))
     }
 
     /// Returns the full exact boolean certification bundle for `request`,
@@ -1364,10 +1331,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
         request: ExactBooleanRequest,
         certifications: &ExactBooleanCertificationSet,
     ) -> ExactReportFreshness {
-        match self.validate_certification_set(request, certifications) {
-            Ok(()) => ExactReportFreshness::Current,
-            Err(error) => error.into(),
-        }
+        exact_report_freshness(self.validate_certification_set(request, certifications))
     }
 
     /// Returns an exact boolean evaluation for `request`, building it once per
@@ -1517,10 +1481,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
         &mut self,
         evaluation: &ExactBooleanEvaluation,
     ) -> ExactReportFreshness {
-        match self.validate_evaluation(evaluation) {
-            Ok(()) => ExactReportFreshness::Current,
-            Err(error) => error.into(),
-        }
+        exact_report_freshness(self.validate_evaluation(evaluation))
     }
 
     /// Validate a materialized result against this workspace's source meshes
@@ -1580,10 +1541,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
         request: ExactBooleanRequest,
         result: &ExactBooleanResult,
     ) -> ExactReportFreshness {
-        match self.validate_result(request, result) {
-            Ok(()) => ExactReportFreshness::Current,
-            Err(error) => error.into(),
-        }
+        exact_report_freshness(self.validate_result(request, result))
     }
 }
 
@@ -1613,6 +1571,15 @@ fn workspace_coplanar_volumetric_cell_error(
             "exact boolean workspace coplanar volumetric evidence failed validation: {error:?}"
         ),
     ))
+}
+
+fn exact_report_freshness(
+    validation: Result<(), ExactReportValidationError>,
+) -> ExactReportFreshness {
+    match validation {
+        Ok(()) => ExactReportFreshness::Current,
+        Err(error) => error.into(),
+    }
 }
 
 fn validate_retained_result_with_evidence(
