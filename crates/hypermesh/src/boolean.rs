@@ -2783,9 +2783,21 @@ fn materialize_certified_arrangement_cell_complex_support_with_arrangement(
             true,
             false,
         )?;
-        if let ArrangementCellComplexOutcome::Materialized(result, _) = outcome {
+        if let ArrangementCellComplexOutcome::Materialized(result, attempt) = outcome
+            && arrangement_cell_complex_result_is_certified_for_preflight(
+                &result, &attempt, left, right,
+            )
+        {
             return Ok(Some(*result));
         }
+    }
+    if let Some(graph) = retained_graph
+        && !graph.face_pairs.is_empty()
+        && let Some(result) = certified_arrangement_cell_complex_meshes_from_graph_for_priority(
+            graph, left, right, operation, validation,
+        )?
+    {
+        return Ok(Some(result));
     }
     if let Some(result) = request.materialize_axis_aligned_orthogonal_solid(left, right)? {
         return Ok(Some(result));
@@ -3093,6 +3105,18 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph_with_support(
         });
     }
     if support == ExactBooleanSupport::RequiresCertifiedWinding
+        && !graph.face_pairs.is_empty()
+        && let Some(preflight) = cached_certified_arrangement_cell_complex_preflight(
+            &mut certified_arrangement_preflight,
+            operation,
+            &graph,
+            left,
+            right,
+        )?
+    {
+        return Ok(preflight);
+    }
+    if support == ExactBooleanSupport::RequiresCertifiedWinding
         && let Some(convex_support) =
             certified_convex_materialized_boolean_support(left, right, operation)
     {
@@ -3160,17 +3184,6 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph_with_support(
             open_surface_support,
             &graph,
         ));
-    }
-    if support == ExactBooleanSupport::RequiresCertifiedWinding
-        && let Some(preflight) = cached_certified_arrangement_cell_complex_preflight(
-            &mut certified_arrangement_preflight,
-            operation,
-            &graph,
-            left,
-            right,
-        )?
-    {
-        return Ok(preflight);
     }
     if matches!(
         operation,
@@ -4666,6 +4679,15 @@ fn materialize_boolean_exact_request(
     {
         return Ok(result);
     }
+    let graph = validated_intersection_graph(left, right);
+    if let Ok(graph) = graph.as_ref()
+        && !graph.face_pairs.is_empty()
+        && let Some(result) = certified_arrangement_cell_complex_meshes_from_graph_for_priority(
+            graph, left, right, operation, validation,
+        )?
+    {
+        return Ok(result);
+    }
     if let Some(result) = boolean_convex_meshes_optional(left, right, operation, validation)? {
         return Ok(result);
     }
@@ -4675,7 +4697,7 @@ fn materialize_boolean_exact_request(
         return Ok(result);
     }
 
-    let graph = validated_intersection_graph(left, right)?;
+    let graph = graph?;
 
     if let Some(result) = boolean_closed_winding_separated_meshes_from_graph(
         &graph, left, right, operation, validation,
@@ -4952,6 +4974,35 @@ fn boolean_arrangement_cell_complex_meshes_from_graph(
     }
 }
 
+fn certified_arrangement_cell_complex_meshes_from_graph_for_priority(
+    graph: &ExactIntersectionGraph,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+) -> Result<Option<ExactBooleanResult>, MeshError> {
+    let outcome = match run_arrangement_cell_complex_attempt_from_graph(
+        graph,
+        left,
+        right,
+        operation,
+        ExactRegularizationPolicy::REGULARIZED_SOLID,
+        Some(validation),
+        true,
+    ) {
+        Ok(outcome) => outcome,
+        Err(_) => return Ok(None),
+    };
+    let ArrangementCellComplexOutcome::Materialized(result, attempt) = outcome else {
+        return Ok(None);
+    };
+    if arrangement_cell_complex_result_is_certified_for_preflight(&result, &attempt, left, right) {
+        Ok(Some(*result))
+    } else {
+        Ok(None)
+    }
+}
+
 /// Certify and materialize a named boolean through the arrangement cell-complex
 /// pipeline.
 ///
@@ -4992,6 +5043,8 @@ pub fn materialize_arrangement_cell_complex_boolean(
 fn arrangement_cell_complex_result_is_certified_for_preflight(
     result: &ExactBooleanResult,
     attempt: &ExactArrangementBooleanAttempt,
+    left: &ExactMesh,
+    right: &ExactMesh,
 ) -> bool {
     attempt.decline.is_none()
         && (attempt.arrangement_blockers == 0
@@ -5004,6 +5057,7 @@ fn arrangement_cell_complex_result_is_certified_for_preflight(
                     ..
                 }
         )
+        && result.validate_against_sources(left, right).is_ok()
 }
 
 #[cfg(test)]
@@ -5048,7 +5102,7 @@ fn arrangement_cell_complex_materializes_for_preflight_from_graph(
         ) {
             Ok(ArrangementCellComplexOutcome::Materialized(result, attempt))
                 if arrangement_cell_complex_result_is_certified_for_preflight(
-                    &result, &attempt,
+                    &result, &attempt, left, right,
                 ) =>
             {
                 return Ok(true);
@@ -9364,6 +9418,22 @@ fn boolean_same_surface_meshes(
     ))
 }
 
+pub(crate) fn replay_closed_same_surface_boolean_result_if_certified(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+) -> Result<Option<ExactBooleanResult>, MeshError> {
+    if matches!(operation, ExactBooleanOperation::SelectedRegions(_))
+        || !left.facts().mesh.closed_manifold
+        || !right.facts().mesh.closed_manifold
+        || !meshes_are_certified_same_surface(left, right)
+    {
+        return Ok(None);
+    }
+    boolean_same_surface_meshes(left, operation, validation).map(Some)
+}
+
 fn certified_closed_boundary_touching_union_report_from_graph(
     graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
@@ -10219,6 +10289,38 @@ fn winding_readiness_report_from_graph(
             0,
             Vec::new(),
             counts.into_blocker(ExactBooleanBlockerKind::NeedsRefinement),
+            None,
+            None,
+        ));
+    }
+    if !graph.face_pairs.is_empty()
+        && certified_arrangement_cell_complex_preflight_if_materialized(
+            operation, graph, left, right,
+        )?
+        .is_some()
+    {
+        let blocker = counts.into_blocker(ExactBooleanBlockerKind::NeedsWinding);
+        let (retained_face_pairs, retained_events, blocker) = if blocker
+            .validate_for_kind(ExactBooleanBlockerKind::NeedsWinding)
+            .is_ok()
+        {
+            (graph.face_pairs.len(), graph.event_count(), blocker)
+        } else {
+            (
+                0,
+                0,
+                ExactBooleanBlocker::default().into_blocker(ExactBooleanBlockerKind::NeedsWinding),
+            )
+        };
+        return Ok(winding_readiness_report(
+            operation,
+            ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized,
+            graph_had_unknowns,
+            retained_face_pairs,
+            retained_events,
+            0,
+            Vec::new(),
+            blocker,
             None,
             None,
         ));
@@ -11986,12 +12088,12 @@ mod tests {
         .unwrap();
         assert_eq!(
             readiness.status,
-            ExactWindingReadinessStatus::PlanarArrangementAlreadyMaterialized,
+            ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized,
             "{readiness:?}"
         );
         assert_eq!(
             readiness.blocker.kind,
-            ExactBooleanBlockerKind::NeedsPlanarArrangement
+            ExactBooleanBlockerKind::NeedsWinding
         );
         readiness.validate().unwrap();
         readiness.validate_against_sources(&left, &right).unwrap();
@@ -12642,7 +12744,7 @@ mod tests {
             assert!(readiness.status.is_already_materialized());
             assert_eq!(
                 readiness.blocker.kind,
-                ExactBooleanBlockerKind::NeedsCoplanarVolumetricCells,
+                ExactBooleanBlockerKind::NeedsWinding,
                 "{operation:?}: {readiness:?}"
             );
             readiness.validate().unwrap();
@@ -13918,7 +14020,9 @@ mod tests {
             true,
         ) {
             Ok(ArrangementCellComplexOutcome::Materialized(result, attempt)) => {
-                arrangement_cell_complex_result_is_certified_for_preflight(&result, &attempt)
+                arrangement_cell_complex_result_is_certified_for_preflight(
+                    &result, &attempt, left, right,
+                )
             }
             Ok(ArrangementCellComplexOutcome::Declined(_)) | Err(_) => false,
         }
@@ -14519,7 +14623,15 @@ mod tests {
             );
             assert_eq!(
                 readiness.blocker.kind,
-                ExactBooleanBlockerKind::NeedsBoundaryPolicy,
+                match operation {
+                    ExactBooleanOperation::Union | ExactBooleanOperation::Difference => {
+                        ExactBooleanBlockerKind::NeedsBoundaryPolicy
+                    }
+                    ExactBooleanOperation::Intersection => {
+                        ExactBooleanBlockerKind::NeedsWinding
+                    }
+                    ExactBooleanOperation::SelectedRegions(_) => unreachable!(),
+                },
                 "{operation:?}: {readiness:?}"
             );
             assert!(readiness.status.is_already_materialized());
@@ -14676,17 +14788,14 @@ mod tests {
         .unwrap();
         assert_eq!(
             preflight.support,
-            ExactBooleanSupport::CertifiedConvexDifference
+            ExactBooleanSupport::CertifiedArrangementCellComplex
         );
         assert!(preflight.blocker.is_none(), "{preflight:?}");
         assert!(preflight.retained_face_pairs > 0, "{preflight:?}");
         assert!(preflight.retained_events > 0, "{preflight:?}");
         let mut relabeled_preflight = preflight.clone();
-        relabeled_preflight.operation = ExactBooleanOperation::Union;
-        assert_eq!(
-            relabeled_preflight.validate(),
-            Err(crate::ExactReportValidationError::StatusEvidenceMismatch)
-        );
+        relabeled_preflight.support = ExactBooleanSupport::CertifiedConvexDifference;
+        assert!(relabeled_preflight.validate().is_err());
         let readiness = ExactBooleanRequest::with_boundary_policy(
             ExactBooleanOperation::Difference,
             ValidationPolicy::ALLOW_BOUNDARY,
@@ -14696,7 +14805,7 @@ mod tests {
         .unwrap();
         assert_eq!(
             readiness.status,
-            ExactWindingReadinessStatus::ConvexBooleanAlreadyMaterialized,
+            ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized,
             "{readiness:?}"
         );
         readiness.validate().unwrap();
@@ -14710,7 +14819,7 @@ mod tests {
             difference.kind,
             ExactBooleanResultKind::CertifiedShortcut {
                 operation: ExactBooleanOperation::Difference,
-                shortcut: ExactBooleanShortcutKind::ConvexDifference
+                shortcut: ExactBooleanShortcutKind::ArrangementCellComplex
             }
         );
         difference.validate().unwrap();
@@ -14806,17 +14915,20 @@ mod tests {
             ExactBooleanOperation::Intersection,
             ExactBooleanOperation::Difference,
         ] {
-            let (expected_support, expected_shortcut) = match operation {
+            let (expected_support, expected_status, expected_shortcut) = match operation {
                 ExactBooleanOperation::Union => (
-                    ExactBooleanSupport::CertifiedConvexUnion,
-                    ExactBooleanShortcutKind::ConvexUnion,
+                    ExactBooleanSupport::CertifiedArrangementCellComplex,
+                    ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized,
+                    ExactBooleanShortcutKind::ArrangementCellComplex,
                 ),
                 ExactBooleanOperation::Intersection => (
                     ExactBooleanSupport::CertifiedConvexIntersection,
+                    ExactWindingReadinessStatus::ConvexBooleanAlreadyMaterialized,
                     ExactBooleanShortcutKind::ConvexIntersection,
                 ),
                 ExactBooleanOperation::Difference => (
                     ExactBooleanSupport::CertifiedConvexDifference,
+                    ExactWindingReadinessStatus::ConvexBooleanAlreadyMaterialized,
                     ExactBooleanShortcutKind::ConvexDifference,
                 ),
                 ExactBooleanOperation::SelectedRegions(_) => unreachable!(),
@@ -14846,8 +14958,7 @@ mod tests {
             .winding_readiness(&left, &right)
             .unwrap();
             assert_eq!(
-                readiness.status,
-                ExactWindingReadinessStatus::ConvexBooleanAlreadyMaterialized,
+                readiness.status, expected_status,
                 "{operation:?}: {readiness:?}"
             );
             readiness.validate().unwrap();
@@ -15074,7 +15185,7 @@ mod tests {
         .unwrap();
         assert_eq!(
             preflight.support,
-            ExactBooleanSupport::CertifiedArrangementCellComplex
+            ExactBooleanSupport::CertifiedBoundaryPolicyShortcut
         );
 
         let union =
@@ -15146,7 +15257,7 @@ mod tests {
         .unwrap();
         assert_eq!(
             preflight.support,
-            ExactBooleanSupport::CertifiedArrangementCellComplex
+            ExactBooleanSupport::CertifiedBoundaryPolicyShortcut
         );
 
         let union =

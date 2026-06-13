@@ -1363,9 +1363,10 @@ impl<'a> ExactBooleanWorkspace<'a> {
             evaluation
                 .validate()
                 .map_err(workspace_report_validation_error)?;
-            validate_retained_result_for_request(self.left, self.right, request, result)
-                .map_err(workspace_report_validation_error)?;
-            return Ok(result.clone());
+            if validate_retained_result_for_request(self.left, self.right, request, result).is_ok()
+            {
+                return Ok(result.clone());
+            }
         }
         self.preflight(request)?;
         self.graph()?;

@@ -25,7 +25,8 @@ use super::boolean::{
     ExactBooleanOperation, ExactBooleanRequest, ExactBoundaryBooleanPolicy,
     boundary_policy_shortcut_result_matches_sources,
     materialize_volumetric_coplanar_boundary_closure_output,
-    open_surface_disjoint_result_matches_sources, replay_coplanar_mesh_overlay_result,
+    open_surface_disjoint_result_matches_sources,
+    replay_closed_same_surface_boolean_result_if_certified, replay_coplanar_mesh_overlay_result,
     replay_materialized_volumetric_winding_region_plan, replay_open_surface_arrangement_result,
     replay_selected_region_boolean_result,
 };
@@ -2722,8 +2723,7 @@ fn arrangement_cell_complex_sources_match(
             return Ok(true);
         }
     }
-    if ExactBooleanRequest::new(operation, validation)
-        .materialize_closed_same_surface(left, right)
+    if replay_closed_same_surface_boolean_result_if_certified(left, right, operation, validation)
         .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
         .is_some()
     {
@@ -2784,9 +2784,9 @@ fn arrangement_cell_complex_output_matches_sources(
         return Ok(Some(mesh_output_matches(mesh, &replay)));
     }
 
-    if let Some(replay) = ExactBooleanRequest::new(operation, validation)
-        .materialize_closed_same_surface(left, right)
-        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
+    if let Some(replay) =
+        replay_closed_same_surface_boolean_result_if_certified(left, right, operation, validation)
+            .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
     {
         return Ok(Some(mesh_output_matches(mesh, &replay.mesh)));
     }
