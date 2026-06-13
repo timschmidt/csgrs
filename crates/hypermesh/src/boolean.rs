@@ -267,17 +267,9 @@ impl ExactArrangementBooleanAttempt {
                 }
             }
             None => {
-                if self.stage != ExactArrangementBooleanStage::Materialized
-                    || self.materialized_shortcut.is_none()
-                {
+                if !self.materialized_arrangement_cell_complex_shortcut() {
                     return Err(ExactReportValidationError::StatusEvidenceMismatch);
                 }
-            }
-        }
-
-        if let Some(shortcut) = self.materialized_shortcut {
-            if shortcut != ExactBooleanShortcutKind::ArrangementCellComplex {
-                return Err(ExactReportValidationError::StatusEvidenceMismatch);
             }
         }
         if !arrangement_attempt_gate_statuses_match_stage(self) {
