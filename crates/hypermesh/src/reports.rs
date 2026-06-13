@@ -2036,32 +2036,26 @@ fn validate_shortcut_output_shape(
 
 fn mesh_has_boolean_output_provenance(kind: ExactBooleanResultKind, mesh: &ExactMesh) -> bool {
     let source = &mesh.provenance().source;
-    source.source == MeshSource::Exact
-        && source.approximation == ApproximationPolicy::ExactOnly
-        && exact_boolean_output_label(kind, &source.label)
-}
-
-fn exact_boolean_output_label(kind: ExactBooleanResultKind, label: &str) -> bool {
-    if !(label.starts_with("exact ") || label.starts_with("empty exact ")) {
-        return false;
-    }
-    if let ExactBooleanResultKind::CertifiedShortcut {
+    let has_exact_boolean_label =
+        source.label.starts_with("exact ") || source.label.starts_with("empty exact ");
+    let has_arrangement_label = source.label.contains("arrangement")
+        || source.label.contains("cell-complex")
+        || source.label.contains("volumetric split-cell")
+        || source.label.contains("orthogonal solid cell")
+        || source.label.contains("full-face adjacent")
+        || source.label.contains("contained-face adjacent");
+    let label_matches_kind = if let ExactBooleanResultKind::CertifiedShortcut {
         shortcut: ExactBooleanShortcutKind::ArrangementCellComplex,
         ..
     } = kind
     {
-        return exact_arrangement_cell_complex_output_label(label);
-    }
-    true
-}
-
-fn exact_arrangement_cell_complex_output_label(label: &str) -> bool {
-    label.contains("arrangement")
-        || label.contains("cell-complex")
-        || label.contains("volumetric split-cell")
-        || label.contains("orthogonal solid cell")
-        || label.contains("full-face adjacent")
-        || label.contains("contained-face adjacent")
+        has_exact_boolean_label && has_arrangement_label
+    } else {
+        has_exact_boolean_label
+    };
+    source.source == MeshSource::Exact
+        && source.approximation == ApproximationPolicy::ExactOnly
+        && label_matches_kind
 }
 
 const fn shortcut_requires_empty_output(
