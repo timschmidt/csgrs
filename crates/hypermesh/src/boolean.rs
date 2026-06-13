@@ -3401,7 +3401,7 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph_with_support(
     if winding_report
         .status
         .materializes_arrangement_cell_complex()
-        || (winding_report.status == ExactWindingReadinessStatus::Ready
+        || (winding_report.is_ready()
             && materialize_volumetric_winding_region_plan_from_graph(
                 &graph,
                 left,
@@ -12907,6 +12907,26 @@ mod tests {
         ] {
             assert!(!status.is_already_materialized());
         }
+        let ready_report = ExactWindingReadinessReport {
+            operation: ExactBooleanOperation::Union,
+            status: ExactWindingReadinessStatus::Ready,
+            graph_had_unknowns: false,
+            retained_face_pairs: 1,
+            retained_events: 1,
+            region_count: 1,
+            region_classifications: Vec::new(),
+            blocker: ExactBooleanBlocker {
+                kind: ExactBooleanBlockerKind::NeedsWinding,
+                candidate_pairs: 1,
+                coplanar_overlapping_pairs: 0,
+                coplanar_touching_pairs: 0,
+                unknown_pairs: 0,
+                construction_failed_events: 0,
+            },
+            arrangement_readiness: None,
+            coplanar_volumetric_evidence: None,
+        };
+        assert!(ready_report.is_ready());
 
         for status in [
             ExactWindingReadinessStatus::PlanarArrangementAlreadyMaterialized,
