@@ -4559,21 +4559,7 @@ impl ExactBooleanBlocker {
         left: &ExactMesh,
         right: &ExactMesh,
     ) -> ExactReportFreshness {
-        if let Err(error) = self.validate_for_kind(self.kind) {
-            return error.into();
-        }
-        let Ok(graph) = build_intersection_graph(left, right) else {
-            return ExactReportFreshness::SourceReplayMismatch;
-        };
-        if graph.validate_against_sources(left, right).is_err() {
-            return ExactReportFreshness::SourceReplayMismatch;
-        }
-        let replay = ExactBooleanBlocker::from_graph_counts(&graph, self.kind);
-        if replay.validate_for_kind(self.kind).is_ok() && self == &replay {
-            ExactReportFreshness::Current
-        } else {
-            ExactReportFreshness::SourceReplayMismatch
-        }
+        exact_report_freshness(self.validate_against_sources(left, right))
     }
 }
 
