@@ -5094,9 +5094,7 @@ impl ExactAdjacentUnionCompletionReport {
             }
             _ => retained_blocker_kind_from_counts(&self.blocker),
         };
-        if self.blocker.kind != expected_kind {
-            return Err(ExactReportValidationError::WrongBlockerKind);
-        }
+        blocker_kind(Some(&self.blocker), expected_kind)?;
         if matches!(
             self.status,
             ExactAdjacentUnionCompletionStatus::CertifiedFullFace
@@ -5442,9 +5440,7 @@ impl ExactPlanarArrangementReport {
                 retained_blocker_kind_from_counts(&self.blocker)
             }
         };
-        if self.blocker.kind != expected_kind {
-            return Err(ExactReportValidationError::WrongBlockerKind);
-        }
+        blocker_kind(Some(&self.blocker), expected_kind)?;
         self.blocker.validate_for_kind(expected_kind)?;
         validate_refinement_partition(
             matches!(self.status, ExactPlanarArrangementStatus::GraphUnknowns),
