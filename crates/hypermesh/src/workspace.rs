@@ -46,6 +46,8 @@ use super::volumetric_cells::{
 
 type MaterializedResultWithEvidence =
     Option<(ExactBooleanResult, CoplanarVolumetricCellEvidenceReport)>;
+type MaterializedAdjacentUnionCompletion =
+    Option<(ExactBooleanResult, ExactAdjacentUnionCompletionReport)>;
 type OptionalMaterializedResult = Option<ExactBooleanResult>;
 
 /// Reusable exact boolean session for a fixed source-mesh pair.
@@ -70,10 +72,8 @@ pub struct ExactBooleanWorkspace<'a> {
         Vec<(ExactBooleanRequest, OptionalMaterializedResult)>,
     closed_winding_separated_materializations:
         Vec<(ExactBooleanRequest, OptionalMaterializedResult)>,
-    adjacent_union_completion_materializations: Vec<(
-        ExactBooleanRequest,
-        Option<(ExactBooleanResult, ExactAdjacentUnionCompletionReport)>,
-    )>,
+    adjacent_union_completion_materializations:
+        Vec<(ExactBooleanRequest, MaterializedAdjacentUnionCompletion)>,
     arrangements: Vec<(ExactRegularizationPolicy, ExactArrangement)>,
     topology_assembly_reports: Vec<(ExactRegularizationPolicy, ExactTopologyAssemblyReport)>,
     region_ownership_reports: Vec<(ExactRegularizationPolicy, ExactRegionOwnershipReport)>,
@@ -399,14 +399,11 @@ impl<'a> ExactBooleanWorkspace<'a> {
         &mut self,
         request: ExactBooleanRequest,
     ) -> Result<Option<(ExactBooleanResult, ExactAdjacentUnionCompletionReport)>, MeshError> {
-        if let Some(cached) = cached_materialization(
+        if let Some(cached) = cached_retained_result_with_adjacent_report(
             &self.adjacent_union_completion_materializations,
+            self.left,
+            self.right,
             request,
-            |cached| {
-                validate_retained_result_with_adjacent_report(
-                    cached, self.left, self.right, request,
-                )
-            },
         )? {
             return Ok(cached);
         }
@@ -1460,32 +1457,6 @@ fn workspace_coplanar_volumetric_cell_error(
     ))
 }
 
-fn validate_retained_result_with_evidence(
-    materialized: &MaterializedResultWithEvidence,
-    left: &ExactMesh,
-    right: &ExactMesh,
-    request: ExactBooleanRequest,
-) -> Result<(), MeshError> {
-    validate_retained_result_pair(materialized, left, right, request, |evidence| {
-        evidence
-            .validate_against_sources(left, right)
-            .map_err(workspace_coplanar_volumetric_cell_error)
-    })
-}
-
-fn validate_retained_result_with_adjacent_report(
-    materialized: &Option<(ExactBooleanResult, ExactAdjacentUnionCompletionReport)>,
-    left: &ExactMesh,
-    right: &ExactMesh,
-    request: ExactBooleanRequest,
-) -> Result<(), MeshError> {
-    validate_retained_result_pair(materialized, left, right, request, |report| {
-        report
-            .validate_against_sources(left, right)
-            .map_err(workspace_report_validation_error)
-    })
-}
-
 fn validate_retained_result_pair<T>(
     materialized: &Option<(ExactBooleanResult, T)>,
     left: &ExactMesh,
@@ -1543,8 +1514,35 @@ fn cached_retained_result_with_evidence(
     right: &ExactMesh,
     request: ExactBooleanRequest,
 ) -> Result<Option<MaterializedResultWithEvidence>, MeshError> {
+    cached_retained_result_pair(cache, left, right, request, |evidence| {
+        evidence
+            .validate_against_sources(left, right)
+            .map_err(workspace_coplanar_volumetric_cell_error)
+    })
+}
+
+fn cached_retained_result_with_adjacent_report(
+    cache: &[(ExactBooleanRequest, MaterializedAdjacentUnionCompletion)],
+    left: &ExactMesh,
+    right: &ExactMesh,
+    request: ExactBooleanRequest,
+) -> Result<Option<MaterializedAdjacentUnionCompletion>, MeshError> {
+    cached_retained_result_pair(cache, left, right, request, |report| {
+        report
+            .validate_against_sources(left, right)
+            .map_err(workspace_report_validation_error)
+    })
+}
+
+fn cached_retained_result_pair<T: Clone>(
+    cache: &[(ExactBooleanRequest, Option<(ExactBooleanResult, T)>)],
+    left: &ExactMesh,
+    right: &ExactMesh,
+    request: ExactBooleanRequest,
+    validate_artifact: impl FnOnce(&T) -> Result<(), MeshError>,
+) -> Result<Option<Option<(ExactBooleanResult, T)>>, MeshError> {
     cached_materialization(cache, request, |result| {
-        validate_retained_result_with_evidence(result, left, right, request)
+        validate_retained_result_pair(result, left, right, request, validate_artifact)
     })
 }
 
