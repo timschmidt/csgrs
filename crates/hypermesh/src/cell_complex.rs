@@ -400,6 +400,19 @@ impl ExactRegionOwnershipReport {
         self.validate_against_arrangement(&arrangement, left, right, policy)
     }
 
+    pub fn status_against_sources(
+        &self,
+        left: &super::mesh::ExactMesh,
+        right: &super::mesh::ExactMesh,
+        policy: ExactRegularizationPolicy,
+    ) -> ExactRegionOwnershipStatus {
+        let arrangement = match ExactArrangement::from_meshes_with_policy(left, right, policy) {
+            Ok(arrangement) => arrangement,
+            Err(_) => return ExactRegionOwnershipStatus::SourceReplayBlocked,
+        };
+        self.status_against_arrangement(&arrangement, left, right, policy)
+    }
+
     pub(crate) fn validate_against_arrangement(
         &self,
         arrangement: &ExactArrangement,
@@ -413,6 +426,23 @@ impl ExactRegionOwnershipReport {
             Ok(())
         } else {
             Err(ExactArrangementBlocker::UnresolvedRegionClassification)
+        }
+    }
+
+    pub(crate) fn status_against_arrangement(
+        &self,
+        arrangement: &ExactArrangement,
+        left: &super::mesh::ExactMesh,
+        right: &super::mesh::ExactMesh,
+        policy: ExactRegularizationPolicy,
+    ) -> ExactRegionOwnershipStatus {
+        if self.validate().is_err() {
+            return ExactRegionOwnershipStatus::StaleOwnership;
+        }
+        match arrangement.region_ownership_report_with_policy(left, right, policy) {
+            Ok(replay) if self == &replay => self.status,
+            Ok(_) => ExactRegionOwnershipStatus::StaleOwnership,
+            Err(_) => ExactRegionOwnershipStatus::LabelingReplayBlocked,
         }
     }
 }

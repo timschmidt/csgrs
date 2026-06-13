@@ -20,8 +20,8 @@ use super::boolean::{
     volumetric_boundary_closure_report_from_graph, winding_readiness_report_for_request_from_graph,
 };
 use super::cell_complex::{
-    ExactRegionOwnershipReport, ExactSelectedCellComplex, ExactSelectedCellComplexFreshness,
-    select_arrangement_for_replay,
+    ExactRegionOwnershipReport, ExactRegionOwnershipStatus, ExactSelectedCellComplex,
+    ExactSelectedCellComplexFreshness, select_arrangement_for_replay,
 };
 use super::error::{DiagnosticKind, MeshDiagnostic, MeshError, Severity};
 use super::graph::{
@@ -504,6 +504,20 @@ impl<'a> ExactBooleanWorkspace<'a> {
             .map_err(|_| ExactArrangementBlocker::UnresolvedIntersection)?
             .clone();
         report.validate_against_arrangement(&arrangement, self.left, self.right, policy)
+    }
+
+    /// Classify region-ownership evidence against this workspace's retained
+    /// source session.
+    pub fn region_ownership_report_status(
+        &mut self,
+        policy: ExactRegularizationPolicy,
+        report: &ExactRegionOwnershipReport,
+    ) -> ExactRegionOwnershipStatus {
+        let arrangement = match self.arrangement(policy) {
+            Ok(arrangement) => arrangement.clone(),
+            Err(_) => return ExactRegionOwnershipStatus::SourceReplayBlocked,
+        };
+        report.status_against_arrangement(&arrangement, self.left, self.right, policy)
     }
 
     /// Returns the arrangement/cell-complex attempt report for `request` and
@@ -1699,6 +1713,13 @@ mod tests {
                 &ownership_report,
             )
             .unwrap();
+        assert_eq!(
+            workspace.region_ownership_report_status(
+                ExactRegularizationPolicy::REGULARIZED_SOLID,
+                &ownership_report,
+            ),
+            ExactRegionOwnershipStatus::VolumeResolved
+        );
         let mut stale_ownership_report = ownership_report.clone();
         stale_ownership_report.face_cell_boundary_nodes += 3;
         stale_ownership_report.face_cell_boundary_points += 3;
@@ -1717,6 +1738,13 @@ mod tests {
                 &stale_ownership_report,
             ),
             Err(ExactArrangementBlocker::UnresolvedRegionClassification)
+        );
+        assert_eq!(
+            workspace.region_ownership_report_status(
+                ExactRegularizationPolicy::REGULARIZED_SOLID,
+                &stale_ownership_report,
+            ),
+            ExactRegionOwnershipStatus::StaleOwnership
         );
 
         let first_attempt = workspace
