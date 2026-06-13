@@ -5,7 +5,7 @@ use super::boolean::{
     adjacent_union_completion_certification_from_graph,
     arrangement_boolean_attempt_report_from_arrangement,
     boolean_closed_validation_regularized_meshes, boundary_touching_report_from_graph,
-    direct_arrangement_cell_complex_attempt, exact_boolean_result_kind_matches_request,
+    direct_arrangement_cell_complex_attempt,
     materialize_adjacent_union_completion_from_graph_for_request,
     materialize_boundary_touching_policy_from_graph_for_request,
     materialize_certified_boolean_support_with_artifacts,
@@ -1753,9 +1753,7 @@ fn validate_retained_result_for_request(
     request: ExactBooleanRequest,
     result: &ExactBooleanResult,
 ) -> Result<(), ExactReportValidationError> {
-    if result.mesh.validation_policy() != request.validation
-        || !exact_boolean_result_kind_matches_request(result, request)
-    {
+    if result.mesh.validation_policy() != request.validation || !result.matches_request(request) {
         return Err(ExactReportValidationError::StatusEvidenceMismatch);
     }
     result.validate_operation_against_sources(
