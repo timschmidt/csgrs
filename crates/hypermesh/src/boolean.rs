@@ -2793,8 +2793,8 @@ fn materialize_certified_arrangement_cell_complex_support_with_arrangement(
     }
     if let Some(graph) = retained_graph
         && !graph.face_pairs.is_empty()
-        && let Some(result) = certified_arrangement_cell_complex_meshes_from_graph_for_priority(
-            graph, left, right, operation, validation,
+        && let Some(result) = certified_arrangement_cell_complex_result_from_graph(
+            graph, left, right, operation, validation, true,
         )?
     {
         return Ok(Some(result));
@@ -4682,8 +4682,8 @@ fn materialize_boolean_exact_request(
     let graph = validated_intersection_graph(left, right);
     if let Ok(graph) = graph.as_ref()
         && !graph.face_pairs.is_empty()
-        && let Some(result) = certified_arrangement_cell_complex_meshes_from_graph_for_priority(
-            graph, left, right, operation, validation,
+        && let Some(result) = certified_arrangement_cell_complex_result_from_graph(
+            graph, left, right, operation, validation, true,
         )?
     {
         return Ok(result);
@@ -4972,18 +4972,6 @@ fn boolean_arrangement_cell_complex_meshes_from_graph(
         ArrangementCellComplexOutcome::Materialized(result, _) => Ok(Some(*result)),
         ArrangementCellComplexOutcome::Declined(_) => Ok(None),
     }
-}
-
-fn certified_arrangement_cell_complex_meshes_from_graph_for_priority(
-    graph: &ExactIntersectionGraph,
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: ValidationPolicy,
-) -> Result<Option<ExactBooleanResult>, MeshError> {
-    certified_arrangement_cell_complex_result_from_graph(
-        graph, left, right, operation, validation, true,
-    )
 }
 
 /// Certify and materialize a named boolean through the arrangement cell-complex
