@@ -498,10 +498,7 @@ fn arrangement_attempt_gate_statuses_match_stage(attempt: &ExactArrangementBoole
     if attempt.decline.is_none()
         && !matches!(attempt.operation, ExactBooleanOperation::SelectedRegions(_))
         && let Some(status) = attempt.region_ownership
-        && !matches!(
-            status,
-            ExactRegionOwnershipStatus::VolumeResolved | ExactRegionOwnershipStatus::FaceResolved
-        )
+        && !status.is_resolved()
     {
         return false;
     }
@@ -5469,7 +5466,7 @@ fn run_arrangement_cell_complex_attempt_from_arrangement_with_recovery_timing(
         ));
         return Ok(ArrangementCellComplexOutcome::Declined(attempt));
     }
-    let selected_result = if ownership_report.status == ExactRegionOwnershipStatus::VolumeResolved {
+    let selected_result = if ownership_report.status.is_volume_resolved() {
         labeled.select_volume_resolved_with_policy(operation, policy)
     } else {
         labeled.select_with_policy(operation, policy)

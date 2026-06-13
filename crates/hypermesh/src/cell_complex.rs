@@ -177,6 +177,19 @@ pub enum ExactRegionOwnershipStatus {
     StaleOwnership,
 }
 
+impl ExactRegionOwnershipStatus {
+    /// Return whether this ownership status can select named Boolean regions
+    /// without additional winding evidence.
+    pub const fn is_resolved(self) -> bool {
+        matches!(self, Self::VolumeResolved | Self::FaceResolved)
+    }
+
+    /// Return whether retained volume-region ownership resolves selection.
+    pub const fn is_volume_resolved(self) -> bool {
+        matches!(self, Self::VolumeResolved)
+    }
+}
+
 /// Compact exact ownership report for arrangement regions.
 #[derive(Clone, Debug, PartialEq)]
 pub struct ExactRegionOwnershipReport {
@@ -235,10 +248,7 @@ pub struct ExactRegionOwnershipReport {
 impl ExactRegionOwnershipReport {
     /// Return whether retained exact evidence resolves region ownership.
     pub fn is_resolved(&self) -> bool {
-        matches!(
-            self.status,
-            ExactRegionOwnershipStatus::VolumeResolved | ExactRegionOwnershipStatus::FaceResolved
-        )
+        self.status.is_resolved()
     }
 
     /// Validate local ownership report shape without source replay.
@@ -939,7 +949,7 @@ pub(crate) fn select_arrangement_for_replay(
     let labeled = arrangement.label_regions(labeling_policy)?;
     let ownership_report = labeled.region_ownership_report(left, right, labeling_policy);
     ownership_report.validate()?;
-    let mut selected = if ownership_report.status == ExactRegionOwnershipStatus::VolumeResolved {
+    let mut selected = if ownership_report.status.is_volume_resolved() {
         labeled.select_volume_resolved_with_policy(operation, policy)
     } else {
         if !ownership_report.is_resolved()
@@ -1783,6 +1793,8 @@ mod tests {
             lower_dimensional_edge_endpoints: 0,
         };
         report.validate().unwrap();
+        assert!(report.status.is_resolved());
+        assert!(!report.status.is_volume_resolved());
 
         let mut overflowing_boundary_partition = report.clone();
         overflowing_boundary_partition.left_boundary_faces = usize::MAX;
@@ -2221,6 +2233,7 @@ mod tests {
             .expect("replay-selected cells should retain region ownership");
         ownership.validate().unwrap();
         assert!(ownership.is_resolved());
+        assert!(ownership.status.is_resolved());
         selected.validate().unwrap();
         selected
             .validate_against_sources(&left, &right, ExactRegularizationPolicy::REGULARIZED_SOLID)
