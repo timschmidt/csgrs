@@ -2722,20 +2722,21 @@ pub(crate) fn materialize_certified_boolean_support_with_artifacts(
         }
         ExactBooleanSupport::CertifiedOpenSurfaceDisjoint => {
             if let Some(graph) = retained_graph {
-                boolean_open_surface_disjoint_meshes_from_graph(
-                    graph, left, right, operation, validation,
+                materialize_open_surface_disjoint_from_graph_for_request(
+                    graph, left, right, request,
                 )?
             } else {
-                let graph = validated_intersection_graph(left, right)?;
-                boolean_open_surface_disjoint_meshes_from_graph(
-                    &graph, left, right, operation, validation,
-                )?
+                request.materialize_open_surface_disjoint(left, right)?
             }
         }
         ExactBooleanSupport::CertifiedClosedWindingSeparated => {
             if let Some(graph) = retained_graph {
-                boolean_closed_winding_separated_meshes_from_graph(
-                    graph, left, right, operation, validation,
+                materialize_closed_winding_from_graph_for_request(
+                    graph,
+                    left,
+                    right,
+                    request,
+                    ClosedWindingMaterialization::Separated,
                 )?
             } else {
                 request.materialize_closed_winding_separated(left, right)?
@@ -2743,18 +2744,22 @@ pub(crate) fn materialize_certified_boolean_support_with_artifacts(
         }
         ExactBooleanSupport::CertifiedClosedWindingContainment => {
             if let Some(graph) = retained_graph {
-                boolean_closed_winding_containment_meshes_from_graph(
-                    graph, left, right, operation, validation,
+                materialize_closed_winding_from_graph_for_request(
+                    graph,
+                    left,
+                    right,
+                    request,
+                    ClosedWindingMaterialization::Containment,
                 )?
             } else {
                 request.materialize_closed_winding_containment(left, right)?
             }
         }
-        ExactBooleanSupport::CertifiedMixedDimensionalRegularizedSolid
-        | ExactBooleanSupport::CertifiedLowerDimensionalRegularizedSolid => {
-            boolean_closed_regularized_lower_dimensional_optional(
-                left, right, operation, validation,
-            )?
+        ExactBooleanSupport::CertifiedMixedDimensionalRegularizedSolid => {
+            request.materialize_mixed_dimensional_regularized_solid(left, right)?
+        }
+        ExactBooleanSupport::CertifiedLowerDimensionalRegularizedSolid => {
+            request.materialize_closed_regularized_lower_dimensional(left, right)?
         }
         ExactBooleanSupport::CertifiedConvexUnion
         | ExactBooleanSupport::CertifiedConvexIntersection
