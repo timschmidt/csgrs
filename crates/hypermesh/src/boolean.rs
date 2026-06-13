@@ -5909,22 +5909,6 @@ fn boolean_arrangement_adjacency_union_completion(
     Ok(adjacent_union_completion_certification(left, right, operation, Some(validation))?.1)
 }
 
-fn adjacent_union_completion_blocker_kind(
-    status: &ExactAdjacentUnionCompletionStatus,
-    counts: ExactBooleanBlocker,
-) -> ExactBooleanBlockerKind {
-    match status {
-        ExactAdjacentUnionCompletionStatus::GraphUnresolved => {
-            ExactBooleanBlockerKind::NeedsRefinement
-        }
-        ExactAdjacentUnionCompletionStatus::CertifiedFullFace
-        | ExactAdjacentUnionCompletionStatus::CertifiedContainedFace => {
-            ExactBooleanBlockerKind::NeedsBoundaryPolicy
-        }
-        _ => retained_graph_blocker_kind(counts),
-    }
-}
-
 fn adjacent_union_completion_report(
     operation: ExactBooleanOperation,
     status: ExactAdjacentUnionCompletionStatus,
@@ -5942,7 +5926,16 @@ fn adjacent_union_completion_report(
     contained_faces: usize,
     containing_faces: usize,
 ) -> ExactAdjacentUnionCompletionReport {
-    let blocker_kind = adjacent_union_completion_blocker_kind(&status, counts);
+    let blocker_kind = match status {
+        ExactAdjacentUnionCompletionStatus::GraphUnresolved => {
+            ExactBooleanBlockerKind::NeedsRefinement
+        }
+        ExactAdjacentUnionCompletionStatus::CertifiedFullFace
+        | ExactAdjacentUnionCompletionStatus::CertifiedContainedFace => {
+            ExactBooleanBlockerKind::NeedsBoundaryPolicy
+        }
+        _ => retained_graph_blocker_kind(counts),
+    };
     ExactAdjacentUnionCompletionReport {
         operation,
         status,
@@ -10324,7 +10317,11 @@ pub(crate) fn boundary_touching_report_from_graph(
     } else {
         ExactBoundaryTouchingStatus::NotBoundaryOnly
     };
-    let blocker_kind = boundary_touching_blocker_kind(&status, counts);
+    let blocker_kind = match status {
+        ExactBoundaryTouchingStatus::GraphUnknowns => ExactBooleanBlockerKind::NeedsRefinement,
+        ExactBoundaryTouchingStatus::Certified => ExactBooleanBlockerKind::NeedsBoundaryPolicy,
+        ExactBoundaryTouchingStatus::NotBoundaryOnly => retained_graph_blocker_kind(counts),
+    };
     Ok(ExactBoundaryTouchingReport {
         status,
         graph_had_unknowns,
@@ -10332,17 +10329,6 @@ pub(crate) fn boundary_touching_report_from_graph(
         retained_events: graph.event_count(),
         blocker: counts.into_blocker(blocker_kind),
     })
-}
-
-fn boundary_touching_blocker_kind(
-    status: &ExactBoundaryTouchingStatus,
-    counts: ExactBooleanBlocker,
-) -> ExactBooleanBlockerKind {
-    match status {
-        ExactBoundaryTouchingStatus::GraphUnknowns => ExactBooleanBlockerKind::NeedsRefinement,
-        ExactBoundaryTouchingStatus::Certified => ExactBooleanBlockerKind::NeedsBoundaryPolicy,
-        ExactBoundaryTouchingStatus::NotBoundaryOnly => retained_graph_blocker_kind(counts),
-    }
 }
 
 pub(crate) fn refinement_report_from_graph(
