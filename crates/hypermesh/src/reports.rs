@@ -5298,9 +5298,7 @@ impl ExactBoundaryTouchingReport {
                 boundary_touching_not_boundary_blocker_kind(&self.blocker)?
             }
         };
-        if self.blocker.kind != expected_kind {
-            return Err(ExactReportValidationError::WrongBlockerKind);
-        }
+        blocker_kind(Some(&self.blocker), expected_kind)?;
         self.blocker.validate_for_kind(expected_kind)?;
         validate_refinement_partition(
             matches!(self.status, ExactBoundaryTouchingStatus::GraphUnknowns),
@@ -5311,13 +5309,6 @@ impl ExactBoundaryTouchingReport {
             self.retained_face_pairs,
             self.retained_events,
         )?;
-        // Boundary-only contact is an application policy boundary. Keep its
-        // evidence separated from graph refinement and non-boundary winding
-        match self.status {
-            ExactBoundaryTouchingStatus::GraphUnknowns => {}
-            ExactBoundaryTouchingStatus::NotBoundaryOnly => {}
-            ExactBoundaryTouchingStatus::Certified => {}
-        }
         if self.is_certified()
             && self.blocker.candidate_pairs == 0
             && self.blocker.coplanar_touching_pairs == 0
