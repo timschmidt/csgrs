@@ -1459,15 +1459,11 @@ fn validate_retained_result_with_evidence(
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> Result<(), MeshError> {
-    if let Some((result, evidence)) = materialized {
-        result
-            .validate_against_sources(left, right)
-            .map_err(workspace_report_validation_error)?;
+    validate_retained_result_pair(materialized, left, right, |evidence| {
         evidence
             .validate_against_sources(left, right)
-            .map_err(workspace_coplanar_volumetric_cell_error)?;
-    }
-    Ok(())
+            .map_err(workspace_coplanar_volumetric_cell_error)
+    })
 }
 
 fn validate_retained_result_with_adjacent_report(
@@ -1475,13 +1471,24 @@ fn validate_retained_result_with_adjacent_report(
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> Result<(), MeshError> {
-    if let Some((result, report)) = materialized {
+    validate_retained_result_pair(materialized, left, right, |report| {
+        report
+            .validate_against_sources(left, right)
+            .map_err(workspace_report_validation_error)
+    })
+}
+
+fn validate_retained_result_pair<T>(
+    materialized: &Option<(ExactBooleanResult, T)>,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    validate_artifact: impl FnOnce(&T) -> Result<(), MeshError>,
+) -> Result<(), MeshError> {
+    if let Some((result, artifact)) = materialized {
         result
             .validate_against_sources(left, right)
             .map_err(workspace_report_validation_error)?;
-        report
-            .validate_against_sources(left, right)
-            .map_err(workspace_report_validation_error)?;
+        validate_artifact(artifact)?;
     }
     Ok(())
 }
