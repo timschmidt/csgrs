@@ -690,8 +690,7 @@ impl ExactBooleanRequest {
         left: &ExactMesh,
         right: &ExactMesh,
     ) -> Result<ExactWindingReadinessReport, MeshError> {
-        let graph = build_intersection_graph(left, right)?;
-        validate_graph_source_handoff(&graph, left, right)?;
+        let graph = validated_intersection_graph(left, right)?;
         winding_readiness_report_for_request_from_graph(&graph, left, right, self)
     }
 
@@ -702,8 +701,7 @@ impl ExactBooleanRequest {
         left: &ExactMesh,
         right: &ExactMesh,
     ) -> Result<ExactVolumetricBoundaryClosureReport, MeshError> {
-        let graph = build_intersection_graph(left, right)?;
-        validate_graph_source_handoff(&graph, left, right)?;
+        let graph = validated_intersection_graph(left, right)?;
         volumetric_boundary_closure_report_from_graph(&graph, left, right, self.operation)
     }
 
@@ -714,8 +712,7 @@ impl ExactBooleanRequest {
         left: &ExactMesh,
         right: &ExactMesh,
     ) -> Result<ExactRefinementReport, MeshError> {
-        let graph = build_intersection_graph(left, right)?;
-        validate_graph_source_handoff(&graph, left, right)?;
+        let graph = validated_intersection_graph(left, right)?;
         Ok(refinement_report_from_graph(&graph, self.operation))
     }
 
@@ -739,8 +736,7 @@ impl ExactBooleanRequest {
             ));
         }
 
-        let graph = build_intersection_graph(left, right)?;
-        validate_graph_source_handoff(&graph, left, right)?;
+        let graph = validated_intersection_graph(left, right)?;
         planar_arrangement_report_from_graph(&graph, left, right, operation)
     }
 
@@ -760,8 +756,7 @@ impl ExactBooleanRequest {
         left: &ExactMesh,
         right: &ExactMesh,
     ) -> Result<ExactBoundaryTouchingReport, MeshError> {
-        let graph = build_intersection_graph(left, right)?;
-        validate_graph_source_handoff(&graph, left, right)?;
+        let graph = validated_intersection_graph(left, right)?;
         boundary_touching_report_from_graph(&graph, left, right)
     }
 
@@ -772,8 +767,7 @@ impl ExactBooleanRequest {
         left: &ExactMesh,
         right: &ExactMesh,
     ) -> Result<ExactOpenSurfaceDisjointReport, MeshError> {
-        let graph = build_intersection_graph(left, right)?;
-        validate_graph_source_handoff(&graph, left, right)?;
+        let graph = validated_intersection_graph(left, right)?;
         Ok(open_surface_disjoint_report_from_graph(&graph, left, right))
     }
 
@@ -969,8 +963,7 @@ impl ExactBooleanRequest {
         {
             return Ok(None);
         }
-        let graph = build_intersection_graph(left, right)?;
-        validate_graph_source_handoff(&graph, left, right)?;
+        let graph = validated_intersection_graph(left, right)?;
         materialize_open_surface_disjoint_from_graph_for_request(&graph, left, right, self)
     }
 
@@ -996,8 +989,7 @@ impl ExactBooleanRequest {
                 boundary_policy,
             ));
         }
-        let graph = build_intersection_graph(left, right)?;
-        validate_graph_source_handoff(&graph, left, right)?;
+        let graph = validated_intersection_graph(left, right)?;
         materialize_boundary_touching_policy_from_graph_for_request(&graph, left, right, self)
     }
 
@@ -1017,8 +1009,7 @@ impl ExactBooleanRequest {
         {
             return Ok(None);
         }
-        let graph = build_intersection_graph(left, right)?;
-        validate_graph_source_handoff(&graph, left, right)?;
+        let graph = validated_intersection_graph(left, right)?;
         let preflight = preflight_boolean_exact_request_from_graph(
             &graph,
             left,
@@ -1040,8 +1031,7 @@ impl ExactBooleanRequest {
         left: &ExactMesh,
         right: &ExactMesh,
     ) -> Result<Option<(ExactBooleanResult, CoplanarVolumetricCellEvidenceReport)>, MeshError> {
-        let graph = build_intersection_graph(left, right)?;
-        validate_graph_source_handoff(&graph, left, right)?;
+        let graph = validated_intersection_graph(left, right)?;
         Ok(materialized_result_with_evidence_replays_sources(
             materialize_closed_no_volume_overlap_regularized_boolean_with_evidence_from_graph(
                 &graph,
@@ -1062,8 +1052,7 @@ impl ExactBooleanRequest {
         left: &ExactMesh,
         right: &ExactMesh,
     ) -> Result<Option<(ExactBooleanResult, CoplanarVolumetricCellEvidenceReport)>, MeshError> {
-        let graph = build_intersection_graph(left, right)?;
-        validate_graph_source_handoff(&graph, left, right)?;
+        let graph = validated_intersection_graph(left, right)?;
         Ok(materialized_result_with_evidence_replays_sources(
             materialize_closed_boundary_touching_regularized_boolean_with_evidence_from_graph(
                 &graph,
@@ -1084,8 +1073,7 @@ impl ExactBooleanRequest {
         left: &ExactMesh,
         right: &ExactMesh,
     ) -> Result<Option<ExactBooleanResult>, MeshError> {
-        let graph = build_intersection_graph(left, right)?;
-        validate_graph_source_handoff(&graph, left, right)?;
+        let graph = validated_intersection_graph(left, right)?;
         materialize_closed_winding_from_graph_for_request(
             &graph,
             left,
@@ -1102,8 +1090,7 @@ impl ExactBooleanRequest {
         left: &ExactMesh,
         right: &ExactMesh,
     ) -> Result<Option<ExactBooleanResult>, MeshError> {
-        let graph = build_intersection_graph(left, right)?;
-        validate_graph_source_handoff(&graph, left, right)?;
+        let graph = validated_intersection_graph(left, right)?;
         materialize_closed_winding_from_graph_for_request(
             &graph,
             left,
@@ -1193,8 +1180,7 @@ impl ExactBooleanRequest {
         left: &ExactMesh,
         right: &ExactMesh,
     ) -> Result<Option<(ExactBooleanResult, ExactAdjacentUnionCompletionReport)>, MeshError> {
-        let graph = build_intersection_graph(left, right)?;
-        validate_graph_source_handoff(&graph, left, right)?;
+        let graph = validated_intersection_graph(left, right)?;
         materialize_adjacent_union_completion_from_graph_for_request(&graph, left, right, self)
     }
 }
@@ -1255,8 +1241,7 @@ impl ExactBooleanCertificationSet {
         right: &ExactMesh,
         request: ExactBooleanRequest,
     ) -> Result<Self, MeshError> {
-        let graph = build_intersection_graph(left, right)?;
-        validate_graph_source_handoff(&graph, left, right)?;
+        let graph = validated_intersection_graph(left, right)?;
         Self::from_graph(&graph, left, right, request)
     }
 
@@ -2542,8 +2527,7 @@ fn evaluate_boolean_exact_request(
     right: &ExactMesh,
     request: ExactBooleanRequest,
 ) -> Result<ExactBooleanEvaluation, MeshError> {
-    let graph = build_intersection_graph(left, right)?;
-    validate_graph_source_handoff(&graph, left, right)?;
+    let graph = validated_intersection_graph(left, right)?;
     let preflight = preflight_boolean_exact_request_from_graph(&graph, left, right, request)?;
     evaluate_boolean_exact_request_with_artifacts(left, right, request, &preflight, &graph)
 }
@@ -2779,8 +2763,7 @@ pub(crate) fn materialize_certified_boolean_support_with_artifacts(
                     graph, left, right, operation, validation,
                 )?
             } else {
-                let graph = build_intersection_graph(left, right)?;
-                validate_graph_source_handoff(&graph, left, right)?;
+                let graph = validated_intersection_graph(left, right)?;
                 boolean_open_surface_disjoint_meshes_from_graph(
                     &graph, left, right, operation, validation,
                 )?
@@ -2983,8 +2966,7 @@ pub(crate) fn replay_selected_region_boolean_result(
     selection: ExactRegionSelection,
     validation: ValidationPolicy,
 ) -> Result<ExactBooleanResult, MeshError> {
-    let graph = build_intersection_graph(left, right)?;
-    validate_graph_source_handoff(&graph, left, right)?;
+    let graph = validated_intersection_graph(left, right)?;
     let result =
         materialize_selected_region_result_from_graph(&graph, left, right, selection, validation)?;
     if !matches!(
@@ -3105,8 +3087,7 @@ fn preflight_boolean_exact_reject_boundary_policy(
         return Ok(preflight);
     }
 
-    let graph = build_intersection_graph(left, right)?;
-    validate_graph_source_handoff(&graph, left, right)?;
+    let graph = validated_intersection_graph(left, right)?;
     preflight_boolean_exact_reject_boundary_policy_from_graph(&graph, left, right, operation)
 }
 
@@ -3532,8 +3513,7 @@ fn preflight_boolean_exact_with_validation_reject_boundary_policy(
         return Ok(preflight);
     }
 
-    let graph = build_intersection_graph(left, right)?;
-    validate_graph_source_handoff(&graph, left, right)?;
+    let graph = validated_intersection_graph(left, right)?;
     preflight_boolean_exact_with_validation_reject_boundary_policy_from_graph(
         &graph, left, right, operation, validation,
     )
@@ -3602,8 +3582,7 @@ fn preflight_boolean_exact_request(
         return Ok(preflight);
     }
 
-    let graph = build_intersection_graph(left, right)?;
-    validate_graph_source_handoff(&graph, left, right)?;
+    let graph = validated_intersection_graph(left, right)?;
     preflight_boolean_exact_request_from_graph(&graph, left, right, request)
 }
 
@@ -4799,8 +4778,7 @@ fn materialize_boolean_exact_request(
         return Ok(result);
     }
 
-    let graph = build_intersection_graph(left, right)?;
-    validate_graph_source_handoff(&graph, left, right)?;
+    let graph = validated_intersection_graph(left, right)?;
 
     if let Some(result) = boolean_closed_winding_separated_meshes_from_graph(
         &graph, left, right, operation, validation,
@@ -4965,8 +4943,7 @@ fn arrangement_boolean_attempt_report(
     if let Some(attempt) = direct_arrangement_cell_complex_attempt(left, right, request, policy)? {
         return Ok(attempt);
     }
-    let graph = build_intersection_graph(left, right)?;
-    validate_graph_source_handoff(&graph, left, right)?;
+    let graph = validated_intersection_graph(left, right)?;
     let outcome = run_arrangement_cell_complex_attempt_from_graph(
         &graph,
         left,
@@ -5068,8 +5045,7 @@ fn boolean_arrangement_cell_complex_meshes(
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
-    let graph = build_intersection_graph(left, right)?;
-    validate_graph_source_handoff(&graph, left, right)?;
+    let graph = validated_intersection_graph(left, right)?;
     boolean_arrangement_cell_complex_meshes_from_graph(&graph, left, right, operation, validation)
 }
 
@@ -5119,8 +5095,7 @@ pub fn materialize_arrangement_cell_complex_boolean(
         return Ok(None);
     }
     let request = ExactBooleanRequest::new(operation, validation);
-    let graph = build_intersection_graph(left, right)?;
-    validate_graph_source_handoff(&graph, left, right)?;
+    let graph = validated_intersection_graph(left, right)?;
     let preflight = preflight_boolean_exact_request_from_graph(&graph, left, right, request)?;
     if preflight.support != ExactBooleanSupport::CertifiedArrangementCellComplex {
         return Ok(None);
@@ -6094,8 +6069,7 @@ fn adjacent_union_completion_certification(
             None,
         ));
     }
-    let graph = build_intersection_graph(left, right)?;
-    validate_graph_source_handoff(&graph, left, right)?;
+    let graph = validated_intersection_graph(left, right)?;
     adjacent_union_completion_certification_from_graph(
         &graph,
         left,
@@ -6987,8 +6961,7 @@ fn boolean_convex_relation_meshes_optional(
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
-    let graph = build_intersection_graph(left, right)?;
-    validate_graph_source_handoff(&graph, left, right)?;
+    let graph = validated_intersection_graph(left, right)?;
     let Some(relation) =
         certified_convex_relation_shortcut_from_graph(&graph, left, right, operation)?
     else {
@@ -7170,8 +7143,7 @@ pub fn materialize_volumetric_coplanar_boundary_closure_boolean(
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
 ) -> Result<Option<(ExactBooleanResult, ExactVolumetricBoundaryClosureReport)>, MeshError> {
-    let graph = build_intersection_graph(left, right)?;
-    validate_graph_source_handoff(&graph, left, right)?;
+    let graph = validated_intersection_graph(left, right)?;
     materialize_volumetric_coplanar_boundary_closure_boolean_from_graph(
         &graph, left, right, operation, validation,
     )
@@ -7220,8 +7192,7 @@ pub(crate) fn materialize_volumetric_coplanar_boundary_closure_output(
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
 ) -> Result<Option<(ExactMesh, ExactVolumetricBoundaryClosureReport)>, MeshError> {
-    let graph = build_intersection_graph(left, right)?;
-    validate_graph_source_handoff(&graph, left, right)?;
+    let graph = validated_intersection_graph(left, right)?;
     materialize_volumetric_coplanar_boundary_closure_output_from_graph(
         &graph, left, right, operation, validation,
     )
@@ -7273,8 +7244,7 @@ fn boolean_arrangement_volumetric_split_cell_recovery(
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
-    let graph = build_intersection_graph(left, right)?;
-    validate_graph_source_handoff(&graph, left, right)?;
+    let graph = validated_intersection_graph(left, right)?;
     boolean_arrangement_volumetric_split_cell_recovery_from_graph(
         &graph, left, right, operation, validation,
     )
@@ -9434,8 +9404,7 @@ pub fn materialize_open_surface_arrangement(
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
-    let graph = build_intersection_graph(left, right)?;
-    validate_graph_source_handoff(&graph, left, right)?;
+    let graph = validated_intersection_graph(left, right)?;
     materialize_open_surface_arrangement_from_graph(&graph, left, right, operation, validation)
 }
 
@@ -9474,8 +9443,7 @@ pub(crate) fn replay_open_surface_arrangement_result(
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
-    let graph = build_intersection_graph(left, right)?;
-    validate_graph_source_handoff(&graph, left, right)?;
+    let graph = validated_intersection_graph(left, right)?;
     let Some(plan) = open_surface_arrangement_plan_from_graph(&graph, left, right, operation)?
     else {
         return Ok(None);
@@ -10411,6 +10379,15 @@ fn validate_graph_source_handoff(
         })
 }
 
+fn validated_intersection_graph(
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Result<ExactIntersectionGraph, MeshError> {
+    let graph = build_intersection_graph(left, right)?;
+    validate_graph_source_handoff(&graph, left, right)?;
+    Ok(graph)
+}
+
 fn retained_graph_counts(graph: &super::graph::ExactIntersectionGraph) -> ExactBooleanBlocker {
     ExactBooleanBlocker::from_graph_counts(graph, ExactBooleanBlockerKind::NeedsWinding)
 }
@@ -11215,8 +11192,7 @@ pub(crate) fn replay_materialized_volumetric_winding_region_plan(
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
 ) -> Result<Option<MaterializedVolumetricWindingRegionPlan>, MeshError> {
-    let graph = build_intersection_graph(left, right)?;
-    validate_graph_source_handoff(&graph, left, right)?;
+    let graph = validated_intersection_graph(left, right)?;
     materialize_volumetric_winding_region_plan_from_graph(
         &graph, left, right, operation, validation,
     )
