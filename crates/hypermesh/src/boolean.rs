@@ -2064,7 +2064,7 @@ fn exact_boolean_preflight_matches_certifications(
                 certifications,
             )) || (exact_boolean_region_ownership_resolved(certifications)
                 && exact_boolean_topology_assembly_complete(certifications)
-                && winding_readiness_status_materializes_arrangement_cell_complex(status)
+                && status.materializes_arrangement_cell_complex()
                 && exact_boolean_arrangement_attempt_materialized(
                     &certifications.arrangement_attempt,
                 )
@@ -3398,7 +3398,9 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph_with_support(
     }
 
     let winding_report = winding_readiness_report_from_graph(&graph, left, right, operation)?;
-    if winding_readiness_status_materializes_arrangement_cell_complex(&winding_report.status)
+    if winding_report
+        .status
+        .materializes_arrangement_cell_complex()
         || (winding_report.status == ExactWindingReadinessStatus::Ready
             && materialize_volumetric_winding_region_plan_from_graph(
                 &graph,
@@ -3846,41 +3848,6 @@ fn volumetric_boundary_closure_report_from_materialized(
             coplanar_loop_groups: 0,
         }),
     }
-}
-
-#[cfg(test)]
-const fn winding_readiness_status_already_materialized(
-    status: &ExactWindingReadinessStatus,
-) -> bool {
-    matches!(
-        status,
-        ExactWindingReadinessStatus::PlanarArrangementAlreadyMaterialized
-            | ExactWindingReadinessStatus::CoplanarVolumetricCellsAlreadyMaterialized
-            | ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized
-            | ExactWindingReadinessStatus::MixedDimensionalRegularizedSolidAlreadyMaterialized
-            | ExactWindingReadinessStatus::LowerDimensionalRegularizedSolidAlreadyMaterialized
-            | ExactWindingReadinessStatus::ConvexBooleanAlreadyMaterialized
-            | ExactWindingReadinessStatus::OpenSurfaceArrangementAlreadyMaterialized
-            | ExactWindingReadinessStatus::SurfaceEqualityAlreadyMaterialized
-            | ExactWindingReadinessStatus::ClosedBoundaryTouchingAlreadyMaterialized
-            | ExactWindingReadinessStatus::BoundaryPolicyShortcutAlreadyMaterialized
-            | ExactWindingReadinessStatus::EmptyOperandAlreadyMaterialized
-            | ExactWindingReadinessStatus::BoundsDisjointAlreadyMaterialized
-            | ExactWindingReadinessStatus::OpenSurfaceDisjointAlreadyMaterialized
-            | ExactWindingReadinessStatus::ClosedWindingSeparatedAlreadyMaterialized
-            | ExactWindingReadinessStatus::ClosedWindingContainmentAlreadyMaterialized
-    )
-}
-
-const fn winding_readiness_status_materializes_arrangement_cell_complex(
-    status: &ExactWindingReadinessStatus,
-) -> bool {
-    matches!(
-        status,
-        ExactWindingReadinessStatus::PlanarArrangementAlreadyMaterialized
-            | ExactWindingReadinessStatus::CoplanarVolumetricCellsAlreadyMaterialized
-            | ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized
-    )
 }
 
 fn preflight_tail_shortcut_support(
@@ -12686,9 +12653,7 @@ mod tests {
                 ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized,
                 "{operation:?}: {readiness:?}"
             );
-            assert!(winding_readiness_status_already_materialized(
-                &readiness.status
-            ));
+            assert!(readiness.status.is_already_materialized());
             assert_eq!(
                 readiness.blocker.kind,
                 ExactBooleanBlockerKind::NeedsCoplanarVolumetricCells,
@@ -12891,9 +12856,7 @@ mod tests {
                 ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized,
                 "{operation:?}: {readiness:?}"
             );
-            assert!(winding_readiness_status_already_materialized(
-                &readiness.status
-            ));
+            assert!(readiness.status.is_already_materialized());
             assert_eq!(
                 readiness.blocker.kind,
                 ExactBooleanBlockerKind::NeedsWinding,
@@ -12929,7 +12892,7 @@ mod tests {
             ExactWindingReadinessStatus::ClosedWindingSeparatedAlreadyMaterialized,
             ExactWindingReadinessStatus::ClosedWindingContainmentAlreadyMaterialized,
         ] {
-            assert!(winding_readiness_status_already_materialized(&status));
+            assert!(status.is_already_materialized());
         }
 
         for status in [
@@ -12942,7 +12905,7 @@ mod tests {
             ExactWindingReadinessStatus::NoNontrivialOverlap,
             ExactWindingReadinessStatus::Ready,
         ] {
-            assert!(!winding_readiness_status_already_materialized(&status));
+            assert!(!status.is_already_materialized());
         }
 
         for status in [
@@ -12950,43 +12913,36 @@ mod tests {
             ExactWindingReadinessStatus::CoplanarVolumetricCellsAlreadyMaterialized,
             ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized,
         ] {
-            assert!(winding_readiness_status_materializes_arrangement_cell_complex(&status));
+            assert!(status.materializes_arrangement_cell_complex());
         }
 
         assert!(
-            !winding_readiness_status_materializes_arrangement_cell_complex(
-                &ExactWindingReadinessStatus::MixedDimensionalRegularizedSolidAlreadyMaterialized,
-            )
+            !ExactWindingReadinessStatus::MixedDimensionalRegularizedSolidAlreadyMaterialized
+                .materializes_arrangement_cell_complex()
         );
         assert!(
-            !winding_readiness_status_materializes_arrangement_cell_complex(
-                &ExactWindingReadinessStatus::LowerDimensionalRegularizedSolidAlreadyMaterialized,
-            )
+            !ExactWindingReadinessStatus::LowerDimensionalRegularizedSolidAlreadyMaterialized
+                .materializes_arrangement_cell_complex()
         );
         assert!(
-            !winding_readiness_status_materializes_arrangement_cell_complex(
-                &ExactWindingReadinessStatus::ConvexBooleanAlreadyMaterialized,
-            )
+            !ExactWindingReadinessStatus::ConvexBooleanAlreadyMaterialized
+                .materializes_arrangement_cell_complex()
         );
         assert!(
-            !winding_readiness_status_materializes_arrangement_cell_complex(
-                &ExactWindingReadinessStatus::OpenSurfaceArrangementAlreadyMaterialized,
-            )
+            !ExactWindingReadinessStatus::OpenSurfaceArrangementAlreadyMaterialized
+                .materializes_arrangement_cell_complex()
         );
         assert!(
-            !winding_readiness_status_materializes_arrangement_cell_complex(
-                &ExactWindingReadinessStatus::SurfaceEqualityAlreadyMaterialized,
-            )
+            !ExactWindingReadinessStatus::SurfaceEqualityAlreadyMaterialized
+                .materializes_arrangement_cell_complex()
         );
         assert!(
-            !winding_readiness_status_materializes_arrangement_cell_complex(
-                &ExactWindingReadinessStatus::ClosedBoundaryTouchingAlreadyMaterialized,
-            )
+            !ExactWindingReadinessStatus::ClosedBoundaryTouchingAlreadyMaterialized
+                .materializes_arrangement_cell_complex()
         );
         assert!(
-            !winding_readiness_status_materializes_arrangement_cell_complex(
-                &ExactWindingReadinessStatus::BoundaryPolicyShortcutAlreadyMaterialized,
-            )
+            !ExactWindingReadinessStatus::BoundaryPolicyShortcutAlreadyMaterialized
+                .materializes_arrangement_cell_complex()
         );
         for status in [
             ExactWindingReadinessStatus::EmptyOperandAlreadyMaterialized,
@@ -12995,7 +12951,7 @@ mod tests {
             ExactWindingReadinessStatus::ClosedWindingSeparatedAlreadyMaterialized,
             ExactWindingReadinessStatus::ClosedWindingContainmentAlreadyMaterialized,
         ] {
-            assert!(!winding_readiness_status_materializes_arrangement_cell_complex(&status));
+            assert!(!status.materializes_arrangement_cell_complex());
         }
     }
 
@@ -13084,14 +13040,8 @@ mod tests {
                 assert_eq!(readiness.retained_face_pairs, 0, "{operation:?}");
                 assert_eq!(readiness.retained_events, 0, "{operation:?}");
                 assert_eq!(readiness.region_count, 0, "{operation:?}");
-                assert!(winding_readiness_status_already_materialized(
-                    &readiness.status
-                ));
-                assert!(
-                    !winding_readiness_status_materializes_arrangement_cell_complex(
-                        &readiness.status
-                    )
-                );
+                assert!(readiness.status.is_already_materialized());
+                assert!(!readiness.status.materializes_arrangement_cell_complex());
                 readiness.validate().unwrap();
                 readiness.validate_against_sources(left, right).unwrap();
 
@@ -13172,14 +13122,8 @@ mod tests {
                 );
                 assert_eq!(readiness.retained_face_pairs, 0, "{operation:?}");
                 assert_eq!(readiness.retained_events, 0, "{operation:?}");
-                assert!(winding_readiness_status_already_materialized(
-                    &readiness.status
-                ));
-                assert!(
-                    !winding_readiness_status_materializes_arrangement_cell_complex(
-                        &readiness.status
-                    )
-                );
+                assert!(readiness.status.is_already_materialized());
+                assert!(!readiness.status.materializes_arrangement_cell_complex());
                 readiness.validate().unwrap();
                 readiness.validate_against_sources(left, right).unwrap();
 
@@ -13283,12 +13227,8 @@ mod tests {
             );
             assert_eq!(readiness.retained_face_pairs, 0, "{operation:?}");
             assert_eq!(readiness.retained_events, 0, "{operation:?}");
-            assert!(winding_readiness_status_already_materialized(
-                &readiness.status
-            ));
-            assert!(
-                !winding_readiness_status_materializes_arrangement_cell_complex(&readiness.status)
-            );
+            assert!(readiness.status.is_already_materialized());
+            assert!(!readiness.status.materializes_arrangement_cell_complex());
             readiness.validate().unwrap();
             readiness.validate_against_sources(&left, &right).unwrap();
 
@@ -13375,14 +13315,8 @@ mod tests {
                 );
                 assert_eq!(readiness.retained_face_pairs, 0);
                 assert_eq!(readiness.retained_events, 0);
-                assert!(winding_readiness_status_already_materialized(
-                    &readiness.status
-                ));
-                assert!(
-                    !winding_readiness_status_materializes_arrangement_cell_complex(
-                        &readiness.status
-                    )
-                );
+                assert!(readiness.status.is_already_materialized());
+                assert!(!readiness.status.materializes_arrangement_cell_complex());
                 readiness.validate().unwrap();
                 readiness.validate_against_sources(left, right).unwrap();
 
@@ -13455,12 +13389,8 @@ mod tests {
             assert_eq!(readiness.retained_face_pairs, 0);
             assert_eq!(readiness.retained_events, 0);
             assert_eq!(readiness.region_count, 0);
-            assert!(winding_readiness_status_already_materialized(
-                &readiness.status
-            ));
-            assert!(
-                !winding_readiness_status_materializes_arrangement_cell_complex(&readiness.status)
-            );
+            assert!(readiness.status.is_already_materialized());
+            assert!(!readiness.status.materializes_arrangement_cell_complex());
             readiness.validate().unwrap();
             readiness
                 .validate_against_sources_with_validation(&left, &right, ValidationPolicy::CLOSED)
@@ -13626,13 +13556,11 @@ mod tests {
         );
         assert_eq!(boundary_readiness.retained_events, graph.event_count());
         assert_eq!(boundary_readiness.region_count, 0);
-        assert!(winding_readiness_status_already_materialized(
-            &boundary_readiness.status
-        ));
+        assert!(boundary_readiness.status.is_already_materialized());
         assert!(
-            winding_readiness_status_materializes_arrangement_cell_complex(
-                &boundary_readiness.status
-            )
+            boundary_readiness
+                .status
+                .materializes_arrangement_cell_complex()
         );
         boundary_readiness.validate().unwrap();
         boundary_readiness
@@ -14195,12 +14123,8 @@ mod tests {
                 readiness.region_classifications,
                 preflight.region_classifications
             );
-            assert!(winding_readiness_status_already_materialized(
-                &readiness.status
-            ));
-            assert!(
-                !winding_readiness_status_materializes_arrangement_cell_complex(&readiness.status)
-            );
+            assert!(readiness.status.is_already_materialized());
+            assert!(!readiness.status.materializes_arrangement_cell_complex());
             readiness.validate().unwrap();
             readiness.validate_against_sources(&left, &right).unwrap();
 
@@ -14559,9 +14483,7 @@ mod tests {
                 ExactBooleanBlockerKind::NeedsBoundaryPolicy,
                 "{operation:?}: {readiness:?}"
             );
-            assert!(winding_readiness_status_already_materialized(
-                &readiness.status
-            ));
+            assert!(readiness.status.is_already_materialized());
             readiness.validate().unwrap();
             readiness.validate_against_sources(&left, &right).unwrap();
         }
@@ -14661,9 +14583,7 @@ mod tests {
                 ExactBooleanBlockerKind::NeedsBoundaryPolicy,
                 "{operation:?}: {readiness:?}"
             );
-            assert!(winding_readiness_status_already_materialized(
-                &readiness.status
-            ));
+            assert!(readiness.status.is_already_materialized());
             readiness.validate().unwrap();
             readiness.validate_against_sources(&left, &right).unwrap();
 

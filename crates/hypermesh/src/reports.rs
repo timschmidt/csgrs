@@ -5664,6 +5664,42 @@ pub enum ExactWindingReadinessStatus {
     Ready,
 }
 
+impl ExactWindingReadinessStatus {
+    /// Returns whether this readiness state records a certified materialized
+    /// path rather than an unresolved winding handoff.
+    pub const fn is_already_materialized(&self) -> bool {
+        matches!(
+            self,
+            Self::PlanarArrangementAlreadyMaterialized
+                | Self::CoplanarVolumetricCellsAlreadyMaterialized
+                | Self::ArrangementCellComplexAlreadyMaterialized
+                | Self::MixedDimensionalRegularizedSolidAlreadyMaterialized
+                | Self::LowerDimensionalRegularizedSolidAlreadyMaterialized
+                | Self::ConvexBooleanAlreadyMaterialized
+                | Self::OpenSurfaceArrangementAlreadyMaterialized
+                | Self::SurfaceEqualityAlreadyMaterialized
+                | Self::ClosedBoundaryTouchingAlreadyMaterialized
+                | Self::BoundaryPolicyShortcutAlreadyMaterialized
+                | Self::EmptyOperandAlreadyMaterialized
+                | Self::BoundsDisjointAlreadyMaterialized
+                | Self::OpenSurfaceDisjointAlreadyMaterialized
+                | Self::ClosedWindingSeparatedAlreadyMaterialized
+                | Self::ClosedWindingContainmentAlreadyMaterialized
+        )
+    }
+
+    /// Returns whether the materialized path specifically produced the exact
+    /// arrangement/cell-complex topology needed before winding policy.
+    pub const fn materializes_arrangement_cell_complex(&self) -> bool {
+        matches!(
+            self,
+            Self::PlanarArrangementAlreadyMaterialized
+                | Self::CoplanarVolumetricCellsAlreadyMaterialized
+                | Self::ArrangementCellComplexAlreadyMaterialized
+        )
+    }
+}
+
 /// Auditable report for the nontrivial overlap winding handoff.
 ///
 /// This report is the certified boundary immediately before full named
