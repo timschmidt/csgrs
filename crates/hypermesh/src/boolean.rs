@@ -3027,37 +3027,17 @@ fn preflight_without_graph_if_supported(
     operation: ExactBooleanOperation,
     support: ExactBooleanSupport,
 ) -> Option<ExactBooleanPreflight> {
-    matches!(
-        support,
-        ExactBooleanSupport::CertifiedEmptyOperand
-            | ExactBooleanSupport::CertifiedBoundsDisjoint
-            | ExactBooleanSupport::CertifiedIdentical
-            | ExactBooleanSupport::CertifiedSameSurface
-            | ExactBooleanSupport::CertifiedClosedBoundaryTouchingUnion
-            | ExactBooleanSupport::CertifiedClosedBoundaryTouchingIntersection
-            | ExactBooleanSupport::CertifiedClosedBoundaryTouchingDifference
-            | ExactBooleanSupport::CertifiedOpenSurfaceDisjoint
-            | ExactBooleanSupport::CertifiedClosedWindingSeparated
-            | ExactBooleanSupport::CertifiedClosedWindingContainment
-            | ExactBooleanSupport::CertifiedMixedDimensionalRegularizedSolid
-            | ExactBooleanSupport::CertifiedConvexUnion
-            | ExactBooleanSupport::CertifiedConvexIntersection
-            | ExactBooleanSupport::CertifiedConvexDifference
-            | ExactBooleanSupport::CertifiedConvexContainment
-            | ExactBooleanSupport::CertifiedConvexSeparated
-    )
-    .then(|| ExactBooleanPreflight {
-        operation,
-        support,
-        graph_had_unknowns: false,
-        retained_face_pairs: 0,
-        retained_events: 0,
-        region_count: 0,
-        region_classifications: Vec::new(),
-        blocker: None,
-        arrangement_readiness: None,
-        coplanar_volumetric_evidence: None,
-    })
+    let graphless_certified_support = support.is_certified()
+        && !matches!(
+            support,
+            ExactBooleanSupport::SelectedRegionPolicy
+                | ExactBooleanSupport::CertifiedOpenSurfaceArrangementUnion
+                | ExactBooleanSupport::CertifiedOpenSurfaceArrangementIntersection
+                | ExactBooleanSupport::CertifiedOpenSurfaceArrangementDifference
+                | ExactBooleanSupport::CertifiedArrangementCellComplex
+                | ExactBooleanSupport::CertifiedBoundaryPolicyShortcut
+        );
+    graphless_certified_support.then(|| certified_shortcut_preflight(operation, support))
 }
 
 fn preflight_boolean_exact_reject_boundary_policy_from_graph(
