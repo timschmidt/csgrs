@@ -698,10 +698,13 @@ impl<'a> ExactBooleanWorkspace<'a> {
     /// retained source session.
     pub fn validate_simplified_cell_complex(
         &mut self,
-        _request: ExactBooleanRequest,
+        request: ExactBooleanRequest,
         policy: ExactRegularizationPolicy,
         simplified: &ExactSimplifiedCellComplex,
     ) -> Result<(), ExactArrangementBlocker> {
+        if simplified.operation != request.operation {
+            return Err(ExactArrangementBlocker::UnresolvedRegionClassification);
+        }
         let arrangement = self
             .arrangement(policy)
             .map_err(|_| ExactArrangementBlocker::UnresolvedIntersection)?
@@ -717,10 +720,14 @@ impl<'a> ExactBooleanWorkspace<'a> {
         policy: ExactRegularizationPolicy,
         simplified: &ExactSimplifiedCellComplex,
     ) -> ExactSimplifiedCellComplexFreshness {
-        match self.validate_simplified_cell_complex(request, policy, simplified) {
-            Ok(()) => ExactSimplifiedCellComplexFreshness::Current,
-            Err(_) => ExactSimplifiedCellComplexFreshness::StaleSimplifiedCells,
+        if simplified.operation != request.operation {
+            return ExactSimplifiedCellComplexFreshness::StaleSimplifiedCells;
         }
+        let arrangement = match self.arrangement(policy) {
+            Ok(arrangement) => arrangement.clone(),
+            Err(_) => return ExactSimplifiedCellComplexFreshness::SourceReplayBlocked,
+        };
+        simplified.freshness_against_arrangement(arrangement, self.left, self.right, policy)
     }
 
     /// Returns preflight for `request`, building it once per request.
@@ -1879,6 +1886,22 @@ mod tests {
             ),
             ExactSimplifiedCellComplexFreshness::Current
         );
+        assert_eq!(
+            workspace.validate_simplified_cell_complex(
+                mismatched_request,
+                ExactRegularizationPolicy::REGULARIZED_SOLID,
+                &simplified,
+            ),
+            Err(ExactArrangementBlocker::UnresolvedRegionClassification)
+        );
+        assert_eq!(
+            workspace.simplified_cell_complex_freshness(
+                mismatched_request,
+                ExactRegularizationPolicy::REGULARIZED_SOLID,
+                &simplified,
+            ),
+            ExactSimplifiedCellComplexFreshness::StaleSimplifiedCells
+        );
         let mut stale_simplified = simplified.clone();
         stale_simplified
             .topology_assembly_report
@@ -1894,13 +1917,13 @@ mod tests {
                 )
                 .is_err()
         );
-        assert_ne!(
+        assert_eq!(
             workspace.simplified_cell_complex_freshness(
                 request,
                 ExactRegularizationPolicy::REGULARIZED_SOLID,
                 &stale_simplified,
             ),
-            ExactSimplifiedCellComplexFreshness::Current
+            ExactSimplifiedCellComplexFreshness::StaleSimplifiedCells
         );
 
         let first_preflight = workspace.preflight(request).unwrap() as *const ExactBooleanPreflight;

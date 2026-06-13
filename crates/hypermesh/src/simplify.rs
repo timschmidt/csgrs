@@ -228,13 +228,23 @@ impl ExactSimplifiedCellComplex {
         right: &ExactMesh,
         policy: ExactRegularizationPolicy,
     ) -> ExactSimplifiedCellComplexFreshness {
-        if self.validate().is_err() {
-            return ExactSimplifiedCellComplexFreshness::StaleSimplifiedCells;
-        }
         let arrangement = match ExactArrangement::from_meshes_with_policy(left, right, policy) {
             Ok(arrangement) => arrangement,
             Err(_) => return ExactSimplifiedCellComplexFreshness::SourceReplayBlocked,
         };
+        self.freshness_against_arrangement(arrangement, left, right, policy)
+    }
+
+    pub(crate) fn freshness_against_arrangement(
+        &self,
+        arrangement: ExactArrangement,
+        left: &ExactMesh,
+        right: &ExactMesh,
+        policy: ExactRegularizationPolicy,
+    ) -> ExactSimplifiedCellComplexFreshness {
+        if self.validate().is_err() {
+            return ExactSimplifiedCellComplexFreshness::StaleSimplifiedCells;
+        }
         let selected =
             match select_arrangement_for_replay(arrangement, left, right, self.operation, policy) {
                 Ok(selected) => selected,
