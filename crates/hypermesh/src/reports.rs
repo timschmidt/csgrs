@@ -496,22 +496,6 @@ fn validate_refinement_partition(
     }
 }
 
-fn retained_blocker_kind_from_counts(blocker: &ExactBooleanBlocker) -> ExactBooleanBlockerKind {
-    if blocker_has_refinement_evidence(blocker) {
-        ExactBooleanBlockerKind::NeedsRefinement
-    } else if blocker.coplanar_overlapping_pairs != 0 || blocker.coplanar_touching_pairs != 0 {
-        if blocker.candidate_pairs == 0 && blocker.coplanar_overlapping_pairs > 0 {
-            ExactBooleanBlockerKind::NeedsPlanarArrangement
-        } else if blocker.candidate_pairs == 0 {
-            ExactBooleanBlockerKind::NeedsBoundaryPolicy
-        } else {
-            ExactBooleanBlockerKind::NeedsCoplanarVolumetricCells
-        }
-    } else {
-        ExactBooleanBlockerKind::NeedsWinding
-    }
-}
-
 fn boundary_touching_not_boundary_blocker_kind(
     blocker: &ExactBooleanBlocker,
 ) -> Result<ExactBooleanBlockerKind, ExactReportValidationError> {
@@ -2594,8 +2578,7 @@ fn certified_closed_winding_relation_from_sources(
         return Ok(None);
     }
     let graph = validated_report_intersection_graph(left, right)?;
-    let counts =
-        ExactBooleanBlocker::from_graph_counts(&graph, ExactBooleanBlockerKind::NeedsWinding);
+    let counts = ExactBooleanBlocker::from_graph(&graph, ExactBooleanBlockerKind::NeedsWinding);
     if graph.has_unknowns()
         || !graph.face_pairs.is_empty()
         || counts.construction_failed_events != 0
@@ -4388,7 +4371,7 @@ impl ExactBooleanBlocker {
     /// source replay. Keeping the counts on the public blocker shape prevents
     /// executor and report code from drifting on how unknown candidate events
     /// and failed exact constructions are retained.
-    pub(crate) fn from_graph_counts(
+    pub(crate) fn from_graph(
         graph: &ExactIntersectionGraph,
         kind: ExactBooleanBlockerKind,
     ) -> Self {
@@ -4434,6 +4417,29 @@ impl ExactBooleanBlocker {
                 .count();
         }
         blocker
+    }
+
+    /// Infer the narrowest blocker kind justified by retained graph counts.
+    ///
+    /// This keeps executor reports and validation replay on the same
+    /// provenance-count interpretation: refinement evidence outranks topology
+    /// policy, coplanar-only graphs route to planar cells or boundary policy,
+    /// mixed coplanar/non-coplanar graphs need volumetric coplanar handling, and
+    /// remaining resolved non-coplanar graph state needs winding.
+    pub(crate) fn inferred_kind(&self) -> ExactBooleanBlockerKind {
+        if blocker_has_refinement_evidence(self) {
+            ExactBooleanBlockerKind::NeedsRefinement
+        } else if self.coplanar_overlapping_pairs != 0 || self.coplanar_touching_pairs != 0 {
+            if self.candidate_pairs == 0 && self.coplanar_overlapping_pairs > 0 {
+                ExactBooleanBlockerKind::NeedsPlanarArrangement
+            } else if self.candidate_pairs == 0 {
+                ExactBooleanBlockerKind::NeedsBoundaryPolicy
+            } else {
+                ExactBooleanBlockerKind::NeedsCoplanarVolumetricCells
+            }
+        } else {
+            ExactBooleanBlockerKind::NeedsWinding
+        }
     }
 
     /// Validate that this blocker kind is justified by retained graph relation
@@ -4500,7 +4506,7 @@ impl ExactBooleanBlocker {
     ) -> Result<(), ExactReportValidationError> {
         self.validate_for_kind(self.kind)?;
         let graph = validated_report_intersection_graph(left, right)?;
-        let replay = ExactBooleanBlocker::from_graph_counts(&graph, self.kind);
+        let replay = ExactBooleanBlocker::from_graph(&graph, self.kind);
         if replay.validate_for_kind(self.kind).is_ok() && self == &replay {
             Ok(())
         } else {
@@ -4909,9 +4915,7 @@ impl ExactOpenSurfaceDisjointReport {
             }
             ExactOpenSurfaceDisjointStatus::NotOpenSurface
             | ExactOpenSurfaceDisjointStatus::GraphHasFacePairs
-            | ExactOpenSurfaceDisjointStatus::Certified => {
-                retained_blocker_kind_from_counts(&self.blocker)
-            }
+            | ExactOpenSurfaceDisjointStatus::Certified => self.blocker.inferred_kind(),
         };
         blocker_kind(Some(&self.blocker), expected_kind)?;
         self.blocker.validate_for_kind(expected_kind)?;
@@ -5092,7 +5096,7 @@ impl ExactAdjacentUnionCompletionReport {
             | ExactAdjacentUnionCompletionStatus::CertifiedContainedFace => {
                 ExactBooleanBlockerKind::NeedsBoundaryPolicy
             }
-            _ => retained_blocker_kind_from_counts(&self.blocker),
+            _ => self.blocker.inferred_kind(),
         };
         blocker_kind(Some(&self.blocker), expected_kind)?;
         if matches!(
@@ -5436,9 +5440,7 @@ impl ExactPlanarArrangementReport {
             }
             ExactPlanarArrangementStatus::NotNamedOperation
             | ExactPlanarArrangementStatus::AlreadyMaterialized
-            | ExactPlanarArrangementStatus::NoPositiveOverlap => {
-                retained_blocker_kind_from_counts(&self.blocker)
-            }
+            | ExactPlanarArrangementStatus::NoPositiveOverlap => self.blocker.inferred_kind(),
         };
         blocker_kind(Some(&self.blocker), expected_kind)?;
         self.blocker.validate_for_kind(expected_kind)?;
@@ -6374,7 +6376,7 @@ impl ExactWindingReadinessReport {
                     _ => {}
                 }
                 if matches!(self.status, ExactWindingReadinessStatus::NotNamedOperation) {
-                    let expected = retained_blocker_kind_from_counts(&self.blocker);
+                    let expected = self.blocker.inferred_kind();
                     blocker_kind(Some(&self.blocker), expected)?;
                     self.blocker.validate_for_kind(expected)?;
                 } else {
@@ -8051,10 +8053,8 @@ mod tests {
             }],
         };
 
-        let blocker = ExactBooleanBlocker::from_graph_counts(
-            &graph,
-            ExactBooleanBlockerKind::NeedsRefinement,
-        );
+        let blocker =
+            ExactBooleanBlocker::from_graph(&graph, ExactBooleanBlockerKind::NeedsRefinement);
         assert_eq!(blocker.candidate_pairs, 1);
         assert_eq!(blocker.unknown_pairs, 1);
         assert_eq!(blocker.construction_failed_events, 0);

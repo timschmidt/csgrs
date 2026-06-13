@@ -5807,7 +5807,7 @@ fn adjacent_union_completion_report(
         | ExactAdjacentUnionCompletionStatus::CertifiedContainedFace => {
             ExactBooleanBlockerKind::NeedsBoundaryPolicy
         }
-        _ => retained_graph_blocker_kind(counts),
+        _ => counts.inferred_kind(),
     };
     ExactAdjacentUnionCompletionReport {
         operation,
@@ -9086,7 +9086,7 @@ fn open_surface_disjoint_report(
     retained_events: usize,
     counts: ExactBooleanBlocker,
 ) -> ExactOpenSurfaceDisjointReport {
-    let blocker_kind = retained_graph_blocker_kind(counts);
+    let blocker_kind = counts.inferred_kind();
     ExactOpenSurfaceDisjointReport {
         status,
         left_open_surface,
@@ -10141,7 +10141,7 @@ fn validated_intersection_graph(
 }
 
 fn retained_graph_counts(graph: &super::graph::ExactIntersectionGraph) -> ExactBooleanBlocker {
-    ExactBooleanBlocker::from_graph_counts(graph, ExactBooleanBlockerKind::NeedsWinding)
+    ExactBooleanBlocker::from_graph(graph, ExactBooleanBlockerKind::NeedsWinding)
 }
 
 pub(crate) fn boundary_touching_report_from_graph(
@@ -10161,7 +10161,7 @@ pub(crate) fn boundary_touching_report_from_graph(
     let blocker_kind = match status {
         ExactBoundaryTouchingStatus::GraphUnknowns => ExactBooleanBlockerKind::NeedsRefinement,
         ExactBoundaryTouchingStatus::Certified => ExactBooleanBlockerKind::NeedsBoundaryPolicy,
-        ExactBoundaryTouchingStatus::NotBoundaryOnly => retained_graph_blocker_kind(counts),
+        ExactBoundaryTouchingStatus::NotBoundaryOnly => counts.inferred_kind(),
     };
     Ok(ExactBoundaryTouchingReport {
         status,
@@ -10255,7 +10255,7 @@ fn planar_arrangement_report(
         ExactPlanarArrangementStatus::Required => ExactBooleanBlockerKind::NeedsPlanarArrangement,
         ExactPlanarArrangementStatus::NotNamedOperation
         | ExactPlanarArrangementStatus::AlreadyMaterialized
-        | ExactPlanarArrangementStatus::NoPositiveOverlap => retained_graph_blocker_kind(counts),
+        | ExactPlanarArrangementStatus::NoPositiveOverlap => counts.inferred_kind(),
     };
     ExactPlanarArrangementReport {
         operation,
@@ -10286,7 +10286,7 @@ fn winding_readiness_report_from_graph(
     let graph_had_unknowns = graph.has_unknowns();
     let counts = retained_graph_counts(graph);
     if matches!(operation, ExactBooleanOperation::SelectedRegions(_)) {
-        let blocker_kind = retained_graph_blocker_kind(counts);
+        let blocker_kind = counts.inferred_kind();
         return Ok(winding_readiness_report(
             operation,
             ExactWindingReadinessStatus::NotNamedOperation,
@@ -10741,22 +10741,6 @@ fn winding_readiness_report_from_graph(
         None,
         None,
     ))
-}
-
-fn retained_graph_blocker_kind(counts: ExactBooleanBlocker) -> ExactBooleanBlockerKind {
-    if counts.unknown_pairs > 0 || counts.construction_failed_events > 0 {
-        ExactBooleanBlockerKind::NeedsRefinement
-    } else if counts.coplanar_overlapping_pairs + counts.coplanar_touching_pairs > 0 {
-        if counts.candidate_pairs == 0 && counts.coplanar_overlapping_pairs > 0 {
-            ExactBooleanBlockerKind::NeedsPlanarArrangement
-        } else if counts.candidate_pairs == 0 {
-            ExactBooleanBlockerKind::NeedsBoundaryPolicy
-        } else {
-            ExactBooleanBlockerKind::NeedsCoplanarVolumetricCells
-        }
-    } else {
-        ExactBooleanBlockerKind::NeedsWinding
-    }
 }
 
 fn winding_readiness_report(
@@ -12006,7 +11990,7 @@ mod tests {
         let boundary_right = axis_aligned_box_i64([2, 0, 0], [4, 2, 2]);
         let boundary_graph = build_intersection_graph(&boundary_left, &boundary_right).unwrap();
         assert!(graph_requires_coplanar_volumetric_cells(
-            &ExactBooleanBlocker::from_graph_counts(
+            &ExactBooleanBlocker::from_graph(
                 &boundary_graph,
                 ExactBooleanBlockerKind::NeedsWinding
             )
