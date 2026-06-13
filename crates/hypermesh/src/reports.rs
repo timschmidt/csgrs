@@ -4925,34 +4925,18 @@ impl ExactOpenSurfaceDisjointReport {
             self.retained_events,
         )?;
         // Status is certified combinatorial state, not a label layered over
-        // refinement, topology policy, and certified shortcuts are not
-        // accidentally conflated.
-        match self.status {
-            ExactOpenSurfaceDisjointStatus::NotOpenSurface => {
-                if (self.left_open_surface && self.right_open_surface)
-                    || self.graph_had_unknowns
-                    || self.retained_face_pairs != 0
-                    || self.retained_events != 0
-                    || blocker_has_any_evidence(&self.blocker)
-                {
-                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
-                }
+        // mesh-shape preconditions and graph evidence.
+        if matches!(self.status, ExactOpenSurfaceDisjointStatus::NotOpenSurface) {
+            if (self.left_open_surface && self.right_open_surface)
+                || self.graph_had_unknowns
+                || self.retained_face_pairs != 0
+                || self.retained_events != 0
+                || blocker_has_any_evidence(&self.blocker)
+            {
+                return Err(ExactReportValidationError::StatusEvidenceMismatch);
             }
-            ExactOpenSurfaceDisjointStatus::GraphUnknowns => {
-                if !self.left_open_surface || !self.right_open_surface {
-                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
-                }
-            }
-            ExactOpenSurfaceDisjointStatus::GraphHasFacePairs => {
-                if !self.left_open_surface || !self.right_open_surface {
-                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
-                }
-            }
-            ExactOpenSurfaceDisjointStatus::Certified => {
-                if !self.left_open_surface || !self.right_open_surface {
-                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
-                }
-            }
+        } else if !self.left_open_surface || !self.right_open_surface {
+            return Err(ExactReportValidationError::StatusEvidenceMismatch);
         }
         if self.is_certified() && (self.retained_face_pairs != 0 || self.retained_events != 0) {
             return Err(ExactReportValidationError::UnexpectedGraphEvents);
