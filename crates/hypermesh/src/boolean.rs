@@ -1032,17 +1032,13 @@ impl ExactBooleanRequest {
         right: &ExactMesh,
     ) -> Result<Option<(ExactBooleanResult, CoplanarVolumetricCellEvidenceReport)>, MeshError> {
         let graph = validated_intersection_graph(left, right)?;
-        Ok(materialized_result_with_evidence_replays_sources(
-            materialize_closed_no_volume_overlap_regularized_boolean_with_evidence_from_graph(
-                &graph,
-                left,
-                right,
-                self.operation,
-                self.validation,
-            )?,
+        materialize_closed_no_volume_overlap_regularized_boolean_with_evidence_from_graph(
+            &graph,
             left,
             right,
-        ))
+            self.operation,
+            self.validation,
+        )
     }
 
     /// Materialize zero-area closed boundary contact, returning the exact
@@ -1053,17 +1049,13 @@ impl ExactBooleanRequest {
         right: &ExactMesh,
     ) -> Result<Option<(ExactBooleanResult, CoplanarVolumetricCellEvidenceReport)>, MeshError> {
         let graph = validated_intersection_graph(left, right)?;
-        Ok(materialized_result_with_evidence_replays_sources(
-            materialize_closed_boundary_touching_regularized_boolean_with_evidence_from_graph(
-                &graph,
-                left,
-                right,
-                self.operation,
-                self.validation,
-            )?,
+        materialize_closed_boundary_touching_regularized_boolean_with_evidence_from_graph(
+            &graph,
             left,
             right,
-        ))
+            self.operation,
+            self.validation,
+        )
     }
 
     /// Materialize the closed-winding containment shortcut for this request,
@@ -4757,22 +4749,18 @@ fn materialize_boolean_exact_request(
     {
         return Ok(result);
     }
-    if let Some((result, _evidence)) = materialized_result_with_evidence_replays_sources(
+    if let Some((result, _evidence)) =
         materialize_closed_boundary_touching_regularized_boolean_with_evidence_from_graph(
             &graph, left, right, operation, validation,
-        )?,
-        left,
-        right,
-    ) {
+        )?
+    {
         return Ok(result);
     }
-    if let Some((result, _evidence)) = materialized_result_with_evidence_replays_sources(
+    if let Some((result, _evidence)) =
         materialize_closed_no_volume_overlap_regularized_boolean_with_evidence_from_graph(
             &graph, left, right, operation, validation,
-        )?,
-        left,
-        right,
-    ) {
+        )?
+    {
         return Ok(result);
     }
     if let Some(result) = boolean_arrangement_volumetric_split_cell_recovery_from_graph(
@@ -9814,7 +9802,7 @@ pub(crate) fn materialize_boundary_touching_policy_from_graph_for_request(
     let operation = request.operation;
     let validation = request.validation;
     let boundary_policy = request.boundary_policy;
-    if let Some((result, evidence)) =
+    if let Some((result, _evidence)) =
         materialize_closed_boundary_touching_regularized_boolean_with_evidence_from_graph(
             graph, left, right, operation, validation,
         )?
@@ -9828,7 +9816,6 @@ pub(crate) fn materialize_boundary_touching_policy_from_graph_for_request(
                 ExactBoundaryBooleanPolicy::Reject,
             )
             .is_err()
-            || evidence.validate_against_sources(left, right).is_err()
         {
             return Ok(None);
         }
