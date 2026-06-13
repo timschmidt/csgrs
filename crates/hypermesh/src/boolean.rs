@@ -2727,30 +2727,31 @@ pub(crate) fn materialize_certified_boolean_support_with_artifacts(
                 request.materialize_open_surface_disjoint(left, right)?
             }
         }
-        ExactBooleanSupport::CertifiedClosedWindingSeparated => {
+        ExactBooleanSupport::CertifiedClosedWindingSeparated
+        | ExactBooleanSupport::CertifiedClosedWindingContainment => {
+            let materialization = if support == ExactBooleanSupport::CertifiedClosedWindingSeparated
+            {
+                ClosedWindingMaterialization::Separated
+            } else {
+                ClosedWindingMaterialization::Containment
+            };
             if let Some(graph) = retained_graph {
                 materialize_closed_winding_from_graph_for_request(
                     graph,
                     left,
                     right,
                     request,
-                    ClosedWindingMaterialization::Separated,
+                    materialization,
                 )?
             } else {
-                request.materialize_closed_winding_separated(left, right)?
-            }
-        }
-        ExactBooleanSupport::CertifiedClosedWindingContainment => {
-            if let Some(graph) = retained_graph {
+                let graph = validated_intersection_graph(left, right)?;
                 materialize_closed_winding_from_graph_for_request(
-                    graph,
+                    &graph,
                     left,
                     right,
                     request,
-                    ClosedWindingMaterialization::Containment,
+                    materialization,
                 )?
-            } else {
-                request.materialize_closed_winding_containment(left, right)?
             }
         }
         ExactBooleanSupport::CertifiedMixedDimensionalRegularizedSolid => {
