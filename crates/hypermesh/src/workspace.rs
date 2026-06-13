@@ -1,4 +1,6 @@
-use super::arrangement3d::{ExactArrangement, ExactTopologyAssemblyReport};
+use super::arrangement3d::{
+    ExactArrangement, ExactTopologyAssemblyReport, ExactTopologyAssemblyStatus,
+};
 use super::boolean::{
     ExactArrangementBooleanAttempt, ExactBooleanCertificationSet, ExactBooleanEvaluation,
     ExactBooleanRequest, ExactIdenticalMeshReport,
@@ -465,6 +467,20 @@ impl<'a> ExactBooleanWorkspace<'a> {
             .map_err(|_| ExactArrangementBlocker::UnresolvedIntersection)?
             .clone();
         report.validate_against_arrangement(&arrangement, self.left, self.right, policy)
+    }
+
+    /// Classify topology-assembly evidence against this workspace's retained
+    /// source session.
+    pub fn topology_assembly_report_status(
+        &mut self,
+        policy: ExactRegularizationPolicy,
+        report: &ExactTopologyAssemblyReport,
+    ) -> ExactTopologyAssemblyStatus {
+        let arrangement = match self.arrangement(policy) {
+            Ok(arrangement) => arrangement.clone(),
+            Err(_) => return ExactTopologyAssemblyStatus::SourceReplayBlocked,
+        };
+        report.status_against_arrangement(&arrangement, self.left, self.right, policy)
     }
 
     /// Returns region-ownership evidence for `policy`, reusing the cached
@@ -1669,6 +1685,13 @@ mod tests {
                 &topology_report,
             )
             .unwrap();
+        assert_eq!(
+            workspace.topology_assembly_report_status(
+                ExactRegularizationPolicy::REGULARIZED_SOLID,
+                &topology_report,
+            ),
+            ExactTopologyAssemblyStatus::Complete
+        );
         let mut stale_topology_report = topology_report.clone();
         stale_topology_report.graph_events += 1;
         stale_topology_report.validate().unwrap();
@@ -1686,6 +1709,13 @@ mod tests {
                 &stale_topology_report,
             ),
             Err(ExactArrangementBlocker::UnresolvedRegionClassification)
+        );
+        assert_eq!(
+            workspace.topology_assembly_report_status(
+                ExactRegularizationPolicy::REGULARIZED_SOLID,
+                &stale_topology_report,
+            ),
+            ExactTopologyAssemblyStatus::StaleArrangement
         );
 
         let first_ownership_report = workspace
