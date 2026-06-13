@@ -6354,21 +6354,6 @@ fn boolean_arrangement_regularized_sheet_complex_from_graph(
     )
 }
 
-fn boolean_arrangement_regularized_sheet_or_boundary_from_graph(
-    graph: &super::graph::ExactIntersectionGraph,
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: ValidationPolicy,
-) -> Result<Option<ExactBooleanResult>, MeshError> {
-    if let Some(result) = boolean_arrangement_regularized_sheet_complex_from_graph(
-        graph, left, right, operation, validation,
-    )? {
-        return Ok(Some(result));
-    }
-    Ok(None)
-}
-
 fn boolean_arrangement_regularized_no_volume_overlap_from_graph(
     graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
@@ -6678,7 +6663,7 @@ fn arrangement_cell_complex_recovery_outcome_if_available(
         && regularized_sheet_recovery_surface
         && let Some(validation) = validation
     {
-        if let Some(result) = boolean_arrangement_regularized_sheet_or_boundary_from_graph(
+        if let Some(result) = boolean_arrangement_regularized_sheet_complex_from_graph(
             graph, left, right, operation, validation,
         )? {
             return Ok(Some(materialized_arrangement_attempt_outcome(
