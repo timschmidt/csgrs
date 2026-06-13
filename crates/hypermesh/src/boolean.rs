@@ -2810,10 +2810,7 @@ fn materialize_certified_arrangement_cell_complex_support_with_arrangement(
             graph, left, right, operation, validation,
         )?
     } else {
-        let graph = validated_intersection_graph(left, right)?;
-        boolean_arrangement_volumetric_split_cell_recovery_from_graph(
-            &graph, left, right, operation, validation,
-        )?
+        materialize_volumetric_winding_arrangement(left, right, operation, validation)?
     };
     if let Some(result) = volumetric_split_cell {
         return Ok(Some(result));
