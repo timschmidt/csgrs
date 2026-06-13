@@ -5275,7 +5275,7 @@ fn arrangement_pre_cell_complex_recovery_outcome_if_available(
 
     if let Some(validation) = validation
         && let Some(result) =
-            boolean_arrangement_adjacency_union_completion(left, right, operation, validation)?
+            adjacent_union_completion_certification(left, right, operation, Some(validation))?.1
     {
         return Ok(Some(materialized_arrangement_attempt_outcome(
             attempt, result, false,
@@ -5898,15 +5898,6 @@ fn arrangement_affine_orthogonal_solid_recovery_outcome(
     Ok(Some(materialized_arrangement_attempt_outcome(
         attempt, result, true,
     )))
-}
-
-fn boolean_arrangement_adjacency_union_completion(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: ValidationPolicy,
-) -> Result<Option<ExactBooleanResult>, MeshError> {
-    Ok(adjacent_union_completion_certification(left, right, operation, Some(validation))?.1)
 }
 
 fn adjacent_union_completion_report(
