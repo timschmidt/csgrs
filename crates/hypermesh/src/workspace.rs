@@ -232,10 +232,11 @@ impl<'a> ExactBooleanWorkspace<'a> {
         &mut self,
         request: ExactBooleanRequest,
     ) -> Result<Option<(ExactBooleanResult, CoplanarVolumetricCellEvidenceReport)>, MeshError> {
-        if let Some(cached) = cached_materialization(
+        if let Some(cached) = cached_retained_result_with_evidence(
             &self.closed_boundary_touching_regularized_materializations,
+            self.left,
+            self.right,
             request,
-            |cached| validate_retained_result_with_evidence(cached, self.left, self.right, request),
         )? {
             return Ok(cached);
         }
@@ -260,10 +261,11 @@ impl<'a> ExactBooleanWorkspace<'a> {
         &mut self,
         request: ExactBooleanRequest,
     ) -> Result<Option<(ExactBooleanResult, CoplanarVolumetricCellEvidenceReport)>, MeshError> {
-        if let Some(cached) = cached_materialization(
+        if let Some(cached) = cached_retained_result_with_evidence(
             &self.closed_no_volume_overlap_regularized_materializations,
+            self.left,
+            self.right,
             request,
-            |cached| validate_retained_result_with_evidence(cached, self.left, self.right, request),
         )? {
             return Ok(cached);
         }
@@ -288,10 +290,11 @@ impl<'a> ExactBooleanWorkspace<'a> {
         &mut self,
         request: ExactBooleanRequest,
     ) -> Result<Option<ExactBooleanResult>, MeshError> {
-        if let Some(cached) = cached_materialization(
+        if let Some(cached) = cached_retained_optional_result(
             &self.open_surface_disjoint_materializations,
+            self.left,
+            self.right,
             request,
-            |cached| validate_retained_optional_result(cached, self.left, self.right, request),
         )? {
             return Ok(cached);
         }
@@ -311,10 +314,11 @@ impl<'a> ExactBooleanWorkspace<'a> {
         &mut self,
         request: ExactBooleanRequest,
     ) -> Result<Option<ExactBooleanResult>, MeshError> {
-        if let Some(cached) = cached_materialization(
+        if let Some(cached) = cached_retained_optional_result(
             &self.boundary_touching_policy_materializations,
+            self.left,
+            self.right,
             request,
-            |cached| validate_retained_optional_result(cached, self.left, self.right, request),
         )? {
             return Ok(cached);
         }
@@ -347,10 +351,11 @@ impl<'a> ExactBooleanWorkspace<'a> {
         &mut self,
         request: ExactBooleanRequest,
     ) -> Result<Option<ExactBooleanResult>, MeshError> {
-        if let Some(cached) = cached_materialization(
+        if let Some(cached) = cached_retained_optional_result(
             &self.closed_winding_containment_materializations,
+            self.left,
+            self.right,
             request,
-            |cached| validate_retained_optional_result(cached, self.left, self.right, request),
         )? {
             return Ok(cached);
         }
@@ -370,10 +375,11 @@ impl<'a> ExactBooleanWorkspace<'a> {
         &mut self,
         request: ExactBooleanRequest,
     ) -> Result<Option<ExactBooleanResult>, MeshError> {
-        if let Some(cached) = cached_materialization(
+        if let Some(cached) = cached_retained_optional_result(
             &self.closed_winding_separated_materializations,
+            self.left,
+            self.right,
             request,
-            |cached| validate_retained_optional_result(cached, self.left, self.right, request),
         )? {
             return Ok(cached);
         }
@@ -1517,6 +1523,28 @@ fn cached_retained_result(
     cached_materialization(cache, request, |result| {
         validate_retained_result_for_request(left, right, request, result)
             .map_err(workspace_report_validation_error)
+    })
+}
+
+fn cached_retained_optional_result(
+    cache: &[(ExactBooleanRequest, OptionalMaterializedResult)],
+    left: &ExactMesh,
+    right: &ExactMesh,
+    request: ExactBooleanRequest,
+) -> Result<Option<OptionalMaterializedResult>, MeshError> {
+    cached_materialization(cache, request, |result| {
+        validate_retained_optional_result(result, left, right, request)
+    })
+}
+
+fn cached_retained_result_with_evidence(
+    cache: &[(ExactBooleanRequest, MaterializedResultWithEvidence)],
+    left: &ExactMesh,
+    right: &ExactMesh,
+    request: ExactBooleanRequest,
+) -> Result<Option<MaterializedResultWithEvidence>, MeshError> {
+    cached_materialization(cache, request, |result| {
+        validate_retained_result_with_evidence(result, left, right, request)
     })
 }
 
