@@ -2819,7 +2819,10 @@ fn materialize_certified_arrangement_cell_complex_support_with_arrangement(
             graph, left, right, operation, validation,
         )?
     } else {
-        boolean_arrangement_volumetric_split_cell_recovery(left, right, operation, validation)?
+        let graph = validated_intersection_graph(left, right)?;
+        boolean_arrangement_volumetric_split_cell_recovery_from_graph(
+            &graph, left, right, operation, validation,
+        )?
     };
     if let Some(result) = volumetric_split_cell {
         return Ok(Some(result));
@@ -6988,8 +6991,11 @@ pub fn materialize_volumetric_winding_arrangement(
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
+    let graph = validated_intersection_graph(left, right)?;
     Ok(public_operation_replayable_result(
-        boolean_arrangement_volumetric_split_cell_recovery(left, right, operation, validation)?,
+        boolean_arrangement_volumetric_split_cell_recovery_from_graph(
+            &graph, left, right, operation, validation,
+        )?,
         left,
         right,
         operation,
@@ -7106,18 +7112,6 @@ fn materialize_volumetric_coplanar_boundary_closure_output_from_graph(
         return Ok(None);
     }
     Ok(Some((mesh, closure_report)))
-}
-
-fn boolean_arrangement_volumetric_split_cell_recovery(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: ValidationPolicy,
-) -> Result<Option<ExactBooleanResult>, MeshError> {
-    let graph = validated_intersection_graph(left, right)?;
-    boolean_arrangement_volumetric_split_cell_recovery_from_graph(
-        &graph, left, right, operation, validation,
-    )
 }
 
 fn boolean_arrangement_volumetric_split_cell_recovery_from_graph(
