@@ -704,6 +704,14 @@ pub enum ExactTopologyAssemblyStatus {
     ArrangementBlocked,
 }
 
+impl ExactTopologyAssemblyStatus {
+    /// Return whether retained arrangement topology completed the exact
+    /// graph/split/region bridge.
+    pub const fn is_complete(self) -> bool {
+        matches!(self, Self::Complete)
+    }
+}
+
 /// Compact retained-topology report connecting graph/split plans to arrangement
 /// topology.
 #[derive(Clone, Debug, PartialEq)]
@@ -783,7 +791,7 @@ pub struct ExactTopologyAssemblyReport {
 impl ExactTopologyAssemblyReport {
     /// Return whether this report represents a complete topology bridge.
     pub fn is_complete(&self) -> bool {
-        self.status == ExactTopologyAssemblyStatus::Complete
+        self.status.is_complete()
     }
 
     /// Validate local topology-assembly report shape without source replay.
@@ -6143,6 +6151,7 @@ mod tests {
         );
 
         assert_eq!(report.status, ExactTopologyAssemblyStatus::Complete);
+        assert!(report.status.is_complete());
         assert!(report.is_complete());
         assert_eq!(report.freshness, ExactArrangementFreshness::Current);
         assert!(report.blockers.is_empty(), "{:?}", report.blockers);
