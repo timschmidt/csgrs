@@ -15,8 +15,7 @@ use super::arrangement2d::{
 use super::boolean::ExactBooleanOperation;
 use super::cell_complex::{
     ExactCellComplex, ExactLabeledCellComplex, ExactLabeledCellComplexFreshness,
-    ExactRegionOwnershipReport, region_ownership_status,
-    selected_region_selection_ignores_opposite_classification,
+    ExactRegionOwnershipReport, arrangement_cell_complex_labeling_policy, region_ownership_status,
 };
 use super::error::{DiagnosticKind, MeshDiagnostic, MeshError, Severity};
 use super::graph::{
@@ -1497,14 +1496,7 @@ impl ExactArrangement3d {
         policy: ExactRegularizationPolicy,
     ) -> Result<super::cell_complex::ExactSelectedCellComplex, ExactArrangementBlocker> {
         let labeling_policy =
-            if selected_region_selection_ignores_opposite_classification(operation) {
-                ExactRegularizationPolicy {
-                    unresolved: super::regularization::ExactUnresolvedPolicy::RetainArtifacts,
-                    ..policy
-                }
-            } else {
-                policy
-            };
+            arrangement_cell_complex_labeling_policy(self, Some(operation), policy);
         self.label_regions(labeling_policy)?
             .select_with_policy(operation, policy)
     }

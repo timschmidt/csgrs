@@ -31,9 +31,7 @@ use super::boolean::{
     replay_selected_region_boolean_result,
 };
 use super::bounds::AabbIntersectionKind;
-use super::cell_complex::{
-    ExactRegionOwnershipReport, arrangement_region_classification_blockers_are_volume_resolved,
-};
+use super::cell_complex::{ExactRegionOwnershipReport, arrangement_cell_complex_labeling_policy};
 use super::contained_adjacent::materialize_contained_face_adjacent_union;
 use super::convex::{
     intersect_closed_convex_solids, subtract_closed_convex_solids, union_closed_convex_solids,
@@ -55,7 +53,7 @@ use super::region::{
     FaceRegionTriangulation, boundary_node_point,
 };
 use super::regularization::ExactArrangementBlocker;
-use super::regularization::{ExactRegularizationPolicy, ExactUnresolvedPolicy};
+use super::regularization::ExactRegularizationPolicy;
 use super::solid::{
     ConvexSolidMeshClassification, ConvexSolidMeshRelation, ConvexSolidPointRelation,
     classify_mesh_vertices_against_convex_solid_report,
@@ -1625,6 +1623,7 @@ impl ExactBooleanResult {
             &arrangement,
             left,
             right,
+            self.arrangement_cell_complex_operation(),
         )
     }
 
@@ -1633,6 +1632,7 @@ impl ExactBooleanResult {
         arrangement: &ExactArrangement,
         left: &ExactMesh,
         right: &ExactMesh,
+        operation: Option<ExactBooleanOperation>,
     ) -> Result<(), ExactReportValidationError> {
         if self.topology_assembly_report.is_none() && self.region_ownership_report.is_none() {
             return Ok(());
@@ -1645,15 +1645,11 @@ impl ExactBooleanResult {
         if self.topology_assembly_report.as_ref() != Some(&replay_topology) {
             return Err(ExactReportValidationError::SourceReplayMismatch);
         }
-        let ownership_policy =
-            if arrangement_region_classification_blockers_are_volume_resolved(&arrangement) {
-                ExactRegularizationPolicy {
-                    unresolved: ExactUnresolvedPolicy::RetainArtifacts,
-                    ..ExactRegularizationPolicy::REGULARIZED_SOLID
-                }
-            } else {
-                ExactRegularizationPolicy::REGULARIZED_SOLID
-            };
+        let ownership_policy = arrangement_cell_complex_labeling_policy(
+            arrangement,
+            operation,
+            ExactRegularizationPolicy::REGULARIZED_SOLID,
+        );
         let replay_ownership = arrangement
             .region_ownership_report_with_policy(left, right, ownership_policy)
             .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
@@ -1661,6 +1657,19 @@ impl ExactBooleanResult {
             return Err(ExactReportValidationError::SourceReplayMismatch);
         }
         Ok(())
+    }
+
+    fn arrangement_cell_complex_operation(&self) -> Option<ExactBooleanOperation> {
+        match self.kind {
+            ExactBooleanResultKind::CertifiedShortcut {
+                operation,
+                shortcut: ExactBooleanShortcutKind::ArrangementCellComplex,
+            }
+            | ExactBooleanResultKind::ArrangementCellComplexMaterialized { operation } => {
+                Some(operation)
+            }
+            _ => None,
+        }
     }
 
     /// Validate this result against the operation and policies that produced it.

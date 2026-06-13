@@ -656,7 +656,7 @@ impl ExactLabeledCellComplex {
         policy: ExactRegularizationPolicy,
     ) -> Result<ExactSelectedCellComplex, ExactArrangementBlocker> {
         let mut blockers = self.blockers;
-        if selected_region_selection_ignores_opposite_classification(operation) {
+        if matches!(operation, ExactBooleanOperation::SelectedRegions(_)) {
             blockers.retain(|blocker| {
                 *blocker != ExactArrangementBlocker::UnresolvedRegionClassification
             });
@@ -933,19 +933,7 @@ pub(crate) fn select_arrangement_for_replay(
         return Err(ExactArrangementBlocker::NonManifoldCellComplex);
     }
     let labeling_policy =
-        if arrangement_region_classification_blockers_are_volume_resolved(&arrangement)
-            || selected_region_selection_ignores_opposite_classification(operation)
-                && arrangement.blockers.iter().all(|blocker| {
-                    *blocker == ExactArrangementBlocker::UnresolvedRegionClassification
-                })
-        {
-            ExactRegularizationPolicy {
-                unresolved: ExactUnresolvedPolicy::RetainArtifacts,
-                ..policy
-            }
-        } else {
-            policy
-        };
+        arrangement_cell_complex_labeling_policy(&arrangement, Some(operation), policy);
     let labeled = arrangement.label_regions(labeling_policy)?;
     let ownership_report = labeled.region_ownership_report(left, right, labeling_policy);
     ownership_report.validate()?;
@@ -1161,6 +1149,28 @@ pub(crate) fn arrangement_region_classification_blockers_are_volume_resolved(
             .is_some_and(|adjacencies| !adjacencies.is_empty())
 }
 
+pub(crate) fn arrangement_cell_complex_labeling_policy(
+    arrangement: &ExactArrangement3d,
+    operation: Option<ExactBooleanOperation>,
+    policy: ExactRegularizationPolicy,
+) -> ExactRegularizationPolicy {
+    if arrangement_region_classification_blockers_are_volume_resolved(arrangement)
+        || operation.is_some_and(|operation| {
+            matches!(operation, ExactBooleanOperation::SelectedRegions(_))
+                && arrangement.blockers.iter().all(|blocker| {
+                    *blocker == ExactArrangementBlocker::UnresolvedRegionClassification
+                })
+        })
+    {
+        ExactRegularizationPolicy {
+            unresolved: ExactUnresolvedPolicy::RetainArtifacts,
+            ..policy
+        }
+    } else {
+        policy
+    }
+}
+
 pub(crate) fn region_ownership_status(
     freshness: ExactLabeledCellComplexFreshness,
     blockers: &[ExactArrangementBlocker],
@@ -1303,12 +1313,6 @@ fn select_boundary_face(
         },
         ExactBooleanOperation::SelectedRegions(_) => unreachable!("handled above"),
     }
-}
-
-pub(crate) fn selected_region_selection_ignores_opposite_classification(
-    operation: ExactBooleanOperation,
-) -> bool {
-    matches!(operation, ExactBooleanOperation::SelectedRegions(_))
 }
 
 fn select_faces_from_face_labels(

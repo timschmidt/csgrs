@@ -43,8 +43,8 @@ use super::bounds::AabbIntersectionKind;
 use super::box_solid::is_axis_aligned_box;
 use super::cell_complex::{
     ExactRegionOwnershipReport, ExactRegionOwnershipStatus, ExactSelectedCellComplex,
+    arrangement_cell_complex_labeling_policy,
     arrangement_region_classification_blockers_are_volume_resolved,
-    selected_region_selection_ignores_opposite_classification,
 };
 use super::cells::triangulate_all_face_cells_with_cdt;
 use super::contained_adjacent::{
@@ -73,9 +73,7 @@ use super::region::{
     checked_classify_face_regions_against_opposite_planes,
     checked_triangulate_face_regions_with_earcut, choose_region_projection,
 };
-use super::regularization::{
-    ExactArrangementBlocker, ExactRegularizationPolicy, ExactUnresolvedPolicy,
-};
+use super::regularization::{ExactArrangementBlocker, ExactRegularizationPolicy};
 use super::reports::{
     ExactAdjacentUnionCompletionReport, ExactAdjacentUnionCompletionStatus, ExactBooleanBlocker,
     ExactBooleanBlockerKind, ExactBooleanPreflight, ExactBooleanResult, ExactBooleanResultKind,
@@ -5352,7 +5350,7 @@ fn run_arrangement_cell_complex_attempt_from_arrangement_with_recovery_timing(
     let volume_resolves_region_classification =
         arrangement_region_classification_blockers_are_volume_resolved(arrangement);
     let selected_regions_ignore_unresolved_classification =
-        selected_region_selection_ignores_opposite_classification(operation)
+        matches!(operation, ExactBooleanOperation::SelectedRegions(_))
             && arrangement
                 .blockers
                 .iter()
@@ -5468,16 +5466,8 @@ fn run_arrangement_cell_complex_attempt_from_arrangement_with_recovery_timing(
         return Ok(ArrangementCellComplexOutcome::Declined(attempt));
     }
 
-    let labeling_policy = if volume_resolves_region_classification
-        || selected_regions_ignore_unresolved_classification
-    {
-        ExactRegularizationPolicy {
-            unresolved: ExactUnresolvedPolicy::RetainArtifacts,
-            ..policy
-        }
-    } else {
-        policy
-    };
+    let labeling_policy =
+        arrangement_cell_complex_labeling_policy(arrangement, Some(operation), policy);
     let labeled = match arrangement.label_regions(labeling_policy) {
         Ok(labeled) => labeled,
         Err(blocker) => {
@@ -6969,7 +6959,7 @@ fn materialize_volumetric_coplanar_boundary_closure_boolean_from_graph(
         operation,
         ExactBooleanShortcutKind::ArrangementCellComplex,
     );
-    retain_arrangement_gate_reports_from_graph(&mut result, graph, left, right)?;
+    retain_arrangement_gate_reports_from_graph(&mut result, graph, left, right, operation)?;
     if result
         .validate_operation_against_sources(
             left,
@@ -6993,6 +6983,7 @@ fn retain_arrangement_gate_reports_from_graph(
     graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
+    operation: ExactBooleanOperation,
 ) -> Result<(), MeshError> {
     let arrangement = ExactArrangement::from_intersection_graph_with_policy(
         graph.clone(),
@@ -7005,15 +6996,11 @@ fn retain_arrangement_gate_reports_from_graph(
         right,
         ExactRegularizationPolicy::REGULARIZED_SOLID,
     );
-    let ownership_policy =
-        if arrangement_region_classification_blockers_are_volume_resolved(&arrangement) {
-            ExactRegularizationPolicy {
-                unresolved: ExactUnresolvedPolicy::RetainArtifacts,
-                ..ExactRegularizationPolicy::REGULARIZED_SOLID
-            }
-        } else {
-            ExactRegularizationPolicy::REGULARIZED_SOLID
-        };
+    let ownership_policy = arrangement_cell_complex_labeling_policy(
+        &arrangement,
+        Some(operation),
+        ExactRegularizationPolicy::REGULARIZED_SOLID,
+    );
     let ownership_report = arrangement
         .region_ownership_report_with_policy(left, right, ownership_policy)
         .map_err(region_ownership_report_error)?;
@@ -7122,7 +7109,7 @@ fn boolean_arrangement_volumetric_split_cell_recovery_from_graph(
                 operation,
                 ExactBooleanShortcutKind::ArrangementCellComplex,
             );
-            retain_arrangement_gate_reports_from_graph(&mut result, graph, left, right)?;
+            retain_arrangement_gate_reports_from_graph(&mut result, graph, left, right, operation)?;
             if result.validate_against_sources(left, right).is_err() {
                 return Ok(None);
             }
@@ -7163,6 +7150,7 @@ fn validate_volumetric_arrangement_result_against_graph(
             arrangement,
             left,
             right,
+            Some(operation),
         )?;
     } else {
         result.validate_arrangement_cell_complex_gate_reports_against_sources(left, right)?;
