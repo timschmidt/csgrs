@@ -2763,10 +2763,8 @@ pub(crate) fn materialize_certified_boolean_support_with_artifacts(
         }
         ExactBooleanSupport::CertifiedConvexUnion
         | ExactBooleanSupport::CertifiedConvexIntersection
-        | ExactBooleanSupport::CertifiedConvexDifference => {
-            request.materialize_closed_convex(left, right)?
-        }
-        ExactBooleanSupport::CertifiedConvexSeparated
+        | ExactBooleanSupport::CertifiedConvexDifference
+        | ExactBooleanSupport::CertifiedConvexSeparated
         | ExactBooleanSupport::CertifiedConvexContainment => {
             request.materialize_closed_convex(left, right)?
         }
