@@ -248,7 +248,6 @@ impl<'a> ExactBooleanWorkspace<'a> {
                 request.operation,
                 request.validation,
             )?;
-        validate_retained_result_with_evidence(&materialized, self.left, self.right)?;
         self.closed_boundary_touching_regularized_materializations
             .push((request, materialized.clone()));
         Ok(materialized)
@@ -278,7 +277,6 @@ impl<'a> ExactBooleanWorkspace<'a> {
                 request.operation,
                 request.validation,
             )?;
-        validate_retained_result_with_evidence(&materialized, self.left, self.right)?;
         self.closed_no_volume_overlap_regularized_materializations
             .push((request, materialized.clone()));
         Ok(materialized)
@@ -424,7 +422,6 @@ impl<'a> ExactBooleanWorkspace<'a> {
         let materialized = materialize_adjacent_union_completion_from_graph_for_request(
             graph, left, right, request,
         )?;
-        validate_retained_result_with_adjacent_report(&materialized, self.left, self.right)?;
         self.adjacent_union_completion_materializations
             .push((request, materialized.clone()));
         Ok(materialized)
