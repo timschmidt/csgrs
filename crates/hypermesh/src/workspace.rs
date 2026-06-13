@@ -603,21 +603,13 @@ impl<'a> ExactBooleanWorkspace<'a> {
             .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
         let arrangement_index = cached_by_policy_index(&self.arrangements, policy)
             .expect("arrangement cache was just populated");
-        attempt.validate()?;
-        let replay = arrangement_boolean_attempt_report_from_arrangement(
+        attempt.validate_against_arrangement(
             self.left,
             self.right,
             request,
             policy,
             &self.arrangements[arrangement_index].1,
         )
-        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
-        replay.validate()?;
-        if attempt == &replay {
-            Ok(())
-        } else {
-            Err(ExactReportValidationError::SourceReplayMismatch)
-        }
     }
 
     /// Classify arrangement/cell-complex attempt freshness in this retained
@@ -1829,13 +1821,13 @@ mod tests {
                 )
                 .is_err()
         );
-        assert_ne!(
+        assert_eq!(
             workspace.arrangement_attempt_freshness(
                 request,
                 ExactRegularizationPolicy::REGULARIZED_SOLID,
                 &stale_attempt,
             ),
-            ExactReportFreshness::Current
+            ExactReportFreshness::SourceReplayMismatch
         );
 
         let first_selected = workspace

@@ -334,6 +334,31 @@ impl ExactArrangementBooleanAttempt {
         }
     }
 
+    pub(crate) fn validate_against_arrangement(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+        request: ExactBooleanRequest,
+        policy: ExactRegularizationPolicy,
+        arrangement: &ExactArrangement,
+    ) -> Result<(), ExactReportValidationError> {
+        self.validate()?;
+        let replay = arrangement_boolean_attempt_report_from_arrangement(
+            left,
+            right,
+            request,
+            policy,
+            arrangement,
+        )
+        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+        replay.validate()?;
+        if self == &replay {
+            Ok(())
+        } else {
+            Err(ExactReportValidationError::SourceReplayMismatch)
+        }
+    }
+
     /// Classify whether this retained arrangement attempt is fresh.
     pub fn freshness_against_sources(
         &self,
