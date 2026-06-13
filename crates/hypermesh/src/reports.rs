@@ -2742,6 +2742,14 @@ fn arrangement_cell_complex_output_matches_sources(
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> Result<Option<bool>, ExactReportValidationError> {
+    if let Some((replay, closure_report)) =
+        materialize_volumetric_coplanar_boundary_closure_output(left, right, operation, validation)
+            .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
+    {
+        closure_report.validate()?;
+        return Ok(Some(mesh_output_matches(mesh, &replay)));
+    }
+
     let Some(axis_operation) = axis_aligned_orthogonal_operation(operation) else {
         return Ok(None);
     };
@@ -2757,14 +2765,6 @@ fn arrangement_cell_complex_output_matches_sources(
         affine_orthogonal_output_from_sources(affine_operation, validation, left, right)?
     {
         return Ok(Some(mesh_output_matches(mesh, &replay.mesh)));
-    }
-
-    if let Some((replay, closure_report)) =
-        materialize_volumetric_coplanar_boundary_closure_output(left, right, operation, validation)
-            .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
-    {
-        closure_report.validate()?;
-        return Ok(Some(mesh_output_matches(mesh, &replay)));
     }
 
     if let Some(replay) =

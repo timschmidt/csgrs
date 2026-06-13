@@ -6964,11 +6964,12 @@ fn materialize_volumetric_coplanar_boundary_closure_boolean_from_graph(
     else {
         return Ok(None);
     };
-    let result = certified_shortcut_result(
+    let mut result = certified_shortcut_result(
         mesh,
         operation,
         ExactBooleanShortcutKind::ArrangementCellComplex,
     );
+    retain_arrangement_gate_reports_from_graph(&mut result, graph, left, right)?;
     if result
         .validate_operation_against_sources(
             left,
@@ -6985,6 +6986,40 @@ fn materialize_volumetric_coplanar_boundary_closure_boolean_from_graph(
         return Ok(None);
     }
     Ok(Some((result, closure_report)))
+}
+
+fn retain_arrangement_gate_reports_from_graph(
+    result: &mut ExactBooleanResult,
+    graph: &super::graph::ExactIntersectionGraph,
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Result<(), MeshError> {
+    let arrangement = ExactArrangement::from_intersection_graph_with_policy(
+        graph.clone(),
+        left,
+        right,
+        ExactRegularizationPolicy::REGULARIZED_SOLID,
+    )?;
+    let topology_report = arrangement.topology_assembly_report_with_policy(
+        left,
+        right,
+        ExactRegularizationPolicy::REGULARIZED_SOLID,
+    );
+    let ownership_policy =
+        if arrangement_region_classification_blockers_are_volume_resolved(&arrangement) {
+            ExactRegularizationPolicy {
+                unresolved: ExactUnresolvedPolicy::RetainArtifacts,
+                ..ExactRegularizationPolicy::REGULARIZED_SOLID
+            }
+        } else {
+            ExactRegularizationPolicy::REGULARIZED_SOLID
+        };
+    let ownership_report = arrangement
+        .region_ownership_report_with_policy(left, right, ownership_policy)
+        .map_err(region_ownership_report_error)?;
+    result.topology_assembly_report = Some(topology_report);
+    result.region_ownership_report = Some(ownership_report);
+    Ok(())
 }
 
 pub(crate) fn materialize_volumetric_coplanar_boundary_closure_output(
@@ -7082,11 +7117,12 @@ fn boolean_arrangement_volumetric_split_cell_recovery_from_graph(
             operation,
             validation,
         )? {
-            let result = certified_shortcut_result(
+            let mut result = certified_shortcut_result(
                 mesh,
                 operation,
                 ExactBooleanShortcutKind::ArrangementCellComplex,
             );
+            retain_arrangement_gate_reports_from_graph(&mut result, graph, left, right)?;
             if result.validate_against_sources(left, right).is_err() {
                 return Ok(None);
             }
