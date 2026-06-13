@@ -1500,14 +1500,7 @@ fn validate_retained_optional_result(
     request: ExactBooleanRequest,
 ) -> Result<(), MeshError> {
     if let Some(result) = materialized {
-        result
-            .validate_operation_against_sources(
-                left,
-                right,
-                request.operation,
-                request.validation,
-                request.boundary_policy,
-            )
+        validate_retained_result_for_request(left, right, request, result)
             .map_err(workspace_report_validation_error)?;
     }
     Ok(())
@@ -2863,6 +2856,19 @@ mod tests {
             materialized
         );
         assert_eq!(workspace.boundary_touching_policy_materializations.len(), 1);
+
+        let mut relabelled = materialized.clone();
+        relabelled.kind = ExactBooleanResultKind::BoundaryPolicyShortcut {
+            operation: ExactBooleanOperation::Difference,
+        };
+        workspace.boundary_touching_policy_materializations[0].1 = Some(relabelled);
+        assert!(
+            workspace
+                .materialize_boundary_touching_policy(request)
+                .is_err(),
+            "cached boundary-policy materialization must match the request operation"
+        );
+        workspace.boundary_touching_policy_materializations[0].1 = Some(materialized.clone());
 
         let cached = workspace.boundary_touching_policy_materializations[0]
             .1
