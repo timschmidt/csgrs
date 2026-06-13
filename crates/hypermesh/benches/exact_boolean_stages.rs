@@ -680,8 +680,8 @@ fn run_case(case: &BenchCase) {
         || retained_workspace_and_identical_mesh_for_case(case, request),
         |(retained_workspace, report)| {
             black_box(
-                retained_workspace
-                    .validate_identical_mesh_report(request, report)
+                report
+                    .validate_against_sources(retained_workspace.left(), retained_workspace.right())
                     .ok(),
             );
         },
@@ -693,8 +693,8 @@ fn run_case(case: &BenchCase) {
         || retained_workspace_and_same_surface_for_case(case, request),
         |(retained_workspace, report)| {
             black_box(
-                retained_workspace
-                    .validate_same_surface_report(request, report)
+                report
+                    .validate_against_sources(retained_workspace.left(), retained_workspace.right())
                     .ok(),
             );
         },
@@ -706,8 +706,8 @@ fn run_case(case: &BenchCase) {
         || retained_workspace_and_boundary_touching_for_case(case, request),
         |(retained_workspace, report)| {
             black_box(
-                retained_workspace
-                    .validate_boundary_touching_report(request, report)
+                report
+                    .validate_against_sources(retained_workspace.left(), retained_workspace.right())
                     .ok(),
             );
         },
@@ -719,8 +719,8 @@ fn run_case(case: &BenchCase) {
         || retained_workspace_and_open_surface_disjoint_for_case(case, request),
         |(retained_workspace, report)| {
             black_box(
-                retained_workspace
-                    .validate_open_surface_disjoint_report(request, report)
+                report
+                    .validate_against_sources(retained_workspace.left(), retained_workspace.right())
                     .ok(),
             );
         },

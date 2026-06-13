@@ -950,23 +950,13 @@ impl<'a> ExactBooleanWorkspace<'a> {
             .1
     }
 
-    /// Validate identical-mesh evidence against this workspace's source
-    /// meshes.
-    pub fn validate_identical_mesh_report(
-        &mut self,
-        _request: ExactBooleanRequest,
-        report: &ExactIdenticalMeshReport,
-    ) -> Result<(), ExactReportValidationError> {
-        report.validate_against_sources(self.left, self.right)
-    }
-
     /// Classify identical-mesh freshness in this retained source session.
     pub fn identical_mesh_report_freshness(
         &mut self,
-        request: ExactBooleanRequest,
+        _request: ExactBooleanRequest,
         report: &ExactIdenticalMeshReport,
     ) -> ExactReportFreshness {
-        exact_report_freshness(self.validate_identical_mesh_report(request, report))
+        report.freshness_against_sources(self.left, self.right)
     }
 
     /// Returns same-surface evidence for `request`, building it once per
@@ -989,22 +979,13 @@ impl<'a> ExactBooleanWorkspace<'a> {
             .1
     }
 
-    /// Validate same-surface evidence against this workspace's source meshes.
-    pub fn validate_same_surface_report(
-        &mut self,
-        _request: ExactBooleanRequest,
-        report: &ExactSameSurfaceReport,
-    ) -> Result<(), ExactReportValidationError> {
-        report.validate_against_sources(self.left, self.right)
-    }
-
     /// Classify same-surface freshness in this retained source session.
     pub fn same_surface_report_freshness(
         &mut self,
-        request: ExactBooleanRequest,
+        _request: ExactBooleanRequest,
         report: &ExactSameSurfaceReport,
     ) -> ExactReportFreshness {
-        exact_report_freshness(self.validate_same_surface_report(request, report))
+        report.freshness_against_sources(self.left, self.right)
     }
 
     /// Returns boundary-touching evidence for `request`, building it once per
@@ -1033,23 +1014,13 @@ impl<'a> ExactBooleanWorkspace<'a> {
             .1)
     }
 
-    /// Validate boundary-touching evidence against this workspace's source
-    /// meshes.
-    pub fn validate_boundary_touching_report(
-        &mut self,
-        _request: ExactBooleanRequest,
-        report: &ExactBoundaryTouchingReport,
-    ) -> Result<(), ExactReportValidationError> {
-        report.validate_against_sources(self.left, self.right)
-    }
-
     /// Classify boundary-touching freshness in this retained source session.
     pub fn boundary_touching_report_freshness(
         &mut self,
-        request: ExactBooleanRequest,
+        _request: ExactBooleanRequest,
         report: &ExactBoundaryTouchingReport,
     ) -> ExactReportFreshness {
-        exact_report_freshness(self.validate_boundary_touching_report(request, report))
+        report.freshness_against_sources(self.left, self.right)
     }
 
     /// Returns open-surface disjointness evidence for `request`, building it
@@ -1078,24 +1049,14 @@ impl<'a> ExactBooleanWorkspace<'a> {
             .1)
     }
 
-    /// Validate open-surface disjointness evidence against this workspace's
-    /// source meshes.
-    pub fn validate_open_surface_disjoint_report(
-        &mut self,
-        _request: ExactBooleanRequest,
-        report: &ExactOpenSurfaceDisjointReport,
-    ) -> Result<(), ExactReportValidationError> {
-        report.validate_against_sources(self.left, self.right)
-    }
-
     /// Classify open-surface disjointness freshness in this retained source
     /// session.
     pub fn open_surface_disjoint_report_freshness(
         &mut self,
-        request: ExactBooleanRequest,
+        _request: ExactBooleanRequest,
         report: &ExactOpenSurfaceDisjointReport,
     ) -> ExactReportFreshness {
-        exact_report_freshness(self.validate_open_surface_disjoint_report(request, report))
+        report.freshness_against_sources(self.left, self.right)
     }
 
     /// Returns volumetric boundary-closure evidence for `request`, building it
@@ -2095,8 +2056,8 @@ mod tests {
             &request.identical_mesh_report(&left, &right)
         );
         let identical_report = workspace.identical_mesh_report(request).clone();
-        workspace
-            .validate_identical_mesh_report(request, &identical_report)
+        identical_report
+            .validate_against_sources(&left, &right)
             .unwrap();
         assert_eq!(
             workspace.identical_mesh_report_freshness(request, &identical_report),
@@ -2105,7 +2066,7 @@ mod tests {
         let mut stale_identical_report = identical_report.clone();
         stale_identical_report.left_triangles += 1;
         assert_eq!(
-            workspace.validate_identical_mesh_report(request, &stale_identical_report),
+            stale_identical_report.validate_against_sources(&left, &right),
             Err(ExactReportValidationError::SourceReplayMismatch)
         );
         assert_ne!(
@@ -2123,8 +2084,8 @@ mod tests {
             &request.same_surface_report(&left, &right)
         );
         let same_surface_report = workspace.same_surface_report(request).clone();
-        workspace
-            .validate_same_surface_report(request, &same_surface_report)
+        same_surface_report
+            .validate_against_sources(&left, &right)
             .unwrap();
         assert_eq!(
             workspace.same_surface_report_freshness(request, &same_surface_report),
@@ -2133,7 +2094,7 @@ mod tests {
         let mut stale_same_surface_report = same_surface_report.clone();
         stale_same_surface_report.predicates.clear();
         assert_eq!(
-            workspace.validate_same_surface_report(request, &stale_same_surface_report),
+            stale_same_surface_report.validate_against_sources(&left, &right),
             Err(ExactReportValidationError::StatusEvidenceMismatch)
         );
         assert_ne!(
@@ -2151,8 +2112,8 @@ mod tests {
             &request.boundary_touching_report(&left, &right).unwrap()
         );
         let boundary_report = workspace.boundary_touching_report(request).unwrap().clone();
-        workspace
-            .validate_boundary_touching_report(request, &boundary_report)
+        boundary_report
+            .validate_against_sources(&left, &right)
             .unwrap();
         assert_eq!(
             workspace.boundary_touching_report_freshness(request, &boundary_report),
@@ -2161,7 +2122,7 @@ mod tests {
         let mut stale_boundary_report = boundary_report.clone();
         stale_boundary_report.retained_events += 1;
         assert_eq!(
-            workspace.validate_boundary_touching_report(request, &stale_boundary_report),
+            stale_boundary_report.validate_against_sources(&left, &right),
             Err(ExactReportValidationError::SourceReplayMismatch)
         );
         assert_ne!(
@@ -2182,8 +2143,8 @@ mod tests {
             .open_surface_disjoint_report(request)
             .unwrap()
             .clone();
-        workspace
-            .validate_open_surface_disjoint_report(request, &open_surface_report)
+        open_surface_report
+            .validate_against_sources(&left, &right)
             .unwrap();
         assert_eq!(
             workspace.open_surface_disjoint_report_freshness(request, &open_surface_report),
@@ -2192,7 +2153,7 @@ mod tests {
         let mut stale_open_surface_report = open_surface_report.clone();
         stale_open_surface_report.left_open_surface = !stale_open_surface_report.left_open_surface;
         assert_eq!(
-            workspace.validate_open_surface_disjoint_report(request, &stale_open_surface_report),
+            stale_open_surface_report.validate_against_sources(&left, &right),
             Err(ExactReportValidationError::SourceReplayMismatch)
         );
         assert_ne!(
