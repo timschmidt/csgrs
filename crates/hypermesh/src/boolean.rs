@@ -2709,15 +2709,13 @@ pub(crate) fn materialize_certified_boolean_support_with_artifacts(
             };
             if result.is_some() {
                 result
-            } else if let Some(graph) = retained_graph {
-                materialize_closed_no_volume_overlap_regularized_boolean_with_evidence_from_graph(
-                    graph, left, right, operation, validation,
-                )?
-                .map(|(result, _)| result)
             } else {
-                request
-                    .materialize_closed_no_volume_overlap_regularized_with_evidence(left, right)?
-                    .map(|(result, _evidence)| result)
+                materialize_closed_no_volume_overlap_regularized_result(
+                    left,
+                    right,
+                    request,
+                    retained_graph,
+                )?
             }
         }
         ExactBooleanSupport::CertifiedOpenSurfaceDisjoint => {
@@ -2835,16 +2833,12 @@ fn materialize_certified_arrangement_cell_complex_support_with_arrangement(
     if let Some((result, _closure)) = coplanar_boundary_closure {
         return Ok(Some(result));
     }
-    let no_volume_overlap = if let Some(graph) = retained_graph {
-        materialize_closed_no_volume_overlap_regularized_boolean_with_evidence_from_graph(
-            graph, left, right, operation, validation,
-        )?
-        .map(|(result, _evidence)| result)
-    } else {
-        ExactBooleanRequest::new(operation, validation)
-            .materialize_closed_no_volume_overlap_regularized_with_evidence(left, right)?
-            .map(|(result, _evidence)| result)
-    };
+    let no_volume_overlap = materialize_closed_no_volume_overlap_regularized_result(
+        left,
+        right,
+        ExactBooleanRequest::new(operation, validation),
+        retained_graph,
+    )?;
     if let Some(result) = no_volume_overlap {
         return Ok(Some(result));
     }
@@ -2858,6 +2852,28 @@ fn materialize_certified_arrangement_cell_complex_support_with_arrangement(
             &graph, left, right, operation, validation,
         )
     }
+}
+
+fn materialize_closed_no_volume_overlap_regularized_result(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    request: ExactBooleanRequest,
+    retained_graph: Option<&ExactIntersectionGraph>,
+) -> Result<Option<ExactBooleanResult>, MeshError> {
+    Ok(if let Some(graph) = retained_graph {
+        materialize_closed_no_volume_overlap_regularized_boolean_with_evidence_from_graph(
+            graph,
+            left,
+            right,
+            request.operation,
+            request.validation,
+        )?
+        .map(|(result, _evidence)| result)
+    } else {
+        request
+            .materialize_closed_no_volume_overlap_regularized_with_evidence(left, right)?
+            .map(|(result, _evidence)| result)
+    })
 }
 
 fn materialize_selected_region_result_from_graph(
