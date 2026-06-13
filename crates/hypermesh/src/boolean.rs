@@ -6550,34 +6550,15 @@ pub(crate) fn materialize_closed_no_volume_overlap_regularized_boolean_with_evid
     {
         return Ok(None);
     }
-    let Some(result) = materialize_closed_no_volume_overlap_regularized_result_from_evidence(
-        graph, left, right, operation, validation, &evidence,
-    )?
-    else {
-        return Ok(None);
-    };
-    Ok(Some((result, evidence)))
-}
-
-fn materialize_closed_no_volume_overlap_regularized_result_from_evidence(
-    graph: &super::graph::ExactIntersectionGraph,
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: ValidationPolicy,
-    evidence: &CoplanarVolumetricCellEvidenceReport,
-) -> Result<Option<ExactBooleanResult>, MeshError> {
-    if matches!(operation, ExactBooleanOperation::SelectedRegions(_))
-        || evidence.obstacle != CoplanarVolumetricCellObstacle::BoundaryOnlyContact
-        || evidence.positive_area_coplanar_overlapping_pairs == 0
-    {
-        return Ok(None);
-    }
-    match operation {
+    let result = match operation {
         ExactBooleanOperation::Union => {
-            boolean_arrangement_regularized_no_volume_overlap_from_graph(
+            let Some(result) = boolean_arrangement_regularized_no_volume_overlap_from_graph(
                 graph, left, right, operation, validation,
-            )
+            )?
+            else {
+                return Ok(None);
+            };
+            result
         }
         ExactBooleanOperation::Intersection => {
             let mesh = empty_mesh(
@@ -6592,7 +6573,7 @@ fn materialize_closed_no_volume_overlap_regularized_result_from_evidence(
             if result.validate_against_sources(left, right).is_err() {
                 return Ok(None);
             }
-            Ok(Some(result))
+            result
         }
         ExactBooleanOperation::Difference => {
             let mesh = copy_mesh(
@@ -6608,10 +6589,11 @@ fn materialize_closed_no_volume_overlap_regularized_result_from_evidence(
             if result.validate_against_sources(left, right).is_err() {
                 return Ok(None);
             }
-            Ok(Some(result))
+            result
         }
         ExactBooleanOperation::SelectedRegions(_) => unreachable!("handled above"),
-    }
+    };
+    Ok(Some((result, evidence)))
 }
 
 fn arrangement_difference_preserves_source_surface(
@@ -9811,19 +9793,23 @@ fn certified_closed_zero_area_boundary_contact_support_from_graph(
     }))
 }
 
-fn materialize_closed_boundary_touching_regularized_result_from_evidence(
+pub(crate) fn materialize_closed_boundary_touching_regularized_boolean_with_evidence_from_graph(
+    graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
-    evidence: &CoplanarVolumetricCellEvidenceReport,
-) -> Result<Option<ExactBooleanResult>, MeshError> {
+) -> Result<Option<(ExactBooleanResult, CoplanarVolumetricCellEvidenceReport)>, MeshError> {
+    let Some(evidence) = closed_zero_area_boundary_contact_evidence_from_graph(graph, left, right)?
+    else {
+        return Ok(None);
+    };
     if matches!(operation, ExactBooleanOperation::SelectedRegions(_))
         || evidence.obstacle != CoplanarVolumetricCellObstacle::BoundaryOnlyContact
         || evidence.positive_area_coplanar_overlapping_pairs != 0
     {
         return Ok(None);
-    };
+    }
     let (mesh, shortcut) = match operation {
         ExactBooleanOperation::Union => (
             concatenate_meshes_with_options(
@@ -9850,32 +9836,12 @@ fn materialize_closed_boundary_touching_regularized_result_from_evidence(
             )?,
             ExactBooleanShortcutKind::ClosedBoundaryTouchingDifference,
         ),
-        ExactBooleanOperation::SelectedRegions(_) => unreachable!("handled by evidence check"),
+        ExactBooleanOperation::SelectedRegions(_) => unreachable!("handled above"),
     };
     let result = certified_shortcut_result(mesh, operation, shortcut);
     if result.validate_against_sources(left, right).is_err() {
         return Ok(None);
     }
-    Ok(Some(result))
-}
-
-pub(crate) fn materialize_closed_boundary_touching_regularized_boolean_with_evidence_from_graph(
-    graph: &super::graph::ExactIntersectionGraph,
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: ValidationPolicy,
-) -> Result<Option<(ExactBooleanResult, CoplanarVolumetricCellEvidenceReport)>, MeshError> {
-    let Some(evidence) = closed_zero_area_boundary_contact_evidence_from_graph(graph, left, right)?
-    else {
-        return Ok(None);
-    };
-    let Some(result) = materialize_closed_boundary_touching_regularized_result_from_evidence(
-        left, right, operation, validation, &evidence,
-    )?
-    else {
-        return Ok(None);
-    };
     Ok(Some((result, evidence)))
 }
 
