@@ -5883,23 +5883,6 @@ fn arrangement_open_surface_recovery_outcome(
     )))
 }
 
-fn arrangement_affine_orthogonal_solid_recovery_outcome(
-    attempt: &mut ExactArrangementBooleanAttempt,
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: ValidationPolicy,
-) -> Result<Option<ArrangementCellComplexOutcome>, MeshError> {
-    let Some(result) =
-        boolean_arrangement_affine_orthogonal_solid_recovery(left, right, operation, validation)?
-    else {
-        return Ok(None);
-    };
-    Ok(Some(materialized_arrangement_attempt_outcome(
-        attempt, result, true,
-    )))
-}
-
 fn adjacent_union_completion_report(
     operation: ExactBooleanOperation,
     status: ExactAdjacentUnionCompletionStatus,
@@ -6764,9 +6747,14 @@ fn arrangement_cell_complex_recovery_outcome_if_available(
     )? {
         return Ok(Some(outcome));
     }
-    arrangement_affine_orthogonal_solid_recovery_outcome(
-        attempt, left, right, operation, validation,
-    )
+    let Some(result) =
+        boolean_arrangement_affine_orthogonal_solid_recovery(left, right, operation, validation)?
+    else {
+        return Ok(None);
+    };
+    Ok(Some(materialized_arrangement_attempt_outcome(
+        attempt, result, true,
+    )))
 }
 
 fn boolean_convex_meshes_optional(
