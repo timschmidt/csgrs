@@ -2791,7 +2791,7 @@ fn materialize_certified_arrangement_cell_complex_support_with_arrangement(
     retained_regularized_arrangement: Option<&ExactArrangement>,
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
     if let Some(arrangement) = retained_regularized_arrangement {
-        let outcome = run_arrangement_cell_complex_attempt_from_arrangement(
+        let outcome = run_arrangement_cell_complex_attempt_from_arrangement_with_recovery_timing(
             arrangement,
             left,
             right,
@@ -2799,6 +2799,7 @@ fn materialize_certified_arrangement_cell_complex_support_with_arrangement(
             ExactRegularizationPolicy::REGULARIZED_SOLID,
             Some(validation),
             true,
+            false,
         )?;
         if let ArrangementCellComplexOutcome::Materialized(result, _) = outcome {
             return Ok(Some(*result));
@@ -4970,7 +4971,7 @@ pub(crate) fn arrangement_boolean_attempt_report_from_arrangement(
     policy: ExactRegularizationPolicy,
     arrangement: &ExactArrangement,
 ) -> Result<ExactArrangementBooleanAttempt, MeshError> {
-    let outcome = run_arrangement_cell_complex_attempt_from_arrangement(
+    let outcome = run_arrangement_cell_complex_attempt_from_arrangement_with_recovery_timing(
         arrangement,
         left,
         right,
@@ -4978,6 +4979,7 @@ pub(crate) fn arrangement_boolean_attempt_report_from_arrangement(
         policy,
         Some(request.validation),
         true,
+        false,
     )?;
     Ok(arrangement_attempt_from_outcome(outcome))
 }
@@ -5286,27 +5288,6 @@ fn run_arrangement_cell_complex_attempt_from_graph(
         ExactArrangement::from_intersection_graph_with_policy(graph.clone(), left, right, policy)?;
     run_arrangement_cell_complex_attempt_from_arrangement_with_recovery_timing(
         &arrangement,
-        left,
-        right,
-        operation,
-        policy,
-        validation,
-        regularize_unregularized_sheet_complex,
-        false,
-    )
-}
-
-fn run_arrangement_cell_complex_attempt_from_arrangement(
-    arrangement: &ExactArrangement,
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    policy: ExactRegularizationPolicy,
-    validation: Option<ValidationPolicy>,
-    regularize_unregularized_sheet_complex: bool,
-) -> Result<ArrangementCellComplexOutcome, MeshError> {
-    run_arrangement_cell_complex_attempt_from_arrangement_with_recovery_timing(
-        arrangement,
         left,
         right,
         operation,
