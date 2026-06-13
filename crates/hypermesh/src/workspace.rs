@@ -235,7 +235,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
         if let Some(cached) = cached_materialization(
             &self.closed_boundary_touching_regularized_materializations,
             request,
-            |cached| validate_retained_result_with_evidence(cached, self.left, self.right),
+            |cached| validate_retained_result_with_evidence(cached, self.left, self.right, request),
         )? {
             return Ok(cached);
         }
@@ -263,7 +263,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
         if let Some(cached) = cached_materialization(
             &self.closed_no_volume_overlap_regularized_materializations,
             request,
-            |cached| validate_retained_result_with_evidence(cached, self.left, self.right),
+            |cached| validate_retained_result_with_evidence(cached, self.left, self.right, request),
         )? {
             return Ok(cached);
         }
@@ -396,7 +396,11 @@ impl<'a> ExactBooleanWorkspace<'a> {
         if let Some(cached) = cached_materialization(
             &self.adjacent_union_completion_materializations,
             request,
-            |cached| validate_retained_result_with_adjacent_report(cached, self.left, self.right),
+            |cached| {
+                validate_retained_result_with_adjacent_report(
+                    cached, self.left, self.right, request,
+                )
+            },
         )? {
             return Ok(cached);
         }
@@ -1458,8 +1462,9 @@ fn validate_retained_result_with_evidence(
     materialized: &MaterializedResultWithEvidence,
     left: &ExactMesh,
     right: &ExactMesh,
+    request: ExactBooleanRequest,
 ) -> Result<(), MeshError> {
-    validate_retained_result_pair(materialized, left, right, |evidence| {
+    validate_retained_result_pair(materialized, left, right, request, |evidence| {
         evidence
             .validate_against_sources(left, right)
             .map_err(workspace_coplanar_volumetric_cell_error)
@@ -1470,8 +1475,9 @@ fn validate_retained_result_with_adjacent_report(
     materialized: &Option<(ExactBooleanResult, ExactAdjacentUnionCompletionReport)>,
     left: &ExactMesh,
     right: &ExactMesh,
+    request: ExactBooleanRequest,
 ) -> Result<(), MeshError> {
-    validate_retained_result_pair(materialized, left, right, |report| {
+    validate_retained_result_pair(materialized, left, right, request, |report| {
         report
             .validate_against_sources(left, right)
             .map_err(workspace_report_validation_error)
@@ -1482,11 +1488,11 @@ fn validate_retained_result_pair<T>(
     materialized: &Option<(ExactBooleanResult, T)>,
     left: &ExactMesh,
     right: &ExactMesh,
+    request: ExactBooleanRequest,
     validate_artifact: impl FnOnce(&T) -> Result<(), MeshError>,
 ) -> Result<(), MeshError> {
     if let Some((result, artifact)) = materialized {
-        result
-            .validate_against_sources(left, right)
+        validate_retained_result_for_request(left, right, request, result)
             .map_err(workspace_report_validation_error)?;
         validate_artifact(artifact)?;
     }
@@ -2685,6 +2691,21 @@ mod tests {
                 .len(),
             1
         );
+
+        let mut relabelled = materialized.clone();
+        relabelled.0.kind = ExactBooleanResultKind::CertifiedShortcut {
+            operation: ExactBooleanOperation::Difference,
+            shortcut: ExactBooleanShortcutKind::ClosedBoundaryTouchingDifference,
+        };
+        workspace.closed_boundary_touching_regularized_materializations[0].1 = Some(relabelled);
+        assert!(
+            workspace
+                .materialize_closed_boundary_touching_regularized_with_evidence(request)
+                .is_err(),
+            "cached boundary-touching materialization must match the request operation"
+        );
+        workspace.closed_boundary_touching_regularized_materializations[0].1 =
+            Some(materialized.clone());
 
         let cached_result = &mut workspace.closed_boundary_touching_regularized_materializations[0]
             .1
