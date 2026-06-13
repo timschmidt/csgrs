@@ -4468,6 +4468,14 @@ fn exact_volumetric_winding_coplanar_cap_is_publicly_certified() {
         );
         result.validate().unwrap();
         assert!(
+            result.topology_assembly_report.is_some(),
+            "{operation:?}: {result:?}"
+        );
+        assert!(
+            result.region_ownership_report.is_some(),
+            "{operation:?}: {result:?}"
+        );
+        assert!(
             result.mesh.facts().mesh.closed_manifold || result.mesh.triangles().is_empty(),
             "{operation:?}: {:?}",
             result.mesh.facts().mesh
@@ -4499,6 +4507,14 @@ fn exact_volumetric_winding_coplanar_cap_is_publicly_certified() {
             "{operation:?}: {cap_result:?}"
         );
         cap_result.validate().unwrap();
+        assert_eq!(
+            cap_result.topology_assembly_report, result.topology_assembly_report,
+            "{operation:?}: {cap_result:?}"
+        );
+        assert_eq!(
+            cap_result.region_ownership_report, result.region_ownership_report,
+            "{operation:?}: {cap_result:?}"
+        );
 
         assert_eq!(
             result.freshness_against_sources(&left, &right),
