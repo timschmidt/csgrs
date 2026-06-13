@@ -2544,7 +2544,7 @@ fn exact_boolean_preflight_matches_winding_handoff(
         && preflight.coplanar_volumetric_evidence == winding_readiness.coplanar_volumetric_evidence
 }
 
-fn exact_boolean_result_kind_matches_request(
+pub(crate) fn exact_boolean_result_kind_matches_request(
     result: &ExactBooleanResult,
     request: ExactBooleanRequest,
 ) -> bool {

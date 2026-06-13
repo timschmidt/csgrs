@@ -1,11 +1,11 @@
 use super::arrangement3d::{ExactArrangement, ExactTopologyAssemblyReport};
 use super::boolean::{
     ClosedWindingMaterialization, ExactArrangementBooleanAttempt, ExactBooleanCertificationSet,
-    ExactBooleanEvaluation, ExactBooleanOperation, ExactBooleanRequest, ExactIdenticalMeshReport,
+    ExactBooleanEvaluation, ExactBooleanRequest, ExactIdenticalMeshReport,
     adjacent_union_completion_certification_from_graph,
     arrangement_boolean_attempt_report_from_arrangement,
     boolean_closed_validation_regularized_meshes, boundary_touching_report_from_graph,
-    direct_arrangement_cell_complex_attempt,
+    direct_arrangement_cell_complex_attempt, exact_boolean_result_kind_matches_request,
     materialize_adjacent_union_completion_from_graph_for_request,
     materialize_boundary_touching_policy_from_graph_for_request,
     materialize_certified_boolean_support_with_artifacts,
@@ -30,10 +30,9 @@ use super::mesh::ExactMesh;
 use super::regularization::{ExactArrangementBlocker, ExactRegularizationPolicy};
 use super::reports::{
     ExactAdjacentUnionCompletionReport, ExactBooleanPreflight, ExactBooleanResult,
-    ExactBooleanResultKind, ExactBoundaryTouchingReport, ExactOpenSurfaceDisjointReport,
-    ExactPlanarArrangementReport, ExactRefinementReport, ExactReportFreshness,
-    ExactReportValidationError, ExactSameSurfaceReport, ExactVolumetricBoundaryClosureReport,
-    ExactWindingReadinessReport,
+    ExactBoundaryTouchingReport, ExactOpenSurfaceDisjointReport, ExactPlanarArrangementReport,
+    ExactRefinementReport, ExactReportFreshness, ExactReportValidationError,
+    ExactSameSurfaceReport, ExactVolumetricBoundaryClosureReport, ExactWindingReadinessReport,
 };
 use super::simplify::{ExactSimplifiedCellComplex, ExactSimplifiedCellComplexFreshness};
 use super::volumetric_cells::{
@@ -1755,7 +1754,7 @@ fn validate_retained_result_for_request(
     result: &ExactBooleanResult,
 ) -> Result<(), ExactReportValidationError> {
     if result.mesh.validation_policy() != request.validation
-        || !retained_result_kind_matches_request(result, request)
+        || !exact_boolean_result_kind_matches_request(result, request)
     {
         return Err(ExactReportValidationError::StatusEvidenceMismatch);
     }
@@ -1766,23 +1765,6 @@ fn validate_retained_result_for_request(
         request.validation,
         request.boundary_policy,
     )
-}
-
-fn retained_result_kind_matches_request(
-    result: &ExactBooleanResult,
-    request: ExactBooleanRequest,
-) -> bool {
-    match result.kind {
-        ExactBooleanResultKind::SelectedRegions { selection } => {
-            request.operation == ExactBooleanOperation::SelectedRegions(selection)
-        }
-        ExactBooleanResultKind::CertifiedShortcut { operation, .. }
-        | ExactBooleanResultKind::BoundaryPolicyShortcut { operation }
-        | ExactBooleanResultKind::OpenSurfaceArrangement { operation }
-        | ExactBooleanResultKind::ArrangementCellComplexMaterialized { operation } => {
-            operation == request.operation
-        }
-    }
 }
 
 fn workspace_report_validation_error(error: ExactReportValidationError) -> MeshError {

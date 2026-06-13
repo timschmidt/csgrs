@@ -23,7 +23,7 @@ use super::affine_solid::{
 use super::arrangement3d::{ExactArrangement, ExactTopologyAssemblyReport};
 use super::boolean::{
     ExactBooleanOperation, ExactBooleanRequest, ExactBoundaryBooleanPolicy,
-    boundary_policy_shortcut_result_matches_sources,
+    boundary_policy_shortcut_result_matches_sources, exact_boolean_result_kind_matches_request,
     materialize_volumetric_coplanar_boundary_closure_output,
     open_surface_disjoint_result_matches_sources, replay_coplanar_mesh_overlay_result,
     replay_materialized_volumetric_winding_region_plan, replay_open_surface_arrangement_result,
@@ -1564,19 +1564,15 @@ impl ExactBooleanResult {
         validation: ValidationPolicy,
         boundary_policy: ExactBoundaryBooleanPolicy,
     ) -> Result<(), ExactReportValidationError> {
-        if let ExactBooleanResultKind::CertifiedShortcut {
-            operation: retained_operation,
-            ..
-        } = self.kind
-            && retained_operation != operation
-        {
+        let request =
+            ExactBooleanRequest::with_boundary_policy(operation, validation, boundary_policy);
+        if !exact_boolean_result_kind_matches_request(self, request) {
             return Err(ExactReportValidationError::SourceReplayMismatch);
         }
         self.validate_against_sources(left, right)?;
-        let replay =
-            ExactBooleanRequest::with_boundary_policy(operation, validation, boundary_policy)
-                .materialize(left, right)
-                .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+        let replay = request
+            .materialize(left, right)
+            .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
         if self == &replay {
             Ok(())
         } else {
