@@ -187,12 +187,11 @@ impl<'a> ExactBooleanWorkspace<'a> {
     }
 
     fn regularized_solid_arrangement(&self) -> Option<&ExactArrangement> {
-        self.arrangements
-            .iter()
-            .find(|(stored_policy, _)| {
-                *stored_policy == ExactRegularizationPolicy::REGULARIZED_SOLID
-            })
-            .map(|(_, arrangement)| arrangement)
+        cached_by_policy_index(
+            &self.arrangements,
+            ExactRegularizationPolicy::REGULARIZED_SOLID,
+        )
+        .map(|index| &self.arrangements[index].1)
     }
 
     /// Returns retained coplanar volumetric-cell evidence, deriving it from
@@ -414,11 +413,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
         &mut self,
         policy: ExactRegularizationPolicy,
     ) -> Result<&ExactArrangement, MeshError> {
-        if let Some(index) = self
-            .arrangements
-            .iter()
-            .position(|(stored_policy, _)| *stored_policy == policy)
-        {
+        if let Some(index) = cached_by_policy_index(&self.arrangements, policy) {
             return Ok(&self.arrangements[index].1);
         }
 
@@ -440,19 +435,12 @@ impl<'a> ExactBooleanWorkspace<'a> {
         &mut self,
         policy: ExactRegularizationPolicy,
     ) -> Result<&ExactTopologyAssemblyReport, MeshError> {
-        if let Some(index) = self
-            .topology_assembly_reports
-            .iter()
-            .position(|(stored_policy, _)| *stored_policy == policy)
-        {
+        if let Some(index) = cached_by_policy_index(&self.topology_assembly_reports, policy) {
             return Ok(&self.topology_assembly_reports[index].1);
         }
 
         self.arrangement(policy)?;
-        let arrangement_index = self
-            .arrangements
-            .iter()
-            .position(|(stored_policy, _)| *stored_policy == policy)
+        let arrangement_index = cached_by_policy_index(&self.arrangements, policy)
             .expect("arrangement cache was just populated");
         let report = self.arrangements[arrangement_index]
             .1
@@ -485,19 +473,12 @@ impl<'a> ExactBooleanWorkspace<'a> {
         &mut self,
         policy: ExactRegularizationPolicy,
     ) -> Result<&ExactRegionOwnershipReport, MeshError> {
-        if let Some(index) = self
-            .region_ownership_reports
-            .iter()
-            .position(|(stored_policy, _)| *stored_policy == policy)
-        {
+        if let Some(index) = cached_by_policy_index(&self.region_ownership_reports, policy) {
             return Ok(&self.region_ownership_reports[index].1);
         }
 
         self.arrangement(policy)?;
-        let arrangement_index = self
-            .arrangements
-            .iter()
-            .position(|(stored_policy, _)| *stored_policy == policy)
+        let arrangement_index = cached_by_policy_index(&self.arrangements, policy)
             .expect("arrangement cache was just populated");
         let report = self.arrangements[arrangement_index]
             .1
@@ -533,11 +514,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
         policy: ExactRegularizationPolicy,
     ) -> Result<&ExactArrangementBooleanAttempt, MeshError> {
         if let Some(index) =
-            self.arrangement_attempts
-                .iter()
-                .position(|(stored_request, stored_policy, _)| {
-                    *stored_request == request && *stored_policy == policy
-                })
+            cached_by_request_and_policy_index(&self.arrangement_attempts, request, policy)
         {
             return Ok(&self.arrangement_attempts[index].2);
         }
@@ -554,10 +531,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
         }
 
         self.arrangement(policy)?;
-        let arrangement_index = self
-            .arrangements
-            .iter()
-            .position(|(stored_policy, _)| *stored_policy == policy)
+        let arrangement_index = cached_by_policy_index(&self.arrangements, policy)
             .expect("arrangement cache was just populated");
         let attempt = arrangement_boolean_attempt_report_from_arrangement(
             self.left,
@@ -597,10 +571,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
 
         self.arrangement(policy)
             .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
-        let arrangement_index = self
-            .arrangements
-            .iter()
-            .position(|(stored_policy, _)| *stored_policy == policy)
+        let arrangement_index = cached_by_policy_index(&self.arrangements, policy)
             .expect("arrangement cache was just populated");
         attempt.validate()?;
         let replay = arrangement_boolean_attempt_report_from_arrangement(
@@ -638,11 +609,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
         policy: ExactRegularizationPolicy,
     ) -> Result<&ExactSelectedCellComplex, MeshError> {
         if let Some(index) =
-            self.selected_cell_complexes
-                .iter()
-                .position(|(stored_request, stored_policy, _)| {
-                    *stored_request == request && *stored_policy == policy
-                })
+            cached_by_request_and_policy_index(&self.selected_cell_complexes, request, policy)
         {
             return Ok(&self.selected_cell_complexes[index].2);
         }
@@ -673,11 +640,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
         policy: ExactRegularizationPolicy,
     ) -> Result<&ExactSimplifiedCellComplex, MeshError> {
         if let Some(index) =
-            self.simplified_cell_complexes
-                .iter()
-                .position(|(stored_request, stored_policy, _)| {
-                    *stored_request == request && *stored_policy == policy
-                })
+            cached_by_request_and_policy_index(&self.simplified_cell_complexes, request, policy)
         {
             return Ok(&self.simplified_cell_complexes[index].2);
         }
@@ -758,11 +721,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
         &mut self,
         request: ExactBooleanRequest,
     ) -> Result<&ExactBooleanPreflight, MeshError> {
-        if let Some(index) = self
-            .preflights
-            .iter()
-            .position(|(stored_request, _)| *stored_request == request)
-        {
+        if let Some(index) = cached_by_request_index(&self.preflights, request) {
             return Ok(&self.preflights[index].1);
         }
 
@@ -811,11 +770,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
         &mut self,
         request: ExactBooleanRequest,
     ) -> Result<&ExactRefinementReport, MeshError> {
-        if let Some(index) = self
-            .refinement_reports
-            .iter()
-            .position(|(stored_request, _)| *stored_request == request)
-        {
+        if let Some(index) = cached_by_request_index(&self.refinement_reports, request) {
             return Ok(&self.refinement_reports[index].1);
         }
 
@@ -856,10 +811,8 @@ impl<'a> ExactBooleanWorkspace<'a> {
         &mut self,
         request: ExactBooleanRequest,
     ) -> Result<&ExactAdjacentUnionCompletionReport, MeshError> {
-        if let Some(index) = self
-            .adjacent_union_completion_reports
-            .iter()
-            .position(|(stored_request, _)| *stored_request == request)
+        if let Some(index) =
+            cached_by_request_index(&self.adjacent_union_completion_reports, request)
         {
             return Ok(&self.adjacent_union_completion_reports[index].1);
         }
@@ -912,11 +865,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
         &mut self,
         request: ExactBooleanRequest,
     ) -> &ExactIdenticalMeshReport {
-        if let Some(index) = self
-            .identical_mesh_reports
-            .iter()
-            .position(|(stored_request, _)| *stored_request == request)
-        {
+        if let Some(index) = cached_by_request_index(&self.identical_mesh_reports, request) {
             return &self.identical_mesh_reports[index].1;
         }
 
@@ -941,11 +890,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
     /// Returns same-surface evidence for `request`, building it once per
     /// request.
     pub fn same_surface_report(&mut self, request: ExactBooleanRequest) -> &ExactSameSurfaceReport {
-        if let Some(index) = self
-            .same_surface_reports
-            .iter()
-            .position(|(stored_request, _)| *stored_request == request)
-        {
+        if let Some(index) = cached_by_request_index(&self.same_surface_reports, request) {
             return &self.same_surface_reports[index].1;
         }
 
@@ -973,11 +918,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
         &mut self,
         request: ExactBooleanRequest,
     ) -> Result<&ExactBoundaryTouchingReport, MeshError> {
-        if let Some(index) = self
-            .boundary_touching_reports
-            .iter()
-            .position(|(stored_request, _)| *stored_request == request)
-        {
+        if let Some(index) = cached_by_request_index(&self.boundary_touching_reports, request) {
             return Ok(&self.boundary_touching_reports[index].1);
         }
 
@@ -1008,11 +949,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
         &mut self,
         request: ExactBooleanRequest,
     ) -> Result<&ExactOpenSurfaceDisjointReport, MeshError> {
-        if let Some(index) = self
-            .open_surface_disjoint_reports
-            .iter()
-            .position(|(stored_request, _)| *stored_request == request)
-        {
+        if let Some(index) = cached_by_request_index(&self.open_surface_disjoint_reports, request) {
             return Ok(&self.open_surface_disjoint_reports[index].1);
         }
 
@@ -1044,10 +981,8 @@ impl<'a> ExactBooleanWorkspace<'a> {
         &mut self,
         request: ExactBooleanRequest,
     ) -> Result<&ExactVolumetricBoundaryClosureReport, MeshError> {
-        if let Some(index) = self
-            .volumetric_boundary_closure_reports
-            .iter()
-            .position(|(stored_request, _)| *stored_request == request)
+        if let Some(index) =
+            cached_by_request_index(&self.volumetric_boundary_closure_reports, request)
         {
             return Ok(&self.volumetric_boundary_closure_reports[index].1);
         }
@@ -1095,11 +1030,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
         &mut self,
         request: ExactBooleanRequest,
     ) -> Result<&ExactWindingReadinessReport, MeshError> {
-        if let Some(index) = self
-            .winding_readiness_reports
-            .iter()
-            .position(|(stored_request, _)| *stored_request == request)
-        {
+        if let Some(index) = cached_by_request_index(&self.winding_readiness_reports, request) {
             return Ok(&self.winding_readiness_reports[index].1);
         }
 
@@ -1149,11 +1080,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
         &mut self,
         request: ExactBooleanRequest,
     ) -> Result<&ExactPlanarArrangementReport, MeshError> {
-        if let Some(index) = self
-            .planar_arrangement_reports
-            .iter()
-            .position(|(stored_request, _)| *stored_request == request)
-        {
+        if let Some(index) = cached_by_request_index(&self.planar_arrangement_reports, request) {
             return Ok(&self.planar_arrangement_reports[index].1);
         }
 
@@ -1198,11 +1125,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
         &mut self,
         request: ExactBooleanRequest,
     ) -> Result<&ExactBooleanCertificationSet, MeshError> {
-        if let Some(index) = self
-            .certifications
-            .iter()
-            .position(|(stored_request, _)| *stored_request == request)
-        {
+        if let Some(index) = cached_by_request_index(&self.certifications, request) {
             return Ok(&self.certifications[index].1);
         }
 
@@ -1269,11 +1192,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
         &mut self,
         request: ExactBooleanRequest,
     ) -> Result<&ExactBooleanEvaluation, MeshError> {
-        if let Some(index) = self
-            .evaluations
-            .iter()
-            .position(|(stored_request, _)| *stored_request == request)
-        {
+        if let Some(index) = cached_by_request_index(&self.evaluations, request) {
             return Ok(&self.evaluations[index].1);
         }
 
@@ -1564,6 +1483,34 @@ fn cached_materialization<T: Clone>(
         return Ok(Some(cached.clone()));
     }
     Ok(None)
+}
+
+fn cached_by_policy_index<T>(
+    cache: &[(ExactRegularizationPolicy, T)],
+    policy: ExactRegularizationPolicy,
+) -> Option<usize> {
+    cache
+        .iter()
+        .position(|(stored_policy, _)| *stored_policy == policy)
+}
+
+fn cached_by_request_index<T>(
+    cache: &[(ExactBooleanRequest, T)],
+    request: ExactBooleanRequest,
+) -> Option<usize> {
+    cache
+        .iter()
+        .position(|(stored_request, _)| *stored_request == request)
+}
+
+fn cached_by_request_and_policy_index<T>(
+    cache: &[(ExactBooleanRequest, ExactRegularizationPolicy, T)],
+    request: ExactBooleanRequest,
+    policy: ExactRegularizationPolicy,
+) -> Option<usize> {
+    cache.iter().position(|(stored_request, stored_policy, _)| {
+        *stored_request == request && *stored_policy == policy
+    })
 }
 
 fn validate_retained_result_for_request(
