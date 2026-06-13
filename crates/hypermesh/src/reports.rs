@@ -345,6 +345,18 @@ pub(crate) fn exact_report_freshness(
     }
 }
 
+fn validated_report_intersection_graph(
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Result<ExactIntersectionGraph, ExactReportValidationError> {
+    let graph = build_intersection_graph(left, right)
+        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+    graph
+        .validate_against_sources(left, right)
+        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+    Ok(graph)
+}
+
 fn blocker_kind(
     blocker: Option<&ExactBooleanBlocker>,
     expected: ExactBooleanBlockerKind,
@@ -2252,11 +2264,7 @@ fn certified_convex_relation_from_sources(
     if matches!(operation, ExactBooleanOperation::SelectedRegions(_)) {
         return Ok(None);
     }
-    let graph = build_intersection_graph(left, right)
-        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
-    graph
-        .validate_against_sources(left, right)
-        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+    let graph = validated_report_intersection_graph(left, right)?;
     if graph.has_unknowns() {
         return Ok(None);
     }
@@ -2461,11 +2469,7 @@ fn closed_boundary_touching_sources_match(
             ExactBooleanShortcutKind::ClosedBoundaryTouchingIntersection
                 | ExactBooleanShortcutKind::ClosedBoundaryTouchingDifference
         ) {
-            let graph = build_intersection_graph(left, right)
-                .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
-            graph
-                .validate_against_sources(left, right)
-                .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+            let graph = validated_report_intersection_graph(left, right)?;
             let evidence = CoplanarVolumetricCellEvidenceReport::from_graph(&graph, left, right);
             evidence
                 .validate()
@@ -2480,11 +2484,7 @@ fn closed_boundary_touching_sources_match(
     if shortcut == ExactBooleanShortcutKind::ClosedBoundaryTouchingUnion
         && report.blocker.coplanar_overlapping_pairs != 0
     {
-        let graph = build_intersection_graph(left, right)
-            .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
-        graph
-            .validate_against_sources(left, right)
-            .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+        let graph = validated_report_intersection_graph(left, right)?;
         let evidence = CoplanarVolumetricCellEvidenceReport::from_graph(&graph, left, right);
         evidence
             .validate()
@@ -2530,11 +2530,7 @@ fn closed_winding_sources_match(
     if !mesh_is_closed_solid(left) || !mesh_is_closed_solid(right) {
         return Ok(false);
     }
-    let graph = build_intersection_graph(left, right)
-        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
-    graph
-        .validate_against_sources(left, right)
-        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+    let graph = validated_report_intersection_graph(left, right)?;
     if graph.has_unknowns() || !graph.face_pairs.is_empty() {
         return Ok(false);
     }
@@ -2626,11 +2622,7 @@ fn certified_closed_winding_relation_from_sources(
     if !mesh_is_closed_solid(left) || !mesh_is_closed_solid(right) {
         return Ok(None);
     }
-    let graph = build_intersection_graph(left, right)
-        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
-    graph
-        .validate_against_sources(left, right)
-        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+    let graph = validated_report_intersection_graph(left, right)?;
     let counts =
         ExactBooleanBlocker::from_graph_counts(&graph, ExactBooleanBlockerKind::NeedsWinding);
     if graph.has_unknowns()
@@ -2688,11 +2680,7 @@ fn convex_relation_shortcut_sources_match(
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> Result<bool, ExactReportValidationError> {
-    let graph = build_intersection_graph(left, right)
-        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
-    graph
-        .validate_against_sources(left, right)
-        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+    let graph = validated_report_intersection_graph(left, right)?;
     if graph.has_unknowns() {
         return Ok(false);
     }
@@ -2772,11 +2760,7 @@ fn arrangement_cell_complex_sources_match(
         return Ok(true);
     }
 
-    let graph = build_intersection_graph(left, right)
-        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
-    graph
-        .validate_against_sources(left, right)
-        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+    let graph = validated_report_intersection_graph(left, right)?;
     if graph.has_unknowns() || graph.face_pairs.is_empty() {
         return Ok(false);
     }
@@ -2868,11 +2852,7 @@ fn arrangement_cell_complex_output_matches_sources(
     if !mesh_is_closed_solid(left) || !mesh_is_closed_solid(right) {
         return Ok(None);
     }
-    let graph = build_intersection_graph(left, right)
-        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
-    graph
-        .validate_against_sources(left, right)
-        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+    let graph = validated_report_intersection_graph(left, right)?;
     if graph.has_unknowns() || graph.face_pairs.is_empty() {
         return Ok(None);
     }
@@ -4540,11 +4520,7 @@ impl ExactBooleanBlocker {
         right: &ExactMesh,
     ) -> Result<(), ExactReportValidationError> {
         self.validate_for_kind(self.kind)?;
-        let graph = build_intersection_graph(left, right)
-            .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
-        graph
-            .validate_against_sources(left, right)
-            .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+        let graph = validated_report_intersection_graph(left, right)?;
         let replay = ExactBooleanBlocker::from_graph_counts(&graph, self.kind);
         if replay.validate_for_kind(self.kind).is_ok() && self == &replay {
             Ok(())
