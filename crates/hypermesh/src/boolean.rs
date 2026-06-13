@@ -10115,21 +10115,9 @@ fn winding_readiness_report_with_shortcuts_from_graph(
     right: &ExactMesh,
     operation: ExactBooleanOperation,
 ) -> Result<ExactWindingReadinessReport, MeshError> {
-    if let Some(report) = winding_readiness_shortcut_report(left, right, operation) {
-        return Ok(report);
-    }
-    winding_readiness_report_from_graph(graph, left, right, operation)
-}
-
-fn winding_readiness_shortcut_report(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-) -> Option<ExactWindingReadinessReport> {
-    if !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
-        && (left.triangles().is_empty() || right.triangles().is_empty())
-    {
-        return Some(winding_readiness_report(
+    let regular_operation = !matches!(operation, ExactBooleanOperation::SelectedRegions(_));
+    if regular_operation && (left.triangles().is_empty() || right.triangles().is_empty()) {
+        return Ok(winding_readiness_report(
             operation,
             ExactWindingReadinessStatus::EmptyOperandAlreadyMaterialized,
             false,
@@ -10142,10 +10130,8 @@ fn winding_readiness_shortcut_report(
             None,
         ));
     }
-    if !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
-        && meshes_are_certified_bounds_disjoint(left, right)
-    {
-        return Some(winding_readiness_report(
+    if regular_operation && meshes_are_certified_bounds_disjoint(left, right) {
+        return Ok(winding_readiness_report(
             operation,
             ExactWindingReadinessStatus::BoundsDisjointAlreadyMaterialized,
             false,
@@ -10158,12 +10144,12 @@ fn winding_readiness_shortcut_report(
             None,
         ));
     }
-    if !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
+    if regular_operation
         && (!left.facts().mesh.closed_manifold || !right.facts().mesh.closed_manifold)
         && (meshes_are_certified_identical(left, right)
             || meshes_are_certified_same_surface(left, right))
     {
-        return Some(winding_readiness_report(
+        return Ok(winding_readiness_report(
             operation,
             ExactWindingReadinessStatus::SurfaceEqualityAlreadyMaterialized,
             false,
@@ -10176,10 +10162,10 @@ fn winding_readiness_shortcut_report(
             None,
         ));
     }
-    if !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
+    if regular_operation
         && certified_mixed_dimensional_regularized_solid_support(left, right).is_some()
     {
-        return Some(winding_readiness_report(
+        return Ok(winding_readiness_report(
             operation,
             ExactWindingReadinessStatus::MixedDimensionalRegularizedSolidAlreadyMaterialized,
             false,
@@ -10192,7 +10178,7 @@ fn winding_readiness_shortcut_report(
             None,
         ));
     }
-    None
+    winding_readiness_report_from_graph(graph, left, right, operation)
 }
 
 /// Validate the retained graph/source-handle handoff for public reports.
