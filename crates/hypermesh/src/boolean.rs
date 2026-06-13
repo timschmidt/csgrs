@@ -3978,11 +3978,24 @@ fn certified_arrangement_cell_complex_preflight_if_materialized(
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> Result<Option<ExactBooleanPreflight>, MeshError> {
-    if arrangement_cell_complex_materializes_for_preflight_from_graph(
-        graph, left, right, operation, false,
-    )? || arrangement_cell_complex_materializes_for_preflight_from_graph(
-        graph, left, right, operation, true,
-    )? || coplanar_surface_output_materializes_for_preflight(left, right, operation)?
+    let arrangement_materializes =
+        [false, true]
+            .into_iter()
+            .try_fold(false, |materialized, regularize_sheet_complex| {
+                if materialized {
+                    Ok(true)
+                } else {
+                    arrangement_cell_complex_materializes_for_preflight_from_graph(
+                        graph,
+                        left,
+                        right,
+                        operation,
+                        regularize_sheet_complex,
+                    )
+                }
+            })?;
+    if arrangement_materializes
+        || coplanar_surface_output_materializes_for_preflight(left, right, operation)?
     {
         Ok(Some(
             certified_arrangement_cell_complex_preflight_from_graph(operation, graph, left, right),
@@ -4980,11 +4993,9 @@ fn boolean_arrangement_cell_complex_meshes_from_graph(
 /// This exposes the same arrangement-certified materialization used by
 /// [`ExactBooleanRequest::materialize`]. It only runs when retained-graph,
 /// policy-aware preflight has already certified
-/// [`ExactBooleanSupport::CertifiedArrangementCellComplex`], so stronger exact
-/// paths such as convex, boundary-touching, winding, and trivial shortcuts keep
-/// their dispatcher provenance. After that guard it reuses the retained graph
-/// for graph-backed arrangement recovery before falling back to full
-/// arrangement cell-complex materialization.
+/// [`ExactBooleanSupport::CertifiedArrangementCellComplex`]. After that guard
+/// it reuses the retained graph for graph-backed arrangement recovery before
+/// falling back to full arrangement cell-complex materialization.
 pub fn materialize_arrangement_cell_complex_boolean(
     left: &ExactMesh,
     right: &ExactMesh,
