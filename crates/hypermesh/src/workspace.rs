@@ -184,6 +184,15 @@ impl<'a> ExactBooleanWorkspace<'a> {
         Ok((graph, left, right))
     }
 
+    fn regularized_solid_arrangement(&self) -> Option<&ExactArrangement> {
+        self.arrangements
+            .iter()
+            .find(|(stored_policy, _)| {
+                *stored_policy == ExactRegularizationPolicy::REGULARIZED_SOLID
+            })
+            .map(|(_, arrangement)| arrangement)
+    }
+
     /// Returns retained coplanar volumetric-cell evidence, deriving it from
     /// the workspace's cached exact intersection graph.
     pub fn coplanar_volumetric_cell_evidence(
@@ -1306,13 +1315,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
             .graph
             .as_ref()
             .expect("intersection graph cache was just populated");
-        let regularized_arrangement = self
-            .arrangements
-            .iter()
-            .find(|(stored_policy, _)| {
-                *stored_policy == ExactRegularizationPolicy::REGULARIZED_SOLID
-            })
-            .map(|(_, arrangement)| arrangement);
+        let regularized_arrangement = self.regularized_solid_arrangement();
         let certifications = ExactBooleanCertificationSet::from_graph_and_regularized_arrangement(
             graph,
             self.left,
@@ -1344,13 +1347,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
             .graph
             .as_ref()
             .expect("intersection graph cache was just populated");
-        let regularized_arrangement = self
-            .arrangements
-            .iter()
-            .find(|(stored_policy, _)| {
-                *stored_policy == ExactRegularizationPolicy::REGULARIZED_SOLID
-            })
-            .map(|(_, arrangement)| arrangement);
+        let regularized_arrangement = self.regularized_solid_arrangement();
         certifications.validate_against_sources_with_graph_and_regularized_arrangement(
             graph,
             self.left,
@@ -1393,13 +1390,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
             .graph
             .as_ref()
             .expect("intersection graph cache was just populated");
-        let regularized_arrangement = self
-            .arrangements
-            .iter()
-            .find(|(stored_policy, _)| {
-                *stored_policy == ExactRegularizationPolicy::REGULARIZED_SOLID
-            })
-            .map(|(_, arrangement)| arrangement);
+        let regularized_arrangement = self.regularized_solid_arrangement();
         let result = if preflight.is_certified() {
             if let Some((_, result)) = self
                 .materializations
@@ -1478,13 +1469,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
             .expect("preflight cache was just populated");
         let preflight = &self.preflights[preflight_index].1;
         if preflight.is_certified() {
-            let regularized_arrangement = self
-                .arrangements
-                .iter()
-                .find(|(stored_policy, _)| {
-                    *stored_policy == ExactRegularizationPolicy::REGULARIZED_SOLID
-                })
-                .map(|(_, arrangement)| arrangement);
+            let regularized_arrangement = self.regularized_solid_arrangement();
             let graph = self
                 .graph
                 .as_ref()
@@ -1517,13 +1502,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
             .graph
             .as_ref()
             .expect("intersection graph cache was just populated");
-        let regularized_arrangement = self
-            .arrangements
-            .iter()
-            .find(|(stored_policy, _)| {
-                *stored_policy == ExactRegularizationPolicy::REGULARIZED_SOLID
-            })
-            .map(|(_, arrangement)| arrangement);
+        let regularized_arrangement = self.regularized_solid_arrangement();
         evaluation.validate_against_sources_with_artifacts(
             self.left,
             self.right,
@@ -1581,13 +1560,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
             .graph
             .as_ref()
             .expect("intersection graph cache was just populated");
-        let regularized_arrangement = self
-            .arrangements
-            .iter()
-            .find(|(stored_policy, _)| {
-                *stored_policy == ExactRegularizationPolicy::REGULARIZED_SOLID
-            })
-            .map(|(_, arrangement)| arrangement);
+        let regularized_arrangement = self.regularized_solid_arrangement();
         validate_boolean_result_against_sources_with_artifacts(
             result,
             graph,
