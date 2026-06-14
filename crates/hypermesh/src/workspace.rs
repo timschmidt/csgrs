@@ -1636,9 +1636,9 @@ fn store_retained_optional_result(
     request: ExactBooleanRequest,
     materialized: OptionalMaterializedResult,
 ) -> Result<OptionalMaterializedResult, MeshError> {
-    validate_retained_optional_result(&materialized, left, right, request)?;
-    cache.push((request, materialized.clone()));
-    Ok(materialized)
+    store_retained_materialization(cache, request, materialized, |materialized| {
+        validate_retained_optional_result(materialized, left, right, request)
+    })
 }
 
 fn store_replayable_result_or_return(
@@ -1671,7 +1671,18 @@ fn store_retained_result_pair<T: Clone + RetainedMaterializationArtifact>(
     request: ExactBooleanRequest,
     materialized: Option<(ExactBooleanResult, T)>,
 ) -> Result<Option<(ExactBooleanResult, T)>, MeshError> {
-    validate_retained_result_pair(&materialized, left, right, request)?;
+    store_retained_materialization(cache, request, materialized, |materialized| {
+        validate_retained_result_pair(materialized, left, right, request)
+    })
+}
+
+fn store_retained_materialization<T: Clone>(
+    cache: &mut Vec<(ExactBooleanRequest, T)>,
+    request: ExactBooleanRequest,
+    materialized: T,
+    validate: impl FnOnce(&T) -> Result<(), MeshError>,
+) -> Result<T, MeshError> {
+    validate(&materialized)?;
     cache.push((request, materialized.clone()));
     Ok(materialized)
 }
