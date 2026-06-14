@@ -1256,7 +1256,13 @@ impl<'a> ExactBooleanWorkspace<'a> {
                 .map_err(workspace_report_validation_error)?;
             if validate_retained_result_for_request(self.left, self.right, request, result).is_ok()
             {
-                return Ok(result.clone());
+                return store_replayable_result_or_return(
+                    &mut self.materializations,
+                    self.left,
+                    self.right,
+                    request,
+                    result.clone(),
+                );
             }
         }
         self.preflight(request)?;
@@ -2918,6 +2924,33 @@ mod tests {
             corrupt_workspace.evaluate(request).is_err(),
             "cached materialization must validate before evaluation reuse"
         );
+    }
+
+    #[test]
+    fn exact_boolean_workspace_materialization_promotes_evaluation_result_cache() {
+        let left = tetra([0, 0, 0]);
+        let right = tetra([1, 0, 0]);
+        let request =
+            ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED);
+        let mut workspace = ExactBooleanWorkspace::new(&left, &right);
+        workspace.graph().unwrap();
+        workspace
+            .arrangement(ExactRegularizationPolicy::REGULARIZED_SOLID)
+            .unwrap();
+        workspace.preflight(request).unwrap();
+
+        let evaluation = workspace.evaluate(request).unwrap().clone();
+        let evaluated_result = evaluation
+            .result
+            .expect("certified test request should retain a result");
+        assert!(workspace.materializations.is_empty());
+
+        let materialized = workspace.materialize(request).unwrap();
+        assert_eq!(materialized, evaluated_result);
+        assert_eq!(workspace.materializations.len(), 1);
+        assert_eq!(workspace.materializations[0].1, evaluated_result);
+        assert_eq!(workspace.materialize(request).unwrap(), evaluated_result);
+        assert_eq!(workspace.materializations.len(), 1);
     }
 
     #[test]
