@@ -35,7 +35,7 @@ use hypermesh::{
     classify_point_against_closed_mesh_winding_report, classify_point_against_convex_solid_report,
     classify_triangle_triangle, exact_mesh_consumer_readiness, exact_mesh_handoff_package,
     inspect_f64_mesh_input, inspect_i64_mesh_input, materialize_affine_orthogonal_solid_difference,
-    materialize_affine_orthogonal_solid_intersection, materialize_arrangement_cell_complex_boolean,
+    materialize_affine_orthogonal_solid_intersection,
     materialize_axis_aligned_orthogonal_solid_difference,
     materialize_axis_aligned_orthogonal_solid_intersection,
     materialize_axis_aligned_orthogonal_solid_union, materialize_contained_face_adjacent_union,
@@ -4318,7 +4318,7 @@ fn exact_volumetric_winding_coplanar_cap_is_publicly_certified() {
 }
 
 #[test]
-fn arrangement_cell_complex_boolean_is_publicly_replayable() {
+fn arrangement_cell_complex_request_materialization_is_publicly_replayable() {
     let left = ExactMesh::from_i64_triangles(
         &[
             0, 0, 0, //
@@ -4344,21 +4344,12 @@ fn arrangement_cell_complex_boolean_is_publicly_replayable() {
     .unwrap();
     let stale_right = tetra([10, 10, 10]);
 
-    let result = materialize_arrangement_cell_complex_boolean(
-        &left,
-        &right,
-        ExactBooleanOperation::Union,
-        ValidationPolicy::ALLOW_BOUNDARY,
-    )
-    .unwrap()
-    .expect("certified arrangement cell-complex boolean should materialize");
-    let replay = ExactBooleanRequest::new(
+    let result = ExactBooleanRequest::new(
         ExactBooleanOperation::Union,
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .materialize(&left, &right)
     .unwrap();
-    assert_eq!(result, replay);
     assert_eq!(
         result.kind,
         ExactBooleanResultKind::ArrangementCellComplexMaterialized {
@@ -4391,14 +4382,9 @@ fn arrangement_cell_complex_boolean_is_publicly_replayable() {
 
     let horizontal = axis_aligned_box([0, 0, 0], [2, 1, 1]);
     let vertical = axis_aligned_box([0, 1, 0], [1, 2, 1]);
-    let shortcut = materialize_arrangement_cell_complex_boolean(
-        &horizontal,
-        &vertical,
-        ExactBooleanOperation::Union,
-        ValidationPolicy::CLOSED,
-    )
-    .unwrap()
-    .expect("orthogonal arrangement shortcut should materialize");
+    let shortcut = ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED)
+        .materialize(&horizontal, &vertical)
+        .unwrap();
     assert_eq!(
         shortcut.kind,
         ExactBooleanResultKind::CertifiedShortcut {
@@ -4422,16 +4408,6 @@ fn arrangement_cell_complex_boolean_is_publicly_replayable() {
 
     let convex_left = tetra_from_corners([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]);
     let convex_right = tetra_from_corners([1, 1, 1], [5, 1, 1], [1, 5, 1], [1, 1, 5]);
-    assert!(
-        materialize_arrangement_cell_complex_boolean(
-            &convex_left,
-            &convex_right,
-            ExactBooleanOperation::Intersection,
-            ValidationPolicy::CLOSED,
-        )
-        .unwrap()
-        .is_none()
-    );
     let convex_intersection = ExactBooleanRequest::new(
         ExactBooleanOperation::Intersection,
         ValidationPolicy::CLOSED,
