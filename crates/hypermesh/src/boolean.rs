@@ -2616,6 +2616,23 @@ fn certified_boolean_support_did_not_materialize_error(support: ExactBooleanSupp
     ))
 }
 
+fn graph_for_certified_materialization<'a>(
+    retained_graph: Option<&'a ExactIntersectionGraph>,
+    owned_graph: &'a mut Option<ExactIntersectionGraph>,
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Result<&'a ExactIntersectionGraph, MeshError> {
+    if let Some(graph) = retained_graph {
+        return Ok(graph);
+    }
+    if owned_graph.is_none() {
+        *owned_graph = Some(validated_intersection_graph(left, right)?);
+    }
+    Ok(owned_graph
+        .as_ref()
+        .expect("certified materialization graph was just built"))
+}
+
 pub(crate) fn materialize_certified_boolean_support_with_artifacts(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -2626,6 +2643,7 @@ pub(crate) fn materialize_certified_boolean_support_with_artifacts(
 ) -> Result<ExactBooleanResult, MeshError> {
     let operation = request.operation;
     let validation = request.validation;
+    let mut owned_graph = None;
     let result = match support {
         ExactBooleanSupport::SelectedRegionPolicy => {
             let ExactBooleanOperation::SelectedRegions(selection) = operation else {
@@ -2640,24 +2658,20 @@ pub(crate) fn materialize_certified_boolean_support_with_artifacts(
             })
         }
         ExactBooleanSupport::CertifiedBoundaryPolicyShortcut => {
-            if let Some(graph) = retained_graph {
-                materialize_boundary_touching_policy_from_graph_for_request(
-                    graph, left, right, request,
-                )?
-            } else {
-                request.materialize_boundary_touching_policy(left, right)?
-            }
+            let graph =
+                graph_for_certified_materialization(retained_graph, &mut owned_graph, left, right)?;
+            materialize_boundary_touching_policy_from_graph_for_request(
+                graph, left, right, request,
+            )?
         }
         ExactBooleanSupport::CertifiedOpenSurfaceArrangementUnion
         | ExactBooleanSupport::CertifiedOpenSurfaceArrangementIntersection
         | ExactBooleanSupport::CertifiedOpenSurfaceArrangementDifference => {
-            if let Some(graph) = retained_graph {
-                materialize_open_surface_arrangement_from_graph(
-                    graph, left, right, operation, validation,
-                )?
-            } else {
-                materialize_open_surface_arrangement(left, right, operation, validation)?
-            }
+            let graph =
+                graph_for_certified_materialization(retained_graph, &mut owned_graph, left, right)?;
+            materialize_open_surface_arrangement_from_graph(
+                graph, left, right, operation, validation,
+            )?
         }
         ExactBooleanSupport::CertifiedArrangementCellComplex => {
             materialize_certified_arrangement_cell_complex_support_with_arrangement(
@@ -2683,16 +2697,13 @@ pub(crate) fn materialize_certified_boolean_support_with_artifacts(
         ExactBooleanSupport::CertifiedClosedBoundaryTouchingUnion
         | ExactBooleanSupport::CertifiedClosedBoundaryTouchingIntersection
         | ExactBooleanSupport::CertifiedClosedBoundaryTouchingDifference => {
-            let result = if let Some(graph) = retained_graph {
+            let graph =
+                graph_for_certified_materialization(retained_graph, &mut owned_graph, left, right)?;
+            let result =
                 materialize_closed_boundary_touching_regularized_boolean_with_evidence_from_graph(
                     graph, left, right, operation, validation,
                 )?
-                .map(|(result, _)| result)
-            } else {
-                request
-                    .materialize_closed_boundary_touching_regularized_with_evidence(left, right)?
-                    .map(|(result, _evidence)| result)
-            };
+                .map(|(result, _)| result);
             if result.is_some() {
                 result
             } else {
@@ -2705,31 +2716,23 @@ pub(crate) fn materialize_certified_boolean_support_with_artifacts(
             }
         }
         ExactBooleanSupport::CertifiedOpenSurfaceDisjoint => {
-            if let Some(graph) = retained_graph {
-                materialize_open_surface_disjoint_from_graph_for_request(
-                    graph, left, right, request,
-                )?
-            } else {
-                request.materialize_open_surface_disjoint(left, right)?
-            }
+            let graph =
+                graph_for_certified_materialization(retained_graph, &mut owned_graph, left, right)?;
+            materialize_open_surface_disjoint_from_graph_for_request(graph, left, right, request)?
         }
         ExactBooleanSupport::CertifiedClosedWindingSeparated => {
-            if let Some(graph) = retained_graph {
-                materialize_closed_winding_separated_from_graph_for_request(
-                    graph, left, right, request,
-                )?
-            } else {
-                request.materialize_closed_winding_separated(left, right)?
-            }
+            let graph =
+                graph_for_certified_materialization(retained_graph, &mut owned_graph, left, right)?;
+            materialize_closed_winding_separated_from_graph_for_request(
+                graph, left, right, request,
+            )?
         }
         ExactBooleanSupport::CertifiedClosedWindingContainment => {
-            if let Some(graph) = retained_graph {
-                materialize_closed_winding_containment_from_graph_for_request(
-                    graph, left, right, request,
-                )?
-            } else {
-                request.materialize_closed_winding_containment(left, right)?
-            }
+            let graph =
+                graph_for_certified_materialization(retained_graph, &mut owned_graph, left, right)?;
+            materialize_closed_winding_containment_from_graph_for_request(
+                graph, left, right, request,
+            )?
         }
         ExactBooleanSupport::CertifiedMixedDimensionalRegularizedSolid => {
             request.materialize_mixed_dimensional_regularized_solid(left, right)?
