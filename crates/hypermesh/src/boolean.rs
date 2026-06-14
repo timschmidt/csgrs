@@ -2657,7 +2657,7 @@ pub(crate) fn materialize_certified_boolean_support_with_artifacts(
                     left,
                     right,
                 )?;
-                materialize_selected_region_result_from_graph(
+                replay_selected_region_boolean_result_from_graph(
                     graph, left, right, selection, validation,
                 )?
             } else {
@@ -2925,8 +2925,19 @@ pub(crate) fn replay_selected_region_boolean_result(
     validation: ValidationPolicy,
 ) -> Result<ExactBooleanResult, MeshError> {
     let graph = validated_intersection_graph(left, right)?;
+    replay_selected_region_boolean_result_from_graph(&graph, left, right, selection, validation)
+}
+
+fn replay_selected_region_boolean_result_from_graph(
+    graph: &ExactIntersectionGraph,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    selection: ExactRegionSelection,
+    validation: ValidationPolicy,
+) -> Result<ExactBooleanResult, MeshError> {
+    validate_graph_source_handoff(graph, left, right)?;
     let result =
-        materialize_selected_region_result_from_graph(&graph, left, right, selection, validation)?;
+        materialize_selected_region_result_from_graph(graph, left, right, selection, validation)?;
     if !matches!(
         result.kind,
         ExactBooleanResultKind::SelectedRegions {
@@ -4617,6 +4628,11 @@ fn materialize_boolean_exact_request_with_graph(
     let validation = request.validation;
     let mut owned_graph = None;
     if let ExactBooleanOperation::SelectedRegions(selection) = operation {
+        if let Some(graph) = retained_graph {
+            return replay_selected_region_boolean_result_from_graph(
+                graph, left, right, selection, validation,
+            );
+        }
         return replay_selected_region_boolean_result(left, right, selection, validation);
     }
     if let Some(result) =
