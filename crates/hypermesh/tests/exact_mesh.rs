@@ -40,9 +40,9 @@ use hypermesh::{
     materialize_axis_aligned_orthogonal_solid_intersection,
     materialize_axis_aligned_orthogonal_solid_union, materialize_contained_face_adjacent_union,
     materialize_coplanar_mesh_overlay_arrangement, materialize_full_face_adjacent_union,
-    materialize_open_surface_arrangement, materialize_volumetric_winding_arrangement,
-    mesh_artifact_from_exact_mesh, mesh_artifact_from_exact_mesh_proposal,
-    triangulate_all_face_cells_with_cdt, validate_face_cell_cdt_against_sources,
+    materialize_volumetric_winding_arrangement, mesh_artifact_from_exact_mesh,
+    mesh_artifact_from_exact_mesh_proposal, triangulate_all_face_cells_with_cdt,
+    validate_face_cell_cdt_against_sources,
 };
 use hyperreal::Real;
 
@@ -2330,17 +2330,6 @@ fn exact_open_surface_arrangement_is_publicly_replayable() {
                 ),
                 ExactReportFreshness::SourceReplayMismatch
             );
-            assert!(
-                materialize_open_surface_arrangement(
-                    &left,
-                    &right,
-                    operation,
-                    ValidationPolicy::CLOSED,
-                )
-                .unwrap()
-                .is_none(),
-                "{operation:?} should decline certified open-surface replay when output cannot satisfy CLOSED validation"
-            );
         }
 
         let attempt = ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY)
@@ -2382,14 +2371,9 @@ fn exact_open_surface_arrangement_is_publicly_replayable() {
             ExactReportFreshness::SourceReplayMismatch
         );
 
-        let result = materialize_open_surface_arrangement(
-            &left,
-            &right,
-            operation,
-            ValidationPolicy::ALLOW_BOUNDARY,
-        )
-        .unwrap()
-        .expect("crossing open surfaces should materialize by exact arrangement");
+        let result = ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY)
+            .materialize(&left, &right)
+            .unwrap();
         assert_eq!(
             result.kind,
             ExactBooleanResultKind::OpenSurfaceArrangement { operation }
@@ -2424,17 +2408,6 @@ fn exact_open_surface_arrangement_is_publicly_replayable() {
             ExactReportFreshness::SourceReplayMismatch
         );
         if matches!(operation, ExactBooleanOperation::Intersection) {
-            assert!(
-                materialize_open_surface_arrangement(
-                    &left,
-                    &right,
-                    operation,
-                    ValidationPolicy::CLOSED,
-                )
-                .unwrap()
-                .is_none(),
-                "{operation:?} should yield to closed lower-dimensional provenance"
-            );
             let replay = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED)
                 .materialize(&left, &right)
                 .unwrap();
@@ -2457,21 +2430,17 @@ fn exact_open_surface_arrangement_is_publicly_replayable() {
         }
     }
 
-    let union = materialize_open_surface_arrangement(
-        &left,
-        &right,
+    let union = ExactBooleanRequest::new(
         ExactBooleanOperation::Union,
         ValidationPolicy::ALLOW_BOUNDARY,
     )
-    .unwrap()
+    .materialize(&left, &right)
     .unwrap();
-    let difference = materialize_open_surface_arrangement(
-        &left,
-        &right,
+    let difference = ExactBooleanRequest::new(
         ExactBooleanOperation::Difference,
         ValidationPolicy::ALLOW_BOUNDARY,
     )
-    .unwrap()
+    .materialize(&left, &right)
     .unwrap();
     let mut stale_materialization = union.clone();
     stale_materialization.assembly = difference.assembly;

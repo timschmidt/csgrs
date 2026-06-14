@@ -8971,23 +8971,6 @@ type OpenSurfaceArrangementPlan = (
     Vec<FaceRegionTriangulation>,
 );
 
-/// Certify and materialize a named arrangement boolean for crossing open surfaces.
-///
-/// The result is returned as an [`ExactBooleanResult`] because that artifact
-/// already retains the exact split-region classifications, triangulations,
-/// assembly, output mesh, and source-replay freshness checks for this bounded
-/// surface arrangement path. Unsupported open-surface contacts return `None`
-/// rather than falling back to approximate winding.
-pub fn materialize_open_surface_arrangement(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: ValidationPolicy,
-) -> Result<Option<ExactBooleanResult>, MeshError> {
-    let graph = validated_intersection_graph(left, right)?;
-    materialize_open_surface_arrangement_from_graph(&graph, left, right, operation, validation)
-}
-
 fn materialize_open_surface_arrangement_from_graph(
     graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
