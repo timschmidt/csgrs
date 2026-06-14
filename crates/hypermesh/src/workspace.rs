@@ -36,8 +36,7 @@ use super::reports::{
 };
 use super::simplify::{ExactSimplifiedCellComplex, ExactSimplifiedCellComplexFreshness};
 use super::volumetric_cells::{
-    CoplanarVolumetricCellEvidenceError, CoplanarVolumetricCellEvidenceFreshness,
-    CoplanarVolumetricCellEvidenceReport,
+    CoplanarVolumetricCellEvidenceError, CoplanarVolumetricCellEvidenceReport,
 };
 
 type MaterializedResultWithEvidence =
@@ -234,15 +233,6 @@ impl<'a> ExactBooleanWorkspace<'a> {
             .coplanar_volumetric_cell_evidence
             .as_ref()
             .expect("coplanar volumetric-cell evidence cache was just populated"))
-    }
-
-    /// Classify coplanar volumetric-cell evidence freshness in this retained
-    /// source session.
-    pub fn coplanar_volumetric_cell_evidence_freshness(
-        &mut self,
-        report: &CoplanarVolumetricCellEvidenceReport,
-    ) -> CoplanarVolumetricCellEvidenceFreshness {
-        report.freshness_against_sources(self.left, self.right)
     }
 
     /// Materializes zero-area closed boundary contact from the retained exact
@@ -761,15 +751,6 @@ impl<'a> ExactBooleanWorkspace<'a> {
             request.validation,
             request.boundary_policy,
         )
-    }
-
-    /// Classify preflight freshness in this retained source session.
-    pub fn preflight_freshness(
-        &mut self,
-        request: ExactBooleanRequest,
-        preflight: &ExactBooleanPreflight,
-    ) -> ExactReportFreshness {
-        exact_report_freshness(self.validate_preflight(request, preflight))
     }
 
     /// Returns refinement evidence for `request`, building it once per
@@ -1816,7 +1797,7 @@ mod tests {
             .validate_against_sources(&left, &right)
             .unwrap();
         assert_eq!(
-            workspace.coplanar_volumetric_cell_evidence_freshness(&coplanar_volumetric_evidence),
+            coplanar_volumetric_evidence.freshness_against_sources(&left, &right),
             CoplanarVolumetricCellEvidenceFreshness::Current
         );
         let mut stale_coplanar_volumetric_evidence = coplanar_volumetric_evidence.clone();
@@ -1826,8 +1807,7 @@ mod tests {
             Err(CoplanarVolumetricCellEvidenceError::FacePairCountMismatch)
         );
         assert_eq!(
-            workspace
-                .coplanar_volumetric_cell_evidence_freshness(&stale_coplanar_volumetric_evidence),
+            stale_coplanar_volumetric_evidence.freshness_against_sources(&left, &right),
             CoplanarVolumetricCellEvidenceFreshness::StaleFacePairCounts
         );
 
@@ -2174,7 +2154,12 @@ mod tests {
         let preflight = workspace.preflight(request).unwrap().clone();
         workspace.validate_preflight(request, &preflight).unwrap();
         assert_eq!(
-            workspace.preflight_freshness(request, &preflight),
+            preflight.freshness_against_sources_with_boundary_policy(
+                &left,
+                &right,
+                request.validation,
+                request.boundary_policy
+            ),
             ExactReportFreshness::Current
         );
         let mut stale_preflight = preflight.clone();
@@ -2184,7 +2169,12 @@ mod tests {
             Err(ExactReportValidationError::SourceReplayMismatch)
         );
         assert_ne!(
-            workspace.preflight_freshness(request, &stale_preflight),
+            stale_preflight.freshness_against_sources_with_boundary_policy(
+                &left,
+                &right,
+                request.validation,
+                request.boundary_policy
+            ),
             ExactReportFreshness::Current
         );
         let mut relabeled_preflight = preflight.clone();
