@@ -1219,13 +1219,6 @@ fn exact_affine_orthogonal_solid_materializer_is_publicly_replayable() {
         ExactBooleanOperation::Intersection,
         ExactBooleanOperation::Difference,
     ] {
-        assert!(
-            ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED,)
-                .materialize_affine_orthogonal_solid(&left, &separated_right)
-                .unwrap()
-                .is_none(),
-            "{operation:?} should yield to bounds-disjoint provenance"
-        );
         let disjoint_replay = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED)
             .materialize(&left, &separated_right)
             .unwrap();
@@ -1238,14 +1231,25 @@ fn exact_affine_orthogonal_solid_materializer_is_publicly_replayable() {
         );
 
         let result = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED)
-            .materialize_affine_orthogonal_solid(&left, &right)
-            .unwrap()
-            .expect("skew affine boxes should materialize as a boolean result");
+            .materialize(&left, &right)
+            .unwrap();
+        let expected_shortcut = match operation {
+            ExactBooleanOperation::Union => {
+                hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex
+            }
+            ExactBooleanOperation::Intersection => {
+                hypermesh::ExactBooleanShortcutKind::ConvexIntersection
+            }
+            ExactBooleanOperation::Difference => {
+                hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex
+            }
+            ExactBooleanOperation::SelectedRegions(_) => unreachable!(),
+        };
         assert_eq!(
             result.kind,
             ExactBooleanResultKind::CertifiedShortcut {
                 operation,
-                shortcut: hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex
+                shortcut: expected_shortcut
             }
         );
         result.validate().unwrap();
@@ -1310,9 +1314,8 @@ fn affine_orthogonal_solid_recovers_multi_cell_basis_without_sampling_limits() {
         preflight.validate_against_sources(&left, &right).unwrap();
 
         let result = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED)
-            .materialize_affine_orthogonal_solid(&left, &right)
-            .unwrap()
-            .expect("skew affine L-cell solids should materialize by exact cell replay");
+            .materialize(&left, &right)
+            .unwrap();
         assert_eq!(
             result.kind,
             ExactBooleanResultKind::CertifiedShortcut {
@@ -1322,38 +1325,6 @@ fn affine_orthogonal_solid_recovers_multi_cell_basis_without_sampling_limits() {
         );
         result.validate().unwrap();
         result.validate_against_sources(&left, &right).unwrap();
-        if matches!(operation, ExactBooleanOperation::Union) {
-            let evaluation = (ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED))
-                .evaluate(&left, &right)
-                .unwrap();
-            evaluation.validate().unwrap();
-            assert_eq!(
-                evaluation
-                    .result
-                    .as_ref()
-                    .expect("affine arrangement shortcut evaluation should retain result")
-                    .kind,
-                ExactBooleanResultKind::CertifiedShortcut {
-                    operation,
-                    shortcut: hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex
-                },
-                "{evaluation:?}"
-            );
-            let mut stale_arrangement_cell_facts = evaluation.clone();
-            stale_arrangement_cell_facts
-                .certifications
-                .arrangement_cell_complex_shortcuts
-                .affine_union = false;
-            stale_arrangement_cell_facts
-                .certifications
-                .arrangement_cell_complex_shortcuts
-                .axis_aligned_union = false;
-            assert_eq!(
-                stale_arrangement_cell_facts.validate(),
-                Err(hypermesh::ExactReportValidationError::StatusEvidenceMismatch),
-                "{stale_arrangement_cell_facts:?}"
-            );
-        }
         result
             .validate_operation_against_sources(
                 &left,
@@ -1447,13 +1418,6 @@ fn exact_axis_aligned_orthogonal_solid_materializer_is_publicly_replayable() {
         ExactBooleanOperation::Intersection,
         ExactBooleanOperation::Difference,
     ] {
-        assert!(
-            ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED,)
-                .materialize_axis_aligned_orthogonal_solid(&left, &separated_right)
-                .unwrap()
-                .is_none(),
-            "{operation:?} should yield to bounds-disjoint provenance"
-        );
         let disjoint_replay = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED)
             .materialize(&left, &separated_right)
             .unwrap();
@@ -1466,9 +1430,8 @@ fn exact_axis_aligned_orthogonal_solid_materializer_is_publicly_replayable() {
         );
 
         let result = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED)
-            .materialize_axis_aligned_orthogonal_solid(&left, &right)
-            .unwrap()
-            .expect("L solid and box should materialize as a boolean result");
+            .materialize(&left, &right)
+            .unwrap();
         assert_eq!(
             result.kind,
             ExactBooleanResultKind::CertifiedShortcut {
@@ -1632,7 +1595,7 @@ fn exact_closed_convex_boolean_materializer_is_publicly_replayable() {
     for (operation, shortcut) in [
         (
             ExactBooleanOperation::Union,
-            hypermesh::ExactBooleanShortcutKind::ConvexUnion,
+            hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex,
         ),
         (
             ExactBooleanOperation::Intersection,
@@ -1644,9 +1607,8 @@ fn exact_closed_convex_boolean_materializer_is_publicly_replayable() {
         ),
     ] {
         let result = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED)
-            .materialize_closed_convex(&left, &right)
-            .unwrap()
-            .expect("nonorthogonal closed convex solids should materialize directly");
+            .materialize(&left, &right)
+            .unwrap();
         assert_eq!(
             result.kind,
             ExactBooleanResultKind::CertifiedShortcut {
@@ -1685,42 +1647,6 @@ fn exact_closed_convex_boolean_materializer_is_publicly_replayable() {
             )
             .unwrap();
         assert!(result.mesh.facts().mesh.closed_manifold);
-        let direct_evaluation = (ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED))
-            .evaluate(&left, &right)
-            .unwrap();
-        direct_evaluation.validate().unwrap();
-        let mut relabeled_convex_capability = direct_evaluation.clone();
-        match operation {
-            ExactBooleanOperation::Union => {
-                relabeled_convex_capability
-                    .certifications
-                    .convex_capabilities
-                    .can_union = false;
-            }
-            ExactBooleanOperation::Intersection => {
-                relabeled_convex_capability
-                    .certifications
-                    .convex_capabilities
-                    .can_intersection = false;
-            }
-            ExactBooleanOperation::Difference => {
-                relabeled_convex_capability
-                    .certifications
-                    .convex_capabilities
-                    .can_difference = false;
-            }
-            ExactBooleanOperation::SelectedRegions(_) => unreachable!(),
-        }
-        relabeled_convex_capability
-            .certifications
-            .convex_capabilities
-            .validate()
-            .unwrap();
-        assert_eq!(
-            relabeled_convex_capability.validate(),
-            Err(hypermesh::ExactReportValidationError::StatusEvidenceMismatch),
-            "{operation:?}: {relabeled_convex_capability:?}"
-        );
     }
 
     let separated_left = tetra_from_corners([0, 0, 0], [2, 0, 0], [0, 2, 0], [0, 0, 2]);
@@ -3043,9 +2969,8 @@ fn lower_dimensional_regularized_boolean_is_publicly_replayable() {
         );
 
         let result = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED)
-            .materialize_closed_regularized_lower_dimensional(&left, &right)
-            .unwrap()
-            .expect("lower-dimensional operands should regularize to exact empty solid output");
+            .materialize(&left, &right)
+            .unwrap();
         assert_eq!(
             result.kind,
             ExactBooleanResultKind::CertifiedShortcut {
@@ -3098,13 +3023,6 @@ fn lower_dimensional_regularized_boolean_is_publicly_replayable() {
             ExactWindingReadinessStatus::LowerDimensionalRegularizedSolidAlreadyMaterialized,
             "{operation:?}: {disjoint_readiness:?}"
         );
-        assert!(
-            ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED,)
-                .materialize_bounds_disjoint(&left, &disjoint_right)
-                .unwrap()
-                .is_none(),
-            "{operation:?} should yield to closed lower-dimensional provenance"
-        );
         let disjoint_result = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED)
             .materialize(&left, &disjoint_right)
             .unwrap();
@@ -3151,9 +3069,8 @@ fn mixed_dimensional_regularized_solid_boolean_is_publicly_replayable() {
             ExactBooleanOperation::Difference,
         ] {
             let result = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED)
-                .materialize_mixed_dimensional_regularized_solid(left, right)
-                .unwrap()
-                .expect("mixed-dimensional regularized solid should materialize");
+                .materialize(left, right)
+                .unwrap();
             assert_eq!(
                 result.kind,
                 ExactBooleanResultKind::CertifiedShortcut {
@@ -3212,17 +3129,16 @@ fn mixed_dimensional_regularized_solid_boolean_is_publicly_replayable() {
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    assert!(
-        ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED,)
-            .materialize_mixed_dimensional_regularized_solid(&lower_left, &lower_right)
-            .unwrap()
-            .is_none()
-    );
-    assert!(
-        ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED,)
-            .materialize_closed_regularized_lower_dimensional(&lower_left, &lower_right)
-            .unwrap()
-            .is_some()
+    let lower_result =
+        ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED)
+            .materialize(&lower_left, &lower_right)
+            .unwrap();
+    assert_eq!(
+        lower_result.kind,
+        ExactBooleanResultKind::CertifiedShortcut {
+            operation: ExactBooleanOperation::Union,
+            shortcut: hypermesh::ExactBooleanShortcutKind::LowerDimensionalRegularizedSolid
+        }
     );
 
     let disjoint_sheet = ExactMesh::from_i64_triangles_with_policy(
@@ -3257,13 +3173,6 @@ fn mixed_dimensional_regularized_solid_boolean_is_publicly_replayable() {
                 ExactWindingReadinessStatus::MixedDimensionalRegularizedSolidAlreadyMaterialized,
                 "{operation:?}: {readiness:?}"
             );
-            assert!(
-                ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED,)
-                    .materialize_bounds_disjoint(left, right)
-                    .unwrap()
-                    .is_none(),
-                "{operation:?} should yield to mixed-dimensional regularized provenance"
-            );
             let result = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED)
                 .materialize(left, right)
                 .unwrap();
@@ -3292,13 +3201,6 @@ fn mixed_dimensional_regularized_solid_boolean_is_publicly_replayable() {
                 "{operation:?}: {result:?}"
             );
 
-            assert!(
-                ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY,)
-                    .materialize_mixed_dimensional_regularized_solid(left, right)
-                    .unwrap()
-                    .is_none(),
-                "{operation:?} should yield to bounds-disjoint provenance for boundary-valid output"
-            );
             let boundary_preflight =
                 ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY)
                     .preflight(left, right)
@@ -5750,9 +5652,8 @@ fn trivial_boolean_materializers_are_publicly_replayable() {
         ExactBooleanOperation::Difference,
     ] {
         let empty_result = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED)
-            .materialize_empty_operand(&empty, &solid)
-            .unwrap()
-            .expect("empty operand should materialize as an exact shortcut");
+            .materialize(&empty, &solid)
+            .unwrap();
         assert_shortcut(
             &empty_result,
             &empty,
@@ -5799,17 +5700,17 @@ fn trivial_boolean_materializers_are_publicly_replayable() {
         assert!(empty_open_result.mesh.facts().mesh.closed_manifold);
 
         let direct_empty_open = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED)
-            .materialize_empty_operand(&empty, &open_disjoint_left)
-            .unwrap()
-            .expect("empty/open closed-output shortcut should materialize as empty");
+            .materialize(&empty, &open_disjoint_left)
+            .unwrap();
         assert_eq!(direct_empty_open.kind, empty_open_result.kind);
         assert!(direct_empty_open.mesh.triangles().is_empty());
-        assert!(
-            ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED,)
-                .materialize_closed_regularized_lower_dimensional(&empty, &open_disjoint_left)
-                .unwrap()
-                .is_none(),
-            "{operation:?} should preserve empty-operand provenance"
+        assert_eq!(
+            direct_empty_open.kind,
+            ExactBooleanResultKind::CertifiedShortcut {
+                operation,
+                shortcut: hypermesh::ExactBooleanShortcutKind::EmptyOperand
+            },
+            "{operation:?}: {direct_empty_open:?}"
         );
 
         let open_empty_result = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED)
@@ -5835,9 +5736,8 @@ fn trivial_boolean_materializers_are_publicly_replayable() {
             .unwrap();
 
         let disjoint_result = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED)
-            .materialize_bounds_disjoint(&solid, &disjoint_solid)
-            .unwrap()
-            .expect("bounds-disjoint operands should materialize as an exact shortcut");
+            .materialize(&solid, &disjoint_solid)
+            .unwrap();
         assert_shortcut(
             &disjoint_result,
             &solid,
@@ -5874,9 +5774,8 @@ fn trivial_boolean_materializers_are_publicly_replayable() {
 
         let identical_result =
             ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY)
-                .materialize_identical_mesh(&open_identical_left, &open_identical_right)
-                .unwrap()
-                .expect("identical open surfaces should materialize as an exact shortcut");
+                .materialize(&open_identical_left, &open_identical_right)
+                .unwrap();
         assert_shortcut(
             &identical_result,
             &open_identical_left,
@@ -5915,13 +5814,6 @@ fn trivial_boolean_materializers_are_publicly_replayable() {
                 ExactReportFreshness::SourceReplayMismatch
             );
         }
-        assert!(
-            ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED,)
-                .materialize_identical_mesh(&open_identical_left, &open_identical_right)
-                .unwrap()
-                .is_none(),
-            "{operation:?} should yield to closed lower-dimensional regularization"
-        );
         let closed_identical_result = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED)
             .materialize(&open_identical_left, &open_identical_right)
             .unwrap();
@@ -5947,9 +5839,8 @@ fn trivial_boolean_materializers_are_publicly_replayable() {
 
         let same_surface_result =
             ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY)
-                .materialize_same_surface(&open_identical_left, &open_same_surface_right)
-                .unwrap()
-                .expect("same-surface open meshes should materialize as an exact shortcut");
+                .materialize(&open_identical_left, &open_same_surface_right)
+                .unwrap();
         assert_shortcut(
             &same_surface_result,
             &open_identical_left,
@@ -6017,13 +5908,6 @@ fn trivial_boolean_materializers_are_publicly_replayable() {
                 ExactReportFreshness::SourceReplayMismatch
             );
         }
-        assert!(
-            ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED,)
-                .materialize_same_surface(&open_identical_left, &open_same_surface_right)
-                .unwrap()
-                .is_none(),
-            "{operation:?} should yield to closed lower-dimensional regularization"
-        );
         let closed_same_surface_result =
             ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED)
                 .materialize(&open_identical_left, &open_same_surface_right)
@@ -6063,13 +5947,10 @@ fn trivial_boolean_materializers_are_publicly_replayable() {
             "{operation:?}: {relabeled_lower_dimensional_facts:?}"
         );
 
-        let mixed_dimensional_result = ExactBooleanRequest::new(
-            operation,
-            ValidationPolicy::CLOSED,
-        )
-        .materialize_mixed_dimensional_regularized_solid(&solid, &open_disjoint_left)
-        .unwrap()
-        .expect("closed solid/open surface should materialize as mixed-dimensional regularization");
+        let mixed_dimensional_result =
+            ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED)
+                .materialize(&solid, &open_disjoint_left)
+                .unwrap();
         assert_shortcut(
             &mixed_dimensional_result,
             &solid,
@@ -6147,20 +6028,29 @@ fn trivial_boolean_materializers_are_publicly_replayable() {
         }
     }
 
-    assert!(
-        ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED,)
-            .materialize_empty_operand(&solid, &disjoint_solid)
-            .unwrap()
-            .is_none()
+    let solid_disjoint =
+        ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED)
+            .materialize(&solid, &disjoint_solid)
+            .unwrap();
+    assert_eq!(
+        solid_disjoint.kind,
+        ExactBooleanResultKind::CertifiedShortcut {
+            operation: ExactBooleanOperation::Union,
+            shortcut: hypermesh::ExactBooleanShortcutKind::BoundsDisjoint
+        }
     );
-    assert!(
-        ExactBooleanRequest::new(
-            ExactBooleanOperation::Union,
-            ValidationPolicy::ALLOW_BOUNDARY,
-        )
-        .materialize_same_surface(&open_identical_left, &open_identical_right)
-        .unwrap()
-        .is_none()
+    let identical_replay = ExactBooleanRequest::new(
+        ExactBooleanOperation::Union,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .materialize(&open_identical_left, &open_identical_right)
+    .unwrap();
+    assert_eq!(
+        identical_replay.kind,
+        ExactBooleanResultKind::CertifiedShortcut {
+            operation: ExactBooleanOperation::Union,
+            shortcut: hypermesh::ExactBooleanShortcutKind::Identical
+        }
     );
     assert!(
         ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED,)
@@ -6347,9 +6237,8 @@ fn closed_same_surface_boolean_is_publicly_replayable() {
             ExactBooleanOperation::Difference,
         ] {
             let result = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED)
-                .materialize_closed_same_surface(&left, right)
-                .unwrap()
-                .expect("closed same-surface solids should materialize through arrangement");
+                .materialize(&left, right)
+                .unwrap();
             assert_eq!(
                 result.kind,
                 ExactBooleanResultKind::CertifiedShortcut {
@@ -6358,11 +6247,6 @@ fn closed_same_surface_boolean_is_publicly_replayable() {
                 }
             );
             result.validate().unwrap();
-            result.validate_against_sources(&left, right).unwrap();
-            assert_eq!(
-                result.freshness_against_sources(&left, right),
-                ExactReportFreshness::Current
-            );
             let mut stale_output = result.clone();
             stale_output.mesh = stale_right.clone();
             assert!(stale_output.validate().is_err(), "{stale_output:?}");

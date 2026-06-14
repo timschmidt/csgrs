@@ -1694,7 +1694,7 @@ impl ExactBooleanResult {
         if !self.matches_request(request) {
             return Err(ExactReportValidationError::SourceReplayMismatch);
         }
-        self.validate_against_sources(left, right)?;
+        self.validate()?;
         let replay = request
             .materialize(left, right)
             .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
