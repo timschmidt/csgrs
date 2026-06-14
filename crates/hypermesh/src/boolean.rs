@@ -3042,13 +3042,21 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
         && let Some(separated_support) =
             certified_closed_winding_separated_support_from_graph(&graph, left, right, operation)?
     {
-        return Ok(certified_shortcut_preflight(operation, separated_support));
+        return Ok(certified_shortcut_preflight_from_graph(
+            operation,
+            separated_support,
+            &graph,
+        ));
     }
     if support == ExactBooleanSupport::RequiresCertifiedWinding
         && let Some(containment_support) =
             certified_closed_winding_containment_support_from_graph(&graph, left, right, operation)?
     {
-        return Ok(certified_shortcut_preflight(operation, containment_support));
+        return Ok(certified_shortcut_preflight_from_graph(
+            operation,
+            containment_support,
+            &graph,
+        ));
     }
     if support == ExactBooleanSupport::RequiresCertifiedWinding
         && let Some(boundary_support) =
