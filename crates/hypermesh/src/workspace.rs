@@ -1178,15 +1178,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
             request,
             regularized_arrangement,
         )?;
-        certifications
-            .validate_for_request(request)
-            .map_err(workspace_report_validation_error)?;
-        self.certifications.push((request, certifications));
-        Ok(&self
-            .certifications
-            .last()
-            .expect("certification cache was just populated")
-            .1)
+        store_retained_certification_set(&mut self.certifications, request, certifications)
     }
 
     /// Validate a certification bundle against this workspace's retained graph
@@ -1263,15 +1255,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
             certifications,
             result,
         };
-        evaluation
-            .validate()
-            .map_err(workspace_report_validation_error)?;
-        self.evaluations.push((request, evaluation));
-        Ok(&self
-            .evaluations
-            .last()
-            .expect("evaluation cache was just populated")
-            .1)
+        store_retained_evaluation(&mut self.evaluations, request, evaluation)
     }
 
     /// Materializes `request`, reusing a cached certified evaluation when the
@@ -1645,6 +1629,38 @@ fn store_retained_source_report<T: RetainedSourceReport>(
         .last()
         .expect("source report cache was just populated")
         .1)
+}
+
+fn store_retained_certification_set(
+    cache: &mut Vec<(ExactBooleanRequest, ExactBooleanCertificationSet)>,
+    request: ExactBooleanRequest,
+    certifications: ExactBooleanCertificationSet,
+) -> Result<&ExactBooleanCertificationSet, MeshError> {
+    certifications
+        .validate_for_request(request)
+        .map_err(workspace_report_validation_error)?;
+    cache.push((request, certifications));
+    Ok(&cache
+        .last()
+        .expect("certification cache was just populated")
+        .1)
+}
+
+fn store_retained_evaluation(
+    cache: &mut Vec<(ExactBooleanRequest, ExactBooleanEvaluation)>,
+    request: ExactBooleanRequest,
+    evaluation: ExactBooleanEvaluation,
+) -> Result<&ExactBooleanEvaluation, MeshError> {
+    if evaluation.request != request {
+        return Err(workspace_report_validation_error(
+            ExactReportValidationError::StatusEvidenceMismatch,
+        ));
+    }
+    evaluation
+        .validate()
+        .map_err(workspace_report_validation_error)?;
+    cache.push((request, evaluation));
+    Ok(&cache.last().expect("evaluation cache was just populated").1)
 }
 
 fn cached_retained_result(
