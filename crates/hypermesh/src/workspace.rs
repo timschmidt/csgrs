@@ -14,8 +14,7 @@ use super::boolean::{
     materialize_certified_boolean_support_with_artifacts,
     materialize_closed_boundary_touching_regularized_boolean_with_evidence_from_graph,
     materialize_closed_no_volume_overlap_regularized_boolean_with_evidence_from_graph,
-    materialize_closed_winding_containment_from_graph_for_request,
-    materialize_closed_winding_separated_from_graph_for_request,
+    materialize_closed_winding_from_graph_for_request,
     materialize_open_surface_disjoint_from_graph_for_request,
     open_surface_disjoint_report_from_graph, planar_arrangement_report_from_graph,
     preflight_boolean_exact_request_from_graph, refinement_report_from_graph,
@@ -34,10 +33,10 @@ use super::mesh::ExactMesh;
 use super::regularization::{ExactArrangementBlocker, ExactRegularizationPolicy};
 use super::reports::{
     ExactAdjacentUnionCompletionReport, ExactBooleanPreflight, ExactBooleanResult,
-    ExactBoundaryTouchingReport, ExactOpenSurfaceDisjointReport, ExactPlanarArrangementReport,
-    ExactRefinementReport, ExactReportFreshness, ExactReportValidationError,
-    ExactSameSurfaceReport, ExactVolumetricBoundaryClosureReport, ExactWindingReadinessReport,
-    exact_report_freshness,
+    ExactBooleanSupport, ExactBoundaryTouchingReport, ExactOpenSurfaceDisjointReport,
+    ExactPlanarArrangementReport, ExactRefinementReport, ExactReportFreshness,
+    ExactReportValidationError, ExactSameSurfaceReport, ExactVolumetricBoundaryClosureReport,
+    ExactWindingReadinessReport, exact_report_freshness,
 };
 use super::simplify::{ExactSimplifiedCellComplex, ExactSimplifiedCellComplexFreshness};
 use super::volumetric_cells::{
@@ -379,8 +378,12 @@ impl<'a> ExactBooleanWorkspace<'a> {
         }
 
         let (graph, left, right) = self.validated_graph_with_sources()?;
-        let materialized = materialize_closed_winding_containment_from_graph_for_request(
-            graph, left, right, request,
+        let materialized = materialize_closed_winding_from_graph_for_request(
+            graph,
+            left,
+            right,
+            request,
+            ExactBooleanSupport::CertifiedClosedWindingContainment,
         )?;
         store_retained_materialization_value(
             &mut self.closed_winding_containment_materializations,
@@ -407,8 +410,12 @@ impl<'a> ExactBooleanWorkspace<'a> {
         }
 
         let (graph, left, right) = self.validated_graph_with_sources()?;
-        let materialized = materialize_closed_winding_separated_from_graph_for_request(
-            graph, left, right, request,
+        let materialized = materialize_closed_winding_from_graph_for_request(
+            graph,
+            left,
+            right,
+            request,
+            ExactBooleanSupport::CertifiedClosedWindingSeparated,
         )?;
         store_retained_materialization_value(
             &mut self.closed_winding_separated_materializations,
