@@ -111,7 +111,6 @@ pub use boolean::{
     ExactIdenticalMeshReport, ExactIdenticalMeshStatus, ExactRegularizedSolidBooleanFacts,
     ExactTrivialBooleanFacts, materialize_arrangement_cell_complex_boolean,
     materialize_coplanar_mesh_overlay_arrangement, materialize_open_surface_arrangement,
-    materialize_volumetric_coplanar_boundary_closure_boolean,
     materialize_volumetric_winding_arrangement,
 };
 pub use bounds::{AabbIntersectionKind, BoundsValidationError, ExactAabb3, MeshBounds};

@@ -40,10 +40,9 @@ use hypermesh::{
     materialize_axis_aligned_orthogonal_solid_intersection,
     materialize_axis_aligned_orthogonal_solid_union, materialize_contained_face_adjacent_union,
     materialize_coplanar_mesh_overlay_arrangement, materialize_full_face_adjacent_union,
-    materialize_open_surface_arrangement, materialize_volumetric_coplanar_boundary_closure_boolean,
-    materialize_volumetric_winding_arrangement, mesh_artifact_from_exact_mesh,
-    mesh_artifact_from_exact_mesh_proposal, triangulate_all_face_cells_with_cdt,
-    validate_face_cell_cdt_against_sources,
+    materialize_open_surface_arrangement, materialize_volumetric_winding_arrangement,
+    mesh_artifact_from_exact_mesh, mesh_artifact_from_exact_mesh_proposal,
+    triangulate_all_face_cells_with_cdt, validate_face_cell_cdt_against_sources,
 };
 use hyperreal::Real;
 
@@ -4329,40 +4328,6 @@ fn exact_volumetric_winding_coplanar_cap_is_publicly_certified() {
             result.mesh.facts().mesh
         );
         result.validate_against_sources(&left, &right).unwrap();
-
-        let (cap_result, cap_report) = materialize_volumetric_coplanar_boundary_closure_boolean(
-            &left,
-            &right,
-            operation,
-            ValidationPolicy::CLOSED,
-        )
-        .unwrap()
-        .expect("public coplanar cap materializer should retain closure provenance");
-        assert_eq!(cap_report, closure, "{operation:?}: {cap_report:?}");
-        cap_report.validate().unwrap();
-        assert_eq!(
-            cap_result.kind, result.kind,
-            "{operation:?}: {cap_result:?}"
-        );
-        assert_eq!(
-            cap_result.mesh.vertices().len(),
-            result.mesh.vertices().len(),
-            "{operation:?}: {cap_result:?}"
-        );
-        assert_eq!(
-            cap_result.mesh.triangles().len(),
-            result.mesh.triangles().len(),
-            "{operation:?}: {cap_result:?}"
-        );
-        cap_result.validate().unwrap();
-        assert_eq!(
-            cap_result.topology_assembly_report, result.topology_assembly_report,
-            "{operation:?}: {cap_result:?}"
-        );
-        assert_eq!(
-            cap_result.region_ownership_report, result.region_ownership_report,
-            "{operation:?}: {cap_result:?}"
-        );
 
         assert_eq!(
             result.freshness_against_sources(&left, &right),

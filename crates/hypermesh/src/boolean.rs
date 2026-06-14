@@ -6746,27 +6746,6 @@ pub fn materialize_volumetric_winding_arrangement(
     ))
 }
 
-/// Certify and materialize a closed volumetric winding arrangement whose
-/// remaining boundary is closed by exact coplanar cap loops.
-///
-/// This is the provenance-retaining form of the coplanar cap path used by
-/// [`materialize_volumetric_winding_arrangement`]. It returns both the
-/// certified Boolean result and the exact closure report that authorized the
-/// cap decision, so callers can replay the volumetric split-cell output and
-/// the cap-readiness evidence together. Non-coplanar, self-contacting, or
-/// otherwise blocked boundary output returns `None`.
-pub fn materialize_volumetric_coplanar_boundary_closure_boolean(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: ValidationPolicy,
-) -> Result<Option<(ExactBooleanResult, ExactVolumetricBoundaryClosureReport)>, MeshError> {
-    let graph = validated_intersection_graph(left, right)?;
-    materialize_volumetric_coplanar_boundary_closure_boolean_from_graph(
-        &graph, left, right, operation, validation,
-    )
-}
-
 fn materialize_volumetric_coplanar_boundary_closure_boolean_from_graph(
     graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
