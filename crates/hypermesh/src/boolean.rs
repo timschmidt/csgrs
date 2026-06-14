@@ -919,55 +919,6 @@ impl ExactBooleanRequest {
         ))
     }
 
-    /// Materialize closed-output lower-dimensional regularization for this
-    /// request, when it owns the replay provenance.
-    pub fn materialize_closed_regularized_lower_dimensional(
-        self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-    ) -> Result<Option<ExactBooleanResult>, MeshError> {
-        let operation = self.operation;
-        let validation = self.validation;
-        Ok(public_operation_replayable_result(
-            boolean_closed_regularized_lower_dimensional_optional(
-                left, right, operation, validation,
-            )?,
-            left,
-            right,
-            operation,
-            validation,
-            ExactBoundaryBooleanPolicy::Reject,
-        ))
-    }
-
-    /// Materialize mixed-dimensional closed-solid regularization for this
-    /// request, when it owns the replay provenance.
-    pub fn materialize_mixed_dimensional_regularized_solid(
-        self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-    ) -> Result<Option<ExactBooleanResult>, MeshError> {
-        let operation = self.operation;
-        let validation = self.validation;
-        if matches!(operation, ExactBooleanOperation::SelectedRegions(_))
-            || certified_mixed_dimensional_regularized_solid_support(left, right).is_none()
-            || (validation != ValidationPolicy::CLOSED
-                && meshes_are_certified_bounds_disjoint(left, right))
-        {
-            return Ok(None);
-        }
-        Ok(public_operation_replayable_result(
-            boolean_closed_regularized_lower_dimensional_optional(
-                left, right, operation, validation,
-            )?,
-            left,
-            right,
-            operation,
-            validation,
-            ExactBoundaryBooleanPolicy::Reject,
-        ))
-    }
-
     /// Materialize the open-surface disjoint shortcut for this request, when
     /// exact graph facts prove the shortcut owns the replay provenance.
     pub fn materialize_open_surface_disjoint(
@@ -2691,10 +2642,36 @@ pub(crate) fn materialize_certified_boolean_support_with_artifacts(
             )?
         }
         ExactBooleanSupport::CertifiedMixedDimensionalRegularizedSolid => {
-            request.materialize_mixed_dimensional_regularized_solid(left, right)?
+            if matches!(operation, ExactBooleanOperation::SelectedRegions(_))
+                || certified_mixed_dimensional_regularized_solid_support(left, right).is_none()
+                || (validation != ValidationPolicy::CLOSED
+                    && meshes_are_certified_bounds_disjoint(left, right))
+            {
+                None
+            } else {
+                public_operation_replayable_result(
+                    boolean_closed_regularized_lower_dimensional_optional(
+                        left, right, operation, validation,
+                    )?,
+                    left,
+                    right,
+                    operation,
+                    validation,
+                    ExactBoundaryBooleanPolicy::Reject,
+                )
+            }
         }
         ExactBooleanSupport::CertifiedLowerDimensionalRegularizedSolid => {
-            request.materialize_closed_regularized_lower_dimensional(left, right)?
+            public_operation_replayable_result(
+                boolean_closed_regularized_lower_dimensional_optional(
+                    left, right, operation, validation,
+                )?,
+                left,
+                right,
+                operation,
+                validation,
+                ExactBoundaryBooleanPolicy::Reject,
+            )
         }
         ExactBooleanSupport::CertifiedConvexUnion
         | ExactBooleanSupport::CertifiedConvexIntersection
