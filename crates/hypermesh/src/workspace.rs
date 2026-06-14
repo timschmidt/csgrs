@@ -683,13 +683,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
             policy,
         )
         .map_err(workspace_arrangement_blocker_error)?;
-        self.selected_cell_complexes
-            .push((request, policy, selected));
-        Ok(&self
-            .selected_cell_complexes
-            .last()
-            .expect("selected cell-complex cache was just populated")
-            .2)
+        store_retained_cell_complex(&mut self.selected_cell_complexes, request, policy, selected)
     }
 
     /// Returns simplified exact cell-complex evidence for `request` and
@@ -709,13 +703,12 @@ impl<'a> ExactBooleanWorkspace<'a> {
         let simplified = selected
             .simplify_exact_with_policy(policy)
             .map_err(workspace_arrangement_blocker_error)?;
-        self.simplified_cell_complexes
-            .push((request, policy, simplified));
-        Ok(&self
-            .simplified_cell_complexes
-            .last()
-            .expect("simplified cell-complex cache was just populated")
-            .2)
+        store_retained_cell_complex(
+            &mut self.simplified_cell_complexes,
+            request,
+            policy,
+            simplified,
+        )
     }
 
     /// Validate selected cell-complex evidence against this workspace's
@@ -1483,6 +1476,11 @@ trait RetainedSourceReport {
     fn validate_for_workspace_cache(&self) -> Result<(), ExactReportValidationError>;
 }
 
+trait RetainedCellComplex {
+    fn operation(&self) -> ExactBooleanOperation;
+    fn validate_for_workspace_cache(&self) -> Result<(), ExactArrangementBlocker>;
+}
+
 impl RetainedRequestReport for ExactBooleanPreflight {
     fn operation(&self) -> ExactBooleanOperation {
         self.operation
@@ -1551,6 +1549,26 @@ impl RetainedSourceReport for ExactBoundaryTouchingReport {
 
 impl RetainedSourceReport for ExactOpenSurfaceDisjointReport {
     fn validate_for_workspace_cache(&self) -> Result<(), ExactReportValidationError> {
+        self.validate()
+    }
+}
+
+impl RetainedCellComplex for ExactSelectedCellComplex {
+    fn operation(&self) -> ExactBooleanOperation {
+        self.operation
+    }
+
+    fn validate_for_workspace_cache(&self) -> Result<(), ExactArrangementBlocker> {
+        self.validate()
+    }
+}
+
+impl RetainedCellComplex for ExactSimplifiedCellComplex {
+    fn operation(&self) -> ExactBooleanOperation {
+        self.operation
+    }
+
+    fn validate_for_workspace_cache(&self) -> Result<(), ExactArrangementBlocker> {
         self.validate()
     }
 }
@@ -1662,6 +1680,27 @@ fn store_retained_source_report<T: RetainedSourceReport>(
         .last()
         .expect("source report cache was just populated")
         .1)
+}
+
+fn store_retained_cell_complex<T: RetainedCellComplex>(
+    cache: &mut Vec<(ExactBooleanRequest, ExactRegularizationPolicy, T)>,
+    request: ExactBooleanRequest,
+    policy: ExactRegularizationPolicy,
+    cell_complex: T,
+) -> Result<&T, MeshError> {
+    if cell_complex.operation() != request.operation {
+        return Err(workspace_arrangement_blocker_error(
+            ExactArrangementBlocker::UnresolvedRegionClassification,
+        ));
+    }
+    cell_complex
+        .validate_for_workspace_cache()
+        .map_err(workspace_arrangement_blocker_error)?;
+    cache.push((request, policy, cell_complex));
+    Ok(&cache
+        .last()
+        .expect("cell-complex cache was just populated")
+        .2)
 }
 
 fn store_retained_certification_set(
