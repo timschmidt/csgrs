@@ -1444,7 +1444,13 @@ impl ExactBooleanCertificationSet {
             return Ok(());
         }
         let direct_arrangement_cell_complex_certified =
-            exact_boolean_direct_arrangement_cell_complex_shortcut_certified(self, request);
+            exact_boolean_direct_arrangement_cell_complex_shortcut_certified_for_operation(
+                self,
+                request.operation,
+            ) && self
+                .arrangement_attempt
+                .as_ref()
+                .is_some_and(|attempt| attempt.output_validation == request.validation);
         if direct_arrangement_cell_complex_certified {
             if self.region_ownership.is_some() || self.topology_assembly.is_some() {
                 return Err(ExactReportValidationError::StatusEvidenceMismatch);
@@ -2338,19 +2344,6 @@ fn exact_boolean_arrangement_attempt_materialized(
     attempt
         .as_ref()
         .is_some_and(ExactArrangementBooleanAttempt::materialized_arrangement_cell_complex_shortcut)
-}
-
-fn exact_boolean_direct_arrangement_cell_complex_shortcut_certified(
-    certifications: &ExactBooleanCertificationSet,
-    request: ExactBooleanRequest,
-) -> bool {
-    exact_boolean_direct_arrangement_cell_complex_shortcut_certified_for_operation(
-        certifications,
-        request.operation,
-    ) && certifications
-        .arrangement_attempt
-        .as_ref()
-        .is_some_and(|attempt| attempt.output_validation == request.validation)
 }
 
 fn exact_boolean_direct_arrangement_cell_complex_shortcut_certified_for_operation(
@@ -3580,8 +3573,10 @@ pub(crate) fn preflight_boolean_exact_request_from_graph(
     )?
     .is_some()
     {
-        return Ok(certified_boundary_policy_preflight_from_graph(
-            operation, graph,
+        return Ok(certified_shortcut_preflight_from_graph(
+            operation,
+            ExactBooleanSupport::CertifiedBoundaryPolicyShortcut,
+            graph,
         ));
     }
     Ok(preflight)
@@ -3970,24 +3965,6 @@ fn certified_arrangement_cell_complex_preflight_from_graph(
         coplanar_volumetric_evidence: coplanar_volumetric_evidence_for_certified_arrangement(
             graph, left, right,
         ),
-    }
-}
-
-fn certified_boundary_policy_preflight_from_graph(
-    operation: ExactBooleanOperation,
-    graph: &super::graph::ExactIntersectionGraph,
-) -> ExactBooleanPreflight {
-    ExactBooleanPreflight {
-        operation,
-        support: ExactBooleanSupport::CertifiedBoundaryPolicyShortcut,
-        graph_had_unknowns: graph.has_unknowns(),
-        retained_face_pairs: graph.face_pairs.len(),
-        retained_events: graph.event_count(),
-        region_count: 0,
-        region_classifications: Vec::new(),
-        blocker: None,
-        arrangement_readiness: None,
-        coplanar_volumetric_evidence: None,
     }
 }
 
