@@ -984,12 +984,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
         let right = self.right;
         let graph = self.validated_graph()?;
         let report = boundary_touching_report_from_graph(graph, left, right)?;
-        self.boundary_touching_reports.push((request, report));
-        Ok(&self
-            .boundary_touching_reports
-            .last()
-            .expect("boundary-touching report cache was just populated")
-            .1)
+        store_retained_source_report(&mut self.boundary_touching_reports, request, report)
     }
 
     /// Classify boundary-touching freshness in this retained source session.
@@ -1015,12 +1010,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
         let right = self.right;
         let graph = self.validated_graph()?;
         let report = open_surface_disjoint_report_from_graph(graph, left, right);
-        self.open_surface_disjoint_reports.push((request, report));
-        Ok(&self
-            .open_surface_disjoint_reports
-            .last()
-            .expect("open-surface disjoint report cache was just populated")
-            .1)
+        store_retained_source_report(&mut self.open_surface_disjoint_reports, request, report)
     }
 
     /// Classify open-surface disjointness freshness in this retained source
@@ -1495,6 +1485,10 @@ trait RetainedRequestReport {
     fn validate_for_workspace_cache(&self) -> Result<(), ExactReportValidationError>;
 }
 
+trait RetainedSourceReport {
+    fn validate_for_workspace_cache(&self) -> Result<(), ExactReportValidationError>;
+}
+
 impl RetainedRequestReport for ExactBooleanPreflight {
     fn operation(&self) -> ExactBooleanOperation {
         self.operation
@@ -1550,6 +1544,18 @@ impl RetainedRequestReport for ExactPlanarArrangementReport {
         self.operation
     }
 
+    fn validate_for_workspace_cache(&self) -> Result<(), ExactReportValidationError> {
+        self.validate()
+    }
+}
+
+impl RetainedSourceReport for ExactBoundaryTouchingReport {
+    fn validate_for_workspace_cache(&self) -> Result<(), ExactReportValidationError> {
+        self.validate()
+    }
+}
+
+impl RetainedSourceReport for ExactOpenSurfaceDisjointReport {
     fn validate_for_workspace_cache(&self) -> Result<(), ExactReportValidationError> {
         self.validate()
     }
@@ -1623,6 +1629,21 @@ fn store_retained_request_report<T: RetainedRequestReport>(
     Ok(&cache
         .last()
         .expect("request report cache was just populated")
+        .1)
+}
+
+fn store_retained_source_report<T: RetainedSourceReport>(
+    cache: &mut Vec<(ExactBooleanRequest, T)>,
+    request: ExactBooleanRequest,
+    report: T,
+) -> Result<&T, MeshError> {
+    report
+        .validate_for_workspace_cache()
+        .map_err(workspace_report_validation_error)?;
+    cache.push((request, report));
+    Ok(&cache
+        .last()
+        .expect("source report cache was just populated")
         .1)
 }
 
