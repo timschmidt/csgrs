@@ -858,37 +858,6 @@ impl ExactBooleanRequest {
         materialize_boundary_touching_policy_from_graph_for_request(&graph, left, right, self)
     }
 
-    /// Materialize closed same-surface arrangement output for this request,
-    /// when that shortcut owns replay provenance.
-    pub fn materialize_closed_same_surface(
-        self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-    ) -> Result<Option<ExactBooleanResult>, MeshError> {
-        let operation = self.operation;
-        let validation = self.validation;
-        if matches!(operation, ExactBooleanOperation::SelectedRegions(_))
-            || !left.facts().mesh.closed_manifold
-            || !right.facts().mesh.closed_manifold
-            || !meshes_are_certified_same_surface(left, right)
-        {
-            return Ok(None);
-        }
-        let graph = validated_intersection_graph(left, right)?;
-        let preflight = preflight_boolean_exact_request_from_graph(
-            &graph,
-            left,
-            right,
-            ExactBooleanRequest::new(operation, validation),
-        )?;
-        if preflight.support != ExactBooleanSupport::CertifiedArrangementCellComplex {
-            return Ok(None);
-        }
-        boolean_arrangement_cell_complex_meshes_from_graph(
-            &graph, left, right, operation, validation,
-        )
-    }
-
     /// Materialize positive-area closed boundary contact with no shared
     /// volume, returning the exact evidence consumed by this request.
     pub fn materialize_closed_no_volume_overlap_regularized_with_evidence(

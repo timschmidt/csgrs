@@ -6061,130 +6061,6 @@ fn trivial_boolean_materializers_are_publicly_replayable() {
 }
 
 #[test]
-fn direct_boolean_materializers_yield_to_public_operation_replay() {
-    type DirectBooleanMaterializer = fn(
-        &ExactMesh,
-        &ExactMesh,
-        ExactBooleanOperation,
-        ValidationPolicy,
-    )
-        -> Result<Option<ExactBooleanResult>, hypermesh::MeshError>;
-
-    let materializers: &[(&str, DirectBooleanMaterializer)] = &[];
-
-    let empty = ExactMesh::new(
-        Vec::new(),
-        Vec::new(),
-        SourceProvenance::exact("test empty direct replay audit"),
-    )
-    .unwrap();
-    let solid = tetra([0, 0, 0]);
-    let disjoint_solid = tetra([4, 0, 0]);
-    let contained = tetra_from_corners([1, 1, 1], [2, 1, 1], [1, 2, 1], [1, 1, 2]);
-    let container = combine_exact_meshes(
-        &tetra_from_corners([0, 0, 0], [10, 0, 0], [0, 10, 0], [0, 0, 10]),
-        &tetra_from_corners([20, 0, 0], [21, 0, 0], [20, 1, 0], [20, 0, 1]),
-        "test direct replay containment container",
-    );
-    let boundary_touching_right = tetra_from_corners([0, 0, 0], [-4, 0, 0], [0, -4, 0], [0, 0, -4]);
-    let no_volume_right = tetra_from_corners([2, 0, 0], [6, 0, 0], [2, 4, 0], [2, 0, -4]);
-    let open_left = ExactMesh::from_i64_triangles_with_policy(
-        &[0, 0, 0, 4, 0, 4, 0, 4, 0],
-        &[0, 1, 2],
-        ValidationPolicy::ALLOW_BOUNDARY,
-    )
-    .unwrap();
-    let open_right = ExactMesh::from_i64_triangles_with_policy(
-        &[0, 0, 1, 4, 0, 5, 0, 4, 1],
-        &[0, 1, 2],
-        ValidationPolicy::ALLOW_BOUNDARY,
-    )
-    .unwrap();
-    let same_surface_right = ExactMesh::from_i64_triangles_with_policy(
-        &[4, 0, 0, 0, 4, 0, 0, 0, 0],
-        &[2, 0, 1],
-        ValidationPolicy::ALLOW_BOUNDARY,
-    )
-    .unwrap();
-    let horizontal = axis_aligned_box([0, 0, 0], [2, 1, 1]);
-    let vertical = axis_aligned_box([0, 1, 0], [1, 2, 1]);
-    let orthogonal = materialize_axis_aligned_orthogonal_solid_union(
-        &horizontal,
-        &vertical,
-        ValidationPolicy::CLOSED,
-    )
-    .unwrap()
-    .expect("adjacent boxes should build an orthogonal audit fixture")
-    .mesh;
-    let orthogonal_right = axis_aligned_box([1, 0, 0], [3, 1, 1]);
-    let affine_left = skew_affine_box([0, 0, 0], [2, 2, 2]);
-    let affine_right = skew_affine_box([1, 1, 1], [3, 3, 3]);
-
-    let fixtures: &[(&str, &ExactMesh, &ExactMesh)] = &[
-        ("empty", &empty, &solid),
-        ("bounds_disjoint_solids", &solid, &disjoint_solid),
-        ("identical_open", &open_left, &open_left),
-        ("same_surface_open", &open_left, &same_surface_right),
-        ("open_disjoint", &open_left, &open_right),
-        ("boundary_touching", &solid, &boundary_touching_right),
-        ("positive_area_no_volume", &solid, &no_volume_right),
-        ("winding_containment", &container, &contained),
-        ("axis_orthogonal", &orthogonal, &orthogonal_right),
-        ("affine_orthogonal", &affine_left, &affine_right),
-    ];
-
-    for (fixture_name, left, right) in fixtures {
-        for operation in [
-            ExactBooleanOperation::Union,
-            ExactBooleanOperation::Intersection,
-            ExactBooleanOperation::Difference,
-        ] {
-            for validation in [ValidationPolicy::CLOSED, ValidationPolicy::ALLOW_BOUNDARY] {
-                for (materializer_name, materializer) in materializers {
-                    let Some(result) = materializer(left, right, operation, validation)
-                        .unwrap_or_else(|error| {
-                            panic!(
-                                "{materializer_name} errored for {fixture_name} {operation:?} {validation:?}: {error:?}"
-                            )
-                        })
-                    else {
-                        continue;
-                    };
-                    result.validate().unwrap_or_else(|error| {
-                        panic!(
-                            "{materializer_name} produced invalid result for {fixture_name} {operation:?} {validation:?}: {error:?}"
-                        )
-                    });
-                    result
-                        .validate_operation_against_sources(
-                            left,
-                            right,
-                            operation,
-                            validation,
-                            ExactBoundaryBooleanPolicy::Reject,
-                        )
-                        .unwrap_or_else(|error| {
-                            let replay =
-                                ExactBooleanRequest::new(operation, validation).materialize(left, right).unwrap_or_else(
-                                    |replay_error| {
-                                        panic!(
-                                            "{materializer_name} produced unreplayable result for {fixture_name} {operation:?} {validation:?}: {error:?}; replay errored: {replay_error:?}; result={:?}",
-                                            result.kind
-                                        )
-                                    },
-                                );
-                            panic!(
-                                "{materializer_name} produced unreplayable result for {fixture_name} {operation:?} {validation:?}: {error:?}; result={:?}; replay={:?}",
-                                result.kind, replay.kind
-                            )
-                        });
-                }
-            }
-        }
-    }
-}
-
-#[test]
 fn closed_same_surface_boolean_is_publicly_replayable() {
     let left_a = tetra_from_corners([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]);
     let left_b = tetra_from_corners([10, 0, 0], [14, 0, 0], [10, 4, 0], [10, 0, 4]);
@@ -6290,32 +6166,45 @@ fn closed_same_surface_boolean_is_publicly_replayable() {
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    assert!(
-        ExactBooleanRequest::new(
-            ExactBooleanOperation::Union,
-            ValidationPolicy::ALLOW_BOUNDARY,
-        )
-        .materialize_closed_same_surface(&open_left, &open_right)
-        .unwrap()
-        .is_none()
+    let open_same_surface = ExactBooleanRequest::new(
+        ExactBooleanOperation::Union,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .materialize(&open_left, &open_right)
+    .unwrap();
+    assert_eq!(
+        open_same_surface.kind,
+        ExactBooleanResultKind::CertifiedShortcut {
+            operation: ExactBooleanOperation::Union,
+            shortcut: hypermesh::ExactBooleanShortcutKind::SameSurface
+        }
     );
-    assert!(
-        ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED,)
-            .materialize_closed_same_surface(&left, &stale_right)
-            .unwrap()
-            .is_none()
+    let stale_replay =
+        ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED)
+            .materialize(&left, &stale_right)
+            .unwrap();
+    assert_eq!(
+        stale_replay.kind,
+        ExactBooleanResultKind::CertifiedShortcut {
+            operation: ExactBooleanOperation::Union,
+            shortcut: hypermesh::ExactBooleanShortcutKind::BoundsDisjoint
+        }
     );
 
     let convex_left = tetra_from_corners([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]);
     let convex_same_surface = same_surface_a;
-    assert!(
-        ExactBooleanRequest::new(
-            ExactBooleanOperation::Intersection,
-            ValidationPolicy::CLOSED,
-        )
-        .materialize_closed_same_surface(&convex_left, &convex_same_surface)
-        .unwrap()
-        .is_none()
+    let convex_same_surface_replay = ExactBooleanRequest::new(
+        ExactBooleanOperation::Intersection,
+        ValidationPolicy::CLOSED,
+    )
+    .materialize(&convex_left, &convex_same_surface)
+    .unwrap();
+    assert_eq!(
+        convex_same_surface_replay.kind,
+        ExactBooleanResultKind::CertifiedShortcut {
+            operation: ExactBooleanOperation::Intersection,
+            shortcut: hypermesh::ExactBooleanShortcutKind::ConvexIntersection
+        }
     );
     assert!(
         ExactBooleanRequest::new(
