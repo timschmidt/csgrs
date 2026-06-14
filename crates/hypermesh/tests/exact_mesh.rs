@@ -1168,7 +1168,7 @@ fn exact_convex_reports_classify_freshness_publicly() {
 }
 
 #[test]
-fn exact_affine_orthogonal_solid_materializer_is_publicly_replayable() {
+fn exact_affine_orthogonal_solid_boolean_is_publicly_replayable() {
     let left = skew_affine_box([0, 0, 0], [2, 2, 2]);
     let right = skew_affine_box([1, 1, 1], [3, 3, 3]);
     let separated_right = skew_affine_box([4, 4, 4], [5, 5, 5]);
@@ -1343,7 +1343,7 @@ fn affine_orthogonal_solid_recovers_multi_cell_basis_without_sampling_limits() {
 }
 
 #[test]
-fn exact_axis_aligned_orthogonal_solid_materializer_is_publicly_replayable() {
+fn exact_axis_aligned_orthogonal_solid_boolean_is_publicly_replayable() {
     let horizontal = axis_aligned_box([0, 0, 0], [2, 1, 1]);
     let vertical = axis_aligned_box([0, 1, 0], [1, 2, 1]);
     let left = materialize_axis_aligned_orthogonal_solid_union(
@@ -1582,7 +1582,7 @@ fn exact_coplanar_volumetric_cell_evidence_is_publicly_replayable() {
 }
 
 #[test]
-fn exact_closed_convex_boolean_materializer_is_publicly_replayable() {
+fn exact_closed_convex_boolean_is_publicly_replayable() {
     let left = tetra_from_corners([0, 0, 0], [6, 0, 0], [0, 6, 0], [0, 0, 6]);
     let right = tetra_from_corners([2, 2, 2], [8, -1, -1], [-1, 8, -1], [3, 2, 0]);
     let stale_open_right = ExactMesh::from_i64_triangles_with_policy(
@@ -3806,7 +3806,7 @@ fn closed_winding_shortcuts_are_publicly_replayable() {
 }
 
 #[test]
-fn closed_winding_materializers_yield_to_earlier_public_convex_replay() {
+fn closed_winding_public_replay_yields_to_convex_provenance() {
     let separated_left = tetra_from_corners([0, 0, 0], [2, 0, 0], [0, 2, 0], [0, 0, 2]);
     let separated_right = tetra_from_corners([1, 1, 1], [3, 1, 1], [1, 3, 1], [1, 1, 3]);
     let container = tetra_from_corners([0, 0, 0], [10, 0, 0], [0, 10, 0], [0, 0, 10]);
@@ -5487,7 +5487,7 @@ fn exact_boolean_public_shortcuts_handle_disjoint_operands() {
 }
 
 #[test]
-fn trivial_boolean_materializers_are_publicly_replayable() {
+fn trivial_boolean_shortcuts_are_publicly_replayable() {
     let empty = ExactMesh::new(
         Vec::new(),
         Vec::new(),
@@ -5640,18 +5640,18 @@ fn trivial_boolean_materializers_are_publicly_replayable() {
         assert!(empty_open_result.mesh.triangles().is_empty());
         assert!(empty_open_result.mesh.facts().mesh.closed_manifold);
 
-        let direct_empty_open = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED)
+        let replayed_empty_open = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED)
             .materialize(&empty, &open_disjoint_left)
             .unwrap();
-        assert_eq!(direct_empty_open.kind, empty_open_result.kind);
-        assert!(direct_empty_open.mesh.triangles().is_empty());
+        assert_eq!(replayed_empty_open.kind, empty_open_result.kind);
+        assert!(replayed_empty_open.mesh.triangles().is_empty());
         assert_eq!(
-            direct_empty_open.kind,
+            replayed_empty_open.kind,
             ExactBooleanResultKind::CertifiedShortcut {
                 operation,
                 shortcut: hypermesh::ExactBooleanShortcutKind::EmptyOperand
             },
-            "{operation:?}: {direct_empty_open:?}"
+            "{operation:?}: {replayed_empty_open:?}"
         );
 
         let open_empty_result = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED)
