@@ -485,12 +485,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
         let report = self.arrangements[arrangement_index]
             .1
             .topology_assembly_report_with_policy(self.left, self.right, policy);
-        self.topology_assembly_reports.push((policy, report));
-        Ok(&self
-            .topology_assembly_reports
-            .last()
-            .expect("topology assembly report cache was just populated")
-            .1)
+        store_retained_policy_report(&mut self.topology_assembly_reports, policy, report)
     }
 
     /// Validate topology-assembly evidence against this workspace's retained
@@ -538,12 +533,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
             .1
             .region_ownership_report_with_policy(self.left, self.right, policy)
             .map_err(workspace_arrangement_blocker_error)?;
-        self.region_ownership_reports.push((policy, report));
-        Ok(&self
-            .region_ownership_reports
-            .last()
-            .expect("region ownership report cache was just populated")
-            .1)
+        store_retained_policy_report(&mut self.region_ownership_reports, policy, report)
     }
 
     /// Validate region-ownership evidence against this workspace's retained
@@ -1481,6 +1471,10 @@ trait RetainedCellComplex {
     fn validate_for_workspace_cache(&self) -> Result<(), ExactArrangementBlocker>;
 }
 
+trait RetainedPolicyReport {
+    fn validate_for_workspace_cache(&self) -> Result<(), ExactArrangementBlocker>;
+}
+
 impl RetainedRequestReport for ExactBooleanPreflight {
     fn operation(&self) -> ExactBooleanOperation {
         self.operation
@@ -1568,6 +1562,18 @@ impl RetainedCellComplex for ExactSimplifiedCellComplex {
         self.operation
     }
 
+    fn validate_for_workspace_cache(&self) -> Result<(), ExactArrangementBlocker> {
+        self.validate()
+    }
+}
+
+impl RetainedPolicyReport for ExactTopologyAssemblyReport {
+    fn validate_for_workspace_cache(&self) -> Result<(), ExactArrangementBlocker> {
+        self.validate()
+    }
+}
+
+impl RetainedPolicyReport for ExactRegionOwnershipReport {
     fn validate_for_workspace_cache(&self) -> Result<(), ExactArrangementBlocker> {
         self.validate()
     }
@@ -1701,6 +1707,21 @@ fn store_retained_cell_complex<T: RetainedCellComplex>(
         .last()
         .expect("cell-complex cache was just populated")
         .2)
+}
+
+fn store_retained_policy_report<T: RetainedPolicyReport>(
+    cache: &mut Vec<(ExactRegularizationPolicy, T)>,
+    policy: ExactRegularizationPolicy,
+    report: T,
+) -> Result<&T, MeshError> {
+    report
+        .validate_for_workspace_cache()
+        .map_err(workspace_arrangement_blocker_error)?;
+    cache.push((policy, report));
+    Ok(&cache
+        .last()
+        .expect("policy report cache was just populated")
+        .1)
 }
 
 fn store_retained_certification_set(
