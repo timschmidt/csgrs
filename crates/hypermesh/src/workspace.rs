@@ -475,12 +475,11 @@ impl<'a> ExactBooleanWorkspace<'a> {
             return Ok(&self.topology_assembly_reports[index].1);
         }
 
-        self.arrangement(policy)?;
-        let arrangement_index = cached_by_policy_index(&self.arrangements, policy)
-            .expect("arrangement cache was just populated");
-        let report = self.arrangements[arrangement_index]
-            .1
-            .topology_assembly_report_with_policy(self.left, self.right, policy);
+        let left = self.left;
+        let right = self.right;
+        let report = self
+            .arrangement(policy)?
+            .topology_assembly_report_with_policy(left, right, policy);
         store_retained_policy_report(&mut self.topology_assembly_reports, policy, report)
     }
 
@@ -522,12 +521,11 @@ impl<'a> ExactBooleanWorkspace<'a> {
             return Ok(&self.region_ownership_reports[index].1);
         }
 
-        self.arrangement(policy)?;
-        let arrangement_index = cached_by_policy_index(&self.arrangements, policy)
-            .expect("arrangement cache was just populated");
-        let report = self.arrangements[arrangement_index]
-            .1
-            .region_ownership_report_with_policy(self.left, self.right, policy)
+        let left = self.left;
+        let right = self.right;
+        let report = self
+            .arrangement(policy)?
+            .region_ownership_report_with_policy(left, right, policy)
             .map_err(workspace_arrangement_blocker_error)?;
         store_retained_policy_report(&mut self.region_ownership_reports, policy, report)
     }
@@ -584,15 +582,15 @@ impl<'a> ExactBooleanWorkspace<'a> {
             );
         }
 
-        self.arrangement(policy)?;
-        let arrangement_index = cached_by_policy_index(&self.arrangements, policy)
-            .expect("arrangement cache was just populated");
+        let left = self.left;
+        let right = self.right;
+        let arrangement = self.arrangement(policy)?;
         let attempt = arrangement_boolean_attempt_report_from_arrangement(
-            self.left,
-            self.right,
+            left,
+            right,
             request,
             policy,
-            &self.arrangements[arrangement_index].1,
+            arrangement,
         )?;
         store_retained_arrangement_attempt(&mut self.arrangement_attempts, request, policy, attempt)
     }
@@ -618,17 +616,12 @@ impl<'a> ExactBooleanWorkspace<'a> {
             };
         }
 
-        self.arrangement(policy)
+        let left = self.left;
+        let right = self.right;
+        let arrangement = self
+            .arrangement(policy)
             .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
-        let arrangement_index = cached_by_policy_index(&self.arrangements, policy)
-            .expect("arrangement cache was just populated");
-        attempt.validate_against_arrangement(
-            self.left,
-            self.right,
-            request,
-            policy,
-            &self.arrangements[arrangement_index].1,
-        )
+        attempt.validate_against_arrangement(left, right, request, policy, arrangement)
     }
 
     /// Classify arrangement/cell-complex attempt freshness in this retained
