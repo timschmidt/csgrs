@@ -3243,17 +3243,29 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
         && !graph_requires_coplanar_volumetric_cells_for_sources(&graph, left, right)
         && let Some(convex_support) = certified_convex_intersection_support(left, right, operation)
     {
-        return Ok(certified_shortcut_preflight(operation, convex_support));
+        return Ok(certified_shortcut_preflight_from_graph(
+            operation,
+            convex_support,
+            &graph,
+        ));
     }
     if support == ExactBooleanSupport::RequiresCertifiedWinding
         && let Some(convex_support) = certified_convex_difference_support(left, right, operation)
     {
-        return Ok(certified_shortcut_preflight(operation, convex_support));
+        return Ok(certified_shortcut_preflight_from_graph(
+            operation,
+            convex_support,
+            &graph,
+        ));
     }
     if support == ExactBooleanSupport::RequiresCertifiedWinding
         && let Some(convex_support) = certified_convex_union_support(left, right, operation)
     {
-        return Ok(certified_shortcut_preflight(operation, convex_support));
+        return Ok(certified_shortcut_preflight_from_graph(
+            operation,
+            convex_support,
+            &graph,
+        ));
     }
     if graph_requires_coplanar_volumetric_cells_for_sources(&graph, left, right) {
         if let Some(preflight) = cached_certified_arrangement_cell_complex_preflight(
@@ -3266,11 +3278,19 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
             return Ok(preflight);
         }
         if let Some(convex_support) = certified_convex_union_support(left, right, operation) {
-            return Ok(certified_shortcut_preflight(operation, convex_support));
+            return Ok(certified_shortcut_preflight_from_graph(
+                operation,
+                convex_support,
+                &graph,
+            ));
         }
         if let Some(convex_support) = certified_convex_intersection_support(left, right, operation)
         {
-            return Ok(certified_shortcut_preflight(operation, convex_support));
+            return Ok(certified_shortcut_preflight_from_graph(
+                operation,
+                convex_support,
+                &graph,
+            ));
         }
         return Ok(ExactBooleanPreflight {
             operation,
