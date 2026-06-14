@@ -10,7 +10,6 @@ use super::boolean::{
     direct_arrangement_cell_complex_attempt,
     materialize_adjacent_union_completion_from_graph_for_request,
     materialize_boolean_exact_request_from_retained_graph,
-    materialize_boundary_touching_policy_from_graph_for_request,
     materialize_certified_boolean_support_with_artifacts,
     materialize_closed_boundary_touching_regularized_boolean_with_evidence_from_graph,
     materialize_closed_no_volume_overlap_regularized_boolean_with_evidence_from_graph,
@@ -353,8 +352,12 @@ impl<'a> ExactBooleanWorkspace<'a> {
         }
 
         let (graph, left, right) = self.validated_graph_with_sources()?;
-        let materialized = materialize_boundary_touching_policy_from_graph_for_request(
-            graph, left, right, request,
+        let materialized = materialize_graph_shortcut_from_graph_for_request(
+            graph,
+            left,
+            right,
+            request,
+            ExactBooleanSupport::CertifiedBoundaryPolicyShortcut,
         )?;
         store_retained_materialization_value(
             &mut self.boundary_touching_policy_materializations,

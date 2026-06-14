@@ -2331,9 +2331,7 @@ pub(crate) fn materialize_certified_boolean_support_with_artifacts(
         ExactBooleanSupport::CertifiedBoundaryPolicyShortcut => {
             let graph =
                 graph_for_certified_materialization(retained_graph, &mut owned_graph, left, right)?;
-            materialize_boundary_touching_policy_from_graph_for_request(
-                graph, left, right, request,
-            )?
+            materialize_graph_shortcut_from_graph_for_request(graph, left, right, request, support)?
         }
         ExactBooleanSupport::CertifiedOpenSurfaceArrangementUnion
         | ExactBooleanSupport::CertifiedOpenSurfaceArrangementIntersection
@@ -4296,6 +4294,54 @@ pub(crate) fn materialize_graph_shortcut_from_graph_for_request(
     let operation = request.operation;
     let validation = request.validation;
     let result = match support {
+        ExactBooleanSupport::CertifiedBoundaryPolicyShortcut => {
+            let boundary_policy = request.boundary_policy;
+            if let Some((result, _evidence)) =
+                materialize_closed_boundary_touching_regularized_boolean_with_evidence_from_graph(
+                    graph, left, right, operation, validation,
+                )?
+            {
+                if result
+                    .validate_operation_against_sources(
+                        left,
+                        right,
+                        operation,
+                        validation,
+                        ExactBoundaryBooleanPolicy::Reject,
+                    )
+                    .is_err()
+                {
+                    return Ok(None);
+                }
+                return Ok(public_operation_replayable_result(
+                    Some(result),
+                    left,
+                    right,
+                    operation,
+                    validation,
+                    boundary_policy,
+                ));
+            }
+            let Some(result) = boolean_boundary_touching_meshes_from_graph(
+                graph,
+                left,
+                right,
+                operation,
+                validation,
+                boundary_policy,
+            )?
+            else {
+                return Ok(None);
+            };
+            return Ok(public_operation_replayable_result(
+                Some(result),
+                left,
+                right,
+                operation,
+                validation,
+                boundary_policy,
+            ));
+        }
         ExactBooleanSupport::CertifiedOpenSurfaceDisjoint => {
             if matches!(operation, ExactBooleanOperation::SelectedRegions(_))
                 || meshes_are_certified_bounds_disjoint(left, right)
@@ -9697,62 +9743,6 @@ fn boolean_boundary_touching_meshes_from_graph(
         &report,
     )
     .then_some(result))
-}
-
-pub(crate) fn materialize_boundary_touching_policy_from_graph_for_request(
-    graph: &super::graph::ExactIntersectionGraph,
-    left: &ExactMesh,
-    right: &ExactMesh,
-    request: ExactBooleanRequest,
-) -> Result<Option<ExactBooleanResult>, MeshError> {
-    let operation = request.operation;
-    let validation = request.validation;
-    let boundary_policy = request.boundary_policy;
-    if let Some((result, _evidence)) =
-        materialize_closed_boundary_touching_regularized_boolean_with_evidence_from_graph(
-            graph, left, right, operation, validation,
-        )?
-    {
-        if result
-            .validate_operation_against_sources(
-                left,
-                right,
-                operation,
-                validation,
-                ExactBoundaryBooleanPolicy::Reject,
-            )
-            .is_err()
-        {
-            return Ok(None);
-        }
-        return Ok(public_operation_replayable_result(
-            Some(result),
-            left,
-            right,
-            operation,
-            validation,
-            boundary_policy,
-        ));
-    }
-    let Some(result) = boolean_boundary_touching_meshes_from_graph(
-        graph,
-        left,
-        right,
-        operation,
-        validation,
-        boundary_policy,
-    )?
-    else {
-        return Ok(None);
-    };
-    Ok(public_operation_replayable_result(
-        Some(result),
-        left,
-        right,
-        operation,
-        validation,
-        boundary_policy,
-    ))
 }
 
 pub(crate) fn winding_readiness_report_for_request_from_graph(
