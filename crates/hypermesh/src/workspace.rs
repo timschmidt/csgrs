@@ -1151,7 +1151,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
             request,
             regularized_arrangement,
         )?;
-        store_retained_certification_set(&mut self.certifications, request, certifications)
+        store_retained_request_artifact(&mut self.certifications, request, certifications)
     }
 
     /// Validate a certification bundle against this workspace's retained graph
@@ -1228,7 +1228,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
             certifications,
             result,
         };
-        store_retained_evaluation(&mut self.evaluations, request, evaluation)
+        store_retained_request_artifact(&mut self.evaluations, request, evaluation)
     }
 
     /// Materializes `request`, reusing a cached certified evaluation when the
@@ -1464,6 +1464,13 @@ trait RetainedPolicyReport {
     fn validate_for_workspace_cache(&self) -> Result<(), ExactArrangementBlocker>;
 }
 
+trait RetainedRequestArtifact {
+    fn validate_for_workspace_cache(
+        &self,
+        request: ExactBooleanRequest,
+    ) -> Result<(), ExactReportValidationError>;
+}
+
 impl RetainedWorkspaceReport for ExactBooleanPreflight {
     fn operation(&self) -> Option<ExactBooleanOperation> {
         Some(self.operation)
@@ -1570,6 +1577,27 @@ impl RetainedPolicyReport for ExactArrangement {
 
 impl RetainedPolicyReport for ExactRegionOwnershipReport {
     fn validate_for_workspace_cache(&self) -> Result<(), ExactArrangementBlocker> {
+        self.validate()
+    }
+}
+
+impl RetainedRequestArtifact for ExactBooleanCertificationSet {
+    fn validate_for_workspace_cache(
+        &self,
+        request: ExactBooleanRequest,
+    ) -> Result<(), ExactReportValidationError> {
+        self.validate_for_request(request)
+    }
+}
+
+impl RetainedRequestArtifact for ExactBooleanEvaluation {
+    fn validate_for_workspace_cache(
+        &self,
+        request: ExactBooleanRequest,
+    ) -> Result<(), ExactReportValidationError> {
+        if self.request != request {
+            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+        }
         self.validate()
     }
 }
@@ -1735,36 +1763,19 @@ fn store_retained_arrangement_attempt(
         .2)
 }
 
-fn store_retained_certification_set(
-    cache: &mut Vec<(ExactBooleanRequest, ExactBooleanCertificationSet)>,
+fn store_retained_request_artifact<T: RetainedRequestArtifact>(
+    cache: &mut Vec<(ExactBooleanRequest, T)>,
     request: ExactBooleanRequest,
-    certifications: ExactBooleanCertificationSet,
-) -> Result<&ExactBooleanCertificationSet, MeshError> {
-    certifications
-        .validate_for_request(request)
+    artifact: T,
+) -> Result<&T, MeshError> {
+    artifact
+        .validate_for_workspace_cache(request)
         .map_err(workspace_report_validation_error)?;
-    cache.push((request, certifications));
+    cache.push((request, artifact));
     Ok(&cache
         .last()
-        .expect("certification cache was just populated")
+        .expect("request artifact cache was just populated")
         .1)
-}
-
-fn store_retained_evaluation(
-    cache: &mut Vec<(ExactBooleanRequest, ExactBooleanEvaluation)>,
-    request: ExactBooleanRequest,
-    evaluation: ExactBooleanEvaluation,
-) -> Result<&ExactBooleanEvaluation, MeshError> {
-    if evaluation.request != request {
-        return Err(workspace_report_validation_error(
-            ExactReportValidationError::StatusEvidenceMismatch,
-        ));
-    }
-    evaluation
-        .validate()
-        .map_err(workspace_report_validation_error)?;
-    cache.push((request, evaluation));
-    Ok(&cache.last().expect("evaluation cache was just populated").1)
 }
 
 fn cached_retained_result(
