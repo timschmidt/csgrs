@@ -2799,24 +2799,14 @@ fn materialize_certified_arrangement_cell_complex_support_with_arrangement(
             return Ok(Some(*result));
         }
     }
-    if retained_graph.is_some() {
-        let graph =
-            graph_for_certified_materialization(retained_graph, &mut owned_graph, left, right)?;
-        if !graph.face_pairs.is_empty()
-            && let Some(result) = certified_arrangement_cell_complex_result_from_graph(
-                graph, left, right, operation, validation, true,
-            )?
-        {
-            return Ok(Some(result));
-        }
-    }
-    if let Some(result) = request.materialize_axis_aligned_orthogonal_solid(left, right)? {
-        return Ok(Some(result));
-    }
-    if let Some(result) = request.materialize_affine_orthogonal_solid(left, right)? {
-        return Ok(Some(result));
-    }
     let graph = graph_for_certified_materialization(retained_graph, &mut owned_graph, left, right)?;
+    if !graph.face_pairs.is_empty()
+        && let Some(result) = certified_arrangement_cell_complex_result_from_graph(
+            graph, left, right, operation, validation, true,
+        )?
+    {
+        return Ok(Some(result));
+    }
     if let Some(result) = boolean_arrangement_volumetric_split_cell_recovery_from_graph(
         graph, left, right, operation, validation,
     )? {
@@ -2834,7 +2824,15 @@ fn materialize_certified_arrangement_cell_complex_support_with_arrangement(
     )? {
         return Ok(Some(result));
     }
-    boolean_arrangement_cell_complex_meshes_from_graph(graph, left, right, operation, validation)
+    if let Some(result) = boolean_arrangement_cell_complex_meshes_from_graph(
+        graph, left, right, operation, validation,
+    )? {
+        return Ok(Some(result));
+    }
+    if let Some(result) = request.materialize_axis_aligned_orthogonal_solid(left, right)? {
+        return Ok(Some(result));
+    }
+    request.materialize_affine_orthogonal_solid(left, right)
 }
 
 fn materialize_closed_no_volume_overlap_regularized_result_from_graph(
