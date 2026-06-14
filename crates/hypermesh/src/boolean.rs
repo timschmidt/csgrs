@@ -888,7 +888,7 @@ pub struct ExactBooleanCertificationSet {
     pub convex_left_in_right: ConvexSolidMeshClassification,
     /// Right vertices classified against the left convex solid.
     pub convex_right_in_left: ConvexSolidMeshClassification,
-    /// Direct closed-convex boolean capabilities.
+    /// Closed-convex shortcut capabilities.
     pub convex_capabilities: ExactConvexBooleanCapabilityFacts,
     /// Arrangement-cell shortcut capabilities that cover cases not yet
     /// consumed by the full arrangement attempt report.
@@ -1306,14 +1306,14 @@ impl ExactRegularizedSolidBooleanFacts {
     }
 }
 
-/// Replayable source facts for direct closed-convex boolean materialization.
+/// Replayable source facts for closed-convex boolean shortcuts.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ExactConvexBooleanCapabilityFacts {
-    /// Exact closed-convex union can be materialized directly.
+    /// Exact closed-convex union can be certified by the shortcut.
     pub can_union: bool,
-    /// Exact closed-convex intersection can be materialized directly.
+    /// Exact closed-convex intersection can be certified by the shortcut.
     pub can_intersection: bool,
-    /// Exact closed-convex difference can be materialized directly.
+    /// Exact closed-convex difference can be certified by the shortcut.
     pub can_difference: bool,
 }
 
@@ -2876,7 +2876,7 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
     }
     if support == ExactBooleanSupport::RequiresCertifiedWinding
         && let Some(convex_support) =
-            certified_convex_materialized_boolean_support(left, right, operation)
+            certified_convex_operation_shortcut_support(left, right, operation)
     {
         return Ok(certified_shortcut_preflight_from_graph(
             operation,
@@ -5949,7 +5949,7 @@ pub(crate) fn adjacent_union_completion_certification_from_graph(
         ));
     }
 
-    if certified_convex_materialized_boolean_support(left, right, operation).is_some()
+    if certified_convex_operation_shortcut_support(left, right, operation).is_some()
         || contained_face_adjacency_should_yield_to_stronger_kernel(left, right, operation)
     {
         return Ok((
@@ -10204,7 +10204,7 @@ fn winding_readiness_report_from_graph(
     }
     if preflight_tail_shortcut_support(left, right, operation)
         != Some(ExactBooleanSupport::CertifiedArrangementCellComplex)
-        && certified_convex_materialized_boolean_support(left, right, operation).is_some()
+        && certified_convex_operation_shortcut_support(left, right, operation).is_some()
     {
         let blocker = counts.into_blocker(ExactBooleanBlockerKind::NeedsWinding);
         let (retained_face_pairs, retained_events, blocker) = if blocker
@@ -10919,7 +10919,7 @@ fn certified_convex_difference_support(
     }
 }
 
-fn certified_convex_materialized_boolean_support(
+fn certified_convex_operation_shortcut_support(
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,

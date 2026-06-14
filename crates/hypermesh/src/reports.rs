@@ -2150,7 +2150,7 @@ fn convex_operation_output_matches_sources(
         ExactBooleanShortcutKind::ConvexDifference => {
             subtract_closed_convex_solids(left, right).map(|result| result.mesh)
         }
-        _ => unreachable!("only direct convex operation shortcuts are replayed here"),
+        _ => unreachable!("only convex operation shortcuts are replayed here"),
     }) else {
         return Ok(false);
     };
