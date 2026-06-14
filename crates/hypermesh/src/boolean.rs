@@ -4682,6 +4682,12 @@ fn materialize_boolean_exact_request_with_graph(
             return Ok(result);
         }
     }
+    if let Some(graph) = retained_graph {
+        return materialize_boolean_exact_request_from_ready_graph(graph, left, right, request);
+    }
+    if let Some(graph) = owned_graph {
+        return materialize_boolean_exact_request_from_ready_graph(&graph, left, right, request);
+    }
     if let Some(result) =
         boolean_arrangement_orthogonal_solid_cell_recovery(left, right, operation, validation)?
     {
@@ -4691,12 +4697,6 @@ fn materialize_boolean_exact_request_with_graph(
         boolean_arrangement_affine_orthogonal_solid_recovery(left, right, operation, validation)?
     {
         return Ok(result);
-    }
-    if let Some(graph) = retained_graph {
-        return materialize_boolean_exact_request_from_ready_graph(graph, left, right, request);
-    }
-    if let Some(graph) = owned_graph {
-        return materialize_boolean_exact_request_from_ready_graph(&graph, left, right, request);
     }
 
     match validated_intersection_graph(left, right) {
