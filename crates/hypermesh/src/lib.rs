@@ -109,8 +109,7 @@ pub use boolean::{
     ExactBooleanCertificationSet, ExactBooleanEvaluation, ExactBooleanOperation,
     ExactBooleanRequest, ExactBoundaryBooleanPolicy, ExactConvexBooleanCapabilityFacts,
     ExactIdenticalMeshReport, ExactIdenticalMeshStatus, ExactRegularizedSolidBooleanFacts,
-    ExactTrivialBooleanFacts, materialize_coplanar_mesh_overlay_arrangement,
-    materialize_volumetric_winding_arrangement,
+    ExactTrivialBooleanFacts, materialize_volumetric_winding_arrangement,
 };
 pub use bounds::{AabbIntersectionKind, BoundsValidationError, ExactAabb3, MeshBounds};
 pub use cell_complex::{

@@ -39,10 +39,9 @@ use hypermesh::{
     materialize_axis_aligned_orthogonal_solid_difference,
     materialize_axis_aligned_orthogonal_solid_intersection,
     materialize_axis_aligned_orthogonal_solid_union, materialize_contained_face_adjacent_union,
-    materialize_coplanar_mesh_overlay_arrangement, materialize_full_face_adjacent_union,
-    materialize_volumetric_winding_arrangement, mesh_artifact_from_exact_mesh,
-    mesh_artifact_from_exact_mesh_proposal, triangulate_all_face_cells_with_cdt,
-    validate_face_cell_cdt_against_sources,
+    materialize_full_face_adjacent_union, materialize_volumetric_winding_arrangement,
+    mesh_artifact_from_exact_mesh, mesh_artifact_from_exact_mesh_proposal,
+    triangulate_all_face_cells_with_cdt, validate_face_cell_cdt_against_sources,
 };
 use hyperreal::Real;
 
@@ -2750,14 +2749,9 @@ fn exact_coplanar_mesh_overlay_arrangement_is_publicly_replayable() {
         ExactBooleanOperation::Intersection,
         ExactBooleanOperation::Difference,
     ] {
-        let result = materialize_coplanar_mesh_overlay_arrangement(
-            &left,
-            &right,
-            operation,
-            ValidationPolicy::ALLOW_BOUNDARY,
-        )
-        .unwrap()
-        .expect("overlapping coplanar surfaces should materialize by exact overlay");
+        let result = ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY)
+            .materialize(&left, &right)
+            .unwrap();
         assert_eq!(
             result.kind,
             ExactBooleanResultKind::CertifiedShortcut {
@@ -2803,16 +2797,18 @@ fn exact_coplanar_mesh_overlay_arrangement_is_publicly_replayable() {
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    assert!(
-        materialize_coplanar_mesh_overlay_arrangement(
-            &identical,
-            &identical,
-            ExactBooleanOperation::Union,
-            ValidationPolicy::ALLOW_BOUNDARY,
-        )
-        .unwrap()
-        .is_none(),
-        "coplanar overlay replay should yield to the public identical shortcut"
+    let identical_result = ExactBooleanRequest::new(
+        ExactBooleanOperation::Union,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .materialize(&identical, &identical)
+    .unwrap();
+    assert_eq!(
+        identical_result.kind,
+        ExactBooleanResultKind::CertifiedShortcut {
+            operation: ExactBooleanOperation::Union,
+            shortcut: hypermesh::ExactBooleanShortcutKind::Identical
+        }
     );
 }
 
