@@ -776,7 +776,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
         let right = self.right;
         let graph = self.validated_graph()?;
         let preflight = preflight_boolean_exact_request_from_graph(graph, left, right, request)?;
-        store_retained_request_report(&mut self.preflights, request, preflight)
+        store_retained_report(&mut self.preflights, request, preflight)
     }
 
     /// Validate preflight scheduling evidence against this workspace's source
@@ -818,7 +818,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
 
         let graph = self.validated_graph()?;
         let report = refinement_report_from_graph(graph, request.operation);
-        store_retained_request_report(&mut self.refinement_reports, request, report)
+        store_retained_report(&mut self.refinement_reports, request, report)
     }
 
     /// Validate refinement evidence against this workspace's source meshes.
@@ -864,7 +864,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
             request.operation,
             None,
         )?;
-        store_retained_request_report(&mut self.adjacent_union_completion_reports, request, report)
+        store_retained_report(&mut self.adjacent_union_completion_reports, request, report)
     }
 
     /// Validate adjacent-union completion evidence against this workspace's
@@ -957,7 +957,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
         let right = self.right;
         let graph = self.validated_graph()?;
         let report = boundary_touching_report_from_graph(graph, left, right)?;
-        store_retained_source_report(&mut self.boundary_touching_reports, request, report)
+        store_retained_report(&mut self.boundary_touching_reports, request, report)
     }
 
     /// Classify boundary-touching freshness in this retained source session.
@@ -983,7 +983,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
         let right = self.right;
         let graph = self.validated_graph()?;
         let report = open_surface_disjoint_report_from_graph(graph, left, right);
-        store_retained_source_report(&mut self.open_surface_disjoint_reports, request, report)
+        store_retained_report(&mut self.open_surface_disjoint_reports, request, report)
     }
 
     /// Classify open-surface disjointness freshness in this retained source
@@ -1013,7 +1013,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
         let graph = self.validated_graph()?;
         let report =
             volumetric_boundary_closure_report_from_graph(graph, left, right, request.operation)?;
-        store_retained_request_report(
+        store_retained_report(
             &mut self.volumetric_boundary_closure_reports,
             request,
             report,
@@ -1058,7 +1058,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
         let graph = self.validated_graph()?;
         let readiness =
             winding_readiness_report_for_request_from_graph(graph, left, right, request)?;
-        store_retained_request_report(&mut self.winding_readiness_reports, request, readiness)
+        store_retained_report(&mut self.winding_readiness_reports, request, readiness)
     }
 
     /// Validate winding-readiness evidence against this workspace's source
@@ -1102,7 +1102,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
         let right = self.right;
         let graph = self.validated_graph()?;
         let report = planar_arrangement_report_from_graph(graph, left, right, request.operation)?;
-        store_retained_request_report(&mut self.planar_arrangement_reports, request, report)
+        store_retained_report(&mut self.planar_arrangement_reports, request, report)
     }
 
     /// Validate planar-arrangement readiness evidence against this workspace's
@@ -1447,12 +1447,11 @@ impl RetainedMaterializationArtifact for ExactAdjacentUnionCompletionReport {
     }
 }
 
-trait RetainedRequestReport {
-    fn operation(&self) -> ExactBooleanOperation;
-    fn validate_for_workspace_cache(&self) -> Result<(), ExactReportValidationError>;
-}
+trait RetainedWorkspaceReport {
+    fn operation(&self) -> Option<ExactBooleanOperation> {
+        None
+    }
 
-trait RetainedSourceReport {
     fn validate_for_workspace_cache(&self) -> Result<(), ExactReportValidationError>;
 }
 
@@ -1465,9 +1464,9 @@ trait RetainedPolicyReport {
     fn validate_for_workspace_cache(&self) -> Result<(), ExactArrangementBlocker>;
 }
 
-impl RetainedRequestReport for ExactBooleanPreflight {
-    fn operation(&self) -> ExactBooleanOperation {
-        self.operation
+impl RetainedWorkspaceReport for ExactBooleanPreflight {
+    fn operation(&self) -> Option<ExactBooleanOperation> {
+        Some(self.operation)
     }
 
     fn validate_for_workspace_cache(&self) -> Result<(), ExactReportValidationError> {
@@ -1475,9 +1474,9 @@ impl RetainedRequestReport for ExactBooleanPreflight {
     }
 }
 
-impl RetainedRequestReport for ExactRefinementReport {
-    fn operation(&self) -> ExactBooleanOperation {
-        self.operation
+impl RetainedWorkspaceReport for ExactRefinementReport {
+    fn operation(&self) -> Option<ExactBooleanOperation> {
+        Some(self.operation)
     }
 
     fn validate_for_workspace_cache(&self) -> Result<(), ExactReportValidationError> {
@@ -1485,9 +1484,9 @@ impl RetainedRequestReport for ExactRefinementReport {
     }
 }
 
-impl RetainedRequestReport for ExactAdjacentUnionCompletionReport {
-    fn operation(&self) -> ExactBooleanOperation {
-        self.operation
+impl RetainedWorkspaceReport for ExactAdjacentUnionCompletionReport {
+    fn operation(&self) -> Option<ExactBooleanOperation> {
+        Some(self.operation)
     }
 
     fn validate_for_workspace_cache(&self) -> Result<(), ExactReportValidationError> {
@@ -1495,9 +1494,9 @@ impl RetainedRequestReport for ExactAdjacentUnionCompletionReport {
     }
 }
 
-impl RetainedRequestReport for ExactVolumetricBoundaryClosureReport {
-    fn operation(&self) -> ExactBooleanOperation {
-        self.operation
+impl RetainedWorkspaceReport for ExactVolumetricBoundaryClosureReport {
+    fn operation(&self) -> Option<ExactBooleanOperation> {
+        Some(self.operation)
     }
 
     fn validate_for_workspace_cache(&self) -> Result<(), ExactReportValidationError> {
@@ -1505,9 +1504,9 @@ impl RetainedRequestReport for ExactVolumetricBoundaryClosureReport {
     }
 }
 
-impl RetainedRequestReport for ExactWindingReadinessReport {
-    fn operation(&self) -> ExactBooleanOperation {
-        self.operation
+impl RetainedWorkspaceReport for ExactWindingReadinessReport {
+    fn operation(&self) -> Option<ExactBooleanOperation> {
+        Some(self.operation)
     }
 
     fn validate_for_workspace_cache(&self) -> Result<(), ExactReportValidationError> {
@@ -1515,9 +1514,9 @@ impl RetainedRequestReport for ExactWindingReadinessReport {
     }
 }
 
-impl RetainedRequestReport for ExactPlanarArrangementReport {
-    fn operation(&self) -> ExactBooleanOperation {
-        self.operation
+impl RetainedWorkspaceReport for ExactPlanarArrangementReport {
+    fn operation(&self) -> Option<ExactBooleanOperation> {
+        Some(self.operation)
     }
 
     fn validate_for_workspace_cache(&self) -> Result<(), ExactReportValidationError> {
@@ -1525,13 +1524,13 @@ impl RetainedRequestReport for ExactPlanarArrangementReport {
     }
 }
 
-impl RetainedSourceReport for ExactBoundaryTouchingReport {
+impl RetainedWorkspaceReport for ExactBoundaryTouchingReport {
     fn validate_for_workspace_cache(&self) -> Result<(), ExactReportValidationError> {
         self.validate()
     }
 }
 
-impl RetainedSourceReport for ExactOpenSurfaceDisjointReport {
+impl RetainedWorkspaceReport for ExactOpenSurfaceDisjointReport {
     fn validate_for_workspace_cache(&self) -> Result<(), ExactReportValidationError> {
         self.validate()
     }
@@ -1649,12 +1648,15 @@ fn store_retained_result_pair<T: Clone + RetainedMaterializationArtifact>(
     Ok(materialized)
 }
 
-fn store_retained_request_report<T: RetainedRequestReport>(
+fn store_retained_report<T: RetainedWorkspaceReport>(
     cache: &mut Vec<(ExactBooleanRequest, T)>,
     request: ExactBooleanRequest,
     report: T,
 ) -> Result<&T, MeshError> {
-    if report.operation() != request.operation {
+    if report
+        .operation()
+        .is_some_and(|operation| operation != request.operation)
+    {
         return Err(workspace_report_validation_error(
             ExactReportValidationError::StatusEvidenceMismatch,
         ));
@@ -1665,22 +1667,7 @@ fn store_retained_request_report<T: RetainedRequestReport>(
     cache.push((request, report));
     Ok(&cache
         .last()
-        .expect("request report cache was just populated")
-        .1)
-}
-
-fn store_retained_source_report<T: RetainedSourceReport>(
-    cache: &mut Vec<(ExactBooleanRequest, T)>,
-    request: ExactBooleanRequest,
-    report: T,
-) -> Result<&T, MeshError> {
-    report
-        .validate_for_workspace_cache()
-        .map_err(workspace_report_validation_error)?;
-    cache.push((request, report));
-    Ok(&cache
-        .last()
-        .expect("source report cache was just populated")
+        .expect("workspace report cache was just populated")
         .1)
 }
 
