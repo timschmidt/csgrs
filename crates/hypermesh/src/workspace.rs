@@ -169,13 +169,11 @@ impl<'a> ExactBooleanWorkspace<'a> {
     }
 
     fn validated_graph(&mut self) -> Result<&ExactIntersectionGraph, MeshError> {
-        self.graph()?;
-        let graph = self
-            .graph
-            .as_ref()
-            .expect("intersection graph cache was just populated");
+        let left = self.left;
+        let right = self.right;
+        let graph = self.graph()?;
         graph
-            .validate_against_meshes(self.left, self.right)
+            .validate_against_meshes(left, right)
             .map_err(workspace_graph_validation_error)?;
         Ok(graph)
     }
