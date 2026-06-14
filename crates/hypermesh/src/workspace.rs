@@ -46,6 +46,31 @@ type MaterializedAdjacentUnionCompletion =
     Option<(ExactBooleanResult, ExactAdjacentUnionCompletionReport)>;
 type OptionalMaterializedResult = Option<ExactBooleanResult>;
 
+macro_rules! materialize_cached_graph_shortcut {
+    ($workspace:ident, $cache:ident, $request:expr, $support:expr) => {{
+        if let Some(cached) = cached_retained_materialization(
+            &$workspace.$cache,
+            $workspace.left,
+            $workspace.right,
+            $request,
+        )? {
+            Ok(cached)
+        } else {
+            let (graph, left, right) = $workspace.validated_graph_with_sources()?;
+            let materialized = materialize_graph_shortcut_from_graph_for_request(
+                graph, left, right, $request, $support,
+            )?;
+            store_retained_materialization_value(
+                &mut $workspace.$cache,
+                left,
+                right,
+                $request,
+                materialized,
+            )
+        }
+    }};
+}
+
 /// Reusable exact boolean session for a fixed source-mesh pair.
 ///
 /// The workspace keeps source meshes borrowed and caches replayable exact
@@ -292,29 +317,11 @@ impl<'a> ExactBooleanWorkspace<'a> {
         &mut self,
         request: ExactBooleanRequest,
     ) -> Result<Option<ExactBooleanResult>, MeshError> {
-        if let Some(cached) = cached_retained_materialization(
-            &self.open_surface_disjoint_materializations,
-            self.left,
-            self.right,
+        materialize_cached_graph_shortcut!(
+            self,
+            open_surface_disjoint_materializations,
             request,
-        )? {
-            return Ok(cached);
-        }
-
-        let (graph, left, right) = self.validated_graph_with_sources()?;
-        let materialized = materialize_graph_shortcut_from_graph_for_request(
-            graph,
-            left,
-            right,
-            request,
-            ExactBooleanSupport::CertifiedOpenSurfaceDisjoint,
-        )?;
-        store_retained_materialization_value(
-            &mut self.open_surface_disjoint_materializations,
-            left,
-            right,
-            request,
-            materialized,
+            ExactBooleanSupport::CertifiedOpenSurfaceDisjoint
         )
     }
 
@@ -350,20 +357,11 @@ impl<'a> ExactBooleanWorkspace<'a> {
             );
         }
 
-        let (graph, left, right) = self.validated_graph_with_sources()?;
-        let materialized = materialize_graph_shortcut_from_graph_for_request(
-            graph,
-            left,
-            right,
+        materialize_cached_graph_shortcut!(
+            self,
+            boundary_touching_policy_materializations,
             request,
-            ExactBooleanSupport::CertifiedBoundaryPolicyShortcut,
-        )?;
-        store_retained_materialization_value(
-            &mut self.boundary_touching_policy_materializations,
-            left,
-            right,
-            request,
-            materialized,
+            ExactBooleanSupport::CertifiedBoundaryPolicyShortcut
         )
     }
 
@@ -373,29 +371,11 @@ impl<'a> ExactBooleanWorkspace<'a> {
         &mut self,
         request: ExactBooleanRequest,
     ) -> Result<Option<ExactBooleanResult>, MeshError> {
-        if let Some(cached) = cached_retained_materialization(
-            &self.closed_winding_containment_materializations,
-            self.left,
-            self.right,
+        materialize_cached_graph_shortcut!(
+            self,
+            closed_winding_containment_materializations,
             request,
-        )? {
-            return Ok(cached);
-        }
-
-        let (graph, left, right) = self.validated_graph_with_sources()?;
-        let materialized = materialize_graph_shortcut_from_graph_for_request(
-            graph,
-            left,
-            right,
-            request,
-            ExactBooleanSupport::CertifiedClosedWindingContainment,
-        )?;
-        store_retained_materialization_value(
-            &mut self.closed_winding_containment_materializations,
-            left,
-            right,
-            request,
-            materialized,
+            ExactBooleanSupport::CertifiedClosedWindingContainment
         )
     }
 
@@ -405,29 +385,11 @@ impl<'a> ExactBooleanWorkspace<'a> {
         &mut self,
         request: ExactBooleanRequest,
     ) -> Result<Option<ExactBooleanResult>, MeshError> {
-        if let Some(cached) = cached_retained_materialization(
-            &self.closed_winding_separated_materializations,
-            self.left,
-            self.right,
+        materialize_cached_graph_shortcut!(
+            self,
+            closed_winding_separated_materializations,
             request,
-        )? {
-            return Ok(cached);
-        }
-
-        let (graph, left, right) = self.validated_graph_with_sources()?;
-        let materialized = materialize_graph_shortcut_from_graph_for_request(
-            graph,
-            left,
-            right,
-            request,
-            ExactBooleanSupport::CertifiedClosedWindingSeparated,
-        )?;
-        store_retained_materialization_value(
-            &mut self.closed_winding_separated_materializations,
-            left,
-            right,
-            request,
-            materialized,
+            ExactBooleanSupport::CertifiedClosedWindingSeparated
         )
     }
 
