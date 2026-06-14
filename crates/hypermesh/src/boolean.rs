@@ -9913,9 +9913,76 @@ fn winding_readiness_report_with_boundary_policy_from_graph(
     validation: ValidationPolicy,
     boundary_policy: ExactBoundaryBooleanPolicy,
 ) -> Result<ExactWindingReadinessReport, MeshError> {
-    let readiness = winding_readiness_report_with_validation_from_graph(
-        graph, left, right, operation, validation,
-    )?;
+    let readiness = if validation == ValidationPolicy::CLOSED
+        && !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
+        && let Some(support) = certified_closed_validation_regularized_solid_support(left, right)
+    {
+        let status = match support {
+            ExactBooleanSupport::CertifiedMixedDimensionalRegularizedSolid => {
+                ExactWindingReadinessStatus::MixedDimensionalRegularizedSolidAlreadyMaterialized
+            }
+            ExactBooleanSupport::CertifiedLowerDimensionalRegularizedSolid => {
+                ExactWindingReadinessStatus::LowerDimensionalRegularizedSolidAlreadyMaterialized
+            }
+            _ => unreachable!("closed validation gate only certifies regularized support"),
+        };
+        winding_readiness_report(
+            operation,
+            status,
+            false,
+            0,
+            0,
+            0,
+            Vec::new(),
+            ExactBooleanBlocker::default().into_blocker(ExactBooleanBlockerKind::NeedsWinding),
+            None,
+            None,
+        )
+    } else {
+        let readiness =
+            winding_readiness_report_with_shortcuts_from_graph(graph, left, right, operation)?;
+        if validation == ValidationPolicy::CLOSED
+            || matches!(operation, ExactBooleanOperation::SelectedRegions(_))
+            || !matches!(
+                readiness.status,
+                ExactWindingReadinessStatus::VolumetricAssemblyRequired
+                    | ExactWindingReadinessStatus::CoplanarVolumetricCellsRequired
+            )
+        {
+            readiness
+        } else if boolean_arrangement_volumetric_split_cell_recovery_from_graph(
+            graph, left, right, operation, validation,
+        )?
+        .is_some()
+        {
+            let counts = retained_graph_counts(graph);
+            let needs_coplanar_volumetric =
+                graph_requires_coplanar_volumetric_cells_for_sources(graph, left, right);
+            let blocker_kind = if needs_coplanar_volumetric {
+                ExactBooleanBlockerKind::NeedsCoplanarVolumetricCells
+            } else {
+                ExactBooleanBlockerKind::NeedsWinding
+            };
+            winding_readiness_report(
+                operation,
+                ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized,
+                graph.has_unknowns(),
+                graph.face_pairs.len(),
+                graph.event_count(),
+                0,
+                Vec::new(),
+                counts.into_blocker(blocker_kind),
+                None,
+                if needs_coplanar_volumetric {
+                    coplanar_volumetric_evidence_if_required(graph, left, right)
+                } else {
+                    None
+                },
+            )
+        } else {
+            readiness
+        }
+    };
     if boundary_policy == ExactBoundaryBooleanPolicy::Reject
         || matches!(operation, ExactBooleanOperation::SelectedRegions(_))
         || readiness.status != ExactWindingReadinessStatus::BoundaryPolicyRequired
@@ -9945,86 +10012,6 @@ fn winding_readiness_report_with_boundary_policy_from_graph(
             counts.into_blocker(ExactBooleanBlockerKind::NeedsBoundaryPolicy),
             None,
             None,
-        ));
-    }
-    Ok(readiness)
-}
-
-fn winding_readiness_report_with_validation_from_graph(
-    graph: &super::graph::ExactIntersectionGraph,
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: ValidationPolicy,
-) -> Result<ExactWindingReadinessReport, MeshError> {
-    if validation == ValidationPolicy::CLOSED
-        && !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
-        && let Some(support) = certified_closed_validation_regularized_solid_support(left, right)
-    {
-        let status = match support {
-            ExactBooleanSupport::CertifiedMixedDimensionalRegularizedSolid => {
-                ExactWindingReadinessStatus::MixedDimensionalRegularizedSolidAlreadyMaterialized
-            }
-            ExactBooleanSupport::CertifiedLowerDimensionalRegularizedSolid => {
-                ExactWindingReadinessStatus::LowerDimensionalRegularizedSolidAlreadyMaterialized
-            }
-            _ => unreachable!("closed validation gate only certifies regularized support"),
-        };
-        return Ok(winding_readiness_report(
-            operation,
-            status,
-            false,
-            0,
-            0,
-            0,
-            Vec::new(),
-            ExactBooleanBlocker::default().into_blocker(ExactBooleanBlockerKind::NeedsWinding),
-            None,
-            None,
-        ));
-    }
-
-    let readiness =
-        winding_readiness_report_with_shortcuts_from_graph(graph, left, right, operation)?;
-    if validation == ValidationPolicy::CLOSED
-        || matches!(operation, ExactBooleanOperation::SelectedRegions(_))
-        || !matches!(
-            readiness.status,
-            ExactWindingReadinessStatus::VolumetricAssemblyRequired
-                | ExactWindingReadinessStatus::CoplanarVolumetricCellsRequired
-        )
-    {
-        return Ok(readiness);
-    }
-
-    if boolean_arrangement_volumetric_split_cell_recovery_from_graph(
-        graph, left, right, operation, validation,
-    )?
-    .is_some()
-    {
-        let counts = retained_graph_counts(graph);
-        let needs_coplanar_volumetric =
-            graph_requires_coplanar_volumetric_cells_for_sources(graph, left, right);
-        let blocker_kind = if needs_coplanar_volumetric {
-            ExactBooleanBlockerKind::NeedsCoplanarVolumetricCells
-        } else {
-            ExactBooleanBlockerKind::NeedsWinding
-        };
-        return Ok(winding_readiness_report(
-            operation,
-            ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized,
-            graph.has_unknowns(),
-            graph.face_pairs.len(),
-            graph.event_count(),
-            0,
-            Vec::new(),
-            counts.into_blocker(blocker_kind),
-            None,
-            if needs_coplanar_volumetric {
-                coplanar_volumetric_evidence_if_required(graph, left, right)
-            } else {
-                None
-            },
         ));
     }
     Ok(readiness)
