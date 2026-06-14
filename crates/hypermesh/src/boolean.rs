@@ -2623,6 +2623,7 @@ fn graph_for_certified_materialization<'a>(
     right: &ExactMesh,
 ) -> Result<&'a ExactIntersectionGraph, MeshError> {
     if let Some(graph) = retained_graph {
+        validate_graph_source_handoff(graph, left, right)?;
         return Ok(graph);
     }
     if owned_graph.is_none() {
@@ -2649,7 +2650,13 @@ pub(crate) fn materialize_certified_boolean_support_with_artifacts(
             let ExactBooleanOperation::SelectedRegions(selection) = operation else {
                 return Err(certified_boolean_support_did_not_materialize_error(support));
             };
-            Some(if let Some(graph) = retained_graph {
+            Some(if retained_graph.is_some() {
+                let graph = graph_for_certified_materialization(
+                    retained_graph,
+                    &mut owned_graph,
+                    left,
+                    right,
+                )?;
                 materialize_selected_region_result_from_graph(
                     graph, left, right, selection, validation,
                 )?
@@ -11961,6 +11968,46 @@ mod tests {
             )
             .unwrap()
             .is_none()
+        );
+    }
+
+    #[test]
+    fn certified_selected_region_materialization_rejects_stale_retained_graph() {
+        let left = ExactMesh::from_i64_triangles_with_policy(
+            &[0, 0, 0, 4, 0, 4, 0, 4, 0],
+            &[0, 1, 2],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let separated_right = ExactMesh::from_i64_triangles_with_policy(
+            &[0, 0, 1, 4, 0, 5, 0, 4, 1],
+            &[0, 1, 2],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let overlapping_right = ExactMesh::from_i64_triangles_with_policy(
+            &[0, 0, 0, 4, 0, 4, 0, 4, 0],
+            &[0, 1, 2],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let stale_graph = build_intersection_graph(&left, &separated_right).unwrap();
+        let request = ExactBooleanRequest::new(
+            ExactBooleanOperation::SelectedRegions(ExactRegionSelection::KeepAll),
+            ValidationPolicy::ALLOW_BOUNDARY,
+        );
+
+        assert!(
+            materialize_certified_boolean_support_with_artifacts(
+                &left,
+                &overlapping_right,
+                request,
+                ExactBooleanSupport::SelectedRegionPolicy,
+                Some(&stale_graph),
+                None,
+            )
+            .is_err(),
+            "certified selected-region materialization must replay retained graph sources"
         );
     }
 
