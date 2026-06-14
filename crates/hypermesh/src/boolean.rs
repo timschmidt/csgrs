@@ -849,8 +849,8 @@ impl ExactBooleanRequest {
             || left.triangles().is_empty()
             || right.triangles().is_empty()
             || !meshes_are_certified_bounds_disjoint(left, right)
-            || (validation == ValidationPolicy::CLOSED
-                && certified_closed_validation_regularized_solid_support(left, right).is_some())
+            || closed_validation_regularized_solid_support(left, right, operation, validation)
+                .is_some()
         {
             return Ok(None);
         }
@@ -875,8 +875,8 @@ impl ExactBooleanRequest {
         let validation = self.validation;
         if matches!(operation, ExactBooleanOperation::SelectedRegions(_))
             || (left.facts().mesh.closed_manifold && right.facts().mesh.closed_manifold)
-            || (validation == ValidationPolicy::CLOSED
-                && certified_closed_validation_regularized_solid_support(left, right).is_some())
+            || closed_validation_regularized_solid_support(left, right, operation, validation)
+                .is_some()
             || !meshes_are_certified_identical(left, right)
         {
             return Ok(None);
@@ -902,8 +902,8 @@ impl ExactBooleanRequest {
         let validation = self.validation;
         if matches!(operation, ExactBooleanOperation::SelectedRegions(_))
             || (left.facts().mesh.closed_manifold && right.facts().mesh.closed_manifold)
-            || (validation == ValidationPolicy::CLOSED
-                && certified_closed_validation_regularized_solid_support(left, right).is_some())
+            || closed_validation_regularized_solid_support(left, right, operation, validation)
+                .is_some()
             || meshes_are_certified_identical(left, right)
             || !meshes_are_certified_same_surface(left, right)
         {
@@ -979,8 +979,8 @@ impl ExactBooleanRequest {
         let validation = self.validation;
         if matches!(operation, ExactBooleanOperation::SelectedRegions(_))
             || meshes_are_certified_bounds_disjoint(left, right)
-            || (validation == ValidationPolicy::CLOSED
-                && certified_closed_validation_regularized_solid_support(left, right).is_some())
+            || closed_validation_regularized_solid_support(left, right, operation, validation)
+                .is_some()
         {
             return Ok(None);
         }
@@ -3440,9 +3440,8 @@ fn preflight_boolean_exact_with_validation_reject_boundary_policy_from_graph(
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
 ) -> Result<ExactBooleanPreflight, MeshError> {
-    if validation == ValidationPolicy::CLOSED
-        && !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
-        && let Some(support) = certified_closed_validation_regularized_solid_support(left, right)
+    if let Some(support) =
+        closed_validation_regularized_solid_support(left, right, operation, validation)
     {
         return Ok(certified_shortcut_preflight(operation, support));
     }
@@ -3485,9 +3484,8 @@ fn preflight_boolean_exact_request(
 ) -> Result<ExactBooleanPreflight, MeshError> {
     let operation = request.operation;
     let validation = request.validation;
-    if validation == ValidationPolicy::CLOSED
-        && !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
-        && let Some(support) = certified_closed_validation_regularized_solid_support(left, right)
+    if let Some(support) =
+        closed_validation_regularized_solid_support(left, right, operation, validation)
     {
         return Ok(certified_shortcut_preflight(operation, support));
     }
@@ -8952,8 +8950,7 @@ pub(crate) fn materialize_open_surface_disjoint_from_graph_for_request(
     let validation = request.validation;
     if matches!(operation, ExactBooleanOperation::SelectedRegions(_))
         || meshes_are_certified_bounds_disjoint(left, right)
-        || (validation == ValidationPolicy::CLOSED
-            && certified_closed_validation_regularized_solid_support(left, right).is_some())
+        || closed_validation_regularized_solid_support(left, right, operation, validation).is_some()
     {
         return Ok(None);
     }
@@ -9125,16 +9122,27 @@ fn certified_closed_validation_regularized_solid_support(
         .or_else(|| certified_mixed_dimensional_regularized_solid_support(left, right))
 }
 
+fn closed_validation_regularized_solid_support(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+) -> Option<ExactBooleanSupport> {
+    if validation != ValidationPolicy::CLOSED
+        || matches!(operation, ExactBooleanOperation::SelectedRegions(_))
+    {
+        return None;
+    }
+    certified_closed_validation_regularized_solid_support(left, right)
+}
+
 pub(crate) fn boolean_closed_validation_regularized_meshes(
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
-    if validation != ValidationPolicy::CLOSED
-        || matches!(operation, ExactBooleanOperation::SelectedRegions(_))
-        || certified_closed_validation_regularized_solid_support(left, right).is_none()
-    {
+    if closed_validation_regularized_solid_support(left, right, operation, validation).is_none() {
         return Ok(None);
     }
     boolean_closed_regularized_lower_dimensional_optional(left, right, operation, validation)
@@ -9902,9 +9910,8 @@ fn winding_readiness_report_with_boundary_policy_from_graph(
     validation: ValidationPolicy,
     boundary_policy: ExactBoundaryBooleanPolicy,
 ) -> Result<ExactWindingReadinessReport, MeshError> {
-    let readiness = if validation == ValidationPolicy::CLOSED
-        && !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
-        && let Some(support) = certified_closed_validation_regularized_solid_support(left, right)
+    let readiness = if let Some(support) =
+        closed_validation_regularized_solid_support(left, right, operation, validation)
     {
         let status = match support {
             ExactBooleanSupport::CertifiedMixedDimensionalRegularizedSolid => {
