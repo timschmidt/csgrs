@@ -10935,49 +10935,26 @@ fn certified_convex_boolean_support_from_graph(
     right: &ExactMesh,
     operation: ExactBooleanOperation,
 ) -> Result<Option<ExactBooleanSupport>, MeshError> {
-    let relation_counts = retained_graph_counts(graph);
-    if graph.has_unknowns() || relation_counts.construction_failed_events > 0 {
-        return Ok(None);
-    }
+    Ok(
+        certified_convex_relation_shortcut_from_graph(graph, left, right, operation)?
+            .map(convex_relation_shortcut_support),
+    )
+}
 
-    let left_in_right = classify_mesh_vertices_against_convex_solid_report(left, right);
-    let right_in_left = classify_mesh_vertices_against_convex_solid_report(right, left);
-    if graph.face_pairs.is_empty() {
-        let support = match (left_in_right.relation, right_in_left.relation) {
-            (ConvexSolidMeshRelation::StrictlyInside, _)
-            | (_, ConvexSolidMeshRelation::StrictlyInside) => {
-                Some(ExactBooleanSupport::CertifiedConvexContainment)
-            }
-            (ConvexSolidMeshRelation::Outside, ConvexSolidMeshRelation::Outside) => {
-                Some(ExactBooleanSupport::CertifiedConvexSeparated)
-            }
-            _ => None,
-        };
-        return Ok(support);
+const fn convex_relation_shortcut_support(relation: ConvexRelationShortcut) -> ExactBooleanSupport {
+    match relation {
+        ConvexRelationShortcut::Separated => ExactBooleanSupport::CertifiedConvexSeparated,
+        ConvexRelationShortcut::LeftInsideRight | ConvexRelationShortcut::RightInsideLeft => {
+            ExactBooleanSupport::CertifiedConvexContainment
+        }
     }
-
-    let left_boundary_inside_right =
-        convex_boundary_containment_is_supported(&left_in_right, &right_in_left);
-    let right_boundary_inside_left =
-        convex_boundary_containment_is_supported(&right_in_left, &left_in_right);
-    if matches!(
-        operation,
-        ExactBooleanOperation::Union | ExactBooleanOperation::Intersection
-    ) && (left_boundary_inside_right || right_boundary_inside_left)
-    {
-        return Ok(Some(ExactBooleanSupport::CertifiedConvexContainment));
-    }
-    if operation == ExactBooleanOperation::Difference && left_boundary_inside_right {
-        return Ok(Some(ExactBooleanSupport::CertifiedConvexContainment));
-    }
-
-    Ok(None)
 }
 
 /// Return whether one certified convex solid is contained in another while
 /// touching its boundary.
 ///
-/// argues that such topology decisions must be retained as exact predicate
+/// Exact geometric computation argues that such topology decisions must be
+/// retained as exact predicate
 /// facts: every subject vertex is certified inside or on the container, at
 /// least one vertex is exactly on the boundary, the container has at least one
 /// vertex outside the subject so the relation is not relabeled equality, and
