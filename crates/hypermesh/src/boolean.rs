@@ -3435,36 +3435,15 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
     })
 }
 
-/// Preflight an exact boolean operation for a specific output validation policy.
+/// Preflight a graph-backed exact boolean operation for a specific output
+/// validation policy.
 ///
-/// [`ExactBooleanRequest::preflight`] preserves the strict closed-output boundary for
-/// named solid booleans. This policy-aware variant keeps that default contract
-/// for `CLOSED`, but can also certify exact arrangement/cell-complex support
-/// when the same retained split-cell facts materialize under a less restrictive
-/// output policy such as [`ValidationPolicy::ALLOW_BOUNDARY`].
-fn preflight_boolean_exact_with_validation_reject_boundary_policy(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: ValidationPolicy,
-) -> Result<ExactBooleanPreflight, MeshError> {
-    if validation == ValidationPolicy::CLOSED
-        && !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
-        && let Some(support) = certified_closed_validation_regularized_solid_support(left, right)
-    {
-        return Ok(certified_shortcut_preflight(operation, support));
-    }
-    let support = initial_reject_boundary_preflight_support(left, right, operation);
-    if let Some(preflight) = preflight_without_graph_if_supported(operation, support) {
-        return Ok(preflight);
-    }
-
-    let graph = validated_intersection_graph(left, right)?;
-    preflight_boolean_exact_with_validation_reject_boundary_policy_from_graph(
-        &graph, left, right, operation, validation,
-    )
-}
-
+/// [`ExactBooleanRequest::preflight`] preserves the strict closed-output
+/// boundary for named solid booleans. This policy-aware variant keeps that
+/// default contract for `CLOSED`, but can also certify exact
+/// arrangement/cell-complex support when the same retained split-cell facts
+/// materialize under a less restrictive output policy such as
+/// [`ValidationPolicy::ALLOW_BOUNDARY`].
 fn preflight_boolean_exact_with_validation_reject_boundary_policy_from_graph(
     graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
@@ -3517,14 +3496,14 @@ fn preflight_boolean_exact_request(
 ) -> Result<ExactBooleanPreflight, MeshError> {
     let operation = request.operation;
     let validation = request.validation;
-    let boundary_policy = request.boundary_policy;
-    let preflight = preflight_boolean_exact_with_validation_reject_boundary_policy(
-        left, right, operation, validation,
-    )?;
-    if boundary_policy == ExactBoundaryBooleanPolicy::Reject
-        || matches!(operation, ExactBooleanOperation::SelectedRegions(_))
-        || preflight.support != ExactBooleanSupport::RequiresBoundaryPolicy
+    if validation == ValidationPolicy::CLOSED
+        && !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
+        && let Some(support) = certified_closed_validation_regularized_solid_support(left, right)
     {
+        return Ok(certified_shortcut_preflight(operation, support));
+    }
+    let support = initial_reject_boundary_preflight_support(left, right, operation);
+    if let Some(preflight) = preflight_without_graph_if_supported(operation, support) {
         return Ok(preflight);
     }
 
