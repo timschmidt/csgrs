@@ -2762,9 +2762,6 @@ fn materialize_certified_arrangement_cell_complex_support_with_arrangement(
     let operation = request.operation;
     let validation = request.validation;
     let mut owned_graph = None;
-    if let Some(graph) = retained_graph {
-        validate_graph_source_handoff(graph, left, right)?;
-    }
     if let Some(arrangement) = retained_regularized_arrangement {
         let outcome = run_arrangement_cell_complex_attempt_from_arrangement_with_recovery_timing(
             arrangement,
@@ -2784,13 +2781,16 @@ fn materialize_certified_arrangement_cell_complex_support_with_arrangement(
             return Ok(Some(*result));
         }
     }
-    if let Some(graph) = retained_graph
-        && !graph.face_pairs.is_empty()
-        && let Some(result) = certified_arrangement_cell_complex_result_from_graph(
-            graph, left, right, operation, validation, true,
-        )?
-    {
-        return Ok(Some(result));
+    if retained_graph.is_some() {
+        let graph =
+            graph_for_certified_materialization(retained_graph, &mut owned_graph, left, right)?;
+        if !graph.face_pairs.is_empty()
+            && let Some(result) = certified_arrangement_cell_complex_result_from_graph(
+                graph, left, right, operation, validation, true,
+            )?
+        {
+            return Ok(Some(result));
+        }
     }
     if let Some(result) = request.materialize_axis_aligned_orthogonal_solid(left, right)? {
         return Ok(Some(result));
