@@ -3050,18 +3050,7 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
     if let Some(preflight) = preflight_without_graph_if_supported(operation, support) {
         return Ok(preflight);
     }
-    preflight_boolean_exact_reject_boundary_policy_from_graph_with_support(
-        graph, left, right, operation, support,
-    )
-}
 
-fn preflight_boolean_exact_reject_boundary_policy_from_graph_with_support(
-    graph: &super::graph::ExactIntersectionGraph,
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    support: ExactBooleanSupport,
-) -> Result<ExactBooleanPreflight, MeshError> {
     if support == ExactBooleanSupport::RequiresCertifiedWinding
         && operation == ExactBooleanOperation::Difference
         && let Some(evidence) = coplanar_boundary_only_evidence_if_consumed(graph, left, right)?
