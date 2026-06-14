@@ -1806,12 +1806,9 @@ fn cached_materialization<T: Clone>(
     request: ExactBooleanRequest,
     validate: impl FnOnce(&T) -> Result<(), MeshError>,
 ) -> Result<Option<T>, MeshError> {
-    if let Some((_, cached)) = cache
-        .iter()
-        .find(|(stored_request, _)| *stored_request == request)
-    {
-        validate(cached)?;
-        return Ok(Some(cached.clone()));
+    if let Some(index) = cached_by_request_index(cache, request) {
+        validate(&cache[index].1)?;
+        return Ok(Some(cache[index].1.clone()));
     }
     Ok(None)
 }
