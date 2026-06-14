@@ -2650,19 +2650,11 @@ pub(crate) fn materialize_certified_boolean_support_with_artifacts(
             let ExactBooleanOperation::SelectedRegions(selection) = operation else {
                 return Err(certified_boolean_support_did_not_materialize_error(support));
             };
-            Some(if retained_graph.is_some() {
-                let graph = graph_for_certified_materialization(
-                    retained_graph,
-                    &mut owned_graph,
-                    left,
-                    right,
-                )?;
-                replay_selected_region_boolean_result_from_graph(
-                    graph, left, right, selection, validation,
-                )?
-            } else {
-                replay_selected_region_boolean_result(left, right, selection, validation)?
-            })
+            let graph =
+                graph_for_certified_materialization(retained_graph, &mut owned_graph, left, right)?;
+            Some(replay_selected_region_boolean_result_from_graph(
+                graph, left, right, selection, validation,
+            )?)
         }
         ExactBooleanSupport::CertifiedBoundaryPolicyShortcut => {
             let graph =
@@ -4628,12 +4620,11 @@ fn materialize_boolean_exact_request_with_graph(
     let validation = request.validation;
     let mut owned_graph = None;
     if let ExactBooleanOperation::SelectedRegions(selection) = operation {
-        if let Some(graph) = retained_graph {
-            return replay_selected_region_boolean_result_from_graph(
-                graph, left, right, selection, validation,
-            );
-        }
-        return replay_selected_region_boolean_result(left, right, selection, validation);
+        let graph =
+            graph_for_certified_materialization(retained_graph, &mut owned_graph, left, right)?;
+        return replay_selected_region_boolean_result_from_graph(
+            graph, left, right, selection, validation,
+        );
     }
     if let Some(result) =
         boolean_closed_validation_regularized_meshes(left, right, operation, validation)?
