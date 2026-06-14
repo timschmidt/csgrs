@@ -1703,18 +1703,7 @@ fn store_retained_materialization_value<T: RetainedMaterializationCacheValue>(
     request: ExactBooleanRequest,
     materialized: T,
 ) -> Result<T, MeshError> {
-    store_retained_materialization(cache, request, materialized, |materialized| {
-        materialized.validate_for_workspace_cache(left, right, request)
-    })
-}
-
-fn store_retained_materialization<T: Clone>(
-    cache: &mut Vec<(ExactBooleanRequest, T)>,
-    request: ExactBooleanRequest,
-    materialized: T,
-    validate: impl FnOnce(&T) -> Result<(), MeshError>,
-) -> Result<T, MeshError> {
-    validate(&materialized)?;
+    materialized.validate_for_workspace_cache(left, right, request)?;
     cache.push((request, materialized.clone()));
     Ok(materialized)
 }
