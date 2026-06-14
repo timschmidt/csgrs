@@ -3,8 +3,7 @@ use super::arrangement3d::{
 };
 use super::boolean::{
     ExactArrangementBooleanAttempt, ExactBooleanCertificationSet, ExactBooleanEvaluation,
-    ExactBooleanOperation, ExactBooleanRequest, ExactIdenticalMeshReport,
-    adjacent_union_completion_certification_from_graph,
+    ExactBooleanOperation, ExactBooleanRequest, adjacent_union_completion_certification_from_graph,
     arrangement_boolean_attempt_report_from_arrangement, arrangement_cell_complex_shortcut_attempt,
     boolean_closed_validation_regularized_meshes, boundary_touching_report_from_graph,
     materialize_adjacent_union_completion_from_graph_for_request,
@@ -31,8 +30,8 @@ use super::reports::{
     ExactAdjacentUnionCompletionReport, ExactBooleanPreflight, ExactBooleanResult,
     ExactBooleanSupport, ExactBoundaryTouchingReport, ExactOpenSurfaceDisjointReport,
     ExactPlanarArrangementReport, ExactRefinementReport, ExactReportFreshness,
-    ExactReportValidationError, ExactSameSurfaceReport, ExactVolumetricBoundaryClosureReport,
-    ExactWindingReadinessReport, exact_report_freshness,
+    ExactReportValidationError, ExactVolumetricBoundaryClosureReport, ExactWindingReadinessReport,
+    exact_report_freshness,
 };
 use super::simplify::{ExactSimplifiedCellComplex, ExactSimplifiedCellComplexFreshness};
 use super::volumetric_cells::{
@@ -115,8 +114,6 @@ pub struct ExactBooleanWorkspace<'a> {
     refinement_reports: Vec<(ExactBooleanRequest, ExactRefinementReport)>,
     adjacent_union_completion_reports:
         Vec<(ExactBooleanRequest, ExactAdjacentUnionCompletionReport)>,
-    identical_mesh_reports: Vec<(ExactBooleanRequest, ExactIdenticalMeshReport)>,
-    same_surface_reports: Vec<(ExactBooleanRequest, ExactSameSurfaceReport)>,
     boundary_touching_reports: Vec<(ExactBooleanRequest, ExactBoundaryTouchingReport)>,
     open_surface_disjoint_reports: Vec<(ExactBooleanRequest, ExactOpenSurfaceDisjointReport)>,
     volumetric_boundary_closure_reports:
@@ -152,8 +149,6 @@ impl<'a> ExactBooleanWorkspace<'a> {
             simplified_cell_complexes: Vec::new(),
             refinement_reports: Vec::new(),
             adjacent_union_completion_reports: Vec::new(),
-            identical_mesh_reports: Vec::new(),
-            same_surface_reports: Vec::new(),
             boundary_touching_reports: Vec::new(),
             open_surface_disjoint_reports: Vec::new(),
             volumetric_boundary_closure_reports: Vec::new(),
@@ -816,41 +811,6 @@ impl<'a> ExactBooleanWorkspace<'a> {
             return Err(ExactReportValidationError::StatusEvidenceMismatch);
         }
         report.validate_against_sources(self.left, self.right)
-    }
-
-    /// Returns identical-mesh evidence for `request`, building it once per
-    /// request.
-    pub fn identical_mesh_report(
-        &mut self,
-        request: ExactBooleanRequest,
-    ) -> &ExactIdenticalMeshReport {
-        if let Some(index) = cached_by_request_index(&self.identical_mesh_reports, request) {
-            return &self.identical_mesh_reports[index].1;
-        }
-
-        let report = request.identical_mesh_report(self.left, self.right);
-        self.identical_mesh_reports.push((request, report));
-        &self
-            .identical_mesh_reports
-            .last()
-            .expect("identical-mesh report cache was just populated")
-            .1
-    }
-
-    /// Returns same-surface evidence for `request`, building it once per
-    /// request.
-    pub fn same_surface_report(&mut self, request: ExactBooleanRequest) -> &ExactSameSurfaceReport {
-        if let Some(index) = cached_by_request_index(&self.same_surface_reports, request) {
-            return &self.same_surface_reports[index].1;
-        }
-
-        let report = request.same_surface_report(self.left, self.right);
-        self.same_surface_reports.push((request, report));
-        &self
-            .same_surface_reports
-            .last()
-            .expect("same-surface report cache was just populated")
-            .1
     }
 
     /// Returns boundary-touching evidence for `request`, building it once per
@@ -2259,16 +2219,7 @@ mod tests {
             Err(ExactReportValidationError::StatusEvidenceMismatch)
         );
 
-        let first_identical_report =
-            workspace.identical_mesh_report(request) as *const ExactIdenticalMeshReport;
-        let second_identical_report =
-            workspace.identical_mesh_report(request) as *const ExactIdenticalMeshReport;
-        assert_eq!(first_identical_report, second_identical_report);
-        assert_eq!(
-            workspace.identical_mesh_report(request),
-            &request.identical_mesh_report(&left, &right)
-        );
-        let identical_report = workspace.identical_mesh_report(request).clone();
+        let identical_report = request.identical_mesh_report(&left, &right);
         identical_report
             .validate_against_sources(&left, &right)
             .unwrap();
@@ -2287,16 +2238,7 @@ mod tests {
             ExactReportFreshness::Current
         );
 
-        let first_same_surface_report =
-            workspace.same_surface_report(request) as *const ExactSameSurfaceReport;
-        let second_same_surface_report =
-            workspace.same_surface_report(request) as *const ExactSameSurfaceReport;
-        assert_eq!(first_same_surface_report, second_same_surface_report);
-        assert_eq!(
-            workspace.same_surface_report(request),
-            &request.same_surface_report(&left, &right)
-        );
-        let same_surface_report = workspace.same_surface_report(request).clone();
+        let same_surface_report = request.same_surface_report(&left, &right);
         same_surface_report
             .validate_against_sources(&left, &right)
             .unwrap();

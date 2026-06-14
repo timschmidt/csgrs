@@ -920,8 +920,8 @@ fn retained_workspace_and_identical_mesh_for_case<'a>(
     case: &'a BenchCase,
     request: ExactBooleanRequest,
 ) -> (ExactBooleanWorkspace<'a>, ExactIdenticalMeshReport) {
-    let mut retained_workspace = retained_workspace_for_case(case, request);
-    let report = retained_workspace.identical_mesh_report(request).clone();
+    let retained_workspace = retained_workspace_for_case(case, request);
+    let report = request.identical_mesh_report(&case.left, &case.right);
     (retained_workspace, report)
 }
 
@@ -929,8 +929,8 @@ fn retained_workspace_and_same_surface_for_case<'a>(
     case: &'a BenchCase,
     request: ExactBooleanRequest,
 ) -> (ExactBooleanWorkspace<'a>, ExactSameSurfaceReport) {
-    let mut retained_workspace = retained_workspace_for_case(case, request);
-    let report = retained_workspace.same_surface_report(request).clone();
+    let retained_workspace = retained_workspace_for_case(case, request);
+    let report = request.same_surface_report(&case.left, &case.right);
     (retained_workspace, report)
 }
 
