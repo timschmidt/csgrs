@@ -799,15 +799,6 @@ impl<'a> ExactBooleanWorkspace<'a> {
         report.validate_against_sources(self.left, self.right)
     }
 
-    /// Classify refinement-report freshness in this retained source session.
-    pub fn refinement_report_freshness(
-        &mut self,
-        request: ExactBooleanRequest,
-        report: &ExactRefinementReport,
-    ) -> ExactReportFreshness {
-        exact_report_freshness(self.validate_refinement_report(request, report))
-    }
-
     /// Returns adjacent-union completion evidence for `request`, building it
     /// once per request.
     pub fn adjacent_union_completion_report(
@@ -846,16 +837,6 @@ impl<'a> ExactBooleanWorkspace<'a> {
         report.validate_against_sources(self.left, self.right)
     }
 
-    /// Classify adjacent-union completion freshness in this retained source
-    /// session.
-    pub fn adjacent_union_completion_report_freshness(
-        &mut self,
-        request: ExactBooleanRequest,
-        report: &ExactAdjacentUnionCompletionReport,
-    ) -> ExactReportFreshness {
-        exact_report_freshness(self.validate_adjacent_union_completion_report(request, report))
-    }
-
     /// Returns identical-mesh evidence for `request`, building it once per
     /// request.
     pub fn identical_mesh_report(
@@ -875,15 +856,6 @@ impl<'a> ExactBooleanWorkspace<'a> {
             .1
     }
 
-    /// Classify identical-mesh freshness in this retained source session.
-    pub fn identical_mesh_report_freshness(
-        &mut self,
-        _request: ExactBooleanRequest,
-        report: &ExactIdenticalMeshReport,
-    ) -> ExactReportFreshness {
-        report.freshness_against_sources(self.left, self.right)
-    }
-
     /// Returns same-surface evidence for `request`, building it once per
     /// request.
     pub fn same_surface_report(&mut self, request: ExactBooleanRequest) -> &ExactSameSurfaceReport {
@@ -898,15 +870,6 @@ impl<'a> ExactBooleanWorkspace<'a> {
             .last()
             .expect("same-surface report cache was just populated")
             .1
-    }
-
-    /// Classify same-surface freshness in this retained source session.
-    pub fn same_surface_report_freshness(
-        &mut self,
-        _request: ExactBooleanRequest,
-        report: &ExactSameSurfaceReport,
-    ) -> ExactReportFreshness {
-        report.freshness_against_sources(self.left, self.right)
     }
 
     /// Returns boundary-touching evidence for `request`, building it once per
@@ -926,15 +889,6 @@ impl<'a> ExactBooleanWorkspace<'a> {
         store_retained_report(&mut self.boundary_touching_reports, request, report)
     }
 
-    /// Classify boundary-touching freshness in this retained source session.
-    pub fn boundary_touching_report_freshness(
-        &mut self,
-        _request: ExactBooleanRequest,
-        report: &ExactBoundaryTouchingReport,
-    ) -> ExactReportFreshness {
-        report.freshness_against_sources(self.left, self.right)
-    }
-
     /// Returns open-surface disjointness evidence for `request`, building it
     /// once per request.
     pub fn open_surface_disjoint_report(
@@ -950,16 +904,6 @@ impl<'a> ExactBooleanWorkspace<'a> {
         let graph = self.validated_graph()?;
         let report = open_surface_disjoint_report_from_graph(graph, left, right);
         store_retained_report(&mut self.open_surface_disjoint_reports, request, report)
-    }
-
-    /// Classify open-surface disjointness freshness in this retained source
-    /// session.
-    pub fn open_surface_disjoint_report_freshness(
-        &mut self,
-        _request: ExactBooleanRequest,
-        report: &ExactOpenSurfaceDisjointReport,
-    ) -> ExactReportFreshness {
-        report.freshness_against_sources(self.left, self.right)
     }
 
     /// Returns volumetric boundary-closure evidence for `request`, building it
@@ -999,16 +943,6 @@ impl<'a> ExactBooleanWorkspace<'a> {
         report.validate_against_sources(self.left, self.right)
     }
 
-    /// Classify volumetric boundary-closure freshness in this retained source
-    /// session.
-    pub fn volumetric_boundary_closure_freshness(
-        &mut self,
-        request: ExactBooleanRequest,
-        report: &ExactVolumetricBoundaryClosureReport,
-    ) -> ExactReportFreshness {
-        exact_report_freshness(self.validate_volumetric_boundary_closure(request, report))
-    }
-
     /// Returns winding-readiness evidence for `request`, building it once per
     /// request.
     pub fn winding_readiness(
@@ -1045,15 +979,6 @@ impl<'a> ExactBooleanWorkspace<'a> {
         )
     }
 
-    /// Classify winding-readiness freshness in this retained source session.
-    pub fn winding_readiness_freshness(
-        &mut self,
-        request: ExactBooleanRequest,
-        readiness: &ExactWindingReadinessReport,
-    ) -> ExactReportFreshness {
-        exact_report_freshness(self.validate_winding_readiness(request, readiness))
-    }
-
     /// Returns planar-arrangement readiness evidence for `request`, building
     /// it once per request.
     pub fn planar_arrangement_report(
@@ -1082,16 +1007,6 @@ impl<'a> ExactBooleanWorkspace<'a> {
             return Err(ExactReportValidationError::StatusEvidenceMismatch);
         }
         report.validate_against_sources(self.left, self.right)
-    }
-
-    /// Classify planar-arrangement readiness freshness in this retained source
-    /// session.
-    pub fn planar_arrangement_report_freshness(
-        &mut self,
-        request: ExactBooleanRequest,
-        report: &ExactPlanarArrangementReport,
-    ) -> ExactReportFreshness {
-        exact_report_freshness(self.validate_planar_arrangement_report(request, report))
     }
 
     /// Returns the full exact boolean certification bundle for `request`,
@@ -2293,7 +2208,7 @@ mod tests {
             .validate_refinement_report(request, &refinement_report)
             .unwrap();
         assert_eq!(
-            workspace.refinement_report_freshness(request, &refinement_report),
+            refinement_report.freshness_against_sources(&left, &right),
             ExactReportFreshness::Current
         );
         let mut stale_refinement_report = refinement_report.clone();
@@ -2303,7 +2218,7 @@ mod tests {
             Err(ExactReportValidationError::SourceReplayMismatch)
         );
         assert_ne!(
-            workspace.refinement_report_freshness(request, &stale_refinement_report),
+            stale_refinement_report.freshness_against_sources(&left, &right),
             ExactReportFreshness::Current
         );
         let mut relabeled_refinement_report = refinement_report.clone();
@@ -2332,7 +2247,7 @@ mod tests {
             .validate_adjacent_union_completion_report(request, &adjacent_report)
             .unwrap();
         assert_eq!(
-            workspace.adjacent_union_completion_report_freshness(request, &adjacent_report),
+            adjacent_report.freshness_against_sources(&left, &right),
             ExactReportFreshness::Current
         );
         let mut stale_adjacent_report = adjacent_report.clone();
@@ -2343,7 +2258,7 @@ mod tests {
             Err(ExactReportValidationError::StatusEvidenceMismatch)
         );
         assert_ne!(
-            workspace.adjacent_union_completion_report_freshness(request, &stale_adjacent_report),
+            stale_adjacent_report.freshness_against_sources(&left, &right),
             ExactReportFreshness::Current
         );
         let mut relabeled_adjacent_report = adjacent_report.clone();
@@ -2368,7 +2283,7 @@ mod tests {
             .validate_against_sources(&left, &right)
             .unwrap();
         assert_eq!(
-            workspace.identical_mesh_report_freshness(request, &identical_report),
+            identical_report.freshness_against_sources(&left, &right),
             ExactReportFreshness::Current
         );
         let mut stale_identical_report = identical_report.clone();
@@ -2378,7 +2293,7 @@ mod tests {
             Err(ExactReportValidationError::SourceReplayMismatch)
         );
         assert_ne!(
-            workspace.identical_mesh_report_freshness(request, &stale_identical_report),
+            stale_identical_report.freshness_against_sources(&left, &right),
             ExactReportFreshness::Current
         );
 
@@ -2396,7 +2311,7 @@ mod tests {
             .validate_against_sources(&left, &right)
             .unwrap();
         assert_eq!(
-            workspace.same_surface_report_freshness(request, &same_surface_report),
+            same_surface_report.freshness_against_sources(&left, &right),
             ExactReportFreshness::Current
         );
         let mut stale_same_surface_report = same_surface_report.clone();
@@ -2406,7 +2321,7 @@ mod tests {
             Err(ExactReportValidationError::StatusEvidenceMismatch)
         );
         assert_ne!(
-            workspace.same_surface_report_freshness(request, &stale_same_surface_report),
+            stale_same_surface_report.freshness_against_sources(&left, &right),
             ExactReportFreshness::Current
         );
 
@@ -2424,7 +2339,7 @@ mod tests {
             .validate_against_sources(&left, &right)
             .unwrap();
         assert_eq!(
-            workspace.boundary_touching_report_freshness(request, &boundary_report),
+            boundary_report.freshness_against_sources(&left, &right),
             ExactReportFreshness::Current
         );
         let mut stale_boundary_report = boundary_report.clone();
@@ -2434,7 +2349,7 @@ mod tests {
             Err(ExactReportValidationError::SourceReplayMismatch)
         );
         assert_ne!(
-            workspace.boundary_touching_report_freshness(request, &stale_boundary_report),
+            stale_boundary_report.freshness_against_sources(&left, &right),
             ExactReportFreshness::Current
         );
 
@@ -2455,7 +2370,7 @@ mod tests {
             .validate_against_sources(&left, &right)
             .unwrap();
         assert_eq!(
-            workspace.open_surface_disjoint_report_freshness(request, &open_surface_report),
+            open_surface_report.freshness_against_sources(&left, &right),
             ExactReportFreshness::Current
         );
         let mut stale_open_surface_report = open_surface_report.clone();
@@ -2465,7 +2380,7 @@ mod tests {
             Err(ExactReportValidationError::SourceReplayMismatch)
         );
         assert_ne!(
-            workspace.open_surface_disjoint_report_freshness(request, &stale_open_surface_report),
+            stale_open_surface_report.freshness_against_sources(&left, &right),
             ExactReportFreshness::Current
         );
 
@@ -2486,18 +2401,24 @@ mod tests {
             .validate_volumetric_boundary_closure(request, &closure_report)
             .unwrap();
         assert_eq!(
-            workspace.volumetric_boundary_closure_freshness(request, &closure_report),
+            closure_report.freshness_against_sources(&left, &right),
             ExactReportFreshness::Current
         );
         let mut stale_closure_report = closure_report.clone();
-        stale_closure_report.operation = ExactBooleanOperation::Difference;
+        stale_closure_report.output_triangles += 1;
         assert_eq!(
             workspace.validate_volumetric_boundary_closure(request, &stale_closure_report),
             Err(ExactReportValidationError::StatusEvidenceMismatch)
         );
         assert_ne!(
-            workspace.volumetric_boundary_closure_freshness(request, &stale_closure_report),
+            stale_closure_report.freshness_against_sources(&left, &right),
             ExactReportFreshness::Current
+        );
+        let mut relabeled_closure_report = closure_report.clone();
+        relabeled_closure_report.operation = ExactBooleanOperation::Difference;
+        assert_eq!(
+            workspace.validate_volumetric_boundary_closure(request, &relabeled_closure_report),
+            Err(ExactReportValidationError::StatusEvidenceMismatch)
         );
 
         let first_readiness =
@@ -2514,7 +2435,12 @@ mod tests {
             .validate_winding_readiness(request, &readiness)
             .unwrap();
         assert_eq!(
-            workspace.winding_readiness_freshness(request, &readiness),
+            readiness.freshness_against_sources_with_boundary_policy(
+                &left,
+                &right,
+                request.validation,
+                request.boundary_policy
+            ),
             ExactReportFreshness::Current
         );
         let mut stale_readiness = readiness.clone();
@@ -2524,7 +2450,12 @@ mod tests {
             Err(ExactReportValidationError::SourceReplayMismatch)
         );
         assert_ne!(
-            workspace.winding_readiness_freshness(request, &stale_readiness),
+            stale_readiness.freshness_against_sources_with_boundary_policy(
+                &left,
+                &right,
+                request.validation,
+                request.boundary_policy
+            ),
             ExactReportFreshness::Current
         );
         let mut relabeled_readiness = readiness.clone();
@@ -2551,7 +2482,7 @@ mod tests {
             .validate_planar_arrangement_report(request, &planar_report)
             .unwrap();
         assert_eq!(
-            workspace.planar_arrangement_report_freshness(request, &planar_report),
+            planar_report.freshness_against_sources(&left, &right),
             ExactReportFreshness::Current
         );
         let mut stale_planar_report = planar_report.clone();
@@ -2561,7 +2492,7 @@ mod tests {
             Err(ExactReportValidationError::SourceReplayMismatch)
         );
         assert_ne!(
-            workspace.planar_arrangement_report_freshness(request, &stale_planar_report),
+            stale_planar_report.freshness_against_sources(&left, &right),
             ExactReportFreshness::Current
         );
         let mut relabeled_planar_report = planar_report.clone();
