@@ -812,113 +812,6 @@ impl ExactBooleanRequest {
         same_surface_report_from_sources(left, right)
     }
 
-    /// Materialize the empty-operand shortcut for this request, when it owns
-    /// the replay provenance.
-    pub fn materialize_empty_operand(
-        self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-    ) -> Result<Option<ExactBooleanResult>, MeshError> {
-        let operation = self.operation;
-        let validation = self.validation;
-        if matches!(operation, ExactBooleanOperation::SelectedRegions(_))
-            || (!left.triangles().is_empty() && !right.triangles().is_empty())
-        {
-            return Ok(None);
-        }
-        Ok(public_operation_replayable_result(
-            Some(boolean_empty_operand(left, right, operation, validation)?),
-            left,
-            right,
-            operation,
-            validation,
-            ExactBoundaryBooleanPolicy::Reject,
-        ))
-    }
-
-    /// Materialize the bounds-disjoint shortcut for this request, when exact
-    /// AABB facts prove the shortcut owns the replay provenance.
-    pub fn materialize_bounds_disjoint(
-        self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-    ) -> Result<Option<ExactBooleanResult>, MeshError> {
-        let operation = self.operation;
-        let validation = self.validation;
-        if matches!(operation, ExactBooleanOperation::SelectedRegions(_))
-            || left.triangles().is_empty()
-            || right.triangles().is_empty()
-            || !meshes_are_certified_bounds_disjoint(left, right)
-            || closed_validation_regularized_solid_support(left, right, operation, validation)
-                .is_some()
-        {
-            return Ok(None);
-        }
-        Ok(public_operation_replayable_result(
-            Some(boolean_disjoint_meshes(left, right, operation, validation)?),
-            left,
-            right,
-            operation,
-            validation,
-            ExactBoundaryBooleanPolicy::Reject,
-        ))
-    }
-
-    /// Materialize the identical-mesh shortcut for this request, when it owns
-    /// the replay provenance.
-    pub fn materialize_identical_mesh(
-        self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-    ) -> Result<Option<ExactBooleanResult>, MeshError> {
-        let operation = self.operation;
-        let validation = self.validation;
-        if matches!(operation, ExactBooleanOperation::SelectedRegions(_))
-            || (left.facts().mesh.closed_manifold && right.facts().mesh.closed_manifold)
-            || closed_validation_regularized_solid_support(left, right, operation, validation)
-                .is_some()
-            || !meshes_are_certified_identical(left, right)
-        {
-            return Ok(None);
-        }
-        Ok(public_operation_replayable_result(
-            Some(boolean_identical_meshes(left, operation, validation)?),
-            left,
-            right,
-            operation,
-            validation,
-            ExactBoundaryBooleanPolicy::Reject,
-        ))
-    }
-
-    /// Materialize the same-surface shortcut for this request, when it owns
-    /// the replay provenance.
-    pub fn materialize_same_surface(
-        self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-    ) -> Result<Option<ExactBooleanResult>, MeshError> {
-        let operation = self.operation;
-        let validation = self.validation;
-        if matches!(operation, ExactBooleanOperation::SelectedRegions(_))
-            || (left.facts().mesh.closed_manifold && right.facts().mesh.closed_manifold)
-            || closed_validation_regularized_solid_support(left, right, operation, validation)
-                .is_some()
-            || meshes_are_certified_identical(left, right)
-            || !meshes_are_certified_same_surface(left, right)
-        {
-            return Ok(None);
-        }
-        Ok(public_operation_replayable_result(
-            Some(boolean_same_surface_meshes(left, operation, validation)?),
-            left,
-            right,
-            operation,
-            validation,
-            ExactBoundaryBooleanPolicy::Reject,
-        ))
-    }
-
     /// Materialize the open-surface disjoint shortcut for this request, when
     /// exact graph facts prove the shortcut owns the replay provenance.
     pub fn materialize_open_surface_disjoint(
@@ -2593,16 +2486,79 @@ pub(crate) fn materialize_certified_boolean_support_with_artifacts(
             )?
         }
         ExactBooleanSupport::CertifiedEmptyOperand => {
-            request.materialize_empty_operand(left, right)?
+            if matches!(operation, ExactBooleanOperation::SelectedRegions(_))
+                || (!left.triangles().is_empty() && !right.triangles().is_empty())
+            {
+                None
+            } else {
+                public_operation_replayable_result(
+                    Some(boolean_empty_operand(left, right, operation, validation)?),
+                    left,
+                    right,
+                    operation,
+                    validation,
+                    ExactBoundaryBooleanPolicy::Reject,
+                )
+            }
         }
         ExactBooleanSupport::CertifiedBoundsDisjoint => {
-            request.materialize_bounds_disjoint(left, right)?
+            if matches!(operation, ExactBooleanOperation::SelectedRegions(_))
+                || left.triangles().is_empty()
+                || right.triangles().is_empty()
+                || !meshes_are_certified_bounds_disjoint(left, right)
+                || closed_validation_regularized_solid_support(left, right, operation, validation)
+                    .is_some()
+            {
+                None
+            } else {
+                public_operation_replayable_result(
+                    Some(boolean_disjoint_meshes(left, right, operation, validation)?),
+                    left,
+                    right,
+                    operation,
+                    validation,
+                    ExactBoundaryBooleanPolicy::Reject,
+                )
+            }
         }
         ExactBooleanSupport::CertifiedIdentical => {
-            request.materialize_identical_mesh(left, right)?
+            if matches!(operation, ExactBooleanOperation::SelectedRegions(_))
+                || (left.facts().mesh.closed_manifold && right.facts().mesh.closed_manifold)
+                || closed_validation_regularized_solid_support(left, right, operation, validation)
+                    .is_some()
+                || !meshes_are_certified_identical(left, right)
+            {
+                None
+            } else {
+                public_operation_replayable_result(
+                    Some(boolean_identical_meshes(left, operation, validation)?),
+                    left,
+                    right,
+                    operation,
+                    validation,
+                    ExactBoundaryBooleanPolicy::Reject,
+                )
+            }
         }
         ExactBooleanSupport::CertifiedSameSurface => {
-            request.materialize_same_surface(left, right)?
+            if matches!(operation, ExactBooleanOperation::SelectedRegions(_))
+                || (left.facts().mesh.closed_manifold && right.facts().mesh.closed_manifold)
+                || closed_validation_regularized_solid_support(left, right, operation, validation)
+                    .is_some()
+                || meshes_are_certified_identical(left, right)
+                || !meshes_are_certified_same_surface(left, right)
+            {
+                None
+            } else {
+                public_operation_replayable_result(
+                    Some(boolean_same_surface_meshes(left, operation, validation)?),
+                    left,
+                    right,
+                    operation,
+                    validation,
+                    ExactBoundaryBooleanPolicy::Reject,
+                )
+            }
         }
         ExactBooleanSupport::CertifiedClosedBoundaryTouchingUnion
         | ExactBooleanSupport::CertifiedClosedBoundaryTouchingIntersection
