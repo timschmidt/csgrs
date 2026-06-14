@@ -580,12 +580,12 @@ impl<'a> ExactBooleanWorkspace<'a> {
         if let Some(attempt) =
             direct_arrangement_cell_complex_attempt(self.left, self.right, request, policy)?
         {
-            self.arrangement_attempts.push((request, policy, attempt));
-            return Ok(&self
-                .arrangement_attempts
-                .last()
-                .expect("arrangement attempt cache was just populated")
-                .2);
+            return store_retained_arrangement_attempt(
+                &mut self.arrangement_attempts,
+                request,
+                policy,
+                attempt,
+            );
         }
 
         self.arrangement(policy)?;
@@ -598,12 +598,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
             policy,
             &self.arrangements[arrangement_index].1,
         )?;
-        self.arrangement_attempts.push((request, policy, attempt));
-        Ok(&self
-            .arrangement_attempts
-            .last()
-            .expect("arrangement attempt cache was just populated")
-            .2)
+        store_retained_arrangement_attempt(&mut self.arrangement_attempts, request, policy, attempt)
     }
 
     /// Validate arrangement/cell-complex attempt evidence against this
@@ -1722,6 +1717,34 @@ fn store_retained_policy_report<T: RetainedPolicyReport>(
         .last()
         .expect("policy report cache was just populated")
         .1)
+}
+
+fn store_retained_arrangement_attempt(
+    cache: &mut Vec<(
+        ExactBooleanRequest,
+        ExactRegularizationPolicy,
+        ExactArrangementBooleanAttempt,
+    )>,
+    request: ExactBooleanRequest,
+    policy: ExactRegularizationPolicy,
+    attempt: ExactArrangementBooleanAttempt,
+) -> Result<&ExactArrangementBooleanAttempt, MeshError> {
+    if attempt.operation != request.operation
+        || attempt.output_validation != request.validation
+        || attempt.policy != policy
+    {
+        return Err(workspace_report_validation_error(
+            ExactReportValidationError::StatusEvidenceMismatch,
+        ));
+    }
+    attempt
+        .validate()
+        .map_err(workspace_report_validation_error)?;
+    cache.push((request, policy, attempt));
+    Ok(&cache
+        .last()
+        .expect("arrangement attempt cache was just populated")
+        .2)
 }
 
 fn store_retained_certification_set(
