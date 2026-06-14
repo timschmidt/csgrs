@@ -4762,20 +4762,6 @@ fn arrangement_boolean_attempt_report(
     Ok(arrangement_attempt_from_outcome(outcome))
 }
 
-fn arrangement_cell_complex_shortcut_result(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: ValidationPolicy,
-) -> Result<Option<ExactBooleanResult>, MeshError> {
-    if let Some(result) =
-        boolean_arrangement_orthogonal_solid_cell_recovery(left, right, operation, validation)?
-    {
-        return Ok(Some(result));
-    }
-    boolean_arrangement_affine_orthogonal_solid_recovery(left, right, operation, validation)
-}
-
 pub(crate) fn arrangement_cell_complex_shortcut_attempt(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -4785,13 +4771,21 @@ pub(crate) fn arrangement_cell_complex_shortcut_attempt(
     if policy != ExactRegularizationPolicy::REGULARIZED_SOLID {
         return Ok(None);
     }
-    let Some(result) = arrangement_cell_complex_shortcut_result(
+    let result = if let Some(result) = boolean_arrangement_orthogonal_solid_cell_recovery(
         left,
         right,
         request.operation,
         request.validation,
-    )?
-    else {
+    )? {
+        result
+    } else if let Some(result) = boolean_arrangement_affine_orthogonal_solid_recovery(
+        left,
+        right,
+        request.operation,
+        request.validation,
+    )? {
+        result
+    } else {
         return Ok(None);
     };
     Ok(Some(ExactArrangementBooleanAttempt {
