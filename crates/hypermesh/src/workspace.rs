@@ -3171,13 +3171,7 @@ mod tests {
             .materialize_boundary_touching_policy(request)
             .unwrap()
             .expect("boundary policy should materialize from retained graph");
-        assert_eq!(
-            materialized,
-            request
-                .materialize_boundary_touching_policy(&left, &right)
-                .unwrap()
-                .unwrap()
-        );
+        assert_eq!(materialized, request.materialize(&left, &right).unwrap());
         assert_eq!(workspace.boundary_touching_policy_materializations.len(), 1);
         assert_eq!(
             workspace

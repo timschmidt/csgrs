@@ -3270,9 +3270,8 @@ fn boundary_touching_policy_boolean_is_publicly_replayable() {
                 ValidationPolicy::ALLOW_BOUNDARY,
                 ExactBoundaryBooleanPolicy::Reject,
             )
-            .materialize_boundary_touching_policy(&left, &right)
-            .unwrap()
-            .is_none()
+            .materialize(&left, &right)
+            .is_err()
         );
 
         let result = ExactBooleanRequest::with_boundary_policy(
@@ -3280,9 +3279,8 @@ fn boundary_touching_policy_boolean_is_publicly_replayable() {
             ValidationPolicy::ALLOW_BOUNDARY,
             ExactBoundaryBooleanPolicy::PreserveSeparateShells,
         )
-        .materialize_boundary_touching_policy(&left, &right)
-        .unwrap()
-        .expect("certified boundary-only contact should materialize under explicit policy");
+        .materialize(&left, &right)
+        .unwrap();
         assert_eq!(
             result.kind,
             ExactBooleanResultKind::BoundaryPolicyShortcut { operation }
@@ -3335,9 +3333,8 @@ fn boundary_touching_policy_boolean_is_publicly_replayable() {
             ValidationPolicy::CLOSED,
             ExactBoundaryBooleanPolicy::PreserveSeparateShells,
         )
-        .materialize_boundary_touching_policy(&closed_left, &closed_right)
-        .unwrap()
-        .expect("closed boundary-touching regularization should materialize directly");
+        .materialize(&closed_left, &closed_right)
+        .unwrap();
         assert_eq!(
             direct.kind,
             ExactBooleanResultKind::CertifiedShortcut {
@@ -6798,9 +6795,8 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
             ValidationPolicy::CLOSED,
             ExactBoundaryBooleanPolicy::PreserveSeparateShells,
         )
-        .materialize_boundary_touching_policy(&left, &right)
-        .unwrap()
-        .expect("closed lower-dimensional regularization should materialize directly");
+        .materialize(&left, &right)
+        .unwrap();
         assert_eq!(
             materialized.kind,
             ExactBooleanResultKind::CertifiedShortcut {

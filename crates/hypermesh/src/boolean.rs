@@ -812,32 +812,6 @@ impl ExactBooleanRequest {
         same_surface_report_from_sources(left, right)
     }
 
-    /// Materialize explicit boundary-only projection for this request, when
-    /// its boundary policy allows that projection.
-    pub fn materialize_boundary_touching_policy(
-        self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-    ) -> Result<Option<ExactBooleanResult>, MeshError> {
-        let operation = self.operation;
-        let validation = self.validation;
-        let boundary_policy = self.boundary_policy;
-        if let Some(result) =
-            boolean_closed_validation_regularized_meshes(left, right, operation, validation)?
-        {
-            return Ok(public_operation_replayable_result(
-                Some(result),
-                left,
-                right,
-                operation,
-                validation,
-                boundary_policy,
-            ));
-        }
-        let graph = validated_intersection_graph(left, right)?;
-        materialize_boundary_touching_policy_from_graph_for_request(&graph, left, right, self)
-    }
-
     /// Materialize positive-area closed boundary contact with no shared
     /// volume, returning the exact evidence consumed by this request.
     pub fn materialize_closed_no_volume_overlap_regularized_with_evidence(
