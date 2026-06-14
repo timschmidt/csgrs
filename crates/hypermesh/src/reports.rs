@@ -23,10 +23,10 @@ use super::affine_solid::{
 use super::arrangement3d::{ExactArrangement, ExactTopologyAssemblyReport};
 use super::boolean::{
     ExactBooleanOperation, ExactBooleanRequest, ExactBoundaryBooleanPolicy,
-    boundary_policy_shortcut_result_matches_sources,
+    boolean_coplanar_mesh_overlay_optional, boundary_policy_shortcut_result_matches_sources,
     materialize_volumetric_coplanar_boundary_closure_output,
     open_surface_disjoint_result_matches_sources, preflight_boolean_exact_request_from_graph,
-    replay_closed_same_surface_boolean_result_if_certified, replay_coplanar_mesh_overlay_result,
+    replay_closed_same_surface_boolean_result_if_certified,
     replay_materialized_volumetric_winding_region_plan, replay_open_surface_arrangement_result,
     replay_selected_region_boolean_result,
 };
@@ -1496,7 +1496,7 @@ impl ExactBooleanResult {
             shortcut: ExactBooleanShortcutKind::ArrangementCellComplex,
         } = self.kind
         {
-            if let Some(replay) = replay_coplanar_mesh_overlay_result(
+            if let Some(replay) = boolean_coplanar_mesh_overlay_optional(
                 left,
                 right,
                 operation,

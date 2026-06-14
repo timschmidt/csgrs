@@ -7984,7 +7984,7 @@ fn materialize_simple_coplanar_overlay_arrangement(
     )))
 }
 
-fn boolean_coplanar_mesh_overlay_optional(
+pub(crate) fn boolean_coplanar_mesh_overlay_optional(
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
@@ -8112,15 +8112,6 @@ pub fn materialize_coplanar_mesh_overlay_arrangement(
         return Ok(None);
     }
     Ok(Some(result))
-}
-
-pub(crate) fn replay_coplanar_mesh_overlay_result(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: ValidationPolicy,
-) -> Result<Option<ExactBooleanResult>, MeshError> {
-    boolean_coplanar_mesh_overlay_optional(left, right, operation, validation)
 }
 
 pub(crate) fn materialize_coplanar_mesh_overlay_mesh(
