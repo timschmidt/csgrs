@@ -890,8 +890,8 @@ pub struct ExactBooleanCertificationSet {
     pub convex_right_in_left: ConvexSolidMeshClassification,
     /// Direct closed-convex boolean capabilities.
     pub convex_capabilities: ExactConvexBooleanCapabilityFacts,
-    /// Direct arrangement-cell shortcut capabilities that do not consume the
-    /// full arrangement attempt report.
+    /// Arrangement-cell shortcut capabilities that cover cases not yet
+    /// consumed by the full arrangement attempt report.
     pub arrangement_cell_complex_shortcuts: ExactArrangementCellComplexShortcutFacts,
     /// Planar-arrangement readiness for coplanar surface output.
     pub planar_arrangement: ExactPlanarArrangementReport,
@@ -972,20 +972,20 @@ impl ExactBooleanCertificationSet {
                     request.operation,
                 )?)
             };
-        let direct_arrangement_cell_complex_attempt_report =
-            direct_arrangement_cell_complex_attempt(
+        let arrangement_cell_complex_shortcut_attempt_report =
+            arrangement_cell_complex_shortcut_attempt(
                 left,
                 right,
                 request,
                 ExactRegularizationPolicy::REGULARIZED_SOLID,
             )?;
-        let direct_arrangement_cell_complex_certified =
-            direct_arrangement_cell_complex_attempt_report.is_some()
+        let arrangement_cell_complex_shortcut_certified =
+            arrangement_cell_complex_shortcut_attempt_report.is_some()
                 && arrangement_cell_complex_shortcuts.supports(request.operation);
         let owned_regularized_arrangement;
         let regularized_arrangement =
             if matches!(request.operation, ExactBooleanOperation::SelectedRegions(_))
-                || direct_arrangement_cell_complex_certified
+                || arrangement_cell_complex_shortcut_certified
             {
                 None
             } else if let Some(arrangement) = retained_regularized_arrangement {
@@ -1017,8 +1017,8 @@ impl ExactBooleanCertificationSet {
             })
             .transpose()
             .map_err(region_ownership_report_error)?;
-        let arrangement_attempt = if direct_arrangement_cell_complex_certified {
-            direct_arrangement_cell_complex_attempt_report
+        let arrangement_attempt = if arrangement_cell_complex_shortcut_certified {
+            arrangement_cell_complex_shortcut_attempt_report
         } else {
             regularized_arrangement
                 .map(|arrangement| {
@@ -1116,15 +1116,15 @@ impl ExactBooleanCertificationSet {
             }
             return Ok(());
         }
-        let direct_arrangement_cell_complex_certified =
-            exact_boolean_direct_arrangement_cell_complex_shortcut_certified_for_operation(
+        let arrangement_cell_complex_shortcut_certified =
+            exact_boolean_arrangement_cell_complex_shortcut_certified_for_operation(
                 self,
                 request.operation,
             ) && self
                 .arrangement_attempt
                 .as_ref()
                 .is_some_and(|attempt| attempt.output_validation == request.validation);
-        if direct_arrangement_cell_complex_certified {
+        if arrangement_cell_complex_shortcut_certified {
             if self.region_ownership.is_some() || self.topology_assembly.is_some() {
                 return Err(ExactReportValidationError::StatusEvidenceMismatch);
             }
@@ -1743,10 +1743,10 @@ fn exact_boolean_preflight_matches_certifications(
                 )
         }
         ExactBooleanSupport::CertifiedArrangementCellComplex => {
-            (exact_boolean_direct_arrangement_cell_complex_shortcut_certified_for_operation(
+            (exact_boolean_arrangement_cell_complex_shortcut_certified_for_operation(
                 certifications,
                 preflight.operation,
-            ) && exact_boolean_preflight_matches_direct_arrangement_cell_complex_shortcut(
+            ) && exact_boolean_preflight_matches_arrangement_cell_complex_shortcut(
                 preflight,
                 certifications,
             )) || (exact_boolean_region_ownership_resolved(certifications)
@@ -2019,7 +2019,7 @@ fn exact_boolean_arrangement_attempt_materialized(
         .is_some_and(ExactArrangementBooleanAttempt::materialized_arrangement_cell_complex_shortcut)
 }
 
-fn exact_boolean_direct_arrangement_cell_complex_shortcut_certified_for_operation(
+fn exact_boolean_arrangement_cell_complex_shortcut_certified_for_operation(
     certifications: &ExactBooleanCertificationSet,
     operation: ExactBooleanOperation,
 ) -> bool {
@@ -2052,7 +2052,7 @@ fn exact_boolean_topology_assembly_complete(certifications: &ExactBooleanCertifi
         .is_some_and(|topology| topology.validate().is_ok() && topology.is_complete())
 }
 
-fn exact_boolean_preflight_matches_direct_arrangement_cell_complex_shortcut(
+fn exact_boolean_preflight_matches_arrangement_cell_complex_shortcut(
     preflight: &ExactBooleanPreflight,
     certifications: &ExactBooleanCertificationSet,
 ) -> bool {
@@ -2163,7 +2163,7 @@ fn exact_boolean_result_matches_certifications(
             shortcut: ExactBooleanShortcutKind::ArrangementCellComplex,
             operation,
         } => {
-            exact_boolean_direct_arrangement_cell_complex_shortcut_certified_for_operation(
+            exact_boolean_arrangement_cell_complex_shortcut_certified_for_operation(
                 certifications,
                 operation,
             ) || (exact_boolean_region_ownership_resolved(certifications)
@@ -4754,7 +4754,8 @@ fn arrangement_boolean_attempt_report(
     request: ExactBooleanRequest,
     policy: ExactRegularizationPolicy,
 ) -> Result<ExactArrangementBooleanAttempt, MeshError> {
-    if let Some(attempt) = direct_arrangement_cell_complex_attempt(left, right, request, policy)? {
+    if let Some(attempt) = arrangement_cell_complex_shortcut_attempt(left, right, request, policy)?
+    {
         return Ok(attempt);
     }
     let graph = validated_intersection_graph(left, right)?;
@@ -4770,7 +4771,7 @@ fn arrangement_boolean_attempt_report(
     Ok(arrangement_attempt_from_outcome(outcome))
 }
 
-fn direct_arrangement_cell_complex_result(
+fn arrangement_cell_complex_shortcut_result(
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
@@ -4784,7 +4785,7 @@ fn direct_arrangement_cell_complex_result(
     boolean_arrangement_affine_orthogonal_solid_recovery(left, right, operation, validation)
 }
 
-pub(crate) fn direct_arrangement_cell_complex_attempt(
+pub(crate) fn arrangement_cell_complex_shortcut_attempt(
     left: &ExactMesh,
     right: &ExactMesh,
     request: ExactBooleanRequest,
@@ -4793,8 +4794,12 @@ pub(crate) fn direct_arrangement_cell_complex_attempt(
     if policy != ExactRegularizationPolicy::REGULARIZED_SOLID {
         return Ok(None);
     }
-    let Some(result) =
-        direct_arrangement_cell_complex_result(left, right, request.operation, request.validation)?
+    let Some(result) = arrangement_cell_complex_shortcut_result(
+        left,
+        right,
+        request.operation,
+        request.validation,
+    )?
     else {
         return Ok(None);
     };

@@ -5,9 +5,8 @@ use super::boolean::{
     ExactArrangementBooleanAttempt, ExactBooleanCertificationSet, ExactBooleanEvaluation,
     ExactBooleanOperation, ExactBooleanRequest, ExactIdenticalMeshReport,
     adjacent_union_completion_certification_from_graph,
-    arrangement_boolean_attempt_report_from_arrangement,
+    arrangement_boolean_attempt_report_from_arrangement, arrangement_cell_complex_shortcut_attempt,
     boolean_closed_validation_regularized_meshes, boundary_touching_report_from_graph,
-    direct_arrangement_cell_complex_attempt,
     materialize_adjacent_union_completion_from_graph_for_request,
     materialize_boolean_exact_request_from_retained_graph,
     materialize_certified_boolean_support_with_artifacts,
@@ -583,7 +582,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
         }
 
         if let Some(attempt) =
-            direct_arrangement_cell_complex_attempt(self.left, self.right, request, policy)?
+            arrangement_cell_complex_shortcut_attempt(self.left, self.right, request, policy)?
         {
             return store_retained_arrangement_attempt(
                 &mut self.arrangement_attempts,
@@ -615,7 +614,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
         attempt: &ExactArrangementBooleanAttempt,
     ) -> Result<(), ExactReportValidationError> {
         if let Some(replay) =
-            direct_arrangement_cell_complex_attempt(self.left, self.right, request, policy)
+            arrangement_cell_complex_shortcut_attempt(self.left, self.right, request, policy)
                 .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
         {
             attempt.validate()?;
