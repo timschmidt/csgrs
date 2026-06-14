@@ -1307,12 +1307,22 @@ impl<'a> ExactBooleanWorkspace<'a> {
                 Some(graph),
                 regularized_arrangement,
             )?;
-            self.materializations.push((request, result.clone()));
-            return Ok(result);
+            return store_replayable_result_or_return(
+                &mut self.materializations,
+                self.left,
+                self.right,
+                request,
+                result,
+            );
         }
         let result = request.materialize(self.left, self.right)?;
-        self.materializations.push((request, result.clone()));
-        Ok(result)
+        store_replayable_result_or_return(
+            &mut self.materializations,
+            self.left,
+            self.right,
+            request,
+            result,
+        )
     }
 
     /// Validate an evaluation against this workspace's source meshes using
@@ -1582,6 +1592,29 @@ fn store_retained_optional_result(
     validate_retained_optional_result(&materialized, left, right, request)?;
     cache.push((request, materialized.clone()));
     Ok(materialized)
+}
+
+fn store_replayable_result_or_return(
+    cache: &mut Vec<(ExactBooleanRequest, ExactBooleanResult)>,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    request: ExactBooleanRequest,
+    result: ExactBooleanResult,
+) -> Result<ExactBooleanResult, MeshError> {
+    if validate_retained_result_for_request(left, right, request, &result).is_ok() {
+        cache.push((request, result.clone()));
+    } else {
+        result
+            .validate()
+            .map_err(workspace_report_validation_error)?;
+        if result.mesh.validation_policy() != request.validation || !result.matches_request(request)
+        {
+            return Err(workspace_report_validation_error(
+                ExactReportValidationError::StatusEvidenceMismatch,
+            ));
+        }
+    }
+    Ok(result)
 }
 
 fn store_retained_result_pair<T: Clone + RetainedMaterializationArtifact>(
