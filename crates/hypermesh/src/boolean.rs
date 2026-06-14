@@ -1340,8 +1340,8 @@ impl ExactConvexBooleanCapabilityFacts {
     }
 }
 
-/// Replayable source facts for direct arrangement-cell-complex shortcut
-/// materializers that do not consume the general arrangement attempt report.
+/// Replayable source facts for arrangement-cell-complex shortcut materializers
+/// that cover cases the general arrangement attempt does not consume yet.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ExactArrangementCellComplexShortcutFacts {
     /// Axis-aligned orthogonal cell decomposition supports union.
@@ -6728,11 +6728,11 @@ fn boolean_convex_relation_meshes_optional_from_graph(
 
 /// Certify and materialize a named boolean for closed convex solids.
 ///
-/// This public wrapper follows [`ExactBooleanRequest::materialize`] precedence: it only
-/// materializes when preflight certifies the requested operation as a direct
-/// convex operation or convex relation shortcut. Inputs handled by earlier
-/// exact shortcuts, such as orthogonal-cell recovery or bounds disjointness,
-/// return `None` so replay provenance remains stable.
+/// This public replay helper follows [`ExactBooleanRequest::materialize`]
+/// precedence: it only materializes when preflight certifies the requested
+/// operation as a convex operation or convex relation shortcut. Inputs handled
+/// by earlier exact shortcuts, such as orthogonal-cell recovery or bounds
+/// disjointness, return `None` so replay provenance remains stable.
 fn boolean_arrangement_convex_regularized_sheet_recovery(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -12659,7 +12659,7 @@ mod tests {
                 ValidationPolicy::CLOSED,
             )
             .unwrap()
-            .expect("orthogonal cell shortcut should materialize directly");
+            .expect("orthogonal cell shortcut should materialize through certified replay");
             direct.validate().unwrap();
             direct.validate_against_sources(&left, &right).unwrap();
 

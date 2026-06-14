@@ -2340,7 +2340,7 @@ fn exact_open_surface_arrangement_is_publicly_replayable() {
                 )
                 .unwrap()
                 .is_none(),
-                "{operation:?} should decline direct materialization when open-surface output cannot satisfy CLOSED validation"
+                "{operation:?} should decline certified open-surface replay when output cannot satisfy CLOSED validation"
             );
         }
 
@@ -2844,7 +2844,7 @@ fn exact_coplanar_mesh_overlay_arrangement_is_publicly_replayable() {
         )
         .unwrap()
         .is_none(),
-        "direct coplanar overlay wrapper should yield to the public identical shortcut"
+        "coplanar overlay replay should yield to the public identical shortcut"
     );
 }
 
@@ -4235,7 +4235,7 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
         )
         .unwrap()
         .is_none(),
-        "direct volumetric wrapper should yield when public replay is a convex shortcut"
+        "volumetric replay should yield when public replay is a convex shortcut"
     );
 }
 
