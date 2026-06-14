@@ -3296,13 +3296,11 @@ mod tests {
             .materialize_adjacent_union_completion(request)
             .unwrap()
             .expect("adjacent closed solids should complete from retained graph");
-        assert_eq!(
-            materialized,
-            request
-                .materialize_adjacent_union_completion(&left, &right)
-                .unwrap()
-                .unwrap()
-        );
+        let expected_result = request.materialize(&left, &right).unwrap();
+        let expected_report = request
+            .adjacent_union_completion_report(&left, &right)
+            .unwrap();
+        assert_eq!(materialized, (expected_result, expected_report));
         assert_eq!(
             workspace.adjacent_union_completion_materializations.len(),
             1

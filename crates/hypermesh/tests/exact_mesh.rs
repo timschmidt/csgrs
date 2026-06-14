@@ -2137,25 +2137,6 @@ fn adjacent_union_completion_boolean_is_publicly_replayable() {
     result.validate().unwrap();
     result.validate_against_sources(&left, &right).unwrap();
 
-    let (reported_result, consumed_report) =
-        ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED)
-            .materialize_adjacent_union_completion(&left, &right)
-            .unwrap()
-            .expect("non-axis full-face adjacent union should retain consumed report");
-    assert_eq!(
-        consumed_report, report,
-        "full-face adjacent completion should return the certified report it consumed"
-    );
-    consumed_report.validate().unwrap();
-    consumed_report
-        .validate_against_sources(&left, &right)
-        .unwrap();
-    assert_eq!(reported_result, result);
-    reported_result.validate().unwrap();
-    reported_result
-        .validate_against_sources(&left, &right)
-        .unwrap();
-
     assert_eq!(
         result.freshness_against_sources(&left, &right),
         ExactReportFreshness::Current
@@ -4645,25 +4626,6 @@ fn exact_contained_face_adjacent_union_is_publicly_replayable() {
     );
     result.validate().unwrap();
     result.validate_against_sources(&container, &right).unwrap();
-
-    let (reported_result, consumed_report) =
-        ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED)
-            .materialize_adjacent_union_completion(&container, &right)
-            .unwrap()
-            .expect("contained-face adjacent union should retain consumed report");
-    assert_eq!(
-        consumed_report, completion_report,
-        "contained-face adjacent completion should return the certified report it consumed"
-    );
-    consumed_report.validate().unwrap();
-    consumed_report
-        .validate_against_sources(&container, &right)
-        .unwrap();
-    assert_eq!(reported_result, result);
-    reported_result.validate().unwrap();
-    reported_result
-        .validate_against_sources(&container, &right)
-        .unwrap();
 
     assert_eq!(
         result.freshness_against_sources(&container, &right),

@@ -862,17 +862,6 @@ impl ExactBooleanRequest {
             self.validation,
         )
     }
-
-    /// Materialize adjacent closed-solid union completion for this request,
-    /// returning the exact report consumed by the materializer.
-    pub fn materialize_adjacent_union_completion(
-        self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-    ) -> Result<Option<(ExactBooleanResult, ExactAdjacentUnionCompletionReport)>, MeshError> {
-        let graph = validated_intersection_graph(left, right)?;
-        materialize_adjacent_union_completion_from_graph_for_request(&graph, left, right, self)
-    }
 }
 
 /// Replayable certification bundle for an exact boolean request.
