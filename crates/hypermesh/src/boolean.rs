@@ -670,7 +670,20 @@ impl ExactBooleanRequest {
         left: &ExactMesh,
         right: &ExactMesh,
     ) -> Result<ExactBooleanPreflight, MeshError> {
-        preflight_boolean_exact_request(left, right, self)
+        let operation = self.operation;
+        let validation = self.validation;
+        if let Some(support) =
+            closed_validation_regularized_solid_support(left, right, operation, validation)
+        {
+            return Ok(certified_shortcut_preflight(operation, support));
+        }
+        let support = initial_reject_boundary_preflight_support(left, right, operation);
+        if let Some(preflight) = preflight_without_graph_if_supported(operation, support) {
+            return Ok(preflight);
+        }
+
+        let graph = validated_intersection_graph(left, right)?;
+        preflight_boolean_exact_request_from_graph(&graph, left, right, self)
     }
 
     /// Evaluate this request into a certified result or retained exact
@@ -680,7 +693,11 @@ impl ExactBooleanRequest {
         left: &ExactMesh,
         right: &ExactMesh,
     ) -> Result<ExactBooleanEvaluation, MeshError> {
-        evaluate_boolean_exact_request(left, right, self)
+        let graph = validated_intersection_graph(left, right)?;
+        let preflight = preflight_boolean_exact_request_from_graph(&graph, left, right, self)?;
+        evaluate_boolean_exact_request_with_artifacts_and_arrangement_replay(
+            left, right, self, &preflight, &graph, None, true,
+        )
     }
 
     /// Materialize this request, returning an error when the retained exact
@@ -690,7 +707,7 @@ impl ExactBooleanRequest {
         left: &ExactMesh,
         right: &ExactMesh,
     ) -> Result<ExactBooleanResult, MeshError> {
-        materialize_boolean_exact_request(left, right, self)
+        materialize_boolean_exact_request_with_graph(left, right, self, None)
     }
 
     /// Report how far this request gets through the arrangement/cell-complex
@@ -2176,20 +2193,6 @@ fn exact_boolean_result_matches_certifications(
     }
 }
 
-/// Evaluate an exact boolean request into either a certified result or retained
-/// exact blockers/provenance.
-fn evaluate_boolean_exact_request(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    request: ExactBooleanRequest,
-) -> Result<ExactBooleanEvaluation, MeshError> {
-    let graph = validated_intersection_graph(left, right)?;
-    let preflight = preflight_boolean_exact_request_from_graph(&graph, left, right, request)?;
-    evaluate_boolean_exact_request_with_artifacts_and_arrangement_replay(
-        left, right, request, &preflight, &graph, None, true,
-    )
-}
-
 pub(crate) fn evaluate_boolean_exact_request_with_artifacts_and_arrangement_replay(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -3265,34 +3268,6 @@ fn preflight_boolean_exact_with_validation_reject_boundary_policy_from_graph(
         ));
     }
     Ok(preflight)
-}
-
-/// Preflight an exact boolean request for explicit output validation and
-/// boundary-only projection policies.
-///
-/// A rejecting boundary policy keeps lower-dimensional boundary contact as
-/// [`ExactBooleanSupport::RequiresBoundaryPolicy`]. The default request policy
-/// proves when the chosen boundary projection is sufficient for the current
-/// graph and validation contract.
-fn preflight_boolean_exact_request(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    request: ExactBooleanRequest,
-) -> Result<ExactBooleanPreflight, MeshError> {
-    let operation = request.operation;
-    let validation = request.validation;
-    if let Some(support) =
-        closed_validation_regularized_solid_support(left, right, operation, validation)
-    {
-        return Ok(certified_shortcut_preflight(operation, support));
-    }
-    let support = initial_reject_boundary_preflight_support(left, right, operation);
-    if let Some(preflight) = preflight_without_graph_if_supported(operation, support) {
-        return Ok(preflight);
-    }
-
-    let graph = validated_intersection_graph(left, right)?;
-    preflight_boolean_exact_request_from_graph(&graph, left, right, request)
 }
 
 pub(crate) fn preflight_boolean_exact_request_from_graph(
@@ -4451,14 +4426,6 @@ fn mesh_vertices_touch_boundary(report: &ClosedMeshWindingMeshReport) -> bool {
 /// intersection and difference do not need that projection policy once the
 /// same exact boundary-touch report proves no shared interior volume; those
 /// two operations use certified shortcuts before the policy layer.
-fn materialize_boolean_exact_request(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    request: ExactBooleanRequest,
-) -> Result<ExactBooleanResult, MeshError> {
-    materialize_boolean_exact_request_with_graph(left, right, request, None)
-}
-
 pub(crate) fn materialize_boolean_exact_request_from_retained_graph(
     graph: &ExactIntersectionGraph,
     left: &ExactMesh,
