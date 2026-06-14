@@ -1809,18 +1809,10 @@ fn cached_retained_materialization<T: RetainedMaterializationCacheValue>(
     right: &ExactMesh,
     request: ExactBooleanRequest,
 ) -> Result<Option<T>, MeshError> {
-    cached_materialization(cache, request, |materialized| {
-        materialized.validate_for_workspace_cache(left, right, request)
-    })
-}
-
-fn cached_materialization<T: Clone>(
-    cache: &[(ExactBooleanRequest, T)],
-    request: ExactBooleanRequest,
-    validate: impl FnOnce(&T) -> Result<(), MeshError>,
-) -> Result<Option<T>, MeshError> {
     if let Some(index) = cached_by_request_index(cache, request) {
-        validate(&cache[index].1)?;
+        cache[index]
+            .1
+            .validate_for_workspace_cache(left, right, request)?;
         return Ok(Some(cache[index].1.clone()));
     }
     Ok(None)
