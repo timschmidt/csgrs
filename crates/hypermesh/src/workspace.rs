@@ -461,12 +461,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
         let arrangement = ExactArrangement::from_intersection_graph_with_policy(
             graph, self.left, self.right, policy,
         )?;
-        self.arrangements.push((policy, arrangement));
-        Ok(&self
-            .arrangements
-            .last()
-            .expect("arrangement cache was just populated")
-            .1)
+        store_retained_policy_report(&mut self.arrangements, policy, arrangement)
     }
 
     /// Returns topology-assembly evidence for `policy`, reusing the cached
@@ -1563,6 +1558,12 @@ impl RetainedCellComplex for ExactSimplifiedCellComplex {
 }
 
 impl RetainedPolicyReport for ExactTopologyAssemblyReport {
+    fn validate_for_workspace_cache(&self) -> Result<(), ExactArrangementBlocker> {
+        self.validate()
+    }
+}
+
+impl RetainedPolicyReport for ExactArrangement {
     fn validate_for_workspace_cache(&self) -> Result<(), ExactArrangementBlocker> {
         self.validate()
     }
