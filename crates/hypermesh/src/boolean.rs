@@ -6,13 +6,13 @@
 //! triangulate them through exact `hypertri`, assemble exact 3D
 //! output triangles, and validate the resulting [`ExactMesh`].
 //!
-//! The operation policy is deliberately explicit. No-intersection named
-//! booleans are handled by certified empty/disjoint/identity, convex,
-//! coplanar, or exact ray-parity winding shortcuts; remaining split-region
-//! cases require a selected-region policy or an explicit unsupported report
-//! instead of a silently approximate union/intersection/difference decision.
-//! Topology decisions must be certified or represented as policy choices or
-//! unknowns.
+//! The operation policy is deliberately explicit. Named booleans converge on
+//! the graph-backed arrangement/cell-complex path; shortcut materializers stay
+//! only where they can prove coverage for cases that path does not yet support.
+//! Remaining split-region cases require a selected-region policy or an explicit
+//! unsupported report instead of a silently approximate
+//! union/intersection/difference decision. Topology decisions must be certified
+//! or represented as policy choices or unknowns.
 
 use std::collections::{BTreeMap, BTreeSet};
 
@@ -585,20 +585,21 @@ const fn arrangement_attempt_stage_rank(stage: ExactArrangementBooleanStage) -> 
 /// Exact boolean operation request.
 ///
 /// Named booleans are represented now, but they intentionally do not fall back
-/// to approximate float winding. Certified shortcut cases execute directly, while
-/// remaining named overlaps return [`DiagnosticKind::UnsupportedExactOperation`]
-/// until split-region inside/outside classification is complete.
+/// to approximate float winding. They prefer the exact graph-backed
+/// arrangement/cell-complex path; certified shortcut cases execute only where
+/// they cover cases that path does not yet support. Remaining named overlaps
+/// return [`DiagnosticKind::UnsupportedExactOperation`] until split-region
+/// inside/outside classification is complete.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ExactBooleanOperation {
     /// Assemble explicitly selected source-side split regions.
     SelectedRegions(ExactRegionSelection),
-    /// Exact union through certified shortcuts or future split-region winding.
+    /// Exact union through the graph-backed arrangement/cell-complex path.
     Union,
-    /// Exact intersection through certified shortcuts or future split-region
-    /// winding.
+    /// Exact intersection through the graph-backed arrangement/cell-complex
+    /// path.
     Intersection,
-    /// Exact difference through certified shortcuts or future split-region
-    /// winding.
+    /// Exact difference through the graph-backed arrangement/cell-complex path.
     Difference,
 }
 

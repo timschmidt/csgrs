@@ -240,8 +240,9 @@ Use exact validation, audit, face-pair classification, split-plan, preflight,
 consumer-readiness, and handoff-package reports to audit topology before relying on
 boolean output.
 
-Named booleans first try the exact arrangement/cell-complex path before falling back to
-older certified shortcuts:
+Named booleans converge on the exact arrangement/cell-complex path. Certified
+shortcuts remain only where they prove coverage for cases that path does not
+yet support:
 
 ```rust,ignore
 use hypermesh::{
