@@ -1134,46 +1134,6 @@ impl ExactBooleanRequest {
         ))
     }
 
-    /// Materialize axis-aligned orthogonal solid recovery for this request,
-    /// when the orthogonal-cell model owns replay provenance.
-    pub fn materialize_axis_aligned_orthogonal_solid(
-        self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-    ) -> Result<Option<ExactBooleanResult>, MeshError> {
-        let operation = self.operation;
-        let validation = self.validation;
-        Ok(public_operation_replayable_result(
-            boolean_arrangement_orthogonal_solid_cell_recovery(left, right, operation, validation)?,
-            left,
-            right,
-            operation,
-            validation,
-            ExactBoundaryBooleanPolicy::Reject,
-        ))
-    }
-
-    /// Materialize affine orthogonal solid recovery for this request, when the
-    /// affine-cell model owns replay provenance.
-    pub fn materialize_affine_orthogonal_solid(
-        self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-    ) -> Result<Option<ExactBooleanResult>, MeshError> {
-        let operation = self.operation;
-        let validation = self.validation;
-        Ok(public_operation_replayable_result(
-            boolean_arrangement_affine_orthogonal_solid_recovery(
-                left, right, operation, validation,
-            )?,
-            left,
-            right,
-            operation,
-            validation,
-            ExactBoundaryBooleanPolicy::Reject,
-        ))
-    }
-
     /// Materialize adjacent closed-solid union completion for this request,
     /// returning the exact report consumed by the materializer.
     pub fn materialize_adjacent_union_completion(
@@ -2829,10 +2789,24 @@ fn materialize_certified_arrangement_cell_complex_support_with_arrangement(
     )? {
         return Ok(Some(result));
     }
-    if let Some(result) = request.materialize_axis_aligned_orthogonal_solid(left, right)? {
+    if let Some(result) = public_operation_replayable_result(
+        boolean_arrangement_orthogonal_solid_cell_recovery(left, right, operation, validation)?,
+        left,
+        right,
+        operation,
+        validation,
+        ExactBoundaryBooleanPolicy::Reject,
+    ) {
         return Ok(Some(result));
     }
-    request.materialize_affine_orthogonal_solid(left, right)
+    Ok(public_operation_replayable_result(
+        boolean_arrangement_affine_orthogonal_solid_recovery(left, right, operation, validation)?,
+        left,
+        right,
+        operation,
+        validation,
+        ExactBoundaryBooleanPolicy::Reject,
+    ))
 }
 
 fn materialize_closed_no_volume_overlap_regularized_result_from_graph(
