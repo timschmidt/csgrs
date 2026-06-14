@@ -39,9 +39,9 @@ use hypermesh::{
     materialize_axis_aligned_orthogonal_solid_difference,
     materialize_axis_aligned_orthogonal_solid_intersection,
     materialize_axis_aligned_orthogonal_solid_union, materialize_contained_face_adjacent_union,
-    materialize_full_face_adjacent_union, materialize_volumetric_winding_arrangement,
-    mesh_artifact_from_exact_mesh, mesh_artifact_from_exact_mesh_proposal,
-    triangulate_all_face_cells_with_cdt, validate_face_cell_cdt_against_sources,
+    materialize_full_face_adjacent_union, mesh_artifact_from_exact_mesh,
+    mesh_artifact_from_exact_mesh_proposal, triangulate_all_face_cells_with_cdt,
+    validate_face_cell_cdt_against_sources,
 };
 use hyperreal::Real;
 
@@ -3938,14 +3938,12 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
         ExactReportFreshness::SourceReplayMismatch
     );
 
-    let result = materialize_volumetric_winding_arrangement(
-        &left,
-        &right,
+    let result = ExactBooleanRequest::new(
         ExactBooleanOperation::Union,
         ValidationPolicy::ALLOW_BOUNDARY,
     )
-    .unwrap()
-    .expect("overlapping closed solids should materialize by exact volumetric winding");
+    .materialize(&left, &right)
+    .unwrap();
 
     assert_eq!(
         result.kind,
@@ -4159,14 +4157,12 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
         );
     }
 
-    let difference = materialize_volumetric_winding_arrangement(
-        &left,
-        &right,
+    let difference = ExactBooleanRequest::new(
         ExactBooleanOperation::Difference,
         ValidationPolicy::ALLOW_BOUNDARY,
     )
-    .unwrap()
-    .expect("overlapping closed solids should materialize exact volumetric difference");
+    .materialize(&left, &right)
+    .unwrap();
     difference.validate().unwrap();
     let Some(reversed_triangle) =
         difference.assembly.triangles.iter().position(|triangle| {
@@ -4190,16 +4186,18 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
 
     let convex_left = tetra_from_corners([0, 0, 0], [6, 0, 0], [0, 6, 0], [0, 0, 6]);
     let convex_right = tetra_from_corners([1, 1, 1], [5, 1, 2], [1, 5, 1], [2, 1, 5]);
-    assert!(
-        materialize_volumetric_winding_arrangement(
-            &convex_left,
-            &convex_right,
-            ExactBooleanOperation::Intersection,
-            ValidationPolicy::CLOSED,
-        )
-        .unwrap()
-        .is_none(),
-        "volumetric replay should yield when public replay is a convex shortcut"
+    let convex_intersection = ExactBooleanRequest::new(
+        ExactBooleanOperation::Intersection,
+        ValidationPolicy::CLOSED,
+    )
+    .materialize(&convex_left, &convex_right)
+    .unwrap();
+    assert_eq!(
+        convex_intersection.kind,
+        ExactBooleanResultKind::CertifiedShortcut {
+            operation: ExactBooleanOperation::Intersection,
+            shortcut: hypermesh::ExactBooleanShortcutKind::ConvexIntersection
+        }
     );
 }
 
@@ -4262,14 +4260,9 @@ fn exact_volumetric_winding_coplanar_cap_is_publicly_certified() {
         readiness.validate().unwrap();
         readiness.validate_against_sources(&left, &right).unwrap();
 
-        let result = materialize_volumetric_winding_arrangement(
-            &left,
-            &right,
-            operation,
-            ValidationPolicy::CLOSED,
-        )
-        .unwrap()
-        .expect("exact coplanar boundary cap should materialize closed volumetric output");
+        let result = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED)
+            .materialize(&left, &right)
+            .unwrap();
         assert_eq!(
             result.kind,
             ExactBooleanResultKind::CertifiedShortcut {

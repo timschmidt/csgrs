@@ -6680,37 +6680,6 @@ fn boolean_arrangement_convex_regularized_sheet_recovery(
     Ok(Some(result))
 }
 
-/// Certify and materialize a closed-solid arrangement boolean from exact
-/// volumetric winding region classifications.
-///
-/// Directly closed or boundary-valid output retains the split-region plane
-/// classifications, triangulations, volumetric classifications, assembly plan,
-/// output mesh, and source-replay freshness checks needed to audit the named
-/// cell-complex decision. Closed outputs whose boundary-valid split-cell
-/// assembly has exact non-self-contacting coplanar cap loops materialize as a
-/// certified arrangement-cell-complex shortcut; callers can audit that cap
-/// decision with [`ExactBooleanRequest::volumetric_boundary_closure`]. Cases outside
-/// the currently supportable exact winding arrangement path return `None`
-/// rather than falling back to approximate winding.
-pub fn materialize_volumetric_winding_arrangement(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: ValidationPolicy,
-) -> Result<Option<ExactBooleanResult>, MeshError> {
-    let graph = validated_intersection_graph(left, right)?;
-    Ok(public_operation_replayable_result(
-        boolean_arrangement_volumetric_split_cell_recovery_from_graph(
-            &graph, left, right, operation, validation,
-        )?,
-        left,
-        right,
-        operation,
-        validation,
-        ExactBoundaryBooleanPolicy::Reject,
-    ))
-}
-
 fn materialize_volumetric_coplanar_boundary_closure_boolean_from_graph(
     graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
@@ -13822,14 +13791,12 @@ mod tests {
         )
         .arrangement_attempt(&left, &right, ExactRegularizationPolicy::REGULARIZED_SOLID)
         .unwrap();
-        let mut replayable_result = materialize_volumetric_winding_arrangement(
-            &left,
-            &right,
+        let mut replayable_result = ExactBooleanRequest::new(
             ExactBooleanOperation::Union,
             ValidationPolicy::ALLOW_BOUNDARY,
         )
-        .unwrap()
-        .expect("allow-boundary volumetric arrangement should materialize");
+        .materialize(&left, &right)
+        .unwrap();
         replayable_result.topology_assembly_report =
             report_attempt.topology_assembly_report.clone();
         replayable_result.region_ownership_report = report_attempt.region_ownership_report.clone();
