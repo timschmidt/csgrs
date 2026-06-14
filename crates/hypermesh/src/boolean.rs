@@ -2714,11 +2714,8 @@ pub(crate) fn materialize_certified_boolean_support_with_artifacts(
             if result.is_some() {
                 result
             } else {
-                materialize_closed_no_volume_overlap_regularized_result(
-                    left,
-                    right,
-                    request,
-                    retained_graph,
+                materialize_closed_no_volume_overlap_regularized_result_from_graph(
+                    graph, left, right, request,
                 )?
             }
         }
@@ -2822,21 +2819,21 @@ fn materialize_certified_arrangement_cell_complex_support_with_arrangement(
     {
         return Ok(Some(result));
     }
-    if let Some(result) =
-        materialize_closed_no_volume_overlap_regularized_result(left, right, request, Some(graph))?
-    {
+    if let Some(result) = materialize_closed_no_volume_overlap_regularized_result_from_graph(
+        graph, left, right, request,
+    )? {
         return Ok(Some(result));
     }
     boolean_arrangement_cell_complex_meshes_from_graph(graph, left, right, operation, validation)
 }
 
-fn materialize_closed_no_volume_overlap_regularized_result(
+fn materialize_closed_no_volume_overlap_regularized_result_from_graph(
+    graph: &ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
     request: ExactBooleanRequest,
-    retained_graph: Option<&ExactIntersectionGraph>,
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
-    Ok(if let Some(graph) = retained_graph {
+    Ok(
         materialize_closed_no_volume_overlap_regularized_boolean_with_evidence_from_graph(
             graph,
             left,
@@ -2844,12 +2841,8 @@ fn materialize_closed_no_volume_overlap_regularized_result(
             request.operation,
             request.validation,
         )?
-        .map(|(result, _evidence)| result)
-    } else {
-        request
-            .materialize_closed_no_volume_overlap_regularized_with_evidence(left, right)?
-            .map(|(result, _evidence)| result)
-    })
+        .map(|(result, _evidence)| result),
+    )
 }
 
 fn materialize_selected_region_result_from_graph(
@@ -4622,6 +4615,7 @@ fn materialize_boolean_exact_request_with_graph(
 ) -> Result<ExactBooleanResult, MeshError> {
     let operation = request.operation;
     let validation = request.validation;
+    let mut owned_graph = None;
     if let ExactBooleanOperation::SelectedRegions(selection) = operation {
         return replay_selected_region_boolean_result(left, right, selection, validation);
     }
@@ -4654,10 +4648,14 @@ fn materialize_boolean_exact_request_with_graph(
     if matches!(
         operation,
         ExactBooleanOperation::Intersection | ExactBooleanOperation::Difference
-    ) && let Some(result) =
-        materialize_closed_no_volume_overlap_regularized_result(left, right, request, None)?
-    {
-        return Ok(result);
+    ) {
+        let graph =
+            graph_for_certified_materialization(retained_graph, &mut owned_graph, left, right)?;
+        if let Some(result) = materialize_closed_no_volume_overlap_regularized_result_from_graph(
+            graph, left, right, request,
+        )? {
+            return Ok(result);
+        }
     }
     if let Some(result) =
         boolean_arrangement_orthogonal_solid_cell_recovery(left, right, operation, validation)?
@@ -4671,6 +4669,9 @@ fn materialize_boolean_exact_request_with_graph(
     }
     if let Some(graph) = retained_graph {
         return materialize_boolean_exact_request_from_ready_graph(graph, left, right, request);
+    }
+    if let Some(graph) = owned_graph {
+        return materialize_boolean_exact_request_from_ready_graph(&graph, left, right, request);
     }
 
     match validated_intersection_graph(left, right) {
