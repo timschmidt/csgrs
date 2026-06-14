@@ -828,23 +828,6 @@ impl ExactBooleanRequest {
     ) -> ExactSameSurfaceReport {
         same_surface_report_from_sources(left, right)
     }
-
-    /// Materialize positive-area closed boundary contact with no shared
-    /// volume, returning the exact evidence consumed by this request.
-    pub fn materialize_closed_no_volume_overlap_regularized_with_evidence(
-        self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-    ) -> Result<Option<(ExactBooleanResult, CoplanarVolumetricCellEvidenceReport)>, MeshError> {
-        let graph = validated_intersection_graph(left, right)?;
-        materialize_closed_no_volume_overlap_regularized_boolean_with_evidence_from_graph(
-            &graph,
-            left,
-            right,
-            self.operation,
-            self.validation,
-        )
-    }
 }
 
 /// Replayable certification bundle for an exact boolean request.

@@ -3030,13 +3030,9 @@ mod tests {
             .materialize_closed_no_volume_overlap_regularized_with_evidence(request)
             .unwrap()
             .expect("positive-area boundary contact should materialize from retained graph");
-        assert_eq!(
-            materialized,
-            request
-                .materialize_closed_no_volume_overlap_regularized_with_evidence(&left, &right)
-                .unwrap()
-                .unwrap()
-        );
+        let expected_result = request.materialize(&left, &right).unwrap();
+        let expected_evidence = certify_coplanar_volumetric_cell_evidence(&left, &right).unwrap();
+        assert_eq!(materialized, (expected_result, expected_evidence));
         assert_eq!(
             workspace
                 .closed_no_volume_overlap_regularized_materializations
