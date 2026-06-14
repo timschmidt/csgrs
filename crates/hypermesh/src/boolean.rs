@@ -4726,6 +4726,19 @@ fn boolean_convex_materialization_optional(
     boolean_convex_relation_meshes_optional(left, right, operation, validation)
 }
 
+fn boolean_convex_materialization_optional_from_graph(
+    graph: &ExactIntersectionGraph,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+) -> Result<Option<ExactBooleanResult>, MeshError> {
+    if let Some(result) = boolean_convex_meshes_optional(left, right, operation, validation)? {
+        return Ok(Some(result));
+    }
+    boolean_convex_relation_meshes_optional_from_graph(graph, left, right, operation, validation)
+}
+
 fn materialize_boolean_exact_request_from_ready_graph(
     graph: &ExactIntersectionGraph,
     left: &ExactMesh,
@@ -4742,9 +4755,9 @@ fn materialize_boolean_exact_request_from_ready_graph(
     {
         return Ok(result);
     }
-    if let Some(result) =
-        boolean_convex_materialization_optional(left, right, operation, validation)?
-    {
+    if let Some(result) = boolean_convex_materialization_optional_from_graph(
+        graph, left, right, operation, validation,
+    )? {
         return Ok(result);
     }
 
