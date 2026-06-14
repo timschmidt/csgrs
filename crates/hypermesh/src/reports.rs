@@ -25,7 +25,7 @@ use super::boolean::{
     ExactBooleanOperation, ExactBooleanRequest, ExactBoundaryBooleanPolicy,
     boundary_policy_shortcut_result_matches_sources,
     materialize_volumetric_coplanar_boundary_closure_output,
-    open_surface_disjoint_result_matches_sources,
+    open_surface_disjoint_result_matches_sources, preflight_boolean_exact_request_from_graph,
     replay_closed_same_surface_boolean_result_if_certified, replay_coplanar_mesh_overlay_result,
     replay_materialized_volumetric_winding_region_plan, replay_open_surface_arrangement_result,
     replay_selected_region_boolean_result,
@@ -3911,9 +3911,11 @@ impl ExactBooleanPreflight {
         right: &ExactMesh,
     ) -> Result<(), ExactReportValidationError> {
         self.validate()?;
-        let replay = ExactBooleanRequest::new(self.operation, ValidationPolicy::ALLOW_BOUNDARY)
-            .preflight(left, right)
-            .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+        let replay = self.replay_against_sources(
+            left,
+            right,
+            ExactBooleanRequest::new(self.operation, ValidationPolicy::ALLOW_BOUNDARY),
+        )?;
         if self == &replay {
             Ok(())
         } else {
@@ -3936,9 +3938,11 @@ impl ExactBooleanPreflight {
         validation: ValidationPolicy,
     ) -> Result<(), ExactReportValidationError> {
         self.validate()?;
-        let replay = ExactBooleanRequest::new(self.operation, validation)
-            .preflight(left, right)
-            .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+        let replay = self.replay_against_sources(
+            left,
+            right,
+            ExactBooleanRequest::new(self.operation, validation),
+        )?;
         if self == &replay {
             Ok(())
         } else {
@@ -3962,15 +3966,35 @@ impl ExactBooleanPreflight {
         boundary_policy: ExactBoundaryBooleanPolicy,
     ) -> Result<(), ExactReportValidationError> {
         self.validate()?;
-        let replay =
-            ExactBooleanRequest::with_boundary_policy(self.operation, validation, boundary_policy)
-                .preflight(left, right)
-                .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+        let replay = self.replay_against_sources(
+            left,
+            right,
+            ExactBooleanRequest::with_boundary_policy(self.operation, validation, boundary_policy),
+        )?;
         if self == &replay {
             Ok(())
         } else {
             Err(ExactReportValidationError::SourceReplayMismatch)
         }
+    }
+
+    fn replay_against_sources(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+        request: ExactBooleanRequest,
+    ) -> Result<ExactBooleanPreflight, ExactReportValidationError> {
+        let replay = request
+            .preflight(left, right)
+            .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+        if self == &replay || !self.has_retained_exact_evidence() {
+            return Ok(replay);
+        }
+
+        let graph = build_intersection_graph(left, right)
+            .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+        preflight_boolean_exact_request_from_graph(&graph, left, right, request)
+            .map_err(|_| ExactReportValidationError::SourceReplayMismatch)
     }
 
     /// Classify whether this retained preflight is fresh for the source meshes.
@@ -4050,8 +4074,6 @@ impl ExactBooleanPreflight {
                 }
                 if operation_is_selected_region(self.operation)
                     || self.graph_had_unknowns
-                    || self.retained_face_pairs != 0
-                    || self.retained_events != 0
                     || !certified_preflight_support_matches_operation(self.support, self.operation)
                 {
                     return Err(ExactReportValidationError::StatusEvidenceMismatch);

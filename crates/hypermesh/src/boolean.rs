@@ -2927,7 +2927,21 @@ fn preflight_without_graph_if_supported(
     operation: ExactBooleanOperation,
     support: ExactBooleanSupport,
 ) -> Option<ExactBooleanPreflight> {
-    let graphless_certified_support = support.is_certified()
+    preflight_can_certify_without_graph(support)
+        .then(|| certified_shortcut_preflight(operation, support))
+}
+
+fn preflight_from_graph_if_supported(
+    operation: ExactBooleanOperation,
+    support: ExactBooleanSupport,
+    graph: &super::graph::ExactIntersectionGraph,
+) -> Option<ExactBooleanPreflight> {
+    preflight_can_certify_without_graph(support)
+        .then(|| certified_shortcut_preflight_from_graph(operation, support, graph))
+}
+
+fn preflight_can_certify_without_graph(support: ExactBooleanSupport) -> bool {
+    support.is_certified()
         && !matches!(
             support,
             ExactBooleanSupport::SelectedRegionPolicy
@@ -2936,8 +2950,7 @@ fn preflight_without_graph_if_supported(
                 | ExactBooleanSupport::CertifiedOpenSurfaceArrangementDifference
                 | ExactBooleanSupport::CertifiedArrangementCellComplex
                 | ExactBooleanSupport::CertifiedBoundaryPolicyShortcut
-        );
-    graphless_certified_support.then(|| certified_shortcut_preflight(operation, support))
+        )
 }
 
 fn preflight_boolean_exact_reject_boundary_policy_from_graph(
@@ -2947,7 +2960,7 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
     operation: ExactBooleanOperation,
 ) -> Result<ExactBooleanPreflight, MeshError> {
     let support = initial_reject_boundary_preflight_support(left, right, operation);
-    if let Some(preflight) = preflight_without_graph_if_supported(operation, support) {
+    if let Some(preflight) = preflight_from_graph_if_supported(operation, support, graph) {
         return Ok(preflight);
     }
 
@@ -3382,7 +3395,9 @@ fn preflight_boolean_exact_with_validation_reject_boundary_policy_from_graph(
     if let Some(support) =
         closed_validation_regularized_solid_support(left, right, operation, validation)
     {
-        return Ok(certified_shortcut_preflight(operation, support));
+        return Ok(certified_shortcut_preflight_from_graph(
+            operation, support, graph,
+        ));
     }
     let preflight =
         preflight_boolean_exact_reject_boundary_policy_from_graph(graph, left, right, operation)?;
@@ -15608,6 +15623,48 @@ mod tests {
                 ExactBoundaryBooleanPolicy::Reject,
             )
             .unwrap();
+    }
+
+    #[test]
+    fn graph_backed_early_shortcuts_retain_graph_counts() {
+        let left = ExactMesh::from_i64_triangles_with_policy(
+            &[0, 0, 0, 4, 0, 0, 0, 4, 0],
+            &[0, 1, 2],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let right = left.clone();
+        let graph = build_intersection_graph(&left, &right).unwrap();
+        validate_graph_source_handoff(&graph, &left, &right).unwrap();
+        assert!(!graph.face_pairs.is_empty());
+        assert!(graph.event_count() > 0);
+
+        for (validation, expected_support) in [
+            (
+                ValidationPolicy::ALLOW_BOUNDARY,
+                ExactBooleanSupport::CertifiedIdentical,
+            ),
+            (
+                ValidationPolicy::CLOSED,
+                ExactBooleanSupport::CertifiedLowerDimensionalRegularizedSolid,
+            ),
+        ] {
+            let preflight = preflight_boolean_exact_request_from_graph(
+                &graph,
+                &left,
+                &right,
+                ExactBooleanRequest::new(ExactBooleanOperation::Union, validation),
+            )
+            .unwrap();
+            assert_eq!(preflight.support, expected_support, "{preflight:?}");
+            assert_eq!(preflight.retained_face_pairs, graph.face_pairs.len());
+            assert_eq!(preflight.retained_events, graph.event_count());
+            assert!(preflight.blocker.is_none(), "{preflight:?}");
+            preflight.validate().unwrap();
+            preflight
+                .validate_against_sources_with_validation(&left, &right, validation)
+                .unwrap();
+        }
     }
 
     #[test]
