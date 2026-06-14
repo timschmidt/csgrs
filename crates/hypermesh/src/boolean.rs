@@ -4566,20 +4566,8 @@ fn boolean_convex_materialization_optional(
     if let Some(result) = boolean_convex_meshes_optional(left, right, operation, validation)? {
         return Ok(Some(result));
     }
-    boolean_convex_relation_meshes_optional(left, right, operation, validation)
-}
-
-fn boolean_convex_materialization_optional_from_graph(
-    graph: &ExactIntersectionGraph,
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: ValidationPolicy,
-) -> Result<Option<ExactBooleanResult>, MeshError> {
-    if let Some(result) = boolean_convex_meshes_optional(left, right, operation, validation)? {
-        return Ok(Some(result));
-    }
-    boolean_convex_relation_meshes_optional_from_graph(graph, left, right, operation, validation)
+    let graph = validated_intersection_graph(left, right)?;
+    boolean_convex_relation_meshes_optional_from_graph(&graph, left, right, operation, validation)
 }
 
 fn materialize_boolean_exact_request_from_ready_graph(
@@ -4598,7 +4586,10 @@ fn materialize_boolean_exact_request_from_ready_graph(
     {
         return Ok(result);
     }
-    if let Some(result) = boolean_convex_materialization_optional_from_graph(
+    if let Some(result) = boolean_convex_meshes_optional(left, right, operation, validation)? {
+        return Ok(result);
+    }
+    if let Some(result) = boolean_convex_relation_meshes_optional_from_graph(
         graph, left, right, operation, validation,
     )? {
         return Ok(result);
@@ -6628,16 +6619,6 @@ fn certified_convex_relation_shortcut_from_graph(
         }
         _ => None,
     })
-}
-
-fn boolean_convex_relation_meshes_optional(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: ValidationPolicy,
-) -> Result<Option<ExactBooleanResult>, MeshError> {
-    let graph = validated_intersection_graph(left, right)?;
-    boolean_convex_relation_meshes_optional_from_graph(&graph, left, right, operation, validation)
 }
 
 fn boolean_convex_relation_meshes_optional_from_graph(
