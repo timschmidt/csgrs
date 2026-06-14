@@ -2738,10 +2738,28 @@ pub(crate) fn materialize_certified_boolean_support_with_artifacts(
         }
         ExactBooleanSupport::CertifiedConvexUnion
         | ExactBooleanSupport::CertifiedConvexIntersection
-        | ExactBooleanSupport::CertifiedConvexDifference
-        | ExactBooleanSupport::CertifiedConvexSeparated
+        | ExactBooleanSupport::CertifiedConvexDifference => public_operation_replayable_result(
+            boolean_convex_meshes_optional(left, right, operation, validation)?,
+            left,
+            right,
+            operation,
+            validation,
+            ExactBoundaryBooleanPolicy::Reject,
+        ),
+        ExactBooleanSupport::CertifiedConvexSeparated
         | ExactBooleanSupport::CertifiedConvexContainment => {
-            request.materialize_closed_convex(left, right)?
+            let graph =
+                graph_for_certified_materialization(retained_graph, &mut owned_graph, left, right)?;
+            public_operation_replayable_result(
+                boolean_convex_relation_meshes_optional_from_graph(
+                    graph, left, right, operation, validation,
+                )?,
+                left,
+                right,
+                operation,
+                validation,
+                ExactBoundaryBooleanPolicy::Reject,
+            )
         }
         ExactBooleanSupport::RequiresBoundaryPolicy
         | ExactBooleanSupport::RequiresPlanarArrangement
@@ -6758,8 +6776,19 @@ fn boolean_convex_relation_meshes_optional(
     validation: ValidationPolicy,
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
     let graph = validated_intersection_graph(left, right)?;
+    boolean_convex_relation_meshes_optional_from_graph(&graph, left, right, operation, validation)
+}
+
+fn boolean_convex_relation_meshes_optional_from_graph(
+    graph: &ExactIntersectionGraph,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+) -> Result<Option<ExactBooleanResult>, MeshError> {
+    validate_graph_source_handoff(graph, left, right)?;
     let Some(relation) =
-        certified_convex_relation_shortcut_from_graph(&graph, left, right, operation)?
+        certified_convex_relation_shortcut_from_graph(graph, left, right, operation)?
     else {
         return Ok(None);
     };
