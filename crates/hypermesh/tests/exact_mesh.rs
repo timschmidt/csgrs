@@ -1670,9 +1670,8 @@ fn exact_closed_convex_boolean_materializer_is_publicly_replayable() {
         ExactBooleanOperation::Intersection,
         ValidationPolicy::CLOSED,
     )
-    .materialize_closed_convex(&separated_left, &separated_right)
-    .unwrap()
-    .expect("separated closed convex intersection should retain convex relation provenance");
+    .materialize(&separated_left, &separated_right)
+    .unwrap();
     assert_eq!(
         separated.kind,
         ExactBooleanResultKind::CertifiedShortcut {
@@ -1778,9 +1777,8 @@ fn exact_closed_convex_boolean_materializer_is_publicly_replayable() {
         .unwrap();
     let containment =
         ExactBooleanRequest::new(ExactBooleanOperation::Difference, ValidationPolicy::CLOSED)
-            .materialize_closed_convex(&contained_on_boundary, &container)
-            .unwrap()
-            .expect("boundary-contained closed convex difference should certify as empty");
+            .materialize(&contained_on_boundary, &container)
+            .unwrap();
     assert_eq!(
         containment.kind,
         ExactBooleanResultKind::CertifiedShortcut {
@@ -1814,14 +1812,19 @@ fn exact_closed_convex_boolean_materializer_is_publicly_replayable() {
         .unwrap();
     assert!(containment.mesh.triangles().is_empty());
 
-    assert!(
+    let axis_overlap =
         ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED)
-            .materialize_closed_convex(
+            .materialize(
                 &axis_aligned_box([0, 0, 0], [2, 2, 2]),
                 &axis_aligned_box([1, 1, 1], [3, 3, 3]),
             )
-            .unwrap()
-            .is_none()
+            .unwrap();
+    assert_eq!(
+        axis_overlap.kind,
+        ExactBooleanResultKind::CertifiedShortcut {
+            operation: ExactBooleanOperation::Union,
+            shortcut: hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex
+        }
     );
 }
 
@@ -4552,14 +4555,18 @@ fn arrangement_cell_complex_boolean_is_publicly_replayable() {
         .unwrap()
         .is_none()
     );
-    assert!(
-        ExactBooleanRequest::new(
-            ExactBooleanOperation::Intersection,
-            ValidationPolicy::CLOSED,
-        )
-        .materialize_closed_convex(&convex_left, &convex_right)
-        .unwrap()
-        .is_some()
+    let convex_intersection = ExactBooleanRequest::new(
+        ExactBooleanOperation::Intersection,
+        ValidationPolicy::CLOSED,
+    )
+    .materialize(&convex_left, &convex_right)
+    .unwrap();
+    assert_eq!(
+        convex_intersection.kind,
+        ExactBooleanResultKind::CertifiedShortcut {
+            operation: ExactBooleanOperation::Intersection,
+            shortcut: hypermesh::ExactBooleanShortcutKind::ConvexIntersection
+        }
     );
 }
 
@@ -6205,15 +6212,6 @@ fn closed_same_surface_boolean_is_publicly_replayable() {
             operation: ExactBooleanOperation::Intersection,
             shortcut: hypermesh::ExactBooleanShortcutKind::ConvexIntersection
         }
-    );
-    assert!(
-        ExactBooleanRequest::new(
-            ExactBooleanOperation::Intersection,
-            ValidationPolicy::CLOSED,
-        )
-        .materialize_closed_convex(&convex_left, &convex_same_surface)
-        .unwrap()
-        .is_some()
     );
 }
 

@@ -914,39 +914,6 @@ impl ExactBooleanRequest {
         materialize_closed_winding_separated_from_graph_for_request(&graph, left, right, self)
     }
 
-    /// Materialize a closed-convex shortcut for this request, when convex facts
-    /// own the replay provenance.
-    pub fn materialize_closed_convex(
-        self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-    ) -> Result<Option<ExactBooleanResult>, MeshError> {
-        let operation = self.operation;
-        let validation = self.validation;
-        let preflight = ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY)
-            .preflight(left, right)?;
-        let result = match preflight.support {
-            ExactBooleanSupport::CertifiedConvexUnion
-            | ExactBooleanSupport::CertifiedConvexIntersection
-            | ExactBooleanSupport::CertifiedConvexDifference => {
-                boolean_convex_meshes_optional(left, right, operation, validation)?
-            }
-            ExactBooleanSupport::CertifiedConvexContainment
-            | ExactBooleanSupport::CertifiedConvexSeparated => {
-                boolean_convex_relation_meshes_optional(left, right, operation, validation)?
-            }
-            _ => return Ok(None),
-        };
-        Ok(public_operation_replayable_result(
-            result,
-            left,
-            right,
-            operation,
-            validation,
-            ExactBoundaryBooleanPolicy::Reject,
-        ))
-    }
-
     /// Materialize adjacent closed-solid union completion for this request,
     /// returning the exact report consumed by the materializer.
     pub fn materialize_adjacent_union_completion(
