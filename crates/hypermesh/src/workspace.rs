@@ -3122,13 +3122,7 @@ mod tests {
             .materialize_open_surface_disjoint(request)
             .unwrap()
             .expect("graph-disjoint open surfaces should materialize from retained graph");
-        assert_eq!(
-            materialized,
-            request
-                .materialize_open_surface_disjoint(&left, &right)
-                .unwrap()
-                .unwrap()
-        );
+        assert_eq!(materialized, request.materialize(&left, &right).unwrap());
         assert_eq!(workspace.open_surface_disjoint_materializations.len(), 1);
         assert_eq!(
             workspace

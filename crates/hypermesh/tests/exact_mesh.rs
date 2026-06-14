@@ -5986,9 +5986,8 @@ fn trivial_boolean_materializers_are_publicly_replayable() {
 
         let open_disjoint_result =
             ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY)
-                .materialize_open_surface_disjoint(&open_disjoint_left, &open_disjoint_right)
-                .unwrap()
-                .expect("open surfaces with an empty exact graph should materialize as disjoint");
+                .materialize(&open_disjoint_left, &open_disjoint_right)
+                .unwrap();
         assert_shortcut(
             &open_disjoint_result,
             &open_disjoint_left,
@@ -6059,11 +6058,16 @@ fn trivial_boolean_materializers_are_publicly_replayable() {
             shortcut: hypermesh::ExactBooleanShortcutKind::Identical
         }
     );
-    assert!(
-        ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED,)
-            .materialize_open_surface_disjoint(&solid, &disjoint_solid)
-            .unwrap()
-            .is_none()
+    let closed_disjoint =
+        ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED)
+            .materialize(&solid, &disjoint_solid)
+            .unwrap();
+    assert_eq!(
+        closed_disjoint.kind,
+        ExactBooleanResultKind::CertifiedShortcut {
+            operation: ExactBooleanOperation::Union,
+            shortcut: hypermesh::ExactBooleanShortcutKind::BoundsDisjoint
+        }
     );
 }
 

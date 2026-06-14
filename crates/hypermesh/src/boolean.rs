@@ -812,26 +812,6 @@ impl ExactBooleanRequest {
         same_surface_report_from_sources(left, right)
     }
 
-    /// Materialize the open-surface disjoint shortcut for this request, when
-    /// exact graph facts prove the shortcut owns the replay provenance.
-    pub fn materialize_open_surface_disjoint(
-        self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-    ) -> Result<Option<ExactBooleanResult>, MeshError> {
-        let operation = self.operation;
-        let validation = self.validation;
-        if matches!(operation, ExactBooleanOperation::SelectedRegions(_))
-            || meshes_are_certified_bounds_disjoint(left, right)
-            || closed_validation_regularized_solid_support(left, right, operation, validation)
-                .is_some()
-        {
-            return Ok(None);
-        }
-        let graph = validated_intersection_graph(left, right)?;
-        materialize_open_surface_disjoint_from_graph_for_request(&graph, left, right, self)
-    }
-
     /// Materialize explicit boundary-only projection for this request, when
     /// its boundary policy allows that projection.
     pub fn materialize_boundary_touching_policy(
