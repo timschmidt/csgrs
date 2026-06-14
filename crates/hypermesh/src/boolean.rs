@@ -2639,11 +2639,6 @@ pub(crate) fn materialize_certified_boolean_support_with_artifacts(
             })
         }
         ExactBooleanSupport::CertifiedBoundaryPolicyShortcut => {
-            let request = ExactBooleanRequest::with_boundary_policy(
-                operation,
-                validation,
-                request.boundary_policy,
-            );
             if let Some(graph) = retained_graph {
                 materialize_boundary_touching_policy_from_graph_for_request(
                     graph, left, right, request,
@@ -2667,8 +2662,7 @@ pub(crate) fn materialize_certified_boolean_support_with_artifacts(
             materialize_certified_arrangement_cell_complex_support_with_arrangement(
                 left,
                 right,
-                operation,
-                validation,
+                request,
                 retained_graph,
                 retained_regularized_arrangement,
             )?
@@ -2761,12 +2755,12 @@ pub(crate) fn materialize_certified_boolean_support_with_artifacts(
 fn materialize_certified_arrangement_cell_complex_support_with_arrangement(
     left: &ExactMesh,
     right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: ValidationPolicy,
+    request: ExactBooleanRequest,
     retained_graph: Option<&ExactIntersectionGraph>,
     retained_regularized_arrangement: Option<&ExactArrangement>,
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
-    let request = ExactBooleanRequest::new(operation, validation);
+    let operation = request.operation;
+    let validation = request.validation;
     if let Some(arrangement) = retained_regularized_arrangement {
         let outcome = run_arrangement_cell_complex_attempt_from_arrangement_with_recovery_timing(
             arrangement,
