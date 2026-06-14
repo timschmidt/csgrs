@@ -4609,9 +4609,27 @@ fn materialize_boolean_exact_request(
     right: &ExactMesh,
     request: ExactBooleanRequest,
 ) -> Result<ExactBooleanResult, MeshError> {
+    materialize_boolean_exact_request_with_graph(left, right, request, None)
+}
+
+pub(crate) fn materialize_boolean_exact_request_from_retained_graph(
+    graph: &ExactIntersectionGraph,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    request: ExactBooleanRequest,
+) -> Result<ExactBooleanResult, MeshError> {
+    validate_graph_source_handoff(graph, left, right)?;
+    materialize_boolean_exact_request_with_graph(left, right, request, Some(graph))
+}
+
+fn materialize_boolean_exact_request_with_graph(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    request: ExactBooleanRequest,
+    retained_graph: Option<&ExactIntersectionGraph>,
+) -> Result<ExactBooleanResult, MeshError> {
     let operation = request.operation;
     let validation = request.validation;
-    let boundary_policy = request.boundary_policy;
     if let ExactBooleanOperation::SelectedRegions(selection) = operation {
         return replay_selected_region_boolean_result(left, right, selection, validation);
     }
@@ -4659,65 +4677,98 @@ fn materialize_boolean_exact_request(
     {
         return Ok(result);
     }
-    let graph = validated_intersection_graph(left, right);
-    if let Ok(graph) = graph.as_ref()
-        && !graph.face_pairs.is_empty()
+    if let Some(graph) = retained_graph {
+        return materialize_boolean_exact_request_from_ready_graph(graph, left, right, request);
+    }
+
+    match validated_intersection_graph(left, right) {
+        Ok(graph) => {
+            materialize_boolean_exact_request_from_ready_graph(&graph, left, right, request)
+        }
+        Err(error) => {
+            if let Some(result) =
+                boolean_convex_materialization_optional(left, right, operation, validation)?
+            {
+                return Ok(result);
+            }
+            Err(error)
+        }
+    }
+}
+
+fn boolean_convex_materialization_optional(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+) -> Result<Option<ExactBooleanResult>, MeshError> {
+    if let Some(result) = boolean_convex_meshes_optional(left, right, operation, validation)? {
+        return Ok(Some(result));
+    }
+    boolean_convex_relation_meshes_optional(left, right, operation, validation)
+}
+
+fn materialize_boolean_exact_request_from_ready_graph(
+    graph: &ExactIntersectionGraph,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    request: ExactBooleanRequest,
+) -> Result<ExactBooleanResult, MeshError> {
+    let operation = request.operation;
+    let validation = request.validation;
+    let boundary_policy = request.boundary_policy;
+    if !graph.face_pairs.is_empty()
         && let Some(result) = certified_arrangement_cell_complex_result_from_graph(
             graph, left, right, operation, validation, true,
         )?
     {
         return Ok(result);
     }
-    if let Some(result) = boolean_convex_meshes_optional(left, right, operation, validation)? {
-        return Ok(result);
-    }
     if let Some(result) =
-        boolean_convex_relation_meshes_optional(left, right, operation, validation)?
+        boolean_convex_materialization_optional(left, right, operation, validation)?
     {
         return Ok(result);
     }
 
-    let graph = graph?;
-
     if let Some(result) = boolean_closed_winding_separated_meshes_from_graph(
-        &graph, left, right, operation, validation,
+        graph, left, right, operation, validation,
     )? {
         return Ok(result);
     }
     if let Some(result) = boolean_closed_winding_containment_meshes_from_graph(
-        &graph, left, right, operation, validation,
+        graph, left, right, operation, validation,
     )? {
         return Ok(result);
     }
     if operation == ExactBooleanOperation::Union
         && let Some((result, _report)) =
             materialize_adjacent_union_completion_from_graph_for_request(
-                &graph, left, right, request,
+                graph, left, right, request,
             )?
     {
         return Ok(result);
     }
     if let Some((result, _evidence)) =
         materialize_closed_boundary_touching_regularized_boolean_with_evidence_from_graph(
-            &graph, left, right, operation, validation,
+            graph, left, right, operation, validation,
         )?
     {
         return Ok(result);
     }
     if let Some((result, _evidence)) =
         materialize_closed_no_volume_overlap_regularized_boolean_with_evidence_from_graph(
-            &graph, left, right, operation, validation,
+            graph, left, right, operation, validation,
         )?
     {
         return Ok(result);
     }
     if let Some(result) = boolean_arrangement_volumetric_split_cell_recovery_from_graph(
-        &graph, left, right, operation, validation,
+        graph, left, right, operation, validation,
     )? {
         return Ok(result);
     }
     if let Some(result) = boolean_arrangement_cell_complex_meshes_from_graph(
-        &graph, left, right, operation, validation,
+        graph, left, right, operation, validation,
     )? {
         return Ok(result);
     }
@@ -4731,7 +4782,7 @@ fn materialize_boolean_exact_request(
                 ExactBooleanOperation::Intersection => {
                     if let Some(result) =
                         boolean_arrangement_regularized_boundary_contact_from_graph(
-                            &graph, left, right, operation, validation,
+                            graph, left, right, operation, validation,
                         )?
                     {
                         return Ok(result);
@@ -4740,7 +4791,7 @@ fn materialize_boolean_exact_request(
                 ExactBooleanOperation::Difference => {
                     if let Some(result) =
                         boolean_arrangement_regularized_boundary_contact_from_graph(
-                            &graph, left, right, operation, validation,
+                            graph, left, right, operation, validation,
                         )?
                     {
                         return Ok(result);
@@ -4749,12 +4800,12 @@ fn materialize_boolean_exact_request(
                 ExactBooleanOperation::SelectedRegions(_) => unreachable!("handled above"),
             }
             if let Some(result) = boolean_open_surface_disjoint_meshes_from_graph(
-                &graph, left, right, operation, validation,
+                graph, left, right, operation, validation,
             )? {
                 return Ok(result);
             }
             if let Some(result) = boolean_boundary_touching_meshes_from_graph(
-                &graph,
+                graph,
                 left,
                 right,
                 operation,

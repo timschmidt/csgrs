@@ -9,6 +9,7 @@ use super::boolean::{
     boolean_closed_validation_regularized_meshes, boundary_touching_report_from_graph,
     direct_arrangement_cell_complex_attempt,
     materialize_adjacent_union_completion_from_graph_for_request,
+    materialize_boolean_exact_request_from_retained_graph,
     materialize_boundary_touching_policy_from_graph_for_request,
     materialize_certified_boolean_support_with_artifacts,
     materialize_closed_boundary_touching_regularized_boolean_with_evidence_from_graph,
@@ -1288,7 +1289,13 @@ impl<'a> ExactBooleanWorkspace<'a> {
                 result,
             );
         }
-        let result = request.materialize(self.left, self.right)?;
+        let graph = self
+            .graph
+            .as_ref()
+            .expect("intersection graph cache was just populated");
+        let result = materialize_boolean_exact_request_from_retained_graph(
+            graph, self.left, self.right, request,
+        )?;
         store_replayable_result_or_return(
             &mut self.materializations,
             self.left,
