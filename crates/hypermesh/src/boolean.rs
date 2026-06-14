@@ -2449,13 +2449,13 @@ pub(crate) fn materialize_certified_boolean_support_with_artifacts(
         ExactBooleanSupport::CertifiedOpenSurfaceDisjoint => {
             let graph =
                 graph_for_certified_materialization(retained_graph, &mut owned_graph, left, right)?;
-            materialize_open_surface_disjoint_from_graph_for_request(graph, left, right, request)?
+            materialize_graph_shortcut_from_graph_for_request(graph, left, right, request, support)?
         }
         ExactBooleanSupport::CertifiedClosedWindingSeparated
         | ExactBooleanSupport::CertifiedClosedWindingContainment => {
             let graph =
                 graph_for_certified_materialization(retained_graph, &mut owned_graph, left, right)?;
-            materialize_closed_winding_from_graph_for_request(graph, left, right, request, support)?
+            materialize_graph_shortcut_from_graph_for_request(graph, left, right, request, support)?
         }
         ExactBooleanSupport::CertifiedMixedDimensionalRegularizedSolid => {
             if matches!(operation, ExactBooleanOperation::SelectedRegions(_))
@@ -4286,7 +4286,7 @@ fn closed_winding_shortcut_preconditions_fail(
         || meshes_are_certified_bounds_disjoint(left, right)
 }
 
-pub(crate) fn materialize_closed_winding_from_graph_for_request(
+pub(crate) fn materialize_graph_shortcut_from_graph_for_request(
     graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
@@ -4295,16 +4295,31 @@ pub(crate) fn materialize_closed_winding_from_graph_for_request(
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
     let operation = request.operation;
     let validation = request.validation;
-    if closed_winding_shortcut_preconditions_fail(left, right, operation) {
-        return Ok(None);
-    }
     let result = match support {
+        ExactBooleanSupport::CertifiedOpenSurfaceDisjoint => {
+            if matches!(operation, ExactBooleanOperation::SelectedRegions(_))
+                || meshes_are_certified_bounds_disjoint(left, right)
+                || closed_validation_regularized_solid_support(left, right, operation, validation)
+                    .is_some()
+            {
+                return Ok(None);
+            }
+            boolean_open_surface_disjoint_meshes_from_graph(
+                graph, left, right, operation, validation,
+            )?
+        }
         ExactBooleanSupport::CertifiedClosedWindingSeparated => {
+            if closed_winding_shortcut_preconditions_fail(left, right, operation) {
+                return Ok(None);
+            }
             boolean_closed_winding_separated_meshes_from_graph(
                 graph, left, right, operation, validation,
             )?
         }
         ExactBooleanSupport::CertifiedClosedWindingContainment => {
+            if closed_winding_shortcut_preconditions_fail(left, right, operation) {
+                return Ok(None);
+            }
             boolean_closed_winding_containment_meshes_from_graph(
                 graph, left, right, operation, validation,
             )?
@@ -8826,30 +8841,6 @@ fn boolean_open_surface_disjoint_meshes_from_graph(
         .then_some(result));
     }
     Ok(None)
-}
-
-pub(crate) fn materialize_open_surface_disjoint_from_graph_for_request(
-    graph: &super::graph::ExactIntersectionGraph,
-    left: &ExactMesh,
-    right: &ExactMesh,
-    request: ExactBooleanRequest,
-) -> Result<Option<ExactBooleanResult>, MeshError> {
-    let operation = request.operation;
-    let validation = request.validation;
-    if matches!(operation, ExactBooleanOperation::SelectedRegions(_))
-        || meshes_are_certified_bounds_disjoint(left, right)
-        || closed_validation_regularized_solid_support(left, right, operation, validation).is_some()
-    {
-        return Ok(None);
-    }
-    Ok(public_operation_replayable_result(
-        boolean_open_surface_disjoint_meshes_from_graph(graph, left, right, operation, validation)?,
-        left,
-        right,
-        operation,
-        validation,
-        ExactBoundaryBooleanPolicy::Reject,
-    ))
 }
 
 pub(crate) fn open_surface_disjoint_result_matches_sources(

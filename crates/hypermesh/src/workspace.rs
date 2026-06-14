@@ -14,11 +14,9 @@ use super::boolean::{
     materialize_certified_boolean_support_with_artifacts,
     materialize_closed_boundary_touching_regularized_boolean_with_evidence_from_graph,
     materialize_closed_no_volume_overlap_regularized_boolean_with_evidence_from_graph,
-    materialize_closed_winding_from_graph_for_request,
-    materialize_open_surface_disjoint_from_graph_for_request,
-    open_surface_disjoint_report_from_graph, planar_arrangement_report_from_graph,
-    preflight_boolean_exact_request_from_graph, refinement_report_from_graph,
-    validate_boolean_result_against_sources_with_artifacts,
+    materialize_graph_shortcut_from_graph_for_request, open_surface_disjoint_report_from_graph,
+    planar_arrangement_report_from_graph, preflight_boolean_exact_request_from_graph,
+    refinement_report_from_graph, validate_boolean_result_against_sources_with_artifacts,
     volumetric_boundary_closure_report_from_graph, winding_readiness_report_for_request_from_graph,
 };
 use super::cell_complex::{
@@ -306,8 +304,13 @@ impl<'a> ExactBooleanWorkspace<'a> {
         }
 
         let (graph, left, right) = self.validated_graph_with_sources()?;
-        let materialized =
-            materialize_open_surface_disjoint_from_graph_for_request(graph, left, right, request)?;
+        let materialized = materialize_graph_shortcut_from_graph_for_request(
+            graph,
+            left,
+            right,
+            request,
+            ExactBooleanSupport::CertifiedOpenSurfaceDisjoint,
+        )?;
         store_retained_materialization_value(
             &mut self.open_surface_disjoint_materializations,
             left,
@@ -378,7 +381,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
         }
 
         let (graph, left, right) = self.validated_graph_with_sources()?;
-        let materialized = materialize_closed_winding_from_graph_for_request(
+        let materialized = materialize_graph_shortcut_from_graph_for_request(
             graph,
             left,
             right,
@@ -410,7 +413,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
         }
 
         let (graph, left, right) = self.validated_graph_with_sources()?;
-        let materialized = materialize_closed_winding_from_graph_for_request(
+        let materialized = materialize_graph_shortcut_from_graph_for_request(
             graph,
             left,
             right,
