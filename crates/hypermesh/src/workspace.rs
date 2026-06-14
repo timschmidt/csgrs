@@ -1683,7 +1683,10 @@ fn store_replayable_result_or_return(
     request: ExactBooleanRequest,
     result: ExactBooleanResult,
 ) -> Result<ExactBooleanResult, MeshError> {
-    if validate_retained_result_for_request(left, right, request, &result).is_ok() {
+    if result
+        .validate_for_workspace_cache(left, right, request)
+        .is_ok()
+    {
         cache.push((request, result.clone()));
     } else {
         result
