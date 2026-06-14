@@ -2126,11 +2126,9 @@ fn adjacent_union_completion_boolean_is_publicly_replayable() {
         ExactReportFreshness::SourceReplayMismatch
     );
 
-    let (result, _completion_report) =
-        ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED)
-            .materialize_adjacent_union_completion(&left, &right)
-            .unwrap()
-            .expect("non-axis full-face adjacent solids should complete as a boolean union");
+    let result = ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED)
+        .materialize(&left, &right)
+        .unwrap();
     assert_eq!(
         result.kind,
         ExactBooleanResultKind::CertifiedShortcut {
@@ -2187,24 +2185,6 @@ fn adjacent_union_completion_boolean_is_publicly_replayable() {
         .unwrap();
     assert!(result.mesh.facts().mesh.closed_manifold);
 
-    assert!(
-        ExactBooleanRequest::new(
-            ExactBooleanOperation::Intersection,
-            ValidationPolicy::CLOSED,
-        )
-        .materialize_adjacent_union_completion(&left, &right)
-        .unwrap()
-        .is_none()
-    );
-    assert!(
-        ExactBooleanRequest::new(
-            ExactBooleanOperation::Intersection,
-            ValidationPolicy::CLOSED,
-        )
-        .materialize_adjacent_union_completion(&left, &right)
-        .unwrap()
-        .is_none()
-    );
     let intersection_report = ExactBooleanRequest::new(
         ExactBooleanOperation::Intersection,
         ValidationPolicy::CLOSED,
@@ -2240,18 +2220,6 @@ fn adjacent_union_completion_boolean_is_publicly_replayable() {
     stale_axis_report.blocker.candidate_pairs = 1;
     assert!(stale_axis_report.validate().is_err());
 
-    assert!(
-        ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED,)
-            .materialize_adjacent_union_completion(&axis_left, &axis_right)
-            .unwrap()
-            .is_none()
-    );
-    assert!(
-        ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED,)
-            .materialize_adjacent_union_completion(&axis_left, &axis_right)
-            .unwrap()
-            .is_none()
-    );
     let axis_replay =
         ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED)
             .materialize(&axis_left, &axis_right)
@@ -2295,12 +2263,6 @@ fn adjacent_union_completion_boolean_is_publicly_replayable() {
     let mut stale_crossing = crossing_report;
     stale_crossing.blocker.kind = ExactBooleanBlockerKind::NeedsBoundaryPolicy;
     assert!(stale_crossing.validate().is_err());
-    assert!(
-        ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED,)
-            .materialize_adjacent_union_completion(&left, &crossing_right)
-            .unwrap()
-            .is_none()
-    );
 }
 
 #[test]
@@ -4698,13 +4660,6 @@ fn exact_contained_face_adjacent_union_is_publicly_replayable() {
         ContainedFaceAdjacentUnionFreshness::SourceReplayMismatch
     );
 
-    assert!(
-        ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED,)
-            .materialize_adjacent_union_completion(&left, &right)
-            .unwrap()
-            .is_none()
-    );
-
     let disjoint_shell = tetra_from_corners([40, 0, 0], [41, 0, 0], [40, 1, 0], [40, 0, 1]);
     let split_container = combine_exact_meshes(
         &subdivided_left,
@@ -4779,11 +4734,9 @@ fn exact_contained_face_adjacent_union_is_publicly_replayable() {
         completion_report.freshness_against_sources(&container, &separated_right),
         ExactReportFreshness::SourceReplayMismatch
     );
-    let (result, _completion_report) =
-        ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED)
-            .materialize_adjacent_union_completion(&container, &right)
-            .unwrap()
-            .expect("contained-face adjacent solids should complete as a boolean union");
+    let result = ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED)
+        .materialize(&container, &right)
+        .unwrap();
     assert_eq!(
         result.kind,
         ExactBooleanResultKind::CertifiedShortcut {
