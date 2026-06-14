@@ -1277,15 +1277,14 @@ fn label_opposite_region(
         ClosedMeshWindingRelation::Outside => ExactOppositeRegionLabel::Outside,
         ClosedMeshWindingRelation::Boundary => ExactOppositeRegionLabel::Boundary,
         ClosedMeshWindingRelation::Unknown | ClosedMeshWindingRelation::NotClosed => match opposite
-            .convex_fallback
-            .as_ref()
-            .map(|fallback| fallback.relation)
+            .convex_certified_relation()
         {
             Some(ConvexSolidPointRelation::Inside) => ExactOppositeRegionLabel::Inside,
             Some(ConvexSolidPointRelation::Outside) => ExactOppositeRegionLabel::Outside,
             Some(ConvexSolidPointRelation::Boundary) => ExactOppositeRegionLabel::Boundary,
-            Some(ConvexSolidPointRelation::Unknown)
-            | Some(ConvexSolidPointRelation::NotCertifiedConvex)
+            Some(
+                ConvexSolidPointRelation::Unknown | ConvexSolidPointRelation::NotCertifiedConvex,
+            )
             | None => ExactOppositeRegionLabel::Unknown,
         },
     }
@@ -1612,10 +1611,12 @@ mod tests {
     use super::*;
     use crate::arrangement3d::{
         ArrangementFaceCarrier, ArrangementFaceCell, ArrangementFaceCellNode,
-        ArrangementVolumeFaceSide, ExactTopologyAssemblyStatus,
+        ArrangementOppositeClassification, ArrangementVolumeFaceSide, ExactTopologyAssemblyStatus,
     };
     use crate::mesh::ExactMesh;
     use crate::region::ExactRegionSelection;
+    use crate::solid::ConvexSolidPointClassification;
+    use crate::winding::PointMeshWindingReport;
     use hyperlimit::Point3;
     use hyperreal::Real;
 
@@ -1645,6 +1646,40 @@ mod tests {
             source,
             opposite: ExactOppositeRegionLabel::Outside,
         }
+    }
+
+    fn winding_report(relation: ClosedMeshWindingRelation) -> PointMeshWindingReport {
+        PointMeshWindingReport {
+            relation,
+            axis: None,
+            tested_axes: 0,
+            triangle_count: 0,
+            crossings: 0,
+            boundary_hits: 0,
+            degenerate_hits: 0,
+            parallel_faces: 0,
+            unknown_hits: 0,
+        }
+    }
+
+    fn convex_classification(relation: ConvexSolidPointRelation) -> ConvexSolidPointClassification {
+        ConvexSolidPointClassification {
+            relation,
+            predicates: Vec::new(),
+        }
+    }
+
+    fn face_with_opposite(
+        winding_relation: ClosedMeshWindingRelation,
+        convex_relation: Option<ConvexSolidPointRelation>,
+    ) -> ArrangementFaceCell {
+        let mut face = labeled_face(MeshSide::Left).cell;
+        face.opposite = Some(ArrangementOppositeClassification {
+            representative: p(0, 0, 0),
+            winding: winding_report(winding_relation),
+            convex_fallback: convex_relation.map(convex_classification),
+        });
+        face
     }
 
     fn boundary_labeled_face(side: MeshSide) -> ExactCellComplexFace {
@@ -1761,6 +1796,38 @@ mod tests {
                 from_volume_adjacency: false,
             }]
         );
+    }
+
+    #[test]
+    fn label_face_cell_uses_certified_convex_relation_when_winding_is_unknown() {
+        for (convex, expected) in [
+            (
+                ConvexSolidPointRelation::Inside,
+                ExactOppositeRegionLabel::Inside,
+            ),
+            (
+                ConvexSolidPointRelation::Outside,
+                ExactOppositeRegionLabel::Outside,
+            ),
+            (
+                ConvexSolidPointRelation::Boundary,
+                ExactOppositeRegionLabel::Boundary,
+            ),
+            (
+                ConvexSolidPointRelation::Unknown,
+                ExactOppositeRegionLabel::Unknown,
+            ),
+            (
+                ConvexSolidPointRelation::NotCertifiedConvex,
+                ExactOppositeRegionLabel::Unknown,
+            ),
+        ] {
+            let face = label_face_cell(face_with_opposite(
+                ClosedMeshWindingRelation::Unknown,
+                Some(convex),
+            ));
+            assert_eq!(face.opposite, expected, "{convex:?}");
+        }
     }
 
     #[test]

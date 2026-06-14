@@ -128,8 +128,16 @@ pub struct ArrangementOppositeClassification {
     pub representative: Point3,
     /// Winding report against the opposite mesh.
     pub winding: PointMeshWindingReport,
-    /// Exact convex-solid fallback used when axis-ray winding is degenerate.
+    /// Exact convex-solid classification retained when winding cannot decide.
     pub convex_fallback: Option<ConvexSolidPointClassification>,
+}
+
+impl ArrangementOppositeClassification {
+    pub(crate) fn convex_certified_relation(&self) -> Option<ConvexSolidPointRelation> {
+        self.convex_fallback
+            .as_ref()
+            .and_then(|classification| certified_convex_point_relation(classification.relation))
+    }
 }
 
 /// Exact face cell in the retained arrangement.
@@ -4375,15 +4383,10 @@ fn classify_opposite(
         MeshSide::Right => left,
     };
     let winding = classify_point_against_closed_mesh_winding_report(&point, target);
-    let convex_fallback = if matches!(winding.relation, ClosedMeshWindingRelation::Unknown) {
-        let fallback = classify_point_against_convex_solid_report(&point, target);
-        if matches!(
-            fallback.relation,
-            ConvexSolidPointRelation::Inside
-                | ConvexSolidPointRelation::Boundary
-                | ConvexSolidPointRelation::Outside
-        ) {
-            Some(fallback)
+    let convex_certification = if matches!(winding.relation, ClosedMeshWindingRelation::Unknown) {
+        let classification = classify_point_against_convex_solid_report(&point, target);
+        if certified_convex_point_relation(classification.relation).is_some() {
+            Some(classification)
         } else {
             None
         }
@@ -4393,7 +4396,7 @@ fn classify_opposite(
     if matches!(
         winding.relation,
         ClosedMeshWindingRelation::Unknown | ClosedMeshWindingRelation::NotClosed
-    ) && convex_fallback.is_none()
+    ) && convex_certification.is_none()
         && policy.unresolved == super::regularization::ExactUnresolvedPolicy::Block
     {
         blockers.push(ExactArrangementBlocker::UnresolvedRegionClassification);
@@ -4401,7 +4404,18 @@ fn classify_opposite(
     ArrangementOppositeClassification {
         representative: point,
         winding,
-        convex_fallback,
+        convex_fallback: convex_certification,
+    }
+}
+
+fn certified_convex_point_relation(
+    relation: ConvexSolidPointRelation,
+) -> Option<ConvexSolidPointRelation> {
+    match relation {
+        ConvexSolidPointRelation::Inside
+        | ConvexSolidPointRelation::Boundary
+        | ConvexSolidPointRelation::Outside => Some(relation),
+        ConvexSolidPointRelation::Unknown | ConvexSolidPointRelation::NotCertifiedConvex => None,
     }
 }
 
