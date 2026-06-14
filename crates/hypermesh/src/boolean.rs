@@ -846,28 +846,6 @@ impl ExactBooleanRequest {
         )
     }
 
-    /// Materialize the closed-winding containment shortcut for this request,
-    /// when exact winding facts own the replay provenance.
-    pub fn materialize_closed_winding_containment(
-        self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-    ) -> Result<Option<ExactBooleanResult>, MeshError> {
-        let graph = validated_intersection_graph(left, right)?;
-        materialize_closed_winding_containment_from_graph_for_request(&graph, left, right, self)
-    }
-
-    /// Materialize the closed-winding separation shortcut for this request,
-    /// when exact winding facts own the replay provenance.
-    pub fn materialize_closed_winding_separated(
-        self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-    ) -> Result<Option<ExactBooleanResult>, MeshError> {
-        let graph = validated_intersection_graph(left, right)?;
-        materialize_closed_winding_separated_from_graph_for_request(&graph, left, right, self)
-    }
-
     /// Materialize adjacent closed-solid union completion for this request,
     /// returning the exact report consumed by the materializer.
     pub fn materialize_adjacent_union_completion(

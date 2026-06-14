@@ -3714,9 +3714,8 @@ fn closed_winding_shortcuts_are_publicly_replayable() {
         ExactBooleanOperation::Difference,
     ] {
         let result = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED)
-            .materialize_closed_winding_separated(&separated_left, &separated_right)
-            .unwrap()
-            .expect("empty graph separated solids should materialize by exact winding");
+            .materialize(&separated_left, &separated_right)
+            .unwrap();
         assert_eq!(
             result.kind,
             ExactBooleanResultKind::CertifiedShortcut {
@@ -3801,9 +3800,8 @@ fn closed_winding_shortcuts_are_publicly_replayable() {
         ExactBooleanOperation::Difference,
     ] {
         let result = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED)
-            .materialize_closed_winding_containment(&container, &contained)
-            .unwrap()
-            .expect("empty graph contained solids should materialize by exact winding");
+            .materialize(&container, &contained)
+            .unwrap();
         assert_eq!(
             result.kind,
             ExactBooleanResultKind::CertifiedShortcut {
@@ -3857,13 +3855,6 @@ fn closed_winding_materializers_yield_to_earlier_public_convex_replay() {
         ExactBooleanOperation::Intersection,
         ExactBooleanOperation::Difference,
     ] {
-        assert!(
-            ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED,)
-                .materialize_closed_winding_separated(&separated_left, &separated_right)
-                .unwrap()
-                .is_none(),
-            "{operation:?} should yield to convex-separated public provenance"
-        );
         let separated_replay = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED)
             .materialize(&separated_left, &separated_right)
             .unwrap();
@@ -3878,13 +3869,6 @@ fn closed_winding_materializers_yield_to_earlier_public_convex_replay() {
             )
             .unwrap();
 
-        assert!(
-            ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED,)
-                .materialize_closed_winding_containment(&container, &contained)
-                .unwrap()
-                .is_none(),
-            "{operation:?} should yield to convex-containment public provenance"
-        );
         let containment_replay = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED)
             .materialize(&container, &contained)
             .unwrap();

@@ -3228,10 +3228,7 @@ mod tests {
             .expect("empty graph containment should materialize from retained graph");
         assert_eq!(
             materialized,
-            request
-                .materialize_closed_winding_containment(&container, &contained)
-                .unwrap()
-                .unwrap()
+            request.materialize(&container, &contained).unwrap()
         );
         assert_eq!(
             workspace.closed_winding_containment_materializations.len(),
@@ -3280,13 +3277,7 @@ mod tests {
             .materialize_closed_winding_separated(request)
             .unwrap()
             .expect("empty graph separation should materialize from retained graph");
-        assert_eq!(
-            materialized,
-            request
-                .materialize_closed_winding_separated(&left, &right)
-                .unwrap()
-                .unwrap()
-        );
+        assert_eq!(materialized, request.materialize(&left, &right).unwrap());
         assert_eq!(workspace.closed_winding_separated_materializations.len(), 1);
         assert_eq!(
             workspace
