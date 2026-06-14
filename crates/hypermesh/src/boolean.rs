@@ -845,23 +845,6 @@ impl ExactBooleanRequest {
             self.validation,
         )
     }
-
-    /// Materialize zero-area closed boundary contact, returning the exact
-    /// evidence consumed by this request.
-    pub fn materialize_closed_boundary_touching_regularized_with_evidence(
-        self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-    ) -> Result<Option<(ExactBooleanResult, CoplanarVolumetricCellEvidenceReport)>, MeshError> {
-        let graph = validated_intersection_graph(left, right)?;
-        materialize_closed_boundary_touching_regularized_boolean_with_evidence_from_graph(
-            &graph,
-            left,
-            right,
-            self.operation,
-            self.validation,
-        )
-    }
 }
 
 /// Replayable certification bundle for an exact boolean request.

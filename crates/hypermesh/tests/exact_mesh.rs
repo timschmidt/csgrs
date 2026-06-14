@@ -3334,11 +3334,9 @@ fn closed_boundary_touching_regularized_boolean_is_publicly_replayable() {
         preflight.validate().unwrap();
         preflight.validate_against_sources(&left, &right).unwrap();
 
-        let (result, _consumed_evidence) =
-            ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED)
-                .materialize_closed_boundary_touching_regularized_with_evidence(&left, &right)
-                .unwrap()
-                .expect("closed boundary-only contact should materialize by exact regularization");
+        let result = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED)
+            .materialize(&left, &right)
+            .unwrap();
         assert_eq!(
             result.kind,
             ExactBooleanResultKind::CertifiedShortcut {
@@ -3361,38 +3359,6 @@ fn closed_boundary_touching_regularized_boolean_is_publicly_replayable() {
             relabeled_boundary_report.validate().is_err(),
             "{operation:?}: {relabeled_boundary_report:?}"
         );
-
-        let (evidenced_result, consumed_evidence) =
-            ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED)
-                .materialize_closed_boundary_touching_regularized_with_evidence(&left, &right)
-                .unwrap()
-                .expect("closed zero-area boundary contact should retain consumed evidence");
-        assert_eq!(
-            consumed_evidence, evidence,
-            "{operation:?}: consumed evidence should match certified zero-area boundary report"
-        );
-        consumed_evidence.validate().unwrap();
-        consumed_evidence
-            .validate_against_sources(&left, &right)
-            .unwrap();
-        assert_eq!(
-            evidenced_result.kind, result.kind,
-            "{operation:?}: {evidenced_result:?}"
-        );
-        assert_eq!(
-            evidenced_result.mesh.vertices().len(),
-            result.mesh.vertices().len(),
-            "{operation:?}: {evidenced_result:?}"
-        );
-        assert_eq!(
-            evidenced_result.mesh.triangles().len(),
-            result.mesh.triangles().len(),
-            "{operation:?}: {evidenced_result:?}"
-        );
-        evidenced_result.validate().unwrap();
-        evidenced_result
-            .validate_against_sources(&left, &right)
-            .unwrap();
 
         assert_eq!(
             result.freshness_against_sources(&left, &right),
@@ -3518,12 +3484,6 @@ fn closed_no_volume_overlap_regularized_boolean_is_publicly_replayable() {
             );
         }
 
-        assert!(
-            ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED,)
-                .materialize_closed_boundary_touching_regularized_with_evidence(&left, &right)
-                .unwrap()
-                .is_none()
-        );
         let (result, _consumed_evidence) =
             ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED,).materialize_closed_no_volume_overlap_regularized_with_evidence(&left, &right)
         .unwrap()
