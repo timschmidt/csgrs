@@ -2291,9 +2291,16 @@ pub(crate) fn materialize_certified_boolean_support_with_artifacts(
         | ExactBooleanSupport::CertifiedOpenSurfaceArrangementDifference => {
             let graph =
                 graph_for_certified_materialization(retained_graph, &mut owned_graph, left, right)?;
-            materialize_open_surface_arrangement_from_graph(
-                graph, left, right, operation, validation,
-            )?
+            public_operation_replayable_result(
+                open_surface_arrangement_result_from_graph(
+                    graph, left, right, operation, validation,
+                )?,
+                left,
+                right,
+                operation,
+                validation,
+                ExactBoundaryBooleanPolicy::Reject,
+            )
         }
         ExactBooleanSupport::CertifiedArrangementCellComplex => {
             materialize_certified_arrangement_cell_complex_support_with_arrangement(
@@ -8793,25 +8800,6 @@ type OpenSurfaceArrangementPlan = (
     Vec<FaceRegionPlaneClassification>,
     Vec<FaceRegionTriangulation>,
 );
-
-fn materialize_open_surface_arrangement_from_graph(
-    graph: &super::graph::ExactIntersectionGraph,
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: ValidationPolicy,
-) -> Result<Option<ExactBooleanResult>, MeshError> {
-    let result =
-        open_surface_arrangement_result_from_graph(graph, left, right, operation, validation)?;
-    Ok(public_operation_replayable_result(
-        result,
-        left,
-        right,
-        operation,
-        validation,
-        ExactBoundaryBooleanPolicy::Reject,
-    ))
-}
 
 pub(crate) fn replay_open_surface_arrangement_result(
     left: &ExactMesh,
