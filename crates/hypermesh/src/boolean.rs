@@ -260,7 +260,31 @@ impl ExactArrangementBooleanAttempt {
                 {
                     return Err(ExactReportValidationError::StatusEvidenceMismatch);
                 }
-                if !arrangement_attempt_decline_matches_stage(decline, self.stage) {
+                if !matches!(
+                    (decline, self.stage),
+                    (
+                        ExactArrangementBooleanDecline::DispatchGate,
+                        ExactArrangementBooleanStage::NotAttempted
+                    ) | (
+                        ExactArrangementBooleanDecline::ArrangementBlockers(_)
+                            | ExactArrangementBooleanDecline::Labeling(_)
+                            | ExactArrangementBooleanDecline::TopologyAssembly(_),
+                        ExactArrangementBooleanStage::ArrangementBuilt
+                    ) | (
+                        ExactArrangementBooleanDecline::RegionOwnership(_)
+                            | ExactArrangementBooleanDecline::Selection(_),
+                        ExactArrangementBooleanStage::Labeled
+                    ) | (
+                        ExactArrangementBooleanDecline::Simplification(_),
+                        ExactArrangementBooleanStage::Selected
+                    ) | (
+                        ExactArrangementBooleanDecline::Triangulation(_),
+                        ExactArrangementBooleanStage::Simplified
+                    ) | (
+                        ExactArrangementBooleanDecline::OutputValidation,
+                        ExactArrangementBooleanStage::Triangulated
+                    )
+                ) {
                     return Err(ExactReportValidationError::StatusEvidenceMismatch);
                 }
             }
@@ -270,7 +294,91 @@ impl ExactArrangementBooleanAttempt {
                 }
             }
         }
-        if !arrangement_attempt_gate_statuses_match_stage(self) {
+        let pre_gate_output_validation = matches!(
+            self.decline,
+            Some(ExactArrangementBooleanDecline::OutputValidation)
+        ) && self.stage
+            == ExactArrangementBooleanStage::Triangulated
+            && self.topology_assembly.is_none()
+            && self.region_ownership.is_none();
+        if self.stage == ExactArrangementBooleanStage::NotAttempted {
+            if self.topology_assembly.is_some() || self.region_ownership.is_some() {
+                return Err(ExactReportValidationError::StatusEvidenceMismatch);
+            }
+        } else if self.region_ownership.is_some() && self.topology_assembly.is_none() {
+            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+        }
+        if !matches!(
+            (&self.topology_assembly, &self.topology_assembly_report),
+            (Some(status), Some(report)) if report.status == *status && report.validate().is_ok()
+        ) && !matches!(
+            (&self.topology_assembly, &self.topology_assembly_report),
+            (None, None)
+        ) {
+            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+        }
+        if !matches!(
+            (&self.region_ownership, &self.region_ownership_report),
+            (Some(status), Some(report)) if report.status == *status && report.validate().is_ok()
+        ) && !matches!(
+            (&self.region_ownership, &self.region_ownership_report),
+            (None, None)
+        ) {
+            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+        }
+        if self.region_ownership_report.is_some() && self.topology_assembly_report.is_none() {
+            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+        }
+        match self.decline.as_ref() {
+            Some(ExactArrangementBooleanDecline::TopologyAssembly(status)) => {
+                if self.topology_assembly != Some(*status) || self.region_ownership.is_some() {
+                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                }
+            }
+            Some(ExactArrangementBooleanDecline::Labeling(_)) => {
+                if self.topology_assembly.is_none() || self.region_ownership.is_some() {
+                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                }
+            }
+            Some(ExactArrangementBooleanDecline::RegionOwnership(status)) => {
+                if self.region_ownership != Some(*status) {
+                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                }
+            }
+            Some(
+                ExactArrangementBooleanDecline::Selection(_)
+                | ExactArrangementBooleanDecline::Simplification(_)
+                | ExactArrangementBooleanDecline::Triangulation(_),
+            ) => {
+                if self.region_ownership.is_none() {
+                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                }
+            }
+            Some(ExactArrangementBooleanDecline::OutputValidation) => {
+                if !pre_gate_output_validation && self.region_ownership.is_none() {
+                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                }
+            }
+            _ => {}
+        }
+        if self.decline.is_none()
+            && !matches!(self.operation, ExactBooleanOperation::SelectedRegions(_))
+            && let Some(status) = self.region_ownership
+            && !status.is_resolved()
+        {
+            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+        }
+        if (self.stage == ExactArrangementBooleanStage::Selected
+            || self.stage == ExactArrangementBooleanStage::Simplified
+            || self.stage == ExactArrangementBooleanStage::Triangulated
+            || self.selected_faces != 0
+            || self.reversed_selected_faces != 0
+            || self.volume_oriented_selected_faces != 0
+            || self.label_oriented_selected_faces != 0
+            || self.selected_volume_regions != 0)
+            && self.region_ownership.is_none()
+            && !pre_gate_output_validation
+        {
             return Err(ExactReportValidationError::StatusEvidenceMismatch);
         }
         if self.output_triangles != 0 && self.output_vertices == 0 {
@@ -282,7 +390,37 @@ impl ExactArrangementBooleanAttempt {
         {
             return Err(ExactReportValidationError::StatusEvidenceMismatch);
         }
-        if !arrangement_attempt_counts_match_stage(self) {
+        if self.stage == ExactArrangementBooleanStage::NotAttempted
+            && (self.arrangement_blockers != 0
+                || self.face_cells != 0
+                || self.regions != 0
+                || self.volume_regions != 0
+                || self.volume_adjacencies != 0
+                || self.lower_dimensional_artifacts != 0
+                || self.selected_faces != 0
+                || self.reversed_selected_faces != 0
+                || self.volume_oriented_selected_faces != 0
+                || self.label_oriented_selected_faces != 0
+                || self.selected_volume_regions != 0
+                || self.output_vertices != 0
+                || self.output_triangles != 0)
+        {
+            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+        }
+        if arrangement_attempt_stage_rank(self.stage)
+            < arrangement_attempt_stage_rank(ExactArrangementBooleanStage::Labeled)
+            && (self.selected_faces != 0
+                || self.reversed_selected_faces != 0
+                || self.volume_oriented_selected_faces != 0
+                || self.label_oriented_selected_faces != 0
+                || self.selected_volume_regions != 0)
+        {
+            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+        }
+        if arrangement_attempt_stage_rank(self.stage)
+            < arrangement_attempt_stage_rank(ExactArrangementBooleanStage::Triangulated)
+            && (self.output_vertices != 0 || self.output_triangles != 0)
+        {
             return Err(ExactReportValidationError::StatusEvidenceMismatch);
         }
         Ok(())
@@ -382,73 +520,6 @@ impl ExactArrangementBooleanAttempt {
     }
 }
 
-fn arrangement_attempt_decline_matches_stage(
-    decline: &ExactArrangementBooleanDecline,
-    stage: ExactArrangementBooleanStage,
-) -> bool {
-    matches!(
-        (decline, stage),
-        (
-            ExactArrangementBooleanDecline::DispatchGate,
-            ExactArrangementBooleanStage::NotAttempted
-        ) | (
-            ExactArrangementBooleanDecline::ArrangementBlockers(_)
-                | ExactArrangementBooleanDecline::Labeling(_)
-                | ExactArrangementBooleanDecline::TopologyAssembly(_),
-            ExactArrangementBooleanStage::ArrangementBuilt
-        ) | (
-            ExactArrangementBooleanDecline::RegionOwnership(_)
-                | ExactArrangementBooleanDecline::Selection(_),
-            ExactArrangementBooleanStage::Labeled
-        ) | (
-            ExactArrangementBooleanDecline::Simplification(_),
-            ExactArrangementBooleanStage::Selected
-        ) | (
-            ExactArrangementBooleanDecline::Triangulation(_),
-            ExactArrangementBooleanStage::Simplified
-        ) | (
-            ExactArrangementBooleanDecline::OutputValidation,
-            ExactArrangementBooleanStage::Triangulated
-        )
-    )
-}
-
-fn arrangement_attempt_counts_match_stage(attempt: &ExactArrangementBooleanAttempt) -> bool {
-    let stage = attempt.stage;
-    if stage == ExactArrangementBooleanStage::NotAttempted {
-        return attempt.arrangement_blockers == 0
-            && attempt.face_cells == 0
-            && attempt.regions == 0
-            && attempt.volume_regions == 0
-            && attempt.volume_adjacencies == 0
-            && attempt.lower_dimensional_artifacts == 0
-            && attempt.selected_faces == 0
-            && attempt.reversed_selected_faces == 0
-            && attempt.volume_oriented_selected_faces == 0
-            && attempt.label_oriented_selected_faces == 0
-            && attempt.selected_volume_regions == 0
-            && attempt.output_vertices == 0
-            && attempt.output_triangles == 0;
-    }
-    if arrangement_attempt_stage_rank(stage)
-        < arrangement_attempt_stage_rank(ExactArrangementBooleanStage::Labeled)
-        && (attempt.selected_faces != 0
-            || attempt.reversed_selected_faces != 0
-            || attempt.volume_oriented_selected_faces != 0
-            || attempt.label_oriented_selected_faces != 0
-            || attempt.selected_volume_regions != 0)
-    {
-        return false;
-    }
-    if arrangement_attempt_stage_rank(stage)
-        < arrangement_attempt_stage_rank(ExactArrangementBooleanStage::Triangulated)
-        && (attempt.output_vertices != 0 || attempt.output_triangles != 0)
-    {
-        return false;
-    }
-    true
-}
-
 fn record_selected_orientation_counts(
     attempt: &mut ExactArrangementBooleanAttempt,
     selected: &ExactSelectedCellComplex,
@@ -469,100 +540,6 @@ fn record_selected_orientation_counts(
         .selected_face_orientations
         .len()
         .saturating_sub(attempt.volume_oriented_selected_faces);
-}
-
-fn arrangement_attempt_gate_statuses_match_stage(attempt: &ExactArrangementBooleanAttempt) -> bool {
-    let pre_gate_output_validation = matches!(
-        attempt.decline,
-        Some(ExactArrangementBooleanDecline::OutputValidation)
-    ) && attempt.stage
-        == ExactArrangementBooleanStage::Triangulated
-        && attempt.topology_assembly.is_none()
-        && attempt.region_ownership.is_none();
-    if attempt.stage == ExactArrangementBooleanStage::NotAttempted {
-        return attempt.topology_assembly.is_none() && attempt.region_ownership.is_none();
-    }
-    if attempt.region_ownership.is_some() && attempt.topology_assembly.is_none() {
-        return false;
-    }
-    if !arrangement_attempt_gate_reports_match_statuses(attempt) {
-        return false;
-    }
-    match attempt.decline.as_ref() {
-        Some(ExactArrangementBooleanDecline::TopologyAssembly(status)) => {
-            if attempt.topology_assembly != Some(*status) || attempt.region_ownership.is_some() {
-                return false;
-            }
-        }
-        Some(ExactArrangementBooleanDecline::Labeling(_)) => {
-            if attempt.topology_assembly.is_none() || attempt.region_ownership.is_some() {
-                return false;
-            }
-        }
-        Some(ExactArrangementBooleanDecline::RegionOwnership(status)) => {
-            if attempt.region_ownership != Some(*status) {
-                return false;
-            }
-        }
-        Some(
-            ExactArrangementBooleanDecline::Selection(_)
-            | ExactArrangementBooleanDecline::Simplification(_)
-            | ExactArrangementBooleanDecline::Triangulation(_),
-        ) => {
-            if attempt.region_ownership.is_none() {
-                return false;
-            }
-        }
-        Some(ExactArrangementBooleanDecline::OutputValidation) => {
-            if !pre_gate_output_validation && attempt.region_ownership.is_none() {
-                return false;
-            }
-        }
-        _ => {}
-    }
-    if attempt.decline.is_none()
-        && !matches!(attempt.operation, ExactBooleanOperation::SelectedRegions(_))
-        && let Some(status) = attempt.region_ownership
-        && !status.is_resolved()
-    {
-        return false;
-    }
-    if (attempt.stage == ExactArrangementBooleanStage::Selected
-        || attempt.stage == ExactArrangementBooleanStage::Simplified
-        || attempt.stage == ExactArrangementBooleanStage::Triangulated
-        || attempt.selected_faces != 0
-        || attempt.reversed_selected_faces != 0
-        || attempt.volume_oriented_selected_faces != 0
-        || attempt.label_oriented_selected_faces != 0
-        || attempt.selected_volume_regions != 0)
-        && attempt.region_ownership.is_none()
-        && !pre_gate_output_validation
-    {
-        return false;
-    }
-    true
-}
-
-fn arrangement_attempt_gate_reports_match_statuses(
-    attempt: &ExactArrangementBooleanAttempt,
-) -> bool {
-    match (
-        &attempt.topology_assembly,
-        &attempt.topology_assembly_report,
-    ) {
-        (Some(status), Some(report)) if report.status == *status && report.validate().is_ok() => {}
-        (None, None) => {}
-        _ => return false,
-    }
-    match (&attempt.region_ownership, &attempt.region_ownership_report) {
-        (Some(status), Some(report)) if report.status == *status && report.validate().is_ok() => {}
-        (None, None) => {}
-        _ => return false,
-    }
-    if attempt.region_ownership_report.is_some() && attempt.topology_assembly_report.is_none() {
-        return false;
-    }
-    true
 }
 
 const fn arrangement_attempt_stage_rank(stage: ExactArrangementBooleanStage) -> u8 {
@@ -1568,7 +1545,17 @@ impl ExactBooleanEvaluation {
             result.validate()?;
             if !result.matches_request(self.request)
                 || result.mesh.validation_policy() != self.request.validation
-                || !exact_boolean_result_facts_match_preflight(result, &self.preflight)
+                || match result.kind {
+                    ExactBooleanResultKind::SelectedRegions { .. }
+                    | ExactBooleanResultKind::OpenSurfaceArrangement { .. } => {
+                        result.graph_had_unknowns != self.preflight.graph_had_unknowns
+                            || result.region_classifications
+                                != self.preflight.region_classifications
+                    }
+                    ExactBooleanResultKind::ArrangementCellComplexMaterialized { .. }
+                    | ExactBooleanResultKind::BoundaryPolicyShortcut { .. }
+                    | ExactBooleanResultKind::CertifiedShortcut { .. } => false,
+                }
                 || !exact_boolean_result_matches_certifications(result, &self.certifications)
                 || !result.matches_preflight_support(self.preflight.support)
             {
@@ -1685,10 +1672,21 @@ fn exact_boolean_preflight_matches_certifications(
         | ExactBooleanSupport::CertifiedOpenSurfaceArrangementIntersection
         | ExactBooleanSupport::CertifiedOpenSurfaceArrangementDifference => {
             *status == ExactWindingReadinessStatus::OpenSurfaceArrangementAlreadyMaterialized
-                && exact_boolean_preflight_matches_open_surface_arrangement(
-                    preflight,
-                    &certifications.winding_readiness,
-                )
+                && preflight.graph_had_unknowns
+                    == certifications.winding_readiness.graph_had_unknowns
+                && preflight.retained_face_pairs
+                    == certifications.winding_readiness.retained_face_pairs
+                && preflight.retained_events == certifications.winding_readiness.retained_events
+                && preflight.region_count == certifications.winding_readiness.region_count
+                && preflight.region_classifications
+                    == certifications.winding_readiness.region_classifications
+                && preflight.blocker.is_none()
+                && preflight.arrangement_readiness.is_none()
+                && preflight.coplanar_volumetric_evidence.is_none()
+                && certifications
+                    .winding_readiness
+                    .coplanar_volumetric_evidence
+                    .is_none()
         }
         ExactBooleanSupport::CertifiedArrangementCellComplex => {
             (exact_boolean_arrangement_cell_complex_shortcut_certified_for_operation(
@@ -1736,18 +1734,31 @@ fn exact_boolean_preflight_matches_certifications(
         }
         ExactBooleanSupport::CertifiedOpenSurfaceDisjoint => {
             *status == ExactWindingReadinessStatus::OpenSurfaceDisjointAlreadyMaterialized
-                && exact_boolean_preflight_matches_open_surface_disjoint(
-                    preflight,
-                    &certifications.open_surface_disjoint,
-                )
+                && certifications.open_surface_disjoint.is_certified()
+                && preflight.graph_had_unknowns
+                    == certifications.open_surface_disjoint.graph_had_unknowns
+                && preflight.retained_face_pairs
+                    == certifications.open_surface_disjoint.retained_face_pairs
+                && preflight.retained_events == certifications.open_surface_disjoint.retained_events
+                && preflight.region_count == 0
+                && preflight.region_classifications.is_empty()
+                && preflight.blocker.is_none()
+                && preflight.arrangement_readiness.is_none()
+                && preflight.coplanar_volumetric_evidence.is_none()
         }
         ExactBooleanSupport::CertifiedClosedWindingSeparated => {
             *status == ExactWindingReadinessStatus::ClosedWindingSeparatedAlreadyMaterialized
-                && exact_boolean_closed_winding_reports_separated(certifications)
+                && certifications.closed_winding_left_in_right.relation
+                    == ClosedMeshWindingMeshRelation::Outside
+                && certifications.closed_winding_right_in_left.relation
+                    == ClosedMeshWindingMeshRelation::Outside
         }
         ExactBooleanSupport::CertifiedClosedWindingContainment => {
             *status == ExactWindingReadinessStatus::ClosedWindingContainmentAlreadyMaterialized
-                && exact_boolean_closed_winding_reports_containment(certifications)
+                && (certifications.closed_winding_left_in_right.relation
+                    == ClosedMeshWindingMeshRelation::StrictlyInside
+                    || certifications.closed_winding_right_in_left.relation
+                        == ClosedMeshWindingMeshRelation::StrictlyInside)
         }
         ExactBooleanSupport::CertifiedMixedDimensionalRegularizedSolid => {
             *status
@@ -1794,10 +1805,17 @@ fn exact_boolean_preflight_matches_certifications(
         }
         ExactBooleanSupport::RequiresPlanarArrangement => {
             *status == ExactWindingReadinessStatus::PlanarArrangementRequired
-                && exact_boolean_preflight_matches_planar_report(
-                    preflight,
-                    &certifications.planar_arrangement,
-                )
+                && preflight.graph_had_unknowns
+                    == certifications.planar_arrangement.graph_had_unknowns
+                && preflight.retained_face_pairs
+                    == certifications.planar_arrangement.retained_face_pairs
+                && preflight.retained_events == certifications.planar_arrangement.retained_events
+                && preflight.region_count == 0
+                && preflight.region_classifications.is_empty()
+                && preflight.blocker.as_ref() == Some(&certifications.planar_arrangement.blocker)
+                && preflight.arrangement_readiness
+                    == certifications.planar_arrangement.arrangement_readiness
+                && preflight.coplanar_volumetric_evidence.is_none()
         }
         ExactBooleanSupport::RequiresCoplanarVolumetricCells => {
             *status == ExactWindingReadinessStatus::CoplanarVolumetricCellsRequired
@@ -1821,21 +1839,6 @@ fn exact_boolean_preflight_matches_certifications(
                 )
         }
     }
-}
-
-fn exact_boolean_preflight_matches_open_surface_disjoint(
-    preflight: &ExactBooleanPreflight,
-    open_surface_disjoint: &ExactOpenSurfaceDisjointReport,
-) -> bool {
-    open_surface_disjoint.is_certified()
-        && preflight.graph_had_unknowns == open_surface_disjoint.graph_had_unknowns
-        && preflight.retained_face_pairs == open_surface_disjoint.retained_face_pairs
-        && preflight.retained_events == open_surface_disjoint.retained_events
-        && preflight.region_count == 0
-        && preflight.region_classifications.is_empty()
-        && preflight.blocker.is_none()
-        && preflight.arrangement_readiness.is_none()
-        && preflight.coplanar_volumetric_evidence.is_none()
 }
 
 fn exact_boolean_preflight_matches_selected_region_policy(
@@ -1867,23 +1870,6 @@ fn exact_boolean_preflight_matches_selected_region_policy(
             .winding_readiness
             .coplanar_volumetric_evidence
             .is_none()
-}
-
-fn exact_boolean_closed_winding_reports_separated(
-    certifications: &ExactBooleanCertificationSet,
-) -> bool {
-    certifications.closed_winding_left_in_right.relation == ClosedMeshWindingMeshRelation::Outside
-        && certifications.closed_winding_right_in_left.relation
-            == ClosedMeshWindingMeshRelation::Outside
-}
-
-fn exact_boolean_closed_winding_reports_containment(
-    certifications: &ExactBooleanCertificationSet,
-) -> bool {
-    certifications.closed_winding_left_in_right.relation
-        == ClosedMeshWindingMeshRelation::StrictlyInside
-        || certifications.closed_winding_right_in_left.relation
-            == ClosedMeshWindingMeshRelation::StrictlyInside
 }
 
 fn exact_boolean_convex_reports_match_support(
@@ -1944,21 +1930,6 @@ fn exact_boolean_preflight_matches_closed_boundary_coplanar_handoff(
         && preflight.arrangement_readiness.is_none()
         && preflight.coplanar_volumetric_evidence.is_some()
         && preflight.coplanar_volumetric_evidence == winding_readiness.coplanar_volumetric_evidence
-}
-
-fn exact_boolean_preflight_matches_open_surface_arrangement(
-    preflight: &ExactBooleanPreflight,
-    winding_readiness: &ExactWindingReadinessReport,
-) -> bool {
-    preflight.graph_had_unknowns == winding_readiness.graph_had_unknowns
-        && preflight.retained_face_pairs == winding_readiness.retained_face_pairs
-        && preflight.retained_events == winding_readiness.retained_events
-        && preflight.region_count == winding_readiness.region_count
-        && preflight.region_classifications == winding_readiness.region_classifications
-        && preflight.blocker.is_none()
-        && preflight.arrangement_readiness.is_none()
-        && preflight.coplanar_volumetric_evidence.is_none()
-        && winding_readiness.coplanar_volumetric_evidence.is_none()
 }
 
 fn exact_boolean_arrangement_attempt_materialized(
@@ -2053,20 +2024,6 @@ fn exact_boolean_preflight_matches_boundary_report(
         }
 }
 
-fn exact_boolean_preflight_matches_planar_report(
-    preflight: &ExactBooleanPreflight,
-    planar_arrangement: &ExactPlanarArrangementReport,
-) -> bool {
-    preflight.graph_had_unknowns == planar_arrangement.graph_had_unknowns
-        && preflight.retained_face_pairs == planar_arrangement.retained_face_pairs
-        && preflight.retained_events == planar_arrangement.retained_events
-        && preflight.region_count == 0
-        && preflight.region_classifications.is_empty()
-        && preflight.blocker.as_ref() == Some(&planar_arrangement.blocker)
-        && preflight.arrangement_readiness == planar_arrangement.arrangement_readiness
-        && preflight.coplanar_volumetric_evidence.is_none()
-}
-
 fn exact_boolean_preflight_matches_winding_handoff(
     preflight: &ExactBooleanPreflight,
     winding_readiness: &ExactWindingReadinessReport,
@@ -2079,22 +2036,6 @@ fn exact_boolean_preflight_matches_winding_handoff(
         && preflight.blocker.as_ref() == Some(&winding_readiness.blocker)
         && preflight.arrangement_readiness.is_none()
         && preflight.coplanar_volumetric_evidence == winding_readiness.coplanar_volumetric_evidence
-}
-
-fn exact_boolean_result_facts_match_preflight(
-    result: &ExactBooleanResult,
-    preflight: &ExactBooleanPreflight,
-) -> bool {
-    match result.kind {
-        ExactBooleanResultKind::SelectedRegions { .. }
-        | ExactBooleanResultKind::OpenSurfaceArrangement { .. } => {
-            result.graph_had_unknowns == preflight.graph_had_unknowns
-                && result.region_classifications == preflight.region_classifications
-        }
-        ExactBooleanResultKind::ArrangementCellComplexMaterialized { .. }
-        | ExactBooleanResultKind::BoundaryPolicyShortcut { .. }
-        | ExactBooleanResultKind::CertifiedShortcut { .. } => true,
-    }
 }
 
 fn exact_boolean_result_matches_certifications(
