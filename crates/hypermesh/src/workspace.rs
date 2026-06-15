@@ -69,6 +69,18 @@ macro_rules! materialize_cached_graph_shortcut {
     }};
 }
 
+macro_rules! cached_workspace_report {
+    ($workspace:ident, $cache:ident, $request:expr, $build:block) => {{
+        let request = $request;
+        if let Some(index) = cached_by_request_index(&$workspace.$cache, request) {
+            Ok(&$workspace.$cache[index].1)
+        } else {
+            let report = $build;
+            store_retained_report(&mut $workspace.$cache, request, report)
+        }
+    }};
+}
+
 /// Reusable exact boolean session for a fixed source-mesh pair.
 ///
 /// The workspace keeps source meshes borrowed and caches replayable exact
@@ -719,15 +731,12 @@ impl<'a> ExactBooleanWorkspace<'a> {
         &mut self,
         request: ExactBooleanRequest,
     ) -> Result<&ExactBooleanPreflight, MeshError> {
-        if let Some(index) = cached_by_request_index(&self.preflights, request) {
-            return Ok(&self.preflights[index].1);
-        }
-
-        let left = self.left;
-        let right = self.right;
-        let graph = self.validated_graph()?;
-        let preflight = preflight_boolean_exact_request_from_graph(graph, left, right, request)?;
-        store_retained_report(&mut self.preflights, request, preflight)
+        cached_workspace_report!(self, preflights, request, {
+            let left = self.left;
+            let right = self.right;
+            let graph = self.validated_graph()?;
+            preflight_boolean_exact_request_from_graph(graph, left, right, request)?
+        })
     }
 
     /// Validate preflight scheduling evidence against this workspace's source
@@ -754,13 +763,10 @@ impl<'a> ExactBooleanWorkspace<'a> {
         &mut self,
         request: ExactBooleanRequest,
     ) -> Result<&ExactRefinementReport, MeshError> {
-        if let Some(index) = cached_by_request_index(&self.refinement_reports, request) {
-            return Ok(&self.refinement_reports[index].1);
-        }
-
-        let graph = self.validated_graph()?;
-        let report = refinement_report_from_graph(graph, request.operation);
-        store_retained_report(&mut self.refinement_reports, request, report)
+        cached_workspace_report!(self, refinement_reports, request, {
+            let graph = self.validated_graph()?;
+            refinement_report_from_graph(graph, request.operation)
+        })
     }
 
     /// Validate refinement evidence against this workspace's source meshes.
@@ -781,23 +787,19 @@ impl<'a> ExactBooleanWorkspace<'a> {
         &mut self,
         request: ExactBooleanRequest,
     ) -> Result<&ExactAdjacentUnionCompletionReport, MeshError> {
-        if let Some(index) =
-            cached_by_request_index(&self.adjacent_union_completion_reports, request)
-        {
-            return Ok(&self.adjacent_union_completion_reports[index].1);
-        }
-
-        let left = self.left;
-        let right = self.right;
-        let graph = self.validated_graph()?;
-        let (report, _) = adjacent_union_completion_certification_from_graph(
-            graph,
-            left,
-            right,
-            request.operation,
-            None,
-        )?;
-        store_retained_report(&mut self.adjacent_union_completion_reports, request, report)
+        cached_workspace_report!(self, adjacent_union_completion_reports, request, {
+            let left = self.left;
+            let right = self.right;
+            let graph = self.validated_graph()?;
+            let (report, _) = adjacent_union_completion_certification_from_graph(
+                graph,
+                left,
+                right,
+                request.operation,
+                None,
+            )?;
+            report
+        })
     }
 
     /// Validate adjacent-union completion evidence against this workspace's
@@ -819,15 +821,12 @@ impl<'a> ExactBooleanWorkspace<'a> {
         &mut self,
         request: ExactBooleanRequest,
     ) -> Result<&ExactBoundaryTouchingReport, MeshError> {
-        if let Some(index) = cached_by_request_index(&self.boundary_touching_reports, request) {
-            return Ok(&self.boundary_touching_reports[index].1);
-        }
-
-        let left = self.left;
-        let right = self.right;
-        let graph = self.validated_graph()?;
-        let report = boundary_touching_report_from_graph(graph, left, right)?;
-        store_retained_report(&mut self.boundary_touching_reports, request, report)
+        cached_workspace_report!(self, boundary_touching_reports, request, {
+            let left = self.left;
+            let right = self.right;
+            let graph = self.validated_graph()?;
+            boundary_touching_report_from_graph(graph, left, right)?
+        })
     }
 
     /// Returns open-surface disjointness evidence for `request`, building it
@@ -836,15 +835,12 @@ impl<'a> ExactBooleanWorkspace<'a> {
         &mut self,
         request: ExactBooleanRequest,
     ) -> Result<&ExactOpenSurfaceDisjointReport, MeshError> {
-        if let Some(index) = cached_by_request_index(&self.open_surface_disjoint_reports, request) {
-            return Ok(&self.open_surface_disjoint_reports[index].1);
-        }
-
-        let left = self.left;
-        let right = self.right;
-        let graph = self.validated_graph()?;
-        let report = open_surface_disjoint_report_from_graph(graph, left, right);
-        store_retained_report(&mut self.open_surface_disjoint_reports, request, report)
+        cached_workspace_report!(self, open_surface_disjoint_reports, request, {
+            let left = self.left;
+            let right = self.right;
+            let graph = self.validated_graph()?;
+            open_surface_disjoint_report_from_graph(graph, left, right)
+        })
     }
 
     /// Returns volumetric boundary-closure evidence for `request`, building it
@@ -853,22 +849,12 @@ impl<'a> ExactBooleanWorkspace<'a> {
         &mut self,
         request: ExactBooleanRequest,
     ) -> Result<&ExactVolumetricBoundaryClosureReport, MeshError> {
-        if let Some(index) =
-            cached_by_request_index(&self.volumetric_boundary_closure_reports, request)
-        {
-            return Ok(&self.volumetric_boundary_closure_reports[index].1);
-        }
-
-        let left = self.left;
-        let right = self.right;
-        let graph = self.validated_graph()?;
-        let report =
-            volumetric_boundary_closure_report_from_graph(graph, left, right, request.operation)?;
-        store_retained_report(
-            &mut self.volumetric_boundary_closure_reports,
-            request,
-            report,
-        )
+        cached_workspace_report!(self, volumetric_boundary_closure_reports, request, {
+            let left = self.left;
+            let right = self.right;
+            let graph = self.validated_graph()?;
+            volumetric_boundary_closure_report_from_graph(graph, left, right, request.operation)?
+        })
     }
 
     /// Validate volumetric boundary-closure evidence against this workspace's
@@ -890,16 +876,12 @@ impl<'a> ExactBooleanWorkspace<'a> {
         &mut self,
         request: ExactBooleanRequest,
     ) -> Result<&ExactWindingReadinessReport, MeshError> {
-        if let Some(index) = cached_by_request_index(&self.winding_readiness_reports, request) {
-            return Ok(&self.winding_readiness_reports[index].1);
-        }
-
-        let left = self.left;
-        let right = self.right;
-        let graph = self.validated_graph()?;
-        let readiness =
-            winding_readiness_report_for_request_from_graph(graph, left, right, request)?;
-        store_retained_report(&mut self.winding_readiness_reports, request, readiness)
+        cached_workspace_report!(self, winding_readiness_reports, request, {
+            let left = self.left;
+            let right = self.right;
+            let graph = self.validated_graph()?;
+            winding_readiness_report_for_request_from_graph(graph, left, right, request)?
+        })
     }
 
     /// Validate winding-readiness evidence against this workspace's source
@@ -926,15 +908,12 @@ impl<'a> ExactBooleanWorkspace<'a> {
         &mut self,
         request: ExactBooleanRequest,
     ) -> Result<&ExactPlanarArrangementReport, MeshError> {
-        if let Some(index) = cached_by_request_index(&self.planar_arrangement_reports, request) {
-            return Ok(&self.planar_arrangement_reports[index].1);
-        }
-
-        let left = self.left;
-        let right = self.right;
-        let graph = self.validated_graph()?;
-        let report = planar_arrangement_report_from_graph(graph, left, right, request.operation)?;
-        store_retained_report(&mut self.planar_arrangement_reports, request, report)
+        cached_workspace_report!(self, planar_arrangement_reports, request, {
+            let left = self.left;
+            let right = self.right;
+            let graph = self.validated_graph()?;
+            planar_arrangement_report_from_graph(graph, left, right, request.operation)?
+        })
     }
 
     /// Validate planar-arrangement readiness evidence against this workspace's
