@@ -8682,19 +8682,6 @@ fn certified_mixed_dimensional_regularized_solid_support(
     }
 }
 
-fn certified_lower_dimensional_regularized_solid_support(
-    left: &ExactMesh,
-    right: &ExactMesh,
-) -> Option<ExactBooleanSupport> {
-    if left.triangles().is_empty() || right.triangles().is_empty() {
-        return None;
-    }
-    let left_kind = closed_regularized_operand_kind(left)?;
-    let right_kind = closed_regularized_operand_kind(right)?;
-    (!left_kind.has_volume() && !right_kind.has_volume())
-        .then_some(ExactBooleanSupport::CertifiedLowerDimensionalRegularizedSolid)
-}
-
 fn closed_validation_regularized_solid_support(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -8706,8 +8693,18 @@ fn closed_validation_regularized_solid_support(
     {
         return None;
     }
-    certified_lower_dimensional_regularized_solid_support(left, right)
-        .or_else(|| certified_mixed_dimensional_regularized_solid_support(left, right))
+    if !left.triangles().is_empty()
+        && !right.triangles().is_empty()
+        && let (Some(left_kind), Some(right_kind)) = (
+            closed_regularized_operand_kind(left),
+            closed_regularized_operand_kind(right),
+        )
+        && !left_kind.has_volume()
+        && !right_kind.has_volume()
+    {
+        return Some(ExactBooleanSupport::CertifiedLowerDimensionalRegularizedSolid);
+    }
+    certified_mixed_dimensional_regularized_solid_support(left, right)
 }
 
 /// Retained split-region artifacts that certify an open-surface arrangement.
