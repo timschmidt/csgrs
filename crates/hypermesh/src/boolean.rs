@@ -1088,11 +1088,17 @@ impl ExactBooleanCertificationSet {
             }
             return Ok(());
         }
-        let arrangement_cell_complex_shortcut_certified =
-            exact_boolean_arrangement_cell_complex_shortcut_certified_for_operation(
-                self,
-                request.operation,
-            ) && self
+        let arrangement_cell_complex_shortcut_certified = self
+            .arrangement_cell_complex_shortcuts
+            .supports(request.operation)
+            && self.region_ownership.is_none()
+            && self.topology_assembly.is_none()
+            && self.arrangement_attempt.as_ref().is_some_and(|attempt| {
+                attempt.operation == request.operation
+                    && attempt.policy == ExactRegularizationPolicy::REGULARIZED_SOLID
+                    && attempt.materialized_arrangement_cell_complex_shortcut()
+            })
+            && self
                 .arrangement_attempt
                 .as_ref()
                 .is_some_and(|attempt| attempt.output_validation == request.validation);
@@ -1543,6 +1549,49 @@ impl ExactBooleanEvaluation {
                 return Err(ExactReportValidationError::StatusEvidenceMismatch);
             }
             result.validate()?;
+            let result_matches_certifications = match result.kind {
+                ExactBooleanResultKind::ArrangementCellComplexMaterialized { .. } => {
+                    self.certifications
+                        .region_ownership
+                        .as_ref()
+                        .is_some_and(|ownership| {
+                            ownership.validate().is_ok() && ownership.is_resolved()
+                        })
+                        && self.certifications.topology_assembly.as_ref().is_some_and(
+                            |topology| topology.validate().is_ok() && topology.is_complete(),
+                        )
+                        && self.certifications.arrangement_attempt.as_ref().is_some_and(
+                            ExactArrangementBooleanAttempt::materialized_arrangement_cell_complex_shortcut,
+                        )
+                }
+                ExactBooleanResultKind::CertifiedShortcut {
+                    shortcut: ExactBooleanShortcutKind::ArrangementCellComplex,
+                    operation,
+                } => {
+                    (self
+                        .certifications
+                        .arrangement_cell_complex_shortcuts
+                        .supports(operation)
+                        && self.certifications.region_ownership.is_none()
+                        && self.certifications.topology_assembly.is_none()
+                        && self.certifications.arrangement_attempt.as_ref().is_some_and(
+                            |attempt| {
+                                attempt.operation == operation
+                                    && attempt.policy
+                                        == ExactRegularizationPolicy::REGULARIZED_SOLID
+                                    && attempt.materialized_arrangement_cell_complex_shortcut()
+                            },
+                        ))
+                        || (self.certifications.region_ownership.as_ref().is_some_and(
+                            |ownership| ownership.validate().is_ok() && ownership.is_resolved(),
+                        ) && self.certifications.topology_assembly.as_ref().is_some_and(
+                            |topology| topology.validate().is_ok() && topology.is_complete(),
+                        ) && self.certifications.arrangement_attempt.as_ref().is_some_and(
+                            ExactArrangementBooleanAttempt::materialized_arrangement_cell_complex_shortcut,
+                        ))
+                }
+                _ => true,
+            };
             if !result.matches_request(self.request)
                 || result.mesh.validation_policy() != self.request.validation
                 || match result.kind {
@@ -1556,7 +1605,7 @@ impl ExactBooleanEvaluation {
                     | ExactBooleanResultKind::BoundaryPolicyShortcut { .. }
                     | ExactBooleanResultKind::CertifiedShortcut { .. } => false,
                 }
-                || !exact_boolean_result_matches_certifications(result, &self.certifications)
+                || !result_matches_certifications
                 || !result.matches_preflight_support(self.preflight.support)
             {
                 return Err(ExactReportValidationError::StatusEvidenceMismatch);
@@ -1657,7 +1706,34 @@ fn exact_boolean_preflight_matches_certifications(
     match preflight.support {
         ExactBooleanSupport::SelectedRegionPolicy => {
             *status == ExactWindingReadinessStatus::NotNamedOperation
-                && exact_boolean_preflight_matches_selected_region_policy(preflight, certifications)
+                && matches!(
+                    preflight.operation,
+                    ExactBooleanOperation::SelectedRegions(_)
+                )
+                && preflight.graph_had_unknowns == certifications.refinement.graph_had_unknowns
+                && preflight.retained_face_pairs == certifications.refinement.retained_face_pairs
+                && preflight.retained_events == certifications.refinement.retained_events
+                && preflight.graph_had_unknowns
+                    == certifications.winding_readiness.graph_had_unknowns
+                && preflight.retained_face_pairs
+                    == certifications.winding_readiness.retained_face_pairs
+                && preflight.retained_events == certifications.winding_readiness.retained_events
+                && preflight.blocker.is_none()
+                && preflight.arrangement_readiness.is_none()
+                && preflight.coplanar_volumetric_evidence.is_none()
+                && certifications.winding_readiness.region_count == 0
+                && certifications
+                    .winding_readiness
+                    .region_classifications
+                    .is_empty()
+                && certifications
+                    .winding_readiness
+                    .arrangement_readiness
+                    .is_none()
+                && certifications
+                    .winding_readiness
+                    .coplanar_volumetric_evidence
+                    .is_none()
         }
         ExactBooleanSupport::CertifiedBoundaryPolicyShortcut => {
             certifications.boundary_touching.is_certified()
@@ -1688,24 +1764,60 @@ fn exact_boolean_preflight_matches_certifications(
                     .coplanar_volumetric_evidence
                     .is_none()
         }
-        ExactBooleanSupport::CertifiedArrangementCellComplex => {
-            (exact_boolean_arrangement_cell_complex_shortcut_certified_for_operation(
-                certifications,
-                preflight.operation,
-            ) && exact_boolean_preflight_matches_arrangement_cell_complex_shortcut(
-                preflight,
-                certifications,
-            )) || (exact_boolean_region_ownership_resolved(certifications)
-                && exact_boolean_topology_assembly_complete(certifications)
+        ExactBooleanSupport::CertifiedArrangementCellComplex => (certifications
+            .arrangement_cell_complex_shortcuts
+            .supports(preflight.operation)
+            && certifications.region_ownership.is_none()
+            && certifications.topology_assembly.is_none()
+            && certifications
+                .arrangement_attempt
+                .as_ref()
+                .is_some_and(|attempt| {
+                    attempt.operation == preflight.operation
+                        && attempt.policy == ExactRegularizationPolicy::REGULARIZED_SOLID
+                        && attempt.materialized_arrangement_cell_complex_shortcut()
+                })
+            && preflight.graph_had_unknowns == certifications.refinement.graph_had_unknowns
+            && preflight.retained_face_pairs == certifications.refinement.retained_face_pairs
+            && preflight.retained_events == certifications.refinement.retained_events
+            && preflight.region_count == 0
+            && preflight.region_classifications.is_empty()
+            && preflight.blocker.is_none()
+            && preflight.arrangement_readiness.is_none())
+            || (certifications
+                .region_ownership
+                .as_ref()
+                .is_some_and(|ownership| ownership.validate().is_ok() && ownership.is_resolved())
+                && certifications
+                    .topology_assembly
+                    .as_ref()
+                    .is_some_and(|topology| topology.validate().is_ok() && topology.is_complete())
                 && status.materializes_arrangement_cell_complex()
-                && exact_boolean_arrangement_attempt_materialized(
-                    &certifications.arrangement_attempt,
+                && certifications.arrangement_attempt.as_ref().is_some_and(
+                    ExactArrangementBooleanAttempt::materialized_arrangement_cell_complex_shortcut,
                 )
-                && exact_boolean_preflight_matches_arrangement_cell_complex(
-                    preflight,
-                    &certifications.winding_readiness,
-                ))
-        }
+                && {
+                    let region_handoff_matches = (preflight.region_count
+                        == certifications.winding_readiness.region_count
+                        && preflight.region_classifications
+                            == certifications.winding_readiness.region_classifications)
+                        || (preflight.region_count == 0
+                            && preflight.region_classifications.is_empty());
+                    preflight.graph_had_unknowns
+                        == certifications.winding_readiness.graph_had_unknowns
+                        && preflight.retained_face_pairs
+                            == certifications.winding_readiness.retained_face_pairs
+                        && preflight.retained_events
+                            == certifications.winding_readiness.retained_events
+                        && region_handoff_matches
+                        && preflight.blocker.is_none()
+                        && preflight.arrangement_readiness
+                            == certifications.winding_readiness.arrangement_readiness
+                        && preflight.coplanar_volumetric_evidence
+                            == certifications
+                                .winding_readiness
+                                .coplanar_volumetric_evidence
+                }),
         ExactBooleanSupport::CertifiedEmptyOperand => {
             *status == ExactWindingReadinessStatus::EmptyOperandAlreadyMaterialized
                 && certifications.trivial.has_empty_operand()
@@ -1727,10 +1839,28 @@ fn exact_boolean_preflight_matches_certifications(
         | ExactBooleanSupport::CertifiedClosedBoundaryTouchingIntersection
         | ExactBooleanSupport::CertifiedClosedBoundaryTouchingDifference => {
             *status == ExactWindingReadinessStatus::ClosedBoundaryTouchingAlreadyMaterialized
-                && exact_boolean_preflight_matches_closed_boundary_touching(
-                    preflight,
-                    certifications,
-                )
+                && ((certifications.boundary_touching.is_certified()
+                    && exact_boolean_preflight_matches_boundary_report(
+                        preflight,
+                        &certifications.boundary_touching,
+                        false,
+                    ))
+                    || (preflight.graph_had_unknowns
+                        == certifications.winding_readiness.graph_had_unknowns
+                        && preflight.retained_face_pairs
+                            == certifications.winding_readiness.retained_face_pairs
+                        && preflight.retained_events
+                            == certifications.winding_readiness.retained_events
+                        && preflight.region_count == certifications.winding_readiness.region_count
+                        && preflight.region_classifications
+                            == certifications.winding_readiness.region_classifications
+                        && preflight.blocker.is_none()
+                        && preflight.arrangement_readiness.is_none()
+                        && preflight.coplanar_volumetric_evidence.is_some()
+                        && preflight.coplanar_volumetric_evidence
+                            == certifications
+                                .winding_readiness
+                                .coplanar_volumetric_evidence))
         }
         ExactBooleanSupport::CertifiedOpenSurfaceDisjoint => {
             *status == ExactWindingReadinessStatus::OpenSurfaceDisjointAlreadyMaterialized
@@ -1841,37 +1971,6 @@ fn exact_boolean_preflight_matches_certifications(
     }
 }
 
-fn exact_boolean_preflight_matches_selected_region_policy(
-    preflight: &ExactBooleanPreflight,
-    certifications: &ExactBooleanCertificationSet,
-) -> bool {
-    matches!(
-        preflight.operation,
-        ExactBooleanOperation::SelectedRegions(_)
-    ) && preflight.graph_had_unknowns == certifications.refinement.graph_had_unknowns
-        && preflight.retained_face_pairs == certifications.refinement.retained_face_pairs
-        && preflight.retained_events == certifications.refinement.retained_events
-        && preflight.graph_had_unknowns == certifications.winding_readiness.graph_had_unknowns
-        && preflight.retained_face_pairs == certifications.winding_readiness.retained_face_pairs
-        && preflight.retained_events == certifications.winding_readiness.retained_events
-        && preflight.blocker.is_none()
-        && preflight.arrangement_readiness.is_none()
-        && preflight.coplanar_volumetric_evidence.is_none()
-        && certifications.winding_readiness.region_count == 0
-        && certifications
-            .winding_readiness
-            .region_classifications
-            .is_empty()
-        && certifications
-            .winding_readiness
-            .arrangement_readiness
-            .is_none()
-        && certifications
-            .winding_readiness
-            .coplanar_volumetric_evidence
-            .is_none()
-}
-
 fn exact_boolean_convex_reports_match_support(
     preflight: &ExactBooleanPreflight,
     certifications: &ExactBooleanCertificationSet,
@@ -1899,110 +1998,6 @@ fn exact_boolean_convex_reports_match_support(
         | ExactBooleanSupport::CertifiedConvexContainment => true,
         _ => false,
     }
-}
-
-fn exact_boolean_preflight_matches_closed_boundary_touching(
-    preflight: &ExactBooleanPreflight,
-    certifications: &ExactBooleanCertificationSet,
-) -> bool {
-    (certifications.boundary_touching.is_certified()
-        && exact_boolean_preflight_matches_boundary_report(
-            preflight,
-            &certifications.boundary_touching,
-            false,
-        ))
-        || exact_boolean_preflight_matches_closed_boundary_coplanar_handoff(
-            preflight,
-            &certifications.winding_readiness,
-        )
-}
-
-fn exact_boolean_preflight_matches_closed_boundary_coplanar_handoff(
-    preflight: &ExactBooleanPreflight,
-    winding_readiness: &ExactWindingReadinessReport,
-) -> bool {
-    preflight.graph_had_unknowns == winding_readiness.graph_had_unknowns
-        && preflight.retained_face_pairs == winding_readiness.retained_face_pairs
-        && preflight.retained_events == winding_readiness.retained_events
-        && preflight.region_count == winding_readiness.region_count
-        && preflight.region_classifications == winding_readiness.region_classifications
-        && preflight.blocker.is_none()
-        && preflight.arrangement_readiness.is_none()
-        && preflight.coplanar_volumetric_evidence.is_some()
-        && preflight.coplanar_volumetric_evidence == winding_readiness.coplanar_volumetric_evidence
-}
-
-fn exact_boolean_arrangement_attempt_materialized(
-    attempt: &Option<ExactArrangementBooleanAttempt>,
-) -> bool {
-    attempt
-        .as_ref()
-        .is_some_and(ExactArrangementBooleanAttempt::materialized_arrangement_cell_complex_shortcut)
-}
-
-fn exact_boolean_arrangement_cell_complex_shortcut_certified_for_operation(
-    certifications: &ExactBooleanCertificationSet,
-    operation: ExactBooleanOperation,
-) -> bool {
-    certifications
-        .arrangement_cell_complex_shortcuts
-        .supports(operation)
-        && certifications.region_ownership.is_none()
-        && certifications.topology_assembly.is_none()
-        && certifications
-            .arrangement_attempt
-            .as_ref()
-            .is_some_and(|attempt| {
-                attempt.operation == operation
-                    && attempt.policy == ExactRegularizationPolicy::REGULARIZED_SOLID
-                    && attempt.materialized_arrangement_cell_complex_shortcut()
-            })
-}
-
-fn exact_boolean_region_ownership_resolved(certifications: &ExactBooleanCertificationSet) -> bool {
-    certifications
-        .region_ownership
-        .as_ref()
-        .is_some_and(|ownership| ownership.validate().is_ok() && ownership.is_resolved())
-}
-
-fn exact_boolean_topology_assembly_complete(certifications: &ExactBooleanCertificationSet) -> bool {
-    certifications
-        .topology_assembly
-        .as_ref()
-        .is_some_and(|topology| topology.validate().is_ok() && topology.is_complete())
-}
-
-fn exact_boolean_preflight_matches_arrangement_cell_complex_shortcut(
-    preflight: &ExactBooleanPreflight,
-    certifications: &ExactBooleanCertificationSet,
-) -> bool {
-    certifications
-        .arrangement_cell_complex_shortcuts
-        .supports(preflight.operation)
-        && preflight.graph_had_unknowns == certifications.refinement.graph_had_unknowns
-        && preflight.retained_face_pairs == certifications.refinement.retained_face_pairs
-        && preflight.retained_events == certifications.refinement.retained_events
-        && preflight.region_count == 0
-        && preflight.region_classifications.is_empty()
-        && preflight.blocker.is_none()
-        && preflight.arrangement_readiness.is_none()
-}
-
-fn exact_boolean_preflight_matches_arrangement_cell_complex(
-    preflight: &ExactBooleanPreflight,
-    winding_readiness: &ExactWindingReadinessReport,
-) -> bool {
-    let region_handoff_matches = (preflight.region_count == winding_readiness.region_count
-        && preflight.region_classifications == winding_readiness.region_classifications)
-        || (preflight.region_count == 0 && preflight.region_classifications.is_empty());
-    preflight.graph_had_unknowns == winding_readiness.graph_had_unknowns
-        && preflight.retained_face_pairs == winding_readiness.retained_face_pairs
-        && preflight.retained_events == winding_readiness.retained_events
-        && region_handoff_matches
-        && preflight.blocker.is_none()
-        && preflight.arrangement_readiness == winding_readiness.arrangement_readiness
-        && preflight.coplanar_volumetric_evidence == winding_readiness.coplanar_volumetric_evidence
 }
 
 fn exact_boolean_preflight_matches_boundary_report(
@@ -2036,35 +2031,6 @@ fn exact_boolean_preflight_matches_winding_handoff(
         && preflight.blocker.as_ref() == Some(&winding_readiness.blocker)
         && preflight.arrangement_readiness.is_none()
         && preflight.coplanar_volumetric_evidence == winding_readiness.coplanar_volumetric_evidence
-}
-
-fn exact_boolean_result_matches_certifications(
-    result: &ExactBooleanResult,
-    certifications: &ExactBooleanCertificationSet,
-) -> bool {
-    match result.kind {
-        ExactBooleanResultKind::ArrangementCellComplexMaterialized { .. } => {
-            exact_boolean_region_ownership_resolved(certifications)
-                && exact_boolean_topology_assembly_complete(certifications)
-                && exact_boolean_arrangement_attempt_materialized(
-                    &certifications.arrangement_attempt,
-                )
-        }
-        ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: ExactBooleanShortcutKind::ArrangementCellComplex,
-            operation,
-        } => {
-            exact_boolean_arrangement_cell_complex_shortcut_certified_for_operation(
-                certifications,
-                operation,
-            ) || (exact_boolean_region_ownership_resolved(certifications)
-                && exact_boolean_topology_assembly_complete(certifications)
-                && exact_boolean_arrangement_attempt_materialized(
-                    &certifications.arrangement_attempt,
-                ))
-        }
-        _ => true,
-    }
 }
 
 pub(crate) fn evaluate_boolean_exact_request_with_artifacts_and_arrangement_replay(
