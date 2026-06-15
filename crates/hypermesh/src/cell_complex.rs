@@ -7,9 +7,9 @@
 
 use super::arrangement3d::{
     ArrangementFaceCell, ArrangementLowerDimensionalArtifact, ArrangementVolumeAdjacency,
-    ArrangementVolumeRegion, ExactArrangement, ExactArrangement3d, ExactTopologyAssemblyReport,
-    exact_node_loops_equivalent, lower_dimensional_artifact_counts, sorted_unique_usize_set,
-    validate_arrangement_face_cell, validate_lower_dimensional_artifacts,
+    ExactArrangement, ExactArrangement3d, ExactTopologyAssemblyReport, exact_node_loops_equivalent,
+    lower_dimensional_artifact_counts, sorted_unique_usize_set, validate_arrangement_face_cell,
+    validate_lower_dimensional_artifacts,
 };
 use super::boolean::ExactBooleanOperation;
 use super::graph::MeshSide;
@@ -481,7 +481,18 @@ impl ExactCellComplex {
             .arrangement
             .volume_regions
             .as_ref()
-            .map(|regions| regions.iter().map(label_volume_region).collect())
+            .map(|regions| {
+                regions
+                    .iter()
+                    .map(|region| ExactCellComplexVolumeRegion {
+                        index: region.index,
+                        exterior: region.exterior,
+                        boundary_shells: region.boundary_shells.clone(),
+                        in_left: region.source_sides.contains(&MeshSide::Left),
+                        in_right: region.source_sides.contains(&MeshSide::Right),
+                    })
+                    .collect()
+            })
             .unwrap_or_default();
         let volume_adjacencies = self
             .arrangement
@@ -1287,16 +1298,6 @@ fn label_opposite_region(
             )
             | None => ExactOppositeRegionLabel::Unknown,
         },
-    }
-}
-
-fn label_volume_region(region: &ArrangementVolumeRegion) -> ExactCellComplexVolumeRegion {
-    ExactCellComplexVolumeRegion {
-        index: region.index,
-        exterior: region.exterior,
-        boundary_shells: region.boundary_shells.clone(),
-        in_left: region.source_sides.contains(&MeshSide::Left),
-        in_right: region.source_sides.contains(&MeshSide::Right),
     }
 }
 

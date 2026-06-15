@@ -10820,7 +10820,10 @@ fn same_surface_report_from_sources(left: &ExactMesh, right: &ExactMesh) -> Exac
     if status != ExactSameSurfaceStatus::Certified {
         return same_surface_report(status, left_to_right, Vec::new(), predicates);
     }
-    let right_to_left = invert_permutation(&left_to_right);
+    let mut right_to_left = vec![0; left_to_right.len()];
+    for (left_index, &right_index) in left_to_right.iter().enumerate() {
+        right_to_left[right_index] = left_index;
+    }
 
     let mut left_triangles = sorted_triangle_sets(left, None);
     let mut right_triangles = sorted_triangle_sets(right, Some(&right_to_left));
@@ -10995,14 +10998,6 @@ fn certified_vertex_permutation_report(
     }
 
     (left_to_right, predicates, ExactSameSurfaceStatus::Certified)
-}
-
-fn invert_permutation(permutation: &[usize]) -> Vec<usize> {
-    let mut inverse = vec![0; permutation.len()];
-    for (left_index, &right_index) in permutation.iter().enumerate() {
-        inverse[right_index] = left_index;
-    }
-    inverse
 }
 
 fn sorted_triangle_sets(mesh: &ExactMesh, right_to_left: Option<&[usize]>) -> Vec<[usize; 3]> {
