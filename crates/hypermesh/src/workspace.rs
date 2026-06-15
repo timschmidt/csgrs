@@ -21,9 +21,7 @@ use super::cell_complex::{
     ExactSelectedCellComplexFreshness, select_arrangement_for_replay,
 };
 use super::error::{DiagnosticKind, MeshDiagnostic, MeshError, Severity};
-use super::graph::{
-    ExactIntersectionGraph, IntersectionGraphValidationError, build_intersection_graph,
-};
+use super::graph::{ExactIntersectionGraph, build_intersection_graph};
 use super::mesh::ExactMesh;
 use super::regularization::{ExactArrangementBlocker, ExactRegularizationPolicy};
 use super::reports::{
@@ -162,7 +160,13 @@ impl<'a> ExactBooleanWorkspace<'a> {
         let graph = self.graph()?;
         graph
             .validate_against_meshes(left, right)
-            .map_err(workspace_graph_validation_error)?;
+            .map_err(|error| {
+                MeshError::one(MeshDiagnostic::new(
+                    Severity::Error,
+                    DiagnosticKind::UnsupportedExactOperation,
+                    format!("exact boolean workspace graph failed validation: {error:?}"),
+                ))
+            })?;
         Ok(graph)
     }
 
@@ -1090,14 +1094,6 @@ fn workspace_arrangement_blocker_error(blocker: ExactArrangementBlocker) -> Mesh
         Severity::Error,
         DiagnosticKind::UnsupportedExactOperation,
         format!("exact boolean workspace arrangement report failed: {blocker:?}"),
-    ))
-}
-
-fn workspace_graph_validation_error(error: IntersectionGraphValidationError) -> MeshError {
-    MeshError::one(MeshDiagnostic::new(
-        Severity::Error,
-        DiagnosticKind::UnsupportedExactOperation,
-        format!("exact boolean workspace graph failed validation: {error:?}"),
     ))
 }
 
