@@ -649,20 +649,15 @@ fn validate_coplanar_volumetric_evidence_shape(
     Ok(())
 }
 
-fn coplanar_boundary_only_evidence_is_positive_area(
-    evidence: &CoplanarVolumetricCellEvidenceReport,
-) -> bool {
-    evidence.obstacle == CoplanarVolumetricCellObstacle::BoundaryOnlyContact
-        && evidence.positive_area_coplanar_overlapping_pairs != 0
-}
-
 fn validate_coplanar_boundary_only_evidence_shape(
     evidence: &CoplanarVolumetricCellEvidenceReport,
     retained_face_pairs: usize,
     retained_events: usize,
 ) -> Result<(), ExactReportValidationError> {
     validate_coplanar_volumetric_evidence_counts(evidence, retained_face_pairs, retained_events)?;
-    if !coplanar_boundary_only_evidence_is_positive_area(evidence) {
+    if evidence.obstacle != CoplanarVolumetricCellObstacle::BoundaryOnlyContact
+        || evidence.positive_area_coplanar_overlapping_pairs == 0
+    {
         return Err(ExactReportValidationError::CoplanarVolumetricEvidenceMismatch);
     }
     Ok(())
@@ -675,7 +670,8 @@ fn validate_certified_arrangement_coplanar_evidence_shape(
 ) -> Result<(), ExactReportValidationError> {
     validate_coplanar_volumetric_evidence_counts(evidence, retained_face_pairs, retained_events)?;
     if !evidence.obstacle.requires_coplanar_volumetric_cells()
-        && !coplanar_boundary_only_evidence_is_positive_area(evidence)
+        && (evidence.obstacle != CoplanarVolumetricCellObstacle::BoundaryOnlyContact
+            || evidence.positive_area_coplanar_overlapping_pairs == 0)
     {
         return Err(ExactReportValidationError::CoplanarVolumetricEvidenceMismatch);
     }
