@@ -1218,7 +1218,28 @@ impl ExactBooleanResult {
         self.mesh
             .validate_retained_state()
             .map_err(|_| ExactReportValidationError::InvalidOutputMesh)?;
-        if !mesh_has_boolean_output_provenance(self.kind, &self.mesh) {
+        let output_source = &self.mesh.provenance().source;
+        let has_exact_boolean_label = output_source.label.starts_with("exact ")
+            || output_source.label.starts_with("empty exact ");
+        let has_arrangement_label = output_source.label.contains("arrangement")
+            || output_source.label.contains("cell-complex")
+            || output_source.label.contains("volumetric split-cell")
+            || output_source.label.contains("orthogonal solid cell")
+            || output_source.label.contains("full-face adjacent")
+            || output_source.label.contains("contained-face adjacent");
+        let label_matches_kind = if let ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: ExactBooleanShortcutKind::ArrangementCellComplex,
+            ..
+        } = self.kind
+        {
+            has_exact_boolean_label && has_arrangement_label
+        } else {
+            has_exact_boolean_label
+        };
+        if output_source.source != MeshSource::Exact
+            || output_source.approximation != ApproximationPolicy::ExactOnly
+            || !label_matches_kind
+        {
             return Err(ExactReportValidationError::InvalidOutputMeshProvenance);
         }
 
@@ -2021,30 +2042,6 @@ fn validate_shortcut_output_shape(
         return Err(ExactReportValidationError::StatusEvidenceMismatch);
     }
     Ok(())
-}
-
-fn mesh_has_boolean_output_provenance(kind: ExactBooleanResultKind, mesh: &ExactMesh) -> bool {
-    let source = &mesh.provenance().source;
-    let has_exact_boolean_label =
-        source.label.starts_with("exact ") || source.label.starts_with("empty exact ");
-    let has_arrangement_label = source.label.contains("arrangement")
-        || source.label.contains("cell-complex")
-        || source.label.contains("volumetric split-cell")
-        || source.label.contains("orthogonal solid cell")
-        || source.label.contains("full-face adjacent")
-        || source.label.contains("contained-face adjacent");
-    let label_matches_kind = if let ExactBooleanResultKind::CertifiedShortcut {
-        shortcut: ExactBooleanShortcutKind::ArrangementCellComplex,
-        ..
-    } = kind
-    {
-        has_exact_boolean_label && has_arrangement_label
-    } else {
-        has_exact_boolean_label
-    };
-    source.source == MeshSource::Exact
-        && source.approximation == ApproximationPolicy::ExactOnly
-        && label_matches_kind
 }
 
 fn convex_operation_output_matches_sources(

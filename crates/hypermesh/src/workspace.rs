@@ -47,7 +47,23 @@ macro_rules! cached_workspace_report {
             Ok(&$workspace.$cache[index].1)
         } else {
             let report = $build;
-            store_retained_report(&mut $workspace.$cache, request, report)
+            if report
+                .operation()
+                .is_some_and(|operation| operation != request.operation)
+            {
+                return Err(workspace_report_validation_error(
+                    ExactReportValidationError::StatusEvidenceMismatch,
+                ));
+            }
+            report
+                .validate_for_workspace_cache()
+                .map_err(workspace_report_validation_error)?;
+            $workspace.$cache.push((request, report));
+            Ok(&$workspace
+                .$cache
+                .last()
+                .expect("workspace report cache was just populated")
+                .1)
         }
     }};
 }
@@ -1370,29 +1386,6 @@ fn store_retained_materialization_value<T: RetainedMaterializationCacheValue>(
     materialized.validate_for_workspace_cache(left, right, request)?;
     cache.push((request, materialized.clone()));
     Ok(materialized)
-}
-
-fn store_retained_report<T: RetainedWorkspaceReport>(
-    cache: &mut Vec<(ExactBooleanRequest, T)>,
-    request: ExactBooleanRequest,
-    report: T,
-) -> Result<&T, MeshError> {
-    if report
-        .operation()
-        .is_some_and(|operation| operation != request.operation)
-    {
-        return Err(workspace_report_validation_error(
-            ExactReportValidationError::StatusEvidenceMismatch,
-        ));
-    }
-    report
-        .validate_for_workspace_cache()
-        .map_err(workspace_report_validation_error)?;
-    cache.push((request, report));
-    Ok(&cache
-        .last()
-        .expect("workspace report cache was just populated")
-        .1)
 }
 
 fn store_retained_cell_complex<T: RetainedCellComplex>(

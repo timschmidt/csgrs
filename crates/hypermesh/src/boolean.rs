@@ -94,7 +94,7 @@ use super::topology::mesh_for_side;
 use super::topology::triangle_edges as topology_triangle_edges;
 use super::validation::ValidationPolicy;
 use super::volumetric::{
-    ExactVolumetricRegionClassification, ExactVolumetricRegionError, ExactVolumetricRegionRelation,
+    ExactVolumetricRegionClassification, ExactVolumetricRegionRelation,
     classify_triangulated_regions_against_opposite_meshes,
 };
 use super::volumetric_cells::{
@@ -3710,7 +3710,12 @@ fn graph_requires_boundary_policy(
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> Result<bool, MeshError> {
-    if graph_has_only_coplanar_touching_pairs(graph) {
+    if !graph.face_pairs.is_empty()
+        && graph
+            .face_pairs
+            .iter()
+            .all(|pair| pair.relation == MeshFacePairRelation::CoplanarTouching)
+    {
         return Ok(true);
     }
     if !graph_has_only_boundary_contact_pairs(graph, left, right) {
@@ -3722,26 +3727,12 @@ fn graph_requires_boundary_policy(
     {
         return Ok(true);
     }
-    if exact_cell_complexes_certify_boundary_contact_without_shared_volume(left, right) {
+    if has_empty_axis_aligned_orthogonal_solid_cell_intersection(left, right)
+        || has_empty_affine_orthogonal_solid_cell_intersection(left, right)
+    {
         return Ok(true);
     }
     certified_closed_boundary_contact(left, right)
-}
-
-fn exact_cell_complexes_certify_boundary_contact_without_shared_volume(
-    left: &ExactMesh,
-    right: &ExactMesh,
-) -> bool {
-    has_empty_axis_aligned_orthogonal_solid_cell_intersection(left, right)
-        || has_empty_affine_orthogonal_solid_cell_intersection(left, right)
-}
-
-fn graph_has_only_coplanar_touching_pairs(graph: &super::graph::ExactIntersectionGraph) -> bool {
-    !graph.face_pairs.is_empty()
-        && graph
-            .face_pairs
-            .iter()
-            .all(|pair| pair.relation == MeshFacePairRelation::CoplanarTouching)
 }
 
 fn graph_has_only_coplanar_contact_pairs(graph: &super::graph::ExactIntersectionGraph) -> bool {
@@ -3756,10 +3747,6 @@ fn graph_has_only_coplanar_contact_pairs(graph: &super::graph::ExactIntersection
             .face_pairs
             .iter()
             .any(|pair| pair.relation == MeshFacePairRelation::CoplanarOverlapping)
-}
-
-fn graph_requires_planar_arrangement(graph: &super::graph::ExactIntersectionGraph) -> bool {
-    graph_has_only_coplanar_contact_pairs(graph)
 }
 
 fn graph_requires_coplanar_volumetric_cells(counts: &ExactBooleanBlocker) -> bool {
@@ -9174,7 +9161,20 @@ fn materialize_boundary_policy_shortcut_result(
     let Ok(mesh) = mesh else {
         return Ok(None);
     };
-    Ok(Some(boundary_policy_shortcut_result(mesh, operation)))
+    Ok(Some(ExactBooleanResult {
+        kind: ExactBooleanResultKind::BoundaryPolicyShortcut { operation },
+        graph_had_unknowns: false,
+        region_classifications: Vec::new(),
+        triangulations: Vec::new(),
+        assembly: ExactBooleanAssemblyPlan {
+            vertices: Vec::new(),
+            triangles: Vec::new(),
+        },
+        volumetric_classifications: Vec::new(),
+        topology_assembly_report: None,
+        region_ownership_report: None,
+        mesh,
+    }))
 }
 
 pub(crate) fn boundary_policy_shortcut_result_matches_sources(
@@ -9572,6 +9572,7 @@ pub(crate) fn planar_arrangement_report_from_graph(
     } else {
         Some(graph.coplanar_arrangement_readiness_report(left, right)?)
     };
+    let requires_planar_arrangement = graph_has_only_coplanar_contact_pairs(graph);
     let status = if matches!(operation, ExactBooleanOperation::SelectedRegions(_)) {
         ExactPlanarArrangementStatus::NotNamedOperation
     } else if graph_had_unknowns {
@@ -9580,14 +9581,14 @@ pub(crate) fn planar_arrangement_report_from_graph(
         ExactPlanarArrangementStatus::AlreadyMaterialized
     } else if graph_requires_boundary_policy(graph, left, right)? {
         ExactPlanarArrangementStatus::BoundaryPolicyRequired
-    } else if graph_requires_planar_arrangement(graph)
+    } else if requires_planar_arrangement
         && certified_arrangement_cell_complex_preflight_if_materialized(
             operation, graph, left, right,
         )?
         .is_some()
     {
         ExactPlanarArrangementStatus::AlreadyMaterialized
-    } else if graph_requires_planar_arrangement(graph) {
+    } else if requires_planar_arrangement {
         ExactPlanarArrangementStatus::Required
     } else {
         ExactPlanarArrangementStatus::NoPositiveOverlap
@@ -10222,11 +10223,16 @@ fn materialize_volumetric_winding_region_plan(
     {
         return Ok(None);
     }
-    if !operation_retains_any_volumetric_region(
-        operation,
-        &triangulations,
-        &volumetric_classifications,
-    ) {
+    if !triangulations.iter().any(|triangulation| {
+        triangulation.triangles.chunks_exact(3).any(|triangle| {
+            volumetric_retention_for_operation(
+                operation,
+                triangulation,
+                [triangle[0], triangle[1], triangle[2]],
+                &volumetric_classifications,
+            ) != ExactRegionRetention::Drop
+        })
+    }) {
         return match operation {
             ExactBooleanOperation::Intersection | ExactBooleanOperation::Difference => {
                 Ok(Some(MaterializedVolumetricWindingRegionPlan {
@@ -10327,7 +10333,15 @@ fn volumetric_winding_region_plan_from_graph(
         checked_classify_face_regions_against_opposite_planes(&region_plan, left, right)?;
     let volumetric_classifications =
         classify_triangulated_regions_against_opposite_meshes(&triangulations, left, right)
-            .map_err(volumetric_error)?;
+            .map_err(|error| {
+                MeshError::one(MeshDiagnostic::new(
+                    Severity::Error,
+                    DiagnosticKind::UnsupportedExactOperation,
+                    format!(
+                        "exact volumetric winding region report/source replay failed: {error:?}"
+                    ),
+                ))
+            })?;
     Ok(Some((
         region_classifications,
         triangulations,
@@ -10345,23 +10359,6 @@ pub(crate) fn replay_materialized_volumetric_winding_region_plan(
     materialize_volumetric_winding_region_plan_from_graph(
         &graph, left, right, operation, validation,
     )
-}
-
-fn operation_retains_any_volumetric_region(
-    operation: ExactBooleanOperation,
-    triangulations: &[FaceRegionTriangulation],
-    classifications: &[ExactVolumetricRegionClassification],
-) -> bool {
-    triangulations.iter().any(|triangulation| {
-        triangulation.triangles.chunks_exact(3).any(|triangle| {
-            volumetric_retention_for_operation(
-                operation,
-                triangulation,
-                [triangle[0], triangle[1], triangle[2]],
-                classifications,
-            ) != ExactRegionRetention::Drop
-        })
-    })
 }
 
 fn volumetric_retention_for_operation(
@@ -10501,14 +10498,6 @@ fn winding_error(error: WindingReportError) -> MeshError {
         Severity::Error,
         DiagnosticKind::UnsupportedExactOperation,
         format!("exact winding report/source replay failed: {error:?}"),
-    ))
-}
-
-fn volumetric_error(error: ExactVolumetricRegionError) -> MeshError {
-    MeshError::one(MeshDiagnostic::new(
-        Severity::Error,
-        DiagnosticKind::UnsupportedExactOperation,
-        format!("exact volumetric winding region report/source replay failed: {error:?}"),
     ))
 }
 
@@ -10940,7 +10929,18 @@ fn boolean_empty_operand(
 ) -> Result<ExactBooleanResult, MeshError> {
     let mesh = match operation {
         ExactBooleanOperation::Union
-            if empty_operand_union_regularizes_to_empty_closed_output(left, right, validation) =>
+            if validation == ValidationPolicy::CLOSED
+                && (left.triangles().is_empty() || right.triangles().is_empty())
+                && matches!(
+                    (
+                        closed_regularized_operand_kind(left),
+                        closed_regularized_operand_kind(right),
+                    ),
+                    (
+                        Some(ClosedRegularizedOperandKind::LowerDimensional),
+                        Some(ClosedRegularizedOperandKind::LowerDimensional)
+                    )
+                ) =>
         {
             empty_mesh(
                 "empty exact closed regularized union with empty operand",
@@ -10955,9 +10955,10 @@ fn boolean_empty_operand(
             empty_mesh("empty exact difference from empty left operand", validation)?
         }
         ExactBooleanOperation::Difference
-            if empty_right_difference_regularizes_to_empty_closed_output(
-                left, right, validation,
-            ) =>
+            if validation == ValidationPolicy::CLOSED
+                && right.triangles().is_empty()
+                && closed_regularized_operand_kind(left)
+                    == Some(ClosedRegularizedOperandKind::LowerDimensional) =>
         {
             empty_mesh(
                 "empty exact closed regularized difference with empty right operand",
@@ -10978,36 +10979,6 @@ fn boolean_empty_operand(
         operation,
         ExactBooleanShortcutKind::EmptyOperand,
     ))
-}
-
-fn empty_operand_union_regularizes_to_empty_closed_output(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    validation: ValidationPolicy,
-) -> bool {
-    validation == ValidationPolicy::CLOSED
-        && (left.triangles().is_empty() || right.triangles().is_empty())
-        && matches!(
-            (
-                closed_regularized_operand_kind(left),
-                closed_regularized_operand_kind(right),
-            ),
-            (
-                Some(ClosedRegularizedOperandKind::LowerDimensional),
-                Some(ClosedRegularizedOperandKind::LowerDimensional)
-            )
-        )
-}
-
-fn empty_right_difference_regularizes_to_empty_closed_output(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    validation: ValidationPolicy,
-) -> bool {
-    validation == ValidationPolicy::CLOSED
-        && right.triangles().is_empty()
-        && closed_regularized_operand_kind(left)
-            == Some(ClosedRegularizedOperandKind::LowerDimensional)
 }
 
 fn boolean_identical_meshes(
@@ -11059,26 +11030,6 @@ fn certified_shortcut_result(
             operation,
             shortcut,
         },
-        graph_had_unknowns: false,
-        region_classifications: Vec::new(),
-        triangulations: Vec::new(),
-        assembly: ExactBooleanAssemblyPlan {
-            vertices: Vec::new(),
-            triangles: Vec::new(),
-        },
-        volumetric_classifications: Vec::new(),
-        topology_assembly_report: None,
-        region_ownership_report: None,
-        mesh,
-    }
-}
-
-fn boundary_policy_shortcut_result(
-    mesh: ExactMesh,
-    operation: ExactBooleanOperation,
-) -> ExactBooleanResult {
-    ExactBooleanResult {
-        kind: ExactBooleanResultKind::BoundaryPolicyShortcut { operation },
         graph_had_unknowns: false,
         region_classifications: Vec::new(),
         triangulations: Vec::new(),
