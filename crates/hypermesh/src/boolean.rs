@@ -5074,8 +5074,16 @@ fn run_arrangement_cell_complex_attempt_from_arrangement_with_recovery_timing(
         output_vertices: 0,
         output_triangles: 0,
     };
-    let regularized_sheet_recovery_surface =
-        arrangement_has_regularized_closed_sheet_recovery_surface(arrangement, left, right);
+    let regularized_sheet_recovery_surface = left.facts().mesh.closed_manifold
+        && right.facts().mesh.closed_manifold
+        && arrangement
+            .shells_or_regions
+            .as_ref()
+            .is_some_and(|regions| {
+                regions
+                    .iter()
+                    .any(|region| region.non_manifold_edges > 0 && region.source_sides.len() > 1)
+            });
     let volume_resolves_region_classification =
         arrangement_region_classification_blockers_are_volume_resolved(arrangement);
     let selected_regions_ignore_unresolved_classification =
@@ -5928,27 +5936,6 @@ fn arrangement_blockers_are_unregularized_sheet_complex(
                     | ExactArrangementBlocker::UnregularizedOpenSheetComplex
             )
         })
-}
-
-fn arrangement_has_mixed_source_sheet_complex(arrangement: &ExactArrangement) -> bool {
-    arrangement
-        .shells_or_regions
-        .as_ref()
-        .is_some_and(|regions| {
-            regions
-                .iter()
-                .any(|region| region.non_manifold_edges > 0 && region.source_sides.len() > 1)
-        })
-}
-
-fn arrangement_has_regularized_closed_sheet_recovery_surface(
-    arrangement: &ExactArrangement,
-    left: &ExactMesh,
-    right: &ExactMesh,
-) -> bool {
-    left.facts().mesh.closed_manifold
-        && right.facts().mesh.closed_manifold
-        && arrangement_has_mixed_source_sheet_complex(arrangement)
 }
 
 fn boolean_arrangement_regularized_sheet_complex_from_graph(
