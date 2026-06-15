@@ -817,98 +817,88 @@ impl ExactBooleanResult {
     /// Returns whether this result kind is a valid materialized witness for
     /// the retained preflight support that produced it.
     pub(crate) fn matches_preflight_support(&self, support: ExactBooleanSupport) -> bool {
-        match support {
+        let expected_shortcut = match support {
             ExactBooleanSupport::SelectedRegionPolicy => {
-                matches!(self.kind, ExactBooleanResultKind::SelectedRegions { .. })
+                return matches!(self.kind, ExactBooleanResultKind::SelectedRegions { .. });
             }
             ExactBooleanSupport::CertifiedBoundaryPolicyShortcut => {
-                matches!(
+                return matches!(
                     self.kind,
                     ExactBooleanResultKind::BoundaryPolicyShortcut { .. }
-                )
+                );
             }
             ExactBooleanSupport::CertifiedOpenSurfaceArrangementUnion
             | ExactBooleanSupport::CertifiedOpenSurfaceArrangementIntersection
             | ExactBooleanSupport::CertifiedOpenSurfaceArrangementDifference => {
-                matches!(
+                return matches!(
                     self.kind,
                     ExactBooleanResultKind::OpenSurfaceArrangement { .. }
-                )
+                );
             }
-            ExactBooleanSupport::CertifiedArrangementCellComplex => matches!(
-                self.kind,
-                ExactBooleanResultKind::ArrangementCellComplexMaterialized { .. }
-                    | ExactBooleanResultKind::CertifiedShortcut {
-                        shortcut: ExactBooleanShortcutKind::ArrangementCellComplex,
-                        ..
-                    }
-            ),
-            ExactBooleanSupport::CertifiedEmptyOperand => {
-                self.has_shortcut(ExactBooleanShortcutKind::EmptyOperand)
+            ExactBooleanSupport::CertifiedArrangementCellComplex => {
+                if matches!(
+                    self.kind,
+                    ExactBooleanResultKind::ArrangementCellComplexMaterialized { .. }
+                ) {
+                    return true;
+                }
+                ExactBooleanShortcutKind::ArrangementCellComplex
             }
+            ExactBooleanSupport::CertifiedEmptyOperand => ExactBooleanShortcutKind::EmptyOperand,
             ExactBooleanSupport::CertifiedBoundsDisjoint => {
-                self.has_shortcut(ExactBooleanShortcutKind::BoundsDisjoint)
+                ExactBooleanShortcutKind::BoundsDisjoint
             }
-            ExactBooleanSupport::CertifiedIdentical => {
-                self.has_shortcut(ExactBooleanShortcutKind::Identical)
-            }
-            ExactBooleanSupport::CertifiedSameSurface => {
-                self.has_shortcut(ExactBooleanShortcutKind::SameSurface)
-            }
+            ExactBooleanSupport::CertifiedIdentical => ExactBooleanShortcutKind::Identical,
+            ExactBooleanSupport::CertifiedSameSurface => ExactBooleanShortcutKind::SameSurface,
             ExactBooleanSupport::CertifiedClosedBoundaryTouchingUnion => {
-                self.has_shortcut(ExactBooleanShortcutKind::ClosedBoundaryTouchingUnion)
+                ExactBooleanShortcutKind::ClosedBoundaryTouchingUnion
             }
             ExactBooleanSupport::CertifiedClosedBoundaryTouchingIntersection => {
-                self.has_shortcut(ExactBooleanShortcutKind::ClosedBoundaryTouchingIntersection)
+                ExactBooleanShortcutKind::ClosedBoundaryTouchingIntersection
             }
             ExactBooleanSupport::CertifiedClosedBoundaryTouchingDifference => {
-                self.has_shortcut(ExactBooleanShortcutKind::ClosedBoundaryTouchingDifference)
+                ExactBooleanShortcutKind::ClosedBoundaryTouchingDifference
             }
             ExactBooleanSupport::CertifiedOpenSurfaceDisjoint => {
-                self.has_shortcut(ExactBooleanShortcutKind::OpenSurfaceDisjoint)
+                ExactBooleanShortcutKind::OpenSurfaceDisjoint
             }
             ExactBooleanSupport::CertifiedClosedWindingSeparated => {
-                self.has_shortcut(ExactBooleanShortcutKind::ClosedWindingSeparated)
+                ExactBooleanShortcutKind::ClosedWindingSeparated
             }
             ExactBooleanSupport::CertifiedClosedWindingContainment => {
-                self.has_shortcut(ExactBooleanShortcutKind::ClosedWindingContainment)
+                ExactBooleanShortcutKind::ClosedWindingContainment
             }
             ExactBooleanSupport::CertifiedMixedDimensionalRegularizedSolid => {
-                self.has_shortcut(ExactBooleanShortcutKind::MixedDimensionalRegularizedSolid)
+                ExactBooleanShortcutKind::MixedDimensionalRegularizedSolid
             }
             ExactBooleanSupport::CertifiedLowerDimensionalRegularizedSolid => {
-                self.has_shortcut(ExactBooleanShortcutKind::LowerDimensionalRegularizedSolid)
+                ExactBooleanShortcutKind::LowerDimensionalRegularizedSolid
             }
             ExactBooleanSupport::CertifiedConvexContainment => {
-                self.has_shortcut(ExactBooleanShortcutKind::ConvexContainment)
+                ExactBooleanShortcutKind::ConvexContainment
             }
-            ExactBooleanSupport::CertifiedConvexUnion => {
-                self.has_shortcut(ExactBooleanShortcutKind::ConvexUnion)
-            }
+            ExactBooleanSupport::CertifiedConvexUnion => ExactBooleanShortcutKind::ConvexUnion,
             ExactBooleanSupport::CertifiedConvexIntersection => {
-                self.has_shortcut(ExactBooleanShortcutKind::ConvexIntersection)
+                ExactBooleanShortcutKind::ConvexIntersection
             }
             ExactBooleanSupport::CertifiedConvexDifference => {
-                self.has_shortcut(ExactBooleanShortcutKind::ConvexDifference)
+                ExactBooleanShortcutKind::ConvexDifference
             }
             ExactBooleanSupport::CertifiedConvexSeparated => {
-                self.has_shortcut(ExactBooleanShortcutKind::ConvexSeparated)
+                ExactBooleanShortcutKind::ConvexSeparated
             }
             ExactBooleanSupport::RequiresBoundaryPolicy
             | ExactBooleanSupport::RequiresPlanarArrangement
             | ExactBooleanSupport::RequiresCoplanarVolumetricCells
             | ExactBooleanSupport::RequiresCertifiedWinding
-            | ExactBooleanSupport::UnresolvedGraph => false,
-        }
-    }
-
-    fn has_shortcut(&self, expected: ExactBooleanShortcutKind) -> bool {
+            | ExactBooleanSupport::UnresolvedGraph => return false,
+        };
         matches!(
             self.kind,
             ExactBooleanResultKind::CertifiedShortcut {
                 shortcut,
                 ..
-            } if shortcut == expected
+            } if shortcut == expected_shortcut
         )
     }
 

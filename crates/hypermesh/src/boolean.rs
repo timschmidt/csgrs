@@ -2827,22 +2827,20 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
         && operation == ExactBooleanOperation::Union
         && certified_closed_boundary_only_contact_from_graph(&graph, left, right)?
     {
-        if operation == ExactBooleanOperation::Union {
-            let evidence = CoplanarVolumetricCellEvidenceReport::from_graph(&graph, left, right);
-            evidence.validate().map_err(|error| {
-                MeshError::one(MeshDiagnostic::new(
-                    Severity::Error,
-                    DiagnosticKind::UnsupportedExactOperation,
-                    format!("exact no-volume-overlap union evidence validation failed: {error:?}"),
-                ))
-            })?;
-            if evidence.positive_area_coplanar_overlapping_pairs != 0 {
-                let mut preflight = certified_arrangement_cell_complex_preflight_from_graph(
-                    operation, &graph, left, right,
-                );
-                preflight.coplanar_volumetric_evidence = Some(evidence);
-                return Ok(preflight);
-            }
+        let evidence = CoplanarVolumetricCellEvidenceReport::from_graph(&graph, left, right);
+        evidence.validate().map_err(|error| {
+            MeshError::one(MeshDiagnostic::new(
+                Severity::Error,
+                DiagnosticKind::UnsupportedExactOperation,
+                format!("exact no-volume-overlap union evidence validation failed: {error:?}"),
+            ))
+        })?;
+        if evidence.positive_area_coplanar_overlapping_pairs != 0 {
+            let mut preflight = certified_arrangement_cell_complex_preflight_from_graph(
+                operation, &graph, left, right,
+            );
+            preflight.coplanar_volumetric_evidence = Some(evidence);
+            return Ok(preflight);
         }
         let boundary_support = ExactBooleanSupport::CertifiedClosedBoundaryTouchingUnion;
         return Ok(certified_shortcut_preflight_from_graph(
@@ -2987,29 +2985,32 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
     }
     if support == ExactBooleanSupport::RequiresCertifiedWinding
         && !graph_requires_coplanar_volumetric_cells_for_sources(&graph, left, right)
-        && let Some(convex_support) = certified_convex_intersection_support(left, right, operation)
+        && operation == ExactBooleanOperation::Intersection
+        && intersect_closed_convex_solids(left, right).is_some()
     {
         return Ok(certified_shortcut_preflight_from_graph(
             operation,
-            convex_support,
+            ExactBooleanSupport::CertifiedConvexIntersection,
             &graph,
         ));
     }
     if support == ExactBooleanSupport::RequiresCertifiedWinding
-        && let Some(convex_support) = certified_convex_difference_support(left, right, operation)
+        && operation == ExactBooleanOperation::Difference
+        && subtract_closed_convex_solids(left, right).is_some()
     {
         return Ok(certified_shortcut_preflight_from_graph(
             operation,
-            convex_support,
+            ExactBooleanSupport::CertifiedConvexDifference,
             &graph,
         ));
     }
     if support == ExactBooleanSupport::RequiresCertifiedWinding
-        && let Some(convex_support) = certified_convex_union_support(left, right, operation)
+        && operation == ExactBooleanOperation::Union
+        && union_closed_convex_solids(left, right).is_some()
     {
         return Ok(certified_shortcut_preflight_from_graph(
             operation,
-            convex_support,
+            ExactBooleanSupport::CertifiedConvexUnion,
             &graph,
         ));
     }
@@ -3023,18 +3024,21 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
         )? {
             return Ok(preflight);
         }
-        if let Some(convex_support) = certified_convex_union_support(left, right, operation) {
-            return Ok(certified_shortcut_preflight_from_graph(
-                operation,
-                convex_support,
-                &graph,
-            ));
-        }
-        if let Some(convex_support) = certified_convex_intersection_support(left, right, operation)
+        if operation == ExactBooleanOperation::Union
+            && union_closed_convex_solids(left, right).is_some()
         {
             return Ok(certified_shortcut_preflight_from_graph(
                 operation,
-                convex_support,
+                ExactBooleanSupport::CertifiedConvexUnion,
+                &graph,
+            ));
+        }
+        if operation == ExactBooleanOperation::Intersection
+            && intersect_closed_convex_solids(left, right).is_some()
+        {
+            return Ok(certified_shortcut_preflight_from_graph(
+                operation,
+                ExactBooleanSupport::CertifiedConvexIntersection,
                 &graph,
             ));
         }
@@ -3978,17 +3982,6 @@ fn boolean_closed_winding_containment_meshes_from_graph(
     )))
 }
 
-fn closed_winding_shortcut_preconditions_fail(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-) -> bool {
-    matches!(operation, ExactBooleanOperation::SelectedRegions(_))
-        || left.triangles().is_empty()
-        || right.triangles().is_empty()
-        || meshes_are_certified_bounds_disjoint(left, right)
-}
-
 pub(crate) fn materialize_graph_shortcut_from_graph_for_request(
     graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
@@ -4059,21 +4052,28 @@ pub(crate) fn materialize_graph_shortcut_from_graph_for_request(
                 graph, left, right, operation, validation,
             )?
         }
-        ExactBooleanSupport::CertifiedClosedWindingSeparated => {
-            if closed_winding_shortcut_preconditions_fail(left, right, operation) {
+        ExactBooleanSupport::CertifiedClosedWindingSeparated
+        | ExactBooleanSupport::CertifiedClosedWindingContainment => {
+            if matches!(operation, ExactBooleanOperation::SelectedRegions(_))
+                || left.triangles().is_empty()
+                || right.triangles().is_empty()
+                || meshes_are_certified_bounds_disjoint(left, right)
+            {
                 return Ok(None);
             }
-            boolean_closed_winding_separated_meshes_from_graph(
-                graph, left, right, operation, validation,
-            )?
-        }
-        ExactBooleanSupport::CertifiedClosedWindingContainment => {
-            if closed_winding_shortcut_preconditions_fail(left, right, operation) {
-                return Ok(None);
+            match support {
+                ExactBooleanSupport::CertifiedClosedWindingSeparated => {
+                    boolean_closed_winding_separated_meshes_from_graph(
+                        graph, left, right, operation, validation,
+                    )?
+                }
+                ExactBooleanSupport::CertifiedClosedWindingContainment => {
+                    boolean_closed_winding_containment_meshes_from_graph(
+                        graph, left, right, operation, validation,
+                    )?
+                }
+                _ => unreachable!("closed-winding support arm only matches closed-winding support"),
             }
-            boolean_closed_winding_containment_meshes_from_graph(
-                graph, left, right, operation, validation,
-            )?
         }
         _ => return Ok(None),
     };
@@ -8408,13 +8408,17 @@ fn boolean_open_surface_disjoint_meshes_from_graph(
     let disjoint_report = open_surface_disjoint_report_from_graph(graph, left, right);
     if disjoint_report.is_certified() {
         let result = materialize_open_surface_disjoint_meshes(left, right, operation, validation)?;
-        return Ok(open_surface_disjoint_result_consumes_report(
-            &result,
-            left,
-            right,
-            operation,
-            &disjoint_report,
-        )
+        return Ok((disjoint_report
+            .validate_against_sources(left, right)
+            .is_ok()
+            && matches!(
+                result.kind,
+                ExactBooleanResultKind::CertifiedShortcut {
+                    operation: result_operation,
+                    shortcut: ExactBooleanShortcutKind::OpenSurfaceDisjoint
+                } if result_operation == operation
+            )
+            && result.validate().is_ok())
         .then_some(result));
     }
     Ok(None)
@@ -8432,7 +8436,17 @@ pub(crate) fn open_surface_disjoint_result_matches_sources(
     else {
         return false;
     };
-    if !open_surface_disjoint_result_consumes_report(result, left, right, operation, &report) {
+    if !report.is_certified()
+        || report.validate_against_sources(left, right).is_err()
+        || !matches!(
+            result.kind,
+            ExactBooleanResultKind::CertifiedShortcut {
+                operation: result_operation,
+                shortcut: ExactBooleanShortcutKind::OpenSurfaceDisjoint
+            } if result_operation == operation
+        )
+        || result.validate().is_err()
+    {
         return false;
     }
     let Ok(expected) = materialize_open_surface_disjoint_meshes(left, right, operation, validation)
@@ -8440,25 +8454,6 @@ pub(crate) fn open_surface_disjoint_result_matches_sources(
         return false;
     };
     expected.validate().is_ok() && result == &expected
-}
-
-fn open_surface_disjoint_result_consumes_report(
-    result: &ExactBooleanResult,
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    report: &ExactOpenSurfaceDisjointReport,
-) -> bool {
-    report.is_certified()
-        && report.validate_against_sources(left, right).is_ok()
-        && matches!(
-            result.kind,
-            ExactBooleanResultKind::CertifiedShortcut {
-                operation: result_operation,
-                shortcut: ExactBooleanShortcutKind::OpenSurfaceDisjoint
-            } if result_operation == operation
-        )
-        && result.validate().is_ok()
 }
 
 pub(crate) fn open_surface_disjoint_report_from_graph(
@@ -9067,14 +9062,16 @@ pub(crate) fn boundary_policy_shortcut_result_matches_sources(
     else {
         return false;
     };
-    if !boundary_policy_shortcut_result_consumes_report(
-        result,
-        left,
-        right,
-        operation,
-        boundary_policy,
-        &report,
-    ) {
+    if !report.is_certified()
+        || report.validate_against_sources(left, right).is_err()
+        || !matches!(
+            result.kind,
+            ExactBooleanResultKind::BoundaryPolicyShortcut {
+                operation: result_operation
+            } if result_operation == operation
+        )
+        || result.validate().is_err()
+    {
         return false;
     }
     let Ok(Some(expected)) =
@@ -9083,26 +9080,6 @@ pub(crate) fn boundary_policy_shortcut_result_matches_sources(
         return false;
     };
     expected.validate().is_ok() && result == &expected
-}
-
-fn boundary_policy_shortcut_result_consumes_report(
-    result: &ExactBooleanResult,
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    boundary_policy: ExactBoundaryBooleanPolicy,
-    report: &ExactBoundaryTouchingReport,
-) -> bool {
-    boundary_policy == ExactBoundaryBooleanPolicy::PreserveSeparateShells
-        && report.is_certified()
-        && report.validate_against_sources(left, right).is_ok()
-        && matches!(
-            result.kind,
-            ExactBooleanResultKind::BoundaryPolicyShortcut {
-                operation: result_operation
-            } if result_operation == operation
-        )
-        && result.validate().is_ok()
 }
 
 fn boolean_boundary_touching_meshes_from_graph(
@@ -9127,15 +9104,17 @@ fn boolean_boundary_touching_meshes_from_graph(
     else {
         return Ok(None);
     };
-    Ok(boundary_policy_shortcut_result_consumes_report(
-        &result,
-        left,
-        right,
-        operation,
-        boundary_policy,
-        &report,
+    Ok(
+        (boundary_policy == ExactBoundaryBooleanPolicy::PreserveSeparateShells
+            && matches!(
+                result.kind,
+                ExactBooleanResultKind::BoundaryPolicyShortcut {
+                    operation: result_operation
+                } if result_operation == operation
+            )
+            && result.validate().is_ok())
+        .then_some(result),
     )
-    .then_some(result))
 }
 
 pub(crate) fn winding_readiness_report_for_request_from_graph(
@@ -10289,22 +10268,7 @@ fn volumetric_retention_for_operation(
     }
 }
 
-fn certified_convex_intersection_support(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-) -> Option<ExactBooleanSupport> {
-    match operation {
-        ExactBooleanOperation::Intersection
-            if intersect_closed_convex_solids(left, right).is_some() =>
-        {
-            Some(ExactBooleanSupport::CertifiedConvexIntersection)
-        }
-        _ => None,
-    }
-}
-
-fn certified_convex_union_support(
+fn certified_convex_operation_shortcut_support(
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
@@ -10313,33 +10277,21 @@ fn certified_convex_union_support(
         ExactBooleanOperation::Union if union_closed_convex_solids(left, right).is_some() => {
             Some(ExactBooleanSupport::CertifiedConvexUnion)
         }
-        _ => None,
-    }
-}
-
-fn certified_convex_difference_support(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-) -> Option<ExactBooleanSupport> {
-    match operation {
+        ExactBooleanOperation::Intersection
+            if intersect_closed_convex_solids(left, right).is_some() =>
+        {
+            Some(ExactBooleanSupport::CertifiedConvexIntersection)
+        }
         ExactBooleanOperation::Difference
             if subtract_closed_convex_solids(left, right).is_some() =>
         {
             Some(ExactBooleanSupport::CertifiedConvexDifference)
         }
-        _ => None,
+        ExactBooleanOperation::SelectedRegions(_)
+        | ExactBooleanOperation::Union
+        | ExactBooleanOperation::Intersection
+        | ExactBooleanOperation::Difference => None,
     }
-}
-
-fn certified_convex_operation_shortcut_support(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-) -> Option<ExactBooleanSupport> {
-    certified_convex_union_support(left, right, operation)
-        .or_else(|| certified_convex_intersection_support(left, right, operation))
-        .or_else(|| certified_convex_difference_support(left, right, operation))
 }
 
 /// Return whether one certified convex solid is contained in another while
