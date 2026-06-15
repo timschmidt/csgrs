@@ -2845,8 +2845,15 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
         ));
     }
     if support == ExactBooleanSupport::RequiresCertifiedWinding
-        && let Some(convex_support) =
-            certified_convex_boolean_support_from_graph(&graph, left, right, operation)?
+        && let Some(convex_support) = certified_convex_relation_shortcut_from_graph(
+            &graph, left, right, operation,
+        )?
+        .map(|relation| match relation {
+            ConvexRelationShortcut::Separated => ExactBooleanSupport::CertifiedConvexSeparated,
+            ConvexRelationShortcut::LeftInsideRight | ConvexRelationShortcut::RightInsideLeft => {
+                ExactBooleanSupport::CertifiedConvexContainment
+            }
+        })
     {
         return Ok(certified_shortcut_preflight_from_graph(
             operation,
@@ -4934,8 +4941,8 @@ fn certified_arrangement_regularized_boundary_contact_from_graph(
         return Ok(false);
     }
     if matches!(
-        certified_convex_boolean_support_from_graph(graph, left, right, operation)?,
-        Some(ExactBooleanSupport::CertifiedConvexContainment)
+        certified_convex_relation_shortcut_from_graph(graph, left, right, operation)?,
+        Some(ConvexRelationShortcut::LeftInsideRight | ConvexRelationShortcut::RightInsideLeft)
     ) {
         return Ok(false);
     }
@@ -10532,25 +10539,6 @@ fn certified_convex_operation_shortcut_support(
     certified_convex_union_support(left, right, operation)
         .or_else(|| certified_convex_intersection_support(left, right, operation))
         .or_else(|| certified_convex_difference_support(left, right, operation))
-}
-
-fn certified_convex_boolean_support_from_graph(
-    graph: &super::graph::ExactIntersectionGraph,
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-) -> Result<Option<ExactBooleanSupport>, MeshError> {
-    Ok(
-        match certified_convex_relation_shortcut_from_graph(graph, left, right, operation)? {
-            Some(ConvexRelationShortcut::Separated) => {
-                Some(ExactBooleanSupport::CertifiedConvexSeparated)
-            }
-            Some(
-                ConvexRelationShortcut::LeftInsideRight | ConvexRelationShortcut::RightInsideLeft,
-            ) => Some(ExactBooleanSupport::CertifiedConvexContainment),
-            None => None,
-        },
-    )
 }
 
 /// Return whether one certified convex solid is contained in another while
