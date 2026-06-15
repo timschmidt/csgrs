@@ -381,13 +381,6 @@ fn no_region_facts(
     }
 }
 
-fn blocker_has_pair_evidence(blocker: &ExactBooleanBlocker) -> bool {
-    blocker.candidate_pairs != 0
-        || blocker.coplanar_overlapping_pairs != 0
-        || blocker.coplanar_touching_pairs != 0
-        || blocker.unknown_pairs != 0
-}
-
 fn validate_blocker_count_bounds(
     blocker: &ExactBooleanBlocker,
     retained_face_pairs: usize,
@@ -457,7 +450,11 @@ fn validate_arrangement_readiness_matches_blocker(
 }
 
 fn blocker_has_any_evidence(blocker: &ExactBooleanBlocker) -> bool {
-    blocker_has_pair_evidence(blocker) || blocker.construction_failed_events != 0
+    blocker.candidate_pairs != 0
+        || blocker.coplanar_overlapping_pairs != 0
+        || blocker.coplanar_touching_pairs != 0
+        || blocker.unknown_pairs != 0
+        || blocker.construction_failed_events != 0
 }
 
 fn blocker_has_refinement_evidence(blocker: &ExactBooleanBlocker) -> bool {
@@ -5025,7 +5022,10 @@ impl ExactAdjacentUnionCompletionReport {
                 | ExactAdjacentUnionCompletionStatus::AxisAlignedBoxPair
         ) && (self.retained_face_pairs != 0
             || self.retained_events != 0
-            || blocker_has_pair_evidence(&self.blocker))
+            || self.blocker.candidate_pairs != 0
+            || self.blocker.coplanar_overlapping_pairs != 0
+            || self.blocker.coplanar_touching_pairs != 0
+            || self.blocker.unknown_pairs != 0)
         {
             return Err(ExactReportValidationError::StatusEvidenceMismatch);
         }

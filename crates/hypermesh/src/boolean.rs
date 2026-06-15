@@ -3594,7 +3594,13 @@ fn certified_arrangement_cell_complex_preflight_if_materialized(
                 }
             })?;
     if arrangement_materializes
-        || coplanar_surface_output_materializes_for_preflight(left, right, operation)?
+        || boolean_coplanar_mesh_overlay_optional(
+            left,
+            right,
+            operation,
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )?
+        .is_some()
     {
         Ok(Some(
             certified_arrangement_cell_complex_preflight_from_graph(operation, graph, left, right),
@@ -3736,72 +3742,60 @@ fn graph_has_only_boundary_contact_pairs(
             MeshFacePairRelation::CoplanarTouching | MeshFacePairRelation::CoplanarOverlapping => {
                 true
             }
-            MeshFacePairRelation::Candidate => pair
-                .events
-                .iter()
-                .all(|event| boundary_contact_candidate_event(event, left, right)),
+            MeshFacePairRelation::Candidate => pair.events.iter().all(|event| {
+                // Positive-area coplanar contact between closed solids also
+                // retains adjacent non-coplanar face pairs where an endpoint
+                // or coplanar source edge lies on the opposite plane. Those
+                // are still boundary facts, not volume overlap.
+                match event {
+                    IntersectionEvent::SegmentPlane {
+                        relation:
+                            SegmentPlaneRelation::Disjoint
+                            | SegmentPlaneRelation::Coplanar
+                            | SegmentPlaneRelation::EndpointOnPlane,
+                        ..
+                    } => true,
+                    IntersectionEvent::SegmentPlane {
+                        relation: SegmentPlaneRelation::ProperCrossing,
+                        plane_side,
+                        plane_face,
+                        point: Some(point),
+                        ..
+                    } => {
+                        let Some(triangle) =
+                            triangle_points(mesh_for_side(*plane_side, left, right), *plane_face)
+                        else {
+                            return false;
+                        };
+                        let Some(projection) = choose_triangle_projection(&triangle) else {
+                            return false;
+                        };
+                        classify_point_triangle(
+                            &project_point3(&triangle[0], projection),
+                            &project_point3(&triangle[1], projection),
+                            &project_point3(&triangle[2], projection),
+                            &project_point3(point, projection),
+                        )
+                        .value()
+                            == Some(TriangleLocation::Outside)
+                    }
+                    IntersectionEvent::SegmentPlane { .. } => false,
+                    IntersectionEvent::CoplanarEdge { relation, .. } => {
+                        *relation != SegmentIntersection::Disjoint
+                    }
+                    IntersectionEvent::CoplanarVertex { location, .. } => matches!(
+                        location,
+                        TriangleLocation::Inside
+                            | TriangleLocation::OnEdge
+                            | TriangleLocation::OnVertex
+                    ),
+                    IntersectionEvent::Unknown => false,
+                }
+            }),
             MeshFacePairRelation::BoundsDisjoint
             | MeshFacePairRelation::PlaneSeparated
             | MeshFacePairRelation::Unknown => false,
         })
-}
-
-fn boundary_contact_candidate_event(
-    event: &IntersectionEvent,
-    left: &ExactMesh,
-    right: &ExactMesh,
-) -> bool {
-    // Positive-area coplanar contact between closed solids also retains
-    // adjacent non-coplanar face pairs where an endpoint or coplanar source
-    // edge lies on the opposite plane. Those are still boundary facts, not
-    // distinction instead of collapsing every retained candidate into the
-    // same unsupported topology bucket.
-    match event {
-        IntersectionEvent::SegmentPlane {
-            relation:
-                SegmentPlaneRelation::Disjoint
-                | SegmentPlaneRelation::Coplanar
-                | SegmentPlaneRelation::EndpointOnPlane,
-            ..
-        } => true,
-        IntersectionEvent::SegmentPlane {
-            relation: SegmentPlaneRelation::ProperCrossing,
-            plane_side,
-            plane_face,
-            point: Some(point),
-            ..
-        } => {
-            let Some(triangle) =
-                triangle_points(mesh_for_side(*plane_side, left, right), *plane_face)
-            else {
-                return false;
-            };
-            let Some(projection) = choose_triangle_projection(&triangle) else {
-                return false;
-            };
-            // A segment/supporting-plane crossing outside the finite opposite triangle
-            // is retained construction evidence, but it is not a surface crossing.
-            // this distinction exactly instead of treating every proper plane crossing
-            // as volume overlap.
-            classify_point_triangle(
-                &project_point3(&triangle[0], projection),
-                &project_point3(&triangle[1], projection),
-                &project_point3(&triangle[2], projection),
-                &project_point3(point, projection),
-            )
-            .value()
-                == Some(TriangleLocation::Outside)
-        }
-        IntersectionEvent::SegmentPlane { .. } => false,
-        IntersectionEvent::CoplanarEdge { relation, .. } => {
-            *relation != SegmentIntersection::Disjoint
-        }
-        IntersectionEvent::CoplanarVertex { location, .. } => matches!(
-            location,
-            TriangleLocation::Inside | TriangleLocation::OnEdge | TriangleLocation::OnVertex
-        ),
-        IntersectionEvent::Unknown => false,
-    }
 }
 
 fn triangle_points(mesh: &ExactMesh, face: usize) -> Option<[Point3; 3]> {
@@ -3834,10 +3828,6 @@ fn real_sign(value: &Real) -> Option<Sign> {
     }
 }
 
-fn both_axis_aligned_boxes(left: &ExactMesh, right: &ExactMesh) -> bool {
-    is_axis_aligned_box(left) && is_axis_aligned_box(right)
-}
-
 fn certified_closed_boundary_contact(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -3851,10 +3841,28 @@ fn certified_closed_boundary_contact(
     let right_in_left = classify_mesh_vertices_against_closed_mesh_winding_report(right, left);
     right_in_left.validate().map_err(winding_error)?;
 
-    Ok(mesh_vertices_are_boundary_or_outside(&left_in_right)
-        && mesh_vertices_are_boundary_or_outside(&right_in_left)
-        && (mesh_vertices_touch_boundary(&left_in_right)
-            || mesh_vertices_touch_boundary(&right_in_left)))
+    Ok(left_in_right.target_closed
+        && right_in_left.target_closed
+        && left_in_right.vertices.iter().all(|vertex| {
+            matches!(
+                vertex.relation,
+                ClosedMeshWindingRelation::Outside | ClosedMeshWindingRelation::Boundary
+            )
+        })
+        && right_in_left.vertices.iter().all(|vertex| {
+            matches!(
+                vertex.relation,
+                ClosedMeshWindingRelation::Outside | ClosedMeshWindingRelation::Boundary
+            )
+        })
+        && (left_in_right
+            .vertices
+            .iter()
+            .any(|vertex| vertex.relation == ClosedMeshWindingRelation::Boundary)
+            || right_in_left
+                .vertices
+                .iter()
+                .any(|vertex| vertex.relation == ClosedMeshWindingRelation::Boundary)))
 }
 
 fn closed_winding_vertex_relations_from_empty_graph(
@@ -4145,23 +4153,6 @@ fn public_operation_replayable_result(
         .validate_operation_against_sources(left, right, operation, validation, boundary_policy)
         .is_ok()
         .then_some(result)
-}
-
-fn mesh_vertices_are_boundary_or_outside(report: &ClosedMeshWindingMeshReport) -> bool {
-    report.target_closed
-        && report.vertices.iter().all(|vertex| {
-            matches!(
-                vertex.relation,
-                ClosedMeshWindingRelation::Outside | ClosedMeshWindingRelation::Boundary
-            )
-        })
-}
-
-fn mesh_vertices_touch_boundary(report: &ClosedMeshWindingMeshReport) -> bool {
-    report
-        .vertices
-        .iter()
-        .any(|vertex| vertex.relation == ClosedMeshWindingRelation::Boundary)
 }
 
 /// Materialize an exact boolean request.
@@ -5399,7 +5390,7 @@ fn adjacent_union_completion_certification(
             None,
         ));
     }
-    let axis_aligned_box_pair = both_axis_aligned_boxes(left, right);
+    let axis_aligned_box_pair = is_axis_aligned_box(left) && is_axis_aligned_box(right);
     if axis_aligned_box_pair {
         return Ok((
             adjacent_union_completion_report(
@@ -5491,7 +5482,7 @@ pub(crate) fn adjacent_union_completion_certification_from_graph(
             None,
         ));
     }
-    let axis_aligned_box_pair = both_axis_aligned_boxes(left, right);
+    let axis_aligned_box_pair = is_axis_aligned_box(left) && is_axis_aligned_box(right);
     if axis_aligned_box_pair {
         return Ok((
             adjacent_union_completion_report(
@@ -5586,7 +5577,7 @@ pub(crate) fn adjacent_union_completion_certification_from_graph(
     }
 
     if certified_convex_operation_shortcut_support(left, right, operation).is_some()
-        || both_axis_aligned_boxes(left, right)
+        || (is_axis_aligned_box(left) && is_axis_aligned_box(right))
         || match operation {
             ExactBooleanOperation::Union => {
                 axis_aligned_orthogonal_solid_operation(operation).is_some_and(|operation| {
@@ -5875,20 +5866,6 @@ fn boolean_arrangement_regularized_no_volume_overlap_from_graph(
     Ok(Some(result))
 }
 
-fn materialized_result_with_evidence_replays_sources(
-    result: ExactBooleanResult,
-    evidence: CoplanarVolumetricCellEvidenceReport,
-    left: &ExactMesh,
-    right: &ExactMesh,
-) -> Option<(ExactBooleanResult, CoplanarVolumetricCellEvidenceReport)> {
-    if result.validate_against_sources(left, right).is_err()
-        || evidence.validate_against_sources(left, right).is_err()
-    {
-        return None;
-    }
-    Some((result, evidence))
-}
-
 pub(crate) fn materialize_closed_no_volume_overlap_regularized_boolean_with_evidence_from_graph(
     graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
@@ -5917,9 +5894,9 @@ pub(crate) fn materialize_closed_no_volume_overlap_regularized_boolean_with_evid
             graph, left, right, operation, validation, true,
         )?
     {
-        return Ok(materialized_result_with_evidence_replays_sources(
-            result, evidence, left, right,
-        ));
+        return Ok((result.validate_against_sources(left, right).is_ok()
+            && evidence.validate_against_sources(left, right).is_ok())
+        .then_some((result, evidence)));
     }
     let result = match operation {
         ExactBooleanOperation::Union => {
@@ -5956,9 +5933,9 @@ pub(crate) fn materialize_closed_no_volume_overlap_regularized_boolean_with_evid
         }
         ExactBooleanOperation::SelectedRegions(_) => unreachable!("handled above"),
     };
-    Ok(materialized_result_with_evidence_replays_sources(
-        result, evidence, left, right,
-    ))
+    Ok((result.validate_against_sources(left, right).is_ok()
+        && evidence.validate_against_sources(left, right).is_ok())
+    .then_some((result, evidence)))
 }
 
 fn arrangement_difference_preserves_source_surface(
@@ -5999,7 +5976,12 @@ fn arrangement_difference_preserves_source_surface(
         else {
             return false;
         };
-        let Some(area) = real_abs(&projected_polygon_area2_value(&points, projection)) else {
+        let area = projected_polygon_area2_value(&points, projection);
+        let Some(area) = (match real_sign(&area) {
+            Some(Sign::Negative) => Some(Real::from(0) - area),
+            Some(Sign::Zero | Sign::Positive) => Some(area),
+            None => None,
+        }) else {
             return false;
         };
         if compare_reals(&area, &Real::from(0)).value() != Some(Ordering::Greater) {
@@ -6016,19 +5998,16 @@ fn arrangement_difference_preserves_source_surface(
         let Ok(projection) = choose_region_projection(source, face) else {
             return false;
         };
-        let Some(source_area) = real_abs(&projected_polygon_area2_value(&points, projection))
-        else {
+        let source_area = projected_polygon_area2_value(&points, projection);
+        let Some(source_area) = (match real_sign(&source_area) {
+            Some(Sign::Negative) => Some(Real::from(0) - source_area),
+            Some(Sign::Zero | Sign::Positive) => Some(source_area),
+            None => None,
+        }) else {
             return false;
         };
         compare_reals(&retained_area_by_face[face], &source_area).value() == Some(Ordering::Equal)
     })
-}
-
-fn real_abs(value: &Real) -> Option<Real> {
-    match real_sign(value)? {
-        Sign::Negative => Some(Real::from(0) - value),
-        Sign::Zero | Sign::Positive => Some(value.clone()),
-    }
 }
 
 fn arrangement_volumetric_split_cell_recovery_outcome(
@@ -7598,7 +7577,10 @@ pub(crate) fn boolean_coplanar_mesh_overlay_optional(
     if !coplanar_mesh_overlay_should_preempt_surface_paths(left, right, operation) {
         return Ok(None);
     }
-    let allow_empty_overlay = coplanar_mesh_overlay_allows_empty(operation);
+    let allow_empty_overlay = matches!(
+        operation,
+        ExactBooleanOperation::Intersection | ExactBooleanOperation::Difference
+    );
     let Some(boundary_policy) = coplanar_mesh_overlay_boundary_policy(left, right, operation)
     else {
         return Ok(None);
@@ -7636,7 +7618,10 @@ fn coplanar_mesh_overlay_candidate_counts(
     if !coplanar_mesh_overlay_should_preempt_surface_paths(left, right, operation) {
         return None;
     }
-    let allow_empty_overlay = coplanar_mesh_overlay_allows_empty(operation);
+    let allow_empty_overlay = matches!(
+        operation,
+        ExactBooleanOperation::Intersection | ExactBooleanOperation::Difference
+    );
     let boundary_policy = coplanar_mesh_overlay_boundary_policy(left, right, operation)?;
     let set_operation = coplanar_mesh_overlay_set_operation(operation)?;
     materialize_coplanar_mesh_overlay_mesh(
@@ -7648,13 +7633,6 @@ fn coplanar_mesh_overlay_candidate_counts(
         allow_empty_overlay,
     )
     .map(|mesh| (mesh.vertices().len(), mesh.triangles().len()))
-}
-
-fn coplanar_mesh_overlay_allows_empty(operation: ExactBooleanOperation) -> bool {
-    matches!(
-        operation,
-        ExactBooleanOperation::Intersection | ExactBooleanOperation::Difference
-    )
 }
 
 fn coplanar_mesh_overlay_boundary_policy(
@@ -8980,9 +8958,9 @@ pub(crate) fn materialize_closed_boundary_touching_regularized_boolean_with_evid
         ExactBooleanOperation::SelectedRegions(_) => unreachable!("handled above"),
     };
     let result = certified_shortcut_result(mesh, operation, shortcut);
-    Ok(materialized_result_with_evidence_replays_sources(
-        result, evidence, left, right,
-    ))
+    Ok((result.validate_against_sources(left, right).is_ok()
+        && evidence.validate_against_sources(left, right).is_ok())
+    .then_some((result, evidence)))
 }
 
 fn validate_consumed_boundary_touching_report(
@@ -9440,7 +9418,14 @@ pub(crate) fn planar_arrangement_report_from_graph(
         ExactPlanarArrangementStatus::NotNamedOperation
     } else if graph_had_unknowns {
         ExactPlanarArrangementStatus::GraphUnknowns
-    } else if coplanar_surface_output_materializes_for_preflight(left, right, operation)? {
+    } else if boolean_coplanar_mesh_overlay_optional(
+        left,
+        right,
+        operation,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )?
+    .is_some()
+    {
         ExactPlanarArrangementStatus::AlreadyMaterialized
     } else if graph_requires_boundary_policy(graph, left, right)? {
         ExactPlanarArrangementStatus::BoundaryPolicyRequired
@@ -9495,15 +9480,6 @@ fn planar_arrangement_report(
         blocker: counts.into_blocker(blocker_kind),
         arrangement_readiness,
     }
-}
-
-fn coplanar_surface_output_materializes_for_preflight(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-) -> Result<bool, MeshError> {
-    boolean_coplanar_mesh_overlay_optional(left, right, operation, ValidationPolicy::ALLOW_BOUNDARY)
-        .map(|result| result.is_some())
 }
 
 fn winding_readiness_report_from_graph(
