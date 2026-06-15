@@ -4645,11 +4645,19 @@ impl ExactSameSurfaceReport {
             }
             ExactSameSurfaceStatus::VertexMatchingUndecided
             | ExactSameSurfaceStatus::VertexCoordinateMismatch => {
+                let mut seen_right_vertices = Vec::with_capacity(self.left_to_right.len());
                 if !self.right_to_left.is_empty()
                     || !self.left_triangles.is_empty()
                     || !self.right_triangles.is_empty()
                     || self.predicates.is_empty()
-                    || !is_partial_injective_mapping(&self.left_to_right)
+                    || self.left_to_right.iter().any(|&right| {
+                        if seen_right_vertices.contains(&right) {
+                            true
+                        } else {
+                            seen_right_vertices.push(right);
+                            false
+                        }
+                    })
                 {
                     return Err(ExactReportValidationError::StatusEvidenceMismatch);
                 }
@@ -4733,17 +4741,6 @@ fn validate_full_permutation(
         }
     }
     Ok(())
-}
-
-fn is_partial_injective_mapping(mapping: &[usize]) -> bool {
-    let mut seen = Vec::with_capacity(mapping.len());
-    for &right in mapping {
-        if seen.contains(&right) {
-            return false;
-        }
-        seen.push(right);
-    }
-    true
 }
 
 /// Certification status for an open-surface disjoint shortcut.
