@@ -919,7 +919,19 @@ impl ExactBooleanCertificationSet {
         let arrangement_cell_complex_shortcuts =
             ExactArrangementCellComplexShortcutFacts::from_sources(left, right);
         let planar_arrangement =
-            planar_arrangement_certification_from_graph(graph, left, right, request.operation)?;
+            if matches!(request.operation, ExactBooleanOperation::SelectedRegions(_)) {
+                planar_arrangement_report(
+                    request.operation,
+                    ExactPlanarArrangementStatus::NotNamedOperation,
+                    false,
+                    0,
+                    0,
+                    ExactBooleanBlocker::default(),
+                    None,
+                )
+            } else {
+                planar_arrangement_report_from_graph(graph, left, right, request.operation)?
+            };
         let winding_readiness = winding_readiness_report_with_boundary_policy_from_graph(
             graph,
             left,
@@ -1494,27 +1506,6 @@ impl ExactTrivialBooleanFacts {
 
     fn has_empty_operand(&self) -> bool {
         self.left_empty || self.right_empty
-    }
-}
-
-fn planar_arrangement_certification_from_graph(
-    graph: &super::graph::ExactIntersectionGraph,
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-) -> Result<ExactPlanarArrangementReport, MeshError> {
-    if matches!(operation, ExactBooleanOperation::SelectedRegions(_)) {
-        Ok(planar_arrangement_report(
-            operation,
-            ExactPlanarArrangementStatus::NotNamedOperation,
-            false,
-            0,
-            0,
-            ExactBooleanBlocker::default(),
-            None,
-        ))
-    } else {
-        planar_arrangement_report_from_graph(graph, left, right, operation)
     }
 }
 
