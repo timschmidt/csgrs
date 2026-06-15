@@ -2983,7 +2983,10 @@ fn triangulated_cell_projected_area2_abs(
         .iter()
         .map(|&vertex| triangulation.boundary.get(vertex).map(boundary_node_point))
         .collect::<Option<Vec<_>>>()?;
-    projected_points_area2_abs([points[0], points[1], points[2]], triangulation.projection)
+    real_abs(&projected_polygon_area2_value(
+        &[points[0].clone(), points[1].clone(), points[2].clone()],
+        triangulation.projection,
+    ))
 }
 
 fn output_triangle_projected_area2_abs(
@@ -2996,16 +2999,9 @@ fn output_triangle_projected_area2_abs(
         .iter()
         .map(|&vertex| assembly.vertices.get(vertex).map(|vertex| &vertex.point))
         .collect::<Option<Vec<_>>>()?;
-    projected_points_area2_abs([points[0], points[1], points[2]], triangulation.projection)
-}
-
-fn projected_points_area2_abs(
-    points: [&Point3; 3],
-    projection: hyperlimit::CoplanarProjection,
-) -> Option<Real> {
     real_abs(&projected_polygon_area2_value(
         &[points[0].clone(), points[1].clone(), points[2].clone()],
-        projection,
+        triangulation.projection,
     ))
 }
 
