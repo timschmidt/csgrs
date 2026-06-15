@@ -430,7 +430,8 @@ fn arrangement_attempt_counts_match_stage(attempt: &ExactArrangementBooleanAttem
             && attempt.output_vertices == 0
             && attempt.output_triangles == 0;
     }
-    if !arrangement_attempt_stage_reaches(stage, ExactArrangementBooleanStage::Labeled)
+    if arrangement_attempt_stage_rank(stage)
+        < arrangement_attempt_stage_rank(ExactArrangementBooleanStage::Labeled)
         && (attempt.selected_faces != 0
             || attempt.reversed_selected_faces != 0
             || attempt.volume_oriented_selected_faces != 0
@@ -439,7 +440,8 @@ fn arrangement_attempt_counts_match_stage(attempt: &ExactArrangementBooleanAttem
     {
         return false;
     }
-    if !arrangement_attempt_stage_reaches(stage, ExactArrangementBooleanStage::Triangulated)
+    if arrangement_attempt_stage_rank(stage)
+        < arrangement_attempt_stage_rank(ExactArrangementBooleanStage::Triangulated)
         && (attempt.output_vertices != 0 || attempt.output_triangles != 0)
     {
         return false;
@@ -561,13 +563,6 @@ fn arrangement_attempt_gate_reports_match_statuses(
         return false;
     }
     true
-}
-
-fn arrangement_attempt_stage_reaches(
-    stage: ExactArrangementBooleanStage,
-    target: ExactArrangementBooleanStage,
-) -> bool {
-    arrangement_attempt_stage_rank(stage) >= arrangement_attempt_stage_rank(target)
 }
 
 const fn arrangement_attempt_stage_rank(stage: ExactArrangementBooleanStage) -> u8 {
