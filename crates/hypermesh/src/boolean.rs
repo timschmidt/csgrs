@@ -1287,15 +1287,6 @@ impl ExactConvexBooleanCapabilityFacts {
     pub fn validate(&self) -> Result<(), ExactReportValidationError> {
         Ok(())
     }
-
-    fn supports(&self, support: ExactBooleanSupport) -> bool {
-        match support {
-            ExactBooleanSupport::CertifiedConvexUnion => self.can_union,
-            ExactBooleanSupport::CertifiedConvexIntersection => self.can_intersection,
-            ExactBooleanSupport::CertifiedConvexDifference => self.can_difference,
-            _ => false,
-        }
-    }
 }
 
 /// Replayable source facts for arrangement-cell-complex shortcut materializers
@@ -1912,11 +1903,13 @@ fn exact_boolean_convex_reports_match_support(
         return false;
     }
     match preflight.support {
-        ExactBooleanSupport::CertifiedConvexUnion
-        | ExactBooleanSupport::CertifiedConvexIntersection
-        | ExactBooleanSupport::CertifiedConvexDifference => certifications
-            .convex_capabilities
-            .supports(preflight.support),
+        ExactBooleanSupport::CertifiedConvexUnion => certifications.convex_capabilities.can_union,
+        ExactBooleanSupport::CertifiedConvexIntersection => {
+            certifications.convex_capabilities.can_intersection
+        }
+        ExactBooleanSupport::CertifiedConvexDifference => {
+            certifications.convex_capabilities.can_difference
+        }
         ExactBooleanSupport::CertifiedConvexSeparated
         | ExactBooleanSupport::CertifiedConvexContainment => true,
         _ => false,
