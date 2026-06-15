@@ -4409,8 +4409,10 @@ fn materialize_boolean_exact_request_with_graph(
             graph, left, right, selection, validation,
         );
     }
-    if let Some(result) =
-        boolean_closed_validation_regularized_meshes(left, right, operation, validation)?
+    if closed_validation_regularized_solid_support(left, right, operation, validation).is_some()
+        && let Some(result) = boolean_closed_regularized_lower_dimensional_optional(
+            left, right, operation, validation,
+        )?
     {
         return Ok(result);
     }
@@ -8780,18 +8782,6 @@ fn closed_validation_regularized_solid_support(
         return None;
     }
     certified_closed_validation_regularized_solid_support(left, right)
-}
-
-pub(crate) fn boolean_closed_validation_regularized_meshes(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: ValidationPolicy,
-) -> Result<Option<ExactBooleanResult>, MeshError> {
-    if closed_validation_regularized_solid_support(left, right, operation, validation).is_none() {
-        return Ok(None);
-    }
-    boolean_closed_regularized_lower_dimensional_optional(left, right, operation, validation)
 }
 
 /// Retained split-region artifacts that certify an open-surface arrangement.
