@@ -673,8 +673,8 @@ impl ExactBooleanRequest {
             return Ok(certified_shortcut_preflight(operation, support));
         }
         let support = initial_reject_boundary_preflight_support(left, right, operation);
-        if let Some(preflight) = preflight_without_graph_if_supported(operation, support) {
-            return Ok(preflight);
+        if preflight_can_certify_without_graph(support) {
+            return Ok(certified_shortcut_preflight(operation, support));
         }
 
         let graph = validated_intersection_graph(left, right)?;
@@ -2710,23 +2710,6 @@ fn initial_reject_boundary_preflight_support(
     }
 }
 
-fn preflight_without_graph_if_supported(
-    operation: ExactBooleanOperation,
-    support: ExactBooleanSupport,
-) -> Option<ExactBooleanPreflight> {
-    preflight_can_certify_without_graph(support)
-        .then(|| certified_shortcut_preflight(operation, support))
-}
-
-fn preflight_from_graph_if_supported(
-    operation: ExactBooleanOperation,
-    support: ExactBooleanSupport,
-    graph: &super::graph::ExactIntersectionGraph,
-) -> Option<ExactBooleanPreflight> {
-    preflight_can_certify_without_graph(support)
-        .then(|| certified_shortcut_preflight_from_graph(operation, support, graph))
-}
-
 fn preflight_can_certify_without_graph(support: ExactBooleanSupport) -> bool {
     support.is_certified()
         && !matches!(
@@ -2747,8 +2730,10 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
     operation: ExactBooleanOperation,
 ) -> Result<ExactBooleanPreflight, MeshError> {
     let support = initial_reject_boundary_preflight_support(left, right, operation);
-    if let Some(preflight) = preflight_from_graph_if_supported(operation, support, graph) {
-        return Ok(preflight);
+    if preflight_can_certify_without_graph(support) {
+        return Ok(certified_shortcut_preflight_from_graph(
+            operation, support, graph,
+        ));
     }
 
     if support == ExactBooleanSupport::RequiresCertifiedWinding
