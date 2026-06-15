@@ -1882,7 +1882,8 @@ fn bounds_disjoint_output_matches_sources(
     if left.triangles().is_empty()
         || right.triangles().is_empty()
         || (validation == ValidationPolicy::CLOSED
-            && closed_validation_regularized_solid_sources(left, right))
+            && (lower_dimensional_regularized_sources(left, right)
+                || mixed_dimensional_regularized_sources(left, right)))
     {
         return false;
     }
@@ -1903,7 +1904,8 @@ fn identical_output_matches_sources(
 ) -> bool {
     if (mesh_is_closed_solid(left) && mesh_is_closed_solid(right))
         || (validation == ValidationPolicy::CLOSED
-            && closed_validation_regularized_solid_sources(left, right))
+            && (lower_dimensional_regularized_sources(left, right)
+                || mixed_dimensional_regularized_sources(left, right)))
     {
         return false;
     }
@@ -1943,11 +1945,6 @@ fn mixed_dimensional_regularized_output_matches_sources(
         }
         ExactBooleanOperation::SelectedRegions(_) => false,
     }
-}
-
-fn closed_validation_regularized_solid_sources(left: &ExactMesh, right: &ExactMesh) -> bool {
-    lower_dimensional_regularized_sources(left, right)
-        || mixed_dimensional_regularized_sources(left, right)
 }
 
 fn retained_split_region_result_matches(
