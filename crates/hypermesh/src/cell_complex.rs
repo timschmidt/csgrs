@@ -1306,7 +1306,10 @@ fn select_face(
     policy: ExactRegularizationPolicy,
 ) -> Option<bool> {
     if let ExactBooleanOperation::SelectedRegions(selection) = operation {
-        return Some(selection.keeps(mesh_side_for_source(face.source)));
+        return Some(selection.keeps(match face.source {
+            ExactCellRegionLabel::LeftBoundary => MeshSide::Left,
+            ExactCellRegionLabel::RightBoundary => MeshSide::Right,
+        }));
     }
     if face.opposite == ExactOppositeRegionLabel::Boundary {
         return select_boundary_face(face, operation, policy);
@@ -1596,13 +1599,6 @@ fn select_volume_region(
             (region.in_left && selection.keeps(MeshSide::Left))
                 || (region.in_right && selection.keeps(MeshSide::Right))
         }
-    }
-}
-
-const fn mesh_side_for_source(source: ExactCellRegionLabel) -> MeshSide {
-    match source {
-        ExactCellRegionLabel::LeftBoundary => MeshSide::Left,
-        ExactCellRegionLabel::RightBoundary => MeshSide::Right,
     }
 }
 
