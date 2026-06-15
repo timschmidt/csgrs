@@ -1992,22 +1992,69 @@ fn validate_shortcut_output_shape(
     operation: ExactBooleanOperation,
     mesh: &ExactMesh,
 ) -> Result<(), ExactReportValidationError> {
-    if shortcut_requires_empty_output(shortcut, operation) && !mesh_output_is_empty(mesh) {
+    let requires_empty_output = matches!(
+        (shortcut, operation),
+        (
+            ExactBooleanShortcutKind::BoundsDisjoint
+                | ExactBooleanShortcutKind::ClosedBoundaryTouchingIntersection
+                | ExactBooleanShortcutKind::ClosedWindingSeparated
+                | ExactBooleanShortcutKind::ConvexSeparated
+                | ExactBooleanShortcutKind::OpenSurfaceDisjoint,
+            ExactBooleanOperation::Intersection
+        ) | (
+            ExactBooleanShortcutKind::Identical | ExactBooleanShortcutKind::SameSurface,
+            ExactBooleanOperation::Difference
+        )
+    );
+    let requires_nonempty_output = matches!(
+        (shortcut, operation),
+        (
+            ExactBooleanShortcutKind::ArrangementCellComplex,
+            ExactBooleanOperation::Union
+        )
+    );
+    let requires_closed_solid_output = matches!(
+        shortcut,
+        ExactBooleanShortcutKind::ClosedBoundaryTouchingUnion
+            | ExactBooleanShortcutKind::ClosedBoundaryTouchingDifference
+            | ExactBooleanShortcutKind::ConvexUnion
+            | ExactBooleanShortcutKind::ConvexIntersection
+            | ExactBooleanShortcutKind::ConvexDifference
+    ) || matches!(
+        (shortcut, operation),
+        (
+            ExactBooleanShortcutKind::ClosedWindingSeparated
+                | ExactBooleanShortcutKind::ConvexSeparated,
+            ExactBooleanOperation::Union | ExactBooleanOperation::Difference
+        )
+    );
+    let requires_empty_or_closed_solid_output = matches!(
+        shortcut,
+        ExactBooleanShortcutKind::ClosedWindingContainment
+            | ExactBooleanShortcutKind::MixedDimensionalRegularizedSolid
+            | ExactBooleanShortcutKind::ConvexContainment
+    );
+    let requires_lower_dimensional_output = matches!(
+        shortcut,
+        ExactBooleanShortcutKind::LowerDimensionalRegularizedSolid
+    );
+
+    if requires_empty_output && !mesh_output_is_empty(mesh) {
         return Err(ExactReportValidationError::StatusEvidenceMismatch);
     }
-    if shortcut_requires_nonempty_output(shortcut, operation) && mesh.triangles().is_empty() {
+    if requires_nonempty_output && mesh.triangles().is_empty() {
         return Err(ExactReportValidationError::StatusEvidenceMismatch);
     }
-    if shortcut_requires_closed_solid_output(shortcut, operation) && !mesh_is_closed_solid(mesh) {
+    if requires_closed_solid_output && !mesh_is_closed_solid(mesh) {
         return Err(ExactReportValidationError::StatusEvidenceMismatch);
     }
-    if shortcut_requires_empty_or_closed_solid_output(shortcut)
+    if requires_empty_or_closed_solid_output
         && !mesh.triangles().is_empty()
         && !mesh_is_closed_solid(mesh)
     {
         return Err(ExactReportValidationError::StatusEvidenceMismatch);
     }
-    if shortcut_requires_lower_dimensional_output(shortcut) && !mesh_is_lower_dimensional(mesh) {
+    if requires_lower_dimensional_output && !mesh_is_lower_dimensional(mesh) {
         return Err(ExactReportValidationError::StatusEvidenceMismatch);
     }
     Ok(())
@@ -2035,78 +2082,6 @@ fn mesh_has_boolean_output_provenance(kind: ExactBooleanResultKind, mesh: &Exact
     source.source == MeshSource::Exact
         && source.approximation == ApproximationPolicy::ExactOnly
         && label_matches_kind
-}
-
-const fn shortcut_requires_empty_output(
-    shortcut: ExactBooleanShortcutKind,
-    operation: ExactBooleanOperation,
-) -> bool {
-    matches!(
-        (shortcut, operation),
-        (
-            ExactBooleanShortcutKind::BoundsDisjoint
-                | ExactBooleanShortcutKind::ClosedBoundaryTouchingIntersection
-                | ExactBooleanShortcutKind::ClosedWindingSeparated
-                | ExactBooleanShortcutKind::ConvexSeparated
-                | ExactBooleanShortcutKind::OpenSurfaceDisjoint,
-            ExactBooleanOperation::Intersection
-        ) | (
-            ExactBooleanShortcutKind::Identical | ExactBooleanShortcutKind::SameSurface,
-            ExactBooleanOperation::Difference
-        )
-    )
-}
-
-const fn shortcut_requires_nonempty_output(
-    shortcut: ExactBooleanShortcutKind,
-    operation: ExactBooleanOperation,
-) -> bool {
-    matches!(
-        (shortcut, operation),
-        (
-            ExactBooleanShortcutKind::ArrangementCellComplex,
-            ExactBooleanOperation::Union
-        )
-    )
-}
-
-const fn shortcut_requires_closed_solid_output(
-    shortcut: ExactBooleanShortcutKind,
-    operation: ExactBooleanOperation,
-) -> bool {
-    matches!(
-        shortcut,
-        ExactBooleanShortcutKind::ClosedBoundaryTouchingUnion
-            | ExactBooleanShortcutKind::ClosedBoundaryTouchingDifference
-            | ExactBooleanShortcutKind::ConvexUnion
-            | ExactBooleanShortcutKind::ConvexIntersection
-            | ExactBooleanShortcutKind::ConvexDifference
-    ) || matches!(
-        (shortcut, operation),
-        (
-            ExactBooleanShortcutKind::ClosedWindingSeparated
-                | ExactBooleanShortcutKind::ConvexSeparated,
-            ExactBooleanOperation::Union | ExactBooleanOperation::Difference
-        )
-    )
-}
-
-const fn shortcut_requires_empty_or_closed_solid_output(
-    shortcut: ExactBooleanShortcutKind,
-) -> bool {
-    matches!(
-        shortcut,
-        ExactBooleanShortcutKind::ClosedWindingContainment
-            | ExactBooleanShortcutKind::MixedDimensionalRegularizedSolid
-            | ExactBooleanShortcutKind::ConvexContainment
-    )
-}
-
-const fn shortcut_requires_lower_dimensional_output(shortcut: ExactBooleanShortcutKind) -> bool {
-    matches!(
-        shortcut,
-        ExactBooleanShortcutKind::LowerDimensionalRegularizedSolid
-    )
 }
 
 fn convex_operation_output_matches_sources(
