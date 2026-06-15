@@ -1269,35 +1269,30 @@ fn label_face_cell(cell: ArrangementFaceCell) -> ExactCellComplexFace {
         MeshSide::Left => ExactCellRegionLabel::LeftBoundary,
         MeshSide::Right => ExactCellRegionLabel::RightBoundary,
     };
-    let opposite = cell
-        .opposite
-        .as_ref()
-        .map_or(ExactOppositeRegionLabel::Unknown, label_opposite_region);
+    let opposite = match cell.opposite.as_ref() {
+        None => ExactOppositeRegionLabel::Unknown,
+        Some(opposite) => match opposite.winding.relation {
+            ClosedMeshWindingRelation::Inside => ExactOppositeRegionLabel::Inside,
+            ClosedMeshWindingRelation::Outside => ExactOppositeRegionLabel::Outside,
+            ClosedMeshWindingRelation::Boundary => ExactOppositeRegionLabel::Boundary,
+            ClosedMeshWindingRelation::Unknown | ClosedMeshWindingRelation::NotClosed => {
+                match opposite.convex_certified_relation() {
+                    Some(ConvexSolidPointRelation::Inside) => ExactOppositeRegionLabel::Inside,
+                    Some(ConvexSolidPointRelation::Outside) => ExactOppositeRegionLabel::Outside,
+                    Some(ConvexSolidPointRelation::Boundary) => ExactOppositeRegionLabel::Boundary,
+                    Some(
+                        ConvexSolidPointRelation::Unknown
+                        | ConvexSolidPointRelation::NotCertifiedConvex,
+                    )
+                    | None => ExactOppositeRegionLabel::Unknown,
+                }
+            }
+        },
+    };
     ExactCellComplexFace {
         cell,
         source,
         opposite,
-    }
-}
-
-fn label_opposite_region(
-    opposite: &super::arrangement3d::ArrangementOppositeClassification,
-) -> ExactOppositeRegionLabel {
-    match opposite.winding.relation {
-        ClosedMeshWindingRelation::Inside => ExactOppositeRegionLabel::Inside,
-        ClosedMeshWindingRelation::Outside => ExactOppositeRegionLabel::Outside,
-        ClosedMeshWindingRelation::Boundary => ExactOppositeRegionLabel::Boundary,
-        ClosedMeshWindingRelation::Unknown | ClosedMeshWindingRelation::NotClosed => match opposite
-            .convex_certified_relation()
-        {
-            Some(ConvexSolidPointRelation::Inside) => ExactOppositeRegionLabel::Inside,
-            Some(ConvexSolidPointRelation::Outside) => ExactOppositeRegionLabel::Outside,
-            Some(ConvexSolidPointRelation::Boundary) => ExactOppositeRegionLabel::Boundary,
-            Some(
-                ConvexSolidPointRelation::Unknown | ConvexSolidPointRelation::NotCertifiedConvex,
-            )
-            | None => ExactOppositeRegionLabel::Unknown,
-        },
     }
 }
 
