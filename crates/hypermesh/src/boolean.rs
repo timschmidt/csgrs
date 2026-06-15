@@ -1262,15 +1262,6 @@ impl ExactRegularizedSolidBooleanFacts {
             Ok(())
         }
     }
-
-    fn supports_mixed_dimensional_regularized_solid(&self) -> bool {
-        (self.left_closed_solid && self.right_open_surface)
-            || (self.left_open_surface && self.right_closed_solid)
-    }
-
-    fn supports_lower_dimensional_regularized_solid(&self) -> bool {
-        self.left_open_surface && self.right_open_surface
-    }
 }
 
 /// Replayable source facts for closed-convex boolean shortcuts.
@@ -1771,16 +1762,16 @@ fn exact_boolean_preflight_matches_certifications(
         ExactBooleanSupport::CertifiedMixedDimensionalRegularizedSolid => {
             *status
                 == ExactWindingReadinessStatus::MixedDimensionalRegularizedSolidAlreadyMaterialized
-                && certifications
-                    .regularized_solid
-                    .supports_mixed_dimensional_regularized_solid()
+                && ((certifications.regularized_solid.left_closed_solid
+                    && certifications.regularized_solid.right_open_surface)
+                    || (certifications.regularized_solid.left_open_surface
+                        && certifications.regularized_solid.right_closed_solid))
         }
         ExactBooleanSupport::CertifiedLowerDimensionalRegularizedSolid => {
             *status
                 == ExactWindingReadinessStatus::LowerDimensionalRegularizedSolidAlreadyMaterialized
-                && certifications
-                    .regularized_solid
-                    .supports_lower_dimensional_regularized_solid()
+                && certifications.regularized_solid.left_open_surface
+                && certifications.regularized_solid.right_open_surface
         }
         ExactBooleanSupport::CertifiedConvexUnion
         | ExactBooleanSupport::CertifiedConvexIntersection
