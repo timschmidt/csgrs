@@ -497,28 +497,6 @@ fn validate_refinement_partition(
     }
 }
 
-fn boundary_touching_not_boundary_blocker_kind(
-    blocker: &ExactBooleanBlocker,
-) -> Result<ExactBooleanBlockerKind, ExactReportValidationError> {
-    let coplanar_pairs =
-        blocker.coplanar_overlapping_pairs != 0 || blocker.coplanar_touching_pairs != 0;
-    if blocker_has_refinement_evidence(blocker) {
-        Ok(ExactBooleanBlockerKind::NeedsRefinement)
-    } else if blocker.candidate_pairs == 0 && !coplanar_pairs {
-        Ok(ExactBooleanBlockerKind::NeedsWinding)
-    } else if blocker.candidate_pairs == 0 && blocker.coplanar_overlapping_pairs == 0 {
-        Err(ExactReportValidationError::StatusEvidenceMismatch)
-    } else if coplanar_pairs {
-        if blocker.candidate_pairs == 0 && blocker.coplanar_overlapping_pairs > 0 {
-            Ok(ExactBooleanBlockerKind::NeedsPlanarArrangement)
-        } else {
-            Ok(ExactBooleanBlockerKind::NeedsCoplanarVolumetricCells)
-        }
-    } else {
-        Ok(ExactBooleanBlockerKind::NeedsWinding)
-    }
-}
-
 fn operation_is_selected_region(operation: ExactBooleanOperation) -> bool {
     matches!(operation, ExactBooleanOperation::SelectedRegions(_))
 }
@@ -5245,7 +5223,27 @@ impl ExactBoundaryTouchingReport {
             ExactBoundaryTouchingStatus::GraphUnknowns => ExactBooleanBlockerKind::NeedsRefinement,
             ExactBoundaryTouchingStatus::Certified => ExactBooleanBlockerKind::NeedsBoundaryPolicy,
             ExactBoundaryTouchingStatus::NotBoundaryOnly => {
-                boundary_touching_not_boundary_blocker_kind(&self.blocker)?
+                let coplanar_pairs = self.blocker.coplanar_overlapping_pairs != 0
+                    || self.blocker.coplanar_touching_pairs != 0;
+                if blocker_has_refinement_evidence(&self.blocker) {
+                    ExactBooleanBlockerKind::NeedsRefinement
+                } else if self.blocker.candidate_pairs == 0 && !coplanar_pairs {
+                    ExactBooleanBlockerKind::NeedsWinding
+                } else if self.blocker.candidate_pairs == 0
+                    && self.blocker.coplanar_overlapping_pairs == 0
+                {
+                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                } else if coplanar_pairs {
+                    if self.blocker.candidate_pairs == 0
+                        && self.blocker.coplanar_overlapping_pairs > 0
+                    {
+                        ExactBooleanBlockerKind::NeedsPlanarArrangement
+                    } else {
+                        ExactBooleanBlockerKind::NeedsCoplanarVolumetricCells
+                    }
+                } else {
+                    ExactBooleanBlockerKind::NeedsWinding
+                }
             }
         };
         blocker_kind(Some(&self.blocker), expected_kind)?;
