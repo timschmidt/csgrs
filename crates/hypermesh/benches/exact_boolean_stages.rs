@@ -338,58 +338,6 @@ fn run_case(case: &BenchCase) {
 
     time_prepared_stage(
         case,
-        "workspace_materialize_open_surface_disjoint_from_retained_graph",
-        || retained_workspace_for_case(case, request),
-        |retained_workspace| {
-            black_box(
-                retained_workspace
-                    .materialize_open_surface_disjoint(request)
-                    .ok(),
-            );
-        },
-    );
-
-    time_prepared_stage(
-        case,
-        "workspace_materialize_boundary_touching_policy_from_retained_graph",
-        || retained_workspace_for_case(case, request),
-        |retained_workspace| {
-            black_box(
-                retained_workspace
-                    .materialize_boundary_touching_policy(request)
-                    .ok(),
-            );
-        },
-    );
-
-    time_prepared_stage(
-        case,
-        "workspace_materialize_closed_winding_containment_from_retained_graph",
-        || retained_workspace_for_case(case, request),
-        |retained_workspace| {
-            black_box(
-                retained_workspace
-                    .materialize_closed_winding_containment(request)
-                    .ok(),
-            );
-        },
-    );
-
-    time_prepared_stage(
-        case,
-        "workspace_materialize_closed_winding_separated_from_retained_graph",
-        || retained_workspace_for_case(case, request),
-        |retained_workspace| {
-            black_box(
-                retained_workspace
-                    .materialize_closed_winding_separated(request)
-                    .ok(),
-            );
-        },
-    );
-
-    time_prepared_stage(
-        case,
         "workspace_materialize_adjacent_union_completion_from_retained_graph",
         || retained_workspace_for_case(case, request),
         |retained_workspace| {

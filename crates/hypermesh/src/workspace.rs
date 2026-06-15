@@ -5,15 +5,15 @@ use super::boolean::{
     ExactArrangementBooleanAttempt, ExactBooleanCertificationSet, ExactBooleanEvaluation,
     ExactBooleanOperation, ExactBooleanRequest, adjacent_union_completion_certification_from_graph,
     arrangement_boolean_attempt_report_from_arrangement, arrangement_cell_complex_shortcut_attempt,
-    boolean_closed_validation_regularized_meshes, boundary_touching_report_from_graph,
+    boundary_touching_report_from_graph,
     materialize_adjacent_union_completion_from_graph_for_request,
     materialize_boolean_exact_request_from_retained_graph,
     materialize_certified_boolean_support_with_artifacts,
     materialize_closed_boundary_touching_regularized_boolean_with_evidence_from_graph,
     materialize_closed_no_volume_overlap_regularized_boolean_with_evidence_from_graph,
-    materialize_graph_shortcut_from_graph_for_request, open_surface_disjoint_report_from_graph,
-    planar_arrangement_report_from_graph, preflight_boolean_exact_request_from_graph,
-    refinement_report_from_graph, validate_boolean_result_against_sources_with_artifacts,
+    open_surface_disjoint_report_from_graph, planar_arrangement_report_from_graph,
+    preflight_boolean_exact_request_from_graph, refinement_report_from_graph,
+    validate_boolean_result_against_sources_with_artifacts,
     volumetric_boundary_closure_report_from_graph, winding_readiness_report_for_request_from_graph,
 };
 use super::cell_complex::{
@@ -28,10 +28,9 @@ use super::mesh::ExactMesh;
 use super::regularization::{ExactArrangementBlocker, ExactRegularizationPolicy};
 use super::reports::{
     ExactAdjacentUnionCompletionReport, ExactBooleanPreflight, ExactBooleanResult,
-    ExactBooleanSupport, ExactBoundaryTouchingReport, ExactOpenSurfaceDisjointReport,
-    ExactPlanarArrangementReport, ExactRefinementReport, ExactReportFreshness,
-    ExactReportValidationError, ExactVolumetricBoundaryClosureReport, ExactWindingReadinessReport,
-    exact_report_freshness,
+    ExactBoundaryTouchingReport, ExactOpenSurfaceDisjointReport, ExactPlanarArrangementReport,
+    ExactRefinementReport, ExactReportFreshness, ExactReportValidationError,
+    ExactVolumetricBoundaryClosureReport, ExactWindingReadinessReport, exact_report_freshness,
 };
 use super::simplify::{ExactSimplifiedCellComplex, ExactSimplifiedCellComplexFreshness};
 use super::volumetric_cells::{
@@ -42,32 +41,6 @@ type MaterializedResultWithEvidence =
     Option<(ExactBooleanResult, CoplanarVolumetricCellEvidenceReport)>;
 type MaterializedAdjacentUnionCompletion =
     Option<(ExactBooleanResult, ExactAdjacentUnionCompletionReport)>;
-type OptionalMaterializedResult = Option<ExactBooleanResult>;
-
-macro_rules! materialize_cached_graph_shortcut {
-    ($workspace:ident, $cache:ident, $request:expr, $support:expr) => {{
-        if let Some(cached) = cached_retained_materialization(
-            &$workspace.$cache,
-            $workspace.left,
-            $workspace.right,
-            $request,
-        )? {
-            Ok(cached)
-        } else {
-            let (graph, left, right) = $workspace.validated_graph_with_sources()?;
-            let materialized = materialize_graph_shortcut_from_graph_for_request(
-                graph, left, right, $request, $support,
-            )?;
-            store_retained_materialization_value(
-                &mut $workspace.$cache,
-                left,
-                right,
-                $request,
-                materialized,
-            )
-        }
-    }};
-}
 
 macro_rules! cached_workspace_report {
     ($workspace:ident, $cache:ident, $request:expr, $build:block) => {{
@@ -96,13 +69,6 @@ pub struct ExactBooleanWorkspace<'a> {
         Vec<(ExactBooleanRequest, MaterializedResultWithEvidence)>,
     closed_no_volume_overlap_regularized_materializations:
         Vec<(ExactBooleanRequest, MaterializedResultWithEvidence)>,
-    open_surface_disjoint_materializations: Vec<(ExactBooleanRequest, OptionalMaterializedResult)>,
-    boundary_touching_policy_materializations:
-        Vec<(ExactBooleanRequest, OptionalMaterializedResult)>,
-    closed_winding_containment_materializations:
-        Vec<(ExactBooleanRequest, OptionalMaterializedResult)>,
-    closed_winding_separated_materializations:
-        Vec<(ExactBooleanRequest, OptionalMaterializedResult)>,
     adjacent_union_completion_materializations:
         Vec<(ExactBooleanRequest, MaterializedAdjacentUnionCompletion)>,
     arrangements: Vec<(ExactRegularizationPolicy, ExactArrangement)>,
@@ -148,10 +114,6 @@ impl<'a> ExactBooleanWorkspace<'a> {
             coplanar_volumetric_cell_evidence: None,
             closed_boundary_touching_regularized_materializations: Vec::new(),
             closed_no_volume_overlap_regularized_materializations: Vec::new(),
-            open_surface_disjoint_materializations: Vec::new(),
-            boundary_touching_policy_materializations: Vec::new(),
-            closed_winding_containment_materializations: Vec::new(),
-            closed_winding_separated_materializations: Vec::new(),
             adjacent_union_completion_materializations: Vec::new(),
             arrangements: Vec::new(),
             topology_assembly_reports: Vec::new(),
@@ -305,88 +267,6 @@ impl<'a> ExactBooleanWorkspace<'a> {
             right,
             request,
             materialized,
-        )
-    }
-
-    /// Materializes graph-disjoint open surfaces from the retained exact
-    /// graph, caching certified output and declined outcomes per request.
-    pub fn materialize_open_surface_disjoint(
-        &mut self,
-        request: ExactBooleanRequest,
-    ) -> Result<Option<ExactBooleanResult>, MeshError> {
-        materialize_cached_graph_shortcut!(
-            self,
-            open_surface_disjoint_materializations,
-            request,
-            ExactBooleanSupport::CertifiedOpenSurfaceDisjoint
-        )
-    }
-
-    /// Materializes explicit boundary-only projection, preserving the public
-    /// closed-validation shortcut and reusing the retained graph for
-    /// boundary-policy replay.
-    pub fn materialize_boundary_touching_policy(
-        &mut self,
-        request: ExactBooleanRequest,
-    ) -> Result<Option<ExactBooleanResult>, MeshError> {
-        if let Some(cached) = cached_retained_materialization(
-            &self.boundary_touching_policy_materializations,
-            self.left,
-            self.right,
-            request,
-        )? {
-            return Ok(cached);
-        }
-
-        if let Some(result) = boolean_closed_validation_regularized_meshes(
-            self.left,
-            self.right,
-            request.operation,
-            request.validation,
-        )? {
-            let materialized = Some(result);
-            return store_retained_materialization_value(
-                &mut self.boundary_touching_policy_materializations,
-                self.left,
-                self.right,
-                request,
-                materialized,
-            );
-        }
-
-        materialize_cached_graph_shortcut!(
-            self,
-            boundary_touching_policy_materializations,
-            request,
-            ExactBooleanSupport::CertifiedBoundaryPolicyShortcut
-        )
-    }
-
-    /// Materializes closed-solid containment certified by exact winding and an
-    /// empty retained graph.
-    pub fn materialize_closed_winding_containment(
-        &mut self,
-        request: ExactBooleanRequest,
-    ) -> Result<Option<ExactBooleanResult>, MeshError> {
-        materialize_cached_graph_shortcut!(
-            self,
-            closed_winding_containment_materializations,
-            request,
-            ExactBooleanSupport::CertifiedClosedWindingContainment
-        )
-    }
-
-    /// Materializes closed-solid separation certified by exact winding and an
-    /// empty retained graph.
-    pub fn materialize_closed_winding_separated(
-        &mut self,
-        request: ExactBooleanRequest,
-    ) -> Result<Option<ExactBooleanResult>, MeshError> {
-        materialize_cached_graph_shortcut!(
-            self,
-            closed_winding_separated_materializations,
-            request,
-            ExactBooleanSupport::CertifiedClosedWindingSeparated
         )
     }
 
@@ -1436,21 +1316,6 @@ impl RetainedMaterializationCacheValue for ExactBooleanResult {
     ) -> Result<(), MeshError> {
         validate_retained_result_for_request(left, right, request, self)
             .map_err(workspace_report_validation_error)?;
-        Ok(())
-    }
-}
-
-impl RetainedMaterializationCacheValue for OptionalMaterializedResult {
-    fn validate_for_workspace_cache(
-        &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-        request: ExactBooleanRequest,
-    ) -> Result<(), MeshError> {
-        if let Some(result) = self {
-            validate_retained_result_for_request(left, right, request, result)
-                .map_err(workspace_report_validation_error)?;
-        }
         Ok(())
     }
 }
@@ -2906,209 +2771,6 @@ mod tests {
                 .materialize_closed_no_volume_overlap_regularized_with_evidence(request)
                 .is_err(),
             "cached no-volume materialization evidence must validate before reuse"
-        );
-    }
-
-    #[test]
-    fn exact_boolean_workspace_reuses_open_surface_disjoint_materialization() {
-        let left = ExactMesh::from_i64_triangles_with_policy(
-            &[0, 0, 0, 4, 0, 4, 0, 4, 0],
-            &[0, 1, 2],
-            ValidationPolicy::ALLOW_BOUNDARY,
-        )
-        .unwrap();
-        let right = ExactMesh::from_i64_triangles_with_policy(
-            &[0, 0, 1, 4, 0, 5, 0, 4, 1],
-            &[0, 1, 2],
-            ValidationPolicy::ALLOW_BOUNDARY,
-        )
-        .unwrap();
-        let request = ExactBooleanRequest::new(
-            ExactBooleanOperation::Union,
-            ValidationPolicy::ALLOW_BOUNDARY,
-        );
-        let mut workspace = ExactBooleanWorkspace::new(&left, &right);
-
-        let materialized = workspace
-            .materialize_open_surface_disjoint(request)
-            .unwrap()
-            .expect("graph-disjoint open surfaces should materialize from retained graph");
-        assert_eq!(materialized, request.materialize(&left, &right).unwrap());
-        assert_eq!(workspace.open_surface_disjoint_materializations.len(), 1);
-        assert_eq!(
-            workspace
-                .materialize_open_surface_disjoint(request)
-                .unwrap()
-                .unwrap(),
-            materialized
-        );
-        assert_eq!(workspace.open_surface_disjoint_materializations.len(), 1);
-
-        let cached = workspace.open_surface_disjoint_materializations[0]
-            .1
-            .as_mut()
-            .unwrap();
-        cached.graph_had_unknowns = !cached.graph_had_unknowns;
-        assert!(
-            workspace
-                .materialize_open_surface_disjoint(request)
-                .is_err(),
-            "cached open-surface disjoint materialization must validate before reuse"
-        );
-    }
-
-    #[test]
-    fn exact_boolean_workspace_reuses_boundary_touching_policy_materialization() {
-        let left = ExactMesh::from_i64_triangles_with_policy(
-            &[0, 0, 0, 2, 0, 0, 0, 2, 0],
-            &[0, 1, 2],
-            ValidationPolicy::ALLOW_BOUNDARY,
-        )
-        .unwrap();
-        let right = ExactMesh::from_i64_triangles_with_policy(
-            &[2, 0, 0, 0, 2, 0, 2, 2, 2],
-            &[0, 1, 2],
-            ValidationPolicy::ALLOW_BOUNDARY,
-        )
-        .unwrap();
-        let request = ExactBooleanRequest::with_boundary_policy(
-            ExactBooleanOperation::Union,
-            ValidationPolicy::ALLOW_BOUNDARY,
-            ExactBoundaryBooleanPolicy::PreserveSeparateShells,
-        );
-        let mut workspace = ExactBooleanWorkspace::new(&left, &right);
-
-        let materialized = workspace
-            .materialize_boundary_touching_policy(request)
-            .unwrap()
-            .expect("boundary policy should materialize from retained graph");
-        assert_eq!(materialized, request.materialize(&left, &right).unwrap());
-        assert_eq!(workspace.boundary_touching_policy_materializations.len(), 1);
-        assert_eq!(
-            workspace
-                .materialize_boundary_touching_policy(request)
-                .unwrap()
-                .unwrap(),
-            materialized
-        );
-        assert_eq!(workspace.boundary_touching_policy_materializations.len(), 1);
-
-        let mut relabelled = materialized.clone();
-        relabelled.kind = ExactBooleanResultKind::BoundaryPolicyShortcut {
-            operation: ExactBooleanOperation::Difference,
-        };
-        workspace.boundary_touching_policy_materializations[0].1 = Some(relabelled);
-        assert!(
-            workspace
-                .materialize_boundary_touching_policy(request)
-                .is_err(),
-            "cached boundary-policy materialization must match the request operation"
-        );
-        workspace.boundary_touching_policy_materializations[0].1 = Some(materialized.clone());
-
-        let cached = workspace.boundary_touching_policy_materializations[0]
-            .1
-            .as_mut()
-            .unwrap();
-        cached.graph_had_unknowns = !cached.graph_had_unknowns;
-        assert!(
-            workspace
-                .materialize_boundary_touching_policy(request)
-                .is_err(),
-            "cached boundary-policy materialization must validate before reuse"
-        );
-    }
-
-    #[test]
-    fn exact_boolean_workspace_reuses_closed_winding_containment_materialization() {
-        let outer = tetra_from_corners([0, 0, 0], [10, 0, 0], [0, 10, 0], [0, 0, 10]);
-        let disjoint_shell = tetra_from_corners([20, 0, 0], [21, 0, 0], [20, 1, 0], [20, 0, 1]);
-        let container = combine_exact_meshes(
-            &outer,
-            &disjoint_shell,
-            "workspace disconnected winding container",
-        );
-        let contained = tetra_from_corners([1, 1, 1], [2, 1, 1], [1, 2, 1], [1, 1, 2]);
-        let request =
-            ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED);
-        let mut workspace = ExactBooleanWorkspace::new(&container, &contained);
-
-        let materialized = workspace
-            .materialize_closed_winding_containment(request)
-            .unwrap()
-            .expect("empty graph containment should materialize from retained graph");
-        assert_eq!(
-            materialized,
-            request.materialize(&container, &contained).unwrap()
-        );
-        assert_eq!(
-            workspace.closed_winding_containment_materializations.len(),
-            1
-        );
-        assert_eq!(
-            workspace
-                .materialize_closed_winding_containment(request)
-                .unwrap()
-                .unwrap(),
-            materialized
-        );
-        assert_eq!(
-            workspace.closed_winding_containment_materializations.len(),
-            1
-        );
-
-        let cached = workspace.closed_winding_containment_materializations[0]
-            .1
-            .as_mut()
-            .unwrap();
-        cached.graph_had_unknowns = !cached.graph_had_unknowns;
-        assert!(
-            workspace
-                .materialize_closed_winding_containment(request)
-                .is_err(),
-            "cached closed-winding containment materialization must validate before reuse"
-        );
-    }
-
-    #[test]
-    fn exact_boolean_workspace_reuses_closed_winding_separation_materialization() {
-        let left_a = tetra_from_corners([0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1]);
-        let left_b = tetra_from_corners([10, 0, 0], [11, 0, 0], [10, 1, 0], [10, 0, 1]);
-        let left = combine_exact_meshes(
-            &left_a,
-            &left_b,
-            "workspace disconnected winding separated left",
-        );
-        let right = tetra_from_corners([5, 0, 0], [6, 0, 0], [5, 1, 0], [5, 0, 1]);
-        let request =
-            ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED);
-        let mut workspace = ExactBooleanWorkspace::new(&left, &right);
-
-        let materialized = workspace
-            .materialize_closed_winding_separated(request)
-            .unwrap()
-            .expect("empty graph separation should materialize from retained graph");
-        assert_eq!(materialized, request.materialize(&left, &right).unwrap());
-        assert_eq!(workspace.closed_winding_separated_materializations.len(), 1);
-        assert_eq!(
-            workspace
-                .materialize_closed_winding_separated(request)
-                .unwrap()
-                .unwrap(),
-            materialized
-        );
-        assert_eq!(workspace.closed_winding_separated_materializations.len(), 1);
-
-        let cached = workspace.closed_winding_separated_materializations[0]
-            .1
-            .as_mut()
-            .unwrap();
-        cached.graph_had_unknowns = !cached.graph_had_unknowns;
-        assert!(
-            workspace
-                .materialize_closed_winding_separated(request)
-                .is_err(),
-            "cached closed-winding separation materialization must validate before reuse"
         );
     }
 
