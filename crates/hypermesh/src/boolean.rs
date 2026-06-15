@@ -2875,11 +2875,21 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
         ));
     }
     if support == ExactBooleanSupport::RequiresCertifiedWinding
-        && let Some(boundary_support) =
-            certified_closed_zero_area_boundary_contact_support_from_graph(
-                &graph, left, right, operation,
-            )?
+        && !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
+        && closed_zero_area_boundary_contact_evidence_from_graph(&graph, left, right)?.is_some()
     {
+        let boundary_support = match operation {
+            ExactBooleanOperation::Union => {
+                ExactBooleanSupport::CertifiedClosedBoundaryTouchingUnion
+            }
+            ExactBooleanOperation::Intersection => {
+                ExactBooleanSupport::CertifiedClosedBoundaryTouchingIntersection
+            }
+            ExactBooleanOperation::Difference => {
+                ExactBooleanSupport::CertifiedClosedBoundaryTouchingDifference
+            }
+            ExactBooleanOperation::SelectedRegions(_) => unreachable!("handled above"),
+        };
         return Ok(certified_shortcut_preflight_from_graph(
             operation,
             boundary_support,
@@ -2891,10 +2901,19 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
             operation,
             ExactBooleanOperation::Intersection | ExactBooleanOperation::Difference
         )
-        && let Some(boundary_support) = certified_closed_boundary_only_contact_support_from_graph(
-            &graph, left, right, operation,
-        )?
+        && certified_closed_boundary_only_contact_from_graph(&graph, left, right)?
     {
+        let boundary_support = match operation {
+            ExactBooleanOperation::Intersection => {
+                ExactBooleanSupport::CertifiedClosedBoundaryTouchingIntersection
+            }
+            ExactBooleanOperation::Difference => {
+                ExactBooleanSupport::CertifiedClosedBoundaryTouchingDifference
+            }
+            ExactBooleanOperation::Union | ExactBooleanOperation::SelectedRegions(_) => {
+                unreachable!("handled by operation guard")
+            }
+        };
         let mut preflight =
             certified_shortcut_preflight_from_graph(operation, boundary_support, &graph);
         preflight.coplanar_volumetric_evidence =
@@ -2922,9 +2941,7 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
     }
     if support == ExactBooleanSupport::RequiresCertifiedWinding
         && operation == ExactBooleanOperation::Union
-        && let Some(boundary_support) = certified_closed_boundary_only_contact_support_from_graph(
-            &graph, left, right, operation,
-        )?
+        && certified_closed_boundary_only_contact_from_graph(&graph, left, right)?
     {
         if operation == ExactBooleanOperation::Union {
             let evidence = CoplanarVolumetricCellEvidenceReport::from_graph(&graph, left, right);
@@ -2943,6 +2960,7 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
                 return Ok(preflight);
             }
         }
+        let boundary_support = ExactBooleanSupport::CertifiedClosedBoundaryTouchingUnion;
         return Ok(certified_shortcut_preflight_from_graph(
             operation,
             boundary_support,
@@ -9188,52 +9206,6 @@ fn closed_zero_area_boundary_contact_evidence_from_graph(
     )
 }
 
-fn certified_closed_boundary_only_contact_support_from_graph(
-    graph: &super::graph::ExactIntersectionGraph,
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-) -> Result<Option<ExactBooleanSupport>, MeshError> {
-    if matches!(operation, ExactBooleanOperation::SelectedRegions(_))
-        || !certified_closed_boundary_only_contact_from_graph(graph, left, right)?
-    {
-        return Ok(None);
-    }
-    Ok(Some(match operation {
-        ExactBooleanOperation::Union => ExactBooleanSupport::CertifiedClosedBoundaryTouchingUnion,
-        ExactBooleanOperation::Intersection => {
-            ExactBooleanSupport::CertifiedClosedBoundaryTouchingIntersection
-        }
-        ExactBooleanOperation::Difference => {
-            ExactBooleanSupport::CertifiedClosedBoundaryTouchingDifference
-        }
-        ExactBooleanOperation::SelectedRegions(_) => unreachable!(),
-    }))
-}
-
-fn certified_closed_zero_area_boundary_contact_support_from_graph(
-    graph: &super::graph::ExactIntersectionGraph,
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-) -> Result<Option<ExactBooleanSupport>, MeshError> {
-    if matches!(operation, ExactBooleanOperation::SelectedRegions(_))
-        || closed_zero_area_boundary_contact_evidence_from_graph(graph, left, right)?.is_none()
-    {
-        return Ok(None);
-    }
-    Ok(Some(match operation {
-        ExactBooleanOperation::Union => ExactBooleanSupport::CertifiedClosedBoundaryTouchingUnion,
-        ExactBooleanOperation::Intersection => {
-            ExactBooleanSupport::CertifiedClosedBoundaryTouchingIntersection
-        }
-        ExactBooleanOperation::Difference => {
-            ExactBooleanSupport::CertifiedClosedBoundaryTouchingDifference
-        }
-        ExactBooleanOperation::SelectedRegions(_) => unreachable!(),
-    }))
-}
-
 pub(crate) fn materialize_closed_boundary_touching_regularized_boolean_with_evidence_from_graph(
     graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
@@ -9949,9 +9921,9 @@ fn winding_readiness_report_from_graph(
     let tail_shortcut_materializes = preflight_tail_shortcut_support(left, right, operation)
         == Some(ExactBooleanSupport::CertifiedArrangementCellComplex);
     let boundary_policy_required = graph_requires_boundary_policy(graph, left, right)?;
-    if let Some(_support) = certified_closed_zero_area_boundary_contact_support_from_graph(
-        graph, left, right, operation,
-    )? {
+    if !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
+        && closed_zero_area_boundary_contact_evidence_from_graph(graph, left, right)?.is_some()
+    {
         return Ok(winding_readiness_report(
             operation,
             ExactWindingReadinessStatus::ClosedBoundaryTouchingAlreadyMaterialized,
