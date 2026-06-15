@@ -1208,8 +1208,16 @@ impl ExactBooleanResult {
         self.assembly
             .validate()
             .map_err(|_| ExactReportValidationError::InvalidAssembly)?;
-        if retains_region_artifacts && assembly_has_duplicate_triangle_vertex_sets(&self.assembly) {
-            return Err(ExactReportValidationError::DuplicateAssemblyTriangle);
+        if retains_region_artifacts {
+            let mut seen_triangle_vertex_sets = Vec::<[usize; 3]>::new();
+            for triangle in &self.assembly.triangles {
+                let mut vertices = triangle.vertices;
+                vertices.sort_unstable();
+                if seen_triangle_vertex_sets.contains(&vertices) {
+                    return Err(ExactReportValidationError::DuplicateAssemblyTriangle);
+                }
+                seen_triangle_vertex_sets.push(vertices);
+            }
         }
         self.mesh
             .validate_retained_state()
@@ -1747,20 +1755,6 @@ fn certified_shortcut_sources_match(
             arrangement_cell_complex_sources_match(operation, validation, left, right)
         }
     }
-}
-
-fn assembly_has_duplicate_triangle_vertex_sets(assembly: &ExactBooleanAssemblyPlan) -> bool {
-    let mut seen = Vec::<[usize; 3]>::new();
-    assembly.triangles.iter().any(|triangle| {
-        let mut vertices = triangle.vertices;
-        vertices.sort_unstable();
-        if seen.contains(&vertices) {
-            true
-        } else {
-            seen.push(vertices);
-            false
-        }
-    })
 }
 
 fn certified_shortcut_output_matches_sources(
