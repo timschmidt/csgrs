@@ -10663,18 +10663,16 @@ fn certified_convex_boolean_support_from_graph(
     operation: ExactBooleanOperation,
 ) -> Result<Option<ExactBooleanSupport>, MeshError> {
     Ok(
-        certified_convex_relation_shortcut_from_graph(graph, left, right, operation)?
-            .map(convex_relation_shortcut_support),
+        match certified_convex_relation_shortcut_from_graph(graph, left, right, operation)? {
+            Some(ConvexRelationShortcut::Separated) => {
+                Some(ExactBooleanSupport::CertifiedConvexSeparated)
+            }
+            Some(
+                ConvexRelationShortcut::LeftInsideRight | ConvexRelationShortcut::RightInsideLeft,
+            ) => Some(ExactBooleanSupport::CertifiedConvexContainment),
+            None => None,
+        },
     )
-}
-
-const fn convex_relation_shortcut_support(relation: ConvexRelationShortcut) -> ExactBooleanSupport {
-    match relation {
-        ConvexRelationShortcut::Separated => ExactBooleanSupport::CertifiedConvexSeparated,
-        ConvexRelationShortcut::LeftInsideRight | ConvexRelationShortcut::RightInsideLeft => {
-            ExactBooleanSupport::CertifiedConvexContainment
-        }
-    }
 }
 
 /// Return whether one certified convex solid is contained in another while
