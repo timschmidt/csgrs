@@ -2921,12 +2921,12 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
         return Ok(preflight);
     }
     if support == ExactBooleanSupport::RequiresCertifiedWinding
-        && let Some(open_surface_support) =
-            certified_open_surface_disjoint_support_from_graph(&graph, left, right, operation)
+        && !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
+        && open_surface_disjoint_report_from_graph(&graph, left, right).is_certified()
     {
         return Ok(certified_shortcut_preflight_from_graph(
             operation,
-            open_surface_support,
+            ExactBooleanSupport::CertifiedOpenSurfaceDisjoint,
             &graph,
         ));
     }
@@ -8737,20 +8737,6 @@ pub(crate) fn open_surface_disjoint_report_from_graph(
     )
 }
 
-fn certified_open_surface_disjoint_support_from_graph(
-    graph: &super::graph::ExactIntersectionGraph,
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-) -> Option<ExactBooleanSupport> {
-    if matches!(operation, ExactBooleanOperation::SelectedRegions(_)) {
-        return None;
-    }
-    open_surface_disjoint_report_from_graph(graph, left, right)
-        .is_certified()
-        .then_some(ExactBooleanSupport::CertifiedOpenSurfaceDisjoint)
-}
-
 fn open_surface_disjoint_report(
     status: ExactOpenSurfaceDisjointStatus,
     left_open_surface: bool,
@@ -9875,7 +9861,9 @@ fn winding_readiness_report_from_graph(
             None,
         ));
     }
-    if certified_open_surface_disjoint_support_from_graph(graph, left, right, operation).is_some() {
+    if !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
+        && open_surface_disjoint_report_from_graph(graph, left, right).is_certified()
+    {
         return Ok(winding_readiness_report(
             operation,
             ExactWindingReadinessStatus::OpenSurfaceDisjointAlreadyMaterialized,
