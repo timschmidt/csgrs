@@ -2855,12 +2855,15 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
         ));
     }
     if support == ExactBooleanSupport::RequiresCertifiedWinding
-        && let Some(separated_support) =
-            certified_closed_winding_separated_support_from_graph(&graph, left, right, operation)?
+        && !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
+        && let Some((left_in_right, right_in_left)) =
+            closed_winding_vertex_relations_from_empty_graph(&graph, left, right)?
+        && left_in_right == ClosedMeshWindingMeshRelation::Outside
+        && right_in_left == ClosedMeshWindingMeshRelation::Outside
     {
         return Ok(certified_shortcut_preflight_from_graph(
             operation,
-            separated_support,
+            ExactBooleanSupport::CertifiedClosedWindingSeparated,
             &graph,
         ));
     }
@@ -4073,29 +4076,6 @@ fn certified_closed_boundary_contact(
             || mesh_vertices_touch_boundary(&right_in_left)))
 }
 
-fn certified_closed_winding_separated_support_from_graph(
-    graph: &super::graph::ExactIntersectionGraph,
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-) -> Result<Option<ExactBooleanSupport>, MeshError> {
-    if matches!(operation, ExactBooleanOperation::SelectedRegions(_)) {
-        return Ok(None);
-    }
-    let Some((left_in_right, right_in_left)) =
-        closed_winding_vertex_relations_from_empty_graph(graph, left, right)?
-    else {
-        return Ok(None);
-    };
-    if left_in_right == ClosedMeshWindingMeshRelation::Outside
-        && right_in_left == ClosedMeshWindingMeshRelation::Outside
-    {
-        Ok(Some(ExactBooleanSupport::CertifiedClosedWindingSeparated))
-    } else {
-        Ok(None)
-    }
-}
-
 fn closed_winding_vertex_relations_from_empty_graph(
     graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
@@ -4337,8 +4317,14 @@ fn boolean_closed_winding_separated_meshes_from_graph(
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
-    if certified_closed_winding_separated_support_from_graph(graph, left, right, operation)?
-        .is_none()
+    let Some((left_in_right, right_in_left)) =
+        closed_winding_vertex_relations_from_empty_graph(graph, left, right)?
+    else {
+        return Ok(None);
+    };
+    if matches!(operation, ExactBooleanOperation::SelectedRegions(_))
+        || left_in_right != ClosedMeshWindingMeshRelation::Outside
+        || right_in_left != ClosedMeshWindingMeshRelation::Outside
     {
         return Ok(None);
     }
@@ -10113,8 +10099,11 @@ fn winding_readiness_report_from_graph(
             coplanar_volumetric_evidence_if_required(graph, left, right),
         ));
     }
-    if certified_closed_winding_separated_support_from_graph(graph, left, right, operation)?
-        .is_some()
+    if !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
+        && let Some((left_in_right, right_in_left)) =
+            closed_winding_vertex_relations_from_empty_graph(graph, left, right)?
+        && left_in_right == ClosedMeshWindingMeshRelation::Outside
+        && right_in_left == ClosedMeshWindingMeshRelation::Outside
     {
         return Ok(winding_readiness_report(
             operation,
