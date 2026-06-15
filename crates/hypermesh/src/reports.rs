@@ -615,7 +615,18 @@ fn validate_coplanar_volumetric_evidence_counts(
     evidence
         .validate()
         .map_err(|_| ExactReportValidationError::InvalidCoplanarVolumetricEvidence)?;
-    let Some(retained_evidence_events) = coplanar_volumetric_evidence_event_count(evidence) else {
+    let Some(explicit_unknown_events) = evidence
+        .unknown_events
+        .checked_sub(evidence.unknown_segment_plane_events)
+    else {
+        return Err(ExactReportValidationError::CoplanarVolumetricEvidenceMismatch);
+    };
+    let Some(retained_evidence_events) = evidence
+        .segment_plane_events
+        .checked_add(evidence.coplanar_edge_events)
+        .and_then(|count| count.checked_add(evidence.coplanar_vertex_events))
+        .and_then(|count| count.checked_add(explicit_unknown_events))
+    else {
         return Err(ExactReportValidationError::CoplanarVolumetricEvidenceMismatch);
     };
     if evidence.retained_face_pair_count != retained_face_pairs
@@ -669,19 +680,6 @@ fn validate_certified_arrangement_coplanar_evidence_shape(
         return Err(ExactReportValidationError::CoplanarVolumetricEvidenceMismatch);
     }
     Ok(())
-}
-
-fn coplanar_volumetric_evidence_event_count(
-    evidence: &CoplanarVolumetricCellEvidenceReport,
-) -> Option<usize> {
-    let explicit_unknown_events = evidence
-        .unknown_events
-        .checked_sub(evidence.unknown_segment_plane_events)?;
-    evidence
-        .segment_plane_events
-        .checked_add(evidence.coplanar_edge_events)
-        .and_then(|count| count.checked_add(evidence.coplanar_vertex_events))
-        .and_then(|count| count.checked_add(explicit_unknown_events))
 }
 
 /// Auditable result of an exact selected-region boolean pipeline.
