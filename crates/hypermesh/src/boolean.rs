@@ -8808,14 +8808,6 @@ fn certified_lower_dimensional_regularized_solid_support(
         .then_some(ExactBooleanSupport::CertifiedLowerDimensionalRegularizedSolid)
 }
 
-fn certified_closed_validation_regularized_solid_support(
-    left: &ExactMesh,
-    right: &ExactMesh,
-) -> Option<ExactBooleanSupport> {
-    certified_lower_dimensional_regularized_solid_support(left, right)
-        .or_else(|| certified_mixed_dimensional_regularized_solid_support(left, right))
-}
-
 fn closed_validation_regularized_solid_support(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -8827,7 +8819,8 @@ fn closed_validation_regularized_solid_support(
     {
         return None;
     }
-    certified_closed_validation_regularized_solid_support(left, right)
+    certified_lower_dimensional_regularized_solid_support(left, right)
+        .or_else(|| certified_mixed_dimensional_regularized_solid_support(left, right))
 }
 
 /// Retained split-region artifacts that certify an open-surface arrangement.
