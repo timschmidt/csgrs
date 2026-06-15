@@ -4781,23 +4781,6 @@ fn arrangement_cell_complex_result_is_certified_for_preflight(
         && result.validate_against_sources(left, right).is_ok()
 }
 
-#[cfg(test)]
-fn arrangement_cell_complex_materializes_for_preflight(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    regularize_unregularized_sheet_complex: bool,
-) -> Result<bool, MeshError> {
-    let graph = validated_intersection_graph(left, right)?;
-    arrangement_cell_complex_materializes_for_preflight_from_graph(
-        &graph,
-        left,
-        right,
-        operation,
-        regularize_unregularized_sheet_complex,
-    )
-}
-
 fn arrangement_cell_complex_materializes_for_preflight_from_graph(
     graph: &ExactIntersectionGraph,
     left: &ExactMesh,
@@ -13636,6 +13619,7 @@ mod tests {
         )
         .unwrap();
 
+        let graph = validated_intersection_graph(&left, &right).unwrap();
         for operation in [
             ExactBooleanOperation::Union,
             ExactBooleanOperation::Intersection,
@@ -13657,8 +13641,8 @@ mod tests {
                 )
             );
             assert!(
-                !arrangement_cell_complex_materializes_for_preflight(
-                    &left, &right, operation, true
+                !arrangement_cell_complex_materializes_for_preflight_from_graph(
+                    &graph, &left, &right, operation, true
                 )
                 .unwrap()
             );
