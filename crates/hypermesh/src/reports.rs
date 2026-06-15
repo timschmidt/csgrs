@@ -663,21 +663,6 @@ fn validate_coplanar_boundary_only_evidence_shape(
     Ok(())
 }
 
-fn validate_certified_arrangement_coplanar_evidence_shape(
-    evidence: &CoplanarVolumetricCellEvidenceReport,
-    retained_face_pairs: usize,
-    retained_events: usize,
-) -> Result<(), ExactReportValidationError> {
-    validate_coplanar_volumetric_evidence_counts(evidence, retained_face_pairs, retained_events)?;
-    if !evidence.obstacle.requires_coplanar_volumetric_cells()
-        && (evidence.obstacle != CoplanarVolumetricCellObstacle::BoundaryOnlyContact
-            || evidence.positive_area_coplanar_overlapping_pairs == 0)
-    {
-        return Err(ExactReportValidationError::CoplanarVolumetricEvidenceMismatch);
-    }
-    Ok(())
-}
-
 /// Auditable result of an exact selected-region boolean pipeline.
 #[derive(Clone, Debug, PartialEq)]
 pub struct ExactBooleanResult {
@@ -1129,13 +1114,29 @@ impl ExactBooleanResult {
         {
             return Err(ExactReportValidationError::OrphanedVolumetricClassification);
         }
-        if retains_volumetric_artifacts
-            && !volumetric_classifications_follow_triangulation_order(
-                &self.triangulations,
-                &self.volumetric_classifications,
-            )
-        {
-            return Err(ExactReportValidationError::VolumetricClassificationOrderMismatch);
+        if retains_volumetric_artifacts {
+            let expected_volumetric_classifications = self
+                .triangulations
+                .iter()
+                .flat_map(|triangulation| {
+                    triangulation
+                        .triangles
+                        .chunks_exact(3)
+                        .map(move |triangle| (triangulation.side, triangulation.face, triangle))
+                })
+                .collect::<Vec<_>>();
+            if expected_volumetric_classifications.len() != self.volumetric_classifications.len()
+                || !expected_volumetric_classifications
+                    .iter()
+                    .zip(&self.volumetric_classifications)
+                    .all(|(&(side, face, triangle), classification)| {
+                        classification.region_side == side
+                            && classification.region_face == face
+                            && classification.triangle == [triangle[0], triangle[1], triangle[2]]
+                    })
+            {
+                return Err(ExactReportValidationError::VolumetricClassificationOrderMismatch);
+            }
         }
         if retains_volumetric_artifacts {
             for classification in &self.volumetric_classifications {
@@ -1945,30 +1946,6 @@ fn retained_split_region_result_matches(
         && retained.volumetric_classifications == replay.volumetric_classifications
         && retained.assembly == replay.assembly
         && mesh_output_matches(&retained.mesh, &replay.mesh)
-}
-
-fn volumetric_classifications_follow_triangulation_order(
-    triangulations: &[FaceRegionTriangulation],
-    classifications: &[ExactVolumetricRegionClassification],
-) -> bool {
-    let expected = triangulations
-        .iter()
-        .flat_map(|triangulation| {
-            triangulation
-                .triangles
-                .chunks_exact(3)
-                .map(move |triangle| (triangulation.side, triangulation.face, triangle))
-        })
-        .collect::<Vec<_>>();
-    expected.len() == classifications.len()
-        && expected
-            .iter()
-            .zip(classifications)
-            .all(|(&(side, face, triangle), classification)| {
-                classification.region_side == side
-                    && classification.region_face == face
-                    && classification.triangle == [triangle[0], triangle[1], triangle[2]]
-            })
 }
 
 fn validate_shortcut_output_shape(
@@ -4031,11 +4008,18 @@ impl ExactBooleanPreflight {
                     return Err(ExactReportValidationError::UnexpectedArrangementReadiness);
                 }
                 if let Some(evidence) = self.coplanar_volumetric_evidence.as_ref() {
-                    validate_certified_arrangement_coplanar_evidence_shape(
+                    validate_coplanar_volumetric_evidence_counts(
                         evidence,
                         self.retained_face_pairs,
                         self.retained_events,
                     )?;
+                    if !evidence.obstacle.requires_coplanar_volumetric_cells()
+                        && (evidence.obstacle
+                            != CoplanarVolumetricCellObstacle::BoundaryOnlyContact
+                            || evidence.positive_area_coplanar_overlapping_pairs == 0)
+                    {
+                        return Err(ExactReportValidationError::CoplanarVolumetricEvidenceMismatch);
+                    }
                 }
                 no_region_facts(self.region_count, &self.region_classifications)
             }
