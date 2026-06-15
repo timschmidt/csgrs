@@ -17,7 +17,7 @@ use std::cmp::Ordering;
 use super::ExactMesh;
 use super::adjacent::materialize_full_face_adjacent_union;
 use super::affine_solid::{
-    AffineOrthogonalSolidOperation, materialize_affine_orthogonal_solid_difference,
+    materialize_affine_orthogonal_solid_difference,
     materialize_affine_orthogonal_solid_intersection, materialize_affine_orthogonal_solid_union,
 };
 use super::arrangement3d::{ExactArrangement, ExactTopologyAssemblyReport};
@@ -46,7 +46,7 @@ use super::graph::{
 };
 use super::intersection::MeshFacePairRelation;
 use super::orthogonal_solid::{
-    AxisAlignedOrthogonalSolidOperation, materialize_axis_aligned_orthogonal_solid_difference,
+    materialize_axis_aligned_orthogonal_solid_difference,
     materialize_axis_aligned_orthogonal_solid_intersection,
     materialize_axis_aligned_orthogonal_solid_union,
 };
@@ -2719,21 +2719,49 @@ fn arrangement_cell_complex_output_matches_sources(
         return Ok(Some(mesh_output_matches(mesh, &replay)));
     }
 
-    let Some(axis_operation) = axis_aligned_orthogonal_operation(operation) else {
-        return Ok(None);
-    };
-    if let Some(replay) =
-        axis_aligned_orthogonal_output_from_sources(axis_operation, validation, left, right)?
-    {
-        return Ok(Some(mesh_output_matches(mesh, &replay.mesh)));
-    }
-
-    let affine_operation = affine_orthogonal_operation(operation)
-        .expect("affine and axis-aligned orthogonal operation sets match");
-    if let Some(replay) =
-        affine_orthogonal_output_from_sources(affine_operation, validation, left, right)?
-    {
-        return Ok(Some(mesh_output_matches(mesh, &replay.mesh)));
+    match operation {
+        ExactBooleanOperation::Union => {
+            if let Some(replay) =
+                materialize_axis_aligned_orthogonal_solid_union(left, right, validation)
+                    .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
+            {
+                return Ok(Some(mesh_output_matches(mesh, &replay.mesh)));
+            }
+            if let Some(replay) = materialize_affine_orthogonal_solid_union(left, right, validation)
+                .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
+            {
+                return Ok(Some(mesh_output_matches(mesh, &replay.mesh)));
+            }
+        }
+        ExactBooleanOperation::Intersection => {
+            if let Some(replay) =
+                materialize_axis_aligned_orthogonal_solid_intersection(left, right, validation)
+                    .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
+            {
+                return Ok(Some(mesh_output_matches(mesh, &replay.mesh)));
+            }
+            if let Some(replay) =
+                materialize_affine_orthogonal_solid_intersection(left, right, validation)
+                    .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
+            {
+                return Ok(Some(mesh_output_matches(mesh, &replay.mesh)));
+            }
+        }
+        ExactBooleanOperation::Difference => {
+            if let Some(replay) =
+                materialize_axis_aligned_orthogonal_solid_difference(left, right, validation)
+                    .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
+            {
+                return Ok(Some(mesh_output_matches(mesh, &replay.mesh)));
+            }
+            if let Some(replay) =
+                materialize_affine_orthogonal_solid_difference(left, right, validation)
+                    .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
+            {
+                return Ok(Some(mesh_output_matches(mesh, &replay.mesh)));
+            }
+        }
+        ExactBooleanOperation::SelectedRegions(_) => return Ok(None),
     }
 
     if let Some(replay) =
@@ -2790,74 +2818,6 @@ fn arrangement_cell_complex_output_matches_sources(
         )));
     }
     Ok(None)
-}
-
-fn axis_aligned_orthogonal_operation(
-    operation: ExactBooleanOperation,
-) -> Option<AxisAlignedOrthogonalSolidOperation> {
-    match operation {
-        ExactBooleanOperation::Union => Some(AxisAlignedOrthogonalSolidOperation::Union),
-        ExactBooleanOperation::Intersection => {
-            Some(AxisAlignedOrthogonalSolidOperation::Intersection)
-        }
-        ExactBooleanOperation::Difference => Some(AxisAlignedOrthogonalSolidOperation::Difference),
-        ExactBooleanOperation::SelectedRegions(_) => None,
-    }
-}
-
-fn affine_orthogonal_operation(
-    operation: ExactBooleanOperation,
-) -> Option<AffineOrthogonalSolidOperation> {
-    match operation {
-        ExactBooleanOperation::Union => Some(AffineOrthogonalSolidOperation::Union),
-        ExactBooleanOperation::Intersection => Some(AffineOrthogonalSolidOperation::Intersection),
-        ExactBooleanOperation::Difference => Some(AffineOrthogonalSolidOperation::Difference),
-        ExactBooleanOperation::SelectedRegions(_) => None,
-    }
-}
-
-fn axis_aligned_orthogonal_output_from_sources(
-    operation: AxisAlignedOrthogonalSolidOperation,
-    validation: ValidationPolicy,
-    left: &ExactMesh,
-    right: &ExactMesh,
-) -> Result<
-    Option<super::orthogonal_solid::AxisAlignedOrthogonalSolidArrangement>,
-    ExactReportValidationError,
-> {
-    match operation {
-        AxisAlignedOrthogonalSolidOperation::Union => {
-            materialize_axis_aligned_orthogonal_solid_union(left, right, validation)
-        }
-        AxisAlignedOrthogonalSolidOperation::Intersection => {
-            materialize_axis_aligned_orthogonal_solid_intersection(left, right, validation)
-        }
-        AxisAlignedOrthogonalSolidOperation::Difference => {
-            materialize_axis_aligned_orthogonal_solid_difference(left, right, validation)
-        }
-    }
-    .map_err(|_| ExactReportValidationError::SourceReplayMismatch)
-}
-
-fn affine_orthogonal_output_from_sources(
-    operation: AffineOrthogonalSolidOperation,
-    validation: ValidationPolicy,
-    left: &ExactMesh,
-    right: &ExactMesh,
-) -> Result<Option<super::affine_solid::AffineOrthogonalSolidArrangement>, ExactReportValidationError>
-{
-    match operation {
-        AffineOrthogonalSolidOperation::Union => {
-            materialize_affine_orthogonal_solid_union(left, right, validation)
-        }
-        AffineOrthogonalSolidOperation::Intersection => {
-            materialize_affine_orthogonal_solid_intersection(left, right, validation)
-        }
-        AffineOrthogonalSolidOperation::Difference => {
-            materialize_affine_orthogonal_solid_difference(left, right, validation)
-        }
-    }
-    .map_err(|_| ExactReportValidationError::SourceReplayMismatch)
 }
 
 fn mesh_is_closed_solid(mesh: &ExactMesh) -> bool {
