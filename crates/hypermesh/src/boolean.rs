@@ -2979,8 +2979,36 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
         ));
     }
     if support == ExactBooleanSupport::RequiresCertifiedWinding
-        && let Some(boundary_support) =
-            certified_closed_boundary_touching_support_from_graph(&graph, left, right, operation)?
+        && let Some(boundary_support) = match operation {
+            ExactBooleanOperation::Union
+                if certified_closed_boundary_touching_union_report_from_graph(
+                    &graph, left, right,
+                )?
+                .is_some() =>
+            {
+                Some(ExactBooleanSupport::CertifiedClosedBoundaryTouchingUnion)
+            }
+            ExactBooleanOperation::Intersection
+                if certified_closed_boundary_touching_regularized_report_from_graph(
+                    &graph, left, right,
+                )?
+                .is_some() =>
+            {
+                Some(ExactBooleanSupport::CertifiedClosedBoundaryTouchingIntersection)
+            }
+            ExactBooleanOperation::Difference
+                if certified_closed_boundary_touching_regularized_report_from_graph(
+                    &graph, left, right,
+                )?
+                .is_some() =>
+            {
+                Some(ExactBooleanSupport::CertifiedClosedBoundaryTouchingDifference)
+            }
+            ExactBooleanOperation::Union
+            | ExactBooleanOperation::Intersection
+            | ExactBooleanOperation::Difference
+            | ExactBooleanOperation::SelectedRegions(_) => None,
+        }
     {
         return Ok(certified_shortcut_preflight_from_graph(
             operation,
@@ -9129,39 +9157,6 @@ fn certified_closed_boundary_touching_regularized_report_from_graph(
         ))
     })?;
     Ok(Some(report))
-}
-
-fn certified_closed_boundary_touching_support_from_graph(
-    graph: &super::graph::ExactIntersectionGraph,
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-) -> Result<Option<ExactBooleanSupport>, MeshError> {
-    Ok(match operation {
-        ExactBooleanOperation::Union
-            if certified_closed_boundary_touching_union_report_from_graph(graph, left, right)?
-                .is_some() =>
-        {
-            Some(ExactBooleanSupport::CertifiedClosedBoundaryTouchingUnion)
-        }
-        ExactBooleanOperation::Intersection
-            if certified_closed_boundary_touching_regularized_report_from_graph(
-                graph, left, right,
-            )?
-            .is_some() =>
-        {
-            Some(ExactBooleanSupport::CertifiedClosedBoundaryTouchingIntersection)
-        }
-        ExactBooleanOperation::Difference
-            if certified_closed_boundary_touching_regularized_report_from_graph(
-                graph, left, right,
-            )?
-            .is_some() =>
-        {
-            Some(ExactBooleanSupport::CertifiedClosedBoundaryTouchingDifference)
-        }
-        _ => None,
-    })
 }
 
 fn certified_closed_boundary_only_contact_from_graph(
