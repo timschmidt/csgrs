@@ -2865,12 +2865,12 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
         ));
     }
     if support == ExactBooleanSupport::RequiresCertifiedWinding
-        && let Some(containment_support) =
-            certified_closed_winding_containment_support_from_graph(&graph, left, right, operation)?
+        && !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
+        && certified_closed_winding_containment_relation_from_graph(&graph, left, right)?.is_some()
     {
         return Ok(certified_shortcut_preflight_from_graph(
             operation,
-            containment_support,
+            ExactBooleanSupport::CertifiedClosedWindingContainment,
             &graph,
         ));
     }
@@ -4151,21 +4151,6 @@ fn certified_closed_winding_containment_relation_from_graph(
         }
         _ => Ok(None),
     }
-}
-
-fn certified_closed_winding_containment_support_from_graph(
-    graph: &super::graph::ExactIntersectionGraph,
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-) -> Result<Option<ExactBooleanSupport>, MeshError> {
-    if matches!(operation, ExactBooleanOperation::SelectedRegions(_)) {
-        return Ok(None);
-    }
-    Ok(
-        certified_closed_winding_containment_relation_from_graph(graph, left, right)?
-            .map(|_| ExactBooleanSupport::CertifiedClosedWindingContainment),
-    )
 }
 
 fn boolean_closed_winding_containment_meshes_from_graph(
@@ -10144,8 +10129,8 @@ fn winding_readiness_report_from_graph(
             None,
         ));
     }
-    if certified_closed_winding_containment_support_from_graph(graph, left, right, operation)?
-        .is_some()
+    if !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
+        && certified_closed_winding_containment_relation_from_graph(graph, left, right)?.is_some()
     {
         return Ok(winding_readiness_report(
             operation,
