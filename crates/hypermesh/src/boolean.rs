@@ -4602,15 +4602,6 @@ enum ArrangementCellComplexOutcome {
     Declined(ExactArrangementBooleanAttempt),
 }
 
-impl ArrangementCellComplexOutcome {
-    fn materialized(
-        result: ExactBooleanResult,
-        attempt: ExactArrangementBooleanAttempt,
-    ) -> ArrangementCellComplexOutcome {
-        ArrangementCellComplexOutcome::Materialized(Box::new(result), attempt)
-    }
-}
-
 fn materialized_arrangement_attempt_outcome(
     attempt: &mut ExactArrangementBooleanAttempt,
     mut result: ExactBooleanResult,
@@ -4630,7 +4621,7 @@ fn materialized_arrangement_attempt_outcome(
     }
     attempt.output_vertices = result.mesh.vertices().len();
     attempt.output_triangles = result.mesh.triangles().len();
-    ArrangementCellComplexOutcome::materialized(result, attempt.clone())
+    ArrangementCellComplexOutcome::Materialized(Box::new(result), attempt.clone())
 }
 
 fn declined_output_validation_attempt_outcome_with_counts(
@@ -4668,7 +4659,10 @@ fn arrangement_boolean_attempt_report(
         Some(request.validation),
         true,
     )?;
-    Ok(arrangement_attempt_from_outcome(outcome))
+    Ok(match outcome {
+        ArrangementCellComplexOutcome::Materialized(_, attempt)
+        | ArrangementCellComplexOutcome::Declined(attempt) => attempt,
+    })
 }
 
 pub(crate) fn arrangement_cell_complex_shortcut_attempt(
@@ -4741,16 +4735,10 @@ pub(crate) fn arrangement_boolean_attempt_report_from_arrangement(
         true,
         false,
     )?;
-    Ok(arrangement_attempt_from_outcome(outcome))
-}
-
-fn arrangement_attempt_from_outcome(
-    outcome: ArrangementCellComplexOutcome,
-) -> ExactArrangementBooleanAttempt {
-    match outcome {
+    Ok(match outcome {
         ArrangementCellComplexOutcome::Materialized(_, attempt)
         | ArrangementCellComplexOutcome::Declined(attempt) => attempt,
-    }
+    })
 }
 
 fn boolean_arrangement_cell_complex_meshes_from_graph(
