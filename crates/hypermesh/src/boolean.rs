@@ -3207,51 +3207,6 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
 /// Preflight a graph-backed exact boolean operation for a specific output
 /// validation policy.
 ///
-/// [`ExactBooleanRequest::preflight`] preserves the strict closed-output
-/// boundary for named solid booleans. This policy-aware variant keeps that
-/// default contract for `CLOSED`, but can also certify exact
-/// arrangement/cell-complex support when the same retained split-cell facts
-/// materialize under a less restrictive output policy such as
-/// [`ValidationPolicy::ALLOW_BOUNDARY`].
-fn preflight_boolean_exact_with_validation_reject_boundary_policy_from_graph(
-    graph: &super::graph::ExactIntersectionGraph,
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: ValidationPolicy,
-) -> Result<ExactBooleanPreflight, MeshError> {
-    if let Some(support) =
-        closed_validation_regularized_solid_support(left, right, operation, validation)
-    {
-        return Ok(certified_shortcut_preflight_from_graph(
-            operation, support, graph,
-        ));
-    }
-    let preflight =
-        preflight_boolean_exact_reject_boundary_policy_from_graph(graph, left, right, operation)?;
-    if validation == ValidationPolicy::CLOSED
-        || matches!(operation, ExactBooleanOperation::SelectedRegions(_))
-        || !matches!(
-            preflight.support,
-            ExactBooleanSupport::RequiresCertifiedWinding
-                | ExactBooleanSupport::RequiresCoplanarVolumetricCells
-        )
-    {
-        return Ok(preflight);
-    }
-
-    if boolean_arrangement_volumetric_split_cell_recovery_from_graph(
-        graph, left, right, operation, validation,
-    )?
-    .is_some()
-    {
-        return Ok(certified_arrangement_cell_complex_preflight_from_graph(
-            operation, graph, left, right,
-        ));
-    }
-    Ok(preflight)
-}
-
 pub(crate) fn preflight_boolean_exact_request_from_graph(
     graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
@@ -3262,9 +3217,30 @@ pub(crate) fn preflight_boolean_exact_request_from_graph(
     let operation = request.operation;
     let validation = request.validation;
     let boundary_policy = request.boundary_policy;
-    let preflight = preflight_boolean_exact_with_validation_reject_boundary_policy_from_graph(
-        graph, left, right, operation, validation,
-    )?;
+    if let Some(support) =
+        closed_validation_regularized_solid_support(left, right, operation, validation)
+    {
+        return Ok(certified_shortcut_preflight_from_graph(
+            operation, support, graph,
+        ));
+    }
+    let mut preflight =
+        preflight_boolean_exact_reject_boundary_policy_from_graph(graph, left, right, operation)?;
+    if validation != ValidationPolicy::CLOSED
+        && !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
+        && matches!(
+            preflight.support,
+            ExactBooleanSupport::RequiresCertifiedWinding
+                | ExactBooleanSupport::RequiresCoplanarVolumetricCells
+        )
+        && boolean_arrangement_volumetric_split_cell_recovery_from_graph(
+            graph, left, right, operation, validation,
+        )?
+        .is_some()
+    {
+        preflight =
+            certified_arrangement_cell_complex_preflight_from_graph(operation, graph, left, right);
+    }
     if boundary_policy == ExactBoundaryBooleanPolicy::Reject
         || matches!(operation, ExactBooleanOperation::SelectedRegions(_))
         || preflight.support != ExactBooleanSupport::RequiresBoundaryPolicy
