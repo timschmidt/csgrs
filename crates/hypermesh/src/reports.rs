@@ -31,7 +31,10 @@ use super::boolean::{
     replay_selected_region_boolean_result,
 };
 use super::bounds::AabbIntersectionKind;
-use super::cell_complex::{ExactRegionOwnershipReport, arrangement_cell_complex_labeling_policy};
+use super::cell_complex::{
+    ExactRegionOwnershipReport, arrangement_cell_complex_labeling_policy,
+    validate_selected_gate_reports,
+};
 use super::contained_adjacent::materialize_contained_face_adjacent_union;
 use super::convex::{
     intersect_closed_convex_solids, subtract_closed_convex_solids, union_closed_convex_solids,
@@ -1289,37 +1292,19 @@ impl ExactBooleanResult {
         if !carries_reports {
             return Ok(());
         }
-        let arrangement_cell_complex_result = matches!(
-            self.kind,
-            ExactBooleanResultKind::ArrangementCellComplexMaterialized { .. }
-                | ExactBooleanResultKind::CertifiedShortcut {
-                    shortcut: ExactBooleanShortcutKind::ArrangementCellComplex,
-                    ..
-                }
-        );
-        if !arrangement_cell_complex_result {
-            return Err(ExactReportValidationError::StatusEvidenceMismatch);
-        }
+        let operation = self
+            .arrangement_cell_complex_operation()
+            .ok_or(ExactReportValidationError::StatusEvidenceMismatch)?;
         let topology = self
             .topology_assembly_report
             .as_ref()
             .ok_or(ExactReportValidationError::StatusEvidenceMismatch)?;
-        topology
-            .validate()
-            .map_err(|_| ExactReportValidationError::StatusEvidenceMismatch)?;
-        if !topology.is_complete() {
-            return Err(ExactReportValidationError::StatusEvidenceMismatch);
-        }
         let ownership = self
             .region_ownership_report
             .as_ref()
             .ok_or(ExactReportValidationError::StatusEvidenceMismatch)?;
-        ownership
-            .validate()
+        validate_selected_gate_reports(Some(topology), Some(ownership), operation)
             .map_err(|_| ExactReportValidationError::StatusEvidenceMismatch)?;
-        if !ownership.is_resolved() {
-            return Err(ExactReportValidationError::StatusEvidenceMismatch);
-        }
         self.validate_arrangement_cell_complex_gate_report_counts(topology, ownership)?;
         Ok(())
     }
