@@ -2480,7 +2480,7 @@ fn materialize_certified_arrangement_cell_complex_support_with_arrangement(
     {
         return Ok(Some(result));
     }
-    if let Some(result) = boolean_arrangement_volumetric_split_cell_recovery_from_graph(
+    if let Some(result) = materialize_arrangement_volumetric_split_cell_result_from_graph(
         graph, left, right, operation, validation,
     )? {
         return Ok(Some(result));
@@ -3240,7 +3240,7 @@ pub(crate) fn preflight_boolean_exact_request_from_graph(
             ExactBooleanSupport::RequiresCertifiedWinding
                 | ExactBooleanSupport::RequiresCoplanarVolumetricCells
         )
-        && boolean_arrangement_volumetric_split_cell_recovery_from_graph(
+        && materialize_arrangement_volumetric_split_cell_result_from_graph(
             graph, left, right, operation, validation,
         )?
         .is_some()
@@ -4362,7 +4362,7 @@ fn materialize_boolean_exact_request_from_ready_graph(
     {
         return Ok(result);
     }
-    if let Some(result) = boolean_arrangement_volumetric_split_cell_recovery_from_graph(
+    if let Some(result) = materialize_arrangement_volumetric_split_cell_result_from_graph(
         graph, left, right, operation, validation,
     )? {
         return Ok(result);
@@ -5771,7 +5771,7 @@ fn boolean_arrangement_regularized_sheet_complex_from_graph(
     // Unregularized sheet arrangements already retain exact split cells but can
     // lack a closed shell graph. The volumetric split-cell assembly supplies
     // the missing regularized caps without changing predicates or tolerances.
-    if let Some(result) = boolean_arrangement_volumetric_split_cell_recovery_from_graph(
+    if let Some(result) = materialize_arrangement_volumetric_split_cell_result_from_graph(
         graph, left, right, operation, validation,
     )? {
         return Ok(Some(result));
@@ -5826,7 +5826,7 @@ fn boolean_arrangement_regularized_no_volume_overlap_from_graph(
         return Ok(Some(result));
     }
 
-    let Some(left_minus_right) = boolean_arrangement_volumetric_split_cell_recovery_from_graph(
+    let Some(left_minus_right) = materialize_arrangement_volumetric_split_cell_result_from_graph(
         graph,
         left,
         right,
@@ -5842,7 +5842,7 @@ fn boolean_arrangement_regularized_no_volume_overlap_from_graph(
 
     let reverse_graph = build_intersection_graph(right, left)?;
     validate_graph_source_handoff(&reverse_graph, right, left)?;
-    let Some(right_minus_left) = boolean_arrangement_volumetric_split_cell_recovery_from_graph(
+    let Some(right_minus_left) = materialize_arrangement_volumetric_split_cell_result_from_graph(
         &reverse_graph,
         right,
         left,
@@ -6043,7 +6043,7 @@ fn arrangement_volumetric_split_cell_recovery_outcome(
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
 ) -> Result<Option<ArrangementCellComplexOutcome>, MeshError> {
-    let Some(result) = boolean_arrangement_volumetric_split_cell_recovery_from_graph(
+    let Some(result) = materialize_arrangement_volumetric_split_cell_result_from_graph(
         graph, left, right, operation, validation,
     )?
     else {
@@ -6561,7 +6561,12 @@ fn materialize_volumetric_coplanar_boundary_closure_output_from_graph(
     Ok(Some((mesh, closure_report)))
 }
 
-fn boolean_arrangement_volumetric_split_cell_recovery_from_graph(
+/// Materialize a named boolean from graph-backed volumetric split-cell facts.
+///
+/// This is a primary arrangement/cell-complex materialization path. Callers
+/// that use it as a fallback should wrap the returned result in their own
+/// recovery-specific attempt provenance.
+fn materialize_arrangement_volumetric_split_cell_result_from_graph(
     graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
@@ -9128,7 +9133,7 @@ fn winding_readiness_report_with_boundary_policy_from_graph(
             )
         {
             readiness
-        } else if boolean_arrangement_volumetric_split_cell_recovery_from_graph(
+        } else if materialize_arrangement_volumetric_split_cell_result_from_graph(
             graph, left, right, operation, validation,
         )?
         .is_some()
@@ -13140,7 +13145,7 @@ mod tests {
             );
             readiness.validate().unwrap();
 
-            let result = boolean_arrangement_volumetric_split_cell_recovery_from_graph(
+            let result = materialize_arrangement_volumetric_split_cell_result_from_graph(
                 &graph,
                 &left,
                 &right,
