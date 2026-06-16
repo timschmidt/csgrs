@@ -271,6 +271,21 @@ impl<'a> ExactBooleanWorkspace<'a> {
         }
         let preflight = self.preflight(request)?;
         if preflight.is_certified() {
+            let evaluation = self.evaluate(request)?.clone();
+            evaluation
+                .validate()
+                .map_err(workspace_report_validation_error)?;
+            if let Some(result) = evaluation.result {
+                let result = store_replayable_result_or_return(
+                    &mut self.materializations,
+                    self.left,
+                    self.right,
+                    request,
+                    result,
+                )?;
+                self.promote_evaluation_cache_from_materialization(request, &result)?;
+                return Ok(result);
+            }
             let regularized_arrangement = self.regularized_solid_arrangement();
             let graph = self
                 .graph
@@ -1435,6 +1450,18 @@ mod tests {
         assert!(
             workspace.evaluate(request).is_err(),
             "cached arrangement attempts must match the evaluated request"
+        );
+
+        let mut materialize_workspace = ExactBooleanWorkspace::new(&left, &right);
+        materialize_workspace
+            .arrangement_attempt(request, ExactRegularizationPolicy::REGULARIZED_SOLID)
+            .unwrap();
+        materialize_workspace.arrangement_attempts[0].2.operation =
+            ExactBooleanOperation::Difference;
+
+        assert!(
+            materialize_workspace.materialize(request).is_err(),
+            "materialize must validate cached arrangement attempts through evaluation"
         );
     }
 
