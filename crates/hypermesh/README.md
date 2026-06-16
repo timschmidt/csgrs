@@ -170,8 +170,9 @@ topology and ownership report counts for face cells, boundary nodes, and
 lower-dimensional artifact shape before source replay. Retained arrangement
 attempts try topology/label/selection before bounded
 recovery materializers; those attempts now retain the ownership report and status
-observed before selection, while recoveries remain fallback paths when the exact
-cell-complex stage declines.
+observed before selection. Recovery materializers remain available only when
+their retained certificates prove coverage for cases not yet supported by the
+generic graph-backed cell-complex stage.
 Replay-selected and simplified cell-complex artifacts likewise carry the consumed
 ownership report when it is available. Arrangement-cell-complex results can also
 carry those consumed gate reports at the materialized result boundary, and result
