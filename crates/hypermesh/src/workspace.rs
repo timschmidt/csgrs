@@ -93,6 +93,18 @@ impl<'a> ExactBooleanWorkspace<'a> {
         .map(|index| &self.arrangements[index].1)
     }
 
+    fn regularized_solid_arrangement_attempt(
+        &self,
+        request: ExactBooleanRequest,
+    ) -> Option<&ExactArrangementBooleanAttempt> {
+        cached_by_request_and_policy_index(
+            &self.arrangement_attempts,
+            request,
+            ExactRegularizationPolicy::REGULARIZED_SOLID,
+        )
+        .map(|index| &self.arrangement_attempts[index].2)
+    }
+
     /// Returns the exact arrangement for `policy`, building it once per policy.
     pub fn arrangement(
         &mut self,
@@ -182,12 +194,14 @@ impl<'a> ExactBooleanWorkspace<'a> {
             .as_ref()
             .expect("intersection graph cache was just populated");
         let regularized_arrangement = self.regularized_solid_arrangement();
+        let regularized_attempt = self.regularized_solid_arrangement_attempt(request);
         let certifications = ExactBooleanCertificationSet::from_graph_and_regularized_arrangement(
             graph,
             self.left,
             self.right,
             request,
             regularized_arrangement,
+            regularized_attempt,
         )?;
         let result = if preflight.is_certified() {
             if let Some(result) = cached_retained_materialization(
@@ -590,6 +604,7 @@ mod tests {
             workspace.right,
             request,
             workspace.regularized_solid_arrangement(),
+            workspace.regularized_solid_arrangement_attempt(request),
         )
         .unwrap()
     }
@@ -887,6 +902,7 @@ mod tests {
         certifications
             .validate_against_sources(&left, &right, request)
             .unwrap();
+        assert_eq!(certifications.arrangement_attempt.as_ref(), Some(&attempt));
 
         let refinement_report = certifications.refinement.clone();
         assert_eq!(
@@ -1277,12 +1293,16 @@ mod tests {
             ExactReportFreshness::Current
         );
 
-        let first_evaluation =
-            workspace.evaluate(request).unwrap() as *const ExactBooleanEvaluation;
+        let evaluation = workspace.evaluate(request).unwrap();
+        assert_eq!(
+            evaluation.certifications.arrangement_attempt.as_ref(),
+            Some(&attempt)
+        );
+        evaluation.validate().unwrap();
+        let first_evaluation = evaluation as *const ExactBooleanEvaluation;
         let second_evaluation =
             workspace.evaluate(request).unwrap() as *const ExactBooleanEvaluation;
         assert_eq!(first_evaluation, second_evaluation);
-        workspace.evaluate(request).unwrap().validate().unwrap();
         workspace
             .materialize(request)
             .unwrap()
@@ -1367,7 +1387,10 @@ mod tests {
         assert!(evaluation.result.is_some());
         assert!(evaluation.certifications.topology_assembly.is_none());
         assert!(evaluation.certifications.region_ownership.is_none());
-        assert!(evaluation.certifications.arrangement_attempt.is_some());
+        assert_eq!(
+            evaluation.certifications.arrangement_attempt.as_ref(),
+            Some(&attempt)
+        );
         assert_eq!(workspace.arrangements.len(), 0);
 
         let result = workspace.materialize(request).unwrap();
@@ -1394,6 +1417,25 @@ mod tests {
             Err(ExactReportValidationError::SourceReplayMismatch)
         );
         assert_eq!(workspace.arrangements.len(), 0);
+    }
+
+    #[test]
+    fn exact_boolean_workspace_evaluation_validates_cached_arrangement_attempt() {
+        let left = axis_aligned_box_i64([0, 0, 0], [2, 2, 2]);
+        let right = axis_aligned_box_i64([1, 1, 0], [3, 3, 2]);
+        let request =
+            ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED);
+        let mut workspace = ExactBooleanWorkspace::new(&left, &right);
+
+        workspace
+            .arrangement_attempt(request, ExactRegularizationPolicy::REGULARIZED_SOLID)
+            .unwrap();
+        workspace.arrangement_attempts[0].2.operation = ExactBooleanOperation::Difference;
+
+        assert!(
+            workspace.evaluate(request).is_err(),
+            "cached arrangement attempts must match the evaluated request"
+        );
     }
 
     #[test]

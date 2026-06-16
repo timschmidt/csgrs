@@ -660,6 +660,24 @@ const fn arrangement_attempt_stage_rank(stage: ExactArrangementBooleanStage) -> 
     }
 }
 
+fn retained_arrangement_attempt_for_request<'a>(
+    retained: Option<&'a ExactArrangementBooleanAttempt>,
+    request: ExactBooleanRequest,
+    policy: ExactRegularizationPolicy,
+) -> Result<Option<&'a ExactArrangementBooleanAttempt>, ExactReportValidationError> {
+    let Some(attempt) = retained else {
+        return Ok(None);
+    };
+    attempt.validate()?;
+    if attempt.operation != request.operation
+        || attempt.policy != policy
+        || attempt.output_validation != request.validation
+    {
+        return Err(ExactReportValidationError::StatusEvidenceMismatch);
+    }
+    Ok(Some(attempt))
+}
+
 /// Exact boolean operation request.
 ///
 /// Named booleans are represented now, but they intentionally do not fall back
@@ -858,7 +876,7 @@ impl ExactBooleanCertificationSet {
         request: ExactBooleanRequest,
     ) -> Result<Self, MeshError> {
         let graph = validated_intersection_graph(left, right)?;
-        Self::from_graph_and_regularized_arrangement(&graph, left, right, request, None)
+        Self::from_graph_and_regularized_arrangement(&graph, left, right, request, None, None)
     }
 
     pub(crate) fn from_graph_and_regularized_arrangement(
@@ -867,8 +885,21 @@ impl ExactBooleanCertificationSet {
         right: &ExactMesh,
         request: ExactBooleanRequest,
         retained_regularized_arrangement: Option<&ExactArrangement>,
+        retained_arrangement_attempt: Option<&ExactArrangementBooleanAttempt>,
     ) -> Result<Self, MeshError> {
         validate_graph_source_handoff(graph, left, right)?;
+        let retained_arrangement_attempt = retained_arrangement_attempt_for_request(
+            retained_arrangement_attempt,
+            request,
+            ExactRegularizationPolicy::REGULARIZED_SOLID,
+        )
+        .map_err(|error| {
+            MeshError::one(MeshDiagnostic::new(
+                Severity::Error,
+                DiagnosticKind::UnsupportedExactOperation,
+                format!("retained arrangement attempt failed validation: {error:?}"),
+            ))
+        })?;
         let trivial = ExactTrivialBooleanFacts::from_sources(left, right);
         let regularized_solid = ExactRegularizedSolidBooleanFacts::from_sources(left, right);
         let refinement = refinement_report_from_graph(graph, request.operation);
@@ -951,6 +982,8 @@ impl ExactBooleanCertificationSet {
             None
         } else if arrangement_cell_complex_shortcut_certified {
             arrangement_cell_complex_shortcut_attempt_report
+        } else if let Some(attempt) = retained_arrangement_attempt {
+            Some(attempt.clone())
         } else {
             regularized_arrangement
                 .map(|arrangement| {
@@ -2143,6 +2176,7 @@ fn evaluate_boolean_exact_request_with_artifacts_and_arrangement_replay(
         right,
         request,
         regularized_arrangement,
+        None,
     )?;
     let result = if preflight.is_certified() {
         let materialization_arrangement = if replay_sources {
@@ -11998,6 +12032,7 @@ mod tests {
             &right,
             request,
             Some(&arrangement),
+            None,
         )
         .unwrap();
         certifications.validate_for_request(request).unwrap();
