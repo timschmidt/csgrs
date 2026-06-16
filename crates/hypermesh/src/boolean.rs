@@ -3647,8 +3647,10 @@ fn certified_arrangement_cell_complex_preflight_if_materialized(
     }
 }
 
+type CertifiedArrangementCellComplexPreflightCache = Option<Option<ExactBooleanPreflight>>;
+
 fn cached_certified_arrangement_cell_complex_preflight(
-    cache: &mut Option<Option<ExactBooleanPreflight>>,
+    cache: &mut CertifiedArrangementCellComplexPreflightCache,
     operation: ExactBooleanOperation,
     graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
@@ -9364,7 +9366,8 @@ pub(crate) fn planar_arrangement_report_from_graph(
     right: &ExactMesh,
     operation: ExactBooleanOperation,
 ) -> Result<ExactPlanarArrangementReport, MeshError> {
-    let mut arrangement_cell_complex_preflight = None;
+    let mut arrangement_cell_complex_preflight: CertifiedArrangementCellComplexPreflightCache =
+        None;
     planar_arrangement_report_from_graph_with_cell_complex_cache(
         graph,
         left,
@@ -9379,7 +9382,7 @@ fn planar_arrangement_report_from_graph_with_cell_complex_cache(
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
-    arrangement_cell_complex_preflight: &mut Option<Option<ExactBooleanPreflight>>,
+    arrangement_cell_complex_preflight: &mut CertifiedArrangementCellComplexPreflightCache,
 ) -> Result<ExactPlanarArrangementReport, MeshError> {
     let graph_had_unknowns = graph.has_unknowns();
     let counts = retained_graph_counts(graph);
@@ -9511,7 +9514,8 @@ fn winding_readiness_report_from_graph(
     let arrangement_cell_complex_shortcut_support =
         ExactArrangementCellComplexShortcutFacts::from_sources(left, right)
             .certified_support(operation);
-    let mut arrangement_cell_complex_preflight = None;
+    let mut arrangement_cell_complex_preflight: CertifiedArrangementCellComplexPreflightCache =
+        None;
     if operation == ExactBooleanOperation::Difference
         && arrangement_cell_complex_shortcut_support
             != Some(ExactBooleanSupport::CertifiedArrangementCellComplex)
