@@ -229,6 +229,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
         if let Some(result) =
             cached_retained_materialization(&self.materializations, self.left, self.right, request)?
         {
+            self.promote_evaluation_cache_from_materialization(request, &result)?;
             return Ok(result);
         }
         if let Some(evaluation) = self
@@ -243,13 +244,15 @@ impl<'a> ExactBooleanWorkspace<'a> {
                 .map_err(workspace_report_validation_error)?;
             if validate_retained_result_for_request(self.left, self.right, request, result).is_ok()
             {
-                return store_replayable_result_or_return(
+                let result = store_replayable_result_or_return(
                     &mut self.materializations,
                     self.left,
                     self.right,
                     request,
                     result.clone(),
-                );
+                )?;
+                self.promote_evaluation_cache_from_materialization(request, &result)?;
+                return Ok(result);
             }
         }
         let preflight = self.preflight(request)?;
@@ -267,13 +270,15 @@ impl<'a> ExactBooleanWorkspace<'a> {
                 Some(graph),
                 regularized_arrangement,
             )?;
-            return store_replayable_result_or_return(
+            let result = store_replayable_result_or_return(
                 &mut self.materializations,
                 self.left,
                 self.right,
                 request,
                 result,
-            );
+            )?;
+            self.promote_evaluation_cache_from_materialization(request, &result)?;
+            return Ok(result);
         }
         let graph = self
             .graph
@@ -282,13 +287,54 @@ impl<'a> ExactBooleanWorkspace<'a> {
         let result = materialize_boolean_exact_request_from_retained_graph(
             graph, self.left, self.right, request,
         )?;
-        store_replayable_result_or_return(
+        let result = store_replayable_result_or_return(
             &mut self.materializations,
             self.left,
             self.right,
             request,
             result,
-        )
+        )?;
+        self.promote_evaluation_cache_from_materialization(request, &result)?;
+        Ok(result)
+    }
+
+    fn promote_evaluation_cache_from_materialization(
+        &mut self,
+        request: ExactBooleanRequest,
+        result: &ExactBooleanResult,
+    ) -> Result<(), MeshError> {
+        if cached_by_request_index(&self.materializations, request).is_none() {
+            return Ok(());
+        }
+        validate_retained_result_for_request(self.left, self.right, request, result)
+            .map_err(workspace_report_validation_error)?;
+        if let Some(index) = cached_by_request_index(&self.evaluations, request) {
+            let evaluation = &mut self.evaluations[index].1;
+            evaluation
+                .validate()
+                .map_err(workspace_report_validation_error)?;
+            match evaluation.result.as_ref() {
+                Some(existing) if existing == result => Ok(()),
+                Some(_) => Err(workspace_report_validation_error(
+                    ExactReportValidationError::StatusEvidenceMismatch,
+                )),
+                None => {
+                    evaluation.result = Some(result.clone());
+                    evaluation
+                        .validate()
+                        .map_err(workspace_report_validation_error)
+                }
+            }
+        } else {
+            let evaluation = self.evaluate(request)?;
+            if evaluation.result.as_ref() == Some(result) {
+                Ok(())
+            } else {
+                Err(workspace_report_validation_error(
+                    ExactReportValidationError::StatusEvidenceMismatch,
+                ))
+            }
+        }
     }
 }
 
@@ -1150,9 +1196,14 @@ mod tests {
         materialized
             .validate_against_sources(&left, &right)
             .unwrap();
-        assert!(
-            materialize_workspace.evaluations.is_empty(),
-            "first-call materialize should not populate the evaluation cache"
+        assert_eq!(
+            materialize_workspace.evaluations.len(),
+            1,
+            "first-call materialize should promote the evaluation cache"
+        );
+        assert_eq!(
+            materialize_workspace.evaluations[0].1.result.as_ref(),
+            Some(&materialized)
         );
         assert_eq!(materialize_workspace.materializations.len(), 1);
         assert_eq!(
@@ -1419,13 +1470,20 @@ mod tests {
 
         let materialized = workspace.materialize(request).unwrap();
         assert_eq!(workspace.materializations.len(), 1);
+        assert_eq!(workspace.evaluations.len(), 1);
+        assert_eq!(
+            workspace.evaluations[0].1.result.as_ref(),
+            Some(&materialized)
+        );
         let evaluation = workspace.evaluate(request).unwrap().clone();
         assert_eq!(evaluation.result.as_ref(), Some(&materialized));
+        assert_eq!(workspace.evaluations.len(), 1);
         assert_eq!(workspace.materializations.len(), 1);
         evaluation.validate().unwrap();
 
         let mut corrupt_workspace = ExactBooleanWorkspace::new(&left, &right);
         corrupt_workspace.materialize(request).unwrap();
+        corrupt_workspace.evaluations.clear();
         corrupt_workspace.materializations[0].1.graph_had_unknowns =
             !corrupt_workspace.materializations[0].1.graph_had_unknowns;
         assert!(
