@@ -21,6 +21,7 @@ use hyperlimit::{
 };
 
 use super::error::{DiagnosticKind, MeshDiagnostic, MeshError, Severity};
+use super::exact_key::{ExactPoint3Key, exact_point3_key};
 use super::intersection::{
     MeshFacePairClassification, MeshFacePairRelation, classify_mesh_face_pairs,
 };
@@ -2397,7 +2398,7 @@ fn edge_split_plan(graph: &ExactIntersectionGraph) -> ExactEdgeSplitPlan {
 
 fn graph_vertex_plan(split_plan: &ExactEdgeSplitPlan) -> ExactGraphVertexPlan {
     let mut vertices = Vec::<ExactGraphVertex>::new();
-    let mut integer_key_buckets = BTreeMap::<ExactIntegerPointKey, Vec<usize>>::new();
+    let mut point_key_buckets = BTreeMap::<ExactPoint3Key, Vec<usize>>::new();
     let mut unkeyed_vertices = Vec::<usize>::new();
     let mut unresolved_equalities = 0;
 
@@ -2413,12 +2414,12 @@ fn graph_vertex_plan(split_plan: &ExactEdgeSplitPlan) -> ExactGraphVertexPlan {
                 endpoint_sides: point.endpoint_sides,
             };
 
-            let point_key = exact_integer_point_key(&point.point);
+            let point_key = exact_point3_key(&point.point);
             let matched = find_matching_graph_vertex(
                 &point.point,
                 point_key.as_ref(),
                 &vertices,
-                &integer_key_buckets,
+                &point_key_buckets,
                 &unkeyed_vertices,
                 &mut unresolved_equalities,
             );
@@ -2428,7 +2429,7 @@ fn graph_vertex_plan(split_plan: &ExactEdgeSplitPlan) -> ExactGraphVertexPlan {
             } else {
                 let index = vertices.len();
                 if let Some(key) = point_key {
-                    integer_key_buckets.entry(key).or_default().push(index);
+                    point_key_buckets.entry(key).or_default().push(index);
                 } else {
                     unkeyed_vertices.push(index);
                 }
@@ -2446,31 +2447,16 @@ fn graph_vertex_plan(split_plan: &ExactEdgeSplitPlan) -> ExactGraphVertexPlan {
     }
 }
 
-#[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
-struct ExactIntegerPointKey {
-    x: String,
-    y: String,
-    z: String,
-}
-
-fn exact_integer_point_key(point: &Point3) -> Option<ExactIntegerPointKey> {
-    Some(ExactIntegerPointKey {
-        x: point.x.exact_rational_ref()?.to_big_integer()?.to_string(),
-        y: point.y.exact_rational_ref()?.to_big_integer()?.to_string(),
-        z: point.z.exact_rational_ref()?.to_big_integer()?.to_string(),
-    })
-}
-
 fn find_matching_graph_vertex(
     point: &Point3,
-    point_key: Option<&ExactIntegerPointKey>,
+    point_key: Option<&ExactPoint3Key>,
     vertices: &[ExactGraphVertex],
-    integer_key_buckets: &BTreeMap<ExactIntegerPointKey, Vec<usize>>,
+    point_key_buckets: &BTreeMap<ExactPoint3Key, Vec<usize>>,
     unkeyed_vertices: &[usize],
     unresolved_equalities: &mut usize,
 ) -> Option<usize> {
     if let Some(key) = point_key {
-        if let Some(bucket) = integer_key_buckets.get(key) {
+        if let Some(bucket) = point_key_buckets.get(key) {
             if let Some(index) = find_matching_graph_vertex_in_indices(
                 point,
                 vertices,
@@ -2487,7 +2473,7 @@ fn find_matching_graph_vertex(
             unresolved_equalities,
         );
     }
-    for bucket in integer_key_buckets.values() {
+    for bucket in point_key_buckets.values() {
         if let Some(index) =
             find_matching_graph_vertex_in_indices(point, vertices, bucket, unresolved_equalities)
         {
@@ -4584,6 +4570,64 @@ fn projected_points_equal(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn q(numerator: i64, denominator: i64) -> Real {
+        (Real::from(numerator) / &Real::from(denominator)).expect("nonzero denominator")
+    }
+
+    fn rational_p3(x: [i64; 2], y: [i64; 2], z: [i64; 2]) -> Point3 {
+        Point3::new(q(x[0], x[1]), q(y[0], y[1]), q(z[0], z[1]))
+    }
+
+    fn split_point(point: Point3, parameter: Real, face_pair: [usize; 2]) -> EdgeSplitPoint {
+        EdgeSplitPoint {
+            face_pair,
+            plane_face: face_pair[1],
+            parameter: parameter.clone(),
+            parameter_ratio: SegmentPlaneParameterRatio {
+                numerator: parameter,
+                denominator: Real::from(1),
+            },
+            point,
+            endpoint_sides: [Some(PlaneSide::Above), Some(PlaneSide::Below)],
+        }
+    }
+
+    #[test]
+    fn graph_vertex_plan_buckets_exact_rational_points() {
+        let point = rational_p3([1, 2], [-3, 4], [5, 6]);
+        let split_plan = ExactEdgeSplitPlan {
+            splits: vec![
+                EdgeSplit {
+                    side: MeshSide::Left,
+                    edge: [0, 1],
+                    points: vec![split_point(point.clone(), q(1, 3), [0, 0])],
+                },
+                EdgeSplit {
+                    side: MeshSide::Right,
+                    edge: [2, 3],
+                    points: vec![split_point(point, q(2, 3), [1, 1])],
+                },
+                EdgeSplit {
+                    side: MeshSide::Left,
+                    edge: [3, 4],
+                    points: vec![split_point(
+                        rational_p3([2, 3], [-3, 4], [5, 6]),
+                        q(1, 2),
+                        [2, 2],
+                    )],
+                },
+            ],
+            unknown_orderings: 0,
+        };
+
+        let graph_vertices = graph_vertex_plan(&split_plan);
+
+        assert_eq!(graph_vertices.unresolved_equalities, 0);
+        assert_eq!(graph_vertices.vertices.len(), 2);
+        assert_eq!(graph_vertices.vertices[0].uses.len(), 2);
+        assert_eq!(graph_vertices.vertices[1].uses.len(), 1);
+    }
 
     #[test]
     fn graph_unknowns_include_unknown_segment_plane_events() {

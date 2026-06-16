@@ -18,6 +18,7 @@ use super::cell_complex::{
     ExactRegionOwnershipReport, arrangement_cell_complex_labeling_policy, region_ownership_status,
 };
 use super::error::{DiagnosticKind, MeshDiagnostic, MeshError, Severity};
+use super::exact_key::{ExactPoint3Key, exact_point3_key};
 use super::graph::{
     CoplanarEdgeSplitConstruction, CoplanarOverlapGraph, ExactFaceRegionPlan,
     ExactIntersectionGraph, ExactSplitTopologyPlan, FaceRegionBoundary, FaceSplitBoundaryNode,
@@ -1670,7 +1671,7 @@ fn push_arrangement_vertex(
     provenance: ArrangementVertexProvenance,
     blockers: &mut Vec<ExactArrangementBlocker>,
 ) {
-    let point_key = exact_arrangement_integer_point_key(&point);
+    let point_key = exact_point3_key(&point);
     if let Some(existing) = index.find_matching(&point, point_key.as_ref(), vertices, blockers) {
         if !vertices[existing].provenance.contains(&provenance) {
             vertices[existing].provenance.push(provenance);
@@ -1687,14 +1688,14 @@ fn push_arrangement_vertex(
 
 #[derive(Default)]
 struct ArrangementVertexMergeIndex {
-    integer_key_buckets: BTreeMap<ExactArrangementIntegerPointKey, Vec<usize>>,
+    point_key_buckets: BTreeMap<ExactPoint3Key, Vec<usize>>,
     unkeyed_vertices: Vec<usize>,
 }
 
 impl ArrangementVertexMergeIndex {
-    fn insert(&mut self, vertex_index: usize, point_key: Option<ExactArrangementIntegerPointKey>) {
+    fn insert(&mut self, vertex_index: usize, point_key: Option<ExactPoint3Key>) {
         if let Some(key) = point_key {
-            self.integer_key_buckets
+            self.point_key_buckets
                 .entry(key)
                 .or_default()
                 .push(vertex_index);
@@ -1706,12 +1707,12 @@ impl ArrangementVertexMergeIndex {
     fn find_matching(
         &self,
         point: &Point3,
-        point_key: Option<&ExactArrangementIntegerPointKey>,
+        point_key: Option<&ExactPoint3Key>,
         vertices: &[ArrangementVertex],
         blockers: &mut Vec<ExactArrangementBlocker>,
     ) -> Option<usize> {
         if let Some(key) = point_key {
-            if let Some(bucket) = self.integer_key_buckets.get(key)
+            if let Some(bucket) = self.point_key_buckets.get(key)
                 && let Some(index) =
                     find_matching_arrangement_vertex(point, vertices, bucket, blockers)
             {
@@ -1725,7 +1726,7 @@ impl ArrangementVertexMergeIndex {
             );
         }
 
-        for bucket in self.integer_key_buckets.values() {
+        for bucket in self.point_key_buckets.values() {
             if let Some(index) = find_matching_arrangement_vertex(point, vertices, bucket, blockers)
             {
                 return Some(index);
@@ -1733,21 +1734,6 @@ impl ArrangementVertexMergeIndex {
         }
         find_matching_arrangement_vertex(point, vertices, &self.unkeyed_vertices, blockers)
     }
-}
-
-#[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
-struct ExactArrangementIntegerPointKey {
-    x: String,
-    y: String,
-    z: String,
-}
-
-fn exact_arrangement_integer_point_key(point: &Point3) -> Option<ExactArrangementIntegerPointKey> {
-    Some(ExactArrangementIntegerPointKey {
-        x: point.x.exact_rational_ref()?.to_big_integer()?.to_string(),
-        y: point.y.exact_rational_ref()?.to_big_integer()?.to_string(),
-        z: point.z.exact_rational_ref()?.to_big_integer()?.to_string(),
-    })
 }
 
 fn find_matching_arrangement_vertex(
@@ -4767,6 +4753,14 @@ mod tests {
         Point3::new(Real::from(x), Real::from(y), Real::from(z))
     }
 
+    fn q(numerator: i64, denominator: i64) -> Real {
+        (Real::from(numerator) / &Real::from(denominator)).expect("nonzero denominator")
+    }
+
+    fn rational_p3(x: [i64; 2], y: [i64; 2], z: [i64; 2]) -> Point3 {
+        Point3::new(q(x[0], x[1]), q(y[0], y[1]), q(z[0], z[1]))
+    }
+
     fn test_face_cell(face: usize, points: Vec<Point3>) -> ArrangementFaceCell {
         ArrangementFaceCell {
             carrier: ArrangementFaceCarrier {
@@ -4785,6 +4779,49 @@ mod tests {
             boundary_points: points,
             opposite: None,
         }
+    }
+
+    #[test]
+    fn arrangement_vertex_merge_index_buckets_exact_rational_points() {
+        let mut vertices = Vec::new();
+        let mut index = ArrangementVertexMergeIndex::default();
+        let mut blockers = Vec::new();
+        let point = rational_p3([1, 2], [-3, 4], [5, 6]);
+
+        push_arrangement_vertex(
+            &mut vertices,
+            &mut index,
+            point.clone(),
+            ArrangementVertexProvenance::SourceVertex {
+                side: MeshSide::Left,
+                vertex: 0,
+            },
+            &mut blockers,
+        );
+        push_arrangement_vertex(
+            &mut vertices,
+            &mut index,
+            point,
+            ArrangementVertexProvenance::SourceVertex {
+                side: MeshSide::Right,
+                vertex: 1,
+            },
+            &mut blockers,
+        );
+        push_arrangement_vertex(
+            &mut vertices,
+            &mut index,
+            rational_p3([2, 3], [-3, 4], [5, 6]),
+            ArrangementVertexProvenance::GraphIntersection { graph_vertex: 2 },
+            &mut blockers,
+        );
+
+        assert!(blockers.is_empty(), "{blockers:?}");
+        assert_eq!(vertices.len(), 2);
+        assert_eq!(vertices[0].provenance.len(), 2);
+        assert_eq!(vertices[1].provenance.len(), 1);
+        assert_eq!(index.point_key_buckets.len(), 2);
+        assert!(index.unkeyed_vertices.is_empty());
     }
 
     fn tetrahedron_i64(a: [i64; 3], b: [i64; 3], c: [i64; 3], d: [i64; 3]) -> ExactMesh {
