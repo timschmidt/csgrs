@@ -895,16 +895,7 @@ impl ExactBooleanCertificationSet {
         request: ExactBooleanRequest,
     ) -> Result<Self, MeshError> {
         let graph = validated_intersection_graph(left, right)?;
-        Self::from_graph(&graph, left, right, request)
-    }
-
-    pub(crate) fn from_graph(
-        graph: &ExactIntersectionGraph,
-        left: &ExactMesh,
-        right: &ExactMesh,
-        request: ExactBooleanRequest,
-    ) -> Result<Self, MeshError> {
-        Self::from_graph_and_regularized_arrangement(graph, left, right, request, None)
+        Self::from_graph_and_regularized_arrangement(&graph, left, right, request, None)
     }
 
     pub(crate) fn from_graph_and_regularized_arrangement(
