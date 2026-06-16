@@ -354,36 +354,6 @@ impl<'a> ExactBooleanWorkspace<'a> {
             result,
         )
     }
-
-    /// Validate an evaluation against this workspace's source meshes using
-    /// retained graph and arrangement artifacts where they apply.
-    pub fn validate_evaluation(
-        &mut self,
-        evaluation: &ExactBooleanEvaluation,
-    ) -> Result<(), ExactReportValidationError> {
-        self.graph()
-            .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
-        let graph = self
-            .graph
-            .as_ref()
-            .expect("intersection graph cache was just populated");
-        let regularized_arrangement = self.regularized_solid_arrangement();
-        evaluation.validate_against_sources_with_artifacts(
-            self.left,
-            self.right,
-            graph,
-            regularized_arrangement,
-        )
-    }
-
-    /// Classify an evaluation's freshness against this workspace's source
-    /// meshes using the retained replay session.
-    pub fn evaluation_freshness(
-        &mut self,
-        evaluation: &ExactBooleanEvaluation,
-    ) -> ExactReportFreshness {
-        exact_report_freshness(self.validate_evaluation(evaluation))
-    }
 }
 
 fn workspace_arrangement_blocker_error(blocker: ExactArrangementBlocker) -> MeshError {
@@ -1500,20 +1470,20 @@ mod tests {
         workspace.preflight(request).unwrap();
 
         let retained = workspace.evaluate(request).unwrap().clone();
-        workspace.validate_evaluation(&retained).unwrap();
+        retained.validate_against_sources(&left, &right).unwrap();
         assert_eq!(
-            workspace.evaluation_freshness(&retained),
+            retained.freshness_against_sources(&left, &right),
             ExactReportFreshness::Current
         );
 
         let mut stale = retained.clone();
         stale.preflight.retained_events += 1;
         assert_eq!(
-            workspace.validate_evaluation(&stale),
+            stale.validate_against_sources(&left, &right),
             Err(ExactReportValidationError::StatusEvidenceMismatch)
         );
         assert_ne!(
-            workspace.evaluation_freshness(&stale),
+            stale.freshness_against_sources(&left, &right),
             ExactReportFreshness::Current
         );
 
@@ -1536,7 +1506,7 @@ mod tests {
         cached_result.graph_had_unknowns = !cached_result.graph_had_unknowns;
         let corrupted = workspace.evaluations[0].1.clone();
         assert!(
-            workspace.validate_evaluation(&corrupted).is_err(),
+            corrupted.validate_against_sources(&left, &right).is_err(),
             "cached evaluation validation must still enforce local invariants"
         );
         assert!(

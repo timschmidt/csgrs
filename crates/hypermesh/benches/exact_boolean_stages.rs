@@ -677,11 +677,18 @@ fn run_case(case: &BenchCase) {
 
     time_prepared_stage(
         case,
-        "workspace_validate_evaluation_from_retained_artifacts",
+        "evaluation_validate_source_replay",
         || retained_workspace_and_evaluation_for_case(case, request),
         |(retained_workspace, evaluation)| {
             if let Some(evaluation) = evaluation.as_ref() {
-                black_box(retained_workspace.validate_evaluation(evaluation).ok());
+                black_box(
+                    evaluation
+                        .validate_against_sources(
+                            retained_workspace.left(),
+                            retained_workspace.right(),
+                        )
+                        .ok(),
+                );
             }
         },
     );

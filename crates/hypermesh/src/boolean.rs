@@ -1197,30 +1197,6 @@ impl ExactBooleanCertificationSet {
         }
     }
 
-    pub(crate) fn validate_against_sources_with_graph_and_regularized_arrangement(
-        &self,
-        graph: &ExactIntersectionGraph,
-        left: &ExactMesh,
-        right: &ExactMesh,
-        request: ExactBooleanRequest,
-        retained_regularized_arrangement: Option<&ExactArrangement>,
-    ) -> Result<(), ExactReportValidationError> {
-        self.validate_for_request(request)?;
-        let replay = Self::from_graph_and_regularized_arrangement(
-            graph,
-            left,
-            right,
-            request,
-            retained_regularized_arrangement,
-        )
-        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
-        if self == &replay {
-            Ok(())
-        } else {
-            Err(ExactReportValidationError::SourceReplayMismatch)
-        }
-    }
-
     /// Classify whether this retained certification bundle is fresh for the
     /// source meshes and request policy.
     pub fn freshness_against_sources(
@@ -1688,46 +1664,6 @@ impl ExactBooleanEvaluation {
             .validate_against_sources(left, right, self.request)?;
         if let Some(result) = self.result.as_ref() {
             result.validate_operation_against_sources(
-                left,
-                right,
-                self.request.operation,
-                self.request.validation,
-                self.request.boundary_policy,
-            )?;
-        } else if exact_boolean_evaluation_requires_materialized_result(&self.preflight) {
-            return Err(ExactReportValidationError::StatusEvidenceMismatch);
-        }
-        Ok(())
-    }
-
-    pub(crate) fn validate_against_sources_with_artifacts(
-        &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-        graph: &ExactIntersectionGraph,
-        retained_regularized_arrangement: Option<&ExactArrangement>,
-    ) -> Result<(), ExactReportValidationError> {
-        self.validate()?;
-        self.preflight
-            .validate_against_sources_with_boundary_policy(
-                left,
-                right,
-                self.request.validation,
-                self.request.boundary_policy,
-            )?;
-        self.certifications
-            .validate_against_sources_with_graph_and_regularized_arrangement(
-                graph,
-                left,
-                right,
-                self.request,
-                retained_regularized_arrangement,
-            )?;
-        if let Some(result) = self.result.as_ref() {
-            validate_boolean_result_against_sources_with_artifacts(
-                result,
-                graph,
-                retained_regularized_arrangement,
                 left,
                 right,
                 self.request.operation,
@@ -6735,37 +6671,6 @@ fn validate_volumetric_arrangement_result_against_graph(
     } else {
         Err(ExactReportValidationError::SourceReplayMismatch)
     }
-}
-
-pub(crate) fn validate_boolean_result_against_sources_with_artifacts(
-    result: &ExactBooleanResult,
-    graph: &super::graph::ExactIntersectionGraph,
-    retained_regularized_arrangement: Option<&ExactArrangement>,
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: ValidationPolicy,
-    boundary_policy: ExactBoundaryBooleanPolicy,
-) -> Result<(), ExactReportValidationError> {
-    if let ExactBooleanResultKind::ArrangementCellComplexMaterialized {
-        operation: result_operation,
-    } = result.kind
-        && result_operation == operation
-        && !result.volumetric_classifications.is_empty()
-        && validate_volumetric_arrangement_result_against_graph(
-            result,
-            graph,
-            retained_regularized_arrangement,
-            left,
-            right,
-            operation,
-            validation,
-        )
-        .is_ok()
-    {
-        return Ok(());
-    }
-    result.validate_operation_against_sources(left, right, operation, validation, boundary_policy)
 }
 
 fn volumetric_winding_open_boundary_candidate_counts(
