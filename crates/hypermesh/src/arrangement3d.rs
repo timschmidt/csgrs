@@ -124,14 +124,14 @@ pub struct ArrangementFaceCarrier {
     pub triangle: [usize; 3],
 }
 
-/// Winding classification of a face cell against the opposite mesh.
+/// Exact classification of a face cell against the opposite mesh.
 #[derive(Clone, Debug, PartialEq)]
 pub struct ArrangementOppositeClassification {
     /// Exact representative point used for the winding query.
     pub representative: Point3,
     /// Winding report against the opposite mesh.
     pub winding: PointMeshWindingReport,
-    /// Exact convex-solid classification retained when winding cannot decide.
+    /// Exact convex-solid classification retained when it certifies a relation.
     pub convex_fallback: Option<ConvexSolidPointClassification>,
 }
 
@@ -4899,17 +4899,13 @@ fn classify_opposite(
         MeshSide::Left => right,
         MeshSide::Right => left,
     };
-    let winding = classify_point_against_closed_mesh_winding_report(&point, target);
-    let convex_certification = if matches!(winding.relation, ClosedMeshWindingRelation::Unknown) {
-        let classification = classify_point_against_convex_solid_report(&point, target);
-        if certified_convex_point_relation(classification.relation).is_some() {
-            Some(classification)
-        } else {
-            None
-        }
+    let convex = classify_point_against_convex_solid_report(&point, target);
+    let convex_certification = if certified_convex_point_relation(convex.relation).is_some() {
+        Some(convex)
     } else {
         None
     };
+    let winding = classify_point_against_closed_mesh_winding_report(&point, target);
     if matches!(
         winding.relation,
         ClosedMeshWindingRelation::Unknown | ClosedMeshWindingRelation::NotClosed

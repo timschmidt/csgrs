@@ -6,10 +6,10 @@
 //! triangulation policy.
 
 use super::arrangement3d::{
-    ArrangementFaceCell, ArrangementLowerDimensionalArtifact, ArrangementVolumeAdjacency,
-    ArrangementVolumeRegion, ExactArrangement, ExactArrangement3d, ExactTopologyAssemblyReport,
-    exact_node_loops_equivalent, lower_dimensional_artifact_counts, sorted_unique_usize_set,
-    validate_arrangement_face_cell, validate_lower_dimensional_artifacts,
+    ArrangementFaceCell, ArrangementLowerDimensionalArtifact, ArrangementOppositeClassification,
+    ArrangementVolumeAdjacency, ArrangementVolumeRegion, ExactArrangement, ExactArrangement3d,
+    ExactTopologyAssemblyReport, exact_node_loops_equivalent, lower_dimensional_artifact_counts,
+    sorted_unique_usize_set, validate_arrangement_face_cell, validate_lower_dimensional_artifacts,
 };
 use super::boolean::ExactBooleanOperation;
 use super::graph::MeshSide;
@@ -19,7 +19,6 @@ use super::regularization::{
 };
 use super::simplify::{ExactSimplifiedCellComplex, simplify_selected_cell_complex};
 use super::solid::ConvexSolidPointRelation;
-use super::winding::ClosedMeshWindingRelation;
 
 /// Region label for one arrangement face-cell.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -1310,30 +1309,32 @@ fn label_face_cell(cell: ArrangementFaceCell) -> ExactCellComplexFace {
         MeshSide::Left => ExactCellRegionLabel::LeftBoundary,
         MeshSide::Right => ExactCellRegionLabel::RightBoundary,
     };
-    let opposite = match cell.opposite.as_ref() {
-        None => ExactOppositeRegionLabel::Unknown,
-        Some(opposite) => match opposite.winding.relation {
-            ClosedMeshWindingRelation::Inside => ExactOppositeRegionLabel::Inside,
-            ClosedMeshWindingRelation::Outside => ExactOppositeRegionLabel::Outside,
-            ClosedMeshWindingRelation::Boundary => ExactOppositeRegionLabel::Boundary,
-            ClosedMeshWindingRelation::Unknown | ClosedMeshWindingRelation::NotClosed => {
-                match opposite.convex_certified_relation() {
-                    Some(ConvexSolidPointRelation::Inside) => ExactOppositeRegionLabel::Inside,
-                    Some(ConvexSolidPointRelation::Outside) => ExactOppositeRegionLabel::Outside,
-                    Some(ConvexSolidPointRelation::Boundary) => ExactOppositeRegionLabel::Boundary,
-                    Some(
-                        ConvexSolidPointRelation::Unknown
-                        | ConvexSolidPointRelation::NotCertifiedConvex,
-                    )
-                    | None => ExactOppositeRegionLabel::Unknown,
-                }
-            }
-        },
-    };
+    let opposite = cell
+        .opposite
+        .as_ref()
+        .map(opposite_region_label)
+        .unwrap_or(ExactOppositeRegionLabel::Unknown);
     ExactCellComplexFace {
         cell,
         source,
         opposite,
+    }
+}
+
+fn opposite_region_label(opposite: &ArrangementOppositeClassification) -> ExactOppositeRegionLabel {
+    match opposite.convex_certified_relation() {
+        Some(ConvexSolidPointRelation::Inside) => return ExactOppositeRegionLabel::Inside,
+        Some(ConvexSolidPointRelation::Outside) => return ExactOppositeRegionLabel::Outside,
+        Some(ConvexSolidPointRelation::Boundary) => return ExactOppositeRegionLabel::Boundary,
+        Some(ConvexSolidPointRelation::Unknown | ConvexSolidPointRelation::NotCertifiedConvex)
+        | None => {}
+    }
+    match opposite.winding.relation {
+        super::winding::ClosedMeshWindingRelation::Inside => ExactOppositeRegionLabel::Inside,
+        super::winding::ClosedMeshWindingRelation::Outside => ExactOppositeRegionLabel::Outside,
+        super::winding::ClosedMeshWindingRelation::Boundary => ExactOppositeRegionLabel::Boundary,
+        super::winding::ClosedMeshWindingRelation::Unknown
+        | super::winding::ClosedMeshWindingRelation::NotClosed => ExactOppositeRegionLabel::Unknown,
     }
 }
 
@@ -1665,7 +1666,7 @@ mod tests {
     use crate::mesh::ExactMesh;
     use crate::region::ExactRegionSelection;
     use crate::solid::ConvexSolidPointClassification;
-    use crate::winding::PointMeshWindingReport;
+    use crate::winding::{ClosedMeshWindingRelation, PointMeshWindingReport};
     use hyperlimit::Point3;
     use hyperreal::Real;
 
@@ -1876,6 +1877,30 @@ mod tests {
                 Some(convex),
             ));
             assert_eq!(face.opposite, expected, "{convex:?}");
+        }
+    }
+
+    #[test]
+    fn label_face_cell_prefers_certified_convex_relation_over_winding() {
+        for (winding, convex, expected) in [
+            (
+                ClosedMeshWindingRelation::Inside,
+                ConvexSolidPointRelation::Outside,
+                ExactOppositeRegionLabel::Outside,
+            ),
+            (
+                ClosedMeshWindingRelation::Outside,
+                ConvexSolidPointRelation::Inside,
+                ExactOppositeRegionLabel::Inside,
+            ),
+            (
+                ClosedMeshWindingRelation::Inside,
+                ConvexSolidPointRelation::Boundary,
+                ExactOppositeRegionLabel::Boundary,
+            ),
+        ] {
+            let face = label_face_cell(face_with_opposite(winding, Some(convex)));
+            assert_eq!(face.opposite, expected, "{winding:?} {convex:?}");
         }
     }
 
