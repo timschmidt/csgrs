@@ -428,6 +428,47 @@ pub fn build_exact_arrangement2d_overlay_with_boundary_policy(
 ) -> ExactArrangement2dOverlay {
     let mut blockers = Vec::new();
     let normalized = normalize_region_rings(rings, &mut blockers);
+    build_exact_arrangement2d_overlay_from_normalized(
+        normalized,
+        blockers,
+        boundary_policy,
+        |arrangement, normalized, blockers| {
+            classify_overlay_faces(arrangement, normalized, operation, blockers)
+        },
+    )
+}
+
+pub(crate) fn build_exact_arrangement2d_ring_union_overlay_with_boundary_policy(
+    rings: &[Vec<Point2>],
+    boundary_policy: ExactArrangement2dBoundaryPolicy,
+) -> ExactArrangement2dOverlay {
+    let region_rings = rings
+        .iter()
+        .map(|ring| ExactArrangement2dRegionRing::new(ExactArrangement2dRegion::Left, ring.clone()))
+        .collect::<Vec<_>>();
+    let mut blockers = Vec::new();
+    let normalized = normalize_region_rings(&region_rings, &mut blockers);
+    build_exact_arrangement2d_overlay_from_normalized(
+        normalized,
+        blockers,
+        boundary_policy,
+        classify_ring_union_overlay_faces,
+    )
+}
+
+fn build_exact_arrangement2d_overlay_from_normalized<F>(
+    normalized: Vec<NormalizedRegionRing>,
+    mut blockers: Vec<ExactArrangement2dBlocker>,
+    boundary_policy: ExactArrangement2dBoundaryPolicy,
+    classify_faces: F,
+) -> ExactArrangement2dOverlay
+where
+    F: FnOnce(
+        &ExactArrangement2d,
+        &[NormalizedRegionRing],
+        &mut Vec<ExactArrangement2dBlocker>,
+    ) -> Vec<ExactArrangement2dOverlayFace>,
+{
     let segments = arrangement_segments_from_rings(&normalized);
     let arrangement = build_exact_arrangement2d(&segments);
     blockers.extend(arrangement.blockers.iter().cloned());
@@ -442,7 +483,7 @@ pub fn build_exact_arrangement2d_overlay_with_boundary_policy(
         };
     }
 
-    let faces = classify_overlay_faces(&arrangement, &normalized, operation, &mut blockers);
+    let faces = classify_faces(&arrangement, &normalized, &mut blockers);
     let mut output_loops = if blockers.is_empty() {
         let mut loops = selected_output_loops(&arrangement, &faces, boundary_policy, &mut blockers);
         append_nested_unselected_hole_loops(
@@ -611,6 +652,31 @@ fn classify_overlay_faces(
     overlay_faces
 }
 
+fn classify_ring_union_overlay_faces(
+    arrangement: &ExactArrangement2d,
+    rings: &[NormalizedRegionRing],
+    blockers: &mut Vec<ExactArrangement2dBlocker>,
+) -> Vec<ExactArrangement2dOverlayFace> {
+    let mut overlay_faces = Vec::new();
+    for face_index in 0..arrangement.faces.len() {
+        let Some(witness) = face_interior_witness(face_index, arrangement, blockers) else {
+            blockers.push(ExactArrangement2dBlocker::UnresolvedFaceWitness { face: face_index });
+            continue;
+        };
+        let Some(selected) = point_in_any_ring(rings, face_index, &witness, blockers) else {
+            continue;
+        };
+        overlay_faces.push(ExactArrangement2dOverlayFace {
+            face: face_index,
+            witness,
+            in_left: selected,
+            in_right: false,
+            selected,
+        });
+    }
+    overlay_faces
+}
+
 fn point_in_region(
     rings: &[NormalizedRegionRing],
     region: ExactArrangement2dRegion,
@@ -642,6 +708,38 @@ fn point_in_region(
         }
     }
     Some(inside)
+}
+
+fn point_in_any_ring(
+    rings: &[NormalizedRegionRing],
+    face: usize,
+    point: &Point2,
+    blockers: &mut Vec<ExactArrangement2dBlocker>,
+) -> Option<bool> {
+    let mut inside_any = false;
+    for ring in rings {
+        match classify_point_ring_even_odd(&ring.vertices, point).value() {
+            Some(RingPointLocation::Inside) => inside_any = true,
+            Some(RingPointLocation::Outside) => {}
+            Some(RingPointLocation::Boundary) => {
+                blockers.push(ExactArrangement2dBlocker::FaceWitnessOnBoundary {
+                    face,
+                    region: ring.region,
+                    ring: ring.ring,
+                });
+                return None;
+            }
+            None => {
+                blockers.push(ExactArrangement2dBlocker::UnresolvedRingClassification {
+                    face,
+                    region: ring.region,
+                    ring: ring.ring,
+                });
+                return None;
+            }
+        }
+    }
+    Some(inside_any)
 }
 
 fn add_pair_intersections(

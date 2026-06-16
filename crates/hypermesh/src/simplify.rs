@@ -2858,7 +2858,7 @@ mod tests {
     }
 
     #[test]
-    fn triangulation_rejects_overlapping_same_depth_loops() {
+    fn triangulation_unions_overlapping_same_depth_loops_via_arrangement() {
         let left = [p(0, 0, 0), p(4, 0, 0), p(4, 4, 0), p(0, 4, 0)];
         let right = [p(2, 1, 0), p(6, 1, 0), p(6, 3, 0), p(2, 3, 0)];
         let selected = ExactSelectedCellComplex {
@@ -2882,9 +2882,13 @@ mod tests {
             simplify_selected_cell_complex(selected, ExactRegularizationPolicy::REGULARIZED_SOLID)
                 .unwrap();
 
-        assert_eq!(
-            simplified.triangulate(),
-            Err(ExactArrangementBlocker::NonManifoldCellComplex)
+        let mesh = simplified.triangulate().unwrap();
+        assert!(!mesh.triangles().is_empty());
+        let area = mesh_projected_area2(&mesh, CoplanarProjection::Xy);
+        assert!(
+            compare_reals(&area, &Real::from(40)).value() == Some(Ordering::Equal)
+                || compare_reals(&area, &Real::from(-40)).value() == Some(Ordering::Equal),
+            "{area:?}"
         );
     }
 

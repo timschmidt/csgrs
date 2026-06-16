@@ -19,6 +19,7 @@ use super::arrangement2d::{
     ExactArrangement2dBlocker, ExactArrangement2dBoundaryPolicy, ExactArrangement2dRegion,
     ExactArrangement2dRegionRing, ExactArrangement2dSetOperation,
     build_exact_arrangement2d_overlay_with_boundary_policy,
+    build_exact_arrangement2d_ring_union_overlay_with_boundary_policy,
 };
 use super::exact_key::{ExactPoint3Key, exact_point3_key};
 use super::mesh::Triangle;
@@ -579,57 +580,8 @@ fn triangulate_loop_group_union_via_arrangement_or_error(
     triangles: &mut Vec<Triangle>,
     error: ExactArrangementBlocker,
 ) -> Result<(), ExactArrangementBlocker> {
-    if loop_boundaries_have_proper_crossing(loops)? {
-        return Err(error);
-    }
     triangulate_loop_group_union_via_arrangement(loops, vertices, vertex_index, triangles)
         .or(Err(error))
-}
-
-fn loop_boundaries_have_proper_crossing(
-    loops: &[ProjectedFaceLoop],
-) -> Result<bool, ExactArrangementBlocker> {
-    for left_index in 0..loops.len() {
-        for right_index in (left_index + 1)..loops.len() {
-            if loop_pair_boundaries_have_proper_crossing(
-                &loops[left_index].projected,
-                &loops[right_index].projected,
-            )? {
-                return Ok(true);
-            }
-        }
-    }
-    Ok(false)
-}
-
-fn loop_pair_boundaries_have_proper_crossing(
-    left: &[Point2],
-    right: &[Point2],
-) -> Result<bool, ExactArrangementBlocker> {
-    for left_index in 0..left.len() {
-        let left_next = (left_index + 1) % left.len();
-        for right_index in 0..right.len() {
-            let right_next = (right_index + 1) % right.len();
-            match classify_segment_intersection(
-                &left[left_index],
-                &left[left_next],
-                &right[right_index],
-                &right[right_next],
-            )
-            .value()
-            {
-                Some(
-                    SegmentIntersection::Disjoint
-                    | SegmentIntersection::EndpointTouch
-                    | SegmentIntersection::CollinearOverlap
-                    | SegmentIntersection::Identical,
-                ) => {}
-                Some(SegmentIntersection::Proper) => return Ok(true),
-                None => return Err(ExactArrangementBlocker::UndecidableOrdering),
-            }
-        }
-    }
-    Ok(false)
 }
 
 fn triangulate_loop_group_union_via_arrangement(
@@ -644,13 +596,49 @@ fn triangulate_loop_group_union_via_arrangement(
     let projection = loops[0].projection;
     let output_orientation = projected_loop_orientation(&loops[0].boundary, projection)?;
     let loop_indices = (0..loops.len()).collect::<Vec<_>>();
-    triangulate_projected_loop_indices_via_arrangement(
+    triangulate_projected_loop_indices_via_ring_union_arrangement(
         loops,
         &loop_indices,
         vertices,
         vertex_index,
         triangles,
         output_orientation,
+    )
+}
+
+fn triangulate_projected_loop_indices_via_ring_union_arrangement(
+    loops: &[ProjectedFaceLoop],
+    loop_indices: &[usize],
+    vertices: &mut Vec<Point3>,
+    vertex_index: &mut ExactVertexInsertIndex,
+    triangles: &mut Vec<Triangle>,
+    output_orientation: Ordering,
+) -> Result<(), ExactArrangementBlocker> {
+    let first = *loop_indices
+        .first()
+        .ok_or(ExactArrangementBlocker::NonManifoldCellComplex)?;
+    let projection = loops[first].projection;
+    let carrier = carrier_triangle_for_projection(&loops[first].boundary, projection)?;
+    let mut rings = Vec::with_capacity(loop_indices.len());
+    for &loop_index in loop_indices {
+        if loops[loop_index].projection != projection {
+            return Err(ExactArrangementBlocker::NonManifoldCellComplex);
+        }
+        rings.push(loops[loop_index].projected.clone());
+    }
+
+    let overlay = build_exact_arrangement2d_ring_union_overlay_with_boundary_policy(
+        &rings,
+        ExactArrangement2dBoundaryPolicy::PreserveCollinear,
+    );
+    triangulate_selected_overlay_faces(
+        &overlay,
+        &carrier,
+        projection,
+        output_orientation,
+        vertices,
+        vertex_index,
+        triangles,
     )
 }
 
@@ -683,6 +671,26 @@ fn triangulate_projected_loop_indices_via_arrangement(
         ExactArrangement2dSetOperation::Union,
         ExactArrangement2dBoundaryPolicy::PreserveCollinear,
     );
+    triangulate_selected_overlay_faces(
+        &overlay,
+        &carrier,
+        projection,
+        output_orientation,
+        vertices,
+        vertex_index,
+        triangles,
+    )
+}
+
+fn triangulate_selected_overlay_faces(
+    overlay: &super::arrangement2d::ExactArrangement2dOverlay,
+    carrier: &[Point3; 3],
+    projection: CoplanarProjection,
+    output_orientation: Ordering,
+    vertices: &mut Vec<Point3>,
+    vertex_index: &mut ExactVertexInsertIndex,
+    triangles: &mut Vec<Triangle>,
+) -> Result<(), ExactArrangementBlocker> {
     if !overlay.is_complete() {
         return Err(map_arrangement2d_blocker(
             overlay
@@ -1104,6 +1112,28 @@ mod tests {
         Point3::new(q(x[0], x[1]), q(y[0], y[1]), q(z[0], z[1]))
     }
 
+    fn triangle_area2(
+        vertices: &[Point3],
+        triangles: &[Triangle],
+        projection: CoplanarProjection,
+    ) -> Real {
+        let mut area = Real::from(0);
+        for triangle in triangles {
+            let points = [
+                vertices[triangle.0[0]].clone(),
+                vertices[triangle.0[1]].clone(),
+                vertices[triangle.0[2]].clone(),
+            ];
+            area += &projected_polygon_area2_value(&points, projection);
+        }
+        area
+    }
+
+    fn area_magnitude_eq(area: &Real, expected: i64) -> bool {
+        compare_reals(area, &Real::from(expected)).value() == Some(Ordering::Equal)
+            || compare_reals(area, &Real::from(-expected)).value() == Some(Ordering::Equal)
+    }
+
     #[test]
     fn vertex_insert_index_buckets_exact_rational_points() {
         let mut vertices = Vec::new();
@@ -1144,6 +1174,34 @@ mod tests {
             vertices
                 .iter()
                 .any(|vertex| { point3_equal(vertex, &p(3, 3, 0)).value() == Some(true) })
+        );
+    }
+
+    #[test]
+    fn triangulates_proper_crossing_same_depth_loops_via_arrangement_union() {
+        let loops = vec![
+            vec![p(0, 0, 0), p(4, 0, 0), p(4, 4, 0), p(0, 4, 0)],
+            vec![p(2, 1, 0), p(6, 1, 0), p(6, 3, 0), p(2, 3, 0)],
+        ];
+
+        let mut vertices = Vec::new();
+        let mut triangles = Vec::new();
+        triangulate_exact_loop_group(&loops, &mut vertices, &mut triangles).unwrap();
+
+        assert!(!triangles.is_empty());
+        assert!(area_magnitude_eq(
+            &triangle_area2(&vertices, &triangles, CoplanarProjection::Xy),
+            40
+        ));
+        assert!(
+            vertices
+                .iter()
+                .any(|vertex| { point3_equal(vertex, &p(4, 1, 0)).value() == Some(true) })
+        );
+        assert!(
+            vertices
+                .iter()
+                .any(|vertex| { point3_equal(vertex, &p(4, 3, 0)).value() == Some(true) })
         );
     }
 
