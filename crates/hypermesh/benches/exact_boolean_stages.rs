@@ -363,7 +363,7 @@ fn run_case(case: &BenchCase) {
     workspace
         .topology_assembly_report(case.regularization)
         .unwrap();
-    time_stage(case, "workspace_topology_assembly_report_cached", || {
+    time_stage(case, "workspace_topology_assembly_report_derived", || {
         let report = workspace
             .topology_assembly_report(case.regularization)
             .unwrap();
@@ -401,7 +401,7 @@ fn run_case(case: &BenchCase) {
     workspace
         .region_ownership_report(case.regularization)
         .unwrap();
-    time_stage(case, "workspace_region_ownership_report_cached", || {
+    time_stage(case, "workspace_region_ownership_report_derived", || {
         let report = workspace
             .region_ownership_report(case.regularization)
             .unwrap();
@@ -579,7 +579,7 @@ fn run_case(case: &BenchCase) {
     );
 
     workspace.preflight(request).unwrap();
-    time_stage(case, "workspace_preflight_cached", || {
+    time_stage(case, "workspace_preflight_derived", || {
         black_box(workspace.preflight(request).unwrap());
     });
 
@@ -602,8 +602,8 @@ fn run_case(case: &BenchCase) {
         || retained_workspace_and_refinement_for_case(case, request),
         |(retained_workspace, report)| {
             black_box(
-                retained_workspace
-                    .validate_refinement_report(request, report)
+                report
+                    .validate_against_sources(retained_workspace.left(), retained_workspace.right())
                     .ok(),
             );
         },
@@ -615,8 +615,8 @@ fn run_case(case: &BenchCase) {
         || retained_workspace_and_adjacent_union_for_case(case, request),
         |(retained_workspace, report)| {
             black_box(
-                retained_workspace
-                    .validate_adjacent_union_completion_report(request, report)
+                report
+                    .validate_against_sources(retained_workspace.left(), retained_workspace.right())
                     .ok(),
             );
         },
@@ -680,8 +680,8 @@ fn run_case(case: &BenchCase) {
         || retained_workspace_and_volumetric_boundary_closure_for_case(case, request),
         |(retained_workspace, report)| {
             black_box(
-                retained_workspace
-                    .validate_volumetric_boundary_closure(request, report)
+                report
+                    .validate_against_sources(retained_workspace.left(), retained_workspace.right())
                     .ok(),
             );
         },
@@ -693,8 +693,13 @@ fn run_case(case: &BenchCase) {
         || retained_workspace_and_winding_readiness_for_case(case, request),
         |(retained_workspace, readiness)| {
             black_box(
-                retained_workspace
-                    .validate_winding_readiness(request, readiness)
+                readiness
+                    .validate_against_sources_with_boundary_policy(
+                        retained_workspace.left(),
+                        retained_workspace.right(),
+                        request.validation,
+                        request.boundary_policy,
+                    )
                     .ok(),
             );
         },
@@ -706,8 +711,8 @@ fn run_case(case: &BenchCase) {
         || retained_workspace_and_planar_arrangement_for_case(case, request),
         |(retained_workspace, report)| {
             black_box(
-                retained_workspace
-                    .validate_planar_arrangement_report(request, report)
+                report
+                    .validate_against_sources(retained_workspace.left(), retained_workspace.right())
                     .ok(),
             );
         },
@@ -818,7 +823,7 @@ fn retained_workspace_and_preflight_for_case<'a>(
     request: ExactBooleanRequest,
 ) -> (ExactBooleanWorkspace<'a>, ExactBooleanPreflight) {
     let mut retained_workspace = retained_workspace_for_case(case, request);
-    let preflight = retained_workspace.preflight(request).unwrap().clone();
+    let preflight = retained_workspace.preflight(request).unwrap();
     (retained_workspace, preflight)
 }
 
@@ -843,8 +848,9 @@ fn retained_workspace_and_refinement_for_case<'a>(
 ) -> (ExactBooleanWorkspace<'a>, ExactRefinementReport) {
     let mut retained_workspace = retained_workspace_for_case(case, request);
     let report = retained_workspace
-        .refinement_report(request)
+        .certification_set(request)
         .unwrap()
+        .refinement
         .clone();
     (retained_workspace, report)
 }
@@ -858,8 +864,9 @@ fn retained_workspace_and_adjacent_union_for_case<'a>(
 ) {
     let mut retained_workspace = retained_workspace_for_case(case, request);
     let report = retained_workspace
-        .adjacent_union_completion_report(request)
+        .certification_set(request)
         .unwrap()
+        .adjacent_union_completion
         .clone();
     (retained_workspace, report)
 }
@@ -868,8 +875,12 @@ fn retained_workspace_and_identical_mesh_for_case<'a>(
     case: &'a BenchCase,
     request: ExactBooleanRequest,
 ) -> (ExactBooleanWorkspace<'a>, ExactIdenticalMeshReport) {
-    let retained_workspace = retained_workspace_for_case(case, request);
-    let report = request.identical_mesh_report(&case.left, &case.right);
+    let mut retained_workspace = retained_workspace_for_case(case, request);
+    let report = retained_workspace
+        .certification_set(request)
+        .unwrap()
+        .identical
+        .clone();
     (retained_workspace, report)
 }
 
@@ -877,8 +888,12 @@ fn retained_workspace_and_same_surface_for_case<'a>(
     case: &'a BenchCase,
     request: ExactBooleanRequest,
 ) -> (ExactBooleanWorkspace<'a>, ExactSameSurfaceReport) {
-    let retained_workspace = retained_workspace_for_case(case, request);
-    let report = request.same_surface_report(&case.left, &case.right);
+    let mut retained_workspace = retained_workspace_for_case(case, request);
+    let report = retained_workspace
+        .certification_set(request)
+        .unwrap()
+        .same_surface
+        .clone();
     (retained_workspace, report)
 }
 
@@ -888,8 +903,9 @@ fn retained_workspace_and_boundary_touching_for_case<'a>(
 ) -> (ExactBooleanWorkspace<'a>, ExactBoundaryTouchingReport) {
     let mut retained_workspace = retained_workspace_for_case(case, request);
     let report = retained_workspace
-        .boundary_touching_report(request)
+        .certification_set(request)
         .unwrap()
+        .boundary_touching
         .clone();
     (retained_workspace, report)
 }
@@ -900,8 +916,9 @@ fn retained_workspace_and_open_surface_disjoint_for_case<'a>(
 ) -> (ExactBooleanWorkspace<'a>, ExactOpenSurfaceDisjointReport) {
     let mut retained_workspace = retained_workspace_for_case(case, request);
     let report = retained_workspace
-        .open_surface_disjoint_report(request)
+        .certification_set(request)
         .unwrap()
+        .open_surface_disjoint
         .clone();
     (retained_workspace, report)
 }
@@ -915,9 +932,11 @@ fn retained_workspace_and_volumetric_boundary_closure_for_case<'a>(
 ) {
     let mut retained_workspace = retained_workspace_for_case(case, request);
     let report = retained_workspace
-        .volumetric_boundary_closure(request)
+        .certification_set(request)
         .unwrap()
-        .clone();
+        .volumetric_boundary_closure
+        .clone()
+        .unwrap();
     (retained_workspace, report)
 }
 
@@ -927,8 +946,9 @@ fn retained_workspace_and_winding_readiness_for_case<'a>(
 ) -> (ExactBooleanWorkspace<'a>, ExactWindingReadinessReport) {
     let mut retained_workspace = retained_workspace_for_case(case, request);
     let readiness = retained_workspace
-        .winding_readiness(request)
+        .certification_set(request)
         .unwrap()
+        .winding_readiness
         .clone();
     (retained_workspace, readiness)
 }
@@ -939,8 +959,9 @@ fn retained_workspace_and_planar_arrangement_for_case<'a>(
 ) -> (ExactBooleanWorkspace<'a>, ExactPlanarArrangementReport) {
     let mut retained_workspace = retained_workspace_for_case(case, request);
     let report = retained_workspace
-        .planar_arrangement_report(request)
+        .certification_set(request)
         .unwrap()
+        .planar_arrangement
         .clone();
     (retained_workspace, report)
 }
@@ -999,8 +1020,7 @@ fn retained_workspace_and_region_ownership_for_case<'a>(
     );
     let report = retained_workspace
         .region_ownership_report(case.regularization)
-        .unwrap()
-        .clone();
+        .unwrap();
     (retained_workspace, report)
 }
 
@@ -1016,8 +1036,7 @@ fn retained_workspace_and_topology_for_case<'a>(
     );
     let report = retained_workspace
         .topology_assembly_report(case.regularization)
-        .unwrap()
-        .clone();
+        .unwrap();
     (retained_workspace, report)
 }
 

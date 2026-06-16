@@ -19,7 +19,9 @@ use super::cell_complex::{
     validate_selected_gate_reports, validate_selected_gate_reports_against_counts,
     validate_volume_adjacency_face_provenance,
 };
-use super::loop_triangulation::{choose_polygon_projection, triangulate_exact_loop_group};
+use super::loop_triangulation::{
+    choose_polygon_projection, group_exact_coplanar_loops, triangulate_exact_loop_group,
+};
 use super::mesh::{ExactMesh, Triangle};
 use super::regularization::{ExactArrangementBlocker, ExactRegularizationPolicy};
 use super::validation::ValidationPolicy;
@@ -27,8 +29,8 @@ use super::view::{ApproximateMeshF64View, approximate_mesh_f64_view};
 use hyperlimit::CoplanarProjection;
 use hyperlimit::{ApproximationPolicy, SourceProvenance};
 use hyperlimit::{
-    Point3, Sign, compare_reals, orient2d_report, orient3d_report, point3_equal, project_point3,
-    projected_polygon_area2_value,
+    Point3, Sign, compare_reals, orient2d_report, orient3d_report, point_on_segment3, point3_equal,
+    project_point3, projected_polygon_area2_value,
 };
 use hyperreal::Real;
 
@@ -74,7 +76,7 @@ pub struct ExactSimplifiedCellComplex {
     pub collinear_boundary_nodes_removed: usize,
     /// Number of zero-area selected cells dissolved.
     pub zero_area_cells_removed: usize,
-    /// Number of exact internal edges removed between same-label cells.
+    /// Number of exact internal edges removed between compatible selected cells.
     pub interior_edges_removed: usize,
     /// Blockers inherited or introduced during simplification.
     pub blockers: Vec<ExactArrangementBlocker>,
@@ -408,6 +410,10 @@ pub fn simplify_selected_cell_complex(
         require_volume_orientations,
         &mut blockers,
     );
+    let remove_collinear_nodes = matches!(
+        selected.operation,
+        ExactBooleanOperation::SelectedRegions(_)
+    );
     let selected_face_set = retained_selected_face_membership(
         selected.faces.len(),
         &selected.selected_faces,
@@ -448,8 +454,10 @@ pub fn simplify_selected_cell_complex(
             }
         }
         duplicate_boundary_nodes_removed += remove_consecutive_duplicate_nodes(&mut face);
-        collinear_boundary_nodes_removed +=
-            remove_collinear_boundary_nodes(&mut face, &mut blockers);
+        if remove_collinear_nodes {
+            collinear_boundary_nodes_removed +=
+                remove_collinear_boundary_nodes(&mut face, &mut blockers);
+        }
         if face.cell.boundary.len() < 3 {
             blockers.push(ExactArrangementBlocker::NonManifoldCellComplex);
             continue;
@@ -489,16 +497,31 @@ pub fn simplify_selected_cell_complex(
         faces.push(ExactSimplifiedFaceCell { source_face, face });
     }
 
-    let merged = merge_same_label_adjacent_faces(faces, &mut blockers);
+    let merged = merge_same_label_adjacent_faces(faces, &mut blockers, remove_collinear_nodes);
     let mut faces = merged.faces;
     interior_edges_removed += merged.interior_edges_removed;
     collinear_boundary_nodes_removed += merged.collinear_boundary_nodes_removed;
     zero_area_cells_removed += merged.zero_area_cells_removed;
-    let merged = merge_coplanar_same_label_faces_across_carriers(faces, &mut blockers);
+    let merged = merge_coplanar_same_label_faces_across_carriers(
+        faces,
+        &mut blockers,
+        remove_collinear_nodes,
+    );
     faces = merged.faces;
     interior_edges_removed += merged.interior_edges_removed;
     collinear_boundary_nodes_removed += merged.collinear_boundary_nodes_removed;
     zero_area_cells_removed += merged.zero_area_cells_removed;
+    if !matches!(
+        selected.operation,
+        ExactBooleanOperation::SelectedRegions(_)
+    ) {
+        let merged =
+            merge_coplanar_selected_output_faces(faces, &mut blockers, remove_collinear_nodes);
+        faces = merged.faces;
+        interior_edges_removed += merged.interior_edges_removed;
+        collinear_boundary_nodes_removed += merged.collinear_boundary_nodes_removed;
+        zero_area_cells_removed += merged.zero_area_cells_removed;
+    }
 
     faces.sort_by_key(simplified_sort_key);
 
@@ -563,6 +586,7 @@ struct MergeSameLabelResult {
 fn merge_same_label_adjacent_faces(
     faces: Vec<ExactSimplifiedFaceCell>,
     blockers: &mut Vec<ExactArrangementBlocker>,
+    remove_collinear_nodes: bool,
 ) -> MergeSameLabelResult {
     let mut groups = std::collections::BTreeMap::<_, Vec<ExactSimplifiedFaceCell>>::new();
     for face in faces {
@@ -585,8 +609,10 @@ fn merge_same_label_adjacent_faces(
             Ok((mut merged, removed)) if removed > 0 => {
                 interior_edges_removed += removed;
                 for mut face in merged.drain(..) {
-                    collinear_boundary_nodes_removed +=
-                        remove_collinear_boundary_nodes(&mut face.face, blockers);
+                    if remove_collinear_nodes {
+                        collinear_boundary_nodes_removed +=
+                            remove_collinear_boundary_nodes(&mut face.face, blockers);
+                    }
                     match boundary_has_nonzero_area(&face.face.cell.boundary_points) {
                         Ok(true) => {
                             canonicalize_boundary_start(&mut face.face);
@@ -633,6 +659,7 @@ fn simplified_label_key(face: &ExactSimplifiedFaceCell) -> (usize, usize, usize)
 fn merge_coplanar_same_label_faces_across_carriers(
     mut faces: Vec<ExactSimplifiedFaceCell>,
     blockers: &mut Vec<ExactArrangementBlocker>,
+    remove_collinear_nodes: bool,
 ) -> MergeSameLabelResult {
     let mut interior_edges_removed = 0;
     let mut collinear_boundary_nodes_removed = 0;
@@ -661,8 +688,70 @@ fn merge_coplanar_same_label_faces_across_carriers(
                         let _ = (left_face, right_face);
                         interior_edges_removed += removed;
                         for mut face in merged.drain(..) {
-                            collinear_boundary_nodes_removed +=
-                                remove_collinear_boundary_nodes(&mut face.face, blockers);
+                            if remove_collinear_nodes {
+                                collinear_boundary_nodes_removed +=
+                                    remove_collinear_boundary_nodes(&mut face.face, blockers);
+                            }
+                            match boundary_has_nonzero_area(&face.face.cell.boundary_points) {
+                                Ok(true) => {
+                                    canonicalize_boundary_start(&mut face.face);
+                                    faces.push(face);
+                                }
+                                Ok(false) => zero_area_cells_removed += 1,
+                                Err(blocker) => blockers.push(blocker),
+                            }
+                        }
+                        changed = true;
+                        break 'pairs;
+                    }
+                    Ok(_) => {}
+                    Err(blocker) => blockers.push(blocker),
+                }
+            }
+        }
+    }
+    MergeSameLabelResult {
+        faces,
+        interior_edges_removed,
+        collinear_boundary_nodes_removed,
+        zero_area_cells_removed,
+    }
+}
+
+fn merge_coplanar_selected_output_faces(
+    mut faces: Vec<ExactSimplifiedFaceCell>,
+    blockers: &mut Vec<ExactArrangementBlocker>,
+    remove_collinear_nodes: bool,
+) -> MergeSameLabelResult {
+    let mut interior_edges_removed = 0;
+    let mut collinear_boundary_nodes_removed = 0;
+    let mut zero_area_cells_removed = 0;
+    let mut changed = true;
+    while changed {
+        changed = false;
+        'pairs: for left in 0..faces.len() {
+            for right in (left + 1)..faces.len() {
+                if !faces_share_reversed_exact_edge(&faces[left], &faces[right])
+                    || !face_boundaries_are_coplanar(
+                        &faces[left].face.cell.boundary_points,
+                        &faces[right].face.cell.boundary_points,
+                        blockers,
+                    )
+                {
+                    continue;
+                }
+                let pair = vec![faces[left].clone(), faces[right].clone()];
+                match merge_same_label_group(pair) {
+                    Ok((mut merged, removed)) if removed > 0 => {
+                        let right_face = faces.remove(right);
+                        let left_face = faces.remove(left);
+                        let _ = (left_face, right_face);
+                        interior_edges_removed += removed;
+                        for mut face in merged.drain(..) {
+                            if remove_collinear_nodes {
+                                collinear_boundary_nodes_removed +=
+                                    remove_collinear_boundary_nodes(&mut face.face, blockers);
+                            }
                             match boundary_has_nonzero_area(&face.face.cell.boundary_points) {
                                 Ok(true) => {
                                     canonicalize_boundary_start(&mut face.face);
@@ -1134,18 +1223,46 @@ fn triangulate_simplified_cell_complex(
     let mut vertices = Vec::<Point3>::new();
     let mut triangles = Vec::<Triangle>::new();
 
-    let mut groups = std::collections::BTreeMap::<_, Vec<usize>>::new();
-    for (index, face) in complex.faces.iter().enumerate() {
-        groups
-            .entry(simplified_group_key(face))
-            .or_default()
-            .push(index);
+    if matches!(complex.operation, ExactBooleanOperation::SelectedRegions(_)) {
+        let mut groups = std::collections::BTreeMap::<_, Vec<usize>>::new();
+        for (index, face) in complex.faces.iter().enumerate() {
+            groups
+                .entry(simplified_group_key(face))
+                .or_default()
+                .push(index);
+        }
+        for face_indices in groups.values() {
+            triangulate_simplified_face_group(
+                complex,
+                face_indices,
+                &mut vertices,
+                &mut triangles,
+            )?;
+        }
+    } else {
+        let boundaries = complex
+            .faces
+            .iter()
+            .map(|face| {
+                if face.face.cell.boundary.len() != face.face.cell.boundary_points.len()
+                    || face.face.cell.boundary.len() < 3
+                {
+                    Err(ExactArrangementBlocker::NonManifoldCellComplex)
+                } else {
+                    Ok(face.face.cell.boundary_points.clone())
+                }
+            })
+            .collect::<Result<Vec<_>, _>>()?;
+        let boundaries = refine_boundary_segments_with_collinear_points(boundaries)?;
+        for group in group_exact_coplanar_loops(boundaries)? {
+            triangulate_exact_loop_group(&group, &mut vertices, &mut triangles)?;
+        }
     }
 
-    for face_indices in groups.values() {
-        triangulate_simplified_face_group(complex, face_indices, &mut vertices, &mut triangles)?;
+    if !matches!(complex.operation, ExactBooleanOperation::SelectedRegions(_)) {
+        weld_exact_duplicate_vertices(&mut vertices, &mut triangles);
+        split_triangles_at_edge_vertices(&vertices, &mut triangles)?;
     }
-
     orient_paired_triangle_edges(&mut triangles)?;
     remove_duplicate_triangle_vertex_sets(&mut triangles);
     orient_paired_triangle_edges(&mut triangles)?;
@@ -1159,6 +1276,285 @@ fn triangulate_simplified_cell_complex(
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .map_err(|_| ExactArrangementBlocker::NonManifoldCellComplex)
+}
+
+fn weld_exact_duplicate_vertices(vertices: &mut Vec<Point3>, triangles: &mut [Triangle]) -> usize {
+    let mut unique = Vec::<Point3>::new();
+    let mut remap = Vec::<usize>::with_capacity(vertices.len());
+    for vertex in vertices.iter() {
+        if let Some(existing) = unique
+            .iter()
+            .position(|point| point3_coordinates_equal(point, vertex))
+        {
+            remap.push(existing);
+        } else {
+            remap.push(unique.len());
+            unique.push(vertex.clone());
+        }
+    }
+    for triangle in triangles {
+        for vertex in &mut triangle.0 {
+            if let Some(&mapped) = remap.get(*vertex) {
+                *vertex = mapped;
+            }
+        }
+    }
+    let removed = vertices.len().saturating_sub(unique.len());
+    *vertices = unique;
+    removed
+}
+
+fn point3_coordinates_equal(left: &Point3, right: &Point3) -> bool {
+    compare_reals(&left.x, &right.x).value() == Some(Ordering::Equal)
+        && compare_reals(&left.y, &right.y).value() == Some(Ordering::Equal)
+        && compare_reals(&left.z, &right.z).value() == Some(Ordering::Equal)
+}
+
+#[derive(Clone, Copy)]
+enum Point3CoordinateAxis {
+    X,
+    Y,
+    Z,
+}
+
+fn refine_boundary_segments_with_collinear_points(
+    boundaries: Vec<Vec<Point3>>,
+) -> Result<Vec<Vec<Point3>>, ExactArrangementBlocker> {
+    let all_points = boundaries
+        .iter()
+        .flat_map(|boundary| boundary.iter().cloned())
+        .collect::<Vec<_>>();
+    let mut refined = Vec::with_capacity(boundaries.len());
+    for boundary in boundaries {
+        if boundary.len() < 3 {
+            return Err(ExactArrangementBlocker::NonManifoldCellComplex);
+        }
+        let mut refined_boundary = Vec::new();
+        for index in 0..boundary.len() {
+            let start = &boundary[index];
+            let end = &boundary[(index + 1) % boundary.len()];
+            refined_boundary.push(start.clone());
+            let mut candidates = Vec::new();
+            for point in &all_points {
+                if point3_coordinates_equal(point, start)
+                    || point3_coordinates_equal(point, end)
+                    || candidates
+                        .iter()
+                        .any(|candidate| point3_coordinates_equal(candidate, point))
+                {
+                    continue;
+                }
+                match point_on_segment3(start, end, point).value() {
+                    Some(true) => candidates.push(point.clone()),
+                    Some(false) => {}
+                    None => return Err(ExactArrangementBlocker::UndecidableOrdering),
+                }
+            }
+            let candidates = sort_points_along_segment(start, end, candidates)?;
+            refined_boundary.extend(candidates);
+        }
+        remove_consecutive_duplicate_points(&mut refined_boundary);
+        refined.push(refined_boundary);
+    }
+    Ok(refined)
+}
+
+fn sort_points_along_segment(
+    start: &Point3,
+    end: &Point3,
+    points: Vec<Point3>,
+) -> Result<Vec<Point3>, ExactArrangementBlocker> {
+    let (axis, forward) = segment_order_axis(start, end)?;
+    let mut ordered = Vec::<Point3>::new();
+    'points: for point in points {
+        for index in 0..ordered.len() {
+            if point_precedes_on_axis(&point, &ordered[index], axis, forward)? {
+                ordered.insert(index, point);
+                continue 'points;
+            }
+        }
+        ordered.push(point);
+    }
+    Ok(ordered)
+}
+
+fn segment_order_axis(
+    start: &Point3,
+    end: &Point3,
+) -> Result<(Point3CoordinateAxis, bool), ExactArrangementBlocker> {
+    for axis in [
+        Point3CoordinateAxis::X,
+        Point3CoordinateAxis::Y,
+        Point3CoordinateAxis::Z,
+    ] {
+        match compare_reals(point3_axis_value(start, axis), point3_axis_value(end, axis)).value() {
+            Some(Ordering::Less) => return Ok((axis, true)),
+            Some(Ordering::Greater) => return Ok((axis, false)),
+            Some(Ordering::Equal) => {}
+            None => return Err(ExactArrangementBlocker::UndecidableOrdering),
+        }
+    }
+    Err(ExactArrangementBlocker::NonManifoldCellComplex)
+}
+
+fn point_precedes_on_axis(
+    left: &Point3,
+    right: &Point3,
+    axis: Point3CoordinateAxis,
+    forward: bool,
+) -> Result<bool, ExactArrangementBlocker> {
+    match compare_reals(
+        point3_axis_value(left, axis),
+        point3_axis_value(right, axis),
+    )
+    .value()
+    {
+        Some(Ordering::Less) => Ok(forward),
+        Some(Ordering::Greater) => Ok(!forward),
+        Some(Ordering::Equal) => Ok(false),
+        None => Err(ExactArrangementBlocker::UndecidableOrdering),
+    }
+}
+
+fn point3_axis_value(point: &Point3, axis: Point3CoordinateAxis) -> &Real {
+    match axis {
+        Point3CoordinateAxis::X => &point.x,
+        Point3CoordinateAxis::Y => &point.y,
+        Point3CoordinateAxis::Z => &point.z,
+    }
+}
+
+fn remove_consecutive_duplicate_points(points: &mut Vec<Point3>) -> usize {
+    let original_len = points.len();
+    let mut deduped = Vec::<Point3>::new();
+    for point in points.iter() {
+        if deduped
+            .last()
+            .is_none_or(|last| !point3_coordinates_equal(last, point))
+        {
+            deduped.push(point.clone());
+        }
+    }
+    if deduped.len() > 1
+        && deduped
+            .first()
+            .zip(deduped.last())
+            .is_some_and(|(first, last)| point3_coordinates_equal(first, last))
+    {
+        deduped.pop();
+    }
+    *points = deduped;
+    original_len.saturating_sub(points.len())
+}
+
+fn split_triangles_at_edge_vertices(
+    vertices: &[Point3],
+    triangles: &mut Vec<Triangle>,
+) -> Result<usize, ExactArrangementBlocker> {
+    let original_len = triangles.len();
+    let original = triangles.clone();
+    let mut split = Vec::new();
+    for triangle in original {
+        let boundary = triangle_boundary_with_edge_vertices(vertices, triangle)?;
+        if boundary.len() == 3 {
+            split.push(triangle);
+            continue;
+        }
+        for index in 1..boundary.len() - 1 {
+            let candidate = Triangle([boundary[0], boundary[index], boundary[index + 1]]);
+            let points = [
+                vertices[candidate.0[0]].clone(),
+                vertices[candidate.0[1]].clone(),
+                vertices[candidate.0[2]].clone(),
+            ];
+            if boundary_has_nonzero_area(&points)? {
+                split.push(candidate);
+            }
+        }
+    }
+    let added = split.len().saturating_sub(original_len);
+    *triangles = split;
+    Ok(added)
+}
+
+fn triangle_boundary_with_edge_vertices(
+    vertices: &[Point3],
+    triangle: Triangle,
+) -> Result<Vec<usize>, ExactArrangementBlocker> {
+    let [a, b, c] = triangle.0;
+    let mut boundary = Vec::new();
+    append_edge_with_interior_vertices(vertices, a, b, &mut boundary)?;
+    append_edge_with_interior_vertices(vertices, b, c, &mut boundary)?;
+    append_edge_with_interior_vertices(vertices, c, a, &mut boundary)?;
+    dedup_consecutive_vertex_indices(&mut boundary);
+    Ok(boundary)
+}
+
+fn append_edge_with_interior_vertices(
+    vertices: &[Point3],
+    start: usize,
+    end: usize,
+    boundary: &mut Vec<usize>,
+) -> Result<(), ExactArrangementBlocker> {
+    boundary.push(start);
+    let mut interior = Vec::new();
+    for (candidate, point) in vertices.iter().enumerate() {
+        if candidate == start
+            || candidate == end
+            || interior.contains(&candidate)
+            || point3_coordinates_equal(point, &vertices[start])
+            || point3_coordinates_equal(point, &vertices[end])
+        {
+            continue;
+        }
+        match point_on_segment3(&vertices[start], &vertices[end], point).value() {
+            Some(true) => interior.push(candidate),
+            Some(false) => {}
+            None => return Err(ExactArrangementBlocker::UndecidableOrdering),
+        }
+    }
+    sort_vertex_indices_along_segment(vertices, start, end, &mut interior)?;
+    boundary.extend(interior);
+    Ok(())
+}
+
+fn sort_vertex_indices_along_segment(
+    vertices: &[Point3],
+    start: usize,
+    end: usize,
+    indices: &mut Vec<usize>,
+) -> Result<(), ExactArrangementBlocker> {
+    let (axis, forward) = segment_order_axis(&vertices[start], &vertices[end])?;
+    let mut ordered = Vec::<usize>::new();
+    'indices: for index in indices.drain(..) {
+        for ordered_index in 0..ordered.len() {
+            if point_precedes_on_axis(
+                &vertices[index],
+                &vertices[ordered[ordered_index]],
+                axis,
+                forward,
+            )? {
+                ordered.insert(ordered_index, index);
+                continue 'indices;
+            }
+        }
+        ordered.push(index);
+    }
+    *indices = ordered;
+    Ok(())
+}
+
+fn dedup_consecutive_vertex_indices(boundary: &mut Vec<usize>) {
+    let mut deduped = Vec::<usize>::new();
+    for &vertex in boundary.iter() {
+        if deduped.last().copied() != Some(vertex) {
+            deduped.push(vertex);
+        }
+    }
+    if deduped.len() > 1 && deduped.first() == deduped.last() {
+        deduped.pop();
+    }
+    *boundary = deduped;
 }
 
 fn triangulate_simplified_face_group(
@@ -1717,6 +2113,49 @@ mod tests {
         assert_eq!(simplified.faces.len(), 1);
         assert_eq!(simplified.interior_edges_removed, 1);
         assert_eq!(simplified.faces[0].face.cell.boundary_points.len(), 4);
+    }
+
+    #[test]
+    fn simplification_merges_selected_output_faces_across_source_labels() {
+        let left = [p(0, 0, 0), p(1, 0, 0), p(0, 1, 0)];
+        let right = [p(0, 1, 0), p(1, 0, 0), p(1, 1, 0)];
+        let selected = ExactSelectedCellComplex {
+            faces: vec![
+                selected_face_with_source(
+                    MeshSide::Left,
+                    ExactCellRegionLabel::LeftBoundary,
+                    &[0, 1, 2],
+                    &left,
+                ),
+                selected_face_with_source(
+                    MeshSide::Right,
+                    ExactCellRegionLabel::RightBoundary,
+                    &[3, 4, 5],
+                    &right,
+                ),
+            ],
+            volume_regions: Vec::new(),
+            volume_adjacencies: Vec::new(),
+            lower_dimensional_artifacts: Vec::new(),
+            topology_assembly_report: None,
+            region_ownership_report: None,
+            selected_faces: vec![0, 1],
+            selected_face_orientations: Vec::new(),
+            selected_volume_regions: Vec::new(),
+            operation: ExactBooleanOperation::Union,
+            blockers: Vec::new(),
+        };
+
+        let simplified =
+            simplify_selected_cell_complex(selected, ExactRegularizationPolicy::REGULARIZED_SOLID)
+                .unwrap();
+
+        assert_eq!(simplified.faces.len(), 1);
+        assert_eq!(simplified.interior_edges_removed, 1);
+        assert_eq!(simplified.faces[0].face.cell.boundary_points.len(), 4);
+        let mesh = simplified.triangulate().unwrap();
+        assert_eq!(mesh.vertices().len(), 4);
+        assert_eq!(mesh.triangles().len(), 2);
     }
 
     #[test]

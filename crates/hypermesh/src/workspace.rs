@@ -3,20 +3,16 @@ use super::arrangement3d::{
 };
 use super::boolean::{
     ExactArrangementBooleanAttempt, ExactBooleanCertificationSet, ExactBooleanEvaluation,
-    ExactBooleanOperation, ExactBooleanRequest, adjacent_union_completion_certification_from_graph,
+    ExactBooleanOperation, ExactBooleanRequest,
     arrangement_boolean_attempt_report_from_arrangement, arrangement_cell_complex_shortcut_attempt,
-    boundary_touching_report_from_graph,
     materialize_adjacent_union_completion_from_graph_for_request,
     materialize_boolean_exact_request_from_retained_graph,
     materialize_certified_boolean_support_with_artifacts,
     materialize_closed_boundary_touching_regularized_boolean_with_evidence_from_graph,
     materialize_closed_no_volume_overlap_regularized_boolean_with_evidence_from_graph,
-    open_surface_disjoint_report_from_graph, planar_arrangement_report_from_graph,
-    preflight_boolean_exact_request_from_graph, refinement_report_from_graph,
+    preflight_boolean_exact_request_from_graph,
     validate_boolean_result_against_sources_with_artifacts,
-    volumetric_boundary_closure_report_from_graph, winding_readiness_report_for_request_from_graph,
 };
-use super::box_solid::is_axis_aligned_box;
 use super::cell_complex::{
     ExactRegionOwnershipReport, ExactRegionOwnershipStatus, ExactSelectedCellComplex,
     ExactSelectedCellComplexFreshness, select_arrangement_for_replay,
@@ -27,9 +23,7 @@ use super::mesh::ExactMesh;
 use super::regularization::{ExactArrangementBlocker, ExactRegularizationPolicy};
 use super::reports::{
     ExactAdjacentUnionCompletionReport, ExactBooleanPreflight, ExactBooleanResult,
-    ExactBoundaryTouchingReport, ExactOpenSurfaceDisjointReport, ExactPlanarArrangementReport,
-    ExactRefinementReport, ExactReportFreshness, ExactReportValidationError,
-    ExactVolumetricBoundaryClosureReport, ExactWindingReadinessReport, exact_report_freshness,
+    ExactReportFreshness, ExactReportValidationError, exact_report_freshness,
 };
 use super::simplify::{ExactSimplifiedCellComplex, ExactSimplifiedCellComplexFreshness};
 use super::volumetric_cells::{
@@ -40,34 +34,6 @@ type MaterializedResultWithEvidence =
     Option<(ExactBooleanResult, CoplanarVolumetricCellEvidenceReport)>;
 type MaterializedAdjacentUnionCompletion =
     Option<(ExactBooleanResult, ExactAdjacentUnionCompletionReport)>;
-
-macro_rules! cached_workspace_report {
-    ($workspace:ident, $cache:ident, $request:expr, $build:block) => {{
-        let request = $request;
-        if let Some(index) = cached_by_request_index(&$workspace.$cache, request) {
-            Ok(&$workspace.$cache[index].1)
-        } else {
-            let report = $build;
-            if report
-                .operation()
-                .is_some_and(|operation| operation != request.operation)
-            {
-                return Err(workspace_report_validation_error(
-                    ExactReportValidationError::StatusEvidenceMismatch,
-                ));
-            }
-            report
-                .validate_for_workspace_cache()
-                .map_err(workspace_report_validation_error)?;
-            $workspace.$cache.push((request, report));
-            Ok(&$workspace
-                .$cache
-                .last()
-                .expect("workspace report cache was just populated")
-                .1)
-        }
-    }};
-}
 
 /// Reusable exact boolean session for a fixed source-mesh pair.
 ///
@@ -87,8 +53,6 @@ pub struct ExactBooleanWorkspace<'a> {
     adjacent_union_completion_materializations:
         Vec<(ExactBooleanRequest, MaterializedAdjacentUnionCompletion)>,
     arrangements: Vec<(ExactRegularizationPolicy, ExactArrangement)>,
-    topology_assembly_reports: Vec<(ExactRegularizationPolicy, ExactTopologyAssemblyReport)>,
-    region_ownership_reports: Vec<(ExactRegularizationPolicy, ExactRegionOwnershipReport)>,
     arrangement_attempts: Vec<(
         ExactBooleanRequest,
         ExactRegularizationPolicy,
@@ -104,16 +68,6 @@ pub struct ExactBooleanWorkspace<'a> {
         ExactRegularizationPolicy,
         ExactSimplifiedCellComplex,
     )>,
-    refinement_reports: Vec<(ExactBooleanRequest, ExactRefinementReport)>,
-    adjacent_union_completion_reports:
-        Vec<(ExactBooleanRequest, ExactAdjacentUnionCompletionReport)>,
-    boundary_touching_reports: Vec<(ExactBooleanRequest, ExactBoundaryTouchingReport)>,
-    open_surface_disjoint_reports: Vec<(ExactBooleanRequest, ExactOpenSurfaceDisjointReport)>,
-    volumetric_boundary_closure_reports:
-        Vec<(ExactBooleanRequest, ExactVolumetricBoundaryClosureReport)>,
-    preflights: Vec<(ExactBooleanRequest, ExactBooleanPreflight)>,
-    winding_readiness_reports: Vec<(ExactBooleanRequest, ExactWindingReadinessReport)>,
-    planar_arrangement_reports: Vec<(ExactBooleanRequest, ExactPlanarArrangementReport)>,
     certifications: Vec<(ExactBooleanRequest, ExactBooleanCertificationSet)>,
     evaluations: Vec<(ExactBooleanRequest, ExactBooleanEvaluation)>,
     materializations: Vec<(ExactBooleanRequest, ExactBooleanResult)>,
@@ -131,19 +85,9 @@ impl<'a> ExactBooleanWorkspace<'a> {
             closed_no_volume_overlap_regularized_materializations: Vec::new(),
             adjacent_union_completion_materializations: Vec::new(),
             arrangements: Vec::new(),
-            topology_assembly_reports: Vec::new(),
-            region_ownership_reports: Vec::new(),
             arrangement_attempts: Vec::new(),
             selected_cell_complexes: Vec::new(),
             simplified_cell_complexes: Vec::new(),
-            refinement_reports: Vec::new(),
-            adjacent_union_completion_reports: Vec::new(),
-            boundary_touching_reports: Vec::new(),
-            open_surface_disjoint_reports: Vec::new(),
-            volumetric_boundary_closure_reports: Vec::new(),
-            preflights: Vec::new(),
-            winding_readiness_reports: Vec::new(),
-            planar_arrangement_reports: Vec::new(),
             certifications: Vec::new(),
             evaluations: Vec::new(),
             materializations: Vec::new(),
@@ -335,22 +279,17 @@ impl<'a> ExactBooleanWorkspace<'a> {
         store_retained_policy_report(&mut self.arrangements, policy, arrangement)
     }
 
-    /// Returns topology-assembly evidence for `policy`, reusing the cached
-    /// arrangement and report for that policy.
+    /// Returns topology-assembly evidence for `policy`, deriving it from the
+    /// retained arrangement for that policy.
     pub fn topology_assembly_report(
         &mut self,
         policy: ExactRegularizationPolicy,
-    ) -> Result<&ExactTopologyAssemblyReport, MeshError> {
-        if let Some(index) = cached_by_policy_index(&self.topology_assembly_reports, policy) {
-            return Ok(&self.topology_assembly_reports[index].1);
-        }
-
+    ) -> Result<ExactTopologyAssemblyReport, MeshError> {
         let left = self.left;
         let right = self.right;
-        let report = self
+        Ok(self
             .arrangement(policy)?
-            .topology_assembly_report_with_policy(left, right, policy);
-        store_retained_policy_report(&mut self.topology_assembly_reports, policy, report)
+            .topology_assembly_report_with_policy(left, right, policy))
     }
 
     /// Validate topology-assembly evidence against this workspace's retained
@@ -381,23 +320,17 @@ impl<'a> ExactBooleanWorkspace<'a> {
         report.status_against_arrangement(&arrangement, self.left, self.right, policy)
     }
 
-    /// Returns region-ownership evidence for `policy`, reusing the cached
-    /// arrangement and report for that policy.
+    /// Returns region-ownership evidence for `policy`, deriving it from the
+    /// retained arrangement for that policy.
     pub fn region_ownership_report(
         &mut self,
         policy: ExactRegularizationPolicy,
-    ) -> Result<&ExactRegionOwnershipReport, MeshError> {
-        if let Some(index) = cached_by_policy_index(&self.region_ownership_reports, policy) {
-            return Ok(&self.region_ownership_reports[index].1);
-        }
-
+    ) -> Result<ExactRegionOwnershipReport, MeshError> {
         let left = self.left;
         let right = self.right;
-        let report = self
-            .arrangement(policy)?
+        self.arrangement(policy)?
             .region_ownership_report_with_policy(left, right, policy)
-            .map_err(workspace_arrangement_blocker_error)?;
-        store_retained_policy_report(&mut self.region_ownership_reports, policy, report)
+            .map_err(workspace_arrangement_blocker_error)
     }
 
     /// Validate region-ownership evidence against this workspace's retained
@@ -627,17 +560,24 @@ impl<'a> ExactBooleanWorkspace<'a> {
         simplified.freshness_against_arrangement(arrangement, self.left, self.right, policy)
     }
 
-    /// Returns preflight for `request`, building it once per request.
+    /// Returns preflight for `request`, deriving it from the retained graph.
     pub fn preflight(
         &mut self,
         request: ExactBooleanRequest,
-    ) -> Result<&ExactBooleanPreflight, MeshError> {
-        cached_workspace_report!(self, preflights, request, {
-            let left = self.left;
-            let right = self.right;
-            let graph = self.validated_graph()?;
-            preflight_boolean_exact_request_from_graph(graph, left, right, request)?
-        })
+    ) -> Result<ExactBooleanPreflight, MeshError> {
+        let left = self.left;
+        let right = self.right;
+        let graph = self.validated_graph()?;
+        let preflight = preflight_boolean_exact_request_from_graph(graph, left, right, request)?;
+        if preflight.operation != request.operation {
+            return Err(workspace_report_validation_error(
+                ExactReportValidationError::StatusEvidenceMismatch,
+            ));
+        }
+        preflight
+            .validate()
+            .map_err(workspace_report_validation_error)?;
+        Ok(preflight)
     }
 
     /// Validate preflight scheduling evidence against this workspace's source
@@ -656,199 +596,6 @@ impl<'a> ExactBooleanWorkspace<'a> {
             request.validation,
             request.boundary_policy,
         )
-    }
-
-    /// Returns refinement evidence for `request`, building it once per
-    /// request.
-    pub fn refinement_report(
-        &mut self,
-        request: ExactBooleanRequest,
-    ) -> Result<&ExactRefinementReport, MeshError> {
-        cached_workspace_report!(self, refinement_reports, request, {
-            let graph = self.validated_graph()?;
-            refinement_report_from_graph(graph, request.operation)
-        })
-    }
-
-    /// Validate refinement evidence against this workspace's source meshes.
-    pub fn validate_refinement_report(
-        &mut self,
-        request: ExactBooleanRequest,
-        report: &ExactRefinementReport,
-    ) -> Result<(), ExactReportValidationError> {
-        if report.operation != request.operation {
-            return Err(ExactReportValidationError::StatusEvidenceMismatch);
-        }
-        report.validate_against_sources(self.left, self.right)
-    }
-
-    /// Returns adjacent-union completion evidence for `request`, building it
-    /// once per request.
-    pub fn adjacent_union_completion_report(
-        &mut self,
-        request: ExactBooleanRequest,
-    ) -> Result<&ExactAdjacentUnionCompletionReport, MeshError> {
-        cached_workspace_report!(self, adjacent_union_completion_reports, request, {
-            let left = self.left;
-            let right = self.right;
-            if request.operation != ExactBooleanOperation::Union
-                || !left.facts().mesh.closed_manifold
-                || !right.facts().mesh.closed_manifold
-                || (is_axis_aligned_box(left) && is_axis_aligned_box(right))
-            {
-                request.adjacent_union_completion_report(left, right)?
-            } else {
-                let graph = self.validated_graph()?;
-                let (report, _) = adjacent_union_completion_certification_from_graph(
-                    graph,
-                    left,
-                    right,
-                    request.operation,
-                    None,
-                )?;
-                report
-            }
-        })
-    }
-
-    /// Validate adjacent-union completion evidence against this workspace's
-    /// source meshes.
-    pub fn validate_adjacent_union_completion_report(
-        &mut self,
-        request: ExactBooleanRequest,
-        report: &ExactAdjacentUnionCompletionReport,
-    ) -> Result<(), ExactReportValidationError> {
-        if report.operation != request.operation {
-            return Err(ExactReportValidationError::StatusEvidenceMismatch);
-        }
-        report.validate_against_sources(self.left, self.right)
-    }
-
-    /// Returns boundary-touching evidence for `request`, building it once per
-    /// request.
-    pub fn boundary_touching_report(
-        &mut self,
-        request: ExactBooleanRequest,
-    ) -> Result<&ExactBoundaryTouchingReport, MeshError> {
-        cached_workspace_report!(self, boundary_touching_reports, request, {
-            let left = self.left;
-            let right = self.right;
-            let graph = self.validated_graph()?;
-            boundary_touching_report_from_graph(graph, left, right)?
-        })
-    }
-
-    /// Returns open-surface disjointness evidence for `request`, building it
-    /// once per request.
-    pub fn open_surface_disjoint_report(
-        &mut self,
-        request: ExactBooleanRequest,
-    ) -> Result<&ExactOpenSurfaceDisjointReport, MeshError> {
-        cached_workspace_report!(self, open_surface_disjoint_reports, request, {
-            let left = self.left;
-            let right = self.right;
-            let graph = self.validated_graph()?;
-            open_surface_disjoint_report_from_graph(graph, left, right)
-        })
-    }
-
-    /// Returns volumetric boundary-closure evidence for `request`, building it
-    /// once per request.
-    pub fn volumetric_boundary_closure(
-        &mut self,
-        request: ExactBooleanRequest,
-    ) -> Result<&ExactVolumetricBoundaryClosureReport, MeshError> {
-        cached_workspace_report!(self, volumetric_boundary_closure_reports, request, {
-            let left = self.left;
-            let right = self.right;
-            if matches!(request.operation, ExactBooleanOperation::SelectedRegions(_)) {
-                request.volumetric_boundary_closure(left, right)?
-            } else {
-                let graph = self.validated_graph()?;
-                volumetric_boundary_closure_report_from_graph(
-                    graph,
-                    left,
-                    right,
-                    request.operation,
-                )?
-            }
-        })
-    }
-
-    /// Validate volumetric boundary-closure evidence against this workspace's
-    /// source meshes.
-    pub fn validate_volumetric_boundary_closure(
-        &mut self,
-        request: ExactBooleanRequest,
-        report: &ExactVolumetricBoundaryClosureReport,
-    ) -> Result<(), ExactReportValidationError> {
-        if report.operation != request.operation {
-            return Err(ExactReportValidationError::StatusEvidenceMismatch);
-        }
-        report.validate_against_sources(self.left, self.right)
-    }
-
-    /// Returns winding-readiness evidence for `request`, building it once per
-    /// request.
-    pub fn winding_readiness(
-        &mut self,
-        request: ExactBooleanRequest,
-    ) -> Result<&ExactWindingReadinessReport, MeshError> {
-        cached_workspace_report!(self, winding_readiness_reports, request, {
-            let left = self.left;
-            let right = self.right;
-            let graph = self.validated_graph()?;
-            winding_readiness_report_for_request_from_graph(graph, left, right, request)?
-        })
-    }
-
-    /// Validate winding-readiness evidence against this workspace's source
-    /// meshes.
-    pub fn validate_winding_readiness(
-        &mut self,
-        request: ExactBooleanRequest,
-        readiness: &ExactWindingReadinessReport,
-    ) -> Result<(), ExactReportValidationError> {
-        if readiness.operation != request.operation {
-            return Err(ExactReportValidationError::StatusEvidenceMismatch);
-        }
-        readiness.validate_against_sources_with_boundary_policy(
-            self.left,
-            self.right,
-            request.validation,
-            request.boundary_policy,
-        )
-    }
-
-    /// Returns planar-arrangement readiness evidence for `request`, building
-    /// it once per request.
-    pub fn planar_arrangement_report(
-        &mut self,
-        request: ExactBooleanRequest,
-    ) -> Result<&ExactPlanarArrangementReport, MeshError> {
-        cached_workspace_report!(self, planar_arrangement_reports, request, {
-            let left = self.left;
-            let right = self.right;
-            if matches!(request.operation, ExactBooleanOperation::SelectedRegions(_)) {
-                request.planar_arrangement_report(left, right)?
-            } else {
-                let graph = self.validated_graph()?;
-                planar_arrangement_report_from_graph(graph, left, right, request.operation)?
-            }
-        })
-    }
-
-    /// Validate planar-arrangement readiness evidence against this workspace's
-    /// source meshes.
-    pub fn validate_planar_arrangement_report(
-        &mut self,
-        request: ExactBooleanRequest,
-        report: &ExactPlanarArrangementReport,
-    ) -> Result<(), ExactReportValidationError> {
-        if report.operation != request.operation {
-            return Err(ExactReportValidationError::StatusEvidenceMismatch);
-        }
-        report.validate_against_sources(self.left, self.right)
     }
 
     /// Returns the full exact boolean certification bundle for `request`,
@@ -920,7 +667,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
             return Ok(&self.evaluations[index].1);
         }
 
-        let preflight = self.preflight(request)?.clone();
+        let preflight = self.preflight(request)?;
         let certifications = self.certification_set(request)?.clone();
         let graph = self
             .graph
@@ -990,14 +737,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
                 );
             }
         }
-        self.preflight(request)?;
-        self.graph()?;
-        let preflight_index = self
-            .preflights
-            .iter()
-            .position(|(stored_request, _)| *stored_request == request)
-            .expect("preflight cache was just populated");
-        let preflight = &self.preflights[preflight_index].1;
+        let preflight = self.preflight(request)?;
         if preflight.is_certified() {
             let regularized_arrangement = self.regularized_solid_arrangement();
             let graph = self
@@ -1177,14 +917,6 @@ impl RetainedMaterializationArtifact for ExactAdjacentUnionCompletionReport {
     }
 }
 
-trait RetainedWorkspaceReport {
-    fn operation(&self) -> Option<ExactBooleanOperation> {
-        None
-    }
-
-    fn validate_for_workspace_cache(&self) -> Result<(), ExactReportValidationError>;
-}
-
 trait RetainedCellComplex {
     fn operation(&self) -> ExactBooleanOperation;
     fn validate_for_workspace_cache(&self) -> Result<(), ExactArrangementBlocker>;
@@ -1199,78 +931,6 @@ trait RetainedRequestArtifact {
         &self,
         request: ExactBooleanRequest,
     ) -> Result<(), ExactReportValidationError>;
-}
-
-impl RetainedWorkspaceReport for ExactBooleanPreflight {
-    fn operation(&self) -> Option<ExactBooleanOperation> {
-        Some(self.operation)
-    }
-
-    fn validate_for_workspace_cache(&self) -> Result<(), ExactReportValidationError> {
-        self.validate()
-    }
-}
-
-impl RetainedWorkspaceReport for ExactRefinementReport {
-    fn operation(&self) -> Option<ExactBooleanOperation> {
-        Some(self.operation)
-    }
-
-    fn validate_for_workspace_cache(&self) -> Result<(), ExactReportValidationError> {
-        self.validate()
-    }
-}
-
-impl RetainedWorkspaceReport for ExactAdjacentUnionCompletionReport {
-    fn operation(&self) -> Option<ExactBooleanOperation> {
-        Some(self.operation)
-    }
-
-    fn validate_for_workspace_cache(&self) -> Result<(), ExactReportValidationError> {
-        self.validate()
-    }
-}
-
-impl RetainedWorkspaceReport for ExactVolumetricBoundaryClosureReport {
-    fn operation(&self) -> Option<ExactBooleanOperation> {
-        Some(self.operation)
-    }
-
-    fn validate_for_workspace_cache(&self) -> Result<(), ExactReportValidationError> {
-        self.validate()
-    }
-}
-
-impl RetainedWorkspaceReport for ExactWindingReadinessReport {
-    fn operation(&self) -> Option<ExactBooleanOperation> {
-        Some(self.operation)
-    }
-
-    fn validate_for_workspace_cache(&self) -> Result<(), ExactReportValidationError> {
-        self.validate()
-    }
-}
-
-impl RetainedWorkspaceReport for ExactPlanarArrangementReport {
-    fn operation(&self) -> Option<ExactBooleanOperation> {
-        Some(self.operation)
-    }
-
-    fn validate_for_workspace_cache(&self) -> Result<(), ExactReportValidationError> {
-        self.validate()
-    }
-}
-
-impl RetainedWorkspaceReport for ExactBoundaryTouchingReport {
-    fn validate_for_workspace_cache(&self) -> Result<(), ExactReportValidationError> {
-        self.validate()
-    }
-}
-
-impl RetainedWorkspaceReport for ExactOpenSurfaceDisjointReport {
-    fn validate_for_workspace_cache(&self) -> Result<(), ExactReportValidationError> {
-        self.validate()
-    }
 }
 
 impl RetainedCellComplex for ExactSelectedCellComplex {
@@ -1561,7 +1221,9 @@ fn workspace_report_validation_error(error: ExactReportValidationError) -> MeshE
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::boolean::ExactBooleanOperation;
+    use crate::boolean::{
+        ExactBooleanOperation, identical_mesh_report_from_sources, same_surface_report_from_sources,
+    };
     use crate::region::ExactRegionSelection;
     use crate::validation::ValidationPolicy;
     use crate::{
@@ -1637,20 +1299,13 @@ mod tests {
 
         let first_topology_report = workspace
             .topology_assembly_report(ExactRegularizationPolicy::REGULARIZED_SOLID)
-            .unwrap() as *const ExactTopologyAssemblyReport;
+            .unwrap();
         let second_topology_report = workspace
             .topology_assembly_report(ExactRegularizationPolicy::REGULARIZED_SOLID)
-            .unwrap() as *const ExactTopologyAssemblyReport;
-        assert_eq!(first_topology_report, second_topology_report);
-        workspace
-            .topology_assembly_report(ExactRegularizationPolicy::REGULARIZED_SOLID)
-            .unwrap()
-            .validate()
             .unwrap();
-        let topology_report = workspace
-            .topology_assembly_report(ExactRegularizationPolicy::REGULARIZED_SOLID)
-            .unwrap()
-            .clone();
+        assert_eq!(first_topology_report, second_topology_report);
+        first_topology_report.validate().unwrap();
+        let topology_report = first_topology_report;
         topology_report
             .validate_against_sources(&left, &right, ExactRegularizationPolicy::REGULARIZED_SOLID)
             .unwrap();
@@ -1695,20 +1350,13 @@ mod tests {
 
         let first_ownership_report = workspace
             .region_ownership_report(ExactRegularizationPolicy::REGULARIZED_SOLID)
-            .unwrap() as *const ExactRegionOwnershipReport;
+            .unwrap();
         let second_ownership_report = workspace
             .region_ownership_report(ExactRegularizationPolicy::REGULARIZED_SOLID)
-            .unwrap() as *const ExactRegionOwnershipReport;
-        assert_eq!(first_ownership_report, second_ownership_report);
-        workspace
-            .region_ownership_report(ExactRegularizationPolicy::REGULARIZED_SOLID)
-            .unwrap()
-            .validate()
             .unwrap();
-        let ownership_report = workspace
-            .region_ownership_report(ExactRegularizationPolicy::REGULARIZED_SOLID)
-            .unwrap()
-            .clone();
+        assert_eq!(first_ownership_report, second_ownership_report);
+        first_ownership_report.validate().unwrap();
+        let ownership_report = first_ownership_report;
         ownership_report
             .validate_against_sources(&left, &right, ExactRegularizationPolicy::REGULARIZED_SOLID)
             .unwrap();
@@ -1959,15 +1607,11 @@ mod tests {
             ExactSimplifiedCellComplexFreshness::StaleSimplifiedCells
         );
 
-        let first_preflight = workspace.preflight(request).unwrap() as *const ExactBooleanPreflight;
-        let second_preflight =
-            workspace.preflight(request).unwrap() as *const ExactBooleanPreflight;
+        let first_preflight = workspace.preflight(request).unwrap();
+        let second_preflight = workspace.preflight(request).unwrap();
         assert_eq!(first_preflight, second_preflight);
-        assert_eq!(
-            workspace.preflight(request).unwrap(),
-            &request.preflight(&left, &right).unwrap()
-        );
-        let preflight = workspace.preflight(request).unwrap().clone();
+        assert_eq!(first_preflight, request.preflight(&left, &right).unwrap());
+        let preflight = first_preflight;
         workspace.validate_preflight(request, &preflight).unwrap();
         assert_eq!(
             preflight.freshness_against_sources_with_boundary_policy(
@@ -2000,78 +1644,61 @@ mod tests {
             Err(ExactReportValidationError::StatusEvidenceMismatch)
         );
 
-        let first_refinement_report =
-            workspace.refinement_report(request).unwrap() as *const ExactRefinementReport;
-        let second_refinement_report =
-            workspace.refinement_report(request).unwrap() as *const ExactRefinementReport;
-        assert_eq!(first_refinement_report, second_refinement_report);
-        assert_eq!(
-            workspace.refinement_report(request).unwrap(),
-            &request.refinement_report(&left, &right).unwrap()
-        );
-        let refinement_report = workspace.refinement_report(request).unwrap().clone();
+        let certifications = workspace.certification_set(request).unwrap().clone();
         workspace
-            .validate_refinement_report(request, &refinement_report)
+            .validate_certification_set(request, &certifications)
             .unwrap();
+
+        let refinement_report = certifications.refinement.clone();
         assert_eq!(
             refinement_report.freshness_against_sources(&left, &right),
             ExactReportFreshness::Current
         );
-        let mut stale_refinement_report = refinement_report.clone();
-        stale_refinement_report.retained_events += 1;
+        let mut stale_refinement_bundle = certifications.clone();
+        stale_refinement_bundle.refinement.retained_events += 1;
         assert_eq!(
-            workspace.validate_refinement_report(request, &stale_refinement_report),
-            Err(ExactReportValidationError::SourceReplayMismatch)
+            workspace.validate_certification_set(request, &stale_refinement_bundle),
+            Err(ExactReportValidationError::StatusEvidenceMismatch)
         );
-        assert_ne!(
-            stale_refinement_report.freshness_against_sources(&left, &right),
-            ExactReportFreshness::Current
-        );
-        let mut relabeled_refinement_report = refinement_report.clone();
-        relabeled_refinement_report.operation = ExactBooleanOperation::Difference;
+        let mut relabeled_refinement_bundle = certifications.clone();
+        relabeled_refinement_bundle.refinement.operation = ExactBooleanOperation::Difference;
         assert_eq!(
-            workspace.validate_refinement_report(request, &relabeled_refinement_report),
+            relabeled_refinement_bundle.validate_for_request(request),
             Err(ExactReportValidationError::StatusEvidenceMismatch)
         );
 
-        let first_adjacent_report = workspace.adjacent_union_completion_report(request).unwrap()
-            as *const ExactAdjacentUnionCompletionReport;
-        let second_adjacent_report = workspace.adjacent_union_completion_report(request).unwrap()
-            as *const ExactAdjacentUnionCompletionReport;
-        assert_eq!(first_adjacent_report, second_adjacent_report);
+        let adjacent_report = certifications.adjacent_union_completion.clone();
         assert_eq!(
-            workspace.adjacent_union_completion_report(request).unwrap(),
-            &request
-                .adjacent_union_completion_report(&left, &right)
-                .unwrap()
-        );
-        let adjacent_report = workspace
-            .adjacent_union_completion_report(request)
+            adjacent_report,
+            crate::boolean::adjacent_union_completion_certification(
+                &left,
+                &right,
+                request.operation,
+                None,
+            )
             .unwrap()
-            .clone();
-        workspace
-            .validate_adjacent_union_completion_report(request, &adjacent_report)
-            .unwrap();
+            .0
+        );
         assert_eq!(
             adjacent_report.freshness_against_sources(&left, &right),
             ExactReportFreshness::Current
         );
-        let mut stale_adjacent_report = adjacent_report.clone();
-        stale_adjacent_report.stronger_kernel_available =
-            !stale_adjacent_report.stronger_kernel_available;
+        let mut stale_adjacent_bundle = certifications.clone();
+        stale_adjacent_bundle
+            .adjacent_union_completion
+            .stronger_kernel_available = !stale_adjacent_bundle
+            .adjacent_union_completion
+            .stronger_kernel_available;
         assert_eq!(
-            workspace.validate_adjacent_union_completion_report(request, &stale_adjacent_report),
+            workspace.validate_certification_set(request, &stale_adjacent_bundle),
             Err(ExactReportValidationError::StatusEvidenceMismatch)
         );
-        assert_ne!(
-            stale_adjacent_report.freshness_against_sources(&left, &right),
-            ExactReportFreshness::Current
-        );
-        let mut relabeled_adjacent_report = adjacent_report.clone();
-        relabeled_adjacent_report.operation = ExactBooleanOperation::Difference;
+        let mut relabeled_adjacent_bundle = certifications.clone();
+        relabeled_adjacent_bundle
+            .adjacent_union_completion
+            .operation = ExactBooleanOperation::Difference;
         assert_eq!(
-            workspace
-                .validate_adjacent_union_completion_report(request, &relabeled_adjacent_report),
+            relabeled_adjacent_bundle.validate_for_request(request),
             Err(ExactReportValidationError::StatusEvidenceMismatch)
         );
         let non_union_request = ExactBooleanRequest::new(
@@ -2079,20 +1706,25 @@ mod tests {
             ValidationPolicy::ALLOW_BOUNDARY,
         );
         let non_union_adjacent_report = workspace
-            .adjacent_union_completion_report(non_union_request)
+            .certification_set(non_union_request)
             .unwrap()
+            .adjacent_union_completion
             .clone();
         assert_eq!(
             non_union_adjacent_report,
-            non_union_request
-                .adjacent_union_completion_report(&left, &right)
-                .unwrap()
+            crate::boolean::adjacent_union_completion_certification(
+                &left,
+                &right,
+                non_union_request.operation,
+                None
+            )
+            .unwrap()
+            .0
         );
         workspace
-            .validate_adjacent_union_completion_report(
-                non_union_request,
-                &non_union_adjacent_report,
-            )
+            .certification_set(non_union_request)
+            .unwrap()
+            .validate_for_request(non_union_request)
             .unwrap();
         assert_eq!(non_union_adjacent_report.retained_face_pairs, 0);
         assert_eq!(non_union_adjacent_report.retained_events, 0);
@@ -2112,20 +1744,25 @@ mod tests {
             ValidationPolicy::ALLOW_BOUNDARY,
         );
         let not_closed_adjacent_report = open_workspace
-            .adjacent_union_completion_report(not_closed_request)
+            .certification_set(not_closed_request)
             .unwrap()
+            .adjacent_union_completion
             .clone();
         assert_eq!(
             not_closed_adjacent_report,
-            not_closed_request
-                .adjacent_union_completion_report(&open_sheet, &right)
-                .unwrap()
+            crate::boolean::adjacent_union_completion_certification(
+                &open_sheet,
+                &right,
+                not_closed_request.operation,
+                None
+            )
+            .unwrap()
+            .0
         );
         open_workspace
-            .validate_adjacent_union_completion_report(
-                not_closed_request,
-                &not_closed_adjacent_report,
-            )
+            .certification_set(not_closed_request)
+            .unwrap()
+            .validate_for_request(not_closed_request)
             .unwrap();
         assert_eq!(not_closed_adjacent_report.retained_face_pairs, 0);
         assert_eq!(not_closed_adjacent_report.retained_events, 0);
@@ -2133,17 +1770,25 @@ mod tests {
         let box_right = axis_aligned_box_i64([1, 1, 0], [3, 3, 2]);
         let mut box_workspace = ExactBooleanWorkspace::new(&box_left, &box_right);
         let axis_box_adjacent_report = box_workspace
-            .adjacent_union_completion_report(request)
+            .certification_set(request)
             .unwrap()
+            .adjacent_union_completion
             .clone();
         assert_eq!(
             axis_box_adjacent_report,
-            request
-                .adjacent_union_completion_report(&box_left, &box_right)
-                .unwrap()
+            crate::boolean::adjacent_union_completion_certification(
+                &box_left,
+                &box_right,
+                request.operation,
+                None,
+            )
+            .unwrap()
+            .0
         );
         box_workspace
-            .validate_adjacent_union_completion_report(request, &axis_box_adjacent_report)
+            .certification_set(request)
+            .unwrap()
+            .validate_for_request(request)
             .unwrap();
         assert_eq!(
             axis_box_adjacent_report.status,
@@ -2151,9 +1796,8 @@ mod tests {
         );
         assert_eq!(axis_box_adjacent_report.retained_face_pairs, 0);
         assert_eq!(axis_box_adjacent_report.retained_events, 0);
-        assert!(box_workspace.graph.is_none());
 
-        let identical_report = request.identical_mesh_report(&left, &right);
+        let identical_report = identical_mesh_report_from_sources(&left, &right);
         identical_report
             .validate_against_sources(&left, &right)
             .unwrap();
@@ -2172,7 +1816,7 @@ mod tests {
             ExactReportFreshness::Current
         );
 
-        let same_surface_report = request.same_surface_report(&left, &right);
+        let same_surface_report = same_surface_report_from_sources(&left, &right);
         same_surface_report
             .validate_against_sources(&left, &right)
             .unwrap();
@@ -2191,16 +1835,7 @@ mod tests {
             ExactReportFreshness::Current
         );
 
-        let first_boundary_report = workspace.boundary_touching_report(request).unwrap()
-            as *const ExactBoundaryTouchingReport;
-        let second_boundary_report = workspace.boundary_touching_report(request).unwrap()
-            as *const ExactBoundaryTouchingReport;
-        assert_eq!(first_boundary_report, second_boundary_report);
-        assert_eq!(
-            workspace.boundary_touching_report(request).unwrap(),
-            &request.boundary_touching_report(&left, &right).unwrap()
-        );
-        let boundary_report = workspace.boundary_touching_report(request).unwrap().clone();
+        let boundary_report = certifications.boundary_touching.clone();
         boundary_report
             .validate_against_sources(&left, &right)
             .unwrap();
@@ -2219,19 +1854,7 @@ mod tests {
             ExactReportFreshness::Current
         );
 
-        let first_open_surface_report = workspace.open_surface_disjoint_report(request).unwrap()
-            as *const ExactOpenSurfaceDisjointReport;
-        let second_open_surface_report = workspace.open_surface_disjoint_report(request).unwrap()
-            as *const ExactOpenSurfaceDisjointReport;
-        assert_eq!(first_open_surface_report, second_open_surface_report);
-        assert_eq!(
-            workspace.open_surface_disjoint_report(request).unwrap(),
-            &request.open_surface_disjoint_report(&left, &right).unwrap()
-        );
-        let open_surface_report = workspace
-            .open_surface_disjoint_report(request)
-            .unwrap()
-            .clone();
+        let open_surface_report = certifications.open_surface_disjoint.clone();
         open_surface_report
             .validate_against_sources(&left, &right)
             .unwrap();
@@ -2250,75 +1873,49 @@ mod tests {
             ExactReportFreshness::Current
         );
 
-        let first_closure_report = workspace.volumetric_boundary_closure(request).unwrap()
-            as *const ExactVolumetricBoundaryClosureReport;
-        let second_closure_report = workspace.volumetric_boundary_closure(request).unwrap()
-            as *const ExactVolumetricBoundaryClosureReport;
-        assert_eq!(first_closure_report, second_closure_report);
-        assert_eq!(
-            workspace.volumetric_boundary_closure(request).unwrap(),
-            &request.volumetric_boundary_closure(&left, &right).unwrap()
-        );
-        let closure_report = workspace
-            .volumetric_boundary_closure(request)
-            .unwrap()
-            .clone();
-        workspace
-            .validate_volumetric_boundary_closure(request, &closure_report)
-            .unwrap();
+        let closure_report = certifications.volumetric_boundary_closure.clone().unwrap();
         assert_eq!(
             closure_report.freshness_against_sources(&left, &right),
             ExactReportFreshness::Current
         );
-        let mut stale_closure_report = closure_report.clone();
-        stale_closure_report.output_triangles += 1;
+        let mut stale_closure_bundle = certifications.clone();
+        stale_closure_bundle
+            .volumetric_boundary_closure
+            .as_mut()
+            .unwrap()
+            .output_triangles += 1;
         assert_eq!(
-            workspace.validate_volumetric_boundary_closure(request, &stale_closure_report),
+            workspace.validate_certification_set(request, &stale_closure_bundle),
             Err(ExactReportValidationError::StatusEvidenceMismatch)
         );
-        assert_ne!(
-            stale_closure_report.freshness_against_sources(&left, &right),
-            ExactReportFreshness::Current
-        );
-        let mut relabeled_closure_report = closure_report.clone();
-        relabeled_closure_report.operation = ExactBooleanOperation::Difference;
+        let mut relabeled_closure_bundle = certifications.clone();
+        relabeled_closure_bundle
+            .volumetric_boundary_closure
+            .as_mut()
+            .unwrap()
+            .operation = ExactBooleanOperation::Difference;
         assert_eq!(
-            workspace.validate_volumetric_boundary_closure(request, &relabeled_closure_report),
+            relabeled_closure_bundle.validate_for_request(request),
             Err(ExactReportValidationError::StatusEvidenceMismatch)
         );
         let selected_request = ExactBooleanRequest::new(
             ExactBooleanOperation::SelectedRegions(ExactRegionSelection::KeepAll),
             ValidationPolicy::ALLOW_BOUNDARY,
         );
-        let selected_closure_report = workspace
-            .volumetric_boundary_closure(selected_request)
+        let selected_certifications = workspace
+            .certification_set(selected_request)
             .unwrap()
             .clone();
-        assert_eq!(
-            selected_closure_report,
-            selected_request
-                .volumetric_boundary_closure(&left, &right)
-                .unwrap()
-        );
-        workspace
-            .validate_volumetric_boundary_closure(selected_request, &selected_closure_report)
+        selected_certifications
+            .validate_for_request(selected_request)
             .unwrap();
-        assert_eq!(selected_closure_report.output_triangles, 0);
-        assert_eq!(selected_closure_report.boundary_edges, 0);
+        assert!(
+            selected_certifications
+                .volumetric_boundary_closure
+                .is_none()
+        );
 
-        let first_readiness =
-            workspace.winding_readiness(request).unwrap() as *const ExactWindingReadinessReport;
-        let second_readiness =
-            workspace.winding_readiness(request).unwrap() as *const ExactWindingReadinessReport;
-        assert_eq!(first_readiness, second_readiness);
-        assert_eq!(
-            workspace.winding_readiness(request).unwrap(),
-            &request.winding_readiness(&left, &right).unwrap()
-        );
-        let readiness = workspace.winding_readiness(request).unwrap().clone();
-        workspace
-            .validate_winding_readiness(request, &readiness)
-            .unwrap();
+        let readiness = certifications.winding_readiness.clone();
         assert_eq!(
             readiness.freshness_against_sources_with_boundary_policy(
                 &left,
@@ -2328,77 +1925,41 @@ mod tests {
             ),
             ExactReportFreshness::Current
         );
-        let mut stale_readiness = readiness.clone();
-        stale_readiness.retained_events += 1;
+        let mut stale_readiness_bundle = certifications.clone();
+        stale_readiness_bundle.winding_readiness.retained_events += 1;
         assert_eq!(
-            workspace.validate_winding_readiness(request, &stale_readiness),
+            workspace.validate_certification_set(request, &stale_readiness_bundle),
             Err(ExactReportValidationError::SourceReplayMismatch)
         );
-        assert_ne!(
-            stale_readiness.freshness_against_sources_with_boundary_policy(
-                &left,
-                &right,
-                request.validation,
-                request.boundary_policy
-            ),
-            ExactReportFreshness::Current
-        );
-        let mut relabeled_readiness = readiness.clone();
-        relabeled_readiness.operation = ExactBooleanOperation::Difference;
+        let mut relabeled_readiness_bundle = certifications.clone();
+        relabeled_readiness_bundle.winding_readiness.operation = ExactBooleanOperation::Difference;
         assert_eq!(
-            workspace.validate_winding_readiness(request, &relabeled_readiness),
+            relabeled_readiness_bundle.validate_for_request(request),
             Err(ExactReportValidationError::StatusEvidenceMismatch)
         );
 
-        let first_planar_report = workspace.planar_arrangement_report(request).unwrap()
-            as *const ExactPlanarArrangementReport;
-        let second_planar_report = workspace.planar_arrangement_report(request).unwrap()
-            as *const ExactPlanarArrangementReport;
-        assert_eq!(first_planar_report, second_planar_report);
-        assert_eq!(
-            workspace.planar_arrangement_report(request).unwrap(),
-            &request.planar_arrangement_report(&left, &right).unwrap()
-        );
-        let planar_report = workspace
-            .planar_arrangement_report(request)
-            .unwrap()
-            .clone();
-        workspace
-            .validate_planar_arrangement_report(request, &planar_report)
-            .unwrap();
+        let planar_report = certifications.planar_arrangement.clone();
         assert_eq!(
             planar_report.freshness_against_sources(&left, &right),
             ExactReportFreshness::Current
         );
-        let mut stale_planar_report = planar_report.clone();
-        stale_planar_report.retained_events += 1;
+        let mut stale_planar_bundle = certifications.clone();
+        stale_planar_bundle.planar_arrangement.retained_events += 1;
         assert_eq!(
-            workspace.validate_planar_arrangement_report(request, &stale_planar_report),
-            Err(ExactReportValidationError::SourceReplayMismatch)
-        );
-        assert_ne!(
-            stale_planar_report.freshness_against_sources(&left, &right),
-            ExactReportFreshness::Current
-        );
-        let mut relabeled_planar_report = planar_report.clone();
-        relabeled_planar_report.operation = ExactBooleanOperation::Difference;
-        assert_eq!(
-            workspace.validate_planar_arrangement_report(request, &relabeled_planar_report),
+            workspace.validate_certification_set(request, &stale_planar_bundle),
             Err(ExactReportValidationError::StatusEvidenceMismatch)
         );
-        let selected_planar_report = workspace
-            .planar_arrangement_report(selected_request)
-            .unwrap()
-            .clone();
+        let mut relabeled_planar_bundle = certifications.clone();
+        relabeled_planar_bundle.planar_arrangement.operation = ExactBooleanOperation::Difference;
+        assert_eq!(
+            relabeled_planar_bundle.validate_for_request(request),
+            Err(ExactReportValidationError::StatusEvidenceMismatch)
+        );
+        let selected_planar_report = selected_certifications.planar_arrangement;
         assert_eq!(
             selected_planar_report,
-            selected_request
-                .planar_arrangement_report(&left, &right)
-                .unwrap()
+            crate::boolean::not_named_planar_arrangement_report(selected_request.operation)
         );
-        workspace
-            .validate_planar_arrangement_report(selected_request, &selected_planar_report)
-            .unwrap();
         assert_eq!(selected_planar_report.retained_face_pairs, 0);
         assert_eq!(selected_planar_report.retained_events, 0);
 
@@ -2601,6 +2162,11 @@ mod tests {
 
         let mut stale_attempt = attempt.clone();
         stale_attempt.output_triangles += 1;
+        stale_attempt
+            .output_facts
+            .as_mut()
+            .expect("materialized attempt should retain output facts")
+            .face_count += 1;
         stale_attempt.validate().unwrap();
         assert_eq!(
             workspace.validate_arrangement_attempt(
@@ -2917,9 +2483,14 @@ mod tests {
             .unwrap()
             .expect("adjacent closed solids should complete from retained graph");
         let expected_result = request.materialize(&left, &right).unwrap();
-        let expected_report = request
-            .adjacent_union_completion_report(&left, &right)
-            .unwrap();
+        let expected_report = crate::boolean::adjacent_union_completion_certification(
+            &left,
+            &right,
+            request.operation,
+            None,
+        )
+        .unwrap()
+        .0;
         assert_eq!(materialized, (expected_result, expected_report));
         assert_eq!(
             workspace.adjacent_union_completion_materializations.len(),

@@ -50,7 +50,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use hyperlimit::{
     Point2, Point3, SegmentIntersection, Sign, TriangleLocation, classify_point_triangle,
     classify_segment_intersection, compare_point2_lexicographic, compare_reals, orient3d_report,
-    point_on_segment, point2_equal, point3_equal, project_point3,
+    point_on_segment, point_on_segment3, point2_equal, point3_equal, project_point3,
     proper_segment_intersection_point,
 };
 use hyperreal::Real;
@@ -1096,7 +1096,7 @@ impl ExactArrangement3d {
             &face_plane_arrangements,
             &mut blockers,
         );
-        let shells_or_regions = Some(arrangement_regions(&face_cells));
+        let shells_or_regions = Some(arrangement_regions(&face_cells, &mut blockers));
         let (volume_regions, volume_adjacencies) = arrangement_volume_graph(
             shells_or_regions.as_ref().map_or(&[][..], Vec::as_slice),
             &face_cells,
@@ -1577,9 +1577,11 @@ fn arrangement_vertices(
     blockers: &mut Vec<ExactArrangementBlocker>,
 ) -> Vec<ArrangementVertex> {
     let mut vertices = Vec::new();
+    let mut merge_index = ArrangementVertexMergeIndex::default();
     for (index, point) in left.vertices().iter().enumerate() {
         push_arrangement_vertex(
             &mut vertices,
+            &mut merge_index,
             point.clone(),
             ArrangementVertexProvenance::SourceVertex {
                 side: MeshSide::Left,
@@ -1591,6 +1593,7 @@ fn arrangement_vertices(
     for (index, point) in right.vertices().iter().enumerate() {
         push_arrangement_vertex(
             &mut vertices,
+            &mut merge_index,
             point.clone(),
             ArrangementVertexProvenance::SourceVertex {
                 side: MeshSide::Right,
@@ -1603,6 +1606,7 @@ fn arrangement_vertices(
         for (index, vertex) in topology.graph_vertices.iter().enumerate() {
             push_arrangement_vertex(
                 &mut vertices,
+                &mut merge_index,
                 vertex.point.clone(),
                 ArrangementVertexProvenance::GraphIntersection {
                     graph_vertex: index,
@@ -1622,6 +1626,7 @@ fn arrangement_vertices(
             ) {
                 push_arrangement_vertex(
                     &mut vertices,
+                    &mut merge_index,
                     point,
                     ArrangementVertexProvenance::CarrierPlaneVertex {
                         overlay: overlay_index,
@@ -1644,6 +1649,7 @@ fn arrangement_vertices(
             ) {
                 push_arrangement_vertex(
                     &mut vertices,
+                    &mut merge_index,
                     point,
                     ArrangementVertexProvenance::FacePlaneVertex {
                         arrangement: arrangement_index,
@@ -1659,26 +1665,105 @@ fn arrangement_vertices(
 
 fn push_arrangement_vertex(
     vertices: &mut Vec<ArrangementVertex>,
+    index: &mut ArrangementVertexMergeIndex,
     point: Point3,
     provenance: ArrangementVertexProvenance,
     blockers: &mut Vec<ExactArrangementBlocker>,
 ) {
-    for existing in vertices.iter_mut() {
-        match point3_equal(&existing.point, &point).value() {
-            Some(true) => {
-                if !existing.provenance.contains(&provenance) {
-                    existing.provenance.push(provenance);
-                }
-                return;
-            }
-            Some(false) => {}
-            None => blockers.push(ExactArrangementBlocker::UndecidableOrdering),
+    let point_key = exact_arrangement_integer_point_key(&point);
+    if let Some(existing) = index.find_matching(&point, point_key.as_ref(), vertices, blockers) {
+        if !vertices[existing].provenance.contains(&provenance) {
+            vertices[existing].provenance.push(provenance);
         }
+        return;
     }
+    let vertex_index = vertices.len();
+    index.insert(vertex_index, point_key);
     vertices.push(ArrangementVertex {
         point,
         provenance: vec![provenance],
     });
+}
+
+#[derive(Default)]
+struct ArrangementVertexMergeIndex {
+    integer_key_buckets: BTreeMap<ExactArrangementIntegerPointKey, Vec<usize>>,
+    unkeyed_vertices: Vec<usize>,
+}
+
+impl ArrangementVertexMergeIndex {
+    fn insert(&mut self, vertex_index: usize, point_key: Option<ExactArrangementIntegerPointKey>) {
+        if let Some(key) = point_key {
+            self.integer_key_buckets
+                .entry(key)
+                .or_default()
+                .push(vertex_index);
+        } else {
+            self.unkeyed_vertices.push(vertex_index);
+        }
+    }
+
+    fn find_matching(
+        &self,
+        point: &Point3,
+        point_key: Option<&ExactArrangementIntegerPointKey>,
+        vertices: &[ArrangementVertex],
+        blockers: &mut Vec<ExactArrangementBlocker>,
+    ) -> Option<usize> {
+        if let Some(key) = point_key {
+            if let Some(bucket) = self.integer_key_buckets.get(key)
+                && let Some(index) =
+                    find_matching_arrangement_vertex(point, vertices, bucket, blockers)
+            {
+                return Some(index);
+            }
+            return find_matching_arrangement_vertex(
+                point,
+                vertices,
+                &self.unkeyed_vertices,
+                blockers,
+            );
+        }
+
+        for bucket in self.integer_key_buckets.values() {
+            if let Some(index) = find_matching_arrangement_vertex(point, vertices, bucket, blockers)
+            {
+                return Some(index);
+            }
+        }
+        find_matching_arrangement_vertex(point, vertices, &self.unkeyed_vertices, blockers)
+    }
+}
+
+#[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
+struct ExactArrangementIntegerPointKey {
+    x: String,
+    y: String,
+    z: String,
+}
+
+fn exact_arrangement_integer_point_key(point: &Point3) -> Option<ExactArrangementIntegerPointKey> {
+    Some(ExactArrangementIntegerPointKey {
+        x: point.x.exact_rational_ref()?.to_big_integer()?.to_string(),
+        y: point.y.exact_rational_ref()?.to_big_integer()?.to_string(),
+        z: point.z.exact_rational_ref()?.to_big_integer()?.to_string(),
+    })
+}
+
+fn find_matching_arrangement_vertex(
+    point: &Point3,
+    vertices: &[ArrangementVertex],
+    candidates: &[usize],
+    blockers: &mut Vec<ExactArrangementBlocker>,
+) -> Option<usize> {
+    for &index in candidates {
+        match point3_equal(&vertices[index].point, point).value() {
+            Some(true) => return Some(index),
+            Some(false) => {}
+            None => blockers.push(ExactArrangementBlocker::UndecidableOrdering),
+        }
+    }
+    None
 }
 
 fn arrangement_edges(
@@ -1688,18 +1773,20 @@ fn arrangement_edges(
     face_plane_arrangements: &[ArrangementFacePlaneArrangement],
 ) -> Vec<ArrangementEdge> {
     let mut edges = Vec::new();
+    let mut edge_lookup = BTreeMap::<[usize; 2], usize>::new();
+    let vertex_index = ArrangementVertexProvenanceIndex::new(vertices);
     if let Some(topology) = topology {
         for chain in &topology.edge_chains {
             for pair in chain.nodes.windows(2) {
-                let Some(left) = arrangement_node_index(&pair[0], vertices) else {
+                let Some(left) = arrangement_node_index(&pair[0], &vertex_index) else {
                     continue;
                 };
-                let Some(right) = arrangement_node_index(&pair[1], vertices) else {
+                let Some(right) = arrangement_node_index(&pair[1], &vertex_index) else {
                     continue;
                 };
                 push_arrangement_edge(
                     &mut edges,
-                    vertices,
+                    &mut edge_lookup,
                     left,
                     right,
                     ArrangementEdgeProvenance::SourceEdge {
@@ -1713,7 +1800,7 @@ fn arrangement_edges(
     for (overlay_index, overlay) in carrier_plane_overlays.iter().enumerate() {
         for (edge_index, edge) in overlay.overlay.arrangement.edges.iter().enumerate() {
             let Some(left) = arrangement_vertex_index_by_provenance(
-                vertices,
+                &vertex_index,
                 &ArrangementVertexProvenance::CarrierPlaneVertex {
                     overlay: overlay_index,
                     vertex: edge.vertices[0],
@@ -1722,7 +1809,7 @@ fn arrangement_edges(
                 continue;
             };
             let Some(right) = arrangement_vertex_index_by_provenance(
-                vertices,
+                &vertex_index,
                 &ArrangementVertexProvenance::CarrierPlaneVertex {
                     overlay: overlay_index,
                     vertex: edge.vertices[1],
@@ -1732,7 +1819,7 @@ fn arrangement_edges(
             };
             push_arrangement_edge(
                 &mut edges,
-                vertices,
+                &mut edge_lookup,
                 left,
                 right,
                 ArrangementEdgeProvenance::CarrierPlaneEdge {
@@ -1745,7 +1832,7 @@ fn arrangement_edges(
     for (arrangement_index, arrangement) in face_plane_arrangements.iter().enumerate() {
         for (edge_index, edge) in arrangement.arrangement.edges.iter().enumerate() {
             let Some(left) = arrangement_vertex_index_by_provenance(
-                vertices,
+                &vertex_index,
                 &ArrangementVertexProvenance::FacePlaneVertex {
                     arrangement: arrangement_index,
                     vertex: edge.vertices[0],
@@ -1754,7 +1841,7 @@ fn arrangement_edges(
                 continue;
             };
             let Some(right) = arrangement_vertex_index_by_provenance(
-                vertices,
+                &vertex_index,
                 &ArrangementVertexProvenance::FacePlaneVertex {
                     arrangement: arrangement_index,
                     vertex: edge.vertices[1],
@@ -1764,7 +1851,7 @@ fn arrangement_edges(
             };
             push_arrangement_edge(
                 &mut edges,
-                vertices,
+                &mut edge_lookup,
                 left,
                 right,
                 ArrangementEdgeProvenance::FacePlaneEdge {
@@ -1779,7 +1866,7 @@ fn arrangement_edges(
 
 fn push_arrangement_edge(
     edges: &mut Vec<ArrangementEdge>,
-    _vertices: &[ArrangementVertex],
+    edge_index: &mut BTreeMap<[usize; 2], usize>,
     left: usize,
     right: usize,
     provenance: ArrangementEdgeProvenance,
@@ -1792,50 +1879,84 @@ fn push_arrangement_edge(
     } else {
         [right, left]
     };
-    match edges
-        .iter_mut()
-        .find(|edge: &&mut ArrangementEdge| edge.vertices == key)
-    {
-        Some(edge) => {
-            if !edge.provenance.contains(&provenance) {
-                edge.provenance.push(provenance);
-            }
+    if let Some(index) = edge_index.get(&key).copied() {
+        if !edges[index].provenance.contains(&provenance) {
+            edges[index].provenance.push(provenance);
         }
-        None => edges.push(ArrangementEdge {
+    } else {
+        let index = edges.len();
+        edge_index.insert(key, index);
+        edges.push(ArrangementEdge {
             vertices: key,
             provenance: vec![provenance],
-        }),
+        });
+    }
+}
+
+type ArrangementVertexProvenanceKey = (usize, usize, usize);
+
+struct ArrangementVertexProvenanceIndex {
+    by_provenance: BTreeMap<ArrangementVertexProvenanceKey, usize>,
+}
+
+impl ArrangementVertexProvenanceIndex {
+    fn new(vertices: &[ArrangementVertex]) -> Self {
+        let mut by_provenance = BTreeMap::new();
+        for (index, vertex) in vertices.iter().enumerate() {
+            for provenance in &vertex.provenance {
+                by_provenance
+                    .entry(arrangement_vertex_provenance_key(provenance))
+                    .or_insert(index);
+            }
+        }
+        Self { by_provenance }
+    }
+
+    fn get_provenance(&self, provenance: &ArrangementVertexProvenance) -> Option<usize> {
+        self.by_provenance
+            .get(&arrangement_vertex_provenance_key(provenance))
+            .copied()
+    }
+
+    fn get_key(&self, key: ArrangementVertexProvenanceKey) -> Option<usize> {
+        self.by_provenance.get(&key).copied()
     }
 }
 
 fn arrangement_vertex_index_by_provenance(
-    vertices: &[ArrangementVertex],
+    index: &ArrangementVertexProvenanceIndex,
     provenance: &ArrangementVertexProvenance,
 ) -> Option<usize> {
-    vertices
-        .iter()
-        .position(|vertex| vertex.provenance.contains(provenance))
+    index.get_provenance(provenance)
 }
 
-fn arrangement_node_index(node: &SplitEdgeNode, vertices: &[ArrangementVertex]) -> Option<usize> {
-    vertices.iter().position(|vertex| match node {
+fn arrangement_node_index(
+    node: &SplitEdgeNode,
+    index: &ArrangementVertexProvenanceIndex,
+) -> Option<usize> {
+    index.get_key(match node {
         SplitEdgeNode::OriginalVertex {
             side,
             vertex: index,
-        } => vertex
-            .provenance
-            .contains(&ArrangementVertexProvenance::SourceVertex {
-                side: *side,
-                vertex: *index,
-            }),
-        SplitEdgeNode::GraphVertex { graph_vertex } => {
-            vertex
-                .provenance
-                .contains(&ArrangementVertexProvenance::GraphIntersection {
-                    graph_vertex: *graph_vertex,
-                })
-        }
+        } => (0, side_key(*side), *index),
+        SplitEdgeNode::GraphVertex { graph_vertex } => (1, 0, *graph_vertex),
     })
+}
+
+fn arrangement_vertex_provenance_key(
+    provenance: &ArrangementVertexProvenance,
+) -> ArrangementVertexProvenanceKey {
+    match provenance {
+        ArrangementVertexProvenance::SourceVertex { side, vertex } => (0, side_key(*side), *vertex),
+        ArrangementVertexProvenance::GraphIntersection { graph_vertex } => (1, 0, *graph_vertex),
+        ArrangementVertexProvenance::CarrierPlaneVertex { overlay, vertex } => {
+            (2, *overlay, *vertex)
+        }
+        ArrangementVertexProvenance::FacePlaneVertex {
+            arrangement,
+            vertex,
+        } => (3, *arrangement, *vertex),
+    }
 }
 
 fn arrangement_face_cells(
@@ -2929,12 +3050,15 @@ fn projected_face_ring(
     Some(ExactArrangement2dRegionRing::new(region, vertices))
 }
 
-fn arrangement_regions(face_cells: &[ArrangementFaceCell]) -> Vec<ArrangementRegion> {
+fn arrangement_regions(
+    face_cells: &[ArrangementFaceCell],
+    blockers: &mut Vec<ExactArrangementBlocker>,
+) -> Vec<ArrangementRegion> {
     if face_cells.is_empty() {
         return Vec::new();
     }
     let mut adjacency = vec![Vec::<usize>::new(); face_cells.len()];
-    let edge_users = arrangement_edge_users(face_cells);
+    let edge_users = arrangement_edge_users(face_cells, blockers);
     let mut adjacent_pairs = Vec::<[usize; 2]>::new();
     for (_, users) in &edge_users {
         for left_index in 0..users.len() {
@@ -4027,19 +4151,43 @@ struct ArrangementFaceCellBoundaryEdge {
     points: Option<[Point3; 2]>,
 }
 
+#[derive(Clone)]
+struct ArrangementFaceCellRawBoundaryEdge {
+    start: ArrangementFaceCellBoundaryPoint,
+    end: ArrangementFaceCellBoundaryPoint,
+    cell: usize,
+}
+
+#[derive(Clone)]
+struct ArrangementFaceCellBoundaryPoint {
+    node: ArrangementFaceCellNode,
+    point: Point3,
+}
+
 fn arrangement_edge_users(
     face_cells: &[ArrangementFaceCell],
+    blockers: &mut Vec<ExactArrangementBlocker>,
 ) -> Vec<([ArrangementFaceCellNode; 2], Vec<usize>)> {
+    let raw_edges = arrangement_raw_boundary_edges(face_cells);
+    if raw_edges.is_empty() {
+        return Vec::new();
+    }
+    let endpoints = raw_edges
+        .iter()
+        .flat_map(|edge| [edge.start.clone(), edge.end.clone()])
+        .collect::<Vec<_>>();
     let mut edge_users = Vec::<(ArrangementFaceCellBoundaryEdge, Vec<usize>)>::new();
-    for (cell_index, cell) in face_cells.iter().enumerate() {
-        for edge in cell_boundary_edges(cell) {
+    for edge in raw_edges {
+        for atomic in conforming_boundary_edges(&edge, &endpoints, blockers) {
             if let Some((_, users)) = edge_users
                 .iter_mut()
-                .find(|(existing, _)| boundary_edges_equivalent(existing, &edge))
+                .find(|(existing, _)| boundary_edges_equivalent(existing, &atomic))
             {
-                users.push(cell_index);
+                if !users.contains(&edge.cell) {
+                    users.push(edge.cell);
+                }
             } else {
-                edge_users.push((edge, vec![cell_index]));
+                edge_users.push((atomic, vec![edge.cell]));
             }
         }
     }
@@ -4049,26 +4197,181 @@ fn arrangement_edge_users(
         .collect()
 }
 
-fn cell_boundary_edges(cell: &ArrangementFaceCell) -> Vec<ArrangementFaceCellBoundaryEdge> {
+fn arrangement_raw_boundary_edges(
+    face_cells: &[ArrangementFaceCell],
+) -> Vec<ArrangementFaceCellRawBoundaryEdge> {
+    let mut edges = Vec::new();
+    for (cell, face_cell) in face_cells.iter().enumerate() {
+        edges.extend(cell_boundary_edges(face_cell, cell));
+    }
+    edges
+}
+
+fn cell_boundary_edges(
+    cell: &ArrangementFaceCell,
+    cell_index: usize,
+) -> Vec<ArrangementFaceCellRawBoundaryEdge> {
     if cell.boundary.len() < 2 {
         return Vec::new();
     }
     (0..cell.boundary.len())
         .map(|index| {
             let next = (index + 1) % cell.boundary.len();
-            let nodes =
-                canonical_cell_edge(cell.boundary[index].clone(), cell.boundary[next].clone());
-            let points = if cell.boundary_points.len() == cell.boundary.len() {
-                Some([
-                    cell.boundary_points[index].clone(),
-                    cell.boundary_points[next].clone(),
-                ])
-            } else {
-                None
-            };
-            ArrangementFaceCellBoundaryEdge { nodes, points }
+            ArrangementFaceCellRawBoundaryEdge {
+                start: ArrangementFaceCellBoundaryPoint {
+                    node: cell.boundary[index].clone(),
+                    point: cell.boundary_points[index].clone(),
+                },
+                end: ArrangementFaceCellBoundaryPoint {
+                    node: cell.boundary[next].clone(),
+                    point: cell.boundary_points[next].clone(),
+                },
+                cell: cell_index,
+            }
         })
         .collect()
+}
+
+fn conforming_boundary_edges(
+    edge: &ArrangementFaceCellRawBoundaryEdge,
+    endpoints: &[ArrangementFaceCellBoundaryPoint],
+    blockers: &mut Vec<ExactArrangementBlocker>,
+) -> Vec<ArrangementFaceCellBoundaryEdge> {
+    let mut split_points = vec![edge.start.clone(), edge.end.clone()];
+    for endpoint in endpoints {
+        if boundary_points_equal(endpoint, &edge.start)
+            || boundary_points_equal(endpoint, &edge.end)
+        {
+            continue;
+        }
+        match point_on_segment3(&edge.start.point, &edge.end.point, &endpoint.point).value() {
+            Some(true) => push_unique_boundary_point(&mut split_points, endpoint.clone()),
+            Some(false) => {}
+            None => push_unique_blocker(blockers, ExactArrangementBlocker::UndecidableOrdering),
+        }
+    }
+    if sort_boundary_points_along_segment(&edge.start.point, &edge.end.point, &mut split_points)
+        .is_err()
+    {
+        push_unique_blocker(blockers, ExactArrangementBlocker::UndecidableOrdering);
+        return vec![boundary_edge_from_points(&edge.start, &edge.end)];
+    }
+    let mut atoms = Vec::new();
+    for pair in split_points.windows(2) {
+        if boundary_points_equal(&pair[0], &pair[1]) {
+            continue;
+        }
+        atoms.push(boundary_edge_from_points(&pair[0], &pair[1]));
+    }
+    atoms
+}
+
+fn push_unique_boundary_point(
+    points: &mut Vec<ArrangementFaceCellBoundaryPoint>,
+    point: ArrangementFaceCellBoundaryPoint,
+) {
+    if let Some(existing) = points
+        .iter_mut()
+        .find(|existing| boundary_points_equal(existing, &point))
+    {
+        if cell_node_key(&point.node) < cell_node_key(&existing.node) {
+            existing.node = point.node;
+        }
+    } else {
+        points.push(point);
+    }
+}
+
+fn boundary_points_equal(
+    left: &ArrangementFaceCellBoundaryPoint,
+    right: &ArrangementFaceCellBoundaryPoint,
+) -> bool {
+    point3_equal(&left.point, &right.point).value() == Some(true)
+}
+
+#[derive(Clone, Copy)]
+enum ArrangementPointAxis {
+    X,
+    Y,
+    Z,
+}
+
+fn sort_boundary_points_along_segment(
+    start: &Point3,
+    end: &Point3,
+    points: &mut Vec<ArrangementFaceCellBoundaryPoint>,
+) -> Result<(), ExactArrangementBlocker> {
+    let (axis, forward) = boundary_segment_order_axis(start, end)?;
+    let mut ordered = Vec::<ArrangementFaceCellBoundaryPoint>::new();
+    'points: for point in points.drain(..) {
+        for index in 0..ordered.len() {
+            if boundary_point_precedes_on_axis(&point.point, &ordered[index].point, axis, forward)?
+            {
+                ordered.insert(index, point);
+                continue 'points;
+            }
+        }
+        ordered.push(point);
+    }
+    *points = ordered;
+    Ok(())
+}
+
+fn boundary_segment_order_axis(
+    start: &Point3,
+    end: &Point3,
+) -> Result<(ArrangementPointAxis, bool), ExactArrangementBlocker> {
+    for axis in [
+        ArrangementPointAxis::X,
+        ArrangementPointAxis::Y,
+        ArrangementPointAxis::Z,
+    ] {
+        match compare_reals(point3_axis_value(start, axis), point3_axis_value(end, axis)).value() {
+            Some(Ordering::Less) => return Ok((axis, true)),
+            Some(Ordering::Greater) => return Ok((axis, false)),
+            Some(Ordering::Equal) => {}
+            None => return Err(ExactArrangementBlocker::UndecidableOrdering),
+        }
+    }
+    Err(ExactArrangementBlocker::NonManifoldCellComplex)
+}
+
+fn boundary_point_precedes_on_axis(
+    left: &Point3,
+    right: &Point3,
+    axis: ArrangementPointAxis,
+    forward: bool,
+) -> Result<bool, ExactArrangementBlocker> {
+    match compare_reals(
+        point3_axis_value(left, axis),
+        point3_axis_value(right, axis),
+    )
+    .value()
+    {
+        Some(Ordering::Less) => Ok(forward),
+        Some(Ordering::Greater) => Ok(!forward),
+        Some(Ordering::Equal) => Ok(false),
+        None => Err(ExactArrangementBlocker::UndecidableOrdering),
+    }
+}
+
+fn point3_axis_value(point: &Point3, axis: ArrangementPointAxis) -> &Real {
+    match axis {
+        ArrangementPointAxis::X => &point.x,
+        ArrangementPointAxis::Y => &point.y,
+        ArrangementPointAxis::Z => &point.z,
+    }
+}
+
+fn boundary_edge_from_points(
+    start: &ArrangementFaceCellBoundaryPoint,
+    end: &ArrangementFaceCellBoundaryPoint,
+) -> ArrangementFaceCellBoundaryEdge {
+    let nodes = canonical_cell_edge(start.node.clone(), end.node.clone());
+    ArrangementFaceCellBoundaryEdge {
+        nodes,
+        points: Some([start.point.clone(), end.point.clone()]),
+    }
 }
 
 fn boundary_edges_equivalent(
@@ -5025,13 +5328,59 @@ mod tests {
             [p3(1, 0, 0), p3(0, 0, 0), p3(1, 1, 0)],
         );
 
-        let edge_users = arrangement_edge_users(&[left, right]);
+        let edge_users = arrangement_edge_users(&[left, right], &mut Vec::new());
         let shared = edge_users
             .iter()
             .find(|(_, users)| users.as_slice() == [0, 1])
             .expect("exact coincident geometric edge should share one incidence");
 
         assert_eq!(shared.1, vec![0, 1]);
+    }
+
+    #[test]
+    fn region_edge_users_split_collinear_geometric_subedges() {
+        let cell = |side, vertices: [usize; 3], points: [Point3; 3]| ArrangementFaceCell {
+            carrier: ArrangementFaceCarrier {
+                side,
+                face: 0,
+                triangle: vertices,
+            },
+            boundary: vertices
+                .iter()
+                .map(|vertex| ArrangementFaceCellNode::SourceVertex {
+                    side,
+                    vertex: *vertex,
+                })
+                .collect(),
+            boundary_points: points.to_vec(),
+            opposite: None,
+        };
+        let long = cell(
+            MeshSide::Left,
+            [0, 1, 2],
+            [p3(0, 0, 0), p3(2, 0, 0), p3(0, 1, 0)],
+        );
+        let first_half = cell(
+            MeshSide::Right,
+            [3, 4, 5],
+            [p3(1, 0, 0), p3(0, 0, 0), p3(1, -1, 0)],
+        );
+        let second_half = cell(
+            MeshSide::Right,
+            [6, 7, 8],
+            [p3(2, 0, 0), p3(1, 0, 0), p3(2, -1, 0)],
+        );
+
+        let mut blockers = Vec::new();
+        let edge_users = arrangement_edge_users(&[long, first_half, second_half], &mut blockers);
+        let shared_subedges = edge_users
+            .iter()
+            .filter(|(_, users)| users.len() == 2 && users.contains(&0))
+            .map(|(_, users)| users.clone())
+            .collect::<Vec<_>>();
+
+        assert!(blockers.is_empty(), "{blockers:?}");
+        assert_eq!(shared_subedges, vec![vec![0, 1], vec![0, 2]]);
     }
 
     #[test]

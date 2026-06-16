@@ -23,12 +23,16 @@ use super::affine_solid::{
 use super::arrangement3d::{ExactArrangement, ExactTopologyAssemblyReport};
 use super::boolean::{
     ExactBooleanOperation, ExactBooleanRequest, ExactBoundaryBooleanPolicy,
-    boolean_coplanar_mesh_overlay_optional, boundary_policy_shortcut_result_matches_sources,
+    adjacent_union_completion_certification, boolean_coplanar_mesh_overlay_optional,
+    boundary_policy_shortcut_result_matches_sources, boundary_touching_report_from_graph,
     materialize_volumetric_coplanar_boundary_closure_output,
-    open_surface_disjoint_result_matches_sources, preflight_boolean_exact_request_from_graph,
-    replay_closed_same_surface_boolean_result_if_certified,
+    no_materialized_boundary_output_report, not_named_planar_arrangement_report,
+    open_surface_disjoint_report_from_graph, open_surface_disjoint_result_matches_sources,
+    planar_arrangement_report_from_graph, preflight_boolean_exact_request_from_graph,
+    refinement_report_from_graph, replay_closed_same_surface_boolean_result_if_certified,
     replay_materialized_volumetric_winding_region_plan, replay_open_surface_arrangement_result,
-    replay_selected_region_boolean_result,
+    replay_selected_region_boolean_result, same_surface_report_from_sources,
+    volumetric_boundary_closure_report_from_graph, winding_readiness_report_for_request_from_graph,
 };
 use super::bounds::AabbIntersectionKind;
 use super::cell_complex::{
@@ -46,9 +50,7 @@ use super::graph::{
 };
 use super::intersection::MeshFacePairRelation;
 use super::orthogonal_solid::{
-    materialize_axis_aligned_orthogonal_solid_difference,
-    materialize_axis_aligned_orthogonal_solid_intersection,
-    materialize_axis_aligned_orthogonal_solid_union,
+    AxisAlignedOrthogonalSolidOperation, materialize_axis_aligned_orthogonal_solid_cell_output,
 };
 use super::region::{
     ExactBooleanAssemblyPlan, ExactOutputTriangle, ExactOutputTriangleOrientation,
@@ -1723,15 +1725,13 @@ fn certified_shortcut_sources_match(
         }
         ExactBooleanShortcutKind::Identical => Ok(meshes_are_certified_identical(left, right)),
         ExactBooleanShortcutKind::SameSurface => {
-            let report =
-                ExactBooleanRequest::new(operation, validation).same_surface_report(left, right);
+            let report = same_surface_report_from_sources(left, right);
             report.validate()?;
             Ok(report.is_certified())
         }
         ExactBooleanShortcutKind::OpenSurfaceDisjoint => {
-            let report = ExactBooleanRequest::new(operation, validation)
-                .open_surface_disjoint_report(left, right)
-                .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+            let graph = validated_report_intersection_graph(left, right)?;
+            let report = open_surface_disjoint_report_from_graph(&graph, left, right);
             report.validate()?;
             Ok(report.is_certified())
         }
@@ -2305,12 +2305,9 @@ fn closed_boundary_touching_sources_match(
     if !mesh_is_closed_solid(left) || !mesh_is_closed_solid(right) {
         return Ok(false);
     }
-    let report = ExactBooleanRequest::new(
-        ExactBooleanOperation::Union,
-        ValidationPolicy::ALLOW_BOUNDARY,
-    )
-    .boundary_touching_report(left, right)
-    .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+    let graph = validated_report_intersection_graph(left, right)?;
+    let report = boundary_touching_report_from_graph(&graph, left, right)
+        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
     report.validate()?;
     if !report.is_certified() {
         if matches!(
@@ -2588,8 +2585,7 @@ fn arrangement_cell_complex_sources_match(
     right: &ExactMesh,
 ) -> Result<bool, ExactReportValidationError> {
     if operation == ExactBooleanOperation::Union {
-        let report = ExactBooleanRequest::new(operation, validation)
-            .adjacent_union_completion_report(left, right)
+        let (report, _) = adjacent_union_completion_certification(left, right, operation, None)
             .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
         report.validate()?;
         if matches!(
@@ -2629,6 +2625,43 @@ fn arrangement_cell_complex_sources_match(
     Ok(preflight.support == ExactBooleanSupport::CertifiedArrangementCellComplex)
 }
 
+fn axis_aligned_orthogonal_solid_operation(
+    operation: ExactBooleanOperation,
+) -> Option<AxisAlignedOrthogonalSolidOperation> {
+    match operation {
+        ExactBooleanOperation::Union => Some(AxisAlignedOrthogonalSolidOperation::Union),
+        ExactBooleanOperation::Intersection => {
+            Some(AxisAlignedOrthogonalSolidOperation::Intersection)
+        }
+        ExactBooleanOperation::Difference => Some(AxisAlignedOrthogonalSolidOperation::Difference),
+        ExactBooleanOperation::SelectedRegions(_) => None,
+    }
+}
+
+fn axis_aligned_orthogonal_solid_output_matches_sources(
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+    mesh: &ExactMesh,
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Result<Option<bool>, ExactReportValidationError> {
+    let Some(solid_operation) = axis_aligned_orthogonal_solid_operation(operation) else {
+        return Ok(None);
+    };
+    let Some(replay) = materialize_axis_aligned_orthogonal_solid_cell_output(
+        left,
+        right,
+        solid_operation,
+        "exact arrangement orthogonal solid cell replay",
+        validation,
+    )
+    .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
+    else {
+        return Ok(None);
+    };
+    Ok(Some(mesh_output_matches(mesh, &replay)))
+}
+
 fn arrangement_cell_complex_output_matches_sources(
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
@@ -2644,14 +2677,14 @@ fn arrangement_cell_complex_output_matches_sources(
         return Ok(Some(mesh_output_matches(mesh, &replay)));
     }
 
+    if let Some(matches_output) = axis_aligned_orthogonal_solid_output_matches_sources(
+        operation, validation, mesh, left, right,
+    )? {
+        return Ok(Some(matches_output));
+    }
+
     match operation {
         ExactBooleanOperation::Union => {
-            if let Some(replay) =
-                materialize_axis_aligned_orthogonal_solid_union(left, right, validation)
-                    .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
-            {
-                return Ok(Some(mesh_output_matches(mesh, &replay.mesh)));
-            }
             if let Some(replay) = materialize_affine_orthogonal_solid_union(left, right, validation)
                 .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
             {
@@ -2660,12 +2693,6 @@ fn arrangement_cell_complex_output_matches_sources(
         }
         ExactBooleanOperation::Intersection => {
             if let Some(replay) =
-                materialize_axis_aligned_orthogonal_solid_intersection(left, right, validation)
-                    .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
-            {
-                return Ok(Some(mesh_output_matches(mesh, &replay.mesh)));
-            }
-            if let Some(replay) =
                 materialize_affine_orthogonal_solid_intersection(left, right, validation)
                     .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
             {
@@ -2673,12 +2700,6 @@ fn arrangement_cell_complex_output_matches_sources(
             }
         }
         ExactBooleanOperation::Difference => {
-            if let Some(replay) =
-                materialize_axis_aligned_orthogonal_solid_difference(left, right, validation)
-                    .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
-            {
-                return Ok(Some(mesh_output_matches(mesh, &replay.mesh)));
-            }
             if let Some(replay) =
                 materialize_affine_orthogonal_solid_difference(left, right, validation)
                     .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
@@ -2700,9 +2721,9 @@ fn arrangement_cell_complex_output_matches_sources(
         return Ok(None);
     }
 
-    let adjacent_report = ExactBooleanRequest::new(operation, validation)
-        .adjacent_union_completion_report(left, right)
-        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+    let (adjacent_report, _) =
+        adjacent_union_completion_certification(left, right, operation, None)
+            .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
     adjacent_report.validate()?;
     match adjacent_report.status {
         ExactAdjacentUnionCompletionStatus::CertifiedFullFace => {
@@ -3452,9 +3473,13 @@ impl ExactVolumetricBoundaryClosureReport {
         right: &ExactMesh,
     ) -> Result<(), ExactReportValidationError> {
         self.validate()?;
-        let replay = ExactBooleanRequest::new(self.operation, ValidationPolicy::ALLOW_BOUNDARY)
-            .volumetric_boundary_closure(left, right)
-            .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+        let replay = if matches!(self.operation, ExactBooleanOperation::SelectedRegions(_)) {
+            no_materialized_boundary_output_report(self.operation)
+        } else {
+            let graph = validated_report_intersection_graph(left, right)?;
+            volumetric_boundary_closure_report_from_graph(&graph, left, right, self.operation)
+                .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
+        };
         if self == &replay {
             Ok(())
         } else {
@@ -4463,9 +4488,8 @@ impl ExactRefinementReport {
         right: &ExactMesh,
     ) -> Result<(), ExactReportValidationError> {
         self.validate()?;
-        let replay = ExactBooleanRequest::new(self.operation, ValidationPolicy::ALLOW_BOUNDARY)
-            .refinement_report(left, right)
-            .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+        let graph = validated_report_intersection_graph(left, right)?;
+        let replay = refinement_report_from_graph(&graph, self.operation);
         if self == &replay {
             Ok(())
         } else {
@@ -4655,13 +4679,7 @@ impl ExactSameSurfaceReport {
         right: &ExactMesh,
     ) -> Result<(), ExactReportValidationError> {
         self.validate()?;
-        if self
-            == &ExactBooleanRequest::new(
-                ExactBooleanOperation::Union,
-                ValidationPolicy::ALLOW_BOUNDARY,
-            )
-            .same_surface_report(left, right)
-        {
+        if self == &same_surface_report_from_sources(left, right) {
             Ok(())
         } else {
             Err(ExactReportValidationError::SourceReplayMismatch)
@@ -4744,12 +4762,8 @@ impl ExactOpenSurfaceDisjointReport {
         right: &ExactMesh,
     ) -> Result<(), ExactReportValidationError> {
         self.validate()?;
-        let replay = ExactBooleanRequest::new(
-            ExactBooleanOperation::Union,
-            ValidationPolicy::ALLOW_BOUNDARY,
-        )
-        .open_surface_disjoint_report(left, right)
-        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+        let graph = validated_report_intersection_graph(left, right)?;
+        let replay = open_surface_disjoint_report_from_graph(&graph, left, right);
         if self == &replay {
             Ok(())
         } else {
@@ -5127,9 +5141,9 @@ impl ExactAdjacentUnionCompletionReport {
         right: &ExactMesh,
     ) -> Result<(), ExactReportValidationError> {
         self.validate()?;
-        let replay = ExactBooleanRequest::new(self.operation, ValidationPolicy::ALLOW_BOUNDARY)
-            .adjacent_union_completion_report(left, right)
-            .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+        let (replay, _) =
+            adjacent_union_completion_certification(left, right, self.operation, None)
+                .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
         if self == &replay {
             Ok(())
         } else {
@@ -5223,12 +5237,9 @@ impl ExactBoundaryTouchingReport {
         right: &ExactMesh,
     ) -> Result<(), ExactReportValidationError> {
         self.validate()?;
-        let replay = ExactBooleanRequest::new(
-            ExactBooleanOperation::Union,
-            ValidationPolicy::ALLOW_BOUNDARY,
-        )
-        .boundary_touching_report(left, right)
-        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+        let graph = validated_report_intersection_graph(left, right)?;
+        let replay = boundary_touching_report_from_graph(&graph, left, right)
+            .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
         if self == &replay {
             Ok(())
         } else {
@@ -5445,9 +5456,13 @@ impl ExactPlanarArrangementReport {
         right: &ExactMesh,
     ) -> Result<(), ExactReportValidationError> {
         self.validate()?;
-        let replay = ExactBooleanRequest::new(self.operation, ValidationPolicy::ALLOW_BOUNDARY)
-            .planar_arrangement_report(left, right)
-            .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+        let replay = if matches!(self.operation, ExactBooleanOperation::SelectedRegions(_)) {
+            not_named_planar_arrangement_report(self.operation)
+        } else {
+            let graph = validated_report_intersection_graph(left, right)?;
+            planar_arrangement_report_from_graph(&graph, left, right, self.operation)
+                .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
+        };
         if self == &replay {
             Ok(())
         } else {
@@ -5644,13 +5659,14 @@ impl ExactWindingReadinessReport {
         right: &ExactMesh,
     ) -> Result<(), ExactReportValidationError> {
         self.validate()?;
-        let replay = ExactBooleanRequest::with_boundary_policy(
+        let request = ExactBooleanRequest::with_boundary_policy(
             self.operation,
             ValidationPolicy::ALLOW_BOUNDARY,
             ExactBoundaryBooleanPolicy::Reject,
-        )
-        .winding_readiness(left, right)
-        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+        );
+        let graph = validated_report_intersection_graph(left, right)?;
+        let replay = winding_readiness_report_for_request_from_graph(&graph, left, right, request)
+            .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
         if self == &replay {
             Ok(())
         } else {
@@ -5671,8 +5687,9 @@ impl ExactWindingReadinessReport {
         validation: ValidationPolicy,
     ) -> Result<(), ExactReportValidationError> {
         self.validate()?;
-        let replay = ExactBooleanRequest::new(self.operation, validation)
-            .winding_readiness(left, right)
+        let request = ExactBooleanRequest::new(self.operation, validation);
+        let graph = validated_report_intersection_graph(left, right)?;
+        let replay = winding_readiness_report_for_request_from_graph(&graph, left, right, request)
             .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
         if self == &replay {
             Ok(())
@@ -5691,10 +5708,11 @@ impl ExactWindingReadinessReport {
         boundary_policy: ExactBoundaryBooleanPolicy,
     ) -> Result<(), ExactReportValidationError> {
         self.validate()?;
-        let replay =
-            ExactBooleanRequest::with_boundary_policy(self.operation, validation, boundary_policy)
-                .winding_readiness(left, right)
-                .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+        let request =
+            ExactBooleanRequest::with_boundary_policy(self.operation, validation, boundary_policy);
+        let graph = validated_report_intersection_graph(left, right)?;
+        let replay = winding_readiness_report_for_request_from_graph(&graph, left, right, request)
+            .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
         if self == &replay {
             Ok(())
         } else {
@@ -6440,11 +6458,13 @@ mod tests {
             ExactReportFreshness::SourceReplayMismatch
         );
 
-        let closure = ExactBooleanRequest::new(
+        let graph = validated_report_intersection_graph(&left, &right).unwrap();
+        let closure = volumetric_boundary_closure_report_from_graph(
+            &graph,
+            &left,
+            &right,
             ExactBooleanOperation::Union,
-            ValidationPolicy::ALLOW_BOUNDARY,
         )
-        .volumetric_boundary_closure(&left, &right)
         .unwrap();
         assert_eq!(
             closure.freshness_against_sources(&left, &right),
@@ -6464,12 +6484,8 @@ mod tests {
         let left = report_test_tetra([0, 0, 0]);
         let right = report_test_tetra([3, 0, 0]);
 
-        let refinement = ExactBooleanRequest::new(
-            ExactBooleanOperation::Union,
-            ValidationPolicy::ALLOW_BOUNDARY,
-        )
-        .refinement_report(&left, &right)
-        .unwrap();
+        let graph = validated_report_intersection_graph(&left, &right).unwrap();
+        let refinement = refinement_report_from_graph(&graph, ExactBooleanOperation::Union);
         assert_eq!(
             refinement.freshness_against_sources(&left, &right),
             ExactReportFreshness::Current
@@ -6482,11 +6498,7 @@ mod tests {
             ExactReportFreshness::StaleBlockerEvidence
         );
 
-        let same_surface = ExactBooleanRequest::new(
-            ExactBooleanOperation::Union,
-            ValidationPolicy::ALLOW_BOUNDARY,
-        )
-        .same_surface_report(&left, &left);
+        let same_surface = same_surface_report_from_sources(&left, &left);
         assert_eq!(
             same_surface.freshness_against_sources(&left, &left),
             ExactReportFreshness::Current
@@ -6498,24 +6510,18 @@ mod tests {
 
         let open_left = report_test_triangle(&[[0, 0, 0], [2, 0, 0], [0, 2, 0]]);
         let open_right = report_test_triangle(&[[5, 0, 0], [7, 0, 0], [5, 2, 0]]);
-        let open_disjoint = ExactBooleanRequest::new(
-            ExactBooleanOperation::Union,
-            ValidationPolicy::ALLOW_BOUNDARY,
-        )
-        .open_surface_disjoint_report(&open_left, &open_right)
-        .unwrap();
+        let graph = validated_report_intersection_graph(&open_left, &open_right).unwrap();
+        let open_disjoint =
+            open_surface_disjoint_report_from_graph(&graph, &open_left, &open_right);
         assert_eq!(
             open_disjoint.freshness_against_sources(&open_left, &open_right),
             ExactReportFreshness::Current
         );
 
         let touching_right = report_test_triangle(&[[2, 0, 0], [0, 2, 0], [2, 2, 2]]);
-        let boundary = ExactBooleanRequest::new(
-            ExactBooleanOperation::Union,
-            ValidationPolicy::ALLOW_BOUNDARY,
-        )
-        .boundary_touching_report(&open_left, &touching_right)
-        .unwrap();
+        let graph = validated_report_intersection_graph(&open_left, &touching_right).unwrap();
+        let boundary =
+            boundary_touching_report_from_graph(&graph, &open_left, &touching_right).unwrap();
         assert_eq!(
             boundary.freshness_against_sources(&open_left, &touching_right),
             ExactReportFreshness::Current

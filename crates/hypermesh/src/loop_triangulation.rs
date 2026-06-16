@@ -145,9 +145,21 @@ pub(crate) fn triangulate_exact_loop_group(
             depth: 0,
         });
     }
-    compute_loop_depths(&mut loops)?;
-    let isolate_component_vertices = same_depth_endpoint_touch_flags(&loops)?;
-    validate_loop_topology(&loops)?;
+    if let Err(error) = compute_loop_depths(&mut loops) {
+        return triangulate_loop_group_union_via_arrangement(&loops, vertices, triangles)
+            .or(Err(error));
+    }
+    let isolate_component_vertices = match same_depth_endpoint_touch_flags(&loops) {
+        Ok(flags) => flags,
+        Err(error) => {
+            return triangulate_loop_group_union_via_arrangement(&loops, vertices, triangles)
+                .or(Err(error));
+        }
+    };
+    if let Err(error) = validate_loop_topology(&loops) {
+        return triangulate_loop_group_union_via_arrangement(&loops, vertices, triangles)
+            .or(Err(error));
+    }
     let mut used_as_hole = vec![false; loops.len()];
     for outer_index in 0..loops.len() {
         if loops[outer_index].depth % 2 != 0 {
@@ -176,7 +188,8 @@ pub(crate) fn triangulate_exact_loop_group(
     }
     for (index, loop_) in loops.iter().enumerate() {
         if loop_.depth % 2 != 0 && !used_as_hole[index] {
-            return Err(ExactArrangementBlocker::NonManifoldCellComplex);
+            return triangulate_loop_group_union_via_arrangement(&loops, vertices, triangles)
+                .or(Err(ExactArrangementBlocker::NonManifoldCellComplex));
         }
     }
     Ok(())
@@ -519,27 +532,65 @@ fn triangulate_touching_hole_loop_group_via_arrangement(
     triangles: &mut Vec<Triangle>,
     output_orientation: Ordering,
 ) -> Result<(), ExactArrangementBlocker> {
-    let projection = loops[outer_index].projection;
-    let carrier = carrier_triangle_for_projection(&loops[outer_index].boundary, projection)?;
-    let mut rings = Vec::with_capacity(hole_loop_indices.len() + 1);
-    rings.push(ExactArrangement2dRegionRing::new(
-        ExactArrangement2dRegion::Left,
-        loops[outer_index].projected.clone(),
-    ));
-    for &hole_index in hole_loop_indices {
-        if loops[hole_index].projection != projection {
+    let mut loop_indices = Vec::with_capacity(hole_loop_indices.len() + 1);
+    loop_indices.push(outer_index);
+    loop_indices.extend(hole_loop_indices.iter().copied());
+    triangulate_projected_loop_indices_via_arrangement(
+        loops,
+        &loop_indices,
+        vertices,
+        triangles,
+        output_orientation,
+    )
+}
+
+fn triangulate_loop_group_union_via_arrangement(
+    loops: &[ProjectedFaceLoop],
+    vertices: &mut Vec<Point3>,
+    triangles: &mut Vec<Triangle>,
+) -> Result<(), ExactArrangementBlocker> {
+    if loops.is_empty() {
+        return Ok(());
+    }
+    let projection = loops[0].projection;
+    let output_orientation = projected_loop_orientation(&loops[0].boundary, projection)?;
+    let loop_indices = (0..loops.len()).collect::<Vec<_>>();
+    triangulate_projected_loop_indices_via_arrangement(
+        loops,
+        &loop_indices,
+        vertices,
+        triangles,
+        output_orientation,
+    )
+}
+
+fn triangulate_projected_loop_indices_via_arrangement(
+    loops: &[ProjectedFaceLoop],
+    loop_indices: &[usize],
+    vertices: &mut Vec<Point3>,
+    triangles: &mut Vec<Triangle>,
+    output_orientation: Ordering,
+) -> Result<(), ExactArrangementBlocker> {
+    let first = *loop_indices
+        .first()
+        .ok_or(ExactArrangementBlocker::NonManifoldCellComplex)?;
+    let projection = loops[first].projection;
+    let carrier = carrier_triangle_for_projection(&loops[first].boundary, projection)?;
+    let mut rings = Vec::with_capacity(loop_indices.len());
+    for &loop_index in loop_indices {
+        if loops[loop_index].projection != projection {
             return Err(ExactArrangementBlocker::NonManifoldCellComplex);
         }
         rings.push(ExactArrangement2dRegionRing::new(
             ExactArrangement2dRegion::Left,
-            loops[hole_index].projected.clone(),
+            loops[loop_index].projected.clone(),
         ));
     }
 
     let overlay = build_exact_arrangement2d_overlay_with_boundary_policy(
         &rings,
         ExactArrangement2dSetOperation::Union,
-        ExactArrangement2dBoundaryPolicy::SimplifyCollinear,
+        ExactArrangement2dBoundaryPolicy::PreserveCollinear,
     );
     if !overlay.is_complete() {
         return Err(map_arrangement2d_blocker(

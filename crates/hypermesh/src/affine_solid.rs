@@ -53,17 +53,6 @@ pub struct AffineOrthogonalSolidArrangement {
     pub mesh: ExactMesh,
 }
 
-/// Freshness status for a retained affine orthogonal-solid materialization.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum AffineOrthogonalSolidFreshness {
-    /// The retained arrangement locally validates and replays from source operands.
-    Current,
-    /// The retained output mesh or affine frame no longer passes local replay.
-    InvalidOutput,
-    /// The artifact is locally valid but no longer replays from source operands.
-    SourceReplayMismatch,
-}
-
 #[derive(Clone, Debug)]
 struct AffineOrthogonalSolidInputs {
     basis: AffineBoxBasis,
@@ -75,8 +64,8 @@ impl AffineOrthogonalSolidArrangement {
     ///
     /// This does not inspect the original operands. It checks that the output
     /// mesh remains valid and that every lifted vertex maps back to an exact
-    /// axis-aligned orthogonal solid cell complex in the retained frame. Source
-    /// replay is handled by [`Self::validate_against_sources`].
+    /// axis-aligned orthogonal solid cell complex in the retained frame. Public
+    /// source replay is handled by `ExactBooleanResult`.
     pub fn validate(&self) -> Result<(), MeshError> {
         self.mesh.validate_retained_state().map_err(|error| {
             affine_solid_error(format!(
@@ -101,13 +90,7 @@ impl AffineOrthogonalSolidArrangement {
         Ok(())
     }
 
-    /// Validate this output by replaying the retained operation from sources.
-    ///
-    /// The replay recomputes basis discovery, exact normalized source meshes,
-    /// normalized orthogonal cell materialization, and lifted output. That
-    /// keeps the affine frame and source operands in the certificate chain,
-    /// triangle soup by itself.
-    pub fn validate_against_sources(
+    pub(crate) fn validate_against_sources(
         &self,
         left: &ExactMesh,
         right: &ExactMesh,
@@ -130,31 +113,10 @@ impl AffineOrthogonalSolidArrangement {
             ))
         }
     }
-
-    /// Classify whether this retained affine materialization is fresh for the sources.
-    pub fn freshness_against_sources(
-        &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-    ) -> AffineOrthogonalSolidFreshness {
-        if self.validate().is_err() {
-            return AffineOrthogonalSolidFreshness::InvalidOutput;
-        }
-        let replay = materialize_affine_orthogonal_solids(
-            left,
-            right,
-            self.operation,
-            self.mesh.validation_policy(),
-        );
-        match replay {
-            Ok(Some(replay)) if replay == *self => AffineOrthogonalSolidFreshness::Current,
-            Ok(_) | Err(_) => AffineOrthogonalSolidFreshness::SourceReplayMismatch,
-        }
-    }
 }
 
 /// Certify and materialize an affine orthogonal-solid union.
-pub fn materialize_affine_orthogonal_solid_union(
+pub(crate) fn materialize_affine_orthogonal_solid_union(
     left: &ExactMesh,
     right: &ExactMesh,
     validation: ValidationPolicy,
@@ -168,7 +130,7 @@ pub fn materialize_affine_orthogonal_solid_union(
 }
 
 /// Certify and materialize an affine orthogonal-solid intersection.
-pub fn materialize_affine_orthogonal_solid_intersection(
+pub(crate) fn materialize_affine_orthogonal_solid_intersection(
     left: &ExactMesh,
     right: &ExactMesh,
     validation: ValidationPolicy,
@@ -182,7 +144,7 @@ pub fn materialize_affine_orthogonal_solid_intersection(
 }
 
 /// Certify and materialize an affine orthogonal-solid difference.
-pub fn materialize_affine_orthogonal_solid_difference(
+pub(crate) fn materialize_affine_orthogonal_solid_difference(
     left: &ExactMesh,
     right: &ExactMesh,
     validation: ValidationPolicy,

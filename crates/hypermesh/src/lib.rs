@@ -62,19 +62,9 @@ pub use adapter::{
     LossyF64MeshInputReadiness, LossyF64MeshInputReport, LossyF64MeshInputReportValidationError,
     inspect_f64_mesh_input, inspect_i64_mesh_input,
 };
-pub use adjacent::{
-    FullFaceAdjacentFacePair, FullFaceAdjacentPatch, FullFaceAdjacentUnion,
-    FullFaceAdjacentUnionError, FullFaceAdjacentUnionFreshness,
-    materialize_full_face_adjacent_union,
-};
 pub use affine_box::{
     AffineBoxBasis, AffineBoxOperation, has_affine_box_difference, has_affine_box_intersection,
     has_affine_box_union,
-};
-pub use affine_solid::{
-    AffineOrthogonalSolidArrangement, AffineOrthogonalSolidFreshness,
-    AffineOrthogonalSolidOperation, materialize_affine_orthogonal_solid_difference,
-    materialize_affine_orthogonal_solid_intersection, materialize_affine_orthogonal_solid_union,
 };
 pub use arrangement2d::{
     ExactArrangement2d, ExactArrangement2dBlocker, ExactArrangement2dBoundaryPolicy,
@@ -122,10 +112,6 @@ pub use cells::{triangulate_all_face_cells_with_cdt, validate_face_cell_cdt_agai
 pub use construction::{
     intersect_segment_with_face_plane, intersect_segment_with_retained_face_plane,
 };
-pub use contained_adjacent::{
-    ContainedFaceAdjacentUnion, ContainedFaceAdjacentUnionError,
-    ContainedFaceAdjacentUnionFreshness, materialize_contained_face_adjacent_union,
-};
 pub use convex::{
     ConvexSolidDifference, ConvexSolidIntersection, ConvexSolidUnion,
     intersect_closed_convex_solids, subtract_closed_convex_solids, union_closed_convex_solids,
@@ -165,12 +151,6 @@ pub use narrow::{
     TriangleTriangleClassification, TriangleTriangleFreshness, TriangleTriangleRelation,
     TriangleTriangleValidationError, classify_mesh_triangle_against_retained_face_plane,
     classify_triangle_against_face_plane, classify_triangle_triangle,
-};
-pub use orthogonal_solid::{
-    AxisAlignedOrthogonalSolidArrangement, AxisAlignedOrthogonalSolidFreshness,
-    AxisAlignedOrthogonalSolidOperation, materialize_axis_aligned_orthogonal_solid_difference,
-    materialize_axis_aligned_orthogonal_solid_intersection,
-    materialize_axis_aligned_orthogonal_solid_union,
 };
 pub use package::{
     ExactMeshConsumerDomain, ExactMeshDomainReportRef, ExactMeshDomainSummary,

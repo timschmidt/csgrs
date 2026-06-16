@@ -4,8 +4,8 @@
 //! next bounded class: closed triangular meshes whose boundary is an exact
 //! axis-aligned grid of rectangular cell faces, possibly with several
 //! components or cavities. It reconstructs occupied cells from exact face
-//! coordinates and triangle orientation, then materializes named booleans by
-//! replaying occupancy on the merged exact grid.
+//! coordinates and triangle orientation, then exposes retained occupancy plans
+//! for canonical arrangement/cell-complex consumers.
 //!
 //! Topology is produced from retained geometric object structure and exact
 //! predicates, while unsupported shapes remain explicit non-certifications
@@ -16,7 +16,7 @@ use std::collections::{BTreeMap, BTreeSet, VecDeque};
 
 use hyperlimit::{Point3, compare_reals};
 
-use super::error::{DiagnosticKind, MeshDiagnostic, MeshError, Severity};
+use super::error::MeshError;
 use super::mesh::{ExactMesh, Triangle};
 use super::validation::ValidationPolicy;
 use hyperlimit::SourceProvenance;
@@ -31,33 +31,6 @@ pub enum AxisAlignedOrthogonalSolidOperation {
     Intersection,
     /// Retain cells occupied by the left operand and not the right operand.
     Difference,
-}
-
-/// Exact axis-aligned orthogonal-solid boolean output.
-///
-/// The artifact retains the named operation, the selected cell count on the
-/// merged exact source grid, and the materialized exact output mesh. The source
-/// grid can be finer than the simplified output mesh, so `selected_cells` is
-/// certified by source replay rather than by re-counting the output shell.
-#[derive(Clone, Debug, PartialEq)]
-pub struct AxisAlignedOrthogonalSolidArrangement {
-    /// Boolean operation that produced the retained mesh.
-    pub operation: AxisAlignedOrthogonalSolidOperation,
-    /// Number of selected cells on the merged exact source grid.
-    pub selected_cells: usize,
-    /// Exact closed output mesh materialized from selected orthogonal cells.
-    pub mesh: ExactMesh,
-}
-
-/// Freshness status for a retained axis-aligned orthogonal-solid materialization.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum AxisAlignedOrthogonalSolidFreshness {
-    /// The retained arrangement locally validates and replays from source operands.
-    Current,
-    /// The retained output mesh no longer passes local exact orthogonal-solid audit.
-    InvalidOutput,
-    /// The artifact is locally valid but no longer replays from source operands.
-    SourceReplayMismatch,
 }
 
 /// Coordinate axis for retained grid faces.
@@ -198,20 +171,6 @@ pub(crate) fn has_empty_axis_aligned_orthogonal_solid_cell_intersection(
     .is_some_and(|selected_count| selected_count == 0)
 }
 
-/// Return whether exact orthogonal occupancy certifies a positive-volume
-/// intersection.
-pub(crate) fn has_non_empty_axis_aligned_orthogonal_solid_cell_intersection(
-    left: &ExactMesh,
-    right: &ExactMesh,
-) -> bool {
-    axis_aligned_orthogonal_solid_cell_selected_count(
-        left,
-        right,
-        AxisAlignedOrthogonalSolidOperation::Intersection,
-    )
-    .is_some_and(|selected_count| selected_count > 0)
-}
-
 /// Return the exact count of selected cells for a certified orthogonal
 /// operation.
 ///
@@ -227,156 +186,6 @@ pub(crate) fn axis_aligned_orthogonal_solid_cell_selected_count(
     certify_orthogonal_cell_inputs(left, right)
         .as_ref()
         .and_then(|inputs| orthogonal_cell_selected_count(inputs, operation))
-}
-
-impl AxisAlignedOrthogonalSolidArrangement {
-    /// Validate local output mesh state and orthogonal-solid replay.
-    ///
-    /// Empty selections are valid regularized solid outputs. Non-empty outputs
-    /// must still certify as exact axis-aligned orthogonal cell complexes.
-    pub fn validate(&self) -> Result<(), MeshError> {
-        self.mesh.validate_retained_state().map_err(|error| {
-            orthogonal_solid_error(format!(
-                "axis-aligned orthogonal solid output mesh is stale: {error:?}"
-            ))
-        })?;
-        if self.selected_cells == 0 {
-            if self.mesh.vertices().is_empty() && self.mesh.triangles().is_empty() {
-                return Ok(());
-            }
-            return Err(orthogonal_solid_error(
-                "empty orthogonal solid selection retained non-empty output mesh",
-            ));
-        }
-        if self.mesh.vertices().is_empty() || self.mesh.triangles().is_empty() {
-            return Err(orthogonal_solid_error(
-                "non-empty orthogonal solid selection retained empty output mesh",
-            ));
-        }
-        if !is_axis_aligned_orthogonal_solid(&self.mesh) {
-            return Err(orthogonal_solid_error(
-                "orthogonal solid output is not an exact axis-aligned cell complex",
-            ));
-        }
-        Ok(())
-    }
-
-    /// Validate this output by replaying the retained operation from sources.
-    pub fn validate_against_sources(
-        &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-    ) -> Result<(), MeshError> {
-        self.validate()?;
-        let replay = materialize_axis_aligned_orthogonal_solids(
-            left,
-            right,
-            self.operation,
-            self.mesh.validation_policy(),
-        )?
-        .ok_or_else(|| {
-            orthogonal_solid_error("source replay did not reproduce orthogonal solid output")
-        })?;
-        if self == &replay {
-            Ok(())
-        } else {
-            Err(orthogonal_solid_error(
-                "retained orthogonal solid output does not match source replay",
-            ))
-        }
-    }
-
-    /// Classify whether this retained materialization is fresh for the sources.
-    pub fn freshness_against_sources(
-        &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-    ) -> AxisAlignedOrthogonalSolidFreshness {
-        if self.validate().is_err() {
-            return AxisAlignedOrthogonalSolidFreshness::InvalidOutput;
-        }
-        let replay = materialize_axis_aligned_orthogonal_solids(
-            left,
-            right,
-            self.operation,
-            self.mesh.validation_policy(),
-        );
-        match replay {
-            Ok(Some(replay)) if replay == *self => AxisAlignedOrthogonalSolidFreshness::Current,
-            Ok(_) | Err(_) => AxisAlignedOrthogonalSolidFreshness::SourceReplayMismatch,
-        }
-    }
-}
-
-/// Certify and materialize an axis-aligned orthogonal-solid union.
-pub fn materialize_axis_aligned_orthogonal_solid_union(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    validation: ValidationPolicy,
-) -> Result<Option<AxisAlignedOrthogonalSolidArrangement>, MeshError> {
-    materialize_axis_aligned_orthogonal_solids(
-        left,
-        right,
-        AxisAlignedOrthogonalSolidOperation::Union,
-        validation,
-    )
-}
-
-/// Certify and materialize an axis-aligned orthogonal-solid intersection.
-pub fn materialize_axis_aligned_orthogonal_solid_intersection(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    validation: ValidationPolicy,
-) -> Result<Option<AxisAlignedOrthogonalSolidArrangement>, MeshError> {
-    materialize_axis_aligned_orthogonal_solids(
-        left,
-        right,
-        AxisAlignedOrthogonalSolidOperation::Intersection,
-        validation,
-    )
-}
-
-/// Certify and materialize an axis-aligned orthogonal-solid difference.
-pub fn materialize_axis_aligned_orthogonal_solid_difference(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    validation: ValidationPolicy,
-) -> Result<Option<AxisAlignedOrthogonalSolidArrangement>, MeshError> {
-    materialize_axis_aligned_orthogonal_solids(
-        left,
-        right,
-        AxisAlignedOrthogonalSolidOperation::Difference,
-        validation,
-    )
-}
-
-fn materialize_axis_aligned_orthogonal_solids(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: AxisAlignedOrthogonalSolidOperation,
-    validation: ValidationPolicy,
-) -> Result<Option<AxisAlignedOrthogonalSolidArrangement>, MeshError> {
-    let Some(plan) = axis_aligned_orthogonal_solid_cell_plan(left, right, operation) else {
-        return Ok(None);
-    };
-    let selected_cells = plan.selected_count;
-    let label = match operation {
-        AxisAlignedOrthogonalSolidOperation::Union => "exact axis-aligned orthogonal solid union",
-        AxisAlignedOrthogonalSolidOperation::Intersection => {
-            "exact axis-aligned orthogonal solid intersection"
-        }
-        AxisAlignedOrthogonalSolidOperation::Difference => {
-            "exact axis-aligned orthogonal solid difference"
-        }
-    };
-    let mesh = materialize_axis_aligned_orthogonal_solid_cell_plan(plan, label, validation)?;
-    let arrangement = AxisAlignedOrthogonalSolidArrangement {
-        operation,
-        selected_cells,
-        mesh,
-    };
-    arrangement.validate()?;
-    Ok(Some(arrangement))
 }
 
 /// Return whether one mesh certifies as an exact orthogonal solid cell complex.
@@ -401,12 +210,17 @@ pub(crate) fn materialize_axis_aligned_orthogonal_solid_cell_plan(
     plan.to_mesh(label, validation)
 }
 
-fn orthogonal_solid_error(message: impl Into<String>) -> MeshError {
-    MeshError::one(MeshDiagnostic::new(
-        Severity::Error,
-        DiagnosticKind::UnsupportedExactOperation,
-        message,
-    ))
+pub(crate) fn materialize_axis_aligned_orthogonal_solid_cell_output(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: AxisAlignedOrthogonalSolidOperation,
+    label: &'static str,
+    validation: ValidationPolicy,
+) -> Result<Option<ExactMesh>, MeshError> {
+    let Some(plan) = axis_aligned_orthogonal_solid_cell_plan(left, right, operation) else {
+        return Ok(None);
+    };
+    materialize_axis_aligned_orthogonal_solid_cell_plan(plan, label, validation).map(Some)
 }
 
 fn certify_orthogonal_cell_inputs(

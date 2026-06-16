@@ -94,21 +94,6 @@ pub enum FullFaceAdjacentUnionError {
     OutputMesh(ExactMeshValidationError),
     /// The retained output mesh is locally valid but is not a closed manifold.
     OutputNotClosed,
-    /// Replaying the retained source operands did not reproduce this union.
-    SourceReplayMismatch,
-}
-
-/// Freshness status for a retained full-face adjacent union.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum FullFaceAdjacentUnionFreshness {
-    /// The retained union locally validates and replays from source operands.
-    Current,
-    /// Retained consumed-face topology is internally incoherent.
-    InvalidSharedFaces,
-    /// The retained output mesh no longer passes local exact output validation.
-    InvalidOutput,
-    /// The artifact is locally valid but no longer replays from source operands.
-    SourceReplayMismatch,
 }
 
 impl FullFaceAdjacentUnion {
@@ -150,52 +135,10 @@ impl FullFaceAdjacentUnion {
         }
         Ok(())
     }
-
-    /// Validate this union by replaying the full-face adjacency certificate and
-    /// materialization from the source operands.
-    pub fn validate_against_sources(
-        &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-    ) -> Result<(), FullFaceAdjacentUnionError> {
-        self.validate()?;
-        let replay =
-            materialize_full_face_adjacent_union(left, right, self.mesh.validation_policy())
-                .ok_or(FullFaceAdjacentUnionError::SourceReplayMismatch)?;
-        if self == &replay {
-            Ok(())
-        } else {
-            Err(FullFaceAdjacentUnionError::SourceReplayMismatch)
-        }
-    }
-
-    /// Classify whether this retained union is fresh for the source operands.
-    pub fn freshness_against_sources(
-        &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-    ) -> FullFaceAdjacentUnionFreshness {
-        match self.validate() {
-            Ok(()) => {}
-            Err(
-                FullFaceAdjacentUnionError::MissingSharedFace
-                | FullFaceAdjacentUnionError::DuplicateSharedFace,
-            ) => return FullFaceAdjacentUnionFreshness::InvalidSharedFaces,
-            Err(
-                FullFaceAdjacentUnionError::OutputMesh(_)
-                | FullFaceAdjacentUnionError::OutputNotClosed
-                | FullFaceAdjacentUnionError::SourceReplayMismatch,
-            ) => return FullFaceAdjacentUnionFreshness::InvalidOutput,
-        }
-        match materialize_full_face_adjacent_union(left, right, self.mesh.validation_policy()) {
-            Some(replay) if replay == *self => FullFaceAdjacentUnionFreshness::Current,
-            Some(_) | None => FullFaceAdjacentUnionFreshness::SourceReplayMismatch,
-        }
-    }
 }
 
 /// Certify and materialize a full-face adjacent closed-solid union.
-pub fn materialize_full_face_adjacent_union(
+pub(crate) fn materialize_full_face_adjacent_union(
     left: &ExactMesh,
     right: &ExactMesh,
     validation: ValidationPolicy,
