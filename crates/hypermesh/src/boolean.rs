@@ -250,13 +250,22 @@ impl ExactArrangementBooleanAttempt {
             None => {
                 self.topology_assembly
                     .is_some_and(|status| status.is_complete())
-                    && self
-                        .region_ownership
-                        .is_some_and(|status| status.is_resolved())
+                    && self.region_ownership_resolves_operation()
                     && self.topology_assembly_report.is_some()
                     && self.region_ownership_report.is_some()
             }
         }
+    }
+
+    fn region_ownership_resolves_operation(&self) -> bool {
+        let (Some(status), Some(report)) =
+            (self.region_ownership, self.region_ownership_report.as_ref())
+        else {
+            return false;
+        };
+        report.status == status
+            && report.validate().is_ok()
+            && (status.is_resolved() || report.volume_selection_resolves_operation(self.operation))
     }
 
     /// Validate this retained arrangement/cell-complex attempt as a coherent
@@ -455,8 +464,8 @@ impl ExactArrangementBooleanAttempt {
         }
         if self.decline.is_none()
             && !matches!(self.operation, ExactBooleanOperation::SelectedRegions(_))
-            && let Some(status) = self.region_ownership
-            && !status.is_resolved()
+            && self.region_ownership.is_some()
+            && !self.region_ownership_resolves_operation()
         {
             return Err(ExactReportValidationError::StatusEvidenceMismatch);
         }
@@ -1544,7 +1553,7 @@ impl ExactBooleanEvaluation {
                             .region_ownership
                             .as_ref()
                             .is_some_and(|ownership| {
-                                ownership.validate().is_ok() && ownership.is_resolved()
+                                ownership_resolves_arrangement_operation(ownership, operation)
                             })
                             && self.certifications.topology_assembly.as_ref().is_some_and(
                                 |topology| topology.validate().is_ok() && topology.is_complete(),
@@ -1588,7 +1597,9 @@ impl ExactBooleanEvaluation {
                                 && self.certifications.topology_assembly.is_none()
                                 && self.certifications.arrangement_attempt.is_none())
                             || (self.certifications.region_ownership.as_ref().is_some_and(
-                                |ownership| ownership.validate().is_ok() && ownership.is_resolved(),
+                                |ownership| {
+                                    ownership_resolves_arrangement_operation(ownership, operation)
+                                },
                             ) && self.certifications.topology_assembly.as_ref().is_some_and(
                                 |topology| topology.validate().is_ok() && topology.is_complete(),
                             ) && self
@@ -1681,6 +1692,14 @@ fn exact_boolean_evaluation_requires_materialized_result(
             preflight.support,
             ExactBooleanSupport::CertifiedArrangementCellComplex
         )
+}
+
+fn ownership_resolves_arrangement_operation(
+    ownership: &ExactRegionOwnershipReport,
+    operation: ExactBooleanOperation,
+) -> bool {
+    ownership.validate().is_ok()
+        && (ownership.is_resolved() || ownership.volume_selection_resolves_operation(operation))
 }
 
 fn exact_boolean_preflight_matches_certifications(
@@ -1807,7 +1826,7 @@ fn exact_boolean_preflight_matches_certifications(
                     .region_ownership
                     .as_ref()
                     .is_some_and(|ownership| {
-                        ownership.validate().is_ok() && ownership.is_resolved()
+                        ownership_resolves_arrangement_operation(ownership, preflight.operation)
                     })
                     && certifications
                         .topology_assembly
@@ -13598,6 +13617,121 @@ mod tests {
                 ValidationPolicy::ALLOW_BOUNDARY,
             ),
             Err(ExactReportValidationError::SourceReplayMismatch)
+        );
+    }
+
+    #[test]
+    fn arrangement_certification_accepts_requested_volume_ownership() {
+        let ownership = ExactRegionOwnershipReport {
+            status: ExactRegionOwnershipStatus::RequiresWinding,
+            freshness: crate::cell_complex::ExactLabeledCellComplexFreshness::Current,
+            blockers: vec![ExactArrangementBlocker::UnresolvedRegionClassification],
+            face_cells: 1,
+            face_cell_boundary_nodes: 3,
+            face_cell_boundary_points: 3,
+            left_boundary_faces: 1,
+            right_boundary_faces: 0,
+            opposite_inside_faces: 0,
+            opposite_outside_faces: 0,
+            opposite_boundary_faces: 0,
+            opposite_unknown_faces: 1,
+            volume_regions: 3,
+            exterior_volume_regions: 1,
+            left_owned_volumes: 1,
+            right_owned_volumes: 1,
+            shared_owned_volumes: 0,
+            unowned_bounded_volumes: 0,
+            volume_adjacencies: 2,
+            volume_adjacency_face_sides: 2,
+            volume_adjacency_separating_faces: 2,
+            volume_selection_resolved: false,
+            volume_union_resolved: false,
+            volume_intersection_resolved: true,
+            volume_difference_resolved: true,
+            lower_dimensional_artifacts: 0,
+            lower_dimensional_point_contacts: 0,
+            lower_dimensional_edge_contacts: 0,
+            lower_dimensional_edge_endpoints: 0,
+        };
+
+        ownership.validate().unwrap();
+        assert!(!ownership.is_resolved());
+        assert!(ownership_resolves_arrangement_operation(
+            &ownership,
+            ExactBooleanOperation::Intersection
+        ));
+        assert!(ownership_resolves_arrangement_operation(
+            &ownership,
+            ExactBooleanOperation::Difference
+        ));
+        assert!(!ownership_resolves_arrangement_operation(
+            &ownership,
+            ExactBooleanOperation::Union
+        ));
+    }
+
+    #[test]
+    fn arrangement_attempt_accepts_requested_volume_ownership() {
+        let left = tetrahedron_i64([0, 0, 0], [10, 0, 0], [0, 10, 0], [0, 0, 10]);
+        let right = tetrahedron_i64([1, 1, 1], [2, 1, 1], [1, 2, 1], [1, 1, 2]);
+        let mut attempt = test_arrangement_attempt(
+            ExactBooleanRequest::new(ExactBooleanOperation::Difference, ValidationPolicy::CLOSED),
+            &left,
+            &right,
+            ExactRegularizationPolicy::REGULARIZED_SOLID,
+        );
+        assert!(attempt.region_ownership_report.is_some(), "{attempt:?}");
+        assert!(attempt.volume_adjacencies > 0, "{attempt:?}");
+        let mesh = copy_mesh(
+            &left,
+            "exact arrangement cell-complex boolean result",
+            ValidationPolicy::CLOSED,
+        )
+        .unwrap();
+        let result = certified_shortcut_result(
+            mesh,
+            ExactBooleanOperation::Difference,
+            ExactBooleanShortcutKind::ArrangementCellComplex,
+        );
+        let ArrangementCellComplexOutcome::Materialized(_, mut retained_attempt) =
+            materialized_arrangement_attempt_outcome(&mut attempt, result, false, None)
+        else {
+            panic!("materialized helper should return a result");
+        };
+        assert!(retained_attempt.materialized_arrangement_cell_complex_output());
+
+        let mut ownership = retained_attempt.region_ownership_report.clone().unwrap();
+        ownership.status = ExactRegionOwnershipStatus::RequiresWinding;
+        ownership.blockers = vec![ExactArrangementBlocker::UnresolvedRegionClassification];
+        ownership.opposite_inside_faces = 0;
+        ownership.opposite_outside_faces = 0;
+        ownership.opposite_boundary_faces = 0;
+        ownership.opposite_unknown_faces = ownership.face_cells;
+        ownership.volume_selection_resolved = false;
+        ownership.volume_union_resolved = false;
+        ownership.volume_intersection_resolved = false;
+        ownership.volume_difference_resolved = true;
+        ownership.validate().unwrap();
+
+        retained_attempt.region_ownership = Some(ownership.status);
+        retained_attempt.region_ownership_report = Some(ownership.clone());
+        if let Some(selected) = retained_attempt.selected_cell_complex.as_mut() {
+            selected.region_ownership_report = Some(ownership.clone());
+        }
+        if let Some(simplified) = retained_attempt.simplified_cell_complex.as_mut() {
+            simplified.region_ownership_report = Some(ownership.clone());
+        }
+
+        assert!(retained_attempt.materialized_arrangement_cell_complex_output());
+        retained_attempt.validate().unwrap();
+
+        let unresolved_for_difference = retained_attempt.region_ownership_report.as_mut().unwrap();
+        unresolved_for_difference.volume_difference_resolved = false;
+        unresolved_for_difference.validate().unwrap();
+        assert!(!retained_attempt.materialized_arrangement_cell_complex_output());
+        assert_eq!(
+            retained_attempt.validate(),
+            Err(ExactReportValidationError::StatusEvidenceMismatch)
         );
     }
 
