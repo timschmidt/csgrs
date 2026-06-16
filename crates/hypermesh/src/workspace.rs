@@ -6,6 +6,7 @@ use super::boolean::{
     materialize_boolean_exact_request_from_retained_graph,
     materialize_certified_boolean_support_with_artifacts,
     preflight_boolean_exact_request_from_graph,
+    try_materialize_certified_boolean_support_with_artifacts,
     validate_boolean_result_against_sources_with_artifacts,
 };
 use super::cell_complex::{
@@ -393,9 +394,8 @@ impl<'a> ExactBooleanWorkspace<'a> {
         )
     }
 
-    /// Returns the full exact boolean certification bundle for `request`,
-    /// reusing retained graph and regularized arrangement artifacts.
-    pub fn certification_set(
+    /// Build or reuse the certification bundle backing an evaluation.
+    fn certification_set(
         &mut self,
         request: ExactBooleanRequest,
     ) -> Result<&ExactBooleanCertificationSet, MeshError> {
@@ -417,39 +417,6 @@ impl<'a> ExactBooleanWorkspace<'a> {
             regularized_arrangement,
         )?;
         store_retained_request_artifact(&mut self.certifications, request, certifications)
-    }
-
-    /// Validate a certification bundle against this workspace's retained graph
-    /// and arrangement session.
-    pub fn validate_certification_set(
-        &mut self,
-        request: ExactBooleanRequest,
-        certifications: &ExactBooleanCertificationSet,
-    ) -> Result<(), ExactReportValidationError> {
-        self.graph()
-            .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
-        let graph = self
-            .graph
-            .as_ref()
-            .expect("intersection graph cache was just populated");
-        let regularized_arrangement = self.regularized_solid_arrangement();
-        certifications.validate_against_sources_with_graph_and_regularized_arrangement(
-            graph,
-            self.left,
-            self.right,
-            request,
-            regularized_arrangement,
-        )
-    }
-
-    /// Classify certification-bundle freshness in this retained source
-    /// session.
-    pub fn certification_set_freshness(
-        &mut self,
-        request: ExactBooleanRequest,
-        certifications: &ExactBooleanCertificationSet,
-    ) -> ExactReportFreshness {
-        exact_report_freshness(self.validate_certification_set(request, certifications))
     }
 
     /// Returns an exact boolean evaluation for `request`, building it once per
@@ -478,14 +445,14 @@ impl<'a> ExactBooleanWorkspace<'a> {
             )? {
                 Some(result)
             } else {
-                Some(materialize_certified_boolean_support_with_artifacts(
+                try_materialize_certified_boolean_support_with_artifacts(
                     self.left,
                     self.right,
                     request,
                     preflight.support,
                     Some(graph),
                     regularized_arrangement,
-                )?)
+                )?
             }
         } else {
             None
@@ -1343,8 +1310,8 @@ mod tests {
         );
 
         let certifications = workspace.certification_set(request).unwrap().clone();
-        workspace
-            .validate_certification_set(request, &certifications)
+        certifications
+            .validate_against_sources(&left, &right, request)
             .unwrap();
 
         let refinement_report = certifications.refinement.clone();
@@ -1355,7 +1322,7 @@ mod tests {
         let mut stale_refinement_bundle = certifications.clone();
         stale_refinement_bundle.refinement.retained_events += 1;
         assert_eq!(
-            workspace.validate_certification_set(request, &stale_refinement_bundle),
+            stale_refinement_bundle.validate_against_sources(&left, &right, request),
             Err(ExactReportValidationError::StatusEvidenceMismatch)
         );
         let mut relabeled_refinement_bundle = certifications.clone();
@@ -1388,7 +1355,7 @@ mod tests {
             .adjacent_union_completion
             .stronger_kernel_available;
         assert_eq!(
-            workspace.validate_certification_set(request, &stale_adjacent_bundle),
+            stale_adjacent_bundle.validate_against_sources(&left, &right, request),
             Err(ExactReportValidationError::StatusEvidenceMismatch)
         );
         let mut relabeled_adjacent_bundle = certifications.clone();
@@ -1583,7 +1550,7 @@ mod tests {
             .unwrap()
             .output_triangles += 1;
         assert_eq!(
-            workspace.validate_certification_set(request, &stale_closure_bundle),
+            stale_closure_bundle.validate_against_sources(&left, &right, request),
             Err(ExactReportValidationError::StatusEvidenceMismatch)
         );
         let mut relabeled_closure_bundle = certifications.clone();
@@ -1626,7 +1593,7 @@ mod tests {
         let mut stale_readiness_bundle = certifications.clone();
         stale_readiness_bundle.winding_readiness.retained_events += 1;
         assert_eq!(
-            workspace.validate_certification_set(request, &stale_readiness_bundle),
+            stale_readiness_bundle.validate_against_sources(&left, &right, request),
             Err(ExactReportValidationError::SourceReplayMismatch)
         );
         let mut relabeled_readiness_bundle = certifications.clone();
@@ -1644,7 +1611,7 @@ mod tests {
         let mut stale_planar_bundle = certifications.clone();
         stale_planar_bundle.planar_arrangement.retained_events += 1;
         assert_eq!(
-            workspace.validate_certification_set(request, &stale_planar_bundle),
+            stale_planar_bundle.validate_against_sources(&left, &right, request),
             Err(ExactReportValidationError::StatusEvidenceMismatch)
         );
         let mut relabeled_planar_bundle = certifications.clone();
@@ -1775,11 +1742,8 @@ mod tests {
         certifications
             .validate_against_sources(&left, &right, request)
             .unwrap();
-        workspace
-            .validate_certification_set(request, &certifications)
-            .unwrap();
         assert_eq!(
-            workspace.certification_set_freshness(request, &certifications),
+            certifications.freshness_against_sources(&left, &right, request),
             ExactReportFreshness::Current
         );
 
@@ -1790,11 +1754,11 @@ mod tests {
             Err(ExactReportValidationError::StatusEvidenceMismatch)
         );
         assert_eq!(
-            workspace.validate_certification_set(request, &stale),
+            stale.validate_against_sources(&left, &right, request),
             Err(ExactReportValidationError::StatusEvidenceMismatch)
         );
         assert_ne!(
-            workspace.certification_set_freshness(request, &stale),
+            stale.freshness_against_sources(&left, &right, request),
             ExactReportFreshness::Current
         );
     }

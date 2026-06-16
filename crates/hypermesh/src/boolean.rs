@@ -1481,7 +1481,7 @@ pub struct ExactBooleanEvaluation {
     pub preflight: ExactBooleanPreflight,
     /// Replayable exact certification reports for the request.
     pub certifications: ExactBooleanCertificationSet,
-    /// Materialized exact result, when certified under `request`.
+    /// Materialized exact result, when available under `request`.
     pub result: Option<ExactBooleanResult>,
 }
 
@@ -1601,7 +1601,7 @@ impl ExactBooleanEvaluation {
             {
                 return Err(ExactReportValidationError::StatusEvidenceMismatch);
             }
-        } else if self.preflight.is_certified() {
+        } else if exact_boolean_evaluation_requires_materialized_result(&self.preflight) {
             return Err(ExactReportValidationError::StatusEvidenceMismatch);
         }
         Ok(())
@@ -1632,7 +1632,7 @@ impl ExactBooleanEvaluation {
                 self.request.validation,
                 self.request.boundary_policy,
             )?;
-        } else if self.preflight.is_certified() {
+        } else if exact_boolean_evaluation_requires_materialized_result(&self.preflight) {
             return Err(ExactReportValidationError::StatusEvidenceMismatch);
         }
         Ok(())
@@ -1672,7 +1672,7 @@ impl ExactBooleanEvaluation {
                 self.request.validation,
                 self.request.boundary_policy,
             )?;
-        } else if self.preflight.is_certified() {
+        } else if exact_boolean_evaluation_requires_materialized_result(&self.preflight) {
             return Err(ExactReportValidationError::StatusEvidenceMismatch);
         }
         Ok(())
@@ -1687,6 +1687,16 @@ impl ExactBooleanEvaluation {
     ) -> ExactReportFreshness {
         exact_report_freshness(self.validate_against_sources(left, right))
     }
+}
+
+fn exact_boolean_evaluation_requires_materialized_result(
+    preflight: &ExactBooleanPreflight,
+) -> bool {
+    preflight.is_certified()
+        && !matches!(
+            preflight.support,
+            ExactBooleanSupport::CertifiedArrangementCellComplex
+        )
 }
 
 fn exact_boolean_preflight_matches_certifications(
@@ -1777,6 +1787,22 @@ fn exact_boolean_preflight_matches_certifications(
                 && preflight.region_classifications.is_empty()
                 && preflight.blocker.is_none()
                 && preflight.arrangement_readiness.is_none())
+                || (certifications
+                    .arrangement_attempt
+                    .as_ref()
+                    .is_some_and(|attempt| {
+                        attempt.operation == preflight.operation
+                            && attempt.policy == ExactRegularizationPolicy::REGULARIZED_SOLID
+                            && attempt.validate().is_ok()
+                    })
+                    && preflight.graph_had_unknowns == certifications.refinement.graph_had_unknowns
+                    && preflight.retained_face_pairs
+                        == certifications.refinement.retained_face_pairs
+                    && preflight.retained_events == certifications.refinement.retained_events
+                    && preflight.region_count == 0
+                    && preflight.region_classifications.is_empty()
+                    && preflight.blocker.is_none()
+                    && preflight.arrangement_readiness.is_none())
                 || (certifications.adjacent_union_completion.is_certified()
                     && certifications.adjacent_union_completion.operation == preflight.operation
                     && preflight.operation == ExactBooleanOperation::Union
@@ -2104,14 +2130,14 @@ fn evaluate_boolean_exact_request_with_artifacts_and_arrangement_replay(
         } else {
             regularized_arrangement
         };
-        Some(materialize_certified_boolean_support_with_artifacts(
+        try_materialize_certified_boolean_support_with_artifacts(
             left,
             right,
             request,
             preflight.support,
             Some(graph),
             materialization_arrangement,
-        )?)
+        )?
     } else {
         None
     };
@@ -2160,25 +2186,29 @@ fn graph_for_certified_materialization<'a>(
         .expect("certified materialization graph was just built"))
 }
 
-pub(crate) fn materialize_certified_boolean_support_with_artifacts(
+fn unsupported_certified_materialization_error(support: ExactBooleanSupport) -> MeshError {
+    MeshError::one(MeshDiagnostic::new(
+        Severity::Error,
+        DiagnosticKind::UnsupportedExactOperation,
+        format!("certified exact boolean support did not materialize: {support:?}"),
+    ))
+}
+
+pub(crate) fn try_materialize_certified_boolean_support_with_artifacts(
     left: &ExactMesh,
     right: &ExactMesh,
     request: ExactBooleanRequest,
     support: ExactBooleanSupport,
     retained_graph: Option<&ExactIntersectionGraph>,
     retained_regularized_arrangement: Option<&ExactArrangement>,
-) -> Result<ExactBooleanResult, MeshError> {
+) -> Result<Option<ExactBooleanResult>, MeshError> {
     let operation = request.operation;
     let validation = request.validation;
     let mut owned_graph = None;
     let result = match support {
         ExactBooleanSupport::SelectedRegionPolicy => {
             let ExactBooleanOperation::SelectedRegions(selection) = operation else {
-                return Err(MeshError::one(MeshDiagnostic::new(
-                    Severity::Error,
-                    DiagnosticKind::UnsupportedExactOperation,
-                    format!("certified exact boolean support did not materialize: {support:?}"),
-                )));
+                return Err(unsupported_certified_materialization_error(support));
             };
             let graph =
                 graph_for_certified_materialization(retained_graph, &mut owned_graph, left, right)?;
@@ -2384,13 +2414,34 @@ pub(crate) fn materialize_certified_boolean_support_with_artifacts(
         | ExactBooleanSupport::RequiresCertifiedWinding
         | ExactBooleanSupport::UnresolvedGraph => None,
     };
-    result.ok_or_else(|| {
-        MeshError::one(MeshDiagnostic::new(
-            Severity::Error,
-            DiagnosticKind::UnsupportedExactOperation,
-            format!("certified exact boolean support did not materialize: {support:?}"),
-        ))
-    })
+    if result.is_none()
+        && !matches!(
+            support,
+            ExactBooleanSupport::CertifiedArrangementCellComplex
+        )
+    {
+        return Err(unsupported_certified_materialization_error(support));
+    }
+    Ok(result)
+}
+
+pub(crate) fn materialize_certified_boolean_support_with_artifacts(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    request: ExactBooleanRequest,
+    support: ExactBooleanSupport,
+    retained_graph: Option<&ExactIntersectionGraph>,
+    retained_regularized_arrangement: Option<&ExactArrangement>,
+) -> Result<ExactBooleanResult, MeshError> {
+    try_materialize_certified_boolean_support_with_artifacts(
+        left,
+        right,
+        request,
+        support,
+        retained_graph,
+        retained_regularized_arrangement,
+    )?
+    .ok_or_else(|| unsupported_certified_materialization_error(support))
 }
 
 fn materialize_certified_arrangement_cell_complex_support_with_arrangement(

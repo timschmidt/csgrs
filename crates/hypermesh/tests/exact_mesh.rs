@@ -62,7 +62,7 @@ fn exact_boolean_certifications(
     request: ExactBooleanRequest,
 ) -> hypermesh::ExactBooleanCertificationSet {
     let mut workspace = ExactBooleanWorkspace::new(left, right);
-    workspace.certification_set(request).unwrap().clone()
+    workspace.evaluate(request).unwrap().certifications.clone()
 }
 
 fn exact_adjacent_union_completion_report(
@@ -72,8 +72,9 @@ fn exact_adjacent_union_completion_report(
 ) -> hypermesh::ExactAdjacentUnionCompletionReport {
     let mut workspace = ExactBooleanWorkspace::new(left, right);
     workspace
-        .certification_set(request)
+        .evaluate(request)
         .unwrap()
+        .certifications
         .adjacent_union_completion
         .clone()
 }
