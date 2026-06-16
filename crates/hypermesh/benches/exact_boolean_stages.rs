@@ -434,12 +434,12 @@ fn run_case(case: &BenchCase) {
 
     time_prepared_stage(
         case,
-        "workspace_replay_validate_arrangement_attempt",
+        "attempt_validate_source_replay",
         || retained_workspace_and_arrangement_attempt_for_case(case, request),
         |(retained_workspace, attempt)| {
             black_box(
-                retained_workspace
-                    .validate_arrangement_attempt(request, case.regularization, attempt)
+                attempt
+                    .validate_against_sources(retained_workspace.left(), retained_workspace.right())
                     .ok(),
             );
         },

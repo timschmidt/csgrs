@@ -12,10 +12,7 @@ use super::error::{DiagnosticKind, MeshDiagnostic, MeshError, Severity};
 use super::graph::{ExactIntersectionGraph, build_intersection_graph};
 use super::mesh::ExactMesh;
 use super::regularization::{ExactArrangementBlocker, ExactRegularizationPolicy};
-use super::reports::{
-    ExactBooleanPreflight, ExactBooleanResult, ExactReportFreshness, ExactReportValidationError,
-    exact_report_freshness,
-};
+use super::reports::{ExactBooleanPreflight, ExactBooleanResult, ExactReportValidationError};
 
 /// Reusable exact boolean session for a fixed source-mesh pair.
 ///
@@ -149,46 +146,6 @@ impl<'a> ExactBooleanWorkspace<'a> {
             arrangement,
         )?;
         store_retained_arrangement_attempt(&mut self.arrangement_attempts, request, policy, attempt)
-    }
-
-    /// Validate arrangement/cell-complex attempt evidence against this
-    /// workspace's retained source session.
-    pub fn validate_arrangement_attempt(
-        &mut self,
-        request: ExactBooleanRequest,
-        policy: ExactRegularizationPolicy,
-        attempt: &ExactArrangementBooleanAttempt,
-    ) -> Result<(), ExactReportValidationError> {
-        if let Some(replay) =
-            arrangement_cell_complex_shortcut_attempt(self.left, self.right, request, policy)
-                .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
-        {
-            attempt.validate()?;
-            replay.validate()?;
-            return if attempt == &replay {
-                Ok(())
-            } else {
-                Err(ExactReportValidationError::SourceReplayMismatch)
-            };
-        }
-
-        let left = self.left;
-        let right = self.right;
-        let arrangement = self
-            .arrangement(policy)
-            .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
-        attempt.validate_against_arrangement(left, right, request, policy, arrangement)
-    }
-
-    /// Classify arrangement/cell-complex attempt freshness in this retained
-    /// source session.
-    pub fn arrangement_attempt_freshness(
-        &mut self,
-        request: ExactBooleanRequest,
-        policy: ExactRegularizationPolicy,
-        attempt: &ExactArrangementBooleanAttempt,
-    ) -> ExactReportFreshness {
-        exact_report_freshness(self.validate_arrangement_attempt(request, policy, attempt))
     }
 
     /// Derive preflight for `request` from the retained graph.
@@ -593,11 +550,12 @@ mod tests {
         ExactBooleanOperation, identical_mesh_report_from_sources, same_surface_report_from_sources,
     };
     use crate::region::ExactRegionSelection;
+    use crate::reports::exact_report_freshness;
     use crate::validation::ValidationPolicy;
     use crate::{
         ExactAdjacentUnionCompletionStatus, ExactArrangementBooleanStage, ExactBooleanResultKind,
         ExactBooleanShortcutKind, ExactBoundaryBooleanPolicy, ExactRegionOwnershipStatus,
-        ExactReportValidationError, ExactSelectedCellComplexFreshness,
+        ExactReportFreshness, ExactReportValidationError, ExactSelectedCellComplexFreshness,
         ExactSimplifiedCellComplexFreshness, ExactTopologyAssemblyStatus, Triangle,
     };
 
@@ -736,19 +694,8 @@ mod tests {
             .expect("generic arrangement attempt should retain simplified cells");
         attempt.validate().unwrap();
         attempt.validate_against_sources(&left, &right).unwrap();
-        workspace
-            .validate_arrangement_attempt(
-                request,
-                ExactRegularizationPolicy::REGULARIZED_SOLID,
-                &attempt,
-            )
-            .unwrap();
         assert_eq!(
-            workspace.arrangement_attempt_freshness(
-                request,
-                ExactRegularizationPolicy::REGULARIZED_SOLID,
-                &attempt,
-            ),
+            attempt.freshness_against_sources(&left, &right),
             ExactReportFreshness::Current
         );
         let mut stale_attempt = attempt.clone();
@@ -772,21 +719,8 @@ mod tests {
                 .graph_events += 1;
         }
         stale_attempt.validate().unwrap();
-        assert!(
-            workspace
-                .validate_arrangement_attempt(
-                    request,
-                    ExactRegularizationPolicy::REGULARIZED_SOLID,
-                    &stale_attempt,
-                )
-                .is_err()
-        );
         assert_eq!(
-            workspace.arrangement_attempt_freshness(
-                request,
-                ExactRegularizationPolicy::REGULARIZED_SOLID,
-                &stale_attempt,
-            ),
+            stale_attempt.freshness_against_sources(&left, &right),
             ExactReportFreshness::SourceReplayMismatch
         );
 
@@ -1400,19 +1334,8 @@ mod tests {
         attempt.validate().unwrap();
         attempt.validate_against_sources(&left, &right).unwrap();
 
-        workspace
-            .validate_arrangement_attempt(
-                request,
-                ExactRegularizationPolicy::REGULARIZED_SOLID,
-                &attempt,
-            )
-            .unwrap();
         assert_eq!(
-            workspace.arrangement_attempt_freshness(
-                request,
-                ExactRegularizationPolicy::REGULARIZED_SOLID,
-                &attempt,
-            ),
+            attempt.freshness_against_sources(&left, &right),
             ExactReportFreshness::Current
         );
         assert_eq!(workspace.arrangements.len(), 0);
@@ -1446,11 +1369,7 @@ mod tests {
             .face_count += 1;
         stale_attempt.validate().unwrap();
         assert_eq!(
-            workspace.validate_arrangement_attempt(
-                request,
-                ExactRegularizationPolicy::REGULARIZED_SOLID,
-                &stale_attempt,
-            ),
+            stale_attempt.validate_against_sources(&left, &right),
             Err(ExactReportValidationError::SourceReplayMismatch)
         );
         assert_eq!(workspace.arrangements.len(), 0);
