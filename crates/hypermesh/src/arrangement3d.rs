@@ -18,7 +18,10 @@ use super::cell_complex::{
     ExactRegionOwnershipReport, arrangement_cell_complex_labeling_policy, region_ownership_status,
 };
 use super::error::{DiagnosticKind, MeshDiagnostic, MeshError, Severity};
-use super::exact_key::{ExactPoint3Key, exact_point3_key};
+use super::exact_key::{
+    ExactPoint3Key, ExactUndirectedPoint3EdgeKey, exact_point3_key,
+    exact_undirected_point3_edge_key,
+};
 use super::graph::{
     CoplanarEdgeSplitConstruction, CoplanarOverlapGraph, ExactFaceRegionPlan,
     ExactIntersectionGraph, ExactSplitTopologyPlan, FaceRegionBoundary, FaceSplitBoundaryNode,
@@ -4162,25 +4165,96 @@ fn arrangement_edge_users(
         .iter()
         .flat_map(|edge| [edge.start.clone(), edge.end.clone()])
         .collect::<Vec<_>>();
-    let mut edge_users = Vec::<(ArrangementFaceCellBoundaryEdge, Vec<usize>)>::new();
+    let mut edge_users = ArrangementEdgeUserIndex::default();
     for edge in raw_edges {
         for atomic in conforming_boundary_edges(&edge, &endpoints, blockers) {
-            if let Some((_, users)) = edge_users
-                .iter_mut()
-                .find(|(existing, _)| boundary_edges_equivalent(existing, &atomic))
-            {
-                if !users.contains(&edge.cell) {
-                    users.push(edge.cell);
-                }
-            } else {
-                edge_users.push((atomic, vec![edge.cell]));
-            }
+            edge_users.push(atomic, edge.cell);
         }
     }
     edge_users
+        .edge_users
         .into_iter()
         .map(|(edge, users)| (edge.nodes, users))
         .collect()
+}
+
+type ArrangementBoundaryNodeKey = [(usize, usize, usize); 2];
+
+#[derive(Default)]
+struct ArrangementEdgeUserIndex {
+    edge_users: Vec<(ArrangementFaceCellBoundaryEdge, Vec<usize>)>,
+    node_key_buckets: BTreeMap<ArrangementBoundaryNodeKey, usize>,
+    point_key_buckets: BTreeMap<ExactUndirectedPoint3EdgeKey, usize>,
+    unkeyed_edges: Vec<usize>,
+}
+
+impl ArrangementEdgeUserIndex {
+    fn push(&mut self, edge: ArrangementFaceCellBoundaryEdge, cell: usize) {
+        let node_key = boundary_edge_node_key(&edge);
+        let point_key = boundary_edge_point_key(&edge);
+        if let Some(index) = self
+            .node_key_buckets
+            .get(&node_key)
+            .copied()
+            .or_else(|| {
+                point_key
+                    .as_ref()
+                    .and_then(|key| self.point_key_buckets.get(key).copied())
+            })
+            .or_else(|| self.find_fallback(&edge, point_key.is_some()))
+        {
+            self.node_key_buckets.entry(node_key).or_insert(index);
+            if let Some(key) = point_key {
+                self.point_key_buckets.entry(key).or_insert(index);
+            }
+            push_unique_edge_user(&mut self.edge_users[index].1, cell);
+            return;
+        }
+
+        let index = self.edge_users.len();
+        self.node_key_buckets.entry(node_key).or_insert(index);
+        if let Some(key) = point_key {
+            self.point_key_buckets.entry(key).or_insert(index);
+        } else {
+            self.unkeyed_edges.push(index);
+        }
+        self.edge_users.push((edge, vec![cell]));
+    }
+
+    fn find_fallback(
+        &self,
+        edge: &ArrangementFaceCellBoundaryEdge,
+        has_point_key: bool,
+    ) -> Option<usize> {
+        if has_point_key {
+            self.unkeyed_edges
+                .iter()
+                .copied()
+                .find(|&index| boundary_edges_equivalent(&self.edge_users[index].0, edge))
+        } else {
+            self.edge_users
+                .iter()
+                .enumerate()
+                .find(|(_, (existing, _))| boundary_edges_equivalent(existing, edge))
+                .map(|(index, _)| index)
+        }
+    }
+}
+
+fn push_unique_edge_user(users: &mut Vec<usize>, cell: usize) {
+    if !users.contains(&cell) {
+        users.push(cell);
+    }
+}
+
+fn boundary_edge_node_key(edge: &ArrangementFaceCellBoundaryEdge) -> ArrangementBoundaryNodeKey {
+    [cell_node_key(&edge.nodes[0]), cell_node_key(&edge.nodes[1])]
+}
+
+fn boundary_edge_point_key(
+    edge: &ArrangementFaceCellBoundaryEdge,
+) -> Option<ExactUndirectedPoint3EdgeKey> {
+    exact_undirected_point3_edge_key(edge.points.as_ref()?)
 }
 
 fn arrangement_raw_boundary_edges(
@@ -4822,6 +4896,34 @@ mod tests {
         assert_eq!(vertices[1].provenance.len(), 1);
         assert_eq!(index.point_key_buckets.len(), 2);
         assert!(index.unkeyed_vertices.is_empty());
+    }
+
+    #[test]
+    fn arrangement_edge_user_index_buckets_exact_rational_edges() {
+        let point_a = rational_p3([1, 2], [2, 3], [3, 4]);
+        let point_b = rational_p3([-5, 6], [7, 8], [-9, 10]);
+        let boundary_point = |side, vertex, point| ArrangementFaceCellBoundaryPoint {
+            node: ArrangementFaceCellNode::SourceVertex { side, vertex },
+            point,
+        };
+        let left_edge = boundary_edge_from_points(
+            &boundary_point(MeshSide::Left, 0, point_a.clone()),
+            &boundary_point(MeshSide::Left, 1, point_b.clone()),
+        );
+        let right_edge = boundary_edge_from_points(
+            &boundary_point(MeshSide::Right, 4, point_b),
+            &boundary_point(MeshSide::Right, 5, point_a),
+        );
+        let mut index = ArrangementEdgeUserIndex::default();
+
+        index.push(left_edge, 0);
+        index.push(right_edge, 1);
+
+        assert_eq!(index.edge_users.len(), 1);
+        assert_eq!(index.edge_users[0].1, vec![0, 1]);
+        assert_eq!(index.point_key_buckets.len(), 1);
+        assert_eq!(index.node_key_buckets.len(), 2);
+        assert!(index.unkeyed_edges.is_empty());
     }
 
     fn tetrahedron_i64(a: [i64; 3], b: [i64; 3], c: [i64; 3], d: [i64; 3]) -> ExactMesh {
