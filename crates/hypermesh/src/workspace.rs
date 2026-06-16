@@ -17,9 +17,6 @@ use super::reports::{
     ExactBooleanPreflight, ExactBooleanResult, ExactReportFreshness, ExactReportValidationError,
     exact_report_freshness,
 };
-use super::volumetric_cells::{
-    CoplanarVolumetricCellEvidenceError, CoplanarVolumetricCellEvidenceReport,
-};
 
 /// Reusable exact boolean session for a fixed source-mesh pair.
 ///
@@ -31,7 +28,6 @@ pub struct ExactBooleanWorkspace<'a> {
     left: &'a ExactMesh,
     right: &'a ExactMesh,
     graph: Option<ExactIntersectionGraph>,
-    coplanar_volumetric_cell_evidence: Option<CoplanarVolumetricCellEvidenceReport>,
     arrangements: Vec<(ExactRegularizationPolicy, ExactArrangement)>,
     arrangement_attempts: Vec<(
         ExactBooleanRequest,
@@ -50,7 +46,6 @@ impl<'a> ExactBooleanWorkspace<'a> {
             left,
             right,
             graph: None,
-            coplanar_volumetric_cell_evidence: None,
             arrangements: Vec::new(),
             arrangement_attempts: Vec::new(),
             certifications: Vec::new(),
@@ -102,27 +97,6 @@ impl<'a> ExactBooleanWorkspace<'a> {
             ExactRegularizationPolicy::REGULARIZED_SOLID,
         )
         .map(|index| &self.arrangements[index].1)
-    }
-
-    /// Returns retained coplanar volumetric-cell evidence, deriving it from
-    /// the workspace's cached exact intersection graph.
-    pub fn coplanar_volumetric_cell_evidence(
-        &mut self,
-    ) -> Result<&CoplanarVolumetricCellEvidenceReport, MeshError> {
-        if self.coplanar_volumetric_cell_evidence.is_none() {
-            let left = self.left;
-            let right = self.right;
-            let graph = self.validated_graph()?;
-            let report = CoplanarVolumetricCellEvidenceReport::from_graph(graph, left, right);
-            report
-                .validate()
-                .map_err(workspace_coplanar_volumetric_cell_error)?;
-            self.coplanar_volumetric_cell_evidence = Some(report);
-        }
-        Ok(self
-            .coplanar_volumetric_cell_evidence
-            .as_ref()
-            .expect("coplanar volumetric-cell evidence cache was just populated"))
     }
 
     /// Returns the exact arrangement for `policy`, building it once per policy.
@@ -481,18 +455,6 @@ fn workspace_arrangement_blocker_error(blocker: ExactArrangementBlocker) -> Mesh
     ))
 }
 
-fn workspace_coplanar_volumetric_cell_error(
-    error: CoplanarVolumetricCellEvidenceError,
-) -> MeshError {
-    MeshError::one(MeshDiagnostic::new(
-        Severity::Error,
-        DiagnosticKind::UnsupportedExactOperation,
-        format!(
-            "exact boolean workspace coplanar volumetric evidence failed validation: {error:?}"
-        ),
-    ))
-}
-
 trait RetainedPolicyArtifact {
     fn validate_for_workspace_cache(&self) -> Result<(), ExactArrangementBlocker>;
 }
@@ -724,7 +686,6 @@ mod tests {
     use crate::region::ExactRegionSelection;
     use crate::validation::ValidationPolicy;
     use crate::{
-        CoplanarVolumetricCellEvidenceError, CoplanarVolumetricCellEvidenceFreshness,
         ExactAdjacentUnionCompletionStatus, ExactArrangementBooleanStage, ExactBooleanResultKind,
         ExactBooleanShortcutKind, ExactBoundaryBooleanPolicy, ExactRegionOwnershipStatus,
         ExactReportValidationError, ExactSelectedCellComplexFreshness,
@@ -751,42 +712,6 @@ mod tests {
             .unwrap()
             .validate_against_meshes(&left, &right)
             .unwrap();
-
-        let first_coplanar_volumetric_evidence =
-            workspace.coplanar_volumetric_cell_evidence().unwrap()
-                as *const CoplanarVolumetricCellEvidenceReport;
-        let second_coplanar_volumetric_evidence =
-            workspace.coplanar_volumetric_cell_evidence().unwrap()
-                as *const CoplanarVolumetricCellEvidenceReport;
-        assert_eq!(
-            first_coplanar_volumetric_evidence,
-            second_coplanar_volumetric_evidence
-        );
-        assert_eq!(
-            workspace.coplanar_volumetric_cell_evidence().unwrap(),
-            &certify_coplanar_volumetric_cell_evidence(&left, &right).unwrap()
-        );
-        let coplanar_volumetric_evidence = workspace
-            .coplanar_volumetric_cell_evidence()
-            .unwrap()
-            .clone();
-        coplanar_volumetric_evidence
-            .validate_against_sources(&left, &right)
-            .unwrap();
-        assert_eq!(
-            coplanar_volumetric_evidence.freshness_against_sources(&left, &right),
-            CoplanarVolumetricCellEvidenceFreshness::Current
-        );
-        let mut stale_coplanar_volumetric_evidence = coplanar_volumetric_evidence.clone();
-        stale_coplanar_volumetric_evidence.retained_face_pair_count += 1;
-        assert_eq!(
-            stale_coplanar_volumetric_evidence.validate_against_sources(&left, &right),
-            Err(CoplanarVolumetricCellEvidenceError::FacePairCountMismatch)
-        );
-        assert_eq!(
-            stale_coplanar_volumetric_evidence.freshness_against_sources(&left, &right),
-            CoplanarVolumetricCellEvidenceFreshness::StaleFacePairCounts
-        );
 
         let first_arrangement = workspace
             .arrangement(ExactRegularizationPolicy::REGULARIZED_SOLID)
@@ -1787,18 +1712,10 @@ mod tests {
 
         let materialized = workspace.materialize(request).unwrap();
         let expected_result = request.materialize(&left, &right).unwrap();
-        let expected_evidence = certify_coplanar_volumetric_cell_evidence(&left, &right).unwrap();
         assert_eq!(materialized, expected_result);
         assert_eq!(workspace.materializations.len(), 1);
         assert_eq!(workspace.materialize(request).unwrap(), materialized);
         assert_eq!(workspace.materializations.len(), 1);
-        assert_eq!(
-            workspace
-                .coplanar_volumetric_cell_evidence()
-                .unwrap()
-                .clone(),
-            expected_evidence
-        );
 
         let mut relabelled = materialized.clone();
         relabelled.kind = ExactBooleanResultKind::CertifiedShortcut {
