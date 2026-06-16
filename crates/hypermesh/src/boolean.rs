@@ -938,29 +938,6 @@ impl ExactBooleanCertificationSet {
                     )?;
                 Some(&owned_regularized_arrangement)
             };
-        let topology_assembly = regularized_arrangement.map(|arrangement| {
-            arrangement.topology_assembly_report_with_policy(
-                left,
-                right,
-                ExactRegularizationPolicy::REGULARIZED_SOLID,
-            )
-        });
-        let region_ownership = regularized_arrangement
-            .map(|arrangement| {
-                arrangement.region_ownership_report_with_policy(
-                    left,
-                    right,
-                    ExactRegularizationPolicy::REGULARIZED_SOLID,
-                )
-            })
-            .transpose()
-            .map_err(|blocker| {
-                MeshError::one(MeshDiagnostic::new(
-                    Severity::Error,
-                    DiagnosticKind::UnsupportedExactOperation,
-                    format!("exact region ownership report failed: {blocker:?}"),
-                ))
-            })?;
         let arrangement_attempt = if adjacent_union_completion_certified {
             None
         } else if arrangement_cell_complex_shortcut_certified {
@@ -978,6 +955,40 @@ impl ExactBooleanCertificationSet {
                 })
                 .transpose()?
         };
+        let topology_assembly = regularized_arrangement.map(|arrangement| {
+            arrangement_attempt
+                .as_ref()
+                .and_then(|attempt| attempt.topology_assembly_report.clone())
+                .unwrap_or_else(|| {
+                    arrangement.topology_assembly_report_with_policy(
+                        left,
+                        right,
+                        ExactRegularizationPolicy::REGULARIZED_SOLID,
+                    )
+                })
+        });
+        let region_ownership = regularized_arrangement
+            .map(|arrangement| {
+                arrangement_attempt
+                    .as_ref()
+                    .and_then(|attempt| attempt.region_ownership_report.clone())
+                    .map(Ok)
+                    .unwrap_or_else(|| {
+                        arrangement.region_ownership_report_with_policy(
+                            left,
+                            right,
+                            ExactRegularizationPolicy::REGULARIZED_SOLID,
+                        )
+                    })
+            })
+            .transpose()
+            .map_err(|blocker| {
+                MeshError::one(MeshDiagnostic::new(
+                    Severity::Error,
+                    DiagnosticKind::UnsupportedExactOperation,
+                    format!("exact region ownership report failed: {blocker:?}"),
+                ))
+            })?;
         Ok(Self {
             trivial,
             regularized_solid,
@@ -11940,6 +11951,51 @@ mod tests {
         assert!(result.region_ownership_report.is_some());
         result.validate().unwrap();
         result.validate_against_sources(&left, &right).unwrap();
+    }
+
+    #[test]
+    fn certifications_reuse_regularized_arrangement_attempt_reports() {
+        let left = tetrahedron_i64([0, 0, 0], [10, 0, 0], [0, 10, 0], [0, 0, 10]);
+        let right = tetrahedron_i64([1, 1, 1], [2, 1, 1], [1, 2, 1], [1, 1, 2]);
+        let request = ExactBooleanRequest::new(
+            ExactBooleanOperation::Union,
+            ValidationPolicy::ALLOW_BOUNDARY,
+        );
+        let graph = build_intersection_graph(&left, &right).unwrap();
+        let arrangement = ExactArrangement::from_intersection_graph_with_policy(
+            graph.clone(),
+            &left,
+            &right,
+            ExactRegularizationPolicy::REGULARIZED_SOLID,
+        )
+        .unwrap();
+
+        let certifications = ExactBooleanCertificationSet::from_graph_and_regularized_arrangement(
+            &graph,
+            &left,
+            &right,
+            request,
+            Some(&arrangement),
+        )
+        .unwrap();
+        certifications.validate_for_request(request).unwrap();
+        certifications
+            .validate_against_sources(&left, &right, request)
+            .unwrap();
+        let attempt = certifications
+            .arrangement_attempt
+            .as_ref()
+            .expect("nested tetrahedra should retain an arrangement attempt");
+        assert!(attempt.topology_assembly_report.is_some());
+        assert!(attempt.region_ownership_report.is_some());
+        assert_eq!(
+            certifications.topology_assembly,
+            attempt.topology_assembly_report
+        );
+        assert_eq!(
+            certifications.region_ownership,
+            attempt.region_ownership_report
+        );
     }
 
     #[test]
