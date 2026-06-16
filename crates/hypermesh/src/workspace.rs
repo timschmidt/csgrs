@@ -16,6 +16,7 @@ use super::boolean::{
     validate_boolean_result_against_sources_with_artifacts,
     volumetric_boundary_closure_report_from_graph, winding_readiness_report_for_request_from_graph,
 };
+use super::box_solid::is_axis_aligned_box;
 use super::cell_complex::{
     ExactRegionOwnershipReport, ExactRegionOwnershipStatus, ExactSelectedCellComplex,
     ExactSelectedCellComplexFreshness, select_arrangement_for_replay,
@@ -693,6 +694,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
             if request.operation != ExactBooleanOperation::Union
                 || !left.facts().mesh.closed_manifold
                 || !right.facts().mesh.closed_manifold
+                || (is_axis_aligned_box(left) && is_axis_aligned_box(right))
             {
                 request.adjacent_union_completion_report(left, right)?
             } else {
@@ -1564,8 +1566,8 @@ mod tests {
     use crate::validation::ValidationPolicy;
     use crate::{
         CoplanarVolumetricCellEvidenceError, CoplanarVolumetricCellEvidenceFreshness,
-        ExactArrangementBooleanStage, ExactBooleanResultKind, ExactBooleanShortcutKind,
-        ExactBoundaryBooleanPolicy, ExactReportValidationError, Triangle,
+        ExactAdjacentUnionCompletionStatus, ExactArrangementBooleanStage, ExactBooleanResultKind,
+        ExactBooleanShortcutKind, ExactBoundaryBooleanPolicy, ExactReportValidationError, Triangle,
         certify_coplanar_volumetric_cell_evidence,
     };
 
@@ -2127,6 +2129,29 @@ mod tests {
             .unwrap();
         assert_eq!(not_closed_adjacent_report.retained_face_pairs, 0);
         assert_eq!(not_closed_adjacent_report.retained_events, 0);
+        let box_left = axis_aligned_box_i64([0, 0, 0], [2, 2, 2]);
+        let box_right = axis_aligned_box_i64([1, 1, 0], [3, 3, 2]);
+        let mut box_workspace = ExactBooleanWorkspace::new(&box_left, &box_right);
+        let axis_box_adjacent_report = box_workspace
+            .adjacent_union_completion_report(request)
+            .unwrap()
+            .clone();
+        assert_eq!(
+            axis_box_adjacent_report,
+            request
+                .adjacent_union_completion_report(&box_left, &box_right)
+                .unwrap()
+        );
+        box_workspace
+            .validate_adjacent_union_completion_report(request, &axis_box_adjacent_report)
+            .unwrap();
+        assert_eq!(
+            axis_box_adjacent_report.status,
+            ExactAdjacentUnionCompletionStatus::AxisAlignedBoxPair
+        );
+        assert_eq!(axis_box_adjacent_report.retained_face_pairs, 0);
+        assert_eq!(axis_box_adjacent_report.retained_events, 0);
+        assert!(box_workspace.graph.is_none());
 
         let identical_report = request.identical_mesh_report(&left, &right);
         identical_report
