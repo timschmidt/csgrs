@@ -174,7 +174,11 @@ pub struct ExactArrangementBooleanAttempt {
     pub stage: ExactArrangementBooleanStage,
     /// Reason no output was produced, when the attempt declined.
     pub decline: Option<ExactArrangementBooleanDecline>,
-    /// Certified shortcut that materialized output, when one did.
+    /// Certified shortcut/recovery path that materialized output, when one did.
+    ///
+    /// A `None` value on a materialized attempt means the generic arrangement
+    /// cell-complex path produced the output from retained topology and
+    /// ownership evidence.
     pub materialized_shortcut: Option<ExactBooleanShortcutKind>,
     /// Arrangement blocker count observed after construction.
     pub arrangement_blockers: usize,
@@ -219,6 +223,28 @@ impl ExactArrangementBooleanAttempt {
         self.stage == ExactArrangementBooleanStage::Materialized
             && self.decline.is_none()
             && self.materialized_shortcut == Some(ExactBooleanShortcutKind::ArrangementCellComplex)
+    }
+
+    /// Return whether this attempt materialized an arrangement cell-complex
+    /// output, either through the generic path or through a certified
+    /// arrangement shortcut/recovery path.
+    pub fn materialized_arrangement_cell_complex_output(&self) -> bool {
+        if self.stage != ExactArrangementBooleanStage::Materialized || self.decline.is_some() {
+            return false;
+        }
+        match self.materialized_shortcut {
+            Some(ExactBooleanShortcutKind::ArrangementCellComplex) => true,
+            Some(_) => false,
+            None => {
+                self.topology_assembly
+                    .is_some_and(|status| status.is_complete())
+                    && self
+                        .region_ownership
+                        .is_some_and(|status| status.is_resolved())
+                    && self.topology_assembly_report.is_some()
+                    && self.region_ownership_report.is_some()
+            }
+        }
     }
 
     /// Validate this retained arrangement/cell-complex attempt as a coherent
@@ -289,7 +315,7 @@ impl ExactArrangementBooleanAttempt {
                 }
             }
             None => {
-                if !self.materialized_arrangement_cell_complex_shortcut() {
+                if !self.materialized_arrangement_cell_complex_output() {
                     return Err(ExactReportValidationError::StatusEvidenceMismatch);
                 }
             }
@@ -1563,50 +1589,67 @@ impl ExactBooleanEvaluation {
                 return Err(ExactReportValidationError::StatusEvidenceMismatch);
             }
             result.validate()?;
-            let result_matches_certifications = match result.kind {
-                ExactBooleanResultKind::ArrangementCellComplexMaterialized { .. } => {
-                    self.certifications
-                        .region_ownership
-                        .as_ref()
-                        .is_some_and(|ownership| {
-                            ownership.validate().is_ok() && ownership.is_resolved()
-                        })
-                        && self.certifications.topology_assembly.as_ref().is_some_and(
-                            |topology| topology.validate().is_ok() && topology.is_complete(),
-                        )
-                        && self.certifications.arrangement_attempt.as_ref().is_some_and(
-                            ExactArrangementBooleanAttempt::materialized_arrangement_cell_complex_shortcut,
-                        )
-                }
-                ExactBooleanResultKind::CertifiedShortcut {
-                    shortcut: ExactBooleanShortcutKind::ArrangementCellComplex,
-                    operation,
-                } => {
-                    (self
-                        .certifications
-                        .arrangement_cell_complex_shortcuts
-                        .certified_support(operation)
-                        == Some(ExactBooleanSupport::CertifiedArrangementCellComplex)
-                        && self.certifications.region_ownership.is_none()
-                        && self.certifications.topology_assembly.is_none()
-                        && self.certifications.arrangement_attempt.as_ref().is_some_and(
-                            |attempt| {
-                                attempt.operation == operation
-                                    && attempt.policy
-                                        == ExactRegularizationPolicy::REGULARIZED_SOLID
-                                    && attempt.materialized_arrangement_cell_complex_shortcut()
-                            },
-                        ))
-                        || (self.certifications.region_ownership.as_ref().is_some_and(
-                            |ownership| ownership.validate().is_ok() && ownership.is_resolved(),
-                        ) && self.certifications.topology_assembly.as_ref().is_some_and(
-                            |topology| topology.validate().is_ok() && topology.is_complete(),
-                        ) && self.certifications.arrangement_attempt.as_ref().is_some_and(
-                            ExactArrangementBooleanAttempt::materialized_arrangement_cell_complex_shortcut,
-                        ))
-                }
-                _ => true,
-            };
+            let result_matches_certifications =
+                match result.kind {
+                    ExactBooleanResultKind::ArrangementCellComplexMaterialized { operation } => {
+                        self.certifications
+                            .region_ownership
+                            .as_ref()
+                            .is_some_and(|ownership| {
+                                ownership.validate().is_ok() && ownership.is_resolved()
+                            })
+                            && self.certifications.topology_assembly.as_ref().is_some_and(
+                                |topology| topology.validate().is_ok() && topology.is_complete(),
+                            )
+                            && self
+                                .certifications
+                                .arrangement_attempt
+                                .as_ref()
+                                .is_some_and(|attempt| {
+                                    attempt.operation == operation
+                                        && attempt.policy
+                                            == ExactRegularizationPolicy::REGULARIZED_SOLID
+                                        && attempt.materialized_arrangement_cell_complex_output()
+                                })
+                    }
+                    ExactBooleanResultKind::CertifiedShortcut {
+                        shortcut: ExactBooleanShortcutKind::ArrangementCellComplex,
+                        operation,
+                    } => {
+                        (self
+                            .certifications
+                            .arrangement_cell_complex_shortcuts
+                            .certified_support(operation)
+                            == Some(ExactBooleanSupport::CertifiedArrangementCellComplex)
+                            && self.certifications.region_ownership.is_none()
+                            && self.certifications.topology_assembly.is_none()
+                            && self
+                                .certifications
+                                .arrangement_attempt
+                                .as_ref()
+                                .is_some_and(|attempt| {
+                                    attempt.operation == operation
+                                        && attempt.policy
+                                            == ExactRegularizationPolicy::REGULARIZED_SOLID
+                                        && attempt.materialized_arrangement_cell_complex_shortcut()
+                                }))
+                            || (self.certifications.region_ownership.as_ref().is_some_and(
+                                |ownership| ownership.validate().is_ok() && ownership.is_resolved(),
+                            ) && self.certifications.topology_assembly.as_ref().is_some_and(
+                                |topology| topology.validate().is_ok() && topology.is_complete(),
+                            ) && self
+                                .certifications
+                                .arrangement_attempt
+                                .as_ref()
+                                .is_some_and(|attempt| {
+                                    attempt.operation == operation
+                                        && attempt.policy
+                                            == ExactRegularizationPolicy::REGULARIZED_SOLID
+                                        && attempt.materialized_arrangement_cell_complex_output()
+                                }))
+                    }
+                    _ => true,
+                };
             if !result.matches_request(self.request)
                 || result.mesh.validation_policy() != self.request.validation
                 || match result.kind {
@@ -1779,61 +1822,72 @@ fn exact_boolean_preflight_matches_certifications(
                     .coplanar_volumetric_evidence
                     .is_none()
         }
-        ExactBooleanSupport::CertifiedArrangementCellComplex => (certifications
-            .arrangement_cell_complex_shortcuts
-            .certified_support(preflight.operation)
-            == Some(ExactBooleanSupport::CertifiedArrangementCellComplex)
-            && certifications.region_ownership.is_none()
-            && certifications.topology_assembly.is_none()
-            && certifications
-                .arrangement_attempt
-                .as_ref()
-                .is_some_and(|attempt| {
-                    attempt.operation == preflight.operation
-                        && attempt.policy == ExactRegularizationPolicy::REGULARIZED_SOLID
-                        && attempt.materialized_arrangement_cell_complex_shortcut()
-                })
-            && preflight.graph_had_unknowns == certifications.refinement.graph_had_unknowns
-            && preflight.retained_face_pairs == certifications.refinement.retained_face_pairs
-            && preflight.retained_events == certifications.refinement.retained_events
-            && preflight.region_count == 0
-            && preflight.region_classifications.is_empty()
-            && preflight.blocker.is_none()
-            && preflight.arrangement_readiness.is_none())
-            || (certifications
-                .region_ownership
-                .as_ref()
-                .is_some_and(|ownership| ownership.validate().is_ok() && ownership.is_resolved())
+        ExactBooleanSupport::CertifiedArrangementCellComplex => {
+            (certifications
+                .arrangement_cell_complex_shortcuts
+                .certified_support(preflight.operation)
+                == Some(ExactBooleanSupport::CertifiedArrangementCellComplex)
+                && certifications.region_ownership.is_none()
+                && certifications.topology_assembly.is_none()
                 && certifications
-                    .topology_assembly
+                    .arrangement_attempt
                     .as_ref()
-                    .is_some_and(|topology| topology.validate().is_ok() && topology.is_complete())
-                && status.materializes_arrangement_cell_complex()
-                && certifications.arrangement_attempt.as_ref().is_some_and(
-                    ExactArrangementBooleanAttempt::materialized_arrangement_cell_complex_shortcut,
-                )
-                && {
-                    let region_handoff_matches = (preflight.region_count
-                        == certifications.winding_readiness.region_count
-                        && preflight.region_classifications
-                            == certifications.winding_readiness.region_classifications)
-                        || (preflight.region_count == 0
-                            && preflight.region_classifications.is_empty());
-                    preflight.graph_had_unknowns
-                        == certifications.winding_readiness.graph_had_unknowns
-                        && preflight.retained_face_pairs
-                            == certifications.winding_readiness.retained_face_pairs
-                        && preflight.retained_events
-                            == certifications.winding_readiness.retained_events
-                        && region_handoff_matches
-                        && preflight.blocker.is_none()
-                        && preflight.arrangement_readiness
-                            == certifications.winding_readiness.arrangement_readiness
-                        && preflight.coplanar_volumetric_evidence
-                            == certifications
-                                .winding_readiness
-                                .coplanar_volumetric_evidence
-                }),
+                    .is_some_and(|attempt| {
+                        attempt.operation == preflight.operation
+                            && attempt.policy == ExactRegularizationPolicy::REGULARIZED_SOLID
+                            && attempt.materialized_arrangement_cell_complex_shortcut()
+                    })
+                && preflight.graph_had_unknowns == certifications.refinement.graph_had_unknowns
+                && preflight.retained_face_pairs == certifications.refinement.retained_face_pairs
+                && preflight.retained_events == certifications.refinement.retained_events
+                && preflight.region_count == 0
+                && preflight.region_classifications.is_empty()
+                && preflight.blocker.is_none()
+                && preflight.arrangement_readiness.is_none())
+                || (certifications
+                    .region_ownership
+                    .as_ref()
+                    .is_some_and(|ownership| {
+                        ownership.validate().is_ok() && ownership.is_resolved()
+                    })
+                    && certifications
+                        .topology_assembly
+                        .as_ref()
+                        .is_some_and(|topology| {
+                            topology.validate().is_ok() && topology.is_complete()
+                        })
+                    && status.materializes_arrangement_cell_complex()
+                    && certifications
+                        .arrangement_attempt
+                        .as_ref()
+                        .is_some_and(|attempt| {
+                            attempt.operation == preflight.operation
+                                && attempt.policy == ExactRegularizationPolicy::REGULARIZED_SOLID
+                                && attempt.materialized_arrangement_cell_complex_output()
+                        })
+                    && {
+                        let region_handoff_matches = (preflight.region_count
+                            == certifications.winding_readiness.region_count
+                            && preflight.region_classifications
+                                == certifications.winding_readiness.region_classifications)
+                            || (preflight.region_count == 0
+                                && preflight.region_classifications.is_empty());
+                        preflight.graph_had_unknowns
+                            == certifications.winding_readiness.graph_had_unknowns
+                            && preflight.retained_face_pairs
+                                == certifications.winding_readiness.retained_face_pairs
+                            && preflight.retained_events
+                                == certifications.winding_readiness.retained_events
+                            && region_handoff_matches
+                            && preflight.blocker.is_none()
+                            && preflight.arrangement_readiness
+                                == certifications.winding_readiness.arrangement_readiness
+                            && preflight.coplanar_volumetric_evidence
+                                == certifications
+                                    .winding_readiness
+                                    .coplanar_volumetric_evidence
+                    })
+        }
         ExactBooleanSupport::CertifiedEmptyOperand => {
             *status == ExactWindingReadinessStatus::EmptyOperandAlreadyMaterialized
                 && certifications.trivial.has_empty_operand()
@@ -4378,10 +4432,11 @@ fn materialized_arrangement_attempt_outcome(
     attempt: &mut ExactArrangementBooleanAttempt,
     mut result: ExactBooleanResult,
     clear_arrangement_blockers: bool,
+    materialized_shortcut: Option<ExactBooleanShortcutKind>,
 ) -> ArrangementCellComplexOutcome {
     attempt.stage = ExactArrangementBooleanStage::Materialized;
     attempt.decline = None;
-    attempt.materialized_shortcut = Some(ExactBooleanShortcutKind::ArrangementCellComplex);
+    attempt.materialized_shortcut = materialized_shortcut;
     if result.topology_assembly_report.is_none() {
         result.topology_assembly_report = attempt.topology_assembly_report.clone();
     }
@@ -4549,7 +4604,7 @@ fn arrangement_cell_complex_result_is_certified_for_preflight(
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> bool {
-    attempt.decline.is_none()
+    attempt.materialized_arrangement_cell_complex_output()
         && (attempt.arrangement_blockers == 0
             || attempt.materialized_arrangement_cell_complex_shortcut())
         && matches!(
@@ -4819,6 +4874,7 @@ fn run_arrangement_cell_complex_attempt_from_arrangement(
                     &mut attempt,
                     result,
                     false,
+                    Some(ExactBooleanShortcutKind::ArrangementCellComplex),
                 ));
             }
             Ok(None) => {}
@@ -4845,6 +4901,7 @@ fn run_arrangement_cell_complex_attempt_from_arrangement(
                 &mut attempt,
                 result,
                 true,
+                Some(ExactBooleanShortcutKind::ArrangementCellComplex),
             ));
         }
         if let Some(outcome) = arrangement_cell_complex_recovery_outcome_if_available(
@@ -4867,6 +4924,7 @@ fn run_arrangement_cell_complex_attempt_from_arrangement(
                     &mut attempt,
                     result,
                     true,
+                    Some(ExactBooleanShortcutKind::ArrangementCellComplex),
                 ));
             }
         }
@@ -5082,6 +5140,7 @@ fn run_arrangement_cell_complex_attempt_from_arrangement(
                     &mut attempt,
                     result,
                     false,
+                    Some(ExactBooleanShortcutKind::ArrangementCellComplex),
                 ));
             }
             if let Some(outcome) = arrangement_cell_complex_recovery_outcome_if_available(
@@ -5109,6 +5168,7 @@ fn run_arrangement_cell_complex_attempt_from_arrangement(
         &mut attempt,
         result,
         volume_resolves_region_classification,
+        None,
     ))
 }
 
@@ -5205,7 +5265,10 @@ fn arrangement_open_surface_recovery_outcome(
         }
     };
     Ok(Some(materialized_arrangement_attempt_outcome(
-        attempt, result, false,
+        attempt,
+        result,
+        false,
+        Some(ExactBooleanShortcutKind::ArrangementCellComplex),
     )))
 }
 
@@ -5946,7 +6009,10 @@ fn arrangement_volumetric_split_cell_recovery_outcome(
         return Ok(None);
     };
     Ok(Some(materialized_arrangement_attempt_outcome(
-        attempt, result, true,
+        attempt,
+        result,
+        true,
+        Some(ExactBooleanShortcutKind::ArrangementCellComplex),
     )))
 }
 
@@ -5968,14 +6034,20 @@ fn arrangement_cell_complex_recovery_outcome_if_available(
             graph, left, right, operation, validation,
         )? {
             return Ok(Some(materialized_arrangement_attempt_outcome(
-                attempt, result, true,
+                attempt,
+                result,
+                true,
+                Some(ExactBooleanShortcutKind::ArrangementCellComplex),
             )));
         }
         if let Some(result) = boolean_arrangement_convex_regularized_sheet_recovery(
             left, right, operation, validation,
         )? {
             return Ok(Some(materialized_arrangement_attempt_outcome(
-                attempt, result, true,
+                attempt,
+                result,
+                true,
+                Some(ExactBooleanShortcutKind::ArrangementCellComplex),
             )));
         }
     }
@@ -5995,7 +6067,10 @@ fn arrangement_cell_complex_recovery_outcome_if_available(
         match boolean_coplanar_mesh_overlay_optional(left, right, operation, validation) {
             Ok(Some(result)) => {
                 return Ok(Some(materialized_arrangement_attempt_outcome(
-                    attempt, result, false,
+                    attempt,
+                    result,
+                    false,
+                    Some(ExactBooleanShortcutKind::ArrangementCellComplex),
                 )));
             }
             Ok(None) => {}
@@ -6016,7 +6091,10 @@ fn arrangement_cell_complex_recovery_outcome_if_available(
         boolean_arrangement_orthogonal_solid_cell_recovery(left, right, operation, validation)?
     {
         return Ok(Some(materialized_arrangement_attempt_outcome(
-            attempt, result, true,
+            attempt,
+            result,
+            true,
+            Some(ExactBooleanShortcutKind::ArrangementCellComplex),
         )));
     }
     let Some(result) =
@@ -6025,7 +6103,10 @@ fn arrangement_cell_complex_recovery_outcome_if_available(
         return Ok(None);
     };
     Ok(Some(materialized_arrangement_attempt_outcome(
-        attempt, result, true,
+        attempt,
+        result,
+        true,
+        Some(ExactBooleanShortcutKind::ArrangementCellComplex),
     )))
 }
 
@@ -13108,11 +13189,20 @@ mod tests {
             ExactBooleanShortcutKind::ArrangementCellComplex,
         );
 
-        let outcome = materialized_arrangement_attempt_outcome(&mut attempt, result, false);
+        let outcome = materialized_arrangement_attempt_outcome(&mut attempt, result, false, None);
         let ArrangementCellComplexOutcome::Materialized(result, retained_attempt) = outcome else {
             panic!("materialized helper should return a result");
         };
+        assert_eq!(retained_attempt.materialized_shortcut, None);
+        assert!(retained_attempt.materialized_arrangement_cell_complex_output());
         assert_result_retains_attempt_gate_reports(&result, &retained_attempt);
+
+        let mut missing_generic_evidence = retained_attempt.clone();
+        missing_generic_evidence.topology_assembly_report = None;
+        assert_eq!(
+            missing_generic_evidence.validate(),
+            Err(ExactReportValidationError::StatusEvidenceMismatch)
+        );
 
         let mut stale_result = (*result).clone();
         stale_result
@@ -13511,10 +13601,10 @@ mod tests {
                 .arrangement_attempt(&left, &right, ExactRegularizationPolicy::REGULARIZED_SOLID)
                 .unwrap();
             assert_eq!(
-                attempt.materialized_shortcut,
-                Some(ExactBooleanShortcutKind::ArrangementCellComplex),
+                attempt.materialized_shortcut, None,
                 "{operation:?}: {attempt:?}"
             );
+            assert!(attempt.materialized_arrangement_cell_complex_output());
             assert!(attempt.decline.is_none(), "{operation:?}: {attempt:?}");
             assert_current_arrangement_attempt(&attempt, &left, &right);
 
