@@ -4452,6 +4452,7 @@ fn conforming_boundary_edges(
     blockers: &mut Vec<ExactArrangementBlocker>,
 ) -> Vec<ArrangementFaceCellBoundaryEdge> {
     let mut split_points = vec![edge.start.clone(), edge.end.clone()];
+    let mut split_point_index = ArrangementBoundaryPointUniquenessIndex::from_points(&split_points);
     for endpoint in endpoints {
         if boundary_points_equal(endpoint, &edge.start)
             || boundary_points_equal(endpoint, &edge.end)
@@ -4459,7 +4460,9 @@ fn conforming_boundary_edges(
             continue;
         }
         match point_on_segment3(&edge.start.point, &edge.end.point, &endpoint.point).value() {
-            Some(true) => push_unique_boundary_point(&mut split_points, endpoint.clone()),
+            Some(true) => {
+                split_point_index.push_unique(&mut split_points, endpoint.clone());
+            }
             Some(false) => {}
             None => push_unique_blocker(blockers, ExactArrangementBlocker::UndecidableOrdering),
         }
@@ -4480,20 +4483,82 @@ fn conforming_boundary_edges(
     atoms
 }
 
-fn push_unique_boundary_point(
-    points: &mut Vec<ArrangementFaceCellBoundaryPoint>,
-    point: ArrangementFaceCellBoundaryPoint,
-) {
-    if let Some(existing) = points
-        .iter_mut()
-        .find(|existing| boundary_points_equal(existing, &point))
-    {
-        if cell_node_key(&point.node) < cell_node_key(&existing.node) {
-            existing.node = point.node;
+#[derive(Default)]
+struct ArrangementBoundaryPointUniquenessIndex {
+    point_key_buckets: BTreeMap<ExactPoint3Key, Vec<usize>>,
+    unkeyed_points: Vec<usize>,
+}
+
+impl ArrangementBoundaryPointUniquenessIndex {
+    fn from_points(points: &[ArrangementFaceCellBoundaryPoint]) -> Self {
+        let mut index = Self::default();
+        for (point_index, point) in points.iter().enumerate() {
+            index.insert(point_index, exact_point3_key(&point.point));
         }
-    } else {
+        index
+    }
+
+    fn push_unique(
+        &mut self,
+        points: &mut Vec<ArrangementFaceCellBoundaryPoint>,
+        point: ArrangementFaceCellBoundaryPoint,
+    ) {
+        let point_key = exact_point3_key(&point.point);
+        if let Some(existing) = self.find_matching(&point, point_key.as_ref(), points) {
+            if cell_node_key(&point.node) < cell_node_key(&points[existing].node) {
+                points[existing].node = point.node;
+            }
+            return;
+        }
+        let point_index = points.len();
+        self.insert(point_index, point_key);
         points.push(point);
     }
+
+    fn insert(&mut self, point_index: usize, point_key: Option<ExactPoint3Key>) {
+        if let Some(key) = point_key {
+            self.point_key_buckets
+                .entry(key)
+                .or_default()
+                .push(point_index);
+        } else {
+            self.unkeyed_points.push(point_index);
+        }
+    }
+
+    fn find_matching(
+        &self,
+        point: &ArrangementFaceCellBoundaryPoint,
+        point_key: Option<&ExactPoint3Key>,
+        points: &[ArrangementFaceCellBoundaryPoint],
+    ) -> Option<usize> {
+        if let Some(key) = point_key {
+            if let Some(bucket) = self.point_key_buckets.get(key)
+                && let Some(index) = find_matching_boundary_point(point, points, bucket)
+            {
+                return Some(index);
+            }
+            return find_matching_boundary_point(point, points, &self.unkeyed_points);
+        }
+
+        for bucket in self.point_key_buckets.values() {
+            if let Some(index) = find_matching_boundary_point(point, points, bucket) {
+                return Some(index);
+            }
+        }
+        find_matching_boundary_point(point, points, &self.unkeyed_points)
+    }
+}
+
+fn find_matching_boundary_point(
+    point: &ArrangementFaceCellBoundaryPoint,
+    points: &[ArrangementFaceCellBoundaryPoint],
+    candidates: &[usize],
+) -> Option<usize> {
+    candidates
+        .iter()
+        .copied()
+        .find(|&index| boundary_points_equal(&points[index], point))
 }
 
 fn boundary_points_equal(
@@ -5060,6 +5125,40 @@ mod tests {
 
         assert_eq!(points.len(), 2);
         assert_eq!(index.point_key_buckets.len(), 2);
+        assert!(index.unkeyed_points.is_empty());
+    }
+
+    #[test]
+    fn arrangement_boundary_point_index_buckets_exact_rational_points() {
+        let boundary_point = |side, vertex, point| ArrangementFaceCellBoundaryPoint {
+            node: ArrangementFaceCellNode::SourceVertex { side, vertex },
+            point,
+        };
+        let point = rational_p3([1, 2], [-3, 4], [5, 6]);
+        let mut points = vec![
+            boundary_point(MeshSide::Right, 7, point.clone()),
+            boundary_point(MeshSide::Left, 1, rational_p3([2, 3], [-3, 4], [5, 6])),
+        ];
+        let mut index = ArrangementBoundaryPointUniquenessIndex::from_points(&points);
+
+        index.push_unique(
+            &mut points,
+            boundary_point(MeshSide::Left, 0, point.clone()),
+        );
+        index.push_unique(
+            &mut points,
+            boundary_point(MeshSide::Right, 2, rational_p3([3, 4], [-3, 4], [5, 6])),
+        );
+
+        assert_eq!(points.len(), 3);
+        assert_eq!(
+            points[0].node,
+            ArrangementFaceCellNode::SourceVertex {
+                side: MeshSide::Left,
+                vertex: 0
+            }
+        );
+        assert_eq!(index.point_key_buckets.len(), 3);
         assert!(index.unkeyed_points.is_empty());
     }
 
