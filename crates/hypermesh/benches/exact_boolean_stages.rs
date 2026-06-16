@@ -4,13 +4,13 @@ use std::time::{Duration, Instant};
 use hypermesh::{
     CoplanarVolumetricCellEvidenceReport, ExactAdjacentUnionCompletionReport, ExactArrangement,
     ExactArrangementBooleanAttempt, ExactBooleanEvaluation, ExactBooleanOperation,
-    ExactBooleanPreflight, ExactBooleanRequest, ExactBooleanResult, ExactBooleanWorkspace,
-    ExactBoundaryTouchingReport, ExactIdenticalMeshReport, ExactMesh,
-    ExactOpenSurfaceDisjointReport, ExactPlanarArrangementReport, ExactRefinementReport,
-    ExactRegionOwnershipReport, ExactRegularizationPolicy, ExactSameSurfaceReport,
-    ExactSelectedCellComplex, ExactSimplifiedCellComplex, ExactTopologyAssemblyReport,
-    ExactVolumetricBoundaryClosureReport, ExactWindingReadinessReport, ValidationPolicy,
-    build_intersection_graph, triangulate_all_face_cells_with_cdt,
+    ExactBooleanRequest, ExactBooleanResult, ExactBooleanWorkspace, ExactBoundaryTouchingReport,
+    ExactIdenticalMeshReport, ExactMesh, ExactOpenSurfaceDisjointReport,
+    ExactPlanarArrangementReport, ExactRefinementReport, ExactRegionOwnershipReport,
+    ExactRegularizationPolicy, ExactSameSurfaceReport, ExactSelectedCellComplex,
+    ExactSimplifiedCellComplex, ExactTopologyAssemblyReport, ExactVolumetricBoundaryClosureReport,
+    ExactWindingReadinessReport, ValidationPolicy, build_intersection_graph,
+    triangulate_all_face_cells_with_cdt,
 };
 
 struct BenchCase {
@@ -271,15 +271,6 @@ fn run_case(case: &BenchCase) {
         let graph = workspace.graph().unwrap();
         black_box((graph.face_pairs.len(), graph.event_count()));
     });
-
-    time_prepared_stage(
-        case,
-        "workspace_preflight_from_retained_graph",
-        || retained_graph_workspace_for_case(case),
-        |retained_workspace| {
-            black_box(retained_workspace.preflight(request).unwrap());
-        },
-    );
 
     workspace.coplanar_volumetric_cell_evidence().unwrap();
     time_stage(
@@ -557,24 +548,6 @@ fn run_case(case: &BenchCase) {
         },
     );
 
-    workspace.preflight(request).unwrap();
-    time_stage(case, "workspace_preflight_derived", || {
-        black_box(workspace.preflight(request).unwrap());
-    });
-
-    time_prepared_stage(
-        case,
-        "workspace_validate_preflight_from_retained_artifacts",
-        || retained_workspace_and_preflight_for_case(case, request),
-        |(retained_workspace, preflight)| {
-            black_box(
-                retained_workspace
-                    .validate_preflight(request, preflight)
-                    .ok(),
-            );
-        },
-    );
-
     time_prepared_stage(
         case,
         "workspace_validate_refinement_from_retained_artifacts",
@@ -765,23 +738,13 @@ fn retained_graph_workspace_for_case<'a>(case: &'a BenchCase) -> ExactBooleanWor
 
 fn retained_workspace_for_case<'a>(
     case: &'a BenchCase,
-    request: ExactBooleanRequest,
+    _request: ExactBooleanRequest,
 ) -> ExactBooleanWorkspace<'a> {
     let mut retained_workspace = retained_graph_workspace_for_case(case);
     retained_workspace
         .arrangement(ExactRegularizationPolicy::REGULARIZED_SOLID)
         .unwrap();
-    retained_workspace.preflight(request).unwrap();
     retained_workspace
-}
-
-fn retained_workspace_and_preflight_for_case<'a>(
-    case: &'a BenchCase,
-    request: ExactBooleanRequest,
-) -> (ExactBooleanWorkspace<'a>, ExactBooleanPreflight) {
-    let mut retained_workspace = retained_workspace_for_case(case, request);
-    let preflight = retained_workspace.preflight(request).unwrap();
-    (retained_workspace, preflight)
 }
 
 fn retained_workspace_and_coplanar_volumetric_evidence_for_case<'a>(

@@ -356,8 +356,8 @@ impl<'a> ExactBooleanWorkspace<'a> {
         simplified.freshness_against_arrangement(arrangement, self.left, self.right, policy)
     }
 
-    /// Returns preflight for `request`, deriving it from the retained graph.
-    pub fn preflight(
+    /// Derive preflight for `request` from the retained graph.
+    fn preflight(
         &mut self,
         request: ExactBooleanRequest,
     ) -> Result<ExactBooleanPreflight, MeshError> {
@@ -374,24 +374,6 @@ impl<'a> ExactBooleanWorkspace<'a> {
             .validate()
             .map_err(workspace_report_validation_error)?;
         Ok(preflight)
-    }
-
-    /// Validate preflight scheduling evidence against this workspace's source
-    /// meshes.
-    pub fn validate_preflight(
-        &mut self,
-        request: ExactBooleanRequest,
-        preflight: &ExactBooleanPreflight,
-    ) -> Result<(), ExactReportValidationError> {
-        if preflight.operation != request.operation {
-            return Err(ExactReportValidationError::StatusEvidenceMismatch);
-        }
-        preflight.validate_against_sources_with_boundary_policy(
-            self.left,
-            self.right,
-            request.validation,
-            request.boundary_policy,
-        )
     }
 
     /// Build or reuse the certification bundle backing an evaluation.
@@ -1277,7 +1259,14 @@ mod tests {
         assert_eq!(first_preflight, second_preflight);
         assert_eq!(first_preflight, request.preflight(&left, &right).unwrap());
         let preflight = first_preflight;
-        workspace.validate_preflight(request, &preflight).unwrap();
+        preflight
+            .validate_against_sources_with_boundary_policy(
+                &left,
+                &right,
+                request.validation,
+                request.boundary_policy,
+            )
+            .unwrap();
         assert_eq!(
             preflight.freshness_against_sources_with_boundary_policy(
                 &left,
@@ -1290,7 +1279,12 @@ mod tests {
         let mut stale_preflight = preflight.clone();
         stale_preflight.retained_events += 1;
         assert_eq!(
-            workspace.validate_preflight(request, &stale_preflight),
+            stale_preflight.validate_against_sources_with_boundary_policy(
+                &left,
+                &right,
+                request.validation,
+                request.boundary_policy,
+            ),
             Err(ExactReportValidationError::SourceReplayMismatch)
         );
         assert_ne!(
@@ -1305,7 +1299,12 @@ mod tests {
         let mut relabeled_preflight = preflight.clone();
         relabeled_preflight.operation = ExactBooleanOperation::Difference;
         assert_eq!(
-            workspace.validate_preflight(request, &relabeled_preflight),
+            relabeled_preflight.validate_against_sources_with_boundary_policy(
+                &left,
+                &right,
+                request.validation,
+                request.boundary_policy,
+            ),
             Err(ExactReportValidationError::StatusEvidenceMismatch)
         );
 
