@@ -708,12 +708,14 @@ pub(crate) fn validate_arrangement_regions(
         {
             return Err(ExactArrangementBlocker::NonManifoldCellComplex);
         }
+        let region_membership =
+            ArrangementRegionComponentMembership::new(&region_faces, face_cell_count);
         for pair in &region.adjacent_face_cells {
             if pair[0] == pair[1]
                 || pair[0] >= face_cell_count
                 || pair[1] >= face_cell_count
-                || !region_faces.contains(&pair[0])
-                || !region_faces.contains(&pair[1])
+                || !region_membership.contains(pair[0])
+                || !region_membership.contains(pair[1])
             {
                 return Err(ExactArrangementBlocker::NonManifoldCellComplex);
             }
@@ -724,7 +726,7 @@ pub(crate) fn validate_arrangement_regions(
             };
             if incidence_faces
                 .iter()
-                .any(|face| !region_faces.contains(face))
+                .any(|&face| !region_membership.contains(face))
             {
                 return Err(ExactArrangementBlocker::NonManifoldCellComplex);
             }
@@ -737,7 +739,7 @@ pub(crate) fn validate_arrangement_regions(
             }
         }
         for side in &region.oriented_sides {
-            if !region_faces.contains(&side.face_cell) {
+            if !region_membership.contains(side.face_cell) {
                 return Err(ExactArrangementBlocker::NonManifoldCellComplex);
             }
         }
@@ -2175,8 +2177,8 @@ fn arrangement_face_cells(
         && !region_plan.regions.is_empty()
     {
         cells.extend(region_plan.regions.iter().filter_map(|region| {
-            if skipped_carriers.contains(&(region.side, region.face))
-                || skipped_face_arrangements.contains(&(region.side, region.face))
+            if skipped_carriers.contains(&carrier_key(region.side, region.face))
+                || skipped_face_arrangements.contains(&carrier_key(region.side, region.face))
             {
                 None
             } else {
@@ -2203,8 +2205,8 @@ fn arrangement_face_cells(
     }
 
     for (face, triangle) in left.triangles().iter().enumerate() {
-        if skipped_carriers.contains(&(MeshSide::Left, face))
-            || skipped_face_arrangements.contains(&(MeshSide::Left, face))
+        if skipped_carriers.contains(&carrier_key(MeshSide::Left, face))
+            || skipped_face_arrangements.contains(&carrier_key(MeshSide::Left, face))
         {
             continue;
         }
@@ -2219,8 +2221,8 @@ fn arrangement_face_cells(
         ));
     }
     for (face, triangle) in right.triangles().iter().enumerate() {
-        if skipped_carriers.contains(&(MeshSide::Right, face))
-            || skipped_face_arrangements.contains(&(MeshSide::Right, face))
+        if skipped_carriers.contains(&carrier_key(MeshSide::Right, face))
+            || skipped_face_arrangements.contains(&carrier_key(MeshSide::Right, face))
         {
             continue;
         }
@@ -2253,10 +2255,16 @@ fn arrangement_face_cells(
     cells
 }
 
+type ArrangementCarrierKey = (usize, usize);
+
+fn carrier_key(side: MeshSide, face: usize) -> ArrangementCarrierKey {
+    (side_key(side), face)
+}
+
 fn face_arrangement_carriers(
     face_plane_arrangements: &[ArrangementFacePlaneArrangement],
-) -> Vec<(MeshSide, usize)> {
-    let mut carriers = Vec::new();
+) -> BTreeSet<ArrangementCarrierKey> {
+    let mut carriers = BTreeSet::new();
     for arrangement in face_plane_arrangements {
         push_unique_carrier(&mut carriers, arrangement.side, arrangement.face);
     }
@@ -2306,7 +2314,7 @@ fn face_plane_arrangements(
             continue;
         }
         let side = side_from_key(side);
-        if skipped_carriers.contains(&(side, face)) {
+        if skipped_carriers.contains(&carrier_key(side, face)) {
             continue;
         }
         per_face_groups
@@ -2525,8 +2533,8 @@ fn face_plane_vertex_provenance(
 
 fn overlay_carriers(
     carrier_plane_overlays: &[ArrangementCarrierPlaneOverlay],
-) -> Vec<(MeshSide, usize)> {
-    let mut carriers = Vec::new();
+) -> BTreeSet<ArrangementCarrierKey> {
+    let mut carriers = BTreeSet::new();
     for overlay in carrier_plane_overlays {
         push_unique_carrier(&mut carriers, MeshSide::Left, overlay.left_face);
         push_unique_carrier(&mut carriers, MeshSide::Right, overlay.right_face);
@@ -2534,11 +2542,12 @@ fn overlay_carriers(
     carriers
 }
 
-fn push_unique_carrier(carriers: &mut Vec<(MeshSide, usize)>, side: MeshSide, face: usize) {
-    let carrier = (side, face);
-    if !carriers.contains(&carrier) {
-        carriers.push(carrier);
-    }
+fn push_unique_carrier(
+    carriers: &mut BTreeSet<ArrangementCarrierKey>,
+    side: MeshSide,
+    face: usize,
+) {
+    carriers.insert(carrier_key(side, face));
 }
 
 fn lower_dimensional_artifacts(
@@ -3300,13 +3309,14 @@ fn arrangement_regions(
             }
         }
         component.sort_unstable();
+        let membership = ArrangementRegionComponentMembership::new(&component, face_cells.len());
         let adjacent_face_cells = adjacent_pairs
             .iter()
             .copied()
-            .filter(|[left, right]| component.contains(left) && component.contains(right))
+            .filter(|[left, right]| membership.contains(*left) && membership.contains(*right))
             .collect::<Vec<_>>();
         let edge_incidences =
-            arrangement_region_edge_incidences(&component, &edge_users, face_cells);
+            arrangement_region_edge_incidences(&membership, &edge_users, face_cells);
         let non_manifold_edges = edge_incidences
             .iter()
             .filter(|incidence| incidence.non_manifold)
@@ -3341,8 +3351,28 @@ const fn canonical_face_pair(left: usize, right: usize) -> [usize; 2] {
     }
 }
 
+struct ArrangementRegionComponentMembership {
+    members: Vec<bool>,
+}
+
+impl ArrangementRegionComponentMembership {
+    fn new(component: &[usize], face_cell_count: usize) -> Self {
+        let mut members = vec![false; face_cell_count];
+        for &cell in component {
+            if let Some(member) = members.get_mut(cell) {
+                *member = true;
+            }
+        }
+        Self { members }
+    }
+
+    fn contains(&self, face_cell: usize) -> bool {
+        self.members.get(face_cell).copied().unwrap_or(false)
+    }
+}
+
 fn arrangement_region_edge_incidences(
-    component: &[usize],
+    membership: &ArrangementRegionComponentMembership,
     edge_users: &[([ArrangementFaceCellNode; 2], Vec<usize>)],
     face_cells: &[ArrangementFaceCell],
 ) -> Vec<ArrangementRegionEdgeIncidence> {
@@ -3352,7 +3382,7 @@ fn arrangement_region_edge_incidences(
             let mut incident_face_cells = users
                 .iter()
                 .copied()
-                .filter(|cell| component.contains(cell))
+                .filter(|&cell| membership.contains(cell))
                 .collect::<Vec<_>>();
             if incident_face_cells.is_empty() {
                 return None;
