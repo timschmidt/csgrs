@@ -426,7 +426,7 @@ impl CoplanarVolumetricCellEvidenceReport {
 }
 
 /// Certify retained graph evidence for coplanar volumetric-cell extraction.
-pub fn certify_coplanar_volumetric_cell_evidence(
+pub(crate) fn certify_coplanar_volumetric_cell_evidence(
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> Result<CoplanarVolumetricCellEvidenceReport, MeshError> {

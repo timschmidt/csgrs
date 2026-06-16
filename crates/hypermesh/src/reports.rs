@@ -3901,6 +3901,7 @@ impl ExactBooleanPreflight {
                     | ExactBooleanSupport::CertifiedClosedBoundaryTouchingIntersection
                     | ExactBooleanSupport::CertifiedClosedBoundaryTouchingDifference
                     | ExactBooleanSupport::RequiresCoplanarVolumetricCells
+                    | ExactBooleanSupport::RequiresCertifiedWinding
             )
         {
             return Err(ExactReportValidationError::UnexpectedCoplanarVolumetricEvidence);
@@ -4152,18 +4153,48 @@ impl ExactBooleanPreflight {
                 {
                     return Err(ExactReportValidationError::StatusEvidenceMismatch);
                 }
-                blocker_kind(self.blocker.as_ref(), ExactBooleanBlockerKind::NeedsWinding)?;
-                self.blocker
-                    .as_ref()
-                    .unwrap()
-                    .validate_for_kind(ExactBooleanBlockerKind::NeedsWinding)?;
+                let blocker = self.blocker.as_ref().unwrap();
+                let expected = match blocker.kind {
+                    ExactBooleanBlockerKind::NeedsCoplanarVolumetricCells => {
+                        ExactBooleanBlockerKind::NeedsCoplanarVolumetricCells
+                    }
+                    _ => ExactBooleanBlockerKind::NeedsWinding,
+                };
+                blocker_kind(self.blocker.as_ref(), expected)?;
+                blocker.validate_for_kind(expected)?;
                 validate_blocker_count_bounds(
-                    self.blocker.as_ref().unwrap(),
+                    blocker,
                     self.retained_face_pairs,
                     self.retained_events,
                 )?;
                 if self.arrangement_readiness.is_some() {
                     return Err(ExactReportValidationError::UnexpectedArrangementReadiness);
+                }
+                match (expected, self.coplanar_volumetric_evidence.as_ref()) {
+                    (ExactBooleanBlockerKind::NeedsCoplanarVolumetricCells, Some(evidence)) => {
+                        validate_coplanar_volumetric_evidence_matches_blocker(
+                            evidence,
+                            blocker,
+                            self.retained_face_pairs,
+                            self.retained_events,
+                        )?;
+                        if !evidence.obstacle.requires_coplanar_volumetric_cells() {
+                            return Err(
+                                ExactReportValidationError::CoplanarVolumetricEvidenceMismatch,
+                            );
+                        }
+                    }
+                    (ExactBooleanBlockerKind::NeedsCoplanarVolumetricCells, None) => {
+                        return Err(ExactReportValidationError::MissingCoplanarVolumetricEvidence);
+                    }
+                    (_, Some(evidence)) => {
+                        validate_coplanar_volumetric_evidence_shape(
+                            evidence,
+                            self.retained_face_pairs,
+                            self.retained_events,
+                        )?;
+                    }
+                    (_, None) => {}
                 }
                 checked_region_facts(self.region_count, &self.region_classifications)
             }

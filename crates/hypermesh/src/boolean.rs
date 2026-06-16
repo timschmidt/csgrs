@@ -3194,6 +3194,25 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
                 None,
             ));
         }
+        let winding_readiness =
+            winding_readiness_report_from_graph(&graph, left, right, operation)?;
+        if winding_readiness.status.routes_to_certified_winding()
+            && winding_readiness.blocker.kind
+                == ExactBooleanBlockerKind::NeedsCoplanarVolumetricCells
+        {
+            return Ok(ExactBooleanPreflight {
+                operation,
+                support: ExactBooleanSupport::RequiresCertifiedWinding,
+                graph_had_unknowns: winding_readiness.graph_had_unknowns,
+                retained_face_pairs: winding_readiness.retained_face_pairs,
+                retained_events: winding_readiness.retained_events,
+                region_count: winding_readiness.region_count,
+                region_classifications: winding_readiness.region_classifications,
+                blocker: Some(winding_readiness.blocker),
+                arrangement_readiness: winding_readiness.arrangement_readiness,
+                coplanar_volumetric_evidence: winding_readiness.coplanar_volumetric_evidence,
+            });
+        }
         return Ok(ExactBooleanPreflight {
             operation,
             support: ExactBooleanSupport::RequiresCoplanarVolumetricCells,

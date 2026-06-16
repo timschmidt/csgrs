@@ -26,8 +26,8 @@ use hypermesh::{
     SplitPlanFreshness, TriangleTriangleFreshness, TriangleTriangleRelation, ValidationPolicy,
     WindingReportFreshness, approximate_mesh_f64_view, audit_exact_mesh,
     build_exact_arrangement2d_overlay, build_exact_arrangement2d_overlay_with_boundary_policy,
-    build_intersection_graph, certify_convex_solid, certify_coplanar_volumetric_cell_evidence,
-    certify_exact_mesh_proposal, checked_classify_face_regions_against_opposite_planes,
+    build_intersection_graph, certify_convex_solid, certify_exact_mesh_proposal,
+    checked_classify_face_regions_against_opposite_planes,
     checked_triangulate_face_regions_with_earcut, classify_mesh_face_pair,
     classify_mesh_vertices_against_closed_mesh_winding_report,
     classify_mesh_vertices_against_convex_solid_report,
@@ -1594,11 +1594,40 @@ fn affine_orthogonal_solid_recovers_face_fan_basis_from_cell_edges() {
 }
 
 #[test]
-fn exact_coplanar_volumetric_cell_evidence_is_publicly_replayable() {
-    let left = tetra_from_corners([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]);
+fn exact_coplanar_volumetric_cell_evidence_is_retained_by_public_evaluation() {
+    let left_a = tetra_from_corners([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]);
+    let left_b = tetra_from_corners([20, 0, 0], [22, 0, 0], [20, 2, 0], [20, 0, 2]);
+    let left = combine_exact_meshes(&left_a, &left_b, "test disconnected same-side fixture");
     let right = tetra_from_corners([0, 0, 0], [8, 0, 0], [0, 8, 0], [0, 0, 8]);
 
-    let report = certify_coplanar_volumetric_cell_evidence(&left, &right).unwrap();
+    let evaluation =
+        ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED)
+            .evaluate(&left, &right)
+            .unwrap();
+    evaluation.validate().unwrap();
+    let preflight = &evaluation.preflight;
+    assert_eq!(
+        preflight.support,
+        hypermesh::ExactBooleanSupport::RequiresCertifiedWinding
+    );
+    assert_eq!(
+        evaluation.certifications.winding_readiness.status,
+        ExactWindingReadinessStatus::Ready
+    );
+    preflight
+        .validate_against_sources_with_validation(&left, &right, ValidationPolicy::CLOSED)
+        .unwrap();
+    assert_eq!(
+        preflight.coplanar_volumetric_evidence,
+        evaluation
+            .certifications
+            .winding_readiness
+            .coplanar_volumetric_evidence
+    );
+    let report = preflight
+        .coplanar_volumetric_evidence
+        .as_ref()
+        .expect("coplanar volumetric blocker should retain source-aware evidence");
     report.validate().unwrap();
     report.validate_against_sources(&left, &right).unwrap();
     assert_eq!(
@@ -3279,15 +3308,6 @@ fn closed_boundary_touching_regularized_boolean_is_publicly_replayable() {
     let right = tetra_from_corners([0, 0, 0], [-4, 0, 0], [0, -4, 0], [0, 0, -4]);
     let separated_right = tetra_from_corners([100, 0, 0], [104, 0, 0], [100, 4, 0], [100, 0, 4]);
 
-    let evidence = certify_coplanar_volumetric_cell_evidence(&left, &right).unwrap();
-    evidence.validate().unwrap();
-    evidence.validate_against_sources(&left, &right).unwrap();
-    assert_eq!(
-        evidence.obstacle,
-        hypermesh::CoplanarVolumetricCellObstacle::BoundaryOnlyContact
-    );
-    assert_eq!(evidence.positive_area_coplanar_overlapping_pairs, 0);
-
     for (operation, support, shortcut) in [
         (
             ExactBooleanOperation::Union,
@@ -3317,6 +3337,14 @@ fn closed_boundary_touching_regularized_boolean_is_publicly_replayable() {
         );
         preflight.validate().unwrap();
         preflight.validate_against_sources(&left, &right).unwrap();
+        if let Some(evidence) = preflight.coplanar_volumetric_evidence.as_ref() {
+            evidence.validate().unwrap();
+            evidence.validate_against_sources(&left, &right).unwrap();
+            assert_eq!(
+                evidence.obstacle,
+                hypermesh::CoplanarVolumetricCellObstacle::BoundaryOnlyContact
+            );
+        }
 
         let result = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED)
             .materialize(&left, &right)
@@ -3396,10 +3424,7 @@ fn closed_no_volume_overlap_regularized_boolean_is_publicly_replayable() {
     let right = tetra_from_corners([2, 0, 0], [6, 0, 0], [2, 4, 0], [2, 0, -4]);
     let separated_right = tetra_from_corners([20, 0, 0], [24, 0, 0], [20, 4, 0], [20, 0, -4]);
 
-    let evidence = certify_coplanar_volumetric_cell_evidence(&left, &right).unwrap();
-    evidence.validate().unwrap();
-    evidence.validate_against_sources(&left, &right).unwrap();
-    assert!(evidence.positive_area_coplanar_overlapping_pairs > 0);
+    let mut retained_evidence = None;
 
     for (operation, support, shortcut) in [
         (
@@ -3428,11 +3453,20 @@ fn closed_no_volume_overlap_regularized_boolean_is_publicly_replayable() {
             preflight.retained_face_pairs > 0,
             "positive-area no-volume shortcut should retain graph evidence: {operation:?}: {preflight:?}"
         );
-        assert_eq!(
-            preflight.coplanar_volumetric_evidence.as_ref(),
-            Some(&evidence),
-            "{operation:?}: positive-area no-volume shortcut should retain source-aware boundary-only evidence"
+        let evidence = preflight.coplanar_volumetric_evidence.as_ref().expect(
+            "positive-area no-volume shortcut should retain source-aware boundary-only evidence",
         );
+        evidence.validate().unwrap();
+        evidence.validate_against_sources(&left, &right).unwrap();
+        assert!(evidence.positive_area_coplanar_overlapping_pairs > 0);
+        if let Some(retained_evidence) = retained_evidence.as_ref() {
+            assert_eq!(
+                evidence, retained_evidence,
+                "{operation:?}: positive-area no-volume shortcut should retain stable source-aware boundary-only evidence"
+            );
+        } else {
+            retained_evidence = Some(evidence.clone());
+        }
         preflight.validate().unwrap();
         preflight.validate_against_sources(&left, &right).unwrap();
 
@@ -3453,7 +3487,7 @@ fn closed_no_volume_overlap_regularized_boolean_is_publicly_replayable() {
             );
             assert_eq!(
                 readiness.coplanar_volumetric_evidence.as_ref(),
-                Some(&evidence),
+                retained_evidence.as_ref(),
                 "{operation:?}: no-volume readiness should retain consumed source-aware evidence"
             );
             readiness.validate().unwrap();

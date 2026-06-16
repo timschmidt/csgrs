@@ -690,7 +690,6 @@ mod tests {
         ExactBooleanShortcutKind, ExactBoundaryBooleanPolicy, ExactRegionOwnershipStatus,
         ExactReportValidationError, ExactSelectedCellComplexFreshness,
         ExactSimplifiedCellComplexFreshness, ExactTopologyAssemblyStatus, Triangle,
-        certify_coplanar_volumetric_cell_evidence,
     };
 
     #[test]
@@ -1755,7 +1754,11 @@ mod tests {
 
         let materialized = workspace.materialize(request).unwrap();
         let expected_result = request.materialize(&left, &right).unwrap();
-        let expected_evidence = certify_coplanar_volumetric_cell_evidence(&left, &right).unwrap();
+        let expected_evidence = request
+            .evaluate(&left, &right)
+            .unwrap()
+            .preflight
+            .coplanar_volumetric_evidence;
         assert_eq!(materialized, expected_result);
         assert_eq!(workspace.materializations.len(), 1);
         assert_eq!(workspace.materialize(request).unwrap(), materialized);
@@ -1765,7 +1768,7 @@ mod tests {
                 .preflight(request)
                 .unwrap()
                 .coplanar_volumetric_evidence,
-            Some(expected_evidence)
+            expected_evidence
         );
 
         workspace.materializations[0].1.graph_had_unknowns =

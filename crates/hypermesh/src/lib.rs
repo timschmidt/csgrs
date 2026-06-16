@@ -217,7 +217,6 @@ pub use volumetric::{
 pub use volumetric_cells::{
     CoplanarVolumetricCellEvidenceError, CoplanarVolumetricCellEvidenceFreshness,
     CoplanarVolumetricCellEvidenceReport, CoplanarVolumetricCellObstacle,
-    certify_coplanar_volumetric_cell_evidence,
 };
 pub use winding::{
     ClosedMeshWindingMeshRelation, ClosedMeshWindingMeshReport, ClosedMeshWindingRelation,
