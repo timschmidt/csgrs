@@ -5043,6 +5043,7 @@ fn run_arrangement_cell_complex_attempt_from_arrangement(
         return Ok(ArrangementCellComplexOutcome::Declined(attempt));
     }
     let ownership_resolves_named_selection = ownership_report.is_resolved()
+        || ownership_report.volume_selection_resolves_operation(operation)
         || matches!(operation, ExactBooleanOperation::SelectedRegions(_));
     if !ownership_resolves_named_selection {
         if let Some(outcome) = arrangement_cell_complex_recovery_outcome_if_available(
@@ -5062,7 +5063,9 @@ fn run_arrangement_cell_complex_attempt_from_arrangement(
         ));
         return Ok(ArrangementCellComplexOutcome::Declined(attempt));
     }
-    let selected_result = if ownership_report.status.is_volume_resolved() {
+    let selected_result = if ownership_report.status.is_volume_resolved()
+        || ownership_report.volume_selection_resolves_operation(operation)
+    {
         labeled.select_volume_resolved_with_policy(operation, policy)
     } else {
         labeled.select_with_policy(operation, policy)

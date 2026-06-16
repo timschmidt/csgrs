@@ -237,6 +237,14 @@ pub struct ExactRegionOwnershipReport {
     /// Whether retained volume adjacency evidence can drive every named
     /// Boolean selection without opposite-face winding labels.
     pub volume_selection_resolved: bool,
+    /// Whether retained volume adjacency evidence can drive union selection.
+    pub volume_union_resolved: bool,
+    /// Whether retained volume adjacency evidence can drive intersection
+    /// selection.
+    pub volume_intersection_resolved: bool,
+    /// Whether retained volume adjacency evidence can drive difference
+    /// selection.
+    pub volume_difference_resolved: bool,
     /// Retained lower-dimensional artifacts.
     pub lower_dimensional_artifacts: usize,
     /// Retained point-contact lower-dimensional artifacts.
@@ -253,6 +261,17 @@ impl ExactRegionOwnershipReport {
         self.status.is_resolved()
     }
 
+    /// Return whether retained volume-region evidence resolves this named
+    /// operation even if other named operations still require winding.
+    pub fn volume_selection_resolves_operation(&self, operation: ExactBooleanOperation) -> bool {
+        match operation {
+            ExactBooleanOperation::Union => self.volume_union_resolved,
+            ExactBooleanOperation::Intersection => self.volume_intersection_resolved,
+            ExactBooleanOperation::Difference => self.volume_difference_resolved,
+            ExactBooleanOperation::SelectedRegions(_) => false,
+        }
+    }
+
     /// Validate local ownership report shape without source replay.
     pub fn validate(&self) -> Result<(), ExactArrangementBlocker> {
         let expected_status = region_ownership_status(
@@ -265,6 +284,15 @@ impl ExactRegionOwnershipReport {
             self.volume_selection_resolved,
         );
         if self.status != expected_status {
+            return Err(ExactArrangementBlocker::UnresolvedRegionClassification);
+        }
+        let all_named_volume_selections_resolved = self.volume_union_resolved
+            && self.volume_intersection_resolved
+            && self.volume_difference_resolved;
+        let any_named_volume_selection_resolved = self.volume_union_resolved
+            || self.volume_intersection_resolved
+            || self.volume_difference_resolved;
+        if self.volume_selection_resolved != all_named_volume_selections_resolved {
             return Err(ExactArrangementBlocker::UnresolvedRegionClassification);
         }
         let Some(boundary_faces) = self
@@ -328,7 +356,7 @@ impl ExactRegionOwnershipReport {
         if (self.volume_adjacencies == 0
             && (self.volume_adjacency_face_sides != 0
                 || self.volume_adjacency_separating_faces != 0
-                || self.volume_selection_resolved))
+                || any_named_volume_selection_resolved))
             || (self.volume_adjacencies != 0
                 && (self.volume_adjacency_face_sides == 0
                     || self.volume_adjacency_separating_faces == 0))
@@ -358,7 +386,7 @@ impl ExactRegionOwnershipReport {
                     || self.volume_adjacencies == 0
                     || self.volume_adjacency_face_sides == 0
                     || self.volume_adjacency_separating_faces == 0
-                    || !self.volume_selection_resolved
+                    || !all_named_volume_selections_resolved
                 {
                     return Err(ExactArrangementBlocker::UnresolvedRegionClassification);
                 }
@@ -633,6 +661,24 @@ impl ExactLabeledCellComplex {
             &self.volume_regions,
             &self.volume_adjacencies,
         );
+        let volume_union_resolved = volume_evidence_resolves_named_operation(
+            &self.faces,
+            &self.volume_regions,
+            &self.volume_adjacencies,
+            ExactBooleanOperation::Union,
+        );
+        let volume_intersection_resolved = volume_evidence_resolves_named_operation(
+            &self.faces,
+            &self.volume_regions,
+            &self.volume_adjacencies,
+            ExactBooleanOperation::Intersection,
+        );
+        let volume_difference_resolved = volume_evidence_resolves_named_operation(
+            &self.faces,
+            &self.volume_regions,
+            &self.volume_adjacencies,
+            ExactBooleanOperation::Difference,
+        );
         let (
             lower_dimensional_point_contacts,
             lower_dimensional_edge_contacts,
@@ -676,6 +722,9 @@ impl ExactLabeledCellComplex {
             volume_adjacency_face_sides,
             volume_adjacency_separating_faces,
             volume_selection_resolved,
+            volume_union_resolved,
+            volume_intersection_resolved,
+            volume_difference_resolved,
             lower_dimensional_artifacts: self.lower_dimensional_artifacts.len(),
             lower_dimensional_point_contacts,
             lower_dimensional_edge_contacts,
@@ -972,7 +1021,9 @@ pub(crate) fn select_arrangement_for_replay(
     let labeled = arrangement.label_regions(labeling_policy)?;
     let ownership_report = labeled.region_ownership_report(left, right, labeling_policy);
     ownership_report.validate()?;
-    let mut selected = if ownership_report.status.is_volume_resolved() {
+    let mut selected = if ownership_report.status.is_volume_resolved()
+        || ownership_report.volume_selection_resolves_operation(operation)
+    {
         labeled.select_volume_resolved_with_policy(operation, policy)
     } else {
         if !ownership_report.is_resolved()
@@ -1020,6 +1071,7 @@ pub(crate) fn validate_selected_gate_reports(
             return Err(ExactArrangementBlocker::NonManifoldCellComplex);
         }
         if !ownership_report.is_resolved()
+            && !ownership_report.volume_selection_resolves_operation(operation)
             && !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
         {
             return Err(ExactArrangementBlocker::UnresolvedRegionClassification);
@@ -1206,26 +1258,40 @@ fn volume_evidence_resolves_named_selection(
     volume_regions: &[ExactCellComplexVolumeRegion],
     volume_adjacencies: &[ArrangementVolumeAdjacency],
 ) -> bool {
-    if volume_regions.is_empty() || volume_adjacencies.is_empty() {
+    volume_evidence_resolves_named_operation(
+        faces,
+        volume_regions,
+        volume_adjacencies,
+        ExactBooleanOperation::Union,
+    ) && volume_evidence_resolves_named_operation(
+        faces,
+        volume_regions,
+        volume_adjacencies,
+        ExactBooleanOperation::Intersection,
+    ) && volume_evidence_resolves_named_operation(
+        faces,
+        volume_regions,
+        volume_adjacencies,
+        ExactBooleanOperation::Difference,
+    )
+}
+
+fn volume_evidence_resolves_named_operation(
+    faces: &[ExactCellComplexFace],
+    volume_regions: &[ExactCellComplexVolumeRegion],
+    volume_adjacencies: &[ArrangementVolumeAdjacency],
+    operation: ExactBooleanOperation,
+) -> bool {
+    if matches!(operation, ExactBooleanOperation::SelectedRegions(_))
+        || volume_regions.is_empty()
+        || volume_adjacencies.is_empty()
+    {
         return false;
     }
-    [
-        ExactBooleanOperation::Union,
-        ExactBooleanOperation::Intersection,
-        ExactBooleanOperation::Difference,
-    ]
-    .into_iter()
-    .all(|operation| {
-        matches!(
-            select_faces_from_volume_adjacencies(
-                faces,
-                volume_regions,
-                volume_adjacencies,
-                operation,
-            ),
-            Ok(Some(_))
-        )
-    })
+    matches!(
+        select_faces_from_volume_adjacencies(faces, volume_regions, volume_adjacencies, operation),
+        Ok(Some(_))
+    )
 }
 
 pub(crate) fn arrangement_region_classification_blockers_are_volume_resolved(
@@ -1973,6 +2039,9 @@ mod tests {
             volume_adjacency_face_sides: 0,
             volume_adjacency_separating_faces: 0,
             volume_selection_resolved: false,
+            volume_union_resolved: false,
+            volume_intersection_resolved: false,
+            volume_difference_resolved: false,
             lower_dimensional_artifacts: 0,
             lower_dimensional_point_contacts: 0,
             lower_dimensional_edge_contacts: 0,
@@ -2342,6 +2411,93 @@ mod tests {
             }]
         );
         assert!(selected.blockers.is_empty());
+    }
+
+    #[test]
+    fn volume_selection_evidence_can_resolve_only_requested_operation() {
+        let mut labeled = labeled_with_volume_adjacency_face(
+            0,
+            vec![ExactArrangementBlocker::UnresolvedRegionClassification],
+        );
+        labeled.volume_regions.push(ExactCellComplexVolumeRegion {
+            index: 2,
+            exterior: false,
+            boundary_shells: vec![1],
+            in_left: false,
+            in_right: true,
+        });
+        let mut crossing_adjacency = labeled.volume_adjacencies[0].clone();
+        crossing_adjacency.shell_region = 1;
+        crossing_adjacency.exterior_volume = 2;
+        crossing_adjacency.interior_volume = 0;
+        crossing_adjacency.oriented_face_sides[0].exterior_volume = 2;
+        crossing_adjacency.oriented_face_sides[0].interior_volume = 0;
+        labeled.volume_adjacencies.push(crossing_adjacency);
+
+        assert!(!volume_evidence_resolves_named_selection(
+            &labeled.faces,
+            &labeled.volume_regions,
+            &labeled.volume_adjacencies,
+        ));
+        assert!(!volume_evidence_resolves_named_operation(
+            &labeled.faces,
+            &labeled.volume_regions,
+            &labeled.volume_adjacencies,
+            ExactBooleanOperation::Union,
+        ));
+        assert!(volume_evidence_resolves_named_operation(
+            &labeled.faces,
+            &labeled.volume_regions,
+            &labeled.volume_adjacencies,
+            ExactBooleanOperation::Difference,
+        ));
+
+        let selected = labeled
+            .clone()
+            .select_volume_resolved_with_policy(
+                ExactBooleanOperation::Difference,
+                ExactRegularizationPolicy::REGULARIZED_SOLID,
+            )
+            .unwrap();
+        assert_eq!(selected.selected_faces, vec![0]);
+        assert_eq!(selected.selected_volume_regions, vec![1]);
+        assert!(selected.blockers.is_empty());
+
+        let report = ExactRegionOwnershipReport {
+            status: ExactRegionOwnershipStatus::RequiresWinding,
+            freshness: ExactLabeledCellComplexFreshness::Current,
+            blockers: vec![ExactArrangementBlocker::UnresolvedRegionClassification],
+            face_cells: 1,
+            face_cell_boundary_nodes: 3,
+            face_cell_boundary_points: 3,
+            left_boundary_faces: 1,
+            right_boundary_faces: 0,
+            opposite_inside_faces: 0,
+            opposite_outside_faces: 0,
+            opposite_boundary_faces: 0,
+            opposite_unknown_faces: 1,
+            volume_regions: 3,
+            exterior_volume_regions: 1,
+            left_owned_volumes: 1,
+            right_owned_volumes: 1,
+            shared_owned_volumes: 0,
+            unowned_bounded_volumes: 0,
+            volume_adjacencies: 2,
+            volume_adjacency_face_sides: 2,
+            volume_adjacency_separating_faces: 2,
+            volume_selection_resolved: false,
+            volume_union_resolved: false,
+            volume_intersection_resolved: true,
+            volume_difference_resolved: true,
+            lower_dimensional_artifacts: 0,
+            lower_dimensional_point_contacts: 0,
+            lower_dimensional_edge_contacts: 0,
+            lower_dimensional_edge_endpoints: 0,
+        };
+        report.validate().unwrap();
+        assert!(!report.is_resolved());
+        assert!(report.volume_selection_resolves_operation(ExactBooleanOperation::Difference));
+        assert!(!report.volume_selection_resolves_operation(ExactBooleanOperation::Union));
     }
 
     #[test]
