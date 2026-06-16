@@ -4030,6 +4030,11 @@ fn classify_shell_witness_against_container(
     witness: &Point3,
     container: &ExactMesh,
 ) -> ShellContainmentRelation {
+    let convex = classify_point_against_convex_solid_report(witness, container);
+    if let Some(relation) = certified_convex_point_relation(convex.relation) {
+        return shell_containment_relation_from_convex(relation);
+    }
+
     match classify_point_against_closed_mesh_winding_report(witness, container).relation {
         ClosedMeshWindingRelation::Inside => ShellContainmentRelation::Inside,
         ClosedMeshWindingRelation::Outside => ShellContainmentRelation::Outside,
@@ -4042,6 +4047,19 @@ fn classify_shell_witness_against_container(
                 ConvexSolidPointRelation::Unknown
                 | ConvexSolidPointRelation::NotCertifiedConvex => ShellContainmentRelation::Unknown,
             }
+        }
+    }
+}
+
+fn shell_containment_relation_from_convex(
+    relation: ConvexSolidPointRelation,
+) -> ShellContainmentRelation {
+    match relation {
+        ConvexSolidPointRelation::Inside => ShellContainmentRelation::Inside,
+        ConvexSolidPointRelation::Outside => ShellContainmentRelation::Outside,
+        ConvexSolidPointRelation::Boundary => ShellContainmentRelation::Boundary,
+        ConvexSolidPointRelation::Unknown | ConvexSolidPointRelation::NotCertifiedConvex => {
+            ShellContainmentRelation::Unknown
         }
     }
 }
@@ -5692,6 +5710,19 @@ mod tests {
     #[test]
     fn shell_containment_classifier_uses_consistent_exact_witnesses() {
         let container = tetrahedron_i64([0, 0, 0], [10, 0, 0], [0, 10, 0], [0, 0, 10]);
+
+        assert_eq!(
+            shell_containment_relation_from_convex(ConvexSolidPointRelation::Inside),
+            ShellContainmentRelation::Inside
+        );
+        assert_eq!(
+            shell_containment_relation_from_convex(ConvexSolidPointRelation::Outside),
+            ShellContainmentRelation::Outside
+        );
+        assert_eq!(
+            shell_containment_relation_from_convex(ConvexSolidPointRelation::Boundary),
+            ShellContainmentRelation::Boundary
+        );
 
         assert_eq!(
             classify_shell_witnesses_against_container(&[p3(1, 1, 1), p3(2, 1, 1)], &container),
