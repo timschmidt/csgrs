@@ -690,7 +690,10 @@ impl<'a> ExactBooleanWorkspace<'a> {
         cached_workspace_report!(self, adjacent_union_completion_reports, request, {
             let left = self.left;
             let right = self.right;
-            if request.operation != ExactBooleanOperation::Union {
+            if request.operation != ExactBooleanOperation::Union
+                || !left.facts().mesh.closed_manifold
+                || !right.facts().mesh.closed_manifold
+            {
                 request.adjacent_union_completion_report(left, right)?
             } else {
                 let graph = self.validated_graph()?;
@@ -2091,6 +2094,39 @@ mod tests {
             .unwrap();
         assert_eq!(non_union_adjacent_report.retained_face_pairs, 0);
         assert_eq!(non_union_adjacent_report.retained_events, 0);
+        let open_sheet = ExactMesh::from_i64_triangles_with_policy(
+            &[
+                0, 0, 0, //
+                1, 0, 0, //
+                0, 1, 0,
+            ],
+            &[0, 1, 2],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let mut open_workspace = ExactBooleanWorkspace::new(&open_sheet, &right);
+        let not_closed_request = ExactBooleanRequest::new(
+            ExactBooleanOperation::Union,
+            ValidationPolicy::ALLOW_BOUNDARY,
+        );
+        let not_closed_adjacent_report = open_workspace
+            .adjacent_union_completion_report(not_closed_request)
+            .unwrap()
+            .clone();
+        assert_eq!(
+            not_closed_adjacent_report,
+            not_closed_request
+                .adjacent_union_completion_report(&open_sheet, &right)
+                .unwrap()
+        );
+        open_workspace
+            .validate_adjacent_union_completion_report(
+                not_closed_request,
+                &not_closed_adjacent_report,
+            )
+            .unwrap();
+        assert_eq!(not_closed_adjacent_report.retained_face_pairs, 0);
+        assert_eq!(not_closed_adjacent_report.retained_events, 0);
 
         let identical_report = request.identical_mesh_report(&left, &right);
         identical_report
