@@ -945,14 +945,8 @@ impl ExactBooleanCertificationSet {
             } else {
                 planar_arrangement_report_from_graph(graph, left, right, request.operation)?
             };
-        let winding_readiness = winding_readiness_report_with_boundary_policy_from_graph(
-            graph,
-            left,
-            right,
-            request.operation,
-            request.validation,
-            request.boundary_policy,
-        )?;
+        let winding_readiness =
+            winding_readiness_report_for_request_from_graph(graph, left, right, request)?;
         let volumetric_boundary_closure =
             if matches!(request.operation, ExactBooleanOperation::SelectedRegions(_)) {
                 None
@@ -9076,24 +9070,10 @@ pub(crate) fn winding_readiness_report_for_request_from_graph(
     {
         return winding_readiness_report_from_graph(graph, left, right, request.operation);
     }
-    winding_readiness_report_with_boundary_policy_from_graph(
-        graph,
-        left,
-        right,
-        request.operation,
-        request.validation,
-        request.boundary_policy,
-    )
-}
 
-fn winding_readiness_report_with_boundary_policy_from_graph(
-    graph: &super::graph::ExactIntersectionGraph,
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: ValidationPolicy,
-    boundary_policy: ExactBoundaryBooleanPolicy,
-) -> Result<ExactWindingReadinessReport, MeshError> {
+    let operation = request.operation;
+    let validation = request.validation;
+    let boundary_policy = request.boundary_policy;
     let readiness = if let Some(support) =
         closed_validation_regularized_solid_support(left, right, operation, validation)
     {
