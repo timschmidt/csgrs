@@ -7561,14 +7561,20 @@ fn coplanar_mesh_overlay_boundary_policy(
     operation: ExactBooleanOperation,
 ) -> Option<ExactArrangement2dBoundaryPolicy> {
     Some(match operation {
-        ExactBooleanOperation::Difference => {
-            coplanar_mesh_overlay_materialized_difference_boundary_policy(left, right)
-                .unwrap_or(ExactArrangement2dBoundaryPolicy::SimplifyCollinear)
-        }
-        ExactBooleanOperation::Intersection => {
-            coplanar_mesh_overlay_surface_intersection_boundary_policy(left, right)
-                .unwrap_or(ExactArrangement2dBoundaryPolicy::SimplifyCollinear)
-        }
+        ExactBooleanOperation::Difference => coplanar_mesh_overlay_materialized_boundary_policy(
+            left,
+            right,
+            ExactArrangement2dSetOperation::Difference,
+            true,
+        )
+        .unwrap_or(ExactArrangement2dBoundaryPolicy::SimplifyCollinear),
+        ExactBooleanOperation::Intersection => coplanar_mesh_overlay_materialized_boundary_policy(
+            left,
+            right,
+            ExactArrangement2dSetOperation::Intersection,
+            true,
+        )
+        .unwrap_or(ExactArrangement2dBoundaryPolicy::SimplifyCollinear),
         ExactBooleanOperation::Union => ExactArrangement2dBoundaryPolicy::SimplifyCollinear,
         ExactBooleanOperation::SelectedRegions(_) => return None,
     })
@@ -7789,15 +7795,27 @@ fn coplanar_mesh_overlay_should_preempt_surface_paths(
         return false;
     }
     match operation {
-        ExactBooleanOperation::Union => {
-            coplanar_mesh_overlay_surface_union_boundary_policy(left, right).is_some()
-        }
-        ExactBooleanOperation::Intersection => {
-            coplanar_mesh_overlay_surface_intersection_boundary_policy(left, right).is_some()
-        }
-        ExactBooleanOperation::Difference => {
-            coplanar_mesh_overlay_difference_materializes(left, right)
-        }
+        ExactBooleanOperation::Union => coplanar_mesh_overlay_materialized_boundary_policy(
+            left,
+            right,
+            ExactArrangement2dSetOperation::Union,
+            false,
+        )
+        .is_some(),
+        ExactBooleanOperation::Intersection => coplanar_mesh_overlay_materialized_boundary_policy(
+            left,
+            right,
+            ExactArrangement2dSetOperation::Intersection,
+            true,
+        )
+        .is_some(),
+        ExactBooleanOperation::Difference => coplanar_mesh_overlay_materialized_boundary_policy(
+            left,
+            right,
+            ExactArrangement2dSetOperation::Difference,
+            true,
+        )
+        .is_some(),
         ExactBooleanOperation::SelectedRegions(_) => false,
     }
 }
@@ -8003,18 +8021,6 @@ fn projected_mesh_face_ring(
     Some(ExactArrangement2dRegionRing::new(region, vertices))
 }
 
-fn coplanar_mesh_overlay_materialized_difference_boundary_policy(
-    left: &ExactMesh,
-    right: &ExactMesh,
-) -> Option<ExactArrangement2dBoundaryPolicy> {
-    coplanar_mesh_overlay_materialized_boundary_policy(
-        left,
-        right,
-        ExactArrangement2dSetOperation::Difference,
-        true,
-    )
-}
-
 fn coplanar_mesh_overlay_materialized_boundary_policy(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -8039,43 +8045,9 @@ fn coplanar_mesh_overlay_materialized_boundary_policy(
     })
 }
 
-fn coplanar_mesh_overlay_difference_materializes(left: &ExactMesh, right: &ExactMesh) -> bool {
-    coplanar_mesh_overlay_materialized_difference_boundary_policy(left, right).is_some()
-}
-
-fn coplanar_mesh_overlay_surface_intersection_boundary_policy(
-    left: &ExactMesh,
-    right: &ExactMesh,
-) -> Option<ExactArrangement2dBoundaryPolicy> {
-    coplanar_mesh_overlay_materialized_boundary_policy(
-        left,
-        right,
-        ExactArrangement2dSetOperation::Intersection,
-        true,
-    )
-}
-
-fn coplanar_mesh_overlay_surface_union_boundary_policy(
-    left: &ExactMesh,
-    right: &ExactMesh,
-) -> Option<ExactArrangement2dBoundaryPolicy> {
-    coplanar_mesh_overlay_materialized_boundary_policy(
-        left,
-        right,
-        ExactArrangement2dSetOperation::Union,
-        false,
-    )
-}
-
 #[cfg(test)]
 fn exact_meshes_have_same_shape(left: &ExactMesh, right: &ExactMesh) -> bool {
-    (exact_mesh_vertex_sets_match(left, right) && left.triangles().len() == right.triangles().len())
-        || exact_mesh_boundary_edges_match(left, right)
-}
-
-#[cfg(test)]
-fn exact_mesh_vertex_sets_match(left: &ExactMesh, right: &ExactMesh) -> bool {
-    left.vertices().len() == right.vertices().len()
+    (left.vertices().len() == right.vertices().len()
         && left.vertices().iter().all(|left_point| {
             right
                 .vertices()
@@ -8087,6 +8059,8 @@ fn exact_mesh_vertex_sets_match(left: &ExactMesh, right: &ExactMesh) -> bool {
                 .iter()
                 .any(|left_point| point3_exact_equal(left_point, right_point) == Some(true))
         })
+        && left.triangles().len() == right.triangles().len())
+        || exact_mesh_boundary_edges_match(left, right)
 }
 
 #[cfg(test)]
@@ -8595,13 +8569,28 @@ fn open_surface_arrangement_plan_from_graph(
         return Ok(None);
     }
     let counts = retained_graph_counts(graph);
+    // Endpoint, edge-only, and coplanar contacts need separate topology
+    // policies. This keeps open-surface arrangement tied to exact proper
+    // segment/plane construction facts rather than a tolerance-style overlap.
+    let has_proper_surface_crossing = graph.face_pairs.iter().any(|pair| {
+        pair.relation == MeshFacePairRelation::Candidate
+            && pair.events.iter().any(|event| {
+                matches!(
+                    event,
+                    IntersectionEvent::SegmentPlane {
+                        relation: SegmentPlaneRelation::ProperCrossing,
+                        ..
+                    }
+                )
+            })
+    });
     if graph.has_unknowns()
         || graph.face_pairs.is_empty()
         || counts.unknown_pairs != 0
         || counts.construction_failed_events != 0
         || counts.coplanar_overlapping_pairs != 0
         || counts.coplanar_touching_pairs != 0
-        || !graph_has_proper_surface_crossing(graph)
+        || !has_proper_surface_crossing
     {
         return Ok(None);
     }
@@ -8625,26 +8614,6 @@ fn open_surface_arrangement_plan_from_graph(
             ))
         })?;
     Ok(Some((support, region_classifications, triangulations)))
-}
-
-/// Return whether the graph contains a genuine non-coplanar surface crossing.
-///
-/// Endpoint, edge-only, and coplanar contacts need separate topology policies.
-/// This gate keeps the open-surface union shortcut tied to exact proper
-/// segment/plane construction facts rather than a tolerance-style overlap
-fn graph_has_proper_surface_crossing(graph: &super::graph::ExactIntersectionGraph) -> bool {
-    graph.face_pairs.iter().any(|pair| {
-        pair.relation == MeshFacePairRelation::Candidate
-            && pair.events.iter().any(|event| {
-                matches!(
-                    event,
-                    IntersectionEvent::SegmentPlane {
-                        relation: SegmentPlaneRelation::ProperCrossing,
-                        ..
-                    }
-                )
-            })
-    })
 }
 
 fn boolean_same_surface_meshes(
@@ -11060,8 +11029,13 @@ mod tests {
         )
         .unwrap();
         let (carrier_points, projection) = coplanar_mesh_overlay_carrier(&left, &right).unwrap();
-        let boundary_policy =
-            coplanar_mesh_overlay_materialized_difference_boundary_policy(&left, &right).unwrap();
+        let boundary_policy = coplanar_mesh_overlay_materialized_boundary_policy(
+            &left,
+            &right,
+            ExactArrangement2dSetOperation::Difference,
+            true,
+        )
+        .unwrap();
         let mut rings =
             projected_mesh_boundary_rings(ExactArrangement2dRegion::Left, &left, projection)
                 .unwrap();
@@ -11211,8 +11185,13 @@ mod tests {
         )
         .unwrap();
         let (carrier_points, projection) = coplanar_mesh_overlay_carrier(&left, &right).unwrap();
-        let boundary_policy =
-            coplanar_mesh_overlay_materialized_difference_boundary_policy(&left, &right).unwrap();
+        let boundary_policy = coplanar_mesh_overlay_materialized_boundary_policy(
+            &left,
+            &right,
+            ExactArrangement2dSetOperation::Difference,
+            true,
+        )
+        .unwrap();
         let mut rings =
             projected_mesh_boundary_rings(ExactArrangement2dRegion::Left, &left, projection)
                 .unwrap();
@@ -11375,8 +11354,13 @@ mod tests {
         )
         .unwrap();
         let (carrier_points, projection) = coplanar_mesh_overlay_carrier(&left, &right).unwrap();
-        let boundary_policy =
-            coplanar_mesh_overlay_materialized_difference_boundary_policy(&left, &right).unwrap();
+        let boundary_policy = coplanar_mesh_overlay_materialized_boundary_policy(
+            &left,
+            &right,
+            ExactArrangement2dSetOperation::Difference,
+            true,
+        )
+        .unwrap();
         let mut rings =
             projected_mesh_boundary_rings(ExactArrangement2dRegion::Left, &left, projection)
                 .unwrap();
@@ -11497,10 +11481,15 @@ mod tests {
         )
         .unwrap();
 
-        assert!(coplanar_mesh_overlay_difference_materializes(
-            &left,
-            &opening_plus_hole
-        ));
+        assert!(
+            coplanar_mesh_overlay_materialized_boundary_policy(
+                &left,
+                &opening_plus_hole,
+                ExactArrangement2dSetOperation::Difference,
+                true,
+            )
+            .is_some()
+        );
         let preflight = ExactBooleanRequest::new(
             ExactBooleanOperation::Difference,
             ValidationPolicy::ALLOW_BOUNDARY,
