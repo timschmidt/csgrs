@@ -209,6 +209,28 @@ pub enum ArrangementLowerDimensionalArtifact {
     },
 }
 
+#[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
+enum LowerDimensionalArtifactExactKey {
+    Point {
+        left_face: usize,
+        right_face: usize,
+        point: ExactPoint3Key,
+    },
+    Edge {
+        left_face: usize,
+        right_face: usize,
+        edge: ExactUndirectedPoint3EdgeKey,
+    },
+}
+
+#[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
+enum LowerDimensionalArtifactKind {
+    Point,
+    Edge,
+}
+
+type LowerDimensionalArtifactBucketKey = (LowerDimensionalArtifactKind, usize, usize);
+
 /// Validate retained lower-dimensional contact evidence.
 pub(crate) fn validate_lower_dimensional_artifacts(
     artifacts: &[ArrangementLowerDimensionalArtifact],
@@ -223,13 +245,7 @@ pub(crate) fn validate_lower_dimensional_artifacts(
         }
     }
 
-    for (index, artifact) in artifacts.iter().enumerate() {
-        for other in &artifacts[index + 1..] {
-            if lower_dimensional_artifacts_duplicate(artifact, other)? {
-                return Err(ExactArrangementBlocker::NonManifoldCellComplex);
-            }
-        }
-    }
+    validate_lower_dimensional_artifacts_unique(artifacts)?;
     Ok(())
 }
 
@@ -255,20 +271,67 @@ fn validate_lower_dimensional_artifact_graph_pairs(
     artifacts: &[ArrangementLowerDimensionalArtifact],
     graph: &ExactIntersectionGraph,
 ) -> Result<(), ExactArrangementBlocker> {
+    let face_pair_relations = graph
+        .face_pairs
+        .iter()
+        .map(|pair| ((pair.left_face, pair.right_face), pair.relation))
+        .collect::<BTreeMap<_, _>>();
     for artifact in artifacts {
         let (left_face, right_face) = lower_dimensional_artifact_faces(artifact);
-        let Some(pair) = graph
-            .face_pairs
-            .iter()
-            .find(|pair| pair.left_face == left_face && pair.right_face == right_face)
-        else {
+        let Some(relation) = face_pair_relations.get(&(left_face, right_face)).copied() else {
             return Err(ExactArrangementBlocker::NonManifoldCellComplex);
         };
         if !matches!(
-            pair.relation,
+            relation,
             super::intersection::MeshFacePairRelation::Candidate
                 | super::intersection::MeshFacePairRelation::CoplanarTouching
         ) {
+            return Err(ExactArrangementBlocker::NonManifoldCellComplex);
+        }
+    }
+    Ok(())
+}
+
+fn validate_lower_dimensional_artifacts_unique(
+    artifacts: &[ArrangementLowerDimensionalArtifact],
+) -> Result<(), ExactArrangementBlocker> {
+    let mut exact_keys = BTreeSet::new();
+    let mut keyed_by_bucket = BTreeMap::<LowerDimensionalArtifactBucketKey, Vec<usize>>::new();
+    let mut unkeyed_by_bucket = BTreeMap::<LowerDimensionalArtifactBucketKey, Vec<usize>>::new();
+    for (index, artifact) in artifacts.iter().enumerate() {
+        let bucket = lower_dimensional_artifact_bucket_key(artifact);
+        let exact_key = lower_dimensional_artifact_exact_key(artifact);
+        if let Some(candidates) = unkeyed_by_bucket.get(&bucket) {
+            validate_lower_dimensional_artifact_not_duplicate_of_candidates(
+                artifact, artifacts, candidates,
+            )?;
+        }
+        if exact_key.is_none()
+            && let Some(candidates) = keyed_by_bucket.get(&bucket)
+        {
+            validate_lower_dimensional_artifact_not_duplicate_of_candidates(
+                artifact, artifacts, candidates,
+            )?;
+        }
+        if let Some(key) = exact_key {
+            if !exact_keys.insert(key) {
+                return Err(ExactArrangementBlocker::NonManifoldCellComplex);
+            }
+            keyed_by_bucket.entry(bucket).or_default().push(index);
+        } else {
+            unkeyed_by_bucket.entry(bucket).or_default().push(index);
+        }
+    }
+    Ok(())
+}
+
+fn validate_lower_dimensional_artifact_not_duplicate_of_candidates(
+    artifact: &ArrangementLowerDimensionalArtifact,
+    artifacts: &[ArrangementLowerDimensionalArtifact],
+    candidates: &[usize],
+) -> Result<(), ExactArrangementBlocker> {
+    for &candidate in candidates {
+        if lower_dimensional_artifacts_duplicate(artifact, &artifacts[candidate])? {
             return Err(ExactArrangementBlocker::NonManifoldCellComplex);
         }
     }
@@ -319,6 +382,48 @@ fn lower_dimensional_artifact_faces(
             right_face,
             ..
         } => (*left_face, *right_face),
+    }
+}
+
+fn lower_dimensional_artifact_bucket_key(
+    artifact: &ArrangementLowerDimensionalArtifact,
+) -> LowerDimensionalArtifactBucketKey {
+    match artifact {
+        ArrangementLowerDimensionalArtifact::PointContact {
+            left_face,
+            right_face,
+            ..
+        } => (LowerDimensionalArtifactKind::Point, *left_face, *right_face),
+        ArrangementLowerDimensionalArtifact::EdgeContact {
+            left_face,
+            right_face,
+            ..
+        } => (LowerDimensionalArtifactKind::Edge, *left_face, *right_face),
+    }
+}
+
+fn lower_dimensional_artifact_exact_key(
+    artifact: &ArrangementLowerDimensionalArtifact,
+) -> Option<LowerDimensionalArtifactExactKey> {
+    match artifact {
+        ArrangementLowerDimensionalArtifact::PointContact {
+            left_face,
+            right_face,
+            point,
+        } => Some(LowerDimensionalArtifactExactKey::Point {
+            left_face: *left_face,
+            right_face: *right_face,
+            point: exact_point3_key(point)?,
+        }),
+        ArrangementLowerDimensionalArtifact::EdgeContact {
+            left_face,
+            right_face,
+            endpoints,
+        } => Some(LowerDimensionalArtifactExactKey::Edge {
+            left_face: *left_face,
+            right_face: *right_face,
+            edge: exact_undirected_point3_edge_key(endpoints)?,
+        }),
     }
 }
 
