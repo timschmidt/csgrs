@@ -1063,12 +1063,13 @@ mod tests {
             .arrangement_attempt(request, ExactRegularizationPolicy::REGULARIZED_SOLID)
             .unwrap() as *const ExactArrangementBooleanAttempt;
         assert_eq!(first_attempt, second_attempt);
+        let mut replay_workspace = ExactBooleanWorkspace::new(&left, &right);
         assert_eq!(
             workspace
                 .arrangement_attempt(request, ExactRegularizationPolicy::REGULARIZED_SOLID)
                 .unwrap(),
-            &request
-                .arrangement_attempt(&left, &right, ExactRegularizationPolicy::REGULARIZED_SOLID,)
+            replay_workspace
+                .arrangement_attempt(request, ExactRegularizationPolicy::REGULARIZED_SOLID)
                 .unwrap()
         );
         let attempt = workspace

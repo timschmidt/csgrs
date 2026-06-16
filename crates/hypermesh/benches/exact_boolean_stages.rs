@@ -247,14 +247,6 @@ fn run_case(case: &BenchCase) {
         }
     }
 
-    time_stage(case, "arrangement_attempt", || {
-        black_box(
-            request
-                .arrangement_attempt(&case.left, &case.right, case.regularization)
-                .unwrap(),
-        );
-    });
-
     time_stage(case, "boolean_evaluate", || {
         black_box(request.evaluate(&case.left, &case.right).ok());
     });

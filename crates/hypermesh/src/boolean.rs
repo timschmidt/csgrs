@@ -743,17 +743,6 @@ impl ExactBooleanRequest {
     ) -> Result<ExactBooleanResult, MeshError> {
         materialize_boolean_exact_request_with_graph(left, right, self, None)
     }
-
-    /// Report how far this request gets through the arrangement/cell-complex
-    /// Boolean pipeline without falling through to unrelated materializers.
-    pub fn arrangement_attempt(
-        self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-        policy: ExactRegularizationPolicy,
-    ) -> Result<ExactArrangementBooleanAttempt, MeshError> {
-        arrangement_boolean_attempt_report(left, right, self, policy)
-    }
 }
 
 /// Replayable certification bundle for an exact boolean request.
@@ -10922,6 +10911,19 @@ mod tests {
         planar_arrangement_report_from_graph(&graph, left, right, request.operation).unwrap()
     }
 
+    fn test_arrangement_attempt(
+        request: ExactBooleanRequest,
+        left: &ExactMesh,
+        right: &ExactMesh,
+        policy: ExactRegularizationPolicy,
+    ) -> ExactArrangementBooleanAttempt {
+        let mut workspace = crate::ExactBooleanWorkspace::new(left, right);
+        workspace
+            .arrangement_attempt(request, policy)
+            .unwrap()
+            .clone()
+    }
+
     fn test_boundary_touching_report(
         left: &ExactMesh,
         right: &ExactMesh,
@@ -12046,9 +12048,12 @@ mod tests {
             direct.validate().unwrap();
             direct.validate_against_sources(&left, &right).unwrap();
 
-            let attempt = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED)
-                .arrangement_attempt(&left, &right, ExactRegularizationPolicy::REGULARIZED_SOLID)
-                .unwrap();
+            let attempt = test_arrangement_attempt(
+                ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
+                &left,
+                &right,
+                ExactRegularizationPolicy::REGULARIZED_SOLID,
+            );
             attempt.validate().unwrap();
             attempt.validate_against_sources(&left, &right).unwrap();
             assert_eq!(
@@ -13438,10 +13443,12 @@ mod tests {
         let left = tetrahedron_i64([0, 0, 0], [2, 0, 0], [0, 2, 0], [0, 0, 2]);
         let right = tetrahedron_i64([1, 0, 0], [3, 0, 0], [1, 2, 0], [1, 0, 2]);
 
-        let mut attempt =
-            ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED)
-                .arrangement_attempt(&left, &right, ExactRegularizationPolicy::REGULARIZED_SOLID)
-                .unwrap();
+        let mut attempt = test_arrangement_attempt(
+            ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED),
+            &left,
+            &right,
+            ExactRegularizationPolicy::REGULARIZED_SOLID,
+        );
         assert!(attempt.topology_assembly_report.is_some(), "{attempt:?}");
         assert!(attempt.region_ownership_report.is_some(), "{attempt:?}");
         let mesh = copy_mesh(
@@ -13482,12 +13489,15 @@ mod tests {
             Err(ExactReportValidationError::StatusEvidenceMismatch)
         );
 
-        let report_attempt = ExactBooleanRequest::new(
-            ExactBooleanOperation::Union,
-            ValidationPolicy::ALLOW_BOUNDARY,
-        )
-        .arrangement_attempt(&left, &right, ExactRegularizationPolicy::REGULARIZED_SOLID)
-        .unwrap();
+        let report_attempt = test_arrangement_attempt(
+            ExactBooleanRequest::new(
+                ExactBooleanOperation::Union,
+                ValidationPolicy::ALLOW_BOUNDARY,
+            ),
+            &left,
+            &right,
+            ExactRegularizationPolicy::REGULARIZED_SOLID,
+        );
         let mut replayable_result = ExactBooleanRequest::new(
             ExactBooleanOperation::Union,
             ValidationPolicy::ALLOW_BOUNDARY,
@@ -13630,9 +13640,12 @@ mod tests {
             readiness.validate().unwrap();
             readiness.validate_against_sources(&left, &right).unwrap();
 
-            let attempt = ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY)
-                .arrangement_attempt(&left, &right, ExactRegularizationPolicy::REGULARIZED_SOLID)
-                .expect("arrangement attempt should run");
+            let attempt = test_arrangement_attempt(
+                ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
+                &left,
+                &right,
+                ExactRegularizationPolicy::REGULARIZED_SOLID,
+            );
             assert_eq!(
                 attempt.stage,
                 ExactArrangementBooleanStage::Materialized,
@@ -13868,9 +13881,12 @@ mod tests {
             readiness.validate().unwrap();
             readiness.validate_against_sources(&left, &right).unwrap();
 
-            let attempt = ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY)
-                .arrangement_attempt(&left, &right, ExactRegularizationPolicy::REGULARIZED_SOLID)
-                .unwrap();
+            let attempt = test_arrangement_attempt(
+                ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
+                &left,
+                &right,
+                ExactRegularizationPolicy::REGULARIZED_SOLID,
+            );
             assert_eq!(
                 attempt.materialized_shortcut, None,
                 "{operation:?}: {attempt:?}"
@@ -13927,12 +13943,15 @@ mod tests {
         );
         assert!(preflight.blocker.is_none(), "{preflight:?}");
 
-        let attempt = ExactBooleanRequest::new(
-            ExactBooleanOperation::Union,
-            ValidationPolicy::ALLOW_BOUNDARY,
-        )
-        .arrangement_attempt(&left, &right, ExactRegularizationPolicy::REGULARIZED_SOLID)
-        .expect("arrangement attempt should run");
+        let attempt = test_arrangement_attempt(
+            ExactBooleanRequest::new(
+                ExactBooleanOperation::Union,
+                ValidationPolicy::ALLOW_BOUNDARY,
+            ),
+            &left,
+            &right,
+            ExactRegularizationPolicy::REGULARIZED_SOLID,
+        );
         assert_eq!(
             attempt.materialized_shortcut,
             Some(ExactBooleanShortcutKind::ArrangementCellComplex),
@@ -14361,9 +14380,12 @@ mod tests {
                 result.mesh.facts().mesh
             );
 
-            let attempt = ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY)
-                .arrangement_attempt(&left, &right, ExactRegularizationPolicy::REGULARIZED_SOLID)
-                .unwrap();
+            let attempt = test_arrangement_attempt(
+                ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
+                &left,
+                &right,
+                ExactRegularizationPolicy::REGULARIZED_SOLID,
+            );
             assert_eq!(
                 attempt.materialized_shortcut, None,
                 "{operation:?}: {attempt:?}"
@@ -14604,12 +14626,15 @@ mod tests {
         assert!(!meshes_are_certified_identical(&left, &right));
         assert!(meshes_are_certified_same_surface(&left, &right));
 
-        let attempt = ExactBooleanRequest::new(
-            ExactBooleanOperation::Union,
-            ValidationPolicy::ALLOW_BOUNDARY,
-        )
-        .arrangement_attempt(&left, &right, ExactRegularizationPolicy::REGULARIZED_SOLID)
-        .unwrap();
+        let attempt = test_arrangement_attempt(
+            ExactBooleanRequest::new(
+                ExactBooleanOperation::Union,
+                ValidationPolicy::ALLOW_BOUNDARY,
+            ),
+            &left,
+            &right,
+            ExactRegularizationPolicy::REGULARIZED_SOLID,
+        );
         assert_eq!(attempt.decline, None);
         assert_eq!(attempt.materialized_shortcut, None);
         assert_current_arrangement_attempt(&attempt, &left, &right);
@@ -14672,12 +14697,15 @@ mod tests {
         .unwrap();
         assert!(meshes_are_certified_same_surface(&left, &right));
 
-        let union_attempt = ExactBooleanRequest::new(
-            ExactBooleanOperation::Union,
-            ValidationPolicy::ALLOW_BOUNDARY,
-        )
-        .arrangement_attempt(&left, &right, ExactRegularizationPolicy::REGULARIZED_SOLID)
-        .unwrap();
+        let union_attempt = test_arrangement_attempt(
+            ExactBooleanRequest::new(
+                ExactBooleanOperation::Union,
+                ValidationPolicy::ALLOW_BOUNDARY,
+            ),
+            &left,
+            &right,
+            ExactRegularizationPolicy::REGULARIZED_SOLID,
+        );
         assert_eq!(union_attempt.decline, None);
         assert_eq!(union_attempt.selected_faces, 4);
         assert_eq!(
@@ -14739,12 +14767,15 @@ mod tests {
             Err(ExactReportValidationError::StatusEvidenceMismatch)
         );
 
-        let difference_attempt = ExactBooleanRequest::new(
-            ExactBooleanOperation::Difference,
-            ValidationPolicy::ALLOW_BOUNDARY,
-        )
-        .arrangement_attempt(&left, &right, ExactRegularizationPolicy::REGULARIZED_SOLID)
-        .unwrap();
+        let difference_attempt = test_arrangement_attempt(
+            ExactBooleanRequest::new(
+                ExactBooleanOperation::Difference,
+                ValidationPolicy::ALLOW_BOUNDARY,
+            ),
+            &left,
+            &right,
+            ExactRegularizationPolicy::REGULARIZED_SOLID,
+        );
         assert_eq!(difference_attempt.decline, None);
         assert_eq!(difference_attempt.selected_faces, 0);
         assert_eq!(difference_attempt.output_triangles, 0);

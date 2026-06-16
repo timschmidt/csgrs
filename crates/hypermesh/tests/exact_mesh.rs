@@ -74,6 +74,19 @@ fn exact_boolean_preflight(
     workspace.evaluate(request).unwrap().preflight.clone()
 }
 
+fn exact_boolean_arrangement_attempt(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    request: ExactBooleanRequest,
+    policy: ExactRegularizationPolicy,
+) -> hypermesh::ExactArrangementBooleanAttempt {
+    let mut workspace = ExactBooleanWorkspace::new(left, right);
+    workspace
+        .arrangement_attempt(request, policy)
+        .unwrap()
+        .clone()
+}
+
 fn exact_adjacent_union_completion_report(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -2197,9 +2210,12 @@ fn exact_open_surface_arrangement_is_publicly_replayable() {
         ExactBooleanOperation::Difference,
     ] {
         if !matches!(operation, ExactBooleanOperation::Intersection) {
-            let closed_attempt = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED)
-                .arrangement_attempt(&left, &right, ExactRegularizationPolicy::REGULARIZED_SOLID)
-                .unwrap();
+            let closed_attempt = exact_boolean_arrangement_attempt(
+                &left,
+                &right,
+                ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
+                ExactRegularizationPolicy::REGULARIZED_SOLID,
+            );
             assert_eq!(closed_attempt.output_validation, ValidationPolicy::CLOSED);
             assert!(
                 matches!(
@@ -2247,9 +2263,12 @@ fn exact_open_surface_arrangement_is_publicly_replayable() {
             );
         }
 
-        let attempt = ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY)
-            .arrangement_attempt(&left, &right, ExactRegularizationPolicy::REGULARIZED_SOLID)
-            .unwrap();
+        let attempt = exact_boolean_arrangement_attempt(
+            &left,
+            &right,
+            ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
+            ExactRegularizationPolicy::REGULARIZED_SOLID,
+        );
         assert_eq!(
             attempt.materialized_shortcut,
             Some(hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex),
@@ -2390,9 +2409,12 @@ fn arrangement_attempt_output_validation_is_publicly_replayable() {
         ExactBooleanOperation::Union,
         ExactBooleanOperation::Intersection,
     ] {
-        let closed_attempt = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED)
-            .arrangement_attempt(&left, &right, ExactRegularizationPolicy::REGULARIZED_SOLID)
-            .unwrap();
+        let closed_attempt = exact_boolean_arrangement_attempt(
+            &left,
+            &right,
+            ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
+            ExactRegularizationPolicy::REGULARIZED_SOLID,
+        );
         assert_eq!(closed_attempt.output_validation, ValidationPolicy::CLOSED);
         assert!(
             closed_attempt.materialized_shortcut.is_none(),
@@ -2448,10 +2470,12 @@ fn arrangement_attempt_output_validation_is_publicly_replayable() {
             ExactReportFreshness::SourceReplayMismatch
         );
 
-        let boundary_attempt =
-            ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY)
-                .arrangement_attempt(&left, &right, ExactRegularizationPolicy::REGULARIZED_SOLID)
-                .unwrap();
+        let boundary_attempt = exact_boolean_arrangement_attempt(
+            &left,
+            &right,
+            ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
+            ExactRegularizationPolicy::REGULARIZED_SOLID,
+        );
         assert_eq!(
             boundary_attempt.output_validation,
             ValidationPolicy::ALLOW_BOUNDARY
@@ -3833,10 +3857,12 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
         }
     );
 
-    let closed_attempt =
-        ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED)
-            .arrangement_attempt(&left, &right, ExactRegularizationPolicy::REGULARIZED_SOLID)
-            .unwrap();
+    let closed_attempt = exact_boolean_arrangement_attempt(
+        &left,
+        &right,
+        ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED),
+        ExactRegularizationPolicy::REGULARIZED_SOLID,
+    );
     assert_eq!(closed_attempt.output_validation, ValidationPolicy::CLOSED);
     assert_eq!(
         closed_attempt.decline,
@@ -6022,12 +6048,15 @@ fn exact_arrangement_public_path_reports_blockers_or_cells() {
         ExactSimplifiedCellComplexFreshness::StaleSimplifiedCells
     );
 
-    let attempt = ExactBooleanRequest::new(
-        ExactBooleanOperation::Union,
-        ValidationPolicy::ALLOW_BOUNDARY,
-    )
-    .arrangement_attempt(&left, &right, ExactRegularizationPolicy::REGULARIZED_SOLID)
-    .unwrap();
+    let attempt = exact_boolean_arrangement_attempt(
+        &left,
+        &right,
+        ExactBooleanRequest::new(
+            ExactBooleanOperation::Union,
+            ValidationPolicy::ALLOW_BOUNDARY,
+        ),
+        ExactRegularizationPolicy::REGULARIZED_SOLID,
+    );
     attempt.validate().unwrap();
     assert_eq!(
         attempt.topology_assembly,
