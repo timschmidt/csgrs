@@ -2316,19 +2316,9 @@ pub(crate) fn try_materialize_certified_boolean_support_with_artifacts(
         | ExactBooleanSupport::CertifiedClosedBoundaryTouchingDifference => {
             let graph =
                 graph_for_certified_materialization(retained_graph, &mut owned_graph, left, right)?;
-            let result =
-                materialize_closed_boundary_touching_regularized_boolean_with_evidence_from_graph(
-                    graph, left, right, operation, validation,
-                )?
-                .map(|(result, _)| result);
-            if result.is_some() {
-                result
-            } else {
-                materialize_closed_no_volume_overlap_regularized_boolean_with_evidence_from_graph(
-                    graph, left, right, operation, validation,
-                )?
-                .map(|(result, _evidence)| result)
-            }
+            materialize_closed_boundary_or_no_volume_overlap_from_graph(
+                graph, left, right, operation, validation,
+            )?
         }
         ExactBooleanSupport::CertifiedOpenSurfaceDisjoint => {
             let graph =
@@ -4256,35 +4246,11 @@ fn materialize_boolean_exact_request_with_graph(
     {
         return boolean_same_surface_meshes(left, operation, validation);
     }
-    if matches!(
-        operation,
-        ExactBooleanOperation::Intersection | ExactBooleanOperation::Difference
-    ) {
-        let graph =
-            graph_for_certified_materialization(retained_graph, &mut owned_graph, left, right)?;
-        if let Some((result, _evidence)) =
-            materialize_closed_no_volume_overlap_regularized_boolean_with_evidence_from_graph(
-                graph, left, right, operation, validation,
-            )?
-        {
-            return Ok(result);
-        }
-    }
     if let Some(graph) = retained_graph {
         return materialize_boolean_exact_request_from_ready_graph(graph, left, right, request);
     }
     if let Some(graph) = owned_graph {
         return materialize_boolean_exact_request_from_ready_graph(&graph, left, right, request);
-    }
-    if let Some(result) =
-        boolean_arrangement_orthogonal_solid_cell_recovery(left, right, operation, validation)?
-    {
-        return Ok(result);
-    }
-    if let Some(result) =
-        boolean_arrangement_affine_orthogonal_solid_recovery(left, right, operation, validation)?
-    {
-        return Ok(result);
     }
 
     match validated_intersection_graph(left, right) {
@@ -4292,6 +4258,16 @@ fn materialize_boolean_exact_request_with_graph(
             materialize_boolean_exact_request_from_ready_graph(&graph, left, right, request)
         }
         Err(error) => {
+            if let Some(result) = boolean_arrangement_orthogonal_solid_cell_recovery(
+                left, right, operation, validation,
+            )? {
+                return Ok(result);
+            }
+            if let Some(result) = boolean_arrangement_affine_orthogonal_solid_recovery(
+                left, right, operation, validation,
+            )? {
+                return Ok(result);
+            }
             if let Some(result) =
                 boolean_convex_meshes_optional(left, right, operation, validation)?
             {
@@ -4311,6 +4287,17 @@ fn materialize_boolean_exact_request_from_ready_graph(
     let operation = request.operation;
     let validation = request.validation;
     let boundary_policy = request.boundary_policy;
+    let prefer_boundary_or_no_volume = matches!(
+        operation,
+        ExactBooleanOperation::Intersection | ExactBooleanOperation::Difference
+    );
+    if prefer_boundary_or_no_volume
+        && let Some(result) = materialize_closed_boundary_or_no_volume_overlap_from_graph(
+            graph, left, right, operation, validation,
+        )?
+    {
+        return Ok(result);
+    }
     if !graph.face_pairs.is_empty()
         && let Some(result) = certified_arrangement_cell_complex_result_from_graph(
             graph, left, right, operation, validation, true,
@@ -4345,15 +4332,8 @@ fn materialize_boolean_exact_request_from_ready_graph(
     {
         return Ok(result);
     }
-    if let Some((result, _evidence)) =
-        materialize_closed_boundary_touching_regularized_boolean_with_evidence_from_graph(
-            graph, left, right, operation, validation,
-        )?
-    {
-        return Ok(result);
-    }
-    if let Some((result, _evidence)) =
-        materialize_closed_no_volume_overlap_regularized_boolean_with_evidence_from_graph(
+    if !prefer_boundary_or_no_volume
+        && let Some(result) = materialize_closed_boundary_or_no_volume_overlap_from_graph(
             graph, left, right, operation, validation,
         )?
     {
@@ -4418,6 +4398,26 @@ fn materialize_boolean_exact_request_from_ready_graph(
             )))
         }
     }
+}
+
+fn materialize_closed_boundary_or_no_volume_overlap_from_graph(
+    graph: &ExactIntersectionGraph,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+) -> Result<Option<ExactBooleanResult>, MeshError> {
+    if let Some((result, _evidence)) =
+        materialize_closed_boundary_touching_regularized_boolean_with_evidence_from_graph(
+            graph, left, right, operation, validation,
+        )?
+    {
+        return Ok(Some(result));
+    }
+    materialize_closed_no_volume_overlap_regularized_boolean_with_evidence_from_graph(
+        graph, left, right, operation, validation,
+    )
+    .map(|result| result.map(|(result, _evidence)| result))
 }
 
 enum ArrangementCellComplexOutcome {
