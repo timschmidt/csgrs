@@ -1,16 +1,13 @@
 use super::arrangement3d::ExactArrangement;
 use super::boolean::{
     ExactArrangementBooleanAttempt, ExactBooleanCertificationSet, ExactBooleanEvaluation,
-    ExactBooleanOperation, ExactBooleanRequest,
-    arrangement_boolean_attempt_report_from_arrangement, arrangement_cell_complex_shortcut_attempt,
+    ExactBooleanRequest, arrangement_boolean_attempt_report_from_arrangement,
+    arrangement_cell_complex_shortcut_attempt,
     materialize_boolean_exact_request_from_retained_graph,
     materialize_certified_boolean_support_with_artifacts,
     preflight_boolean_exact_request_from_graph,
     try_materialize_certified_boolean_support_with_artifacts,
     validate_boolean_result_against_sources_with_artifacts,
-};
-use super::cell_complex::{
-    ExactSelectedCellComplex, ExactSelectedCellComplexFreshness, select_arrangement_for_replay,
 };
 use super::error::{DiagnosticKind, MeshDiagnostic, MeshError, Severity};
 use super::graph::{ExactIntersectionGraph, build_intersection_graph};
@@ -20,7 +17,6 @@ use super::reports::{
     ExactBooleanPreflight, ExactBooleanResult, ExactReportFreshness, ExactReportValidationError,
     exact_report_freshness,
 };
-use super::simplify::{ExactSimplifiedCellComplex, ExactSimplifiedCellComplexFreshness};
 use super::volumetric_cells::{
     CoplanarVolumetricCellEvidenceError, CoplanarVolumetricCellEvidenceReport,
 };
@@ -42,16 +38,6 @@ pub struct ExactBooleanWorkspace<'a> {
         ExactRegularizationPolicy,
         ExactArrangementBooleanAttempt,
     )>,
-    selected_cell_complexes: Vec<(
-        ExactBooleanRequest,
-        ExactRegularizationPolicy,
-        ExactSelectedCellComplex,
-    )>,
-    simplified_cell_complexes: Vec<(
-        ExactBooleanRequest,
-        ExactRegularizationPolicy,
-        ExactSimplifiedCellComplex,
-    )>,
     certifications: Vec<(ExactBooleanRequest, ExactBooleanCertificationSet)>,
     evaluations: Vec<(ExactBooleanRequest, ExactBooleanEvaluation)>,
     materializations: Vec<(ExactBooleanRequest, ExactBooleanResult)>,
@@ -67,8 +53,6 @@ impl<'a> ExactBooleanWorkspace<'a> {
             coplanar_volumetric_cell_evidence: None,
             arrangements: Vec::new(),
             arrangement_attempts: Vec::new(),
-            selected_cell_complexes: Vec::new(),
-            simplified_cell_complexes: Vec::new(),
             certifications: Vec::new(),
             evaluations: Vec::new(),
             materializations: Vec::new(),
@@ -232,210 +216,6 @@ impl<'a> ExactBooleanWorkspace<'a> {
         attempt: &ExactArrangementBooleanAttempt,
     ) -> ExactReportFreshness {
         exact_report_freshness(self.validate_arrangement_attempt(request, policy, attempt))
-    }
-
-    /// Returns selected exact cell-complex evidence for `request` and `policy`,
-    /// retaining the topology and ownership reports consumed by selection.
-    pub fn selected_cell_complex(
-        &mut self,
-        request: ExactBooleanRequest,
-        policy: ExactRegularizationPolicy,
-    ) -> Result<&ExactSelectedCellComplex, MeshError> {
-        if let Some(index) =
-            cached_by_request_and_policy_index(&self.selected_cell_complexes, request, policy)
-        {
-            return Ok(&self.selected_cell_complexes[index].2);
-        }
-
-        if let Some(selected) = self
-            .arrangement_attempt(request, policy)?
-            .selected_cell_complex
-            .clone()
-        {
-            return store_retained_cell_complex(
-                &mut self.selected_cell_complexes,
-                request,
-                policy,
-                selected,
-            );
-        }
-
-        let arrangement = self.arrangement(policy)?.clone();
-        let selected = select_arrangement_for_replay(
-            arrangement,
-            self.left,
-            self.right,
-            request.operation,
-            policy,
-        )
-        .map_err(workspace_arrangement_blocker_error)?;
-        store_retained_cell_complex(&mut self.selected_cell_complexes, request, policy, selected)
-    }
-
-    /// Returns simplified exact cell-complex evidence for `request` and
-    /// `policy`, retaining the gate reports consumed before simplification.
-    pub fn simplified_cell_complex(
-        &mut self,
-        request: ExactBooleanRequest,
-        policy: ExactRegularizationPolicy,
-    ) -> Result<&ExactSimplifiedCellComplex, MeshError> {
-        if let Some(index) =
-            cached_by_request_and_policy_index(&self.simplified_cell_complexes, request, policy)
-        {
-            return Ok(&self.simplified_cell_complexes[index].2);
-        }
-
-        if let Some(simplified) = self
-            .arrangement_attempt(request, policy)?
-            .simplified_cell_complex
-            .clone()
-        {
-            return store_retained_cell_complex(
-                &mut self.simplified_cell_complexes,
-                request,
-                policy,
-                simplified,
-            );
-        }
-
-        let selected = self.selected_cell_complex(request, policy)?.clone();
-        let simplified = selected
-            .simplify_exact_with_policy(policy)
-            .map_err(workspace_arrangement_blocker_error)?;
-        store_retained_cell_complex(
-            &mut self.simplified_cell_complexes,
-            request,
-            policy,
-            simplified,
-        )
-    }
-
-    /// Validate selected cell-complex evidence against this workspace's
-    /// retained source session.
-    pub fn validate_selected_cell_complex(
-        &mut self,
-        request: ExactBooleanRequest,
-        policy: ExactRegularizationPolicy,
-        selected: &ExactSelectedCellComplex,
-    ) -> Result<(), ExactArrangementBlocker> {
-        if selected.operation != request.operation {
-            return Err(ExactArrangementBlocker::UnresolvedRegionClassification);
-        }
-        if let Some(replay) = self
-            .arrangement_attempt(request, policy)
-            .map_err(|_| ExactArrangementBlocker::UnresolvedIntersection)?
-            .selected_cell_complex
-            .clone()
-        {
-            selected.validate()?;
-            replay.validate()?;
-            return if selected == &replay {
-                Ok(())
-            } else {
-                Err(ExactArrangementBlocker::UnresolvedRegionClassification)
-            };
-        }
-        let arrangement = self
-            .arrangement(policy)
-            .map_err(|_| ExactArrangementBlocker::UnresolvedIntersection)?
-            .clone();
-        selected.validate_against_arrangement(arrangement, self.left, self.right, policy)
-    }
-
-    /// Classify selected cell-complex freshness in this retained source
-    /// session.
-    pub fn selected_cell_complex_freshness(
-        &mut self,
-        request: ExactBooleanRequest,
-        policy: ExactRegularizationPolicy,
-        selected: &ExactSelectedCellComplex,
-    ) -> ExactSelectedCellComplexFreshness {
-        if selected.operation != request.operation {
-            return ExactSelectedCellComplexFreshness::StaleSelectedCells;
-        }
-        match self.arrangement_attempt(request, policy) {
-            Ok(attempt) => {
-                if let Some(replay) = attempt.selected_cell_complex.as_ref() {
-                    return if selected.validate().is_err() || replay.validate().is_err() {
-                        ExactSelectedCellComplexFreshness::StaleSelectedCells
-                    } else if selected == replay {
-                        ExactSelectedCellComplexFreshness::Current
-                    } else {
-                        ExactSelectedCellComplexFreshness::StaleSelectedCells
-                    };
-                }
-            }
-            Err(_) => return ExactSelectedCellComplexFreshness::SourceReplayBlocked,
-        }
-        let arrangement = match self.arrangement(policy) {
-            Ok(arrangement) => arrangement.clone(),
-            Err(_) => return ExactSelectedCellComplexFreshness::SourceReplayBlocked,
-        };
-        selected.freshness_against_arrangement(arrangement, self.left, self.right, policy)
-    }
-
-    /// Validate simplified cell-complex evidence against this workspace's
-    /// retained source session.
-    pub fn validate_simplified_cell_complex(
-        &mut self,
-        request: ExactBooleanRequest,
-        policy: ExactRegularizationPolicy,
-        simplified: &ExactSimplifiedCellComplex,
-    ) -> Result<(), ExactArrangementBlocker> {
-        if simplified.operation != request.operation {
-            return Err(ExactArrangementBlocker::UnresolvedRegionClassification);
-        }
-        if let Some(replay) = self
-            .arrangement_attempt(request, policy)
-            .map_err(|_| ExactArrangementBlocker::UnresolvedIntersection)?
-            .simplified_cell_complex
-            .clone()
-        {
-            simplified.validate()?;
-            replay.validate()?;
-            return if simplified == &replay {
-                Ok(())
-            } else {
-                Err(ExactArrangementBlocker::NonManifoldCellComplex)
-            };
-        }
-        let arrangement = self
-            .arrangement(policy)
-            .map_err(|_| ExactArrangementBlocker::UnresolvedIntersection)?
-            .clone();
-        simplified.validate_against_arrangement(arrangement, self.left, self.right, policy)
-    }
-
-    /// Classify simplified cell-complex freshness in this retained source
-    /// session.
-    pub fn simplified_cell_complex_freshness(
-        &mut self,
-        request: ExactBooleanRequest,
-        policy: ExactRegularizationPolicy,
-        simplified: &ExactSimplifiedCellComplex,
-    ) -> ExactSimplifiedCellComplexFreshness {
-        if simplified.operation != request.operation {
-            return ExactSimplifiedCellComplexFreshness::StaleSimplifiedCells;
-        }
-        match self.arrangement_attempt(request, policy) {
-            Ok(attempt) => {
-                if let Some(replay) = attempt.simplified_cell_complex.as_ref() {
-                    return if simplified.validate().is_err() || replay.validate().is_err() {
-                        ExactSimplifiedCellComplexFreshness::StaleSimplifiedCells
-                    } else if simplified == replay {
-                        ExactSimplifiedCellComplexFreshness::Current
-                    } else {
-                        ExactSimplifiedCellComplexFreshness::StaleSimplifiedCells
-                    };
-                }
-            }
-            Err(_) => return ExactSimplifiedCellComplexFreshness::SourceReplayBlocked,
-        }
-        let arrangement = match self.arrangement(policy) {
-            Ok(arrangement) => arrangement.clone(),
-            Err(_) => return ExactSimplifiedCellComplexFreshness::SourceReplayBlocked,
-        };
-        simplified.freshness_against_arrangement(arrangement, self.left, self.right, policy)
     }
 
     /// Derive preflight for `request` from the retained graph.
@@ -713,11 +493,6 @@ fn workspace_coplanar_volumetric_cell_error(
     ))
 }
 
-trait RetainedCellComplex {
-    fn operation(&self) -> ExactBooleanOperation;
-    fn validate_for_workspace_cache(&self) -> Result<(), ExactArrangementBlocker>;
-}
-
 trait RetainedPolicyArtifact {
     fn validate_for_workspace_cache(&self) -> Result<(), ExactArrangementBlocker>;
 }
@@ -727,26 +502,6 @@ trait RetainedRequestArtifact {
         &self,
         request: ExactBooleanRequest,
     ) -> Result<(), ExactReportValidationError>;
-}
-
-impl RetainedCellComplex for ExactSelectedCellComplex {
-    fn operation(&self) -> ExactBooleanOperation {
-        self.operation
-    }
-
-    fn validate_for_workspace_cache(&self) -> Result<(), ExactArrangementBlocker> {
-        self.validate()
-    }
-}
-
-impl RetainedCellComplex for ExactSimplifiedCellComplex {
-    fn operation(&self) -> ExactBooleanOperation {
-        self.operation
-    }
-
-    fn validate_for_workspace_cache(&self) -> Result<(), ExactArrangementBlocker> {
-        self.validate()
-    }
 }
 
 impl RetainedPolicyArtifact for ExactArrangement {
@@ -826,27 +581,6 @@ fn store_replayable_result_or_return(
         }
     }
     Ok(result)
-}
-
-fn store_retained_cell_complex<T: RetainedCellComplex>(
-    cache: &mut Vec<(ExactBooleanRequest, ExactRegularizationPolicy, T)>,
-    request: ExactBooleanRequest,
-    policy: ExactRegularizationPolicy,
-    cell_complex: T,
-) -> Result<&T, MeshError> {
-    if cell_complex.operation() != request.operation {
-        return Err(workspace_arrangement_blocker_error(
-            ExactArrangementBlocker::UnresolvedRegionClassification,
-        ));
-    }
-    cell_complex
-        .validate_for_workspace_cache()
-        .map_err(workspace_arrangement_blocker_error)?;
-    cache.push((request, policy, cell_complex));
-    Ok(&cache
-        .last()
-        .expect("cell-complex cache was just populated")
-        .2)
 }
 
 fn store_retained_policy_artifact<T: RetainedPolicyArtifact>(
@@ -993,7 +727,8 @@ mod tests {
         CoplanarVolumetricCellEvidenceError, CoplanarVolumetricCellEvidenceFreshness,
         ExactAdjacentUnionCompletionStatus, ExactArrangementBooleanStage, ExactBooleanResultKind,
         ExactBooleanShortcutKind, ExactBoundaryBooleanPolicy, ExactRegionOwnershipStatus,
-        ExactReportValidationError, ExactTopologyAssemblyStatus, Triangle,
+        ExactReportValidationError, ExactSelectedCellComplexFreshness,
+        ExactSimplifiedCellComplexFreshness, ExactTopologyAssemblyStatus, Triangle,
         certify_coplanar_volumetric_cell_evidence,
     };
 
@@ -1222,56 +957,26 @@ mod tests {
             ExactReportFreshness::SourceReplayMismatch
         );
 
-        let first_selected = workspace
-            .selected_cell_complex(request, ExactRegularizationPolicy::REGULARIZED_SOLID)
-            .unwrap() as *const ExactSelectedCellComplex;
-        let second_selected = workspace
-            .selected_cell_complex(request, ExactRegularizationPolicy::REGULARIZED_SOLID)
-            .unwrap() as *const ExactSelectedCellComplex;
-        assert_eq!(first_selected, second_selected);
-        let selected = workspace
-            .selected_cell_complex(request, ExactRegularizationPolicy::REGULARIZED_SOLID)
-            .unwrap()
-            .clone();
-        assert_eq!(selected, attempt_selected);
+        let selected = attempt_selected;
         assert!(selected.topology_assembly_report.is_some());
         assert!(selected.region_ownership_report.is_some());
         selected.validate().unwrap();
         selected
             .validate_against_sources(&left, &right, ExactRegularizationPolicy::REGULARIZED_SOLID)
             .unwrap();
-        workspace
-            .validate_selected_cell_complex(
-                request,
-                ExactRegularizationPolicy::REGULARIZED_SOLID,
-                &selected,
-            )
-            .unwrap();
         assert_eq!(
-            workspace.selected_cell_complex_freshness(
-                request,
+            selected.freshness_against_sources(
+                &left,
+                &right,
                 ExactRegularizationPolicy::REGULARIZED_SOLID,
-                &selected,
             ),
             ExactSelectedCellComplexFreshness::Current
         );
         let mismatched_request =
             ExactBooleanRequest::new(ExactBooleanOperation::Difference, ValidationPolicy::CLOSED);
-        assert_eq!(
-            workspace.validate_selected_cell_complex(
-                mismatched_request,
-                ExactRegularizationPolicy::REGULARIZED_SOLID,
-                &selected,
-            ),
-            Err(ExactArrangementBlocker::UnresolvedRegionClassification)
-        );
-        assert_eq!(
-            workspace.selected_cell_complex_freshness(
-                mismatched_request,
-                ExactRegularizationPolicy::REGULARIZED_SOLID,
-                &selected,
-            ),
-            ExactSelectedCellComplexFreshness::StaleSelectedCells
+        assert_ne!(
+            selected.operation, mismatched_request.operation,
+            "selected artifact should carry the request operation it proves"
         );
         let mut stale_selected = selected.clone();
         stale_selected
@@ -1279,72 +984,33 @@ mod tests {
             .as_mut()
             .unwrap()
             .graph_events += 1;
-        assert!(
-            workspace
-                .validate_selected_cell_complex(
-                    request,
-                    ExactRegularizationPolicy::REGULARIZED_SOLID,
-                    &stale_selected,
-                )
-                .is_err()
-        );
         assert_eq!(
-            workspace.selected_cell_complex_freshness(
-                request,
+            stale_selected.freshness_against_sources(
+                &left,
+                &right,
                 ExactRegularizationPolicy::REGULARIZED_SOLID,
-                &stale_selected,
             ),
             ExactSelectedCellComplexFreshness::StaleSelectedCells
         );
 
-        let first_simplified = workspace
-            .simplified_cell_complex(request, ExactRegularizationPolicy::REGULARIZED_SOLID)
-            .unwrap() as *const ExactSimplifiedCellComplex;
-        let second_simplified = workspace
-            .simplified_cell_complex(request, ExactRegularizationPolicy::REGULARIZED_SOLID)
-            .unwrap() as *const ExactSimplifiedCellComplex;
-        assert_eq!(first_simplified, second_simplified);
-        let simplified = workspace
-            .simplified_cell_complex(request, ExactRegularizationPolicy::REGULARIZED_SOLID)
-            .unwrap()
-            .clone();
-        assert_eq!(simplified, attempt_simplified);
+        let simplified = attempt_simplified;
         assert!(simplified.topology_assembly_report.is_some());
         assert!(simplified.region_ownership_report.is_some());
         simplified.validate().unwrap();
         simplified
             .validate_against_sources(&left, &right, ExactRegularizationPolicy::REGULARIZED_SOLID)
             .unwrap();
-        workspace
-            .validate_simplified_cell_complex(
-                request,
-                ExactRegularizationPolicy::REGULARIZED_SOLID,
-                &simplified,
-            )
-            .unwrap();
         assert_eq!(
-            workspace.simplified_cell_complex_freshness(
-                request,
+            simplified.freshness_against_sources(
+                &left,
+                &right,
                 ExactRegularizationPolicy::REGULARIZED_SOLID,
-                &simplified,
             ),
             ExactSimplifiedCellComplexFreshness::Current
         );
-        assert_eq!(
-            workspace.validate_simplified_cell_complex(
-                mismatched_request,
-                ExactRegularizationPolicy::REGULARIZED_SOLID,
-                &simplified,
-            ),
-            Err(ExactArrangementBlocker::UnresolvedRegionClassification)
-        );
-        assert_eq!(
-            workspace.simplified_cell_complex_freshness(
-                mismatched_request,
-                ExactRegularizationPolicy::REGULARIZED_SOLID,
-                &simplified,
-            ),
-            ExactSimplifiedCellComplexFreshness::StaleSimplifiedCells
+        assert_ne!(
+            simplified.operation, mismatched_request.operation,
+            "simplified artifact should carry the request operation it proves"
         );
         let mut stale_simplified = simplified.clone();
         stale_simplified
@@ -1352,20 +1018,11 @@ mod tests {
             .as_mut()
             .unwrap()
             .graph_events += 1;
-        assert!(
-            workspace
-                .validate_simplified_cell_complex(
-                    request,
-                    ExactRegularizationPolicy::REGULARIZED_SOLID,
-                    &stale_simplified,
-                )
-                .is_err()
-        );
         assert_eq!(
-            workspace.simplified_cell_complex_freshness(
-                request,
+            stale_simplified.freshness_against_sources(
+                &left,
+                &right,
                 ExactRegularizationPolicy::REGULARIZED_SOLID,
-                &stale_simplified,
             ),
             ExactSimplifiedCellComplexFreshness::StaleSimplifiedCells
         );

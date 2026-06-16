@@ -424,27 +424,31 @@ fn run_case(case: &BenchCase) {
 
     time_prepared_stage(
         case,
-        "workspace_selected_from_retained_artifacts",
-        || retained_attempt_workspace_for_case(case, request),
-        |retained_workspace| {
-            black_box(
-                retained_workspace
-                    .selected_cell_complex(request, case.regularization)
-                    .ok(),
-            );
+        "attempt_selected_from_retained_artifacts",
+        || retained_arrangement_attempt_for_case(case, request),
+        |attempt| {
+            black_box(attempt.selected_cell_complex.as_ref().map(|selected| {
+                (
+                    selected.selected_faces.len(),
+                    selected.selected_face_orientations.len(),
+                    selected.selected_volume_regions.len(),
+                )
+            }));
         },
     );
 
     time_prepared_stage(
         case,
-        "workspace_simplified_from_retained_artifacts",
-        || retained_attempt_workspace_for_case(case, request),
-        |retained_workspace| {
-            black_box(
-                retained_workspace
-                    .simplified_cell_complex(request, case.regularization)
-                    .ok(),
-            );
+        "attempt_simplified_from_retained_artifacts",
+        || retained_arrangement_attempt_for_case(case, request),
+        |attempt| {
+            black_box(attempt.simplified_cell_complex.as_ref().map(|simplified| {
+                (
+                    simplified.faces.len(),
+                    simplified.selected_faces_before_simplification,
+                    simplified.selected_boundary_nodes_before_simplification,
+                )
+            }));
         },
     );
 
@@ -455,21 +459,6 @@ fn run_case(case: &BenchCase) {
         |selected| {
             if let Some(selected) = selected.as_ref() {
                 black_box(selected.validate().ok());
-            }
-        },
-    );
-
-    time_prepared_stage(
-        case,
-        "workspace_validate_selected_from_retained_artifacts",
-        || retained_workspace_and_selected_for_case(case, request),
-        |(retained_workspace, selected)| {
-            if let Some(selected) = selected.as_ref() {
-                black_box(
-                    retained_workspace
-                        .validate_selected_cell_complex(request, case.regularization, selected)
-                        .ok(),
-                );
             }
         },
     );
@@ -504,21 +493,6 @@ fn run_case(case: &BenchCase) {
                     simplified.volume_oriented_selected_faces_before_simplification,
                     simplified.label_oriented_selected_faces_before_simplification,
                 ));
-            }
-        },
-    );
-
-    time_prepared_stage(
-        case,
-        "workspace_validate_simplified_from_retained_artifacts",
-        || retained_workspace_and_simplified_for_case(case, request),
-        |(retained_workspace, simplified)| {
-            if let Some(simplified) = simplified.as_ref() {
-                black_box(
-                    retained_workspace
-                        .validate_simplified_cell_complex(request, case.regularization, simplified)
-                        .ok(),
-                );
             }
         },
     );
@@ -737,17 +711,6 @@ fn retained_workspace_for_case<'a>(
     retained_workspace
 }
 
-fn retained_attempt_workspace_for_case<'a>(
-    case: &'a BenchCase,
-    request: ExactBooleanRequest,
-) -> ExactBooleanWorkspace<'a> {
-    let mut retained_workspace = retained_workspace_for_case(case, request);
-    retained_workspace
-        .arrangement_attempt(request, case.regularization)
-        .unwrap();
-    retained_workspace
-}
-
 fn retained_workspace_and_coplanar_volumetric_evidence_for_case<'a>(
     case: &'a BenchCase,
     request: ExactBooleanRequest,
@@ -926,6 +889,17 @@ fn retained_workspace_and_arrangement_attempt_for_case<'a>(
     (retained_workspace, attempt)
 }
 
+fn retained_arrangement_attempt_for_case(
+    case: &BenchCase,
+    request: ExactBooleanRequest,
+) -> ExactArrangementBooleanAttempt {
+    let mut retained_workspace = retained_workspace_for_case(case, request);
+    retained_workspace
+        .arrangement_attempt(request, case.regularization)
+        .unwrap()
+        .clone()
+}
+
 fn retained_region_ownership_from_attempt_for_case(
     case: &BenchCase,
 ) -> Option<ExactRegionOwnershipReport> {
@@ -964,49 +938,14 @@ fn retained_selected_for_case(
     case: &BenchCase,
     request: ExactBooleanRequest,
 ) -> Option<ExactSelectedCellComplex> {
-    let mut retained_workspace = retained_workspace_for_case(case, request);
-    retained_workspace
-        .selected_cell_complex(request, case.regularization)
-        .ok()
-        .cloned()
-}
-
-fn retained_workspace_and_selected_for_case<'a>(
-    case: &'a BenchCase,
-    request: ExactBooleanRequest,
-) -> (ExactBooleanWorkspace<'a>, Option<ExactSelectedCellComplex>) {
-    let mut retained_workspace = retained_workspace_for_case(case, request);
-    let selected = retained_workspace
-        .selected_cell_complex(request, case.regularization)
-        .ok()
-        .cloned();
-    (retained_workspace, selected)
+    retained_arrangement_attempt_for_case(case, request).selected_cell_complex
 }
 
 fn retained_simplified_for_case(
     case: &BenchCase,
     request: ExactBooleanRequest,
 ) -> Option<ExactSimplifiedCellComplex> {
-    let mut retained_workspace = retained_workspace_for_case(case, request);
-    retained_workspace
-        .simplified_cell_complex(request, case.regularization)
-        .ok()
-        .cloned()
-}
-
-fn retained_workspace_and_simplified_for_case<'a>(
-    case: &'a BenchCase,
-    request: ExactBooleanRequest,
-) -> (
-    ExactBooleanWorkspace<'a>,
-    Option<ExactSimplifiedCellComplex>,
-) {
-    let mut retained_workspace = retained_workspace_for_case(case, request);
-    let simplified = retained_workspace
-        .simplified_cell_complex(request, case.regularization)
-        .ok()
-        .cloned();
-    (retained_workspace, simplified)
+    retained_arrangement_attempt_for_case(case, request).simplified_cell_complex
 }
 
 fn time_stage<F>(case: &BenchCase, stage: &'static str, mut f: F)

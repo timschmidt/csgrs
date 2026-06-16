@@ -900,23 +900,6 @@ impl ExactSelectedCellComplex {
         }
     }
 
-    pub(crate) fn validate_against_arrangement(
-        &self,
-        arrangement: ExactArrangement,
-        left: &super::mesh::ExactMesh,
-        right: &super::mesh::ExactMesh,
-        policy: ExactRegularizationPolicy,
-    ) -> Result<(), ExactArrangementBlocker> {
-        self.validate()?;
-        let replay =
-            select_arrangement_for_replay(arrangement, left, right, self.operation, policy)?;
-        if selected_cell_complex_matches_replay(self, &replay) {
-            Ok(())
-        } else {
-            Err(ExactArrangementBlocker::UnresolvedRegionClassification)
-        }
-    }
-
     /// Classify whether this retained selected complex is fresh for the source operands.
     pub fn freshness_against_sources(
         &self,

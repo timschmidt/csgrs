@@ -205,24 +205,6 @@ impl ExactSimplifiedCellComplex {
         }
     }
 
-    pub(crate) fn validate_against_arrangement(
-        &self,
-        arrangement: ExactArrangement,
-        left: &ExactMesh,
-        right: &ExactMesh,
-        policy: ExactRegularizationPolicy,
-    ) -> Result<(), ExactArrangementBlocker> {
-        self.validate()?;
-        let replay =
-            select_arrangement_for_replay(arrangement, left, right, self.operation, policy)?
-                .simplify_exact_with_policy(policy)?;
-        if simplified_cell_complex_matches_replay(self, &replay) {
-            Ok(())
-        } else {
-            Err(ExactArrangementBlocker::NonManifoldCellComplex)
-        }
-    }
-
     /// Classify whether this retained simplified complex is fresh for the source operands.
     pub fn freshness_against_sources(
         &self,
