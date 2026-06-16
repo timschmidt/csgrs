@@ -4036,20 +4036,7 @@ fn classify_shell_witness_against_container(
         return shell_containment_relation_from_convex(relation);
     }
 
-    match classify_point_against_closed_mesh_winding_report(witness, container).relation {
-        ClosedMeshWindingRelation::Inside => ShellContainmentRelation::Inside,
-        ClosedMeshWindingRelation::Outside => ShellContainmentRelation::Outside,
-        ClosedMeshWindingRelation::Boundary => ShellContainmentRelation::Boundary,
-        ClosedMeshWindingRelation::Unknown | ClosedMeshWindingRelation::NotClosed => {
-            match classify_point_against_convex_solid_report(witness, container).relation {
-                ConvexSolidPointRelation::Inside => ShellContainmentRelation::Inside,
-                ConvexSolidPointRelation::Outside => ShellContainmentRelation::Outside,
-                ConvexSolidPointRelation::Boundary => ShellContainmentRelation::Boundary,
-                ConvexSolidPointRelation::Unknown
-                | ConvexSolidPointRelation::NotCertifiedConvex => ShellContainmentRelation::Unknown,
-            }
-        }
-    }
+    ShellContainmentRelation::Unknown
 }
 
 fn shell_containment_relation_from_convex(
@@ -5747,6 +5734,19 @@ mod tests {
         assert_eq!(
             classify_shell_witnesses_against_container(&[p3(1, 1, 1), p3(20, 20, 20)], &container),
             ShellContainmentRelation::Boundary
+        );
+    }
+
+    #[test]
+    fn shell_containment_classifier_requires_convex_certified_container() {
+        let container = two_tetrahedra_i64(&[
+            [[0, 0, 0], [10, 0, 0], [0, 10, 0], [0, 0, 10]],
+            [[20, 0, 0], [21, 0, 0], [20, 1, 0], [20, 0, 1]],
+        ]);
+
+        assert_eq!(
+            classify_shell_witnesses_against_container(&[p3(1, 1, 1)], &container),
+            ShellContainmentRelation::Unknown
         );
     }
 
