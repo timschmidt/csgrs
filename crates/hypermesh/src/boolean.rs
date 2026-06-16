@@ -9364,6 +9364,23 @@ pub(crate) fn planar_arrangement_report_from_graph(
     right: &ExactMesh,
     operation: ExactBooleanOperation,
 ) -> Result<ExactPlanarArrangementReport, MeshError> {
+    let mut arrangement_cell_complex_preflight = None;
+    planar_arrangement_report_from_graph_with_cell_complex_cache(
+        graph,
+        left,
+        right,
+        operation,
+        &mut arrangement_cell_complex_preflight,
+    )
+}
+
+fn planar_arrangement_report_from_graph_with_cell_complex_cache(
+    graph: &super::graph::ExactIntersectionGraph,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    arrangement_cell_complex_preflight: &mut Option<Option<ExactBooleanPreflight>>,
+) -> Result<ExactPlanarArrangementReport, MeshError> {
     let graph_had_unknowns = graph.has_unknowns();
     let counts = retained_graph_counts(graph);
     let arrangement_readiness = if graph_had_unknowns {
@@ -9398,8 +9415,12 @@ pub(crate) fn planar_arrangement_report_from_graph(
     } else if graph_requires_boundary_policy(graph, left, right)? {
         ExactPlanarArrangementStatus::BoundaryPolicyRequired
     } else if requires_planar_arrangement
-        && certified_arrangement_cell_complex_preflight_if_materialized(
-            operation, graph, left, right,
+        && cached_certified_arrangement_cell_complex_preflight(
+            arrangement_cell_complex_preflight,
+            operation,
+            graph,
+            left,
+            right,
         )?
         .is_some()
     {
@@ -9490,6 +9511,7 @@ fn winding_readiness_report_from_graph(
     let arrangement_cell_complex_shortcut_support =
         ExactArrangementCellComplexShortcutFacts::from_sources(left, right)
             .certified_support(operation);
+    let mut arrangement_cell_complex_preflight = None;
     if operation == ExactBooleanOperation::Difference
         && arrangement_cell_complex_shortcut_support
             != Some(ExactBooleanSupport::CertifiedArrangementCellComplex)
@@ -9509,8 +9531,12 @@ fn winding_readiness_report_from_graph(
         ));
     }
     if !graph.face_pairs.is_empty()
-        && certified_arrangement_cell_complex_preflight_if_materialized(
-            operation, graph, left, right,
+        && cached_certified_arrangement_cell_complex_preflight(
+            &mut arrangement_cell_complex_preflight,
+            operation,
+            graph,
+            left,
+            right,
         )?
         .is_some()
     {
@@ -9670,7 +9696,13 @@ fn winding_readiness_report_from_graph(
             None,
         ));
     }
-    let planar_report = planar_arrangement_report_from_graph(graph, left, right, operation)?;
+    let planar_report = planar_arrangement_report_from_graph_with_cell_complex_cache(
+        graph,
+        left,
+        right,
+        operation,
+        &mut arrangement_cell_complex_preflight,
+    )?;
     if planar_report.is_required() {
         return Ok(winding_readiness_report(
             operation,
@@ -9806,8 +9838,12 @@ fn winding_readiness_report_from_graph(
         }
     }
     if graph_requires_coplanar_volumetric_cells_for_sources(graph, left, right) {
-        if certified_arrangement_cell_complex_preflight_if_materialized(
-            operation, graph, left, right,
+        if cached_certified_arrangement_cell_complex_preflight(
+            &mut arrangement_cell_complex_preflight,
+            operation,
+            graph,
+            left,
+            right,
         )?
         .is_some()
         {
@@ -9874,8 +9910,12 @@ fn winding_readiness_report_from_graph(
     }
     if graph.face_pairs.is_empty() {
         if !meshes_are_certified_bounds_disjoint(left, right)
-            && certified_arrangement_cell_complex_preflight_if_materialized(
-                operation, graph, left, right,
+            && cached_certified_arrangement_cell_complex_preflight(
+                &mut arrangement_cell_complex_preflight,
+                operation,
+                graph,
+                left,
+                right,
             )?
             .is_some()
         {
