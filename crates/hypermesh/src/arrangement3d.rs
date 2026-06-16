@@ -1330,19 +1330,9 @@ impl ExactArrangement3d {
         }
     }
 
-    /// Report the retained topology bridge between exact graph/split plans and
-    /// arrangement cell-complex topology.
-    pub fn topology_assembly_report(
-        &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-    ) -> ExactTopologyAssemblyReport {
-        self.topology_assembly_report_with_policy(left, right, ExactRegularizationPolicy::default())
-    }
-
     /// Report the retained topology bridge under an explicit regularization
     /// policy.
-    pub fn topology_assembly_report_with_policy(
+    pub(crate) fn topology_assembly_report_with_policy(
         &self,
         left: &ExactMesh,
         right: &ExactMesh,
@@ -1471,19 +1461,9 @@ impl ExactArrangement3d {
         }
     }
 
-    /// Report whether retained exact cell/volume evidence resolves region
-    /// ownership.
-    pub fn region_ownership_report(
-        &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-    ) -> Result<ExactRegionOwnershipReport, ExactArrangementBlocker> {
-        self.region_ownership_report_with_policy(left, right, ExactRegularizationPolicy::default())
-    }
-
     /// Report retained region ownership under an explicit regularization
     /// policy.
-    pub fn region_ownership_report_with_policy(
+    pub(crate) fn region_ownership_report_with_policy(
         &self,
         left: &ExactMesh,
         right: &ExactMesh,
@@ -5164,7 +5144,11 @@ mod tests {
                 .iter()
                 .all(|side| side.boundary.len() == 3)
         }));
-        let topology_report = arrangement.topology_assembly_report(&left, &right);
+        let topology_report = arrangement.topology_assembly_report_with_policy(
+            &left,
+            &right,
+            ExactRegularizationPolicy::default(),
+        );
         topology_report.validate().unwrap();
         assert_eq!(topology_report.arrangement_regions, 2);
         assert_eq!(topology_report.arrangement_region_face_cells, 8);

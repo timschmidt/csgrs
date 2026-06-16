@@ -187,32 +187,29 @@ fn run_case(case: &BenchCase) {
         case.regularization,
     )
     .unwrap();
-    time_stage(case, "topology_assembly_report", || {
-        let report = arrangement.topology_assembly_report_with_policy(
-            &case.left,
-            &case.right,
-            case.regularization,
-        );
-        black_box((
-            report.status,
-            report.graph_events,
-            report.split_graph_vertices,
-            report.region_boundaries,
-            report.arrangement_face_cells,
-        ));
+    let attempt = retained_arrangement_attempt_for_case(case, request);
+    time_stage(case, "attempt_topology_assembly_report", || {
+        if let Some(report) = attempt.topology_assembly_report.as_ref() {
+            black_box((
+                report.status,
+                report.graph_events,
+                report.split_graph_vertices,
+                report.region_boundaries,
+                report.arrangement_face_cells,
+            ));
+        }
     });
 
-    time_stage(case, "region_ownership_report", || {
-        let report = arrangement
-            .region_ownership_report_with_policy(&case.left, &case.right, case.regularization)
-            .unwrap();
-        black_box((
-            report.status,
-            report.face_cells,
-            report.opposite_unknown_faces,
-            report.volume_regions,
-            report.shared_owned_volumes,
-        ));
+    time_stage(case, "attempt_region_ownership_report", || {
+        if let Some(report) = attempt.region_ownership_report.as_ref() {
+            black_box((
+                report.status,
+                report.face_cells,
+                report.opposite_unknown_faces,
+                report.volume_regions,
+                report.shared_owned_volumes,
+            ));
+        }
     });
 
     time_stage(case, "cell_label_select", || {
