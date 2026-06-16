@@ -88,6 +88,7 @@ use super::reports::{
     ExactVolumetricBoundaryClosureStatus, ExactWindingReadinessReport, ExactWindingReadinessStatus,
     exact_report_freshness,
 };
+use super::simplify::ExactSimplifiedCellComplex;
 use super::solid::{
     ConvexSolidMeshClassification, ConvexSolidMeshRelation, ConvexSolidPointRelation,
     classify_mesh_vertices_against_convex_solid_report,
@@ -213,6 +214,12 @@ pub struct ExactArrangementBooleanAttempt {
     pub label_oriented_selected_faces: usize,
     /// Selected volume-region count, when selection succeeded.
     pub selected_volume_regions: usize,
+    /// Retained selected cell complex consumed by simplification, when the
+    /// generic arrangement path reached selection.
+    pub selected_cell_complex: Option<ExactSelectedCellComplex>,
+    /// Retained simplified cell complex consumed by triangulation, when the
+    /// generic arrangement path reached simplification.
+    pub simplified_cell_complex: Option<ExactSimplifiedCellComplex>,
     /// Output vertex count, when triangulation succeeded.
     pub output_vertices: usize,
     /// Output triangle count, when triangulation succeeded.
@@ -332,8 +339,62 @@ impl ExactArrangementBooleanAttempt {
             == ExactArrangementBooleanStage::Triangulated
             && self.topology_assembly.is_none()
             && self.region_ownership.is_none();
+        if let Some(selected) = &self.selected_cell_complex {
+            let selected_volume_oriented_faces = selected
+                .selected_face_orientations
+                .iter()
+                .filter(|orientation| orientation.from_volume_adjacency)
+                .count();
+            let selected_label_oriented_faces = selected
+                .selected_face_orientations
+                .len()
+                .saturating_sub(selected_volume_oriented_faces);
+            if arrangement_attempt_stage_rank(self.stage)
+                < arrangement_attempt_stage_rank(ExactArrangementBooleanStage::Selected)
+                || selected.operation != self.operation
+                || selected.validate().is_err()
+                || selected.topology_assembly_report != self.topology_assembly_report
+                || selected.region_ownership_report != self.region_ownership_report
+                || selected.selected_faces.len() != self.selected_faces
+                || selected.selected_volume_regions.len() != self.selected_volume_regions
+                || selected
+                    .selected_face_orientations
+                    .iter()
+                    .filter(|orientation| orientation.reverse)
+                    .count()
+                    != self.reversed_selected_faces
+                || selected_volume_oriented_faces != self.volume_oriented_selected_faces
+                || selected_label_oriented_faces != self.label_oriented_selected_faces
+            {
+                return Err(ExactReportValidationError::StatusEvidenceMismatch);
+            }
+        }
+        if let Some(simplified) = &self.simplified_cell_complex {
+            if arrangement_attempt_stage_rank(self.stage)
+                < arrangement_attempt_stage_rank(ExactArrangementBooleanStage::Simplified)
+                || self.selected_cell_complex.is_none()
+                || simplified.operation != self.operation
+                || simplified.validate().is_err()
+                || simplified.topology_assembly_report != self.topology_assembly_report
+                || simplified.region_ownership_report != self.region_ownership_report
+                || simplified.selected_faces_before_simplification != self.selected_faces
+                || simplified.oriented_selected_faces_before_simplification != self.selected_faces
+                || simplified.reversed_selected_faces_before_simplification
+                    != self.reversed_selected_faces
+                || simplified.volume_oriented_selected_faces_before_simplification
+                    != self.volume_oriented_selected_faces
+                || simplified.label_oriented_selected_faces_before_simplification
+                    != self.label_oriented_selected_faces
+            {
+                return Err(ExactReportValidationError::StatusEvidenceMismatch);
+            }
+        }
         if self.stage == ExactArrangementBooleanStage::NotAttempted {
-            if self.topology_assembly.is_some() || self.region_ownership.is_some() {
+            if self.topology_assembly.is_some()
+                || self.region_ownership.is_some()
+                || self.selected_cell_complex.is_some()
+                || self.simplified_cell_complex.is_some()
+            {
                 return Err(ExactReportValidationError::StatusEvidenceMismatch);
             }
         } else if self.region_ownership.is_some() && self.topology_assembly.is_none() {
@@ -453,7 +514,9 @@ impl ExactArrangementBooleanAttempt {
                 || self.selected_volume_regions != 0
                 || self.output_vertices != 0
                 || self.output_triangles != 0
-                || self.output_facts.is_some())
+                || self.output_facts.is_some()
+                || self.selected_cell_complex.is_some()
+                || self.simplified_cell_complex.is_some())
         {
             return Err(ExactReportValidationError::StatusEvidenceMismatch);
         }
@@ -463,7 +526,14 @@ impl ExactArrangementBooleanAttempt {
                 || self.reversed_selected_faces != 0
                 || self.volume_oriented_selected_faces != 0
                 || self.label_oriented_selected_faces != 0
-                || self.selected_volume_regions != 0)
+                || self.selected_volume_regions != 0
+                || self.selected_cell_complex.is_some())
+        {
+            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+        }
+        if arrangement_attempt_stage_rank(self.stage)
+            < arrangement_attempt_stage_rank(ExactArrangementBooleanStage::Simplified)
+            && self.simplified_cell_complex.is_some()
         {
             return Err(ExactReportValidationError::StatusEvidenceMismatch);
         }
@@ -4584,6 +4654,8 @@ pub(crate) fn arrangement_cell_complex_shortcut_attempt(
         volume_oriented_selected_faces: 0,
         label_oriented_selected_faces: 0,
         selected_volume_regions: 0,
+        selected_cell_complex: None,
+        simplified_cell_complex: None,
         output_vertices: result.mesh.vertices().len(),
         output_triangles: result.mesh.triangles().len(),
         output_facts: Some(result.mesh.facts().mesh.clone()),
@@ -4865,6 +4937,8 @@ fn run_arrangement_cell_complex_attempt_from_arrangement(
         volume_oriented_selected_faces: 0,
         label_oriented_selected_faces: 0,
         selected_volume_regions: 0,
+        selected_cell_complex: None,
+        simplified_cell_complex: None,
         output_vertices: 0,
         output_triangles: 0,
         output_facts: None,
@@ -5094,6 +5168,7 @@ fn run_arrangement_cell_complex_attempt_from_arrangement(
     selected.region_ownership_report = Some(ownership_report.clone());
     attempt.stage = ExactArrangementBooleanStage::Selected;
     record_selected_orientation_counts(&mut attempt, &selected);
+    attempt.selected_cell_complex = Some(selected.clone());
     let simplified = match selected.simplify_exact_with_policy(policy) {
         Ok(simplified) if simplified.blockers.is_empty() => simplified,
         Ok(simplified) => {
@@ -5132,6 +5207,7 @@ fn run_arrangement_cell_complex_attempt_from_arrangement(
         }
     };
     attempt.stage = ExactArrangementBooleanStage::Simplified;
+    attempt.simplified_cell_complex = Some(simplified.clone());
     let mesh = match simplified.triangulate() {
         Ok(mesh) => mesh,
         Err(blocker) => {

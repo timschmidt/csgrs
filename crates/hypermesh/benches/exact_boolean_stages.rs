@@ -425,7 +425,7 @@ fn run_case(case: &BenchCase) {
     time_prepared_stage(
         case,
         "workspace_selected_from_retained_artifacts",
-        || retained_workspace_for_case(case, request),
+        || retained_attempt_workspace_for_case(case, request),
         |retained_workspace| {
             black_box(
                 retained_workspace
@@ -438,7 +438,7 @@ fn run_case(case: &BenchCase) {
     time_prepared_stage(
         case,
         "workspace_simplified_from_retained_artifacts",
-        || retained_workspace_for_case(case, request),
+        || retained_attempt_workspace_for_case(case, request),
         |retained_workspace| {
             black_box(
                 retained_workspace
@@ -733,6 +733,17 @@ fn retained_workspace_for_case<'a>(
     let mut retained_workspace = retained_graph_workspace_for_case(case);
     retained_workspace
         .arrangement(ExactRegularizationPolicy::REGULARIZED_SOLID)
+        .unwrap();
+    retained_workspace
+}
+
+fn retained_attempt_workspace_for_case<'a>(
+    case: &'a BenchCase,
+    request: ExactBooleanRequest,
+) -> ExactBooleanWorkspace<'a> {
+    let mut retained_workspace = retained_workspace_for_case(case, request);
+    retained_workspace
+        .arrangement_attempt(request, case.regularization)
         .unwrap();
     retained_workspace
 }

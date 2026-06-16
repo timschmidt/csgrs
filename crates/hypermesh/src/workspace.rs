@@ -247,6 +247,19 @@ impl<'a> ExactBooleanWorkspace<'a> {
             return Ok(&self.selected_cell_complexes[index].2);
         }
 
+        if let Some(selected) = self
+            .arrangement_attempt(request, policy)?
+            .selected_cell_complex
+            .clone()
+        {
+            return store_retained_cell_complex(
+                &mut self.selected_cell_complexes,
+                request,
+                policy,
+                selected,
+            );
+        }
+
         let arrangement = self.arrangement(policy)?.clone();
         let selected = select_arrangement_for_replay(
             arrangement,
@@ -272,6 +285,19 @@ impl<'a> ExactBooleanWorkspace<'a> {
             return Ok(&self.simplified_cell_complexes[index].2);
         }
 
+        if let Some(simplified) = self
+            .arrangement_attempt(request, policy)?
+            .simplified_cell_complex
+            .clone()
+        {
+            return store_retained_cell_complex(
+                &mut self.simplified_cell_complexes,
+                request,
+                policy,
+                simplified,
+            );
+        }
+
         let selected = self.selected_cell_complex(request, policy)?.clone();
         let simplified = selected
             .simplify_exact_with_policy(policy)
@@ -295,6 +321,20 @@ impl<'a> ExactBooleanWorkspace<'a> {
         if selected.operation != request.operation {
             return Err(ExactArrangementBlocker::UnresolvedRegionClassification);
         }
+        if let Some(replay) = self
+            .arrangement_attempt(request, policy)
+            .map_err(|_| ExactArrangementBlocker::UnresolvedIntersection)?
+            .selected_cell_complex
+            .clone()
+        {
+            selected.validate()?;
+            replay.validate()?;
+            return if selected == &replay {
+                Ok(())
+            } else {
+                Err(ExactArrangementBlocker::UnresolvedRegionClassification)
+            };
+        }
         let arrangement = self
             .arrangement(policy)
             .map_err(|_| ExactArrangementBlocker::UnresolvedIntersection)?
@@ -312,6 +352,20 @@ impl<'a> ExactBooleanWorkspace<'a> {
     ) -> ExactSelectedCellComplexFreshness {
         if selected.operation != request.operation {
             return ExactSelectedCellComplexFreshness::StaleSelectedCells;
+        }
+        match self.arrangement_attempt(request, policy) {
+            Ok(attempt) => {
+                if let Some(replay) = attempt.selected_cell_complex.as_ref() {
+                    return if selected.validate().is_err() || replay.validate().is_err() {
+                        ExactSelectedCellComplexFreshness::StaleSelectedCells
+                    } else if selected == replay {
+                        ExactSelectedCellComplexFreshness::Current
+                    } else {
+                        ExactSelectedCellComplexFreshness::StaleSelectedCells
+                    };
+                }
+            }
+            Err(_) => return ExactSelectedCellComplexFreshness::SourceReplayBlocked,
         }
         let arrangement = match self.arrangement(policy) {
             Ok(arrangement) => arrangement.clone(),
@@ -331,6 +385,20 @@ impl<'a> ExactBooleanWorkspace<'a> {
         if simplified.operation != request.operation {
             return Err(ExactArrangementBlocker::UnresolvedRegionClassification);
         }
+        if let Some(replay) = self
+            .arrangement_attempt(request, policy)
+            .map_err(|_| ExactArrangementBlocker::UnresolvedIntersection)?
+            .simplified_cell_complex
+            .clone()
+        {
+            simplified.validate()?;
+            replay.validate()?;
+            return if simplified == &replay {
+                Ok(())
+            } else {
+                Err(ExactArrangementBlocker::NonManifoldCellComplex)
+            };
+        }
         let arrangement = self
             .arrangement(policy)
             .map_err(|_| ExactArrangementBlocker::UnresolvedIntersection)?
@@ -348,6 +416,20 @@ impl<'a> ExactBooleanWorkspace<'a> {
     ) -> ExactSimplifiedCellComplexFreshness {
         if simplified.operation != request.operation {
             return ExactSimplifiedCellComplexFreshness::StaleSimplifiedCells;
+        }
+        match self.arrangement_attempt(request, policy) {
+            Ok(attempt) => {
+                if let Some(replay) = attempt.simplified_cell_complex.as_ref() {
+                    return if simplified.validate().is_err() || replay.validate().is_err() {
+                        ExactSimplifiedCellComplexFreshness::StaleSimplifiedCells
+                    } else if simplified == replay {
+                        ExactSimplifiedCellComplexFreshness::Current
+                    } else {
+                        ExactSimplifiedCellComplexFreshness::StaleSimplifiedCells
+                    };
+                }
+            }
+            Err(_) => return ExactSimplifiedCellComplexFreshness::SourceReplayBlocked,
         }
         let arrangement = match self.arrangement(policy) {
             Ok(arrangement) => arrangement.clone(),
@@ -1076,6 +1158,14 @@ mod tests {
             .arrangement_attempt(request, ExactRegularizationPolicy::REGULARIZED_SOLID)
             .unwrap()
             .clone();
+        let attempt_selected = attempt
+            .selected_cell_complex
+            .clone()
+            .expect("generic arrangement attempt should retain selected cells");
+        let attempt_simplified = attempt
+            .simplified_cell_complex
+            .clone()
+            .expect("generic arrangement attempt should retain simplified cells");
         attempt.validate().unwrap();
         attempt.validate_against_sources(&left, &right).unwrap();
         workspace
@@ -1099,6 +1189,20 @@ mod tests {
             .as_mut()
             .unwrap()
             .graph_events += 1;
+        if let Some(selected) = stale_attempt.selected_cell_complex.as_mut() {
+            selected
+                .topology_assembly_report
+                .as_mut()
+                .unwrap()
+                .graph_events += 1;
+        }
+        if let Some(simplified) = stale_attempt.simplified_cell_complex.as_mut() {
+            simplified
+                .topology_assembly_report
+                .as_mut()
+                .unwrap()
+                .graph_events += 1;
+        }
         stale_attempt.validate().unwrap();
         assert!(
             workspace
@@ -1129,6 +1233,7 @@ mod tests {
             .selected_cell_complex(request, ExactRegularizationPolicy::REGULARIZED_SOLID)
             .unwrap()
             .clone();
+        assert_eq!(selected, attempt_selected);
         assert!(selected.topology_assembly_report.is_some());
         assert!(selected.region_ownership_report.is_some());
         selected.validate().unwrap();
@@ -1203,6 +1308,7 @@ mod tests {
             .simplified_cell_complex(request, ExactRegularizationPolicy::REGULARIZED_SOLID)
             .unwrap()
             .clone();
+        assert_eq!(simplified, attempt_simplified);
         assert!(simplified.topology_assembly_report.is_some());
         assert!(simplified.region_ownership_report.is_some());
         simplified.validate().unwrap();
