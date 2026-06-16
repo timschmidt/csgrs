@@ -945,9 +945,12 @@ impl ExactBooleanCertificationSet {
                 request,
                 ExactRegularizationPolicy::REGULARIZED_SOLID,
             )?;
+        let arrangement_cell_complex_shortcut_support =
+            arrangement_cell_complex_shortcuts.certified_support(request.operation);
         let arrangement_cell_complex_shortcut_certified =
             arrangement_cell_complex_shortcut_attempt_report.is_some()
-                && arrangement_cell_complex_shortcuts.supports(request.operation);
+                && arrangement_cell_complex_shortcut_support
+                    == Some(ExactBooleanSupport::CertifiedArrangementCellComplex);
         let owned_regularized_arrangement;
         let regularized_arrangement =
             if matches!(request.operation, ExactBooleanOperation::SelectedRegions(_))
@@ -1090,7 +1093,8 @@ impl ExactBooleanCertificationSet {
         }
         let arrangement_cell_complex_shortcut_certified = self
             .arrangement_cell_complex_shortcuts
-            .supports(request.operation)
+            .certified_support(request.operation)
+            == Some(ExactBooleanSupport::CertifiedArrangementCellComplex)
             && self.region_ownership.is_none()
             && self.topology_assembly.is_none()
             && self.arrangement_attempt.as_ref().is_some_and(|attempt| {
@@ -1358,16 +1362,26 @@ impl ExactArrangementCellComplexShortcutFacts {
         Ok(())
     }
 
-    fn supports(&self, operation: ExactBooleanOperation) -> bool {
+    /// Return the certified support proven by these retained shortcut facts.
+    fn certified_support(&self, operation: ExactBooleanOperation) -> Option<ExactBooleanSupport> {
         match operation {
-            ExactBooleanOperation::Union => self.axis_aligned_union || self.affine_union,
-            ExactBooleanOperation::Intersection => {
-                self.axis_aligned_intersection || self.affine_intersection
+            ExactBooleanOperation::Union if self.axis_aligned_union || self.affine_union => {
+                Some(ExactBooleanSupport::CertifiedArrangementCellComplex)
             }
-            ExactBooleanOperation::Difference => {
-                self.axis_aligned_difference || self.affine_difference
+            ExactBooleanOperation::Intersection
+                if self.axis_aligned_intersection || self.affine_intersection =>
+            {
+                Some(ExactBooleanSupport::CertifiedArrangementCellComplex)
             }
-            ExactBooleanOperation::SelectedRegions(_) => false,
+            ExactBooleanOperation::Difference
+                if self.axis_aligned_difference || self.affine_difference =>
+            {
+                Some(ExactBooleanSupport::CertifiedArrangementCellComplex)
+            }
+            ExactBooleanOperation::Union
+            | ExactBooleanOperation::Intersection
+            | ExactBooleanOperation::Difference
+            | ExactBooleanOperation::SelectedRegions(_) => None,
         }
     }
 }
@@ -1571,7 +1585,8 @@ impl ExactBooleanEvaluation {
                     (self
                         .certifications
                         .arrangement_cell_complex_shortcuts
-                        .supports(operation)
+                        .certified_support(operation)
+                        == Some(ExactBooleanSupport::CertifiedArrangementCellComplex)
                         && self.certifications.region_ownership.is_none()
                         && self.certifications.topology_assembly.is_none()
                         && self.certifications.arrangement_attempt.as_ref().is_some_and(
@@ -1766,7 +1781,8 @@ fn exact_boolean_preflight_matches_certifications(
         }
         ExactBooleanSupport::CertifiedArrangementCellComplex => (certifications
             .arrangement_cell_complex_shortcuts
-            .supports(preflight.operation)
+            .certified_support(preflight.operation)
+            == Some(ExactBooleanSupport::CertifiedArrangementCellComplex)
             && certifications.region_ownership.is_none()
             && certifications.topology_assembly.is_none()
             && certifications
@@ -2610,7 +2626,8 @@ fn initial_reject_boundary_preflight_support(
         ExactBooleanOperation::Union
         | ExactBooleanOperation::Intersection
         | ExactBooleanOperation::Difference => {
-            preflight_tail_shortcut_support(left, right, operation)
+            ExactArrangementCellComplexShortcutFacts::from_sources(left, right)
+                .certified_support(operation)
                 .or_else(|| certified_mixed_dimensional_regularized_solid_support(left, right))
                 .unwrap_or(ExactBooleanSupport::RequiresCertifiedWinding)
         }
@@ -3454,51 +3471,6 @@ fn volumetric_boundary_closure_report_from_materialized(
             self_contact_nondegenerate_cycles: 0,
             coplanar_loop_groups: 0,
         }),
-    }
-}
-
-fn preflight_tail_shortcut_support(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-) -> Option<ExactBooleanSupport> {
-    if let Some(solid_operation) = axis_aligned_orthogonal_solid_operation(operation)
-        && has_axis_aligned_orthogonal_solid_cells(left, right, solid_operation)
-    {
-        return Some(ExactBooleanSupport::CertifiedArrangementCellComplex);
-    }
-    match operation {
-        ExactBooleanOperation::Union
-            if has_affine_orthogonal_solid_cells(
-                left,
-                right,
-                AffineOrthogonalSolidOperation::Union,
-            ) =>
-        {
-            Some(ExactBooleanSupport::CertifiedArrangementCellComplex)
-        }
-        ExactBooleanOperation::Intersection
-            if has_affine_orthogonal_solid_cells(
-                left,
-                right,
-                AffineOrthogonalSolidOperation::Intersection,
-            ) =>
-        {
-            Some(ExactBooleanSupport::CertifiedArrangementCellComplex)
-        }
-        ExactBooleanOperation::Difference
-            if has_affine_orthogonal_solid_cells(
-                left,
-                right,
-                AffineOrthogonalSolidOperation::Difference,
-            ) =>
-        {
-            Some(ExactBooleanSupport::CertifiedArrangementCellComplex)
-        }
-        ExactBooleanOperation::Union
-        | ExactBooleanOperation::Intersection
-        | ExactBooleanOperation::Difference => None,
-        ExactBooleanOperation::SelectedRegions(_) => None,
     }
 }
 
@@ -4460,6 +4432,12 @@ pub(crate) fn arrangement_cell_complex_shortcut_attempt(
     policy: ExactRegularizationPolicy,
 ) -> Result<Option<ExactArrangementBooleanAttempt>, MeshError> {
     if policy != ExactRegularizationPolicy::REGULARIZED_SOLID {
+        return Ok(None);
+    }
+    if ExactArrangementCellComplexShortcutFacts::from_sources(left, right)
+        .certified_support(request.operation)
+        != Some(ExactBooleanSupport::CertifiedArrangementCellComplex)
+    {
         return Ok(None);
     }
     let result = if let Some(result) = boolean_arrangement_orthogonal_solid_cell_recovery(
@@ -9359,8 +9337,11 @@ fn winding_readiness_report_from_graph(
             None,
         ));
     }
+    let arrangement_cell_complex_shortcut_support =
+        ExactArrangementCellComplexShortcutFacts::from_sources(left, right)
+            .certified_support(operation);
     if operation == ExactBooleanOperation::Difference
-        && preflight_tail_shortcut_support(left, right, operation)
+        && arrangement_cell_complex_shortcut_support
             != Some(ExactBooleanSupport::CertifiedArrangementCellComplex)
         && let Some(evidence) = coplanar_boundary_only_evidence_if_consumed(graph, left, right)?
     {
@@ -9409,7 +9390,7 @@ fn winding_readiness_report_from_graph(
             None,
         ));
     }
-    if preflight_tail_shortcut_support(left, right, operation)
+    if arrangement_cell_complex_shortcut_support
         != Some(ExactBooleanSupport::CertifiedArrangementCellComplex)
         && certified_convex_operation_shortcut_support(left, right, operation).is_some()
     {
@@ -9472,7 +9453,7 @@ fn winding_readiness_report_from_graph(
             None,
         ));
     }
-    let tail_shortcut_materializes = preflight_tail_shortcut_support(left, right, operation)
+    let arrangement_cell_complex_shortcut_materializes = arrangement_cell_complex_shortcut_support
         == Some(ExactBooleanSupport::CertifiedArrangementCellComplex);
     let boundary_policy_required = graph_requires_boundary_policy(graph, left, right)?;
     if !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
@@ -9491,7 +9472,7 @@ fn winding_readiness_report_from_graph(
             None,
         ));
     }
-    if !tail_shortcut_materializes
+    if !arrangement_cell_complex_shortcut_materializes
         && matches!(
             operation,
             ExactBooleanOperation::Intersection | ExactBooleanOperation::Difference
@@ -9511,7 +9492,7 @@ fn winding_readiness_report_from_graph(
             coplanar_boundary_only_evidence_if_consumed(graph, left, right)?,
         ));
     }
-    if tail_shortcut_materializes && boundary_policy_required {
+    if arrangement_cell_complex_shortcut_materializes && boundary_policy_required {
         return Ok(winding_readiness_report(
             operation,
             ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized,
@@ -9568,7 +9549,7 @@ fn winding_readiness_report_from_graph(
             None,
         ));
     }
-    if tail_shortcut_materializes {
+    if arrangement_cell_complex_shortcut_materializes {
         let needs_coplanar_volumetric =
             graph_requires_coplanar_volumetric_cells_for_sources(graph, left, right);
         let blocker_kind = if needs_coplanar_volumetric {
@@ -11711,7 +11692,8 @@ mod tests {
             ExactBooleanOperation::Difference,
         ] {
             assert_eq!(
-                preflight_tail_shortcut_support(&left, &right, operation),
+                ExactArrangementCellComplexShortcutFacts::from_sources(&left, &right)
+                    .certified_support(operation),
                 Some(ExactBooleanSupport::CertifiedArrangementCellComplex),
                 "{operation:?}"
             );
