@@ -771,15 +771,7 @@ impl ExactBooleanRequest {
     ) -> Result<ExactPlanarArrangementReport, MeshError> {
         let operation = self.operation;
         if matches!(operation, ExactBooleanOperation::SelectedRegions(_)) {
-            return Ok(planar_arrangement_report(
-                operation,
-                ExactPlanarArrangementStatus::NotNamedOperation,
-                false,
-                0,
-                0,
-                ExactBooleanBlocker::default(),
-                None,
-            ));
+            return Ok(not_named_planar_arrangement_report(operation));
         }
 
         let graph = validated_intersection_graph(left, right)?;
@@ -924,15 +916,7 @@ impl ExactBooleanCertificationSet {
             ExactArrangementCellComplexShortcutFacts::from_sources(left, right);
         let planar_arrangement =
             if matches!(request.operation, ExactBooleanOperation::SelectedRegions(_)) {
-                planar_arrangement_report(
-                    request.operation,
-                    ExactPlanarArrangementStatus::NotNamedOperation,
-                    false,
-                    0,
-                    0,
-                    ExactBooleanBlocker::default(),
-                    None,
-                )
+                not_named_planar_arrangement_report(request.operation)
             } else {
                 planar_arrangement_report_from_graph(graph, left, right, request.operation)?
             };
@@ -9277,6 +9261,10 @@ fn planar_arrangement_report_from_graph_with_cell_complex_cache(
     operation: ExactBooleanOperation,
     arrangement_cell_complex_preflight: &mut CertifiedArrangementCellComplexPreflightCache,
 ) -> Result<ExactPlanarArrangementReport, MeshError> {
+    if matches!(operation, ExactBooleanOperation::SelectedRegions(_)) {
+        return Ok(not_named_planar_arrangement_report(operation));
+    }
+
     let graph_had_unknowns = graph.has_unknowns();
     let counts = retained_graph_counts(graph);
     let arrangement_readiness = if graph_had_unknowns {
@@ -9295,9 +9283,7 @@ fn planar_arrangement_report_from_graph_with_cell_complex_cache(
             .face_pairs
             .iter()
             .any(|pair| pair.relation == MeshFacePairRelation::CoplanarOverlapping);
-    let status = if matches!(operation, ExactBooleanOperation::SelectedRegions(_)) {
-        ExactPlanarArrangementStatus::NotNamedOperation
-    } else if graph_had_unknowns {
+    let status = if graph_had_unknowns {
         ExactPlanarArrangementStatus::GraphUnknowns
     } else if boolean_coplanar_mesh_overlay_optional(
         left,
@@ -9335,6 +9321,20 @@ fn planar_arrangement_report_from_graph_with_cell_complex_cache(
         counts,
         arrangement_readiness,
     ))
+}
+
+fn not_named_planar_arrangement_report(
+    operation: ExactBooleanOperation,
+) -> ExactPlanarArrangementReport {
+    planar_arrangement_report(
+        operation,
+        ExactPlanarArrangementStatus::NotNamedOperation,
+        false,
+        0,
+        0,
+        ExactBooleanBlocker::default(),
+        None,
+    )
 }
 
 fn planar_arrangement_report(

@@ -1540,6 +1540,7 @@ fn workspace_report_validation_error(error: ExactReportValidationError) -> MeshE
 mod tests {
     use super::*;
     use crate::boolean::ExactBooleanOperation;
+    use crate::region::ExactRegionSelection;
     use crate::validation::ValidationPolicy;
     use crate::{
         CoplanarVolumetricCellEvidenceError, CoplanarVolumetricCellEvidenceFreshness,
@@ -2266,6 +2267,25 @@ mod tests {
             workspace.validate_planar_arrangement_report(request, &relabeled_planar_report),
             Err(ExactReportValidationError::StatusEvidenceMismatch)
         );
+        let selected_request = ExactBooleanRequest::new(
+            ExactBooleanOperation::SelectedRegions(ExactRegionSelection::KeepAll),
+            ValidationPolicy::ALLOW_BOUNDARY,
+        );
+        let selected_planar_report = workspace
+            .planar_arrangement_report(selected_request)
+            .unwrap()
+            .clone();
+        assert_eq!(
+            selected_planar_report,
+            selected_request
+                .planar_arrangement_report(&left, &right)
+                .unwrap()
+        );
+        workspace
+            .validate_planar_arrangement_report(selected_request, &selected_planar_report)
+            .unwrap();
+        assert_eq!(selected_planar_report.retained_face_pairs, 0);
+        assert_eq!(selected_planar_report.retained_events, 0);
 
         let mut materialize_workspace = ExactBooleanWorkspace::new(&left, &right);
         materialize_workspace.graph().unwrap();
