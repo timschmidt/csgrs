@@ -5,6 +5,7 @@
 //! blockers instead of falling back to tolerance repair.
 
 use std::cmp::Ordering;
+use std::collections::BTreeMap;
 
 use hyperlimit::{
     Point2, Point3, RingPointLocation, SegmentIntersection, Sign, TriangleLocation,
@@ -19,6 +20,7 @@ use super::arrangement2d::{
     ExactArrangement2dRegionRing, ExactArrangement2dSetOperation,
     build_exact_arrangement2d_overlay_with_boundary_policy,
 };
+use super::exact_key::{ExactPoint3Key, exact_point3_key};
 use super::mesh::Triangle;
 use super::regularization::ExactArrangementBlocker;
 use hyperlimit::CoplanarProjection;
@@ -145,20 +147,36 @@ pub(crate) fn triangulate_exact_loop_group(
             depth: 0,
         });
     }
+    let mut vertex_index = ExactVertexInsertIndex::from_vertices(vertices);
     if let Err(error) = compute_loop_depths(&mut loops) {
-        return triangulate_loop_group_union_via_arrangement(&loops, vertices, triangles)
-            .or(Err(error));
+        return triangulate_loop_group_union_via_arrangement_or_error(
+            &loops,
+            vertices,
+            &mut vertex_index,
+            triangles,
+            error,
+        );
     }
     let isolate_component_vertices = match same_depth_endpoint_touch_flags(&loops) {
         Ok(flags) => flags,
         Err(error) => {
-            return triangulate_loop_group_union_via_arrangement(&loops, vertices, triangles)
-                .or(Err(error));
+            return triangulate_loop_group_union_via_arrangement_or_error(
+                &loops,
+                vertices,
+                &mut vertex_index,
+                triangles,
+                error,
+            );
         }
     };
     if let Err(error) = validate_loop_topology(&loops) {
-        return triangulate_loop_group_union_via_arrangement(&loops, vertices, triangles)
-            .or(Err(error));
+        return triangulate_loop_group_union_via_arrangement_or_error(
+            &loops,
+            vertices,
+            &mut vertex_index,
+            triangles,
+            error,
+        );
     }
     let mut used_as_hole = vec![false; loops.len()];
     for outer_index in 0..loops.len() {
@@ -182,14 +200,20 @@ pub(crate) fn triangulate_exact_loop_group(
             outer_index,
             &hole_indices,
             vertices,
+            &mut vertex_index,
             triangles,
             isolate_component_vertices[outer_index],
         )?;
     }
     for (index, loop_) in loops.iter().enumerate() {
         if loop_.depth % 2 != 0 && !used_as_hole[index] {
-            return triangulate_loop_group_union_via_arrangement(&loops, vertices, triangles)
-                .or(Err(ExactArrangementBlocker::NonManifoldCellComplex));
+            return triangulate_loop_group_union_via_arrangement_or_error(
+                &loops,
+                vertices,
+                &mut vertex_index,
+                triangles,
+                ExactArrangementBlocker::NonManifoldCellComplex,
+            );
         }
     }
     Ok(())
@@ -420,6 +444,7 @@ fn triangulate_loop_with_holes(
     outer_index: usize,
     hole_loop_indices: &[usize],
     vertices: &mut Vec<Point3>,
+    vertex_index: &mut ExactVertexInsertIndex,
     triangles: &mut Vec<Triangle>,
     isolate_component_vertices: bool,
 ) -> Result<(), ExactArrangementBlocker> {
@@ -457,11 +482,11 @@ fn triangulate_loop_with_holes(
         );
     }
     let local_to_global = if isolate_component_vertices {
-        append_component_local_vertices(vertices, &polygon_points)?
+        append_component_local_vertices(vertices, vertex_index, &polygon_points)?
     } else {
         polygon_points
             .iter()
-            .map(|point| find_or_insert_vertex(vertices, point.clone()))
+            .map(|point| vertex_index.find_or_insert(vertices, point.clone()))
             .collect::<Result<Vec<_>, _>>()?
     };
     if polygon_points.len() == 3 && hole_indices.is_empty() {
@@ -485,6 +510,7 @@ fn triangulate_loop_with_holes(
                 outer_index,
                 hole_loop_indices,
                 vertices,
+                vertex_index,
                 triangles,
                 output_orientation,
             );
@@ -529,6 +555,7 @@ fn triangulate_touching_hole_loop_group_via_arrangement(
     outer_index: usize,
     hole_loop_indices: &[usize],
     vertices: &mut Vec<Point3>,
+    vertex_index: &mut ExactVertexInsertIndex,
     triangles: &mut Vec<Triangle>,
     output_orientation: Ordering,
 ) -> Result<(), ExactArrangementBlocker> {
@@ -539,14 +566,75 @@ fn triangulate_touching_hole_loop_group_via_arrangement(
         loops,
         &loop_indices,
         vertices,
+        vertex_index,
         triangles,
         output_orientation,
     )
 }
 
+fn triangulate_loop_group_union_via_arrangement_or_error(
+    loops: &[ProjectedFaceLoop],
+    vertices: &mut Vec<Point3>,
+    vertex_index: &mut ExactVertexInsertIndex,
+    triangles: &mut Vec<Triangle>,
+    error: ExactArrangementBlocker,
+) -> Result<(), ExactArrangementBlocker> {
+    if loop_boundaries_cross_or_overlap(loops)? {
+        return Err(error);
+    }
+    triangulate_loop_group_union_via_arrangement(loops, vertices, vertex_index, triangles)
+        .or(Err(error))
+}
+
+fn loop_boundaries_cross_or_overlap(
+    loops: &[ProjectedFaceLoop],
+) -> Result<bool, ExactArrangementBlocker> {
+    for left_index in 0..loops.len() {
+        for right_index in (left_index + 1)..loops.len() {
+            if loop_pair_boundaries_cross_or_overlap(
+                &loops[left_index].projected,
+                &loops[right_index].projected,
+            )? {
+                return Ok(true);
+            }
+        }
+    }
+    Ok(false)
+}
+
+fn loop_pair_boundaries_cross_or_overlap(
+    left: &[Point2],
+    right: &[Point2],
+) -> Result<bool, ExactArrangementBlocker> {
+    for left_index in 0..left.len() {
+        let left_next = (left_index + 1) % left.len();
+        for right_index in 0..right.len() {
+            let right_next = (right_index + 1) % right.len();
+            match classify_segment_intersection(
+                &left[left_index],
+                &left[left_next],
+                &right[right_index],
+                &right[right_next],
+            )
+            .value()
+            {
+                Some(SegmentIntersection::Disjoint | SegmentIntersection::EndpointTouch) => {}
+                Some(
+                    SegmentIntersection::Proper
+                    | SegmentIntersection::CollinearOverlap
+                    | SegmentIntersection::Identical,
+                ) => return Ok(true),
+                None => return Err(ExactArrangementBlocker::UndecidableOrdering),
+            }
+        }
+    }
+    Ok(false)
+}
+
 fn triangulate_loop_group_union_via_arrangement(
     loops: &[ProjectedFaceLoop],
     vertices: &mut Vec<Point3>,
+    vertex_index: &mut ExactVertexInsertIndex,
     triangles: &mut Vec<Triangle>,
 ) -> Result<(), ExactArrangementBlocker> {
     if loops.is_empty() {
@@ -559,6 +647,7 @@ fn triangulate_loop_group_union_via_arrangement(
         loops,
         &loop_indices,
         vertices,
+        vertex_index,
         triangles,
         output_orientation,
     )
@@ -568,6 +657,7 @@ fn triangulate_projected_loop_indices_via_arrangement(
     loops: &[ProjectedFaceLoop],
     loop_indices: &[usize],
     vertices: &mut Vec<Point3>,
+    vertex_index: &mut ExactVertexInsertIndex,
     triangles: &mut Vec<Triangle>,
     output_orientation: Ordering,
 ) -> Result<(), ExactArrangementBlocker> {
@@ -625,6 +715,7 @@ fn triangulate_projected_loop_indices_via_arrangement(
             projection,
             output_orientation,
             vertices,
+            vertex_index,
             triangles,
         )?;
     }
@@ -735,6 +826,7 @@ fn triangulate_simple_arrangement_face(
     projection: CoplanarProjection,
     output_orientation: Ordering,
     vertices: &mut Vec<Point3>,
+    vertex_index: &mut ExactVertexInsertIndex,
     triangles: &mut Vec<Triangle>,
 ) -> Result<(), ExactArrangementBlocker> {
     let projected = boundary
@@ -743,7 +835,7 @@ fn triangulate_simple_arrangement_face(
         .collect::<Vec<_>>();
     let local_to_global = boundary
         .iter()
-        .map(|point| find_or_insert_vertex(vertices, point.clone()))
+        .map(|point| vertex_index.find_or_insert(vertices, point.clone()))
         .collect::<Result<Vec<_>, _>>()?;
     if boundary.len() == 3 {
         triangles.push(oriented_output_triangle(
@@ -778,16 +870,22 @@ fn triangulate_simple_arrangement_face(
 
 fn append_component_local_vertices(
     vertices: &mut Vec<Point3>,
+    vertex_index: &mut ExactVertexInsertIndex,
     polygon_points: &[Point3],
 ) -> Result<Vec<usize>, ExactArrangementBlocker> {
     let offset = vertices.len();
     let mut component_vertices = Vec::<Point3>::new();
+    let mut component_index = ExactVertexInsertIndex::default();
     let mut local_to_global = Vec::with_capacity(polygon_points.len());
     for point in polygon_points {
-        let local = find_or_insert_vertex(&mut component_vertices, point.clone())?;
+        let local = component_index.find_or_insert(&mut component_vertices, point.clone())?;
         local_to_global.push(offset + local);
     }
-    vertices.extend(component_vertices);
+    for point in component_vertices {
+        let index = vertices.len();
+        vertex_index.insert_known(index, &point);
+        vertices.push(point);
+    }
     Ok(local_to_global)
 }
 
@@ -882,20 +980,85 @@ fn oriented_loop_points_for_triangulation(
     }
 }
 
-fn find_or_insert_vertex(
-    vertices: &mut Vec<Point3>,
-    point: Point3,
-) -> Result<usize, ExactArrangementBlocker> {
-    for (index, existing) in vertices.iter().enumerate() {
-        match point3_equal(existing, &point).value() {
-            Some(true) => return Ok(index),
+#[derive(Default)]
+struct ExactVertexInsertIndex {
+    point_key_buckets: BTreeMap<ExactPoint3Key, Vec<usize>>,
+    unkeyed_vertices: Vec<usize>,
+}
+
+impl ExactVertexInsertIndex {
+    fn from_vertices(vertices: &[Point3]) -> Self {
+        let mut index = Self::default();
+        for (vertex, point) in vertices.iter().enumerate() {
+            index.insert_known(vertex, point);
+        }
+        index
+    }
+
+    fn find_or_insert(
+        &mut self,
+        vertices: &mut Vec<Point3>,
+        point: Point3,
+    ) -> Result<usize, ExactArrangementBlocker> {
+        let point_key = exact_point3_key(&point);
+        if let Some(index) = self.find_matching(&point, point_key.as_ref(), vertices)? {
+            return Ok(index);
+        }
+        let vertex = vertices.len();
+        self.insert_with_key(vertex, point_key);
+        vertices.push(point);
+        Ok(vertex)
+    }
+
+    fn insert_known(&mut self, vertex: usize, point: &Point3) {
+        self.insert_with_key(vertex, exact_point3_key(point));
+    }
+
+    fn insert_with_key(&mut self, vertex: usize, point_key: Option<ExactPoint3Key>) {
+        if let Some(key) = point_key {
+            self.point_key_buckets.entry(key).or_default().push(vertex);
+        } else {
+            self.unkeyed_vertices.push(vertex);
+        }
+    }
+
+    fn find_matching(
+        &self,
+        point: &Point3,
+        point_key: Option<&ExactPoint3Key>,
+        vertices: &[Point3],
+    ) -> Result<Option<usize>, ExactArrangementBlocker> {
+        if let Some(key) = point_key {
+            if let Some(bucket) = self.point_key_buckets.get(key)
+                && let Some(index) = find_matching_vertex_in_indices(point, vertices, bucket)?
+            {
+                return Ok(Some(index));
+            }
+            return find_matching_vertex_in_indices(point, vertices, &self.unkeyed_vertices);
+        }
+
+        for bucket in self.point_key_buckets.values() {
+            if let Some(index) = find_matching_vertex_in_indices(point, vertices, bucket)? {
+                return Ok(Some(index));
+            }
+        }
+        find_matching_vertex_in_indices(point, vertices, &self.unkeyed_vertices)
+    }
+}
+
+fn find_matching_vertex_in_indices(
+    point: &Point3,
+    vertices: &[Point3],
+    candidates: &[usize],
+) -> Result<Option<usize>, ExactArrangementBlocker> {
+    for &index in candidates {
+        match point3_equal(&vertices[index], point).value() {
+            Some(true) => return Ok(Some(index)),
             Some(false) => {}
             None => return Err(ExactArrangementBlocker::UndecidableOrdering),
         }
     }
-    let index = vertices.len();
-    vertices.push(point);
-    Ok(index)
+    Ok(None)
 }
 
 pub(crate) fn choose_polygon_projection(
@@ -930,6 +1093,37 @@ mod tests {
 
     fn p(x: i64, y: i64, z: i64) -> Point3 {
         Point3::new(Real::from(x), Real::from(y), Real::from(z))
+    }
+
+    fn q(numerator: i64, denominator: i64) -> Real {
+        (Real::from(numerator) / &Real::from(denominator)).expect("nonzero denominator")
+    }
+
+    fn rational_p(x: [i64; 2], y: [i64; 2], z: [i64; 2]) -> Point3 {
+        Point3::new(q(x[0], x[1]), q(y[0], y[1]), q(z[0], z[1]))
+    }
+
+    #[test]
+    fn vertex_insert_index_buckets_exact_rational_points() {
+        let mut vertices = Vec::new();
+        let mut index = ExactVertexInsertIndex::default();
+        let point = rational_p([1, 2], [-3, 4], [5, 6]);
+
+        assert_eq!(
+            index.find_or_insert(&mut vertices, point.clone()).unwrap(),
+            0
+        );
+        assert_eq!(index.find_or_insert(&mut vertices, point).unwrap(), 0);
+        assert_eq!(
+            index
+                .find_or_insert(&mut vertices, rational_p([2, 3], [-3, 4], [5, 6]))
+                .unwrap(),
+            1
+        );
+
+        assert_eq!(vertices.len(), 2);
+        assert_eq!(index.point_key_buckets.len(), 2);
+        assert!(index.unkeyed_vertices.is_empty());
     }
 
     #[test]
