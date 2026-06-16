@@ -747,6 +747,9 @@ impl ExactBooleanRequest {
         left: &ExactMesh,
         right: &ExactMesh,
     ) -> Result<ExactVolumetricBoundaryClosureReport, MeshError> {
+        if matches!(self.operation, ExactBooleanOperation::SelectedRegions(_)) {
+            return Ok(no_materialized_boundary_output_report(self.operation));
+        }
         let graph = validated_intersection_graph(left, right)?;
         volumetric_boundary_closure_report_from_graph(&graph, left, right, self.operation)
     }
@@ -3254,6 +3257,10 @@ pub(crate) fn volumetric_boundary_closure_report_from_graph(
     right: &ExactMesh,
     operation: ExactBooleanOperation,
 ) -> Result<ExactVolumetricBoundaryClosureReport, MeshError> {
+    if matches!(operation, ExactBooleanOperation::SelectedRegions(_)) {
+        return Ok(no_materialized_boundary_output_report(operation));
+    }
+
     let Some(materialized) = materialize_volumetric_winding_region_plan_from_graph(
         graph,
         left,
@@ -3262,25 +3269,31 @@ pub(crate) fn volumetric_boundary_closure_report_from_graph(
         ValidationPolicy::ALLOW_BOUNDARY,
     )?
     else {
-        return Ok(ExactVolumetricBoundaryClosureReport {
-            operation,
-            status: ExactVolumetricBoundaryClosureStatus::NoMaterializedBoundaryOutput,
-            output_triangles: 0,
-            boundary_edges: 0,
-            boundary_loops: 0,
-            boundary_vertices_with_invalid_outgoing_degree: 0,
-            boundary_vertices_with_invalid_incoming_degree: 0,
-            overused_boundary_edges: 0,
-            noncoplanar_boundary_loops: 0,
-            repeated_exact_boundary_points: 0,
-            self_contact_exact_points: 0,
-            self_contact_topological_vertices: 0,
-            self_contact_degenerate_cycles: 0,
-            self_contact_nondegenerate_cycles: 0,
-            coplanar_loop_groups: 0,
-        });
+        return Ok(no_materialized_boundary_output_report(operation));
     };
     volumetric_boundary_closure_report_from_materialized(&materialized, operation)
+}
+
+fn no_materialized_boundary_output_report(
+    operation: ExactBooleanOperation,
+) -> ExactVolumetricBoundaryClosureReport {
+    ExactVolumetricBoundaryClosureReport {
+        operation,
+        status: ExactVolumetricBoundaryClosureStatus::NoMaterializedBoundaryOutput,
+        output_triangles: 0,
+        boundary_edges: 0,
+        boundary_loops: 0,
+        boundary_vertices_with_invalid_outgoing_degree: 0,
+        boundary_vertices_with_invalid_incoming_degree: 0,
+        overused_boundary_edges: 0,
+        noncoplanar_boundary_loops: 0,
+        repeated_exact_boundary_points: 0,
+        self_contact_exact_points: 0,
+        self_contact_topological_vertices: 0,
+        self_contact_degenerate_cycles: 0,
+        self_contact_nondegenerate_cycles: 0,
+        coplanar_loop_groups: 0,
+    }
 }
 
 fn volumetric_boundary_closure_report_from_materialized(

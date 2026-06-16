@@ -752,8 +752,17 @@ impl<'a> ExactBooleanWorkspace<'a> {
         cached_workspace_report!(self, volumetric_boundary_closure_reports, request, {
             let left = self.left;
             let right = self.right;
-            let graph = self.validated_graph()?;
-            volumetric_boundary_closure_report_from_graph(graph, left, right, request.operation)?
+            if matches!(request.operation, ExactBooleanOperation::SelectedRegions(_)) {
+                request.volumetric_boundary_closure(left, right)?
+            } else {
+                let graph = self.validated_graph()?;
+                volumetric_boundary_closure_report_from_graph(
+                    graph,
+                    left,
+                    right,
+                    request.operation,
+                )?
+            }
         })
     }
 
@@ -811,8 +820,12 @@ impl<'a> ExactBooleanWorkspace<'a> {
         cached_workspace_report!(self, planar_arrangement_reports, request, {
             let left = self.left;
             let right = self.right;
-            let graph = self.validated_graph()?;
-            planar_arrangement_report_from_graph(graph, left, right, request.operation)?
+            if matches!(request.operation, ExactBooleanOperation::SelectedRegions(_)) {
+                request.planar_arrangement_report(left, right)?
+            } else {
+                let graph = self.validated_graph()?;
+                planar_arrangement_report_from_graph(graph, left, right, request.operation)?
+            }
         })
     }
 
@@ -2186,6 +2199,25 @@ mod tests {
             workspace.validate_volumetric_boundary_closure(request, &relabeled_closure_report),
             Err(ExactReportValidationError::StatusEvidenceMismatch)
         );
+        let selected_request = ExactBooleanRequest::new(
+            ExactBooleanOperation::SelectedRegions(ExactRegionSelection::KeepAll),
+            ValidationPolicy::ALLOW_BOUNDARY,
+        );
+        let selected_closure_report = workspace
+            .volumetric_boundary_closure(selected_request)
+            .unwrap()
+            .clone();
+        assert_eq!(
+            selected_closure_report,
+            selected_request
+                .volumetric_boundary_closure(&left, &right)
+                .unwrap()
+        );
+        workspace
+            .validate_volumetric_boundary_closure(selected_request, &selected_closure_report)
+            .unwrap();
+        assert_eq!(selected_closure_report.output_triangles, 0);
+        assert_eq!(selected_closure_report.boundary_edges, 0);
 
         let first_readiness =
             workspace.winding_readiness(request).unwrap() as *const ExactWindingReadinessReport;
@@ -2266,10 +2298,6 @@ mod tests {
         assert_eq!(
             workspace.validate_planar_arrangement_report(request, &relabeled_planar_report),
             Err(ExactReportValidationError::StatusEvidenceMismatch)
-        );
-        let selected_request = ExactBooleanRequest::new(
-            ExactBooleanOperation::SelectedRegions(ExactRegionSelection::KeepAll),
-            ValidationPolicy::ALLOW_BOUNDARY,
         );
         let selected_planar_report = workspace
             .planar_arrangement_report(selected_request)
