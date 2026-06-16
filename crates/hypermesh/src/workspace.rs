@@ -1,6 +1,4 @@
-use super::arrangement3d::{
-    ExactArrangement, ExactTopologyAssemblyReport, ExactTopologyAssemblyStatus,
-};
+use super::arrangement3d::ExactArrangement;
 use super::boolean::{
     ExactArrangementBooleanAttempt, ExactBooleanCertificationSet, ExactBooleanEvaluation,
     ExactBooleanOperation, ExactBooleanRequest,
@@ -14,8 +12,7 @@ use super::boolean::{
     validate_boolean_result_against_sources_with_artifacts,
 };
 use super::cell_complex::{
-    ExactRegionOwnershipReport, ExactRegionOwnershipStatus, ExactSelectedCellComplex,
-    ExactSelectedCellComplexFreshness, select_arrangement_for_replay,
+    ExactSelectedCellComplex, ExactSelectedCellComplexFreshness, select_arrangement_for_replay,
 };
 use super::error::{DiagnosticKind, MeshDiagnostic, MeshError, Severity};
 use super::graph::{ExactIntersectionGraph, build_intersection_graph};
@@ -276,89 +273,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
         let arrangement = ExactArrangement::from_intersection_graph_with_policy(
             graph, self.left, self.right, policy,
         )?;
-        store_retained_policy_report(&mut self.arrangements, policy, arrangement)
-    }
-
-    /// Returns topology-assembly evidence for `policy`, deriving it from the
-    /// retained arrangement for that policy.
-    pub fn topology_assembly_report(
-        &mut self,
-        policy: ExactRegularizationPolicy,
-    ) -> Result<ExactTopologyAssemblyReport, MeshError> {
-        let left = self.left;
-        let right = self.right;
-        Ok(self
-            .arrangement(policy)?
-            .topology_assembly_report_with_policy(left, right, policy))
-    }
-
-    /// Validate topology-assembly evidence against this workspace's retained
-    /// source session.
-    pub fn validate_topology_assembly_report(
-        &mut self,
-        policy: ExactRegularizationPolicy,
-        report: &ExactTopologyAssemblyReport,
-    ) -> Result<(), ExactArrangementBlocker> {
-        let arrangement = self
-            .arrangement(policy)
-            .map_err(|_| ExactArrangementBlocker::UnresolvedIntersection)?
-            .clone();
-        report.validate_against_arrangement(&arrangement, self.left, self.right, policy)
-    }
-
-    /// Classify topology-assembly evidence against this workspace's retained
-    /// source session.
-    pub fn topology_assembly_report_status(
-        &mut self,
-        policy: ExactRegularizationPolicy,
-        report: &ExactTopologyAssemblyReport,
-    ) -> ExactTopologyAssemblyStatus {
-        let arrangement = match self.arrangement(policy) {
-            Ok(arrangement) => arrangement.clone(),
-            Err(_) => return ExactTopologyAssemblyStatus::SourceReplayBlocked,
-        };
-        report.status_against_arrangement(&arrangement, self.left, self.right, policy)
-    }
-
-    /// Returns region-ownership evidence for `policy`, deriving it from the
-    /// retained arrangement for that policy.
-    pub fn region_ownership_report(
-        &mut self,
-        policy: ExactRegularizationPolicy,
-    ) -> Result<ExactRegionOwnershipReport, MeshError> {
-        let left = self.left;
-        let right = self.right;
-        self.arrangement(policy)?
-            .region_ownership_report_with_policy(left, right, policy)
-            .map_err(workspace_arrangement_blocker_error)
-    }
-
-    /// Validate region-ownership evidence against this workspace's retained
-    /// source session.
-    pub fn validate_region_ownership_report(
-        &mut self,
-        policy: ExactRegularizationPolicy,
-        report: &ExactRegionOwnershipReport,
-    ) -> Result<(), ExactArrangementBlocker> {
-        let arrangement = self
-            .arrangement(policy)
-            .map_err(|_| ExactArrangementBlocker::UnresolvedIntersection)?
-            .clone();
-        report.validate_against_arrangement(&arrangement, self.left, self.right, policy)
-    }
-
-    /// Classify region-ownership evidence against this workspace's retained
-    /// source session.
-    pub fn region_ownership_report_status(
-        &mut self,
-        policy: ExactRegularizationPolicy,
-        report: &ExactRegionOwnershipReport,
-    ) -> ExactRegionOwnershipStatus {
-        let arrangement = match self.arrangement(policy) {
-            Ok(arrangement) => arrangement.clone(),
-            Err(_) => return ExactRegionOwnershipStatus::SourceReplayBlocked,
-        };
-        report.status_against_arrangement(&arrangement, self.left, self.right, policy)
+        store_retained_policy_artifact(&mut self.arrangements, policy, arrangement)
     }
 
     /// Returns the arrangement/cell-complex attempt report for `request` and
@@ -922,7 +837,7 @@ trait RetainedCellComplex {
     fn validate_for_workspace_cache(&self) -> Result<(), ExactArrangementBlocker>;
 }
 
-trait RetainedPolicyReport {
+trait RetainedPolicyArtifact {
     fn validate_for_workspace_cache(&self) -> Result<(), ExactArrangementBlocker>;
 }
 
@@ -953,19 +868,7 @@ impl RetainedCellComplex for ExactSimplifiedCellComplex {
     }
 }
 
-impl RetainedPolicyReport for ExactTopologyAssemblyReport {
-    fn validate_for_workspace_cache(&self) -> Result<(), ExactArrangementBlocker> {
-        self.validate()
-    }
-}
-
-impl RetainedPolicyReport for ExactArrangement {
-    fn validate_for_workspace_cache(&self) -> Result<(), ExactArrangementBlocker> {
-        self.validate()
-    }
-}
-
-impl RetainedPolicyReport for ExactRegionOwnershipReport {
+impl RetainedPolicyArtifact for ExactArrangement {
     fn validate_for_workspace_cache(&self) -> Result<(), ExactArrangementBlocker> {
         self.validate()
     }
@@ -1091,7 +994,7 @@ fn store_retained_cell_complex<T: RetainedCellComplex>(
         .2)
 }
 
-fn store_retained_policy_report<T: RetainedPolicyReport>(
+fn store_retained_policy_artifact<T: RetainedPolicyArtifact>(
     cache: &mut Vec<(ExactRegularizationPolicy, T)>,
     policy: ExactRegularizationPolicy,
     report: T,
@@ -1229,7 +1132,8 @@ mod tests {
     use crate::{
         CoplanarVolumetricCellEvidenceError, CoplanarVolumetricCellEvidenceFreshness,
         ExactAdjacentUnionCompletionStatus, ExactArrangementBooleanStage, ExactBooleanResultKind,
-        ExactBooleanShortcutKind, ExactBoundaryBooleanPolicy, ExactReportValidationError, Triangle,
+        ExactBooleanShortcutKind, ExactBoundaryBooleanPolicy, ExactRegionOwnershipStatus,
+        ExactReportValidationError, ExactTopologyAssemblyStatus, Triangle,
         certify_coplanar_volumetric_cell_evidence,
     };
 
@@ -1297,28 +1201,23 @@ mod tests {
             .unwrap() as *const ExactArrangement;
         assert_eq!(first_arrangement, second_arrangement);
 
-        let first_topology_report = workspace
-            .topology_assembly_report(ExactRegularizationPolicy::REGULARIZED_SOLID)
-            .unwrap();
-        let second_topology_report = workspace
-            .topology_assembly_report(ExactRegularizationPolicy::REGULARIZED_SOLID)
-            .unwrap();
-        assert_eq!(first_topology_report, second_topology_report);
-        first_topology_report.validate().unwrap();
-        let topology_report = first_topology_report;
+        let attempt_with_reports = workspace
+            .arrangement_attempt(request, ExactRegularizationPolicy::REGULARIZED_SOLID)
+            .unwrap()
+            .clone();
+        let topology_report = attempt_with_reports
+            .topology_assembly_report
+            .clone()
+            .expect("arrangement attempt should retain topology evidence");
+        topology_report.validate().unwrap();
         topology_report
             .validate_against_sources(&left, &right, ExactRegularizationPolicy::REGULARIZED_SOLID)
             .unwrap();
-        workspace
-            .validate_topology_assembly_report(
-                ExactRegularizationPolicy::REGULARIZED_SOLID,
-                &topology_report,
-            )
-            .unwrap();
         assert_eq!(
-            workspace.topology_assembly_report_status(
+            topology_report.status_against_sources(
+                &left,
+                &right,
                 ExactRegularizationPolicy::REGULARIZED_SOLID,
-                &topology_report,
             ),
             ExactTopologyAssemblyStatus::Complete
         );
@@ -1334,42 +1233,27 @@ mod tests {
             Err(ExactArrangementBlocker::UnresolvedRegionClassification)
         );
         assert_eq!(
-            workspace.validate_topology_assembly_report(
+            stale_topology_report.status_against_sources(
+                &left,
+                &right,
                 ExactRegularizationPolicy::REGULARIZED_SOLID,
-                &stale_topology_report,
-            ),
-            Err(ExactArrangementBlocker::UnresolvedRegionClassification)
-        );
-        assert_eq!(
-            workspace.topology_assembly_report_status(
-                ExactRegularizationPolicy::REGULARIZED_SOLID,
-                &stale_topology_report,
             ),
             ExactTopologyAssemblyStatus::StaleArrangement
         );
 
-        let first_ownership_report = workspace
-            .region_ownership_report(ExactRegularizationPolicy::REGULARIZED_SOLID)
-            .unwrap();
-        let second_ownership_report = workspace
-            .region_ownership_report(ExactRegularizationPolicy::REGULARIZED_SOLID)
-            .unwrap();
-        assert_eq!(first_ownership_report, second_ownership_report);
-        first_ownership_report.validate().unwrap();
-        let ownership_report = first_ownership_report;
+        let ownership_report = attempt_with_reports
+            .region_ownership_report
+            .clone()
+            .expect("arrangement attempt should retain ownership evidence");
+        ownership_report.validate().unwrap();
         ownership_report
             .validate_against_sources(&left, &right, ExactRegularizationPolicy::REGULARIZED_SOLID)
             .unwrap();
-        workspace
-            .validate_region_ownership_report(
-                ExactRegularizationPolicy::REGULARIZED_SOLID,
-                &ownership_report,
-            )
-            .unwrap();
         assert_eq!(
-            workspace.region_ownership_report_status(
+            ownership_report.status_against_sources(
+                &left,
+                &right,
                 ExactRegularizationPolicy::REGULARIZED_SOLID,
-                &ownership_report,
             ),
             ExactRegionOwnershipStatus::VolumeResolved
         );
@@ -1386,16 +1270,10 @@ mod tests {
             Err(ExactArrangementBlocker::UnresolvedRegionClassification)
         );
         assert_eq!(
-            workspace.validate_region_ownership_report(
+            stale_ownership_report.status_against_sources(
+                &left,
+                &right,
                 ExactRegularizationPolicy::REGULARIZED_SOLID,
-                &stale_ownership_report,
-            ),
-            Err(ExactArrangementBlocker::UnresolvedRegionClassification)
-        );
-        assert_eq!(
-            workspace.region_ownership_report_status(
-                ExactRegularizationPolicy::REGULARIZED_SOLID,
-                &stale_ownership_report,
             ),
             ExactRegionOwnershipStatus::StaleOwnership
         );

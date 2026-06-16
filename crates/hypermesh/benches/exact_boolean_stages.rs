@@ -7,9 +7,10 @@ use hypermesh::{
     ExactBooleanOperation, ExactBooleanPreflight, ExactBooleanRequest, ExactBooleanResult,
     ExactBooleanWorkspace, ExactBoundaryTouchingReport, ExactIdenticalMeshReport, ExactMesh,
     ExactOpenSurfaceDisjointReport, ExactPlanarArrangementReport, ExactRefinementReport,
-    ExactRegularizationPolicy, ExactSameSurfaceReport, ExactSelectedCellComplex,
-    ExactSimplifiedCellComplex, ExactVolumetricBoundaryClosureReport, ExactWindingReadinessReport,
-    ValidationPolicy, build_intersection_graph, triangulate_all_face_cells_with_cdt,
+    ExactRegionOwnershipReport, ExactRegularizationPolicy, ExactSameSurfaceReport,
+    ExactSelectedCellComplex, ExactSimplifiedCellComplex, ExactTopologyAssemblyReport,
+    ExactVolumetricBoundaryClosureReport, ExactWindingReadinessReport, ValidationPolicy,
+    build_intersection_graph, triangulate_all_face_cells_with_cdt,
 };
 
 struct BenchCase {
@@ -361,74 +362,91 @@ fn run_case(case: &BenchCase) {
     });
 
     workspace
-        .topology_assembly_report(case.regularization)
+        .arrangement_attempt(request, case.regularization)
         .unwrap();
-    time_stage(case, "workspace_topology_assembly_report_derived", || {
-        let report = workspace
-            .topology_assembly_report(case.regularization)
-            .unwrap();
-        black_box((
-            report.status,
-            report.graph_events,
-            report.region_boundaries,
-            report.arrangement_face_cells,
-            report.arrangement_face_cell_boundary_nodes,
-            report.arrangement_face_cell_boundary_points,
-            report.arrangement_regions,
-            report.arrangement_region_edge_incidences,
-            report.arrangement_region_boundary_edges,
-            report.arrangement_region_non_manifold_edges,
-            report.lower_dimensional_point_contacts,
-            report.lower_dimensional_edge_contacts,
-            report.volume_adjacency_face_sides,
-            report.volume_adjacency_separating_faces,
-        ));
-    });
-
-    time_prepared_stage(
+    time_stage(
         case,
-        "workspace_replay_validate_topology_assembly_report",
-        || retained_workspace_and_topology_for_case(case),
-        |(retained_workspace, report)| {
-            black_box(
-                retained_workspace
-                    .validate_topology_assembly_report(case.regularization, report)
-                    .ok(),
-            );
+        "workspace_topology_assembly_report_from_attempt",
+        || {
+            let report = workspace
+                .arrangement_attempt(request, case.regularization)
+                .unwrap()
+                .topology_assembly_report
+                .as_ref();
+            if let Some(report) = report {
+                black_box((
+                    report.status,
+                    report.graph_events,
+                    report.region_boundaries,
+                    report.arrangement_face_cells,
+                    report.arrangement_face_cell_boundary_nodes,
+                    report.arrangement_face_cell_boundary_points,
+                    report.arrangement_regions,
+                    report.arrangement_region_edge_incidences,
+                    report.arrangement_region_boundary_edges,
+                    report.arrangement_region_non_manifold_edges,
+                    report.lower_dimensional_point_contacts,
+                    report.lower_dimensional_edge_contacts,
+                    report.volume_adjacency_face_sides,
+                    report.volume_adjacency_separating_faces,
+                ));
+            }
         },
     );
 
-    workspace
-        .region_ownership_report(case.regularization)
-        .unwrap();
-    time_stage(case, "workspace_region_ownership_report_derived", || {
-        let report = workspace
-            .region_ownership_report(case.regularization)
-            .unwrap();
-        black_box((
-            report.status,
-            report.face_cells,
-            report.face_cell_boundary_nodes,
-            report.face_cell_boundary_points,
-            report.opposite_unknown_faces,
-            report.volume_regions,
-            report.lower_dimensional_point_contacts,
-            report.lower_dimensional_edge_contacts,
-            report.volume_adjacency_face_sides,
-            report.volume_adjacency_separating_faces,
-        ));
-    });
+    time_prepared_stage(
+        case,
+        "topology_assembly_report_replay_validate_from_attempt",
+        || retained_topology_from_attempt_for_case(case),
+        |report| {
+            if let Some(report) = report.as_ref() {
+                black_box(
+                    report
+                        .validate_against_sources(&case.left, &case.right, case.regularization)
+                        .ok(),
+                );
+            }
+        },
+    );
+
+    time_stage(
+        case,
+        "workspace_region_ownership_report_from_attempt",
+        || {
+            let report = workspace
+                .arrangement_attempt(request, case.regularization)
+                .unwrap()
+                .region_ownership_report
+                .as_ref();
+            if let Some(report) = report {
+                black_box((
+                    report.status,
+                    report.face_cells,
+                    report.face_cell_boundary_nodes,
+                    report.face_cell_boundary_points,
+                    report.opposite_unknown_faces,
+                    report.volume_regions,
+                    report.lower_dimensional_point_contacts,
+                    report.lower_dimensional_edge_contacts,
+                    report.volume_adjacency_face_sides,
+                    report.volume_adjacency_separating_faces,
+                ));
+            }
+        },
+    );
 
     time_prepared_stage(
         case,
-        "workspace_replay_validate_region_ownership_report",
-        || retained_workspace_and_region_ownership_for_case(case),
-        |(retained_workspace, report)| {
-            black_box(
-                retained_workspace
-                    .validate_region_ownership_report(case.regularization, report)
-                    .ok(),
-            );
+        "region_ownership_report_replay_validate_from_attempt",
+        || retained_region_ownership_from_attempt_for_case(case),
+        |report| {
+            if let Some(report) = report.as_ref() {
+                black_box(
+                    report
+                        .validate_against_sources(&case.left, &case.right, case.regularization)
+                        .ok(),
+                );
+            }
         },
     );
 
@@ -1008,36 +1026,38 @@ fn retained_workspace_and_arrangement_attempt_for_case<'a>(
     (retained_workspace, attempt)
 }
 
-fn retained_workspace_and_region_ownership_for_case<'a>(
-    case: &'a BenchCase,
-) -> (
-    ExactBooleanWorkspace<'a>,
-    hypermesh::ExactRegionOwnershipReport,
-) {
+fn retained_region_ownership_from_attempt_for_case(
+    case: &BenchCase,
+) -> Option<ExactRegionOwnershipReport> {
     let mut retained_workspace = retained_workspace_for_case(
         case,
         ExactBooleanRequest::new(case.operation, case.validation),
     );
-    let report = retained_workspace
-        .region_ownership_report(case.regularization)
-        .unwrap();
-    (retained_workspace, report)
+    retained_workspace
+        .arrangement_attempt(
+            ExactBooleanRequest::new(case.operation, case.validation),
+            case.regularization,
+        )
+        .unwrap()
+        .region_ownership_report
+        .clone()
 }
 
-fn retained_workspace_and_topology_for_case<'a>(
-    case: &'a BenchCase,
-) -> (
-    ExactBooleanWorkspace<'a>,
-    hypermesh::ExactTopologyAssemblyReport,
-) {
+fn retained_topology_from_attempt_for_case(
+    case: &BenchCase,
+) -> Option<ExactTopologyAssemblyReport> {
     let mut retained_workspace = retained_workspace_for_case(
         case,
         ExactBooleanRequest::new(case.operation, case.validation),
     );
-    let report = retained_workspace
-        .topology_assembly_report(case.regularization)
-        .unwrap();
-    (retained_workspace, report)
+    retained_workspace
+        .arrangement_attempt(
+            ExactBooleanRequest::new(case.operation, case.validation),
+            case.regularization,
+        )
+        .unwrap()
+        .topology_assembly_report
+        .clone()
 }
 
 fn retained_selected_for_case(
