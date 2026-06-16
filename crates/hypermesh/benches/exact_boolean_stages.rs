@@ -688,11 +688,21 @@ fn run_case(case: &BenchCase) {
 
     time_prepared_stage(
         case,
-        "workspace_validate_result_from_retained_artifacts",
+        "result_validate_operation_replay",
         || retained_workspace_and_result_for_case(case, request),
         |(retained_workspace, result)| {
             if let Some(result) = result.as_ref() {
-                black_box(retained_workspace.validate_result(request, result).ok());
+                black_box(
+                    result
+                        .validate_operation_against_sources(
+                            retained_workspace.left(),
+                            retained_workspace.right(),
+                            request.operation,
+                            request.validation,
+                            request.boundary_policy,
+                        )
+                        .ok(),
+                );
             }
         },
     );

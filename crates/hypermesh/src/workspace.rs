@@ -7,7 +7,6 @@ use super::boolean::{
     materialize_certified_boolean_support_with_artifacts,
     preflight_boolean_exact_request_from_graph,
     try_materialize_certified_boolean_support_with_artifacts,
-    validate_boolean_result_against_sources_with_artifacts,
 };
 use super::error::{DiagnosticKind, MeshDiagnostic, MeshError, Severity};
 use super::graph::{ExactIntersectionGraph, build_intersection_graph};
@@ -384,66 +383,6 @@ impl<'a> ExactBooleanWorkspace<'a> {
         evaluation: &ExactBooleanEvaluation,
     ) -> ExactReportFreshness {
         exact_report_freshness(self.validate_evaluation(evaluation))
-    }
-
-    /// Validate a materialized result against this workspace's source meshes
-    /// using retained graph artifacts where they apply.
-    pub fn validate_result(
-        &mut self,
-        request: ExactBooleanRequest,
-        result: &ExactBooleanResult,
-    ) -> Result<(), ExactReportValidationError> {
-        if self
-            .materializations
-            .iter()
-            .any(|(stored_request, stored_result)| {
-                *stored_request == request && stored_result == result
-            })
-            || self
-                .evaluations
-                .iter()
-                .filter(|(stored_request, _)| *stored_request == request)
-                .filter_map(|(_, evaluation)| evaluation.result.as_ref())
-                .any(|stored_result| stored_result == result)
-        {
-            validate_retained_result_for_request(self.left, self.right, request, result)?;
-            return Ok(());
-        }
-
-        self.graph()
-            .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
-        if !matches!(
-            request.operation,
-            super::boolean::ExactBooleanOperation::SelectedRegions(_)
-        ) {
-            self.arrangement(ExactRegularizationPolicy::REGULARIZED_SOLID)
-                .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
-        }
-        let graph = self
-            .graph
-            .as_ref()
-            .expect("intersection graph cache was just populated");
-        let regularized_arrangement = self.regularized_solid_arrangement();
-        validate_boolean_result_against_sources_with_artifacts(
-            result,
-            graph,
-            regularized_arrangement,
-            self.left,
-            self.right,
-            request.operation,
-            request.validation,
-            request.boundary_policy,
-        )
-    }
-
-    /// Classify a materialized result's freshness against this workspace's
-    /// source meshes using the retained replay session.
-    pub fn result_freshness(
-        &mut self,
-        request: ExactBooleanRequest,
-        result: &ExactBooleanResult,
-    ) -> ExactReportFreshness {
-        exact_report_freshness(self.validate_result(request, result))
     }
 }
 
@@ -1360,16 +1299,18 @@ mod tests {
             corrupt_materialization_cache.materialize(request).is_err(),
             "cached materialization results must validate before reuse"
         );
-        materialize_workspace
-            .validate_result(request, &materialized)
-            .unwrap();
+        validate_retained_result_for_request(&left, &right, request, &materialized).unwrap();
         let mut locally_invalid_cached_result = materialized.clone();
         locally_invalid_cached_result.graph_had_unknowns =
             !locally_invalid_cached_result.graph_had_unknowns;
         assert!(
-            materialize_workspace
-                .validate_result(request, &locally_invalid_cached_result)
-                .is_err()
+            validate_retained_result_for_request(
+                &left,
+                &right,
+                request,
+                &locally_invalid_cached_result
+            )
+            .is_err()
         );
         if materialized.topology_assembly_report.is_some() {
             let mut stale_gate_report = materialized.clone();
@@ -1379,12 +1320,17 @@ mod tests {
                 .unwrap()
                 .graph_events += 1;
             assert_eq!(
-                materialize_workspace.validate_result(request, &stale_gate_report),
+                validate_retained_result_for_request(&left, &right, request, &stale_gate_report),
                 Err(ExactReportValidationError::SourceReplayMismatch)
             );
         }
         assert_eq!(
-            materialize_workspace.result_freshness(request, &materialized),
+            exact_report_freshness(validate_retained_result_for_request(
+                &left,
+                &right,
+                request,
+                &materialized
+            )),
             ExactReportFreshness::Current
         );
         let mut stale_result = materialized.clone();
@@ -1392,12 +1338,15 @@ mod tests {
             operation: ExactBooleanOperation::Difference,
         };
         assert!(
-            materialize_workspace
-                .validate_result(request, &stale_result)
-                .is_err()
+            validate_retained_result_for_request(&left, &right, request, &stale_result).is_err()
         );
         assert_ne!(
-            materialize_workspace.result_freshness(request, &stale_result),
+            exact_report_freshness(validate_retained_result_for_request(
+                &left,
+                &right,
+                request,
+                &stale_result
+            )),
             ExactReportFreshness::Current
         );
 
@@ -1686,7 +1635,7 @@ mod tests {
         };
         let relabelled = workspace.materializations[0].1.clone();
         assert!(
-            workspace.validate_result(request, &relabelled).is_err(),
+            validate_retained_result_for_request(&left, &right, request, &relabelled).is_err(),
             "cached result validation must reject relabelled operations"
         );
         assert!(
