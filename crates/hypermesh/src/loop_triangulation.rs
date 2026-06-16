@@ -579,19 +579,19 @@ fn triangulate_loop_group_union_via_arrangement_or_error(
     triangles: &mut Vec<Triangle>,
     error: ExactArrangementBlocker,
 ) -> Result<(), ExactArrangementBlocker> {
-    if loop_boundaries_cross_or_overlap(loops)? {
+    if loop_boundaries_have_proper_crossing(loops)? {
         return Err(error);
     }
     triangulate_loop_group_union_via_arrangement(loops, vertices, vertex_index, triangles)
         .or(Err(error))
 }
 
-fn loop_boundaries_cross_or_overlap(
+fn loop_boundaries_have_proper_crossing(
     loops: &[ProjectedFaceLoop],
 ) -> Result<bool, ExactArrangementBlocker> {
     for left_index in 0..loops.len() {
         for right_index in (left_index + 1)..loops.len() {
-            if loop_pair_boundaries_cross_or_overlap(
+            if loop_pair_boundaries_have_proper_crossing(
                 &loops[left_index].projected,
                 &loops[right_index].projected,
             )? {
@@ -602,7 +602,7 @@ fn loop_boundaries_cross_or_overlap(
     Ok(false)
 }
 
-fn loop_pair_boundaries_cross_or_overlap(
+fn loop_pair_boundaries_have_proper_crossing(
     left: &[Point2],
     right: &[Point2],
 ) -> Result<bool, ExactArrangementBlocker> {
@@ -618,12 +618,13 @@ fn loop_pair_boundaries_cross_or_overlap(
             )
             .value()
             {
-                Some(SegmentIntersection::Disjoint | SegmentIntersection::EndpointTouch) => {}
                 Some(
-                    SegmentIntersection::Proper
+                    SegmentIntersection::Disjoint
+                    | SegmentIntersection::EndpointTouch
                     | SegmentIntersection::CollinearOverlap
                     | SegmentIntersection::Identical,
-                ) => return Ok(true),
+                ) => {}
+                Some(SegmentIntersection::Proper) => return Ok(true),
                 None => return Err(ExactArrangementBlocker::UndecidableOrdering),
             }
         }
@@ -1143,6 +1144,30 @@ mod tests {
             vertices
                 .iter()
                 .any(|vertex| { point3_equal(vertex, &p(3, 3, 0)).value() == Some(true) })
+        );
+    }
+
+    #[test]
+    fn triangulates_collinear_overlapping_same_depth_loops_via_arrangement() {
+        let loops = vec![
+            vec![p(0, 0, 0), p(2, 0, 0), p(2, 2, 0), p(0, 2, 0)],
+            vec![p(2, 0, 0), p(4, 0, 0), p(4, 2, 0), p(2, 2, 0)],
+        ];
+
+        let mut vertices = Vec::new();
+        let mut triangles = Vec::new();
+        triangulate_exact_loop_group(&loops, &mut vertices, &mut triangles).unwrap();
+
+        assert!(!triangles.is_empty());
+        assert!(
+            vertices
+                .iter()
+                .any(|vertex| { point3_equal(vertex, &p(2, 0, 0)).value() == Some(true) })
+        );
+        assert!(
+            vertices
+                .iter()
+                .any(|vertex| { point3_equal(vertex, &p(2, 2, 0)).value() == Some(true) })
         );
     }
 
