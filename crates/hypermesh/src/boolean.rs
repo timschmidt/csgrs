@@ -4451,6 +4451,41 @@ fn materialized_arrangement_attempt_outcome(
     ArrangementCellComplexOutcome::Materialized(Box::new(result), attempt.clone())
 }
 
+fn graph_backed_arrangement_cell_complex_result(
+    graph: &ExactIntersectionGraph,
+    retained_regularized_arrangement: &ExactArrangement,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+    topology_report: &ExactTopologyAssemblyReport,
+    ownership_report: &ExactRegionOwnershipReport,
+) -> Result<Option<ExactBooleanResult>, MeshError> {
+    let Some(materialized) = materialize_volumetric_winding_region_plan_from_graph(
+        graph, left, right, operation, validation,
+    )?
+    else {
+        return Ok(None);
+    };
+    let mut result = volumetric_arrangement_cell_complex_result(operation, materialized);
+    result.topology_assembly_report = Some(topology_report.clone());
+    result.region_ownership_report = Some(ownership_report.clone());
+    if validate_volumetric_arrangement_result_against_graph(
+        &result,
+        graph,
+        Some(retained_regularized_arrangement),
+        left,
+        right,
+        operation,
+        validation,
+    )
+    .is_err()
+    {
+        return Ok(None);
+    }
+    Ok(Some(result))
+}
+
 fn declined_output_validation_attempt_outcome_with_counts(
     attempt: &mut ExactArrangementBooleanAttempt,
     output_counts: Option<(usize, usize)>,
@@ -5159,6 +5194,23 @@ fn run_arrangement_cell_complex_attempt_from_arrangement(
             return Ok(ArrangementCellComplexOutcome::Declined(attempt));
         }
     };
+    if let Some(result) = graph_backed_arrangement_cell_complex_result(
+        &arrangement.graph,
+        arrangement,
+        left,
+        right,
+        operation,
+        validation,
+        &topology_report,
+        &ownership_report,
+    )? {
+        return Ok(materialized_arrangement_attempt_outcome(
+            &mut attempt,
+            result,
+            volume_resolves_region_classification,
+            None,
+        ));
+    }
     let result = certified_shortcut_result(
         mesh,
         operation,
@@ -11770,6 +11822,48 @@ mod tests {
         assert!(preflight.blocker.is_none());
         assert_eq!(preflight.retained_face_pairs, graph.face_pairs.len());
         assert_eq!(preflight.retained_events, graph.event_count());
+
+        let arrangement = ExactArrangement::from_intersection_graph_with_policy(
+            graph.clone(),
+            &left,
+            &right,
+            ExactRegularizationPolicy::REGULARIZED_SOLID,
+        )
+        .unwrap();
+        let topology_report = arrangement.topology_assembly_report_with_policy(
+            &left,
+            &right,
+            ExactRegularizationPolicy::REGULARIZED_SOLID,
+        );
+        let labeling_policy = arrangement_cell_complex_labeling_policy(
+            &arrangement,
+            Some(ExactBooleanOperation::Union),
+            ExactRegularizationPolicy::REGULARIZED_SOLID,
+        );
+        let labeled = arrangement.label_regions(labeling_policy).unwrap();
+        let ownership_report = labeled.region_ownership_report(&left, &right, labeling_policy);
+        let result = graph_backed_arrangement_cell_complex_result(
+            &graph,
+            &arrangement,
+            &left,
+            &right,
+            ExactBooleanOperation::Union,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            &topology_report,
+            &ownership_report,
+        )
+        .unwrap()
+        .expect("graph-backed result should retain materialized volumetric evidence");
+        assert_eq!(
+            result.kind,
+            ExactBooleanResultKind::ArrangementCellComplexMaterialized {
+                operation: ExactBooleanOperation::Union
+            }
+        );
+        assert!(result.topology_assembly_report.is_some());
+        assert!(result.region_ownership_report.is_some());
+        result.validate().unwrap();
+        result.validate_against_sources(&left, &right).unwrap();
     }
 
     #[test]
