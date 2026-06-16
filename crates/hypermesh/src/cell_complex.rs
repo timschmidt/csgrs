@@ -1388,24 +1388,29 @@ fn select_faces_from_volume_adjacencies(
         if exterior_selected == interior_selected {
             continue;
         }
-        for side in &adjacency.oriented_face_sides {
-            if side.exterior_volume != adjacency.exterior_volume
-                || side.interior_volume != adjacency.interior_volume
-                || side.face_cell >= face_count
-            {
+        for &face_cell in &adjacency.separating_face_cells {
+            if face_cell >= face_count {
                 return Err(ExactArrangementBlocker::NonManifoldCellComplex);
+            }
+            if !adjacency
+                .oriented_face_sides
+                .iter()
+                .any(|side| side.face_cell == face_cell)
+                && !oriented_volume_side_covers_face_provenance(&faces[face_cell], adjacency)
+            {
+                continue;
             }
             let reverse = exterior_selected && !interior_selected;
             match selected
                 .iter()
-                .position(|orientation| orientation.face == side.face_cell)
+                .position(|orientation| orientation.face == face_cell)
             {
                 Some(index) if selected[index].reverse != reverse => {
                     return Err(ExactArrangementBlocker::NonManifoldCellComplex);
                 }
                 Some(_) => {}
                 None => selected.push(ExactSelectedFaceOrientation {
-                    face: side.face_cell,
+                    face: face_cell,
                     reverse,
                     from_volume_adjacency: true,
                 }),
@@ -1530,6 +1535,17 @@ fn oriented_volume_side_covers_face_boundary(
         .oriented_face_sides
         .iter()
         .any(|side| exact_node_loops_equivalent(&face.cell.boundary, &side.boundary))
+}
+
+fn oriented_volume_side_covers_face_provenance(
+    face: &ExactCellComplexFace,
+    adjacency: &ArrangementVolumeAdjacency,
+) -> bool {
+    adjacency.oriented_face_sides.iter().any(|side| {
+        side.source == face.cell.carrier.side
+            && side.source_face == face.cell.carrier.face
+            && exact_node_loops_equivalent(&face.cell.boundary, &side.boundary)
+    })
 }
 
 fn selected_face_orientations_from_operation(
@@ -2001,6 +2017,39 @@ mod tests {
             }]
         );
         assert!(selected.blockers.is_empty());
+    }
+
+    #[test]
+    fn named_operation_selects_all_boundary_equivalent_volume_separator_faces() {
+        let mut labeled = labeled_with_volume_adjacency_face(
+            0,
+            vec![ExactArrangementBlocker::UnresolvedRegionClassification],
+        );
+        let duplicate_separator = labeled.faces[0].clone();
+        labeled.faces.push(duplicate_separator);
+        labeled.volume_adjacencies[0].separating_face_cells.push(1);
+
+        let selected = labeled.select(ExactBooleanOperation::Union).unwrap();
+
+        assert_eq!(selected.selected_volume_regions, vec![1]);
+        assert_eq!(selected.selected_faces, vec![0, 1]);
+        assert_eq!(
+            selected.selected_face_orientations,
+            vec![
+                ExactSelectedFaceOrientation {
+                    face: 0,
+                    reverse: false,
+                    from_volume_adjacency: true,
+                },
+                ExactSelectedFaceOrientation {
+                    face: 1,
+                    reverse: false,
+                    from_volume_adjacency: true,
+                },
+            ]
+        );
+        assert!(selected.blockers.is_empty());
+        selected.validate().unwrap();
     }
 
     #[test]
