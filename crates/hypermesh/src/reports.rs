@@ -4235,7 +4235,7 @@ impl ExactBooleanPreflight {
                 {
                     return Err(ExactReportValidationError::StatusEvidenceMismatch);
                 }
-                if self.retained_face_pairs == 0 {
+                if self.region_count == 0 {
                     no_region_facts(self.region_count, &self.region_classifications)
                 } else {
                     checked_region_facts(self.region_count, &self.region_classifications)
@@ -6421,6 +6421,30 @@ mod tests {
                 ExactReportValidationError::VolumetricMaterializedAssemblyViolatesOperation
             ),
             ExactReportFreshness::StaleStatusEvidence
+        );
+    }
+
+    #[test]
+    fn selected_region_preflight_accepts_empty_region_plan_with_boundary_face_pairs() {
+        let mut preflight = ExactBooleanPreflight {
+            operation: ExactBooleanOperation::SelectedRegions(ExactRegionSelection::KeepAll),
+            support: ExactBooleanSupport::SelectedRegionPolicy,
+            graph_had_unknowns: false,
+            retained_face_pairs: 1,
+            retained_events: 1,
+            region_count: 0,
+            region_classifications: Vec::new(),
+            blocker: None,
+            arrangement_readiness: None,
+            coplanar_volumetric_evidence: None,
+        };
+
+        preflight.validate().unwrap();
+
+        preflight.region_count = 1;
+        assert_eq!(
+            preflight.validate(),
+            Err(ExactReportValidationError::MissingRegionFacts)
         );
     }
 

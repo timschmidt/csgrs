@@ -30,7 +30,6 @@ pub struct ExactBooleanWorkspace<'a> {
         ExactRegularizationPolicy,
         ExactArrangementBooleanAttempt,
     )>,
-    certifications: Vec<(ExactBooleanRequest, ExactBooleanCertificationSet)>,
     evaluations: Vec<(ExactBooleanRequest, ExactBooleanEvaluation)>,
     materializations: Vec<(ExactBooleanRequest, ExactBooleanResult)>,
 }
@@ -44,7 +43,6 @@ impl<'a> ExactBooleanWorkspace<'a> {
             graph: None,
             arrangements: Vec::new(),
             arrangement_attempts: Vec::new(),
-            certifications: Vec::new(),
             evaluations: Vec::new(),
             materializations: Vec::new(),
         }
@@ -168,16 +166,17 @@ impl<'a> ExactBooleanWorkspace<'a> {
         Ok(preflight)
     }
 
-    /// Build or reuse the certification bundle backing an evaluation.
-    fn certification_set(
+    /// Returns an exact boolean evaluation for `request`, building it once per
+    /// request.
+    pub fn evaluate(
         &mut self,
         request: ExactBooleanRequest,
-    ) -> Result<&ExactBooleanCertificationSet, MeshError> {
-        if let Some(index) = cached_by_request_index(&self.certifications, request) {
-            return Ok(&self.certifications[index].1);
+    ) -> Result<&ExactBooleanEvaluation, MeshError> {
+        if let Some(index) = cached_by_request_index(&self.evaluations, request) {
+            return Ok(&self.evaluations[index].1);
         }
 
-        self.graph()?;
+        let preflight = self.preflight(request)?;
         let graph = self
             .graph
             .as_ref()
@@ -190,26 +189,6 @@ impl<'a> ExactBooleanWorkspace<'a> {
             request,
             regularized_arrangement,
         )?;
-        store_retained_request_artifact(&mut self.certifications, request, certifications)
-    }
-
-    /// Returns an exact boolean evaluation for `request`, building it once per
-    /// request.
-    pub fn evaluate(
-        &mut self,
-        request: ExactBooleanRequest,
-    ) -> Result<&ExactBooleanEvaluation, MeshError> {
-        if let Some(index) = cached_by_request_index(&self.evaluations, request) {
-            return Ok(&self.evaluations[index].1);
-        }
-
-        let preflight = self.preflight(request)?;
-        let certifications = self.certification_set(request)?.clone();
-        let graph = self
-            .graph
-            .as_ref()
-            .expect("intersection graph cache was just populated");
-        let regularized_arrangement = self.regularized_solid_arrangement();
         let result = if preflight.is_certified() {
             if let Some(result) = cached_retained_materialization(
                 &self.materializations,
@@ -335,15 +314,6 @@ trait RetainedRequestArtifact {
 impl RetainedPolicyArtifact for ExactArrangement {
     fn validate_for_workspace_cache(&self) -> Result<(), ExactArrangementBlocker> {
         self.validate()
-    }
-}
-
-impl RetainedRequestArtifact for ExactBooleanCertificationSet {
-    fn validate_for_workspace_cache(
-        &self,
-        request: ExactBooleanRequest,
-    ) -> Result<(), ExactReportValidationError> {
-        self.validate_for_request(request)
     }
 }
 
@@ -558,6 +528,25 @@ mod tests {
         ExactReportFreshness, ExactReportValidationError, ExactSelectedCellComplexFreshness,
         ExactSimplifiedCellComplexFreshness, ExactTopologyAssemblyStatus, Triangle,
     };
+
+    fn workspace_certifications(
+        workspace: &mut ExactBooleanWorkspace<'_>,
+        request: ExactBooleanRequest,
+    ) -> ExactBooleanCertificationSet {
+        workspace.graph().unwrap();
+        let graph = workspace
+            .graph
+            .as_ref()
+            .expect("intersection graph cache was just populated");
+        ExactBooleanCertificationSet::from_graph_and_regularized_arrangement(
+            graph,
+            workspace.left,
+            workspace.right,
+            request,
+            workspace.regularized_solid_arrangement(),
+        )
+        .unwrap()
+    }
 
     #[test]
     fn exact_boolean_workspace_reuses_graph_arrangement_preflight_and_evaluation() {
@@ -848,7 +837,7 @@ mod tests {
             Err(ExactReportValidationError::StatusEvidenceMismatch)
         );
 
-        let certifications = workspace.certification_set(request).unwrap().clone();
+        let certifications = workspace_certifications(&mut workspace, request);
         certifications
             .validate_against_sources(&left, &right, request)
             .unwrap();
@@ -909,11 +898,8 @@ mod tests {
             ExactBooleanOperation::Intersection,
             ValidationPolicy::ALLOW_BOUNDARY,
         );
-        let non_union_adjacent_report = workspace
-            .certification_set(non_union_request)
-            .unwrap()
-            .adjacent_union_completion
-            .clone();
+        let non_union_adjacent_report =
+            workspace_certifications(&mut workspace, non_union_request).adjacent_union_completion;
         assert_eq!(
             non_union_adjacent_report,
             crate::boolean::adjacent_union_completion_certification(
@@ -925,9 +911,7 @@ mod tests {
             .unwrap()
             .0
         );
-        workspace
-            .certification_set(non_union_request)
-            .unwrap()
+        workspace_certifications(&mut workspace, non_union_request)
             .validate_for_request(non_union_request)
             .unwrap();
         assert_eq!(non_union_adjacent_report.retained_face_pairs, 0);
@@ -947,11 +931,9 @@ mod tests {
             ExactBooleanOperation::Union,
             ValidationPolicy::ALLOW_BOUNDARY,
         );
-        let not_closed_adjacent_report = open_workspace
-            .certification_set(not_closed_request)
-            .unwrap()
-            .adjacent_union_completion
-            .clone();
+        let not_closed_adjacent_report =
+            workspace_certifications(&mut open_workspace, not_closed_request)
+                .adjacent_union_completion;
         assert_eq!(
             not_closed_adjacent_report,
             crate::boolean::adjacent_union_completion_certification(
@@ -963,9 +945,7 @@ mod tests {
             .unwrap()
             .0
         );
-        open_workspace
-            .certification_set(not_closed_request)
-            .unwrap()
+        workspace_certifications(&mut open_workspace, not_closed_request)
             .validate_for_request(not_closed_request)
             .unwrap();
         assert_eq!(not_closed_adjacent_report.retained_face_pairs, 0);
@@ -973,11 +953,8 @@ mod tests {
         let box_left = axis_aligned_box_i64([0, 0, 0], [2, 2, 2]);
         let box_right = axis_aligned_box_i64([1, 1, 0], [3, 3, 2]);
         let mut box_workspace = ExactBooleanWorkspace::new(&box_left, &box_right);
-        let axis_box_adjacent_report = box_workspace
-            .certification_set(request)
-            .unwrap()
-            .adjacent_union_completion
-            .clone();
+        let axis_box_adjacent_report =
+            workspace_certifications(&mut box_workspace, request).adjacent_union_completion;
         assert_eq!(
             axis_box_adjacent_report,
             crate::boolean::adjacent_union_completion_certification(
@@ -989,9 +966,7 @@ mod tests {
             .unwrap()
             .0
         );
-        box_workspace
-            .certification_set(request)
-            .unwrap()
+        workspace_certifications(&mut box_workspace, request)
             .validate_for_request(request)
             .unwrap();
         assert_eq!(
@@ -1106,10 +1081,7 @@ mod tests {
             ExactBooleanOperation::SelectedRegions(ExactRegionSelection::KeepAll),
             ValidationPolicy::ALLOW_BOUNDARY,
         );
-        let selected_certifications = workspace
-            .certification_set(selected_request)
-            .unwrap()
-            .clone();
+        let selected_certifications = workspace_certifications(&mut workspace, selected_request);
         selected_certifications
             .validate_for_request(selected_request)
             .unwrap();
@@ -1268,7 +1240,7 @@ mod tests {
     }
 
     #[test]
-    fn exact_boolean_workspace_reuses_certification_set() {
+    fn exact_boolean_workspace_evaluation_retains_certification_set() {
         let left = tetra([0, 0, 0]);
         let right = tetra([1, 0, 0]);
         let request =
@@ -1280,13 +1252,11 @@ mod tests {
             .unwrap();
         workspace.preflight(request).unwrap();
 
-        let first =
-            workspace.certification_set(request).unwrap() as *const ExactBooleanCertificationSet;
-        let second =
-            workspace.certification_set(request).unwrap() as *const ExactBooleanCertificationSet;
+        let first = workspace.evaluate(request).unwrap() as *const ExactBooleanEvaluation;
+        let second = workspace.evaluate(request).unwrap() as *const ExactBooleanEvaluation;
         assert_eq!(first, second);
 
-        let certifications = workspace.certification_set(request).unwrap().clone();
+        let certifications = workspace_certifications(&mut workspace, request);
         certifications.validate_for_request(request).unwrap();
         certifications
             .validate_against_sources(&left, &right, request)
@@ -1644,10 +1614,7 @@ mod tests {
         assert!(materialized.matches_request(request));
         assert_eq!(workspace.materialize(request).unwrap(), materialized);
         assert_eq!(
-            workspace
-                .certification_set(request)
-                .unwrap()
-                .adjacent_union_completion,
+            workspace_certifications(&mut workspace, request).adjacent_union_completion,
             expected_report
         );
     }
