@@ -2103,7 +2103,7 @@ fn exact_boolean_preflight_matches_winding_handoff(
         && preflight.coplanar_volumetric_evidence == winding_readiness.coplanar_volumetric_evidence
 }
 
-pub(crate) fn evaluate_boolean_exact_request_with_artifacts_and_arrangement_replay(
+fn evaluate_boolean_exact_request_with_artifacts_and_arrangement_replay(
     left: &ExactMesh,
     right: &ExactMesh,
     request: ExactBooleanRequest,
@@ -4027,7 +4027,7 @@ fn boolean_closed_winding_containment_meshes_from_graph(
     )))
 }
 
-pub(crate) fn materialize_graph_shortcut_from_graph_for_request(
+fn materialize_graph_shortcut_from_graph_for_request(
     graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
