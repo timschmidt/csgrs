@@ -1754,6 +1754,65 @@ fn find_matching_arrangement_vertex(
     None
 }
 
+#[derive(Default)]
+struct ArrangementPointUniquenessIndex {
+    point_key_buckets: BTreeMap<ExactPoint3Key, Vec<usize>>,
+    unkeyed_points: Vec<usize>,
+}
+
+impl ArrangementPointUniquenessIndex {
+    fn push_unique(&mut self, points: &mut Vec<Point3>, point: Point3) {
+        let point_key = exact_point3_key(&point);
+        if self
+            .find_matching(&point, point_key.as_ref(), points)
+            .is_some()
+        {
+            return;
+        }
+        let index = points.len();
+        if let Some(key) = point_key {
+            self.point_key_buckets.entry(key).or_default().push(index);
+        } else {
+            self.unkeyed_points.push(index);
+        }
+        points.push(point);
+    }
+
+    fn find_matching(
+        &self,
+        point: &Point3,
+        point_key: Option<&ExactPoint3Key>,
+        points: &[Point3],
+    ) -> Option<usize> {
+        if let Some(key) = point_key {
+            if let Some(bucket) = self.point_key_buckets.get(key)
+                && let Some(index) = find_matching_arrangement_point(point, points, bucket)
+            {
+                return Some(index);
+            }
+            return find_matching_arrangement_point(point, points, &self.unkeyed_points);
+        }
+
+        for bucket in self.point_key_buckets.values() {
+            if let Some(index) = find_matching_arrangement_point(point, points, bucket) {
+                return Some(index);
+            }
+        }
+        find_matching_arrangement_point(point, points, &self.unkeyed_points)
+    }
+}
+
+fn find_matching_arrangement_point(
+    point: &Point3,
+    points: &[Point3],
+    candidates: &[usize],
+) -> Option<usize> {
+    candidates
+        .iter()
+        .copied()
+        .find(|&index| point3_equal(&points[index], point).value() == Some(true))
+}
+
 fn arrangement_edges(
     topology: Option<&ExactSplitTopologyPlan>,
     vertices: &[ArrangementVertex],
@@ -2533,11 +2592,12 @@ fn coplanar_segment_triangle_interval(
     let segment_start = project_point3(start, projection);
     let segment_end = project_point3(end, projection);
     let mut points = Vec::<Point3>::new();
+    let mut point_index = ArrangementPointUniquenessIndex::default();
     for (point, projected) in [(start, &segment_start), (end, &segment_end)] {
         let location =
             classify_point_triangle(triangle[0], triangle[1], triangle[2], projected).value()?;
         if constructive_triangle_location(location) {
-            push_unique_contact_point(&mut points, point.clone());
+            point_index.push_unique(&mut points, point.clone());
         }
     }
 
@@ -2549,7 +2609,7 @@ fn coplanar_segment_triangle_interval(
             SegmentIntersection::Proper => {
                 let point = proper_segment_intersection_point(&segment_start, &segment_end, a, b)
                     .value()??;
-                push_unique_contact_point(
+                point_index.push_unique(
                     &mut points,
                     lift_projected_point_to_segment(start, end, &point, projection)?,
                 );
@@ -2559,7 +2619,7 @@ fn coplanar_segment_triangle_interval(
             | SegmentIntersection::Identical => {
                 for point in [a, b] {
                     if point_on_segment(&segment_start, &segment_end, point).value()? {
-                        push_unique_contact_point(
+                        point_index.push_unique(
                             &mut points,
                             lift_projected_point_to_segment(start, end, point, projection)?,
                         );
@@ -2567,7 +2627,7 @@ fn coplanar_segment_triangle_interval(
                 }
                 for (point, projected) in [(start, &segment_start), (end, &segment_end)] {
                     if point_on_segment(a, b, projected).value()? {
-                        push_unique_contact_point(&mut points, point.clone());
+                        point_index.push_unique(&mut points, point.clone());
                     }
                 }
             }
@@ -2612,15 +2672,6 @@ fn lift_projected_point_to_segment(
         start.y.clone() + &((end.y.clone() - &start.y) * &parameter),
         start.z.clone() + &((end.z.clone() - &start.z) * &parameter),
     ))
-}
-
-fn push_unique_contact_point(points: &mut Vec<Point3>, point: Point3) {
-    if points
-        .iter()
-        .all(|existing| point3_equal(existing, &point).value() != Some(true))
-    {
-        points.push(point);
-    }
 }
 
 fn sort_points_along_segment(points: &mut [Point3], start: &Point3, end: &Point3) -> Option<()> {
@@ -3945,28 +3996,20 @@ fn shell_region_witnesses(
     right: &ExactMesh,
 ) -> Vec<Point3> {
     let mut witnesses = Vec::new();
+    let mut witness_index = ArrangementPointUniquenessIndex::default();
     for cell in shell
         .face_cells
         .iter()
         .filter_map(|&cell| face_cells.get(cell))
     {
         for point in &cell.boundary_points {
-            push_unique_witness(&mut witnesses, point.clone());
+            witness_index.push_unique(&mut witnesses, point.clone());
         }
         if let Some(point) = face_cell_interior_witness(cell, left, right) {
-            push_unique_witness(&mut witnesses, point);
+            witness_index.push_unique(&mut witnesses, point);
         }
     }
     witnesses
-}
-
-fn push_unique_witness(witnesses: &mut Vec<Point3>, point: Point3) {
-    if witnesses
-        .iter()
-        .all(|existing| point3_equal(existing, &point).value() != Some(true))
-    {
-        witnesses.push(point);
-    }
 }
 
 fn face_cell_interior_witness(
@@ -4807,6 +4850,21 @@ mod tests {
         assert_eq!(vertices[1].provenance.len(), 1);
         assert_eq!(index.point_key_buckets.len(), 2);
         assert!(index.unkeyed_vertices.is_empty());
+    }
+
+    #[test]
+    fn arrangement_point_uniqueness_index_buckets_exact_rational_points() {
+        let mut points = Vec::new();
+        let mut index = ArrangementPointUniquenessIndex::default();
+        let point = rational_p3([1, 2], [-3, 4], [5, 6]);
+
+        index.push_unique(&mut points, point.clone());
+        index.push_unique(&mut points, point);
+        index.push_unique(&mut points, rational_p3([2, 3], [-3, 4], [5, 6]));
+
+        assert_eq!(points.len(), 2);
+        assert_eq!(index.point_key_buckets.len(), 2);
+        assert!(index.unkeyed_points.is_empty());
     }
 
     #[test]
