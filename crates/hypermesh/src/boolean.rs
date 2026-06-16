@@ -2385,7 +2385,7 @@ fn materialize_certified_arrangement_cell_complex_support_with_arrangement(
     let validation = request.validation;
     let mut owned_graph = None;
     if let Some(arrangement) = retained_regularized_arrangement {
-        let outcome = run_arrangement_cell_complex_attempt_from_arrangement_with_recovery_timing(
+        let outcome = run_arrangement_cell_complex_attempt_from_arrangement(
             arrangement,
             left,
             right,
@@ -2393,7 +2393,6 @@ fn materialize_certified_arrangement_cell_complex_support_with_arrangement(
             ExactRegularizationPolicy::REGULARIZED_SOLID,
             Some(validation),
             true,
-            false,
         )?;
         if let ArrangementCellComplexOutcome::Materialized(result, attempt) = outcome
             && arrangement_cell_complex_result_is_certified_for_preflight(
@@ -4514,7 +4513,7 @@ pub(crate) fn arrangement_boolean_attempt_report_from_arrangement(
     policy: ExactRegularizationPolicy,
     arrangement: &ExactArrangement,
 ) -> Result<ExactArrangementBooleanAttempt, MeshError> {
-    let outcome = run_arrangement_cell_complex_attempt_from_arrangement_with_recovery_timing(
+    let outcome = run_arrangement_cell_complex_attempt_from_arrangement(
         arrangement,
         left,
         right,
@@ -4522,7 +4521,6 @@ pub(crate) fn arrangement_boolean_attempt_report_from_arrangement(
         policy,
         Some(request.validation),
         true,
-        false,
     )?;
     Ok(match outcome {
         ArrangementCellComplexOutcome::Materialized(_, attempt)
@@ -4655,12 +4653,15 @@ fn boolean_arrangement_regularized_boundary_contact_from_graph(
     if let Some(report) =
         certified_closed_boundary_touching_regularized_report_from_graph(graph, left, right)?
     {
-        validate_consumed_boundary_touching_report(
-            &report,
-            left,
-            right,
-            "arrangement regularized boundary contact",
-        )?;
+        report.validate_against_sources(left, right).map_err(|error| {
+            MeshError::one(MeshDiagnostic::new(
+                Severity::Error,
+                DiagnosticKind::UnsupportedExactOperation,
+                format!(
+                    "exact arrangement regularized boundary contact consumed invalid certificate: {error:?}"
+                ),
+            ))
+        })?;
     } else if !certified_arrangement_regularized_boundary_contact_from_graph(
         graph, left, right, operation,
     )? {
@@ -4718,72 +4719,6 @@ fn certified_arrangement_regularized_boundary_contact_from_graph(
     Ok(true)
 }
 
-fn arrangement_pre_cell_complex_recovery_outcome_if_available(
-    validation: Option<ValidationPolicy>,
-    attempt: &mut ExactArrangementBooleanAttempt,
-    graph: &super::graph::ExactIntersectionGraph,
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-) -> Result<Option<ArrangementCellComplexOutcome>, MeshError> {
-    if let Some(validation) = validation
-        && let Some(result) =
-            boolean_arrangement_orthogonal_solid_cell_recovery(left, right, operation, validation)?
-    {
-        return Ok(Some(materialized_arrangement_attempt_outcome(
-            attempt, result, true,
-        )));
-    }
-
-    if let Some(validation) = validation
-        && let Some(result) =
-            adjacent_union_completion_certification(left, right, operation, Some(validation))?.1
-    {
-        return Ok(Some(materialized_arrangement_attempt_outcome(
-            attempt, result, false,
-        )));
-    }
-
-    if let Some(validation) = validation
-        && let Some(result) = boolean_arrangement_regularized_boundary_contact_from_graph(
-            graph, left, right, operation, validation,
-        )?
-    {
-        return Ok(Some(materialized_arrangement_attempt_outcome(
-            attempt, result, false,
-        )));
-    }
-
-    if !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
-        && let Some(validation) = validation
-    {
-        match boolean_coplanar_mesh_overlay_optional(left, right, operation, validation) {
-            Ok(Some(result)) => {
-                return Ok(Some(materialized_arrangement_attempt_outcome(
-                    attempt, result, false,
-                )));
-            }
-            Ok(None) => {}
-            Err(_) => {
-                let output_counts = coplanar_mesh_overlay_candidate_counts(left, right, operation);
-                return Ok(Some(
-                    declined_output_validation_attempt_outcome_with_counts(attempt, output_counts),
-                ));
-            }
-        }
-    }
-
-    if let Some(validation) = validation
-        && let Some(outcome) = arrangement_open_surface_recovery_outcome(
-            attempt, graph, left, right, operation, validation,
-        )?
-    {
-        return Ok(Some(outcome));
-    }
-
-    Ok(None)
-}
-
 fn run_arrangement_cell_complex_attempt_from_graph(
     graph: &ExactIntersectionGraph,
     left: &ExactMesh,
@@ -4795,7 +4730,7 @@ fn run_arrangement_cell_complex_attempt_from_graph(
 ) -> Result<ArrangementCellComplexOutcome, MeshError> {
     let arrangement =
         ExactArrangement::from_intersection_graph_with_policy(graph.clone(), left, right, policy)?;
-    run_arrangement_cell_complex_attempt_from_arrangement_with_recovery_timing(
+    run_arrangement_cell_complex_attempt_from_arrangement(
         &arrangement,
         left,
         right,
@@ -4803,11 +4738,10 @@ fn run_arrangement_cell_complex_attempt_from_graph(
         policy,
         validation,
         regularize_unregularized_sheet_complex,
-        false,
     )
 }
 
-fn run_arrangement_cell_complex_attempt_from_arrangement_with_recovery_timing(
+fn run_arrangement_cell_complex_attempt_from_arrangement(
     arrangement: &ExactArrangement,
     left: &ExactMesh,
     right: &ExactMesh,
@@ -4815,7 +4749,6 @@ fn run_arrangement_cell_complex_attempt_from_arrangement_with_recovery_timing(
     policy: ExactRegularizationPolicy,
     validation: Option<ValidationPolicy>,
     regularize_unregularized_sheet_complex: bool,
-    try_recoveries_before_cell_complex: bool,
 ) -> Result<ArrangementCellComplexOutcome, MeshError> {
     let mut attempt = ExactArrangementBooleanAttempt {
         operation,
@@ -4870,23 +4803,20 @@ fn run_arrangement_cell_complex_attempt_from_arrangement_with_recovery_timing(
                 .iter()
                 .all(|blocker| *blocker == ExactArrangementBlocker::UnresolvedRegionClassification);
 
-    if try_recoveries_before_cell_complex
-        && let Some(outcome) = arrangement_pre_cell_complex_recovery_outcome_if_available(
-            validation,
-            &mut attempt,
-            &arrangement.graph,
-            left,
-            right,
-            operation,
-        )?
-    {
-        return Ok(outcome);
-    }
-
     if !arrangement.is_complete()
         && !volume_resolves_region_classification
         && !selected_regions_ignore_unresolved_classification
     {
+        let unregularized_sheet_complex = arrangement
+            .blockers
+            .contains(&ExactArrangementBlocker::UnregularizedOpenSheetComplex)
+            && arrangement.blockers.iter().all(|blocker| {
+                matches!(
+                    blocker,
+                    ExactArrangementBlocker::UnregularizedCoincidentSheetComplex
+                        | ExactArrangementBlocker::UnregularizedOpenSheetComplex
+                )
+            });
         match materialize_simple_coplanar_overlay_arrangement(
             left,
             right,
@@ -4911,7 +4841,7 @@ fn run_arrangement_cell_complex_attempt_from_arrangement_with_recovery_timing(
             }
         }
         if regularize_unregularized_sheet_complex
-            && arrangement_blockers_are_unregularized_sheet_complex(&arrangement.blockers)
+            && unregularized_sheet_complex
             && let Some(validation) = validation
             && let Some(result) = boolean_arrangement_regularized_sheet_complex_from_graph(
                 &arrangement.graph,
@@ -4939,9 +4869,7 @@ fn run_arrangement_cell_complex_attempt_from_arrangement_with_recovery_timing(
         )? {
             return Ok(outcome);
         }
-        if arrangement_blockers_are_unregularized_sheet_complex(&arrangement.blockers)
-            && let Some(validation) = validation
-        {
+        if unregularized_sheet_complex && let Some(validation) = validation {
             if let Some(result) = boolean_arrangement_convex_regularized_sheet_recovery(
                 left, right, operation, validation,
             )? {
@@ -5237,9 +5165,6 @@ fn arrangement_open_surface_recovery_outcome(
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
 ) -> Result<Option<ArrangementCellComplexOutcome>, MeshError> {
-    if !mesh_is_open_surface(left) || !mesh_is_open_surface(right) {
-        return Ok(None);
-    }
     let Some(plan) = open_surface_arrangement_plan_from_graph(graph, left, right, operation)?
     else {
         return Ok(None);
@@ -5254,25 +5179,33 @@ fn arrangement_open_surface_recovery_outcome(
     ) {
         Ok(Some(result)) => result,
         Ok(None) => {
-            let output_counts = open_surface_arrangement_candidate_counts(
+            let output_counts = materialize_open_surface_arrangement_plan(
                 left,
                 right,
                 operation,
+                ValidationPolicy::ALLOW_BOUNDARY,
                 graph.has_unknowns(),
                 plan,
-            );
+            )
+            .ok()
+            .flatten()
+            .map(|result| (result.mesh.vertices().len(), result.mesh.triangles().len()));
             return Ok(Some(
                 declined_output_validation_attempt_outcome_with_counts(attempt, output_counts),
             ));
         }
         Err(error) => {
-            let output_counts = open_surface_arrangement_candidate_counts(
+            let output_counts = materialize_open_surface_arrangement_plan(
                 left,
                 right,
                 operation,
+                ValidationPolicy::ALLOW_BOUNDARY,
                 graph.has_unknowns(),
                 plan,
-            );
+            )
+            .ok()
+            .flatten()
+            .map(|result| (result.mesh.vertices().len(), result.mesh.triangles().len()));
             if output_counts.is_some() {
                 return Ok(Some(
                     declined_output_validation_attempt_outcome_with_counts(attempt, output_counts),
@@ -5721,19 +5654,6 @@ pub(crate) fn materialize_adjacent_union_completion_from_graph_for_request(
         return Ok(None);
     }
     Ok(Some((result, report)))
-}
-
-fn arrangement_blockers_are_unregularized_sheet_complex(
-    blockers: &[ExactArrangementBlocker],
-) -> bool {
-    blockers.contains(&ExactArrangementBlocker::UnregularizedOpenSheetComplex)
-        && blockers.iter().all(|blocker| {
-            matches!(
-                blocker,
-                ExactArrangementBlocker::UnregularizedCoincidentSheetComplex
-                    | ExactArrangementBlocker::UnregularizedOpenSheetComplex
-            )
-        })
 }
 
 fn boolean_arrangement_regularized_sheet_complex_from_graph(
@@ -8380,9 +8300,6 @@ fn boolean_open_surface_disjoint_meshes_from_graph(
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
-    if !mesh_is_open_surface(left) || !mesh_is_open_surface(right) {
-        return Ok(None);
-    }
     let disjoint_report = open_surface_disjoint_report_from_graph(graph, left, right);
     if disjoint_report.is_certified() {
         let result = materialize_open_surface_disjoint_meshes(left, right, operation, validation)?;
@@ -8441,54 +8358,37 @@ pub(crate) fn open_surface_disjoint_report_from_graph(
 ) -> ExactOpenSurfaceDisjointReport {
     let left_open_surface = mesh_is_open_surface(left);
     let right_open_surface = mesh_is_open_surface(right);
-    if !left_open_surface || !right_open_surface {
-        return open_surface_disjoint_report(
-            ExactOpenSurfaceDisjointStatus::NotOpenSurface,
-            left_open_surface,
-            right_open_surface,
-            false,
-            0,
-            0,
-            ExactBooleanBlocker::default(),
-        );
-    }
-    let graph_had_unknowns = graph.has_unknowns();
-    let counts = retained_graph_counts(graph);
-    let status = if graph_had_unknowns {
+    let graph_had_unknowns = left_open_surface && right_open_surface && graph.has_unknowns();
+    let counts = if left_open_surface && right_open_surface {
+        retained_graph_counts(graph)
+    } else {
+        ExactBooleanBlocker::default()
+    };
+    let status = if !left_open_surface || !right_open_surface {
+        ExactOpenSurfaceDisjointStatus::NotOpenSurface
+    } else if graph_had_unknowns {
         ExactOpenSurfaceDisjointStatus::GraphUnknowns
     } else if graph.face_pairs.is_empty() {
         ExactOpenSurfaceDisjointStatus::Certified
     } else {
         ExactOpenSurfaceDisjointStatus::GraphHasFacePairs
     };
-    open_surface_disjoint_report(
-        status,
-        left_open_surface,
-        right_open_surface,
-        graph_had_unknowns,
-        graph.face_pairs.len(),
-        graph.event_count(),
-        counts,
-    )
-}
-
-fn open_surface_disjoint_report(
-    status: ExactOpenSurfaceDisjointStatus,
-    left_open_surface: bool,
-    right_open_surface: bool,
-    graph_had_unknowns: bool,
-    retained_face_pairs: usize,
-    retained_events: usize,
-    counts: ExactBooleanBlocker,
-) -> ExactOpenSurfaceDisjointReport {
     let blocker_kind = counts.inferred_kind();
     ExactOpenSurfaceDisjointReport {
         status,
         left_open_surface,
         right_open_surface,
         graph_had_unknowns,
-        retained_face_pairs,
-        retained_events,
+        retained_face_pairs: if left_open_surface && right_open_surface {
+            graph.face_pairs.len()
+        } else {
+            0
+        },
+        retained_events: if left_open_surface && right_open_surface {
+            graph.event_count()
+        } else {
+            0
+        },
         blocker: counts.into_blocker(blocker_kind),
     }
 }
@@ -8667,26 +8567,6 @@ fn materialize_open_surface_arrangement_plan(
         ))
     })?;
     Ok(Some(result))
-}
-
-fn open_surface_arrangement_candidate_counts(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    graph_had_unknowns: bool,
-    plan: OpenSurfaceArrangementPlan,
-) -> Option<(usize, usize)> {
-    materialize_open_surface_arrangement_plan(
-        left,
-        right,
-        operation,
-        ValidationPolicy::ALLOW_BOUNDARY,
-        graph_had_unknowns,
-        plan,
-    )
-    .ok()
-    .flatten()
-    .map(|result| (result.mesh.vertices().len(), result.mesh.triangles().len()))
 }
 
 /// Build the retained exact split-region plan for open-surface arrangement.
@@ -8963,23 +8843,6 @@ pub(crate) fn materialize_closed_boundary_touching_regularized_boolean_with_evid
     .then_some((result, evidence)))
 }
 
-fn validate_consumed_boundary_touching_report(
-    report: &ExactBoundaryTouchingReport,
-    left: &ExactMesh,
-    right: &ExactMesh,
-    label: &str,
-) -> Result<(), MeshError> {
-    report
-        .validate_against_sources(left, right)
-        .map_err(|error| {
-            MeshError::one(MeshDiagnostic::new(
-                Severity::Error,
-                DiagnosticKind::UnsupportedExactOperation,
-                format!("exact {label} consumed invalid certificate: {error:?}"),
-            ))
-        })
-}
-
 fn materialize_boundary_policy_shortcut_result(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -9075,7 +8938,15 @@ fn boolean_boundary_touching_meshes_from_graph(
     if !report.is_certified() {
         return Ok(None);
     }
-    validate_consumed_boundary_touching_report(&report, left, right, "boundary-policy projection")?;
+    report
+        .validate_against_sources(left, right)
+        .map_err(|error| {
+            MeshError::one(MeshDiagnostic::new(
+                Severity::Error,
+                DiagnosticKind::UnsupportedExactOperation,
+                format!("exact boundary-policy projection consumed invalid certificate: {error:?}"),
+            ))
+        })?;
 
     let Some(result) =
         materialize_boundary_policy_shortcut_result(left, right, operation, validation)?
