@@ -688,8 +688,8 @@ impl ExactBooleanRequest {
         }
     }
 
-    /// Preflight this request against source meshes.
-    pub fn preflight(
+    /// Derive preflight for this request against source meshes.
+    pub(crate) fn preflight(
         self,
         left: &ExactMesh,
         right: &ExactMesh,
@@ -1584,7 +1584,10 @@ impl ExactBooleanEvaluation {
                     _ => true,
                 };
             if !result.matches_request(self.request)
-                || result.mesh.validation_policy() != self.request.validation
+                || !result
+                    .mesh
+                    .validation_policy()
+                    .satisfies(self.request.validation)
                 || match result.kind {
                     ExactBooleanResultKind::SelectedRegions { .. }
                     | ExactBooleanResultKind::OpenSurfaceArrangement { .. } => {
@@ -1956,18 +1959,18 @@ fn exact_boolean_preflight_matches_certifications(
                 && exact_boolean_convex_reports_match_support(preflight, certifications)
         }
         ExactBooleanSupport::CertifiedConvexSeparated => {
-            matches!(
-                status,
-                ExactWindingReadinessStatus::ConvexBooleanAlreadyMaterialized
-                    | ExactWindingReadinessStatus::ClosedWindingSeparatedAlreadyMaterialized
-            ) && exact_boolean_convex_reports_match_support(preflight, certifications)
+            (*status == ExactWindingReadinessStatus::ConvexBooleanAlreadyMaterialized
+                && exact_boolean_convex_reports_match_support(preflight, certifications))
+                || (*status
+                    == ExactWindingReadinessStatus::ClosedWindingSeparatedAlreadyMaterialized
+                    && exact_boolean_closed_winding_reports_match_separated(certifications))
         }
         ExactBooleanSupport::CertifiedConvexContainment => {
-            matches!(
-                status,
-                ExactWindingReadinessStatus::ConvexBooleanAlreadyMaterialized
-                    | ExactWindingReadinessStatus::ClosedWindingContainmentAlreadyMaterialized
-            ) && exact_boolean_convex_reports_match_support(preflight, certifications)
+            (*status == ExactWindingReadinessStatus::ConvexBooleanAlreadyMaterialized
+                && exact_boolean_convex_reports_match_support(preflight, certifications))
+                || (*status
+                    == ExactWindingReadinessStatus::ClosedWindingContainmentAlreadyMaterialized
+                    && exact_boolean_closed_winding_reports_match_containment(certifications))
         }
         ExactBooleanSupport::RequiresBoundaryPolicy => {
             certifications.boundary_touching.is_certified()
@@ -2014,6 +2017,23 @@ fn exact_boolean_preflight_matches_certifications(
                 )
         }
     }
+}
+
+fn exact_boolean_closed_winding_reports_match_separated(
+    certifications: &ExactBooleanCertificationSet,
+) -> bool {
+    certifications.closed_winding_left_in_right.relation == ClosedMeshWindingMeshRelation::Outside
+        && certifications.closed_winding_right_in_left.relation
+            == ClosedMeshWindingMeshRelation::Outside
+}
+
+fn exact_boolean_closed_winding_reports_match_containment(
+    certifications: &ExactBooleanCertificationSet,
+) -> bool {
+    certifications.closed_winding_left_in_right.relation
+        == ClosedMeshWindingMeshRelation::StrictlyInside
+        || certifications.closed_winding_right_in_left.relation
+            == ClosedMeshWindingMeshRelation::StrictlyInside
 }
 
 fn exact_boolean_convex_reports_match_support(

@@ -732,7 +732,11 @@ fn store_replayable_result_or_return(
         result
             .validate()
             .map_err(workspace_report_validation_error)?;
-        if result.mesh.validation_policy() != request.validation || !result.matches_request(request)
+        if !result
+            .mesh
+            .validation_policy()
+            .satisfies(request.validation)
+            || !result.matches_request(request)
         {
             return Err(workspace_report_validation_error(
                 ExactReportValidationError::StatusEvidenceMismatch,
@@ -870,7 +874,12 @@ fn validate_retained_result_for_request(
     request: ExactBooleanRequest,
     result: &ExactBooleanResult,
 ) -> Result<(), ExactReportValidationError> {
-    if result.mesh.validation_policy() != request.validation || !result.matches_request(request) {
+    if !result
+        .mesh
+        .validation_policy()
+        .satisfies(request.validation)
+        || !result.matches_request(request)
+    {
         return Err(ExactReportValidationError::StatusEvidenceMismatch);
     }
     result.validate_operation_against_sources(

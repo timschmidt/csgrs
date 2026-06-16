@@ -55,6 +55,16 @@ impl ValidationPolicy {
     pub const ALLOW_BOUNDARY: Self = Self {
         boundary: BoundaryPolicy::AllowBoundary,
     };
+
+    /// Return whether this policy is at least as strict as `requested`.
+    pub const fn satisfies(self, requested: Self) -> bool {
+        matches!(
+            (self.boundary, requested.boundary),
+            (BoundaryPolicy::Closed, BoundaryPolicy::Closed)
+                | (BoundaryPolicy::Closed, BoundaryPolicy::AllowBoundary)
+                | (BoundaryPolicy::AllowBoundary, BoundaryPolicy::AllowBoundary)
+        )
+    }
 }
 
 impl Default for ValidationPolicy {

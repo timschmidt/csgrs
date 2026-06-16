@@ -86,13 +86,15 @@ fn run_case(case: &BenchCase) {
         "request",
         format!("{:?}/{:?}", case.operation, case.validation),
     );
-    match request.preflight(&case.left, &case.right) {
-        Ok(preflight) => print_metadata(
+    match request.evaluate(&case.left, &case.right) {
+        Ok(evaluation) => print_metadata(
             case.name,
             "preflight_support",
             format!(
                 "{:?};pairs={};events={}",
-                preflight.support, preflight.retained_face_pairs, preflight.retained_events
+                evaluation.preflight.support,
+                evaluation.preflight.retained_face_pairs,
+                evaluation.preflight.retained_events
             ),
         ),
         Err(error) => print_metadata(case.name, "preflight_support", format!("error:{error:?}")),
@@ -251,10 +253,6 @@ fn run_case(case: &BenchCase) {
                 .arrangement_attempt(&case.left, &case.right, case.regularization)
                 .unwrap(),
         );
-    });
-
-    time_stage(case, "boolean_preflight", || {
-        black_box(request.preflight(&case.left, &case.right).unwrap());
     });
 
     time_stage(case, "boolean_evaluate", || {
