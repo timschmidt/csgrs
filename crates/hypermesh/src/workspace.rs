@@ -690,15 +690,19 @@ impl<'a> ExactBooleanWorkspace<'a> {
         cached_workspace_report!(self, adjacent_union_completion_reports, request, {
             let left = self.left;
             let right = self.right;
-            let graph = self.validated_graph()?;
-            let (report, _) = adjacent_union_completion_certification_from_graph(
-                graph,
-                left,
-                right,
-                request.operation,
-                None,
-            )?;
-            report
+            if request.operation != ExactBooleanOperation::Union {
+                request.adjacent_union_completion_report(left, right)?
+            } else {
+                let graph = self.validated_graph()?;
+                let (report, _) = adjacent_union_completion_certification_from_graph(
+                    graph,
+                    left,
+                    right,
+                    request.operation,
+                    None,
+                )?;
+                report
+            }
         })
     }
 
@@ -2065,6 +2069,28 @@ mod tests {
                 .validate_adjacent_union_completion_report(request, &relabeled_adjacent_report),
             Err(ExactReportValidationError::StatusEvidenceMismatch)
         );
+        let non_union_request = ExactBooleanRequest::new(
+            ExactBooleanOperation::Intersection,
+            ValidationPolicy::ALLOW_BOUNDARY,
+        );
+        let non_union_adjacent_report = workspace
+            .adjacent_union_completion_report(non_union_request)
+            .unwrap()
+            .clone();
+        assert_eq!(
+            non_union_adjacent_report,
+            non_union_request
+                .adjacent_union_completion_report(&left, &right)
+                .unwrap()
+        );
+        workspace
+            .validate_adjacent_union_completion_report(
+                non_union_request,
+                &non_union_adjacent_report,
+            )
+            .unwrap();
+        assert_eq!(non_union_adjacent_report.retained_face_pairs, 0);
+        assert_eq!(non_union_adjacent_report.retained_events, 0);
 
         let identical_report = request.identical_mesh_report(&left, &right);
         identical_report
