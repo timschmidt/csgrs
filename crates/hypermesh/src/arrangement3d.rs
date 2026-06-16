@@ -231,6 +231,73 @@ enum LowerDimensionalArtifactKind {
 
 type LowerDimensionalArtifactBucketKey = (LowerDimensionalArtifactKind, usize, usize);
 
+#[derive(Default)]
+struct LowerDimensionalArtifactBuildIndex {
+    exact_keys: BTreeSet<LowerDimensionalArtifactExactKey>,
+    keyed_by_bucket: BTreeMap<LowerDimensionalArtifactBucketKey, Vec<usize>>,
+    unkeyed_by_bucket: BTreeMap<LowerDimensionalArtifactBucketKey, Vec<usize>>,
+}
+
+impl LowerDimensionalArtifactBuildIndex {
+    fn push_unique(
+        &mut self,
+        artifacts: &mut Vec<ArrangementLowerDimensionalArtifact>,
+        artifact: ArrangementLowerDimensionalArtifact,
+    ) {
+        let bucket = lower_dimensional_artifact_bucket_key(&artifact);
+        let exact_key = lower_dimensional_artifact_exact_key(&artifact);
+        if self.contains_equivalent(artifacts, &artifact, bucket, exact_key.as_ref()) {
+            return;
+        }
+        let index = artifacts.len();
+        if let Some(key) = exact_key {
+            self.exact_keys.insert(key);
+            self.keyed_by_bucket.entry(bucket).or_default().push(index);
+        } else {
+            self.unkeyed_by_bucket
+                .entry(bucket)
+                .or_default()
+                .push(index);
+        }
+        artifacts.push(artifact);
+    }
+
+    fn contains_equivalent(
+        &self,
+        artifacts: &[ArrangementLowerDimensionalArtifact],
+        artifact: &ArrangementLowerDimensionalArtifact,
+        bucket: LowerDimensionalArtifactBucketKey,
+        exact_key: Option<&LowerDimensionalArtifactExactKey>,
+    ) -> bool {
+        if let Some(key) = exact_key {
+            if self.exact_keys.contains(key) {
+                return true;
+            }
+            return self
+                .unkeyed_by_bucket
+                .get(&bucket)
+                .is_some_and(|candidates| artifact_matches_any(artifact, artifacts, candidates));
+        }
+        self.keyed_by_bucket
+            .get(&bucket)
+            .is_some_and(|candidates| artifact_matches_any(artifact, artifacts, candidates))
+            || self
+                .unkeyed_by_bucket
+                .get(&bucket)
+                .is_some_and(|candidates| artifact_matches_any(artifact, artifacts, candidates))
+    }
+}
+
+fn artifact_matches_any(
+    artifact: &ArrangementLowerDimensionalArtifact,
+    artifacts: &[ArrangementLowerDimensionalArtifact],
+    candidates: &[usize],
+) -> bool {
+    candidates
+        .iter()
+        .any(|&candidate| artifact == &artifacts[candidate])
+}
+
 /// Validate retained lower-dimensional contact evidence.
 pub(crate) fn validate_lower_dimensional_artifacts(
     artifacts: &[ArrangementLowerDimensionalArtifact],
@@ -2485,7 +2552,15 @@ fn lower_dimensional_artifacts(
         return Vec::new();
     }
 
-    let mut artifacts = non_coplanar_lower_dimensional_artifacts(graph, left, right);
+    let mut artifacts = Vec::new();
+    let mut artifact_index = LowerDimensionalArtifactBuildIndex::default();
+    append_non_coplanar_lower_dimensional_artifacts(
+        &mut artifacts,
+        &mut artifact_index,
+        graph,
+        left,
+        right,
+    );
     let touching_pairs = graph
         .coplanar_overlap_graphs()
         .into_iter()
@@ -2511,6 +2586,7 @@ fn lower_dimensional_artifacts(
             for edge_split in &split_graph.edge_splits {
                 push_lower_dimensional_edge_artifacts(
                     &mut artifacts,
+                    &mut artifact_index,
                     split_graph.left_face,
                     split_graph.right_face,
                     edge_split,
@@ -2521,6 +2597,7 @@ fn lower_dimensional_artifacts(
                 if let Some(point) = mesh.vertices().get(vertex_overlap.vertex) {
                     push_lower_dimensional_artifact(
                         &mut artifacts,
+                        &mut artifact_index,
                         ArrangementLowerDimensionalArtifact::PointContact {
                             left_face: split_graph.left_face,
                             right_face: split_graph.right_face,
@@ -2540,12 +2617,13 @@ fn lower_dimensional_artifacts(
     artifacts
 }
 
-fn non_coplanar_lower_dimensional_artifacts(
+fn append_non_coplanar_lower_dimensional_artifacts(
+    artifacts: &mut Vec<ArrangementLowerDimensionalArtifact>,
+    artifact_index: &mut LowerDimensionalArtifactBuildIndex,
     graph: &ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
-) -> Vec<ArrangementLowerDimensionalArtifact> {
-    let mut artifacts = Vec::new();
+) {
     for pair in &graph.face_pairs {
         if pair.relation != super::intersection::MeshFacePairRelation::Candidate {
             continue;
@@ -2569,7 +2647,7 @@ fn non_coplanar_lower_dimensional_artifacts(
                 left,
                 right,
             ) {
-                push_lower_dimensional_artifact(&mut artifacts, artifact);
+                push_lower_dimensional_artifact(artifacts, artifact_index, artifact);
                 continue;
             }
             if let Some(artifact) = non_coplanar_point_contact_artifact(
@@ -2579,11 +2657,10 @@ fn non_coplanar_lower_dimensional_artifacts(
                 left,
                 right,
             ) {
-                push_lower_dimensional_artifact(&mut artifacts, artifact);
+                push_lower_dimensional_artifact(artifacts, artifact_index, artifact);
             }
         }
     }
-    artifacts
 }
 
 fn non_coplanar_point_contact_artifact(
@@ -2802,6 +2879,7 @@ fn compare_point3_on_axis(
 
 fn push_lower_dimensional_edge_artifacts(
     artifacts: &mut Vec<ArrangementLowerDimensionalArtifact>,
+    artifact_index: &mut LowerDimensionalArtifactBuildIndex,
     left_face: usize,
     right_face: usize,
     edge_split: &CoplanarEdgeSplitConstruction,
@@ -2809,6 +2887,7 @@ fn push_lower_dimensional_edge_artifacts(
     for split_point in &edge_split.points {
         push_lower_dimensional_artifact(
             artifacts,
+            artifact_index,
             ArrangementLowerDimensionalArtifact::PointContact {
                 left_face,
                 right_face,
@@ -2819,6 +2898,7 @@ fn push_lower_dimensional_edge_artifacts(
     if let Some(interval) = &edge_split.interval {
         push_lower_dimensional_artifact(
             artifacts,
+            artifact_index,
             ArrangementLowerDimensionalArtifact::EdgeContact {
                 left_face,
                 right_face,
@@ -2833,11 +2913,10 @@ fn push_lower_dimensional_edge_artifacts(
 
 fn push_lower_dimensional_artifact(
     artifacts: &mut Vec<ArrangementLowerDimensionalArtifact>,
+    artifact_index: &mut LowerDimensionalArtifactBuildIndex,
     artifact: ArrangementLowerDimensionalArtifact,
 ) {
-    if !artifacts.contains(&artifact) {
-        artifacts.push(artifact);
-    }
+    artifact_index.push_unique(artifacts, artifact);
 }
 
 fn append_carrier_plane_overlay_face_cells(
