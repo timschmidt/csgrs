@@ -1233,10 +1233,13 @@ fn labeled_volume_regions_from_arrangement(
         .collect()
 }
 
-fn arrangement_volume_evidence_resolves_named_selection(arrangement: &ExactArrangement3d) -> bool {
-    if !arrangement.retained_volume_graph_blockers().is_empty() {
-        return false;
-    }
+fn arrangement_volume_evidence(
+    arrangement: &ExactArrangement3d,
+) -> Option<(
+    Vec<ExactCellComplexFace>,
+    Vec<ExactCellComplexVolumeRegion>,
+    &[ArrangementVolumeAdjacency],
+)> {
     let faces = arrangement
         .face_cells
         .iter()
@@ -1244,13 +1247,40 @@ fn arrangement_volume_evidence_resolves_named_selection(arrangement: &ExactArran
         .map(label_face_cell)
         .collect::<Vec<_>>();
     let Some(volume_regions) = arrangement.volume_regions.as_deref() else {
-        return false;
+        return None;
     };
     let Some(volume_adjacencies) = arrangement.volume_adjacencies.as_deref() else {
-        return false;
+        return None;
     };
     let volume_regions = labeled_volume_regions_from_arrangement(volume_regions);
+    Some((faces, volume_regions, volume_adjacencies))
+}
+
+fn arrangement_volume_evidence_resolves_named_selection(arrangement: &ExactArrangement3d) -> bool {
+    if !arrangement.retained_volume_graph_blockers().is_empty() {
+        return false;
+    }
+    let Some((faces, volume_regions, volume_adjacencies)) =
+        arrangement_volume_evidence(arrangement)
+    else {
+        return false;
+    };
     volume_evidence_resolves_named_selection(&faces, &volume_regions, volume_adjacencies)
+}
+
+fn arrangement_volume_evidence_resolves_named_operation(
+    arrangement: &ExactArrangement3d,
+    operation: ExactBooleanOperation,
+) -> bool {
+    if !arrangement.retained_volume_graph_blockers().is_empty() {
+        return false;
+    }
+    let Some((faces, volume_regions, volume_adjacencies)) =
+        arrangement_volume_evidence(arrangement)
+    else {
+        return false;
+    };
+    volume_evidence_resolves_named_operation(&faces, &volume_regions, volume_adjacencies, operation)
 }
 
 fn volume_evidence_resolves_named_selection(
@@ -1294,15 +1324,27 @@ fn volume_evidence_resolves_named_operation(
     )
 }
 
-pub(crate) fn arrangement_region_classification_blockers_are_volume_resolved(
-    arrangement: &ExactArrangement3d,
-) -> bool {
+fn arrangement_has_only_region_classification_blockers(arrangement: &ExactArrangement3d) -> bool {
     !arrangement.blockers.is_empty()
         && arrangement
             .blockers
             .iter()
             .all(|blocker| *blocker == ExactArrangementBlocker::UnresolvedRegionClassification)
+}
+
+pub(crate) fn arrangement_region_classification_blockers_are_volume_resolved(
+    arrangement: &ExactArrangement3d,
+) -> bool {
+    arrangement_has_only_region_classification_blockers(arrangement)
         && arrangement_volume_evidence_resolves_named_selection(arrangement)
+}
+
+pub(crate) fn arrangement_region_classification_blockers_resolve_operation(
+    arrangement: &ExactArrangement3d,
+    operation: ExactBooleanOperation,
+) -> bool {
+    arrangement_has_only_region_classification_blockers(arrangement)
+        && arrangement_volume_evidence_resolves_named_operation(arrangement, operation)
 }
 
 pub(crate) fn arrangement_cell_complex_labeling_policy(
@@ -1310,7 +1352,13 @@ pub(crate) fn arrangement_cell_complex_labeling_policy(
     operation: Option<ExactBooleanOperation>,
     policy: ExactRegularizationPolicy,
 ) -> ExactRegularizationPolicy {
-    if arrangement_region_classification_blockers_are_volume_resolved(arrangement)
+    let volume_resolves_classification = match operation {
+        Some(operation) => {
+            arrangement_region_classification_blockers_resolve_operation(arrangement, operation)
+        }
+        None => arrangement_region_classification_blockers_are_volume_resolved(arrangement),
+    };
+    if volume_resolves_classification
         || operation.is_some_and(|operation| {
             matches!(operation, ExactBooleanOperation::SelectedRegions(_))
                 && arrangement.blockers.iter().all(|blocker| {
@@ -2134,11 +2182,41 @@ mod tests {
         arrangement.blockers = vec![ExactArrangementBlocker::UnresolvedRegionClassification];
 
         assert!(arrangement_region_classification_blockers_are_volume_resolved(&arrangement));
+        assert!(
+            arrangement_region_classification_blockers_resolve_operation(
+                &arrangement,
+                ExactBooleanOperation::Union
+            )
+        );
+        assert_eq!(
+            arrangement_cell_complex_labeling_policy(
+                &arrangement,
+                Some(ExactBooleanOperation::Union),
+                ExactRegularizationPolicy::REGULARIZED_SOLID,
+            )
+            .unresolved,
+            ExactUnresolvedPolicy::RetainArtifacts
+        );
 
         arrangement.volume_adjacencies.as_mut().unwrap()[0]
             .separating_face_cells
             .clear();
         assert!(!arrangement_region_classification_blockers_are_volume_resolved(&arrangement));
+        assert!(
+            !arrangement_region_classification_blockers_resolve_operation(
+                &arrangement,
+                ExactBooleanOperation::Union
+            )
+        );
+        assert_eq!(
+            arrangement_cell_complex_labeling_policy(
+                &arrangement,
+                Some(ExactBooleanOperation::Union),
+                ExactRegularizationPolicy::REGULARIZED_SOLID,
+            )
+            .unresolved,
+            ExactUnresolvedPolicy::Block
+        );
     }
 
     #[test]

@@ -44,7 +44,7 @@ use super::box_solid::is_axis_aligned_box;
 use super::cell_complex::{
     ExactRegionOwnershipReport, ExactRegionOwnershipStatus, ExactSelectedCellComplex,
     arrangement_cell_complex_labeling_policy,
-    arrangement_region_classification_blockers_are_volume_resolved,
+    arrangement_region_classification_blockers_resolve_operation,
 };
 use super::cells::triangulate_all_face_cells_with_cdt;
 use super::contained_adjacent::{
@@ -4914,7 +4914,7 @@ fn run_arrangement_cell_complex_attempt_from_arrangement(
                     .any(|region| region.non_manifold_edges > 0 && region.source_sides.len() > 1)
             });
     let volume_resolves_region_classification =
-        arrangement_region_classification_blockers_are_volume_resolved(arrangement);
+        arrangement_region_classification_blockers_resolve_operation(arrangement, operation);
     let selected_regions_ignore_unresolved_classification =
         matches!(operation, ExactBooleanOperation::SelectedRegions(_))
             && arrangement
