@@ -1665,6 +1665,7 @@ impl ExactArrangement3d {
             report.opposite_unknown_faces,
             report.volume_regions,
             report.volume_adjacencies,
+            report.volume_selection_resolved,
         );
         Ok(report)
     }

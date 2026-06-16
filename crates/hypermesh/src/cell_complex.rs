@@ -7,9 +7,9 @@
 
 use super::arrangement3d::{
     ArrangementFaceCell, ArrangementLowerDimensionalArtifact, ArrangementVolumeAdjacency,
-    ExactArrangement, ExactArrangement3d, ExactTopologyAssemblyReport, exact_node_loops_equivalent,
-    lower_dimensional_artifact_counts, sorted_unique_usize_set, validate_arrangement_face_cell,
-    validate_lower_dimensional_artifacts,
+    ArrangementVolumeRegion, ExactArrangement, ExactArrangement3d, ExactTopologyAssemblyReport,
+    exact_node_loops_equivalent, lower_dimensional_artifact_counts, sorted_unique_usize_set,
+    validate_arrangement_face_cell, validate_lower_dimensional_artifacts,
 };
 use super::boolean::ExactBooleanOperation;
 use super::graph::MeshSide;
@@ -235,6 +235,9 @@ pub struct ExactRegionOwnershipReport {
     pub volume_adjacency_face_sides: usize,
     /// Separating face-cell references carried by retained volume adjacencies.
     pub volume_adjacency_separating_faces: usize,
+    /// Whether retained volume adjacency evidence can drive every named
+    /// Boolean selection without opposite-face winding labels.
+    pub volume_selection_resolved: bool,
     /// Retained lower-dimensional artifacts.
     pub lower_dimensional_artifacts: usize,
     /// Retained point-contact lower-dimensional artifacts.
@@ -260,6 +263,7 @@ impl ExactRegionOwnershipReport {
             self.opposite_unknown_faces,
             self.volume_regions,
             self.volume_adjacencies,
+            self.volume_selection_resolved,
         );
         if self.status != expected_status {
             return Err(ExactArrangementBlocker::UnresolvedRegionClassification);
@@ -324,7 +328,8 @@ impl ExactRegionOwnershipReport {
         }
         if (self.volume_adjacencies == 0
             && (self.volume_adjacency_face_sides != 0
-                || self.volume_adjacency_separating_faces != 0))
+                || self.volume_adjacency_separating_faces != 0
+                || self.volume_selection_resolved))
             || (self.volume_adjacencies != 0
                 && (self.volume_adjacency_face_sides == 0
                     || self.volume_adjacency_separating_faces == 0))
@@ -354,6 +359,7 @@ impl ExactRegionOwnershipReport {
                     || self.volume_adjacencies == 0
                     || self.volume_adjacency_face_sides == 0
                     || self.volume_adjacency_separating_faces == 0
+                    || !self.volume_selection_resolved
                 {
                     return Err(ExactArrangementBlocker::UnresolvedRegionClassification);
                 }
@@ -480,19 +486,8 @@ impl ExactCellComplex {
         let volume_regions = self
             .arrangement
             .volume_regions
-            .as_ref()
-            .map(|regions| {
-                regions
-                    .iter()
-                    .map(|region| ExactCellComplexVolumeRegion {
-                        index: region.index,
-                        exterior: region.exterior,
-                        boundary_shells: region.boundary_shells.clone(),
-                        in_left: region.source_sides.contains(&MeshSide::Left),
-                        in_right: region.source_sides.contains(&MeshSide::Right),
-                    })
-                    .collect()
-            })
+            .as_deref()
+            .map(labeled_volume_regions_from_arrangement)
             .unwrap_or_default();
         let volume_adjacencies = self
             .arrangement
@@ -634,6 +629,11 @@ impl ExactLabeledCellComplex {
             .iter()
             .map(|adjacency| adjacency.separating_face_cells.len())
             .sum();
+        let volume_selection_resolved = volume_evidence_resolves_named_selection(
+            &self.faces,
+            &self.volume_regions,
+            &self.volume_adjacencies,
+        );
         let (
             lower_dimensional_point_contacts,
             lower_dimensional_edge_contacts,
@@ -652,6 +652,7 @@ impl ExactLabeledCellComplex {
             opposite_unknown_faces,
             self.volume_regions.len(),
             self.volume_adjacencies.len(),
+            volume_selection_resolved,
         );
         ExactRegionOwnershipReport {
             status,
@@ -675,6 +676,7 @@ impl ExactLabeledCellComplex {
             volume_adjacencies: self.volume_adjacencies.len(),
             volume_adjacency_face_sides,
             volume_adjacency_separating_faces,
+            volume_selection_resolved,
             lower_dimensional_artifacts: self.lower_dimensional_artifacts.len(),
             lower_dimensional_point_contacts,
             lower_dimensional_edge_contacts,
@@ -1165,6 +1167,68 @@ pub(crate) fn selected_cell_complex_gate_counts(
     }
 }
 
+fn labeled_volume_regions_from_arrangement(
+    volume_regions: &[ArrangementVolumeRegion],
+) -> Vec<ExactCellComplexVolumeRegion> {
+    volume_regions
+        .iter()
+        .map(|region| ExactCellComplexVolumeRegion {
+            index: region.index,
+            exterior: region.exterior,
+            boundary_shells: region.boundary_shells.clone(),
+            in_left: region.source_sides.contains(&MeshSide::Left),
+            in_right: region.source_sides.contains(&MeshSide::Right),
+        })
+        .collect()
+}
+
+fn arrangement_volume_evidence_resolves_named_selection(arrangement: &ExactArrangement3d) -> bool {
+    if !arrangement.retained_volume_graph_blockers().is_empty() {
+        return false;
+    }
+    let faces = arrangement
+        .face_cells
+        .iter()
+        .cloned()
+        .map(label_face_cell)
+        .collect::<Vec<_>>();
+    let Some(volume_regions) = arrangement.volume_regions.as_deref() else {
+        return false;
+    };
+    let Some(volume_adjacencies) = arrangement.volume_adjacencies.as_deref() else {
+        return false;
+    };
+    let volume_regions = labeled_volume_regions_from_arrangement(volume_regions);
+    volume_evidence_resolves_named_selection(&faces, &volume_regions, volume_adjacencies)
+}
+
+fn volume_evidence_resolves_named_selection(
+    faces: &[ExactCellComplexFace],
+    volume_regions: &[ExactCellComplexVolumeRegion],
+    volume_adjacencies: &[ArrangementVolumeAdjacency],
+) -> bool {
+    if volume_regions.is_empty() || volume_adjacencies.is_empty() {
+        return false;
+    }
+    [
+        ExactBooleanOperation::Union,
+        ExactBooleanOperation::Intersection,
+        ExactBooleanOperation::Difference,
+    ]
+    .into_iter()
+    .all(|operation| {
+        matches!(
+            select_faces_from_volume_adjacencies(
+                faces,
+                volume_regions,
+                volume_adjacencies,
+                operation,
+            ),
+            Ok(Some(_))
+        )
+    })
+}
+
 pub(crate) fn arrangement_region_classification_blockers_are_volume_resolved(
     arrangement: &ExactArrangement3d,
 ) -> bool {
@@ -1173,14 +1237,7 @@ pub(crate) fn arrangement_region_classification_blockers_are_volume_resolved(
             .blockers
             .iter()
             .all(|blocker| *blocker == ExactArrangementBlocker::UnresolvedRegionClassification)
-        && arrangement
-            .volume_regions
-            .as_ref()
-            .is_some_and(|regions| !regions.is_empty())
-        && arrangement
-            .volume_adjacencies
-            .as_ref()
-            .is_some_and(|adjacencies| !adjacencies.is_empty())
+        && arrangement_volume_evidence_resolves_named_selection(arrangement)
 }
 
 pub(crate) fn arrangement_cell_complex_labeling_policy(
@@ -1212,6 +1269,7 @@ pub(crate) fn region_ownership_status(
     opposite_unknown_faces: usize,
     volume_regions: usize,
     volume_adjacencies: usize,
+    volume_selection_resolved: bool,
 ) -> ExactRegionOwnershipStatus {
     match freshness {
         ExactLabeledCellComplexFreshness::SourceReplayBlocked => {
@@ -1231,7 +1289,7 @@ pub(crate) fn region_ownership_status(
     {
         return ExactRegionOwnershipStatus::Blocked;
     }
-    if volume_regions > 0 && volume_adjacencies > 0 {
+    if volume_regions > 0 && volume_adjacencies > 0 && volume_selection_resolved {
         return ExactRegionOwnershipStatus::VolumeResolved;
     }
     if blockers.contains(&ExactArrangementBlocker::UnresolvedRegionClassification) {
@@ -1889,6 +1947,7 @@ mod tests {
             volume_adjacencies: 0,
             volume_adjacency_face_sides: 0,
             volume_adjacency_separating_faces: 0,
+            volume_selection_resolved: false,
             lower_dimensional_artifacts: 0,
             lower_dimensional_point_contacts: 0,
             lower_dimensional_edge_contacts: 0,
@@ -1940,6 +1999,52 @@ mod tests {
             overflowing_volume_partition.validate(),
             Err(ExactArrangementBlocker::UnresolvedRegionClassification)
         );
+    }
+
+    #[test]
+    fn region_ownership_status_requires_selectable_volume_evidence() {
+        let status_without_volume_proof = region_ownership_status(
+            ExactLabeledCellComplexFreshness::Current,
+            &[ExactArrangementBlocker::UnresolvedRegionClassification],
+            1,
+            1,
+            2,
+            1,
+            false,
+        );
+        assert_eq!(
+            status_without_volume_proof,
+            ExactRegionOwnershipStatus::RequiresWinding
+        );
+
+        let status_with_volume_proof = region_ownership_status(
+            ExactLabeledCellComplexFreshness::Current,
+            &[ExactArrangementBlocker::UnresolvedRegionClassification],
+            1,
+            1,
+            2,
+            1,
+            true,
+        );
+        assert_eq!(
+            status_with_volume_proof,
+            ExactRegionOwnershipStatus::VolumeResolved
+        );
+    }
+
+    #[test]
+    fn arrangement_volume_resolution_requires_selectable_adjacency_provenance() {
+        let left = tetrahedron_i64([0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1]);
+        let right = tetrahedron_i64([3, 0, 0], [4, 0, 0], [3, 1, 0], [3, 0, 1]);
+        let mut arrangement = ExactArrangement::from_meshes(&left, &right).unwrap();
+        arrangement.blockers = vec![ExactArrangementBlocker::UnresolvedRegionClassification];
+
+        assert!(arrangement_region_classification_blockers_are_volume_resolved(&arrangement));
+
+        arrangement.volume_adjacencies.as_mut().unwrap()[0]
+            .separating_face_cells
+            .clear();
+        assert!(!arrangement_region_classification_blockers_are_volume_resolved(&arrangement));
     }
 
     #[test]
