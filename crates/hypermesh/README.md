@@ -120,6 +120,11 @@ and selected and simplified cell-complex accessors retain the topology and
 ownership reports consumed by the selection gate, giving benchmarks a direct view
 of local gate-report validation, workspace session validation, and full source
 replay validation costs.
+Certified shortcut evaluations can also retain arrangement-attempt evidence in
+the same workspace session. Validation treats that retained attempt as an
+additional exact witness only when the shortcut-specific source facts still
+certify the request, so shortcuts remain certified accelerators rather than a
+parallel boolean API.
 `ExactBooleanRequest` now only describes the operation and policy; evaluation and
 materialization run through `ExactBooleanWorkspace` so retained artifacts and
 cache freshness stay tied to one explicit session. Volumetric split-cell recovery
