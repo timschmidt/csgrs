@@ -257,6 +257,60 @@ impl ExactArrangementBooleanAttempt {
         }
     }
 
+    pub(crate) fn matches_request_policy(
+        &self,
+        request: ExactBooleanRequest,
+        policy: ExactRegularizationPolicy,
+    ) -> bool {
+        self.operation == request.operation
+            && self.policy == policy
+            && self.output_validation == request.validation
+    }
+
+    pub(crate) fn certifies_arrangement_cell_complex_output_for_operation(
+        &self,
+        operation: ExactBooleanOperation,
+        policy: ExactRegularizationPolicy,
+    ) -> bool {
+        self.operation == operation
+            && self.policy == policy
+            && self.validate().is_ok()
+            && self.materialized_arrangement_cell_complex_output()
+    }
+
+    pub(crate) fn certifies_arrangement_cell_complex_output_for_request(
+        &self,
+        request: ExactBooleanRequest,
+        policy: ExactRegularizationPolicy,
+    ) -> bool {
+        self.matches_request_policy(request, policy)
+            && self
+                .certifies_arrangement_cell_complex_output_for_operation(request.operation, policy)
+    }
+
+    pub(crate) fn certifies_arrangement_cell_complex_shortcut_for_operation(
+        &self,
+        operation: ExactBooleanOperation,
+        policy: ExactRegularizationPolicy,
+    ) -> bool {
+        self.operation == operation
+            && self.policy == policy
+            && self.validate().is_ok()
+            && self.materialized_arrangement_cell_complex_shortcut()
+    }
+
+    pub(crate) fn certifies_arrangement_cell_complex_shortcut_for_request(
+        &self,
+        request: ExactBooleanRequest,
+        policy: ExactRegularizationPolicy,
+    ) -> bool {
+        self.matches_request_policy(request, policy)
+            && self.certifies_arrangement_cell_complex_shortcut_for_operation(
+                request.operation,
+                policy,
+            )
+    }
+
     fn region_ownership_resolves_operation(&self) -> bool {
         let (Some(status), Some(report)) =
             (self.region_ownership, self.region_ownership_report.as_ref())
@@ -669,10 +723,7 @@ fn retained_arrangement_attempt_for_request<'a>(
         return Ok(None);
     };
     attempt.validate()?;
-    if attempt.operation != request.operation
-        || attempt.policy != policy
-        || attempt.output_validation != request.validation
-    {
+    if !attempt.matches_request_policy(request, policy) {
         return Err(ExactReportValidationError::StatusEvidenceMismatch);
     }
     Ok(Some(attempt))
@@ -1144,14 +1195,11 @@ impl ExactBooleanCertificationSet {
             && self.region_ownership.is_none()
             && self.topology_assembly.is_none()
             && self.arrangement_attempt.as_ref().is_some_and(|attempt| {
-                attempt.operation == request.operation
-                    && attempt.policy == ExactRegularizationPolicy::REGULARIZED_SOLID
-                    && attempt.materialized_arrangement_cell_complex_shortcut()
-            })
-            && self
-                .arrangement_attempt
-                .as_ref()
-                .is_some_and(|attempt| attempt.output_validation == request.validation);
+                attempt.certifies_arrangement_cell_complex_shortcut_for_request(
+                    request,
+                    ExactRegularizationPolicy::REGULARIZED_SOLID,
+                )
+            });
         if arrangement_cell_complex_shortcut_certified {
             if self.region_ownership.is_some() || self.topology_assembly.is_some() {
                 return Err(ExactReportValidationError::StatusEvidenceMismatch);
@@ -1167,9 +1215,8 @@ impl ExactBooleanCertificationSet {
                 return Err(ExactReportValidationError::StatusEvidenceMismatch);
             };
             attempt.validate()?;
-            if attempt.operation != request.operation
-                || attempt.policy != ExactRegularizationPolicy::REGULARIZED_SOLID
-                || attempt.output_validation != request.validation
+            if !attempt
+                .matches_request_policy(request, ExactRegularizationPolicy::REGULARIZED_SOLID)
             {
                 return Err(ExactReportValidationError::StatusEvidenceMismatch);
             }
@@ -1198,10 +1245,7 @@ impl ExactBooleanCertificationSet {
             return Err(ExactReportValidationError::StatusEvidenceMismatch);
         };
         attempt.validate()?;
-        if attempt.operation != request.operation
-            || attempt.policy != ExactRegularizationPolicy::REGULARIZED_SOLID
-            || attempt.output_validation != request.validation
-        {
+        if !attempt.matches_request_policy(request, ExactRegularizationPolicy::REGULARIZED_SOLID) {
             return Err(ExactReportValidationError::StatusEvidenceMismatch);
         }
         Ok(())
@@ -1579,75 +1623,53 @@ impl ExactBooleanEvaluation {
                 return Err(ExactReportValidationError::StatusEvidenceMismatch);
             }
             result.validate()?;
-            let result_matches_certifications =
-                match result.kind {
-                    ExactBooleanResultKind::ArrangementCellComplexMaterialized { operation } => {
-                        self.certifications
-                            .region_ownership
-                            .as_ref()
-                            .is_some_and(|ownership| {
-                                ownership_resolves_arrangement_operation(ownership, operation)
-                            })
-                            && self.certifications.topology_assembly.as_ref().is_some_and(
-                                |topology| topology.validate().is_ok() && topology.is_complete(),
-                            )
-                            && self
-                                .certifications
-                                .arrangement_attempt
-                                .as_ref()
-                                .is_some_and(|attempt| {
-                                    attempt.operation == operation
-                                        && attempt.policy
-                                            == ExactRegularizationPolicy::REGULARIZED_SOLID
-                                        && attempt.materialized_arrangement_cell_complex_output()
-                                })
-                    }
-                    ExactBooleanResultKind::CertifiedShortcut {
-                        shortcut: ExactBooleanShortcutKind::ArrangementCellComplex,
-                        operation,
-                    } => {
-                        (self
+            let arrangement_attempt_certifies_request = self
+                .certifications
+                .arrangement_attempt
+                .as_ref()
+                .is_some_and(|attempt| {
+                    attempt.certifies_arrangement_cell_complex_output_for_request(
+                        self.request,
+                        ExactRegularizationPolicy::REGULARIZED_SOLID,
+                    )
+                });
+            let arrangement_shortcut_attempt_certifies_request = self
+                .certifications
+                .arrangement_attempt
+                .as_ref()
+                .is_some_and(|attempt| {
+                    attempt.certifies_arrangement_cell_complex_shortcut_for_request(
+                        self.request,
+                        ExactRegularizationPolicy::REGULARIZED_SOLID,
+                    )
+                });
+            let result_matches_certifications = match result.kind {
+                ExactBooleanResultKind::ArrangementCellComplexMaterialized { operation } => {
+                    operation == self.request.operation && arrangement_attempt_certifies_request
+                }
+                ExactBooleanResultKind::CertifiedShortcut {
+                    shortcut: ExactBooleanShortcutKind::ArrangementCellComplex,
+                    operation,
+                } => {
+                    operation == self.request.operation
+                        && ((self
                             .certifications
                             .arrangement_cell_complex_shortcuts
                             .certified_support(operation)
                             == Some(ExactBooleanSupport::CertifiedArrangementCellComplex)
                             && self.certifications.region_ownership.is_none()
                             && self.certifications.topology_assembly.is_none()
-                            && self
-                                .certifications
-                                .arrangement_attempt
-                                .as_ref()
-                                .is_some_and(|attempt| {
-                                    attempt.operation == operation
-                                        && attempt.policy
-                                            == ExactRegularizationPolicy::REGULARIZED_SOLID
-                                        && attempt.materialized_arrangement_cell_complex_shortcut()
-                                }))
+                            && arrangement_shortcut_attempt_certifies_request)
                             || (self.certifications.adjacent_union_completion.is_certified()
                                 && self.certifications.adjacent_union_completion.operation
                                     == operation
                                 && self.certifications.region_ownership.is_none()
                                 && self.certifications.topology_assembly.is_none()
                                 && self.certifications.arrangement_attempt.is_none())
-                            || (self.certifications.region_ownership.as_ref().is_some_and(
-                                |ownership| {
-                                    ownership_resolves_arrangement_operation(ownership, operation)
-                                },
-                            ) && self.certifications.topology_assembly.as_ref().is_some_and(
-                                |topology| topology.validate().is_ok() && topology.is_complete(),
-                            ) && self
-                                .certifications
-                                .arrangement_attempt
-                                .as_ref()
-                                .is_some_and(|attempt| {
-                                    attempt.operation == operation
-                                        && attempt.policy
-                                            == ExactRegularizationPolicy::REGULARIZED_SOLID
-                                        && attempt.materialized_arrangement_cell_complex_output()
-                                }))
-                    }
-                    _ => true,
-                };
+                            || arrangement_attempt_certifies_request)
+                }
+                _ => true,
+            };
             if !result.matches_request(self.request)
                 || !result
                     .mesh
@@ -1812,9 +1834,10 @@ fn exact_boolean_preflight_matches_certifications(
                     .arrangement_attempt
                     .as_ref()
                     .is_some_and(|attempt| {
-                        attempt.operation == preflight.operation
-                            && attempt.policy == ExactRegularizationPolicy::REGULARIZED_SOLID
-                            && attempt.materialized_arrangement_cell_complex_shortcut()
+                        attempt.certifies_arrangement_cell_complex_shortcut_for_operation(
+                            preflight.operation,
+                            ExactRegularizationPolicy::REGULARIZED_SOLID,
+                        )
                     })
                 && preflight.graph_had_unknowns == certifications.refinement.graph_had_unknowns
                 && preflight.retained_face_pairs == certifications.refinement.retained_face_pairs
@@ -1827,9 +1850,10 @@ fn exact_boolean_preflight_matches_certifications(
                     .arrangement_attempt
                     .as_ref()
                     .is_some_and(|attempt| {
-                        attempt.operation == preflight.operation
-                            && attempt.policy == ExactRegularizationPolicy::REGULARIZED_SOLID
-                            && attempt.validate().is_ok()
+                        attempt.certifies_arrangement_cell_complex_output_for_operation(
+                            preflight.operation,
+                            ExactRegularizationPolicy::REGULARIZED_SOLID,
+                        )
                     })
                     && preflight.graph_had_unknowns == certifications.refinement.graph_had_unknowns
                     && preflight.retained_face_pairs
@@ -1872,9 +1896,10 @@ fn exact_boolean_preflight_matches_certifications(
                         .arrangement_attempt
                         .as_ref()
                         .is_some_and(|attempt| {
-                            attempt.operation == preflight.operation
-                                && attempt.policy == ExactRegularizationPolicy::REGULARIZED_SOLID
-                                && attempt.materialized_arrangement_cell_complex_output()
+                            attempt.certifies_arrangement_cell_complex_output_for_operation(
+                                preflight.operation,
+                                ExactRegularizationPolicy::REGULARIZED_SOLID,
+                            )
                         })
                     && {
                         let region_handoff_matches = (preflight.region_count
@@ -4845,16 +4870,18 @@ fn arrangement_cell_complex_result_is_certified_for_preflight(
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> bool {
-    attempt.materialized_arrangement_cell_complex_output()
-        && matches!(
-            result.kind,
-            ExactBooleanResultKind::ArrangementCellComplexMaterialized { .. }
-                | ExactBooleanResultKind::CertifiedShortcut {
-                    shortcut: ExactBooleanShortcutKind::ArrangementCellComplex,
-                    ..
-                }
-        )
-        && result.validate_against_sources(left, right).is_ok()
+    let operation = match result.kind {
+        ExactBooleanResultKind::ArrangementCellComplexMaterialized { operation }
+        | ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: ExactBooleanShortcutKind::ArrangementCellComplex,
+            operation,
+        } => operation,
+        _ => return false,
+    };
+    attempt.certifies_arrangement_cell_complex_output_for_operation(
+        operation,
+        ExactRegularizationPolicy::REGULARIZED_SOLID,
+    ) && result.validate_against_sources(left, right).is_ok()
 }
 
 fn arrangement_cell_complex_materializes_for_preflight_from_graph(
@@ -13733,6 +13760,51 @@ mod tests {
         replayable_result
             .validate_against_sources(&left, &right)
             .unwrap();
+        assert!(
+            report_attempt.certifies_arrangement_cell_complex_output_for_request(
+                ExactBooleanRequest::new(
+                    ExactBooleanOperation::Union,
+                    ValidationPolicy::ALLOW_BOUNDARY,
+                ),
+                ExactRegularizationPolicy::REGULARIZED_SOLID,
+            )
+        );
+        assert!(arrangement_cell_complex_result_is_certified_for_preflight(
+            &replayable_result,
+            &report_attempt,
+            &left,
+            &right,
+        ));
+        let mut relabeled_attempt = report_attempt.clone();
+        relabeled_attempt.operation = ExactBooleanOperation::Difference;
+        assert!(!arrangement_cell_complex_result_is_certified_for_preflight(
+            &replayable_result,
+            &relabeled_attempt,
+            &left,
+            &right,
+        ));
+        let mut wrong_validation_attempt = report_attempt.clone();
+        wrong_validation_attempt.output_validation = ValidationPolicy::CLOSED;
+        assert!(
+            !wrong_validation_attempt.certifies_arrangement_cell_complex_output_for_request(
+                ExactBooleanRequest::new(
+                    ExactBooleanOperation::Union,
+                    ValidationPolicy::ALLOW_BOUNDARY,
+                ),
+                ExactRegularizationPolicy::REGULARIZED_SOLID,
+            )
+        );
+        assert_eq!(
+            retained_arrangement_attempt_for_request(
+                Some(&wrong_validation_attempt),
+                ExactBooleanRequest::new(
+                    ExactBooleanOperation::Union,
+                    ValidationPolicy::ALLOW_BOUNDARY,
+                ),
+                ExactRegularizationPolicy::REGULARIZED_SOLID,
+            ),
+            Err(ExactReportValidationError::StatusEvidenceMismatch)
+        );
         let graph = build_intersection_graph(&left, &right).unwrap();
         validate_volumetric_arrangement_result_against_graph(
             &replayable_result,
