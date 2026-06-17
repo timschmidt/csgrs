@@ -2292,11 +2292,6 @@ impl ExactBooleanEvaluation {
         &self.certifications.refinement
     }
 
-    /// Returns the retained adjacent-union completion report.
-    pub fn adjacent_union_completion_report(&self) -> &ExactAdjacentUnionCompletionReport {
-        &self.certifications.adjacent_union_completion
-    }
-
     /// Returns the retained identical-mesh report.
     pub fn identical_mesh_report(&self) -> &ExactIdenticalMeshReport {
         &self.certifications.identical

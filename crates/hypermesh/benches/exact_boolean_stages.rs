@@ -559,7 +559,7 @@ fn run_case(case: &BenchCase) {
         "workspace_validate_adjacent_union_from_retained_artifacts",
         || {
             retained_workspace_and_certification_for_case(case, request, |evaluation| {
-                evaluation.adjacent_union_completion_report().clone()
+                evaluation.certifications.adjacent_union_completion.clone()
             })
         },
         |(retained_workspace, report)| {

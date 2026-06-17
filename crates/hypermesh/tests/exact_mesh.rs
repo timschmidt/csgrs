@@ -66,7 +66,8 @@ fn exact_boolean_arrangement_attempt(
 macro_rules! exact_adjacent_union_completion_report {
     ($left:expr, $right:expr, $request:expr $(,)?) => {
         exact_boolean_evaluation($left, $right, $request)
-            .adjacent_union_completion_report()
+            .certifications
+            .adjacent_union_completion
             .clone()
     };
 }

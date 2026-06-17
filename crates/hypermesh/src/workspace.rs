@@ -1133,7 +1133,7 @@ mod tests {
             Err(ExactReportValidationError::StatusEvidenceMismatch)
         );
 
-        let adjacent_report = evaluation.adjacent_union_completion_report().clone();
+        let adjacent_report = evaluation.certifications.adjacent_union_completion.clone();
         assert_eq!(
             adjacent_report,
             crate::boolean::adjacent_union_completion_certification(
@@ -2026,7 +2026,7 @@ mod tests {
         let evaluation = workspace.evaluate(request).unwrap().clone();
         evaluation.validate().unwrap();
         assert_eq!(
-            evaluation.adjacent_union_completion_report().clone(),
+            evaluation.certifications.adjacent_union_completion.clone(),
             expected_report
         );
     }
