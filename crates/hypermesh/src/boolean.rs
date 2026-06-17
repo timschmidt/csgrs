@@ -1368,7 +1368,8 @@ impl ExactBooleanCertificationSet {
     }
 
     fn planar_arrangement_matches_preflight(&self, preflight: &ExactBooleanPreflight) -> bool {
-        preflight.graph_had_unknowns == self.planar_arrangement.graph_had_unknowns
+        self.winding_readiness.status == ExactWindingReadinessStatus::PlanarArrangementRequired
+            && preflight.graph_had_unknowns == self.planar_arrangement.graph_had_unknowns
             && preflight.retained_face_pairs == self.planar_arrangement.retained_face_pairs
             && preflight.retained_events == self.planar_arrangement.retained_events
             && preflight.region_count == 0
@@ -1691,6 +1692,81 @@ impl ExactBooleanCertificationSet {
                         && preflight.coplanar_volumetric_evidence
                             == self.winding_readiness.coplanar_volumetric_evidence
                 })
+    }
+
+    fn matches_preflight(&self, preflight: &ExactBooleanPreflight) -> bool {
+        match preflight.support {
+            ExactBooleanSupport::SelectedRegionPolicy => {
+                self.selected_region_policy_matches_preflight(preflight)
+            }
+            ExactBooleanSupport::CertifiedBoundaryPolicyShortcut => {
+                self.boundary_policy_shortcut_matches_preflight(preflight)
+            }
+            ExactBooleanSupport::CertifiedOpenSurfaceArrangementUnion
+            | ExactBooleanSupport::CertifiedOpenSurfaceArrangementIntersection
+            | ExactBooleanSupport::CertifiedOpenSurfaceArrangementDifference => {
+                self.open_surface_arrangement_matches_preflight(preflight)
+            }
+            ExactBooleanSupport::CertifiedArrangementCellComplex => {
+                self.arrangement_cell_complex_matches_preflight(preflight)
+            }
+            ExactBooleanSupport::CertifiedEmptyOperand => {
+                self.empty_operand_matches_preflight(preflight)
+            }
+            ExactBooleanSupport::CertifiedBoundsDisjoint => {
+                self.bounds_disjoint_matches_preflight(preflight)
+            }
+            ExactBooleanSupport::CertifiedIdentical => self.identical_matches_preflight(preflight),
+            ExactBooleanSupport::CertifiedSameSurface => {
+                self.same_surface_matches_preflight(preflight)
+            }
+            ExactBooleanSupport::CertifiedClosedBoundaryTouchingUnion
+            | ExactBooleanSupport::CertifiedClosedBoundaryTouchingIntersection
+            | ExactBooleanSupport::CertifiedClosedBoundaryTouchingDifference => {
+                self.closed_boundary_touching_matches_preflight(preflight)
+            }
+            ExactBooleanSupport::CertifiedOpenSurfaceDisjoint => {
+                self.open_surface_disjoint_shortcut_matches_preflight(preflight)
+            }
+            ExactBooleanSupport::CertifiedClosedWindingSeparated => {
+                self.closed_winding_separated_matches_preflight(preflight)
+            }
+            ExactBooleanSupport::CertifiedClosedWindingContainment => {
+                self.closed_winding_containment_matches_preflight(preflight)
+            }
+            ExactBooleanSupport::CertifiedMixedDimensionalRegularizedSolid => {
+                self.mixed_dimensional_regularized_solid_matches_preflight(preflight)
+            }
+            ExactBooleanSupport::CertifiedLowerDimensionalRegularizedSolid => {
+                self.lower_dimensional_regularized_solid_matches_preflight(preflight)
+            }
+            ExactBooleanSupport::CertifiedConvexUnion
+            | ExactBooleanSupport::CertifiedConvexIntersection
+            | ExactBooleanSupport::CertifiedConvexDifference => {
+                self.convex_boolean_matches_preflight(preflight)
+            }
+            ExactBooleanSupport::CertifiedConvexSeparated => {
+                self.convex_separated_matches_preflight(preflight)
+            }
+            ExactBooleanSupport::CertifiedConvexContainment => {
+                self.convex_containment_matches_preflight(preflight)
+            }
+            ExactBooleanSupport::RequiresBoundaryPolicy => {
+                self.boundary_policy_requirement_matches_preflight(preflight)
+            }
+            ExactBooleanSupport::RequiresPlanarArrangement => {
+                self.planar_arrangement_matches_preflight(preflight)
+            }
+            ExactBooleanSupport::RequiresCoplanarVolumetricCells => {
+                self.coplanar_volumetric_requirement_matches_preflight(preflight)
+            }
+            ExactBooleanSupport::UnresolvedGraph => {
+                self.unresolved_graph_matches_preflight(preflight)
+            }
+            ExactBooleanSupport::RequiresCertifiedWinding => {
+                self.certified_winding_requirement_matches_preflight(preflight)
+            }
+        }
     }
 
     fn validate_retained_closure_and_attempt_for_request(
@@ -2250,7 +2326,7 @@ impl ExactBooleanEvaluation {
         if let Err(error) = self.certifications.validate_for_request(self.request) {
             return Err(error);
         }
-        if !exact_boolean_preflight_matches_certifications(&self.preflight, &self.certifications) {
+        if !self.certifications.matches_preflight(&self.preflight) {
             return Err(ExactReportValidationError::StatusEvidenceMismatch);
         }
         if let Some(result) = self.result.as_ref() {
@@ -2357,88 +2433,6 @@ fn validate_evaluation_materialized_result(
         return Err(ExactReportValidationError::StatusEvidenceMismatch);
     }
     Ok(())
-}
-
-fn exact_boolean_preflight_matches_certifications(
-    preflight: &ExactBooleanPreflight,
-    certifications: &ExactBooleanCertificationSet,
-) -> bool {
-    let status = &certifications.winding_readiness.status;
-    match preflight.support {
-        ExactBooleanSupport::SelectedRegionPolicy => {
-            certifications.selected_region_policy_matches_preflight(preflight)
-        }
-        ExactBooleanSupport::CertifiedBoundaryPolicyShortcut => {
-            certifications.boundary_policy_shortcut_matches_preflight(preflight)
-        }
-        ExactBooleanSupport::CertifiedOpenSurfaceArrangementUnion
-        | ExactBooleanSupport::CertifiedOpenSurfaceArrangementIntersection
-        | ExactBooleanSupport::CertifiedOpenSurfaceArrangementDifference => {
-            certifications.open_surface_arrangement_matches_preflight(preflight)
-        }
-        ExactBooleanSupport::CertifiedArrangementCellComplex => {
-            certifications.arrangement_cell_complex_matches_preflight(preflight)
-        }
-        ExactBooleanSupport::CertifiedEmptyOperand => {
-            certifications.empty_operand_matches_preflight(preflight)
-        }
-        ExactBooleanSupport::CertifiedBoundsDisjoint => {
-            certifications.bounds_disjoint_matches_preflight(preflight)
-        }
-        ExactBooleanSupport::CertifiedIdentical => {
-            certifications.identical_matches_preflight(preflight)
-        }
-        ExactBooleanSupport::CertifiedSameSurface => {
-            certifications.same_surface_matches_preflight(preflight)
-        }
-        ExactBooleanSupport::CertifiedClosedBoundaryTouchingUnion
-        | ExactBooleanSupport::CertifiedClosedBoundaryTouchingIntersection
-        | ExactBooleanSupport::CertifiedClosedBoundaryTouchingDifference => {
-            certifications.closed_boundary_touching_matches_preflight(preflight)
-        }
-        ExactBooleanSupport::CertifiedOpenSurfaceDisjoint => {
-            certifications.open_surface_disjoint_shortcut_matches_preflight(preflight)
-        }
-        ExactBooleanSupport::CertifiedClosedWindingSeparated => {
-            certifications.closed_winding_separated_matches_preflight(preflight)
-        }
-        ExactBooleanSupport::CertifiedClosedWindingContainment => {
-            certifications.closed_winding_containment_matches_preflight(preflight)
-        }
-        ExactBooleanSupport::CertifiedMixedDimensionalRegularizedSolid => {
-            certifications.mixed_dimensional_regularized_solid_matches_preflight(preflight)
-        }
-        ExactBooleanSupport::CertifiedLowerDimensionalRegularizedSolid => {
-            certifications.lower_dimensional_regularized_solid_matches_preflight(preflight)
-        }
-        ExactBooleanSupport::CertifiedConvexUnion
-        | ExactBooleanSupport::CertifiedConvexIntersection
-        | ExactBooleanSupport::CertifiedConvexDifference => {
-            certifications.convex_boolean_matches_preflight(preflight)
-        }
-        ExactBooleanSupport::CertifiedConvexSeparated => {
-            certifications.convex_separated_matches_preflight(preflight)
-        }
-        ExactBooleanSupport::CertifiedConvexContainment => {
-            certifications.convex_containment_matches_preflight(preflight)
-        }
-        ExactBooleanSupport::RequiresBoundaryPolicy => {
-            certifications.boundary_policy_requirement_matches_preflight(preflight)
-        }
-        ExactBooleanSupport::RequiresPlanarArrangement => {
-            *status == ExactWindingReadinessStatus::PlanarArrangementRequired
-                && certifications.planar_arrangement_matches_preflight(preflight)
-        }
-        ExactBooleanSupport::RequiresCoplanarVolumetricCells => {
-            certifications.coplanar_volumetric_requirement_matches_preflight(preflight)
-        }
-        ExactBooleanSupport::UnresolvedGraph => {
-            certifications.unresolved_graph_matches_preflight(preflight)
-        }
-        ExactBooleanSupport::RequiresCertifiedWinding => {
-            certifications.certified_winding_requirement_matches_preflight(preflight)
-        }
-    }
 }
 
 fn exact_boolean_closed_winding_reports_match_separated(
