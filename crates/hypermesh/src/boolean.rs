@@ -1291,9 +1291,9 @@ impl ExactBooleanCertificationSet {
     fn region_ownership_resolves_operation(&self, operation: ExactBooleanOperation) -> bool {
         self.arrangement_attempt.as_ref().is_some_and(|attempt| {
             attempt.operation == operation && attempt.resolves_requested_volume_ownership()
-        }) || self
-            .region_ownership_report()
-            .is_some_and(|ownership| ownership_resolves_arrangement_operation(ownership, operation))
+        }) || self.region_ownership_report().is_some_and(|ownership| {
+            ownership.validate().is_ok() && ownership.resolves_operation_selection(operation)
+        })
     }
 
     fn arrangement_attempt_certifies_output_for_operation(
@@ -2458,13 +2458,6 @@ impl ExactBooleanEvaluation {
         }
         Ok(())
     }
-}
-
-fn ownership_resolves_arrangement_operation(
-    ownership: &ExactRegionOwnershipReport,
-    operation: ExactBooleanOperation,
-) -> bool {
-    ownership.validate().is_ok() && ownership.resolves_operation_selection(operation)
 }
 
 fn graph_for_certified_materialization<'a>(
@@ -14343,18 +14336,9 @@ mod tests {
 
         ownership.validate().unwrap();
         assert!(!ownership.is_resolved());
-        assert!(ownership_resolves_arrangement_operation(
-            &ownership,
-            ExactBooleanOperation::Intersection
-        ));
-        assert!(ownership_resolves_arrangement_operation(
-            &ownership,
-            ExactBooleanOperation::Difference
-        ));
-        assert!(!ownership_resolves_arrangement_operation(
-            &ownership,
-            ExactBooleanOperation::Union
-        ));
+        assert!(ownership.resolves_operation_selection(ExactBooleanOperation::Intersection));
+        assert!(ownership.resolves_operation_selection(ExactBooleanOperation::Difference));
+        assert!(!ownership.resolves_operation_selection(ExactBooleanOperation::Union));
     }
 
     #[test]
