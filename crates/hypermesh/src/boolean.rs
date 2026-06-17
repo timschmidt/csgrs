@@ -2292,11 +2292,6 @@ impl ExactBooleanEvaluation {
         &self.certifications.boundary_touching
     }
 
-    /// Returns the retained open-surface disjointness report.
-    pub fn open_surface_disjoint_report(&self) -> &ExactOpenSurfaceDisjointReport {
-        &self.certifications.open_surface_disjoint
-    }
-
     /// Returns the retained winding-readiness report.
     pub fn winding_readiness_report(&self) -> &ExactWindingReadinessReport {
         &self.certifications.winding_readiness

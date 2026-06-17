@@ -627,7 +627,7 @@ fn run_case(case: &BenchCase) {
         "workspace_validate_open_surface_disjoint_from_retained_artifacts",
         || {
             retained_workspace_and_certification_for_case(case, request, |evaluation| {
-                evaluation.open_surface_disjoint_report().clone()
+                evaluation.certifications.open_surface_disjoint.clone()
             })
         },
         |(retained_workspace, report)| {

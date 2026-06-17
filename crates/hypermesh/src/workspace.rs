@@ -1306,7 +1306,7 @@ mod tests {
             ExactReportFreshness::Current
         );
 
-        let open_surface_report = evaluation.open_surface_disjoint_report().clone();
+        let open_surface_report = evaluation.certifications.open_surface_disjoint.clone();
         open_surface_report
             .validate_against_sources(&left, &right)
             .unwrap();

@@ -4660,7 +4660,8 @@ fn public_exact_blocker_reports_replay_remaining_decisions() {
             ValidationPolicy::ALLOW_BOUNDARY,
         ),
     )
-    .open_surface_disjoint_report()
+    .certifications
+    .open_surface_disjoint
     .clone();
     assert!(open_disjoint.is_certified());
     open_disjoint.validate().unwrap();
@@ -4700,7 +4701,8 @@ fn open_surface_disjoint_report_classifies_retained_coplanar_overlap_blocker() {
             ValidationPolicy::ALLOW_BOUNDARY,
         ),
     )
-    .open_surface_disjoint_report()
+    .certifications
+    .open_surface_disjoint
     .clone();
 
     assert!(!report.is_certified());
@@ -5461,10 +5463,12 @@ fn trivial_boolean_shortcuts_are_publicly_replayable() {
             &open_disjoint_right,
             ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
         )
-        .open_surface_disjoint_report()
+        .certifications
+        .open_surface_disjoint
         .clone();
         relabeled_disjoint_report
-            .open_surface_disjoint_report()
+            .certifications
+            .open_surface_disjoint
             .validate()
             .unwrap();
         assert_eq!(
