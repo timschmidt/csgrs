@@ -1329,6 +1329,22 @@ impl ExactBooleanCertificationSet {
             && self.arrangement_attempt_certifies_output_for_operation(preflight.operation)
     }
 
+    fn adjacent_union_completion_matches_preflight(
+        &self,
+        preflight: &ExactBooleanPreflight,
+    ) -> bool {
+        self.adjacent_union_completion.is_certified()
+            && self.adjacent_union_completion.operation == preflight.operation
+            && preflight.operation == ExactBooleanOperation::Union
+            && preflight.graph_had_unknowns == self.adjacent_union_completion.graph_had_unknowns
+            && preflight.retained_face_pairs == self.adjacent_union_completion.retained_face_pairs
+            && preflight.retained_events == self.adjacent_union_completion.retained_events
+            && preflight.region_count == 0
+            && preflight.region_classifications.is_empty()
+            && preflight.blocker.is_none()
+            && preflight.arrangement_readiness.is_none()
+    }
+
     fn validate_retained_closure_and_attempt_for_request(
         &self,
         request: ExactBooleanRequest,
@@ -2114,19 +2130,7 @@ fn exact_boolean_preflight_matches_certifications(
                         preflight,
                         &certifications.refinement,
                     ))
-                || (certifications.adjacent_union_completion.is_certified()
-                    && certifications.adjacent_union_completion.operation == preflight.operation
-                    && preflight.operation == ExactBooleanOperation::Union
-                    && preflight.graph_had_unknowns
-                        == certifications.adjacent_union_completion.graph_had_unknowns
-                    && preflight.retained_face_pairs
-                        == certifications.adjacent_union_completion.retained_face_pairs
-                    && preflight.retained_events
-                        == certifications.adjacent_union_completion.retained_events
-                    && preflight.region_count == 0
-                    && preflight.region_classifications.is_empty()
-                    && preflight.blocker.is_none()
-                    && preflight.arrangement_readiness.is_none())
+                || certifications.adjacent_union_completion_matches_preflight(preflight)
                 || (certifications.region_ownership_resolves_operation(preflight.operation)
                     && certifications.topology_assembly_complete()
                     && {
