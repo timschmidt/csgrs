@@ -1175,44 +1175,7 @@ impl ExactBooleanCertificationSet {
             }
             return Ok(());
         }
-        let materialized_shortcut_certified = match self.winding_readiness.status {
-            ExactWindingReadinessStatus::EmptyOperandAlreadyMaterialized => {
-                self.trivial.has_empty_operand()
-            }
-            ExactWindingReadinessStatus::BoundsDisjointAlreadyMaterialized => {
-                self.trivial.bounds_disjoint
-            }
-            ExactWindingReadinessStatus::SurfaceEqualityAlreadyMaterialized => {
-                self.same_surface.is_certified()
-            }
-            ExactWindingReadinessStatus::OpenSurfaceDisjointAlreadyMaterialized => {
-                self.open_surface_disjoint.is_certified()
-            }
-            ExactWindingReadinessStatus::ClosedBoundaryTouchingAlreadyMaterialized => {
-                self.boundary_touching.is_certified()
-            }
-            ExactWindingReadinessStatus::MixedDimensionalRegularizedSolidAlreadyMaterialized => {
-                (self.regularized_solid.left_closed_solid
-                    && self.regularized_solid.right_open_surface)
-                    || (self.regularized_solid.left_open_surface
-                        && self.regularized_solid.right_closed_solid)
-            }
-            ExactWindingReadinessStatus::LowerDimensionalRegularizedSolidAlreadyMaterialized => {
-                self.regularized_solid.left_open_surface
-                    && self.regularized_solid.right_open_surface
-            }
-            ExactWindingReadinessStatus::ConvexBooleanAlreadyMaterialized => self
-                .convex_capabilities
-                .resolves_operation(request.operation),
-            ExactWindingReadinessStatus::ClosedWindingSeparatedAlreadyMaterialized => {
-                exact_boolean_closed_winding_reports_match_separated(self)
-            }
-            ExactWindingReadinessStatus::ClosedWindingContainmentAlreadyMaterialized => {
-                exact_boolean_closed_winding_reports_match_containment(self)
-            }
-            _ => false,
-        };
-        if materialized_shortcut_certified {
+        if self.materialized_shortcut_certified_for_request(request) {
             self.validate_retained_closure_and_attempt_for_request(request, false, false)?;
             return Ok(());
         }
@@ -1263,6 +1226,46 @@ impl ExactBooleanCertificationSet {
         }
         self.validate_retained_closure_and_attempt_for_request(request, true, true)?;
         Ok(())
+    }
+
+    fn materialized_shortcut_certified_for_request(&self, request: ExactBooleanRequest) -> bool {
+        match self.winding_readiness.status {
+            ExactWindingReadinessStatus::EmptyOperandAlreadyMaterialized => {
+                self.trivial.has_empty_operand()
+            }
+            ExactWindingReadinessStatus::BoundsDisjointAlreadyMaterialized => {
+                self.trivial.bounds_disjoint
+            }
+            ExactWindingReadinessStatus::SurfaceEqualityAlreadyMaterialized => {
+                self.same_surface.is_certified()
+            }
+            ExactWindingReadinessStatus::OpenSurfaceDisjointAlreadyMaterialized => {
+                self.open_surface_disjoint.is_certified()
+            }
+            ExactWindingReadinessStatus::ClosedBoundaryTouchingAlreadyMaterialized => {
+                self.boundary_touching.is_certified()
+            }
+            ExactWindingReadinessStatus::MixedDimensionalRegularizedSolidAlreadyMaterialized => {
+                (self.regularized_solid.left_closed_solid
+                    && self.regularized_solid.right_open_surface)
+                    || (self.regularized_solid.left_open_surface
+                        && self.regularized_solid.right_closed_solid)
+            }
+            ExactWindingReadinessStatus::LowerDimensionalRegularizedSolidAlreadyMaterialized => {
+                self.regularized_solid.left_open_surface
+                    && self.regularized_solid.right_open_surface
+            }
+            ExactWindingReadinessStatus::ConvexBooleanAlreadyMaterialized => self
+                .convex_capabilities
+                .resolves_operation(request.operation),
+            ExactWindingReadinessStatus::ClosedWindingSeparatedAlreadyMaterialized => {
+                exact_boolean_closed_winding_reports_match_separated(self)
+            }
+            ExactWindingReadinessStatus::ClosedWindingContainmentAlreadyMaterialized => {
+                exact_boolean_closed_winding_reports_match_containment(self)
+            }
+            _ => false,
+        }
     }
 
     fn validate_retained_closure_and_attempt_for_request(
@@ -2366,13 +2369,11 @@ fn exact_boolean_convex_reports_match_support(
         return false;
     }
     match preflight.support {
-        ExactBooleanSupport::CertifiedConvexUnion => certifications.convex_capabilities.can_union,
-        ExactBooleanSupport::CertifiedConvexIntersection => {
-            certifications.convex_capabilities.can_intersection
-        }
-        ExactBooleanSupport::CertifiedConvexDifference => {
-            certifications.convex_capabilities.can_difference
-        }
+        ExactBooleanSupport::CertifiedConvexUnion
+        | ExactBooleanSupport::CertifiedConvexIntersection
+        | ExactBooleanSupport::CertifiedConvexDifference => certifications
+            .convex_capabilities
+            .resolves_operation(preflight.operation),
         ExactBooleanSupport::CertifiedConvexSeparated
         | ExactBooleanSupport::CertifiedConvexContainment => true,
         _ => false,
