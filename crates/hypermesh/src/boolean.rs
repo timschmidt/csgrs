@@ -11549,6 +11549,127 @@ mod tests {
         );
     }
 
+    fn synthetic_arrangement_attempt(
+        stage: ExactArrangementBooleanStage,
+        decline: Option<ExactArrangementBooleanDecline>,
+    ) -> ExactArrangementBooleanAttempt {
+        ExactArrangementBooleanAttempt {
+            operation: ExactBooleanOperation::Union,
+            policy: ExactRegularizationPolicy::REGULARIZED_SOLID,
+            output_validation: ValidationPolicy::ALLOW_BOUNDARY,
+            stage,
+            decline,
+            materialized_shortcut: None,
+            shortcut_reason: None,
+            arrangement_blockers: 0,
+            face_cells: 0,
+            regions: 0,
+            volume_regions: 0,
+            volume_adjacencies: 0,
+            lower_dimensional_artifacts: 0,
+            topology_assembly: None,
+            topology_assembly_report: None,
+            region_ownership: None,
+            region_ownership_report: None,
+            selected_faces: 0,
+            reversed_selected_faces: 0,
+            volume_oriented_selected_faces: 0,
+            label_oriented_selected_faces: 0,
+            selected_volume_regions: 0,
+            selected_cell_complex: None,
+            simplified_cell_complex: None,
+            output_vertices: 0,
+            output_triangles: 0,
+            output_facts: None,
+        }
+    }
+
+    #[test]
+    fn arrangement_shortcut_reason_names_generic_blocker_stage() {
+        let cases = [
+            (
+                synthetic_arrangement_attempt(
+                    ExactArrangementBooleanStage::NotAttempted,
+                    Some(ExactArrangementBooleanDecline::DispatchGate),
+                ),
+                ExactArrangementBooleanShortcutReason::ShortcutSupportOnly,
+            ),
+            (
+                synthetic_arrangement_attempt(
+                    ExactArrangementBooleanStage::ArrangementBuilt,
+                    Some(ExactArrangementBooleanDecline::ArrangementBlockers(vec![
+                        ExactArrangementBlocker::UnresolvedIntersection,
+                    ])),
+                ),
+                ExactArrangementBooleanShortcutReason::ArrangementConstructionBlocked,
+            ),
+            (
+                synthetic_arrangement_attempt(
+                    ExactArrangementBooleanStage::ArrangementBuilt,
+                    Some(ExactArrangementBooleanDecline::TopologyAssembly(
+                        ExactTopologyAssemblyStatus::ArrangementBlocked,
+                    )),
+                ),
+                ExactArrangementBooleanShortcutReason::TopologyAssemblyBlocked,
+            ),
+            (
+                synthetic_arrangement_attempt(
+                    ExactArrangementBooleanStage::Labeled,
+                    Some(ExactArrangementBooleanDecline::RegionOwnership(
+                        ExactRegionOwnershipStatus::RequiresWinding,
+                    )),
+                ),
+                ExactArrangementBooleanShortcutReason::RegionOwnershipBlocked,
+            ),
+            (
+                synthetic_arrangement_attempt(
+                    ExactArrangementBooleanStage::Labeled,
+                    Some(ExactArrangementBooleanDecline::Selection(
+                        ExactArrangementBlocker::LowerDimensionalContact,
+                    )),
+                ),
+                ExactArrangementBooleanShortcutReason::SelectionBlocked,
+            ),
+            (
+                synthetic_arrangement_attempt(
+                    ExactArrangementBooleanStage::Selected,
+                    Some(ExactArrangementBooleanDecline::Simplification(
+                        ExactArrangementBlocker::NonManifoldCellComplex,
+                    )),
+                ),
+                ExactArrangementBooleanShortcutReason::SimplificationBlocked,
+            ),
+            (
+                synthetic_arrangement_attempt(
+                    ExactArrangementBooleanStage::Simplified,
+                    Some(ExactArrangementBooleanDecline::Triangulation(
+                        ExactArrangementBlocker::NonManifoldCellComplex,
+                    )),
+                ),
+                ExactArrangementBooleanShortcutReason::TriangulationBlocked,
+            ),
+            (
+                synthetic_arrangement_attempt(
+                    ExactArrangementBooleanStage::Triangulated,
+                    Some(ExactArrangementBooleanDecline::OutputValidation),
+                ),
+                ExactArrangementBooleanShortcutReason::OutputValidationBlocked,
+            ),
+            (
+                synthetic_arrangement_attempt(ExactArrangementBooleanStage::Materialized, None),
+                ExactArrangementBooleanShortcutReason::GenericMaterializationUnavailable,
+            ),
+        ];
+
+        for (attempt, expected) in cases {
+            assert_eq!(
+                shortcut_reason_for_recovered_arrangement_attempt(&attempt),
+                expected,
+                "{attempt:?}"
+            );
+        }
+    }
+
     #[test]
     fn exact_mesh_shape_accepts_same_boundary_with_different_triangulation() {
         let diagonal = ExactMesh::from_i64_triangles_with_policy(
