@@ -1872,9 +1872,7 @@ impl ExactBooleanResult {
         if self.retained_arrangement_artifacts_certify_operation_replay(left, right, request)? {
             return Ok(());
         }
-        let replay = replay_boolean_exact_request_for_result_validation(left, right, request)
-            .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
-        if self == &replay {
+        if self.operation_replay_matches_sources(left, right, request)? {
             Ok(())
         } else {
             Err(ExactReportValidationError::SourceReplayMismatch)
@@ -1903,10 +1901,21 @@ impl ExactBooleanResult {
             Ok(false) => {}
             Err(error) => return error.into(),
         }
-        match replay_boolean_exact_request_for_result_validation(left, right, request) {
-            Ok(replay) if self == &replay => ExactReportFreshness::Current,
-            Ok(_) | Err(_) => ExactReportFreshness::OperationReplayMismatch,
+        match self.operation_replay_matches_sources(left, right, request) {
+            Ok(true) => ExactReportFreshness::Current,
+            Ok(false) | Err(_) => ExactReportFreshness::OperationReplayMismatch,
         }
+    }
+
+    fn operation_replay_matches_sources(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+        request: ExactBooleanRequest,
+    ) -> Result<bool, ExactReportValidationError> {
+        let replay = replay_boolean_exact_request_for_result_validation(left, right, request)
+            .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+        Ok(self == &replay)
     }
 
     fn retained_arrangement_artifacts_certify_operation_replay(
