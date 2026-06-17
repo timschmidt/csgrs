@@ -1405,6 +1405,23 @@ impl ExactBooleanCertificationSet {
             )
     }
 
+    fn boundary_policy_shortcut_matches_preflight(
+        &self,
+        preflight: &ExactBooleanPreflight,
+    ) -> bool {
+        self.boundary_touching.is_certified()
+            && (matches!(
+                self.winding_readiness.status,
+                ExactWindingReadinessStatus::BoundaryPolicyShortcutAlreadyMaterialized
+                    | ExactWindingReadinessStatus::BoundaryPolicyRequired
+            ) || self.materialized_shortcut_certified_for_operation(preflight.operation))
+            && exact_boolean_preflight_matches_boundary_report(
+                preflight,
+                &self.boundary_touching,
+                false,
+            )
+    }
+
     fn validate_retained_closure_and_attempt_for_request(
         &self,
         request: ExactBooleanRequest,
@@ -2112,18 +2129,7 @@ fn exact_boolean_preflight_matches_certifications(
             certifications.selected_region_policy_matches_preflight(preflight)
         }
         ExactBooleanSupport::CertifiedBoundaryPolicyShortcut => {
-            certifications.boundary_touching.is_certified()
-                && (matches!(
-                    status,
-                    ExactWindingReadinessStatus::BoundaryPolicyShortcutAlreadyMaterialized
-                        | ExactWindingReadinessStatus::BoundaryPolicyRequired
-                ) || certifications
-                    .materialized_shortcut_certified_for_operation(preflight.operation))
-                && exact_boolean_preflight_matches_boundary_report(
-                    preflight,
-                    &certifications.boundary_touching,
-                    false,
-                )
+            certifications.boundary_policy_shortcut_matches_preflight(preflight)
         }
         ExactBooleanSupport::CertifiedOpenSurfaceArrangementUnion
         | ExactBooleanSupport::CertifiedOpenSurfaceArrangementIntersection
