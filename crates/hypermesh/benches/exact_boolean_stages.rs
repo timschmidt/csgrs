@@ -578,7 +578,7 @@ fn run_case(case: &BenchCase) {
         "workspace_validate_identical_mesh_from_retained_artifacts",
         || {
             retained_workspace_and_certification_for_case(case, request, |evaluation| {
-                evaluation.certifications.identical.clone()
+                evaluation.identical_mesh_report().clone()
             })
         },
         |(retained_workspace, report)| {
@@ -595,7 +595,7 @@ fn run_case(case: &BenchCase) {
         "workspace_validate_same_surface_from_retained_artifacts",
         || {
             retained_workspace_and_certification_for_case(case, request, |evaluation| {
-                evaluation.certifications.same_surface.clone()
+                evaluation.same_surface_report().clone()
             })
         },
         |(retained_workspace, report)| {
@@ -629,7 +629,7 @@ fn run_case(case: &BenchCase) {
         "workspace_validate_open_surface_disjoint_from_retained_artifacts",
         || {
             retained_workspace_and_certification_for_case(case, request, |evaluation| {
-                evaluation.certifications.open_surface_disjoint.clone()
+                evaluation.open_surface_disjoint_report().clone()
             })
         },
         |(retained_workspace, report)| {

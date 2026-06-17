@@ -1708,6 +1708,16 @@ impl ExactBooleanEvaluation {
         &self.certifications.adjacent_union_completion
     }
 
+    /// Returns the retained identical-mesh report.
+    pub fn identical_mesh_report(&self) -> &ExactIdenticalMeshReport {
+        &self.certifications.identical
+    }
+
+    /// Returns the retained same-surface report.
+    pub fn same_surface_report(&self) -> &ExactSameSurfaceReport {
+        &self.certifications.same_surface
+    }
+
     /// Returns the retained boundary-touching report.
     pub fn boundary_touching_report(&self) -> &ExactBoundaryTouchingReport {
         &self.certifications.boundary_touching
