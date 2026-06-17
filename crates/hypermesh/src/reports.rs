@@ -30,6 +30,7 @@ use super::boolean::{
     open_surface_disjoint_report_from_graph, open_surface_disjoint_result_matches_sources,
     planar_arrangement_report_from_graph, preflight_boolean_exact_request_from_graph,
     refinement_report_from_graph, replay_closed_same_surface_boolean_result_if_certified,
+    replay_generic_arrangement_cell_complex_result,
     replay_materialized_volumetric_winding_region_plan, replay_open_surface_arrangement_result,
     replay_selected_region_boolean_result, same_surface_report_from_sources,
     volumetric_boundary_closure_report_from_graph, winding_readiness_report_for_request_from_graph,
@@ -1481,10 +1482,9 @@ impl ExactBooleanResult {
             )
             .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
             {
-                if self != &replay {
-                    return Err(ExactReportValidationError::SourceReplayMismatch);
+                if self == &replay {
+                    arrangement_cell_complex_output_replayed = true;
                 }
-                arrangement_cell_complex_output_replayed = true;
             }
         }
         if let ExactBooleanResultKind::CertifiedShortcut {
@@ -2669,6 +2669,13 @@ fn arrangement_cell_complex_output_matches_sources(
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> Result<Option<bool>, ExactReportValidationError> {
+    if let Some(replay) =
+        replay_generic_arrangement_cell_complex_result(left, right, operation, validation)
+            .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
+    {
+        return Ok(Some(mesh_output_matches(mesh, &replay.mesh)));
+    }
+
     if let Some((replay, closure_report)) =
         materialize_volumetric_coplanar_boundary_closure_output(left, right, operation, validation)
             .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?

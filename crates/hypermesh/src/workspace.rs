@@ -219,6 +219,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
                     preflight.support,
                     Some(graph),
                     regularized_arrangement,
+                    regularized_attempt,
                 )?
             }
         } else {
@@ -298,6 +299,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
                 preflight.support,
                 Some(graph),
                 regularized_arrangement,
+                self.regularized_solid_arrangement_attempt(request),
             )?;
             let result = store_replayable_result_or_return(
                 &mut self.materializations,
@@ -910,7 +912,16 @@ mod tests {
                 request.validation,
                 request.boundary_policy,
             ),
-            Err(ExactReportValidationError::StatusEvidenceMismatch)
+            Ok(())
+        );
+        assert_eq!(
+            relabeled_preflight.freshness_against_sources_with_boundary_policy(
+                &left,
+                &right,
+                request.validation,
+                request.boundary_policy,
+            ),
+            ExactReportFreshness::Current
         );
 
         let certifications = workspace_certifications(&mut workspace, request);
@@ -1182,7 +1193,7 @@ mod tests {
         stale_readiness_bundle.winding_readiness.retained_events += 1;
         assert_eq!(
             stale_readiness_bundle.validate_against_sources(&left, &right, request),
-            Err(ExactReportValidationError::SourceReplayMismatch)
+            Err(ExactReportValidationError::StatusEvidenceMismatch)
         );
         let mut relabeled_readiness_bundle = certifications.clone();
         relabeled_readiness_bundle.winding_readiness.operation = ExactBooleanOperation::Difference;

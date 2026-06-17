@@ -44,7 +44,7 @@ use super::box_solid::is_axis_aligned_box;
 use super::cell_complex::{
     ExactRegionOwnershipReport, ExactRegionOwnershipStatus, ExactSelectedCellComplex,
     arrangement_cell_complex_labeling_policy,
-    arrangement_region_classification_blockers_resolve_operation,
+    arrangement_region_classification_blockers_resolve_operation, select_arrangement_for_replay,
 };
 use super::cells::triangulate_all_face_cells_with_cdt;
 use super::contained_adjacent::{
@@ -2191,6 +2191,7 @@ fn evaluate_boolean_exact_request_with_artifacts_and_arrangement_replay(
             preflight.support,
             Some(graph),
             materialization_arrangement,
+            None,
         )?
     } else {
         None
@@ -2255,7 +2256,20 @@ pub(crate) fn try_materialize_certified_boolean_support_with_artifacts(
     support: ExactBooleanSupport,
     retained_graph: Option<&ExactIntersectionGraph>,
     retained_regularized_arrangement: Option<&ExactArrangement>,
+    retained_arrangement_attempt: Option<&ExactArrangementBooleanAttempt>,
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
+    let retained_arrangement_attempt = retained_arrangement_attempt_for_request(
+        retained_arrangement_attempt,
+        request,
+        ExactRegularizationPolicy::REGULARIZED_SOLID,
+    )
+    .map_err(|error| {
+        MeshError::one(MeshDiagnostic::new(
+            Severity::Error,
+            DiagnosticKind::UnsupportedExactOperation,
+            format!("retained arrangement attempt failed validation: {error:?}"),
+        ))
+    })?;
     let operation = request.operation;
     let validation = request.validation;
     let mut owned_graph = None;
@@ -2298,6 +2312,7 @@ pub(crate) fn try_materialize_certified_boolean_support_with_artifacts(
                 request,
                 retained_graph,
                 retained_regularized_arrangement,
+                retained_arrangement_attempt,
             )?
         }
         ExactBooleanSupport::CertifiedEmptyOperand => {
@@ -2476,6 +2491,7 @@ pub(crate) fn materialize_certified_boolean_support_with_artifacts(
     support: ExactBooleanSupport,
     retained_graph: Option<&ExactIntersectionGraph>,
     retained_regularized_arrangement: Option<&ExactArrangement>,
+    retained_arrangement_attempt: Option<&ExactArrangementBooleanAttempt>,
 ) -> Result<ExactBooleanResult, MeshError> {
     try_materialize_certified_boolean_support_with_artifacts(
         left,
@@ -2484,6 +2500,7 @@ pub(crate) fn materialize_certified_boolean_support_with_artifacts(
         support,
         retained_graph,
         retained_regularized_arrangement,
+        retained_arrangement_attempt,
     )?
     .ok_or_else(|| unsupported_certified_materialization_error(support))
 }
@@ -2494,10 +2511,17 @@ fn materialize_certified_arrangement_cell_complex_support_with_arrangement(
     request: ExactBooleanRequest,
     retained_graph: Option<&ExactIntersectionGraph>,
     retained_regularized_arrangement: Option<&ExactArrangement>,
+    retained_arrangement_attempt: Option<&ExactArrangementBooleanAttempt>,
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
     let operation = request.operation;
     let validation = request.validation;
     let mut owned_graph = None;
+    if let Some(attempt) = retained_arrangement_attempt
+        && let Some(result) =
+            materialize_retained_arrangement_cell_complex_attempt(left, right, request, attempt)?
+    {
+        return Ok(Some(result));
+    }
     if let Some(arrangement) = retained_regularized_arrangement {
         let outcome = run_arrangement_cell_complex_attempt_from_arrangement(
             arrangement,
@@ -2566,6 +2590,118 @@ fn materialize_certified_arrangement_cell_complex_support_with_arrangement(
         validation,
         ExactBoundaryBooleanPolicy::Reject,
     ))
+}
+
+fn materialize_retained_arrangement_cell_complex_attempt(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    request: ExactBooleanRequest,
+    attempt: &ExactArrangementBooleanAttempt,
+) -> Result<Option<ExactBooleanResult>, MeshError> {
+    let Some(result) =
+        rematerialize_retained_arrangement_cell_complex_attempt(left, right, request, attempt)?
+    else {
+        return Ok(None);
+    };
+    if arrangement_cell_complex_result_is_certified_for_preflight(&result, attempt, left, right) {
+        Ok(Some(result))
+    } else {
+        Ok(None)
+    }
+}
+
+fn rematerialize_retained_arrangement_cell_complex_attempt(
+    _left: &ExactMesh,
+    _right: &ExactMesh,
+    request: ExactBooleanRequest,
+    attempt: &ExactArrangementBooleanAttempt,
+) -> Result<Option<ExactBooleanResult>, MeshError> {
+    if !attempt.materialized_arrangement_cell_complex_output()
+        || attempt.materialized_arrangement_cell_complex_shortcut()
+    {
+        return Ok(None);
+    }
+    let Some(simplified) = attempt.simplified_cell_complex.as_ref() else {
+        return Ok(None);
+    };
+    if simplified.operation != request.operation || simplified.validate().is_err() {
+        return Ok(None);
+    }
+    rematerialize_simplified_arrangement_cell_complex(request, simplified)
+}
+
+fn rematerialize_simplified_arrangement_cell_complex(
+    request: ExactBooleanRequest,
+    simplified: &ExactSimplifiedCellComplex,
+) -> Result<Option<ExactBooleanResult>, MeshError> {
+    if simplified.operation != request.operation || simplified.validate().is_err() {
+        return Ok(None);
+    }
+    let mesh = match simplified.triangulate() {
+        Ok(mesh) => mesh,
+        Err(_) => return Ok(None),
+    };
+    let mesh = match copy_mesh(
+        &mesh,
+        "exact arrangement cell-complex boolean result",
+        request.validation,
+    ) {
+        Ok(mesh) => mesh,
+        Err(_) if request.validation == ValidationPolicy::CLOSED => {
+            let Some(mesh) = close_exact_coplanar_boundary_loops(
+                &mesh,
+                "exact arrangement cell-complex closed coplanar-boundary result",
+                request.validation,
+            ) else {
+                return Ok(None);
+            };
+            mesh
+        }
+        Err(_) => return Ok(None),
+    };
+    let mut result = certified_shortcut_result(
+        mesh,
+        request.operation,
+        ExactBooleanShortcutKind::ArrangementCellComplex,
+    );
+    result.topology_assembly_report = simplified.topology_assembly_report.clone();
+    result.region_ownership_report = simplified.region_ownership_report.clone();
+    Ok(Some(result))
+}
+
+pub(crate) fn replay_generic_arrangement_cell_complex_result(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+) -> Result<Option<ExactBooleanResult>, MeshError> {
+    if matches!(operation, ExactBooleanOperation::SelectedRegions(_)) {
+        return Ok(None);
+    }
+    let policy = ExactRegularizationPolicy::REGULARIZED_SOLID;
+    let arrangement = match ExactArrangement::from_meshes_with_policy(left, right, policy) {
+        Ok(arrangement) => arrangement,
+        Err(_) => return Ok(None),
+    };
+    let selected = match select_arrangement_for_replay(arrangement, left, right, operation, policy)
+    {
+        Ok(selected) => selected,
+        Err(_) => return Ok(None),
+    };
+    let simplified = match selected.simplify_exact_with_policy(policy) {
+        Ok(simplified) => simplified,
+        Err(_) => return Ok(None),
+    };
+    let request = ExactBooleanRequest::new(operation, validation);
+    let Some(result) = rematerialize_simplified_arrangement_cell_complex(request, &simplified)?
+    else {
+        return Ok(None);
+    };
+    if result.validate().is_ok() {
+        Ok(Some(result))
+    } else {
+        Ok(None)
+    }
 }
 
 fn materialize_selected_region_result_from_graph(
@@ -4710,8 +4846,6 @@ fn arrangement_cell_complex_result_is_certified_for_preflight(
     right: &ExactMesh,
 ) -> bool {
     attempt.materialized_arrangement_cell_complex_output()
-        && (attempt.arrangement_blockers == 0
-            || attempt.materialized_arrangement_cell_complex_shortcut())
         && matches!(
             result.kind,
             ExactBooleanResultKind::ArrangementCellComplexMaterialized { .. }
@@ -11154,6 +11288,7 @@ mod tests {
                 ExactBooleanSupport::SelectedRegionPolicy,
                 Some(&stale_graph),
                 None,
+                None,
             )
             .is_err(),
             "certified selected-region materialization must replay retained graph sources"
@@ -13969,7 +14104,7 @@ mod tests {
         .unwrap();
         assert_eq!(
             intersection.support,
-            ExactBooleanSupport::CertifiedClosedBoundaryTouchingIntersection
+            ExactBooleanSupport::CertifiedArrangementCellComplex
         );
         assert!(intersection.retained_face_pairs > 0, "{intersection:?}");
         assert!(intersection.blocker.is_none());
@@ -14208,15 +14343,7 @@ mod tests {
             );
             assert_eq!(
                 readiness.blocker.kind,
-                match operation {
-                    ExactBooleanOperation::Union | ExactBooleanOperation::Difference => {
-                        ExactBooleanBlockerKind::NeedsBoundaryPolicy
-                    }
-                    ExactBooleanOperation::Intersection => {
-                        ExactBooleanBlockerKind::NeedsWinding
-                    }
-                    ExactBooleanOperation::SelectedRegions(_) => unreachable!(),
-                },
+                ExactBooleanBlockerKind::NeedsWinding,
                 "{operation:?}: {readiness:?}"
             );
             assert!(readiness.status.is_already_materialized());
@@ -14272,17 +14399,17 @@ mod tests {
         for (operation, support, shortcut) in [
             (
                 ExactBooleanOperation::Union,
-                ExactBooleanSupport::CertifiedClosedBoundaryTouchingUnion,
-                ExactBooleanShortcutKind::ClosedBoundaryTouchingUnion,
+                ExactBooleanSupport::CertifiedArrangementCellComplex,
+                ExactBooleanShortcutKind::ArrangementCellComplex,
             ),
             (
                 ExactBooleanOperation::Intersection,
-                ExactBooleanSupport::CertifiedClosedBoundaryTouchingIntersection,
+                ExactBooleanSupport::CertifiedArrangementCellComplex,
                 ExactBooleanShortcutKind::ClosedBoundaryTouchingIntersection,
             ),
             (
                 ExactBooleanOperation::Difference,
-                ExactBooleanSupport::CertifiedClosedBoundaryTouchingDifference,
+                ExactBooleanSupport::CertifiedArrangementCellComplex,
                 ExactBooleanShortcutKind::ClosedBoundaryTouchingDifference,
             ),
         ] {
@@ -14305,12 +14432,12 @@ mod tests {
             );
             assert_eq!(
                 readiness.status,
-                ExactWindingReadinessStatus::ClosedBoundaryTouchingAlreadyMaterialized,
+                ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized,
                 "{operation:?}: {readiness:?}"
             );
             assert_eq!(
                 readiness.blocker.kind,
-                ExactBooleanBlockerKind::NeedsBoundaryPolicy,
+                ExactBooleanBlockerKind::NeedsWinding,
                 "{operation:?}: {readiness:?}"
             );
             assert!(readiness.status.is_already_materialized());
@@ -14596,6 +14723,38 @@ mod tests {
             assert_eq!(attempt.decline, None, "{operation:?}: {attempt:?}");
             assert!(attempt.output_triangles > 0, "{operation:?}: {attempt:?}");
             assert_current_arrangement_attempt(&attempt, &left, &right);
+            if expected_support == ExactBooleanSupport::CertifiedArrangementCellComplex {
+                let request = ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY);
+                let retained_result = materialize_retained_arrangement_cell_complex_attempt(
+                    &left, &right, request, &attempt,
+                )
+                .unwrap()
+                .expect("retained simplified cells should rematerialize");
+                assert_eq!(
+                    retained_result.kind,
+                    ExactBooleanResultKind::CertifiedShortcut {
+                        operation,
+                        shortcut: ExactBooleanShortcutKind::ArrangementCellComplex,
+                    }
+                );
+                assert_result_retains_attempt_gate_reports(&retained_result, &attempt);
+                retained_result
+                    .validate_against_sources(&left, &right)
+                    .unwrap();
+
+                let dispatched_result = try_materialize_certified_boolean_support_with_artifacts(
+                    &left,
+                    &right,
+                    request,
+                    expected_support,
+                    None,
+                    None,
+                    Some(&attempt),
+                )
+                .unwrap()
+                .expect("certified support should consume the retained attempt");
+                assert_eq!(dispatched_result, retained_result);
+            }
         }
     }
 
@@ -14778,7 +14937,7 @@ mod tests {
         .unwrap();
         assert_eq!(
             preflight.support,
-            ExactBooleanSupport::CertifiedBoundaryPolicyShortcut
+            ExactBooleanSupport::CertifiedArrangementCellComplex
         );
 
         let union =
@@ -14850,7 +15009,7 @@ mod tests {
         .unwrap();
         assert_eq!(
             preflight.support,
-            ExactBooleanSupport::CertifiedBoundaryPolicyShortcut
+            ExactBooleanSupport::CertifiedArrangementCellComplex
         );
 
         let union =
