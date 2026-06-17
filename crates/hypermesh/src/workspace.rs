@@ -314,7 +314,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
             .iter()
             .find(|(stored_request, _)| *stored_request == request)
             .map(|(_, evaluation)| evaluation)
-            && let Some(result) = evaluation.result.as_ref()
+            && let Some(result) = evaluation.materialized_result()
         {
             evaluation
                 .validate()
@@ -347,7 +347,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
             evaluation
                 .validate()
                 .map_err(workspace_report_validation_error)?;
-            if let Some(result) = evaluation.result.clone() {
+            if let Some(result) = evaluation.materialized_result().cloned() {
                 let retained_attempt = self.regularized_solid_arrangement_attempt(request).cloned();
                 let result = store_replayable_result_or_return(
                     &mut self.materializations,
@@ -434,7 +434,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
             evaluation
                 .validate()
                 .map_err(workspace_report_validation_error)?;
-            match evaluation.result.as_ref() {
+            match evaluation.materialized_result() {
                 Some(existing) if existing == result => Ok(()),
                 Some(_) => Err(workspace_report_validation_error(
                     ExactReportValidationError::StatusEvidenceMismatch,
@@ -448,7 +448,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
             }
         } else {
             let evaluation = self.evaluate(request)?;
-            if evaluation.result.as_ref() == Some(result) {
+            if evaluation.materialized_result() == Some(result) {
                 Ok(())
             } else {
                 Err(workspace_report_validation_error(

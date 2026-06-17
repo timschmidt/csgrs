@@ -2919,8 +2919,7 @@ fn mixed_dimensional_regularized_solid_boolean_is_publicly_replayable() {
                 right,
                 ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
             )
-            .certifications
-            .winding_readiness
+            .winding_readiness_report()
             .clone();
             assert!(
                 readiness.is_mixed_dimensional_regularized_solid_materialized(),
