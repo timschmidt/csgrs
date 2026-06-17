@@ -1357,6 +1357,16 @@ impl ExactBooleanCertificationSet {
             && preflight.coplanar_volumetric_evidence.is_none()
     }
 
+    fn open_surface_disjoint_shortcut_matches_preflight(
+        &self,
+        preflight: &ExactBooleanPreflight,
+    ) -> bool {
+        (self.winding_readiness.status
+            == ExactWindingReadinessStatus::OpenSurfaceDisjointAlreadyMaterialized
+            || self.arrangement_attempt_matches_certified_preflight(preflight))
+            && self.open_surface_disjoint_matches_preflight(preflight)
+    }
+
     fn planar_arrangement_matches_preflight(&self, preflight: &ExactBooleanPreflight) -> bool {
         preflight.graph_had_unknowns == self.planar_arrangement.graph_had_unknowns
             && preflight.retained_face_pairs == self.planar_arrangement.retained_face_pairs
@@ -2298,9 +2308,7 @@ fn exact_boolean_preflight_matches_certifications(
             certifications.closed_boundary_touching_matches_preflight(preflight)
         }
         ExactBooleanSupport::CertifiedOpenSurfaceDisjoint => {
-            (*status == ExactWindingReadinessStatus::OpenSurfaceDisjointAlreadyMaterialized
-                || certifications.arrangement_attempt_matches_certified_preflight(preflight))
-                && certifications.open_surface_disjoint_matches_preflight(preflight)
+            certifications.open_surface_disjoint_shortcut_matches_preflight(preflight)
         }
         ExactBooleanSupport::CertifiedClosedWindingSeparated => {
             (*status == ExactWindingReadinessStatus::ClosedWindingSeparatedAlreadyMaterialized
