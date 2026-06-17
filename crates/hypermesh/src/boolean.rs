@@ -1422,6 +1422,33 @@ impl ExactBooleanCertificationSet {
             )
     }
 
+    fn closed_boundary_touching_matches_preflight(
+        &self,
+        preflight: &ExactBooleanPreflight,
+    ) -> bool {
+        self.boundary_touching.is_certified()
+            && ((self.winding_readiness.status
+                == ExactWindingReadinessStatus::ClosedBoundaryTouchingAlreadyMaterialized
+                && (exact_boolean_preflight_matches_boundary_report(
+                    preflight,
+                    &self.boundary_touching,
+                    false,
+                ) || (preflight.graph_had_unknowns
+                    == self.winding_readiness.graph_had_unknowns
+                    && preflight.retained_face_pairs
+                        == self.winding_readiness.retained_face_pairs
+                    && preflight.retained_events == self.winding_readiness.retained_events
+                    && preflight.region_count == self.winding_readiness.region_count
+                    && preflight.region_classifications
+                        == self.winding_readiness.region_classifications
+                    && preflight.blocker.is_none()
+                    && preflight.arrangement_readiness.is_none()
+                    && preflight.coplanar_volumetric_evidence.is_some()
+                    && preflight.coplanar_volumetric_evidence
+                        == self.winding_readiness.coplanar_volumetric_evidence)))
+                || self.arrangement_attempt_matches_certified_preflight(preflight))
+    }
+
     fn validate_retained_closure_and_attempt_for_request(
         &self,
         request: ExactBooleanRequest,
@@ -2221,32 +2248,7 @@ fn exact_boolean_preflight_matches_certifications(
         ExactBooleanSupport::CertifiedClosedBoundaryTouchingUnion
         | ExactBooleanSupport::CertifiedClosedBoundaryTouchingIntersection
         | ExactBooleanSupport::CertifiedClosedBoundaryTouchingDifference => {
-            ((*status == ExactWindingReadinessStatus::ClosedBoundaryTouchingAlreadyMaterialized
-                && ((certifications.boundary_touching.is_certified()
-                    && exact_boolean_preflight_matches_boundary_report(
-                        preflight,
-                        &certifications.boundary_touching,
-                        false,
-                    ))
-                    || (preflight.graph_had_unknowns
-                        == certifications.winding_readiness.graph_had_unknowns
-                        && preflight.retained_face_pairs
-                            == certifications.winding_readiness.retained_face_pairs
-                        && preflight.retained_events
-                            == certifications.winding_readiness.retained_events
-                        && preflight.region_count
-                            == certifications.winding_readiness.region_count
-                        && preflight.region_classifications
-                            == certifications.winding_readiness.region_classifications
-                        && preflight.blocker.is_none()
-                        && preflight.arrangement_readiness.is_none()
-                        && preflight.coplanar_volumetric_evidence.is_some()
-                        && preflight.coplanar_volumetric_evidence
-                            == certifications
-                                .winding_readiness
-                                .coplanar_volumetric_evidence)))
-                || certifications.arrangement_attempt_matches_certified_preflight(preflight))
-                && certifications.boundary_touching.is_certified()
+            certifications.closed_boundary_touching_matches_preflight(preflight)
         }
         ExactBooleanSupport::CertifiedOpenSurfaceDisjoint => {
             (*status == ExactWindingReadinessStatus::OpenSurfaceDisjointAlreadyMaterialized
