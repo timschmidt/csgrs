@@ -1583,6 +1583,30 @@ impl ExactBooleanCertificationSet {
             && exact_boolean_closed_winding_reports_match_containment(self)
     }
 
+    fn mixed_dimensional_regularized_solid_matches_preflight(
+        &self,
+        preflight: &ExactBooleanPreflight,
+    ) -> bool {
+        (self.winding_readiness.status
+            == ExactWindingReadinessStatus::MixedDimensionalRegularizedSolidAlreadyMaterialized
+            || self.arrangement_attempt_matches_certified_preflight(preflight))
+            && ((self.regularized_solid.left_closed_solid
+                && self.regularized_solid.right_open_surface)
+                || (self.regularized_solid.left_open_surface
+                    && self.regularized_solid.right_closed_solid))
+    }
+
+    fn lower_dimensional_regularized_solid_matches_preflight(
+        &self,
+        preflight: &ExactBooleanPreflight,
+    ) -> bool {
+        (self.winding_readiness.status
+            == ExactWindingReadinessStatus::LowerDimensionalRegularizedSolidAlreadyMaterialized
+            || self.arrangement_attempt_matches_certified_preflight(preflight))
+            && self.regularized_solid.left_open_surface
+            && self.regularized_solid.right_open_surface
+    }
+
     fn arrangement_cell_complex_matches_preflight(
         &self,
         preflight: &ExactBooleanPreflight,
@@ -2337,20 +2361,10 @@ fn exact_boolean_preflight_matches_certifications(
             certifications.closed_winding_containment_matches_preflight(preflight)
         }
         ExactBooleanSupport::CertifiedMixedDimensionalRegularizedSolid => {
-            (*status
-                == ExactWindingReadinessStatus::MixedDimensionalRegularizedSolidAlreadyMaterialized
-                || certifications.arrangement_attempt_matches_certified_preflight(preflight))
-                && ((certifications.regularized_solid.left_closed_solid
-                    && certifications.regularized_solid.right_open_surface)
-                    || (certifications.regularized_solid.left_open_surface
-                        && certifications.regularized_solid.right_closed_solid))
+            certifications.mixed_dimensional_regularized_solid_matches_preflight(preflight)
         }
         ExactBooleanSupport::CertifiedLowerDimensionalRegularizedSolid => {
-            (*status
-                == ExactWindingReadinessStatus::LowerDimensionalRegularizedSolidAlreadyMaterialized
-                || certifications.arrangement_attempt_matches_certified_preflight(preflight))
-                && certifications.regularized_solid.left_open_surface
-                && certifications.regularized_solid.right_open_surface
+            certifications.lower_dimensional_regularized_solid_matches_preflight(preflight)
         }
         ExactBooleanSupport::CertifiedConvexUnion
         | ExactBooleanSupport::CertifiedConvexIntersection
