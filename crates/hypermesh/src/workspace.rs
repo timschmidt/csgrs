@@ -1639,15 +1639,13 @@ mod tests {
         evaluation.validate().unwrap();
         assert!(evaluation.preflight.is_certified());
         assert!(evaluation.result.is_some());
-        attempt
-            .topology_assembly_report
-            .as_ref()
+        evaluation
+            .topology_assembly_report()
             .expect("attempt should retain topology assembly")
             .validate()
             .unwrap();
-        attempt
-            .region_ownership_report
-            .as_ref()
+        evaluation
+            .region_ownership_report()
             .expect("attempt should retain region ownership")
             .validate()
             .unwrap();

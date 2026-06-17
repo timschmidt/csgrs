@@ -382,21 +382,20 @@ fn exact_boolean_evaluation_retains_region_ownership_report() {
         attempt_backed_evaluation.materializes_arrangement_cell_complex(),
         "{attempt_backed_evaluation:?}"
     );
-    let attempt = evaluation
-        .arrangement_attempt()
-        .expect("named boolean certifications should retain arrangement attempt");
-    let ownership = attempt
-        .region_ownership_report
-        .as_ref()
+    assert!(
+        evaluation.arrangement_attempt().is_some(),
+        "named boolean certifications should retain arrangement attempt"
+    );
+    let ownership = evaluation
+        .region_ownership_report()
         .expect("named boolean certifications should retain region ownership");
     ownership.validate().unwrap();
     assert!(ownership.is_resolved());
     assert!(ownership.status.is_volume_resolved());
     assert_eq!(ownership.volume_regions, 3);
     assert_eq!(ownership.shared_owned_volumes, 1);
-    attempt
-        .topology_assembly_report
-        .as_ref()
+    evaluation
+        .topology_assembly_report()
         .expect("named boolean certifications should retain topology assembly")
         .validate()
         .unwrap();
