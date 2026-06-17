@@ -1345,6 +1345,18 @@ impl ExactBooleanCertificationSet {
             && preflight.arrangement_readiness.is_none()
     }
 
+    fn open_surface_disjoint_matches_preflight(&self, preflight: &ExactBooleanPreflight) -> bool {
+        self.open_surface_disjoint.is_certified()
+            && preflight.graph_had_unknowns == self.open_surface_disjoint.graph_had_unknowns
+            && preflight.retained_face_pairs == self.open_surface_disjoint.retained_face_pairs
+            && preflight.retained_events == self.open_surface_disjoint.retained_events
+            && preflight.region_count == 0
+            && preflight.region_classifications.is_empty()
+            && preflight.blocker.is_none()
+            && preflight.arrangement_readiness.is_none()
+            && preflight.coplanar_volumetric_evidence.is_none()
+    }
+
     fn validate_retained_closure_and_attempt_for_request(
         &self,
         request: ExactBooleanRequest,
@@ -2213,17 +2225,7 @@ fn exact_boolean_preflight_matches_certifications(
         ExactBooleanSupport::CertifiedOpenSurfaceDisjoint => {
             (*status == ExactWindingReadinessStatus::OpenSurfaceDisjointAlreadyMaterialized
                 || certifications.arrangement_attempt_matches_certified_preflight(preflight))
-                && certifications.open_surface_disjoint.is_certified()
-                && preflight.graph_had_unknowns
-                    == certifications.open_surface_disjoint.graph_had_unknowns
-                && preflight.retained_face_pairs
-                    == certifications.open_surface_disjoint.retained_face_pairs
-                && preflight.retained_events == certifications.open_surface_disjoint.retained_events
-                && preflight.region_count == 0
-                && preflight.region_classifications.is_empty()
-                && preflight.blocker.is_none()
-                && preflight.arrangement_readiness.is_none()
-                && preflight.coplanar_volumetric_evidence.is_none()
+                && certifications.open_surface_disjoint_matches_preflight(preflight)
         }
         ExactBooleanSupport::CertifiedClosedWindingSeparated => {
             (*status == ExactWindingReadinessStatus::ClosedWindingSeparatedAlreadyMaterialized
