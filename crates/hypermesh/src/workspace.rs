@@ -1121,9 +1121,9 @@ mod tests {
         certifications
             .validate_against_sources(&left, &right, request)
             .unwrap();
-        assert_eq!(certifications.arrangement_attempt.as_ref(), Some(&attempt));
         let evaluation = workspace.evaluate(request).unwrap().clone();
         evaluation.validate().unwrap();
+        assert_eq!(evaluation.arrangement_attempt(), Some(&attempt));
 
         let refinement_report = evaluation.refinement_report().clone();
         assert_eq!(
@@ -2032,8 +2032,10 @@ mod tests {
         materialized.validate().unwrap();
         assert!(materialized.matches_request(request));
         assert_eq!(workspace.materialize(request).unwrap(), materialized);
+        let evaluation = workspace.evaluate(request).unwrap().clone();
+        evaluation.validate().unwrap();
         assert_eq!(
-            workspace_certifications(&mut workspace, request).adjacent_union_completion,
+            evaluation.adjacent_union_completion_report().clone(),
             expected_report
         );
     }
