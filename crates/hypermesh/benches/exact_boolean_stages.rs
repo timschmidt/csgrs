@@ -610,7 +610,7 @@ fn run_case(case: &BenchCase) {
         "workspace_validate_boundary_touching_from_retained_artifacts",
         || {
             retained_workspace_and_certification_for_case(case, request, |evaluation| {
-                evaluation.boundary_touching_report().clone()
+                evaluation.certifications.boundary_touching.clone()
             })
         },
         |(retained_workspace, report)| {

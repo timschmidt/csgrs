@@ -5929,7 +5929,8 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
             ValidationPolicy::ALLOW_BOUNDARY,
         ),
     )
-    .boundary_touching_report()
+    .certifications
+    .boundary_touching
     .clone();
     assert!(report.is_certified(), "{report:?}");
     report.validate().unwrap();
@@ -6301,7 +6302,8 @@ fn boundary_touching_report_classifies_proper_crossing_as_winding_blocker() {
             ValidationPolicy::ALLOW_BOUNDARY,
         ),
     )
-    .boundary_touching_report()
+    .certifications
+    .boundary_touching
     .clone();
 
     assert!(!report.is_certified());

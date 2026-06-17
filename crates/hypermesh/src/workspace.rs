@@ -1287,7 +1287,7 @@ mod tests {
             ExactReportFreshness::Current
         );
 
-        let boundary_report = evaluation.boundary_touching_report().clone();
+        let boundary_report = evaluation.certifications.boundary_touching.clone();
         boundary_report
             .validate_against_sources(&left, &right)
             .unwrap();

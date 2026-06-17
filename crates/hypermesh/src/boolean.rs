@@ -2287,11 +2287,6 @@ impl ExactBooleanEvaluation {
         self.certifications.arrangement_attempt.as_ref()
     }
 
-    /// Returns the retained boundary-touching report.
-    pub fn boundary_touching_report(&self) -> &ExactBoundaryTouchingReport {
-        &self.certifications.boundary_touching
-    }
-
     /// Returns the retained winding-readiness report.
     pub fn winding_readiness_report(&self) -> &ExactWindingReadinessReport {
         &self.certifications.winding_readiness
