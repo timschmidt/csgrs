@@ -1607,6 +1607,51 @@ impl ExactBooleanCertificationSet {
             && self.regularized_solid.right_open_surface
     }
 
+    fn convex_reports_match_preflight_support(&self, preflight: &ExactBooleanPreflight) -> bool {
+        if !self.convex_left_in_right.solid_facts.is_certified_convex()
+            || !self.convex_right_in_left.solid_facts.is_certified_convex()
+        {
+            return false;
+        }
+        match preflight.support {
+            ExactBooleanSupport::CertifiedConvexUnion
+            | ExactBooleanSupport::CertifiedConvexIntersection
+            | ExactBooleanSupport::CertifiedConvexDifference => self
+                .convex_capabilities
+                .resolves_operation(preflight.operation),
+            ExactBooleanSupport::CertifiedConvexSeparated
+            | ExactBooleanSupport::CertifiedConvexContainment => true,
+            _ => false,
+        }
+    }
+
+    fn convex_boolean_matches_preflight(&self, preflight: &ExactBooleanPreflight) -> bool {
+        (self.winding_readiness.status
+            == ExactWindingReadinessStatus::ConvexBooleanAlreadyMaterialized
+            || self.arrangement_attempt_matches_certified_preflight(preflight))
+            && self.convex_reports_match_preflight_support(preflight)
+    }
+
+    fn convex_separated_matches_preflight(&self, preflight: &ExactBooleanPreflight) -> bool {
+        (self.winding_readiness.status
+            == ExactWindingReadinessStatus::ConvexBooleanAlreadyMaterialized
+            && self.convex_reports_match_preflight_support(preflight))
+            || (self.winding_readiness.status
+                == ExactWindingReadinessStatus::ClosedWindingSeparatedAlreadyMaterialized
+                && exact_boolean_closed_winding_reports_match_separated(self))
+            || self.arrangement_attempt_matches_certified_preflight(preflight)
+    }
+
+    fn convex_containment_matches_preflight(&self, preflight: &ExactBooleanPreflight) -> bool {
+        (self.winding_readiness.status
+            == ExactWindingReadinessStatus::ConvexBooleanAlreadyMaterialized
+            && self.convex_reports_match_preflight_support(preflight))
+            || (self.winding_readiness.status
+                == ExactWindingReadinessStatus::ClosedWindingContainmentAlreadyMaterialized
+                && exact_boolean_closed_winding_reports_match_containment(self))
+            || self.arrangement_attempt_matches_certified_preflight(preflight)
+    }
+
     fn arrangement_cell_complex_matches_preflight(
         &self,
         preflight: &ExactBooleanPreflight,
@@ -2369,25 +2414,13 @@ fn exact_boolean_preflight_matches_certifications(
         ExactBooleanSupport::CertifiedConvexUnion
         | ExactBooleanSupport::CertifiedConvexIntersection
         | ExactBooleanSupport::CertifiedConvexDifference => {
-            (*status == ExactWindingReadinessStatus::ConvexBooleanAlreadyMaterialized
-                || certifications.arrangement_attempt_matches_certified_preflight(preflight))
-                && exact_boolean_convex_reports_match_support(preflight, certifications)
+            certifications.convex_boolean_matches_preflight(preflight)
         }
         ExactBooleanSupport::CertifiedConvexSeparated => {
-            (*status == ExactWindingReadinessStatus::ConvexBooleanAlreadyMaterialized
-                && exact_boolean_convex_reports_match_support(preflight, certifications))
-                || (*status
-                    == ExactWindingReadinessStatus::ClosedWindingSeparatedAlreadyMaterialized
-                    && exact_boolean_closed_winding_reports_match_separated(certifications))
-                || certifications.arrangement_attempt_matches_certified_preflight(preflight)
+            certifications.convex_separated_matches_preflight(preflight)
         }
         ExactBooleanSupport::CertifiedConvexContainment => {
-            (*status == ExactWindingReadinessStatus::ConvexBooleanAlreadyMaterialized
-                && exact_boolean_convex_reports_match_support(preflight, certifications))
-                || (*status
-                    == ExactWindingReadinessStatus::ClosedWindingContainmentAlreadyMaterialized
-                    && exact_boolean_closed_winding_reports_match_containment(certifications))
-                || certifications.arrangement_attempt_matches_certified_preflight(preflight)
+            certifications.convex_containment_matches_preflight(preflight)
         }
         ExactBooleanSupport::RequiresBoundaryPolicy => {
             certifications.boundary_policy_requirement_matches_preflight(preflight)
@@ -2423,33 +2456,6 @@ fn exact_boolean_closed_winding_reports_match_containment(
         == ClosedMeshWindingMeshRelation::StrictlyInside
         || certifications.closed_winding_right_in_left.relation
             == ClosedMeshWindingMeshRelation::StrictlyInside
-}
-
-fn exact_boolean_convex_reports_match_support(
-    preflight: &ExactBooleanPreflight,
-    certifications: &ExactBooleanCertificationSet,
-) -> bool {
-    if !certifications
-        .convex_left_in_right
-        .solid_facts
-        .is_certified_convex()
-        || !certifications
-            .convex_right_in_left
-            .solid_facts
-            .is_certified_convex()
-    {
-        return false;
-    }
-    match preflight.support {
-        ExactBooleanSupport::CertifiedConvexUnion
-        | ExactBooleanSupport::CertifiedConvexIntersection
-        | ExactBooleanSupport::CertifiedConvexDifference => certifications
-            .convex_capabilities
-            .resolves_operation(preflight.operation),
-        ExactBooleanSupport::CertifiedConvexSeparated
-        | ExactBooleanSupport::CertifiedConvexContainment => true,
-        _ => false,
-    }
 }
 
 fn exact_boolean_preflight_matches_boundary_report(
