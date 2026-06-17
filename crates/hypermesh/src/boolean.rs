@@ -2287,11 +2287,6 @@ impl ExactBooleanEvaluation {
         self.certifications.arrangement_attempt.as_ref()
     }
 
-    /// Returns the retained winding-readiness report.
-    pub fn winding_readiness_report(&self) -> &ExactWindingReadinessReport {
-        &self.certifications.winding_readiness
-    }
-
     /// Returns the retained topology assembly report used by this evaluation,
     /// preferring the primary arrangement attempt over parallel certification
     /// fields.

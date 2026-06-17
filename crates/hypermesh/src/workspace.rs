@@ -1368,7 +1368,7 @@ mod tests {
                 .is_none()
         );
 
-        let readiness = evaluation.winding_readiness_report().clone();
+        let readiness = evaluation.certifications.winding_readiness.clone();
         assert_eq!(
             readiness.freshness_against_sources_with_boundary_policy(
                 &left,

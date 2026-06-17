@@ -375,7 +375,8 @@ fn exact_boolean_evaluation_retains_region_ownership_report() {
         &disjoint_right,
         ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED),
     )
-    .winding_readiness_report()
+    .certifications
+    .winding_readiness
     .clone();
     let mut attempt_backed_evaluation = evaluation.clone();
     attempt_backed_evaluation.certifications.winding_readiness = disjoint_readiness;
@@ -1477,14 +1478,16 @@ fn exact_coplanar_volumetric_cell_evidence_is_retained_by_public_evaluation() {
         .validate_against_sources_with_validation(&left, &right, ValidationPolicy::CLOSED)
         .unwrap();
     if evaluation
-        .winding_readiness_report()
+        .certifications
+        .winding_readiness
         .coplanar_volumetric_evidence
         .is_some()
     {
         assert_eq!(
             preflight.coplanar_volumetric_evidence,
             evaluation
-                .winding_readiness_report()
+                .certifications
+                .winding_readiness
                 .coplanar_volumetric_evidence
         );
     } else {
@@ -2920,7 +2923,8 @@ fn mixed_dimensional_regularized_solid_boolean_is_publicly_replayable() {
                 right,
                 ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
             )
-            .winding_readiness_report()
+            .certifications
+            .winding_readiness
             .clone();
             assert!(
                 readiness.is_mixed_dimensional_regularized_solid_materialized(),
@@ -6020,7 +6024,8 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
             ExactBoundaryBooleanPolicy::Reject,
         ),
     )
-    .winding_readiness_report()
+    .certifications
+    .winding_readiness
     .clone();
     assert!(
         rejected_readiness.requires_boundary_policy(),
@@ -6036,7 +6041,8 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
             ExactBoundaryBooleanPolicy::PreserveSeparateShells,
         ),
     )
-    .winding_readiness_report()
+    .certifications
+    .winding_readiness
     .clone();
     assert!(
         policy_readiness.is_boundary_policy_shortcut_materialized(),
@@ -6157,7 +6163,8 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
             ExactBoundaryBooleanPolicy::PreserveSeparateShells,
         ),
     )
-    .winding_readiness_report()
+    .certifications
+    .winding_readiness
     .clone();
     assert!(
         closed_intersection_readiness.is_lower_dimensional_regularized_solid_materialized(),
@@ -6235,7 +6242,8 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
                 ExactBoundaryBooleanPolicy::PreserveSeparateShells,
             ),
         )
-        .winding_readiness_report()
+        .certifications
+        .winding_readiness
         .clone();
         assert!(
             closed_policy_readiness.is_lower_dimensional_regularized_solid_materialized(),

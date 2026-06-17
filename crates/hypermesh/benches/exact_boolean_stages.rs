@@ -273,7 +273,8 @@ fn run_case(case: &BenchCase) {
                 .coplanar_volumetric_evidence
                 .as_ref()
                 .or(evaluation
-                    .winding_readiness_report()
+                    .certifications
+                    .winding_readiness
                     .coplanar_volumetric_evidence
                     .as_ref());
             black_box(report.map(|report| {
@@ -300,7 +301,8 @@ fn run_case(case: &BenchCase) {
                     .coplanar_volumetric_evidence
                     .as_ref()
                     .or(evaluation
-                        .winding_readiness_report()
+                        .certifications
+                        .winding_readiness
                         .coplanar_volumetric_evidence
                         .as_ref());
                 if let Some(report) = report {
@@ -669,7 +671,7 @@ fn run_case(case: &BenchCase) {
         "workspace_validate_winding_readiness_from_retained_artifacts",
         || {
             retained_workspace_and_certification_for_case(case, request, |evaluation| {
-                evaluation.winding_readiness_report().clone()
+                evaluation.certifications.winding_readiness.clone()
             })
         },
         |(retained_workspace, readiness)| {
