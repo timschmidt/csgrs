@@ -389,7 +389,8 @@ fn exact_boolean_evaluation_retains_region_ownership_report() {
         "named boolean certifications should retain arrangement attempt"
     );
     let ownership = evaluation
-        .region_ownership_report()
+        .arrangement_attempt()
+        .and_then(|attempt| attempt.region_ownership_report.as_ref())
         .expect("named boolean certifications should retain region ownership");
     ownership.validate().unwrap();
     assert!(ownership.is_resolved());
@@ -397,7 +398,8 @@ fn exact_boolean_evaluation_retains_region_ownership_report() {
     assert_eq!(ownership.volume_regions, 3);
     assert_eq!(ownership.shared_owned_volumes, 1);
     evaluation
-        .topology_assembly_report()
+        .arrangement_attempt()
+        .and_then(|attempt| attempt.topology_assembly_report.as_ref())
         .expect("named boolean certifications should retain topology assembly")
         .validate()
         .unwrap();

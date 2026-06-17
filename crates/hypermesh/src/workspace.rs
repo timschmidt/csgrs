@@ -1636,12 +1636,14 @@ mod tests {
         assert!(evaluation.preflight().is_certified());
         assert!(evaluation.materialized_result().is_some());
         evaluation
-            .topology_assembly_report()
+            .arrangement_attempt()
+            .and_then(|attempt| attempt.topology_assembly_report.as_ref())
             .expect("attempt should retain topology assembly")
             .validate()
             .unwrap();
         evaluation
-            .region_ownership_report()
+            .arrangement_attempt()
+            .and_then(|attempt| attempt.region_ownership_report.as_ref())
             .expect("attempt should retain region ownership")
             .validate()
             .unwrap();

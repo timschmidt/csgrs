@@ -2287,24 +2287,6 @@ impl ExactBooleanEvaluation {
         self.certifications.arrangement_attempt.as_ref()
     }
 
-    /// Returns the retained topology assembly report used by this evaluation,
-    /// preferring the primary arrangement attempt over parallel certification
-    /// fields.
-    pub fn topology_assembly_report(&self) -> Option<&ExactTopologyAssemblyReport> {
-        self.arrangement_attempt()
-            .and_then(|attempt| attempt.topology_assembly_report.as_ref())
-            .or_else(|| self.certifications.topology_assembly_report())
-    }
-
-    /// Returns the retained region ownership report used by this evaluation,
-    /// preferring the primary arrangement attempt over parallel certification
-    /// fields.
-    pub fn region_ownership_report(&self) -> Option<&ExactRegionOwnershipReport> {
-        self.arrangement_attempt()
-            .and_then(|attempt| attempt.region_ownership_report.as_ref())
-            .or_else(|| self.certifications.region_ownership_report())
-    }
-
     /// Validate the retained evaluation shape without replaying sources.
     pub fn validate(&self) -> Result<(), ExactReportValidationError> {
         if self.preflight.operation != self.request.operation {
