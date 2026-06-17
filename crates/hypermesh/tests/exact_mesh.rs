@@ -66,8 +66,8 @@ fn exact_boolean_arrangement_attempt(
 macro_rules! exact_adjacent_union_completion_report {
     ($left:expr, $right:expr, $request:expr $(,)?) => {
         exact_boolean_evaluation($left, $right, $request)
-            .certifications
-            .adjacent_union_completion
+            .adjacent_union_completion_report()
+            .clone()
     };
 }
 
@@ -373,8 +373,7 @@ fn exact_boolean_evaluation_retains_region_ownership_report() {
         &disjoint_right,
         ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED),
     )
-    .certifications
-    .winding_readiness
+    .winding_readiness_report()
     .clone();
     let mut attempt_backed_evaluation = evaluation.clone();
     attempt_backed_evaluation.certifications.winding_readiness = disjoint_readiness;
@@ -1475,16 +1474,14 @@ fn exact_coplanar_volumetric_cell_evidence_is_retained_by_public_evaluation() {
         .validate_against_sources_with_validation(&left, &right, ValidationPolicy::CLOSED)
         .unwrap();
     if evaluation
-        .certifications
-        .winding_readiness
+        .winding_readiness_report()
         .coplanar_volumetric_evidence
         .is_some()
     {
         assert_eq!(
             preflight.coplanar_volumetric_evidence,
             evaluation
-                .certifications
-                .winding_readiness
+                .winding_readiness_report()
                 .coplanar_volumetric_evidence
         );
     } else {
@@ -4574,8 +4571,7 @@ fn public_exact_blocker_reports_replay_remaining_decisions() {
             ValidationPolicy::ALLOW_BOUNDARY,
         ),
     )
-    .certifications
-    .refinement
+    .refinement_report()
     .clone();
     assert!(!refinement.is_required());
     refinement.validate().unwrap();
@@ -4599,8 +4595,7 @@ fn public_exact_blocker_reports_replay_remaining_decisions() {
             ValidationPolicy::ALLOW_BOUNDARY,
         ),
     )
-    .certifications
-    .planar_arrangement
+    .planar_arrangement_report()
     .clone();
     assert!(planar.is_already_materialized());
     assert!(!planar.is_required());
@@ -4625,8 +4620,7 @@ fn public_exact_blocker_reports_replay_remaining_decisions() {
             ValidationPolicy::ALLOW_BOUNDARY,
         ),
     )
-    .certifications
-    .same_surface
+    .same_surface_report()
     .clone();
     assert!(same_surface.is_certified());
     same_surface.validate().unwrap();
@@ -4654,8 +4648,7 @@ fn public_exact_blocker_reports_replay_remaining_decisions() {
             ValidationPolicy::ALLOW_BOUNDARY,
         ),
     )
-    .certifications
-    .open_surface_disjoint
+    .open_surface_disjoint_report()
     .clone();
     assert!(open_disjoint.is_certified());
     open_disjoint.validate().unwrap();
@@ -4695,8 +4688,7 @@ fn open_surface_disjoint_report_classifies_retained_coplanar_overlap_blocker() {
             ValidationPolicy::ALLOW_BOUNDARY,
         ),
     )
-    .certifications
-    .open_surface_disjoint
+    .open_surface_disjoint_report()
     .clone();
 
     assert!(!report.is_certified());
@@ -5332,12 +5324,10 @@ fn trivial_boolean_shortcuts_are_publicly_replayable() {
             &open_disjoint_left,
             ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
         )
-        .certifications
-        .same_surface
+        .same_surface_report()
         .clone();
         relabeled_same_surface_report
-            .certifications
-            .same_surface
+            .same_surface_report()
             .validate()
             .unwrap();
         assert_eq!(
@@ -5456,11 +5446,10 @@ fn trivial_boolean_shortcuts_are_publicly_replayable() {
             &open_disjoint_right,
             ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
         )
-        .certifications
-        .open_surface_disjoint;
+        .open_surface_disjoint_report()
+        .clone();
         relabeled_disjoint_report
-            .certifications
-            .open_surface_disjoint
+            .open_surface_disjoint_report()
             .validate()
             .unwrap();
         assert_eq!(
@@ -5919,8 +5908,7 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
             ValidationPolicy::ALLOW_BOUNDARY,
         ),
     )
-    .certifications
-    .boundary_touching
+    .boundary_touching_report()
     .clone();
     assert!(report.is_certified(), "{report:?}");
     report.validate().unwrap();
@@ -6007,8 +5995,7 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
             ExactBoundaryBooleanPolicy::Reject,
         ),
     )
-    .certifications
-    .winding_readiness
+    .winding_readiness_report()
     .clone();
     assert!(
         rejected_readiness.requires_boundary_policy(),
@@ -6024,8 +6011,7 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
             ExactBoundaryBooleanPolicy::PreserveSeparateShells,
         ),
     )
-    .certifications
-    .winding_readiness
+    .winding_readiness_report()
     .clone();
     assert!(
         policy_readiness.is_boundary_policy_shortcut_materialized(),
