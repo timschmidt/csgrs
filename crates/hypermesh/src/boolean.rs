@@ -1233,6 +1233,20 @@ impl ExactBooleanCertificationSet {
             }
             return Ok(());
         }
+        if self.arrangement_attempt.as_ref().is_some_and(|attempt| {
+            attempt.certifies_arrangement_cell_complex_output_for_request(
+                request,
+                ExactRegularizationPolicy::REGULARIZED_SOLID,
+            )
+        }) {
+            if let Some(report) = self.volumetric_boundary_closure.as_ref() {
+                report.validate()?;
+                if report.operation != request.operation {
+                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                }
+            }
+            return Ok(());
+        }
         if !certifications_region_ownership_resolves_operation(self, request.operation) {
             return Err(ExactReportValidationError::StatusEvidenceMismatch);
         }

@@ -1380,13 +1380,18 @@ mod tests {
                 request.validation,
                 request.boundary_policy
             ),
+            ExactReportFreshness::SourceReplayMismatch,
+            "arrangement-materialized winding readiness replays through the retained certification bundle, not as a standalone graph report"
+        );
+        assert_eq!(
+            certifications.freshness_against_sources(&left, &right, request),
             ExactReportFreshness::Current
         );
         let mut stale_readiness_bundle = certifications.clone();
         stale_readiness_bundle.winding_readiness.retained_events += 1;
         assert_eq!(
             stale_readiness_bundle.validate_against_sources(&left, &right, request),
-            Err(ExactReportValidationError::StatusEvidenceMismatch)
+            Err(ExactReportValidationError::SourceReplayMismatch)
         );
         let mut relabeled_readiness_bundle = certifications.clone();
         relabeled_readiness_bundle.winding_readiness.operation = ExactBooleanOperation::Difference;
@@ -1404,7 +1409,7 @@ mod tests {
         stale_planar_bundle.planar_arrangement.retained_events += 1;
         assert_eq!(
             stale_planar_bundle.validate_against_sources(&left, &right, request),
-            Err(ExactReportValidationError::StatusEvidenceMismatch)
+            Err(ExactReportValidationError::SourceReplayMismatch)
         );
         let mut relabeled_planar_bundle = certifications.clone();
         relabeled_planar_bundle.planar_arrangement.operation = ExactBooleanOperation::Difference;
@@ -1555,9 +1560,10 @@ mod tests {
             .arrangement(ExactRegularizationPolicy::REGULARIZED_SOLID)
             .unwrap();
         workspace.preflight(request).unwrap();
-        assert!(
-            workspace.arrangement_attempts.is_empty(),
-            "preflight from graph must not hide an uncached arrangement attempt"
+        assert_eq!(
+            workspace.arrangement_attempts.len(),
+            1,
+            "preflight should retain the arrangement attempt it uses for certification"
         );
 
         let first = workspace.evaluate(request).unwrap() as *const ExactBooleanEvaluation;
