@@ -1500,6 +1500,28 @@ impl ExactBooleanCertificationSet {
         }
     }
 
+    fn coplanar_volumetric_requirement_matches_preflight(
+        &self,
+        preflight: &ExactBooleanPreflight,
+    ) -> bool {
+        self.winding_readiness.status
+            == ExactWindingReadinessStatus::CoplanarVolumetricCellsRequired
+            && exact_boolean_preflight_matches_winding_handoff(preflight, &self.winding_readiness)
+    }
+
+    fn unresolved_graph_matches_preflight(&self, preflight: &ExactBooleanPreflight) -> bool {
+        self.winding_readiness.status == ExactWindingReadinessStatus::GraphUnknowns
+            && exact_boolean_preflight_matches_winding_handoff(preflight, &self.winding_readiness)
+    }
+
+    fn certified_winding_requirement_matches_preflight(
+        &self,
+        preflight: &ExactBooleanPreflight,
+    ) -> bool {
+        self.winding_readiness.status.routes_to_certified_winding()
+            && exact_boolean_preflight_matches_winding_handoff(preflight, &self.winding_readiness)
+    }
+
     fn validate_retained_closure_and_attempt_for_request(
         &self,
         request: ExactBooleanRequest,
@@ -2323,25 +2345,13 @@ fn exact_boolean_preflight_matches_certifications(
                 && certifications.planar_arrangement_matches_preflight(preflight)
         }
         ExactBooleanSupport::RequiresCoplanarVolumetricCells => {
-            *status == ExactWindingReadinessStatus::CoplanarVolumetricCellsRequired
-                && exact_boolean_preflight_matches_winding_handoff(
-                    preflight,
-                    &certifications.winding_readiness,
-                )
+            certifications.coplanar_volumetric_requirement_matches_preflight(preflight)
         }
         ExactBooleanSupport::UnresolvedGraph => {
-            *status == ExactWindingReadinessStatus::GraphUnknowns
-                && exact_boolean_preflight_matches_winding_handoff(
-                    preflight,
-                    &certifications.winding_readiness,
-                )
+            certifications.unresolved_graph_matches_preflight(preflight)
         }
         ExactBooleanSupport::RequiresCertifiedWinding => {
-            status.routes_to_certified_winding()
-                && exact_boolean_preflight_matches_winding_handoff(
-                    preflight,
-                    &certifications.winding_readiness,
-                )
+            certifications.certified_winding_requirement_matches_preflight(preflight)
         }
     }
 }
