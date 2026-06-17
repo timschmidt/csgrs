@@ -1181,6 +1181,60 @@ impl ExactBooleanCertificationSet {
             }
             return Ok(());
         }
+        let materialized_shortcut_certified = match self.winding_readiness.status {
+            ExactWindingReadinessStatus::EmptyOperandAlreadyMaterialized => {
+                self.trivial.has_empty_operand()
+            }
+            ExactWindingReadinessStatus::BoundsDisjointAlreadyMaterialized => {
+                self.trivial.bounds_disjoint
+            }
+            ExactWindingReadinessStatus::SurfaceEqualityAlreadyMaterialized => {
+                self.same_surface.is_certified()
+            }
+            ExactWindingReadinessStatus::OpenSurfaceDisjointAlreadyMaterialized => {
+                self.open_surface_disjoint.is_certified()
+            }
+            ExactWindingReadinessStatus::ClosedBoundaryTouchingAlreadyMaterialized => {
+                self.boundary_touching.is_certified()
+            }
+            ExactWindingReadinessStatus::MixedDimensionalRegularizedSolidAlreadyMaterialized => {
+                (self.regularized_solid.left_closed_solid
+                    && self.regularized_solid.right_open_surface)
+                    || (self.regularized_solid.left_open_surface
+                        && self.regularized_solid.right_closed_solid)
+            }
+            ExactWindingReadinessStatus::LowerDimensionalRegularizedSolidAlreadyMaterialized => {
+                self.regularized_solid.left_open_surface
+                    && self.regularized_solid.right_open_surface
+            }
+            ExactWindingReadinessStatus::ConvexBooleanAlreadyMaterialized => self
+                .convex_capabilities
+                .resolves_operation(request.operation),
+            ExactWindingReadinessStatus::ClosedWindingSeparatedAlreadyMaterialized => {
+                exact_boolean_closed_winding_reports_match_separated(self)
+            }
+            ExactWindingReadinessStatus::ClosedWindingContainmentAlreadyMaterialized => {
+                exact_boolean_closed_winding_reports_match_containment(self)
+            }
+            _ => false,
+        };
+        if materialized_shortcut_certified {
+            if let Some(report) = self.volumetric_boundary_closure.as_ref() {
+                report.validate()?;
+                if report.operation != request.operation {
+                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                }
+            }
+            if let Some(attempt) = self.arrangement_attempt.as_ref() {
+                attempt.validate()?;
+                if !attempt
+                    .matches_request_policy(request, ExactRegularizationPolicy::REGULARIZED_SOLID)
+                {
+                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                }
+            }
+            return Ok(());
+        }
         let boundary_policy_shortcut_certified = self.boundary_touching.is_certified()
             && matches!(
                 self.winding_readiness.status,
@@ -1408,6 +1462,15 @@ impl ExactConvexBooleanCapabilityFacts {
 
     pub fn validate(&self) -> Result<(), ExactReportValidationError> {
         Ok(())
+    }
+
+    fn resolves_operation(&self, operation: ExactBooleanOperation) -> bool {
+        match operation {
+            ExactBooleanOperation::Union => self.can_union,
+            ExactBooleanOperation::Intersection => self.can_intersection,
+            ExactBooleanOperation::Difference => self.can_difference,
+            ExactBooleanOperation::SelectedRegions(_) => false,
+        }
     }
 }
 
@@ -2123,12 +2186,20 @@ fn exact_boolean_preflight_matches_certifications(
                 && certifications.trivial.bounds_disjoint
         }
         ExactBooleanSupport::CertifiedIdentical => {
-            *status == ExactWindingReadinessStatus::SurfaceEqualityAlreadyMaterialized
+            (*status == ExactWindingReadinessStatus::SurfaceEqualityAlreadyMaterialized
+                || exact_boolean_arrangement_attempt_matches_certified_preflight(
+                    preflight,
+                    certifications,
+                ))
                 && certifications.identical.is_certified()
                 && certifications.same_surface.is_certified()
         }
         ExactBooleanSupport::CertifiedSameSurface => {
-            *status == ExactWindingReadinessStatus::SurfaceEqualityAlreadyMaterialized
+            (*status == ExactWindingReadinessStatus::SurfaceEqualityAlreadyMaterialized
+                || exact_boolean_arrangement_attempt_matches_certified_preflight(
+                    preflight,
+                    certifications,
+                ))
                 && certifications.same_surface.is_certified()
         }
         ExactBooleanSupport::CertifiedClosedBoundaryTouchingUnion
