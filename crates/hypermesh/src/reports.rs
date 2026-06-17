@@ -1013,6 +1013,12 @@ impl ExactBooleanResult {
         }
     }
 
+    /// Returns whether this result witnesses the request operation and carries
+    /// an output mesh satisfying the request validation policy.
+    pub(crate) fn satisfies_request_shape(&self, request: ExactBooleanRequest) -> bool {
+        self.matches_request(request) && self.mesh.validation_policy().satisfies(request.validation)
+    }
+
     /// Returns whether this result kind is a valid materialized witness for
     /// the retained preflight support that produced it.
     pub(crate) fn matches_preflight_support(&self, support: ExactBooleanSupport) -> bool {
@@ -1913,7 +1919,7 @@ impl ExactBooleanResult {
             return Ok(false);
         }
         if self.arrangement_cell_complex_operation() != Some(request.operation)
-            || !self.mesh.validation_policy().satisfies(request.validation)
+            || !self.satisfies_request_shape(request)
         {
             return Ok(false);
         }

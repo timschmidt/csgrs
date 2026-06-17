@@ -1982,14 +1982,7 @@ fn validate_evaluation_materialized_result(
     certifications: &ExactBooleanCertificationSet,
 ) -> Result<(), ExactReportValidationError> {
     result.validate()?;
-    if !result.matches_request(request) {
-        return Err(ExactReportValidationError::StatusEvidenceMismatch);
-    }
-    if !result
-        .mesh
-        .validation_policy()
-        .satisfies(request.validation)
-    {
+    if !result.satisfies_request_shape(request) {
         return Err(ExactReportValidationError::StatusEvidenceMismatch);
     }
     if match result.kind {

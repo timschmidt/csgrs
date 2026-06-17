@@ -543,8 +543,11 @@ fn store_replayable_result_or_return(
         result
             .validate()
             .map_err(workspace_report_validation_error)?;
-        validate_result_request_shape(request, &result)
-            .map_err(workspace_report_validation_error)?;
+        if !result.satisfies_request_shape(request) {
+            return Err(workspace_report_validation_error(
+                ExactReportValidationError::StatusEvidenceMismatch,
+            ));
+        }
     }
     Ok(result)
 }
@@ -658,7 +661,9 @@ fn validate_retained_result_for_request(
     retained_arrangement_attempt: Option<&ExactArrangementBooleanAttempt>,
     result: &ExactBooleanResult,
 ) -> Result<(), ExactReportValidationError> {
-    validate_result_request_shape(request, result)?;
+    if !result.satisfies_request_shape(request) {
+        return Err(ExactReportValidationError::StatusEvidenceMismatch);
+    }
     validate_result_against_retained_arrangement_attempt(
         left,
         right,
@@ -673,22 +678,6 @@ fn validate_retained_result_for_request(
         request.validation,
         request.boundary_policy,
     )
-}
-
-fn validate_result_request_shape(
-    request: ExactBooleanRequest,
-    result: &ExactBooleanResult,
-) -> Result<(), ExactReportValidationError> {
-    if result.matches_request(request)
-        && result
-            .mesh
-            .validation_policy()
-            .satisfies(request.validation)
-    {
-        Ok(())
-    } else {
-        Err(ExactReportValidationError::StatusEvidenceMismatch)
-    }
 }
 
 fn validate_result_against_retained_arrangement_attempt(
