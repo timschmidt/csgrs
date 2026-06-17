@@ -4580,7 +4580,8 @@ fn public_exact_blocker_reports_replay_remaining_decisions() {
             ValidationPolicy::ALLOW_BOUNDARY,
         ),
     )
-    .refinement_report()
+    .certifications
+    .refinement
     .clone();
     assert!(!refinement.is_required());
     refinement.validate().unwrap();

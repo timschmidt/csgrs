@@ -1115,7 +1115,7 @@ mod tests {
         evaluation.validate().unwrap();
         assert_eq!(evaluation.arrangement_attempt(), Some(&attempt));
 
-        let refinement_report = evaluation.refinement_report().clone();
+        let refinement_report = evaluation.certifications.refinement.clone();
         assert_eq!(
             refinement_report.freshness_against_sources(&left, &right),
             ExactReportFreshness::Current

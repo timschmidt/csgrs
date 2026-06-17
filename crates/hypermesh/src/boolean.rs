@@ -2287,11 +2287,6 @@ impl ExactBooleanEvaluation {
         self.certifications.arrangement_attempt.as_ref()
     }
 
-    /// Returns the retained exact graph refinement report.
-    pub fn refinement_report(&self) -> &ExactRefinementReport {
-        &self.certifications.refinement
-    }
-
     /// Returns the retained boundary-touching report.
     pub fn boundary_touching_report(&self) -> &ExactBoundaryTouchingReport {
         &self.certifications.boundary_touching

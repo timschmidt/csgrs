@@ -542,7 +542,7 @@ fn run_case(case: &BenchCase) {
         "workspace_validate_refinement_from_retained_artifacts",
         || {
             retained_workspace_and_certification_for_case(case, request, |evaluation| {
-                evaluation.refinement_report().clone()
+                evaluation.certifications.refinement.clone()
             })
         },
         |(retained_workspace, report)| {
