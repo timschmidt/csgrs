@@ -1642,7 +1642,7 @@ mod tests {
 
         let evaluation = workspace.evaluate(request).unwrap().clone();
         evaluation.validate().unwrap();
-        assert!(evaluation.preflight.is_certified());
+        assert!(evaluation.preflight().is_certified());
         assert!(evaluation.materialized_result().is_some());
         evaluation
             .topology_assembly_report()

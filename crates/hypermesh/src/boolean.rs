@@ -1705,6 +1705,16 @@ pub struct ExactBooleanEvaluation {
 }
 
 impl ExactBooleanEvaluation {
+    /// Returns the exact boolean request evaluated by this session snapshot.
+    pub fn request(&self) -> ExactBooleanRequest {
+        self.request
+    }
+
+    /// Returns the retained exact preflight/scheduling result.
+    pub fn preflight(&self) -> &ExactBooleanPreflight {
+        &self.preflight
+    }
+
     /// Returns whether the retained named-boolean ownership evidence is ready
     /// to select volume regions directly.
     pub fn has_ready_volume_ownership(&self) -> bool {
