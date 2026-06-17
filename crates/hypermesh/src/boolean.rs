@@ -2297,14 +2297,6 @@ impl ExactBooleanEvaluation {
         &self.certifications.winding_readiness
     }
 
-    /// Returns the retained volumetric boundary-closure report, when the
-    /// request has one.
-    pub fn volumetric_boundary_closure_report(
-        &self,
-    ) -> Option<&ExactVolumetricBoundaryClosureReport> {
-        self.certifications.volumetric_boundary_closure.as_ref()
-    }
-
     /// Returns the retained topology assembly report used by this evaluation,
     /// preferring the primary arrangement attempt over parallel certification
     /// fields.

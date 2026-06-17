@@ -1326,8 +1326,9 @@ mod tests {
         );
 
         let closure_report = evaluation
-            .volumetric_boundary_closure_report()
-            .cloned()
+            .certifications
+            .volumetric_boundary_closure
+            .clone()
             .unwrap();
         assert_eq!(
             closure_report.freshness_against_sources(&left, &right),

@@ -4043,7 +4043,9 @@ fn exact_volumetric_winding_coplanar_cap_is_publicly_certified() {
             ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
         );
         let closure = evaluation
-            .volumetric_boundary_closure_report()
+            .certifications
+            .volumetric_boundary_closure
+            .as_ref()
             .expect("coplanar closure evaluation should retain boundary closure evidence");
         assert!(
             closure.is_coplanar_closure_available(),

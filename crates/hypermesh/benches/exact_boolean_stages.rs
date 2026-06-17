@@ -644,7 +644,10 @@ fn run_case(case: &BenchCase) {
         "workspace_validate_volumetric_boundary_closure_from_retained_artifacts",
         || {
             retained_workspace_and_certification_for_case(case, request, |evaluation| {
-                evaluation.volumetric_boundary_closure_report().cloned()
+                evaluation
+                    .certifications
+                    .volumetric_boundary_closure
+                    .clone()
             })
         },
         |(retained_workspace, report)| {
