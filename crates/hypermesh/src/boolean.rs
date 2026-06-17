@@ -1469,6 +1469,37 @@ impl ExactBooleanCertificationSet {
                 .is_none()
     }
 
+    fn result_matches_request(
+        &self,
+        result: &ExactBooleanResult,
+        request: ExactBooleanRequest,
+    ) -> bool {
+        let arrangement_attempt_certifies_request =
+            self.arrangement_attempt_certifies_output_for_operation(request.operation);
+        let arrangement_shortcut_attempt_certifies_request =
+            self.arrangement_attempt_certifies_shortcut_for_operation(request.operation);
+        match result.kind {
+            ExactBooleanResultKind::ArrangementCellComplexMaterialized { operation } => {
+                operation == request.operation && arrangement_attempt_certifies_request
+            }
+            ExactBooleanResultKind::CertifiedShortcut {
+                shortcut: ExactBooleanShortcutKind::ArrangementCellComplex,
+                operation,
+            } => {
+                operation == request.operation
+                    && ((self
+                        .arrangement_cell_complex_shortcuts
+                        .certified_support(operation)
+                        == Some(ExactBooleanSupport::CertifiedArrangementCellComplex)
+                        && arrangement_shortcut_attempt_certifies_request)
+                        || (self.adjacent_union_completion.is_certified()
+                            && self.adjacent_union_completion.operation == operation)
+                        || arrangement_attempt_certifies_request)
+            }
+            _ => true,
+        }
+    }
+
     fn validate_retained_closure_and_attempt_for_request(
         &self,
         request: ExactBooleanRequest,
@@ -2126,44 +2157,13 @@ fn validate_evaluation_materialized_result(
     } {
         return Err(ExactReportValidationError::StatusEvidenceMismatch);
     }
-    if !evaluation_result_matches_certifications(result, request, certifications) {
+    if !certifications.result_matches_request(result, request) {
         return Err(ExactReportValidationError::StatusEvidenceMismatch);
     }
     if !result.matches_preflight_support(preflight.support) {
         return Err(ExactReportValidationError::StatusEvidenceMismatch);
     }
     Ok(())
-}
-
-fn evaluation_result_matches_certifications(
-    result: &ExactBooleanResult,
-    request: ExactBooleanRequest,
-    certifications: &ExactBooleanCertificationSet,
-) -> bool {
-    let arrangement_attempt_certifies_request =
-        certifications.arrangement_attempt_certifies_output_for_operation(request.operation);
-    let arrangement_shortcut_attempt_certifies_request =
-        certifications.arrangement_attempt_certifies_shortcut_for_operation(request.operation);
-    match result.kind {
-        ExactBooleanResultKind::ArrangementCellComplexMaterialized { operation } => {
-            operation == request.operation && arrangement_attempt_certifies_request
-        }
-        ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: ExactBooleanShortcutKind::ArrangementCellComplex,
-            operation,
-        } => {
-            operation == request.operation
-                && ((certifications
-                    .arrangement_cell_complex_shortcuts
-                    .certified_support(operation)
-                    == Some(ExactBooleanSupport::CertifiedArrangementCellComplex)
-                    && arrangement_shortcut_attempt_certifies_request)
-                    || (certifications.adjacent_union_completion.is_certified()
-                        && certifications.adjacent_union_completion.operation == operation)
-                    || arrangement_attempt_certifies_request)
-        }
-        _ => true,
-    }
 }
 
 fn exact_boolean_preflight_matches_certifications(
