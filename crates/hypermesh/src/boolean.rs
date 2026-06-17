@@ -1212,10 +1212,10 @@ impl ExactBooleanCertificationSet {
             self.validate_retained_closure_and_attempt_for_request(request, false, false)?;
             return Ok(());
         }
-        if !certifications_region_ownership_resolves_operation(self, request.operation) {
+        if !self.region_ownership_resolves_operation(request.operation) {
             return Err(ExactReportValidationError::StatusEvidenceMismatch);
         }
-        if !certifications_topology_assembly_complete(self) {
+        if !self.topology_assembly_complete() {
             return Err(ExactReportValidationError::StatusEvidenceMismatch);
         }
         if self.refinement.graph_had_unknowns != self.planar_arrangement.graph_had_unknowns
@@ -1269,6 +1269,31 @@ impl ExactBooleanCertificationSet {
             }
             _ => false,
         }
+    }
+
+    fn topology_assembly_report(&self) -> Option<&ExactTopologyAssemblyReport> {
+        self.arrangement_attempt
+            .as_ref()
+            .and_then(|attempt| attempt.topology_assembly_report.as_ref())
+    }
+
+    fn region_ownership_report(&self) -> Option<&ExactRegionOwnershipReport> {
+        self.arrangement_attempt
+            .as_ref()
+            .and_then(|attempt| attempt.region_ownership_report.as_ref())
+    }
+
+    fn topology_assembly_complete(&self) -> bool {
+        self.topology_assembly_report()
+            .is_some_and(|topology| topology.validate().is_ok() && topology.is_complete())
+    }
+
+    fn region_ownership_resolves_operation(&self, operation: ExactBooleanOperation) -> bool {
+        self.arrangement_attempt.as_ref().is_some_and(|attempt| {
+            attempt.operation == operation && attempt.resolves_requested_volume_ownership()
+        }) || self
+            .region_ownership_report()
+            .is_some_and(|ownership| ownership_resolves_arrangement_operation(ownership, operation))
     }
 
     fn validate_retained_closure_and_attempt_for_request(
@@ -1718,10 +1743,8 @@ impl ExactBooleanEvaluation {
     /// Returns whether the retained named-boolean ownership evidence is ready
     /// to select volume regions directly.
     pub fn has_ready_volume_ownership(&self) -> bool {
-        certifications_region_ownership_resolves_operation(
-            &self.certifications,
-            self.request.operation,
-        )
+        self.certifications
+            .region_ownership_resolves_operation(self.request.operation)
     }
 
     /// Returns whether retained arrangement/cell-complex evidence already
@@ -1807,7 +1830,7 @@ impl ExactBooleanEvaluation {
     pub fn topology_assembly_report(&self) -> Option<&ExactTopologyAssemblyReport> {
         self.arrangement_attempt()
             .and_then(|attempt| attempt.topology_assembly_report.as_ref())
-            .or_else(|| certifications_topology_assembly_report(&self.certifications))
+            .or_else(|| self.certifications.topology_assembly_report())
     }
 
     /// Returns the retained region ownership report used by this evaluation,
@@ -1816,7 +1839,7 @@ impl ExactBooleanEvaluation {
     pub fn region_ownership_report(&self) -> Option<&ExactRegionOwnershipReport> {
         self.arrangement_attempt()
             .and_then(|attempt| attempt.region_ownership_report.as_ref())
-            .or_else(|| certifications_region_ownership_report(&self.certifications))
+            .or_else(|| self.certifications.region_ownership_report())
     }
 
     /// Validate the retained evaluation shape without replaying sources.
@@ -1906,43 +1929,6 @@ fn ownership_resolves_arrangement_operation(
     operation: ExactBooleanOperation,
 ) -> bool {
     ownership.validate().is_ok() && ownership.resolves_operation_selection(operation)
-}
-
-fn certifications_topology_assembly_report(
-    certifications: &ExactBooleanCertificationSet,
-) -> Option<&ExactTopologyAssemblyReport> {
-    certifications
-        .arrangement_attempt
-        .as_ref()
-        .and_then(|attempt| attempt.topology_assembly_report.as_ref())
-}
-
-fn certifications_region_ownership_report(
-    certifications: &ExactBooleanCertificationSet,
-) -> Option<&ExactRegionOwnershipReport> {
-    certifications
-        .arrangement_attempt
-        .as_ref()
-        .and_then(|attempt| attempt.region_ownership_report.as_ref())
-}
-
-fn certifications_topology_assembly_complete(
-    certifications: &ExactBooleanCertificationSet,
-) -> bool {
-    certifications_topology_assembly_report(certifications)
-        .is_some_and(|topology| topology.validate().is_ok() && topology.is_complete())
-}
-
-fn certifications_region_ownership_resolves_operation(
-    certifications: &ExactBooleanCertificationSet,
-    operation: ExactBooleanOperation,
-) -> bool {
-    certifications
-        .arrangement_attempt
-        .as_ref()
-        .is_some_and(|attempt| attempt.resolves_requested_volume_ownership())
-        || certifications_region_ownership_report(certifications)
-            .is_some_and(|ownership| ownership_resolves_arrangement_operation(ownership, operation))
 }
 
 fn certifications_arrangement_attempt_certifies_output_for_operation(
@@ -2155,10 +2141,8 @@ fn exact_boolean_preflight_matches_certifications(
                     && preflight.region_classifications.is_empty()
                     && preflight.blocker.is_none()
                     && preflight.arrangement_readiness.is_none())
-                || (certifications_region_ownership_resolves_operation(
-                    certifications,
-                    preflight.operation,
-                ) && certifications_topology_assembly_complete(certifications)
+                || (certifications.region_ownership_resolves_operation(preflight.operation)
+                    && certifications.topology_assembly_complete()
                     && {
                         let region_handoff_matches = (preflight.region_count
                             == certifications.winding_readiness.region_count
