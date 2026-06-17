@@ -4032,9 +4032,7 @@ fn exact_volumetric_winding_coplanar_cap_is_publicly_certified() {
             ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
         );
         let closure = evaluation
-            .certifications
-            .volumetric_boundary_closure
-            .as_ref()
+            .volumetric_boundary_closure_report()
             .expect("coplanar closure evaluation should retain boundary closure evidence");
         assert!(
             closure.is_coplanar_closure_available(),
@@ -6131,8 +6129,7 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
             ExactBoundaryBooleanPolicy::PreserveSeparateShells,
         ),
     )
-    .certifications
-    .winding_readiness
+    .winding_readiness_report()
     .clone();
     assert!(
         closed_intersection_readiness.is_lower_dimensional_regularized_solid_materialized(),
@@ -6209,8 +6206,7 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
                 ExactBoundaryBooleanPolicy::PreserveSeparateShells,
             ),
         )
-        .certifications
-        .winding_readiness
+        .winding_readiness_report()
         .clone();
         assert!(
             closed_policy_readiness.is_lower_dimensional_regularized_solid_materialized(),
@@ -6277,8 +6273,7 @@ fn boundary_touching_report_classifies_proper_crossing_as_winding_blocker() {
             ValidationPolicy::ALLOW_BOUNDARY,
         ),
     )
-    .certifications
-    .boundary_touching
+    .boundary_touching_report()
     .clone();
 
     assert!(!report.is_certified());
