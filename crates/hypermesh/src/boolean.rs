@@ -1262,10 +1262,10 @@ impl ExactBooleanCertificationSet {
                 self.convex_capabilities.resolves_operation(operation)
             }
             ExactWindingReadinessStatus::ClosedWindingSeparatedAlreadyMaterialized => {
-                exact_boolean_closed_winding_reports_match_separated(self)
+                self.closed_winding_reports_match_separated()
             }
             ExactWindingReadinessStatus::ClosedWindingContainmentAlreadyMaterialized => {
-                exact_boolean_closed_winding_reports_match_containment(self)
+                self.closed_winding_reports_match_containment()
             }
             _ => false,
         }
@@ -1564,6 +1564,17 @@ impl ExactBooleanCertificationSet {
             && self.same_surface.is_certified()
     }
 
+    fn closed_winding_reports_match_separated(&self) -> bool {
+        self.closed_winding_left_in_right.relation == ClosedMeshWindingMeshRelation::Outside
+            && self.closed_winding_right_in_left.relation == ClosedMeshWindingMeshRelation::Outside
+    }
+
+    fn closed_winding_reports_match_containment(&self) -> bool {
+        self.closed_winding_left_in_right.relation == ClosedMeshWindingMeshRelation::StrictlyInside
+            || self.closed_winding_right_in_left.relation
+                == ClosedMeshWindingMeshRelation::StrictlyInside
+    }
+
     fn closed_winding_separated_matches_preflight(
         &self,
         preflight: &ExactBooleanPreflight,
@@ -1571,7 +1582,7 @@ impl ExactBooleanCertificationSet {
         (self.winding_readiness.status
             == ExactWindingReadinessStatus::ClosedWindingSeparatedAlreadyMaterialized
             || self.arrangement_attempt_matches_certified_preflight(preflight))
-            && exact_boolean_closed_winding_reports_match_separated(self)
+            && self.closed_winding_reports_match_separated()
     }
 
     fn closed_winding_containment_matches_preflight(
@@ -1581,7 +1592,7 @@ impl ExactBooleanCertificationSet {
         (self.winding_readiness.status
             == ExactWindingReadinessStatus::ClosedWindingContainmentAlreadyMaterialized
             || self.arrangement_attempt_matches_certified_preflight(preflight))
-            && exact_boolean_closed_winding_reports_match_containment(self)
+            && self.closed_winding_reports_match_containment()
     }
 
     fn mixed_dimensional_regularized_solid_matches_preflight(
@@ -1639,7 +1650,7 @@ impl ExactBooleanCertificationSet {
             && self.convex_reports_match_preflight_support(preflight))
             || (self.winding_readiness.status
                 == ExactWindingReadinessStatus::ClosedWindingSeparatedAlreadyMaterialized
-                && exact_boolean_closed_winding_reports_match_separated(self))
+                && self.closed_winding_reports_match_separated())
             || self.arrangement_attempt_matches_certified_preflight(preflight)
     }
 
@@ -1649,7 +1660,7 @@ impl ExactBooleanCertificationSet {
             && self.convex_reports_match_preflight_support(preflight))
             || (self.winding_readiness.status
                 == ExactWindingReadinessStatus::ClosedWindingContainmentAlreadyMaterialized
-                && exact_boolean_closed_winding_reports_match_containment(self))
+                && self.closed_winding_reports_match_containment())
             || self.arrangement_attempt_matches_certified_preflight(preflight)
     }
 
@@ -2433,23 +2444,6 @@ fn validate_evaluation_materialized_result(
         return Err(ExactReportValidationError::StatusEvidenceMismatch);
     }
     Ok(())
-}
-
-fn exact_boolean_closed_winding_reports_match_separated(
-    certifications: &ExactBooleanCertificationSet,
-) -> bool {
-    certifications.closed_winding_left_in_right.relation == ClosedMeshWindingMeshRelation::Outside
-        && certifications.closed_winding_right_in_left.relation
-            == ClosedMeshWindingMeshRelation::Outside
-}
-
-fn exact_boolean_closed_winding_reports_match_containment(
-    certifications: &ExactBooleanCertificationSet,
-) -> bool {
-    certifications.closed_winding_left_in_right.relation
-        == ClosedMeshWindingMeshRelation::StrictlyInside
-        || certifications.closed_winding_right_in_left.relation
-            == ClosedMeshWindingMeshRelation::StrictlyInside
 }
 
 fn exact_boolean_preflight_matches_boundary_report(
