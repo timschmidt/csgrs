@@ -2292,11 +2292,6 @@ impl ExactBooleanEvaluation {
         &self.certifications.refinement
     }
 
-    /// Returns the retained identical-mesh report.
-    pub fn identical_mesh_report(&self) -> &ExactIdenticalMeshReport {
-        &self.certifications.identical
-    }
-
     /// Returns the retained same-surface report.
     pub fn same_surface_report(&self) -> &ExactSameSurfaceReport {
         &self.certifications.same_surface

@@ -576,7 +576,7 @@ fn run_case(case: &BenchCase) {
         "workspace_validate_identical_mesh_from_retained_artifacts",
         || {
             retained_workspace_and_certification_for_case(case, request, |evaluation| {
-                evaluation.identical_mesh_report().clone()
+                evaluation.certifications.identical.clone()
             })
         },
         |(retained_workspace, report)| {
