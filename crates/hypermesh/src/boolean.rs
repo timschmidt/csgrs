@@ -1392,6 +1392,19 @@ impl ExactBooleanCertificationSet {
                 .is_none()
     }
 
+    fn boundary_policy_requirement_matches_preflight(
+        &self,
+        preflight: &ExactBooleanPreflight,
+    ) -> bool {
+        self.boundary_touching.is_certified()
+            && self.winding_readiness.status == ExactWindingReadinessStatus::BoundaryPolicyRequired
+            && exact_boolean_preflight_matches_boundary_report(
+                preflight,
+                &self.boundary_touching,
+                true,
+            )
+    }
+
     fn validate_retained_closure_and_attempt_for_request(
         &self,
         request: ExactBooleanRequest,
@@ -2290,13 +2303,7 @@ fn exact_boolean_preflight_matches_certifications(
                 || certifications.arrangement_attempt_matches_certified_preflight(preflight)
         }
         ExactBooleanSupport::RequiresBoundaryPolicy => {
-            certifications.boundary_touching.is_certified()
-                && *status == ExactWindingReadinessStatus::BoundaryPolicyRequired
-                && exact_boolean_preflight_matches_boundary_report(
-                    preflight,
-                    &certifications.boundary_touching,
-                    true,
-                )
+            certifications.boundary_policy_requirement_matches_preflight(preflight)
         }
         ExactBooleanSupport::RequiresPlanarArrangement => {
             *status == ExactWindingReadinessStatus::PlanarArrangementRequired
