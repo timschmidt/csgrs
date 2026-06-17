@@ -2104,23 +2104,16 @@ fn exact_boolean_preflight_matches_certifications(
                 == Some(ExactBooleanSupport::CertifiedArrangementCellComplex)
                 && certifications
                     .arrangement_attempt_certifies_shortcut_for_operation(preflight.operation)
-                && preflight.graph_had_unknowns == certifications.refinement.graph_had_unknowns
-                && preflight.retained_face_pairs == certifications.refinement.retained_face_pairs
-                && preflight.retained_events == certifications.refinement.retained_events
-                && preflight.region_count == 0
-                && preflight.region_classifications.is_empty()
-                && preflight.blocker.is_none()
-                && preflight.arrangement_readiness.is_none())
+                && exact_boolean_preflight_matches_refinement_output_handoff(
+                    preflight,
+                    &certifications.refinement,
+                ))
                 || (certifications
                     .arrangement_attempt_certifies_output_for_operation(preflight.operation)
-                    && preflight.graph_had_unknowns == certifications.refinement.graph_had_unknowns
-                    && preflight.retained_face_pairs
-                        == certifications.refinement.retained_face_pairs
-                    && preflight.retained_events == certifications.refinement.retained_events
-                    && preflight.region_count == 0
-                    && preflight.region_classifications.is_empty()
-                    && preflight.blocker.is_none()
-                    && preflight.arrangement_readiness.is_none())
+                    && exact_boolean_preflight_matches_refinement_output_handoff(
+                        preflight,
+                        &certifications.refinement,
+                    ))
                 || (certifications.adjacent_union_completion.is_certified()
                     && certifications.adjacent_union_completion.operation == preflight.operation
                     && preflight.operation == ExactBooleanOperation::Union
@@ -2391,6 +2384,19 @@ fn exact_boolean_preflight_matches_boundary_report(
         } else {
             preflight.blocker.is_none()
         }
+}
+
+fn exact_boolean_preflight_matches_refinement_output_handoff(
+    preflight: &ExactBooleanPreflight,
+    refinement: &ExactRefinementReport,
+) -> bool {
+    preflight.graph_had_unknowns == refinement.graph_had_unknowns
+        && preflight.retained_face_pairs == refinement.retained_face_pairs
+        && preflight.retained_events == refinement.retained_events
+        && preflight.region_count == 0
+        && preflight.region_classifications.is_empty()
+        && preflight.blocker.is_none()
+        && preflight.arrangement_readiness.is_none()
 }
 
 fn exact_boolean_preflight_matches_winding_handoff(
