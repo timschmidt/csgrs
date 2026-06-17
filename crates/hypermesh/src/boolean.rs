@@ -1135,13 +1135,7 @@ impl ExactBooleanCertificationSet {
             && request.operation == ExactBooleanOperation::Union
             && self.arrangement_attempt.is_none();
         if adjacent_union_completion_certified {
-            let Some(report) = self.volumetric_boundary_closure.as_ref() else {
-                return Err(ExactReportValidationError::StatusEvidenceMismatch);
-            };
-            report.validate()?;
-            if report.operation != request.operation {
-                return Err(ExactReportValidationError::StatusEvidenceMismatch);
-            }
+            self.validate_retained_closure_and_attempt_for_request(request, true, false)?;
             return Ok(());
         }
         self.boundary_touching.validate()?;
@@ -1219,20 +1213,7 @@ impl ExactBooleanCertificationSet {
             _ => false,
         };
         if materialized_shortcut_certified {
-            if let Some(report) = self.volumetric_boundary_closure.as_ref() {
-                report.validate()?;
-                if report.operation != request.operation {
-                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
-                }
-            }
-            if let Some(attempt) = self.arrangement_attempt.as_ref() {
-                attempt.validate()?;
-                if !attempt
-                    .matches_request_policy(request, ExactRegularizationPolicy::REGULARIZED_SOLID)
-                {
-                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
-                }
-            }
+            self.validate_retained_closure_and_attempt_for_request(request, false, false)?;
             return Ok(());
         }
         let boundary_policy_shortcut_certified = self.boundary_touching.is_certified()
@@ -1242,20 +1223,7 @@ impl ExactBooleanCertificationSet {
                     | ExactWindingReadinessStatus::BoundaryPolicyRequired
             );
         if boundary_policy_shortcut_certified {
-            if let Some(report) = self.volumetric_boundary_closure.as_ref() {
-                report.validate()?;
-                if report.operation != request.operation {
-                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
-                }
-            }
-            if let Some(attempt) = self.arrangement_attempt.as_ref() {
-                attempt.validate()?;
-                if !attempt
-                    .matches_request_policy(request, ExactRegularizationPolicy::REGULARIZED_SOLID)
-                {
-                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
-                }
-            }
+            self.validate_retained_closure_and_attempt_for_request(request, false, false)?;
             return Ok(());
         }
         let arrangement_cell_complex_shortcut_certified = self
@@ -1269,22 +1237,7 @@ impl ExactBooleanCertificationSet {
                 )
             });
         if arrangement_cell_complex_shortcut_certified {
-            let Some(report) = self.volumetric_boundary_closure.as_ref() else {
-                return Err(ExactReportValidationError::StatusEvidenceMismatch);
-            };
-            report.validate()?;
-            if report.operation != request.operation {
-                return Err(ExactReportValidationError::StatusEvidenceMismatch);
-            }
-            let Some(attempt) = self.arrangement_attempt.as_ref() else {
-                return Err(ExactReportValidationError::StatusEvidenceMismatch);
-            };
-            attempt.validate()?;
-            if !attempt
-                .matches_request_policy(request, ExactRegularizationPolicy::REGULARIZED_SOLID)
-            {
-                return Err(ExactReportValidationError::StatusEvidenceMismatch);
-            }
+            self.validate_retained_closure_and_attempt_for_request(request, true, true)?;
             return Ok(());
         }
         if self.arrangement_attempt.as_ref().is_some_and(|attempt| {
@@ -1293,12 +1246,7 @@ impl ExactBooleanCertificationSet {
                 ExactRegularizationPolicy::REGULARIZED_SOLID,
             )
         }) {
-            if let Some(report) = self.volumetric_boundary_closure.as_ref() {
-                report.validate()?;
-                if report.operation != request.operation {
-                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
-                }
-            }
+            self.validate_retained_closure_and_attempt_for_request(request, false, false)?;
             return Ok(());
         }
         if !certifications_region_ownership_resolves_operation(self, request.operation) {
@@ -1313,19 +1261,41 @@ impl ExactBooleanCertificationSet {
         {
             return Err(ExactReportValidationError::StatusEvidenceMismatch);
         }
-        let Some(report) = self.volumetric_boundary_closure.as_ref() else {
-            return Err(ExactReportValidationError::StatusEvidenceMismatch);
-        };
-        report.validate()?;
-        if report.operation != request.operation {
-            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+        self.validate_retained_closure_and_attempt_for_request(request, true, true)?;
+        Ok(())
+    }
+
+    fn validate_retained_closure_and_attempt_for_request(
+        &self,
+        request: ExactBooleanRequest,
+        require_closure: bool,
+        require_attempt: bool,
+    ) -> Result<(), ExactReportValidationError> {
+        match self.volumetric_boundary_closure.as_ref() {
+            Some(report) => {
+                report.validate()?;
+                if report.operation != request.operation {
+                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                }
+            }
+            None if require_closure => {
+                return Err(ExactReportValidationError::StatusEvidenceMismatch);
+            }
+            None => {}
         }
-        let Some(attempt) = self.arrangement_attempt.as_ref() else {
-            return Err(ExactReportValidationError::StatusEvidenceMismatch);
-        };
-        attempt.validate()?;
-        if !attempt.matches_request_policy(request, ExactRegularizationPolicy::REGULARIZED_SOLID) {
-            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+        match self.arrangement_attempt.as_ref() {
+            Some(attempt) => {
+                attempt.validate()?;
+                if !attempt
+                    .matches_request_policy(request, ExactRegularizationPolicy::REGULARIZED_SOLID)
+                {
+                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                }
+            }
+            None if require_attempt => {
+                return Err(ExactReportValidationError::StatusEvidenceMismatch);
+            }
+            None => {}
         }
         Ok(())
     }
