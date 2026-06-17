@@ -1449,6 +1449,26 @@ impl ExactBooleanCertificationSet {
                 || self.arrangement_attempt_matches_certified_preflight(preflight))
     }
 
+    fn open_surface_arrangement_matches_preflight(
+        &self,
+        preflight: &ExactBooleanPreflight,
+    ) -> bool {
+        self.winding_readiness.status
+            == ExactWindingReadinessStatus::OpenSurfaceArrangementAlreadyMaterialized
+            && preflight.graph_had_unknowns == self.winding_readiness.graph_had_unknowns
+            && preflight.retained_face_pairs == self.winding_readiness.retained_face_pairs
+            && preflight.retained_events == self.winding_readiness.retained_events
+            && preflight.region_count == self.winding_readiness.region_count
+            && preflight.region_classifications == self.winding_readiness.region_classifications
+            && preflight.blocker.is_none()
+            && preflight.arrangement_readiness.is_none()
+            && preflight.coplanar_volumetric_evidence.is_none()
+            && self
+                .winding_readiness
+                .coplanar_volumetric_evidence
+                .is_none()
+    }
+
     fn validate_retained_closure_and_attempt_for_request(
         &self,
         request: ExactBooleanRequest,
@@ -2161,22 +2181,7 @@ fn exact_boolean_preflight_matches_certifications(
         ExactBooleanSupport::CertifiedOpenSurfaceArrangementUnion
         | ExactBooleanSupport::CertifiedOpenSurfaceArrangementIntersection
         | ExactBooleanSupport::CertifiedOpenSurfaceArrangementDifference => {
-            *status == ExactWindingReadinessStatus::OpenSurfaceArrangementAlreadyMaterialized
-                && preflight.graph_had_unknowns
-                    == certifications.winding_readiness.graph_had_unknowns
-                && preflight.retained_face_pairs
-                    == certifications.winding_readiness.retained_face_pairs
-                && preflight.retained_events == certifications.winding_readiness.retained_events
-                && preflight.region_count == certifications.winding_readiness.region_count
-                && preflight.region_classifications
-                    == certifications.winding_readiness.region_classifications
-                && preflight.blocker.is_none()
-                && preflight.arrangement_readiness.is_none()
-                && preflight.coplanar_volumetric_evidence.is_none()
-                && certifications
-                    .winding_readiness
-                    .coplanar_volumetric_evidence
-                    .is_none()
+            certifications.open_surface_arrangement_matches_preflight(preflight)
         }
         ExactBooleanSupport::CertifiedArrangementCellComplex => {
             (certifications
