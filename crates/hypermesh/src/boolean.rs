@@ -1553,6 +1553,47 @@ impl ExactBooleanCertificationSet {
             && self.same_surface.is_certified()
     }
 
+    fn arrangement_cell_complex_matches_preflight(
+        &self,
+        preflight: &ExactBooleanPreflight,
+    ) -> bool {
+        (self
+            .arrangement_cell_complex_shortcuts
+            .certified_support(preflight.operation)
+            == Some(ExactBooleanSupport::CertifiedArrangementCellComplex)
+            && self.arrangement_attempt_certifies_shortcut_for_operation(preflight.operation)
+            && exact_boolean_preflight_matches_refinement_output_handoff(
+                preflight,
+                &self.refinement,
+            ))
+            || (self.arrangement_attempt_certifies_output_for_operation(preflight.operation)
+                && exact_boolean_preflight_matches_refinement_output_handoff(
+                    preflight,
+                    &self.refinement,
+                ))
+            || self.adjacent_union_completion_matches_preflight(preflight)
+            || (self.region_ownership_resolves_operation(preflight.operation)
+                && self.topology_assembly_complete()
+                && {
+                    let region_handoff_matches = (preflight.region_count
+                        == self.winding_readiness.region_count
+                        && preflight.region_classifications
+                            == self.winding_readiness.region_classifications)
+                        || (preflight.region_count == 0
+                            && preflight.region_classifications.is_empty());
+                    preflight.graph_had_unknowns == self.winding_readiness.graph_had_unknowns
+                        && preflight.retained_face_pairs
+                            == self.winding_readiness.retained_face_pairs
+                        && preflight.retained_events == self.winding_readiness.retained_events
+                        && region_handoff_matches
+                        && preflight.blocker.is_none()
+                        && preflight.arrangement_readiness
+                            == self.winding_readiness.arrangement_readiness
+                        && preflight.coplanar_volumetric_evidence
+                            == self.winding_readiness.coplanar_volumetric_evidence
+                })
+    }
+
     fn validate_retained_closure_and_attempt_for_request(
         &self,
         request: ExactBooleanRequest,
@@ -2237,47 +2278,7 @@ fn exact_boolean_preflight_matches_certifications(
             certifications.open_surface_arrangement_matches_preflight(preflight)
         }
         ExactBooleanSupport::CertifiedArrangementCellComplex => {
-            (certifications
-                .arrangement_cell_complex_shortcuts
-                .certified_support(preflight.operation)
-                == Some(ExactBooleanSupport::CertifiedArrangementCellComplex)
-                && certifications
-                    .arrangement_attempt_certifies_shortcut_for_operation(preflight.operation)
-                && exact_boolean_preflight_matches_refinement_output_handoff(
-                    preflight,
-                    &certifications.refinement,
-                ))
-                || (certifications
-                    .arrangement_attempt_certifies_output_for_operation(preflight.operation)
-                    && exact_boolean_preflight_matches_refinement_output_handoff(
-                        preflight,
-                        &certifications.refinement,
-                    ))
-                || certifications.adjacent_union_completion_matches_preflight(preflight)
-                || (certifications.region_ownership_resolves_operation(preflight.operation)
-                    && certifications.topology_assembly_complete()
-                    && {
-                        let region_handoff_matches = (preflight.region_count
-                            == certifications.winding_readiness.region_count
-                            && preflight.region_classifications
-                                == certifications.winding_readiness.region_classifications)
-                            || (preflight.region_count == 0
-                                && preflight.region_classifications.is_empty());
-                        preflight.graph_had_unknowns
-                            == certifications.winding_readiness.graph_had_unknowns
-                            && preflight.retained_face_pairs
-                                == certifications.winding_readiness.retained_face_pairs
-                            && preflight.retained_events
-                                == certifications.winding_readiness.retained_events
-                            && region_handoff_matches
-                            && preflight.blocker.is_none()
-                            && preflight.arrangement_readiness
-                                == certifications.winding_readiness.arrangement_readiness
-                            && preflight.coplanar_volumetric_evidence
-                                == certifications
-                                    .winding_readiness
-                                    .coplanar_volumetric_evidence
-                    })
+            certifications.arrangement_cell_complex_matches_preflight(preflight)
         }
         ExactBooleanSupport::CertifiedEmptyOperand => {
             certifications.empty_operand_matches_preflight(preflight)
