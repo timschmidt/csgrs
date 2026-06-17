@@ -4629,7 +4629,8 @@ fn public_exact_blocker_reports_replay_remaining_decisions() {
             ValidationPolicy::ALLOW_BOUNDARY,
         ),
     )
-    .same_surface_report()
+    .certifications
+    .same_surface
     .clone();
     assert!(same_surface.is_certified());
     same_surface.validate().unwrap();
@@ -5334,10 +5335,12 @@ fn trivial_boolean_shortcuts_are_publicly_replayable() {
             &open_disjoint_left,
             ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
         )
-        .same_surface_report()
+        .certifications
+        .same_surface
         .clone();
         relabeled_same_surface_report
-            .same_surface_report()
+            .certifications
+            .same_surface
             .validate()
             .unwrap();
         assert_eq!(

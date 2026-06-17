@@ -593,7 +593,7 @@ fn run_case(case: &BenchCase) {
         "workspace_validate_same_surface_from_retained_artifacts",
         || {
             retained_workspace_and_certification_for_case(case, request, |evaluation| {
-                evaluation.same_surface_report().clone()
+                evaluation.certifications.same_surface.clone()
             })
         },
         |(retained_workspace, report)| {

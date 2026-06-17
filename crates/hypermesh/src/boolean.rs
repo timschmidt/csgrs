@@ -2292,11 +2292,6 @@ impl ExactBooleanEvaluation {
         &self.certifications.refinement
     }
 
-    /// Returns the retained same-surface report.
-    pub fn same_surface_report(&self) -> &ExactSameSurfaceReport {
-        &self.certifications.same_surface
-    }
-
     /// Returns the retained boundary-touching report.
     pub fn boundary_touching_report(&self) -> &ExactBoundaryTouchingReport {
         &self.certifications.boundary_touching
