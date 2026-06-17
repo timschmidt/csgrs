@@ -1490,17 +1490,8 @@ impl ExactBooleanResult {
         if !self.has_arrangement_cell_complex_gate_reports() {
             return Ok(());
         }
-        let operation = self
-            .arrangement_cell_complex_operation()
-            .ok_or(ExactReportValidationError::StatusEvidenceMismatch)?;
-        let topology = self
-            .topology_assembly_report
-            .as_ref()
-            .ok_or(ExactReportValidationError::StatusEvidenceMismatch)?;
-        let ownership = self
-            .region_ownership_report
-            .as_ref()
-            .ok_or(ExactReportValidationError::StatusEvidenceMismatch)?;
+        let (operation, topology, ownership) =
+            self.required_arrangement_cell_complex_gate_reports()?;
         validate_selected_gate_reports(Some(topology), Some(ownership), operation)
             .map_err(|_| ExactReportValidationError::StatusEvidenceMismatch)?;
         self.validate_arrangement_cell_complex_gate_report_counts(topology, ownership)?;
@@ -1846,6 +1837,30 @@ impl ExactBooleanResult {
 
     fn has_arrangement_cell_complex_gate_reports(&self) -> bool {
         self.topology_assembly_report.is_some() || self.region_ownership_report.is_some()
+    }
+
+    fn required_arrangement_cell_complex_gate_reports(
+        &self,
+    ) -> Result<
+        (
+            ExactBooleanOperation,
+            &ExactTopologyAssemblyReport,
+            &ExactRegionOwnershipReport,
+        ),
+        ExactReportValidationError,
+    > {
+        let operation = self
+            .arrangement_cell_complex_operation()
+            .ok_or(ExactReportValidationError::StatusEvidenceMismatch)?;
+        let topology = self
+            .topology_assembly_report
+            .as_ref()
+            .ok_or(ExactReportValidationError::StatusEvidenceMismatch)?;
+        let ownership = self
+            .region_ownership_report
+            .as_ref()
+            .ok_or(ExactReportValidationError::StatusEvidenceMismatch)?;
+        Ok((operation, topology, ownership))
     }
 
     /// Validate this result against the operation and policies that produced it.
