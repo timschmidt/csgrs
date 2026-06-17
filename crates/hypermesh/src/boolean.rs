@@ -1368,6 +1368,30 @@ impl ExactBooleanCertificationSet {
             && preflight.coplanar_volumetric_evidence.is_none()
     }
 
+    fn selected_region_policy_matches_preflight(&self, preflight: &ExactBooleanPreflight) -> bool {
+        self.winding_readiness.status == ExactWindingReadinessStatus::NotNamedOperation
+            && matches!(
+                preflight.operation,
+                ExactBooleanOperation::SelectedRegions(_)
+            )
+            && preflight.graph_had_unknowns == self.refinement.graph_had_unknowns
+            && preflight.retained_face_pairs == self.refinement.retained_face_pairs
+            && preflight.retained_events == self.refinement.retained_events
+            && preflight.graph_had_unknowns == self.winding_readiness.graph_had_unknowns
+            && preflight.retained_face_pairs == self.winding_readiness.retained_face_pairs
+            && preflight.retained_events == self.winding_readiness.retained_events
+            && preflight.blocker.is_none()
+            && preflight.arrangement_readiness.is_none()
+            && preflight.coplanar_volumetric_evidence.is_none()
+            && self.winding_readiness.region_count == 0
+            && self.winding_readiness.region_classifications.is_empty()
+            && self.winding_readiness.arrangement_readiness.is_none()
+            && self
+                .winding_readiness
+                .coplanar_volumetric_evidence
+                .is_none()
+    }
+
     fn validate_retained_closure_and_attempt_for_request(
         &self,
         request: ExactBooleanRequest,
@@ -2072,35 +2096,7 @@ fn exact_boolean_preflight_matches_certifications(
     let status = &certifications.winding_readiness.status;
     match preflight.support {
         ExactBooleanSupport::SelectedRegionPolicy => {
-            *status == ExactWindingReadinessStatus::NotNamedOperation
-                && matches!(
-                    preflight.operation,
-                    ExactBooleanOperation::SelectedRegions(_)
-                )
-                && preflight.graph_had_unknowns == certifications.refinement.graph_had_unknowns
-                && preflight.retained_face_pairs == certifications.refinement.retained_face_pairs
-                && preflight.retained_events == certifications.refinement.retained_events
-                && preflight.graph_had_unknowns
-                    == certifications.winding_readiness.graph_had_unknowns
-                && preflight.retained_face_pairs
-                    == certifications.winding_readiness.retained_face_pairs
-                && preflight.retained_events == certifications.winding_readiness.retained_events
-                && preflight.blocker.is_none()
-                && preflight.arrangement_readiness.is_none()
-                && preflight.coplanar_volumetric_evidence.is_none()
-                && certifications.winding_readiness.region_count == 0
-                && certifications
-                    .winding_readiness
-                    .region_classifications
-                    .is_empty()
-                && certifications
-                    .winding_readiness
-                    .arrangement_readiness
-                    .is_none()
-                && certifications
-                    .winding_readiness
-                    .coplanar_volumetric_evidence
-                    .is_none()
+            certifications.selected_region_policy_matches_preflight(preflight)
         }
         ExactBooleanSupport::CertifiedBoundaryPolicyShortcut => {
             certifications.boundary_touching.is_certified()
