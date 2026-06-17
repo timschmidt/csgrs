@@ -1522,6 +1522,37 @@ impl ExactBooleanCertificationSet {
             && exact_boolean_preflight_matches_winding_handoff(preflight, &self.winding_readiness)
     }
 
+    fn empty_operand_matches_preflight(&self, preflight: &ExactBooleanPreflight) -> bool {
+        (self.winding_readiness.status
+            == ExactWindingReadinessStatus::EmptyOperandAlreadyMaterialized
+            || self.arrangement_attempt_matches_certified_preflight(preflight))
+            && self.trivial.has_empty_operand()
+    }
+
+    fn bounds_disjoint_matches_preflight(&self, preflight: &ExactBooleanPreflight) -> bool {
+        (self.winding_readiness.status
+            == ExactWindingReadinessStatus::BoundsDisjointAlreadyMaterialized
+            || (self.winding_readiness.status
+                == ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized
+                && self.arrangement_attempt_certifies_output_for_operation(preflight.operation)))
+            && self.trivial.bounds_disjoint
+    }
+
+    fn identical_matches_preflight(&self, preflight: &ExactBooleanPreflight) -> bool {
+        (self.winding_readiness.status
+            == ExactWindingReadinessStatus::SurfaceEqualityAlreadyMaterialized
+            || self.arrangement_attempt_matches_certified_preflight(preflight))
+            && self.identical.is_certified()
+            && self.same_surface.is_certified()
+    }
+
+    fn same_surface_matches_preflight(&self, preflight: &ExactBooleanPreflight) -> bool {
+        (self.winding_readiness.status
+            == ExactWindingReadinessStatus::SurfaceEqualityAlreadyMaterialized
+            || self.arrangement_attempt_matches_certified_preflight(preflight))
+            && self.same_surface.is_certified()
+    }
+
     fn validate_retained_closure_and_attempt_for_request(
         &self,
         request: ExactBooleanRequest,
@@ -2249,28 +2280,16 @@ fn exact_boolean_preflight_matches_certifications(
                     })
         }
         ExactBooleanSupport::CertifiedEmptyOperand => {
-            (*status == ExactWindingReadinessStatus::EmptyOperandAlreadyMaterialized
-                || certifications.arrangement_attempt_matches_certified_preflight(preflight))
-                && certifications.trivial.has_empty_operand()
+            certifications.empty_operand_matches_preflight(preflight)
         }
         ExactBooleanSupport::CertifiedBoundsDisjoint => {
-            (*status == ExactWindingReadinessStatus::BoundsDisjointAlreadyMaterialized
-                || (*status
-                    == ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized
-                    && certifications
-                        .arrangement_attempt_certifies_output_for_operation(preflight.operation)))
-                && certifications.trivial.bounds_disjoint
+            certifications.bounds_disjoint_matches_preflight(preflight)
         }
         ExactBooleanSupport::CertifiedIdentical => {
-            (*status == ExactWindingReadinessStatus::SurfaceEqualityAlreadyMaterialized
-                || certifications.arrangement_attempt_matches_certified_preflight(preflight))
-                && certifications.identical.is_certified()
-                && certifications.same_surface.is_certified()
+            certifications.identical_matches_preflight(preflight)
         }
         ExactBooleanSupport::CertifiedSameSurface => {
-            (*status == ExactWindingReadinessStatus::SurfaceEqualityAlreadyMaterialized
-                || certifications.arrangement_attempt_matches_certified_preflight(preflight))
-                && certifications.same_surface.is_certified()
+            certifications.same_surface_matches_preflight(preflight)
         }
         ExactBooleanSupport::CertifiedClosedBoundaryTouchingUnion
         | ExactBooleanSupport::CertifiedClosedBoundaryTouchingIntersection
