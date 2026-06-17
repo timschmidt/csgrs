@@ -1838,26 +1838,16 @@ impl ExactBooleanEvaluation {
                 return Err(ExactReportValidationError::StatusEvidenceMismatch);
             }
             result.validate()?;
-            let arrangement_attempt_certifies_request = self
-                .certifications
-                .arrangement_attempt
-                .as_ref()
-                .is_some_and(|attempt| {
-                    attempt.certifies_arrangement_cell_complex_output_for_request(
-                        self.request,
-                        ExactRegularizationPolicy::REGULARIZED_SOLID,
-                    )
-                });
-            let arrangement_shortcut_attempt_certifies_request = self
-                .certifications
-                .arrangement_attempt
-                .as_ref()
-                .is_some_and(|attempt| {
-                    attempt.certifies_arrangement_cell_complex_shortcut_for_request(
-                        self.request,
-                        ExactRegularizationPolicy::REGULARIZED_SOLID,
-                    )
-                });
+            let arrangement_attempt_certifies_request =
+                certifications_arrangement_attempt_certifies_output_for_operation(
+                    &self.certifications,
+                    self.request.operation,
+                );
+            let arrangement_shortcut_attempt_certifies_request =
+                certifications_arrangement_attempt_certifies_shortcut_for_operation(
+                    &self.certifications,
+                    self.request.operation,
+                );
             let result_matches_certifications = match result.kind {
                 ExactBooleanResultKind::ArrangementCellComplexMaterialized { operation } => {
                     operation == self.request.operation && arrangement_attempt_certifies_request
@@ -2010,6 +2000,36 @@ fn certifications_region_ownership_resolves_operation(
             .is_some_and(|ownership| ownership_resolves_arrangement_operation(ownership, operation))
 }
 
+fn certifications_arrangement_attempt_certifies_output_for_operation(
+    certifications: &ExactBooleanCertificationSet,
+    operation: ExactBooleanOperation,
+) -> bool {
+    certifications
+        .arrangement_attempt
+        .as_ref()
+        .is_some_and(|attempt| {
+            attempt.certifies_arrangement_cell_complex_output_for_operation(
+                operation,
+                ExactRegularizationPolicy::REGULARIZED_SOLID,
+            )
+        })
+}
+
+fn certifications_arrangement_attempt_certifies_shortcut_for_operation(
+    certifications: &ExactBooleanCertificationSet,
+    operation: ExactBooleanOperation,
+) -> bool {
+    certifications
+        .arrangement_attempt
+        .as_ref()
+        .is_some_and(|attempt| {
+            attempt.certifies_arrangement_cell_complex_shortcut_for_operation(
+                operation,
+                ExactRegularizationPolicy::REGULARIZED_SOLID,
+            )
+        })
+}
+
 fn exact_boolean_preflight_matches_certifications(
     preflight: &ExactBooleanPreflight,
     certifications: &ExactBooleanCertificationSet,
@@ -2086,15 +2106,10 @@ fn exact_boolean_preflight_matches_certifications(
                 .arrangement_cell_complex_shortcuts
                 .certified_support(preflight.operation)
                 == Some(ExactBooleanSupport::CertifiedArrangementCellComplex)
-                && certifications
-                    .arrangement_attempt
-                    .as_ref()
-                    .is_some_and(|attempt| {
-                        attempt.certifies_arrangement_cell_complex_shortcut_for_operation(
-                            preflight.operation,
-                            ExactRegularizationPolicy::REGULARIZED_SOLID,
-                        )
-                    })
+                && certifications_arrangement_attempt_certifies_shortcut_for_operation(
+                    certifications,
+                    preflight.operation,
+                )
                 && preflight.graph_had_unknowns == certifications.refinement.graph_had_unknowns
                 && preflight.retained_face_pairs == certifications.refinement.retained_face_pairs
                 && preflight.retained_events == certifications.refinement.retained_events
@@ -2102,16 +2117,11 @@ fn exact_boolean_preflight_matches_certifications(
                 && preflight.region_classifications.is_empty()
                 && preflight.blocker.is_none()
                 && preflight.arrangement_readiness.is_none())
-                || (certifications
-                    .arrangement_attempt
-                    .as_ref()
-                    .is_some_and(|attempt| {
-                        attempt.certifies_arrangement_cell_complex_output_for_operation(
-                            preflight.operation,
-                            ExactRegularizationPolicy::REGULARIZED_SOLID,
-                        )
-                    })
-                    && preflight.graph_had_unknowns == certifications.refinement.graph_had_unknowns
+                || (certifications_arrangement_attempt_certifies_output_for_operation(
+                    certifications,
+                    preflight.operation,
+                ) && preflight.graph_had_unknowns
+                    == certifications.refinement.graph_had_unknowns
                     && preflight.retained_face_pairs
                         == certifications.refinement.retained_face_pairs
                     && preflight.retained_events == certifications.refinement.retained_events
@@ -2171,15 +2181,10 @@ fn exact_boolean_preflight_matches_certifications(
             (*status == ExactWindingReadinessStatus::BoundsDisjointAlreadyMaterialized
                 || (*status
                     == ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized
-                    && certifications
-                        .arrangement_attempt
-                        .as_ref()
-                        .is_some_and(|attempt| {
-                            attempt.certifies_arrangement_cell_complex_output_for_operation(
-                                preflight.operation,
-                                ExactRegularizationPolicy::REGULARIZED_SOLID,
-                            )
-                        })))
+                    && certifications_arrangement_attempt_certifies_output_for_operation(
+                        certifications,
+                        preflight.operation,
+                    )))
                 && certifications.trivial.bounds_disjoint
         }
         ExactBooleanSupport::CertifiedIdentical => {
@@ -2379,15 +2384,10 @@ fn exact_boolean_arrangement_attempt_matches_certified_preflight(
 ) -> bool {
     certifications.winding_readiness.status
         == ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized
-        && certifications
-            .arrangement_attempt
-            .as_ref()
-            .is_some_and(|attempt| {
-                attempt.certifies_arrangement_cell_complex_output_for_operation(
-                    preflight.operation,
-                    ExactRegularizationPolicy::REGULARIZED_SOLID,
-                )
-            })
+        && certifications_arrangement_attempt_certifies_output_for_operation(
+            certifications,
+            preflight.operation,
+        )
 }
 
 fn exact_boolean_closed_winding_reports_match_separated(
