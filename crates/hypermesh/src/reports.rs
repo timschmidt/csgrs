@@ -795,6 +795,20 @@ pub enum ExactBooleanShortcutKind {
 }
 
 impl ExactBooleanResult {
+    fn is_shortcut_for(
+        &self,
+        operation: ExactBooleanOperation,
+        shortcut: ExactBooleanShortcutKind,
+    ) -> bool {
+        matches!(
+            self.kind,
+            ExactBooleanResultKind::CertifiedShortcut {
+                operation: result_operation,
+                shortcut: result_shortcut,
+            } if result_operation == operation && result_shortcut == shortcut
+        )
+    }
+
     /// Return whether this result is a certified shortcut for `operation`.
     pub fn is_certified_shortcut_for(&self, operation: ExactBooleanOperation) -> bool {
         matches!(
@@ -813,57 +827,27 @@ impl ExactBooleanResult {
         operation: ExactBooleanOperation,
         shortcut: ExactBooleanShortcutKind,
     ) -> bool {
-        matches!(
-            self.kind,
-            ExactBooleanResultKind::CertifiedShortcut {
-                operation: result_operation,
-                shortcut: result_shortcut,
-            } if result_operation == operation && result_shortcut == shortcut
-        )
+        self.is_shortcut_for(operation, shortcut)
     }
 
     /// Return whether this result is the exact empty-operand shortcut.
     pub fn is_empty_operand_shortcut_for(&self, operation: ExactBooleanOperation) -> bool {
-        matches!(
-            self.kind,
-            ExactBooleanResultKind::CertifiedShortcut {
-                operation: result_operation,
-                shortcut: ExactBooleanShortcutKind::EmptyOperand,
-            } if result_operation == operation
-        )
+        self.is_shortcut_for(operation, ExactBooleanShortcutKind::EmptyOperand)
     }
 
     /// Return whether this result is the certified disjoint-bounds shortcut.
     pub fn is_bounds_disjoint_shortcut_for(&self, operation: ExactBooleanOperation) -> bool {
-        matches!(
-            self.kind,
-            ExactBooleanResultKind::CertifiedShortcut {
-                operation: result_operation,
-                shortcut: ExactBooleanShortcutKind::BoundsDisjoint,
-            } if result_operation == operation
-        )
+        self.is_shortcut_for(operation, ExactBooleanShortcutKind::BoundsDisjoint)
     }
 
     /// Return whether this result is the exact identical-mesh shortcut.
     pub fn is_identical_shortcut_for(&self, operation: ExactBooleanOperation) -> bool {
-        matches!(
-            self.kind,
-            ExactBooleanResultKind::CertifiedShortcut {
-                operation: result_operation,
-                shortcut: ExactBooleanShortcutKind::Identical,
-            } if result_operation == operation
-        )
+        self.is_shortcut_for(operation, ExactBooleanShortcutKind::Identical)
     }
 
     /// Return whether this result is the exact same-surface shortcut.
     pub fn is_same_surface_shortcut_for(&self, operation: ExactBooleanOperation) -> bool {
-        matches!(
-            self.kind,
-            ExactBooleanResultKind::CertifiedShortcut {
-                operation: result_operation,
-                shortcut: ExactBooleanShortcutKind::SameSurface,
-            } if result_operation == operation
-        )
+        self.is_shortcut_for(operation, ExactBooleanShortcutKind::SameSurface)
     }
 
     /// Return whether this result is the mixed-dimensional regularized-solid shortcut.
@@ -871,12 +855,9 @@ impl ExactBooleanResult {
         &self,
         operation: ExactBooleanOperation,
     ) -> bool {
-        matches!(
-            self.kind,
-            ExactBooleanResultKind::CertifiedShortcut {
-                operation: result_operation,
-                shortcut: ExactBooleanShortcutKind::MixedDimensionalRegularizedSolid,
-            } if result_operation == operation
+        self.is_shortcut_for(
+            operation,
+            ExactBooleanShortcutKind::MixedDimensionalRegularizedSolid,
         )
     }
 
@@ -885,24 +866,15 @@ impl ExactBooleanResult {
         &self,
         operation: ExactBooleanOperation,
     ) -> bool {
-        matches!(
-            self.kind,
-            ExactBooleanResultKind::CertifiedShortcut {
-                operation: result_operation,
-                shortcut: ExactBooleanShortcutKind::LowerDimensionalRegularizedSolid,
-            } if result_operation == operation
+        self.is_shortcut_for(
+            operation,
+            ExactBooleanShortcutKind::LowerDimensionalRegularizedSolid,
         )
     }
 
     /// Return whether this result is the open-surface disjoint shortcut.
     pub fn is_open_surface_disjoint_shortcut_for(&self, operation: ExactBooleanOperation) -> bool {
-        matches!(
-            self.kind,
-            ExactBooleanResultKind::CertifiedShortcut {
-                operation: result_operation,
-                shortcut: ExactBooleanShortcutKind::OpenSurfaceDisjoint,
-            } if result_operation == operation
-        )
+        self.is_shortcut_for(operation, ExactBooleanShortcutKind::OpenSurfaceDisjoint)
     }
 
     /// Return whether this result is a closed-boundary-touching shortcut.
@@ -927,13 +899,7 @@ impl ExactBooleanResult {
         &self,
         operation: ExactBooleanOperation,
     ) -> bool {
-        matches!(
-            self.kind,
-            ExactBooleanResultKind::CertifiedShortcut {
-                operation: result_operation,
-                shortcut: ExactBooleanShortcutKind::ClosedWindingSeparated,
-            } if result_operation == operation
-        )
+        self.is_shortcut_for(operation, ExactBooleanShortcutKind::ClosedWindingSeparated)
     }
 
     /// Return whether this result is a closed-winding containment shortcut.
@@ -941,12 +907,9 @@ impl ExactBooleanResult {
         &self,
         operation: ExactBooleanOperation,
     ) -> bool {
-        matches!(
-            self.kind,
-            ExactBooleanResultKind::CertifiedShortcut {
-                operation: result_operation,
-                shortcut: ExactBooleanShortcutKind::ClosedWindingContainment,
-            } if result_operation == operation
+        self.is_shortcut_for(
+            operation,
+            ExactBooleanShortcutKind::ClosedWindingContainment,
         )
     }
 
@@ -955,68 +918,41 @@ impl ExactBooleanResult {
         &self,
         operation: ExactBooleanOperation,
     ) -> bool {
-        matches!(
-            self.kind,
-            ExactBooleanResultKind::CertifiedShortcut {
-                operation: result_operation,
-                shortcut: ExactBooleanShortcutKind::ArrangementCellComplex,
-            } if result_operation == operation
-        )
+        self.is_shortcut_for(operation, ExactBooleanShortcutKind::ArrangementCellComplex)
     }
 
     /// Return whether this result is a closed-convex union shortcut.
     pub fn is_convex_union_shortcut(&self) -> bool {
-        matches!(
-            self.kind,
-            ExactBooleanResultKind::CertifiedShortcut {
-                operation: ExactBooleanOperation::Union,
-                shortcut: ExactBooleanShortcutKind::ConvexUnion,
-            }
+        self.is_shortcut_for(
+            ExactBooleanOperation::Union,
+            ExactBooleanShortcutKind::ConvexUnion,
         )
     }
 
     /// Return whether this result is a closed-convex intersection shortcut.
     pub fn is_convex_intersection_shortcut(&self) -> bool {
-        matches!(
-            self.kind,
-            ExactBooleanResultKind::CertifiedShortcut {
-                operation: ExactBooleanOperation::Intersection,
-                shortcut: ExactBooleanShortcutKind::ConvexIntersection,
-            }
+        self.is_shortcut_for(
+            ExactBooleanOperation::Intersection,
+            ExactBooleanShortcutKind::ConvexIntersection,
         )
     }
 
     /// Return whether this result is a closed-convex difference shortcut.
     pub fn is_convex_difference_shortcut(&self) -> bool {
-        matches!(
-            self.kind,
-            ExactBooleanResultKind::CertifiedShortcut {
-                operation: ExactBooleanOperation::Difference,
-                shortcut: ExactBooleanShortcutKind::ConvexDifference,
-            }
+        self.is_shortcut_for(
+            ExactBooleanOperation::Difference,
+            ExactBooleanShortcutKind::ConvexDifference,
         )
     }
 
     /// Return whether this result is a closed-convex separated shortcut.
     pub fn is_convex_separated_shortcut_for(&self, operation: ExactBooleanOperation) -> bool {
-        matches!(
-            self.kind,
-            ExactBooleanResultKind::CertifiedShortcut {
-                operation: result_operation,
-                shortcut: ExactBooleanShortcutKind::ConvexSeparated,
-            } if result_operation == operation
-        )
+        self.is_shortcut_for(operation, ExactBooleanShortcutKind::ConvexSeparated)
     }
 
     /// Return whether this result is a closed-convex containment shortcut.
     pub fn is_convex_containment_shortcut_for(&self, operation: ExactBooleanOperation) -> bool {
-        matches!(
-            self.kind,
-            ExactBooleanResultKind::CertifiedShortcut {
-                operation: result_operation,
-                shortcut: ExactBooleanShortcutKind::ConvexContainment,
-            } if result_operation == operation
-        )
+        self.is_shortcut_for(operation, ExactBooleanShortcutKind::ConvexContainment)
     }
 
     /// Return whether this result is a caller boundary-policy projection.
@@ -1158,10 +1094,8 @@ impl ExactBooleanResult {
         };
         matches!(
             self.kind,
-            ExactBooleanResultKind::CertifiedShortcut {
-                shortcut,
-                ..
-            } if shortcut == expected_shortcut
+            ExactBooleanResultKind::CertifiedShortcut { operation, .. }
+                if self.is_shortcut_for(operation, expected_shortcut)
         )
     }
 
