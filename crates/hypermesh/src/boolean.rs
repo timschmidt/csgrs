@@ -1357,6 +1357,17 @@ impl ExactBooleanCertificationSet {
             && preflight.coplanar_volumetric_evidence.is_none()
     }
 
+    fn planar_arrangement_matches_preflight(&self, preflight: &ExactBooleanPreflight) -> bool {
+        preflight.graph_had_unknowns == self.planar_arrangement.graph_had_unknowns
+            && preflight.retained_face_pairs == self.planar_arrangement.retained_face_pairs
+            && preflight.retained_events == self.planar_arrangement.retained_events
+            && preflight.region_count == 0
+            && preflight.region_classifications.is_empty()
+            && preflight.blocker.as_ref() == Some(&self.planar_arrangement.blocker)
+            && preflight.arrangement_readiness == self.planar_arrangement.arrangement_readiness
+            && preflight.coplanar_volumetric_evidence.is_none()
+    }
+
     fn validate_retained_closure_and_attempt_for_request(
         &self,
         request: ExactBooleanRequest,
@@ -2293,17 +2304,7 @@ fn exact_boolean_preflight_matches_certifications(
         }
         ExactBooleanSupport::RequiresPlanarArrangement => {
             *status == ExactWindingReadinessStatus::PlanarArrangementRequired
-                && preflight.graph_had_unknowns
-                    == certifications.planar_arrangement.graph_had_unknowns
-                && preflight.retained_face_pairs
-                    == certifications.planar_arrangement.retained_face_pairs
-                && preflight.retained_events == certifications.planar_arrangement.retained_events
-                && preflight.region_count == 0
-                && preflight.region_classifications.is_empty()
-                && preflight.blocker.as_ref() == Some(&certifications.planar_arrangement.blocker)
-                && preflight.arrangement_readiness
-                    == certifications.planar_arrangement.arrangement_readiness
-                && preflight.coplanar_volumetric_evidence.is_none()
+                && certifications.planar_arrangement_matches_preflight(preflight)
         }
         ExactBooleanSupport::RequiresCoplanarVolumetricCells => {
             *status == ExactWindingReadinessStatus::CoplanarVolumetricCellsRequired
