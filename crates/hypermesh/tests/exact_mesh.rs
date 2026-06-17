@@ -4605,7 +4605,8 @@ fn public_exact_blocker_reports_replay_remaining_decisions() {
             ValidationPolicy::ALLOW_BOUNDARY,
         ),
     )
-    .planar_arrangement_report()
+    .certifications
+    .planar_arrangement
     .clone();
     assert!(planar.is_already_materialized());
     assert!(!planar.is_required());

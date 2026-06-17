@@ -1395,7 +1395,7 @@ mod tests {
             Err(ExactReportValidationError::StatusEvidenceMismatch)
         );
 
-        let planar_report = evaluation.planar_arrangement_report().clone();
+        let planar_report = evaluation.certifications.planar_arrangement.clone();
         assert_eq!(
             planar_report.freshness_against_sources(&left, &right),
             ExactReportFreshness::Current

@@ -2297,11 +2297,6 @@ impl ExactBooleanEvaluation {
         &self.certifications.open_surface_disjoint
     }
 
-    /// Returns the retained planar-arrangement report.
-    pub fn planar_arrangement_report(&self) -> &ExactPlanarArrangementReport {
-        &self.certifications.planar_arrangement
-    }
-
     /// Returns the retained winding-readiness report.
     pub fn winding_readiness_report(&self) -> &ExactWindingReadinessReport {
         &self.certifications.winding_readiness

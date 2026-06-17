@@ -688,7 +688,7 @@ fn run_case(case: &BenchCase) {
         "workspace_validate_planar_arrangement_from_retained_artifacts",
         || {
             retained_workspace_and_certification_for_case(case, request, |evaluation| {
-                evaluation.planar_arrangement_report().clone()
+                evaluation.certifications.planar_arrangement.clone()
             })
         },
         |(retained_workspace, report)| {
