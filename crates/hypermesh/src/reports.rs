@@ -29,9 +29,9 @@ use super::boolean::{
     no_materialized_boundary_output_report, not_named_planar_arrangement_report,
     open_surface_disjoint_report_from_graph, open_surface_disjoint_result_matches_sources,
     planar_arrangement_report_from_graph, preflight_boolean_exact_request_from_graph,
-    refinement_report_from_graph, replay_closed_same_surface_boolean_result_if_certified,
-    replay_generic_arrangement_cell_complex_result,
-    replay_materialized_volumetric_winding_region_plan, replay_open_surface_arrangement_result,
+    refinement_report_from_graph, replay_boolean_exact_request_for_result_validation,
+    replay_closed_same_surface_boolean_result_if_certified,
+    replay_generic_arrangement_cell_complex_result, replay_open_surface_arrangement_result,
     replay_selected_region_boolean_result, same_surface_report_from_sources,
     volumetric_boundary_closure_report_from_graph, winding_readiness_report_for_request_from_graph,
 };
@@ -47,7 +47,7 @@ use super::convex::{
 use super::graph::MeshSide;
 use super::graph::{
     CoplanarArrangementReadinessReport, CoplanarArrangementReadinessStatus, ExactIntersectionGraph,
-    IntersectionEvent, build_intersection_graph,
+    IntersectionEvent,
 };
 use super::intersection::MeshFacePairRelation;
 use super::orthogonal_solid::{
@@ -72,6 +72,7 @@ use super::volumetric_cells::{
 use super::winding::{
     ClosedMeshWindingMeshRelation, classify_mesh_vertices_against_closed_mesh_winding_report,
 };
+use super::workspace::ExactBooleanWorkspace;
 use hyperlimit::PredicateUse;
 
 /// Validation failure for an exact report object.
@@ -354,12 +355,11 @@ fn validated_report_intersection_graph(
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> Result<ExactIntersectionGraph, ExactReportValidationError> {
-    let graph = build_intersection_graph(left, right)
-        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
-    graph
-        .validate_against_sources(left, right)
-        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
-    Ok(graph)
+    let mut workspace = ExactBooleanWorkspace::new(left, right);
+    workspace
+        .validated_graph()
+        .map(|graph| graph.clone())
+        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)
 }
 
 fn blocker_kind(
@@ -795,6 +795,273 @@ pub enum ExactBooleanShortcutKind {
 }
 
 impl ExactBooleanResult {
+    /// Return whether this result is a certified shortcut for `operation`.
+    pub fn is_certified_shortcut_for(&self, operation: ExactBooleanOperation) -> bool {
+        matches!(
+            self.kind,
+            ExactBooleanResultKind::CertifiedShortcut {
+                operation: result_operation,
+                ..
+            } if result_operation == operation
+        )
+    }
+
+    /// Return whether this result is the requested certified shortcut class.
+    #[cfg(test)]
+    pub(crate) fn is_certified_shortcut_kind_for(
+        &self,
+        operation: ExactBooleanOperation,
+        shortcut: ExactBooleanShortcutKind,
+    ) -> bool {
+        matches!(
+            self.kind,
+            ExactBooleanResultKind::CertifiedShortcut {
+                operation: result_operation,
+                shortcut: result_shortcut,
+            } if result_operation == operation && result_shortcut == shortcut
+        )
+    }
+
+    /// Return whether this result is the exact empty-operand shortcut.
+    pub fn is_empty_operand_shortcut_for(&self, operation: ExactBooleanOperation) -> bool {
+        matches!(
+            self.kind,
+            ExactBooleanResultKind::CertifiedShortcut {
+                operation: result_operation,
+                shortcut: ExactBooleanShortcutKind::EmptyOperand,
+            } if result_operation == operation
+        )
+    }
+
+    /// Return whether this result is the certified disjoint-bounds shortcut.
+    pub fn is_bounds_disjoint_shortcut_for(&self, operation: ExactBooleanOperation) -> bool {
+        matches!(
+            self.kind,
+            ExactBooleanResultKind::CertifiedShortcut {
+                operation: result_operation,
+                shortcut: ExactBooleanShortcutKind::BoundsDisjoint,
+            } if result_operation == operation
+        )
+    }
+
+    /// Return whether this result is the exact identical-mesh shortcut.
+    pub fn is_identical_shortcut_for(&self, operation: ExactBooleanOperation) -> bool {
+        matches!(
+            self.kind,
+            ExactBooleanResultKind::CertifiedShortcut {
+                operation: result_operation,
+                shortcut: ExactBooleanShortcutKind::Identical,
+            } if result_operation == operation
+        )
+    }
+
+    /// Return whether this result is the exact same-surface shortcut.
+    pub fn is_same_surface_shortcut_for(&self, operation: ExactBooleanOperation) -> bool {
+        matches!(
+            self.kind,
+            ExactBooleanResultKind::CertifiedShortcut {
+                operation: result_operation,
+                shortcut: ExactBooleanShortcutKind::SameSurface,
+            } if result_operation == operation
+        )
+    }
+
+    /// Return whether this result is the mixed-dimensional regularized-solid shortcut.
+    pub fn is_mixed_dimensional_regularized_solid_shortcut_for(
+        &self,
+        operation: ExactBooleanOperation,
+    ) -> bool {
+        matches!(
+            self.kind,
+            ExactBooleanResultKind::CertifiedShortcut {
+                operation: result_operation,
+                shortcut: ExactBooleanShortcutKind::MixedDimensionalRegularizedSolid,
+            } if result_operation == operation
+        )
+    }
+
+    /// Return whether this result is the lower-dimensional regularized-solid shortcut.
+    pub fn is_lower_dimensional_regularized_solid_shortcut_for(
+        &self,
+        operation: ExactBooleanOperation,
+    ) -> bool {
+        matches!(
+            self.kind,
+            ExactBooleanResultKind::CertifiedShortcut {
+                operation: result_operation,
+                shortcut: ExactBooleanShortcutKind::LowerDimensionalRegularizedSolid,
+            } if result_operation == operation
+        )
+    }
+
+    /// Return whether this result is the open-surface disjoint shortcut.
+    pub fn is_open_surface_disjoint_shortcut_for(&self, operation: ExactBooleanOperation) -> bool {
+        matches!(
+            self.kind,
+            ExactBooleanResultKind::CertifiedShortcut {
+                operation: result_operation,
+                shortcut: ExactBooleanShortcutKind::OpenSurfaceDisjoint,
+            } if result_operation == operation
+        )
+    }
+
+    /// Return whether this result is a closed-boundary-touching shortcut.
+    pub fn is_closed_boundary_touching_shortcut_for(
+        &self,
+        operation: ExactBooleanOperation,
+    ) -> bool {
+        matches!(
+            self.kind,
+            ExactBooleanResultKind::CertifiedShortcut {
+                operation: result_operation,
+                shortcut:
+                    ExactBooleanShortcutKind::ClosedBoundaryTouchingUnion
+                    | ExactBooleanShortcutKind::ClosedBoundaryTouchingIntersection
+                    | ExactBooleanShortcutKind::ClosedBoundaryTouchingDifference,
+            } if result_operation == operation
+        )
+    }
+
+    /// Return whether this result is a closed-winding separated shortcut.
+    pub fn is_closed_winding_separated_shortcut_for(
+        &self,
+        operation: ExactBooleanOperation,
+    ) -> bool {
+        matches!(
+            self.kind,
+            ExactBooleanResultKind::CertifiedShortcut {
+                operation: result_operation,
+                shortcut: ExactBooleanShortcutKind::ClosedWindingSeparated,
+            } if result_operation == operation
+        )
+    }
+
+    /// Return whether this result is a closed-winding containment shortcut.
+    pub fn is_closed_winding_containment_shortcut_for(
+        &self,
+        operation: ExactBooleanOperation,
+    ) -> bool {
+        matches!(
+            self.kind,
+            ExactBooleanResultKind::CertifiedShortcut {
+                operation: result_operation,
+                shortcut: ExactBooleanShortcutKind::ClosedWindingContainment,
+            } if result_operation == operation
+        )
+    }
+
+    /// Return whether this result is the arrangement/cell-complex shortcut.
+    pub fn is_arrangement_cell_complex_shortcut_for(
+        &self,
+        operation: ExactBooleanOperation,
+    ) -> bool {
+        matches!(
+            self.kind,
+            ExactBooleanResultKind::CertifiedShortcut {
+                operation: result_operation,
+                shortcut: ExactBooleanShortcutKind::ArrangementCellComplex,
+            } if result_operation == operation
+        )
+    }
+
+    /// Return whether this result is a closed-convex union shortcut.
+    pub fn is_convex_union_shortcut(&self) -> bool {
+        matches!(
+            self.kind,
+            ExactBooleanResultKind::CertifiedShortcut {
+                operation: ExactBooleanOperation::Union,
+                shortcut: ExactBooleanShortcutKind::ConvexUnion,
+            }
+        )
+    }
+
+    /// Return whether this result is a closed-convex intersection shortcut.
+    pub fn is_convex_intersection_shortcut(&self) -> bool {
+        matches!(
+            self.kind,
+            ExactBooleanResultKind::CertifiedShortcut {
+                operation: ExactBooleanOperation::Intersection,
+                shortcut: ExactBooleanShortcutKind::ConvexIntersection,
+            }
+        )
+    }
+
+    /// Return whether this result is a closed-convex difference shortcut.
+    pub fn is_convex_difference_shortcut(&self) -> bool {
+        matches!(
+            self.kind,
+            ExactBooleanResultKind::CertifiedShortcut {
+                operation: ExactBooleanOperation::Difference,
+                shortcut: ExactBooleanShortcutKind::ConvexDifference,
+            }
+        )
+    }
+
+    /// Return whether this result is a closed-convex separated shortcut.
+    pub fn is_convex_separated_shortcut_for(&self, operation: ExactBooleanOperation) -> bool {
+        matches!(
+            self.kind,
+            ExactBooleanResultKind::CertifiedShortcut {
+                operation: result_operation,
+                shortcut: ExactBooleanShortcutKind::ConvexSeparated,
+            } if result_operation == operation
+        )
+    }
+
+    /// Return whether this result is a closed-convex containment shortcut.
+    pub fn is_convex_containment_shortcut_for(&self, operation: ExactBooleanOperation) -> bool {
+        matches!(
+            self.kind,
+            ExactBooleanResultKind::CertifiedShortcut {
+                operation: result_operation,
+                shortcut: ExactBooleanShortcutKind::ConvexContainment,
+            } if result_operation == operation
+        )
+    }
+
+    /// Return whether this result is a caller boundary-policy projection.
+    pub fn is_boundary_policy_shortcut_for(&self, operation: ExactBooleanOperation) -> bool {
+        matches!(
+            self.kind,
+            ExactBooleanResultKind::BoundaryPolicyShortcut {
+                operation: result_operation,
+            } if result_operation == operation
+        )
+    }
+
+    /// Return whether this result materialized the requested selected regions.
+    pub fn is_selected_regions_for(&self, selection: ExactRegionSelection) -> bool {
+        matches!(
+            self.kind,
+            ExactBooleanResultKind::SelectedRegions {
+                selection: result_selection,
+            } if result_selection == selection
+        )
+    }
+
+    /// Return whether this result is an open-surface arrangement output.
+    pub fn is_open_surface_arrangement_for(&self, operation: ExactBooleanOperation) -> bool {
+        matches!(
+            self.kind,
+            ExactBooleanResultKind::OpenSurfaceArrangement {
+                operation: result_operation,
+            } if result_operation == operation
+        )
+    }
+
+    /// Return whether this result was materialized by the arrangement/cell-complex path.
+    pub fn is_arrangement_cell_complex_materialized_for(
+        &self,
+        operation: ExactBooleanOperation,
+    ) -> bool {
+        matches!(
+            self.kind,
+            ExactBooleanResultKind::ArrangementCellComplexMaterialized {
+                operation: result_operation,
+            } if result_operation == operation
+        )
+    }
+
     /// Returns whether this result kind witnesses the requested operation.
     pub(crate) fn matches_request(&self, request: ExactBooleanRequest) -> bool {
         match self.kind {
@@ -1366,7 +1633,7 @@ impl ExactBooleanResult {
         }
         if let ExactBooleanResultKind::ArrangementCellComplexMaterialized { operation } = self.kind
         {
-            let replay = replay_materialized_volumetric_winding_region_plan(
+            let mut replay = replay_generic_arrangement_cell_complex_result(
                 left,
                 right,
                 operation,
@@ -1374,17 +1641,7 @@ impl ExactBooleanResult {
             )
             .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
             .ok_or(ExactReportValidationError::SourceReplayMismatch)?;
-            let replay = ExactBooleanResult {
-                kind: self.kind,
-                graph_had_unknowns: false,
-                region_classifications: replay.region_classifications,
-                triangulations: replay.triangulations,
-                volumetric_classifications: replay.volumetric_classifications,
-                topology_assembly_report: None,
-                region_ownership_report: None,
-                assembly: replay.assembly,
-                mesh: replay.mesh,
-            };
+            replay.kind = self.kind;
             if !retained_split_region_result_matches(self, &replay) {
                 return Err(ExactReportValidationError::SourceReplayMismatch);
             }
@@ -1672,8 +1929,10 @@ impl ExactBooleanResult {
             return Err(ExactReportValidationError::SourceReplayMismatch);
         }
         self.validate()?;
-        let replay = request
-            .materialize(left, right)
+        if self.retained_arrangement_artifacts_certify_operation_replay(left, right, request)? {
+            return Ok(());
+        }
+        let replay = replay_boolean_exact_request_for_result_validation(left, right, request)
             .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
         if self == &replay {
             Ok(())
@@ -1699,10 +1958,33 @@ impl ExactBooleanResult {
         if let Err(error) = self.validate_against_sources(left, right) {
             return error.into();
         }
-        match request.materialize(left, right) {
+        match self.retained_arrangement_artifacts_certify_operation_replay(left, right, request) {
+            Ok(true) => return ExactReportFreshness::Current,
+            Ok(false) => {}
+            Err(error) => return error.into(),
+        }
+        match replay_boolean_exact_request_for_result_validation(left, right, request) {
             Ok(replay) if self == &replay => ExactReportFreshness::Current,
             Ok(_) | Err(_) => ExactReportFreshness::OperationReplayMismatch,
         }
+    }
+
+    fn retained_arrangement_artifacts_certify_operation_replay(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+        request: ExactBooleanRequest,
+    ) -> Result<bool, ExactReportValidationError> {
+        if self.topology_assembly_report.is_none() || self.region_ownership_report.is_none() {
+            return Ok(false);
+        }
+        if self.arrangement_cell_complex_operation() != Some(request.operation)
+            || !self.mesh.validation_policy().satisfies(request.validation)
+        {
+            return Ok(false);
+        }
+        self.validate_against_sources(left, right)?;
+        Ok(true)
     }
 }
 
@@ -2618,9 +2900,11 @@ fn arrangement_cell_complex_sources_match(
             return Ok(true);
         }
     }
-    let preflight = ExactBooleanRequest::new(operation, validation)
-        .preflight(left, right)
-        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+    let preflight = workspace_preflight_for_report_replay(
+        left,
+        right,
+        ExactBooleanRequest::new(operation, validation),
+    )?;
     preflight.validate()?;
     Ok(preflight.support == ExactBooleanSupport::CertifiedArrangementCellComplex)
 }
@@ -3355,7 +3639,7 @@ impl ExactBooleanSupport {
 /// Preflight report for an exact boolean operation request.
 ///
 /// The report gives callers a stable way to audit the current implementation
-/// boundary. Shortcut variants are executable by [`ExactBooleanRequest::materialize`]. For
+/// boundary. Shortcut variants are executable by [`ExactBooleanWorkspace::materialize`]. For
 /// nontrivial named booleans, the report exposes the certified split-region
 /// plane classifications that a future exact winding/inside-outside rule must
 /// consume, without dispatching to the specialized tolerance kernel.
@@ -3708,6 +3992,17 @@ impl ExactVolumetricBoundaryClosureReport {
     }
 }
 
+fn workspace_preflight_for_report_replay(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    request: ExactBooleanRequest,
+) -> Result<ExactBooleanPreflight, ExactReportValidationError> {
+    let mut workspace = ExactBooleanWorkspace::new(left, right);
+    workspace
+        .preflight(request)
+        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)
+}
+
 impl ExactBooleanPreflight {
     /// Returns whether this preflight has certified support for materializing
     /// the requested operation under the policy used to produce the report.
@@ -3720,6 +4015,66 @@ impl ExactBooleanPreflight {
         self.support
             .required_blocker_kind()
             .or_else(|| self.blocker.as_ref().map(|blocker| blocker.kind))
+    }
+
+    /// Return whether this request was certified by the arrangement/cell-complex path.
+    pub const fn is_certified_arrangement_cell_complex(&self) -> bool {
+        matches!(
+            self.support,
+            ExactBooleanSupport::CertifiedArrangementCellComplex
+        ) && self.blocker.is_none()
+    }
+
+    /// Return whether this request was certified by closed lower-dimensional regularization.
+    pub const fn is_certified_lower_dimensional_regularized_solid(&self) -> bool {
+        matches!(
+            self.support,
+            ExactBooleanSupport::CertifiedLowerDimensionalRegularizedSolid
+        ) && self.blocker.is_none()
+    }
+
+    /// Return whether this request was certified by mixed-dimensional regularized-solid semantics.
+    pub const fn is_certified_mixed_dimensional_regularized_solid(&self) -> bool {
+        matches!(
+            self.support,
+            ExactBooleanSupport::CertifiedMixedDimensionalRegularizedSolid
+        ) && self.blocker.is_none()
+    }
+
+    /// Return whether this request was certified by disjoint exact bounds.
+    pub const fn is_certified_bounds_disjoint(&self) -> bool {
+        matches!(self.support, ExactBooleanSupport::CertifiedBoundsDisjoint)
+            && self.blocker.is_none()
+    }
+
+    /// Return whether caller boundary policy has certified the requested output.
+    pub const fn is_certified_boundary_policy_shortcut(&self) -> bool {
+        matches!(
+            self.support,
+            ExactBooleanSupport::CertifiedBoundaryPolicyShortcut
+        ) && self.blocker.is_none()
+    }
+
+    /// Return whether closed boundary-touching semantics certified this request.
+    pub const fn is_certified_closed_boundary_touching(&self) -> bool {
+        matches!(
+            (self.operation, self.support),
+            (
+                ExactBooleanOperation::Union,
+                ExactBooleanSupport::CertifiedClosedBoundaryTouchingUnion
+            ) | (
+                ExactBooleanOperation::Intersection,
+                ExactBooleanSupport::CertifiedClosedBoundaryTouchingIntersection
+            ) | (
+                ExactBooleanOperation::Difference,
+                ExactBooleanSupport::CertifiedClosedBoundaryTouchingDifference
+            )
+        ) && self.blocker.is_none()
+    }
+
+    /// Return whether this request is waiting on explicit caller boundary policy.
+    pub const fn requires_boundary_policy(&self) -> bool {
+        matches!(self.support, ExactBooleanSupport::RequiresBoundaryPolicy)
     }
 
     /// Returns whether this preflight is blocked by unresolved exact
@@ -3840,15 +4195,12 @@ impl ExactBooleanPreflight {
         right: &ExactMesh,
         request: ExactBooleanRequest,
     ) -> Result<ExactBooleanPreflight, ExactReportValidationError> {
-        let replay = request
-            .preflight(left, right)
-            .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+        let replay = workspace_preflight_for_report_replay(left, right, request)?;
         if self == &replay || !self.has_retained_exact_evidence() {
             return Ok(replay);
         }
 
-        let graph = build_intersection_graph(left, right)
-            .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+        let graph = validated_report_intersection_graph(left, right)?;
         preflight_boolean_exact_request_from_graph(&graph, left, right, request)
             .map_err(|_| ExactReportValidationError::SourceReplayMismatch)
     }
@@ -4289,6 +4641,34 @@ impl Default for ExactBooleanBlocker {
 }
 
 impl ExactBooleanBlocker {
+    /// Return whether this blocker is waiting on predicate or construction refinement.
+    pub const fn requires_refinement(&self) -> bool {
+        matches!(self.kind, ExactBooleanBlockerKind::NeedsRefinement)
+    }
+
+    /// Return whether this blocker is waiting on caller boundary-output policy.
+    pub const fn requires_boundary_policy(&self) -> bool {
+        matches!(self.kind, ExactBooleanBlockerKind::NeedsBoundaryPolicy)
+    }
+
+    /// Return whether this blocker is waiting on planar arrangement topology.
+    pub const fn requires_planar_arrangement(&self) -> bool {
+        matches!(self.kind, ExactBooleanBlockerKind::NeedsPlanarArrangement)
+    }
+
+    /// Return whether this blocker is waiting on coplanar volumetric cells.
+    pub const fn requires_coplanar_volumetric_cells(&self) -> bool {
+        matches!(
+            self.kind,
+            ExactBooleanBlockerKind::NeedsCoplanarVolumetricCells
+        )
+    }
+
+    /// Return whether this blocker is waiting on certified winding/ownership.
+    pub const fn requires_winding(&self) -> bool {
+        matches!(self.kind, ExactBooleanBlockerKind::NeedsWinding)
+    }
+
     /// Return this exact graph-count blocker with a different semantic kind.
     pub(crate) fn into_blocker(mut self, kind: ExactBooleanBlockerKind) -> Self {
         self.kind = kind;
@@ -4984,6 +5364,43 @@ impl ExactAdjacentUnionCompletionReport {
             self.status,
             ExactAdjacentUnionCompletionStatus::CertifiedFullFace
                 | ExactAdjacentUnionCompletionStatus::CertifiedContainedFace
+        )
+    }
+
+    /// Return whether full-face adjacency completed the union.
+    pub const fn is_certified_full_face(&self) -> bool {
+        matches!(
+            self.status,
+            ExactAdjacentUnionCompletionStatus::CertifiedFullFace
+        )
+    }
+
+    /// Return whether contained-face adjacency completed the union.
+    pub const fn is_certified_contained_face(&self) -> bool {
+        matches!(
+            self.status,
+            ExactAdjacentUnionCompletionStatus::CertifiedContainedFace
+        )
+    }
+
+    /// Return whether this retained state belongs to a non-union request.
+    pub const fn is_not_union(&self) -> bool {
+        matches!(self.status, ExactAdjacentUnionCompletionStatus::NotUnion)
+    }
+
+    /// Return whether an axis-aligned box shortcut superseded adjacency.
+    pub const fn is_axis_aligned_box_pair(&self) -> bool {
+        matches!(
+            self.status,
+            ExactAdjacentUnionCompletionStatus::AxisAlignedBoxPair
+        )
+    }
+
+    /// Return whether no adjacent-union certificate was available.
+    pub const fn has_no_adjacency_certificate(&self) -> bool {
+        matches!(
+            self.status,
+            ExactAdjacentUnionCompletionStatus::NoAdjacencyCertificate
         )
     }
 
@@ -5685,6 +6102,58 @@ impl ExactWindingReadinessReport {
         matches!(self.status, ExactWindingReadinessStatus::Ready)
     }
 
+    /// Return whether this report records a certified materialized path
+    /// rather than an unresolved winding handoff.
+    pub const fn is_already_materialized(&self) -> bool {
+        self.status.is_already_materialized()
+    }
+
+    /// Return whether this report materialized through the arrangement/cell
+    /// complex path that supersedes winding.
+    pub const fn materializes_arrangement_cell_complex(&self) -> bool {
+        self.status.materializes_arrangement_cell_complex()
+    }
+
+    /// Return whether this report is blocked on caller boundary-output policy.
+    pub const fn requires_boundary_policy(&self) -> bool {
+        matches!(
+            self.status,
+            ExactWindingReadinessStatus::BoundaryPolicyRequired
+        )
+    }
+
+    /// Return whether caller boundary policy has already materialized output.
+    pub const fn is_boundary_policy_shortcut_materialized(&self) -> bool {
+        matches!(
+            self.status,
+            ExactWindingReadinessStatus::BoundaryPolicyShortcutAlreadyMaterialized
+        )
+    }
+
+    /// Return whether closed lower-dimensional regularization materialized output.
+    pub const fn is_lower_dimensional_regularized_solid_materialized(&self) -> bool {
+        matches!(
+            self.status,
+            ExactWindingReadinessStatus::LowerDimensionalRegularizedSolidAlreadyMaterialized
+        )
+    }
+
+    /// Return whether mixed-dimensional regularized-solid semantics materialized output.
+    pub const fn is_mixed_dimensional_regularized_solid_materialized(&self) -> bool {
+        matches!(
+            self.status,
+            ExactWindingReadinessStatus::MixedDimensionalRegularizedSolidAlreadyMaterialized
+        )
+    }
+
+    /// Return whether closed boundary-touching regularized semantics materialized output.
+    pub const fn is_closed_boundary_touching_materialized(&self) -> bool {
+        matches!(
+            self.status,
+            ExactWindingReadinessStatus::ClosedBoundaryTouchingAlreadyMaterialized
+        )
+    }
+
     /// Validate this winding-readiness report against the source meshes.
     ///
     /// Winding readiness retains exact split-region and opposite-plane facts
@@ -6345,6 +6814,16 @@ mod tests {
     use crate::boolean::ExactBooleanRequest;
     use crate::graph::FaceSplitBoundaryNode;
     use crate::region::{ExactOutputVertex, FaceRegionPlaneRelation};
+    use crate::workspace::ExactBooleanWorkspace;
+
+    fn materialize_for_test(
+        left: &ExactMesh,
+        right: &ExactMesh,
+        request: ExactBooleanRequest,
+    ) -> ExactBooleanResult {
+        let mut workspace = ExactBooleanWorkspace::new(left, right);
+        workspace.materialize(request).unwrap()
+    }
 
     #[test]
     fn freshness_classifies_retained_region_provenance_drift() {
@@ -6488,11 +6967,14 @@ mod tests {
         let left = report_test_tetra([0, 0, 0]);
         let right = report_test_tetra([3, 0, 0]);
 
-        let preflight = ExactBooleanRequest::new(
-            ExactBooleanOperation::Union,
-            ValidationPolicy::ALLOW_BOUNDARY,
+        let preflight = workspace_preflight_for_report_replay(
+            &left,
+            &right,
+            ExactBooleanRequest::new(
+                ExactBooleanOperation::Union,
+                ValidationPolicy::ALLOW_BOUNDARY,
+            ),
         )
-        .preflight(&left, &right)
         .unwrap();
         assert_eq!(
             preflight.freshness_against_sources(&left, &right),
@@ -6607,13 +7089,15 @@ mod tests {
     fn boolean_result_freshness_classifies_local_source_and_operation_drift() {
         let left = report_test_tetra([0, 0, 0]);
         let right = report_test_tetra([3, 0, 0]);
-        let result = ExactBooleanRequest::with_boundary_policy(
-            ExactBooleanOperation::Union,
-            ValidationPolicy::CLOSED,
-            ExactBoundaryBooleanPolicy::Reject,
-        )
-        .materialize(&left, &right)
-        .unwrap();
+        let result = materialize_for_test(
+            &left,
+            &right,
+            ExactBooleanRequest::with_boundary_policy(
+                ExactBooleanOperation::Union,
+                ValidationPolicy::CLOSED,
+                ExactBoundaryBooleanPolicy::Reject,
+            ),
+        );
 
         assert_eq!(
             result.freshness_against_sources(&left, &right),
@@ -6657,12 +7141,14 @@ mod tests {
     fn selected_region_result_rejects_duplicate_assembly_triangle() {
         let left = report_test_triangle(&[[0, 0, 0], [4, 0, 0], [0, 4, 0]]);
         let right = report_test_triangle(&[[1, -1, -1], [1, 3, 1], [1, 3, -1]]);
-        let mut result = ExactBooleanRequest::new(
-            ExactBooleanOperation::SelectedRegions(ExactRegionSelection::KeepAll),
-            ValidationPolicy::ALLOW_BOUNDARY,
-        )
-        .materialize(&left, &right)
-        .unwrap();
+        let mut result = materialize_for_test(
+            &left,
+            &right,
+            ExactBooleanRequest::new(
+                ExactBooleanOperation::SelectedRegions(ExactRegionSelection::KeepAll),
+                ValidationPolicy::ALLOW_BOUNDARY,
+            ),
+        );
         result.validate().unwrap();
         assert!(!result.assembly.triangles.is_empty());
 

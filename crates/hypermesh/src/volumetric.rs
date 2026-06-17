@@ -294,7 +294,7 @@ impl From<ExactVolumetricRegionError> for ExactVolumetricRegionFreshness {
 /// triangulator order. Retrying with retained exact interior witnesses follows
 /// representational accident such as "centroid is on the boundary" should not
 /// force an approximate perturbation.
-pub fn classify_triangulated_region_triangle_against_closed_mesh(
+pub(crate) fn classify_triangulated_region_triangle_against_closed_mesh(
     triangulation: &FaceRegionTriangulation,
     triangle: [usize; 3],
     target: &ExactMesh,
@@ -328,7 +328,7 @@ pub fn classify_triangulated_region_triangle_against_closed_mesh(
 }
 
 /// Classify every split-region triangle against its opposite closed mesh.
-pub fn classify_triangulated_regions_against_opposite_meshes(
+pub(crate) fn classify_triangulated_regions_against_opposite_meshes(
     triangulations: &[FaceRegionTriangulation],
     left: &ExactMesh,
     right: &ExactMesh,

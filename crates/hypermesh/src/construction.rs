@@ -3,37 +3,14 @@
 //! The reusable segment/plane event model lives in `hyperlimit`: endpoint
 //! predicates decide the combinatorial relation, and proper crossings retain
 //! the exact determinant-ratio parameter `d0 / (d0 - d1)`. That is the
-//! mesh-specific adapters here, such as indexing a face plane from a mesh or
-//! reusing retained [`FacePlaneFacts`].
+//! retained [`FacePlaneFacts`] adapter here.
 
 use hyperlimit::{
-    PlaneSide, Point3, SegmentPlaneIntersection, compare_reals,
-    intersect_segment_with_oriented_plane, intersect_segment_with_plane_values,
+    PlaneSide, Point3, SegmentPlaneIntersection, compare_reals, intersect_segment_with_plane_values,
 };
 
 use super::facts::FacePlaneFacts;
 use hyperreal::Real;
-
-/// Intersect a mesh segment with the oriented plane of one triangular face.
-///
-/// The face orientation is the vertex order in `face`, matching
-/// `hyperlimit::orient3d_report(a, b, c, point)`. A proper crossing constructs
-/// `t = d0 / (d0 - d1)`, where `d0` and `d1` are exact evaluations of the same
-/// oriented plane at the segment endpoints. This determinant-ratio form keeps
-/// the construction exact and auditable for later edge ordering.
-pub fn intersect_segment_with_face_plane(
-    points: &[Point3],
-    face: [usize; 3],
-    segment: [usize; 2],
-) -> SegmentPlaneIntersection {
-    intersect_segment_with_oriented_plane(
-        &points[face[0]],
-        &points[face[1]],
-        &points[face[2]],
-        &points[segment[0]],
-        &points[segment[1]],
-    )
-}
 
 /// Intersect a closed segment with a retained exact face plane.
 ///
@@ -43,7 +20,7 @@ pub fn intersect_segment_with_face_plane(
 /// structure as part of the exact object model: constructions should reuse
 /// certified object facts rather than reintroducing representative primitive
 /// normals.
-pub fn intersect_segment_with_retained_face_plane(
+pub(crate) fn intersect_segment_with_retained_face_plane(
     plane: &FacePlaneFacts,
     p0: &Point3,
     p1: &Point3,

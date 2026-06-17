@@ -91,6 +91,23 @@ impl ExactArrangement2dRegionRing {
     pub fn new(region: ExactArrangement2dRegion, vertices: Vec<Point2>) -> Self {
         Self { region, vertices }
     }
+
+    /// Build a 2D region-ring overlay and simplify selected cells into loops.
+    pub fn overlay(
+        rings: &[ExactArrangement2dRegionRing],
+        operation: ExactArrangement2dSetOperation,
+    ) -> ExactArrangement2dOverlay {
+        build_exact_arrangement2d_overlay(rings, operation)
+    }
+
+    /// Build a 2D region-ring overlay with explicit output boundary policy.
+    pub fn overlay_with_boundary_policy(
+        rings: &[ExactArrangement2dRegionRing],
+        operation: ExactArrangement2dSetOperation,
+        boundary_policy: ExactArrangement2dBoundaryPolicy,
+    ) -> ExactArrangement2dOverlay {
+        build_exact_arrangement2d_overlay_with_boundary_policy(rings, operation, boundary_policy)
+    }
 }
 
 /// Vertex in the exact planar arrangement graph.
@@ -199,7 +216,7 @@ impl ExactArrangement2dOverlay {
 /// The witness is suitable for source-region and winding classification of a
 /// planar cell. Undecidable predicates are retained in `blockers` instead of
 /// falling back to an approximate point.
-pub fn exact_arrangement2d_face_witness(
+pub(crate) fn exact_arrangement2d_face_witness(
     arrangement: &ExactArrangement2d,
     face: usize,
     blockers: &mut Vec<ExactArrangement2dBlocker>,
@@ -304,7 +321,7 @@ impl ExactArrangement2d {
 }
 
 /// Build an exact 2D arrangement from closed input segments.
-pub fn build_exact_arrangement2d(
+pub(crate) fn build_exact_arrangement2d(
     segments: &[ExactArrangement2dInputSegment],
 ) -> ExactArrangement2d {
     let mut blockers = Vec::new();
@@ -409,7 +426,7 @@ pub fn build_exact_arrangement2d(
 
 /// Build a 2D arrangement overlay and simplify selected cells into boundary
 /// loops.
-pub fn build_exact_arrangement2d_overlay(
+pub(crate) fn build_exact_arrangement2d_overlay(
     rings: &[ExactArrangement2dRegionRing],
     operation: ExactArrangement2dSetOperation,
 ) -> ExactArrangement2dOverlay {
@@ -421,7 +438,7 @@ pub fn build_exact_arrangement2d_overlay(
 }
 
 /// Build a 2D arrangement overlay with explicit output boundary policy.
-pub fn build_exact_arrangement2d_overlay_with_boundary_policy(
+pub(crate) fn build_exact_arrangement2d_overlay_with_boundary_policy(
     rings: &[ExactArrangement2dRegionRing],
     operation: ExactArrangement2dSetOperation,
     boundary_policy: ExactArrangement2dBoundaryPolicy,

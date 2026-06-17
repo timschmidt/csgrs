@@ -8,24 +8,14 @@ use super::adapter::{
     ExactI64MeshInputReport, LossyF64MeshInputReport, inspect_f64_mesh_input,
     inspect_i64_mesh_input,
 };
-use super::audit::{ExactMeshAuditReport, audit_exact_mesh};
 use super::bounds::{BoundsValidationError, MeshBounds};
 use super::error::{DiagnosticKind, MeshDiagnostic, MeshError, Severity};
 use super::facts::{MeshFactsValidationError, MeshValidationFacts};
-use super::handoff::{
-    ExactSolidHandoffError, ExactSolidHandoffReport, ExactSurfaceHandoffError,
-    ExactSurfaceHandoffReport, exact_solid_handoff, exact_surface_handoff,
-};
 use super::package::{
     ExactMeshHandoffPackage, ExactMeshHandoffPackageError, exact_mesh_handoff_package,
 };
-use super::readiness::{
-    ExactMeshConsumerReadinessError, ExactMeshConsumerReadinessReport,
-    exact_mesh_consumer_readiness,
-};
 use super::scalar::LossyF64Import;
 use super::validation::{ValidationPolicy, ValidationReport, validate_triangles_with_policy};
-use super::view::{ApproximateMeshF64View, ApproximateMeshF64ViewError, approximate_mesh_f64_view};
 use hyperlimit::{
     ConstructionProvenance, ConstructionProvenanceValidationError, Point3, PredicateUse,
     SourceProvenance,
@@ -376,39 +366,6 @@ impl ExactMesh {
         Ok(())
     }
 
-    /// Build a compact audit report for this mesh after retained-state replay.
-    pub fn audit(&self) -> Result<ExactMeshAuditReport, ExactMeshValidationError> {
-        audit_exact_mesh(self)
-    }
-
-    /// Build an exact closed-solid handoff report for downstream consumers.
-    pub fn solid_handoff(&self) -> Result<ExactSolidHandoffReport, ExactSolidHandoffError> {
-        exact_solid_handoff(self)
-    }
-
-    /// Build an exact surface handoff report for downstream consumers.
-    ///
-    /// Surface handoff accepts both closed shells and explicitly
-    /// boundary-allowed open surfaces. Callers that need volume semantics must
-    /// use [`ExactMesh::solid_handoff`] instead; this distinction keeps exact
-    /// surface evidence from being silently promoted to solid evidence.
-    pub fn surface_handoff(&self) -> Result<ExactSurfaceHandoffReport, ExactSurfaceHandoffError> {
-        exact_surface_handoff(self)
-    }
-
-    /// Build a compact readiness summary for common downstream consumers.
-    ///
-    /// This is a routing artifact over audited mesh state, exact surface
-    /// handoff, exact solid handoff, and lossy display/export availability.
-    /// It does not replace any domain-specific report; it tells callers which
-    /// report-bearing path is presently available without conflating surface,
-    /// solid, and approximate-view semantics.
-    pub fn consumer_readiness(
-        &self,
-    ) -> Result<ExactMeshConsumerReadinessReport, ExactMeshConsumerReadinessError> {
-        exact_mesh_consumer_readiness(self)
-    }
-
     /// Build a bundled report-bearing handoff package for downstream consumers.
     ///
     /// The package is a cache-friendly envelope over the independently
@@ -417,13 +374,6 @@ impl ExactMesh {
     /// promoted to solids and lossy views are not promoted to topology.
     pub fn handoff_package(&self) -> Result<ExactMeshHandoffPackage, ExactMeshHandoffPackageError> {
         exact_mesh_handoff_package(self)
-    }
-
-    /// Build a report-bearing primitive-float view for display/export adapters.
-    pub fn approximate_f64_view(
-        &self,
-    ) -> Result<ApproximateMeshF64View, ApproximateMeshF64ViewError> {
-        approximate_mesh_f64_view(self)
     }
 }
 

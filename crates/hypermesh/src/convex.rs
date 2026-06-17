@@ -102,31 +102,6 @@ impl ConvexSolidUnion {
             ))
         })
     }
-
-    /// Recompute this union from the supplied source meshes.
-    pub fn validate_against_sources(
-        &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-    ) -> Result<(), MeshError> {
-        self.validate()?;
-        let replay = union_closed_convex_solids(left, right).ok_or_else(|| {
-            MeshError::one(MeshDiagnostic::new(
-                Severity::Error,
-                DiagnosticKind::UnsupportedExactOperation,
-                "convex union source replay did not reproduce an output",
-            ))
-        })?;
-        if self == &replay {
-            Ok(())
-        } else {
-            Err(MeshError::one(MeshDiagnostic::new(
-                Severity::Error,
-                DiagnosticKind::UnsupportedExactOperation,
-                "convex union retained output no longer matches source replay",
-            )))
-        }
-    }
 }
 
 impl ConvexSolidDifference {
@@ -148,31 +123,6 @@ impl ConvexSolidDifference {
                 format!("convex difference output failed retained-state replay: {error:?}"),
             ))
         })
-    }
-
-    /// Recompute this difference from the supplied source meshes.
-    pub fn validate_against_sources(
-        &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-    ) -> Result<(), MeshError> {
-        self.validate()?;
-        let replay = subtract_closed_convex_solids(left, right).ok_or_else(|| {
-            MeshError::one(MeshDiagnostic::new(
-                Severity::Error,
-                DiagnosticKind::UnsupportedExactOperation,
-                "convex difference source replay did not reproduce an output",
-            ))
-        })?;
-        if self == &replay {
-            Ok(())
-        } else {
-            Err(MeshError::one(MeshDiagnostic::new(
-                Severity::Error,
-                DiagnosticKind::UnsupportedExactOperation,
-                "convex difference retained output no longer matches source replay",
-            )))
-        }
     }
 }
 
@@ -196,35 +146,6 @@ impl ConvexSolidIntersection {
             ))
         })
     }
-
-    /// Recompute this intersection from the supplied source meshes.
-    ///
-    /// computation history, not detached meshes. This replay check rejects an
-    /// otherwise coherent intersection if its source solids or clipped output
-    /// no longer match the operands that produced it.
-    pub fn validate_against_sources(
-        &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-    ) -> Result<(), MeshError> {
-        self.validate()?;
-        let replay = intersect_closed_convex_solids(left, right).ok_or_else(|| {
-            MeshError::one(MeshDiagnostic::new(
-                Severity::Error,
-                DiagnosticKind::UnsupportedExactOperation,
-                "convex intersection source replay did not reproduce an output",
-            ))
-        })?;
-        if self == &replay {
-            Ok(())
-        } else {
-            Err(MeshError::one(MeshDiagnostic::new(
-                Severity::Error,
-                DiagnosticKind::UnsupportedExactOperation,
-                "convex intersection retained output no longer matches source replay",
-            )))
-        }
-    }
 }
 
 /// Certify and materialize the union of two closed convex solids.
@@ -233,7 +154,10 @@ impl ConvexSolidIntersection {
 /// stays inside exact arithmetic: it keeps the parts of each source face that
 /// are outside the opposite convex solid and revalidates the resulting shell as
 /// a closed exact mesh.
-pub fn union_closed_convex_solids(left: &ExactMesh, right: &ExactMesh) -> Option<ConvexSolidUnion> {
+pub(crate) fn union_closed_convex_solids(
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Option<ConvexSolidUnion> {
     let left_facts = certify_convex_solid(left);
     let right_facts = certify_convex_solid(right);
     if !left_facts.is_certified_convex() || !right_facts.is_certified_convex() {
@@ -277,7 +201,7 @@ pub fn union_closed_convex_solids(left: &ExactMesh, right: &ExactMesh) -> Option
 /// This is the exact source-face-cell construction for general convex
 /// difference. It returns `None` for empty/lower-dimensional results or when
 /// exact face-cell triangulation cannot be certified.
-pub fn subtract_closed_convex_solids(
+pub(crate) fn subtract_closed_convex_solids(
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> Option<ConvexSolidDifference> {
@@ -432,7 +356,7 @@ fn loop_is_planar(vertices: &[Point3], loop_: &[usize]) -> Option<bool> {
 /// clipped output revalidates as a closed exact triangle mesh. It does not
 /// approximate winding, and it does not claim union/difference support for
 /// partial overlaps.
-pub fn intersect_closed_convex_solids(
+pub(crate) fn intersect_closed_convex_solids(
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> Option<ConvexSolidIntersection> {
@@ -1554,6 +1478,17 @@ fn report_error(error: ConvexSolidReportError) -> MeshError {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::boolean::{ExactBooleanOperation, ExactBooleanRequest, ExactBoundaryBooleanPolicy};
+    use crate::workspace::ExactBooleanWorkspace;
+
+    fn materialize_for_test(
+        left: &ExactMesh,
+        right: &ExactMesh,
+        request: ExactBooleanRequest,
+    ) -> crate::reports::ExactBooleanResult {
+        let mut workspace = ExactBooleanWorkspace::new(left, right);
+        workspace.materialize(request).unwrap()
+    }
 
     fn tetrahedron_i64(a: [i64; 3], b: [i64; 3], c: [i64; 3], d: [i64; 3]) -> ExactMesh {
         ExactMesh::from_i64_triangles(
@@ -1573,15 +1508,39 @@ mod tests {
         let union = union_closed_convex_solids(&left, &right)
             .expect("certified convex union should close exact planar boundary loop");
         union.validate().unwrap();
-        union.validate_against_sources(&left, &right).unwrap();
         assert!(union.mesh.facts().mesh.closed_manifold);
         assert_eq!(union.mesh.facts().mesh.boundary_edges, 0);
+        materialize_for_test(
+            &left,
+            &right,
+            ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED),
+        )
+        .validate_operation_against_sources(
+            &left,
+            &right,
+            ExactBooleanOperation::Union,
+            ValidationPolicy::CLOSED,
+            ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
 
         let difference = subtract_closed_convex_solids(&left, &right)
             .expect("certified convex difference should orient paired cut faces");
         difference.validate().unwrap();
-        difference.validate_against_sources(&left, &right).unwrap();
         assert!(difference.mesh.facts().mesh.closed_manifold);
         assert_eq!(difference.mesh.facts().mesh.boundary_edges, 0);
+        materialize_for_test(
+            &left,
+            &right,
+            ExactBooleanRequest::new(ExactBooleanOperation::Difference, ValidationPolicy::CLOSED),
+        )
+        .validate_operation_against_sources(
+            &left,
+            &right,
+            ExactBooleanOperation::Difference,
+            ValidationPolicy::CLOSED,
+            ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
     }
 }

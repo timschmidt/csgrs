@@ -4,9 +4,7 @@ use std::time::{Duration, Instant};
 use hypermesh::{
     ExactArrangement, ExactArrangementBooleanAttempt, ExactBooleanEvaluation,
     ExactBooleanOperation, ExactBooleanRequest, ExactBooleanResult, ExactBooleanWorkspace,
-    ExactMesh, ExactRegionOwnershipReport, ExactRegularizationPolicy, ExactSelectedCellComplex,
-    ExactSimplifiedCellComplex, ExactTopologyAssemblyReport, ValidationPolicy,
-    build_intersection_graph, triangulate_all_face_cells_with_cdt,
+    ExactMesh, ExactRegularizationPolicy, ValidationPolicy,
 };
 
 struct BenchCase {
@@ -82,7 +80,8 @@ fn run_case(case: &BenchCase) {
         "request",
         format!("{:?}/{:?}", case.operation, case.validation),
     );
-    match request.evaluate(&case.left, &case.right) {
+    let mut metadata_workspace = ExactBooleanWorkspace::new(&case.left, &case.right);
+    match metadata_workspace.evaluate(request) {
         Ok(evaluation) => print_metadata(
             case.name,
             "preflight_support",
@@ -95,7 +94,7 @@ fn run_case(case: &BenchCase) {
         ),
         Err(error) => print_metadata(case.name, "preflight_support", format!("error:{error:?}")),
     }
-    match request.materialize(&case.left, &case.right) {
+    match metadata_workspace.materialize(request) {
         Ok(result) => print_metadata(
             case.name,
             "materialize_kind",
@@ -123,11 +122,13 @@ fn run_case(case: &BenchCase) {
     });
 
     time_stage(case, "intersection_graph_build", || {
-        let graph = build_intersection_graph(&case.left, &case.right).unwrap();
+        let mut workspace = ExactBooleanWorkspace::new(&case.left, &case.right);
+        let graph = workspace.graph().unwrap();
         black_box((graph.face_pairs.len(), graph.event_count()));
     });
 
-    let graph = build_intersection_graph(&case.left, &case.right).unwrap();
+    let mut graph_workspace = ExactBooleanWorkspace::new(&case.left, &case.right);
+    let graph = graph_workspace.graph().unwrap().clone();
     time_stage(case, "intersection_graph_validate", || {
         black_box(
             graph
@@ -145,7 +146,11 @@ fn run_case(case: &BenchCase) {
     });
 
     time_stage(case, "face_cell_cdt", || {
-        black_box(triangulate_all_face_cells_with_cdt(&graph, &case.left, &case.right).ok());
+        black_box(
+            graph
+                .triangulate_face_cells_with_cdt(&case.left, &case.right)
+                .ok(),
+        );
     });
 
     time_stage(case, "arrangement_build", || {
@@ -241,11 +246,13 @@ fn run_case(case: &BenchCase) {
     }
 
     time_stage(case, "boolean_evaluate", || {
-        black_box(request.evaluate(&case.left, &case.right).ok());
+        let mut workspace = ExactBooleanWorkspace::new(&case.left, &case.right);
+        black_box(workspace.evaluate(request).ok());
     });
 
     time_stage(case, "boolean_materialize_or_block", || {
-        black_box(request.materialize(&case.left, &case.right).ok());
+        let mut workspace = ExactBooleanWorkspace::new(&case.left, &case.right);
+        black_box(workspace.materialize(request).ok());
     });
 
     let mut workspace = ExactBooleanWorkspace::new(&case.left, &case.right);
@@ -359,9 +366,9 @@ fn run_case(case: &BenchCase) {
     time_prepared_stage(
         case,
         "topology_assembly_report_replay_validate_from_attempt",
-        || retained_topology_from_attempt_for_case(case),
-        |report| {
-            if let Some(report) = report.as_ref() {
+        || retained_arrangement_attempt_for_case(case, request),
+        |attempt| {
+            if let Some(report) = attempt.topology_assembly_report.as_ref() {
                 black_box(
                     report
                         .validate_against_sources(&case.left, &case.right, case.regularization)
@@ -400,9 +407,9 @@ fn run_case(case: &BenchCase) {
     time_prepared_stage(
         case,
         "region_ownership_report_replay_validate_from_attempt",
-        || retained_region_ownership_from_attempt_for_case(case),
-        |report| {
-            if let Some(report) = report.as_ref() {
+        || retained_arrangement_attempt_for_case(case, request),
+        |attempt| {
+            if let Some(report) = attempt.region_ownership_report.as_ref() {
                 black_box(
                     report
                         .validate_against_sources(&case.left, &case.right, case.regularization)
@@ -475,9 +482,9 @@ fn run_case(case: &BenchCase) {
     time_prepared_stage(
         case,
         "selected_validate_retained_reports",
-        || retained_selected_for_case(case, request),
-        |selected| {
-            if let Some(selected) = selected.as_ref() {
+        || retained_arrangement_attempt_for_case(case, request),
+        |attempt| {
+            if let Some(selected) = attempt.selected_cell_complex.as_ref() {
                 black_box(selected.validate().ok());
             }
         },
@@ -486,9 +493,9 @@ fn run_case(case: &BenchCase) {
     time_prepared_stage(
         case,
         "selected_replay_validate_retained_reports",
-        || retained_selected_for_case(case, request),
-        |selected| {
-            if let Some(selected) = selected.as_ref() {
+        || retained_arrangement_attempt_for_case(case, request),
+        |attempt| {
+            if let Some(selected) = attempt.selected_cell_complex.as_ref() {
                 black_box(
                     selected
                         .validate_against_sources(&case.left, &case.right, case.regularization)
@@ -501,9 +508,9 @@ fn run_case(case: &BenchCase) {
     time_prepared_stage(
         case,
         "simplified_validate_retained_reports",
-        || retained_simplified_for_case(case, request),
-        |simplified| {
-            if let Some(simplified) = simplified.as_ref() {
+        || retained_arrangement_attempt_for_case(case, request),
+        |attempt| {
+            if let Some(simplified) = attempt.simplified_cell_complex.as_ref() {
                 black_box((
                     simplified.validate().ok(),
                     simplified.selected_faces_before_simplification,
@@ -520,9 +527,9 @@ fn run_case(case: &BenchCase) {
     time_prepared_stage(
         case,
         "simplified_replay_validate_retained_reports",
-        || retained_simplified_for_case(case, request),
-        |simplified| {
-            if let Some(simplified) = simplified.as_ref() {
+        || retained_arrangement_attempt_for_case(case, request),
+        |attempt| {
+            if let Some(simplified) = attempt.simplified_cell_complex.as_ref() {
                 black_box(
                     simplified
                         .validate_against_sources(&case.left, &case.right, case.regularization)
@@ -642,7 +649,8 @@ fn run_case(case: &BenchCase) {
                 evaluation
                     .certifications
                     .volumetric_boundary_closure
-                    .clone()
+                    .as_ref()
+                    .cloned()
             })
         },
         |(retained_workspace, report)| {
@@ -841,54 +849,6 @@ fn retained_arrangement_attempt_for_case(
         .arrangement_attempt(request, case.regularization)
         .unwrap()
         .clone()
-}
-
-fn retained_region_ownership_from_attempt_for_case(
-    case: &BenchCase,
-) -> Option<ExactRegionOwnershipReport> {
-    let mut retained_workspace = retained_workspace_for_case(
-        case,
-        ExactBooleanRequest::new(case.operation, case.validation),
-    );
-    retained_workspace
-        .arrangement_attempt(
-            ExactBooleanRequest::new(case.operation, case.validation),
-            case.regularization,
-        )
-        .unwrap()
-        .region_ownership_report
-        .clone()
-}
-
-fn retained_topology_from_attempt_for_case(
-    case: &BenchCase,
-) -> Option<ExactTopologyAssemblyReport> {
-    let mut retained_workspace = retained_workspace_for_case(
-        case,
-        ExactBooleanRequest::new(case.operation, case.validation),
-    );
-    retained_workspace
-        .arrangement_attempt(
-            ExactBooleanRequest::new(case.operation, case.validation),
-            case.regularization,
-        )
-        .unwrap()
-        .topology_assembly_report
-        .clone()
-}
-
-fn retained_selected_for_case(
-    case: &BenchCase,
-    request: ExactBooleanRequest,
-) -> Option<ExactSelectedCellComplex> {
-    retained_arrangement_attempt_for_case(case, request).selected_cell_complex
-}
-
-fn retained_simplified_for_case(
-    case: &BenchCase,
-    request: ExactBooleanRequest,
-) -> Option<ExactSimplifiedCellComplex> {
-    retained_arrangement_attempt_for_case(case, request).simplified_cell_complex
 }
 
 fn time_stage<F>(case: &BenchCase, stage: &'static str, mut f: F)

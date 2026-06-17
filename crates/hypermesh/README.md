@@ -70,10 +70,10 @@ from exact predicates and retained evidence.
   face-plane evidence.
 - `SourceProvenance`, `ApproximationPolicy`, `PredicateUse`, and construction
   provenance records preserve import and decision history.
-- `MeshFacePairClassification`, triangle-plane/triangle-triangle reports, coplanar
-  reports, and intersection graphs describe local topology evidence.
-- `ExactEdgeSplitPlan`, `ExactFaceSplitPlan`, `ExactBooleanPreflight`, and
-  `ExactBooleanResult` describe readiness and assembly state.
+- `ExactBooleanWorkspace` retains graph, arrangement, attempt, evaluation, and
+  materialization artifacts for replayable boolean sessions.
+- `ExactBooleanEvaluation` and `ExactBooleanResult` describe retained readiness,
+  assembly state, and materialized outputs.
 - Surface, region, convex-solid, boundary-touching, winding, handoff-package, and
   consumer-readiness reports capture certified fast paths and downstream contracts.
 
@@ -109,9 +109,9 @@ source freshness tied to the borrowed exact meshes.
 Workspace evaluation reuses the retained regularized arrangement for boolean
 certification evidence instead of reconstructing that object internally. First-call
 workspace materialization also consumes retained graph, preflight, and arrangement
-artifacts directly for certified supports before falling back to request-level
-materialization, and repeat materialization reuses a separate result cache without
-forcing the evaluation cache to exist. Workspace evaluation performs local
+artifacts directly for certified supports, and repeat materialization reuses a
+separate result cache without forcing the evaluation cache to exist. Workspace
+evaluation performs local
 proof-bundle validation first, and workspace replay validation reuses retained
 graph and regularized-arrangement artifacts for evaluations, plus retained graph
 artifacts for materialized result replay, while preserving stale-evidence checks.
@@ -120,11 +120,13 @@ and selected and simplified cell-complex accessors retain the topology and
 ownership reports consumed by the selection gate, giving benchmarks a direct view
 of local gate-report validation, workspace session validation, and full source
 replay validation costs.
-Public request evaluation keeps standalone source replay semantics. Volumetric
-split-cell recovery reuses its retained graph for internal result proof before
-exposing the strict public `validate_against_sources` replay API.
+`ExactBooleanRequest` now only describes the operation and policy; evaluation and
+materialization run through `ExactBooleanWorkspace` so retained artifacts and
+cache freshness stay tied to one explicit session. Volumetric split-cell recovery
+reuses its retained graph for internal result proof before exposing the strict
+public `validate_against_sources` replay API.
 
-`ExactTopologyAssemblyReport` records the retained bridge from intersection graph
+Topology assembly subreports record the retained bridge from intersection graph
 events through split topology and face-region loops into arrangement vertices,
 edges, face cells, and volume adjacency evidence. Face-cell topology includes
 boundary-node and boundary-coordinate counts, so retained cells must prove a
@@ -154,7 +156,7 @@ reversed-face count. Topology
 assembly reports validate directly against source operands and through workspace
 retained-arrangement sessions.
 
-`ExactRegionOwnershipReport` records whether labeled arrangement cells are
+Region ownership subreports record whether labeled arrangement cells are
 volume-resolved, face-label-resolved, still waiting on exact winding, or blocked by
 other arrangement evidence. Volume-resolved reports also retain adjacency
 face-side and separating-face counts, so local validation requires explicit
@@ -247,28 +249,20 @@ yet support:
 
 ```rust,ignore
 use hypermesh::{
-    ExactArrangement, ExactBooleanOperation, ExactRegularizationPolicy,
-    ValidationPolicy, boolean_exact, exact_arrangement_boolean_attempt_report,
+    ExactBooleanOperation, ExactBooleanRequest, ExactBooleanWorkspace,
+    ExactRegularizationPolicy, ValidationPolicy,
 };
 
-let arrangement = ExactArrangement::from_meshes(&left, &right)?;
-let mesh = arrangement
-    .label_regions(ExactRegularizationPolicy::REGULARIZED_SOLID)?
-    .select(ExactBooleanOperation::Union)?
-    .simplify_exact()?
-    .triangulate()?;
-
-let result = boolean_exact(
-    &left,
-    &right,
+let request = ExactBooleanRequest::new(
     ExactBooleanOperation::Union,
     ValidationPolicy::ALLOW_BOUNDARY,
-)?;
+);
+let mut workspace = ExactBooleanWorkspace::new(&left, &right);
 
-let attempt = exact_arrangement_boolean_attempt_report(
-    &left,
-    &right,
-    ExactBooleanOperation::Union,
+let result = workspace.materialize(request)?;
+
+let attempt = workspace.arrangement_attempt(
+    request,
     ExactRegularizationPolicy::REGULARIZED_SOLID,
 )?;
 assert!(attempt.decline.is_none() || attempt.arrangement_blockers > 0);

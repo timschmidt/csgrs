@@ -1460,7 +1460,7 @@ impl ExactIntersectionGraph {
 }
 
 /// Build an exact event graph from two exact meshes.
-pub fn build_intersection_graph(
+pub(crate) fn build_intersection_graph(
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> Result<ExactIntersectionGraph, MeshError> {

@@ -8,10 +8,10 @@
 //! cached readiness separately so approximate or domain-specific consumers
 //! cannot silently reinterpret topology evidence.
 
-use super::{
-    ExactMesh, ExactMeshAuditReport, ValidationPolicy, approximate_mesh_f64_view, audit_exact_mesh,
-    exact_solid_handoff, exact_surface_handoff,
-};
+use super::{ExactMesh, ValidationPolicy};
+use crate::audit::{ExactMeshAuditReport, audit_exact_mesh};
+use crate::handoff::{exact_solid_handoff, exact_surface_handoff};
+use crate::view::approximate_mesh_f64_view;
 use hyperlimit::MeshSource;
 
 /// Compact readiness summary for common exact-mesh consumers.
@@ -183,7 +183,7 @@ impl ExactMeshConsumerReadinessReport {
 }
 
 /// Build a common-consumer readiness summary for an exact mesh.
-pub fn exact_mesh_consumer_readiness(
+pub(crate) fn exact_mesh_consumer_readiness(
     mesh: &ExactMesh,
 ) -> Result<ExactMeshConsumerReadinessReport, ExactMeshConsumerReadinessError> {
     ExactMeshConsumerReadinessReport::from_mesh(mesh)

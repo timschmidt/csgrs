@@ -37,6 +37,32 @@ use super::topology::triangle_edges;
 use hyperlimit::CoplanarProjection;
 use hyperreal::Real;
 
+impl ExactIntersectionGraph {
+    /// Triangulate every source face into exact constrained planar cells.
+    pub fn triangulate_face_cells_with_cdt(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> hypertri::Result<Option<(ExactFaceRegionPlan, Vec<FaceRegionTriangulation>)>> {
+        triangulate_all_face_cells_with_cdt(self, left, right)
+    }
+
+    /// Validate a retained constrained face-cell triangulation by source replay.
+    pub fn validate_face_cell_cdt_against_sources(
+        &self,
+        regions: &ExactFaceRegionPlan,
+        triangulations: &[FaceRegionTriangulation],
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> hypertri::Result<()> {
+        self.validate_against_sources(left, right)
+            .map_err(|_| hypertri::Error::InvalidInput {
+                reason: "face-cell CDT source graph replay mismatch",
+            })?;
+        validate_face_cell_cdt_against_sources(self, regions, triangulations, left, right)
+    }
+}
+
 /// Candidate constraint edge from the opposite coplanar triangle boundary.
 ///
 /// These records are local to one source face. They gather exact split points
@@ -66,7 +92,7 @@ struct CoplanarCellEdgePoint {
 /// each new projected point is lifted back to the original source-face plane
 /// and retained as a [`FaceSplitBoundaryNode::FaceInterior`] witness before
 /// validation or assembly can consume it.
-pub fn triangulate_all_face_cells_with_cdt(
+pub(crate) fn triangulate_all_face_cells_with_cdt(
     graph: &ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
@@ -117,7 +143,8 @@ pub fn triangulate_all_face_cells_with_cdt(
 /// interior constraints and possible exact Steiner vertices, so their
 /// provenance must replay through [`triangulate_all_face_cells_with_cdt`]
 /// instead of the basic boundary-loop path.
-pub fn validate_face_cell_cdt_against_sources(
+pub(crate) fn validate_face_cell_cdt_against_sources(
+    graph: &ExactIntersectionGraph,
     regions: &ExactFaceRegionPlan,
     triangulations: &[FaceRegionTriangulation],
     left: &ExactMesh,
@@ -137,12 +164,7 @@ pub fn validate_face_cell_cdt_against_sources(
         triangulation.validate()?;
     }
 
-    let graph = super::graph::build_intersection_graph(left, right).map_err(|_| {
-        hypertri::Error::InvalidInput {
-            reason: "face-cell CDT source replay could not rebuild intersection graph",
-        }
-    })?;
-    let replay = triangulate_all_face_cells_with_cdt(&graph, left, right)?.ok_or(
+    let replay = triangulate_all_face_cells_with_cdt(graph, left, right)?.ok_or(
         hypertri::Error::InvalidInput {
             reason: "face-cell CDT source replay did not materialize",
         },

@@ -22,86 +22,6 @@ use super::narrow::{
 };
 use super::topology::triangle_edges;
 
-/// Structural inconsistency in one exact face-pair scheduler record.
-///
-/// This validates the retained broad/narrow classification record rather than
-/// decisions from later topology mutation; the scheduler relation, AABB
-/// outcome, triangle classifier, and retained split events must agree before
-/// graph construction consumes the pair.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum MeshFacePairValidationError {
-    /// A bounds-disjoint relation was not backed by a decided disjoint AABB.
-    BoundsDisjointWithoutDisjointBounds,
-    /// A bounds-rejected pair retained a triangle classifier.
-    BoundsDisjointHasTriangle,
-    /// A non-bounds relation is missing the triangle classifier that justified
-    /// it.
-    MissingTriangleClassification,
-    /// The retained triangle classifier relation does not map to the retained
-    /// mesh face-pair relation.
-    TriangleRelationMismatch,
-    /// The retained triangle classifier is internally inconsistent.
-    InvalidTriangleClassification,
-    /// A candidate pair did not retain both triangle-edge event sets.
-    CandidateMissingEdgeEvents,
-    /// A non-candidate pair retained segment/plane split events.
-    NonCandidateHasEdgeEvents,
-    /// A retained segment/plane construction event was internally invalid.
-    InvalidSegmentPlaneEvent,
-    /// A coplanar mesh relation is missing its projected coplanar classifier.
-    CoplanarRelationMissingCoplanarClassifier,
-    /// A non-coplanar mesh relation retained a coplanar classifier.
-    NonCoplanarRelationHasCoplanarClassifier,
-    /// Recomputing the face-pair classifier from the supplied source meshes
-    /// did not reproduce this retained scheduler record.
-    SourceReplayMismatch,
-}
-
-/// Freshness status for retained mesh face-pair scheduler evidence.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum MeshFacePairFreshness {
-    /// The face-pair record is locally valid and replays from source meshes.
-    Current,
-    /// Retained bounds-rejection evidence is internally inconsistent.
-    StaleBoundsEvidence,
-    /// A required triangle classifier is absent.
-    MissingTriangleEvidence,
-    /// Retained triangle relation and mesh face-pair relation disagree.
-    StaleTriangleEvidence,
-    /// Retained candidate split-event evidence is missing or invalid.
-    StaleCandidateEvidence,
-    /// Retained coplanar classifier evidence is missing or misplaced.
-    StaleCoplanarEvidence,
-    /// Retained evidence is present for a relation that cannot consume it.
-    UnexpectedEvidence,
-    /// The record is locally valid but no longer replays from source meshes.
-    SourceReplayMismatch,
-}
-
-impl From<MeshFacePairValidationError> for MeshFacePairFreshness {
-    fn from(error: MeshFacePairValidationError) -> Self {
-        match error {
-            MeshFacePairValidationError::BoundsDisjointWithoutDisjointBounds
-            | MeshFacePairValidationError::BoundsDisjointHasTriangle => Self::StaleBoundsEvidence,
-            MeshFacePairValidationError::MissingTriangleClassification => {
-                Self::MissingTriangleEvidence
-            }
-            MeshFacePairValidationError::TriangleRelationMismatch
-            | MeshFacePairValidationError::InvalidTriangleClassification => {
-                Self::StaleTriangleEvidence
-            }
-            MeshFacePairValidationError::CandidateMissingEdgeEvents
-            | MeshFacePairValidationError::InvalidSegmentPlaneEvent => Self::StaleCandidateEvidence,
-            MeshFacePairValidationError::CoplanarRelationMissingCoplanarClassifier
-            | MeshFacePairValidationError::NonCoplanarRelationHasCoplanarClassifier => {
-                Self::StaleCoplanarEvidence
-            }
-            MeshFacePairValidationError::NonCandidateHasEdgeEvents => Self::UnexpectedEvidence,
-            MeshFacePairValidationError::SourceReplayMismatch => Self::SourceReplayMismatch,
-        }
-    }
-}
-
 /// Coarse exact relation for one pair of mesh faces.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum MeshFacePairRelation {
@@ -146,121 +66,10 @@ impl MeshFacePairClassification {
                 | MeshFacePairRelation::Unknown
         )
     }
-
-    /// Validate scheduler relation, broad phase, and retained narrow facts.
-    ///
-    /// This check is the handoff between exact face-pair classification and
-    /// graph construction. It ensures the collapsed relation is recoverable
-    /// from the retained triangle classifier and that candidate split events
-    /// remain valid construction artifacts.
-    pub fn validate(&self) -> Result<(), MeshFacePairValidationError> {
-        if self.relation == MeshFacePairRelation::BoundsDisjoint {
-            if !matches!(
-                self.bounds,
-                PredicateOutcome::Decided {
-                    value: AabbIntersectionKind::Disjoint,
-                    ..
-                }
-            ) {
-                return Err(MeshFacePairValidationError::BoundsDisjointWithoutDisjointBounds);
-            }
-            return if self.triangle.is_none() {
-                Ok(())
-            } else {
-                Err(MeshFacePairValidationError::BoundsDisjointHasTriangle)
-            };
-        }
-
-        let Some(triangle) = &self.triangle else {
-            return Err(MeshFacePairValidationError::MissingTriangleClassification);
-        };
-        if self.relation == MeshFacePairRelation::Candidate
-            && (triangle.left_edge_events.len() != 3 || triangle.right_edge_events.len() != 3)
-        {
-            return Err(MeshFacePairValidationError::CandidateMissingEdgeEvents);
-        }
-        triangle
-            .validate()
-            .map_err(|_| MeshFacePairValidationError::InvalidTriangleClassification)?;
-        if mesh_relation_from_triangle(triangle.relation) != self.relation {
-            return Err(MeshFacePairValidationError::TriangleRelationMismatch);
-        }
-
-        match self.relation {
-            MeshFacePairRelation::Candidate => {
-                validate_segment_events(&triangle.left_edge_events)?;
-                validate_segment_events(&triangle.right_edge_events)?;
-                if triangle.coplanar.is_some() {
-                    return Err(
-                        MeshFacePairValidationError::NonCoplanarRelationHasCoplanarClassifier,
-                    );
-                }
-            }
-            MeshFacePairRelation::CoplanarTouching | MeshFacePairRelation::CoplanarOverlapping => {
-                if triangle.coplanar.is_none() {
-                    return Err(
-                        MeshFacePairValidationError::CoplanarRelationMissingCoplanarClassifier,
-                    );
-                }
-                if !triangle.left_edge_events.is_empty() || !triangle.right_edge_events.is_empty() {
-                    return Err(MeshFacePairValidationError::NonCandidateHasEdgeEvents);
-                }
-            }
-            MeshFacePairRelation::PlaneSeparated | MeshFacePairRelation::Unknown => {
-                if !triangle.left_edge_events.is_empty() || !triangle.right_edge_events.is_empty() {
-                    return Err(MeshFacePairValidationError::NonCandidateHasEdgeEvents);
-                }
-                if triangle.coplanar.is_some()
-                    && self.relation != MeshFacePairRelation::PlaneSeparated
-                {
-                    return Err(
-                        MeshFacePairValidationError::NonCoplanarRelationHasCoplanarClassifier,
-                    );
-                }
-            }
-            MeshFacePairRelation::BoundsDisjoint => {}
-        }
-        Ok(())
-    }
-
-    /// Validate this scheduler record against the exact source meshes.
-    ///
-    /// Local validation checks that the retained broad-phase relation, optional
-    /// narrow-phase classifier, and candidate split events agree. Source replay
-    /// recomputes the face-pair scheduler from `left` and `right` using the
-    /// retained face handles and requires exact equality with this record. This
-    /// keeps broad-phase rejection, retained-plane separation, coplanar
-    /// refinement, and candidate construction evidence attached to the source
-    pub fn validate_against_sources(
-        &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-    ) -> Result<(), MeshFacePairValidationError> {
-        self.validate()?;
-        let replay = classify_mesh_face_pair(left, self.left_face, right, self.right_face)
-            .map_err(|_| MeshFacePairValidationError::SourceReplayMismatch)?;
-        if self == &replay {
-            Ok(())
-        } else {
-            Err(MeshFacePairValidationError::SourceReplayMismatch)
-        }
-    }
-
-    /// Classify whether this retained face-pair record is fresh for the source meshes.
-    pub fn freshness_against_sources(
-        &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-    ) -> MeshFacePairFreshness {
-        match self.validate_against_sources(left, right) {
-            Ok(()) => MeshFacePairFreshness::Current,
-            Err(error) => error.into(),
-        }
-    }
 }
 
 /// Classify one face pair from two exact meshes.
-pub fn classify_mesh_face_pair(
+pub(crate) fn classify_mesh_face_pair(
     left: &ExactMesh,
     left_face: usize,
     right: &ExactMesh,
@@ -341,7 +150,7 @@ pub fn classify_mesh_face_pair(
 /// disjointness. Coplanar touching/overlapping, non-coplanar candidate, and
 /// unknown pairs remain because they are exactly the cases that need
 /// overlap-graph construction or a policy decision.
-pub fn classify_mesh_face_pairs(
+pub(crate) fn classify_mesh_face_pairs(
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> Result<Vec<MeshFacePairClassification>, MeshError> {
@@ -379,17 +188,6 @@ fn classify_mesh_triangles_without_candidate_events(
         right.vertices()[right_tri[2]].clone(),
     ];
     classify_triangle_triangle_without_candidate_events(&points, [0, 1, 2], [3, 4, 5])
-}
-
-fn validate_segment_events(
-    events: &[SegmentPlaneIntersection],
-) -> Result<(), MeshFacePairValidationError> {
-    for event in events {
-        event
-            .validate()
-            .map_err(|_| MeshFacePairValidationError::InvalidSegmentPlaneEvent)?;
-    }
-    Ok(())
 }
 
 fn retained_triangle_edge_events(

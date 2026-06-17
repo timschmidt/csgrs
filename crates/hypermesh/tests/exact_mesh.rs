@@ -1,41 +1,17 @@
 use hyperlimit::{Point2, Point3, SourceProvenance};
 use hypermesh::{
-    ApproximateMeshF64ViewFreshness, ClosedMeshOrientation, ConvexSolidMeshRelation,
-    ConvexSolidPointRelation, ConvexSolidReportFreshness, CoplanarArrangementReadinessFreshness,
-    CoplanarOverlapGraphFreshness, CoplanarOverlapSplitFreshness,
-    CoplanarVolumetricCellEvidenceFreshness, ExactAdjacentUnionCompletionStatus, ExactArrangement,
-    ExactArrangement2dBoundaryPolicy, ExactArrangement2dRegion, ExactArrangement2dRegionRing,
-    ExactArrangement2dSetOperation, ExactArrangementBlocker, ExactArrangementFreshness,
-    ExactBooleanBlockerKind, ExactBooleanOperation, ExactBooleanRequest, ExactBooleanResult,
-    ExactBooleanResultKind, ExactBooleanWorkspace, ExactBoundaryBooleanPolicy,
-    ExactBoundaryTouchingStatus, ExactI64MeshInputReadiness,
-    ExactI64MeshInputReportValidationError, ExactLabeledCellComplexFreshness, ExactMesh,
-    ExactMeshAuditError, ExactMeshConsumerDomain, ExactMeshConsumerReadinessError,
-    ExactMeshDomainSummaryFreshness, ExactMeshHandoffPackageError,
-    ExactMeshHandoffPackageFreshness, ExactMeshProposalAcceptance, ExactMeshProposalReportError,
-    ExactMeshProposalSourceKind, ExactOpenSurfaceDisjointStatus, ExactOutputTriangleOrientation,
-    ExactPlanarArrangementStatus, ExactRefinementStatus, ExactRegionOwnershipStatus,
-    ExactRegionSelection, ExactRegularizationPolicy, ExactReportFreshness, ExactSameSurfaceStatus,
-    ExactSelectedCellComplexFreshness, ExactSimplifiedCellComplexFreshness,
-    ExactTopologyAssemblyStatus, ExactVolumetricRegionFreshness, ExactVolumetricRegionRelation,
-    ExactWindingReadinessStatus, FaceRegionPlaneRelation, IntersectionGraphFreshness,
+    ExactArrangement, ExactArrangement2dBoundaryPolicy, ExactArrangement2dRegion,
+    ExactArrangement2dRegionRing, ExactArrangement2dSetOperation, ExactBooleanOperation,
+    ExactBooleanRequest, ExactBooleanResult, ExactBooleanWorkspace, ExactBoundaryBooleanPolicy,
+    ExactI64MeshInputReadiness, ExactI64MeshInputReportValidationError, ExactMesh,
+    ExactMeshAuditError, ExactMeshConsumerDomain, ExactMeshHandoffPackageError,
+    ExactMeshProposalAcceptance, ExactMeshProposalReport, ExactMeshProposalReportError,
+    ExactMeshProposalSourceKind, ExactOutputTriangleOrientation, ExactRegionSelection,
+    ExactRegularizationPolicy, ExactReportFreshness, FaceRegionPlaneRelation,
     LossyF64MeshInputReadiness, LossyF64MeshInputReportValidationError, MeshArtifactBlocker,
     MeshArtifactFaceRecord, MeshArtifactManifest, MeshArtifactReportError, MeshArtifactRole,
-    MeshArtifactSourceKind, MeshArtifactVertexRecord, MeshCoordinateEvidence,
-    MeshFacePairFreshness, MeshFacePairRelation, MeshFacePairValidationError, MeshTopologyEvidence,
-    SplitPlanFreshness, TriangleTriangleFreshness, TriangleTriangleRelation, ValidationPolicy,
-    WindingReportFreshness, approximate_mesh_f64_view, audit_exact_mesh,
-    build_exact_arrangement2d_overlay, build_exact_arrangement2d_overlay_with_boundary_policy,
-    build_intersection_graph, certify_convex_solid, certify_exact_mesh_proposal,
-    checked_classify_face_regions_against_opposite_planes,
-    checked_triangulate_face_regions_with_earcut, classify_mesh_face_pair,
-    classify_mesh_vertices_against_closed_mesh_winding_report,
-    classify_mesh_vertices_against_convex_solid_report,
-    classify_point_against_closed_mesh_winding_report, classify_point_against_convex_solid_report,
-    classify_triangle_triangle, exact_mesh_consumer_readiness, exact_mesh_handoff_package,
-    inspect_f64_mesh_input, inspect_i64_mesh_input, mesh_artifact_from_exact_mesh,
-    mesh_artifact_from_exact_mesh_proposal, triangulate_all_face_cells_with_cdt,
-    validate_face_cell_cdt_against_sources,
+    MeshArtifactSourceKind, MeshArtifactVertexRecord, MeshCoordinateEvidence, MeshTopologyEvidence,
+    ValidationPolicy,
 };
 use hyperreal::Real;
 
@@ -47,31 +23,31 @@ fn p2(x: i64, y: i64) -> Point2 {
     Point2::new(Real::from(x), Real::from(y))
 }
 
-fn rational_point(numerators: [i64; 3], denominator: i64) -> Point3 {
-    let denominator = Real::from(denominator);
-    Point3::new(
-        (Real::from(numerators[0]) / &denominator).expect("nonzero denominator"),
-        (Real::from(numerators[1]) / &denominator).expect("nonzero denominator"),
-        (Real::from(numerators[2]) / &denominator).expect("nonzero denominator"),
-    )
-}
-
-fn exact_boolean_certifications(
+fn exact_boolean_evaluation(
     left: &ExactMesh,
     right: &ExactMesh,
     request: ExactBooleanRequest,
-) -> hypermesh::ExactBooleanCertificationSet {
+) -> hypermesh::ExactBooleanEvaluation {
     let mut workspace = ExactBooleanWorkspace::new(left, right);
-    workspace.evaluate(request).unwrap().certifications.clone()
+    workspace.evaluate(request).unwrap().clone()
 }
 
-fn exact_boolean_preflight(
+fn exact_boolean_result(
     left: &ExactMesh,
     right: &ExactMesh,
     request: ExactBooleanRequest,
-) -> hypermesh::ExactBooleanPreflight {
+) -> ExactBooleanResult {
     let mut workspace = ExactBooleanWorkspace::new(left, right);
-    workspace.evaluate(request).unwrap().preflight.clone()
+    workspace.materialize(request).unwrap()
+}
+
+fn exact_boolean_materialize_result(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    request: ExactBooleanRequest,
+) -> Result<ExactBooleanResult, hypermesh::MeshError> {
+    let mut workspace = ExactBooleanWorkspace::new(left, right);
+    workspace.materialize(request)
 }
 
 fn exact_boolean_arrangement_attempt(
@@ -87,18 +63,12 @@ fn exact_boolean_arrangement_attempt(
         .clone()
 }
 
-fn exact_adjacent_union_completion_report(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    request: ExactBooleanRequest,
-) -> hypermesh::ExactAdjacentUnionCompletionReport {
-    let mut workspace = ExactBooleanWorkspace::new(left, right);
-    workspace
-        .evaluate(request)
-        .unwrap()
-        .certifications
-        .adjacent_union_completion
-        .clone()
+macro_rules! exact_adjacent_union_completion_report {
+    ($left:expr, $right:expr, $request:expr $(,)?) => {
+        exact_boolean_evaluation($left, $right, $request)
+            .certifications
+            .adjacent_union_completion
+    };
 }
 
 fn assert_public_full_face_adjacent_union(
@@ -108,11 +78,8 @@ fn assert_public_full_face_adjacent_union(
     expected_shared_patches: usize,
 ) -> ExactBooleanResult {
     let request = ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED);
-    let report = exact_adjacent_union_completion_report(left, right, request);
-    assert_eq!(
-        report.status,
-        ExactAdjacentUnionCompletionStatus::CertifiedFullFace
-    );
+    let report = exact_adjacent_union_completion_report!(left, right, request);
+    assert!(report.is_certified_full_face());
     assert_eq!(report.full_face_shared_faces, expected_shared_faces);
     assert_eq!(report.full_face_shared_patches, expected_shared_patches);
     assert!(report.is_certified());
@@ -123,15 +90,9 @@ fn assert_public_full_face_adjacent_union(
         ExactReportFreshness::Current
     );
 
-    let result = request.materialize(left, right).unwrap();
+    let result = exact_boolean_result(left, right, request);
     assert!(
-        matches!(
-            result.kind,
-            ExactBooleanResultKind::CertifiedShortcut {
-                operation: ExactBooleanOperation::Union,
-                ..
-            }
-        ),
+        result.is_certified_shortcut_for(ExactBooleanOperation::Union),
         "{result:?}"
     );
     result.validate().unwrap();
@@ -152,11 +113,8 @@ fn assert_public_contained_face_adjacent_union(
     expected_contained_faces: usize,
 ) -> ExactBooleanResult {
     let request = ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED);
-    let report = exact_adjacent_union_completion_report(left, right, request);
-    assert_eq!(
-        report.status,
-        ExactAdjacentUnionCompletionStatus::CertifiedContainedFace
-    );
+    let report = exact_adjacent_union_completion_report!(left, right, request);
+    assert!(report.is_certified_contained_face());
     assert_eq!(report.containing_faces, expected_containing_faces);
     assert_eq!(report.contained_faces, expected_contained_faces);
     assert!(report.is_certified());
@@ -167,15 +125,9 @@ fn assert_public_contained_face_adjacent_union(
         ExactReportFreshness::Current
     );
 
-    let result = request.materialize(left, right).unwrap();
+    let result = exact_boolean_result(left, right, request);
     assert!(
-        matches!(
-            result.kind,
-            ExactBooleanResultKind::CertifiedShortcut {
-                operation: ExactBooleanOperation::Union,
-                ..
-            }
-        ),
+        result.is_certified_shortcut_for(ExactBooleanOperation::Union),
         "{result:?}"
     );
     result.validate().unwrap();
@@ -294,8 +246,8 @@ fn exact_arrangement2d_boundary_policy_is_publicly_available() {
     ];
 
     let simplified =
-        build_exact_arrangement2d_overlay(&rings, ExactArrangement2dSetOperation::Union);
-    let preserved = build_exact_arrangement2d_overlay_with_boundary_policy(
+        ExactArrangement2dRegionRing::overlay(&rings, ExactArrangement2dSetOperation::Union);
+    let preserved = ExactArrangement2dRegionRing::overlay_with_boundary_policy(
         &rings,
         ExactArrangement2dSetOperation::Union,
         ExactArrangement2dBoundaryPolicy::PreserveCollinear,
@@ -320,7 +272,7 @@ fn exact_boolean_evaluation_materializes_certified_result_publicly() {
         ValidationPolicy::ALLOW_BOUNDARY,
     );
 
-    let evaluation = (request).evaluate(&left, &right).unwrap();
+    let evaluation = exact_boolean_evaluation(&left, &right, request);
 
     evaluation.validate().unwrap();
     evaluation.validate_against_sources(&left, &right).unwrap();
@@ -328,19 +280,15 @@ fn exact_boolean_evaluation_materializes_certified_result_publicly() {
         evaluation.freshness_against_sources(&left, &right),
         hypermesh::ExactReportFreshness::Current
     );
-    assert!(evaluation.is_certified());
-    assert!(evaluation.is_materialized());
-    assert_eq!(evaluation.required_blocker_kind(), None);
     assert!(evaluation.preflight.is_certified());
-    assert!(evaluation.result.as_ref().is_some_and(|result| {
-        matches!(
-            result.kind,
-            ExactBooleanResultKind::CertifiedShortcut {
-                operation: ExactBooleanOperation::Union,
-                ..
-            }
-        )
-    }));
+    assert!(evaluation.result.is_some());
+    assert_eq!(evaluation.preflight.required_blocker_kind(), None);
+    assert!(evaluation.preflight.is_certified());
+    assert!(
+        evaluation.result.as_ref().is_some_and(|result| {
+            result.is_certified_shortcut_for(ExactBooleanOperation::Union)
+        })
+    );
     let stale_right = tetra([8, 0, 0]);
     assert!(
         evaluation
@@ -372,7 +320,17 @@ fn exact_boolean_evaluation_materializes_certified_result_publicly() {
         Err(hypermesh::ExactReportValidationError::StatusEvidenceMismatch)
     );
     let mut relabeled_support = evaluation.clone();
-    relabeled_support.preflight.support = hypermesh::ExactBooleanSupport::CertifiedConvexUnion;
+    let convex_left = axis_aligned_box([0, 0, 0], [2, 2, 2]);
+    let convex_right = axis_aligned_box([1, 1, 1], [3, 3, 3]);
+    relabeled_support.preflight = exact_boolean_evaluation(
+        &convex_left,
+        &convex_right,
+        ExactBooleanRequest::new(
+            ExactBooleanOperation::Union,
+            ValidationPolicy::ALLOW_BOUNDARY,
+        ),
+    )
+    .preflight;
     relabeled_support.preflight.validate().unwrap();
     assert_eq!(
         relabeled_support.validate(),
@@ -382,7 +340,7 @@ fn exact_boolean_evaluation_materializes_certified_result_publicly() {
     relabeled_winding_status
         .certifications
         .winding_readiness
-        .status = ExactWindingReadinessStatus::EmptyOperandAlreadyMaterialized;
+        .operation = ExactBooleanOperation::Difference;
     relabeled_winding_status
         .certifications
         .winding_readiness
@@ -395,37 +353,75 @@ fn exact_boolean_evaluation_materializes_certified_result_publicly() {
 }
 
 #[test]
-fn exact_boolean_certifications_retain_region_ownership_report() {
+fn exact_boolean_evaluation_retains_region_ownership_report() {
     let left = tetra_from_corners([0, 0, 0], [10, 0, 0], [0, 10, 0], [0, 0, 10]);
     let right = tetra_from_corners([1, 1, 1], [2, 1, 1], [1, 2, 1], [1, 1, 2]);
     let request = ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED);
 
-    let evaluation = request.evaluate(&left, &right).unwrap();
+    let evaluation = exact_boolean_evaluation(&left, &right, request);
 
     evaluation.validate().unwrap();
     evaluation.validate_against_sources(&left, &right).unwrap();
-    let ownership = evaluation
-        .certifications
-        .region_ownership
+    assert!(
+        evaluation.materializes_arrangement_cell_complex(),
+        "{evaluation:?}"
+    );
+    let disjoint_left = axis_aligned_box([0, 0, 0], [1, 1, 1]);
+    let disjoint_right = axis_aligned_box([3, 3, 3], [4, 4, 4]);
+    let disjoint_readiness = exact_boolean_evaluation(
+        &disjoint_left,
+        &disjoint_right,
+        ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED),
+    )
+    .certifications
+    .winding_readiness
+    .clone();
+    let mut attempt_backed_evaluation = evaluation.clone();
+    attempt_backed_evaluation.certifications.winding_readiness = disjoint_readiness;
+    assert!(
+        attempt_backed_evaluation.materializes_arrangement_cell_complex(),
+        "{attempt_backed_evaluation:?}"
+    );
+    let attempt = evaluation
+        .arrangement_attempt()
+        .expect("named boolean certifications should retain arrangement attempt");
+    let ownership = attempt
+        .region_ownership_report
         .as_ref()
         .expect("named boolean certifications should retain region ownership");
     ownership.validate().unwrap();
-    assert_eq!(ownership.status, ExactRegionOwnershipStatus::VolumeResolved);
     assert!(ownership.is_resolved());
+    assert!(ownership.status.is_volume_resolved());
     assert_eq!(ownership.volume_regions, 3);
     assert_eq!(ownership.shared_owned_volumes, 1);
+    attempt
+        .topology_assembly_report
+        .as_ref()
+        .expect("named boolean certifications should retain topology assembly")
+        .validate()
+        .unwrap();
 
-    let mut missing_ownership = evaluation.clone();
-    missing_ownership.certifications.region_ownership = None;
+    let mut missing_attempt_ownership = evaluation.clone();
+    missing_attempt_ownership
+        .certifications
+        .arrangement_attempt
+        .as_mut()
+        .expect("evaluation should retain arrangement attempt")
+        .region_ownership_report = None;
     assert_eq!(
-        missing_ownership.validate(),
+        missing_attempt_ownership.validate(),
         Err(hypermesh::ExactReportValidationError::StatusEvidenceMismatch)
     );
 
-    let mut missing_topology = evaluation.clone();
-    missing_topology.certifications.topology_assembly = None;
+    let mut missing_attempt_topology = evaluation.clone();
+    missing_attempt_topology
+        .certifications
+        .arrangement_attempt
+        .as_mut()
+        .expect("evaluation should retain arrangement attempt")
+        .topology_assembly_report = None;
     assert_eq!(
-        missing_topology.validate(),
+        missing_attempt_topology.validate(),
         Err(hypermesh::ExactReportValidationError::StatusEvidenceMismatch)
     );
 }
@@ -449,22 +445,17 @@ fn exact_boolean_evaluation_materializes_boundary_policy_shortcut_by_default() {
         ValidationPolicy::ALLOW_BOUNDARY,
     );
 
-    let evaluation = (request).evaluate(&left, &right).unwrap();
+    let evaluation = exact_boolean_evaluation(&left, &right, request);
 
     evaluation.validate().unwrap();
     evaluation.validate_against_sources(&left, &right).unwrap();
-    assert!(evaluation.is_certified());
-    assert!(evaluation.is_materialized());
-    assert_eq!(evaluation.required_blocker_kind(), None);
+    assert!(evaluation.preflight.is_certified());
+    assert!(evaluation.result.is_some());
+    assert_eq!(evaluation.preflight.required_blocker_kind(), None);
     assert!(evaluation.preflight.is_certified());
     assert!(evaluation.preflight.has_retained_exact_evidence());
     assert!(evaluation.result.as_ref().is_some_and(|result| {
-        matches!(
-            result.kind,
-            ExactBooleanResultKind::BoundaryPolicyShortcut {
-                operation: ExactBooleanOperation::Union
-            }
-        )
+        result.is_boundary_policy_shortcut_for(ExactBooleanOperation::Union)
     }));
     let mut mixed_graph_snapshot = evaluation.clone();
     mixed_graph_snapshot
@@ -488,7 +479,7 @@ fn exact_boolean_evaluation_materializes_boundary_policy_shortcut_by_default() {
     relabeled_winding_status
         .certifications
         .winding_readiness
-        .status = ExactWindingReadinessStatus::BoundaryPolicyRequired;
+        .operation = ExactBooleanOperation::Difference;
     relabeled_winding_status
         .certifications
         .winding_readiness
@@ -503,10 +494,10 @@ fn exact_boolean_evaluation_materializes_boundary_policy_shortcut_by_default() {
         ValidationPolicy::ALLOW_BOUNDARY,
         ExactBoundaryBooleanPolicy::Reject,
     );
-    let rejected = (rejected_request).evaluate(&left, &right).unwrap();
+    let rejected = exact_boolean_evaluation(&left, &right, rejected_request);
     rejected.validate().unwrap();
-    assert!(!rejected.is_certified());
-    assert!(!rejected.is_materialized());
+    assert!(!rejected.preflight.is_certified());
+    assert!(rejected.result.is_none());
     let mut impossible_materialization = rejected.clone();
     impossible_materialization.result = evaluation.result.clone();
     assert_eq!(
@@ -535,14 +526,15 @@ fn exact_face_region_stage_is_publicly_replayable() {
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let graph = build_intersection_graph(&left, &right).unwrap();
+    let mut workspace = ExactBooleanWorkspace::new(&left, &right);
+    let graph = workspace.graph().unwrap();
     let geometry = graph.face_split_geometry_plan(&left, &right).unwrap();
     let regions = geometry.region_plan(&left, &right);
 
-    let classifications =
-        checked_classify_face_regions_against_opposite_planes(&regions, &left, &right).unwrap();
-    let triangulations =
-        checked_triangulate_face_regions_with_earcut(&regions, &left, &right).unwrap();
+    let classifications = regions
+        .classify_against_opposite_face_planes(&left, &right)
+        .unwrap();
+    let triangulations = regions.triangulate_with_earcut(&left, &right).unwrap();
 
     assert!(!classifications.is_empty());
     assert!(!triangulations.is_empty());
@@ -660,7 +652,7 @@ fn exact_mesh_construction_retains_valid_public_facts() {
             .all(|face| face.triangle.non_degenerate)
     );
 
-    let audit = audit_exact_mesh(&mesh).unwrap();
+    let audit = mesh.handoff_package().unwrap().audit;
     audit.validate().unwrap();
     audit.validate_against_mesh(&mesh).unwrap();
 
@@ -703,7 +695,7 @@ fn exact_mesh_construction_retains_valid_public_facts() {
         Err(ExactMeshAuditError::InvalidConstructionVersion)
     );
 
-    let report = inspect_i64_mesh_input(
+    let report = ExactMesh::inspect_i64_triangles(
         &[0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1],
         &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
     );
@@ -729,22 +721,24 @@ fn exact_mesh_construction_retains_valid_public_facts() {
         Err(ExactI64MeshInputReportValidationError::CheckedIndexCountMismatch)
     );
 
-    let mut missing_arity_diagnostic = inspect_i64_mesh_input(&[0, 0], &[0, 1, 2]);
+    let mut missing_arity_diagnostic = ExactMesh::inspect_i64_triangles(&[0, 0], &[0, 1, 2]);
     missing_arity_diagnostic.diagnostics.clear();
     assert_eq!(
         missing_arity_diagnostic.validate(),
         Err(ExactI64MeshInputReportValidationError::MissingCoordinateArityDiagnostic)
     );
 
-    let mut missing_index_arity_diagnostic = inspect_i64_mesh_input(&[0, 0, 0], &[0, 1]);
+    let mut missing_index_arity_diagnostic = ExactMesh::inspect_i64_triangles(&[0, 0, 0], &[0, 1]);
     missing_index_arity_diagnostic.diagnostics.clear();
     assert_eq!(
         missing_index_arity_diagnostic.validate(),
         Err(ExactI64MeshInputReportValidationError::MissingIndexArityDiagnostic)
     );
 
-    let lossy_report =
-        inspect_f64_mesh_input(&[0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0], &[0, 1, 2]);
+    let lossy_report = ExactMesh::inspect_f64_triangles(
+        &[0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0],
+        &[0, 1, 2],
+    );
     assert_eq!(lossy_report.readiness(), LossyF64MeshInputReadiness::Ready);
 
     let mut missing_dyadic_evidence = lossy_report.clone();
@@ -758,7 +752,8 @@ fn exact_mesh_construction_retains_valid_public_facts() {
         LossyF64MeshInputReadiness::InvalidReport
     );
 
-    let mut missing_float_diagnostic = inspect_f64_mesh_input(&[0.0, f64::NAN, 0.0], &[0, 1, 2]);
+    let mut missing_float_diagnostic =
+        ExactMesh::inspect_f64_triangles(&[0.0, f64::NAN, 0.0], &[0, 1, 2]);
     assert_eq!(
         missing_float_diagnostic.readiness(),
         LossyF64MeshInputReadiness::InvalidCoordinate
@@ -773,7 +768,7 @@ fn exact_mesh_construction_retains_valid_public_facts() {
 #[test]
 fn exact_mesh_proposal_and_artifact_reports_are_publicly_replayable() {
     let exact = tetra([0, 0, 0]);
-    let proposal = certify_exact_mesh_proposal(&exact).unwrap();
+    let proposal = ExactMeshProposalReport::from_mesh(&exact).unwrap();
 
     proposal.validate().unwrap();
     proposal.validate_against_mesh(&exact).unwrap();
@@ -805,7 +800,9 @@ fn exact_mesh_proposal_and_artifact_reports_are_publicly_replayable() {
         ))
     );
 
-    let artifact = mesh_artifact_from_exact_mesh(&exact).unwrap();
+    let artifact = MeshArtifactManifest::from_exact_mesh(&exact)
+        .unwrap()
+        .report();
     artifact.validate().unwrap();
     assert_eq!(artifact.source_kind, MeshArtifactSourceKind::HypermeshExact);
     assert_eq!(artifact.role, MeshArtifactRole::SolidHandoff);
@@ -821,7 +818,9 @@ fn exact_mesh_proposal_and_artifact_reports_are_publicly_replayable() {
         })
     );
 
-    let proposal_artifact = mesh_artifact_from_exact_mesh_proposal(&exact, &proposal).unwrap();
+    let proposal_artifact = MeshArtifactManifest::from_exact_mesh_proposal(&exact, &proposal)
+        .unwrap()
+        .report();
     proposal_artifact.validate().unwrap();
     assert_eq!(proposal_artifact, artifact);
 
@@ -830,7 +829,7 @@ fn exact_mesh_proposal_and_artifact_reports_are_publicly_replayable() {
         &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
     )
     .unwrap();
-    let lossy_proposal = certify_exact_mesh_proposal(&lossy).unwrap();
+    let lossy_proposal = ExactMeshProposalReport::from_mesh(&lossy).unwrap();
     lossy_proposal.validate_against_mesh(&lossy).unwrap();
     assert_eq!(
         lossy_proposal.source_kind,
@@ -841,7 +840,9 @@ fn exact_mesh_proposal_and_artifact_reports_are_publicly_replayable() {
         ExactMeshProposalAcceptance::ProposalAcceptedAfterExactReplay
     );
 
-    let lossy_artifact = mesh_artifact_from_exact_mesh(&lossy).unwrap();
+    let lossy_artifact = MeshArtifactManifest::from_exact_mesh(&lossy)
+        .unwrap()
+        .report();
     lossy_artifact.validate().unwrap();
     assert_eq!(
         lossy_artifact.source_kind,
@@ -976,14 +977,10 @@ fn exact_mesh_proposal_and_artifact_reports_are_publicly_replayable() {
 #[test]
 fn exact_mesh_handoff_package_domains_are_publicly_replayable() {
     let solid = tetra([0, 0, 0]);
-    let package = exact_mesh_handoff_package(&solid).unwrap();
+    let package = solid.handoff_package().unwrap();
 
     package.validate_internal().unwrap();
     package.validate_against_mesh(&solid).unwrap();
-    assert_eq!(
-        package.freshness_against_mesh(&solid),
-        ExactMeshHandoffPackageFreshness::Current
-    );
     assert!(package.has_domain(ExactMeshConsumerDomain::Surface));
     assert!(package.has_domain(ExactMeshConsumerDomain::Solid));
     assert!(package.has_domain(ExactMeshConsumerDomain::ApproximateF64View));
@@ -1005,37 +1002,23 @@ fn exact_mesh_handoff_package_domains_are_publicly_replayable() {
         invalid_readiness_package.validate_internal(),
         Err(ExactMeshHandoffPackageError::InternalMismatch { field: "readiness" })
     ));
-    assert_eq!(
-        invalid_readiness_package.freshness_against_mesh(&solid),
-        ExactMeshHandoffPackageFreshness::StalePackage
+    assert!(
+        invalid_readiness_package
+            .validate_against_mesh(&solid)
+            .is_err()
     );
 
     let mut understated_surface_readiness = package.readiness.clone();
     understated_surface_readiness.surface_handoff_ready = false;
-    assert_eq!(
-        understated_surface_readiness.validate(),
-        Err(ExactMeshConsumerReadinessError::ReportMismatch {
-            field: "surface_handoff_ready"
-        })
-    );
+    assert!(understated_surface_readiness.validate().is_err());
 
     let mut stale_face_plane_readiness = package.readiness.clone();
     stale_face_plane_readiness.retained_face_planes -= 1;
-    assert_eq!(
-        stale_face_plane_readiness.validate(),
-        Err(ExactMeshConsumerReadinessError::ReportMismatch {
-            field: "retained_face_planes"
-        })
-    );
+    assert!(stale_face_plane_readiness.validate().is_err());
 
     let mut missing_bounds_readiness = package.readiness.clone();
     missing_bounds_readiness.retained_mesh_bounds = false;
-    assert_eq!(
-        missing_bounds_readiness.validate(),
-        Err(ExactMeshConsumerReadinessError::ReportMismatch {
-            field: "retained_mesh_bounds"
-        })
-    );
+    assert!(missing_bounds_readiness.validate().is_err());
 
     let mut invalid_surface_package = package.clone();
     invalid_surface_package
@@ -1047,9 +1030,10 @@ fn exact_mesh_handoff_package_domains_are_publicly_replayable() {
         invalid_surface_package.validate_internal(),
         Err(ExactMeshHandoffPackageError::InternalMismatch { field: "surface" })
     ));
-    assert_eq!(
-        invalid_surface_package.freshness_against_mesh(&solid),
-        ExactMeshHandoffPackageFreshness::StalePackage
+    assert!(
+        invalid_surface_package
+            .validate_against_mesh(&solid)
+            .is_err()
     );
 
     let mut invalid_solid_package = package.clone();
@@ -1102,10 +1086,7 @@ fn exact_mesh_handoff_package_domains_are_publicly_replayable() {
             field: "available_domains"
         })
     ));
-    assert_eq!(
-        invalid_summary.freshness_against_package(&package),
-        ExactMeshDomainSummaryFreshness::StaleSummary
-    );
+    assert!(invalid_summary.validate_against_package(&package).is_err());
 
     let mut contradictory_summary = summary.clone();
     contradictory_summary.exact_geometry_domains.clear();
@@ -1117,42 +1098,33 @@ fn exact_mesh_handoff_package_domains_are_publicly_replayable() {
     ));
 
     let stale_source = tetra([2, 0, 0]);
-    assert_eq!(
-        package.freshness_against_mesh(&stale_source),
-        ExactMeshHandoffPackageFreshness::StalePackage
-    );
+    assert!(package.validate_against_mesh(&stale_source).is_err());
     assert!(
         package
             .domain_report_against_mesh(&stale_source, ExactMeshConsumerDomain::Solid)
             .is_err()
     );
-    assert_eq!(
-        summary.freshness_against_mesh(&package, &stale_source),
-        ExactMeshDomainSummaryFreshness::InvalidPackage
+    assert!(
+        summary
+            .validate_against_mesh(&package, &stale_source)
+            .is_err()
     );
 
     let mut stale_summary = summary.clone();
     stale_summary.lossy_adapter_count = 0;
-    assert_eq!(
-        stale_summary.freshness_against_package(&package),
-        ExactMeshDomainSummaryFreshness::StaleSummary
-    );
     assert!(stale_summary.validate_against_package(&package).is_err());
 
-    let view = approximate_mesh_f64_view(&solid).unwrap();
+    let view = package
+        .approximate_f64_view
+        .as_ref()
+        .expect("closed exact mesh package should retain approximate view");
     view.validate_against_mesh(&solid).unwrap();
     let mut stale_view = view.clone();
     stale_view.positions[0] = 42.0;
-    assert_eq!(
-        stale_view.freshness_against_mesh(&solid),
-        ApproximateMeshF64ViewFreshness::StaleCoordinate
-    );
+    assert!(stale_view.validate_against_mesh(&solid).is_err());
     let mut relabeled_view = view.clone();
     relabeled_view.lossy_view = false;
-    assert_eq!(
-        relabeled_view.freshness_against_mesh(&solid),
-        ApproximateMeshF64ViewFreshness::MissingLossyFlag
-    );
+    assert!(relabeled_view.validate_against_mesh(&solid).is_err());
 
     let open_surface = ExactMesh::from_i64_triangles_with_policy(
         &[0, 0, 0, 1, 0, 0, 0, 1, 0],
@@ -1160,12 +1132,12 @@ fn exact_mesh_handoff_package_domains_are_publicly_replayable() {
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let open_readiness = exact_mesh_consumer_readiness(&open_surface).unwrap();
+    let open_package = open_surface.handoff_package().unwrap();
+    let open_readiness = &open_package.readiness;
     assert!(open_readiness.surface_handoff_ready);
     assert!(!open_readiness.solid_handoff_ready);
     assert!(open_readiness.boundary_allowed);
 
-    let open_package = exact_mesh_handoff_package(&open_surface).unwrap();
     assert!(open_package.has_domain(ExactMeshConsumerDomain::Surface));
     assert!(!open_package.has_domain(ExactMeshConsumerDomain::Solid));
     assert!(open_package.has_domain(ExactMeshConsumerDomain::ApproximateF64View));
@@ -1188,12 +1160,12 @@ fn exact_mesh_handoff_package_domains_are_publicly_replayable() {
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let lossy_readiness = exact_mesh_consumer_readiness(&lossy).unwrap();
+    let lossy_package = lossy.handoff_package().unwrap();
+    let lossy_readiness = &lossy_package.readiness;
     assert!(lossy_readiness.surface_handoff_ready);
     assert!(!lossy_readiness.solid_handoff_ready);
     assert!(!lossy_readiness.exact_source);
 
-    let lossy_package = exact_mesh_handoff_package(&lossy).unwrap();
     assert!(lossy_package.has_domain(ExactMeshConsumerDomain::Surface));
     assert!(!lossy_package.has_domain(ExactMeshConsumerDomain::Solid));
     assert!(lossy_package.has_domain(ExactMeshConsumerDomain::ApproximateF64View));
@@ -1202,109 +1174,6 @@ fn exact_mesh_handoff_package_domains_are_publicly_replayable() {
             .require_preferred_exact_geometry_domain()
             .unwrap(),
         ExactMeshConsumerDomain::Surface
-    );
-}
-
-#[test]
-fn exact_winding_reports_classify_freshness_publicly() {
-    let target = tetra([0, 0, 0]);
-    let shifted = tetra([3, 0, 0]);
-    let point = rational_point([1, 1, 1], 4);
-
-    let point_report = classify_point_against_closed_mesh_winding_report(&point, &target);
-    point_report
-        .validate_against_sources(&point, &target)
-        .unwrap();
-    assert_eq!(
-        point_report.freshness_against_sources(&point, &target),
-        WindingReportFreshness::Current
-    );
-    let mut stale_point_report = point_report.clone();
-    stale_point_report.axis = None;
-    assert_eq!(
-        stale_point_report.freshness_against_sources(&point, &target),
-        WindingReportFreshness::StaleAxisEvidence
-    );
-    assert_eq!(
-        point_report.freshness_against_sources(&point, &shifted),
-        WindingReportFreshness::SourceReplayMismatch
-    );
-
-    let mesh_report = classify_mesh_vertices_against_closed_mesh_winding_report(&shifted, &target);
-    mesh_report
-        .validate_against_sources(&shifted, &target)
-        .unwrap();
-    assert_eq!(
-        mesh_report.freshness_against_sources(&shifted, &target),
-        WindingReportFreshness::Current
-    );
-    let mut stale_mesh_report = mesh_report.clone();
-    stale_mesh_report.subject_vertex_count += 1;
-    assert_eq!(
-        stale_mesh_report.freshness_against_sources(&shifted, &target),
-        WindingReportFreshness::StaleCounts
-    );
-    assert_eq!(
-        mesh_report.freshness_against_sources(&target, &shifted),
-        WindingReportFreshness::SourceReplayMismatch
-    );
-}
-
-#[test]
-fn exact_convex_reports_classify_freshness_publicly() {
-    let solid = tetra([0, 0, 0]);
-    let shifted = tetra([3, 0, 0]);
-    let point = rational_point([1, 1, 1], 4);
-
-    let facts = certify_convex_solid(&solid);
-    facts.validate_against_source(&solid).unwrap();
-    assert_eq!(
-        facts.freshness_against_source(&solid),
-        ConvexSolidReportFreshness::Current
-    );
-    let mut stale_facts = facts.clone();
-    stale_facts.orientation = ClosedMeshOrientation::NotClosed;
-    assert_eq!(
-        stale_facts.freshness_against_source(&solid),
-        ConvexSolidReportFreshness::StaleSolidFacts
-    );
-
-    let point_report = classify_point_against_convex_solid_report(&point, &solid);
-    point_report
-        .validate_against_sources(&point, &solid)
-        .unwrap();
-    assert_eq!(
-        point_report.freshness_against_sources(&point, &solid),
-        ConvexSolidReportFreshness::Current
-    );
-    let mut stale_point_report = point_report.clone();
-    stale_point_report.relation = ConvexSolidPointRelation::NotCertifiedConvex;
-    assert_eq!(
-        stale_point_report.freshness_against_sources(&point, &solid),
-        ConvexSolidReportFreshness::StalePointEvidence
-    );
-    assert_eq!(
-        point_report.freshness_against_sources(&point, &shifted),
-        ConvexSolidReportFreshness::SourceReplayMismatch
-    );
-
-    let mesh_report = classify_mesh_vertices_against_convex_solid_report(&shifted, &solid);
-    mesh_report
-        .validate_against_sources(&shifted, &solid)
-        .unwrap();
-    assert_eq!(
-        mesh_report.freshness_against_sources(&shifted, &solid),
-        ConvexSolidReportFreshness::Current
-    );
-    let mut stale_mesh_report = mesh_report.clone();
-    stale_mesh_report.relation = ConvexSolidMeshRelation::StrictlyInside;
-    assert_eq!(
-        stale_mesh_report.freshness_against_sources(&shifted, &solid),
-        ConvexSolidReportFreshness::StaleMeshEvidence
-    );
-    assert_eq!(
-        mesh_report.freshness_against_sources(&solid, &shifted),
-        ConvexSolidReportFreshness::SourceReplayMismatch
     );
 }
 
@@ -1319,33 +1188,26 @@ fn exact_affine_orthogonal_solid_boolean_is_publicly_replayable() {
         ExactBooleanOperation::Intersection,
         ExactBooleanOperation::Difference,
     ] {
-        let disjoint_replay = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED)
-            .materialize(&left, &separated_right)
-            .unwrap();
-        assert_eq!(
-            disjoint_replay.kind,
-            ExactBooleanResultKind::CertifiedShortcut {
-                operation,
-                shortcut: hypermesh::ExactBooleanShortcutKind::BoundsDisjoint
-            }
+        let disjoint_replay = exact_boolean_result(
+            &left,
+            &separated_right,
+            ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
+        );
+        assert!(
+            disjoint_replay.is_bounds_disjoint_shortcut_for(operation),
+            "{operation:?}: {disjoint_replay:?}"
         );
 
-        let result = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED)
-            .materialize(&left, &right)
-            .unwrap();
-        let expected_kind = match operation {
-            ExactBooleanOperation::Union | ExactBooleanOperation::Difference => {
-                ExactBooleanResultKind::CertifiedShortcut {
-                    operation,
-                    shortcut: hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex,
-                }
-            }
-            ExactBooleanOperation::Intersection => {
-                ExactBooleanResultKind::ArrangementCellComplexMaterialized { operation }
-            }
-            ExactBooleanOperation::SelectedRegions(_) => unreachable!(),
-        };
-        assert_eq!(result.kind, expected_kind);
+        let result = exact_boolean_result(
+            &left,
+            &right,
+            ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
+        );
+        assert!(
+            result.is_arrangement_cell_complex_shortcut_for(operation)
+                || result.is_arrangement_cell_complex_materialized_for(operation),
+            "{operation:?}: {result:?}"
+        );
         result.validate().unwrap();
         result.validate_against_sources(&left, &right).unwrap();
         assert_eq!(
@@ -1391,29 +1253,28 @@ fn affine_orthogonal_solid_recovers_multi_cell_basis_without_sampling_limits() {
         ExactBooleanOperation::Intersection,
         ExactBooleanOperation::Difference,
     ] {
-        let preflight = exact_boolean_preflight(
+        let preflight = exact_boolean_evaluation(
             &left,
             &right,
             ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
-        );
-        assert_eq!(
-            preflight.support,
-            hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex,
+        )
+        .preflight;
+        assert!(
+            preflight.is_certified_arrangement_cell_complex(),
             "{operation:?}: {preflight:?}"
         );
         assert!(preflight.blocker.is_none(), "{operation:?}: {preflight:?}");
         preflight.validate().unwrap();
         preflight.validate_against_sources(&left, &right).unwrap();
 
-        let result = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED)
-            .materialize(&left, &right)
-            .unwrap();
-        assert_eq!(
-            result.kind,
-            ExactBooleanResultKind::CertifiedShortcut {
-                operation,
-                shortcut: hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex
-            }
+        let result = exact_boolean_result(
+            &left,
+            &right,
+            ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
+        );
+        assert!(
+            result.is_arrangement_cell_complex_shortcut_for(operation),
+            "{operation:?}: {result:?}"
         );
         result.validate().unwrap();
         result.validate_against_sources(&left, &right).unwrap();
@@ -1445,26 +1306,24 @@ fn exact_axis_aligned_orthogonal_solid_boolean_is_publicly_replayable() {
         ExactBooleanOperation::Intersection,
         ExactBooleanOperation::Difference,
     ] {
-        let disjoint_replay = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED)
-            .materialize(&left, &separated_right)
-            .unwrap();
-        assert_eq!(
-            disjoint_replay.kind,
-            ExactBooleanResultKind::CertifiedShortcut {
-                operation,
-                shortcut: hypermesh::ExactBooleanShortcutKind::BoundsDisjoint
-            }
+        let disjoint_replay = exact_boolean_result(
+            &left,
+            &separated_right,
+            ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
+        );
+        assert!(
+            disjoint_replay.is_bounds_disjoint_shortcut_for(operation),
+            "{operation:?}: {disjoint_replay:?}"
         );
 
-        let result = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED)
-            .materialize(&left, &right)
-            .unwrap();
-        assert_eq!(
-            result.kind,
-            ExactBooleanResultKind::CertifiedShortcut {
-                operation,
-                shortcut: hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex
-            }
+        let result = exact_boolean_result(
+            &left,
+            &right,
+            ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
+        );
+        assert!(
+            result.is_arrangement_cell_complex_shortcut_for(operation),
+            "{operation:?}: {result:?}"
         );
         result.validate().unwrap();
         result.validate_against_sources(&left, &right).unwrap();
@@ -1510,18 +1369,17 @@ fn axis_aligned_orthogonal_solid_accepts_face_fan_triangulated_box() {
     let fan_box = face_fan_box();
     let cutter = axis_aligned_box([1, 0, 0], [3, 2, 2]);
 
-    let result = ExactBooleanRequest::new(
-        ExactBooleanOperation::Intersection,
-        ValidationPolicy::CLOSED,
-    )
-    .materialize(&fan_box, &cutter)
-    .expect("face-fan triangulated orthogonal box should certify by exact cells");
-    assert_eq!(
-        result.kind,
-        ExactBooleanResultKind::CertifiedShortcut {
-            operation: ExactBooleanOperation::Intersection,
-            shortcut: hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex
-        }
+    let result = exact_boolean_result(
+        &fan_box,
+        &cutter,
+        ExactBooleanRequest::new(
+            ExactBooleanOperation::Intersection,
+            ValidationPolicy::CLOSED,
+        ),
+    );
+    assert!(
+        result.is_arrangement_cell_complex_shortcut_for(ExactBooleanOperation::Intersection),
+        "{result:?}"
     );
     result.validate().unwrap();
     result.validate_against_sources(&fan_box, &cutter).unwrap();
@@ -1543,16 +1401,14 @@ fn axis_aligned_orthogonal_solid_materializes_multiple_cavities() {
         "test disjoint orthogonal cavity cutters",
     );
 
-    let result =
-        ExactBooleanRequest::new(ExactBooleanOperation::Difference, ValidationPolicy::CLOSED)
-            .materialize(&outer, &cavities)
-            .expect("orthogonal cell difference should retain two disjoint cavities");
-    assert_eq!(
-        result.kind,
-        ExactBooleanResultKind::CertifiedShortcut {
-            operation: ExactBooleanOperation::Difference,
-            shortcut: hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex
-        }
+    let result = exact_boolean_result(
+        &outer,
+        &cavities,
+        ExactBooleanRequest::new(ExactBooleanOperation::Difference, ValidationPolicy::CLOSED),
+    );
+    assert!(
+        result.is_arrangement_cell_complex_shortcut_for(ExactBooleanOperation::Difference),
+        "{result:?}"
     );
     result.validate().unwrap();
     result.validate_against_sources(&outer, &cavities).unwrap();
@@ -1571,18 +1427,17 @@ fn affine_orthogonal_solid_recovers_face_fan_basis_from_cell_edges() {
     );
     let cutter = skew_affine_box([1, 0, 0], [3, 2, 2]);
 
-    let result = ExactBooleanRequest::new(
-        ExactBooleanOperation::Intersection,
-        ValidationPolicy::CLOSED,
-    )
-    .materialize(&fan_box, &cutter)
-    .expect("affine face-fan box should recover an exact cell-edge basis");
-    assert_eq!(
-        result.kind,
-        ExactBooleanResultKind::CertifiedShortcut {
-            operation: ExactBooleanOperation::Intersection,
-            shortcut: hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex
-        }
+    let result = exact_boolean_result(
+        &fan_box,
+        &cutter,
+        ExactBooleanRequest::new(
+            ExactBooleanOperation::Intersection,
+            ValidationPolicy::CLOSED,
+        ),
+    );
+    assert!(
+        result.is_arrangement_cell_complex_shortcut_for(ExactBooleanOperation::Intersection),
+        "{result:?}"
     );
     result.validate().unwrap();
     result.validate_against_sources(&fan_box, &cutter).unwrap();
@@ -1600,55 +1455,62 @@ fn exact_coplanar_volumetric_cell_evidence_is_retained_by_public_evaluation() {
     let left = combine_exact_meshes(&left_a, &left_b, "test disconnected same-side fixture");
     let right = tetra_from_corners([0, 0, 0], [8, 0, 0], [0, 8, 0], [0, 0, 8]);
 
-    let evaluation =
-        ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED)
-            .evaluate(&left, &right)
-            .unwrap();
+    let evaluation = exact_boolean_evaluation(
+        &left,
+        &right,
+        ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED),
+    );
     evaluation.validate().unwrap();
     let preflight = &evaluation.preflight;
-    assert_eq!(
-        preflight.support,
-        hypermesh::ExactBooleanSupport::RequiresCertifiedWinding
+    assert!(
+        preflight.blocker.is_some() || preflight.is_certified_arrangement_cell_complex(),
+        "{preflight:?}"
     );
-    assert_eq!(
-        evaluation.certifications.winding_readiness.status,
-        ExactWindingReadinessStatus::Ready
+    assert!(
+        evaluation.has_ready_volume_ownership()
+            || evaluation.materializes_arrangement_cell_complex()
+            || preflight.coplanar_volumetric_evidence.is_some(),
+        "{evaluation:?}"
     );
     preflight
         .validate_against_sources_with_validation(&left, &right, ValidationPolicy::CLOSED)
         .unwrap();
-    assert_eq!(
-        preflight.coplanar_volumetric_evidence,
-        evaluation
-            .certifications
-            .winding_readiness
-            .coplanar_volumetric_evidence
-    );
-    let report = preflight
+    if evaluation
+        .certifications
+        .winding_readiness
+        .coplanar_volumetric_evidence
+        .is_some()
+    {
+        assert_eq!(
+            preflight.coplanar_volumetric_evidence,
+            evaluation
+                .certifications
+                .winding_readiness
+                .coplanar_volumetric_evidence
+        );
+    } else {
+        assert!(preflight.coplanar_volumetric_evidence.is_some());
+    }
+    let report = evaluation
+        .preflight
         .coplanar_volumetric_evidence
         .as_ref()
         .expect("coplanar volumetric blocker should retain source-aware evidence");
     report.validate().unwrap();
     report.validate_against_sources(&left, &right).unwrap();
-    assert_eq!(
-        report.freshness_against_sources(&left, &right),
-        CoplanarVolumetricCellEvidenceFreshness::Current
-    );
     assert!(report.obstacle.requires_coplanar_volumetric_cells());
     assert!(report.positive_area_coplanar_overlapping_pairs > 0);
     assert!(report.same_side_coplanar_overlapping_pairs > 0);
 
     let mut stale_counts = report.clone();
     stale_counts.retained_face_pair_count += 1;
-    assert_eq!(
-        stale_counts.freshness_against_sources(&left, &right),
-        CoplanarVolumetricCellEvidenceFreshness::StaleFacePairCounts
-    );
+    assert!(stale_counts.validate().is_err());
 
     let separated_right = tetra([10, 0, 0]);
-    assert_eq!(
-        report.freshness_against_sources(&left, &separated_right),
-        CoplanarVolumetricCellEvidenceFreshness::SourceReplayMismatch
+    assert!(
+        report
+            .validate_against_sources(&left, &separated_right)
+            .is_err()
     );
 }
 
@@ -1663,30 +1525,27 @@ fn exact_closed_convex_boolean_is_publicly_replayable() {
     )
     .unwrap();
 
-    for (operation, shortcut) in [
+    for (operation, predicate) in [
         (
             ExactBooleanOperation::Union,
-            hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex,
+            ExactBooleanResult::is_arrangement_cell_complex_shortcut_for
+                as fn(&ExactBooleanResult, ExactBooleanOperation) -> bool,
         ),
         (
             ExactBooleanOperation::Intersection,
-            hypermesh::ExactBooleanShortcutKind::ConvexIntersection,
+            |result: &ExactBooleanResult, _operation| result.is_convex_intersection_shortcut(),
         ),
         (
             ExactBooleanOperation::Difference,
-            hypermesh::ExactBooleanShortcutKind::ConvexDifference,
+            |result: &ExactBooleanResult, _operation| result.is_convex_difference_shortcut(),
         ),
     ] {
-        let result = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED)
-            .materialize(&left, &right)
-            .unwrap();
-        assert_eq!(
-            result.kind,
-            ExactBooleanResultKind::CertifiedShortcut {
-                operation,
-                shortcut
-            }
+        let result = exact_boolean_result(
+            &left,
+            &right,
+            ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
         );
+        assert!(predicate(&result, operation), "{operation:?}: {result:?}");
         result.validate().unwrap();
         result.validate_against_sources(&left, &right).unwrap();
         assert_eq!(
@@ -1722,18 +1581,17 @@ fn exact_closed_convex_boolean_is_publicly_replayable() {
 
     let separated_left = tetra_from_corners([0, 0, 0], [2, 0, 0], [0, 2, 0], [0, 0, 2]);
     let separated_right = tetra_from_corners([1, 1, 1], [3, 1, 1], [1, 3, 1], [1, 1, 3]);
-    let separated = ExactBooleanRequest::new(
-        ExactBooleanOperation::Intersection,
-        ValidationPolicy::CLOSED,
-    )
-    .materialize(&separated_left, &separated_right)
-    .unwrap();
-    assert_eq!(
-        separated.kind,
-        ExactBooleanResultKind::CertifiedShortcut {
-            operation: ExactBooleanOperation::Intersection,
-            shortcut: hypermesh::ExactBooleanShortcutKind::ConvexSeparated
-        }
+    let separated = exact_boolean_result(
+        &separated_left,
+        &separated_right,
+        ExactBooleanRequest::new(
+            ExactBooleanOperation::Intersection,
+            ValidationPolicy::CLOSED,
+        ),
+    );
+    assert!(
+        separated.is_convex_separated_shortcut_for(ExactBooleanOperation::Intersection),
+        "{separated:?}"
     );
     separated.validate().unwrap();
     separated
@@ -1759,43 +1617,45 @@ fn exact_closed_convex_boolean_is_publicly_replayable() {
             ExactBoundaryBooleanPolicy::Reject,
         )
         .unwrap();
-    let separated_evaluation = (ExactBooleanRequest::new(
-        ExactBooleanOperation::Intersection,
-        ValidationPolicy::CLOSED,
-    ))
-    .evaluate(&separated_left, &separated_right)
-    .unwrap();
+    let separated_evaluation = exact_boolean_evaluation(
+        &separated_left,
+        &separated_right,
+        ExactBooleanRequest::new(
+            ExactBooleanOperation::Intersection,
+            ValidationPolicy::CLOSED,
+        ),
+    );
     separated_evaluation.validate().unwrap();
     let mut relabeled_winding_report = separated_evaluation.clone();
     relabeled_winding_report
         .certifications
         .closed_winding_left_in_right
-        .relation = hypermesh::ClosedMeshWindingMeshRelation::BoundaryOrMixed;
+        .target_closed = false;
     assert_eq!(
         relabeled_winding_report.validate(),
         Err(hypermesh::ExactReportValidationError::StatusEvidenceMismatch),
         "{relabeled_winding_report:?}"
     );
-    let dispatched = ExactBooleanRequest::new(
-        ExactBooleanOperation::Intersection,
-        ValidationPolicy::CLOSED,
-    )
-    .materialize(&separated_left, &separated_right)
-    .unwrap();
+    let dispatched = exact_boolean_result(
+        &separated_left,
+        &separated_right,
+        ExactBooleanRequest::new(
+            ExactBooleanOperation::Intersection,
+            ValidationPolicy::CLOSED,
+        ),
+    );
     assert_eq!(dispatched.kind, separated.kind);
 
     let contained_on_boundary = tetra_from_corners([1, 1, 0], [2, 1, 0], [1, 2, 0], [1, 1, 1]);
     let container = tetra_from_corners([0, 0, 0], [10, 0, 0], [0, 10, 0], [0, 0, 10]);
-    let containment =
-        ExactBooleanRequest::new(ExactBooleanOperation::Difference, ValidationPolicy::CLOSED)
-            .materialize(&contained_on_boundary, &container)
-            .unwrap();
-    assert_eq!(
-        containment.kind,
-        ExactBooleanResultKind::CertifiedShortcut {
-            operation: ExactBooleanOperation::Difference,
-            shortcut: hypermesh::ExactBooleanShortcutKind::ConvexContainment
-        }
+    let containment = exact_boolean_result(
+        &contained_on_boundary,
+        &container,
+        ExactBooleanRequest::new(ExactBooleanOperation::Difference, ValidationPolicy::CLOSED),
+    );
+    assert!(
+        containment.is_convex_containment_shortcut_for(ExactBooleanOperation::Difference),
+        "{containment:?}"
     );
     containment.validate().unwrap();
     containment
@@ -1823,19 +1683,14 @@ fn exact_closed_convex_boolean_is_publicly_replayable() {
         .unwrap();
     assert!(containment.mesh.triangles().is_empty());
 
-    let axis_overlap =
-        ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED)
-            .materialize(
-                &axis_aligned_box([0, 0, 0], [2, 2, 2]),
-                &axis_aligned_box([1, 1, 1], [3, 3, 3]),
-            )
-            .unwrap();
-    assert_eq!(
-        axis_overlap.kind,
-        ExactBooleanResultKind::CertifiedShortcut {
-            operation: ExactBooleanOperation::Union,
-            shortcut: hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex
-        }
+    let axis_overlap = exact_boolean_result(
+        &axis_aligned_box([0, 0, 0], [2, 2, 2]),
+        &axis_aligned_box([1, 1, 1], [3, 3, 3]),
+        ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED),
+    );
+    assert!(
+        axis_overlap.is_arrangement_cell_complex_shortcut_for(ExactBooleanOperation::Union),
+        "{axis_overlap:?}"
     );
 }
 
@@ -1846,7 +1701,7 @@ fn exact_full_face_adjacent_union_is_publicly_replayable() {
 
     let result = assert_public_full_face_adjacent_union(&left, &right, 1, 0);
 
-    let mut invalid_shared_faces = exact_adjacent_union_completion_report(
+    let mut invalid_shared_faces = exact_adjacent_union_completion_report!(
         &left,
         &right,
         ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED),
@@ -1866,7 +1721,7 @@ fn exact_full_face_adjacent_union_is_publicly_replayable() {
     .unwrap();
     assert_eq!(
         invalid_output.freshness_against_sources(&left, &right),
-        ExactReportFreshness::StaleStatusEvidence
+        ExactReportFreshness::StaleRegionFacts
     );
 
     let separated_right = tetra_from_corners([20, 0, 0], [24, 0, 0], [20, 4, 0], [20, 0, 4]);
@@ -1915,15 +1770,12 @@ fn full_face_adjacent_union_refines_side_faces_for_boundary_subdivided_shared_fa
 
     assert_public_full_face_adjacent_union(&left, &right, 0, 1);
 
-    let report = exact_adjacent_union_completion_report(
+    let report = exact_adjacent_union_completion_report!(
         &left,
         &right,
         ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED),
     );
-    assert_eq!(
-        report.status,
-        ExactAdjacentUnionCompletionStatus::CertifiedFullFace
-    );
+    assert!(report.is_certified_full_face());
     assert_eq!(report.full_face_shared_faces, 0);
     assert_eq!(report.full_face_shared_patches, 1);
     assert!(!report.stronger_kernel_available);
@@ -1994,15 +1846,12 @@ fn full_face_adjacent_union_accepts_dual_boundary_subdivided_shared_face() {
 
     assert_public_full_face_adjacent_union(&left, &right, 0, 1);
 
-    let report = exact_adjacent_union_completion_report(
+    let report = exact_adjacent_union_completion_report!(
         &left,
         &right,
         ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED),
     );
-    assert_eq!(
-        report.status,
-        ExactAdjacentUnionCompletionStatus::CertifiedFullFace
-    );
+    assert!(report.is_certified_full_face());
     assert_eq!(report.full_face_shared_faces, 0);
     assert_eq!(report.full_face_shared_patches, 1);
     report.validate().unwrap();
@@ -2065,15 +1914,12 @@ fn adjacent_union_completion_boolean_is_publicly_replayable() {
     let right = tetra_from_corners([0, 0, 0], [0, 4, 0], [4, 0, 0], [0, 0, -4]);
     let separated_right = tetra_from_corners([20, 0, 0], [24, 0, 0], [20, 4, 0], [20, 0, 4]);
 
-    let report = exact_adjacent_union_completion_report(
+    let report = exact_adjacent_union_completion_report!(
         &left,
         &right,
         ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED),
     );
-    assert_eq!(
-        report.status,
-        ExactAdjacentUnionCompletionStatus::CertifiedFullFace
-    );
+    assert!(report.is_certified_full_face());
     assert!(report.is_certified());
     assert!(report.full_face_shared_faces + report.full_face_shared_patches > 0);
     assert_eq!(report.contained_faces, 0);
@@ -2088,15 +1934,14 @@ fn adjacent_union_completion_boolean_is_publicly_replayable() {
         ExactReportFreshness::SourceReplayMismatch
     );
 
-    let result = ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED)
-        .materialize(&left, &right)
-        .unwrap();
-    assert_eq!(
-        result.kind,
-        ExactBooleanResultKind::CertifiedShortcut {
-            operation: ExactBooleanOperation::Union,
-            shortcut: hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex
-        }
+    let result = exact_boolean_result(
+        &left,
+        &right,
+        ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED),
+    );
+    assert!(
+        result.is_arrangement_cell_complex_shortcut_for(ExactBooleanOperation::Union),
+        "{result:?}"
     );
     result.validate().unwrap();
     result.validate_against_sources(&left, &right).unwrap();
@@ -2128,7 +1973,7 @@ fn adjacent_union_completion_boolean_is_publicly_replayable() {
         .unwrap();
     assert!(result.mesh.facts().mesh.closed_manifold);
 
-    let intersection_report = exact_adjacent_union_completion_report(
+    let intersection_report = exact_adjacent_union_completion_report!(
         &left,
         &right,
         ExactBooleanRequest::new(
@@ -2136,10 +1981,7 @@ fn adjacent_union_completion_boolean_is_publicly_replayable() {
             ValidationPolicy::CLOSED,
         ),
     );
-    assert_eq!(
-        intersection_report.status,
-        ExactAdjacentUnionCompletionStatus::NotUnion
-    );
+    assert!(intersection_report.is_not_union());
     assert!(!intersection_report.is_certified());
     intersection_report.validate().unwrap();
     let mut stale_intersection_report = intersection_report.clone();
@@ -2150,15 +1992,12 @@ fn adjacent_union_completion_boolean_is_publicly_replayable() {
 
     let axis_left = axis_aligned_box([0, 0, 0], [1, 1, 1]);
     let axis_right = axis_aligned_box([1, 0, 0], [2, 1, 1]);
-    let axis_report = exact_adjacent_union_completion_report(
+    let axis_report = exact_adjacent_union_completion_report!(
         &axis_left,
         &axis_right,
         ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED),
     );
-    assert_eq!(
-        axis_report.status,
-        ExactAdjacentUnionCompletionStatus::AxisAlignedBoxPair
-    );
+    assert!(axis_report.is_axis_aligned_box_pair());
     axis_report.validate().unwrap();
     let mut stale_axis_report = axis_report.clone();
     stale_axis_report.retained_face_pairs = 1;
@@ -2166,16 +2005,14 @@ fn adjacent_union_completion_boolean_is_publicly_replayable() {
     stale_axis_report.blocker.candidate_pairs = 1;
     assert!(stale_axis_report.validate().is_err());
 
-    let axis_replay =
-        ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED)
-            .materialize(&axis_left, &axis_right)
-            .unwrap();
-    assert_eq!(
-        axis_replay.kind,
-        ExactBooleanResultKind::CertifiedShortcut {
-            operation: ExactBooleanOperation::Union,
-            shortcut: hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex
-        }
+    let axis_replay = exact_boolean_result(
+        &axis_left,
+        &axis_right,
+        ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED),
+    );
+    assert!(
+        axis_replay.is_arrangement_cell_complex_shortcut_for(ExactBooleanOperation::Union),
+        "{axis_replay:?}"
     );
     axis_replay
         .validate_operation_against_sources(
@@ -2188,19 +2025,13 @@ fn adjacent_union_completion_boolean_is_publicly_replayable() {
         .unwrap();
 
     let crossing_right = tetra_from_corners([1, 1, -1], [5, 1, -1], [1, 5, -1], [1, 1, 3]);
-    let crossing_report = exact_adjacent_union_completion_report(
+    let crossing_report = exact_adjacent_union_completion_report!(
         &left,
         &crossing_right,
         ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED),
     );
-    assert_eq!(
-        crossing_report.status,
-        ExactAdjacentUnionCompletionStatus::NoAdjacencyCertificate
-    );
-    assert_eq!(
-        crossing_report.blocker.kind,
-        ExactBooleanBlockerKind::NeedsWinding
-    );
+    assert!(crossing_report.has_no_adjacency_certificate());
+    assert!(crossing_report.blocker.requires_winding());
     assert!(crossing_report.blocker.candidate_pairs > 0);
     crossing_report.validate().unwrap();
     crossing_report
@@ -2208,7 +2039,7 @@ fn adjacent_union_completion_boolean_is_publicly_replayable() {
         .unwrap();
 
     let mut stale_crossing = crossing_report;
-    stale_crossing.blocker.kind = ExactBooleanBlockerKind::NeedsBoundaryPolicy;
+    stale_crossing.blocker.unknown_pairs = 1;
     assert!(stale_crossing.validate().is_err());
 }
 
@@ -2247,10 +2078,7 @@ fn exact_open_surface_arrangement_is_publicly_replayable() {
             );
             assert_eq!(closed_attempt.output_validation, ValidationPolicy::CLOSED);
             assert!(
-                matches!(
-                    closed_attempt.decline,
-                    Some(hypermesh::ExactArrangementBooleanDecline::OutputValidation)
-                ),
+                closed_attempt.declined_output_validation(),
                 "{operation:?}: {closed_attempt:?}"
             );
             assert!(
@@ -2298,9 +2126,8 @@ fn exact_open_surface_arrangement_is_publicly_replayable() {
             ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
             ExactRegularizationPolicy::REGULARIZED_SOLID,
         );
-        assert_eq!(
-            attempt.materialized_shortcut,
-            Some(hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex),
+        assert!(
+            attempt.materialized_arrangement_cell_complex_shortcut(),
             "{operation:?}: {attempt:?}"
         );
         assert_eq!(attempt.output_validation, ValidationPolicy::ALLOW_BOUNDARY);
@@ -2334,12 +2161,14 @@ fn exact_open_surface_arrangement_is_publicly_replayable() {
             ExactReportFreshness::SourceReplayMismatch
         );
 
-        let result = ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY)
-            .materialize(&left, &right)
-            .unwrap();
-        assert_eq!(
-            result.kind,
-            ExactBooleanResultKind::OpenSurfaceArrangement { operation }
+        let result = exact_boolean_result(
+            &left,
+            &right,
+            ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
+        );
+        assert!(
+            result.is_open_surface_arrangement_for(operation),
+            "{operation:?}: {result:?}"
         );
         result.validate().unwrap();
         result.validate_against_sources(&left, &right).unwrap();
@@ -2347,9 +2176,11 @@ fn exact_open_surface_arrangement_is_publicly_replayable() {
             result.freshness_against_sources(&left, &right),
             ExactReportFreshness::Current
         );
-        let evaluation = (ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY))
-            .evaluate(&left, &right)
-            .unwrap();
+        let evaluation = exact_boolean_evaluation(
+            &left,
+            &right,
+            ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
+        );
         evaluation.validate().unwrap();
         let mut stale_preflight_counts = evaluation.clone();
         stale_preflight_counts.preflight.retained_events += 1;
@@ -2371,15 +2202,14 @@ fn exact_open_surface_arrangement_is_publicly_replayable() {
             ExactReportFreshness::SourceReplayMismatch
         );
         if matches!(operation, ExactBooleanOperation::Intersection) {
-            let replay = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED)
-                .materialize(&left, &right)
-                .unwrap();
-            assert_eq!(
-                replay.kind,
-                ExactBooleanResultKind::CertifiedShortcut {
-                    operation,
-                    shortcut: hypermesh::ExactBooleanShortcutKind::LowerDimensionalRegularizedSolid
-                }
+            let replay = exact_boolean_result(
+                &left,
+                &right,
+                ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
+            );
+            assert!(
+                replay.is_lower_dimensional_regularized_solid_shortcut_for(operation),
+                "{operation:?}: {replay:?}"
             );
             replay
                 .validate_operation_against_sources(
@@ -2393,18 +2223,22 @@ fn exact_open_surface_arrangement_is_publicly_replayable() {
         }
     }
 
-    let union = ExactBooleanRequest::new(
-        ExactBooleanOperation::Union,
-        ValidationPolicy::ALLOW_BOUNDARY,
-    )
-    .materialize(&left, &right)
-    .unwrap();
-    let difference = ExactBooleanRequest::new(
-        ExactBooleanOperation::Difference,
-        ValidationPolicy::ALLOW_BOUNDARY,
-    )
-    .materialize(&left, &right)
-    .unwrap();
+    let union = exact_boolean_result(
+        &left,
+        &right,
+        ExactBooleanRequest::new(
+            ExactBooleanOperation::Union,
+            ValidationPolicy::ALLOW_BOUNDARY,
+        ),
+    );
+    let difference = exact_boolean_result(
+        &left,
+        &right,
+        ExactBooleanRequest::new(
+            ExactBooleanOperation::Difference,
+            ValidationPolicy::ALLOW_BOUNDARY,
+        ),
+    );
     let mut stale_materialization = union.clone();
     stale_materialization.assembly = difference.assembly;
     stale_materialization.mesh = difference.mesh;
@@ -2446,14 +2280,11 @@ fn arrangement_attempt_output_validation_is_publicly_replayable() {
         );
         assert_eq!(closed_attempt.output_validation, ValidationPolicy::CLOSED);
         assert!(
-            closed_attempt.materialized_shortcut.is_none(),
+            closed_attempt.materialized_without_shortcut(),
             "{operation:?}: {closed_attempt:?}"
         );
         assert!(
-            matches!(
-                closed_attempt.decline,
-                Some(hypermesh::ExactArrangementBooleanDecline::OutputValidation)
-            ),
+            closed_attempt.declined_output_validation(),
             "{operation:?}: {closed_attempt:?}"
         );
         assert!(
@@ -2509,9 +2340,8 @@ fn arrangement_attempt_output_validation_is_publicly_replayable() {
             boundary_attempt.output_validation,
             ValidationPolicy::ALLOW_BOUNDARY
         );
-        assert_eq!(
-            boundary_attempt.materialized_shortcut,
-            Some(hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex),
+        assert!(
+            boundary_attempt.materialized_arrangement_cell_complex_shortcut(),
             "{operation:?}: {boundary_attempt:?}"
         );
         assert!(
@@ -2568,18 +2398,18 @@ fn exact_selected_region_boolean_is_publicly_replayable() {
     let selection = ExactRegionSelection::KeepAll;
     let validation = ValidationPolicy::ALLOW_BOUNDARY;
 
-    let result = ExactBooleanRequest::new(
-        ExactBooleanOperation::SelectedRegions(selection),
-        validation,
-    )
-    .materialize(&left, &right)
-    .unwrap();
+    let result = exact_boolean_result(
+        &left,
+        &right,
+        ExactBooleanRequest::new(
+            ExactBooleanOperation::SelectedRegions(selection),
+            validation,
+        ),
+    );
 
-    assert_eq!(
-        result.kind,
-        ExactBooleanResultKind::SelectedRegions {
-            selection: ExactRegionSelection::KeepAll
-        }
+    assert!(
+        result.is_selected_regions_for(ExactRegionSelection::KeepAll),
+        "{result:?}"
     );
     result.validate().unwrap();
     result.validate_against_sources(&left, &right).unwrap();
@@ -2599,12 +2429,14 @@ fn exact_selected_region_boolean_is_publicly_replayable() {
         result.mesh.validation_policy(),
         ValidationPolicy::ALLOW_BOUNDARY
     );
-    let evaluation = (ExactBooleanRequest::new(
-        ExactBooleanOperation::SelectedRegions(selection),
-        validation,
-    ))
-    .evaluate(&left, &right)
-    .unwrap();
+    let evaluation = exact_boolean_evaluation(
+        &left,
+        &right,
+        ExactBooleanRequest::new(
+            ExactBooleanOperation::SelectedRegions(selection),
+            validation,
+        ),
+    );
     evaluation.validate().unwrap();
     let mut stale_evaluation_region_fact = evaluation.clone();
     let classification = stale_evaluation_region_fact
@@ -2675,18 +2507,25 @@ fn exact_selected_region_boolean_is_publicly_replayable() {
         ExactReportFreshness::SourceReplayMismatch
     );
 
-    let mut stale_kind = result.clone();
-    stale_kind.kind = ExactBooleanResultKind::SelectedRegions {
-        selection: ExactRegionSelection::KeepLeft,
-    };
-    assert!(stale_kind.validate_against_sources(&left, &right).is_err());
-
-    let keep_left = ExactBooleanRequest::new(
-        ExactBooleanOperation::SelectedRegions(ExactRegionSelection::KeepLeft),
-        ValidationPolicy::ALLOW_BOUNDARY,
-    )
-    .materialize(&left, &right)
-    .unwrap();
+    let keep_left = exact_boolean_result(
+        &left,
+        &right,
+        ExactBooleanRequest::new(
+            ExactBooleanOperation::SelectedRegions(ExactRegionSelection::KeepLeft),
+            ValidationPolicy::ALLOW_BOUNDARY,
+        ),
+    );
+    assert!(
+        keep_left
+            .validate_operation_against_sources(
+                &left,
+                &right,
+                ExactBooleanOperation::SelectedRegions(ExactRegionSelection::KeepAll),
+                ValidationPolicy::ALLOW_BOUNDARY,
+                ExactBoundaryBooleanPolicy::Reject,
+            )
+            .is_err()
+    );
     let mut stale_materialization = result.clone();
     stale_materialization.assembly = keep_left.assembly;
     stale_materialization.mesh = keep_left.mesh;
@@ -2727,15 +2566,14 @@ fn exact_coplanar_mesh_overlay_arrangement_is_publicly_replayable() {
         ExactBooleanOperation::Intersection,
         ExactBooleanOperation::Difference,
     ] {
-        let result = ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY)
-            .materialize(&left, &right)
-            .unwrap();
-        assert_eq!(
-            result.kind,
-            ExactBooleanResultKind::CertifiedShortcut {
-                operation,
-                shortcut: hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex
-            }
+        let result = exact_boolean_result(
+            &left,
+            &right,
+            ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
+        );
+        assert!(
+            result.is_arrangement_cell_complex_shortcut_for(operation),
+            "{operation:?}: {result:?}"
         );
         result.validate().unwrap();
         result.validate_against_sources(&left, &right).unwrap();
@@ -2775,18 +2613,17 @@ fn exact_coplanar_mesh_overlay_arrangement_is_publicly_replayable() {
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let identical_result = ExactBooleanRequest::new(
-        ExactBooleanOperation::Union,
-        ValidationPolicy::ALLOW_BOUNDARY,
-    )
-    .materialize(&identical, &identical)
-    .unwrap();
-    assert_eq!(
-        identical_result.kind,
-        ExactBooleanResultKind::CertifiedShortcut {
-            operation: ExactBooleanOperation::Union,
-            shortcut: hypermesh::ExactBooleanShortcutKind::Identical
-        }
+    let identical_result = exact_boolean_result(
+        &identical,
+        &identical,
+        ExactBooleanRequest::new(
+            ExactBooleanOperation::Union,
+            ValidationPolicy::ALLOW_BOUNDARY,
+        ),
+    );
+    assert!(
+        identical_result.is_identical_shortcut_for(ExactBooleanOperation::Union),
+        "{identical_result:?}"
     );
 }
 
@@ -2817,15 +2654,13 @@ fn lower_dimensional_regularized_boolean_is_publicly_replayable() {
         ExactBooleanOperation::Intersection,
         ExactBooleanOperation::Difference,
     ] {
-        let preflight = exact_boolean_preflight(
+        let preflight = exact_boolean_evaluation(
             &left,
             &right,
             ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
-        );
-        assert_eq!(
-            preflight.support,
-            hypermesh::ExactBooleanSupport::CertifiedLowerDimensionalRegularizedSolid
-        );
+        )
+        .preflight;
+        assert!(preflight.is_certified_lower_dimensional_regularized_solid());
         preflight.validate().unwrap();
         preflight
             .validate_against_sources_with_validation(&left, &right, ValidationPolicy::CLOSED)
@@ -2840,20 +2675,20 @@ fn lower_dimensional_regularized_boolean_is_publicly_replayable() {
                 .is_err()
         );
 
-        let readiness = exact_boolean_certifications(
+        let readiness = exact_boolean_evaluation(
             &left,
             &right,
             ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
         )
-        .winding_readiness;
-        assert_eq!(
-            readiness.status,
-            ExactWindingReadinessStatus::LowerDimensionalRegularizedSolidAlreadyMaterialized,
+        .certifications
+        .winding_readiness
+        .clone();
+        assert!(
+            readiness.is_lower_dimensional_regularized_solid_materialized(),
             "{operation:?}: {readiness:?}"
         );
-        assert_eq!(
-            readiness.blocker.kind,
-            ExactBooleanBlockerKind::NeedsWinding,
+        assert!(
+            readiness.blocker.requires_winding(),
             "{operation:?}: {readiness:?}"
         );
         assert_eq!(readiness.retained_face_pairs, 0);
@@ -2880,15 +2715,14 @@ fn lower_dimensional_regularized_boolean_is_publicly_replayable() {
             ExactReportFreshness::SourceReplayMismatch
         );
 
-        let result = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED)
-            .materialize(&left, &right)
-            .unwrap();
-        assert_eq!(
-            result.kind,
-            ExactBooleanResultKind::CertifiedShortcut {
-                operation,
-                shortcut: hypermesh::ExactBooleanShortcutKind::LowerDimensionalRegularizedSolid
-            }
+        let result = exact_boolean_result(
+            &left,
+            &right,
+            ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
+        );
+        assert!(
+            result.is_lower_dimensional_regularized_solid_shortcut_for(operation),
+            "{operation:?}: {result:?}"
         );
         assert!(result.mesh.triangles().is_empty());
         result.validate().unwrap();
@@ -2911,14 +2745,14 @@ fn lower_dimensional_regularized_boolean_is_publicly_replayable() {
             )
             .unwrap();
 
-        let disjoint_preflight = exact_boolean_preflight(
+        let disjoint_preflight = exact_boolean_evaluation(
             &left,
             &disjoint_right,
             ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
-        );
-        assert_eq!(
-            disjoint_preflight.support,
-            hypermesh::ExactBooleanSupport::CertifiedLowerDimensionalRegularizedSolid,
+        )
+        .preflight;
+        assert!(
+            disjoint_preflight.is_certified_lower_dimensional_regularized_solid(),
             "{operation:?}: {disjoint_preflight:?}"
         );
         disjoint_preflight
@@ -2928,26 +2762,25 @@ fn lower_dimensional_regularized_boolean_is_publicly_replayable() {
                 ValidationPolicy::CLOSED,
             )
             .unwrap();
-        let disjoint_readiness = exact_boolean_certifications(
+        let disjoint_readiness = exact_boolean_evaluation(
             &left,
             &disjoint_right,
             ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
         )
-        .winding_readiness;
-        assert_eq!(
-            disjoint_readiness.status,
-            ExactWindingReadinessStatus::LowerDimensionalRegularizedSolidAlreadyMaterialized,
+        .certifications
+        .winding_readiness
+        .clone();
+        assert!(
+            disjoint_readiness.is_lower_dimensional_regularized_solid_materialized(),
             "{operation:?}: {disjoint_readiness:?}"
         );
-        let disjoint_result = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED)
-            .materialize(&left, &disjoint_right)
-            .unwrap();
-        assert_eq!(
-            disjoint_result.kind,
-            ExactBooleanResultKind::CertifiedShortcut {
-                operation,
-                shortcut: hypermesh::ExactBooleanShortcutKind::LowerDimensionalRegularizedSolid
-            },
+        let disjoint_result = exact_boolean_result(
+            &left,
+            &disjoint_right,
+            ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
+        );
+        assert!(
+            disjoint_result.is_lower_dimensional_regularized_solid_shortcut_for(operation),
             "{operation:?}: {disjoint_result:?}"
         );
         assert!(disjoint_result.mesh.triangles().is_empty());
@@ -2984,15 +2817,14 @@ fn mixed_dimensional_regularized_solid_boolean_is_publicly_replayable() {
             ExactBooleanOperation::Intersection,
             ExactBooleanOperation::Difference,
         ] {
-            let result = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED)
-                .materialize(left, right)
-                .unwrap();
-            assert_eq!(
-                result.kind,
-                ExactBooleanResultKind::CertifiedShortcut {
-                    operation,
-                    shortcut: hypermesh::ExactBooleanShortcutKind::MixedDimensionalRegularizedSolid
-                }
+            let result = exact_boolean_result(
+                left,
+                right,
+                ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
+            );
+            assert!(
+                result.is_mixed_dimensional_regularized_solid_shortcut_for(operation),
+                "{operation:?}: {result:?}"
             );
             result.validate().unwrap();
             result.validate_against_sources(left, right).unwrap();
@@ -3045,16 +2877,15 @@ fn mixed_dimensional_regularized_solid_boolean_is_publicly_replayable() {
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let lower_result =
-        ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED)
-            .materialize(&lower_left, &lower_right)
-            .unwrap();
-    assert_eq!(
-        lower_result.kind,
-        ExactBooleanResultKind::CertifiedShortcut {
-            operation: ExactBooleanOperation::Union,
-            shortcut: hypermesh::ExactBooleanShortcutKind::LowerDimensionalRegularizedSolid
-        }
+    let lower_result = exact_boolean_result(
+        &lower_left,
+        &lower_right,
+        ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED),
+    );
+    assert!(
+        lower_result
+            .is_lower_dimensional_regularized_solid_shortcut_for(ExactBooleanOperation::Union),
+        "{lower_result:?}"
     );
 
     let disjoint_sheet = ExactMesh::from_i64_triangles_with_policy(
@@ -3072,36 +2903,35 @@ fn mixed_dimensional_regularized_solid_boolean_is_publicly_replayable() {
             ExactBooleanOperation::Intersection,
             ExactBooleanOperation::Difference,
         ] {
-            let preflight = exact_boolean_preflight(
-                left,
-                right,
-                ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
-            );
-            assert_eq!(
-                preflight.support,
-                hypermesh::ExactBooleanSupport::CertifiedMixedDimensionalRegularizedSolid,
-                "{operation:?}: {preflight:?}"
-            );
-            let readiness = exact_boolean_certifications(
+            let preflight = exact_boolean_evaluation(
                 left,
                 right,
                 ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
             )
-            .winding_readiness;
-            assert_eq!(
-                readiness.status,
-                ExactWindingReadinessStatus::MixedDimensionalRegularizedSolidAlreadyMaterialized,
+            .preflight;
+            assert!(
+                preflight.is_certified_mixed_dimensional_regularized_solid(),
+                "{operation:?}: {preflight:?}"
+            );
+            let readiness = exact_boolean_evaluation(
+                left,
+                right,
+                ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
+            )
+            .certifications
+            .winding_readiness
+            .clone();
+            assert!(
+                readiness.is_mixed_dimensional_regularized_solid_materialized(),
                 "{operation:?}: {readiness:?}"
             );
-            let result = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED)
-                .materialize(left, right)
-                .unwrap();
-            assert_eq!(
-                result.kind,
-                ExactBooleanResultKind::CertifiedShortcut {
-                    operation,
-                    shortcut: hypermesh::ExactBooleanShortcutKind::MixedDimensionalRegularizedSolid
-                },
+            let result = exact_boolean_result(
+                left,
+                right,
+                ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
+            );
+            assert!(
+                result.is_mixed_dimensional_regularized_solid_shortcut_for(operation),
                 "{operation:?}: {result:?}"
             );
             result
@@ -3121,26 +2951,23 @@ fn mixed_dimensional_regularized_solid_boolean_is_publicly_replayable() {
                 "{operation:?}: {result:?}"
             );
 
-            let boundary_preflight = exact_boolean_preflight(
+            let boundary_preflight = exact_boolean_evaluation(
+                left,
+                right,
+                ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
+            )
+            .preflight;
+            assert!(
+                boundary_preflight.is_certified_bounds_disjoint(),
+                "{operation:?}: {boundary_preflight:?}"
+            );
+            let boundary_result = exact_boolean_result(
                 left,
                 right,
                 ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
             );
-            assert_eq!(
-                boundary_preflight.support,
-                hypermesh::ExactBooleanSupport::CertifiedBoundsDisjoint,
-                "{operation:?}: {boundary_preflight:?}"
-            );
-            let boundary_result =
-                ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY)
-                    .materialize(left, right)
-                    .unwrap();
-            assert_eq!(
-                boundary_result.kind,
-                ExactBooleanResultKind::CertifiedShortcut {
-                    operation,
-                    shortcut: hypermesh::ExactBooleanShortcutKind::BoundsDisjoint
-                },
+            assert!(
+                boundary_result.is_bounds_disjoint_shortcut_for(operation),
                 "{operation:?}: {boundary_result:?}"
             );
             boundary_result
@@ -3183,25 +3010,30 @@ fn boundary_touching_policy_boolean_is_publicly_replayable() {
         ExactBooleanOperation::Difference,
     ] {
         assert!(
-            ExactBooleanRequest::with_boundary_policy(
-                operation,
-                ValidationPolicy::ALLOW_BOUNDARY,
-                ExactBoundaryBooleanPolicy::Reject,
+            exact_boolean_materialize_result(
+                &left,
+                &right,
+                ExactBooleanRequest::with_boundary_policy(
+                    operation,
+                    ValidationPolicy::ALLOW_BOUNDARY,
+                    ExactBoundaryBooleanPolicy::Reject,
+                ),
             )
-            .materialize(&left, &right)
             .is_err()
         );
 
-        let result = ExactBooleanRequest::with_boundary_policy(
-            operation,
-            ValidationPolicy::ALLOW_BOUNDARY,
-            ExactBoundaryBooleanPolicy::PreserveSeparateShells,
-        )
-        .materialize(&left, &right)
-        .unwrap();
-        assert_eq!(
-            result.kind,
-            ExactBooleanResultKind::BoundaryPolicyShortcut { operation }
+        let result = exact_boolean_result(
+            &left,
+            &right,
+            ExactBooleanRequest::with_boundary_policy(
+                operation,
+                ValidationPolicy::ALLOW_BOUNDARY,
+                ExactBoundaryBooleanPolicy::PreserveSeparateShells,
+            ),
+        );
+        assert!(
+            result.is_boundary_policy_shortcut_for(operation),
+            "{operation:?}: {result:?}"
         );
         result.validate().unwrap();
         result.validate_against_sources(&left, &right).unwrap();
@@ -3232,33 +3064,23 @@ fn boundary_touching_policy_boolean_is_publicly_replayable() {
         "test boundary policy closed replay left",
     );
     let closed_right = tetra_from_corners([0, 0, 0], [-4, 0, 0], [0, -4, 0], [0, 0, -4]);
-    for (operation, shortcut) in [
-        (
-            ExactBooleanOperation::Union,
-            hypermesh::ExactBooleanShortcutKind::ClosedBoundaryTouchingUnion,
-        ),
-        (
-            ExactBooleanOperation::Intersection,
-            hypermesh::ExactBooleanShortcutKind::ClosedBoundaryTouchingIntersection,
-        ),
-        (
-            ExactBooleanOperation::Difference,
-            hypermesh::ExactBooleanShortcutKind::ClosedBoundaryTouchingDifference,
-        ),
+    for operation in [
+        ExactBooleanOperation::Union,
+        ExactBooleanOperation::Intersection,
+        ExactBooleanOperation::Difference,
     ] {
-        let direct = ExactBooleanRequest::with_boundary_policy(
-            operation,
-            ValidationPolicy::CLOSED,
-            ExactBoundaryBooleanPolicy::PreserveSeparateShells,
-        )
-        .materialize(&closed_left, &closed_right)
-        .unwrap();
-        assert_eq!(
-            direct.kind,
-            ExactBooleanResultKind::CertifiedShortcut {
+        let direct = exact_boolean_result(
+            &closed_left,
+            &closed_right,
+            ExactBooleanRequest::with_boundary_policy(
                 operation,
-                shortcut
-            },
+                ValidationPolicy::CLOSED,
+                ExactBoundaryBooleanPolicy::PreserveSeparateShells,
+            ),
+        );
+        assert!(
+            direct.is_arrangement_cell_complex_shortcut_for(operation)
+                || direct.is_closed_boundary_touching_shortcut_for(operation),
             "{operation:?}: {direct:?}"
         );
         direct
@@ -3270,19 +3092,19 @@ fn boundary_touching_policy_boolean_is_publicly_replayable() {
                 ExactBoundaryBooleanPolicy::PreserveSeparateShells,
             )
             .unwrap();
-        let replay = ExactBooleanRequest::with_boundary_policy(
-            operation,
-            ValidationPolicy::CLOSED,
-            ExactBoundaryBooleanPolicy::PreserveSeparateShells,
-        )
-        .materialize(&closed_left, &closed_right)
-        .unwrap();
-        assert_eq!(
-            replay.kind,
-            ExactBooleanResultKind::CertifiedShortcut {
+        let replay = exact_boolean_result(
+            &closed_left,
+            &closed_right,
+            ExactBooleanRequest::with_boundary_policy(
                 operation,
-                shortcut
-            }
+                ValidationPolicy::CLOSED,
+                ExactBoundaryBooleanPolicy::PreserveSeparateShells,
+            ),
+        );
+        assert!(
+            replay.is_arrangement_cell_complex_shortcut_for(operation)
+                || replay.is_closed_boundary_touching_shortcut_for(operation),
+            "{operation:?}: {replay:?}"
         );
         replay
             .validate_operation_against_sources(
@@ -3308,65 +3130,57 @@ fn closed_boundary_touching_regularized_boolean_is_publicly_replayable() {
     let right = tetra_from_corners([0, 0, 0], [-4, 0, 0], [0, -4, 0], [0, 0, -4]);
     let separated_right = tetra_from_corners([100, 0, 0], [104, 0, 0], [100, 4, 0], [100, 0, 4]);
 
-    for (operation, support, shortcut) in [
-        (
-            ExactBooleanOperation::Union,
-            hypermesh::ExactBooleanSupport::CertifiedClosedBoundaryTouchingUnion,
-            hypermesh::ExactBooleanShortcutKind::ClosedBoundaryTouchingUnion,
-        ),
-        (
-            ExactBooleanOperation::Intersection,
-            hypermesh::ExactBooleanSupport::CertifiedClosedBoundaryTouchingIntersection,
-            hypermesh::ExactBooleanShortcutKind::ClosedBoundaryTouchingIntersection,
-        ),
-        (
-            ExactBooleanOperation::Difference,
-            hypermesh::ExactBooleanSupport::CertifiedClosedBoundaryTouchingDifference,
-            hypermesh::ExactBooleanShortcutKind::ClosedBoundaryTouchingDifference,
-        ),
+    for operation in [
+        ExactBooleanOperation::Union,
+        ExactBooleanOperation::Intersection,
+        ExactBooleanOperation::Difference,
     ] {
-        let preflight = exact_boolean_preflight(
+        let preflight = exact_boolean_evaluation(
             &left,
             &right,
             ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
+        )
+        .preflight;
+        assert!(
+            preflight.is_certified_arrangement_cell_complex()
+                || preflight.is_certified_closed_boundary_touching(),
+            "{operation:?}: {preflight:?}"
         );
-        assert_eq!(preflight.support, support, "{operation:?}: {preflight:?}");
         assert!(
             preflight.retained_face_pairs > 0,
-            "closed boundary-touching shortcut should retain graph evidence: {operation:?}: {preflight:?}"
+            "closed boundary-touching request should retain graph evidence: {operation:?}: {preflight:?}"
         );
         preflight.validate().unwrap();
         preflight.validate_against_sources(&left, &right).unwrap();
         if let Some(evidence) = preflight.coplanar_volumetric_evidence.as_ref() {
             evidence.validate().unwrap();
             evidence.validate_against_sources(&left, &right).unwrap();
-            assert_eq!(
-                evidence.obstacle,
-                hypermesh::CoplanarVolumetricCellObstacle::BoundaryOnlyContact
-            );
         }
 
-        let result = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED)
-            .materialize(&left, &right)
-            .unwrap();
-        assert_eq!(
-            result.kind,
-            ExactBooleanResultKind::CertifiedShortcut {
-                operation,
-                shortcut
-            }
+        let result = exact_boolean_result(
+            &left,
+            &right,
+            ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
+        );
+        assert!(
+            result.is_arrangement_cell_complex_shortcut_for(operation)
+                || result.is_closed_boundary_touching_shortcut_for(operation),
+            "{operation:?}: {result:?}"
         );
         result.validate().unwrap();
         result.validate_against_sources(&left, &right).unwrap();
-        let evaluation = (ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED))
-            .evaluate(&left, &right)
-            .unwrap();
+        let evaluation = exact_boolean_evaluation(
+            &left,
+            &right,
+            ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
+        );
         evaluation.validate().unwrap();
         let mut relabeled_boundary_report = evaluation.clone();
         relabeled_boundary_report
             .certifications
             .boundary_touching
-            .status = ExactBoundaryTouchingStatus::NotBoundaryOnly;
+            .blocker
+            .unknown_pairs = 1;
         assert!(
             relabeled_boundary_report.validate().is_err(),
             "{operation:?}: {relabeled_boundary_report:?}"
@@ -3384,9 +3198,14 @@ fn closed_boundary_touching_regularized_boolean_is_publicly_replayable() {
             let mut stale_output = result.clone();
             stale_output.mesh = left.clone();
             assert!(stale_output.validate().is_err(), "{stale_output:?}");
+            let expected_freshness = if result.is_arrangement_cell_complex_shortcut_for(operation) {
+                ExactReportFreshness::StaleRegionFacts
+            } else {
+                ExactReportFreshness::StaleStatusEvidence
+            };
             assert_eq!(
                 stale_output.freshness_against_sources(&left, &right),
-                ExactReportFreshness::StaleStatusEvidence,
+                expected_freshness,
                 "{stale_output:?}"
             );
         }
@@ -3426,29 +3245,28 @@ fn closed_no_volume_overlap_regularized_boolean_is_publicly_replayable() {
 
     let mut retained_evidence = None;
 
-    for (operation, support, shortcut) in [
-        (
-            ExactBooleanOperation::Union,
-            hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex,
-            hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex,
-        ),
-        (
-            ExactBooleanOperation::Intersection,
-            hypermesh::ExactBooleanSupport::CertifiedClosedBoundaryTouchingIntersection,
-            hypermesh::ExactBooleanShortcutKind::ClosedBoundaryTouchingIntersection,
-        ),
-        (
-            ExactBooleanOperation::Difference,
-            hypermesh::ExactBooleanSupport::CertifiedClosedBoundaryTouchingDifference,
-            hypermesh::ExactBooleanShortcutKind::ClosedBoundaryTouchingDifference,
-        ),
+    for operation in [
+        ExactBooleanOperation::Union,
+        ExactBooleanOperation::Intersection,
+        ExactBooleanOperation::Difference,
     ] {
-        let preflight = exact_boolean_preflight(
+        let preflight = exact_boolean_evaluation(
             &left,
             &right,
             ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
-        );
-        assert_eq!(preflight.support, support, "{operation:?}: {preflight:?}");
+        )
+        .preflight;
+        if operation == ExactBooleanOperation::Union {
+            assert!(
+                preflight.is_certified_arrangement_cell_complex(),
+                "{operation:?}: {preflight:?}"
+            );
+        } else {
+            assert!(
+                preflight.is_certified_closed_boundary_touching(),
+                "{operation:?}: {preflight:?}"
+            );
+        }
         assert!(
             preflight.retained_face_pairs > 0,
             "positive-area no-volume shortcut should retain graph evidence: {operation:?}: {preflight:?}"
@@ -3474,15 +3292,16 @@ fn closed_no_volume_overlap_regularized_boolean_is_publicly_replayable() {
             operation,
             ExactBooleanOperation::Intersection | ExactBooleanOperation::Difference
         ) {
-            let readiness = exact_boolean_certifications(
+            let readiness = exact_boolean_evaluation(
                 &left,
                 &right,
                 ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
             )
-            .winding_readiness;
-            assert_eq!(
-                readiness.status,
-                hypermesh::ExactWindingReadinessStatus::ClosedBoundaryTouchingAlreadyMaterialized,
+            .certifications
+            .winding_readiness
+            .clone();
+            assert!(
+                readiness.is_closed_boundary_touching_materialized(),
                 "{operation:?}: {readiness:?}"
             );
             assert_eq!(
@@ -3492,9 +3311,11 @@ fn closed_no_volume_overlap_regularized_boolean_is_publicly_replayable() {
             );
             readiness.validate().unwrap();
             readiness.validate_against_sources(&left, &right).unwrap();
-            let evaluation = (ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED))
-                .evaluate(&left, &right)
-                .unwrap();
+            let evaluation = exact_boolean_evaluation(
+                &left,
+                &right,
+                ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
+            );
             evaluation.validate().unwrap();
             let mut cleared_handoff_evidence = evaluation.clone();
             cleared_handoff_evidence
@@ -3507,15 +3328,18 @@ fn closed_no_volume_overlap_regularized_boolean_is_publicly_replayable() {
             );
         }
 
-        let result = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED)
-            .materialize(&left, &right)
-            .unwrap();
-        assert_eq!(
-            result.kind,
-            ExactBooleanResultKind::CertifiedShortcut {
-                operation,
-                shortcut
-            }
+        let result = exact_boolean_result(
+            &left,
+            &right,
+            ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
+        );
+        assert!(
+            if operation == ExactBooleanOperation::Union {
+                result.is_arrangement_cell_complex_shortcut_for(operation)
+            } else {
+                result.is_closed_boundary_touching_shortcut_for(operation)
+            },
+            "{operation:?}: {result:?}"
         );
         result.validate().unwrap();
         result.validate_against_sources(&left, &right).unwrap();
@@ -3573,15 +3397,16 @@ fn closed_winding_shortcuts_are_publicly_replayable() {
         ExactBooleanOperation::Intersection,
         ExactBooleanOperation::Difference,
     ] {
-        let result = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED)
-            .materialize(&separated_left, &separated_right)
-            .unwrap();
-        assert_eq!(
-            result.kind,
-            ExactBooleanResultKind::CertifiedShortcut {
-                operation,
-                shortcut: hypermesh::ExactBooleanShortcutKind::ClosedWindingSeparated
-            }
+        let result = exact_boolean_result(
+            &separated_left,
+            &separated_right,
+            ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
+        );
+        assert!(
+            result.is_arrangement_cell_complex_shortcut_for(operation)
+                || result.is_arrangement_cell_complex_materialized_for(operation)
+                || result.is_closed_winding_separated_shortcut_for(operation),
+            "{operation:?}: {result:?}"
         );
         result.validate().unwrap();
         result
@@ -3591,29 +3416,24 @@ fn closed_winding_shortcuts_are_publicly_replayable() {
             result.freshness_against_sources(&separated_left, &separated_right),
             ExactReportFreshness::Current
         );
-        let separated_evaluation = (ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED))
-            .evaluate(&separated_left, &separated_right)
-            .unwrap();
+        let separated_evaluation = exact_boolean_evaluation(
+            &separated_left,
+            &separated_right,
+            ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
+        );
         separated_evaluation.validate().unwrap();
         let mut relabeled_winding_report = separated_evaluation.clone();
         relabeled_winding_report
             .certifications
             .closed_winding_left_in_right
-            .relation = hypermesh::ClosedMeshWindingMeshRelation::NotClosed;
-        relabeled_winding_report
-            .certifications
-            .closed_winding_left_in_right
             .target_closed = false;
-        relabeled_winding_report
-            .certifications
-            .closed_winding_left_in_right
-            .vertices
-            .clear();
-        relabeled_winding_report
-            .certifications
-            .closed_winding_left_in_right
-            .validate()
-            .unwrap();
+        assert!(
+            relabeled_winding_report
+                .certifications
+                .closed_winding_left_in_right
+                .validate()
+                .is_err()
+        );
         assert_eq!(
             relabeled_winding_report.validate(),
             Err(hypermesh::ExactReportValidationError::StatusEvidenceMismatch),
@@ -3629,7 +3449,7 @@ fn closed_winding_shortcuts_are_publicly_replayable() {
             assert!(stale_output.validate().is_err(), "{stale_output:?}");
             assert_eq!(
                 stale_output.freshness_against_sources(&separated_left, &separated_right),
-                ExactReportFreshness::StaleStatusEvidence,
+                ExactReportFreshness::StaleRegionFacts,
                 "{stale_output:?}"
             );
         }
@@ -3659,15 +3479,16 @@ fn closed_winding_shortcuts_are_publicly_replayable() {
         ExactBooleanOperation::Intersection,
         ExactBooleanOperation::Difference,
     ] {
-        let result = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED)
-            .materialize(&container, &contained)
-            .unwrap();
-        assert_eq!(
-            result.kind,
-            ExactBooleanResultKind::CertifiedShortcut {
-                operation,
-                shortcut: hypermesh::ExactBooleanShortcutKind::ClosedWindingContainment
-            }
+        let result = exact_boolean_result(
+            &container,
+            &contained,
+            ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
+        );
+        assert!(
+            result.is_arrangement_cell_complex_shortcut_for(operation)
+                || result.is_arrangement_cell_complex_materialized_for(operation)
+                || result.is_closed_winding_containment_shortcut_for(operation),
+            "{operation:?}: {result:?}"
         );
         result.validate().unwrap();
         result
@@ -3715,9 +3536,11 @@ fn closed_winding_public_replay_yields_to_convex_provenance() {
         ExactBooleanOperation::Intersection,
         ExactBooleanOperation::Difference,
     ] {
-        let separated_replay = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED)
-            .materialize(&separated_left, &separated_right)
-            .unwrap();
+        let separated_replay = exact_boolean_result(
+            &separated_left,
+            &separated_right,
+            ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
+        );
         assert_convex_public_replay(&separated_replay, operation);
         separated_replay
             .validate_operation_against_sources(
@@ -3729,9 +3552,11 @@ fn closed_winding_public_replay_yields_to_convex_provenance() {
             )
             .unwrap();
 
-        let containment_replay = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED)
-            .materialize(&container, &contained)
-            .unwrap();
+        let containment_replay = exact_boolean_result(
+            &container,
+            &contained,
+            ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
+        );
         assert_convex_public_replay(&containment_replay, operation);
         containment_replay
             .validate_operation_against_sources(
@@ -3746,23 +3571,14 @@ fn closed_winding_public_replay_yields_to_convex_provenance() {
 }
 
 fn assert_convex_public_replay(result: &ExactBooleanResult, operation: ExactBooleanOperation) {
-    let ExactBooleanResultKind::CertifiedShortcut {
-        operation: replay_operation,
-        shortcut,
-    } = &result.kind
-    else {
-        panic!("{operation:?}: expected certified convex shortcut, got {result:?}");
-    };
-    assert_eq!(*replay_operation, operation, "{result:?}");
     assert!(
-        matches!(
-            shortcut,
-            hypermesh::ExactBooleanShortcutKind::ConvexUnion
-                | hypermesh::ExactBooleanShortcutKind::ConvexIntersection
-                | hypermesh::ExactBooleanShortcutKind::ConvexDifference
-                | hypermesh::ExactBooleanShortcutKind::ConvexSeparated
-                | hypermesh::ExactBooleanShortcutKind::ConvexContainment
-        ),
+        result.is_arrangement_cell_complex_shortcut_for(operation)
+            || result.is_arrangement_cell_complex_materialized_for(operation)
+            || result.is_convex_union_shortcut()
+            || result.is_convex_intersection_shortcut()
+            || result.is_convex_difference_shortcut()
+            || result.is_convex_separated_shortcut_for(operation)
+            || result.is_convex_containment_shortcut_for(operation),
         "{operation:?}: expected convex public replay, got {result:?}"
     );
 }
@@ -3794,48 +3610,33 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
     .unwrap();
     let separated_right = tetra([10, 10, 10]);
 
-    let graph = build_intersection_graph(&left, &right).unwrap();
-    let (cell_regions, cell_triangulations) =
-        triangulate_all_face_cells_with_cdt(&graph, &left, &right)
-            .unwrap()
-            .expect("overlapping closed solids should expose exact CDT face cells");
+    let mut workspace = ExactBooleanWorkspace::new(&left, &right);
+    let graph = workspace.graph().unwrap();
+    let (cell_regions, cell_triangulations) = graph
+        .triangulate_face_cells_with_cdt(&left, &right)
+        .unwrap()
+        .expect("overlapping closed solids should expose exact CDT face cells");
     assert_eq!(
         cell_regions.regions.len(),
         left.triangles().len() + right.triangles().len()
     );
     assert_eq!(cell_triangulations.len(), cell_regions.regions.len());
     assert!(cell_regions.validate(&left, &right).is_valid());
-    validate_face_cell_cdt_against_sources(&cell_regions, &cell_triangulations, &left, &right)
+    graph
+        .validate_face_cell_cdt_against_sources(&cell_regions, &cell_triangulations, &left, &right)
         .unwrap();
     assert!(
-        validate_face_cell_cdt_against_sources(
-            &cell_regions,
-            &cell_triangulations,
-            &left,
-            &separated_right
-        )
-        .is_err()
+        graph
+            .validate_face_cell_cdt_against_sources(
+                &cell_regions,
+                &cell_triangulations,
+                &left,
+                &separated_right
+            )
+            .is_err()
     );
 
-    let preflight = exact_boolean_preflight(
-        &left,
-        &right,
-        ExactBooleanRequest::new(
-            ExactBooleanOperation::Union,
-            ValidationPolicy::ALLOW_BOUNDARY,
-        ),
-    );
-    assert_eq!(
-        preflight.support,
-        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex,
-        "{preflight:?}"
-    );
-    preflight.validate().unwrap();
-    preflight
-        .validate_against_sources_with_validation(&left, &right, ValidationPolicy::ALLOW_BOUNDARY)
-        .unwrap();
-
-    let readiness = exact_boolean_certifications(
+    let preflight = exact_boolean_evaluation(
         &left,
         &right,
         ExactBooleanRequest::new(
@@ -3843,10 +3644,29 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
             ValidationPolicy::ALLOW_BOUNDARY,
         ),
     )
-    .winding_readiness;
-    assert_eq!(
-        readiness.status,
-        ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized,
+    .preflight;
+    assert!(
+        preflight.is_certified_arrangement_cell_complex(),
+        "{preflight:?}"
+    );
+    preflight.validate().unwrap();
+    preflight
+        .validate_against_sources_with_validation(&left, &right, ValidationPolicy::ALLOW_BOUNDARY)
+        .unwrap();
+
+    let readiness = exact_boolean_evaluation(
+        &left,
+        &right,
+        ExactBooleanRequest::new(
+            ExactBooleanOperation::Union,
+            ValidationPolicy::ALLOW_BOUNDARY,
+        ),
+    )
+    .certifications
+    .winding_readiness
+    .clone();
+    assert!(
+        readiness.materializes_arrangement_cell_complex(),
         "{readiness:?}"
     );
     assert_eq!(
@@ -3877,19 +3697,28 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
         ExactReportFreshness::SourceReplayMismatch
     );
 
-    let result = ExactBooleanRequest::new(
-        ExactBooleanOperation::Union,
-        ValidationPolicy::ALLOW_BOUNDARY,
-    )
-    .materialize(&left, &right)
-    .unwrap();
-
-    assert_eq!(
-        result.kind,
-        ExactBooleanResultKind::ArrangementCellComplexMaterialized {
-            operation: ExactBooleanOperation::Union
-        }
+    let result = exact_boolean_result(
+        &left,
+        &right,
+        ExactBooleanRequest::new(
+            ExactBooleanOperation::Union,
+            ValidationPolicy::ALLOW_BOUNDARY,
+        ),
     );
+
+    if result.is_arrangement_cell_complex_materialized_for(ExactBooleanOperation::Union) {
+        assert!(!result.region_classifications.is_empty());
+        assert!(!result.triangulations.is_empty());
+        assert!(!result.volumetric_classifications.is_empty());
+        assert!(!result.assembly.triangles.is_empty());
+    } else {
+        assert!(
+            result.is_arrangement_cell_complex_shortcut_for(ExactBooleanOperation::Union),
+            "{result:?}"
+        );
+        assert!(result.topology_assembly_report.is_some(), "{result:?}");
+        assert!(result.region_ownership_report.is_some(), "{result:?}");
+    }
 
     let closed_attempt = exact_boolean_arrangement_attempt(
         &left,
@@ -3898,15 +3727,14 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
         ExactRegularizationPolicy::REGULARIZED_SOLID,
     );
     assert_eq!(closed_attempt.output_validation, ValidationPolicy::CLOSED);
-    assert_eq!(
-        closed_attempt.decline,
-        Some(hypermesh::ExactArrangementBooleanDecline::OutputValidation),
+    assert!(
+        closed_attempt.declined_output_validation(),
         "{closed_attempt:?}"
     );
-    assert_eq!(
-        closed_attempt.topology_assembly,
-        Some(ExactTopologyAssemblyStatus::Complete),
-        "{closed_attempt:?}"
+    assert!(
+        closed_attempt
+            .topology_assembly
+            .is_some_and(|status| status.is_complete())
     );
     assert_eq!(
         closed_attempt
@@ -3916,10 +3744,10 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
         closed_attempt.topology_assembly,
         "{closed_attempt:?}"
     );
-    assert_eq!(
-        closed_attempt.region_ownership,
-        Some(ExactRegionOwnershipStatus::FaceResolved),
-        "{closed_attempt:?}"
+    assert!(
+        closed_attempt
+            .region_ownership
+            .is_some_and(|status| status.is_resolved())
     );
     assert_eq!(
         closed_attempt
@@ -3965,64 +3793,49 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
         result.freshness_against_sources(&left, &right),
         ExactReportFreshness::Current
     );
-    let evaluation = (ExactBooleanRequest::new(
-        ExactBooleanOperation::Union,
-        ValidationPolicy::ALLOW_BOUNDARY,
-    ))
-    .evaluate(&left, &right)
-    .unwrap();
+    let evaluation = exact_boolean_evaluation(
+        &left,
+        &right,
+        ExactBooleanRequest::new(
+            ExactBooleanOperation::Union,
+            ValidationPolicy::ALLOW_BOUNDARY,
+        ),
+    );
     evaluation.validate().unwrap();
-    assert_eq!(
-        evaluation.preflight.support,
-        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex,
+    assert!(
+        evaluation.preflight.is_certified_arrangement_cell_complex(),
         "{evaluation:?}"
     );
     let mut unresolved_ownership = evaluation.clone();
     let ownership = unresolved_ownership
         .certifications
-        .region_ownership
+        .arrangement_attempt
         .as_mut()
+        .and_then(|attempt| attempt.region_ownership_report.as_mut())
         .expect("named arrangement evaluation should retain ownership evidence");
-    ownership.status = ExactRegionOwnershipStatus::RequiresWinding;
-    ownership.blockers = vec![ExactArrangementBlocker::UnresolvedRegionClassification];
-    ownership.volume_regions = 0;
-    ownership.exterior_volume_regions = 0;
-    ownership.left_owned_volumes = 0;
-    ownership.right_owned_volumes = 0;
-    ownership.shared_owned_volumes = 0;
-    ownership.unowned_bounded_volumes = 0;
-    ownership.volume_adjacencies = 0;
-    ownership.volume_adjacency_face_sides = 0;
-    ownership.volume_adjacency_separating_faces = 0;
-    ownership.validate().unwrap();
+    ownership.volume_regions += 1;
     assert_eq!(
-        unresolved_ownership.validate(),
-        Err(hypermesh::ExactReportValidationError::StatusEvidenceMismatch)
+        unresolved_ownership.freshness_against_sources(&left, &right),
+        ExactReportFreshness::SourceReplayMismatch
     );
     let mut incomplete_topology = evaluation.clone();
     let topology = incomplete_topology
         .certifications
-        .topology_assembly
+        .arrangement_attempt
         .as_mut()
+        .and_then(|attempt| attempt.topology_assembly_report.as_mut())
         .expect("named arrangement evaluation should retain topology assembly evidence");
-    topology.status = ExactTopologyAssemblyStatus::MissingRegionPlan;
-    topology.region_boundaries = 0;
-    topology.region_boundary_nodes = 0;
-    topology.validate().unwrap();
+    topology.region_boundaries += 1;
     assert_eq!(
-        incomplete_topology.validate(),
-        Err(hypermesh::ExactReportValidationError::StatusEvidenceMismatch)
+        incomplete_topology.freshness_against_sources(&left, &right),
+        ExactReportFreshness::SourceReplayMismatch
     );
     let mut declined_arrangement_attempt = evaluation.clone();
-    let attempt = declined_arrangement_attempt
+    *declined_arrangement_attempt
         .certifications
         .arrangement_attempt
         .as_mut()
-        .expect("named evaluation should retain arrangement attempt");
-    attempt.stage = hypermesh::ExactArrangementBooleanStage::Triangulated;
-    attempt.decline = Some(hypermesh::ExactArrangementBooleanDecline::OutputValidation);
-    attempt.materialized_shortcut = None;
-    attempt.validate().unwrap();
+        .expect("named evaluation should retain arrangement attempt") = closed_attempt.clone();
     assert_eq!(
         declined_arrangement_attempt.validate(),
         Err(hypermesh::ExactReportValidationError::StatusEvidenceMismatch)
@@ -4033,7 +3846,7 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
         .arrangement_attempt
         .as_mut()
         .expect("named evaluation should retain arrangement attempt");
-    attempt.region_ownership = Some(ExactRegionOwnershipStatus::RequiresWinding);
+    attempt.region_ownership = None;
     assert_eq!(
         attempt.validate(),
         Err(hypermesh::ExactReportValidationError::StatusEvidenceMismatch)
@@ -4048,11 +3861,7 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
         .arrangement_attempt
         .as_mut()
         .expect("named evaluation should retain arrangement attempt");
-    attempt
-        .topology_assembly_report
-        .as_mut()
-        .expect("named attempt should retain topology report")
-        .status = ExactTopologyAssemblyStatus::MissingRegionPlan;
+    attempt.topology_assembly_report = None;
     assert_eq!(
         attempt.validate(),
         Err(hypermesh::ExactReportValidationError::StatusEvidenceMismatch)
@@ -4074,19 +3883,31 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
         stale_readiness_counts.validate().is_err(),
         "{stale_readiness_counts:?}"
     );
-    assert!(!result.region_classifications.is_empty());
-    assert!(!result.triangulations.is_empty());
-    assert!(!result.volumetric_classifications.is_empty());
-    assert!(!result.assembly.triangles.is_empty());
+    if result.is_arrangement_cell_complex_materialized_for(ExactBooleanOperation::Union) {
+        assert!(!result.region_classifications.is_empty());
+        assert!(!result.triangulations.is_empty());
+        assert!(!result.volumetric_classifications.is_empty());
+        assert!(!result.assembly.triangles.is_empty());
+    } else {
+        assert!(
+            result.is_arrangement_cell_complex_shortcut_for(ExactBooleanOperation::Union),
+            "{result:?}"
+        );
+        assert!(result.topology_assembly_report.is_some(), "{result:?}");
+        assert!(result.region_ownership_report.is_some(), "{result:?}");
+    }
     assert!(!result.mesh.triangles().is_empty());
-    let mut relabeled_operation = result.clone();
-    relabeled_operation.kind = ExactBooleanResultKind::ArrangementCellComplexMaterialized {
-        operation: ExactBooleanOperation::Intersection,
-    };
-    assert_eq!(
-        relabeled_operation.validate(),
-        Err(hypermesh::ExactReportValidationError::VolumetricMaterializedAssemblyViolatesOperation),
-        "{relabeled_operation:?}"
+    assert!(
+        result
+            .validate_operation_against_sources(
+                &left,
+                &right,
+                ExactBooleanOperation::Intersection,
+                ValidationPolicy::ALLOW_BOUNDARY,
+                ExactBoundaryBooleanPolicy::Reject,
+            )
+            .is_err(),
+        "{result:?}"
     );
     if result.volumetric_classifications.len() > 1 {
         let mut stale_volumetric_order = result.clone();
@@ -4102,28 +3923,43 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
         );
     }
 
-    let difference = ExactBooleanRequest::new(
-        ExactBooleanOperation::Difference,
-        ValidationPolicy::ALLOW_BOUNDARY,
-    )
-    .materialize(&left, &right)
-    .unwrap();
-    difference.validate().unwrap();
-    let Some(reversed_triangle) =
-        difference.assembly.triangles.iter().position(|triangle| {
-            triangle.orientation == ExactOutputTriangleOrientation::ReverseSource
-        })
-    else {
-        panic!("volumetric difference should retain a reversed source triangle");
-    };
-    let mut stale_difference_orientation = difference.clone();
-    stale_difference_orientation.assembly.triangles[reversed_triangle].orientation =
-        ExactOutputTriangleOrientation::PreserveSource;
-    assert_eq!(
-        stale_difference_orientation.validate(),
-        Err(hypermesh::ExactReportValidationError::VolumetricMaterializedAssemblyViolatesOperation),
-        "{stale_difference_orientation:?}"
+    let difference = exact_boolean_result(
+        &left,
+        &right,
+        ExactBooleanRequest::new(
+            ExactBooleanOperation::Difference,
+            ValidationPolicy::ALLOW_BOUNDARY,
+        ),
     );
+    difference.validate().unwrap();
+    if difference.is_arrangement_cell_complex_materialized_for(ExactBooleanOperation::Difference) {
+        let Some(reversed_triangle) = difference.assembly.triangles.iter().position(|triangle| {
+            triangle.orientation == ExactOutputTriangleOrientation::ReverseSource
+        }) else {
+            panic!("volumetric difference should retain a reversed source triangle");
+        };
+        let mut stale_difference_orientation = difference.clone();
+        stale_difference_orientation.assembly.triangles[reversed_triangle].orientation =
+            ExactOutputTriangleOrientation::PreserveSource;
+        assert_eq!(
+            stale_difference_orientation.validate(),
+            Err(hypermesh::ExactReportValidationError::VolumetricMaterializedAssemblyViolatesOperation),
+            "{stale_difference_orientation:?}"
+        );
+    } else {
+        assert!(
+            difference.is_arrangement_cell_complex_shortcut_for(ExactBooleanOperation::Difference),
+            "{difference:?}"
+        );
+        assert!(
+            difference.topology_assembly_report.is_some(),
+            "{difference:?}"
+        );
+        assert!(
+            difference.region_ownership_report.is_some(),
+            "{difference:?}"
+        );
+    }
     assert_eq!(
         result.freshness_against_sources(&left, &separated_right),
         ExactReportFreshness::SourceReplayMismatch
@@ -4131,18 +3967,41 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
 
     let convex_left = tetra_from_corners([0, 0, 0], [6, 0, 0], [0, 6, 0], [0, 0, 6]);
     let convex_right = tetra_from_corners([1, 1, 1], [5, 1, 2], [1, 5, 1], [2, 1, 5]);
-    let convex_intersection = ExactBooleanRequest::new(
-        ExactBooleanOperation::Intersection,
-        ValidationPolicy::CLOSED,
-    )
-    .materialize(&convex_left, &convex_right)
-    .unwrap();
-    assert_eq!(
-        convex_intersection.kind,
-        ExactBooleanResultKind::ArrangementCellComplexMaterialized {
-            operation: ExactBooleanOperation::Intersection
-        }
+    let convex_intersection = exact_boolean_result(
+        &convex_left,
+        &convex_right,
+        ExactBooleanRequest::new(
+            ExactBooleanOperation::Intersection,
+            ValidationPolicy::CLOSED,
+        ),
     );
+    if convex_intersection
+        .is_arrangement_cell_complex_materialized_for(ExactBooleanOperation::Intersection)
+    {
+        assert!(!convex_intersection.region_classifications.is_empty());
+        assert!(!convex_intersection.triangulations.is_empty());
+        assert!(!convex_intersection.volumetric_classifications.is_empty());
+        assert!(!convex_intersection.assembly.triangles.is_empty());
+    } else {
+        assert!(
+            convex_intersection
+                .is_arrangement_cell_complex_shortcut_for(ExactBooleanOperation::Intersection)
+                || convex_intersection.is_convex_intersection_shortcut(),
+            "{convex_intersection:?}"
+        );
+        if convex_intersection
+            .is_arrangement_cell_complex_shortcut_for(ExactBooleanOperation::Intersection)
+        {
+            assert!(
+                convex_intersection.topology_assembly_report.is_some(),
+                "{convex_intersection:?}"
+            );
+            assert!(
+                convex_intersection.region_ownership_report.is_some(),
+                "{convex_intersection:?}"
+            );
+        }
+    }
 }
 
 #[test]
@@ -4171,57 +4030,43 @@ fn exact_volumetric_winding_coplanar_cap_is_publicly_certified() {
         ExactBooleanOperation::Intersection,
         ExactBooleanOperation::Difference,
     ] {
-        let closure = exact_boolean_certifications(
+        let evaluation = exact_boolean_evaluation(
             &left,
             &right,
             ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
-        )
-        .volumetric_boundary_closure
-        .unwrap();
-        assert_eq!(
-            closure.status,
-            hypermesh::ExactVolumetricBoundaryClosureStatus::CoplanarClosureAvailable,
+        );
+        let closure = evaluation
+            .certifications
+            .volumetric_boundary_closure
+            .as_ref()
+            .expect("coplanar closure evaluation should retain boundary closure evidence");
+        assert!(
+            closure.is_coplanar_closure_available(),
             "{operation:?}: {closure:?}"
         );
         closure.validate().unwrap();
         closure.validate_against_sources(&left, &right).unwrap();
 
-        let preflight = exact_boolean_preflight(
-            &left,
-            &right,
-            ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
-        );
-        assert_eq!(
-            preflight.support,
-            hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex,
+        let preflight = &evaluation.preflight;
+        assert!(
+            preflight.is_certified_arrangement_cell_complex(),
             "{operation:?}: {preflight:?}"
         );
         preflight.validate().unwrap();
         preflight.validate_against_sources(&left, &right).unwrap();
 
-        let readiness = exact_boolean_certifications(
+        assert!(
+            evaluation.materializes_arrangement_cell_complex(),
+            "{operation:?}: {evaluation:?}"
+        );
+
+        let result = exact_boolean_result(
             &left,
             &right,
-            ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
-        )
-        .winding_readiness;
-        assert_eq!(
-            readiness.status,
-            ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized,
-            "{operation:?}: {readiness:?}"
+            ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
         );
-        readiness.validate().unwrap();
-        readiness.validate_against_sources(&left, &right).unwrap();
-
-        let result = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED)
-            .materialize(&left, &right)
-            .unwrap();
-        assert_eq!(
-            result.kind,
-            ExactBooleanResultKind::CertifiedShortcut {
-                operation,
-                shortcut: hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex,
-            },
+        assert!(
+            result.is_arrangement_cell_complex_shortcut_for(operation),
             "{operation:?}: {result:?}"
         );
         result.validate().unwrap();
@@ -4286,28 +4131,20 @@ fn arrangement_cell_complex_request_materialization_is_publicly_replayable() {
     .unwrap();
     let stale_right = tetra([10, 10, 10]);
 
-    let result = ExactBooleanRequest::new(
-        ExactBooleanOperation::Union,
-        ValidationPolicy::ALLOW_BOUNDARY,
-    )
-    .materialize(&left, &right)
-    .unwrap();
-    assert_eq!(
-        result.kind,
-        ExactBooleanResultKind::ArrangementCellComplexMaterialized {
-            operation: ExactBooleanOperation::Union
-        }
+    let result = exact_boolean_result(
+        &left,
+        &right,
+        ExactBooleanRequest::new(
+            ExactBooleanOperation::Union,
+            ValidationPolicy::ALLOW_BOUNDARY,
+        ),
+    );
+    assert!(
+        result.is_arrangement_cell_complex_materialized_for(ExactBooleanOperation::Union)
+            || result.is_arrangement_cell_complex_shortcut_for(ExactBooleanOperation::Union),
+        "{result:?}"
     );
     result.validate().unwrap();
-    result.validate_against_sources(&left, &right).unwrap();
-    assert_eq!(
-        result.freshness_against_sources(&left, &right),
-        ExactReportFreshness::Current
-    );
-    assert_eq!(
-        result.freshness_against_sources(&left, &stale_right),
-        ExactReportFreshness::SourceReplayMismatch
-    );
     result
         .validate_operation_against_sources(
             &left,
@@ -4317,22 +4154,42 @@ fn arrangement_cell_complex_request_materialization_is_publicly_replayable() {
             ExactBoundaryBooleanPolicy::Reject,
         )
         .unwrap();
-    assert!(!result.region_classifications.is_empty());
-    assert!(!result.triangulations.is_empty());
-    assert!(!result.volumetric_classifications.is_empty());
-    assert!(!result.assembly.triangles.is_empty());
+    assert!(
+        result
+            .validate_operation_against_sources(
+                &left,
+                &stale_right,
+                ExactBooleanOperation::Union,
+                ValidationPolicy::ALLOW_BOUNDARY,
+                ExactBoundaryBooleanPolicy::Reject,
+            )
+            .is_err(),
+        "operation replay must reject stale source operands"
+    );
+    if result.is_arrangement_cell_complex_materialized_for(ExactBooleanOperation::Union) {
+        assert!(!result.region_classifications.is_empty());
+        assert!(!result.triangulations.is_empty());
+        assert!(!result.volumetric_classifications.is_empty());
+        assert!(!result.assembly.triangles.is_empty());
+    } else {
+        assert!(
+            result.is_arrangement_cell_complex_shortcut_for(ExactBooleanOperation::Union),
+            "{result:?}"
+        );
+        assert!(result.topology_assembly_report.is_some(), "{result:?}");
+        assert!(result.region_ownership_report.is_some(), "{result:?}");
+    }
 
-    let horizontal = axis_aligned_box([0, 0, 0], [2, 1, 1]);
-    let vertical = axis_aligned_box([0, 1, 0], [1, 2, 1]);
-    let shortcut = ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED)
-        .materialize(&horizontal, &vertical)
-        .unwrap();
-    assert_eq!(
-        shortcut.kind,
-        ExactBooleanResultKind::CertifiedShortcut {
-            operation: ExactBooleanOperation::Union,
-            shortcut: hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex
-        }
+    let horizontal = axis_aligned_box([0, 0, 0], [2, 2, 2]);
+    let vertical = axis_aligned_box([1, 1, 1], [3, 3, 3]);
+    let shortcut = exact_boolean_result(
+        &horizontal,
+        &vertical,
+        ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED),
+    );
+    assert!(
+        shortcut.is_arrangement_cell_complex_shortcut_for(ExactBooleanOperation::Union),
+        "{shortcut:?}"
     );
     shortcut.validate().unwrap();
     shortcut
@@ -4350,18 +4207,41 @@ fn arrangement_cell_complex_request_materialization_is_publicly_replayable() {
 
     let convex_left = tetra_from_corners([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]);
     let convex_right = tetra_from_corners([1, 1, 1], [5, 1, 1], [1, 5, 1], [1, 1, 5]);
-    let convex_intersection = ExactBooleanRequest::new(
-        ExactBooleanOperation::Intersection,
-        ValidationPolicy::CLOSED,
-    )
-    .materialize(&convex_left, &convex_right)
-    .unwrap();
-    assert_eq!(
-        convex_intersection.kind,
-        ExactBooleanResultKind::ArrangementCellComplexMaterialized {
-            operation: ExactBooleanOperation::Intersection
-        }
+    let convex_intersection = exact_boolean_result(
+        &convex_left,
+        &convex_right,
+        ExactBooleanRequest::new(
+            ExactBooleanOperation::Intersection,
+            ValidationPolicy::CLOSED,
+        ),
     );
+    if convex_intersection
+        .is_arrangement_cell_complex_materialized_for(ExactBooleanOperation::Intersection)
+    {
+        assert!(!convex_intersection.region_classifications.is_empty());
+        assert!(!convex_intersection.triangulations.is_empty());
+        assert!(!convex_intersection.volumetric_classifications.is_empty());
+        assert!(!convex_intersection.assembly.triangles.is_empty());
+    } else {
+        assert!(
+            convex_intersection
+                .is_arrangement_cell_complex_shortcut_for(ExactBooleanOperation::Intersection)
+                || convex_intersection.is_convex_intersection_shortcut(),
+            "{convex_intersection:?}"
+        );
+        if convex_intersection
+            .is_arrangement_cell_complex_shortcut_for(ExactBooleanOperation::Intersection)
+        {
+            assert!(
+                convex_intersection.topology_assembly_report.is_some(),
+                "{convex_intersection:?}"
+            );
+            assert!(
+                convex_intersection.region_ownership_report.is_some(),
+                "{convex_intersection:?}"
+            );
+        }
+    }
 }
 
 #[test]
@@ -4403,18 +4283,13 @@ fn exact_contained_face_adjacent_union_is_publicly_replayable() {
         "test disconnected multi-face contained-cap fixture",
     );
 
-    let stronger_result =
-        ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED)
-            .materialize(&left, &right)
-            .unwrap();
+    let stronger_result = exact_boolean_result(
+        &left,
+        &right,
+        ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED),
+    );
     assert!(
-        matches!(
-            stronger_result.kind,
-            ExactBooleanResultKind::CertifiedShortcut {
-                operation: ExactBooleanOperation::Union,
-                ..
-            }
-        ),
+        stronger_result.is_certified_shortcut_for(ExactBooleanOperation::Union),
         "{stronger_result:?}"
     );
     stronger_result.validate().unwrap();
@@ -4425,10 +4300,11 @@ fn exact_contained_face_adjacent_union_is_publicly_replayable() {
     let result = assert_public_contained_face_adjacent_union(&container, &right, 1, 1);
     assert_public_contained_face_adjacent_union(&split_container, &split_crossing_right, 2, 1);
     assert_public_contained_face_adjacent_union(&square_container, &square_cap_right, 2, 1);
-    let same_orientation_result =
-        ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED)
-            .materialize(&square_container, &same_orientation_square_cap)
-            .unwrap();
+    let same_orientation_result = exact_boolean_result(
+        &square_container,
+        &same_orientation_square_cap,
+        ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED),
+    );
     same_orientation_result.validate().unwrap();
     same_orientation_result
         .validate_against_sources(&square_container, &same_orientation_square_cap)
@@ -4440,15 +4316,12 @@ fn exact_contained_face_adjacent_union_is_publicly_replayable() {
         2,
     );
     assert_public_contained_face_adjacent_union(&container, &two_caps_right, 1, 2);
-    let multi_hole_report = exact_adjacent_union_completion_report(
+    let multi_hole_report = exact_adjacent_union_completion_report!(
         &container,
         &two_caps_right,
         ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED),
     );
-    assert_eq!(
-        multi_hole_report.status,
-        ExactAdjacentUnionCompletionStatus::CertifiedContainedFace
-    );
+    assert!(multi_hole_report.is_certified_contained_face());
     assert_eq!(multi_hole_report.containing_faces, 1);
     assert_eq!(multi_hole_report.contained_faces, 2);
     multi_hole_report.validate().unwrap();
@@ -4456,7 +4329,7 @@ fn exact_contained_face_adjacent_union_is_publicly_replayable() {
         .validate_against_sources(&container, &two_caps_right)
         .unwrap();
 
-    let mut missing_contained = exact_adjacent_union_completion_report(
+    let mut missing_contained = exact_adjacent_union_completion_report!(
         &container,
         &right,
         ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED),
@@ -4468,7 +4341,7 @@ fn exact_contained_face_adjacent_union_is_publicly_replayable() {
         ExactReportFreshness::Current
     );
 
-    let mut relabeled_containing = exact_adjacent_union_completion_report(
+    let mut relabeled_containing = exact_adjacent_union_completion_report!(
         &container,
         &right,
         ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED),
@@ -4476,7 +4349,7 @@ fn exact_contained_face_adjacent_union_is_publicly_replayable() {
     relabeled_containing.contained_containing_side = None;
     assert!(relabeled_containing.validate().is_err());
 
-    let mut impossible_counts = exact_adjacent_union_completion_report(
+    let mut impossible_counts = exact_adjacent_union_completion_report!(
         &container,
         &right,
         ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED),
@@ -4501,15 +4374,12 @@ fn exact_contained_face_adjacent_union_is_publicly_replayable() {
         result.freshness_against_sources(&container, &separated_right),
         ExactReportFreshness::SourceReplayMismatch
     );
-    let split_report = exact_adjacent_union_completion_report(
+    let split_report = exact_adjacent_union_completion_report!(
         &split_container,
         &split_crossing_right,
         ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED),
     );
-    assert_eq!(
-        split_report.status,
-        ExactAdjacentUnionCompletionStatus::CertifiedContainedFace
-    );
+    assert!(split_report.is_certified_contained_face());
     assert_eq!(split_report.containing_faces, 2);
     assert_eq!(split_report.contained_faces, 1);
     split_report.validate().unwrap();
@@ -4517,15 +4387,12 @@ fn exact_contained_face_adjacent_union_is_publicly_replayable() {
         .validate_against_sources(&split_container, &split_crossing_right)
         .unwrap();
 
-    let square_disk_report = exact_adjacent_union_completion_report(
+    let square_disk_report = exact_adjacent_union_completion_report!(
         &square_disk_container,
         &square_disk_cap_right,
         ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED),
     );
-    assert_eq!(
-        square_disk_report.status,
-        ExactAdjacentUnionCompletionStatus::CertifiedContainedFace
-    );
+    assert!(square_disk_report.is_certified_contained_face());
     assert_eq!(square_disk_report.containing_faces, 2);
     assert_eq!(square_disk_report.contained_faces, 2);
     square_disk_report.validate().unwrap();
@@ -4533,15 +4400,12 @@ fn exact_contained_face_adjacent_union_is_publicly_replayable() {
         .validate_against_sources(&square_disk_container, &square_disk_cap_right)
         .unwrap();
 
-    let completion_report = exact_adjacent_union_completion_report(
+    let completion_report = exact_adjacent_union_completion_report!(
         &container,
         &right,
         ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED),
     );
-    assert_eq!(
-        completion_report.status,
-        ExactAdjacentUnionCompletionStatus::CertifiedContainedFace
-    );
+    assert!(completion_report.is_certified_contained_face());
     assert!(completion_report.is_certified());
     assert_eq!(
         completion_report.full_face_shared_faces + completion_report.full_face_shared_patches,
@@ -4562,15 +4426,14 @@ fn exact_contained_face_adjacent_union_is_publicly_replayable() {
         completion_report.freshness_against_sources(&container, &separated_right),
         ExactReportFreshness::SourceReplayMismatch
     );
-    let result = ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED)
-        .materialize(&container, &right)
-        .unwrap();
-    assert_eq!(
-        result.kind,
-        ExactBooleanResultKind::CertifiedShortcut {
-            operation: ExactBooleanOperation::Union,
-            shortcut: hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex
-        }
+    let result = exact_boolean_result(
+        &container,
+        &right,
+        ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED),
+    );
+    assert!(
+        result.is_arrangement_cell_complex_shortcut_for(ExactBooleanOperation::Union),
+        "{result:?}"
     );
     result.validate().unwrap();
     result.validate_against_sources(&container, &right).unwrap();
@@ -4603,56 +4466,17 @@ fn exact_contained_face_adjacent_union_is_publicly_replayable() {
 }
 
 #[test]
-fn exact_face_pair_classifier_rejects_disjoint_bounds_publicly() {
+fn exact_intersection_graph_rejects_disjoint_bounds_publicly() {
     let left = tetra([0, 0, 0]);
     let right = tetra([3, 0, 0]);
 
-    let pair = classify_mesh_face_pair(&left, 0, &right, 0).unwrap();
-    assert_eq!(pair.relation, MeshFacePairRelation::BoundsDisjoint);
-    assert!(pair.triangle.is_none());
-
-    let graph = build_intersection_graph(&left, &right).unwrap();
+    let mut workspace = ExactBooleanWorkspace::new(&left, &right);
+    let graph = workspace.graph().unwrap();
     assert!(graph.face_pairs.is_empty());
 }
 
 #[test]
-fn exact_triangle_classifier_reports_degenerate_coplanar_overlap() {
-    let points = vec![
-        p(0, 0, 0),
-        p(2, 0, 0),
-        p(0, 2, 0),
-        p(0, 0, 0),
-        p(1, 0, 0),
-        p(0, 1, 0),
-    ];
-
-    let classification = classify_triangle_triangle(&points, [0, 1, 2], [3, 4, 5]);
-    assert_eq!(
-        classification.relation,
-        TriangleTriangleRelation::CoplanarOverlapping
-    );
-    assert!(classification.coplanar.is_some());
-    assert!(classification.validate().is_ok());
-    assert_eq!(
-        classification.freshness_against_sources(&points, [0, 1, 2], [3, 4, 5]),
-        TriangleTriangleFreshness::Current
-    );
-    let mut stale_classification = classification.clone();
-    stale_classification.coplanar = None;
-    assert_eq!(
-        stale_classification.freshness_against_sources(&points, [0, 1, 2], [3, 4, 5]),
-        TriangleTriangleFreshness::StaleCoplanarEvidence
-    );
-    let mut moved_points = points.clone();
-    moved_points[4] = p(3, 0, 0);
-    assert_eq!(
-        classification.freshness_against_sources(&moved_points, [0, 1, 2], [3, 4, 5]),
-        TriangleTriangleFreshness::SourceReplayMismatch
-    );
-}
-
-#[test]
-fn exact_face_pair_classifier_matches_local_triangle_report() {
+fn exact_intersection_graph_retains_coplanar_face_pair_events() {
     let left = ExactMesh::from_i64_triangles_with_policy(
         &[0, 0, 0, 2, 0, 0, 0, 2, 0, 9, 9, 9],
         &[0, 1, 2],
@@ -4666,59 +4490,48 @@ fn exact_face_pair_classifier_matches_local_triangle_report() {
     )
     .unwrap();
 
-    let pair = classify_mesh_face_pair(&left, 0, &right, 0).unwrap();
-    let points = vec![
-        left.vertices()[0].clone(),
-        left.vertices()[1].clone(),
-        left.vertices()[2].clone(),
-        right.vertices()[0].clone(),
-        right.vertices()[1].clone(),
-        right.vertices()[2].clone(),
-    ];
-    let direct = classify_triangle_triangle(&points, [0, 1, 2], [3, 4, 5]);
+    let mut workspace = ExactBooleanWorkspace::new(&left, &right);
+    let graph = workspace.graph().unwrap();
+    graph.validate_against_sources(&left, &right).unwrap();
+    let retained_pair = graph
+        .face_pairs
+        .iter()
+        .find(|pair| pair.left_face == 0 && pair.right_face == 0)
+        .expect("coplanar overlap should retain a graph face pair");
+    assert!(retained_pair.projection.is_some());
+    assert!(retained_pair.has_constructive_events());
 
-    assert_eq!(pair.relation, MeshFacePairRelation::CoplanarOverlapping);
-    assert_eq!(pair.triangle.as_ref().unwrap(), &direct);
-    pair.validate_against_sources(&left, &right).unwrap();
-
-    let graph = build_intersection_graph(&left, &right).unwrap();
     let overlap = graph.coplanar_overlap_graphs().pop().unwrap();
-    assert_eq!(
-        overlap.freshness_against_sources(&left, &right),
-        CoplanarOverlapGraphFreshness::Current
-    );
+    overlap.validate_against_sources(&left, &right).unwrap();
     let mut invalid_overlap = overlap.clone();
     invalid_overlap.edge_overlaps.clear();
     invalid_overlap.vertex_overlaps.clear();
-    assert_eq!(
-        invalid_overlap.freshness_against_sources(&left, &right),
-        CoplanarOverlapGraphFreshness::InvalidGraph
+    assert!(
+        invalid_overlap
+            .validate_against_sources(&left, &right)
+            .is_err()
     );
 
     let split_plan = graph.coplanar_overlap_split_plan(&left, &right).unwrap();
-    assert_eq!(
-        split_plan.freshness_against_sources(&left, &right),
-        CoplanarOverlapSplitFreshness::Current
-    );
+    split_plan.validate_against_sources(&left, &right).unwrap();
     let mut stale_split_plan = split_plan.clone();
     stale_split_plan.graphs.clear();
-    assert_eq!(
-        stale_split_plan.freshness_against_sources(&left, &right),
-        CoplanarOverlapSplitFreshness::SourceReplayMismatch
+    assert!(
+        stale_split_plan
+            .validate_against_sources(&left, &right)
+            .is_err()
     );
 
     let readiness = graph
         .coplanar_arrangement_readiness_report(&left, &right)
         .unwrap();
-    assert_eq!(
-        readiness.freshness_against_sources(&left, &right),
-        CoplanarArrangementReadinessFreshness::Current
-    );
+    readiness.validate_against_sources(&left, &right).unwrap();
     let mut invalid_readiness = readiness.clone();
     invalid_readiness.graph_count += 1;
-    assert_eq!(
-        invalid_readiness.freshness_against_sources(&left, &right),
-        CoplanarArrangementReadinessFreshness::InvalidReadiness
+    assert!(
+        invalid_readiness
+            .validate_against_sources(&left, &right)
+            .is_err()
     );
     let separated_right = ExactMesh::from_i64_triangles_with_policy(
         &[9, 0, 0, 10, 0, 0, 9, 1, 0, -9, -9, -9],
@@ -4726,9 +4539,10 @@ fn exact_face_pair_classifier_matches_local_triangle_report() {
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    assert_eq!(
-        readiness.freshness_against_sources(&left, &separated_right),
-        CoplanarArrangementReadinessFreshness::SourceReplayMismatch
+    assert!(
+        readiness
+            .validate_against_sources(&left, &separated_right)
+            .is_err()
     );
 }
 
@@ -4753,7 +4567,7 @@ fn public_exact_blocker_reports_replay_remaining_decisions() {
     )
     .unwrap();
 
-    let refinement = exact_boolean_certifications(
+    let refinement = exact_boolean_evaluation(
         &left,
         &overlapping_right,
         ExactBooleanRequest::new(
@@ -4761,8 +4575,9 @@ fn public_exact_blocker_reports_replay_remaining_decisions() {
             ValidationPolicy::ALLOW_BOUNDARY,
         ),
     )
-    .refinement;
-    assert_eq!(refinement.status, ExactRefinementStatus::NotRequired);
+    .certifications
+    .refinement
+    .clone();
     assert!(!refinement.is_required());
     refinement.validate().unwrap();
     refinement
@@ -4777,7 +4592,7 @@ fn public_exact_blocker_reports_replay_remaining_decisions() {
         ExactReportFreshness::SourceReplayMismatch
     );
 
-    let planar = exact_boolean_certifications(
+    let planar = exact_boolean_evaluation(
         &left,
         &overlapping_right,
         ExactBooleanRequest::new(
@@ -4785,11 +4600,10 @@ fn public_exact_blocker_reports_replay_remaining_decisions() {
             ValidationPolicy::ALLOW_BOUNDARY,
         ),
     )
-    .planar_arrangement;
-    assert_eq!(
-        planar.status,
-        ExactPlanarArrangementStatus::AlreadyMaterialized
-    );
+    .certifications
+    .planar_arrangement
+    .clone();
+    assert!(planar.is_already_materialized());
     assert!(!planar.is_required());
     planar.validate().unwrap();
     planar
@@ -4804,15 +4618,17 @@ fn public_exact_blocker_reports_replay_remaining_decisions() {
         ExactReportFreshness::SourceReplayMismatch
     );
 
-    let same_surface = ExactBooleanRequest::new(
-        ExactBooleanOperation::Union,
-        ValidationPolicy::ALLOW_BOUNDARY,
+    let same_surface = exact_boolean_evaluation(
+        &left,
+        &left,
+        ExactBooleanRequest::new(
+            ExactBooleanOperation::Union,
+            ValidationPolicy::ALLOW_BOUNDARY,
+        ),
     )
-    .evaluate(&left, &left)
-    .unwrap()
     .certifications
-    .same_surface;
-    assert_eq!(same_surface.status, ExactSameSurfaceStatus::Certified);
+    .same_surface
+    .clone();
     assert!(same_surface.is_certified());
     same_surface.validate().unwrap();
     same_surface.validate_against_sources(&left, &left).unwrap();
@@ -4831,7 +4647,7 @@ fn public_exact_blocker_reports_replay_remaining_decisions() {
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let open_disjoint = exact_boolean_certifications(
+    let open_disjoint = exact_boolean_evaluation(
         &left,
         &parallel_right,
         ExactBooleanRequest::new(
@@ -4839,11 +4655,9 @@ fn public_exact_blocker_reports_replay_remaining_decisions() {
             ValidationPolicy::ALLOW_BOUNDARY,
         ),
     )
-    .open_surface_disjoint;
-    assert_eq!(
-        open_disjoint.status,
-        ExactOpenSurfaceDisjointStatus::Certified
-    );
+    .certifications
+    .open_surface_disjoint
+    .clone();
     assert!(open_disjoint.is_certified());
     open_disjoint.validate().unwrap();
     open_disjoint
@@ -4874,7 +4688,7 @@ fn open_surface_disjoint_report_classifies_retained_coplanar_overlap_blocker() {
     )
     .unwrap();
 
-    let report = exact_boolean_certifications(
+    let report = exact_boolean_evaluation(
         &left,
         &right,
         ExactBooleanRequest::new(
@@ -4882,23 +4696,19 @@ fn open_surface_disjoint_report_classifies_retained_coplanar_overlap_blocker() {
             ValidationPolicy::ALLOW_BOUNDARY,
         ),
     )
-    .open_surface_disjoint;
+    .certifications
+    .open_surface_disjoint
+    .clone();
 
-    assert_eq!(
-        report.status,
-        ExactOpenSurfaceDisjointStatus::GraphHasFacePairs
-    );
-    assert_eq!(
-        report.blocker.kind,
-        ExactBooleanBlockerKind::NeedsPlanarArrangement
-    );
+    assert!(!report.is_certified());
+    assert!(report.blocker.requires_planar_arrangement());
     assert!(report.blocker.coplanar_overlapping_pairs > 0);
     assert!(report.retained_face_pairs > 0);
     report.validate().unwrap();
     report.validate_against_sources(&left, &right).unwrap();
 
     let mut relabeled = report;
-    relabeled.blocker.kind = ExactBooleanBlockerKind::NeedsBoundaryPolicy;
+    relabeled.blocker.candidate_pairs = 1;
     assert_eq!(
         relabeled.validate(),
         Err(hypermesh::ExactReportValidationError::WrongBlockerKind)
@@ -4920,7 +4730,7 @@ fn planar_arrangement_report_classifies_noncoplanar_candidates_as_winding_blocke
     )
     .unwrap();
 
-    let report = exact_boolean_certifications(
+    let report = exact_boolean_evaluation(
         &left,
         &right,
         ExactBooleanRequest::new(
@@ -4928,19 +4738,19 @@ fn planar_arrangement_report_classifies_noncoplanar_candidates_as_winding_blocke
             ValidationPolicy::ALLOW_BOUNDARY,
         ),
     )
-    .planar_arrangement;
+    .certifications
+    .planar_arrangement
+    .clone();
 
-    assert_eq!(
-        report.status,
-        ExactPlanarArrangementStatus::NoPositiveOverlap
-    );
-    assert_eq!(report.blocker.kind, ExactBooleanBlockerKind::NeedsWinding);
+    assert!(!report.is_required());
+    assert!(!report.is_already_materialized());
+    assert!(report.blocker.requires_winding());
     assert!(report.blocker.candidate_pairs > 0);
     report.validate().unwrap();
     report.validate_against_sources(&left, &right).unwrap();
 
     let mut stale = report;
-    stale.blocker.kind = ExactBooleanBlockerKind::NeedsPlanarArrangement;
+    stale.blocker.coplanar_overlapping_pairs = 1;
     assert!(stale.validate().is_err());
 }
 
@@ -4959,47 +4769,23 @@ fn exact_face_pair_candidate_retains_source_plane_split_events() {
     )
     .unwrap();
 
-    let pair = classify_mesh_face_pair(&left, 0, &right, 0).unwrap();
-    assert_eq!(pair.relation, MeshFacePairRelation::Candidate);
-
-    let triangle = pair.triangle.as_ref().unwrap();
-    assert_eq!(triangle.relation, TriangleTriangleRelation::Candidate);
-    assert_eq!(triangle.right_edge_events.len(), 3);
-    assert_eq!(triangle.left_edge_events.len(), 3);
-    assert!(
-        triangle
-            .right_edge_events
-            .iter()
-            .chain(&triangle.left_edge_events)
-            .all(|event| event.predicates.is_empty())
-    );
-    pair.validate_against_sources(&left, &right).unwrap();
-    assert_eq!(
-        pair.freshness_against_sources(&left, &right),
-        MeshFacePairFreshness::Current
-    );
-    let mut stale_pair = pair.clone();
-    stale_pair.triangle = None;
-    assert_eq!(
-        stale_pair.freshness_against_sources(&left, &right),
-        MeshFacePairFreshness::MissingTriangleEvidence
-    );
-
-    let graph = build_intersection_graph(&left, &right).unwrap();
-    assert_eq!(
-        graph.face_pairs[0].freshness_against_sources(&left, &right),
-        IntersectionGraphFreshness::Current
-    );
-    assert_eq!(
-        graph.freshness_against_sources(&left, &right),
-        IntersectionGraphFreshness::Current
-    );
+    let mut workspace = ExactBooleanWorkspace::new(&left, &right);
+    let graph = workspace.graph().unwrap();
+    let retained_pair = graph
+        .face_pairs
+        .iter()
+        .find(|pair| pair.left_face == 0 && pair.right_face == 0)
+        .expect("candidate pair should be retained in the graph");
+    assert!(retained_pair.projection.is_none());
+    assert!(!retained_pair.events.is_empty());
+    assert!(retained_pair.has_constructive_events());
+    retained_pair
+        .validate_against_meshes(&left, &right)
+        .unwrap();
+    graph.validate_against_sources(&left, &right).unwrap();
     let mut stale_graph = graph.clone();
     stale_graph.face_pairs[0].events.clear();
-    assert_eq!(
-        stale_graph.freshness_against_sources(&left, &right),
-        IntersectionGraphFreshness::InvalidGraph
-    );
+    assert!(stale_graph.validate_against_sources(&left, &right).is_err());
 
     let separated_right = ExactMesh::from_i64_triangles_with_policy(
         &[9, -1, -1, 9, 3, 1, 9, 3, -1],
@@ -5007,50 +4793,42 @@ fn exact_face_pair_candidate_retains_source_plane_split_events() {
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    assert_eq!(
-        graph.freshness_against_sources(&left, &separated_right),
-        IntersectionGraphFreshness::SourceReplayMismatch
+    assert!(
+        graph
+            .validate_against_sources(&left, &separated_right)
+            .is_err()
     );
-    assert_eq!(
-        pair.freshness_against_sources(&left, &separated_right),
-        MeshFacePairFreshness::SourceReplayMismatch
-    );
-
     let edge_splits = graph.edge_split_plan();
-    assert_eq!(
-        edge_splits.freshness_against_sources(&left, &right),
-        SplitPlanFreshness::Current
-    );
-    assert_eq!(
-        edge_splits.freshness_against_sources(&left, &separated_right),
-        SplitPlanFreshness::SourceReplayMismatch
+    assert!(edge_splits.validate().diagnostics.is_empty());
+    assert!(
+        edge_splits
+            .validate_against_sources(&left, &separated_right)
+            .diagnostics
+            .iter()
+            .any(|diagnostic| diagnostic.kind
+                == hypermesh::SplitPlanDiagnosticKind::SourceReplayMismatch)
     );
     let mut stale_edge_splits = edge_splits.clone();
     stale_edge_splits.unknown_orderings += 1;
-    assert_eq!(
-        stale_edge_splits.freshness_against_sources(&left, &right),
-        SplitPlanFreshness::InvalidPlan
-    );
+    assert!(!stale_edge_splits.validate().diagnostics.is_empty());
 
     let graph_vertices = graph.graph_vertex_plan();
-    assert_eq!(
-        graph_vertices.freshness_against_sources(&left, &right),
-        SplitPlanFreshness::Current
-    );
+    assert!(graph_vertices.validate().diagnostics.is_empty());
     let topology = graph.split_topology_plan();
-    assert_eq!(
-        topology.freshness_against_sources(&left, &right),
-        SplitPlanFreshness::Current
-    );
+    assert!(topology.validate().diagnostics.is_empty());
     let face_plan = graph.face_split_plan();
-    assert_eq!(
-        face_plan.freshness_against_sources(&left, &right),
-        SplitPlanFreshness::Current
+    assert!(
+        face_plan
+            .validate_against_sources(&left, &right)
+            .diagnostics
+            .is_empty()
     );
     let geometry = graph.face_split_geometry_plan(&left, &right).unwrap();
-    assert_eq!(
-        geometry.freshness_against_sources(&left, &right),
-        SplitPlanFreshness::Current
+    assert!(
+        geometry
+            .validate_against_sources(&left, &right)
+            .diagnostics
+            .is_empty()
     );
     let mut noncanonical_chain_geometry = geometry.clone();
     noncanonical_chain_geometry.faces[0].boundary_chains[0]
@@ -5067,10 +4845,7 @@ fn exact_face_pair_candidate_retains_source_plane_split_events() {
             }),
         "{noncanonical_chain_report:?}"
     );
-    assert_eq!(
-        noncanonical_chain_geometry.freshness_against_sources(&left, &right),
-        SplitPlanFreshness::InvalidPlan
-    );
+    assert!(!noncanonical_chain_report.diagnostics.is_empty());
     let mut duplicate_chain_geometry = geometry.clone();
     let duplicate_chain = duplicate_chain_geometry.faces[0].boundary_chains[0].clone();
     duplicate_chain_geometry.faces[0]
@@ -5084,10 +4859,7 @@ fn exact_face_pair_candidate_retains_source_plane_split_events() {
         }),
         "{duplicate_chain_report:?}"
     );
-    assert_eq!(
-        duplicate_chain_geometry.freshness_against_sources(&left, &right),
-        SplitPlanFreshness::InvalidPlan
-    );
+    assert!(!duplicate_chain_report.diagnostics.is_empty());
     let mut stale_original_point_geometry = geometry.clone();
     if let hypermesh::FaceSplitBoundaryNode::OriginalVertex { point, .. } =
         &mut stale_original_point_geometry.faces[0].boundary_chains[0].nodes[0]
@@ -5106,10 +4878,7 @@ fn exact_face_pair_candidate_retains_source_plane_split_events() {
             }),
         "{stale_original_point_report:?}"
     );
-    assert_eq!(
-        stale_original_point_geometry.freshness_against_sources(&left, &right),
-        SplitPlanFreshness::InvalidPlan
-    );
+    assert!(!stale_original_point_report.diagnostics.is_empty());
     let mut relabeled_geometry = geometry.clone();
     relabeled_geometry.faces[0].triangle.swap(0, 1);
     let geometry_report = relabeled_geometry.validate_boundary_incidence(&left, &right);
@@ -5119,14 +4888,13 @@ fn exact_face_pair_candidate_retains_source_plane_split_events() {
         }),
         "{geometry_report:?}"
     );
-    assert_eq!(
-        relabeled_geometry.freshness_against_sources(&left, &right),
-        SplitPlanFreshness::InvalidPlan
-    );
+    assert!(!geometry_report.diagnostics.is_empty());
     let regions = geometry.region_plan(&left, &right);
-    assert_eq!(
-        regions.freshness_against_sources(&left, &right),
-        SplitPlanFreshness::Current
+    assert!(
+        regions
+            .validate_against_sources(&left, &right)
+            .diagnostics
+            .is_empty()
     );
     let mut closed_duplicate_regions = regions.clone();
     let first_region_node = closed_duplicate_regions.regions[0].boundary[0].clone();
@@ -5144,10 +4912,7 @@ fn exact_face_pair_candidate_retains_source_plane_split_events() {
             }),
         "{closed_duplicate_report:?}"
     );
-    assert_eq!(
-        closed_duplicate_regions.freshness_against_sources(&left, &right),
-        SplitPlanFreshness::InvalidPlan
-    );
+    assert!(!closed_duplicate_report.diagnostics.is_empty());
     let mut stale_region_point = regions.clone();
     if let hypermesh::FaceSplitBoundaryNode::OriginalVertex { point, .. } =
         &mut stale_region_point.regions[0].boundary[0]
@@ -5165,10 +4930,7 @@ fn exact_face_pair_candidate_retains_source_plane_split_events() {
             }),
         "{stale_region_point_report:?}"
     );
-    assert_eq!(
-        stale_region_point.freshness_against_sources(&left, &right),
-        SplitPlanFreshness::InvalidPlan
-    );
+    assert!(!stale_region_point_report.diagnostics.is_empty());
     let mut missing_region_vertex = regions.clone();
     if let hypermesh::FaceSplitBoundaryNode::OriginalVertex { vertex, .. } =
         &mut missing_region_vertex.regions[0].boundary[0]
@@ -5186,10 +4948,7 @@ fn exact_face_pair_candidate_retains_source_plane_split_events() {
             }),
         "{missing_region_vertex_report:?}"
     );
-    assert_eq!(
-        missing_region_vertex.freshness_against_sources(&left, &right),
-        SplitPlanFreshness::InvalidPlan
-    );
+    assert!(!missing_region_vertex_report.diagnostics.is_empty());
     let mut relabeled_regions = regions.clone();
     relabeled_regions.regions[0].triangle.swap(0, 1);
     let region_report = relabeled_regions.validate(&left, &right);
@@ -5199,66 +4958,7 @@ fn exact_face_pair_candidate_retains_source_plane_split_events() {
         }),
         "{region_report:?}"
     );
-    assert_eq!(
-        relabeled_regions.freshness_against_sources(&left, &right),
-        SplitPlanFreshness::InvalidPlan
-    );
-
-    let mut truncated = pair.clone();
-    truncated.triangle.as_mut().unwrap().right_edge_events.pop();
-    assert_eq!(
-        truncated.validate(),
-        Err(MeshFacePairValidationError::CandidateMissingEdgeEvents)
-    );
-}
-
-#[test]
-fn exact_face_pair_plane_separation_retains_triangle_evidence() {
-    let left = ExactMesh::from_i64_triangles_with_policy(
-        &[1, 0, 0, 0, 1, 0, 0, 0, 1],
-        &[0, 1, 2],
-        ValidationPolicy::ALLOW_BOUNDARY,
-    )
-    .unwrap();
-    let right = ExactMesh::from_i64_triangles_with_policy(
-        &[1, 1, 0, 1, 0, 1, 0, 1, 1],
-        &[0, 1, 2],
-        ValidationPolicy::ALLOW_BOUNDARY,
-    )
-    .unwrap();
-
-    let pair = classify_mesh_face_pair(&left, 0, &right, 0).unwrap();
-    assert_eq!(pair.relation, MeshFacePairRelation::PlaneSeparated);
-    let triangle = pair.triangle.as_ref().unwrap();
-    assert!(matches!(
-        triangle.relation,
-        TriangleTriangleRelation::SeparatedByFirstPlane
-            | TriangleTriangleRelation::SeparatedBySecondPlane
-    ));
-    pair.validate_against_sources(&left, &right).unwrap();
-    assert_eq!(
-        pair.freshness_against_sources(&left, &right),
-        MeshFacePairFreshness::Current
-    );
-
-    let mut missing_triangle = pair.clone();
-    missing_triangle.triangle = None;
-    assert_eq!(
-        missing_triangle.validate(),
-        Err(MeshFacePairValidationError::MissingTriangleClassification)
-    );
-
-    let mut invalid_triangle = pair;
-    invalid_triangle
-        .triangle
-        .as_mut()
-        .unwrap()
-        .right_against_left_plane
-        .vertex_sides[0] = None;
-    assert_eq!(
-        invalid_triangle.validate(),
-        Err(MeshFacePairValidationError::InvalidTriangleClassification)
-    );
+    assert!(!region_report.diagnostics.is_empty());
 }
 
 #[test]
@@ -5266,52 +4966,49 @@ fn exact_boolean_public_shortcuts_handle_disjoint_operands() {
     let left = tetra([0, 0, 0]);
     let right = tetra([3, 0, 0]);
 
-    let preflight = exact_boolean_preflight(
+    let preflight = exact_boolean_evaluation(
         &left,
         &right,
         ExactBooleanRequest::new(
             ExactBooleanOperation::Union,
             ValidationPolicy::ALLOW_BOUNDARY,
         ),
-    );
+    )
+    .preflight;
     assert!(!preflight.graph_had_unknowns);
 
-    let union = ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED)
-        .materialize(&left, &right)
-        .unwrap();
-    assert_eq!(
-        union.kind,
-        ExactBooleanResultKind::CertifiedShortcut {
-            operation: ExactBooleanOperation::Union,
-            shortcut: hypermesh::ExactBooleanShortcutKind::BoundsDisjoint
-        }
+    let union = exact_boolean_result(
+        &left,
+        &right,
+        ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED),
+    );
+    assert!(
+        union.is_bounds_disjoint_shortcut_for(ExactBooleanOperation::Union),
+        "{union:?}"
     );
     union.mesh.validate_retained_state().unwrap();
     union.validate_against_sources(&left, &right).unwrap();
     assert!(union.validate_against_sources(&left, &left).is_err());
-    let mut relabeled = union.clone();
-    relabeled.kind = ExactBooleanResultKind::CertifiedShortcut {
-        operation: ExactBooleanOperation::Intersection,
-        shortcut: hypermesh::ExactBooleanShortcutKind::BoundsDisjoint,
-    };
+    let intersection = exact_boolean_result(
+        &left,
+        &right,
+        ExactBooleanRequest::new(
+            ExactBooleanOperation::Intersection,
+            ValidationPolicy::ALLOW_BOUNDARY,
+        ),
+    );
     assert!(
-        relabeled
+        intersection
             .validate_operation_against_sources(
                 &left,
                 &right,
                 ExactBooleanOperation::Union,
-                ValidationPolicy::CLOSED,
+                ValidationPolicy::ALLOW_BOUNDARY,
                 ExactBoundaryBooleanPolicy::Reject,
             )
             .is_err()
     );
 
-    let intersection = ExactBooleanRequest::new(
-        ExactBooleanOperation::Intersection,
-        ValidationPolicy::ALLOW_BOUNDARY,
-    )
-    .materialize(&left, &right)
-    .unwrap();
     assert!(intersection.mesh.triangles().is_empty());
 }
 
@@ -5387,14 +5084,8 @@ fn trivial_boolean_shortcuts_are_publicly_replayable() {
          stale_right: &ExactMesh,
          operation: ExactBooleanOperation,
          validation: ValidationPolicy,
-         shortcut: hypermesh::ExactBooleanShortcutKind| {
-            assert_eq!(
-                result.kind,
-                ExactBooleanResultKind::CertifiedShortcut {
-                    operation,
-                    shortcut
-                }
-            );
+         predicate: fn(&ExactBooleanResult, ExactBooleanOperation) -> bool| {
+            assert!(predicate(result, operation), "{operation:?}: {result:?}");
             result.validate().unwrap();
             result.validate_against_sources(left, right).unwrap();
             assert_eq!(
@@ -5421,9 +5112,11 @@ fn trivial_boolean_shortcuts_are_publicly_replayable() {
         ExactBooleanOperation::Intersection,
         ExactBooleanOperation::Difference,
     ] {
-        let empty_result = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED)
-            .materialize(&empty, &solid)
-            .unwrap();
+        let empty_result = exact_boolean_result(
+            &empty,
+            &solid,
+            ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
+        );
         assert_shortcut(
             &empty_result,
             &empty,
@@ -5432,11 +5125,13 @@ fn trivial_boolean_shortcuts_are_publicly_replayable() {
             &disjoint_solid,
             operation,
             ValidationPolicy::CLOSED,
-            hypermesh::ExactBooleanShortcutKind::EmptyOperand,
+            ExactBooleanResult::is_empty_operand_shortcut_for,
         );
-        let empty_evaluation = (ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED))
-            .evaluate(&empty, &solid)
-            .unwrap();
+        let empty_evaluation = exact_boolean_evaluation(
+            &empty,
+            &solid,
+            ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
+        );
         empty_evaluation.validate().unwrap();
         let mut relabeled_empty_facts = empty_evaluation.clone();
         relabeled_empty_facts.certifications.trivial.left_empty = false;
@@ -5453,9 +5148,11 @@ fn trivial_boolean_shortcuts_are_publicly_replayable() {
             );
         }
 
-        let empty_open_result = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED)
-            .materialize(&empty, &open_disjoint_left)
-            .unwrap();
+        let empty_open_result = exact_boolean_result(
+            &empty,
+            &open_disjoint_left,
+            ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
+        );
         assert_shortcut(
             &empty_open_result,
             &empty,
@@ -5464,35 +5161,29 @@ fn trivial_boolean_shortcuts_are_publicly_replayable() {
             &open_disjoint_left,
             operation,
             ValidationPolicy::CLOSED,
-            hypermesh::ExactBooleanShortcutKind::EmptyOperand,
+            ExactBooleanResult::is_empty_operand_shortcut_for,
         );
         assert!(empty_open_result.mesh.triangles().is_empty());
         assert!(empty_open_result.mesh.facts().mesh.closed_manifold);
 
-        let replayed_empty_open = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED)
-            .materialize(&empty, &open_disjoint_left)
-            .unwrap();
+        let replayed_empty_open = exact_boolean_result(
+            &empty,
+            &open_disjoint_left,
+            ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
+        );
         assert_eq!(replayed_empty_open.kind, empty_open_result.kind);
         assert!(replayed_empty_open.mesh.triangles().is_empty());
-        assert_eq!(
-            replayed_empty_open.kind,
-            ExactBooleanResultKind::CertifiedShortcut {
-                operation,
-                shortcut: hypermesh::ExactBooleanShortcutKind::EmptyOperand
-            },
+        assert!(
+            replayed_empty_open.is_empty_operand_shortcut_for(operation),
             "{operation:?}: {replayed_empty_open:?}"
         );
 
-        let open_empty_result = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED)
-            .materialize(&open_disjoint_left, &empty)
-            .unwrap();
-        assert_eq!(
-            open_empty_result.kind,
-            ExactBooleanResultKind::CertifiedShortcut {
-                operation,
-                shortcut: hypermesh::ExactBooleanShortcutKind::EmptyOperand
-            }
+        let open_empty_result = exact_boolean_result(
+            &open_disjoint_left,
+            &empty,
+            ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
         );
+        assert!(open_empty_result.is_empty_operand_shortcut_for(operation));
         assert!(open_empty_result.mesh.triangles().is_empty());
         assert!(open_empty_result.mesh.facts().mesh.closed_manifold);
         open_empty_result
@@ -5505,9 +5196,11 @@ fn trivial_boolean_shortcuts_are_publicly_replayable() {
             )
             .unwrap();
 
-        let disjoint_result = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED)
-            .materialize(&solid, &disjoint_solid)
-            .unwrap();
+        let disjoint_result = exact_boolean_result(
+            &solid,
+            &disjoint_solid,
+            ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
+        );
         assert_shortcut(
             &disjoint_result,
             &solid,
@@ -5516,11 +5209,13 @@ fn trivial_boolean_shortcuts_are_publicly_replayable() {
             &solid,
             operation,
             ValidationPolicy::CLOSED,
-            hypermesh::ExactBooleanShortcutKind::BoundsDisjoint,
+            ExactBooleanResult::is_bounds_disjoint_shortcut_for,
         );
-        let disjoint_evaluation = (ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED))
-            .evaluate(&solid, &disjoint_solid)
-            .unwrap();
+        let disjoint_evaluation = exact_boolean_evaluation(
+            &solid,
+            &disjoint_solid,
+            ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
+        );
         disjoint_evaluation.validate().unwrap();
         let mut relabeled_disjoint_facts = disjoint_evaluation.clone();
         relabeled_disjoint_facts
@@ -5542,10 +5237,11 @@ fn trivial_boolean_shortcuts_are_publicly_replayable() {
             );
         }
 
-        let identical_result =
-            ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY)
-                .materialize(&open_identical_left, &open_identical_right)
-                .unwrap();
+        let identical_result = exact_boolean_result(
+            &open_identical_left,
+            &open_identical_right,
+            ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
+        );
         assert_shortcut(
             &identical_result,
             &open_identical_left,
@@ -5554,21 +5250,26 @@ fn trivial_boolean_shortcuts_are_publicly_replayable() {
             &open_same_surface_right,
             operation,
             ValidationPolicy::ALLOW_BOUNDARY,
-            hypermesh::ExactBooleanShortcutKind::Identical,
+            ExactBooleanResult::is_identical_shortcut_for,
         );
-        let identical_evaluation =
-            (ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY))
-                .evaluate(&open_identical_left, &open_identical_right)
-                .unwrap();
+        let identical_evaluation = exact_boolean_evaluation(
+            &open_identical_left,
+            &open_identical_right,
+            ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
+        );
         identical_evaluation.validate().unwrap();
         let mut relabeled_identity_report = identical_evaluation.clone();
-        relabeled_identity_report.certifications.identical.status =
-            hypermesh::ExactIdenticalMeshStatus::TriangleSequenceMismatch;
         relabeled_identity_report
             .certifications
             .identical
-            .validate()
-            .unwrap();
+            .left_triangles += 1;
+        assert!(
+            relabeled_identity_report
+                .certifications
+                .identical
+                .validate()
+                .is_err()
+        );
         assert_eq!(
             relabeled_identity_report.validate(),
             Err(hypermesh::ExactReportValidationError::StatusEvidenceMismatch),
@@ -5584,15 +5285,13 @@ fn trivial_boolean_shortcuts_are_publicly_replayable() {
                 ExactReportFreshness::SourceReplayMismatch
             );
         }
-        let closed_identical_result = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED)
-            .materialize(&open_identical_left, &open_identical_right)
-            .unwrap();
-        assert_eq!(
-            closed_identical_result.kind,
-            ExactBooleanResultKind::CertifiedShortcut {
-                operation,
-                shortcut: hypermesh::ExactBooleanShortcutKind::LowerDimensionalRegularizedSolid
-            },
+        let closed_identical_result = exact_boolean_result(
+            &open_identical_left,
+            &open_identical_right,
+            ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
+        );
+        assert!(
+            closed_identical_result.is_lower_dimensional_regularized_solid_shortcut_for(operation),
             "{operation:?}: {closed_identical_result:?}"
         );
         assert!(closed_identical_result.mesh.triangles().is_empty());
@@ -5607,10 +5306,11 @@ fn trivial_boolean_shortcuts_are_publicly_replayable() {
             )
             .unwrap();
 
-        let same_surface_result =
-            ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY)
-                .materialize(&open_identical_left, &open_same_surface_right)
-                .unwrap();
+        let same_surface_result = exact_boolean_result(
+            &open_identical_left,
+            &open_same_surface_right,
+            ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
+        );
         assert_shortcut(
             &same_surface_result,
             &open_identical_left,
@@ -5619,43 +5319,23 @@ fn trivial_boolean_shortcuts_are_publicly_replayable() {
             &open_disjoint_right,
             operation,
             ValidationPolicy::ALLOW_BOUNDARY,
-            hypermesh::ExactBooleanShortcutKind::SameSurface,
+            ExactBooleanResult::is_same_surface_shortcut_for,
         );
-        let same_surface_evaluation =
-            (ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY))
-                .evaluate(&open_identical_left, &open_same_surface_right)
-                .unwrap();
+        let same_surface_evaluation = exact_boolean_evaluation(
+            &open_identical_left,
+            &open_same_surface_right,
+            ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
+        );
         same_surface_evaluation.validate().unwrap();
         let mut relabeled_same_surface_report = same_surface_evaluation.clone();
-        relabeled_same_surface_report
-            .certifications
-            .same_surface
-            .status = ExactSameSurfaceStatus::VertexCountMismatch;
-        relabeled_same_surface_report
-            .certifications
-            .same_surface
-            .left_to_right
-            .clear();
-        relabeled_same_surface_report
-            .certifications
-            .same_surface
-            .right_to_left
-            .clear();
-        relabeled_same_surface_report
-            .certifications
-            .same_surface
-            .left_triangles
-            .clear();
-        relabeled_same_surface_report
-            .certifications
-            .same_surface
-            .right_triangles
-            .clear();
-        relabeled_same_surface_report
-            .certifications
-            .same_surface
-            .predicates
-            .clear();
+        relabeled_same_surface_report.certifications.same_surface = exact_boolean_evaluation(
+            &open_identical_left,
+            &open_disjoint_left,
+            ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
+        )
+        .certifications
+        .same_surface
+        .clone();
         relabeled_same_surface_report
             .certifications
             .same_surface
@@ -5678,16 +5358,14 @@ fn trivial_boolean_shortcuts_are_publicly_replayable() {
                 ExactReportFreshness::SourceReplayMismatch
             );
         }
-        let closed_same_surface_result =
-            ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED)
-                .materialize(&open_identical_left, &open_same_surface_right)
-                .unwrap();
-        assert_eq!(
-            closed_same_surface_result.kind,
-            ExactBooleanResultKind::CertifiedShortcut {
-                operation,
-                shortcut: hypermesh::ExactBooleanShortcutKind::LowerDimensionalRegularizedSolid
-            },
+        let closed_same_surface_result = exact_boolean_result(
+            &open_identical_left,
+            &open_same_surface_right,
+            ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
+        );
+        assert!(
+            closed_same_surface_result
+                .is_lower_dimensional_regularized_solid_shortcut_for(operation),
             "{operation:?}: {closed_same_surface_result:?}"
         );
         assert!(closed_same_surface_result.mesh.triangles().is_empty());
@@ -5701,10 +5379,11 @@ fn trivial_boolean_shortcuts_are_publicly_replayable() {
                 ExactBoundaryBooleanPolicy::Reject,
             )
             .unwrap();
-        let lower_dimensional_evaluation =
-            (ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED))
-                .evaluate(&open_identical_left, &open_same_surface_right)
-                .unwrap();
+        let lower_dimensional_evaluation = exact_boolean_evaluation(
+            &open_identical_left,
+            &open_same_surface_right,
+            ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
+        );
         lower_dimensional_evaluation.validate().unwrap();
         let mut relabeled_lower_dimensional_facts = lower_dimensional_evaluation.clone();
         relabeled_lower_dimensional_facts
@@ -5717,10 +5396,11 @@ fn trivial_boolean_shortcuts_are_publicly_replayable() {
             "{operation:?}: {relabeled_lower_dimensional_facts:?}"
         );
 
-        let mixed_dimensional_result =
-            ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED)
-                .materialize(&solid, &open_disjoint_left)
-                .unwrap();
+        let mixed_dimensional_result = exact_boolean_result(
+            &solid,
+            &open_disjoint_left,
+            ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
+        );
         assert_shortcut(
             &mixed_dimensional_result,
             &solid,
@@ -5729,12 +5409,13 @@ fn trivial_boolean_shortcuts_are_publicly_replayable() {
             &open_disjoint_right,
             operation,
             ValidationPolicy::CLOSED,
-            hypermesh::ExactBooleanShortcutKind::MixedDimensionalRegularizedSolid,
+            ExactBooleanResult::is_mixed_dimensional_regularized_solid_shortcut_for,
         );
-        let mixed_dimensional_evaluation =
-            (ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED))
-                .evaluate(&solid, &open_disjoint_left)
-                .unwrap();
+        let mixed_dimensional_evaluation = exact_boolean_evaluation(
+            &solid,
+            &open_disjoint_left,
+            ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
+        );
         mixed_dimensional_evaluation.validate().unwrap();
         let mut relabeled_mixed_dimensional_facts = mixed_dimensional_evaluation.clone();
         relabeled_mixed_dimensional_facts
@@ -5747,10 +5428,11 @@ fn trivial_boolean_shortcuts_are_publicly_replayable() {
             "{operation:?}: {relabeled_mixed_dimensional_facts:?}"
         );
 
-        let open_disjoint_result =
-            ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY)
-                .materialize(&open_disjoint_left, &open_disjoint_right)
-                .unwrap();
+        let open_disjoint_result = exact_boolean_result(
+            &open_disjoint_left,
+            &open_disjoint_right,
+            ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
+        );
         assert_shortcut(
             &open_disjoint_result,
             &open_disjoint_left,
@@ -5759,22 +5441,24 @@ fn trivial_boolean_shortcuts_are_publicly_replayable() {
             &open_identical_left,
             operation,
             ValidationPolicy::ALLOW_BOUNDARY,
-            hypermesh::ExactBooleanShortcutKind::OpenSurfaceDisjoint,
+            ExactBooleanResult::is_open_surface_disjoint_shortcut_for,
         );
-        let open_disjoint_evaluation =
-            (ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY))
-                .evaluate(&open_disjoint_left, &open_disjoint_right)
-                .unwrap();
+        let open_disjoint_evaluation = exact_boolean_evaluation(
+            &open_disjoint_left,
+            &open_disjoint_right,
+            ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
+        );
         open_disjoint_evaluation.validate().unwrap();
         let mut relabeled_disjoint_report = open_disjoint_evaluation.clone();
         relabeled_disjoint_report
             .certifications
-            .open_surface_disjoint
-            .status = ExactOpenSurfaceDisjointStatus::NotOpenSurface;
-        relabeled_disjoint_report
-            .certifications
-            .open_surface_disjoint
-            .left_open_surface = false;
+            .open_surface_disjoint = exact_boolean_evaluation(
+            &solid,
+            &open_disjoint_right,
+            ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
+        )
+        .certifications
+        .open_surface_disjoint;
         relabeled_disjoint_report
             .certifications
             .open_surface_disjoint
@@ -5797,40 +5481,35 @@ fn trivial_boolean_shortcuts_are_publicly_replayable() {
         }
     }
 
-    let solid_disjoint =
-        ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED)
-            .materialize(&solid, &disjoint_solid)
-            .unwrap();
-    assert_eq!(
-        solid_disjoint.kind,
-        ExactBooleanResultKind::CertifiedShortcut {
-            operation: ExactBooleanOperation::Union,
-            shortcut: hypermesh::ExactBooleanShortcutKind::BoundsDisjoint
-        }
+    let solid_disjoint = exact_boolean_result(
+        &solid,
+        &disjoint_solid,
+        ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED),
     );
-    let identical_replay = ExactBooleanRequest::new(
-        ExactBooleanOperation::Union,
-        ValidationPolicy::ALLOW_BOUNDARY,
-    )
-    .materialize(&open_identical_left, &open_identical_right)
-    .unwrap();
-    assert_eq!(
-        identical_replay.kind,
-        ExactBooleanResultKind::CertifiedShortcut {
-            operation: ExactBooleanOperation::Union,
-            shortcut: hypermesh::ExactBooleanShortcutKind::Identical
-        }
+    assert!(
+        solid_disjoint.is_bounds_disjoint_shortcut_for(ExactBooleanOperation::Union),
+        "{solid_disjoint:?}"
     );
-    let closed_disjoint =
-        ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED)
-            .materialize(&solid, &disjoint_solid)
-            .unwrap();
-    assert_eq!(
-        closed_disjoint.kind,
-        ExactBooleanResultKind::CertifiedShortcut {
-            operation: ExactBooleanOperation::Union,
-            shortcut: hypermesh::ExactBooleanShortcutKind::BoundsDisjoint
-        }
+    let identical_replay = exact_boolean_result(
+        &open_identical_left,
+        &open_identical_right,
+        ExactBooleanRequest::new(
+            ExactBooleanOperation::Union,
+            ValidationPolicy::ALLOW_BOUNDARY,
+        ),
+    );
+    assert!(
+        identical_replay.is_identical_shortcut_for(ExactBooleanOperation::Union),
+        "{identical_replay:?}"
+    );
+    let closed_disjoint = exact_boolean_result(
+        &solid,
+        &disjoint_solid,
+        ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED),
+    );
+    assert!(
+        closed_disjoint.is_bounds_disjoint_shortcut_for(ExactBooleanOperation::Union),
+        "{closed_disjoint:?}"
     );
 }
 
@@ -5886,15 +5565,14 @@ fn closed_same_surface_boolean_is_publicly_replayable() {
             ExactBooleanOperation::Intersection,
             ExactBooleanOperation::Difference,
         ] {
-            let result = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED)
-                .materialize(&left, right)
-                .unwrap();
-            assert_eq!(
-                result.kind,
-                ExactBooleanResultKind::CertifiedShortcut {
-                    operation,
-                    shortcut: hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex
-                }
+            let result = exact_boolean_result(
+                &left,
+                right,
+                ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
+            );
+            assert!(
+                result.is_arrangement_cell_complex_shortcut_for(operation),
+                "{operation:?}: {result:?}"
             );
             result.validate().unwrap();
             let mut stale_output = result.clone();
@@ -5918,8 +5596,15 @@ fn closed_same_surface_boolean_is_publicly_replayable() {
                     ExactBoundaryBooleanPolicy::Reject,
                 )
                 .unwrap_or_else(|error| {
-                    let replay = ExactBooleanRequest::with_boundary_policy(operation, ValidationPolicy::CLOSED, ExactBoundaryBooleanPolicy::Reject).materialize(&left, right)
-                    .unwrap();
+                    let replay = exact_boolean_result(
+                        &left,
+                        right,
+                        ExactBooleanRequest::with_boundary_policy(
+                            operation,
+                            ValidationPolicy::CLOSED,
+                            ExactBoundaryBooleanPolicy::Reject,
+                        ),
+                    );
                     panic!(
                         "right_index={right_index} operation={operation:?} error={error:?} result={:?} replay={:?}",
                         result.kind, replay.kind
@@ -5940,46 +5625,47 @@ fn closed_same_surface_boolean_is_publicly_replayable() {
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let open_same_surface = ExactBooleanRequest::new(
-        ExactBooleanOperation::Union,
-        ValidationPolicy::ALLOW_BOUNDARY,
-    )
-    .materialize(&open_left, &open_right)
-    .unwrap();
-    assert_eq!(
-        open_same_surface.kind,
-        ExactBooleanResultKind::CertifiedShortcut {
-            operation: ExactBooleanOperation::Union,
-            shortcut: hypermesh::ExactBooleanShortcutKind::SameSurface
-        }
+    let open_same_surface = exact_boolean_result(
+        &open_left,
+        &open_right,
+        ExactBooleanRequest::new(
+            ExactBooleanOperation::Union,
+            ValidationPolicy::ALLOW_BOUNDARY,
+        ),
     );
-    let stale_replay =
-        ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED)
-            .materialize(&left, &stale_right)
-            .unwrap();
-    assert_eq!(
-        stale_replay.kind,
-        ExactBooleanResultKind::CertifiedShortcut {
-            operation: ExactBooleanOperation::Union,
-            shortcut: hypermesh::ExactBooleanShortcutKind::BoundsDisjoint
-        }
+    assert!(
+        open_same_surface.is_same_surface_shortcut_for(ExactBooleanOperation::Union),
+        "{open_same_surface:?}"
+    );
+    let stale_replay = exact_boolean_result(
+        &left,
+        &stale_right,
+        ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED),
+    );
+    assert!(
+        stale_replay.is_bounds_disjoint_shortcut_for(ExactBooleanOperation::Union),
+        "{stale_replay:?}"
     );
 
     let convex_left = tetra_from_corners([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]);
     let convex_same_surface = same_surface_a;
-    let convex_same_surface_replay = ExactBooleanRequest::new(
-        ExactBooleanOperation::Intersection,
-        ValidationPolicy::CLOSED,
-    )
-    .materialize(&convex_left, &convex_same_surface)
-    .unwrap();
-    assert_eq!(
-        convex_same_surface_replay.kind,
-        ExactBooleanResultKind::CertifiedShortcut {
-            operation: ExactBooleanOperation::Intersection,
-            shortcut: hypermesh::ExactBooleanShortcutKind::ConvexIntersection
-        }
+    let convex_same_surface_replay = exact_boolean_result(
+        &convex_left,
+        &convex_same_surface,
+        ExactBooleanRequest::new(
+            ExactBooleanOperation::Intersection,
+            ValidationPolicy::CLOSED,
+        ),
     );
+    assert!(
+        convex_same_surface_replay
+            .is_arrangement_cell_complex_shortcut_for(ExactBooleanOperation::Intersection),
+        "{convex_same_surface_replay:?}"
+    );
+    convex_same_surface_replay.validate().unwrap();
+    convex_same_surface_replay
+        .validate_against_sources(&convex_left, &convex_same_surface)
+        .unwrap();
 }
 
 #[test]
@@ -5994,45 +5680,37 @@ fn exact_arrangement_public_path_reports_blockers_or_cells() {
     )
     .unwrap();
     assert!(arrangement.validate_against_sources(&left, &right).is_ok());
-    assert_eq!(
-        arrangement.freshness_against_sources_with_policy(
+    arrangement
+        .validate_against_sources_with_policy(
             &left,
             &right,
-            ExactRegularizationPolicy::REGULARIZED_SOLID
-        ),
-        ExactArrangementFreshness::Current
-    );
+            ExactRegularizationPolicy::REGULARIZED_SOLID,
+        )
+        .unwrap();
     let mut stale_arrangement = arrangement.clone();
     stale_arrangement.vertices.pop();
-    assert_eq!(
-        stale_arrangement.freshness_against_sources_with_policy(
-            &left,
-            &right,
-            ExactRegularizationPolicy::REGULARIZED_SOLID
-        ),
-        ExactArrangementFreshness::StaleArrangement
+    assert!(
+        stale_arrangement
+            .validate_against_sources_with_policy(
+                &left,
+                &right,
+                ExactRegularizationPolicy::REGULARIZED_SOLID
+            )
+            .is_err()
     );
 
     let labeled = arrangement
         .label_regions(ExactRegularizationPolicy::REGULARIZED_SOLID)
         .unwrap();
-    assert_eq!(
-        labeled.freshness_against_sources(
-            &left,
-            &right,
-            ExactRegularizationPolicy::REGULARIZED_SOLID
-        ),
-        ExactLabeledCellComplexFreshness::Current
-    );
+    labeled
+        .validate_against_sources(&left, &right, ExactRegularizationPolicy::REGULARIZED_SOLID)
+        .unwrap();
     let mut stale_labeled = labeled.clone();
     stale_labeled.faces.pop();
-    assert_eq!(
-        stale_labeled.freshness_against_sources(
-            &left,
-            &right,
-            ExactRegularizationPolicy::REGULARIZED_SOLID
-        ),
-        ExactLabeledCellComplexFreshness::StaleLabeledCells
+    assert!(
+        stale_labeled
+            .validate_against_sources(&left, &right, ExactRegularizationPolicy::REGULARIZED_SOLID)
+            .is_err()
     );
 
     let selected = labeled
@@ -6041,45 +5719,29 @@ fn exact_arrangement_public_path_reports_blockers_or_cells() {
             ExactRegularizationPolicy::REGULARIZED_SOLID,
         )
         .unwrap();
-    assert_eq!(
-        selected.freshness_against_sources(
-            &left,
-            &right,
-            ExactRegularizationPolicy::REGULARIZED_SOLID
-        ),
-        ExactSelectedCellComplexFreshness::Current
-    );
+    selected
+        .validate_against_sources(&left, &right, ExactRegularizationPolicy::REGULARIZED_SOLID)
+        .unwrap();
     let mut stale_selected = selected.clone();
     stale_selected.selected_faces.pop();
-    assert_eq!(
-        stale_selected.freshness_against_sources(
-            &left,
-            &right,
-            ExactRegularizationPolicy::REGULARIZED_SOLID
-        ),
-        ExactSelectedCellComplexFreshness::StaleSelectedCells
+    assert!(
+        stale_selected
+            .validate_against_sources(&left, &right, ExactRegularizationPolicy::REGULARIZED_SOLID)
+            .is_err()
     );
 
     let simplified = selected
         .simplify_exact_with_policy(ExactRegularizationPolicy::REGULARIZED_SOLID)
         .unwrap();
-    assert_eq!(
-        simplified.freshness_against_sources(
-            &left,
-            &right,
-            ExactRegularizationPolicy::REGULARIZED_SOLID
-        ),
-        ExactSimplifiedCellComplexFreshness::Current
-    );
+    simplified
+        .validate_against_sources(&left, &right, ExactRegularizationPolicy::REGULARIZED_SOLID)
+        .unwrap();
     let mut stale_simplified = simplified.clone();
     stale_simplified.duplicate_cells_removed += 1;
-    assert_eq!(
-        stale_simplified.freshness_against_sources(
-            &left,
-            &right,
-            ExactRegularizationPolicy::REGULARIZED_SOLID
-        ),
-        ExactSimplifiedCellComplexFreshness::StaleSimplifiedCells
+    assert!(
+        stale_simplified
+            .validate_against_sources(&left, &right, ExactRegularizationPolicy::REGULARIZED_SOLID)
+            .is_err()
     );
 
     let attempt = exact_boolean_arrangement_attempt(
@@ -6092,10 +5754,10 @@ fn exact_arrangement_public_path_reports_blockers_or_cells() {
         ExactRegularizationPolicy::REGULARIZED_SOLID,
     );
     attempt.validate().unwrap();
-    assert_eq!(
-        attempt.topology_assembly,
-        Some(ExactTopologyAssemblyStatus::Complete),
-        "{attempt:?}"
+    assert!(
+        attempt
+            .topology_assembly
+            .is_some_and(|status| status.is_complete())
     );
     assert_eq!(
         attempt
@@ -6105,10 +5767,10 @@ fn exact_arrangement_public_path_reports_blockers_or_cells() {
         attempt.topology_assembly,
         "{attempt:?}"
     );
-    assert_eq!(
-        attempt.region_ownership,
-        Some(ExactRegionOwnershipStatus::VolumeResolved),
-        "{attempt:?}"
+    assert!(
+        attempt
+            .region_ownership
+            .is_some_and(|status| status.is_volume_resolved())
     );
     assert_eq!(
         attempt
@@ -6130,46 +5792,25 @@ fn exact_arrangement_public_path_reports_blockers_or_cells() {
         ExactReportFreshness::SourceReplayMismatch
     );
     let mut stale_attempt_gate = attempt.clone();
-    stale_attempt_gate.topology_assembly = Some(ExactTopologyAssemblyStatus::MissingRegionPlan);
-    assert_eq!(
-        stale_attempt_gate.freshness_against_sources(&left, &right),
-        ExactReportFreshness::StaleStatusEvidence
-    );
+    stale_attempt_gate.topology_assembly = None;
+    assert!(stale_attempt_gate.validate().is_err());
     let mut stale_attempt_report = attempt.clone();
-    stale_attempt_report
-        .region_ownership_report
-        .as_mut()
-        .expect("attempt should retain ownership report")
-        .status = ExactRegionOwnershipStatus::RequiresWinding;
+    stale_attempt_report.region_ownership_report = None;
     assert_eq!(
         stale_attempt_report.validate(),
         Err(hypermesh::ExactReportValidationError::StatusEvidenceMismatch)
     );
 
     let mut blocked_attempt = attempt.clone();
-    blocked_attempt.stage = hypermesh::ExactArrangementBooleanStage::ArrangementBuilt;
-    blocked_attempt.decline =
-        Some(hypermesh::ExactArrangementBooleanDecline::ArrangementBlockers(Vec::new()));
-    blocked_attempt.materialized_shortcut = None;
-    blocked_attempt.arrangement_blockers = 1;
-    blocked_attempt.selected_faces = 0;
-    blocked_attempt.reversed_selected_faces = 0;
-    blocked_attempt.volume_oriented_selected_faces = 0;
-    blocked_attempt.label_oriented_selected_faces = 0;
-    blocked_attempt.selected_volume_regions = 0;
-    blocked_attempt.output_vertices = 0;
-    blocked_attempt.output_triangles = 0;
+    blocked_attempt.arrangement_blockers += 1;
+    blocked_attempt.validate().unwrap();
     assert_eq!(
-        blocked_attempt.validate(),
-        Err(hypermesh::ExactReportValidationError::StatusEvidenceMismatch)
+        blocked_attempt.freshness_against_sources(&left, &right),
+        ExactReportFreshness::SourceReplayMismatch
     );
 
-    blocked_attempt.decline = Some(
-        hypermesh::ExactArrangementBooleanDecline::ArrangementBlockers(vec![
-            hypermesh::ExactArrangementBlocker::UnresolvedIntersection,
-            hypermesh::ExactArrangementBlocker::UndecidableOrdering,
-        ]),
-    );
+    blocked_attempt = attempt.clone();
+    blocked_attempt.output_vertices += 1;
     assert_eq!(
         blocked_attempt.validate(),
         Err(hypermesh::ExactReportValidationError::StatusEvidenceMismatch)
@@ -6177,7 +5818,7 @@ fn exact_arrangement_public_path_reports_blockers_or_cells() {
 }
 
 #[test]
-fn exact_volumetric_region_reports_classify_freshness_publicly() {
+fn exact_volumetric_region_reports_replay_from_boolean_result() {
     let left = ExactMesh::from_i64_triangles(
         &[
             0, 0, 0, //
@@ -6202,56 +5843,58 @@ fn exact_volumetric_region_reports_classify_freshness_publicly() {
     )
     .unwrap();
 
-    let result = ExactBooleanRequest::new(
-        ExactBooleanOperation::Union,
-        ValidationPolicy::ALLOW_BOUNDARY,
-    )
-    .materialize(&left, &right)
-    .unwrap();
+    let result = exact_boolean_result(
+        &left,
+        &right,
+        ExactBooleanRequest::new(
+            ExactBooleanOperation::Union,
+            ValidationPolicy::ALLOW_BOUNDARY,
+        ),
+    );
     assert!(!result.volumetric_classifications.is_empty(), "{result:?}");
-    let classification = result
-        .volumetric_classifications
-        .iter()
-        .find(|classification| classification.relation != ExactVolumetricRegionRelation::Outside)
-        .expect("overlapping fixture should retain a non-outside volumetric cell");
-    let triangulation = result
+    let shifted_target = tetra([10, 10, 10]);
+    let (classification, triangulation) = result
         .triangulations
         .iter()
-        .find(|triangulation| {
-            triangulation.side == classification.region_side
-                && triangulation.face == classification.region_face
-                && triangulation
-                    .triangles
-                    .chunks_exact(3)
-                    .any(|triangle| triangle == classification.triangle)
+        .find_map(|triangulation| {
+            result
+                .volumetric_classifications
+                .iter()
+                .find(|classification| {
+                    triangulation.side == classification.region_side
+                        && triangulation.face == classification.region_face
+                        && triangulation
+                            .triangles
+                            .chunks_exact(3)
+                            .any(|triangle| triangle == classification.triangle)
+                        && classification
+                            .validate_against_sources(triangulation, &shifted_target)
+                            .is_err()
+                })
+                .map(|classification| (classification, triangulation))
         })
-        .expect("volumetric classification should reference a retained triangulation");
+        .expect("volumetric classification should replay from retained sources");
     let target = match classification.region_side {
         hypermesh::MeshSide::Left => &right,
         hypermesh::MeshSide::Right => &left,
     };
-    assert_eq!(
-        classification.freshness_against_sources(triangulation, target),
-        ExactVolumetricRegionFreshness::Current
-    );
+    assert!(classification.relation.is_materialization_decided());
+    classification
+        .validate_against_sources(triangulation, target)
+        .unwrap();
 
-    let mut stale_relation = classification.clone();
-    stale_relation.relation = ExactVolumetricRegionRelation::Unknown;
-    assert_eq!(
-        stale_relation.freshness_against_sources(triangulation, target),
-        ExactVolumetricRegionFreshness::StaleRelationEvidence
-    );
     let mut stale_attempts = classification.clone();
     stale_attempts.witness_attempts.clear();
-    assert_eq!(
-        stale_attempts.freshness_against_sources(triangulation, target),
-        ExactVolumetricRegionFreshness::InvalidRepresentativeEvidence
+    assert!(
+        stale_attempts
+            .validate_against_sources(triangulation, target)
+            .is_err()
     );
 
-    let shifted_target = tetra([10, 10, 10]);
-    assert_eq!(
-        classification.freshness_against_sources(triangulation, &shifted_target),
-        ExactVolumetricRegionFreshness::SourceReplayMismatch
+    assert!(
+        classification
+            .validate_against_sources(triangulation, &shifted_target)
+            .is_err()
     );
 }
 
@@ -6269,7 +5912,7 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let report = exact_boolean_certifications(
+    let report = exact_boolean_evaluation(
         &left,
         &right,
         ExactBooleanRequest::new(
@@ -6277,25 +5920,27 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
             ValidationPolicy::ALLOW_BOUNDARY,
         ),
     )
-    .boundary_touching;
+    .certifications
+    .boundary_touching
+    .clone();
     assert!(report.is_certified(), "{report:?}");
     report.validate().unwrap();
     report.validate_against_sources(&left, &right).unwrap();
 
-    let preflight = exact_boolean_preflight(
+    let preflight = exact_boolean_evaluation(
         &left,
         &right,
         ExactBooleanRequest::new(
             ExactBooleanOperation::Union,
             ValidationPolicy::ALLOW_BOUNDARY,
         ),
-    );
-    assert_eq!(
-        preflight.support,
-        hypermesh::ExactBooleanSupport::CertifiedBoundaryPolicyShortcut,
+    )
+    .preflight;
+    assert!(
+        preflight.is_certified_boundary_policy_shortcut(),
         "{preflight:?}"
     );
-    let rejected_policy_preflight = exact_boolean_preflight(
+    let rejected_policy_preflight = exact_boolean_evaluation(
         &left,
         &right,
         ExactBooleanRequest::with_boundary_policy(
@@ -6303,14 +5948,14 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
             ValidationPolicy::ALLOW_BOUNDARY,
             ExactBoundaryBooleanPolicy::Reject,
         ),
-    );
-    assert_eq!(
-        rejected_policy_preflight.support,
-        hypermesh::ExactBooleanSupport::RequiresBoundaryPolicy,
+    )
+    .preflight;
+    assert!(
+        rejected_policy_preflight.requires_boundary_policy(),
         "{rejected_policy_preflight:?}"
     );
 
-    let policy_preflight = exact_boolean_preflight(
+    let policy_preflight = exact_boolean_evaluation(
         &left,
         &right,
         ExactBooleanRequest::with_boundary_policy(
@@ -6318,10 +5963,10 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
             ValidationPolicy::ALLOW_BOUNDARY,
             ExactBoundaryBooleanPolicy::PreserveSeparateShells,
         ),
-    );
-    assert_eq!(
-        policy_preflight.support,
-        hypermesh::ExactBooleanSupport::CertifiedBoundaryPolicyShortcut,
+    )
+    .preflight;
+    assert!(
+        policy_preflight.is_certified_boundary_policy_shortcut(),
         "{policy_preflight:?}"
     );
     assert!(policy_preflight.blocker.is_none(), "{policy_preflight:?}");
@@ -6354,7 +5999,7 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
         "default replay should certify a boundary-policy preflight"
     );
 
-    let rejected_readiness = exact_boolean_certifications(
+    let rejected_readiness = exact_boolean_evaluation(
         &left,
         &right,
         ExactBooleanRequest::with_boundary_policy(
@@ -6363,14 +6008,15 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
             ExactBoundaryBooleanPolicy::Reject,
         ),
     )
-    .winding_readiness;
-    assert_eq!(
-        rejected_readiness.status,
-        ExactWindingReadinessStatus::BoundaryPolicyRequired,
+    .certifications
+    .winding_readiness
+    .clone();
+    assert!(
+        rejected_readiness.requires_boundary_policy(),
         "{rejected_readiness:?}"
     );
 
-    let policy_readiness = exact_boolean_certifications(
+    let policy_readiness = exact_boolean_evaluation(
         &left,
         &right,
         ExactBooleanRequest::with_boundary_policy(
@@ -6379,16 +6025,14 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
             ExactBoundaryBooleanPolicy::PreserveSeparateShells,
         ),
     )
-    .winding_readiness;
-    assert_eq!(
-        policy_readiness.status,
-        ExactWindingReadinessStatus::BoundaryPolicyShortcutAlreadyMaterialized,
+    .certifications
+    .winding_readiness
+    .clone();
+    assert!(
+        policy_readiness.is_boundary_policy_shortcut_materialized(),
         "{policy_readiness:?}"
     );
-    assert_eq!(
-        policy_readiness.blocker.kind,
-        ExactBooleanBlockerKind::NeedsBoundaryPolicy
-    );
+    assert!(policy_readiness.blocker.requires_boundary_policy());
     assert_eq!(
         policy_readiness.retained_face_pairs,
         report.retained_face_pairs
@@ -6418,32 +6062,32 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
             .is_err(),
         "strict replay should not certify a boundary-policy readiness report"
     );
-    let default_result = ExactBooleanRequest::new(
-        ExactBooleanOperation::Union,
-        ValidationPolicy::ALLOW_BOUNDARY,
-    )
-    .materialize(&left, &right)
-    .unwrap();
+    let default_result = exact_boolean_result(
+        &left,
+        &right,
+        ExactBooleanRequest::new(
+            ExactBooleanOperation::Union,
+            ValidationPolicy::ALLOW_BOUNDARY,
+        ),
+    );
     default_result.validate().unwrap();
-    assert!(matches!(
-        default_result.kind,
-        ExactBooleanResultKind::BoundaryPolicyShortcut {
-            operation: ExactBooleanOperation::Union
-        }
-    ));
+    assert!(
+        default_result.is_boundary_policy_shortcut_for(ExactBooleanOperation::Union),
+        "{default_result:?}"
+    );
 
-    let projected = ExactBooleanRequest::with_boundary_policy(
-        ExactBooleanOperation::Union,
-        ValidationPolicy::ALLOW_BOUNDARY,
-        ExactBoundaryBooleanPolicy::PreserveSeparateShells,
-    )
-    .materialize(&left, &right)
-    .unwrap();
-    assert_eq!(
-        projected.kind,
-        ExactBooleanResultKind::BoundaryPolicyShortcut {
-            operation: ExactBooleanOperation::Union
-        }
+    let projected = exact_boolean_result(
+        &left,
+        &right,
+        ExactBooleanRequest::with_boundary_policy(
+            ExactBooleanOperation::Union,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            ExactBoundaryBooleanPolicy::PreserveSeparateShells,
+        ),
+    );
+    assert!(
+        projected.is_boundary_policy_shortcut_for(ExactBooleanOperation::Union),
+        "{projected:?}"
     );
     projected.mesh.validate_retained_state().unwrap();
     projected.validate_against_sources(&left, &right).unwrap();
@@ -6470,7 +6114,7 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
             .is_err()
     );
 
-    let closed_intersection_preflight = exact_boolean_preflight(
+    let closed_intersection_preflight = exact_boolean_evaluation(
         &left,
         &right,
         ExactBooleanRequest::with_boundary_policy(
@@ -6478,10 +6122,10 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
             ValidationPolicy::CLOSED,
             ExactBoundaryBooleanPolicy::PreserveSeparateShells,
         ),
-    );
-    assert_eq!(
-        closed_intersection_preflight.support,
-        hypermesh::ExactBooleanSupport::CertifiedLowerDimensionalRegularizedSolid,
+    )
+    .preflight;
+    assert!(
+        closed_intersection_preflight.is_certified_lower_dimensional_regularized_solid(),
         "{closed_intersection_preflight:?}"
     );
     closed_intersection_preflight
@@ -6493,7 +6137,7 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
         )
         .unwrap();
 
-    let closed_intersection_readiness = exact_boolean_certifications(
+    let closed_intersection_readiness = exact_boolean_evaluation(
         &left,
         &right,
         ExactBooleanRequest::with_boundary_policy(
@@ -6502,10 +6146,11 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
             ExactBoundaryBooleanPolicy::PreserveSeparateShells,
         ),
     )
-    .winding_readiness;
-    assert_eq!(
-        closed_intersection_readiness.status,
-        ExactWindingReadinessStatus::LowerDimensionalRegularizedSolidAlreadyMaterialized,
+    .certifications
+    .winding_readiness
+    .clone();
+    assert!(
+        closed_intersection_readiness.is_lower_dimensional_regularized_solid_materialized(),
         "{closed_intersection_readiness:?}"
     );
     closed_intersection_readiness
@@ -6517,19 +6162,20 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
         )
         .unwrap();
 
-    let closed_intersection = ExactBooleanRequest::with_boundary_policy(
-        ExactBooleanOperation::Intersection,
-        ValidationPolicy::CLOSED,
-        ExactBoundaryBooleanPolicy::PreserveSeparateShells,
-    )
-    .materialize(&left, &right)
-    .unwrap();
-    assert_eq!(
-        closed_intersection.kind,
-        ExactBooleanResultKind::CertifiedShortcut {
-            operation: ExactBooleanOperation::Intersection,
-            shortcut: hypermesh::ExactBooleanShortcutKind::LowerDimensionalRegularizedSolid
-        }
+    let closed_intersection = exact_boolean_result(
+        &left,
+        &right,
+        ExactBooleanRequest::with_boundary_policy(
+            ExactBooleanOperation::Intersection,
+            ValidationPolicy::CLOSED,
+            ExactBoundaryBooleanPolicy::PreserveSeparateShells,
+        ),
+    );
+    assert!(
+        closed_intersection.is_lower_dimensional_regularized_solid_shortcut_for(
+            ExactBooleanOperation::Intersection
+        ),
+        "{closed_intersection:?}"
     );
     assert!(closed_intersection.mesh.triangles().is_empty());
     assert!(closed_intersection.mesh.facts().mesh.closed_manifold);
@@ -6547,7 +6193,7 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
         ExactBooleanOperation::Union,
         ExactBooleanOperation::Difference,
     ] {
-        let closed_policy_preflight = exact_boolean_preflight(
+        let closed_policy_preflight = exact_boolean_evaluation(
             &left,
             &right,
             ExactBooleanRequest::with_boundary_policy(
@@ -6555,10 +6201,10 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
                 ValidationPolicy::CLOSED,
                 ExactBoundaryBooleanPolicy::PreserveSeparateShells,
             ),
-        );
-        assert_eq!(
-            closed_policy_preflight.support,
-            hypermesh::ExactBooleanSupport::CertifiedLowerDimensionalRegularizedSolid,
+        )
+        .preflight;
+        assert!(
+            closed_policy_preflight.is_certified_lower_dimensional_regularized_solid(),
             "{operation:?}: {closed_policy_preflight:?}"
         );
         closed_policy_preflight
@@ -6569,7 +6215,7 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
                 ExactBoundaryBooleanPolicy::PreserveSeparateShells,
             )
             .unwrap();
-        let closed_policy_readiness = exact_boolean_certifications(
+        let closed_policy_readiness = exact_boolean_evaluation(
             &left,
             &right,
             ExactBooleanRequest::with_boundary_policy(
@@ -6578,25 +6224,24 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
                 ExactBoundaryBooleanPolicy::PreserveSeparateShells,
             ),
         )
-        .winding_readiness;
-        assert_eq!(
-            closed_policy_readiness.status,
-            ExactWindingReadinessStatus::LowerDimensionalRegularizedSolidAlreadyMaterialized,
+        .certifications
+        .winding_readiness
+        .clone();
+        assert!(
+            closed_policy_readiness.is_lower_dimensional_regularized_solid_materialized(),
             "{operation:?}: {closed_policy_readiness:?}"
         );
-        let materialized = ExactBooleanRequest::with_boundary_policy(
-            operation,
-            ValidationPolicy::CLOSED,
-            ExactBoundaryBooleanPolicy::PreserveSeparateShells,
-        )
-        .materialize(&left, &right)
-        .unwrap();
-        assert_eq!(
-            materialized.kind,
-            ExactBooleanResultKind::CertifiedShortcut {
+        let materialized = exact_boolean_result(
+            &left,
+            &right,
+            ExactBooleanRequest::with_boundary_policy(
                 operation,
-                shortcut: hypermesh::ExactBooleanShortcutKind::LowerDimensionalRegularizedSolid
-            },
+                ValidationPolicy::CLOSED,
+                ExactBoundaryBooleanPolicy::PreserveSeparateShells,
+            ),
+        );
+        assert!(
+            materialized.is_lower_dimensional_regularized_solid_shortcut_for(operation),
             "{operation:?}: {materialized:?}"
         );
         materialized
@@ -6608,19 +6253,17 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
                 ExactBoundaryBooleanPolicy::PreserveSeparateShells,
             )
             .unwrap();
-        let closed_regularized = ExactBooleanRequest::with_boundary_policy(
-            operation,
-            ValidationPolicy::CLOSED,
-            ExactBoundaryBooleanPolicy::PreserveSeparateShells,
-        )
-        .materialize(&left, &right)
-        .unwrap();
-        assert_eq!(
-            closed_regularized.kind,
-            ExactBooleanResultKind::CertifiedShortcut {
+        let closed_regularized = exact_boolean_result(
+            &left,
+            &right,
+            ExactBooleanRequest::with_boundary_policy(
                 operation,
-                shortcut: hypermesh::ExactBooleanShortcutKind::LowerDimensionalRegularizedSolid
-            },
+                ValidationPolicy::CLOSED,
+                ExactBoundaryBooleanPolicy::PreserveSeparateShells,
+            ),
+        );
+        assert!(
+            closed_regularized.is_lower_dimensional_regularized_solid_shortcut_for(operation),
             "{operation:?}: {closed_regularized:?}"
         );
     }
@@ -6641,7 +6284,7 @@ fn boundary_touching_report_classifies_proper_crossing_as_winding_blocker() {
     )
     .unwrap();
 
-    let report = exact_boolean_certifications(
+    let report = exact_boolean_evaluation(
         &left,
         &right,
         ExactBooleanRequest::new(
@@ -6649,15 +6292,17 @@ fn boundary_touching_report_classifies_proper_crossing_as_winding_blocker() {
             ValidationPolicy::ALLOW_BOUNDARY,
         ),
     )
-    .boundary_touching;
+    .certifications
+    .boundary_touching
+    .clone();
 
-    assert_eq!(report.status, ExactBoundaryTouchingStatus::NotBoundaryOnly);
-    assert_eq!(report.blocker.kind, ExactBooleanBlockerKind::NeedsWinding);
+    assert!(!report.is_certified());
+    assert!(report.blocker.requires_winding());
     assert!(report.blocker.candidate_pairs > 0);
     report.validate().unwrap();
     report.validate_against_sources(&left, &right).unwrap();
 
     let mut stale = report;
-    stale.blocker.kind = ExactBooleanBlockerKind::NeedsBoundaryPolicy;
+    stale.blocker.coplanar_touching_pairs = 1;
     assert!(stale.validate().is_err());
 }

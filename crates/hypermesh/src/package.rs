@@ -7,11 +7,16 @@
 //! must replay against exact source objects instead of becoming unexamined
 //! topology authority.
 
-use super::{
-    ApproximateMeshF64View, ExactMesh, ExactMeshAuditReport, ExactMeshConsumerReadinessReport,
-    ExactSolidHandoffReport, ExactSurfaceHandoffReport, approximate_mesh_f64_view,
-    audit_exact_mesh, exact_mesh_consumer_readiness, exact_solid_handoff, exact_surface_handoff,
+use super::ExactMesh;
+use crate::audit::{ExactMeshAuditReport, audit_exact_mesh};
+use crate::handoff::{
+    ExactSolidHandoffReport, ExactSurfaceHandoffReport, exact_solid_handoff, exact_surface_handoff,
 };
+use crate::readiness::{
+    ExactMeshConsumerReadinessError, ExactMeshConsumerReadinessReport,
+    exact_mesh_consumer_readiness,
+};
+use crate::view::{ApproximateMeshF64View, approximate_mesh_f64_view};
 
 /// Bundled report-bearing handoff package for common downstream mesh consumers.
 #[derive(Clone, Debug, PartialEq)]
@@ -541,10 +546,10 @@ impl ExactMeshHandoffPackage {
     pub fn from_mesh(mesh: &ExactMesh) -> Result<Self, ExactMeshHandoffPackageError> {
         let audit = audit_exact_mesh(mesh).map_err(ExactMeshHandoffPackageError::Audit)?;
         let readiness = exact_mesh_consumer_readiness(mesh).map_err(|error| match error {
-            super::ExactMeshConsumerReadinessError::Audit(error) => {
+            ExactMeshConsumerReadinessError::Audit(error) => {
                 ExactMeshHandoffPackageError::Audit(error)
             }
-            super::ExactMeshConsumerReadinessError::ReportMismatch { .. } => {
+            ExactMeshConsumerReadinessError::ReportMismatch { .. } => {
                 ExactMeshHandoffPackageError::PackageMismatch {
                     field: "exact_mesh_consumer_readiness",
                 }
@@ -886,7 +891,7 @@ impl ExactMeshHandoffPackage {
 }
 
 /// Build a bundled downstream handoff package for an exact mesh.
-pub fn exact_mesh_handoff_package(
+pub(crate) fn exact_mesh_handoff_package(
     mesh: &ExactMesh,
 ) -> Result<ExactMeshHandoffPackage, ExactMeshHandoffPackageError> {
     ExactMeshHandoffPackage::from_mesh(mesh)

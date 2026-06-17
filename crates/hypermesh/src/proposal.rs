@@ -191,13 +191,6 @@ impl ExactMeshProposalReport {
     }
 }
 
-/// Certify a mesh proposal after exact retained-state replay.
-pub fn certify_exact_mesh_proposal(
-    mesh: &ExactMesh,
-) -> Result<ExactMeshProposalReport, ExactMeshProposalReportError> {
-    ExactMeshProposalReport::from_mesh(mesh)
-}
-
 fn source_kind_for_mesh_source(source: MeshSource) -> ExactMeshProposalSourceKind {
     match source {
         MeshSource::Exact => ExactMeshProposalSourceKind::ExactConstruction,

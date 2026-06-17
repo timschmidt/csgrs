@@ -10,7 +10,8 @@
 
 use hyperlimit::MeshSource;
 
-use super::{ExactMesh, ExactMeshAuditReport, ValidationPolicy, audit_exact_mesh};
+use super::{ExactMesh, ValidationPolicy};
+use crate::audit::{ExactMeshAuditReport, audit_exact_mesh};
 
 /// Exact solid handoff report for downstream crates.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -393,14 +394,14 @@ impl ExactSurfaceHandoffReport {
 }
 
 /// Build a downstream exact-solid handoff report.
-pub fn exact_solid_handoff(
+pub(crate) fn exact_solid_handoff(
     mesh: &ExactMesh,
 ) -> Result<ExactSolidHandoffReport, ExactSolidHandoffError> {
     ExactSolidHandoffReport::from_mesh(mesh)
 }
 
 /// Build a downstream exact-surface handoff report.
-pub fn exact_surface_handoff(
+pub(crate) fn exact_surface_handoff(
     mesh: &ExactMesh,
 ) -> Result<ExactSurfaceHandoffReport, ExactSurfaceHandoffError> {
     ExactSurfaceHandoffReport::from_mesh(mesh)

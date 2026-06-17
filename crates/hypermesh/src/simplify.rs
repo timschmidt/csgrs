@@ -329,7 +329,7 @@ fn simplified_sort_key(face: &ExactSimplifiedFaceCell) -> (usize, usize, usize) 
 }
 
 /// Simplify a selected cell complex by exact canonicalization.
-pub fn simplify_selected_cell_complex(
+pub(crate) fn simplify_selected_cell_complex(
     selected: ExactSelectedCellComplex,
     policy: ExactRegularizationPolicy,
 ) -> Result<ExactSimplifiedCellComplex, ExactArrangementBlocker> {

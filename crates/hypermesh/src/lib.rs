@@ -19,7 +19,7 @@ mod affine_box;
 mod affine_solid;
 mod arrangement2d;
 mod arrangement3d;
-pub mod artifact;
+mod artifact;
 mod audit;
 mod boolean;
 mod bounds;
@@ -40,7 +40,7 @@ mod mesh;
 mod narrow;
 mod orthogonal_solid;
 mod package;
-pub mod proposal;
+mod proposal;
 mod readiness;
 mod region;
 mod regularization;
@@ -48,7 +48,6 @@ mod reports;
 mod scalar;
 mod simplify;
 mod solid;
-mod support;
 mod topology;
 mod validation;
 mod view;
@@ -59,63 +58,23 @@ mod witness;
 mod workspace;
 
 pub use adapter::{
-    ExactI64MeshInputReadiness, ExactI64MeshInputReport, ExactI64MeshInputReportValidationError,
-    LossyF64MeshInputReadiness, LossyF64MeshInputReport, LossyF64MeshInputReportValidationError,
-    inspect_f64_mesh_input, inspect_i64_mesh_input,
-};
-pub use affine_box::{
-    AffineBoxBasis, AffineBoxOperation, has_affine_box_difference, has_affine_box_intersection,
-    has_affine_box_union,
+    ExactI64MeshInputReadiness, ExactI64MeshInputReportValidationError, LossyF64MeshInputReadiness,
+    LossyF64MeshInputReportValidationError,
 };
 pub use arrangement2d::{
-    ExactArrangement2d, ExactArrangement2dBlocker, ExactArrangement2dBoundaryPolicy,
-    ExactArrangement2dEdge, ExactArrangement2dFace, ExactArrangement2dInputSegment,
-    ExactArrangement2dOutputComponent, ExactArrangement2dOutputLoop, ExactArrangement2dOverlay,
-    ExactArrangement2dOverlayFace, ExactArrangement2dRegion, ExactArrangement2dRegionRing,
-    ExactArrangement2dSegmentSource, ExactArrangement2dSetOperation, ExactArrangement2dVertex,
-    build_exact_arrangement2d, build_exact_arrangement2d_overlay,
-    build_exact_arrangement2d_overlay_with_boundary_policy, exact_arrangement2d_face_witness,
+    ExactArrangement2dBoundaryPolicy, ExactArrangement2dRegion, ExactArrangement2dRegionRing,
+    ExactArrangement2dSetOperation,
 };
-pub use arrangement3d::{
-    ArrangementCarrierPlaneOverlay, ArrangementEdge, ArrangementEdgeProvenance,
-    ArrangementFaceCarrier, ArrangementFaceCell, ArrangementFaceCellNode,
-    ArrangementFacePlaneArrangement, ArrangementLowerDimensionalArtifact,
-    ArrangementOppositeClassification, ArrangementRegion, ArrangementRegionEdgeIncidence,
-    ArrangementRegionSide, ArrangementVertex, ArrangementVertexProvenance,
-    ArrangementVolumeAdjacency, ArrangementVolumeFaceSide, ArrangementVolumeRegion,
-    ExactArrangement, ExactArrangement3d, ExactArrangementFreshness, ExactTopologyAssemblyReport,
-    ExactTopologyAssemblyStatus,
-};
+pub use arrangement3d::ExactArrangement;
 pub use artifact::{
     MeshArtifactBlocker, MeshArtifactFaceRecord, MeshArtifactManifest, MeshArtifactReport,
     MeshArtifactReportError, MeshArtifactRole, MeshArtifactSourceKind, MeshArtifactVertexRecord,
     MeshCoordinateEvidence, MeshNumericAdapterContract, MeshTopologyEvidence,
-    mesh_artifact_from_exact_mesh, mesh_artifact_from_exact_mesh_proposal,
 };
-pub use audit::{
-    ExactMeshAuditError, ExactMeshAuditFreshness, ExactMeshAuditReport, audit_exact_mesh,
-};
+pub use audit::ExactMeshAuditError;
 pub use boolean::{
-    ExactArrangementBooleanAttempt, ExactArrangementBooleanDecline, ExactArrangementBooleanStage,
-    ExactBooleanCertificationSet, ExactBooleanEvaluation, ExactBooleanOperation,
-    ExactBooleanRequest, ExactBoundaryBooleanPolicy, ExactConvexBooleanCapabilityFacts,
-    ExactIdenticalMeshReport, ExactIdenticalMeshStatus, ExactRegularizedSolidBooleanFacts,
-    ExactTrivialBooleanFacts,
-};
-pub use bounds::{AabbIntersectionKind, BoundsValidationError, ExactAabb3, MeshBounds};
-pub use cell_complex::{
-    ExactCellComplex, ExactCellComplexFace, ExactCellComplexVolumeRegion, ExactCellRegionLabel,
-    ExactLabeledCellComplex, ExactLabeledCellComplexFreshness, ExactOppositeRegionLabel,
-    ExactRegionOwnershipReport, ExactRegionOwnershipStatus, ExactSelectedCellComplex,
-    ExactSelectedCellComplexFreshness, ExactSelectedFaceOrientation,
-};
-pub use cells::{triangulate_all_face_cells_with_cdt, validate_face_cell_cdt_against_sources};
-pub use construction::{
-    intersect_segment_with_face_plane, intersect_segment_with_retained_face_plane,
-};
-pub use convex::{
-    ConvexSolidDifference, ConvexSolidIntersection, ConvexSolidUnion,
-    intersect_closed_convex_solids, subtract_closed_convex_solids, union_closed_convex_solids,
+    ExactArrangementBooleanAttempt, ExactArrangementBooleanShortcutReason, ExactBooleanEvaluation,
+    ExactBooleanOperation, ExactBooleanRequest, ExactBoundaryBooleanPolicy,
 };
 pub use error::{DiagnosticKind, MeshDiagnostic, MeshError, Severity};
 pub use facts::{
@@ -123,106 +82,22 @@ pub use facts::{
     OrientedFaceFacts, TriangleFacts, VertexFacts, VertexLinkKind,
 };
 pub use graph::{
-    CoplanarArrangementReadinessFreshness, CoplanarArrangementReadinessReport,
-    CoplanarArrangementReadinessStatus, CoplanarArrangementReadinessValidationError,
-    CoplanarEdgeInterval, CoplanarEdgeOverlap, CoplanarEdgeSplitConstruction,
-    CoplanarEdgeSplitPoint, CoplanarOverlapGraph, CoplanarOverlapGraphFreshness,
-    CoplanarOverlapGraphValidationError, CoplanarOverlapSplitFreshness, CoplanarOverlapSplitGraph,
-    CoplanarOverlapSplitPlan, CoplanarOverlapSplitValidationError, CoplanarVertexOverlap,
-    EdgeSplit, EdgeSplitPoint, ExactEdgeSplitPlan, ExactFaceRegionPlan, ExactFaceSplitGeometryPlan,
-    ExactFaceSplitPlan, ExactGraphVertex, ExactGraphVertexPlan, ExactGraphVertexUse,
-    ExactIntersectionGraph, ExactSplitTopologyPlan, FacePairEvents, FaceRegionBoundary,
-    FaceSplitBoundaryChain, FaceSplitBoundaryNode, FaceSplitEdge, FaceSplitGeometry, FaceSplitPlan,
-    IntersectionEvent, IntersectionGraphFreshness, IntersectionGraphValidationError, MeshSide,
-    SplitEdgeChain, SplitEdgeNode, SplitPlanDiagnostic, SplitPlanDiagnosticKind,
-    SplitPlanFreshness, SplitPlanReportValidationError, SplitPlanValidationReport,
-    build_intersection_graph,
-};
-pub use handoff::{
-    ExactSolidHandoffError, ExactSolidHandoffFreshness, ExactSolidHandoffReport,
-    ExactSurfaceHandoffError, ExactSurfaceHandoffFreshness, ExactSurfaceHandoffReport,
-    exact_solid_handoff, exact_surface_handoff,
-};
-pub use intersection::{
-    MeshFacePairClassification, MeshFacePairFreshness, MeshFacePairRelation,
-    MeshFacePairValidationError, classify_mesh_face_pair, classify_mesh_face_pairs,
+    ExactIntersectionGraph, FaceSplitBoundaryNode, IntersectionGraphValidationError, MeshSide,
+    SplitPlanDiagnostic, SplitPlanDiagnosticKind,
 };
 pub use mesh::{ExactMesh, ExactMeshValidationError, Triangle};
-pub use narrow::{
-    TriangleTriangleClassification, TriangleTriangleFreshness, TriangleTriangleRelation,
-    TriangleTriangleValidationError, classify_mesh_triangle_against_retained_face_plane,
-    classify_triangle_against_face_plane, classify_triangle_triangle,
-};
 pub use package::{
-    ExactMeshConsumerDomain, ExactMeshDomainReportRef, ExactMeshDomainSummary,
-    ExactMeshDomainSummaryError, ExactMeshDomainSummaryFreshness, ExactMeshHandoffPackage,
-    ExactMeshHandoffPackageError, ExactMeshHandoffPackageFreshness, exact_mesh_handoff_package,
+    ExactMeshConsumerDomain, ExactMeshDomainSummaryError, ExactMeshHandoffPackageError,
 };
 pub use proposal::{
     ExactMeshProposalAcceptance, ExactMeshProposalReport, ExactMeshProposalReportError,
-    ExactMeshProposalSourceKind, certify_exact_mesh_proposal,
+    ExactMeshProposalSourceKind,
 };
-pub use readiness::{
-    ExactMeshConsumerReadinessError, ExactMeshConsumerReadinessFreshness,
-    ExactMeshConsumerReadinessReport, exact_mesh_consumer_readiness,
-};
-pub use region::{
-    ExactBooleanAssemblyPlan, ExactOutputTriangle, ExactOutputTriangleOrientation,
-    ExactOutputVertex, ExactRegionRetention, ExactRegionSelection, FaceRegionPlaneClassification,
-    FaceRegionPlaneRelation, FaceRegionPlaneValidationError, FaceRegionTriangulation,
-    checked_classify_face_regions_against_opposite_planes,
-    checked_triangulate_face_regions_with_earcut,
-};
+pub use region::{ExactOutputTriangleOrientation, ExactRegionSelection, FaceRegionPlaneRelation};
 pub use regularization::{
     ExactArrangementBlocker, ExactLowerDimensionalPolicy, ExactRegularizationPolicy,
     ExactUnresolvedPolicy,
 };
-pub use reports::{
-    ExactAdjacentUnionCompletionReport, ExactAdjacentUnionCompletionStatus, ExactBooleanBlocker,
-    ExactBooleanBlockerKind, ExactBooleanPreflight, ExactBooleanResult, ExactBooleanResultKind,
-    ExactBooleanShortcutKind, ExactBooleanSupport, ExactBoundaryTouchingReport,
-    ExactBoundaryTouchingStatus, ExactOpenSurfaceDisjointReport, ExactOpenSurfaceDisjointStatus,
-    ExactPlanarArrangementReport, ExactPlanarArrangementStatus, ExactRefinementReport,
-    ExactRefinementStatus, ExactReportFreshness, ExactReportValidationError,
-    ExactSameSurfaceReport, ExactSameSurfaceStatus, ExactVolumetricBoundaryClosureReport,
-    ExactVolumetricBoundaryClosureStatus, ExactWindingReadinessReport, ExactWindingReadinessStatus,
-};
-pub use scalar::LossyF64Import;
-pub use simplify::{
-    ExactSimplifiedCellComplex, ExactSimplifiedCellComplexFreshness, ExactSimplifiedFaceCell,
-};
-pub use solid::{
-    ClosedMeshOrientation, ConvexSolidClassification, ConvexSolidFacts,
-    ConvexSolidMeshClassification, ConvexSolidMeshRelation, ConvexSolidPointClassification,
-    ConvexSolidPointRelation, ConvexSolidReportError, ConvexSolidReportFreshness,
-    certify_convex_solid, classify_mesh_vertices_against_convex_solid,
-    classify_mesh_vertices_against_convex_solid_report, classify_point_against_convex_solid,
-    classify_point_against_convex_solid_report,
-};
-pub use support::support_dop_for_mesh;
-pub use validation::{
-    BoundaryPolicy, ValidationPolicy, ValidationReport, validate_triangles,
-    validate_triangles_with_policy,
-};
-pub use view::{
-    ApproximateMeshF64View, ApproximateMeshF64ViewError, ApproximateMeshF64ViewFreshness,
-    approximate_mesh_f64_view,
-};
-pub use volumetric::{
-    ExactVolumetricRegionClassification, ExactVolumetricRegionError,
-    ExactVolumetricRegionFreshness, ExactVolumetricRegionRelation, ExactVolumetricWitnessAttempt,
-    classify_triangulated_region_triangle_against_closed_mesh,
-    classify_triangulated_regions_against_opposite_meshes,
-};
-pub use volumetric_cells::{
-    CoplanarVolumetricCellEvidenceError, CoplanarVolumetricCellEvidenceFreshness,
-    CoplanarVolumetricCellEvidenceReport, CoplanarVolumetricCellObstacle,
-};
-pub use winding::{
-    ClosedMeshWindingMeshRelation, ClosedMeshWindingMeshReport, ClosedMeshWindingRelation,
-    PointMeshWindingReport, WindingRayAxis, WindingReportError, WindingReportFreshness,
-    classify_mesh_vertices_against_closed_mesh_winding,
-    classify_mesh_vertices_against_closed_mesh_winding_report,
-    classify_point_against_closed_mesh_winding, classify_point_against_closed_mesh_winding_report,
-};
+pub use reports::{ExactBooleanResult, ExactReportFreshness, ExactReportValidationError};
+pub use validation::{BoundaryPolicy, ValidationPolicy, ValidationReport};
 pub use workspace::ExactBooleanWorkspace;

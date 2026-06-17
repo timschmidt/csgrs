@@ -149,15 +149,6 @@ struct OrientedPlaneKey {
 
 type GridBoxBounds = (usize, usize, usize, usize, usize, usize);
 
-/// Return whether both meshes certify as orthogonal solids for `operation`.
-pub(crate) fn has_axis_aligned_orthogonal_solid_cells(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: AxisAlignedOrthogonalSolidOperation,
-) -> bool {
-    axis_aligned_orthogonal_solid_cell_selected_count(left, right, operation).is_some()
-}
-
 /// Return whether exact orthogonal occupancy certifies an empty intersection.
 pub(crate) fn has_empty_axis_aligned_orthogonal_solid_cell_intersection(
     left: &ExactMesh,

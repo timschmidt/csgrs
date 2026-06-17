@@ -83,7 +83,7 @@ impl ValidationReport {
 }
 
 /// Validate indexed triangles against exact points.
-pub fn validate_triangles(points: &[Point3], triangles: &[[usize; 3]]) -> ValidationReport {
+pub(crate) fn validate_triangles(points: &[Point3], triangles: &[[usize; 3]]) -> ValidationReport {
     validate_triangles_with_policy(points, triangles, ValidationPolicy::default())
 }
 
@@ -93,7 +93,7 @@ pub fn validate_triangles(points: &[Point3], triangles: &[[usize; 3]]) -> Valida
 /// validation still records boundary facts but does not promote them to fatal
 /// diagnostics. The policy object keeps that topological contract explicit,
 /// approximation policies must be visible at API boundaries.
-pub fn validate_triangles_with_policy(
+pub(crate) fn validate_triangles_with_policy(
     points: &[Point3],
     triangles: &[[usize; 3]],
     policy: ValidationPolicy,

@@ -442,7 +442,7 @@ impl ConvexSolidMeshClassification {
 /// volume convention used here, interior points of a positively oriented
 /// closed surface therefore lie on the above side of every face. The signed
 /// volume orientation is exact `Real` arithmetic and is compared through
-pub fn certify_convex_solid(mesh: &ExactMesh) -> ConvexSolidFacts {
+pub(crate) fn certify_convex_solid(mesh: &ExactMesh) -> ConvexSolidFacts {
     if !mesh.facts().mesh.closed_manifold {
         return ConvexSolidFacts {
             orientation: ClosedMeshOrientation::NotClosed,
@@ -502,40 +502,18 @@ pub fn certify_convex_solid(mesh: &ExactMesh) -> ConvexSolidFacts {
     }
 }
 
-/// Classify one point against a certified convex solid.
-pub fn classify_point_against_convex_solid(
-    point: &Point3,
-    solid: &ExactMesh,
-) -> ConvexSolidPointRelation {
-    classify_point_against_convex_solid_report(point, solid).relation
-}
-
 /// Classify one point against a certified convex solid and retain predicates.
 ///
-/// This is the auditable form of [`classify_point_against_convex_solid`].
 /// Each face halfspace query records the `hyperlimit::orient3d_report`
 /// certificate that drove the relation. Keeping those certificates near the
-/// the exact predicates they consumed rather than returning only a collapsed
+/// exact predicates they consumed avoids returning only a collapsed
 /// boolean-like answer.
-pub fn classify_point_against_convex_solid_report(
+pub(crate) fn classify_point_against_convex_solid_report(
     point: &Point3,
     solid: &ExactMesh,
 ) -> ConvexSolidPointClassification {
     let facts = certify_convex_solid(solid);
     classify_point_with_convex_facts_report(point, solid, &facts)
-}
-
-/// Classify every vertex of `subject` against a certified convex solid.
-///
-/// This is a containment precondition for simple named-boolean shortcuts. It
-/// is not a substitute for general winding: boundary and mixed relations remain
-/// explicit so coplanar overlaps, shared faces, and partial intersections are
-/// rejected by higher-level boolean policy.
-pub fn classify_mesh_vertices_against_convex_solid(
-    subject: &ExactMesh,
-    solid: &ExactMesh,
-) -> ConvexSolidMeshRelation {
-    classify_mesh_vertices_against_convex_solid_report(subject, solid).relation
 }
 
 /// Classify every vertex of `subject` against a convex solid and retain predicates.
@@ -545,7 +523,7 @@ pub fn classify_mesh_vertices_against_convex_solid(
 /// predicates so callers can inspect whether a containment/disjoint shortcut
 /// contract used throughout the port: predicates and uncertainty stay explicit
 /// at API boundaries.
-pub fn classify_mesh_vertices_against_convex_solid_report(
+pub(crate) fn classify_mesh_vertices_against_convex_solid_report(
     subject: &ExactMesh,
     solid: &ExactMesh,
 ) -> ConvexSolidMeshClassification {

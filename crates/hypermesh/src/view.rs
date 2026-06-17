@@ -8,7 +8,8 @@
 //! useful, but exact geometric decisions must remain tied to exact objects and
 //! proof-producing predicates.
 
-use super::{ExactMesh, ExactMeshAuditError, ExactMeshAuditReport, audit_exact_mesh};
+use super::{ExactMesh, ExactMeshAuditError};
+use crate::audit::{ExactMeshAuditReport, audit_exact_mesh};
 use hyperlimit::Point3;
 use hyperreal::Real;
 
@@ -260,7 +261,7 @@ impl ApproximateMeshF64View {
 }
 
 /// Build a primitive-float approximate view from an exact mesh.
-pub fn approximate_mesh_f64_view(
+pub(crate) fn approximate_mesh_f64_view(
     mesh: &ExactMesh,
 ) -> Result<ApproximateMeshF64View, ApproximateMeshF64ViewError> {
     ApproximateMeshF64View::from_mesh(mesh)

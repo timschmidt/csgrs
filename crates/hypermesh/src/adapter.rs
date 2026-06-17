@@ -11,7 +11,8 @@
 
 use hyperlimit::{ApproximationPolicy, MeshSource, SourceProvenance};
 
-use super::{DiagnosticKind, LossyF64Import, MeshDiagnostic, Severity};
+use super::{DiagnosticKind, MeshDiagnostic, Severity};
+use crate::scalar::LossyF64Import;
 
 /// Audited primitive-float mesh input stream.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -560,12 +561,12 @@ impl ExactI64MeshInputReport {
 }
 
 /// Audit a primitive-float mesh input stream before exact construction.
-pub fn inspect_f64_mesh_input(pos: &[f64], idx: &[usize]) -> LossyF64MeshInputReport {
+pub(crate) fn inspect_f64_mesh_input(pos: &[f64], idx: &[usize]) -> LossyF64MeshInputReport {
     LossyF64MeshInputReport::inspect(pos, idx)
 }
 
 /// Audit an exact-integer mesh input stream before exact construction.
-pub fn inspect_i64_mesh_input(pos: &[i64], idx: &[usize]) -> ExactI64MeshInputReport {
+pub(crate) fn inspect_i64_mesh_input(pos: &[i64], idx: &[usize]) -> ExactI64MeshInputReport {
     ExactI64MeshInputReport::inspect(pos, idx)
 }
 

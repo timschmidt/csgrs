@@ -283,7 +283,7 @@ impl ExactMeshAuditReport {
 }
 
 /// Build a retained-state audit report for an exact mesh.
-pub fn audit_exact_mesh(
+pub(crate) fn audit_exact_mesh(
     mesh: &ExactMesh,
 ) -> Result<ExactMeshAuditReport, ExactMeshValidationError> {
     ExactMeshAuditReport::from_mesh(mesh)

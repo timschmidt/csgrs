@@ -492,14 +492,6 @@ impl From<WindingReportError> for WindingReportFreshness {
     }
 }
 
-/// Classify `point` against a closed triangle mesh by exact ray parity.
-pub fn classify_point_against_closed_mesh_winding(
-    point: &Point3,
-    mesh: &ExactMesh,
-) -> ClosedMeshWindingRelation {
-    classify_point_against_closed_mesh_winding_report(point, mesh).relation
-}
-
 /// Classify `point` against a closed triangle mesh and retain parity evidence.
 ///
 /// The classifier tries positive X, Y, and Z rays first, then deterministic
@@ -510,7 +502,7 @@ pub fn classify_point_against_closed_mesh_winding(
 /// another exact ray may still decide the relation. This keeps the report
 /// stable and replayable: a decided report includes the exact ray, crossing
 /// count, and blocker counts used to reach the decision.
-pub fn classify_point_against_closed_mesh_winding_report(
+pub(crate) fn classify_point_against_closed_mesh_winding_report(
     point: &Point3,
     mesh: &ExactMesh,
 ) -> PointMeshWindingReport {
@@ -648,17 +640,9 @@ fn point_on_closed_triangle(point: &Point3, triangle: &[Point3; 3]) -> Option<bo
     if unresolved { None } else { Some(false) }
 }
 
-/// Classify every vertex of `subject` against a closed target mesh.
-pub fn classify_mesh_vertices_against_closed_mesh_winding(
-    subject: &ExactMesh,
-    target: &ExactMesh,
-) -> ClosedMeshWindingMeshRelation {
-    classify_mesh_vertices_against_closed_mesh_winding_report(subject, target).relation
-}
-
 /// Classify every vertex of `subject` against a closed target mesh and retain
 /// exact ray-parity reports.
-pub fn classify_mesh_vertices_against_closed_mesh_winding_report(
+pub(crate) fn classify_mesh_vertices_against_closed_mesh_winding_report(
     subject: &ExactMesh,
     target: &ExactMesh,
 ) -> ClosedMeshWindingMeshReport {

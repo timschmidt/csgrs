@@ -186,7 +186,7 @@ impl FaceRegionPlaneClassification {
 /// does not collapse a full mesh-side decision into one boolean: a region can
 /// be coplanar with one face, straddle another face plane, and remain unknown
 /// against a symbolic face until refinement or a policy decision is available.
-pub fn classify_face_regions_against_opposite_planes(
+pub(crate) fn classify_face_regions_against_opposite_planes(
     regions: &ExactFaceRegionPlan,
     left: &ExactMesh,
     right: &ExactMesh,
@@ -216,7 +216,27 @@ pub fn classify_face_regions_against_opposite_planes(
 /// This is the checked handoff for future winding/inside-outside policy:
 /// region loops must satisfy exact structural and source-face incidence
 /// objects rather than unchecked boundary loops.
-pub fn checked_classify_face_regions_against_opposite_planes(
+impl ExactFaceRegionPlan {
+    /// Validate and classify split regions against every opposite face plane.
+    pub fn classify_against_opposite_face_planes(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> Result<Vec<FaceRegionPlaneClassification>, MeshError> {
+        checked_classify_face_regions_against_opposite_planes(self, left, right)
+    }
+
+    /// Validate and triangulate split face-region loops with exact earcut.
+    pub fn triangulate_with_earcut(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> hypertri::Result<Vec<FaceRegionTriangulation>> {
+        checked_triangulate_face_regions_with_earcut(self, left, right)
+    }
+}
+
+pub(crate) fn checked_classify_face_regions_against_opposite_planes(
     regions: &ExactFaceRegionPlan,
     left: &ExactMesh,
     right: &ExactMesh,
@@ -1494,7 +1514,7 @@ fn assembly_validation_error(error: hypertri::Error) -> super::error::MeshError 
 /// classification. The earcut call follows Held, "FIST:
 /// Fast Industrial-Strength Triangulation of Polygons," *Algorithmica* 30
 /// (2001), with exact projected coordinates supplied by `hypertri`.
-pub fn triangulate_face_regions_with_earcut(
+pub(crate) fn triangulate_face_regions_with_earcut(
     regions: &ExactFaceRegionPlan,
     left: &ExactMesh,
     right: &ExactMesh,
@@ -1532,7 +1552,7 @@ pub fn triangulate_face_regions_with_earcut(
 /// region loops must first satisfy the structural and face-incidence
 /// invariants enforced by [`ExactFaceRegionPlan::validate`]. Only then are
 /// them into downstream combinatorics.
-pub fn checked_triangulate_face_regions_with_earcut(
+pub(crate) fn checked_triangulate_face_regions_with_earcut(
     regions: &ExactFaceRegionPlan,
     left: &ExactMesh,
     right: &ExactMesh,

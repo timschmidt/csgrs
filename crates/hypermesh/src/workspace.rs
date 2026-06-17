@@ -3,16 +3,20 @@ use super::boolean::{
     ExactArrangementBooleanAttempt, ExactBooleanCertificationSet, ExactBooleanEvaluation,
     ExactBooleanRequest, arrangement_boolean_attempt_report_from_arrangement,
     arrangement_cell_complex_shortcut_attempt,
+    certified_arrangement_cell_complex_preflight_from_retained_attempt,
     materialize_boolean_exact_request_from_retained_graph,
     materialize_certified_boolean_support_with_artifacts,
     preflight_boolean_exact_request_from_graph,
+    rematerialize_retained_arrangement_cell_complex_attempt,
     try_materialize_certified_boolean_support_with_artifacts,
 };
 use super::error::{DiagnosticKind, MeshDiagnostic, MeshError, Severity};
 use super::graph::{ExactIntersectionGraph, build_intersection_graph};
 use super::mesh::ExactMesh;
 use super::regularization::{ExactArrangementBlocker, ExactRegularizationPolicy};
-use super::reports::{ExactBooleanPreflight, ExactBooleanResult, ExactReportValidationError};
+use super::reports::{
+    ExactBooleanPreflight, ExactBooleanResult, ExactBooleanSupport, ExactReportValidationError,
+};
 
 /// Reusable exact boolean session for a fixed source-mesh pair.
 ///
@@ -69,7 +73,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
             .expect("intersection graph was just initialized"))
     }
 
-    fn validated_graph(&mut self) -> Result<&ExactIntersectionGraph, MeshError> {
+    pub(crate) fn validated_graph(&mut self) -> Result<&ExactIntersectionGraph, MeshError> {
         let left = self.left;
         let right = self.right;
         let graph = self.graph()?;
@@ -134,48 +138,95 @@ impl<'a> ExactBooleanWorkspace<'a> {
             return Ok(&self.arrangement_attempts[index].2);
         }
 
-        if let Some(attempt) =
-            arrangement_cell_complex_shortcut_attempt(self.left, self.right, request, policy)?
-        {
-            return store_retained_arrangement_attempt(
-                &mut self.arrangement_attempts,
-                request,
-                policy,
-                attempt,
-            );
-        }
-
         let left = self.left;
         let right = self.right;
-        let arrangement = self.arrangement(policy)?;
-        let attempt = arrangement_boolean_attempt_report_from_arrangement(
-            left,
-            right,
-            request,
-            policy,
-            arrangement,
-        )?;
+        let attempt = match self.arrangement(policy) {
+            Ok(arrangement) => {
+                let attempt = arrangement_boolean_attempt_report_from_arrangement(
+                    left,
+                    right,
+                    request,
+                    policy,
+                    arrangement,
+                )?;
+                if attempt.materialized_arrangement_cell_complex_output() {
+                    attempt
+                } else {
+                    arrangement_cell_complex_shortcut_attempt(left, right, request, policy)?
+                        .unwrap_or(attempt)
+                }
+            }
+            Err(error) => {
+                if let Some(attempt) =
+                    arrangement_cell_complex_shortcut_attempt(left, right, request, policy)?
+                {
+                    attempt
+                } else {
+                    return Err(error);
+                }
+            }
+        };
         store_retained_arrangement_attempt(&mut self.arrangement_attempts, request, policy, attempt)
     }
 
     /// Derive preflight for `request` from the retained graph.
-    fn preflight(
+    pub(crate) fn preflight(
         &mut self,
         request: ExactBooleanRequest,
     ) -> Result<ExactBooleanPreflight, MeshError> {
         let left = self.left;
         let right = self.right;
+        if self
+            .regularized_solid_arrangement_attempt(request)
+            .is_none()
+            && !matches!(
+                request.operation,
+                super::boolean::ExactBooleanOperation::SelectedRegions(_)
+            )
+        {
+            let _ = self.arrangement_attempt(request, ExactRegularizationPolicy::REGULARIZED_SOLID);
+        }
+        let retained_attempt = self.regularized_solid_arrangement_attempt(request).cloned();
         let graph = self.validated_graph()?;
-        let preflight = preflight_boolean_exact_request_from_graph(graph, left, right, request)?;
-        if preflight.operation != request.operation {
+        let graph_preflight =
+            preflight_boolean_exact_request_from_graph(graph, left, right, request)?;
+        if graph_preflight.operation != request.operation {
             return Err(workspace_report_validation_error(
                 ExactReportValidationError::StatusEvidenceMismatch,
             ));
         }
-        preflight
+        graph_preflight
             .validate()
             .map_err(workspace_report_validation_error)?;
-        Ok(preflight)
+        if matches!(
+            graph_preflight.support,
+            ExactBooleanSupport::CertifiedBoundaryPolicyShortcut
+                | ExactBooleanSupport::CertifiedEmptyOperand
+                | ExactBooleanSupport::CertifiedBoundsDisjoint
+                | ExactBooleanSupport::CertifiedIdentical
+                | ExactBooleanSupport::CertifiedSameSurface
+                | ExactBooleanSupport::CertifiedOpenSurfaceDisjoint
+                | ExactBooleanSupport::CertifiedConvexSeparated
+        ) {
+            return Ok(graph_preflight);
+        }
+        if let Some(attempt) = retained_attempt.as_ref()
+            && let Some(preflight) =
+                certified_arrangement_cell_complex_preflight_from_retained_attempt(
+                    graph,
+                    left,
+                    right,
+                    request,
+                    ExactRegularizationPolicy::REGULARIZED_SOLID,
+                    attempt,
+                )?
+        {
+            preflight
+                .validate()
+                .map_err(workspace_report_validation_error)?;
+            return Ok(preflight);
+        }
+        Ok(graph_preflight)
     }
 
     /// Returns an exact boolean evaluation for `request`, building it once per
@@ -189,6 +240,13 @@ impl<'a> ExactBooleanWorkspace<'a> {
         }
 
         let preflight = self.preflight(request)?;
+        if preflight.support == ExactBooleanSupport::CertifiedArrangementCellComplex
+            && self
+                .regularized_solid_arrangement_attempt(request)
+                .is_none()
+        {
+            self.arrangement_attempt(request, ExactRegularizationPolicy::REGULARIZED_SOLID)?;
+        }
         let graph = self
             .graph
             .as_ref()
@@ -209,6 +267,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
                 self.left,
                 self.right,
                 request,
+                regularized_attempt,
             )? {
                 Some(result)
             } else {
@@ -241,9 +300,13 @@ impl<'a> ExactBooleanWorkspace<'a> {
         &mut self,
         request: ExactBooleanRequest,
     ) -> Result<ExactBooleanResult, MeshError> {
-        if let Some(result) =
-            cached_retained_materialization(&self.materializations, self.left, self.right, request)?
-        {
+        if let Some(result) = cached_retained_materialization(
+            &self.materializations,
+            self.left,
+            self.right,
+            request,
+            self.regularized_solid_arrangement_attempt(request),
+        )? {
             self.promote_evaluation_cache_from_materialization(request, &result)?;
             return Ok(result);
         }
@@ -257,13 +320,22 @@ impl<'a> ExactBooleanWorkspace<'a> {
             evaluation
                 .validate()
                 .map_err(workspace_report_validation_error)?;
-            if validate_retained_result_for_request(self.left, self.right, request, result).is_ok()
+            if validate_retained_result_for_request(
+                self.left,
+                self.right,
+                request,
+                self.regularized_solid_arrangement_attempt(request),
+                result,
+            )
+            .is_ok()
             {
+                let retained_attempt = self.regularized_solid_arrangement_attempt(request).cloned();
                 let result = store_replayable_result_or_return(
                     &mut self.materializations,
                     self.left,
                     self.right,
                     request,
+                    retained_attempt.as_ref(),
                     result.clone(),
                 )?;
                 self.promote_evaluation_cache_from_materialization(request, &result)?;
@@ -276,16 +348,25 @@ impl<'a> ExactBooleanWorkspace<'a> {
             evaluation
                 .validate()
                 .map_err(workspace_report_validation_error)?;
-            if let Some(result) = evaluation.result {
+            if let Some(result) = evaluation.result.clone() {
+                let retained_attempt = self.regularized_solid_arrangement_attempt(request).cloned();
                 let result = store_replayable_result_or_return(
                     &mut self.materializations,
                     self.left,
                     self.right,
                     request,
+                    retained_attempt.as_ref(),
                     result,
                 )?;
                 self.promote_evaluation_cache_from_materialization(request, &result)?;
                 return Ok(result);
+            }
+            if preflight.support == ExactBooleanSupport::CertifiedArrangementCellComplex
+                && self
+                    .regularized_solid_arrangement_attempt(request)
+                    .is_none()
+            {
+                self.arrangement_attempt(request, ExactRegularizationPolicy::REGULARIZED_SOLID)?;
             }
             let regularized_arrangement = self.regularized_solid_arrangement();
             let graph = self
@@ -301,11 +382,13 @@ impl<'a> ExactBooleanWorkspace<'a> {
                 regularized_arrangement,
                 self.regularized_solid_arrangement_attempt(request),
             )?;
+            let retained_attempt = self.regularized_solid_arrangement_attempt(request).cloned();
             let result = store_replayable_result_or_return(
                 &mut self.materializations,
                 self.left,
                 self.right,
                 request,
+                retained_attempt.as_ref(),
                 result,
             )?;
             self.promote_evaluation_cache_from_materialization(request, &result)?;
@@ -318,11 +401,13 @@ impl<'a> ExactBooleanWorkspace<'a> {
         let result = materialize_boolean_exact_request_from_retained_graph(
             graph, self.left, self.right, request,
         )?;
+        let retained_attempt = self.regularized_solid_arrangement_attempt(request).cloned();
         let result = store_replayable_result_or_return(
             &mut self.materializations,
             self.left,
             self.right,
             request,
+            retained_attempt.as_ref(),
             result,
         )?;
         self.promote_evaluation_cache_from_materialization(request, &result)?;
@@ -337,8 +422,14 @@ impl<'a> ExactBooleanWorkspace<'a> {
         if cached_by_request_index(&self.materializations, request).is_none() {
             return Ok(());
         }
-        validate_retained_result_for_request(self.left, self.right, request, result)
-            .map_err(workspace_report_validation_error)?;
+        validate_retained_result_for_request(
+            self.left,
+            self.right,
+            request,
+            self.regularized_solid_arrangement_attempt(request),
+            result,
+        )
+        .map_err(workspace_report_validation_error)?;
         if let Some(index) = cached_by_request_index(&self.evaluations, request) {
             let evaluation = &mut self.evaluations[index].1;
             evaluation
@@ -412,6 +503,7 @@ trait RetainedMaterializationCacheValue: Clone {
         left: &ExactMesh,
         right: &ExactMesh,
         request: ExactBooleanRequest,
+        retained_arrangement_attempt: Option<&ExactArrangementBooleanAttempt>,
     ) -> Result<(), MeshError>;
 }
 
@@ -421,9 +513,16 @@ impl RetainedMaterializationCacheValue for ExactBooleanResult {
         left: &ExactMesh,
         right: &ExactMesh,
         request: ExactBooleanRequest,
+        retained_arrangement_attempt: Option<&ExactArrangementBooleanAttempt>,
     ) -> Result<(), MeshError> {
-        validate_retained_result_for_request(left, right, request, self)
-            .map_err(workspace_report_validation_error)?;
+        validate_retained_result_for_request(
+            left,
+            right,
+            request,
+            retained_arrangement_attempt,
+            self,
+        )
+        .map_err(workspace_report_validation_error)?;
         Ok(())
     }
 }
@@ -433,10 +532,11 @@ fn store_replayable_result_or_return(
     left: &ExactMesh,
     right: &ExactMesh,
     request: ExactBooleanRequest,
+    retained_arrangement_attempt: Option<&ExactArrangementBooleanAttempt>,
     result: ExactBooleanResult,
 ) -> Result<ExactBooleanResult, MeshError> {
     if result
-        .validate_for_workspace_cache(left, right, request)
+        .validate_for_workspace_cache(left, right, request, retained_arrangement_attempt)
         .is_ok()
     {
         cache.push((request, result.clone()));
@@ -518,11 +618,15 @@ fn cached_retained_materialization<T: RetainedMaterializationCacheValue>(
     left: &ExactMesh,
     right: &ExactMesh,
     request: ExactBooleanRequest,
+    retained_arrangement_attempt: Option<&ExactArrangementBooleanAttempt>,
 ) -> Result<Option<T>, MeshError> {
     if let Some(index) = cached_by_request_index(cache, request) {
-        cache[index]
-            .1
-            .validate_for_workspace_cache(left, right, request)?;
+        cache[index].1.validate_for_workspace_cache(
+            left,
+            right,
+            request,
+            retained_arrangement_attempt,
+        )?;
         return Ok(Some(cache[index].1.clone()));
     }
     Ok(None)
@@ -560,6 +664,7 @@ fn validate_retained_result_for_request(
     left: &ExactMesh,
     right: &ExactMesh,
     request: ExactBooleanRequest,
+    retained_arrangement_attempt: Option<&ExactArrangementBooleanAttempt>,
     result: &ExactBooleanResult,
 ) -> Result<(), ExactReportValidationError> {
     if !result
@@ -570,6 +675,13 @@ fn validate_retained_result_for_request(
     {
         return Err(ExactReportValidationError::StatusEvidenceMismatch);
     }
+    validate_result_against_retained_arrangement_attempt(
+        left,
+        right,
+        request,
+        retained_arrangement_attempt,
+        result,
+    )?;
     result.validate_operation_against_sources(
         left,
         right,
@@ -577,6 +689,70 @@ fn validate_retained_result_for_request(
         request.validation,
         request.boundary_policy,
     )
+}
+
+fn validate_result_against_retained_arrangement_attempt(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    request: ExactBooleanRequest,
+    retained_arrangement_attempt: Option<&ExactArrangementBooleanAttempt>,
+    result: &ExactBooleanResult,
+) -> Result<(), ExactReportValidationError> {
+    let Some(attempt) = retained_arrangement_attempt else {
+        return Ok(());
+    };
+    match result.kind {
+        super::reports::ExactBooleanResultKind::ArrangementCellComplexMaterialized {
+            operation,
+        }
+        | super::reports::ExactBooleanResultKind::CertifiedShortcut {
+            operation,
+            shortcut: super::reports::ExactBooleanShortcutKind::ArrangementCellComplex,
+        } if operation == request.operation => {
+            if !attempt
+                .matches_request_policy(request, ExactRegularizationPolicy::REGULARIZED_SOLID)
+            {
+                return Err(ExactReportValidationError::StatusEvidenceMismatch);
+            }
+            if !attempt.certifies_arrangement_cell_complex_output_for_request(
+                request,
+                ExactRegularizationPolicy::REGULARIZED_SOLID,
+            ) {
+                return Err(ExactReportValidationError::StatusEvidenceMismatch);
+            }
+            if attempt.materialized_without_shortcut() {
+                let retained_replay_matches_output =
+                    rematerialize_retained_arrangement_cell_complex_attempt(
+                        left, right, request, attempt,
+                    )
+                    .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
+                    .is_some_and(|mut replay| {
+                        replay.kind = result.kind;
+                        result.mesh == replay.mesh
+                            && result.topology_assembly_report == replay.topology_assembly_report
+                            && result.region_ownership_report == replay.region_ownership_report
+                    });
+                if !retained_replay_matches_output {
+                    return Err(ExactReportValidationError::SourceReplayMismatch);
+                }
+            } else if result.topology_assembly_report != attempt.topology_assembly_report
+                || result.region_ownership_report != attempt.region_ownership_report
+            {
+                return Err(ExactReportValidationError::SourceReplayMismatch);
+            }
+            let Some(output_facts) = attempt.output_facts.as_ref() else {
+                return Err(ExactReportValidationError::StatusEvidenceMismatch);
+            };
+            if result.mesh.vertices().len() != attempt.output_vertices
+                || result.mesh.triangles().len() != attempt.output_triangles
+                || &result.mesh.facts().mesh != output_facts
+            {
+                return Err(ExactReportValidationError::SourceReplayMismatch);
+            }
+        }
+        _ => {}
+    }
+    Ok(())
 }
 
 fn workspace_report_validation_error(error: ExactReportValidationError) -> MeshError {
@@ -590,17 +766,21 @@ fn workspace_report_validation_error(error: ExactReportValidationError) -> MeshE
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::arrangement3d::ExactTopologyAssemblyStatus;
     use crate::boolean::{
-        ExactBooleanOperation, identical_mesh_report_from_sources, same_surface_report_from_sources,
+        ExactArrangementBooleanShortcutReason, ExactArrangementBooleanStage, ExactBooleanOperation,
+        identical_mesh_report_from_sources, same_surface_report_from_sources,
     };
+    use crate::cell_complex::{ExactRegionOwnershipStatus, ExactSelectedCellComplexFreshness};
     use crate::region::ExactRegionSelection;
-    use crate::reports::exact_report_freshness;
+    use crate::reports::{
+        ExactAdjacentUnionCompletionStatus, ExactBooleanResultKind, ExactBooleanShortcutKind,
+        exact_report_freshness,
+    };
+    use crate::simplify::ExactSimplifiedCellComplexFreshness;
     use crate::validation::ValidationPolicy;
     use crate::{
-        ExactAdjacentUnionCompletionStatus, ExactArrangementBooleanStage, ExactBooleanResultKind,
-        ExactBooleanShortcutKind, ExactBoundaryBooleanPolicy, ExactRegionOwnershipStatus,
-        ExactReportFreshness, ExactReportValidationError, ExactSelectedCellComplexFreshness,
-        ExactSimplifiedCellComplexFreshness, ExactTopologyAssemblyStatus, Triangle,
+        ExactBoundaryBooleanPolicy, ExactReportFreshness, ExactReportValidationError, Triangle,
     };
 
     fn workspace_certifications(
@@ -861,7 +1041,11 @@ mod tests {
         let first_preflight = workspace.preflight(request).unwrap();
         let second_preflight = workspace.preflight(request).unwrap();
         assert_eq!(first_preflight, second_preflight);
-        assert_eq!(first_preflight, request.preflight(&left, &right).unwrap());
+        let mut replay_workspace = ExactBooleanWorkspace::new(&left, &right);
+        assert_eq!(
+            first_preflight,
+            replay_workspace.preflight(request).unwrap()
+        );
         let preflight = first_preflight;
         preflight
             .validate_against_sources_with_boundary_policy(
@@ -899,6 +1083,19 @@ mod tests {
                 request.boundary_policy
             ),
             ExactReportFreshness::Current
+        );
+        let mut stale_attempt_preflight_workspace = ExactBooleanWorkspace::new(&left, &right);
+        stale_attempt_preflight_workspace
+            .arrangement_attempt(request, ExactRegularizationPolicy::REGULARIZED_SOLID)
+            .unwrap();
+        stale_attempt_preflight_workspace.arrangement_attempts[0]
+            .2
+            .output_validation = ValidationPolicy::ALLOW_BOUNDARY;
+        assert!(
+            stale_attempt_preflight_workspace
+                .preflight(request)
+                .is_err(),
+            "preflight must reject stale retained arrangement attempts before using them as certification evidence"
         );
         let mut relabeled_preflight = preflight.clone();
         relabeled_preflight.operation = ExactBooleanOperation::Difference;
@@ -1265,7 +1462,8 @@ mod tests {
             corrupt_materialization_cache.materialize(request).is_err(),
             "cached materialization results must validate before reuse"
         );
-        validate_retained_result_for_request(&left, &right, request, &materialized).unwrap();
+        validate_retained_result_for_request(&left, &right, request, Some(&attempt), &materialized)
+            .unwrap();
         let mut locally_invalid_cached_result = materialized.clone();
         locally_invalid_cached_result.graph_had_unknowns =
             !locally_invalid_cached_result.graph_had_unknowns;
@@ -1274,6 +1472,7 @@ mod tests {
                 &left,
                 &right,
                 request,
+                Some(&attempt),
                 &locally_invalid_cached_result
             )
             .is_err()
@@ -1286,7 +1485,13 @@ mod tests {
                 .unwrap()
                 .graph_events += 1;
             assert_eq!(
-                validate_retained_result_for_request(&left, &right, request, &stale_gate_report),
+                validate_retained_result_for_request(
+                    &left,
+                    &right,
+                    request,
+                    Some(&attempt),
+                    &stale_gate_report,
+                ),
                 Err(ExactReportValidationError::SourceReplayMismatch)
             );
         }
@@ -1295,6 +1500,7 @@ mod tests {
                 &left,
                 &right,
                 request,
+                Some(&attempt),
                 &materialized
             )),
             ExactReportFreshness::Current
@@ -1304,23 +1510,28 @@ mod tests {
             operation: ExactBooleanOperation::Difference,
         };
         assert!(
-            validate_retained_result_for_request(&left, &right, request, &stale_result).is_err()
+            validate_retained_result_for_request(
+                &left,
+                &right,
+                request,
+                Some(&attempt),
+                &stale_result
+            )
+            .is_err()
         );
         assert_ne!(
             exact_report_freshness(validate_retained_result_for_request(
                 &left,
                 &right,
                 request,
+                Some(&attempt),
                 &stale_result
             )),
             ExactReportFreshness::Current
         );
 
         let evaluation = workspace.evaluate(request).unwrap();
-        assert_eq!(
-            evaluation.certifications.arrangement_attempt.as_ref(),
-            Some(&attempt)
-        );
+        assert_eq!(evaluation.arrangement_attempt(), Some(&attempt));
         evaluation.validate().unwrap();
         let first_evaluation = evaluation as *const ExactBooleanEvaluation;
         let second_evaluation =
@@ -1345,8 +1556,21 @@ mod tests {
             .arrangement(ExactRegularizationPolicy::REGULARIZED_SOLID)
             .unwrap();
         workspace.preflight(request).unwrap();
+        assert!(
+            workspace.arrangement_attempts.is_empty(),
+            "preflight from graph must not hide an uncached arrangement attempt"
+        );
 
         let first = workspace.evaluate(request).unwrap() as *const ExactBooleanEvaluation;
+        assert_eq!(
+            workspace.arrangement_attempts.len(),
+            1,
+            "evaluation should promote cell-complex certification through the retained attempt cache"
+        );
+        assert_eq!(
+            workspace.evaluations[0].1.arrangement_attempt(),
+            Some(&workspace.arrangement_attempts[0].2)
+        );
         let second = workspace.evaluate(request).unwrap() as *const ExactBooleanEvaluation;
         assert_eq!(first, second);
 
@@ -1377,7 +1601,8 @@ mod tests {
     }
 
     #[test]
-    fn exact_boolean_workspace_arrangement_attempt_uses_orthogonal_shortcut_without_arrangement() {
+    fn exact_boolean_workspace_arrangement_attempt_uses_orthogonal_shortcut_after_retained_arrangement()
+     {
         let left = axis_aligned_box_i64([0, 0, 0], [2, 2, 2]);
         let right = axis_aligned_box_i64([1, 1, 0], [3, 3, 2]);
         let request =
@@ -1388,12 +1613,13 @@ mod tests {
             .arrangement_attempt(request, ExactRegularizationPolicy::REGULARIZED_SOLID)
             .unwrap()
             .clone();
-        assert_eq!(workspace.arrangements.len(), 0);
+        assert_eq!(workspace.arrangements.len(), 1);
         assert_eq!(workspace.arrangement_attempts.len(), 1);
         assert_eq!(attempt.stage, ExactArrangementBooleanStage::Materialized);
+        assert!(attempt.materialized_arrangement_cell_complex_shortcut());
         assert_eq!(
-            attempt.materialized_shortcut,
-            Some(ExactBooleanShortcutKind::ArrangementCellComplex)
+            attempt.shortcut_reason,
+            Some(ExactArrangementBooleanShortcutReason::SelectionBlocked)
         );
         attempt.validate().unwrap();
         attempt.validate_against_sources(&left, &right).unwrap();
@@ -1402,30 +1628,31 @@ mod tests {
             attempt.freshness_against_sources(&left, &right),
             ExactReportFreshness::Current
         );
-        assert_eq!(workspace.arrangements.len(), 0);
+        assert_eq!(workspace.arrangements.len(), 1);
 
         let evaluation = workspace.evaluate(request).unwrap().clone();
         evaluation.validate().unwrap();
         assert!(evaluation.preflight.is_certified());
         assert!(evaluation.result.is_some());
-        assert!(evaluation.certifications.topology_assembly.is_none());
-        assert!(evaluation.certifications.region_ownership.is_none());
-        assert_eq!(
-            evaluation.certifications.arrangement_attempt.as_ref(),
-            Some(&attempt)
-        );
-        assert_eq!(workspace.arrangements.len(), 0);
+        attempt
+            .topology_assembly_report
+            .as_ref()
+            .expect("attempt should retain topology assembly")
+            .validate()
+            .unwrap();
+        attempt
+            .region_ownership_report
+            .as_ref()
+            .expect("attempt should retain region ownership")
+            .validate()
+            .unwrap();
+        assert_eq!(evaluation.arrangement_attempt(), Some(&attempt));
+        assert_eq!(workspace.arrangements.len(), 1);
 
         let result = workspace.materialize(request).unwrap();
-        assert_eq!(
-            result.kind,
-            ExactBooleanResultKind::CertifiedShortcut {
-                operation: ExactBooleanOperation::Union,
-                shortcut: ExactBooleanShortcutKind::ArrangementCellComplex,
-            }
-        );
+        assert!(result.is_arrangement_cell_complex_shortcut_for(ExactBooleanOperation::Union));
         result.validate_against_sources(&left, &right).unwrap();
-        assert_eq!(workspace.arrangements.len(), 0);
+        assert_eq!(workspace.arrangements.len(), 1);
 
         let mut stale_attempt = attempt.clone();
         stale_attempt.output_triangles += 1;
@@ -1439,7 +1666,7 @@ mod tests {
             stale_attempt.validate_against_sources(&left, &right),
             Err(ExactReportValidationError::SourceReplayMismatch)
         );
-        assert_eq!(workspace.arrangements.len(), 0);
+        assert_eq!(workspace.arrangements.len(), 1);
     }
 
     #[test]
@@ -1583,7 +1810,7 @@ mod tests {
     #[test]
     fn exact_boolean_workspace_evaluation_reuses_materialization_cache() {
         let left = tetra([0, 0, 0]);
-        let right = tetra([1, 0, 0]);
+        let right = tetra([4, 0, 0]);
         let request =
             ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED);
         let mut workspace = ExactBooleanWorkspace::new(&left, &right);
@@ -1620,7 +1847,7 @@ mod tests {
     #[test]
     fn exact_boolean_workspace_materialization_promotes_evaluation_result_cache() {
         let left = tetra([0, 0, 0]);
-        let right = tetra([1, 0, 0]);
+        let right = tetra([4, 0, 0]);
         let request =
             ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED);
         let mut workspace = ExactBooleanWorkspace::new(&left, &right);
@@ -1666,18 +1893,14 @@ mod tests {
         let mut workspace = ExactBooleanWorkspace::new(&left, &right);
 
         let materialized = workspace.materialize(request).unwrap();
-        assert_eq!(
-            materialized.kind,
-            ExactBooleanResultKind::BoundaryPolicyShortcut {
-                operation: ExactBooleanOperation::Union
-            }
-        );
+        assert!(materialized.is_boundary_policy_shortcut_for(ExactBooleanOperation::Union));
         workspace.materializations[0].1.kind = ExactBooleanResultKind::BoundaryPolicyShortcut {
             operation: ExactBooleanOperation::Difference,
         };
         let relabelled = workspace.materializations[0].1.clone();
         assert!(
-            validate_retained_result_for_request(&left, &right, request, &relabelled).is_err(),
+            validate_retained_result_for_request(&left, &right, request, None, &relabelled)
+                .is_err(),
             "cached result validation must reject relabelled operations"
         );
         assert!(
@@ -1701,7 +1924,9 @@ mod tests {
         let mut workspace = ExactBooleanWorkspace::new(&left, &right);
 
         let materialized = workspace.materialize(request).unwrap();
-        let expected_result = request.materialize(&left, &right).unwrap();
+        let expected_result = ExactBooleanWorkspace::new(&left, &right)
+            .materialize(request)
+            .unwrap();
         assert_eq!(materialized, expected_result);
         assert_eq!(workspace.materializations.len(), 1);
         assert_eq!(workspace.materialize(request).unwrap(), materialized);
@@ -1744,11 +1969,14 @@ mod tests {
         let mut workspace = ExactBooleanWorkspace::new(&left, &right);
 
         let materialized = workspace.materialize(request).unwrap();
-        let expected_result = request.materialize(&left, &right).unwrap();
-        let expected_evidence = request
-            .evaluate(&left, &right)
+        let expected_result = ExactBooleanWorkspace::new(&left, &right)
+            .materialize(request)
+            .unwrap();
+        let expected_evidence = ExactBooleanWorkspace::new(&left, &right)
+            .evaluate(request)
             .unwrap()
             .preflight
+            .clone()
             .coplanar_volumetric_evidence;
         assert_eq!(materialized, expected_result);
         assert_eq!(workspace.materializations.len(), 1);

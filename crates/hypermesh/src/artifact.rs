@@ -14,7 +14,8 @@
 //! evidence.
 
 use super::proposal::{ExactMeshProposalReport, ExactMeshProposalReportError};
-use super::{ExactMesh, ExactMeshValidationError, ValidationPolicy, audit_exact_mesh};
+use super::{ExactMesh, ExactMeshValidationError, ValidationPolicy};
+use crate::audit::audit_exact_mesh;
 use hyperlimit::MeshSource;
 
 /// Producer family for a mesh-shaped artifact.
@@ -405,7 +406,7 @@ impl MeshArtifactManifest {
     ///
     /// This is the proposal-facing adapter for hypermesh-derived topology,
     /// primitive-float imports, and external producers that have already crossed
-    /// [`certify_exact_mesh_proposal`](crate::proposal::certify_exact_mesh_proposal).
+    /// [`ExactMesh::certify_proposal`](crate::ExactMesh::certify_proposal).
     /// The proposal report must replay against `mesh` before the shared
     /// artifact is emitted. That keeps the accepted topology, source route, and
     /// lossy-adapter status coupled to the exact mesh audit, as required by
@@ -843,21 +844,6 @@ fn face_has_repeated_vertex(vertices: &[usize]) -> bool {
         .iter()
         .enumerate()
         .any(|(index, vertex)| vertices.iter().skip(index + 1).any(|other| other == vertex))
-}
-
-/// Build a shared mesh artifact report from an accepted exact mesh.
-pub fn mesh_artifact_from_exact_mesh(
-    mesh: &ExactMesh,
-) -> Result<MeshArtifactReport, ExactMeshValidationError> {
-    Ok(MeshArtifactManifest::from_exact_mesh(mesh)?.report())
-}
-
-/// Build a shared mesh artifact report from an accepted exact mesh proposal.
-pub fn mesh_artifact_from_exact_mesh_proposal(
-    mesh: &ExactMesh,
-    proposal: &ExactMeshProposalReport,
-) -> Result<MeshArtifactReport, ExactMeshProposalReportError> {
-    Ok(MeshArtifactManifest::from_exact_mesh_proposal(mesh, proposal)?.report())
 }
 
 fn source_kind_from_mesh_source(source: MeshSource) -> MeshArtifactSourceKind {
