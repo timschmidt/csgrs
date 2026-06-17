@@ -1487,9 +1487,7 @@ impl ExactBooleanResult {
     fn validate_arrangement_cell_complex_gate_reports(
         &self,
     ) -> Result<(), ExactReportValidationError> {
-        let carries_reports =
-            self.topology_assembly_report.is_some() || self.region_ownership_report.is_some();
-        if !carries_reports {
+        if !self.has_arrangement_cell_complex_gate_reports() {
             return Ok(());
         }
         let operation = self
@@ -1784,7 +1782,7 @@ impl ExactBooleanResult {
         left: &ExactMesh,
         right: &ExactMesh,
     ) -> Result<(), ExactReportValidationError> {
-        if self.topology_assembly_report.is_none() && self.region_ownership_report.is_none() {
+        if !self.has_arrangement_cell_complex_gate_reports() {
             return Ok(());
         }
         let arrangement = ExactArrangement::from_meshes_with_policy(
@@ -1808,7 +1806,7 @@ impl ExactBooleanResult {
         right: &ExactMesh,
         operation: Option<ExactBooleanOperation>,
     ) -> Result<(), ExactReportValidationError> {
-        if self.topology_assembly_report.is_none() && self.region_ownership_report.is_none() {
+        if !self.has_arrangement_cell_complex_gate_reports() {
             return Ok(());
         }
         let replay_topology = arrangement.topology_assembly_report_with_policy(
@@ -1844,6 +1842,10 @@ impl ExactBooleanResult {
             }
             _ => None,
         }
+    }
+
+    fn has_arrangement_cell_complex_gate_reports(&self) -> bool {
+        self.topology_assembly_report.is_some() || self.region_ownership_report.is_some()
     }
 
     /// Validate this result against the operation and policies that produced it.
