@@ -1447,7 +1447,7 @@ mod tests {
             "first-call materialize should promote the evaluation cache"
         );
         assert_eq!(
-            materialize_workspace.evaluations[0].1.result.as_ref(),
+            materialize_workspace.evaluations[0].1.materialized_result(),
             Some(&materialized)
         );
         assert_eq!(materialize_workspace.materializations.len(), 1);
@@ -1643,7 +1643,7 @@ mod tests {
         let evaluation = workspace.evaluate(request).unwrap().clone();
         evaluation.validate().unwrap();
         assert!(evaluation.preflight.is_certified());
-        assert!(evaluation.result.is_some());
+        assert!(evaluation.materialized_result().is_some());
         evaluation
             .topology_assembly_report()
             .expect("attempt should retain topology assembly")
@@ -1832,11 +1832,11 @@ mod tests {
         assert_eq!(workspace.materializations.len(), 1);
         assert_eq!(workspace.evaluations.len(), 1);
         assert_eq!(
-            workspace.evaluations[0].1.result.as_ref(),
+            workspace.evaluations[0].1.materialized_result(),
             Some(&materialized)
         );
         let evaluation = workspace.evaluate(request).unwrap().clone();
-        assert_eq!(evaluation.result.as_ref(), Some(&materialized));
+        assert_eq!(evaluation.materialized_result(), Some(&materialized));
         assert_eq!(workspace.evaluations.len(), 1);
         assert_eq!(workspace.materializations.len(), 1);
         evaluation.validate().unwrap();
@@ -1867,7 +1867,8 @@ mod tests {
 
         let evaluation = workspace.evaluate(request).unwrap().clone();
         let evaluated_result = evaluation
-            .result
+            .materialized_result()
+            .cloned()
             .expect("certified test request should retain a result");
         assert!(workspace.materializations.is_empty());
 

@@ -281,11 +281,11 @@ fn exact_boolean_evaluation_materializes_certified_result_publicly() {
         hypermesh::ExactReportFreshness::Current
     );
     assert!(evaluation.preflight.is_certified());
-    assert!(evaluation.result.is_some());
+    assert!(evaluation.materialized_result().is_some());
     assert_eq!(evaluation.preflight.required_blocker_kind(), None);
     assert!(evaluation.preflight.is_certified());
     assert!(
-        evaluation.result.as_ref().is_some_and(|result| {
+        evaluation.materialized_result().is_some_and(|result| {
             result.is_certified_shortcut_for(ExactBooleanOperation::Union)
         })
     );
@@ -448,11 +448,11 @@ fn exact_boolean_evaluation_materializes_boundary_policy_shortcut_by_default() {
     evaluation.validate().unwrap();
     evaluation.validate_against_sources(&left, &right).unwrap();
     assert!(evaluation.preflight.is_certified());
-    assert!(evaluation.result.is_some());
+    assert!(evaluation.materialized_result().is_some());
     assert_eq!(evaluation.preflight.required_blocker_kind(), None);
     assert!(evaluation.preflight.is_certified());
     assert!(evaluation.preflight.has_retained_exact_evidence());
-    assert!(evaluation.result.as_ref().is_some_and(|result| {
+    assert!(evaluation.materialized_result().is_some_and(|result| {
         result.is_boundary_policy_shortcut_for(ExactBooleanOperation::Union)
     }));
     let mut mixed_graph_snapshot = evaluation.clone();
@@ -495,9 +495,9 @@ fn exact_boolean_evaluation_materializes_boundary_policy_shortcut_by_default() {
     let rejected = exact_boolean_evaluation(&left, &right, rejected_request);
     rejected.validate().unwrap();
     assert!(!rejected.preflight.is_certified());
-    assert!(rejected.result.is_none());
+    assert!(rejected.materialized_result().is_none());
     let mut impossible_materialization = rejected.clone();
-    impossible_materialization.result = evaluation.result.clone();
+    impossible_materialization.result = evaluation.materialized_result().cloned();
     assert_eq!(
         impossible_materialization.validate(),
         Err(hypermesh::ExactReportValidationError::StatusEvidenceMismatch)

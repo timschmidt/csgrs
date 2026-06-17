@@ -1732,6 +1732,12 @@ impl ExactBooleanEvaluation {
                 .materializes_arrangement_cell_complex()
     }
 
+    /// Returns the retained materialized exact result, when this evaluation
+    /// could certify one for the request.
+    pub fn materialized_result(&self) -> Option<&ExactBooleanResult> {
+        self.result.as_ref()
+    }
+
     /// Returns the retained arrangement/cell-complex materialization attempt.
     pub fn arrangement_attempt(&self) -> Option<&ExactArrangementBooleanAttempt> {
         self.certifications.arrangement_attempt.as_ref()
