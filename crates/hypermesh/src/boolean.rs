@@ -716,6 +716,8 @@ const fn arrangement_attempt_stage_rank(stage: ExactArrangementBooleanStage) -> 
 
 fn retained_arrangement_attempt_for_request<'a>(
     retained: Option<&'a ExactArrangementBooleanAttempt>,
+    left: &ExactMesh,
+    right: &ExactMesh,
     request: ExactBooleanRequest,
     policy: ExactRegularizationPolicy,
 ) -> Result<Option<&'a ExactArrangementBooleanAttempt>, ExactReportValidationError> {
@@ -726,6 +728,7 @@ fn retained_arrangement_attempt_for_request<'a>(
     if !attempt.matches_request_policy(request, policy) {
         return Err(ExactReportValidationError::StatusEvidenceMismatch);
     }
+    attempt.validate_against_sources_with_validation(left, right, request.validation)?;
     Ok(Some(attempt))
 }
 
@@ -941,6 +944,8 @@ impl ExactBooleanCertificationSet {
         validate_graph_source_handoff(graph, left, right)?;
         let retained_arrangement_attempt = retained_arrangement_attempt_for_request(
             retained_arrangement_attempt,
+            left,
+            right,
             request,
             ExactRegularizationPolicy::REGULARIZED_SOLID,
         )
@@ -997,19 +1002,33 @@ impl ExactBooleanCertificationSet {
                     request.operation,
                 )?)
             };
-        let arrangement_cell_complex_shortcut_attempt_report =
-            arrangement_cell_complex_shortcut_attempt(
-                left,
-                right,
-                request,
-                ExactRegularizationPolicy::REGULARIZED_SOLID,
-            )?;
         let arrangement_cell_complex_shortcut_support =
             arrangement_cell_complex_shortcuts.certified_support(request.operation);
-        let arrangement_cell_complex_shortcut_certified =
-            arrangement_cell_complex_shortcut_attempt_report.is_some()
-                && arrangement_cell_complex_shortcut_support
-                    == Some(ExactBooleanSupport::CertifiedArrangementCellComplex);
+        let retained_arrangement_cell_complex_shortcut_attempt = retained_arrangement_attempt
+            .filter(|attempt| {
+                attempt.certifies_arrangement_cell_complex_shortcut_for_request(
+                    request,
+                    ExactRegularizationPolicy::REGULARIZED_SOLID,
+                )
+            });
+        let arrangement_cell_complex_shortcut_attempt_report =
+            if arrangement_cell_complex_shortcut_support
+                == Some(ExactBooleanSupport::CertifiedArrangementCellComplex)
+                && retained_arrangement_cell_complex_shortcut_attempt.is_none()
+            {
+                arrangement_cell_complex_shortcut_attempt(
+                    left,
+                    right,
+                    request,
+                    ExactRegularizationPolicy::REGULARIZED_SOLID,
+                )?
+            } else {
+                None
+            };
+        let arrangement_cell_complex_shortcut_certified = arrangement_cell_complex_shortcut_support
+            == Some(ExactBooleanSupport::CertifiedArrangementCellComplex)
+            && (retained_arrangement_cell_complex_shortcut_attempt.is_some()
+                || arrangement_cell_complex_shortcut_attempt_report.is_some());
         let owned_regularized_arrangement;
         let regularized_arrangement =
             if matches!(request.operation, ExactBooleanOperation::SelectedRegions(_))
@@ -1032,7 +1051,9 @@ impl ExactBooleanCertificationSet {
         let arrangement_attempt = if adjacent_union_completion_certified {
             None
         } else if arrangement_cell_complex_shortcut_certified {
-            arrangement_cell_complex_shortcut_attempt_report
+            retained_arrangement_cell_complex_shortcut_attempt
+                .cloned()
+                .or(arrangement_cell_complex_shortcut_attempt_report)
         } else if let Some(attempt) = retained_arrangement_attempt {
             Some(attempt.clone())
         } else {
@@ -2285,6 +2306,8 @@ pub(crate) fn try_materialize_certified_boolean_support_with_artifacts(
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
     let retained_arrangement_attempt = retained_arrangement_attempt_for_request(
         retained_arrangement_attempt,
+        left,
+        right,
         request,
         ExactRegularizationPolicy::REGULARIZED_SOLID,
     )
@@ -13797,6 +13820,8 @@ mod tests {
         assert_eq!(
             retained_arrangement_attempt_for_request(
                 Some(&wrong_validation_attempt),
+                &left,
+                &right,
                 ExactBooleanRequest::new(
                     ExactBooleanOperation::Union,
                     ValidationPolicy::ALLOW_BOUNDARY,

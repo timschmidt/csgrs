@@ -483,10 +483,7 @@ fn store_retained_arrangement_attempt(
     policy: ExactRegularizationPolicy,
     attempt: ExactArrangementBooleanAttempt,
 ) -> Result<&ExactArrangementBooleanAttempt, MeshError> {
-    if attempt.operation != request.operation
-        || attempt.output_validation != request.validation
-        || attempt.policy != policy
-    {
+    if !attempt.matches_request_policy(request, policy) {
         return Err(workspace_report_validation_error(
             ExactReportValidationError::StatusEvidenceMismatch,
         ));
@@ -1473,6 +1470,54 @@ mod tests {
         assert!(
             materialize_workspace.materialize(request).is_err(),
             "materialize must validate cached arrangement attempts through evaluation"
+        );
+
+        let mut stale_workspace = ExactBooleanWorkspace::new(&left, &right);
+        stale_workspace
+            .arrangement_attempt(request, ExactRegularizationPolicy::REGULARIZED_SOLID)
+            .unwrap();
+        stale_workspace.arrangement_attempts[0].2.output_triangles += 1;
+        stale_workspace.arrangement_attempts[0]
+            .2
+            .output_facts
+            .as_mut()
+            .expect("materialized attempt should retain output facts")
+            .face_count += 1;
+        stale_workspace.arrangement_attempts[0]
+            .2
+            .validate()
+            .unwrap();
+        assert_eq!(
+            stale_workspace.arrangement_attempts[0]
+                .2
+                .validate_against_sources(&left, &right),
+            Err(ExactReportValidationError::SourceReplayMismatch)
+        );
+        assert!(
+            stale_workspace.evaluate(request).is_err(),
+            "cached arrangement attempts must replay against sources before evaluation reuse"
+        );
+
+        let mut stale_materialize_workspace = ExactBooleanWorkspace::new(&left, &right);
+        stale_materialize_workspace
+            .arrangement_attempt(request, ExactRegularizationPolicy::REGULARIZED_SOLID)
+            .unwrap();
+        stale_materialize_workspace.arrangement_attempts[0]
+            .2
+            .output_triangles += 1;
+        stale_materialize_workspace.arrangement_attempts[0]
+            .2
+            .output_facts
+            .as_mut()
+            .expect("materialized attempt should retain output facts")
+            .face_count += 1;
+        stale_materialize_workspace.arrangement_attempts[0]
+            .2
+            .validate()
+            .unwrap();
+        assert!(
+            stale_materialize_workspace.materialize(request).is_err(),
+            "cached arrangement attempts must replay against sources before materialization reuse"
         );
     }
 
