@@ -544,7 +544,7 @@ fn run_case(case: &BenchCase) {
         "workspace_validate_refinement_from_retained_artifacts",
         || {
             retained_workspace_and_certification_for_case(case, request, |evaluation| {
-                evaluation.certifications.refinement.clone()
+                evaluation.refinement_report().clone()
             })
         },
         |(retained_workspace, report)| {
@@ -561,7 +561,7 @@ fn run_case(case: &BenchCase) {
         "workspace_validate_adjacent_union_from_retained_artifacts",
         || {
             retained_workspace_and_certification_for_case(case, request, |evaluation| {
-                evaluation.certifications.adjacent_union_completion.clone()
+                evaluation.adjacent_union_completion_report().clone()
             })
         },
         |(retained_workspace, report)| {
@@ -612,7 +612,7 @@ fn run_case(case: &BenchCase) {
         "workspace_validate_boundary_touching_from_retained_artifacts",
         || {
             retained_workspace_and_certification_for_case(case, request, |evaluation| {
-                evaluation.certifications.boundary_touching.clone()
+                evaluation.boundary_touching_report().clone()
             })
         },
         |(retained_workspace, report)| {
@@ -646,11 +646,7 @@ fn run_case(case: &BenchCase) {
         "workspace_validate_volumetric_boundary_closure_from_retained_artifacts",
         || {
             retained_workspace_and_certification_for_case(case, request, |evaluation| {
-                evaluation
-                    .certifications
-                    .volumetric_boundary_closure
-                    .as_ref()
-                    .cloned()
+                evaluation.volumetric_boundary_closure_report().cloned()
             })
         },
         |(retained_workspace, report)| {
@@ -672,7 +668,7 @@ fn run_case(case: &BenchCase) {
         "workspace_validate_winding_readiness_from_retained_artifacts",
         || {
             retained_workspace_and_certification_for_case(case, request, |evaluation| {
-                evaluation.certifications.winding_readiness.clone()
+                evaluation.winding_readiness_report().clone()
             })
         },
         |(retained_workspace, readiness)| {
@@ -694,7 +690,7 @@ fn run_case(case: &BenchCase) {
         "workspace_validate_planar_arrangement_from_retained_artifacts",
         || {
             retained_workspace_and_certification_for_case(case, request, |evaluation| {
-                evaluation.certifications.planar_arrangement.clone()
+                evaluation.planar_arrangement_report().clone()
             })
         },
         |(retained_workspace, report)| {

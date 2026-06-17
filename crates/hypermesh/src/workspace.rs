@@ -1122,8 +1122,10 @@ mod tests {
             .validate_against_sources(&left, &right, request)
             .unwrap();
         assert_eq!(certifications.arrangement_attempt.as_ref(), Some(&attempt));
+        let evaluation = workspace.evaluate(request).unwrap().clone();
+        evaluation.validate().unwrap();
 
-        let refinement_report = certifications.refinement.clone();
+        let refinement_report = evaluation.refinement_report().clone();
         assert_eq!(
             refinement_report.freshness_against_sources(&left, &right),
             ExactReportFreshness::Current
@@ -1141,7 +1143,7 @@ mod tests {
             Err(ExactReportValidationError::StatusEvidenceMismatch)
         );
 
-        let adjacent_report = certifications.adjacent_union_completion.clone();
+        let adjacent_report = evaluation.adjacent_union_completion_report().clone();
         assert_eq!(
             adjacent_report,
             crate::boolean::adjacent_union_completion_certification(
@@ -1295,7 +1297,7 @@ mod tests {
             ExactReportFreshness::Current
         );
 
-        let boundary_report = certifications.boundary_touching.clone();
+        let boundary_report = evaluation.boundary_touching_report().clone();
         boundary_report
             .validate_against_sources(&left, &right)
             .unwrap();
@@ -1314,7 +1316,7 @@ mod tests {
             ExactReportFreshness::Current
         );
 
-        let open_surface_report = certifications.open_surface_disjoint.clone();
+        let open_surface_report = evaluation.open_surface_disjoint_report().clone();
         open_surface_report
             .validate_against_sources(&left, &right)
             .unwrap();
@@ -1333,7 +1335,10 @@ mod tests {
             ExactReportFreshness::Current
         );
 
-        let closure_report = certifications.volumetric_boundary_closure.clone().unwrap();
+        let closure_report = evaluation
+            .volumetric_boundary_closure_report()
+            .cloned()
+            .unwrap();
         assert_eq!(
             closure_report.freshness_against_sources(&left, &right),
             ExactReportFreshness::Current
@@ -1372,7 +1377,7 @@ mod tests {
                 .is_none()
         );
 
-        let readiness = certifications.winding_readiness.clone();
+        let readiness = evaluation.winding_readiness_report().clone();
         assert_eq!(
             readiness.freshness_against_sources_with_boundary_policy(
                 &left,
@@ -1400,7 +1405,7 @@ mod tests {
             Err(ExactReportValidationError::StatusEvidenceMismatch)
         );
 
-        let planar_report = certifications.planar_arrangement.clone();
+        let planar_report = evaluation.planar_arrangement_report().clone();
         assert_eq!(
             planar_report.freshness_against_sources(&left, &right),
             ExactReportFreshness::Current

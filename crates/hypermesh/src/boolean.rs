@@ -1698,6 +1698,44 @@ impl ExactBooleanEvaluation {
         self.certifications.arrangement_attempt.as_ref()
     }
 
+    /// Returns the retained exact graph refinement report.
+    pub fn refinement_report(&self) -> &ExactRefinementReport {
+        &self.certifications.refinement
+    }
+
+    /// Returns the retained adjacent-union completion report.
+    pub fn adjacent_union_completion_report(&self) -> &ExactAdjacentUnionCompletionReport {
+        &self.certifications.adjacent_union_completion
+    }
+
+    /// Returns the retained boundary-touching report.
+    pub fn boundary_touching_report(&self) -> &ExactBoundaryTouchingReport {
+        &self.certifications.boundary_touching
+    }
+
+    /// Returns the retained open-surface disjointness report.
+    pub fn open_surface_disjoint_report(&self) -> &ExactOpenSurfaceDisjointReport {
+        &self.certifications.open_surface_disjoint
+    }
+
+    /// Returns the retained planar-arrangement report.
+    pub fn planar_arrangement_report(&self) -> &ExactPlanarArrangementReport {
+        &self.certifications.planar_arrangement
+    }
+
+    /// Returns the retained winding-readiness report.
+    pub fn winding_readiness_report(&self) -> &ExactWindingReadinessReport {
+        &self.certifications.winding_readiness
+    }
+
+    /// Returns the retained volumetric boundary-closure report, when the
+    /// request has one.
+    pub fn volumetric_boundary_closure_report(
+        &self,
+    ) -> Option<&ExactVolumetricBoundaryClosureReport> {
+        self.certifications.volumetric_boundary_closure.as_ref()
+    }
+
     /// Returns the retained topology assembly report used by this evaluation,
     /// preferring the primary arrangement attempt over parallel certification
     /// fields.
