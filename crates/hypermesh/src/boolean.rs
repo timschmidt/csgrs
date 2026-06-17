@@ -2365,6 +2365,28 @@ pub(crate) fn try_materialize_certified_boolean_support_with_artifacts(
         ExactBooleanSupport::CertifiedBoundaryPolicyShortcut => {
             let graph =
                 graph_for_certified_materialization(retained_graph, &mut owned_graph, left, right)?;
+            let boundary_policy = request.boundary_policy;
+            if boundary_policy != ExactBoundaryBooleanPolicy::Reject {
+                let Some(result) = boolean_boundary_touching_meshes_from_graph(
+                    graph,
+                    left,
+                    right,
+                    operation,
+                    validation,
+                    boundary_policy,
+                )?
+                else {
+                    return Ok(None);
+                };
+                return Ok(public_operation_replayable_result(
+                    Some(result),
+                    left,
+                    right,
+                    operation,
+                    validation,
+                    boundary_policy,
+                ));
+            }
             materialize_graph_shortcut_from_graph_for_request(graph, left, right, request, support)?
         }
         ExactBooleanSupport::CertifiedOpenSurfaceArrangementUnion
@@ -3543,6 +3565,23 @@ pub(crate) fn preflight_boolean_exact_request_from_graph(
     }
     let mut preflight =
         preflight_boolean_exact_reject_boundary_policy_from_graph(graph, left, right, operation)?;
+    if operation == ExactBooleanOperation::Union
+        && let (report, Some(_)) = adjacent_union_completion_certification_from_graph(
+            graph,
+            left,
+            right,
+            operation,
+            Some(validation),
+        )?
+        && report.is_certified()
+    {
+        return Ok(certified_preflight(
+            operation,
+            ExactBooleanSupport::CertifiedArrangementCellComplex,
+            Some(graph),
+            certified_arrangement_cell_complex_coplanar_evidence(graph, left, right),
+        ));
+    }
     if boundary_policy != ExactBoundaryBooleanPolicy::Reject
         && !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
         && boolean_boundary_touching_meshes_from_graph(
@@ -9494,7 +9533,9 @@ fn arrangement_cell_complex_already_materialized_winding_readiness(
     let counts = retained_graph_counts(graph);
     let needs_coplanar_volumetric =
         graph_requires_coplanar_volumetric_cells_for_sources(graph, left, right);
-    let blocker_kind = if needs_coplanar_volumetric {
+    let blocker_kind = if graph_has_only_boundary_contact_pairs(graph, left, right) {
+        ExactBooleanBlockerKind::NeedsBoundaryPolicy
+    } else if needs_coplanar_volumetric {
         ExactBooleanBlockerKind::NeedsCoplanarVolumetricCells
     } else {
         ExactBooleanBlockerKind::NeedsWinding

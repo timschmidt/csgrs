@@ -200,8 +200,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
             .map_err(workspace_report_validation_error)?;
         if matches!(
             graph_preflight.support,
-            ExactBooleanSupport::CertifiedBoundaryPolicyShortcut
-                | ExactBooleanSupport::CertifiedEmptyOperand
+            ExactBooleanSupport::CertifiedEmptyOperand
                 | ExactBooleanSupport::CertifiedBoundsDisjoint
                 | ExactBooleanSupport::CertifiedIdentical
                 | ExactBooleanSupport::CertifiedSameSurface
