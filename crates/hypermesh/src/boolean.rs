@@ -1409,11 +1409,7 @@ impl ExactBooleanCertificationSet {
     ) -> bool {
         self.boundary_touching.is_certified()
             && self.winding_readiness.status == ExactWindingReadinessStatus::BoundaryPolicyRequired
-            && exact_boolean_preflight_matches_boundary_report(
-                preflight,
-                &self.boundary_touching,
-                true,
-            )
+            && self.boundary_report_matches_preflight(preflight, true)
     }
 
     fn boundary_policy_shortcut_matches_preflight(
@@ -1426,11 +1422,26 @@ impl ExactBooleanCertificationSet {
                 ExactWindingReadinessStatus::BoundaryPolicyShortcutAlreadyMaterialized
                     | ExactWindingReadinessStatus::BoundaryPolicyRequired
             ) || self.materialized_shortcut_certified_for_operation(preflight.operation))
-            && exact_boolean_preflight_matches_boundary_report(
-                preflight,
-                &self.boundary_touching,
-                false,
-            )
+            && self.boundary_report_matches_preflight(preflight, false)
+    }
+
+    fn boundary_report_matches_preflight(
+        &self,
+        preflight: &ExactBooleanPreflight,
+        requires_blocker: bool,
+    ) -> bool {
+        preflight.graph_had_unknowns == self.boundary_touching.graph_had_unknowns
+            && preflight.retained_face_pairs == self.boundary_touching.retained_face_pairs
+            && preflight.retained_events == self.boundary_touching.retained_events
+            && preflight.region_count == 0
+            && preflight.region_classifications.is_empty()
+            && preflight.arrangement_readiness.is_none()
+            && preflight.coplanar_volumetric_evidence.is_none()
+            && if requires_blocker {
+                preflight.blocker.as_ref() == Some(&self.boundary_touching.blocker)
+            } else {
+                preflight.blocker.is_none()
+            }
     }
 
     fn closed_boundary_touching_matches_preflight(
@@ -1440,23 +1451,20 @@ impl ExactBooleanCertificationSet {
         self.boundary_touching.is_certified()
             && ((self.winding_readiness.status
                 == ExactWindingReadinessStatus::ClosedBoundaryTouchingAlreadyMaterialized
-                && (exact_boolean_preflight_matches_boundary_report(
-                    preflight,
-                    &self.boundary_touching,
-                    false,
-                ) || (preflight.graph_had_unknowns
-                    == self.winding_readiness.graph_had_unknowns
-                    && preflight.retained_face_pairs
-                        == self.winding_readiness.retained_face_pairs
-                    && preflight.retained_events == self.winding_readiness.retained_events
-                    && preflight.region_count == self.winding_readiness.region_count
-                    && preflight.region_classifications
-                        == self.winding_readiness.region_classifications
-                    && preflight.blocker.is_none()
-                    && preflight.arrangement_readiness.is_none()
-                    && preflight.coplanar_volumetric_evidence.is_some()
-                    && preflight.coplanar_volumetric_evidence
-                        == self.winding_readiness.coplanar_volumetric_evidence)))
+                && (self.boundary_report_matches_preflight(preflight, false)
+                    || (preflight.graph_had_unknowns
+                        == self.winding_readiness.graph_had_unknowns
+                        && preflight.retained_face_pairs
+                            == self.winding_readiness.retained_face_pairs
+                        && preflight.retained_events == self.winding_readiness.retained_events
+                        && preflight.region_count == self.winding_readiness.region_count
+                        && preflight.region_classifications
+                            == self.winding_readiness.region_classifications
+                        && preflight.blocker.is_none()
+                        && preflight.arrangement_readiness.is_none()
+                        && preflight.coplanar_volumetric_evidence.is_some()
+                        && preflight.coplanar_volumetric_evidence
+                            == self.winding_readiness.coplanar_volumetric_evidence)))
                 || self.arrangement_attempt_matches_certified_preflight(preflight))
     }
 
@@ -2457,25 +2465,6 @@ fn ownership_resolves_arrangement_operation(
     operation: ExactBooleanOperation,
 ) -> bool {
     ownership.validate().is_ok() && ownership.resolves_operation_selection(operation)
-}
-
-fn exact_boolean_preflight_matches_boundary_report(
-    preflight: &ExactBooleanPreflight,
-    boundary_touching: &ExactBoundaryTouchingReport,
-    requires_blocker: bool,
-) -> bool {
-    preflight.graph_had_unknowns == boundary_touching.graph_had_unknowns
-        && preflight.retained_face_pairs == boundary_touching.retained_face_pairs
-        && preflight.retained_events == boundary_touching.retained_events
-        && preflight.region_count == 0
-        && preflight.region_classifications.is_empty()
-        && preflight.arrangement_readiness.is_none()
-        && preflight.coplanar_volumetric_evidence.is_none()
-        && if requires_blocker {
-            preflight.blocker.as_ref() == Some(&boundary_touching.blocker)
-        } else {
-            preflight.blocker.is_none()
-        }
 }
 
 fn graph_for_certified_materialization<'a>(
