@@ -1320,6 +1320,15 @@ impl ExactBooleanCertificationSet {
         })
     }
 
+    fn arrangement_attempt_matches_certified_preflight(
+        &self,
+        preflight: &ExactBooleanPreflight,
+    ) -> bool {
+        self.winding_readiness.status
+            == ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized
+            && self.arrangement_attempt_certifies_output_for_operation(preflight.operation)
+    }
+
     fn validate_retained_closure_and_attempt_for_request(
         &self,
         request: ExactBooleanRequest,
@@ -2152,10 +2161,7 @@ fn exact_boolean_preflight_matches_certifications(
         }
         ExactBooleanSupport::CertifiedEmptyOperand => {
             (*status == ExactWindingReadinessStatus::EmptyOperandAlreadyMaterialized
-                || exact_boolean_arrangement_attempt_matches_certified_preflight(
-                    preflight,
-                    certifications,
-                ))
+                || certifications.arrangement_attempt_matches_certified_preflight(preflight))
                 && certifications.trivial.has_empty_operand()
         }
         ExactBooleanSupport::CertifiedBoundsDisjoint => {
@@ -2168,19 +2174,13 @@ fn exact_boolean_preflight_matches_certifications(
         }
         ExactBooleanSupport::CertifiedIdentical => {
             (*status == ExactWindingReadinessStatus::SurfaceEqualityAlreadyMaterialized
-                || exact_boolean_arrangement_attempt_matches_certified_preflight(
-                    preflight,
-                    certifications,
-                ))
+                || certifications.arrangement_attempt_matches_certified_preflight(preflight))
                 && certifications.identical.is_certified()
                 && certifications.same_surface.is_certified()
         }
         ExactBooleanSupport::CertifiedSameSurface => {
             (*status == ExactWindingReadinessStatus::SurfaceEqualityAlreadyMaterialized
-                || exact_boolean_arrangement_attempt_matches_certified_preflight(
-                    preflight,
-                    certifications,
-                ))
+                || certifications.arrangement_attempt_matches_certified_preflight(preflight))
                 && certifications.same_surface.is_certified()
         }
         ExactBooleanSupport::CertifiedClosedBoundaryTouchingUnion
@@ -2210,18 +2210,12 @@ fn exact_boolean_preflight_matches_certifications(
                             == certifications
                                 .winding_readiness
                                 .coplanar_volumetric_evidence)))
-                || exact_boolean_arrangement_attempt_matches_certified_preflight(
-                    preflight,
-                    certifications,
-                ))
+                || certifications.arrangement_attempt_matches_certified_preflight(preflight))
                 && certifications.boundary_touching.is_certified()
         }
         ExactBooleanSupport::CertifiedOpenSurfaceDisjoint => {
             (*status == ExactWindingReadinessStatus::OpenSurfaceDisjointAlreadyMaterialized
-                || exact_boolean_arrangement_attempt_matches_certified_preflight(
-                    preflight,
-                    certifications,
-                ))
+                || certifications.arrangement_attempt_matches_certified_preflight(preflight))
                 && certifications.open_surface_disjoint.is_certified()
                 && preflight.graph_had_unknowns
                     == certifications.open_surface_disjoint.graph_had_unknowns
@@ -2236,10 +2230,7 @@ fn exact_boolean_preflight_matches_certifications(
         }
         ExactBooleanSupport::CertifiedClosedWindingSeparated => {
             (*status == ExactWindingReadinessStatus::ClosedWindingSeparatedAlreadyMaterialized
-                || exact_boolean_arrangement_attempt_matches_certified_preflight(
-                    preflight,
-                    certifications,
-                ))
+                || certifications.arrangement_attempt_matches_certified_preflight(preflight))
                 && certifications.closed_winding_left_in_right.relation
                     == ClosedMeshWindingMeshRelation::Outside
                 && certifications.closed_winding_right_in_left.relation
@@ -2247,10 +2238,7 @@ fn exact_boolean_preflight_matches_certifications(
         }
         ExactBooleanSupport::CertifiedClosedWindingContainment => {
             (*status == ExactWindingReadinessStatus::ClosedWindingContainmentAlreadyMaterialized
-                || exact_boolean_arrangement_attempt_matches_certified_preflight(
-                    preflight,
-                    certifications,
-                ))
+                || certifications.arrangement_attempt_matches_certified_preflight(preflight))
                 && (certifications.closed_winding_left_in_right.relation
                     == ClosedMeshWindingMeshRelation::StrictlyInside
                     || certifications.closed_winding_right_in_left.relation
@@ -2259,10 +2247,7 @@ fn exact_boolean_preflight_matches_certifications(
         ExactBooleanSupport::CertifiedMixedDimensionalRegularizedSolid => {
             (*status
                 == ExactWindingReadinessStatus::MixedDimensionalRegularizedSolidAlreadyMaterialized
-                || exact_boolean_arrangement_attempt_matches_certified_preflight(
-                    preflight,
-                    certifications,
-                ))
+                || certifications.arrangement_attempt_matches_certified_preflight(preflight))
                 && ((certifications.regularized_solid.left_closed_solid
                     && certifications.regularized_solid.right_open_surface)
                     || (certifications.regularized_solid.left_open_surface
@@ -2271,10 +2256,7 @@ fn exact_boolean_preflight_matches_certifications(
         ExactBooleanSupport::CertifiedLowerDimensionalRegularizedSolid => {
             (*status
                 == ExactWindingReadinessStatus::LowerDimensionalRegularizedSolidAlreadyMaterialized
-                || exact_boolean_arrangement_attempt_matches_certified_preflight(
-                    preflight,
-                    certifications,
-                ))
+                || certifications.arrangement_attempt_matches_certified_preflight(preflight))
                 && certifications.regularized_solid.left_open_surface
                 && certifications.regularized_solid.right_open_surface
         }
@@ -2282,10 +2264,7 @@ fn exact_boolean_preflight_matches_certifications(
         | ExactBooleanSupport::CertifiedConvexIntersection
         | ExactBooleanSupport::CertifiedConvexDifference => {
             (*status == ExactWindingReadinessStatus::ConvexBooleanAlreadyMaterialized
-                || exact_boolean_arrangement_attempt_matches_certified_preflight(
-                    preflight,
-                    certifications,
-                ))
+                || certifications.arrangement_attempt_matches_certified_preflight(preflight))
                 && exact_boolean_convex_reports_match_support(preflight, certifications)
         }
         ExactBooleanSupport::CertifiedConvexSeparated => {
@@ -2294,10 +2273,7 @@ fn exact_boolean_preflight_matches_certifications(
                 || (*status
                     == ExactWindingReadinessStatus::ClosedWindingSeparatedAlreadyMaterialized
                     && exact_boolean_closed_winding_reports_match_separated(certifications))
-                || exact_boolean_arrangement_attempt_matches_certified_preflight(
-                    preflight,
-                    certifications,
-                )
+                || certifications.arrangement_attempt_matches_certified_preflight(preflight)
         }
         ExactBooleanSupport::CertifiedConvexContainment => {
             (*status == ExactWindingReadinessStatus::ConvexBooleanAlreadyMaterialized
@@ -2305,10 +2281,7 @@ fn exact_boolean_preflight_matches_certifications(
                 || (*status
                     == ExactWindingReadinessStatus::ClosedWindingContainmentAlreadyMaterialized
                     && exact_boolean_closed_winding_reports_match_containment(certifications))
-                || exact_boolean_arrangement_attempt_matches_certified_preflight(
-                    preflight,
-                    certifications,
-                )
+                || certifications.arrangement_attempt_matches_certified_preflight(preflight)
         }
         ExactBooleanSupport::RequiresBoundaryPolicy => {
             certifications.boundary_touching.is_certified()
@@ -2355,15 +2328,6 @@ fn exact_boolean_preflight_matches_certifications(
                 )
         }
     }
-}
-
-fn exact_boolean_arrangement_attempt_matches_certified_preflight(
-    preflight: &ExactBooleanPreflight,
-    certifications: &ExactBooleanCertificationSet,
-) -> bool {
-    certifications.winding_readiness.status
-        == ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized
-        && certifications.arrangement_attempt_certifies_output_for_operation(preflight.operation)
 }
 
 fn exact_boolean_closed_winding_reports_match_separated(
