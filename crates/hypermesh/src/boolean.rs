@@ -1837,67 +1837,12 @@ impl ExactBooleanEvaluation {
             if !self.preflight.is_certified() {
                 return Err(ExactReportValidationError::StatusEvidenceMismatch);
             }
-            result.validate()?;
-            let arrangement_attempt_certifies_request =
-                certifications_arrangement_attempt_certifies_output_for_operation(
-                    &self.certifications,
-                    self.request.operation,
-                );
-            let arrangement_shortcut_attempt_certifies_request =
-                certifications_arrangement_attempt_certifies_shortcut_for_operation(
-                    &self.certifications,
-                    self.request.operation,
-                );
-            let result_matches_certifications = match result.kind {
-                ExactBooleanResultKind::ArrangementCellComplexMaterialized { operation } => {
-                    operation == self.request.operation && arrangement_attempt_certifies_request
-                }
-                ExactBooleanResultKind::CertifiedShortcut {
-                    shortcut: ExactBooleanShortcutKind::ArrangementCellComplex,
-                    operation,
-                } => {
-                    operation == self.request.operation
-                        && ((self
-                            .certifications
-                            .arrangement_cell_complex_shortcuts
-                            .certified_support(operation)
-                            == Some(ExactBooleanSupport::CertifiedArrangementCellComplex)
-                            && arrangement_shortcut_attempt_certifies_request)
-                            || (self.certifications.adjacent_union_completion.is_certified()
-                                && self.certifications.adjacent_union_completion.operation
-                                    == operation)
-                            || arrangement_attempt_certifies_request)
-                }
-                _ => true,
-            };
-            if !result.matches_request(self.request) {
-                return Err(ExactReportValidationError::StatusEvidenceMismatch);
-            }
-            if !result
-                .mesh
-                .validation_policy()
-                .satisfies(self.request.validation)
-            {
-                return Err(ExactReportValidationError::StatusEvidenceMismatch);
-            }
-            if match result.kind {
-                ExactBooleanResultKind::SelectedRegions { .. }
-                | ExactBooleanResultKind::OpenSurfaceArrangement { .. } => {
-                    result.graph_had_unknowns != self.preflight.graph_had_unknowns
-                        || result.region_classifications != self.preflight.region_classifications
-                }
-                ExactBooleanResultKind::ArrangementCellComplexMaterialized { .. }
-                | ExactBooleanResultKind::BoundaryPolicyShortcut { .. }
-                | ExactBooleanResultKind::CertifiedShortcut { .. } => false,
-            } {
-                return Err(ExactReportValidationError::StatusEvidenceMismatch);
-            }
-            if !result_matches_certifications {
-                return Err(ExactReportValidationError::StatusEvidenceMismatch);
-            }
-            if !result.matches_preflight_support(self.preflight.support) {
-                return Err(ExactReportValidationError::StatusEvidenceMismatch);
-            }
+            validate_evaluation_materialized_result(
+                result,
+                self.request,
+                &self.preflight,
+                &self.certifications,
+            )?;
         } else if exact_boolean_evaluation_requires_materialized_result(&self.preflight) {
             return Err(ExactReportValidationError::StatusEvidenceMismatch);
         }
@@ -2028,6 +1973,81 @@ fn certifications_arrangement_attempt_certifies_shortcut_for_operation(
                 ExactRegularizationPolicy::REGULARIZED_SOLID,
             )
         })
+}
+
+fn validate_evaluation_materialized_result(
+    result: &ExactBooleanResult,
+    request: ExactBooleanRequest,
+    preflight: &ExactBooleanPreflight,
+    certifications: &ExactBooleanCertificationSet,
+) -> Result<(), ExactReportValidationError> {
+    result.validate()?;
+    if !result.matches_request(request) {
+        return Err(ExactReportValidationError::StatusEvidenceMismatch);
+    }
+    if !result
+        .mesh
+        .validation_policy()
+        .satisfies(request.validation)
+    {
+        return Err(ExactReportValidationError::StatusEvidenceMismatch);
+    }
+    if match result.kind {
+        ExactBooleanResultKind::SelectedRegions { .. }
+        | ExactBooleanResultKind::OpenSurfaceArrangement { .. } => {
+            result.graph_had_unknowns != preflight.graph_had_unknowns
+                || result.region_classifications != preflight.region_classifications
+        }
+        ExactBooleanResultKind::ArrangementCellComplexMaterialized { .. }
+        | ExactBooleanResultKind::BoundaryPolicyShortcut { .. }
+        | ExactBooleanResultKind::CertifiedShortcut { .. } => false,
+    } {
+        return Err(ExactReportValidationError::StatusEvidenceMismatch);
+    }
+    if !evaluation_result_matches_certifications(result, request, certifications) {
+        return Err(ExactReportValidationError::StatusEvidenceMismatch);
+    }
+    if !result.matches_preflight_support(preflight.support) {
+        return Err(ExactReportValidationError::StatusEvidenceMismatch);
+    }
+    Ok(())
+}
+
+fn evaluation_result_matches_certifications(
+    result: &ExactBooleanResult,
+    request: ExactBooleanRequest,
+    certifications: &ExactBooleanCertificationSet,
+) -> bool {
+    let arrangement_attempt_certifies_request =
+        certifications_arrangement_attempt_certifies_output_for_operation(
+            certifications,
+            request.operation,
+        );
+    let arrangement_shortcut_attempt_certifies_request =
+        certifications_arrangement_attempt_certifies_shortcut_for_operation(
+            certifications,
+            request.operation,
+        );
+    match result.kind {
+        ExactBooleanResultKind::ArrangementCellComplexMaterialized { operation } => {
+            operation == request.operation && arrangement_attempt_certifies_request
+        }
+        ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: ExactBooleanShortcutKind::ArrangementCellComplex,
+            operation,
+        } => {
+            operation == request.operation
+                && ((certifications
+                    .arrangement_cell_complex_shortcuts
+                    .certified_support(operation)
+                    == Some(ExactBooleanSupport::CertifiedArrangementCellComplex)
+                    && arrangement_shortcut_attempt_certifies_request)
+                    || (certifications.adjacent_union_completion.is_certified()
+                        && certifications.adjacent_union_completion.operation == operation)
+                    || arrangement_attempt_certifies_request)
+        }
+        _ => true,
+    }
 }
 
 fn exact_boolean_preflight_matches_certifications(
