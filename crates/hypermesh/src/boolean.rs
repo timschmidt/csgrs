@@ -14692,7 +14692,7 @@ mod tests {
     }
 
     #[test]
-    fn closed_boundary_touching_union_materializes_through_arrangement_pipeline() {
+    fn closed_boundary_touching_union_materializes_without_shortcut_through_arrangement_pipeline() {
         let left = axis_aligned_box_i64([0, 0, 0], [1, 1, 1]);
         let right = axis_aligned_box_i64([1, 0, 0], [2, 1, 1]);
 
@@ -14720,10 +14720,7 @@ mod tests {
             &right,
             ExactRegularizationPolicy::REGULARIZED_SOLID,
         );
-        assert!(
-            attempt.materialized_arrangement_cell_complex_shortcut(),
-            "{attempt:?}"
-        );
+        assert!(attempt.materialized_without_shortcut(), "{attempt:?}");
         assert!(attempt.decline.is_none(), "{attempt:?}");
         assert_current_arrangement_attempt(&attempt, &left, &right);
 
