@@ -164,7 +164,7 @@ pub enum ExactArrangementBooleanDecline {
 /// Why a retained arrangement/cell-complex attempt used a certified shortcut
 /// or recovery output instead of the generic selected-cell triangulation.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum ExactArrangementBooleanShortcutReason {
+pub(crate) enum ExactArrangementBooleanShortcutReason {
     /// The shortcut was certified without constructing a generic arrangement.
     ShortcutSupportOnly,
     /// Arrangement construction had retained blockers.
@@ -206,7 +206,7 @@ pub struct ExactArrangementBooleanAttempt {
     pub materialized_shortcut: Option<ExactBooleanShortcutKind>,
     /// Reason a retained shortcut/recovery was used instead of the generic
     /// arrangement/cell-complex output.
-    pub shortcut_reason: Option<ExactArrangementBooleanShortcutReason>,
+    pub(crate) shortcut_reason: Option<ExactArrangementBooleanShortcutReason>,
     /// Arrangement blocker count observed after construction.
     pub arrangement_blockers: usize,
     /// Arrangement face-cell count, when construction succeeded.

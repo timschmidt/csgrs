@@ -73,8 +73,8 @@ pub use artifact::{
 };
 pub use audit::ExactMeshAuditError;
 pub use boolean::{
-    ExactArrangementBooleanAttempt, ExactArrangementBooleanShortcutReason, ExactBooleanEvaluation,
-    ExactBooleanOperation, ExactBooleanRequest, ExactBoundaryBooleanPolicy,
+    ExactArrangementBooleanAttempt, ExactBooleanEvaluation, ExactBooleanOperation,
+    ExactBooleanRequest, ExactBoundaryBooleanPolicy,
 };
 pub use error::{DiagnosticKind, MeshDiagnostic, MeshError, Severity};
 pub use facts::{
