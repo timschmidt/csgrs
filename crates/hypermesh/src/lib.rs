@@ -87,7 +87,8 @@ pub use graph::{
 };
 pub use mesh::{ExactMesh, ExactMeshValidationError, Triangle};
 pub use package::{
-    ExactMeshConsumerDomain, ExactMeshDomainSummaryError, ExactMeshHandoffPackageError,
+    ExactMeshConsumerDomain, ExactMeshDomainSummaryError, ExactMeshHandoffPackage,
+    ExactMeshHandoffPackageError,
 };
 pub use proposal::{
     ExactMeshProposalAcceptance, ExactMeshProposalReport, ExactMeshProposalReportError,

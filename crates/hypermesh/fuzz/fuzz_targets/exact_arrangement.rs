@@ -6,8 +6,9 @@ use std::collections::BTreeSet;
 use hyperlimit::{Point2, compare_reals};
 use hypermesh::{
     ExactArrangement, ExactArrangement2dRegion, ExactArrangement2dRegionRing,
-    ExactArrangement2dSetOperation, ExactBooleanOperation, ExactMesh,
-    ExactRegularizationPolicy, ValidationPolicy, boolean_exact, build_exact_arrangement2d_overlay,
+    ExactArrangement2dSetOperation, ExactBooleanOperation, ExactBooleanRequest,
+    ExactBooleanWorkspace, ExactMesh, ExactRegularizationPolicy, ValidationPolicy,
+    build_exact_arrangement2d_overlay,
 };
 use hyperreal::Real;
 use libfuzzer_sys::fuzz_target;
@@ -138,8 +139,9 @@ fn exercise_mesh_arrangement(values: &[i64]) {
                 }
             }
         }
-        if let Ok(result) = boolean_exact(&left, &right, operation, ValidationPolicy::ALLOW_BOUNDARY)
-        {
+        let request = ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY);
+        let mut workspace = ExactBooleanWorkspace::new(&left, &right);
+        if let Ok(result) = workspace.materialize(request) {
             let _ = result.validate();
         }
     }

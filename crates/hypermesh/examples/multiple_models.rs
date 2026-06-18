@@ -8,7 +8,8 @@ use bevy::prelude::*;
 use bevy::render::mesh::PrimitiveTopology;
 use bevy_panorbit_camera::{PanOrbitCamera, PanOrbitCameraPlugin};
 use hypermesh::{
-    ExactBooleanOperation, ExactMesh, ValidationPolicy, approximate_mesh_f64_view, boolean_exact,
+    ExactBooleanOperation, ExactBooleanRequest, ExactBooleanWorkspace, ExactMesh,
+    ExactMeshHandoffPackage, ValidationPolicy,
 };
 
 #[derive(Component)]
@@ -35,14 +36,12 @@ fn setup(
 ) {
     let left = exact_box([-3, -2, -2], [1, 2, 2]);
     let right = exact_box([0, -1, -1], [3, 1, 1]);
-    let difference = boolean_exact(
-        &left,
-        &right,
-        ExactBooleanOperation::Difference,
-        ValidationPolicy::CLOSED,
-    )
-    .expect("overlapping boxes should be supported by exact boolean shortcuts")
-    .mesh;
+    let request =
+        ExactBooleanRequest::new(ExactBooleanOperation::Difference, ValidationPolicy::CLOSED);
+    let difference = ExactBooleanWorkspace::new(&left, &right)
+        .materialize(request)
+        .expect("overlapping boxes should be supported by exact boolean shortcuts")
+        .mesh;
 
     let meshes_to_draw = [left, right, difference];
     let colors = [BLUE, GREEN, WHITE];
@@ -105,7 +104,12 @@ fn exact_box(min: [i64; 3], max: [i64; 3]) -> ExactMesh {
 }
 
 fn bevy_mesh_from_exact(mesh: &ExactMesh) -> Mesh {
-    let view = approximate_mesh_f64_view(mesh).expect("exact mesh should have a fresh f64 view");
+    let package =
+        ExactMeshHandoffPackage::from_mesh(mesh).expect("exact mesh should have a fresh handoff");
+    let view = package
+        .approximate_f64_view
+        .as_ref()
+        .expect("exact mesh handoff should include a fresh f64 view");
     let mut positions = Vec::with_capacity(view.indices.len());
     let mut normals = Vec::with_capacity(view.indices.len());
 
