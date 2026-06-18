@@ -178,6 +178,102 @@ fn curve_string_endpoint_report_rejects_empty_unchecked_input() {
 }
 
 #[test]
+fn curve_string_extend_line_end_to_exact_target() {
+    let curve = CurveString2::try_new(vec![line_segment(0, 0, 2, 0)]).unwrap();
+
+    let extended = curve
+        .extend_line_endpoint_to_point(CurveStringEndpoint2::End, p(5, 0), &policy())
+        .unwrap();
+
+    assert!(extended.report().status().is_native_exact());
+    assert_eq!(extended.report().endpoint(), CurveStringEndpoint2::End);
+    assert_eq!(extended.report().source_segment_index(), 0);
+    assert_eq!(extended.report().target_point(), &p(5, 0));
+    assert_eq!(extended.report().source_param(), Some(&q(5, 2)));
+    assert_eq!(extended.report().source_segment_count(), 1);
+    assert!(extended.report().blocker().is_none());
+    let curve = extended
+        .curve_string()
+        .expect("line extension should materialize");
+    assert_eq!(curve.start(), Some(&p(0, 0)));
+    assert_eq!(curve.end(), Some(&p(5, 0)));
+}
+
+#[test]
+fn curve_string_extend_line_start_to_exact_target() {
+    let curve =
+        CurveString2::try_new(vec![line_segment(0, 0, 2, 0), line_segment(2, 0, 2, 2)]).unwrap();
+
+    let extended = curve
+        .extend_line_endpoint_to_point(CurveStringEndpoint2::Start, p(-3, 0), &policy())
+        .unwrap();
+
+    assert!(extended.report().status().is_native_exact());
+    assert_eq!(extended.report().endpoint(), CurveStringEndpoint2::Start);
+    assert_eq!(extended.report().source_segment_index(), 0);
+    assert_eq!(extended.report().source_param(), Some(&q(-3, 2)));
+    let curve = extended
+        .curve_string()
+        .expect("start line extension should materialize");
+    assert_eq!(curve.len(), 2);
+    assert_eq!(curve.start(), Some(&p(-3, 0)));
+    assert_eq!(curve.end(), Some(&p(2, 2)));
+}
+
+#[test]
+fn curve_string_extend_line_reports_interior_target_boundary() {
+    let curve = CurveString2::try_new(vec![line_segment(0, 0, 4, 0)]).unwrap();
+
+    let extended = curve
+        .extend_line_endpoint_to_point(CurveStringEndpoint2::End, p(1, 0), &policy())
+        .unwrap();
+
+    assert!(extended.curve_string().is_none());
+    assert!(extended.report().status().is_retained_evidence());
+    assert_eq!(extended.report().source_param(), Some(&q(1, 4)));
+    assert_eq!(
+        extended.report().blocker(),
+        Some(UncertaintyReason::Boundary)
+    );
+}
+
+#[test]
+fn curve_string_extend_line_reports_off_support_boundary() {
+    let curve = CurveString2::try_new(vec![line_segment(0, 0, 4, 0)]).unwrap();
+
+    let extended = curve
+        .extend_line_endpoint_to_point(CurveStringEndpoint2::End, p(5, 1), &policy())
+        .unwrap();
+
+    assert!(extended.curve_string().is_none());
+    assert!(extended.report().status().is_retained_evidence());
+    assert_eq!(extended.report().source_param(), None);
+    assert_eq!(
+        extended.report().blocker(),
+        Some(UncertaintyReason::Boundary)
+    );
+}
+
+#[test]
+fn curve_string_extend_arc_endpoint_reports_unsupported() {
+    let curve = CurveString2::try_new(vec![Segment2::Arc(
+        CircularArc2::from_bulge(p(0, 0), p(2, 0), s(1)).unwrap(),
+    )])
+    .unwrap();
+
+    let extended = curve
+        .extend_line_endpoint_to_point(CurveStringEndpoint2::End, p(3, 0), &policy())
+        .unwrap();
+
+    assert!(extended.curve_string().is_none());
+    assert!(extended.report().status().is_retained_evidence());
+    assert_eq!(
+        extended.report().blocker(),
+        Some(UncertaintyReason::Unsupported)
+    );
+}
+
+#[test]
 fn curve_string_trim_materializes_exact_line_subsegment_with_report() {
     let curve = CurveString2::try_new(vec![line_segment(0, 0, 4, 0)]).unwrap();
 

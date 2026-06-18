@@ -82,6 +82,25 @@ pub struct LinkedCurveString2 {
     report: CurveStringLinkReport2,
 }
 
+/// Report for extending one open curve-string endpoint to an exact target point.
+#[derive(Clone, Debug, PartialEq)]
+pub struct CurveStringExtendReport2 {
+    endpoint: CurveStringEndpoint2,
+    source_segment_index: usize,
+    target_point: Point2,
+    source_param: Option<Real>,
+    source_segment_count: usize,
+    status: RetainedTopologyStatus,
+    blocker: Option<UncertaintyReason>,
+}
+
+/// Result of a report-bearing open curve-string extension.
+#[derive(Clone, Debug, PartialEq)]
+pub struct CurveStringExtendResult2 {
+    curve_string: Option<CurveString2>,
+    report: CurveStringExtendReport2,
+}
+
 /// Segment-local retained trim point on an open curve string.
 #[derive(Clone, Debug, PartialEq)]
 pub struct CurveStringTrimPoint2 {
@@ -514,6 +533,141 @@ impl CurveString2 {
         )
     }
 
+    /// Extends one endpoint line segment to an exact point on its supporting line.
+    ///
+    /// This first extension slice deliberately supports only line endpoint
+    /// segments. The target must be certified on the selected line support and
+    /// outside the finite segment in the selected endpoint direction. Targets
+    /// inside the existing segment, off the support, on arcs, or behind
+    /// undecided predicates are retained as explicit blockers.
+    pub fn extend_line_endpoint_to_point(
+        &self,
+        endpoint: CurveStringEndpoint2,
+        target_point: Point2,
+        policy: &CurvePolicy,
+    ) -> CurveResult<CurveStringExtendResult2> {
+        let source_segment_index = match endpoint {
+            CurveStringEndpoint2::Start => 0,
+            CurveStringEndpoint2::End => self
+                .len()
+                .checked_sub(1)
+                .ok_or(CurveError::EmptyCurveString)?,
+        };
+        let segment = self
+            .segments
+            .get(source_segment_index)
+            .ok_or(CurveError::EmptyCurveString)?;
+        let line = match segment {
+            Segment2::Line(line) => line,
+            Segment2::Arc(_) => {
+                return Ok(blocked_extend_result(
+                    self,
+                    endpoint,
+                    source_segment_index,
+                    target_point,
+                    None,
+                    RetainedTopologyStatus::Unsupported,
+                    Some(UncertaintyReason::Unsupported),
+                ));
+            }
+        };
+
+        match line.classify_point(&target_point, policy) {
+            Classification::Decided(crate::LineSide::On) => {}
+            Classification::Decided(_) => {
+                return Ok(blocked_extend_result(
+                    self,
+                    endpoint,
+                    source_segment_index,
+                    target_point,
+                    None,
+                    RetainedTopologyStatus::Unsupported,
+                    Some(UncertaintyReason::Boundary),
+                ));
+            }
+            Classification::Uncertain(reason) => {
+                return Ok(blocked_extend_result(
+                    self,
+                    endpoint,
+                    source_segment_index,
+                    target_point,
+                    None,
+                    RetainedTopologyStatus::Unresolved,
+                    Some(reason),
+                ));
+            }
+        }
+
+        let source_param = match line_point_parameter(line, &target_point, policy)? {
+            Classification::Decided(param) => param,
+            Classification::Uncertain(reason) => {
+                return Ok(blocked_extend_result(
+                    self,
+                    endpoint,
+                    source_segment_index,
+                    target_point,
+                    None,
+                    RetainedTopologyStatus::Unresolved,
+                    Some(reason),
+                ));
+            }
+        };
+        let outside = match endpoint {
+            CurveStringEndpoint2::Start => compare_reals(&source_param, &Real::zero(), policy),
+            CurveStringEndpoint2::End => compare_reals(&source_param, &Real::one(), policy),
+        };
+        match (endpoint, outside) {
+            (CurveStringEndpoint2::Start, Some(Ordering::Less))
+            | (CurveStringEndpoint2::End, Some(Ordering::Greater)) => {}
+            (_, Some(_)) => {
+                return Ok(blocked_extend_result(
+                    self,
+                    endpoint,
+                    source_segment_index,
+                    target_point,
+                    Some(source_param),
+                    RetainedTopologyStatus::Unsupported,
+                    Some(UncertaintyReason::Boundary),
+                ));
+            }
+            (_, None) => {
+                return Ok(blocked_extend_result(
+                    self,
+                    endpoint,
+                    source_segment_index,
+                    target_point,
+                    Some(source_param),
+                    RetainedTopologyStatus::Unresolved,
+                    Some(UncertaintyReason::Ordering),
+                ));
+            }
+        }
+
+        let mut segments = self.segments.clone();
+        segments[source_segment_index] = match endpoint {
+            CurveStringEndpoint2::Start => {
+                Segment2::Line(LineSeg2::try_new(target_point.clone(), line.end().clone())?)
+            }
+            CurveStringEndpoint2::End => Segment2::Line(LineSeg2::try_new(
+                line.start().clone(),
+                target_point.clone(),
+            )?),
+        };
+        let curve_string = CurveString2::try_new(segments)?;
+        Ok(CurveStringExtendResult2 {
+            curve_string: Some(curve_string),
+            report: CurveStringExtendReport2 {
+                endpoint,
+                source_segment_index,
+                target_point,
+                source_param: Some(source_param),
+                source_segment_count: self.len(),
+                status: RetainedTopologyStatus::NativeExact,
+                blocker: None,
+            },
+        })
+    }
+
     pub(crate) fn trim_between_curve_intersection_events(
         &self,
         start_events: Vec<CurveStringIntersection>,
@@ -900,6 +1054,60 @@ impl CurveStringCurveTrimResult2 {
     }
 }
 
+impl CurveStringExtendReport2 {
+    /// Returns which endpoint was extended.
+    pub const fn endpoint(&self) -> CurveStringEndpoint2 {
+        self.endpoint
+    }
+
+    /// Returns the endpoint segment index in the source curve string.
+    pub const fn source_segment_index(&self) -> usize {
+        self.source_segment_index
+    }
+
+    /// Returns the requested exact target point.
+    pub const fn target_point(&self) -> &Point2 {
+        &self.target_point
+    }
+
+    /// Returns the affine parameter on the source endpoint line, when certified.
+    pub const fn source_param(&self) -> Option<&Real> {
+        self.source_param.as_ref()
+    }
+
+    /// Returns the source curve-string segment count captured by this report.
+    pub const fn source_segment_count(&self) -> usize {
+        self.source_segment_count
+    }
+
+    /// Returns extension materialization status.
+    pub const fn status(&self) -> RetainedTopologyStatus {
+        self.status
+    }
+
+    /// Returns the exact blocker for non-materialized extensions.
+    pub const fn blocker(&self) -> Option<UncertaintyReason> {
+        self.blocker
+    }
+}
+
+impl CurveStringExtendResult2 {
+    /// Returns the materialized extended curve string, if supported.
+    pub const fn curve_string(&self) -> Option<&CurveString2> {
+        self.curve_string.as_ref()
+    }
+
+    /// Consumes this result and returns the materialized extended curve string, if any.
+    pub fn into_curve_string(self) -> Option<CurveString2> {
+        self.curve_string
+    }
+
+    /// Returns the retained extension report.
+    pub const fn report(&self) -> &CurveStringExtendReport2 {
+        &self.report
+    }
+}
+
 enum SegmentTrimMaterialization {
     Materialized(Segment2),
     SkippedEmpty,
@@ -1015,6 +1223,29 @@ fn blocked_curve_trim_result(
             end_hits,
             trim_report,
             query_path,
+            status,
+            blocker,
+        },
+    }
+}
+
+fn blocked_extend_result(
+    curve_string: &CurveString2,
+    endpoint: CurveStringEndpoint2,
+    source_segment_index: usize,
+    target_point: Point2,
+    source_param: Option<Real>,
+    status: RetainedTopologyStatus,
+    blocker: Option<UncertaintyReason>,
+) -> CurveStringExtendResult2 {
+    CurveStringExtendResult2 {
+        curve_string: None,
+        report: CurveStringExtendReport2 {
+            endpoint,
+            source_segment_index,
+            target_point,
+            source_param,
+            source_segment_count: curve_string.len(),
             status,
             blocker,
         },
