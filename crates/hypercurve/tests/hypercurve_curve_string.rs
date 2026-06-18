@@ -2807,6 +2807,54 @@ fn prepared_curve_string_trim_between_curve_intersections_reuses_cached_evidence
         prepared.report().end_intersection_report().query_path(),
         CurveStringIntersectionQueryPath2::Prepared
     );
+    assert_eq!(direct.report().start_prepared_cache_report(), None);
+    assert_eq!(direct.report().end_prepared_cache_report(), None);
+    let start_cache = prepared.report().start_prepared_cache_report().unwrap();
+    assert_eq!(
+        start_cache.first().freshness(),
+        CurveStringPreparedCacheFreshness2::BorrowedCurrentSource
+    );
+    assert_eq!(
+        start_cache.second().freshness(),
+        CurveStringPreparedCacheFreshness2::BorrowedCurrentSource
+    );
+    assert_eq!(start_cache.first().prepared_segment_count(), 1);
+    assert_eq!(start_cache.second().prepared_segment_count(), 1);
+    assert_eq!(
+        start_cache.first().prepared_segment_kind_counts(),
+        SegmentKindCounts { lines: 1, arcs: 0 }
+    );
+    assert_eq!(
+        start_cache.second().prepared_segment_kind_counts(),
+        SegmentKindCounts { lines: 1, arcs: 0 }
+    );
+    assert_eq!(start_cache.first().decided_segment_box_count(), 1);
+    assert_eq!(start_cache.second().decided_segment_box_count(), 1);
+    assert!(start_cache.first().curve_box_decided());
+    assert!(start_cache.second().curve_box_decided());
+    let end_cache = prepared.report().end_prepared_cache_report().unwrap();
+    assert_eq!(
+        end_cache.first().freshness(),
+        CurveStringPreparedCacheFreshness2::BorrowedCurrentSource
+    );
+    assert_eq!(
+        end_cache.second().freshness(),
+        CurveStringPreparedCacheFreshness2::BorrowedCurrentSource
+    );
+    assert_eq!(end_cache.first().prepared_segment_count(), 1);
+    assert_eq!(end_cache.second().prepared_segment_count(), 1);
+    assert_eq!(
+        end_cache.first().prepared_segment_kind_counts(),
+        SegmentKindCounts { lines: 1, arcs: 0 }
+    );
+    assert_eq!(
+        end_cache.second().prepared_segment_kind_counts(),
+        SegmentKindCounts { lines: 1, arcs: 0 }
+    );
+    assert_eq!(end_cache.first().decided_segment_box_count(), 1);
+    assert_eq!(end_cache.second().decided_segment_box_count(), 1);
+    assert!(end_cache.first().curve_box_decided());
+    assert!(end_cache.second().curve_box_decided());
     assert_eq!(
         prepared
             .report()

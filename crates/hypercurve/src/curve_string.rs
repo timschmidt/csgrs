@@ -3526,9 +3526,23 @@ impl CurveStringCurveTrimReport2 {
         &self.start_intersection_report
     }
 
+    /// Returns prepared-cache evidence for the start-cutter intersection query, when used.
+    pub const fn start_prepared_cache_report(
+        &self,
+    ) -> Option<&CurveStringIntersectionPreparedCacheReport2> {
+        self.start_intersection_report.prepared_cache_report()
+    }
+
     /// Returns scan evidence for the end-cutter intersection query.
     pub const fn end_intersection_report(&self) -> &CurveStringIntersectionReport2 {
         &self.end_intersection_report
+    }
+
+    /// Returns prepared-cache evidence for the end-cutter intersection query, when used.
+    pub const fn end_prepared_cache_report(
+        &self,
+    ) -> Option<&CurveStringIntersectionPreparedCacheReport2> {
+        self.end_intersection_report.prepared_cache_report()
     }
 
     /// Returns the intersection query path used to collect split evidence.
