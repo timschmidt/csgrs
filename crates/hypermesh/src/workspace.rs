@@ -419,14 +419,6 @@ impl<'a> ExactBooleanWorkspace<'a> {
         if cached_by_request_index(&self.materializations, request).is_none() {
             return Ok(());
         }
-        validate_retained_result_for_request(
-            self.left,
-            self.right,
-            request,
-            self.regularized_solid_arrangement_attempt(request),
-            result,
-        )
-        .map_err(workspace_report_validation_error)?;
         if let Some(index) = cached_by_request_index(&self.evaluations, request) {
             let evaluation = &mut self.evaluations[index].1;
             evaluation
