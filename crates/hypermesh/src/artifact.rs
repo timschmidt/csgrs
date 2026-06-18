@@ -537,6 +537,34 @@ impl MeshArtifactManifest {
         )
     }
 
+    /// Build a BREP exact-triangle handoff from face vertex rows.
+    ///
+    /// This keeps the common producer-facing route on the manifest type: the
+    /// helper derives certified exact vertex records for every referenced
+    /// vertex and enumerates face records in order.
+    pub fn brep_exact_triangle_handoff_faces(
+        source_label: impl Into<String>,
+        source_version: u64,
+        face_vertices: Vec<Vec<usize>>,
+    ) -> Self {
+        let vertex_count = face_vertices
+            .iter()
+            .flat_map(|vertices| vertices.iter().copied())
+            .max()
+            .map_or(0, |index| index + 1);
+        let vertices = (0..vertex_count)
+            .map(MeshArtifactVertexRecord::certified_derived_exact)
+            .collect();
+        let faces = face_vertices
+            .into_iter()
+            .enumerate()
+            .map(|(index, vertices)| {
+                MeshArtifactFaceRecord::derived_exact_surface_handoff(index, vertices)
+            })
+            .collect();
+        Self::brep_exact_triangle_handoff(source_label, source_version, vertices, faces)
+    }
+
     /// Build an exact voxel exposed-face handoff.
     ///
     /// Exposed voxel faces are retained as exact integer-grid evidence rather

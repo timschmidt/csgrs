@@ -57,9 +57,7 @@ mod winding;
 mod witness;
 mod workspace;
 
-pub use artifact::{
-    MeshArtifactFaceRecord, MeshArtifactManifest, MeshArtifactVertexRecord,
-};
+pub use artifact::MeshArtifactManifest;
 pub use boolean::{
     ExactArrangementBooleanAttempt, ExactBooleanEvaluation, ExactBooleanOperation,
     ExactBooleanRequest, ExactBoundaryBooleanPolicy,
