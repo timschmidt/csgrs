@@ -2208,24 +2208,6 @@ pub struct ExactBooleanEvaluation {
 }
 
 impl ExactBooleanEvaluation {
-    /// Returns whether retained arrangement/cell-complex evidence already
-    /// materializes the request without falling through to winding.
-    pub fn materializes_arrangement_cell_complex(&self) -> bool {
-        self.certifications
-            .arrangement_attempt
-            .as_ref()
-            .is_some_and(|attempt| {
-                attempt.certifies_arrangement_cell_complex_output_for_request(
-                    self.request,
-                    ExactRegularizationPolicy::REGULARIZED_SOLID,
-                )
-            })
-            || self
-                .certifications
-                .winding_readiness
-                .materializes_arrangement_cell_complex()
-    }
-
     /// Validate the retained evaluation shape without replaying sources.
     pub fn validate(&self) -> Result<(), ExactReportValidationError> {
         if self.preflight.operation != self.request.operation {

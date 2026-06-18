@@ -32,6 +32,25 @@ fn exact_boolean_evaluation(
     workspace.evaluate(request).unwrap().clone()
 }
 
+fn evaluation_materializes_arrangement_cell_complex(
+    evaluation: &hypermesh::ExactBooleanEvaluation,
+) -> bool {
+    evaluation
+        .certifications
+        .arrangement_attempt
+        .as_ref()
+        .is_some_and(|attempt| {
+            attempt.operation == evaluation.request.operation
+                && attempt.policy == ExactRegularizationPolicy::REGULARIZED_SOLID
+                && attempt.output_validation == evaluation.request.validation
+                && attempt.materialized_arrangement_cell_complex_output()
+        })
+        || evaluation
+            .certifications
+            .winding_readiness
+            .materializes_arrangement_cell_complex()
+}
+
 fn exact_boolean_result(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -365,7 +384,7 @@ fn exact_boolean_evaluation_retains_region_ownership_report() {
     evaluation.validate().unwrap();
     evaluation.validate_against_sources(&left, &right).unwrap();
     assert!(
-        evaluation.materializes_arrangement_cell_complex(),
+        evaluation_materializes_arrangement_cell_complex(&evaluation),
         "{evaluation:?}"
     );
     let disjoint_left = axis_aligned_box([0, 0, 0], [1, 1, 1]);
@@ -381,7 +400,7 @@ fn exact_boolean_evaluation_retains_region_ownership_report() {
     let mut attempt_backed_evaluation = evaluation.clone();
     attempt_backed_evaluation.certifications.winding_readiness = disjoint_readiness;
     assert!(
-        attempt_backed_evaluation.materializes_arrangement_cell_complex(),
+        evaluation_materializes_arrangement_cell_complex(&attempt_backed_evaluation),
         "{attempt_backed_evaluation:?}"
     );
     assert!(
@@ -1491,7 +1510,7 @@ fn exact_coplanar_volumetric_cell_evidence_is_retained_by_public_evaluation() {
                 attempt.operation == evaluation.request.operation
                     && attempt.resolves_requested_volume_ownership()
             })
-            || evaluation.materializes_arrangement_cell_complex()
+            || evaluation_materializes_arrangement_cell_complex(&evaluation)
             || preflight.coplanar_volumetric_evidence.is_some(),
         "{evaluation:?}"
     );
@@ -2755,7 +2774,9 @@ fn lower_dimensional_regularized_boolean_is_publicly_replayable() {
                 ExactReportFreshness::SourceReplayMismatch
             );
         } else {
-            assert!(evaluation.materializes_arrangement_cell_complex());
+            assert!(evaluation_materializes_arrangement_cell_complex(
+                &evaluation
+            ));
             evaluation.validate().unwrap();
             evaluation.validate_against_sources(&left, &right).unwrap();
         }
@@ -4110,7 +4131,7 @@ fn exact_volumetric_winding_coplanar_cap_is_publicly_certified() {
         preflight.validate_against_sources(&left, &right).unwrap();
 
         assert!(
-            evaluation.materializes_arrangement_cell_complex(),
+            evaluation_materializes_arrangement_cell_complex(&evaluation),
             "{operation:?}: {evaluation:?}"
         );
 
