@@ -142,6 +142,7 @@ pub struct CurveStringLinkReport2 {
     exact_endpoint_pair_count: usize,
     disconnected_endpoint_pair_count: usize,
     unresolved_endpoint_pair_count: usize,
+    output_segment_count: Option<usize>,
     output_segments: Vec<CurveStringLinkOutputSegmentReport2>,
     status: RetainedTopologyStatus,
 }
@@ -174,6 +175,7 @@ pub struct CurveStringLinkAttemptReport2 {
     exact_endpoint_pair_count: usize,
     disconnected_endpoint_pair_count: usize,
     unresolved_endpoint_pair_count: usize,
+    output_segment_count: Option<usize>,
     output_segments: Vec<CurveStringLinkOutputSegmentReport2>,
     status: RetainedTopologyStatus,
     blocker: Option<UncertaintyReason>,
@@ -239,6 +241,7 @@ pub struct CurveStringConnectReport2 {
     disconnected_endpoint_pair_count: usize,
     unresolved_endpoint_pair_count: usize,
     connector_segment_index: Option<usize>,
+    output_segment_count: Option<usize>,
     output_segments: Vec<CurveStringConnectOutputSegmentReport2>,
     status: RetainedTopologyStatus,
     blocker: Option<UncertaintyReason>,
@@ -859,6 +862,7 @@ impl CurveString2 {
                     exact_endpoint_pair_count: endpoint_summary.exact_count,
                     disconnected_endpoint_pair_count: endpoint_summary.disconnected_count,
                     unresolved_endpoint_pair_count: endpoint_summary.unresolved_count,
+                    output_segment_count: None,
                     output_segments: Vec::new(),
                     status: RetainedTopologyStatus::Unsupported,
                     blocker: Some(UncertaintyReason::Boundary),
@@ -878,6 +882,7 @@ impl CurveString2 {
                     exact_endpoint_pair_count: endpoint_summary.exact_count,
                     disconnected_endpoint_pair_count: endpoint_summary.disconnected_count,
                     unresolved_endpoint_pair_count: endpoint_summary.unresolved_count,
+                    output_segment_count: None,
                     output_segments: Vec::new(),
                     status: retained_status_for_uncertainty(reason),
                     blocker: Some(reason),
@@ -897,6 +902,7 @@ impl CurveString2 {
                     exact_endpoint_pair_count: endpoint_summary.exact_count,
                     disconnected_endpoint_pair_count: endpoint_summary.disconnected_count,
                     unresolved_endpoint_pair_count: endpoint_summary.unresolved_count,
+                    output_segment_count: None,
                     output_segments: Vec::new(),
                     status: RetainedTopologyStatus::Unsupported,
                     blocker: Some(UncertaintyReason::Boundary),
@@ -905,6 +911,7 @@ impl CurveString2 {
         };
 
         let curve_string = linked_curve_string(self, other, kind)?;
+        let output_segment_count = Some(curve_string.len());
         let output_segments = link_output_segment_reports(self, other, kind);
         let report = CurveStringLinkReport2 {
             stage: CurveStringLinkStage2::SegmentMaterialization,
@@ -916,6 +923,7 @@ impl CurveString2 {
             exact_endpoint_pair_count: endpoint_summary.exact_count,
             disconnected_endpoint_pair_count: endpoint_summary.disconnected_count,
             unresolved_endpoint_pair_count: endpoint_summary.unresolved_count,
+            output_segment_count,
             output_segments: output_segments.clone(),
             status: RetainedTopologyStatus::NativeExact,
         };
@@ -934,6 +942,7 @@ impl CurveString2 {
                 exact_endpoint_pair_count: endpoint_summary.exact_count,
                 disconnected_endpoint_pair_count: endpoint_summary.disconnected_count,
                 unresolved_endpoint_pair_count: endpoint_summary.unresolved_count,
+                output_segment_count,
                 output_segments,
                 status: RetainedTopologyStatus::NativeExact,
                 blocker: None,
@@ -1085,6 +1094,7 @@ impl CurveString2 {
         }
 
         let (curve_string, connector_segment_index) = connected_curve_string(self, other, kind)?;
+        let output_segment_count = Some(curve_string.len());
         let report = CurveStringConnectReport2 {
             stage: CurveStringConnectStage2::ConnectorMaterialization,
             kind: Some(kind),
@@ -1097,6 +1107,7 @@ impl CurveString2 {
             disconnected_endpoint_pair_count: endpoint_summary.disconnected_count,
             unresolved_endpoint_pair_count: endpoint_summary.unresolved_count,
             connector_segment_index: Some(connector_segment_index),
+            output_segment_count,
             output_segments: connect_output_segment_reports(self, other, kind)?,
             status: RetainedTopologyStatus::NativeExact,
             blocker: None,
@@ -1200,6 +1211,7 @@ impl CurveString2 {
             NearestEndpointChoice::Empty => return Err(CurveError::EmptyCurveString),
         };
         let (curve_string, connector_segment_index) = connected_curve_string(self, other, kind)?;
+        let output_segment_count = Some(curve_string.len());
         let report = CurveStringConnectReport2 {
             stage: CurveStringConnectStage2::ConnectorMaterialization,
             kind: Some(kind),
@@ -1212,6 +1224,7 @@ impl CurveString2 {
             disconnected_endpoint_pair_count: endpoint_summary.disconnected_count,
             unresolved_endpoint_pair_count: endpoint_summary.unresolved_count,
             connector_segment_index: Some(connector_segment_index),
+            output_segment_count,
             output_segments: connect_output_segment_reports(self, other, kind)?,
             status: RetainedTopologyStatus::NativeExact,
             blocker: None,
@@ -5268,6 +5281,11 @@ impl CurveStringLinkReport2 {
         self.unresolved_endpoint_pair_count
     }
 
+    /// Returns the output segment count for the materialized link.
+    pub const fn output_segment_count(&self) -> Option<usize> {
+        self.output_segment_count
+    }
+
     /// Returns output segment source ownership in output order.
     pub fn output_segments(&self) -> &[CurveStringLinkOutputSegmentReport2] {
         &self.output_segments
@@ -5372,6 +5390,11 @@ impl CurveStringLinkAttemptReport2 {
     /// Returns inspected endpoint pairs that remained unresolved.
     pub const fn unresolved_endpoint_pair_count(&self) -> usize {
         self.unresolved_endpoint_pair_count
+    }
+
+    /// Returns the output segment count when the link attempt materialized.
+    pub const fn output_segment_count(&self) -> Option<usize> {
+        self.output_segment_count
     }
 
     /// Returns output segment source ownership when a link materialized.
@@ -5652,6 +5675,11 @@ impl CurveStringConnectReport2 {
     /// Returns the inserted connector segment index in the output curve string.
     pub const fn connector_segment_index(&self) -> Option<usize> {
         self.connector_segment_index
+    }
+
+    /// Returns the output segment count when a connector was materialized.
+    pub const fn output_segment_count(&self) -> Option<usize> {
+        self.output_segment_count
     }
 
     /// Returns output segment source ownership in output order.
@@ -6261,6 +6289,7 @@ fn blocked_connected_curve_string(
             disconnected_endpoint_pair_count: endpoint_summary.disconnected_count,
             unresolved_endpoint_pair_count: endpoint_summary.unresolved_count,
             connector_segment_index: None,
+            output_segment_count: None,
             output_segments: Vec::new(),
             status,
             blocker,
