@@ -445,6 +445,15 @@ pub enum CurveStringCurveTrimQueryPath2 {
     Prepared,
 }
 
+/// Furthest exact stage reached by a trim-by-cutter-curve attempt.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum CurveStringCurveTrimStage2 {
+    /// Cutter intersections were collected, but unique trim hits were not selected.
+    HitSelection,
+    /// Unique cutter hits were selected and point/range trim materialization was attempted.
+    RangeMaterialization,
+}
+
 /// Report for a trim whose boundaries come from cutter curve intersections.
 #[derive(Clone, Debug, PartialEq)]
 pub struct CurveStringCurveTrimReport2 {
@@ -454,6 +463,7 @@ pub struct CurveStringCurveTrimReport2 {
     end_intersection_report: CurveStringIntersectionReport2,
     trim_report: Option<CurveStringTrimReport2>,
     query_path: CurveStringCurveTrimQueryPath2,
+    stage: CurveStringCurveTrimStage2,
     status: RetainedTopologyStatus,
     blocker: Option<UncertaintyReason>,
 }
@@ -2356,6 +2366,7 @@ impl CurveString2 {
                 end_intersection_report,
                 trim_report: Some(trim.report().clone()),
                 query_path,
+                stage: CurveStringCurveTrimStage2::RangeMaterialization,
                 status,
                 blocker,
             },
@@ -2957,6 +2968,11 @@ impl CurveStringCurveTrimReport2 {
     /// Returns the intersection query path used to collect split evidence.
     pub const fn query_path(&self) -> CurveStringCurveTrimQueryPath2 {
         self.query_path
+    }
+
+    /// Returns the furthest exact trim stage reached.
+    pub const fn stage(&self) -> CurveStringCurveTrimStage2 {
+        self.stage
     }
 
     /// Returns trim-by-curve materialization status.
@@ -4336,6 +4352,11 @@ fn blocked_curve_trim_result(
     status: RetainedTopologyStatus,
     blocker: Option<UncertaintyReason>,
 ) -> CurveStringCurveTrimResult2 {
+    let stage = if trim_report.is_some() {
+        CurveStringCurveTrimStage2::RangeMaterialization
+    } else {
+        CurveStringCurveTrimStage2::HitSelection
+    };
     CurveStringCurveTrimResult2 {
         curve_string: None,
         report: CurveStringCurveTrimReport2 {
@@ -4345,6 +4366,7 @@ fn blocked_curve_trim_result(
             end_intersection_report,
             trim_report,
             query_path,
+            stage,
             status,
             blocker,
         },

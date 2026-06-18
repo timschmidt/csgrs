@@ -1,12 +1,12 @@
 use hypercurve::{
     BulgeVertex2, CircularArc2, Classification, Contour2, CurveError, CurvePolicy, CurveString2,
     CurveStringChamferInputPath2, CurveStringConnectSource2, CurveStringCurveTrimQueryPath2,
-    CurveStringEndpoint2, CurveStringEndpointConnectionStatus2, CurveStringFilletInputPath2,
-    CurveStringIntersectionPredicatePath2, CurveStringIntersectionQueryPath2, CurveStringLinkKind2,
-    CurveStringLinkSourceInput2, CurveStringRegionTrimQueryPath2, CurveStringTrimInputPath2,
-    CurveStringTrimPoint2, IntersectionKind, LineArcIntersection, LineArcOrder, LineSeg2, Point2,
-    Real, Region2, RegionContourRole, RegionPointLocation, Segment2, SegmentIntersection,
-    UncertaintyReason,
+    CurveStringCurveTrimStage2, CurveStringEndpoint2, CurveStringEndpointConnectionStatus2,
+    CurveStringFilletInputPath2, CurveStringIntersectionPredicatePath2,
+    CurveStringIntersectionQueryPath2, CurveStringLinkKind2, CurveStringLinkSourceInput2,
+    CurveStringRegionTrimQueryPath2, CurveStringTrimInputPath2, CurveStringTrimPoint2,
+    IntersectionKind, LineArcIntersection, LineArcOrder, LineSeg2, Point2, Real, Region2,
+    RegionContourRole, RegionPointLocation, Segment2, SegmentIntersection, UncertaintyReason,
 };
 
 fn s(value: i32) -> Real {
@@ -1772,6 +1772,10 @@ fn curve_string_trim_between_curve_intersections_materializes_line_window() {
         CurveStringCurveTrimQueryPath2::Direct
     );
     assert_eq!(
+        trim.report().stage(),
+        CurveStringCurveTrimStage2::RangeMaterialization
+    );
+    assert_eq!(
         trim.report().start_intersection_report().query_path(),
         CurveStringIntersectionQueryPath2::Direct
     );
@@ -1854,6 +1858,10 @@ fn prepared_curve_string_trim_between_curve_intersections_reuses_cached_evidence
         CurveStringCurveTrimQueryPath2::Prepared
     );
     assert_eq!(
+        prepared.report().stage(),
+        CurveStringCurveTrimStage2::RangeMaterialization
+    );
+    assert_eq!(
         prepared.report().start_intersection_report().query_path(),
         CurveStringIntersectionQueryPath2::Prepared
     );
@@ -1910,6 +1918,10 @@ fn curve_string_trim_between_curve_intersections_reports_ambiguous_cutter_hits()
 
     assert!(trim.curve_string().is_none());
     assert!(trim.report().status().is_retained_evidence());
+    assert_eq!(
+        trim.report().stage(),
+        CurveStringCurveTrimStage2::HitSelection
+    );
     assert_eq!(trim.report().blocker(), Some(UncertaintyReason::Boundary));
     assert_eq!(trim.report().start_hits().len(), 2);
     assert_eq!(trim.report().end_hits().len(), 1);
