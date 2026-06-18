@@ -2041,6 +2041,14 @@ fn curve_string_trim_materializes_exact_line_subsegment_with_report() {
     assert_eq!(trim.report().segment_reports().len(), 1);
     assert_eq!(trim.report().segment_reports()[0].source_segment_index(), 0);
     assert_eq!(
+        trim.report().segment_reports()[0].source_segment_kind(),
+        SegmentKind::Line
+    );
+    assert_eq!(
+        trim.report().segment_reports()[0].output_segment_kind(),
+        Some(SegmentKind::Line)
+    );
+    assert_eq!(
         trim.report().segment_reports()[0].source_range().start(),
         &q(1, 4)
     );
@@ -2142,6 +2150,14 @@ fn curve_string_trim_reports_partial_arc_as_unsupported_without_materializing() 
             .is_retained_evidence()
     );
     assert_eq!(
+        trim.report().segment_reports()[0].source_segment_kind(),
+        SegmentKind::Arc
+    );
+    assert_eq!(
+        trim.report().segment_reports()[0].output_segment_kind(),
+        None
+    );
+    assert_eq!(
         trim.report().segment_reports()[0].source_range().start(),
         &q(1, 4)
     );
@@ -2229,6 +2245,14 @@ fn curve_string_trim_between_points_materializes_partial_arc() {
     );
     assert_eq!(trim.report().segment_reports().len(), 1);
     assert_eq!(trim.report().output_segment_count(), Some(1));
+    assert_eq!(
+        trim.report().segment_reports()[0].source_segment_kind(),
+        SegmentKind::Arc
+    );
+    assert_eq!(
+        trim.report().segment_reports()[0].output_segment_kind(),
+        Some(SegmentKind::Arc)
+    );
     assert_eq!(
         trim.report().segment_reports()[0].source_range().start(),
         &s(0)

@@ -532,6 +532,8 @@ pub struct CurveStringTrimPoint2 {
 #[derive(Clone, Debug, PartialEq)]
 pub struct CurveStringTrimSegmentReport2 {
     source_segment_index: usize,
+    source_segment_kind: SegmentKind,
+    output_segment_kind: Option<SegmentKind>,
     source_range: ParamRange,
     range_start_point: Option<Point2>,
     range_end_point: Option<Point2>,
@@ -1515,6 +1517,8 @@ impl CurveString2 {
             let source_range = ParamRange::new(range_start, range_end);
             let segment_report = CurveStringTrimSegmentReport2 {
                 source_segment_index,
+                source_segment_kind: self.segments[source_segment_index].structural_facts().kind,
+                output_segment_kind: None,
                 source_range: source_range.clone(),
                 range_start_point: None,
                 range_end_point: None,
@@ -1526,6 +1530,8 @@ impl CurveString2 {
                 policy,
             )? {
                 SegmentTrimMaterialization::Materialized(segment) => {
+                    let mut segment_report = segment_report;
+                    segment_report.output_segment_kind = Some(segment.structural_facts().kind);
                     segment_reports.push(segment_report);
                     trimmed_segments.push(segment);
                 }
@@ -1800,6 +1806,8 @@ impl CurveString2 {
         let segment_reports = vec![
             CurveStringTrimSegmentReport2 {
                 source_segment_index: previous_segment_index,
+                source_segment_kind: SegmentKind::Line,
+                output_segment_kind: Some(SegmentKind::Line),
                 source_range: previous_range,
                 range_start_point: Some(previous_line.start().clone()),
                 range_end_point: Some(previous_cut_point.clone()),
@@ -1807,6 +1815,8 @@ impl CurveString2 {
             },
             CurveStringTrimSegmentReport2 {
                 source_segment_index: next_segment_index,
+                source_segment_kind: SegmentKind::Line,
+                output_segment_kind: Some(SegmentKind::Line),
                 source_range: next_range,
                 range_start_point: Some(next_cut_point.clone()),
                 range_end_point: Some(next_line.end().clone()),
@@ -2244,6 +2254,8 @@ impl CurveString2 {
         let segment_reports = vec![
             CurveStringTrimSegmentReport2 {
                 source_segment_index: previous_segment_index,
+                source_segment_kind: SegmentKind::Line,
+                output_segment_kind: Some(SegmentKind::Line),
                 source_range: previous_range,
                 range_start_point: Some(previous_line.start().clone()),
                 range_end_point: Some((*previous_point).clone()),
@@ -2251,6 +2263,8 @@ impl CurveString2 {
             },
             CurveStringTrimSegmentReport2 {
                 source_segment_index: next_segment_index,
+                source_segment_kind: SegmentKind::Line,
+                output_segment_kind: Some(SegmentKind::Line),
                 source_range: next_range,
                 range_start_point: Some((*next_point).clone()),
                 range_end_point: Some(next_line.end().clone()),
@@ -2722,6 +2736,8 @@ impl CurveString2 {
             let source_range = ParamRange::new(range_start, range_end);
             let segment_report = CurveStringTrimSegmentReport2 {
                 source_segment_index,
+                source_segment_kind: self.segments[source_segment_index].structural_facts().kind,
+                output_segment_kind: None,
                 source_range: source_range.clone(),
                 range_start_point: Some(range_start_point.clone()),
                 range_end_point: Some(range_end_point.clone()),
@@ -2735,6 +2751,8 @@ impl CurveString2 {
                 policy,
             )? {
                 SegmentTrimMaterialization::Materialized(segment) => {
+                    let mut segment_report = segment_report;
+                    segment_report.output_segment_kind = Some(segment.structural_facts().kind);
                     segment_reports.push(segment_report);
                     trimmed_segments.push(segment);
                 }
@@ -2952,6 +2970,16 @@ impl CurveStringTrimSegmentReport2 {
     /// Returns the retained source segment index.
     pub const fn source_segment_index(&self) -> usize {
         self.source_segment_index
+    }
+
+    /// Returns the primitive family of the retained source segment.
+    pub const fn source_segment_kind(&self) -> SegmentKind {
+        self.source_segment_kind
+    }
+
+    /// Returns the primitive family of the emitted segment, when materialized.
+    pub const fn output_segment_kind(&self) -> Option<SegmentKind> {
+        self.output_segment_kind
     }
 
     /// Returns the retained source parameter range.
