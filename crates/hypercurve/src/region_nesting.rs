@@ -38,6 +38,8 @@ pub struct RegionBoundaryContourBuildReport2 {
     stage: RegionBoundaryContourBuildStage2,
     source_contour_count: usize,
     source_segment_count: usize,
+    output_contour_count: Option<usize>,
+    output_segment_count: Option<usize>,
     material_contour_count: Option<usize>,
     hole_contour_count: Option<usize>,
     material_segment_count: Option<usize>,
@@ -167,6 +169,7 @@ impl Region2 {
 
         let material_contour_count = material_contours.len();
         let hole_contour_count = hole_contours.len();
+        let output_contour_count = material_contour_count + hole_contour_count;
         let material_segment_count = role_reports
             .iter()
             .filter(|report| report.role == RegionBoundaryContourRole2::Material)
@@ -177,12 +180,15 @@ impl Region2 {
             .filter(|report| report.role == RegionBoundaryContourRole2::Hole)
             .map(|report| report.source_segment_count)
             .sum();
+        let output_segment_count = material_segment_count + hole_segment_count;
         Ok(RegionBoundaryContourBuildResult2 {
             region: Some(Region2::new(material_contours, hole_contours)),
             report: RegionBoundaryContourBuildReport2 {
                 stage: RegionBoundaryContourBuildStage2::RoleAssignment,
                 source_contour_count,
                 source_segment_count,
+                output_contour_count: Some(output_contour_count),
+                output_segment_count: Some(output_segment_count),
                 material_contour_count: Some(material_contour_count),
                 hole_contour_count: Some(hole_contour_count),
                 material_segment_count: Some(material_segment_count),
@@ -258,6 +264,16 @@ impl RegionBoundaryContourBuildReport2 {
         self.source_segment_count
     }
 
+    /// Returns total output contour count when role assignment materialized.
+    pub const fn output_contour_count(&self) -> Option<usize> {
+        self.output_contour_count
+    }
+
+    /// Returns total output boundary segment count when role assignment materialized.
+    pub const fn output_segment_count(&self) -> Option<usize> {
+        self.output_segment_count
+    }
+
     /// Returns material contour count when role assignment materialized.
     pub const fn material_contour_count(&self) -> Option<usize> {
         self.material_contour_count
@@ -323,6 +339,8 @@ fn blocked_boundary_contour_region_result(
             stage: RegionBoundaryContourBuildStage2::NestingValidation,
             source_contour_count,
             source_segment_count,
+            output_contour_count: None,
+            output_segment_count: None,
             material_contour_count: None,
             hole_contour_count: None,
             material_segment_count: None,

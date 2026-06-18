@@ -1451,11 +1451,7 @@ pub(crate) fn region_boolean_result_from_boundary_contours_with_prepared_cache_a
     let blocker = built.report().blocker();
     let result_material_contour_count = built.report().material_contour_count();
     let result_hole_contour_count = built.report().hole_contour_count();
-    let result_boundary_segment_count = built
-        .report()
-        .material_segment_count()
-        .zip(built.report().hole_segment_count())
-        .map(|(material_count, hole_count)| material_count + hole_count);
+    let result_boundary_segment_count = built.report().output_segment_count();
     let boundary_build_report = built.report().clone();
     Ok(RegionBooleanResult2 {
         region: built.into_region(),
