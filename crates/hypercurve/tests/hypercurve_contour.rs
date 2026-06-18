@@ -1,6 +1,6 @@
 use hypercurve::{
     BulgeVertex2, Classification, Contour2, ContourPointLocation, CurveError, CurvePolicy,
-    FillRule, Real, Segment2, UncertaintyReason,
+    CurveString2, FillRule, Real, Region2, RegionPointLocation, Segment2, UncertaintyReason,
 };
 
 fn s(value: i32) -> Real {
@@ -84,6 +84,70 @@ fn contour_rejects_open_segment_chain() {
 
     let err = Contour2::try_new(segments).expect_err("open chain is not a contour");
     assert_eq!(err, CurveError::DisconnectedCurveString);
+}
+
+#[test]
+fn contour_closure_report_materializes_closed_curve_string() {
+    let curve = CurveString2::try_new(vec![
+        vertex(0, 0, 0).segment_to(&vertex(4, 0, 0)).unwrap(),
+        vertex(4, 0, 0).segment_to(&vertex(4, 4, 0)).unwrap(),
+        vertex(4, 4, 0).segment_to(&vertex(0, 4, 0)).unwrap(),
+        vertex(0, 4, 0).segment_to(&vertex(0, 0, 0)).unwrap(),
+    ])
+    .unwrap();
+
+    let closed = Contour2::from_curve_string_with_report(curve, FillRule::EvenOdd).unwrap();
+
+    assert!(closed.report().status().is_native_exact());
+    assert_eq!(closed.report().source_segment_count(), 4);
+    assert_eq!(closed.report().fill_rule(), FillRule::EvenOdd);
+    assert_eq!(closed.report().blocker(), None);
+    let contour = closed.contour().unwrap();
+    assert_eq!(contour.len(), 4);
+    assert_eq!(contour.fill_rule(), FillRule::EvenOdd);
+}
+
+#[test]
+fn contour_closure_report_blocks_certified_open_curve_string() {
+    let curve = CurveString2::try_new(vec![
+        vertex(0, 0, 0).segment_to(&vertex(1, 0, 0)).unwrap(),
+        vertex(1, 0, 0).segment_to(&vertex(2, 0, 0)).unwrap(),
+    ])
+    .unwrap();
+
+    let closed = Contour2::from_curve_string_with_report(curve, FillRule::NonZero).unwrap();
+
+    assert!(closed.contour().is_none());
+    assert!(closed.report().status().is_retained_evidence());
+    assert_eq!(closed.report().source_segment_count(), 2);
+    assert_eq!(closed.report().fill_rule(), FillRule::NonZero);
+    assert_eq!(closed.report().blocker(), Some(UncertaintyReason::Boundary));
+}
+
+#[test]
+fn closed_curve_string_contour_feeds_boundary_region_report() {
+    let curve = CurveString2::try_new(vec![
+        vertex(0, 0, 0).segment_to(&vertex(4, 0, 0)).unwrap(),
+        vertex(4, 0, 0).segment_to(&vertex(4, 4, 0)).unwrap(),
+        vertex(4, 4, 0).segment_to(&vertex(0, 4, 0)).unwrap(),
+        vertex(0, 4, 0).segment_to(&vertex(0, 0, 0)).unwrap(),
+    ])
+    .unwrap();
+    let contour = Contour2::from_curve_string_with_report(curve, FillRule::NonZero)
+        .unwrap()
+        .into_contour()
+        .unwrap();
+
+    let built = Region2::from_boundary_contours_with_report(vec![contour], &policy()).unwrap();
+
+    assert!(built.report().status().is_native_exact());
+    assert_eq!(built.report().source_contour_count(), 1);
+    assert_eq!(built.report().material_contour_count(), Some(1));
+    assert_eq!(built.report().hole_contour_count(), Some(0));
+    assert_eq!(
+        built.region().unwrap().classify_point(&p(2, 2), &policy()),
+        Classification::Decided(RegionPointLocation::Inside)
+    );
 }
 
 #[test]

@@ -33,6 +33,22 @@ pub enum ContourPointLocation {
     Inside,
 }
 
+/// Report for converting a connected curve string into a closed contour.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ContourClosureReport2 {
+    source_segment_count: usize,
+    fill_rule: FillRule,
+    status: RetainedTopologyStatus,
+    blocker: Option<UncertaintyReason>,
+}
+
+/// Result of report-bearing curve-string closure.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ContourClosureResult2 {
+    contour: Option<Contour2>,
+    report: ContourClosureReport2,
+}
+
 /// Report for a closed-contour line-line chamfer.
 #[derive(Clone, Debug, PartialEq)]
 pub struct ContourChamferReport2 {
@@ -103,6 +119,39 @@ impl Contour2 {
     /// Constructs a closed contour without checking connectivity or closure.
     pub const fn new_unchecked(curve: CurveString2, fill_rule: FillRule) -> Self {
         Self { curve, fill_rule }
+    }
+
+    /// Converts a connected curve string into a closed contour with a report.
+    ///
+    /// The closure decision is exact: the first and last points must have a
+    /// structurally proven zero squared distance. Certified-open chains and
+    /// unknown endpoint equality are retained as non-materialized reports
+    /// instead of being snapped or closed by an implicit segment.
+    pub fn from_curve_string_with_report(
+        curve: CurveString2,
+        fill_rule: FillRule,
+    ) -> CurveResult<ContourClosureResult2> {
+        let source_segment_count = curve.len();
+        match closed_curve_string_status(&curve)? {
+            Classification::Decided(()) => Ok(ContourClosureResult2 {
+                contour: Some(Self { curve, fill_rule }),
+                report: ContourClosureReport2 {
+                    source_segment_count,
+                    fill_rule,
+                    status: RetainedTopologyStatus::NativeExact,
+                    blocker: None,
+                },
+            }),
+            Classification::Uncertain(reason) => Ok(ContourClosureResult2 {
+                contour: None,
+                report: ContourClosureReport2 {
+                    source_segment_count,
+                    fill_rule,
+                    status: retained_status_for_contour_closure_blocker(reason),
+                    blocker: Some(reason),
+                },
+            }),
+        }
     }
 
     /// Constructs a closed contour from exact bulge vertices.
@@ -534,6 +583,45 @@ impl Contour2 {
     }
 }
 
+impl ContourClosureReport2 {
+    /// Returns the source curve-string segment count.
+    pub const fn source_segment_count(&self) -> usize {
+        self.source_segment_count
+    }
+
+    /// Returns the fill rule requested for the contour.
+    pub const fn fill_rule(&self) -> FillRule {
+        self.fill_rule
+    }
+
+    /// Returns closure materialization status.
+    pub const fn status(&self) -> RetainedTopologyStatus {
+        self.status
+    }
+
+    /// Returns the exact blocker for non-materialized closure attempts.
+    pub const fn blocker(&self) -> Option<UncertaintyReason> {
+        self.blocker
+    }
+}
+
+impl ContourClosureResult2 {
+    /// Returns the materialized contour, if the curve string was closed.
+    pub const fn contour(&self) -> Option<&Contour2> {
+        self.contour.as_ref()
+    }
+
+    /// Consumes this result and returns the materialized contour, if any.
+    pub fn into_contour(self) -> Option<Contour2> {
+        self.contour
+    }
+
+    /// Returns retained closure evidence.
+    pub const fn report(&self) -> &ContourClosureReport2 {
+        &self.report
+    }
+}
+
 impl ContourChamferReport2 {
     /// Returns the contour vertex index requested by the chamfer.
     pub const fn vertex_index(&self) -> usize {
@@ -864,12 +952,36 @@ fn push_contour_line_merge_run(
 }
 
 fn validate_closed_curve_string(curve: &CurveString2) -> CurveResult<()> {
+    match closed_curve_string_status(curve)? {
+        Classification::Decided(()) => Ok(()),
+        Classification::Uncertain(UncertaintyReason::Boundary) => {
+            Err(CurveError::DisconnectedCurveString)
+        }
+        Classification::Uncertain(UncertaintyReason::RealSign) => {
+            Err(CurveError::AmbiguousCurveStringConnection)
+        }
+        Classification::Uncertain(_) => Err(CurveError::AmbiguousCurveStringConnection),
+    }
+}
+
+fn closed_curve_string_status(curve: &CurveString2) -> CurveResult<Classification<()>> {
     let start = curve.start().ok_or(CurveError::EmptyCurveString)?;
     let end = curve.end().ok_or(CurveError::EmptyCurveString)?;
     match start.distance_squared(end).zero_status() {
-        ZeroStatus::Zero => Ok(()),
-        ZeroStatus::NonZero => Err(CurveError::DisconnectedCurveString),
-        ZeroStatus::Unknown => Err(CurveError::AmbiguousCurveStringConnection),
+        ZeroStatus::Zero => Ok(Classification::Decided(())),
+        ZeroStatus::NonZero => Ok(Classification::Uncertain(UncertaintyReason::Boundary)),
+        ZeroStatus::Unknown => Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+    }
+}
+
+fn retained_status_for_contour_closure_blocker(
+    reason: UncertaintyReason,
+) -> RetainedTopologyStatus {
+    match reason {
+        UncertaintyReason::Boundary | UncertaintyReason::Unsupported => {
+            RetainedTopologyStatus::Unsupported
+        }
+        _ => RetainedTopologyStatus::Unresolved,
     }
 }
 
