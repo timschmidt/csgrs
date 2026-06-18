@@ -2561,6 +2561,9 @@ mod tests {
         );
         assert_eq!(result.report().blocker(), Some(UncertaintyReason::Boundary));
         let boundary_report = result.report().boundary_build_report().unwrap();
+        assert_eq!(boundary_report.validation_candidate_pair_count(), 1);
+        assert_eq!(boundary_report.validation_tested_pair_count(), 1);
+        assert_eq!(boundary_report.nesting_classification_count(), 0);
         assert_eq!(boundary_report.blocker_first_contour_index(), Some(0));
         assert_eq!(boundary_report.blocker_second_contour_index(), Some(1));
         assert_eq!(

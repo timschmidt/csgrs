@@ -177,6 +177,9 @@ fn boundary_contour_region_report_assigns_material_and_hole_roles() {
     );
     assert_eq!(report.source_contour_count(), 2);
     assert_eq!(report.source_segment_count(), 8);
+    assert_eq!(report.validation_candidate_pair_count(), 1);
+    assert_eq!(report.validation_tested_pair_count(), 1);
+    assert_eq!(report.nesting_classification_count(), 2);
     assert_eq!(report.blocker_first_contour_index(), None);
     assert_eq!(report.blocker_second_contour_index(), None);
     assert_eq!(report.output_contour_count(), Some(2));
@@ -261,6 +264,9 @@ fn boundary_contour_region_report_blocks_crossing_roles() {
     assert_eq!(report.blocker(), Some(UncertaintyReason::Boundary));
     assert_eq!(report.source_contour_count(), 2);
     assert_eq!(report.source_segment_count(), 8);
+    assert_eq!(report.validation_candidate_pair_count(), 1);
+    assert_eq!(report.validation_tested_pair_count(), 1);
+    assert_eq!(report.nesting_classification_count(), 0);
     assert_eq!(report.blocker_first_contour_index(), Some(0));
     assert_eq!(report.blocker_second_contour_index(), Some(1));
     assert_eq!(report.output_contour_count(), None);
@@ -288,6 +294,9 @@ fn boundary_contour_region_report_blocks_touching_roles_with_source_pair() {
         RegionBoundaryContourBuildStage2::NestingValidation
     );
     assert_eq!(report.blocker(), Some(UncertaintyReason::Boundary));
+    assert_eq!(report.validation_candidate_pair_count(), 1);
+    assert_eq!(report.validation_tested_pair_count(), 1);
+    assert_eq!(report.nesting_classification_count(), 0);
     assert_eq!(report.blocker_first_contour_index(), Some(0));
     assert_eq!(report.blocker_second_contour_index(), Some(1));
     assert_eq!(report.output_contour_count(), None);

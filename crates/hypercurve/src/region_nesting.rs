@@ -38,6 +38,9 @@ pub struct RegionBoundaryContourBuildReport2 {
     stage: RegionBoundaryContourBuildStage2,
     source_contour_count: usize,
     source_segment_count: usize,
+    validation_candidate_pair_count: usize,
+    validation_tested_pair_count: usize,
+    nesting_classification_count: usize,
     blocker_first_contour_index: Option<usize>,
     blocker_second_contour_index: Option<usize>,
     output_contour_count: Option<usize>,
@@ -85,10 +88,23 @@ struct BoundaryContourNestingBlocker {
     second_contour_index: usize,
 }
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+struct BoundaryContourValidationCounts {
+    candidate_pair_count: usize,
+    tested_pair_count: usize,
+    nesting_classification_count: usize,
+}
+
 #[derive(Clone, Debug, PartialEq)]
 enum BoundaryContourNestingOutcome {
-    Decided(BoundaryContourNestingDepths),
-    Blocked(BoundaryContourNestingBlocker),
+    Decided {
+        nesting: BoundaryContourNestingDepths,
+        counts: BoundaryContourValidationCounts,
+    },
+    Blocked {
+        blocker: BoundaryContourNestingBlocker,
+        counts: BoundaryContourValidationCounts,
+    },
 }
 
 impl Region2 {
@@ -130,12 +146,13 @@ impl Region2 {
             .iter()
             .map(|contour| contour.segments().len())
             .sum();
-        let nesting = match contour_nesting_depths(&contours, policy)? {
-            BoundaryContourNestingOutcome::Decided(nesting) => nesting,
-            BoundaryContourNestingOutcome::Blocked(blocker) => {
+        let (nesting, counts) = match contour_nesting_depths(&contours, policy)? {
+            BoundaryContourNestingOutcome::Decided { nesting, counts } => (nesting, counts),
+            BoundaryContourNestingOutcome::Blocked { blocker, counts } => {
                 return Ok(blocked_boundary_contour_region_result(
                     source_contour_count,
                     source_segment_count,
+                    counts,
                     Some((blocker.first_contour_index, blocker.second_contour_index)),
                     retained_status_for_boundary_contour_blocker(blocker.reason),
                     blocker.reason,
@@ -203,6 +220,9 @@ impl Region2 {
                 stage: RegionBoundaryContourBuildStage2::RoleAssignment,
                 source_contour_count,
                 source_segment_count,
+                validation_candidate_pair_count: counts.candidate_pair_count,
+                validation_tested_pair_count: counts.tested_pair_count,
+                nesting_classification_count: counts.nesting_classification_count,
                 blocker_first_contour_index: None,
                 blocker_second_contour_index: None,
                 output_contour_count: Some(output_contour_count),
@@ -282,6 +302,21 @@ impl RegionBoundaryContourBuildReport2 {
         self.source_segment_count
     }
 
+    /// Returns the number of contour pairs scheduled for intersection validation.
+    pub const fn validation_candidate_pair_count(&self) -> usize {
+        self.validation_candidate_pair_count
+    }
+
+    /// Returns the number of contour pairs tested before success or a blocker.
+    pub const fn validation_tested_pair_count(&self) -> usize {
+        self.validation_tested_pair_count
+    }
+
+    /// Returns point-containment classifications used to assign nesting roles.
+    pub const fn nesting_classification_count(&self) -> usize {
+        self.nesting_classification_count
+    }
+
     /// Returns the first source contour index involved in a blocking relation.
     pub const fn blocker_first_contour_index(&self) -> Option<usize> {
         self.blocker_first_contour_index
@@ -358,6 +393,7 @@ impl RegionBoundaryContourBuildResult2 {
 fn blocked_boundary_contour_region_result(
     source_contour_count: usize,
     source_segment_count: usize,
+    counts: BoundaryContourValidationCounts,
     blocker_contour_indices: Option<(usize, usize)>,
     status: RetainedTopologyStatus,
     blocker: UncertaintyReason,
@@ -370,6 +406,9 @@ fn blocked_boundary_contour_region_result(
             stage: RegionBoundaryContourBuildStage2::NestingValidation,
             source_contour_count,
             source_segment_count,
+            validation_candidate_pair_count: counts.candidate_pair_count,
+            validation_tested_pair_count: counts.tested_pair_count,
+            nesting_classification_count: counts.nesting_classification_count,
             blocker_first_contour_index,
             blocker_second_contour_index,
             output_contour_count: None,
@@ -400,16 +439,28 @@ fn contour_nesting_depths(
     contours: &[Contour2],
     policy: &CurvePolicy,
 ) -> CurveResult<BoundaryContourNestingOutcome> {
+    let candidate_pair_count = contours
+        .len()
+        .saturating_mul(contours.len().saturating_sub(1))
+        / 2;
+    let mut counts = BoundaryContourValidationCounts {
+        candidate_pair_count,
+        tested_pair_count: 0,
+        nesting_classification_count: 0,
+    };
+
     for (left_index, left) in contours.iter().enumerate() {
         for (right_offset, right) in contours[left_index + 1..].iter().enumerate() {
+            counts.tested_pair_count += 1;
             if !left.intersect_contour(right, policy)?.is_empty() {
-                return Ok(BoundaryContourNestingOutcome::Blocked(
-                    BoundaryContourNestingBlocker {
+                return Ok(BoundaryContourNestingOutcome::Blocked {
+                    blocker: BoundaryContourNestingBlocker {
                         reason: crate::UncertaintyReason::Boundary,
                         first_contour_index: left_index,
                         second_contour_index: left_index + 1 + right_offset,
                     },
-                ));
+                    counts,
+                });
             }
         }
     }
@@ -436,28 +487,31 @@ fn contour_nesting_depths(
                 continue;
             }
 
+            counts.nesting_classification_count += 1;
             match container.classify_point(sample, policy) {
                 Classification::Decided(ContourPointLocation::Inside) => {
                     containing_contour_indices.push(container_index);
                 }
                 Classification::Decided(ContourPointLocation::Outside) => {}
                 Classification::Decided(ContourPointLocation::Boundary) => {
-                    return Ok(BoundaryContourNestingOutcome::Blocked(
-                        BoundaryContourNestingBlocker {
+                    return Ok(BoundaryContourNestingOutcome::Blocked {
+                        blocker: BoundaryContourNestingBlocker {
                             reason: crate::UncertaintyReason::Boundary,
                             first_contour_index: candidate_index,
                             second_contour_index: container_index,
                         },
-                    ));
+                        counts,
+                    });
                 }
                 Classification::Uncertain(reason) => {
-                    return Ok(BoundaryContourNestingOutcome::Blocked(
-                        BoundaryContourNestingBlocker {
+                    return Ok(BoundaryContourNestingOutcome::Blocked {
+                        blocker: BoundaryContourNestingBlocker {
                             reason,
                             first_contour_index: candidate_index,
                             second_contour_index: container_index,
                         },
-                    ));
+                        counts,
+                    });
                 }
             }
         }
@@ -468,7 +522,8 @@ fn contour_nesting_depths(
         });
     }
 
-    Ok(BoundaryContourNestingOutcome::Decided(
-        BoundaryContourNestingDepths { entries },
-    ))
+    Ok(BoundaryContourNestingOutcome::Decided {
+        nesting: BoundaryContourNestingDepths { entries },
+        counts,
+    })
 }
