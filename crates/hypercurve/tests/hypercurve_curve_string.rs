@@ -458,6 +458,45 @@ fn curve_string_chamfer_line_line_vertex_materializes_exact_segments() {
 }
 
 #[test]
+fn curve_string_chamfer_line_line_vertex_by_points_materializes_exact_segments() {
+    let curve =
+        CurveString2::try_new(vec![line_segment(0, 0, 4, 0), line_segment(4, 0, 4, 4)]).unwrap();
+
+    let chamfer = curve
+        .chamfer_line_line_vertex_by_points(1, &p(3, 0), &p(4, 1), &policy())
+        .unwrap();
+
+    assert!(chamfer.report().status().is_native_exact());
+    assert_eq!(chamfer.report().previous_trim().param(), &q(3, 4));
+    assert_eq!(chamfer.report().next_trim().param(), &q(1, 4));
+    let curve = chamfer
+        .curve_string()
+        .expect("point-bearing line-line chamfer should materialize");
+    assert_eq!(curve.len(), 3);
+    assert_eq!(curve.segments()[0].end(), &p(3, 0));
+    assert_eq!(curve.segments()[1].start(), &p(3, 0));
+    assert_eq!(curve.segments()[1].end(), &p(4, 1));
+    assert_eq!(curve.segments()[2].start(), &p(4, 1));
+}
+
+#[test]
+fn curve_string_chamfer_line_line_vertex_by_points_reports_off_segment_boundary() {
+    let curve =
+        CurveString2::try_new(vec![line_segment(0, 0, 4, 0), line_segment(4, 0, 4, 4)]).unwrap();
+
+    let chamfer = curve
+        .chamfer_line_line_vertex_by_points(1, &p(5, 0), &p(4, 1), &policy())
+        .unwrap();
+
+    assert!(chamfer.curve_string().is_none());
+    assert!(chamfer.report().status().is_retained_evidence());
+    assert_eq!(
+        chamfer.report().blocker(),
+        Some(UncertaintyReason::Boundary)
+    );
+}
+
+#[test]
 fn curve_string_chamfer_line_line_vertex_reports_boundary_parameters() {
     let curve =
         CurveString2::try_new(vec![line_segment(0, 0, 4, 0), line_segment(4, 0, 4, 4)]).unwrap();

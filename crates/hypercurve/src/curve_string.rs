@@ -848,6 +848,89 @@ impl CurveString2 {
         })
     }
 
+    /// Chamfers one interior line-line vertex by exact cut points.
+    ///
+    /// The supplied points are validated against the specific previous and next
+    /// finite line segments adjacent to `vertex_index`. Certified point
+    /// parameters are then passed to
+    /// [`CurveString2::chamfer_line_line_vertex_by_parameters`], so the same
+    /// strict interior-parameter and retained-range rules decide whether native
+    /// topology may be materialized.
+    pub fn chamfer_line_line_vertex_by_points(
+        &self,
+        vertex_index: usize,
+        previous_point: &Point2,
+        next_point: &Point2,
+        policy: &CurvePolicy,
+    ) -> CurveResult<CurveStringChamferResult2> {
+        if vertex_index == 0 || vertex_index >= self.len() {
+            return Err(CurveError::InvalidCurveRange);
+        }
+        let previous_segment_index = vertex_index - 1;
+        let next_segment_index = vertex_index;
+        let previous_zero = CurveStringTrimPoint2::new(previous_segment_index, Real::zero());
+        let next_zero = CurveStringTrimPoint2::new(next_segment_index, Real::zero());
+        let (previous_line, next_line) = match (
+            &self.segments[previous_segment_index],
+            &self.segments[next_segment_index],
+        ) {
+            (Segment2::Line(previous), Segment2::Line(next)) => (previous, next),
+            _ => {
+                return Ok(blocked_chamfer_result(
+                    self,
+                    previous_segment_index,
+                    next_segment_index,
+                    previous_zero,
+                    next_zero,
+                    Vec::new(),
+                    RetainedTopologyStatus::Unsupported,
+                    Some(UncertaintyReason::Unsupported),
+                ));
+            }
+        };
+
+        let previous_param =
+            match line_chamfer_point_parameter(previous_line, previous_point, policy)? {
+                Classification::Decided(param) => param,
+                Classification::Uncertain(reason) => {
+                    return Ok(blocked_chamfer_result(
+                        self,
+                        previous_segment_index,
+                        next_segment_index,
+                        previous_zero,
+                        next_zero,
+                        Vec::new(),
+                        retained_status_for_uncertainty(reason),
+                        Some(reason),
+                    ));
+                }
+            };
+        let previous_trim =
+            CurveStringTrimPoint2::new(previous_segment_index, previous_param.clone());
+        let next_param = match line_chamfer_point_parameter(next_line, next_point, policy)? {
+            Classification::Decided(param) => param,
+            Classification::Uncertain(reason) => {
+                return Ok(blocked_chamfer_result(
+                    self,
+                    previous_segment_index,
+                    next_segment_index,
+                    previous_trim,
+                    next_zero,
+                    Vec::new(),
+                    retained_status_for_uncertainty(reason),
+                    Some(reason),
+                ));
+            }
+        };
+
+        self.chamfer_line_line_vertex_by_parameters(
+            vertex_index,
+            previous_param,
+            next_param,
+            policy,
+        )
+    }
+
     /// Extends one endpoint line segment to an exact point on its supporting line.
     ///
     /// This first extension slice deliberately supports only line endpoint
@@ -1975,6 +2058,29 @@ fn line_point_parameter(
             Some(true) => Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
             None => Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
         },
+    }
+}
+
+fn line_chamfer_point_parameter(
+    line: &LineSeg2,
+    point: &Point2,
+    policy: &CurvePolicy,
+) -> CurveResult<Classification<Real>> {
+    match line.contains_point(point, policy) {
+        Classification::Decided(true) => line_point_parameter(line, point, policy),
+        Classification::Decided(false) => {
+            Ok(Classification::Uncertain(UncertaintyReason::Boundary))
+        }
+        Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
+    }
+}
+
+fn retained_status_for_uncertainty(reason: UncertaintyReason) -> RetainedTopologyStatus {
+    match reason {
+        UncertaintyReason::Boundary | UncertaintyReason::Unsupported => {
+            RetainedTopologyStatus::Unsupported
+        }
+        _ => RetainedTopologyStatus::Unresolved,
     }
 }
 
