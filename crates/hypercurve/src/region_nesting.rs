@@ -14,7 +14,7 @@ use crate::{
     ArcArcIntersection, CircularArc2, Classification, Contour2, ContourPointLocation, CurveError,
     CurvePolicy, CurveResult, FillRule, LineArcIntersection, LineArcOrder, LineLineIntersection,
     LineSeg2, ParamRange, Point2, Region2, RetainedTopologyStatus, Segment2, SegmentIntersection,
-    UncertaintyReason,
+    SegmentKind, UncertaintyReason,
 };
 
 /// Material/hole role assigned to one closed boundary contour.
@@ -96,8 +96,10 @@ pub struct RegionLineSegmentRingSourceReport2 {
 #[derive(Clone, Debug, PartialEq)]
 pub struct RegionLineSegmentArrangedSourceReport2 {
     source_segment_index: usize,
+    source_segment_kind: SegmentKind,
     source_range: ParamRange,
     arranged_segment_index: usize,
+    arranged_segment_kind: SegmentKind,
     output_start_point: Point2,
     output_end_point: Point2,
     status: RetainedTopologyStatus,
@@ -424,7 +426,7 @@ impl Region2 {
                             segments.len(),
                             Some(arranged.report),
                             Some(endpoint_graph),
-                            native_arranged_source_reports(&arranged.segments),
+                            native_arranged_source_reports(&segments, &arranged.segments),
                             LineSegmentRingAssemblyReportParts {
                                 counts,
                                 ..LineSegmentRingAssemblyReportParts::default()
@@ -446,7 +448,7 @@ impl Region2 {
                         segments.len(),
                         Some(arranged.report),
                         Some(endpoint_graph),
-                        native_arranged_source_reports(&arranged.segments),
+                        native_arranged_source_reports(&segments, &arranged.segments),
                         report,
                         RegionLineSegmentRegionBuildStage2::RingAssembly,
                         retained_status_for_line_segment_region_blocker(blocker),
@@ -509,7 +511,10 @@ impl Region2 {
                 reversed_source_segment_count: assembled.reversed_source_segment_count,
                 output_ring_count,
                 output_boundary_segment_count,
-                arranged_source_reports: native_arranged_source_reports(&arranged.segments),
+                arranged_source_reports: native_arranged_source_reports(
+                    &segments,
+                    &arranged.segments,
+                ),
                 source_reports: assembled.source_reports,
                 boundary_build_report: Some(boundary_build_report),
                 status,
@@ -854,6 +859,11 @@ impl RegionLineSegmentArrangedSourceReport2 {
         self.source_segment_index
     }
 
+    /// Returns the primitive family of the source segment.
+    pub const fn source_segment_kind(&self) -> SegmentKind {
+        self.source_segment_kind
+    }
+
     /// Returns the retained parameter range on the source segment.
     pub const fn source_range(&self) -> &ParamRange {
         &self.source_range
@@ -862,6 +872,11 @@ impl RegionLineSegmentArrangedSourceReport2 {
     /// Returns the arranged fragment index after exact splitting.
     pub const fn arranged_segment_index(&self) -> usize {
         self.arranged_segment_index
+    }
+
+    /// Returns the primitive family of the arranged fragment.
+    pub const fn arranged_segment_kind(&self) -> SegmentKind {
+        self.arranged_segment_kind
     }
 
     /// Returns the arranged fragment start point.
@@ -2183,8 +2198,10 @@ fn line_arranged_source_reports(
         .map(
             |(arranged_segment_index, segment)| RegionLineSegmentArrangedSourceReport2 {
                 source_segment_index: segment.source_segment_index,
+                source_segment_kind: SegmentKind::Line,
                 source_range: segment.source_range.clone(),
                 arranged_segment_index,
+                arranged_segment_kind: SegmentKind::Line,
                 output_start_point: segment.line.start().clone(),
                 output_end_point: segment.line.end().clone(),
                 status: RetainedTopologyStatus::NativeExact,
@@ -2194,6 +2211,7 @@ fn line_arranged_source_reports(
 }
 
 fn native_arranged_source_reports(
+    source_segments: &[Segment2],
     segments: &[ArrangedNativeSegment],
 ) -> Vec<RegionLineSegmentArrangedSourceReport2> {
     segments
@@ -2202,8 +2220,12 @@ fn native_arranged_source_reports(
         .map(
             |(arranged_segment_index, segment)| RegionLineSegmentArrangedSourceReport2 {
                 source_segment_index: segment.source_segment_index,
+                source_segment_kind: source_segments[segment.source_segment_index]
+                    .structural_facts()
+                    .kind,
                 source_range: segment.source_range.clone(),
                 arranged_segment_index,
+                arranged_segment_kind: segment.segment.structural_facts().kind,
                 output_start_point: segment.segment.start().clone(),
                 output_end_point: segment.segment.end().clone(),
                 status: RetainedTopologyStatus::NativeExact,

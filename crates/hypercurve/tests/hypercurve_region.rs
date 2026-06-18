@@ -2,7 +2,7 @@ use hypercurve::{
     BulgeVertex2, CircularArc2, Classification, Contour2, CurveError, CurvePolicy, CurveString2,
     FillRule, FiniteProjectionOptions, Real, Region2, RegionBoundaryContourBuildStage2,
     RegionBoundaryContourRole2, RegionLineSegmentRegionBuildStage2, RegionPointLocation,
-    RegionView2, Segment2, UncertaintyReason, finite_polyline_vertex_centroid,
+    RegionView2, Segment2, SegmentKind, UncertaintyReason, finite_polyline_vertex_centroid,
     finite_ring_signed_area, try_finite_polyline_vertex_centroid, try_finite_ring_signed_area,
 };
 use proptest::prelude::*;
@@ -363,6 +363,14 @@ fn unordered_line_segments_build_region_with_source_provenance() {
         0
     );
     assert_eq!(
+        report.arranged_source_reports()[0].source_segment_kind(),
+        SegmentKind::Line
+    );
+    assert_eq!(
+        report.arranged_source_reports()[0].arranged_segment_kind(),
+        SegmentKind::Line
+    );
+    assert_eq!(
         report.arranged_source_reports()[0].source_range(),
         &hypercurve::ParamRange::new(s(0), s(1))
     );
@@ -526,6 +534,22 @@ fn unordered_native_segments_build_line_arc_region_with_source_provenance() {
         report.arranged_source_reports()[1].source_segment_index(),
         1
     );
+    assert_eq!(
+        report.arranged_source_reports()[0].source_segment_kind(),
+        SegmentKind::Line
+    );
+    assert_eq!(
+        report.arranged_source_reports()[0].arranged_segment_kind(),
+        SegmentKind::Line
+    );
+    assert_eq!(
+        report.arranged_source_reports()[1].source_segment_kind(),
+        SegmentKind::Arc
+    );
+    assert_eq!(
+        report.arranged_source_reports()[1].arranged_segment_kind(),
+        SegmentKind::Arc
+    );
     assert_eq!(report.source_reports().len(), 2);
     assert_eq!(report.source_reports()[0].source_segment_index(), 0);
     assert_eq!(report.source_reports()[1].source_segment_index(), 1);
@@ -637,6 +661,14 @@ fn unordered_native_segments_split_line_arc_crossing_before_boundary_blocker() {
         0
     );
     assert_eq!(
+        report.arranged_source_reports()[0].source_segment_kind(),
+        SegmentKind::Arc
+    );
+    assert_eq!(
+        report.arranged_source_reports()[0].arranged_segment_kind(),
+        SegmentKind::Arc
+    );
+    assert_eq!(
         report.arranged_source_reports()[0].source_range(),
         &hypercurve::ParamRange::new(s(0), q(1, 2))
     );
@@ -685,6 +717,14 @@ fn unordered_native_segments_split_arc_arc_crossing_before_boundary_blocker() {
     assert_eq!(
         report.arranged_source_reports()[0].source_segment_index(),
         0
+    );
+    assert_eq!(
+        report.arranged_source_reports()[0].source_segment_kind(),
+        SegmentKind::Arc
+    );
+    assert_eq!(
+        report.arranged_source_reports()[0].arranged_segment_kind(),
+        SegmentKind::Arc
     );
     assert_eq!(
         report.arranged_source_reports()[0].source_range(),
