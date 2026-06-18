@@ -351,6 +351,7 @@ pub(crate) fn simplify_selected_cell_complex(
         selected.region_ownership_report.as_ref(),
         &gate_counts,
     )?;
+    let selected_counts = selected.counts();
     let mut blockers = selected.blockers;
     let mut faces = Vec::new();
     let mut duplicate_cells_removed = 0;
@@ -359,7 +360,7 @@ pub(crate) fn simplify_selected_cell_complex(
     let mut zero_area_cells_removed = 0;
     let mut interior_edges_removed = 0;
     let selected_face_orientations = selected.selected_face_orientations.clone();
-    let selected_faces_before_simplification = selected.selected_faces.len();
+    let selected_faces_before_simplification = selected_counts.selected_faces;
     let mut selected_boundary_nodes_before_simplification = 0usize;
     for &source_face in &selected.selected_faces {
         if let Some(face) = selected.faces.get(source_face) {
@@ -372,18 +373,12 @@ pub(crate) fn simplify_selected_cell_complex(
             selected_boundary_nodes_before_simplification = next_count;
         }
     }
-    let oriented_selected_faces_before_simplification = selected_face_orientations.len();
-    let reversed_selected_faces_before_simplification = selected_face_orientations
-        .iter()
-        .filter(|orientation| orientation.reverse)
-        .count();
-    let volume_oriented_selected_faces_before_simplification = selected_face_orientations
-        .iter()
-        .filter(|orientation| orientation.from_volume_adjacency)
-        .count();
+    let oriented_selected_faces_before_simplification = selected_counts.oriented_selected_faces;
+    let reversed_selected_faces_before_simplification = selected_counts.reversed_selected_faces;
+    let volume_oriented_selected_faces_before_simplification =
+        selected_counts.volume_oriented_selected_faces;
     let label_oriented_selected_faces_before_simplification =
-        oriented_selected_faces_before_simplification
-            .saturating_sub(volume_oriented_selected_faces_before_simplification);
+        selected_counts.label_oriented_selected_faces;
     let require_volume_orientations = !matches!(
         selected.operation,
         ExactBooleanOperation::SelectedRegions(_)

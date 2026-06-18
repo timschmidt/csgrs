@@ -136,6 +136,7 @@ pub struct ExactSelectedFaceOrientation {
 pub(crate) struct ExactSelectedCellComplexCounts {
     pub(crate) selected_faces: usize,
     pub(crate) selected_volume_regions: usize,
+    pub(crate) oriented_selected_faces: usize,
     pub(crate) reversed_selected_faces: usize,
     pub(crate) volume_oriented_selected_faces: usize,
     pub(crate) label_oriented_selected_faces: usize,
@@ -881,6 +882,7 @@ impl ExactSelectedCellComplex {
         ExactSelectedCellComplexCounts {
             selected_faces: self.selected_faces.len(),
             selected_volume_regions: self.selected_volume_regions.len(),
+            oriented_selected_faces: self.selected_face_orientations.len(),
             reversed_selected_faces: self
                 .selected_face_orientations
                 .iter()
