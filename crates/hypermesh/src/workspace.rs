@@ -5,7 +5,6 @@ use super::boolean::{
     arrangement_cell_complex_shortcut_attempt,
     certified_arrangement_cell_complex_preflight_from_retained_attempt,
     materialize_boolean_exact_request_from_retained_graph,
-    materialize_certified_boolean_support_with_artifacts,
     preflight_boolean_exact_request_from_graph,
     try_materialize_certified_boolean_support_with_artifacts,
 };
@@ -369,7 +368,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
                 .graph
                 .as_ref()
                 .expect("intersection graph cache was just populated");
-            let result = materialize_certified_boolean_support_with_artifacts(
+            let result = try_materialize_certified_boolean_support_with_artifacts(
                 self.left,
                 self.right,
                 request,
@@ -377,7 +376,12 @@ impl<'a> ExactBooleanWorkspace<'a> {
                 Some(graph),
                 regularized_arrangement,
                 self.regularized_solid_arrangement_attempt(request),
-            )?;
+            )?
+            .ok_or_else(|| {
+                workspace_report_validation_error(
+                    ExactReportValidationError::StatusEvidenceMismatch,
+                )
+            })?;
             return self.store_materialization_and_promote_evaluation(request, result);
         }
         let graph = self

@@ -2713,27 +2713,6 @@ pub(crate) fn try_materialize_certified_boolean_support_with_artifacts(
     Ok(result)
 }
 
-pub(crate) fn materialize_certified_boolean_support_with_artifacts(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    request: ExactBooleanRequest,
-    support: ExactBooleanSupport,
-    retained_graph: Option<&ExactIntersectionGraph>,
-    retained_regularized_arrangement: Option<&ExactArrangement>,
-    retained_arrangement_attempt: Option<&ExactArrangementBooleanAttempt>,
-) -> Result<ExactBooleanResult, MeshError> {
-    try_materialize_certified_boolean_support_with_artifacts(
-        left,
-        right,
-        request,
-        support,
-        retained_graph,
-        retained_regularized_arrangement,
-        retained_arrangement_attempt,
-    )?
-    .ok_or_else(|| unsupported_certified_materialization_error(support))
-}
-
 fn materialize_certified_arrangement_cell_complex_support_with_arrangement(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -11705,7 +11684,7 @@ mod tests {
         );
 
         assert!(
-            materialize_certified_boolean_support_with_artifacts(
+            try_materialize_certified_boolean_support_with_artifacts(
                 &left,
                 &overlapping_right,
                 request,
