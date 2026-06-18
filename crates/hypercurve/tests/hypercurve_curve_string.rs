@@ -948,6 +948,37 @@ fn curve_string_fillet_line_line_vertex_materializes_exact_arc() {
 }
 
 #[test]
+fn curve_string_fillet_line_line_vertex_by_parameters_materializes_exact_arc() {
+    let curve =
+        CurveString2::try_new(vec![line_segment(0, 0, 4, 0), line_segment(4, 0, 4, 4)]).unwrap();
+
+    let fillet = curve
+        .fillet_line_line_vertex_by_parameters(1, q(3, 4), q(1, 4), &p(3, 1), false, &policy())
+        .unwrap();
+
+    assert!(fillet.report().status().is_native_exact());
+    assert_eq!(fillet.report().previous_trim().param(), &q(3, 4));
+    assert_eq!(fillet.report().next_trim().param(), &q(1, 4));
+    assert_eq!(fillet.report().center(), Some(&p(3, 1)));
+    assert_eq!(fillet.report().radius_squared(), Some(&s(1)));
+    assert_eq!(fillet.report().fillet_segment_index(), Some(1));
+
+    let curve = fillet
+        .curve_string()
+        .expect("parameter line-line fillet should materialize");
+    assert_eq!(curve.len(), 3);
+    assert_eq!(curve.segments()[0].end(), &p(3, 0));
+    let Segment2::Arc(arc) = &curve.segments()[1] else {
+        panic!("fillet segment should be an arc");
+    };
+    assert_eq!(arc.start(), &p(3, 0));
+    assert_eq!(arc.end(), &p(4, 1));
+    assert_eq!(arc.center(), &p(3, 1));
+    assert!(!arc.is_clockwise());
+    assert_eq!(curve.segments()[2].start(), &p(4, 1));
+}
+
+#[test]
 fn curve_string_fillet_reports_radius_mismatch_boundary() {
     let curve =
         CurveString2::try_new(vec![line_segment(0, 0, 4, 0), line_segment(4, 0, 4, 4)]).unwrap();

@@ -235,10 +235,10 @@ fn bench_line_fillet(iterations: u32) -> CurveResult<()> {
     let mut total_segments = 0_usize;
 
     for _ in 0..iterations {
-        let result = curve.fillet_line_line_vertex_by_points(
+        let result = curve.fillet_line_line_vertex_by_parameters(
             1,
-            &p(3, 0),
-            &p(4, 1),
+            q(3, 4),
+            q(1, 4),
             &p(3, 1),
             false,
             &policy,

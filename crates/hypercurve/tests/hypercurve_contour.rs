@@ -492,6 +492,47 @@ fn contour_fillet_line_line_vertex_materializes_closed_contour() {
 }
 
 #[test]
+fn contour_fillet_line_line_vertex_by_parameters_materializes_closed_contour() {
+    let contour = rectangle();
+
+    let fillet = contour
+        .fillet_line_line_vertex_by_parameters(1, q(3, 4), q(1, 4), &p(3, 1), false, &policy())
+        .unwrap();
+
+    assert!(fillet.report().status().is_native_exact());
+    assert_eq!(fillet.report().vertex_index(), 1);
+    assert_eq!(
+        fillet
+            .report()
+            .curve_string_report()
+            .previous_trim()
+            .param(),
+        &q(3, 4)
+    );
+    assert_eq!(
+        fillet.report().curve_string_report().next_trim().param(),
+        &q(1, 4)
+    );
+    assert_eq!(
+        fillet.report().curve_string_report().fillet_segment_index(),
+        Some(1)
+    );
+
+    let contour = fillet
+        .contour()
+        .expect("parameter contour fillet should materialize");
+    assert_eq!(contour.len(), 5);
+    assert_eq!(contour.segments()[0].end(), &p(3, 0));
+    let Segment2::Arc(arc) = &contour.segments()[1] else {
+        panic!("fillet segment should be an arc");
+    };
+    assert_eq!(arc.start(), &p(3, 0));
+    assert_eq!(arc.end(), &p(4, 1));
+    assert_eq!(arc.center(), &p(3, 1));
+    assert_eq!(contour.segments()[2].start(), &p(4, 1));
+}
+
+#[test]
 fn contour_fillet_preserves_fill_rule() {
     let contour = Contour2::from_bulge_vertices_with_fill_rule(
         &[
@@ -587,6 +628,45 @@ fn contour_fillet_line_line_wraparound_vertex_materializes_closed_contour() {
     assert!(!arc.is_clockwise());
     assert_eq!(contour.segments()[2].start(), &p(1, 0));
     assert_eq!(contour.segments()[4].end(), &p(0, 4));
+}
+
+#[test]
+fn contour_fillet_line_line_wraparound_vertex_by_parameters_materializes_closed_contour() {
+    let contour = rectangle();
+
+    let fillet = contour
+        .fillet_line_line_vertex_by_parameters(0, q(3, 4), q(1, 4), &p(1, 1), false, &policy())
+        .unwrap();
+
+    assert!(fillet.report().status().is_native_exact());
+    assert_eq!(fillet.report().vertex_index(), 0);
+    assert_eq!(
+        fillet
+            .report()
+            .curve_string_report()
+            .previous_segment_index(),
+        3
+    );
+    assert_eq!(
+        fillet.report().curve_string_report().next_segment_index(),
+        0
+    );
+    let segment_reports = fillet.report().curve_string_report().segment_reports();
+    assert_eq!(segment_reports[0].source_segment_index(), 3);
+    assert_eq!(segment_reports[1].source_segment_index(), 0);
+
+    let contour = fillet
+        .contour()
+        .expect("parameter wraparound contour fillet should materialize");
+    assert_eq!(contour.len(), 5);
+    assert_eq!(contour.segments()[0].end(), &p(0, 1));
+    let Segment2::Arc(arc) = &contour.segments()[1] else {
+        panic!("wraparound fillet segment should be an arc");
+    };
+    assert_eq!(arc.start(), &p(0, 1));
+    assert_eq!(arc.end(), &p(1, 0));
+    assert_eq!(arc.center(), &p(1, 1));
+    assert_eq!(contour.segments()[2].start(), &p(1, 0));
 }
 
 #[test]

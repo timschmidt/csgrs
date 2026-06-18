@@ -449,6 +449,73 @@ impl Contour2 {
         })
     }
 
+    /// Fillets an interior line-line contour vertex by exact parameters and center.
+    ///
+    /// `vertex_index` identifies the shared vertex between
+    /// `segments[vertex_index - 1]` and `segments[vertex_index]`, with
+    /// `vertex_index == 0` using the final segment as the previous segment.
+    /// The underlying curve-string fillet report is retained, and wrapped
+    /// vertex edits remap retained source segment indices back to this contour.
+    pub fn fillet_line_line_vertex_by_parameters(
+        &self,
+        vertex_index: usize,
+        previous_param: Real,
+        next_param: Real,
+        center: &Point2,
+        clockwise: bool,
+        policy: &CurvePolicy,
+    ) -> CurveResult<ContourFilletResult2> {
+        if vertex_index >= self.segments().len() {
+            return Err(CurveError::InvalidCurveRange);
+        }
+        let fillet = if vertex_index == 0 {
+            let rotated = CurveString2::try_new(wraparound_chamfer_segments(self.segments()))?;
+            let mut fillet = rotated.fillet_line_line_vertex_by_parameters(
+                1,
+                previous_param,
+                next_param,
+                center,
+                clockwise,
+                policy,
+            )?;
+            let source_segment_count = self.segments().len();
+            fillet.report_mut().remap_source_segment_indices(|index| {
+                remap_wraparound_chamfer_source_index(index, source_segment_count)
+            });
+            fillet
+        } else {
+            self.curve.fillet_line_line_vertex_by_parameters(
+                vertex_index,
+                previous_param,
+                next_param,
+                center,
+                clockwise,
+                policy,
+            )?
+        };
+        let curve_string_report = fillet.report().clone();
+        let status = curve_string_report.status();
+        let blocker = curve_string_report.blocker();
+        let contour = match fillet.into_curve_string() {
+            Some(curve_string) => Some(Self::try_new_with_fill_rule(
+                curve_string.into_segments(),
+                self.fill_rule,
+            )?),
+            None => None,
+        };
+        Ok(ContourFilletResult2 {
+            contour,
+            report: ContourFilletReport2 {
+                vertex_index,
+                curve_string_report,
+                source_segment_count: self.segments().len(),
+                fill_rule: self.fill_rule,
+                status,
+                blocker,
+            },
+        })
+    }
+
     /// Fillets an interior line-line contour vertex by exact tangent points and center.
     ///
     /// The supplied points and center are validated by the underlying

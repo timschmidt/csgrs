@@ -1374,6 +1374,67 @@ impl CurveString2 {
         )
     }
 
+    /// Fillets one interior line-line vertex from exact parameters and center.
+    ///
+    /// `vertex_index` identifies the shared vertex between
+    /// `segments[vertex_index - 1]` and `segments[vertex_index]`. The
+    /// parameters identify the tangent points on the previous and next line
+    /// segments. The final materialization delegates to
+    /// [`CurveString2::fillet_line_line_vertex_by_points`], so the same
+    /// nonzero-radius, equal-radius, tangency, orientation, and retained-range
+    /// checks decide whether native topology may be emitted.
+    pub fn fillet_line_line_vertex_by_parameters(
+        &self,
+        vertex_index: usize,
+        previous_param: Real,
+        next_param: Real,
+        center: &Point2,
+        clockwise: bool,
+        policy: &CurvePolicy,
+    ) -> CurveResult<CurveStringFilletResult2> {
+        if vertex_index == 0 || vertex_index >= self.len() {
+            return Err(CurveError::InvalidCurveRange);
+        }
+        let previous_segment_index = vertex_index - 1;
+        let next_segment_index = vertex_index;
+        let previous_trim = CurveStringTrimPoint2::new(previous_segment_index, previous_param);
+        let next_trim = CurveStringTrimPoint2::new(next_segment_index, next_param);
+        validate_trim_point(self, &previous_trim, policy)?;
+        validate_trim_point(self, &next_trim, policy)?;
+
+        let (previous_line, next_line) = match (
+            &self.segments[previous_segment_index],
+            &self.segments[next_segment_index],
+        ) {
+            (Segment2::Line(previous), Segment2::Line(next)) => (previous, next),
+            _ => {
+                return Ok(blocked_fillet_result(
+                    self,
+                    previous_segment_index,
+                    next_segment_index,
+                    previous_trim,
+                    next_trim,
+                    Some(center.clone()),
+                    None,
+                    Vec::new(),
+                    RetainedTopologyStatus::Unsupported,
+                    Some(UncertaintyReason::Unsupported),
+                ));
+            }
+        };
+
+        let previous_point = previous_line.point_at(previous_trim.param().clone());
+        let next_point = next_line.point_at(next_trim.param().clone());
+        self.fillet_line_line_vertex_by_points(
+            vertex_index,
+            &previous_point,
+            &next_point,
+            center,
+            clockwise,
+            policy,
+        )
+    }
+
     /// Fillets one interior line-line vertex from exact tangent points and center.
     ///
     /// The tangent points must lie at strict interior parameters of the two
