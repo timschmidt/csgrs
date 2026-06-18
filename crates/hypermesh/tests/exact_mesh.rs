@@ -1094,9 +1094,8 @@ fn affine_orthogonal_solid_recovers_multi_cell_basis_without_sampling_limits() {
             .validate_materialized_result_against_sources(&left, &right)
             .unwrap();
         result.validate().unwrap();
-        result.validate_against_sources(&left, &right).unwrap();
         assert_eq!(
-            result.freshness_against_sources(&left, &right),
+            evaluation.materialized_result_freshness_against_sources(&left, &right),
             ExactReportFreshness::Current
         );
         assert!(result.mesh.facts().mesh.closed_manifold);
