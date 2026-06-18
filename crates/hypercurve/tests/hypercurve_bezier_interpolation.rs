@@ -1,5 +1,6 @@
 use hypercurve::{
-    Classification, CurvePolicy, Point2, QuadraticBezier2,
+    BezierEndpoint, Classification, CubicBezier2, CubicBezierHermiteInterpolationStage2,
+    CurvePolicy, EndpointTangent2, Point2, QuadraticBezier2,
     QuadraticBezierMidpointInterpolationStage2, QuadraticBezierPointInterpolationStage2, Real,
     UncertaintyReason,
 };
@@ -18,6 +19,67 @@ fn p(x: i32, y: i32) -> Point2 {
 
 fn policy() -> CurvePolicy {
     CurvePolicy::certified()
+}
+
+#[test]
+fn cubic_hermite_interpolation_solves_controls_and_replays_endpoint_tangents() {
+    let start_tangent = EndpointTangent2::new(r(3), r(6));
+    let end_tangent = EndpointTangent2::new(r(6), r(-3));
+    let result = CubicBezier2::interpolate_hermite_with_report(
+        p(0, 0),
+        start_tangent.clone(),
+        p(6, 0),
+        end_tangent.clone(),
+    )
+    .unwrap();
+    let report = result.report();
+
+    assert!(report.status().is_native_exact());
+    assert_eq!(
+        report.stage(),
+        CubicBezierHermiteInterpolationStage2::SegmentMaterialization
+    );
+    assert_eq!(report.start_point(), &p(0, 0));
+    assert_eq!(report.start_tangent(), &start_tangent);
+    assert_eq!(report.end_point(), &p(6, 0));
+    assert_eq!(report.end_tangent(), &end_tangent);
+    assert_eq!(report.solved_first_control_point(), Some(&p(1, 2)));
+    assert_eq!(report.solved_second_control_point(), Some(&p(4, 1)));
+    assert_eq!(report.replayed_start_tangent(), Some(&start_tangent));
+    assert_eq!(report.replayed_end_tangent(), Some(&end_tangent));
+    assert_eq!(report.blocker(), None);
+
+    let curve = result
+        .curve()
+        .expect("Hermite interpolation should materialize");
+    assert_eq!(curve.start(), &p(0, 0));
+    assert_eq!(curve.control1(), &p(1, 2));
+    assert_eq!(curve.control2(), &p(4, 1));
+    assert_eq!(curve.end(), &p(6, 0));
+    assert_eq!(curve.endpoint_tangent(BezierEndpoint::Start), start_tangent);
+    assert_eq!(curve.endpoint_tangent(BezierEndpoint::End), end_tangent);
+}
+
+#[test]
+fn cubic_hermite_interpolation_preserves_zero_endpoint_derivative_evidence() {
+    let curve = CubicBezier2::interpolate_hermite(
+        p(0, 0),
+        EndpointTangent2::new(r(0), r(0)),
+        p(3, 0),
+        EndpointTangent2::new(r(0), r(0)),
+    )
+    .unwrap();
+
+    assert_eq!(curve.control1(), &p(0, 0));
+    assert_eq!(curve.control2(), &p(3, 0));
+    assert_eq!(
+        curve.endpoint_tangent(BezierEndpoint::Start),
+        EndpointTangent2::new(r(0), r(0))
+    );
+    assert_eq!(
+        curve.endpoint_tangent(BezierEndpoint::End),
+        EndpointTangent2::new(r(0), r(0))
+    );
 }
 
 #[test]

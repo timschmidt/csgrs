@@ -103,6 +103,38 @@ pub struct QuadraticBezierPointInterpolationResult2 {
     report: QuadraticBezierPointInterpolationReport2,
 }
 
+/// Report for exact cubic Hermite interpolation from endpoint derivatives.
+#[derive(Clone, Debug, PartialEq)]
+pub struct CubicBezierHermiteInterpolationReport2 {
+    stage: CubicBezierHermiteInterpolationStage2,
+    start_point: Point2,
+    start_tangent: EndpointTangent2,
+    end_point: Point2,
+    end_tangent: EndpointTangent2,
+    solved_first_control_point: Option<Point2>,
+    solved_second_control_point: Option<Point2>,
+    replayed_start_tangent: Option<EndpointTangent2>,
+    replayed_end_tangent: Option<EndpointTangent2>,
+    status: RetainedTopologyStatus,
+    blocker: Option<UncertaintyReason>,
+}
+
+/// Furthest exact stage reached by cubic Hermite interpolation.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum CubicBezierHermiteInterpolationStage2 {
+    /// The two cubic control points were being solved from endpoint derivatives.
+    ControlSolve,
+    /// The native cubic span was materialized and replayed.
+    SegmentMaterialization,
+}
+
+/// Result of exact cubic Hermite interpolation from endpoint derivatives.
+#[derive(Clone, Debug, PartialEq)]
+pub struct CubicBezierHermiteInterpolationResult2 {
+    curve: Option<CubicBezier2>,
+    report: CubicBezierHermiteInterpolationReport2,
+}
+
 impl EndpointTangent2 {
     /// Constructs endpoint derivative information from an exact vector.
     pub fn new(dx: Real, dy: Real) -> Self {
@@ -255,6 +287,80 @@ impl QuadraticBezierPointInterpolationResult2 {
 
     /// Returns retained interpolation evidence.
     pub const fn report(&self) -> &QuadraticBezierPointInterpolationReport2 {
+        &self.report
+    }
+}
+
+impl CubicBezierHermiteInterpolationReport2 {
+    /// Returns the furthest exact interpolation stage reached.
+    pub const fn stage(&self) -> CubicBezierHermiteInterpolationStage2 {
+        self.stage
+    }
+
+    /// Returns the exact start-point constraint.
+    pub const fn start_point(&self) -> &Point2 {
+        &self.start_point
+    }
+
+    /// Returns the exact start derivative constraint.
+    pub const fn start_tangent(&self) -> &EndpointTangent2 {
+        &self.start_tangent
+    }
+
+    /// Returns the exact end-point constraint.
+    pub const fn end_point(&self) -> &Point2 {
+        &self.end_point
+    }
+
+    /// Returns the exact end derivative constraint.
+    pub const fn end_tangent(&self) -> &EndpointTangent2 {
+        &self.end_tangent
+    }
+
+    /// Returns the solved first cubic control point, when materialized.
+    pub const fn solved_first_control_point(&self) -> Option<&Point2> {
+        self.solved_first_control_point.as_ref()
+    }
+
+    /// Returns the solved second cubic control point, when materialized.
+    pub const fn solved_second_control_point(&self) -> Option<&Point2> {
+        self.solved_second_control_point.as_ref()
+    }
+
+    /// Returns the replayed start derivative from the materialized cubic span.
+    pub const fn replayed_start_tangent(&self) -> Option<&EndpointTangent2> {
+        self.replayed_start_tangent.as_ref()
+    }
+
+    /// Returns the replayed end derivative from the materialized cubic span.
+    pub const fn replayed_end_tangent(&self) -> Option<&EndpointTangent2> {
+        self.replayed_end_tangent.as_ref()
+    }
+
+    /// Returns the interpolation status.
+    pub const fn status(&self) -> RetainedTopologyStatus {
+        self.status
+    }
+
+    /// Returns the exact blocker for non-materialized interpolation attempts.
+    pub const fn blocker(&self) -> Option<UncertaintyReason> {
+        self.blocker
+    }
+}
+
+impl CubicBezierHermiteInterpolationResult2 {
+    /// Returns the materialized cubic Bezier span, if supported.
+    pub const fn curve(&self) -> Option<&CubicBezier2> {
+        self.curve.as_ref()
+    }
+
+    /// Consumes this result and returns the materialized cubic Bezier span, if any.
+    pub fn into_curve(self) -> Option<CubicBezier2> {
+        self.curve
+    }
+
+    /// Returns retained interpolation evidence.
+    pub const fn report(&self) -> &CubicBezierHermiteInterpolationReport2 {
         &self.report
     }
 }
@@ -517,6 +623,71 @@ impl CubicBezier2 {
             control2,
             end,
         }
+    }
+
+    /// Constructs the exact cubic Bezier span with retained endpoint derivatives.
+    ///
+    /// This is the standard cubic Hermite-to-Bezier conversion. The derivative
+    /// constraints are exact endpoint derivative vectors, not normalized tangent
+    /// directions, so no length fitting or approximate tangent scaling is used.
+    pub fn interpolate_hermite(
+        start: Point2,
+        start_tangent: EndpointTangent2,
+        end: Point2,
+        end_tangent: EndpointTangent2,
+    ) -> CurveResult<Self> {
+        Self::interpolate_hermite_with_report(start, start_tangent, end, end_tangent).map(
+            |result| {
+                result
+                    .into_curve()
+                    .expect("exact cubic Hermite interpolation materializes")
+            },
+        )
+    }
+
+    /// Constructs the exact cubic Bezier span with retained endpoint derivatives.
+    ///
+    /// The returned report records the endpoint constraints, solved Bezier
+    /// control points, and replayed endpoint derivatives from the materialized
+    /// cubic span.
+    pub fn interpolate_hermite_with_report(
+        start: Point2,
+        start_tangent: EndpointTangent2,
+        end: Point2,
+        end_tangent: EndpointTangent2,
+    ) -> CurveResult<CubicBezierHermiteInterpolationResult2> {
+        let three = Real::from(3_i8);
+        let first_control_dx = (start_tangent.dx() / three.clone())?;
+        let first_control_dy = (start_tangent.dy() / three.clone())?;
+        let second_control_dx = (end_tangent.dx() / three.clone())?;
+        let second_control_dy = (end_tangent.dy() / three)?;
+        let control1 = start.translated(first_control_dx, first_control_dy);
+        let control2 = end.translated(-second_control_dx, -second_control_dy);
+        let curve = Self::new(
+            start.clone(),
+            control1.clone(),
+            control2.clone(),
+            end.clone(),
+        );
+        let replayed_start_tangent = curve.endpoint_tangent(BezierEndpoint::Start);
+        let replayed_end_tangent = curve.endpoint_tangent(BezierEndpoint::End);
+
+        Ok(CubicBezierHermiteInterpolationResult2 {
+            curve: Some(curve),
+            report: CubicBezierHermiteInterpolationReport2 {
+                stage: CubicBezierHermiteInterpolationStage2::SegmentMaterialization,
+                start_point: start,
+                start_tangent,
+                end_point: end,
+                end_tangent,
+                solved_first_control_point: Some(control1),
+                solved_second_control_point: Some(control2),
+                replayed_start_tangent: Some(replayed_start_tangent),
+                replayed_end_tangent: Some(replayed_end_tangent),
+                status: RetainedTopologyStatus::NativeExact,
+                blocker: None,
+            },
+        })
     }
 
     /// Returns the start point.
