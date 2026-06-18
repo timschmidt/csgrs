@@ -93,6 +93,35 @@ pub struct BooleanBoundaryLoopExtractionResult2 {
     report: BooleanBoundaryLoopExtractionReport2,
 }
 
+/// Report for converting closed boolean boundary loops into checked contours.
+#[derive(Clone, Debug, PartialEq)]
+pub struct BooleanBoundaryContourTransferReport2 {
+    fill_rule: FillRule,
+    stage: BooleanBoundaryContourTransferStage2,
+    source_loop_count: usize,
+    source_fragment_count: usize,
+    contour_count: Option<usize>,
+    output_segment_count: Option<usize>,
+    status: RetainedTopologyStatus,
+    blocker: Option<UncertaintyReason>,
+}
+
+/// Furthest exact stage reached by boolean boundary contour transfer.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum BooleanBoundaryContourTransferStage2 {
+    /// Loop geometry was being replayed into checked contour inputs.
+    LoopGeometryReplay,
+    /// Checked closed contours were materialized with the requested fill rule.
+    ContourMaterialization,
+}
+
+/// Result of report-bearing boolean boundary contour transfer.
+#[derive(Clone, Debug, PartialEq)]
+pub struct BooleanBoundaryContourTransferResult2 {
+    contours: Option<Vec<Contour2>>,
+    report: BooleanBoundaryContourTransferReport2,
+}
+
 impl BooleanBoundaryFragmentSet {
     /// Constructs a boundary-fragment set from preclassified pieces.
     pub fn new(
@@ -729,12 +758,129 @@ impl BooleanBoundaryLoopSet {
             .collect()
     }
 
+    /// Clones every loop into checked closed contours and retains transfer evidence.
+    pub fn to_contours_with_report(
+        &self,
+        fill_rule: FillRule,
+    ) -> BooleanBoundaryContourTransferResult2 {
+        let mut contours = Vec::with_capacity(self.loops.len());
+        for boundary_loop in &self.loops {
+            match boundary_loop.to_contour(fill_rule) {
+                Ok(contour) => contours.push(contour),
+                Err(_) => {
+                    return blocked_boolean_boundary_contour_transfer_result(
+                        self.len(),
+                        loop_set_fragment_count(self),
+                        fill_rule,
+                        BooleanBoundaryContourTransferStage2::ContourMaterialization,
+                        UncertaintyReason::Unsupported,
+                    );
+                }
+            }
+        }
+        decided_boolean_boundary_contour_transfer_result(
+            self.len(),
+            loop_set_fragment_count(self),
+            fill_rule,
+            contours,
+        )
+    }
+
     /// Consumes every loop into a checked closed contour.
     pub fn into_contours(self, fill_rule: FillRule) -> CurveResult<Vec<Contour2>> {
         self.loops
             .into_iter()
             .map(|boundary_loop| boundary_loop.into_contour(fill_rule))
             .collect()
+    }
+
+    /// Consumes every loop into checked closed contours and retains transfer evidence.
+    pub fn into_contours_with_report(
+        self,
+        fill_rule: FillRule,
+    ) -> BooleanBoundaryContourTransferResult2 {
+        let source_loop_count = self.len();
+        let source_fragment_count = loop_set_fragment_count(&self);
+        let mut contours = Vec::with_capacity(source_loop_count);
+        for boundary_loop in self.loops {
+            match boundary_loop.into_contour(fill_rule) {
+                Ok(contour) => contours.push(contour),
+                Err(_) => {
+                    return blocked_boolean_boundary_contour_transfer_result(
+                        source_loop_count,
+                        source_fragment_count,
+                        fill_rule,
+                        BooleanBoundaryContourTransferStage2::ContourMaterialization,
+                        UncertaintyReason::Unsupported,
+                    );
+                }
+            }
+        }
+        decided_boolean_boundary_contour_transfer_result(
+            source_loop_count,
+            source_fragment_count,
+            fill_rule,
+            contours,
+        )
+    }
+}
+
+impl BooleanBoundaryContourTransferReport2 {
+    /// Returns the fill rule used for materialized contours.
+    pub const fn fill_rule(&self) -> FillRule {
+        self.fill_rule
+    }
+
+    /// Returns the furthest exact contour-transfer stage reached.
+    pub const fn stage(&self) -> BooleanBoundaryContourTransferStage2 {
+        self.stage
+    }
+
+    /// Returns source boundary loop count.
+    pub const fn source_loop_count(&self) -> usize {
+        self.source_loop_count
+    }
+
+    /// Returns total source fragment count across loops.
+    pub const fn source_fragment_count(&self) -> usize {
+        self.source_fragment_count
+    }
+
+    /// Returns contour count when transfer materialized.
+    pub const fn contour_count(&self) -> Option<usize> {
+        self.contour_count
+    }
+
+    /// Returns output contour segment count when transfer materialized.
+    pub const fn output_segment_count(&self) -> Option<usize> {
+        self.output_segment_count
+    }
+
+    /// Returns retained topology status for contour transfer.
+    pub const fn status(&self) -> RetainedTopologyStatus {
+        self.status
+    }
+
+    /// Returns the exact blocker for non-materialized contour transfer.
+    pub const fn blocker(&self) -> Option<UncertaintyReason> {
+        self.blocker
+    }
+}
+
+impl BooleanBoundaryContourTransferResult2 {
+    /// Returns materialized contours, if transfer succeeded.
+    pub fn contours(&self) -> Option<&[Contour2]> {
+        self.contours.as_deref()
+    }
+
+    /// Consumes this result and returns materialized contours, if any.
+    pub fn into_contours(self) -> Option<Vec<Contour2>> {
+        self.contours
+    }
+
+    /// Returns retained contour-transfer evidence.
+    pub const fn report(&self) -> &BooleanBoundaryContourTransferReport2 {
+        &self.report
     }
 }
 
@@ -1100,6 +1246,54 @@ fn retained_status_for_loop_extraction_blocker(
 
 fn chain_set_fragment_count(chains: &BooleanBoundaryChainSet) -> usize {
     chains.chains().iter().map(BooleanBoundaryChain::len).sum()
+}
+
+fn decided_boolean_boundary_contour_transfer_result(
+    source_loop_count: usize,
+    source_fragment_count: usize,
+    fill_rule: FillRule,
+    contours: Vec<Contour2>,
+) -> BooleanBoundaryContourTransferResult2 {
+    let output_segment_count = contours.iter().map(Contour2::len).sum();
+    BooleanBoundaryContourTransferResult2 {
+        report: BooleanBoundaryContourTransferReport2 {
+            fill_rule,
+            stage: BooleanBoundaryContourTransferStage2::ContourMaterialization,
+            source_loop_count,
+            source_fragment_count,
+            contour_count: Some(contours.len()),
+            output_segment_count: Some(output_segment_count),
+            status: RetainedTopologyStatus::NativeExact,
+            blocker: None,
+        },
+        contours: Some(contours),
+    }
+}
+
+fn blocked_boolean_boundary_contour_transfer_result(
+    source_loop_count: usize,
+    source_fragment_count: usize,
+    fill_rule: FillRule,
+    stage: BooleanBoundaryContourTransferStage2,
+    blocker: UncertaintyReason,
+) -> BooleanBoundaryContourTransferResult2 {
+    BooleanBoundaryContourTransferResult2 {
+        contours: None,
+        report: BooleanBoundaryContourTransferReport2 {
+            fill_rule,
+            stage,
+            source_loop_count,
+            source_fragment_count,
+            contour_count: None,
+            output_segment_count: None,
+            status: RetainedTopologyStatus::Unsupported,
+            blocker: Some(blocker),
+        },
+    }
+}
+
+fn loop_set_fragment_count(loops: &BooleanBoundaryLoopSet) -> usize {
+    loops.loops().iter().map(BooleanBoundaryLoop::len).sum()
 }
 
 fn endpoint_adjacency(

@@ -1,11 +1,11 @@
 use hypercurve::{
     BooleanBoundaryChain, BooleanBoundaryChainAssemblyStage2, BooleanBoundaryChainSet,
-    BooleanBoundaryFragmentSet, BooleanBoundaryLoop, BooleanBoundaryLoopExtractionStage2,
-    BooleanBoundaryLoopSet, BooleanFragmentAction, BooleanFragmentClassification,
-    BooleanFragmentSelection, BooleanFragmentSelectionStage2, BooleanOp, BulgeVertex2,
-    Classification, Contour2, CurveError, CurvePolicy, DirectedBooleanFragment, FillRule, LineSeg2,
-    Real, Region2, RegionContourKey, RegionContourRole, RegionPointLocation, RegionSide, Segment2,
-    UncertaintyReason,
+    BooleanBoundaryContourTransferStage2, BooleanBoundaryFragmentSet, BooleanBoundaryLoop,
+    BooleanBoundaryLoopExtractionStage2, BooleanBoundaryLoopSet, BooleanFragmentAction,
+    BooleanFragmentClassification, BooleanFragmentSelection, BooleanFragmentSelectionStage2,
+    BooleanOp, BulgeVertex2, Classification, Contour2, CurveError, CurvePolicy,
+    DirectedBooleanFragment, FillRule, LineSeg2, Real, Region2, RegionContourKey,
+    RegionContourRole, RegionPointLocation, RegionSide, Segment2, UncertaintyReason,
 };
 
 fn s(value: i32) -> Real {
@@ -291,7 +291,27 @@ fn boolean_fragment_selection_emits_directed_boundary_fragments() {
         .expect("reported closed loop extraction should materialize");
     assert_eq!(loops.len(), 1);
 
-    let contours = loops.to_contours(FillRule::NonZero).unwrap();
+    let transferred = loops.to_contours_with_report(FillRule::NonZero);
+    assert!(transferred.report().status().is_native_exact());
+    assert_eq!(
+        transferred.report().stage(),
+        BooleanBoundaryContourTransferStage2::ContourMaterialization
+    );
+    assert_eq!(transferred.report().fill_rule(), FillRule::NonZero);
+    assert_eq!(transferred.report().source_loop_count(), 1);
+    assert_eq!(
+        transferred.report().source_fragment_count(),
+        emitted.directed_len()
+    );
+    assert_eq!(transferred.report().contour_count(), Some(1));
+    assert_eq!(
+        transferred.report().output_segment_count(),
+        Some(emitted.directed_len())
+    );
+    assert_eq!(transferred.report().blocker(), None);
+    let contours = transferred
+        .contours()
+        .expect("reported contour transfer should materialize");
     assert_eq!(contours.len(), 1);
     assert_eq!(contours[0].len(), emitted.directed_len());
 }
@@ -376,7 +396,19 @@ fn boolean_boundary_chain_assembly_keeps_disjoint_loops_separate() {
         "reported disjoint loop extraction should materialize"
     );
     let loops = extracted.into_loops().unwrap();
-    let contours = loops.into_contours(FillRule::NonZero).unwrap();
+    let transferred = loops.into_contours_with_report(FillRule::NonZero);
+    assert!(transferred.report().status().is_native_exact());
+    assert_eq!(
+        transferred.report().stage(),
+        BooleanBoundaryContourTransferStage2::ContourMaterialization
+    );
+    assert_eq!(transferred.report().fill_rule(), FillRule::NonZero);
+    assert_eq!(transferred.report().source_loop_count(), 2);
+    assert_eq!(transferred.report().source_fragment_count(), 8);
+    assert_eq!(transferred.report().contour_count(), Some(2));
+    assert_eq!(transferred.report().output_segment_count(), Some(8));
+    assert_eq!(transferred.report().blocker(), None);
+    let contours = transferred.into_contours().unwrap();
     assert_eq!(contours.len(), 2);
     assert!(contours.iter().all(|contour| contour.len() == 4));
 }
