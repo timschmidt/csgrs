@@ -3,7 +3,7 @@ use hypercurve::{
     FillRule, FiniteProjectionOptions, Real, Region2, RegionBoundaryContourBuildStage2,
     RegionBoundaryContourRole2, RegionLineSegmentArrangedEndpoint2,
     RegionLineSegmentRegionBuildStage2, RegionPointLocation, RegionView2, Segment2, SegmentKind,
-    UncertaintyReason, finite_polyline_vertex_centroid, finite_ring_signed_area,
+    SegmentKindCounts, UncertaintyReason, finite_polyline_vertex_centroid, finite_ring_signed_area,
     try_finite_polyline_vertex_centroid, try_finite_ring_signed_area,
 };
 use proptest::prelude::*;
@@ -344,7 +344,15 @@ fn unordered_line_segments_build_region_with_source_provenance() {
         RegionLineSegmentRegionBuildStage2::RegionRoleAssignment
     );
     assert_eq!(report.source_segment_count(), 4);
+    assert_eq!(
+        report.source_segment_kind_counts(),
+        SegmentKindCounts { lines: 4, arcs: 0 }
+    );
     assert_eq!(report.arranged_segment_count(), Some(4));
+    assert_eq!(
+        report.arranged_segment_kind_counts(),
+        Some(SegmentKindCounts { lines: 4, arcs: 0 })
+    );
     assert_eq!(report.split_candidate_pair_count(), 6);
     assert_eq!(report.split_skipped_aabb_pair_count(), 2);
     assert_eq!(report.split_tested_pair_count(), 4);
@@ -366,6 +374,10 @@ fn unordered_line_segments_build_region_with_source_provenance() {
     assert_eq!(report.reversed_source_segment_count(), 2);
     assert_eq!(report.output_ring_count(), Some(1));
     assert_eq!(report.output_boundary_segment_count(), Some(4));
+    assert_eq!(
+        report.output_boundary_segment_kind_counts(),
+        Some(SegmentKindCounts { lines: 4, arcs: 0 })
+    );
     assert_eq!(report.arranged_source_reports().len(), 4);
     assert_eq!(
         report.arranged_source_reports()[0].source_segment_index(),
@@ -477,7 +489,15 @@ fn unordered_line_segments_split_crossings_before_boundary_blocker() {
         RegionLineSegmentRegionBuildStage2::RingAssembly
     );
     assert_eq!(report.source_segment_count(), 2);
+    assert_eq!(
+        report.source_segment_kind_counts(),
+        SegmentKindCounts { lines: 2, arcs: 0 }
+    );
     assert_eq!(report.arranged_segment_count(), Some(4));
+    assert_eq!(
+        report.arranged_segment_kind_counts(),
+        Some(SegmentKindCounts { lines: 4, arcs: 0 })
+    );
     assert_eq!(report.split_candidate_pair_count(), 1);
     assert_eq!(report.split_skipped_aabb_pair_count(), 0);
     assert_eq!(report.split_tested_pair_count(), 1);
@@ -530,7 +550,12 @@ fn unordered_line_segments_report_overlap_source_pair_blocker() {
         RegionLineSegmentRegionBuildStage2::RingAssembly
     );
     assert_eq!(report.source_segment_count(), 2);
+    assert_eq!(
+        report.source_segment_kind_counts(),
+        SegmentKindCounts { lines: 2, arcs: 0 }
+    );
     assert_eq!(report.arranged_segment_count(), None);
+    assert_eq!(report.arranged_segment_kind_counts(), None);
     assert_eq!(report.split_candidate_pair_count(), 1);
     assert_eq!(report.split_skipped_aabb_pair_count(), 0);
     assert_eq!(report.split_tested_pair_count(), 1);
@@ -539,6 +564,7 @@ fn unordered_line_segments_report_overlap_source_pair_blocker() {
     assert_eq!(report.split_blocker_first_source_segment_index(), Some(0));
     assert_eq!(report.split_blocker_second_source_segment_index(), Some(1));
     assert_eq!(report.arranged_source_reports().len(), 0);
+    assert_eq!(report.output_boundary_segment_kind_counts(), None);
     assert_eq!(report.endpoint_graph_blocker_arranged_segment_index(), None);
     assert_eq!(report.endpoint_graph_blocker_endpoint(), None);
     assert_eq!(report.blocker(), Some(UncertaintyReason::Boundary));
@@ -563,7 +589,15 @@ fn unordered_native_segments_build_line_arc_region_with_source_provenance() {
         RegionLineSegmentRegionBuildStage2::RegionRoleAssignment
     );
     assert_eq!(report.source_segment_count(), 2);
+    assert_eq!(
+        report.source_segment_kind_counts(),
+        SegmentKindCounts { lines: 1, arcs: 1 }
+    );
     assert_eq!(report.arranged_segment_count(), Some(2));
+    assert_eq!(
+        report.arranged_segment_kind_counts(),
+        Some(SegmentKindCounts { lines: 1, arcs: 1 })
+    );
     assert_eq!(report.split_candidate_pair_count(), 1);
     assert_eq!(report.split_skipped_aabb_pair_count(), 0);
     assert_eq!(report.split_tested_pair_count(), 1);
@@ -585,6 +619,10 @@ fn unordered_native_segments_build_line_arc_region_with_source_provenance() {
     assert_eq!(report.reversed_source_segment_count(), 0);
     assert_eq!(report.output_ring_count(), Some(1));
     assert_eq!(report.output_boundary_segment_count(), Some(2));
+    assert_eq!(
+        report.output_boundary_segment_kind_counts(),
+        Some(SegmentKindCounts { lines: 1, arcs: 1 })
+    );
     assert_eq!(report.arranged_source_reports().len(), 2);
     assert_eq!(
         report.arranged_source_reports()[0].source_segment_index(),
@@ -667,7 +705,12 @@ fn unordered_native_segments_report_arc_overlap_boundary_blocker() {
         RegionLineSegmentRegionBuildStage2::RingAssembly
     );
     assert_eq!(report.source_segment_count(), 2);
+    assert_eq!(
+        report.source_segment_kind_counts(),
+        SegmentKindCounts { lines: 0, arcs: 2 }
+    );
     assert_eq!(report.arranged_segment_count(), None);
+    assert_eq!(report.arranged_segment_kind_counts(), None);
     assert_eq!(report.split_candidate_pair_count(), 1);
     assert_eq!(report.split_skipped_aabb_pair_count(), 0);
     assert_eq!(report.split_tested_pair_count(), 1);
@@ -680,6 +723,7 @@ fn unordered_native_segments_report_arc_overlap_boundary_blocker() {
     assert_eq!(report.endpoint_graph_blocker_arranged_segment_index(), None);
     assert_eq!(report.endpoint_graph_blocker_endpoint(), None);
     assert_eq!(report.arranged_source_reports().len(), 0);
+    assert_eq!(report.output_boundary_segment_kind_counts(), None);
     assert_eq!(report.source_reports().len(), 0);
     assert_eq!(report.blocker(), Some(UncertaintyReason::Boundary));
 }
@@ -704,7 +748,15 @@ fn unordered_native_segments_split_line_arc_crossing_before_boundary_blocker() {
         RegionLineSegmentRegionBuildStage2::RingAssembly
     );
     assert_eq!(report.source_segment_count(), 2);
+    assert_eq!(
+        report.source_segment_kind_counts(),
+        SegmentKindCounts { lines: 1, arcs: 1 }
+    );
     assert_eq!(report.arranged_segment_count(), Some(4));
+    assert_eq!(
+        report.arranged_segment_kind_counts(),
+        Some(SegmentKindCounts { lines: 2, arcs: 2 })
+    );
     assert_eq!(report.split_candidate_pair_count(), 1);
     assert_eq!(report.split_skipped_aabb_pair_count(), 0);
     assert_eq!(report.split_tested_pair_count(), 1);

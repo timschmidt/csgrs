@@ -14,7 +14,7 @@ use crate::{
     ArcArcIntersection, CircularArc2, Classification, Contour2, ContourPointLocation, CurveError,
     CurvePolicy, CurveResult, FillRule, LineArcIntersection, LineArcOrder, LineLineIntersection,
     LineSeg2, ParamRange, Point2, Region2, RetainedTopologyStatus, Segment2, SegmentIntersection,
-    SegmentKind, UncertaintyReason,
+    SegmentKind, SegmentKindCounts, UncertaintyReason,
 };
 
 /// Material/hole role assigned to one closed boundary contour.
@@ -119,7 +119,9 @@ pub enum RegionLineSegmentArrangedEndpoint2 {
 pub struct RegionLineSegmentRegionBuildReport2 {
     stage: RegionLineSegmentRegionBuildStage2,
     source_segment_count: usize,
+    source_segment_kind_counts: SegmentKindCounts,
     arranged_segment_count: Option<usize>,
+    arranged_segment_kind_counts: Option<SegmentKindCounts>,
     split_candidate_pair_count: usize,
     split_skipped_aabb_pair_count: usize,
     split_tested_pair_count: usize,
@@ -142,6 +144,7 @@ pub struct RegionLineSegmentRegionBuildReport2 {
     reversed_source_segment_count: usize,
     output_ring_count: Option<usize>,
     output_boundary_segment_count: Option<usize>,
+    output_boundary_segment_kind_counts: Option<SegmentKindCounts>,
     arranged_source_reports: Vec<RegionLineSegmentArrangedSourceReport2>,
     source_reports: Vec<RegionLineSegmentRingSourceReport2>,
     boundary_build_report: Option<RegionBoundaryContourBuildReport2>,
@@ -250,6 +253,7 @@ impl Region2 {
                     region: None,
                     report: blocked_line_segment_region_report(
                         segments.len(),
+                        line_segment_kind_counts(segments.len()),
                         Some(split_report),
                         None,
                         Vec::new(),
@@ -270,6 +274,7 @@ impl Region2 {
                         region: None,
                         report: blocked_line_segment_region_report(
                             segments.len(),
+                            line_segment_kind_counts(segments.len()),
                             Some(arranged.report),
                             Some(endpoint_graph),
                             line_arranged_source_reports(&arranged.segments),
@@ -292,6 +297,7 @@ impl Region2 {
                     region: None,
                     report: blocked_line_segment_region_report(
                         segments.len(),
+                        line_segment_kind_counts(segments.len()),
                         Some(arranged.report),
                         Some(endpoint_graph),
                         line_arranged_source_reports(&arranged.segments),
@@ -319,12 +325,17 @@ impl Region2 {
         let boundary_build_report = built.report().clone();
         let output_ring_count = boundary_build_report.output_contour_count();
         let output_boundary_segment_count = boundary_build_report.output_segment_count();
+        let output_boundary_segment_kind_counts = built.region().map(region_segment_kind_counts);
         Ok(RegionLineSegmentRegionBuildResult2 {
             region: built.into_region(),
             report: RegionLineSegmentRegionBuildReport2 {
                 stage: RegionLineSegmentRegionBuildStage2::RegionRoleAssignment,
                 source_segment_count: segments.len(),
+                source_segment_kind_counts: line_segment_kind_counts(segments.len()),
                 arranged_segment_count: Some(arranged.segments.len()),
+                arranged_segment_kind_counts: Some(line_segment_kind_counts(
+                    arranged.segments.len(),
+                )),
                 split_candidate_pair_count: arranged.report.candidate_pair_count,
                 split_skipped_aabb_pair_count: arranged.report.skipped_aabb_pair_count,
                 split_tested_pair_count: arranged.report.tested_pair_count,
@@ -370,6 +381,7 @@ impl Region2 {
                 reversed_source_segment_count: assembled.reversed_source_segment_count,
                 output_ring_count,
                 output_boundary_segment_count,
+                output_boundary_segment_kind_counts,
                 arranged_source_reports: line_arranged_source_reports(&arranged.segments),
                 source_reports: assembled.source_reports,
                 boundary_build_report: Some(boundary_build_report),
@@ -426,6 +438,7 @@ impl Region2 {
                     region: None,
                     report: blocked_line_segment_region_report(
                         segments.len(),
+                        segment_kind_counts(&segments),
                         Some(split_report),
                         None,
                         Vec::new(),
@@ -446,6 +459,7 @@ impl Region2 {
                         region: None,
                         report: blocked_line_segment_region_report(
                             segments.len(),
+                            segment_kind_counts(&segments),
                             Some(arranged.report),
                             Some(endpoint_graph),
                             native_arranged_source_reports(&segments, &arranged.segments),
@@ -468,6 +482,7 @@ impl Region2 {
                     region: None,
                     report: blocked_line_segment_region_report(
                         segments.len(),
+                        segment_kind_counts(&segments),
                         Some(arranged.report),
                         Some(endpoint_graph),
                         native_arranged_source_reports(&segments, &arranged.segments),
@@ -491,12 +506,17 @@ impl Region2 {
         let boundary_build_report = built.report().clone();
         let output_ring_count = boundary_build_report.output_contour_count();
         let output_boundary_segment_count = boundary_build_report.output_segment_count();
+        let output_boundary_segment_kind_counts = built.region().map(region_segment_kind_counts);
         Ok(RegionLineSegmentRegionBuildResult2 {
             region: built.into_region(),
             report: RegionLineSegmentRegionBuildReport2 {
                 stage: RegionLineSegmentRegionBuildStage2::RegionRoleAssignment,
                 source_segment_count: segments.len(),
+                source_segment_kind_counts: segment_kind_counts(&segments),
                 arranged_segment_count: Some(arranged.segments.len()),
+                arranged_segment_kind_counts: Some(native_arranged_segment_kind_counts(
+                    &arranged.segments,
+                )),
                 split_candidate_pair_count: arranged.report.candidate_pair_count,
                 split_skipped_aabb_pair_count: arranged.report.skipped_aabb_pair_count,
                 split_tested_pair_count: arranged.report.tested_pair_count,
@@ -542,6 +562,7 @@ impl Region2 {
                 reversed_source_segment_count: assembled.reversed_source_segment_count,
                 output_ring_count,
                 output_boundary_segment_count,
+                output_boundary_segment_kind_counts,
                 arranged_source_reports: native_arranged_source_reports(
                     &segments,
                     &arranged.segments,
@@ -932,14 +953,24 @@ impl RegionLineSegmentRegionBuildReport2 {
         self.stage
     }
 
-    /// Returns the number of source line segments considered.
+    /// Returns the number of source segments considered.
     pub const fn source_segment_count(&self) -> usize {
         self.source_segment_count
+    }
+
+    /// Returns source segment primitive-family counts.
+    pub const fn source_segment_kind_counts(&self) -> SegmentKindCounts {
+        self.source_segment_kind_counts
     }
 
     /// Returns arranged segment count after exact point-intersection splitting.
     pub const fn arranged_segment_count(&self) -> Option<usize> {
         self.arranged_segment_count
+    }
+
+    /// Returns arranged fragment primitive-family counts after exact splitting.
+    pub const fn arranged_segment_kind_counts(&self) -> Option<SegmentKindCounts> {
+        self.arranged_segment_kind_counts
     }
 
     /// Returns source line pairs considered for splitting.
@@ -1052,6 +1083,11 @@ impl RegionLineSegmentRegionBuildReport2 {
     /// Returns output boundary segment count when available.
     pub const fn output_boundary_segment_count(&self) -> Option<usize> {
         self.output_boundary_segment_count
+    }
+
+    /// Returns output boundary segment primitive-family counts when available.
+    pub const fn output_boundary_segment_kind_counts(&self) -> Option<SegmentKindCounts> {
+        self.output_boundary_segment_kind_counts
     }
 
     /// Returns per-arranged-fragment source provenance after exact splitting.
@@ -2345,8 +2381,65 @@ fn native_arranged_source_reports(
         .collect()
 }
 
+fn line_segment_kind_counts(segment_count: usize) -> SegmentKindCounts {
+    SegmentKindCounts {
+        lines: segment_count,
+        arcs: 0,
+    }
+}
+
+fn segment_kind_counts(segments: &[Segment2]) -> SegmentKindCounts {
+    let mut counts = SegmentKindCounts::default();
+    for segment in segments {
+        add_segment_kind(&mut counts, segment);
+    }
+    counts
+}
+
+fn native_arranged_segment_kind_counts(segments: &[ArrangedNativeSegment]) -> SegmentKindCounts {
+    let mut counts = SegmentKindCounts::default();
+    for segment in segments {
+        add_segment_kind(&mut counts, &segment.segment);
+    }
+    counts
+}
+
+fn arranged_report_segment_kind_counts(
+    reports: &[RegionLineSegmentArrangedSourceReport2],
+) -> SegmentKindCounts {
+    let mut counts = SegmentKindCounts::default();
+    for report in reports {
+        match report.arranged_segment_kind {
+            SegmentKind::Line => counts.lines += 1,
+            SegmentKind::Arc => counts.arcs += 1,
+        }
+    }
+    counts
+}
+
+fn region_segment_kind_counts(region: &Region2) -> SegmentKindCounts {
+    let mut counts = SegmentKindCounts::default();
+    for segment in region
+        .material_contours()
+        .iter()
+        .chain(region.hole_contours().iter())
+        .flat_map(|contour| contour.segments())
+    {
+        add_segment_kind(&mut counts, segment);
+    }
+    counts
+}
+
+fn add_segment_kind(counts: &mut SegmentKindCounts, segment: &Segment2) {
+    match segment {
+        Segment2::Line(_) => counts.lines += 1,
+        Segment2::Arc(_) => counts.arcs += 1,
+    }
+}
+
 fn blocked_line_segment_region_report(
     source_segment_count: usize,
+    source_segment_kind_counts: SegmentKindCounts,
     split_report: Option<LineSegmentSplitReportParts>,
     endpoint_graph_report: Option<LineSegmentEndpointGraphReportParts>,
     arranged_source_reports: Vec<RegionLineSegmentArrangedSourceReport2>,
@@ -2356,10 +2449,15 @@ fn blocked_line_segment_region_report(
     blocker: UncertaintyReason,
 ) -> RegionLineSegmentRegionBuildReport2 {
     let split_report = split_report.unwrap_or_default();
+    let arranged_segment_kind_counts = split_report
+        .output_segment_count
+        .map(|_| arranged_report_segment_kind_counts(&arranged_source_reports));
     RegionLineSegmentRegionBuildReport2 {
         stage,
         source_segment_count,
+        source_segment_kind_counts,
         arranged_segment_count: split_report.output_segment_count,
+        arranged_segment_kind_counts,
         split_candidate_pair_count: split_report.candidate_pair_count,
         split_skipped_aabb_pair_count: split_report.skipped_aabb_pair_count,
         split_tested_pair_count: split_report.tested_pair_count,
@@ -2391,6 +2489,7 @@ fn blocked_line_segment_region_report(
         reversed_source_segment_count: report.reversed_source_segment_count,
         output_ring_count: None,
         output_boundary_segment_count: None,
+        output_boundary_segment_kind_counts: None,
         arranged_source_reports,
         source_reports: report.source_reports,
         boundary_build_report: None,
