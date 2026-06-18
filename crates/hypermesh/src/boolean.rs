@@ -141,8 +141,6 @@ pub enum ExactArrangementBooleanStage {
 /// Why an arrangement/cell-complex Boolean attempt declined to produce output.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum ExactArrangementBooleanDecline {
-    /// The dispatch mode intentionally left this case to older certified paths.
-    DispatchGate,
     /// Arrangement construction completed with blockers.
     ArrangementBlockers(Vec<ExactArrangementBlocker>),
     /// Cell labeling failed.
@@ -195,9 +193,9 @@ pub struct ExactArrangementBooleanAttempt {
     /// Output validation policy used by shortcut recovery and final mesh copy.
     pub output_validation: ValidationPolicy,
     /// Furthest stage reached.
-    pub stage: ExactArrangementBooleanStage,
+    pub(crate) stage: ExactArrangementBooleanStage,
     /// Reason no output was produced, when the attempt declined.
-    pub decline: Option<ExactArrangementBooleanDecline>,
+    pub(crate) decline: Option<ExactArrangementBooleanDecline>,
     /// Certified shortcut/recovery path that materialized output, when one did.
     ///
     /// A `None` value on a materialized attempt means the generic arrangement
@@ -220,23 +218,23 @@ pub struct ExactArrangementBooleanAttempt {
     /// Retained lower-dimensional artifact count.
     pub lower_dimensional_artifacts: usize,
     /// Topology assembly status observed before consuming labeled cells.
-    pub topology_assembly: Option<ExactTopologyAssemblyStatus>,
+    pub(crate) topology_assembly: Option<ExactTopologyAssemblyStatus>,
     /// Full topology assembly report consumed before labeled-cell output.
     pub topology_assembly_report: Option<ExactTopologyAssemblyReport>,
     /// Region ownership status observed before named cell selection.
-    pub region_ownership: Option<ExactRegionOwnershipStatus>,
+    pub(crate) region_ownership: Option<ExactRegionOwnershipStatus>,
     /// Full region ownership report consumed before named cell selection.
     pub region_ownership_report: Option<ExactRegionOwnershipReport>,
     /// Selected face-cell count, when selection succeeded.
-    pub selected_faces: usize,
+    pub(crate) selected_faces: usize,
     /// Selected faces whose output orientation is reversed.
-    pub reversed_selected_faces: usize,
+    pub(crate) reversed_selected_faces: usize,
     /// Selected faces oriented by explicit volume adjacency evidence.
-    pub volume_oriented_selected_faces: usize,
+    pub(crate) volume_oriented_selected_faces: usize,
     /// Selected faces oriented by source-label operation rules.
-    pub label_oriented_selected_faces: usize,
+    pub(crate) label_oriented_selected_faces: usize,
     /// Selected volume-region count, when selection succeeded.
-    pub selected_volume_regions: usize,
+    pub(crate) selected_volume_regions: usize,
     /// Retained selected cell complex consumed by simplification, when the
     /// generic arrangement path reached selection.
     pub(crate) selected_cell_complex: Option<ExactSelectedCellComplex>,
@@ -244,9 +242,9 @@ pub struct ExactArrangementBooleanAttempt {
     /// generic arrangement path reached simplification.
     pub(crate) simplified_cell_complex: Option<ExactSimplifiedCellComplex>,
     /// Output vertex count, when triangulation succeeded.
-    pub output_vertices: usize,
+    pub(crate) output_vertices: usize,
     /// Output triangle count, when triangulation succeeded.
-    pub output_triangles: usize,
+    pub(crate) output_triangles: usize,
     /// Retained output mesh facts, when a concrete triangulated mesh was built.
     pub(crate) output_facts: Option<MeshFacts>,
 }
@@ -259,6 +257,29 @@ impl ExactArrangementBooleanAttempt {
             self.decline,
             Some(ExactArrangementBooleanDecline::OutputValidation)
         )
+    }
+
+    /// Return the retained output vertex and triangle counts.
+    pub const fn output_counts(&self) -> (usize, usize) {
+        (self.output_vertices, self.output_triangles)
+    }
+
+    /// Return whether retained topology assembly reached a complete state.
+    pub fn topology_assembly_complete(&self) -> bool {
+        self.topology_assembly
+            .is_some_and(|status| status.is_complete())
+    }
+
+    /// Return whether retained region ownership resolved source-side labels.
+    pub fn region_ownership_resolved(&self) -> bool {
+        self.region_ownership
+            .is_some_and(|status| status.is_resolved())
+    }
+
+    /// Return whether retained region ownership resolved volume labels.
+    pub fn region_ownership_volume_resolved(&self) -> bool {
+        self.region_ownership
+            .is_some_and(|status| status.is_volume_resolved())
     }
 
     /// Return whether this attempt reached the materialized arrangement
@@ -386,9 +407,6 @@ impl ExactArrangementBooleanAttempt {
                 if !matches!(
                     (decline, self.stage),
                     (
-                        ExactArrangementBooleanDecline::DispatchGate,
-                        ExactArrangementBooleanStage::NotAttempted
-                    ) | (
                         ExactArrangementBooleanDecline::ArrangementBlockers(_)
                             | ExactArrangementBooleanDecline::Labeling(_)
                             | ExactArrangementBooleanDecline::TopologyAssembly(_),
@@ -4903,9 +4921,6 @@ fn shortcut_reason_for_recovered_arrangement_attempt(
     attempt: &ExactArrangementBooleanAttempt,
 ) -> ExactArrangementBooleanShortcutReason {
     match attempt.decline.as_ref() {
-        Some(ExactArrangementBooleanDecline::DispatchGate) => {
-            return ExactArrangementBooleanShortcutReason::ShortcutSupportOnly;
-        }
         Some(ExactArrangementBooleanDecline::ArrangementBlockers(_)) => {
             return ExactArrangementBooleanShortcutReason::ArrangementConstructionBlocked;
         }
@@ -11450,13 +11465,6 @@ mod tests {
     #[test]
     fn arrangement_shortcut_reason_names_generic_blocker_stage() {
         let cases = [
-            (
-                synthetic_arrangement_attempt(
-                    ExactArrangementBooleanStage::NotAttempted,
-                    Some(ExactArrangementBooleanDecline::DispatchGate),
-                ),
-                ExactArrangementBooleanShortcutReason::ShortcutSupportOnly,
-            ),
             (
                 synthetic_arrangement_attempt(
                     ExactArrangementBooleanStage::ArrangementBuilt,

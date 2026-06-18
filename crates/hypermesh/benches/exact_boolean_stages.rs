@@ -424,12 +424,10 @@ fn run_case(case: &BenchCase) {
             .arrangement_attempt(request, case.regularization)
             .unwrap();
         black_box((
-            attempt.stage,
-            attempt.selected_faces,
-            attempt.reversed_selected_faces,
-            attempt.volume_oriented_selected_faces,
-            attempt.label_oriented_selected_faces,
-            attempt.selected_volume_regions,
+            attempt.output_counts(),
+            attempt.topology_assembly_complete(),
+            attempt.region_ownership_resolved(),
+            attempt.region_ownership_volume_resolved(),
         ));
     });
 

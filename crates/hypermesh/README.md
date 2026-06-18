@@ -274,7 +274,7 @@ let attempt = workspace.arrangement_attempt(
     request,
     ExactRegularizationPolicy::REGULARIZED_SOLID,
 )?;
-assert!(attempt.decline.is_none() || attempt.arrangement_blockers > 0);
+attempt.validate()?;
 ```
 
 ## References

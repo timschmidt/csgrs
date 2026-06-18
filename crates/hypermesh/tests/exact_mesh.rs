@@ -2125,14 +2125,9 @@ fn exact_open_surface_arrangement_is_publicly_replayable() {
                 closed_attempt.declined_output_validation(),
                 "{operation:?}: {closed_attempt:?}"
             );
-            assert!(
-                closed_attempt.output_vertices > 0,
-                "{operation:?}: {closed_attempt:?}"
-            );
-            assert!(
-                closed_attempt.output_triangles > 0,
-                "{operation:?}: {closed_attempt:?}"
-            );
+            let (output_vertices, output_triangles) = closed_attempt.output_counts();
+            assert!(output_vertices > 0, "{operation:?}: {closed_attempt:?}");
+            assert!(output_triangles > 0, "{operation:?}: {closed_attempt:?}");
             closed_attempt.validate().unwrap();
             closed_attempt
                 .validate_against_sources_with_validation(&left, &right, ValidationPolicy::CLOSED)
@@ -2323,15 +2318,10 @@ fn arrangement_attempt_output_validation_is_publicly_replayable() {
             closed_attempt.declined_output_validation(),
             "{operation:?}: {closed_attempt:?}"
         );
-        assert!(
-            closed_attempt.output_vertices > 0,
-            "{operation:?}: {closed_attempt:?}"
-        );
+        let (output_vertices, output_triangles) = closed_attempt.output_counts();
+        assert!(output_vertices > 0, "{operation:?}: {closed_attempt:?}");
         if operation == ExactBooleanOperation::Union {
-            assert!(
-                closed_attempt.output_triangles > 0,
-                "{operation:?}: {closed_attempt:?}"
-            );
+            assert!(output_triangles > 0, "{operation:?}: {closed_attempt:?}");
         }
         closed_attempt.validate().unwrap();
         closed_attempt
@@ -2369,10 +2359,6 @@ fn arrangement_attempt_output_validation_is_publicly_replayable() {
         );
         assert!(
             boundary_attempt.materialized_arrangement_cell_complex_shortcut(),
-            "{operation:?}: {boundary_attempt:?}"
-        );
-        assert!(
-            boundary_attempt.decline.is_none(),
             "{operation:?}: {boundary_attempt:?}"
         );
         boundary_attempt.validate().unwrap();
@@ -3783,32 +3769,8 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
         closed_attempt.declined_output_validation(),
         "{closed_attempt:?}"
     );
-    assert!(
-        closed_attempt
-            .topology_assembly
-            .is_some_and(|status| status.is_complete())
-    );
-    assert_eq!(
-        closed_attempt
-            .topology_assembly_report
-            .as_ref()
-            .map(|report| report.status),
-        closed_attempt.topology_assembly,
-        "{closed_attempt:?}"
-    );
-    assert!(
-        closed_attempt
-            .region_ownership
-            .is_some_and(|status| status.is_resolved())
-    );
-    assert_eq!(
-        closed_attempt
-            .region_ownership_report
-            .as_ref()
-            .map(|report| report.status),
-        closed_attempt.region_ownership,
-        "{closed_attempt:?}"
-    );
+    assert!(closed_attempt.topology_assembly_complete());
+    assert!(closed_attempt.region_ownership_resolved());
     closed_attempt.validate().unwrap();
     closed_attempt
         .validate_against_sources_with_validation(&left, &right, ValidationPolicy::CLOSED)
@@ -3889,7 +3851,7 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
         .arrangement_attempt
         .as_mut()
         .expect("named evaluation should retain arrangement attempt");
-    attempt.region_ownership = None;
+    attempt.region_ownership_report = None;
     assert_eq!(
         attempt.validate(),
         Err(hypermesh::ExactReportValidationError::StatusEvidenceMismatch)
@@ -5800,32 +5762,8 @@ fn exact_arrangement_public_path_reports_blockers_or_cells() {
         ExactRegularizationPolicy::REGULARIZED_SOLID,
     );
     attempt.validate().unwrap();
-    assert!(
-        attempt
-            .topology_assembly
-            .is_some_and(|status| status.is_complete())
-    );
-    assert_eq!(
-        attempt
-            .topology_assembly_report
-            .as_ref()
-            .map(|report| report.status),
-        attempt.topology_assembly,
-        "{attempt:?}"
-    );
-    assert!(
-        attempt
-            .region_ownership
-            .is_some_and(|status| status.is_volume_resolved())
-    );
-    assert_eq!(
-        attempt
-            .region_ownership_report
-            .as_ref()
-            .map(|report| report.status),
-        attempt.region_ownership,
-        "{attempt:?}"
-    );
+    assert!(attempt.topology_assembly_complete());
+    assert!(attempt.region_ownership_volume_resolved());
     attempt.validate_against_sources(&left, &right).unwrap();
     assert_eq!(
         attempt.freshness_against_sources(&left, &right),
@@ -5837,9 +5775,6 @@ fn exact_arrangement_public_path_reports_blockers_or_cells() {
         stale_attempt.freshness_against_sources(&left, &right),
         ExactReportFreshness::SourceReplayMismatch
     );
-    let mut stale_attempt_gate = attempt.clone();
-    stale_attempt_gate.topology_assembly = None;
-    assert!(stale_attempt_gate.validate().is_err());
     let mut stale_attempt_report = attempt.clone();
     stale_attempt_report.region_ownership_report = None;
     assert_eq!(
@@ -5853,13 +5788,6 @@ fn exact_arrangement_public_path_reports_blockers_or_cells() {
     assert_eq!(
         blocked_attempt.freshness_against_sources(&left, &right),
         ExactReportFreshness::SourceReplayMismatch
-    );
-
-    blocked_attempt = attempt.clone();
-    blocked_attempt.output_vertices += 1;
-    assert_eq!(
-        blocked_attempt.validate(),
-        Err(hypermesh::ExactReportValidationError::StatusEvidenceMismatch)
     );
 }
 
