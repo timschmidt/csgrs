@@ -655,6 +655,8 @@ pub struct CurveStringRegionTrimReport2 {
     source_segment_count: usize,
     region_material_contour_count: usize,
     region_hole_contour_count: usize,
+    region_material_segment_count: usize,
+    region_hole_segment_count: usize,
     boundary_candidate_pair_count: usize,
     boundary_skipped_aabb_pair_count: usize,
     boundary_tested_pair_count: usize,
@@ -3412,6 +3414,16 @@ impl CurveStringRegionTrimReport2 {
         self.region_hole_contour_count
     }
 
+    /// Returns the material boundary segment count in the clipping region.
+    pub const fn region_material_segment_count(&self) -> usize {
+        self.region_material_segment_count
+    }
+
+    /// Returns the hole boundary segment count in the clipping region.
+    pub const fn region_hole_segment_count(&self) -> usize {
+        self.region_hole_segment_count
+    }
+
     /// Returns boundary segment-pair candidates considered while collecting trim hits.
     pub const fn boundary_candidate_pair_count(&self) -> usize {
         self.boundary_candidate_pair_count
@@ -3641,6 +3653,8 @@ fn trim_curve_string_inside_region(
             curve_string,
             region.material_contours().len(),
             region.hole_contours().len(),
+            region_material_segment_count(region),
+            region_hole_segment_count(region),
             boundary_workload,
             boundary_hits,
             Vec::new(),
@@ -3655,12 +3669,30 @@ fn trim_curve_string_inside_region(
         curve_string,
         region.material_contours().len(),
         region.hole_contours().len(),
+        region_material_segment_count(region),
+        region_hole_segment_count(region),
         boundary_workload,
         boundary_hits,
         CurveStringRegionTrimQueryPath2::Direct,
         policy,
         |point| region.classify_point(point, policy),
     )
+}
+
+fn region_material_segment_count(region: &Region2) -> usize {
+    region
+        .material_contours()
+        .iter()
+        .map(|contour| contour.len())
+        .sum()
+}
+
+fn region_hole_segment_count(region: &Region2) -> usize {
+    region
+        .hole_contours()
+        .iter()
+        .map(|contour| contour.len())
+        .sum()
 }
 
 fn trim_curve_string_inside_prepared_region(
@@ -3681,6 +3713,8 @@ fn trim_curve_string_inside_prepared_region(
             curve_string,
             region.material_contours().len(),
             region.hole_contours().len(),
+            region.prepared_material_segment_count(),
+            region.prepared_hole_segment_count(),
             boundary_workload,
             boundary_hits,
             Vec::new(),
@@ -3695,6 +3729,8 @@ fn trim_curve_string_inside_prepared_region(
         curve_string,
         region.material_contours().len(),
         region.hole_contours().len(),
+        region.prepared_material_segment_count(),
+        region.prepared_hole_segment_count(),
         boundary_workload,
         boundary_hits,
         CurveStringRegionTrimQueryPath2::Prepared,
@@ -3707,6 +3743,8 @@ fn trim_curve_string_inside_region_with_hits(
     curve_string: &CurveString2,
     region_material_contour_count: usize,
     region_hole_contour_count: usize,
+    region_material_segment_count: usize,
+    region_hole_segment_count: usize,
     boundary_workload: RegionTrimBoundaryWorkload,
     boundary_hits: Vec<CurveStringRegionTrimHit2>,
     query_path: CurveStringRegionTrimQueryPath2,
@@ -3730,6 +3768,8 @@ fn trim_curve_string_inside_region_with_hits(
                     curve_string,
                     region_material_contour_count,
                     region_hole_contour_count,
+                    region_material_segment_count,
+                    region_hole_segment_count,
                     boundary_workload,
                     boundary_hits,
                     interval_reports,
@@ -3772,6 +3812,8 @@ fn trim_curve_string_inside_region_with_hits(
                         curve_string,
                         region_material_contour_count,
                         region_hole_contour_count,
+                        region_material_segment_count,
+                        region_hole_segment_count,
                         boundary_workload,
                         boundary_hits,
                         interval_reports,
@@ -3798,6 +3840,8 @@ fn trim_curve_string_inside_region_with_hits(
                         curve_string,
                         region_material_contour_count,
                         region_hole_contour_count,
+                        region_material_segment_count,
+                        region_hole_segment_count,
                         boundary_workload,
                         boundary_hits,
                         interval_reports,
@@ -3828,6 +3872,8 @@ fn trim_curve_string_inside_region_with_hits(
                         curve_string,
                         region_material_contour_count,
                         region_hole_contour_count,
+                        region_material_segment_count,
+                        region_hole_segment_count,
                         boundary_workload,
                         boundary_hits,
                         interval_reports,
@@ -3858,6 +3904,8 @@ fn trim_curve_string_inside_region_with_hits(
                         curve_string,
                         region_material_contour_count,
                         region_hole_contour_count,
+                        region_material_segment_count,
+                        region_hole_segment_count,
                         boundary_workload,
                         boundary_hits,
                         interval_reports,
@@ -3919,6 +3967,8 @@ fn trim_curve_string_inside_region_with_hits(
                         curve_string,
                         region_material_contour_count,
                         region_hole_contour_count,
+                        region_material_segment_count,
+                        region_hole_segment_count,
                         boundary_workload,
                         boundary_hits,
                         interval_reports,
@@ -3944,6 +3994,8 @@ fn trim_curve_string_inside_region_with_hits(
             source_segment_count: curve_string.len(),
             region_material_contour_count,
             region_hole_contour_count,
+            region_material_segment_count,
+            region_hole_segment_count,
             boundary_candidate_pair_count: boundary_workload.candidate_pair_count,
             boundary_skipped_aabb_pair_count: boundary_workload.skipped_aabb_pair_count,
             boundary_tested_pair_count: boundary_workload.tested_pair_count,
@@ -4450,6 +4502,8 @@ fn blocked_region_trim_result(
     curve_string: &CurveString2,
     region_material_contour_count: usize,
     region_hole_contour_count: usize,
+    region_material_segment_count: usize,
+    region_hole_segment_count: usize,
     boundary_workload: RegionTrimBoundaryWorkload,
     boundary_hits: Vec<CurveStringRegionTrimHit2>,
     interval_reports: Vec<CurveStringRegionTrimIntervalReport2>,
@@ -4464,6 +4518,8 @@ fn blocked_region_trim_result(
             source_segment_count: curve_string.len(),
             region_material_contour_count,
             region_hole_contour_count,
+            region_material_segment_count,
+            region_hole_segment_count,
             boundary_candidate_pair_count: boundary_workload.candidate_pair_count,
             boundary_skipped_aabb_pair_count: boundary_workload.skipped_aabb_pair_count,
             boundary_tested_pair_count: boundary_workload.tested_pair_count,
