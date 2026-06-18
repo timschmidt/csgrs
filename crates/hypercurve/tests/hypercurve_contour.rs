@@ -154,6 +154,62 @@ fn contour_chamfer_reports_boundary_parameters() {
 }
 
 #[test]
+fn contour_chamfer_line_line_vertex_by_points_materializes_closed_contour() {
+    let contour = rectangle();
+
+    let chamfer = contour
+        .chamfer_line_line_vertex_by_points(1, &p(3, 0), &p(4, 1), &policy())
+        .unwrap();
+
+    assert!(chamfer.report().status().is_native_exact());
+    assert_eq!(chamfer.report().vertex_index(), 1);
+    assert_eq!(
+        chamfer
+            .report()
+            .curve_string_report()
+            .previous_trim()
+            .param(),
+        &q(3, 4)
+    );
+    assert_eq!(
+        chamfer.report().curve_string_report().next_trim().param(),
+        &q(1, 4)
+    );
+    let contour = chamfer
+        .contour()
+        .expect("point-bearing contour chamfer should materialize");
+    assert_eq!(contour.len(), 5);
+    assert_eq!(contour.segments()[0].end(), &p(3, 0));
+    assert_eq!(contour.segments()[1].start(), &p(3, 0));
+    assert_eq!(contour.segments()[1].end(), &p(4, 1));
+    assert_eq!(contour.segments()[2].start(), &p(4, 1));
+    assert_eq!(contour.segments()[4].end(), &p(0, 0));
+}
+
+#[test]
+fn contour_chamfer_line_line_vertex_by_points_reports_off_segment_boundary() {
+    let contour = rectangle();
+
+    let chamfer = contour
+        .chamfer_line_line_vertex_by_points(1, &p(5, 0), &p(4, 1), &policy())
+        .unwrap();
+
+    assert!(chamfer.contour().is_none());
+    assert!(chamfer.report().status().is_retained_evidence());
+    assert_eq!(
+        chamfer.report().blocker(),
+        Some(UncertaintyReason::Boundary)
+    );
+    assert_eq!(
+        chamfer
+            .report()
+            .curve_string_report()
+            .chamfer_segment_index(),
+        None
+    );
+}
+
+#[test]
 fn contour_chamfer_rejects_wraparound_vertex_for_now() {
     let contour = rectangle();
 

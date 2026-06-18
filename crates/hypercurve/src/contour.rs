@@ -175,6 +175,51 @@ impl Contour2 {
         })
     }
 
+    /// Chamfers a non-wrapping interior line-line contour vertex by exact cut points.
+    ///
+    /// The supplied points are validated against the adjacent source line
+    /// segments by the underlying curve-string operation. Materialization then
+    /// goes back through the checked contour constructor, so closed topology is
+    /// retained only when the resulting segment sequence is still certified.
+    pub fn chamfer_line_line_vertex_by_points(
+        &self,
+        vertex_index: usize,
+        previous_point: &Point2,
+        next_point: &Point2,
+        policy: &CurvePolicy,
+    ) -> CurveResult<ContourChamferResult2> {
+        if vertex_index == 0 || vertex_index >= self.segments().len() {
+            return Err(CurveError::InvalidCurveRange);
+        }
+        let chamfer = self.curve.chamfer_line_line_vertex_by_points(
+            vertex_index,
+            previous_point,
+            next_point,
+            policy,
+        )?;
+        let curve_string_report = chamfer.report().clone();
+        let status = curve_string_report.status();
+        let blocker = curve_string_report.blocker();
+        let contour = match chamfer.into_curve_string() {
+            Some(curve_string) => Some(Self::try_new_with_fill_rule(
+                curve_string.into_segments(),
+                self.fill_rule,
+            )?),
+            None => None,
+        };
+        Ok(ContourChamferResult2 {
+            contour,
+            report: ContourChamferReport2 {
+                vertex_index,
+                curve_string_report,
+                source_segment_count: self.segments().len(),
+                fill_rule: self.fill_rule,
+                status,
+                blocker,
+            },
+        })
+    }
+
     /// Returns this contour's exact signed area when every segment can provide
     /// a Green's-theorem boundary contribution.
     ///
