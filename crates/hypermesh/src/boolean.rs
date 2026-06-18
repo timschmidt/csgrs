@@ -1872,10 +1872,7 @@ impl ExactBooleanCertificationSet {
         request: ExactBooleanRequest,
     ) -> Result<(), ExactReportValidationError> {
         self.validate_for_request(request)?;
-        let mut workspace = ExactBooleanWorkspace::new(left, right);
-        let replay = workspace
-            .evaluate(request)
-            .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+        let replay = workspace_evaluation_for_replay(left, right, request)?;
         if self == &replay.certifications {
             Ok(())
         } else {
