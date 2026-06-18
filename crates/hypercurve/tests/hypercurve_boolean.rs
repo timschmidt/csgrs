@@ -1,10 +1,11 @@
 use hypercurve::{
     BooleanBoundaryChain, BooleanBoundaryChainAssemblyStage2, BooleanBoundaryChainSet,
-    BooleanBoundaryFragmentSet, BooleanBoundaryLoop, BooleanBoundaryLoopSet, BooleanFragmentAction,
-    BooleanFragmentClassification, BooleanFragmentSelection, BooleanFragmentSelectionStage2,
-    BooleanOp, BulgeVertex2, Classification, Contour2, CurveError, CurvePolicy,
-    DirectedBooleanFragment, FillRule, LineSeg2, Real, Region2, RegionContourKey,
-    RegionContourRole, RegionPointLocation, RegionSide, Segment2, UncertaintyReason,
+    BooleanBoundaryFragmentSet, BooleanBoundaryLoop, BooleanBoundaryLoopExtractionStage2,
+    BooleanBoundaryLoopSet, BooleanFragmentAction, BooleanFragmentClassification,
+    BooleanFragmentSelection, BooleanFragmentSelectionStage2, BooleanOp, BulgeVertex2,
+    Classification, Contour2, CurveError, CurvePolicy, DirectedBooleanFragment, FillRule, LineSeg2,
+    Real, Region2, RegionContourKey, RegionContourRole, RegionPointLocation, RegionSide, Segment2,
+    UncertaintyReason,
 };
 
 fn s(value: i32) -> Real {
@@ -266,9 +267,28 @@ fn boolean_fragment_selection_emits_directed_boundary_fragments() {
     assert_eq!(chains.closed_count(), 1);
     assert_eq!(chains.chains()[0].len(), emitted.directed_len());
 
-    let Classification::Decided(loops) = chains.closed_loops() else {
-        panic!("expected a closed boolean loop");
-    };
+    let extracted = chains.closed_loops_with_report();
+    assert!(extracted.report().status().is_native_exact());
+    assert_eq!(
+        extracted.report().stage(),
+        BooleanBoundaryLoopExtractionStage2::LoopMaterialization
+    );
+    assert_eq!(extracted.report().source_chain_count(), 1);
+    assert_eq!(
+        extracted.report().source_fragment_count(),
+        emitted.directed_len()
+    );
+    assert_eq!(extracted.report().closed_chain_count(), 1);
+    assert_eq!(extracted.report().open_chain_count(), 0);
+    assert_eq!(extracted.report().loop_count(), Some(1));
+    assert_eq!(
+        extracted.report().output_fragment_count(),
+        Some(emitted.directed_len())
+    );
+    assert_eq!(extracted.report().blocker(), None);
+    let loops = extracted
+        .loops()
+        .expect("reported closed loop extraction should materialize");
     assert_eq!(loops.len(), 1);
 
     let contours = loops.to_contours(FillRule::NonZero).unwrap();
@@ -339,9 +359,23 @@ fn boolean_boundary_chain_assembly_keeps_disjoint_loops_separate() {
     assert_eq!(chains.closed_count(), 2);
     assert!(chains.chains().iter().all(|chain| chain.len() == 4));
 
-    let Classification::Decided(loops) = chains.into_closed_loops() else {
-        panic!("expected disjoint closed loops");
-    };
+    let extracted = chains.into_closed_loops_with_report();
+    assert!(extracted.report().status().is_native_exact());
+    assert_eq!(
+        extracted.report().stage(),
+        BooleanBoundaryLoopExtractionStage2::LoopMaterialization
+    );
+    assert_eq!(extracted.report().source_chain_count(), 2);
+    assert_eq!(extracted.report().source_fragment_count(), 8);
+    assert_eq!(extracted.report().closed_chain_count(), 2);
+    assert_eq!(extracted.report().open_chain_count(), 0);
+    assert_eq!(extracted.report().loop_count(), Some(2));
+    assert_eq!(extracted.report().output_fragment_count(), Some(8));
+    assert!(
+        extracted.loops().is_some(),
+        "reported disjoint loop extraction should materialize"
+    );
+    let loops = extracted.into_loops().unwrap();
     let contours = loops.into_contours(FillRule::NonZero).unwrap();
     assert_eq!(contours.len(), 2);
     assert!(contours.iter().all(|contour| contour.len() == 4));
@@ -723,6 +757,22 @@ fn boundary_loop_extraction_rejects_open_chains() {
         .expect("reported open chain assembly should materialize");
     assert_eq!(chains.len(), 1);
     assert_eq!(chains.closed_count(), 0);
+    let extracted = chains.closed_loops_with_report();
+    assert!(extracted.loops().is_none());
+    assert!(extracted.report().status().is_retained_evidence());
+    assert_eq!(
+        extracted.report().stage(),
+        BooleanBoundaryLoopExtractionStage2::ChainClosureValidation
+    );
+    assert_eq!(extracted.report().source_chain_count(), 1);
+    assert_eq!(extracted.report().source_fragment_count(), 2);
+    assert_eq!(extracted.report().closed_chain_count(), 0);
+    assert_eq!(extracted.report().open_chain_count(), 1);
+    assert_eq!(extracted.report().loop_count(), None);
+    assert_eq!(
+        extracted.report().blocker(),
+        Some(UncertaintyReason::Unsupported)
+    );
     assert_eq!(
         chains.closed_loops(),
         Classification::Uncertain(UncertaintyReason::Unsupported)

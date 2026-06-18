@@ -63,6 +63,36 @@ pub struct BooleanBoundaryChainAssemblyResult2 {
     report: BooleanBoundaryChainAssemblyReport2,
 }
 
+/// Report for extracting closed boolean boundary loops from assembled chains.
+#[derive(Clone, Debug, PartialEq)]
+pub struct BooleanBoundaryLoopExtractionReport2 {
+    stage: BooleanBoundaryLoopExtractionStage2,
+    source_chain_count: usize,
+    source_fragment_count: usize,
+    closed_chain_count: usize,
+    open_chain_count: usize,
+    loop_count: Option<usize>,
+    output_fragment_count: Option<usize>,
+    status: RetainedTopologyStatus,
+    blocker: Option<UncertaintyReason>,
+}
+
+/// Furthest exact stage reached by boolean boundary loop extraction.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum BooleanBoundaryLoopExtractionStage2 {
+    /// Chains were being checked for closure before loop materialization.
+    ChainClosureValidation,
+    /// Closed chains were converted into checked boundary loops.
+    LoopMaterialization,
+}
+
+/// Result of report-bearing boolean boundary loop extraction.
+#[derive(Clone, Debug, PartialEq)]
+pub struct BooleanBoundaryLoopExtractionResult2 {
+    loops: Option<BooleanBoundaryLoopSet>,
+    report: BooleanBoundaryLoopExtractionReport2,
+}
+
 impl BooleanBoundaryFragmentSet {
     /// Constructs a boundary-fragment set from preclassified pieces.
     pub fn new(
@@ -362,8 +392,26 @@ impl BooleanBoundaryChainSet {
     /// separate avoids assigning hole/material roles before the graph is fully
     /// resolved.
     pub fn closed_loops(&self) -> Classification<BooleanBoundaryLoopSet> {
+        let result = self.closed_loops_with_report();
+        let blocker = result
+            .report()
+            .blocker()
+            .unwrap_or(UncertaintyReason::Unsupported);
+        if let Some(loops) = result.into_loops() {
+            Classification::Decided(loops)
+        } else {
+            Classification::Uncertain(blocker)
+        }
+    }
+
+    /// Extracts closed chains as boolean boundary loops and retains evidence.
+    pub fn closed_loops_with_report(&self) -> BooleanBoundaryLoopExtractionResult2 {
         if self.chains.iter().any(|chain| !chain.is_closed()) {
-            return Classification::Uncertain(crate::UncertaintyReason::Unsupported);
+            return blocked_boolean_boundary_loop_extraction_result(
+                self,
+                BooleanBoundaryLoopExtractionStage2::ChainClosureValidation,
+                UncertaintyReason::Unsupported,
+            );
         }
 
         let loops = match self
@@ -373,17 +421,51 @@ impl BooleanBoundaryChainSet {
             .collect::<CurveResult<Vec<_>>>()
         {
             Ok(loops) => loops,
-            Err(_) => return Classification::Uncertain(crate::UncertaintyReason::Unsupported),
+            Err(_) => {
+                return blocked_boolean_boundary_loop_extraction_result(
+                    self,
+                    BooleanBoundaryLoopExtractionStage2::LoopMaterialization,
+                    UncertaintyReason::Unsupported,
+                );
+            }
         };
-        decided_boolean_boundary_loop_set(loops)
+        match BooleanBoundaryLoopSet::new(loops) {
+            Ok(loop_set) => decided_boolean_boundary_loop_extraction_result(self, loop_set),
+            Err(_) => blocked_boolean_boundary_loop_extraction_result(
+                self,
+                BooleanBoundaryLoopExtractionStage2::LoopMaterialization,
+                UncertaintyReason::Unsupported,
+            ),
+        }
     }
 
     /// Consumes the chain set and extracts closed chains as boundary loops.
     pub fn into_closed_loops(self) -> Classification<BooleanBoundaryLoopSet> {
+        let result = self.into_closed_loops_with_report();
+        let blocker = result
+            .report()
+            .blocker()
+            .unwrap_or(UncertaintyReason::Unsupported);
+        if let Some(loops) = result.into_loops() {
+            Classification::Decided(loops)
+        } else {
+            Classification::Uncertain(blocker)
+        }
+    }
+
+    /// Consumes the chain set and extracts closed chains with retained evidence.
+    pub fn into_closed_loops_with_report(self) -> BooleanBoundaryLoopExtractionResult2 {
         if self.chains.iter().any(|chain| !chain.is_closed()) {
-            return Classification::Uncertain(crate::UncertaintyReason::Unsupported);
+            return blocked_boolean_boundary_loop_extraction_result(
+                &self,
+                BooleanBoundaryLoopExtractionStage2::ChainClosureValidation,
+                UncertaintyReason::Unsupported,
+            );
         }
 
+        let source_chain_count = self.len();
+        let source_fragment_count = chain_set_fragment_count(&self);
+        let closed_chain_count = self.closed_count();
         let loops = match self
             .chains
             .into_iter()
@@ -391,9 +473,98 @@ impl BooleanBoundaryChainSet {
             .collect::<CurveResult<Vec<_>>>()
         {
             Ok(loops) => loops,
-            Err(_) => return Classification::Uncertain(crate::UncertaintyReason::Unsupported),
+            Err(_) => {
+                return blocked_boolean_boundary_loop_extraction_counts_result(
+                    BooleanBoundaryLoopExtractionStage2::LoopMaterialization,
+                    source_chain_count,
+                    source_fragment_count,
+                    closed_chain_count,
+                    0,
+                    UncertaintyReason::Unsupported,
+                );
+            }
         };
-        decided_boolean_boundary_loop_set(loops)
+        match BooleanBoundaryLoopSet::new(loops) {
+            Ok(loop_set) => decided_boolean_boundary_loop_extraction_counts_result(
+                source_chain_count,
+                source_fragment_count,
+                closed_chain_count,
+                0,
+                loop_set,
+            ),
+            Err(_) => blocked_boolean_boundary_loop_extraction_counts_result(
+                BooleanBoundaryLoopExtractionStage2::LoopMaterialization,
+                source_chain_count,
+                source_fragment_count,
+                closed_chain_count,
+                0,
+                UncertaintyReason::Unsupported,
+            ),
+        }
+    }
+}
+
+impl BooleanBoundaryLoopExtractionReport2 {
+    /// Returns the furthest exact loop-extraction stage reached.
+    pub const fn stage(&self) -> BooleanBoundaryLoopExtractionStage2 {
+        self.stage
+    }
+
+    /// Returns source boundary chain count.
+    pub const fn source_chain_count(&self) -> usize {
+        self.source_chain_count
+    }
+
+    /// Returns total source fragment count across chains.
+    pub const fn source_fragment_count(&self) -> usize {
+        self.source_fragment_count
+    }
+
+    /// Returns source closed chain count.
+    pub const fn closed_chain_count(&self) -> usize {
+        self.closed_chain_count
+    }
+
+    /// Returns source open chain count.
+    pub const fn open_chain_count(&self) -> usize {
+        self.open_chain_count
+    }
+
+    /// Returns output loop count when materialized.
+    pub const fn loop_count(&self) -> Option<usize> {
+        self.loop_count
+    }
+
+    /// Returns output fragment count when materialized.
+    pub const fn output_fragment_count(&self) -> Option<usize> {
+        self.output_fragment_count
+    }
+
+    /// Returns retained topology status for loop extraction.
+    pub const fn status(&self) -> RetainedTopologyStatus {
+        self.status
+    }
+
+    /// Returns the exact blocker for non-materialized loop extraction.
+    pub const fn blocker(&self) -> Option<UncertaintyReason> {
+        self.blocker
+    }
+}
+
+impl BooleanBoundaryLoopExtractionResult2 {
+    /// Returns materialized loops, if extraction succeeded.
+    pub const fn loops(&self) -> Option<&BooleanBoundaryLoopSet> {
+        self.loops.as_ref()
+    }
+
+    /// Consumes this result and returns materialized loops, if any.
+    pub fn into_loops(self) -> Option<BooleanBoundaryLoopSet> {
+        self.loops
+    }
+
+    /// Returns retained loop-extraction evidence.
+    pub const fn report(&self) -> &BooleanBoundaryLoopExtractionReport2 {
+        &self.report
     }
 }
 
@@ -842,13 +1013,93 @@ fn retained_status_for_chain_assembly_blocker(
     }
 }
 
-fn decided_boolean_boundary_loop_set(
-    loops: Vec<BooleanBoundaryLoop>,
-) -> Classification<BooleanBoundaryLoopSet> {
-    match BooleanBoundaryLoopSet::new(loops) {
-        Ok(loop_set) => Classification::Decided(loop_set),
-        Err(_) => Classification::Uncertain(crate::UncertaintyReason::Unsupported),
+fn decided_boolean_boundary_loop_extraction_result(
+    source: &BooleanBoundaryChainSet,
+    loops: BooleanBoundaryLoopSet,
+) -> BooleanBoundaryLoopExtractionResult2 {
+    decided_boolean_boundary_loop_extraction_counts_result(
+        source.len(),
+        chain_set_fragment_count(source),
+        source.closed_count(),
+        source.len() - source.closed_count(),
+        loops,
+    )
+}
+
+fn decided_boolean_boundary_loop_extraction_counts_result(
+    source_chain_count: usize,
+    source_fragment_count: usize,
+    closed_chain_count: usize,
+    open_chain_count: usize,
+    loops: BooleanBoundaryLoopSet,
+) -> BooleanBoundaryLoopExtractionResult2 {
+    let output_fragment_count = loops.loops().iter().map(BooleanBoundaryLoop::len).sum();
+    BooleanBoundaryLoopExtractionResult2 {
+        loops: Some(loops),
+        report: BooleanBoundaryLoopExtractionReport2 {
+            stage: BooleanBoundaryLoopExtractionStage2::LoopMaterialization,
+            source_chain_count,
+            source_fragment_count,
+            closed_chain_count,
+            open_chain_count,
+            loop_count: Some(closed_chain_count),
+            output_fragment_count: Some(output_fragment_count),
+            status: RetainedTopologyStatus::NativeExact,
+            blocker: None,
+        },
     }
+}
+
+fn blocked_boolean_boundary_loop_extraction_result(
+    source: &BooleanBoundaryChainSet,
+    stage: BooleanBoundaryLoopExtractionStage2,
+    blocker: UncertaintyReason,
+) -> BooleanBoundaryLoopExtractionResult2 {
+    blocked_boolean_boundary_loop_extraction_counts_result(
+        stage,
+        source.len(),
+        chain_set_fragment_count(source),
+        source.closed_count(),
+        source.len() - source.closed_count(),
+        blocker,
+    )
+}
+
+fn blocked_boolean_boundary_loop_extraction_counts_result(
+    stage: BooleanBoundaryLoopExtractionStage2,
+    source_chain_count: usize,
+    source_fragment_count: usize,
+    closed_chain_count: usize,
+    open_chain_count: usize,
+    blocker: UncertaintyReason,
+) -> BooleanBoundaryLoopExtractionResult2 {
+    BooleanBoundaryLoopExtractionResult2 {
+        loops: None,
+        report: BooleanBoundaryLoopExtractionReport2 {
+            stage,
+            source_chain_count,
+            source_fragment_count,
+            closed_chain_count,
+            open_chain_count,
+            loop_count: None,
+            output_fragment_count: None,
+            status: retained_status_for_loop_extraction_blocker(blocker),
+            blocker: Some(blocker),
+        },
+    }
+}
+
+fn retained_status_for_loop_extraction_blocker(
+    blocker: UncertaintyReason,
+) -> RetainedTopologyStatus {
+    match blocker {
+        UncertaintyReason::Unsupported => RetainedTopologyStatus::Unsupported,
+        _ => RetainedTopologyStatus::Unresolved,
+    }
+}
+
+fn chain_set_fragment_count(chains: &BooleanBoundaryChainSet) -> usize {
+    chains.chains().iter().map(BooleanBoundaryChain::len).sum()
 }
 
 fn endpoint_adjacency(

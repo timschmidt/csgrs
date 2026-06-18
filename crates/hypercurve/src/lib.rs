@@ -129,7 +129,9 @@ pub use boolean::{
 pub use boolean_boundary::{
     BooleanBoundaryChain, BooleanBoundaryChainAssemblyReport2, BooleanBoundaryChainAssemblyResult2,
     BooleanBoundaryChainAssemblyStage2, BooleanBoundaryChainSet, BooleanBoundaryFragmentSet,
-    BooleanBoundaryLoop, BooleanBoundaryLoopSet, DirectedBooleanFragment,
+    BooleanBoundaryLoop, BooleanBoundaryLoopExtractionReport2,
+    BooleanBoundaryLoopExtractionResult2, BooleanBoundaryLoopExtractionStage2,
+    BooleanBoundaryLoopSet, DirectedBooleanFragment,
 };
 pub use bspline::{
     PolynomialBSplineBezierExtraction2, PolynomialBSplineCurve2, RationalBSplineBezierExtraction2,
