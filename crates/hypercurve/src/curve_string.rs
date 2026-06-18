@@ -133,6 +133,7 @@ pub struct CurveStringLinkOutputSegmentReport2 {
 /// Report for an auto-link attempt between two open curve strings.
 #[derive(Clone, Debug, PartialEq)]
 pub struct CurveStringLinkReport2 {
+    stage: CurveStringLinkStage2,
     kind: CurveStringLinkKind2,
     endpoint_report: CurveStringEndpointConnectionReport2,
     first_segment_count: usize,
@@ -143,6 +144,15 @@ pub struct CurveStringLinkReport2 {
     unresolved_endpoint_pair_count: usize,
     output_segments: Vec<CurveStringLinkOutputSegmentReport2>,
     status: RetainedTopologyStatus,
+}
+
+/// Furthest exact stage reached by an endpoint-link attempt.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum CurveStringLinkStage2 {
+    /// Endpoint pairs were classified to choose a unique exact link.
+    EndpointSelection,
+    /// Linked output segments were materialized with retained source ownership.
+    SegmentMaterialization,
 }
 
 /// A linked open curve string with retained endpoint provenance.
@@ -165,12 +175,22 @@ pub struct CurveStringOrderedLinkStepReport2 {
 /// Report for linking an ordered sequence of open curve strings.
 #[derive(Clone, Debug, PartialEq)]
 pub struct CurveStringOrderedLinkReport2 {
+    stage: CurveStringOrderedLinkStage2,
     source_curve_string_count: usize,
     output_segment_count: Option<usize>,
     output_source_indices: Vec<usize>,
     steps: Vec<CurveStringOrderedLinkStepReport2>,
     status: RetainedTopologyStatus,
     blocker: Option<UncertaintyReason>,
+}
+
+/// Furthest exact stage reached by ordered open-chain linking.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum CurveStringOrderedLinkStage2 {
+    /// Pairwise link steps were being selected and validated.
+    StepLinking,
+    /// The full ordered chain was materialized.
+    ChainMaterialization,
 }
 
 /// Result of report-bearing ordered open-chain linking.
@@ -183,6 +203,7 @@ pub struct OrderedLinkedCurveString2 {
 /// Report for connecting `first.end` to `second.start` with an exact line segment.
 #[derive(Clone, Debug, PartialEq)]
 pub struct CurveStringConnectReport2 {
+    stage: CurveStringConnectStage2,
     kind: Option<CurveStringLinkKind2>,
     endpoint_report: CurveStringEndpointConnectionReport2,
     first_segment_count: usize,
@@ -195,6 +216,15 @@ pub struct CurveStringConnectReport2 {
     output_segments: Vec<CurveStringConnectOutputSegmentReport2>,
     status: RetainedTopologyStatus,
     blocker: Option<UncertaintyReason>,
+}
+
+/// Furthest exact stage reached by explicit endpoint connection.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum CurveStringConnectStage2 {
+    /// Endpoint pair evidence was classified to decide whether a connector is valid.
+    EndpointSelection,
+    /// Connector and output segment provenance were materialized.
+    ConnectorMaterialization,
 }
 
 /// Source kind for one segment emitted by a connector operation.
@@ -757,6 +787,7 @@ impl CurveString2 {
 
         let curve_string = linked_curve_string(self, other, kind)?;
         let report = CurveStringLinkReport2 {
+            stage: CurveStringLinkStage2::SegmentMaterialization,
             kind,
             endpoint_report,
             first_segment_count: self.len(),
@@ -825,6 +856,7 @@ impl CurveString2 {
                     return Ok(OrderedLinkedCurveString2 {
                         curve_string: None,
                         report: CurveStringOrderedLinkReport2 {
+                            stage: CurveStringOrderedLinkStage2::StepLinking,
                             source_curve_string_count,
                             output_segment_count: None,
                             output_source_indices: blocked_output_source_indices,
@@ -846,6 +878,7 @@ impl CurveString2 {
                     return Ok(OrderedLinkedCurveString2 {
                         curve_string: None,
                         report: CurveStringOrderedLinkReport2 {
+                            stage: CurveStringOrderedLinkStage2::StepLinking,
                             source_curve_string_count,
                             output_segment_count: None,
                             output_source_indices: blocked_output_source_indices,
@@ -860,6 +893,7 @@ impl CurveString2 {
 
         Ok(OrderedLinkedCurveString2 {
             report: CurveStringOrderedLinkReport2 {
+                stage: CurveStringOrderedLinkStage2::ChainMaterialization,
                 source_curve_string_count,
                 output_segment_count: Some(accumulated.len()),
                 output_source_indices: accumulated_source_indices,
@@ -927,6 +961,7 @@ impl CurveString2 {
 
         let (curve_string, connector_segment_index) = connected_curve_string(self, other, kind)?;
         let report = CurveStringConnectReport2 {
+            stage: CurveStringConnectStage2::ConnectorMaterialization,
             kind: Some(kind),
             endpoint_report,
             first_segment_count: self.len(),
@@ -1034,6 +1069,7 @@ impl CurveString2 {
         };
         let (curve_string, connector_segment_index) = connected_curve_string(self, other, kind)?;
         let report = CurveStringConnectReport2 {
+            stage: CurveStringConnectStage2::ConnectorMaterialization,
             kind: Some(kind),
             endpoint_report,
             first_segment_count: self.len(),
@@ -4988,6 +5024,11 @@ impl CurveStringEndpointConnectionReport2 {
 }
 
 impl CurveStringLinkReport2 {
+    /// Returns the furthest exact link stage reached.
+    pub const fn stage(&self) -> CurveStringLinkStage2 {
+        self.stage
+    }
+
     /// Returns the selected link orientation.
     pub const fn kind(&self) -> CurveStringLinkKind2 {
         self.kind
@@ -5218,6 +5259,11 @@ impl CurveStringOrderedLinkStepReport2 {
 }
 
 impl CurveStringOrderedLinkReport2 {
+    /// Returns the furthest exact ordered-link stage reached.
+    pub const fn stage(&self) -> CurveStringOrderedLinkStage2 {
+        self.stage
+    }
+
     /// Returns the source curve-string count captured by this report.
     pub const fn source_curve_string_count(&self) -> usize {
         self.source_curve_string_count
@@ -5270,6 +5316,11 @@ impl OrderedLinkedCurveString2 {
 }
 
 impl CurveStringConnectReport2 {
+    /// Returns the furthest exact connector stage reached.
+    pub const fn stage(&self) -> CurveStringConnectStage2 {
+        self.stage
+    }
+
     /// Returns the selected connector orientation, when one was selected.
     pub const fn kind(&self) -> Option<CurveStringLinkKind2> {
         self.kind
@@ -5875,6 +5926,7 @@ fn blocked_connected_curve_string(
     ConnectedCurveString2 {
         curve_string: None,
         report: CurveStringConnectReport2 {
+            stage: CurveStringConnectStage2::EndpointSelection,
             kind,
             endpoint_report,
             first_segment_count: first.len(),

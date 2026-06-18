@@ -1,14 +1,15 @@
 use hypercurve::{
     BulgeVertex2, CircularArc2, Classification, Contour2, CurveError, CurvePolicy, CurveString2,
     CurveStringChamferInputPath2, CurveStringChamferStage2, CurveStringConnectSource2,
-    CurveStringCurveTrimQueryPath2, CurveStringCurveTrimStage2, CurveStringDeduplicateStage2,
-    CurveStringEndpoint2, CurveStringEndpointConnectionStatus2, CurveStringFilletInputPath2,
-    CurveStringFilletStage2, CurveStringIntersectionPredicatePath2,
+    CurveStringConnectStage2, CurveStringCurveTrimQueryPath2, CurveStringCurveTrimStage2,
+    CurveStringDeduplicateStage2, CurveStringEndpoint2, CurveStringEndpointConnectionStatus2,
+    CurveStringFilletInputPath2, CurveStringFilletStage2, CurveStringIntersectionPredicatePath2,
     CurveStringIntersectionQueryPath2, CurveStringLineMergeStage2, CurveStringLinkKind2,
-    CurveStringLinkSourceInput2, CurveStringRegionTrimQueryPath2, CurveStringRegionTrimStage2,
-    CurveStringTrimInputPath2, CurveStringTrimPoint2, IntersectionKind, LineArcIntersection,
-    LineArcOrder, LineSeg2, Point2, Real, Region2, RegionContourRole, RegionPointLocation,
-    Segment2, SegmentIntersection, UncertaintyReason,
+    CurveStringLinkSourceInput2, CurveStringLinkStage2, CurveStringOrderedLinkStage2,
+    CurveStringRegionTrimQueryPath2, CurveStringRegionTrimStage2, CurveStringTrimInputPath2,
+    CurveStringTrimPoint2, IntersectionKind, LineArcIntersection, LineArcOrder, LineSeg2, Point2,
+    Real, Region2, RegionContourRole, RegionPointLocation, Segment2, SegmentIntersection,
+    UncertaintyReason,
 };
 
 fn s(value: i32) -> Real {
@@ -503,6 +504,10 @@ fn curve_string_link_materializes_unique_end_start_connection() {
         &p(2, 0)
     );
     assert!(linked.report().status().is_native_exact());
+    assert_eq!(
+        linked.report().stage(),
+        CurveStringLinkStage2::SegmentMaterialization
+    );
     assert_eq!(linked.curve_string().len(), 2);
     assert_eq!(linked.curve_string().start(), Some(&p(0, 0)));
     assert_eq!(linked.curve_string().end(), Some(&p(2, 0)));
@@ -589,6 +594,10 @@ fn curve_string_ordered_link_materializes_multistep_chain() {
     .unwrap();
 
     assert!(linked.report().status().is_native_exact());
+    assert_eq!(
+        linked.report().stage(),
+        CurveStringOrderedLinkStage2::ChainMaterialization
+    );
     assert_eq!(linked.report().source_curve_string_count(), 3);
     assert_eq!(linked.report().output_segment_count(), Some(3));
     assert_eq!(linked.report().output_source_indices(), &[0, 1, 2]);
@@ -719,6 +728,10 @@ fn curve_string_ordered_link_reports_disconnected_step() {
 
     assert!(linked.curve_string().is_none());
     assert!(linked.report().status().is_retained_evidence());
+    assert_eq!(
+        linked.report().stage(),
+        CurveStringOrderedLinkStage2::StepLinking
+    );
     assert_eq!(linked.report().blocker(), Some(UncertaintyReason::Boundary));
     assert_eq!(linked.report().output_segment_count(), None);
     assert_eq!(linked.report().output_source_indices(), &[0]);
@@ -744,6 +757,10 @@ fn curve_string_connect_end_to_start_inserts_exact_line() {
         .unwrap();
 
     assert!(connected.report().status().is_native_exact());
+    assert_eq!(
+        connected.report().stage(),
+        CurveStringConnectStage2::ConnectorMaterialization
+    );
     assert!(connected.report().blocker().is_none());
     assert_eq!(
         connected.report().endpoint_report().status(),
@@ -958,6 +975,10 @@ fn curve_string_connect_end_to_start_blocks_already_connected_endpoints() {
 
     assert!(connected.curve_string().is_none());
     assert!(connected.report().status().is_retained_evidence());
+    assert_eq!(
+        connected.report().stage(),
+        CurveStringConnectStage2::EndpointSelection
+    );
     assert_eq!(connected.report().endpoint_pair_count(), 1);
     assert_eq!(connected.report().exact_endpoint_pair_count(), 1);
     assert_eq!(connected.report().disconnected_endpoint_pair_count(), 0);
