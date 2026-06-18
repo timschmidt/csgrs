@@ -2501,4 +2501,71 @@ mod tests {
             Some(UncertaintyReason::Unsupported)
         );
     }
+
+    #[test]
+    fn region_boolean_report_retains_boundary_role_blocker_pair() {
+        let first = Region2::from_material_contours(vec![
+            Contour2::from_bulge_vertices(&[
+                BulgeVertex2::new(point(0, 0), Real::zero()),
+                BulgeVertex2::new(point(4, 0), Real::zero()),
+                BulgeVertex2::new(point(4, 4), Real::zero()),
+                BulgeVertex2::new(point(0, 4), Real::zero()),
+            ])
+            .unwrap(),
+        ]);
+        let second = Region2::from_material_contours(vec![
+            Contour2::from_bulge_vertices(&[
+                BulgeVertex2::new(point(10, 0), Real::zero()),
+                BulgeVertex2::new(point(14, 0), Real::zero()),
+                BulgeVertex2::new(point(14, 4), Real::zero()),
+                BulgeVertex2::new(point(10, 4), Real::zero()),
+            ])
+            .unwrap(),
+        ]);
+        let boundary_events =
+            RegionIntersectionSet::from_parts(Vec::new(), Some(1), Some(1), 1, 1, 0).unwrap();
+        let crossing_contours = vec![
+            Contour2::from_bulge_vertices(&[
+                BulgeVertex2::new(point(0, 0), Real::zero()),
+                BulgeVertex2::new(point(4, 0), Real::zero()),
+                BulgeVertex2::new(point(4, 4), Real::zero()),
+                BulgeVertex2::new(point(0, 4), Real::zero()),
+            ])
+            .unwrap(),
+            Contour2::from_bulge_vertices(&[
+                BulgeVertex2::new(point(2, -1), Real::zero()),
+                BulgeVertex2::new(point(6, -1), Real::zero()),
+                BulgeVertex2::new(point(6, 3), Real::zero()),
+                BulgeVertex2::new(point(2, 3), Real::zero()),
+            ])
+            .unwrap(),
+        ];
+
+        let result = region_boolean_result_from_boundary_contours_with_pipeline_report(
+            &first.as_view(),
+            &second.as_view(),
+            BooleanOp::Union,
+            FillRule::NonZero,
+            RegionBooleanQueryPath2::Direct,
+            &boundary_events,
+            crossing_contours,
+            None,
+            &CurvePolicy::certified(),
+        )
+        .unwrap();
+
+        assert!(result.region().is_none());
+        assert_eq!(
+            result.report().stage(),
+            RegionBooleanStage2::RegionRoleAssignment
+        );
+        assert_eq!(result.report().blocker(), Some(UncertaintyReason::Boundary));
+        let boundary_report = result.report().boundary_build_report().unwrap();
+        assert_eq!(boundary_report.blocker_first_contour_index(), Some(0));
+        assert_eq!(boundary_report.blocker_second_contour_index(), Some(1));
+        assert_eq!(
+            boundary_report.stage(),
+            crate::RegionBoundaryContourBuildStage2::NestingValidation
+        );
+    }
 }
