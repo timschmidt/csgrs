@@ -438,6 +438,7 @@ pub struct CurveStringChamferReport2 {
     next_cut_point: Option<Point2>,
     segment_reports: Vec<CurveStringTrimSegmentReport2>,
     chamfer_segment_index: Option<usize>,
+    chamfer_segment_kind: Option<SegmentKind>,
     source_segment_count: usize,
     output_segment_count: Option<usize>,
     status: RetainedTopologyStatus,
@@ -484,6 +485,7 @@ pub struct CurveStringFilletReport2 {
     radius_squared: Option<Real>,
     segment_reports: Vec<CurveStringTrimSegmentReport2>,
     fillet_segment_index: Option<usize>,
+    fillet_segment_kind: Option<SegmentKind>,
     source_segment_count: usize,
     output_segment_count: Option<usize>,
     status: RetainedTopologyStatus,
@@ -1822,6 +1824,7 @@ impl CurveString2 {
                 next_cut_point: Some(next_cut_point),
                 segment_reports,
                 chamfer_segment_index: Some(chamfer_segment_index),
+                chamfer_segment_kind: Some(SegmentKind::Line),
                 source_segment_count: self.len(),
                 output_segment_count: Some(output_segment_count),
                 status: RetainedTopologyStatus::NativeExact,
@@ -2267,6 +2270,7 @@ impl CurveString2 {
                 radius_squared: Some(radius_squared),
                 segment_reports,
                 fillet_segment_index: Some(fillet_segment_index),
+                fillet_segment_kind: Some(SegmentKind::Arc),
                 source_segment_count: self.len(),
                 output_segment_count: Some(output_segment_count),
                 status: RetainedTopologyStatus::NativeExact,
@@ -3080,6 +3084,11 @@ impl CurveStringChamferReport2 {
         self.chamfer_segment_index
     }
 
+    /// Returns the primitive family of the inserted chamfer segment, when materialized.
+    pub const fn chamfer_segment_kind(&self) -> Option<SegmentKind> {
+        self.chamfer_segment_kind
+    }
+
     /// Returns the source curve-string segment count captured by this report.
     pub const fn source_segment_count(&self) -> usize {
         self.source_segment_count
@@ -3196,6 +3205,11 @@ impl CurveStringFilletReport2 {
     /// Returns the inserted fillet arc segment index in the output curve string.
     pub const fn fillet_segment_index(&self) -> Option<usize> {
         self.fillet_segment_index
+    }
+
+    /// Returns the primitive family of the inserted fillet segment, when materialized.
+    pub const fn fillet_segment_kind(&self) -> Option<SegmentKind> {
+        self.fillet_segment_kind
     }
 
     /// Returns the source curve-string segment count captured by this report.
@@ -4917,6 +4931,7 @@ fn blocked_chamfer_result(
             next_cut_point: None,
             segment_reports,
             chamfer_segment_index: None,
+            chamfer_segment_kind: None,
             source_segment_count: curve_string.len(),
             output_segment_count: None,
             status,
@@ -4956,6 +4971,7 @@ fn blocked_fillet_result(
             radius_squared,
             segment_reports,
             fillet_segment_index: None,
+            fillet_segment_kind: None,
             source_segment_count: curve_string.len(),
             output_segment_count: None,
             status,
