@@ -1640,6 +1640,24 @@ fn curve_string_trim_inside_region_materializes_inside_window() {
         trimmed.report().boundary_hits()[0].region_contour_role(),
         RegionContourRole::Material
     );
+    let left_hit = trimmed
+        .report()
+        .boundary_hits()
+        .iter()
+        .find(|hit| hit.point() == &p(0, 1))
+        .expect("left boundary hit is retained");
+    assert_eq!(left_hit.source_param(), &q(1, 4));
+    assert_eq!(left_hit.region_segment_index(), 3);
+    assert_eq!(left_hit.region_param(), &q(3, 4));
+    let right_hit = trimmed
+        .report()
+        .boundary_hits()
+        .iter()
+        .find(|hit| hit.point() == &p(4, 1))
+        .expect("right boundary hit is retained");
+    assert_eq!(right_hit.source_param(), &q(3, 4));
+    assert_eq!(right_hit.region_segment_index(), 1);
+    assert_eq!(right_hit.region_param(), &q(1, 4));
     assert_eq!(trimmed.report().interval_reports().len(), 3);
     assert_eq!(
         trimmed.report().interval_reports()[1].location(),

@@ -428,6 +428,7 @@ pub struct CurveStringRegionTrimHit2 {
     region_segment_index: usize,
     point: Point2,
     source_param: Real,
+    region_param: Real,
     kind: IntersectionKind,
 }
 
@@ -2850,6 +2851,11 @@ impl CurveStringRegionTrimHit2 {
         &self.source_param
     }
 
+    /// Returns the retained region boundary segment parameter.
+    pub const fn region_param(&self) -> &Real {
+        &self.region_param
+    }
+
     /// Returns the local intersection kind.
     pub const fn kind(&self) -> IntersectionKind {
         self.kind
@@ -3426,6 +3432,7 @@ fn collect_region_trim_contour_hits(
                 role,
                 contour_index,
                 region_segment_index,
+                region_segment,
                 relation,
                 policy,
             )? {
@@ -3469,6 +3476,7 @@ fn collect_prepared_region_trim_contour_hits(
                 role,
                 contour_index,
                 region_segment_index,
+                region_segment,
                 relation,
                 policy,
             )? {
@@ -3487,6 +3495,7 @@ fn append_region_trim_hits_from_relation(
     role: RegionContourRole,
     contour_index: usize,
     region_segment_index: usize,
+    region_segment: &Segment2,
     relation: SegmentIntersection,
     policy: &CurvePolicy,
 ) -> CurveResult<Option<(RetainedTopologyStatus, UncertaintyReason)>> {
@@ -3497,97 +3506,147 @@ fn append_region_trim_hits_from_relation(
             ..
         }
         | SegmentIntersection::ArcArc(ArcArcIntersection::None) => Ok(None),
-        SegmentIntersection::LineLine(LineLineIntersection::Point { point, kind, .. }) => {
+        SegmentIntersection::LineLine(LineLineIntersection::Point {
+            point,
+            a_param,
+            b_param,
+            kind,
+        }) => push_region_trim_hit(
+            hits,
+            source_segment_index,
+            role,
+            contour_index,
+            region_segment_index,
+            point,
+            a_param,
+            b_param,
+            kind,
+        ),
+        SegmentIntersection::LineArc {
+            result: LineArcIntersection::Point(hit),
+            order,
+        } => {
+            match line_arc_region_trim_params(source_segment, region_segment, order, &hit, policy)?
+            {
+                Ok((source_param, region_param)) => push_region_trim_hit(
+                    hits,
+                    source_segment_index,
+                    role,
+                    contour_index,
+                    region_segment_index,
+                    hit.point,
+                    source_param,
+                    region_param,
+                    hit.kind,
+                ),
+                Err(reason) => Ok(Some((retained_status_for_uncertainty(reason), reason))),
+            }
+        }
+        SegmentIntersection::ArcArc(ArcArcIntersection::Point(hit)) => {
+            match point_region_trim_params(source_segment, region_segment, &hit.point, policy)? {
+                Ok((source_param, region_param)) => push_region_trim_hit(
+                    hits,
+                    source_segment_index,
+                    role,
+                    contour_index,
+                    region_segment_index,
+                    hit.point,
+                    source_param,
+                    region_param,
+                    hit.kind,
+                ),
+                Err(reason) => Ok(Some((retained_status_for_uncertainty(reason), reason))),
+            }
+        }
+        SegmentIntersection::LineArc {
+            result: LineArcIntersection::TwoPoints { first, second },
+            order,
+        } => {
+            let (source_param, region_param) = match line_arc_region_trim_params(
+                source_segment,
+                region_segment,
+                order,
+                &first,
+                policy,
+            )? {
+                Ok(params) => params,
+                Err(reason) => return Ok(Some((retained_status_for_uncertainty(reason), reason))),
+            };
             push_region_trim_hit(
                 hits,
                 source_segment_index,
-                source_segment,
-                role,
-                contour_index,
-                region_segment_index,
-                point,
-                kind,
-                policy,
-            )
-        }
-        SegmentIntersection::LineArc {
-            result: LineArcIntersection::Point(hit),
-            ..
-        } => push_region_trim_hit(
-            hits,
-            source_segment_index,
-            source_segment,
-            role,
-            contour_index,
-            region_segment_index,
-            hit.point,
-            hit.kind,
-            policy,
-        ),
-        SegmentIntersection::ArcArc(ArcArcIntersection::Point(hit)) => push_region_trim_hit(
-            hits,
-            source_segment_index,
-            source_segment,
-            role,
-            contour_index,
-            region_segment_index,
-            hit.point,
-            hit.kind,
-            policy,
-        ),
-        SegmentIntersection::LineArc {
-            result: LineArcIntersection::TwoPoints { first, second },
-            ..
-        } => {
-            if let Some(blocker) = push_region_trim_hit(
-                hits,
-                source_segment_index,
-                source_segment,
                 role,
                 contour_index,
                 region_segment_index,
                 first.point,
+                source_param,
+                region_param,
                 first.kind,
+            )?;
+            let (source_param, region_param) = match line_arc_region_trim_params(
+                source_segment,
+                region_segment,
+                order,
+                &second,
                 policy,
             )? {
-                return Ok(Some(blocker));
-            }
+                Ok(params) => params,
+                Err(reason) => return Ok(Some((retained_status_for_uncertainty(reason), reason))),
+            };
             push_region_trim_hit(
                 hits,
                 source_segment_index,
-                source_segment,
                 role,
                 contour_index,
                 region_segment_index,
                 second.point,
+                source_param,
+                region_param,
                 second.kind,
-                policy,
             )
         }
         SegmentIntersection::ArcArc(ArcArcIntersection::TwoPoints { first, second }) => {
-            if let Some(blocker) = push_region_trim_hit(
+            let (source_param, region_param) = match point_region_trim_params(
+                source_segment,
+                region_segment,
+                &first.point,
+                policy,
+            )? {
+                Ok(params) => params,
+                Err(reason) => {
+                    return Ok(Some((retained_status_for_uncertainty(reason), reason)));
+                }
+            };
+            push_region_trim_hit(
                 hits,
                 source_segment_index,
-                source_segment,
                 role,
                 contour_index,
                 region_segment_index,
                 first.point,
+                source_param,
+                region_param,
                 first.kind,
+            )?;
+            let (source_param, region_param) = match point_region_trim_params(
+                source_segment,
+                region_segment,
+                &second.point,
                 policy,
             )? {
-                return Ok(Some(blocker));
-            }
+                Ok(params) => params,
+                Err(reason) => return Ok(Some((retained_status_for_uncertainty(reason), reason))),
+            };
             push_region_trim_hit(
                 hits,
                 source_segment_index,
-                source_segment,
                 role,
                 contour_index,
                 region_segment_index,
                 second.point,
+                source_param,
+                region_param,
                 second.kind,
-                policy,
             )
         }
         SegmentIntersection::LineLine(LineLineIntersection::Overlap { .. })
@@ -3610,20 +3669,14 @@ fn append_region_trim_hits_from_relation(
 fn push_region_trim_hit(
     hits: &mut Vec<CurveStringRegionTrimHit2>,
     source_segment_index: usize,
-    source_segment: &Segment2,
     role: RegionContourRole,
     contour_index: usize,
     region_segment_index: usize,
     point: Point2,
+    source_param: Real,
+    region_param: Real,
     kind: IntersectionKind,
-    policy: &CurvePolicy,
 ) -> CurveResult<Option<(RetainedTopologyStatus, UncertaintyReason)>> {
-    let source_param = match segment_point_parameter(source_segment, &point, policy)? {
-        Classification::Decided(param) => param,
-        Classification::Uncertain(reason) => {
-            return Ok(Some((retained_status_for_uncertainty(reason), reason)));
-        }
-    };
     hits.push(CurveStringRegionTrimHit2 {
         source_segment_index,
         region_contour_role: role,
@@ -3631,9 +3684,52 @@ fn push_region_trim_hit(
         region_segment_index,
         point,
         source_param,
+        region_param,
         kind,
     });
     Ok(None)
+}
+
+fn line_arc_region_trim_params(
+    source_segment: &Segment2,
+    region_segment: &Segment2,
+    order: LineArcOrder,
+    hit: &crate::LineArcIntersectionPoint,
+    policy: &CurvePolicy,
+) -> CurveResult<Result<(Real, Real), UncertaintyReason>> {
+    match order {
+        LineArcOrder::LineThenArc => {
+            let region_param = match segment_point_parameter(region_segment, &hit.point, policy)? {
+                Classification::Decided(param) => param,
+                Classification::Uncertain(reason) => return Ok(Err(reason)),
+            };
+            Ok(Ok((hit.line_param.clone(), region_param)))
+        }
+        LineArcOrder::ArcThenLine => {
+            let source_param = match segment_point_parameter(source_segment, &hit.point, policy)? {
+                Classification::Decided(param) => param,
+                Classification::Uncertain(reason) => return Ok(Err(reason)),
+            };
+            Ok(Ok((source_param, hit.line_param.clone())))
+        }
+    }
+}
+
+fn point_region_trim_params(
+    source_segment: &Segment2,
+    region_segment: &Segment2,
+    point: &Point2,
+    policy: &CurvePolicy,
+) -> CurveResult<Result<(Real, Real), UncertaintyReason>> {
+    let source_param = match segment_point_parameter(source_segment, point, policy)? {
+        Classification::Decided(param) => param,
+        Classification::Uncertain(reason) => return Ok(Err(reason)),
+    };
+    let region_param = match segment_point_parameter(region_segment, point, policy)? {
+        Classification::Decided(param) => param,
+        Classification::Uncertain(reason) => return Ok(Err(reason)),
+    };
+    Ok(Ok((source_param, region_param)))
 }
 
 fn region_trim_split_points_for_segment(
