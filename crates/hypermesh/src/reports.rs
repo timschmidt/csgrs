@@ -1819,6 +1819,22 @@ impl ExactBooleanResult {
         request: ExactBooleanRequest,
         retained_arrangement_attempt: Option<&ExactArrangementBooleanAttempt>,
     ) -> Result<bool, ExactReportValidationError> {
+        self.retained_arrangement_attempt_matches_output_for_request(
+            left,
+            right,
+            request,
+            retained_arrangement_attempt,
+        )
+        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)
+    }
+
+    pub(crate) fn retained_arrangement_attempt_matches_output_for_request(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+        request: ExactBooleanRequest,
+        retained_arrangement_attempt: Option<&ExactArrangementBooleanAttempt>,
+    ) -> Result<bool, ExactReportValidationError> {
         if !matches!(
             self.kind,
             ExactBooleanResultKind::ArrangementCellComplexMaterialized { .. }
@@ -1826,28 +1842,43 @@ impl ExactBooleanResult {
                     shortcut: ExactBooleanShortcutKind::ArrangementCellComplex,
                     ..
                 }
-        ) {
+        ) || self.arrangement_cell_complex_operation() != Some(request.operation)
+            || !self.satisfies_request_shape(request)
+        {
             return Ok(false);
         }
         let Some(attempt) = retained_arrangement_attempt else {
             return Ok(false);
         };
-        if !self.satisfies_request_shape(request) {
-            return Ok(false);
-        }
         if !attempt.certifies_arrangement_cell_complex_output_for_request(
             request,
             ExactRegularizationPolicy::REGULARIZED_SOLID,
         ) {
+            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+        }
+        if attempt.materialized_without_shortcut() {
+            let replay = rematerialize_retained_arrangement_cell_complex_attempt(
+                left, right, request, attempt,
+            )
+            .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
+            .ok_or(ExactReportValidationError::SourceReplayMismatch)?;
+            if self.mesh != replay.mesh
+                || self.topology_assembly_report != replay.topology_assembly_report
+                || self.region_ownership_report != replay.region_ownership_report
+            {
+                return Err(ExactReportValidationError::SourceReplayMismatch);
+            }
+        } else if self.topology_assembly_report != attempt.topology_assembly_report
+            || self.region_ownership_report != attempt.region_ownership_report
+        {
             return Err(ExactReportValidationError::SourceReplayMismatch);
         }
-        let replay =
-            rematerialize_retained_arrangement_cell_complex_attempt(left, right, request, attempt)
-                .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
-                .ok_or(ExactReportValidationError::SourceReplayMismatch)?;
-        if self.mesh != replay.mesh
-            || self.topology_assembly_report != replay.topology_assembly_report
-            || self.region_ownership_report != replay.region_ownership_report
+        let Some(output_facts) = attempt.output_facts.as_ref() else {
+            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+        };
+        if self.mesh.vertices().len() != attempt.output_vertices
+            || self.mesh.triangles().len() != attempt.output_triangles
+            || &self.mesh.facts().mesh != output_facts
         {
             return Err(ExactReportValidationError::SourceReplayMismatch);
         }

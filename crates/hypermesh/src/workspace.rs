@@ -7,7 +7,6 @@ use super::boolean::{
     materialize_boolean_exact_request_from_retained_graph,
     materialize_certified_boolean_support_with_artifacts,
     preflight_boolean_exact_request_from_graph,
-    rematerialize_retained_arrangement_cell_complex_attempt,
     try_materialize_certified_boolean_support_with_artifacts,
 };
 use super::error::{DiagnosticKind, MeshDiagnostic, MeshError, Severity};
@@ -545,12 +544,11 @@ fn validate_retained_result_for_request(
     if !result.satisfies_request_shape(request) {
         return Err(ExactReportValidationError::StatusEvidenceMismatch);
     }
-    validate_result_against_retained_arrangement_attempt(
+    result.retained_arrangement_attempt_matches_output_for_request(
         left,
         right,
         request,
         retained_arrangement_attempt,
-        result,
     )?;
     result.validate_operation_against_sources_with_retained_attempt(
         left,
@@ -560,65 +558,6 @@ fn validate_retained_result_for_request(
         request.boundary_policy,
         retained_arrangement_attempt,
     )
-}
-
-fn validate_result_against_retained_arrangement_attempt(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    request: ExactBooleanRequest,
-    retained_arrangement_attempt: Option<&ExactArrangementBooleanAttempt>,
-    result: &ExactBooleanResult,
-) -> Result<(), ExactReportValidationError> {
-    let Some(attempt) = retained_arrangement_attempt else {
-        return Ok(());
-    };
-    match result.kind {
-        super::reports::ExactBooleanResultKind::ArrangementCellComplexMaterialized {
-            operation,
-        }
-        | super::reports::ExactBooleanResultKind::CertifiedShortcut {
-            operation,
-            shortcut: super::reports::ExactBooleanShortcutKind::ArrangementCellComplex,
-        } if operation == request.operation => {
-            if !attempt.certifies_arrangement_cell_complex_output_for_request(
-                request,
-                ExactRegularizationPolicy::REGULARIZED_SOLID,
-            ) {
-                return Err(ExactReportValidationError::StatusEvidenceMismatch);
-            }
-            if attempt.materialized_without_shortcut() {
-                let retained_replay_matches_output =
-                    rematerialize_retained_arrangement_cell_complex_attempt(
-                        left, right, request, attempt,
-                    )
-                    .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
-                    .is_some_and(|mut replay| {
-                        replay.kind = result.kind;
-                        result.mesh == replay.mesh
-                            && result.topology_assembly_report == replay.topology_assembly_report
-                            && result.region_ownership_report == replay.region_ownership_report
-                    });
-                if !retained_replay_matches_output {
-                    return Err(ExactReportValidationError::SourceReplayMismatch);
-                }
-            } else if result.topology_assembly_report != attempt.topology_assembly_report
-                || result.region_ownership_report != attempt.region_ownership_report
-            {
-                return Err(ExactReportValidationError::SourceReplayMismatch);
-            }
-            let Some(output_facts) = attempt.output_facts.as_ref() else {
-                return Err(ExactReportValidationError::StatusEvidenceMismatch);
-            };
-            if result.mesh.vertices().len() != attempt.output_vertices
-                || result.mesh.triangles().len() != attempt.output_triangles
-                || &result.mesh.facts().mesh != output_facts
-            {
-                return Err(ExactReportValidationError::SourceReplayMismatch);
-            }
-        }
-        _ => {}
-    }
-    Ok(())
 }
 
 fn workspace_report_validation_error(error: ExactReportValidationError) -> MeshError {
