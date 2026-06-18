@@ -75,10 +75,15 @@ fn exact_boolean_arrangement_attempt(
     request: ExactBooleanRequest,
     policy: ExactRegularizationPolicy,
 ) -> hypermesh::ExactArrangementBooleanAttempt {
+    assert_eq!(policy, ExactRegularizationPolicy::REGULARIZED_SOLID);
     let mut workspace = ExactBooleanWorkspace::new(left, right);
     workspace
-        .arrangement_attempt(request, policy)
+        .evaluate(request)
         .unwrap()
+        .certifications
+        .arrangement_attempt
+        .as_ref()
+        .expect("evaluation should retain an arrangement attempt")
         .clone()
 }
 

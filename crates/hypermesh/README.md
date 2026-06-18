@@ -259,7 +259,7 @@ yet support:
 ```rust,ignore
 use hypermesh::{
     ExactBooleanOperation, ExactBooleanRequest, ExactBooleanWorkspace,
-    ExactRegularizationPolicy, ValidationPolicy,
+    ValidationPolicy,
 };
 
 let request = ExactBooleanRequest::new(
@@ -270,11 +270,10 @@ let mut workspace = ExactBooleanWorkspace::new(&left, &right);
 
 let result = workspace.materialize(request)?;
 
-let attempt = workspace.arrangement_attempt(
-    request,
-    ExactRegularizationPolicy::REGULARIZED_SOLID,
-)?;
-attempt.validate()?;
+let evaluation = workspace.evaluate(request)?;
+if let Some(attempt) = evaluation.certifications.arrangement_attempt.as_ref() {
+    attempt.validate()?;
+}
 ```
 
 ## References
