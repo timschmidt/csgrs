@@ -14,10 +14,10 @@ use crate::{
     ContourIntersectionSet, ContourPointLocation, CurvePolicy, CurveResult, CurveString2,
     CurveStringCurveTrimQueryPath2, CurveStringCurveTrimResult2, CurveStringIntersection,
     CurveStringIntersectionQueryPath2, CurveStringIntersectionReport2,
-    CurveStringIntersectionResult2, FillRule, LineSeg2, LineSeg2Facts, LineSide, Point2, Region2,
-    RegionBooleanResult2, RegionContourIntersection, RegionContourKey, RegionContourRole,
-    RegionIntersectionSet, RegionPointLocation, RegionSide, RegionView2, Segment2,
-    SegmentIntersection, UncertaintyReason,
+    CurveStringIntersectionResult2, CurveStringRegionTrimResult2, FillRule, LineSeg2,
+    LineSeg2Facts, LineSide, Point2, Region2, RegionBooleanResult2, RegionContourIntersection,
+    RegionContourKey, RegionContourRole, RegionIntersectionSet, RegionPointLocation, RegionSide,
+    RegionView2, Segment2, SegmentIntersection, UncertaintyReason,
 };
 
 /// Prepared point-line classifier for a fixed [`LineSeg2`].
@@ -449,6 +449,31 @@ impl<'a> PreparedCurveStringView2<'a> {
             CurveStringCurveTrimQueryPath2::Prepared,
             policy,
         )
+    }
+
+    /// Retains portions of this prepared open curve string inside a prepared region.
+    ///
+    /// The region's prepared contour boxes are reused for boundary-hit
+    /// collection and its prepared point classifier is reused for retained
+    /// interval representatives. Exact segment intersections and native
+    /// interval materialization remain delegated to the ordinary curve-string
+    /// trim pipeline.
+    pub fn trim_inside_prepared_region(
+        &self,
+        region: &PreparedRegionView2<'_>,
+        policy: &CurvePolicy,
+    ) -> CurveResult<CurveStringRegionTrimResult2> {
+        self.curve.trim_inside_prepared_region(region, policy)
+    }
+
+    /// Retains portions of this prepared open curve string inside an ordinary region.
+    pub fn trim_inside_region(
+        &self,
+        region: &Region2,
+        policy: &CurvePolicy,
+    ) -> CurveResult<CurveStringRegionTrimResult2> {
+        let region = PreparedRegionView2::from_region(region, policy);
+        self.trim_inside_prepared_region(&region, policy)
     }
 
     /// Classifies whether this prepared open curve string self-contacts.

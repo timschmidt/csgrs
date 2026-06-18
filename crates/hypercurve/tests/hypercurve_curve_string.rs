@@ -1,9 +1,10 @@
 use hypercurve::{
     BulgeVertex2, CircularArc2, Classification, Contour2, CurveError, CurvePolicy, CurveString2,
     CurveStringCurveTrimQueryPath2, CurveStringEndpoint2, CurveStringEndpointConnectionStatus2,
-    CurveStringIntersectionQueryPath2, CurveStringLinkKind2, CurveStringTrimPoint2,
-    IntersectionKind, LineArcIntersection, LineArcOrder, LineSeg2, Point2, Real, Region2,
-    RegionContourRole, RegionPointLocation, Segment2, SegmentIntersection, UncertaintyReason,
+    CurveStringIntersectionQueryPath2, CurveStringLinkKind2, CurveStringRegionTrimQueryPath2,
+    CurveStringTrimPoint2, IntersectionKind, LineArcIntersection, LineArcOrder, LineSeg2, Point2,
+    Real, Region2, RegionContourRole, RegionPointLocation, Segment2, SegmentIntersection,
+    UncertaintyReason,
 };
 
 fn s(value: i32) -> Real {
@@ -1323,6 +1324,10 @@ fn curve_string_trim_inside_region_materializes_inside_window() {
     let trimmed = curve.trim_inside_region(&region, &policy()).unwrap();
 
     assert!(trimmed.report().status().is_native_exact());
+    assert_eq!(
+        trimmed.report().query_path(),
+        CurveStringRegionTrimQueryPath2::Direct
+    );
     assert_eq!(trimmed.report().source_segment_count(), 1);
     assert_eq!(trimmed.report().region_material_contour_count(), 1);
     assert_eq!(trimmed.report().region_hole_contour_count(), 0);
@@ -1349,6 +1354,40 @@ fn curve_string_trim_inside_region_materializes_inside_window() {
     assert_eq!(trimmed.curve_strings().len(), 1);
     assert_eq!(trimmed.curve_strings()[0].len(), 1);
     assert_line(&trimmed.curve_strings()[0].segments()[0], p(0, 1), p(4, 1));
+}
+
+#[test]
+fn prepared_curve_string_trim_inside_region_matches_direct_result() {
+    let curve = CurveString2::try_new(vec![line_segment(-2, 1, 8, 1)]).unwrap();
+    let first = rectangle_region(0, 0, 2, 2);
+    let second = rectangle_region(4, 0, 6, 2);
+    let region = Region2::from_material_contours(vec![
+        first.material_contours()[0].clone(),
+        second.material_contours()[0].clone(),
+    ]);
+    let policy = policy();
+    let prepared_curve = curve.prepare_topology_queries(&policy);
+    let prepared_region = region.prepare_topology_queries(&policy);
+
+    let direct = curve.trim_inside_region(&region, &policy).unwrap();
+    let prepared = prepared_curve
+        .trim_inside_prepared_region(&prepared_region, &policy)
+        .unwrap();
+
+    assert!(prepared.report().status().is_native_exact());
+    assert_eq!(
+        prepared.report().query_path(),
+        CurveStringRegionTrimQueryPath2::Prepared
+    );
+    assert_eq!(prepared.curve_strings(), direct.curve_strings());
+    assert_eq!(
+        prepared.report().boundary_hits(),
+        direct.report().boundary_hits()
+    );
+    assert_eq!(
+        prepared.report().interval_reports(),
+        direct.report().interval_reports()
+    );
 }
 
 #[test]

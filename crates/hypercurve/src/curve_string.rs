@@ -9,8 +9,8 @@ use crate::classify::{compare_reals, in_closed_unit_interval, is_zero, real_sign
 use crate::{
     ArcArcIntersection, BulgeVertex2, CircularArc2, Classification, CurveError, CurvePolicy,
     CurveResult, IntersectionKind, LineArcIntersection, LineLineIntersection, LineSeg2, LineSide,
-    ParamRange, Point2, Region2, RegionContourRole, RegionPointLocation, RetainedTopologyStatus,
-    Segment2, SegmentIntersection, UncertaintyReason,
+    ParamRange, Point2, PreparedRegionView2, Region2, RegionContourRole, RegionPointLocation,
+    RetainedTopologyStatus, Segment2, SegmentIntersection, UncertaintyReason,
 };
 
 /// One segment-pair event between two curve strings.
@@ -346,6 +346,15 @@ pub struct CurveStringRegionTrimIntervalReport2 {
     blocker: Option<UncertaintyReason>,
 }
 
+/// Query path used to trim an open curve string by a region.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum CurveStringRegionTrimQueryPath2 {
+    /// Region boundary hits and classifications used transient broad-phase data.
+    Direct,
+    /// Region boundary hits and classifications reused prepared region caches.
+    Prepared,
+}
+
 /// Report for retaining portions of an open curve string inside a region.
 #[derive(Clone, Debug, PartialEq)]
 pub struct CurveStringRegionTrimReport2 {
@@ -355,6 +364,7 @@ pub struct CurveStringRegionTrimReport2 {
     boundary_hits: Vec<CurveStringRegionTrimHit2>,
     interval_reports: Vec<CurveStringRegionTrimIntervalReport2>,
     output_curve_string_count: Option<usize>,
+    query_path: CurveStringRegionTrimQueryPath2,
     status: RetainedTopologyStatus,
     blocker: Option<UncertaintyReason>,
 }
@@ -1121,6 +1131,14 @@ impl CurveString2 {
         policy: &CurvePolicy,
     ) -> CurveResult<CurveStringRegionTrimResult2> {
         trim_curve_string_inside_region(self, region, policy)
+    }
+
+    pub(crate) fn trim_inside_prepared_region(
+        &self,
+        region: &PreparedRegionView2<'_>,
+        policy: &CurvePolicy,
+    ) -> CurveResult<CurveStringRegionTrimResult2> {
+        trim_curve_string_inside_prepared_region(self, region, policy)
     }
 
     /// Chamfers one interior line-line vertex by exact segment parameters.
@@ -2312,6 +2330,11 @@ impl CurveStringRegionTrimReport2 {
         self.output_curve_string_count
     }
 
+    /// Returns the query path used to collect boundary and classification evidence.
+    pub const fn query_path(&self) -> CurveStringRegionTrimQueryPath2 {
+        self.query_path
+    }
+
     /// Returns trim-by-region materialization status.
     pub const fn status(&self) -> RetainedTopologyStatus {
         self.status
@@ -2440,14 +2463,71 @@ fn trim_curve_string_inside_region(
     {
         return Ok(blocked_region_trim_result(
             curve_string,
-            region,
+            region.material_contours().len(),
+            region.hole_contours().len(),
             boundary_hits,
             Vec::new(),
+            CurveStringRegionTrimQueryPath2::Direct,
             status,
             blocker,
         ));
     }
 
+    trim_curve_string_inside_region_with_hits(
+        curve_string,
+        region.material_contours().len(),
+        region.hole_contours().len(),
+        boundary_hits,
+        CurveStringRegionTrimQueryPath2::Direct,
+        policy,
+        |point| region.classify_point(point, policy),
+    )
+}
+
+fn trim_curve_string_inside_prepared_region(
+    curve_string: &CurveString2,
+    region: &PreparedRegionView2<'_>,
+    policy: &CurvePolicy,
+) -> CurveResult<CurveStringRegionTrimResult2> {
+    let mut boundary_hits = Vec::new();
+    if let Some((status, blocker)) = collect_prepared_region_trim_boundary_hits(
+        curve_string,
+        region,
+        policy,
+        &mut boundary_hits,
+    )? {
+        return Ok(blocked_region_trim_result(
+            curve_string,
+            region.material_contours().len(),
+            region.hole_contours().len(),
+            boundary_hits,
+            Vec::new(),
+            CurveStringRegionTrimQueryPath2::Prepared,
+            status,
+            blocker,
+        ));
+    }
+
+    trim_curve_string_inside_region_with_hits(
+        curve_string,
+        region.material_contours().len(),
+        region.hole_contours().len(),
+        boundary_hits,
+        CurveStringRegionTrimQueryPath2::Prepared,
+        policy,
+        |point| region.classify_point(point, policy),
+    )
+}
+
+fn trim_curve_string_inside_region_with_hits(
+    curve_string: &CurveString2,
+    region_material_contour_count: usize,
+    region_hole_contour_count: usize,
+    boundary_hits: Vec<CurveStringRegionTrimHit2>,
+    query_path: CurveStringRegionTrimQueryPath2,
+    policy: &CurvePolicy,
+    mut classify_point: impl FnMut(&Point2) -> Classification<RegionPointLocation>,
+) -> CurveResult<CurveStringRegionTrimResult2> {
     let mut output_segments: Vec<Vec<Segment2>> = Vec::new();
     let mut current_segments = Vec::new();
     let mut interval_reports = Vec::new();
@@ -2463,9 +2543,11 @@ fn trim_curve_string_inside_region(
             Classification::Uncertain(reason) => {
                 return Ok(blocked_region_trim_result(
                     curve_string,
-                    region,
+                    region_material_contour_count,
+                    region_hole_contour_count,
                     boundary_hits,
                     interval_reports,
+                    query_path,
                     retained_status_for_uncertainty(reason),
                     reason,
                 ));
@@ -2499,9 +2581,11 @@ fn trim_curve_string_inside_region(
                     });
                     return Ok(blocked_region_trim_result(
                         curve_string,
-                        region,
+                        region_material_contour_count,
+                        region_hole_contour_count,
                         boundary_hits,
                         interval_reports,
+                        query_path,
                         RetainedTopologyStatus::Unsupported,
                         reason,
                     ));
@@ -2519,9 +2603,11 @@ fn trim_curve_string_inside_region(
                     });
                     return Ok(blocked_region_trim_result(
                         curve_string,
-                        region,
+                        region_material_contour_count,
+                        region_hole_contour_count,
                         boundary_hits,
                         interval_reports,
+                        query_path,
                         RetainedTopologyStatus::Unresolved,
                         reason,
                     ));
@@ -2543,16 +2629,18 @@ fn trim_curve_string_inside_region(
                     });
                     return Ok(blocked_region_trim_result(
                         curve_string,
-                        region,
+                        region_material_contour_count,
+                        region_hole_contour_count,
                         boundary_hits,
                         interval_reports,
+                        query_path,
                         retained_status_for_uncertainty(reason),
                         reason,
                     ));
                 }
             };
 
-            let location = match region.classify_point(&representative, policy) {
+            let location = match classify_point(&representative) {
                 Classification::Decided(location) => location,
                 Classification::Uncertain(reason) => {
                     interval_reports.push(CurveStringRegionTrimIntervalReport2 {
@@ -2567,9 +2655,11 @@ fn trim_curve_string_inside_region(
                     });
                     return Ok(blocked_region_trim_result(
                         curve_string,
-                        region,
+                        region_material_contour_count,
+                        region_hole_contour_count,
                         boundary_hits,
                         interval_reports,
+                        query_path,
                         retained_status_for_uncertainty(reason),
                         reason,
                     ));
@@ -2618,9 +2708,11 @@ fn trim_curve_string_inside_region(
                     });
                     return Ok(blocked_region_trim_result(
                         curve_string,
-                        region,
+                        region_material_contour_count,
+                        region_hole_contour_count,
                         boundary_hits,
                         interval_reports,
+                        query_path,
                         RetainedTopologyStatus::Unsupported,
                         UncertaintyReason::Boundary,
                     ));
@@ -2638,11 +2730,12 @@ fn trim_curve_string_inside_region(
     Ok(CurveStringRegionTrimResult2 {
         report: CurveStringRegionTrimReport2 {
             source_segment_count: curve_string.len(),
-            region_material_contour_count: region.material_contours().len(),
-            region_hole_contour_count: region.hole_contours().len(),
+            region_material_contour_count,
+            region_hole_contour_count,
             boundary_hits,
             interval_reports,
             output_curve_string_count: Some(curve_strings.len()),
+            query_path,
             status: RetainedTopologyStatus::NativeExact,
             blocker: None,
         },
@@ -2683,6 +2776,39 @@ fn collect_region_trim_boundary_hits(
     Ok(None)
 }
 
+fn collect_prepared_region_trim_boundary_hits(
+    curve_string: &CurveString2,
+    region: &PreparedRegionView2<'_>,
+    policy: &CurvePolicy,
+    hits: &mut Vec<CurveStringRegionTrimHit2>,
+) -> CurveResult<Option<(RetainedTopologyStatus, UncertaintyReason)>> {
+    for (contour_index, contour) in region.prepared_material_contours().iter().enumerate() {
+        if let Some(blocker) = collect_prepared_region_trim_contour_hits(
+            curve_string,
+            contour,
+            RegionContourRole::Material,
+            contour_index,
+            policy,
+            hits,
+        )? {
+            return Ok(Some(blocker));
+        }
+    }
+    for (contour_index, contour) in region.prepared_hole_contours().iter().enumerate() {
+        if let Some(blocker) = collect_prepared_region_trim_contour_hits(
+            curve_string,
+            contour,
+            RegionContourRole::Hole,
+            contour_index,
+            policy,
+            hits,
+        )? {
+            return Ok(Some(blocker));
+        }
+    }
+    Ok(None)
+}
+
 fn collect_region_trim_contour_hits(
     curve_string: &CurveString2,
     contour: &crate::Contour2,
@@ -2693,6 +2819,49 @@ fn collect_region_trim_contour_hits(
 ) -> CurveResult<Option<(RetainedTopologyStatus, UncertaintyReason)>> {
     for (source_segment_index, source_segment) in curve_string.segments().iter().enumerate() {
         for (region_segment_index, region_segment) in contour.segments().iter().enumerate() {
+            let relation = source_segment.intersect_segment(region_segment, policy)?;
+            if let Some(blocker) = append_region_trim_hits_from_relation(
+                hits,
+                source_segment_index,
+                source_segment,
+                role,
+                contour_index,
+                region_segment_index,
+                relation,
+                policy,
+            )? {
+                return Ok(Some(blocker));
+            }
+        }
+    }
+    Ok(None)
+}
+
+fn collect_prepared_region_trim_contour_hits(
+    curve_string: &CurveString2,
+    contour: &crate::PreparedContourView2<'_>,
+    role: RegionContourRole,
+    contour_index: usize,
+    policy: &CurvePolicy,
+    hits: &mut Vec<CurveStringRegionTrimHit2>,
+) -> CurveResult<Option<(RetainedTopologyStatus, UncertaintyReason)>> {
+    let source_segment_boxes: Vec<_> = curve_string
+        .segments()
+        .iter()
+        .map(|segment| decided_segment_aabb(segment, policy))
+        .collect();
+    for (source_segment_index, source_segment) in curve_string.segments().iter().enumerate() {
+        for (region_segment_index, region_segment) in
+            contour.contour().segments().iter().enumerate()
+        {
+            if let (Some(Some(source_box)), Some(Some(region_box))) = (
+                source_segment_boxes.get(source_segment_index),
+                contour.segment_boxes().get(region_segment_index),
+            ) && aabbs_decided_disjoint(source_box, region_box, policy)
+            {
+                continue;
+            }
+
             let relation = source_segment.intersect_segment(region_segment, policy)?;
             if let Some(blocker) = append_region_trim_hits_from_relation(
                 hits,
@@ -2959,9 +3128,11 @@ fn flush_region_trim_chain(
 
 fn blocked_region_trim_result(
     curve_string: &CurveString2,
-    region: &Region2,
+    region_material_contour_count: usize,
+    region_hole_contour_count: usize,
     boundary_hits: Vec<CurveStringRegionTrimHit2>,
     interval_reports: Vec<CurveStringRegionTrimIntervalReport2>,
+    query_path: CurveStringRegionTrimQueryPath2,
     status: RetainedTopologyStatus,
     blocker: UncertaintyReason,
 ) -> CurveStringRegionTrimResult2 {
@@ -2969,11 +3140,12 @@ fn blocked_region_trim_result(
         curve_strings: Vec::new(),
         report: CurveStringRegionTrimReport2 {
             source_segment_count: curve_string.len(),
-            region_material_contour_count: region.material_contours().len(),
-            region_hole_contour_count: region.hole_contours().len(),
+            region_material_contour_count,
+            region_hole_contour_count,
             boundary_hits,
             interval_reports,
             output_curve_string_count: None,
+            query_path,
             status,
             blocker: Some(blocker),
         },
