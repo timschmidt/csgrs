@@ -180,20 +180,68 @@ fn boolean_region_report_retains_boundary_role_assignment() {
             .source_classification_count()
     );
     assert_eq!(
+        pipeline_report
+            .fragment_selection_report()
+            .source_fragment_kind_counts(),
+        SegmentKindCounts { lines: 12, arcs: 0 }
+    );
+    assert_eq!(
         pipeline_report.boundary_fragment_emission_report().stage(),
         BooleanBoundaryFragmentEmissionStage2::FragmentEmission
+    );
+    assert_eq!(
+        pipeline_report
+            .boundary_fragment_emission_report()
+            .directed_fragment_kind_counts(),
+        Some(SegmentKindCounts { lines: 8, arcs: 0 })
     );
     assert_eq!(
         pipeline_report.chain_assembly_report().stage(),
         BooleanBoundaryChainAssemblyStage2::ChainMaterialization
     );
     assert_eq!(
+        pipeline_report
+            .chain_assembly_report()
+            .directed_fragment_kind_counts(),
+        SegmentKindCounts { lines: 8, arcs: 0 }
+    );
+    assert_eq!(
+        pipeline_report
+            .chain_assembly_report()
+            .output_fragment_kind_counts(),
+        Some(SegmentKindCounts { lines: 8, arcs: 0 })
+    );
+    assert_eq!(
         pipeline_report.loop_extraction_report().stage(),
         BooleanBoundaryLoopExtractionStage2::LoopMaterialization
     );
     assert_eq!(
+        pipeline_report
+            .loop_extraction_report()
+            .source_fragment_kind_counts(),
+        SegmentKindCounts { lines: 8, arcs: 0 }
+    );
+    assert_eq!(
+        pipeline_report
+            .loop_extraction_report()
+            .output_fragment_kind_counts(),
+        Some(SegmentKindCounts { lines: 8, arcs: 0 })
+    );
+    assert_eq!(
         pipeline_report.contour_transfer_report().stage(),
         BooleanBoundaryContourTransferStage2::ContourMaterialization
+    );
+    assert_eq!(
+        pipeline_report
+            .contour_transfer_report()
+            .source_fragment_kind_counts(),
+        SegmentKindCounts { lines: 8, arcs: 0 }
+    );
+    assert_eq!(
+        pipeline_report
+            .contour_transfer_report()
+            .output_segment_kind_counts(),
+        Some(SegmentKindCounts { lines: 8, arcs: 0 })
     );
     assert_eq!(
         pipeline_report.contour_transfer_report().contour_count(),
