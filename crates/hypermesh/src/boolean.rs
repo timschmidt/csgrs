@@ -1229,7 +1229,7 @@ impl ExactBooleanCertificationSet {
                 self.open_surface_disjoint.is_certified()
             }
             ExactWindingReadinessStatus::ClosedBoundaryTouchingAlreadyMaterialized => {
-                self.boundary_touching.is_certified()
+                self.closed_boundary_touching_materialization_certified_by_retained_evidence()
             }
             ExactWindingReadinessStatus::MixedDimensionalRegularizedSolidAlreadyMaterialized => {
                 (self.regularized_solid.left_closed_solid
@@ -1425,7 +1425,7 @@ impl ExactBooleanCertificationSet {
         &self,
         preflight: &ExactBooleanPreflight,
     ) -> bool {
-        self.boundary_touching.is_certified()
+        self.closed_boundary_touching_materialization_certified_by_retained_evidence()
             && ((self.winding_readiness.status
                 == ExactWindingReadinessStatus::ClosedBoundaryTouchingAlreadyMaterialized
                 && (self.boundary_report_matches_preflight(preflight, false)
@@ -1443,6 +1443,19 @@ impl ExactBooleanCertificationSet {
                         && preflight.coplanar_volumetric_evidence
                             == self.winding_readiness.coplanar_volumetric_evidence)))
                 || self.arrangement_attempt_matches_certified_preflight(preflight))
+    }
+
+    fn closed_boundary_touching_materialization_certified_by_retained_evidence(&self) -> bool {
+        self.boundary_touching.is_certified()
+            || self
+                .winding_readiness
+                .coplanar_volumetric_evidence
+                .as_ref()
+                .is_some_and(|evidence| {
+                    evidence.obstacle == CoplanarVolumetricCellObstacle::BoundaryOnlyContact
+                        && evidence.positive_area_coplanar_overlapping_pairs != 0
+                        && evidence.validate().is_ok()
+                })
     }
 
     fn open_surface_arrangement_matches_preflight(
@@ -2249,12 +2262,13 @@ impl ExactBooleanEvaluation {
         self.certifications
             .validate_against_sources(left, right, self.request)?;
         if let Some(result) = self.result.as_ref() {
-            result.validate_operation_against_sources(
+            result.validate_operation_against_sources_with_retained_attempt(
                 left,
                 right,
                 self.request.operation,
                 self.request.validation,
                 self.request.boundary_policy,
+                self.certifications.arrangement_attempt.as_ref(),
             )?;
         } else if self.requires_materialized_result() {
             return Err(ExactReportValidationError::StatusEvidenceMismatch);

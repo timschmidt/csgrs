@@ -661,12 +661,13 @@ fn validate_retained_result_for_request(
         retained_arrangement_attempt,
         result,
     )?;
-    result.validate_operation_against_sources(
+    result.validate_operation_against_sources_with_retained_attempt(
         left,
         right,
         request.operation,
         request.validation,
         request.boundary_policy,
+        retained_arrangement_attempt,
     )
 }
 
