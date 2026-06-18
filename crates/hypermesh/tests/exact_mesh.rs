@@ -736,9 +736,7 @@ fn exact_mesh_proposal_and_artifact_reports_are_publicly_replayable() {
         ))
     );
 
-    let artifact = MeshArtifactManifest::from_exact_mesh(&exact)
-        .unwrap()
-        .report();
+    let artifact = exact.artifact_manifest().unwrap().report();
     artifact.validate().unwrap();
     assert!(artifact.is_hypermesh_exact());
     assert!(artifact.is_solid_handoff());
@@ -754,9 +752,7 @@ fn exact_mesh_proposal_and_artifact_reports_are_publicly_replayable() {
         })
     );
 
-    let proposal_artifact = MeshArtifactManifest::from_exact_mesh_proposal(&exact, &proposal)
-        .unwrap()
-        .report();
+    let proposal_artifact = exact.proposal_artifact_manifest(&proposal).unwrap().report();
     proposal_artifact.validate().unwrap();
     assert_eq!(proposal_artifact, artifact);
 
@@ -770,9 +766,7 @@ fn exact_mesh_proposal_and_artifact_reports_are_publicly_replayable() {
     assert!(lossy_proposal.is_lossy_primitive_float_proposal());
     assert!(lossy_proposal.proposal_accepted_after_exact_replay());
 
-    let lossy_artifact = MeshArtifactManifest::from_exact_mesh(&lossy)
-        .unwrap()
-        .report();
+    let lossy_artifact = lossy.artifact_manifest().unwrap().report();
     lossy_artifact.validate().unwrap();
     assert!(lossy_artifact.is_hypermesh_lossy_f64_replay());
     assert!(lossy_artifact.validation_handoff_ready);

@@ -8,6 +8,7 @@ use super::adapter::{
     ExactI64MeshInputReport, LossyF64MeshInputReport, inspect_f64_mesh_input,
     inspect_i64_mesh_input,
 };
+use super::artifact::MeshArtifactManifest;
 use super::bounds::{BoundsValidationError, MeshBounds};
 use super::error::{DiagnosticKind, MeshDiagnostic, MeshError, Severity};
 use super::facts::{MeshFactsValidationError, MeshValidationFacts};
@@ -380,6 +381,20 @@ impl ExactMesh {
     /// Build a replayed proposal report from this accepted exact mesh.
     pub fn proposal_report(&self) -> Result<ExactMeshProposalReport, ExactMeshProposalReportError> {
         ExactMeshProposalReport::from_mesh(self)
+    }
+
+    /// Build an artifact manifest from this accepted exact mesh.
+    pub fn artifact_manifest(&self) -> Result<MeshArtifactManifest, ExactMeshValidationError> {
+        MeshArtifactManifest::from_exact_mesh(self)
+    }
+
+    /// Build an artifact manifest for a proposal report that replays against
+    /// this accepted exact mesh.
+    pub fn proposal_artifact_manifest(
+        &self,
+        proposal: &ExactMeshProposalReport,
+    ) -> Result<MeshArtifactManifest, ExactMeshProposalReportError> {
+        MeshArtifactManifest::from_exact_mesh_proposal(self, proposal)
     }
 }
 
