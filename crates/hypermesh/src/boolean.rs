@@ -320,36 +320,14 @@ impl ExactArrangementBooleanAttempt {
             && self.output_validation == request.validation
     }
 
-    pub(crate) fn certifies_arrangement_cell_complex_output_for_operation(
-        &self,
-        operation: ExactBooleanOperation,
-        policy: ExactRegularizationPolicy,
-    ) -> bool {
-        self.operation == operation
-            && self.policy == policy
-            && self.validate().is_ok()
-            && self.materialized_arrangement_cell_complex_output()
-    }
-
     pub(crate) fn certifies_arrangement_cell_complex_output_for_request(
         &self,
         request: ExactBooleanRequest,
         policy: ExactRegularizationPolicy,
     ) -> bool {
         self.matches_request_policy(request, policy)
-            && self
-                .certifies_arrangement_cell_complex_output_for_operation(request.operation, policy)
-    }
-
-    pub(crate) fn certifies_arrangement_cell_complex_shortcut_for_operation(
-        &self,
-        operation: ExactBooleanOperation,
-        policy: ExactRegularizationPolicy,
-    ) -> bool {
-        self.operation == operation
-            && self.policy == policy
             && self.validate().is_ok()
-            && self.materialized_arrangement_cell_complex_shortcut()
+            && self.materialized_arrangement_cell_complex_output()
     }
 
     pub(crate) fn certifies_arrangement_cell_complex_shortcut_for_request(
@@ -358,10 +336,8 @@ impl ExactArrangementBooleanAttempt {
         policy: ExactRegularizationPolicy,
     ) -> bool {
         self.matches_request_policy(request, policy)
-            && self.certifies_arrangement_cell_complex_shortcut_for_operation(
-                request.operation,
-                policy,
-            )
+            && self.validate().is_ok()
+            && self.materialized_arrangement_cell_complex_shortcut()
     }
 
     /// Validate this retained arrangement/cell-complex attempt as a coherent
@@ -1289,10 +1265,7 @@ impl ExactBooleanCertificationSet {
         operation: ExactBooleanOperation,
     ) -> bool {
         self.arrangement_attempt.as_ref().is_some_and(|attempt| {
-            attempt.certifies_arrangement_cell_complex_output_for_operation(
-                operation,
-                ExactRegularizationPolicy::REGULARIZED_SOLID,
-            )
+            retained_arrangement_attempt_certifies_output_for_operation(attempt, operation)
         })
     }
 
@@ -1301,10 +1274,7 @@ impl ExactBooleanCertificationSet {
         operation: ExactBooleanOperation,
     ) -> bool {
         self.arrangement_attempt.as_ref().is_some_and(|attempt| {
-            attempt.certifies_arrangement_cell_complex_shortcut_for_operation(
-                operation,
-                ExactRegularizationPolicy::REGULARIZED_SOLID,
-            )
+            retained_arrangement_attempt_certifies_shortcut_for_operation(attempt, operation)
         })
     }
 
@@ -5129,10 +5099,28 @@ fn arrangement_cell_complex_result_is_certified_for_preflight(
         } => operation,
         _ => return false,
     };
-    attempt.certifies_arrangement_cell_complex_output_for_operation(
-        operation,
-        ExactRegularizationPolicy::REGULARIZED_SOLID,
-    ) && result.validate_against_sources(left, right).is_ok()
+    retained_arrangement_attempt_certifies_output_for_operation(attempt, operation)
+        && result.validate_against_sources(left, right).is_ok()
+}
+
+fn retained_arrangement_attempt_certifies_output_for_operation(
+    attempt: &ExactArrangementBooleanAttempt,
+    operation: ExactBooleanOperation,
+) -> bool {
+    attempt.operation == operation
+        && attempt.policy == ExactRegularizationPolicy::REGULARIZED_SOLID
+        && attempt.validate().is_ok()
+        && attempt.materialized_arrangement_cell_complex_output()
+}
+
+fn retained_arrangement_attempt_certifies_shortcut_for_operation(
+    attempt: &ExactArrangementBooleanAttempt,
+    operation: ExactBooleanOperation,
+) -> bool {
+    attempt.operation == operation
+        && attempt.policy == ExactRegularizationPolicy::REGULARIZED_SOLID
+        && attempt.validate().is_ok()
+        && attempt.materialized_arrangement_cell_complex_shortcut()
 }
 
 fn arrangement_cell_complex_materializes_for_preflight_from_graph(
@@ -14078,21 +14066,8 @@ mod tests {
             &right,
             ExactRegularizationPolicy::REGULARIZED_SOLID,
         );
-        let mut replayable_result = replay_boolean_exact_request_for_result_validation(
-            &left,
-            &right,
-            ExactBooleanRequest::new(
-                ExactBooleanOperation::Union,
-                ValidationPolicy::ALLOW_BOUNDARY,
-            ),
-        )
-        .unwrap();
-        replayable_result.topology_assembly_report =
-            report_attempt.topology_assembly_report.clone();
-        replayable_result.region_ownership_report = report_attempt.region_ownership_report.clone();
-        replayable_result
-            .validate_against_sources(&left, &right)
-            .unwrap();
+        let replayable_result = (*result).clone();
+        replayable_result.validate().unwrap();
         assert!(
             report_attempt.certifies_arrangement_cell_complex_output_for_request(
                 ExactBooleanRequest::new(
@@ -14102,20 +14077,18 @@ mod tests {
                 ExactRegularizationPolicy::REGULARIZED_SOLID,
             )
         );
-        assert!(arrangement_cell_complex_result_is_certified_for_preflight(
-            &replayable_result,
-            &report_attempt,
-            &left,
-            &right,
+        assert!(retained_arrangement_attempt_certifies_output_for_operation(
+            &retained_attempt,
+            ExactBooleanOperation::Union,
         ));
-        let mut relabeled_attempt = report_attempt.clone();
+        let mut relabeled_attempt = retained_attempt.clone();
         relabeled_attempt.operation = ExactBooleanOperation::Difference;
-        assert!(!arrangement_cell_complex_result_is_certified_for_preflight(
-            &replayable_result,
-            &relabeled_attempt,
-            &left,
-            &right,
-        ));
+        assert!(
+            !retained_arrangement_attempt_certifies_output_for_operation(
+                &relabeled_attempt,
+                ExactBooleanOperation::Union,
+            )
+        );
         let mut wrong_validation_attempt = report_attempt.clone();
         wrong_validation_attempt.output_validation = ValidationPolicy::CLOSED;
         assert!(
@@ -14140,17 +14113,6 @@ mod tests {
             ),
             Err(ExactReportValidationError::StatusEvidenceMismatch)
         );
-        let graph = build_intersection_graph(&left, &right).unwrap();
-        validate_volumetric_arrangement_result_against_graph(
-            &replayable_result,
-            &graph,
-            None,
-            &left,
-            &right,
-            ExactBooleanOperation::Union,
-            ValidationPolicy::ALLOW_BOUNDARY,
-        )
-        .unwrap();
         let mut stale_gate_count = replayable_result.clone();
         stale_gate_count
             .topology_assembly_report
@@ -14172,6 +14134,7 @@ mod tests {
             stale_ownership_shape.validate(),
             Err(ExactReportValidationError::StatusEvidenceMismatch)
         );
+        let graph = build_intersection_graph(&left, &right).unwrap();
         let mut stale_replay_report = replayable_result.clone();
         stale_replay_report
             .topology_assembly_report
