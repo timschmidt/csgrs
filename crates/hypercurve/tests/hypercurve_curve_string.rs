@@ -322,6 +322,95 @@ fn curve_string_trim_rejects_reversed_and_out_of_domain_ranges() {
 }
 
 #[test]
+fn curve_string_trim_between_points_materializes_line_subsegment() {
+    let curve = CurveString2::try_new(vec![line_segment(0, 0, 4, 0)]).unwrap();
+
+    let trim = curve
+        .trim_between_points(&p(1, 0), &p(3, 0), &policy())
+        .unwrap();
+
+    assert!(trim.report().status().is_native_exact());
+    assert_eq!(trim.report().start().segment_index(), 0);
+    assert_eq!(trim.report().start().param(), &q(1, 4));
+    assert_eq!(trim.report().end().segment_index(), 0);
+    assert_eq!(trim.report().end().param(), &q(3, 4));
+    let trimmed = trim.curve_string().expect("point trim should materialize");
+    assert_eq!(trimmed.start(), Some(&p(1, 0)));
+    assert_eq!(trimmed.end(), Some(&p(3, 0)));
+}
+
+#[test]
+fn curve_string_trim_between_points_materializes_partial_arc() {
+    let curve = CurveString2::try_new(vec![Segment2::Arc(
+        CircularArc2::from_bulge(p(0, 0), p(2, 0), s(1)).unwrap(),
+    )])
+    .unwrap();
+
+    let trim = curve
+        .trim_between_points(&p(0, 0), &p(1, -1), &policy())
+        .unwrap();
+
+    assert!(trim.report().status().is_native_exact());
+    assert_eq!(trim.report().segment_reports().len(), 1);
+    assert_eq!(
+        trim.report().segment_reports()[0].source_range().start(),
+        &s(0)
+    );
+    assert_eq!(
+        trim.report().segment_reports()[0].source_range().end(),
+        &q(1, 2)
+    );
+    let trimmed = trim
+        .curve_string()
+        .expect("point-bearing arc trim should materialize");
+    assert_eq!(trimmed.start(), Some(&p(0, 0)));
+    assert_eq!(trimmed.end(), Some(&p(1, -1)));
+    let Segment2::Arc(arc) = &trimmed.segments()[0] else {
+        panic!("partial point trim should preserve arc topology");
+    };
+    assert_eq!(arc.center(), &p(1, 0));
+    assert_eq!(arc.radius_squared(), s(1));
+}
+
+#[test]
+fn curve_string_trim_between_points_accepts_shared_vertex_once() {
+    let curve =
+        CurveString2::try_new(vec![line_segment(0, 0, 2, 0), line_segment(2, 0, 2, 2)]).unwrap();
+
+    let trim = curve
+        .trim_between_points(&p(2, 0), &p(2, 2), &policy())
+        .unwrap();
+
+    assert!(trim.report().status().is_native_exact());
+    assert_eq!(trim.report().start().segment_index(), 1);
+    assert_eq!(trim.report().start().param(), &s(0));
+    let trimmed = trim
+        .curve_string()
+        .expect("shared vertex trim should materialize");
+    assert_eq!(trimmed.len(), 1);
+    assert_eq!(trimmed.start(), Some(&p(2, 0)));
+    assert_eq!(trimmed.end(), Some(&p(2, 2)));
+}
+
+#[test]
+fn curve_string_trim_between_points_reports_repeated_nonadjacent_point_boundary() {
+    let curve = CurveString2::try_new(vec![
+        line_segment(0, 0, 1, 0),
+        line_segment(1, 0, 0, 0),
+        line_segment(0, 0, 0, 1),
+    ])
+    .unwrap();
+
+    let trim = curve
+        .trim_between_points(&p(0, 0), &p(0, 1), &policy())
+        .unwrap();
+
+    assert!(trim.curve_string().is_none());
+    assert!(trim.report().status().is_retained_evidence());
+    assert_eq!(trim.report().blocker(), Some(UncertaintyReason::Boundary));
+}
+
+#[test]
 fn prepared_curve_string_intersections_match_plain_sparse_scan() {
     let curve = sparse_zigzag(80);
     let cutter = CurveString2::try_new(vec![line_segment(121, -2, 121, 3)]).unwrap();

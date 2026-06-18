@@ -7,8 +7,8 @@ use hyperreal::Real;
 use crate::bbox::{Aabb2, aabbs_decided_disjoint, decided_segment_aabb};
 use crate::classify::{compare_reals, in_closed_unit_interval, is_zero};
 use crate::{
-    BulgeVertex2, CurveError, CurvePolicy, CurveResult, LineSeg2, ParamRange, Point2,
-    RetainedTopologyStatus, Segment2, SegmentIntersection, UncertaintyReason,
+    BulgeVertex2, CircularArc2, Classification, CurveError, CurvePolicy, CurveResult, LineSeg2,
+    ParamRange, Point2, RetainedTopologyStatus, Segment2, SegmentIntersection, UncertaintyReason,
 };
 
 /// One segment-pair event between two curve strings.
@@ -395,6 +395,159 @@ impl CurveString2 {
         })
     }
 
+    /// Trims this open curve string between two exact points on the path.
+    ///
+    /// Unlike [`CurveString2::trim_between_parameters`], this point-bearing
+    /// path can materialize partial circular arcs because the endpoints are
+    /// explicit exact geometry. The source arc's center, radius, and direction
+    /// are retained and replayed against point-on-arc predicates before any
+    /// fragment is emitted. Repeated non-adjacent point occurrences remain an
+    /// explicit boundary blocker instead of choosing a path branch silently.
+    pub fn trim_between_points(
+        &self,
+        start_point: &Point2,
+        end_point: &Point2,
+        policy: &CurvePolicy,
+    ) -> CurveResult<CurveStringTrimResult2> {
+        let start = match locate_trim_point(self, start_point, policy)? {
+            Classification::Decided(point) => point,
+            Classification::Uncertain(reason) => {
+                return Ok(blocked_trim_result(
+                    self,
+                    CurveStringTrimPoint2::new(0, Real::zero()),
+                    CurveStringTrimPoint2::new(0, Real::zero()),
+                    Vec::new(),
+                    RetainedTopologyStatus::Unresolved,
+                    Some(reason),
+                ));
+            }
+        };
+        let end = match locate_trim_point(self, end_point, policy)? {
+            Classification::Decided(point) => point,
+            Classification::Uncertain(reason) => {
+                return Ok(blocked_trim_result(
+                    self,
+                    start.trim_point.clone(),
+                    start.trim_point.clone(),
+                    Vec::new(),
+                    RetainedTopologyStatus::Unresolved,
+                    Some(reason),
+                ));
+            }
+        };
+
+        match compare_trim_points(&start.trim_point, &end.trim_point, policy) {
+            Some(Ordering::Less) => {}
+            Some(Ordering::Equal | Ordering::Greater) => return Err(CurveError::InvalidCurveRange),
+            None => {
+                return Ok(blocked_trim_result(
+                    self,
+                    start.trim_point,
+                    end.trim_point,
+                    Vec::new(),
+                    RetainedTopologyStatus::Unresolved,
+                    Some(UncertaintyReason::Ordering),
+                ));
+            }
+        }
+
+        self.trim_between_located_points(start, end, policy)
+    }
+
+    fn trim_between_located_points(
+        &self,
+        start: LocatedTrimPoint2,
+        end: LocatedTrimPoint2,
+        policy: &CurvePolicy,
+    ) -> CurveResult<CurveStringTrimResult2> {
+        let mut segment_reports = Vec::new();
+        let mut trimmed_segments = Vec::new();
+        for source_segment_index in start.trim_point.segment_index..=end.trim_point.segment_index {
+            let range_start = if source_segment_index == start.trim_point.segment_index {
+                start.trim_point.param.clone()
+            } else {
+                Real::zero()
+            };
+            let range_end = if source_segment_index == end.trim_point.segment_index {
+                end.trim_point.param.clone()
+            } else {
+                Real::one()
+            };
+            let range_start_point = if source_segment_index == start.trim_point.segment_index {
+                start.point.clone()
+            } else {
+                self.segments[source_segment_index].start().clone()
+            };
+            let range_end_point = if source_segment_index == end.trim_point.segment_index {
+                end.point.clone()
+            } else {
+                self.segments[source_segment_index].end().clone()
+            };
+            let source_range = ParamRange::new(range_start, range_end);
+            let segment_report = CurveStringTrimSegmentReport2 {
+                source_segment_index,
+                source_range: source_range.clone(),
+                status: RetainedTopologyStatus::NativeExact,
+            };
+            match trim_segment_by_point_range(
+                &self.segments[source_segment_index],
+                &source_range,
+                &range_start_point,
+                &range_end_point,
+                policy,
+            )? {
+                SegmentTrimMaterialization::Materialized(segment) => {
+                    segment_reports.push(segment_report);
+                    trimmed_segments.push(segment);
+                }
+                SegmentTrimMaterialization::SkippedEmpty => {}
+                SegmentTrimMaterialization::Unsupported(reason) => {
+                    let mut segment_report = segment_report;
+                    segment_report.status = RetainedTopologyStatus::Unsupported;
+                    segment_reports.push(segment_report);
+                    return Ok(blocked_trim_result(
+                        self,
+                        start.trim_point,
+                        end.trim_point,
+                        segment_reports,
+                        RetainedTopologyStatus::Unsupported,
+                        Some(reason),
+                    ));
+                }
+                SegmentTrimMaterialization::Unresolved(reason) => {
+                    let mut segment_report = segment_report;
+                    segment_report.status = RetainedTopologyStatus::Unresolved;
+                    segment_reports.push(segment_report);
+                    return Ok(blocked_trim_result(
+                        self,
+                        start.trim_point,
+                        end.trim_point,
+                        segment_reports,
+                        RetainedTopologyStatus::Unresolved,
+                        Some(reason),
+                    ));
+                }
+            }
+        }
+
+        if trimmed_segments.is_empty() {
+            return Err(CurveError::InvalidCurveRange);
+        }
+        let curve_string = CurveString2::try_new(trimmed_segments)?;
+        let report = CurveStringTrimReport2 {
+            start: start.trim_point,
+            end: end.trim_point,
+            source_segment_count: self.len(),
+            segment_reports,
+            status: RetainedTopologyStatus::NativeExact,
+            blocker: None,
+        };
+        Ok(CurveStringTrimResult2 {
+            curve_string: Some(curve_string),
+            report,
+        })
+    }
+
     /// Collects all nonempty segment-pair intersections against another curve string.
     ///
     /// Segment axis-aligned bounding boxes are used as a conservative broad
@@ -569,6 +722,12 @@ enum SegmentTrimMaterialization {
     Unresolved(UncertaintyReason),
 }
 
+#[derive(Clone, Debug, PartialEq)]
+struct LocatedTrimPoint2 {
+    trim_point: CurveStringTrimPoint2,
+    point: Point2,
+}
+
 fn validate_trim_point(
     curve_string: &CurveString2,
     point: &CurveStringTrimPoint2,
@@ -643,6 +802,73 @@ fn trim_line_segment_by_range(
         .map(SegmentTrimMaterialization::Materialized)
 }
 
+fn trim_segment_by_point_range(
+    source_segment: &Segment2,
+    source_range: &ParamRange,
+    start_point: &Point2,
+    end_point: &Point2,
+    policy: &CurvePolicy,
+) -> CurveResult<SegmentTrimMaterialization> {
+    let ordering = match compare_reals(source_range.start(), source_range.end(), policy) {
+        Some(ordering) => ordering,
+        None => {
+            return Ok(SegmentTrimMaterialization::Unresolved(
+                UncertaintyReason::Ordering,
+            ));
+        }
+    };
+    match ordering {
+        Ordering::Greater => return Err(CurveError::InvalidCurveRange),
+        Ordering::Equal => return Ok(SegmentTrimMaterialization::SkippedEmpty),
+        Ordering::Less => {}
+    }
+
+    match source_segment {
+        Segment2::Line(_) => LineSeg2::try_new(start_point.clone(), end_point.clone())
+            .map(Segment2::Line)
+            .map(SegmentTrimMaterialization::Materialized),
+        Segment2::Arc(arc) => trim_arc_segment_by_point_range(arc, start_point, end_point, policy),
+    }
+}
+
+fn trim_arc_segment_by_point_range(
+    source_arc: &CircularArc2,
+    start_point: &Point2,
+    end_point: &Point2,
+    policy: &CurvePolicy,
+) -> CurveResult<SegmentTrimMaterialization> {
+    match (
+        source_arc.contains_point(start_point, policy),
+        source_arc.contains_point(end_point, policy),
+    ) {
+        (Classification::Decided(true), Classification::Decided(true)) => {}
+        (Classification::Decided(false), _) | (_, Classification::Decided(false)) => {
+            return Err(CurveError::InvalidCurveRange);
+        }
+        (Classification::Uncertain(reason), _) | (_, Classification::Uncertain(reason)) => {
+            return Ok(SegmentTrimMaterialization::Unresolved(reason));
+        }
+    }
+
+    let distance = start_point.distance_squared(end_point);
+    match is_zero(&distance, policy) {
+        Some(true) => Ok(SegmentTrimMaterialization::SkippedEmpty),
+        Some(false) => Ok(SegmentTrimMaterialization::Materialized(Segment2::Arc(
+            CircularArc2::new_unchecked_with_radius(
+                start_point.clone(),
+                end_point.clone(),
+                source_arc.center().clone(),
+                source_arc.radius_squared(),
+                source_arc.is_clockwise(),
+                None,
+            ),
+        ))),
+        None => Ok(SegmentTrimMaterialization::Unresolved(
+            UncertaintyReason::RealSign,
+        )),
+    }
+}
+
 fn trim_range_is_full(range: &ParamRange, policy: &CurvePolicy) -> Option<bool> {
     let start_is_zero = compare_reals(range.start(), &Real::zero(), policy)? == Ordering::Equal;
     let end_is_one = compare_reals(range.end(), &Real::one(), policy)? == Ordering::Equal;
@@ -668,6 +894,124 @@ fn blocked_trim_result(
             blocker,
         },
     }
+}
+
+fn locate_trim_point(
+    curve_string: &CurveString2,
+    point: &Point2,
+    policy: &CurvePolicy,
+) -> CurveResult<Classification<LocatedTrimPoint2>> {
+    let mut located = Vec::new();
+    for (segment_index, segment) in curve_string.segments().iter().enumerate() {
+        match segment.contains_point(point, policy) {
+            Classification::Decided(true) => {
+                let param = match segment_point_parameter(segment, point, policy)? {
+                    Classification::Decided(param) => param,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+                located.push(LocatedTrimPoint2 {
+                    trim_point: CurveStringTrimPoint2::new(segment_index, param),
+                    point: point.clone(),
+                });
+            }
+            Classification::Decided(false) => {}
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        }
+    }
+
+    match canonical_located_trim_point(located, policy) {
+        Some(point) => Ok(Classification::Decided(point)),
+        None => Ok(Classification::Uncertain(UncertaintyReason::Boundary)),
+    }
+}
+
+fn canonical_located_trim_point(
+    mut located: Vec<LocatedTrimPoint2>,
+    policy: &CurvePolicy,
+) -> Option<LocatedTrimPoint2> {
+    match located.len() {
+        0 => None,
+        1 => located.pop(),
+        _ => {
+            located.sort_by(|left, right| {
+                left.trim_point
+                    .segment_index
+                    .cmp(&right.trim_point.segment_index)
+                    .then_with(|| {
+                        compare_reals(&left.trim_point.param, &right.trim_point.param, policy)
+                            .unwrap_or(Ordering::Equal)
+                    })
+            });
+            if located
+                .windows(2)
+                .all(|window| adjacent_vertex_duplicate(&window[0], &window[1], policy))
+            {
+                located.pop()
+            } else {
+                None
+            }
+        }
+    }
+}
+
+fn adjacent_vertex_duplicate(
+    left: &LocatedTrimPoint2,
+    right: &LocatedTrimPoint2,
+    policy: &CurvePolicy,
+) -> bool {
+    if left.trim_point.segment_index + 1 != right.trim_point.segment_index {
+        return false;
+    }
+    let left_at_end = compare_reals(&left.trim_point.param, &Real::one(), policy);
+    let right_at_start = compare_reals(&right.trim_point.param, &Real::zero(), policy);
+    left_at_end == Some(Ordering::Equal) && right_at_start == Some(Ordering::Equal)
+}
+
+fn segment_point_parameter(
+    segment: &Segment2,
+    point: &Point2,
+    policy: &CurvePolicy,
+) -> CurveResult<Classification<Real>> {
+    match segment {
+        Segment2::Line(line) => line_point_parameter(line, point, policy),
+        Segment2::Arc(arc) => arc_chord_parameter(arc, point),
+    }
+}
+
+fn line_point_parameter(
+    line: &LineSeg2,
+    point: &Point2,
+    policy: &CurvePolicy,
+) -> CurveResult<Classification<Real>> {
+    let (dx, dy) = line.delta();
+    let delta = point.delta_from(line.start());
+    match is_zero(&dx, policy) {
+        Some(false) => (delta.0 / dx)
+            .map(Classification::Decided)
+            .map_err(Into::into),
+        Some(true) => (delta.1 / dy)
+            .map(Classification::Decided)
+            .map_err(Into::into),
+        None => match is_zero(&dy, policy) {
+            Some(false) => (delta.1 / dy)
+                .map(Classification::Decided)
+                .map_err(Into::into),
+            Some(true) => Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+            None => Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+        },
+    }
+}
+
+fn arc_chord_parameter(arc: &CircularArc2, point: &Point2) -> CurveResult<Classification<Real>> {
+    let (dx, dy) = arc.end().delta_from(arc.start());
+    let (px, py) = point.delta_from(arc.start());
+    let numerator = (&px * &dx) + (&py * &dy);
+    let denominator = (&dx * &dx) + (&dy * &dy);
+    (numerator / denominator)
+        .map(Classification::Decided)
+        .map_err(Into::into)
 }
 
 impl CurveStringEndpointConnectionReport2 {
