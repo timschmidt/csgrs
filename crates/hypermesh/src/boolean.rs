@@ -15369,6 +15369,19 @@ mod tests {
             ExactBooleanSupport::CertifiedArrangementCellComplex
         );
 
+        let attempt = test_arrangement_attempt(
+            ExactBooleanRequest::new(
+                ExactBooleanOperation::Union,
+                ValidationPolicy::ALLOW_BOUNDARY,
+            ),
+            &left,
+            &right,
+            ExactRegularizationPolicy::REGULARIZED_SOLID,
+        );
+        assert_eq!(attempt.decline, None);
+        assert!(attempt.materialized_without_shortcut());
+        assert_current_arrangement_attempt(&attempt, &left, &right);
+
         let union = test_materialized_result(
             ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED),
             &left,
