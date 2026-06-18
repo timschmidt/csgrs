@@ -820,11 +820,7 @@ mod tests {
             "evaluation should promote cell-complex certification through the retained attempt cache"
         );
         assert_eq!(
-            workspace.evaluations[0]
-                .1
-                .certifications
-                .arrangement_attempt
-                .as_ref(),
+            workspace.evaluations[0].1.retained_arrangement_attempt(),
             Some(&workspace.arrangement_attempts[0].2)
         );
         let second = workspace.evaluate(request).unwrap() as *const ExactBooleanEvaluation;

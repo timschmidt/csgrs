@@ -12536,11 +12536,11 @@ mod tests {
         let evaluation = workspace.evaluate(request).unwrap().clone();
         evaluation.validate().unwrap();
         evaluation.validate_against_sources(&left, &right).unwrap();
-        let certifications = evaluation.certifications;
         assert_eq!(
-            certifications.arrangement_attempt.as_ref(),
+            evaluation.retained_arrangement_attempt(),
             Some(&retained_attempt)
         );
+        let certifications = evaluation.certifications;
         certifications.validate_for_request(request).unwrap();
         certifications
             .validate_against_sources(&left, &right, request)
