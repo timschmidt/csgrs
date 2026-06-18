@@ -459,36 +459,6 @@ impl RetainedRequestArtifact for ExactBooleanEvaluation {
     }
 }
 
-trait RetainedMaterializationCacheValue: Clone {
-    fn validate_for_workspace_cache(
-        &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-        request: ExactBooleanRequest,
-        retained_arrangement_attempt: Option<&ExactArrangementBooleanAttempt>,
-    ) -> Result<(), MeshError>;
-}
-
-impl RetainedMaterializationCacheValue for ExactBooleanResult {
-    fn validate_for_workspace_cache(
-        &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-        request: ExactBooleanRequest,
-        retained_arrangement_attempt: Option<&ExactArrangementBooleanAttempt>,
-    ) -> Result<(), MeshError> {
-        validate_retained_result_for_request(
-            left,
-            right,
-            request,
-            retained_arrangement_attempt,
-            self,
-        )
-        .map_err(workspace_report_validation_error)?;
-        Ok(())
-    }
-}
-
 fn store_replayable_result_or_return(
     cache: &mut Vec<(ExactBooleanRequest, ExactBooleanResult)>,
     left: &ExactMesh,
@@ -497,9 +467,14 @@ fn store_replayable_result_or_return(
     retained_arrangement_attempt: Option<&ExactArrangementBooleanAttempt>,
     result: ExactBooleanResult,
 ) -> Result<ExactBooleanResult, MeshError> {
-    if result
-        .validate_for_workspace_cache(left, right, request, retained_arrangement_attempt)
-        .is_ok()
+    if validate_retained_result_for_request(
+        left,
+        right,
+        request,
+        retained_arrangement_attempt,
+        &result,
+    )
+    .is_ok()
     {
         cache.push((request, result.clone()));
     } else {
@@ -570,20 +545,22 @@ fn store_retained_request_artifact<T: RetainedRequestArtifact>(
         .1)
 }
 
-fn cached_retained_materialization<T: RetainedMaterializationCacheValue>(
-    cache: &[(ExactBooleanRequest, T)],
+fn cached_retained_materialization(
+    cache: &[(ExactBooleanRequest, ExactBooleanResult)],
     left: &ExactMesh,
     right: &ExactMesh,
     request: ExactBooleanRequest,
     retained_arrangement_attempt: Option<&ExactArrangementBooleanAttempt>,
-) -> Result<Option<T>, MeshError> {
+) -> Result<Option<ExactBooleanResult>, MeshError> {
     if let Some(index) = cached_by_request_index(cache, request) {
-        cache[index].1.validate_for_workspace_cache(
+        validate_retained_result_for_request(
             left,
             right,
             request,
             retained_arrangement_attempt,
-        )?;
+            &cache[index].1,
+        )
+        .map_err(workspace_report_validation_error)?;
         return Ok(Some(cache[index].1.clone()));
     }
     Ok(None)
