@@ -838,6 +838,63 @@ fn borrowed_region_view_matches_owned_region() {
 
 proptest! {
     #[test]
+    fn generated_unordered_line_rectangles_build_native_regions(
+        xmin in -50_i32..50,
+        ymin in -50_i32..50,
+        width in 2_i32..80,
+        height in 2_i32..80,
+        order_variant in 0_usize..4,
+        reverse_mask in 0_u8..16,
+    ) {
+        let xmax = xmin + width;
+        let ymax = ymin + height;
+        let mut lines = vec![
+            line(xmin, ymin, xmax, ymin),
+            line(xmax, ymin, xmax, ymax),
+            line(xmax, ymax, xmin, ymax),
+            line(xmin, ymax, xmin, ymin),
+        ];
+        for (index, line) in lines.iter_mut().enumerate() {
+            if reverse_mask & (1 << index) != 0 {
+                *line = line.reversed();
+            }
+        }
+        match order_variant {
+            0 => {}
+            1 => lines.swap(0, 2),
+            2 => lines.rotate_left(1),
+            _ => lines.reverse(),
+        }
+
+        let built = Region2::from_unordered_line_segments_with_report(
+            lines,
+            FillRule::NonZero,
+            &policy(),
+        ).unwrap();
+        let report = built.report();
+
+        prop_assert!(report.status().is_native_exact());
+        prop_assert_eq!(report.source_segment_count(), 4);
+        prop_assert_eq!(report.arranged_segment_count(), Some(4));
+        prop_assert_eq!(report.split_candidate_pair_count(), 6);
+        prop_assert_eq!(report.split_skipped_aabb_pair_count(), 2);
+        prop_assert_eq!(report.split_tested_pair_count(), 4);
+        prop_assert_eq!(report.split_intersection_event_count(), 4);
+        prop_assert_eq!(report.endpoint_graph_endpoint_count(), Some(8));
+        prop_assert_eq!(report.endpoint_graph_dangling_endpoint_count(), Some(0));
+        prop_assert_eq!(report.endpoint_graph_branch_endpoint_count(), Some(0));
+        prop_assert_eq!(report.output_ring_count(), Some(1));
+        prop_assert_eq!(report.output_boundary_segment_count(), Some(4));
+        prop_assert_eq!(report.blocker(), None);
+
+        let region = built.region().expect("generated rectangle should materialize");
+        prop_assert_eq!(
+            region.classify_point(&p(xmin + 1, ymin + 1), &policy()),
+            Classification::Decided(RegionPointLocation::Inside)
+        );
+    }
+
+    #[test]
     fn generated_rectangle_hole_filled_area_uses_role_not_orientation(
         width in 3_i32..80,
         height in 3_i32..80,
