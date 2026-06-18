@@ -3000,8 +3000,9 @@ pub(crate) fn replay_selected_region_boolean_result(
     selection: ExactRegionSelection,
     validation: ValidationPolicy,
 ) -> Result<ExactBooleanResult, MeshError> {
-    let graph = validated_intersection_graph(left, right)?;
-    replay_selected_region_boolean_result_from_graph(&graph, left, right, selection, validation)
+    let mut workspace = ExactBooleanWorkspace::new(left, right);
+    let graph = workspace.validated_graph()?;
+    replay_selected_region_boolean_result_from_graph(graph, left, right, selection, validation)
 }
 
 fn replay_selected_region_boolean_result_from_graph(
@@ -5878,9 +5879,10 @@ pub(crate) fn adjacent_union_completion_certification(
             None,
         ));
     }
-    let graph = validated_intersection_graph(left, right)?;
+    let mut workspace = ExactBooleanWorkspace::new(left, right);
+    let graph = workspace.validated_graph()?;
     adjacent_union_completion_certification_from_graph(
-        &graph,
+        graph,
         left,
         right,
         operation,
