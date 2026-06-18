@@ -527,6 +527,42 @@ fn bench_unordered_line_segment_region_build(iterations: u32) -> CurveResult<()>
     Ok(())
 }
 
+fn bench_unordered_native_segment_region_build(iterations: u32) -> CurveResult<()> {
+    let segments = vec![
+        Segment2::Line(line(4, 0, 0, 0)),
+        Segment2::Arc(CircularArc2::from_bulge(p(0, 0), p(4, 0), s(1))?),
+    ];
+    let policy = CurvePolicy::certified();
+    let started = Instant::now();
+    let mut total_segments = 0_usize;
+    let mut total_endpoint_checks = 0_usize;
+
+    for _ in 0..iterations {
+        let result = Region2::from_unordered_segments_with_report(
+            segments.clone(),
+            FillRule::NonZero,
+            &policy,
+        )?;
+        let report = result.report();
+        if !report.status().is_native_exact() || result.region().is_none() {
+            panic!("unordered native segment region build benchmark became non-native");
+        }
+        total_segments += black_box(report.split_output_segment_count().unwrap_or_default());
+        total_segments += black_box(report.output_boundary_segment_count().unwrap_or_default());
+        total_endpoint_checks += black_box(report.attempted_endpoint_connection_count());
+        total_endpoint_checks += black_box(report.endpoint_graph_endpoint_count().unwrap_or(0));
+        total_endpoint_checks +=
+            black_box(report.endpoint_graph_structural_bucket_count().unwrap_or(0));
+    }
+
+    let elapsed = started.elapsed();
+    println!(
+        "unordered_native_segment_region_build: {iterations} iterations in {elapsed:?} ({:?}/iter), total segments={total_segments}, endpoint checks={total_endpoint_checks}",
+        elapsed / iterations
+    );
+    Ok(())
+}
+
 fn bench_contour_line_merge_report(iterations: u32) -> CurveResult<()> {
     let contour = Contour2::from_bulge_vertices(&[
         vertex(0, 0, 0),
@@ -666,6 +702,7 @@ fn main() -> CurveResult<()> {
     bench_curve_string_connect_report(iterations)?;
     bench_boundary_contour_region_build(1_000)?;
     bench_unordered_line_segment_region_build(1_000)?;
+    bench_unordered_native_segment_region_build(1_000)?;
     bench_contour_line_merge_report(1_000)?;
     bench_region_boolean_report(1_000)?;
     bench_prepared_region_boolean_report(1_000)?;

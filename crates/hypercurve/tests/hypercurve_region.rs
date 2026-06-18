@@ -33,6 +33,10 @@ fn line(start_x: i32, start_y: i32, end_x: i32, end_y: i32) -> hypercurve::LineS
     hypercurve::LineSeg2::try_new(p(start_x, start_y), p(end_x, end_y)).unwrap()
 }
 
+fn arc_bulge(start_x: i32, start_y: i32, end_x: i32, end_y: i32, bulge: i32) -> CircularArc2 {
+    CircularArc2::from_bulge(p(start_x, start_y), p(end_x, end_y), s(bulge)).unwrap()
+}
+
 fn reversed_rectangle(xmin: i32, ymin: i32, xmax: i32, ymax: i32) -> Contour2 {
     Contour2::from_bulge_vertices(&[
         vertex(xmin, ymin),
@@ -451,6 +455,59 @@ fn unordered_line_segments_split_crossings_before_boundary_blocker() {
     assert_eq!(report.endpoint_graph_branch_endpoint_count(), Some(4));
     assert_eq!(report.source_reports().len(), 0);
     assert_eq!(report.blocker(), Some(UncertaintyReason::Boundary));
+}
+
+#[test]
+fn unordered_native_segments_build_line_arc_region_with_source_provenance() {
+    let built = Region2::from_unordered_segments_with_report(
+        vec![
+            Segment2::Line(line(4, 0, 0, 0)),
+            Segment2::Arc(arc_bulge(0, 0, 4, 0, 1)),
+        ],
+        FillRule::NonZero,
+        &policy(),
+    )
+    .unwrap();
+    let report = built.report();
+
+    assert!(report.status().is_native_exact());
+    assert_eq!(
+        report.stage(),
+        RegionLineSegmentRegionBuildStage2::RegionRoleAssignment
+    );
+    assert_eq!(report.source_segment_count(), 2);
+    assert_eq!(report.arranged_segment_count(), Some(2));
+    assert_eq!(report.split_candidate_pair_count(), 1);
+    assert_eq!(report.split_skipped_aabb_pair_count(), 0);
+    assert_eq!(report.split_tested_pair_count(), 1);
+    assert_eq!(report.split_intersection_event_count(), 2);
+    assert_eq!(report.split_output_segment_count(), Some(2));
+    assert_eq!(report.endpoint_graph_endpoint_count(), Some(4));
+    assert_eq!(report.endpoint_graph_structural_bucket_count(), Some(2));
+    assert_eq!(
+        report.endpoint_graph_structural_singleton_bucket_count(),
+        Some(0)
+    );
+    assert_eq!(report.endpoint_graph_max_structural_bucket_size(), Some(2));
+    assert_eq!(report.endpoint_graph_dangling_endpoint_count(), Some(0));
+    assert_eq!(report.endpoint_graph_branch_endpoint_count(), Some(0));
+    assert_eq!(report.reversed_source_segment_count(), 0);
+    assert_eq!(report.output_ring_count(), Some(1));
+    assert_eq!(report.output_boundary_segment_count(), Some(2));
+    assert_eq!(report.source_reports().len(), 2);
+    assert_eq!(report.source_reports()[0].source_segment_index(), 0);
+    assert_eq!(report.source_reports()[1].source_segment_index(), 1);
+    assert_eq!(report.blocker(), None);
+
+    let region = built.region().unwrap();
+    assert_eq!(
+        region.classify_point(&p(2, -1), &policy()),
+        Classification::Decided(RegionPointLocation::Inside)
+    );
+    assert_eq!(
+        region.classify_point(&p(2, 0), &policy()),
+        Classification::Decided(RegionPointLocation::Boundary)
+    );
 }
 
 #[test]

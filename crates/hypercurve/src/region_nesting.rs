@@ -11,8 +11,9 @@ use hyperreal::Real;
 use crate::bbox::{Aabb2, aabbs_decided_disjoint};
 use crate::classify::compare_reals;
 use crate::{
-    Classification, Contour2, ContourPointLocation, CurveError, CurvePolicy, CurveResult, FillRule,
-    LineLineIntersection, LineSeg2, ParamRange, Point2, Region2, RetainedTopologyStatus, Segment2,
+    ArcArcIntersection, CircularArc2, Classification, Contour2, ContourPointLocation, CurveError,
+    CurvePolicy, CurveResult, FillRule, LineArcIntersection, LineArcOrder, LineLineIntersection,
+    LineSeg2, ParamRange, Point2, Region2, RetainedTopologyStatus, Segment2, SegmentIntersection,
     UncertaintyReason,
 };
 
@@ -280,6 +281,142 @@ impl Region2 {
                 fill_rule,
             )?;
             contours.push(contour);
+        }
+
+        let built = Region2::from_boundary_contours_with_report(contours, policy)?;
+        let status = built.report().status();
+        let blocker = built.report().blocker();
+        let boundary_build_report = built.report().clone();
+        let output_ring_count = boundary_build_report.output_contour_count();
+        let output_boundary_segment_count = boundary_build_report.output_segment_count();
+        Ok(RegionLineSegmentRegionBuildResult2 {
+            region: built.into_region(),
+            report: RegionLineSegmentRegionBuildReport2 {
+                stage: RegionLineSegmentRegionBuildStage2::RegionRoleAssignment,
+                source_segment_count: segments.len(),
+                arranged_segment_count: Some(arranged.segments.len()),
+                split_candidate_pair_count: arranged.report.candidate_pair_count,
+                split_skipped_aabb_pair_count: arranged.report.skipped_aabb_pair_count,
+                split_tested_pair_count: arranged.report.tested_pair_count,
+                split_intersection_event_count: arranged.report.intersection_event_count,
+                split_output_segment_count: Some(arranged.segments.len()),
+                endpoint_graph_endpoint_count: Some(endpoint_graph.endpoint_count),
+                endpoint_graph_structural_bucket_count: Some(
+                    endpoint_graph.structural_bucket_count,
+                ),
+                endpoint_graph_structural_singleton_bucket_count: Some(
+                    endpoint_graph.structural_singleton_bucket_count,
+                ),
+                endpoint_graph_max_structural_bucket_size: Some(
+                    endpoint_graph.max_structural_bucket_size,
+                ),
+                endpoint_graph_dangling_endpoint_count: Some(
+                    endpoint_graph.dangling_endpoint_count,
+                ),
+                endpoint_graph_branch_endpoint_count: Some(endpoint_graph.branch_endpoint_count),
+                attempted_endpoint_connection_count: assembled
+                    .counts
+                    .attempted_endpoint_connection_count
+                    + endpoint_counts.attempted_endpoint_connection_count,
+                exact_endpoint_connection_count: assembled.counts.exact_endpoint_connection_count
+                    + endpoint_counts.exact_endpoint_connection_count,
+                disconnected_endpoint_connection_count: assembled
+                    .counts
+                    .disconnected_endpoint_connection_count
+                    + endpoint_counts.disconnected_endpoint_connection_count,
+                unresolved_endpoint_connection_count: assembled
+                    .counts
+                    .unresolved_endpoint_connection_count
+                    + endpoint_counts.unresolved_endpoint_connection_count,
+                reversed_source_segment_count: assembled.reversed_source_segment_count,
+                output_ring_count,
+                output_boundary_segment_count,
+                source_reports: assembled.source_reports,
+                boundary_build_report: Some(boundary_build_report),
+                status,
+                blocker,
+            },
+        })
+    }
+
+    /// Builds a region from unordered exact native line/arc segments.
+    ///
+    /// This is the native-segment counterpart to
+    /// [`Region2::from_unordered_line_segments_with_report`]. It retains exact
+    /// point-intersection split parameters for lines and arcs, materializes
+    /// line/arc fragments from exact split points, and then assembles closed
+    /// rings by exact endpoint equality. Overlaps, ambiguous ordering, and
+    /// branching/dangling endpoint graphs remain explicit blockers.
+    pub fn from_unordered_segments_with_report(
+        segments: Vec<Segment2>,
+        fill_rule: FillRule,
+        policy: &CurvePolicy,
+    ) -> CurveResult<RegionLineSegmentRegionBuildResult2> {
+        if segments.is_empty() {
+            return Err(CurveError::EmptyCurveString);
+        }
+
+        let arranged = match arrange_native_segments_at_point_intersections(&segments, policy)? {
+            Ok(arranged) => arranged,
+            Err((split_report, blocker)) => {
+                return Ok(RegionLineSegmentRegionBuildResult2 {
+                    region: None,
+                    report: blocked_line_segment_region_report(
+                        segments.len(),
+                        Some(split_report),
+                        None,
+                        LineSegmentRingAssemblyReportParts::default(),
+                        RegionLineSegmentRegionBuildStage2::RingAssembly,
+                        retained_status_for_line_segment_region_blocker(blocker),
+                        blocker,
+                    ),
+                });
+            }
+        };
+
+        let (endpoint_graph, endpoint_counts) =
+            match validate_arranged_native_endpoint_graph(&arranged.segments, policy) {
+                Ok(endpoint_graph) => endpoint_graph,
+                Err((endpoint_graph, counts, blocker)) => {
+                    return Ok(RegionLineSegmentRegionBuildResult2 {
+                        region: None,
+                        report: blocked_line_segment_region_report(
+                            segments.len(),
+                            Some(arranged.report),
+                            Some(endpoint_graph),
+                            LineSegmentRingAssemblyReportParts {
+                                counts,
+                                ..LineSegmentRingAssemblyReportParts::default()
+                            },
+                            RegionLineSegmentRegionBuildStage2::RingAssembly,
+                            retained_status_for_line_segment_region_blocker(blocker),
+                            blocker,
+                        ),
+                    });
+                }
+            };
+
+        let assembled = match assemble_unordered_native_segment_rings(&arranged.segments, policy)? {
+            Ok(assembled) => assembled,
+            Err((report, blocker)) => {
+                return Ok(RegionLineSegmentRegionBuildResult2 {
+                    region: None,
+                    report: blocked_line_segment_region_report(
+                        segments.len(),
+                        Some(arranged.report),
+                        Some(endpoint_graph),
+                        report,
+                        RegionLineSegmentRegionBuildStage2::RingAssembly,
+                        retained_status_for_line_segment_region_blocker(blocker),
+                        blocker,
+                    ),
+                });
+            }
+        };
+
+        let mut contours = Vec::with_capacity(assembled.rings.len());
+        for ring in assembled.rings {
+            contours.push(Contour2::try_new_with_fill_rule(ring, fill_rule)?);
         }
 
         let built = Region2::from_boundary_contours_with_report(contours, policy)?;
@@ -867,6 +1004,19 @@ struct ArrangedLineSegments {
     report: LineSegmentSplitReportParts,
 }
 
+#[derive(Clone, Debug, PartialEq)]
+struct ArrangedNativeSegment {
+    source_segment_index: usize,
+    source_range: ParamRange,
+    segment: Segment2,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+struct ArrangedNativeSegments {
+    segments: Vec<ArrangedNativeSegment>,
+    report: LineSegmentSplitReportParts,
+}
+
 impl ArrangedLineSegment {
     fn reversed(&self) -> Self {
         Self {
@@ -880,6 +1030,19 @@ impl ArrangedLineSegment {
     }
 }
 
+impl ArrangedNativeSegment {
+    fn reversed(&self) -> Self {
+        Self {
+            source_segment_index: self.source_segment_index,
+            source_range: ParamRange::new(
+                self.source_range.end().clone(),
+                self.source_range.start().clone(),
+            ),
+            segment: self.segment.reversed(),
+        }
+    }
+}
+
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum EndpointCandidate {
     Start,
@@ -889,6 +1052,12 @@ enum EndpointCandidate {
 #[derive(Clone, Debug, PartialEq)]
 struct LineSegmentSplitMarker {
     param: Real,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+struct NativeSegmentSplitMarker {
+    param: Real,
+    point: Point2,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -997,6 +1166,109 @@ fn arranged_line_endpoint_point(
     match endpoint.endpoint {
         EndpointCandidate::Start => segments[endpoint.segment_index].line.start(),
         EndpointCandidate::End => segments[endpoint.segment_index].line.end(),
+    }
+}
+
+fn validate_arranged_native_endpoint_graph(
+    segments: &[ArrangedNativeSegment],
+    policy: &CurvePolicy,
+) -> Result<
+    (
+        LineSegmentEndpointGraphReportParts,
+        LineSegmentRingAssemblyCounts,
+    ),
+    (
+        LineSegmentEndpointGraphReportParts,
+        LineSegmentRingAssemblyCounts,
+        UncertaintyReason,
+    ),
+> {
+    let endpoints = arranged_native_endpoints(segments);
+    let mut graph = structural_native_endpoint_bucket_report(segments, &endpoints);
+    let mut counts = LineSegmentRingAssemblyCounts::default();
+
+    for (endpoint_index, endpoint) in endpoints.iter().enumerate() {
+        let point = arranged_native_endpoint_point(segments, *endpoint);
+        let mut exact_match_count = 0_usize;
+        for (candidate_index, candidate) in endpoints.iter().enumerate() {
+            if endpoint_index == candidate_index
+                || endpoint.segment_index == candidate.segment_index
+            {
+                continue;
+            }
+            match exact_points_match(
+                point,
+                arranged_native_endpoint_point(segments, *candidate),
+                policy,
+                &mut counts,
+            ) {
+                Classification::Decided(true) => exact_match_count += 1,
+                Classification::Decided(false) => {}
+                Classification::Uncertain(reason) => return Err((graph, counts, reason)),
+            }
+        }
+        match exact_match_count {
+            1 => {}
+            0 => graph.dangling_endpoint_count += 1,
+            _ => graph.branch_endpoint_count += 1,
+        }
+    }
+
+    if graph.dangling_endpoint_count > 0 || graph.branch_endpoint_count > 0 {
+        Err((graph, counts, UncertaintyReason::Boundary))
+    } else {
+        Ok((graph, counts))
+    }
+}
+
+fn structural_native_endpoint_bucket_report(
+    segments: &[ArrangedNativeSegment],
+    endpoints: &[ArrangedLineEndpoint],
+) -> LineSegmentEndpointGraphReportParts {
+    let mut buckets: Vec<(Point2, usize)> = Vec::new();
+    for endpoint in endpoints {
+        let point = arranged_native_endpoint_point(segments, *endpoint);
+        if let Some((_, count)) = buckets
+            .iter_mut()
+            .find(|(bucket_point, _)| bucket_point == point)
+        {
+            *count += 1;
+        } else {
+            buckets.push((point.clone(), 1));
+        }
+    }
+
+    LineSegmentEndpointGraphReportParts {
+        endpoint_count: endpoints.len(),
+        structural_bucket_count: buckets.len(),
+        structural_singleton_bucket_count: buckets.iter().filter(|(_, count)| *count == 1).count(),
+        max_structural_bucket_size: buckets.iter().map(|(_, count)| *count).max().unwrap_or(0),
+        ..LineSegmentEndpointGraphReportParts::default()
+    }
+}
+
+fn arranged_native_endpoints(segments: &[ArrangedNativeSegment]) -> Vec<ArrangedLineEndpoint> {
+    let mut endpoints = Vec::with_capacity(segments.len() * 2);
+    for segment_index in 0..segments.len() {
+        endpoints.push(ArrangedLineEndpoint {
+            segment_index,
+            endpoint: EndpointCandidate::Start,
+        });
+        endpoints.push(ArrangedLineEndpoint {
+            segment_index,
+            endpoint: EndpointCandidate::End,
+        });
+    }
+    endpoints
+}
+
+fn arranged_native_endpoint_point(
+    segments: &[ArrangedNativeSegment],
+    endpoint: ArrangedLineEndpoint,
+) -> &Point2 {
+    match endpoint.endpoint {
+        EndpointCandidate::Start => segments[endpoint.segment_index].segment.start(),
+        EndpointCandidate::End => segments[endpoint.segment_index].segment.end(),
     }
 }
 
@@ -1124,6 +1396,341 @@ fn sort_line_split_markers(
         })
     });
     (!failed).then_some(())
+}
+
+fn arrange_native_segments_at_point_intersections(
+    segments: &[Segment2],
+    policy: &CurvePolicy,
+) -> CurveResult<Result<ArrangedNativeSegments, (LineSegmentSplitReportParts, UncertaintyReason)>> {
+    let mut report = LineSegmentSplitReportParts {
+        candidate_pair_count: segments
+            .len()
+            .saturating_mul(segments.len().saturating_sub(1))
+            / 2,
+        ..LineSegmentSplitReportParts::default()
+    };
+    let mut markers = segments
+        .iter()
+        .map(|segment| {
+            vec![
+                NativeSegmentSplitMarker {
+                    param: Real::zero(),
+                    point: segment.start().clone(),
+                },
+                NativeSegmentSplitMarker {
+                    param: Real::one(),
+                    point: segment.end().clone(),
+                },
+            ]
+        })
+        .collect::<Vec<_>>();
+    let segment_boxes = segments
+        .iter()
+        .map(|segment| match Aabb2::from_segment(segment, policy) {
+            Ok(Classification::Decided(bbox)) => Some(bbox),
+            Ok(Classification::Uncertain(_)) | Err(_) => None,
+        })
+        .collect::<Vec<_>>();
+
+    for (first_index, first) in segments.iter().enumerate() {
+        for (second_offset, second) in segments[first_index + 1..].iter().enumerate() {
+            let second_index = first_index + 1 + second_offset;
+            if let (Some(first_box), Some(second_box)) =
+                (&segment_boxes[first_index], &segment_boxes[second_index])
+                && aabbs_decided_disjoint(first_box, second_box, policy)
+            {
+                report.skipped_aabb_pair_count += 1;
+                continue;
+            }
+            report.tested_pair_count += 1;
+            match native_segment_intersection_split_markers(first, second, policy)? {
+                NativeSegmentIntersectionMarkers::None => {}
+                NativeSegmentIntersectionMarkers::Points(points) => {
+                    report.intersection_event_count += points.len();
+                    for point in points {
+                        if insert_native_split_marker(
+                            &mut markers[first_index],
+                            NativeSegmentSplitMarker {
+                                param: point.first_param,
+                                point: point.point.clone(),
+                            },
+                            policy,
+                        )
+                        .is_none()
+                            || insert_native_split_marker(
+                                &mut markers[second_index],
+                                NativeSegmentSplitMarker {
+                                    param: point.second_param,
+                                    point: point.point,
+                                },
+                                policy,
+                            )
+                            .is_none()
+                        {
+                            return Ok(Err((report, UncertaintyReason::Ordering)));
+                        }
+                    }
+                }
+                NativeSegmentIntersectionMarkers::Overlap => {
+                    return Ok(Err((report, UncertaintyReason::Boundary)));
+                }
+                NativeSegmentIntersectionMarkers::Uncertain(reason) => {
+                    return Ok(Err((report, reason)));
+                }
+            }
+        }
+    }
+
+    let mut arranged = Vec::new();
+    for (source_segment_index, (segment, source_markers)) in
+        segments.iter().zip(markers.iter_mut()).enumerate()
+    {
+        sort_native_split_markers(source_markers, policy).ok_or(CurveError::Topology(
+            "native split markers could not be sorted".into(),
+        ))?;
+        for pair in source_markers.windows(2) {
+            let start_param = pair[0].param.clone();
+            let end_param = pair[1].param.clone();
+            match compare_reals(&start_param, &end_param, policy) {
+                Some(Ordering::Less) => {
+                    match materialize_native_segment_between_markers(
+                        segment, &pair[0], &pair[1], policy,
+                    )? {
+                        NativeSegmentMaterialization::Materialized(segment) => {
+                            arranged.push(ArrangedNativeSegment {
+                                source_segment_index,
+                                source_range: ParamRange::new(start_param, end_param),
+                                segment,
+                            });
+                        }
+                        NativeSegmentMaterialization::SkippedEmpty => {}
+                        NativeSegmentMaterialization::Unresolved(reason) => {
+                            return Ok(Err((report, reason)));
+                        }
+                    }
+                }
+                Some(Ordering::Equal) => {}
+                Some(Ordering::Greater) | None => {
+                    return Ok(Err((report, UncertaintyReason::Ordering)));
+                }
+            }
+        }
+    }
+
+    report.output_segment_count = Some(arranged.len());
+    Ok(Ok(ArrangedNativeSegments {
+        segments: arranged,
+        report,
+    }))
+}
+
+#[derive(Clone, Debug, PartialEq)]
+struct NativeSegmentIntersectionPoint {
+    point: Point2,
+    first_param: Real,
+    second_param: Real,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+enum NativeSegmentIntersectionMarkers {
+    None,
+    Points(Vec<NativeSegmentIntersectionPoint>),
+    Overlap,
+    Uncertain(UncertaintyReason),
+}
+
+fn native_segment_intersection_split_markers(
+    first: &Segment2,
+    second: &Segment2,
+    policy: &CurvePolicy,
+) -> CurveResult<NativeSegmentIntersectionMarkers> {
+    match first.intersect_segment(second, policy)? {
+        SegmentIntersection::LineLine(LineLineIntersection::None) => {
+            Ok(NativeSegmentIntersectionMarkers::None)
+        }
+        SegmentIntersection::LineLine(LineLineIntersection::Point {
+            point,
+            a_param,
+            b_param,
+            ..
+        }) => Ok(NativeSegmentIntersectionMarkers::Points(vec![
+            NativeSegmentIntersectionPoint {
+                point,
+                first_param: a_param,
+                second_param: b_param,
+            },
+        ])),
+        SegmentIntersection::LineLine(LineLineIntersection::Overlap { .. }) => {
+            Ok(NativeSegmentIntersectionMarkers::Overlap)
+        }
+        SegmentIntersection::LineLine(LineLineIntersection::Uncertain { reason }) => {
+            Ok(NativeSegmentIntersectionMarkers::Uncertain(reason))
+        }
+        SegmentIntersection::LineArc { order, result } => {
+            native_line_arc_intersection_split_markers(order, result)
+        }
+        SegmentIntersection::ArcArc(result) => native_arc_arc_intersection_split_markers(result),
+    }
+}
+
+fn native_line_arc_intersection_split_markers(
+    order: LineArcOrder,
+    result: LineArcIntersection,
+) -> CurveResult<NativeSegmentIntersectionMarkers> {
+    let map_point = |hit: crate::LineArcIntersectionPoint| {
+        let (first_param, second_param) = match order {
+            LineArcOrder::LineThenArc => (hit.line_param, hit.arc_param),
+            LineArcOrder::ArcThenLine => (hit.arc_param, hit.line_param),
+        };
+        NativeSegmentIntersectionPoint {
+            point: hit.point,
+            first_param,
+            second_param,
+        }
+    };
+
+    Ok(match result {
+        LineArcIntersection::None => NativeSegmentIntersectionMarkers::None,
+        LineArcIntersection::Point(hit) => {
+            NativeSegmentIntersectionMarkers::Points(vec![map_point(hit)])
+        }
+        LineArcIntersection::TwoPoints { first, second } => {
+            NativeSegmentIntersectionMarkers::Points(vec![map_point(first), map_point(second)])
+        }
+        LineArcIntersection::Uncertain { reason } => {
+            NativeSegmentIntersectionMarkers::Uncertain(reason)
+        }
+    })
+}
+
+fn native_arc_arc_intersection_split_markers(
+    result: ArcArcIntersection,
+) -> CurveResult<NativeSegmentIntersectionMarkers> {
+    Ok(match result {
+        ArcArcIntersection::None => NativeSegmentIntersectionMarkers::None,
+        ArcArcIntersection::Point(hit) => {
+            NativeSegmentIntersectionMarkers::Points(vec![NativeSegmentIntersectionPoint {
+                point: hit.point,
+                first_param: hit.a_param,
+                second_param: hit.b_param,
+            }])
+        }
+        ArcArcIntersection::TwoPoints { first, second } => {
+            NativeSegmentIntersectionMarkers::Points(vec![
+                NativeSegmentIntersectionPoint {
+                    point: first.point,
+                    first_param: first.a_param,
+                    second_param: first.b_param,
+                },
+                NativeSegmentIntersectionPoint {
+                    point: second.point,
+                    first_param: second.a_param,
+                    second_param: second.b_param,
+                },
+            ])
+        }
+        ArcArcIntersection::Overlap { .. } => NativeSegmentIntersectionMarkers::Overlap,
+        ArcArcIntersection::Uncertain { reason } => {
+            NativeSegmentIntersectionMarkers::Uncertain(reason)
+        }
+    })
+}
+
+fn insert_native_split_marker(
+    markers: &mut Vec<NativeSegmentSplitMarker>,
+    marker: NativeSegmentSplitMarker,
+    policy: &CurvePolicy,
+) -> Option<()> {
+    for existing in markers.iter() {
+        if compare_reals(&existing.param, &marker.param, policy)? == Ordering::Equal {
+            return match crate::classify::is_zero(
+                &existing.point.distance_squared(&marker.point),
+                policy,
+            ) {
+                Some(true) => Some(()),
+                Some(false) | None => None,
+            };
+        }
+    }
+    markers.push(marker);
+    Some(())
+}
+
+fn sort_native_split_markers(
+    markers: &mut [NativeSegmentSplitMarker],
+    policy: &CurvePolicy,
+) -> Option<()> {
+    let mut failed = false;
+    markers.sort_by(|left, right| {
+        compare_reals(&left.param, &right.param, policy).unwrap_or_else(|| {
+            failed = true;
+            Ordering::Equal
+        })
+    });
+    (!failed).then_some(())
+}
+
+enum NativeSegmentMaterialization {
+    Materialized(Segment2),
+    SkippedEmpty,
+    Unresolved(UncertaintyReason),
+}
+
+fn materialize_native_segment_between_markers(
+    source_segment: &Segment2,
+    start: &NativeSegmentSplitMarker,
+    end: &NativeSegmentSplitMarker,
+    policy: &CurvePolicy,
+) -> CurveResult<NativeSegmentMaterialization> {
+    match crate::classify::is_zero(&start.point.distance_squared(&end.point), policy) {
+        Some(true) => return Ok(NativeSegmentMaterialization::SkippedEmpty),
+        Some(false) => {}
+        None => {
+            return Ok(NativeSegmentMaterialization::Unresolved(
+                UncertaintyReason::RealSign,
+            ));
+        }
+    }
+
+    match source_segment {
+        Segment2::Line(_) => LineSeg2::try_new(start.point.clone(), end.point.clone())
+            .map(Segment2::Line)
+            .map(NativeSegmentMaterialization::Materialized),
+        Segment2::Arc(arc) => {
+            materialize_arc_between_markers(arc, &start.point, &end.point, policy)
+        }
+    }
+}
+
+fn materialize_arc_between_markers(
+    source_arc: &CircularArc2,
+    start: &Point2,
+    end: &Point2,
+    policy: &CurvePolicy,
+) -> CurveResult<NativeSegmentMaterialization> {
+    match (
+        source_arc.contains_point(start, policy),
+        source_arc.contains_point(end, policy),
+    ) {
+        (Classification::Decided(true), Classification::Decided(true)) => {
+            Ok(NativeSegmentMaterialization::Materialized(Segment2::Arc(
+                CircularArc2::new_unchecked_with_radius(
+                    start.clone(),
+                    end.clone(),
+                    source_arc.center().clone(),
+                    source_arc.radius_squared(),
+                    source_arc.is_clockwise(),
+                    None,
+                ),
+            )))
+        }
+        (Classification::Decided(false), _) | (_, Classification::Decided(false)) => {
+            Err(CurveError::InvalidCurveRange)
+        }
+        (Classification::Uncertain(reason), _) | (_, Classification::Uncertain(reason)) => {
+            Ok(NativeSegmentMaterialization::Unresolved(reason))
+        }
+    }
 }
 
 fn assemble_unordered_line_segment_rings(
@@ -1280,6 +1887,152 @@ fn unique_next_line_segment(
     Classification::Decided(selected)
 }
 
+#[derive(Clone, Debug, PartialEq)]
+struct NativeSegmentRingAssembly {
+    rings: Vec<Vec<Segment2>>,
+    counts: LineSegmentRingAssemblyCounts,
+    reversed_source_segment_count: usize,
+    source_reports: Vec<RegionLineSegmentRingSourceReport2>,
+}
+
+fn assemble_unordered_native_segment_rings(
+    segments: &[ArrangedNativeSegment],
+    policy: &CurvePolicy,
+) -> CurveResult<
+    Result<NativeSegmentRingAssembly, (LineSegmentRingAssemblyReportParts, UncertaintyReason)>,
+> {
+    let mut used = vec![false; segments.len()];
+    let mut rings = Vec::new();
+    let mut counts = LineSegmentRingAssemblyCounts::default();
+    let mut reversed_source_segment_count = 0_usize;
+    let mut source_reports = Vec::with_capacity(segments.len());
+
+    while let Some(seed_index) = used.iter().position(|used| !*used) {
+        let output_ring_index = rings.len();
+        let mut ring = Vec::new();
+        let mut current = segments[seed_index].clone();
+        used[seed_index] = true;
+        append_native_segment_ring_source_report(
+            &mut source_reports,
+            &current,
+            output_ring_index,
+            ring.len(),
+            false,
+        );
+        let ring_start = current.segment.start().clone();
+        ring.push(current.segment.clone());
+
+        loop {
+            match exact_points_match(current.segment.end(), &ring_start, policy, &mut counts) {
+                Classification::Decided(true) => break,
+                Classification::Decided(false) => {}
+                Classification::Uncertain(reason) => {
+                    return Ok(Err((
+                        LineSegmentRingAssemblyReportParts {
+                            counts,
+                            reversed_source_segment_count,
+                            source_reports,
+                        },
+                        reason,
+                    )));
+                }
+            }
+
+            let next = match unique_next_native_segment(
+                current.segment.end(),
+                segments,
+                &used,
+                policy,
+                &mut counts,
+            ) {
+                Classification::Decided(Some(next)) => next,
+                Classification::Decided(None) => {
+                    return Ok(Err((
+                        LineSegmentRingAssemblyReportParts {
+                            counts,
+                            reversed_source_segment_count,
+                            source_reports,
+                        },
+                        UncertaintyReason::Boundary,
+                    )));
+                }
+                Classification::Uncertain(reason) => {
+                    return Ok(Err((
+                        LineSegmentRingAssemblyReportParts {
+                            counts,
+                            reversed_source_segment_count,
+                            source_reports,
+                        },
+                        reason,
+                    )));
+                }
+            };
+
+            used[next.arranged_segment_index] = true;
+            if next.reversed {
+                reversed_source_segment_count += 1;
+            }
+            current = if next.reversed {
+                segments[next.arranged_segment_index].reversed()
+            } else {
+                segments[next.arranged_segment_index].clone()
+            };
+            append_native_segment_ring_source_report(
+                &mut source_reports,
+                &current,
+                output_ring_index,
+                ring.len(),
+                next.reversed,
+            );
+            ring.push(current.segment.clone());
+        }
+
+        rings.push(ring);
+    }
+
+    Ok(Ok(NativeSegmentRingAssembly {
+        rings,
+        counts,
+        reversed_source_segment_count,
+        source_reports,
+    }))
+}
+
+fn unique_next_native_segment(
+    target: &Point2,
+    segments: &[ArrangedNativeSegment],
+    used: &[bool],
+    policy: &CurvePolicy,
+    counts: &mut LineSegmentRingAssemblyCounts,
+) -> Classification<Option<NextLineSegment>> {
+    let mut selected = None;
+    for (arranged_segment_index, segment) in segments.iter().enumerate() {
+        if used[arranged_segment_index] {
+            continue;
+        }
+        for candidate in [EndpointCandidate::Start, EndpointCandidate::End] {
+            let point = match candidate {
+                EndpointCandidate::Start => segment.segment.start(),
+                EndpointCandidate::End => segment.segment.end(),
+            };
+            match exact_points_match(target, point, policy, counts) {
+                Classification::Decided(true) => {
+                    if selected.is_some() {
+                        return Classification::Uncertain(UncertaintyReason::Boundary);
+                    }
+                    selected = Some(NextLineSegment {
+                        arranged_segment_index,
+                        reversed: candidate == EndpointCandidate::End,
+                    });
+                }
+                Classification::Decided(false) => {}
+                Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+            }
+        }
+    }
+    Classification::Decided(selected)
+}
+
 fn exact_points_match(
     left: &Point2,
     right: &Point2,
@@ -1318,6 +2071,25 @@ fn append_line_segment_ring_source_report(
         reversed,
         output_start_point: segment.line.start().clone(),
         output_end_point: segment.line.end().clone(),
+        status: RetainedTopologyStatus::NativeExact,
+    });
+}
+
+fn append_native_segment_ring_source_report(
+    source_reports: &mut Vec<RegionLineSegmentRingSourceReport2>,
+    segment: &ArrangedNativeSegment,
+    output_ring_index: usize,
+    output_segment_index: usize,
+    reversed: bool,
+) {
+    source_reports.push(RegionLineSegmentRingSourceReport2 {
+        source_segment_index: segment.source_segment_index,
+        source_range: segment.source_range.clone(),
+        output_ring_index,
+        output_segment_index,
+        reversed,
+        output_start_point: segment.segment.start().clone(),
+        output_end_point: segment.segment.end().clone(),
         status: RetainedTopologyStatus::NativeExact,
     });
 }
