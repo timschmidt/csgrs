@@ -121,9 +121,13 @@ pub struct CurveStringOutlineOffsetReport2 {
     stage: CurveStringOutlineOffsetStage2,
     cap: OffsetCap,
     source_segment_count: usize,
+    source_segment_kind_counts: SegmentKindCounts,
     left_offset_segment_count: Option<usize>,
+    left_offset_segment_kind_counts: Option<SegmentKindCounts>,
     right_offset_segment_count: Option<usize>,
+    right_offset_segment_kind_counts: Option<SegmentKindCounts>,
     outline_segment_count: Option<usize>,
+    outline_segment_kind_counts: Option<SegmentKindCounts>,
     status: RetainedTopologyStatus,
     blocker: Option<UncertaintyReason>,
 }
@@ -695,9 +699,19 @@ impl CurveStringOutlineOffsetReport2 {
         self.source_segment_count
     }
 
+    /// Returns primitive-family counts for the source open curve string.
+    pub const fn source_segment_kind_counts(&self) -> SegmentKindCounts {
+        self.source_segment_kind_counts
+    }
+
     /// Returns the left offset trace segment count after raw joining.
     pub const fn left_offset_segment_count(&self) -> Option<usize> {
         self.left_offset_segment_count
+    }
+
+    /// Returns primitive-family counts for the left offset trace.
+    pub const fn left_offset_segment_kind_counts(&self) -> Option<SegmentKindCounts> {
+        self.left_offset_segment_kind_counts
     }
 
     /// Returns the right offset trace segment count after raw joining.
@@ -705,9 +719,19 @@ impl CurveStringOutlineOffsetReport2 {
         self.right_offset_segment_count
     }
 
+    /// Returns primitive-family counts for the right offset trace.
+    pub const fn right_offset_segment_kind_counts(&self) -> Option<SegmentKindCounts> {
+        self.right_offset_segment_kind_counts
+    }
+
     /// Returns the closed outline segment count before final topology rejection.
     pub const fn outline_segment_count(&self) -> Option<usize> {
         self.outline_segment_count
+    }
+
+    /// Returns primitive-family counts for the closed outline before final topology rejection.
+    pub const fn outline_segment_kind_counts(&self) -> Option<SegmentKindCounts> {
+        self.outline_segment_kind_counts
     }
 
     /// Returns checked outline topology status.
@@ -869,9 +893,13 @@ fn blocked_curve_string_outline_offset_result(
     stage: CurveStringOutlineOffsetStage2,
     cap: OffsetCap,
     source_segment_count: usize,
+    source_segment_kind_counts: SegmentKindCounts,
     left_offset_segment_count: Option<usize>,
+    left_offset_segment_kind_counts: Option<SegmentKindCounts>,
     right_offset_segment_count: Option<usize>,
+    right_offset_segment_kind_counts: Option<SegmentKindCounts>,
     outline_segment_count: Option<usize>,
+    outline_segment_kind_counts: Option<SegmentKindCounts>,
     status: RetainedTopologyStatus,
     blocker: UncertaintyReason,
 ) -> CurveStringOutlineOffsetResult2 {
@@ -881,9 +909,13 @@ fn blocked_curve_string_outline_offset_result(
             stage,
             cap,
             source_segment_count,
+            source_segment_kind_counts,
             left_offset_segment_count,
+            left_offset_segment_kind_counts,
             right_offset_segment_count,
+            right_offset_segment_kind_counts,
             outline_segment_count,
+            outline_segment_kind_counts,
             status,
             blocker: Some(blocker),
         },
@@ -906,6 +938,7 @@ fn checked_outline_with_report(
     policy: &CurvePolicy,
 ) -> CurveResult<CurveStringOutlineOffsetResult2> {
     let source_segment_count = source.len();
+    let source_segment_kind_counts = segment_kind_counts(source.segments());
     match real_sign(&distance, policy) {
         Some(RealSign::Positive) => {}
         Some(RealSign::Zero | RealSign::Negative) => {
@@ -913,6 +946,10 @@ fn checked_outline_with_report(
                 CurveStringOutlineOffsetStage2::DistanceValidation,
                 cap,
                 source_segment_count,
+                source_segment_kind_counts,
+                None,
+                None,
+                None,
                 None,
                 None,
                 None,
@@ -925,6 +962,10 @@ fn checked_outline_with_report(
                 CurveStringOutlineOffsetStage2::DistanceValidation,
                 cap,
                 source_segment_count,
+                source_segment_kind_counts,
+                None,
+                None,
+                None,
                 None,
                 None,
                 None,
@@ -941,6 +982,10 @@ fn checked_outline_with_report(
                 CurveStringOutlineOffsetStage2::SourceSelfContactValidation,
                 cap,
                 source_segment_count,
+                source_segment_kind_counts,
+                None,
+                None,
+                None,
                 None,
                 None,
                 None,
@@ -953,6 +998,10 @@ fn checked_outline_with_report(
                 CurveStringOutlineOffsetStage2::SourceSelfContactValidation,
                 cap,
                 source_segment_count,
+                source_segment_kind_counts,
+                None,
+                None,
+                None,
                 None,
                 None,
                 None,
@@ -969,6 +1018,10 @@ fn checked_outline_with_report(
                 CurveStringOutlineOffsetStage2::LeftOffsetConstruction,
                 cap,
                 source_segment_count,
+                source_segment_kind_counts,
+                None,
+                None,
+                None,
                 None,
                 None,
                 None,
@@ -978,6 +1031,7 @@ fn checked_outline_with_report(
         }
     };
     let left_offset_segment_count = left.len();
+    let left_offset_segment_kind_counts = segment_kind_counts(left.segments());
 
     let right = match source.offset_left_with_line_joins(-distance.clone(), policy)? {
         Classification::Decided(right) => right,
@@ -986,7 +1040,11 @@ fn checked_outline_with_report(
                 CurveStringOutlineOffsetStage2::RightOffsetConstruction,
                 cap,
                 source_segment_count,
+                source_segment_kind_counts,
                 Some(left_offset_segment_count),
+                Some(left_offset_segment_kind_counts),
+                None,
+                None,
                 None,
                 None,
                 retained_status_for_offset_blocker(reason),
@@ -995,6 +1053,7 @@ fn checked_outline_with_report(
         }
     };
     let right_offset_segment_count = right.len();
+    let right_offset_segment_kind_counts = segment_kind_counts(right.segments());
 
     let offsets = OutlineOffsets {
         start_center: source.start().ok_or(CurveError::EmptyCurveString)?.clone(),
@@ -1014,8 +1073,12 @@ fn checked_outline_with_report(
                 CurveStringOutlineOffsetStage2::CapConstruction,
                 cap,
                 source_segment_count,
+                source_segment_kind_counts,
                 Some(left_offset_segment_count),
+                Some(left_offset_segment_kind_counts),
                 Some(right_offset_segment_count),
+                Some(right_offset_segment_kind_counts),
+                None,
                 None,
                 retained_status_for_offset_blocker(reason),
                 reason,
@@ -1023,6 +1086,7 @@ fn checked_outline_with_report(
         }
     };
     let outline_segment_count = segments.len();
+    let outline_segment_kind_counts = segment_kind_counts(&segments);
 
     match checked_outline_contour(segments, policy)? {
         Classification::Decided(outline) => Ok(CurveStringOutlineOffsetResult2 {
@@ -1031,9 +1095,13 @@ fn checked_outline_with_report(
                 stage: CurveStringOutlineOffsetStage2::OutlineTopologyValidation,
                 cap,
                 source_segment_count,
+                source_segment_kind_counts,
                 left_offset_segment_count: Some(left_offset_segment_count),
+                left_offset_segment_kind_counts: Some(left_offset_segment_kind_counts),
                 right_offset_segment_count: Some(right_offset_segment_count),
+                right_offset_segment_kind_counts: Some(right_offset_segment_kind_counts),
                 outline_segment_count: Some(outline_segment_count),
+                outline_segment_kind_counts: Some(outline_segment_kind_counts),
                 status: RetainedTopologyStatus::NativeExact,
                 blocker: None,
             },
@@ -1042,9 +1110,13 @@ fn checked_outline_with_report(
             CurveStringOutlineOffsetStage2::OutlineTopologyValidation,
             cap,
             source_segment_count,
+            source_segment_kind_counts,
             Some(left_offset_segment_count),
+            Some(left_offset_segment_kind_counts),
             Some(right_offset_segment_count),
+            Some(right_offset_segment_kind_counts),
             Some(outline_segment_count),
+            Some(outline_segment_kind_counts),
             retained_status_for_offset_blocker(reason),
             reason,
         )),

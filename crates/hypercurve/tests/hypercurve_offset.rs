@@ -402,9 +402,25 @@ fn curve_string_round_cap_outline_report_materializes_single_line() {
     );
     assert_eq!(outline.report().cap(), OffsetCap::Round);
     assert_eq!(outline.report().source_segment_count(), 1);
+    assert_eq!(
+        outline.report().source_segment_kind_counts(),
+        SegmentKindCounts { lines: 1, arcs: 0 }
+    );
     assert_eq!(outline.report().left_offset_segment_count(), Some(1));
+    assert_eq!(
+        outline.report().left_offset_segment_kind_counts(),
+        Some(SegmentKindCounts { lines: 1, arcs: 0 })
+    );
     assert_eq!(outline.report().right_offset_segment_count(), Some(1));
+    assert_eq!(
+        outline.report().right_offset_segment_kind_counts(),
+        Some(SegmentKindCounts { lines: 1, arcs: 0 })
+    );
     assert_eq!(outline.report().outline_segment_count(), Some(4));
+    assert_eq!(
+        outline.report().outline_segment_kind_counts(),
+        Some(SegmentKindCounts { lines: 2, arcs: 2 })
+    );
     assert_eq!(outline.report().blocker(), None);
     assert_eq!(outline.outline().unwrap().len(), 4);
 }
@@ -463,9 +479,16 @@ fn curve_string_round_cap_outline_report_blocks_nonpositive_distance() {
     );
     assert_eq!(outline.report().cap(), OffsetCap::Round);
     assert_eq!(outline.report().source_segment_count(), 1);
+    assert_eq!(
+        outline.report().source_segment_kind_counts(),
+        SegmentKindCounts { lines: 1, arcs: 0 }
+    );
     assert_eq!(outline.report().left_offset_segment_count(), None);
+    assert_eq!(outline.report().left_offset_segment_kind_counts(), None);
     assert_eq!(outline.report().right_offset_segment_count(), None);
+    assert_eq!(outline.report().right_offset_segment_kind_counts(), None);
     assert_eq!(outline.report().outline_segment_count(), None);
+    assert_eq!(outline.report().outline_segment_kind_counts(), None);
     assert_eq!(
         outline.report().blocker(),
         Some(UncertaintyReason::Unsupported)
@@ -508,9 +531,16 @@ fn curve_string_round_cap_outline_report_blocks_self_contacting_input() {
     );
     assert_eq!(outline.report().cap(), OffsetCap::Round);
     assert_eq!(outline.report().source_segment_count(), 3);
+    assert_eq!(
+        outline.report().source_segment_kind_counts(),
+        SegmentKindCounts { lines: 3, arcs: 0 }
+    );
     assert_eq!(outline.report().left_offset_segment_count(), None);
+    assert_eq!(outline.report().left_offset_segment_kind_counts(), None);
     assert_eq!(outline.report().right_offset_segment_count(), None);
+    assert_eq!(outline.report().right_offset_segment_kind_counts(), None);
     assert_eq!(outline.report().outline_segment_count(), None);
+    assert_eq!(outline.report().outline_segment_kind_counts(), None);
     assert_eq!(
         outline.report().blocker(),
         Some(UncertaintyReason::Unsupported)
