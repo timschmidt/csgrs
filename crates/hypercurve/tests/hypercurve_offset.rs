@@ -274,6 +274,17 @@ fn curve_string_checked_offset_report_materializes_simple_open_path() {
         offset.report().raw_offset_segment_kind_counts(),
         Some(SegmentKindCounts { lines: 2, arcs: 0 })
     );
+    let self_contact = offset.report().self_contact_report().unwrap();
+    assert_eq!(self_contact.segment_count(), 2);
+    assert_eq!(
+        self_contact.segment_kind_counts(),
+        SegmentKindCounts { lines: 2, arcs: 0 }
+    );
+    assert_eq!(self_contact.candidate_pair_count(), 1);
+    assert_eq!(self_contact.skipped_aabb_pair_count(), 0);
+    assert_eq!(self_contact.tested_pair_count(), 1);
+    assert_eq!(self_contact.first_contact_first_segment_index(), None);
+    assert_eq!(self_contact.first_contact_second_segment_index(), None);
     assert_eq!(offset.report().output_segment_count(), Some(2));
     assert_eq!(
         offset.report().output_segment_kind_counts(),
@@ -327,6 +338,13 @@ fn curve_string_checked_offset_report_blocks_self_contacting_result() {
         offset.report().raw_offset_segment_kind_counts(),
         Some(SegmentKindCounts { lines: 3, arcs: 0 })
     );
+    let self_contact = offset.report().self_contact_report().unwrap();
+    assert_eq!(self_contact.segment_count(), 3);
+    assert_eq!(self_contact.candidate_pair_count(), 2);
+    assert_eq!(self_contact.skipped_aabb_pair_count(), 0);
+    assert_eq!(self_contact.tested_pair_count(), 2);
+    assert_eq!(self_contact.first_contact_first_segment_index(), Some(0));
+    assert_eq!(self_contact.first_contact_second_segment_index(), Some(2));
     assert_eq!(offset.report().output_segment_count(), None);
     assert_eq!(offset.report().output_segment_kind_counts(), None);
     assert_eq!(
@@ -909,6 +927,13 @@ fn contour_checked_offset_report_blocks_self_contacting_result() {
         offset.report().raw_offset_segment_kind_counts(),
         Some(SegmentKindCounts { lines: 4, arcs: 0 })
     );
+    let self_contact = offset.report().self_contact_report().unwrap();
+    assert_eq!(self_contact.segment_count(), 4);
+    assert_eq!(self_contact.candidate_pair_count(), 2);
+    assert_eq!(self_contact.skipped_aabb_pair_count(), 0);
+    assert_eq!(self_contact.tested_pair_count(), 2);
+    assert_eq!(self_contact.first_contact_first_segment_index(), Some(0));
+    assert_eq!(self_contact.first_contact_second_segment_index(), Some(2));
     assert_eq!(offset.report().output_segment_count(), None);
     assert_eq!(offset.report().output_segment_kind_counts(), None);
     assert_eq!(offset.report().fill_rule(), FillRule::NonZero);
