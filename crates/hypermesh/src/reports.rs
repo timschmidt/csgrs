@@ -3907,6 +3907,44 @@ fn workspace_preflight_for_report_replay(
         .map_err(|_| ExactReportValidationError::SourceReplayMismatch)
 }
 
+fn workspace_winding_readiness_for_report_replay(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    request: ExactBooleanRequest,
+) -> Result<ExactWindingReadinessReport, ExactReportValidationError> {
+    let mut workspace = ExactBooleanWorkspace::new(left, right);
+    workspace
+        .evaluate(request)
+        .map(|evaluation| evaluation.certifications.winding_readiness.clone())
+        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)
+}
+
+fn validate_winding_readiness_against_sources_for_request(
+    report: &ExactWindingReadinessReport,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    request: ExactBooleanRequest,
+) -> Result<(), ExactReportValidationError> {
+    if let Ok(replay) = workspace_winding_readiness_for_report_replay(left, right, request)
+        && report == &replay
+    {
+        return Ok(());
+    }
+
+    // Some retained witnesses, such as selected-region blockers and older
+    // lower-dimensional shortcut reports, are still exact even when the
+    // canonical evaluation cannot yet return them or supersedes them with an
+    // arrangement/cell-complex materialization status.
+    let graph = validated_report_intersection_graph(left, right)?;
+    let replay = winding_readiness_report_for_request_from_graph(&graph, left, right, request)
+        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+    if report == &replay {
+        Ok(())
+    } else {
+        Err(ExactReportValidationError::SourceReplayMismatch)
+    }
+}
+
 impl ExactBooleanPreflight {
     /// Returns whether this preflight has certified support for materializing
     /// the requested operation under the policy used to produce the report.
@@ -6075,14 +6113,7 @@ impl ExactWindingReadinessReport {
             ValidationPolicy::ALLOW_BOUNDARY,
             ExactBoundaryBooleanPolicy::Reject,
         );
-        let graph = validated_report_intersection_graph(left, right)?;
-        let replay = winding_readiness_report_for_request_from_graph(&graph, left, right, request)
-            .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
-        if self == &replay {
-            Ok(())
-        } else {
-            Err(ExactReportValidationError::SourceReplayMismatch)
-        }
+        validate_winding_readiness_against_sources_for_request(self, left, right, request)
     }
 
     /// Validate this winding-readiness report against source meshes and an
@@ -6099,14 +6130,7 @@ impl ExactWindingReadinessReport {
     ) -> Result<(), ExactReportValidationError> {
         self.validate()?;
         let request = ExactBooleanRequest::new(self.operation, validation);
-        let graph = validated_report_intersection_graph(left, right)?;
-        let replay = winding_readiness_report_for_request_from_graph(&graph, left, right, request)
-            .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
-        if self == &replay {
-            Ok(())
-        } else {
-            Err(ExactReportValidationError::SourceReplayMismatch)
-        }
+        validate_winding_readiness_against_sources_for_request(self, left, right, request)
     }
 
     /// Validate this winding-readiness report against source meshes, output
@@ -6121,14 +6145,7 @@ impl ExactWindingReadinessReport {
         self.validate()?;
         let request =
             ExactBooleanRequest::with_boundary_policy(self.operation, validation, boundary_policy);
-        let graph = validated_report_intersection_graph(left, right)?;
-        let replay = winding_readiness_report_for_request_from_graph(&graph, left, right, request)
-            .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
-        if self == &replay {
-            Ok(())
-        } else {
-            Err(ExactReportValidationError::SourceReplayMismatch)
-        }
+        validate_winding_readiness_against_sources_for_request(self, left, right, request)
     }
 
     /// Classify whether this retained winding handoff is fresh for the source meshes.
