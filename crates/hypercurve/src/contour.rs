@@ -10,7 +10,7 @@ use crate::curve_string::merge_adjacent_line_segments;
 use crate::{
     BulgeVertex2, Classification, CurveError, CurvePolicy, CurveResult, CurveString2,
     CurveStringChamferReport2, CurveStringFilletReport2, CurveStringTrimPoint2, LineSeg2, LineSide,
-    Point2, RetainedTopologyStatus, Segment2, UncertaintyReason,
+    Point2, RetainedTopologyStatus, Segment2, SegmentKindCounts, UncertaintyReason,
 };
 
 /// Fill rule used when classifying contour interiors.
@@ -965,9 +965,19 @@ impl ContourChamferReport2 {
         self.source_segment_count
     }
 
+    /// Returns primitive-family counts for the source contour segments.
+    pub const fn source_segment_kind_counts(&self) -> SegmentKindCounts {
+        self.curve_string_report.source_segment_kind_counts()
+    }
+
     /// Returns output segment count when the edited contour materialized.
     pub const fn output_segment_count(&self) -> Option<usize> {
         self.output_segment_count
+    }
+
+    /// Returns primitive-family counts for the materialized chamfered contour.
+    pub const fn output_segment_kind_counts(&self) -> Option<SegmentKindCounts> {
+        self.curve_string_report.output_segment_kind_counts()
     }
 
     /// Returns the fill rule preserved by this contour edit.
@@ -1069,9 +1079,19 @@ impl ContourFilletReport2 {
         self.source_segment_count
     }
 
+    /// Returns primitive-family counts for the source contour segments.
+    pub const fn source_segment_kind_counts(&self) -> SegmentKindCounts {
+        self.curve_string_report.source_segment_kind_counts()
+    }
+
     /// Returns output segment count when the edited contour materialized.
     pub const fn output_segment_count(&self) -> Option<usize> {
         self.output_segment_count
+    }
+
+    /// Returns primitive-family counts for the materialized filleted contour.
+    pub const fn output_segment_kind_counts(&self) -> Option<SegmentKindCounts> {
+        self.curve_string_report.output_segment_kind_counts()
     }
 
     /// Returns the fill rule preserved by this contour edit.

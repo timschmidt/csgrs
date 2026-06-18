@@ -2,7 +2,7 @@ use hypercurve::{
     BulgeVertex2, Classification, Contour2, ContourChamferStage2, ContourClosureStage2,
     ContourFilletStage2, ContourLineMergeStage2, ContourPointLocation, CurveError, CurvePolicy,
     CurveString2, CurveStringChamferInputPath2, CurveStringFilletInputPath2, FillRule, Real,
-    Region2, RegionPointLocation, Segment2, UncertaintyReason,
+    Region2, RegionPointLocation, Segment2, SegmentKindCounts, UncertaintyReason,
 };
 
 fn s(value: i32) -> Real {
@@ -258,7 +258,15 @@ fn contour_chamfer_line_line_vertex_materializes_closed_contour() {
         CurveStringChamferInputPath2::Parameters
     );
     assert_eq!(chamfer.report().source_segment_count(), 4);
+    assert_eq!(
+        chamfer.report().source_segment_kind_counts(),
+        SegmentKindCounts { lines: 4, arcs: 0 }
+    );
     assert_eq!(chamfer.report().output_segment_count(), Some(5));
+    assert_eq!(
+        chamfer.report().output_segment_kind_counts(),
+        Some(SegmentKindCounts { lines: 5, arcs: 0 })
+    );
     assert_eq!(chamfer.report().previous_segment_index(), 0);
     assert_eq!(chamfer.report().next_segment_index(), 1);
     assert_eq!(chamfer.report().previous_trim().param(), &q(3, 4));
@@ -631,6 +639,14 @@ fn contour_fillet_line_line_vertex_by_parameters_materializes_closed_contour() {
     assert_eq!(
         fillet.report().curve_string_report().fillet_segment_index(),
         Some(1)
+    );
+    assert_eq!(
+        fillet.report().source_segment_kind_counts(),
+        SegmentKindCounts { lines: 4, arcs: 0 }
+    );
+    assert_eq!(
+        fillet.report().output_segment_kind_counts(),
+        Some(SegmentKindCounts { lines: 4, arcs: 1 })
     );
 
     let contour = fillet
