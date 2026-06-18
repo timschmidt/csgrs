@@ -894,6 +894,105 @@ fn curve_string_chamfer_arc_neighbor_reports_unsupported() {
 }
 
 #[test]
+fn curve_string_fillet_line_line_vertex_materializes_exact_arc() {
+    let curve =
+        CurveString2::try_new(vec![line_segment(0, 0, 4, 0), line_segment(4, 0, 4, 4)]).unwrap();
+
+    let fillet = curve
+        .fillet_line_line_vertex_by_points(1, &p(3, 0), &p(4, 1), &p(3, 1), false, &policy())
+        .unwrap();
+
+    assert!(fillet.report().status().is_native_exact());
+    assert_eq!(fillet.report().previous_segment_index(), 0);
+    assert_eq!(fillet.report().next_segment_index(), 1);
+    assert_eq!(fillet.report().previous_trim().param(), &q(3, 4));
+    assert_eq!(fillet.report().next_trim().param(), &q(1, 4));
+    assert_eq!(fillet.report().center(), Some(&p(3, 1)));
+    assert_eq!(fillet.report().radius_squared(), Some(&s(1)));
+    assert_eq!(fillet.report().fillet_segment_index(), Some(1));
+    assert_eq!(fillet.report().source_segment_count(), 2);
+    assert_eq!(fillet.report().segment_reports().len(), 2);
+    assert_eq!(
+        fillet.report().segment_reports()[0].source_range().start(),
+        &s(0)
+    );
+    assert_eq!(
+        fillet.report().segment_reports()[0].source_range().end(),
+        &q(3, 4)
+    );
+    assert_eq!(
+        fillet.report().segment_reports()[1].source_range().start(),
+        &q(1, 4)
+    );
+    assert_eq!(
+        fillet.report().segment_reports()[1].source_range().end(),
+        &s(1)
+    );
+
+    let curve = fillet
+        .curve_string()
+        .expect("line-line fillet should materialize");
+    assert_eq!(curve.len(), 3);
+    assert_eq!(curve.segments()[0].start(), &p(0, 0));
+    assert_eq!(curve.segments()[0].end(), &p(3, 0));
+    let Segment2::Arc(arc) = &curve.segments()[1] else {
+        panic!("fillet segment should be an arc");
+    };
+    assert_eq!(arc.start(), &p(3, 0));
+    assert_eq!(arc.end(), &p(4, 1));
+    assert_eq!(arc.center(), &p(3, 1));
+    assert_eq!(arc.radius_squared_ref(), &s(1));
+    assert!(!arc.is_clockwise());
+    assert_eq!(curve.segments()[2].start(), &p(4, 1));
+    assert_eq!(curve.segments()[2].end(), &p(4, 4));
+}
+
+#[test]
+fn curve_string_fillet_reports_radius_mismatch_boundary() {
+    let curve =
+        CurveString2::try_new(vec![line_segment(0, 0, 4, 0), line_segment(4, 0, 4, 4)]).unwrap();
+
+    let fillet = curve
+        .fillet_line_line_vertex_by_points(1, &p(3, 0), &p(4, 1), &p(3, 2), false, &policy())
+        .unwrap();
+
+    assert!(fillet.curve_string().is_none());
+    assert!(fillet.report().status().is_retained_evidence());
+    assert_eq!(fillet.report().center(), Some(&p(3, 2)));
+    assert_eq!(fillet.report().blocker(), Some(UncertaintyReason::Boundary));
+}
+
+#[test]
+fn curve_string_fillet_reports_wrong_orientation_boundary() {
+    let curve =
+        CurveString2::try_new(vec![line_segment(0, 0, 4, 0), line_segment(4, 0, 4, 4)]).unwrap();
+
+    let fillet = curve
+        .fillet_line_line_vertex_by_points(1, &p(3, 0), &p(4, 1), &p(3, 1), true, &policy())
+        .unwrap();
+
+    assert!(fillet.curve_string().is_none());
+    assert!(fillet.report().status().is_retained_evidence());
+    assert_eq!(fillet.report().blocker(), Some(UncertaintyReason::Boundary));
+    assert_eq!(fillet.report().fillet_segment_index(), None);
+}
+
+#[test]
+fn curve_string_fillet_reports_boundary_parameters() {
+    let curve =
+        CurveString2::try_new(vec![line_segment(0, 0, 4, 0), line_segment(4, 0, 4, 4)]).unwrap();
+
+    let fillet = curve
+        .fillet_line_line_vertex_by_points(1, &p(4, 0), &p(4, 1), &p(3, 1), false, &policy())
+        .unwrap();
+
+    assert!(fillet.curve_string().is_none());
+    assert!(fillet.report().status().is_retained_evidence());
+    assert_eq!(fillet.report().blocker(), Some(UncertaintyReason::Boundary));
+    assert_eq!(fillet.report().fillet_segment_index(), None);
+}
+
+#[test]
 fn curve_string_trim_materializes_exact_line_subsegment_with_report() {
     let curve = CurveString2::try_new(vec![line_segment(0, 0, 4, 0)]).unwrap();
 

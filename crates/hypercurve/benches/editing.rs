@@ -223,6 +223,39 @@ fn bench_line_chamfer(iterations: u32) -> CurveResult<()> {
     Ok(())
 }
 
+fn bench_line_fillet(iterations: u32) -> CurveResult<()> {
+    let curve = CurveString2::try_new(vec![
+        line_segment(0, 0, 4, 0),
+        line_segment(4, 0, 4, 4),
+        line_segment(4, 4, 8, 4),
+    ])?;
+    let policy = CurvePolicy::certified();
+    let started = Instant::now();
+    let mut total_segments = 0_usize;
+
+    for _ in 0..iterations {
+        let result = curve.fillet_line_line_vertex_by_points(
+            1,
+            &p(3, 0),
+            &p(4, 1),
+            &p(3, 1),
+            false,
+            &policy,
+        )?;
+        let filleted = result
+            .curve_string()
+            .expect("line-line fillet benchmark should materialize");
+        total_segments += black_box(filleted.len());
+    }
+
+    let elapsed = started.elapsed();
+    println!(
+        "curve_string_line_fillet: {iterations} iterations in {elapsed:?} ({:?}/iter), total segments={total_segments}",
+        elapsed / iterations
+    );
+    Ok(())
+}
+
 fn bench_arc_extension(iterations: u32) -> CurveResult<()> {
     let curve = CurveString2::try_new(vec![Segment2::Arc(CircularArc2::try_from_center(
         p(1, 0),
@@ -288,6 +321,7 @@ fn main() -> CurveResult<()> {
     bench_region_trim(iterations)?;
     bench_prepared_region_trim(iterations)?;
     bench_line_chamfer(iterations)?;
+    bench_line_fillet(iterations)?;
     bench_arc_extension(iterations)?;
     bench_boundary_contour_region_build(1_000)?;
     Ok(())
