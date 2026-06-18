@@ -254,6 +254,9 @@ fn exact_boolean_evaluation_materializes_certified_result_publicly() {
 
     evaluation.validate().unwrap();
     evaluation.validate_against_sources(&left, &right).unwrap();
+    evaluation
+        .validate_materialized_result_against_sources(&left, &right)
+        .unwrap();
     assert_eq!(
         evaluation.freshness_against_sources(&left, &right),
         hypermesh::ExactReportFreshness::Current
@@ -1080,26 +1083,26 @@ fn affine_orthogonal_solid_recovers_multi_cell_basis_without_sampling_limits() {
         preflight.validate().unwrap();
         preflight.validate_against_sources(&left, &right).unwrap();
 
-        let result = exact_boolean_result(
+        let evaluation = exact_boolean_evaluation(
             &left,
             &right,
             ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
         );
+        let result = evaluation
+            .result
+            .as_ref()
+            .expect("certified arrangement cell-complex evaluation should materialize");
         assert!(
             result.is_arrangement_cell_complex_shortcut_for(operation),
             "{operation:?}: {result:?}"
         );
+        evaluation.validate().unwrap();
+        evaluation.validate_against_sources(&left, &right).unwrap();
+        evaluation
+            .validate_materialized_result_against_sources(&left, &right)
+            .unwrap();
         result.validate().unwrap();
         result.validate_against_sources(&left, &right).unwrap();
-        result
-            .validate_operation_against_sources(
-                &left,
-                &right,
-                operation,
-                ValidationPolicy::CLOSED,
-                ExactBoundaryBooleanPolicy::Reject,
-            )
-            .unwrap();
         assert_eq!(
             result.freshness_against_sources(&left, &right),
             ExactReportFreshness::Current
