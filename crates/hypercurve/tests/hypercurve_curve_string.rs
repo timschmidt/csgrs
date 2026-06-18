@@ -3239,8 +3239,8 @@ fn prepared_curve_string_trim_inside_region_matches_direct_result() {
     assert_eq!(prepared_cache.region().undecided_segment_box_count(), 0);
     assert!(prepared_cache.region().region_box_decided());
     assert_eq!(direct.report().boundary_candidate_pair_count(), 8);
-    assert_eq!(direct.report().boundary_skipped_aabb_pair_count(), 0);
-    assert_eq!(direct.report().boundary_tested_pair_count(), 8);
+    assert_eq!(direct.report().boundary_skipped_aabb_pair_count(), 4);
+    assert_eq!(direct.report().boundary_tested_pair_count(), 4);
     assert_eq!(prepared.report().boundary_candidate_pair_count(), 8);
     assert_eq!(prepared.report().boundary_skipped_aabb_pair_count(), 4);
     assert_eq!(prepared.report().boundary_tested_pair_count(), 4);
@@ -3328,8 +3328,8 @@ fn curve_string_trim_inside_region_splits_disconnected_inside_windows() {
     assert_eq!(trimmed.report().region_material_segment_count(), 8);
     assert_eq!(trimmed.report().region_hole_segment_count(), 0);
     assert_eq!(trimmed.report().boundary_candidate_pair_count(), 8);
-    assert_eq!(trimmed.report().boundary_skipped_aabb_pair_count(), 0);
-    assert_eq!(trimmed.report().boundary_tested_pair_count(), 8);
+    assert_eq!(trimmed.report().boundary_skipped_aabb_pair_count(), 4);
+    assert_eq!(trimmed.report().boundary_tested_pair_count(), 4);
     assert_eq!(trimmed.report().interval_candidate_count(), 5);
     assert_eq!(trimmed.report().interval_classification_count(), 5);
     assert_eq!(trimmed.curve_strings().len(), 2);
@@ -3348,8 +3348,8 @@ fn curve_string_trim_inside_region_respects_holes() {
 
     assert!(trimmed.report().status().is_native_exact());
     assert_eq!(trimmed.report().boundary_candidate_pair_count(), 8);
-    assert_eq!(trimmed.report().boundary_skipped_aabb_pair_count(), 0);
-    assert_eq!(trimmed.report().boundary_tested_pair_count(), 8);
+    assert_eq!(trimmed.report().boundary_skipped_aabb_pair_count(), 6);
+    assert_eq!(trimmed.report().boundary_tested_pair_count(), 2);
     assert_eq!(trimmed.report().region_hole_contour_count(), 1);
     assert_eq!(trimmed.report().region_material_segment_count(), 4);
     assert_eq!(trimmed.report().region_hole_segment_count(), 4);

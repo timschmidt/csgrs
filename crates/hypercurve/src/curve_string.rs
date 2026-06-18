@@ -4754,9 +4754,29 @@ fn collect_region_trim_contour_hits(
     hits: &mut Vec<CurveStringRegionTrimHit2>,
     workload: &mut RegionTrimBoundaryWorkload,
 ) -> CurveResult<Option<(RetainedTopologyStatus, UncertaintyReason)>> {
+    let source_segment_boxes: Vec<_> = curve_string
+        .segments()
+        .iter()
+        .map(|segment| decided_segment_aabb(segment, policy))
+        .collect();
+    let region_segment_boxes: Vec<_> = contour
+        .segments()
+        .iter()
+        .map(|segment| decided_segment_aabb(segment, policy))
+        .collect();
+
     for (source_segment_index, source_segment) in curve_string.segments().iter().enumerate() {
         for (region_segment_index, region_segment) in contour.segments().iter().enumerate() {
             workload.candidate_pair_count += 1;
+            if let (Some(Some(source_box)), Some(Some(region_box))) = (
+                source_segment_boxes.get(source_segment_index),
+                region_segment_boxes.get(region_segment_index),
+            ) && aabbs_decided_disjoint(source_box, region_box, policy)
+            {
+                workload.skipped_aabb_pair_count += 1;
+                continue;
+            }
+
             workload.tested_pair_count += 1;
             let relation = source_segment.intersect_segment(region_segment, policy)?;
             if let Some(blocker) = append_region_trim_hits_from_relation(
