@@ -74,8 +74,7 @@ pub use boolean::{
 pub use error::{DiagnosticKind, MeshDiagnostic, MeshError, Severity};
 pub use mesh::{ExactMesh, ExactMeshValidationError, Triangle};
 pub use package::{
-    ExactMeshConsumerDomain, ExactMeshDomainSummaryError, ExactMeshHandoffPackage,
-    ExactMeshHandoffPackageError,
+    ExactMeshConsumerDomain, ExactMeshDomainSummaryError, ExactMeshHandoffPackageError,
 };
 pub use proposal::{
     ExactMeshProposalAcceptance, ExactMeshProposalReport, ExactMeshProposalReportError,
