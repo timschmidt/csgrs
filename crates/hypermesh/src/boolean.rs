@@ -1601,9 +1601,7 @@ impl ExactBooleanCertificationSet {
     fn bounds_disjoint_matches_preflight(&self, preflight: &ExactBooleanPreflight) -> bool {
         (self.winding_readiness.status
             == ExactWindingReadinessStatus::BoundsDisjointAlreadyMaterialized
-            || (self.winding_readiness.status
-                == ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized
-                && self.arrangement_attempt_certifies_output_for_operation(preflight.operation)))
+            || self.arrangement_attempt_matches_certified_preflight(preflight))
             && self.trivial.bounds_disjoint
     }
 
@@ -1726,14 +1724,15 @@ impl ExactBooleanCertificationSet {
         &self,
         preflight: &ExactBooleanPreflight,
     ) -> bool {
-        (self
-            .arrangement_cell_complex_shortcuts
-            .certified_support(preflight.operation)
-            == Some(ExactBooleanSupport::CertifiedArrangementCellComplex)
-            && self.arrangement_attempt_certifies_shortcut_for_operation(preflight.operation)
-            && self.refinement_output_handoff_matches_preflight(preflight))
-            || (self.arrangement_attempt_certifies_output_for_operation(preflight.operation)
-                && self.refinement_output_handoff_matches_preflight(preflight))
+        let retained_attempt_handoff_matches = self
+            .refinement_output_handoff_matches_preflight(preflight)
+            && ((self
+                .arrangement_cell_complex_shortcuts
+                .certified_support(preflight.operation)
+                == Some(ExactBooleanSupport::CertifiedArrangementCellComplex)
+                && self.arrangement_attempt_certifies_shortcut_for_operation(preflight.operation))
+                || self.arrangement_attempt_certifies_output_for_operation(preflight.operation));
+        retained_attempt_handoff_matches
             || self.adjacent_union_completion_matches_preflight(preflight)
             || (self.region_ownership_resolves_operation(preflight.operation)
                 && self.topology_assembly_complete()
