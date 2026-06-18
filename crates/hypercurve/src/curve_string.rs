@@ -164,6 +164,7 @@ pub struct ConnectedCurveString2 {
 pub struct CurveStringLineMergeSpanReport2 {
     source_start_segment_index: usize,
     source_end_segment_index: usize,
+    source_segment_indices: Vec<usize>,
     output_segment_index: usize,
     status: RetainedTopologyStatus,
 }
@@ -863,6 +864,7 @@ impl CurveString2 {
                     spans.push(CurveStringLineMergeSpanReport2 {
                         source_start_segment_index: current_start_index,
                         source_end_segment_index: next_index - 1,
+                        source_segment_indices: (current_start_index..next_index).collect(),
                         output_segment_index,
                         status: RetainedTopologyStatus::NativeExact,
                     });
@@ -889,6 +891,7 @@ impl CurveString2 {
         spans.push(CurveStringLineMergeSpanReport2 {
             source_start_segment_index: current_start_index,
             source_end_segment_index: self.len() - 1,
+            source_segment_indices: (current_start_index..self.len()).collect(),
             output_segment_index,
             status: RetainedTopologyStatus::NativeExact,
         });
@@ -4514,6 +4517,11 @@ impl CurveStringLineMergeSpanReport2 {
     /// Returns the final source segment index included in this output segment.
     pub const fn source_end_segment_index(&self) -> usize {
         self.source_end_segment_index
+    }
+
+    /// Returns all source segment indices included in this output segment.
+    pub fn source_segment_indices(&self) -> &[usize] {
+        &self.source_segment_indices
     }
 
     /// Returns the output segment index produced for this source run.
