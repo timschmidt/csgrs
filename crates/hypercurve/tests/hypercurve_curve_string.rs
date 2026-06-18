@@ -455,11 +455,40 @@ fn curve_string_link_materializes_unique_end_start_connection() {
         Classification::Decided(Some(linked)) => linked,
         other => panic!("expected decided linked curve string, got {other:?}"),
     };
+    let reported = first
+        .link_connected_endpoints_with_report(&second, &policy())
+        .unwrap();
 
     assert_eq!(
         linked.report().kind(),
         CurveStringLinkKind2::FirstEndToSecondStart
     );
+    assert!(reported.linked_curve_string().is_some());
+    assert_eq!(
+        reported.report().stage(),
+        CurveStringLinkStage2::SegmentMaterialization
+    );
+    assert_eq!(
+        reported.report().selected_kind(),
+        Some(CurveStringLinkKind2::FirstEndToSecondStart)
+    );
+    assert_eq!(
+        reported
+            .report()
+            .selected_endpoint_report()
+            .unwrap()
+            .status(),
+        CurveStringEndpointConnectionStatus2::NativeExact
+    );
+    assert_eq!(reported.report().first_segment_count(), 1);
+    assert_eq!(reported.report().second_segment_count(), 1);
+    assert_eq!(reported.report().endpoint_pair_count(), 4);
+    assert_eq!(reported.report().exact_endpoint_pair_count(), 1);
+    assert_eq!(reported.report().disconnected_endpoint_pair_count(), 3);
+    assert_eq!(reported.report().unresolved_endpoint_pair_count(), 0);
+    assert_eq!(reported.report().output_segments().len(), 2);
+    assert!(reported.report().status().is_native_exact());
+    assert_eq!(reported.report().blocker(), None);
     assert_eq!(linked.report().endpoint_report().first_point(), &p(1, 0));
     assert_eq!(linked.report().endpoint_report().second_point(), &p(1, 0));
     assert_eq!(linked.report().first_segment_count(), 1);
@@ -578,6 +607,26 @@ fn curve_string_link_returns_none_for_certified_disconnected_inputs() {
     assert_eq!(
         first.link_connected_endpoints(&second, &policy()).unwrap(),
         Classification::Decided(None)
+    );
+    let reported = first
+        .link_connected_endpoints_with_report(&second, &policy())
+        .unwrap();
+    assert!(reported.linked_curve_string().is_none());
+    assert_eq!(
+        reported.report().stage(),
+        CurveStringLinkStage2::EndpointSelection
+    );
+    assert_eq!(reported.report().selected_kind(), None);
+    assert!(reported.report().selected_endpoint_report().is_none());
+    assert_eq!(reported.report().endpoint_pair_count(), 4);
+    assert_eq!(reported.report().exact_endpoint_pair_count(), 0);
+    assert_eq!(reported.report().disconnected_endpoint_pair_count(), 4);
+    assert_eq!(reported.report().unresolved_endpoint_pair_count(), 0);
+    assert!(reported.report().output_segments().is_empty());
+    assert!(reported.report().status().is_retained_evidence());
+    assert_eq!(
+        reported.report().blocker(),
+        Some(UncertaintyReason::Boundary)
     );
 }
 
@@ -1015,6 +1064,26 @@ fn curve_string_link_rejects_multiple_exact_endpoint_pairings() {
     assert_eq!(
         first.link_connected_endpoints(&second, &policy()).unwrap(),
         Classification::Uncertain(UncertaintyReason::Boundary)
+    );
+    let reported = first
+        .link_connected_endpoints_with_report(&second, &policy())
+        .unwrap();
+    assert!(reported.linked_curve_string().is_none());
+    assert_eq!(
+        reported.report().stage(),
+        CurveStringLinkStage2::EndpointSelection
+    );
+    assert_eq!(reported.report().selected_kind(), None);
+    assert!(reported.report().selected_endpoint_report().is_none());
+    assert_eq!(reported.report().endpoint_pair_count(), 4);
+    assert_eq!(reported.report().exact_endpoint_pair_count(), 2);
+    assert_eq!(reported.report().disconnected_endpoint_pair_count(), 2);
+    assert_eq!(reported.report().unresolved_endpoint_pair_count(), 0);
+    assert!(reported.report().output_segments().is_empty());
+    assert!(reported.report().status().is_retained_evidence());
+    assert_eq!(
+        reported.report().blocker(),
+        Some(UncertaintyReason::Boundary)
     );
 }
 

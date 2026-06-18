@@ -162,6 +162,30 @@ pub struct LinkedCurveString2 {
     report: CurveStringLinkReport2,
 }
 
+/// Report for a pairwise endpoint-link attempt, including non-materialized cases.
+#[derive(Clone, Debug, PartialEq)]
+pub struct CurveStringLinkAttemptReport2 {
+    stage: CurveStringLinkStage2,
+    selected_kind: Option<CurveStringLinkKind2>,
+    selected_endpoint_report: Option<CurveStringEndpointConnectionReport2>,
+    first_segment_count: usize,
+    second_segment_count: usize,
+    endpoint_pair_count: usize,
+    exact_endpoint_pair_count: usize,
+    disconnected_endpoint_pair_count: usize,
+    unresolved_endpoint_pair_count: usize,
+    output_segments: Vec<CurveStringLinkOutputSegmentReport2>,
+    status: RetainedTopologyStatus,
+    blocker: Option<UncertaintyReason>,
+}
+
+/// Result of report-bearing pairwise endpoint linking.
+#[derive(Clone, Debug, PartialEq)]
+pub struct CurveStringLinkAttemptResult2 {
+    linked: Option<LinkedCurveString2>,
+    report: CurveStringLinkAttemptReport2,
+}
+
 /// One ordered-chain link step in a batch open-path link operation.
 #[derive(Clone, Debug, PartialEq)]
 pub struct CurveStringOrderedLinkStepReport2 {
@@ -765,6 +789,31 @@ impl CurveString2 {
         other: &Self,
         policy: &CurvePolicy,
     ) -> CurveResult<crate::Classification<Option<LinkedCurveString2>>> {
+        let result = self.link_connected_endpoints_with_report(other, policy)?;
+        if result.linked.is_some() {
+            return Ok(crate::Classification::Decided(
+                result.into_linked_curve_string(),
+            ));
+        }
+        let report = result.report();
+        if report.exact_endpoint_pair_count() == 0 && report.unresolved_endpoint_pair_count() == 0 {
+            return Ok(crate::Classification::Decided(None));
+        }
+        Ok(crate::Classification::Uncertain(
+            report.blocker().unwrap_or(UncertaintyReason::Unsupported),
+        ))
+    }
+
+    /// Links two open curve strings by certified endpoints and retains a report.
+    ///
+    /// This report-bearing variant preserves endpoint evidence and exact
+    /// blockers for disconnected, ambiguous, or unresolved attempts instead of
+    /// returning only `None` or `Uncertain`.
+    pub fn link_connected_endpoints_with_report(
+        &self,
+        other: &Self,
+        policy: &CurvePolicy,
+    ) -> CurveResult<CurveStringLinkAttemptResult2> {
         let reports = self.endpoint_link_reports(other, policy)?;
         let mut endpoint_summary = EndpointPairSummary {
             pair_count: reports.len(),
@@ -784,35 +833,98 @@ impl CurveString2 {
         }
 
         if exact.len() > 1 {
-            return Ok(crate::Classification::Uncertain(
-                UncertaintyReason::Boundary,
-            ));
+            return Ok(CurveStringLinkAttemptResult2 {
+                linked: None,
+                report: CurveStringLinkAttemptReport2 {
+                    stage: CurveStringLinkStage2::EndpointSelection,
+                    selected_kind: None,
+                    selected_endpoint_report: None,
+                    first_segment_count: self.len(),
+                    second_segment_count: other.len(),
+                    endpoint_pair_count: endpoint_summary.pair_count,
+                    exact_endpoint_pair_count: endpoint_summary.exact_count,
+                    disconnected_endpoint_pair_count: endpoint_summary.disconnected_count,
+                    unresolved_endpoint_pair_count: endpoint_summary.unresolved_count,
+                    output_segments: Vec::new(),
+                    status: RetainedTopologyStatus::Unsupported,
+                    blocker: Some(UncertaintyReason::Boundary),
+                },
+            });
         }
         if let Some(reason) = unresolved {
-            return Ok(crate::Classification::Uncertain(reason));
+            return Ok(CurveStringLinkAttemptResult2 {
+                linked: None,
+                report: CurveStringLinkAttemptReport2 {
+                    stage: CurveStringLinkStage2::EndpointSelection,
+                    selected_kind: None,
+                    selected_endpoint_report: None,
+                    first_segment_count: self.len(),
+                    second_segment_count: other.len(),
+                    endpoint_pair_count: endpoint_summary.pair_count,
+                    exact_endpoint_pair_count: endpoint_summary.exact_count,
+                    disconnected_endpoint_pair_count: endpoint_summary.disconnected_count,
+                    unresolved_endpoint_pair_count: endpoint_summary.unresolved_count,
+                    output_segments: Vec::new(),
+                    status: retained_status_for_uncertainty(reason),
+                    blocker: Some(reason),
+                },
+            });
         }
         let Some((kind, endpoint_report)) = exact.pop() else {
-            return Ok(crate::Classification::Decided(None));
+            return Ok(CurveStringLinkAttemptResult2 {
+                linked: None,
+                report: CurveStringLinkAttemptReport2 {
+                    stage: CurveStringLinkStage2::EndpointSelection,
+                    selected_kind: None,
+                    selected_endpoint_report: None,
+                    first_segment_count: self.len(),
+                    second_segment_count: other.len(),
+                    endpoint_pair_count: endpoint_summary.pair_count,
+                    exact_endpoint_pair_count: endpoint_summary.exact_count,
+                    disconnected_endpoint_pair_count: endpoint_summary.disconnected_count,
+                    unresolved_endpoint_pair_count: endpoint_summary.unresolved_count,
+                    output_segments: Vec::new(),
+                    status: RetainedTopologyStatus::Unsupported,
+                    blocker: Some(UncertaintyReason::Boundary),
+                },
+            });
         };
 
         let curve_string = linked_curve_string(self, other, kind)?;
+        let output_segments = link_output_segment_reports(self, other, kind);
         let report = CurveStringLinkReport2 {
             stage: CurveStringLinkStage2::SegmentMaterialization,
             kind,
-            endpoint_report,
+            endpoint_report: endpoint_report.clone(),
             first_segment_count: self.len(),
             second_segment_count: other.len(),
             endpoint_pair_count: endpoint_summary.pair_count,
             exact_endpoint_pair_count: endpoint_summary.exact_count,
             disconnected_endpoint_pair_count: endpoint_summary.disconnected_count,
             unresolved_endpoint_pair_count: endpoint_summary.unresolved_count,
-            output_segments: link_output_segment_reports(self, other, kind),
+            output_segments: output_segments.clone(),
             status: RetainedTopologyStatus::NativeExact,
         };
-        Ok(crate::Classification::Decided(Some(LinkedCurveString2 {
-            curve_string,
-            report,
-        })))
+        Ok(CurveStringLinkAttemptResult2 {
+            linked: Some(LinkedCurveString2 {
+                curve_string,
+                report,
+            }),
+            report: CurveStringLinkAttemptReport2 {
+                stage: CurveStringLinkStage2::SegmentMaterialization,
+                selected_kind: Some(kind),
+                selected_endpoint_report: Some(endpoint_report),
+                first_segment_count: self.len(),
+                second_segment_count: other.len(),
+                endpoint_pair_count: endpoint_summary.pair_count,
+                exact_endpoint_pair_count: endpoint_summary.exact_count,
+                disconnected_endpoint_pair_count: endpoint_summary.disconnected_count,
+                unresolved_endpoint_pair_count: endpoint_summary.unresolved_count,
+                output_segments,
+                status: RetainedTopologyStatus::NativeExact,
+                blocker: None,
+            },
+        })
     }
 
     /// Links an ordered sequence of open curve strings by certified endpoints.
@@ -5143,6 +5255,85 @@ impl LinkedCurveString2 {
 
     /// Returns the provenance report for this link.
     pub const fn report(&self) -> &CurveStringLinkReport2 {
+        &self.report
+    }
+}
+
+impl CurveStringLinkAttemptReport2 {
+    /// Returns the furthest exact link-attempt stage reached.
+    pub const fn stage(&self) -> CurveStringLinkStage2 {
+        self.stage
+    }
+
+    /// Returns the selected link orientation, when exactly one endpoint pair matched.
+    pub const fn selected_kind(&self) -> Option<CurveStringLinkKind2> {
+        self.selected_kind
+    }
+
+    /// Returns selected endpoint evidence, when exactly one endpoint pair matched.
+    pub const fn selected_endpoint_report(&self) -> Option<&CurveStringEndpointConnectionReport2> {
+        self.selected_endpoint_report.as_ref()
+    }
+
+    /// Returns the first input segment count captured by this report.
+    pub const fn first_segment_count(&self) -> usize {
+        self.first_segment_count
+    }
+
+    /// Returns the second input segment count captured by this report.
+    pub const fn second_segment_count(&self) -> usize {
+        self.second_segment_count
+    }
+
+    /// Returns endpoint pairs inspected before choosing or blocking a link.
+    pub const fn endpoint_pair_count(&self) -> usize {
+        self.endpoint_pair_count
+    }
+
+    /// Returns inspected endpoint pairs certified already connected.
+    pub const fn exact_endpoint_pair_count(&self) -> usize {
+        self.exact_endpoint_pair_count
+    }
+
+    /// Returns inspected endpoint pairs certified disconnected.
+    pub const fn disconnected_endpoint_pair_count(&self) -> usize {
+        self.disconnected_endpoint_pair_count
+    }
+
+    /// Returns inspected endpoint pairs that remained unresolved.
+    pub const fn unresolved_endpoint_pair_count(&self) -> usize {
+        self.unresolved_endpoint_pair_count
+    }
+
+    /// Returns output segment source ownership when a link materialized.
+    pub fn output_segments(&self) -> &[CurveStringLinkOutputSegmentReport2] {
+        &self.output_segments
+    }
+
+    /// Returns topology status for this link attempt.
+    pub const fn status(&self) -> RetainedTopologyStatus {
+        self.status
+    }
+
+    /// Returns the exact blocker for a non-materialized link attempt.
+    pub const fn blocker(&self) -> Option<UncertaintyReason> {
+        self.blocker
+    }
+}
+
+impl CurveStringLinkAttemptResult2 {
+    /// Returns the materialized linked curve string, if exactly one endpoint pair matched.
+    pub const fn linked_curve_string(&self) -> Option<&LinkedCurveString2> {
+        self.linked.as_ref()
+    }
+
+    /// Consumes this result and returns the materialized linked curve string, if any.
+    pub fn into_linked_curve_string(self) -> Option<LinkedCurveString2> {
+        self.linked
+    }
+
+    /// Returns retained evidence for the pairwise link attempt.
+    pub const fn report(&self) -> &CurveStringLinkAttemptReport2 {
         &self.report
     }
 }
