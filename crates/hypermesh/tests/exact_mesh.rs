@@ -2,8 +2,8 @@ use hyperlimit::{Point3, SourceProvenance};
 use hypermesh::{
     ExactBooleanOperation, ExactBooleanRequest, ExactBooleanResult, ExactBooleanWorkspace,
     ExactBoundaryBooleanPolicy, ExactMesh, ExactMeshConsumerDomain, ExactOutputTriangleOrientation,
-    ExactRegionSelection, ExactRegularizationPolicy, ExactReportFreshness, MeshArtifactBlocker,
-    MeshArtifactFaceRecord, MeshArtifactManifest, MeshArtifactVertexRecord, ValidationPolicy,
+    ExactRegionSelection, ExactRegularizationPolicy, ExactReportFreshness, MeshArtifactFaceRecord,
+    MeshArtifactManifest, MeshArtifactVertexRecord, ValidationPolicy,
 };
 use hyperreal::Real;
 
@@ -766,39 +766,19 @@ fn exact_mesh_proposal_and_artifact_reports_are_publicly_replayable() {
     preview.validate().unwrap();
     assert!(preview.preview_only);
     assert!(!preview.validation_handoff_ready);
-    assert!(
-        preview
-            .blockers
-            .contains(&MeshArtifactBlocker::PreviewOrExportOnly)
-    );
-    assert!(
-        preview
-            .blockers
-            .contains(&MeshArtifactBlocker::PreviewOrExportSource)
-    );
-    assert!(
-        preview
-            .blockers
-            .contains(&MeshArtifactBlocker::MissingExactCoordinateReplay)
-    );
-    assert!(
-        preview
-            .blockers
-            .contains(&MeshArtifactBlocker::MissingExactTopologyReplay)
-    );
+    assert!(preview.has_preview_or_export_only_blocker());
+    assert!(preview.has_preview_or_export_source_blocker());
+    assert!(preview.has_missing_exact_coordinate_replay_blocker());
+    assert!(preview.has_missing_exact_topology_replay_blocker());
     let mut preview_missing_blocker = preview.clone();
-    preview_missing_blocker
-        .blockers
-        .retain(|blocker| *blocker != MeshArtifactBlocker::MissingExactCoordinateReplay);
+    preview_missing_blocker.remove_missing_exact_coordinate_replay_blocker();
     assert!(
         preview_missing_blocker
             .validate()
             .is_err_and(|error| error.is_missing_exact_coordinate_replay_blocker())
     );
     let mut duplicate_preview_blocker = preview.clone();
-    duplicate_preview_blocker
-        .blockers
-        .push(MeshArtifactBlocker::PreviewOrExportOnly);
+    duplicate_preview_blocker.duplicate_preview_or_export_only_blocker();
     assert!(
         duplicate_preview_blocker
             .validate()
@@ -826,9 +806,7 @@ fn exact_mesh_proposal_and_artifact_reports_are_publicly_replayable() {
     assert!(!repeated_vertex_handoff.validation_handoff_ready);
     assert!(!repeated_vertex_handoff.topology_validation_replay_ready);
     assert!(
-        repeated_vertex_handoff
-            .blockers
-            .contains(&MeshArtifactBlocker::FaceRepeatedVertex),
+        repeated_vertex_handoff.has_face_repeated_vertex_blocker(),
         "{repeated_vertex_handoff:?}"
     );
 
@@ -841,9 +819,7 @@ fn exact_mesh_proposal_and_artifact_reports_are_publicly_replayable() {
     assert!(!missing_vertex_record.validation_handoff_ready);
     assert!(!missing_vertex_record.coordinates_exact_replay_ready);
     assert!(
-        missing_vertex_record
-            .blockers
-            .contains(&MeshArtifactBlocker::MissingOrMismatchedVertexRecords),
+        missing_vertex_record.has_missing_or_mismatched_vertex_records_blocker(),
         "{missing_vertex_record:?}"
     );
 
@@ -856,9 +832,7 @@ fn exact_mesh_proposal_and_artifact_reports_are_publicly_replayable() {
     assert!(!stale_face_index.validation_handoff_ready);
     assert!(!stale_face_index.topology_validation_replay_ready);
     assert!(
-        stale_face_index
-            .blockers
-            .contains(&MeshArtifactBlocker::FaceIndexMismatch),
+        stale_face_index.has_face_index_mismatch_blocker(),
         "{stale_face_index:?}"
     );
 }

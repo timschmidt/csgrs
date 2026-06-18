@@ -58,7 +58,7 @@ mod witness;
 mod workspace;
 
 pub use artifact::{
-    MeshArtifactBlocker, MeshArtifactFaceRecord, MeshArtifactManifest, MeshArtifactVertexRecord,
+    MeshArtifactFaceRecord, MeshArtifactManifest, MeshArtifactVertexRecord,
 };
 pub use boolean::{
     ExactArrangementBooleanAttempt, ExactBooleanEvaluation, ExactBooleanOperation,

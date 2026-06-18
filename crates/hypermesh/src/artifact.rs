@@ -805,6 +805,59 @@ impl MeshArtifactReport {
             )
     }
 
+    /// Return whether the report carries the preview/export-only blocker.
+    pub fn has_preview_or_export_only_blocker(&self) -> bool {
+        self.blockers
+            .contains(&MeshArtifactBlocker::PreviewOrExportOnly)
+    }
+
+    /// Return whether the report carries the preview/export source blocker.
+    pub fn has_preview_or_export_source_blocker(&self) -> bool {
+        self.blockers
+            .contains(&MeshArtifactBlocker::PreviewOrExportSource)
+    }
+
+    /// Return whether exact coordinate replay is explicitly blocked.
+    pub fn has_missing_exact_coordinate_replay_blocker(&self) -> bool {
+        self.blockers
+            .contains(&MeshArtifactBlocker::MissingExactCoordinateReplay)
+    }
+
+    /// Return whether exact topology replay is explicitly blocked.
+    pub fn has_missing_exact_topology_replay_blocker(&self) -> bool {
+        self.blockers
+            .contains(&MeshArtifactBlocker::MissingExactTopologyReplay)
+    }
+
+    /// Return whether face topology contains a repeated vertex blocker.
+    pub fn has_face_repeated_vertex_blocker(&self) -> bool {
+        self.blockers.contains(&MeshArtifactBlocker::FaceRepeatedVertex)
+    }
+
+    /// Return whether vertex records do not match the declared vertex count.
+    pub fn has_missing_or_mismatched_vertex_records_blocker(&self) -> bool {
+        self.blockers
+            .contains(&MeshArtifactBlocker::MissingOrMismatchedVertexRecords)
+    }
+
+    /// Return whether a face record index does not match its position.
+    pub fn has_face_index_mismatch_blocker(&self) -> bool {
+        self.blockers.contains(&MeshArtifactBlocker::FaceIndexMismatch)
+    }
+
+    /// Drop the exact-coordinate replay blocker, for copied-report validation
+    /// tests that assert missing required blockers remain diagnosable.
+    pub fn remove_missing_exact_coordinate_replay_blocker(&mut self) {
+        self.blockers
+            .retain(|blocker| *blocker != MeshArtifactBlocker::MissingExactCoordinateReplay);
+    }
+
+    /// Add another preview/export-only blocker, for copied-report validation
+    /// tests that assert duplicate blockers remain diagnosable.
+    pub fn duplicate_preview_or_export_only_blocker(&mut self) {
+        self.blockers.push(MeshArtifactBlocker::PreviewOrExportOnly);
+    }
+
     /// Validate report-internal artifact consistency without producer records.
     ///
     /// A summary report cannot re-check face rows after the manifest has been
