@@ -57,7 +57,7 @@ fn main() -> CurveResult<()> {
         );
         materializations.push(decided(curve.split_at_parameters(&split, &policy)?));
     }
-    let graph = BezierArrangementGraph2::from_split_materializations(&materializations);
+    let graph = BezierArrangementGraph2::from_split_materializations(&materializations)?;
 
     let iterations = 5_000_u32;
     let started = Instant::now();
@@ -155,7 +155,7 @@ fn main() -> CurveResult<()> {
         same_tangent_materializations.push(decided(curve.split_at_parameters(&[], &policy)?));
     }
     let same_tangent_graph =
-        BezierArrangementGraph2::from_split_materializations(&same_tangent_materializations);
+        BezierArrangementGraph2::from_split_materializations(&same_tangent_materializations)?;
     let started = Instant::now();
     let mut same_tangent_total = 0_usize;
     for _ in 0..iterations {
@@ -181,7 +181,7 @@ fn main() -> CurveResult<()> {
         cubic_same_tangent_materializations.push(decided(curve.split_at_parameters(&[], &policy)?));
     }
     let cubic_same_tangent_graph =
-        BezierArrangementGraph2::from_split_materializations(&cubic_same_tangent_materializations);
+        BezierArrangementGraph2::from_split_materializations(&cubic_same_tangent_materializations)?;
     let started = Instant::now();
     let mut cubic_same_tangent_total = 0_usize;
     for _ in 0..iterations {
@@ -210,7 +210,7 @@ fn main() -> CurveResult<()> {
     }
     let rational_same_tangent_graph = BezierArrangementGraph2::from_split_materializations(
         &rational_same_tangent_materializations,
-    );
+    )?;
     let started = Instant::now();
     let mut rational_same_tangent_total = 0_usize;
     for _ in 0..iterations {
@@ -238,7 +238,7 @@ fn main() -> CurveResult<()> {
     let algebraic_curve = QuadraticBezier2::new(p(-1, 0), p(0, 0), p(1, 0));
     let algebraic_split =
         decided(algebraic_curve.split_at_parameters(&[algebraic_parameter], &policy)?);
-    let retained_graph = BezierArrangementGraph2::from_split_materializations(&[algebraic_split]);
+    let retained_graph = BezierArrangementGraph2::from_split_materializations(&[algebraic_split])?;
     let started = Instant::now();
     let mut retained_total = 0_usize;
     for _ in 0..iterations {

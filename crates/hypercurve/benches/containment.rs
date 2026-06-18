@@ -259,7 +259,7 @@ fn bench_planar_trim_loop_image_equality(iterations: u32) -> CurveResult<()> {
     let mut same_count = 0_usize;
 
     for _ in 0..iterations {
-        let report = first.image_equality_report(&rotated);
+        let report = first.image_equality_report(&rotated)?;
         if report.relation() == PlanarPcurveImageRelation2::SameDirected {
             same_count += black_box(report.segment_count());
         }
@@ -372,7 +372,7 @@ fn bench_prepared_retained_planar_face_edge_use_query(iterations: u32) -> CurveR
     let mut boundary_count = 0_usize;
 
     for _ in 0..iterations {
-        let report = prepared.edge_use_report(&edge);
+        let report = prepared.edge_use_report(&edge)?;
         if report.relation() == RetainedPlanarFaceEdgeUseRelation2::BoundarySameDirected {
             boundary_count += black_box(report.segment_count());
         }

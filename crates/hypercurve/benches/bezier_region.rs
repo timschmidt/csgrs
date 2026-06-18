@@ -112,7 +112,7 @@ fn main() -> CurveResult<()> {
     let graph = BezierArrangementGraph2::from_split_materializations(&[
         decided(upper.split_at_parameters(std::slice::from_ref(&half), &policy)?),
         decided(lower.split_at_parameters(std::slice::from_ref(&half), &policy)?),
-    ]);
+    ])?;
     let traversal = decided(graph.traverse_branch_free(&policy));
 
     let iterations = 20_000_u32;
@@ -298,7 +298,7 @@ fn main() -> CurveResult<()> {
     let conic_graph = BezierArrangementGraph2::from_split_materializations(&[
         decided(conic_upper.split_at_parameters(std::slice::from_ref(&half), &policy)?),
         decided(conic_lower.split_at_parameters(std::slice::from_ref(&half), &policy)?),
-    ]);
+    ])?;
     let conic_traversal = decided(conic_graph.traverse_branch_free(&policy));
     let started = Instant::now();
     let mut conic_checksum = 0_usize;
