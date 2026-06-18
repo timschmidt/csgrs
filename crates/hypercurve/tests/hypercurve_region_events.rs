@@ -177,6 +177,10 @@ fn region_event_broad_phase_skips_disjoint_contour_pairs() {
 
     let events = region.intersect_region(&cutter, &policy()).unwrap();
 
+    assert_eq!(events.candidate_pair_count(), 3);
+    assert_eq!(events.skipped_aabb_pair_count(), 2);
+    assert_eq!(events.tested_pair_count(), 1);
+    assert_eq!(events.intersecting_pair_count(), 1);
     assert_eq!(events.len(), 1);
     assert_eq!(
         events.pairs()[0].first,

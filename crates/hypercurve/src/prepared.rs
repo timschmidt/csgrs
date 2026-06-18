@@ -9,6 +9,7 @@
 
 use crate::bbox::{Aabb2, aabb_decided_misses_point, aabbs_decided_disjoint, decided_segment_aabb};
 use crate::facts::{CurveStringFacts, RegionFacts};
+use crate::region_events::RegionIntersectionWorkload;
 use crate::{
     BooleanBoundaryLoopSet, BooleanOp, CircularArc2, CircularArc2Facts, Classification, Contour2,
     ContourIntersectionSet, ContourPointLocation, CurvePolicy, CurveResult, CurveString2,
@@ -808,9 +809,11 @@ impl<'a> PreparedRegionView2<'a> {
         policy: &CurvePolicy,
     ) -> CurveResult<RegionIntersectionSet> {
         let mut pairs = Vec::new();
+        let mut workload = RegionIntersectionWorkload::default();
 
         collect_prepared_role_pairs(
             &mut pairs,
+            &mut workload,
             &self.material_prepared_contours,
             RegionContourRole::Material,
             &other.material_prepared_contours,
@@ -819,6 +822,7 @@ impl<'a> PreparedRegionView2<'a> {
         )?;
         collect_prepared_role_pairs(
             &mut pairs,
+            &mut workload,
             &self.material_prepared_contours,
             RegionContourRole::Material,
             &other.hole_prepared_contours,
@@ -827,6 +831,7 @@ impl<'a> PreparedRegionView2<'a> {
         )?;
         collect_prepared_role_pairs(
             &mut pairs,
+            &mut workload,
             &self.hole_prepared_contours,
             RegionContourRole::Hole,
             &other.material_prepared_contours,
@@ -835,6 +840,7 @@ impl<'a> PreparedRegionView2<'a> {
         )?;
         collect_prepared_role_pairs(
             &mut pairs,
+            &mut workload,
             &self.hole_prepared_contours,
             RegionContourRole::Hole,
             &other.hole_prepared_contours,
@@ -842,7 +848,12 @@ impl<'a> PreparedRegionView2<'a> {
             policy,
         )?;
 
-        RegionIntersectionSet::new(pairs)
+        RegionIntersectionSet::from_parts(
+            pairs,
+            workload.candidate_pair_count,
+            workload.skipped_aabb_pair_count,
+            workload.tested_pair_count,
+        )
     }
 
     /// Collects normalized topology events against an ordinary region view.
@@ -1290,6 +1301,7 @@ fn accumulate_depth(
 
 fn collect_prepared_role_pairs(
     pairs: &mut Vec<RegionContourIntersection>,
+    workload: &mut RegionIntersectionWorkload,
     first_contours: &[PreparedContourView2<'_>],
     first_role: RegionContourRole,
     second_contours: &[PreparedContourView2<'_>],
@@ -1298,6 +1310,16 @@ fn collect_prepared_role_pairs(
 ) -> CurveResult<()> {
     for (first_index, first_contour) in first_contours.iter().enumerate() {
         for (second_index, second_contour) in second_contours.iter().enumerate() {
+            workload.candidate_pair_count += 1;
+            if let (Some(first_box), Some(second_box)) =
+                (first_contour.contour_box(), second_contour.contour_box())
+                && aabbs_decided_disjoint(first_box, second_box, policy)
+            {
+                workload.skipped_aabb_pair_count += 1;
+                continue;
+            }
+
+            workload.tested_pair_count += 1;
             let intersections = first_contour.intersect_prepared_contour(second_contour, policy)?;
             if intersections.is_empty() {
                 continue;

@@ -61,13 +61,41 @@ pub struct RegionContourIntersection {
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct RegionIntersectionSet {
     pairs: Vec<RegionContourIntersection>,
+    candidate_pair_count: usize,
+    skipped_aabb_pair_count: usize,
+    tested_pair_count: usize,
 }
 
 impl RegionIntersectionSet {
     /// Constructs a set from already-normalized region contour pairs.
     pub fn new(pairs: Vec<RegionContourIntersection>) -> CurveResult<Self> {
+        let pair_count = pairs.len();
+        Self::from_parts(pairs, pair_count, 0, pair_count)
+    }
+
+    pub(crate) fn from_parts(
+        pairs: Vec<RegionContourIntersection>,
+        candidate_pair_count: usize,
+        skipped_aabb_pair_count: usize,
+        tested_pair_count: usize,
+    ) -> CurveResult<Self> {
         validate_region_intersection_pairs(&pairs)?;
-        Ok(Self { pairs })
+        if candidate_pair_count != skipped_aabb_pair_count + tested_pair_count {
+            return Err(CurveError::Topology(
+                "region intersection workload counts must balance".into(),
+            ));
+        }
+        if pairs.len() > tested_pair_count {
+            return Err(CurveError::Topology(
+                "region intersection event pairs cannot exceed tested contour pairs".into(),
+            ));
+        }
+        Ok(Self {
+            pairs,
+            candidate_pair_count,
+            skipped_aabb_pair_count,
+            tested_pair_count,
+        })
     }
 
     /// Returns nonempty contour-pair event sets.
@@ -87,6 +115,26 @@ impl RegionIntersectionSet {
 
     /// Returns the number of contour pairs with events.
     pub fn len(&self) -> usize {
+        self.pairs.len()
+    }
+
+    /// Returns all contour-pair candidates considered by the region broad phase.
+    pub const fn candidate_pair_count(&self) -> usize {
+        self.candidate_pair_count
+    }
+
+    /// Returns contour-pair candidates skipped by decided disjoint AABBs.
+    pub const fn skipped_aabb_pair_count(&self) -> usize {
+        self.skipped_aabb_pair_count
+    }
+
+    /// Returns contour-pair candidates that reached exact contour intersection.
+    pub const fn tested_pair_count(&self) -> usize {
+        self.tested_pair_count
+    }
+
+    /// Returns contour pairs with nonempty normalized intersection evidence.
+    pub fn intersecting_pair_count(&self) -> usize {
         self.pairs.len()
     }
 
@@ -117,9 +165,11 @@ pub(crate) fn intersect_region_views(
     policy: &CurvePolicy,
 ) -> CurveResult<RegionIntersectionSet> {
     let mut pairs = Vec::new();
+    let mut workload = RegionIntersectionWorkload::default();
 
     collect_role_pairs(
         &mut pairs,
+        &mut workload,
         first.material_contours(),
         RegionContourRole::Material,
         second.material_contours(),
@@ -128,6 +178,7 @@ pub(crate) fn intersect_region_views(
     )?;
     collect_role_pairs(
         &mut pairs,
+        &mut workload,
         first.material_contours(),
         RegionContourRole::Material,
         second.hole_contours(),
@@ -136,6 +187,7 @@ pub(crate) fn intersect_region_views(
     )?;
     collect_role_pairs(
         &mut pairs,
+        &mut workload,
         first.hole_contours(),
         RegionContourRole::Hole,
         second.material_contours(),
@@ -144,6 +196,7 @@ pub(crate) fn intersect_region_views(
     )?;
     collect_role_pairs(
         &mut pairs,
+        &mut workload,
         first.hole_contours(),
         RegionContourRole::Hole,
         second.hole_contours(),
@@ -151,7 +204,19 @@ pub(crate) fn intersect_region_views(
         policy,
     )?;
 
-    RegionIntersectionSet::new(pairs)
+    RegionIntersectionSet::from_parts(
+        pairs,
+        workload.candidate_pair_count,
+        workload.skipped_aabb_pair_count,
+        workload.tested_pair_count,
+    )
+}
+
+#[derive(Clone, Copy, Debug, Default)]
+pub(crate) struct RegionIntersectionWorkload {
+    pub(crate) candidate_pair_count: usize,
+    pub(crate) skipped_aabb_pair_count: usize,
+    pub(crate) tested_pair_count: usize,
 }
 
 fn validate_region_intersection_pairs(pairs: &[RegionContourIntersection]) -> CurveResult<()> {
@@ -181,6 +246,7 @@ fn validate_region_intersection_pairs(pairs: &[RegionContourIntersection]) -> Cu
 
 fn collect_role_pairs(
     pairs: &mut Vec<RegionContourIntersection>,
+    workload: &mut RegionIntersectionWorkload,
     first_contours: &[&crate::Contour2],
     first_role: RegionContourRole,
     second_contours: &[&crate::Contour2],
@@ -198,6 +264,7 @@ fn collect_role_pairs(
 
     for (first_index, first_contour) in first_contours.iter().enumerate() {
         for (second_index, second_contour) in second_contours.iter().enumerate() {
+            workload.candidate_pair_count += 1;
             // Region event collection is still contour-pair based. As in
             // Bentley and Ottmann's intersection-reporting work, bounding
             // intervals are only candidate filters here: decided disjoint boxes
@@ -209,9 +276,11 @@ fn collect_role_pairs(
                 (&first_boxes[first_index], &second_boxes[second_index])
                 && aabbs_decided_disjoint(first_box, second_box, policy)
             {
+                workload.skipped_aabb_pair_count += 1;
                 continue;
             }
 
+            workload.tested_pair_count += 1;
             let intersections = first_contour.intersect_contour(second_contour, policy)?;
             if intersections.is_empty() {
                 continue;
