@@ -41,6 +41,7 @@ pub struct RegionBooleanReport2 {
     boundary_contour_count: Option<usize>,
     result_material_contour_count: Option<usize>,
     result_hole_contour_count: Option<usize>,
+    result_boundary_segment_count: Option<usize>,
     pipeline_report: Option<RegionBooleanPipelineReport2>,
     boundary_build_report: Option<RegionBoundaryContourBuildReport2>,
     prepared_cache_report: Option<RegionBooleanPreparedCacheReport2>,
@@ -737,6 +738,11 @@ impl RegionBooleanReport2 {
     /// Returns hole contour count when a boolean region materialized.
     pub const fn result_hole_contour_count(&self) -> Option<usize> {
         self.result_hole_contour_count
+    }
+
+    /// Returns total result boundary segment count when a boolean region materialized.
+    pub const fn result_boundary_segment_count(&self) -> Option<usize> {
+        self.result_boundary_segment_count
     }
 
     /// Returns arrangement-first split/classify/traverse evidence, if used.
@@ -1445,6 +1451,11 @@ pub(crate) fn region_boolean_result_from_boundary_contours_with_prepared_cache_a
     let blocker = built.report().blocker();
     let result_material_contour_count = built.report().material_contour_count();
     let result_hole_contour_count = built.report().hole_contour_count();
+    let result_boundary_segment_count = built
+        .report()
+        .material_segment_count()
+        .zip(built.report().hole_segment_count())
+        .map(|(material_count, hole_count)| material_count + hole_count);
     let boundary_build_report = built.report().clone();
     Ok(RegionBooleanResult2 {
         region: built.into_region(),
@@ -1468,6 +1479,7 @@ pub(crate) fn region_boolean_result_from_boundary_contours_with_prepared_cache_a
             boundary_contour_count: Some(boundary_contour_count),
             result_material_contour_count,
             result_hole_contour_count,
+            result_boundary_segment_count,
             pipeline_report,
             boundary_build_report: Some(boundary_build_report),
             prepared_cache_report,
@@ -1534,6 +1546,7 @@ pub(crate) fn blocked_region_boolean_result_with_prepared_cache(
             boundary_contour_count: None,
             result_material_contour_count: None,
             result_hole_contour_count: None,
+            result_boundary_segment_count: None,
             pipeline_report: None,
             boundary_build_report: None,
             prepared_cache_report,
@@ -2470,6 +2483,7 @@ mod tests {
             RegionBooleanStage2::BoundaryExtraction
         );
         assert_eq!(result.report().boundary_contour_count(), None);
+        assert_eq!(result.report().result_boundary_segment_count(), None);
         assert_eq!(
             result.report().blocker(),
             Some(UncertaintyReason::Unsupported)

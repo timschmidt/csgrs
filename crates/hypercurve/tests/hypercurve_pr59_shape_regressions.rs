@@ -137,6 +137,7 @@ fn boolean_region_report_retains_boundary_role_assignment() {
     assert_eq!(report.boundary_contour_count(), Some(1));
     assert_eq!(report.result_material_contour_count(), Some(1));
     assert_eq!(report.result_hole_contour_count(), Some(0));
+    assert_eq!(report.result_boundary_segment_count(), Some(8));
     assert_eq!(report.prepared_cache_report(), None);
     assert_eq!(report.blocker(), None);
 
@@ -183,6 +184,13 @@ fn boolean_region_report_retains_boundary_role_assignment() {
     let boundary_report = report.boundary_build_report().unwrap();
     assert_eq!(boundary_report.source_contour_count(), 1);
     assert_eq!(boundary_report.source_segment_count(), 8);
+    assert_eq!(
+        report.result_boundary_segment_count(),
+        boundary_report
+            .material_segment_count()
+            .zip(boundary_report.hole_segment_count())
+            .map(|(material_count, hole_count)| material_count + hole_count)
+    );
     assert_eq!(boundary_report.material_segment_count(), Some(8));
     assert_eq!(boundary_report.hole_segment_count(), Some(0));
     assert_eq!(boundary_report.role_reports().len(), 1);
@@ -247,6 +255,7 @@ fn prepared_boolean_region_report_matches_plain_materialization() {
     assert_eq!(built.report().boundary_contour_count(), Some(1));
     assert_eq!(built.report().result_material_contour_count(), Some(1));
     assert_eq!(built.report().result_hole_contour_count(), Some(0));
+    assert_eq!(built.report().result_boundary_segment_count(), Some(4));
     let prepared_cache = built.report().prepared_cache_report().unwrap();
     assert_eq!(
         prepared_cache.first().freshness(),
@@ -304,6 +313,10 @@ fn prepared_boolean_region_report_matches_plain_materialization() {
     assert_eq!(
         built.report().boundary_build_report(),
         plain.report().boundary_build_report()
+    );
+    assert_eq!(
+        built.report().result_boundary_segment_count(),
+        plain.report().result_boundary_segment_count()
     );
     assert!(inside(built.region().unwrap(), 3.0, 1.0));
     assert!(!inside(built.region().unwrap(), 1.0, 1.0));
