@@ -77,6 +77,10 @@ fn region_fragments_split_all_keyed_contours() {
     );
     assert_eq!(built.report().output_contour_count(), Some(3));
     assert_eq!(built.report().output_fragment_count(), Some(20));
+    assert_eq!(built.report().first_output_contour_count(), Some(2));
+    assert_eq!(built.report().second_output_contour_count(), Some(1));
+    assert_eq!(built.report().first_output_fragment_count(), Some(12));
+    assert_eq!(built.report().second_output_fragment_count(), Some(8));
     assert_eq!(built.report().contour_reports().len(), 3);
     assert_eq!(built.report().blocker(), None);
 

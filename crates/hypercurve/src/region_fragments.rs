@@ -49,6 +49,10 @@ pub struct RegionFragmentBuildReport2 {
     tested_pair_count: usize,
     output_contour_count: Option<usize>,
     output_fragment_count: Option<usize>,
+    first_output_contour_count: Option<usize>,
+    second_output_contour_count: Option<usize>,
+    first_output_fragment_count: Option<usize>,
+    second_output_fragment_count: Option<usize>,
     contour_reports: Vec<RegionContourFragmentReport2>,
     status: RetainedTopologyStatus,
     blocker: Option<UncertaintyReason>,
@@ -238,6 +242,14 @@ pub(crate) fn split_region_views_at_intersections_with_report(
         .iter()
         .map(RegionContourFragmentReport2::output_fragment_count)
         .sum();
+    let first_output_contour_count =
+        contour_reports_for_side(&contour_reports, RegionSide::First).count();
+    let second_output_contour_count =
+        contour_reports_for_side(&contour_reports, RegionSide::Second).count();
+    let first_output_fragment_count =
+        output_fragment_count_for_side(&contour_reports, RegionSide::First);
+    let second_output_fragment_count =
+        output_fragment_count_for_side(&contour_reports, RegionSide::Second);
     Ok(RegionFragmentBuildResult2 {
         fragments: Some(RegionFragmentSet::new(contours)?),
         report: RegionFragmentBuildReport2 {
@@ -252,6 +264,10 @@ pub(crate) fn split_region_views_at_intersections_with_report(
             tested_pair_count: intersections.tested_pair_count(),
             output_contour_count: Some(output_contour_count),
             output_fragment_count: Some(output_fragment_count),
+            first_output_contour_count: Some(first_output_contour_count),
+            second_output_contour_count: Some(second_output_contour_count),
+            first_output_fragment_count: Some(first_output_fragment_count),
+            second_output_fragment_count: Some(second_output_fragment_count),
             contour_reports,
             status: RetainedTopologyStatus::NativeExact,
             blocker: None,
@@ -347,6 +363,26 @@ impl RegionFragmentBuildReport2 {
         self.output_fragment_count
     }
 
+    /// Returns first-operand keyed contour count when splitting materialized.
+    pub const fn first_output_contour_count(&self) -> Option<usize> {
+        self.first_output_contour_count
+    }
+
+    /// Returns second-operand keyed contour count when splitting materialized.
+    pub const fn second_output_contour_count(&self) -> Option<usize> {
+        self.second_output_contour_count
+    }
+
+    /// Returns first-operand output fragment count when splitting materialized.
+    pub const fn first_output_fragment_count(&self) -> Option<usize> {
+        self.first_output_fragment_count
+    }
+
+    /// Returns second-operand output fragment count when splitting materialized.
+    pub const fn second_output_fragment_count(&self) -> Option<usize> {
+        self.second_output_fragment_count
+    }
+
     /// Returns per-contour split provenance.
     pub fn contour_reports(&self) -> &[RegionContourFragmentReport2] {
         &self.contour_reports
@@ -403,11 +439,33 @@ fn blocked_region_fragment_build_result(
             tested_pair_count: intersections.tested_pair_count(),
             output_contour_count: None,
             output_fragment_count: None,
+            first_output_contour_count: None,
+            second_output_contour_count: None,
+            first_output_fragment_count: None,
+            second_output_fragment_count: None,
             contour_reports,
             status: RetainedTopologyStatus::Unresolved,
             blocker: Some(blocker),
         },
     }
+}
+
+fn contour_reports_for_side(
+    contour_reports: &[RegionContourFragmentReport2],
+    side: RegionSide,
+) -> impl Iterator<Item = &RegionContourFragmentReport2> {
+    contour_reports
+        .iter()
+        .filter(move |report| report.key.side == side)
+}
+
+fn output_fragment_count_for_side(
+    contour_reports: &[RegionContourFragmentReport2],
+    side: RegionSide,
+) -> usize {
+    contour_reports_for_side(contour_reports, side)
+        .map(RegionContourFragmentReport2::output_fragment_count)
+        .sum()
 }
 
 fn source_segment_count(view: &RegionView2<'_>) -> usize {
