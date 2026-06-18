@@ -130,6 +130,8 @@ pub struct CurveStringLinkOutputSegmentReport2 {
     output_segment_index: usize,
     source_input: CurveStringLinkSourceInput2,
     source_segment_index: usize,
+    source_segment_kind: SegmentKind,
+    output_segment_kind: SegmentKind,
     reversed: bool,
     output_start_point: Point2,
     output_end_point: Point2,
@@ -281,6 +283,8 @@ pub struct CurveStringConnectOutputSegmentReport2 {
     output_segment_index: usize,
     source: CurveStringConnectSource2,
     source_segment_index: Option<usize>,
+    source_segment_kind: Option<SegmentKind>,
+    output_segment_kind: SegmentKind,
     reversed: bool,
     output_start_point: Point2,
     output_end_point: Point2,
@@ -5454,6 +5458,16 @@ impl CurveStringLinkOutputSegmentReport2 {
         self.source_segment_index
     }
 
+    /// Returns the primitive family of the contributing source segment.
+    pub const fn source_segment_kind(&self) -> SegmentKind {
+        self.source_segment_kind
+    }
+
+    /// Returns the primitive family of the emitted output segment.
+    pub const fn output_segment_kind(&self) -> SegmentKind {
+        self.output_segment_kind
+    }
+
     /// Returns whether the source segment was reversed for output.
     pub const fn reversed(&self) -> bool {
         self.reversed
@@ -5898,6 +5912,16 @@ impl CurveStringConnectOutputSegmentReport2 {
         self.source_segment_index
     }
 
+    /// Returns the primitive family of the contributing source segment, if any.
+    pub const fn source_segment_kind(&self) -> Option<SegmentKind> {
+        self.source_segment_kind
+    }
+
+    /// Returns the primitive family of the emitted output segment.
+    pub const fn output_segment_kind(&self) -> SegmentKind {
+        self.output_segment_kind
+    }
+
     /// Returns whether an input segment was reversed for output.
     pub const fn reversed(&self) -> bool {
         self.reversed
@@ -6300,6 +6324,8 @@ fn push_link_output_segment_reports<I>(
             output_segment_index: output_segments.len(),
             source_input,
             source_segment_index,
+            source_segment_kind: source_segment.structural_facts().kind,
+            output_segment_kind: source_segment.structural_facts().kind,
             reversed,
             output_start_point,
             output_end_point,
@@ -6424,6 +6450,8 @@ fn push_connect_input_segment_reports<I>(
             output_segment_index: output_segments.len(),
             source,
             source_segment_index: Some(source_segment_index),
+            source_segment_kind: Some(source_segment.structural_facts().kind),
+            output_segment_kind: source_segment.structural_facts().kind,
             reversed,
             output_start_point,
             output_end_point,
@@ -6440,6 +6468,8 @@ fn push_connect_connector_report(
         output_segment_index: output_segments.len(),
         source: CurveStringConnectSource2::Connector,
         source_segment_index: None,
+        source_segment_kind: None,
+        output_segment_kind: SegmentKind::Line,
         reversed: false,
         output_start_point: output_start_point.clone(),
         output_end_point: output_end_point.clone(),

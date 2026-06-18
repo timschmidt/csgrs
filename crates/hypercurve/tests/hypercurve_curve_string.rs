@@ -664,6 +664,14 @@ fn curve_string_link_materializes_unique_end_start_connection() {
         linked.report().output_segments()[0].source_segment_index(),
         0
     );
+    assert_eq!(
+        linked.report().output_segments()[0].source_segment_kind(),
+        SegmentKind::Line
+    );
+    assert_eq!(
+        linked.report().output_segments()[0].output_segment_kind(),
+        SegmentKind::Line
+    );
     assert!(!linked.report().output_segments()[0].reversed());
     assert_eq!(
         linked.report().output_segments()[0].output_start_point(),
@@ -698,6 +706,52 @@ fn curve_string_link_materializes_unique_end_start_connection() {
     assert_eq!(linked.curve_string().len(), 2);
     assert_eq!(linked.curve_string().start(), Some(&p(0, 0)));
     assert_eq!(linked.curve_string().end(), Some(&p(2, 0)));
+}
+
+#[test]
+fn curve_string_link_output_reports_preserve_mixed_segment_kinds() {
+    let first = CurveString2::try_new(vec![line_segment(0, 0, 1, 0)]).unwrap();
+    let second = CurveString2::try_new(vec![Segment2::Arc(
+        CircularArc2::from_bulge(p(1, 0), p(3, 0), s(1)).unwrap(),
+    )])
+    .unwrap();
+
+    let linked = match first.link_connected_endpoints(&second, &policy()).unwrap() {
+        Classification::Decided(Some(linked)) => linked,
+        other => panic!("expected decided mixed linked curve string, got {other:?}"),
+    };
+
+    assert!(linked.report().status().is_native_exact());
+    assert_eq!(
+        linked.report().kind(),
+        CurveStringLinkKind2::FirstEndToSecondStart
+    );
+    assert_eq!(linked.report().output_segments().len(), 2);
+    assert_eq!(
+        linked.report().output_segments()[0].source_segment_kind(),
+        SegmentKind::Line
+    );
+    assert_eq!(
+        linked.report().output_segments()[0].output_segment_kind(),
+        SegmentKind::Line
+    );
+    assert_eq!(
+        linked.report().output_segments()[1].source_segment_kind(),
+        SegmentKind::Arc
+    );
+    assert_eq!(
+        linked.report().output_segments()[1].output_segment_kind(),
+        SegmentKind::Arc
+    );
+    assert!(!linked.report().output_segments()[1].reversed());
+    assert_eq!(
+        linked.report().output_segments()[1].output_start_point(),
+        &p(1, 0)
+    );
+    assert_eq!(
+        linked.report().output_segments()[1].output_end_point(),
+        &p(3, 0)
+    );
 }
 
 #[test]
@@ -1063,12 +1117,28 @@ fn curve_string_connect_end_to_start_inserts_exact_line() {
         Some(0)
     );
     assert_eq!(
+        connected.report().output_segments()[0].source_segment_kind(),
+        Some(SegmentKind::Line)
+    );
+    assert_eq!(
+        connected.report().output_segments()[0].output_segment_kind(),
+        SegmentKind::Line
+    );
+    assert_eq!(
         connected.report().output_segments()[1].source(),
         CurveStringConnectSource2::Connector
     );
     assert_eq!(
         connected.report().output_segments()[1].source_segment_index(),
         None
+    );
+    assert_eq!(
+        connected.report().output_segments()[1].source_segment_kind(),
+        None
+    );
+    assert_eq!(
+        connected.report().output_segments()[1].output_segment_kind(),
+        SegmentKind::Line
     );
     assert_eq!(
         connected.report().output_segments()[1].output_start_point(),
@@ -1090,6 +1160,64 @@ fn curve_string_connect_end_to_start_inserts_exact_line() {
     assert_eq!(curve.end(), Some(&p(4, 1)));
     assert_eq!(curve.segments()[1].start(), &p(1, 0));
     assert_eq!(curve.segments()[1].end(), &p(3, 1));
+}
+
+#[test]
+fn curve_string_connect_output_reports_preserve_mixed_segment_kinds() {
+    let first = CurveString2::try_new(vec![Segment2::Arc(
+        CircularArc2::from_bulge(p(0, 0), p(2, 0), s(1)).unwrap(),
+    )])
+    .unwrap();
+    let second = CurveString2::try_new(vec![line_segment(4, 0, 5, 0)]).unwrap();
+
+    let connected = first
+        .connect_end_to_start_with_line(&second, &policy())
+        .unwrap();
+    let report = connected.report();
+
+    assert!(report.status().is_native_exact());
+    assert_eq!(report.output_segments().len(), 3);
+    assert_eq!(
+        report.output_segments()[0].source(),
+        CurveStringConnectSource2::First
+    );
+    assert_eq!(
+        report.output_segments()[0].source_segment_kind(),
+        Some(SegmentKind::Arc)
+    );
+    assert_eq!(
+        report.output_segments()[0].output_segment_kind(),
+        SegmentKind::Arc
+    );
+    assert_eq!(
+        report.output_segments()[1].source(),
+        CurveStringConnectSource2::Connector
+    );
+    assert_eq!(report.output_segments()[1].source_segment_kind(), None);
+    assert_eq!(
+        report.output_segments()[1].output_segment_kind(),
+        SegmentKind::Line
+    );
+    assert_eq!(
+        report.output_segments()[2].source(),
+        CurveStringConnectSource2::Second
+    );
+    assert_eq!(
+        report.output_segments()[2].source_segment_kind(),
+        Some(SegmentKind::Line)
+    );
+    assert_eq!(
+        report.output_segments()[2].output_segment_kind(),
+        SegmentKind::Line
+    );
+
+    let curve = connected
+        .curve_string()
+        .expect("mixed connector should materialize");
+    assert_eq!(curve.len(), 3);
+    assert!(matches!(curve.segments()[0], Segment2::Arc(_)));
+    assert_line(&curve.segments()[1], p(2, 0), p(4, 0));
+    assert_line(&curve.segments()[2], p(4, 0), p(5, 0));
 }
 
 #[test]
