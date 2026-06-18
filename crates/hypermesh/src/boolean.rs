@@ -15759,13 +15759,11 @@ mod tests {
                 ExactBooleanSupport::CertifiedLowerDimensionalRegularizedSolid,
             ),
         ] {
-            let preflight = preflight_boolean_exact_request_from_graph(
-                &graph,
+            let preflight = test_preflight(
+                ExactBooleanRequest::new(ExactBooleanOperation::Union, validation),
                 &left,
                 &right,
-                ExactBooleanRequest::new(ExactBooleanOperation::Union, validation),
-            )
-            .unwrap();
+            );
             assert_eq!(preflight.support, expected_support, "{preflight:?}");
             assert_eq!(preflight.retained_face_pairs, graph.face_pairs.len());
             assert_eq!(preflight.retained_events, graph.event_count());
