@@ -7,8 +7,10 @@
 //! material contours, hole contours, and boolean membership semantics.
 
 use hypercurve::{
-    BooleanOp, BulgeVertex2, Classification, Contour2, CurvePolicy, FillRule, Point2, Real,
-    Region2, RegionBooleanQueryPath2, RegionBooleanStage2, RegionPointLocation,
+    BooleanBoundaryChainAssemblyStage2, BooleanBoundaryContourTransferStage2,
+    BooleanBoundaryFragmentEmissionStage2, BooleanBoundaryLoopExtractionStage2, BooleanOp,
+    BulgeVertex2, Classification, Contour2, CurvePolicy, FillRule, Point2, Real, Region2,
+    RegionBooleanQueryPath2, RegionBooleanStage2, RegionFragmentBuildStage2, RegionPointLocation,
     RegionPreparedCacheFreshness2,
 };
 
@@ -137,6 +139,46 @@ fn boolean_region_report_retains_boundary_role_assignment() {
     assert_eq!(report.result_hole_contour_count(), Some(0));
     assert_eq!(report.prepared_cache_report(), None);
     assert_eq!(report.blocker(), None);
+
+    let pipeline_report = report.pipeline_report().unwrap();
+    assert_eq!(
+        pipeline_report.fragment_build_report().stage(),
+        RegionFragmentBuildStage2::ContourSplitting
+    );
+    assert!(
+        pipeline_report
+            .fragment_build_report()
+            .status()
+            .is_native_exact()
+    );
+    assert_eq!(
+        pipeline_report
+            .fragment_selection_report()
+            .source_fragment_count(),
+        pipeline_report
+            .boundary_fragment_emission_report()
+            .source_classification_count()
+    );
+    assert_eq!(
+        pipeline_report.boundary_fragment_emission_report().stage(),
+        BooleanBoundaryFragmentEmissionStage2::FragmentEmission
+    );
+    assert_eq!(
+        pipeline_report.chain_assembly_report().stage(),
+        BooleanBoundaryChainAssemblyStage2::ChainMaterialization
+    );
+    assert_eq!(
+        pipeline_report.loop_extraction_report().stage(),
+        BooleanBoundaryLoopExtractionStage2::LoopMaterialization
+    );
+    assert_eq!(
+        pipeline_report.contour_transfer_report().stage(),
+        BooleanBoundaryContourTransferStage2::ContourMaterialization
+    );
+    assert_eq!(
+        pipeline_report.contour_transfer_report().contour_count(),
+        report.boundary_contour_count()
+    );
 
     let boundary_report = report.boundary_build_report().unwrap();
     assert_eq!(boundary_report.source_contour_count(), 1);

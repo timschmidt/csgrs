@@ -212,8 +212,8 @@ pub use reconstruct::{
 };
 pub use region::{Region2, RegionContourProfile, RegionPointLocation, RegionView2};
 pub use region_boolean::{
-    RegionBooleanPreparedCacheReport2, RegionBooleanQueryPath2, RegionBooleanReport2,
-    RegionBooleanResult2, RegionBooleanStage2, RegionPreparedCacheAudit2,
+    RegionBooleanPipelineReport2, RegionBooleanPreparedCacheReport2, RegionBooleanQueryPath2,
+    RegionBooleanReport2, RegionBooleanResult2, RegionBooleanStage2, RegionPreparedCacheAudit2,
     RegionPreparedCacheFreshness2,
 };
 pub use region_events::{
