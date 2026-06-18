@@ -128,14 +128,15 @@ impl Contour2 {
         self.fill_rule
     }
 
-    /// Chamfers a non-wrapping interior line-line contour vertex by exact parameters.
+    /// Chamfers an interior line-line contour vertex by exact parameters.
     ///
     /// `vertex_index` identifies the shared vertex between
-    /// `segments[vertex_index - 1]` and `segments[vertex_index]`; therefore the
-    /// wraparound vertex `0` is intentionally left for a rotation-aware slice.
-    /// The underlying open curve-string chamfer report is retained, and the
+    /// `segments[vertex_index - 1]` and `segments[vertex_index]`, with
+    /// `vertex_index == 0` using the final segment as the previous segment.
+    /// The underlying curve-string chamfer report is retained, and the
     /// resulting segment sequence is accepted only through the checked closed
-    /// contour constructor.
+    /// contour constructor. Wrapped vertex edits rotate the materialized closed
+    /// boundary but remap retained source segment indices back to this contour.
     pub fn chamfer_line_line_vertex_by_parameters(
         &self,
         vertex_index: usize,
@@ -143,15 +144,30 @@ impl Contour2 {
         next_param: Real,
         policy: &CurvePolicy,
     ) -> CurveResult<ContourChamferResult2> {
-        if vertex_index == 0 || vertex_index >= self.segments().len() {
+        if vertex_index >= self.segments().len() {
             return Err(CurveError::InvalidCurveRange);
         }
-        let chamfer = self.curve.chamfer_line_line_vertex_by_parameters(
-            vertex_index,
-            previous_param,
-            next_param,
-            policy,
-        )?;
+        let chamfer = if vertex_index == 0 {
+            let rotated = CurveString2::try_new(wraparound_chamfer_segments(self.segments()))?;
+            let mut chamfer = rotated.chamfer_line_line_vertex_by_parameters(
+                1,
+                previous_param,
+                next_param,
+                policy,
+            )?;
+            let source_segment_count = self.segments().len();
+            chamfer.report_mut().remap_source_segment_indices(|index| {
+                remap_wraparound_chamfer_source_index(index, source_segment_count)
+            });
+            chamfer
+        } else {
+            self.curve.chamfer_line_line_vertex_by_parameters(
+                vertex_index,
+                previous_param,
+                next_param,
+                policy,
+            )?
+        };
         let curve_string_report = chamfer.report().clone();
         let status = curve_string_report.status();
         let blocker = curve_string_report.blocker();
@@ -175,12 +191,14 @@ impl Contour2 {
         })
     }
 
-    /// Chamfers a non-wrapping interior line-line contour vertex by exact cut points.
+    /// Chamfers an interior line-line contour vertex by exact cut points.
     ///
     /// The supplied points are validated against the adjacent source line
     /// segments by the underlying curve-string operation. Materialization then
     /// goes back through the checked contour constructor, so closed topology is
     /// retained only when the resulting segment sequence is still certified.
+    /// Wrapped vertex edits rotate the materialized closed boundary but remap
+    /// retained source segment indices back to this contour.
     pub fn chamfer_line_line_vertex_by_points(
         &self,
         vertex_index: usize,
@@ -188,15 +206,30 @@ impl Contour2 {
         next_point: &Point2,
         policy: &CurvePolicy,
     ) -> CurveResult<ContourChamferResult2> {
-        if vertex_index == 0 || vertex_index >= self.segments().len() {
+        if vertex_index >= self.segments().len() {
             return Err(CurveError::InvalidCurveRange);
         }
-        let chamfer = self.curve.chamfer_line_line_vertex_by_points(
-            vertex_index,
-            previous_point,
-            next_point,
-            policy,
-        )?;
+        let chamfer = if vertex_index == 0 {
+            let rotated = CurveString2::try_new(wraparound_chamfer_segments(self.segments()))?;
+            let mut chamfer = rotated.chamfer_line_line_vertex_by_points(
+                1,
+                previous_point,
+                next_point,
+                policy,
+            )?;
+            let source_segment_count = self.segments().len();
+            chamfer.report_mut().remap_source_segment_indices(|index| {
+                remap_wraparound_chamfer_source_index(index, source_segment_count)
+            });
+            chamfer
+        } else {
+            self.curve.chamfer_line_line_vertex_by_points(
+                vertex_index,
+                previous_point,
+                next_point,
+                policy,
+            )?
+        };
         let curve_string_report = chamfer.report().clone();
         let status = curve_string_report.status();
         let blocker = curve_string_report.blocker();
@@ -588,6 +621,23 @@ fn arc_signed_area_contribution(arc: &crate::CircularArc2) -> CurveResult<Option
     let theta = Real::from(4_i8) * bulge.clone().atan()?;
     let segment = (arc.radius_squared() * (theta - sin_theta) / Real::from(2_i8))?;
     Ok(Some(chord + segment))
+}
+
+fn wraparound_chamfer_segments(segments: &[Segment2]) -> Vec<Segment2> {
+    let mut rotated = Vec::with_capacity(segments.len());
+    if let Some(last) = segments.last() {
+        rotated.push(last.clone());
+        rotated.extend(segments[..segments.len() - 1].iter().cloned());
+    }
+    rotated
+}
+
+fn remap_wraparound_chamfer_source_index(index: usize, source_segment_count: usize) -> usize {
+    if index == 0 {
+        source_segment_count - 1
+    } else {
+        index - 1
+    }
 }
 
 fn validate_closed_curve_string(curve: &CurveString2) -> CurveResult<()> {

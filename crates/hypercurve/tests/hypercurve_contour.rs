@@ -210,12 +210,111 @@ fn contour_chamfer_line_line_vertex_by_points_reports_off_segment_boundary() {
 }
 
 #[test]
-fn contour_chamfer_rejects_wraparound_vertex_for_now() {
+fn contour_chamfer_line_line_wraparound_vertex_materializes_closed_contour() {
+    let contour = rectangle();
+
+    let chamfer = contour
+        .chamfer_line_line_vertex_by_parameters(0, q(3, 4), q(1, 4), &policy())
+        .unwrap();
+
+    assert!(chamfer.report().status().is_native_exact());
+    assert_eq!(chamfer.report().vertex_index(), 0);
+    assert_eq!(chamfer.report().source_segment_count(), 4);
+    assert_eq!(
+        chamfer
+            .report()
+            .curve_string_report()
+            .previous_segment_index(),
+        3
+    );
+    assert_eq!(
+        chamfer.report().curve_string_report().next_segment_index(),
+        0
+    );
+    assert_eq!(
+        chamfer
+            .report()
+            .curve_string_report()
+            .previous_trim()
+            .segment_index(),
+        3
+    );
+    assert_eq!(
+        chamfer
+            .report()
+            .curve_string_report()
+            .next_trim()
+            .segment_index(),
+        0
+    );
+    let segment_reports = chamfer.report().curve_string_report().segment_reports();
+    assert_eq!(segment_reports.len(), 2);
+    assert_eq!(segment_reports[0].source_segment_index(), 3);
+    assert_eq!(segment_reports[1].source_segment_index(), 0);
+
+    let contour = chamfer
+        .contour()
+        .expect("wraparound contour chamfer should materialize");
+    assert_eq!(contour.len(), 5);
+    assert_eq!(contour.segments()[0].start(), &p(0, 4));
+    assert_eq!(contour.segments()[0].end(), &p(0, 1));
+    assert_eq!(contour.segments()[1].start(), &p(0, 1));
+    assert_eq!(contour.segments()[1].end(), &p(1, 0));
+    assert_eq!(contour.segments()[2].start(), &p(1, 0));
+    assert_eq!(contour.segments()[4].end(), &p(0, 4));
+}
+
+#[test]
+fn contour_chamfer_line_line_wraparound_vertex_by_points_materializes_closed_contour() {
+    let contour = rectangle();
+
+    let chamfer = contour
+        .chamfer_line_line_vertex_by_points(0, &p(0, 1), &p(1, 0), &policy())
+        .unwrap();
+
+    assert!(chamfer.report().status().is_native_exact());
+    assert_eq!(chamfer.report().vertex_index(), 0);
+    assert_eq!(
+        chamfer
+            .report()
+            .curve_string_report()
+            .previous_trim()
+            .param(),
+        &q(3, 4)
+    );
+    assert_eq!(
+        chamfer.report().curve_string_report().next_trim().param(),
+        &q(1, 4)
+    );
+    assert_eq!(
+        chamfer
+            .report()
+            .curve_string_report()
+            .previous_segment_index(),
+        3
+    );
+    assert_eq!(
+        chamfer.report().curve_string_report().next_segment_index(),
+        0
+    );
+
+    let contour = chamfer
+        .contour()
+        .expect("point-bearing wraparound contour chamfer should materialize");
+    assert_eq!(contour.len(), 5);
+    assert_eq!(contour.segments()[0].end(), &p(0, 1));
+    assert_eq!(contour.segments()[1].start(), &p(0, 1));
+    assert_eq!(contour.segments()[1].end(), &p(1, 0));
+    assert_eq!(contour.segments()[2].start(), &p(1, 0));
+}
+
+#[test]
+fn contour_chamfer_rejects_out_of_range_vertex() {
     let contour = rectangle();
 
     assert_eq!(
         contour
-            .chamfer_line_line_vertex_by_parameters(0, q(3, 4), q(1, 4), &policy())
+            .chamfer_line_line_vertex_by_parameters(4, q(3, 4), q(1, 4), &policy())
             .unwrap_err(),
         CurveError::InvalidCurveRange
     );
