@@ -19,7 +19,7 @@ use crate::{
     CurveStringIntersectionResult2, CurveStringRegionTrimResult2, FillRule, LineSeg2,
     LineSeg2Facts, LineSide, Point2, Region2, RegionBooleanResult2, RegionContourIntersection,
     RegionContourKey, RegionContourRole, RegionIntersectionSet, RegionPointLocation, RegionSide,
-    RegionView2, Segment2, SegmentIntersection, UncertaintyReason,
+    RegionView2, Segment2, SegmentIntersection, SegmentKindCounts, UncertaintyReason,
 };
 
 /// Prepared point-line classifier for a fixed [`LineSeg2`].
@@ -1264,6 +1264,18 @@ fn prepared_segments(segments: &[Segment2]) -> Vec<PreparedSegment2<'_>> {
         .collect()
 }
 
+fn prepared_segment_kind_counts(segments: &[PreparedSegment2<'_>]) -> SegmentKindCounts {
+    let mut counts = SegmentKindCounts::default();
+    for segment in segments {
+        if segment.is_line() {
+            counts.lines += 1;
+        } else if segment.is_arc() {
+            counts.arcs += 1;
+        }
+    }
+    counts
+}
+
 fn intersect_prepared_segment_pairs_with_cached_aabbs(
     first_prepared_segments: &[PreparedSegment2<'_>],
     second_prepared_segments: &[PreparedSegment2<'_>],
@@ -1327,6 +1339,8 @@ fn intersect_prepared_segment_pairs_with_cached_aabbs(
         CurveStringIntersectionReport2::new_native_exact(
             first_prepared_segments.len(),
             second_prepared_segments.len(),
+            prepared_segment_kind_counts(first_prepared_segments),
+            prepared_segment_kind_counts(second_prepared_segments),
             first_decided_segment_box_count,
             second_decided_segment_box_count,
             first_undecided_segment_box_count,

@@ -50,6 +50,8 @@ pub enum CurveStringIntersectionPredicatePath2 {
 pub struct CurveStringIntersectionReport2 {
     first_segment_count: usize,
     second_segment_count: usize,
+    first_segment_kind_counts: SegmentKindCounts,
+    second_segment_kind_counts: SegmentKindCounts,
     first_decided_segment_box_count: usize,
     second_decided_segment_box_count: usize,
     first_undecided_segment_box_count: usize,
@@ -5736,6 +5738,8 @@ impl CurveStringIntersectionReport2 {
     pub(crate) const fn new_native_exact(
         first_segment_count: usize,
         second_segment_count: usize,
+        first_segment_kind_counts: SegmentKindCounts,
+        second_segment_kind_counts: SegmentKindCounts,
         first_decided_segment_box_count: usize,
         second_decided_segment_box_count: usize,
         first_undecided_segment_box_count: usize,
@@ -5749,6 +5753,8 @@ impl CurveStringIntersectionReport2 {
         Self {
             first_segment_count,
             second_segment_count,
+            first_segment_kind_counts,
+            second_segment_kind_counts,
             first_decided_segment_box_count,
             second_decided_segment_box_count,
             first_undecided_segment_box_count,
@@ -5772,6 +5778,16 @@ impl CurveStringIntersectionReport2 {
     /// Returns the second curve-string segment count.
     pub const fn second_segment_count(&self) -> usize {
         self.second_segment_count
+    }
+
+    /// Returns primitive-family counts for the first curve string.
+    pub const fn first_segment_kind_counts(&self) -> SegmentKindCounts {
+        self.first_segment_kind_counts
+    }
+
+    /// Returns primitive-family counts for the second curve string.
+    pub const fn second_segment_kind_counts(&self) -> SegmentKindCounts {
+        self.second_segment_kind_counts
     }
 
     /// Returns decided segment boxes available for the first curve string.
@@ -6836,6 +6852,8 @@ pub(crate) fn intersect_curve_strings_with_cached_aabbs_with_report(
         report: CurveStringIntersectionReport2 {
             first_segment_count: first.len(),
             second_segment_count: second.len(),
+            first_segment_kind_counts: curve_string_segment_kind_counts(first),
+            second_segment_kind_counts: curve_string_segment_kind_counts(second),
             first_decided_segment_box_count,
             second_decided_segment_box_count,
             first_undecided_segment_box_count,

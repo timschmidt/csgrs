@@ -132,6 +132,14 @@ fn curve_string_intersection_report_counts_aabb_skips() {
     );
     assert_eq!(report.first_segment_count(), 2);
     assert_eq!(report.second_segment_count(), 1);
+    assert_eq!(
+        report.first_segment_kind_counts(),
+        SegmentKindCounts { lines: 2, arcs: 0 }
+    );
+    assert_eq!(
+        report.second_segment_kind_counts(),
+        SegmentKindCounts { lines: 1, arcs: 0 }
+    );
     assert_eq!(report.first_decided_segment_box_count(), 2);
     assert_eq!(report.second_decided_segment_box_count(), 1);
     assert_eq!(report.first_undecided_segment_box_count(), 0);
@@ -159,6 +167,14 @@ fn curve_string_intersection_report_names_aabb_only_predicate_path() {
         CurveStringIntersectionPredicatePath2::AabbOnly
     );
     assert_eq!(report.candidate_pair_count(), 1);
+    assert_eq!(
+        report.first_segment_kind_counts(),
+        SegmentKindCounts { lines: 1, arcs: 0 }
+    );
+    assert_eq!(
+        report.second_segment_kind_counts(),
+        SegmentKindCounts { lines: 1, arcs: 0 }
+    );
     assert_eq!(report.skipped_aabb_pair_count(), 1);
     assert_eq!(report.tested_pair_count(), 0);
     assert_eq!(report.intersection_count(), 0);
@@ -188,6 +204,14 @@ fn prepared_curve_string_intersection_report_matches_plain_events() {
         CurveStringIntersectionPredicatePath2::ExactSegmentPredicates
     );
     assert_eq!(prepared.report().candidate_pair_count(), 1);
+    assert_eq!(
+        prepared.report().first_segment_kind_counts(),
+        SegmentKindCounts { lines: 1, arcs: 0 }
+    );
+    assert_eq!(
+        prepared.report().second_segment_kind_counts(),
+        SegmentKindCounts { lines: 1, arcs: 0 }
+    );
     assert_eq!(prepared.report().first_decided_segment_box_count(), 1);
     assert_eq!(prepared.report().second_decided_segment_box_count(), 1);
     assert_eq!(prepared.report().first_undecided_segment_box_count(), 0);
