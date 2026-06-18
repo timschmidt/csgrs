@@ -9,6 +9,7 @@ use super::adapter::{
     inspect_i64_mesh_input,
 };
 use super::artifact::MeshArtifactManifest;
+use super::audit::{ExactMeshAuditReport, audit_exact_mesh};
 use super::bounds::{BoundsValidationError, MeshBounds};
 use super::error::{DiagnosticKind, MeshDiagnostic, MeshError, Severity};
 use super::facts::{MeshFactsValidationError, MeshValidationFacts};
@@ -376,6 +377,11 @@ impl ExactMesh {
     /// promoted to solids and lossy views are not promoted to topology.
     pub fn handoff_package(&self) -> Result<ExactMeshHandoffPackage, ExactMeshHandoffPackageError> {
         exact_mesh_handoff_package(self)
+    }
+
+    /// Build a replayed retained-state audit report from this exact mesh.
+    pub fn audit_report(&self) -> Result<ExactMeshAuditReport, ExactMeshValidationError> {
+        audit_exact_mesh(self)
     }
 
     /// Build a replayed proposal report from this accepted exact mesh.

@@ -594,7 +594,7 @@ fn exact_mesh_construction_retains_valid_public_facts() {
             .all(|face| face.triangle.non_degenerate)
     );
 
-    let audit = mesh.handoff_package().unwrap().audit;
+    let audit = mesh.audit_report().unwrap();
     audit.validate().unwrap();
     audit.validate_against_mesh(&mesh).unwrap();
 
