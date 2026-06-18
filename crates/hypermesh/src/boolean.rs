@@ -14161,7 +14161,8 @@ mod tests {
             stale_ownership_shape.validate(),
             Err(ExactReportValidationError::StatusEvidenceMismatch)
         );
-        let graph = build_intersection_graph(&left, &right).unwrap();
+        let mut graph_workspace = ExactBooleanWorkspace::new(&left, &right);
+        let graph = graph_workspace.validated_graph().unwrap();
         let mut stale_replay_report = replayable_result.clone();
         stale_replay_report
             .topology_assembly_report
