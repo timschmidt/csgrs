@@ -316,6 +316,7 @@ pub struct CurveStringExtendResult2 {
 #[derive(Clone, Debug, PartialEq)]
 pub struct CurveStringChamferReport2 {
     input_path: CurveStringChamferInputPath2,
+    stage: CurveStringChamferStage2,
     previous_segment_index: usize,
     next_segment_index: usize,
     previous_trim: CurveStringTrimPoint2,
@@ -338,6 +339,15 @@ pub enum CurveStringChamferInputPath2 {
     Points,
 }
 
+/// Furthest exact stage reached by a line-line chamfer attempt.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum CurveStringChamferStage2 {
+    /// Input segment family and cut-parameter evidence were being validated.
+    InputValidation,
+    /// Adjacent source ranges and the inserted chamfer segment were materialized.
+    SegmentMaterialization,
+}
+
 /// Result of a report-bearing line-line chamfer operation.
 #[derive(Clone, Debug, PartialEq)]
 pub struct CurveStringChamferResult2 {
@@ -349,6 +359,7 @@ pub struct CurveStringChamferResult2 {
 #[derive(Clone, Debug, PartialEq)]
 pub struct CurveStringFilletReport2 {
     input_path: CurveStringFilletInputPath2,
+    stage: CurveStringFilletStage2,
     previous_segment_index: usize,
     next_segment_index: usize,
     previous_trim: CurveStringTrimPoint2,
@@ -371,6 +382,17 @@ pub enum CurveStringFilletInputPath2 {
     Parameters,
     /// Tangent points were supplied directly as exact points.
     Points,
+}
+
+/// Furthest exact stage reached by a line-line fillet attempt.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum CurveStringFilletStage2 {
+    /// Input segment family and tangent-parameter evidence were being validated.
+    InputValidation,
+    /// Radius, tangency, and orientation predicates were being validated.
+    RadiusAndTangencyValidation,
+    /// Adjacent source ranges and the inserted fillet arc were materialized.
+    ArcMaterialization,
 }
 
 /// Result of a report-bearing line-line fillet operation.
@@ -1529,6 +1551,7 @@ impl CurveString2 {
             curve_string: Some(curve_string),
             report: CurveStringChamferReport2 {
                 input_path: CurveStringChamferInputPath2::Parameters,
+                stage: CurveStringChamferStage2::SegmentMaterialization,
                 previous_segment_index,
                 next_segment_index,
                 previous_trim,
@@ -1969,6 +1992,7 @@ impl CurveString2 {
             curve_string: Some(curve_string),
             report: CurveStringFilletReport2 {
                 input_path: CurveStringFilletInputPath2::Points,
+                stage: CurveStringFilletStage2::ArcMaterialization,
                 previous_segment_index,
                 next_segment_index,
                 previous_trim,
@@ -2729,6 +2753,11 @@ impl CurveStringChamferReport2 {
         self.input_path
     }
 
+    /// Returns the furthest exact chamfer stage reached.
+    pub const fn stage(&self) -> CurveStringChamferStage2 {
+        self.stage
+    }
+
     /// Returns the previous source segment index at the chamfered vertex.
     pub const fn previous_segment_index(&self) -> usize {
         self.previous_segment_index
@@ -2820,6 +2849,11 @@ impl CurveStringFilletReport2 {
     /// Returns how the tangent-point evidence was supplied to the fillet.
     pub const fn input_path(&self) -> CurveStringFilletInputPath2 {
         self.input_path
+    }
+
+    /// Returns the furthest exact fillet stage reached.
+    pub const fn stage(&self) -> CurveStringFilletStage2 {
+        self.stage
     }
 
     /// Returns the previous source segment index at the filleted vertex.
@@ -4456,6 +4490,11 @@ fn blocked_chamfer_result(
         curve_string: None,
         report: CurveStringChamferReport2 {
             input_path: CurveStringChamferInputPath2::Parameters,
+            stage: if segment_reports.is_empty() {
+                CurveStringChamferStage2::InputValidation
+            } else {
+                CurveStringChamferStage2::SegmentMaterialization
+            },
             previous_segment_index,
             next_segment_index,
             previous_trim,
@@ -4487,6 +4526,11 @@ fn blocked_fillet_result(
         curve_string: None,
         report: CurveStringFilletReport2 {
             input_path: CurveStringFilletInputPath2::Points,
+            stage: if radius_squared.is_some() {
+                CurveStringFilletStage2::RadiusAndTangencyValidation
+            } else {
+                CurveStringFilletStage2::InputValidation
+            },
             previous_segment_index,
             next_segment_index,
             previous_trim,

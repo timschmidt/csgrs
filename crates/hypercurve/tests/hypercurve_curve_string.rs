@@ -1,13 +1,13 @@
 use hypercurve::{
     BulgeVertex2, CircularArc2, Classification, Contour2, CurveError, CurvePolicy, CurveString2,
-    CurveStringChamferInputPath2, CurveStringConnectSource2, CurveStringCurveTrimQueryPath2,
-    CurveStringCurveTrimStage2, CurveStringEndpoint2, CurveStringEndpointConnectionStatus2,
-    CurveStringFilletInputPath2, CurveStringIntersectionPredicatePath2,
-    CurveStringIntersectionQueryPath2, CurveStringLinkKind2, CurveStringLinkSourceInput2,
-    CurveStringRegionTrimQueryPath2, CurveStringRegionTrimStage2, CurveStringTrimInputPath2,
-    CurveStringTrimPoint2, IntersectionKind, LineArcIntersection, LineArcOrder, LineSeg2, Point2,
-    Real, Region2, RegionContourRole, RegionPointLocation, Segment2, SegmentIntersection,
-    UncertaintyReason,
+    CurveStringChamferInputPath2, CurveStringChamferStage2, CurveStringConnectSource2,
+    CurveStringCurveTrimQueryPath2, CurveStringCurveTrimStage2, CurveStringEndpoint2,
+    CurveStringEndpointConnectionStatus2, CurveStringFilletInputPath2, CurveStringFilletStage2,
+    CurveStringIntersectionPredicatePath2, CurveStringIntersectionQueryPath2, CurveStringLinkKind2,
+    CurveStringLinkSourceInput2, CurveStringRegionTrimQueryPath2, CurveStringRegionTrimStage2,
+    CurveStringTrimInputPath2, CurveStringTrimPoint2, IntersectionKind, LineArcIntersection,
+    LineArcOrder, LineSeg2, Point2, Real, Region2, RegionContourRole, RegionPointLocation,
+    Segment2, SegmentIntersection, UncertaintyReason,
 };
 
 fn s(value: i32) -> Real {
@@ -1172,6 +1172,10 @@ fn curve_string_chamfer_line_line_vertex_materializes_exact_segments() {
         chamfer.report().input_path(),
         CurveStringChamferInputPath2::Parameters
     );
+    assert_eq!(
+        chamfer.report().stage(),
+        CurveStringChamferStage2::SegmentMaterialization
+    );
     assert_eq!(chamfer.report().previous_segment_index(), 0);
     assert_eq!(chamfer.report().next_segment_index(), 1);
     assert_eq!(chamfer.report().previous_trim().param(), &q(3, 4));
@@ -1266,6 +1270,10 @@ fn curve_string_chamfer_line_line_vertex_by_points_reports_off_segment_boundary(
     assert!(chamfer.curve_string().is_none());
     assert!(chamfer.report().status().is_retained_evidence());
     assert_eq!(
+        chamfer.report().stage(),
+        CurveStringChamferStage2::InputValidation
+    );
+    assert_eq!(
         chamfer.report().input_path(),
         CurveStringChamferInputPath2::Points
     );
@@ -1332,6 +1340,10 @@ fn curve_string_fillet_line_line_vertex_materializes_exact_arc() {
     assert_eq!(
         fillet.report().input_path(),
         CurveStringFilletInputPath2::Points
+    );
+    assert_eq!(
+        fillet.report().stage(),
+        CurveStringFilletStage2::ArcMaterialization
     );
     assert_eq!(fillet.report().previous_segment_index(), 0);
     assert_eq!(fillet.report().next_segment_index(), 1);
@@ -1443,6 +1455,10 @@ fn curve_string_fillet_reports_radius_mismatch_boundary() {
 
     assert!(fillet.curve_string().is_none());
     assert!(fillet.report().status().is_retained_evidence());
+    assert_eq!(
+        fillet.report().stage(),
+        CurveStringFilletStage2::RadiusAndTangencyValidation
+    );
     assert_eq!(fillet.report().center(), Some(&p(3, 2)));
     assert_eq!(fillet.report().previous_tangent_point(), None);
     assert_eq!(fillet.report().next_tangent_point(), None);
