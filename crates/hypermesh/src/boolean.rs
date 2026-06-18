@@ -11359,11 +11359,12 @@ mod tests {
         left: &ExactMesh,
         right: &ExactMesh,
     ) -> ExactPlanarArrangementReport {
+        let mut workspace = ExactBooleanWorkspace::new(left, right);
         if matches!(request.operation, ExactBooleanOperation::SelectedRegions(_)) {
             return not_named_planar_arrangement_report(request.operation);
         }
-        let graph = validated_intersection_graph(left, right).unwrap();
-        planar_arrangement_report_from_graph(&graph, left, right, request.operation).unwrap()
+        let graph = workspace.validated_graph().unwrap();
+        planar_arrangement_report_from_graph(graph, left, right, request.operation).unwrap()
     }
 
     fn test_arrangement_attempt(
