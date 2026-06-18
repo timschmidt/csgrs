@@ -217,6 +217,7 @@ fn bench_line_chamfer(iterations: u32) -> CurveResult<()> {
     let policy = CurvePolicy::certified();
     let started = Instant::now();
     let mut total_segments = 0_usize;
+    let mut total_trim_ranges = 0_usize;
 
     for _ in 0..iterations {
         let result = curve.chamfer_line_line_vertex_by_parameters(1, q(3, 4), q(1, 4), &policy)?;
@@ -224,11 +225,12 @@ fn bench_line_chamfer(iterations: u32) -> CurveResult<()> {
             .curve_string()
             .expect("line-line chamfer benchmark should materialize");
         total_segments += black_box(chamfered.len());
+        total_trim_ranges += black_box(result.report().trim_segment_report_count());
     }
 
     let elapsed = started.elapsed();
     println!(
-        "curve_string_line_chamfer: {iterations} iterations in {elapsed:?} ({:?}/iter), total segments={total_segments}",
+        "curve_string_line_chamfer: {iterations} iterations in {elapsed:?} ({:?}/iter), total segments={total_segments}, trim ranges={total_trim_ranges}",
         elapsed / iterations
     );
     Ok(())
@@ -243,6 +245,7 @@ fn bench_line_fillet(iterations: u32) -> CurveResult<()> {
     let policy = CurvePolicy::certified();
     let started = Instant::now();
     let mut total_segments = 0_usize;
+    let mut total_trim_ranges = 0_usize;
 
     for _ in 0..iterations {
         let result = curve.fillet_line_line_vertex_by_parameters(
@@ -257,11 +260,12 @@ fn bench_line_fillet(iterations: u32) -> CurveResult<()> {
             .curve_string()
             .expect("line-line fillet benchmark should materialize");
         total_segments += black_box(filleted.len());
+        total_trim_ranges += black_box(result.report().trim_segment_report_count());
     }
 
     let elapsed = started.elapsed();
     println!(
-        "curve_string_line_fillet: {iterations} iterations in {elapsed:?} ({:?}/iter), total segments={total_segments}",
+        "curve_string_line_fillet: {iterations} iterations in {elapsed:?} ({:?}/iter), total segments={total_segments}, trim ranges={total_trim_ranges}",
         elapsed / iterations
     );
     Ok(())

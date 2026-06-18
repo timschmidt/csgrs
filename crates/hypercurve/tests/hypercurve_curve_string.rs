@@ -1453,6 +1453,7 @@ fn curve_string_chamfer_line_line_vertex_materializes_exact_segments() {
     assert_eq!(chamfer.report().chamfer_segment_index(), Some(1));
     assert_eq!(chamfer.report().source_segment_count(), 2);
     assert_eq!(chamfer.report().output_segment_count(), Some(3));
+    assert_eq!(chamfer.report().trim_segment_report_count(), 2);
     assert_eq!(chamfer.report().segment_reports().len(), 2);
     assert_eq!(
         chamfer.report().segment_reports()[0].source_range().start(),
@@ -1629,6 +1630,7 @@ fn curve_string_fillet_line_line_vertex_materializes_exact_arc() {
     assert_eq!(fillet.report().fillet_segment_index(), Some(1));
     assert_eq!(fillet.report().source_segment_count(), 2);
     assert_eq!(fillet.report().output_segment_count(), Some(3));
+    assert_eq!(fillet.report().trim_segment_report_count(), 2);
     assert_eq!(fillet.report().segment_reports().len(), 2);
     assert_eq!(
         fillet.report().segment_reports()[0].source_range().start(),

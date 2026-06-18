@@ -3057,6 +3057,11 @@ impl CurveStringChamferReport2 {
         &self.segment_reports
     }
 
+    /// Returns retained adjacent-source trim range count.
+    pub const fn trim_segment_report_count(&self) -> usize {
+        self.segment_reports.len()
+    }
+
     /// Returns the inserted chamfer segment index in the output curve string.
     pub const fn chamfer_segment_index(&self) -> Option<usize> {
         self.chamfer_segment_index
@@ -3168,6 +3173,11 @@ impl CurveStringFilletReport2 {
     /// Returns retained source ranges for the shortened adjacent line segments.
     pub fn segment_reports(&self) -> &[CurveStringTrimSegmentReport2] {
         &self.segment_reports
+    }
+
+    /// Returns retained adjacent-source trim range count.
+    pub const fn trim_segment_report_count(&self) -> usize {
+        self.segment_reports.len()
     }
 
     /// Returns the inserted fillet arc segment index in the output curve string.
