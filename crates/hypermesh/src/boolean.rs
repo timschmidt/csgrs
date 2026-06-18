@@ -12022,7 +12022,7 @@ mod tests {
         let evaluation = test_evaluation(request, &left, &right);
         assert!(
             evaluation.result.is_none(),
-            "selected-region evaluation should retain certifications without eager materialization"
+            "selected-region evaluation should retain certifications when materialization declines"
         );
         let readiness = evaluation.certifications.winding_readiness;
         assert_eq!(

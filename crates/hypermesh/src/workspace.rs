@@ -296,9 +296,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
             regularized_arrangement,
             regularized_attempt,
         )?;
-        let result = if preflight.is_certified()
-            && !matches!(preflight.support, ExactBooleanSupport::SelectedRegionPolicy)
-        {
+        let result = if preflight.is_certified() {
             if let Some(result) = cached_retained_materialization(
                 &self.materializations,
                 self.left,
@@ -307,6 +305,10 @@ impl<'a> ExactBooleanWorkspace<'a> {
                 regularized_attempt,
             )? {
                 Some(result)
+            } else if matches!(preflight.support, ExactBooleanSupport::SelectedRegionPolicy) {
+                self.try_materialize_certified_support(request, preflight.support)
+                    .ok()
+                    .flatten()
             } else {
                 self.try_materialize_certified_support(request, preflight.support)?
             }
