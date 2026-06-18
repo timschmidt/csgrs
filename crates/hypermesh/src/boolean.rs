@@ -6923,9 +6923,10 @@ pub(crate) fn materialize_volumetric_coplanar_boundary_closure_output(
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
 ) -> Result<Option<(ExactMesh, ExactVolumetricBoundaryClosureReport)>, MeshError> {
-    let graph = validated_intersection_graph(left, right)?;
+    let mut workspace = ExactBooleanWorkspace::new(left, right);
+    let graph = workspace.validated_graph()?;
     materialize_volumetric_coplanar_boundary_closure_output_from_graph(
-        &graph, left, right, operation, validation,
+        graph, left, right, operation, validation,
     )
 }
 
@@ -8967,9 +8968,10 @@ pub(crate) fn replay_open_surface_arrangement_result(
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
-    let graph = validated_intersection_graph(left, right)?;
+    let mut workspace = ExactBooleanWorkspace::new(left, right);
+    let graph = workspace.validated_graph()?;
     let Some(result) =
-        open_surface_arrangement_result_from_graph(&graph, left, right, operation, validation)?
+        open_surface_arrangement_result_from_graph(graph, left, right, operation, validation)?
     else {
         return Ok(None);
     };
