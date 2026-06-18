@@ -450,6 +450,8 @@ pub struct CurveStringExtendReport2 {
     source_segment_kind: SegmentKind,
     output_segment_index: Option<usize>,
     output_segment_kind: Option<SegmentKind>,
+    output_segment_start_point: Option<Point2>,
+    output_segment_end_point: Option<Point2>,
     source_endpoint_point: Point2,
     target_point: Point2,
     source_param: Option<Real>,
@@ -2604,15 +2606,17 @@ impl CurveString2 {
         }
 
         let mut segments = self.segments.clone();
-        segments[source_segment_index] = match endpoint {
+        let output_segment = match endpoint {
             CurveStringEndpoint2::Start => {
-                Segment2::Line(LineSeg2::try_new(target_point.clone(), line.end().clone())?)
+                LineSeg2::try_new(target_point.clone(), line.end().clone())?
             }
-            CurveStringEndpoint2::End => Segment2::Line(LineSeg2::try_new(
-                line.start().clone(),
-                target_point.clone(),
-            )?),
+            CurveStringEndpoint2::End => {
+                LineSeg2::try_new(line.start().clone(), target_point.clone())?
+            }
         };
+        let output_segment_start_point = output_segment.start().clone();
+        let output_segment_end_point = output_segment.end().clone();
+        segments[source_segment_index] = Segment2::Line(output_segment);
         let curve_string = CurveString2::try_new(segments)?;
         let output_segment_count = curve_string.len();
         let output_segment_kind_counts = curve_string_segment_kind_counts(&curve_string);
@@ -2625,6 +2629,8 @@ impl CurveString2 {
                 source_segment_kind: SegmentKind::Line,
                 output_segment_index: Some(source_segment_index),
                 output_segment_kind: Some(SegmentKind::Line),
+                output_segment_start_point: Some(output_segment_start_point),
+                output_segment_end_point: Some(output_segment_end_point),
                 source_endpoint_point: line_endpoint_point(line, endpoint).clone(),
                 target_point,
                 source_param: Some(source_param),
@@ -2788,6 +2794,8 @@ impl CurveString2 {
             }
         }
 
+        let output_segment_start_point = extended_arc.start().clone();
+        let output_segment_end_point = extended_arc.end().clone();
         let mut segments = self.segments.clone();
         segments[source_segment_index] = Segment2::Arc(extended_arc);
         let curve_string = CurveString2::try_new(segments)?;
@@ -2802,6 +2810,8 @@ impl CurveString2 {
                 source_segment_kind: SegmentKind::Arc,
                 output_segment_index: Some(source_segment_index),
                 output_segment_kind: Some(SegmentKind::Arc),
+                output_segment_start_point: Some(output_segment_start_point),
+                output_segment_end_point: Some(output_segment_end_point),
                 source_endpoint_point: arc_endpoint_point(arc, endpoint).clone(),
                 target_point,
                 source_param: None,
@@ -4037,6 +4047,16 @@ impl CurveStringExtendReport2 {
     /// Returns the primitive family of the extended output segment, when materialized.
     pub const fn output_segment_kind(&self) -> Option<SegmentKind> {
         self.output_segment_kind
+    }
+
+    /// Returns the exact start point of the extended output segment.
+    pub const fn output_segment_start_point(&self) -> Option<&Point2> {
+        self.output_segment_start_point.as_ref()
+    }
+
+    /// Returns the exact end point of the extended output segment.
+    pub const fn output_segment_end_point(&self) -> Option<&Point2> {
+        self.output_segment_end_point.as_ref()
     }
 
     /// Returns the exact source endpoint point before extension.
@@ -5445,6 +5465,8 @@ fn blocked_extend_result(
                 .kind,
             output_segment_index: None,
             output_segment_kind: None,
+            output_segment_start_point: None,
+            output_segment_end_point: None,
             source_endpoint_point: curve_string
                 .endpoint(endpoint)
                 .expect("blocked extension source endpoint should exist")
