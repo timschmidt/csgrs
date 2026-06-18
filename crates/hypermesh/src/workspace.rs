@@ -347,16 +347,15 @@ impl<'a> ExactBooleanWorkspace<'a> {
                 return self.store_materialization_and_promote_evaluation(request, result.clone());
             }
         }
-        let preflight = self.preflight(request)?;
-        if preflight.is_certified() {
-            let evaluation = self.evaluate(request)?.clone();
-            evaluation
-                .validate()
-                .map_err(workspace_report_validation_error)?;
+        let evaluation = self.evaluate(request)?.clone();
+        evaluation
+            .validate()
+            .map_err(workspace_report_validation_error)?;
+        if evaluation.preflight.is_certified() {
             if let Some(result) = evaluation.result.as_ref().cloned() {
                 return self.store_materialization_and_promote_evaluation(request, result);
             }
-            if preflight.support == ExactBooleanSupport::CertifiedArrangementCellComplex
+            if evaluation.preflight.support == ExactBooleanSupport::CertifiedArrangementCellComplex
                 && self
                     .regularized_solid_arrangement_attempt(request)
                     .is_none()
@@ -372,7 +371,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
                 self.left,
                 self.right,
                 request,
-                preflight.support,
+                evaluation.preflight.support,
                 Some(graph),
                 regularized_arrangement,
                 self.regularized_solid_arrangement_attempt(request),
