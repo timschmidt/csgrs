@@ -125,6 +125,10 @@ pub struct CurveStringLinkReport2 {
     endpoint_report: CurveStringEndpointConnectionReport2,
     first_segment_count: usize,
     second_segment_count: usize,
+    endpoint_pair_count: usize,
+    exact_endpoint_pair_count: usize,
+    disconnected_endpoint_pair_count: usize,
+    unresolved_endpoint_pair_count: usize,
     output_segments: Vec<CurveStringLinkOutputSegmentReport2>,
     status: RetainedTopologyStatus,
 }
@@ -646,9 +650,14 @@ impl CurveString2 {
         policy: &CurvePolicy,
     ) -> CurveResult<crate::Classification<Option<LinkedCurveString2>>> {
         let reports = self.endpoint_link_reports(other, policy)?;
+        let mut endpoint_summary = EndpointPairSummary {
+            pair_count: reports.len(),
+            ..EndpointPairSummary::default()
+        };
         let mut exact = Vec::new();
         let mut unresolved = None;
         for (kind, report) in reports {
+            endpoint_summary.add_status(report.status);
             match report.status {
                 CurveStringEndpointConnectionStatus2::NativeExact => exact.push((kind, report)),
                 CurveStringEndpointConnectionStatus2::Disconnected => {}
@@ -676,6 +685,10 @@ impl CurveString2 {
             endpoint_report,
             first_segment_count: self.len(),
             second_segment_count: other.len(),
+            endpoint_pair_count: endpoint_summary.pair_count,
+            exact_endpoint_pair_count: endpoint_summary.exact_count,
+            disconnected_endpoint_pair_count: endpoint_summary.disconnected_count,
+            unresolved_endpoint_pair_count: endpoint_summary.unresolved_count,
             output_segments: link_output_segment_reports(self, other, kind),
             status: RetainedTopologyStatus::NativeExact,
         };
@@ -4863,6 +4876,26 @@ impl CurveStringLinkReport2 {
     /// Returns the second input segment count captured by this report.
     pub const fn second_segment_count(&self) -> usize {
         self.second_segment_count
+    }
+
+    /// Returns endpoint pairs inspected before choosing this link.
+    pub const fn endpoint_pair_count(&self) -> usize {
+        self.endpoint_pair_count
+    }
+
+    /// Returns inspected endpoint pairs certified already connected.
+    pub const fn exact_endpoint_pair_count(&self) -> usize {
+        self.exact_endpoint_pair_count
+    }
+
+    /// Returns inspected endpoint pairs certified disconnected.
+    pub const fn disconnected_endpoint_pair_count(&self) -> usize {
+        self.disconnected_endpoint_pair_count
+    }
+
+    /// Returns inspected endpoint pairs that remained unresolved.
+    pub const fn unresolved_endpoint_pair_count(&self) -> usize {
+        self.unresolved_endpoint_pair_count
     }
 
     /// Returns output segment source ownership in output order.

@@ -419,6 +419,10 @@ fn curve_string_link_materializes_unique_end_start_connection() {
     assert_eq!(linked.report().endpoint_report().second_point(), &p(1, 0));
     assert_eq!(linked.report().first_segment_count(), 1);
     assert_eq!(linked.report().second_segment_count(), 1);
+    assert_eq!(linked.report().endpoint_pair_count(), 4);
+    assert_eq!(linked.report().exact_endpoint_pair_count(), 1);
+    assert_eq!(linked.report().disconnected_endpoint_pair_count(), 3);
+    assert_eq!(linked.report().unresolved_endpoint_pair_count(), 0);
     assert_eq!(linked.report().output_segments().len(), 2);
     assert_eq!(
         linked.report().output_segments()[0].source_input(),
@@ -474,6 +478,10 @@ fn curve_string_link_reverses_second_curve_when_endpoints_match_end_to_end() {
         linked.report().kind(),
         CurveStringLinkKind2::FirstEndToSecondEnd
     );
+    assert_eq!(linked.report().endpoint_pair_count(), 4);
+    assert_eq!(linked.report().exact_endpoint_pair_count(), 1);
+    assert_eq!(linked.report().disconnected_endpoint_pair_count(), 3);
+    assert_eq!(linked.report().unresolved_endpoint_pair_count(), 0);
     assert_eq!(linked.report().output_segments().len(), 2);
     assert_eq!(
         linked.report().output_segments()[1].source_input(),
@@ -554,6 +562,20 @@ fn curve_string_ordered_link_materializes_multistep_chain() {
         linked.report().steps()[0]
             .link_report()
             .unwrap()
+            .endpoint_pair_count(),
+        4
+    );
+    assert_eq!(
+        linked.report().steps()[0]
+            .link_report()
+            .unwrap()
+            .exact_endpoint_pair_count(),
+        1
+    );
+    assert_eq!(
+        linked.report().steps()[0]
+            .link_report()
+            .unwrap()
             .output_segments()[0]
             .source_input(),
         CurveStringLinkSourceInput2::First
@@ -601,6 +623,20 @@ fn curve_string_ordered_link_reports_reversed_accumulated_sources() {
     assert_eq!(
         linked.report().steps()[0].link_report().unwrap().kind(),
         CurveStringLinkKind2::FirstStartToSecondEnd
+    );
+    assert_eq!(
+        linked.report().steps()[0]
+            .link_report()
+            .unwrap()
+            .endpoint_pair_count(),
+        4
+    );
+    assert_eq!(
+        linked.report().steps()[0]
+            .link_report()
+            .unwrap()
+            .exact_endpoint_pair_count(),
+        1
     );
     assert_eq!(
         linked.report().steps()[0]
