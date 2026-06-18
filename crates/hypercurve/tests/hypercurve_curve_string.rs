@@ -1,8 +1,8 @@
 use hypercurve::{
     BulgeVertex2, CircularArc2, Classification, Contour2, CurveError, CurvePolicy, CurveString2,
     CurveStringEndpoint2, CurveStringEndpointConnectionStatus2, CurveStringLinkKind2,
-    CurveStringTrimPoint2, LineArcIntersection, LineArcOrder, LineSeg2, Point2, Real, Segment2,
-    SegmentIntersection, UncertaintyReason,
+    CurveStringTrimPoint2, IntersectionKind, LineArcIntersection, LineArcOrder, LineSeg2, Point2,
+    Real, Segment2, SegmentIntersection, UncertaintyReason,
 };
 
 fn s(value: i32) -> Real {
@@ -408,6 +408,86 @@ fn curve_string_trim_between_points_reports_repeated_nonadjacent_point_boundary(
     assert!(trim.curve_string().is_none());
     assert!(trim.report().status().is_retained_evidence());
     assert_eq!(trim.report().blocker(), Some(UncertaintyReason::Boundary));
+}
+
+#[test]
+fn curve_string_trim_between_curve_intersections_materializes_line_window() {
+    let curve = CurveString2::try_new(vec![line_segment(0, 0, 10, 0)]).unwrap();
+    let start_cutter = CurveString2::try_new(vec![line_segment(2, -1, 2, 1)]).unwrap();
+    let end_cutter = CurveString2::try_new(vec![line_segment(8, -1, 8, 1)]).unwrap();
+
+    let trim = curve
+        .trim_between_curve_intersections(&start_cutter, &end_cutter, &policy())
+        .unwrap();
+
+    assert!(trim.report().status().is_native_exact());
+    assert!(trim.report().blocker().is_none());
+    assert_eq!(trim.report().start_hits().len(), 1);
+    assert_eq!(trim.report().end_hits().len(), 1);
+    assert_eq!(trim.report().start_hits()[0].source_segment_index(), 0);
+    assert_eq!(trim.report().start_hits()[0].cutter_segment_index(), 0);
+    assert_eq!(trim.report().start_hits()[0].point(), &p(2, 0));
+    assert_eq!(
+        trim.report().start_hits()[0].kind(),
+        IntersectionKind::Crossing
+    );
+    assert_eq!(trim.report().end_hits()[0].point(), &p(8, 0));
+
+    let trim_report = trim
+        .report()
+        .trim_report()
+        .expect("curve trim should retain point trim report");
+    assert_eq!(trim_report.start().param(), &q(1, 5));
+    assert_eq!(trim_report.end().param(), &q(4, 5));
+    let trimmed = trim
+        .curve_string()
+        .expect("curve-intersection trim should materialize");
+    assert_eq!(trimmed.start(), Some(&p(2, 0)));
+    assert_eq!(trimmed.end(), Some(&p(8, 0)));
+}
+
+#[test]
+fn curve_string_trim_between_curve_intersections_reports_ambiguous_cutter_hits() {
+    let curve = CurveString2::try_new(vec![line_segment(0, 0, 10, 0)]).unwrap();
+    let ambiguous_cutter = CurveString2::try_new(vec![
+        line_segment(2, -1, 2, 1),
+        line_segment(2, 1, 8, 1),
+        line_segment(8, 1, 8, -1),
+    ])
+    .unwrap();
+    let end_cutter = CurveString2::try_new(vec![line_segment(9, -1, 9, 1)]).unwrap();
+
+    let trim = curve
+        .trim_between_curve_intersections(&ambiguous_cutter, &end_cutter, &policy())
+        .unwrap();
+
+    assert!(trim.curve_string().is_none());
+    assert!(trim.report().status().is_retained_evidence());
+    assert_eq!(trim.report().blocker(), Some(UncertaintyReason::Boundary));
+    assert_eq!(trim.report().start_hits().len(), 2);
+    assert_eq!(trim.report().end_hits().len(), 1);
+    assert!(trim.report().trim_report().is_none());
+}
+
+#[test]
+fn curve_string_trim_between_curve_intersections_reports_overlap_blocker() {
+    let curve = CurveString2::try_new(vec![line_segment(0, 0, 10, 0)]).unwrap();
+    let overlapping_cutter = CurveString2::try_new(vec![line_segment(2, 0, 4, 0)]).unwrap();
+    let end_cutter = CurveString2::try_new(vec![line_segment(8, -1, 8, 1)]).unwrap();
+
+    let trim = curve
+        .trim_between_curve_intersections(&overlapping_cutter, &end_cutter, &policy())
+        .unwrap();
+
+    assert!(trim.curve_string().is_none());
+    assert!(trim.report().status().is_retained_evidence());
+    assert_eq!(
+        trim.report().blocker(),
+        Some(UncertaintyReason::Unsupported)
+    );
+    assert!(trim.report().start_hits().is_empty());
+    assert_eq!(trim.report().end_hits().len(), 1);
+    assert!(trim.report().trim_report().is_none());
 }
 
 #[test]

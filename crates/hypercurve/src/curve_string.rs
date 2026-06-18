@@ -7,8 +7,9 @@ use hyperreal::Real;
 use crate::bbox::{Aabb2, aabbs_decided_disjoint, decided_segment_aabb};
 use crate::classify::{compare_reals, in_closed_unit_interval, is_zero};
 use crate::{
-    BulgeVertex2, CircularArc2, Classification, CurveError, CurvePolicy, CurveResult, LineSeg2,
-    ParamRange, Point2, RetainedTopologyStatus, Segment2, SegmentIntersection, UncertaintyReason,
+    ArcArcIntersection, BulgeVertex2, CircularArc2, Classification, CurveError, CurvePolicy,
+    CurveResult, IntersectionKind, LineArcIntersection, LineLineIntersection, LineSeg2, ParamRange,
+    Point2, RetainedTopologyStatus, Segment2, SegmentIntersection, UncertaintyReason,
 };
 
 /// One segment-pair event between two curve strings.
@@ -112,6 +113,32 @@ pub struct CurveStringTrimReport2 {
 pub struct CurveStringTrimResult2 {
     curve_string: Option<CurveString2>,
     report: CurveStringTrimReport2,
+}
+
+/// One point witness where a cutter intersects the trimmed curve string.
+#[derive(Clone, Debug, PartialEq)]
+pub struct CurveStringCurveTrimHit2 {
+    source_segment_index: usize,
+    cutter_segment_index: usize,
+    point: Point2,
+    kind: IntersectionKind,
+}
+
+/// Report for a trim whose boundaries come from cutter curve intersections.
+#[derive(Clone, Debug, PartialEq)]
+pub struct CurveStringCurveTrimReport2 {
+    start_hits: Vec<CurveStringCurveTrimHit2>,
+    end_hits: Vec<CurveStringCurveTrimHit2>,
+    trim_report: Option<CurveStringTrimReport2>,
+    status: RetainedTopologyStatus,
+    blocker: Option<UncertaintyReason>,
+}
+
+/// Result of a report-bearing trim by two cutter curve strings.
+#[derive(Clone, Debug, PartialEq)]
+pub struct CurveStringCurveTrimResult2 {
+    curve_string: Option<CurveString2>,
+    report: CurveStringCurveTrimReport2,
 }
 
 /// An ordered sequence of connected native segments.
@@ -454,6 +481,65 @@ impl CurveString2 {
         self.trim_between_located_points(start, end, policy)
     }
 
+    /// Trims this open curve string between exact point intersections with two cutters.
+    ///
+    /// Each cutter must contribute exactly one point witness on this curve
+    /// string. No-hit, multiple-hit, overlap, and uncertain cutter relations are
+    /// retained in the report as blockers. Successful materialization delegates
+    /// to [`CurveString2::trim_between_points`], so line and arc fragments are
+    /// emitted only through the same point-bearing exactness checks.
+    pub fn trim_between_curve_intersections(
+        &self,
+        start_cutter: &Self,
+        end_cutter: &Self,
+        policy: &CurvePolicy,
+    ) -> CurveResult<CurveStringCurveTrimResult2> {
+        let start_events = self.intersect_curve_string(start_cutter, policy)?;
+        let end_events = self.intersect_curve_string(end_cutter, policy)?;
+        let start_extraction = extract_curve_trim_hits(&start_events);
+        let end_extraction = extract_curve_trim_hits(&end_events);
+
+        let start_hit = match single_curve_trim_hit(&start_extraction) {
+            Ok(hit) => hit,
+            Err((status, blocker)) => {
+                return Ok(blocked_curve_trim_result(
+                    start_extraction.hits,
+                    end_extraction.hits,
+                    None,
+                    status,
+                    Some(blocker),
+                ));
+            }
+        };
+        let end_hit = match single_curve_trim_hit(&end_extraction) {
+            Ok(hit) => hit,
+            Err((status, blocker)) => {
+                return Ok(blocked_curve_trim_result(
+                    start_extraction.hits,
+                    end_extraction.hits,
+                    None,
+                    status,
+                    Some(blocker),
+                ));
+            }
+        };
+
+        let trim = self.trim_between_points(&start_hit.point, &end_hit.point, policy)?;
+        let status = trim.report().status();
+        let blocker = trim.report().blocker();
+        let curve_string = trim.curve_string().cloned();
+        Ok(CurveStringCurveTrimResult2 {
+            curve_string,
+            report: CurveStringCurveTrimReport2 {
+                start_hits: vec![start_hit],
+                end_hits: vec![end_hit],
+                trim_report: Some(trim.report().clone()),
+                status,
+                blocker,
+            },
+        })
+    }
+
     fn trim_between_located_points(
         &self,
         start: LocatedTrimPoint2,
@@ -715,6 +801,72 @@ impl CurveStringTrimResult2 {
     }
 }
 
+impl CurveStringCurveTrimHit2 {
+    /// Returns the source segment index on the trimmed curve string.
+    pub const fn source_segment_index(&self) -> usize {
+        self.source_segment_index
+    }
+
+    /// Returns the cutter segment index that produced this hit.
+    pub const fn cutter_segment_index(&self) -> usize {
+        self.cutter_segment_index
+    }
+
+    /// Returns the exact intersection point witness.
+    pub const fn point(&self) -> &Point2 {
+        &self.point
+    }
+
+    /// Returns the local intersection kind.
+    pub const fn kind(&self) -> IntersectionKind {
+        self.kind
+    }
+}
+
+impl CurveStringCurveTrimReport2 {
+    /// Returns retained start-cutter point witnesses.
+    pub fn start_hits(&self) -> &[CurveStringCurveTrimHit2] {
+        &self.start_hits
+    }
+
+    /// Returns retained end-cutter point witnesses.
+    pub fn end_hits(&self) -> &[CurveStringCurveTrimHit2] {
+        &self.end_hits
+    }
+
+    /// Returns the downstream point-bearing trim report, when attempted.
+    pub const fn trim_report(&self) -> Option<&CurveStringTrimReport2> {
+        self.trim_report.as_ref()
+    }
+
+    /// Returns trim-by-curve materialization status.
+    pub const fn status(&self) -> RetainedTopologyStatus {
+        self.status
+    }
+
+    /// Returns the exact blocker for non-materialized trims.
+    pub const fn blocker(&self) -> Option<UncertaintyReason> {
+        self.blocker
+    }
+}
+
+impl CurveStringCurveTrimResult2 {
+    /// Returns the materialized native trim, if supported.
+    pub const fn curve_string(&self) -> Option<&CurveString2> {
+        self.curve_string.as_ref()
+    }
+
+    /// Consumes this result and returns the materialized native trim, if any.
+    pub fn into_curve_string(self) -> Option<CurveString2> {
+        self.curve_string
+    }
+
+    /// Returns the retained curve-intersection trim report.
+    pub const fn report(&self) -> &CurveStringCurveTrimReport2 {
+        &self.report
+    }
+}
+
 enum SegmentTrimMaterialization {
     Materialized(Segment2),
     SkippedEmpty,
@@ -726,6 +878,112 @@ enum SegmentTrimMaterialization {
 struct LocatedTrimPoint2 {
     trim_point: CurveStringTrimPoint2,
     point: Point2,
+}
+
+struct CurveTrimHitExtraction {
+    hits: Vec<CurveStringCurveTrimHit2>,
+    blocker: Option<(RetainedTopologyStatus, UncertaintyReason)>,
+}
+
+fn extract_curve_trim_hits(events: &[CurveStringIntersection]) -> CurveTrimHitExtraction {
+    let mut hits = Vec::new();
+    let mut blocker = None;
+    for event in events {
+        match &event.relation {
+            SegmentIntersection::LineLine(LineLineIntersection::None) => {}
+            SegmentIntersection::LineLine(LineLineIntersection::Point { point, kind, .. }) => {
+                hits.push(curve_trim_hit(event, point.clone(), *kind));
+            }
+            SegmentIntersection::LineLine(LineLineIntersection::Overlap { .. }) => {
+                blocker = Some((
+                    RetainedTopologyStatus::Unsupported,
+                    UncertaintyReason::Unsupported,
+                ));
+            }
+            SegmentIntersection::LineLine(LineLineIntersection::Uncertain { reason }) => {
+                blocker = Some((RetainedTopologyStatus::Unresolved, *reason));
+            }
+            SegmentIntersection::LineArc { result, .. } => match result {
+                LineArcIntersection::None => {}
+                LineArcIntersection::Point(hit) => {
+                    hits.push(curve_trim_hit(event, hit.point.clone(), hit.kind));
+                }
+                LineArcIntersection::TwoPoints { first, second } => {
+                    hits.push(curve_trim_hit(event, first.point.clone(), first.kind));
+                    hits.push(curve_trim_hit(event, second.point.clone(), second.kind));
+                }
+                LineArcIntersection::Uncertain { reason } => {
+                    blocker = Some((RetainedTopologyStatus::Unresolved, *reason));
+                }
+            },
+            SegmentIntersection::ArcArc(ArcArcIntersection::None) => {}
+            SegmentIntersection::ArcArc(ArcArcIntersection::Point(hit)) => {
+                hits.push(curve_trim_hit(event, hit.point.clone(), hit.kind));
+            }
+            SegmentIntersection::ArcArc(ArcArcIntersection::TwoPoints { first, second }) => {
+                hits.push(curve_trim_hit(event, first.point.clone(), first.kind));
+                hits.push(curve_trim_hit(event, second.point.clone(), second.kind));
+            }
+            SegmentIntersection::ArcArc(ArcArcIntersection::Overlap { .. }) => {
+                blocker = Some((
+                    RetainedTopologyStatus::Unsupported,
+                    UncertaintyReason::Unsupported,
+                ));
+            }
+            SegmentIntersection::ArcArc(ArcArcIntersection::Uncertain { reason }) => {
+                blocker = Some((RetainedTopologyStatus::Unresolved, *reason));
+            }
+        }
+    }
+
+    CurveTrimHitExtraction { hits, blocker }
+}
+
+fn curve_trim_hit(
+    event: &CurveStringIntersection,
+    point: Point2,
+    kind: IntersectionKind,
+) -> CurveStringCurveTrimHit2 {
+    CurveStringCurveTrimHit2 {
+        source_segment_index: event.a_segment_index,
+        cutter_segment_index: event.b_segment_index,
+        point,
+        kind,
+    }
+}
+
+fn single_curve_trim_hit(
+    extraction: &CurveTrimHitExtraction,
+) -> Result<CurveStringCurveTrimHit2, (RetainedTopologyStatus, UncertaintyReason)> {
+    if let Some(blocker) = extraction.blocker {
+        return Err(blocker);
+    }
+    match extraction.hits.len() {
+        1 => Ok(extraction.hits[0].clone()),
+        _ => Err((
+            RetainedTopologyStatus::Unsupported,
+            UncertaintyReason::Boundary,
+        )),
+    }
+}
+
+fn blocked_curve_trim_result(
+    start_hits: Vec<CurveStringCurveTrimHit2>,
+    end_hits: Vec<CurveStringCurveTrimHit2>,
+    trim_report: Option<CurveStringTrimReport2>,
+    status: RetainedTopologyStatus,
+    blocker: Option<UncertaintyReason>,
+) -> CurveStringCurveTrimResult2 {
+    CurveStringCurveTrimResult2 {
+        curve_string: None,
+        report: CurveStringCurveTrimReport2 {
+            start_hits,
+            end_hits,
+            trim_report,
+            status,
+            blocker,
+        },
+    }
 }
 
 fn validate_trim_point(
