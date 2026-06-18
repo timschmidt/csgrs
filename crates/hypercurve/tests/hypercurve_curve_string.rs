@@ -779,6 +779,18 @@ fn curve_string_link_output_reports_preserve_mixed_segment_kinds() {
         linked.report().kind(),
         CurveStringLinkKind2::FirstEndToSecondStart
     );
+    assert_eq!(
+        linked.report().first_segment_kind_counts(),
+        SegmentKindCounts { lines: 1, arcs: 0 }
+    );
+    assert_eq!(
+        linked.report().second_segment_kind_counts(),
+        SegmentKindCounts { lines: 0, arcs: 1 }
+    );
+    assert_eq!(
+        linked.report().output_segment_kind_counts(),
+        Some(SegmentKindCounts { lines: 1, arcs: 1 })
+    );
     assert_eq!(linked.report().output_segments().len(), 2);
     assert_eq!(
         linked.report().output_segments()[0].source_segment_kind(),
@@ -889,6 +901,15 @@ fn curve_string_link_returns_none_for_certified_disconnected_inputs() {
     assert_eq!(reported.report().disconnected_endpoint_pair_count(), 4);
     assert_eq!(reported.report().unresolved_endpoint_pair_count(), 0);
     assert_eq!(reported.report().output_segment_count(), None);
+    assert_eq!(
+        reported.report().first_segment_kind_counts(),
+        SegmentKindCounts { lines: 1, arcs: 0 }
+    );
+    assert_eq!(
+        reported.report().second_segment_kind_counts(),
+        SegmentKindCounts { lines: 1, arcs: 0 }
+    );
+    assert_eq!(reported.report().output_segment_kind_counts(), None);
     assert!(reported.report().output_segments().is_empty());
     assert!(reported.report().status().is_retained_evidence());
     assert_eq!(
@@ -919,6 +940,14 @@ fn curve_string_ordered_link_materializes_multistep_chain() {
     assert_eq!(linked.report().materialized_link_step_count(), 2);
     assert_eq!(linked.report().blocked_link_step_count(), 0);
     assert_eq!(linked.report().output_segment_count(), Some(3));
+    assert_eq!(
+        linked.report().source_segment_kind_counts(),
+        SegmentKindCounts { lines: 3, arcs: 0 }
+    );
+    assert_eq!(
+        linked.report().output_segment_kind_counts(),
+        Some(SegmentKindCounts { lines: 3, arcs: 0 })
+    );
     assert_eq!(linked.report().output_source_indices(), &[0, 1, 2]);
     assert_eq!(linked.report().steps().len(), 2);
     assert_eq!(
@@ -1094,6 +1123,11 @@ fn curve_string_ordered_link_reports_disconnected_step() {
     assert_eq!(linked.report().materialized_link_step_count(), 0);
     assert_eq!(linked.report().blocked_link_step_count(), 1);
     assert_eq!(linked.report().output_segment_count(), None);
+    assert_eq!(
+        linked.report().source_segment_kind_counts(),
+        SegmentKindCounts { lines: 2, arcs: 0 }
+    );
+    assert_eq!(linked.report().output_segment_kind_counts(), None);
     assert_eq!(linked.report().output_source_indices(), &[0]);
     assert_eq!(linked.report().steps().len(), 1);
     assert_eq!(
@@ -1115,6 +1149,15 @@ fn curve_string_ordered_link_reports_disconnected_step() {
     assert_eq!(step_attempt.disconnected_endpoint_pair_count(), 4);
     assert_eq!(step_attempt.unresolved_endpoint_pair_count(), 0);
     assert_eq!(step_attempt.output_segment_count(), None);
+    assert_eq!(
+        step_attempt.first_segment_kind_counts(),
+        SegmentKindCounts { lines: 1, arcs: 0 }
+    );
+    assert_eq!(
+        step_attempt.second_segment_kind_counts(),
+        SegmentKindCounts { lines: 1, arcs: 0 }
+    );
+    assert_eq!(step_attempt.output_segment_kind_counts(), None);
     assert_eq!(step_attempt.blocker(), Some(UncertaintyReason::Boundary));
     assert!(linked.report().steps()[0].link_report().is_none());
 }
@@ -1145,6 +1188,14 @@ fn curve_string_connect_end_to_start_inserts_exact_line() {
     );
     assert_eq!(connected.report().first_segment_count(), 1);
     assert_eq!(connected.report().second_segment_count(), 1);
+    assert_eq!(
+        connected.report().first_segment_kind_counts(),
+        SegmentKindCounts { lines: 1, arcs: 0 }
+    );
+    assert_eq!(
+        connected.report().second_segment_kind_counts(),
+        SegmentKindCounts { lines: 1, arcs: 0 }
+    );
     assert_eq!(connected.report().endpoint_pair_count(), 1);
     assert_eq!(connected.report().endpoint_reports().len(), 1);
     assert_eq!(
@@ -1160,6 +1211,10 @@ fn curve_string_connect_end_to_start_inserts_exact_line() {
     );
     assert_eq!(connected.report().connector_segment_index(), Some(1));
     assert_eq!(connected.report().output_segment_count(), Some(3));
+    assert_eq!(
+        connected.report().output_segment_kind_counts(),
+        Some(SegmentKindCounts { lines: 3, arcs: 0 })
+    );
     assert_eq!(connected.report().output_segments().len(), 3);
     assert_eq!(
         connected.report().output_segments()[0].source(),
@@ -1229,6 +1284,18 @@ fn curve_string_connect_output_reports_preserve_mixed_segment_kinds() {
     let report = connected.report();
 
     assert!(report.status().is_native_exact());
+    assert_eq!(
+        report.first_segment_kind_counts(),
+        SegmentKindCounts { lines: 0, arcs: 1 }
+    );
+    assert_eq!(
+        report.second_segment_kind_counts(),
+        SegmentKindCounts { lines: 1, arcs: 0 }
+    );
+    assert_eq!(
+        report.output_segment_kind_counts(),
+        Some(SegmentKindCounts { lines: 2, arcs: 1 })
+    );
     assert_eq!(report.output_segments().len(), 3);
     assert_eq!(
         report.output_segments()[0].source(),
@@ -1419,6 +1486,15 @@ fn curve_string_connect_nearest_endpoints_reports_tie_boundary() {
     assert_eq!(connected.report().unresolved_endpoint_pair_count(), 0);
     assert_eq!(connected.report().connector_segment_index(), None);
     assert_eq!(connected.report().output_segment_count(), None);
+    assert_eq!(
+        connected.report().first_segment_kind_counts(),
+        SegmentKindCounts { lines: 1, arcs: 0 }
+    );
+    assert_eq!(
+        connected.report().second_segment_kind_counts(),
+        SegmentKindCounts { lines: 1, arcs: 0 }
+    );
+    assert_eq!(connected.report().output_segment_kind_counts(), None);
     assert!(connected.report().output_segments().is_empty());
 }
 
@@ -1444,6 +1520,15 @@ fn curve_string_connect_end_to_start_blocks_already_connected_endpoints() {
     assert_eq!(connected.report().unresolved_endpoint_pair_count(), 0);
     assert_eq!(connected.report().connector_segment_index(), None);
     assert_eq!(connected.report().output_segment_count(), None);
+    assert_eq!(
+        connected.report().first_segment_kind_counts(),
+        SegmentKindCounts { lines: 1, arcs: 0 }
+    );
+    assert_eq!(
+        connected.report().second_segment_kind_counts(),
+        SegmentKindCounts { lines: 1, arcs: 0 }
+    );
+    assert_eq!(connected.report().output_segment_kind_counts(), None);
     assert_eq!(
         connected.report().endpoint_report().status(),
         CurveStringEndpointConnectionStatus2::NativeExact
