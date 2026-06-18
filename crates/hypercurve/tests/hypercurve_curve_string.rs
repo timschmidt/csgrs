@@ -1,6 +1,8 @@
 use hypercurve::{
-    BulgeVertex2, CircularArc2, Contour2, CurveError, CurvePolicy, CurveString2,
+    BulgeVertex2, CircularArc2, Classification, Contour2, CurveError, CurvePolicy, CurveString2,
+    CurveStringEndpoint2, CurveStringEndpointConnectionStatus2, CurveStringLinkKind2,
     LineArcIntersection, LineArcOrder, LineSeg2, Point2, Real, Segment2, SegmentIntersection,
+    UncertaintyReason,
 };
 
 fn s(value: i32) -> Real {
@@ -49,6 +51,125 @@ fn curve_string_and_contour_reject_forged_zero_length_segments() {
         ])
         .unwrap_err(),
         CurveError::ZeroLengthLine
+    );
+}
+
+#[test]
+fn curve_string_endpoint_report_certifies_exact_connection() {
+    let first = CurveString2::try_new(vec![line_segment(0, 0, 1, 0)]).unwrap();
+    let second = CurveString2::try_new(vec![line_segment(1, 0, 2, 0)]).unwrap();
+
+    let report = first
+        .endpoint_connection_report(
+            &second,
+            CurveStringEndpoint2::End,
+            CurveStringEndpoint2::Start,
+            &policy(),
+        )
+        .unwrap();
+
+    assert_eq!(report.first_endpoint(), CurveStringEndpoint2::End);
+    assert_eq!(report.second_endpoint(), CurveStringEndpoint2::Start);
+    assert_eq!(
+        report.status(),
+        CurveStringEndpointConnectionStatus2::NativeExact
+    );
+    assert!(report.topology_status().is_native_exact());
+    assert_eq!(report.distance_squared(), &s(0));
+}
+
+#[test]
+fn curve_string_link_materializes_unique_end_start_connection() {
+    let first = CurveString2::try_new(vec![line_segment(0, 0, 1, 0)]).unwrap();
+    let second = CurveString2::try_new(vec![line_segment(1, 0, 2, 0)]).unwrap();
+
+    let linked = match first.link_connected_endpoints(&second, &policy()).unwrap() {
+        Classification::Decided(Some(linked)) => linked,
+        other => panic!("expected decided linked curve string, got {other:?}"),
+    };
+
+    assert_eq!(
+        linked.report().kind(),
+        CurveStringLinkKind2::FirstEndToSecondStart
+    );
+    assert_eq!(linked.report().first_segment_count(), 1);
+    assert_eq!(linked.report().second_segment_count(), 1);
+    assert!(linked.report().status().is_native_exact());
+    assert_eq!(linked.curve_string().len(), 2);
+    assert_eq!(linked.curve_string().start(), Some(&p(0, 0)));
+    assert_eq!(linked.curve_string().end(), Some(&p(2, 0)));
+}
+
+#[test]
+fn curve_string_link_reverses_second_curve_when_endpoints_match_end_to_end() {
+    let first = CurveString2::try_new(vec![line_segment(0, 0, 1, 0)]).unwrap();
+    let second = CurveString2::try_new(vec![line_segment(2, 0, 1, 0)]).unwrap();
+
+    let linked = match first.link_connected_endpoints(&second, &policy()).unwrap() {
+        Classification::Decided(Some(linked)) => linked,
+        other => panic!("expected decided linked curve string, got {other:?}"),
+    };
+
+    assert_eq!(
+        linked.report().kind(),
+        CurveStringLinkKind2::FirstEndToSecondEnd
+    );
+    assert_eq!(linked.curve_string().start(), Some(&p(0, 0)));
+    assert_eq!(linked.curve_string().end(), Some(&p(2, 0)));
+    assert_eq!(linked.curve_string().segments()[1].start(), &p(1, 0));
+    assert_eq!(linked.curve_string().segments()[1].end(), &p(2, 0));
+}
+
+#[test]
+fn curve_string_link_returns_none_for_certified_disconnected_inputs() {
+    let first = CurveString2::try_new(vec![line_segment(0, 0, 1, 0)]).unwrap();
+    let second = CurveString2::try_new(vec![line_segment(3, 0, 4, 0)]).unwrap();
+
+    let disconnected = first
+        .endpoint_connection_report(
+            &second,
+            CurveStringEndpoint2::End,
+            CurveStringEndpoint2::Start,
+            &policy(),
+        )
+        .unwrap();
+
+    assert_eq!(
+        disconnected.status(),
+        CurveStringEndpointConnectionStatus2::Disconnected
+    );
+    assert_eq!(
+        first.link_connected_endpoints(&second, &policy()).unwrap(),
+        Classification::Decided(None)
+    );
+}
+
+#[test]
+fn curve_string_link_rejects_multiple_exact_endpoint_pairings() {
+    let first = CurveString2::try_new(vec![line_segment(0, 0, 1, 0)]).unwrap();
+    let second = CurveString2::try_new(vec![line_segment(1, 0, 0, 0)]).unwrap();
+
+    assert_eq!(
+        first.link_connected_endpoints(&second, &policy()).unwrap(),
+        Classification::Uncertain(UncertaintyReason::Boundary)
+    );
+}
+
+#[test]
+fn curve_string_endpoint_report_rejects_empty_unchecked_input() {
+    let empty = CurveString2::new_unchecked(Vec::new());
+    let nonempty = CurveString2::try_new(vec![line_segment(0, 0, 1, 0)]).unwrap();
+
+    assert_eq!(
+        empty
+            .endpoint_connection_report(
+                &nonempty,
+                CurveStringEndpoint2::End,
+                CurveStringEndpoint2::Start,
+                &policy(),
+            )
+            .unwrap_err(),
+        CurveError::EmptyCurveString
     );
 }
 

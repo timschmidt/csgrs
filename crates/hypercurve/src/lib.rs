@@ -138,7 +138,11 @@ pub use bspline::{
 pub use bulge::BulgeVertex2;
 pub use classify::{Classification, LineSide, UncertaintyReason};
 pub use contour::{Contour2, ContourPointLocation, FillRule};
-pub use curve_string::{CurveString2, CurveStringIntersection};
+pub use curve_string::{
+    CurveString2, CurveStringEndpoint2, CurveStringEndpointConnectionReport2,
+    CurveStringEndpointConnectionStatus2, CurveStringIntersection, CurveStringLinkKind2,
+    CurveStringLinkReport2, LinkedCurveString2,
+};
 pub use error::{CurveError, CurveResult};
 pub use events::{
     ContourIntersection, ContourIntersectionSet, ContourOperand, ContourOverlapIntersection,
