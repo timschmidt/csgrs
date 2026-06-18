@@ -101,6 +101,9 @@ fn contour_closure_report_materializes_closed_curve_string() {
 
     assert!(closed.report().status().is_native_exact());
     assert_eq!(closed.report().source_segment_count(), 4);
+    assert_eq!(closed.report().source_start_point(), &p(0, 0));
+    assert_eq!(closed.report().source_end_point(), &p(0, 0));
+    assert_eq!(closed.report().endpoint_distance_squared(), &s(0));
     assert_eq!(closed.report().fill_rule(), FillRule::EvenOdd);
     assert_eq!(closed.report().blocker(), None);
     let contour = closed.contour().unwrap();
@@ -121,6 +124,9 @@ fn contour_closure_report_blocks_certified_open_curve_string() {
     assert!(closed.contour().is_none());
     assert!(closed.report().status().is_retained_evidence());
     assert_eq!(closed.report().source_segment_count(), 2);
+    assert_eq!(closed.report().source_start_point(), &p(0, 0));
+    assert_eq!(closed.report().source_end_point(), &p(2, 0));
+    assert_eq!(closed.report().endpoint_distance_squared(), &s(4));
     assert_eq!(closed.report().fill_rule(), FillRule::NonZero);
     assert_eq!(closed.report().blocker(), Some(UncertaintyReason::Boundary));
 }

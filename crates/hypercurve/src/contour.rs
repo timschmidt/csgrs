@@ -37,6 +37,9 @@ pub enum ContourPointLocation {
 #[derive(Clone, Debug, PartialEq)]
 pub struct ContourClosureReport2 {
     source_segment_count: usize,
+    source_start_point: Point2,
+    source_end_point: Point2,
+    endpoint_distance_squared: Real,
     fill_rule: FillRule,
     status: RetainedTopologyStatus,
     blocker: Option<UncertaintyReason>,
@@ -152,11 +155,17 @@ impl Contour2 {
         fill_rule: FillRule,
     ) -> CurveResult<ContourClosureResult2> {
         let source_segment_count = curve.len();
-        match closed_curve_string_status(&curve)? {
+        let source_start_point = curve.start().ok_or(CurveError::EmptyCurveString)?.clone();
+        let source_end_point = curve.end().ok_or(CurveError::EmptyCurveString)?.clone();
+        let endpoint_distance_squared = source_start_point.distance_squared(&source_end_point);
+        match closure_status_from_distance(&endpoint_distance_squared) {
             Classification::Decided(()) => Ok(ContourClosureResult2 {
                 contour: Some(Self { curve, fill_rule }),
                 report: ContourClosureReport2 {
                     source_segment_count,
+                    source_start_point,
+                    source_end_point,
+                    endpoint_distance_squared,
                     fill_rule,
                     status: RetainedTopologyStatus::NativeExact,
                     blocker: None,
@@ -166,6 +175,9 @@ impl Contour2 {
                 contour: None,
                 report: ContourClosureReport2 {
                     source_segment_count,
+                    source_start_point,
+                    source_end_point,
+                    endpoint_distance_squared,
                     fill_rule,
                     status: retained_status_for_contour_closure_blocker(reason),
                     blocker: Some(reason),
@@ -745,6 +757,21 @@ impl ContourClosureReport2 {
         self.source_segment_count
     }
 
+    /// Returns the exact source curve-string start point tested for closure.
+    pub const fn source_start_point(&self) -> &Point2 {
+        &self.source_start_point
+    }
+
+    /// Returns the exact source curve-string end point tested for closure.
+    pub const fn source_end_point(&self) -> &Point2 {
+        &self.source_end_point
+    }
+
+    /// Returns exact squared endpoint distance evidence for closure.
+    pub const fn endpoint_distance_squared(&self) -> &Real {
+        &self.endpoint_distance_squared
+    }
+
     /// Returns the fill rule requested for the contour.
     pub const fn fill_rule(&self) -> FillRule {
         self.fill_rule
@@ -1184,10 +1211,14 @@ fn validate_closed_curve_string(curve: &CurveString2) -> CurveResult<()> {
 fn closed_curve_string_status(curve: &CurveString2) -> CurveResult<Classification<()>> {
     let start = curve.start().ok_or(CurveError::EmptyCurveString)?;
     let end = curve.end().ok_or(CurveError::EmptyCurveString)?;
-    match start.distance_squared(end).zero_status() {
-        ZeroStatus::Zero => Ok(Classification::Decided(())),
-        ZeroStatus::NonZero => Ok(Classification::Uncertain(UncertaintyReason::Boundary)),
-        ZeroStatus::Unknown => Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+    Ok(closure_status_from_distance(&start.distance_squared(end)))
+}
+
+fn closure_status_from_distance(distance_squared: &Real) -> Classification<()> {
+    match distance_squared.zero_status() {
+        ZeroStatus::Zero => Classification::Decided(()),
+        ZeroStatus::NonZero => Classification::Uncertain(UncertaintyReason::Boundary),
+        ZeroStatus::Unknown => Classification::Uncertain(UncertaintyReason::RealSign),
     }
 }
 
