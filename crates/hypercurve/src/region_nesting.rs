@@ -105,6 +105,15 @@ pub struct RegionLineSegmentArrangedSourceReport2 {
     status: RetainedTopologyStatus,
 }
 
+/// Arranged segment endpoint reported by unordered region endpoint-graph checks.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum RegionLineSegmentArrangedEndpoint2 {
+    /// Start point of the arranged fragment.
+    Start,
+    /// End point of the arranged fragment.
+    End,
+}
+
 /// Report for constructing a region from unordered exact line segments.
 #[derive(Clone, Debug, PartialEq)]
 pub struct RegionLineSegmentRegionBuildReport2 {
@@ -124,6 +133,8 @@ pub struct RegionLineSegmentRegionBuildReport2 {
     endpoint_graph_max_structural_bucket_size: Option<usize>,
     endpoint_graph_dangling_endpoint_count: Option<usize>,
     endpoint_graph_branch_endpoint_count: Option<usize>,
+    endpoint_graph_blocker_arranged_segment_index: Option<usize>,
+    endpoint_graph_blocker_endpoint: Option<RegionLineSegmentArrangedEndpoint2>,
     attempted_endpoint_connection_count: usize,
     exact_endpoint_connection_count: usize,
     disconnected_endpoint_connection_count: usize,
@@ -339,6 +350,9 @@ impl Region2 {
                     endpoint_graph.dangling_endpoint_count,
                 ),
                 endpoint_graph_branch_endpoint_count: Some(endpoint_graph.branch_endpoint_count),
+                endpoint_graph_blocker_arranged_segment_index: endpoint_graph
+                    .blocker_arranged_segment_index,
+                endpoint_graph_blocker_endpoint: endpoint_graph.blocker_endpoint,
                 attempted_endpoint_connection_count: assembled
                     .counts
                     .attempted_endpoint_connection_count
@@ -508,6 +522,9 @@ impl Region2 {
                     endpoint_graph.dangling_endpoint_count,
                 ),
                 endpoint_graph_branch_endpoint_count: Some(endpoint_graph.branch_endpoint_count),
+                endpoint_graph_blocker_arranged_segment_index: endpoint_graph
+                    .blocker_arranged_segment_index,
+                endpoint_graph_blocker_endpoint: endpoint_graph.blocker_endpoint,
                 attempted_endpoint_connection_count: assembled
                     .counts
                     .attempted_endpoint_connection_count
@@ -990,6 +1007,18 @@ impl RegionLineSegmentRegionBuildReport2 {
         self.endpoint_graph_branch_endpoint_count
     }
 
+    /// Returns the arranged segment index of the first endpoint-graph blocker.
+    pub const fn endpoint_graph_blocker_arranged_segment_index(&self) -> Option<usize> {
+        self.endpoint_graph_blocker_arranged_segment_index
+    }
+
+    /// Returns the arranged endpoint of the first endpoint-graph blocker.
+    pub const fn endpoint_graph_blocker_endpoint(
+        &self,
+    ) -> Option<RegionLineSegmentArrangedEndpoint2> {
+        self.endpoint_graph_blocker_endpoint
+    }
+
     /// Returns endpoint pair comparisons attempted during ring assembly.
     pub const fn attempted_endpoint_connection_count(&self) -> usize {
         self.attempted_endpoint_connection_count
@@ -1084,6 +1113,8 @@ struct LineSegmentEndpointGraphReportParts {
     max_structural_bucket_size: usize,
     dangling_endpoint_count: usize,
     branch_endpoint_count: usize,
+    blocker_arranged_segment_index: Option<usize>,
+    blocker_endpoint: Option<RegionLineSegmentArrangedEndpoint2>,
 }
 
 #[derive(Clone, Debug, Default, PartialEq)]
@@ -1222,13 +1253,22 @@ fn validate_arranged_line_endpoint_graph(
             ) {
                 Classification::Decided(true) => exact_match_count += 1,
                 Classification::Decided(false) => {}
-                Classification::Uncertain(reason) => return Err((graph, counts, reason)),
+                Classification::Uncertain(reason) => {
+                    set_endpoint_graph_blocker(&mut graph, *endpoint);
+                    return Err((graph, counts, reason));
+                }
             }
         }
         match exact_match_count {
             1 => {}
-            0 => graph.dangling_endpoint_count += 1,
-            _ => graph.branch_endpoint_count += 1,
+            0 => {
+                graph.dangling_endpoint_count += 1;
+                set_endpoint_graph_blocker(&mut graph, *endpoint);
+            }
+            _ => {
+                graph.branch_endpoint_count += 1;
+                set_endpoint_graph_blocker(&mut graph, *endpoint);
+            }
         }
     }
 
@@ -1236,6 +1276,23 @@ fn validate_arranged_line_endpoint_graph(
         Err((graph, counts, UncertaintyReason::Boundary))
     } else {
         Ok((graph, counts))
+    }
+}
+
+fn set_endpoint_graph_blocker(
+    graph: &mut LineSegmentEndpointGraphReportParts,
+    endpoint: ArrangedLineEndpoint,
+) {
+    if graph.blocker_arranged_segment_index.is_none() {
+        graph.blocker_arranged_segment_index = Some(endpoint.segment_index);
+        graph.blocker_endpoint = Some(region_arranged_endpoint(endpoint.endpoint));
+    }
+}
+
+fn region_arranged_endpoint(endpoint: EndpointCandidate) -> RegionLineSegmentArrangedEndpoint2 {
+    match endpoint {
+        EndpointCandidate::Start => RegionLineSegmentArrangedEndpoint2::Start,
+        EndpointCandidate::End => RegionLineSegmentArrangedEndpoint2::End,
     }
 }
 
@@ -1325,13 +1382,22 @@ fn validate_arranged_native_endpoint_graph(
             ) {
                 Classification::Decided(true) => exact_match_count += 1,
                 Classification::Decided(false) => {}
-                Classification::Uncertain(reason) => return Err((graph, counts, reason)),
+                Classification::Uncertain(reason) => {
+                    set_endpoint_graph_blocker(&mut graph, *endpoint);
+                    return Err((graph, counts, reason));
+                }
             }
         }
         match exact_match_count {
             1 => {}
-            0 => graph.dangling_endpoint_count += 1,
-            _ => graph.branch_endpoint_count += 1,
+            0 => {
+                graph.dangling_endpoint_count += 1;
+                set_endpoint_graph_blocker(&mut graph, *endpoint);
+            }
+            _ => {
+                graph.branch_endpoint_count += 1;
+                set_endpoint_graph_blocker(&mut graph, *endpoint);
+            }
         }
     }
 
@@ -2312,6 +2378,10 @@ fn blocked_line_segment_region_report(
             .map(|report| report.dangling_endpoint_count),
         endpoint_graph_branch_endpoint_count: endpoint_graph_report
             .map(|report| report.branch_endpoint_count),
+        endpoint_graph_blocker_arranged_segment_index: endpoint_graph_report
+            .and_then(|report| report.blocker_arranged_segment_index),
+        endpoint_graph_blocker_endpoint: endpoint_graph_report
+            .and_then(|report| report.blocker_endpoint),
         attempted_endpoint_connection_count: report.counts.attempted_endpoint_connection_count,
         exact_endpoint_connection_count: report.counts.exact_endpoint_connection_count,
         disconnected_endpoint_connection_count: report
