@@ -311,6 +311,39 @@ fn curve_string_remove_adjacent_reversed_duplicates_reports_removed_pairs() {
             .status()
             .is_native_exact()
     );
+    assert_eq!(deduped.report().retained_segments().len(), 2);
+    assert_eq!(
+        deduped.report().retained_segments()[0].source_segment_index(),
+        0
+    );
+    assert_eq!(
+        deduped.report().retained_segments()[0].output_segment_index(),
+        0
+    );
+    assert_eq!(
+        deduped.report().retained_segments()[0].output_start_point(),
+        &p(0, 0)
+    );
+    assert_eq!(
+        deduped.report().retained_segments()[0].output_end_point(),
+        &p(1, 0)
+    );
+    assert_eq!(
+        deduped.report().retained_segments()[1].source_segment_index(),
+        3
+    );
+    assert_eq!(
+        deduped.report().retained_segments()[1].output_segment_index(),
+        1
+    );
+    assert_eq!(
+        deduped.report().retained_segments()[1].output_start_point(),
+        &p(1, 0)
+    );
+    assert_eq!(
+        deduped.report().retained_segments()[1].output_end_point(),
+        &p(3, 0)
+    );
     let curve = deduped
         .curve_string()
         .expect("partial exact duplicate removal should materialize");
@@ -341,6 +374,7 @@ fn curve_string_remove_adjacent_reversed_duplicates_reports_empty_output_blocker
             .retained_source_segment_indices()
             .is_empty()
     );
+    assert!(deduped.report().retained_segments().is_empty());
     assert_eq!(deduped.report().removed_pairs().len(), 2);
     assert_eq!(
         deduped.report().blocker(),

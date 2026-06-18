@@ -243,12 +243,23 @@ pub struct CurveStringReversedDuplicatePairReport2 {
     status: RetainedTopologyStatus,
 }
 
+/// One retained source segment emitted by adjacent reversed-duplicate removal.
+#[derive(Clone, Debug, PartialEq)]
+pub struct CurveStringDeduplicateRetainedSegmentReport2 {
+    output_segment_index: usize,
+    source_segment_index: usize,
+    output_start_point: Point2,
+    output_end_point: Point2,
+    status: RetainedTopologyStatus,
+}
+
 /// Report for exact adjacent reversed-duplicate removal on an open curve string.
 #[derive(Clone, Debug, PartialEq)]
 pub struct CurveStringDeduplicateReport2 {
     source_segment_count: usize,
     output_segment_count: Option<usize>,
     retained_source_segment_indices: Vec<usize>,
+    retained_segments: Vec<CurveStringDeduplicateRetainedSegmentReport2>,
     removed_pairs: Vec<CurveStringReversedDuplicatePairReport2>,
     status: RetainedTopologyStatus,
     blocker: Option<UncertaintyReason>,
@@ -1038,6 +1049,7 @@ impl CurveString2 {
                     source_segment_count: self.len(),
                     output_segment_count: None,
                     retained_source_segment_indices: Vec::new(),
+                    retained_segments: Vec::new(),
                     removed_pairs,
                     status: RetainedTopologyStatus::Unsupported,
                     blocker: Some(UncertaintyReason::Boundary),
@@ -1049,6 +1061,19 @@ impl CurveString2 {
             .iter()
             .map(|(source_index, _)| *source_index)
             .collect::<Vec<_>>();
+        let retained_segments = retained
+            .iter()
+            .enumerate()
+            .map(|(output_segment_index, (source_segment_index, segment))| {
+                CurveStringDeduplicateRetainedSegmentReport2 {
+                    output_segment_index,
+                    source_segment_index: *source_segment_index,
+                    output_start_point: segment.start().clone(),
+                    output_end_point: segment.end().clone(),
+                    status: RetainedTopologyStatus::NativeExact,
+                }
+            })
+            .collect::<Vec<_>>();
         let segments = retained
             .into_iter()
             .map(|(_, segment)| segment)
@@ -1059,6 +1084,7 @@ impl CurveString2 {
                 source_segment_count: self.len(),
                 output_segment_count: Some(curve_string.len()),
                 retained_source_segment_indices,
+                retained_segments,
                 removed_pairs,
                 status: RetainedTopologyStatus::NativeExact,
                 blocker: None,
@@ -5137,6 +5163,33 @@ impl CurveStringReversedDuplicatePairReport2 {
     }
 }
 
+impl CurveStringDeduplicateRetainedSegmentReport2 {
+    /// Returns the output segment index emitted for this retained source segment.
+    pub const fn output_segment_index(&self) -> usize {
+        self.output_segment_index
+    }
+
+    /// Returns the retained source segment index.
+    pub const fn source_segment_index(&self) -> usize {
+        self.source_segment_index
+    }
+
+    /// Returns the exact output start point for this retained segment.
+    pub const fn output_start_point(&self) -> &Point2 {
+        &self.output_start_point
+    }
+
+    /// Returns the exact output end point for this retained segment.
+    pub const fn output_end_point(&self) -> &Point2 {
+        &self.output_end_point
+    }
+
+    /// Returns retained topology status for this emitted segment.
+    pub const fn status(&self) -> RetainedTopologyStatus {
+        self.status
+    }
+}
+
 impl CurveStringDeduplicateReport2 {
     /// Returns the source curve-string segment count captured by this report.
     pub const fn source_segment_count(&self) -> usize {
@@ -5151,6 +5204,11 @@ impl CurveStringDeduplicateReport2 {
     /// Returns source segment indices retained in output order.
     pub fn retained_source_segment_indices(&self) -> &[usize] {
         &self.retained_source_segment_indices
+    }
+
+    /// Returns retained output segment evidence in output order.
+    pub fn retained_segments(&self) -> &[CurveStringDeduplicateRetainedSegmentReport2] {
+        &self.retained_segments
     }
 
     /// Returns exact reversed duplicate pairs removed by this operation.
