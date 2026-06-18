@@ -231,6 +231,35 @@ pub enum ExactI64MeshInputReadiness {
     FatalDiagnostic,
 }
 
+impl LossyF64MeshInputReadiness {
+    /// Return whether the input can proceed to exact mesh construction.
+    pub const fn is_ready(self) -> bool {
+        matches!(self, Self::Ready)
+    }
+
+    /// Return whether the retained report is internally inconsistent.
+    pub const fn is_invalid_report(self) -> bool {
+        matches!(self, Self::InvalidReport)
+    }
+
+    /// Return whether at least one primitive-float coordinate is invalid.
+    pub const fn is_invalid_coordinate(self) -> bool {
+        matches!(self, Self::InvalidCoordinate)
+    }
+}
+
+impl ExactI64MeshInputReadiness {
+    /// Return whether the input can proceed to exact mesh construction.
+    pub const fn is_ready(self) -> bool {
+        matches!(self, Self::Ready)
+    }
+
+    /// Return whether the retained report is internally inconsistent.
+    pub const fn is_invalid_report(self) -> bool {
+        matches!(self, Self::InvalidReport)
+    }
+}
+
 impl LossyF64MeshInputReport {
     /// Audit a flat primitive-float triangle mesh input stream.
     pub fn inspect(pos: &[f64], idx: &[usize]) -> Self {

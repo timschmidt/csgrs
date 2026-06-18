@@ -1,10 +1,9 @@
 use hyperlimit::{Point3, SourceProvenance};
 use hypermesh::{
     ExactBooleanOperation, ExactBooleanRequest, ExactBooleanResult, ExactBooleanWorkspace,
-    ExactBoundaryBooleanPolicy, ExactI64MeshInputReadiness, ExactMesh, ExactMeshConsumerDomain,
-    ExactOutputTriangleOrientation, ExactRegionSelection, ExactRegularizationPolicy,
-    ExactReportFreshness, LossyF64MeshInputReadiness, MeshArtifactBlocker, MeshArtifactFaceRecord,
-    MeshArtifactManifest, MeshArtifactVertexRecord, ValidationPolicy,
+    ExactBoundaryBooleanPolicy, ExactMesh, ExactMeshConsumerDomain, ExactOutputTriangleOrientation,
+    ExactRegionSelection, ExactRegularizationPolicy, ExactReportFreshness, MeshArtifactBlocker,
+    MeshArtifactFaceRecord, MeshArtifactManifest, MeshArtifactVertexRecord, ValidationPolicy,
 };
 use hyperreal::Real;
 
@@ -639,7 +638,7 @@ fn exact_mesh_construction_retains_valid_public_facts() {
         &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
     );
     let readiness = report.readiness();
-    assert_eq!(readiness, ExactI64MeshInputReadiness::Ready);
+    assert!(readiness.is_ready());
     assert!(report.edge_ready());
 
     let mut missing_integer_evidence = report.clone();
@@ -649,10 +648,7 @@ fn exact_mesh_construction_retains_valid_public_facts() {
             .validate()
             .is_err_and(|error| error.is_exact_coordinate_count_mismatch())
     );
-    assert_eq!(
-        missing_integer_evidence.readiness(),
-        ExactI64MeshInputReadiness::InvalidReport
-    );
+    assert!(missing_integer_evidence.readiness().is_invalid_report());
 
     let mut missing_checked_indices = report.clone();
     missing_checked_indices.checked_indices -= 1;
@@ -682,7 +678,7 @@ fn exact_mesh_construction_retains_valid_public_facts() {
         &[0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0],
         &[0, 1, 2],
     );
-    assert_eq!(lossy_report.readiness(), LossyF64MeshInputReadiness::Ready);
+    assert!(lossy_report.readiness().is_ready());
 
     let mut missing_dyadic_evidence = lossy_report.clone();
     missing_dyadic_evidence.exact_dyadic_coordinates -= 1;
@@ -691,17 +687,13 @@ fn exact_mesh_construction_retains_valid_public_facts() {
             .validate()
             .is_err_and(|error| error.is_exact_coordinate_count_mismatch())
     );
-    assert_eq!(
-        missing_dyadic_evidence.readiness(),
-        LossyF64MeshInputReadiness::InvalidReport
-    );
+    assert!(missing_dyadic_evidence.readiness().is_invalid_report());
 
     let mut missing_float_diagnostic =
         ExactMesh::inspect_f64_triangles(&[0.0, f64::NAN, 0.0], &[0, 1, 2]);
-    assert_eq!(
-        missing_float_diagnostic.readiness(),
-        LossyF64MeshInputReadiness::InvalidCoordinate
-    );
+    assert!(missing_float_diagnostic
+        .readiness()
+        .is_invalid_coordinate());
     missing_float_diagnostic.diagnostics.clear();
     assert!(
         missing_float_diagnostic
