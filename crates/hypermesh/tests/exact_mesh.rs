@@ -2191,12 +2191,17 @@ fn exact_open_surface_arrangement_is_publicly_replayable() {
             &right,
             ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
         );
-        assert!(
-            result.is_open_surface_arrangement_for(operation),
-            "{operation:?}: {result:?}"
-        );
         result.validate().unwrap();
         result.validate_against_sources(&left, &right).unwrap();
+        result
+            .validate_operation_against_sources(
+                &left,
+                &right,
+                operation,
+                ValidationPolicy::ALLOW_BOUNDARY,
+                ExactBoundaryBooleanPolicy::Reject,
+            )
+            .unwrap();
         assert_eq!(
             result.freshness_against_sources(&left, &right),
             ExactReportFreshness::Current
@@ -2432,12 +2437,17 @@ fn exact_selected_region_boolean_is_publicly_replayable() {
         ),
     );
 
-    assert!(
-        result.is_selected_regions_for(ExactRegionSelection::KeepAll),
-        "{result:?}"
-    );
     result.validate().unwrap();
     result.validate_against_sources(&left, &right).unwrap();
+    result
+        .validate_operation_against_sources(
+            &left,
+            &right,
+            ExactBooleanOperation::SelectedRegions(selection),
+            validation,
+            ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
     assert_eq!(
         result.freshness_against_sources(&left, &right),
         ExactReportFreshness::Current
