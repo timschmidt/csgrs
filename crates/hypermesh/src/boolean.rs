@@ -6850,12 +6850,13 @@ fn materialize_volumetric_coplanar_boundary_closure_boolean_from_graph(
     else {
         return Ok(None);
     };
-    let mut result = certified_shortcut_result(
+    let result = certified_shortcut_result(
         mesh,
         operation,
         ExactBooleanShortcutKind::ArrangementCellComplex,
     );
-    retain_arrangement_gate_reports_from_graph(&mut result, graph, left, right, operation)?;
+    let result =
+        result_with_arrangement_gate_reports_from_graph(result, graph, left, right, operation)?;
     if result
         .validate_operation_against_sources(
             left,
@@ -6874,13 +6875,13 @@ fn materialize_volumetric_coplanar_boundary_closure_boolean_from_graph(
     Ok(Some((result, closure_report)))
 }
 
-fn retain_arrangement_gate_reports_from_graph(
-    result: &mut ExactBooleanResult,
+fn result_with_arrangement_gate_reports_from_graph(
+    result: ExactBooleanResult,
     graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
-) -> Result<(), MeshError> {
+) -> Result<ExactBooleanResult, MeshError> {
     let arrangement = ExactArrangement::from_intersection_graph_with_policy(
         graph.clone(),
         left,
@@ -6906,9 +6907,7 @@ fn retain_arrangement_gate_reports_from_graph(
                 format!("exact region ownership report failed: {blocker:?}"),
             ))
         })?;
-    result.topology_assembly_report = Some(topology_report);
-    result.region_ownership_report = Some(ownership_report);
-    Ok(())
+    Ok(result.with_gate_reports(Some(topology_report), Some(ownership_report)))
 }
 
 pub(crate) fn materialize_volumetric_coplanar_boundary_closure_output(
@@ -7012,12 +7011,14 @@ fn materialize_arrangement_volumetric_split_cell_result_from_graph(
             operation,
             validation,
         )? {
-            let mut result = certified_shortcut_result(
+            let result = certified_shortcut_result(
                 mesh,
                 operation,
                 ExactBooleanShortcutKind::ArrangementCellComplex,
             );
-            retain_arrangement_gate_reports_from_graph(&mut result, graph, left, right, operation)?;
+            let result = result_with_arrangement_gate_reports_from_graph(
+                result, graph, left, right, operation,
+            )?;
             if result.validate_against_sources(left, right).is_err() {
                 return Ok(None);
             }
@@ -12693,14 +12694,13 @@ mod tests {
         );
         let labeled = arrangement.label_regions(labeling_policy).unwrap();
         let ownership_report = labeled.region_ownership_report(&left, &right, labeling_policy);
-        let mut selected = labeled
+        let selected = labeled
             .select_with_policy(
                 ExactBooleanOperation::Union,
                 ExactRegularizationPolicy::REGULARIZED_SOLID,
             )
-            .unwrap();
-        selected.topology_assembly_report = Some(topology_report);
-        selected.region_ownership_report = Some(ownership_report);
+            .unwrap()
+            .with_gate_reports(topology_report, ownership_report);
         let simplified = selected
             .simplify_exact_with_policy(ExactRegularizationPolicy::REGULARIZED_SOLID)
             .unwrap();
