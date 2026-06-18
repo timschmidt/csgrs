@@ -418,6 +418,7 @@ pub struct CurveStringExtendReport2 {
     endpoint: CurveStringEndpoint2,
     source_segment_index: usize,
     source_segment_kind: SegmentKind,
+    output_segment_index: Option<usize>,
     output_segment_kind: Option<SegmentKind>,
     source_endpoint_point: Point2,
     target_point: Point2,
@@ -2531,6 +2532,7 @@ impl CurveString2 {
                 endpoint,
                 source_segment_index,
                 source_segment_kind: SegmentKind::Line,
+                output_segment_index: Some(source_segment_index),
                 output_segment_kind: Some(SegmentKind::Line),
                 source_endpoint_point: line_endpoint_point(line, endpoint).clone(),
                 target_point,
@@ -2707,6 +2709,7 @@ impl CurveString2 {
                 endpoint,
                 source_segment_index,
                 source_segment_kind: SegmentKind::Arc,
+                output_segment_index: Some(source_segment_index),
                 output_segment_kind: Some(SegmentKind::Arc),
                 source_endpoint_point: arc_endpoint_point(arc, endpoint).clone(),
                 target_point,
@@ -3767,6 +3770,11 @@ impl CurveStringExtendReport2 {
     /// Returns the primitive family of the endpoint segment before extension.
     pub const fn source_segment_kind(&self) -> SegmentKind {
         self.source_segment_kind
+    }
+
+    /// Returns the output segment index carrying the extended geometry, when materialized.
+    pub const fn output_segment_index(&self) -> Option<usize> {
+        self.output_segment_index
     }
 
     /// Returns the primitive family of the extended output segment, when materialized.
@@ -5130,6 +5138,7 @@ fn blocked_extend_result(
             source_segment_kind: curve_string.segments()[source_segment_index]
                 .structural_facts()
                 .kind,
+            output_segment_index: None,
             output_segment_kind: None,
             source_endpoint_point: curve_string
                 .endpoint(endpoint)
