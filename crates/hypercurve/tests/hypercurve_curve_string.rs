@@ -328,6 +328,8 @@ fn curve_string_link_materializes_unique_end_start_connection() {
         linked.report().kind(),
         CurveStringLinkKind2::FirstEndToSecondStart
     );
+    assert_eq!(linked.report().endpoint_report().first_point(), &p(1, 0));
+    assert_eq!(linked.report().endpoint_report().second_point(), &p(1, 0));
     assert_eq!(linked.report().first_segment_count(), 1);
     assert_eq!(linked.report().second_segment_count(), 1);
     assert_eq!(linked.report().output_segments().len(), 2);
@@ -403,6 +405,8 @@ fn curve_string_link_returns_none_for_certified_disconnected_inputs() {
         disconnected.status(),
         CurveStringEndpointConnectionStatus2::Disconnected
     );
+    assert_eq!(disconnected.first_point(), &p(1, 0));
+    assert_eq!(disconnected.second_point(), &p(3, 0));
     assert_eq!(
         first.link_connected_endpoints(&second, &policy()).unwrap(),
         Classification::Decided(None)
@@ -553,6 +557,11 @@ fn curve_string_connect_end_to_start_inserts_exact_line() {
     assert_eq!(
         connected.report().endpoint_report().status(),
         CurveStringEndpointConnectionStatus2::Disconnected
+    );
+    assert_eq!(connected.report().endpoint_report().first_point(), &p(1, 0));
+    assert_eq!(
+        connected.report().endpoint_report().second_point(),
+        &p(3, 1)
     );
     assert_eq!(connected.report().first_segment_count(), 1);
     assert_eq!(connected.report().second_segment_count(), 1);

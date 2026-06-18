@@ -79,6 +79,8 @@ pub enum CurveStringEndpointConnectionStatus2 {
 pub struct CurveStringEndpointConnectionReport2 {
     first_endpoint: CurveStringEndpoint2,
     second_endpoint: CurveStringEndpoint2,
+    first_point: Point2,
+    second_point: Point2,
     distance_squared: crate::Real,
     status: CurveStringEndpointConnectionStatus2,
 }
@@ -590,6 +592,8 @@ impl CurveString2 {
         Ok(CurveStringEndpointConnectionReport2 {
             first_endpoint,
             second_endpoint,
+            first_point: first_point.clone(),
+            second_point: second_point.clone(),
             distance_squared,
             status,
         })
@@ -4526,6 +4530,16 @@ impl CurveStringEndpointConnectionReport2 {
     /// Returns the tested endpoint on the second curve string.
     pub const fn second_endpoint(&self) -> CurveStringEndpoint2 {
         self.second_endpoint
+    }
+
+    /// Returns the exact point witness on the first curve string endpoint.
+    pub const fn first_point(&self) -> &Point2 {
+        &self.first_point
+    }
+
+    /// Returns the exact point witness on the second curve string endpoint.
+    pub const fn second_point(&self) -> &Point2 {
+        &self.second_point
     }
 
     /// Returns exact squared endpoint distance evidence.
