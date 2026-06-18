@@ -13,9 +13,9 @@ use crate::{
     BooleanBoundaryLoopSet, BooleanOp, CircularArc2, CircularArc2Facts, Classification, Contour2,
     ContourIntersectionSet, ContourPointLocation, CurvePolicy, CurveResult, CurveString2,
     CurveStringCurveTrimQueryPath2, CurveStringCurveTrimResult2, CurveStringIntersection, FillRule,
-    LineSeg2, LineSeg2Facts, LineSide, Point2, Region2, RegionContourIntersection,
-    RegionContourKey, RegionContourRole, RegionIntersectionSet, RegionPointLocation, RegionSide,
-    RegionView2, Segment2, SegmentIntersection, UncertaintyReason,
+    LineSeg2, LineSeg2Facts, LineSide, Point2, Region2, RegionBooleanResult2,
+    RegionContourIntersection, RegionContourKey, RegionContourRole, RegionIntersectionSet,
+    RegionPointLocation, RegionSide, RegionView2, Segment2, SegmentIntersection, UncertaintyReason,
 };
 
 /// Prepared point-line classifier for a fixed [`LineSeg2`].
@@ -902,6 +902,24 @@ impl<'a> PreparedRegionView2<'a> {
         crate::prepared_boolean::boolean_region_between_prepared(self, other, op, fill_rule, policy)
     }
 
+    /// Computes a role-assigned boolean region and retains materialization evidence.
+    ///
+    /// This is the report-bearing counterpart to
+    /// [`PreparedRegionView2::boolean_region`]. Prepared caches still only
+    /// prune candidates; the final report comes from checked boundary contours
+    /// and exact contour nesting.
+    pub fn boolean_region_with_report(
+        &self,
+        other: &PreparedRegionView2<'_>,
+        op: BooleanOp,
+        fill_rule: FillRule,
+        policy: &CurvePolicy,
+    ) -> CurveResult<RegionBooleanResult2> {
+        crate::prepared_boolean::boolean_region_between_prepared_with_report(
+            self, other, op, fill_rule, policy,
+        )
+    }
+
     /// Computes a role-assigned boolean region against an ordinary region view.
     ///
     /// The right operand is prepared transiently, after which the same prepared
@@ -917,6 +935,18 @@ impl<'a> PreparedRegionView2<'a> {
     ) -> CurveResult<Classification<Region2>> {
         let other = PreparedRegionView2::from_region_view(other, policy);
         self.boolean_region(&other, op, fill_rule, policy)
+    }
+
+    /// Computes a report-bearing boolean region against an ordinary region view.
+    pub fn boolean_region_with_report_against_region(
+        &self,
+        other: &RegionView2<'_>,
+        op: BooleanOp,
+        fill_rule: FillRule,
+        policy: &CurvePolicy,
+    ) -> CurveResult<RegionBooleanResult2> {
+        let other = PreparedRegionView2::from_region_view(other, policy);
+        self.boolean_region_with_report(&other, op, fill_rule, policy)
     }
 }
 
@@ -1022,6 +1052,18 @@ impl<'a> RegionView2<'a> {
     ) -> CurveResult<Classification<Region2>> {
         let this = PreparedRegionView2::from_region_view(self, policy);
         this.boolean_region(other, op, fill_rule, policy)
+    }
+
+    /// Computes a report-bearing boolean region against a prepared right operand.
+    pub fn boolean_region_with_report_against_prepared_region(
+        &self,
+        other: &PreparedRegionView2<'_>,
+        op: BooleanOp,
+        fill_rule: FillRule,
+        policy: &CurvePolicy,
+    ) -> CurveResult<RegionBooleanResult2> {
+        let this = PreparedRegionView2::from_region_view(self, policy);
+        this.boolean_region_with_report(other, op, fill_rule, policy)
     }
 }
 

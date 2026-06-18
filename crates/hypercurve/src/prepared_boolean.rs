@@ -9,8 +9,8 @@
 use crate::prepared::{PreparedContourView2, PreparedRegionView2};
 use crate::{
     BooleanBoundaryLoopSet, BooleanFragmentSelection, BooleanOp, Classification, Contour2,
-    CurvePolicy, CurveResult, FillRule, Region2, RegionFragmentSet, RegionIntersectionSet,
-    RegionPointLocation, RegionSide,
+    CurvePolicy, CurveResult, FillRule, Region2, RegionBooleanResult2, RegionFragmentSet,
+    RegionIntersectionSet, RegionPointLocation, RegionSide,
 };
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -315,6 +315,37 @@ pub(crate) fn boolean_region_between_prepared(
         Classification::Decided(contours) => Region2::from_boundary_contours(contours, policy),
         Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
     }
+}
+
+pub(crate) fn boolean_region_between_prepared_with_report(
+    first: &PreparedRegionView2<'_>,
+    second: &PreparedRegionView2<'_>,
+    op: BooleanOp,
+    fill_rule: FillRule,
+    policy: &CurvePolicy,
+) -> CurveResult<RegionBooleanResult2> {
+    let first_view = first.as_region_view();
+    let second_view = second.as_region_view();
+    let contours =
+        match boolean_boundary_contours_between_prepared(first, second, op, fill_rule, policy)? {
+            Classification::Decided(contours) => contours,
+            Classification::Uncertain(reason) => {
+                return Ok(crate::region_boolean::blocked_region_boolean_result(
+                    &first_view,
+                    &second_view,
+                    op,
+                    crate::region_boolean::retained_status_for_boolean_blocker(reason),
+                    reason,
+                ));
+            }
+        };
+    crate::region_boolean::region_boolean_result_from_boundary_contours(
+        &first_view,
+        &second_view,
+        op,
+        contours,
+        policy,
+    )
 }
 
 fn xor_boundary_contours_by_prepared_region(

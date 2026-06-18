@@ -10,10 +10,34 @@ use crate::{
     Aabb2, BooleanBoundaryFragmentSet, BooleanBoundaryLoopSet, BooleanFragmentAction,
     BooleanFragmentClassification, BooleanFragmentSelection, BooleanOp, BulgeVertex2,
     Classification, Contour2, ContourIntersection, CurveError, CurvePolicy, CurveResult, FillRule,
-    IntersectionKind, Point2, Real, Region2, RegionFragmentSet, RegionIntersectionSet,
-    RegionPointLocation, RegionSide, RegionView2, Segment2, UncertaintyReason,
+    IntersectionKind, Point2, Real, Region2, RegionBoundaryContourBuildReport2, RegionFragmentSet,
+    RegionIntersectionSet, RegionPointLocation, RegionSide, RegionView2, RetainedTopologyStatus,
+    Segment2, UncertaintyReason,
 };
 use std::cmp::Ordering;
+
+/// Report for a closed region boolean materialization.
+#[derive(Clone, Debug, PartialEq)]
+pub struct RegionBooleanReport2 {
+    op: BooleanOp,
+    first_material_contour_count: usize,
+    first_hole_contour_count: usize,
+    second_material_contour_count: usize,
+    second_hole_contour_count: usize,
+    boundary_contour_count: Option<usize>,
+    result_material_contour_count: Option<usize>,
+    result_hole_contour_count: Option<usize>,
+    boundary_build_report: Option<RegionBoundaryContourBuildReport2>,
+    status: RetainedTopologyStatus,
+    blocker: Option<UncertaintyReason>,
+}
+
+/// Result of report-bearing closed region boolean materialization.
+#[derive(Clone, Debug, PartialEq)]
+pub struct RegionBooleanResult2 {
+    region: Option<Region2>,
+    report: RegionBooleanReport2,
+}
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum BoundaryContactKind {
@@ -460,6 +484,18 @@ impl Region2 {
         self.as_view()
             .boolean_region(&other.as_view(), op, fill_rule, policy)
     }
+
+    /// Computes a role-assigned boolean region and retains materialization evidence.
+    pub fn boolean_region_with_report(
+        &self,
+        other: &Self,
+        op: BooleanOp,
+        fill_rule: FillRule,
+        policy: &CurvePolicy,
+    ) -> CurveResult<RegionBooleanResult2> {
+        self.as_view()
+            .boolean_region_with_report(&other.as_view(), op, fill_rule, policy)
+    }
 }
 
 impl RegionView2<'_> {
@@ -519,6 +555,95 @@ impl RegionView2<'_> {
         policy: &CurvePolicy,
     ) -> CurveResult<Classification<Region2>> {
         boolean_region_between(self, other, op, fill_rule, policy)
+    }
+
+    /// Computes a role-assigned boolean region and retains materialization evidence.
+    ///
+    /// The result uses the checked boundary-contour boolean path and the
+    /// report-bearing contour nesting pass, so callers can audit output contour
+    /// counts, final material/hole role assignment, and blockers.
+    pub fn boolean_region_with_report(
+        &self,
+        other: &RegionView2<'_>,
+        op: BooleanOp,
+        fill_rule: FillRule,
+        policy: &CurvePolicy,
+    ) -> CurveResult<RegionBooleanResult2> {
+        boolean_region_between_with_report(self, other, op, fill_rule, policy)
+    }
+}
+
+impl RegionBooleanReport2 {
+    /// Returns the requested boolean operation.
+    pub const fn op(&self) -> BooleanOp {
+        self.op
+    }
+
+    /// Returns the first operand material contour count.
+    pub const fn first_material_contour_count(&self) -> usize {
+        self.first_material_contour_count
+    }
+
+    /// Returns the first operand hole contour count.
+    pub const fn first_hole_contour_count(&self) -> usize {
+        self.first_hole_contour_count
+    }
+
+    /// Returns the second operand material contour count.
+    pub const fn second_material_contour_count(&self) -> usize {
+        self.second_material_contour_count
+    }
+
+    /// Returns the second operand hole contour count.
+    pub const fn second_hole_contour_count(&self) -> usize {
+        self.second_hole_contour_count
+    }
+
+    /// Returns checked output boundary contour count when available.
+    pub const fn boundary_contour_count(&self) -> Option<usize> {
+        self.boundary_contour_count
+    }
+
+    /// Returns material contour count when a boolean region materialized.
+    pub const fn result_material_contour_count(&self) -> Option<usize> {
+        self.result_material_contour_count
+    }
+
+    /// Returns hole contour count when a boolean region materialized.
+    pub const fn result_hole_contour_count(&self) -> Option<usize> {
+        self.result_hole_contour_count
+    }
+
+    /// Returns final boundary-contour role assignment evidence, if available.
+    pub const fn boundary_build_report(&self) -> Option<&RegionBoundaryContourBuildReport2> {
+        self.boundary_build_report.as_ref()
+    }
+
+    /// Returns boolean-region materialization status.
+    pub const fn status(&self) -> RetainedTopologyStatus {
+        self.status
+    }
+
+    /// Returns the exact blocker for non-materialized boolean attempts.
+    pub const fn blocker(&self) -> Option<UncertaintyReason> {
+        self.blocker
+    }
+}
+
+impl RegionBooleanResult2 {
+    /// Returns the materialized boolean region, if construction succeeded.
+    pub const fn region(&self) -> Option<&Region2> {
+        self.region.as_ref()
+    }
+
+    /// Consumes this result and returns the materialized boolean region.
+    pub fn into_region(self) -> Option<Region2> {
+        self.region
+    }
+
+    /// Returns retained boolean materialization evidence.
+    pub const fn report(&self) -> &RegionBooleanReport2 {
+        &self.report
     }
 }
 
@@ -796,6 +921,96 @@ pub(crate) fn boolean_region_between(
     match boolean_boundary_contours_between(first, second, op, fill_rule, policy)? {
         Classification::Decided(contours) => Region2::from_boundary_contours(contours, policy),
         Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
+    }
+}
+
+pub(crate) fn boolean_region_between_with_report(
+    first: &RegionView2<'_>,
+    second: &RegionView2<'_>,
+    op: BooleanOp,
+    fill_rule: FillRule,
+    policy: &CurvePolicy,
+) -> CurveResult<RegionBooleanResult2> {
+    let contours = match boolean_boundary_contours_between(first, second, op, fill_rule, policy)? {
+        Classification::Decided(contours) => contours,
+        Classification::Uncertain(reason) => {
+            return Ok(blocked_region_boolean_result(
+                first,
+                second,
+                op,
+                retained_status_for_boolean_blocker(reason),
+                reason,
+            ));
+        }
+    };
+    region_boolean_result_from_boundary_contours(first, second, op, contours, policy)
+}
+
+pub(crate) fn region_boolean_result_from_boundary_contours(
+    first: &RegionView2<'_>,
+    second: &RegionView2<'_>,
+    op: BooleanOp,
+    contours: Vec<Contour2>,
+    policy: &CurvePolicy,
+) -> CurveResult<RegionBooleanResult2> {
+    let boundary_contour_count = contours.len();
+    let built = Region2::from_boundary_contours_with_report(contours, policy)?;
+    let status = built.report().status();
+    let blocker = built.report().blocker();
+    let result_material_contour_count = built.report().material_contour_count();
+    let result_hole_contour_count = built.report().hole_contour_count();
+    let boundary_build_report = built.report().clone();
+    Ok(RegionBooleanResult2 {
+        region: built.into_region(),
+        report: RegionBooleanReport2 {
+            op,
+            first_material_contour_count: first.material_contours().len(),
+            first_hole_contour_count: first.hole_contours().len(),
+            second_material_contour_count: second.material_contours().len(),
+            second_hole_contour_count: second.hole_contours().len(),
+            boundary_contour_count: Some(boundary_contour_count),
+            result_material_contour_count,
+            result_hole_contour_count,
+            boundary_build_report: Some(boundary_build_report),
+            status,
+            blocker,
+        },
+    })
+}
+
+pub(crate) fn blocked_region_boolean_result(
+    first: &RegionView2<'_>,
+    second: &RegionView2<'_>,
+    op: BooleanOp,
+    status: RetainedTopologyStatus,
+    blocker: UncertaintyReason,
+) -> RegionBooleanResult2 {
+    RegionBooleanResult2 {
+        region: None,
+        report: RegionBooleanReport2 {
+            op,
+            first_material_contour_count: first.material_contours().len(),
+            first_hole_contour_count: first.hole_contours().len(),
+            second_material_contour_count: second.material_contours().len(),
+            second_hole_contour_count: second.hole_contours().len(),
+            boundary_contour_count: None,
+            result_material_contour_count: None,
+            result_hole_contour_count: None,
+            boundary_build_report: None,
+            status,
+            blocker: Some(blocker),
+        },
+    }
+}
+
+pub(crate) fn retained_status_for_boolean_blocker(
+    reason: UncertaintyReason,
+) -> RetainedTopologyStatus {
+    match reason {
+        UncertaintyReason::Boundary | UncertaintyReason::Unsupported => {
+            RetainedTopologyStatus::Unsupported
+        }
+        _ => RetainedTopologyStatus::Unresolved,
     }
 }
 

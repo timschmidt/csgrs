@@ -105,6 +105,78 @@ fn assert_boolean_samples(
 }
 
 #[test]
+fn boolean_region_report_retains_boundary_role_assignment() {
+    let first = region(&[(0.0, 0.0, 4.0, 4.0)], &[]);
+    let second = region(&[(2.0, -1.0, 6.0, 3.0)], &[]);
+
+    let built = first
+        .boolean_region_with_report(&second, BooleanOp::Union, FillRule::NonZero, &policy())
+        .unwrap();
+    let report = built.report();
+
+    assert!(report.status().is_native_exact());
+    assert_eq!(report.op(), BooleanOp::Union);
+    assert_eq!(report.first_material_contour_count(), 1);
+    assert_eq!(report.first_hole_contour_count(), 0);
+    assert_eq!(report.second_material_contour_count(), 1);
+    assert_eq!(report.second_hole_contour_count(), 0);
+    assert_eq!(report.boundary_contour_count(), Some(1));
+    assert_eq!(report.result_material_contour_count(), Some(1));
+    assert_eq!(report.result_hole_contour_count(), Some(0));
+    assert_eq!(report.blocker(), None);
+
+    let boundary_report = report.boundary_build_report().unwrap();
+    assert_eq!(boundary_report.source_contour_count(), 1);
+    assert_eq!(boundary_report.role_reports().len(), 1);
+    assert_eq!(
+        boundary_report.role_reports()[0].role(),
+        hypercurve::RegionBoundaryContourRole2::Material
+    );
+
+    let result = built.region().unwrap();
+    assert!(inside(result, 1.0, 1.0));
+    assert!(inside(result, 3.0, 1.0));
+    assert!(inside(result, 5.0, 1.0));
+    assert!(!inside(result, 7.0, 1.0));
+}
+
+#[test]
+fn prepared_boolean_region_report_matches_plain_materialization() {
+    let first = region(&[(0.0, 0.0, 4.0, 4.0)], &[]);
+    let second = region(&[(2.0, -1.0, 6.0, 3.0)], &[]);
+    let prepared_second = second.prepare_topology_queries(&policy());
+
+    let built = first
+        .as_view()
+        .boolean_region_with_report_against_prepared_region(
+            &prepared_second,
+            BooleanOp::Intersection,
+            FillRule::NonZero,
+            &policy(),
+        )
+        .unwrap();
+    let plain = first
+        .boolean_region_with_report(
+            &second,
+            BooleanOp::Intersection,
+            FillRule::NonZero,
+            &policy(),
+        )
+        .unwrap();
+
+    assert!(built.report().status().is_native_exact());
+    assert_eq!(built.report().boundary_contour_count(), Some(1));
+    assert_eq!(built.report().result_material_contour_count(), Some(1));
+    assert_eq!(built.report().result_hole_contour_count(), Some(0));
+    assert_eq!(
+        built.report().boundary_build_report(),
+        plain.report().boundary_build_report()
+    );
+    assert!(inside(built.region().unwrap(), 3.0, 1.0));
+    assert!(!inside(built.region().unwrap(), 1.0, 1.0));
+}
+
+#[test]
 fn pr59_multi_island_disjoint_identities() {
     let first = region(&[(0.0, 0.0, 10.0, 10.0), (20.0, 0.0, 30.0, 10.0)], &[]);
     let second = region(&[(100.0, 0.0, 110.0, 10.0)], &[]);
