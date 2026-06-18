@@ -3682,17 +3682,6 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
 /// Preflight a graph-backed exact boolean operation for a specific output
 /// validation policy.
 ///
-pub(crate) fn preflight_boolean_exact_request_from_graph(
-    graph: &super::graph::ExactIntersectionGraph,
-    left: &ExactMesh,
-    right: &ExactMesh,
-    request: ExactBooleanRequest,
-) -> Result<ExactBooleanPreflight, MeshError> {
-    preflight_boolean_exact_request_from_graph_with_retained_attempt(
-        graph, left, right, request, None,
-    )
-}
-
 pub(crate) fn preflight_boolean_exact_request_from_graph_with_retained_attempt(
     graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,

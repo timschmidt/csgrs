@@ -28,8 +28,8 @@ use super::boolean::{
     boundary_touching_report_from_graph, materialize_volumetric_coplanar_boundary_closure_output,
     no_materialized_boundary_output_report, not_named_planar_arrangement_report,
     open_surface_disjoint_report_from_graph, open_surface_disjoint_result_matches_sources,
-    planar_arrangement_report_from_graph, preflight_boolean_exact_request_from_graph,
-    refinement_report_from_graph, rematerialize_retained_arrangement_cell_complex_attempt,
+    planar_arrangement_report_from_graph, refinement_report_from_graph,
+    rematerialize_retained_arrangement_cell_complex_attempt,
     replay_boolean_exact_request_for_result_validation,
     replay_closed_same_surface_boolean_result_if_certified,
     replay_generic_arrangement_cell_complex_result, replay_open_surface_arrangement_result,
@@ -4235,14 +4235,7 @@ impl ExactBooleanPreflight {
         right: &ExactMesh,
         request: ExactBooleanRequest,
     ) -> Result<ExactBooleanPreflight, ExactReportValidationError> {
-        let replay = workspace_preflight_for_report_replay(left, right, request)?;
-        if self == &replay || !self.has_retained_exact_evidence() {
-            return Ok(replay);
-        }
-
-        let graph = validated_report_intersection_graph(left, right)?;
-        preflight_boolean_exact_request_from_graph(&graph, left, right, request)
-            .map_err(|_| ExactReportValidationError::SourceReplayMismatch)
+        workspace_preflight_for_report_replay(left, right, request)
     }
 
     /// Classify whether this retained preflight is fresh for the source meshes.
