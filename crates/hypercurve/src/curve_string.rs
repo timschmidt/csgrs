@@ -96,6 +96,24 @@ pub enum CurveStringLinkKind2 {
     FirstStartToSecondEnd,
 }
 
+/// Input curve string that contributed one linked output segment.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum CurveStringLinkSourceInput2 {
+    /// Segment came from the first input curve string.
+    First,
+    /// Segment came from the second input curve string.
+    Second,
+}
+
+/// Source provenance for one segment emitted by a link operation.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct CurveStringLinkOutputSegmentReport2 {
+    output_segment_index: usize,
+    source_input: CurveStringLinkSourceInput2,
+    source_segment_index: usize,
+    reversed: bool,
+}
+
 /// Report for an auto-link attempt between two open curve strings.
 #[derive(Clone, Debug, PartialEq)]
 pub struct CurveStringLinkReport2 {
@@ -103,6 +121,7 @@ pub struct CurveStringLinkReport2 {
     endpoint_report: CurveStringEndpointConnectionReport2,
     first_segment_count: usize,
     second_segment_count: usize,
+    output_segments: Vec<CurveStringLinkOutputSegmentReport2>,
     status: RetainedTopologyStatus,
 }
 
@@ -585,6 +604,7 @@ impl CurveString2 {
             endpoint_report,
             first_segment_count: self.len(),
             second_segment_count: other.len(),
+            output_segments: link_output_segment_reports(self.len(), other.len(), kind),
             status: RetainedTopologyStatus::NativeExact,
         };
         Ok(crate::Classification::Decided(Some(LinkedCurveString2 {
@@ -4271,9 +4291,36 @@ impl CurveStringLinkReport2 {
         self.second_segment_count
     }
 
+    /// Returns output segment source ownership in output order.
+    pub fn output_segments(&self) -> &[CurveStringLinkOutputSegmentReport2] {
+        &self.output_segments
+    }
+
     /// Returns the topology status of the materialized link.
     pub const fn status(&self) -> RetainedTopologyStatus {
         self.status
+    }
+}
+
+impl CurveStringLinkOutputSegmentReport2 {
+    /// Returns the linked output segment index described by this report.
+    pub const fn output_segment_index(&self) -> usize {
+        self.output_segment_index
+    }
+
+    /// Returns which input curve string contributed this output segment.
+    pub const fn source_input(&self) -> CurveStringLinkSourceInput2 {
+        self.source_input
+    }
+
+    /// Returns the contributing segment index within its source input.
+    pub const fn source_segment_index(&self) -> usize {
+        self.source_segment_index
+    }
+
+    /// Returns whether the source segment was reversed for output.
+    pub const fn reversed(&self) -> bool {
+        self.reversed
     }
 }
 
@@ -4678,6 +4725,91 @@ fn linked_curve_string(
     }
 
     CurveString2::try_new(segments)
+}
+
+fn link_output_segment_reports(
+    first_segment_count: usize,
+    second_segment_count: usize,
+    kind: CurveStringLinkKind2,
+) -> Vec<CurveStringLinkOutputSegmentReport2> {
+    let mut output_segments = Vec::with_capacity(first_segment_count + second_segment_count);
+    match kind {
+        CurveStringLinkKind2::FirstEndToSecondStart => {
+            push_link_output_segment_reports(
+                &mut output_segments,
+                CurveStringLinkSourceInput2::First,
+                0..first_segment_count,
+                false,
+            );
+            push_link_output_segment_reports(
+                &mut output_segments,
+                CurveStringLinkSourceInput2::Second,
+                0..second_segment_count,
+                false,
+            );
+        }
+        CurveStringLinkKind2::FirstEndToSecondEnd => {
+            push_link_output_segment_reports(
+                &mut output_segments,
+                CurveStringLinkSourceInput2::First,
+                0..first_segment_count,
+                false,
+            );
+            push_link_output_segment_reports(
+                &mut output_segments,
+                CurveStringLinkSourceInput2::Second,
+                (0..second_segment_count).rev(),
+                true,
+            );
+        }
+        CurveStringLinkKind2::FirstStartToSecondStart => {
+            push_link_output_segment_reports(
+                &mut output_segments,
+                CurveStringLinkSourceInput2::First,
+                (0..first_segment_count).rev(),
+                true,
+            );
+            push_link_output_segment_reports(
+                &mut output_segments,
+                CurveStringLinkSourceInput2::Second,
+                0..second_segment_count,
+                false,
+            );
+        }
+        CurveStringLinkKind2::FirstStartToSecondEnd => {
+            push_link_output_segment_reports(
+                &mut output_segments,
+                CurveStringLinkSourceInput2::Second,
+                0..second_segment_count,
+                false,
+            );
+            push_link_output_segment_reports(
+                &mut output_segments,
+                CurveStringLinkSourceInput2::First,
+                0..first_segment_count,
+                false,
+            );
+        }
+    }
+    output_segments
+}
+
+fn push_link_output_segment_reports<I>(
+    output_segments: &mut Vec<CurveStringLinkOutputSegmentReport2>,
+    source_input: CurveStringLinkSourceInput2,
+    source_segment_indices: I,
+    reversed: bool,
+) where
+    I: IntoIterator<Item = usize>,
+{
+    for source_segment_index in source_segment_indices {
+        output_segments.push(CurveStringLinkOutputSegmentReport2 {
+            output_segment_index: output_segments.len(),
+            source_input,
+            source_segment_index,
+            reversed,
+        });
+    }
 }
 
 fn ordered_link_source_indices(

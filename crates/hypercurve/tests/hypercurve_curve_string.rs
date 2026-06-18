@@ -2,10 +2,10 @@ use hypercurve::{
     BulgeVertex2, CircularArc2, Classification, Contour2, CurveError, CurvePolicy, CurveString2,
     CurveStringChamferInputPath2, CurveStringCurveTrimQueryPath2, CurveStringEndpoint2,
     CurveStringEndpointConnectionStatus2, CurveStringFilletInputPath2,
-    CurveStringIntersectionQueryPath2, CurveStringLinkKind2, CurveStringRegionTrimQueryPath2,
-    CurveStringTrimPoint2, IntersectionKind, LineArcIntersection, LineArcOrder, LineSeg2, Point2,
-    Real, Region2, RegionContourRole, RegionPointLocation, Segment2, SegmentIntersection,
-    UncertaintyReason,
+    CurveStringIntersectionQueryPath2, CurveStringLinkKind2, CurveStringLinkSourceInput2,
+    CurveStringRegionTrimQueryPath2, CurveStringTrimPoint2, IntersectionKind, LineArcIntersection,
+    LineArcOrder, LineSeg2, Point2, Real, Region2, RegionContourRole, RegionPointLocation,
+    Segment2, SegmentIntersection, UncertaintyReason,
 };
 
 fn s(value: i32) -> Real {
@@ -330,6 +330,25 @@ fn curve_string_link_materializes_unique_end_start_connection() {
     );
     assert_eq!(linked.report().first_segment_count(), 1);
     assert_eq!(linked.report().second_segment_count(), 1);
+    assert_eq!(linked.report().output_segments().len(), 2);
+    assert_eq!(
+        linked.report().output_segments()[0].source_input(),
+        CurveStringLinkSourceInput2::First
+    );
+    assert_eq!(
+        linked.report().output_segments()[0].source_segment_index(),
+        0
+    );
+    assert!(!linked.report().output_segments()[0].reversed());
+    assert_eq!(
+        linked.report().output_segments()[1].source_input(),
+        CurveStringLinkSourceInput2::Second
+    );
+    assert_eq!(
+        linked.report().output_segments()[1].source_segment_index(),
+        0
+    );
+    assert!(!linked.report().output_segments()[1].reversed());
     assert!(linked.report().status().is_native_exact());
     assert_eq!(linked.curve_string().len(), 2);
     assert_eq!(linked.curve_string().start(), Some(&p(0, 0)));
@@ -350,6 +369,16 @@ fn curve_string_link_reverses_second_curve_when_endpoints_match_end_to_end() {
         linked.report().kind(),
         CurveStringLinkKind2::FirstEndToSecondEnd
     );
+    assert_eq!(linked.report().output_segments().len(), 2);
+    assert_eq!(
+        linked.report().output_segments()[1].source_input(),
+        CurveStringLinkSourceInput2::Second
+    );
+    assert_eq!(
+        linked.report().output_segments()[1].source_segment_index(),
+        0
+    );
+    assert!(linked.report().output_segments()[1].reversed());
     assert_eq!(linked.curve_string().start(), Some(&p(0, 0)));
     assert_eq!(linked.curve_string().end(), Some(&p(2, 0)));
     assert_eq!(linked.curve_string().segments()[1].start(), &p(1, 0));
@@ -406,6 +435,22 @@ fn curve_string_ordered_link_materializes_multistep_chain() {
         CurveStringLinkKind2::FirstEndToSecondStart
     );
     assert_eq!(
+        linked.report().steps()[0]
+            .link_report()
+            .unwrap()
+            .output_segments()[0]
+            .source_input(),
+        CurveStringLinkSourceInput2::First
+    );
+    assert_eq!(
+        linked.report().steps()[0]
+            .link_report()
+            .unwrap()
+            .output_segments()[1]
+            .source_input(),
+        CurveStringLinkSourceInput2::Second
+    );
+    assert_eq!(
         linked.report().steps()[1].accumulated_source_indices(),
         &[0, 1]
     );
@@ -439,6 +484,22 @@ fn curve_string_ordered_link_reports_reversed_accumulated_sources() {
     assert_eq!(
         linked.report().steps()[0].link_report().unwrap().kind(),
         CurveStringLinkKind2::FirstStartToSecondEnd
+    );
+    assert_eq!(
+        linked.report().steps()[0]
+            .link_report()
+            .unwrap()
+            .output_segments()[0]
+            .source_input(),
+        CurveStringLinkSourceInput2::Second
+    );
+    assert_eq!(
+        linked.report().steps()[0]
+            .link_report()
+            .unwrap()
+            .output_segments()[1]
+            .source_input(),
+        CurveStringLinkSourceInput2::First
     );
     let curve = linked
         .curve_string()
