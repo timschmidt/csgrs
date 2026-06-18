@@ -464,10 +464,14 @@ fn exact_boolean_evaluation_materializes_boundary_policy_shortcut_by_default() {
     assert!(evaluation.result.as_ref().is_some());
     assert_eq!(evaluation.preflight.required_blocker_kind(), None);
     assert!(evaluation.preflight.is_certified());
+    assert!(evaluation.preflight.is_certified_boundary_policy_shortcut());
     assert!(evaluation.preflight.has_retained_exact_evidence());
-    assert!(evaluation.result.as_ref().is_some_and(|result| {
-        result.is_boundary_policy_shortcut_for(ExactBooleanOperation::Union)
-    }));
+    let result = evaluation
+        .result
+        .as_ref()
+        .expect("boundary-policy evaluation should materialize");
+    result.validate().unwrap();
+    result.validate_against_sources(&left, &right).unwrap();
     let mut mixed_graph_snapshot = evaluation.clone();
     mixed_graph_snapshot
         .certifications
@@ -3066,12 +3070,17 @@ fn boundary_touching_policy_boolean_is_publicly_replayable() {
                 ExactBoundaryBooleanPolicy::PreserveSeparateShells,
             ),
         );
-        assert!(
-            result.is_boundary_policy_shortcut_for(operation),
-            "{operation:?}: {result:?}"
-        );
         result.validate().unwrap();
         result.validate_against_sources(&left, &right).unwrap();
+        result
+            .validate_operation_against_sources(
+                &left,
+                &right,
+                operation,
+                ValidationPolicy::ALLOW_BOUNDARY,
+                ExactBoundaryBooleanPolicy::PreserveSeparateShells,
+            )
+            .unwrap();
         assert_eq!(
             result.freshness_against_sources(&left, &right),
             ExactReportFreshness::Current
@@ -6111,10 +6120,9 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
         ),
     );
     default_result.validate().unwrap();
-    assert!(
-        default_result.is_boundary_policy_shortcut_for(ExactBooleanOperation::Union),
-        "{default_result:?}"
-    );
+    default_result
+        .validate_against_sources(&left, &right)
+        .unwrap();
 
     let projected = exact_boolean_result(
         &left,
@@ -6125,10 +6133,7 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
             ExactBoundaryBooleanPolicy::PreserveSeparateShells,
         ),
     );
-    assert!(
-        projected.is_boundary_policy_shortcut_for(ExactBooleanOperation::Union),
-        "{projected:?}"
-    );
+    projected.validate().unwrap();
     projected.mesh.validate_retained_state().unwrap();
     projected.validate_against_sources(&left, &right).unwrap();
 

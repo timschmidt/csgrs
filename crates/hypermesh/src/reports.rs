@@ -838,7 +838,7 @@ impl ExactBooleanResult {
     }
 
     /// Return whether this result is a caller boundary-policy projection.
-    pub fn is_boundary_policy_shortcut_for(&self, operation: ExactBooleanOperation) -> bool {
+    pub(crate) fn is_boundary_policy_shortcut_for(&self, operation: ExactBooleanOperation) -> bool {
         matches!(
             self.kind,
             ExactBooleanResultKind::BoundaryPolicyShortcut {
