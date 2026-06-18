@@ -651,6 +651,7 @@ pub struct CurveStringRegionTrimReport2 {
     boundary_hits: Vec<CurveStringRegionTrimHit2>,
     interval_reports: Vec<CurveStringRegionTrimIntervalReport2>,
     output_curve_string_count: Option<usize>,
+    output_segment_count: Option<usize>,
     query_path: CurveStringRegionTrimQueryPath2,
     stage: CurveStringRegionTrimStage2,
     status: RetainedTopologyStatus,
@@ -3400,6 +3401,11 @@ impl CurveStringRegionTrimReport2 {
         self.output_curve_string_count
     }
 
+    /// Returns total emitted segment count when trim-by-region materialized.
+    pub const fn output_segment_count(&self) -> Option<usize> {
+        self.output_segment_count
+    }
+
     /// Returns the query path used to collect boundary and classification evidence.
     pub const fn query_path(&self) -> CurveStringRegionTrimQueryPath2 {
         self.query_path
@@ -3886,6 +3892,7 @@ fn trim_curve_string_inside_region_with_hits(
     }
 
     flush_region_trim_chain(&mut output_segments, &mut current_segments);
+    let output_segment_count = output_segments.iter().map(Vec::len).sum();
     let mut curve_strings = Vec::with_capacity(output_segments.len());
     for segments in output_segments {
         curve_strings.push(CurveString2::try_new(segments)?);
@@ -3902,6 +3909,7 @@ fn trim_curve_string_inside_region_with_hits(
             boundary_hits,
             interval_reports,
             output_curve_string_count: Some(curve_strings.len()),
+            output_segment_count: Some(output_segment_count),
             query_path,
             stage: CurveStringRegionTrimStage2::OutputMaterialization,
             status: RetainedTopologyStatus::NativeExact,
@@ -4421,6 +4429,7 @@ fn blocked_region_trim_result(
             boundary_hits,
             interval_reports,
             output_curve_string_count: None,
+            output_segment_count: None,
             query_path,
             stage,
             status,
