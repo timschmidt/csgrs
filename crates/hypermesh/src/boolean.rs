@@ -121,7 +121,7 @@ use std::cmp::Ordering;
 /// materialized exact output mesh.
 /// Stage reached by an arrangement/cell-complex Boolean attempt.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum ExactArrangementBooleanStage {
+pub(crate) enum ExactArrangementBooleanStage {
     /// Arrangement construction was not attempted by the selected dispatch path.
     NotAttempted,
     /// The 3D arrangement was built.
@@ -140,7 +140,7 @@ pub enum ExactArrangementBooleanStage {
 
 /// Why an arrangement/cell-complex Boolean attempt declined to produce output.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub enum ExactArrangementBooleanDecline {
+pub(crate) enum ExactArrangementBooleanDecline {
     /// Arrangement construction completed with blockers.
     ArrangementBlockers(Vec<ExactArrangementBlocker>),
     /// Cell labeling failed.
@@ -206,17 +206,17 @@ pub struct ExactArrangementBooleanAttempt {
     /// arrangement/cell-complex output.
     pub(crate) shortcut_reason: Option<ExactArrangementBooleanShortcutReason>,
     /// Arrangement blocker count observed after construction.
-    pub arrangement_blockers: usize,
+    pub(crate) arrangement_blockers: usize,
     /// Arrangement face-cell count, when construction succeeded.
-    pub face_cells: usize,
+    pub(crate) face_cells: usize,
     /// Connected shell/region count, when construction succeeded.
-    pub regions: usize,
+    pub(crate) regions: usize,
     /// Volume-region count, when closed shell topology produced a volume graph.
-    pub volume_regions: usize,
+    pub(crate) volume_regions: usize,
     /// Volume adjacency count, when closed shell topology produced a volume graph.
-    pub volume_adjacencies: usize,
+    pub(crate) volume_adjacencies: usize,
     /// Retained lower-dimensional artifact count.
-    pub lower_dimensional_artifacts: usize,
+    pub(crate) lower_dimensional_artifacts: usize,
     /// Topology assembly status observed before consuming labeled cells.
     pub(crate) topology_assembly: Option<ExactTopologyAssemblyStatus>,
     /// Full topology assembly report consumed before labeled-cell output.

@@ -5769,25 +5769,11 @@ fn exact_arrangement_public_path_reports_blockers_or_cells() {
         attempt.freshness_against_sources(&left, &right),
         ExactReportFreshness::Current
     );
-    let mut stale_attempt = attempt.clone();
-    stale_attempt.arrangement_blockers += 1;
-    assert_eq!(
-        stale_attempt.freshness_against_sources(&left, &right),
-        ExactReportFreshness::SourceReplayMismatch
-    );
     let mut stale_attempt_report = attempt.clone();
     stale_attempt_report.region_ownership_report = None;
     assert_eq!(
         stale_attempt_report.validate(),
         Err(hypermesh::ExactReportValidationError::StatusEvidenceMismatch)
-    );
-
-    let mut blocked_attempt = attempt.clone();
-    blocked_attempt.arrangement_blockers += 1;
-    blocked_attempt.validate().unwrap();
-    assert_eq!(
-        blocked_attempt.freshness_against_sources(&left, &right),
-        ExactReportFreshness::SourceReplayMismatch
     );
 }
 
