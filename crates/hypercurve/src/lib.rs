@@ -139,8 +139,8 @@ pub use bulge::BulgeVertex2;
 pub use classify::{Classification, LineSide, UncertaintyReason};
 pub use contour::{
     Contour2, ContourChamferReport2, ContourChamferResult2, ContourClosureReport2,
-    ContourClosureResult2, ContourLineMergeReport2, ContourLineMergeResult2,
-    ContourLineMergeSpanReport2, ContourPointLocation, FillRule,
+    ContourClosureResult2, ContourFilletReport2, ContourFilletResult2, ContourLineMergeReport2,
+    ContourLineMergeResult2, ContourLineMergeSpanReport2, ContourPointLocation, FillRule,
 };
 pub use curve_string::{
     ConnectedCurveString2, CurveString2, CurveStringChamferReport2, CurveStringChamferResult2,

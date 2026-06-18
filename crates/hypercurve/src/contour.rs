@@ -9,8 +9,8 @@ use crate::classify::{classify_oriented_line, compare_reals};
 use crate::curve_string::merge_adjacent_line_segments;
 use crate::{
     BulgeVertex2, Classification, CurveError, CurvePolicy, CurveResult, CurveString2,
-    CurveStringChamferReport2, LineSeg2, LineSide, Point2, RetainedTopologyStatus, Segment2,
-    UncertaintyReason,
+    CurveStringChamferReport2, CurveStringFilletReport2, LineSeg2, LineSide, Point2,
+    RetainedTopologyStatus, Segment2, UncertaintyReason,
 };
 
 /// Fill rule used when classifying contour interiors.
@@ -65,6 +65,24 @@ pub struct ContourChamferReport2 {
 pub struct ContourChamferResult2 {
     contour: Option<Contour2>,
     report: ContourChamferReport2,
+}
+
+/// Report for a closed-contour line-line fillet.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ContourFilletReport2 {
+    vertex_index: usize,
+    curve_string_report: CurveStringFilletReport2,
+    source_segment_count: usize,
+    fill_rule: FillRule,
+    status: RetainedTopologyStatus,
+    blocker: Option<UncertaintyReason>,
+}
+
+/// Result of a report-bearing closed-contour fillet.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ContourFilletResult2 {
+    contour: Option<Contour2>,
+    report: ContourFilletReport2,
 }
 
 /// One retained source run emitted by a closed-contour line merge.
@@ -431,6 +449,75 @@ impl Contour2 {
         })
     }
 
+    /// Fillets an interior line-line contour vertex by exact tangent points and center.
+    ///
+    /// The supplied points and center are validated by the underlying
+    /// curve-string operation: tangent points must be strict interior points on
+    /// adjacent line segments, the center must certify a nonzero equal radius,
+    /// and the arc orientation must match the contour traversal. The
+    /// materialized result is accepted only through the checked closed-contour
+    /// constructor, and wrapped vertex edits remap retained source indices back
+    /// to this contour.
+    pub fn fillet_line_line_vertex_by_points(
+        &self,
+        vertex_index: usize,
+        previous_point: &Point2,
+        next_point: &Point2,
+        center: &Point2,
+        clockwise: bool,
+        policy: &CurvePolicy,
+    ) -> CurveResult<ContourFilletResult2> {
+        if vertex_index >= self.segments().len() {
+            return Err(CurveError::InvalidCurveRange);
+        }
+        let fillet = if vertex_index == 0 {
+            let rotated = CurveString2::try_new(wraparound_chamfer_segments(self.segments()))?;
+            let mut fillet = rotated.fillet_line_line_vertex_by_points(
+                1,
+                previous_point,
+                next_point,
+                center,
+                clockwise,
+                policy,
+            )?;
+            let source_segment_count = self.segments().len();
+            fillet.report_mut().remap_source_segment_indices(|index| {
+                remap_wraparound_chamfer_source_index(index, source_segment_count)
+            });
+            fillet
+        } else {
+            self.curve.fillet_line_line_vertex_by_points(
+                vertex_index,
+                previous_point,
+                next_point,
+                center,
+                clockwise,
+                policy,
+            )?
+        };
+        let curve_string_report = fillet.report().clone();
+        let status = curve_string_report.status();
+        let blocker = curve_string_report.blocker();
+        let contour = match fillet.into_curve_string() {
+            Some(curve_string) => Some(Self::try_new_with_fill_rule(
+                curve_string.into_segments(),
+                self.fill_rule,
+            )?),
+            None => None,
+        };
+        Ok(ContourFilletResult2 {
+            contour,
+            report: ContourFilletReport2 {
+                vertex_index,
+                curve_string_report,
+                source_segment_count: self.segments().len(),
+                fill_rule: self.fill_rule,
+                status,
+                blocker,
+            },
+        })
+    }
+
     /// Returns this contour's exact signed area when every segment can provide
     /// a Green's-theorem boundary contribution.
     ///
@@ -667,6 +754,55 @@ impl ContourChamferResult2 {
 
     /// Returns the retained contour chamfer report.
     pub const fn report(&self) -> &ContourChamferReport2 {
+        &self.report
+    }
+}
+
+impl ContourFilletReport2 {
+    /// Returns the contour vertex index requested by the fillet.
+    pub const fn vertex_index(&self) -> usize {
+        self.vertex_index
+    }
+
+    /// Returns the retained open curve-string fillet report.
+    pub const fn curve_string_report(&self) -> &CurveStringFilletReport2 {
+        &self.curve_string_report
+    }
+
+    /// Returns the source contour segment count captured by this report.
+    pub const fn source_segment_count(&self) -> usize {
+        self.source_segment_count
+    }
+
+    /// Returns the fill rule preserved by this contour edit.
+    pub const fn fill_rule(&self) -> FillRule {
+        self.fill_rule
+    }
+
+    /// Returns contour fillet materialization status.
+    pub const fn status(&self) -> RetainedTopologyStatus {
+        self.status
+    }
+
+    /// Returns the exact blocker for non-materialized contour fillets.
+    pub const fn blocker(&self) -> Option<UncertaintyReason> {
+        self.blocker
+    }
+}
+
+impl ContourFilletResult2 {
+    /// Returns the materialized filleted contour, if supported.
+    pub const fn contour(&self) -> Option<&Contour2> {
+        self.contour.as_ref()
+    }
+
+    /// Consumes this result and returns the materialized filleted contour, if any.
+    pub fn into_contour(self) -> Option<Contour2> {
+        self.contour
+    }
+
+    /// Returns the retained contour fillet report.
+    pub const fn report(&self) -> &ContourFilletReport2 {
         &self.report
     }
 }

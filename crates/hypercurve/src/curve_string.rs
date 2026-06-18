@@ -2498,6 +2498,16 @@ impl CurveStringFilletReport2 {
     pub const fn blocker(&self) -> Option<UncertaintyReason> {
         self.blocker
     }
+
+    pub(crate) fn remap_source_segment_indices(&mut self, mut remap: impl FnMut(usize) -> usize) {
+        self.previous_segment_index = remap(self.previous_segment_index);
+        self.next_segment_index = remap(self.next_segment_index);
+        self.previous_trim.segment_index = remap(self.previous_trim.segment_index);
+        self.next_trim.segment_index = remap(self.next_trim.segment_index);
+        for segment_report in &mut self.segment_reports {
+            segment_report.source_segment_index = remap(segment_report.source_segment_index);
+        }
+    }
 }
 
 impl CurveStringFilletResult2 {
@@ -2514,6 +2524,10 @@ impl CurveStringFilletResult2 {
     /// Returns the retained fillet report.
     pub const fn report(&self) -> &CurveStringFilletReport2 {
         &self.report
+    }
+
+    pub(crate) const fn report_mut(&mut self) -> &mut CurveStringFilletReport2 {
+        &mut self.report
     }
 }
 
