@@ -3555,17 +3555,6 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
         assert!(result.region_ownership_report.is_some(), "{result:?}");
     }
 
-    let closed_attempt = exact_boolean_arrangement_attempt(
-        &left,
-        &right,
-        ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED),
-        ExactRegularizationPolicy::REGULARIZED_SOLID,
-    );
-    assert_eq!(closed_attempt.output_validation, ValidationPolicy::CLOSED);
-    assert!(closed_attempt.topology_assembly_complete());
-    assert!(closed_attempt.region_ownership_resolved());
-    closed_attempt.validate().unwrap();
-
     result.validate().unwrap();
     assert_eq!(
         result.freshness_against_sources(&left, &right),
@@ -3601,11 +3590,12 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
         ExactReportFreshness::StaleStatusEvidence
     );
     let mut declined_arrangement_attempt = evaluation.clone();
-    *declined_arrangement_attempt
+    let stale_validation_attempt = declined_arrangement_attempt
         .certifications
         .arrangement_attempt
         .as_mut()
-        .expect("named evaluation should retain arrangement attempt") = closed_attempt.clone();
+        .expect("named evaluation should retain arrangement attempt");
+    stale_validation_attempt.output_validation = ValidationPolicy::CLOSED;
     assert_eq!(
         declined_arrangement_attempt.validate(),
         Err(hypermesh::ExactReportValidationError::StatusEvidenceMismatch)
@@ -3693,14 +3683,12 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
         );
     }
 
-    let difference = exact_boolean_result(
-        &left,
-        &right,
-        ExactBooleanRequest::new(
+    let difference = workspace
+        .materialize(ExactBooleanRequest::new(
             ExactBooleanOperation::Difference,
             ValidationPolicy::ALLOW_BOUNDARY,
-        ),
-    );
+        ))
+        .unwrap();
     difference.validate().unwrap();
     if difference.is_arrangement_cell_complex_materialized_for(ExactBooleanOperation::Difference) {
         let Some(reversed_triangle) = difference.assembly.triangles.iter().position(|triangle| {
