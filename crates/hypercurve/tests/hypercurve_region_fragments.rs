@@ -57,6 +57,10 @@ fn region_fragments_split_all_keyed_contours() {
     );
     assert_eq!(built.report().first_source_contour_count(), 2);
     assert_eq!(built.report().second_source_contour_count(), 1);
+    assert_eq!(built.report().first_material_source_segment_count(), 4);
+    assert_eq!(built.report().first_hole_source_segment_count(), 4);
+    assert_eq!(built.report().second_material_source_segment_count(), 4);
+    assert_eq!(built.report().second_hole_source_segment_count(), 0);
     assert_eq!(built.report().first_source_segment_count(), 8);
     assert_eq!(built.report().second_source_segment_count(), 4);
     assert_eq!(
@@ -81,6 +85,16 @@ fn region_fragments_split_all_keyed_contours() {
     assert_eq!(built.report().second_output_contour_count(), Some(1));
     assert_eq!(built.report().first_output_fragment_count(), Some(12));
     assert_eq!(built.report().second_output_fragment_count(), Some(8));
+    assert_eq!(
+        built.report().first_material_output_fragment_count(),
+        Some(6)
+    );
+    assert_eq!(built.report().first_hole_output_fragment_count(), Some(6));
+    assert_eq!(
+        built.report().second_material_output_fragment_count(),
+        Some(8)
+    );
+    assert_eq!(built.report().second_hole_output_fragment_count(), Some(0));
     assert_eq!(built.report().contour_reports().len(), 3);
     assert_eq!(built.report().blocker(), None);
 
@@ -269,6 +283,20 @@ fn region_fragments_keep_disjoint_contours_unsplit() {
         .split_regions_with_report(&first.as_view(), &second.as_view(), &policy())
         .unwrap();
     assert!(built.report().status().is_native_exact());
+    assert_eq!(built.report().first_material_source_segment_count(), 4);
+    assert_eq!(built.report().first_hole_source_segment_count(), 0);
+    assert_eq!(built.report().second_material_source_segment_count(), 4);
+    assert_eq!(built.report().second_hole_source_segment_count(), 0);
+    assert_eq!(
+        built.report().first_material_output_fragment_count(),
+        Some(4)
+    );
+    assert_eq!(built.report().first_hole_output_fragment_count(), Some(0));
+    assert_eq!(
+        built.report().second_material_output_fragment_count(),
+        Some(4)
+    );
+    assert_eq!(built.report().second_hole_output_fragment_count(), Some(0));
     assert_eq!(built.report().contour_reports().len(), 2);
     for report in built.report().contour_reports() {
         assert_eq!(report.contributing_pair_count(), 0);

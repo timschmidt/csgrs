@@ -41,6 +41,10 @@ pub struct RegionFragmentBuildReport2 {
     stage: RegionFragmentBuildStage2,
     first_source_contour_count: usize,
     second_source_contour_count: usize,
+    first_material_source_segment_count: usize,
+    first_hole_source_segment_count: usize,
+    second_material_source_segment_count: usize,
+    second_hole_source_segment_count: usize,
     first_source_segment_count: usize,
     second_source_segment_count: usize,
     intersection_pair_count: usize,
@@ -53,6 +57,10 @@ pub struct RegionFragmentBuildReport2 {
     second_output_contour_count: Option<usize>,
     first_output_fragment_count: Option<usize>,
     second_output_fragment_count: Option<usize>,
+    first_material_output_fragment_count: Option<usize>,
+    first_hole_output_fragment_count: Option<usize>,
+    second_material_output_fragment_count: Option<usize>,
+    second_hole_output_fragment_count: Option<usize>,
     contour_reports: Vec<RegionContourFragmentReport2>,
     status: RetainedTopologyStatus,
     blocker: Option<UncertaintyReason>,
@@ -143,6 +151,13 @@ pub(crate) fn split_region_views_at_intersections_with_report(
     let first_source_contour_count = first.material_contours().len() + first.hole_contours().len();
     let second_source_contour_count =
         second.material_contours().len() + second.hole_contours().len();
+    let first_material_source_segment_count =
+        source_segment_count_for_contours(first.material_contours());
+    let first_hole_source_segment_count = source_segment_count_for_contours(first.hole_contours());
+    let second_material_source_segment_count =
+        source_segment_count_for_contours(second.material_contours());
+    let second_hole_source_segment_count =
+        source_segment_count_for_contours(second.hole_contours());
     let first_source_segment_count = source_segment_count(first);
     let second_source_segment_count = source_segment_count(second);
     let mut contours = Vec::new();
@@ -162,6 +177,10 @@ pub(crate) fn split_region_views_at_intersections_with_report(
             return Ok(blocked_region_fragment_build_result(
                 first_source_contour_count,
                 second_source_contour_count,
+                first_material_source_segment_count,
+                first_hole_source_segment_count,
+                second_material_source_segment_count,
+                second_hole_source_segment_count,
                 first_source_segment_count,
                 second_source_segment_count,
                 intersections,
@@ -184,6 +203,10 @@ pub(crate) fn split_region_views_at_intersections_with_report(
             return Ok(blocked_region_fragment_build_result(
                 first_source_contour_count,
                 second_source_contour_count,
+                first_material_source_segment_count,
+                first_hole_source_segment_count,
+                second_material_source_segment_count,
+                second_hole_source_segment_count,
                 first_source_segment_count,
                 second_source_segment_count,
                 intersections,
@@ -206,6 +229,10 @@ pub(crate) fn split_region_views_at_intersections_with_report(
             return Ok(blocked_region_fragment_build_result(
                 first_source_contour_count,
                 second_source_contour_count,
+                first_material_source_segment_count,
+                first_hole_source_segment_count,
+                second_material_source_segment_count,
+                second_hole_source_segment_count,
                 first_source_segment_count,
                 second_source_segment_count,
                 intersections,
@@ -228,6 +255,10 @@ pub(crate) fn split_region_views_at_intersections_with_report(
             return Ok(blocked_region_fragment_build_result(
                 first_source_contour_count,
                 second_source_contour_count,
+                first_material_source_segment_count,
+                first_hole_source_segment_count,
+                second_material_source_segment_count,
+                second_hole_source_segment_count,
                 first_source_segment_count,
                 second_source_segment_count,
                 intersections,
@@ -250,12 +281,36 @@ pub(crate) fn split_region_views_at_intersections_with_report(
         output_fragment_count_for_side(&contour_reports, RegionSide::First);
     let second_output_fragment_count =
         output_fragment_count_for_side(&contour_reports, RegionSide::Second);
+    let first_material_output_fragment_count = output_fragment_count_for_side_role(
+        &contour_reports,
+        RegionSide::First,
+        RegionContourRole::Material,
+    );
+    let first_hole_output_fragment_count = output_fragment_count_for_side_role(
+        &contour_reports,
+        RegionSide::First,
+        RegionContourRole::Hole,
+    );
+    let second_material_output_fragment_count = output_fragment_count_for_side_role(
+        &contour_reports,
+        RegionSide::Second,
+        RegionContourRole::Material,
+    );
+    let second_hole_output_fragment_count = output_fragment_count_for_side_role(
+        &contour_reports,
+        RegionSide::Second,
+        RegionContourRole::Hole,
+    );
     Ok(RegionFragmentBuildResult2 {
         fragments: Some(RegionFragmentSet::new(contours)?),
         report: RegionFragmentBuildReport2 {
             stage: RegionFragmentBuildStage2::ContourSplitting,
             first_source_contour_count,
             second_source_contour_count,
+            first_material_source_segment_count,
+            first_hole_source_segment_count,
+            second_material_source_segment_count,
+            second_hole_source_segment_count,
             first_source_segment_count,
             second_source_segment_count,
             intersection_pair_count: intersections.intersecting_pair_count(),
@@ -268,6 +323,10 @@ pub(crate) fn split_region_views_at_intersections_with_report(
             second_output_contour_count: Some(second_output_contour_count),
             first_output_fragment_count: Some(first_output_fragment_count),
             second_output_fragment_count: Some(second_output_fragment_count),
+            first_material_output_fragment_count: Some(first_material_output_fragment_count),
+            first_hole_output_fragment_count: Some(first_hole_output_fragment_count),
+            second_material_output_fragment_count: Some(second_material_output_fragment_count),
+            second_hole_output_fragment_count: Some(second_hole_output_fragment_count),
             contour_reports,
             status: RetainedTopologyStatus::NativeExact,
             blocker: None,
@@ -321,6 +380,26 @@ impl RegionFragmentBuildReport2 {
     /// Returns the number of source contours in the second region view.
     pub const fn second_source_contour_count(&self) -> usize {
         self.second_source_contour_count
+    }
+
+    /// Returns the number of source material boundary segments in the first region view.
+    pub const fn first_material_source_segment_count(&self) -> usize {
+        self.first_material_source_segment_count
+    }
+
+    /// Returns the number of source hole boundary segments in the first region view.
+    pub const fn first_hole_source_segment_count(&self) -> usize {
+        self.first_hole_source_segment_count
+    }
+
+    /// Returns the number of source material boundary segments in the second region view.
+    pub const fn second_material_source_segment_count(&self) -> usize {
+        self.second_material_source_segment_count
+    }
+
+    /// Returns the number of source hole boundary segments in the second region view.
+    pub const fn second_hole_source_segment_count(&self) -> usize {
+        self.second_hole_source_segment_count
     }
 
     /// Returns the number of source contour segments in the first region view.
@@ -383,6 +462,26 @@ impl RegionFragmentBuildReport2 {
         self.second_output_fragment_count
     }
 
+    /// Returns first-operand material output fragment count when splitting materialized.
+    pub const fn first_material_output_fragment_count(&self) -> Option<usize> {
+        self.first_material_output_fragment_count
+    }
+
+    /// Returns first-operand hole output fragment count when splitting materialized.
+    pub const fn first_hole_output_fragment_count(&self) -> Option<usize> {
+        self.first_hole_output_fragment_count
+    }
+
+    /// Returns second-operand material output fragment count when splitting materialized.
+    pub const fn second_material_output_fragment_count(&self) -> Option<usize> {
+        self.second_material_output_fragment_count
+    }
+
+    /// Returns second-operand hole output fragment count when splitting materialized.
+    pub const fn second_hole_output_fragment_count(&self) -> Option<usize> {
+        self.second_hole_output_fragment_count
+    }
+
     /// Returns per-contour split provenance.
     pub fn contour_reports(&self) -> &[RegionContourFragmentReport2] {
         &self.contour_reports
@@ -419,6 +518,10 @@ impl RegionFragmentBuildResult2 {
 fn blocked_region_fragment_build_result(
     first_source_contour_count: usize,
     second_source_contour_count: usize,
+    first_material_source_segment_count: usize,
+    first_hole_source_segment_count: usize,
+    second_material_source_segment_count: usize,
+    second_hole_source_segment_count: usize,
     first_source_segment_count: usize,
     second_source_segment_count: usize,
     intersections: &RegionIntersectionSet,
@@ -431,6 +534,10 @@ fn blocked_region_fragment_build_result(
             stage: RegionFragmentBuildStage2::ContourSplitting,
             first_source_contour_count,
             second_source_contour_count,
+            first_material_source_segment_count,
+            first_hole_source_segment_count,
+            second_material_source_segment_count,
+            second_hole_source_segment_count,
             first_source_segment_count,
             second_source_segment_count,
             intersection_pair_count: intersections.intersecting_pair_count(),
@@ -443,6 +550,10 @@ fn blocked_region_fragment_build_result(
             second_output_contour_count: None,
             first_output_fragment_count: None,
             second_output_fragment_count: None,
+            first_material_output_fragment_count: None,
+            first_hole_output_fragment_count: None,
+            second_material_output_fragment_count: None,
+            second_hole_output_fragment_count: None,
             contour_reports,
             status: RetainedTopologyStatus::Unresolved,
             blocker: Some(blocker),
@@ -468,12 +579,25 @@ fn output_fragment_count_for_side(
         .sum()
 }
 
-fn source_segment_count(view: &RegionView2<'_>) -> usize {
-    view.material_contours()
+fn output_fragment_count_for_side_role(
+    contour_reports: &[RegionContourFragmentReport2],
+    side: RegionSide,
+    role: RegionContourRole,
+) -> usize {
+    contour_reports
         .iter()
-        .chain(view.hole_contours())
-        .map(|contour| contour.len())
+        .filter(|report| report.key.side == side && report.key.role == role)
+        .map(RegionContourFragmentReport2::output_fragment_count)
         .sum()
+}
+
+fn source_segment_count(view: &RegionView2<'_>) -> usize {
+    source_segment_count_for_contours(view.material_contours())
+        + source_segment_count_for_contours(view.hole_contours())
+}
+
+fn source_segment_count_for_contours(contours: &[&Contour2]) -> usize {
+    contours.iter().map(|contour| contour.len()).sum()
 }
 
 fn validate_region_fragment_keys(contours: &[RegionContourFragments]) -> CurveResult<()> {
