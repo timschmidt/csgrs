@@ -278,15 +278,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
             )? {
                 Some(result)
             } else {
-                try_materialize_certified_boolean_support_with_artifacts(
-                    self.left,
-                    self.right,
-                    request,
-                    preflight.support,
-                    Some(graph),
-                    regularized_arrangement,
-                    regularized_attempt,
-                )?
+                self.try_materialize_certified_support(request, preflight.support)?
             }
         } else {
             None
@@ -362,25 +354,13 @@ impl<'a> ExactBooleanWorkspace<'a> {
             {
                 self.arrangement_attempt(request, ExactRegularizationPolicy::REGULARIZED_SOLID)?;
             }
-            let regularized_arrangement = self.regularized_solid_arrangement();
-            let graph = self
-                .graph
-                .as_ref()
-                .expect("intersection graph cache was just populated");
-            let result = try_materialize_certified_boolean_support_with_artifacts(
-                self.left,
-                self.right,
-                request,
-                evaluation.preflight.support,
-                Some(graph),
-                regularized_arrangement,
-                self.regularized_solid_arrangement_attempt(request),
-            )?
-            .ok_or_else(|| {
-                workspace_report_validation_error(
-                    ExactReportValidationError::StatusEvidenceMismatch,
-                )
-            })?;
+            let result = self
+                .try_materialize_certified_support(request, evaluation.preflight.support)?
+                .ok_or_else(|| {
+                    workspace_report_validation_error(
+                        ExactReportValidationError::StatusEvidenceMismatch,
+                    )
+                })?;
             return self.store_materialization_and_promote_evaluation(request, result);
         }
         let graph = self
@@ -391,6 +371,26 @@ impl<'a> ExactBooleanWorkspace<'a> {
             graph, self.left, self.right, request,
         )?;
         self.store_materialization_and_promote_evaluation(request, result)
+    }
+
+    fn try_materialize_certified_support(
+        &self,
+        request: ExactBooleanRequest,
+        support: ExactBooleanSupport,
+    ) -> Result<Option<ExactBooleanResult>, MeshError> {
+        let graph = self
+            .graph
+            .as_ref()
+            .expect("intersection graph cache was just populated");
+        try_materialize_certified_boolean_support_with_artifacts(
+            self.left,
+            self.right,
+            request,
+            support,
+            Some(graph),
+            self.regularized_solid_arrangement(),
+            self.regularized_solid_arrangement_attempt(request),
+        )
     }
 
     fn store_materialization_and_promote_evaluation(
