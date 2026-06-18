@@ -3950,6 +3950,19 @@ fn workspace_winding_readiness_for_report_replay(
         .map_err(|_| ExactReportValidationError::SourceReplayMismatch)
 }
 
+fn workspace_refinement_for_report_replay(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+) -> Result<ExactRefinementReport, ExactReportValidationError> {
+    let request = ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY);
+    let mut workspace = ExactBooleanWorkspace::new(left, right);
+    workspace
+        .evaluate(request)
+        .map(|evaluation| evaluation.certifications.refinement.clone())
+        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)
+}
+
 fn workspace_planar_arrangement_for_report_replay(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -4892,12 +4905,18 @@ impl ExactRefinementReport {
         right: &ExactMesh,
     ) -> Result<(), ExactReportValidationError> {
         self.validate()?;
-        let graph = validated_report_intersection_graph(left, right)?;
-        let replay = refinement_report_from_graph(&graph, self.operation);
-        if self == &replay {
+        if let Ok(replay) = workspace_refinement_for_report_replay(left, right, self.operation)
+            && self == &replay
+        {
             Ok(())
         } else {
-            Err(ExactReportValidationError::SourceReplayMismatch)
+            let graph = validated_report_intersection_graph(left, right)?;
+            let replay = refinement_report_from_graph(&graph, self.operation);
+            if self == &replay {
+                Ok(())
+            } else {
+                Err(ExactReportValidationError::SourceReplayMismatch)
+            }
         }
     }
 
