@@ -365,17 +365,11 @@ fn exact_boolean_evaluation_retains_region_ownership_report() {
         "{attempt_backed_evaluation:?}"
     );
     assert!(
-        evaluation
-            .certifications
-            .arrangement_attempt
-            .as_ref()
-            .is_some(),
+        evaluation.retained_arrangement_attempt().is_some(),
         "named boolean certifications should retain arrangement attempt"
     );
     let ownership = evaluation
-        .certifications
-        .arrangement_attempt
-        .as_ref()
+        .retained_arrangement_attempt()
         .and_then(|attempt| attempt.region_ownership_report.as_ref())
         .expect("named boolean certifications should retain region ownership");
     ownership.validate().unwrap();
@@ -384,9 +378,7 @@ fn exact_boolean_evaluation_retains_region_ownership_report() {
     assert_eq!(ownership.volume_regions, 3);
     assert_eq!(ownership.shared_owned_volumes, 1);
     evaluation
-        .certifications
-        .arrangement_attempt
-        .as_ref()
+        .retained_arrangement_attempt()
         .and_then(|attempt| attempt.topology_assembly_report.as_ref())
         .expect("named boolean certifications should retain topology assembly")
         .validate()
@@ -1284,9 +1276,7 @@ fn exact_coplanar_volumetric_cell_evidence_is_retained_by_public_evaluation() {
     );
     assert!(
         evaluation
-            .certifications
-            .arrangement_attempt
-            .as_ref()
+            .retained_arrangement_attempt()
             .is_some_and(|attempt| {
                 attempt.operation == evaluation.request.operation
                     && attempt.resolves_requested_volume_ownership()

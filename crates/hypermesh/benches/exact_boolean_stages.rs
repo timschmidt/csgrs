@@ -120,9 +120,7 @@ fn run_case(case: &BenchCase) {
         let attempt = workspace
             .evaluate(request)
             .unwrap()
-            .certifications
-            .arrangement_attempt
-            .as_ref()
+            .retained_arrangement_attempt()
             .cloned();
         black_box(attempt.map(|attempt| {
             let (output_vertices, output_triangles) = attempt.output_counts();
@@ -244,9 +242,7 @@ fn run_case(case: &BenchCase) {
             let report = workspace
                 .evaluate(request)
                 .unwrap()
-                .certifications
-                .arrangement_attempt
-                .as_ref()
+                .retained_arrangement_attempt()
                 .and_then(|attempt| attempt.topology_assembly_report.as_ref());
             if let Some(report) = report {
                 black_box((
@@ -295,9 +291,7 @@ fn run_case(case: &BenchCase) {
             let report = workspace
                 .evaluate(request)
                 .unwrap()
-                .certifications
-                .arrangement_attempt
-                .as_ref()
+                .retained_arrangement_attempt()
                 .and_then(|attempt| attempt.region_ownership_report.as_ref());
             if let Some(report) = report {
                 black_box((
