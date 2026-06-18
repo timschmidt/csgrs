@@ -5541,7 +5541,7 @@ fn run_arrangement_cell_complex_attempt_from_arrangement(
         ));
         return Ok(ArrangementCellComplexOutcome::Declined(attempt));
     }
-    let selected_result = if ownership_report.resolves_operation_selection(operation) {
+    let selected_result = if ownership_report.volume_selection_resolves_operation(operation) {
         labeled.select_volume_resolved_with_policy(operation, policy)
     } else {
         labeled.select_with_policy(operation, policy)
@@ -14774,15 +14774,9 @@ mod tests {
                 ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized,
                 "{operation:?}: {readiness:?}"
             );
-            let expected_blocker = match operation {
-                ExactBooleanOperation::Union | ExactBooleanOperation::Difference => {
-                    ExactBooleanBlockerKind::NeedsBoundaryPolicy
-                }
-                ExactBooleanOperation::Intersection => ExactBooleanBlockerKind::NeedsWinding,
-                ExactBooleanOperation::SelectedRegions(_) => unreachable!(),
-            };
             assert_eq!(
-                readiness.blocker.kind, expected_blocker,
+                readiness.blocker.kind,
+                ExactBooleanBlockerKind::NeedsWinding,
                 "{operation:?}: {readiness:?}"
             );
             assert!(readiness.status.is_already_materialized());
@@ -14997,7 +14991,7 @@ mod tests {
     }
 
     #[test]
-    fn noncoplanar_convex_shortcut_reports_retain_graph_counts() {
+    fn noncoplanar_convex_report_cases_retain_graph_counts() {
         let left = tetrahedron_i64([0, 0, 0], [6, 0, 0], [0, 6, 0], [0, 0, 6]);
         let right = tetrahedron_i64([1, 1, 1], [5, 1, 2], [1, 5, 1], [2, 1, 5]);
         let graph = build_intersection_graph(&left, &right).unwrap();
@@ -15011,28 +15005,14 @@ mod tests {
             ExactBooleanOperation::Intersection,
             ExactBooleanOperation::Difference,
         ] {
-            let (expected_support, expected_readiness_status) = match operation {
-                ExactBooleanOperation::Union => (
-                    ExactBooleanSupport::CertifiedConvexUnion,
-                    ExactWindingReadinessStatus::ConvexBooleanAlreadyMaterialized,
-                ),
-                ExactBooleanOperation::Intersection => (
-                    ExactBooleanSupport::CertifiedConvexIntersection,
-                    ExactWindingReadinessStatus::ConvexBooleanAlreadyMaterialized,
-                ),
-                ExactBooleanOperation::Difference => (
-                    ExactBooleanSupport::CertifiedConvexDifference,
-                    ExactWindingReadinessStatus::ConvexBooleanAlreadyMaterialized,
-                ),
-                ExactBooleanOperation::SelectedRegions(_) => unreachable!(),
-            };
             let preflight = test_preflight(
                 ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
                 &left,
                 &right,
             );
             assert_eq!(
-                preflight.support, expected_support,
+                preflight.support,
+                ExactBooleanSupport::CertifiedArrangementCellComplex,
                 "{operation:?}: {preflight:?}"
             );
             assert_eq!(preflight.retained_face_pairs, graph.face_pairs.len());
@@ -15050,6 +15030,15 @@ mod tests {
                 &left,
                 &right,
             );
+            let expected_readiness_status = match operation {
+                ExactBooleanOperation::Union | ExactBooleanOperation::Difference => {
+                    ExactWindingReadinessStatus::ConvexBooleanAlreadyMaterialized
+                }
+                ExactBooleanOperation::Intersection => {
+                    ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized
+                }
+                ExactBooleanOperation::SelectedRegions(_) => unreachable!(),
+            };
             assert_eq!(
                 readiness.status, expected_readiness_status,
                 "{operation:?}: {readiness:?}"
