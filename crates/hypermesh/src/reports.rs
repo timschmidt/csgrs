@@ -22,8 +22,8 @@ use super::affine_solid::{
 };
 use super::arrangement3d::{ExactArrangement, ExactTopologyAssemblyReport};
 use super::boolean::{
-    ExactArrangementBooleanAttempt, ExactBooleanOperation, ExactBooleanRequest,
-    ExactBoundaryBooleanPolicy, adjacent_union_completion_certification,
+    ExactArrangementBooleanAttempt, ExactBooleanEvaluation, ExactBooleanOperation,
+    ExactBooleanRequest, ExactBoundaryBooleanPolicy, adjacent_union_completion_certification,
     boolean_coplanar_mesh_overlay_optional, boundary_policy_shortcut_result_matches_sources,
     boundary_touching_report_from_graph, materialize_volumetric_coplanar_boundary_closure_output,
     no_materialized_boundary_output_report, not_named_planar_arrangement_report,
@@ -3976,16 +3976,25 @@ fn workspace_preflight_for_report_replay(
         .map_err(|_| ExactReportValidationError::SourceReplayMismatch)
 }
 
+fn workspace_evaluation_for_report_replay(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    request: ExactBooleanRequest,
+) -> Result<ExactBooleanEvaluation, ExactReportValidationError> {
+    let mut workspace = ExactBooleanWorkspace::new(left, right);
+    workspace
+        .evaluate(request)
+        .map(Clone::clone)
+        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)
+}
+
 fn workspace_winding_readiness_for_report_replay(
     left: &ExactMesh,
     right: &ExactMesh,
     request: ExactBooleanRequest,
 ) -> Result<ExactWindingReadinessReport, ExactReportValidationError> {
-    let mut workspace = ExactBooleanWorkspace::new(left, right);
-    workspace
-        .evaluate(request)
-        .map(|evaluation| evaluation.certifications.winding_readiness.clone())
-        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)
+    workspace_evaluation_for_report_replay(left, right, request)
+        .map(|evaluation| evaluation.certifications.winding_readiness)
 }
 
 fn workspace_refinement_for_report_replay(
@@ -3994,11 +4003,8 @@ fn workspace_refinement_for_report_replay(
     operation: ExactBooleanOperation,
 ) -> Result<ExactRefinementReport, ExactReportValidationError> {
     let request = ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY);
-    let mut workspace = ExactBooleanWorkspace::new(left, right);
-    workspace
-        .evaluate(request)
-        .map(|evaluation| evaluation.certifications.refinement.clone())
-        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)
+    workspace_evaluation_for_report_replay(left, right, request)
+        .map(|evaluation| evaluation.certifications.refinement)
 }
 
 fn workspace_planar_arrangement_for_report_replay(
@@ -4007,11 +4013,8 @@ fn workspace_planar_arrangement_for_report_replay(
     operation: ExactBooleanOperation,
 ) -> Result<ExactPlanarArrangementReport, ExactReportValidationError> {
     let request = ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY);
-    let mut workspace = ExactBooleanWorkspace::new(left, right);
-    workspace
-        .evaluate(request)
-        .map(|evaluation| evaluation.certifications.planar_arrangement.clone())
-        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)
+    workspace_evaluation_for_report_replay(left, right, request)
+        .map(|evaluation| evaluation.certifications.planar_arrangement)
 }
 
 fn validate_winding_readiness_against_sources_for_request(
