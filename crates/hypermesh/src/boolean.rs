@@ -239,10 +239,10 @@ pub struct ExactArrangementBooleanAttempt {
     pub selected_volume_regions: usize,
     /// Retained selected cell complex consumed by simplification, when the
     /// generic arrangement path reached selection.
-    pub selected_cell_complex: Option<ExactSelectedCellComplex>,
+    pub(crate) selected_cell_complex: Option<ExactSelectedCellComplex>,
     /// Retained simplified cell complex consumed by triangulation, when the
     /// generic arrangement path reached simplification.
-    pub simplified_cell_complex: Option<ExactSimplifiedCellComplex>,
+    pub(crate) simplified_cell_complex: Option<ExactSimplifiedCellComplex>,
     /// Output vertex count, when triangulation succeeded.
     pub output_vertices: usize,
     /// Output triangle count, when triangulation succeeded.
