@@ -168,13 +168,8 @@ impl<'a> ExactBooleanWorkspace<'a> {
                 }
             }
         };
-        if !attempt.matches_request_policy(request, policy) {
-            return Err(workspace_report_validation_error(
-                ExactReportValidationError::StatusEvidenceMismatch,
-            ));
-        }
         attempt
-            .validate()
+            .validate_for_request_policy(request, policy)
             .map_err(workspace_report_validation_error)?;
         self.arrangement_attempts.push((request, policy, attempt));
         Ok(&self

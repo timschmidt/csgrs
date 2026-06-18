@@ -349,13 +349,24 @@ impl ExactArrangementBooleanAttempt {
             && self.output_validation == request.validation
     }
 
+    pub(crate) fn validate_for_request_policy(
+        &self,
+        request: ExactBooleanRequest,
+        policy: ExactRegularizationPolicy,
+    ) -> Result<(), ExactReportValidationError> {
+        self.validate()?;
+        if !self.matches_request_policy(request, policy) {
+            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+        }
+        Ok(())
+    }
+
     pub(crate) fn certifies_arrangement_cell_complex_output_for_request(
         &self,
         request: ExactBooleanRequest,
         policy: ExactRegularizationPolicy,
     ) -> bool {
-        self.matches_request_policy(request, policy)
-            && self.validate().is_ok()
+        self.validate_for_request_policy(request, policy).is_ok()
             && self.materialized_arrangement_cell_complex_output()
     }
 
@@ -374,8 +385,7 @@ impl ExactArrangementBooleanAttempt {
         request: ExactBooleanRequest,
         policy: ExactRegularizationPolicy,
     ) -> bool {
-        self.matches_request_policy(request, policy)
-            && self.validate().is_ok()
+        self.validate_for_request_policy(request, policy).is_ok()
             && self.materialized_arrangement_cell_complex_shortcut()
     }
 
@@ -803,10 +813,7 @@ fn retained_arrangement_attempt_for_request<'a>(
     let Some(attempt) = retained else {
         return Ok(None);
     };
-    attempt.validate()?;
-    if !attempt.matches_request_policy(request, policy) {
-        return Err(ExactReportValidationError::StatusEvidenceMismatch);
-    }
+    attempt.validate_for_request_policy(request, policy)?;
     attempt.validate_against_sources_with_validation(left, right, request.validation)?;
     Ok(Some(attempt))
 }
@@ -1853,12 +1860,10 @@ impl ExactBooleanCertificationSet {
         }
         match self.arrangement_attempt.as_ref() {
             Some(attempt) => {
-                attempt.validate()?;
-                if !attempt
-                    .matches_request_policy(request, ExactRegularizationPolicy::REGULARIZED_SOLID)
-                {
-                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
-                }
+                attempt.validate_for_request_policy(
+                    request,
+                    ExactRegularizationPolicy::REGULARIZED_SOLID,
+                )?;
             }
             None if require_attempt => {
                 return Err(ExactReportValidationError::StatusEvidenceMismatch);
