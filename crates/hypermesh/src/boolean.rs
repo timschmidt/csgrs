@@ -2251,13 +2251,6 @@ impl ExactBooleanEvaluation {
         &self.preflight
     }
 
-    /// Returns whether the retained named-boolean ownership evidence is ready
-    /// to select volume regions directly.
-    pub fn has_ready_volume_ownership(&self) -> bool {
-        self.certifications
-            .region_ownership_resolves_operation(self.request.operation)
-    }
-
     /// Returns whether retained arrangement/cell-complex evidence already
     /// materializes the request without falling through to winding.
     pub fn materializes_arrangement_cell_complex(&self) -> bool {
