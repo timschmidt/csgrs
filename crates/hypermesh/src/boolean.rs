@@ -203,7 +203,7 @@ pub struct ExactArrangementBooleanAttempt {
     /// A `None` value on a materialized attempt means the generic arrangement
     /// cell-complex path produced the output from retained topology and
     /// ownership evidence.
-    pub materialized_shortcut: Option<ExactBooleanShortcutKind>,
+    pub(crate) materialized_shortcut: Option<ExactBooleanShortcutKind>,
     /// Reason a retained shortcut/recovery was used instead of the generic
     /// arrangement/cell-complex output.
     pub(crate) shortcut_reason: Option<ExactArrangementBooleanShortcutReason>,
