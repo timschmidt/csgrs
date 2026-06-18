@@ -1331,8 +1331,25 @@ proptest! {
         prop_assert_eq!(report.endpoint_graph_branch_endpoint_count(), Some(0));
         prop_assert_eq!(report.endpoint_graph_blocker_arranged_segment_index(), None);
         prop_assert_eq!(report.endpoint_graph_blocker_endpoint(), None);
+        prop_assert_eq!(
+            report.attempted_endpoint_connection_count(),
+            report.exact_endpoint_connection_count()
+                + report.disconnected_endpoint_connection_count()
+                + report.unresolved_endpoint_connection_count()
+        );
+        prop_assert!(report.exact_endpoint_connection_count() >= 2);
+        prop_assert_eq!(report.unresolved_endpoint_connection_count(), 0);
+        prop_assert!(report.reversed_source_segment_count() <= 1);
         prop_assert_eq!(report.arranged_source_reports().len(), 2);
+        prop_assert!(report
+            .arranged_source_reports()
+            .iter()
+            .all(|source| source.status().is_native_exact()));
         prop_assert_eq!(report.source_reports().len(), 2);
+        prop_assert!(report
+            .source_reports()
+            .iter()
+            .all(|source| source.status().is_native_exact()));
         prop_assert_eq!(report.output_ring_count(), Some(1));
         prop_assert_eq!(report.output_boundary_segment_count(), Some(2));
         prop_assert_eq!(report.blocker(), None);
