@@ -112,7 +112,15 @@ impl<'a> ExactBooleanWorkspace<'a> {
         let arrangement = ExactArrangement::from_intersection_graph_with_policy(
             graph, self.left, self.right, policy,
         )?;
-        store_retained_arrangement(&mut self.arrangements, policy, arrangement)
+        arrangement
+            .validate()
+            .map_err(workspace_arrangement_blocker_error)?;
+        self.arrangements.push((policy, arrangement));
+        Ok(&self
+            .arrangements
+            .last()
+            .expect("arrangement cache was just populated")
+            .1)
     }
 
     /// Returns the arrangement/cell-complex attempt report for `request` and
@@ -156,7 +164,20 @@ impl<'a> ExactBooleanWorkspace<'a> {
                 }
             }
         };
-        store_retained_arrangement_attempt(&mut self.arrangement_attempts, request, policy, attempt)
+        if !attempt.matches_request_policy(request, policy) {
+            return Err(workspace_report_validation_error(
+                ExactReportValidationError::StatusEvidenceMismatch,
+            ));
+        }
+        attempt
+            .validate()
+            .map_err(workspace_report_validation_error)?;
+        self.arrangement_attempts.push((request, policy, attempt));
+        Ok(&self
+            .arrangement_attempts
+            .last()
+            .expect("arrangement attempt cache was just populated")
+            .2)
     }
 
     /// Derive preflight for `request` from the retained graph.
@@ -279,7 +300,20 @@ impl<'a> ExactBooleanWorkspace<'a> {
             certifications,
             result,
         };
-        store_retained_evaluation(&mut self.evaluations, request, evaluation)
+        if evaluation.request != request {
+            return Err(workspace_report_validation_error(
+                ExactReportValidationError::StatusEvidenceMismatch,
+            ));
+        }
+        evaluation
+            .validate()
+            .map_err(workspace_report_validation_error)?;
+        self.evaluations.push((request, evaluation));
+        Ok(&self
+            .evaluations
+            .last()
+            .expect("evaluation cache was just populated")
+            .1)
     }
 
     /// Materializes `request`, reusing a cached certified evaluation when the
@@ -459,66 +493,6 @@ fn store_replayable_result_or_return(
         }
     }
     Ok(result)
-}
-
-fn store_retained_arrangement(
-    cache: &mut Vec<(ExactRegularizationPolicy, ExactArrangement)>,
-    policy: ExactRegularizationPolicy,
-    arrangement: ExactArrangement,
-) -> Result<&ExactArrangement, MeshError> {
-    arrangement
-        .validate()
-        .map_err(workspace_arrangement_blocker_error)?;
-    cache.push((policy, arrangement));
-    Ok(&cache
-        .last()
-        .expect("policy report cache was just populated")
-        .1)
-}
-
-fn store_retained_arrangement_attempt(
-    cache: &mut Vec<(
-        ExactBooleanRequest,
-        ExactRegularizationPolicy,
-        ExactArrangementBooleanAttempt,
-    )>,
-    request: ExactBooleanRequest,
-    policy: ExactRegularizationPolicy,
-    attempt: ExactArrangementBooleanAttempt,
-) -> Result<&ExactArrangementBooleanAttempt, MeshError> {
-    if !attempt.matches_request_policy(request, policy) {
-        return Err(workspace_report_validation_error(
-            ExactReportValidationError::StatusEvidenceMismatch,
-        ));
-    }
-    attempt
-        .validate()
-        .map_err(workspace_report_validation_error)?;
-    cache.push((request, policy, attempt));
-    Ok(&cache
-        .last()
-        .expect("arrangement attempt cache was just populated")
-        .2)
-}
-
-fn store_retained_evaluation(
-    cache: &mut Vec<(ExactBooleanRequest, ExactBooleanEvaluation)>,
-    request: ExactBooleanRequest,
-    evaluation: ExactBooleanEvaluation,
-) -> Result<&ExactBooleanEvaluation, MeshError> {
-    if evaluation.request != request {
-        return Err(workspace_report_validation_error(
-            ExactReportValidationError::StatusEvidenceMismatch,
-        ));
-    }
-    evaluation
-        .validate()
-        .map_err(workspace_report_validation_error)?;
-    cache.push((request, evaluation));
-    Ok(&cache
-        .last()
-        .expect("request artifact cache was just populated")
-        .1)
 }
 
 fn cached_retained_materialization(
