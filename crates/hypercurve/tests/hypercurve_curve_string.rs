@@ -3099,6 +3099,9 @@ fn curve_string_trim_inside_region_materializes_inside_window() {
     assert_eq!(trimmed.report().interval_candidate_count(), 3);
     assert_eq!(trimmed.report().interval_classification_count(), 3);
     assert_eq!(trimmed.report().boundary_hit_count(), 2);
+    assert_eq!(trimmed.report().boundary_point_relation_count(), 2);
+    assert_eq!(trimmed.report().boundary_overlap_relation_count(), 0);
+    assert_eq!(trimmed.report().boundary_uncertain_relation_count(), 0);
     assert_eq!(trimmed.report().boundary_hits().len(), 2);
     assert_eq!(
         trimmed.report().boundary_hits()[0].region_contour_role(),
@@ -3265,6 +3268,18 @@ fn prepared_curve_string_trim_inside_region_matches_direct_result() {
         direct.report().boundary_hit_count()
     );
     assert_eq!(
+        prepared.report().boundary_point_relation_count(),
+        direct.report().boundary_point_relation_count()
+    );
+    assert_eq!(
+        prepared.report().boundary_overlap_relation_count(),
+        direct.report().boundary_overlap_relation_count()
+    );
+    assert_eq!(
+        prepared.report().boundary_uncertain_relation_count(),
+        direct.report().boundary_uncertain_relation_count()
+    );
+    assert_eq!(
         prepared.report().boundary_hit_count(),
         prepared.report().boundary_hits().len()
     );
@@ -3398,6 +3413,10 @@ fn curve_string_trim_inside_region_reports_boundary_overlap_blocker() {
     assert_eq!(trimmed.report().output_segment_kind_counts(), None);
     assert_eq!(trimmed.report().interval_candidate_count(), 0);
     assert_eq!(trimmed.report().interval_classification_count(), 0);
+    assert_eq!(trimmed.report().boundary_hit_count(), 0);
+    assert_eq!(trimmed.report().boundary_point_relation_count(), 0);
+    assert_eq!(trimmed.report().boundary_overlap_relation_count(), 1);
+    assert_eq!(trimmed.report().boundary_uncertain_relation_count(), 0);
     assert_eq!(trimmed.report().output_curve_string_count(), None);
     assert_eq!(trimmed.report().output_segment_count(), None);
 }

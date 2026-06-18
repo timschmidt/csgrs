@@ -776,6 +776,9 @@ pub struct CurveStringRegionTrimReport2 {
     boundary_skipped_aabb_pair_count: usize,
     boundary_tested_pair_count: usize,
     boundary_hit_count: usize,
+    boundary_point_relation_count: usize,
+    boundary_overlap_relation_count: usize,
+    boundary_uncertain_relation_count: usize,
     interval_candidate_count: usize,
     interval_classification_count: usize,
     boundary_hits: Vec<CurveStringRegionTrimHit2>,
@@ -3836,6 +3839,21 @@ impl CurveStringRegionTrimReport2 {
         self.boundary_hit_count
     }
 
+    /// Returns tested boundary relations that produced one or more exact split hits.
+    pub const fn boundary_point_relation_count(&self) -> usize {
+        self.boundary_point_relation_count
+    }
+
+    /// Returns tested boundary relations blocked by exact overlap topology.
+    pub const fn boundary_overlap_relation_count(&self) -> usize {
+        self.boundary_overlap_relation_count
+    }
+
+    /// Returns tested boundary relations left unresolved by the active policy.
+    pub const fn boundary_uncertain_relation_count(&self) -> usize {
+        self.boundary_uncertain_relation_count
+    }
+
     /// Returns source intervals considered after splitting at retained boundary hits.
     pub const fn interval_candidate_count(&self) -> usize {
         self.interval_candidate_count
@@ -4154,6 +4172,9 @@ struct RegionTrimBoundaryWorkload {
     candidate_pair_count: usize,
     skipped_aabb_pair_count: usize,
     tested_pair_count: usize,
+    point_relation_count: usize,
+    overlap_relation_count: usize,
+    uncertain_relation_count: usize,
 }
 
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
@@ -4632,6 +4653,9 @@ fn trim_curve_string_inside_region_with_hits(
             boundary_skipped_aabb_pair_count: boundary_workload.skipped_aabb_pair_count,
             boundary_tested_pair_count: boundary_workload.tested_pair_count,
             boundary_hit_count: boundary_hits.len(),
+            boundary_point_relation_count: boundary_workload.point_relation_count,
+            boundary_overlap_relation_count: boundary_workload.overlap_relation_count,
+            boundary_uncertain_relation_count: boundary_workload.uncertain_relation_count,
             interval_candidate_count,
             interval_classification_count,
             boundary_hits,
@@ -4744,6 +4768,7 @@ fn collect_region_trim_contour_hits(
                 region_segment_index,
                 region_segment,
                 relation,
+                workload,
                 policy,
             )? {
                 return Ok(Some(blocker));
@@ -4792,6 +4817,7 @@ fn collect_prepared_region_trim_contour_hits(
                 region_segment_index,
                 region_segment,
                 relation,
+                workload,
                 policy,
             )? {
                 return Ok(Some(blocker));
@@ -4811,6 +4837,7 @@ fn append_region_trim_hits_from_relation(
     region_segment_index: usize,
     region_segment: &Segment2,
     relation: SegmentIntersection,
+    workload: &mut RegionTrimBoundaryWorkload,
     policy: &CurvePolicy,
 ) -> CurveResult<Option<(RetainedTopologyStatus, UncertaintyReason)>> {
     match relation {
@@ -4825,23 +4852,27 @@ fn append_region_trim_hits_from_relation(
             a_param,
             b_param,
             kind,
-        }) => push_region_trim_hit(
-            hits,
-            source_segment_index,
-            source_segment,
-            role,
-            contour_index,
-            region_segment_index,
-            region_segment,
-            point,
-            a_param,
-            b_param,
-            kind,
-        ),
+        }) => {
+            workload.point_relation_count += 1;
+            push_region_trim_hit(
+                hits,
+                source_segment_index,
+                source_segment,
+                role,
+                contour_index,
+                region_segment_index,
+                region_segment,
+                point,
+                a_param,
+                b_param,
+                kind,
+            )
+        }
         SegmentIntersection::LineArc {
             result: LineArcIntersection::Point(hit),
             order,
         } => {
+            workload.point_relation_count += 1;
             match line_arc_region_trim_params(source_segment, region_segment, order, &hit, policy)?
             {
                 Ok((source_param, region_param)) => push_region_trim_hit(
@@ -4861,6 +4892,7 @@ fn append_region_trim_hits_from_relation(
             }
         }
         SegmentIntersection::ArcArc(ArcArcIntersection::Point(hit)) => {
+            workload.point_relation_count += 1;
             match point_region_trim_params(source_segment, region_segment, &hit.point, policy)? {
                 Ok((source_param, region_param)) => push_region_trim_hit(
                     hits,
@@ -4882,6 +4914,7 @@ fn append_region_trim_hits_from_relation(
             result: LineArcIntersection::TwoPoints { first, second },
             order,
         } => {
+            workload.point_relation_count += 1;
             let (source_param, region_param) = match line_arc_region_trim_params(
                 source_segment,
                 region_segment,
@@ -4930,6 +4963,7 @@ fn append_region_trim_hits_from_relation(
             )
         }
         SegmentIntersection::ArcArc(ArcArcIntersection::TwoPoints { first, second }) => {
+            workload.point_relation_count += 1;
             let (source_param, region_param) = match point_region_trim_params(
                 source_segment,
                 region_segment,
@@ -4978,16 +5012,20 @@ fn append_region_trim_hits_from_relation(
             )
         }
         SegmentIntersection::LineLine(LineLineIntersection::Overlap { .. })
-        | SegmentIntersection::ArcArc(ArcArcIntersection::Overlap { .. }) => Ok(Some((
-            RetainedTopologyStatus::Unsupported,
-            UncertaintyReason::Unsupported,
-        ))),
+        | SegmentIntersection::ArcArc(ArcArcIntersection::Overlap { .. }) => {
+            workload.overlap_relation_count += 1;
+            Ok(Some((
+                RetainedTopologyStatus::Unsupported,
+                UncertaintyReason::Unsupported,
+            )))
+        }
         SegmentIntersection::LineLine(LineLineIntersection::Uncertain { reason })
         | SegmentIntersection::LineArc {
             result: LineArcIntersection::Uncertain { reason },
             ..
         }
         | SegmentIntersection::ArcArc(ArcArcIntersection::Uncertain { reason }) => {
+            workload.uncertain_relation_count += 1;
             Ok(Some((RetainedTopologyStatus::Unresolved, reason)))
         }
     }
@@ -5187,6 +5225,9 @@ fn blocked_region_trim_result(
             boundary_skipped_aabb_pair_count: boundary_workload.skipped_aabb_pair_count,
             boundary_tested_pair_count: boundary_workload.tested_pair_count,
             boundary_hit_count: boundary_hits.len(),
+            boundary_point_relation_count: boundary_workload.point_relation_count,
+            boundary_overlap_relation_count: boundary_workload.overlap_relation_count,
+            boundary_uncertain_relation_count: boundary_workload.uncertain_relation_count,
             interval_candidate_count,
             interval_classification_count,
             boundary_hits,
