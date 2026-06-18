@@ -11,7 +11,7 @@
 
 use hyperlimit::{ApproximationPolicy, MeshSource, SourceProvenance};
 
-use super::{DiagnosticKind, MeshDiagnostic, Severity};
+use super::error::{DiagnosticKind, MeshDiagnostic, Severity};
 use crate::scalar::LossyF64Import;
 
 /// Audited primitive-float mesh input stream.

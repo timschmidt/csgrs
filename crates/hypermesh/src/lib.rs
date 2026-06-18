@@ -71,7 +71,7 @@ pub use boolean::{
     ExactArrangementBooleanAttempt, ExactBooleanEvaluation, ExactBooleanOperation,
     ExactBooleanRequest, ExactBoundaryBooleanPolicy,
 };
-pub use error::{DiagnosticKind, MeshDiagnostic, MeshError, Severity};
+pub use error::MeshError;
 pub use mesh::{ExactMesh, ExactMeshValidationError, Triangle};
 pub use package::{
     ExactMeshConsumerDomain, ExactMeshDomainSummaryError, ExactMeshHandoffPackageError,
