@@ -416,18 +416,18 @@ impl<'a> ExactBooleanWorkspace<'a> {
         let retained_attempt = self
             .validated_regularized_solid_arrangement_attempt(request)?
             .cloned();
-        let result = store_replayable_result_or_return(
+        let cached = cache_replayable_result(
             &mut self.materializations,
             self.left,
             self.right,
             request,
             retained_attempt.as_ref(),
-            result,
+            &result,
         )?;
-        if result.cached {
-            self.promote_evaluation_cache_from_materialization(request, &result.result)?;
+        if cached {
+            self.promote_evaluation_cache_from_materialization(request, &result)?;
         }
-        Ok(result.result)
+        Ok(result)
     }
 
     fn promote_evaluation_cache_from_materialization(
@@ -454,19 +454,14 @@ impl<'a> ExactBooleanWorkspace<'a> {
     }
 }
 
-struct StoredMaterialization {
-    result: ExactBooleanResult,
-    cached: bool,
-}
-
-fn store_replayable_result_or_return(
+fn cache_replayable_result(
     cache: &mut Vec<(ExactBooleanRequest, ExactBooleanResult)>,
     left: &ExactMesh,
     right: &ExactMesh,
     request: ExactBooleanRequest,
     retained_arrangement_attempt: Option<&ExactArrangementBooleanAttempt>,
-    result: ExactBooleanResult,
-) -> Result<StoredMaterialization, MeshError> {
+    result: &ExactBooleanResult,
+) -> Result<bool, MeshError> {
     if ExactBooleanEvaluation::validate_result_against_sources_for_request(
         left,
         right,
@@ -477,17 +472,11 @@ fn store_replayable_result_or_return(
     .is_ok()
     {
         cache.push((request, result.clone()));
-        return Ok(StoredMaterialization {
-            result,
-            cached: true,
-        });
+        return Ok(true);
     }
-    ExactBooleanEvaluation::validate_result_shape_for_request(request, &result)
+    ExactBooleanEvaluation::validate_result_shape_for_request(request, result)
         .map_err(workspace_report_validation_error)?;
-    Ok(StoredMaterialization {
-        result,
-        cached: false,
-    })
+    Ok(false)
 }
 
 fn cached_retained_materialization(
