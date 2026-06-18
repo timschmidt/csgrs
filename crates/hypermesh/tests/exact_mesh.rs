@@ -26,10 +26,10 @@ fn evaluation_materializes_arrangement_cell_complex(
     evaluation
         .retained_arrangement_attempt()
         .is_some_and(|attempt| {
-            attempt.operation == evaluation.request.operation
-                && attempt.policy == ExactRegularizationPolicy::REGULARIZED_SOLID
-                && attempt.output_validation == evaluation.request.validation
-                && attempt.materialized_arrangement_cell_complex_output()
+            attempt.certifies_arrangement_cell_complex_output_for_request(
+                evaluation.request,
+                ExactRegularizationPolicy::REGULARIZED_SOLID,
+            )
         })
         || evaluation
             .certifications
@@ -1290,8 +1290,7 @@ fn exact_coplanar_volumetric_cell_evidence_is_retained_by_public_evaluation() {
         evaluation
             .retained_arrangement_attempt()
             .is_some_and(|attempt| {
-                attempt.operation == evaluation.request.operation
-                    && attempt.resolves_requested_volume_ownership()
+                attempt.resolves_volume_ownership_for_operation(evaluation.request.operation)
             })
             || evaluation_materializes_arrangement_cell_complex(&evaluation)
             || preflight.coplanar_volumetric_evidence.is_some(),
