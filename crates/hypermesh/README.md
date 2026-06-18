@@ -103,9 +103,8 @@ diagnostic/probing hooks and Bevy/demo surfaces.
 
 `ExactBooleanWorkspace` provides a native exact session for a fixed mesh pair. It
 caches replayable graph, arrangement, arrangement-attempt, selected cell-complex,
-simplified cell-complex, preflight, evaluation, topology-assembly report,
-region-ownership report, and certified materialization artifacts while keeping
-source freshness tied to the borrowed exact meshes.
+simplified cell-complex, preflight, evaluation, and certified materialization
+artifacts while keeping source freshness tied to the borrowed exact meshes.
 Workspace evaluation reuses the retained regularized arrangement for boolean
 certification evidence instead of reconstructing that object internally. First-call
 workspace materialization also consumes retained graph, preflight, and arrangement
@@ -127,9 +126,14 @@ certify the request, so shortcuts remain certified accelerators rather than a
 parallel boolean API.
 `ExactBooleanRequest` now only describes the operation and policy; evaluation and
 materialization run through `ExactBooleanWorkspace` so retained artifacts and
-cache freshness stay tied to one explicit session. Volumetric split-cell recovery
-reuses its retained graph for internal result proof before exposing the strict
-public `validate_against_sources` replay API.
+cache freshness stay tied to one explicit session. `ExactBooleanEvaluation`
+exposes scheduling through `preflight`, retained subreports through its
+`certifications` bundle, retained arrangement/cell-complex evidence through the
+primary arrangement attempt, and materialized output through `ExactBooleanResult`;
+report-specific evaluation accessors have been folded into those canonical
+fields. Volumetric split-cell recovery reuses its retained graph for internal
+result proof before exposing the strict public `validate_against_sources` replay
+API.
 
 Topology assembly subreports record the retained bridge from intersection graph
 events through split topology and face-region loops into arrangement vertices,
@@ -170,12 +174,12 @@ lower-dimensional artifact shape counts as the topology bridge. Ownership report
 also retain face-cell boundary-node and boundary-coordinate counts for the
 labeled cell-complex view. They validate directly against source operands and
 through workspace retained-arrangement sessions. Named exact boolean evaluations
-retain this report in their certification bundle so materializers can reject
-stale or missing ownership proof before consuming arrangement-cell-complex
-output, and materialized arrangement outputs locally cross-check retained
-topology and ownership report counts for face cells, boundary nodes, and
-lower-dimensional artifact shape before source replay. Retained arrangement
-attempts try topology/label/selection before bounded
+retain this report as arrangement-attempt evidence, mirrored by the certification
+bundle where needed, so materializers can reject stale or missing ownership proof
+before consuming arrangement-cell-complex output. Materialized arrangement outputs
+locally cross-check retained topology and ownership report counts for face cells,
+boundary nodes, and lower-dimensional artifact shape before source replay.
+Retained arrangement attempts try topology/label/selection before bounded
 recovery materializers; those attempts now retain the ownership report and status
 observed before selection. Recovery materializers remain available only when
 their retained certificates prove coverage for cases not yet supported by the
