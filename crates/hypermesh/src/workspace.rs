@@ -341,17 +341,11 @@ impl<'a> ExactBooleanWorkspace<'a> {
             .iter()
             .find(|(stored_request, _)| *stored_request == request)
             .map(|(_, evaluation)| evaluation)
-            && let Some(result) = evaluation.result.as_ref()
+            && let Some(result) = evaluation
+                .replayable_materialized_result(self.left, self.right)
+                .map_err(workspace_report_validation_error)?
         {
-            evaluation
-                .validate()
-                .map_err(workspace_report_validation_error)?;
-            if evaluation
-                .validate_materialized_result_against_sources(self.left, self.right)
-                .is_ok()
-            {
-                return self.store_materialization_and_promote_evaluation(request, result.clone());
-            }
+            return self.store_materialization_and_promote_evaluation(request, result);
         }
         let evaluation = self.evaluate(request)?.clone();
         evaluation
