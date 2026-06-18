@@ -90,6 +90,8 @@ pub struct ContourFilletResult2 {
 pub struct ContourLineMergeSpanReport2 {
     source_segment_indices: Vec<usize>,
     output_segment_index: usize,
+    output_start_point: Point2,
+    output_end_point: Point2,
     status: RetainedTopologyStatus,
 }
 
@@ -885,6 +887,16 @@ impl ContourLineMergeSpanReport2 {
         self.output_segment_index
     }
 
+    /// Returns the exact start point of this emitted contour segment.
+    pub const fn output_start_point(&self) -> &Point2 {
+        &self.output_start_point
+    }
+
+    /// Returns the exact end point of this emitted contour segment.
+    pub const fn output_end_point(&self) -> &Point2 {
+        &self.output_end_point
+    }
+
     /// Returns retained topology status for this source run.
     pub const fn status(&self) -> RetainedTopologyStatus {
         self.status
@@ -1149,6 +1161,8 @@ fn push_contour_line_merge_run(
     spans.push(ContourLineMergeSpanReport2 {
         source_segment_indices: source_indices.to_vec(),
         output_segment_index,
+        output_start_point: output_segments[output_segment_index].start().clone(),
+        output_end_point: output_segments[output_segment_index].end().clone(),
         status: RetainedTopologyStatus::NativeExact,
     });
     Ok(())

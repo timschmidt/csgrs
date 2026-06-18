@@ -171,6 +171,8 @@ fn contour_merge_adjacent_collinear_lines_reports_source_runs() {
     assert_eq!(merged.report().spans().len(), 4);
     assert_eq!(merged.report().spans()[0].source_segment_indices(), &[0, 1]);
     assert_eq!(merged.report().spans()[0].output_segment_index(), 0);
+    assert_eq!(merged.report().spans()[0].output_start_point(), &p(0, 0));
+    assert_eq!(merged.report().spans()[0].output_end_point(), &p(4, 0));
     let contour = merged
         .contour()
         .expect("certified contour line merge should materialize");
@@ -197,6 +199,8 @@ fn contour_merge_adjacent_collinear_lines_merges_wraparound_run() {
     assert_eq!(merged.report().output_segment_count(), Some(4));
     assert_eq!(merged.report().spans()[0].source_segment_indices(), &[4, 0]);
     assert_eq!(merged.report().spans()[0].output_segment_index(), 0);
+    assert_eq!(merged.report().spans()[0].output_start_point(), &p(0, 0));
+    assert_eq!(merged.report().spans()[0].output_end_point(), &p(4, 0));
     let contour = merged
         .contour()
         .expect("certified wraparound contour line merge should materialize");
