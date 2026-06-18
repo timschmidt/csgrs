@@ -2869,13 +2869,15 @@ fn rematerialize_simplified_arrangement_cell_complex(
         }
         Err(_) => return Ok(None),
     };
-    let mut result = certified_shortcut_result(
+    let result = certified_shortcut_result(
         mesh,
         request.operation,
         ExactBooleanShortcutKind::ArrangementCellComplex,
+    )
+    .with_gate_reports(
+        simplified.topology_assembly_report.clone(),
+        simplified.region_ownership_report.clone(),
     );
-    result.topology_assembly_report = simplified.topology_assembly_report.clone();
-    result.region_ownership_report = simplified.region_ownership_report.clone();
     Ok(Some(result))
 }
 
@@ -4924,12 +4926,10 @@ fn materialized_arrangement_attempt_outcome(
     attempt.decline = None;
     attempt.materialized_shortcut = materialized_shortcut;
     attempt.shortcut_reason = shortcut_reason;
-    if result.topology_assembly_report.is_none() {
-        result.topology_assembly_report = attempt.topology_assembly_report.clone();
-    }
-    if result.region_ownership_report.is_none() {
-        result.region_ownership_report = attempt.region_ownership_report.clone();
-    }
+    result.retain_missing_gate_reports(
+        attempt.topology_assembly_report.as_ref(),
+        attempt.region_ownership_report.as_ref(),
+    );
     if clear_arrangement_blockers {
         attempt.arrangement_blockers = 0;
     }

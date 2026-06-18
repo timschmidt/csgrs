@@ -699,6 +699,31 @@ pub struct ExactBooleanResult {
     pub mesh: ExactMesh,
 }
 
+impl ExactBooleanResult {
+    pub(crate) fn with_gate_reports(
+        mut self,
+        topology_assembly_report: Option<ExactTopologyAssemblyReport>,
+        region_ownership_report: Option<ExactRegionOwnershipReport>,
+    ) -> Self {
+        self.topology_assembly_report = topology_assembly_report;
+        self.region_ownership_report = region_ownership_report;
+        self
+    }
+
+    pub(crate) fn retain_missing_gate_reports(
+        &mut self,
+        topology_assembly_report: Option<&ExactTopologyAssemblyReport>,
+        region_ownership_report: Option<&ExactRegionOwnershipReport>,
+    ) {
+        if self.topology_assembly_report.is_none() {
+            self.topology_assembly_report = topology_assembly_report.cloned();
+        }
+        if self.region_ownership_report.is_none() {
+            self.region_ownership_report = region_ownership_report.cloned();
+        }
+    }
+}
+
 /// Declared production path for an exact boolean result.
 ///
 /// Result kind is explicit so validation does not infer semantic intent from
