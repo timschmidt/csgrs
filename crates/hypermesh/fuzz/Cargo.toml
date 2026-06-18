@@ -17,8 +17,15 @@ hypertri = { path = "../../hypertri", default-features = false, features = ["cdt
 # hypermesh = { version = "0.3.0", default-features = false }
 # hyperlimit = { version = "0.4.0" }
 # hyperreal = { version = "0.13.0" }
-# hypertri = { version = "0.3.0", default-features = false, features = ["cdt", "earcut"] }
+# hypertri = { version = "0.4.0", default-features = false, features = ["cdt", "earcut"] }
 libfuzzer-sys = "0.4"
+
+# Keep transitive sibling crates unified while using local path development mode.
+[patch.crates-io]
+hyperlattice = { path = "../../hyperlattice" }
+hyperlimit = { path = "../../hyperlimit" }
+hyperreal = { path = "../../hyperreal" }
+hypertri = { path = "../../hypertri" }
 
 [[bin]]
 name = "exact_mesh_input"

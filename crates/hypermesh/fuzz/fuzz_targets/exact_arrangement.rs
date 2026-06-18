@@ -8,7 +8,6 @@ use hypermesh::{
     ExactArrangement, ExactArrangement2dRegion, ExactArrangement2dRegionRing,
     ExactArrangement2dSetOperation, ExactBooleanOperation, ExactBooleanRequest,
     ExactBooleanWorkspace, ExactMesh, ExactRegularizationPolicy, ValidationPolicy,
-    build_exact_arrangement2d_overlay,
 };
 use hyperreal::Real;
 use libfuzzer_sys::fuzz_target;
@@ -50,50 +49,43 @@ fn exercise_planar_overlay(values: &[i64]) {
         ExactArrangement2dSetOperation::Intersection,
         ExactArrangement2dSetOperation::Difference,
     ] {
-        let overlay = build_exact_arrangement2d_overlay(&[left.clone(), right.clone()], operation);
+        let overlay = ExactArrangement2dRegionRing::overlay(&[left.clone(), right.clone()], operation);
         if overlay.is_complete() {
-            exercise_overlay_component_invariants(&overlay);
+            let mut assigned_holes = BTreeSet::new();
+            for component in &overlay.output_components {
+                assert!(component.outer_loop < overlay.output_loops.len());
+                assert_eq!(
+                    compare_reals(
+                        &overlay.output_loops[component.outer_loop].signed_area_twice,
+                        &Real::from(0),
+                    )
+                    .value(),
+                    Some(Ordering::Greater)
+                );
+                for &hole_loop in &component.hole_loops {
+                    assert!(hole_loop < overlay.output_loops.len());
+                    assert!(assigned_holes.insert(hole_loop));
+                    assert_eq!(
+                        compare_reals(
+                            &overlay.output_loops[hole_loop].signed_area_twice,
+                            &Real::from(0),
+                        )
+                        .value(),
+                        Some(Ordering::Less)
+                    );
+                }
+            }
+            let negative_loops = overlay
+                .output_loops
+                .iter()
+                .filter(|loop_| {
+                    compare_reals(&loop_.signed_area_twice, &Real::from(0)).value()
+                        == Some(Ordering::Less)
+                })
+                .count();
+            assert_eq!(assigned_holes.len(), negative_loops);
         }
     }
-}
-
-fn exercise_overlay_component_invariants(
-    overlay: &hypermesh::ExactArrangement2dOverlay,
-) {
-    let mut assigned_holes = BTreeSet::new();
-    for component in &overlay.output_components {
-        assert!(component.outer_loop < overlay.output_loops.len());
-        assert_eq!(
-            compare_reals(
-                &overlay.output_loops[component.outer_loop].signed_area_twice,
-                &Real::from(0),
-            )
-            .value(),
-            Some(Ordering::Greater)
-        );
-        for &hole_loop in &component.hole_loops {
-            assert!(hole_loop < overlay.output_loops.len());
-            assert!(assigned_holes.insert(hole_loop));
-            assert_eq!(
-                compare_reals(
-                    &overlay.output_loops[hole_loop].signed_area_twice,
-                    &Real::from(0),
-                )
-                .value(),
-                Some(Ordering::Less)
-            );
-        }
-    }
-    let negative_loops = overlay
-        .output_loops
-        .iter()
-        .enumerate()
-        .filter(|(_, loop_)| {
-            compare_reals(&loop_.signed_area_twice, &Real::from(0)).value()
-                == Some(Ordering::Less)
-        })
-        .count();
-    assert_eq!(assigned_holes.len(), negative_loops);
 }
 
 fn exercise_mesh_arrangement(values: &[i64]) {
