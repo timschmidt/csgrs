@@ -136,6 +136,9 @@ pub struct ContourLineMergeReport2 {
     stage: ContourLineMergeStage2,
     source_segment_count: usize,
     output_segment_count: Option<usize>,
+    adjacent_pair_count: usize,
+    merged_pair_count: usize,
+    preserved_pair_count: usize,
     fill_rule: FillRule,
     spans: Vec<ContourLineMergeSpanReport2>,
     status: RetainedTopologyStatus,
@@ -295,15 +298,23 @@ impl Contour2 {
         let source_segment_count = self.segments().len();
         let mut adjacency = Vec::with_capacity(source_segment_count);
         let mut break_index = None;
+        let mut adjacent_pair_count = 0_usize;
+        let mut merged_pair_count = 0_usize;
+        let mut preserved_pair_count = 0_usize;
         for index in 0..source_segment_count {
             let next_index = (index + 1) % source_segment_count;
+            adjacent_pair_count += 1;
             match merge_adjacent_line_segments(
                 &self.segments()[index],
                 &self.segments()[next_index],
                 policy,
             )? {
-                Classification::Decided(Some(_)) => adjacency.push(true),
+                Classification::Decided(Some(_)) => {
+                    merged_pair_count += 1;
+                    adjacency.push(true);
+                }
                 Classification::Decided(None) => {
+                    preserved_pair_count += 1;
                     adjacency.push(false);
                     break_index = Some(index);
                 }
@@ -314,6 +325,9 @@ impl Contour2 {
                             stage: ContourLineMergeStage2::AdjacencyClassification,
                             source_segment_count,
                             output_segment_count: None,
+                            adjacent_pair_count,
+                            merged_pair_count,
+                            preserved_pair_count,
                             fill_rule: self.fill_rule,
                             spans: Vec::new(),
                             status: RetainedTopologyStatus::Unresolved,
@@ -331,6 +345,9 @@ impl Contour2 {
                     stage: ContourLineMergeStage2::AdjacencyClassification,
                     source_segment_count,
                     output_segment_count: None,
+                    adjacent_pair_count,
+                    merged_pair_count,
+                    preserved_pair_count,
                     fill_rule: self.fill_rule,
                     spans: Vec::new(),
                     status: RetainedTopologyStatus::Unsupported,
@@ -376,6 +393,9 @@ impl Contour2 {
                 stage: ContourLineMergeStage2::ContourMaterialization,
                 source_segment_count,
                 output_segment_count: Some(contour.len()),
+                adjacent_pair_count,
+                merged_pair_count,
+                preserved_pair_count,
                 fill_rule: self.fill_rule,
                 spans,
                 status: RetainedTopologyStatus::NativeExact,
@@ -1128,6 +1148,21 @@ impl ContourLineMergeReport2 {
     /// Returns the output segment count when the merge materialized.
     pub const fn output_segment_count(&self) -> Option<usize> {
         self.output_segment_count
+    }
+
+    /// Returns adjacent contour segment pairs classified, including wraparound.
+    pub const fn adjacent_pair_count(&self) -> usize {
+        self.adjacent_pair_count
+    }
+
+    /// Returns adjacent pairs merged into a longer line run.
+    pub const fn merged_pair_count(&self) -> usize {
+        self.merged_pair_count
+    }
+
+    /// Returns adjacent pairs preserved as corners, arcs, or reversals.
+    pub const fn preserved_pair_count(&self) -> usize {
+        self.preserved_pair_count
     }
 
     /// Returns the fill rule preserved by this contour edit.

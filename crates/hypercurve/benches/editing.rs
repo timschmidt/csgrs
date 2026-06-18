@@ -469,6 +469,41 @@ fn bench_boundary_contour_region_build(iterations: u32) -> CurveResult<()> {
     Ok(())
 }
 
+fn bench_contour_line_merge_report(iterations: u32) -> CurveResult<()> {
+    let contour = Contour2::from_bulge_vertices(&[
+        vertex(0, 0, 0),
+        vertex(2, 0, 0),
+        vertex(5, 0, 0),
+        vertex(5, 3, 0),
+        vertex(5, 7, 0),
+        vertex(0, 7, 0),
+    ])?;
+    let policy = CurvePolicy::certified();
+    let started = Instant::now();
+    let mut total_spans = 0_usize;
+
+    for _ in 0..iterations {
+        let result = contour.merge_adjacent_collinear_lines(&policy)?;
+        if !result.report().status().is_native_exact() {
+            panic!("contour line merge benchmark became non-native");
+        }
+        let merged = result
+            .contour()
+            .expect("contour line merge benchmark should materialize");
+        total_spans += black_box(merged.len());
+        total_spans += black_box(result.report().spans().len());
+        total_spans += black_box(result.report().merged_pair_count());
+        total_spans += black_box(result.report().preserved_pair_count());
+    }
+
+    let elapsed = started.elapsed();
+    println!(
+        "contour_line_merge_report: {iterations} iterations in {elapsed:?} ({:?}/iter), total spans={total_spans}",
+        elapsed / iterations
+    );
+    Ok(())
+}
+
 fn bench_region_boolean_report(iterations: u32) -> CurveResult<()> {
     let first = Region2::from_material_contours(vec![rectangle(0, 0, 4, 4)]);
     let second = Region2::from_material_contours(vec![rectangle(2, -1, 6, 3)]);
@@ -554,6 +589,7 @@ fn main() -> CurveResult<()> {
     bench_curve_string_ordered_link_report(iterations)?;
     bench_curve_string_connect_report(iterations)?;
     bench_boundary_contour_region_build(1_000)?;
+    bench_contour_line_merge_report(1_000)?;
     bench_region_boolean_report(1_000)?;
     bench_prepared_region_boolean_report(1_000)?;
     Ok(())

@@ -186,6 +186,9 @@ fn contour_merge_adjacent_collinear_lines_reports_source_runs() {
     );
     assert_eq!(merged.report().source_segment_count(), 5);
     assert_eq!(merged.report().output_segment_count(), Some(4));
+    assert_eq!(merged.report().adjacent_pair_count(), 5);
+    assert_eq!(merged.report().merged_pair_count(), 1);
+    assert_eq!(merged.report().preserved_pair_count(), 4);
     assert_eq!(merged.report().fill_rule(), FillRule::NonZero);
     assert_eq!(merged.report().spans().len(), 4);
     assert_eq!(merged.report().spans()[0].source_segment_indices(), &[0, 1]);
@@ -220,6 +223,9 @@ fn contour_merge_adjacent_collinear_lines_merges_wraparound_run() {
     );
     assert_eq!(merged.report().source_segment_count(), 5);
     assert_eq!(merged.report().output_segment_count(), Some(4));
+    assert_eq!(merged.report().adjacent_pair_count(), 5);
+    assert_eq!(merged.report().merged_pair_count(), 1);
+    assert_eq!(merged.report().preserved_pair_count(), 4);
     assert_eq!(merged.report().spans()[0].source_segment_indices(), &[4, 0]);
     assert_eq!(merged.report().spans()[0].output_segment_index(), 0);
     assert_eq!(merged.report().spans()[0].output_start_point(), &p(0, 0));
