@@ -118,6 +118,17 @@ fn region_fragments_split_all_keyed_contours() {
         4
     );
     assert_eq!(
+        built.report().contour_reports()[0].contributing_pair_count(),
+        intersections.pairs_for_contour(material_key).count()
+    );
+    assert_eq!(
+        built.report().contour_reports()[0].intersection_event_count(),
+        intersections
+            .pairs_for_contour(material_key)
+            .map(|pair| pair.intersections.events().len())
+            .sum()
+    );
+    assert_eq!(
         built.report().contour_reports()[0].output_fragment_count(),
         6
     );
@@ -128,10 +139,32 @@ fn region_fragments_split_all_keyed_contours() {
     );
     assert_eq!(built.report().contour_reports()[1].key(), hole_key);
     assert_eq!(
+        built.report().contour_reports()[1].contributing_pair_count(),
+        intersections.pairs_for_contour(hole_key).count()
+    );
+    assert_eq!(
+        built.report().contour_reports()[1].intersection_event_count(),
+        intersections
+            .pairs_for_contour(hole_key)
+            .map(|pair| pair.intersections.events().len())
+            .sum()
+    );
+    assert_eq!(
         built.report().contour_reports()[1].output_fragment_count(),
         6
     );
     assert_eq!(built.report().contour_reports()[2].key(), cutter_key);
+    assert_eq!(
+        built.report().contour_reports()[2].contributing_pair_count(),
+        intersections.pairs_for_contour(cutter_key).count()
+    );
+    assert_eq!(
+        built.report().contour_reports()[2].intersection_event_count(),
+        intersections
+            .pairs_for_contour(cutter_key)
+            .map(|pair| pair.intersections.events().len())
+            .sum()
+    );
     assert_eq!(
         built.report().contour_reports()[2].output_fragment_count(),
         8
@@ -227,6 +260,17 @@ fn region_fragments_keep_disjoint_contours_unsplit() {
             .len(),
         4
     );
+
+    let built = intersections
+        .split_regions_with_report(&first.as_view(), &second.as_view(), &policy())
+        .unwrap();
+    assert!(built.report().status().is_native_exact());
+    assert_eq!(built.report().contour_reports().len(), 2);
+    for report in built.report().contour_reports() {
+        assert_eq!(report.contributing_pair_count(), 0);
+        assert_eq!(report.intersection_event_count(), 0);
+        assert_eq!(report.output_fragment_count(), 4);
+    }
 }
 
 #[test]

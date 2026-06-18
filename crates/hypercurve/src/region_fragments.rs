@@ -29,6 +29,8 @@ pub struct RegionContourFragments {
 pub struct RegionContourFragmentReport2 {
     key: RegionContourKey,
     source_segment_count: usize,
+    contributing_pair_count: usize,
+    intersection_event_count: usize,
     output_fragment_count: usize,
     status: RetainedTopologyStatus,
 }
@@ -268,6 +270,16 @@ impl RegionContourFragmentReport2 {
         self.source_segment_count
     }
 
+    /// Returns the number of contour-pair event reports that contributed split evidence.
+    pub const fn contributing_pair_count(&self) -> usize {
+        self.contributing_pair_count
+    }
+
+    /// Returns normalized intersection events consumed while splitting this contour.
+    pub const fn intersection_event_count(&self) -> usize {
+        self.intersection_event_count
+    }
+
     /// Returns the number of retained fragments emitted for this contour.
     pub const fn output_fragment_count(&self) -> usize {
         self.output_fragment_count
@@ -500,6 +512,11 @@ fn append_region_contours(
 ) -> CurveResult<Classification<()>> {
     for (index, contour) in contours.iter().enumerate() {
         let key = RegionContourKey::new(side, role, index);
+        let contributing_pair_count = intersections.pairs_for_contour(key).count();
+        let intersection_event_count = intersections
+            .pairs_for_contour(key)
+            .map(|pair| pair.intersections.events().len())
+            .sum();
         let fragments = match split_keyed_contour(contour, key, intersections, policy)? {
             Classification::Decided(fragments) => fragments,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
@@ -507,6 +524,8 @@ fn append_region_contours(
         reports.push(RegionContourFragmentReport2 {
             key,
             source_segment_count: contour.len(),
+            contributing_pair_count,
+            intersection_event_count,
             output_fragment_count: fragments.len(),
             status: RetainedTopologyStatus::NativeExact,
         });
