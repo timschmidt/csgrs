@@ -128,7 +128,9 @@ pub struct RegionLineSegmentRegionBuildReport2 {
     split_intersection_event_count: usize,
     split_output_segment_count: Option<usize>,
     split_blocker_first_source_segment_index: Option<usize>,
+    split_blocker_first_source_segment_kind: Option<SegmentKind>,
     split_blocker_second_source_segment_index: Option<usize>,
+    split_blocker_second_source_segment_kind: Option<SegmentKind>,
     endpoint_graph_endpoint_count: Option<usize>,
     endpoint_graph_structural_bucket_count: Option<usize>,
     endpoint_graph_structural_singleton_bucket_count: Option<usize>,
@@ -344,9 +346,15 @@ impl Region2 {
                 split_blocker_first_source_segment_index: arranged
                     .report
                     .blocker_first_source_segment_index,
+                split_blocker_first_source_segment_kind: arranged
+                    .report
+                    .blocker_first_source_segment_kind,
                 split_blocker_second_source_segment_index: arranged
                     .report
                     .blocker_second_source_segment_index,
+                split_blocker_second_source_segment_kind: arranged
+                    .report
+                    .blocker_second_source_segment_kind,
                 endpoint_graph_endpoint_count: Some(endpoint_graph.endpoint_count),
                 endpoint_graph_structural_bucket_count: Some(
                     endpoint_graph.structural_bucket_count,
@@ -525,9 +533,15 @@ impl Region2 {
                 split_blocker_first_source_segment_index: arranged
                     .report
                     .blocker_first_source_segment_index,
+                split_blocker_first_source_segment_kind: arranged
+                    .report
+                    .blocker_first_source_segment_kind,
                 split_blocker_second_source_segment_index: arranged
                     .report
                     .blocker_second_source_segment_index,
+                split_blocker_second_source_segment_kind: arranged
+                    .report
+                    .blocker_second_source_segment_kind,
                 endpoint_graph_endpoint_count: Some(endpoint_graph.endpoint_count),
                 endpoint_graph_structural_bucket_count: Some(
                     endpoint_graph.structural_bucket_count,
@@ -1003,9 +1017,19 @@ impl RegionLineSegmentRegionBuildReport2 {
         self.split_blocker_first_source_segment_index
     }
 
+    /// Returns the primitive family of the first source segment in a split-stage blocker.
+    pub const fn split_blocker_first_source_segment_kind(&self) -> Option<SegmentKind> {
+        self.split_blocker_first_source_segment_kind
+    }
+
     /// Returns the second source segment in a split-stage blocker, when known.
     pub const fn split_blocker_second_source_segment_index(&self) -> Option<usize> {
         self.split_blocker_second_source_segment_index
+    }
+
+    /// Returns the primitive family of the second source segment in a split-stage blocker.
+    pub const fn split_blocker_second_source_segment_kind(&self) -> Option<SegmentKind> {
+        self.split_blocker_second_source_segment_kind
     }
 
     /// Returns arranged endpoint count validated before ring traversal.
@@ -1176,7 +1200,9 @@ struct LineSegmentSplitReportParts {
     intersection_event_count: usize,
     output_segment_count: Option<usize>,
     blocker_first_source_segment_index: Option<usize>,
+    blocker_first_source_segment_kind: Option<SegmentKind>,
     blocker_second_source_segment_index: Option<usize>,
+    blocker_second_source_segment_kind: Option<SegmentKind>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -1547,16 +1573,34 @@ fn arrange_line_segments_at_point_intersections(
                         || insert_line_split_marker(&mut markers[second_index], b_param, policy)
                             .is_none()
                     {
-                        set_split_blocker_pair(&mut report, first_index, second_index);
+                        set_split_blocker_pair(
+                            &mut report,
+                            first_index,
+                            SegmentKind::Line,
+                            second_index,
+                            SegmentKind::Line,
+                        );
                         return Ok(Err((report, UncertaintyReason::Ordering)));
                     }
                 }
                 LineLineIntersection::Overlap { .. } => {
-                    set_split_blocker_pair(&mut report, first_index, second_index);
+                    set_split_blocker_pair(
+                        &mut report,
+                        first_index,
+                        SegmentKind::Line,
+                        second_index,
+                        SegmentKind::Line,
+                    );
                     return Ok(Err((report, UncertaintyReason::Boundary)));
                 }
                 LineLineIntersection::Uncertain { reason } => {
-                    set_split_blocker_pair(&mut report, first_index, second_index);
+                    set_split_blocker_pair(
+                        &mut report,
+                        first_index,
+                        SegmentKind::Line,
+                        second_index,
+                        SegmentKind::Line,
+                    );
                     return Ok(Err((report, reason)));
                 }
             }
@@ -1629,11 +1673,15 @@ fn sort_line_split_markers(
 fn set_split_blocker_pair(
     report: &mut LineSegmentSplitReportParts,
     first_source_segment_index: usize,
+    first_source_segment_kind: SegmentKind,
     second_source_segment_index: usize,
+    second_source_segment_kind: SegmentKind,
 ) {
     if report.blocker_first_source_segment_index.is_none() {
         report.blocker_first_source_segment_index = Some(first_source_segment_index);
+        report.blocker_first_source_segment_kind = Some(first_source_segment_kind);
         report.blocker_second_source_segment_index = Some(second_source_segment_index);
+        report.blocker_second_source_segment_kind = Some(second_source_segment_kind);
     }
 }
 
@@ -1706,17 +1754,35 @@ fn arrange_native_segments_at_point_intersections(
                             )
                             .is_none()
                         {
-                            set_split_blocker_pair(&mut report, first_index, second_index);
+                            set_split_blocker_pair(
+                                &mut report,
+                                first_index,
+                                first.structural_facts().kind,
+                                second_index,
+                                second.structural_facts().kind,
+                            );
                             return Ok(Err((report, UncertaintyReason::Ordering)));
                         }
                     }
                 }
                 NativeSegmentIntersectionMarkers::Overlap => {
-                    set_split_blocker_pair(&mut report, first_index, second_index);
+                    set_split_blocker_pair(
+                        &mut report,
+                        first_index,
+                        first.structural_facts().kind,
+                        second_index,
+                        second.structural_facts().kind,
+                    );
                     return Ok(Err((report, UncertaintyReason::Boundary)));
                 }
                 NativeSegmentIntersectionMarkers::Uncertain(reason) => {
-                    set_split_blocker_pair(&mut report, first_index, second_index);
+                    set_split_blocker_pair(
+                        &mut report,
+                        first_index,
+                        first.structural_facts().kind,
+                        second_index,
+                        second.structural_facts().kind,
+                    );
                     return Ok(Err((report, reason)));
                 }
             }
@@ -2464,7 +2530,9 @@ fn blocked_line_segment_region_report(
         split_intersection_event_count: split_report.intersection_event_count,
         split_output_segment_count: split_report.output_segment_count,
         split_blocker_first_source_segment_index: split_report.blocker_first_source_segment_index,
+        split_blocker_first_source_segment_kind: split_report.blocker_first_source_segment_kind,
         split_blocker_second_source_segment_index: split_report.blocker_second_source_segment_index,
+        split_blocker_second_source_segment_kind: split_report.blocker_second_source_segment_kind,
         endpoint_graph_endpoint_count: endpoint_graph_report.map(|report| report.endpoint_count),
         endpoint_graph_structural_bucket_count: endpoint_graph_report
             .map(|report| report.structural_bucket_count),
