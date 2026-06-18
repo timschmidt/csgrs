@@ -93,6 +93,13 @@ pub enum ExactMeshDomainSummaryError {
     MissingClosedVolume,
 }
 
+impl ExactMeshDomainSummaryError {
+    /// Return whether this error reports a summary mismatch in `field`.
+    pub fn is_summary_mismatch(&self, field: &str) -> bool {
+        matches!(self, Self::SummaryMismatch { field: actual } if *actual == field)
+    }
+}
+
 /// Freshness status for a retained domain summary.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ExactMeshDomainSummaryFreshness {
@@ -523,6 +530,14 @@ pub enum ExactMeshHandoffPackageError {
         /// Name of the mismatched field.
         field: &'static str,
     },
+}
+
+impl ExactMeshHandoffPackageError {
+    /// Return whether this error reports an internal package mismatch in
+    /// `field`.
+    pub fn is_internal_mismatch(&self, field: &str) -> bool {
+        matches!(self, Self::InternalMismatch { field: actual } if *actual == field)
+    }
 }
 
 /// Freshness status for a retained exact mesh handoff package.

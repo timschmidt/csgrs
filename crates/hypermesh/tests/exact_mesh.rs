@@ -2,10 +2,10 @@ use hyperlimit::{Point3, SourceProvenance};
 use hypermesh::{
     ExactBooleanOperation, ExactBooleanRequest, ExactBooleanResult, ExactBooleanWorkspace,
     ExactBoundaryBooleanPolicy, ExactI64MeshInputReadiness, ExactI64MeshInputReportValidationError,
-    ExactMesh, ExactMeshConsumerDomain, ExactMeshHandoffPackageError, ExactOutputTriangleOrientation,
-    ExactRegionSelection, ExactRegularizationPolicy, ExactReportFreshness,
-    LossyF64MeshInputReadiness, LossyF64MeshInputReportValidationError, MeshArtifactBlocker,
-    MeshArtifactFaceRecord, MeshArtifactManifest, MeshArtifactVertexRecord, ValidationPolicy,
+    ExactMesh, ExactMeshConsumerDomain, ExactOutputTriangleOrientation, ExactRegionSelection,
+    ExactRegularizationPolicy, ExactReportFreshness, LossyF64MeshInputReadiness,
+    LossyF64MeshInputReportValidationError, MeshArtifactBlocker, MeshArtifactFaceRecord,
+    MeshArtifactManifest, MeshArtifactVertexRecord, ValidationPolicy,
 };
 use hyperreal::Real;
 
@@ -890,10 +890,11 @@ fn exact_mesh_handoff_package_domains_are_publicly_replayable() {
 
     let mut invalid_readiness_package = package.clone();
     invalid_readiness_package.readiness.closed_manifold = false;
-    assert!(matches!(
-        invalid_readiness_package.validate_internal(),
-        Err(ExactMeshHandoffPackageError::InternalMismatch { field: "readiness" })
-    ));
+    assert!(
+        invalid_readiness_package
+            .validate_internal()
+            .is_err_and(|error| error.is_internal_mismatch("readiness"))
+    );
     assert!(
         invalid_readiness_package
             .validate_against_mesh(&solid)
@@ -918,10 +919,11 @@ fn exact_mesh_handoff_package_domains_are_publicly_replayable() {
         .as_mut()
         .unwrap()
         .nonempty_topology = false;
-    assert!(matches!(
-        invalid_surface_package.validate_internal(),
-        Err(ExactMeshHandoffPackageError::InternalMismatch { field: "surface" })
-    ));
+    assert!(
+        invalid_surface_package
+            .validate_internal()
+            .is_err_and(|error| error.is_internal_mismatch("surface"))
+    );
     assert!(
         invalid_surface_package
             .validate_against_mesh(&solid)
@@ -934,10 +936,11 @@ fn exact_mesh_handoff_package_domains_are_publicly_replayable() {
         .as_mut()
         .unwrap()
         .retained_face_planes -= 1;
-    assert!(matches!(
-        invalid_solid_package.validate_internal(),
-        Err(ExactMeshHandoffPackageError::InternalMismatch { field: "solid" })
-    ));
+    assert!(
+        invalid_solid_package
+            .validate_internal()
+            .is_err_and(|error| error.is_internal_mismatch("solid"))
+    );
 
     let mut invalid_view_package = package.clone();
     invalid_view_package
@@ -945,12 +948,11 @@ fn exact_mesh_handoff_package_domains_are_publicly_replayable() {
         .as_mut()
         .unwrap()
         .exported_coordinates += 1;
-    assert!(matches!(
-        invalid_view_package.validate_internal(),
-        Err(ExactMeshHandoffPackageError::InternalMismatch {
-            field: "approximate_f64_view"
-        })
-    ));
+    assert!(
+        invalid_view_package
+            .validate_internal()
+            .is_err_and(|error| error.is_internal_mismatch("approximate_f64_view"))
+    );
 
     let summary = package.domain_summary();
     summary.validate_against_mesh(&package, &solid).unwrap();
@@ -972,22 +974,20 @@ fn exact_mesh_handoff_package_domains_are_publicly_replayable() {
     invalid_summary
         .available_domains
         .push(ExactMeshConsumerDomain::Surface);
-    assert!(matches!(
-        invalid_summary.validate(),
-        Err(hypermesh::ExactMeshDomainSummaryError::SummaryMismatch {
-            field: "available_domains"
-        })
-    ));
+    assert!(
+        invalid_summary
+            .validate()
+            .is_err_and(|error| error.is_summary_mismatch("available_domains"))
+    );
     assert!(invalid_summary.validate_against_package(&package).is_err());
 
     let mut contradictory_summary = summary.clone();
     contradictory_summary.exact_geometry_domains.clear();
-    assert!(matches!(
-        contradictory_summary.validate(),
-        Err(hypermesh::ExactMeshDomainSummaryError::SummaryMismatch {
-            field: "exact_geometry_domains"
-        })
-    ));
+    assert!(
+        contradictory_summary
+            .validate()
+            .is_err_and(|error| error.is_summary_mismatch("exact_geometry_domains"))
+    );
 
     let stale_source = tetra([2, 0, 0]);
     assert!(package.validate_against_mesh(&stale_source).is_err());
