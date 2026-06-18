@@ -11346,11 +11346,12 @@ mod tests {
         left: &ExactMesh,
         right: &ExactMesh,
     ) -> ExactVolumetricBoundaryClosureReport {
+        let mut workspace = ExactBooleanWorkspace::new(left, right);
         if matches!(request.operation, ExactBooleanOperation::SelectedRegions(_)) {
             return no_materialized_boundary_output_report(request.operation);
         }
-        let graph = validated_intersection_graph(left, right).unwrap();
-        volumetric_boundary_closure_report_from_graph(&graph, left, right, request.operation)
+        let graph = workspace.validated_graph().unwrap();
+        volumetric_boundary_closure_report_from_graph(graph, left, right, request.operation)
             .unwrap()
     }
 
