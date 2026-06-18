@@ -253,6 +253,13 @@ fn contour_chamfer_line_line_vertex_materializes_closed_contour() {
     );
     assert_eq!(chamfer.report().source_segment_count(), 4);
     assert_eq!(chamfer.report().output_segment_count(), Some(5));
+    assert_eq!(chamfer.report().previous_segment_index(), 0);
+    assert_eq!(chamfer.report().next_segment_index(), 1);
+    assert_eq!(chamfer.report().previous_trim().param(), &q(3, 4));
+    assert_eq!(chamfer.report().next_trim().param(), &q(1, 4));
+    assert_eq!(chamfer.report().previous_cut_point(), Some(&p(3, 0)));
+    assert_eq!(chamfer.report().next_cut_point(), Some(&p(4, 1)));
+    assert_eq!(chamfer.report().chamfer_segment_index(), Some(1));
     assert_eq!(
         chamfer.report().output_segment_count(),
         chamfer
@@ -546,19 +553,20 @@ fn contour_fillet_line_line_vertex_materializes_closed_contour() {
     );
     assert_eq!(fillet.report().source_segment_count(), 4);
     assert_eq!(fillet.report().output_segment_count(), Some(5));
+    assert_eq!(fillet.report().previous_segment_index(), 0);
+    assert_eq!(fillet.report().next_segment_index(), 1);
+    assert_eq!(fillet.report().previous_trim().param(), &q(3, 4));
+    assert_eq!(fillet.report().next_trim().param(), &q(1, 4));
+    assert_eq!(fillet.report().previous_tangent_point(), Some(&p(3, 0)));
+    assert_eq!(fillet.report().next_tangent_point(), Some(&p(4, 1)));
+    assert_eq!(fillet.report().center(), Some(&p(3, 1)));
+    assert_eq!(fillet.report().radius_squared(), Some(&s(1)));
+    assert_eq!(fillet.report().fillet_segment_index(), Some(1));
     assert_eq!(
         fillet.report().output_segment_count(),
         fillet.report().curve_string_report().output_segment_count()
     );
     assert_eq!(fillet.report().fill_rule(), FillRule::NonZero);
-    assert_eq!(
-        fillet.report().curve_string_report().center(),
-        Some(&p(3, 1))
-    );
-    assert_eq!(
-        fillet.report().curve_string_report().radius_squared(),
-        Some(&s(1))
-    );
     assert_eq!(
         fillet.report().curve_string_report().fillet_segment_index(),
         Some(1)

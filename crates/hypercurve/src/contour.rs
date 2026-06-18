@@ -9,8 +9,8 @@ use crate::classify::{classify_oriented_line, compare_reals};
 use crate::curve_string::merge_adjacent_line_segments;
 use crate::{
     BulgeVertex2, Classification, CurveError, CurvePolicy, CurveResult, CurveString2,
-    CurveStringChamferReport2, CurveStringFilletReport2, LineSeg2, LineSide, Point2,
-    RetainedTopologyStatus, Segment2, UncertaintyReason,
+    CurveStringChamferReport2, CurveStringFilletReport2, CurveStringTrimPoint2, LineSeg2, LineSide,
+    Point2, RetainedTopologyStatus, Segment2, UncertaintyReason,
 };
 
 /// Fill rule used when classifying contour interiors.
@@ -905,6 +905,41 @@ impl ContourChamferReport2 {
         &self.curve_string_report
     }
 
+    /// Returns the previous source segment index at the chamfered contour vertex.
+    pub const fn previous_segment_index(&self) -> usize {
+        self.curve_string_report.previous_segment_index()
+    }
+
+    /// Returns the next source segment index at the chamfered contour vertex.
+    pub const fn next_segment_index(&self) -> usize {
+        self.curve_string_report.next_segment_index()
+    }
+
+    /// Returns retained previous-segment trim evidence.
+    pub const fn previous_trim(&self) -> &CurveStringTrimPoint2 {
+        self.curve_string_report.previous_trim()
+    }
+
+    /// Returns retained next-segment trim evidence.
+    pub const fn next_trim(&self) -> &CurveStringTrimPoint2 {
+        self.curve_string_report.next_trim()
+    }
+
+    /// Returns the exact previous-line cut point when the chamfer materialized.
+    pub const fn previous_cut_point(&self) -> Option<&Point2> {
+        self.curve_string_report.previous_cut_point()
+    }
+
+    /// Returns the exact next-line cut point when the chamfer materialized.
+    pub const fn next_cut_point(&self) -> Option<&Point2> {
+        self.curve_string_report.next_cut_point()
+    }
+
+    /// Returns the inserted chamfer segment index in the output contour.
+    pub const fn chamfer_segment_index(&self) -> Option<usize> {
+        self.curve_string_report.chamfer_segment_index()
+    }
+
     /// Returns the source contour segment count captured by this report.
     pub const fn source_segment_count(&self) -> usize {
         self.source_segment_count
@@ -962,6 +997,51 @@ impl ContourFilletReport2 {
     /// Returns the retained open curve-string fillet report.
     pub const fn curve_string_report(&self) -> &CurveStringFilletReport2 {
         &self.curve_string_report
+    }
+
+    /// Returns the previous source segment index at the filleted contour vertex.
+    pub const fn previous_segment_index(&self) -> usize {
+        self.curve_string_report.previous_segment_index()
+    }
+
+    /// Returns the next source segment index at the filleted contour vertex.
+    pub const fn next_segment_index(&self) -> usize {
+        self.curve_string_report.next_segment_index()
+    }
+
+    /// Returns retained previous-segment trim evidence.
+    pub const fn previous_trim(&self) -> &CurveStringTrimPoint2 {
+        self.curve_string_report.previous_trim()
+    }
+
+    /// Returns retained next-segment trim evidence.
+    pub const fn next_trim(&self) -> &CurveStringTrimPoint2 {
+        self.curve_string_report.next_trim()
+    }
+
+    /// Returns the exact previous-line tangent point when the fillet materialized.
+    pub const fn previous_tangent_point(&self) -> Option<&Point2> {
+        self.curve_string_report.previous_tangent_point()
+    }
+
+    /// Returns the exact next-line tangent point when the fillet materialized.
+    pub const fn next_tangent_point(&self) -> Option<&Point2> {
+        self.curve_string_report.next_tangent_point()
+    }
+
+    /// Returns the certified fillet center when validation reached that stage.
+    pub const fn center(&self) -> Option<&Point2> {
+        self.curve_string_report.center()
+    }
+
+    /// Returns the certified squared radius when validation reached that stage.
+    pub const fn radius_squared(&self) -> Option<&Real> {
+        self.curve_string_report.radius_squared()
+    }
+
+    /// Returns the inserted fillet arc segment index in the output contour.
+    pub const fn fillet_segment_index(&self) -> Option<usize> {
+        self.curve_string_report.fillet_segment_index()
     }
 
     /// Returns the source contour segment count captured by this report.
