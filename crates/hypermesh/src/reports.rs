@@ -356,10 +356,8 @@ fn validated_report_intersection_graph(
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> Result<ExactIntersectionGraph, ExactReportValidationError> {
-    let mut workspace = ExactBooleanWorkspace::new(left, right);
-    workspace
-        .validated_graph()
-        .map(|graph| graph.clone())
+    ExactBooleanWorkspace::new(left, right)
+        .into_validated_graph()
         .map_err(|_| ExactReportValidationError::SourceReplayMismatch)
 }
 
