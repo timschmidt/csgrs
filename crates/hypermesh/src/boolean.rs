@@ -265,6 +265,16 @@ impl ExactArrangementBooleanAttempt {
         (self.output_vertices, self.output_triangles)
     }
 
+    fn retain_topology_assembly_report(&mut self, report: ExactTopologyAssemblyReport) {
+        self.topology_assembly = Some(report.status);
+        self.topology_assembly_report = Some(report);
+    }
+
+    fn retain_region_ownership_report(&mut self, report: ExactRegionOwnershipReport) {
+        self.region_ownership = Some(report.status);
+        self.region_ownership_report = Some(report);
+    }
+
     /// Return whether retained topology assembly reached a complete state.
     pub fn topology_assembly_complete(&self) -> bool {
         self.topology_assembly
@@ -5441,8 +5451,7 @@ fn run_arrangement_cell_complex_attempt_from_arrangement(
     }
 
     let topology_report = arrangement.topology_assembly_report_with_policy(left, right, policy);
-    attempt.topology_assembly = Some(topology_report.status);
-    attempt.topology_assembly_report = Some(topology_report.clone());
+    attempt.retain_topology_assembly_report(topology_report.clone());
     if topology_report.validate().is_err() || !topology_report.is_complete() {
         if let Some(outcome) = arrangement_cell_complex_recovery_outcome_if_available(
             regularize_unregularized_sheet_complex,
@@ -5485,8 +5494,7 @@ fn run_arrangement_cell_complex_attempt_from_arrangement(
     };
     attempt.stage = ExactArrangementBooleanStage::Labeled;
     let ownership_report = labeled.region_ownership_report(left, right, labeling_policy);
-    attempt.region_ownership = Some(ownership_report.status);
-    attempt.region_ownership_report = Some(ownership_report.clone());
+    attempt.retain_region_ownership_report(ownership_report.clone());
     if ownership_report.validate().is_err() {
         attempt.decline = Some(ExactArrangementBooleanDecline::RegionOwnership(
             ownership_report.status,
