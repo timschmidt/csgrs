@@ -13112,7 +13112,7 @@ mod tests {
     }
 
     #[test]
-    fn graph_empty_closed_winding_containment_materializes_named_booleans() {
+    fn graph_empty_containment_routes_named_booleans_through_arrangement_pipeline() {
         let outer = tetrahedron_i64([0, 0, 0], [10, 0, 0], [0, 10, 0], [0, 0, 10]);
         let disjoint_shell = tetrahedron_i64([20, 0, 0], [21, 0, 0], [20, 1, 0], [20, 0, 1]);
         let container = concatenate_meshes(&outer, &disjoint_shell, ValidationPolicy::CLOSED)
@@ -13146,7 +13146,7 @@ mod tests {
                 );
                 assert_eq!(
                     preflight.support,
-                    ExactBooleanSupport::CertifiedClosedWindingContainment,
+                    ExactBooleanSupport::CertifiedArrangementCellComplex,
                     "{right_inside_left:?} {operation:?}: {preflight:?}"
                 );
                 assert!(preflight.blocker.is_none(), "{operation:?}: {preflight:?}");
@@ -13185,10 +13185,8 @@ mod tests {
                     right,
                 );
                 assert!(
-                    result.is_certified_shortcut_kind_for(
-                        operation,
-                        ExactBooleanShortcutKind::ClosedWindingContainment,
-                    ),
+                    result.is_arrangement_cell_complex_materialized_for(operation)
+                        || result.is_arrangement_cell_complex_shortcut_for(operation),
                     "{right_inside_left:?} {operation:?}: {result:?}"
                 );
                 result.validate().unwrap();
@@ -13239,8 +13237,8 @@ mod tests {
         assert!(left.facts().mesh.closed_manifold);
         assert!(right.facts().mesh.closed_manifold);
         assert!(!meshes_are_certified_bounds_disjoint(&left, &right));
-        let graph = build_intersection_graph(&left, &right).unwrap();
-        validate_graph_source_handoff(&graph, &left, &right).unwrap();
+        let mut graph_workspace = ExactBooleanWorkspace::new(&left, &right);
+        let graph = graph_workspace.validated_graph().unwrap();
         assert!(!graph.has_unknowns());
         assert!(graph.face_pairs.is_empty());
 
