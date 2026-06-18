@@ -299,6 +299,9 @@ pub struct CurveStringLineMergeSpanReport2 {
 pub struct CurveStringLineMergeReport2 {
     stage: CurveStringLineMergeStage2,
     source_segment_count: usize,
+    adjacent_pair_count: usize,
+    merged_pair_count: usize,
+    preserved_pair_count: usize,
     output_segment_count: Option<usize>,
     spans: Vec<CurveStringLineMergeSpanReport2>,
     status: RetainedTopologyStatus,
@@ -1228,6 +1231,9 @@ impl CurveString2 {
     ) -> CurveResult<CurveStringLineMergeResult2> {
         let mut merged_segments = Vec::with_capacity(self.len());
         let mut spans = Vec::new();
+        let mut adjacent_pair_count = 0_usize;
+        let mut merged_pair_count = 0_usize;
+        let mut preserved_pair_count = 0_usize;
         let mut current_segment = self
             .segments
             .first()
@@ -1236,11 +1242,14 @@ impl CurveString2 {
         let mut current_start_index = 0_usize;
 
         for (next_index, next_segment) in self.segments.iter().enumerate().skip(1) {
+            adjacent_pair_count += 1;
             match merge_adjacent_line_segments(&current_segment, next_segment, policy)? {
                 Classification::Decided(Some(merged)) => {
+                    merged_pair_count += 1;
                     current_segment = Segment2::Line(merged);
                 }
                 Classification::Decided(None) => {
+                    preserved_pair_count += 1;
                     let output_segment_index = merged_segments.len();
                     let output_start_point = current_segment.start().clone();
                     let output_end_point = current_segment.end().clone();
@@ -1263,6 +1272,9 @@ impl CurveString2 {
                         report: CurveStringLineMergeReport2 {
                             stage: CurveStringLineMergeStage2::PairClassification,
                             source_segment_count: self.len(),
+                            adjacent_pair_count,
+                            merged_pair_count,
+                            preserved_pair_count,
                             output_segment_count: None,
                             spans,
                             status: RetainedTopologyStatus::Unresolved,
@@ -1292,6 +1304,9 @@ impl CurveString2 {
             report: CurveStringLineMergeReport2 {
                 stage: CurveStringLineMergeStage2::SegmentMaterialization,
                 source_segment_count: self.len(),
+                adjacent_pair_count,
+                merged_pair_count,
+                preserved_pair_count,
                 output_segment_count: Some(curve_string.len()),
                 spans,
                 status: RetainedTopologyStatus::NativeExact,
@@ -5703,6 +5718,21 @@ impl CurveStringLineMergeReport2 {
     /// Returns the source curve-string segment count captured by this report.
     pub const fn source_segment_count(&self) -> usize {
         self.source_segment_count
+    }
+
+    /// Returns adjacent source segment pairs classified during this merge.
+    pub const fn adjacent_pair_count(&self) -> usize {
+        self.adjacent_pair_count
+    }
+
+    /// Returns adjacent pairs certified as one same-direction line run.
+    pub const fn merged_pair_count(&self) -> usize {
+        self.merged_pair_count
+    }
+
+    /// Returns adjacent pairs certified to remain distinct topology.
+    pub const fn preserved_pair_count(&self) -> usize {
+        self.preserved_pair_count
     }
 
     /// Returns the output segment count when the merge materialized.

@@ -255,6 +255,9 @@ fn curve_string_merge_adjacent_collinear_lines_reports_source_runs() {
         CurveStringLineMergeStage2::SegmentMaterialization
     );
     assert_eq!(merged.report().source_segment_count(), 4);
+    assert_eq!(merged.report().adjacent_pair_count(), 3);
+    assert_eq!(merged.report().merged_pair_count(), 2);
+    assert_eq!(merged.report().preserved_pair_count(), 1);
     assert_eq!(merged.report().output_segment_count(), Some(2));
     assert_eq!(merged.report().spans().len(), 2);
     assert_eq!(merged.report().spans()[0].source_start_segment_index(), 0);
@@ -286,6 +289,9 @@ fn curve_string_merge_adjacent_collinear_lines_preserves_corners() {
     let merged = curve.merge_adjacent_collinear_lines(&policy()).unwrap();
 
     assert!(merged.report().status().is_native_exact());
+    assert_eq!(merged.report().adjacent_pair_count(), 1);
+    assert_eq!(merged.report().merged_pair_count(), 0);
+    assert_eq!(merged.report().preserved_pair_count(), 1);
     assert_eq!(merged.report().output_segment_count(), Some(2));
     assert_eq!(merged.report().spans().len(), 2);
     assert_eq!(merged.report().spans()[0].source_segment_indices(), &[0]);
@@ -306,6 +312,9 @@ fn curve_string_merge_adjacent_collinear_lines_preserves_reversal() {
     let merged = curve.merge_adjacent_collinear_lines(&policy()).unwrap();
 
     assert!(merged.report().status().is_native_exact());
+    assert_eq!(merged.report().adjacent_pair_count(), 1);
+    assert_eq!(merged.report().merged_pair_count(), 0);
+    assert_eq!(merged.report().preserved_pair_count(), 1);
     assert_eq!(merged.report().output_segment_count(), Some(2));
     assert_eq!(merged.report().spans().len(), 2);
     assert_eq!(merged.report().spans()[0].source_segment_indices(), &[0]);
