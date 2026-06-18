@@ -4570,9 +4570,16 @@ fn projected_points_equal(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::mesh::ExactMesh;
+    use crate::region::FaceRegionPlaneRelation;
+    use crate::validation::ValidationPolicy;
 
     fn q(numerator: i64, denominator: i64) -> Real {
         (Real::from(numerator) / &Real::from(denominator)).expect("nonzero denominator")
+    }
+
+    fn p(x: i64, y: i64, z: i64) -> Point3 {
+        Point3::new(Real::from(x), Real::from(y), Real::from(z))
     }
 
     fn rational_p3(x: [i64; 2], y: [i64; 2], z: [i64; 2]) -> Point3 {
@@ -4591,6 +4598,393 @@ mod tests {
             point,
             endpoint_sides: [Some(PlaneSide::Above), Some(PlaneSide::Below)],
         }
+    }
+
+    #[test]
+    fn face_region_stage_replays_from_internal_graph() {
+        let left = ExactMesh::from_i64_triangles_with_policy(
+            &[0, 0, 0, 4, 0, 0, 0, 4, 0],
+            &[0, 1, 2],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let right = ExactMesh::from_i64_triangles_with_policy(
+            &[1, -1, -1, 1, 3, 1, 1, 3, -1],
+            &[0, 1, 2],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let stale_right = ExactMesh::from_i64_triangles_with_policy(
+            &[8, -1, -1, 8, 3, 1, 8, 3, -1],
+            &[0, 1, 2],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let graph = build_intersection_graph(&left, &right).unwrap();
+        let geometry = graph.face_split_geometry_plan(&left, &right).unwrap();
+        let regions = geometry.region_plan(&left, &right);
+
+        let classifications = regions
+            .classify_against_opposite_face_planes(&left, &right)
+            .unwrap();
+        let triangulations = regions.triangulate_with_earcut(&left, &right).unwrap();
+
+        assert!(!classifications.is_empty());
+        assert!(!triangulations.is_empty());
+        classifications[0]
+            .validate_against_sources(&left, &right)
+            .unwrap();
+        triangulations[0]
+            .validate_against_sources(&left, &right)
+            .unwrap();
+        assert!(
+            classifications[0]
+                .validate_against_sources(&left, &stale_right)
+                .is_err()
+        );
+        assert!(
+            triangulations[0]
+                .validate_against_sources(&left, &stale_right)
+                .is_err()
+        );
+
+        let mut stale_classification = classifications[0].clone();
+        stale_classification.relation = match stale_classification.relation {
+            FaceRegionPlaneRelation::StrictlyAbove => FaceRegionPlaneRelation::StrictlyBelow,
+            _ => FaceRegionPlaneRelation::StrictlyAbove,
+        };
+        assert!(stale_classification.validate().is_err());
+    }
+
+    #[test]
+    fn face_cell_cdt_replays_from_internal_graph() {
+        let left = ExactMesh::from_i64_triangles(
+            &[
+                0, 0, 0, //
+                4, 0, 0, //
+                0, 4, 0, //
+                0, 0, 4, //
+                2, 2, 3,
+            ],
+            &[
+                0, 2, 1, //
+                1, 2, 3, //
+                2, 0, 3, //
+                0, 1, 4, //
+                1, 3, 4, //
+                3, 0, 4,
+            ],
+        )
+        .unwrap();
+        let right = ExactMesh::from_i64_triangles(
+            &[1, 1, 1, 5, 1, 1, 1, 5, 1, 1, 1, 5],
+            &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
+        )
+        .unwrap();
+        let separated_right = ExactMesh::from_i64_triangles(
+            &[10, 10, 10, 11, 10, 10, 10, 11, 10, 10, 10, 11],
+            &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
+        )
+        .unwrap();
+
+        let graph = build_intersection_graph(&left, &right).unwrap();
+        let (cell_regions, cell_triangulations) = graph
+            .triangulate_face_cells_with_cdt(&left, &right)
+            .unwrap()
+            .expect("overlapping closed solids should expose exact CDT face cells");
+        assert_eq!(
+            cell_regions.regions.len(),
+            left.triangles().len() + right.triangles().len()
+        );
+        assert_eq!(cell_triangulations.len(), cell_regions.regions.len());
+        assert!(cell_regions.validate(&left, &right).is_valid());
+        graph
+            .validate_face_cell_cdt_against_sources(
+                &cell_regions,
+                &cell_triangulations,
+                &left,
+                &right,
+            )
+            .unwrap();
+        assert!(
+            graph
+                .validate_face_cell_cdt_against_sources(
+                    &cell_regions,
+                    &cell_triangulations,
+                    &left,
+                    &separated_right
+                )
+                .is_err()
+        );
+    }
+
+    #[test]
+    fn intersection_graph_retains_coplanar_face_pair_events_internal() {
+        let left = ExactMesh::from_i64_triangles_with_policy(
+            &[0, 0, 0, 2, 0, 0, 0, 2, 0, 9, 9, 9],
+            &[0, 1, 2],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let right = ExactMesh::from_i64_triangles_with_policy(
+            &[0, 0, 0, 1, 0, 0, 0, 1, 0, -9, -9, -9],
+            &[0, 1, 2],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+
+        let graph = build_intersection_graph(&left, &right).unwrap();
+        graph.validate_against_sources(&left, &right).unwrap();
+        let retained_pair = graph
+            .face_pairs
+            .iter()
+            .find(|pair| pair.left_face == 0 && pair.right_face == 0)
+            .expect("coplanar overlap should retain a graph face pair");
+        assert!(retained_pair.projection.is_some());
+        assert!(retained_pair.has_constructive_events());
+
+        let overlap = graph.coplanar_overlap_graphs().pop().unwrap();
+        overlap.validate_against_sources(&left, &right).unwrap();
+        let mut invalid_overlap = overlap.clone();
+        invalid_overlap.edge_overlaps.clear();
+        invalid_overlap.vertex_overlaps.clear();
+        assert!(
+            invalid_overlap
+                .validate_against_sources(&left, &right)
+                .is_err()
+        );
+
+        let split_plan = graph.coplanar_overlap_split_plan(&left, &right).unwrap();
+        split_plan.validate_against_sources(&left, &right).unwrap();
+        let mut stale_split_plan = split_plan.clone();
+        stale_split_plan.graphs.clear();
+        assert!(
+            stale_split_plan
+                .validate_against_sources(&left, &right)
+                .is_err()
+        );
+
+        let readiness = graph
+            .coplanar_arrangement_readiness_report(&left, &right)
+            .unwrap();
+        readiness.validate_against_sources(&left, &right).unwrap();
+        let mut invalid_readiness = readiness.clone();
+        invalid_readiness.graph_count += 1;
+        assert!(
+            invalid_readiness
+                .validate_against_sources(&left, &right)
+                .is_err()
+        );
+        let separated_right = ExactMesh::from_i64_triangles_with_policy(
+            &[9, 0, 0, 10, 0, 0, 9, 1, 0, -9, -9, -9],
+            &[0, 1, 2],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        assert!(
+            readiness
+                .validate_against_sources(&left, &separated_right)
+                .is_err()
+        );
+    }
+
+    #[test]
+    fn face_pair_candidate_retains_source_plane_split_events_internal() {
+        let left = ExactMesh::from_i64_triangles_with_policy(
+            &[0, 0, 0, 4, 0, 0, 0, 4, 0],
+            &[0, 1, 2],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let right = ExactMesh::from_i64_triangles_with_policy(
+            &[1, -1, -1, 1, 3, 1, 1, 3, -1],
+            &[0, 1, 2],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+
+        let graph = build_intersection_graph(&left, &right).unwrap();
+        let retained_pair = graph
+            .face_pairs
+            .iter()
+            .find(|pair| pair.left_face == 0 && pair.right_face == 0)
+            .expect("candidate pair should be retained in the graph");
+        assert!(retained_pair.projection.is_none());
+        assert!(!retained_pair.events.is_empty());
+        assert!(retained_pair.has_constructive_events());
+        retained_pair
+            .validate_against_meshes(&left, &right)
+            .unwrap();
+        graph.validate_against_sources(&left, &right).unwrap();
+        let mut stale_graph = graph.clone();
+        stale_graph.face_pairs[0].events.clear();
+        assert!(stale_graph.validate_against_sources(&left, &right).is_err());
+
+        let separated_right = ExactMesh::from_i64_triangles_with_policy(
+            &[9, -1, -1, 9, 3, 1, 9, 3, -1],
+            &[0, 1, 2],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        assert!(
+            graph
+                .validate_against_sources(&left, &separated_right)
+                .is_err()
+        );
+        let edge_splits = graph.edge_split_plan();
+        assert!(edge_splits.validate().diagnostics.is_empty());
+        assert!(
+            edge_splits
+                .validate_against_sources(&left, &separated_right)
+                .diagnostics
+                .iter()
+                .any(|diagnostic| diagnostic.kind == SplitPlanDiagnosticKind::SourceReplayMismatch)
+        );
+        let mut stale_edge_splits = edge_splits.clone();
+        stale_edge_splits.unknown_orderings += 1;
+        assert!(!stale_edge_splits.validate().diagnostics.is_empty());
+
+        let graph_vertices = graph.graph_vertex_plan();
+        assert!(graph_vertices.validate().diagnostics.is_empty());
+        let topology = graph.split_topology_plan();
+        assert!(topology.validate().diagnostics.is_empty());
+        let face_plan = graph.face_split_plan();
+        assert!(
+            face_plan
+                .validate_against_sources(&left, &right)
+                .diagnostics
+                .is_empty()
+        );
+        let geometry = graph.face_split_geometry_plan(&left, &right).unwrap();
+        assert!(
+            geometry
+                .validate_against_sources(&left, &right)
+                .diagnostics
+                .is_empty()
+        );
+        let mut noncanonical_chain_geometry = geometry.clone();
+        noncanonical_chain_geometry.faces[0].boundary_chains[0]
+            .nodes
+            .rotate_left(1);
+        let noncanonical_chain_report =
+            noncanonical_chain_geometry.validate_boundary_incidence(&left, &right);
+        assert!(
+            noncanonical_chain_report
+                .diagnostics
+                .iter()
+                .any(|diagnostic| diagnostic.kind == SplitPlanDiagnosticKind::WrongChainStart),
+            "{noncanonical_chain_report:?}"
+        );
+        assert!(!noncanonical_chain_report.diagnostics.is_empty());
+        let mut duplicate_chain_geometry = geometry.clone();
+        let duplicate_chain = duplicate_chain_geometry.faces[0].boundary_chains[0].clone();
+        duplicate_chain_geometry.faces[0]
+            .boundary_chains
+            .push(duplicate_chain);
+        let duplicate_chain_report =
+            duplicate_chain_geometry.validate_boundary_incidence(&left, &right);
+        assert!(
+            duplicate_chain_report.diagnostics.iter().any(|diagnostic| {
+                diagnostic.kind == SplitPlanDiagnosticKind::DuplicateFaceSplitEdge
+            }),
+            "{duplicate_chain_report:?}"
+        );
+        assert!(!duplicate_chain_report.diagnostics.is_empty());
+        let mut stale_original_point_geometry = geometry.clone();
+        if let FaceSplitBoundaryNode::OriginalVertex { point, .. } =
+            &mut stale_original_point_geometry.faces[0].boundary_chains[0].nodes[0]
+        {
+            *point = p(2, 0, 0);
+        }
+        let stale_original_point_report =
+            stale_original_point_geometry.validate_boundary_incidence(&left, &right);
+        assert!(
+            stale_original_point_report
+                .diagnostics
+                .iter()
+                .any(|diagnostic| {
+                    diagnostic.kind == SplitPlanDiagnosticKind::BoundaryNodeSourcePointMismatch
+                }),
+            "{stale_original_point_report:?}"
+        );
+        assert!(!stale_original_point_report.diagnostics.is_empty());
+        let mut relabeled_geometry = geometry.clone();
+        relabeled_geometry.faces[0].triangle.swap(0, 1);
+        let geometry_report = relabeled_geometry.validate_boundary_incidence(&left, &right);
+        assert!(
+            geometry_report.diagnostics.iter().any(|diagnostic| {
+                diagnostic.kind == SplitPlanDiagnosticKind::SourceTriangleMismatch
+            }),
+            "{geometry_report:?}"
+        );
+        assert!(!geometry_report.diagnostics.is_empty());
+        let regions = geometry.region_plan(&left, &right);
+        assert!(
+            regions
+                .validate_against_sources(&left, &right)
+                .diagnostics
+                .is_empty()
+        );
+        let mut closed_duplicate_regions = regions.clone();
+        let first_region_node = closed_duplicate_regions.regions[0].boundary[0].clone();
+        closed_duplicate_regions.regions[0]
+            .boundary
+            .push(first_region_node);
+        let closed_duplicate_report = closed_duplicate_regions.validate(&left, &right);
+        assert!(
+            closed_duplicate_report
+                .diagnostics
+                .iter()
+                .any(|diagnostic| {
+                    diagnostic.kind == SplitPlanDiagnosticKind::DuplicateConsecutiveRegionNode
+                }),
+            "{closed_duplicate_report:?}"
+        );
+        assert!(!closed_duplicate_report.diagnostics.is_empty());
+        let mut stale_region_point = regions.clone();
+        if let FaceSplitBoundaryNode::OriginalVertex { point, .. } =
+            &mut stale_region_point.regions[0].boundary[0]
+        {
+            *point = p(2, 0, 0);
+        }
+        let stale_region_point_report = stale_region_point.validate(&left, &right);
+        assert!(
+            stale_region_point_report
+                .diagnostics
+                .iter()
+                .any(|diagnostic| {
+                    diagnostic.kind == SplitPlanDiagnosticKind::BoundaryNodeSourcePointMismatch
+                }),
+            "{stale_region_point_report:?}"
+        );
+        assert!(!stale_region_point_report.diagnostics.is_empty());
+        let mut missing_region_vertex = regions.clone();
+        if let FaceSplitBoundaryNode::OriginalVertex { vertex, .. } =
+            &mut missing_region_vertex.regions[0].boundary[0]
+        {
+            *vertex = usize::MAX;
+        }
+        let missing_region_vertex_report = missing_region_vertex.validate(&left, &right);
+        assert!(
+            missing_region_vertex_report
+                .diagnostics
+                .iter()
+                .any(|diagnostic| {
+                    diagnostic.kind == SplitPlanDiagnosticKind::BoundaryNodeSourceVertexOutOfRange
+                }),
+            "{missing_region_vertex_report:?}"
+        );
+        assert!(!missing_region_vertex_report.diagnostics.is_empty());
+        let mut relabeled_regions = regions.clone();
+        relabeled_regions.regions[0].triangle.swap(0, 1);
+        let region_report = relabeled_regions.validate(&left, &right);
+        assert!(
+            region_report.diagnostics.iter().any(|diagnostic| {
+                diagnostic.kind == SplitPlanDiagnosticKind::SourceTriangleMismatch
+            }),
+            "{region_report:?}"
+        );
+        assert!(!region_report.diagnostics.is_empty());
     }
 
     #[test]

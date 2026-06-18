@@ -53,7 +53,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
     }
 
     /// Returns the exact intersection graph, building it once per workspace.
-    pub fn graph(&mut self) -> Result<&ExactIntersectionGraph, MeshError> {
+    pub(crate) fn graph(&mut self) -> Result<&ExactIntersectionGraph, MeshError> {
         if self.graph.is_none() {
             self.graph = Some(build_intersection_graph(self.left, self.right)?);
         }
