@@ -209,6 +209,8 @@ pub struct CurveStringLineMergeSpanReport2 {
     source_end_segment_index: usize,
     source_segment_indices: Vec<usize>,
     output_segment_index: usize,
+    output_start_point: Point2,
+    output_end_point: Point2,
     status: RetainedTopologyStatus,
 }
 
@@ -936,12 +938,16 @@ impl CurveString2 {
                 }
                 Classification::Decided(None) => {
                     let output_segment_index = merged_segments.len();
+                    let output_start_point = current_segment.start().clone();
+                    let output_end_point = current_segment.end().clone();
                     merged_segments.push(current_segment);
                     spans.push(CurveStringLineMergeSpanReport2 {
                         source_start_segment_index: current_start_index,
                         source_end_segment_index: next_index - 1,
                         source_segment_indices: (current_start_index..next_index).collect(),
                         output_segment_index,
+                        output_start_point,
+                        output_end_point,
                         status: RetainedTopologyStatus::NativeExact,
                     });
                     current_segment = next_segment.clone();
@@ -963,12 +969,16 @@ impl CurveString2 {
         }
 
         let output_segment_index = merged_segments.len();
+        let output_start_point = current_segment.start().clone();
+        let output_end_point = current_segment.end().clone();
         merged_segments.push(current_segment);
         spans.push(CurveStringLineMergeSpanReport2 {
             source_start_segment_index: current_start_index,
             source_end_segment_index: self.len() - 1,
             source_segment_indices: (current_start_index..self.len()).collect(),
             output_segment_index,
+            output_start_point,
+            output_end_point,
             status: RetainedTopologyStatus::NativeExact,
         });
 
@@ -5024,6 +5034,16 @@ impl CurveStringLineMergeSpanReport2 {
     /// Returns the output segment index produced for this source run.
     pub const fn output_segment_index(&self) -> usize {
         self.output_segment_index
+    }
+
+    /// Returns the exact start point of this emitted output segment.
+    pub const fn output_start_point(&self) -> &Point2 {
+        &self.output_start_point
+    }
+
+    /// Returns the exact end point of this emitted output segment.
+    pub const fn output_end_point(&self) -> &Point2 {
+        &self.output_end_point
     }
 
     /// Returns retained topology status for this source run.

@@ -224,10 +224,14 @@ fn curve_string_merge_adjacent_collinear_lines_reports_source_runs() {
     assert_eq!(merged.report().spans()[0].source_end_segment_index(), 1);
     assert_eq!(merged.report().spans()[0].source_segment_indices(), &[0, 1]);
     assert_eq!(merged.report().spans()[0].output_segment_index(), 0);
+    assert_eq!(merged.report().spans()[0].output_start_point(), &p(0, 0));
+    assert_eq!(merged.report().spans()[0].output_end_point(), &p(5, 0));
     assert_eq!(merged.report().spans()[1].source_start_segment_index(), 2);
     assert_eq!(merged.report().spans()[1].source_end_segment_index(), 3);
     assert_eq!(merged.report().spans()[1].source_segment_indices(), &[2, 3]);
     assert_eq!(merged.report().spans()[1].output_segment_index(), 1);
+    assert_eq!(merged.report().spans()[1].output_start_point(), &p(5, 0));
+    assert_eq!(merged.report().spans()[1].output_end_point(), &p(5, 6));
 
     let curve = merged
         .curve_string()
