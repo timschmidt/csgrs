@@ -1743,6 +1743,7 @@ fn curve_string_trim_materializes_exact_line_subsegment_with_report() {
         CurveStringTrimInputPath2::Parameters
     );
     assert_eq!(trim.report().source_segment_count(), 1);
+    assert_eq!(trim.report().output_segment_count(), Some(1));
     assert_eq!(trim.report().segment_reports().len(), 1);
     assert_eq!(trim.report().segment_reports()[0].source_segment_index(), 0);
     assert_eq!(
@@ -1778,6 +1779,7 @@ fn curve_string_trim_materializes_across_line_segments_with_source_ranges() {
         .unwrap();
 
     assert!(trim.report().status().is_native_exact());
+    assert_eq!(trim.report().output_segment_count(), Some(3));
     let reports = trim.report().segment_reports();
     assert_eq!(reports.len(), 3);
     assert_eq!(reports[0].source_range().start(), &q(1, 2));
@@ -1809,6 +1811,7 @@ fn curve_string_trim_preserves_whole_arc_segment() {
         .unwrap();
 
     assert!(trim.report().status().is_native_exact());
+    assert_eq!(trim.report().output_segment_count(), Some(1));
     assert_eq!(trim.curve_string().unwrap().segments(), &[arc]);
 }
 
@@ -1837,6 +1840,7 @@ fn curve_string_trim_reports_partial_arc_as_unsupported_without_materializing() 
         trim.report().blocker(),
         Some(UncertaintyReason::Unsupported)
     );
+    assert_eq!(trim.report().output_segment_count(), None);
     assert_eq!(trim.report().segment_reports().len(), 1);
     assert!(
         trim.report().segment_reports()[0]
@@ -1898,6 +1902,7 @@ fn curve_string_trim_between_points_materializes_line_subsegment() {
     assert_eq!(trim.report().start().param(), &q(1, 4));
     assert_eq!(trim.report().end().segment_index(), 0);
     assert_eq!(trim.report().end().param(), &q(3, 4));
+    assert_eq!(trim.report().output_segment_count(), Some(1));
     assert_eq!(trim.report().segment_reports().len(), 1);
     assert_eq!(
         trim.report().segment_reports()[0].range_start_point(),
@@ -1929,6 +1934,7 @@ fn curve_string_trim_between_points_materializes_partial_arc() {
         CurveStringTrimInputPath2::Points
     );
     assert_eq!(trim.report().segment_reports().len(), 1);
+    assert_eq!(trim.report().output_segment_count(), Some(1));
     assert_eq!(
         trim.report().segment_reports()[0].source_range().start(),
         &s(0)
@@ -1996,6 +2002,7 @@ fn curve_string_trim_between_points_reports_repeated_nonadjacent_point_boundary(
         trim.report().input_path(),
         CurveStringTrimInputPath2::Points
     );
+    assert_eq!(trim.report().output_segment_count(), None);
     assert_eq!(trim.report().blocker(), Some(UncertaintyReason::Boundary));
 }
 
@@ -2071,6 +2078,7 @@ fn curve_string_trim_between_curve_intersections_materializes_line_window() {
     assert_eq!(trim_report.input_path(), CurveStringTrimInputPath2::Points);
     assert_eq!(trim_report.start().param(), &q(1, 5));
     assert_eq!(trim_report.end().param(), &q(4, 5));
+    assert_eq!(trim_report.output_segment_count(), Some(1));
     let trimmed = trim
         .curve_string()
         .expect("curve-intersection trim should materialize");
@@ -2137,6 +2145,14 @@ fn prepared_curve_string_trim_between_curve_intersections_reuses_cached_evidence
     assert_eq!(
         prepared.report().trim_report(),
         direct.report().trim_report()
+    );
+    assert_eq!(
+        prepared
+            .report()
+            .trim_report()
+            .unwrap()
+            .output_segment_count(),
+        Some(1)
     );
     assert_eq!(
         prepared.curve_string().unwrap().segments(),

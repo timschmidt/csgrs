@@ -521,6 +521,7 @@ pub struct CurveStringTrimReport2 {
     end: CurveStringTrimPoint2,
     source_segment_count: usize,
     segment_reports: Vec<CurveStringTrimSegmentReport2>,
+    output_segment_count: Option<usize>,
     status: RetainedTopologyStatus,
     blocker: Option<UncertaintyReason>,
 }
@@ -1513,6 +1514,7 @@ impl CurveString2 {
             end,
             source_segment_count: self.len(),
             segment_reports,
+            output_segment_count: Some(curve_string.len()),
             status: RetainedTopologyStatus::NativeExact,
             blocker: None,
         };
@@ -2711,6 +2713,7 @@ impl CurveString2 {
             end: end.trim_point,
             source_segment_count: self.len(),
             segment_reports,
+            output_segment_count: Some(curve_string.len()),
             status: RetainedTopologyStatus::NativeExact,
             blocker: None,
         };
@@ -2929,6 +2932,11 @@ impl CurveStringTrimReport2 {
     /// Returns retained source segment ranges considered by this trim.
     pub fn segment_reports(&self) -> &[CurveStringTrimSegmentReport2] {
         &self.segment_reports
+    }
+
+    /// Returns output segment count when trim materialized.
+    pub const fn output_segment_count(&self) -> Option<usize> {
+        self.output_segment_count
     }
 
     /// Returns the trim materialization status.
@@ -4972,6 +4980,7 @@ fn blocked_trim_result(
             end,
             source_segment_count: curve_string.len(),
             segment_reports,
+            output_segment_count: None,
             status,
             blocker,
         },
