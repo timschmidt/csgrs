@@ -62,9 +62,9 @@ pub use adapter::{
     LossyF64MeshInputReportValidationError,
 };
 pub use artifact::{
-    MeshArtifactBlocker, MeshArtifactFaceRecord, MeshArtifactManifest, MeshArtifactReport,
-    MeshArtifactReportError, MeshArtifactRole, MeshArtifactSourceKind, MeshArtifactVertexRecord,
-    MeshCoordinateEvidence, MeshNumericAdapterContract, MeshTopologyEvidence,
+    MeshArtifactBlocker, MeshArtifactFaceRecord, MeshArtifactManifest, MeshArtifactReportError,
+    MeshArtifactRole, MeshArtifactSourceKind, MeshArtifactVertexRecord, MeshCoordinateEvidence,
+    MeshTopologyEvidence,
 };
 pub use audit::ExactMeshAuditError;
 pub use boolean::{
