@@ -51,16 +51,18 @@ fuzz_target!(|data: &[u8]| {
     if let Ok(Classification::Decided(spline)) =
         PolynomialBSplineCurve2::try_new(degree, controls.clone(), knots.clone(), &policy)
     {
-        let _ = spline.retained_curve_profile(0, &policy).map(|classification| {
-            let Classification::Decided(profile) = classification else {
-                return;
-            };
-            let _ = profile.identity();
-            let _ = profile.domain();
-            let _ = profile.trim();
-            let _ = profile.endpoints();
-            let _ = profile.cache_summary();
-        });
+        let _ = spline
+            .retained_curve_profile(0, &policy)
+            .map(|classification| {
+                let Classification::Decided(profile) = classification else {
+                    return;
+                };
+                let _ = profile.identity();
+                let _ = profile.domain();
+                let _ = profile.trim();
+                let _ = profile.endpoints();
+                let _ = profile.cache_summary();
+            });
         let _ = spline.extract_bezier_spans(&policy).map(|classification| {
             let Classification::Decided(extraction) = classification else {
                 return;
@@ -84,8 +86,7 @@ fuzz_target!(|data: &[u8]| {
         weights.clone(),
         knots.clone(),
         &policy,
-    )
-    {
+    ) {
         if let Ok(Classification::Decided(extraction)) = spline.extract_bezier_spans(&policy) {
             let _ = spline.retained_curve_profile(1, &policy);
             let _ = extraction.span_fact_report(&policy).map(|classification| {
@@ -94,19 +95,21 @@ fuzz_target!(|data: &[u8]| {
                 };
                 touch_span_fact_report(&report);
             });
-            let _ = extraction.native_topology_report(&policy).map(|classification| {
-                let Classification::Decided(report) = classification else {
-                    return;
-                };
-                for span in report.span_reports() {
-                    let _ = span.span_index();
-                    let _ = span.degree();
-                    let _ = span.knot_interval();
-                    let _ = span.status();
-                    let _ = span.native_subcurve();
-                }
-                let _ = report.is_fully_native_exact();
-            });
+            let _ = extraction
+                .native_topology_report(&policy)
+                .map(|classification| {
+                    let Classification::Decided(report) = classification else {
+                        return;
+                    };
+                    for span in report.span_reports() {
+                        let _ = span.span_index();
+                        let _ = span.degree();
+                        let _ = span.knot_interval();
+                        let _ = span.status();
+                        let _ = span.native_subcurve();
+                    }
+                    let _ = report.is_fully_native_exact();
+                });
             let _ = extraction.native_subcurves(&policy);
         }
     }

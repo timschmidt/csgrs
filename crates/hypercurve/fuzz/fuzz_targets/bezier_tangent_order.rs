@@ -1,11 +1,11 @@
 #![no_main]
 
 use hypercurve::{
-    BezierAlgebraicParameter2, BezierAlgebraicTangentOrderStatus,
-    BezierAlgebraicTangentVector2, BezierEndpointTangentImage2, BezierParameterInterval,
-    BezierParameterPolynomial, Classification, CurvePolicy, Point2, QuadraticBezier2,
-    RationalQuadraticBezier2, Real, compare_algebraic_same_tangent_second_order,
-    compare_algebraic_same_tangent_third_order, compare_algebraic_tangent_turn_from_base,
+    BezierAlgebraicParameter2, BezierAlgebraicTangentOrderStatus, BezierAlgebraicTangentVector2,
+    BezierEndpointTangentImage2, BezierParameterInterval, BezierParameterPolynomial,
+    Classification, CurvePolicy, Point2, QuadraticBezier2, RationalQuadraticBezier2, Real,
+    compare_algebraic_same_tangent_second_order, compare_algebraic_same_tangent_third_order,
+    compare_algebraic_tangent_turn_from_base,
 };
 use libfuzzer_sys::fuzz_target;
 
@@ -65,14 +65,17 @@ fuzz_target!(|data: &[u8]| {
     }
 
     let policy = CurvePolicy::certified();
-    let Ok(Classification::Decided(polynomial)) =
-        BezierParameterPolynomial::try_new_power_basis(vec![Real::from(-1), Real::from(2)], &policy)
-    else {
+    let Ok(Classification::Decided(polynomial)) = BezierParameterPolynomial::try_new_power_basis(
+        vec![Real::from(-1), Real::from(2)],
+        &policy,
+    ) else {
         return;
     };
-    let Ok(Classification::Decided(interval)) =
-        BezierParameterInterval::try_new((Real::from(2) / Real::from(5)).unwrap(), (Real::from(3) / Real::from(5)).unwrap(), &policy)
-    else {
+    let Ok(Classification::Decided(interval)) = BezierParameterInterval::try_new(
+        (Real::from(2) / Real::from(5)).unwrap(),
+        (Real::from(3) / Real::from(5)).unwrap(),
+        &policy,
+    ) else {
         return;
     };
     let Ok(Classification::Decided(parameter)) =
@@ -82,9 +85,21 @@ fuzz_target!(|data: &[u8]| {
     };
 
     let curves = [
-        QuadraticBezier2::new(point(data[0], data[1]), point(data[2], data[3]), point(data[4], data[5])),
-        QuadraticBezier2::new(point(data[6], data[7]), point(data[8], data[9]), point(data[10], data[11])),
-        QuadraticBezier2::new(point(data[12], data[13]), point(data[14], data[15]), point(data[16], data[17])),
+        QuadraticBezier2::new(
+            point(data[0], data[1]),
+            point(data[2], data[3]),
+            point(data[4], data[5]),
+        ),
+        QuadraticBezier2::new(
+            point(data[6], data[7]),
+            point(data[8], data[9]),
+            point(data[10], data[11]),
+        ),
+        QuadraticBezier2::new(
+            point(data[12], data[13]),
+            point(data[14], data[15]),
+            point(data[16], data[17]),
+        ),
     ];
     let Some(base) = vector_from_curve(&curves[0], &parameter, &policy) else {
         return;

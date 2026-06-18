@@ -89,10 +89,18 @@ fuzz_target!(|data: &[u8]| {
                 } => {
                     assert!(start_image.is_some() || end_image.is_some());
                     if !start.is_exact() {
-                        assert!(start_image.as_ref().is_some_and(|image| image.is_transformed()));
+                        assert!(
+                            start_image
+                                .as_ref()
+                                .is_some_and(|image| image.is_transformed())
+                        );
                     }
                     if !end.is_exact() {
-                        assert!(end_image.as_ref().is_some_and(|image| image.is_transformed()));
+                        assert!(
+                            end_image
+                                .as_ref()
+                                .is_some_and(|image| image.is_transformed())
+                        );
                     }
                 }
                 BezierSplitFragment2::Unresolved { start, end } => {

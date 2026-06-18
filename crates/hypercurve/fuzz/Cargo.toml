@@ -73,3 +73,10 @@ path = "fuzz_targets/planar_pcurve.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "curve_string_editing"
+path = "fuzz_targets/curve_string_editing.rs"
+test = false
+doc = false
+bench = false

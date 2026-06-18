@@ -1,8 +1,8 @@
 #![no_main]
 
 use hypercurve::{
-    BulgeVertex2, Contour2, CurveString2, FillRule, Point2, Real, RetainedPlanarPcurve2,
-    RetainedPlanarFace2, RetainedPlanarSurfaceIdentity2, RetainedPlanarTrimLoop2,
+    BulgeVertex2, Contour2, CurveString2, FillRule, Point2, Real, RetainedPlanarFace2,
+    RetainedPlanarPcurve2, RetainedPlanarSurfaceIdentity2, RetainedPlanarTrimLoop2,
 };
 use libfuzzer_sys::fuzz_target;
 
@@ -41,15 +41,17 @@ fuzz_target!(|data: &[u8]| {
         if let Ok(reversed) = CurveString2::from_bulge_vertices(&reversed_vertices) {
             let first = RetainedPlanarPcurve2::new(surface, curve);
             let second = RetainedPlanarPcurve2::new(surface, reversed);
-            let report = first.image_equality_report(&second);
-            let _ = report.relation();
-            let _ = report.surface();
-            let _ = report.segment_count();
+            if let Ok(report) = first.image_equality_report(&second) {
+                let _ = report.relation();
+                let _ = report.surface();
+                let _ = report.segment_count();
+            }
         }
     }
 
     if vertices.len() >= 3
-        && let Ok(contour) = Contour2::from_bulge_vertices_with_fill_rule(&vertices, FillRule::NonZero)
+        && let Ok(contour) =
+            Contour2::from_bulge_vertices_with_fill_rule(&vertices, FillRule::NonZero)
     {
         let mut rotated_vertices = vertices.clone();
         rotated_vertices.rotate_left((data[0] as usize) % vertices.len());
@@ -58,10 +60,11 @@ fuzz_target!(|data: &[u8]| {
         {
             let first = RetainedPlanarTrimLoop2::new(surface, contour.clone());
             let second = RetainedPlanarTrimLoop2::new(surface, rotated);
-            let report = first.image_equality_report(&second);
-            let _ = report.relation();
-            let _ = report.surface();
-            let _ = report.segment_count();
+            if let Ok(report) = first.image_equality_report(&second) {
+                let _ = report.relation();
+                let _ = report.surface();
+                let _ = report.segment_count();
+            }
 
             let face = RetainedPlanarFace2::try_new(
                 surface,
@@ -100,21 +103,23 @@ fuzz_target!(|data: &[u8]| {
                     && let Ok(edge_curve) = CurveString2::from_bulge_vertices(&vertices[..2])
                 {
                     let edge = RetainedPlanarPcurve2::new(surface, edge_curve);
-                    let report = face.edge_use_report(&edge);
-                    let _ = report.relation();
-                    let _ = report.surface();
-                    let _ = report.trim_role();
-                    let _ = report.trim_loop_index();
-                    let _ = report.trim_segment_index();
-                    let _ = report.segment_count();
+                    if let Ok(report) = face.edge_use_report(&edge) {
+                        let _ = report.relation();
+                        let _ = report.surface();
+                        let _ = report.trim_role();
+                        let _ = report.trim_loop_index();
+                        let _ = report.trim_segment_index();
+                        let _ = report.segment_count();
+                    }
 
-                    let prepared_report = prepared.edge_use_report(&edge);
-                    let _ = prepared_report.relation();
-                    let _ = prepared_report.surface();
-                    let _ = prepared_report.trim_role();
-                    let _ = prepared_report.trim_loop_index();
-                    let _ = prepared_report.trim_segment_index();
-                    let _ = prepared_report.segment_count();
+                    if let Ok(prepared_report) = prepared.edge_use_report(&edge) {
+                        let _ = prepared_report.relation();
+                        let _ = prepared_report.surface();
+                        let _ = prepared_report.trim_role();
+                        let _ = prepared_report.trim_loop_index();
+                        let _ = prepared_report.trim_segment_index();
+                        let _ = prepared_report.segment_count();
+                    }
                 }
             }
         }
