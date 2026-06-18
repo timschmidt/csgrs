@@ -11748,24 +11748,23 @@ mod tests {
     fn coplanar_volumetric_gate_uses_source_side_evidence() {
         let boundary_left = axis_aligned_box_i64([0, 0, 0], [2, 2, 2]);
         let boundary_right = axis_aligned_box_i64([2, 0, 0], [4, 2, 2]);
-        let boundary_graph = build_intersection_graph(&boundary_left, &boundary_right).unwrap();
+        let mut boundary_workspace = ExactBooleanWorkspace::new(&boundary_left, &boundary_right);
+        let boundary_graph = boundary_workspace.validated_graph().unwrap();
         assert!(graph_requires_coplanar_volumetric_cells(
-            &ExactBooleanBlocker::from_graph(
-                &boundary_graph,
-                ExactBooleanBlockerKind::NeedsWinding
-            )
+            &ExactBooleanBlocker::from_graph(boundary_graph, ExactBooleanBlockerKind::NeedsWinding)
         ));
         assert!(!graph_requires_coplanar_volumetric_cells_for_sources(
-            &boundary_graph,
+            boundary_graph,
             &boundary_left,
             &boundary_right
         ));
 
         let same_side_left = tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]);
         let same_side_right = same_side_left.clone();
-        let same_side_graph = build_intersection_graph(&same_side_left, &same_side_right).unwrap();
+        let mut same_side_workspace = ExactBooleanWorkspace::new(&same_side_left, &same_side_right);
+        let same_side_graph = same_side_workspace.validated_graph().unwrap();
         assert!(graph_requires_coplanar_volumetric_cells_for_sources(
-            &same_side_graph,
+            same_side_graph,
             &same_side_left,
             &same_side_right
         ));
