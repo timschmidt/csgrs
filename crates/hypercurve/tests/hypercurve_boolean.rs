@@ -6,7 +6,7 @@ use hypercurve::{
     BooleanFragmentSelection, BooleanFragmentSelectionStage2, BooleanOp, BulgeVertex2,
     Classification, Contour2, CurveError, CurvePolicy, DirectedBooleanFragment, FillRule, LineSeg2,
     Real, Region2, RegionContourKey, RegionContourRole, RegionPointLocation, RegionSide, Segment2,
-    UncertaintyReason,
+    SegmentKindCounts, UncertaintyReason,
 };
 
 fn s(value: i32) -> Real {
@@ -210,6 +210,10 @@ fn boolean_fragment_selection_emits_directed_boundary_fragments() {
         fragments.len()
     );
     assert_eq!(union_result.report().source_fragment_count(), 12);
+    assert_eq!(
+        union_result.report().source_fragment_kind_counts(),
+        SegmentKindCounts { lines: 12, arcs: 0 }
+    );
     assert_eq!(union_result.report().classified_fragment_count(), Some(12));
     assert_eq!(
         union_result.report().boundary_needs_resolution_count(),
@@ -266,6 +270,14 @@ fn boolean_fragment_selection_emits_directed_boundary_fragments() {
             union.count_action(BooleanFragmentAction::KeepSourceDirection)
                 + union.count_action(BooleanFragmentAction::KeepReversed)
         )
+    );
+    assert_eq!(
+        emitted_result.report().directed_fragment_kind_counts(),
+        Some(SegmentKindCounts {
+            lines: union.count_action(BooleanFragmentAction::KeepSourceDirection)
+                + union.count_action(BooleanFragmentAction::KeepReversed),
+            arcs: 0,
+        })
     );
     assert_eq!(emitted_result.report().unresolved_boundary_count(), Some(0));
     assert_eq!(emitted_result.report().blocker(), None);
@@ -538,6 +550,13 @@ fn boolean_fragment_selection_defers_shared_boundary_fragments() {
         reported.report().boundary_needs_resolution_count(),
         Some(selection.count_action(BooleanFragmentAction::BoundaryNeedsResolution))
     );
+    assert_eq!(
+        reported.report().source_fragment_kind_counts(),
+        SegmentKindCounts {
+            lines: reported.report().source_fragment_count(),
+            arcs: 0,
+        }
+    );
     assert_eq!(reported.report().blocker(), None);
     let emitted_result = selection
         .emit_boundary_fragments_with_report(&fragments)
@@ -554,6 +573,13 @@ fn boolean_fragment_selection_defers_shared_boundary_fragments() {
     assert_eq!(
         emitted_result.report().unresolved_boundary_count(),
         Some(selection.count_action(BooleanFragmentAction::BoundaryNeedsResolution))
+    );
+    assert_eq!(
+        emitted_result.report().directed_fragment_kind_counts(),
+        Some(SegmentKindCounts {
+            lines: emitted_result.report().directed_fragment_count().unwrap(),
+            arcs: 0,
+        })
     );
     assert_eq!(emitted_result.report().blocker(), None);
     let emitted = emitted_result

@@ -7,7 +7,8 @@
 use crate::boolean_boundary::{BooleanBoundaryFragmentSet, DirectedBooleanFragment};
 use crate::{
     Classification, CurveError, CurvePolicy, CurveResult, RegionContourRole, RegionFragmentSet,
-    RegionPointLocation, RegionSide, RegionView2, RetainedTopologyStatus, UncertaintyReason,
+    RegionPointLocation, RegionSide, RegionView2, RetainedTopologyStatus, Segment2,
+    SegmentKindCounts, UncertaintyReason,
 };
 
 /// Boolean operation requested between two regions.
@@ -73,6 +74,7 @@ pub struct BooleanFragmentSelectionReport2 {
     stage: BooleanFragmentSelectionStage2,
     source_contour_count: usize,
     source_fragment_count: usize,
+    source_fragment_kind_counts: SegmentKindCounts,
     classified_fragment_count: Option<usize>,
     discard_count: Option<usize>,
     keep_source_direction_count: Option<usize>,
@@ -110,6 +112,7 @@ pub struct BooleanBoundaryFragmentEmissionReport2 {
     keep_reversed_count: usize,
     boundary_needs_resolution_count: usize,
     directed_fragment_count: Option<usize>,
+    directed_fragment_kind_counts: Option<SegmentKindCounts>,
     unresolved_boundary_count: Option<usize>,
     status: RetainedTopologyStatus,
     blocker: Option<UncertaintyReason>,
@@ -224,6 +227,8 @@ impl BooleanFragmentSelection {
         }
 
         let directed_fragment_count = directed_fragments.len();
+        let directed_fragment_kind_counts =
+            directed_boolean_fragment_kind_counts(&directed_fragments);
         let unresolved_boundary_count = unresolved_boundaries.len();
         match BooleanBoundaryFragmentSet::new(directed_fragments, unresolved_boundaries) {
             Ok(fragments) => Ok(BooleanBoundaryFragmentEmissionResult2 {
@@ -238,6 +243,7 @@ impl BooleanFragmentSelection {
                     boundary_needs_resolution_count: self
                         .count_action(BooleanFragmentAction::BoundaryNeedsResolution),
                     directed_fragment_count: Some(directed_fragment_count),
+                    directed_fragment_kind_counts: Some(directed_fragment_kind_counts),
                     unresolved_boundary_count: Some(unresolved_boundary_count),
                     status: RetainedTopologyStatus::NativeExact,
                     blocker: None,
@@ -286,6 +292,11 @@ impl BooleanBoundaryFragmentEmissionReport2 {
     /// Returns emitted directed fragment count when materialized.
     pub const fn directed_fragment_count(&self) -> Option<usize> {
         self.directed_fragment_count
+    }
+
+    /// Returns primitive-family counts for emitted directed fragments when materialized.
+    pub const fn directed_fragment_kind_counts(&self) -> Option<SegmentKindCounts> {
+        self.directed_fragment_kind_counts
     }
 
     /// Returns unresolved boundary fragment count when materialized.
@@ -338,6 +349,7 @@ fn blocked_boolean_boundary_fragment_emission_result(
             boundary_needs_resolution_count: selection
                 .count_action(BooleanFragmentAction::BoundaryNeedsResolution),
             directed_fragment_count: None,
+            directed_fragment_kind_counts: None,
             unresolved_boundary_count: None,
             status: RetainedTopologyStatus::Unsupported,
             blocker: Some(blocker),
@@ -602,6 +614,7 @@ impl RegionFragmentSet {
         let mut classifications = Vec::new();
         let source_contour_count = self.len();
         let source_fragment_count = region_fragment_count(self);
+        let source_fragment_kind_counts = region_fragment_kind_counts(self);
 
         for contour_fragments in self.contours() {
             for (fragment_index, fragment) in
@@ -615,6 +628,7 @@ impl RegionFragmentSet {
                             BooleanFragmentSelectionStage2::RepresentativePoint,
                             source_contour_count,
                             source_fragment_count,
+                            source_fragment_kind_counts,
                             classifications.len(),
                             reason,
                         ));
@@ -629,6 +643,7 @@ impl RegionFragmentSet {
                             BooleanFragmentSelectionStage2::OppositeRegionClassification,
                             source_contour_count,
                             source_fragment_count,
+                            source_fragment_kind_counts,
                             classifications.len(),
                             reason,
                         ));
@@ -653,6 +668,7 @@ impl RegionFragmentSet {
                 BooleanFragmentSelectionStage2::ActionAssignment,
                 source_contour_count,
                 source_fragment_count,
+                source_fragment_kind_counts,
                 selection.classifications(),
                 RetainedTopologyStatus::NativeExact,
                 None,
@@ -681,6 +697,11 @@ impl BooleanFragmentSelectionReport2 {
     /// Returns total source fragment count.
     pub const fn source_fragment_count(&self) -> usize {
         self.source_fragment_count
+    }
+
+    /// Returns primitive-family counts for all source fragments.
+    pub const fn source_fragment_kind_counts(&self) -> SegmentKindCounts {
+        self.source_fragment_kind_counts
     }
 
     /// Returns classified fragment count when available.
@@ -741,6 +762,7 @@ fn blocked_boolean_fragment_selection_result(
     stage: BooleanFragmentSelectionStage2,
     source_contour_count: usize,
     source_fragment_count: usize,
+    source_fragment_kind_counts: SegmentKindCounts,
     classified_fragment_count: usize,
     blocker: UncertaintyReason,
 ) -> BooleanFragmentSelectionResult2 {
@@ -751,6 +773,7 @@ fn blocked_boolean_fragment_selection_result(
             stage,
             source_contour_count,
             source_fragment_count,
+            source_fragment_kind_counts,
             classified_fragment_count: Some(classified_fragment_count),
             discard_count: None,
             keep_source_direction_count: None,
@@ -767,6 +790,7 @@ fn boolean_fragment_selection_report_from_classifications(
     stage: BooleanFragmentSelectionStage2,
     source_contour_count: usize,
     source_fragment_count: usize,
+    source_fragment_kind_counts: SegmentKindCounts,
     classifications: &[BooleanFragmentClassification],
     status: RetainedTopologyStatus,
     blocker: Option<UncertaintyReason>,
@@ -776,6 +800,7 @@ fn boolean_fragment_selection_report_from_classifications(
         stage,
         source_contour_count,
         source_fragment_count,
+        source_fragment_kind_counts,
         classified_fragment_count: Some(classifications.len()),
         discard_count: Some(count_boolean_action(
             classifications,
@@ -814,4 +839,31 @@ fn region_fragment_count(fragments: &RegionFragmentSet) -> usize {
         .iter()
         .map(|contour_fragments| contour_fragments.fragments.len())
         .sum()
+}
+
+fn region_fragment_kind_counts(fragments: &RegionFragmentSet) -> SegmentKindCounts {
+    let mut counts = SegmentKindCounts::default();
+    for contour_fragments in fragments.contours() {
+        for fragment in contour_fragments.fragments.fragments() {
+            add_segment_kind_count(&mut counts, &fragment.segment);
+        }
+    }
+    counts
+}
+
+fn directed_boolean_fragment_kind_counts(
+    fragments: &[DirectedBooleanFragment],
+) -> SegmentKindCounts {
+    let mut counts = SegmentKindCounts::default();
+    for fragment in fragments {
+        add_segment_kind_count(&mut counts, &fragment.segment);
+    }
+    counts
+}
+
+fn add_segment_kind_count(counts: &mut SegmentKindCounts, segment: &Segment2) {
+    match segment {
+        Segment2::Line(_) => counts.lines += 1,
+        Segment2::Arc(_) => counts.arcs += 1,
+    }
 }
