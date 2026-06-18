@@ -148,8 +148,10 @@ pub use curve_string::{
     CurveStringEndpointConnectionReport2, CurveStringEndpointConnectionStatus2,
     CurveStringExtendReport2, CurveStringExtendResult2, CurveStringIntersection,
     CurveStringLineMergeReport2, CurveStringLineMergeResult2, CurveStringLineMergeSpanReport2,
-    CurveStringLinkKind2, CurveStringLinkReport2, CurveStringTrimPoint2, CurveStringTrimReport2,
+    CurveStringLinkKind2, CurveStringLinkReport2, CurveStringOrderedLinkReport2,
+    CurveStringOrderedLinkStepReport2, CurveStringTrimPoint2, CurveStringTrimReport2,
     CurveStringTrimResult2, CurveStringTrimSegmentReport2, LinkedCurveString2,
+    OrderedLinkedCurveString2,
 };
 pub use error::{CurveError, CurveResult};
 pub use events::{

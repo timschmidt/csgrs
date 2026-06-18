@@ -224,6 +224,101 @@ fn curve_string_link_returns_none_for_certified_disconnected_inputs() {
 }
 
 #[test]
+fn curve_string_ordered_link_materializes_multistep_chain() {
+    let linked = CurveString2::link_ordered_connected_endpoints(
+        vec![
+            CurveString2::try_new(vec![line_segment(0, 0, 1, 0)]).unwrap(),
+            CurveString2::try_new(vec![line_segment(1, 0, 2, 0)]).unwrap(),
+            CurveString2::try_new(vec![line_segment(2, 0, 3, 0)]).unwrap(),
+        ],
+        &policy(),
+    )
+    .unwrap();
+
+    assert!(linked.report().status().is_native_exact());
+    assert_eq!(linked.report().source_curve_string_count(), 3);
+    assert_eq!(linked.report().output_segment_count(), Some(3));
+    assert_eq!(linked.report().steps().len(), 2);
+    assert_eq!(
+        linked.report().steps()[0].accumulated_source_indices(),
+        &[0]
+    );
+    assert_eq!(linked.report().steps()[0].next_source_index(), 1);
+    assert_eq!(
+        linked.report().steps()[0].link_report().unwrap().kind(),
+        CurveStringLinkKind2::FirstEndToSecondStart
+    );
+    assert_eq!(
+        linked.report().steps()[1].accumulated_source_indices(),
+        &[0, 1]
+    );
+    assert_eq!(linked.report().steps()[1].next_source_index(), 2);
+
+    let curve = linked
+        .curve_string()
+        .expect("ordered exact links should materialize");
+    assert_eq!(curve.len(), 3);
+    assert_line(&curve.segments()[0], p(0, 0), p(1, 0));
+    assert_line(&curve.segments()[2], p(2, 0), p(3, 0));
+}
+
+#[test]
+fn curve_string_ordered_link_reports_reversed_accumulated_sources() {
+    let linked = CurveString2::link_ordered_connected_endpoints(
+        vec![
+            CurveString2::try_new(vec![line_segment(1, 0, 2, 0)]).unwrap(),
+            CurveString2::try_new(vec![line_segment(0, 0, 1, 0)]).unwrap(),
+        ],
+        &policy(),
+    )
+    .unwrap();
+
+    assert!(linked.report().status().is_native_exact());
+    assert_eq!(
+        linked.report().steps()[0].accumulated_source_indices(),
+        &[0]
+    );
+    assert_eq!(linked.report().steps()[0].next_source_index(), 1);
+    assert_eq!(
+        linked.report().steps()[0].link_report().unwrap().kind(),
+        CurveStringLinkKind2::FirstStartToSecondEnd
+    );
+    let curve = linked
+        .curve_string()
+        .expect("reordered exact endpoint link should materialize");
+    assert_eq!(curve.len(), 2);
+    assert_line(&curve.segments()[0], p(0, 0), p(1, 0));
+    assert_line(&curve.segments()[1], p(1, 0), p(2, 0));
+}
+
+#[test]
+fn curve_string_ordered_link_reports_disconnected_step() {
+    let linked = CurveString2::link_ordered_connected_endpoints(
+        vec![
+            CurveString2::try_new(vec![line_segment(0, 0, 1, 0)]).unwrap(),
+            CurveString2::try_new(vec![line_segment(3, 0, 4, 0)]).unwrap(),
+        ],
+        &policy(),
+    )
+    .unwrap();
+
+    assert!(linked.curve_string().is_none());
+    assert!(linked.report().status().is_retained_evidence());
+    assert_eq!(linked.report().blocker(), Some(UncertaintyReason::Boundary));
+    assert_eq!(linked.report().output_segment_count(), None);
+    assert_eq!(linked.report().steps().len(), 1);
+    assert_eq!(
+        linked.report().steps()[0].status(),
+        hypercurve::RetainedTopologyStatus::Unsupported
+    );
+    assert_eq!(
+        linked.report().steps()[0].blocker(),
+        Some(UncertaintyReason::Boundary)
+    );
+    assert!(linked.report().steps()[0].link_report().is_none());
+}
+
+#[test]
 fn curve_string_connect_end_to_start_inserts_exact_line() {
     let first = CurveString2::try_new(vec![line_segment(0, 0, 1, 0)]).unwrap();
     let second = CurveString2::try_new(vec![line_segment(3, 1, 4, 1)]).unwrap();

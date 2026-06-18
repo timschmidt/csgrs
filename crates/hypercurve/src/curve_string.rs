@@ -82,6 +82,33 @@ pub struct LinkedCurveString2 {
     report: CurveStringLinkReport2,
 }
 
+/// One ordered-chain link step in a batch open-path link operation.
+#[derive(Clone, Debug, PartialEq)]
+pub struct CurveStringOrderedLinkStepReport2 {
+    accumulated_source_indices: Vec<usize>,
+    next_source_index: usize,
+    link_report: Option<CurveStringLinkReport2>,
+    status: RetainedTopologyStatus,
+    blocker: Option<UncertaintyReason>,
+}
+
+/// Report for linking an ordered sequence of open curve strings.
+#[derive(Clone, Debug, PartialEq)]
+pub struct CurveStringOrderedLinkReport2 {
+    source_curve_string_count: usize,
+    output_segment_count: Option<usize>,
+    steps: Vec<CurveStringOrderedLinkStepReport2>,
+    status: RetainedTopologyStatus,
+    blocker: Option<UncertaintyReason>,
+}
+
+/// Result of report-bearing ordered open-chain linking.
+#[derive(Clone, Debug, PartialEq)]
+pub struct OrderedLinkedCurveString2 {
+    curve_string: Option<CurveString2>,
+    report: CurveStringOrderedLinkReport2,
+}
+
 /// Report for connecting `first.end` to `second.start` with an exact line segment.
 #[derive(Clone, Debug, PartialEq)]
 pub struct CurveStringConnectReport2 {
@@ -406,6 +433,98 @@ impl CurveString2 {
             curve_string,
             report,
         })))
+    }
+
+    /// Links an ordered sequence of open curve strings by certified endpoints.
+    ///
+    /// The caller supplies the intended chain order. Each next curve string is
+    /// linked to the accumulated output through
+    /// [`CurveString2::link_connected_endpoints`], so every step still requires
+    /// one unique exact endpoint pair and keeps the pairwise link report. A
+    /// disconnected, ambiguous, or unresolved step stops the batch and returns
+    /// an explicit report instead of creating connectors or snapping endpoints.
+    pub fn link_ordered_connected_endpoints(
+        curve_strings: Vec<Self>,
+        policy: &CurvePolicy,
+    ) -> CurveResult<OrderedLinkedCurveString2> {
+        let source_curve_string_count = curve_strings.len();
+        let mut iter = curve_strings.into_iter().enumerate();
+        let Some((first_index, mut accumulated)) = iter.next() else {
+            return Err(CurveError::EmptyCurveString);
+        };
+        let mut accumulated_source_indices = vec![first_index];
+        let mut steps = Vec::new();
+
+        for (next_source_index, next_curve_string) in iter {
+            match accumulated.link_connected_endpoints(&next_curve_string, policy)? {
+                Classification::Decided(Some(linked)) => {
+                    let link_report = linked.report().clone();
+                    let next_accumulated_source_indices = ordered_link_source_indices(
+                        &accumulated_source_indices,
+                        next_source_index,
+                        link_report.kind(),
+                    );
+                    steps.push(CurveStringOrderedLinkStepReport2 {
+                        accumulated_source_indices,
+                        next_source_index,
+                        link_report: Some(link_report),
+                        status: RetainedTopologyStatus::NativeExact,
+                        blocker: None,
+                    });
+                    accumulated = linked.into_curve_string();
+                    accumulated_source_indices = next_accumulated_source_indices;
+                }
+                Classification::Decided(None) => {
+                    steps.push(CurveStringOrderedLinkStepReport2 {
+                        accumulated_source_indices,
+                        next_source_index,
+                        link_report: None,
+                        status: RetainedTopologyStatus::Unsupported,
+                        blocker: Some(UncertaintyReason::Boundary),
+                    });
+                    return Ok(OrderedLinkedCurveString2 {
+                        curve_string: None,
+                        report: CurveStringOrderedLinkReport2 {
+                            source_curve_string_count,
+                            output_segment_count: None,
+                            steps,
+                            status: RetainedTopologyStatus::Unsupported,
+                            blocker: Some(UncertaintyReason::Boundary),
+                        },
+                    });
+                }
+                Classification::Uncertain(reason) => {
+                    steps.push(CurveStringOrderedLinkStepReport2 {
+                        accumulated_source_indices,
+                        next_source_index,
+                        link_report: None,
+                        status: retained_status_for_uncertainty(reason),
+                        blocker: Some(reason),
+                    });
+                    return Ok(OrderedLinkedCurveString2 {
+                        curve_string: None,
+                        report: CurveStringOrderedLinkReport2 {
+                            source_curve_string_count,
+                            output_segment_count: None,
+                            steps,
+                            status: retained_status_for_uncertainty(reason),
+                            blocker: Some(reason),
+                        },
+                    });
+                }
+            }
+        }
+
+        Ok(OrderedLinkedCurveString2 {
+            report: CurveStringOrderedLinkReport2 {
+                source_curve_string_count,
+                output_segment_count: Some(accumulated.len()),
+                steps,
+                status: RetainedTopologyStatus::NativeExact,
+                blocker: None,
+            },
+            curve_string: Some(accumulated),
+        })
     }
 
     /// Connects `self.end` to `other.start` with an exact line segment.
@@ -2318,6 +2437,77 @@ impl LinkedCurveString2 {
     }
 }
 
+impl CurveStringOrderedLinkStepReport2 {
+    /// Returns source curve-string indices already accumulated before this step.
+    pub fn accumulated_source_indices(&self) -> &[usize] {
+        &self.accumulated_source_indices
+    }
+
+    /// Returns the next source curve-string index consumed by this step.
+    pub const fn next_source_index(&self) -> usize {
+        self.next_source_index
+    }
+
+    /// Returns the pairwise link report when this step materialized.
+    pub const fn link_report(&self) -> Option<&CurveStringLinkReport2> {
+        self.link_report.as_ref()
+    }
+
+    /// Returns topology status for this ordered link step.
+    pub const fn status(&self) -> RetainedTopologyStatus {
+        self.status
+    }
+
+    /// Returns the exact blocker for non-materialized link steps.
+    pub const fn blocker(&self) -> Option<UncertaintyReason> {
+        self.blocker
+    }
+}
+
+impl CurveStringOrderedLinkReport2 {
+    /// Returns the source curve-string count captured by this report.
+    pub const fn source_curve_string_count(&self) -> usize {
+        self.source_curve_string_count
+    }
+
+    /// Returns the output segment count when ordered linking materialized.
+    pub const fn output_segment_count(&self) -> Option<usize> {
+        self.output_segment_count
+    }
+
+    /// Returns ordered link steps and their pairwise evidence.
+    pub fn steps(&self) -> &[CurveStringOrderedLinkStepReport2] {
+        &self.steps
+    }
+
+    /// Returns ordered-link materialization status.
+    pub const fn status(&self) -> RetainedTopologyStatus {
+        self.status
+    }
+
+    /// Returns the exact blocker for a non-materialized ordered link.
+    pub const fn blocker(&self) -> Option<UncertaintyReason> {
+        self.blocker
+    }
+}
+
+impl OrderedLinkedCurveString2 {
+    /// Returns the materialized ordered linked curve string, if supported.
+    pub const fn curve_string(&self) -> Option<&CurveString2> {
+        self.curve_string.as_ref()
+    }
+
+    /// Consumes this result and returns the linked curve string, if any.
+    pub fn into_curve_string(self) -> Option<CurveString2> {
+        self.curve_string
+    }
+
+    /// Returns the retained ordered-link report.
+    pub const fn report(&self) -> &CurveStringOrderedLinkReport2 {
+        &self.report
+    }
+}
+
 impl CurveStringConnectReport2 {
     /// Returns the selected connector orientation, when one was selected.
     pub const fn kind(&self) -> Option<CurveStringLinkKind2> {
@@ -2464,6 +2654,29 @@ fn linked_curve_string(
     }
 
     CurveString2::try_new(segments)
+}
+
+fn ordered_link_source_indices(
+    accumulated_source_indices: &[usize],
+    next_source_index: usize,
+    kind: CurveStringLinkKind2,
+) -> Vec<usize> {
+    let mut source_indices = Vec::with_capacity(accumulated_source_indices.len() + 1);
+    match kind {
+        CurveStringLinkKind2::FirstEndToSecondStart | CurveStringLinkKind2::FirstEndToSecondEnd => {
+            source_indices.extend_from_slice(accumulated_source_indices);
+            source_indices.push(next_source_index);
+        }
+        CurveStringLinkKind2::FirstStartToSecondStart => {
+            source_indices.extend(accumulated_source_indices.iter().rev().copied());
+            source_indices.push(next_source_index);
+        }
+        CurveStringLinkKind2::FirstStartToSecondEnd => {
+            source_indices.push(next_source_index);
+            source_indices.extend_from_slice(accumulated_source_indices);
+        }
+    }
+    source_indices
 }
 
 fn blocked_connected_curve_string(
