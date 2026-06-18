@@ -35,6 +35,7 @@ pub struct RegionBoundaryContourRoleReport2 {
 /// Report for building a region from already-closed boundary contours.
 #[derive(Clone, Debug, PartialEq)]
 pub struct RegionBoundaryContourBuildReport2 {
+    stage: RegionBoundaryContourBuildStage2,
     source_contour_count: usize,
     source_segment_count: usize,
     material_contour_count: Option<usize>,
@@ -44,6 +45,15 @@ pub struct RegionBoundaryContourBuildReport2 {
     role_reports: Vec<RegionBoundaryContourRoleReport2>,
     status: RetainedTopologyStatus,
     blocker: Option<UncertaintyReason>,
+}
+
+/// Furthest exact stage reached by boundary-contour region construction.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum RegionBoundaryContourBuildStage2 {
+    /// Contour intersections and containment nesting were being validated.
+    NestingValidation,
+    /// Material and hole role bins were assigned and materialized.
+    RoleAssignment,
 }
 
 /// Result of report-bearing boundary contour region construction.
@@ -170,6 +180,7 @@ impl Region2 {
         Ok(RegionBoundaryContourBuildResult2 {
             region: Some(Region2::new(material_contours, hole_contours)),
             report: RegionBoundaryContourBuildReport2 {
+                stage: RegionBoundaryContourBuildStage2::RoleAssignment,
                 source_contour_count,
                 source_segment_count,
                 material_contour_count: Some(material_contour_count),
@@ -232,6 +243,11 @@ impl RegionBoundaryContourRoleReport2 {
 }
 
 impl RegionBoundaryContourBuildReport2 {
+    /// Returns the furthest exact region-construction stage reached.
+    pub const fn stage(&self) -> RegionBoundaryContourBuildStage2 {
+        self.stage
+    }
+
     /// Returns the number of source boundary contours considered.
     pub const fn source_contour_count(&self) -> usize {
         self.source_contour_count
@@ -304,6 +320,7 @@ fn blocked_boundary_contour_region_result(
     RegionBoundaryContourBuildResult2 {
         region: None,
         report: RegionBoundaryContourBuildReport2 {
+            stage: RegionBoundaryContourBuildStage2::NestingValidation,
             source_contour_count,
             source_segment_count,
             material_contour_count: None,

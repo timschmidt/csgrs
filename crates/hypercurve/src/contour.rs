@@ -36,6 +36,7 @@ pub enum ContourPointLocation {
 /// Report for converting a connected curve string into a closed contour.
 #[derive(Clone, Debug, PartialEq)]
 pub struct ContourClosureReport2 {
+    stage: ContourClosureStage2,
     source_segment_count: usize,
     source_start_point: Point2,
     source_end_point: Point2,
@@ -43,6 +44,15 @@ pub struct ContourClosureReport2 {
     fill_rule: FillRule,
     status: RetainedTopologyStatus,
     blocker: Option<UncertaintyReason>,
+}
+
+/// Furthest exact stage reached by curve-string closure.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum ContourClosureStage2 {
+    /// Endpoint equality evidence was being validated.
+    EndpointValidation,
+    /// The closed contour was materialized with the requested fill rule.
+    ContourMaterialization,
 }
 
 /// Result of report-bearing curve-string closure.
@@ -162,6 +172,7 @@ impl Contour2 {
             Classification::Decided(()) => Ok(ContourClosureResult2 {
                 contour: Some(Self { curve, fill_rule }),
                 report: ContourClosureReport2 {
+                    stage: ContourClosureStage2::ContourMaterialization,
                     source_segment_count,
                     source_start_point,
                     source_end_point,
@@ -174,6 +185,7 @@ impl Contour2 {
             Classification::Uncertain(reason) => Ok(ContourClosureResult2 {
                 contour: None,
                 report: ContourClosureReport2 {
+                    stage: ContourClosureStage2::EndpointValidation,
                     source_segment_count,
                     source_start_point,
                     source_end_point,
@@ -752,6 +764,11 @@ impl Contour2 {
 }
 
 impl ContourClosureReport2 {
+    /// Returns the furthest exact closure stage reached.
+    pub const fn stage(&self) -> ContourClosureStage2 {
+        self.stage
+    }
+
     /// Returns the source curve-string segment count.
     pub const fn source_segment_count(&self) -> usize {
         self.source_segment_count
