@@ -81,8 +81,8 @@ pub use facts::{
     OrientedFaceFacts, TriangleFacts, VertexFacts, VertexLinkKind,
 };
 pub use graph::{
-    ExactIntersectionGraph, FaceSplitBoundaryNode, IntersectionGraphValidationError, MeshSide,
-    SplitPlanDiagnostic, SplitPlanDiagnosticKind,
+    FaceSplitBoundaryNode, IntersectionGraphValidationError, MeshSide, SplitPlanDiagnostic,
+    SplitPlanDiagnosticKind,
 };
 pub use mesh::{ExactMesh, ExactMeshValidationError, Triangle};
 pub use package::{
