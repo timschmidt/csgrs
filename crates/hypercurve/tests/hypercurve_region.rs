@@ -706,9 +706,28 @@ fn prepared_region_classifier_matches_owned_region() {
     assert_eq!(prepared.material_contours().len(), 2);
     assert_eq!(prepared.hole_contours().len(), 1);
     assert_eq!(prepared.prepared_contour_count(), 3);
+    assert_eq!(prepared.prepared_material_segment_count(), 8);
+    assert_eq!(prepared.prepared_hole_segment_count(), 4);
     assert_eq!(prepared.prepared_segment_count(), 12);
+    assert_eq!(
+        prepared.prepared_segment_count(),
+        prepared.prepared_material_segment_count() + prepared.prepared_hole_segment_count()
+    );
+    assert_eq!(prepared.decided_material_segment_box_count(), 8);
+    assert_eq!(prepared.decided_hole_segment_box_count(), 4);
     assert_eq!(prepared.decided_segment_box_count(), 12);
+    assert_eq!(
+        prepared.decided_segment_box_count(),
+        prepared.decided_material_segment_box_count() + prepared.decided_hole_segment_box_count()
+    );
+    assert_eq!(prepared.undecided_material_segment_box_count(), 0);
+    assert_eq!(prepared.undecided_hole_segment_box_count(), 0);
     assert_eq!(prepared.undecided_segment_box_count(), 0);
+    assert_eq!(
+        prepared.undecided_segment_box_count(),
+        prepared.undecided_material_segment_box_count()
+            + prepared.undecided_hole_segment_box_count()
+    );
 
     for point in [p(1, 1), p(3, 3), p(5, 5), p(11, 1), p(100, 100)] {
         assert_eq!(

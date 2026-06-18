@@ -776,31 +776,67 @@ impl<'a> PreparedRegionView2<'a> {
         self.material_prepared_contours.len() + self.hole_prepared_contours.len()
     }
 
-    /// Returns the number of prepared material and hole source segments.
-    pub fn prepared_segment_count(&self) -> usize {
+    /// Returns the number of prepared material source segments.
+    pub fn prepared_material_segment_count(&self) -> usize {
         self.material_prepared_contours
             .iter()
-            .chain(self.hole_prepared_contours.iter())
             .map(PreparedContourView2::prepared_segment_count)
+            .sum()
+    }
+
+    /// Returns the number of prepared hole source segments.
+    pub fn prepared_hole_segment_count(&self) -> usize {
+        self.hole_prepared_contours
+            .iter()
+            .map(PreparedContourView2::prepared_segment_count)
+            .sum()
+    }
+
+    /// Returns the number of prepared material and hole source segments.
+    pub fn prepared_segment_count(&self) -> usize {
+        self.prepared_material_segment_count() + self.prepared_hole_segment_count()
+    }
+
+    /// Returns the number of material contour segment boxes decided during preparation.
+    pub fn decided_material_segment_box_count(&self) -> usize {
+        self.material_prepared_contours
+            .iter()
+            .map(PreparedContourView2::decided_segment_box_count)
+            .sum()
+    }
+
+    /// Returns the number of hole contour segment boxes decided during preparation.
+    pub fn decided_hole_segment_box_count(&self) -> usize {
+        self.hole_prepared_contours
+            .iter()
+            .map(PreparedContourView2::decided_segment_box_count)
             .sum()
     }
 
     /// Returns the number of retained contour segment boxes decided during preparation.
     pub fn decided_segment_box_count(&self) -> usize {
+        self.decided_material_segment_box_count() + self.decided_hole_segment_box_count()
+    }
+
+    /// Returns the number of material source contour segments whose boxes stayed undecided.
+    pub fn undecided_material_segment_box_count(&self) -> usize {
         self.material_prepared_contours
             .iter()
-            .chain(self.hole_prepared_contours.iter())
-            .map(PreparedContourView2::decided_segment_box_count)
+            .map(PreparedContourView2::undecided_segment_box_count)
+            .sum()
+    }
+
+    /// Returns the number of hole source contour segments whose boxes stayed undecided.
+    pub fn undecided_hole_segment_box_count(&self) -> usize {
+        self.hole_prepared_contours
+            .iter()
+            .map(PreparedContourView2::undecided_segment_box_count)
             .sum()
     }
 
     /// Returns the number of source contour segments whose boxes stayed undecided.
     pub fn undecided_segment_box_count(&self) -> usize {
-        self.material_prepared_contours
-            .iter()
-            .chain(self.hole_prepared_contours.iter())
-            .map(PreparedContourView2::undecided_segment_box_count)
-            .sum()
+        self.undecided_material_segment_box_count() + self.undecided_hole_segment_box_count()
     }
 
     /// Returns conservative structural facts collected while preparing.
