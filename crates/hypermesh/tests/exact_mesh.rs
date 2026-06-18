@@ -1552,11 +1552,13 @@ fn exact_closed_convex_boolean_is_publicly_replayable() {
         ),
         (
             ExactBooleanOperation::Intersection,
-            |result: &ExactBooleanResult, _operation| result.is_convex_intersection_shortcut(),
+            ExactBooleanResult::is_certified_shortcut_for
+                as fn(&ExactBooleanResult, ExactBooleanOperation) -> bool,
         ),
         (
             ExactBooleanOperation::Difference,
-            |result: &ExactBooleanResult, _operation| result.is_convex_difference_shortcut(),
+            ExactBooleanResult::is_certified_shortcut_for
+                as fn(&ExactBooleanResult, ExactBooleanOperation) -> bool,
         ),
     ] {
         let result = exact_boolean_result(
@@ -3599,9 +3601,7 @@ fn assert_convex_public_replay(result: &ExactBooleanResult, operation: ExactBool
     assert!(
         result.is_arrangement_cell_complex_shortcut_for(operation)
             || result.is_arrangement_cell_complex_materialized_for(operation)
-            || result.is_convex_union_shortcut()
-            || result.is_convex_intersection_shortcut()
-            || result.is_convex_difference_shortcut()
+            || result.is_certified_shortcut_for(operation)
             || result.is_convex_separated_shortcut_for(operation)
             || result.is_convex_containment_shortcut_for(operation),
         "{operation:?}: expected convex public replay, got {result:?}"
@@ -4012,7 +4012,8 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
         assert!(
             convex_intersection
                 .is_arrangement_cell_complex_shortcut_for(ExactBooleanOperation::Intersection)
-                || convex_intersection.is_convex_intersection_shortcut(),
+                || convex_intersection
+                    .is_certified_shortcut_for(ExactBooleanOperation::Intersection),
             "{convex_intersection:?}"
         );
         if convex_intersection
@@ -4252,7 +4253,8 @@ fn arrangement_cell_complex_request_materialization_is_publicly_replayable() {
         assert!(
             convex_intersection
                 .is_arrangement_cell_complex_shortcut_for(ExactBooleanOperation::Intersection)
-                || convex_intersection.is_convex_intersection_shortcut(),
+                || convex_intersection
+                    .is_certified_shortcut_for(ExactBooleanOperation::Intersection),
             "{convex_intersection:?}"
         );
         if convex_intersection

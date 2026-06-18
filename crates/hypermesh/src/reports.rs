@@ -921,30 +921,6 @@ impl ExactBooleanResult {
         self.is_shortcut_for(operation, ExactBooleanShortcutKind::ArrangementCellComplex)
     }
 
-    /// Return whether this result is a closed-convex union shortcut.
-    pub fn is_convex_union_shortcut(&self) -> bool {
-        self.is_shortcut_for(
-            ExactBooleanOperation::Union,
-            ExactBooleanShortcutKind::ConvexUnion,
-        )
-    }
-
-    /// Return whether this result is a closed-convex intersection shortcut.
-    pub fn is_convex_intersection_shortcut(&self) -> bool {
-        self.is_shortcut_for(
-            ExactBooleanOperation::Intersection,
-            ExactBooleanShortcutKind::ConvexIntersection,
-        )
-    }
-
-    /// Return whether this result is a closed-convex difference shortcut.
-    pub fn is_convex_difference_shortcut(&self) -> bool {
-        self.is_shortcut_for(
-            ExactBooleanOperation::Difference,
-            ExactBooleanShortcutKind::ConvexDifference,
-        )
-    }
-
     /// Return whether this result is a closed-convex separated shortcut.
     pub fn is_convex_separated_shortcut_for(&self, operation: ExactBooleanOperation) -> bool {
         self.is_shortcut_for(operation, ExactBooleanShortcutKind::ConvexSeparated)
