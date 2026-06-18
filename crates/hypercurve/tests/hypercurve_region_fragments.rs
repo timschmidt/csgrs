@@ -1,6 +1,7 @@
 use hypercurve::{
     BulgeVertex2, Classification, Contour2, CurveError, CurvePolicy, Real, Region2,
-    RegionContourFragments, RegionContourKey, RegionContourRole, RegionFragmentSet, RegionSide,
+    RegionContourFragments, RegionContourKey, RegionContourRole, RegionFragmentBuildStage2,
+    RegionFragmentSet, RegionSide,
 };
 
 fn s(value: i32) -> Real {
@@ -46,16 +47,45 @@ fn region_fragments_split_all_keyed_contours() {
     let cutter = Region2::from_material_contours(vec![rectangle(5, -1, 11, 11)]);
     let intersections = region.intersect_region(&cutter, &policy()).unwrap();
 
-    let fragments = intersections
-        .split_regions(&region.as_view(), &cutter.as_view(), &policy())
+    let built = intersections
+        .split_regions_with_report(&region.as_view(), &cutter.as_view(), &policy())
         .unwrap();
-    let Classification::Decided(fragments) = fragments else {
-        panic!("expected decided region fragments");
-    };
+    assert!(built.report().status().is_native_exact());
+    assert_eq!(
+        built.report().stage(),
+        RegionFragmentBuildStage2::ContourSplitting
+    );
+    assert_eq!(built.report().first_source_contour_count(), 2);
+    assert_eq!(built.report().second_source_contour_count(), 1);
+    assert_eq!(built.report().first_source_segment_count(), 8);
+    assert_eq!(built.report().second_source_segment_count(), 4);
+    assert_eq!(
+        built.report().intersection_pair_count(),
+        intersections.intersecting_pair_count()
+    );
+    assert_eq!(
+        built.report().candidate_pair_count(),
+        intersections.candidate_pair_count()
+    );
+    assert_eq!(
+        built.report().skipped_aabb_pair_count(),
+        intersections.skipped_aabb_pair_count()
+    );
+    assert_eq!(
+        built.report().tested_pair_count(),
+        intersections.tested_pair_count()
+    );
+    assert_eq!(built.report().output_contour_count(), Some(3));
+    assert_eq!(built.report().output_fragment_count(), Some(20));
+    assert_eq!(built.report().contour_reports().len(), 3);
+    assert_eq!(built.report().blocker(), None);
 
     let material_key = RegionContourKey::new(RegionSide::First, RegionContourRole::Material, 0);
     let hole_key = RegionContourKey::new(RegionSide::First, RegionContourRole::Hole, 0);
     let cutter_key = RegionContourKey::new(RegionSide::Second, RegionContourRole::Material, 0);
+    let fragments = built
+        .fragments()
+        .expect("reported region fragments should materialize");
 
     assert_eq!(fragments.len(), 3);
     assert_eq!(
@@ -80,6 +110,30 @@ fn region_fragments_split_all_keyed_contours() {
             .unwrap()
             .fragments
             .len(),
+        8
+    );
+    assert_eq!(built.report().contour_reports()[0].key(), material_key);
+    assert_eq!(
+        built.report().contour_reports()[0].source_segment_count(),
+        4
+    );
+    assert_eq!(
+        built.report().contour_reports()[0].output_fragment_count(),
+        6
+    );
+    assert!(
+        built.report().contour_reports()[0]
+            .status()
+            .is_native_exact()
+    );
+    assert_eq!(built.report().contour_reports()[1].key(), hole_key);
+    assert_eq!(
+        built.report().contour_reports()[1].output_fragment_count(),
+        6
+    );
+    assert_eq!(built.report().contour_reports()[2].key(), cutter_key);
+    assert_eq!(
+        built.report().contour_reports()[2].output_fragment_count(),
         8
     );
 }

@@ -213,7 +213,10 @@ pub use region_events::{
     RegionContourIntersection, RegionContourKey, RegionContourRole, RegionIntersectionSet,
     RegionSide,
 };
-pub use region_fragments::{RegionContourFragments, RegionFragmentSet};
+pub use region_fragments::{
+    RegionContourFragmentReport2, RegionContourFragments, RegionFragmentBuildReport2,
+    RegionFragmentBuildResult2, RegionFragmentBuildStage2, RegionFragmentSet,
+};
 pub use region_nesting::{
     RegionBoundaryContourBuildReport2, RegionBoundaryContourBuildResult2,
     RegionBoundaryContourBuildStage2, RegionBoundaryContourRole2, RegionBoundaryContourRoleReport2,

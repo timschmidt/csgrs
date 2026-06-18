@@ -12,7 +12,7 @@
 use crate::{
     Classification, Contour2, ContourFragmentSet, ContourOperand, ContourSplitMarkers, CurveError,
     CurvePolicy, CurveResult, RegionContourKey, RegionContourRole, RegionIntersectionSet,
-    RegionSide, RegionView2,
+    RegionSide, RegionView2, RetainedTopologyStatus, UncertaintyReason,
 };
 
 /// Fragments for one keyed contour in a region-pair query.
@@ -22,6 +22,50 @@ pub struct RegionContourFragments {
     pub key: RegionContourKey,
     /// Source contour split into traversal-order fragments.
     pub fragments: ContourFragmentSet,
+}
+
+/// Fragment materialization report for one keyed source contour.
+#[derive(Clone, Debug, PartialEq)]
+pub struct RegionContourFragmentReport2 {
+    key: RegionContourKey,
+    source_segment_count: usize,
+    output_fragment_count: usize,
+    status: RetainedTopologyStatus,
+}
+
+/// Report for splitting two region views at retained intersection evidence.
+#[derive(Clone, Debug, PartialEq)]
+pub struct RegionFragmentBuildReport2 {
+    stage: RegionFragmentBuildStage2,
+    first_source_contour_count: usize,
+    second_source_contour_count: usize,
+    first_source_segment_count: usize,
+    second_source_segment_count: usize,
+    intersection_pair_count: usize,
+    candidate_pair_count: usize,
+    skipped_aabb_pair_count: usize,
+    tested_pair_count: usize,
+    output_contour_count: Option<usize>,
+    output_fragment_count: Option<usize>,
+    contour_reports: Vec<RegionContourFragmentReport2>,
+    status: RetainedTopologyStatus,
+    blocker: Option<UncertaintyReason>,
+}
+
+/// Furthest exact stage reached by region-fragment construction.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum RegionFragmentBuildStage2 {
+    /// Supplied region/intersection evidence was being validated.
+    IntersectionEvidenceValidation,
+    /// Keyed contours were being split at retained intersection parameters.
+    ContourSplitting,
+}
+
+/// Result of report-bearing region-fragment construction.
+#[derive(Clone, Debug, PartialEq)]
+pub struct RegionFragmentBuildResult2 {
+    fragments: Option<RegionFragmentSet>,
+    report: RegionFragmentBuildReport2,
 }
 
 /// Fragment inventory for both regions in a region-pair query.
@@ -69,12 +113,38 @@ pub(crate) fn split_region_views_at_intersections(
     intersections: &RegionIntersectionSet,
     policy: &CurvePolicy,
 ) -> CurveResult<Classification<RegionFragmentSet>> {
+    let result =
+        split_region_views_at_intersections_with_report(first, second, intersections, policy)?;
+    let blocker = result
+        .report()
+        .blocker()
+        .unwrap_or(UncertaintyReason::Unsupported);
+    if let Some(fragments) = result.into_fragments() {
+        Ok(Classification::Decided(fragments))
+    } else {
+        Ok(Classification::Uncertain(blocker))
+    }
+}
+
+pub(crate) fn split_region_views_at_intersections_with_report(
+    first: &RegionView2<'_>,
+    second: &RegionView2<'_>,
+    intersections: &RegionIntersectionSet,
+    policy: &CurvePolicy,
+) -> CurveResult<RegionFragmentBuildResult2> {
     validate_region_intersection_evidence_against_views(first, second, intersections)?;
 
+    let first_source_contour_count = first.material_contours().len() + first.hole_contours().len();
+    let second_source_contour_count =
+        second.material_contours().len() + second.hole_contours().len();
+    let first_source_segment_count = source_segment_count(first);
+    let second_source_segment_count = source_segment_count(second);
     let mut contours = Vec::new();
+    let mut contour_reports = Vec::new();
 
     match append_region_contours(
         &mut contours,
+        &mut contour_reports,
         RegionSide::First,
         first.material_contours(),
         RegionContourRole::Material,
@@ -82,10 +152,21 @@ pub(crate) fn split_region_views_at_intersections(
         policy,
     )? {
         Classification::Decided(()) => {}
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        Classification::Uncertain(reason) => {
+            return Ok(blocked_region_fragment_build_result(
+                first_source_contour_count,
+                second_source_contour_count,
+                first_source_segment_count,
+                second_source_segment_count,
+                intersections,
+                contour_reports,
+                reason,
+            ));
+        }
     }
     match append_region_contours(
         &mut contours,
+        &mut contour_reports,
         RegionSide::First,
         first.hole_contours(),
         RegionContourRole::Hole,
@@ -93,10 +174,21 @@ pub(crate) fn split_region_views_at_intersections(
         policy,
     )? {
         Classification::Decided(()) => {}
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        Classification::Uncertain(reason) => {
+            return Ok(blocked_region_fragment_build_result(
+                first_source_contour_count,
+                second_source_contour_count,
+                first_source_segment_count,
+                second_source_segment_count,
+                intersections,
+                contour_reports,
+                reason,
+            ));
+        }
     }
     match append_region_contours(
         &mut contours,
+        &mut contour_reports,
         RegionSide::Second,
         second.material_contours(),
         RegionContourRole::Material,
@@ -104,10 +196,21 @@ pub(crate) fn split_region_views_at_intersections(
         policy,
     )? {
         Classification::Decided(()) => {}
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        Classification::Uncertain(reason) => {
+            return Ok(blocked_region_fragment_build_result(
+                first_source_contour_count,
+                second_source_contour_count,
+                first_source_segment_count,
+                second_source_segment_count,
+                intersections,
+                contour_reports,
+                reason,
+            ));
+        }
     }
     match append_region_contours(
         &mut contours,
+        &mut contour_reports,
         RegionSide::Second,
         second.hole_contours(),
         RegionContourRole::Hole,
@@ -115,10 +218,192 @@ pub(crate) fn split_region_views_at_intersections(
         policy,
     )? {
         Classification::Decided(()) => {}
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        Classification::Uncertain(reason) => {
+            return Ok(blocked_region_fragment_build_result(
+                first_source_contour_count,
+                second_source_contour_count,
+                first_source_segment_count,
+                second_source_segment_count,
+                intersections,
+                contour_reports,
+                reason,
+            ));
+        }
     }
 
-    Ok(Classification::Decided(RegionFragmentSet::new(contours)?))
+    let output_contour_count = contours.len();
+    let output_fragment_count = contour_reports
+        .iter()
+        .map(RegionContourFragmentReport2::output_fragment_count)
+        .sum();
+    Ok(RegionFragmentBuildResult2 {
+        fragments: Some(RegionFragmentSet::new(contours)?),
+        report: RegionFragmentBuildReport2 {
+            stage: RegionFragmentBuildStage2::ContourSplitting,
+            first_source_contour_count,
+            second_source_contour_count,
+            first_source_segment_count,
+            second_source_segment_count,
+            intersection_pair_count: intersections.intersecting_pair_count(),
+            candidate_pair_count: intersections.candidate_pair_count(),
+            skipped_aabb_pair_count: intersections.skipped_aabb_pair_count(),
+            tested_pair_count: intersections.tested_pair_count(),
+            output_contour_count: Some(output_contour_count),
+            output_fragment_count: Some(output_fragment_count),
+            contour_reports,
+            status: RetainedTopologyStatus::NativeExact,
+            blocker: None,
+        },
+    })
+}
+
+impl RegionContourFragmentReport2 {
+    /// Returns the keyed source contour represented by this report.
+    pub const fn key(&self) -> RegionContourKey {
+        self.key
+    }
+
+    /// Returns the number of source contour segments before splitting.
+    pub const fn source_segment_count(&self) -> usize {
+        self.source_segment_count
+    }
+
+    /// Returns the number of retained fragments emitted for this contour.
+    pub const fn output_fragment_count(&self) -> usize {
+        self.output_fragment_count
+    }
+
+    /// Returns retained topology status for this contour split.
+    pub const fn status(&self) -> RetainedTopologyStatus {
+        self.status
+    }
+}
+
+impl RegionFragmentBuildReport2 {
+    /// Returns the furthest exact fragment-build stage reached.
+    pub const fn stage(&self) -> RegionFragmentBuildStage2 {
+        self.stage
+    }
+
+    /// Returns the number of source contours in the first region view.
+    pub const fn first_source_contour_count(&self) -> usize {
+        self.first_source_contour_count
+    }
+
+    /// Returns the number of source contours in the second region view.
+    pub const fn second_source_contour_count(&self) -> usize {
+        self.second_source_contour_count
+    }
+
+    /// Returns the number of source contour segments in the first region view.
+    pub const fn first_source_segment_count(&self) -> usize {
+        self.first_source_segment_count
+    }
+
+    /// Returns the number of source contour segments in the second region view.
+    pub const fn second_source_segment_count(&self) -> usize {
+        self.second_source_segment_count
+    }
+
+    /// Returns the number of keyed contour pairs that retained intersections.
+    pub const fn intersection_pair_count(&self) -> usize {
+        self.intersection_pair_count
+    }
+
+    /// Returns all contour-pair candidates considered by the source event set.
+    pub const fn candidate_pair_count(&self) -> usize {
+        self.candidate_pair_count
+    }
+
+    /// Returns contour-pair candidates skipped by decided disjoint AABBs.
+    pub const fn skipped_aabb_pair_count(&self) -> usize {
+        self.skipped_aabb_pair_count
+    }
+
+    /// Returns contour-pair candidates that reached exact contour intersection.
+    pub const fn tested_pair_count(&self) -> usize {
+        self.tested_pair_count
+    }
+
+    /// Returns output keyed contour count when splitting materialized.
+    pub const fn output_contour_count(&self) -> Option<usize> {
+        self.output_contour_count
+    }
+
+    /// Returns output fragment count when splitting materialized.
+    pub const fn output_fragment_count(&self) -> Option<usize> {
+        self.output_fragment_count
+    }
+
+    /// Returns per-contour split provenance.
+    pub fn contour_reports(&self) -> &[RegionContourFragmentReport2] {
+        &self.contour_reports
+    }
+
+    /// Returns retained topology status for fragment construction.
+    pub const fn status(&self) -> RetainedTopologyStatus {
+        self.status
+    }
+
+    /// Returns the exact blocker for non-materialized fragment construction.
+    pub const fn blocker(&self) -> Option<UncertaintyReason> {
+        self.blocker
+    }
+}
+
+impl RegionFragmentBuildResult2 {
+    /// Returns materialized region fragments, if splitting succeeded.
+    pub const fn fragments(&self) -> Option<&RegionFragmentSet> {
+        self.fragments.as_ref()
+    }
+
+    /// Consumes this result and returns materialized region fragments, if any.
+    pub fn into_fragments(self) -> Option<RegionFragmentSet> {
+        self.fragments
+    }
+
+    /// Returns retained fragment-build evidence.
+    pub const fn report(&self) -> &RegionFragmentBuildReport2 {
+        &self.report
+    }
+}
+
+fn blocked_region_fragment_build_result(
+    first_source_contour_count: usize,
+    second_source_contour_count: usize,
+    first_source_segment_count: usize,
+    second_source_segment_count: usize,
+    intersections: &RegionIntersectionSet,
+    contour_reports: Vec<RegionContourFragmentReport2>,
+    blocker: UncertaintyReason,
+) -> RegionFragmentBuildResult2 {
+    RegionFragmentBuildResult2 {
+        fragments: None,
+        report: RegionFragmentBuildReport2 {
+            stage: RegionFragmentBuildStage2::ContourSplitting,
+            first_source_contour_count,
+            second_source_contour_count,
+            first_source_segment_count,
+            second_source_segment_count,
+            intersection_pair_count: intersections.intersecting_pair_count(),
+            candidate_pair_count: intersections.candidate_pair_count(),
+            skipped_aabb_pair_count: intersections.skipped_aabb_pair_count(),
+            tested_pair_count: intersections.tested_pair_count(),
+            output_contour_count: None,
+            output_fragment_count: None,
+            contour_reports,
+            status: RetainedTopologyStatus::Unresolved,
+            blocker: Some(blocker),
+        },
+    }
+}
+
+fn source_segment_count(view: &RegionView2<'_>) -> usize {
+    view.material_contours()
+        .iter()
+        .chain(view.hole_contours())
+        .map(|contour| contour.len())
+        .sum()
 }
 
 fn validate_region_fragment_keys(contours: &[RegionContourFragments]) -> CurveResult<()> {
@@ -206,6 +491,7 @@ fn validate_event_segment_index(
 
 fn append_region_contours(
     out: &mut Vec<RegionContourFragments>,
+    reports: &mut Vec<RegionContourFragmentReport2>,
     side: RegionSide,
     contours: &[&Contour2],
     role: RegionContourRole,
@@ -218,6 +504,12 @@ fn append_region_contours(
             Classification::Decided(fragments) => fragments,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
+        reports.push(RegionContourFragmentReport2 {
+            key,
+            source_segment_count: contour.len(),
+            output_fragment_count: fragments.len(),
+            status: RetainedTopologyStatus::NativeExact,
+        });
         out.push(RegionContourFragments { key, fragments });
     }
 

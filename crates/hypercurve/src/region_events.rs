@@ -180,6 +180,18 @@ impl RegionIntersectionSet {
     ) -> CurveResult<Classification<crate::RegionFragmentSet>> {
         crate::region_fragments::split_region_views_at_intersections(first, second, self, policy)
     }
+
+    /// Splits every contour in both region views at this event set and retains a report.
+    pub fn split_regions_with_report(
+        &self,
+        first: &RegionView2<'_>,
+        second: &RegionView2<'_>,
+        policy: &CurvePolicy,
+    ) -> CurveResult<crate::RegionFragmentBuildResult2> {
+        crate::region_fragments::split_region_views_at_intersections_with_report(
+            first, second, self, policy,
+        )
+    }
 }
 
 pub(crate) fn intersect_region_views(
