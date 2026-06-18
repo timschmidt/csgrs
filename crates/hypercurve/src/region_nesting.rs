@@ -100,6 +100,9 @@ pub struct RegionLineSegmentRegionBuildReport2 {
     split_tested_pair_count: usize,
     split_intersection_event_count: usize,
     split_output_segment_count: Option<usize>,
+    endpoint_graph_endpoint_count: Option<usize>,
+    endpoint_graph_dangling_endpoint_count: Option<usize>,
+    endpoint_graph_branch_endpoint_count: Option<usize>,
     attempted_endpoint_connection_count: usize,
     exact_endpoint_connection_count: usize,
     disconnected_endpoint_connection_count: usize,
@@ -215,6 +218,7 @@ impl Region2 {
                     report: blocked_line_segment_region_report(
                         segments.len(),
                         Some(split_report),
+                        None,
                         LineSegmentRingAssemblyReportParts::default(),
                         RegionLineSegmentRegionBuildStage2::RingAssembly,
                         retained_status_for_line_segment_region_blocker(blocker),
@@ -224,6 +228,28 @@ impl Region2 {
             }
         };
 
+        let (endpoint_graph, endpoint_counts) =
+            match validate_arranged_line_endpoint_graph(&arranged.segments, policy) {
+                Ok(endpoint_graph) => endpoint_graph,
+                Err((endpoint_graph, counts, blocker)) => {
+                    return Ok(RegionLineSegmentRegionBuildResult2 {
+                        region: None,
+                        report: blocked_line_segment_region_report(
+                            segments.len(),
+                            Some(arranged.report),
+                            Some(endpoint_graph),
+                            LineSegmentRingAssemblyReportParts {
+                                counts,
+                                ..LineSegmentRingAssemblyReportParts::default()
+                            },
+                            RegionLineSegmentRegionBuildStage2::RingAssembly,
+                            retained_status_for_line_segment_region_blocker(blocker),
+                            blocker,
+                        ),
+                    });
+                }
+            };
+
         let assembled = match assemble_unordered_line_segment_rings(&arranged.segments, policy)? {
             Ok(assembled) => assembled,
             Err((report, blocker)) => {
@@ -232,6 +258,7 @@ impl Region2 {
                     report: blocked_line_segment_region_report(
                         segments.len(),
                         Some(arranged.report),
+                        Some(endpoint_graph),
                         report,
                         RegionLineSegmentRegionBuildStage2::RingAssembly,
                         retained_status_for_line_segment_region_blocker(blocker),
@@ -266,16 +293,25 @@ impl Region2 {
                 split_tested_pair_count: arranged.report.tested_pair_count,
                 split_intersection_event_count: arranged.report.intersection_event_count,
                 split_output_segment_count: Some(arranged.segments.len()),
+                endpoint_graph_endpoint_count: Some(endpoint_graph.endpoint_count),
+                endpoint_graph_dangling_endpoint_count: Some(
+                    endpoint_graph.dangling_endpoint_count,
+                ),
+                endpoint_graph_branch_endpoint_count: Some(endpoint_graph.branch_endpoint_count),
                 attempted_endpoint_connection_count: assembled
                     .counts
-                    .attempted_endpoint_connection_count,
-                exact_endpoint_connection_count: assembled.counts.exact_endpoint_connection_count,
+                    .attempted_endpoint_connection_count
+                    + endpoint_counts.attempted_endpoint_connection_count,
+                exact_endpoint_connection_count: assembled.counts.exact_endpoint_connection_count
+                    + endpoint_counts.exact_endpoint_connection_count,
                 disconnected_endpoint_connection_count: assembled
                     .counts
-                    .disconnected_endpoint_connection_count,
+                    .disconnected_endpoint_connection_count
+                    + endpoint_counts.disconnected_endpoint_connection_count,
                 unresolved_endpoint_connection_count: assembled
                     .counts
-                    .unresolved_endpoint_connection_count,
+                    .unresolved_endpoint_connection_count
+                    + endpoint_counts.unresolved_endpoint_connection_count,
                 reversed_source_segment_count: assembled.reversed_source_segment_count,
                 output_ring_count,
                 output_boundary_segment_count,
@@ -653,6 +689,21 @@ impl RegionLineSegmentRegionBuildReport2 {
         self.split_output_segment_count
     }
 
+    /// Returns arranged endpoint count validated before ring traversal.
+    pub const fn endpoint_graph_endpoint_count(&self) -> Option<usize> {
+        self.endpoint_graph_endpoint_count
+    }
+
+    /// Returns arranged endpoints with no exact mate.
+    pub const fn endpoint_graph_dangling_endpoint_count(&self) -> Option<usize> {
+        self.endpoint_graph_dangling_endpoint_count
+    }
+
+    /// Returns arranged endpoints with more than one exact mate.
+    pub const fn endpoint_graph_branch_endpoint_count(&self) -> Option<usize> {
+        self.endpoint_graph_branch_endpoint_count
+    }
+
     /// Returns endpoint pair comparisons attempted during ring assembly.
     pub const fn attempted_endpoint_connection_count(&self) -> usize {
         self.attempted_endpoint_connection_count
@@ -734,6 +785,13 @@ struct LineSegmentRingAssemblyCounts {
     unresolved_endpoint_connection_count: usize,
 }
 
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+struct LineSegmentEndpointGraphReportParts {
+    endpoint_count: usize,
+    dangling_endpoint_count: usize,
+    branch_endpoint_count: usize,
+}
+
 #[derive(Clone, Debug, Default, PartialEq)]
 struct LineSegmentRingAssemblyReportParts {
     counts: LineSegmentRingAssemblyCounts,
@@ -792,6 +850,92 @@ enum EndpointCandidate {
 #[derive(Clone, Debug, PartialEq)]
 struct LineSegmentSplitMarker {
     param: Real,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+struct ArrangedLineEndpoint {
+    segment_index: usize,
+    endpoint: EndpointCandidate,
+}
+
+fn validate_arranged_line_endpoint_graph(
+    segments: &[ArrangedLineSegment],
+    policy: &CurvePolicy,
+) -> Result<
+    (
+        LineSegmentEndpointGraphReportParts,
+        LineSegmentRingAssemblyCounts,
+    ),
+    (
+        LineSegmentEndpointGraphReportParts,
+        LineSegmentRingAssemblyCounts,
+        UncertaintyReason,
+    ),
+> {
+    let endpoints = arranged_line_endpoints(segments);
+    let mut graph = LineSegmentEndpointGraphReportParts {
+        endpoint_count: endpoints.len(),
+        ..LineSegmentEndpointGraphReportParts::default()
+    };
+    let mut counts = LineSegmentRingAssemblyCounts::default();
+
+    for (endpoint_index, endpoint) in endpoints.iter().enumerate() {
+        let point = arranged_line_endpoint_point(segments, *endpoint);
+        let mut exact_match_count = 0_usize;
+        for (candidate_index, candidate) in endpoints.iter().enumerate() {
+            if endpoint_index == candidate_index
+                || endpoint.segment_index == candidate.segment_index
+            {
+                continue;
+            }
+            match exact_points_match(
+                point,
+                arranged_line_endpoint_point(segments, *candidate),
+                policy,
+                &mut counts,
+            ) {
+                Classification::Decided(true) => exact_match_count += 1,
+                Classification::Decided(false) => {}
+                Classification::Uncertain(reason) => return Err((graph, counts, reason)),
+            }
+        }
+        match exact_match_count {
+            1 => {}
+            0 => graph.dangling_endpoint_count += 1,
+            _ => graph.branch_endpoint_count += 1,
+        }
+    }
+
+    if graph.dangling_endpoint_count > 0 || graph.branch_endpoint_count > 0 {
+        Err((graph, counts, UncertaintyReason::Boundary))
+    } else {
+        Ok((graph, counts))
+    }
+}
+
+fn arranged_line_endpoints(segments: &[ArrangedLineSegment]) -> Vec<ArrangedLineEndpoint> {
+    let mut endpoints = Vec::with_capacity(segments.len() * 2);
+    for segment_index in 0..segments.len() {
+        endpoints.push(ArrangedLineEndpoint {
+            segment_index,
+            endpoint: EndpointCandidate::Start,
+        });
+        endpoints.push(ArrangedLineEndpoint {
+            segment_index,
+            endpoint: EndpointCandidate::End,
+        });
+    }
+    endpoints
+}
+
+fn arranged_line_endpoint_point(
+    segments: &[ArrangedLineSegment],
+    endpoint: ArrangedLineEndpoint,
+) -> &Point2 {
+    match endpoint.endpoint {
+        EndpointCandidate::Start => segments[endpoint.segment_index].line.start(),
+        EndpointCandidate::End => segments[endpoint.segment_index].line.end(),
+    }
 }
 
 fn arrange_line_segments_at_point_intersections(
@@ -1105,6 +1249,7 @@ fn append_line_segment_ring_source_report(
 fn blocked_line_segment_region_report(
     source_segment_count: usize,
     split_report: Option<LineSegmentSplitReportParts>,
+    endpoint_graph_report: Option<LineSegmentEndpointGraphReportParts>,
     report: LineSegmentRingAssemblyReportParts,
     stage: RegionLineSegmentRegionBuildStage2,
     status: RetainedTopologyStatus,
@@ -1119,6 +1264,11 @@ fn blocked_line_segment_region_report(
         split_tested_pair_count: split_report.tested_pair_count,
         split_intersection_event_count: split_report.intersection_event_count,
         split_output_segment_count: split_report.output_segment_count,
+        endpoint_graph_endpoint_count: endpoint_graph_report.map(|report| report.endpoint_count),
+        endpoint_graph_dangling_endpoint_count: endpoint_graph_report
+            .map(|report| report.dangling_endpoint_count),
+        endpoint_graph_branch_endpoint_count: endpoint_graph_report
+            .map(|report| report.branch_endpoint_count),
         attempted_endpoint_connection_count: report.counts.attempted_endpoint_connection_count,
         exact_endpoint_connection_count: report.counts.exact_endpoint_connection_count,
         disconnected_endpoint_connection_count: report
