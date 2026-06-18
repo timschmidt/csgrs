@@ -539,11 +539,10 @@ fn workspace_report_validation_error(error: ExactReportValidationError) -> MeshE
 mod tests {
     use super::*;
     use crate::boolean::ExactBooleanOperation;
+    use crate::reports::ExactReportValidationError;
     use crate::reports::{ExactBooleanResultKind, ExactBooleanShortcutKind};
     use crate::validation::ValidationPolicy;
-    use crate::{
-        ExactBoundaryBooleanPolicy, ExactReportFreshness, ExactReportValidationError, Triangle,
-    };
+    use crate::{ExactBoundaryBooleanPolicy, ExactReportFreshness, Triangle};
 
     #[test]
     fn exact_boolean_workspace_reuses_graph_arrangement_preflight_and_evaluation() {

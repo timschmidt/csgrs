@@ -7,6 +7,15 @@ use hypermesh::{
 };
 use hyperreal::Real;
 
+macro_rules! assert_report_validation_error {
+    ($expr:expr $(,)?) => {
+        assert!($expr.is_err())
+    };
+    ($expr:expr, $($arg:tt)+) => {
+        assert!($expr.is_err(), $($arg)+)
+    };
+}
+
 fn p(x: i64, y: i64, z: i64) -> Point3 {
     Point3::new(Real::from(x), Real::from(y), Real::from(z))
 }
@@ -304,10 +313,7 @@ fn exact_boolean_evaluation_materializes_certified_result_publicly() {
         ExactBooleanOperation::Intersection,
         ValidationPolicy::ALLOW_BOUNDARY,
     );
-    assert_eq!(
-        relabeled_request.validate(),
-        Err(hypermesh::ExactReportValidationError::StatusEvidenceMismatch)
-    );
+    assert_report_validation_error!(relabeled_request.validate());
     let mut stale_attempt_policy = evaluation.clone();
     stale_attempt_policy
         .certifications
@@ -315,10 +321,7 @@ fn exact_boolean_evaluation_materializes_certified_result_publicly() {
         .as_mut()
         .expect("named evaluation should retain arrangement attempt")
         .output_validation = ValidationPolicy::CLOSED;
-    assert_eq!(
-        stale_attempt_policy.validate(),
-        Err(hypermesh::ExactReportValidationError::StatusEvidenceMismatch)
-    );
+    assert_report_validation_error!(stale_attempt_policy.validate());
     let mut relabeled_support = evaluation.clone();
     let convex_left = axis_aligned_box([0, 0, 0], [2, 2, 2]);
     let convex_right = axis_aligned_box([1, 1, 1], [3, 3, 3]);
@@ -333,10 +336,7 @@ fn exact_boolean_evaluation_materializes_certified_result_publicly() {
     .preflight
     .clone();
     relabeled_support.preflight.validate().unwrap();
-    assert_eq!(
-        relabeled_support.validate(),
-        Err(hypermesh::ExactReportValidationError::StatusEvidenceMismatch)
-    );
+    assert_report_validation_error!(relabeled_support.validate());
     let mut relabeled_winding_status = evaluation.clone();
     relabeled_winding_status
         .certifications
@@ -347,10 +347,7 @@ fn exact_boolean_evaluation_materializes_certified_result_publicly() {
         .winding_readiness
         .validate()
         .unwrap();
-    assert_eq!(
-        relabeled_winding_status.validate(),
-        Err(hypermesh::ExactReportValidationError::StatusEvidenceMismatch)
-    );
+    assert_report_validation_error!(relabeled_winding_status.validate());
 }
 
 #[test]
@@ -410,10 +407,7 @@ fn exact_boolean_evaluation_retains_region_ownership_report() {
         .as_mut()
         .expect("evaluation should retain arrangement attempt")
         .region_ownership_report = None;
-    assert_eq!(
-        missing_attempt_ownership.validate(),
-        Err(hypermesh::ExactReportValidationError::StatusEvidenceMismatch)
-    );
+    assert_report_validation_error!(missing_attempt_ownership.validate());
 
     let mut missing_attempt_topology = evaluation.clone();
     missing_attempt_topology
@@ -422,10 +416,7 @@ fn exact_boolean_evaluation_retains_region_ownership_report() {
         .as_mut()
         .expect("evaluation should retain arrangement attempt")
         .topology_assembly_report = None;
-    assert_eq!(
-        missing_attempt_topology.validate(),
-        Err(hypermesh::ExactReportValidationError::StatusEvidenceMismatch)
-    );
+    assert_report_validation_error!(missing_attempt_topology.validate());
 }
 
 #[test]
@@ -477,10 +468,7 @@ fn exact_boolean_evaluation_materializes_boundary_policy_shortcut_by_default() {
         .refinement
         .validate()
         .unwrap();
-    assert_eq!(
-        mixed_graph_snapshot.validate(),
-        Err(hypermesh::ExactReportValidationError::StatusEvidenceMismatch)
-    );
+    assert_report_validation_error!(mixed_graph_snapshot.validate());
     let mut relabeled_winding_status = evaluation.clone();
     relabeled_winding_status
         .certifications
@@ -491,10 +479,7 @@ fn exact_boolean_evaluation_materializes_boundary_policy_shortcut_by_default() {
         .winding_readiness
         .validate()
         .unwrap();
-    assert_eq!(
-        relabeled_winding_status.validate(),
-        Err(hypermesh::ExactReportValidationError::StatusEvidenceMismatch)
-    );
+    assert_report_validation_error!(relabeled_winding_status.validate());
     let rejected_request = ExactBooleanRequest::with_boundary_policy(
         ExactBooleanOperation::Union,
         ValidationPolicy::ALLOW_BOUNDARY,
@@ -506,10 +491,7 @@ fn exact_boolean_evaluation_materializes_boundary_policy_shortcut_by_default() {
     assert!(rejected.result.as_ref().is_none());
     let mut impossible_materialization = rejected.clone();
     impossible_materialization.result = evaluation.result.as_ref().cloned();
-    assert_eq!(
-        impossible_materialization.validate(),
-        Err(hypermesh::ExactReportValidationError::StatusEvidenceMismatch)
-    );
+    assert_report_validation_error!(impossible_materialization.validate());
 }
 
 fn skew_affine_box(min: [i64; 3], max: [i64; 3]) -> ExactMesh {
@@ -1458,9 +1440,8 @@ fn exact_closed_convex_boolean_is_publicly_replayable() {
         .certifications
         .closed_winding_left_in_right
         .target_closed = false;
-    assert_eq!(
+    assert_report_validation_error!(
         relabeled_winding_report.validate(),
-        Err(hypermesh::ExactReportValidationError::StatusEvidenceMismatch),
         "{relabeled_winding_report:?}"
     );
     let dispatched = exact_boolean_result(
@@ -2006,9 +1987,8 @@ fn exact_open_surface_arrangement_is_publicly_replayable() {
         let mut stale_preflight_counts = evaluation.clone();
         stale_preflight_counts.preflight.retained_events += 1;
         stale_preflight_counts.preflight.validate().unwrap();
-        assert_eq!(
+        assert_report_validation_error!(
             stale_preflight_counts.validate(),
-            Err(hypermesh::ExactReportValidationError::StatusEvidenceMismatch),
             "{operation:?}: {stale_preflight_counts:?}"
         );
         assert!(!result.region_classifications.is_empty());
@@ -2260,9 +2240,8 @@ fn exact_selected_region_boolean_is_publicly_replayable() {
         .unwrap()
         .validate()
         .unwrap();
-    assert_eq!(
+    assert_report_validation_error!(
         stale_evaluation_region_fact.validate(),
-        Err(hypermesh::ExactReportValidationError::StatusEvidenceMismatch),
         "{stale_evaluation_region_fact:?}"
     );
     let mut stale_winding_handoff = evaluation.clone();
@@ -3242,9 +3221,8 @@ fn closed_winding_shortcuts_are_publicly_replayable() {
                 .validate()
                 .is_err()
         );
-        assert_eq!(
+        assert_report_validation_error!(
             relabeled_winding_report.validate(),
-            Err(hypermesh::ExactReportValidationError::StatusEvidenceMismatch),
             "{operation:?}: {relabeled_winding_report:?}"
         );
         assert_eq!(
@@ -3475,10 +3453,7 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
         .as_mut()
         .expect("named evaluation should retain arrangement attempt");
     stale_validation_attempt.output_validation = ValidationPolicy::CLOSED;
-    assert_eq!(
-        declined_arrangement_attempt.validate(),
-        Err(hypermesh::ExactReportValidationError::StatusEvidenceMismatch)
-    );
+    assert_report_validation_error!(declined_arrangement_attempt.validate());
     let mut stale_attempt_gate = evaluation.clone();
     let attempt = stale_attempt_gate
         .certifications
@@ -3486,14 +3461,8 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
         .as_mut()
         .expect("named evaluation should retain arrangement attempt");
     attempt.region_ownership_report = None;
-    assert_eq!(
-        attempt.validate(),
-        Err(hypermesh::ExactReportValidationError::StatusEvidenceMismatch)
-    );
-    assert_eq!(
-        stale_attempt_gate.validate(),
-        Err(hypermesh::ExactReportValidationError::StatusEvidenceMismatch)
-    );
+    assert_report_validation_error!(attempt.validate());
+    assert_report_validation_error!(stale_attempt_gate.validate());
     let mut stale_attempt_report = evaluation.clone();
     let attempt = stale_attempt_report
         .certifications
@@ -3501,14 +3470,8 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
         .as_mut()
         .expect("named evaluation should retain arrangement attempt");
     attempt.topology_assembly_report = None;
-    assert_eq!(
-        attempt.validate(),
-        Err(hypermesh::ExactReportValidationError::StatusEvidenceMismatch)
-    );
-    assert_eq!(
-        stale_attempt_report.validate(),
-        Err(hypermesh::ExactReportValidationError::StatusEvidenceMismatch)
-    );
+    assert_report_validation_error!(attempt.validate());
+    assert_report_validation_error!(stale_attempt_report.validate());
     let mut stale_readiness_counts = evaluation.clone();
     stale_readiness_counts
         .certifications
@@ -3578,9 +3541,8 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
         let mut stale_difference_orientation = difference.clone();
         stale_difference_orientation.assembly.triangles[reversed_triangle].orientation =
             ExactOutputTriangleOrientation::PreserveSource;
-        assert_eq!(
+        assert_report_validation_error!(
             stale_difference_orientation.validate(),
-            Err(hypermesh::ExactReportValidationError::VolumetricMaterializedAssemblyViolatesOperation),
             "{stale_difference_orientation:?}"
         );
     } else {
@@ -4243,10 +4205,7 @@ fn open_surface_disjoint_report_classifies_retained_coplanar_overlap_blocker() {
 
     let mut relabeled = report;
     relabeled.blocker.candidate_pairs = 1;
-    assert_eq!(
-        relabeled.validate(),
-        Err(hypermesh::ExactReportValidationError::WrongBlockerKind)
-    );
+    assert_report_validation_error!(relabeled.validate());
 }
 
 #[test]
@@ -4464,9 +4423,8 @@ fn trivial_boolean_shortcuts_are_publicly_replayable() {
         let mut relabeled_empty_facts = empty_evaluation.clone();
         relabeled_empty_facts.certifications.trivial.left_empty = false;
         relabeled_empty_facts.certifications.trivial.right_empty = false;
-        assert_eq!(
+        assert_report_validation_error!(
             relabeled_empty_facts.validate(),
-            Err(hypermesh::ExactReportValidationError::StatusEvidenceMismatch),
             "{operation:?}: {relabeled_empty_facts:?}"
         );
         if operation == ExactBooleanOperation::Union {
@@ -4550,9 +4508,8 @@ fn trivial_boolean_shortcuts_are_publicly_replayable() {
             .certifications
             .trivial
             .bounds_disjoint = false;
-        assert_eq!(
+        assert_report_validation_error!(
             relabeled_disjoint_facts.validate(),
-            Err(hypermesh::ExactReportValidationError::StatusEvidenceMismatch),
             "{operation:?}: {relabeled_disjoint_facts:?}"
         );
         if matches!(
@@ -4598,9 +4555,8 @@ fn trivial_boolean_shortcuts_are_publicly_replayable() {
                 .validate()
                 .is_err()
         );
-        assert_eq!(
+        assert_report_validation_error!(
             relabeled_identity_report.validate(),
-            Err(hypermesh::ExactReportValidationError::StatusEvidenceMismatch),
             "{operation:?}: {relabeled_identity_report:?}"
         );
         if matches!(
@@ -4669,9 +4625,8 @@ fn trivial_boolean_shortcuts_are_publicly_replayable() {
             .same_surface
             .validate()
             .unwrap();
-        assert_eq!(
+        assert_report_validation_error!(
             relabeled_same_surface_report.validate(),
-            Err(hypermesh::ExactReportValidationError::StatusEvidenceMismatch),
             "{operation:?}: {relabeled_same_surface_report:?}"
         );
         if matches!(
@@ -4717,9 +4672,8 @@ fn trivial_boolean_shortcuts_are_publicly_replayable() {
             .certifications
             .regularized_solid
             .left_open_surface = false;
-        assert_eq!(
+        assert_report_validation_error!(
             relabeled_lower_dimensional_facts.validate(),
-            Err(hypermesh::ExactReportValidationError::StatusEvidenceMismatch),
             "{operation:?}: {relabeled_lower_dimensional_facts:?}"
         );
 
@@ -4749,9 +4703,8 @@ fn trivial_boolean_shortcuts_are_publicly_replayable() {
             .certifications
             .regularized_solid
             .right_open_surface = false;
-        assert_eq!(
+        assert_report_validation_error!(
             relabeled_mixed_dimensional_facts.validate(),
-            Err(hypermesh::ExactReportValidationError::StatusEvidenceMismatch),
             "{operation:?}: {relabeled_mixed_dimensional_facts:?}"
         );
 
@@ -4792,9 +4745,8 @@ fn trivial_boolean_shortcuts_are_publicly_replayable() {
             .open_surface_disjoint
             .validate()
             .unwrap();
-        assert_eq!(
+        assert_report_validation_error!(
             relabeled_disjoint_report.validate(),
-            Err(hypermesh::ExactReportValidationError::StatusEvidenceMismatch),
             "{operation:?}: {relabeled_disjoint_report:?}"
         );
         if matches!(
@@ -5020,10 +4972,7 @@ fn exact_boolean_attempt_public_path_reports_blockers_or_cells() {
     );
     let mut stale_attempt_report = attempt.clone();
     stale_attempt_report.region_ownership_report = None;
-    assert_eq!(
-        stale_attempt_report.validate(),
-        Err(hypermesh::ExactReportValidationError::StatusEvidenceMismatch)
-    );
+    assert_report_validation_error!(stale_attempt_report.validate());
 }
 
 #[test]

@@ -11713,7 +11713,7 @@ mod tests {
         };
         assert_eq!(
             projected.validate(),
-            Err(crate::ExactReportValidationError::StatusEvidenceMismatch)
+            Err(ExactReportValidationError::StatusEvidenceMismatch)
         );
     }
 
@@ -12042,7 +12042,7 @@ mod tests {
         stale.blocker.kind = ExactBooleanBlockerKind::NeedsWinding;
         assert_eq!(
             stale.validate(),
-            Err(crate::ExactReportValidationError::WrongBlockerKind)
+            Err(ExactReportValidationError::WrongBlockerKind)
         );
 
         let disjoint_right = ExactMesh::from_i64_triangles_with_policy(
@@ -12070,7 +12070,7 @@ mod tests {
         relabeled_empty.blocker.kind = ExactBooleanBlockerKind::NeedsBoundaryPolicy;
         assert_eq!(
             relabeled_empty.validate(),
-            Err(crate::ExactReportValidationError::WrongBlockerKind)
+            Err(ExactReportValidationError::WrongBlockerKind)
         );
     }
 
@@ -15070,7 +15070,7 @@ mod tests {
         };
         assert_eq!(
             relabeled.validate(),
-            Err(crate::ExactReportValidationError::StatusEvidenceMismatch)
+            Err(ExactReportValidationError::StatusEvidenceMismatch)
         );
         difference
             .validate_operation_against_sources(
