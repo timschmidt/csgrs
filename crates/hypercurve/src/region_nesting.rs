@@ -4,9 +4,15 @@
 //! bins used by [`crate::Region2`]. It assumes intersections and overlaps have
 //! already been resolved by earlier topology stages.
 
+use std::cmp::Ordering;
+
+use hyperreal::Real;
+
+use crate::classify::compare_reals;
 use crate::{
     Classification, Contour2, ContourPointLocation, CurveError, CurvePolicy, CurveResult, FillRule,
-    LineSeg2, Point2, Region2, RetainedTopologyStatus, Segment2, UncertaintyReason,
+    LineLineIntersection, LineSeg2, ParamRange, Point2, Region2, RetainedTopologyStatus, Segment2,
+    UncertaintyReason,
 };
 
 /// Material/hole role assigned to one closed boundary contour.
@@ -75,6 +81,7 @@ pub struct RegionBoundaryContourBuildResult2 {
 #[derive(Clone, Debug, PartialEq)]
 pub struct RegionLineSegmentRingSourceReport2 {
     source_segment_index: usize,
+    source_range: ParamRange,
     output_ring_index: usize,
     output_segment_index: usize,
     reversed: bool,
@@ -88,6 +95,11 @@ pub struct RegionLineSegmentRingSourceReport2 {
 pub struct RegionLineSegmentRegionBuildReport2 {
     stage: RegionLineSegmentRegionBuildStage2,
     source_segment_count: usize,
+    arranged_segment_count: Option<usize>,
+    split_candidate_pair_count: usize,
+    split_tested_pair_count: usize,
+    split_intersection_event_count: usize,
+    split_output_segment_count: Option<usize>,
     attempted_endpoint_connection_count: usize,
     exact_endpoint_connection_count: usize,
     disconnected_endpoint_connection_count: usize,
@@ -161,13 +173,13 @@ impl Region2 {
     /// Builds a region from unordered exact line segments that form closed rings.
     ///
     /// This is a narrow first utility for "make region from lines" workflows:
-    /// it accepts already-authored finite line segments, chooses connections
-    /// only from exact endpoint equality, reorients source segments as needed,
-    /// materializes checked contours, and then delegates material/hole role
-    /// assignment to [`Region2::from_boundary_contours_with_report`]. It does
-    /// not snap endpoints or split interior crossings; disconnected, ambiguous,
-    /// unresolved, or branching endpoint graphs are returned as explicit
-    /// blockers.
+    /// it accepts already-authored finite line segments, splits certified point
+    /// intersections, chooses connections only from exact endpoint equality,
+    /// reorients source segments as needed, materializes checked contours, and
+    /// then delegates material/hole role assignment to
+    /// [`Region2::from_boundary_contours_with_report`]. It does not snap
+    /// endpoints or resolve overlaps; disconnected, ambiguous, unresolved, or
+    /// branching endpoint graphs are returned as explicit blockers.
     pub fn from_unordered_line_segments(
         segments: Vec<LineSeg2>,
         fill_rule: FillRule,
@@ -195,13 +207,31 @@ impl Region2 {
             return Err(CurveError::EmptyCurveString);
         }
 
-        let assembled = match assemble_unordered_line_segment_rings(&segments, policy)? {
+        let arranged = match arrange_line_segments_at_point_intersections(&segments, policy)? {
+            Ok(arranged) => arranged,
+            Err((split_report, blocker)) => {
+                return Ok(RegionLineSegmentRegionBuildResult2 {
+                    region: None,
+                    report: blocked_line_segment_region_report(
+                        segments.len(),
+                        Some(split_report),
+                        LineSegmentRingAssemblyReportParts::default(),
+                        RegionLineSegmentRegionBuildStage2::RingAssembly,
+                        retained_status_for_line_segment_region_blocker(blocker),
+                        blocker,
+                    ),
+                });
+            }
+        };
+
+        let assembled = match assemble_unordered_line_segment_rings(&arranged.segments, policy)? {
             Ok(assembled) => assembled,
             Err((report, blocker)) => {
                 return Ok(RegionLineSegmentRegionBuildResult2 {
                     region: None,
                     report: blocked_line_segment_region_report(
                         segments.len(),
+                        Some(arranged.report),
                         report,
                         RegionLineSegmentRegionBuildStage2::RingAssembly,
                         retained_status_for_line_segment_region_blocker(blocker),
@@ -231,6 +261,11 @@ impl Region2 {
             report: RegionLineSegmentRegionBuildReport2 {
                 stage: RegionLineSegmentRegionBuildStage2::RegionRoleAssignment,
                 source_segment_count: segments.len(),
+                arranged_segment_count: Some(arranged.segments.len()),
+                split_candidate_pair_count: arranged.report.candidate_pair_count,
+                split_tested_pair_count: arranged.report.tested_pair_count,
+                split_intersection_event_count: arranged.report.intersection_event_count,
+                split_output_segment_count: Some(arranged.segments.len()),
                 attempted_endpoint_connection_count: assembled
                     .counts
                     .attempted_endpoint_connection_count,
@@ -546,6 +581,11 @@ impl RegionLineSegmentRingSourceReport2 {
         self.source_segment_index
     }
 
+    /// Returns the retained parameter range on the source line segment.
+    pub const fn source_range(&self) -> &ParamRange {
+        &self.source_range
+    }
+
     /// Returns the output ring index.
     pub const fn output_ring_index(&self) -> usize {
         self.output_ring_index
@@ -586,6 +626,31 @@ impl RegionLineSegmentRegionBuildReport2 {
     /// Returns the number of source line segments considered.
     pub const fn source_segment_count(&self) -> usize {
         self.source_segment_count
+    }
+
+    /// Returns arranged segment count after exact point-intersection splitting.
+    pub const fn arranged_segment_count(&self) -> Option<usize> {
+        self.arranged_segment_count
+    }
+
+    /// Returns source line pairs considered for splitting.
+    pub const fn split_candidate_pair_count(&self) -> usize {
+        self.split_candidate_pair_count
+    }
+
+    /// Returns source line pairs tested by exact line-line predicates.
+    pub const fn split_tested_pair_count(&self) -> usize {
+        self.split_tested_pair_count
+    }
+
+    /// Returns certified point-intersection split events collected.
+    pub const fn split_intersection_event_count(&self) -> usize {
+        self.split_intersection_event_count
+    }
+
+    /// Returns arranged output segment count after splitting, when available.
+    pub const fn split_output_segment_count(&self) -> Option<usize> {
+        self.split_output_segment_count
     }
 
     /// Returns endpoint pair comparisons attempted during ring assembly.
@@ -669,7 +734,7 @@ struct LineSegmentRingAssemblyCounts {
     unresolved_endpoint_connection_count: usize,
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, Default, PartialEq)]
 struct LineSegmentRingAssemblyReportParts {
     counts: LineSegmentRingAssemblyCounts,
     reversed_source_segment_count: usize,
@@ -684,14 +749,165 @@ struct LineSegmentRingAssembly {
     source_reports: Vec<RegionLineSegmentRingSourceReport2>,
 }
 
+#[derive(Clone, Debug, Default, PartialEq)]
+struct LineSegmentSplitReportParts {
+    candidate_pair_count: usize,
+    tested_pair_count: usize,
+    intersection_event_count: usize,
+    output_segment_count: Option<usize>,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+struct ArrangedLineSegment {
+    source_segment_index: usize,
+    source_range: ParamRange,
+    line: LineSeg2,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+struct ArrangedLineSegments {
+    segments: Vec<ArrangedLineSegment>,
+    report: LineSegmentSplitReportParts,
+}
+
+impl ArrangedLineSegment {
+    fn reversed(&self) -> Self {
+        Self {
+            source_segment_index: self.source_segment_index,
+            source_range: ParamRange::new(
+                self.source_range.end().clone(),
+                self.source_range.start().clone(),
+            ),
+            line: self.line.reversed(),
+        }
+    }
+}
+
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum EndpointCandidate {
     Start,
     End,
 }
 
-fn assemble_unordered_line_segment_rings(
+#[derive(Clone, Debug, PartialEq)]
+struct LineSegmentSplitMarker {
+    param: Real,
+}
+
+fn arrange_line_segments_at_point_intersections(
     segments: &[LineSeg2],
+    policy: &CurvePolicy,
+) -> CurveResult<Result<ArrangedLineSegments, (LineSegmentSplitReportParts, UncertaintyReason)>> {
+    let mut report = LineSegmentSplitReportParts {
+        candidate_pair_count: segments
+            .len()
+            .saturating_mul(segments.len().saturating_sub(1))
+            / 2,
+        ..LineSegmentSplitReportParts::default()
+    };
+    let mut markers = segments
+        .iter()
+        .map(|_| {
+            vec![
+                LineSegmentSplitMarker {
+                    param: Real::zero(),
+                },
+                LineSegmentSplitMarker { param: Real::one() },
+            ]
+        })
+        .collect::<Vec<_>>();
+
+    for (first_index, first) in segments.iter().enumerate() {
+        for (second_offset, second) in segments[first_index + 1..].iter().enumerate() {
+            let second_index = first_index + 1 + second_offset;
+            report.tested_pair_count += 1;
+            match first.intersect_line(second, policy)? {
+                LineLineIntersection::None => {}
+                LineLineIntersection::Point {
+                    a_param, b_param, ..
+                } => {
+                    report.intersection_event_count += 1;
+                    if insert_line_split_marker(&mut markers[first_index], a_param, policy)
+                        .is_none()
+                        || insert_line_split_marker(&mut markers[second_index], b_param, policy)
+                            .is_none()
+                    {
+                        return Ok(Err((report, UncertaintyReason::Ordering)));
+                    }
+                }
+                LineLineIntersection::Overlap { .. } => {
+                    return Ok(Err((report, UncertaintyReason::Boundary)));
+                }
+                LineLineIntersection::Uncertain { reason } => return Ok(Err((report, reason))),
+            }
+        }
+    }
+
+    let mut arranged = Vec::new();
+    for (source_segment_index, (line, source_markers)) in
+        segments.iter().zip(markers.iter_mut()).enumerate()
+    {
+        sort_line_split_markers(source_markers, policy).ok_or(CurveError::Topology(
+            "line split markers could not be sorted".into(),
+        ))?;
+        for pair in source_markers.windows(2) {
+            let start_param = pair[0].param.clone();
+            let end_param = pair[1].param.clone();
+            match compare_reals(&start_param, &end_param, policy) {
+                Some(Ordering::Less) => {
+                    arranged.push(ArrangedLineSegment {
+                        source_segment_index,
+                        source_range: ParamRange::new(start_param.clone(), end_param.clone()),
+                        line: LineSeg2::try_new(
+                            line.point_at(start_param),
+                            line.point_at(end_param),
+                        )?,
+                    });
+                }
+                Some(Ordering::Equal) => {}
+                Some(Ordering::Greater) => return Ok(Err((report, UncertaintyReason::Ordering))),
+                None => return Ok(Err((report, UncertaintyReason::Ordering))),
+            }
+        }
+    }
+
+    report.output_segment_count = Some(arranged.len());
+    Ok(Ok(ArrangedLineSegments {
+        segments: arranged,
+        report,
+    }))
+}
+
+fn insert_line_split_marker(
+    markers: &mut Vec<LineSegmentSplitMarker>,
+    param: Real,
+    policy: &CurvePolicy,
+) -> Option<()> {
+    for marker in markers.iter() {
+        if compare_reals(&marker.param, &param, policy)? == Ordering::Equal {
+            return Some(());
+        }
+    }
+    markers.push(LineSegmentSplitMarker { param });
+    Some(())
+}
+
+fn sort_line_split_markers(
+    markers: &mut [LineSegmentSplitMarker],
+    policy: &CurvePolicy,
+) -> Option<()> {
+    let mut failed = false;
+    markers.sort_by(|left, right| {
+        compare_reals(&left.param, &right.param, policy).unwrap_or_else(|| {
+            failed = true;
+            Ordering::Equal
+        })
+    });
+    (!failed).then_some(())
+}
+
+fn assemble_unordered_line_segment_rings(
+    segments: &[ArrangedLineSegment],
     policy: &CurvePolicy,
 ) -> CurveResult<
     Result<LineSegmentRingAssembly, (LineSegmentRingAssemblyReportParts, UncertaintyReason)>,
@@ -709,17 +925,16 @@ fn assemble_unordered_line_segment_rings(
         used[seed_index] = true;
         append_line_segment_ring_source_report(
             &mut source_reports,
-            seed_index,
+            &current,
             output_ring_index,
             ring.len(),
             false,
-            &current,
         );
-        let ring_start = current.start().clone();
-        ring.push(current.clone());
+        let ring_start = current.line.start().clone();
+        ring.push(current.line.clone());
 
         loop {
-            match exact_points_match(current.end(), &ring_start, policy, &mut counts) {
+            match exact_points_match(current.line.end(), &ring_start, policy, &mut counts) {
                 Classification::Decided(true) => break,
                 Classification::Decided(false) => {}
                 Classification::Uncertain(reason) => {
@@ -734,50 +949,53 @@ fn assemble_unordered_line_segment_rings(
                 }
             }
 
-            let next =
-                match unique_next_line_segment(current.end(), segments, &used, policy, &mut counts)
-                {
-                    Classification::Decided(Some(next)) => next,
-                    Classification::Decided(None) => {
-                        return Ok(Err((
-                            LineSegmentRingAssemblyReportParts {
-                                counts,
-                                reversed_source_segment_count,
-                                source_reports,
-                            },
-                            UncertaintyReason::Boundary,
-                        )));
-                    }
-                    Classification::Uncertain(reason) => {
-                        return Ok(Err((
-                            LineSegmentRingAssemblyReportParts {
-                                counts,
-                                reversed_source_segment_count,
-                                source_reports,
-                            },
-                            reason,
-                        )));
-                    }
-                };
+            let next = match unique_next_line_segment(
+                current.line.end(),
+                segments,
+                &used,
+                policy,
+                &mut counts,
+            ) {
+                Classification::Decided(Some(next)) => next,
+                Classification::Decided(None) => {
+                    return Ok(Err((
+                        LineSegmentRingAssemblyReportParts {
+                            counts,
+                            reversed_source_segment_count,
+                            source_reports,
+                        },
+                        UncertaintyReason::Boundary,
+                    )));
+                }
+                Classification::Uncertain(reason) => {
+                    return Ok(Err((
+                        LineSegmentRingAssemblyReportParts {
+                            counts,
+                            reversed_source_segment_count,
+                            source_reports,
+                        },
+                        reason,
+                    )));
+                }
+            };
 
-            used[next.source_segment_index] = true;
+            used[next.arranged_segment_index] = true;
             if next.reversed {
                 reversed_source_segment_count += 1;
             }
             current = if next.reversed {
-                segments[next.source_segment_index].reversed()
+                segments[next.arranged_segment_index].reversed()
             } else {
-                segments[next.source_segment_index].clone()
+                segments[next.arranged_segment_index].clone()
             };
             append_line_segment_ring_source_report(
                 &mut source_reports,
-                next.source_segment_index,
+                &current,
                 output_ring_index,
                 ring.len(),
                 next.reversed,
-                &current,
             );
-            ring.push(current.clone());
+            ring.push(current.line.clone());
         }
 
         if ring.len() < 3 {
@@ -803,26 +1021,26 @@ fn assemble_unordered_line_segment_rings(
 
 #[derive(Clone, Debug, PartialEq)]
 struct NextLineSegment {
-    source_segment_index: usize,
+    arranged_segment_index: usize,
     reversed: bool,
 }
 
 fn unique_next_line_segment(
     target: &Point2,
-    segments: &[LineSeg2],
+    segments: &[ArrangedLineSegment],
     used: &[bool],
     policy: &CurvePolicy,
     counts: &mut LineSegmentRingAssemblyCounts,
 ) -> Classification<Option<NextLineSegment>> {
     let mut selected = None;
-    for (source_segment_index, segment) in segments.iter().enumerate() {
-        if used[source_segment_index] {
+    for (arranged_segment_index, segment) in segments.iter().enumerate() {
+        if used[arranged_segment_index] {
             continue;
         }
         for candidate in [EndpointCandidate::Start, EndpointCandidate::End] {
             let point = match candidate {
-                EndpointCandidate::Start => segment.start(),
-                EndpointCandidate::End => segment.end(),
+                EndpointCandidate::Start => segment.line.start(),
+                EndpointCandidate::End => segment.line.end(),
             };
             match exact_points_match(target, point, policy, counts) {
                 Classification::Decided(true) => {
@@ -830,7 +1048,7 @@ fn unique_next_line_segment(
                         return Classification::Uncertain(UncertaintyReason::Boundary);
                     }
                     selected = Some(NextLineSegment {
-                        source_segment_index,
+                        arranged_segment_index,
                         reversed: candidate == EndpointCandidate::End,
                     });
                 }
@@ -867,33 +1085,40 @@ fn exact_points_match(
 
 fn append_line_segment_ring_source_report(
     source_reports: &mut Vec<RegionLineSegmentRingSourceReport2>,
-    source_segment_index: usize,
+    segment: &ArrangedLineSegment,
     output_ring_index: usize,
     output_segment_index: usize,
     reversed: bool,
-    line: &LineSeg2,
 ) {
     source_reports.push(RegionLineSegmentRingSourceReport2 {
-        source_segment_index,
+        source_segment_index: segment.source_segment_index,
+        source_range: segment.source_range.clone(),
         output_ring_index,
         output_segment_index,
         reversed,
-        output_start_point: line.start().clone(),
-        output_end_point: line.end().clone(),
+        output_start_point: segment.line.start().clone(),
+        output_end_point: segment.line.end().clone(),
         status: RetainedTopologyStatus::NativeExact,
     });
 }
 
 fn blocked_line_segment_region_report(
     source_segment_count: usize,
+    split_report: Option<LineSegmentSplitReportParts>,
     report: LineSegmentRingAssemblyReportParts,
     stage: RegionLineSegmentRegionBuildStage2,
     status: RetainedTopologyStatus,
     blocker: UncertaintyReason,
 ) -> RegionLineSegmentRegionBuildReport2 {
+    let split_report = split_report.unwrap_or_default();
     RegionLineSegmentRegionBuildReport2 {
         stage,
         source_segment_count,
+        arranged_segment_count: split_report.output_segment_count,
+        split_candidate_pair_count: split_report.candidate_pair_count,
+        split_tested_pair_count: split_report.tested_pair_count,
+        split_intersection_event_count: split_report.intersection_event_count,
+        split_output_segment_count: split_report.output_segment_count,
         attempted_endpoint_connection_count: report.counts.attempted_endpoint_connection_count,
         exact_endpoint_connection_count: report.counts.exact_endpoint_connection_count,
         disconnected_endpoint_connection_count: report
