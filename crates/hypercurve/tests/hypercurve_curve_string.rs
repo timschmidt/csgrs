@@ -1479,6 +1479,11 @@ fn curve_string_extend_line_end_to_exact_target() {
     );
     assert_eq!(extended.report().endpoint(), CurveStringEndpoint2::End);
     assert_eq!(extended.report().source_segment_index(), 0);
+    assert_eq!(extended.report().source_segment_kind(), SegmentKind::Line);
+    assert_eq!(
+        extended.report().output_segment_kind(),
+        Some(SegmentKind::Line)
+    );
     assert_eq!(extended.report().source_endpoint_point(), &p(2, 0));
     assert_eq!(extended.report().target_point(), &p(5, 0));
     assert_eq!(extended.report().source_param(), Some(&q(5, 2)));
@@ -1554,6 +1559,8 @@ fn curve_string_extend_line_reports_off_support_boundary() {
     assert!(extended.report().status().is_retained_evidence());
     assert_eq!(extended.report().source_endpoint_point(), &p(4, 0));
     assert_eq!(extended.report().target_point(), &p(5, 1));
+    assert_eq!(extended.report().source_segment_kind(), SegmentKind::Line);
+    assert_eq!(extended.report().output_segment_kind(), None);
     assert_eq!(extended.report().source_param(), None);
     assert_eq!(extended.report().source_segment_count(), 1);
     assert_eq!(extended.report().output_segment_count(), None);
@@ -1581,6 +1588,11 @@ fn curve_string_extend_arc_endpoint_to_same_circle_target() {
     );
     assert_eq!(extended.report().endpoint(), CurveStringEndpoint2::End);
     assert_eq!(extended.report().source_segment_index(), 0);
+    assert_eq!(extended.report().source_segment_kind(), SegmentKind::Arc);
+    assert_eq!(
+        extended.report().output_segment_kind(),
+        Some(SegmentKind::Arc)
+    );
     assert_eq!(extended.report().source_endpoint_point(), &p(0, 1));
     assert_eq!(extended.report().target_point(), &p(-1, 0));
     assert_eq!(extended.report().source_param(), None);

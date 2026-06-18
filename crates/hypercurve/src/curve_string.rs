@@ -400,6 +400,8 @@ pub struct CurveStringExtendReport2 {
     stage: CurveStringExtendStage2,
     endpoint: CurveStringEndpoint2,
     source_segment_index: usize,
+    source_segment_kind: SegmentKind,
+    output_segment_kind: Option<SegmentKind>,
     source_endpoint_point: Point2,
     target_point: Point2,
     source_param: Option<Real>,
@@ -2435,6 +2437,8 @@ impl CurveString2 {
                 stage: CurveStringExtendStage2::SegmentMaterialization,
                 endpoint,
                 source_segment_index,
+                source_segment_kind: SegmentKind::Line,
+                output_segment_kind: Some(SegmentKind::Line),
                 source_endpoint_point: line_endpoint_point(line, endpoint).clone(),
                 target_point,
                 source_param: Some(source_param),
@@ -2606,6 +2610,8 @@ impl CurveString2 {
                 stage: CurveStringExtendStage2::SegmentMaterialization,
                 endpoint,
                 source_segment_index,
+                source_segment_kind: SegmentKind::Arc,
+                output_segment_kind: Some(SegmentKind::Arc),
                 source_endpoint_point: arc_endpoint_point(arc, endpoint).clone(),
                 target_point,
                 source_param: None,
@@ -3582,6 +3588,16 @@ impl CurveStringExtendReport2 {
     /// Returns the endpoint segment index in the source curve string.
     pub const fn source_segment_index(&self) -> usize {
         self.source_segment_index
+    }
+
+    /// Returns the primitive family of the endpoint segment before extension.
+    pub const fn source_segment_kind(&self) -> SegmentKind {
+        self.source_segment_kind
+    }
+
+    /// Returns the primitive family of the extended output segment, when materialized.
+    pub const fn output_segment_kind(&self) -> Option<SegmentKind> {
+        self.output_segment_kind
     }
 
     /// Returns the exact source endpoint point before extension.
@@ -4876,6 +4892,10 @@ fn blocked_extend_result(
             stage: CurveStringExtendStage2::TargetValidation,
             endpoint,
             source_segment_index,
+            source_segment_kind: curve_string.segments()[source_segment_index]
+                .structural_facts()
+                .kind,
+            output_segment_kind: None,
             source_endpoint_point: curve_string
                 .endpoint(endpoint)
                 .expect("blocked extension source endpoint should exist")
