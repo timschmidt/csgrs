@@ -95,8 +95,11 @@ pub struct RegionPreparedCacheAudit2 {
     freshness: RegionPreparedCacheFreshness2,
     prepared_contour_count: usize,
     prepared_material_segment_count: usize,
+    prepared_material_segment_kind_counts: SegmentKindCounts,
     prepared_hole_segment_count: usize,
+    prepared_hole_segment_kind_counts: SegmentKindCounts,
     prepared_segment_count: usize,
+    prepared_segment_kind_counts: SegmentKindCounts,
     decided_segment_box_count: usize,
     undecided_segment_box_count: usize,
     region_box_decided: bool,
@@ -856,8 +859,11 @@ impl RegionPreparedCacheAudit2 {
     pub(crate) const fn new(
         prepared_contour_count: usize,
         prepared_material_segment_count: usize,
+        prepared_material_segment_kind_counts: SegmentKindCounts,
         prepared_hole_segment_count: usize,
+        prepared_hole_segment_kind_counts: SegmentKindCounts,
         prepared_segment_count: usize,
+        prepared_segment_kind_counts: SegmentKindCounts,
         decided_segment_box_count: usize,
         undecided_segment_box_count: usize,
         region_box_decided: bool,
@@ -866,8 +872,11 @@ impl RegionPreparedCacheAudit2 {
             freshness: RegionPreparedCacheFreshness2::BorrowedCurrentSource,
             prepared_contour_count,
             prepared_material_segment_count,
+            prepared_material_segment_kind_counts,
             prepared_hole_segment_count,
+            prepared_hole_segment_kind_counts,
             prepared_segment_count,
+            prepared_segment_kind_counts,
             decided_segment_box_count,
             undecided_segment_box_count,
             region_box_decided,
@@ -889,14 +898,29 @@ impl RegionPreparedCacheAudit2 {
         self.prepared_material_segment_count
     }
 
+    /// Returns primitive-family counts for prepared material boundary segments.
+    pub const fn prepared_material_segment_kind_counts(&self) -> SegmentKindCounts {
+        self.prepared_material_segment_kind_counts
+    }
+
     /// Returns the number of prepared hole boundary segments.
     pub const fn prepared_hole_segment_count(&self) -> usize {
         self.prepared_hole_segment_count
     }
 
+    /// Returns primitive-family counts for prepared hole boundary segments.
+    pub const fn prepared_hole_segment_kind_counts(&self) -> SegmentKindCounts {
+        self.prepared_hole_segment_kind_counts
+    }
+
     /// Returns the number of prepared boundary segments.
     pub const fn prepared_segment_count(&self) -> usize {
         self.prepared_segment_count
+    }
+
+    /// Returns primitive-family counts for all prepared boundary segments.
+    pub const fn prepared_segment_kind_counts(&self) -> SegmentKindCounts {
+        self.prepared_segment_kind_counts
     }
 
     /// Returns the number of decided segment AABBs retained by preparation.

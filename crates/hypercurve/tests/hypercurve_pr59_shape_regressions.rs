@@ -297,11 +297,39 @@ fn prepared_boolean_region_report_matches_plain_materialization() {
     assert_eq!(prepared_cache.first().prepared_contour_count(), 2);
     assert_eq!(prepared_cache.second().prepared_contour_count(), 1);
     assert_eq!(prepared_cache.first().prepared_material_segment_count(), 4);
+    assert_eq!(
+        prepared_cache
+            .first()
+            .prepared_material_segment_kind_counts(),
+        SegmentKindCounts { lines: 4, arcs: 0 }
+    );
     assert_eq!(prepared_cache.first().prepared_hole_segment_count(), 4);
+    assert_eq!(
+        prepared_cache.first().prepared_hole_segment_kind_counts(),
+        SegmentKindCounts { lines: 4, arcs: 0 }
+    );
     assert_eq!(prepared_cache.second().prepared_material_segment_count(), 4);
+    assert_eq!(
+        prepared_cache
+            .second()
+            .prepared_material_segment_kind_counts(),
+        SegmentKindCounts { lines: 4, arcs: 0 }
+    );
     assert_eq!(prepared_cache.second().prepared_hole_segment_count(), 0);
+    assert_eq!(
+        prepared_cache.second().prepared_hole_segment_kind_counts(),
+        SegmentKindCounts { lines: 0, arcs: 0 }
+    );
     assert_eq!(prepared_cache.first().prepared_segment_count(), 8);
+    assert_eq!(
+        prepared_cache.first().prepared_segment_kind_counts(),
+        SegmentKindCounts { lines: 8, arcs: 0 }
+    );
     assert_eq!(prepared_cache.second().prepared_segment_count(), 4);
+    assert_eq!(
+        prepared_cache.second().prepared_segment_kind_counts(),
+        SegmentKindCounts { lines: 4, arcs: 0 }
+    );
     assert_eq!(prepared_cache.first().decided_segment_box_count(), 8);
     assert_eq!(prepared_cache.second().decided_segment_box_count(), 4);
     assert_eq!(prepared_cache.first().undecided_segment_box_count(), 0);

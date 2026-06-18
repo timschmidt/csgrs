@@ -374,8 +374,11 @@ fn prepared_region_cache_audit(region: &PreparedRegionView2<'_>) -> RegionPrepar
     RegionPreparedCacheAudit2::new(
         region.prepared_contour_count(),
         region.prepared_material_segment_count(),
+        region.prepared_material_segment_kind_counts(),
         region.prepared_hole_segment_count(),
+        region.prepared_hole_segment_kind_counts(),
         region.prepared_segment_count(),
+        region.prepared_segment_kind_counts(),
         region.decided_segment_box_count(),
         region.undecided_segment_box_count(),
         region.region_box().is_some(),

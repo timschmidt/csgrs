@@ -785,6 +785,11 @@ impl<'a> PreparedRegionView2<'a> {
             .sum()
     }
 
+    /// Returns primitive-family counts for prepared material source segments.
+    pub fn prepared_material_segment_kind_counts(&self) -> SegmentKindCounts {
+        prepared_contour_kind_counts(&self.material_prepared_contours)
+    }
+
     /// Returns the number of prepared hole source segments.
     pub fn prepared_hole_segment_count(&self) -> usize {
         self.hole_prepared_contours
@@ -793,9 +798,23 @@ impl<'a> PreparedRegionView2<'a> {
             .sum()
     }
 
+    /// Returns primitive-family counts for prepared hole source segments.
+    pub fn prepared_hole_segment_kind_counts(&self) -> SegmentKindCounts {
+        prepared_contour_kind_counts(&self.hole_prepared_contours)
+    }
+
     /// Returns the number of prepared material and hole source segments.
     pub fn prepared_segment_count(&self) -> usize {
         self.prepared_material_segment_count() + self.prepared_hole_segment_count()
+    }
+
+    /// Returns primitive-family counts for all prepared source segments.
+    pub fn prepared_segment_kind_counts(&self) -> SegmentKindCounts {
+        let mut counts = self.prepared_material_segment_kind_counts();
+        let hole_counts = self.prepared_hole_segment_kind_counts();
+        counts.lines += hole_counts.lines;
+        counts.arcs += hole_counts.arcs;
+        counts
     }
 
     /// Returns the number of material contour segment boxes decided during preparation.
@@ -1248,6 +1267,16 @@ where
         .iter()
         .map(|contour| PreparedContourView2::from_contour(contour, policy))
         .collect()
+}
+
+fn prepared_contour_kind_counts(contours: &[PreparedContourView2<'_>]) -> SegmentKindCounts {
+    let mut counts = SegmentKindCounts::default();
+    for contour in contours {
+        let contour_counts = prepared_segment_kind_counts(contour.prepared_segments());
+        counts.lines += contour_counts.lines;
+        counts.arcs += contour_counts.arcs;
+    }
+    counts
 }
 
 fn decided_segment_boxes(segments: &[crate::Segment2], policy: &CurvePolicy) -> Vec<Option<Aabb2>> {

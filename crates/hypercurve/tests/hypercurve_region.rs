@@ -1496,8 +1496,20 @@ fn prepared_region_classifier_matches_owned_region() {
     assert_eq!(prepared.hole_contours().len(), 1);
     assert_eq!(prepared.prepared_contour_count(), 3);
     assert_eq!(prepared.prepared_material_segment_count(), 8);
+    assert_eq!(
+        prepared.prepared_material_segment_kind_counts(),
+        SegmentKindCounts { lines: 8, arcs: 0 }
+    );
     assert_eq!(prepared.prepared_hole_segment_count(), 4);
+    assert_eq!(
+        prepared.prepared_hole_segment_kind_counts(),
+        SegmentKindCounts { lines: 4, arcs: 0 }
+    );
     assert_eq!(prepared.prepared_segment_count(), 12);
+    assert_eq!(
+        prepared.prepared_segment_kind_counts(),
+        SegmentKindCounts { lines: 12, arcs: 0 }
+    );
     assert_eq!(
         prepared.prepared_segment_count(),
         prepared.prepared_material_segment_count() + prepared.prepared_hole_segment_count()
