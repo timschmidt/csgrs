@@ -1,9 +1,9 @@
 use hypercurve::{
     BulgeVertex2, CircularArc2, Classification, Contour2, CurveError, CurvePolicy, CurveString2,
     FillRule, FiniteProjectionOptions, Real, Region2, RegionBoundaryContourBuildStage2,
-    RegionBoundaryContourRole2, RegionPointLocation, RegionView2, Segment2, UncertaintyReason,
-    finite_polyline_vertex_centroid, finite_ring_signed_area, try_finite_polyline_vertex_centroid,
-    try_finite_ring_signed_area,
+    RegionBoundaryContourRole2, RegionLineSegmentRegionBuildStage2, RegionPointLocation,
+    RegionView2, Segment2, UncertaintyReason, finite_polyline_vertex_centroid,
+    finite_ring_signed_area, try_finite_polyline_vertex_centroid, try_finite_ring_signed_area,
 };
 use proptest::prelude::*;
 
@@ -27,6 +27,10 @@ fn rectangle(xmin: i32, ymin: i32, xmax: i32, ymax: i32) -> Contour2 {
         vertex(xmin, ymax),
     ])
     .unwrap()
+}
+
+fn line(start_x: i32, start_y: i32, end_x: i32, end_y: i32) -> hypercurve::LineSeg2 {
+    hypercurve::LineSeg2::try_new(p(start_x, start_y), p(end_x, end_y)).unwrap()
 }
 
 fn reversed_rectangle(xmin: i32, ymin: i32, xmax: i32, ymax: i32) -> Contour2 {
@@ -304,6 +308,79 @@ fn boundary_contour_region_report_blocks_touching_roles_with_source_pair() {
     assert_eq!(report.blocker_second_contour_index(), Some(1));
     assert_eq!(report.output_contour_count(), None);
     assert!(report.role_reports().is_empty());
+}
+
+#[test]
+fn unordered_line_segments_build_region_with_source_provenance() {
+    let built = Region2::from_unordered_line_segments_with_report(
+        vec![
+            line(0, 0, 4, 0),
+            line(0, 4, 4, 4),
+            line(0, 0, 0, 4),
+            line(4, 0, 4, 4),
+        ],
+        FillRule::NonZero,
+        &policy(),
+    )
+    .unwrap();
+    let report = built.report();
+
+    assert!(report.status().is_native_exact());
+    assert_eq!(
+        report.stage(),
+        RegionLineSegmentRegionBuildStage2::RegionRoleAssignment
+    );
+    assert_eq!(report.source_segment_count(), 4);
+    assert_eq!(report.reversed_source_segment_count(), 2);
+    assert_eq!(report.output_ring_count(), Some(1));
+    assert_eq!(report.output_boundary_segment_count(), Some(4));
+    assert_eq!(report.source_reports().len(), 4);
+    assert_eq!(report.source_reports()[0].source_segment_index(), 0);
+    assert!(!report.source_reports()[0].reversed());
+    assert_eq!(report.source_reports()[1].source_segment_index(), 3);
+    assert!(!report.source_reports()[1].reversed());
+    assert_eq!(report.source_reports()[2].source_segment_index(), 1);
+    assert!(report.source_reports()[2].reversed());
+    assert_eq!(report.source_reports()[3].source_segment_index(), 2);
+    assert!(report.source_reports()[3].reversed());
+    assert!(report.exact_endpoint_connection_count() >= 4);
+    assert_eq!(report.unresolved_endpoint_connection_count(), 0);
+    assert_eq!(report.blocker(), None);
+
+    let boundary_report = report.boundary_build_report().unwrap();
+    assert_eq!(boundary_report.validation_intersection_event_count(), 0);
+    assert_eq!(boundary_report.material_contour_count(), Some(1));
+    assert_eq!(boundary_report.hole_contour_count(), Some(0));
+
+    let region = built.region().unwrap();
+    assert_eq!(
+        region.classify_point(&p(2, 2), &policy()),
+        Classification::Decided(RegionPointLocation::Inside)
+    );
+}
+
+#[test]
+fn unordered_line_segments_report_disconnected_boundary_blocker() {
+    let built = Region2::from_unordered_line_segments_with_report(
+        vec![line(0, 0, 1, 0), line(3, 0, 4, 0)],
+        FillRule::NonZero,
+        &policy(),
+    )
+    .unwrap();
+    let report = built.report();
+
+    assert!(built.region().is_none());
+    assert!(report.status().is_retained_evidence());
+    assert_eq!(
+        report.stage(),
+        RegionLineSegmentRegionBuildStage2::RingAssembly
+    );
+    assert_eq!(report.source_segment_count(), 2);
+    assert_eq!(report.output_ring_count(), None);
+    assert_eq!(report.output_boundary_segment_count(), None);
+    assert_eq!(report.source_reports().len(), 1);
+    assert_eq!(report.boundary_build_report(), None);
+    assert_eq!(report.blocker(), Some(UncertaintyReason::Boundary));
 }
 
 #[test]

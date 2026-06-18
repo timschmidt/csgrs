@@ -6,7 +6,7 @@
 
 use crate::{
     Classification, Contour2, ContourPointLocation, CurveError, CurvePolicy, CurveResult, FillRule,
-    Point2, Region2, RetainedTopologyStatus, UncertaintyReason,
+    LineSeg2, Point2, Region2, RetainedTopologyStatus, Segment2, UncertaintyReason,
 };
 
 /// Material/hole role assigned to one closed boundary contour.
@@ -71,6 +71,54 @@ pub struct RegionBoundaryContourBuildResult2 {
     report: RegionBoundaryContourBuildReport2,
 }
 
+/// Source line-segment provenance for one assembled boundary ring segment.
+#[derive(Clone, Debug, PartialEq)]
+pub struct RegionLineSegmentRingSourceReport2 {
+    source_segment_index: usize,
+    output_ring_index: usize,
+    output_segment_index: usize,
+    reversed: bool,
+    output_start_point: Point2,
+    output_end_point: Point2,
+    status: RetainedTopologyStatus,
+}
+
+/// Report for constructing a region from unordered exact line segments.
+#[derive(Clone, Debug, PartialEq)]
+pub struct RegionLineSegmentRegionBuildReport2 {
+    stage: RegionLineSegmentRegionBuildStage2,
+    source_segment_count: usize,
+    attempted_endpoint_connection_count: usize,
+    exact_endpoint_connection_count: usize,
+    disconnected_endpoint_connection_count: usize,
+    unresolved_endpoint_connection_count: usize,
+    reversed_source_segment_count: usize,
+    output_ring_count: Option<usize>,
+    output_boundary_segment_count: Option<usize>,
+    source_reports: Vec<RegionLineSegmentRingSourceReport2>,
+    boundary_build_report: Option<RegionBoundaryContourBuildReport2>,
+    status: RetainedTopologyStatus,
+    blocker: Option<UncertaintyReason>,
+}
+
+/// Furthest exact stage reached while assembling unordered line segments.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum RegionLineSegmentRegionBuildStage2 {
+    /// The unordered endpoint graph was being assembled into closed rings.
+    RingAssembly,
+    /// Assembled line rings were being replayed as checked contours.
+    ContourMaterialization,
+    /// Checked contours were being assigned material/hole roles.
+    RegionRoleAssignment,
+}
+
+/// Result of report-bearing region construction from unordered exact line segments.
+#[derive(Clone, Debug, PartialEq)]
+pub struct RegionLineSegmentRegionBuildResult2 {
+    region: Option<Region2>,
+    report: RegionLineSegmentRegionBuildReport2,
+}
+
 #[derive(Clone, Debug, PartialEq)]
 struct BoundaryContourNestingDepths {
     entries: Vec<BoundaryContourNestingEntry>,
@@ -110,6 +158,100 @@ enum BoundaryContourNestingOutcome {
 }
 
 impl Region2 {
+    /// Builds a region from unordered exact line segments that form closed rings.
+    ///
+    /// This is a narrow first utility for "make region from lines" workflows:
+    /// it accepts already-authored finite line segments, chooses connections
+    /// only from exact endpoint equality, reorients source segments as needed,
+    /// materializes checked contours, and then delegates material/hole role
+    /// assignment to [`Region2::from_boundary_contours_with_report`]. It does
+    /// not snap endpoints or split interior crossings; disconnected, ambiguous,
+    /// unresolved, or branching endpoint graphs are returned as explicit
+    /// blockers.
+    pub fn from_unordered_line_segments(
+        segments: Vec<LineSeg2>,
+        fill_rule: FillRule,
+        policy: &CurvePolicy,
+    ) -> CurveResult<Classification<Self>> {
+        let built = Self::from_unordered_line_segments_with_report(segments, fill_rule, policy)?;
+        let blocker = built
+            .report()
+            .blocker()
+            .unwrap_or(UncertaintyReason::Unsupported);
+        if let Some(region) = built.into_region() {
+            Ok(Classification::Decided(region))
+        } else {
+            Ok(Classification::Uncertain(blocker))
+        }
+    }
+
+    /// Builds a region from unordered exact line segments and retains assembly evidence.
+    pub fn from_unordered_line_segments_with_report(
+        segments: Vec<LineSeg2>,
+        fill_rule: FillRule,
+        policy: &CurvePolicy,
+    ) -> CurveResult<RegionLineSegmentRegionBuildResult2> {
+        if segments.is_empty() {
+            return Err(CurveError::EmptyCurveString);
+        }
+
+        let assembled = match assemble_unordered_line_segment_rings(&segments, policy)? {
+            Ok(assembled) => assembled,
+            Err((report, blocker)) => {
+                return Ok(RegionLineSegmentRegionBuildResult2 {
+                    region: None,
+                    report: blocked_line_segment_region_report(
+                        segments.len(),
+                        report,
+                        RegionLineSegmentRegionBuildStage2::RingAssembly,
+                        retained_status_for_line_segment_region_blocker(blocker),
+                        blocker,
+                    ),
+                });
+            }
+        };
+
+        let mut contours = Vec::with_capacity(assembled.rings.len());
+        for ring in assembled.rings {
+            let contour = Contour2::try_new_with_fill_rule(
+                ring.into_iter().map(Segment2::Line).collect(),
+                fill_rule,
+            )?;
+            contours.push(contour);
+        }
+
+        let built = Region2::from_boundary_contours_with_report(contours, policy)?;
+        let status = built.report().status();
+        let blocker = built.report().blocker();
+        let boundary_build_report = built.report().clone();
+        let output_ring_count = boundary_build_report.output_contour_count();
+        let output_boundary_segment_count = boundary_build_report.output_segment_count();
+        Ok(RegionLineSegmentRegionBuildResult2 {
+            region: built.into_region(),
+            report: RegionLineSegmentRegionBuildReport2 {
+                stage: RegionLineSegmentRegionBuildStage2::RegionRoleAssignment,
+                source_segment_count: segments.len(),
+                attempted_endpoint_connection_count: assembled
+                    .counts
+                    .attempted_endpoint_connection_count,
+                exact_endpoint_connection_count: assembled.counts.exact_endpoint_connection_count,
+                disconnected_endpoint_connection_count: assembled
+                    .counts
+                    .disconnected_endpoint_connection_count,
+                unresolved_endpoint_connection_count: assembled
+                    .counts
+                    .unresolved_endpoint_connection_count,
+                reversed_source_segment_count: assembled.reversed_source_segment_count,
+                output_ring_count,
+                output_boundary_segment_count,
+                source_reports: assembled.source_reports,
+                boundary_build_report: Some(boundary_build_report),
+                status,
+                blocker,
+            },
+        })
+    }
+
     /// Builds a region by nesting closed boundary contours into material/hole bins.
     ///
     /// Contours at even containment depth become material. Contours at odd
@@ -395,6 +537,387 @@ impl RegionBoundaryContourBuildResult2 {
     /// Returns the retained region-construction report.
     pub const fn report(&self) -> &RegionBoundaryContourBuildReport2 {
         &self.report
+    }
+}
+
+impl RegionLineSegmentRingSourceReport2 {
+    /// Returns the source line segment index used by this output segment.
+    pub const fn source_segment_index(&self) -> usize {
+        self.source_segment_index
+    }
+
+    /// Returns the output ring index.
+    pub const fn output_ring_index(&self) -> usize {
+        self.output_ring_index
+    }
+
+    /// Returns the output segment index inside the ring.
+    pub const fn output_segment_index(&self) -> usize {
+        self.output_segment_index
+    }
+
+    /// Returns whether the source line segment was reversed for ring traversal.
+    pub const fn reversed(&self) -> bool {
+        self.reversed
+    }
+
+    /// Returns the emitted segment start point.
+    pub const fn output_start_point(&self) -> &Point2 {
+        &self.output_start_point
+    }
+
+    /// Returns the emitted segment end point.
+    pub const fn output_end_point(&self) -> &Point2 {
+        &self.output_end_point
+    }
+
+    /// Returns retained topology status for this source-to-ring mapping.
+    pub const fn status(&self) -> RetainedTopologyStatus {
+        self.status
+    }
+}
+
+impl RegionLineSegmentRegionBuildReport2 {
+    /// Returns the furthest exact line-region construction stage reached.
+    pub const fn stage(&self) -> RegionLineSegmentRegionBuildStage2 {
+        self.stage
+    }
+
+    /// Returns the number of source line segments considered.
+    pub const fn source_segment_count(&self) -> usize {
+        self.source_segment_count
+    }
+
+    /// Returns endpoint pair comparisons attempted during ring assembly.
+    pub const fn attempted_endpoint_connection_count(&self) -> usize {
+        self.attempted_endpoint_connection_count
+    }
+
+    /// Returns endpoint pair comparisons certified as equal.
+    pub const fn exact_endpoint_connection_count(&self) -> usize {
+        self.exact_endpoint_connection_count
+    }
+
+    /// Returns endpoint pair comparisons certified as disconnected.
+    pub const fn disconnected_endpoint_connection_count(&self) -> usize {
+        self.disconnected_endpoint_connection_count
+    }
+
+    /// Returns endpoint pair comparisons whose equality could not be certified.
+    pub const fn unresolved_endpoint_connection_count(&self) -> usize {
+        self.unresolved_endpoint_connection_count
+    }
+
+    /// Returns source segments reversed while materializing ring traversal.
+    pub const fn reversed_source_segment_count(&self) -> usize {
+        self.reversed_source_segment_count
+    }
+
+    /// Returns output ring count when available.
+    pub const fn output_ring_count(&self) -> Option<usize> {
+        self.output_ring_count
+    }
+
+    /// Returns output boundary segment count when available.
+    pub const fn output_boundary_segment_count(&self) -> Option<usize> {
+        self.output_boundary_segment_count
+    }
+
+    /// Returns per-output segment source provenance.
+    pub fn source_reports(&self) -> &[RegionLineSegmentRingSourceReport2] {
+        &self.source_reports
+    }
+
+    /// Returns delegated boundary-contour role assignment evidence, when reached.
+    pub const fn boundary_build_report(&self) -> Option<&RegionBoundaryContourBuildReport2> {
+        self.boundary_build_report.as_ref()
+    }
+
+    /// Returns line-region construction status.
+    pub const fn status(&self) -> RetainedTopologyStatus {
+        self.status
+    }
+
+    /// Returns the exact blocker for non-materialized construction attempts.
+    pub const fn blocker(&self) -> Option<UncertaintyReason> {
+        self.blocker
+    }
+}
+
+impl RegionLineSegmentRegionBuildResult2 {
+    /// Returns the materialized region, if construction succeeded.
+    pub const fn region(&self) -> Option<&Region2> {
+        self.region.as_ref()
+    }
+
+    /// Consumes this result and returns the materialized region, if any.
+    pub fn into_region(self) -> Option<Region2> {
+        self.region
+    }
+
+    /// Returns the retained line-region construction report.
+    pub const fn report(&self) -> &RegionLineSegmentRegionBuildReport2 {
+        &self.report
+    }
+}
+
+#[derive(Clone, Debug, Default, PartialEq)]
+struct LineSegmentRingAssemblyCounts {
+    attempted_endpoint_connection_count: usize,
+    exact_endpoint_connection_count: usize,
+    disconnected_endpoint_connection_count: usize,
+    unresolved_endpoint_connection_count: usize,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+struct LineSegmentRingAssemblyReportParts {
+    counts: LineSegmentRingAssemblyCounts,
+    reversed_source_segment_count: usize,
+    source_reports: Vec<RegionLineSegmentRingSourceReport2>,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+struct LineSegmentRingAssembly {
+    rings: Vec<Vec<LineSeg2>>,
+    counts: LineSegmentRingAssemblyCounts,
+    reversed_source_segment_count: usize,
+    source_reports: Vec<RegionLineSegmentRingSourceReport2>,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum EndpointCandidate {
+    Start,
+    End,
+}
+
+fn assemble_unordered_line_segment_rings(
+    segments: &[LineSeg2],
+    policy: &CurvePolicy,
+) -> CurveResult<
+    Result<LineSegmentRingAssembly, (LineSegmentRingAssemblyReportParts, UncertaintyReason)>,
+> {
+    let mut used = vec![false; segments.len()];
+    let mut rings = Vec::new();
+    let mut counts = LineSegmentRingAssemblyCounts::default();
+    let mut reversed_source_segment_count = 0_usize;
+    let mut source_reports = Vec::with_capacity(segments.len());
+
+    while let Some(seed_index) = used.iter().position(|used| !*used) {
+        let output_ring_index = rings.len();
+        let mut ring = Vec::new();
+        let mut current = segments[seed_index].clone();
+        used[seed_index] = true;
+        append_line_segment_ring_source_report(
+            &mut source_reports,
+            seed_index,
+            output_ring_index,
+            ring.len(),
+            false,
+            &current,
+        );
+        let ring_start = current.start().clone();
+        ring.push(current.clone());
+
+        loop {
+            match exact_points_match(current.end(), &ring_start, policy, &mut counts) {
+                Classification::Decided(true) => break,
+                Classification::Decided(false) => {}
+                Classification::Uncertain(reason) => {
+                    return Ok(Err((
+                        LineSegmentRingAssemblyReportParts {
+                            counts,
+                            reversed_source_segment_count,
+                            source_reports,
+                        },
+                        reason,
+                    )));
+                }
+            }
+
+            let next =
+                match unique_next_line_segment(current.end(), segments, &used, policy, &mut counts)
+                {
+                    Classification::Decided(Some(next)) => next,
+                    Classification::Decided(None) => {
+                        return Ok(Err((
+                            LineSegmentRingAssemblyReportParts {
+                                counts,
+                                reversed_source_segment_count,
+                                source_reports,
+                            },
+                            UncertaintyReason::Boundary,
+                        )));
+                    }
+                    Classification::Uncertain(reason) => {
+                        return Ok(Err((
+                            LineSegmentRingAssemblyReportParts {
+                                counts,
+                                reversed_source_segment_count,
+                                source_reports,
+                            },
+                            reason,
+                        )));
+                    }
+                };
+
+            used[next.source_segment_index] = true;
+            if next.reversed {
+                reversed_source_segment_count += 1;
+            }
+            current = if next.reversed {
+                segments[next.source_segment_index].reversed()
+            } else {
+                segments[next.source_segment_index].clone()
+            };
+            append_line_segment_ring_source_report(
+                &mut source_reports,
+                next.source_segment_index,
+                output_ring_index,
+                ring.len(),
+                next.reversed,
+                &current,
+            );
+            ring.push(current.clone());
+        }
+
+        if ring.len() < 3 {
+            return Ok(Err((
+                LineSegmentRingAssemblyReportParts {
+                    counts,
+                    reversed_source_segment_count,
+                    source_reports,
+                },
+                UncertaintyReason::Boundary,
+            )));
+        }
+        rings.push(ring);
+    }
+
+    Ok(Ok(LineSegmentRingAssembly {
+        rings,
+        counts,
+        reversed_source_segment_count,
+        source_reports,
+    }))
+}
+
+#[derive(Clone, Debug, PartialEq)]
+struct NextLineSegment {
+    source_segment_index: usize,
+    reversed: bool,
+}
+
+fn unique_next_line_segment(
+    target: &Point2,
+    segments: &[LineSeg2],
+    used: &[bool],
+    policy: &CurvePolicy,
+    counts: &mut LineSegmentRingAssemblyCounts,
+) -> Classification<Option<NextLineSegment>> {
+    let mut selected = None;
+    for (source_segment_index, segment) in segments.iter().enumerate() {
+        if used[source_segment_index] {
+            continue;
+        }
+        for candidate in [EndpointCandidate::Start, EndpointCandidate::End] {
+            let point = match candidate {
+                EndpointCandidate::Start => segment.start(),
+                EndpointCandidate::End => segment.end(),
+            };
+            match exact_points_match(target, point, policy, counts) {
+                Classification::Decided(true) => {
+                    if selected.is_some() {
+                        return Classification::Uncertain(UncertaintyReason::Boundary);
+                    }
+                    selected = Some(NextLineSegment {
+                        source_segment_index,
+                        reversed: candidate == EndpointCandidate::End,
+                    });
+                }
+                Classification::Decided(false) => {}
+                Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+            }
+        }
+    }
+    Classification::Decided(selected)
+}
+
+fn exact_points_match(
+    left: &Point2,
+    right: &Point2,
+    policy: &CurvePolicy,
+    counts: &mut LineSegmentRingAssemblyCounts,
+) -> Classification<bool> {
+    counts.attempted_endpoint_connection_count += 1;
+    match crate::classify::is_zero(&left.distance_squared(right), policy) {
+        Some(true) => {
+            counts.exact_endpoint_connection_count += 1;
+            Classification::Decided(true)
+        }
+        Some(false) => {
+            counts.disconnected_endpoint_connection_count += 1;
+            Classification::Decided(false)
+        }
+        None => {
+            counts.unresolved_endpoint_connection_count += 1;
+            Classification::Uncertain(UncertaintyReason::RealSign)
+        }
+    }
+}
+
+fn append_line_segment_ring_source_report(
+    source_reports: &mut Vec<RegionLineSegmentRingSourceReport2>,
+    source_segment_index: usize,
+    output_ring_index: usize,
+    output_segment_index: usize,
+    reversed: bool,
+    line: &LineSeg2,
+) {
+    source_reports.push(RegionLineSegmentRingSourceReport2 {
+        source_segment_index,
+        output_ring_index,
+        output_segment_index,
+        reversed,
+        output_start_point: line.start().clone(),
+        output_end_point: line.end().clone(),
+        status: RetainedTopologyStatus::NativeExact,
+    });
+}
+
+fn blocked_line_segment_region_report(
+    source_segment_count: usize,
+    report: LineSegmentRingAssemblyReportParts,
+    stage: RegionLineSegmentRegionBuildStage2,
+    status: RetainedTopologyStatus,
+    blocker: UncertaintyReason,
+) -> RegionLineSegmentRegionBuildReport2 {
+    RegionLineSegmentRegionBuildReport2 {
+        stage,
+        source_segment_count,
+        attempted_endpoint_connection_count: report.counts.attempted_endpoint_connection_count,
+        exact_endpoint_connection_count: report.counts.exact_endpoint_connection_count,
+        disconnected_endpoint_connection_count: report
+            .counts
+            .disconnected_endpoint_connection_count,
+        unresolved_endpoint_connection_count: report.counts.unresolved_endpoint_connection_count,
+        reversed_source_segment_count: report.reversed_source_segment_count,
+        output_ring_count: None,
+        output_boundary_segment_count: None,
+        source_reports: report.source_reports,
+        boundary_build_report: None,
+        status,
+        blocker: Some(blocker),
+    }
+}
+
+fn retained_status_for_line_segment_region_blocker(
+    blocker: UncertaintyReason,
+) -> RetainedTopologyStatus {
+    match blocker {
+        UncertaintyReason::Boundary | UncertaintyReason::Unsupported => {
+            RetainedTopologyStatus::Unsupported
+        }
+        _ => RetainedTopologyStatus::Unresolved,
     }
 }
 
