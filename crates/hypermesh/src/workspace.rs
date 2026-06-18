@@ -585,11 +585,6 @@ fn validate_result_against_retained_arrangement_attempt(
             operation,
             shortcut: super::reports::ExactBooleanShortcutKind::ArrangementCellComplex,
         } if operation == request.operation => {
-            if !attempt
-                .matches_request_policy(request, ExactRegularizationPolicy::REGULARIZED_SOLID)
-            {
-                return Err(ExactReportValidationError::StatusEvidenceMismatch);
-            }
             if !attempt.certifies_arrangement_cell_complex_output_for_request(
                 request,
                 ExactRegularizationPolicy::REGULARIZED_SOLID,
