@@ -2691,12 +2691,28 @@ fn curve_string_trim_inside_region_materializes_inside_window() {
         CurveStringRegionTrimStage2::OutputMaterialization
     );
     assert_eq!(trimmed.report().source_segment_count(), 1);
+    assert_eq!(
+        trimmed.report().source_segment_kind_counts(),
+        SegmentKindCounts { lines: 1, arcs: 0 }
+    );
     assert_eq!(trimmed.report().region_material_contour_count(), 1);
     assert_eq!(trimmed.report().region_hole_contour_count(), 0);
     assert_eq!(trimmed.report().region_material_segment_count(), 4);
     assert_eq!(trimmed.report().region_hole_segment_count(), 0);
+    assert_eq!(
+        trimmed.report().region_material_segment_kind_counts(),
+        SegmentKindCounts { lines: 4, arcs: 0 }
+    );
+    assert_eq!(
+        trimmed.report().region_hole_segment_kind_counts(),
+        SegmentKindCounts { lines: 0, arcs: 0 }
+    );
     assert_eq!(trimmed.report().output_curve_string_count(), Some(1));
     assert_eq!(trimmed.report().output_segment_count(), Some(1));
+    assert_eq!(
+        trimmed.report().output_segment_kind_counts(),
+        Some(SegmentKindCounts { lines: 1, arcs: 0 })
+    );
     assert_eq!(trimmed.report().interval_candidate_count(), 3);
     assert_eq!(trimmed.report().interval_classification_count(), 3);
     assert_eq!(trimmed.report().boundary_hit_count(), 2);
@@ -2785,7 +2801,19 @@ fn prepared_curve_string_trim_inside_region_matches_direct_result() {
     assert_eq!(prepared.report().boundary_tested_pair_count(), 4);
     assert_eq!(prepared.report().region_material_segment_count(), 8);
     assert_eq!(prepared.report().region_hole_segment_count(), 0);
+    assert_eq!(
+        prepared.report().region_material_segment_kind_counts(),
+        SegmentKindCounts { lines: 8, arcs: 0 }
+    );
+    assert_eq!(
+        prepared.report().region_hole_segment_kind_counts(),
+        SegmentKindCounts { lines: 0, arcs: 0 }
+    );
     assert_eq!(prepared.report().output_segment_count(), Some(2));
+    assert_eq!(
+        prepared.report().output_segment_kind_counts(),
+        Some(SegmentKindCounts { lines: 2, arcs: 0 })
+    );
     assert_eq!(direct.report().interval_candidate_count(), 5);
     assert_eq!(direct.report().interval_classification_count(), 5);
     assert_eq!(prepared.report().interval_candidate_count(), 5);
@@ -2801,6 +2829,10 @@ fn prepared_curve_string_trim_inside_region_matches_direct_result() {
     assert_eq!(
         prepared.report().output_segment_count(),
         direct.report().output_segment_count()
+    );
+    assert_eq!(
+        prepared.report().output_segment_kind_counts(),
+        direct.report().output_segment_kind_counts()
     );
     assert_eq!(prepared.curve_strings(), direct.curve_strings());
     assert_eq!(
@@ -2856,8 +2888,20 @@ fn curve_string_trim_inside_region_respects_holes() {
     assert_eq!(trimmed.report().region_hole_contour_count(), 1);
     assert_eq!(trimmed.report().region_material_segment_count(), 4);
     assert_eq!(trimmed.report().region_hole_segment_count(), 4);
+    assert_eq!(
+        trimmed.report().region_material_segment_kind_counts(),
+        SegmentKindCounts { lines: 4, arcs: 0 }
+    );
+    assert_eq!(
+        trimmed.report().region_hole_segment_kind_counts(),
+        SegmentKindCounts { lines: 4, arcs: 0 }
+    );
     assert_eq!(trimmed.report().output_curve_string_count(), Some(2));
     assert_eq!(trimmed.report().output_segment_count(), Some(2));
+    assert_eq!(
+        trimmed.report().output_segment_kind_counts(),
+        Some(SegmentKindCounts { lines: 2, arcs: 0 })
+    );
     assert_eq!(trimmed.report().interval_candidate_count(), 3);
     assert_eq!(trimmed.report().interval_classification_count(), 3);
     assert_eq!(trimmed.report().boundary_hit_count(), 2);
@@ -2893,6 +2937,15 @@ fn curve_string_trim_inside_region_reports_boundary_overlap_blocker() {
     );
     assert_eq!(trimmed.report().region_material_segment_count(), 4);
     assert_eq!(trimmed.report().region_hole_segment_count(), 0);
+    assert_eq!(
+        trimmed.report().source_segment_kind_counts(),
+        SegmentKindCounts { lines: 1, arcs: 0 }
+    );
+    assert_eq!(
+        trimmed.report().region_material_segment_kind_counts(),
+        SegmentKindCounts { lines: 4, arcs: 0 }
+    );
+    assert_eq!(trimmed.report().output_segment_kind_counts(), None);
     assert_eq!(trimmed.report().interval_candidate_count(), 0);
     assert_eq!(trimmed.report().interval_classification_count(), 0);
     assert_eq!(trimmed.report().output_curve_string_count(), None);

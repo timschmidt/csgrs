@@ -681,10 +681,13 @@ pub enum CurveStringRegionTrimStage2 {
 #[derive(Clone, Debug, PartialEq)]
 pub struct CurveStringRegionTrimReport2 {
     source_segment_count: usize,
+    source_segment_kind_counts: SegmentKindCounts,
     region_material_contour_count: usize,
     region_hole_contour_count: usize,
     region_material_segment_count: usize,
     region_hole_segment_count: usize,
+    region_material_segment_kind_counts: SegmentKindCounts,
+    region_hole_segment_kind_counts: SegmentKindCounts,
     boundary_candidate_pair_count: usize,
     boundary_skipped_aabb_pair_count: usize,
     boundary_tested_pair_count: usize,
@@ -695,6 +698,7 @@ pub struct CurveStringRegionTrimReport2 {
     interval_reports: Vec<CurveStringRegionTrimIntervalReport2>,
     output_curve_string_count: Option<usize>,
     output_segment_count: Option<usize>,
+    output_segment_kind_counts: Option<SegmentKindCounts>,
     query_path: CurveStringRegionTrimQueryPath2,
     stage: CurveStringRegionTrimStage2,
     status: RetainedTopologyStatus,
@@ -3550,6 +3554,11 @@ impl CurveStringRegionTrimReport2 {
         self.source_segment_count
     }
 
+    /// Returns primitive-family counts for the source curve string.
+    pub const fn source_segment_kind_counts(&self) -> SegmentKindCounts {
+        self.source_segment_kind_counts
+    }
+
     /// Returns the number of material contours in the clipping region.
     pub const fn region_material_contour_count(&self) -> usize {
         self.region_material_contour_count
@@ -3568,6 +3577,16 @@ impl CurveStringRegionTrimReport2 {
     /// Returns the hole boundary segment count in the clipping region.
     pub const fn region_hole_segment_count(&self) -> usize {
         self.region_hole_segment_count
+    }
+
+    /// Returns primitive-family counts for material boundary segments.
+    pub const fn region_material_segment_kind_counts(&self) -> SegmentKindCounts {
+        self.region_material_segment_kind_counts
+    }
+
+    /// Returns primitive-family counts for hole boundary segments.
+    pub const fn region_hole_segment_kind_counts(&self) -> SegmentKindCounts {
+        self.region_hole_segment_kind_counts
     }
 
     /// Returns boundary segment-pair candidates considered while collecting trim hits.
@@ -3618,6 +3637,11 @@ impl CurveStringRegionTrimReport2 {
     /// Returns total emitted segment count when trim-by-region materialized.
     pub const fn output_segment_count(&self) -> Option<usize> {
         self.output_segment_count
+    }
+
+    /// Returns primitive-family counts for emitted inside segments.
+    pub const fn output_segment_kind_counts(&self) -> Option<SegmentKindCounts> {
+        self.output_segment_kind_counts
     }
 
     /// Returns the query path used to collect boundary and classification evidence.
@@ -3836,6 +3860,8 @@ fn trim_curve_string_inside_region(
             region.hole_contours().len(),
             region_material_segment_count(region),
             region_hole_segment_count(region),
+            contours_segment_kind_counts(region.material_contours()),
+            contours_segment_kind_counts(region.hole_contours()),
             boundary_workload,
             0,
             0,
@@ -3854,6 +3880,8 @@ fn trim_curve_string_inside_region(
         region.hole_contours().len(),
         region_material_segment_count(region),
         region_hole_segment_count(region),
+        contours_segment_kind_counts(region.material_contours()),
+        contours_segment_kind_counts(region.hole_contours()),
         boundary_workload,
         boundary_hits,
         CurveStringRegionTrimQueryPath2::Direct,
@@ -3898,6 +3926,8 @@ fn trim_curve_string_inside_prepared_region(
             region.hole_contours().len(),
             region.prepared_material_segment_count(),
             region.prepared_hole_segment_count(),
+            contour_refs_segment_kind_counts(region.material_contours()),
+            contour_refs_segment_kind_counts(region.hole_contours()),
             boundary_workload,
             0,
             0,
@@ -3916,6 +3946,8 @@ fn trim_curve_string_inside_prepared_region(
         region.hole_contours().len(),
         region.prepared_material_segment_count(),
         region.prepared_hole_segment_count(),
+        contour_refs_segment_kind_counts(region.material_contours()),
+        contour_refs_segment_kind_counts(region.hole_contours()),
         boundary_workload,
         boundary_hits,
         CurveStringRegionTrimQueryPath2::Prepared,
@@ -3930,6 +3962,8 @@ fn trim_curve_string_inside_region_with_hits(
     region_hole_contour_count: usize,
     region_material_segment_count: usize,
     region_hole_segment_count: usize,
+    region_material_segment_kind_counts: SegmentKindCounts,
+    region_hole_segment_kind_counts: SegmentKindCounts,
     boundary_workload: RegionTrimBoundaryWorkload,
     boundary_hits: Vec<CurveStringRegionTrimHit2>,
     query_path: CurveStringRegionTrimQueryPath2,
@@ -3957,6 +3991,8 @@ fn trim_curve_string_inside_region_with_hits(
                     region_hole_contour_count,
                     region_material_segment_count,
                     region_hole_segment_count,
+                    region_material_segment_kind_counts,
+                    region_hole_segment_kind_counts,
                     boundary_workload,
                     interval_candidate_count,
                     interval_classification_count,
@@ -4004,6 +4040,8 @@ fn trim_curve_string_inside_region_with_hits(
                         region_hole_contour_count,
                         region_material_segment_count,
                         region_hole_segment_count,
+                        region_material_segment_kind_counts,
+                        region_hole_segment_kind_counts,
                         boundary_workload,
                         interval_candidate_count,
                         interval_classification_count,
@@ -4034,6 +4072,8 @@ fn trim_curve_string_inside_region_with_hits(
                         region_hole_contour_count,
                         region_material_segment_count,
                         region_hole_segment_count,
+                        region_material_segment_kind_counts,
+                        region_hole_segment_kind_counts,
                         boundary_workload,
                         interval_candidate_count,
                         interval_classification_count,
@@ -4068,6 +4108,8 @@ fn trim_curve_string_inside_region_with_hits(
                         region_hole_contour_count,
                         region_material_segment_count,
                         region_hole_segment_count,
+                        region_material_segment_kind_counts,
+                        region_hole_segment_kind_counts,
                         boundary_workload,
                         interval_candidate_count,
                         interval_classification_count,
@@ -4103,6 +4145,8 @@ fn trim_curve_string_inside_region_with_hits(
                         region_hole_contour_count,
                         region_material_segment_count,
                         region_hole_segment_count,
+                        region_material_segment_kind_counts,
+                        region_hole_segment_kind_counts,
                         boundary_workload,
                         interval_candidate_count,
                         interval_classification_count,
@@ -4168,6 +4212,8 @@ fn trim_curve_string_inside_region_with_hits(
                         region_hole_contour_count,
                         region_material_segment_count,
                         region_hole_segment_count,
+                        region_material_segment_kind_counts,
+                        region_hole_segment_kind_counts,
                         boundary_workload,
                         interval_candidate_count,
                         interval_classification_count,
@@ -4189,14 +4235,18 @@ fn trim_curve_string_inside_region_with_hits(
     for segments in output_segments {
         curve_strings.push(CurveString2::try_new(segments)?);
     }
+    let output_segment_kind_counts = curve_strings_segment_kind_counts(&curve_strings);
 
     Ok(CurveStringRegionTrimResult2 {
         report: CurveStringRegionTrimReport2 {
             source_segment_count: curve_string.len(),
+            source_segment_kind_counts: curve_string_segment_kind_counts(curve_string),
             region_material_contour_count,
             region_hole_contour_count,
             region_material_segment_count,
             region_hole_segment_count,
+            region_material_segment_kind_counts,
+            region_hole_segment_kind_counts,
             boundary_candidate_pair_count: boundary_workload.candidate_pair_count,
             boundary_skipped_aabb_pair_count: boundary_workload.skipped_aabb_pair_count,
             boundary_tested_pair_count: boundary_workload.tested_pair_count,
@@ -4207,6 +4257,7 @@ fn trim_curve_string_inside_region_with_hits(
             interval_reports,
             output_curve_string_count: Some(curve_strings.len()),
             output_segment_count: Some(output_segment_count),
+            output_segment_kind_counts: Some(output_segment_kind_counts),
             query_path,
             stage: CurveStringRegionTrimStage2::OutputMaterialization,
             status: RetainedTopologyStatus::NativeExact,
@@ -4708,6 +4759,8 @@ fn blocked_region_trim_result(
     region_hole_contour_count: usize,
     region_material_segment_count: usize,
     region_hole_segment_count: usize,
+    region_material_segment_kind_counts: SegmentKindCounts,
+    region_hole_segment_kind_counts: SegmentKindCounts,
     boundary_workload: RegionTrimBoundaryWorkload,
     interval_candidate_count: usize,
     interval_classification_count: usize,
@@ -4722,10 +4775,13 @@ fn blocked_region_trim_result(
         curve_strings: Vec::new(),
         report: CurveStringRegionTrimReport2 {
             source_segment_count: curve_string.len(),
+            source_segment_kind_counts: curve_string_segment_kind_counts(curve_string),
             region_material_contour_count,
             region_hole_contour_count,
             region_material_segment_count,
             region_hole_segment_count,
+            region_material_segment_kind_counts,
+            region_hole_segment_kind_counts,
             boundary_candidate_pair_count: boundary_workload.candidate_pair_count,
             boundary_skipped_aabb_pair_count: boundary_workload.skipped_aabb_pair_count,
             boundary_tested_pair_count: boundary_workload.tested_pair_count,
@@ -4736,6 +4792,7 @@ fn blocked_region_trim_result(
             interval_reports,
             output_curve_string_count: None,
             output_segment_count: None,
+            output_segment_kind_counts: None,
             query_path,
             stage,
             status,
@@ -5278,12 +5335,49 @@ fn trim_range_is_full(range: &ParamRange, policy: &CurvePolicy) -> Option<bool> 
 fn curve_string_segment_kind_counts(curve_string: &CurveString2) -> SegmentKindCounts {
     let mut counts = SegmentKindCounts::default();
     for segment in curve_string.segments() {
-        match segment {
-            Segment2::Line(_) => counts.lines += 1,
-            Segment2::Arc(_) => counts.arcs += 1,
+        add_segment_kind_count(&mut counts, segment);
+    }
+    counts
+}
+
+fn curve_strings_segment_kind_counts(curve_strings: &[CurveString2]) -> SegmentKindCounts {
+    let mut counts = SegmentKindCounts::default();
+    for curve_string in curve_strings {
+        add_segment_kind_counts(&mut counts, curve_string_segment_kind_counts(curve_string));
+    }
+    counts
+}
+
+fn contours_segment_kind_counts(contours: &[crate::Contour2]) -> SegmentKindCounts {
+    let mut counts = SegmentKindCounts::default();
+    for contour in contours {
+        for segment in contour.segments() {
+            add_segment_kind_count(&mut counts, segment);
         }
     }
     counts
+}
+
+fn contour_refs_segment_kind_counts(contours: &[&crate::Contour2]) -> SegmentKindCounts {
+    let mut counts = SegmentKindCounts::default();
+    for contour in contours {
+        for segment in contour.segments() {
+            add_segment_kind_count(&mut counts, segment);
+        }
+    }
+    counts
+}
+
+fn add_segment_kind_counts(counts: &mut SegmentKindCounts, addend: SegmentKindCounts) {
+    counts.lines += addend.lines;
+    counts.arcs += addend.arcs;
+}
+
+fn add_segment_kind_count(counts: &mut SegmentKindCounts, segment: &Segment2) {
+    match segment {
+        Segment2::Line(_) => counts.lines += 1,
+        Segment2::Arc(_) => counts.arcs += 1,
+    }
 }
 
 fn blocked_trim_result(
