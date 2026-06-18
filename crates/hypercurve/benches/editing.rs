@@ -507,6 +507,7 @@ fn bench_unordered_line_segment_region_build(iterations: u32) -> CurveResult<()>
         }
         total_segments += black_box(report.split_output_segment_count().unwrap_or_default());
         total_segments += black_box(report.output_boundary_segment_count().unwrap_or_default());
+        total_segments += black_box(report.split_skipped_aabb_pair_count());
         total_endpoint_checks += black_box(report.attempted_endpoint_connection_count());
         total_endpoint_checks += black_box(report.endpoint_graph_endpoint_count().unwrap_or(0));
     }

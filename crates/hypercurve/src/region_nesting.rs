@@ -8,6 +8,7 @@ use std::cmp::Ordering;
 
 use hyperreal::Real;
 
+use crate::bbox::{Aabb2, aabbs_decided_disjoint};
 use crate::classify::compare_reals;
 use crate::{
     Classification, Contour2, ContourPointLocation, CurveError, CurvePolicy, CurveResult, FillRule,
@@ -97,6 +98,7 @@ pub struct RegionLineSegmentRegionBuildReport2 {
     source_segment_count: usize,
     arranged_segment_count: Option<usize>,
     split_candidate_pair_count: usize,
+    split_skipped_aabb_pair_count: usize,
     split_tested_pair_count: usize,
     split_intersection_event_count: usize,
     split_output_segment_count: Option<usize>,
@@ -290,6 +292,7 @@ impl Region2 {
                 source_segment_count: segments.len(),
                 arranged_segment_count: Some(arranged.segments.len()),
                 split_candidate_pair_count: arranged.report.candidate_pair_count,
+                split_skipped_aabb_pair_count: arranged.report.skipped_aabb_pair_count,
                 split_tested_pair_count: arranged.report.tested_pair_count,
                 split_intersection_event_count: arranged.report.intersection_event_count,
                 split_output_segment_count: Some(arranged.segments.len()),
@@ -674,6 +677,11 @@ impl RegionLineSegmentRegionBuildReport2 {
         self.split_candidate_pair_count
     }
 
+    /// Returns source line pairs skipped by decided disjoint AABBs.
+    pub const fn split_skipped_aabb_pair_count(&self) -> usize {
+        self.split_skipped_aabb_pair_count
+    }
+
     /// Returns source line pairs tested by exact line-line predicates.
     pub const fn split_tested_pair_count(&self) -> usize {
         self.split_tested_pair_count
@@ -810,6 +818,7 @@ struct LineSegmentRingAssembly {
 #[derive(Clone, Debug, Default, PartialEq)]
 struct LineSegmentSplitReportParts {
     candidate_pair_count: usize,
+    skipped_aabb_pair_count: usize,
     tested_pair_count: usize,
     intersection_event_count: usize,
     output_segment_count: Option<usize>,
@@ -960,10 +969,24 @@ fn arrange_line_segments_at_point_intersections(
             ]
         })
         .collect::<Vec<_>>();
+    let segment_boxes = segments
+        .iter()
+        .map(|line| match Aabb2::from_line(line, policy) {
+            Classification::Decided(bbox) => Some(bbox),
+            Classification::Uncertain(_) => None,
+        })
+        .collect::<Vec<_>>();
 
     for (first_index, first) in segments.iter().enumerate() {
         for (second_offset, second) in segments[first_index + 1..].iter().enumerate() {
             let second_index = first_index + 1 + second_offset;
+            if let (Some(first_box), Some(second_box)) =
+                (&segment_boxes[first_index], &segment_boxes[second_index])
+                && aabbs_decided_disjoint(first_box, second_box, policy)
+            {
+                report.skipped_aabb_pair_count += 1;
+                continue;
+            }
             report.tested_pair_count += 1;
             match first.intersect_line(second, policy)? {
                 LineLineIntersection::None => {}
@@ -1261,6 +1284,7 @@ fn blocked_line_segment_region_report(
         source_segment_count,
         arranged_segment_count: split_report.output_segment_count,
         split_candidate_pair_count: split_report.candidate_pair_count,
+        split_skipped_aabb_pair_count: split_report.skipped_aabb_pair_count,
         split_tested_pair_count: split_report.tested_pair_count,
         split_intersection_event_count: split_report.intersection_event_count,
         split_output_segment_count: split_report.output_segment_count,
