@@ -83,6 +83,7 @@ pub struct ExactSimplifiedCellComplex {
 }
 
 /// Freshness status for a retained simplified cell complex.
+#[allow(dead_code)]
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ExactSimplifiedCellComplexFreshness {
     /// The simplified complex replays exactly from the current source operands.
@@ -97,6 +98,7 @@ pub enum ExactSimplifiedCellComplexFreshness {
     StaleSimplifiedCells,
 }
 
+#[allow(dead_code)]
 impl ExactSimplifiedCellComplex {
     /// Validate local simplified-cell consistency without replaying source meshes.
     pub fn validate(&self) -> Result<(), ExactArrangementBlocker> {
@@ -534,6 +536,7 @@ pub(crate) fn simplify_selected_cell_complex(
     })
 }
 
+#[allow(dead_code)]
 fn simplified_cell_complex_matches_replay(
     retained: &ExactSimplifiedCellComplex,
     replay: &ExactSimplifiedCellComplex,

@@ -405,6 +405,7 @@ fn validate_lower_dimensional_artifact_not_duplicate_of_candidates(
     Ok(())
 }
 
+#[allow(dead_code)]
 fn validate_lower_dimensional_artifacts_against_sources(
     artifacts: &[ArrangementLowerDimensionalArtifact],
     left: &ExactMesh,
@@ -494,6 +495,7 @@ fn lower_dimensional_artifact_exact_key(
     }
 }
 
+#[allow(dead_code)]
 fn validate_lower_dimensional_point_on_source_face(
     mesh: &ExactMesh,
     face: usize,
@@ -1162,6 +1164,7 @@ impl ExactTopologyAssemblyReport {
     }
 }
 
+#[allow(dead_code)]
 impl ExactArrangement3d {
     /// Build a retained exact arrangement from two meshes.
     pub fn from_meshes(left: &ExactMesh, right: &ExactMesh) -> Result<Self, MeshError> {

@@ -144,6 +144,7 @@ pub enum ExactLabeledCellComplexFreshness {
 }
 
 /// Freshness status for a retained selected cell complex.
+#[allow(dead_code)]
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ExactSelectedCellComplexFreshness {
     /// The selected complex replays exactly from the current source operands.
@@ -542,6 +543,7 @@ impl ExactCellComplex {
     }
 }
 
+#[allow(dead_code)]
 impl ExactLabeledCellComplex {
     /// Validate local labeled-cell consistency without replaying source meshes.
     pub fn validate(&self) -> Result<(), ExactArrangementBlocker> {
@@ -864,6 +866,7 @@ impl ExactLabeledCellComplex {
     }
 }
 
+#[allow(dead_code)]
 impl ExactSelectedCellComplex {
     /// Validate local selected-cell consistency without replaying source meshes.
     pub fn validate(&self) -> Result<(), ExactArrangementBlocker> {
@@ -1050,6 +1053,7 @@ pub(crate) fn select_arrangement_for_replay(
     Ok(selected)
 }
 
+#[allow(dead_code)]
 fn selected_cell_complex_matches_replay(
     retained: &ExactSelectedCellComplex,
     replay: &ExactSelectedCellComplex,

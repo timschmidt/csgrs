@@ -1,17 +1,16 @@
 use hyperlimit::{Point2, Point3, SourceProvenance};
 use hypermesh::{
-    ExactArrangement, ExactArrangement2dBoundaryPolicy, ExactArrangement2dRegion,
-    ExactArrangement2dRegionRing, ExactArrangement2dSetOperation, ExactBooleanOperation,
-    ExactBooleanRequest, ExactBooleanResult, ExactBooleanWorkspace, ExactBoundaryBooleanPolicy,
-    ExactI64MeshInputReadiness, ExactI64MeshInputReportValidationError, ExactMesh,
-    ExactMeshAuditError, ExactMeshConsumerDomain, ExactMeshHandoffPackageError,
-    ExactMeshProposalAcceptance, ExactMeshProposalReport, ExactMeshProposalReportError,
-    ExactMeshProposalSourceKind, ExactOutputTriangleOrientation, ExactRegionSelection,
-    ExactRegularizationPolicy, ExactReportFreshness, FaceRegionPlaneRelation,
-    LossyF64MeshInputReadiness, LossyF64MeshInputReportValidationError, MeshArtifactBlocker,
-    MeshArtifactFaceRecord, MeshArtifactManifest, MeshArtifactReportError, MeshArtifactRole,
-    MeshArtifactSourceKind, MeshArtifactVertexRecord, MeshCoordinateEvidence, MeshTopologyEvidence,
-    ValidationPolicy,
+    ExactArrangement2dBoundaryPolicy, ExactArrangement2dRegion, ExactArrangement2dRegionRing,
+    ExactArrangement2dSetOperation, ExactBooleanOperation, ExactBooleanRequest, ExactBooleanResult,
+    ExactBooleanWorkspace, ExactBoundaryBooleanPolicy, ExactI64MeshInputReadiness,
+    ExactI64MeshInputReportValidationError, ExactMesh, ExactMeshAuditError,
+    ExactMeshConsumerDomain, ExactMeshHandoffPackageError, ExactMeshProposalAcceptance,
+    ExactMeshProposalReport, ExactMeshProposalReportError, ExactMeshProposalSourceKind,
+    ExactOutputTriangleOrientation, ExactRegionSelection, ExactRegularizationPolicy,
+    ExactReportFreshness, FaceRegionPlaneRelation, LossyF64MeshInputReadiness,
+    LossyF64MeshInputReportValidationError, MeshArtifactBlocker, MeshArtifactFaceRecord,
+    MeshArtifactManifest, MeshArtifactReportError, MeshArtifactRole, MeshArtifactSourceKind,
+    MeshArtifactVertexRecord, MeshCoordinateEvidence, MeshTopologyEvidence, ValidationPolicy,
 };
 use hyperreal::Real;
 
@@ -5682,80 +5681,9 @@ fn closed_same_surface_boolean_is_publicly_replayable() {
 }
 
 #[test]
-fn exact_arrangement_public_path_reports_blockers_or_cells() {
+fn exact_boolean_attempt_public_path_reports_blockers_or_cells() {
     let left = tetra([0, 0, 0]);
     let right = tetra([1, 0, 0]);
-
-    let arrangement = ExactArrangement::from_meshes_with_policy(
-        &left,
-        &right,
-        ExactRegularizationPolicy::REGULARIZED_SOLID,
-    )
-    .unwrap();
-    assert!(arrangement.validate_against_sources(&left, &right).is_ok());
-    arrangement
-        .validate_against_sources_with_policy(
-            &left,
-            &right,
-            ExactRegularizationPolicy::REGULARIZED_SOLID,
-        )
-        .unwrap();
-    let mut stale_arrangement = arrangement.clone();
-    stale_arrangement.vertices.pop();
-    assert!(
-        stale_arrangement
-            .validate_against_sources_with_policy(
-                &left,
-                &right,
-                ExactRegularizationPolicy::REGULARIZED_SOLID
-            )
-            .is_err()
-    );
-
-    let labeled = arrangement
-        .label_regions(ExactRegularizationPolicy::REGULARIZED_SOLID)
-        .unwrap();
-    labeled
-        .validate_against_sources(&left, &right, ExactRegularizationPolicy::REGULARIZED_SOLID)
-        .unwrap();
-    let mut stale_labeled = labeled.clone();
-    stale_labeled.faces.pop();
-    assert!(
-        stale_labeled
-            .validate_against_sources(&left, &right, ExactRegularizationPolicy::REGULARIZED_SOLID)
-            .is_err()
-    );
-
-    let selected = labeled
-        .select_with_policy(
-            ExactBooleanOperation::Union,
-            ExactRegularizationPolicy::REGULARIZED_SOLID,
-        )
-        .unwrap();
-    selected
-        .validate_against_sources(&left, &right, ExactRegularizationPolicy::REGULARIZED_SOLID)
-        .unwrap();
-    let mut stale_selected = selected.clone();
-    stale_selected.selected_faces.pop();
-    assert!(
-        stale_selected
-            .validate_against_sources(&left, &right, ExactRegularizationPolicy::REGULARIZED_SOLID)
-            .is_err()
-    );
-
-    let simplified = selected
-        .simplify_exact_with_policy(ExactRegularizationPolicy::REGULARIZED_SOLID)
-        .unwrap();
-    simplified
-        .validate_against_sources(&left, &right, ExactRegularizationPolicy::REGULARIZED_SOLID)
-        .unwrap();
-    let mut stale_simplified = simplified.clone();
-    stale_simplified.duplicate_cells_removed += 1;
-    assert!(
-        stale_simplified
-            .validate_against_sources(&left, &right, ExactRegularizationPolicy::REGULARIZED_SOLID)
-            .is_err()
-    );
 
     let attempt = exact_boolean_arrangement_attempt(
         &left,

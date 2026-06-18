@@ -2,9 +2,9 @@ use std::hint::black_box;
 use std::time::{Duration, Instant};
 
 use hypermesh::{
-    ExactArrangement, ExactArrangementBooleanAttempt, ExactBooleanEvaluation,
-    ExactBooleanOperation, ExactBooleanRequest, ExactBooleanResult, ExactBooleanWorkspace,
-    ExactMesh, ExactRegularizationPolicy, ValidationPolicy,
+    ExactArrangementBooleanAttempt, ExactBooleanEvaluation, ExactBooleanOperation,
+    ExactBooleanRequest, ExactBooleanResult, ExactBooleanWorkspace, ExactMesh,
+    ExactRegularizationPolicy, ValidationPolicy,
 };
 
 struct BenchCase {
@@ -13,7 +13,6 @@ struct BenchCase {
     right: ExactMesh,
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
-    regularization: ExactRegularizationPolicy,
     iterations: usize,
 }
 
@@ -25,7 +24,6 @@ fn main() {
             right: open_triangle_yz(),
             operation: ExactBooleanOperation::Union,
             validation: ValidationPolicy::ALLOW_BOUNDARY,
-            regularization: ExactRegularizationPolicy::RETAIN_ARTIFACTS,
             iterations: 64,
         },
         BenchCase {
@@ -34,7 +32,6 @@ fn main() {
             right: tetra_from_corners([1, 1, 1], [5, 1, 1], [1, 5, 1], [1, 1, 5]),
             operation: ExactBooleanOperation::Union,
             validation: ValidationPolicy::CLOSED,
-            regularization: ExactRegularizationPolicy::REGULARIZED_SOLID,
             iterations: 8,
         },
         BenchCase {
@@ -43,7 +40,6 @@ fn main() {
             right: tetra_from_corners([1, 1, 1], [5, 1, 1], [1, 5, 1], [1, 1, 5]),
             operation: ExactBooleanOperation::Union,
             validation: ValidationPolicy::ALLOW_BOUNDARY,
-            regularization: ExactRegularizationPolicy::REGULARIZED_SOLID,
             iterations: 1,
         },
         BenchCase {
@@ -52,7 +48,6 @@ fn main() {
             right: open_triangle_xy_far_corner(),
             operation: ExactBooleanOperation::Union,
             validation: ValidationPolicy::ALLOW_BOUNDARY,
-            regularization: ExactRegularizationPolicy::RETAIN_ARTIFACTS,
             iterations: 64,
         },
         BenchCase {
@@ -61,7 +56,6 @@ fn main() {
             right: open_boundary_touching_right(),
             operation: ExactBooleanOperation::Union,
             validation: ValidationPolicy::ALLOW_BOUNDARY,
-            regularization: ExactRegularizationPolicy::RETAIN_ARTIFACTS,
             iterations: 64,
         },
     ];
@@ -153,41 +147,27 @@ fn run_case(case: &BenchCase) {
         );
     });
 
-    time_stage(case, "arrangement_build", || {
-        let arrangement =
-            ExactArrangement::from_meshes_with_policy(&case.left, &case.right, case.regularization)
-                .unwrap();
-        black_box((
-            arrangement.vertices.len(),
-            arrangement.edges.len(),
-            arrangement.face_cells.len(),
-            arrangement.blockers.len(),
-        ));
+    time_stage(case, "arrangement_attempt_from_evaluation", || {
+        let mut workspace = ExactBooleanWorkspace::new(&case.left, &case.right);
+        let attempt = workspace
+            .evaluate(request)
+            .unwrap()
+            .certifications
+            .arrangement_attempt
+            .as_ref()
+            .cloned();
+        black_box(attempt.map(|attempt| {
+            let (output_vertices, output_triangles) = attempt.output_counts();
+            (
+                attempt.topology_assembly_complete(),
+                attempt.region_ownership_volume_resolved(),
+                attempt.materialized_arrangement_cell_complex_output(),
+                output_vertices,
+                output_triangles,
+            )
+        }));
     });
 
-    time_stage(case, "arrangement_build_from_retained_graph", || {
-        let arrangement = ExactArrangement::from_intersection_graph_with_policy(
-            graph.clone(),
-            &case.left,
-            &case.right,
-            case.regularization,
-        )
-        .unwrap();
-        black_box((
-            arrangement.vertices.len(),
-            arrangement.edges.len(),
-            arrangement.face_cells.len(),
-            arrangement.blockers.len(),
-        ));
-    });
-
-    let arrangement = ExactArrangement::from_intersection_graph_with_policy(
-        graph.clone(),
-        &case.left,
-        &case.right,
-        case.regularization,
-    )
-    .unwrap();
     let attempt = retained_arrangement_attempt_for_case(case, request);
     time_stage(case, "attempt_topology_assembly_report", || {
         if let Some(report) = attempt.topology_assembly_report.as_ref() {
@@ -213,37 +193,15 @@ fn run_case(case: &BenchCase) {
         }
     });
 
-    time_stage(case, "cell_label_select", || {
-        let selected = arrangement
-            .label_regions(case.regularization)
-            .and_then(|labeled| labeled.select_with_policy(case.operation, case.regularization));
-        black_box(selected.ok());
+    time_stage(case, "attempt_public_materialization_summary", || {
+        black_box((
+            attempt.output_counts(),
+            attempt.declined_output_validation(),
+            attempt.materialized_without_shortcut(),
+            attempt.materialized_arrangement_cell_complex_shortcut(),
+            attempt.materialized_arrangement_cell_complex_output(),
+        ));
     });
-
-    let selected = arrangement
-        .label_regions(case.regularization)
-        .and_then(|labeled| labeled.select_with_policy(case.operation, case.regularization))
-        .ok();
-    if let Some(selected) = selected {
-        time_stage(case, "cell_simplify", || {
-            black_box(
-                selected
-                    .clone()
-                    .simplify_exact_with_policy(case.regularization)
-                    .ok(),
-            );
-        });
-
-        let simplified = selected
-            .clone()
-            .simplify_exact_with_policy(case.regularization)
-            .ok();
-        if let Some(simplified) = simplified {
-            time_stage(case, "cell_triangulate", || {
-                black_box(simplified.triangulate().ok());
-            });
-        }
-    }
 
     time_stage(case, "boolean_evaluate", || {
         let mut workspace = ExactBooleanWorkspace::new(&case.left, &case.right);
