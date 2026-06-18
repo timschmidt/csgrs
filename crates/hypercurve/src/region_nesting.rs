@@ -116,6 +116,18 @@ pub enum RegionLineSegmentArrangedEndpoint2 {
     End,
 }
 
+/// Retained point-intersection evidence collected before unordered region assembly.
+#[derive(Clone, Debug, PartialEq)]
+pub struct RegionLineSegmentSplitIntersectionReport2 {
+    first_source_segment_index: usize,
+    first_source_segment_kind: SegmentKind,
+    first_source_param: Real,
+    second_source_segment_index: usize,
+    second_source_segment_kind: SegmentKind,
+    second_source_param: Real,
+    point: Point2,
+}
+
 /// Report for constructing a region from unordered exact line segments.
 #[derive(Clone, Debug, PartialEq)]
 pub struct RegionLineSegmentRegionBuildReport2 {
@@ -129,6 +141,7 @@ pub struct RegionLineSegmentRegionBuildReport2 {
     split_tested_pair_count: usize,
     split_intersection_event_count: usize,
     split_intersection_points: Vec<Point2>,
+    split_intersection_reports: Vec<RegionLineSegmentSplitIntersectionReport2>,
     split_output_segment_count: Option<usize>,
     split_blocker_first_source_segment_index: Option<usize>,
     split_blocker_first_source_segment_kind: Option<SegmentKind>,
@@ -351,6 +364,7 @@ impl Region2 {
                 split_tested_pair_count: arranged.report.tested_pair_count,
                 split_intersection_event_count: arranged.report.intersection_event_count,
                 split_intersection_points: arranged.report.intersection_points,
+                split_intersection_reports: arranged.report.intersection_reports,
                 split_output_segment_count: Some(arranged.segments.len()),
                 split_blocker_first_source_segment_index: arranged
                     .report
@@ -552,6 +566,7 @@ impl Region2 {
                 split_tested_pair_count: arranged.report.tested_pair_count,
                 split_intersection_event_count: arranged.report.intersection_event_count,
                 split_intersection_points: arranged.report.intersection_points,
+                split_intersection_reports: arranged.report.intersection_reports,
                 split_output_segment_count: Some(arranged.segments.len()),
                 split_blocker_first_source_segment_index: arranged
                     .report
@@ -1058,6 +1073,11 @@ impl RegionLineSegmentRegionBuildReport2 {
         &self.split_intersection_points
     }
 
+    /// Returns source/parameter evidence for retained point-intersection split events.
+    pub fn split_intersection_reports(&self) -> &[RegionLineSegmentSplitIntersectionReport2] {
+        &self.split_intersection_reports
+    }
+
     /// Returns arranged output segment count after splitting, when available.
     pub const fn split_output_segment_count(&self) -> Option<usize> {
         self.split_output_segment_count
@@ -1216,6 +1236,43 @@ impl RegionLineSegmentRegionBuildReport2 {
     }
 }
 
+impl RegionLineSegmentSplitIntersectionReport2 {
+    /// Returns the first source segment index for this split event.
+    pub const fn first_source_segment_index(&self) -> usize {
+        self.first_source_segment_index
+    }
+
+    /// Returns the first source segment primitive family.
+    pub const fn first_source_segment_kind(&self) -> SegmentKind {
+        self.first_source_segment_kind
+    }
+
+    /// Returns the retained local parameter on the first source segment.
+    pub const fn first_source_param(&self) -> &Real {
+        &self.first_source_param
+    }
+
+    /// Returns the second source segment index for this split event.
+    pub const fn second_source_segment_index(&self) -> usize {
+        self.second_source_segment_index
+    }
+
+    /// Returns the second source segment primitive family.
+    pub const fn second_source_segment_kind(&self) -> SegmentKind {
+        self.second_source_segment_kind
+    }
+
+    /// Returns the retained local parameter on the second source segment.
+    pub const fn second_source_param(&self) -> &Real {
+        &self.second_source_param
+    }
+
+    /// Returns the exact point shared by both source parameters.
+    pub const fn point(&self) -> &Point2 {
+        &self.point
+    }
+}
+
 impl RegionLineSegmentRegionBuildResult2 {
     /// Returns the materialized region, if construction succeeded.
     pub const fn region(&self) -> Option<&Region2> {
@@ -1276,6 +1333,7 @@ struct LineSegmentSplitReportParts {
     tested_pair_count: usize,
     intersection_event_count: usize,
     intersection_points: Vec<Point2>,
+    intersection_reports: Vec<RegionLineSegmentSplitIntersectionReport2>,
     output_segment_count: Option<usize>,
     blocker_first_source_segment_index: Option<usize>,
     blocker_first_source_segment_kind: Option<SegmentKind>,
@@ -1655,7 +1713,18 @@ fn arrange_line_segments_at_point_intersections(
                     ..
                 } => {
                     report.intersection_event_count += 1;
-                    report.intersection_points.push(point);
+                    report.intersection_points.push(point.clone());
+                    report
+                        .intersection_reports
+                        .push(RegionLineSegmentSplitIntersectionReport2 {
+                            first_source_segment_index: first_index,
+                            first_source_segment_kind: SegmentKind::Line,
+                            first_source_param: a_param.clone(),
+                            second_source_segment_index: second_index,
+                            second_source_segment_kind: SegmentKind::Line,
+                            second_source_param: b_param.clone(),
+                            point,
+                        });
                     if insert_line_split_marker(&mut markers[first_index], a_param, policy)
                         .is_none()
                         || insert_line_split_marker(&mut markers[second_index], b_param, policy)
@@ -1844,6 +1913,17 @@ fn arrange_native_segments_at_point_intersections(
                     report.intersection_event_count += points.len();
                     for point in points {
                         report.intersection_points.push(point.point.clone());
+                        report.intersection_reports.push(
+                            RegionLineSegmentSplitIntersectionReport2 {
+                                first_source_segment_index: first_index,
+                                first_source_segment_kind: first.structural_facts().kind,
+                                first_source_param: point.first_param.clone(),
+                                second_source_segment_index: second_index,
+                                second_source_segment_kind: second.structural_facts().kind,
+                                second_source_param: point.second_param.clone(),
+                                point: point.point.clone(),
+                            },
+                        );
                         if insert_native_split_marker(
                             &mut markers[first_index],
                             NativeSegmentSplitMarker {
@@ -2654,6 +2734,7 @@ fn blocked_line_segment_region_report(
         split_tested_pair_count: split_report.tested_pair_count,
         split_intersection_event_count: split_report.intersection_event_count,
         split_intersection_points: split_report.intersection_points,
+        split_intersection_reports: split_report.intersection_reports,
         split_output_segment_count: split_report.output_segment_count,
         split_blocker_first_source_segment_index: split_report.blocker_first_source_segment_index,
         split_blocker_first_source_segment_kind: split_report.blocker_first_source_segment_kind,

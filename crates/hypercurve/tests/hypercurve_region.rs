@@ -358,6 +358,7 @@ fn unordered_line_segments_build_region_with_source_provenance() {
     assert_eq!(report.split_tested_pair_count(), 4);
     assert_eq!(report.split_intersection_event_count(), 4);
     assert_eq!(report.split_intersection_points().len(), 4);
+    assert_eq!(report.split_intersection_reports().len(), 4);
     assert!(report.split_intersection_points().contains(&p(0, 0)));
     assert!(report.split_intersection_points().contains(&p(4, 0)));
     assert!(report.split_intersection_points().contains(&p(0, 4)));
@@ -525,6 +526,32 @@ fn unordered_line_segments_split_crossings_before_boundary_blocker() {
     assert_eq!(report.split_tested_pair_count(), 1);
     assert_eq!(report.split_intersection_event_count(), 1);
     assert_eq!(report.split_intersection_points(), &[p(2, 2)]);
+    assert_eq!(report.split_intersection_reports().len(), 1);
+    assert_eq!(
+        report.split_intersection_reports()[0].first_source_segment_index(),
+        0
+    );
+    assert_eq!(
+        report.split_intersection_reports()[0].first_source_segment_kind(),
+        SegmentKind::Line
+    );
+    assert_eq!(
+        report.split_intersection_reports()[0].first_source_param(),
+        &q(1, 2)
+    );
+    assert_eq!(
+        report.split_intersection_reports()[0].second_source_segment_index(),
+        1
+    );
+    assert_eq!(
+        report.split_intersection_reports()[0].second_source_segment_kind(),
+        SegmentKind::Line
+    );
+    assert_eq!(
+        report.split_intersection_reports()[0].second_source_param(),
+        &q(1, 2)
+    );
+    assert_eq!(report.split_intersection_reports()[0].point(), &p(2, 2));
     assert_eq!(report.split_output_segment_count(), Some(4));
     assert_eq!(report.endpoint_graph_endpoint_count(), Some(8));
     assert_eq!(report.endpoint_graph_structural_bucket_count(), Some(5));
@@ -652,6 +679,7 @@ fn unordered_native_segments_build_line_arc_region_with_source_provenance() {
     assert_eq!(report.split_tested_pair_count(), 1);
     assert_eq!(report.split_intersection_event_count(), 2);
     assert_eq!(report.split_intersection_points().len(), 2);
+    assert_eq!(report.split_intersection_reports().len(), 2);
     assert!(report.split_intersection_points().contains(&p(0, 0)));
     assert!(report.split_intersection_points().contains(&p(4, 0)));
     assert_eq!(report.split_output_segment_count(), Some(2));
@@ -862,6 +890,24 @@ fn unordered_native_segments_split_line_arc_crossing_before_boundary_blocker() {
     assert_eq!(report.split_tested_pair_count(), 1);
     assert_eq!(report.split_intersection_event_count(), 1);
     assert_eq!(report.split_intersection_points(), &[p(2, -2)]);
+    assert_eq!(report.split_intersection_reports().len(), 1);
+    assert_eq!(
+        report.split_intersection_reports()[0].first_source_segment_index(),
+        0
+    );
+    assert_eq!(
+        report.split_intersection_reports()[0].first_source_segment_kind(),
+        SegmentKind::Arc
+    );
+    assert_eq!(
+        report.split_intersection_reports()[0].second_source_segment_index(),
+        1
+    );
+    assert_eq!(
+        report.split_intersection_reports()[0].second_source_segment_kind(),
+        SegmentKind::Line
+    );
+    assert_eq!(report.split_intersection_reports()[0].point(), &p(2, -2));
     assert_eq!(report.split_output_segment_count(), Some(4));
     assert_eq!(report.split_blocker_first_source_segment_kind(), None);
     assert_eq!(report.split_blocker_second_source_segment_kind(), None);
