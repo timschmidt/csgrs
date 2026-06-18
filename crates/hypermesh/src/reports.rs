@@ -660,6 +660,21 @@ fn validate_coplanar_boundary_only_evidence_shape(
     Ok(())
 }
 
+fn validate_arrangement_materialized_coplanar_evidence(
+    evidence: &CoplanarVolumetricCellEvidenceReport,
+    retained_face_pairs: usize,
+    retained_events: usize,
+) -> Result<(), ExactReportValidationError> {
+    validate_coplanar_volumetric_evidence_counts(evidence, retained_face_pairs, retained_events)?;
+    if !evidence.obstacle.requires_coplanar_volumetric_cells()
+        && (evidence.obstacle != CoplanarVolumetricCellObstacle::BoundaryOnlyContact
+            || evidence.positive_area_coplanar_overlapping_pairs == 0)
+    {
+        return Err(ExactReportValidationError::CoplanarVolumetricEvidenceMismatch);
+    }
+    Ok(())
+}
+
 /// Auditable result of an exact selected-region boolean pipeline.
 #[derive(Clone, Debug, PartialEq)]
 pub struct ExactBooleanResult {
@@ -4381,18 +4396,11 @@ impl ExactBooleanPreflight {
                     return Err(ExactReportValidationError::UnexpectedArrangementReadiness);
                 }
                 if let Some(evidence) = self.coplanar_volumetric_evidence.as_ref() {
-                    validate_coplanar_volumetric_evidence_counts(
+                    validate_arrangement_materialized_coplanar_evidence(
                         evidence,
                         self.retained_face_pairs,
                         self.retained_events,
                     )?;
-                    if !evidence.obstacle.requires_coplanar_volumetric_cells()
-                        && (evidence.obstacle
-                            != CoplanarVolumetricCellObstacle::BoundaryOnlyContact
-                            || evidence.positive_area_coplanar_overlapping_pairs == 0)
-                    {
-                        return Err(ExactReportValidationError::CoplanarVolumetricEvidenceMismatch);
-                    }
                 }
                 no_region_facts(self.region_count, &self.region_classifications)
             }
@@ -6569,20 +6577,11 @@ impl ExactWindingReadinessReport {
                         return Err(ExactReportValidationError::MissingCoplanarVolumetricEvidence);
                     }
                     (ExactBooleanBlockerKind::NeedsBoundaryPolicy, Some(evidence)) => {
-                        validate_coplanar_volumetric_evidence_counts(
+                        validate_arrangement_materialized_coplanar_evidence(
                             evidence,
                             self.retained_face_pairs,
                             self.retained_events,
                         )?;
-                        if !evidence.obstacle.requires_coplanar_volumetric_cells()
-                            && (evidence.obstacle
-                                != CoplanarVolumetricCellObstacle::BoundaryOnlyContact
-                                || evidence.positive_area_coplanar_overlapping_pairs == 0)
-                        {
-                            return Err(
-                                ExactReportValidationError::CoplanarVolumetricEvidenceMismatch,
-                            );
-                        }
                     }
                     (_, Some(_)) => {
                         return Err(
