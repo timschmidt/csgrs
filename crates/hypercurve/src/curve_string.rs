@@ -231,6 +231,7 @@ pub struct CurveStringConnectReport2 {
     stage: CurveStringConnectStage2,
     kind: Option<CurveStringLinkKind2>,
     endpoint_report: CurveStringEndpointConnectionReport2,
+    endpoint_reports: Vec<CurveStringEndpointConnectionReport2>,
     first_segment_count: usize,
     second_segment_count: usize,
     endpoint_pair_count: usize,
@@ -1049,7 +1050,8 @@ impl CurveString2 {
                     self,
                     other,
                     Some(kind),
-                    endpoint_report,
+                    endpoint_report.clone(),
+                    vec![endpoint_report],
                     endpoint_summary,
                     RetainedTopologyStatus::Unsupported,
                     Some(UncertaintyReason::Boundary),
@@ -1061,7 +1063,8 @@ impl CurveString2 {
                     self,
                     other,
                     Some(kind),
-                    endpoint_report,
+                    endpoint_report.clone(),
+                    vec![endpoint_report],
                     endpoint_summary,
                     RetainedTopologyStatus::Unresolved,
                     Some(reason),
@@ -1073,7 +1076,8 @@ impl CurveString2 {
         let report = CurveStringConnectReport2 {
             stage: CurveStringConnectStage2::ConnectorMaterialization,
             kind: Some(kind),
-            endpoint_report,
+            endpoint_report: endpoint_report.clone(),
+            endpoint_reports: vec![endpoint_report],
             first_segment_count: self.len(),
             second_segment_count: other.len(),
             endpoint_pair_count: endpoint_summary.pair_count,
@@ -1108,9 +1112,11 @@ impl CurveString2 {
             pair_count: reports.len(),
             ..EndpointPairSummary::default()
         };
+        let mut endpoint_reports = Vec::with_capacity(reports.len());
         let mut exact_blocker = None;
         let mut unresolved_blocker = None;
         for (kind, report) in reports {
+            endpoint_reports.push(report.clone());
             endpoint_summary.add_status(report.status);
             match report.status {
                 CurveStringEndpointConnectionStatus2::NativeExact => {
@@ -1134,6 +1140,7 @@ impl CurveString2 {
                 other,
                 Some(kind),
                 report,
+                endpoint_reports.clone(),
                 endpoint_summary,
                 RetainedTopologyStatus::Unsupported,
                 Some(UncertaintyReason::Boundary),
@@ -1145,6 +1152,7 @@ impl CurveString2 {
                 other,
                 Some(kind),
                 report,
+                endpoint_reports.clone(),
                 endpoint_summary,
                 RetainedTopologyStatus::Unresolved,
                 Some(reason),
@@ -1159,6 +1167,7 @@ impl CurveString2 {
                     other,
                     Some(kind),
                     report,
+                    endpoint_reports.clone(),
                     endpoint_summary,
                     RetainedTopologyStatus::Unsupported,
                     Some(UncertaintyReason::Boundary),
@@ -1170,6 +1179,7 @@ impl CurveString2 {
                     other,
                     Some(kind),
                     report,
+                    endpoint_reports.clone(),
                     endpoint_summary,
                     RetainedTopologyStatus::Unresolved,
                     Some(reason),
@@ -1181,7 +1191,8 @@ impl CurveString2 {
         let report = CurveStringConnectReport2 {
             stage: CurveStringConnectStage2::ConnectorMaterialization,
             kind: Some(kind),
-            endpoint_report,
+            endpoint_report: endpoint_report.clone(),
+            endpoint_reports,
             first_segment_count: self.len(),
             second_segment_count: other.len(),
             endpoint_pair_count: endpoint_summary.pair_count,
@@ -5533,6 +5544,11 @@ impl CurveStringConnectReport2 {
         &self.endpoint_report
     }
 
+    /// Returns every endpoint-pair report inspected for this connector decision.
+    pub fn endpoint_reports(&self) -> &[CurveStringEndpointConnectionReport2] {
+        &self.endpoint_reports
+    }
+
     /// Returns the first input segment count captured by this report.
     pub const fn first_segment_count(&self) -> usize {
         self.first_segment_count
@@ -6121,6 +6137,7 @@ fn blocked_connected_curve_string(
     second: &CurveString2,
     kind: Option<CurveStringLinkKind2>,
     endpoint_report: CurveStringEndpointConnectionReport2,
+    endpoint_reports: Vec<CurveStringEndpointConnectionReport2>,
     endpoint_summary: EndpointPairSummary,
     status: RetainedTopologyStatus,
     blocker: Option<UncertaintyReason>,
@@ -6131,6 +6148,7 @@ fn blocked_connected_curve_string(
             stage: CurveStringConnectStage2::EndpointSelection,
             kind,
             endpoint_report,
+            endpoint_reports,
             first_segment_count: first.len(),
             second_segment_count: second.len(),
             endpoint_pair_count: endpoint_summary.pair_count,

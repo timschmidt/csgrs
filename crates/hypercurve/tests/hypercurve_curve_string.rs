@@ -855,6 +855,11 @@ fn curve_string_connect_end_to_start_inserts_exact_line() {
     assert_eq!(connected.report().first_segment_count(), 1);
     assert_eq!(connected.report().second_segment_count(), 1);
     assert_eq!(connected.report().endpoint_pair_count(), 1);
+    assert_eq!(connected.report().endpoint_reports().len(), 1);
+    assert_eq!(
+        connected.report().endpoint_reports()[0].status(),
+        CurveStringEndpointConnectionStatus2::Disconnected
+    );
     assert_eq!(connected.report().exact_endpoint_pair_count(), 0);
     assert_eq!(connected.report().disconnected_endpoint_pair_count(), 1);
     assert_eq!(connected.report().unresolved_endpoint_pair_count(), 0);
@@ -917,6 +922,7 @@ fn curve_string_connect_selected_endpoints_orients_inputs() {
 
     assert!(connected.report().status().is_native_exact());
     assert_eq!(connected.report().endpoint_pair_count(), 1);
+    assert_eq!(connected.report().endpoint_reports().len(), 1);
     assert_eq!(connected.report().exact_endpoint_pair_count(), 0);
     assert_eq!(connected.report().disconnected_endpoint_pair_count(), 1);
     assert_eq!(connected.report().unresolved_endpoint_pair_count(), 0);
@@ -975,6 +981,7 @@ fn curve_string_connect_nearest_endpoints_selects_unique_pair() {
 
     assert!(connected.report().status().is_native_exact());
     assert_eq!(connected.report().endpoint_pair_count(), 4);
+    assert_eq!(connected.report().endpoint_reports().len(), 4);
     assert_eq!(connected.report().exact_endpoint_pair_count(), 0);
     assert_eq!(connected.report().disconnected_endpoint_pair_count(), 4);
     assert_eq!(connected.report().unresolved_endpoint_pair_count(), 0);
@@ -1038,6 +1045,7 @@ fn curve_string_connect_nearest_endpoints_reports_tie_boundary() {
         Some(UncertaintyReason::Boundary)
     );
     assert_eq!(connected.report().endpoint_pair_count(), 4);
+    assert_eq!(connected.report().endpoint_reports().len(), 4);
     assert_eq!(connected.report().exact_endpoint_pair_count(), 0);
     assert_eq!(connected.report().disconnected_endpoint_pair_count(), 4);
     assert_eq!(connected.report().unresolved_endpoint_pair_count(), 0);
@@ -1061,6 +1069,7 @@ fn curve_string_connect_end_to_start_blocks_already_connected_endpoints() {
         CurveStringConnectStage2::EndpointSelection
     );
     assert_eq!(connected.report().endpoint_pair_count(), 1);
+    assert_eq!(connected.report().endpoint_reports().len(), 1);
     assert_eq!(connected.report().exact_endpoint_pair_count(), 1);
     assert_eq!(connected.report().disconnected_endpoint_pair_count(), 0);
     assert_eq!(connected.report().unresolved_endpoint_pair_count(), 0);
