@@ -326,6 +326,7 @@ pub(crate) fn boolean_region_between_prepared_with_report(
 ) -> CurveResult<RegionBooleanResult2> {
     let first_view = first.as_region_view();
     let second_view = second.as_region_view();
+    let boundary_events = first.intersect_prepared_region(second, policy)?;
     let contours =
         match boolean_boundary_contours_between_prepared(first, second, op, fill_rule, policy)? {
             Classification::Decided(contours) => contours,
@@ -335,6 +336,7 @@ pub(crate) fn boolean_region_between_prepared_with_report(
                     &second_view,
                     op,
                     crate::RegionBooleanQueryPath2::Prepared,
+                    &boundary_events,
                     crate::region_boolean::retained_status_for_boolean_blocker(reason),
                     reason,
                 ));
@@ -345,6 +347,7 @@ pub(crate) fn boolean_region_between_prepared_with_report(
         &second_view,
         op,
         crate::RegionBooleanQueryPath2::Prepared,
+        &boundary_events,
         contours,
         policy,
     )

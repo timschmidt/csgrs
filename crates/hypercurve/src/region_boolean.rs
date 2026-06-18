@@ -25,6 +25,10 @@ pub struct RegionBooleanReport2 {
     first_hole_contour_count: usize,
     second_material_contour_count: usize,
     second_hole_contour_count: usize,
+    boundary_candidate_pair_count: usize,
+    boundary_skipped_aabb_pair_count: usize,
+    boundary_tested_pair_count: usize,
+    boundary_intersecting_pair_count: usize,
     boundary_contour_count: Option<usize>,
     result_material_contour_count: Option<usize>,
     result_hole_contour_count: Option<usize>,
@@ -614,6 +618,26 @@ impl RegionBooleanReport2 {
         self.second_hole_contour_count
     }
 
+    /// Returns region contour-pair candidates considered before boolean splitting.
+    pub const fn boundary_candidate_pair_count(&self) -> usize {
+        self.boundary_candidate_pair_count
+    }
+
+    /// Returns contour-pair candidates skipped by decided disjoint boundary AABBs.
+    pub const fn boundary_skipped_aabb_pair_count(&self) -> usize {
+        self.boundary_skipped_aabb_pair_count
+    }
+
+    /// Returns contour-pair candidates that reached exact boundary intersection.
+    pub const fn boundary_tested_pair_count(&self) -> usize {
+        self.boundary_tested_pair_count
+    }
+
+    /// Returns contour pairs with nonempty retained boundary-intersection evidence.
+    pub const fn boundary_intersecting_pair_count(&self) -> usize {
+        self.boundary_intersecting_pair_count
+    }
+
     /// Returns checked output boundary contour count when available.
     pub const fn boundary_contour_count(&self) -> Option<usize> {
         self.boundary_contour_count
@@ -946,6 +970,7 @@ pub(crate) fn boolean_region_between_with_report(
     fill_rule: FillRule,
     policy: &CurvePolicy,
 ) -> CurveResult<RegionBooleanResult2> {
+    let boundary_events = first.intersect_region(second, policy)?;
     let contours = match boolean_boundary_contours_between(first, second, op, fill_rule, policy)? {
         Classification::Decided(contours) => contours,
         Classification::Uncertain(reason) => {
@@ -954,6 +979,7 @@ pub(crate) fn boolean_region_between_with_report(
                 second,
                 op,
                 RegionBooleanQueryPath2::Direct,
+                &boundary_events,
                 retained_status_for_boolean_blocker(reason),
                 reason,
             ));
@@ -964,6 +990,7 @@ pub(crate) fn boolean_region_between_with_report(
         second,
         op,
         RegionBooleanQueryPath2::Direct,
+        &boundary_events,
         contours,
         policy,
     )
@@ -974,6 +1001,7 @@ pub(crate) fn region_boolean_result_from_boundary_contours(
     second: &RegionView2<'_>,
     op: BooleanOp,
     query_path: RegionBooleanQueryPath2,
+    boundary_events: &RegionIntersectionSet,
     contours: Vec<Contour2>,
     policy: &CurvePolicy,
 ) -> CurveResult<RegionBooleanResult2> {
@@ -993,6 +1021,10 @@ pub(crate) fn region_boolean_result_from_boundary_contours(
             first_hole_contour_count: first.hole_contours().len(),
             second_material_contour_count: second.material_contours().len(),
             second_hole_contour_count: second.hole_contours().len(),
+            boundary_candidate_pair_count: boundary_events.candidate_pair_count(),
+            boundary_skipped_aabb_pair_count: boundary_events.skipped_aabb_pair_count(),
+            boundary_tested_pair_count: boundary_events.tested_pair_count(),
+            boundary_intersecting_pair_count: boundary_events.intersecting_pair_count(),
             boundary_contour_count: Some(boundary_contour_count),
             result_material_contour_count,
             result_hole_contour_count,
@@ -1008,6 +1040,7 @@ pub(crate) fn blocked_region_boolean_result(
     second: &RegionView2<'_>,
     op: BooleanOp,
     query_path: RegionBooleanQueryPath2,
+    boundary_events: &RegionIntersectionSet,
     status: RetainedTopologyStatus,
     blocker: UncertaintyReason,
 ) -> RegionBooleanResult2 {
@@ -1020,6 +1053,10 @@ pub(crate) fn blocked_region_boolean_result(
             first_hole_contour_count: first.hole_contours().len(),
             second_material_contour_count: second.material_contours().len(),
             second_hole_contour_count: second.hole_contours().len(),
+            boundary_candidate_pair_count: boundary_events.candidate_pair_count(),
+            boundary_skipped_aabb_pair_count: boundary_events.skipped_aabb_pair_count(),
+            boundary_tested_pair_count: boundary_events.tested_pair_count(),
+            boundary_intersecting_pair_count: boundary_events.intersecting_pair_count(),
             boundary_contour_count: None,
             result_material_contour_count: None,
             result_hole_contour_count: None,
