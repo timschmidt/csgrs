@@ -11385,8 +11385,9 @@ mod tests {
         left: &ExactMesh,
         right: &ExactMesh,
     ) -> ExactBoundaryTouchingReport {
-        let graph = validated_intersection_graph(left, right).unwrap();
-        boundary_touching_report_from_graph(&graph, left, right).unwrap()
+        let mut workspace = ExactBooleanWorkspace::new(left, right);
+        let graph = workspace.validated_graph().unwrap();
+        boundary_touching_report_from_graph(graph, left, right).unwrap()
     }
 
     fn assert_current_arrangement_attempt(
