@@ -15,7 +15,7 @@ use crate::{
     CurvePolicy, CurveResult, FillRule, IntersectionKind, Point2, Real, Region2,
     RegionBoundaryContourBuildReport2, RegionFragmentBuildReport2, RegionFragmentSet,
     RegionIntersectionSet, RegionPointLocation, RegionSide, RegionView2, RetainedTopologyStatus,
-    Segment2, UncertaintyReason,
+    Segment2, SegmentKindCounts, UncertaintyReason,
 };
 use std::cmp::Ordering;
 
@@ -29,9 +29,11 @@ pub struct RegionBooleanReport2 {
     first_material_contour_count: usize,
     first_hole_contour_count: usize,
     first_boundary_segment_count: usize,
+    first_boundary_segment_kind_counts: SegmentKindCounts,
     second_material_contour_count: usize,
     second_hole_contour_count: usize,
     second_boundary_segment_count: usize,
+    second_boundary_segment_kind_counts: SegmentKindCounts,
     boundary_first_contour_count: Option<usize>,
     boundary_second_contour_count: Option<usize>,
     boundary_candidate_pair_count: usize,
@@ -43,6 +45,7 @@ pub struct RegionBooleanReport2 {
     result_material_contour_count: Option<usize>,
     result_hole_contour_count: Option<usize>,
     result_boundary_segment_count: Option<usize>,
+    result_boundary_segment_kind_counts: Option<SegmentKindCounts>,
     pipeline_report: Option<RegionBooleanPipelineReport2>,
     boundary_build_report: Option<RegionBoundaryContourBuildReport2>,
     prepared_cache_report: Option<RegionBooleanPreparedCacheReport2>,
@@ -683,6 +686,11 @@ impl RegionBooleanReport2 {
         self.first_boundary_segment_count
     }
 
+    /// Returns line/arc boundary segment counts in the first operand.
+    pub const fn first_boundary_segment_kind_counts(&self) -> SegmentKindCounts {
+        self.first_boundary_segment_kind_counts
+    }
+
     /// Returns the second operand material contour count.
     pub const fn second_material_contour_count(&self) -> usize {
         self.second_material_contour_count
@@ -696,6 +704,11 @@ impl RegionBooleanReport2 {
     /// Returns total boundary segment count in the second operand.
     pub const fn second_boundary_segment_count(&self) -> usize {
         self.second_boundary_segment_count
+    }
+
+    /// Returns line/arc boundary segment counts in the second operand.
+    pub const fn second_boundary_segment_kind_counts(&self) -> SegmentKindCounts {
+        self.second_boundary_segment_kind_counts
     }
 
     /// Returns the first operand contour count reported by boundary events.
@@ -751,6 +764,11 @@ impl RegionBooleanReport2 {
     /// Returns total result boundary segment count when a boolean region materialized.
     pub const fn result_boundary_segment_count(&self) -> Option<usize> {
         self.result_boundary_segment_count
+    }
+
+    /// Returns line/arc boundary segment counts in the result region when available.
+    pub const fn result_boundary_segment_kind_counts(&self) -> Option<SegmentKindCounts> {
+        self.result_boundary_segment_kind_counts
     }
 
     /// Returns arrangement-first split/classify/traverse evidence, if used.
@@ -1474,6 +1492,9 @@ pub(crate) fn region_boolean_result_from_boundary_contours_with_prepared_cache_a
     let result_material_contour_count = built.report().material_contour_count();
     let result_hole_contour_count = built.report().hole_contour_count();
     let result_boundary_segment_count = built.report().output_segment_count();
+    let result_boundary_segment_kind_counts = built
+        .region()
+        .map(|region| region_view_boundary_segment_kind_counts(&region.as_view()));
     let boundary_build_report = built.report().clone();
     Ok(RegionBooleanResult2 {
         region: built.into_region(),
@@ -1485,9 +1506,11 @@ pub(crate) fn region_boolean_result_from_boundary_contours_with_prepared_cache_a
             first_material_contour_count: first.material_contours().len(),
             first_hole_contour_count: first.hole_contours().len(),
             first_boundary_segment_count: region_view_boundary_segment_count(first),
+            first_boundary_segment_kind_counts: region_view_boundary_segment_kind_counts(first),
             second_material_contour_count: second.material_contours().len(),
             second_hole_contour_count: second.hole_contours().len(),
             second_boundary_segment_count: region_view_boundary_segment_count(second),
+            second_boundary_segment_kind_counts: region_view_boundary_segment_kind_counts(second),
             boundary_first_contour_count: boundary_events.first_contour_count(),
             boundary_second_contour_count: boundary_events.second_contour_count(),
             boundary_candidate_pair_count: boundary_events.candidate_pair_count(),
@@ -1499,6 +1522,7 @@ pub(crate) fn region_boolean_result_from_boundary_contours_with_prepared_cache_a
             result_material_contour_count,
             result_hole_contour_count,
             result_boundary_segment_count,
+            result_boundary_segment_kind_counts,
             pipeline_report,
             boundary_build_report: Some(boundary_build_report),
             prepared_cache_report,
@@ -1553,9 +1577,11 @@ pub(crate) fn blocked_region_boolean_result_with_prepared_cache(
             first_material_contour_count: first.material_contours().len(),
             first_hole_contour_count: first.hole_contours().len(),
             first_boundary_segment_count: region_view_boundary_segment_count(first),
+            first_boundary_segment_kind_counts: region_view_boundary_segment_kind_counts(first),
             second_material_contour_count: second.material_contours().len(),
             second_hole_contour_count: second.hole_contours().len(),
             second_boundary_segment_count: region_view_boundary_segment_count(second),
+            second_boundary_segment_kind_counts: region_view_boundary_segment_kind_counts(second),
             boundary_first_contour_count: boundary_events.first_contour_count(),
             boundary_second_contour_count: boundary_events.second_contour_count(),
             boundary_candidate_pair_count: boundary_events.candidate_pair_count(),
@@ -1567,6 +1593,7 @@ pub(crate) fn blocked_region_boolean_result_with_prepared_cache(
             result_material_contour_count: None,
             result_hole_contour_count: None,
             result_boundary_segment_count: None,
+            result_boundary_segment_kind_counts: None,
             pipeline_report: None,
             boundary_build_report: None,
             prepared_cache_report,
@@ -1583,6 +1610,22 @@ fn region_view_boundary_segment_count(region: &RegionView2<'_>) -> usize {
         .chain(region.hole_contours().iter())
         .map(|contour| contour.segments().len())
         .sum()
+}
+
+fn region_view_boundary_segment_kind_counts(region: &RegionView2<'_>) -> SegmentKindCounts {
+    let mut counts = SegmentKindCounts::default();
+    for segment in region
+        .material_contours()
+        .iter()
+        .chain(region.hole_contours().iter())
+        .flat_map(|contour| contour.segments())
+    {
+        match segment {
+            Segment2::Line(_) => counts.lines += 1,
+            Segment2::Arc(_) => counts.arcs += 1,
+        }
+    }
+    counts
 }
 
 pub(crate) fn retained_status_for_boolean_blocker(

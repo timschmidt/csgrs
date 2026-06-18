@@ -11,7 +11,7 @@ use hypercurve::{
     BooleanBoundaryFragmentEmissionStage2, BooleanBoundaryLoopExtractionStage2, BooleanOp,
     BulgeVertex2, Classification, Contour2, CurvePolicy, FillRule, Point2, Real, Region2,
     RegionBooleanQueryPath2, RegionBooleanStage2, RegionFragmentBuildStage2, RegionPointLocation,
-    RegionPreparedCacheFreshness2,
+    RegionPreparedCacheFreshness2, SegmentKindCounts,
 };
 
 type HPoint = Point2;
@@ -125,9 +125,17 @@ fn boolean_region_report_retains_boundary_role_assignment() {
     assert_eq!(report.first_material_contour_count(), 1);
     assert_eq!(report.first_hole_contour_count(), 0);
     assert_eq!(report.first_boundary_segment_count(), 4);
+    assert_eq!(
+        report.first_boundary_segment_kind_counts(),
+        SegmentKindCounts { lines: 4, arcs: 0 }
+    );
     assert_eq!(report.second_material_contour_count(), 1);
     assert_eq!(report.second_hole_contour_count(), 0);
     assert_eq!(report.second_boundary_segment_count(), 4);
+    assert_eq!(
+        report.second_boundary_segment_kind_counts(),
+        SegmentKindCounts { lines: 4, arcs: 0 }
+    );
     assert_eq!(report.boundary_first_contour_count(), Some(1));
     assert_eq!(report.boundary_second_contour_count(), Some(1));
     assert_eq!(report.boundary_candidate_pair_count(), 1);
@@ -139,6 +147,10 @@ fn boolean_region_report_retains_boundary_role_assignment() {
     assert_eq!(report.result_material_contour_count(), Some(1));
     assert_eq!(report.result_hole_contour_count(), Some(0));
     assert_eq!(report.result_boundary_segment_count(), Some(8));
+    assert_eq!(
+        report.result_boundary_segment_kind_counts(),
+        Some(SegmentKindCounts { lines: 8, arcs: 0 })
+    );
     assert_eq!(report.prepared_cache_report(), None);
     assert_eq!(report.blocker(), None);
 
@@ -302,8 +314,16 @@ fn prepared_boolean_region_report_matches_plain_materialization() {
         plain.report().first_boundary_segment_count()
     );
     assert_eq!(
+        built.report().first_boundary_segment_kind_counts(),
+        plain.report().first_boundary_segment_kind_counts()
+    );
+    assert_eq!(
         built.report().second_boundary_segment_count(),
         plain.report().second_boundary_segment_count()
+    );
+    assert_eq!(
+        built.report().second_boundary_segment_kind_counts(),
+        plain.report().second_boundary_segment_kind_counts()
     );
     assert_eq!(built.report().boundary_first_contour_count(), Some(2));
     assert_eq!(built.report().boundary_second_contour_count(), Some(1));
@@ -342,6 +362,10 @@ fn prepared_boolean_region_report_matches_plain_materialization() {
     assert_eq!(
         built.report().result_boundary_segment_count(),
         plain.report().result_boundary_segment_count()
+    );
+    assert_eq!(
+        built.report().result_boundary_segment_kind_counts(),
+        plain.report().result_boundary_segment_kind_counts()
     );
     assert!(inside(built.region().unwrap(), 3.5, 1.0));
     assert!(!inside(built.region().unwrap(), 1.5, 1.5));
