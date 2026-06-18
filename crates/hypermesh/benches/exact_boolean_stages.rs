@@ -338,7 +338,7 @@ fn run_case(case: &BenchCase) {
     workspace.evaluate(request).unwrap();
     time_stage(case, "workspace_evaluation_attempt_cached", || {
         let evaluation = workspace.evaluate(request).unwrap();
-        let attempt = evaluation.certifications.arrangement_attempt.as_ref();
+        let attempt = evaluation.retained_arrangement_attempt();
         black_box(attempt.map(|attempt| {
             (
                 attempt.output_counts(),
@@ -627,9 +627,7 @@ fn retained_workspace_and_arrangement_attempt_for_case<'a>(
     let attempt = retained_workspace
         .evaluate(request)
         .unwrap()
-        .certifications
-        .arrangement_attempt
-        .as_ref()
+        .retained_arrangement_attempt()
         .expect("evaluation should retain an arrangement attempt")
         .clone();
     (retained_workspace, attempt)
@@ -643,9 +641,7 @@ fn retained_arrangement_attempt_for_case(
     retained_workspace
         .evaluate(request)
         .unwrap()
-        .certifications
-        .arrangement_attempt
-        .as_ref()
+        .retained_arrangement_attempt()
         .expect("evaluation should retain an arrangement attempt")
         .clone()
 }

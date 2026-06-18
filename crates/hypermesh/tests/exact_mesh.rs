@@ -24,9 +24,7 @@ fn evaluation_materializes_arrangement_cell_complex(
     evaluation: &hypermesh::ExactBooleanEvaluation,
 ) -> bool {
     evaluation
-        .certifications
-        .arrangement_attempt
-        .as_ref()
+        .retained_arrangement_attempt()
         .is_some_and(|attempt| {
             attempt.operation == evaluation.request.operation
                 && attempt.policy == ExactRegularizationPolicy::REGULARIZED_SOLID
@@ -68,9 +66,7 @@ fn exact_boolean_arrangement_attempt(
     workspace
         .evaluate(request)
         .unwrap()
-        .certifications
-        .arrangement_attempt
-        .as_ref()
+        .retained_arrangement_attempt()
         .expect("evaluation should retain an arrangement attempt")
         .clone()
 }

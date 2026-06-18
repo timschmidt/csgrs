@@ -952,10 +952,7 @@ mod tests {
             .unwrap();
         let evaluation = workspace.evaluate(request).unwrap().clone();
         evaluation.validate().unwrap();
-        assert_eq!(
-            evaluation.certifications.arrangement_attempt.as_ref(),
-            Some(&attempt)
-        );
+        assert_eq!(evaluation.retained_arrangement_attempt(), Some(&attempt));
 
         let refinement_report = evaluation.certifications.refinement.clone();
         assert_eq!(
@@ -976,10 +973,7 @@ mod tests {
         );
 
         let evaluation = workspace.evaluate(request).unwrap();
-        assert_eq!(
-            evaluation.certifications.arrangement_attempt.as_ref(),
-            Some(&attempt)
-        );
+        assert_eq!(evaluation.retained_arrangement_attempt(), Some(&attempt));
         evaluation.validate().unwrap();
         let first_evaluation = evaluation as *const ExactBooleanEvaluation;
         let second_evaluation =

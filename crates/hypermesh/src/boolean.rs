@@ -2219,6 +2219,12 @@ pub struct ExactBooleanEvaluation {
 }
 
 impl ExactBooleanEvaluation {
+    /// Return the retained arrangement/cell-complex attempt for this request,
+    /// when evaluation reached that canonical pipeline.
+    pub fn retained_arrangement_attempt(&self) -> Option<&ExactArrangementBooleanAttempt> {
+        self.certifications.arrangement_attempt.as_ref()
+    }
+
     /// Validate the retained evaluation shape without replaying sources.
     pub fn validate(&self) -> Result<(), ExactReportValidationError> {
         if self.preflight.operation != self.request.operation {
@@ -2280,7 +2286,7 @@ impl ExactBooleanEvaluation {
                 self.request.operation,
                 self.request.validation,
                 self.request.boundary_policy,
-                self.certifications.arrangement_attempt.as_ref(),
+                self.retained_arrangement_attempt(),
             )
         } else if self.requires_materialized_result() {
             Err(ExactReportValidationError::StatusEvidenceMismatch)
