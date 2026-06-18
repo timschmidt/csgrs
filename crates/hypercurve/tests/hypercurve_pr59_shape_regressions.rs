@@ -135,6 +135,9 @@ fn boolean_region_report_retains_boundary_role_assignment() {
 
     let boundary_report = report.boundary_build_report().unwrap();
     assert_eq!(boundary_report.source_contour_count(), 1);
+    assert_eq!(boundary_report.source_segment_count(), 8);
+    assert_eq!(boundary_report.material_segment_count(), Some(8));
+    assert_eq!(boundary_report.hole_segment_count(), Some(0));
     assert_eq!(boundary_report.role_reports().len(), 1);
     assert_eq!(
         boundary_report.role_reports()[0].role(),

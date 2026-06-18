@@ -36,8 +36,11 @@ pub struct RegionBoundaryContourRoleReport2 {
 #[derive(Clone, Debug, PartialEq)]
 pub struct RegionBoundaryContourBuildReport2 {
     source_contour_count: usize,
+    source_segment_count: usize,
     material_contour_count: Option<usize>,
     hole_contour_count: Option<usize>,
+    material_segment_count: Option<usize>,
+    hole_segment_count: Option<usize>,
     role_reports: Vec<RegionBoundaryContourRoleReport2>,
     status: RetainedTopologyStatus,
     blocker: Option<UncertaintyReason>,
@@ -96,11 +99,16 @@ impl Region2 {
         policy: &CurvePolicy,
     ) -> CurveResult<RegionBoundaryContourBuildResult2> {
         let source_contour_count = contours.len();
+        let source_segment_count = contours
+            .iter()
+            .map(|contour| contour.segments().len())
+            .sum();
         let nesting = match contour_nesting_depths(&contours, policy)? {
             Classification::Decided(nesting) => nesting,
             Classification::Uncertain(reason) => {
                 return Ok(blocked_boundary_contour_region_result(
                     source_contour_count,
+                    source_segment_count,
                     retained_status_for_boundary_contour_blocker(reason),
                     reason,
                 ));
@@ -149,12 +157,25 @@ impl Region2 {
 
         let material_contour_count = material_contours.len();
         let hole_contour_count = hole_contours.len();
+        let material_segment_count = role_reports
+            .iter()
+            .filter(|report| report.role == RegionBoundaryContourRole2::Material)
+            .map(|report| report.source_segment_count)
+            .sum();
+        let hole_segment_count = role_reports
+            .iter()
+            .filter(|report| report.role == RegionBoundaryContourRole2::Hole)
+            .map(|report| report.source_segment_count)
+            .sum();
         Ok(RegionBoundaryContourBuildResult2 {
             region: Some(Region2::new(material_contours, hole_contours)),
             report: RegionBoundaryContourBuildReport2 {
                 source_contour_count,
+                source_segment_count,
                 material_contour_count: Some(material_contour_count),
                 hole_contour_count: Some(hole_contour_count),
+                material_segment_count: Some(material_segment_count),
+                hole_segment_count: Some(hole_segment_count),
                 role_reports,
                 status: RetainedTopologyStatus::NativeExact,
                 blocker: None,
@@ -216,6 +237,11 @@ impl RegionBoundaryContourBuildReport2 {
         self.source_contour_count
     }
 
+    /// Returns the total number of source contour segments considered.
+    pub const fn source_segment_count(&self) -> usize {
+        self.source_segment_count
+    }
+
     /// Returns material contour count when role assignment materialized.
     pub const fn material_contour_count(&self) -> Option<usize> {
         self.material_contour_count
@@ -224,6 +250,16 @@ impl RegionBoundaryContourBuildReport2 {
     /// Returns hole contour count when role assignment materialized.
     pub const fn hole_contour_count(&self) -> Option<usize> {
         self.hole_contour_count
+    }
+
+    /// Returns material boundary segment count when role assignment materialized.
+    pub const fn material_segment_count(&self) -> Option<usize> {
+        self.material_segment_count
+    }
+
+    /// Returns hole boundary segment count when role assignment materialized.
+    pub const fn hole_segment_count(&self) -> Option<usize> {
+        self.hole_segment_count
     }
 
     /// Returns per-contour exact role reports.
@@ -261,6 +297,7 @@ impl RegionBoundaryContourBuildResult2 {
 
 fn blocked_boundary_contour_region_result(
     source_contour_count: usize,
+    source_segment_count: usize,
     status: RetainedTopologyStatus,
     blocker: UncertaintyReason,
 ) -> RegionBoundaryContourBuildResult2 {
@@ -268,8 +305,11 @@ fn blocked_boundary_contour_region_result(
         region: None,
         report: RegionBoundaryContourBuildReport2 {
             source_contour_count,
+            source_segment_count,
             material_contour_count: None,
             hole_contour_count: None,
+            material_segment_count: None,
+            hole_segment_count: None,
             role_reports: Vec::new(),
             status,
             blocker: Some(blocker),

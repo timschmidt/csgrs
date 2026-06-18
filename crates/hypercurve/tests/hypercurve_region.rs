@@ -171,8 +171,11 @@ fn boundary_contour_region_report_assigns_material_and_hole_roles() {
 
     assert!(report.status().is_native_exact());
     assert_eq!(report.source_contour_count(), 2);
+    assert_eq!(report.source_segment_count(), 8);
     assert_eq!(report.material_contour_count(), Some(1));
     assert_eq!(report.hole_contour_count(), Some(1));
+    assert_eq!(report.material_segment_count(), Some(4));
+    assert_eq!(report.hole_segment_count(), Some(4));
     assert_eq!(report.blocker(), None);
     assert_eq!(report.role_reports().len(), 2);
 
@@ -244,8 +247,11 @@ fn boundary_contour_region_report_blocks_crossing_roles() {
     assert!(report.status().is_retained_evidence());
     assert_eq!(report.blocker(), Some(UncertaintyReason::Boundary));
     assert_eq!(report.source_contour_count(), 2);
+    assert_eq!(report.source_segment_count(), 8);
     assert_eq!(report.material_contour_count(), None);
     assert_eq!(report.hole_contour_count(), None);
+    assert_eq!(report.material_segment_count(), None);
+    assert_eq!(report.hole_segment_count(), None);
     assert!(report.role_reports().is_empty());
 }
 
