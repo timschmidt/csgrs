@@ -355,6 +355,8 @@ pub struct CurveStringTrimPoint2 {
 pub struct CurveStringTrimSegmentReport2 {
     source_segment_index: usize,
     source_range: ParamRange,
+    range_start_point: Option<Point2>,
+    range_end_point: Option<Point2>,
     status: RetainedTopologyStatus,
 }
 
@@ -1100,6 +1102,8 @@ impl CurveString2 {
             let segment_report = CurveStringTrimSegmentReport2 {
                 source_segment_index,
                 source_range: source_range.clone(),
+                range_start_point: None,
+                range_end_point: None,
                 status: RetainedTopologyStatus::NativeExact,
             };
             match trim_segment_by_range(
@@ -1381,11 +1385,15 @@ impl CurveString2 {
             CurveStringTrimSegmentReport2 {
                 source_segment_index: previous_segment_index,
                 source_range: previous_range,
+                range_start_point: Some(previous_line.start().clone()),
+                range_end_point: Some(previous_cut_point.clone()),
                 status: RetainedTopologyStatus::NativeExact,
             },
             CurveStringTrimSegmentReport2 {
                 source_segment_index: next_segment_index,
                 source_range: next_range,
+                range_start_point: Some(next_cut_point.clone()),
+                range_end_point: Some(next_line.end().clone()),
                 status: RetainedTopologyStatus::NativeExact,
             },
         ];
@@ -1817,11 +1825,15 @@ impl CurveString2 {
             CurveStringTrimSegmentReport2 {
                 source_segment_index: previous_segment_index,
                 source_range: previous_range,
+                range_start_point: Some(previous_line.start().clone()),
+                range_end_point: Some((*previous_point).clone()),
                 status: RetainedTopologyStatus::NativeExact,
             },
             CurveStringTrimSegmentReport2 {
                 source_segment_index: next_segment_index,
                 source_range: next_range,
+                range_start_point: Some((*next_point).clone()),
+                range_end_point: Some(next_line.end().clone()),
                 status: RetainedTopologyStatus::NativeExact,
             },
         ];
@@ -2277,6 +2289,8 @@ impl CurveString2 {
             let segment_report = CurveStringTrimSegmentReport2 {
                 source_segment_index,
                 source_range: source_range.clone(),
+                range_start_point: Some(range_start_point.clone()),
+                range_end_point: Some(range_end_point.clone()),
                 status: RetainedTopologyStatus::NativeExact,
             };
             match trim_segment_by_point_range(
@@ -2508,6 +2522,16 @@ impl CurveStringTrimSegmentReport2 {
     /// Returns the retained source parameter range.
     pub const fn source_range(&self) -> &ParamRange {
         &self.source_range
+    }
+
+    /// Returns the exact start point witness for this range, when certified.
+    pub const fn range_start_point(&self) -> Option<&Point2> {
+        self.range_start_point.as_ref()
+    }
+
+    /// Returns the exact end point witness for this range, when certified.
+    pub const fn range_end_point(&self) -> Option<&Point2> {
+        self.range_end_point.as_ref()
     }
 
     /// Returns topology status for this retained source range.

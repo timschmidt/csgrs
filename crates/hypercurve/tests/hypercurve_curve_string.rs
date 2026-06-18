@@ -952,12 +952,28 @@ fn curve_string_chamfer_line_line_vertex_materializes_exact_segments() {
         &q(3, 4)
     );
     assert_eq!(
+        chamfer.report().segment_reports()[0].range_start_point(),
+        Some(&p(0, 0))
+    );
+    assert_eq!(
+        chamfer.report().segment_reports()[0].range_end_point(),
+        Some(&p(3, 0))
+    );
+    assert_eq!(
         chamfer.report().segment_reports()[1].source_range().start(),
         &q(1, 4)
     );
     assert_eq!(
         chamfer.report().segment_reports()[1].source_range().end(),
         &s(1)
+    );
+    assert_eq!(
+        chamfer.report().segment_reports()[1].range_start_point(),
+        Some(&p(4, 1))
+    );
+    assert_eq!(
+        chamfer.report().segment_reports()[1].range_end_point(),
+        Some(&p(4, 4))
     );
 
     let curve = chamfer
@@ -1099,12 +1115,28 @@ fn curve_string_fillet_line_line_vertex_materializes_exact_arc() {
         &q(3, 4)
     );
     assert_eq!(
+        fillet.report().segment_reports()[0].range_start_point(),
+        Some(&p(0, 0))
+    );
+    assert_eq!(
+        fillet.report().segment_reports()[0].range_end_point(),
+        Some(&p(3, 0))
+    );
+    assert_eq!(
         fillet.report().segment_reports()[1].source_range().start(),
         &q(1, 4)
     );
     assert_eq!(
         fillet.report().segment_reports()[1].source_range().end(),
         &s(1)
+    );
+    assert_eq!(
+        fillet.report().segment_reports()[1].range_start_point(),
+        Some(&p(4, 1))
+    );
+    assert_eq!(
+        fillet.report().segment_reports()[1].range_end_point(),
+        Some(&p(4, 4))
     );
 
     let curve = fillet
@@ -1241,6 +1273,8 @@ fn curve_string_trim_materializes_exact_line_subsegment_with_report() {
         trim.report().segment_reports()[0].source_range().end(),
         &q(3, 4)
     );
+    assert_eq!(trim.report().segment_reports()[0].range_start_point(), None);
+    assert_eq!(trim.report().segment_reports()[0].range_end_point(), None);
     let trimmed = trim.curve_string().expect("line trim should materialize");
     assert_eq!(trimmed.start(), Some(&p(1, 0)));
     assert_eq!(trimmed.end(), Some(&p(3, 0)));
@@ -1337,6 +1371,8 @@ fn curve_string_trim_reports_partial_arc_as_unsupported_without_materializing() 
         trim.report().segment_reports()[0].source_range().end(),
         &q(3, 4)
     );
+    assert_eq!(trim.report().segment_reports()[0].range_start_point(), None);
+    assert_eq!(trim.report().segment_reports()[0].range_end_point(), None);
 }
 
 #[test]
@@ -1382,6 +1418,15 @@ fn curve_string_trim_between_points_materializes_line_subsegment() {
     assert_eq!(trim.report().start().param(), &q(1, 4));
     assert_eq!(trim.report().end().segment_index(), 0);
     assert_eq!(trim.report().end().param(), &q(3, 4));
+    assert_eq!(trim.report().segment_reports().len(), 1);
+    assert_eq!(
+        trim.report().segment_reports()[0].range_start_point(),
+        Some(&p(1, 0))
+    );
+    assert_eq!(
+        trim.report().segment_reports()[0].range_end_point(),
+        Some(&p(3, 0))
+    );
     let trimmed = trim.curve_string().expect("point trim should materialize");
     assert_eq!(trimmed.start(), Some(&p(1, 0)));
     assert_eq!(trimmed.end(), Some(&p(3, 0)));
@@ -1411,6 +1456,14 @@ fn curve_string_trim_between_points_materializes_partial_arc() {
     assert_eq!(
         trim.report().segment_reports()[0].source_range().end(),
         &q(1, 2)
+    );
+    assert_eq!(
+        trim.report().segment_reports()[0].range_start_point(),
+        Some(&p(0, 0))
+    );
+    assert_eq!(
+        trim.report().segment_reports()[0].range_end_point(),
+        Some(&p(1, -1))
     );
     let trimmed = trim
         .curve_string()
