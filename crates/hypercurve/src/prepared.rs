@@ -12,9 +12,10 @@ use crate::facts::{CurveStringFacts, RegionFacts};
 use crate::{
     BooleanBoundaryLoopSet, BooleanOp, CircularArc2, CircularArc2Facts, Classification, Contour2,
     ContourIntersectionSet, ContourPointLocation, CurvePolicy, CurveResult, CurveString2,
-    CurveStringIntersection, FillRule, LineSeg2, LineSeg2Facts, LineSide, Point2, Region2,
-    RegionContourIntersection, RegionContourKey, RegionContourRole, RegionIntersectionSet,
-    RegionPointLocation, RegionSide, RegionView2, Segment2, SegmentIntersection, UncertaintyReason,
+    CurveStringCurveTrimQueryPath2, CurveStringCurveTrimResult2, CurveStringIntersection, FillRule,
+    LineSeg2, LineSeg2Facts, LineSide, Point2, Region2, RegionContourIntersection,
+    RegionContourKey, RegionContourRole, RegionIntersectionSet, RegionPointLocation, RegionSide,
+    RegionView2, Segment2, SegmentIntersection, UncertaintyReason,
 };
 
 /// Prepared point-line classifier for a fixed [`LineSeg2`].
@@ -403,6 +404,27 @@ impl<'a> PreparedCurveStringView2<'a> {
     ) -> CurveResult<Vec<CurveStringIntersection>> {
         let other = PreparedCurveStringView2::from_curve_string(other, policy);
         self.intersect_prepared_curve_string(&other, policy)
+    }
+
+    /// Trims the prepared source curve between point intersections with two prepared cutters.
+    ///
+    /// The cached broad-phase boxes in all three prepared views are reused for
+    /// intersection collection; exact split validation and materialization still
+    /// delegate to the source [`CurveString2`] trim pipeline.
+    pub fn trim_between_prepared_curve_intersections(
+        &self,
+        start_cutter: &PreparedCurveStringView2<'_>,
+        end_cutter: &PreparedCurveStringView2<'_>,
+        policy: &CurvePolicy,
+    ) -> CurveResult<CurveStringCurveTrimResult2> {
+        let start_events = self.intersect_prepared_curve_string(start_cutter, policy)?;
+        let end_events = self.intersect_prepared_curve_string(end_cutter, policy)?;
+        self.curve.trim_between_curve_intersection_events(
+            start_events,
+            end_events,
+            CurveStringCurveTrimQueryPath2::Prepared,
+            policy,
+        )
     }
 
     /// Classifies whether this prepared open curve string self-contacts.

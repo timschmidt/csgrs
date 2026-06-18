@@ -124,12 +124,22 @@ pub struct CurveStringCurveTrimHit2 {
     kind: IntersectionKind,
 }
 
+/// Intersection query path used to collect curve-trim split evidence.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum CurveStringCurveTrimQueryPath2 {
+    /// Intersections were collected by preparing transient broad-phase data.
+    Direct,
+    /// Intersections were collected through caller-supplied prepared views.
+    Prepared,
+}
+
 /// Report for a trim whose boundaries come from cutter curve intersections.
 #[derive(Clone, Debug, PartialEq)]
 pub struct CurveStringCurveTrimReport2 {
     start_hits: Vec<CurveStringCurveTrimHit2>,
     end_hits: Vec<CurveStringCurveTrimHit2>,
     trim_report: Option<CurveStringTrimReport2>,
+    query_path: CurveStringCurveTrimQueryPath2,
     status: RetainedTopologyStatus,
     blocker: Option<UncertaintyReason>,
 }
@@ -496,6 +506,21 @@ impl CurveString2 {
     ) -> CurveResult<CurveStringCurveTrimResult2> {
         let start_events = self.intersect_curve_string(start_cutter, policy)?;
         let end_events = self.intersect_curve_string(end_cutter, policy)?;
+        self.trim_between_curve_intersection_events(
+            start_events,
+            end_events,
+            CurveStringCurveTrimQueryPath2::Direct,
+            policy,
+        )
+    }
+
+    pub(crate) fn trim_between_curve_intersection_events(
+        &self,
+        start_events: Vec<CurveStringIntersection>,
+        end_events: Vec<CurveStringIntersection>,
+        query_path: CurveStringCurveTrimQueryPath2,
+        policy: &CurvePolicy,
+    ) -> CurveResult<CurveStringCurveTrimResult2> {
         let start_extraction = extract_curve_trim_hits(&start_events);
         let end_extraction = extract_curve_trim_hits(&end_events);
 
@@ -506,6 +531,7 @@ impl CurveString2 {
                     start_extraction.hits,
                     end_extraction.hits,
                     None,
+                    query_path,
                     status,
                     Some(blocker),
                 ));
@@ -518,6 +544,7 @@ impl CurveString2 {
                     start_extraction.hits,
                     end_extraction.hits,
                     None,
+                    query_path,
                     status,
                     Some(blocker),
                 ));
@@ -534,6 +561,7 @@ impl CurveString2 {
                 start_hits: vec![start_hit],
                 end_hits: vec![end_hit],
                 trim_report: Some(trim.report().clone()),
+                query_path,
                 status,
                 blocker,
             },
@@ -839,6 +867,11 @@ impl CurveStringCurveTrimReport2 {
         self.trim_report.as_ref()
     }
 
+    /// Returns the intersection query path used to collect split evidence.
+    pub const fn query_path(&self) -> CurveStringCurveTrimQueryPath2 {
+        self.query_path
+    }
+
     /// Returns trim-by-curve materialization status.
     pub const fn status(&self) -> RetainedTopologyStatus {
         self.status
@@ -971,6 +1004,7 @@ fn blocked_curve_trim_result(
     start_hits: Vec<CurveStringCurveTrimHit2>,
     end_hits: Vec<CurveStringCurveTrimHit2>,
     trim_report: Option<CurveStringTrimReport2>,
+    query_path: CurveStringCurveTrimQueryPath2,
     status: RetainedTopologyStatus,
     blocker: Option<UncertaintyReason>,
 ) -> CurveStringCurveTrimResult2 {
@@ -980,6 +1014,7 @@ fn blocked_curve_trim_result(
             start_hits,
             end_hits,
             trim_report,
+            query_path,
             status,
             blocker,
         },

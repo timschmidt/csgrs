@@ -1,8 +1,8 @@
 use hypercurve::{
     BulgeVertex2, CircularArc2, Classification, Contour2, CurveError, CurvePolicy, CurveString2,
-    CurveStringEndpoint2, CurveStringEndpointConnectionStatus2, CurveStringLinkKind2,
-    CurveStringTrimPoint2, IntersectionKind, LineArcIntersection, LineArcOrder, LineSeg2, Point2,
-    Real, Segment2, SegmentIntersection, UncertaintyReason,
+    CurveStringCurveTrimQueryPath2, CurveStringEndpoint2, CurveStringEndpointConnectionStatus2,
+    CurveStringLinkKind2, CurveStringTrimPoint2, IntersectionKind, LineArcIntersection,
+    LineArcOrder, LineSeg2, Point2, Real, Segment2, SegmentIntersection, UncertaintyReason,
 };
 
 fn s(value: i32) -> Real {
@@ -421,6 +421,10 @@ fn curve_string_trim_between_curve_intersections_materializes_line_window() {
         .unwrap();
 
     assert!(trim.report().status().is_native_exact());
+    assert_eq!(
+        trim.report().query_path(),
+        CurveStringCurveTrimQueryPath2::Direct
+    );
     assert!(trim.report().blocker().is_none());
     assert_eq!(trim.report().start_hits().len(), 1);
     assert_eq!(trim.report().end_hits().len(), 1);
@@ -444,6 +448,40 @@ fn curve_string_trim_between_curve_intersections_materializes_line_window() {
         .expect("curve-intersection trim should materialize");
     assert_eq!(trimmed.start(), Some(&p(2, 0)));
     assert_eq!(trimmed.end(), Some(&p(8, 0)));
+}
+
+#[test]
+fn prepared_curve_string_trim_between_curve_intersections_reuses_cached_evidence() {
+    let curve = CurveString2::try_new(vec![line_segment(0, 0, 10, 0)]).unwrap();
+    let start_cutter = CurveString2::try_new(vec![line_segment(2, -1, 2, 1)]).unwrap();
+    let end_cutter = CurveString2::try_new(vec![line_segment(8, -1, 8, 1)]).unwrap();
+    let policy = policy();
+    let prepared_curve = curve.prepare_topology_queries(&policy);
+    let prepared_start = start_cutter.prepare_topology_queries(&policy);
+    let prepared_end = end_cutter.prepare_topology_queries(&policy);
+
+    let direct = curve
+        .trim_between_curve_intersections(&start_cutter, &end_cutter, &policy)
+        .unwrap();
+    let prepared = prepared_curve
+        .trim_between_prepared_curve_intersections(&prepared_start, &prepared_end, &policy)
+        .unwrap();
+
+    assert!(prepared.report().status().is_native_exact());
+    assert_eq!(
+        prepared.report().query_path(),
+        CurveStringCurveTrimQueryPath2::Prepared
+    );
+    assert_eq!(prepared.report().start_hits(), direct.report().start_hits());
+    assert_eq!(prepared.report().end_hits(), direct.report().end_hits());
+    assert_eq!(
+        prepared.report().trim_report(),
+        direct.report().trim_report()
+    );
+    assert_eq!(
+        prepared.curve_string().unwrap().segments(),
+        direct.curve_string().unwrap().segments()
+    );
 }
 
 #[test]
