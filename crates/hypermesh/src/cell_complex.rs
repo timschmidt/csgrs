@@ -851,6 +851,16 @@ impl ExactLabeledCellComplex {
 
 #[allow(dead_code)]
 impl ExactSelectedCellComplex {
+    pub(crate) fn with_gate_reports(
+        mut self,
+        topology_assembly_report: ExactTopologyAssemblyReport,
+        region_ownership_report: ExactRegionOwnershipReport,
+    ) -> Self {
+        self.topology_assembly_report = Some(topology_assembly_report);
+        self.region_ownership_report = Some(region_ownership_report);
+        self
+    }
+
     /// Validate local selected-cell consistency without replaying source meshes.
     pub fn validate(&self) -> Result<(), ExactArrangementBlocker> {
         validate_lower_dimensional_artifacts(&self.lower_dimensional_artifacts)?;
@@ -1021,7 +1031,7 @@ pub(crate) fn select_arrangement_for_replay(
     let labeled = arrangement.label_regions(labeling_policy)?;
     let ownership_report = labeled.region_ownership_report(left, right, labeling_policy);
     ownership_report.validate()?;
-    let mut selected = if ownership_report.volume_selection_resolves_operation(operation) {
+    let selected = if ownership_report.volume_selection_resolves_operation(operation) {
         labeled.select_volume_resolved_with_policy(operation, policy)
     } else {
         if !ownership_report.is_resolved()
@@ -1030,9 +1040,8 @@ pub(crate) fn select_arrangement_for_replay(
             return Err(ExactArrangementBlocker::UnresolvedRegionClassification);
         }
         labeled.select_with_policy(operation, policy)
-    }?;
-    selected.topology_assembly_report = Some(topology_report);
-    selected.region_ownership_report = Some(ownership_report);
+    }?
+    .with_gate_reports(topology_report, ownership_report);
     Ok(selected)
 }
 

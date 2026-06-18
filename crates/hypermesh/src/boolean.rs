@@ -5557,8 +5557,7 @@ fn run_arrangement_cell_complex_attempt_from_arrangement(
             return Ok(ArrangementCellComplexOutcome::Declined(attempt));
         }
     };
-    selected.topology_assembly_report = Some(topology_report.clone());
-    selected.region_ownership_report = Some(ownership_report.clone());
+    selected = selected.with_gate_reports(topology_report.clone(), ownership_report.clone());
     attempt.stage = ExactArrangementBooleanStage::Selected;
     record_selected_orientation_counts(&mut attempt, &selected);
     attempt.selected_cell_complex = Some(selected.clone());
