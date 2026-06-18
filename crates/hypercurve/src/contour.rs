@@ -7,8 +7,9 @@ use hyperreal::{Real, ZeroKnowledge as ZeroStatus};
 use crate::bbox::{Aabb2, aabb_decided_misses_point, decided_contour_aabb, decided_segment_aabb};
 use crate::classify::{classify_oriented_line, compare_reals};
 use crate::{
-    BulgeVertex2, Classification, CurveError, CurvePolicy, CurveResult, CurveString2, LineSide,
-    Point2, Segment2, UncertaintyReason,
+    BulgeVertex2, Classification, CurveError, CurvePolicy, CurveResult, CurveString2,
+    CurveStringChamferReport2, LineSide, Point2, RetainedTopologyStatus, Segment2,
+    UncertaintyReason,
 };
 
 /// Fill rule used when classifying contour interiors.
@@ -29,6 +30,24 @@ pub enum ContourPointLocation {
     Boundary,
     /// The point is inside the filled contour.
     Inside,
+}
+
+/// Report for a closed-contour line-line chamfer.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ContourChamferReport2 {
+    vertex_index: usize,
+    curve_string_report: CurveStringChamferReport2,
+    source_segment_count: usize,
+    fill_rule: FillRule,
+    status: RetainedTopologyStatus,
+    blocker: Option<UncertaintyReason>,
+}
+
+/// Result of a report-bearing closed-contour chamfer.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ContourChamferResult2 {
+    contour: Option<Contour2>,
+    report: ContourChamferReport2,
 }
 
 /// A closed sequence of connected native segments.
@@ -107,6 +126,53 @@ impl Contour2 {
     /// Returns the fill rule.
     pub const fn fill_rule(&self) -> FillRule {
         self.fill_rule
+    }
+
+    /// Chamfers a non-wrapping interior line-line contour vertex by exact parameters.
+    ///
+    /// `vertex_index` identifies the shared vertex between
+    /// `segments[vertex_index - 1]` and `segments[vertex_index]`; therefore the
+    /// wraparound vertex `0` is intentionally left for a rotation-aware slice.
+    /// The underlying open curve-string chamfer report is retained, and the
+    /// resulting segment sequence is accepted only through the checked closed
+    /// contour constructor.
+    pub fn chamfer_line_line_vertex_by_parameters(
+        &self,
+        vertex_index: usize,
+        previous_param: Real,
+        next_param: Real,
+        policy: &CurvePolicy,
+    ) -> CurveResult<ContourChamferResult2> {
+        if vertex_index == 0 || vertex_index >= self.segments().len() {
+            return Err(CurveError::InvalidCurveRange);
+        }
+        let chamfer = self.curve.chamfer_line_line_vertex_by_parameters(
+            vertex_index,
+            previous_param,
+            next_param,
+            policy,
+        )?;
+        let curve_string_report = chamfer.report().clone();
+        let status = curve_string_report.status();
+        let blocker = curve_string_report.blocker();
+        let contour = match chamfer.into_curve_string() {
+            Some(curve_string) => Some(Self::try_new_with_fill_rule(
+                curve_string.into_segments(),
+                self.fill_rule,
+            )?),
+            None => None,
+        };
+        Ok(ContourChamferResult2 {
+            contour,
+            report: ContourChamferReport2 {
+                vertex_index,
+                curve_string_report,
+                source_segment_count: self.segments().len(),
+                fill_rule: self.fill_rule,
+                status,
+                blocker,
+            },
+        })
     }
 
     /// Returns this contour's exact signed area when every segment can provide
@@ -258,6 +324,55 @@ impl Contour2 {
         policy: &CurvePolicy,
     ) -> CurveResult<Classification<crate::ContourFragmentSet>> {
         crate::fragment::split_contour_at_self_intersections(self, intersections, policy)
+    }
+}
+
+impl ContourChamferReport2 {
+    /// Returns the contour vertex index requested by the chamfer.
+    pub const fn vertex_index(&self) -> usize {
+        self.vertex_index
+    }
+
+    /// Returns the retained open curve-string chamfer report.
+    pub const fn curve_string_report(&self) -> &CurveStringChamferReport2 {
+        &self.curve_string_report
+    }
+
+    /// Returns the source contour segment count captured by this report.
+    pub const fn source_segment_count(&self) -> usize {
+        self.source_segment_count
+    }
+
+    /// Returns the fill rule preserved by this contour edit.
+    pub const fn fill_rule(&self) -> FillRule {
+        self.fill_rule
+    }
+
+    /// Returns contour chamfer materialization status.
+    pub const fn status(&self) -> RetainedTopologyStatus {
+        self.status
+    }
+
+    /// Returns the exact blocker for non-materialized contour chamfers.
+    pub const fn blocker(&self) -> Option<UncertaintyReason> {
+        self.blocker
+    }
+}
+
+impl ContourChamferResult2 {
+    /// Returns the materialized chamfered contour, if supported.
+    pub const fn contour(&self) -> Option<&Contour2> {
+        self.contour.as_ref()
+    }
+
+    /// Consumes this result and returns the materialized chamfered contour, if any.
+    pub fn into_contour(self) -> Option<Contour2> {
+        self.contour
+    }
+
+    /// Returns the retained contour chamfer report.
+    pub const fn report(&self) -> &ContourChamferReport2 {
+        &self.report
     }
 }
 

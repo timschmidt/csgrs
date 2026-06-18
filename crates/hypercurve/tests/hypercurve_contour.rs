@@ -7,6 +7,10 @@ fn s(value: i32) -> Real {
     value.into()
 }
 
+fn q(numerator: i32, denominator: i32) -> Real {
+    (Real::from(numerator) / Real::from(denominator)).unwrap()
+}
+
 fn p(x: i32, y: i32) -> hypercurve::Point2 {
     hypercurve::Point2::new(s(x), s(y))
 }
@@ -72,6 +76,93 @@ fn contour_rejects_open_segment_chain() {
 
     let err = Contour2::try_new(segments).expect_err("open chain is not a contour");
     assert_eq!(err, CurveError::DisconnectedCurveString);
+}
+
+#[test]
+fn contour_chamfer_line_line_vertex_materializes_closed_contour() {
+    let contour = rectangle();
+
+    let chamfer = contour
+        .chamfer_line_line_vertex_by_parameters(1, q(3, 4), q(1, 4), &policy())
+        .unwrap();
+
+    assert!(chamfer.report().status().is_native_exact());
+    assert_eq!(chamfer.report().vertex_index(), 1);
+    assert_eq!(chamfer.report().source_segment_count(), 4);
+    assert_eq!(chamfer.report().fill_rule(), FillRule::NonZero);
+    assert_eq!(
+        chamfer
+            .report()
+            .curve_string_report()
+            .chamfer_segment_index(),
+        Some(1)
+    );
+    let contour = chamfer
+        .contour()
+        .expect("line-line contour chamfer should materialize");
+    assert_eq!(contour.len(), 5);
+    assert_eq!(contour.fill_rule(), FillRule::NonZero);
+    assert_eq!(contour.segments()[0].start(), &p(0, 0));
+    assert_eq!(contour.segments()[0].end(), &p(3, 0));
+    assert_eq!(contour.segments()[1].start(), &p(3, 0));
+    assert_eq!(contour.segments()[1].end(), &p(4, 1));
+    assert_eq!(contour.segments()[4].end(), &p(0, 0));
+}
+
+#[test]
+fn contour_chamfer_preserves_fill_rule() {
+    let contour = Contour2::from_bulge_vertices_with_fill_rule(
+        &[
+            vertex(0, 0, 0),
+            vertex(4, 0, 0),
+            vertex(4, 4, 0),
+            vertex(0, 4, 0),
+        ],
+        FillRule::EvenOdd,
+    )
+    .unwrap();
+
+    let chamfer = contour
+        .chamfer_line_line_vertex_by_parameters(1, q(3, 4), q(1, 4), &policy())
+        .unwrap();
+
+    assert_eq!(chamfer.report().fill_rule(), FillRule::EvenOdd);
+    assert_eq!(chamfer.contour().unwrap().fill_rule(), FillRule::EvenOdd);
+}
+
+#[test]
+fn contour_chamfer_reports_boundary_parameters() {
+    let contour = rectangle();
+
+    let chamfer = contour
+        .chamfer_line_line_vertex_by_parameters(1, s(1), q(1, 4), &policy())
+        .unwrap();
+
+    assert!(chamfer.contour().is_none());
+    assert!(chamfer.report().status().is_retained_evidence());
+    assert_eq!(
+        chamfer.report().blocker(),
+        Some(UncertaintyReason::Boundary)
+    );
+    assert_eq!(
+        chamfer
+            .report()
+            .curve_string_report()
+            .chamfer_segment_index(),
+        None
+    );
+}
+
+#[test]
+fn contour_chamfer_rejects_wraparound_vertex_for_now() {
+    let contour = rectangle();
+
+    assert_eq!(
+        contour
+            .chamfer_line_line_vertex_by_parameters(0, q(3, 4), q(1, 4), &policy())
+            .unwrap_err(),
+        CurveError::InvalidCurveRange
+    );
 }
 
 #[test]

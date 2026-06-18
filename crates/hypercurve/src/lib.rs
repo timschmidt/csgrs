@@ -137,7 +137,9 @@ pub use bspline::{
 };
 pub use bulge::BulgeVertex2;
 pub use classify::{Classification, LineSide, UncertaintyReason};
-pub use contour::{Contour2, ContourPointLocation, FillRule};
+pub use contour::{
+    Contour2, ContourChamferReport2, ContourChamferResult2, ContourPointLocation, FillRule,
+};
 pub use curve_string::{
     ConnectedCurveString2, CurveString2, CurveStringChamferReport2, CurveStringChamferResult2,
     CurveStringConnectReport2, CurveStringCurveTrimHit2, CurveStringCurveTrimQueryPath2,
