@@ -676,6 +676,10 @@ fn curve_string_connect_end_to_start_inserts_exact_line() {
     );
     assert_eq!(connected.report().first_segment_count(), 1);
     assert_eq!(connected.report().second_segment_count(), 1);
+    assert_eq!(connected.report().endpoint_pair_count(), 1);
+    assert_eq!(connected.report().exact_endpoint_pair_count(), 0);
+    assert_eq!(connected.report().disconnected_endpoint_pair_count(), 1);
+    assert_eq!(connected.report().unresolved_endpoint_pair_count(), 0);
     assert_eq!(
         connected.report().kind(),
         Some(CurveStringLinkKind2::FirstEndToSecondStart)
@@ -734,6 +738,10 @@ fn curve_string_connect_selected_endpoints_orients_inputs() {
         .unwrap();
 
     assert!(connected.report().status().is_native_exact());
+    assert_eq!(connected.report().endpoint_pair_count(), 1);
+    assert_eq!(connected.report().exact_endpoint_pair_count(), 0);
+    assert_eq!(connected.report().disconnected_endpoint_pair_count(), 1);
+    assert_eq!(connected.report().unresolved_endpoint_pair_count(), 0);
     assert_eq!(
         connected.report().kind(),
         Some(CurveStringLinkKind2::FirstStartToSecondEnd)
@@ -788,6 +796,10 @@ fn curve_string_connect_nearest_endpoints_selects_unique_pair() {
         .unwrap();
 
     assert!(connected.report().status().is_native_exact());
+    assert_eq!(connected.report().endpoint_pair_count(), 4);
+    assert_eq!(connected.report().exact_endpoint_pair_count(), 0);
+    assert_eq!(connected.report().disconnected_endpoint_pair_count(), 4);
+    assert_eq!(connected.report().unresolved_endpoint_pair_count(), 0);
     assert_eq!(
         connected.report().kind(),
         Some(CurveStringLinkKind2::FirstEndToSecondEnd)
@@ -847,6 +859,10 @@ fn curve_string_connect_nearest_endpoints_reports_tie_boundary() {
         connected.report().blocker(),
         Some(UncertaintyReason::Boundary)
     );
+    assert_eq!(connected.report().endpoint_pair_count(), 4);
+    assert_eq!(connected.report().exact_endpoint_pair_count(), 0);
+    assert_eq!(connected.report().disconnected_endpoint_pair_count(), 4);
+    assert_eq!(connected.report().unresolved_endpoint_pair_count(), 0);
     assert_eq!(connected.report().connector_segment_index(), None);
     assert!(connected.report().output_segments().is_empty());
 }
@@ -862,6 +878,10 @@ fn curve_string_connect_end_to_start_blocks_already_connected_endpoints() {
 
     assert!(connected.curve_string().is_none());
     assert!(connected.report().status().is_retained_evidence());
+    assert_eq!(connected.report().endpoint_pair_count(), 1);
+    assert_eq!(connected.report().exact_endpoint_pair_count(), 1);
+    assert_eq!(connected.report().disconnected_endpoint_pair_count(), 0);
+    assert_eq!(connected.report().unresolved_endpoint_pair_count(), 0);
     assert_eq!(connected.report().connector_segment_index(), None);
     assert_eq!(
         connected.report().endpoint_report().status(),

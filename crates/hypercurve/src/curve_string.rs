@@ -171,6 +171,10 @@ pub struct CurveStringConnectReport2 {
     endpoint_report: CurveStringEndpointConnectionReport2,
     first_segment_count: usize,
     second_segment_count: usize,
+    endpoint_pair_count: usize,
+    exact_endpoint_pair_count: usize,
+    disconnected_endpoint_pair_count: usize,
+    unresolved_endpoint_pair_count: usize,
     connector_segment_index: Option<usize>,
     output_segments: Vec<CurveStringConnectOutputSegmentReport2>,
     status: RetainedTopologyStatus,
@@ -805,6 +809,7 @@ impl CurveString2 {
         policy: &CurvePolicy,
     ) -> CurveResult<ConnectedCurveString2> {
         let endpoint_report = self.endpoint_connection_report_for_kind(other, kind, policy)?;
+        let endpoint_summary = EndpointPairSummary::from_report(&endpoint_report);
         match endpoint_report.status {
             CurveStringEndpointConnectionStatus2::NativeExact => {
                 return Ok(blocked_connected_curve_string(
@@ -812,6 +817,7 @@ impl CurveString2 {
                     other,
                     Some(kind),
                     endpoint_report,
+                    endpoint_summary,
                     RetainedTopologyStatus::Unsupported,
                     Some(UncertaintyReason::Boundary),
                 ));
@@ -823,6 +829,7 @@ impl CurveString2 {
                     other,
                     Some(kind),
                     endpoint_report,
+                    endpoint_summary,
                     RetainedTopologyStatus::Unresolved,
                     Some(reason),
                 ));
@@ -835,6 +842,10 @@ impl CurveString2 {
             endpoint_report,
             first_segment_count: self.len(),
             second_segment_count: other.len(),
+            endpoint_pair_count: endpoint_summary.pair_count,
+            exact_endpoint_pair_count: endpoint_summary.exact_count,
+            disconnected_endpoint_pair_count: endpoint_summary.disconnected_count,
+            unresolved_endpoint_pair_count: endpoint_summary.unresolved_count,
             connector_segment_index: Some(connector_segment_index),
             output_segments: connect_output_segment_reports(self, other, kind)?,
             status: RetainedTopologyStatus::NativeExact,
@@ -859,32 +870,51 @@ impl CurveString2 {
     ) -> CurveResult<ConnectedCurveString2> {
         let reports = self.endpoint_link_reports(other, policy)?;
         let mut candidates = Vec::new();
+        let mut endpoint_summary = EndpointPairSummary {
+            pair_count: reports.len(),
+            ..EndpointPairSummary::default()
+        };
+        let mut exact_blocker = None;
+        let mut unresolved_blocker = None;
         for (kind, report) in reports {
+            endpoint_summary.add_status(report.status);
             match report.status {
                 CurveStringEndpointConnectionStatus2::NativeExact => {
-                    return Ok(blocked_connected_curve_string(
-                        self,
-                        other,
-                        Some(kind),
-                        report,
-                        RetainedTopologyStatus::Unsupported,
-                        Some(UncertaintyReason::Boundary),
-                    ));
+                    if exact_blocker.is_none() {
+                        exact_blocker = Some((kind, report));
+                    }
                 }
                 CurveStringEndpointConnectionStatus2::Disconnected => {
                     candidates.push((kind, report));
                 }
                 CurveStringEndpointConnectionStatus2::Unresolved(reason) => {
-                    return Ok(blocked_connected_curve_string(
-                        self,
-                        other,
-                        Some(kind),
-                        report,
-                        RetainedTopologyStatus::Unresolved,
-                        Some(reason),
-                    ));
+                    if unresolved_blocker.is_none() {
+                        unresolved_blocker = Some((kind, report, reason));
+                    }
                 }
             }
+        }
+        if let Some((kind, report)) = exact_blocker {
+            return Ok(blocked_connected_curve_string(
+                self,
+                other,
+                Some(kind),
+                report,
+                endpoint_summary,
+                RetainedTopologyStatus::Unsupported,
+                Some(UncertaintyReason::Boundary),
+            ));
+        }
+        if let Some((kind, report, reason)) = unresolved_blocker {
+            return Ok(blocked_connected_curve_string(
+                self,
+                other,
+                Some(kind),
+                report,
+                endpoint_summary,
+                RetainedTopologyStatus::Unresolved,
+                Some(reason),
+            ));
         }
 
         let (kind, endpoint_report) = match unique_nearest_endpoint_report(candidates, policy) {
@@ -895,6 +925,7 @@ impl CurveString2 {
                     other,
                     Some(kind),
                     report,
+                    endpoint_summary,
                     RetainedTopologyStatus::Unsupported,
                     Some(UncertaintyReason::Boundary),
                 ));
@@ -905,6 +936,7 @@ impl CurveString2 {
                     other,
                     Some(kind),
                     report,
+                    endpoint_summary,
                     RetainedTopologyStatus::Unresolved,
                     Some(reason),
                 ));
@@ -917,6 +949,10 @@ impl CurveString2 {
             endpoint_report,
             first_segment_count: self.len(),
             second_segment_count: other.len(),
+            endpoint_pair_count: endpoint_summary.pair_count,
+            exact_endpoint_pair_count: endpoint_summary.exact_count,
+            disconnected_endpoint_pair_count: endpoint_summary.disconnected_count,
+            unresolved_endpoint_pair_count: endpoint_summary.unresolved_count,
             connector_segment_index: Some(connector_segment_index),
             output_segments: connect_output_segment_reports(self, other, kind)?,
             status: RetainedTopologyStatus::NativeExact,
@@ -3189,6 +3225,33 @@ struct RegionTrimBoundaryWorkload {
     tested_pair_count: usize,
 }
 
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+struct EndpointPairSummary {
+    pair_count: usize,
+    exact_count: usize,
+    disconnected_count: usize,
+    unresolved_count: usize,
+}
+
+impl EndpointPairSummary {
+    fn from_report(report: &CurveStringEndpointConnectionReport2) -> Self {
+        let mut summary = Self {
+            pair_count: 1,
+            ..Self::default()
+        };
+        summary.add_status(report.status);
+        summary
+    }
+
+    fn add_status(&mut self, status: CurveStringEndpointConnectionStatus2) {
+        match status {
+            CurveStringEndpointConnectionStatus2::NativeExact => self.exact_count += 1,
+            CurveStringEndpointConnectionStatus2::Disconnected => self.disconnected_count += 1,
+            CurveStringEndpointConnectionStatus2::Unresolved(_) => self.unresolved_count += 1,
+        }
+    }
+}
+
 enum NearestEndpointChoice {
     Selected(CurveStringLinkKind2, CurveStringEndpointConnectionReport2),
     Ambiguous(CurveStringLinkKind2, CurveStringEndpointConnectionReport2),
@@ -5058,6 +5121,26 @@ impl CurveStringConnectReport2 {
         self.second_segment_count
     }
 
+    /// Returns endpoint pairs inspected before connector selection or blocking.
+    pub const fn endpoint_pair_count(&self) -> usize {
+        self.endpoint_pair_count
+    }
+
+    /// Returns inspected endpoint pairs certified already connected.
+    pub const fn exact_endpoint_pair_count(&self) -> usize {
+        self.exact_endpoint_pair_count
+    }
+
+    /// Returns inspected endpoint pairs certified disconnected.
+    pub const fn disconnected_endpoint_pair_count(&self) -> usize {
+        self.disconnected_endpoint_pair_count
+    }
+
+    /// Returns inspected endpoint pairs that remained unresolved.
+    pub const fn unresolved_endpoint_pair_count(&self) -> usize {
+        self.unresolved_endpoint_pair_count
+    }
+
     /// Returns the inserted connector segment index in the output curve string.
     pub const fn connector_segment_index(&self) -> Option<usize> {
         self.connector_segment_index
@@ -5606,6 +5689,7 @@ fn blocked_connected_curve_string(
     second: &CurveString2,
     kind: Option<CurveStringLinkKind2>,
     endpoint_report: CurveStringEndpointConnectionReport2,
+    endpoint_summary: EndpointPairSummary,
     status: RetainedTopologyStatus,
     blocker: Option<UncertaintyReason>,
 ) -> ConnectedCurveString2 {
@@ -5616,6 +5700,10 @@ fn blocked_connected_curve_string(
             endpoint_report,
             first_segment_count: first.len(),
             second_segment_count: second.len(),
+            endpoint_pair_count: endpoint_summary.pair_count,
+            exact_endpoint_pair_count: endpoint_summary.exact_count,
+            disconnected_endpoint_pair_count: endpoint_summary.disconnected_count,
+            unresolved_endpoint_pair_count: endpoint_summary.unresolved_count,
             connector_segment_index: None,
             output_segments: Vec::new(),
             status,
