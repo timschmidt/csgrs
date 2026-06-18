@@ -444,7 +444,9 @@ pub struct CurveStringChamferReport2 {
     chamfer_segment_index: Option<usize>,
     chamfer_segment_kind: Option<SegmentKind>,
     source_segment_count: usize,
+    source_segment_kind_counts: SegmentKindCounts,
     output_segment_count: Option<usize>,
+    output_segment_kind_counts: Option<SegmentKindCounts>,
     status: RetainedTopologyStatus,
     blocker: Option<UncertaintyReason>,
 }
@@ -491,7 +493,9 @@ pub struct CurveStringFilletReport2 {
     fillet_segment_index: Option<usize>,
     fillet_segment_kind: Option<SegmentKind>,
     source_segment_count: usize,
+    source_segment_kind_counts: SegmentKindCounts,
     output_segment_count: Option<usize>,
+    output_segment_kind_counts: Option<SegmentKindCounts>,
     status: RetainedTopologyStatus,
     blocker: Option<UncertaintyReason>,
 }
@@ -1809,6 +1813,7 @@ impl CurveString2 {
         segments.extend(self.segments[next_segment_index + 1..].iter().cloned());
         let curve_string = CurveString2::try_new(segments)?;
         let output_segment_count = curve_string.len();
+        let output_segment_kind_counts = curve_string_segment_kind_counts(&curve_string);
         let segment_reports = vec![
             CurveStringTrimSegmentReport2 {
                 source_segment_index: previous_segment_index,
@@ -1844,7 +1849,9 @@ impl CurveString2 {
                 chamfer_segment_index: Some(chamfer_segment_index),
                 chamfer_segment_kind: Some(SegmentKind::Line),
                 source_segment_count: self.len(),
+                source_segment_kind_counts: curve_string_segment_kind_counts(self),
                 output_segment_count: Some(output_segment_count),
+                output_segment_kind_counts: Some(output_segment_kind_counts),
                 status: RetainedTopologyStatus::NativeExact,
                 blocker: None,
             },
@@ -2257,6 +2264,7 @@ impl CurveString2 {
         segments.extend(self.segments[next_segment_index + 1..].iter().cloned());
         let curve_string = CurveString2::try_new(segments)?;
         let output_segment_count = curve_string.len();
+        let output_segment_kind_counts = curve_string_segment_kind_counts(&curve_string);
         let segment_reports = vec![
             CurveStringTrimSegmentReport2 {
                 source_segment_index: previous_segment_index,
@@ -2294,7 +2302,9 @@ impl CurveString2 {
                 fillet_segment_index: Some(fillet_segment_index),
                 fillet_segment_kind: Some(SegmentKind::Arc),
                 source_segment_count: self.len(),
+                source_segment_kind_counts: curve_string_segment_kind_counts(self),
                 output_segment_count: Some(output_segment_count),
+                output_segment_kind_counts: Some(output_segment_kind_counts),
                 status: RetainedTopologyStatus::NativeExact,
                 blocker: None,
             },
@@ -3152,9 +3162,19 @@ impl CurveStringChamferReport2 {
         self.source_segment_count
     }
 
+    /// Returns primitive-family counts for the source curve string.
+    pub const fn source_segment_kind_counts(&self) -> SegmentKindCounts {
+        self.source_segment_kind_counts
+    }
+
     /// Returns output segment count when the chamfer materialized.
     pub const fn output_segment_count(&self) -> Option<usize> {
         self.output_segment_count
+    }
+
+    /// Returns primitive-family counts for the materialized chamfer output.
+    pub const fn output_segment_kind_counts(&self) -> Option<SegmentKindCounts> {
+        self.output_segment_kind_counts
     }
 
     /// Returns chamfer materialization status.
@@ -3275,9 +3295,19 @@ impl CurveStringFilletReport2 {
         self.source_segment_count
     }
 
+    /// Returns primitive-family counts for the source curve string.
+    pub const fn source_segment_kind_counts(&self) -> SegmentKindCounts {
+        self.source_segment_kind_counts
+    }
+
     /// Returns output segment count when the fillet materialized.
     pub const fn output_segment_count(&self) -> Option<usize> {
         self.output_segment_count
+    }
+
+    /// Returns primitive-family counts for the materialized fillet output.
+    pub const fn output_segment_kind_counts(&self) -> Option<SegmentKindCounts> {
+        self.output_segment_kind_counts
     }
 
     /// Returns fillet materialization status.
@@ -5017,7 +5047,9 @@ fn blocked_chamfer_result(
             chamfer_segment_index: None,
             chamfer_segment_kind: None,
             source_segment_count: curve_string.len(),
+            source_segment_kind_counts: curve_string_segment_kind_counts(curve_string),
             output_segment_count: None,
+            output_segment_kind_counts: None,
             status,
             blocker,
         },
@@ -5057,7 +5089,9 @@ fn blocked_fillet_result(
             fillet_segment_index: None,
             fillet_segment_kind: None,
             source_segment_count: curve_string.len(),
+            source_segment_kind_counts: curve_string_segment_kind_counts(curve_string),
             output_segment_count: None,
+            output_segment_kind_counts: None,
             status,
             blocker,
         },
