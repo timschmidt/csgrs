@@ -264,6 +264,10 @@ mod tests {
         value.into()
     }
 
+    fn q(numerator: i32, denominator: i32) -> Real {
+        (Real::from(numerator) / Real::from(denominator)).unwrap()
+    }
+
     fn p(x: i32, y: i32) -> Point2 {
         Point2::new(s(x), s(y))
     }
@@ -616,6 +620,7 @@ mod tests {
 
         assert_eq!(hit.point, p(1, -1));
         assert_eq!(hit.line_param, Real::try_from(0.25_f64).unwrap());
+        assert_eq!(hit.arc_param, q(1, 2));
         assert_eq!(hit.kind, IntersectionKind::Crossing);
     }
 
@@ -631,6 +636,7 @@ mod tests {
 
         assert_eq!(hit.point, p(1, 1));
         assert_eq!(hit.line_param, Real::try_from(0.75_f64).unwrap());
+        assert_eq!(hit.arc_param, q(1, 2));
         assert_eq!(hit.kind, IntersectionKind::Crossing);
     }
 
@@ -645,6 +651,8 @@ mod tests {
         };
 
         assert_eq!(hit.point, p(1, -1));
+        assert_eq!(hit.line_param, q(1, 2));
+        assert_eq!(hit.arc_param, q(1, 2));
         assert_eq!(hit.kind, IntersectionKind::Tangent);
     }
 
@@ -669,8 +677,10 @@ mod tests {
         };
 
         assert_eq!(first.point, p(0, 0));
+        assert_eq!(first.arc_param, s(0));
         assert_eq!(first.kind, IntersectionKind::Endpoint);
         assert_eq!(second.point, p(2, 0));
+        assert_eq!(second.arc_param, s(1));
         assert_eq!(second.kind, IntersectionKind::Endpoint);
     }
 
@@ -685,6 +695,8 @@ mod tests {
         };
 
         assert_eq!(hit.point, p(4, 3));
+        assert_eq!(hit.a_param, q(1, 10));
+        assert_eq!(hit.b_param, q(1, 10));
         assert_eq!(hit.kind, IntersectionKind::Crossing);
     }
 
@@ -699,6 +711,8 @@ mod tests {
         };
 
         assert_eq!(hit.point, p(5, 0));
+        assert_eq!(hit.a_param, q(1, 2));
+        assert_eq!(hit.b_param, q(1, 2));
         assert_eq!(hit.kind, IntersectionKind::Tangent);
     }
 
@@ -713,8 +727,12 @@ mod tests {
         };
 
         assert_eq!(first.point, p(4, 3));
+        assert_eq!(first.a_param, s(0));
+        assert_eq!(first.b_param, s(1));
         assert_eq!(first.kind, IntersectionKind::Endpoint);
         assert_eq!(second.point, p(4, -3));
+        assert_eq!(second.a_param, s(1));
+        assert_eq!(second.b_param, s(0));
         assert_eq!(second.kind, IntersectionKind::Endpoint);
     }
 

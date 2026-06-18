@@ -165,6 +165,14 @@ pub struct LineArcIntersectionPoint {
     pub point: Point2,
     /// Parameter on the line segment.
     pub line_param: Real,
+    /// Chord-projection ordering parameter on the arc segment.
+    ///
+    /// This is retained event-ordering evidence for the current minor/
+    /// semicircle arc model. It is not a primitive-float angle or an
+    /// approximate sweep parameter; it is computed from exact point/arc
+    /// coordinates and used only under the same finite-arc predicates that
+    /// certified the witness.
+    pub arc_param: Real,
     /// Local kind of point contact.
     pub kind: IntersectionKind,
 }
@@ -261,6 +269,10 @@ impl CircleCircleRelation {
 pub struct ArcArcIntersectionPoint {
     /// Intersection point.
     pub point: Point2,
+    /// Chord-projection ordering parameter on the first arc segment.
+    pub a_param: Real,
+    /// Chord-projection ordering parameter on the second arc segment.
+    pub b_param: Real,
     /// Local kind of point contact.
     pub kind: IntersectionKind,
 }
@@ -826,15 +838,21 @@ fn intersect_same_circle_arcs(
     match candidates.len() {
         1 => Ok(ArcArcIntersection::Point(ArcArcIntersectionPoint {
             point: candidates[0].point.clone(),
+            a_param: candidates[0].a_param.clone(),
+            b_param: candidates[0].b_param.clone(),
             kind: IntersectionKind::Endpoint,
         })),
         2 => Ok(ArcArcIntersection::TwoPoints {
             first: ArcArcIntersectionPoint {
                 point: candidates[0].point.clone(),
+                a_param: candidates[0].a_param.clone(),
+                b_param: candidates[0].b_param.clone(),
                 kind: IntersectionKind::Endpoint,
             },
             second: ArcArcIntersectionPoint {
                 point: candidates[1].point.clone(),
+                a_param: candidates[1].a_param.clone(),
+                b_param: candidates[1].b_param.clone(),
                 kind: IntersectionKind::Endpoint,
             },
         }),
@@ -1177,6 +1195,8 @@ fn arc_arc_hit_candidate(
     };
 
     Ok(ArcArcCandidate::Hit(ArcArcIntersectionPoint {
+        a_param: arc_chord_param(a, &point)?,
+        b_param: arc_chord_param(b, &point)?,
         point,
         kind,
     }))
@@ -1225,6 +1245,7 @@ fn line_arc_hit_candidate(
     };
 
     Ok(LineArcCandidate::Hit(LineArcIntersectionPoint {
+        arc_param: arc_chord_param(arc, &point)?,
         point,
         line_param,
         kind,
