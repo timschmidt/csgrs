@@ -1488,7 +1488,15 @@ fn curve_string_extend_line_end_to_exact_target() {
     assert_eq!(extended.report().target_point(), &p(5, 0));
     assert_eq!(extended.report().source_param(), Some(&q(5, 2)));
     assert_eq!(extended.report().source_segment_count(), 1);
+    assert_eq!(
+        extended.report().source_segment_kind_counts(),
+        SegmentKindCounts { lines: 1, arcs: 0 }
+    );
     assert_eq!(extended.report().output_segment_count(), Some(1));
+    assert_eq!(
+        extended.report().output_segment_kind_counts(),
+        Some(SegmentKindCounts { lines: 1, arcs: 0 })
+    );
     assert!(extended.report().blocker().is_none());
     let curve = extended
         .curve_string()
@@ -1513,7 +1521,15 @@ fn curve_string_extend_line_start_to_exact_target() {
     assert_eq!(extended.report().target_point(), &p(-3, 0));
     assert_eq!(extended.report().source_param(), Some(&q(-3, 2)));
     assert_eq!(extended.report().source_segment_count(), 2);
+    assert_eq!(
+        extended.report().source_segment_kind_counts(),
+        SegmentKindCounts { lines: 2, arcs: 0 }
+    );
     assert_eq!(extended.report().output_segment_count(), Some(2));
+    assert_eq!(
+        extended.report().output_segment_kind_counts(),
+        Some(SegmentKindCounts { lines: 2, arcs: 0 })
+    );
     let curve = extended
         .curve_string()
         .expect("start line extension should materialize");
@@ -1540,7 +1556,12 @@ fn curve_string_extend_line_reports_interior_target_boundary() {
     assert_eq!(extended.report().target_point(), &p(1, 0));
     assert_eq!(extended.report().source_param(), Some(&q(1, 4)));
     assert_eq!(extended.report().source_segment_count(), 1);
+    assert_eq!(
+        extended.report().source_segment_kind_counts(),
+        SegmentKindCounts { lines: 1, arcs: 0 }
+    );
     assert_eq!(extended.report().output_segment_count(), None);
+    assert_eq!(extended.report().output_segment_kind_counts(), None);
     assert_eq!(
         extended.report().blocker(),
         Some(UncertaintyReason::Boundary)
@@ -1563,7 +1584,12 @@ fn curve_string_extend_line_reports_off_support_boundary() {
     assert_eq!(extended.report().output_segment_kind(), None);
     assert_eq!(extended.report().source_param(), None);
     assert_eq!(extended.report().source_segment_count(), 1);
+    assert_eq!(
+        extended.report().source_segment_kind_counts(),
+        SegmentKindCounts { lines: 1, arcs: 0 }
+    );
     assert_eq!(extended.report().output_segment_count(), None);
+    assert_eq!(extended.report().output_segment_kind_counts(), None);
     assert_eq!(
         extended.report().blocker(),
         Some(UncertaintyReason::Boundary)
@@ -1597,7 +1623,15 @@ fn curve_string_extend_arc_endpoint_to_same_circle_target() {
     assert_eq!(extended.report().target_point(), &p(-1, 0));
     assert_eq!(extended.report().source_param(), None);
     assert_eq!(extended.report().source_segment_count(), 1);
+    assert_eq!(
+        extended.report().source_segment_kind_counts(),
+        SegmentKindCounts { lines: 0, arcs: 1 }
+    );
     assert_eq!(extended.report().output_segment_count(), Some(1));
+    assert_eq!(
+        extended.report().output_segment_kind_counts(),
+        Some(SegmentKindCounts { lines: 0, arcs: 1 })
+    );
     let curve = extended
         .curve_string()
         .expect("same-circle arc extension should materialize");
@@ -1630,6 +1664,11 @@ fn curve_string_extend_arc_endpoint_reports_off_circle_boundary() {
     );
     assert_eq!(extended.report().source_endpoint_point(), &p(2, 0));
     assert_eq!(extended.report().target_point(), &p(3, 0));
+    assert_eq!(
+        extended.report().source_segment_kind_counts(),
+        SegmentKindCounts { lines: 0, arcs: 1 }
+    );
+    assert_eq!(extended.report().output_segment_kind_counts(), None);
     assert_eq!(
         extended.report().blocker(),
         Some(UncertaintyReason::Boundary)

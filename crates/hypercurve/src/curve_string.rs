@@ -406,7 +406,9 @@ pub struct CurveStringExtendReport2 {
     target_point: Point2,
     source_param: Option<Real>,
     source_segment_count: usize,
+    source_segment_kind_counts: SegmentKindCounts,
     output_segment_count: Option<usize>,
+    output_segment_kind_counts: Option<SegmentKindCounts>,
     status: RetainedTopologyStatus,
     blocker: Option<UncertaintyReason>,
 }
@@ -2449,6 +2451,7 @@ impl CurveString2 {
         };
         let curve_string = CurveString2::try_new(segments)?;
         let output_segment_count = curve_string.len();
+        let output_segment_kind_counts = curve_string_segment_kind_counts(&curve_string);
         Ok(CurveStringExtendResult2 {
             curve_string: Some(curve_string),
             report: CurveStringExtendReport2 {
@@ -2461,7 +2464,9 @@ impl CurveString2 {
                 target_point,
                 source_param: Some(source_param),
                 source_segment_count: self.len(),
+                source_segment_kind_counts: curve_string_segment_kind_counts(self),
                 output_segment_count: Some(output_segment_count),
+                output_segment_kind_counts: Some(output_segment_kind_counts),
                 status: RetainedTopologyStatus::NativeExact,
                 blocker: None,
             },
@@ -2622,6 +2627,7 @@ impl CurveString2 {
         segments[source_segment_index] = Segment2::Arc(extended_arc);
         let curve_string = CurveString2::try_new(segments)?;
         let output_segment_count = curve_string.len();
+        let output_segment_kind_counts = curve_string_segment_kind_counts(&curve_string);
         Ok(CurveStringExtendResult2 {
             curve_string: Some(curve_string),
             report: CurveStringExtendReport2 {
@@ -2634,7 +2640,9 @@ impl CurveString2 {
                 target_point,
                 source_param: None,
                 source_segment_count: self.len(),
+                source_segment_kind_counts: curve_string_segment_kind_counts(self),
                 output_segment_count: Some(output_segment_count),
+                output_segment_kind_counts: Some(output_segment_kind_counts),
                 status: RetainedTopologyStatus::NativeExact,
                 blocker: None,
             },
@@ -3664,9 +3672,19 @@ impl CurveStringExtendReport2 {
         self.source_segment_count
     }
 
+    /// Returns primitive-family counts for the source curve string.
+    pub const fn source_segment_kind_counts(&self) -> SegmentKindCounts {
+        self.source_segment_kind_counts
+    }
+
     /// Returns the output curve-string segment count after materialization.
     pub const fn output_segment_count(&self) -> Option<usize> {
         self.output_segment_count
+    }
+
+    /// Returns primitive-family counts for the materialized extension output.
+    pub const fn output_segment_kind_counts(&self) -> Option<SegmentKindCounts> {
+        self.output_segment_kind_counts
     }
 
     /// Returns extension materialization status.
@@ -4947,7 +4965,9 @@ fn blocked_extend_result(
             target_point,
             source_param,
             source_segment_count: curve_string.len(),
+            source_segment_kind_counts: curve_string_segment_kind_counts(curve_string),
             output_segment_count: None,
+            output_segment_kind_counts: None,
             status,
             blocker,
         },
