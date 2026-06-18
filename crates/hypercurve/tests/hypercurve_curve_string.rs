@@ -9,7 +9,8 @@ use hypercurve::{
     CurveStringLinkStage2, CurveStringOrderedLinkStage2, CurveStringRegionTrimQueryPath2,
     CurveStringRegionTrimStage2, CurveStringTrimInputPath2, CurveStringTrimPoint2,
     IntersectionKind, LineArcIntersection, LineArcOrder, LineSeg2, Point2, Real, Region2,
-    RegionContourRole, RegionPointLocation, Segment2, SegmentIntersection, UncertaintyReason,
+    RegionContourRole, RegionPointLocation, Segment2, SegmentIntersection, SegmentKind,
+    UncertaintyReason,
 };
 
 fn s(value: i32) -> Real {
@@ -365,6 +366,14 @@ fn curve_string_remove_adjacent_reversed_duplicates_reports_removed_pairs() {
         2
     );
     assert_eq!(
+        deduped.report().removed_pairs()[0].first_source_segment_kind(),
+        SegmentKind::Line
+    );
+    assert_eq!(
+        deduped.report().removed_pairs()[0].second_source_segment_kind(),
+        SegmentKind::Line
+    );
+    assert_eq!(
         deduped.report().removed_pairs()[0].first_start_point(),
         &p(1, 0)
     );
@@ -389,6 +398,14 @@ fn curve_string_remove_adjacent_reversed_duplicates_reports_removed_pairs() {
     assert_eq!(
         deduped.report().retained_segments()[0].source_segment_index(),
         0
+    );
+    assert_eq!(
+        deduped.report().retained_segments()[0].source_segment_kind(),
+        SegmentKind::Line
+    );
+    assert_eq!(
+        deduped.report().retained_segments()[0].output_segment_kind(),
+        SegmentKind::Line
     );
     assert_eq!(
         deduped.report().retained_segments()[0].output_segment_index(),
@@ -424,6 +441,80 @@ fn curve_string_remove_adjacent_reversed_duplicates_reports_removed_pairs() {
     assert_eq!(curve.len(), 2);
     assert_line(&curve.segments()[0], p(0, 0), p(1, 0));
     assert_line(&curve.segments()[1], p(1, 0), p(3, 0));
+}
+
+#[test]
+fn curve_string_remove_adjacent_reversed_duplicates_reports_mixed_segment_kinds() {
+    let arc = Segment2::Arc(CircularArc2::from_bulge(p(1, 0), p(3, 0), s(1)).unwrap());
+    let curve = CurveString2::try_new(vec![
+        line_segment(0, 0, 1, 0),
+        arc.clone(),
+        arc.reversed(),
+        line_segment(1, 0, 0, 0),
+        line_segment(0, 0, -1, 0),
+    ])
+    .unwrap();
+
+    let deduped = curve.remove_adjacent_reversed_duplicates().unwrap();
+    let report = deduped.report();
+
+    assert!(report.status().is_native_exact());
+    assert_eq!(
+        report.stage(),
+        CurveStringDeduplicateStage2::SegmentMaterialization
+    );
+    assert_eq!(report.source_segment_count(), 5);
+    assert_eq!(report.output_segment_count(), Some(1));
+    assert_eq!(report.retained_source_segment_indices(), &[4]);
+    assert_eq!(report.removed_pairs().len(), 2);
+    assert_eq!(report.removed_pairs()[0].first_source_segment_index(), 1);
+    assert_eq!(report.removed_pairs()[0].second_source_segment_index(), 2);
+    assert_eq!(
+        report.removed_pairs()[0].first_source_segment_kind(),
+        SegmentKind::Arc
+    );
+    assert_eq!(
+        report.removed_pairs()[0].second_source_segment_kind(),
+        SegmentKind::Arc
+    );
+    assert_eq!(report.removed_pairs()[1].first_source_segment_index(), 0);
+    assert_eq!(report.removed_pairs()[1].second_source_segment_index(), 3);
+    assert_eq!(
+        report.removed_pairs()[1].first_source_segment_kind(),
+        SegmentKind::Line
+    );
+    assert_eq!(
+        report.removed_pairs()[1].second_source_segment_kind(),
+        SegmentKind::Line
+    );
+    assert_eq!(report.retained_segments().len(), 1);
+    assert_eq!(report.retained_segments()[0].source_segment_index(), 4);
+    assert_eq!(
+        report.retained_segments()[0].source_segment_kind(),
+        SegmentKind::Line
+    );
+    assert_eq!(
+        report.retained_segments()[0].output_segment_kind(),
+        SegmentKind::Line
+    );
+    assert!(
+        report
+            .removed_pairs()
+            .iter()
+            .all(|pair| pair.status().is_native_exact())
+    );
+    assert!(
+        report
+            .retained_segments()
+            .iter()
+            .all(|segment| segment.status().is_native_exact())
+    );
+
+    let curve = deduped
+        .curve_string()
+        .expect("mixed duplicate removal should retain the final line");
+    assert_eq!(curve.len(), 1);
+    assert_line(&curve.segments()[0], p(0, 0), p(-1, 0));
 }
 
 #[test]

@@ -10,7 +10,8 @@ use crate::{
     ArcArcIntersection, BulgeVertex2, CircularArc2, Classification, CurveError, CurvePolicy,
     CurveResult, IntersectionKind, LineArcIntersection, LineArcOrder, LineLineIntersection,
     LineSeg2, LineSide, ParamRange, Point2, PreparedRegionView2, Region2, RegionContourRole,
-    RegionPointLocation, RetainedTopologyStatus, Segment2, SegmentIntersection, UncertaintyReason,
+    RegionPointLocation, RetainedTopologyStatus, Segment2, SegmentIntersection, SegmentKind,
+    UncertaintyReason,
 };
 
 /// One segment-pair event between two curve strings.
@@ -339,6 +340,8 @@ pub struct CurveStringLineMergeResult2 {
 pub struct CurveStringReversedDuplicatePairReport2 {
     first_source_segment_index: usize,
     second_source_segment_index: usize,
+    first_source_segment_kind: SegmentKind,
+    second_source_segment_kind: SegmentKind,
     first_start_point: Point2,
     first_end_point: Point2,
     second_start_point: Point2,
@@ -351,6 +354,8 @@ pub struct CurveStringReversedDuplicatePairReport2 {
 pub struct CurveStringDeduplicateRetainedSegmentReport2 {
     output_segment_index: usize,
     source_segment_index: usize,
+    source_segment_kind: SegmentKind,
+    output_segment_kind: SegmentKind,
     output_start_point: Point2,
     output_end_point: Point2,
     status: RetainedTopologyStatus,
@@ -1384,6 +1389,8 @@ impl CurveString2 {
                 removed_pairs.push(CurveStringReversedDuplicatePairReport2 {
                     first_source_segment_index,
                     second_source_segment_index: source_index,
+                    first_source_segment_kind: first_segment.structural_facts().kind,
+                    second_source_segment_kind: segment.structural_facts().kind,
                     first_start_point: first_segment.start().clone(),
                     first_end_point: first_segment.end().clone(),
                     second_start_point: segment.start().clone(),
@@ -1422,6 +1429,8 @@ impl CurveString2 {
                 CurveStringDeduplicateRetainedSegmentReport2 {
                     output_segment_index,
                     source_segment_index: *source_segment_index,
+                    source_segment_kind: segment.structural_facts().kind,
+                    output_segment_kind: segment.structural_facts().kind,
                     output_start_point: segment.start().clone(),
                     output_end_point: segment.end().clone(),
                     status: RetainedTopologyStatus::NativeExact,
@@ -6034,6 +6043,16 @@ impl CurveStringReversedDuplicatePairReport2 {
         self.second_source_segment_index
     }
 
+    /// Returns the primitive family of the first removed source segment.
+    pub const fn first_source_segment_kind(&self) -> SegmentKind {
+        self.first_source_segment_kind
+    }
+
+    /// Returns the primitive family of the second removed source segment.
+    pub const fn second_source_segment_kind(&self) -> SegmentKind {
+        self.second_source_segment_kind
+    }
+
     /// Returns the exact start point of the first removed segment.
     pub const fn first_start_point(&self) -> &Point2 {
         &self.first_start_point
@@ -6069,6 +6088,16 @@ impl CurveStringDeduplicateRetainedSegmentReport2 {
     /// Returns the retained source segment index.
     pub const fn source_segment_index(&self) -> usize {
         self.source_segment_index
+    }
+
+    /// Returns the primitive family of the retained source segment.
+    pub const fn source_segment_kind(&self) -> SegmentKind {
+        self.source_segment_kind
+    }
+
+    /// Returns the primitive family of the emitted output segment.
+    pub const fn output_segment_kind(&self) -> SegmentKind {
+        self.output_segment_kind
     }
 
     /// Returns the exact output start point for this retained segment.
