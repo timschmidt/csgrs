@@ -70,6 +70,30 @@ impl ContourIntersectionSet {
         self.events.len()
     }
 
+    /// Returns retained point intersection events.
+    pub fn point_event_count(&self) -> usize {
+        self.events
+            .iter()
+            .filter(|event| matches!(event, ContourIntersection::Point(_)))
+            .count()
+    }
+
+    /// Returns retained overlap intersection events.
+    pub fn overlap_event_count(&self) -> usize {
+        self.events
+            .iter()
+            .filter(|event| matches!(event, ContourIntersection::Overlap(_)))
+            .count()
+    }
+
+    /// Returns retained unresolved intersection events.
+    pub fn uncertain_event_count(&self) -> usize {
+        self.events
+            .iter()
+            .filter(|event| matches!(event, ContourIntersection::Uncertain(_)))
+            .count()
+    }
+
     /// Returns events for one segment sorted by that segment's local parameter.
     pub fn sorted_events_for_segment<'a>(
         &'a self,

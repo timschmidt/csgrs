@@ -49,6 +49,9 @@ pub struct RegionFragmentBuildReport2 {
     second_source_segment_count: usize,
     intersection_pair_count: usize,
     intersection_event_count: usize,
+    point_event_count: usize,
+    overlap_event_count: usize,
+    uncertain_event_count: usize,
     candidate_pair_count: usize,
     skipped_aabb_pair_count: usize,
     tested_pair_count: usize,
@@ -316,6 +319,9 @@ pub(crate) fn split_region_views_at_intersections_with_report(
             second_source_segment_count,
             intersection_pair_count: intersections.intersecting_pair_count(),
             intersection_event_count: intersections.event_count(),
+            point_event_count: intersections.point_event_count(),
+            overlap_event_count: intersections.overlap_event_count(),
+            uncertain_event_count: intersections.uncertain_event_count(),
             candidate_pair_count: intersections.candidate_pair_count(),
             skipped_aabb_pair_count: intersections.skipped_aabb_pair_count(),
             tested_pair_count: intersections.tested_pair_count(),
@@ -422,6 +428,21 @@ impl RegionFragmentBuildReport2 {
     /// Returns normalized contour-level intersection events consumed by this build.
     pub const fn intersection_event_count(&self) -> usize {
         self.intersection_event_count
+    }
+
+    /// Returns retained point intersection events consumed by this build.
+    pub const fn point_event_count(&self) -> usize {
+        self.point_event_count
+    }
+
+    /// Returns retained overlap intersection events consumed by this build.
+    pub const fn overlap_event_count(&self) -> usize {
+        self.overlap_event_count
+    }
+
+    /// Returns retained unresolved intersection events consumed by this build.
+    pub const fn uncertain_event_count(&self) -> usize {
+        self.uncertain_event_count
     }
 
     /// Returns all contour-pair candidates considered by the source event set.
@@ -549,6 +570,9 @@ fn blocked_region_fragment_build_result(
             second_source_segment_count,
             intersection_pair_count: intersections.intersecting_pair_count(),
             intersection_event_count: intersections.event_count(),
+            point_event_count: intersections.point_event_count(),
+            overlap_event_count: intersections.overlap_event_count(),
+            uncertain_event_count: intersections.uncertain_event_count(),
             candidate_pair_count: intersections.candidate_pair_count(),
             skipped_aabb_pair_count: intersections.skipped_aabb_pair_count(),
             tested_pair_count: intersections.tested_pair_count(),

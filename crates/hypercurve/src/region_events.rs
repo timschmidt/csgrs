@@ -166,6 +166,30 @@ impl RegionIntersectionSet {
         self.pairs.iter().map(|pair| pair.intersections.len()).sum()
     }
 
+    /// Returns retained point events across all intersecting contour pairs.
+    pub fn point_event_count(&self) -> usize {
+        self.pairs
+            .iter()
+            .map(|pair| pair.intersections.point_event_count())
+            .sum()
+    }
+
+    /// Returns retained overlap events across all intersecting contour pairs.
+    pub fn overlap_event_count(&self) -> usize {
+        self.pairs
+            .iter()
+            .map(|pair| pair.intersections.overlap_event_count())
+            .sum()
+    }
+
+    /// Returns retained unresolved events across all intersecting contour pairs.
+    pub fn uncertain_event_count(&self) -> usize {
+        self.pairs
+            .iter()
+            .map(|pair| pair.intersections.uncertain_event_count())
+            .sum()
+    }
+
     /// Returns true when at least one normalized contour-level event was retained.
     pub fn has_events(&self) -> bool {
         self.event_count() != 0

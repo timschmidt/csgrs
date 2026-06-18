@@ -143,6 +143,9 @@ fn boolean_region_report_retains_boundary_role_assignment() {
     assert_eq!(report.boundary_tested_pair_count(), 1);
     assert_eq!(report.boundary_intersecting_pair_count(), 1);
     assert_eq!(report.boundary_intersection_event_count(), 2);
+    assert_eq!(report.boundary_point_event_count(), 2);
+    assert_eq!(report.boundary_overlap_event_count(), 0);
+    assert_eq!(report.boundary_uncertain_event_count(), 0);
     assert_eq!(report.boundary_contour_count(), Some(1));
     assert_eq!(report.result_material_contour_count(), Some(1));
     assert_eq!(report.result_hole_contour_count(), Some(0));
@@ -170,6 +173,22 @@ fn boolean_region_report_retains_boundary_role_assignment() {
             .fragment_build_report()
             .intersection_event_count(),
         2
+    );
+    assert_eq!(
+        pipeline_report.fragment_build_report().point_event_count(),
+        2
+    );
+    assert_eq!(
+        pipeline_report
+            .fragment_build_report()
+            .overlap_event_count(),
+        0
+    );
+    assert_eq!(
+        pipeline_report
+            .fragment_build_report()
+            .uncertain_event_count(),
+        0
     );
     assert_eq!(
         pipeline_report
@@ -430,6 +449,18 @@ fn prepared_boolean_region_report_matches_plain_materialization() {
     assert_eq!(
         built.report().boundary_intersection_event_count(),
         plain.report().boundary_intersection_event_count()
+    );
+    assert_eq!(
+        built.report().boundary_point_event_count(),
+        plain.report().boundary_point_event_count()
+    );
+    assert_eq!(
+        built.report().boundary_overlap_event_count(),
+        plain.report().boundary_overlap_event_count()
+    );
+    assert_eq!(
+        built.report().boundary_uncertain_event_count(),
+        plain.report().boundary_uncertain_event_count()
     );
     assert_eq!(
         built.report().boundary_build_report(),

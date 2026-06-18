@@ -572,6 +572,15 @@ fn boolean_fragment_selection_defers_shared_boundary_fragments() {
     let first = Region2::from_material_contours(vec![rectangle(0, 0, 4, 4)]);
     let second = Region2::from_material_contours(vec![rectangle(2, -2, 6, 0)]);
     let intersections = first.intersect_region(&second, &policy()).unwrap();
+    assert_eq!(intersections.event_count(), 3);
+    assert_eq!(
+        intersections.event_count(),
+        intersections.point_event_count()
+            + intersections.overlap_event_count()
+            + intersections.uncertain_event_count()
+    );
+    assert_eq!(intersections.overlap_event_count(), 1);
+    assert_eq!(intersections.uncertain_event_count(), 0);
     let Classification::Decided(fragments) = intersections
         .split_regions(&first.as_view(), &second.as_view(), &policy())
         .unwrap()
