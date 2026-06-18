@@ -28,6 +28,8 @@ pub struct RegionBooleanReport2 {
     second_material_contour_count: usize,
     second_hole_contour_count: usize,
     second_boundary_segment_count: usize,
+    boundary_first_contour_count: Option<usize>,
+    boundary_second_contour_count: Option<usize>,
     boundary_candidate_pair_count: usize,
     boundary_skipped_aabb_pair_count: usize,
     boundary_tested_pair_count: usize,
@@ -636,6 +638,16 @@ impl RegionBooleanReport2 {
         self.second_boundary_segment_count
     }
 
+    /// Returns the first operand contour count reported by boundary events.
+    pub const fn boundary_first_contour_count(&self) -> Option<usize> {
+        self.boundary_first_contour_count
+    }
+
+    /// Returns the second operand contour count reported by boundary events.
+    pub const fn boundary_second_contour_count(&self) -> Option<usize> {
+        self.boundary_second_contour_count
+    }
+
     /// Returns region contour-pair candidates considered before boolean splitting.
     pub const fn boundary_candidate_pair_count(&self) -> usize {
         self.boundary_candidate_pair_count
@@ -1045,6 +1057,8 @@ pub(crate) fn region_boolean_result_from_boundary_contours(
             second_material_contour_count: second.material_contours().len(),
             second_hole_contour_count: second.hole_contours().len(),
             second_boundary_segment_count: region_view_boundary_segment_count(second),
+            boundary_first_contour_count: boundary_events.first_contour_count(),
+            boundary_second_contour_count: boundary_events.second_contour_count(),
             boundary_candidate_pair_count: boundary_events.candidate_pair_count(),
             boundary_skipped_aabb_pair_count: boundary_events.skipped_aabb_pair_count(),
             boundary_tested_pair_count: boundary_events.tested_pair_count(),
@@ -1081,6 +1095,8 @@ pub(crate) fn blocked_region_boolean_result(
             second_material_contour_count: second.material_contours().len(),
             second_hole_contour_count: second.hole_contours().len(),
             second_boundary_segment_count: region_view_boundary_segment_count(second),
+            boundary_first_contour_count: boundary_events.first_contour_count(),
+            boundary_second_contour_count: boundary_events.second_contour_count(),
             boundary_candidate_pair_count: boundary_events.candidate_pair_count(),
             boundary_skipped_aabb_pair_count: boundary_events.skipped_aabb_pair_count(),
             boundary_tested_pair_count: boundary_events.tested_pair_count(),
