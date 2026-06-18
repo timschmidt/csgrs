@@ -197,7 +197,7 @@ pub use reconstruct::{
     FiniteContourImport2, FiniteCurveStringImport2, PolylineReconstructionOptions,
 };
 pub use region::{Region2, RegionContourProfile, RegionPointLocation, RegionView2};
-pub use region_boolean::{RegionBooleanReport2, RegionBooleanResult2};
+pub use region_boolean::{RegionBooleanQueryPath2, RegionBooleanReport2, RegionBooleanResult2};
 pub use region_events::{
     RegionContourIntersection, RegionContourKey, RegionContourRole, RegionIntersectionSet,
     RegionSide,

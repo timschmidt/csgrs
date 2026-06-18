@@ -334,6 +334,7 @@ pub(crate) fn boolean_region_between_prepared_with_report(
                     &first_view,
                     &second_view,
                     op,
+                    crate::RegionBooleanQueryPath2::Prepared,
                     crate::region_boolean::retained_status_for_boolean_blocker(reason),
                     reason,
                 ));
@@ -343,6 +344,7 @@ pub(crate) fn boolean_region_between_prepared_with_report(
         &first_view,
         &second_view,
         op,
+        crate::RegionBooleanQueryPath2::Prepared,
         contours,
         policy,
     )

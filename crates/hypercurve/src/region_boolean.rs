@@ -20,6 +20,7 @@ use std::cmp::Ordering;
 #[derive(Clone, Debug, PartialEq)]
 pub struct RegionBooleanReport2 {
     op: BooleanOp,
+    query_path: RegionBooleanQueryPath2,
     first_material_contour_count: usize,
     first_hole_contour_count: usize,
     second_material_contour_count: usize,
@@ -30,6 +31,15 @@ pub struct RegionBooleanReport2 {
     boundary_build_report: Option<RegionBoundaryContourBuildReport2>,
     status: RetainedTopologyStatus,
     blocker: Option<UncertaintyReason>,
+}
+
+/// Query path used by a report-bearing closed region boolean.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum RegionBooleanQueryPath2 {
+    /// Boolean materialization used transient region views and direct queries.
+    Direct,
+    /// Boolean materialization used caller-supplied prepared region views.
+    Prepared,
 }
 
 /// Result of report-bearing closed region boolean materialization.
@@ -579,6 +589,11 @@ impl RegionBooleanReport2 {
         self.op
     }
 
+    /// Returns whether this report used direct or prepared region queries.
+    pub const fn query_path(&self) -> RegionBooleanQueryPath2 {
+        self.query_path
+    }
+
     /// Returns the first operand material contour count.
     pub const fn first_material_contour_count(&self) -> usize {
         self.first_material_contour_count
@@ -938,18 +953,27 @@ pub(crate) fn boolean_region_between_with_report(
                 first,
                 second,
                 op,
+                RegionBooleanQueryPath2::Direct,
                 retained_status_for_boolean_blocker(reason),
                 reason,
             ));
         }
     };
-    region_boolean_result_from_boundary_contours(first, second, op, contours, policy)
+    region_boolean_result_from_boundary_contours(
+        first,
+        second,
+        op,
+        RegionBooleanQueryPath2::Direct,
+        contours,
+        policy,
+    )
 }
 
 pub(crate) fn region_boolean_result_from_boundary_contours(
     first: &RegionView2<'_>,
     second: &RegionView2<'_>,
     op: BooleanOp,
+    query_path: RegionBooleanQueryPath2,
     contours: Vec<Contour2>,
     policy: &CurvePolicy,
 ) -> CurveResult<RegionBooleanResult2> {
@@ -964,6 +988,7 @@ pub(crate) fn region_boolean_result_from_boundary_contours(
         region: built.into_region(),
         report: RegionBooleanReport2 {
             op,
+            query_path,
             first_material_contour_count: first.material_contours().len(),
             first_hole_contour_count: first.hole_contours().len(),
             second_material_contour_count: second.material_contours().len(),
@@ -982,6 +1007,7 @@ pub(crate) fn blocked_region_boolean_result(
     first: &RegionView2<'_>,
     second: &RegionView2<'_>,
     op: BooleanOp,
+    query_path: RegionBooleanQueryPath2,
     status: RetainedTopologyStatus,
     blocker: UncertaintyReason,
 ) -> RegionBooleanResult2 {
@@ -989,6 +1015,7 @@ pub(crate) fn blocked_region_boolean_result(
         region: None,
         report: RegionBooleanReport2 {
             op,
+            query_path,
             first_material_contour_count: first.material_contours().len(),
             first_hole_contour_count: first.hole_contours().len(),
             second_material_contour_count: second.material_contours().len(),
