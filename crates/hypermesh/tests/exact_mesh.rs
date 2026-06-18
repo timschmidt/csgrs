@@ -1939,7 +1939,10 @@ fn exact_open_surface_arrangement_is_publicly_replayable() {
             ExactRegularizationPolicy::REGULARIZED_SOLID,
         );
         assert!(
-            attempt.materialized_arrangement_cell_complex_shortcut(),
+            attempt.certifies_arrangement_cell_complex_shortcut_for_request(
+                ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
+                ExactRegularizationPolicy::REGULARIZED_SOLID,
+            ),
             "{operation:?}: {attempt:?}"
         );
         assert_eq!(attempt.output_validation, ValidationPolicy::ALLOW_BOUNDARY);
@@ -2140,7 +2143,10 @@ fn arrangement_attempt_output_validation_is_publicly_replayable() {
             ValidationPolicy::ALLOW_BOUNDARY
         );
         assert!(
-            boundary_attempt.materialized_arrangement_cell_complex_shortcut(),
+            boundary_attempt.certifies_arrangement_cell_complex_shortcut_for_request(
+                ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
+                ExactRegularizationPolicy::REGULARIZED_SOLID,
+            ),
             "{operation:?}: {boundary_attempt:?}"
         );
         boundary_attempt.validate().unwrap();

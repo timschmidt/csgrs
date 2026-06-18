@@ -380,7 +380,7 @@ impl ExactArrangementBooleanAttempt {
             && self.materialized_arrangement_cell_complex_output()
     }
 
-    pub(crate) fn certifies_arrangement_cell_complex_shortcut_for_request(
+    pub fn certifies_arrangement_cell_complex_shortcut_for_request(
         &self,
         request: ExactBooleanRequest,
         policy: ExactRegularizationPolicy,
