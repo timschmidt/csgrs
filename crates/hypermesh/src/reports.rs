@@ -4256,6 +4256,8 @@ impl ExactBooleanPreflight {
             && !matches!(
                 self.support,
                 ExactBooleanSupport::CertifiedArrangementCellComplex
+                    | ExactBooleanSupport::CertifiedIdentical
+                    | ExactBooleanSupport::CertifiedSameSurface
                     | ExactBooleanSupport::CertifiedClosedBoundaryTouchingIntersection
                     | ExactBooleanSupport::CertifiedClosedBoundaryTouchingDifference
                     | ExactBooleanSupport::RequiresCoplanarVolumetricCells
@@ -4285,6 +4287,22 @@ impl ExactBooleanPreflight {
                     || !certified_preflight_support_matches_operation(self.support, self.operation)
                 {
                     return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                }
+                if let Some(evidence) = self.coplanar_volumetric_evidence.as_ref() {
+                    if !matches!(
+                        self.support,
+                        ExactBooleanSupport::CertifiedIdentical
+                            | ExactBooleanSupport::CertifiedSameSurface
+                    ) {
+                        return Err(
+                            ExactReportValidationError::UnexpectedCoplanarVolumetricEvidence,
+                        );
+                    }
+                    validate_coplanar_volumetric_evidence_counts(
+                        evidence,
+                        self.retained_face_pairs,
+                        self.retained_events,
+                    )?;
                 }
                 no_region_facts(self.region_count, &self.region_classifications)
             }
@@ -6291,6 +6309,7 @@ impl ExactWindingReadinessReport {
                     | ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized
                     | ExactWindingReadinessStatus::CoplanarVolumetricCellsAlreadyMaterialized
                     | ExactWindingReadinessStatus::CoplanarVolumetricCellsRequired
+                    | ExactWindingReadinessStatus::SurfaceEqualityAlreadyMaterialized
                     | ExactWindingReadinessStatus::ClosedBoundaryTouchingAlreadyMaterialized
             )
         {
@@ -6549,6 +6568,22 @@ impl ExactWindingReadinessReport {
                     (ExactBooleanBlockerKind::NeedsCoplanarVolumetricCells, None) => {
                         return Err(ExactReportValidationError::MissingCoplanarVolumetricEvidence);
                     }
+                    (ExactBooleanBlockerKind::NeedsBoundaryPolicy, Some(evidence)) => {
+                        validate_coplanar_volumetric_evidence_counts(
+                            evidence,
+                            self.retained_face_pairs,
+                            self.retained_events,
+                        )?;
+                        if !evidence.obstacle.requires_coplanar_volumetric_cells()
+                            && (evidence.obstacle
+                                != CoplanarVolumetricCellObstacle::BoundaryOnlyContact
+                                || evidence.positive_area_coplanar_overlapping_pairs == 0)
+                        {
+                            return Err(
+                                ExactReportValidationError::CoplanarVolumetricEvidenceMismatch,
+                            );
+                        }
+                    }
                     (_, Some(_)) => {
                         return Err(
                             ExactReportValidationError::UnexpectedCoplanarVolumetricEvidence,
@@ -6612,18 +6647,30 @@ impl ExactWindingReadinessReport {
                 checked_region_facts(self.region_count, &self.region_classifications)
             }
             ExactWindingReadinessStatus::SurfaceEqualityAlreadyMaterialized => {
+                let has_coplanar_evidence = self.coplanar_volumetric_evidence.is_some();
                 if self.arrangement_readiness.is_some()
-                    || self.coplanar_volumetric_evidence.is_some()
                     || matches!(self.operation, ExactBooleanOperation::SelectedRegions(_))
                     || self.graph_had_unknowns
-                    || self.retained_face_pairs != 0
-                    || self.retained_events != 0
+                    || (!has_coplanar_evidence
+                        && (self.retained_face_pairs != 0 || self.retained_events != 0))
                 {
                     return Err(ExactReportValidationError::StatusEvidenceMismatch);
                 }
                 blocker_kind(Some(&self.blocker), ExactBooleanBlockerKind::NeedsWinding)?;
                 self.blocker
                     .validate_for_kind(ExactBooleanBlockerKind::NeedsWinding)?;
+                if let Some(evidence) = self.coplanar_volumetric_evidence.as_ref() {
+                    validate_coplanar_volumetric_evidence_counts(
+                        evidence,
+                        self.retained_face_pairs,
+                        self.retained_events,
+                    )?;
+                    validate_blocker_count_bounds(
+                        &self.blocker,
+                        self.retained_face_pairs,
+                        self.retained_events,
+                    )?;
+                }
                 no_region_facts(self.region_count, &self.region_classifications)
             }
             ExactWindingReadinessStatus::ClosedBoundaryTouchingAlreadyMaterialized => {
