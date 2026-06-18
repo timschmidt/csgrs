@@ -491,31 +491,18 @@ impl ExactArrangementBooleanAttempt {
             && self.topology_assembly.is_none()
             && self.region_ownership.is_none();
         if let Some(selected) = &self.selected_cell_complex {
-            let selected_volume_oriented_faces = selected
-                .selected_face_orientations
-                .iter()
-                .filter(|orientation| orientation.from_volume_adjacency)
-                .count();
-            let selected_label_oriented_faces = selected
-                .selected_face_orientations
-                .len()
-                .saturating_sub(selected_volume_oriented_faces);
+            let counts = selected.counts();
             if arrangement_attempt_stage_rank(self.stage)
                 < arrangement_attempt_stage_rank(ExactArrangementBooleanStage::Selected)
                 || selected.operation != self.operation
                 || selected.validate().is_err()
                 || selected.topology_assembly_report != self.topology_assembly_report
                 || selected.region_ownership_report != self.region_ownership_report
-                || selected.selected_faces.len() != self.selected_faces
-                || selected.selected_volume_regions.len() != self.selected_volume_regions
-                || selected
-                    .selected_face_orientations
-                    .iter()
-                    .filter(|orientation| orientation.reverse)
-                    .count()
-                    != self.reversed_selected_faces
-                || selected_volume_oriented_faces != self.volume_oriented_selected_faces
-                || selected_label_oriented_faces != self.label_oriented_selected_faces
+                || counts.selected_faces != self.selected_faces
+                || counts.selected_volume_regions != self.selected_volume_regions
+                || counts.reversed_selected_faces != self.reversed_selected_faces
+                || counts.volume_oriented_selected_faces != self.volume_oriented_selected_faces
+                || counts.label_oriented_selected_faces != self.label_oriented_selected_faces
             {
                 return Err(ExactReportValidationError::StatusEvidenceMismatch);
             }
@@ -783,22 +770,12 @@ fn record_selected_orientation_counts(
     attempt: &mut ExactArrangementBooleanAttempt,
     selected: &ExactSelectedCellComplex,
 ) {
-    attempt.selected_faces = selected.selected_faces.len();
-    attempt.selected_volume_regions = selected.selected_volume_regions.len();
-    attempt.reversed_selected_faces = selected
-        .selected_face_orientations
-        .iter()
-        .filter(|orientation| orientation.reverse)
-        .count();
-    attempt.volume_oriented_selected_faces = selected
-        .selected_face_orientations
-        .iter()
-        .filter(|orientation| orientation.from_volume_adjacency)
-        .count();
-    attempt.label_oriented_selected_faces = selected
-        .selected_face_orientations
-        .len()
-        .saturating_sub(attempt.volume_oriented_selected_faces);
+    let counts = selected.counts();
+    attempt.selected_faces = counts.selected_faces;
+    attempt.selected_volume_regions = counts.selected_volume_regions;
+    attempt.reversed_selected_faces = counts.reversed_selected_faces;
+    attempt.volume_oriented_selected_faces = counts.volume_oriented_selected_faces;
+    attempt.label_oriented_selected_faces = counts.label_oriented_selected_faces;
 }
 
 const fn arrangement_attempt_stage_rank(stage: ExactArrangementBooleanStage) -> u8 {

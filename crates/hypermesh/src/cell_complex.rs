@@ -130,6 +130,17 @@ pub struct ExactSelectedFaceOrientation {
     pub from_volume_adjacency: bool,
 }
 
+/// Retained selection count summary consumed by arrangement attempts and
+/// simplification reports.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(crate) struct ExactSelectedCellComplexCounts {
+    pub(crate) selected_faces: usize,
+    pub(crate) selected_volume_regions: usize,
+    pub(crate) reversed_selected_faces: usize,
+    pub(crate) volume_oriented_selected_faces: usize,
+    pub(crate) label_oriented_selected_faces: usize,
+}
+
 /// Freshness status for a retained labeled cell complex.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ExactLabeledCellComplexFreshness {
@@ -859,6 +870,28 @@ impl ExactSelectedCellComplex {
         self.topology_assembly_report = Some(topology_assembly_report);
         self.region_ownership_report = Some(region_ownership_report);
         self
+    }
+
+    pub(crate) fn counts(&self) -> ExactSelectedCellComplexCounts {
+        let volume_oriented_selected_faces = self
+            .selected_face_orientations
+            .iter()
+            .filter(|orientation| orientation.from_volume_adjacency)
+            .count();
+        ExactSelectedCellComplexCounts {
+            selected_faces: self.selected_faces.len(),
+            selected_volume_regions: self.selected_volume_regions.len(),
+            reversed_selected_faces: self
+                .selected_face_orientations
+                .iter()
+                .filter(|orientation| orientation.reverse)
+                .count(),
+            volume_oriented_selected_faces,
+            label_oriented_selected_faces: self
+                .selected_face_orientations
+                .len()
+                .saturating_sub(volume_oriented_selected_faces),
+        }
     }
 
     /// Validate local selected-cell consistency without replaying source meshes.
