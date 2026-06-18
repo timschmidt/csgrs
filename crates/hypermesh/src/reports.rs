@@ -3970,10 +3970,8 @@ fn workspace_preflight_for_report_replay(
     right: &ExactMesh,
     request: ExactBooleanRequest,
 ) -> Result<ExactBooleanPreflight, ExactReportValidationError> {
-    let mut workspace = ExactBooleanWorkspace::new(left, right);
-    workspace
-        .preflight(request)
-        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)
+    workspace_evaluation_for_report_replay(left, right, request)
+        .map(|evaluation| evaluation.preflight)
 }
 
 fn workspace_evaluation_for_report_replay(
