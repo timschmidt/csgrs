@@ -662,6 +662,20 @@ fn curve_string_ordered_link_materializes_multistep_chain() {
     );
     assert_eq!(
         linked.report().steps()[0]
+            .link_attempt_report()
+            .unwrap()
+            .selected_kind(),
+        Some(CurveStringLinkKind2::FirstEndToSecondStart)
+    );
+    assert_eq!(
+        linked.report().steps()[0]
+            .link_attempt_report()
+            .unwrap()
+            .blocker(),
+        None
+    );
+    assert_eq!(
+        linked.report().steps()[0]
             .link_report()
             .unwrap()
             .endpoint_pair_count(),
@@ -725,6 +739,13 @@ fn curve_string_ordered_link_reports_reversed_accumulated_sources() {
     assert_eq!(
         linked.report().steps()[0].link_report().unwrap().kind(),
         CurveStringLinkKind2::FirstStartToSecondEnd
+    );
+    assert_eq!(
+        linked.report().steps()[0]
+            .link_attempt_report()
+            .unwrap()
+            .selected_kind(),
+        Some(CurveStringLinkKind2::FirstStartToSecondEnd)
     );
     assert_eq!(
         linked.report().steps()[0]
@@ -793,6 +814,17 @@ fn curve_string_ordered_link_reports_disconnected_step() {
         linked.report().steps()[0].blocker(),
         Some(UncertaintyReason::Boundary)
     );
+    let step_attempt = linked.report().steps()[0].link_attempt_report().unwrap();
+    assert_eq!(
+        step_attempt.stage(),
+        CurveStringLinkStage2::EndpointSelection
+    );
+    assert_eq!(step_attempt.selected_kind(), None);
+    assert_eq!(step_attempt.endpoint_pair_count(), 4);
+    assert_eq!(step_attempt.exact_endpoint_pair_count(), 0);
+    assert_eq!(step_attempt.disconnected_endpoint_pair_count(), 4);
+    assert_eq!(step_attempt.unresolved_endpoint_pair_count(), 0);
+    assert_eq!(step_attempt.blocker(), Some(UncertaintyReason::Boundary));
     assert!(linked.report().steps()[0].link_report().is_none());
 }
 

@@ -191,6 +191,7 @@ pub struct CurveStringLinkAttemptResult2 {
 pub struct CurveStringOrderedLinkStepReport2 {
     accumulated_source_indices: Vec<usize>,
     next_source_index: usize,
+    link_attempt_report: Option<CurveStringLinkAttemptReport2>,
     link_report: Option<CurveStringLinkReport2>,
     status: RetainedTopologyStatus,
     blocker: Option<UncertaintyReason>,
@@ -948,8 +949,11 @@ impl CurveString2 {
         let mut steps = Vec::new();
 
         for (next_source_index, next_curve_string) in iter {
-            match accumulated.link_connected_endpoints(&next_curve_string, policy)? {
-                Classification::Decided(Some(linked)) => {
+            let attempt =
+                accumulated.link_connected_endpoints_with_report(&next_curve_string, policy)?;
+            let link_attempt_report = attempt.report().clone();
+            match attempt.into_linked_curve_string() {
+                Some(linked) => {
                     let link_report = linked.report().clone();
                     let next_accumulated_source_indices = ordered_link_source_indices(
                         &accumulated_source_indices,
@@ -959,6 +963,7 @@ impl CurveString2 {
                     steps.push(CurveStringOrderedLinkStepReport2 {
                         accumulated_source_indices,
                         next_source_index,
+                        link_attempt_report: Some(link_attempt_report),
                         link_report: Some(link_report),
                         status: RetainedTopologyStatus::NativeExact,
                         blocker: None,
@@ -966,14 +971,19 @@ impl CurveString2 {
                     accumulated = linked.into_curve_string();
                     accumulated_source_indices = next_accumulated_source_indices;
                 }
-                Classification::Decided(None) => {
+                None => {
+                    let status = link_attempt_report.status();
+                    let blocker = link_attempt_report
+                        .blocker()
+                        .unwrap_or(UncertaintyReason::Unsupported);
                     let blocked_output_source_indices = accumulated_source_indices.clone();
                     steps.push(CurveStringOrderedLinkStepReport2 {
                         accumulated_source_indices,
                         next_source_index,
+                        link_attempt_report: Some(link_attempt_report),
                         link_report: None,
-                        status: RetainedTopologyStatus::Unsupported,
-                        blocker: Some(UncertaintyReason::Boundary),
+                        status,
+                        blocker: Some(blocker),
                     });
                     return Ok(OrderedLinkedCurveString2 {
                         curve_string: None,
@@ -983,30 +993,8 @@ impl CurveString2 {
                             output_segment_count: None,
                             output_source_indices: blocked_output_source_indices,
                             steps,
-                            status: RetainedTopologyStatus::Unsupported,
-                            blocker: Some(UncertaintyReason::Boundary),
-                        },
-                    });
-                }
-                Classification::Uncertain(reason) => {
-                    let blocked_output_source_indices = accumulated_source_indices.clone();
-                    steps.push(CurveStringOrderedLinkStepReport2 {
-                        accumulated_source_indices,
-                        next_source_index,
-                        link_report: None,
-                        status: retained_status_for_uncertainty(reason),
-                        blocker: Some(reason),
-                    });
-                    return Ok(OrderedLinkedCurveString2 {
-                        curve_string: None,
-                        report: CurveStringOrderedLinkReport2 {
-                            stage: CurveStringOrderedLinkStage2::StepLinking,
-                            source_curve_string_count,
-                            output_segment_count: None,
-                            output_source_indices: blocked_output_source_indices,
-                            steps,
-                            status: retained_status_for_uncertainty(reason),
-                            blocker: Some(reason),
+                            status,
+                            blocker: Some(blocker),
                         },
                     });
                 }
@@ -5449,6 +5437,11 @@ impl CurveStringOrderedLinkStepReport2 {
     /// Returns the next source curve-string index consumed by this step.
     pub const fn next_source_index(&self) -> usize {
         self.next_source_index
+    }
+
+    /// Returns pairwise endpoint-link attempt evidence for this step.
+    pub const fn link_attempt_report(&self) -> Option<&CurveStringLinkAttemptReport2> {
+        self.link_attempt_report.as_ref()
     }
 
     /// Returns the pairwise link report when this step materialized.
