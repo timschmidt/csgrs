@@ -65,6 +65,7 @@ pub struct ContourClosureResult2 {
 /// Report for a closed-contour line-line chamfer.
 #[derive(Clone, Debug, PartialEq)]
 pub struct ContourChamferReport2 {
+    stage: ContourChamferStage2,
     vertex_index: usize,
     curve_string_report: CurveStringChamferReport2,
     source_segment_count: usize,
@@ -80,9 +81,19 @@ pub struct ContourChamferResult2 {
     report: ContourChamferReport2,
 }
 
+/// Furthest exact stage reached by a closed-contour chamfer attempt.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum ContourChamferStage2 {
+    /// The delegated open curve-string chamfer was being validated or materialized.
+    CurveStringEdit,
+    /// The edited segment sequence was validated as a closed contour.
+    ContourMaterialization,
+}
+
 /// Report for a closed-contour line-line fillet.
 #[derive(Clone, Debug, PartialEq)]
 pub struct ContourFilletReport2 {
+    stage: ContourFilletStage2,
     vertex_index: usize,
     curve_string_report: CurveStringFilletReport2,
     source_segment_count: usize,
@@ -98,6 +109,15 @@ pub struct ContourFilletResult2 {
     report: ContourFilletReport2,
 }
 
+/// Furthest exact stage reached by a closed-contour fillet attempt.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum ContourFilletStage2 {
+    /// The delegated open curve-string fillet was being validated or materialized.
+    CurveStringEdit,
+    /// The edited segment sequence was validated as a closed contour.
+    ContourMaterialization,
+}
+
 /// One retained source run emitted by a closed-contour line merge.
 #[derive(Clone, Debug, PartialEq)]
 pub struct ContourLineMergeSpanReport2 {
@@ -111,6 +131,7 @@ pub struct ContourLineMergeSpanReport2 {
 /// Report for exact adjacent-line merging on a closed contour.
 #[derive(Clone, Debug, PartialEq)]
 pub struct ContourLineMergeReport2 {
+    stage: ContourLineMergeStage2,
     source_segment_count: usize,
     output_segment_count: Option<usize>,
     fill_rule: FillRule,
@@ -124,6 +145,15 @@ pub struct ContourLineMergeReport2 {
 pub struct ContourLineMergeResult2 {
     contour: Option<Contour2>,
     report: ContourLineMergeReport2,
+}
+
+/// Furthest exact stage reached by closed-contour adjacent-line merging.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum ContourLineMergeStage2 {
+    /// Wraparound and interior line adjacency predicates were being classified.
+    AdjacencyClassification,
+    /// The merged segment sequence was validated as a closed contour.
+    ContourMaterialization,
 }
 
 /// A closed sequence of connected native segments.
@@ -279,6 +309,7 @@ impl Contour2 {
                     return Ok(ContourLineMergeResult2 {
                         contour: None,
                         report: ContourLineMergeReport2 {
+                            stage: ContourLineMergeStage2::AdjacencyClassification,
                             source_segment_count,
                             output_segment_count: None,
                             fill_rule: self.fill_rule,
@@ -295,6 +326,7 @@ impl Contour2 {
             return Ok(ContourLineMergeResult2 {
                 contour: None,
                 report: ContourLineMergeReport2 {
+                    stage: ContourLineMergeStage2::AdjacencyClassification,
                     source_segment_count,
                     output_segment_count: None,
                     fill_rule: self.fill_rule,
@@ -339,6 +371,7 @@ impl Contour2 {
         let contour = Self::try_new_with_fill_rule(output_segments, self.fill_rule)?;
         Ok(ContourLineMergeResult2 {
             report: ContourLineMergeReport2 {
+                stage: ContourLineMergeStage2::ContourMaterialization,
                 source_segment_count,
                 output_segment_count: Some(contour.len()),
                 fill_rule: self.fill_rule,
@@ -400,9 +433,15 @@ impl Contour2 {
             )?),
             None => None,
         };
+        let stage = if contour.is_some() {
+            ContourChamferStage2::ContourMaterialization
+        } else {
+            ContourChamferStage2::CurveStringEdit
+        };
         Ok(ContourChamferResult2 {
             contour,
             report: ContourChamferReport2 {
+                stage,
                 vertex_index,
                 curve_string_report,
                 source_segment_count: self.segments().len(),
@@ -462,9 +501,15 @@ impl Contour2 {
             )?),
             None => None,
         };
+        let stage = if contour.is_some() {
+            ContourChamferStage2::ContourMaterialization
+        } else {
+            ContourChamferStage2::CurveStringEdit
+        };
         Ok(ContourChamferResult2 {
             contour,
             report: ContourChamferReport2 {
+                stage,
                 vertex_index,
                 curve_string_report,
                 source_segment_count: self.segments().len(),
@@ -529,9 +574,15 @@ impl Contour2 {
             )?),
             None => None,
         };
+        let stage = if contour.is_some() {
+            ContourFilletStage2::ContourMaterialization
+        } else {
+            ContourFilletStage2::CurveStringEdit
+        };
         Ok(ContourFilletResult2 {
             contour,
             report: ContourFilletReport2 {
+                stage,
                 vertex_index,
                 curve_string_report,
                 source_segment_count: self.segments().len(),
@@ -598,9 +649,15 @@ impl Contour2 {
             )?),
             None => None,
         };
+        let stage = if contour.is_some() {
+            ContourFilletStage2::ContourMaterialization
+        } else {
+            ContourFilletStage2::CurveStringEdit
+        };
         Ok(ContourFilletResult2 {
             contour,
             report: ContourFilletReport2 {
+                stage,
                 vertex_index,
                 curve_string_report,
                 source_segment_count: self.segments().len(),
@@ -823,6 +880,11 @@ impl ContourClosureResult2 {
 }
 
 impl ContourChamferReport2 {
+    /// Returns the furthest exact contour chamfer stage reached.
+    pub const fn stage(&self) -> ContourChamferStage2 {
+        self.stage
+    }
+
     /// Returns the contour vertex index requested by the chamfer.
     pub const fn vertex_index(&self) -> usize {
         self.vertex_index
@@ -872,6 +934,11 @@ impl ContourChamferResult2 {
 }
 
 impl ContourFilletReport2 {
+    /// Returns the furthest exact contour fillet stage reached.
+    pub const fn stage(&self) -> ContourFilletStage2 {
+        self.stage
+    }
+
     /// Returns the contour vertex index requested by the fillet.
     pub const fn vertex_index(&self) -> usize {
         self.vertex_index
@@ -948,6 +1015,11 @@ impl ContourLineMergeSpanReport2 {
 }
 
 impl ContourLineMergeReport2 {
+    /// Returns the furthest exact contour line-merge stage reached.
+    pub const fn stage(&self) -> ContourLineMergeStage2 {
+        self.stage
+    }
+
     /// Returns the source contour segment count captured by this report.
     pub const fn source_segment_count(&self) -> usize {
         self.source_segment_count

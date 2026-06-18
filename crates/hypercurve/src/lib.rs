@@ -138,10 +138,10 @@ pub use bspline::{
 pub use bulge::BulgeVertex2;
 pub use classify::{Classification, LineSide, UncertaintyReason};
 pub use contour::{
-    Contour2, ContourChamferReport2, ContourChamferResult2, ContourClosureReport2,
-    ContourClosureResult2, ContourClosureStage2, ContourFilletReport2, ContourFilletResult2,
-    ContourLineMergeReport2, ContourLineMergeResult2, ContourLineMergeSpanReport2,
-    ContourPointLocation, FillRule,
+    Contour2, ContourChamferReport2, ContourChamferResult2, ContourChamferStage2,
+    ContourClosureReport2, ContourClosureResult2, ContourClosureStage2, ContourFilletReport2,
+    ContourFilletResult2, ContourFilletStage2, ContourLineMergeReport2, ContourLineMergeResult2,
+    ContourLineMergeSpanReport2, ContourLineMergeStage2, ContourPointLocation, FillRule,
 };
 pub use curve_string::{
     ConnectedCurveString2, CurveString2, CurveStringChamferInputPath2, CurveStringChamferReport2,

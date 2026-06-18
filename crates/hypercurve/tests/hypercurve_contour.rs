@@ -1,7 +1,8 @@
 use hypercurve::{
-    BulgeVertex2, Classification, Contour2, ContourClosureStage2, ContourPointLocation, CurveError,
-    CurvePolicy, CurveString2, CurveStringChamferInputPath2, CurveStringFilletInputPath2, FillRule,
-    Real, Region2, RegionPointLocation, Segment2, UncertaintyReason,
+    BulgeVertex2, Classification, Contour2, ContourChamferStage2, ContourClosureStage2,
+    ContourFilletStage2, ContourLineMergeStage2, ContourPointLocation, CurveError, CurvePolicy,
+    CurveString2, CurveStringChamferInputPath2, CurveStringFilletInputPath2, FillRule, Real,
+    Region2, RegionPointLocation, Segment2, UncertaintyReason,
 };
 
 fn s(value: i32) -> Real {
@@ -179,6 +180,10 @@ fn contour_merge_adjacent_collinear_lines_reports_source_runs() {
     let merged = contour.merge_adjacent_collinear_lines(&policy()).unwrap();
 
     assert!(merged.report().status().is_native_exact());
+    assert_eq!(
+        merged.report().stage(),
+        ContourLineMergeStage2::ContourMaterialization
+    );
     assert_eq!(merged.report().source_segment_count(), 5);
     assert_eq!(merged.report().output_segment_count(), Some(4));
     assert_eq!(merged.report().fill_rule(), FillRule::NonZero);
@@ -209,6 +214,10 @@ fn contour_merge_adjacent_collinear_lines_merges_wraparound_run() {
     let merged = contour.merge_adjacent_collinear_lines(&policy()).unwrap();
 
     assert!(merged.report().status().is_native_exact());
+    assert_eq!(
+        merged.report().stage(),
+        ContourLineMergeStage2::ContourMaterialization
+    );
     assert_eq!(merged.report().source_segment_count(), 5);
     assert_eq!(merged.report().output_segment_count(), Some(4));
     assert_eq!(merged.report().spans()[0].source_segment_indices(), &[4, 0]);
@@ -233,6 +242,10 @@ fn contour_chamfer_line_line_vertex_materializes_closed_contour() {
         .unwrap();
 
     assert!(chamfer.report().status().is_native_exact());
+    assert_eq!(
+        chamfer.report().stage(),
+        ContourChamferStage2::ContourMaterialization
+    );
     assert_eq!(chamfer.report().vertex_index(), 1);
     assert_eq!(
         chamfer.report().curve_string_report().input_path(),
@@ -291,6 +304,10 @@ fn contour_chamfer_reports_boundary_parameters() {
     assert!(chamfer.contour().is_none());
     assert!(chamfer.report().status().is_retained_evidence());
     assert_eq!(
+        chamfer.report().stage(),
+        ContourChamferStage2::CurveStringEdit
+    );
+    assert_eq!(
         chamfer.report().blocker(),
         Some(UncertaintyReason::Boundary)
     );
@@ -312,6 +329,10 @@ fn contour_chamfer_line_line_vertex_by_points_materializes_closed_contour() {
         .unwrap();
 
     assert!(chamfer.report().status().is_native_exact());
+    assert_eq!(
+        chamfer.report().stage(),
+        ContourChamferStage2::ContourMaterialization
+    );
     assert_eq!(chamfer.report().vertex_index(), 1);
     assert_eq!(
         chamfer.report().curve_string_report().input_path(),
@@ -351,6 +372,10 @@ fn contour_chamfer_line_line_vertex_by_points_reports_off_segment_boundary() {
     assert!(chamfer.contour().is_none());
     assert!(chamfer.report().status().is_retained_evidence());
     assert_eq!(
+        chamfer.report().stage(),
+        ContourChamferStage2::CurveStringEdit
+    );
+    assert_eq!(
         chamfer.report().blocker(),
         Some(UncertaintyReason::Boundary)
     );
@@ -372,6 +397,10 @@ fn contour_chamfer_line_line_wraparound_vertex_materializes_closed_contour() {
         .unwrap();
 
     assert!(chamfer.report().status().is_native_exact());
+    assert_eq!(
+        chamfer.report().stage(),
+        ContourChamferStage2::ContourMaterialization
+    );
     assert_eq!(chamfer.report().vertex_index(), 0);
     assert_eq!(chamfer.report().source_segment_count(), 4);
     assert_eq!(
@@ -427,6 +456,10 @@ fn contour_chamfer_line_line_wraparound_vertex_by_points_materializes_closed_con
         .unwrap();
 
     assert!(chamfer.report().status().is_native_exact());
+    assert_eq!(
+        chamfer.report().stage(),
+        ContourChamferStage2::ContourMaterialization
+    );
     assert_eq!(chamfer.report().vertex_index(), 0);
     assert_eq!(
         chamfer
@@ -483,6 +516,10 @@ fn contour_fillet_line_line_vertex_materializes_closed_contour() {
         .unwrap();
 
     assert!(fillet.report().status().is_native_exact());
+    assert_eq!(
+        fillet.report().stage(),
+        ContourFilletStage2::ContourMaterialization
+    );
     assert_eq!(fillet.report().vertex_index(), 1);
     assert_eq!(
         fillet.report().curve_string_report().input_path(),
@@ -531,6 +568,10 @@ fn contour_fillet_line_line_vertex_by_parameters_materializes_closed_contour() {
         .unwrap();
 
     assert!(fillet.report().status().is_native_exact());
+    assert_eq!(
+        fillet.report().stage(),
+        ContourFilletStage2::ContourMaterialization
+    );
     assert_eq!(fillet.report().vertex_index(), 1);
     assert_eq!(
         fillet.report().curve_string_report().input_path(),
@@ -598,6 +639,10 @@ fn contour_fillet_reports_wrong_orientation_boundary() {
 
     assert!(fillet.contour().is_none());
     assert!(fillet.report().status().is_retained_evidence());
+    assert_eq!(
+        fillet.report().stage(),
+        ContourFilletStage2::CurveStringEdit
+    );
     assert_eq!(fillet.report().blocker(), Some(UncertaintyReason::Boundary));
     assert_eq!(
         fillet.report().curve_string_report().fillet_segment_index(),
@@ -614,6 +659,10 @@ fn contour_fillet_line_line_wraparound_vertex_materializes_closed_contour() {
         .unwrap();
 
     assert!(fillet.report().status().is_native_exact());
+    assert_eq!(
+        fillet.report().stage(),
+        ContourFilletStage2::ContourMaterialization
+    );
     assert_eq!(fillet.report().vertex_index(), 0);
     assert_eq!(fillet.report().source_segment_count(), 4);
     assert_eq!(
@@ -674,6 +723,10 @@ fn contour_fillet_line_line_wraparound_vertex_by_parameters_materializes_closed_
         .unwrap();
 
     assert!(fillet.report().status().is_native_exact());
+    assert_eq!(
+        fillet.report().stage(),
+        ContourFilletStage2::ContourMaterialization
+    );
     assert_eq!(fillet.report().vertex_index(), 0);
     assert_eq!(
         fillet
