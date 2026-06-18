@@ -7,10 +7,10 @@ use hypermesh::{
     ExactMeshConsumerDomain, ExactMeshHandoffPackageError, ExactMeshProposalAcceptance,
     ExactMeshProposalReport, ExactMeshProposalReportError, ExactMeshProposalSourceKind,
     ExactOutputTriangleOrientation, ExactRegionSelection, ExactRegularizationPolicy,
-    ExactReportFreshness, FaceRegionPlaneRelation, LossyF64MeshInputReadiness,
-    LossyF64MeshInputReportValidationError, MeshArtifactBlocker, MeshArtifactFaceRecord,
-    MeshArtifactManifest, MeshArtifactReportError, MeshArtifactRole, MeshArtifactSourceKind,
-    MeshArtifactVertexRecord, MeshCoordinateEvidence, MeshTopologyEvidence, ValidationPolicy,
+    ExactReportFreshness, LossyF64MeshInputReadiness, LossyF64MeshInputReportValidationError,
+    MeshArtifactBlocker, MeshArtifactFaceRecord, MeshArtifactManifest, MeshArtifactReportError,
+    MeshArtifactRole, MeshArtifactSourceKind, MeshArtifactVertexRecord, MeshCoordinateEvidence,
+    MeshTopologyEvidence, ValidationPolicy,
 };
 use hyperreal::Real;
 
@@ -2411,20 +2411,7 @@ fn exact_selected_region_boolean_is_publicly_replayable() {
         .region_classifications
         .first_mut()
         .expect("selected-region result should retain region facts");
-    match classification.relation {
-        FaceRegionPlaneRelation::StrictlyAbove => {
-            classification.relation = FaceRegionPlaneRelation::StrictlyBelow;
-            classification
-                .node_sides
-                .fill(Some(hyperlimit::PlaneSide::Below));
-        }
-        _ => {
-            classification.relation = FaceRegionPlaneRelation::StrictlyAbove;
-            classification
-                .node_sides
-                .fill(Some(hyperlimit::PlaneSide::Above));
-        }
-    }
+    classification.plane_face = usize::MAX;
     stale_evaluation_region_fact
         .result
         .as_ref()

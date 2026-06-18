@@ -89,7 +89,7 @@ pub use proposal::{
     ExactMeshProposalAcceptance, ExactMeshProposalReport, ExactMeshProposalReportError,
     ExactMeshProposalSourceKind,
 };
-pub use region::{ExactOutputTriangleOrientation, ExactRegionSelection, FaceRegionPlaneRelation};
+pub use region::{ExactOutputTriangleOrientation, ExactRegionSelection};
 pub use regularization::{
     ExactArrangementBlocker, ExactLowerDimensionalPolicy, ExactRegularizationPolicy,
     ExactUnresolvedPolicy,
