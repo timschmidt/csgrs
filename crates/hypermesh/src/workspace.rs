@@ -309,14 +309,9 @@ impl<'a> ExactBooleanWorkspace<'a> {
             evaluation
                 .validate()
                 .map_err(workspace_report_validation_error)?;
-            if validate_retained_result_for_request(
-                self.left,
-                self.right,
-                request,
-                self.regularized_solid_arrangement_attempt(request),
-                result,
-            )
-            .is_ok()
+            if evaluation
+                .validate_materialized_result_against_sources(self.left, self.right)
+                .is_ok()
             {
                 return self.store_materialization_and_promote_evaluation(request, result.clone());
             }
