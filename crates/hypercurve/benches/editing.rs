@@ -155,6 +155,7 @@ fn bench_region_trim(iterations: u32) -> CurveResult<()> {
     let policy = CurvePolicy::certified();
     let started = Instant::now();
     let mut total_outputs = 0_usize;
+    let mut total_boundary_hits = 0_usize;
     let mut total_interval_classifications = 0_usize;
 
     for _ in 0..iterations {
@@ -163,13 +164,14 @@ fn bench_region_trim(iterations: u32) -> CurveResult<()> {
             panic!("region trim benchmark became non-native");
         }
         total_outputs += black_box(result.curve_strings().len());
+        total_boundary_hits += black_box(result.report().boundary_hit_count());
         total_interval_classifications +=
             black_box(result.report().interval_classification_count());
     }
 
     let elapsed = started.elapsed();
     println!(
-        "curve_string_region_trim: {iterations} iterations in {elapsed:?} ({:?}/iter), total outputs={total_outputs}, interval classifications={total_interval_classifications}",
+        "curve_string_region_trim: {iterations} iterations in {elapsed:?} ({:?}/iter), total outputs={total_outputs}, boundary hits={total_boundary_hits}, interval classifications={total_interval_classifications}",
         elapsed / iterations
     );
     Ok(())
@@ -184,6 +186,7 @@ fn bench_prepared_region_trim(iterations: u32) -> CurveResult<()> {
     let prepared_region = region.prepare_topology_queries(&policy);
     let started = Instant::now();
     let mut total_outputs = 0_usize;
+    let mut total_boundary_hits = 0_usize;
     let mut total_interval_classifications = 0_usize;
 
     for _ in 0..iterations {
@@ -192,13 +195,14 @@ fn bench_prepared_region_trim(iterations: u32) -> CurveResult<()> {
             panic!("prepared region trim benchmark became non-native");
         }
         total_outputs += black_box(result.curve_strings().len());
+        total_boundary_hits += black_box(result.report().boundary_hit_count());
         total_interval_classifications +=
             black_box(result.report().interval_classification_count());
     }
 
     let elapsed = started.elapsed();
     println!(
-        "prepared_curve_string_region_trim: {iterations} iterations in {elapsed:?} ({:?}/iter), total outputs={total_outputs}, interval classifications={total_interval_classifications}",
+        "prepared_curve_string_region_trim: {iterations} iterations in {elapsed:?} ({:?}/iter), total outputs={total_outputs}, boundary hits={total_boundary_hits}, interval classifications={total_interval_classifications}",
         elapsed / iterations
     );
     Ok(())

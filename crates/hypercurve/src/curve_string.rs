@@ -660,6 +660,7 @@ pub struct CurveStringRegionTrimReport2 {
     boundary_candidate_pair_count: usize,
     boundary_skipped_aabb_pair_count: usize,
     boundary_tested_pair_count: usize,
+    boundary_hit_count: usize,
     interval_candidate_count: usize,
     interval_classification_count: usize,
     boundary_hits: Vec<CurveStringRegionTrimHit2>,
@@ -3441,6 +3442,11 @@ impl CurveStringRegionTrimReport2 {
         self.boundary_tested_pair_count
     }
 
+    /// Returns exact region-boundary hits retained as split evidence.
+    pub const fn boundary_hit_count(&self) -> usize {
+        self.boundary_hit_count
+    }
+
     /// Returns source intervals considered after splitting at retained boundary hits.
     pub const fn interval_candidate_count(&self) -> usize {
         self.interval_candidate_count
@@ -4031,6 +4037,7 @@ fn trim_curve_string_inside_region_with_hits(
             boundary_candidate_pair_count: boundary_workload.candidate_pair_count,
             boundary_skipped_aabb_pair_count: boundary_workload.skipped_aabb_pair_count,
             boundary_tested_pair_count: boundary_workload.tested_pair_count,
+            boundary_hit_count: boundary_hits.len(),
             interval_candidate_count,
             interval_classification_count,
             boundary_hits,
@@ -4559,6 +4566,7 @@ fn blocked_region_trim_result(
             boundary_candidate_pair_count: boundary_workload.candidate_pair_count,
             boundary_skipped_aabb_pair_count: boundary_workload.skipped_aabb_pair_count,
             boundary_tested_pair_count: boundary_workload.tested_pair_count,
+            boundary_hit_count: boundary_hits.len(),
             interval_candidate_count,
             interval_classification_count,
             boundary_hits,
