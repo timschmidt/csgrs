@@ -61,6 +61,8 @@ pub struct RegionContourIntersection {
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct RegionIntersectionSet {
     pairs: Vec<RegionContourIntersection>,
+    first_contour_count: Option<usize>,
+    second_contour_count: Option<usize>,
     candidate_pair_count: usize,
     skipped_aabb_pair_count: usize,
     tested_pair_count: usize,
@@ -70,11 +72,13 @@ impl RegionIntersectionSet {
     /// Constructs a set from already-normalized region contour pairs.
     pub fn new(pairs: Vec<RegionContourIntersection>) -> CurveResult<Self> {
         let pair_count = pairs.len();
-        Self::from_parts(pairs, pair_count, 0, pair_count)
+        Self::from_parts(pairs, None, None, pair_count, 0, pair_count)
     }
 
     pub(crate) fn from_parts(
         pairs: Vec<RegionContourIntersection>,
+        first_contour_count: Option<usize>,
+        second_contour_count: Option<usize>,
         candidate_pair_count: usize,
         skipped_aabb_pair_count: usize,
         tested_pair_count: usize,
@@ -90,8 +94,17 @@ impl RegionIntersectionSet {
                 "region intersection event pairs cannot exceed tested contour pairs".into(),
             ));
         }
+        if let (Some(first_count), Some(second_count)) = (first_contour_count, second_contour_count)
+            && candidate_pair_count != first_count * second_count
+        {
+            return Err(CurveError::Topology(
+                "region intersection candidate count must match operand contour counts".into(),
+            ));
+        }
         Ok(Self {
             pairs,
+            first_contour_count,
+            second_contour_count,
             candidate_pair_count,
             skipped_aabb_pair_count,
             tested_pair_count,
@@ -111,6 +124,16 @@ impl RegionIntersectionSet {
     /// Returns true when no contour-pair events were collected.
     pub fn is_empty(&self) -> bool {
         self.pairs.is_empty()
+    }
+
+    /// Returns the first operand contour count when known for this event set.
+    pub const fn first_contour_count(&self) -> Option<usize> {
+        self.first_contour_count
+    }
+
+    /// Returns the second operand contour count when known for this event set.
+    pub const fn second_contour_count(&self) -> Option<usize> {
+        self.second_contour_count
     }
 
     /// Returns the number of contour pairs with events.
@@ -206,6 +229,8 @@ pub(crate) fn intersect_region_views(
 
     RegionIntersectionSet::from_parts(
         pairs,
+        Some(first.material_contours().len() + first.hole_contours().len()),
+        Some(second.material_contours().len() + second.hole_contours().len()),
         workload.candidate_pair_count,
         workload.skipped_aabb_pair_count,
         workload.tested_pair_count,

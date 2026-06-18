@@ -920,6 +920,8 @@ impl<'a> PreparedRegionView2<'a> {
 
         RegionIntersectionSet::from_parts(
             pairs,
+            Some(self.prepared_contour_count()),
+            Some(other.prepared_contour_count()),
             workload.candidate_pair_count,
             workload.skipped_aabb_pair_count,
             workload.tested_pair_count,
