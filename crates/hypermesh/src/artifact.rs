@@ -223,6 +223,17 @@ pub struct MeshArtifactVertexRecord {
     pub coordinate_evidence: MeshCoordinateEvidence,
 }
 
+impl MeshArtifactVertexRecord {
+    /// Build a vertex record whose coordinates replay through derived exact
+    /// source evidence.
+    pub const fn certified_derived_exact(index: usize) -> Self {
+        Self {
+            index,
+            coordinate_evidence: MeshCoordinateEvidence::CertifiedDerivedExact,
+        }
+    }
+}
+
 /// One face record in a shared mesh artifact manifest.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct MeshArtifactFaceRecord {
@@ -232,6 +243,17 @@ pub struct MeshArtifactFaceRecord {
     pub vertices: Vec<usize>,
     /// Topology evidence for this face.
     pub topology_evidence: MeshTopologyEvidence,
+}
+
+impl MeshArtifactFaceRecord {
+    /// Build a face record for a derived exact surface handoff.
+    pub fn derived_exact_surface_handoff(index: usize, vertices: Vec<usize>) -> Self {
+        Self {
+            index,
+            vertices,
+            topology_evidence: MeshTopologyEvidence::DerivedExactSurfaceHandoff,
+        }
+    }
 }
 
 /// Shared mesh artifact manifest emitted by a producer crate.

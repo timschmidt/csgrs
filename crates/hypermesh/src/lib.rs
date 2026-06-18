@@ -63,7 +63,7 @@ pub use adapter::{
 };
 pub use artifact::{
     MeshArtifactBlocker, MeshArtifactFaceRecord, MeshArtifactManifest, MeshArtifactReportError,
-    MeshArtifactVertexRecord, MeshCoordinateEvidence, MeshTopologyEvidence,
+    MeshArtifactVertexRecord,
 };
 pub use audit::ExactMeshAuditError;
 pub use boolean::{
