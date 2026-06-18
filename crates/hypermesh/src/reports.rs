@@ -3950,6 +3950,19 @@ fn workspace_winding_readiness_for_report_replay(
         .map_err(|_| ExactReportValidationError::SourceReplayMismatch)
 }
 
+fn workspace_planar_arrangement_for_report_replay(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+) -> Result<ExactPlanarArrangementReport, ExactReportValidationError> {
+    let request = ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY);
+    let mut workspace = ExactBooleanWorkspace::new(left, right);
+    workspace
+        .evaluate(request)
+        .map(|evaluation| evaluation.certifications.planar_arrangement.clone())
+        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)
+}
+
 fn validate_winding_readiness_against_sources_for_request(
     report: &ExactWindingReadinessReport,
     left: &ExactMesh,
@@ -5884,17 +5897,24 @@ impl ExactPlanarArrangementReport {
         right: &ExactMesh,
     ) -> Result<(), ExactReportValidationError> {
         self.validate()?;
-        let replay = if matches!(self.operation, ExactBooleanOperation::SelectedRegions(_)) {
-            not_named_planar_arrangement_report(self.operation)
-        } else {
-            let graph = validated_report_intersection_graph(left, right)?;
-            planar_arrangement_report_from_graph(&graph, left, right, self.operation)
-                .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
-        };
-        if self == &replay {
+        if let Ok(replay) =
+            workspace_planar_arrangement_for_report_replay(left, right, self.operation)
+            && self == &replay
+        {
             Ok(())
         } else {
-            Err(ExactReportValidationError::SourceReplayMismatch)
+            let replay = if matches!(self.operation, ExactBooleanOperation::SelectedRegions(_)) {
+                not_named_planar_arrangement_report(self.operation)
+            } else {
+                let graph = validated_report_intersection_graph(left, right)?;
+                planar_arrangement_report_from_graph(&graph, left, right, self.operation)
+                    .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
+            };
+            if self == &replay {
+                Ok(())
+            } else {
+                Err(ExactReportValidationError::SourceReplayMismatch)
+            }
         }
     }
 
