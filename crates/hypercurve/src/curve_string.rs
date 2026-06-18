@@ -488,6 +488,9 @@ pub struct CurveStringRegionTrimReport2 {
     source_segment_count: usize,
     region_material_contour_count: usize,
     region_hole_contour_count: usize,
+    boundary_candidate_pair_count: usize,
+    boundary_skipped_aabb_pair_count: usize,
+    boundary_tested_pair_count: usize,
     boundary_hits: Vec<CurveStringRegionTrimHit2>,
     interval_reports: Vec<CurveStringRegionTrimIntervalReport2>,
     output_curve_string_count: Option<usize>,
@@ -3033,6 +3036,21 @@ impl CurveStringRegionTrimReport2 {
         self.region_hole_contour_count
     }
 
+    /// Returns boundary segment-pair candidates considered while collecting trim hits.
+    pub const fn boundary_candidate_pair_count(&self) -> usize {
+        self.boundary_candidate_pair_count
+    }
+
+    /// Returns boundary segment-pair candidates skipped by decided disjoint AABBs.
+    pub const fn boundary_skipped_aabb_pair_count(&self) -> usize {
+        self.boundary_skipped_aabb_pair_count
+    }
+
+    /// Returns boundary segment pairs tested by exact segment topology.
+    pub const fn boundary_tested_pair_count(&self) -> usize {
+        self.boundary_tested_pair_count
+    }
+
     /// Returns exact boundary hits used as split evidence.
     pub fn boundary_hits(&self) -> &[CurveStringRegionTrimHit2] {
         &self.boundary_hits
@@ -3164,6 +3182,13 @@ struct RegionTrimSplitPoint2 {
     point: Point2,
 }
 
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+struct RegionTrimBoundaryWorkload {
+    candidate_pair_count: usize,
+    skipped_aabb_pair_count: usize,
+    tested_pair_count: usize,
+}
+
 enum NearestEndpointChoice {
     Selected(CurveStringLinkKind2, CurveStringEndpointConnectionReport2),
     Ambiguous(CurveStringLinkKind2, CurveStringEndpointConnectionReport2),
@@ -3181,13 +3206,19 @@ fn trim_curve_string_inside_region(
     policy: &CurvePolicy,
 ) -> CurveResult<CurveStringRegionTrimResult2> {
     let mut boundary_hits = Vec::new();
-    if let Some((status, blocker)) =
-        collect_region_trim_boundary_hits(curve_string, region, policy, &mut boundary_hits)?
-    {
+    let mut boundary_workload = RegionTrimBoundaryWorkload::default();
+    if let Some((status, blocker)) = collect_region_trim_boundary_hits(
+        curve_string,
+        region,
+        policy,
+        &mut boundary_hits,
+        &mut boundary_workload,
+    )? {
         return Ok(blocked_region_trim_result(
             curve_string,
             region.material_contours().len(),
             region.hole_contours().len(),
+            boundary_workload,
             boundary_hits,
             Vec::new(),
             CurveStringRegionTrimQueryPath2::Direct,
@@ -3200,6 +3231,7 @@ fn trim_curve_string_inside_region(
         curve_string,
         region.material_contours().len(),
         region.hole_contours().len(),
+        boundary_workload,
         boundary_hits,
         CurveStringRegionTrimQueryPath2::Direct,
         policy,
@@ -3213,16 +3245,19 @@ fn trim_curve_string_inside_prepared_region(
     policy: &CurvePolicy,
 ) -> CurveResult<CurveStringRegionTrimResult2> {
     let mut boundary_hits = Vec::new();
+    let mut boundary_workload = RegionTrimBoundaryWorkload::default();
     if let Some((status, blocker)) = collect_prepared_region_trim_boundary_hits(
         curve_string,
         region,
         policy,
         &mut boundary_hits,
+        &mut boundary_workload,
     )? {
         return Ok(blocked_region_trim_result(
             curve_string,
             region.material_contours().len(),
             region.hole_contours().len(),
+            boundary_workload,
             boundary_hits,
             Vec::new(),
             CurveStringRegionTrimQueryPath2::Prepared,
@@ -3235,6 +3270,7 @@ fn trim_curve_string_inside_prepared_region(
         curve_string,
         region.material_contours().len(),
         region.hole_contours().len(),
+        boundary_workload,
         boundary_hits,
         CurveStringRegionTrimQueryPath2::Prepared,
         policy,
@@ -3246,6 +3282,7 @@ fn trim_curve_string_inside_region_with_hits(
     curve_string: &CurveString2,
     region_material_contour_count: usize,
     region_hole_contour_count: usize,
+    boundary_workload: RegionTrimBoundaryWorkload,
     boundary_hits: Vec<CurveStringRegionTrimHit2>,
     query_path: CurveStringRegionTrimQueryPath2,
     policy: &CurvePolicy,
@@ -3268,6 +3305,7 @@ fn trim_curve_string_inside_region_with_hits(
                     curve_string,
                     region_material_contour_count,
                     region_hole_contour_count,
+                    boundary_workload,
                     boundary_hits,
                     interval_reports,
                     query_path,
@@ -3308,6 +3346,7 @@ fn trim_curve_string_inside_region_with_hits(
                         curve_string,
                         region_material_contour_count,
                         region_hole_contour_count,
+                        boundary_workload,
                         boundary_hits,
                         interval_reports,
                         query_path,
@@ -3332,6 +3371,7 @@ fn trim_curve_string_inside_region_with_hits(
                         curve_string,
                         region_material_contour_count,
                         region_hole_contour_count,
+                        boundary_workload,
                         boundary_hits,
                         interval_reports,
                         query_path,
@@ -3360,6 +3400,7 @@ fn trim_curve_string_inside_region_with_hits(
                         curve_string,
                         region_material_contour_count,
                         region_hole_contour_count,
+                        boundary_workload,
                         boundary_hits,
                         interval_reports,
                         query_path,
@@ -3388,6 +3429,7 @@ fn trim_curve_string_inside_region_with_hits(
                         curve_string,
                         region_material_contour_count,
                         region_hole_contour_count,
+                        boundary_workload,
                         boundary_hits,
                         interval_reports,
                         query_path,
@@ -3447,6 +3489,7 @@ fn trim_curve_string_inside_region_with_hits(
                         curve_string,
                         region_material_contour_count,
                         region_hole_contour_count,
+                        boundary_workload,
                         boundary_hits,
                         interval_reports,
                         query_path,
@@ -3469,6 +3512,9 @@ fn trim_curve_string_inside_region_with_hits(
             source_segment_count: curve_string.len(),
             region_material_contour_count,
             region_hole_contour_count,
+            boundary_candidate_pair_count: boundary_workload.candidate_pair_count,
+            boundary_skipped_aabb_pair_count: boundary_workload.skipped_aabb_pair_count,
+            boundary_tested_pair_count: boundary_workload.tested_pair_count,
             boundary_hits,
             interval_reports,
             output_curve_string_count: Some(curve_strings.len()),
@@ -3485,6 +3531,7 @@ fn collect_region_trim_boundary_hits(
     region: &Region2,
     policy: &CurvePolicy,
     hits: &mut Vec<CurveStringRegionTrimHit2>,
+    workload: &mut RegionTrimBoundaryWorkload,
 ) -> CurveResult<Option<(RetainedTopologyStatus, UncertaintyReason)>> {
     for (contour_index, contour) in region.material_contours().iter().enumerate() {
         if let Some(blocker) = collect_region_trim_contour_hits(
@@ -3494,6 +3541,7 @@ fn collect_region_trim_boundary_hits(
             contour_index,
             policy,
             hits,
+            workload,
         )? {
             return Ok(Some(blocker));
         }
@@ -3506,6 +3554,7 @@ fn collect_region_trim_boundary_hits(
             contour_index,
             policy,
             hits,
+            workload,
         )? {
             return Ok(Some(blocker));
         }
@@ -3518,6 +3567,7 @@ fn collect_prepared_region_trim_boundary_hits(
     region: &PreparedRegionView2<'_>,
     policy: &CurvePolicy,
     hits: &mut Vec<CurveStringRegionTrimHit2>,
+    workload: &mut RegionTrimBoundaryWorkload,
 ) -> CurveResult<Option<(RetainedTopologyStatus, UncertaintyReason)>> {
     for (contour_index, contour) in region.prepared_material_contours().iter().enumerate() {
         if let Some(blocker) = collect_prepared_region_trim_contour_hits(
@@ -3527,6 +3577,7 @@ fn collect_prepared_region_trim_boundary_hits(
             contour_index,
             policy,
             hits,
+            workload,
         )? {
             return Ok(Some(blocker));
         }
@@ -3539,6 +3590,7 @@ fn collect_prepared_region_trim_boundary_hits(
             contour_index,
             policy,
             hits,
+            workload,
         )? {
             return Ok(Some(blocker));
         }
@@ -3553,9 +3605,12 @@ fn collect_region_trim_contour_hits(
     contour_index: usize,
     policy: &CurvePolicy,
     hits: &mut Vec<CurveStringRegionTrimHit2>,
+    workload: &mut RegionTrimBoundaryWorkload,
 ) -> CurveResult<Option<(RetainedTopologyStatus, UncertaintyReason)>> {
     for (source_segment_index, source_segment) in curve_string.segments().iter().enumerate() {
         for (region_segment_index, region_segment) in contour.segments().iter().enumerate() {
+            workload.candidate_pair_count += 1;
+            workload.tested_pair_count += 1;
             let relation = source_segment.intersect_segment(region_segment, policy)?;
             if let Some(blocker) = append_region_trim_hits_from_relation(
                 hits,
@@ -3582,6 +3637,7 @@ fn collect_prepared_region_trim_contour_hits(
     contour_index: usize,
     policy: &CurvePolicy,
     hits: &mut Vec<CurveStringRegionTrimHit2>,
+    workload: &mut RegionTrimBoundaryWorkload,
 ) -> CurveResult<Option<(RetainedTopologyStatus, UncertaintyReason)>> {
     let source_segment_boxes: Vec<_> = curve_string
         .segments()
@@ -3592,14 +3648,17 @@ fn collect_prepared_region_trim_contour_hits(
         for (region_segment_index, region_segment) in
             contour.contour().segments().iter().enumerate()
         {
+            workload.candidate_pair_count += 1;
             if let (Some(Some(source_box)), Some(Some(region_box))) = (
                 source_segment_boxes.get(source_segment_index),
                 contour.segment_boxes().get(region_segment_index),
             ) && aabbs_decided_disjoint(source_box, region_box, policy)
             {
+                workload.skipped_aabb_pair_count += 1;
                 continue;
             }
 
+            workload.tested_pair_count += 1;
             let relation = source_segment.intersect_segment(region_segment, policy)?;
             if let Some(blocker) = append_region_trim_hits_from_relation(
                 hits,
@@ -3957,6 +4016,7 @@ fn blocked_region_trim_result(
     curve_string: &CurveString2,
     region_material_contour_count: usize,
     region_hole_contour_count: usize,
+    boundary_workload: RegionTrimBoundaryWorkload,
     boundary_hits: Vec<CurveStringRegionTrimHit2>,
     interval_reports: Vec<CurveStringRegionTrimIntervalReport2>,
     query_path: CurveStringRegionTrimQueryPath2,
@@ -3969,6 +4029,9 @@ fn blocked_region_trim_result(
             source_segment_count: curve_string.len(),
             region_material_contour_count,
             region_hole_contour_count,
+            boundary_candidate_pair_count: boundary_workload.candidate_pair_count,
+            boundary_skipped_aabb_pair_count: boundary_workload.skipped_aabb_pair_count,
+            boundary_tested_pair_count: boundary_workload.tested_pair_count,
             boundary_hits,
             interval_reports,
             output_curve_string_count: None,

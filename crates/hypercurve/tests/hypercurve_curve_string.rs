@@ -1954,6 +1954,12 @@ fn prepared_curve_string_trim_inside_region_matches_direct_result() {
         prepared.report().query_path(),
         CurveStringRegionTrimQueryPath2::Prepared
     );
+    assert_eq!(direct.report().boundary_candidate_pair_count(), 8);
+    assert_eq!(direct.report().boundary_skipped_aabb_pair_count(), 0);
+    assert_eq!(direct.report().boundary_tested_pair_count(), 8);
+    assert_eq!(prepared.report().boundary_candidate_pair_count(), 8);
+    assert_eq!(prepared.report().boundary_skipped_aabb_pair_count(), 4);
+    assert_eq!(prepared.report().boundary_tested_pair_count(), 4);
     assert_eq!(prepared.curve_strings(), direct.curve_strings());
     assert_eq!(
         prepared.report().boundary_hits(),
@@ -1979,6 +1985,9 @@ fn curve_string_trim_inside_region_splits_disconnected_inside_windows() {
 
     assert!(trimmed.report().status().is_native_exact());
     assert_eq!(trimmed.report().output_curve_string_count(), Some(2));
+    assert_eq!(trimmed.report().boundary_candidate_pair_count(), 8);
+    assert_eq!(trimmed.report().boundary_skipped_aabb_pair_count(), 0);
+    assert_eq!(trimmed.report().boundary_tested_pair_count(), 8);
     assert_eq!(trimmed.curve_strings().len(), 2);
     assert_line(&trimmed.curve_strings()[0].segments()[0], p(0, 1), p(2, 1));
     assert_line(&trimmed.curve_strings()[1].segments()[0], p(4, 1), p(6, 1));
@@ -1994,6 +2003,9 @@ fn curve_string_trim_inside_region_respects_holes() {
     let trimmed = curve.trim_inside_region(&region, &policy()).unwrap();
 
     assert!(trimmed.report().status().is_native_exact());
+    assert_eq!(trimmed.report().boundary_candidate_pair_count(), 8);
+    assert_eq!(trimmed.report().boundary_skipped_aabb_pair_count(), 0);
+    assert_eq!(trimmed.report().boundary_tested_pair_count(), 8);
     assert_eq!(trimmed.report().region_hole_contour_count(), 1);
     assert_eq!(trimmed.report().output_curve_string_count(), Some(2));
     assert_eq!(
