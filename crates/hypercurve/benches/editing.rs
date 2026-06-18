@@ -395,6 +395,7 @@ fn bench_curve_string_ordered_link_report(iterations: u32) -> CurveResult<()> {
     let policy = CurvePolicy::certified();
     let started = Instant::now();
     let mut total_steps = 0_usize;
+    let mut total_materialized_steps = 0_usize;
 
     for _ in 0..iterations {
         let result = CurveString2::link_ordered_connected_endpoints(curves.clone(), &policy)?;
@@ -405,13 +406,14 @@ fn bench_curve_string_ordered_link_report(iterations: u32) -> CurveResult<()> {
             .curve_string()
             .expect("ordered link benchmark should materialize");
         total_steps += black_box(linked.len());
-        total_steps += black_box(result.report().steps().len());
+        total_steps += black_box(result.report().attempted_link_step_count());
+        total_materialized_steps += black_box(result.report().materialized_link_step_count());
         total_steps += black_box(result.report().output_source_indices().len());
     }
 
     let elapsed = started.elapsed();
     println!(
-        "curve_string_ordered_link_report: {iterations} iterations in {elapsed:?} ({:?}/iter), total steps={total_steps}",
+        "curve_string_ordered_link_report: {iterations} iterations in {elapsed:?} ({:?}/iter), total steps={total_steps}, materialized steps={total_materialized_steps}",
         elapsed / iterations
     );
     Ok(())

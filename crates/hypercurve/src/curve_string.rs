@@ -208,6 +208,9 @@ pub struct CurveStringOrderedLinkStepReport2 {
 pub struct CurveStringOrderedLinkReport2 {
     stage: CurveStringOrderedLinkStage2,
     source_curve_string_count: usize,
+    attempted_link_step_count: usize,
+    materialized_link_step_count: usize,
+    blocked_link_step_count: usize,
     output_segment_count: Option<usize>,
     output_source_indices: Vec<usize>,
     steps: Vec<CurveStringOrderedLinkStepReport2>,
@@ -1016,11 +1019,21 @@ impl CurveString2 {
                         status,
                         blocker: Some(blocker),
                     });
+                    let attempted_link_step_count = steps.len();
+                    let materialized_link_step_count = steps
+                        .iter()
+                        .filter(|step| step.status.is_native_exact())
+                        .count();
+                    let blocked_link_step_count =
+                        attempted_link_step_count - materialized_link_step_count;
                     return Ok(OrderedLinkedCurveString2 {
                         curve_string: None,
                         report: CurveStringOrderedLinkReport2 {
                             stage: CurveStringOrderedLinkStage2::StepLinking,
                             source_curve_string_count,
+                            attempted_link_step_count,
+                            materialized_link_step_count,
+                            blocked_link_step_count,
                             output_segment_count: None,
                             output_source_indices: blocked_output_source_indices,
                             steps,
@@ -1036,6 +1049,9 @@ impl CurveString2 {
             report: CurveStringOrderedLinkReport2 {
                 stage: CurveStringOrderedLinkStage2::ChainMaterialization,
                 source_curve_string_count,
+                attempted_link_step_count: steps.len(),
+                materialized_link_step_count: steps.len(),
+                blocked_link_step_count: 0,
                 output_segment_count: Some(accumulated.len()),
                 output_source_indices: accumulated_source_indices,
                 steps,
@@ -5707,6 +5723,21 @@ impl CurveStringOrderedLinkReport2 {
     /// Returns the source curve-string count captured by this report.
     pub const fn source_curve_string_count(&self) -> usize {
         self.source_curve_string_count
+    }
+
+    /// Returns ordered pairwise link steps attempted.
+    pub const fn attempted_link_step_count(&self) -> usize {
+        self.attempted_link_step_count
+    }
+
+    /// Returns pairwise link steps that materialized native exact topology.
+    pub const fn materialized_link_step_count(&self) -> usize {
+        self.materialized_link_step_count
+    }
+
+    /// Returns pairwise link steps that blocked ordered-chain materialization.
+    pub const fn blocked_link_step_count(&self) -> usize {
+        self.blocked_link_step_count
     }
 
     /// Returns the output segment count when ordered linking materialized.
