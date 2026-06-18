@@ -22,10 +22,11 @@ use super::affine_solid::{
 };
 use super::arrangement3d::{ExactArrangement, ExactTopologyAssemblyReport};
 use super::boolean::{
-    ExactArrangementBooleanAttempt, ExactBooleanEvaluation, ExactBooleanOperation,
-    ExactBooleanRequest, ExactBoundaryBooleanPolicy, adjacent_union_completion_certification,
-    boolean_coplanar_mesh_overlay_optional, boundary_policy_shortcut_result_matches_sources,
-    boundary_touching_report_from_graph, materialize_volumetric_coplanar_boundary_closure_output,
+    ExactArrangementBooleanAttempt, ExactBooleanCertificationSet, ExactBooleanEvaluation,
+    ExactBooleanOperation, ExactBooleanRequest, ExactBoundaryBooleanPolicy,
+    adjacent_union_completion_certification, boolean_coplanar_mesh_overlay_optional,
+    boundary_policy_shortcut_result_matches_sources, boundary_touching_report_from_graph,
+    materialize_volumetric_coplanar_boundary_closure_output,
     no_materialized_boundary_output_report, not_named_planar_arrangement_report,
     open_surface_disjoint_report_from_graph, open_surface_disjoint_result_matches_sources,
     planar_arrangement_report_from_graph, refinement_report_from_graph,
@@ -3986,33 +3987,13 @@ fn workspace_evaluation_for_report_replay(
         .map_err(|_| ExactReportValidationError::SourceReplayMismatch)
 }
 
-fn workspace_winding_readiness_for_report_replay(
+fn workspace_certifications_for_report_replay(
     left: &ExactMesh,
     right: &ExactMesh,
     request: ExactBooleanRequest,
-) -> Result<ExactWindingReadinessReport, ExactReportValidationError> {
+) -> Result<ExactBooleanCertificationSet, ExactReportValidationError> {
     workspace_evaluation_for_report_replay(left, right, request)
-        .map(|evaluation| evaluation.certifications.winding_readiness)
-}
-
-fn workspace_refinement_for_report_replay(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-) -> Result<ExactRefinementReport, ExactReportValidationError> {
-    let request = ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY);
-    workspace_evaluation_for_report_replay(left, right, request)
-        .map(|evaluation| evaluation.certifications.refinement)
-}
-
-fn workspace_planar_arrangement_for_report_replay(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-) -> Result<ExactPlanarArrangementReport, ExactReportValidationError> {
-    let request = ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY);
-    workspace_evaluation_for_report_replay(left, right, request)
-        .map(|evaluation| evaluation.certifications.planar_arrangement)
+        .map(|evaluation| evaluation.certifications)
 }
 
 fn validate_winding_readiness_against_sources_for_request(
@@ -4021,8 +4002,8 @@ fn validate_winding_readiness_against_sources_for_request(
     right: &ExactMesh,
     request: ExactBooleanRequest,
 ) -> Result<(), ExactReportValidationError> {
-    if let Ok(replay) = workspace_winding_readiness_for_report_replay(left, right, request)
-        && report == &replay
+    if let Ok(certifications) = workspace_certifications_for_report_replay(left, right, request)
+        && report == &certifications.winding_readiness
     {
         return Ok(());
     }
@@ -4948,8 +4929,9 @@ impl ExactRefinementReport {
         right: &ExactMesh,
     ) -> Result<(), ExactReportValidationError> {
         self.validate()?;
-        if let Ok(replay) = workspace_refinement_for_report_replay(left, right, self.operation)
-            && self == &replay
+        let request = ExactBooleanRequest::new(self.operation, ValidationPolicy::ALLOW_BOUNDARY);
+        if let Ok(certifications) = workspace_certifications_for_report_replay(left, right, request)
+            && self == &certifications.refinement
         {
             Ok(())
         } else {
@@ -5959,9 +5941,9 @@ impl ExactPlanarArrangementReport {
         right: &ExactMesh,
     ) -> Result<(), ExactReportValidationError> {
         self.validate()?;
-        if let Ok(replay) =
-            workspace_planar_arrangement_for_report_replay(left, right, self.operation)
-            && self == &replay
+        let request = ExactBooleanRequest::new(self.operation, ValidationPolicy::ALLOW_BOUNDARY);
+        if let Ok(certifications) = workspace_certifications_for_report_replay(left, right, request)
+            && self == &certifications.planar_arrangement
         {
             Ok(())
         } else {
