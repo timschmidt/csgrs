@@ -64,6 +64,34 @@ pub struct CurveStringOffsetResult2 {
     report: CurveStringOffsetReport2,
 }
 
+/// Furthest exact stage reached by checked closed-contour offsetting.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum ContourOffsetStage2 {
+    /// Primitive offset segments and joins were being materialized.
+    OffsetConstruction,
+    /// The raw joined offset was checked for self-contacting topology.
+    SelfContactValidation,
+}
+
+/// Report for a checked closed-contour left offset.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ContourOffsetReport2 {
+    stage: ContourOffsetStage2,
+    source_segment_count: usize,
+    raw_offset_segment_count: Option<usize>,
+    output_segment_count: Option<usize>,
+    fill_rule: FillRule,
+    status: RetainedTopologyStatus,
+    blocker: Option<UncertaintyReason>,
+}
+
+/// Result of report-bearing checked closed-contour offsetting.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ContourOffsetResult2 {
+    contour: Option<Contour2>,
+    report: ContourOffsetReport2,
+}
+
 impl LineSeg2 {
     /// Returns the constant-distance segment on this segment's left side.
     ///
@@ -505,18 +533,129 @@ impl Contour2 {
         distance: Real,
         policy: &CurvePolicy,
     ) -> CurveResult<Classification<Self>> {
+        let result = self.offset_left_checked_with_report(distance, policy)?;
+        let blocker = result
+            .report()
+            .blocker()
+            .unwrap_or(UncertaintyReason::Unsupported);
+        if let Some(contour) = result.into_contour() {
+            Ok(Classification::Decided(contour))
+        } else {
+            Ok(Classification::Uncertain(blocker))
+        }
+    }
+
+    /// Returns a report-bearing raw joined left offset, rejecting self-contacting output.
+    ///
+    /// The report records source inventory, the raw joined offset segment count
+    /// before self-contact validation, the final output count when accepted,
+    /// the retained fill rule, and the exact blocker otherwise.
+    pub fn offset_left_checked_with_report(
+        &self,
+        distance: Real,
+        policy: &CurvePolicy,
+    ) -> CurveResult<ContourOffsetResult2> {
+        let source_segment_count = self.len();
+        let fill_rule = self.fill_rule();
         let offset = match self.offset_left_with_line_joins(distance, policy)? {
             Classification::Decided(offset) => offset,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+            Classification::Uncertain(reason) => {
+                return Ok(blocked_contour_offset_result(
+                    ContourOffsetStage2::OffsetConstruction,
+                    source_segment_count,
+                    None,
+                    fill_rule,
+                    retained_status_for_offset_blocker(reason),
+                    reason,
+                ));
+            }
         };
+        let raw_offset_segment_count = offset.len();
 
         match offset.has_self_contacts(policy)? {
-            Classification::Decided(false) => Ok(Classification::Decided(offset)),
-            Classification::Decided(true) => {
-                Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
-            }
-            Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
+            Classification::Decided(false) => Ok(ContourOffsetResult2 {
+                contour: Some(offset),
+                report: ContourOffsetReport2 {
+                    stage: ContourOffsetStage2::SelfContactValidation,
+                    source_segment_count,
+                    raw_offset_segment_count: Some(raw_offset_segment_count),
+                    output_segment_count: Some(raw_offset_segment_count),
+                    fill_rule,
+                    status: RetainedTopologyStatus::NativeExact,
+                    blocker: None,
+                },
+            }),
+            Classification::Decided(true) => Ok(blocked_contour_offset_result(
+                ContourOffsetStage2::SelfContactValidation,
+                source_segment_count,
+                Some(raw_offset_segment_count),
+                fill_rule,
+                RetainedTopologyStatus::Unsupported,
+                UncertaintyReason::Unsupported,
+            )),
+            Classification::Uncertain(reason) => Ok(blocked_contour_offset_result(
+                ContourOffsetStage2::SelfContactValidation,
+                source_segment_count,
+                Some(raw_offset_segment_count),
+                fill_rule,
+                retained_status_for_offset_blocker(reason),
+                reason,
+            )),
         }
+    }
+}
+
+impl ContourOffsetReport2 {
+    /// Returns the furthest exact checked-offset stage reached.
+    pub const fn stage(&self) -> ContourOffsetStage2 {
+        self.stage
+    }
+
+    /// Returns the source contour segment count.
+    pub const fn source_segment_count(&self) -> usize {
+        self.source_segment_count
+    }
+
+    /// Returns the raw joined offset segment count before self-contact rejection.
+    pub const fn raw_offset_segment_count(&self) -> Option<usize> {
+        self.raw_offset_segment_count
+    }
+
+    /// Returns output segment count when the checked offset materialized.
+    pub const fn output_segment_count(&self) -> Option<usize> {
+        self.output_segment_count
+    }
+
+    /// Returns the fill rule retained from the source contour.
+    pub const fn fill_rule(&self) -> FillRule {
+        self.fill_rule
+    }
+
+    /// Returns checked offset topology status.
+    pub const fn status(&self) -> RetainedTopologyStatus {
+        self.status
+    }
+
+    /// Returns the exact blocker for non-materialized checked offsets.
+    pub const fn blocker(&self) -> Option<UncertaintyReason> {
+        self.blocker
+    }
+}
+
+impl ContourOffsetResult2 {
+    /// Returns the materialized checked offset, if accepted.
+    pub const fn contour(&self) -> Option<&Contour2> {
+        self.contour.as_ref()
+    }
+
+    /// Consumes this result and returns the materialized checked offset.
+    pub fn into_contour(self) -> Option<Contour2> {
+        self.contour
+    }
+
+    /// Returns retained checked-offset evidence.
+    pub const fn report(&self) -> &ContourOffsetReport2 {
+        &self.report
     }
 }
 
@@ -583,6 +722,28 @@ fn blocked_curve_string_offset_result(
             source_segment_count,
             raw_offset_segment_count,
             output_segment_count: None,
+            status,
+            blocker: Some(blocker),
+        },
+    }
+}
+
+fn blocked_contour_offset_result(
+    stage: ContourOffsetStage2,
+    source_segment_count: usize,
+    raw_offset_segment_count: Option<usize>,
+    fill_rule: FillRule,
+    status: RetainedTopologyStatus,
+    blocker: UncertaintyReason,
+) -> ContourOffsetResult2 {
+    ContourOffsetResult2 {
+        contour: None,
+        report: ContourOffsetReport2 {
+            stage,
+            source_segment_count,
+            raw_offset_segment_count,
+            output_segment_count: None,
+            fill_rule,
             status,
             blocker: Some(blocker),
         },

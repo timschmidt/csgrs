@@ -195,7 +195,8 @@ pub use intersect::{
     LineLineIntersection, ParamRange, SegmentIntersection,
 };
 pub use offset::{
-    CurveStringOffsetReport2, CurveStringOffsetResult2, CurveStringOffsetStage2, OffsetCap,
+    ContourOffsetReport2, ContourOffsetResult2, ContourOffsetStage2, CurveStringOffsetReport2,
+    CurveStringOffsetResult2, CurveStringOffsetStage2, OffsetCap,
 };
 pub use planar_pcurve::{
     PlanarPcurveImageEqualityReport2, PlanarPcurveImageRelation2, PreparedRetainedPlanarFace2,

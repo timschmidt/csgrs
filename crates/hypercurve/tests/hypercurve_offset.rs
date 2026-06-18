@@ -1,6 +1,7 @@
 use hypercurve::{
-    BulgeVertex2, CircularArc2, Classification, Contour2, CurvePolicy, CurveString2,
-    CurveStringOffsetStage2, LineSeg2, OffsetCap, Point2, Real, Segment2, UncertaintyReason,
+    BulgeVertex2, CircularArc2, Classification, Contour2, ContourOffsetStage2, CurvePolicy,
+    CurveString2, CurveStringOffsetStage2, FillRule, LineSeg2, OffsetCap, Point2, Real, Segment2,
+    UncertaintyReason,
 };
 
 fn s(value: i32) -> Real {
@@ -698,6 +699,33 @@ fn contour_checked_offset_accepts_simple_rectangle() {
 }
 
 #[test]
+fn contour_checked_offset_report_materializes_simple_rectangle() {
+    let rectangle = Contour2::from_bulge_vertices(&[
+        vertex(0, 0, 0),
+        vertex(6, 0, 0),
+        vertex(6, 6, 0),
+        vertex(0, 6, 0),
+    ])
+    .unwrap();
+
+    let offset = rectangle
+        .offset_left_checked_with_report(s(1), &policy())
+        .unwrap();
+
+    assert!(offset.report().status().is_native_exact());
+    assert_eq!(
+        offset.report().stage(),
+        ContourOffsetStage2::SelfContactValidation
+    );
+    assert_eq!(offset.report().source_segment_count(), 4);
+    assert_eq!(offset.report().raw_offset_segment_count(), Some(4));
+    assert_eq!(offset.report().output_segment_count(), Some(4));
+    assert_eq!(offset.report().fill_rule(), FillRule::NonZero);
+    assert_eq!(offset.report().blocker(), None);
+    assert_eq!(offset.contour().unwrap().len(), 4);
+}
+
+#[test]
 fn contour_checked_offset_rejects_self_contacting_result() {
     let bowtie = Contour2::from_bulge_vertices(&[
         vertex(0, 0, 0),
@@ -710,5 +738,35 @@ fn contour_checked_offset_rejects_self_contacting_result() {
     assert_eq!(
         bowtie.offset_left_checked(s(0), &policy()).unwrap(),
         Classification::Uncertain(UncertaintyReason::Unsupported)
+    );
+}
+
+#[test]
+fn contour_checked_offset_report_blocks_self_contacting_result() {
+    let bowtie = Contour2::from_bulge_vertices(&[
+        vertex(0, 0, 0),
+        vertex(4, 4, 0),
+        vertex(0, 4, 0),
+        vertex(4, 0, 0),
+    ])
+    .unwrap();
+
+    let offset = bowtie
+        .offset_left_checked_with_report(s(0), &policy())
+        .unwrap();
+
+    assert!(offset.contour().is_none());
+    assert!(offset.report().status().is_retained_evidence());
+    assert_eq!(
+        offset.report().stage(),
+        ContourOffsetStage2::SelfContactValidation
+    );
+    assert_eq!(offset.report().source_segment_count(), 4);
+    assert_eq!(offset.report().raw_offset_segment_count(), Some(4));
+    assert_eq!(offset.report().output_segment_count(), None);
+    assert_eq!(offset.report().fill_rule(), FillRule::NonZero);
+    assert_eq!(
+        offset.report().blocker(),
+        Some(UncertaintyReason::Unsupported)
     );
 }
