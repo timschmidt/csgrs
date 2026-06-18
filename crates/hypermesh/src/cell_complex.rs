@@ -914,7 +914,7 @@ impl ExactSelectedCellComplex {
             .any(|orientation| orientation.from_volume_adjacency)
         {
             let Some((selected_faces, selected_face_orientations)) =
-                select_faces_from_volume_adjacencies(
+                checked_volume_resolved_face_selection(
                     &self.faces,
                     &self.volume_regions,
                     &self.volume_adjacencies,
