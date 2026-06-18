@@ -823,13 +823,12 @@ impl ExactLabeledCellComplex {
                 .unwrap_or(ExactArrangementBlocker::UnresolvedRegionClassification));
         }
         validate_lower_dimensional_artifacts(&self.lower_dimensional_artifacts)?;
-        validate_cell_complex_parts(&self.faces, &self.volume_regions, &self.volume_adjacencies)?;
-        if !volume_evidence_resolves_named_operation(
+        if !checked_volume_evidence_resolves_named_operation(
             &self.faces,
             &self.volume_regions,
             &self.volume_adjacencies,
             operation,
-        ) {
+        )? {
             return Err(ExactArrangementBlocker::UnresolvedRegionClassification);
         }
         let Some((selected_faces, selected_face_orientations)) =
@@ -1329,16 +1328,32 @@ fn volume_evidence_resolves_named_operation(
     volume_adjacencies: &[ArrangementVolumeAdjacency],
     operation: ExactBooleanOperation,
 ) -> bool {
+    checked_volume_evidence_resolves_named_operation(
+        faces,
+        volume_regions,
+        volume_adjacencies,
+        operation,
+    )
+    .unwrap_or(false)
+}
+
+fn checked_volume_evidence_resolves_named_operation(
+    faces: &[ExactCellComplexFace],
+    volume_regions: &[ExactCellComplexVolumeRegion],
+    volume_adjacencies: &[ArrangementVolumeAdjacency],
+    operation: ExactBooleanOperation,
+) -> Result<bool, ExactArrangementBlocker> {
     if matches!(operation, ExactBooleanOperation::SelectedRegions(_))
         || volume_regions.is_empty()
         || volume_adjacencies.is_empty()
     {
-        return false;
+        return Ok(false);
     }
-    matches!(
+    validate_cell_complex_parts(faces, volume_regions, volume_adjacencies)?;
+    Ok(matches!(
         select_faces_from_volume_adjacencies(faces, volume_regions, volume_adjacencies, operation),
         Ok(Some(_))
-    )
+    ))
 }
 
 fn arrangement_has_only_region_classification_blockers(arrangement: &ExactArrangement3d) -> bool {
