@@ -1430,7 +1430,7 @@ impl ExactBooleanCertificationSet {
         &self,
         preflight: &ExactBooleanPreflight,
     ) -> bool {
-        self.winding_readiness.status
+        (self.winding_readiness.status
             == ExactWindingReadinessStatus::OpenSurfaceArrangementAlreadyMaterialized
             && preflight.graph_had_unknowns == self.winding_readiness.graph_had_unknowns
             && preflight.retained_face_pairs == self.winding_readiness.retained_face_pairs
@@ -1443,7 +1443,16 @@ impl ExactBooleanCertificationSet {
             && self
                 .winding_readiness
                 .coplanar_volumetric_evidence
-                .is_none()
+                .is_none())
+            || (self.arrangement_attempt_matches_certified_preflight(preflight)
+                && preflight.graph_had_unknowns == self.refinement.graph_had_unknowns
+                && preflight.retained_face_pairs == self.refinement.retained_face_pairs
+                && preflight.retained_events == self.refinement.retained_events
+                && preflight.region_count != 0
+                && !preflight.region_classifications.is_empty()
+                && preflight.blocker.is_none()
+                && preflight.arrangement_readiness.is_none()
+                && preflight.coplanar_volumetric_evidence.is_none())
     }
 
     fn result_matches_request(
@@ -2425,6 +2434,14 @@ pub(crate) fn try_materialize_certified_boolean_support_with_artifacts(
         ExactBooleanSupport::CertifiedOpenSurfaceArrangementUnion
         | ExactBooleanSupport::CertifiedOpenSurfaceArrangementIntersection
         | ExactBooleanSupport::CertifiedOpenSurfaceArrangementDifference => {
+            let graph =
+                graph_for_certified_materialization(retained_graph, &mut owned_graph, left, right)?;
+            if let Some(result) = open_surface_arrangement_result_from_graph(
+                graph, left, right, operation, validation,
+            )? && result.validate_against_sources(left, right).is_ok()
+            {
+                return Ok(Some(result));
+            }
             let retained_arrangement_attempt =
                 retained_arrangement_attempt_for_certified_materialization(
                     retained_arrangement_attempt,
@@ -2439,12 +2456,6 @@ pub(crate) fn try_materialize_certified_boolean_support_with_artifacts(
             {
                 Some(result)
             } else {
-                let graph = graph_for_certified_materialization(
-                    retained_graph,
-                    &mut owned_graph,
-                    left,
-                    right,
-                )?;
                 if let ArrangementCellComplexOutcome::Materialized(result, _attempt) =
                     run_arrangement_cell_complex_attempt_from_graph(
                         graph,
@@ -2458,17 +2469,6 @@ pub(crate) fn try_materialize_certified_boolean_support_with_artifacts(
                     && result.validate_against_sources(left, right).is_ok()
                 {
                     Some(*result)
-                } else if let Some(result) = public_operation_replayable_result(
-                    open_surface_arrangement_result_from_graph(
-                        graph, left, right, operation, validation,
-                    )?,
-                    left,
-                    right,
-                    operation,
-                    validation,
-                    ExactBoundaryBooleanPolicy::Reject,
-                ) {
-                    Some(result)
                 } else {
                     materialize_certified_arrangement_cell_complex_support_with_arrangement(
                         left,

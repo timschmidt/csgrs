@@ -1823,6 +1823,14 @@ impl ExactBooleanResult {
         right: &ExactMesh,
         request: ExactBooleanRequest,
     ) -> Result<bool, ExactReportValidationError> {
+        if matches!(
+            self.kind,
+            ExactBooleanResultKind::OpenSurfaceArrangement { .. }
+        ) && self.satisfies_request_shape(request)
+        {
+            self.validate_against_sources(left, right)?;
+            return Ok(true);
+        }
         if self.topology_assembly_report.is_none() || self.region_ownership_report.is_none() {
             return Ok(false);
         }
