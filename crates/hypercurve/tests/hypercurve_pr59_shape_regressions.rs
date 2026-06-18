@@ -8,7 +8,7 @@
 
 use hypercurve::{
     BooleanOp, BulgeVertex2, Classification, Contour2, CurvePolicy, FillRule, Point2, Real,
-    Region2, RegionBooleanQueryPath2, RegionPointLocation,
+    Region2, RegionBooleanQueryPath2, RegionBooleanStage2, RegionPointLocation,
 };
 
 type HPoint = Point2;
@@ -118,6 +118,7 @@ fn boolean_region_report_retains_boundary_role_assignment() {
     assert_eq!(report.op(), BooleanOp::Union);
     assert_eq!(report.fill_rule(), FillRule::NonZero);
     assert_eq!(report.query_path(), RegionBooleanQueryPath2::Direct);
+    assert_eq!(report.stage(), RegionBooleanStage2::RegionRoleAssignment);
     assert_eq!(report.first_material_contour_count(), 1);
     assert_eq!(report.first_hole_contour_count(), 0);
     assert_eq!(report.first_boundary_segment_count(), 4);
@@ -190,7 +191,15 @@ fn prepared_boolean_region_report_matches_plain_materialization() {
         built.report().query_path(),
         RegionBooleanQueryPath2::Prepared
     );
+    assert_eq!(
+        built.report().stage(),
+        RegionBooleanStage2::RegionRoleAssignment
+    );
     assert_eq!(plain.report().query_path(), RegionBooleanQueryPath2::Direct);
+    assert_eq!(
+        plain.report().stage(),
+        RegionBooleanStage2::RegionRoleAssignment
+    );
     assert_eq!(built.report().boundary_contour_count(), Some(1));
     assert_eq!(built.report().result_material_contour_count(), Some(1));
     assert_eq!(built.report().result_hole_contour_count(), Some(0));

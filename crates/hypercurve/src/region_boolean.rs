@@ -22,6 +22,7 @@ pub struct RegionBooleanReport2 {
     op: BooleanOp,
     fill_rule: FillRule,
     query_path: RegionBooleanQueryPath2,
+    stage: RegionBooleanStage2,
     first_material_contour_count: usize,
     first_hole_contour_count: usize,
     first_boundary_segment_count: usize,
@@ -49,6 +50,15 @@ pub enum RegionBooleanQueryPath2 {
     Direct,
     /// Boolean materialization used caller-supplied prepared region views.
     Prepared,
+}
+
+/// Furthest exact materialization stage reached by a region boolean report.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum RegionBooleanStage2 {
+    /// The attempt stopped while extracting checked boolean boundary contours.
+    BoundaryExtraction,
+    /// Checked boundary contours were built and role-assigned into a region.
+    RegionRoleAssignment,
 }
 
 /// Result of report-bearing closed region boolean materialization.
@@ -608,6 +618,11 @@ impl RegionBooleanReport2 {
         self.query_path
     }
 
+    /// Returns the furthest exact materialization stage reached.
+    pub const fn stage(&self) -> RegionBooleanStage2 {
+        self.stage
+    }
+
     /// Returns the first operand material contour count.
     pub const fn first_material_contour_count(&self) -> usize {
         self.first_material_contour_count
@@ -1051,6 +1066,7 @@ pub(crate) fn region_boolean_result_from_boundary_contours(
             op,
             fill_rule,
             query_path,
+            stage: RegionBooleanStage2::RegionRoleAssignment,
             first_material_contour_count: first.material_contours().len(),
             first_hole_contour_count: first.hole_contours().len(),
             first_boundary_segment_count: region_view_boundary_segment_count(first),
@@ -1089,6 +1105,7 @@ pub(crate) fn blocked_region_boolean_result(
             op,
             fill_rule,
             query_path,
+            stage: RegionBooleanStage2::BoundaryExtraction,
             first_material_contour_count: first.material_contours().len(),
             first_hole_contour_count: first.hole_contours().len(),
             first_boundary_segment_count: region_view_boundary_segment_count(first),
@@ -1995,6 +2012,52 @@ mod tests {
                 &CurvePolicy::certified(),
             ),
             Classification::Uncertain(UncertaintyReason::Unsupported)
+        );
+    }
+
+    #[test]
+    fn blocked_region_boolean_report_names_boundary_extraction_stage() {
+        let first = Region2::from_material_contours(vec![
+            Contour2::from_bulge_vertices(&[
+                BulgeVertex2::new(point(0, 0), Real::zero()),
+                BulgeVertex2::new(point(1, 0), Real::zero()),
+                BulgeVertex2::new(point(1, 1), Real::zero()),
+                BulgeVertex2::new(point(0, 1), Real::zero()),
+            ])
+            .unwrap(),
+        ]);
+        let second = Region2::from_material_contours(vec![
+            Contour2::from_bulge_vertices(&[
+                BulgeVertex2::new(point(2, 0), Real::zero()),
+                BulgeVertex2::new(point(3, 0), Real::zero()),
+                BulgeVertex2::new(point(3, 1), Real::zero()),
+                BulgeVertex2::new(point(2, 1), Real::zero()),
+            ])
+            .unwrap(),
+        ]);
+        let boundary_events =
+            RegionIntersectionSet::from_parts(Vec::new(), Some(1), Some(1), 1, 1, 0).unwrap();
+
+        let result = blocked_region_boolean_result(
+            &first.as_view(),
+            &second.as_view(),
+            BooleanOp::Union,
+            FillRule::NonZero,
+            RegionBooleanQueryPath2::Direct,
+            &boundary_events,
+            RetainedTopologyStatus::Unsupported,
+            UncertaintyReason::Unsupported,
+        );
+
+        assert!(result.region().is_none());
+        assert_eq!(
+            result.report().stage(),
+            RegionBooleanStage2::BoundaryExtraction
+        );
+        assert_eq!(result.report().boundary_contour_count(), None);
+        assert_eq!(
+            result.report().blocker(),
+            Some(UncertaintyReason::Unsupported)
         );
     }
 }
