@@ -149,6 +149,69 @@ fn curve_string_link_returns_none_for_certified_disconnected_inputs() {
 }
 
 #[test]
+fn curve_string_connect_end_to_start_inserts_exact_line() {
+    let first = CurveString2::try_new(vec![line_segment(0, 0, 1, 0)]).unwrap();
+    let second = CurveString2::try_new(vec![line_segment(3, 1, 4, 1)]).unwrap();
+
+    let connected = first
+        .connect_end_to_start_with_line(&second, &policy())
+        .unwrap();
+
+    assert!(connected.report().status().is_native_exact());
+    assert!(connected.report().blocker().is_none());
+    assert_eq!(
+        connected.report().endpoint_report().status(),
+        CurveStringEndpointConnectionStatus2::Disconnected
+    );
+    assert_eq!(connected.report().first_segment_count(), 1);
+    assert_eq!(connected.report().second_segment_count(), 1);
+    assert_eq!(connected.report().connector_segment_index(), Some(1));
+    let curve = connected
+        .curve_string()
+        .expect("distinct endpoints should get connector");
+    assert_eq!(curve.len(), 3);
+    assert_eq!(curve.start(), Some(&p(0, 0)));
+    assert_eq!(curve.end(), Some(&p(4, 1)));
+    assert_eq!(curve.segments()[1].start(), &p(1, 0));
+    assert_eq!(curve.segments()[1].end(), &p(3, 1));
+}
+
+#[test]
+fn curve_string_connect_end_to_start_blocks_already_connected_endpoints() {
+    let first = CurveString2::try_new(vec![line_segment(0, 0, 1, 0)]).unwrap();
+    let second = CurveString2::try_new(vec![line_segment(1, 0, 2, 0)]).unwrap();
+
+    let connected = first
+        .connect_end_to_start_with_line(&second, &policy())
+        .unwrap();
+
+    assert!(connected.curve_string().is_none());
+    assert!(connected.report().status().is_retained_evidence());
+    assert_eq!(connected.report().connector_segment_index(), None);
+    assert_eq!(
+        connected.report().endpoint_report().status(),
+        CurveStringEndpointConnectionStatus2::NativeExact
+    );
+    assert_eq!(
+        connected.report().blocker(),
+        Some(UncertaintyReason::Boundary)
+    );
+}
+
+#[test]
+fn curve_string_connect_rejects_empty_unchecked_input() {
+    let empty = CurveString2::new_unchecked(Vec::new());
+    let nonempty = CurveString2::try_new(vec![line_segment(0, 0, 1, 0)]).unwrap();
+
+    assert_eq!(
+        empty
+            .connect_end_to_start_with_line(&nonempty, &policy())
+            .unwrap_err(),
+        CurveError::EmptyCurveString
+    );
+}
+
+#[test]
 fn curve_string_link_rejects_multiple_exact_endpoint_pairings() {
     let first = CurveString2::try_new(vec![line_segment(0, 0, 1, 0)]).unwrap();
     let second = CurveString2::try_new(vec![line_segment(1, 0, 0, 0)]).unwrap();

@@ -82,6 +82,24 @@ pub struct LinkedCurveString2 {
     report: CurveStringLinkReport2,
 }
 
+/// Report for connecting `first.end` to `second.start` with an exact line segment.
+#[derive(Clone, Debug, PartialEq)]
+pub struct CurveStringConnectReport2 {
+    endpoint_report: CurveStringEndpointConnectionReport2,
+    first_segment_count: usize,
+    second_segment_count: usize,
+    connector_segment_index: Option<usize>,
+    status: RetainedTopologyStatus,
+    blocker: Option<UncertaintyReason>,
+}
+
+/// A connected open curve string with retained connector provenance.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ConnectedCurveString2 {
+    curve_string: Option<CurveString2>,
+    report: CurveStringConnectReport2,
+}
+
 /// Report for extending one open curve-string endpoint to an exact target point.
 #[derive(Clone, Debug, PartialEq)]
 pub struct CurveStringExtendReport2 {
@@ -340,6 +358,70 @@ impl CurveString2 {
             curve_string,
             report,
         })))
+    }
+
+    /// Connects `self.end` to `other.start` with an exact line segment.
+    ///
+    /// This operation is the explicit-connector counterpart to
+    /// [`CurveString2::link_connected_endpoints`]. It materializes only when
+    /// the endpoints are certified distinct; already-equal endpoints should be
+    /// linked instead, and unresolved endpoint equality remains an explicit
+    /// blocker. No tolerance snap or hidden zero-length connector is introduced.
+    pub fn connect_end_to_start_with_line(
+        &self,
+        other: &Self,
+        policy: &CurvePolicy,
+    ) -> CurveResult<ConnectedCurveString2> {
+        let endpoint_report = self.endpoint_connection_report(
+            other,
+            CurveStringEndpoint2::End,
+            CurveStringEndpoint2::Start,
+            policy,
+        )?;
+        match endpoint_report.status {
+            CurveStringEndpointConnectionStatus2::NativeExact => {
+                return Ok(blocked_connected_curve_string(
+                    self,
+                    other,
+                    endpoint_report,
+                    RetainedTopologyStatus::Unsupported,
+                    Some(UncertaintyReason::Boundary),
+                ));
+            }
+            CurveStringEndpointConnectionStatus2::Disconnected => {}
+            CurveStringEndpointConnectionStatus2::Unresolved(reason) => {
+                return Ok(blocked_connected_curve_string(
+                    self,
+                    other,
+                    endpoint_report,
+                    RetainedTopologyStatus::Unresolved,
+                    Some(reason),
+                ));
+            }
+        }
+
+        let connector = LineSeg2::try_new(
+            self.end().ok_or(CurveError::EmptyCurveString)?.clone(),
+            other.start().ok_or(CurveError::EmptyCurveString)?.clone(),
+        )?;
+        let connector_segment_index = self.len();
+        let mut segments = Vec::with_capacity(self.len() + 1 + other.len());
+        segments.extend(self.segments().iter().cloned());
+        segments.push(Segment2::Line(connector));
+        segments.extend(other.segments().iter().cloned());
+        let curve_string = CurveString2::try_new(segments)?;
+        let report = CurveStringConnectReport2 {
+            endpoint_report,
+            first_segment_count: self.len(),
+            second_segment_count: other.len(),
+            connector_segment_index: Some(connector_segment_index),
+            status: RetainedTopologyStatus::NativeExact,
+            blocker: None,
+        };
+        Ok(ConnectedCurveString2 {
+            curve_string: Some(curve_string),
+            report,
+        })
     }
 
     /// Trims this open curve string between two segment-local parameters.
@@ -1619,6 +1701,55 @@ impl LinkedCurveString2 {
     }
 }
 
+impl CurveStringConnectReport2 {
+    /// Returns endpoint equality evidence for the connector endpoints.
+    pub const fn endpoint_report(&self) -> &CurveStringEndpointConnectionReport2 {
+        &self.endpoint_report
+    }
+
+    /// Returns the first input segment count captured by this report.
+    pub const fn first_segment_count(&self) -> usize {
+        self.first_segment_count
+    }
+
+    /// Returns the second input segment count captured by this report.
+    pub const fn second_segment_count(&self) -> usize {
+        self.second_segment_count
+    }
+
+    /// Returns the inserted connector segment index in the output curve string.
+    pub const fn connector_segment_index(&self) -> Option<usize> {
+        self.connector_segment_index
+    }
+
+    /// Returns connector materialization status.
+    pub const fn status(&self) -> RetainedTopologyStatus {
+        self.status
+    }
+
+    /// Returns the exact blocker for non-materialized connections.
+    pub const fn blocker(&self) -> Option<UncertaintyReason> {
+        self.blocker
+    }
+}
+
+impl ConnectedCurveString2 {
+    /// Returns the connected curve string, if a connector was materialized.
+    pub const fn curve_string(&self) -> Option<&CurveString2> {
+        self.curve_string.as_ref()
+    }
+
+    /// Consumes this result and returns the connected curve string, if any.
+    pub fn into_curve_string(self) -> Option<CurveString2> {
+        self.curve_string
+    }
+
+    /// Returns the retained connector report.
+    pub const fn report(&self) -> &CurveStringConnectReport2 {
+        &self.report
+    }
+}
+
 fn linked_curve_string(
     first: &CurveString2,
     second: &CurveString2,
@@ -1645,6 +1776,26 @@ fn linked_curve_string(
     }
 
     CurveString2::try_new(segments)
+}
+
+fn blocked_connected_curve_string(
+    first: &CurveString2,
+    second: &CurveString2,
+    endpoint_report: CurveStringEndpointConnectionReport2,
+    status: RetainedTopologyStatus,
+    blocker: Option<UncertaintyReason>,
+) -> ConnectedCurveString2 {
+    ConnectedCurveString2 {
+        curve_string: None,
+        report: CurveStringConnectReport2 {
+            endpoint_report,
+            first_segment_count: first.len(),
+            second_segment_count: second.len(),
+            connector_segment_index: None,
+            status,
+            blocker,
+        },
+    }
 }
 
 fn reversed_segments(segments: &[Segment2]) -> Vec<Segment2> {
