@@ -521,7 +521,16 @@ impl<'a> PreparedCurveStringView2<'a> {
 
     /// Classifies whether this prepared open curve string self-contacts.
     pub fn has_self_contacts(&self, policy: &CurvePolicy) -> CurveResult<Classification<bool>> {
-        crate::self_intersect::segments_have_self_contacts_with_cached_aabbs(
+        self.has_self_contacts_with_report(policy)
+            .map(|result| result.has_self_contacts())
+    }
+
+    /// Classifies self contacts and retains cached broad-phase scan evidence.
+    pub fn has_self_contacts_with_report(
+        &self,
+        policy: &CurvePolicy,
+    ) -> CurveResult<crate::SelfContactResult2> {
+        crate::self_intersect::segments_have_self_contacts_with_cached_aabbs_and_report(
             self.curve.segments(),
             &self.segment_boxes,
             false,
@@ -701,7 +710,16 @@ impl<'a> PreparedContourView2<'a> {
 
     /// Classifies whether this prepared closed contour self-contacts.
     pub fn has_self_contacts(&self, policy: &CurvePolicy) -> CurveResult<Classification<bool>> {
-        crate::self_intersect::segments_have_self_contacts_with_cached_aabbs(
+        self.has_self_contacts_with_report(policy)
+            .map(|result| result.has_self_contacts())
+    }
+
+    /// Classifies self contacts and retains cached broad-phase scan evidence.
+    pub fn has_self_contacts_with_report(
+        &self,
+        policy: &CurvePolicy,
+    ) -> CurveResult<crate::SelfContactResult2> {
+        crate::self_intersect::segments_have_self_contacts_with_cached_aabbs_and_report(
             self.contour.segments(),
             &self.segment_boxes,
             true,

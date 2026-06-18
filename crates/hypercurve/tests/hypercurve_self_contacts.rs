@@ -1,6 +1,6 @@
 use hypercurve::{
     BulgeVertex2, Classification, Contour2, CurvePolicy, CurveString2, LineSeg2, Point2, Real,
-    Segment2,
+    Segment2, SegmentKindCounts,
 };
 
 fn s(value: i32) -> Real {
@@ -36,6 +36,21 @@ fn curve_string_self_contact_detector_ignores_adjacent_corner() {
         curve.has_self_contacts(&policy()).unwrap(),
         Classification::Decided(false)
     );
+    let reported = curve.has_self_contacts_with_report(&policy()).unwrap();
+    assert_eq!(reported.has_self_contacts(), Classification::Decided(false));
+    assert!(reported.report().status().is_native_exact());
+    assert!(!reported.report().closed());
+    assert_eq!(reported.report().segment_count(), 2);
+    assert_eq!(
+        reported.report().segment_kind_counts(),
+        SegmentKindCounts { lines: 2, arcs: 0 }
+    );
+    assert_eq!(reported.report().candidate_pair_count(), 1);
+    assert_eq!(reported.report().skipped_aabb_pair_count(), 0);
+    assert_eq!(reported.report().tested_pair_count(), 1);
+    assert_eq!(reported.report().first_contact_first_segment_index(), None);
+    assert_eq!(reported.report().first_contact_second_segment_index(), None);
+    assert_eq!(reported.report().blocker(), None);
 }
 
 #[test]
@@ -50,6 +65,20 @@ fn curve_string_self_contact_detector_finds_nonadjacent_crossing() {
     assert_eq!(
         curve.has_self_contacts(&policy()).unwrap(),
         Classification::Decided(true)
+    );
+    let reported = curve.has_self_contacts_with_report(&policy()).unwrap();
+    assert_eq!(reported.has_self_contacts(), Classification::Decided(true));
+    assert!(reported.report().status().is_native_exact());
+    assert_eq!(reported.report().candidate_pair_count(), 2);
+    assert_eq!(reported.report().skipped_aabb_pair_count(), 0);
+    assert_eq!(reported.report().tested_pair_count(), 2);
+    assert_eq!(
+        reported.report().first_contact_first_segment_index(),
+        Some(0)
+    );
+    assert_eq!(
+        reported.report().first_contact_second_segment_index(),
+        Some(2)
     );
 }
 
@@ -90,6 +119,9 @@ fn prepared_curve_string_self_contact_detector_matches_plain_detector() {
         prepared.has_self_contacts(&policy).unwrap(),
         Classification::Decided(true)
     );
+    let prepared_reported = prepared.has_self_contacts_with_report(&policy).unwrap();
+    let plain_reported = curve.has_self_contacts_with_report(&policy).unwrap();
+    assert_eq!(prepared_reported, plain_reported);
 }
 
 #[test]
@@ -105,6 +137,19 @@ fn self_contact_detector_ignores_adjacent_rectangle_vertices() {
         rectangle.has_self_contacts(&policy()).unwrap(),
         Classification::Decided(false)
     );
+    let reported = rectangle.has_self_contacts_with_report(&policy()).unwrap();
+    assert_eq!(reported.has_self_contacts(), Classification::Decided(false));
+    assert!(reported.report().closed());
+    assert_eq!(reported.report().segment_count(), 4);
+    assert_eq!(
+        reported.report().segment_kind_counts(),
+        SegmentKindCounts { lines: 4, arcs: 0 }
+    );
+    assert_eq!(reported.report().candidate_pair_count(), 6);
+    assert_eq!(reported.report().skipped_aabb_pair_count(), 2);
+    assert_eq!(reported.report().tested_pair_count(), 4);
+    assert_eq!(reported.report().first_contact_first_segment_index(), None);
+    assert_eq!(reported.report().first_contact_second_segment_index(), None);
 }
 
 #[test]
@@ -179,6 +224,9 @@ fn prepared_contour_self_contact_detector_matches_plain_detector() {
         prepared.has_self_contacts(&policy).unwrap(),
         Classification::Decided(true)
     );
+    let prepared_reported = prepared.has_self_contacts_with_report(&policy).unwrap();
+    let plain_reported = pinched.has_self_contacts_with_report(&policy).unwrap();
+    assert_eq!(prepared_reported, plain_reported);
 }
 
 #[test]
