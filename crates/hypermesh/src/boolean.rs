@@ -766,6 +766,18 @@ fn workspace_arrangement_attempt_for_replay(
         .map_err(|_| ExactReportValidationError::SourceReplayMismatch)
 }
 
+fn workspace_evaluation_for_replay(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    request: ExactBooleanRequest,
+) -> Result<ExactBooleanEvaluation, ExactReportValidationError> {
+    let mut workspace = ExactBooleanWorkspace::new(left, right);
+    workspace
+        .evaluate(request)
+        .map(Clone::clone)
+        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)
+}
+
 fn record_selected_orientation_counts(
     attempt: &mut ExactArrangementBooleanAttempt,
     selected: &ExactSelectedCellComplex,
@@ -2292,15 +2304,10 @@ impl ExactBooleanEvaluation {
         right: &ExactMesh,
     ) -> Result<(), ExactReportValidationError> {
         self.validate()?;
-        self.preflight
-            .validate_against_sources_with_boundary_policy(
-                left,
-                right,
-                self.request.validation,
-                self.request.boundary_policy,
-            )?;
-        self.certifications
-            .validate_against_sources(left, right, self.request)?;
+        let replay = workspace_evaluation_for_replay(left, right, self.request)?;
+        if self.preflight != replay.preflight || self.certifications != replay.certifications {
+            return Err(ExactReportValidationError::SourceReplayMismatch);
+        }
         self.validate_materialized_result_against_sources(left, right)?;
         Ok(())
     }
