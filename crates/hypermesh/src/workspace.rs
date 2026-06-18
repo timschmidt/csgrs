@@ -490,7 +490,7 @@ fn store_replayable_result_or_return(
     retained_arrangement_attempt: Option<&ExactArrangementBooleanAttempt>,
     result: ExactBooleanResult,
 ) -> Result<StoredMaterialization, MeshError> {
-    if validate_retained_result_for_request(
+    if ExactBooleanEvaluation::validate_result_against_sources_for_request(
         left,
         right,
         request,
@@ -527,7 +527,7 @@ fn cached_retained_materialization(
     retained_arrangement_attempt: Option<&ExactArrangementBooleanAttempt>,
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
     if let Some(index) = cached_by_request_index(cache, request) {
-        validate_retained_result_for_request(
+        ExactBooleanEvaluation::validate_result_against_sources_for_request(
             left,
             right,
             request,
@@ -566,32 +566,6 @@ fn cached_by_request_and_policy_index<T>(
     cache.iter().position(|(stored_request, stored_policy, _)| {
         *stored_request == request && *stored_policy == policy
     })
-}
-
-fn validate_retained_result_for_request(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    request: ExactBooleanRequest,
-    retained_arrangement_attempt: Option<&ExactArrangementBooleanAttempt>,
-    result: &ExactBooleanResult,
-) -> Result<(), ExactReportValidationError> {
-    if !result.satisfies_request_shape(request) {
-        return Err(ExactReportValidationError::StatusEvidenceMismatch);
-    }
-    result.retained_arrangement_attempt_matches_output_for_request(
-        left,
-        right,
-        request,
-        retained_arrangement_attempt,
-    )?;
-    result.validate_operation_against_sources_with_retained_attempt(
-        left,
-        right,
-        request.operation,
-        request.validation,
-        request.boundary_policy,
-        retained_arrangement_attempt,
-    )
 }
 
 fn workspace_report_validation_error(error: ExactReportValidationError) -> MeshError {
@@ -1114,8 +1088,14 @@ mod tests {
         };
         let relabelled = workspace.materializations[0].1.clone();
         assert!(
-            validate_retained_result_for_request(&left, &right, request, None, &relabelled)
-                .is_err(),
+            ExactBooleanEvaluation::validate_result_against_sources_for_request(
+                &left,
+                &right,
+                request,
+                None,
+                &relabelled
+            )
+            .is_err(),
             "cached result validation must reject relabelled operations"
         );
         assert!(

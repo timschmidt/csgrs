@@ -2321,6 +2321,32 @@ impl ExactBooleanEvaluation {
         }
     }
 
+    pub(crate) fn validate_result_against_sources_for_request(
+        left: &ExactMesh,
+        right: &ExactMesh,
+        request: ExactBooleanRequest,
+        retained_arrangement_attempt: Option<&ExactArrangementBooleanAttempt>,
+        result: &ExactBooleanResult,
+    ) -> Result<(), ExactReportValidationError> {
+        if !result.satisfies_request_shape(request) {
+            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+        }
+        result.retained_arrangement_attempt_matches_output_for_request(
+            left,
+            right,
+            request,
+            retained_arrangement_attempt,
+        )?;
+        result.validate_operation_against_sources_with_retained_attempt(
+            left,
+            right,
+            request.operation,
+            request.validation,
+            request.boundary_policy,
+            retained_arrangement_attempt,
+        )
+    }
+
     /// Classify only the materialized result retained by this evaluation,
     /// replaying from retained exact artifacts first.
     pub fn materialized_result_freshness_against_sources(
