@@ -76,9 +76,7 @@ pub use mesh::{ExactMesh, ExactMeshValidationError, Triangle};
 pub use package::{
     ExactMeshConsumerDomain, ExactMeshDomainSummaryError, ExactMeshHandoffPackageError,
 };
-pub use proposal::{
-    ExactMeshProposalAcceptance, ExactMeshProposalReportError, ExactMeshProposalSourceKind,
-};
+pub use proposal::ExactMeshProposalReportError;
 pub use region::{ExactOutputTriangleOrientation, ExactRegionSelection};
 pub use regularization::ExactRegularizationPolicy;
 pub use reports::{ExactBooleanResult, ExactReportFreshness, ExactReportValidationError};

@@ -3,8 +3,7 @@ use hypermesh::{
     ExactBooleanOperation, ExactBooleanRequest, ExactBooleanResult, ExactBooleanWorkspace,
     ExactBoundaryBooleanPolicy, ExactI64MeshInputReadiness, ExactI64MeshInputReportValidationError,
     ExactMesh, ExactMeshAuditError, ExactMeshConsumerDomain, ExactMeshHandoffPackageError,
-    ExactMeshProposalAcceptance, ExactMeshProposalReportError, ExactMeshProposalSourceKind,
-    ExactOutputTriangleOrientation, ExactRegionSelection,
+    ExactMeshProposalReportError, ExactOutputTriangleOrientation, ExactRegionSelection,
     ExactRegularizationPolicy, ExactReportFreshness, LossyF64MeshInputReadiness,
     LossyF64MeshInputReportValidationError, MeshArtifactBlocker, MeshArtifactFaceRecord,
     MeshArtifactManifest, MeshArtifactReportError, MeshArtifactRole, MeshArtifactSourceKind,
@@ -716,14 +715,8 @@ fn exact_mesh_proposal_and_artifact_reports_are_publicly_replayable() {
 
     proposal.validate().unwrap();
     proposal.validate_against_mesh(&exact).unwrap();
-    assert_eq!(
-        proposal.source_kind,
-        ExactMeshProposalSourceKind::ExactConstruction
-    );
-    assert_eq!(
-        proposal.acceptance,
-        ExactMeshProposalAcceptance::ExactInputReplayed
-    );
+    assert!(proposal.is_exact_construction());
+    assert!(proposal.exact_input_replayed());
 
     let mut stale_proposal = proposal.clone();
     stale_proposal.source_label.push_str(" stale");
@@ -775,14 +768,8 @@ fn exact_mesh_proposal_and_artifact_reports_are_publicly_replayable() {
     .unwrap();
     let lossy_proposal = lossy.proposal_report().unwrap();
     lossy_proposal.validate_against_mesh(&lossy).unwrap();
-    assert_eq!(
-        lossy_proposal.source_kind,
-        ExactMeshProposalSourceKind::LossyPrimitiveFloatProposal
-    );
-    assert_eq!(
-        lossy_proposal.acceptance,
-        ExactMeshProposalAcceptance::ProposalAcceptedAfterExactReplay
-    );
+    assert!(lossy_proposal.is_lossy_primitive_float_proposal());
+    assert!(lossy_proposal.proposal_accepted_after_exact_replay());
 
     let lossy_artifact = MeshArtifactManifest::from_exact_mesh(&lossy)
         .unwrap()

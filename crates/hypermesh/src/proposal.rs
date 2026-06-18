@@ -130,6 +130,39 @@ impl ExactMeshProposalReport {
         Ok(report)
     }
 
+    /// Return whether this report came from caller-owned exact coordinates.
+    pub const fn is_exact_construction(&self) -> bool {
+        matches!(
+            self.source_kind,
+            ExactMeshProposalSourceKind::ExactConstruction
+        )
+    }
+
+    /// Return whether this report came from lossy primitive-float input that
+    /// replayed through exact dyadic coordinates.
+    pub const fn is_lossy_primitive_float_proposal(&self) -> bool {
+        matches!(
+            self.source_kind,
+            ExactMeshProposalSourceKind::LossyPrimitiveFloatProposal
+        )
+    }
+
+    /// Return whether exact caller input replayed without adapter promotion.
+    pub const fn exact_input_replayed(&self) -> bool {
+        matches!(
+            self.acceptance,
+            ExactMeshProposalAcceptance::ExactInputReplayed
+        )
+    }
+
+    /// Return whether a proposal route was accepted only after exact replay.
+    pub const fn proposal_accepted_after_exact_replay(&self) -> bool {
+        matches!(
+            self.acceptance,
+            ExactMeshProposalAcceptance::ProposalAcceptedAfterExactReplay
+        )
+    }
+
     /// Validate the report shape without access to the source mesh.
     ///
     /// Local validation rejects relabeled source kinds, adapter flags, and
