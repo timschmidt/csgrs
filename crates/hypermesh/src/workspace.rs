@@ -578,26 +578,6 @@ mod tests {
         ExactBoundaryBooleanPolicy, ExactReportFreshness, ExactReportValidationError, Triangle,
     };
 
-    fn workspace_certifications(
-        workspace: &mut ExactBooleanWorkspace<'_>,
-        request: ExactBooleanRequest,
-    ) -> ExactBooleanCertificationSet {
-        workspace.graph().unwrap();
-        let graph = workspace
-            .graph
-            .as_ref()
-            .expect("intersection graph cache was just populated");
-        ExactBooleanCertificationSet::from_graph_and_regularized_arrangement(
-            graph,
-            workspace.left,
-            workspace.right,
-            request,
-            workspace.regularized_solid_arrangement(),
-            workspace.regularized_solid_arrangement_attempt(request),
-        )
-        .unwrap()
-    }
-
     #[test]
     fn exact_boolean_workspace_reuses_graph_arrangement_preflight_and_evaluation() {
         let left = tetra([0, 0, 0]);
@@ -771,7 +751,7 @@ mod tests {
             ExactReportFreshness::Current
         );
 
-        let certifications = workspace_certifications(&mut workspace, request);
+        let certifications = workspace.evaluate(request).unwrap().certifications.clone();
         certifications
             .validate_against_sources(&left, &right, request)
             .unwrap();
@@ -846,7 +826,7 @@ mod tests {
         let second = workspace.evaluate(request).unwrap() as *const ExactBooleanEvaluation;
         assert_eq!(first, second);
 
-        let certifications = workspace_certifications(&mut workspace, request);
+        let certifications = workspace.evaluate(request).unwrap().certifications.clone();
         certifications.validate_for_request(request).unwrap();
         certifications
             .validate_against_sources(&left, &right, request)
