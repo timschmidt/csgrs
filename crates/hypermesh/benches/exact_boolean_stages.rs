@@ -327,18 +327,18 @@ fn run_case(case: &BenchCase) {
         ));
     });
 
-    workspace
-        .arrangement_attempt(request, case.regularization)
-        .unwrap();
+    workspace.evaluate(request).unwrap();
     time_stage(
         case,
-        "workspace_topology_assembly_report_from_attempt",
+        "workspace_topology_assembly_report_from_evaluation_attempt",
         || {
             let report = workspace
-                .arrangement_attempt(request, case.regularization)
+                .evaluate(request)
                 .unwrap()
-                .topology_assembly_report
-                .as_ref();
+                .certifications
+                .arrangement_attempt
+                .as_ref()
+                .and_then(|attempt| attempt.topology_assembly_report.as_ref());
             if let Some(report) = report {
                 black_box((
                     report.status,
@@ -368,7 +368,11 @@ fn run_case(case: &BenchCase) {
             if let Some(report) = attempt.topology_assembly_report.as_ref() {
                 black_box(
                     report
-                        .validate_against_sources(&case.left, &case.right, case.regularization)
+                        .validate_against_sources(
+                            &case.left,
+                            &case.right,
+                            ExactRegularizationPolicy::REGULARIZED_SOLID,
+                        )
                         .ok(),
                 );
             }
@@ -377,13 +381,15 @@ fn run_case(case: &BenchCase) {
 
     time_stage(
         case,
-        "workspace_region_ownership_report_from_attempt",
+        "workspace_region_ownership_report_from_evaluation_attempt",
         || {
             let report = workspace
-                .arrangement_attempt(request, case.regularization)
+                .evaluate(request)
                 .unwrap()
-                .region_ownership_report
-                .as_ref();
+                .certifications
+                .arrangement_attempt
+                .as_ref()
+                .and_then(|attempt| attempt.region_ownership_report.as_ref());
             if let Some(report) = report {
                 black_box((
                     report.status,
@@ -409,26 +415,29 @@ fn run_case(case: &BenchCase) {
             if let Some(report) = attempt.region_ownership_report.as_ref() {
                 black_box(
                     report
-                        .validate_against_sources(&case.left, &case.right, case.regularization)
+                        .validate_against_sources(
+                            &case.left,
+                            &case.right,
+                            ExactRegularizationPolicy::REGULARIZED_SOLID,
+                        )
                         .ok(),
                 );
             }
         },
     );
 
-    workspace
-        .arrangement_attempt(request, case.regularization)
-        .unwrap();
-    time_stage(case, "workspace_arrangement_attempt_cached", || {
-        let attempt = workspace
-            .arrangement_attempt(request, case.regularization)
-            .unwrap();
-        black_box((
-            attempt.output_counts(),
-            attempt.topology_assembly_complete(),
-            attempt.region_ownership_resolved(),
-            attempt.region_ownership_volume_resolved(),
-        ));
+    workspace.evaluate(request).unwrap();
+    time_stage(case, "workspace_evaluation_attempt_cached", || {
+        let evaluation = workspace.evaluate(request).unwrap();
+        let attempt = evaluation.certifications.arrangement_attempt.as_ref();
+        black_box(attempt.map(|attempt| {
+            (
+                attempt.output_counts(),
+                attempt.topology_assembly_complete(),
+                attempt.region_ownership_resolved(),
+                attempt.region_ownership_volume_resolved(),
+            )
+        }));
     });
 
     time_prepared_stage(
@@ -732,8 +741,12 @@ fn retained_workspace_and_arrangement_attempt_for_case<'a>(
 ) -> (ExactBooleanWorkspace<'a>, ExactArrangementBooleanAttempt) {
     let mut retained_workspace = retained_workspace_for_case(case, request);
     let attempt = retained_workspace
-        .arrangement_attempt(request, case.regularization)
+        .evaluate(request)
         .unwrap()
+        .certifications
+        .arrangement_attempt
+        .as_ref()
+        .expect("evaluation should retain an arrangement attempt")
         .clone();
     (retained_workspace, attempt)
 }
@@ -744,8 +757,12 @@ fn retained_arrangement_attempt_for_case(
 ) -> ExactArrangementBooleanAttempt {
     let mut retained_workspace = retained_workspace_for_case(case, request);
     retained_workspace
-        .arrangement_attempt(request, case.regularization)
+        .evaluate(request)
         .unwrap()
+        .certifications
+        .arrangement_attempt
+        .as_ref()
+        .expect("evaluation should retain an arrangement attempt")
         .clone()
 }
 
