@@ -483,6 +483,8 @@ fn retained_bspline_profile_reports_exact_domain_trim_and_endpoints() {
     assert_eq!(profile.cache_summary().span_count(), 2);
     assert_eq!(profile.cache_summary().native_span_count(), 2);
     assert_eq!(profile.cache_summary().retained_span_count(), 0);
+    assert_eq!(profile.cache_summary().source_version(), 0);
+    assert!(profile.cache_summary().is_fresh_for(profile.identity()));
 
     let versioned = decided(
         spline
@@ -491,6 +493,8 @@ fn retained_bspline_profile_reports_exact_domain_trim_and_endpoints() {
     );
     assert_eq!(versioned.identity().source_index(), 42);
     assert_eq!(versioned.identity().source_version(), 5);
+    assert_eq!(versioned.cache_summary().source_version(), 5);
+    assert!(versioned.cache_summary().is_fresh_for(versioned.identity()));
 }
 
 #[test]
@@ -516,6 +520,8 @@ fn retained_rational_quadratic_profile_preserves_source_version() {
     );
     assert_eq!(profile.identity().source_index(), 11);
     assert_eq!(profile.identity().source_version(), 3);
+    assert_eq!(profile.cache_summary().source_version(), 3);
+    assert!(profile.cache_summary().is_fresh_for(profile.identity()));
     assert_eq!(
         profile.topology_status(),
         RetainedTopologyStatus::NativeExact
@@ -553,6 +559,11 @@ fn retained_curve_profile_rejects_mismatched_endpoint_evidence_without_blocking_
     let cache = RetainedCurveCacheSummary2::new(5, 9, 2, 2, 0).unwrap();
     let mixed_cache = RetainedCurveCacheSummary2::new(5, 9, 2, 1, 1).unwrap();
     let identity = RetainedCurveIdentity2::new(RetainedCurveFamily2::PolynomialBSpline, 42);
+    let versioned_identity = RetainedCurveIdentity2::new_with_source_version(
+        RetainedCurveFamily2::PolynomialBSpline,
+        42,
+        3,
+    );
     let endpoints = RetainedEndpointEvidence2::new(&domain, p(0, 0), p(2, 0));
     RetainedCurveProfile2::new(
         identity,
@@ -562,6 +573,32 @@ fn retained_curve_profile_rejects_mismatched_endpoint_evidence_without_blocking_
         RetainedTopologyStatus::NativeExact,
         endpoints,
         cache.clone(),
+    )
+    .unwrap();
+
+    let stale_cache =
+        RetainedCurveCacheSummary2::new_with_source_version(2, 5, 9, 2, 2, 0).unwrap();
+    let endpoints = RetainedEndpointEvidence2::new(&domain, p(0, 0), p(2, 0));
+    assert_topology_error(RetainedCurveProfile2::new(
+        versioned_identity,
+        domain.clone(),
+        full_trim.clone(),
+        RetainedCurvePeriodicity1::NonPeriodic,
+        RetainedTopologyStatus::NativeExact,
+        endpoints,
+        stale_cache,
+    ));
+    let fresh_cache =
+        RetainedCurveCacheSummary2::new_with_source_version(3, 5, 9, 2, 2, 0).unwrap();
+    let endpoints = RetainedEndpointEvidence2::new(&domain, p(0, 0), p(2, 0));
+    RetainedCurveProfile2::new(
+        versioned_identity,
+        domain.clone(),
+        full_trim.clone(),
+        RetainedCurvePeriodicity1::NonPeriodic,
+        RetainedTopologyStatus::NativeExact,
+        endpoints,
+        fresh_cache,
     )
     .unwrap();
 
@@ -723,6 +760,8 @@ fn retained_rational_cubic_profile_keeps_unsupported_spans_as_evidence() {
     assert_eq!(profile.cache_summary().span_count(), 2);
     assert_eq!(profile.cache_summary().native_span_count(), 0);
     assert_eq!(profile.cache_summary().retained_span_count(), 2);
+    assert_eq!(profile.cache_summary().source_version(), 0);
+    assert!(profile.cache_summary().is_fresh_for(profile.identity()));
 
     let versioned = decided(
         spline
@@ -731,6 +770,8 @@ fn retained_rational_cubic_profile_keeps_unsupported_spans_as_evidence() {
     );
     assert_eq!(versioned.identity().source_index(), 7);
     assert_eq!(versioned.identity().source_version(), 4);
+    assert_eq!(versioned.cache_summary().source_version(), 4);
+    assert!(versioned.cache_summary().is_fresh_for(versioned.identity()));
 }
 
 #[test]

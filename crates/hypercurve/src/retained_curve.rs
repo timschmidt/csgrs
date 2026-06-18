@@ -88,6 +88,7 @@ pub struct RetainedEndpointEvidence2 {
 /// spans, and how many spans are native versus retained evidence.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct RetainedCurveCacheSummary2 {
+    source_version: u64,
     control_count: usize,
     knot_count: usize,
     span_count: usize,
@@ -283,6 +284,25 @@ impl RetainedCurveCacheSummary2 {
         native_span_count: usize,
         retained_span_count: usize,
     ) -> CurveResult<Self> {
+        Self::new_with_source_version(
+            0,
+            control_count,
+            knot_count,
+            span_count,
+            native_span_count,
+            retained_span_count,
+        )
+    }
+
+    /// Constructs a retained cache summary stamped with the source version it replayed.
+    pub fn new_with_source_version(
+        source_version: u64,
+        control_count: usize,
+        knot_count: usize,
+        span_count: usize,
+        native_span_count: usize,
+        retained_span_count: usize,
+    ) -> CurveResult<Self> {
         validate_cache_summary_counts(
             control_count,
             knot_count,
@@ -291,12 +311,23 @@ impl RetainedCurveCacheSummary2 {
             retained_span_count,
         )?;
         Ok(Self {
+            source_version,
             control_count,
             knot_count,
             span_count,
             native_span_count,
             retained_span_count,
         })
+    }
+
+    /// Returns the source version used to build this cache evidence.
+    pub const fn source_version(&self) -> u64 {
+        self.source_version
+    }
+
+    /// Returns true when the cache was replayed against the retained identity version.
+    pub const fn is_fresh_for(&self, identity: RetainedCurveIdentity2) -> bool {
+        self.source_version == identity.source_version()
     }
 
     /// Returns the number of retained controls.
@@ -453,6 +484,11 @@ fn validate_curve_profile_evidence(
     cache_summary: &RetainedCurveCacheSummary2,
 ) -> CurveResult<()> {
     validate_profile_family_shape(identity, cache_summary)?;
+    if !cache_summary.is_fresh_for(identity) {
+        return Err(CurveError::Topology(
+            "retained curve profile cache summary source version is stale".into(),
+        ));
+    }
     let policy = CurvePolicy::certified();
     for parameter in [trim.start(), trim.end()] {
         if domain.contains(parameter, &policy) != Classification::Decided(true) {

@@ -339,7 +339,8 @@ impl PolynomialBSplineCurve2 {
             Classification::Decided(extraction) => extraction,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
-        let cache_summary = RetainedCurveCacheSummary2::new(
+        let cache_summary = RetainedCurveCacheSummary2::new_with_source_version(
+            source_version,
             self.control_points.len(),
             self.knots.len(),
             extraction.spans().len(),
@@ -539,7 +540,8 @@ impl RationalQuadraticBSplineCurve2 {
             Classification::Decided(extraction) => extraction,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
-        let cache_summary = RetainedCurveCacheSummary2::new(
+        let cache_summary = RetainedCurveCacheSummary2::new_with_source_version(
+            source_version,
             self.control_points.len(),
             self.knots.len(),
             extraction.spans().len(),
@@ -799,7 +801,8 @@ impl RationalBSplineCurve2 {
         } else {
             RetainedTopologyStatus::Unsupported
         };
-        let cache_summary = RetainedCurveCacheSummary2::new(
+        let cache_summary = RetainedCurveCacheSummary2::new_with_source_version(
+            source_version,
             self.control_points.len(),
             self.knots.len(),
             report.span_reports().len(),
