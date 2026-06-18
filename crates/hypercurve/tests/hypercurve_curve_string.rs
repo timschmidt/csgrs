@@ -240,6 +240,16 @@ fn prepared_curve_string_reports_cached_segment_box_counts() {
         prepared.prepared_segment_count(),
         prepared.prepared_segments().len()
     );
+    assert!(
+        prepared
+            .prepared_segments()
+            .iter()
+            .all(|segment| segment.segment_kind() == SegmentKind::Line)
+    );
+    assert_eq!(
+        prepared.prepared_segment_kind_counts(),
+        SegmentKindCounts { lines: 3, arcs: 0 }
+    );
     assert_eq!(prepared.decided_segment_box_count(), 3);
     assert_eq!(prepared.undecided_segment_box_count(), 0);
     assert!(prepared.curve_box().is_some());
@@ -264,6 +274,16 @@ fn prepared_contour_reports_cached_segment_box_counts() {
     assert_eq!(
         prepared.prepared_segment_count(),
         prepared.prepared_segments().len()
+    );
+    assert!(
+        prepared
+            .prepared_segments()
+            .iter()
+            .all(|segment| segment.segment_kind() == SegmentKind::Line)
+    );
+    assert_eq!(
+        prepared.prepared_segment_kind_counts(),
+        SegmentKindCounts { lines: 4, arcs: 0 }
     );
     assert_eq!(prepared.decided_segment_box_count(), 4);
     assert_eq!(prepared.undecided_segment_box_count(), 0);

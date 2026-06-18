@@ -19,7 +19,7 @@ use crate::{
     CurveStringIntersectionResult2, CurveStringRegionTrimResult2, FillRule, LineSeg2,
     LineSeg2Facts, LineSide, Point2, Region2, RegionBooleanResult2, RegionContourIntersection,
     RegionContourKey, RegionContourRole, RegionIntersectionSet, RegionPointLocation, RegionSide,
-    RegionView2, Segment2, SegmentIntersection, SegmentKindCounts, UncertaintyReason,
+    RegionView2, Segment2, SegmentIntersection, SegmentKind, SegmentKindCounts, UncertaintyReason,
 };
 
 /// Prepared point-line classifier for a fixed [`LineSeg2`].
@@ -263,6 +263,14 @@ impl<'a> PreparedSegment2<'a> {
     /// Returns whether this handle prepares a circular arc.
     pub const fn is_arc(&self) -> bool {
         matches!(self, Self::Arc(_))
+    }
+
+    /// Returns the primitive family prepared by this segment handle.
+    pub const fn segment_kind(&self) -> SegmentKind {
+        match self {
+            Self::Line(_) => SegmentKind::Line,
+            Self::Arc(_) => SegmentKind::Arc,
+        }
     }
 
     /// Intersects two prepared native segment handles.
