@@ -161,6 +161,16 @@ impl RegionIntersectionSet {
         self.pairs.len()
     }
 
+    /// Returns normalized contour-level events retained across all intersecting pairs.
+    pub fn event_count(&self) -> usize {
+        self.pairs.iter().map(|pair| pair.intersections.len()).sum()
+    }
+
+    /// Returns true when at least one normalized contour-level event was retained.
+    pub fn has_events(&self) -> bool {
+        self.event_count() != 0
+    }
+
     /// Returns contour-pair events touching a specific keyed contour.
     pub fn pairs_for_contour(
         &self,

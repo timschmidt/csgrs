@@ -311,6 +311,7 @@ fn bench_prepared_sparse_region_events(contour_count: i32, iterations: u32) -> C
     let prepared_cutter = cutter.prepare_topology_queries(&policy);
     let started = Instant::now();
     let mut total_pairs = 0_usize;
+    let mut total_events = 0_usize;
 
     for _ in 0..iterations {
         let events = prepared_region.intersect_prepared_region(&prepared_cutter, &policy)?;
@@ -318,11 +319,12 @@ fn bench_prepared_sparse_region_events(contour_count: i32, iterations: u32) -> C
             panic!("prepared sparse region benchmark expected one contour-pair event set");
         }
         total_pairs += black_box(events.len());
+        total_events += black_box(events.event_count());
     }
 
     let elapsed = started.elapsed();
     println!(
-        "prepared_sparse_region_events_{contour_count}: {iterations} iterations in {elapsed:?} ({:?}/iter), total pairs={total_pairs}",
+        "prepared_sparse_region_events_{contour_count}: {iterations} iterations in {elapsed:?} ({:?}/iter), total pairs={total_pairs}, total events={total_events}",
         elapsed / iterations
     );
     Ok(())

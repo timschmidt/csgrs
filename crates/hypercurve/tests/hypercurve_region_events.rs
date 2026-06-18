@@ -48,6 +48,8 @@ fn region_events_keep_material_and_hole_roles() {
 
     let events = region.intersect_region(&cutter, &policy()).unwrap();
     assert_eq!(events.len(), 2);
+    assert!(events.has_events());
+    assert_eq!(events.event_count(), 4);
 
     let material_key = RegionContourKey::new(RegionSide::First, RegionContourRole::Material, 0);
     let hole_key = RegionContourKey::new(RegionSide::First, RegionContourRole::Hole, 0);
@@ -67,6 +69,8 @@ fn region_intersection_set_constructor_validates_pair_ownership() {
     let empty = RegionIntersectionSet::new(Vec::new()).unwrap();
     assert_eq!(empty.first_contour_count(), None);
     assert_eq!(empty.second_contour_count(), None);
+    assert_eq!(empty.event_count(), 0);
+    assert!(!empty.has_events());
 
     let first = Region2::from_material_contours(vec![rectangle(0, 0, 4, 4)]);
     let second = Region2::from_material_contours(vec![rectangle(2, -1, 6, 3)]);
@@ -187,6 +191,7 @@ fn region_event_broad_phase_skips_disjoint_contour_pairs() {
     assert_eq!(events.skipped_aabb_pair_count(), 2);
     assert_eq!(events.tested_pair_count(), 1);
     assert_eq!(events.intersecting_pair_count(), 1);
+    assert_eq!(events.event_count(), 2);
     assert_eq!(events.len(), 1);
     assert_eq!(
         events.pairs()[0].first,
@@ -248,6 +253,8 @@ fn prepared_region_events_match_owned_region_events() {
     assert_eq!(prepared_events.first_contour_count(), Some(3));
     assert_eq!(prepared_events.second_contour_count(), Some(1));
     assert_eq!(prepared_events.len(), 2);
+    assert!(prepared_events.has_events());
+    assert_eq!(prepared_events.event_count(), owned_events.event_count());
 }
 
 #[test]
