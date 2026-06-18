@@ -15,11 +15,12 @@ use crate::{
     BooleanBoundaryLoopSet, BooleanOp, CircularArc2, CircularArc2Facts, Classification, Contour2,
     ContourIntersectionSet, ContourPointLocation, CurvePolicy, CurveResult, CurveString2,
     CurveStringCurveTrimQueryPath2, CurveStringCurveTrimResult2, CurveStringIntersection,
-    CurveStringIntersectionQueryPath2, CurveStringIntersectionReport2,
-    CurveStringIntersectionResult2, CurveStringRegionTrimResult2, FillRule, LineSeg2,
-    LineSeg2Facts, LineSide, Point2, Region2, RegionBooleanResult2, RegionContourIntersection,
-    RegionContourKey, RegionContourRole, RegionIntersectionSet, RegionPointLocation, RegionSide,
-    RegionView2, Segment2, SegmentIntersection, SegmentKind, SegmentKindCounts, UncertaintyReason,
+    CurveStringIntersectionPreparedCacheReport2, CurveStringIntersectionQueryPath2,
+    CurveStringIntersectionReport2, CurveStringIntersectionResult2, CurveStringPreparedCacheAudit2,
+    CurveStringRegionTrimResult2, FillRule, LineSeg2, LineSeg2Facts, LineSide, Point2, Region2,
+    RegionBooleanResult2, RegionContourIntersection, RegionContourKey, RegionContourRole,
+    RegionIntersectionSet, RegionPointLocation, RegionSide, RegionView2, Segment2,
+    SegmentIntersection, SegmentKind, SegmentKindCounts, UncertaintyReason,
 };
 
 /// Prepared point-line classifier for a fixed [`LineSeg2`].
@@ -438,6 +439,7 @@ impl<'a> PreparedCurveStringView2<'a> {
             self.segment_boxes(),
             other.segment_boxes(),
             CurveStringIntersectionQueryPath2::Prepared,
+            Some(curve_string_intersection_prepared_cache_report(self, other)),
             policy,
         )
     }
@@ -1329,6 +1331,7 @@ fn intersect_prepared_segment_pairs_with_cached_aabbs(
     first_segment_boxes: &[Option<Aabb2>],
     second_segment_boxes: &[Option<Aabb2>],
     query_path: CurveStringIntersectionQueryPath2,
+    prepared_cache_report: Option<CurveStringIntersectionPreparedCacheReport2>,
     policy: &CurvePolicy,
 ) -> CurveResult<CurveStringIntersectionResult2> {
     let mut intersections = Vec::new();
@@ -1397,8 +1400,31 @@ fn intersect_prepared_segment_pairs_with_cached_aabbs(
             tested_pair_count,
             intersection_count,
             query_path,
+            prepared_cache_report,
         ),
     ))
+}
+
+fn curve_string_intersection_prepared_cache_report(
+    first: &PreparedCurveStringView2<'_>,
+    second: &PreparedCurveStringView2<'_>,
+) -> CurveStringIntersectionPreparedCacheReport2 {
+    CurveStringIntersectionPreparedCacheReport2::new(
+        prepared_curve_string_cache_audit(first),
+        prepared_curve_string_cache_audit(second),
+    )
+}
+
+fn prepared_curve_string_cache_audit(
+    curve: &PreparedCurveStringView2<'_>,
+) -> CurveStringPreparedCacheAudit2 {
+    CurveStringPreparedCacheAudit2::new(
+        curve.prepared_segment_count(),
+        curve.prepared_segment_kind_counts(),
+        curve.decided_segment_box_count(),
+        curve.undecided_segment_box_count(),
+        curve.curve_box().is_some(),
+    )
 }
 
 #[cfg(feature = "predicates")]

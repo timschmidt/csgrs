@@ -45,6 +45,31 @@ pub enum CurveStringIntersectionPredicatePath2 {
     ExactSegmentPredicates,
 }
 
+/// Prepared-cache evidence consumed by a curve-string intersection query.
+#[derive(Clone, Debug, PartialEq)]
+pub struct CurveStringIntersectionPreparedCacheReport2 {
+    first: CurveStringPreparedCacheAudit2,
+    second: CurveStringPreparedCacheAudit2,
+}
+
+/// Per-operand prepared curve-string cache inventory.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct CurveStringPreparedCacheAudit2 {
+    freshness: CurveStringPreparedCacheFreshness2,
+    prepared_segment_count: usize,
+    prepared_segment_kind_counts: SegmentKindCounts,
+    decided_segment_box_count: usize,
+    undecided_segment_box_count: usize,
+    curve_box_decided: bool,
+}
+
+/// Freshness claim for prepared curve-string cache evidence.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum CurveStringPreparedCacheFreshness2 {
+    /// Prepared cache borrows the current source segments for this query.
+    BorrowedCurrentSource,
+}
+
 /// Report for a curve-string intersection query.
 #[derive(Clone, Debug, PartialEq)]
 pub struct CurveStringIntersectionReport2 {
@@ -62,6 +87,7 @@ pub struct CurveStringIntersectionReport2 {
     intersection_count: usize,
     query_path: CurveStringIntersectionQueryPath2,
     predicate_path: CurveStringIntersectionPredicatePath2,
+    prepared_cache_report: Option<CurveStringIntersectionPreparedCacheReport2>,
     status: RetainedTopologyStatus,
     blocker: Option<UncertaintyReason>,
 }
@@ -6050,6 +6076,7 @@ impl CurveStringIntersectionReport2 {
         tested_pair_count: usize,
         intersection_count: usize,
         query_path: CurveStringIntersectionQueryPath2,
+        prepared_cache_report: Option<CurveStringIntersectionPreparedCacheReport2>,
     ) -> Self {
         Self {
             first_segment_count,
@@ -6066,6 +6093,7 @@ impl CurveStringIntersectionReport2 {
             intersection_count,
             query_path,
             predicate_path: intersection_predicate_path(candidate_pair_count, tested_pair_count),
+            prepared_cache_report,
             status: RetainedTopologyStatus::NativeExact,
             blocker: None,
         }
@@ -6141,6 +6169,13 @@ impl CurveStringIntersectionReport2 {
         self.predicate_path
     }
 
+    /// Returns prepared-cache inventory and freshness evidence, when used.
+    pub const fn prepared_cache_report(
+        &self,
+    ) -> Option<&CurveStringIntersectionPreparedCacheReport2> {
+        self.prepared_cache_report.as_ref()
+    }
+
     /// Returns intersection collection status.
     pub const fn status(&self) -> RetainedTopologyStatus {
         self.status
@@ -6149,6 +6184,76 @@ impl CurveStringIntersectionReport2 {
     /// Returns the exact blocker for non-materialized intersection collection.
     pub const fn blocker(&self) -> Option<UncertaintyReason> {
         self.blocker
+    }
+}
+
+impl CurveStringIntersectionPreparedCacheReport2 {
+    /// Builds prepared-cache evidence from per-operand audits.
+    pub(crate) const fn new(
+        first: CurveStringPreparedCacheAudit2,
+        second: CurveStringPreparedCacheAudit2,
+    ) -> Self {
+        Self { first, second }
+    }
+
+    /// Returns prepared-cache evidence for the first curve string.
+    pub const fn first(&self) -> &CurveStringPreparedCacheAudit2 {
+        &self.first
+    }
+
+    /// Returns prepared-cache evidence for the second curve string.
+    pub const fn second(&self) -> &CurveStringPreparedCacheAudit2 {
+        &self.second
+    }
+}
+
+impl CurveStringPreparedCacheAudit2 {
+    /// Builds per-curve-string prepared cache evidence.
+    pub(crate) const fn new(
+        prepared_segment_count: usize,
+        prepared_segment_kind_counts: SegmentKindCounts,
+        decided_segment_box_count: usize,
+        undecided_segment_box_count: usize,
+        curve_box_decided: bool,
+    ) -> Self {
+        Self {
+            freshness: CurveStringPreparedCacheFreshness2::BorrowedCurrentSource,
+            prepared_segment_count,
+            prepared_segment_kind_counts,
+            decided_segment_box_count,
+            undecided_segment_box_count,
+            curve_box_decided,
+        }
+    }
+
+    /// Returns the cache freshness claim for this borrowed prepared view.
+    pub const fn freshness(&self) -> CurveStringPreparedCacheFreshness2 {
+        self.freshness
+    }
+
+    /// Returns the number of prepared source segments.
+    pub const fn prepared_segment_count(&self) -> usize {
+        self.prepared_segment_count
+    }
+
+    /// Returns primitive-family counts for prepared source segments.
+    pub const fn prepared_segment_kind_counts(&self) -> SegmentKindCounts {
+        self.prepared_segment_kind_counts
+    }
+
+    /// Returns the number of decided segment AABBs retained by preparation.
+    pub const fn decided_segment_box_count(&self) -> usize {
+        self.decided_segment_box_count
+    }
+
+    /// Returns the number of source segment AABBs that remained undecided.
+    pub const fn undecided_segment_box_count(&self) -> usize {
+        self.undecided_segment_box_count
+    }
+
+    /// Returns whether preparation retained a decided whole-curve AABB.
+    pub const fn curve_box_decided(&self) -> bool {
+        self.curve_box_decided
     }
 }
 
@@ -7223,6 +7328,7 @@ pub(crate) fn intersect_curve_strings_with_cached_aabbs_with_report(
             intersection_count,
             query_path,
             predicate_path: intersection_predicate_path(candidate_pair_count, tested_pair_count),
+            prepared_cache_report: None,
             status: RetainedTopologyStatus::NativeExact,
             blocker: None,
         },

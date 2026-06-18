@@ -6,11 +6,11 @@ use hypercurve::{
     CurveStringExtendStage2, CurveStringFilletInputPath2, CurveStringFilletStage2,
     CurveStringIntersectionPredicatePath2, CurveStringIntersectionQueryPath2,
     CurveStringLineMergeStage2, CurveStringLinkKind2, CurveStringLinkSourceInput2,
-    CurveStringLinkStage2, CurveStringOrderedLinkStage2, CurveStringRegionTrimQueryPath2,
-    CurveStringRegionTrimStage2, CurveStringTrimInputPath2, CurveStringTrimPoint2,
-    IntersectionKind, LineArcIntersection, LineArcOrder, LineSeg2, Point2, Real, Region2,
-    RegionContourRole, RegionPointLocation, Segment2, SegmentIntersection, SegmentKind,
-    SegmentKindCounts, UncertaintyReason,
+    CurveStringLinkStage2, CurveStringOrderedLinkStage2, CurveStringPreparedCacheFreshness2,
+    CurveStringRegionTrimQueryPath2, CurveStringRegionTrimStage2, CurveStringTrimInputPath2,
+    CurveStringTrimPoint2, IntersectionKind, LineArcIntersection, LineArcOrder, LineSeg2, Point2,
+    Real, Region2, RegionContourRole, RegionPointLocation, Segment2, SegmentIntersection,
+    SegmentKind, SegmentKindCounts, UncertaintyReason,
 };
 
 fn s(value: i32) -> Real {
@@ -148,6 +148,7 @@ fn curve_string_intersection_report_counts_aabb_skips() {
     assert_eq!(report.skipped_aabb_pair_count(), 1);
     assert_eq!(report.tested_pair_count(), 1);
     assert_eq!(report.intersection_count(), 1);
+    assert_eq!(report.prepared_cache_report(), None);
     assert_eq!(report.blocker(), None);
     assert_eq!(intersections.intersections().len(), 1);
 }
@@ -216,6 +217,31 @@ fn prepared_curve_string_intersection_report_matches_plain_events() {
     assert_eq!(prepared.report().second_decided_segment_box_count(), 1);
     assert_eq!(prepared.report().first_undecided_segment_box_count(), 0);
     assert_eq!(prepared.report().second_undecided_segment_box_count(), 0);
+    let prepared_cache = prepared.report().prepared_cache_report().unwrap();
+    assert_eq!(
+        prepared_cache.first().freshness(),
+        CurveStringPreparedCacheFreshness2::BorrowedCurrentSource
+    );
+    assert_eq!(
+        prepared_cache.second().freshness(),
+        CurveStringPreparedCacheFreshness2::BorrowedCurrentSource
+    );
+    assert_eq!(prepared_cache.first().prepared_segment_count(), 1);
+    assert_eq!(prepared_cache.second().prepared_segment_count(), 1);
+    assert_eq!(
+        prepared_cache.first().prepared_segment_kind_counts(),
+        SegmentKindCounts { lines: 1, arcs: 0 }
+    );
+    assert_eq!(
+        prepared_cache.second().prepared_segment_kind_counts(),
+        SegmentKindCounts { lines: 1, arcs: 0 }
+    );
+    assert_eq!(prepared_cache.first().decided_segment_box_count(), 1);
+    assert_eq!(prepared_cache.second().decided_segment_box_count(), 1);
+    assert_eq!(prepared_cache.first().undecided_segment_box_count(), 0);
+    assert_eq!(prepared_cache.second().undecided_segment_box_count(), 0);
+    assert!(prepared_cache.first().curve_box_decided());
+    assert!(prepared_cache.second().curve_box_decided());
     assert_eq!(prepared.report().tested_pair_count(), 1);
     assert_eq!(prepared.report().intersection_count(), plain.len());
     assert_eq!(prepared.intersections(), plain.as_slice());
