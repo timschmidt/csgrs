@@ -120,8 +120,10 @@ fn boolean_region_report_retains_boundary_role_assignment() {
     assert_eq!(report.query_path(), RegionBooleanQueryPath2::Direct);
     assert_eq!(report.first_material_contour_count(), 1);
     assert_eq!(report.first_hole_contour_count(), 0);
+    assert_eq!(report.first_boundary_segment_count(), 4);
     assert_eq!(report.second_material_contour_count(), 1);
     assert_eq!(report.second_hole_contour_count(), 0);
+    assert_eq!(report.second_boundary_segment_count(), 4);
     assert_eq!(report.boundary_candidate_pair_count(), 1);
     assert_eq!(report.boundary_skipped_aabb_pair_count(), 0);
     assert_eq!(report.boundary_tested_pair_count(), 1);
@@ -187,6 +189,14 @@ fn prepared_boolean_region_report_matches_plain_materialization() {
     assert_eq!(built.report().boundary_contour_count(), Some(1));
     assert_eq!(built.report().result_material_contour_count(), Some(1));
     assert_eq!(built.report().result_hole_contour_count(), Some(0));
+    assert_eq!(
+        built.report().first_boundary_segment_count(),
+        plain.report().first_boundary_segment_count()
+    );
+    assert_eq!(
+        built.report().second_boundary_segment_count(),
+        plain.report().second_boundary_segment_count()
+    );
     assert_eq!(
         built.report().boundary_candidate_pair_count(),
         plain.report().boundary_candidate_pair_count()

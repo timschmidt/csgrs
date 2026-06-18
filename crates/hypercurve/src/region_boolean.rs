@@ -24,8 +24,10 @@ pub struct RegionBooleanReport2 {
     query_path: RegionBooleanQueryPath2,
     first_material_contour_count: usize,
     first_hole_contour_count: usize,
+    first_boundary_segment_count: usize,
     second_material_contour_count: usize,
     second_hole_contour_count: usize,
+    second_boundary_segment_count: usize,
     boundary_candidate_pair_count: usize,
     boundary_skipped_aabb_pair_count: usize,
     boundary_tested_pair_count: usize,
@@ -614,6 +616,11 @@ impl RegionBooleanReport2 {
         self.first_hole_contour_count
     }
 
+    /// Returns total boundary segment count in the first operand.
+    pub const fn first_boundary_segment_count(&self) -> usize {
+        self.first_boundary_segment_count
+    }
+
     /// Returns the second operand material contour count.
     pub const fn second_material_contour_count(&self) -> usize {
         self.second_material_contour_count
@@ -622,6 +629,11 @@ impl RegionBooleanReport2 {
     /// Returns the second operand hole contour count.
     pub const fn second_hole_contour_count(&self) -> usize {
         self.second_hole_contour_count
+    }
+
+    /// Returns total boundary segment count in the second operand.
+    pub const fn second_boundary_segment_count(&self) -> usize {
+        self.second_boundary_segment_count
     }
 
     /// Returns region contour-pair candidates considered before boolean splitting.
@@ -1029,8 +1041,10 @@ pub(crate) fn region_boolean_result_from_boundary_contours(
             query_path,
             first_material_contour_count: first.material_contours().len(),
             first_hole_contour_count: first.hole_contours().len(),
+            first_boundary_segment_count: region_view_boundary_segment_count(first),
             second_material_contour_count: second.material_contours().len(),
             second_hole_contour_count: second.hole_contours().len(),
+            second_boundary_segment_count: region_view_boundary_segment_count(second),
             boundary_candidate_pair_count: boundary_events.candidate_pair_count(),
             boundary_skipped_aabb_pair_count: boundary_events.skipped_aabb_pair_count(),
             boundary_tested_pair_count: boundary_events.tested_pair_count(),
@@ -1063,8 +1077,10 @@ pub(crate) fn blocked_region_boolean_result(
             query_path,
             first_material_contour_count: first.material_contours().len(),
             first_hole_contour_count: first.hole_contours().len(),
+            first_boundary_segment_count: region_view_boundary_segment_count(first),
             second_material_contour_count: second.material_contours().len(),
             second_hole_contour_count: second.hole_contours().len(),
+            second_boundary_segment_count: region_view_boundary_segment_count(second),
             boundary_candidate_pair_count: boundary_events.candidate_pair_count(),
             boundary_skipped_aabb_pair_count: boundary_events.skipped_aabb_pair_count(),
             boundary_tested_pair_count: boundary_events.tested_pair_count(),
@@ -1077,6 +1093,15 @@ pub(crate) fn blocked_region_boolean_result(
             blocker: Some(blocker),
         },
     }
+}
+
+fn region_view_boundary_segment_count(region: &RegionView2<'_>) -> usize {
+    region
+        .material_contours()
+        .iter()
+        .chain(region.hole_contours().iter())
+        .map(|contour| contour.segments().len())
+        .sum()
 }
 
 pub(crate) fn retained_status_for_boolean_blocker(
