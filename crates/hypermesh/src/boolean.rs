@@ -12533,7 +12533,10 @@ mod tests {
             .as_ref()
             .expect("workspace evaluation should retain an arrangement attempt");
         assert!(
-            attempt.materialized_arrangement_cell_complex_output(),
+            attempt.certifies_arrangement_cell_complex_output_for_request(
+                request,
+                ExactRegularizationPolicy::REGULARIZED_SOLID,
+            ),
             "{attempt:?}"
         );
         assert!(attempt.topology_assembly_report.is_some());
@@ -12578,7 +12581,10 @@ mod tests {
             .as_ref()
             .expect("nested tetrahedra should retain an arrangement attempt");
         assert!(
-            attempt.materialized_arrangement_cell_complex_output(),
+            attempt.certifies_arrangement_cell_complex_output_for_request(
+                request,
+                ExactRegularizationPolicy::REGULARIZED_SOLID,
+            ),
             "{attempt:?}"
         );
         assert!(attempt.materialized_without_shortcut(), "{attempt:?}");
@@ -12683,7 +12689,10 @@ mod tests {
                 "{operation:?}: {attempt:?}"
             );
             assert!(
-                attempt.materialized_arrangement_cell_complex_shortcut(),
+                attempt.certifies_arrangement_cell_complex_shortcut_for_request(
+                    ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
+                    ExactRegularizationPolicy::REGULARIZED_SOLID,
+                ),
                 "{operation:?}: {attempt:?}"
             );
 
@@ -14637,7 +14646,10 @@ mod tests {
                 attempt.materialized_without_shortcut(),
                 "{operation:?}: {attempt:?}"
             );
-            assert!(attempt.materialized_arrangement_cell_complex_output());
+            assert!(attempt.certifies_arrangement_cell_complex_output_for_request(
+                ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
+                ExactRegularizationPolicy::REGULARIZED_SOLID,
+            ));
             assert!(attempt.decline.is_none(), "{operation:?}: {attempt:?}");
             assert_current_arrangement_attempt(&attempt, &left, &right);
 
