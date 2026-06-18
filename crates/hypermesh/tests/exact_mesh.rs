@@ -701,9 +701,7 @@ fn exact_mesh_construction_retains_valid_public_facts() {
 
     let mut missing_float_diagnostic =
         ExactMesh::inspect_f64_triangles(&[0.0, f64::NAN, 0.0], &[0, 1, 2]);
-    assert!(missing_float_diagnostic
-        .readiness()
-        .is_invalid_coordinate());
+    assert!(missing_float_diagnostic.readiness().is_invalid_coordinate());
     missing_float_diagnostic.diagnostics.clear();
     assert!(
         missing_float_diagnostic
@@ -752,7 +750,10 @@ fn exact_mesh_proposal_and_artifact_reports_are_publicly_replayable() {
             .is_err_and(|error| error.is_report_mismatch("validation_handoff_ready"))
     );
 
-    let proposal_artifact = exact.proposal_artifact_manifest(&proposal).unwrap().report();
+    let proposal_artifact = exact
+        .proposal_artifact_manifest(&proposal)
+        .unwrap()
+        .report();
     proposal_artifact.validate().unwrap();
     assert_eq!(proposal_artifact, artifact);
 

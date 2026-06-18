@@ -14656,10 +14656,12 @@ mod tests {
                 attempt.materialized_without_shortcut(),
                 "{operation:?}: {attempt:?}"
             );
-            assert!(attempt.certifies_arrangement_cell_complex_output_for_request(
-                ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
-                ExactRegularizationPolicy::REGULARIZED_SOLID,
-            ));
+            assert!(
+                attempt.certifies_arrangement_cell_complex_output_for_request(
+                    ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
+                    ExactRegularizationPolicy::REGULARIZED_SOLID,
+                )
+            );
             assert!(attempt.decline.is_none(), "{operation:?}: {attempt:?}");
             assert_current_arrangement_attempt(&attempt, &left, &right);
 

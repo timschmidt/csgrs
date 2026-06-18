@@ -859,7 +859,8 @@ impl MeshArtifactReport {
 
     /// Return whether face topology contains a repeated vertex blocker.
     pub fn has_face_repeated_vertex_blocker(&self) -> bool {
-        self.blockers.contains(&MeshArtifactBlocker::FaceRepeatedVertex)
+        self.blockers
+            .contains(&MeshArtifactBlocker::FaceRepeatedVertex)
     }
 
     /// Return whether vertex records do not match the declared vertex count.
@@ -870,7 +871,8 @@ impl MeshArtifactReport {
 
     /// Return whether a face record index does not match its position.
     pub fn has_face_index_mismatch_blocker(&self) -> bool {
-        self.blockers.contains(&MeshArtifactBlocker::FaceIndexMismatch)
+        self.blockers
+            .contains(&MeshArtifactBlocker::FaceIndexMismatch)
     }
 
     /// Drop the exact-coordinate replay blocker, for copied-report validation
