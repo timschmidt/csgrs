@@ -105,6 +105,19 @@ impl<'a> ExactBooleanWorkspace<'a> {
         .map(|index| &self.arrangement_attempts[index].2)
     }
 
+    fn validated_regularized_solid_arrangement_attempt(
+        &self,
+        request: ExactBooleanRequest,
+    ) -> Result<Option<&ExactArrangementBooleanAttempt>, MeshError> {
+        let Some(attempt) = self.regularized_solid_arrangement_attempt(request) else {
+            return Ok(None);
+        };
+        attempt
+            .validate_against_sources(self.left, self.right)
+            .map_err(workspace_report_validation_error)?;
+        Ok(Some(attempt))
+    }
+
     /// Returns the exact arrangement for `policy`, building it once per policy.
     pub(crate) fn arrangement(
         &mut self,
@@ -202,7 +215,9 @@ impl<'a> ExactBooleanWorkspace<'a> {
         {
             let _ = self.arrangement_attempt(request, ExactRegularizationPolicy::REGULARIZED_SOLID);
         }
-        let retained_attempt = self.regularized_solid_arrangement_attempt(request).cloned();
+        let retained_attempt = self
+            .validated_regularized_solid_arrangement_attempt(request)?
+            .cloned();
         let graph = self.validated_graph()?;
         let graph_preflight =
             preflight_boolean_exact_request_from_graph(graph, left, right, request)?;
@@ -257,7 +272,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
         let preflight = self.preflight(request)?;
         if preflight.support == ExactBooleanSupport::CertifiedArrangementCellComplex
             && self
-                .regularized_solid_arrangement_attempt(request)
+                .validated_regularized_solid_arrangement_attempt(request)?
                 .is_none()
         {
             self.arrangement_attempt(request, ExactRegularizationPolicy::REGULARIZED_SOLID)?;
@@ -267,7 +282,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
             .as_ref()
             .expect("intersection graph cache was just populated");
         let regularized_arrangement = self.regularized_solid_arrangement();
-        let regularized_attempt = self.regularized_solid_arrangement_attempt(request);
+        let regularized_attempt = self.validated_regularized_solid_arrangement_attempt(request)?;
         let certifications = ExactBooleanCertificationSet::from_graph_and_regularized_arrangement(
             graph,
             self.left,
@@ -327,7 +342,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
             self.left,
             self.right,
             request,
-            self.regularized_solid_arrangement_attempt(request),
+            self.validated_regularized_solid_arrangement_attempt(request)?,
         )? {
             self.promote_evaluation_cache_from_materialization(request, &result)?;
             return Ok(result);
@@ -359,7 +374,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
             }
             if evaluation.preflight.support == ExactBooleanSupport::CertifiedArrangementCellComplex
                 && self
-                    .regularized_solid_arrangement_attempt(request)
+                    .validated_regularized_solid_arrangement_attempt(request)?
                     .is_none()
             {
                 self.arrangement_attempt(request, ExactRegularizationPolicy::REGULARIZED_SOLID)?;
@@ -392,6 +407,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
             .graph
             .as_ref()
             .expect("intersection graph cache was just populated");
+        let regularized_attempt = self.validated_regularized_solid_arrangement_attempt(request)?;
         try_materialize_certified_boolean_support_with_artifacts(
             self.left,
             self.right,
@@ -399,7 +415,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
             support,
             Some(graph),
             self.regularized_solid_arrangement(),
-            self.regularized_solid_arrangement_attempt(request),
+            regularized_attempt,
         )
     }
 
@@ -408,7 +424,9 @@ impl<'a> ExactBooleanWorkspace<'a> {
         request: ExactBooleanRequest,
         result: ExactBooleanResult,
     ) -> Result<ExactBooleanResult, MeshError> {
-        let retained_attempt = self.regularized_solid_arrangement_attempt(request).cloned();
+        let retained_attempt = self
+            .validated_regularized_solid_arrangement_attempt(request)?
+            .cloned();
         let result = store_replayable_result_or_return(
             &mut self.materializations,
             self.left,
