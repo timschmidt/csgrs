@@ -112,7 +112,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
         let arrangement = ExactArrangement::from_intersection_graph_with_policy(
             graph, self.left, self.right, policy,
         )?;
-        store_retained_policy_artifact(&mut self.arrangements, policy, arrangement)
+        store_retained_arrangement(&mut self.arrangements, policy, arrangement)
     }
 
     /// Returns the arrangement/cell-complex attempt report for `request` and
@@ -279,7 +279,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
             certifications,
             result,
         };
-        store_retained_request_artifact(&mut self.evaluations, request, evaluation)
+        store_retained_evaluation(&mut self.evaluations, request, evaluation)
     }
 
     /// Materializes `request`, reusing a cached certified evaluation when the
@@ -430,35 +430,6 @@ fn workspace_arrangement_blocker_error(blocker: ExactArrangementBlocker) -> Mesh
     ))
 }
 
-trait RetainedPolicyArtifact {
-    fn validate_for_workspace_cache(&self) -> Result<(), ExactArrangementBlocker>;
-}
-
-trait RetainedRequestArtifact {
-    fn validate_for_workspace_cache(
-        &self,
-        request: ExactBooleanRequest,
-    ) -> Result<(), ExactReportValidationError>;
-}
-
-impl RetainedPolicyArtifact for ExactArrangement {
-    fn validate_for_workspace_cache(&self) -> Result<(), ExactArrangementBlocker> {
-        self.validate()
-    }
-}
-
-impl RetainedRequestArtifact for ExactBooleanEvaluation {
-    fn validate_for_workspace_cache(
-        &self,
-        request: ExactBooleanRequest,
-    ) -> Result<(), ExactReportValidationError> {
-        if self.request != request {
-            return Err(ExactReportValidationError::StatusEvidenceMismatch);
-        }
-        self.validate()
-    }
-}
-
 fn store_replayable_result_or_return(
     cache: &mut Vec<(ExactBooleanRequest, ExactBooleanResult)>,
     left: &ExactMesh,
@@ -490,15 +461,15 @@ fn store_replayable_result_or_return(
     Ok(result)
 }
 
-fn store_retained_policy_artifact<T: RetainedPolicyArtifact>(
-    cache: &mut Vec<(ExactRegularizationPolicy, T)>,
+fn store_retained_arrangement(
+    cache: &mut Vec<(ExactRegularizationPolicy, ExactArrangement)>,
     policy: ExactRegularizationPolicy,
-    report: T,
-) -> Result<&T, MeshError> {
-    report
-        .validate_for_workspace_cache()
+    arrangement: ExactArrangement,
+) -> Result<&ExactArrangement, MeshError> {
+    arrangement
+        .validate()
         .map_err(workspace_arrangement_blocker_error)?;
-    cache.push((policy, report));
+    cache.push((policy, arrangement));
     Ok(&cache
         .last()
         .expect("policy report cache was just populated")
@@ -530,15 +501,20 @@ fn store_retained_arrangement_attempt(
         .2)
 }
 
-fn store_retained_request_artifact<T: RetainedRequestArtifact>(
-    cache: &mut Vec<(ExactBooleanRequest, T)>,
+fn store_retained_evaluation(
+    cache: &mut Vec<(ExactBooleanRequest, ExactBooleanEvaluation)>,
     request: ExactBooleanRequest,
-    artifact: T,
-) -> Result<&T, MeshError> {
-    artifact
-        .validate_for_workspace_cache(request)
+    evaluation: ExactBooleanEvaluation,
+) -> Result<&ExactBooleanEvaluation, MeshError> {
+    if evaluation.request != request {
+        return Err(workspace_report_validation_error(
+            ExactReportValidationError::StatusEvidenceMismatch,
+        ));
+    }
+    evaluation
+        .validate()
         .map_err(workspace_report_validation_error)?;
-    cache.push((request, artifact));
+    cache.push((request, evaluation));
     Ok(&cache
         .last()
         .expect("request artifact cache was just populated")
