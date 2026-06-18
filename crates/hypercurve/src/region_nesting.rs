@@ -40,6 +40,7 @@ pub struct RegionBoundaryContourBuildReport2 {
     source_segment_count: usize,
     validation_candidate_pair_count: usize,
     validation_tested_pair_count: usize,
+    validation_intersection_event_count: usize,
     nesting_classification_count: usize,
     blocker_first_contour_index: Option<usize>,
     blocker_second_contour_index: Option<usize>,
@@ -92,6 +93,7 @@ struct BoundaryContourNestingBlocker {
 struct BoundaryContourValidationCounts {
     candidate_pair_count: usize,
     tested_pair_count: usize,
+    intersection_event_count: usize,
     nesting_classification_count: usize,
 }
 
@@ -222,6 +224,7 @@ impl Region2 {
                 source_segment_count,
                 validation_candidate_pair_count: counts.candidate_pair_count,
                 validation_tested_pair_count: counts.tested_pair_count,
+                validation_intersection_event_count: counts.intersection_event_count,
                 nesting_classification_count: counts.nesting_classification_count,
                 blocker_first_contour_index: None,
                 blocker_second_contour_index: None,
@@ -310,6 +313,11 @@ impl RegionBoundaryContourBuildReport2 {
     /// Returns the number of contour pairs tested before success or a blocker.
     pub const fn validation_tested_pair_count(&self) -> usize {
         self.validation_tested_pair_count
+    }
+
+    /// Returns exact contour-intersection events found during nesting validation.
+    pub const fn validation_intersection_event_count(&self) -> usize {
+        self.validation_intersection_event_count
     }
 
     /// Returns point-containment classifications used to assign nesting roles.
@@ -408,6 +416,7 @@ fn blocked_boundary_contour_region_result(
             source_segment_count,
             validation_candidate_pair_count: counts.candidate_pair_count,
             validation_tested_pair_count: counts.tested_pair_count,
+            validation_intersection_event_count: counts.intersection_event_count,
             nesting_classification_count: counts.nesting_classification_count,
             blocker_first_contour_index,
             blocker_second_contour_index,
@@ -446,13 +455,16 @@ fn contour_nesting_depths(
     let mut counts = BoundaryContourValidationCounts {
         candidate_pair_count,
         tested_pair_count: 0,
+        intersection_event_count: 0,
         nesting_classification_count: 0,
     };
 
     for (left_index, left) in contours.iter().enumerate() {
         for (right_offset, right) in contours[left_index + 1..].iter().enumerate() {
             counts.tested_pair_count += 1;
-            if !left.intersect_contour(right, policy)?.is_empty() {
+            let intersections = left.intersect_contour(right, policy)?;
+            counts.intersection_event_count += intersections.len();
+            if !intersections.is_empty() {
                 return Ok(BoundaryContourNestingOutcome::Blocked {
                     blocker: BoundaryContourNestingBlocker {
                         reason: crate::UncertaintyReason::Boundary,
