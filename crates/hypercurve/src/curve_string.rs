@@ -660,6 +660,8 @@ pub struct CurveStringRegionTrimReport2 {
     boundary_candidate_pair_count: usize,
     boundary_skipped_aabb_pair_count: usize,
     boundary_tested_pair_count: usize,
+    interval_candidate_count: usize,
+    interval_classification_count: usize,
     boundary_hits: Vec<CurveStringRegionTrimHit2>,
     interval_reports: Vec<CurveStringRegionTrimIntervalReport2>,
     output_curve_string_count: Option<usize>,
@@ -3439,6 +3441,16 @@ impl CurveStringRegionTrimReport2 {
         self.boundary_tested_pair_count
     }
 
+    /// Returns source intervals considered after splitting at retained boundary hits.
+    pub const fn interval_candidate_count(&self) -> usize {
+        self.interval_candidate_count
+    }
+
+    /// Returns retained representative-point classifications attempted for intervals.
+    pub const fn interval_classification_count(&self) -> usize {
+        self.interval_classification_count
+    }
+
     /// Returns exact boundary hits used as split evidence.
     pub fn boundary_hits(&self) -> &[CurveStringRegionTrimHit2] {
         &self.boundary_hits
@@ -3656,6 +3668,8 @@ fn trim_curve_string_inside_region(
             region_material_segment_count(region),
             region_hole_segment_count(region),
             boundary_workload,
+            0,
+            0,
             boundary_hits,
             Vec::new(),
             CurveStringRegionTrimQueryPath2::Direct,
@@ -3716,6 +3730,8 @@ fn trim_curve_string_inside_prepared_region(
             region.prepared_material_segment_count(),
             region.prepared_hole_segment_count(),
             boundary_workload,
+            0,
+            0,
             boundary_hits,
             Vec::new(),
             CurveStringRegionTrimQueryPath2::Prepared,
@@ -3754,6 +3770,8 @@ fn trim_curve_string_inside_region_with_hits(
     let mut output_segments: Vec<Vec<Segment2>> = Vec::new();
     let mut current_segments = Vec::new();
     let mut interval_reports = Vec::new();
+    let mut interval_candidate_count = 0_usize;
+    let mut interval_classification_count = 0_usize;
 
     for (source_segment_index, source_segment) in curve_string.segments().iter().enumerate() {
         let split_points = match region_trim_split_points_for_segment(
@@ -3771,6 +3789,8 @@ fn trim_curve_string_inside_region_with_hits(
                     region_material_segment_count,
                     region_hole_segment_count,
                     boundary_workload,
+                    interval_candidate_count,
+                    interval_classification_count,
                     boundary_hits,
                     interval_reports,
                     query_path,
@@ -3784,6 +3804,7 @@ fn trim_curve_string_inside_region_with_hits(
         for window in split_points.windows(2) {
             let start = &window[0];
             let end = &window[1];
+            interval_candidate_count += 1;
             let source_range =
                 ParamRange::new(start.trim_point.param.clone(), end.trim_point.param.clone());
             let fragment = match trim_segment_by_point_range(
@@ -3815,6 +3836,8 @@ fn trim_curve_string_inside_region_with_hits(
                         region_material_segment_count,
                         region_hole_segment_count,
                         boundary_workload,
+                        interval_candidate_count,
+                        interval_classification_count,
                         boundary_hits,
                         interval_reports,
                         query_path,
@@ -3843,6 +3866,8 @@ fn trim_curve_string_inside_region_with_hits(
                         region_material_segment_count,
                         region_hole_segment_count,
                         boundary_workload,
+                        interval_candidate_count,
+                        interval_classification_count,
                         boundary_hits,
                         interval_reports,
                         query_path,
@@ -3875,6 +3900,8 @@ fn trim_curve_string_inside_region_with_hits(
                         region_material_segment_count,
                         region_hole_segment_count,
                         boundary_workload,
+                        interval_candidate_count,
+                        interval_classification_count,
                         boundary_hits,
                         interval_reports,
                         query_path,
@@ -3885,6 +3912,7 @@ fn trim_curve_string_inside_region_with_hits(
                 }
             };
 
+            interval_classification_count += 1;
             let location = match classify_point(&representative) {
                 Classification::Decided(location) => location,
                 Classification::Uncertain(reason) => {
@@ -3907,6 +3935,8 @@ fn trim_curve_string_inside_region_with_hits(
                         region_material_segment_count,
                         region_hole_segment_count,
                         boundary_workload,
+                        interval_candidate_count,
+                        interval_classification_count,
                         boundary_hits,
                         interval_reports,
                         query_path,
@@ -3970,6 +4000,8 @@ fn trim_curve_string_inside_region_with_hits(
                         region_material_segment_count,
                         region_hole_segment_count,
                         boundary_workload,
+                        interval_candidate_count,
+                        interval_classification_count,
                         boundary_hits,
                         interval_reports,
                         query_path,
@@ -3999,6 +4031,8 @@ fn trim_curve_string_inside_region_with_hits(
             boundary_candidate_pair_count: boundary_workload.candidate_pair_count,
             boundary_skipped_aabb_pair_count: boundary_workload.skipped_aabb_pair_count,
             boundary_tested_pair_count: boundary_workload.tested_pair_count,
+            interval_candidate_count,
+            interval_classification_count,
             boundary_hits,
             interval_reports,
             output_curve_string_count: Some(curve_strings.len()),
@@ -4505,6 +4539,8 @@ fn blocked_region_trim_result(
     region_material_segment_count: usize,
     region_hole_segment_count: usize,
     boundary_workload: RegionTrimBoundaryWorkload,
+    interval_candidate_count: usize,
+    interval_classification_count: usize,
     boundary_hits: Vec<CurveStringRegionTrimHit2>,
     interval_reports: Vec<CurveStringRegionTrimIntervalReport2>,
     query_path: CurveStringRegionTrimQueryPath2,
@@ -4523,6 +4559,8 @@ fn blocked_region_trim_result(
             boundary_candidate_pair_count: boundary_workload.candidate_pair_count,
             boundary_skipped_aabb_pair_count: boundary_workload.skipped_aabb_pair_count,
             boundary_tested_pair_count: boundary_workload.tested_pair_count,
+            interval_candidate_count,
+            interval_classification_count,
             boundary_hits,
             interval_reports,
             output_curve_string_count: None,

@@ -2287,6 +2287,8 @@ fn curve_string_trim_inside_region_materializes_inside_window() {
     assert_eq!(trimmed.report().region_hole_segment_count(), 0);
     assert_eq!(trimmed.report().output_curve_string_count(), Some(1));
     assert_eq!(trimmed.report().output_segment_count(), Some(1));
+    assert_eq!(trimmed.report().interval_candidate_count(), 3);
+    assert_eq!(trimmed.report().interval_classification_count(), 3);
     assert_eq!(trimmed.report().boundary_hits().len(), 2);
     assert_eq!(
         trimmed.report().boundary_hits()[0].region_contour_role(),
@@ -2373,6 +2375,10 @@ fn prepared_curve_string_trim_inside_region_matches_direct_result() {
     assert_eq!(prepared.report().region_material_segment_count(), 8);
     assert_eq!(prepared.report().region_hole_segment_count(), 0);
     assert_eq!(prepared.report().output_segment_count(), Some(2));
+    assert_eq!(direct.report().interval_candidate_count(), 5);
+    assert_eq!(direct.report().interval_classification_count(), 5);
+    assert_eq!(prepared.report().interval_candidate_count(), 5);
+    assert_eq!(prepared.report().interval_classification_count(), 5);
     assert_eq!(
         prepared.report().output_segment_count(),
         direct.report().output_segment_count()
@@ -2408,6 +2414,8 @@ fn curve_string_trim_inside_region_splits_disconnected_inside_windows() {
     assert_eq!(trimmed.report().boundary_candidate_pair_count(), 8);
     assert_eq!(trimmed.report().boundary_skipped_aabb_pair_count(), 0);
     assert_eq!(trimmed.report().boundary_tested_pair_count(), 8);
+    assert_eq!(trimmed.report().interval_candidate_count(), 5);
+    assert_eq!(trimmed.report().interval_classification_count(), 5);
     assert_eq!(trimmed.curve_strings().len(), 2);
     assert_line(&trimmed.curve_strings()[0].segments()[0], p(0, 1), p(2, 1));
     assert_line(&trimmed.curve_strings()[1].segments()[0], p(4, 1), p(6, 1));
@@ -2431,6 +2439,8 @@ fn curve_string_trim_inside_region_respects_holes() {
     assert_eq!(trimmed.report().region_hole_segment_count(), 4);
     assert_eq!(trimmed.report().output_curve_string_count(), Some(2));
     assert_eq!(trimmed.report().output_segment_count(), Some(2));
+    assert_eq!(trimmed.report().interval_candidate_count(), 3);
+    assert_eq!(trimmed.report().interval_classification_count(), 3);
     assert_eq!(
         trimmed
             .report()
@@ -2463,6 +2473,8 @@ fn curve_string_trim_inside_region_reports_boundary_overlap_blocker() {
     );
     assert_eq!(trimmed.report().region_material_segment_count(), 4);
     assert_eq!(trimmed.report().region_hole_segment_count(), 0);
+    assert_eq!(trimmed.report().interval_candidate_count(), 0);
+    assert_eq!(trimmed.report().interval_classification_count(), 0);
     assert_eq!(trimmed.report().output_curve_string_count(), None);
     assert_eq!(trimmed.report().output_segment_count(), None);
 }
