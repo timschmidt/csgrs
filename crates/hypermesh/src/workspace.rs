@@ -407,8 +407,10 @@ impl<'a> ExactBooleanWorkspace<'a> {
             retained_attempt.as_ref(),
             result,
         )?;
-        self.promote_evaluation_cache_from_materialization(request, &result)?;
-        Ok(result)
+        if result.cached {
+            self.promote_evaluation_cache_from_materialization(request, &result.result)?;
+        }
+        Ok(result.result)
     }
 
     fn promote_evaluation_cache_from_materialization(
@@ -416,9 +418,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
         request: ExactBooleanRequest,
         result: &ExactBooleanResult,
     ) -> Result<(), MeshError> {
-        if cached_by_request_index(&self.materializations, request).is_none() {
-            return Ok(());
-        }
+        debug_assert!(cached_by_request_index(&self.materializations, request).is_some());
         if let Some(index) = cached_by_request_index(&self.evaluations, request) {
             let evaluation = &mut self.evaluations[index].1;
             evaluation
@@ -449,6 +449,11 @@ impl<'a> ExactBooleanWorkspace<'a> {
     }
 }
 
+struct StoredMaterialization {
+    result: ExactBooleanResult,
+    cached: bool,
+}
+
 fn store_replayable_result_or_return(
     cache: &mut Vec<(ExactBooleanRequest, ExactBooleanResult)>,
     left: &ExactMesh,
@@ -456,7 +461,7 @@ fn store_replayable_result_or_return(
     request: ExactBooleanRequest,
     retained_arrangement_attempt: Option<&ExactArrangementBooleanAttempt>,
     result: ExactBooleanResult,
-) -> Result<ExactBooleanResult, MeshError> {
+) -> Result<StoredMaterialization, MeshError> {
     if validate_retained_result_for_request(
         left,
         right,
@@ -467,17 +472,23 @@ fn store_replayable_result_or_return(
     .is_ok()
     {
         cache.push((request, result.clone()));
-    } else {
-        result
-            .validate()
-            .map_err(workspace_report_validation_error)?;
-        if !result.satisfies_request_shape(request) {
-            return Err(workspace_report_validation_error(
-                ExactReportValidationError::StatusEvidenceMismatch,
-            ));
-        }
+        return Ok(StoredMaterialization {
+            result,
+            cached: true,
+        });
     }
-    Ok(result)
+    result
+        .validate()
+        .map_err(workspace_report_validation_error)?;
+    if !result.satisfies_request_shape(request) {
+        return Err(workspace_report_validation_error(
+            ExactReportValidationError::StatusEvidenceMismatch,
+        ));
+    }
+    Ok(StoredMaterialization {
+        result,
+        cached: false,
+    })
 }
 
 fn cached_retained_materialization(
