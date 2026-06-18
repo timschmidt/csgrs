@@ -822,6 +822,8 @@ impl ExactLabeledCellComplex {
                 .cloned()
                 .unwrap_or(ExactArrangementBlocker::UnresolvedRegionClassification));
         }
+        validate_lower_dimensional_artifacts(&self.lower_dimensional_artifacts)?;
+        validate_cell_complex_parts(&self.faces, &self.volume_regions, &self.volume_adjacencies)?;
         if !volume_evidence_resolves_named_operation(
             &self.faces,
             &self.volume_regions,
