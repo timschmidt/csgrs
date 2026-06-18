@@ -9,6 +9,7 @@
 use hypercurve::{
     BooleanOp, BulgeVertex2, Classification, Contour2, CurvePolicy, FillRule, Point2, Real,
     Region2, RegionBooleanQueryPath2, RegionBooleanStage2, RegionPointLocation,
+    RegionPreparedCacheFreshness2,
 };
 
 type HPoint = Point2;
@@ -134,6 +135,7 @@ fn boolean_region_report_retains_boundary_role_assignment() {
     assert_eq!(report.boundary_contour_count(), Some(1));
     assert_eq!(report.result_material_contour_count(), Some(1));
     assert_eq!(report.result_hole_contour_count(), Some(0));
+    assert_eq!(report.prepared_cache_report(), None);
     assert_eq!(report.blocker(), None);
 
     let boundary_report = report.boundary_build_report().unwrap();
@@ -203,6 +205,26 @@ fn prepared_boolean_region_report_matches_plain_materialization() {
     assert_eq!(built.report().boundary_contour_count(), Some(1));
     assert_eq!(built.report().result_material_contour_count(), Some(1));
     assert_eq!(built.report().result_hole_contour_count(), Some(0));
+    let prepared_cache = built.report().prepared_cache_report().unwrap();
+    assert_eq!(
+        prepared_cache.first().freshness(),
+        RegionPreparedCacheFreshness2::BorrowedCurrentSource
+    );
+    assert_eq!(
+        prepared_cache.second().freshness(),
+        RegionPreparedCacheFreshness2::BorrowedCurrentSource
+    );
+    assert_eq!(prepared_cache.first().prepared_contour_count(), 1);
+    assert_eq!(prepared_cache.second().prepared_contour_count(), 1);
+    assert_eq!(prepared_cache.first().prepared_segment_count(), 4);
+    assert_eq!(prepared_cache.second().prepared_segment_count(), 4);
+    assert_eq!(prepared_cache.first().decided_segment_box_count(), 4);
+    assert_eq!(prepared_cache.second().decided_segment_box_count(), 4);
+    assert_eq!(prepared_cache.first().undecided_segment_box_count(), 0);
+    assert_eq!(prepared_cache.second().undecided_segment_box_count(), 0);
+    assert!(prepared_cache.first().region_box_decided());
+    assert!(prepared_cache.second().region_box_decided());
+    assert_eq!(plain.report().prepared_cache_report(), None);
     assert_eq!(
         built.report().first_boundary_segment_count(),
         plain.report().first_boundary_segment_count()

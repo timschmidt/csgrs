@@ -9,8 +9,9 @@
 use crate::prepared::{PreparedContourView2, PreparedRegionView2};
 use crate::{
     BooleanBoundaryLoopSet, BooleanFragmentSelection, BooleanOp, Classification, Contour2,
-    CurvePolicy, CurveResult, FillRule, Region2, RegionBooleanResult2, RegionFragmentSet,
-    RegionIntersectionSet, RegionPointLocation, RegionSide,
+    CurvePolicy, CurveResult, FillRule, Region2, RegionBooleanPreparedCacheReport2,
+    RegionBooleanResult2, RegionFragmentSet, RegionIntersectionSet, RegionPointLocation,
+    RegionPreparedCacheAudit2, RegionSide,
 };
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -331,19 +332,22 @@ pub(crate) fn boolean_region_between_prepared_with_report(
         match boolean_boundary_contours_between_prepared(first, second, op, fill_rule, policy)? {
             Classification::Decided(contours) => contours,
             Classification::Uncertain(reason) => {
-                return Ok(crate::region_boolean::blocked_region_boolean_result(
-                    &first_view,
-                    &second_view,
-                    op,
-                    fill_rule,
-                    crate::RegionBooleanQueryPath2::Prepared,
-                    &boundary_events,
-                    crate::region_boolean::retained_status_for_boolean_blocker(reason),
-                    reason,
-                ));
+                return Ok(
+                    crate::region_boolean::blocked_region_boolean_result_with_prepared_cache(
+                        &first_view,
+                        &second_view,
+                        op,
+                        fill_rule,
+                        crate::RegionBooleanQueryPath2::Prepared,
+                        &boundary_events,
+                        crate::region_boolean::retained_status_for_boolean_blocker(reason),
+                        reason,
+                        Some(region_boolean_prepared_cache_report(first, second)),
+                    ),
+                );
             }
         };
-    crate::region_boolean::region_boolean_result_from_boundary_contours(
+    crate::region_boolean::region_boolean_result_from_boundary_contours_with_prepared_cache(
         &first_view,
         &second_view,
         op,
@@ -351,7 +355,28 @@ pub(crate) fn boolean_region_between_prepared_with_report(
         crate::RegionBooleanQueryPath2::Prepared,
         &boundary_events,
         contours,
+        Some(region_boolean_prepared_cache_report(first, second)),
         policy,
+    )
+}
+
+fn region_boolean_prepared_cache_report(
+    first: &PreparedRegionView2<'_>,
+    second: &PreparedRegionView2<'_>,
+) -> RegionBooleanPreparedCacheReport2 {
+    RegionBooleanPreparedCacheReport2::new(
+        prepared_region_cache_audit(first),
+        prepared_region_cache_audit(second),
+    )
+}
+
+fn prepared_region_cache_audit(region: &PreparedRegionView2<'_>) -> RegionPreparedCacheAudit2 {
+    RegionPreparedCacheAudit2::new(
+        region.prepared_contour_count(),
+        region.prepared_segment_count(),
+        region.decided_segment_box_count(),
+        region.undecided_segment_box_count(),
+        region.region_box().is_some(),
     )
 }
 

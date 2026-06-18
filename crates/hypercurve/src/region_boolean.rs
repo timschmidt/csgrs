@@ -39,6 +39,7 @@ pub struct RegionBooleanReport2 {
     result_material_contour_count: Option<usize>,
     result_hole_contour_count: Option<usize>,
     boundary_build_report: Option<RegionBoundaryContourBuildReport2>,
+    prepared_cache_report: Option<RegionBooleanPreparedCacheReport2>,
     status: RetainedTopologyStatus,
     blocker: Option<UncertaintyReason>,
 }
@@ -59,6 +60,31 @@ pub enum RegionBooleanStage2 {
     BoundaryExtraction,
     /// Checked boundary contours were built and role-assigned into a region.
     RegionRoleAssignment,
+}
+
+/// Prepared-cache evidence consumed by a report-bearing region boolean.
+#[derive(Clone, Debug, PartialEq)]
+pub struct RegionBooleanPreparedCacheReport2 {
+    first: RegionPreparedCacheAudit2,
+    second: RegionPreparedCacheAudit2,
+}
+
+/// Per-operand prepared region cache inventory.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct RegionPreparedCacheAudit2 {
+    freshness: RegionPreparedCacheFreshness2,
+    prepared_contour_count: usize,
+    prepared_segment_count: usize,
+    decided_segment_box_count: usize,
+    undecided_segment_box_count: usize,
+    region_box_decided: bool,
+}
+
+/// Freshness claim for prepared boolean cache evidence.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum RegionPreparedCacheFreshness2 {
+    /// Prepared cache borrows the current source contours for this query.
+    BorrowedCurrentSource,
 }
 
 /// Result of report-bearing closed region boolean materialization.
@@ -703,6 +729,11 @@ impl RegionBooleanReport2 {
         self.boundary_build_report.as_ref()
     }
 
+    /// Returns prepared-cache inventory and freshness evidence, when used.
+    pub const fn prepared_cache_report(&self) -> Option<&RegionBooleanPreparedCacheReport2> {
+        self.prepared_cache_report.as_ref()
+    }
+
     /// Returns boolean-region materialization status.
     pub const fn status(&self) -> RetainedTopologyStatus {
         self.status
@@ -711,6 +742,76 @@ impl RegionBooleanReport2 {
     /// Returns the exact blocker for non-materialized boolean attempts.
     pub const fn blocker(&self) -> Option<UncertaintyReason> {
         self.blocker
+    }
+}
+
+impl RegionBooleanPreparedCacheReport2 {
+    /// Builds a prepared-cache evidence report from per-operand audits.
+    pub(crate) const fn new(
+        first: RegionPreparedCacheAudit2,
+        second: RegionPreparedCacheAudit2,
+    ) -> Self {
+        Self { first, second }
+    }
+
+    /// Returns prepared-cache evidence for the first operand.
+    pub const fn first(&self) -> &RegionPreparedCacheAudit2 {
+        &self.first
+    }
+
+    /// Returns prepared-cache evidence for the second operand.
+    pub const fn second(&self) -> &RegionPreparedCacheAudit2 {
+        &self.second
+    }
+}
+
+impl RegionPreparedCacheAudit2 {
+    /// Builds per-region prepared cache evidence.
+    pub(crate) const fn new(
+        prepared_contour_count: usize,
+        prepared_segment_count: usize,
+        decided_segment_box_count: usize,
+        undecided_segment_box_count: usize,
+        region_box_decided: bool,
+    ) -> Self {
+        Self {
+            freshness: RegionPreparedCacheFreshness2::BorrowedCurrentSource,
+            prepared_contour_count,
+            prepared_segment_count,
+            decided_segment_box_count,
+            undecided_segment_box_count,
+            region_box_decided,
+        }
+    }
+
+    /// Returns the cache freshness claim for this borrowed prepared view.
+    pub const fn freshness(&self) -> RegionPreparedCacheFreshness2 {
+        self.freshness
+    }
+
+    /// Returns the number of prepared material and hole contours.
+    pub const fn prepared_contour_count(&self) -> usize {
+        self.prepared_contour_count
+    }
+
+    /// Returns the number of prepared boundary segments.
+    pub const fn prepared_segment_count(&self) -> usize {
+        self.prepared_segment_count
+    }
+
+    /// Returns the number of decided segment AABBs retained by preparation.
+    pub const fn decided_segment_box_count(&self) -> usize {
+        self.decided_segment_box_count
+    }
+
+    /// Returns the number of source segment AABBs that remained undecided.
+    pub const fn undecided_segment_box_count(&self) -> usize {
+        self.undecided_segment_box_count
+    }
+
+    /// Returns whether preparation retained a decided whole-region AABB.
+    pub const fn region_box_decided(&self) -> bool {
+        self.region_box_decided
     }
 }
 
@@ -1053,6 +1154,31 @@ pub(crate) fn region_boolean_result_from_boundary_contours(
     contours: Vec<Contour2>,
     policy: &CurvePolicy,
 ) -> CurveResult<RegionBooleanResult2> {
+    region_boolean_result_from_boundary_contours_with_prepared_cache(
+        first,
+        second,
+        op,
+        fill_rule,
+        query_path,
+        boundary_events,
+        contours,
+        None,
+        policy,
+    )
+}
+
+#[allow(clippy::too_many_arguments)]
+pub(crate) fn region_boolean_result_from_boundary_contours_with_prepared_cache(
+    first: &RegionView2<'_>,
+    second: &RegionView2<'_>,
+    op: BooleanOp,
+    fill_rule: FillRule,
+    query_path: RegionBooleanQueryPath2,
+    boundary_events: &RegionIntersectionSet,
+    contours: Vec<Contour2>,
+    prepared_cache_report: Option<RegionBooleanPreparedCacheReport2>,
+    policy: &CurvePolicy,
+) -> CurveResult<RegionBooleanResult2> {
     let boundary_contour_count = contours.len();
     let built = Region2::from_boundary_contours_with_report(contours, policy)?;
     let status = built.report().status();
@@ -1083,6 +1209,7 @@ pub(crate) fn region_boolean_result_from_boundary_contours(
             result_material_contour_count,
             result_hole_contour_count,
             boundary_build_report: Some(boundary_build_report),
+            prepared_cache_report,
             status,
             blocker,
         },
@@ -1098,6 +1225,31 @@ pub(crate) fn blocked_region_boolean_result(
     boundary_events: &RegionIntersectionSet,
     status: RetainedTopologyStatus,
     blocker: UncertaintyReason,
+) -> RegionBooleanResult2 {
+    blocked_region_boolean_result_with_prepared_cache(
+        first,
+        second,
+        op,
+        fill_rule,
+        query_path,
+        boundary_events,
+        status,
+        blocker,
+        None,
+    )
+}
+
+#[allow(clippy::too_many_arguments)]
+pub(crate) fn blocked_region_boolean_result_with_prepared_cache(
+    first: &RegionView2<'_>,
+    second: &RegionView2<'_>,
+    op: BooleanOp,
+    fill_rule: FillRule,
+    query_path: RegionBooleanQueryPath2,
+    boundary_events: &RegionIntersectionSet,
+    status: RetainedTopologyStatus,
+    blocker: UncertaintyReason,
+    prepared_cache_report: Option<RegionBooleanPreparedCacheReport2>,
 ) -> RegionBooleanResult2 {
     RegionBooleanResult2 {
         region: None,
@@ -1122,6 +1274,7 @@ pub(crate) fn blocked_region_boolean_result(
             result_material_contour_count: None,
             result_hole_contour_count: None,
             boundary_build_report: None,
+            prepared_cache_report,
             status,
             blocker: Some(blocker),
         },
