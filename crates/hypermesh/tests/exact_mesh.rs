@@ -3,8 +3,8 @@ use hypermesh::{
     ExactBooleanOperation, ExactBooleanRequest, ExactBooleanResult, ExactBooleanWorkspace,
     ExactBoundaryBooleanPolicy, ExactI64MeshInputReadiness, ExactI64MeshInputReportValidationError,
     ExactMesh, ExactMeshAuditError, ExactMeshConsumerDomain, ExactMeshHandoffPackageError,
-    ExactMeshProposalAcceptance, ExactMeshProposalReport, ExactMeshProposalReportError,
-    ExactMeshProposalSourceKind, ExactOutputTriangleOrientation, ExactRegionSelection,
+    ExactMeshProposalAcceptance, ExactMeshProposalReportError, ExactMeshProposalSourceKind,
+    ExactOutputTriangleOrientation, ExactRegionSelection,
     ExactRegularizationPolicy, ExactReportFreshness, LossyF64MeshInputReadiness,
     LossyF64MeshInputReportValidationError, MeshArtifactBlocker, MeshArtifactFaceRecord,
     MeshArtifactManifest, MeshArtifactReportError, MeshArtifactRole, MeshArtifactSourceKind,
@@ -712,7 +712,7 @@ fn exact_mesh_construction_retains_valid_public_facts() {
 #[test]
 fn exact_mesh_proposal_and_artifact_reports_are_publicly_replayable() {
     let exact = tetra([0, 0, 0]);
-    let proposal = ExactMeshProposalReport::from_mesh(&exact).unwrap();
+    let proposal = exact.proposal_report().unwrap();
 
     proposal.validate().unwrap();
     proposal.validate_against_mesh(&exact).unwrap();
@@ -773,7 +773,7 @@ fn exact_mesh_proposal_and_artifact_reports_are_publicly_replayable() {
         &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
     )
     .unwrap();
-    let lossy_proposal = ExactMeshProposalReport::from_mesh(&lossy).unwrap();
+    let lossy_proposal = lossy.proposal_report().unwrap();
     lossy_proposal.validate_against_mesh(&lossy).unwrap();
     assert_eq!(
         lossy_proposal.source_kind,

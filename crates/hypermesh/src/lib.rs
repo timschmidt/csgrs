@@ -77,8 +77,7 @@ pub use package::{
     ExactMeshConsumerDomain, ExactMeshDomainSummaryError, ExactMeshHandoffPackageError,
 };
 pub use proposal::{
-    ExactMeshProposalAcceptance, ExactMeshProposalReport, ExactMeshProposalReportError,
-    ExactMeshProposalSourceKind,
+    ExactMeshProposalAcceptance, ExactMeshProposalReportError, ExactMeshProposalSourceKind,
 };
 pub use region::{ExactOutputTriangleOrientation, ExactRegionSelection};
 pub use regularization::ExactRegularizationPolicy;

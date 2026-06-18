@@ -14,6 +14,7 @@ use super::facts::{MeshFactsValidationError, MeshValidationFacts};
 use super::package::{
     ExactMeshHandoffPackage, ExactMeshHandoffPackageError, exact_mesh_handoff_package,
 };
+use super::proposal::{ExactMeshProposalReport, ExactMeshProposalReportError};
 use super::scalar::LossyF64Import;
 use super::validation::{ValidationPolicy, ValidationReport, validate_triangles_with_policy};
 use hyperlimit::{
@@ -374,6 +375,11 @@ impl ExactMesh {
     /// promoted to solids and lossy views are not promoted to topology.
     pub fn handoff_package(&self) -> Result<ExactMeshHandoffPackage, ExactMeshHandoffPackageError> {
         exact_mesh_handoff_package(self)
+    }
+
+    /// Build a replayed proposal report from this accepted exact mesh.
+    pub fn proposal_report(&self) -> Result<ExactMeshProposalReport, ExactMeshProposalReportError> {
+        ExactMeshProposalReport::from_mesh(self)
     }
 }
 
