@@ -3,8 +3,8 @@ use std::time::{Duration, Instant};
 
 use hypermesh::{
     ExactArrangementBooleanAttempt, ExactBooleanEvaluation, ExactBooleanOperation,
-    ExactBooleanRequest, ExactBooleanResult, ExactBooleanWorkspace, ExactMesh,
-    ExactRegularizationPolicy, ValidationPolicy,
+    ExactBooleanRequest, ExactBooleanWorkspace, ExactMesh, ExactRegularizationPolicy,
+    ValidationPolicy,
 };
 
 struct BenchCase {
@@ -560,19 +560,13 @@ fn run_case(case: &BenchCase) {
 
     time_prepared_stage(
         case,
-        "result_validate_operation_replay",
-        || retained_workspace_and_result_for_case(case, request),
-        |(_retained_workspace, result)| {
-            if let Some(result) = result.as_ref() {
+        "evaluation_result_validate_retained_replay",
+        || retained_workspace_and_evaluation_for_case(case, request),
+        |(_retained_workspace, evaluation)| {
+            if let Some(evaluation) = evaluation.as_ref() {
                 black_box(
-                    result
-                        .validate_operation_against_sources(
-                            &case.left,
-                            &case.right,
-                            request.operation,
-                            request.validation,
-                            request.boundary_policy,
-                        )
+                    evaluation
+                        .validate_materialized_result_against_sources(&case.left, &case.right)
                         .ok(),
                 );
             }
@@ -623,15 +617,6 @@ fn retained_workspace_and_evaluation_for_case<'a>(
     let mut retained_workspace = retained_workspace_for_case(case, request);
     let evaluation = retained_workspace.evaluate(request).ok().cloned();
     (retained_workspace, evaluation)
-}
-
-fn retained_workspace_and_result_for_case<'a>(
-    case: &'a BenchCase,
-    request: ExactBooleanRequest,
-) -> (ExactBooleanWorkspace<'a>, Option<ExactBooleanResult>) {
-    let mut retained_workspace = retained_workspace_for_case(case, request);
-    let result = retained_workspace.materialize(request).ok();
-    (retained_workspace, result)
 }
 
 fn retained_workspace_and_arrangement_attempt_for_case<'a>(

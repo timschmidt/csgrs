@@ -2261,6 +2261,18 @@ impl ExactBooleanEvaluation {
             )?;
         self.certifications
             .validate_against_sources(left, right, self.request)?;
+        self.validate_materialized_result_against_sources(left, right)?;
+        Ok(())
+    }
+
+    /// Validate only the materialized result retained by this evaluation,
+    /// replaying from the retained arrangement attempt before falling back to
+    /// broader result replay.
+    pub fn validate_materialized_result_against_sources(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> Result<(), ExactReportValidationError> {
         if let Some(result) = self.result.as_ref() {
             result.validate_operation_against_sources_with_retained_attempt(
                 left,
@@ -2269,11 +2281,12 @@ impl ExactBooleanEvaluation {
                 self.request.validation,
                 self.request.boundary_policy,
                 self.certifications.arrangement_attempt.as_ref(),
-            )?;
+            )
         } else if self.requires_materialized_result() {
-            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+            Err(ExactReportValidationError::StatusEvidenceMismatch)
+        } else {
+            Ok(())
         }
-        Ok(())
     }
 
     /// Classify whether this retained evaluation is fresh for the source
