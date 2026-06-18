@@ -1,9 +1,10 @@
 use hypercurve::{
     BulgeVertex2, CircularArc2, Classification, Contour2, CurveError, CurvePolicy, CurveString2,
     CurveStringChamferInputPath2, CurveStringChamferStage2, CurveStringConnectSource2,
-    CurveStringCurveTrimQueryPath2, CurveStringCurveTrimStage2, CurveStringEndpoint2,
-    CurveStringEndpointConnectionStatus2, CurveStringFilletInputPath2, CurveStringFilletStage2,
-    CurveStringIntersectionPredicatePath2, CurveStringIntersectionQueryPath2, CurveStringLinkKind2,
+    CurveStringCurveTrimQueryPath2, CurveStringCurveTrimStage2, CurveStringDeduplicateStage2,
+    CurveStringEndpoint2, CurveStringEndpointConnectionStatus2, CurveStringFilletInputPath2,
+    CurveStringFilletStage2, CurveStringIntersectionPredicatePath2,
+    CurveStringIntersectionQueryPath2, CurveStringLineMergeStage2, CurveStringLinkKind2,
     CurveStringLinkSourceInput2, CurveStringRegionTrimQueryPath2, CurveStringRegionTrimStage2,
     CurveStringTrimInputPath2, CurveStringTrimPoint2, IntersectionKind, LineArcIntersection,
     LineArcOrder, LineSeg2, Point2, Real, Region2, RegionContourRole, RegionPointLocation,
@@ -248,6 +249,10 @@ fn curve_string_merge_adjacent_collinear_lines_reports_source_runs() {
     let merged = curve.merge_adjacent_collinear_lines(&policy()).unwrap();
 
     assert!(merged.report().status().is_native_exact());
+    assert_eq!(
+        merged.report().stage(),
+        CurveStringLineMergeStage2::SegmentMaterialization
+    );
     assert_eq!(merged.report().source_segment_count(), 4);
     assert_eq!(merged.report().output_segment_count(), Some(2));
     assert_eq!(merged.report().spans().len(), 2);
@@ -325,6 +330,10 @@ fn curve_string_remove_adjacent_reversed_duplicates_reports_removed_pairs() {
     let deduped = curve.remove_adjacent_reversed_duplicates().unwrap();
 
     assert!(deduped.report().status().is_native_exact());
+    assert_eq!(
+        deduped.report().stage(),
+        CurveStringDeduplicateStage2::SegmentMaterialization
+    );
     assert_eq!(deduped.report().source_segment_count(), 4);
     assert_eq!(deduped.report().output_segment_count(), Some(2));
     assert_eq!(deduped.report().retained_source_segment_indices(), &[0, 3]);
@@ -397,6 +406,10 @@ fn curve_string_remove_adjacent_reversed_duplicates_reports_empty_output_blocker
 
     assert!(deduped.curve_string().is_none());
     assert!(deduped.report().status().is_retained_evidence());
+    assert_eq!(
+        deduped.report().stage(),
+        CurveStringDeduplicateStage2::PairCancellation
+    );
     assert_eq!(deduped.report().source_segment_count(), 4);
     assert_eq!(deduped.report().output_segment_count(), None);
     assert!(

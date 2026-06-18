@@ -241,11 +241,21 @@ pub struct CurveStringLineMergeSpanReport2 {
 /// Report for exact adjacent-line merging on an open curve string.
 #[derive(Clone, Debug, PartialEq)]
 pub struct CurveStringLineMergeReport2 {
+    stage: CurveStringLineMergeStage2,
     source_segment_count: usize,
     output_segment_count: Option<usize>,
     spans: Vec<CurveStringLineMergeSpanReport2>,
     status: RetainedTopologyStatus,
     blocker: Option<UncertaintyReason>,
+}
+
+/// Furthest exact stage reached by adjacent line merging.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum CurveStringLineMergeStage2 {
+    /// Adjacent segment families, collinearity, and direction predicates were being classified.
+    PairClassification,
+    /// Output segments and retained source runs were materialized.
+    SegmentMaterialization,
 }
 
 /// Result of report-bearing adjacent-line merging.
@@ -276,6 +286,7 @@ pub struct CurveStringDeduplicateRetainedSegmentReport2 {
 /// Report for exact adjacent reversed-duplicate removal on an open curve string.
 #[derive(Clone, Debug, PartialEq)]
 pub struct CurveStringDeduplicateReport2 {
+    stage: CurveStringDeduplicateStage2,
     source_segment_count: usize,
     output_segment_count: Option<usize>,
     retained_source_segment_indices: Vec<usize>,
@@ -283,6 +294,15 @@ pub struct CurveStringDeduplicateReport2 {
     removed_pairs: Vec<CurveStringReversedDuplicatePairReport2>,
     status: RetainedTopologyStatus,
     blocker: Option<UncertaintyReason>,
+}
+
+/// Furthest exact stage reached by adjacent reversed-duplicate removal.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum CurveStringDeduplicateStage2 {
+    /// Adjacent reversed duplicate pairs were being detected and cancelled.
+    PairCancellation,
+    /// Retained output segments were materialized.
+    SegmentMaterialization,
 }
 
 /// Result of report-bearing exact adjacent reversed-duplicate removal.
@@ -1080,6 +1100,7 @@ impl CurveString2 {
                     return Ok(CurveStringLineMergeResult2 {
                         curve_string: None,
                         report: CurveStringLineMergeReport2 {
+                            stage: CurveStringLineMergeStage2::PairClassification,
                             source_segment_count: self.len(),
                             output_segment_count: None,
                             spans,
@@ -1108,6 +1129,7 @@ impl CurveString2 {
         let curve_string = CurveString2::try_new(merged_segments)?;
         Ok(CurveStringLineMergeResult2 {
             report: CurveStringLineMergeReport2 {
+                stage: CurveStringLineMergeStage2::SegmentMaterialization,
                 source_segment_count: self.len(),
                 output_segment_count: Some(curve_string.len()),
                 spans,
@@ -1154,6 +1176,7 @@ impl CurveString2 {
             return Ok(CurveStringDeduplicateResult2 {
                 curve_string: None,
                 report: CurveStringDeduplicateReport2 {
+                    stage: CurveStringDeduplicateStage2::PairCancellation,
                     source_segment_count: self.len(),
                     output_segment_count: None,
                     retained_source_segment_indices: Vec::new(),
@@ -1189,6 +1212,7 @@ impl CurveString2 {
         let curve_string = CurveString2::try_new(segments)?;
         Ok(CurveStringDeduplicateResult2 {
             report: CurveStringDeduplicateReport2 {
+                stage: CurveStringDeduplicateStage2::SegmentMaterialization,
                 source_segment_count: self.len(),
                 output_segment_count: Some(curve_string.len()),
                 retained_source_segment_indices,
@@ -5394,6 +5418,11 @@ impl CurveStringLineMergeSpanReport2 {
 }
 
 impl CurveStringLineMergeReport2 {
+    /// Returns the furthest exact line-merge stage reached.
+    pub const fn stage(&self) -> CurveStringLineMergeStage2 {
+        self.stage
+    }
+
     /// Returns the source curve-string segment count captured by this report.
     pub const fn source_segment_count(&self) -> usize {
         self.source_segment_count
@@ -5482,6 +5511,11 @@ impl CurveStringDeduplicateRetainedSegmentReport2 {
 }
 
 impl CurveStringDeduplicateReport2 {
+    /// Returns the furthest exact de-duplication stage reached.
+    pub const fn stage(&self) -> CurveStringDeduplicateStage2 {
+        self.stage
+    }
+
     /// Returns the source curve-string segment count captured by this report.
     pub const fn source_segment_count(&self) -> usize {
         self.source_segment_count
