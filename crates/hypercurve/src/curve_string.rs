@@ -385,6 +385,7 @@ pub struct CurveStringExtendReport2 {
     target_point: Point2,
     source_param: Option<Real>,
     source_segment_count: usize,
+    output_segment_count: Option<usize>,
     status: RetainedTopologyStatus,
     blocker: Option<UncertaintyReason>,
 }
@@ -2363,6 +2364,7 @@ impl CurveString2 {
             )?),
         };
         let curve_string = CurveString2::try_new(segments)?;
+        let output_segment_count = curve_string.len();
         Ok(CurveStringExtendResult2 {
             curve_string: Some(curve_string),
             report: CurveStringExtendReport2 {
@@ -2373,6 +2375,7 @@ impl CurveString2 {
                 target_point,
                 source_param: Some(source_param),
                 source_segment_count: self.len(),
+                output_segment_count: Some(output_segment_count),
                 status: RetainedTopologyStatus::NativeExact,
                 blocker: None,
             },
@@ -2532,6 +2535,7 @@ impl CurveString2 {
         let mut segments = self.segments.clone();
         segments[source_segment_index] = Segment2::Arc(extended_arc);
         let curve_string = CurveString2::try_new(segments)?;
+        let output_segment_count = curve_string.len();
         Ok(CurveStringExtendResult2 {
             curve_string: Some(curve_string),
             report: CurveStringExtendReport2 {
@@ -2542,6 +2546,7 @@ impl CurveString2 {
                 target_point,
                 source_param: None,
                 source_segment_count: self.len(),
+                output_segment_count: Some(output_segment_count),
                 status: RetainedTopologyStatus::NativeExact,
                 blocker: None,
             },
@@ -3467,6 +3472,11 @@ impl CurveStringExtendReport2 {
     /// Returns the source curve-string segment count captured by this report.
     pub const fn source_segment_count(&self) -> usize {
         self.source_segment_count
+    }
+
+    /// Returns the output curve-string segment count after materialization.
+    pub const fn output_segment_count(&self) -> Option<usize> {
+        self.output_segment_count
     }
 
     /// Returns extension materialization status.
@@ -4668,6 +4678,7 @@ fn blocked_extend_result(
             target_point,
             source_param,
             source_segment_count: curve_string.len(),
+            output_segment_count: None,
             status,
             blocker,
         },
