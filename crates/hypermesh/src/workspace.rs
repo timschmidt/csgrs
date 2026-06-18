@@ -5,7 +5,7 @@ use super::boolean::{
     arrangement_cell_complex_shortcut_attempt,
     certified_arrangement_cell_complex_preflight_from_retained_attempt,
     materialize_boolean_exact_request_from_retained_graph,
-    preflight_boolean_exact_request_from_graph,
+    preflight_boolean_exact_request_from_graph_with_retained_attempt,
     try_materialize_certified_boolean_support_with_artifacts,
 };
 use super::error::{DiagnosticKind, MeshDiagnostic, MeshError, Severity};
@@ -219,8 +219,13 @@ impl<'a> ExactBooleanWorkspace<'a> {
             .validated_regularized_solid_arrangement_attempt(request)?
             .cloned();
         let graph = self.validated_graph()?;
-        let graph_preflight =
-            preflight_boolean_exact_request_from_graph(graph, left, right, request)?;
+        let graph_preflight = preflight_boolean_exact_request_from_graph_with_retained_attempt(
+            graph,
+            left,
+            right,
+            request,
+            retained_attempt.as_ref(),
+        )?;
         if graph_preflight.operation != request.operation {
             return Err(workspace_report_validation_error(
                 ExactReportValidationError::StatusEvidenceMismatch,

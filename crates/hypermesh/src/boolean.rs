@@ -3148,8 +3148,10 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
     graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
-    operation: ExactBooleanOperation,
+    request: ExactBooleanRequest,
+    retained_attempt: Option<&ExactArrangementBooleanAttempt>,
 ) -> Result<ExactBooleanPreflight, MeshError> {
+    let operation = request.operation;
     let support = initial_reject_boundary_preflight_support(left, right, operation);
     if support.is_certified()
         && !matches!(
@@ -3230,6 +3232,8 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
             &graph,
             left,
             right,
+            Some(request),
+            retained_attempt,
         )?
     {
         return Ok(preflight);
@@ -3480,6 +3484,8 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
             &graph,
             left,
             right,
+            Some(request),
+            retained_attempt,
         )? {
             return Ok(preflight);
         }
@@ -3503,6 +3509,8 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
             &graph,
             left,
             right,
+            Some(request),
+            retained_attempt,
         )?
     {
         return Ok(preflight);
@@ -3551,6 +3559,8 @@ fn preflight_boolean_exact_reject_boundary_policy_from_graph(
             &graph,
             left,
             right,
+            Some(request),
+            retained_attempt,
         )? {
             return Ok(preflight);
         }
@@ -3678,6 +3688,18 @@ pub(crate) fn preflight_boolean_exact_request_from_graph(
     right: &ExactMesh,
     request: ExactBooleanRequest,
 ) -> Result<ExactBooleanPreflight, MeshError> {
+    preflight_boolean_exact_request_from_graph_with_retained_attempt(
+        graph, left, right, request, None,
+    )
+}
+
+pub(crate) fn preflight_boolean_exact_request_from_graph_with_retained_attempt(
+    graph: &super::graph::ExactIntersectionGraph,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    request: ExactBooleanRequest,
+    retained_attempt: Option<&ExactArrangementBooleanAttempt>,
+) -> Result<ExactBooleanPreflight, MeshError> {
     validate_graph_source_handoff(graph, left, right)?;
     let operation = request.operation;
     let validation = request.validation;
@@ -3687,8 +3709,13 @@ pub(crate) fn preflight_boolean_exact_request_from_graph(
     {
         return Ok(certified_preflight(operation, support, Some(graph), None));
     }
-    let mut preflight =
-        preflight_boolean_exact_reject_boundary_policy_from_graph(graph, left, right, operation)?;
+    let mut preflight = preflight_boolean_exact_reject_boundary_policy_from_graph(
+        graph,
+        left,
+        right,
+        request,
+        retained_attempt,
+    )?;
     if operation == ExactBooleanOperation::Union
         && let (report, Some(_)) = adjacent_union_completion_certification_from_graph(
             graph,
@@ -4190,13 +4217,31 @@ fn cached_certified_arrangement_cell_complex_preflight(
     graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
+    retained_request: Option<ExactBooleanRequest>,
+    retained_attempt: Option<&ExactArrangementBooleanAttempt>,
 ) -> Result<Option<ExactBooleanPreflight>, MeshError> {
     if cache.is_none() {
-        *cache = Some(
-            certified_arrangement_cell_complex_preflight_if_materialized(
+        let retained_preflight = retained_request
+            .zip(retained_attempt)
+            .filter(|(request, _)| request.operation == operation)
+            .map(|(request, attempt)| {
+                certified_arrangement_cell_complex_preflight_from_retained_attempt(
+                    graph,
+                    left,
+                    right,
+                    request,
+                    ExactRegularizationPolicy::REGULARIZED_SOLID,
+                    attempt,
+                )
+            })
+            .transpose()?
+            .flatten();
+        *cache = Some(match retained_preflight {
+            Some(preflight) => Some(preflight),
+            None => certified_arrangement_cell_complex_preflight_if_materialized(
                 operation, graph, left, right,
             )?,
-        );
+        });
     }
     Ok(cache.clone().flatten())
 }
@@ -9829,6 +9874,8 @@ fn planar_arrangement_report_from_graph_with_cell_complex_cache(
             graph,
             left,
             right,
+            None,
+            None,
         )?
         .is_some()
     {
@@ -10008,6 +10055,8 @@ fn winding_readiness_report_from_graph(
             graph,
             left,
             right,
+            None,
+            None,
         )?
         .is_none()
         && certified_convex_relation_shortcut_from_graph(graph, left, right, operation)?.is_some()
@@ -10063,6 +10112,8 @@ fn winding_readiness_report_from_graph(
             graph,
             left,
             right,
+            None,
+            None,
         )?
         .is_some()
     {
@@ -10345,6 +10396,8 @@ fn winding_readiness_report_from_graph(
             graph,
             left,
             right,
+            None,
+            None,
         )?
         .is_some()
         {
@@ -10417,6 +10470,8 @@ fn winding_readiness_report_from_graph(
                 graph,
                 left,
                 right,
+                None,
+                None,
             )?
             .is_some()
         {
