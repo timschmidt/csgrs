@@ -5,8 +5,8 @@
 //! already been resolved by earlier topology stages.
 
 use crate::{
-    Classification, Contour2, ContourPointLocation, CurveError, CurvePolicy, CurveResult, Point2,
-    Region2, RetainedTopologyStatus, UncertaintyReason,
+    Classification, Contour2, ContourPointLocation, CurveError, CurvePolicy, CurveResult, FillRule,
+    Point2, Region2, RetainedTopologyStatus, UncertaintyReason,
 };
 
 /// Material/hole role assigned to one closed boundary contour.
@@ -22,6 +22,8 @@ pub enum RegionBoundaryContourRole2 {
 #[derive(Clone, Debug, PartialEq)]
 pub struct RegionBoundaryContourRoleReport2 {
     source_contour_index: usize,
+    source_segment_count: usize,
+    source_fill_rule: FillRule,
     nesting_sample_point: Point2,
     containing_contour_indices: Vec<usize>,
     nesting_depth: usize,
@@ -111,12 +113,16 @@ impl Region2 {
         for (source_contour_index, (contour, entry)) in
             contours.into_iter().zip(nesting.entries.iter()).enumerate()
         {
+            let source_segment_count = contour.segments().len();
+            let source_fill_rule = contour.fill_rule();
             let depth = entry.containing_contour_indices.len();
             if depth % 2 == 0 {
                 let output_role_index = material_contours.len();
                 material_contours.push(contour);
                 role_reports.push(RegionBoundaryContourRoleReport2 {
                     source_contour_index,
+                    source_segment_count,
+                    source_fill_rule,
                     nesting_sample_point: entry.sample_point.clone(),
                     containing_contour_indices: entry.containing_contour_indices.clone(),
                     nesting_depth: depth,
@@ -129,6 +135,8 @@ impl Region2 {
                 hole_contours.push(contour);
                 role_reports.push(RegionBoundaryContourRoleReport2 {
                     source_contour_index,
+                    source_segment_count,
+                    source_fill_rule,
                     nesting_sample_point: entry.sample_point.clone(),
                     containing_contour_indices: entry.containing_contour_indices.clone(),
                     nesting_depth: depth,
@@ -159,6 +167,16 @@ impl RegionBoundaryContourRoleReport2 {
     /// Returns the source contour index assigned by this report.
     pub const fn source_contour_index(&self) -> usize {
         self.source_contour_index
+    }
+
+    /// Returns the source contour segment count captured before role binning.
+    pub const fn source_segment_count(&self) -> usize {
+        self.source_segment_count
+    }
+
+    /// Returns the source contour fill rule captured before role binning.
+    pub const fn source_fill_rule(&self) -> FillRule {
+        self.source_fill_rule
     }
 
     /// Returns the exact source point used for containment classification.

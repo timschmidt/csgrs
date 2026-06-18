@@ -1,7 +1,7 @@
 use hypercurve::{
     BulgeVertex2, CircularArc2, Classification, Contour2, CurveError, CurvePolicy, CurveString2,
-    FiniteProjectionOptions, Real, Region2, RegionBoundaryContourRole2, RegionPointLocation,
-    RegionView2, Segment2, UncertaintyReason, finite_polyline_vertex_centroid,
+    FillRule, FiniteProjectionOptions, Real, Region2, RegionBoundaryContourRole2,
+    RegionPointLocation, RegionView2, Segment2, UncertaintyReason, finite_polyline_vertex_centroid,
     finite_ring_signed_area, try_finite_polyline_vertex_centroid, try_finite_ring_signed_area,
 };
 use proptest::prelude::*;
@@ -178,6 +178,8 @@ fn boundary_contour_region_report_assigns_material_and_hole_roles() {
 
     let outer = &report.role_reports()[0];
     assert_eq!(outer.source_contour_index(), 0);
+    assert_eq!(outer.source_segment_count(), 4);
+    assert_eq!(outer.source_fill_rule(), FillRule::NonZero);
     assert_eq!(outer.nesting_sample_point(), &p(0, 0));
     assert!(outer.containing_contour_indices().is_empty());
     assert_eq!(outer.nesting_depth(), 0);
@@ -187,6 +189,8 @@ fn boundary_contour_region_report_assigns_material_and_hole_roles() {
 
     let hole = &report.role_reports()[1];
     assert_eq!(hole.source_contour_index(), 1);
+    assert_eq!(hole.source_segment_count(), 4);
+    assert_eq!(hole.source_fill_rule(), FillRule::NonZero);
     assert_eq!(hole.nesting_sample_point(), &p(3, 3));
     assert_eq!(hole.containing_contour_indices(), &[0]);
     assert_eq!(hole.nesting_depth(), 1);
