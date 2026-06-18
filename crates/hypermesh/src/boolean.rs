@@ -1864,8 +1864,8 @@ impl ExactBooleanCertificationSet {
         Ok(())
     }
 
-    /// Validate this retained certification bundle by replaying every report
-    /// from the source meshes under the request policy that produced it.
+    /// Validate this retained certification bundle by replaying the canonical
+    /// workspace evaluation under the request policy that produced it.
     pub fn validate_against_sources(
         &self,
         left: &ExactMesh,
@@ -1873,18 +1873,11 @@ impl ExactBooleanCertificationSet {
         request: ExactBooleanRequest,
     ) -> Result<(), ExactReportValidationError> {
         self.validate_for_request(request)?;
-        let graph = validated_intersection_graph(left, right)
+        let mut workspace = ExactBooleanWorkspace::new(left, right);
+        let replay = workspace
+            .evaluate(request)
             .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
-        let replay = Self::from_graph_and_regularized_arrangement(
-            &graph,
-            left,
-            right,
-            request,
-            None,
-            self.arrangement_attempt.as_ref(),
-        )
-        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
-        if self == &replay {
+        if self == &replay.certifications {
             Ok(())
         } else {
             Err(ExactReportValidationError::SourceReplayMismatch)
