@@ -12,10 +12,12 @@ use crate::facts::{CurveStringFacts, RegionFacts};
 use crate::{
     BooleanBoundaryLoopSet, BooleanOp, CircularArc2, CircularArc2Facts, Classification, Contour2,
     ContourIntersectionSet, ContourPointLocation, CurvePolicy, CurveResult, CurveString2,
-    CurveStringCurveTrimQueryPath2, CurveStringCurveTrimResult2, CurveStringIntersection, FillRule,
-    LineSeg2, LineSeg2Facts, LineSide, Point2, Region2, RegionBooleanResult2,
-    RegionContourIntersection, RegionContourKey, RegionContourRole, RegionIntersectionSet,
-    RegionPointLocation, RegionSide, RegionView2, Segment2, SegmentIntersection, UncertaintyReason,
+    CurveStringCurveTrimQueryPath2, CurveStringCurveTrimResult2, CurveStringIntersection,
+    CurveStringIntersectionQueryPath2, CurveStringIntersectionReport2,
+    CurveStringIntersectionResult2, FillRule, LineSeg2, LineSeg2Facts, LineSide, Point2, Region2,
+    RegionBooleanResult2, RegionContourIntersection, RegionContourKey, RegionContourRole,
+    RegionIntersectionSet, RegionPointLocation, RegionSide, RegionView2, Segment2,
+    SegmentIntersection, UncertaintyReason,
 };
 
 /// Prepared point-line classifier for a fixed [`LineSeg2`].
@@ -386,11 +388,22 @@ impl<'a> PreparedCurveStringView2<'a> {
         other: &PreparedCurveStringView2<'_>,
         policy: &CurvePolicy,
     ) -> CurveResult<Vec<CurveStringIntersection>> {
+        self.intersect_prepared_curve_string_with_report(other, policy)
+            .map(|result| result.into_intersections())
+    }
+
+    /// Collects intersections against another prepared curve string with scan evidence.
+    pub fn intersect_prepared_curve_string_with_report(
+        &self,
+        other: &PreparedCurveStringView2<'_>,
+        policy: &CurvePolicy,
+    ) -> CurveResult<CurveStringIntersectionResult2> {
         intersect_prepared_segment_pairs_with_cached_aabbs(
             &self.prepared_segments,
             &other.prepared_segments,
             self.segment_boxes(),
             other.segment_boxes(),
+            CurveStringIntersectionQueryPath2::Prepared,
             policy,
         )
     }
@@ -402,8 +415,18 @@ impl<'a> PreparedCurveStringView2<'a> {
         other: &CurveString2,
         policy: &CurvePolicy,
     ) -> CurveResult<Vec<CurveStringIntersection>> {
+        self.intersect_curve_string_with_report(other, policy)
+            .map(|result| result.into_intersections())
+    }
+
+    /// Collects intersections against an ordinary curve string with scan evidence.
+    pub fn intersect_curve_string_with_report(
+        &self,
+        other: &CurveString2,
+        policy: &CurvePolicy,
+    ) -> CurveResult<CurveStringIntersectionResult2> {
         let other = PreparedCurveStringView2::from_curve_string(other, policy);
-        self.intersect_prepared_curve_string(&other, policy)
+        self.intersect_prepared_curve_string_with_report(&other, policy)
     }
 
     /// Trims the prepared source curve between point intersections with two prepared cutters.
@@ -1098,9 +1121,13 @@ fn intersect_prepared_segment_pairs_with_cached_aabbs(
     second_prepared_segments: &[PreparedSegment2<'_>],
     first_segment_boxes: &[Option<Aabb2>],
     second_segment_boxes: &[Option<Aabb2>],
+    query_path: CurveStringIntersectionQueryPath2,
     policy: &CurvePolicy,
-) -> CurveResult<Vec<CurveStringIntersection>> {
+) -> CurveResult<CurveStringIntersectionResult2> {
     let mut intersections = Vec::new();
+    let candidate_pair_count = first_prepared_segments.len() * second_prepared_segments.len();
+    let mut skipped_aabb_pair_count = 0_usize;
+    let mut tested_pair_count = 0_usize;
 
     for (a_segment_index, a_segment) in first_prepared_segments.iter().enumerate() {
         for (b_segment_index, b_segment) in second_prepared_segments.iter().enumerate() {
@@ -1114,9 +1141,11 @@ fn intersect_prepared_segment_pairs_with_cached_aabbs(
                 second_segment_boxes.get(b_segment_index),
             ) && aabbs_decided_disjoint(a_box, b_box, policy)
             {
+                skipped_aabb_pair_count += 1;
                 continue;
             }
 
+            tested_pair_count += 1;
             let relation = match (a_segment, b_segment) {
                 (PreparedSegment2::Line(_), PreparedSegment2::Line(_))
                 | (PreparedSegment2::Line(_), PreparedSegment2::Arc(_))
@@ -1136,7 +1165,19 @@ fn intersect_prepared_segment_pairs_with_cached_aabbs(
         }
     }
 
-    Ok(intersections)
+    let intersection_count = intersections.len();
+    Ok(CurveStringIntersectionResult2::from_parts(
+        intersections,
+        CurveStringIntersectionReport2::new_native_exact(
+            first_prepared_segments.len(),
+            second_prepared_segments.len(),
+            candidate_pair_count,
+            skipped_aabb_pair_count,
+            tested_pair_count,
+            intersection_count,
+            query_path,
+        ),
+    ))
 }
 
 #[cfg(feature = "predicates")]

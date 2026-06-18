@@ -23,6 +23,36 @@ pub struct CurveStringIntersection {
     pub relation: SegmentIntersection,
 }
 
+/// Query path used to collect curve-string intersections.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum CurveStringIntersectionQueryPath2 {
+    /// Intersections were collected with transient broad-phase boxes.
+    Direct,
+    /// Intersections were collected through caller-supplied prepared views.
+    Prepared,
+}
+
+/// Report for a curve-string intersection query.
+#[derive(Clone, Debug, PartialEq)]
+pub struct CurveStringIntersectionReport2 {
+    first_segment_count: usize,
+    second_segment_count: usize,
+    candidate_pair_count: usize,
+    skipped_aabb_pair_count: usize,
+    tested_pair_count: usize,
+    intersection_count: usize,
+    query_path: CurveStringIntersectionQueryPath2,
+    status: RetainedTopologyStatus,
+    blocker: Option<UncertaintyReason>,
+}
+
+/// Result of report-bearing curve-string intersection collection.
+#[derive(Clone, Debug, PartialEq)]
+pub struct CurveStringIntersectionResult2 {
+    intersections: Vec<CurveStringIntersection>,
+    report: CurveStringIntersectionReport2,
+}
+
 /// Endpoint selector for open curve-string editing reports.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum CurveStringEndpoint2 {
@@ -1535,6 +1565,22 @@ impl CurveString2 {
         other: &Self,
         policy: &CurvePolicy,
     ) -> CurveResult<Vec<CurveStringIntersection>> {
+        self.intersect_curve_string_with_report(other, policy)
+            .map(|result| result.into_intersections())
+    }
+
+    /// Collects all nonempty segment-pair intersections with scan evidence.
+    ///
+    /// The returned report records how many segment pairs were considered,
+    /// skipped by decided AABB disjointness, and tested with exact segment
+    /// topology. The broad phase remains advisory: every non-skipped pair is
+    /// resolved by the same exact segment intersection dispatch as
+    /// [`CurveString2::intersect_curve_string`].
+    pub fn intersect_curve_string_with_report(
+        &self,
+        other: &Self,
+        policy: &CurvePolicy,
+    ) -> CurveResult<CurveStringIntersectionResult2> {
         let self_boxes: Vec<_> = self
             .segments
             .iter()
@@ -1546,7 +1592,14 @@ impl CurveString2 {
             .map(|segment| decided_segment_aabb(segment, policy))
             .collect();
 
-        intersect_curve_strings_with_cached_aabbs(self, other, &self_boxes, &other_boxes, policy)
+        intersect_curve_strings_with_cached_aabbs_with_report(
+            self,
+            other,
+            &self_boxes,
+            &other_boxes,
+            CurveStringIntersectionQueryPath2::Direct,
+            policy,
+        )
     }
 
     fn endpoint(&self, endpoint: CurveStringEndpoint2) -> CurveResult<&Point2> {
@@ -2524,6 +2577,102 @@ impl LinkedCurveString2 {
     }
 }
 
+impl CurveStringIntersectionReport2 {
+    pub(crate) const fn new_native_exact(
+        first_segment_count: usize,
+        second_segment_count: usize,
+        candidate_pair_count: usize,
+        skipped_aabb_pair_count: usize,
+        tested_pair_count: usize,
+        intersection_count: usize,
+        query_path: CurveStringIntersectionQueryPath2,
+    ) -> Self {
+        Self {
+            first_segment_count,
+            second_segment_count,
+            candidate_pair_count,
+            skipped_aabb_pair_count,
+            tested_pair_count,
+            intersection_count,
+            query_path,
+            status: RetainedTopologyStatus::NativeExact,
+            blocker: None,
+        }
+    }
+
+    /// Returns the first curve-string segment count.
+    pub const fn first_segment_count(&self) -> usize {
+        self.first_segment_count
+    }
+
+    /// Returns the second curve-string segment count.
+    pub const fn second_segment_count(&self) -> usize {
+        self.second_segment_count
+    }
+
+    /// Returns the total flat segment-pair candidates before broad-phase skips.
+    pub const fn candidate_pair_count(&self) -> usize {
+        self.candidate_pair_count
+    }
+
+    /// Returns segment pairs skipped by decided AABB disjointness.
+    pub const fn skipped_aabb_pair_count(&self) -> usize {
+        self.skipped_aabb_pair_count
+    }
+
+    /// Returns segment pairs tested by exact segment topology.
+    pub const fn tested_pair_count(&self) -> usize {
+        self.tested_pair_count
+    }
+
+    /// Returns nonempty segment-pair intersections collected.
+    pub const fn intersection_count(&self) -> usize {
+        self.intersection_count
+    }
+
+    /// Returns the query path used to collect intersections.
+    pub const fn query_path(&self) -> CurveStringIntersectionQueryPath2 {
+        self.query_path
+    }
+
+    /// Returns intersection collection status.
+    pub const fn status(&self) -> RetainedTopologyStatus {
+        self.status
+    }
+
+    /// Returns the exact blocker for non-materialized intersection collection.
+    pub const fn blocker(&self) -> Option<UncertaintyReason> {
+        self.blocker
+    }
+}
+
+impl CurveStringIntersectionResult2 {
+    pub(crate) fn from_parts(
+        intersections: Vec<CurveStringIntersection>,
+        report: CurveStringIntersectionReport2,
+    ) -> Self {
+        Self {
+            intersections,
+            report,
+        }
+    }
+
+    /// Returns collected segment-pair intersections.
+    pub fn intersections(&self) -> &[CurveStringIntersection] {
+        &self.intersections
+    }
+
+    /// Consumes this result and returns collected intersections.
+    pub fn into_intersections(self) -> Vec<CurveStringIntersection> {
+        self.intersections
+    }
+
+    /// Returns retained scan evidence for this intersection query.
+    pub const fn report(&self) -> &CurveStringIntersectionReport2 {
+        &self.report
+    }
+}
+
 impl CurveStringOrderedLinkStepReport2 {
     /// Returns source curve-string indices already accumulated before this step.
     pub fn accumulated_source_indices(&self) -> &[usize] {
@@ -2952,14 +3101,18 @@ fn reversed_segments(segments: &[Segment2]) -> Vec<Segment2> {
         .collect::<Vec<_>>()
 }
 
-pub(crate) fn intersect_curve_strings_with_cached_aabbs(
+pub(crate) fn intersect_curve_strings_with_cached_aabbs_with_report(
     first: &CurveString2,
     second: &CurveString2,
     first_segment_boxes: &[Option<Aabb2>],
     second_segment_boxes: &[Option<Aabb2>],
+    query_path: CurveStringIntersectionQueryPath2,
     policy: &CurvePolicy,
-) -> CurveResult<Vec<CurveStringIntersection>> {
+) -> CurveResult<CurveStringIntersectionResult2> {
     let mut intersections = Vec::new();
+    let candidate_pair_count = first.segments.len() * second.segments.len();
+    let mut skipped_aabb_pair_count = 0_usize;
+    let mut tested_pair_count = 0_usize;
 
     for (a_segment_index, a_segment) in first.segments.iter().enumerate() {
         for (b_segment_index, b_segment) in second.segments.iter().enumerate() {
@@ -2974,9 +3127,11 @@ pub(crate) fn intersect_curve_strings_with_cached_aabbs(
                 second_segment_boxes.get(b_segment_index),
             ) && aabbs_decided_disjoint(a_box, b_box, policy)
             {
+                skipped_aabb_pair_count += 1;
                 continue;
             }
 
+            tested_pair_count += 1;
             let relation = a_segment.intersect_segment(b_segment, policy)?;
             if !relation.is_none() {
                 intersections.push(CurveStringIntersection {
@@ -2988,5 +3143,19 @@ pub(crate) fn intersect_curve_strings_with_cached_aabbs(
         }
     }
 
-    Ok(intersections)
+    let intersection_count = intersections.len();
+    Ok(CurveStringIntersectionResult2 {
+        intersections,
+        report: CurveStringIntersectionReport2 {
+            first_segment_count: first.len(),
+            second_segment_count: second.len(),
+            candidate_pair_count,
+            skipped_aabb_pair_count,
+            tested_pair_count,
+            intersection_count,
+            query_path,
+            status: RetainedTopologyStatus::NativeExact,
+            blocker: None,
+        },
+    })
 }

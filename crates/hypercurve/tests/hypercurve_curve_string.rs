@@ -1,8 +1,9 @@
 use hypercurve::{
     BulgeVertex2, CircularArc2, Classification, Contour2, CurveError, CurvePolicy, CurveString2,
     CurveStringCurveTrimQueryPath2, CurveStringEndpoint2, CurveStringEndpointConnectionStatus2,
-    CurveStringLinkKind2, CurveStringTrimPoint2, IntersectionKind, LineArcIntersection,
-    LineArcOrder, LineSeg2, Point2, Real, Segment2, SegmentIntersection, UncertaintyReason,
+    CurveStringIntersectionQueryPath2, CurveStringLinkKind2, CurveStringTrimPoint2,
+    IntersectionKind, LineArcIntersection, LineArcOrder, LineSeg2, Point2, Real, Segment2,
+    SegmentIntersection, UncertaintyReason,
 };
 
 fn s(value: i32) -> Real {
@@ -88,6 +89,56 @@ fn curve_string_endpoint_report_certifies_exact_connection() {
     );
     assert!(report.topology_status().is_native_exact());
     assert_eq!(report.distance_squared(), &s(0));
+}
+
+#[test]
+fn curve_string_intersection_report_counts_aabb_skips() {
+    let first =
+        CurveString2::try_new(vec![line_segment(0, 0, 2, 0), line_segment(2, 0, 10, 0)]).unwrap();
+    let second = CurveString2::try_new(vec![line_segment(1, -1, 1, 1)]).unwrap();
+
+    let intersections = first
+        .intersect_curve_string_with_report(&second, &policy())
+        .unwrap();
+    let report = intersections.report();
+
+    assert!(report.status().is_native_exact());
+    assert_eq!(
+        report.query_path(),
+        CurveStringIntersectionQueryPath2::Direct
+    );
+    assert_eq!(report.first_segment_count(), 2);
+    assert_eq!(report.second_segment_count(), 1);
+    assert_eq!(report.candidate_pair_count(), 2);
+    assert_eq!(report.skipped_aabb_pair_count(), 1);
+    assert_eq!(report.tested_pair_count(), 1);
+    assert_eq!(report.intersection_count(), 1);
+    assert_eq!(report.blocker(), None);
+    assert_eq!(intersections.intersections().len(), 1);
+}
+
+#[test]
+fn prepared_curve_string_intersection_report_matches_plain_events() {
+    let curve = CurveString2::try_new(vec![line_segment(0, 0, 10, 0)]).unwrap();
+    let cutter = CurveString2::try_new(vec![line_segment(5, -1, 5, 1)]).unwrap();
+    let policy = policy();
+    let prepared_curve = curve.prepare_topology_queries(&policy);
+    let prepared_cutter = cutter.prepare_topology_queries(&policy);
+
+    let prepared = prepared_curve
+        .intersect_prepared_curve_string_with_report(&prepared_cutter, &policy)
+        .unwrap();
+    let plain = curve.intersect_curve_string(&cutter, &policy).unwrap();
+
+    assert!(prepared.report().status().is_native_exact());
+    assert_eq!(
+        prepared.report().query_path(),
+        CurveStringIntersectionQueryPath2::Prepared
+    );
+    assert_eq!(prepared.report().candidate_pair_count(), 1);
+    assert_eq!(prepared.report().tested_pair_count(), 1);
+    assert_eq!(prepared.report().intersection_count(), plain.len());
+    assert_eq!(prepared.intersections(), plain.as_slice());
 }
 
 #[test]
