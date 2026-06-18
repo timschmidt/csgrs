@@ -821,40 +821,12 @@ impl ExactBooleanResult {
     }
 
     /// Return whether this result is the requested certified shortcut class.
-    #[cfg(test)]
     pub(crate) fn is_certified_shortcut_kind_for(
         &self,
         operation: ExactBooleanOperation,
         shortcut: ExactBooleanShortcutKind,
     ) -> bool {
         self.is_shortcut_for(operation, shortcut)
-    }
-
-    /// Return whether this result is the mixed-dimensional regularized-solid shortcut.
-    pub fn is_mixed_dimensional_regularized_solid_shortcut_for(
-        &self,
-        operation: ExactBooleanOperation,
-    ) -> bool {
-        self.is_shortcut_for(
-            operation,
-            ExactBooleanShortcutKind::MixedDimensionalRegularizedSolid,
-        )
-    }
-
-    /// Return whether this result is the lower-dimensional regularized-solid shortcut.
-    pub fn is_lower_dimensional_regularized_solid_shortcut_for(
-        &self,
-        operation: ExactBooleanOperation,
-    ) -> bool {
-        self.is_shortcut_for(
-            operation,
-            ExactBooleanShortcutKind::LowerDimensionalRegularizedSolid,
-        )
-    }
-
-    /// Return whether this result is the open-surface disjoint shortcut.
-    pub fn is_open_surface_disjoint_shortcut_for(&self, operation: ExactBooleanOperation) -> bool {
-        self.is_shortcut_for(operation, ExactBooleanShortcutKind::OpenSurfaceDisjoint)
     }
 
     /// Return whether this result is a closed-boundary-touching shortcut.
@@ -871,25 +843,6 @@ impl ExactBooleanResult {
                     | ExactBooleanShortcutKind::ClosedBoundaryTouchingIntersection
                     | ExactBooleanShortcutKind::ClosedBoundaryTouchingDifference,
             } if result_operation == operation
-        )
-    }
-
-    /// Return whether this result is a closed-winding separated shortcut.
-    pub fn is_closed_winding_separated_shortcut_for(
-        &self,
-        operation: ExactBooleanOperation,
-    ) -> bool {
-        self.is_shortcut_for(operation, ExactBooleanShortcutKind::ClosedWindingSeparated)
-    }
-
-    /// Return whether this result is a closed-winding containment shortcut.
-    pub fn is_closed_winding_containment_shortcut_for(
-        &self,
-        operation: ExactBooleanOperation,
-    ) -> bool {
-        self.is_shortcut_for(
-            operation,
-            ExactBooleanShortcutKind::ClosedWindingContainment,
         )
     }
 

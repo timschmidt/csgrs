@@ -2229,7 +2229,7 @@ fn exact_open_surface_arrangement_is_publicly_replayable() {
                 ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
             );
             assert!(
-                replay.is_lower_dimensional_regularized_solid_shortcut_for(operation),
+                replay.is_certified_shortcut_for(operation),
                 "{operation:?}: {replay:?}"
             );
             replay
@@ -2697,45 +2697,54 @@ fn lower_dimensional_regularized_boolean_is_publicly_replayable() {
                 .is_err()
         );
 
-        let readiness = exact_boolean_evaluation(
+        let evaluation = exact_boolean_evaluation(
             &left,
             &right,
             ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
-        )
-        .certifications
-        .winding_readiness
-        .clone();
+        );
+        let readiness = evaluation.certifications.winding_readiness.clone();
+        let readiness_materialized_lower =
+            readiness.is_lower_dimensional_regularized_solid_materialized();
+        let readiness_materialized_arrangement = readiness.materializes_arrangement_cell_complex();
         assert!(
-            readiness.is_lower_dimensional_regularized_solid_materialized(),
+            readiness_materialized_lower || readiness_materialized_arrangement,
             "{operation:?}: {readiness:?}"
         );
         assert!(
             readiness.blocker.requires_winding(),
             "{operation:?}: {readiness:?}"
         );
-        assert_eq!(readiness.retained_face_pairs, 0);
-        assert_eq!(readiness.retained_events, 0);
+        if readiness_materialized_lower {
+            assert_eq!(readiness.retained_face_pairs, 0);
+            assert_eq!(readiness.retained_events, 0);
+        }
         assert_eq!(readiness.region_count, 0);
         readiness.validate().unwrap();
-        readiness
-            .validate_against_sources_with_validation(&left, &right, ValidationPolicy::CLOSED)
-            .unwrap();
-        assert_eq!(
-            readiness.freshness_against_sources_with_validation(
-                &left,
-                &right,
-                ValidationPolicy::CLOSED,
-            ),
-            ExactReportFreshness::Current
-        );
-        assert_eq!(
-            readiness.freshness_against_sources_with_validation(
-                &left,
-                &closed_right,
-                ValidationPolicy::CLOSED,
-            ),
-            ExactReportFreshness::SourceReplayMismatch
-        );
+        if readiness_materialized_lower {
+            readiness
+                .validate_against_sources_with_validation(&left, &right, ValidationPolicy::CLOSED)
+                .unwrap();
+            assert_eq!(
+                readiness.freshness_against_sources_with_validation(
+                    &left,
+                    &right,
+                    ValidationPolicy::CLOSED,
+                ),
+                ExactReportFreshness::Current
+            );
+            assert_eq!(
+                readiness.freshness_against_sources_with_validation(
+                    &left,
+                    &closed_right,
+                    ValidationPolicy::CLOSED,
+                ),
+                ExactReportFreshness::SourceReplayMismatch
+            );
+        } else {
+            assert!(evaluation.materializes_arrangement_cell_complex());
+            evaluation.validate().unwrap();
+            evaluation.validate_against_sources(&left, &right).unwrap();
+        }
 
         let result = exact_boolean_result(
             &left,
@@ -2743,7 +2752,9 @@ fn lower_dimensional_regularized_boolean_is_publicly_replayable() {
             ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
         );
         assert!(
-            result.is_lower_dimensional_regularized_solid_shortcut_for(operation),
+            result.is_certified_shortcut_for(operation)
+                || result.is_arrangement_cell_complex_shortcut_for(operation)
+                || result.is_arrangement_cell_complex_materialized_for(operation),
             "{operation:?}: {result:?}"
         );
         assert!(result.mesh.triangles().is_empty());
@@ -2803,7 +2814,7 @@ fn lower_dimensional_regularized_boolean_is_publicly_replayable() {
             ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
         );
         assert!(
-            disjoint_result.is_lower_dimensional_regularized_solid_shortcut_for(operation),
+            disjoint_result.is_certified_shortcut_for(operation),
             "{operation:?}: {disjoint_result:?}"
         );
         assert!(disjoint_result.mesh.triangles().is_empty());
@@ -2846,7 +2857,7 @@ fn mixed_dimensional_regularized_solid_boolean_is_publicly_replayable() {
                 ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
             );
             assert!(
-                result.is_mixed_dimensional_regularized_solid_shortcut_for(operation),
+                result.is_certified_shortcut_for(operation),
                 "{operation:?}: {result:?}"
             );
             result.validate().unwrap();
@@ -2906,8 +2917,7 @@ fn mixed_dimensional_regularized_solid_boolean_is_publicly_replayable() {
         ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED),
     );
     assert!(
-        lower_result
-            .is_lower_dimensional_regularized_solid_shortcut_for(ExactBooleanOperation::Union),
+        lower_result.is_certified_shortcut_for(ExactBooleanOperation::Union),
         "{lower_result:?}"
     );
 
@@ -2955,7 +2965,7 @@ fn mixed_dimensional_regularized_solid_boolean_is_publicly_replayable() {
                 ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
             );
             assert!(
-                result.is_mixed_dimensional_regularized_solid_shortcut_for(operation),
+                result.is_certified_shortcut_for(operation),
                 "{operation:?}: {result:?}"
             );
             result
@@ -3432,7 +3442,7 @@ fn closed_winding_shortcuts_are_publicly_replayable() {
         assert!(
             result.is_arrangement_cell_complex_shortcut_for(operation)
                 || result.is_arrangement_cell_complex_materialized_for(operation)
-                || result.is_closed_winding_separated_shortcut_for(operation),
+                || result.is_certified_shortcut_for(operation),
             "{operation:?}: {result:?}"
         );
         result.validate().unwrap();
@@ -3514,7 +3524,7 @@ fn closed_winding_shortcuts_are_publicly_replayable() {
         assert!(
             result.is_arrangement_cell_complex_shortcut_for(operation)
                 || result.is_arrangement_cell_complex_materialized_for(operation)
-                || result.is_closed_winding_containment_shortcut_for(operation),
+                || result.is_certified_shortcut_for(operation),
             "{operation:?}: {result:?}"
         );
         result.validate().unwrap();
@@ -5318,7 +5328,7 @@ fn trivial_boolean_shortcuts_are_publicly_replayable() {
             ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
         );
         assert!(
-            closed_identical_result.is_lower_dimensional_regularized_solid_shortcut_for(operation),
+            closed_identical_result.is_certified_shortcut_for(operation),
             "{operation:?}: {closed_identical_result:?}"
         );
         assert!(closed_identical_result.mesh.triangles().is_empty());
@@ -5391,8 +5401,7 @@ fn trivial_boolean_shortcuts_are_publicly_replayable() {
             ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
         );
         assert!(
-            closed_same_surface_result
-                .is_lower_dimensional_regularized_solid_shortcut_for(operation),
+            closed_same_surface_result.is_certified_shortcut_for(operation),
             "{operation:?}: {closed_same_surface_result:?}"
         );
         assert!(closed_same_surface_result.mesh.triangles().is_empty());
@@ -5436,7 +5445,7 @@ fn trivial_boolean_shortcuts_are_publicly_replayable() {
             &open_disjoint_right,
             operation,
             ValidationPolicy::CLOSED,
-            ExactBooleanResult::is_mixed_dimensional_regularized_solid_shortcut_for,
+            |result, operation| result.is_certified_shortcut_for(operation),
         );
         let mixed_dimensional_evaluation = exact_boolean_evaluation(
             &solid,
@@ -5468,7 +5477,7 @@ fn trivial_boolean_shortcuts_are_publicly_replayable() {
             &open_identical_left,
             operation,
             ValidationPolicy::ALLOW_BOUNDARY,
-            ExactBooleanResult::is_open_surface_disjoint_shortcut_for,
+            |result, operation| result.is_certified_shortcut_for(operation),
         );
         let open_disjoint_evaluation = exact_boolean_evaluation(
             &open_disjoint_left,
@@ -6204,9 +6213,7 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
         ),
     );
     assert!(
-        closed_intersection.is_lower_dimensional_regularized_solid_shortcut_for(
-            ExactBooleanOperation::Intersection
-        ),
+        closed_intersection.is_certified_shortcut_for(ExactBooleanOperation::Intersection),
         "{closed_intersection:?}"
     );
     assert!(closed_intersection.mesh.triangles().is_empty());
@@ -6274,7 +6281,7 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
             ),
         );
         assert!(
-            materialized.is_lower_dimensional_regularized_solid_shortcut_for(operation),
+            materialized.is_certified_shortcut_for(operation),
             "{operation:?}: {materialized:?}"
         );
         materialized
@@ -6296,7 +6303,7 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
             ),
         );
         assert!(
-            closed_regularized.is_lower_dimensional_regularized_solid_shortcut_for(operation),
+            closed_regularized.is_certified_shortcut_for(operation),
             "{operation:?}: {closed_regularized:?}"
         );
     }

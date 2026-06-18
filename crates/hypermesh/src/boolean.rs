@@ -8829,7 +8829,10 @@ fn boolean_open_surface_disjoint_meshes_from_graph(
         return Ok((disjoint_report
             .validate_against_sources(left, right)
             .is_ok()
-            && result.is_open_surface_disjoint_shortcut_for(operation)
+            && result.is_certified_shortcut_kind_for(
+                operation,
+                ExactBooleanShortcutKind::OpenSurfaceDisjoint,
+            )
             && result.validate().is_ok())
         .then_some(result));
     }
@@ -8849,7 +8852,10 @@ pub(crate) fn open_surface_disjoint_result_matches_sources(
     let report = open_surface_disjoint_report_from_graph(&graph, left, right);
     if !report.is_certified()
         || report.validate_against_sources(left, right).is_err()
-        || !result.is_open_surface_disjoint_shortcut_for(operation)
+        || !result.is_certified_shortcut_kind_for(
+            operation,
+            ExactBooleanShortcutKind::OpenSurfaceDisjoint,
+        )
         || result.validate().is_err()
     {
         return false;
@@ -11734,7 +11740,10 @@ mod tests {
             .as_ref()
             .expect("open-surface disjoint support should materialize");
         assert!(
-            materialized.is_open_surface_disjoint_shortcut_for(ExactBooleanOperation::Union),
+            materialized.is_certified_shortcut_kind_for(
+                ExactBooleanOperation::Union,
+                ExactBooleanShortcutKind::OpenSurfaceDisjoint,
+            ),
             "{materialized:?}"
         );
         result.validate().unwrap();
@@ -13185,7 +13194,10 @@ mod tests {
                     right,
                 );
                 assert!(
-                    result.is_closed_winding_containment_shortcut_for(operation),
+                    result.is_certified_shortcut_kind_for(
+                        operation,
+                        ExactBooleanShortcutKind::ClosedWindingContainment,
+                    ),
                     "{right_inside_left:?} {operation:?}: {result:?}"
                 );
                 result.validate().unwrap();
@@ -13382,7 +13394,10 @@ mod tests {
                     right,
                 );
                 assert!(
-                    result.is_mixed_dimensional_regularized_solid_shortcut_for(operation),
+                    result.is_certified_shortcut_kind_for(
+                        operation,
+                        ExactBooleanShortcutKind::MixedDimensionalRegularizedSolid,
+                    ),
                     "{operation:?}: {result:?}"
                 );
                 result.validate().unwrap();
