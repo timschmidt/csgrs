@@ -420,6 +420,7 @@ pub struct CurveStringChamferReport2 {
     segment_reports: Vec<CurveStringTrimSegmentReport2>,
     chamfer_segment_index: Option<usize>,
     source_segment_count: usize,
+    output_segment_count: Option<usize>,
     status: RetainedTopologyStatus,
     blocker: Option<UncertaintyReason>,
 }
@@ -465,6 +466,7 @@ pub struct CurveStringFilletReport2 {
     segment_reports: Vec<CurveStringTrimSegmentReport2>,
     fillet_segment_index: Option<usize>,
     source_segment_count: usize,
+    output_segment_count: Option<usize>,
     status: RetainedTopologyStatus,
     blocker: Option<UncertaintyReason>,
 }
@@ -1739,6 +1741,7 @@ impl CurveString2 {
         segments.push(Segment2::Line(next_segment));
         segments.extend(self.segments[next_segment_index + 1..].iter().cloned());
         let curve_string = CurveString2::try_new(segments)?;
+        let output_segment_count = curve_string.len();
         let segment_reports = vec![
             CurveStringTrimSegmentReport2 {
                 source_segment_index: previous_segment_index,
@@ -1769,6 +1772,7 @@ impl CurveString2 {
                 segment_reports,
                 chamfer_segment_index: Some(chamfer_segment_index),
                 source_segment_count: self.len(),
+                output_segment_count: Some(output_segment_count),
                 status: RetainedTopologyStatus::NativeExact,
                 blocker: None,
             },
@@ -2180,6 +2184,7 @@ impl CurveString2 {
         segments.push(Segment2::Line(next_segment));
         segments.extend(self.segments[next_segment_index + 1..].iter().cloned());
         let curve_string = CurveString2::try_new(segments)?;
+        let output_segment_count = curve_string.len();
         let segment_reports = vec![
             CurveStringTrimSegmentReport2 {
                 source_segment_index: previous_segment_index,
@@ -2212,6 +2217,7 @@ impl CurveString2 {
                 segment_reports,
                 fillet_segment_index: Some(fillet_segment_index),
                 source_segment_count: self.len(),
+                output_segment_count: Some(output_segment_count),
                 status: RetainedTopologyStatus::NativeExact,
                 blocker: None,
             },
@@ -3023,6 +3029,11 @@ impl CurveStringChamferReport2 {
         self.source_segment_count
     }
 
+    /// Returns output segment count when the chamfer materialized.
+    pub const fn output_segment_count(&self) -> Option<usize> {
+        self.output_segment_count
+    }
+
     /// Returns chamfer materialization status.
     pub const fn status(&self) -> RetainedTopologyStatus {
         self.status
@@ -3129,6 +3140,11 @@ impl CurveStringFilletReport2 {
     /// Returns the source curve-string segment count captured by this report.
     pub const fn source_segment_count(&self) -> usize {
         self.source_segment_count
+    }
+
+    /// Returns output segment count when the fillet materialized.
+    pub const fn output_segment_count(&self) -> Option<usize> {
+        self.output_segment_count
     }
 
     /// Returns fillet materialization status.
@@ -4744,6 +4760,7 @@ fn blocked_chamfer_result(
             segment_reports,
             chamfer_segment_index: None,
             source_segment_count: curve_string.len(),
+            output_segment_count: None,
             status,
             blocker,
         },
@@ -4782,6 +4799,7 @@ fn blocked_fillet_result(
             segment_reports,
             fillet_segment_index: None,
             source_segment_count: curve_string.len(),
+            output_segment_count: None,
             status,
             blocker,
         },
