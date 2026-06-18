@@ -120,6 +120,27 @@ pub struct CurveStringExtendResult2 {
     report: CurveStringExtendReport2,
 }
 
+/// Report for a line-line chamfer at one open curve-string vertex.
+#[derive(Clone, Debug, PartialEq)]
+pub struct CurveStringChamferReport2 {
+    previous_segment_index: usize,
+    next_segment_index: usize,
+    previous_trim: CurveStringTrimPoint2,
+    next_trim: CurveStringTrimPoint2,
+    segment_reports: Vec<CurveStringTrimSegmentReport2>,
+    chamfer_segment_index: Option<usize>,
+    source_segment_count: usize,
+    status: RetainedTopologyStatus,
+    blocker: Option<UncertaintyReason>,
+}
+
+/// Result of a report-bearing line-line chamfer operation.
+#[derive(Clone, Debug, PartialEq)]
+pub struct CurveStringChamferResult2 {
+    curve_string: Option<CurveString2>,
+    report: CurveStringChamferReport2,
+}
+
 /// Segment-local retained trim point on an open curve string.
 #[derive(Clone, Debug, PartialEq)]
 pub struct CurveStringTrimPoint2 {
@@ -700,6 +721,133 @@ impl CurveString2 {
         )
     }
 
+    /// Chamfers one interior line-line vertex by exact segment parameters.
+    ///
+    /// `vertex_index` identifies the shared vertex between
+    /// `segments[vertex_index - 1]` and `segments[vertex_index]`. The previous
+    /// line is cut at `previous_param` and the next line is cut at
+    /// `next_param`; the two cut points are connected by an exact line segment.
+    /// This first chamfer slice supports only strict interior line parameters
+    /// so it never deletes a neighboring segment silently.
+    pub fn chamfer_line_line_vertex_by_parameters(
+        &self,
+        vertex_index: usize,
+        previous_param: Real,
+        next_param: Real,
+        policy: &CurvePolicy,
+    ) -> CurveResult<CurveStringChamferResult2> {
+        if vertex_index == 0 || vertex_index >= self.len() {
+            return Err(CurveError::InvalidCurveRange);
+        }
+        let previous_segment_index = vertex_index - 1;
+        let next_segment_index = vertex_index;
+        let previous_trim = CurveStringTrimPoint2::new(previous_segment_index, previous_param);
+        let next_trim = CurveStringTrimPoint2::new(next_segment_index, next_param);
+        validate_trim_point(self, &previous_trim, policy)?;
+        validate_trim_point(self, &next_trim, policy)?;
+
+        let (previous_line, next_line) = match (
+            &self.segments[previous_segment_index],
+            &self.segments[next_segment_index],
+        ) {
+            (Segment2::Line(previous), Segment2::Line(next)) => (previous, next),
+            _ => {
+                return Ok(blocked_chamfer_result(
+                    self,
+                    previous_segment_index,
+                    next_segment_index,
+                    previous_trim,
+                    next_trim,
+                    Vec::new(),
+                    RetainedTopologyStatus::Unsupported,
+                    Some(UncertaintyReason::Unsupported),
+                ));
+            }
+        };
+
+        match (
+            compare_reals(previous_trim.param(), &Real::zero(), policy),
+            compare_reals(previous_trim.param(), &Real::one(), policy),
+            compare_reals(next_trim.param(), &Real::zero(), policy),
+            compare_reals(next_trim.param(), &Real::one(), policy),
+        ) {
+            (
+                Some(Ordering::Greater),
+                Some(Ordering::Less),
+                Some(Ordering::Greater),
+                Some(Ordering::Less),
+            ) => {}
+            (Some(_), Some(_), Some(_), Some(_)) => {
+                return Ok(blocked_chamfer_result(
+                    self,
+                    previous_segment_index,
+                    next_segment_index,
+                    previous_trim,
+                    next_trim,
+                    Vec::new(),
+                    RetainedTopologyStatus::Unsupported,
+                    Some(UncertaintyReason::Boundary),
+                ));
+            }
+            _ => {
+                return Ok(blocked_chamfer_result(
+                    self,
+                    previous_segment_index,
+                    next_segment_index,
+                    previous_trim,
+                    next_trim,
+                    Vec::new(),
+                    RetainedTopologyStatus::Unresolved,
+                    Some(UncertaintyReason::Ordering),
+                ));
+            }
+        }
+
+        let previous_cut = previous_line.point_at(previous_trim.param().clone());
+        let next_cut = next_line.point_at(next_trim.param().clone());
+        let previous_range = ParamRange::new(Real::zero(), previous_trim.param().clone());
+        let next_range = ParamRange::new(next_trim.param().clone(), Real::one());
+        let previous_segment =
+            LineSeg2::try_new(previous_line.start().clone(), previous_cut.clone())?;
+        let chamfer_segment = LineSeg2::try_new(previous_cut, next_cut.clone())?;
+        let next_segment = LineSeg2::try_new(next_cut, next_line.end().clone())?;
+
+        let mut segments = Vec::with_capacity(self.len() + 1);
+        segments.extend(self.segments[..previous_segment_index].iter().cloned());
+        segments.push(Segment2::Line(previous_segment));
+        let chamfer_segment_index = segments.len();
+        segments.push(Segment2::Line(chamfer_segment));
+        segments.push(Segment2::Line(next_segment));
+        segments.extend(self.segments[next_segment_index + 1..].iter().cloned());
+        let curve_string = CurveString2::try_new(segments)?;
+        let segment_reports = vec![
+            CurveStringTrimSegmentReport2 {
+                source_segment_index: previous_segment_index,
+                source_range: previous_range,
+                status: RetainedTopologyStatus::NativeExact,
+            },
+            CurveStringTrimSegmentReport2 {
+                source_segment_index: next_segment_index,
+                source_range: next_range,
+                status: RetainedTopologyStatus::NativeExact,
+            },
+        ];
+        Ok(CurveStringChamferResult2 {
+            curve_string: Some(curve_string),
+            report: CurveStringChamferReport2 {
+                previous_segment_index,
+                next_segment_index,
+                previous_trim,
+                next_trim,
+                segment_reports,
+                chamfer_segment_index: Some(chamfer_segment_index),
+                source_segment_count: self.len(),
+                status: RetainedTopologyStatus::NativeExact,
+                blocker: None,
+            },
+        })
+    }
+
     /// Extends one endpoint line segment to an exact point on its supporting line.
     ///
     /// This first extension slice deliberately supports only line endpoint
@@ -1184,6 +1332,70 @@ impl CurveStringTrimResult2 {
     }
 }
 
+impl CurveStringChamferReport2 {
+    /// Returns the previous source segment index at the chamfered vertex.
+    pub const fn previous_segment_index(&self) -> usize {
+        self.previous_segment_index
+    }
+
+    /// Returns the next source segment index at the chamfered vertex.
+    pub const fn next_segment_index(&self) -> usize {
+        self.next_segment_index
+    }
+
+    /// Returns the previous line trim point.
+    pub const fn previous_trim(&self) -> &CurveStringTrimPoint2 {
+        &self.previous_trim
+    }
+
+    /// Returns the next line trim point.
+    pub const fn next_trim(&self) -> &CurveStringTrimPoint2 {
+        &self.next_trim
+    }
+
+    /// Returns retained source ranges for the shortened adjacent line segments.
+    pub fn segment_reports(&self) -> &[CurveStringTrimSegmentReport2] {
+        &self.segment_reports
+    }
+
+    /// Returns the inserted chamfer segment index in the output curve string.
+    pub const fn chamfer_segment_index(&self) -> Option<usize> {
+        self.chamfer_segment_index
+    }
+
+    /// Returns the source curve-string segment count captured by this report.
+    pub const fn source_segment_count(&self) -> usize {
+        self.source_segment_count
+    }
+
+    /// Returns chamfer materialization status.
+    pub const fn status(&self) -> RetainedTopologyStatus {
+        self.status
+    }
+
+    /// Returns the exact blocker for non-materialized chamfers.
+    pub const fn blocker(&self) -> Option<UncertaintyReason> {
+        self.blocker
+    }
+}
+
+impl CurveStringChamferResult2 {
+    /// Returns the materialized chamfered curve string, if supported.
+    pub const fn curve_string(&self) -> Option<&CurveString2> {
+        self.curve_string.as_ref()
+    }
+
+    /// Consumes this result and returns the materialized chamfered curve string, if any.
+    pub fn into_curve_string(self) -> Option<CurveString2> {
+        self.curve_string
+    }
+
+    /// Returns the retained chamfer report.
+    pub const fn report(&self) -> &CurveStringChamferReport2 {
+        &self.report
+    }
+}
+
 impl CurveStringCurveTrimHit2 {
     /// Returns the source segment index on the trimmed curve string.
     pub const fn source_segment_index(&self) -> usize {
@@ -1457,6 +1669,32 @@ fn blocked_extend_result(
             source_segment_index,
             target_point,
             source_param,
+            source_segment_count: curve_string.len(),
+            status,
+            blocker,
+        },
+    }
+}
+
+fn blocked_chamfer_result(
+    curve_string: &CurveString2,
+    previous_segment_index: usize,
+    next_segment_index: usize,
+    previous_trim: CurveStringTrimPoint2,
+    next_trim: CurveStringTrimPoint2,
+    segment_reports: Vec<CurveStringTrimSegmentReport2>,
+    status: RetainedTopologyStatus,
+    blocker: Option<UncertaintyReason>,
+) -> CurveStringChamferResult2 {
+    CurveStringChamferResult2 {
+        curve_string: None,
+        report: CurveStringChamferReport2 {
+            previous_segment_index,
+            next_segment_index,
+            previous_trim,
+            next_trim,
+            segment_reports,
+            chamfer_segment_index: None,
             source_segment_count: curve_string.len(),
             status,
             blocker,
