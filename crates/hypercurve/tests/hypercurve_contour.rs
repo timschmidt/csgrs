@@ -2,7 +2,7 @@ use hypercurve::{
     BulgeVertex2, Classification, Contour2, ContourChamferStage2, ContourClosureStage2,
     ContourFilletStage2, ContourLineMergeStage2, ContourPointLocation, CurveError, CurvePolicy,
     CurveString2, CurveStringChamferInputPath2, CurveStringFilletInputPath2, FillRule, Real,
-    Region2, RegionPointLocation, Segment2, SegmentKindCounts, UncertaintyReason,
+    Region2, RegionPointLocation, Segment2, SegmentKind, SegmentKindCounts, UncertaintyReason,
 };
 
 fn s(value: i32) -> Real {
@@ -192,7 +192,15 @@ fn contour_merge_adjacent_collinear_lines_reports_source_runs() {
     assert_eq!(merged.report().fill_rule(), FillRule::NonZero);
     assert_eq!(merged.report().spans().len(), 4);
     assert_eq!(merged.report().spans()[0].source_segment_indices(), &[0, 1]);
+    assert_eq!(
+        merged.report().spans()[0].source_segment_kind_counts(),
+        SegmentKindCounts { lines: 2, arcs: 0 }
+    );
     assert_eq!(merged.report().spans()[0].output_segment_index(), 0);
+    assert_eq!(
+        merged.report().spans()[0].output_segment_kind(),
+        SegmentKind::Line
+    );
     assert_eq!(merged.report().spans()[0].output_start_point(), &p(0, 0));
     assert_eq!(merged.report().spans()[0].output_end_point(), &p(4, 0));
     let contour = merged
@@ -201,6 +209,38 @@ fn contour_merge_adjacent_collinear_lines_reports_source_runs() {
     assert_eq!(contour.len(), 4);
     assert_eq!(contour.fill_rule(), FillRule::NonZero);
     assert_line(&contour.segments()[0], p(0, 0), p(4, 0));
+}
+
+#[test]
+fn contour_line_merge_span_reports_preserve_mixed_segment_kinds() {
+    let contour = Contour2::try_new(vec![
+        Segment2::Line(hypercurve::LineSeg2::try_new(p(0, 0), p(1, 0)).unwrap()),
+        Segment2::Arc(hypercurve::CircularArc2::from_bulge(p(1, 0), p(3, 0), s(1)).unwrap()),
+        Segment2::Line(hypercurve::LineSeg2::try_new(p(3, 0), p(0, 0)).unwrap()),
+    ])
+    .unwrap();
+
+    let merged = contour.merge_adjacent_collinear_lines(&policy()).unwrap();
+
+    assert!(merged.report().status().is_native_exact());
+    assert_eq!(merged.report().merged_pair_count(), 0);
+    assert_eq!(merged.report().spans().len(), 3);
+    assert_eq!(
+        merged.report().spans()[0].source_segment_kind_counts(),
+        SegmentKindCounts { lines: 1, arcs: 0 }
+    );
+    assert_eq!(
+        merged.report().spans()[0].output_segment_kind(),
+        SegmentKind::Line
+    );
+    assert_eq!(
+        merged.report().spans()[1].source_segment_kind_counts(),
+        SegmentKindCounts { lines: 0, arcs: 1 }
+    );
+    assert_eq!(
+        merged.report().spans()[1].output_segment_kind(),
+        SegmentKind::Arc
+    );
 }
 
 #[test]

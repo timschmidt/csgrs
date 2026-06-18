@@ -10,7 +10,7 @@ use crate::curve_string::merge_adjacent_line_segments;
 use crate::{
     BulgeVertex2, Classification, CurveError, CurvePolicy, CurveResult, CurveString2,
     CurveStringChamferReport2, CurveStringFilletReport2, CurveStringTrimPoint2, LineSeg2, LineSide,
-    Point2, RetainedTopologyStatus, Segment2, SegmentKindCounts, UncertaintyReason,
+    Point2, RetainedTopologyStatus, Segment2, SegmentKind, SegmentKindCounts, UncertaintyReason,
 };
 
 /// Fill rule used when classifying contour interiors.
@@ -124,7 +124,9 @@ pub enum ContourFilletStage2 {
 #[derive(Clone, Debug, PartialEq)]
 pub struct ContourLineMergeSpanReport2 {
     source_segment_indices: Vec<usize>,
+    source_segment_kind_counts: SegmentKindCounts,
     output_segment_index: usize,
+    output_segment_kind: SegmentKind,
     output_start_point: Point2,
     output_end_point: Point2,
     status: RetainedTopologyStatus,
@@ -1133,9 +1135,19 @@ impl ContourLineMergeSpanReport2 {
         &self.source_segment_indices
     }
 
+    /// Returns primitive-family counts for the retained source segment run.
+    pub const fn source_segment_kind_counts(&self) -> SegmentKindCounts {
+        self.source_segment_kind_counts
+    }
+
     /// Returns the output segment index produced for this source run.
     pub const fn output_segment_index(&self) -> usize {
         self.output_segment_index
+    }
+
+    /// Returns the primitive family of the emitted output segment.
+    pub const fn output_segment_kind(&self) -> SegmentKind {
+        self.output_segment_kind
     }
 
     /// Returns the exact start point of this emitted contour segment.
@@ -1431,12 +1443,33 @@ fn push_contour_line_merge_run(
     output_segments.push(segment);
     spans.push(ContourLineMergeSpanReport2 {
         source_segment_indices: source_indices.to_vec(),
+        source_segment_kind_counts: contour_line_merge_run_kind_counts(
+            source_segments,
+            source_indices,
+        ),
         output_segment_index,
+        output_segment_kind: output_segments[output_segment_index]
+            .structural_facts()
+            .kind,
         output_start_point: output_segments[output_segment_index].start().clone(),
         output_end_point: output_segments[output_segment_index].end().clone(),
         status: RetainedTopologyStatus::NativeExact,
     });
     Ok(())
+}
+
+fn contour_line_merge_run_kind_counts(
+    source_segments: &[Segment2],
+    source_indices: &[usize],
+) -> SegmentKindCounts {
+    let mut counts = SegmentKindCounts::default();
+    for source_index in source_indices {
+        match &source_segments[*source_index] {
+            Segment2::Line(_) => counts.lines += 1,
+            Segment2::Arc(_) => counts.arcs += 1,
+        }
+    }
+    counts
 }
 
 fn validate_closed_curve_string(curve: &CurveString2) -> CurveResult<()> {
