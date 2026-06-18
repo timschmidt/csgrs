@@ -1474,17 +1474,22 @@ fn curve_string_trim_between_curve_intersections_materializes_line_window() {
     assert_eq!(trim.report().end_hits().len(), 1);
     assert_eq!(trim.report().start_hits()[0].source_segment_index(), 0);
     assert_eq!(trim.report().start_hits()[0].cutter_segment_index(), 0);
+    assert_eq!(trim.report().start_hits()[0].source_param(), &q(1, 5));
+    assert_eq!(trim.report().start_hits()[0].cutter_param(), &q(1, 2));
     assert_eq!(trim.report().start_hits()[0].point(), &p(2, 0));
     assert_eq!(
         trim.report().start_hits()[0].kind(),
         IntersectionKind::Crossing
     );
+    assert_eq!(trim.report().end_hits()[0].source_param(), &q(4, 5));
+    assert_eq!(trim.report().end_hits()[0].cutter_param(), &q(1, 2));
     assert_eq!(trim.report().end_hits()[0].point(), &p(8, 0));
 
     let trim_report = trim
         .report()
         .trim_report()
         .expect("curve trim should retain point trim report");
+    assert_eq!(trim_report.input_path(), CurveStringTrimInputPath2::Points);
     assert_eq!(trim_report.start().param(), &q(1, 5));
     assert_eq!(trim_report.end().param(), &q(4, 5));
     let trimmed = trim

@@ -8,9 +8,9 @@ use crate::bbox::{Aabb2, aabbs_decided_disjoint, decided_segment_aabb};
 use crate::classify::{compare_reals, in_closed_unit_interval, is_zero, real_sign};
 use crate::{
     ArcArcIntersection, BulgeVertex2, CircularArc2, Classification, CurveError, CurvePolicy,
-    CurveResult, IntersectionKind, LineArcIntersection, LineLineIntersection, LineSeg2, LineSide,
-    ParamRange, Point2, PreparedRegionView2, Region2, RegionContourRole, RegionPointLocation,
-    RetainedTopologyStatus, Segment2, SegmentIntersection, UncertaintyReason,
+    CurveResult, IntersectionKind, LineArcIntersection, LineArcOrder, LineLineIntersection,
+    LineSeg2, LineSide, ParamRange, Point2, PreparedRegionView2, Region2, RegionContourRole,
+    RegionPointLocation, RetainedTopologyStatus, Segment2, SegmentIntersection, UncertaintyReason,
 };
 
 /// One segment-pair event between two curve strings.
@@ -384,6 +384,8 @@ pub struct CurveStringTrimResult2 {
 pub struct CurveStringCurveTrimHit2 {
     source_segment_index: usize,
     cutter_segment_index: usize,
+    source_param: Real,
+    cutter_param: Real,
     point: Point2,
     kind: IntersectionKind,
 }
@@ -1228,7 +1230,9 @@ impl CurveString2 {
         let start_events = self.intersect_curve_string_with_report(start_cutter, policy)?;
         let end_events = self.intersect_curve_string_with_report(end_cutter, policy)?;
         self.trim_between_curve_intersection_events(
+            start_cutter,
             start_events,
+            end_cutter,
             end_events,
             CurveStringCurveTrimQueryPath2::Direct,
             policy,
@@ -2158,15 +2162,19 @@ impl CurveString2 {
 
     pub(crate) fn trim_between_curve_intersection_events(
         &self,
+        start_cutter: &Self,
         start_events: CurveStringIntersectionResult2,
+        end_cutter: &Self,
         end_events: CurveStringIntersectionResult2,
         query_path: CurveStringCurveTrimQueryPath2,
         policy: &CurvePolicy,
     ) -> CurveResult<CurveStringCurveTrimResult2> {
         let start_intersection_report = start_events.report().clone();
         let end_intersection_report = end_events.report().clone();
-        let start_extraction = extract_curve_trim_hits(start_events.intersections());
-        let end_extraction = extract_curve_trim_hits(end_events.intersections());
+        let start_extraction =
+            extract_curve_trim_hits(self, start_cutter, start_events.intersections(), policy)?;
+        let end_extraction =
+            extract_curve_trim_hits(self, end_cutter, end_events.intersections(), policy)?;
 
         let start_hit = match single_curve_trim_hit(&start_extraction) {
             Ok(hit) => hit,
@@ -2729,6 +2737,16 @@ impl CurveStringCurveTrimHit2 {
     /// Returns the cutter segment index that produced this hit.
     pub const fn cutter_segment_index(&self) -> usize {
         self.cutter_segment_index
+    }
+
+    /// Returns the exact affine parameter on the source segment.
+    pub const fn source_param(&self) -> &Real {
+        &self.source_param
+    }
+
+    /// Returns the exact affine parameter on the cutter segment.
+    pub const fn cutter_param(&self) -> &Real {
+        &self.cutter_param
     }
 
     /// Returns the exact intersection point witness.
@@ -3733,15 +3751,29 @@ fn blocked_region_trim_result(
     }
 }
 
-fn extract_curve_trim_hits(events: &[CurveStringIntersection]) -> CurveTrimHitExtraction {
+fn extract_curve_trim_hits(
+    source: &CurveString2,
+    cutter: &CurveString2,
+    events: &[CurveStringIntersection],
+    policy: &CurvePolicy,
+) -> CurveResult<CurveTrimHitExtraction> {
     let mut hits = Vec::new();
     let mut blocker = None;
     for event in events {
         match &event.relation {
             SegmentIntersection::LineLine(LineLineIntersection::None) => {}
-            SegmentIntersection::LineLine(LineLineIntersection::Point { point, kind, .. }) => {
-                hits.push(curve_trim_hit(event, point.clone(), *kind));
-            }
+            SegmentIntersection::LineLine(LineLineIntersection::Point {
+                point,
+                a_param,
+                b_param,
+                kind,
+            }) => hits.push(curve_trim_hit(
+                event,
+                a_param.clone(),
+                b_param.clone(),
+                point.clone(),
+                *kind,
+            )),
             SegmentIntersection::LineLine(LineLineIntersection::Overlap { .. }) => {
                 blocker = Some((
                     RetainedTopologyStatus::Unsupported,
@@ -3751,14 +3783,39 @@ fn extract_curve_trim_hits(events: &[CurveStringIntersection]) -> CurveTrimHitEx
             SegmentIntersection::LineLine(LineLineIntersection::Uncertain { reason }) => {
                 blocker = Some((RetainedTopologyStatus::Unresolved, *reason));
             }
-            SegmentIntersection::LineArc { result, .. } => match result {
+            SegmentIntersection::LineArc { order, result } => match result {
                 LineArcIntersection::None => {}
                 LineArcIntersection::Point(hit) => {
-                    hits.push(curve_trim_hit(event, hit.point.clone(), hit.kind));
+                    match line_arc_curve_trim_params(source, cutter, event, *order, hit, policy)? {
+                        Ok((source_param, cutter_param)) => hits.push(curve_trim_hit(
+                            event,
+                            source_param,
+                            cutter_param,
+                            hit.point.clone(),
+                            hit.kind,
+                        )),
+                        Err(reason) => {
+                            blocker = Some((retained_status_for_uncertainty(reason), reason));
+                        }
+                    }
                 }
                 LineArcIntersection::TwoPoints { first, second } => {
-                    hits.push(curve_trim_hit(event, first.point.clone(), first.kind));
-                    hits.push(curve_trim_hit(event, second.point.clone(), second.kind));
+                    for hit in [first, second] {
+                        match line_arc_curve_trim_params(
+                            source, cutter, event, *order, hit, policy,
+                        )? {
+                            Ok((source_param, cutter_param)) => hits.push(curve_trim_hit(
+                                event,
+                                source_param,
+                                cutter_param,
+                                hit.point.clone(),
+                                hit.kind,
+                            )),
+                            Err(reason) => {
+                                blocker = Some((retained_status_for_uncertainty(reason), reason));
+                            }
+                        }
+                    }
                 }
                 LineArcIntersection::Uncertain { reason } => {
                     blocker = Some((RetainedTopologyStatus::Unresolved, *reason));
@@ -3766,11 +3823,34 @@ fn extract_curve_trim_hits(events: &[CurveStringIntersection]) -> CurveTrimHitEx
             },
             SegmentIntersection::ArcArc(ArcArcIntersection::None) => {}
             SegmentIntersection::ArcArc(ArcArcIntersection::Point(hit)) => {
-                hits.push(curve_trim_hit(event, hit.point.clone(), hit.kind));
+                match point_curve_trim_params(source, cutter, event, &hit.point, policy)? {
+                    Ok((source_param, cutter_param)) => hits.push(curve_trim_hit(
+                        event,
+                        source_param,
+                        cutter_param,
+                        hit.point.clone(),
+                        hit.kind,
+                    )),
+                    Err(reason) => {
+                        blocker = Some((retained_status_for_uncertainty(reason), reason));
+                    }
+                }
             }
             SegmentIntersection::ArcArc(ArcArcIntersection::TwoPoints { first, second }) => {
-                hits.push(curve_trim_hit(event, first.point.clone(), first.kind));
-                hits.push(curve_trim_hit(event, second.point.clone(), second.kind));
+                for hit in [first, second] {
+                    match point_curve_trim_params(source, cutter, event, &hit.point, policy)? {
+                        Ok((source_param, cutter_param)) => hits.push(curve_trim_hit(
+                            event,
+                            source_param,
+                            cutter_param,
+                            hit.point.clone(),
+                            hit.kind,
+                        )),
+                        Err(reason) => {
+                            blocker = Some((retained_status_for_uncertainty(reason), reason));
+                        }
+                    }
+                }
             }
             SegmentIntersection::ArcArc(ArcArcIntersection::Overlap { .. }) => {
                 blocker = Some((
@@ -3784,17 +3864,69 @@ fn extract_curve_trim_hits(events: &[CurveStringIntersection]) -> CurveTrimHitEx
         }
     }
 
-    CurveTrimHitExtraction { hits, blocker }
+    Ok(CurveTrimHitExtraction { hits, blocker })
+}
+
+fn line_arc_curve_trim_params(
+    source: &CurveString2,
+    cutter: &CurveString2,
+    event: &CurveStringIntersection,
+    order: LineArcOrder,
+    hit: &crate::LineArcIntersectionPoint,
+    policy: &CurvePolicy,
+) -> CurveResult<Result<(Real, Real), UncertaintyReason>> {
+    match order {
+        LineArcOrder::LineThenArc => {
+            let cutter_segment = &cutter.segments[event.b_segment_index];
+            let cutter_param = match segment_point_parameter(cutter_segment, &hit.point, policy)? {
+                Classification::Decided(param) => param,
+                Classification::Uncertain(reason) => return Ok(Err(reason)),
+            };
+            Ok(Ok((hit.line_param.clone(), cutter_param)))
+        }
+        LineArcOrder::ArcThenLine => {
+            let source_segment = &source.segments[event.a_segment_index];
+            let source_param = match segment_point_parameter(source_segment, &hit.point, policy)? {
+                Classification::Decided(param) => param,
+                Classification::Uncertain(reason) => return Ok(Err(reason)),
+            };
+            Ok(Ok((source_param, hit.line_param.clone())))
+        }
+    }
+}
+
+fn point_curve_trim_params(
+    source: &CurveString2,
+    cutter: &CurveString2,
+    event: &CurveStringIntersection,
+    point: &Point2,
+    policy: &CurvePolicy,
+) -> CurveResult<Result<(Real, Real), UncertaintyReason>> {
+    let source_param =
+        match segment_point_parameter(&source.segments[event.a_segment_index], point, policy)? {
+            Classification::Decided(param) => param,
+            Classification::Uncertain(reason) => return Ok(Err(reason)),
+        };
+    let cutter_param =
+        match segment_point_parameter(&cutter.segments[event.b_segment_index], point, policy)? {
+            Classification::Decided(param) => param,
+            Classification::Uncertain(reason) => return Ok(Err(reason)),
+        };
+    Ok(Ok((source_param, cutter_param)))
 }
 
 fn curve_trim_hit(
     event: &CurveStringIntersection,
+    source_param: Real,
+    cutter_param: Real,
     point: Point2,
     kind: IntersectionKind,
 ) -> CurveStringCurveTrimHit2 {
     CurveStringCurveTrimHit2 {
         source_segment_index: event.a_segment_index,
         cutter_segment_index: event.b_segment_index,
+        source_param,
+        cutter_param,
         point,
         kind,
     }
