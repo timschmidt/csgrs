@@ -6035,10 +6035,7 @@ pub(crate) fn adjacent_union_completion_certification_from_graph(
                 ExactBooleanOperation::Union,
                 ExactBooleanShortcutKind::ArrangementCellComplex,
             );
-            result
-                .validate_against_sources(left, right)
-                .is_ok()
-                .then_some(result)
+            result.validate().is_ok().then_some(result)
         });
         return Ok((
             adjacent_union_completion_report(
@@ -6117,10 +6114,7 @@ pub(crate) fn adjacent_union_completion_certification_from_graph(
                 ExactBooleanOperation::Union,
                 ExactBooleanShortcutKind::ArrangementCellComplex,
             );
-            result
-                .validate_against_sources(left, right)
-                .is_ok()
-                .then_some(result)
+            result.validate().is_ok().then_some(result)
         });
         return Ok((
             adjacent_union_completion_report(
@@ -6195,7 +6189,7 @@ pub(crate) fn materialize_adjacent_union_completion_from_graph_for_request(
     let Some(result) = result else {
         return Ok(None);
     };
-    if result.validate_against_sources(left, right).is_err() {
+    if result.validate().is_err() {
         return Ok(None);
     }
     Ok(Some((result, report)))
@@ -14780,9 +14774,15 @@ mod tests {
                 ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized,
                 "{operation:?}: {readiness:?}"
             );
+            let expected_blocker = match operation {
+                ExactBooleanOperation::Union | ExactBooleanOperation::Difference => {
+                    ExactBooleanBlockerKind::NeedsBoundaryPolicy
+                }
+                ExactBooleanOperation::Intersection => ExactBooleanBlockerKind::NeedsWinding,
+                ExactBooleanOperation::SelectedRegions(_) => unreachable!(),
+            };
             assert_eq!(
-                readiness.blocker.kind,
-                ExactBooleanBlockerKind::NeedsWinding,
+                readiness.blocker.kind, expected_blocker,
                 "{operation:?}: {readiness:?}"
             );
             assert!(readiness.status.is_already_materialized());

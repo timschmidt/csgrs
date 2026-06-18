@@ -1038,7 +1038,7 @@ pub(crate) fn select_arrangement_for_replay(
     let labeled = arrangement.label_regions(labeling_policy)?;
     let ownership_report = labeled.region_ownership_report(left, right, labeling_policy);
     ownership_report.validate()?;
-    let mut selected = if ownership_report.resolves_operation_selection(operation) {
+    let mut selected = if ownership_report.volume_selection_resolves_operation(operation) {
         labeled.select_volume_resolved_with_policy(operation, policy)
     } else {
         if !ownership_report.is_resolved()
