@@ -167,8 +167,29 @@ pub struct CurveStringConnectReport2 {
     first_segment_count: usize,
     second_segment_count: usize,
     connector_segment_index: Option<usize>,
+    output_segments: Vec<CurveStringConnectOutputSegmentReport2>,
     status: RetainedTopologyStatus,
     blocker: Option<UncertaintyReason>,
+}
+
+/// Source kind for one segment emitted by a connector operation.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum CurveStringConnectSource2 {
+    /// Segment came from the first input curve string.
+    First,
+    /// Segment came from the second input curve string.
+    Second,
+    /// Segment is the inserted exact connector line.
+    Connector,
+}
+
+/// Source provenance for one segment emitted by a connector operation.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct CurveStringConnectOutputSegmentReport2 {
+    output_segment_index: usize,
+    source: CurveStringConnectSource2,
+    source_segment_index: Option<usize>,
+    reversed: bool,
 }
 
 /// A connected open curve string with retained connector provenance.
@@ -763,6 +784,7 @@ impl CurveString2 {
             first_segment_count: self.len(),
             second_segment_count: other.len(),
             connector_segment_index: Some(connector_segment_index),
+            output_segments: connect_output_segment_reports(self.len(), other.len(), kind),
             status: RetainedTopologyStatus::NativeExact,
             blocker: None,
         };
@@ -844,6 +866,7 @@ impl CurveString2 {
             first_segment_count: self.len(),
             second_segment_count: other.len(),
             connector_segment_index: Some(connector_segment_index),
+            output_segments: connect_output_segment_reports(self.len(), other.len(), kind),
             status: RetainedTopologyStatus::NativeExact,
             blocker: None,
         };
@@ -4534,6 +4557,11 @@ impl CurveStringConnectReport2 {
         self.connector_segment_index
     }
 
+    /// Returns output segment source ownership in output order.
+    pub fn output_segments(&self) -> &[CurveStringConnectOutputSegmentReport2] {
+        &self.output_segments
+    }
+
     /// Returns connector materialization status.
     pub const fn status(&self) -> RetainedTopologyStatus {
         self.status
@@ -4542,6 +4570,28 @@ impl CurveStringConnectReport2 {
     /// Returns the exact blocker for non-materialized connections.
     pub const fn blocker(&self) -> Option<UncertaintyReason> {
         self.blocker
+    }
+}
+
+impl CurveStringConnectOutputSegmentReport2 {
+    /// Returns the connected output segment index described by this report.
+    pub const fn output_segment_index(&self) -> usize {
+        self.output_segment_index
+    }
+
+    /// Returns which source produced this output segment.
+    pub const fn source(&self) -> CurveStringConnectSource2 {
+        self.source
+    }
+
+    /// Returns the source segment index for input-derived segments.
+    pub const fn source_segment_index(&self) -> Option<usize> {
+        self.source_segment_index
+    }
+
+    /// Returns whether an input segment was reversed for output.
+    pub const fn reversed(&self) -> bool {
+        self.reversed
     }
 }
 
@@ -4812,6 +4862,106 @@ fn push_link_output_segment_reports<I>(
     }
 }
 
+fn connect_output_segment_reports(
+    first_segment_count: usize,
+    second_segment_count: usize,
+    kind: CurveStringLinkKind2,
+) -> Vec<CurveStringConnectOutputSegmentReport2> {
+    let mut output_segments = Vec::with_capacity(first_segment_count + second_segment_count + 1);
+    match kind {
+        CurveStringLinkKind2::FirstEndToSecondStart => {
+            push_connect_input_segment_reports(
+                &mut output_segments,
+                CurveStringConnectSource2::First,
+                0..first_segment_count,
+                false,
+            );
+            push_connect_connector_report(&mut output_segments);
+            push_connect_input_segment_reports(
+                &mut output_segments,
+                CurveStringConnectSource2::Second,
+                0..second_segment_count,
+                false,
+            );
+        }
+        CurveStringLinkKind2::FirstEndToSecondEnd => {
+            push_connect_input_segment_reports(
+                &mut output_segments,
+                CurveStringConnectSource2::First,
+                0..first_segment_count,
+                false,
+            );
+            push_connect_connector_report(&mut output_segments);
+            push_connect_input_segment_reports(
+                &mut output_segments,
+                CurveStringConnectSource2::Second,
+                (0..second_segment_count).rev(),
+                true,
+            );
+        }
+        CurveStringLinkKind2::FirstStartToSecondStart => {
+            push_connect_input_segment_reports(
+                &mut output_segments,
+                CurveStringConnectSource2::First,
+                (0..first_segment_count).rev(),
+                true,
+            );
+            push_connect_connector_report(&mut output_segments);
+            push_connect_input_segment_reports(
+                &mut output_segments,
+                CurveStringConnectSource2::Second,
+                0..second_segment_count,
+                false,
+            );
+        }
+        CurveStringLinkKind2::FirstStartToSecondEnd => {
+            push_connect_input_segment_reports(
+                &mut output_segments,
+                CurveStringConnectSource2::Second,
+                0..second_segment_count,
+                false,
+            );
+            push_connect_connector_report(&mut output_segments);
+            push_connect_input_segment_reports(
+                &mut output_segments,
+                CurveStringConnectSource2::First,
+                0..first_segment_count,
+                false,
+            );
+        }
+    }
+    output_segments
+}
+
+fn push_connect_input_segment_reports<I>(
+    output_segments: &mut Vec<CurveStringConnectOutputSegmentReport2>,
+    source: CurveStringConnectSource2,
+    source_segment_indices: I,
+    reversed: bool,
+) where
+    I: IntoIterator<Item = usize>,
+{
+    for source_segment_index in source_segment_indices {
+        output_segments.push(CurveStringConnectOutputSegmentReport2 {
+            output_segment_index: output_segments.len(),
+            source,
+            source_segment_index: Some(source_segment_index),
+            reversed,
+        });
+    }
+}
+
+fn push_connect_connector_report(
+    output_segments: &mut Vec<CurveStringConnectOutputSegmentReport2>,
+) {
+    output_segments.push(CurveStringConnectOutputSegmentReport2 {
+        output_segment_index: output_segments.len(),
+        source: CurveStringConnectSource2::Connector,
+        source_segment_index: None,
+        reversed: false,
+    });
+}
+
 fn ordered_link_source_indices(
     accumulated_source_indices: &[usize],
     next_source_index: usize,
@@ -4851,6 +5001,7 @@ fn blocked_connected_curve_string(
             first_segment_count: first.len(),
             second_segment_count: second.len(),
             connector_segment_index: None,
+            output_segments: Vec::new(),
             status,
             blocker,
         },

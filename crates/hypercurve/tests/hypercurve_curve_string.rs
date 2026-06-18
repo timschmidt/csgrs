@@ -1,7 +1,7 @@
 use hypercurve::{
     BulgeVertex2, CircularArc2, Classification, Contour2, CurveError, CurvePolicy, CurveString2,
-    CurveStringChamferInputPath2, CurveStringCurveTrimQueryPath2, CurveStringEndpoint2,
-    CurveStringEndpointConnectionStatus2, CurveStringFilletInputPath2,
+    CurveStringChamferInputPath2, CurveStringConnectSource2, CurveStringCurveTrimQueryPath2,
+    CurveStringEndpoint2, CurveStringEndpointConnectionStatus2, CurveStringFilletInputPath2,
     CurveStringIntersectionQueryPath2, CurveStringLinkKind2, CurveStringLinkSourceInput2,
     CurveStringRegionTrimQueryPath2, CurveStringTrimPoint2, IntersectionKind, LineArcIntersection,
     LineArcOrder, LineSeg2, Point2, Real, Region2, RegionContourRole, RegionPointLocation,
@@ -558,6 +558,27 @@ fn curve_string_connect_end_to_start_inserts_exact_line() {
         Some(CurveStringLinkKind2::FirstEndToSecondStart)
     );
     assert_eq!(connected.report().connector_segment_index(), Some(1));
+    assert_eq!(connected.report().output_segments().len(), 3);
+    assert_eq!(
+        connected.report().output_segments()[0].source(),
+        CurveStringConnectSource2::First
+    );
+    assert_eq!(
+        connected.report().output_segments()[0].source_segment_index(),
+        Some(0)
+    );
+    assert_eq!(
+        connected.report().output_segments()[1].source(),
+        CurveStringConnectSource2::Connector
+    );
+    assert_eq!(
+        connected.report().output_segments()[1].source_segment_index(),
+        None
+    );
+    assert_eq!(
+        connected.report().output_segments()[2].source(),
+        CurveStringConnectSource2::Second
+    );
     let curve = connected
         .curve_string()
         .expect("distinct endpoints should get connector");
@@ -587,6 +608,19 @@ fn curve_string_connect_selected_endpoints_orients_inputs() {
         Some(CurveStringLinkKind2::FirstStartToSecondEnd)
     );
     assert_eq!(connected.report().connector_segment_index(), Some(1));
+    assert_eq!(connected.report().output_segments().len(), 3);
+    assert_eq!(
+        connected.report().output_segments()[0].source(),
+        CurveStringConnectSource2::Second
+    );
+    assert_eq!(
+        connected.report().output_segments()[1].source(),
+        CurveStringConnectSource2::Connector
+    );
+    assert_eq!(
+        connected.report().output_segments()[2].source(),
+        CurveStringConnectSource2::First
+    );
     let curve = connected
         .curve_string()
         .expect("selected endpoint connector should materialize");
@@ -612,6 +646,20 @@ fn curve_string_connect_nearest_endpoints_selects_unique_pair() {
         Some(CurveStringLinkKind2::FirstEndToSecondEnd)
     );
     assert_eq!(connected.report().connector_segment_index(), Some(1));
+    assert_eq!(connected.report().output_segments().len(), 3);
+    assert_eq!(
+        connected.report().output_segments()[0].source(),
+        CurveStringConnectSource2::First
+    );
+    assert_eq!(
+        connected.report().output_segments()[1].source(),
+        CurveStringConnectSource2::Connector
+    );
+    assert_eq!(
+        connected.report().output_segments()[2].source(),
+        CurveStringConnectSource2::Second
+    );
+    assert!(connected.report().output_segments()[2].reversed());
     let curve = connected
         .curve_string()
         .expect("nearest endpoint connector should materialize");
@@ -637,6 +685,7 @@ fn curve_string_connect_nearest_endpoints_reports_tie_boundary() {
         Some(UncertaintyReason::Boundary)
     );
     assert_eq!(connected.report().connector_segment_index(), None);
+    assert!(connected.report().output_segments().is_empty());
 }
 
 #[test]
