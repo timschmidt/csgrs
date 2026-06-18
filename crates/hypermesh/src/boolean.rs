@@ -14060,8 +14060,10 @@ mod tests {
         let left = tetrahedron_i64([0, 0, 0], [2, 0, 0], [0, 2, 0], [0, 0, 2]);
         let right = tetrahedron_i64([1, 0, 0], [3, 0, 0], [1, 2, 0], [1, 0, 2]);
 
+        let request =
+            ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED);
         let mut attempt = test_arrangement_attempt(
-            ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED),
+            request,
             &left,
             &right,
             ExactRegularizationPolicy::REGULARIZED_SOLID,
@@ -14085,7 +14087,12 @@ mod tests {
             panic!("materialized helper should return a result");
         };
         assert!(retained_attempt.materialized_without_shortcut());
-        assert!(retained_attempt.materialized_arrangement_cell_complex_output());
+        assert!(
+            retained_attempt.certifies_arrangement_cell_complex_output_for_request(
+                request,
+                ExactRegularizationPolicy::REGULARIZED_SOLID,
+            )
+        );
         assert_result_retains_attempt_gate_reports(&result, &retained_attempt);
 
         let mut missing_generic_evidence = retained_attempt.clone();
@@ -14254,8 +14261,10 @@ mod tests {
     fn arrangement_attempt_accepts_requested_volume_ownership() {
         let left = tetrahedron_i64([0, 0, 0], [10, 0, 0], [0, 10, 0], [0, 0, 10]);
         let right = tetrahedron_i64([1, 1, 1], [2, 1, 1], [1, 2, 1], [1, 1, 2]);
+        let request =
+            ExactBooleanRequest::new(ExactBooleanOperation::Difference, ValidationPolicy::CLOSED);
         let mut attempt = test_arrangement_attempt(
-            ExactBooleanRequest::new(ExactBooleanOperation::Difference, ValidationPolicy::CLOSED),
+            request,
             &left,
             &right,
             ExactRegularizationPolicy::REGULARIZED_SOLID,
@@ -14278,7 +14287,12 @@ mod tests {
         else {
             panic!("materialized helper should return a result");
         };
-        assert!(retained_attempt.materialized_arrangement_cell_complex_output());
+        assert!(
+            retained_attempt.certifies_arrangement_cell_complex_output_for_request(
+                request,
+                ExactRegularizationPolicy::REGULARIZED_SOLID,
+            )
+        );
         assert_eq!(retained_attempt.shortcut_reason, None);
 
         let mut ownership = retained_attempt.region_ownership_report.clone().unwrap();
@@ -14304,14 +14318,24 @@ mod tests {
         }
 
         assert!(retained_attempt.resolves_requested_volume_ownership());
-        assert!(retained_attempt.materialized_arrangement_cell_complex_output());
+        assert!(
+            retained_attempt.certifies_arrangement_cell_complex_output_for_request(
+                request,
+                ExactRegularizationPolicy::REGULARIZED_SOLID,
+            )
+        );
         retained_attempt.validate().unwrap();
 
         let unresolved_for_difference = retained_attempt.region_ownership_report.as_mut().unwrap();
         unresolved_for_difference.volume_difference_resolved = false;
         unresolved_for_difference.validate().unwrap();
         assert!(!retained_attempt.resolves_requested_volume_ownership());
-        assert!(!retained_attempt.materialized_arrangement_cell_complex_output());
+        assert!(
+            !retained_attempt.certifies_arrangement_cell_complex_output_for_request(
+                request,
+                ExactRegularizationPolicy::REGULARIZED_SOLID,
+            )
+        );
         assert_eq!(
             retained_attempt.validate(),
             Err(ExactReportValidationError::StatusEvidenceMismatch)
