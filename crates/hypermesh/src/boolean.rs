@@ -12539,24 +12539,19 @@ mod tests {
             ExactBooleanOperation::Union,
             ValidationPolicy::ALLOW_BOUNDARY,
         );
-        let graph = build_intersection_graph(&left, &right).unwrap();
-        let arrangement = ExactArrangement::from_intersection_graph_with_policy(
-            graph.clone(),
-            &left,
-            &right,
-            ExactRegularizationPolicy::REGULARIZED_SOLID,
-        )
-        .unwrap();
-
-        let certifications = ExactBooleanCertificationSet::from_graph_and_regularized_arrangement(
-            &graph,
-            &left,
-            &right,
-            request,
-            Some(&arrangement),
-            None,
-        )
-        .unwrap();
+        let mut workspace = ExactBooleanWorkspace::new(&left, &right);
+        let retained_attempt = workspace
+            .arrangement_attempt(request, ExactRegularizationPolicy::REGULARIZED_SOLID)
+            .unwrap()
+            .clone();
+        let evaluation = workspace.evaluate(request).unwrap().clone();
+        evaluation.validate().unwrap();
+        evaluation.validate_against_sources(&left, &right).unwrap();
+        let certifications = evaluation.certifications;
+        assert_eq!(
+            certifications.arrangement_attempt.as_ref(),
+            Some(&retained_attempt)
+        );
         certifications.validate_for_request(request).unwrap();
         certifications
             .validate_against_sources(&left, &right, request)
