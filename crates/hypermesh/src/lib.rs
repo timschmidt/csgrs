@@ -64,7 +64,6 @@ pub use adapter::{
 pub use artifact::{
     MeshArtifactBlocker, MeshArtifactFaceRecord, MeshArtifactManifest, MeshArtifactVertexRecord,
 };
-pub use audit::ExactMeshAuditError;
 pub use boolean::{
     ExactArrangementBooleanAttempt, ExactBooleanEvaluation, ExactBooleanOperation,
     ExactBooleanRequest, ExactBoundaryBooleanPolicy,
@@ -74,7 +73,6 @@ pub use mesh::{ExactMesh, ExactMeshValidationError, Triangle};
 pub use package::{
     ExactMeshConsumerDomain, ExactMeshDomainSummaryError, ExactMeshHandoffPackageError,
 };
-pub use proposal::ExactMeshProposalReportError;
 pub use region::{ExactOutputTriangleOrientation, ExactRegionSelection};
 pub use regularization::ExactRegularizationPolicy;
 pub use reports::{ExactBooleanResult, ExactReportFreshness, ExactReportValidationError};

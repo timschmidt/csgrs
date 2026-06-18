@@ -72,6 +72,17 @@ pub enum ExactMeshProposalReportError {
     SourceReplayMismatch,
 }
 
+impl ExactMeshProposalReportError {
+    /// Return whether proposal validation failed because the embedded audit has
+    /// impossible predicate counts.
+    pub fn is_audit_replay_invalid_predicate_counts(&self) -> bool {
+        matches!(
+            self,
+            Self::AuditReplay(error) if error.is_invalid_predicate_counts()
+        )
+    }
+}
+
 /// Replayable acceptance report for an exact mesh candidate.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ExactMeshProposalReport {

@@ -2,11 +2,10 @@ use hyperlimit::{Point3, SourceProvenance};
 use hypermesh::{
     ExactBooleanOperation, ExactBooleanRequest, ExactBooleanResult, ExactBooleanWorkspace,
     ExactBoundaryBooleanPolicy, ExactI64MeshInputReadiness, ExactI64MeshInputReportValidationError,
-    ExactMesh, ExactMeshAuditError, ExactMeshConsumerDomain, ExactMeshHandoffPackageError,
-    ExactMeshProposalReportError, ExactOutputTriangleOrientation, ExactRegionSelection,
-    ExactRegularizationPolicy, ExactReportFreshness, LossyF64MeshInputReadiness,
-    LossyF64MeshInputReportValidationError, MeshArtifactBlocker, MeshArtifactFaceRecord,
-    MeshArtifactManifest, MeshArtifactVertexRecord, ValidationPolicy,
+    ExactMesh, ExactMeshConsumerDomain, ExactMeshHandoffPackageError, ExactOutputTriangleOrientation,
+    ExactRegionSelection, ExactRegularizationPolicy, ExactReportFreshness,
+    LossyF64MeshInputReadiness, LossyF64MeshInputReportValidationError, MeshArtifactBlocker,
+    MeshArtifactFaceRecord, MeshArtifactManifest, MeshArtifactVertexRecord, ValidationPolicy,
 };
 use hyperreal::Real;
 
@@ -601,40 +600,39 @@ fn exact_mesh_construction_retains_valid_public_facts() {
     let mut impossible_predicate_counts = audit.clone();
     impossible_predicate_counts.proof_predicates =
         impossible_predicate_counts.predicate_uses.saturating_add(1);
-    assert_eq!(
-        impossible_predicate_counts.validate(),
-        Err(ExactMeshAuditError::InvalidPredicateCounts {
-            predicate_uses: impossible_predicate_counts.predicate_uses,
-            proof_predicates: impossible_predicate_counts.proof_predicates
-        })
+    assert!(
+        impossible_predicate_counts
+            .validate()
+            .is_err_and(|error| error.is_invalid_predicate_counts())
     );
-    assert_eq!(
-        impossible_predicate_counts.validate_against_mesh(&mesh),
-        Err(ExactMeshAuditError::InvalidPredicateCounts {
-            predicate_uses: impossible_predicate_counts.predicate_uses,
-            proof_predicates: impossible_predicate_counts.proof_predicates
-        })
+    assert!(
+        impossible_predicate_counts
+            .validate_against_mesh(&mesh)
+            .is_err_and(|error| error.is_invalid_predicate_counts())
     );
 
     let mut empty_topology_audit = audit.clone();
     empty_topology_audit.vertex_count = 0;
-    assert_eq!(
-        empty_topology_audit.validate(),
-        Err(ExactMeshAuditError::EmptyTopology)
+    assert!(
+        empty_topology_audit
+            .validate()
+            .is_err_and(|error| error.is_empty_topology())
     );
 
     let mut empty_source_audit = audit.clone();
     empty_source_audit.source_label.clear();
-    assert_eq!(
-        empty_source_audit.validate(),
-        Err(ExactMeshAuditError::EmptySourceLabel)
+    assert!(
+        empty_source_audit
+            .validate()
+            .is_err_and(|error| error.is_empty_source_label())
     );
 
     let mut invalid_version_audit = audit.clone();
     invalid_version_audit.construction_version = 0;
-    assert_eq!(
-        invalid_version_audit.validate(),
-        Err(ExactMeshAuditError::InvalidConstructionVersion)
+    assert!(
+        invalid_version_audit
+            .validate()
+            .is_err_and(|error| error.is_invalid_construction_version())
     );
 
     let report = ExactMesh::inspect_i64_triangles(
@@ -726,14 +724,10 @@ fn exact_mesh_proposal_and_artifact_reports_are_publicly_replayable() {
         .audit
         .predicate_uses
         .saturating_add(1);
-    assert_eq!(
-        invalid_proposal_audit.validate(),
-        Err(ExactMeshProposalReportError::AuditReplay(
-            ExactMeshAuditError::InvalidPredicateCounts {
-                predicate_uses: invalid_proposal_audit.audit.predicate_uses,
-                proof_predicates: invalid_proposal_audit.audit.proof_predicates
-            }
-        ))
+    assert!(
+        invalid_proposal_audit
+            .validate()
+            .is_err_and(|error| error.is_audit_replay_invalid_predicate_counts())
     );
 
     let artifact = exact.artifact_manifest().unwrap().report();

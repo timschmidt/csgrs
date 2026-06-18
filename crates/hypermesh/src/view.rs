@@ -8,7 +8,8 @@
 //! useful, but exact geometric decisions must remain tied to exact objects and
 //! proof-producing predicates.
 
-use super::{ExactMesh, ExactMeshAuditError};
+use super::ExactMesh;
+use super::audit::ExactMeshAuditError;
 use crate::audit::{ExactMeshAuditReport, audit_exact_mesh};
 use hyperlimit::Point3;
 use hyperreal::Real;

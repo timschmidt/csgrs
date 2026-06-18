@@ -110,6 +110,28 @@ pub enum ExactMeshAuditError {
     },
 }
 
+impl ExactMeshAuditError {
+    /// Return whether this error reports impossible predicate counts.
+    pub const fn is_invalid_predicate_counts(&self) -> bool {
+        matches!(self, Self::InvalidPredicateCounts { .. })
+    }
+
+    /// Return whether this error reports empty accepted topology.
+    pub const fn is_empty_topology(&self) -> bool {
+        matches!(self, Self::EmptyTopology)
+    }
+
+    /// Return whether this error reports an empty retained source label.
+    pub const fn is_empty_source_label(&self) -> bool {
+        matches!(self, Self::EmptySourceLabel)
+    }
+
+    /// Return whether this error reports an invalid construction version.
+    pub const fn is_invalid_construction_version(&self) -> bool {
+        matches!(self, Self::InvalidConstructionVersion)
+    }
+}
+
 /// Freshness status for a retained exact mesh audit.
 ///
 /// This is advisory cache metadata, not a topology certificate. It gives
