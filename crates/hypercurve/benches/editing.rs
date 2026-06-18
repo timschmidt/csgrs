@@ -285,6 +285,156 @@ fn bench_arc_extension(iterations: u32) -> CurveResult<()> {
     Ok(())
 }
 
+fn bench_curve_string_line_merge_report(iterations: u32) -> CurveResult<()> {
+    let curve = CurveString2::try_new(vec![
+        line_segment(0, 0, 2, 0),
+        line_segment(2, 0, 5, 0),
+        line_segment(5, 0, 5, 3),
+        line_segment(5, 3, 5, 7),
+    ])?;
+    let policy = CurvePolicy::certified();
+    let started = Instant::now();
+    let mut total_spans = 0_usize;
+
+    for _ in 0..iterations {
+        let result = curve.merge_adjacent_collinear_lines(&policy)?;
+        if !result.report().status().is_native_exact() {
+            panic!("curve string line merge benchmark became non-native");
+        }
+        let merged = result
+            .curve_string()
+            .expect("line merge benchmark should materialize");
+        total_spans += black_box(merged.len());
+        total_spans += black_box(result.report().spans().len());
+        total_spans += black_box(result.report().merged_pair_count());
+    }
+
+    let elapsed = started.elapsed();
+    println!(
+        "curve_string_line_merge_report: {iterations} iterations in {elapsed:?} ({:?}/iter), total spans={total_spans}",
+        elapsed / iterations
+    );
+    Ok(())
+}
+
+fn bench_curve_string_reversed_duplicate_report(iterations: u32) -> CurveResult<()> {
+    let curve = CurveString2::try_new(vec![
+        line_segment(0, 0, 2, 0),
+        line_segment(2, 0, 4, 0),
+        line_segment(4, 0, 2, 0),
+        line_segment(2, 0, 2, 2),
+    ])?;
+    let started = Instant::now();
+    let mut total_retained = 0_usize;
+
+    for _ in 0..iterations {
+        let result = curve.remove_adjacent_reversed_duplicates()?;
+        if !result.report().status().is_native_exact() {
+            panic!("curve string reversed duplicate benchmark became non-native");
+        }
+        let deduped = result
+            .curve_string()
+            .expect("reversed duplicate benchmark should materialize");
+        total_retained += black_box(deduped.len());
+        total_retained += black_box(result.report().retained_segments().len());
+        total_retained += black_box(result.report().removed_pairs().len());
+    }
+
+    let elapsed = started.elapsed();
+    println!(
+        "curve_string_reversed_duplicate_report: {iterations} iterations in {elapsed:?} ({:?}/iter), total retained={total_retained}",
+        elapsed / iterations
+    );
+    Ok(())
+}
+
+fn bench_curve_string_pair_link_report(iterations: u32) -> CurveResult<()> {
+    let first = CurveString2::try_new(vec![line_segment(0, 0, 1, 0)])?;
+    let second = CurveString2::try_new(vec![line_segment(1, 0, 2, 0)])?;
+    let policy = CurvePolicy::certified();
+    let started = Instant::now();
+    let mut total_segments = 0_usize;
+
+    for _ in 0..iterations {
+        let result = first.link_connected_endpoints_with_report(&second, &policy)?;
+        if !result.report().status().is_native_exact() {
+            panic!("curve string pair link benchmark became non-native");
+        }
+        let linked = result
+            .linked_curve_string()
+            .expect("pair link benchmark should materialize");
+        total_segments += black_box(linked.curve_string().len());
+        total_segments += black_box(result.report().output_segments().len());
+        total_segments += black_box(result.report().exact_endpoint_pair_count());
+    }
+
+    let elapsed = started.elapsed();
+    println!(
+        "curve_string_pair_link_report: {iterations} iterations in {elapsed:?} ({:?}/iter), total segments={total_segments}",
+        elapsed / iterations
+    );
+    Ok(())
+}
+
+fn bench_curve_string_ordered_link_report(iterations: u32) -> CurveResult<()> {
+    let curves = vec![
+        CurveString2::try_new(vec![line_segment(0, 0, 1, 0)])?,
+        CurveString2::try_new(vec![line_segment(1, 0, 2, 0)])?,
+        CurveString2::try_new(vec![line_segment(2, 0, 3, 0)])?,
+    ];
+    let policy = CurvePolicy::certified();
+    let started = Instant::now();
+    let mut total_steps = 0_usize;
+
+    for _ in 0..iterations {
+        let result = CurveString2::link_ordered_connected_endpoints(curves.clone(), &policy)?;
+        if !result.report().status().is_native_exact() {
+            panic!("curve string ordered link benchmark became non-native");
+        }
+        let linked = result
+            .curve_string()
+            .expect("ordered link benchmark should materialize");
+        total_steps += black_box(linked.len());
+        total_steps += black_box(result.report().steps().len());
+        total_steps += black_box(result.report().output_source_indices().len());
+    }
+
+    let elapsed = started.elapsed();
+    println!(
+        "curve_string_ordered_link_report: {iterations} iterations in {elapsed:?} ({:?}/iter), total steps={total_steps}",
+        elapsed / iterations
+    );
+    Ok(())
+}
+
+fn bench_curve_string_connect_report(iterations: u32) -> CurveResult<()> {
+    let first = CurveString2::try_new(vec![line_segment(0, 0, 1, 0)])?;
+    let second = CurveString2::try_new(vec![line_segment(3, 1, 4, 1)])?;
+    let policy = CurvePolicy::certified();
+    let started = Instant::now();
+    let mut total_segments = 0_usize;
+
+    for _ in 0..iterations {
+        let result = first.connect_end_to_start_with_line(&second, &policy)?;
+        if !result.report().status().is_native_exact() {
+            panic!("curve string connect benchmark became non-native");
+        }
+        let connected = result
+            .curve_string()
+            .expect("connect benchmark should materialize");
+        total_segments += black_box(connected.len());
+        total_segments += black_box(result.report().output_segments().len());
+        total_segments += black_box(result.report().connector_segment_index().unwrap_or(0));
+    }
+
+    let elapsed = started.elapsed();
+    println!(
+        "curve_string_connect_report: {iterations} iterations in {elapsed:?} ({:?}/iter), total segments={total_segments}",
+        elapsed / iterations
+    );
+    Ok(())
+}
+
 fn bench_boundary_contour_region_build(iterations: u32) -> CurveResult<()> {
     let material = rectangle(0, 0, 10, 10);
     let hole = rectangle(2, 2, 8, 8);
@@ -392,6 +542,11 @@ fn main() -> CurveResult<()> {
     bench_line_chamfer(iterations)?;
     bench_line_fillet(iterations)?;
     bench_arc_extension(iterations)?;
+    bench_curve_string_line_merge_report(iterations)?;
+    bench_curve_string_reversed_duplicate_report(iterations)?;
+    bench_curve_string_pair_link_report(iterations)?;
+    bench_curve_string_ordered_link_report(iterations)?;
+    bench_curve_string_connect_report(iterations)?;
     bench_boundary_contour_region_build(1_000)?;
     bench_region_boolean_report(1_000)?;
     bench_prepared_region_boolean_report(1_000)?;
