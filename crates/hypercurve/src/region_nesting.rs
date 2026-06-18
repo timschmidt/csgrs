@@ -128,6 +128,7 @@ pub struct RegionLineSegmentRegionBuildReport2 {
     split_skipped_aabb_pair_count: usize,
     split_tested_pair_count: usize,
     split_intersection_event_count: usize,
+    split_intersection_points: Vec<Point2>,
     split_output_segment_count: Option<usize>,
     split_blocker_first_source_segment_index: Option<usize>,
     split_blocker_first_source_segment_kind: Option<SegmentKind>,
@@ -349,6 +350,7 @@ impl Region2 {
                 split_skipped_aabb_pair_count: arranged.report.skipped_aabb_pair_count,
                 split_tested_pair_count: arranged.report.tested_pair_count,
                 split_intersection_event_count: arranged.report.intersection_event_count,
+                split_intersection_points: arranged.report.intersection_points,
                 split_output_segment_count: Some(arranged.segments.len()),
                 split_blocker_first_source_segment_index: arranged
                     .report
@@ -549,6 +551,7 @@ impl Region2 {
                 split_skipped_aabb_pair_count: arranged.report.skipped_aabb_pair_count,
                 split_tested_pair_count: arranged.report.tested_pair_count,
                 split_intersection_event_count: arranged.report.intersection_event_count,
+                split_intersection_points: arranged.report.intersection_points,
                 split_output_segment_count: Some(arranged.segments.len()),
                 split_blocker_first_source_segment_index: arranged
                     .report
@@ -1050,6 +1053,11 @@ impl RegionLineSegmentRegionBuildReport2 {
         self.split_intersection_event_count
     }
 
+    /// Returns exact point-intersection events retained during split arrangement.
+    pub fn split_intersection_points(&self) -> &[Point2] {
+        &self.split_intersection_points
+    }
+
     /// Returns arranged output segment count after splitting, when available.
     pub const fn split_output_segment_count(&self) -> Option<usize> {
         self.split_output_segment_count
@@ -1267,6 +1275,7 @@ struct LineSegmentSplitReportParts {
     skipped_aabb_pair_count: usize,
     tested_pair_count: usize,
     intersection_event_count: usize,
+    intersection_points: Vec<Point2>,
     output_segment_count: Option<usize>,
     blocker_first_source_segment_index: Option<usize>,
     blocker_first_source_segment_kind: Option<SegmentKind>,
@@ -1640,9 +1649,13 @@ fn arrange_line_segments_at_point_intersections(
             match first.intersect_line(second, policy)? {
                 LineLineIntersection::None => {}
                 LineLineIntersection::Point {
-                    a_param, b_param, ..
+                    point,
+                    a_param,
+                    b_param,
+                    ..
                 } => {
                     report.intersection_event_count += 1;
+                    report.intersection_points.push(point);
                     if insert_line_split_marker(&mut markers[first_index], a_param, policy)
                         .is_none()
                         || insert_line_split_marker(&mut markers[second_index], b_param, policy)
@@ -1830,6 +1843,7 @@ fn arrange_native_segments_at_point_intersections(
                 NativeSegmentIntersectionMarkers::Points(points) => {
                     report.intersection_event_count += points.len();
                     for point in points {
+                        report.intersection_points.push(point.point.clone());
                         if insert_native_split_marker(
                             &mut markers[first_index],
                             NativeSegmentSplitMarker {
@@ -2639,6 +2653,7 @@ fn blocked_line_segment_region_report(
         split_skipped_aabb_pair_count: split_report.skipped_aabb_pair_count,
         split_tested_pair_count: split_report.tested_pair_count,
         split_intersection_event_count: split_report.intersection_event_count,
+        split_intersection_points: split_report.intersection_points,
         split_output_segment_count: split_report.output_segment_count,
         split_blocker_first_source_segment_index: split_report.blocker_first_source_segment_index,
         split_blocker_first_source_segment_kind: split_report.blocker_first_source_segment_kind,
