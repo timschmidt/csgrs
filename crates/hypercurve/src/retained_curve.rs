@@ -36,6 +36,7 @@ pub enum RetainedCurveFamily2 {
 pub struct RetainedCurveIdentity2 {
     family: RetainedCurveFamily2,
     source_index: u64,
+    source_version: u64,
 }
 
 /// Exact one-dimensional parameter domain.
@@ -109,9 +110,19 @@ pub struct RetainedCurveProfile2 {
 impl RetainedCurveIdentity2 {
     /// Constructs a retained curve identity.
     pub const fn new(family: RetainedCurveFamily2, source_index: u64) -> Self {
+        Self::new_with_source_version(family, source_index, 0)
+    }
+
+    /// Constructs a retained curve identity with source version/revision evidence.
+    pub const fn new_with_source_version(
+        family: RetainedCurveFamily2,
+        source_index: u64,
+        source_version: u64,
+    ) -> Self {
         Self {
             family,
             source_index,
+            source_version,
         }
     }
 
@@ -123,6 +134,11 @@ impl RetainedCurveIdentity2 {
     /// Returns the opaque source index.
     pub const fn source_index(self) -> u64 {
         self.source_index
+    }
+
+    /// Returns the retained source version/revision.
+    pub const fn source_version(self) -> u64 {
+        self.source_version
     }
 }
 

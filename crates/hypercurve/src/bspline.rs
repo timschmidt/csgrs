@@ -312,6 +312,16 @@ impl PolynomialBSplineCurve2 {
         source_index: u64,
         policy: &CurvePolicy,
     ) -> CurveResult<Classification<RetainedCurveProfile2>> {
+        self.retained_curve_profile_with_source_version(source_index, 0, policy)
+    }
+
+    /// Builds a retained CAD-curve profile with source version/revision evidence.
+    pub fn retained_curve_profile_with_source_version(
+        &self,
+        source_index: u64,
+        source_version: u64,
+        policy: &CurvePolicy,
+    ) -> CurveResult<Classification<RetainedCurveProfile2>> {
         let domain = match bspline_parameter_domain(
             &self.knots,
             self.degree,
@@ -337,7 +347,11 @@ impl PolynomialBSplineCurve2 {
             0,
         )?;
         Ok(Classification::Decided(RetainedCurveProfile2::new(
-            RetainedCurveIdentity2::new(RetainedCurveFamily2::PolynomialBSpline, source_index),
+            RetainedCurveIdentity2::new_with_source_version(
+                RetainedCurveFamily2::PolynomialBSpline,
+                source_index,
+                source_version,
+            ),
             domain.clone(),
             trim,
             RetainedCurvePeriodicity1::NonPeriodic,
@@ -502,6 +516,16 @@ impl RationalQuadraticBSplineCurve2 {
         source_index: u64,
         policy: &CurvePolicy,
     ) -> CurveResult<Classification<RetainedCurveProfile2>> {
+        self.retained_curve_profile_with_source_version(source_index, 0, policy)
+    }
+
+    /// Builds a retained CAD-curve profile with source version/revision evidence.
+    pub fn retained_curve_profile_with_source_version(
+        &self,
+        source_index: u64,
+        source_version: u64,
+        policy: &CurvePolicy,
+    ) -> CurveResult<Classification<RetainedCurveProfile2>> {
         let domain =
             match bspline_parameter_domain(&self.knots, 2, self.control_points.len(), policy)? {
                 Classification::Decided(domain) => domain,
@@ -523,9 +547,10 @@ impl RationalQuadraticBSplineCurve2 {
             0,
         )?;
         Ok(Classification::Decided(RetainedCurveProfile2::new(
-            RetainedCurveIdentity2::new(
+            RetainedCurveIdentity2::new_with_source_version(
                 RetainedCurveFamily2::RationalQuadraticBSpline,
                 source_index,
+                source_version,
             ),
             domain.clone(),
             trim,
@@ -732,6 +757,16 @@ impl RationalBSplineCurve2 {
         source_index: u64,
         policy: &CurvePolicy,
     ) -> CurveResult<Classification<RetainedCurveProfile2>> {
+        self.retained_curve_profile_with_source_version(source_index, 0, policy)
+    }
+
+    /// Builds a retained CAD-curve profile with source version/revision evidence.
+    pub fn retained_curve_profile_with_source_version(
+        &self,
+        source_index: u64,
+        source_version: u64,
+        policy: &CurvePolicy,
+    ) -> CurveResult<Classification<RetainedCurveProfile2>> {
         let domain = match bspline_parameter_domain(
             &self.knots,
             self.degree,
@@ -773,7 +808,11 @@ impl RationalBSplineCurve2 {
         )?;
 
         Ok(Classification::Decided(RetainedCurveProfile2::new(
-            RetainedCurveIdentity2::new(RetainedCurveFamily2::RationalBSpline, source_index),
+            RetainedCurveIdentity2::new_with_source_version(
+                RetainedCurveFamily2::RationalBSpline,
+                source_index,
+                source_version,
+            ),
             domain.clone(),
             trim,
             RetainedCurvePeriodicity1::NonPeriodic,

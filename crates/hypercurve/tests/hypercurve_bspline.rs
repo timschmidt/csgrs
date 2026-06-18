@@ -460,6 +460,7 @@ fn retained_bspline_profile_reports_exact_domain_trim_and_endpoints() {
         RetainedCurveFamily2::PolynomialBSpline
     );
     assert_eq!(profile.identity().source_index(), 42);
+    assert_eq!(profile.identity().source_version(), 0);
     assert_eq!(profile.domain().start(), &r(0));
     assert_eq!(profile.domain().end(), &r(2));
     assert_eq!(profile.trim().start(), &r(0));
@@ -482,6 +483,43 @@ fn retained_bspline_profile_reports_exact_domain_trim_and_endpoints() {
     assert_eq!(profile.cache_summary().span_count(), 2);
     assert_eq!(profile.cache_summary().native_span_count(), 2);
     assert_eq!(profile.cache_summary().retained_span_count(), 0);
+
+    let versioned = decided(
+        spline
+            .retained_curve_profile_with_source_version(42, 5, &policy())
+            .unwrap(),
+    );
+    assert_eq!(versioned.identity().source_index(), 42);
+    assert_eq!(versioned.identity().source_version(), 5);
+}
+
+#[test]
+fn retained_rational_quadratic_profile_preserves_source_version() {
+    let spline = decided(
+        RationalQuadraticBSplineCurve2::try_new(
+            vec![p(0, 0), p(1, 1), p(2, 0)],
+            vec![r(1), r(2), r(3)],
+            vec![r(0), r(0), r(0), r(1), r(1), r(1)],
+            &policy(),
+        )
+        .unwrap(),
+    );
+    let profile = decided(
+        spline
+            .retained_curve_profile_with_source_version(11, 3, &policy())
+            .unwrap(),
+    );
+
+    assert_eq!(
+        profile.identity().family(),
+        RetainedCurveFamily2::RationalQuadraticBSpline
+    );
+    assert_eq!(profile.identity().source_index(), 11);
+    assert_eq!(profile.identity().source_version(), 3);
+    assert_eq!(
+        profile.topology_status(),
+        RetainedTopologyStatus::NativeExact
+    );
 }
 
 #[test]
@@ -676,6 +714,8 @@ fn retained_rational_cubic_profile_keeps_unsupported_spans_as_evidence() {
         profile.identity().family(),
         RetainedCurveFamily2::RationalBSpline
     );
+    assert_eq!(profile.identity().source_index(), 7);
+    assert_eq!(profile.identity().source_version(), 0);
     assert_eq!(
         profile.topology_status(),
         RetainedTopologyStatus::Unsupported
@@ -683,6 +723,14 @@ fn retained_rational_cubic_profile_keeps_unsupported_spans_as_evidence() {
     assert_eq!(profile.cache_summary().span_count(), 2);
     assert_eq!(profile.cache_summary().native_span_count(), 0);
     assert_eq!(profile.cache_summary().retained_span_count(), 2);
+
+    let versioned = decided(
+        spline
+            .retained_curve_profile_with_source_version(7, 4, &policy())
+            .unwrap(),
+    );
+    assert_eq!(versioned.identity().source_index(), 7);
+    assert_eq!(versioned.identity().source_version(), 4);
 }
 
 #[test]
