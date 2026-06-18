@@ -248,7 +248,7 @@ pub struct ExactArrangementBooleanAttempt {
     /// Output triangle count, when triangulation succeeded.
     pub output_triangles: usize,
     /// Retained output mesh facts, when a concrete triangulated mesh was built.
-    pub output_facts: Option<MeshFacts>,
+    pub(crate) output_facts: Option<MeshFacts>,
 }
 
 impl ExactArrangementBooleanAttempt {

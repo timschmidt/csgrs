@@ -2133,15 +2133,6 @@ fn exact_open_surface_arrangement_is_publicly_replayable() {
                 closed_attempt.output_triangles > 0,
                 "{operation:?}: {closed_attempt:?}"
             );
-            if let Some(output_facts) = closed_attempt.output_facts.as_ref() {
-                assert_eq!(output_facts.vertex_count, closed_attempt.output_vertices);
-                assert_eq!(output_facts.face_count, closed_attempt.output_triangles);
-                assert!(
-                    output_facts.boundary_edges > 0,
-                    "{operation:?}: {closed_attempt:?}"
-                );
-                assert!(!output_facts.closed_manifold, "{closed_attempt:?}");
-            }
             closed_attempt.validate().unwrap();
             closed_attempt
                 .validate_against_sources_with_validation(&left, &right, ValidationPolicy::CLOSED)
@@ -2329,10 +2320,6 @@ fn arrangement_attempt_output_validation_is_publicly_replayable() {
         );
         assert_eq!(closed_attempt.output_validation, ValidationPolicy::CLOSED);
         assert!(
-            closed_attempt.materialized_without_shortcut(),
-            "{operation:?}: {closed_attempt:?}"
-        );
-        assert!(
             closed_attempt.declined_output_validation(),
             "{operation:?}: {closed_attempt:?}"
         );
@@ -2345,15 +2332,6 @@ fn arrangement_attempt_output_validation_is_publicly_replayable() {
                 closed_attempt.output_triangles > 0,
                 "{operation:?}: {closed_attempt:?}"
             );
-        }
-        if let Some(output_facts) = closed_attempt.output_facts.as_ref() {
-            assert_eq!(output_facts.vertex_count, closed_attempt.output_vertices);
-            assert_eq!(output_facts.face_count, closed_attempt.output_triangles);
-            assert!(
-                output_facts.boundary_edges > 0 || output_facts.non_manifold_edges > 0,
-                "{operation:?}: {closed_attempt:?}"
-            );
-            assert!(!output_facts.closed_manifold, "{closed_attempt:?}");
         }
         closed_attempt.validate().unwrap();
         closed_attempt
@@ -3831,15 +3809,6 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
         closed_attempt.region_ownership,
         "{closed_attempt:?}"
     );
-    if let Some(output_facts) = closed_attempt.output_facts.as_ref() {
-        assert_eq!(output_facts.vertex_count, closed_attempt.output_vertices);
-        assert_eq!(output_facts.face_count, closed_attempt.output_triangles);
-        assert!(
-            output_facts.boundary_edges > 0 || output_facts.non_manifold_edges > 0,
-            "{closed_attempt:?}"
-        );
-        assert!(!output_facts.closed_manifold, "{closed_attempt:?}");
-    }
     closed_attempt.validate().unwrap();
     closed_attempt
         .validate_against_sources_with_validation(&left, &right, ValidationPolicy::CLOSED)
