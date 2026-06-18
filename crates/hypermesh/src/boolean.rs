@@ -352,12 +352,32 @@ impl ExactArrangementBooleanAttempt {
             && self.materialized_arrangement_cell_complex_output()
     }
 
+    pub(crate) fn certifies_arrangement_cell_complex_output_for_operation(
+        &self,
+        operation: ExactBooleanOperation,
+    ) -> bool {
+        self.operation == operation
+            && self.policy == ExactRegularizationPolicy::REGULARIZED_SOLID
+            && self.validate().is_ok()
+            && self.materialized_arrangement_cell_complex_output()
+    }
+
     pub(crate) fn certifies_arrangement_cell_complex_shortcut_for_request(
         &self,
         request: ExactBooleanRequest,
         policy: ExactRegularizationPolicy,
     ) -> bool {
         self.matches_request_policy(request, policy)
+            && self.validate().is_ok()
+            && self.materialized_arrangement_cell_complex_shortcut()
+    }
+
+    pub(crate) fn certifies_arrangement_cell_complex_shortcut_for_operation(
+        &self,
+        operation: ExactBooleanOperation,
+    ) -> bool {
+        self.operation == operation
+            && self.policy == ExactRegularizationPolicy::REGULARIZED_SOLID
             && self.validate().is_ok()
             && self.materialized_arrangement_cell_complex_shortcut()
     }
@@ -1284,7 +1304,7 @@ impl ExactBooleanCertificationSet {
         operation: ExactBooleanOperation,
     ) -> bool {
         self.arrangement_attempt.as_ref().is_some_and(|attempt| {
-            retained_arrangement_attempt_certifies_output_for_operation(attempt, operation)
+            attempt.certifies_arrangement_cell_complex_output_for_operation(operation)
         })
     }
 
@@ -1293,7 +1313,7 @@ impl ExactBooleanCertificationSet {
         operation: ExactBooleanOperation,
     ) -> bool {
         self.arrangement_attempt.as_ref().is_some_and(|attempt| {
-            retained_arrangement_attempt_certifies_shortcut_for_operation(attempt, operation)
+            attempt.certifies_arrangement_cell_complex_shortcut_for_operation(operation)
         })
     }
 
@@ -5119,28 +5139,8 @@ fn arrangement_cell_complex_result_is_certified_for_preflight(
         } => operation,
         _ => return false,
     };
-    retained_arrangement_attempt_certifies_output_for_operation(attempt, operation)
+    attempt.certifies_arrangement_cell_complex_output_for_operation(operation)
         && result.validate_against_sources(left, right).is_ok()
-}
-
-fn retained_arrangement_attempt_certifies_output_for_operation(
-    attempt: &ExactArrangementBooleanAttempt,
-    operation: ExactBooleanOperation,
-) -> bool {
-    attempt.operation == operation
-        && attempt.policy == ExactRegularizationPolicy::REGULARIZED_SOLID
-        && attempt.validate().is_ok()
-        && attempt.materialized_arrangement_cell_complex_output()
-}
-
-fn retained_arrangement_attempt_certifies_shortcut_for_operation(
-    attempt: &ExactArrangementBooleanAttempt,
-    operation: ExactBooleanOperation,
-) -> bool {
-    attempt.operation == operation
-        && attempt.policy == ExactRegularizationPolicy::REGULARIZED_SOLID
-        && attempt.validate().is_ok()
-        && attempt.materialized_arrangement_cell_complex_shortcut()
 }
 
 fn arrangement_cell_complex_materializes_for_preflight_from_graph(
@@ -14105,15 +14105,15 @@ mod tests {
                 ExactRegularizationPolicy::REGULARIZED_SOLID,
             )
         );
-        assert!(retained_arrangement_attempt_certifies_output_for_operation(
-            &retained_attempt,
-            ExactBooleanOperation::Union,
-        ));
+        assert!(
+            retained_attempt.certifies_arrangement_cell_complex_output_for_operation(
+                ExactBooleanOperation::Union,
+            )
+        );
         let mut relabeled_attempt = retained_attempt.clone();
         relabeled_attempt.operation = ExactBooleanOperation::Difference;
         assert!(
-            !retained_arrangement_attempt_certifies_output_for_operation(
-                &relabeled_attempt,
+            !relabeled_attempt.certifies_arrangement_cell_complex_output_for_operation(
                 ExactBooleanOperation::Union,
             )
         );
