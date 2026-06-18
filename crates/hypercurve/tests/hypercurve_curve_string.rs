@@ -3103,6 +3103,45 @@ fn prepared_curve_string_trim_inside_region_matches_direct_result() {
         prepared.report().stage(),
         CurveStringRegionTrimStage2::OutputMaterialization
     );
+    assert_eq!(direct.report().prepared_cache_report(), None);
+    let prepared_cache = prepared.report().prepared_cache_report().unwrap();
+    assert_eq!(
+        prepared_cache.source().freshness(),
+        CurveStringPreparedCacheFreshness2::BorrowedCurrentSource
+    );
+    assert_eq!(prepared_cache.source().prepared_segment_count(), 1);
+    assert_eq!(
+        prepared_cache.source().prepared_segment_kind_counts(),
+        SegmentKindCounts { lines: 1, arcs: 0 }
+    );
+    assert_eq!(prepared_cache.source().decided_segment_box_count(), 1);
+    assert_eq!(prepared_cache.source().undecided_segment_box_count(), 0);
+    assert!(prepared_cache.source().curve_box_decided());
+    assert_eq!(
+        prepared_cache.region().freshness(),
+        CurveStringPreparedCacheFreshness2::BorrowedCurrentSource
+    );
+    assert_eq!(prepared_cache.region().prepared_contour_count(), 2);
+    assert_eq!(prepared_cache.region().prepared_material_segment_count(), 8);
+    assert_eq!(
+        prepared_cache
+            .region()
+            .prepared_material_segment_kind_counts(),
+        SegmentKindCounts { lines: 8, arcs: 0 }
+    );
+    assert_eq!(prepared_cache.region().prepared_hole_segment_count(), 0);
+    assert_eq!(
+        prepared_cache.region().prepared_hole_segment_kind_counts(),
+        SegmentKindCounts { lines: 0, arcs: 0 }
+    );
+    assert_eq!(prepared_cache.region().prepared_segment_count(), 8);
+    assert_eq!(
+        prepared_cache.region().prepared_segment_kind_counts(),
+        SegmentKindCounts { lines: 8, arcs: 0 }
+    );
+    assert_eq!(prepared_cache.region().decided_segment_box_count(), 8);
+    assert_eq!(prepared_cache.region().undecided_segment_box_count(), 0);
+    assert!(prepared_cache.region().region_box_decided());
     assert_eq!(direct.report().boundary_candidate_pair_count(), 8);
     assert_eq!(direct.report().boundary_skipped_aabb_pair_count(), 0);
     assert_eq!(direct.report().boundary_tested_pair_count(), 8);

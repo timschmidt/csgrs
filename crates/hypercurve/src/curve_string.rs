@@ -716,6 +716,29 @@ pub enum CurveStringRegionTrimQueryPath2 {
     Prepared,
 }
 
+/// Prepared-cache evidence consumed by a trim-by-region query.
+#[derive(Clone, Debug, PartialEq)]
+pub struct CurveStringRegionTrimPreparedCacheReport2 {
+    source: CurveStringPreparedCacheAudit2,
+    region: RegionTrimPreparedCacheAudit2,
+}
+
+/// Per-region prepared cache inventory for trim-by-region.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct RegionTrimPreparedCacheAudit2 {
+    freshness: CurveStringPreparedCacheFreshness2,
+    prepared_contour_count: usize,
+    prepared_material_segment_count: usize,
+    prepared_material_segment_kind_counts: SegmentKindCounts,
+    prepared_hole_segment_count: usize,
+    prepared_hole_segment_kind_counts: SegmentKindCounts,
+    prepared_segment_count: usize,
+    prepared_segment_kind_counts: SegmentKindCounts,
+    decided_segment_box_count: usize,
+    undecided_segment_box_count: usize,
+    region_box_decided: bool,
+}
+
 /// Furthest exact stage reached by a trim-by-region attempt.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum CurveStringRegionTrimStage2 {
@@ -750,6 +773,7 @@ pub struct CurveStringRegionTrimReport2 {
     output_segment_count: Option<usize>,
     output_segment_kind_counts: Option<SegmentKindCounts>,
     query_path: CurveStringRegionTrimQueryPath2,
+    prepared_cache_report: Option<CurveStringRegionTrimPreparedCacheReport2>,
     stage: CurveStringRegionTrimStage2,
     status: RetainedTopologyStatus,
     blocker: Option<UncertaintyReason>,
@@ -1813,9 +1837,10 @@ impl CurveString2 {
     pub(crate) fn trim_inside_prepared_region(
         &self,
         region: &PreparedRegionView2<'_>,
+        prepared_cache_report: Option<CurveStringRegionTrimPreparedCacheReport2>,
         policy: &CurvePolicy,
     ) -> CurveResult<CurveStringRegionTrimResult2> {
-        trim_curve_string_inside_prepared_region(self, region, policy)
+        trim_curve_string_inside_prepared_region(self, region, prepared_cache_report, policy)
     }
 
     /// Chamfers one interior line-line vertex by exact segment parameters.
@@ -3798,6 +3823,13 @@ impl CurveStringRegionTrimReport2 {
         self.query_path
     }
 
+    /// Returns prepared-cache inventory and freshness evidence, when used.
+    pub const fn prepared_cache_report(
+        &self,
+    ) -> Option<&CurveStringRegionTrimPreparedCacheReport2> {
+        self.prepared_cache_report.as_ref()
+    }
+
     /// Returns the furthest exact trim-by-region stage reached.
     pub const fn stage(&self) -> CurveStringRegionTrimStage2 {
         self.stage
@@ -3811,6 +3843,111 @@ impl CurveStringRegionTrimReport2 {
     /// Returns the exact blocker for non-materialized trim-by-region attempts.
     pub const fn blocker(&self) -> Option<UncertaintyReason> {
         self.blocker
+    }
+}
+
+impl CurveStringRegionTrimPreparedCacheReport2 {
+    /// Builds trim-by-region prepared-cache evidence.
+    pub(crate) const fn new(
+        source: CurveStringPreparedCacheAudit2,
+        region: RegionTrimPreparedCacheAudit2,
+    ) -> Self {
+        Self { source, region }
+    }
+
+    /// Returns prepared-cache evidence for the source curve string.
+    pub const fn source(&self) -> &CurveStringPreparedCacheAudit2 {
+        &self.source
+    }
+
+    /// Returns prepared-cache evidence for the clipping region.
+    pub const fn region(&self) -> &RegionTrimPreparedCacheAudit2 {
+        &self.region
+    }
+}
+
+impl RegionTrimPreparedCacheAudit2 {
+    /// Builds per-region prepared cache evidence for trim-by-region.
+    pub(crate) const fn new(
+        prepared_contour_count: usize,
+        prepared_material_segment_count: usize,
+        prepared_material_segment_kind_counts: SegmentKindCounts,
+        prepared_hole_segment_count: usize,
+        prepared_hole_segment_kind_counts: SegmentKindCounts,
+        prepared_segment_count: usize,
+        prepared_segment_kind_counts: SegmentKindCounts,
+        decided_segment_box_count: usize,
+        undecided_segment_box_count: usize,
+        region_box_decided: bool,
+    ) -> Self {
+        Self {
+            freshness: CurveStringPreparedCacheFreshness2::BorrowedCurrentSource,
+            prepared_contour_count,
+            prepared_material_segment_count,
+            prepared_material_segment_kind_counts,
+            prepared_hole_segment_count,
+            prepared_hole_segment_kind_counts,
+            prepared_segment_count,
+            prepared_segment_kind_counts,
+            decided_segment_box_count,
+            undecided_segment_box_count,
+            region_box_decided,
+        }
+    }
+
+    /// Returns the cache freshness claim for this borrowed prepared view.
+    pub const fn freshness(&self) -> CurveStringPreparedCacheFreshness2 {
+        self.freshness
+    }
+
+    /// Returns prepared material and hole contour count.
+    pub const fn prepared_contour_count(&self) -> usize {
+        self.prepared_contour_count
+    }
+
+    /// Returns prepared material segment count.
+    pub const fn prepared_material_segment_count(&self) -> usize {
+        self.prepared_material_segment_count
+    }
+
+    /// Returns primitive-family counts for prepared material segments.
+    pub const fn prepared_material_segment_kind_counts(&self) -> SegmentKindCounts {
+        self.prepared_material_segment_kind_counts
+    }
+
+    /// Returns prepared hole segment count.
+    pub const fn prepared_hole_segment_count(&self) -> usize {
+        self.prepared_hole_segment_count
+    }
+
+    /// Returns primitive-family counts for prepared hole segments.
+    pub const fn prepared_hole_segment_kind_counts(&self) -> SegmentKindCounts {
+        self.prepared_hole_segment_kind_counts
+    }
+
+    /// Returns prepared material and hole segment count.
+    pub const fn prepared_segment_count(&self) -> usize {
+        self.prepared_segment_count
+    }
+
+    /// Returns primitive-family counts for all prepared region segments.
+    pub const fn prepared_segment_kind_counts(&self) -> SegmentKindCounts {
+        self.prepared_segment_kind_counts
+    }
+
+    /// Returns decided segment AABB count retained by preparation.
+    pub const fn decided_segment_box_count(&self) -> usize {
+        self.decided_segment_box_count
+    }
+
+    /// Returns segment AABB count that remained undecided.
+    pub const fn undecided_segment_box_count(&self) -> usize {
+        self.undecided_segment_box_count
+    }
+
+    /// Returns whether preparation retained a decided whole-region AABB.
+    pub const fn region_box_decided(&self) -> bool {
+        self.region_box_decided
     }
 }
 
@@ -4022,6 +4159,7 @@ fn trim_curve_string_inside_region(
             boundary_hits,
             Vec::new(),
             CurveStringRegionTrimQueryPath2::Direct,
+            None,
             CurveStringRegionTrimStage2::BoundaryCollection,
             status,
             blocker,
@@ -4039,6 +4177,7 @@ fn trim_curve_string_inside_region(
         boundary_workload,
         boundary_hits,
         CurveStringRegionTrimQueryPath2::Direct,
+        None,
         policy,
         |point| region.classify_point(point, policy),
     )
@@ -4063,6 +4202,7 @@ fn region_hole_segment_count(region: &Region2) -> usize {
 fn trim_curve_string_inside_prepared_region(
     curve_string: &CurveString2,
     region: &PreparedRegionView2<'_>,
+    prepared_cache_report: Option<CurveStringRegionTrimPreparedCacheReport2>,
     policy: &CurvePolicy,
 ) -> CurveResult<CurveStringRegionTrimResult2> {
     let mut boundary_hits = Vec::new();
@@ -4088,6 +4228,7 @@ fn trim_curve_string_inside_prepared_region(
             boundary_hits,
             Vec::new(),
             CurveStringRegionTrimQueryPath2::Prepared,
+            prepared_cache_report,
             CurveStringRegionTrimStage2::BoundaryCollection,
             status,
             blocker,
@@ -4105,6 +4246,7 @@ fn trim_curve_string_inside_prepared_region(
         boundary_workload,
         boundary_hits,
         CurveStringRegionTrimQueryPath2::Prepared,
+        prepared_cache_report,
         policy,
         |point| region.classify_point(point, policy),
     )
@@ -4121,6 +4263,7 @@ fn trim_curve_string_inside_region_with_hits(
     boundary_workload: RegionTrimBoundaryWorkload,
     boundary_hits: Vec<CurveStringRegionTrimHit2>,
     query_path: CurveStringRegionTrimQueryPath2,
+    prepared_cache_report: Option<CurveStringRegionTrimPreparedCacheReport2>,
     policy: &CurvePolicy,
     mut classify_point: impl FnMut(&Point2) -> Classification<RegionPointLocation>,
 ) -> CurveResult<CurveStringRegionTrimResult2> {
@@ -4153,6 +4296,7 @@ fn trim_curve_string_inside_region_with_hits(
                     boundary_hits,
                     interval_reports,
                     query_path,
+                    prepared_cache_report.clone(),
                     CurveStringRegionTrimStage2::IntervalClassification,
                     retained_status_for_uncertainty(reason),
                     reason,
@@ -4204,6 +4348,7 @@ fn trim_curve_string_inside_region_with_hits(
                         boundary_hits,
                         interval_reports,
                         query_path,
+                        prepared_cache_report.clone(),
                         CurveStringRegionTrimStage2::IntervalClassification,
                         RetainedTopologyStatus::Unsupported,
                         reason,
@@ -4238,6 +4383,7 @@ fn trim_curve_string_inside_region_with_hits(
                         boundary_hits,
                         interval_reports,
                         query_path,
+                        prepared_cache_report.clone(),
                         CurveStringRegionTrimStage2::IntervalClassification,
                         RetainedTopologyStatus::Unresolved,
                         reason,
@@ -4276,6 +4422,7 @@ fn trim_curve_string_inside_region_with_hits(
                         boundary_hits,
                         interval_reports,
                         query_path,
+                        prepared_cache_report.clone(),
                         CurveStringRegionTrimStage2::IntervalClassification,
                         retained_status_for_uncertainty(reason),
                         reason,
@@ -4315,6 +4462,7 @@ fn trim_curve_string_inside_region_with_hits(
                         boundary_hits,
                         interval_reports,
                         query_path,
+                        prepared_cache_report.clone(),
                         CurveStringRegionTrimStage2::IntervalClassification,
                         retained_status_for_uncertainty(reason),
                         reason,
@@ -4389,6 +4537,7 @@ fn trim_curve_string_inside_region_with_hits(
                         boundary_hits,
                         interval_reports,
                         query_path,
+                        prepared_cache_report.clone(),
                         CurveStringRegionTrimStage2::IntervalClassification,
                         RetainedTopologyStatus::Unsupported,
                         UncertaintyReason::Boundary,
@@ -4428,6 +4577,7 @@ fn trim_curve_string_inside_region_with_hits(
             output_segment_count: Some(output_segment_count),
             output_segment_kind_counts: Some(output_segment_kind_counts),
             query_path,
+            prepared_cache_report,
             stage: CurveStringRegionTrimStage2::OutputMaterialization,
             status: RetainedTopologyStatus::NativeExact,
             blocker: None,
@@ -4954,6 +5104,7 @@ fn blocked_region_trim_result(
     boundary_hits: Vec<CurveStringRegionTrimHit2>,
     interval_reports: Vec<CurveStringRegionTrimIntervalReport2>,
     query_path: CurveStringRegionTrimQueryPath2,
+    prepared_cache_report: Option<CurveStringRegionTrimPreparedCacheReport2>,
     stage: CurveStringRegionTrimStage2,
     status: RetainedTopologyStatus,
     blocker: UncertaintyReason,
@@ -4981,6 +5132,7 @@ fn blocked_region_trim_result(
             output_segment_count: None,
             output_segment_kind_counts: None,
             query_path,
+            prepared_cache_report,
             stage,
             status,
             blocker: Some(blocker),

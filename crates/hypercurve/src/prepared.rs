@@ -17,10 +17,11 @@ use crate::{
     CurveStringCurveTrimQueryPath2, CurveStringCurveTrimResult2, CurveStringIntersection,
     CurveStringIntersectionPreparedCacheReport2, CurveStringIntersectionQueryPath2,
     CurveStringIntersectionReport2, CurveStringIntersectionResult2, CurveStringPreparedCacheAudit2,
-    CurveStringRegionTrimResult2, FillRule, LineSeg2, LineSeg2Facts, LineSide, Point2, Region2,
-    RegionBooleanResult2, RegionContourIntersection, RegionContourKey, RegionContourRole,
-    RegionIntersectionSet, RegionPointLocation, RegionSide, RegionView2, Segment2,
-    SegmentIntersection, SegmentKind, SegmentKindCounts, UncertaintyReason,
+    CurveStringRegionTrimPreparedCacheReport2, CurveStringRegionTrimResult2, FillRule, LineSeg2,
+    LineSeg2Facts, LineSide, Point2, Region2, RegionBooleanResult2, RegionContourIntersection,
+    RegionContourKey, RegionContourRole, RegionIntersectionSet, RegionPointLocation, RegionSide,
+    RegionTrimPreparedCacheAudit2, RegionView2, Segment2, SegmentIntersection, SegmentKind,
+    SegmentKindCounts, UncertaintyReason,
 };
 
 /// Prepared point-line classifier for a fixed [`LineSeg2`].
@@ -501,7 +502,11 @@ impl<'a> PreparedCurveStringView2<'a> {
         region: &PreparedRegionView2<'_>,
         policy: &CurvePolicy,
     ) -> CurveResult<CurveStringRegionTrimResult2> {
-        self.curve.trim_inside_prepared_region(region, policy)
+        self.curve.trim_inside_prepared_region(
+            region,
+            Some(curve_string_region_trim_prepared_cache_report(self, region)),
+            policy,
+        )
     }
 
     /// Retains portions of this prepared open curve string inside an ordinary region.
@@ -1424,6 +1429,33 @@ fn prepared_curve_string_cache_audit(
         curve.decided_segment_box_count(),
         curve.undecided_segment_box_count(),
         curve.curve_box().is_some(),
+    )
+}
+
+fn curve_string_region_trim_prepared_cache_report(
+    source: &PreparedCurveStringView2<'_>,
+    region: &PreparedRegionView2<'_>,
+) -> CurveStringRegionTrimPreparedCacheReport2 {
+    CurveStringRegionTrimPreparedCacheReport2::new(
+        prepared_curve_string_cache_audit(source),
+        prepared_region_trim_cache_audit(region),
+    )
+}
+
+fn prepared_region_trim_cache_audit(
+    region: &PreparedRegionView2<'_>,
+) -> RegionTrimPreparedCacheAudit2 {
+    RegionTrimPreparedCacheAudit2::new(
+        region.prepared_contour_count(),
+        region.prepared_material_segment_count(),
+        region.prepared_material_segment_kind_counts(),
+        region.prepared_hole_segment_count(),
+        region.prepared_hole_segment_kind_counts(),
+        region.prepared_segment_count(),
+        region.prepared_segment_kind_counts(),
+        region.decided_segment_box_count(),
+        region.undecided_segment_box_count(),
+        region.region_box().is_some(),
     )
 }
 
