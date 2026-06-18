@@ -424,6 +424,7 @@ fn curve_string_ordered_link_materializes_multistep_chain() {
     assert!(linked.report().status().is_native_exact());
     assert_eq!(linked.report().source_curve_string_count(), 3);
     assert_eq!(linked.report().output_segment_count(), Some(3));
+    assert_eq!(linked.report().output_source_indices(), &[0, 1, 2]);
     assert_eq!(linked.report().steps().len(), 2);
     assert_eq!(
         linked.report().steps()[0].accumulated_source_indices(),
@@ -476,6 +477,7 @@ fn curve_string_ordered_link_reports_reversed_accumulated_sources() {
     .unwrap();
 
     assert!(linked.report().status().is_native_exact());
+    assert_eq!(linked.report().output_source_indices(), &[1, 0]);
     assert_eq!(
         linked.report().steps()[0].accumulated_source_indices(),
         &[0]
@@ -524,6 +526,7 @@ fn curve_string_ordered_link_reports_disconnected_step() {
     assert!(linked.report().status().is_retained_evidence());
     assert_eq!(linked.report().blocker(), Some(UncertaintyReason::Boundary));
     assert_eq!(linked.report().output_segment_count(), None);
+    assert_eq!(linked.report().output_source_indices(), &[0]);
     assert_eq!(linked.report().steps().len(), 1);
     assert_eq!(
         linked.report().steps()[0].status(),

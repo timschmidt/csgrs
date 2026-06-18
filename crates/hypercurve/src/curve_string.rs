@@ -147,6 +147,7 @@ pub struct CurveStringOrderedLinkStepReport2 {
 pub struct CurveStringOrderedLinkReport2 {
     source_curve_string_count: usize,
     output_segment_count: Option<usize>,
+    output_source_indices: Vec<usize>,
     steps: Vec<CurveStringOrderedLinkStepReport2>,
     status: RetainedTopologyStatus,
     blocker: Option<UncertaintyReason>,
@@ -674,6 +675,7 @@ impl CurveString2 {
                     accumulated_source_indices = next_accumulated_source_indices;
                 }
                 Classification::Decided(None) => {
+                    let blocked_output_source_indices = accumulated_source_indices.clone();
                     steps.push(CurveStringOrderedLinkStepReport2 {
                         accumulated_source_indices,
                         next_source_index,
@@ -686,6 +688,7 @@ impl CurveString2 {
                         report: CurveStringOrderedLinkReport2 {
                             source_curve_string_count,
                             output_segment_count: None,
+                            output_source_indices: blocked_output_source_indices,
                             steps,
                             status: RetainedTopologyStatus::Unsupported,
                             blocker: Some(UncertaintyReason::Boundary),
@@ -693,6 +696,7 @@ impl CurveString2 {
                     });
                 }
                 Classification::Uncertain(reason) => {
+                    let blocked_output_source_indices = accumulated_source_indices.clone();
                     steps.push(CurveStringOrderedLinkStepReport2 {
                         accumulated_source_indices,
                         next_source_index,
@@ -705,6 +709,7 @@ impl CurveString2 {
                         report: CurveStringOrderedLinkReport2 {
                             source_curve_string_count,
                             output_segment_count: None,
+                            output_source_indices: blocked_output_source_indices,
                             steps,
                             status: retained_status_for_uncertainty(reason),
                             blocker: Some(reason),
@@ -718,6 +723,7 @@ impl CurveString2 {
             report: CurveStringOrderedLinkReport2 {
                 source_curve_string_count,
                 output_segment_count: Some(accumulated.len()),
+                output_source_indices: accumulated_source_indices,
                 steps,
                 status: RetainedTopologyStatus::NativeExact,
                 blocker: None,
@@ -4496,6 +4502,14 @@ impl CurveStringOrderedLinkReport2 {
     /// Returns the output segment count when ordered linking materialized.
     pub const fn output_segment_count(&self) -> Option<usize> {
         self.output_segment_count
+    }
+
+    /// Returns source curve-string indices in final output order.
+    ///
+    /// For blocked reports this is the accumulated output order before the
+    /// failing step.
+    pub fn output_source_indices(&self) -> &[usize] {
+        &self.output_source_indices
     }
 
     /// Returns ordered link steps and their pairwise evidence.
