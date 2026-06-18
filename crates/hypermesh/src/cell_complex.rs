@@ -814,7 +814,7 @@ impl ExactLabeledCellComplex {
             return Err(ExactArrangementBlocker::UnresolvedRegionClassification);
         }
         let Some((selected_faces, selected_face_orientations)) =
-            select_faces_from_volume_adjacencies(
+            checked_volume_resolved_face_selection(
                 &self.faces,
                 &self.volume_regions,
                 &self.volume_adjacencies,
@@ -1643,6 +1643,22 @@ fn select_faces_from_volume_adjacencies(
         .map(|orientation| orientation.face)
         .collect::<Vec<_>>();
     Ok(Some((selected_faces, selected)))
+}
+
+fn checked_volume_resolved_face_selection(
+    faces: &[ExactCellComplexFace],
+    volume_regions: &[ExactCellComplexVolumeRegion],
+    volume_adjacencies: &[ArrangementVolumeAdjacency],
+    operation: ExactBooleanOperation,
+) -> Result<Option<(Vec<usize>, Vec<ExactSelectedFaceOrientation>)>, ExactArrangementBlocker> {
+    if matches!(operation, ExactBooleanOperation::SelectedRegions(_))
+        || volume_regions.is_empty()
+        || volume_adjacencies.is_empty()
+    {
+        return Ok(None);
+    }
+    validate_cell_complex_parts(faces, volume_regions, volume_adjacencies)?;
+    select_faces_from_volume_adjacencies(faces, volume_regions, volume_adjacencies, operation)
 }
 
 fn validate_cell_complex_parts(
