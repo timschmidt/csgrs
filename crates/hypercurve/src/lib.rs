@@ -122,7 +122,9 @@ pub use bezier_topology::{
     BezierMonotoneGraphContactOrder, BezierMonotoneGraphOrder, BezierMonotoneSpan,
 };
 pub use boolean::{
-    BooleanFragmentAction, BooleanFragmentClassification, BooleanFragmentSelection, BooleanOp,
+    BooleanFragmentAction, BooleanFragmentClassification, BooleanFragmentSelection,
+    BooleanFragmentSelectionReport2, BooleanFragmentSelectionResult2,
+    BooleanFragmentSelectionStage2, BooleanOp,
 };
 pub use boolean_boundary::{
     BooleanBoundaryChain, BooleanBoundaryChainSet, BooleanBoundaryFragmentSet, BooleanBoundaryLoop,

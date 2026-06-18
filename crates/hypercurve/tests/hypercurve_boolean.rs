@@ -1,9 +1,10 @@
 use hypercurve::{
     BooleanBoundaryChain, BooleanBoundaryChainSet, BooleanBoundaryFragmentSet, BooleanBoundaryLoop,
     BooleanBoundaryLoopSet, BooleanFragmentAction, BooleanFragmentClassification,
-    BooleanFragmentSelection, BooleanOp, BulgeVertex2, Classification, Contour2, CurveError,
-    CurvePolicy, DirectedBooleanFragment, FillRule, LineSeg2, Real, Region2, RegionContourKey,
-    RegionContourRole, RegionPointLocation, RegionSide, Segment2, UncertaintyReason,
+    BooleanFragmentSelection, BooleanFragmentSelectionStage2, BooleanOp, BulgeVertex2,
+    Classification, Contour2, CurveError, CurvePolicy, DirectedBooleanFragment, FillRule, LineSeg2,
+    Real, Region2, RegionContourKey, RegionContourRole, RegionPointLocation, RegionSide, Segment2,
+    UncertaintyReason,
 };
 
 fn s(value: i32) -> Real {
@@ -188,17 +189,46 @@ fn boolean_fragment_selection_reverses_second_operand_for_difference() {
 #[test]
 fn boolean_fragment_selection_emits_directed_boundary_fragments() {
     let (first, second, fragments) = overlapping_fragments();
-    let Classification::Decided(union) = fragments
-        .classify_for_boolean(
+    let union_result = fragments
+        .classify_for_boolean_with_report(
             &first.as_view(),
             &second.as_view(),
             BooleanOp::Union,
             &policy(),
         )
-        .unwrap()
-    else {
-        panic!("expected decided union selection");
-    };
+        .unwrap();
+    assert!(union_result.report().status().is_native_exact());
+    assert_eq!(union_result.report().op(), BooleanOp::Union);
+    assert_eq!(
+        union_result.report().stage(),
+        BooleanFragmentSelectionStage2::ActionAssignment
+    );
+    assert_eq!(
+        union_result.report().source_contour_count(),
+        fragments.len()
+    );
+    assert_eq!(union_result.report().source_fragment_count(), 12);
+    assert_eq!(union_result.report().classified_fragment_count(), Some(12));
+    assert_eq!(
+        union_result.report().boundary_needs_resolution_count(),
+        Some(0)
+    );
+    assert_eq!(union_result.report().blocker(), None);
+    let union = union_result
+        .selection()
+        .expect("reported union selection should materialize");
+    assert_eq!(
+        union_result.report().discard_count(),
+        Some(union.count_action(BooleanFragmentAction::Discard))
+    );
+    assert_eq!(
+        union_result.report().keep_source_direction_count(),
+        Some(union.count_action(BooleanFragmentAction::KeepSourceDirection))
+    );
+    assert_eq!(
+        union_result.report().keep_reversed_count(),
+        Some(union.count_action(BooleanFragmentAction::KeepReversed))
+    );
 
     let emitted = union.emit_boundary_fragments(&fragments).unwrap();
 
@@ -367,6 +397,23 @@ fn boolean_fragment_selection_defers_shared_boundary_fragments() {
     };
 
     assert!(selection.count_action(BooleanFragmentAction::BoundaryNeedsResolution) > 0);
+    let reported = fragments
+        .classify_for_boolean_with_report(
+            &first.as_view(),
+            &second.as_view(),
+            BooleanOp::Union,
+            &policy(),
+        )
+        .unwrap();
+    assert_eq!(
+        reported.report().stage(),
+        BooleanFragmentSelectionStage2::ActionAssignment
+    );
+    assert_eq!(
+        reported.report().boundary_needs_resolution_count(),
+        Some(selection.count_action(BooleanFragmentAction::BoundaryNeedsResolution))
+    );
+    assert_eq!(reported.report().blocker(), None);
     let emitted = selection.emit_boundary_fragments(&fragments).unwrap();
     assert!(!emitted.is_ready_for_traversal());
     assert_eq!(
