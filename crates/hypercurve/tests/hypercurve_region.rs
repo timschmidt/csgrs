@@ -527,31 +527,15 @@ fn unordered_line_segments_split_crossings_before_boundary_blocker() {
     assert_eq!(report.split_intersection_event_count(), 1);
     assert_eq!(report.split_intersection_points(), &[p(2, 2)]);
     assert_eq!(report.split_intersection_reports().len(), 1);
-    assert_eq!(
-        report.split_intersection_reports()[0].first_source_segment_index(),
-        0
-    );
-    assert_eq!(
-        report.split_intersection_reports()[0].first_source_segment_kind(),
-        SegmentKind::Line
-    );
-    assert_eq!(
-        report.split_intersection_reports()[0].first_source_param(),
-        &q(1, 2)
-    );
-    assert_eq!(
-        report.split_intersection_reports()[0].second_source_segment_index(),
-        1
-    );
-    assert_eq!(
-        report.split_intersection_reports()[0].second_source_segment_kind(),
-        SegmentKind::Line
-    );
-    assert_eq!(
-        report.split_intersection_reports()[0].second_source_param(),
-        &q(1, 2)
-    );
-    assert_eq!(report.split_intersection_reports()[0].point(), &p(2, 2));
+    let event: &hypercurve::RegionLineSegmentSplitIntersectionReport2 =
+        &report.split_intersection_reports()[0];
+    assert_eq!(event.first_source_segment_index(), 0);
+    assert_eq!(event.first_source_segment_kind(), SegmentKind::Line);
+    assert_eq!(event.first_source_param(), &q(1, 2));
+    assert_eq!(event.second_source_segment_index(), 1);
+    assert_eq!(event.second_source_segment_kind(), SegmentKind::Line);
+    assert_eq!(event.second_source_param(), &q(1, 2));
+    assert_eq!(event.point(), &p(2, 2));
     assert_eq!(report.split_output_segment_count(), Some(4));
     assert_eq!(report.endpoint_graph_endpoint_count(), Some(8));
     assert_eq!(report.endpoint_graph_structural_bucket_count(), Some(5));

@@ -244,6 +244,7 @@ pub use region_nesting::{
     RegionLineSegmentArrangedEndpoint2, RegionLineSegmentArrangedSourceReport2,
     RegionLineSegmentRegionBuildReport2, RegionLineSegmentRegionBuildResult2,
     RegionLineSegmentRegionBuildStage2, RegionLineSegmentRingSourceReport2,
+    RegionLineSegmentSplitIntersectionReport2,
 };
 pub use retained_curve::{
     RetainedCurveCacheSummary2, RetainedCurveFamily2, RetainedCurveIdentity2,
