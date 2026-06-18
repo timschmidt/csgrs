@@ -396,6 +396,14 @@ fn curve_string_link_materializes_unique_end_start_connection() {
     );
     assert!(!linked.report().output_segments()[0].reversed());
     assert_eq!(
+        linked.report().output_segments()[0].output_start_point(),
+        &p(0, 0)
+    );
+    assert_eq!(
+        linked.report().output_segments()[0].output_end_point(),
+        &p(1, 0)
+    );
+    assert_eq!(
         linked.report().output_segments()[1].source_input(),
         CurveStringLinkSourceInput2::Second
     );
@@ -404,6 +412,14 @@ fn curve_string_link_materializes_unique_end_start_connection() {
         0
     );
     assert!(!linked.report().output_segments()[1].reversed());
+    assert_eq!(
+        linked.report().output_segments()[1].output_start_point(),
+        &p(1, 0)
+    );
+    assert_eq!(
+        linked.report().output_segments()[1].output_end_point(),
+        &p(2, 0)
+    );
     assert!(linked.report().status().is_native_exact());
     assert_eq!(linked.curve_string().len(), 2);
     assert_eq!(linked.curve_string().start(), Some(&p(0, 0)));
@@ -434,6 +450,14 @@ fn curve_string_link_reverses_second_curve_when_endpoints_match_end_to_end() {
         0
     );
     assert!(linked.report().output_segments()[1].reversed());
+    assert_eq!(
+        linked.report().output_segments()[1].output_start_point(),
+        &p(1, 0)
+    );
+    assert_eq!(
+        linked.report().output_segments()[1].output_end_point(),
+        &p(2, 0)
+    );
     assert_eq!(linked.curve_string().start(), Some(&p(0, 0)));
     assert_eq!(linked.curve_string().end(), Some(&p(2, 0)));
     assert_eq!(linked.curve_string().segments()[1].start(), &p(1, 0));
