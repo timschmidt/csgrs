@@ -304,13 +304,29 @@ fn curve_string_merge_adjacent_collinear_lines_reports_source_runs() {
     assert_eq!(merged.report().spans()[0].source_start_segment_index(), 0);
     assert_eq!(merged.report().spans()[0].source_end_segment_index(), 1);
     assert_eq!(merged.report().spans()[0].source_segment_indices(), &[0, 1]);
+    assert_eq!(
+        merged.report().spans()[0].source_segment_kind_counts(),
+        SegmentKindCounts { lines: 2, arcs: 0 }
+    );
     assert_eq!(merged.report().spans()[0].output_segment_index(), 0);
+    assert_eq!(
+        merged.report().spans()[0].output_segment_kind(),
+        SegmentKind::Line
+    );
     assert_eq!(merged.report().spans()[0].output_start_point(), &p(0, 0));
     assert_eq!(merged.report().spans()[0].output_end_point(), &p(5, 0));
     assert_eq!(merged.report().spans()[1].source_start_segment_index(), 2);
     assert_eq!(merged.report().spans()[1].source_end_segment_index(), 3);
     assert_eq!(merged.report().spans()[1].source_segment_indices(), &[2, 3]);
+    assert_eq!(
+        merged.report().spans()[1].source_segment_kind_counts(),
+        SegmentKindCounts { lines: 2, arcs: 0 }
+    );
     assert_eq!(merged.report().spans()[1].output_segment_index(), 1);
+    assert_eq!(
+        merged.report().spans()[1].output_segment_kind(),
+        SegmentKind::Line
+    );
     assert_eq!(merged.report().spans()[1].output_start_point(), &p(5, 0));
     assert_eq!(merged.report().spans()[1].output_end_point(), &p(5, 6));
 
@@ -343,6 +359,42 @@ fn curve_string_merge_adjacent_collinear_lines_preserves_corners() {
     assert_eq!(curve.len(), 2);
     assert_line(&curve.segments()[0], p(0, 0), p(2, 0));
     assert_line(&curve.segments()[1], p(2, 0), p(2, 3));
+}
+
+#[test]
+fn curve_string_line_merge_span_reports_preserve_mixed_segment_kinds() {
+    let curve = CurveString2::try_new(vec![
+        line_segment(0, 0, 1, 0),
+        Segment2::Arc(CircularArc2::from_bulge(p(1, 0), p(3, 0), s(1)).unwrap()),
+    ])
+    .unwrap();
+
+    let merged = curve.merge_adjacent_collinear_lines(&policy()).unwrap();
+
+    assert!(merged.report().status().is_native_exact());
+    assert_eq!(merged.report().merged_pair_count(), 0);
+    assert_eq!(merged.report().preserved_pair_count(), 1);
+    assert_eq!(merged.report().spans().len(), 2);
+    assert_eq!(
+        merged.report().spans()[0].source_segment_kind_counts(),
+        SegmentKindCounts { lines: 1, arcs: 0 }
+    );
+    assert_eq!(
+        merged.report().spans()[0].output_segment_kind(),
+        SegmentKind::Line
+    );
+    assert_eq!(
+        merged.report().spans()[1].source_segment_kind_counts(),
+        SegmentKindCounts { lines: 0, arcs: 1 }
+    );
+    assert_eq!(
+        merged.report().spans()[1].output_segment_kind(),
+        SegmentKind::Arc
+    );
+    assert_eq!(
+        merged.report().output_segment_kind_counts(),
+        Some(SegmentKindCounts { lines: 1, arcs: 1 })
+    );
 }
 
 #[test]

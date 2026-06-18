@@ -316,7 +316,9 @@ pub struct CurveStringLineMergeSpanReport2 {
     source_start_segment_index: usize,
     source_end_segment_index: usize,
     source_segment_indices: Vec<usize>,
+    source_segment_kind_counts: SegmentKindCounts,
     output_segment_index: usize,
+    output_segment_kind: SegmentKind,
     output_start_point: Point2,
     output_end_point: Point2,
     status: RetainedTopologyStatus,
@@ -1381,7 +1383,14 @@ impl CurveString2 {
                         source_start_segment_index: current_start_index,
                         source_end_segment_index: next_index - 1,
                         source_segment_indices: (current_start_index..next_index).collect(),
+                        source_segment_kind_counts: segment_kind_counts_for_range(
+                            &self.segments,
+                            current_start_index..next_index,
+                        ),
                         output_segment_index,
+                        output_segment_kind: merged_segments[output_segment_index]
+                            .structural_facts()
+                            .kind,
                         output_start_point,
                         output_end_point,
                         status: RetainedTopologyStatus::NativeExact,
@@ -1418,7 +1427,14 @@ impl CurveString2 {
             source_start_segment_index: current_start_index,
             source_end_segment_index: self.len() - 1,
             source_segment_indices: (current_start_index..self.len()).collect(),
+            source_segment_kind_counts: segment_kind_counts_for_range(
+                &self.segments,
+                current_start_index..self.len(),
+            ),
             output_segment_index,
+            output_segment_kind: merged_segments[output_segment_index]
+                .structural_facts()
+                .kind,
             output_start_point,
             output_end_point,
             status: RetainedTopologyStatus::NativeExact,
@@ -5490,6 +5506,17 @@ fn curve_string_segment_kind_counts(curve_string: &CurveString2) -> SegmentKindC
     counts
 }
 
+fn segment_kind_counts_for_range(
+    segments: &[Segment2],
+    range: std::ops::Range<usize>,
+) -> SegmentKindCounts {
+    let mut counts = SegmentKindCounts::default();
+    for segment in &segments[range] {
+        add_segment_kind_count(&mut counts, segment);
+    }
+    counts
+}
+
 fn curve_strings_segment_kind_counts(curve_strings: &[CurveString2]) -> SegmentKindCounts {
     let mut counts = SegmentKindCounts::default();
     for curve_string in curve_strings {
@@ -6433,9 +6460,19 @@ impl CurveStringLineMergeSpanReport2 {
         &self.source_segment_indices
     }
 
+    /// Returns primitive-family counts for the retained source segment run.
+    pub const fn source_segment_kind_counts(&self) -> SegmentKindCounts {
+        self.source_segment_kind_counts
+    }
+
     /// Returns the output segment index produced for this source run.
     pub const fn output_segment_index(&self) -> usize {
         self.output_segment_index
+    }
+
+    /// Returns the primitive family of the emitted output segment.
+    pub const fn output_segment_kind(&self) -> SegmentKind {
+        self.output_segment_kind
     }
 
     /// Returns the exact start point of this emitted output segment.
