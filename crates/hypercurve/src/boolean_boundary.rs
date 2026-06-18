@@ -10,7 +10,7 @@ use crate::boolean::{
 use crate::classify::is_zero;
 use crate::{
     Classification, Contour2, CurveError, CurvePolicy, CurveResult, FillRule, RegionContourKey,
-    RegionContourRole, RegionSide, Segment2,
+    RegionContourRole, RegionSide, RetainedTopologyStatus, Segment2, UncertaintyReason,
 };
 
 /// A selected fragment with geometry already oriented for result traversal.
@@ -29,6 +29,38 @@ pub struct DirectedBooleanFragment {
 pub struct BooleanBoundaryFragmentSet {
     directed_fragments: Vec<DirectedBooleanFragment>,
     unresolved_boundaries: Vec<BooleanFragmentClassification>,
+}
+
+/// Report for assembling directed boolean boundary fragments into chains.
+#[derive(Clone, Debug, PartialEq)]
+pub struct BooleanBoundaryChainAssemblyReport2 {
+    stage: BooleanBoundaryChainAssemblyStage2,
+    directed_fragment_count: usize,
+    unresolved_boundary_count: usize,
+    chain_count: Option<usize>,
+    closed_chain_count: Option<usize>,
+    open_chain_count: Option<usize>,
+    output_fragment_count: Option<usize>,
+    status: RetainedTopologyStatus,
+    blocker: Option<UncertaintyReason>,
+}
+
+/// Furthest exact stage reached by boolean boundary chain assembly.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum BooleanBoundaryChainAssemblyStage2 {
+    /// Shared-boundary fragments were checked before graph traversal.
+    BoundaryResolution,
+    /// Directed fragment endpoint adjacency was being classified.
+    EndpointAdjacency,
+    /// Endpoint-connected chains were assembled and validated.
+    ChainMaterialization,
+}
+
+/// Result of report-bearing boolean boundary chain assembly.
+#[derive(Clone, Debug, PartialEq)]
+pub struct BooleanBoundaryChainAssemblyResult2 {
+    chains: Option<BooleanBoundaryChainSet>,
+    report: BooleanBoundaryChainAssemblyReport2,
 }
 
 impl BooleanBoundaryFragmentSet {
@@ -88,14 +120,41 @@ impl BooleanBoundaryFragmentSet {
     /// (B. R. Vatti, "A generic solution to polygon clipping," Communications
     /// of the ACM 35(7), 56-63, 1992).
     pub fn assemble_chains(&self, policy: &CurvePolicy) -> Classification<BooleanBoundaryChainSet> {
+        let result = self.assemble_chains_with_report(policy);
+        let blocker = result
+            .report()
+            .blocker()
+            .unwrap_or(UncertaintyReason::Unsupported);
+        if let Some(chains) = result.into_chains() {
+            Classification::Decided(chains)
+        } else {
+            Classification::Uncertain(blocker)
+        }
+    }
+
+    /// Assembles directed boundary fragments and retains traversal evidence.
+    pub fn assemble_chains_with_report(
+        &self,
+        policy: &CurvePolicy,
+    ) -> BooleanBoundaryChainAssemblyResult2 {
         if !self.unresolved_boundaries.is_empty() {
-            return Classification::Uncertain(crate::UncertaintyReason::Boundary);
+            return blocked_boolean_boundary_chain_assembly_result(
+                self,
+                BooleanBoundaryChainAssemblyStage2::BoundaryResolution,
+                UncertaintyReason::Boundary,
+            );
         }
 
         let (successors, predecessors) = match endpoint_adjacency(&self.directed_fragments, policy)
         {
             Classification::Decided(adjacency) => adjacency,
-            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+            Classification::Uncertain(reason) => {
+                return blocked_boolean_boundary_chain_assembly_result(
+                    self,
+                    BooleanBoundaryChainAssemblyStage2::EndpointAdjacency,
+                    reason,
+                );
+            }
         };
 
         let mut used = vec![false; self.directed_fragments.len()];
@@ -107,7 +166,11 @@ impl BooleanBoundaryFragmentSet {
                     match follow_chain(index, &self.directed_fragments, &successors, &mut used) {
                         Classification::Decided(chain) => chain,
                         Classification::Uncertain(reason) => {
-                            return Classification::Uncertain(reason);
+                            return blocked_boolean_boundary_chain_assembly_result(
+                                self,
+                                BooleanBoundaryChainAssemblyStage2::ChainMaterialization,
+                                reason,
+                            );
                         }
                     };
                 chains.push(chain);
@@ -120,14 +183,89 @@ impl BooleanBoundaryFragmentSet {
                     match follow_chain(index, &self.directed_fragments, &successors, &mut used) {
                         Classification::Decided(chain) => chain,
                         Classification::Uncertain(reason) => {
-                            return Classification::Uncertain(reason);
+                            return blocked_boolean_boundary_chain_assembly_result(
+                                self,
+                                BooleanBoundaryChainAssemblyStage2::ChainMaterialization,
+                                reason,
+                            );
                         }
                     };
                 chains.push(chain);
             }
         }
 
-        decided_boolean_boundary_chain_set(chains)
+        match BooleanBoundaryChainSet::new(chains) {
+            Ok(chain_set) => decided_boolean_boundary_chain_assembly_result(self, chain_set),
+            Err(_) => blocked_boolean_boundary_chain_assembly_result(
+                self,
+                BooleanBoundaryChainAssemblyStage2::ChainMaterialization,
+                UncertaintyReason::Unsupported,
+            ),
+        }
+    }
+}
+
+impl BooleanBoundaryChainAssemblyReport2 {
+    /// Returns the furthest exact chain-assembly stage reached.
+    pub const fn stage(&self) -> BooleanBoundaryChainAssemblyStage2 {
+        self.stage
+    }
+
+    /// Returns the number of directed fragments supplied for traversal.
+    pub const fn directed_fragment_count(&self) -> usize {
+        self.directed_fragment_count
+    }
+
+    /// Returns the number of unresolved shared-boundary fragments.
+    pub const fn unresolved_boundary_count(&self) -> usize {
+        self.unresolved_boundary_count
+    }
+
+    /// Returns assembled chain count when materialized.
+    pub const fn chain_count(&self) -> Option<usize> {
+        self.chain_count
+    }
+
+    /// Returns closed chain count when materialized.
+    pub const fn closed_chain_count(&self) -> Option<usize> {
+        self.closed_chain_count
+    }
+
+    /// Returns open chain count when materialized.
+    pub const fn open_chain_count(&self) -> Option<usize> {
+        self.open_chain_count
+    }
+
+    /// Returns output fragment count when materialized.
+    pub const fn output_fragment_count(&self) -> Option<usize> {
+        self.output_fragment_count
+    }
+
+    /// Returns retained topology status for chain assembly.
+    pub const fn status(&self) -> RetainedTopologyStatus {
+        self.status
+    }
+
+    /// Returns the exact blocker for non-materialized chain assembly.
+    pub const fn blocker(&self) -> Option<UncertaintyReason> {
+        self.blocker
+    }
+}
+
+impl BooleanBoundaryChainAssemblyResult2 {
+    /// Returns materialized chains, if assembly succeeded.
+    pub const fn chains(&self) -> Option<&BooleanBoundaryChainSet> {
+        self.chains.as_ref()
+    }
+
+    /// Consumes this result and returns materialized chains, if any.
+    pub fn into_chains(self) -> Option<BooleanBoundaryChainSet> {
+        self.chains
+    }
+
+    /// Returns retained chain-assembly evidence.
+    pub const fn report(&self) -> &BooleanBoundaryChainAssemblyReport2 {
+        &self.report
     }
 }
 
@@ -649,12 +787,58 @@ fn decided_boolean_boundary_chain(
     }
 }
 
-fn decided_boolean_boundary_chain_set(
-    chains: Vec<BooleanBoundaryChain>,
-) -> Classification<BooleanBoundaryChainSet> {
-    match BooleanBoundaryChainSet::new(chains) {
-        Ok(chain_set) => Classification::Decided(chain_set),
-        Err(_) => Classification::Uncertain(crate::UncertaintyReason::Unsupported),
+fn decided_boolean_boundary_chain_assembly_result(
+    source: &BooleanBoundaryFragmentSet,
+    chains: BooleanBoundaryChainSet,
+) -> BooleanBoundaryChainAssemblyResult2 {
+    let chain_count = chains.len();
+    let closed_chain_count = chains.closed_count();
+    let output_fragment_count = chains.chains().iter().map(BooleanBoundaryChain::len).sum();
+    BooleanBoundaryChainAssemblyResult2 {
+        chains: Some(chains),
+        report: BooleanBoundaryChainAssemblyReport2 {
+            stage: BooleanBoundaryChainAssemblyStage2::ChainMaterialization,
+            directed_fragment_count: source.directed_len(),
+            unresolved_boundary_count: source.unresolved_len(),
+            chain_count: Some(chain_count),
+            closed_chain_count: Some(closed_chain_count),
+            open_chain_count: Some(chain_count - closed_chain_count),
+            output_fragment_count: Some(output_fragment_count),
+            status: RetainedTopologyStatus::NativeExact,
+            blocker: None,
+        },
+    }
+}
+
+fn blocked_boolean_boundary_chain_assembly_result(
+    source: &BooleanBoundaryFragmentSet,
+    stage: BooleanBoundaryChainAssemblyStage2,
+    blocker: UncertaintyReason,
+) -> BooleanBoundaryChainAssemblyResult2 {
+    BooleanBoundaryChainAssemblyResult2 {
+        chains: None,
+        report: BooleanBoundaryChainAssemblyReport2 {
+            stage,
+            directed_fragment_count: source.directed_len(),
+            unresolved_boundary_count: source.unresolved_len(),
+            chain_count: None,
+            closed_chain_count: None,
+            open_chain_count: None,
+            output_fragment_count: None,
+            status: retained_status_for_chain_assembly_blocker(blocker),
+            blocker: Some(blocker),
+        },
+    }
+}
+
+fn retained_status_for_chain_assembly_blocker(
+    blocker: UncertaintyReason,
+) -> RetainedTopologyStatus {
+    match blocker {
+        UncertaintyReason::Boundary | UncertaintyReason::Unsupported => {
+            RetainedTopologyStatus::Unsupported
+        }
+        _ => RetainedTopologyStatus::Unresolved,
     }
 }
 

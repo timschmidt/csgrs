@@ -1,10 +1,10 @@
 use hypercurve::{
-    BooleanBoundaryChain, BooleanBoundaryChainSet, BooleanBoundaryFragmentSet, BooleanBoundaryLoop,
-    BooleanBoundaryLoopSet, BooleanFragmentAction, BooleanFragmentClassification,
-    BooleanFragmentSelection, BooleanFragmentSelectionStage2, BooleanOp, BulgeVertex2,
-    Classification, Contour2, CurveError, CurvePolicy, DirectedBooleanFragment, FillRule, LineSeg2,
-    Real, Region2, RegionContourKey, RegionContourRole, RegionPointLocation, RegionSide, Segment2,
-    UncertaintyReason,
+    BooleanBoundaryChain, BooleanBoundaryChainAssemblyStage2, BooleanBoundaryChainSet,
+    BooleanBoundaryFragmentSet, BooleanBoundaryLoop, BooleanBoundaryLoopSet, BooleanFragmentAction,
+    BooleanFragmentClassification, BooleanFragmentSelection, BooleanFragmentSelectionStage2,
+    BooleanOp, BulgeVertex2, Classification, Contour2, CurveError, CurvePolicy,
+    DirectedBooleanFragment, FillRule, LineSeg2, Real, Region2, RegionContourKey,
+    RegionContourRole, RegionPointLocation, RegionSide, Segment2, UncertaintyReason,
 };
 
 fn s(value: i32) -> Real {
@@ -240,9 +240,28 @@ fn boolean_fragment_selection_emits_directed_boundary_fragments() {
     assert_eq!(emitted.unresolved_len(), 0);
     assert!(emitted.is_ready_for_traversal());
 
-    let Classification::Decided(chains) = emitted.assemble_chains(&policy()) else {
-        panic!("expected assembled boundary chains");
-    };
+    let assembled = emitted.assemble_chains_with_report(&policy());
+    assert!(assembled.report().status().is_native_exact());
+    assert_eq!(
+        assembled.report().stage(),
+        BooleanBoundaryChainAssemblyStage2::ChainMaterialization
+    );
+    assert_eq!(
+        assembled.report().directed_fragment_count(),
+        emitted.directed_len()
+    );
+    assert_eq!(assembled.report().unresolved_boundary_count(), 0);
+    assert_eq!(assembled.report().chain_count(), Some(1));
+    assert_eq!(assembled.report().closed_chain_count(), Some(1));
+    assert_eq!(assembled.report().open_chain_count(), Some(0));
+    assert_eq!(
+        assembled.report().output_fragment_count(),
+        Some(emitted.directed_len())
+    );
+    assert_eq!(assembled.report().blocker(), None);
+    let chains = assembled
+        .chains()
+        .expect("reported boundary chain assembly should materialize");
     assert_eq!(chains.len(), 1);
     assert_eq!(chains.closed_count(), 1);
     assert_eq!(chains.chains()[0].len(), emitted.directed_len());
@@ -419,6 +438,22 @@ fn boolean_fragment_selection_defers_shared_boundary_fragments() {
     assert_eq!(
         emitted.unresolved_len(),
         selection.count_action(BooleanFragmentAction::BoundaryNeedsResolution)
+    );
+    let assembled = emitted.assemble_chains_with_report(&policy());
+    assert!(assembled.chains().is_none());
+    assert!(assembled.report().status().is_retained_evidence());
+    assert_eq!(
+        assembled.report().stage(),
+        BooleanBoundaryChainAssemblyStage2::BoundaryResolution
+    );
+    assert_eq!(
+        assembled.report().unresolved_boundary_count(),
+        emitted.unresolved_len()
+    );
+    assert_eq!(assembled.report().chain_count(), None);
+    assert_eq!(
+        assembled.report().blocker(),
+        Some(UncertaintyReason::Boundary)
     );
     assert_eq!(
         emitted.assemble_chains(&policy()),
@@ -632,6 +667,19 @@ fn boundary_chain_assembly_rejects_branch_points() {
     )
     .unwrap();
 
+    let assembled = fragments.assemble_chains_with_report(&policy());
+    assert!(assembled.chains().is_none());
+    assert!(assembled.report().status().is_retained_evidence());
+    assert_eq!(
+        assembled.report().stage(),
+        BooleanBoundaryChainAssemblyStage2::EndpointAdjacency
+    );
+    assert_eq!(assembled.report().directed_fragment_count(), 3);
+    assert_eq!(assembled.report().unresolved_boundary_count(), 0);
+    assert_eq!(
+        assembled.report().blocker(),
+        Some(UncertaintyReason::Unsupported)
+    );
     assert_eq!(
         fragments.assemble_chains(&policy()),
         Classification::Uncertain(UncertaintyReason::Unsupported)
@@ -658,9 +706,21 @@ fn boundary_loop_extraction_rejects_open_chains() {
     )
     .unwrap();
 
-    let Classification::Decided(chains) = fragments.assemble_chains(&policy()) else {
-        panic!("expected open chain assembly to succeed");
-    };
+    let assembled = fragments.assemble_chains_with_report(&policy());
+    assert!(assembled.report().status().is_native_exact());
+    assert_eq!(
+        assembled.report().stage(),
+        BooleanBoundaryChainAssemblyStage2::ChainMaterialization
+    );
+    assert_eq!(assembled.report().directed_fragment_count(), 2);
+    assert_eq!(assembled.report().chain_count(), Some(1));
+    assert_eq!(assembled.report().closed_chain_count(), Some(0));
+    assert_eq!(assembled.report().open_chain_count(), Some(1));
+    assert_eq!(assembled.report().output_fragment_count(), Some(2));
+    assert_eq!(assembled.report().blocker(), None);
+    let chains = assembled
+        .chains()
+        .expect("reported open chain assembly should materialize");
     assert_eq!(chains.len(), 1);
     assert_eq!(chains.closed_count(), 0);
     assert_eq!(
