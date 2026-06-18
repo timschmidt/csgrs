@@ -17,7 +17,7 @@ use crate::curve_string::CurveString2;
 use crate::segment::{CircularArc2, LineSeg2, Segment2};
 use crate::{
     Classification, CurveError, CurvePolicy, CurveResult, Point2, RetainedTopologyStatus,
-    UncertaintyReason,
+    SegmentKindCounts, UncertaintyReason,
 };
 
 /// Endpoint cap style for checked open curve-string outlines.
@@ -51,8 +51,11 @@ pub enum CurveStringOffsetStage2 {
 pub struct CurveStringOffsetReport2 {
     stage: CurveStringOffsetStage2,
     source_segment_count: usize,
+    source_segment_kind_counts: SegmentKindCounts,
     raw_offset_segment_count: Option<usize>,
+    raw_offset_segment_kind_counts: Option<SegmentKindCounts>,
     output_segment_count: Option<usize>,
+    output_segment_kind_counts: Option<SegmentKindCounts>,
     status: RetainedTopologyStatus,
     blocker: Option<UncertaintyReason>,
 }
@@ -290,12 +293,15 @@ impl CurveString2 {
         policy: &CurvePolicy,
     ) -> CurveResult<CurveStringOffsetResult2> {
         let source_segment_count = self.len();
+        let source_segment_kind_counts = segment_kind_counts(self.segments());
         let offset = match self.offset_left_with_line_joins(distance, policy)? {
             Classification::Decided(offset) => offset,
             Classification::Uncertain(reason) => {
                 return Ok(blocked_curve_string_offset_result(
                     CurveStringOffsetStage2::OffsetConstruction,
                     source_segment_count,
+                    source_segment_kind_counts,
+                    None,
                     None,
                     retained_status_for_offset_blocker(reason),
                     reason,
@@ -303,6 +309,7 @@ impl CurveString2 {
             }
         };
         let raw_offset_segment_count = offset.len();
+        let raw_offset_segment_kind_counts = segment_kind_counts(offset.segments());
 
         match offset.has_self_contacts(policy)? {
             Classification::Decided(false) => Ok(CurveStringOffsetResult2 {
@@ -310,8 +317,11 @@ impl CurveString2 {
                 report: CurveStringOffsetReport2 {
                     stage: CurveStringOffsetStage2::SelfContactValidation,
                     source_segment_count,
+                    source_segment_kind_counts,
                     raw_offset_segment_count: Some(raw_offset_segment_count),
+                    raw_offset_segment_kind_counts: Some(raw_offset_segment_kind_counts),
                     output_segment_count: Some(raw_offset_segment_count),
+                    output_segment_kind_counts: Some(raw_offset_segment_kind_counts),
                     status: RetainedTopologyStatus::NativeExact,
                     blocker: None,
                 },
@@ -319,14 +329,18 @@ impl CurveString2 {
             Classification::Decided(true) => Ok(blocked_curve_string_offset_result(
                 CurveStringOffsetStage2::SelfContactValidation,
                 source_segment_count,
+                source_segment_kind_counts,
                 Some(raw_offset_segment_count),
+                Some(raw_offset_segment_kind_counts),
                 RetainedTopologyStatus::Unsupported,
                 UncertaintyReason::Unsupported,
             )),
             Classification::Uncertain(reason) => Ok(blocked_curve_string_offset_result(
                 CurveStringOffsetStage2::SelfContactValidation,
                 source_segment_count,
+                source_segment_kind_counts,
                 Some(raw_offset_segment_count),
+                Some(raw_offset_segment_kind_counts),
                 retained_status_for_offset_blocker(reason),
                 reason,
             )),
@@ -706,14 +720,29 @@ impl CurveStringOffsetReport2 {
         self.source_segment_count
     }
 
+    /// Returns primitive-family counts for the source curve string.
+    pub const fn source_segment_kind_counts(&self) -> SegmentKindCounts {
+        self.source_segment_kind_counts
+    }
+
     /// Returns the raw joined offset segment count before self-contact rejection.
     pub const fn raw_offset_segment_count(&self) -> Option<usize> {
         self.raw_offset_segment_count
     }
 
+    /// Returns primitive-family counts for the raw joined offset.
+    pub const fn raw_offset_segment_kind_counts(&self) -> Option<SegmentKindCounts> {
+        self.raw_offset_segment_kind_counts
+    }
+
     /// Returns output segment count when the checked offset materialized.
     pub const fn output_segment_count(&self) -> Option<usize> {
         self.output_segment_count
+    }
+
+    /// Returns primitive-family counts for the checked materialized offset.
+    pub const fn output_segment_kind_counts(&self) -> Option<SegmentKindCounts> {
+        self.output_segment_kind_counts
     }
 
     /// Returns checked offset topology status.
@@ -744,10 +773,23 @@ impl CurveStringOffsetResult2 {
     }
 }
 
+fn segment_kind_counts(segments: &[Segment2]) -> SegmentKindCounts {
+    let mut counts = SegmentKindCounts::default();
+    for segment in segments {
+        match segment {
+            Segment2::Line(_) => counts.lines += 1,
+            Segment2::Arc(_) => counts.arcs += 1,
+        }
+    }
+    counts
+}
+
 fn blocked_curve_string_offset_result(
     stage: CurveStringOffsetStage2,
     source_segment_count: usize,
+    source_segment_kind_counts: SegmentKindCounts,
     raw_offset_segment_count: Option<usize>,
+    raw_offset_segment_kind_counts: Option<SegmentKindCounts>,
     status: RetainedTopologyStatus,
     blocker: UncertaintyReason,
 ) -> CurveStringOffsetResult2 {
@@ -756,8 +798,11 @@ fn blocked_curve_string_offset_result(
         report: CurveStringOffsetReport2 {
             stage,
             source_segment_count,
+            source_segment_kind_counts,
             raw_offset_segment_count,
+            raw_offset_segment_kind_counts,
             output_segment_count: None,
+            output_segment_kind_counts: None,
             status,
             blocker: Some(blocker),
         },

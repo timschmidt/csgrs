@@ -1,7 +1,7 @@
 use hypercurve::{
     BulgeVertex2, CircularArc2, Classification, Contour2, ContourOffsetStage2, CurvePolicy,
     CurveString2, CurveStringOffsetStage2, CurveStringOutlineOffsetStage2, FillRule, LineSeg2,
-    OffsetCap, Point2, Real, Segment2, UncertaintyReason,
+    OffsetCap, Point2, Real, Segment2, SegmentKindCounts, UncertaintyReason,
 };
 
 fn s(value: i32) -> Real {
@@ -265,8 +265,20 @@ fn curve_string_checked_offset_report_materializes_simple_open_path() {
         CurveStringOffsetStage2::SelfContactValidation
     );
     assert_eq!(offset.report().source_segment_count(), 2);
+    assert_eq!(
+        offset.report().source_segment_kind_counts(),
+        SegmentKindCounts { lines: 2, arcs: 0 }
+    );
     assert_eq!(offset.report().raw_offset_segment_count(), Some(2));
+    assert_eq!(
+        offset.report().raw_offset_segment_kind_counts(),
+        Some(SegmentKindCounts { lines: 2, arcs: 0 })
+    );
     assert_eq!(offset.report().output_segment_count(), Some(2));
+    assert_eq!(
+        offset.report().output_segment_kind_counts(),
+        Some(SegmentKindCounts { lines: 2, arcs: 0 })
+    );
     assert_eq!(offset.report().blocker(), None);
     assert_eq!(offset.curve_string().unwrap().len(), 2);
 }
@@ -306,8 +318,17 @@ fn curve_string_checked_offset_report_blocks_self_contacting_result() {
         CurveStringOffsetStage2::SelfContactValidation
     );
     assert_eq!(offset.report().source_segment_count(), 3);
+    assert_eq!(
+        offset.report().source_segment_kind_counts(),
+        SegmentKindCounts { lines: 3, arcs: 0 }
+    );
     assert_eq!(offset.report().raw_offset_segment_count(), Some(3));
+    assert_eq!(
+        offset.report().raw_offset_segment_kind_counts(),
+        Some(SegmentKindCounts { lines: 3, arcs: 0 })
+    );
     assert_eq!(offset.report().output_segment_count(), None);
+    assert_eq!(offset.report().output_segment_kind_counts(), None);
     assert_eq!(
         offset.report().blocker(),
         Some(UncertaintyReason::Unsupported)
