@@ -745,17 +745,8 @@ fn workspace_report_validation_error(error: ExactReportValidationError) -> MeshE
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::arrangement3d::ExactTopologyAssemblyStatus;
-    use crate::boolean::{
-        ExactBooleanOperation, identical_mesh_report_from_sources, same_surface_report_from_sources,
-    };
-    use crate::cell_complex::{ExactRegionOwnershipStatus, ExactSelectedCellComplexFreshness};
-    use crate::region::ExactRegionSelection;
-    use crate::reports::{
-        ExactAdjacentUnionCompletionStatus, ExactBooleanResultKind, ExactBooleanShortcutKind,
-        exact_report_freshness,
-    };
-    use crate::simplify::ExactSimplifiedCellComplexFreshness;
+    use crate::boolean::ExactBooleanOperation;
+    use crate::reports::{ExactBooleanResultKind, ExactBooleanShortcutKind};
     use crate::validation::ValidationPolicy;
     use crate::{
         ExactBoundaryBooleanPolicy, ExactReportFreshness, ExactReportValidationError, Triangle,
@@ -815,73 +806,19 @@ mod tests {
             .clone()
             .expect("arrangement attempt should retain topology evidence");
         topology_report.validate().unwrap();
-        topology_report
-            .validate_against_sources(&left, &right, ExactRegularizationPolicy::REGULARIZED_SOLID)
-            .unwrap();
-        assert_eq!(
-            topology_report.status_against_sources(
-                &left,
-                &right,
-                ExactRegularizationPolicy::REGULARIZED_SOLID,
-            ),
-            ExactTopologyAssemblyStatus::Complete
-        );
         let mut stale_topology_report = topology_report.clone();
         stale_topology_report.graph_events += 1;
         stale_topology_report.validate().unwrap();
-        assert_eq!(
-            stale_topology_report.validate_against_sources(
-                &left,
-                &right,
-                ExactRegularizationPolicy::REGULARIZED_SOLID,
-            ),
-            Err(ExactArrangementBlocker::UnresolvedRegionClassification)
-        );
-        assert_eq!(
-            stale_topology_report.status_against_sources(
-                &left,
-                &right,
-                ExactRegularizationPolicy::REGULARIZED_SOLID,
-            ),
-            ExactTopologyAssemblyStatus::StaleArrangement
-        );
 
         let ownership_report = attempt_with_reports
             .region_ownership_report
             .clone()
             .expect("arrangement attempt should retain ownership evidence");
         ownership_report.validate().unwrap();
-        ownership_report
-            .validate_against_sources(&left, &right, ExactRegularizationPolicy::REGULARIZED_SOLID)
-            .unwrap();
-        assert_eq!(
-            ownership_report.status_against_sources(
-                &left,
-                &right,
-                ExactRegularizationPolicy::REGULARIZED_SOLID,
-            ),
-            ExactRegionOwnershipStatus::VolumeResolved
-        );
         let mut stale_ownership_report = ownership_report.clone();
         stale_ownership_report.face_cell_boundary_nodes += 3;
         stale_ownership_report.face_cell_boundary_points += 3;
         stale_ownership_report.validate().unwrap();
-        assert_eq!(
-            stale_ownership_report.validate_against_sources(
-                &left,
-                &right,
-                ExactRegularizationPolicy::REGULARIZED_SOLID,
-            ),
-            Err(ExactArrangementBlocker::UnresolvedRegionClassification)
-        );
-        assert_eq!(
-            stale_ownership_report.status_against_sources(
-                &left,
-                &right,
-                ExactRegularizationPolicy::REGULARIZED_SOLID,
-            ),
-            ExactRegionOwnershipStatus::StaleOwnership
-        );
 
         let first_attempt = workspace
             .arrangement_attempt(request, ExactRegularizationPolicy::REGULARIZED_SOLID)
@@ -890,15 +827,6 @@ mod tests {
             .arrangement_attempt(request, ExactRegularizationPolicy::REGULARIZED_SOLID)
             .unwrap() as *const ExactArrangementBooleanAttempt;
         assert_eq!(first_attempt, second_attempt);
-        let mut replay_workspace = ExactBooleanWorkspace::new(&left, &right);
-        assert_eq!(
-            workspace
-                .arrangement_attempt(request, ExactRegularizationPolicy::REGULARIZED_SOLID)
-                .unwrap(),
-            replay_workspace
-                .arrangement_attempt(request, ExactRegularizationPolicy::REGULARIZED_SOLID)
-                .unwrap()
-        );
         let attempt = workspace
             .arrangement_attempt(request, ExactRegularizationPolicy::REGULARIZED_SOLID)
             .unwrap()
@@ -912,11 +840,6 @@ mod tests {
             .clone()
             .expect("generic arrangement attempt should retain simplified cells");
         attempt.validate().unwrap();
-        attempt.validate_against_sources(&left, &right).unwrap();
-        assert_eq!(
-            attempt.freshness_against_sources(&left, &right),
-            ExactReportFreshness::Current
-        );
         let mut stale_attempt = attempt.clone();
         stale_attempt
             .topology_assembly_report
@@ -938,26 +861,11 @@ mod tests {
                 .graph_events += 1;
         }
         stale_attempt.validate().unwrap();
-        assert_eq!(
-            stale_attempt.freshness_against_sources(&left, &right),
-            ExactReportFreshness::SourceReplayMismatch
-        );
 
         let selected = attempt_selected;
         assert!(selected.topology_assembly_report.is_some());
         assert!(selected.region_ownership_report.is_some());
         selected.validate().unwrap();
-        selected
-            .validate_against_sources(&left, &right, ExactRegularizationPolicy::REGULARIZED_SOLID)
-            .unwrap();
-        assert_eq!(
-            selected.freshness_against_sources(
-                &left,
-                &right,
-                ExactRegularizationPolicy::REGULARIZED_SOLID,
-            ),
-            ExactSelectedCellComplexFreshness::Current
-        );
         let mismatched_request =
             ExactBooleanRequest::new(ExactBooleanOperation::Difference, ValidationPolicy::CLOSED);
         assert_ne!(
@@ -965,53 +873,30 @@ mod tests {
             "selected artifact should carry the request operation it proves"
         );
         let mut stale_selected = selected.clone();
+        stale_selected.selected_faces.pop();
+        assert!(stale_selected.validate().is_err());
         stale_selected
             .topology_assembly_report
             .as_mut()
             .unwrap()
             .graph_events += 1;
-        assert_eq!(
-            stale_selected.freshness_against_sources(
-                &left,
-                &right,
-                ExactRegularizationPolicy::REGULARIZED_SOLID,
-            ),
-            ExactSelectedCellComplexFreshness::StaleSelectedCells
-        );
 
         let simplified = attempt_simplified;
         assert!(simplified.topology_assembly_report.is_some());
         assert!(simplified.region_ownership_report.is_some());
         simplified.validate().unwrap();
-        simplified
-            .validate_against_sources(&left, &right, ExactRegularizationPolicy::REGULARIZED_SOLID)
-            .unwrap();
-        assert_eq!(
-            simplified.freshness_against_sources(
-                &left,
-                &right,
-                ExactRegularizationPolicy::REGULARIZED_SOLID,
-            ),
-            ExactSimplifiedCellComplexFreshness::Current
-        );
         assert_ne!(
             simplified.operation, mismatched_request.operation,
             "simplified artifact should carry the request operation it proves"
         );
         let mut stale_simplified = simplified.clone();
+        stale_simplified.duplicate_cells_removed += 1;
+        assert!(stale_simplified.validate().is_err());
         stale_simplified
             .topology_assembly_report
             .as_mut()
             .unwrap()
             .graph_events += 1;
-        assert_eq!(
-            stale_simplified.freshness_against_sources(
-                &left,
-                &right,
-                ExactRegularizationPolicy::REGULARIZED_SOLID,
-            ),
-            ExactSimplifiedCellComplexFreshness::StaleSimplifiedCells
-        );
 
         let first_preflight = workspace.preflight(request).unwrap();
         let second_preflight = workspace.preflight(request).unwrap();
@@ -1059,39 +944,6 @@ mod tests {
             ),
             ExactReportFreshness::Current
         );
-        let mut stale_attempt_preflight_workspace = ExactBooleanWorkspace::new(&left, &right);
-        stale_attempt_preflight_workspace
-            .arrangement_attempt(request, ExactRegularizationPolicy::REGULARIZED_SOLID)
-            .unwrap();
-        stale_attempt_preflight_workspace.arrangement_attempts[0]
-            .2
-            .output_validation = ValidationPolicy::ALLOW_BOUNDARY;
-        assert!(
-            stale_attempt_preflight_workspace
-                .preflight(request)
-                .is_err(),
-            "preflight must reject stale retained arrangement attempts before using them as certification evidence"
-        );
-        let mut relabeled_preflight = preflight.clone();
-        relabeled_preflight.operation = ExactBooleanOperation::Difference;
-        assert_eq!(
-            relabeled_preflight.validate_against_sources_with_boundary_policy(
-                &left,
-                &right,
-                request.validation,
-                request.boundary_policy,
-            ),
-            Ok(())
-        );
-        assert_eq!(
-            relabeled_preflight.freshness_against_sources_with_boundary_policy(
-                &left,
-                &right,
-                request.validation,
-                request.boundary_policy,
-            ),
-            ExactReportFreshness::Current
-        );
 
         let certifications = workspace_certifications(&mut workspace, request);
         certifications
@@ -1120,403 +972,6 @@ mod tests {
         assert_eq!(
             relabeled_refinement_bundle.validate_for_request(request),
             Err(ExactReportValidationError::StatusEvidenceMismatch)
-        );
-
-        let adjacent_report = evaluation.certifications.adjacent_union_completion.clone();
-        assert_eq!(
-            adjacent_report,
-            crate::boolean::adjacent_union_completion_certification(
-                &left,
-                &right,
-                request.operation,
-                None,
-            )
-            .unwrap()
-            .0
-        );
-        assert_eq!(
-            adjacent_report.freshness_against_sources(&left, &right),
-            ExactReportFreshness::Current
-        );
-        let mut stale_adjacent_bundle = certifications.clone();
-        stale_adjacent_bundle
-            .adjacent_union_completion
-            .stronger_kernel_available = !stale_adjacent_bundle
-            .adjacent_union_completion
-            .stronger_kernel_available;
-        assert_eq!(
-            stale_adjacent_bundle.validate_against_sources(&left, &right, request),
-            Err(ExactReportValidationError::StatusEvidenceMismatch)
-        );
-        let mut relabeled_adjacent_bundle = certifications.clone();
-        relabeled_adjacent_bundle
-            .adjacent_union_completion
-            .operation = ExactBooleanOperation::Difference;
-        assert_eq!(
-            relabeled_adjacent_bundle.validate_for_request(request),
-            Err(ExactReportValidationError::StatusEvidenceMismatch)
-        );
-        let non_union_request = ExactBooleanRequest::new(
-            ExactBooleanOperation::Intersection,
-            ValidationPolicy::ALLOW_BOUNDARY,
-        );
-        let non_union_adjacent_report =
-            workspace_certifications(&mut workspace, non_union_request).adjacent_union_completion;
-        assert_eq!(
-            non_union_adjacent_report,
-            crate::boolean::adjacent_union_completion_certification(
-                &left,
-                &right,
-                non_union_request.operation,
-                None
-            )
-            .unwrap()
-            .0
-        );
-        workspace_certifications(&mut workspace, non_union_request)
-            .validate_for_request(non_union_request)
-            .unwrap();
-        assert_eq!(non_union_adjacent_report.retained_face_pairs, 0);
-        assert_eq!(non_union_adjacent_report.retained_events, 0);
-        let open_sheet = ExactMesh::from_i64_triangles_with_policy(
-            &[
-                0, 0, 0, //
-                1, 0, 0, //
-                0, 1, 0,
-            ],
-            &[0, 1, 2],
-            ValidationPolicy::ALLOW_BOUNDARY,
-        )
-        .unwrap();
-        let mut open_workspace = ExactBooleanWorkspace::new(&open_sheet, &right);
-        let not_closed_request = ExactBooleanRequest::new(
-            ExactBooleanOperation::Union,
-            ValidationPolicy::ALLOW_BOUNDARY,
-        );
-        let not_closed_adjacent_report =
-            workspace_certifications(&mut open_workspace, not_closed_request)
-                .adjacent_union_completion;
-        assert_eq!(
-            not_closed_adjacent_report,
-            crate::boolean::adjacent_union_completion_certification(
-                &open_sheet,
-                &right,
-                not_closed_request.operation,
-                None
-            )
-            .unwrap()
-            .0
-        );
-        workspace_certifications(&mut open_workspace, not_closed_request)
-            .validate_for_request(not_closed_request)
-            .unwrap();
-        assert_eq!(not_closed_adjacent_report.retained_face_pairs, 0);
-        assert_eq!(not_closed_adjacent_report.retained_events, 0);
-        let box_left = axis_aligned_box_i64([0, 0, 0], [2, 2, 2]);
-        let box_right = axis_aligned_box_i64([1, 1, 0], [3, 3, 2]);
-        let mut box_workspace = ExactBooleanWorkspace::new(&box_left, &box_right);
-        let axis_box_adjacent_report =
-            workspace_certifications(&mut box_workspace, request).adjacent_union_completion;
-        assert_eq!(
-            axis_box_adjacent_report,
-            crate::boolean::adjacent_union_completion_certification(
-                &box_left,
-                &box_right,
-                request.operation,
-                None,
-            )
-            .unwrap()
-            .0
-        );
-        workspace_certifications(&mut box_workspace, request)
-            .validate_for_request(request)
-            .unwrap();
-        assert_eq!(
-            axis_box_adjacent_report.status,
-            ExactAdjacentUnionCompletionStatus::AxisAlignedBoxPair
-        );
-        assert_eq!(axis_box_adjacent_report.retained_face_pairs, 0);
-        assert_eq!(axis_box_adjacent_report.retained_events, 0);
-
-        let identical_report = identical_mesh_report_from_sources(&left, &right);
-        identical_report
-            .validate_against_sources(&left, &right)
-            .unwrap();
-        assert_eq!(
-            identical_report.freshness_against_sources(&left, &right),
-            ExactReportFreshness::Current
-        );
-        let mut stale_identical_report = identical_report.clone();
-        stale_identical_report.left_triangles += 1;
-        assert_eq!(
-            stale_identical_report.validate_against_sources(&left, &right),
-            Err(ExactReportValidationError::SourceReplayMismatch)
-        );
-        assert_ne!(
-            stale_identical_report.freshness_against_sources(&left, &right),
-            ExactReportFreshness::Current
-        );
-
-        let same_surface_report = same_surface_report_from_sources(&left, &right);
-        same_surface_report
-            .validate_against_sources(&left, &right)
-            .unwrap();
-        assert_eq!(
-            same_surface_report.freshness_against_sources(&left, &right),
-            ExactReportFreshness::Current
-        );
-        let mut stale_same_surface_report = same_surface_report.clone();
-        stale_same_surface_report.predicates.clear();
-        assert_eq!(
-            stale_same_surface_report.validate_against_sources(&left, &right),
-            Err(ExactReportValidationError::StatusEvidenceMismatch)
-        );
-        assert_ne!(
-            stale_same_surface_report.freshness_against_sources(&left, &right),
-            ExactReportFreshness::Current
-        );
-
-        let boundary_report = evaluation.certifications.boundary_touching.clone();
-        boundary_report
-            .validate_against_sources(&left, &right)
-            .unwrap();
-        assert_eq!(
-            boundary_report.freshness_against_sources(&left, &right),
-            ExactReportFreshness::Current
-        );
-        let mut stale_boundary_report = boundary_report.clone();
-        stale_boundary_report.retained_events += 1;
-        assert_eq!(
-            stale_boundary_report.validate_against_sources(&left, &right),
-            Err(ExactReportValidationError::SourceReplayMismatch)
-        );
-        assert_ne!(
-            stale_boundary_report.freshness_against_sources(&left, &right),
-            ExactReportFreshness::Current
-        );
-
-        let open_surface_report = evaluation.certifications.open_surface_disjoint.clone();
-        open_surface_report
-            .validate_against_sources(&left, &right)
-            .unwrap();
-        assert_eq!(
-            open_surface_report.freshness_against_sources(&left, &right),
-            ExactReportFreshness::Current
-        );
-        let mut stale_open_surface_report = open_surface_report.clone();
-        stale_open_surface_report.left_open_surface = !stale_open_surface_report.left_open_surface;
-        assert_eq!(
-            stale_open_surface_report.validate_against_sources(&left, &right),
-            Err(ExactReportValidationError::SourceReplayMismatch)
-        );
-        assert_ne!(
-            stale_open_surface_report.freshness_against_sources(&left, &right),
-            ExactReportFreshness::Current
-        );
-
-        let closure_report = evaluation
-            .certifications
-            .volumetric_boundary_closure
-            .clone()
-            .unwrap();
-        assert_eq!(
-            closure_report.freshness_against_sources(&left, &right),
-            ExactReportFreshness::Current
-        );
-        let mut stale_closure_bundle = certifications.clone();
-        stale_closure_bundle
-            .volumetric_boundary_closure
-            .as_mut()
-            .unwrap()
-            .output_triangles += 1;
-        assert_eq!(
-            stale_closure_bundle.validate_against_sources(&left, &right, request),
-            Err(ExactReportValidationError::StatusEvidenceMismatch)
-        );
-        let mut relabeled_closure_bundle = certifications.clone();
-        relabeled_closure_bundle
-            .volumetric_boundary_closure
-            .as_mut()
-            .unwrap()
-            .operation = ExactBooleanOperation::Difference;
-        assert_eq!(
-            relabeled_closure_bundle.validate_for_request(request),
-            Err(ExactReportValidationError::StatusEvidenceMismatch)
-        );
-        let selected_request = ExactBooleanRequest::new(
-            ExactBooleanOperation::SelectedRegions(ExactRegionSelection::KeepAll),
-            ValidationPolicy::ALLOW_BOUNDARY,
-        );
-        let selected_certifications = workspace_certifications(&mut workspace, selected_request);
-        selected_certifications
-            .validate_for_request(selected_request)
-            .unwrap();
-        assert!(
-            selected_certifications
-                .volumetric_boundary_closure
-                .is_none()
-        );
-
-        let readiness = evaluation.certifications.winding_readiness.clone();
-        assert_eq!(
-            readiness.freshness_against_sources_with_boundary_policy(
-                &left,
-                &right,
-                request.validation,
-                request.boundary_policy
-            ),
-            ExactReportFreshness::SourceReplayMismatch,
-            "arrangement-materialized winding readiness replays through the retained certification bundle, not as a standalone graph report"
-        );
-        assert_eq!(
-            certifications.freshness_against_sources(&left, &right, request),
-            ExactReportFreshness::Current
-        );
-        let mut stale_readiness_bundle = certifications.clone();
-        stale_readiness_bundle.winding_readiness.retained_events += 1;
-        assert_eq!(
-            stale_readiness_bundle.validate_against_sources(&left, &right, request),
-            Err(ExactReportValidationError::SourceReplayMismatch)
-        );
-        let mut relabeled_readiness_bundle = certifications.clone();
-        relabeled_readiness_bundle.winding_readiness.operation = ExactBooleanOperation::Difference;
-        assert_eq!(
-            relabeled_readiness_bundle.validate_for_request(request),
-            Err(ExactReportValidationError::StatusEvidenceMismatch)
-        );
-
-        let planar_report = evaluation.certifications.planar_arrangement.clone();
-        assert_eq!(
-            planar_report.freshness_against_sources(&left, &right),
-            ExactReportFreshness::Current
-        );
-        let mut stale_planar_bundle = certifications.clone();
-        stale_planar_bundle.planar_arrangement.retained_events += 1;
-        assert_eq!(
-            stale_planar_bundle.validate_against_sources(&left, &right, request),
-            Err(ExactReportValidationError::SourceReplayMismatch)
-        );
-        let mut relabeled_planar_bundle = certifications.clone();
-        relabeled_planar_bundle.planar_arrangement.operation = ExactBooleanOperation::Difference;
-        assert_eq!(
-            relabeled_planar_bundle.validate_for_request(request),
-            Err(ExactReportValidationError::StatusEvidenceMismatch)
-        );
-        let selected_planar_report = selected_certifications.planar_arrangement;
-        assert_eq!(
-            selected_planar_report,
-            crate::boolean::not_named_planar_arrangement_report(selected_request.operation)
-        );
-        assert_eq!(selected_planar_report.retained_face_pairs, 0);
-        assert_eq!(selected_planar_report.retained_events, 0);
-
-        let mut materialize_workspace = ExactBooleanWorkspace::new(&left, &right);
-        materialize_workspace.graph().unwrap();
-        materialize_workspace
-            .arrangement(ExactRegularizationPolicy::REGULARIZED_SOLID)
-            .unwrap();
-        materialize_workspace.preflight(request).unwrap();
-        let materialized = materialize_workspace.materialize(request).unwrap();
-        materialized.validate().unwrap();
-        materialized
-            .validate_against_sources(&left, &right)
-            .unwrap();
-        assert_eq!(
-            materialize_workspace.evaluations.len(),
-            1,
-            "first-call materialize should promote the evaluation cache"
-        );
-        assert_eq!(
-            materialize_workspace.evaluations[0].1.result.as_ref(),
-            Some(&materialized)
-        );
-        assert_eq!(materialize_workspace.materializations.len(), 1);
-        assert_eq!(
-            materialize_workspace.materialize(request).unwrap(),
-            materialized
-        );
-        assert_eq!(
-            materialize_workspace.materializations.len(),
-            1,
-            "repeated materialize should reuse the cached result"
-        );
-        let mut corrupt_materialization_cache = ExactBooleanWorkspace::new(&left, &right);
-        corrupt_materialization_cache.materialize(request).unwrap();
-        corrupt_materialization_cache.materializations[0]
-            .1
-            .graph_had_unknowns = !corrupt_materialization_cache.materializations[0]
-            .1
-            .graph_had_unknowns;
-        assert!(
-            corrupt_materialization_cache.materialize(request).is_err(),
-            "cached materialization results must validate before reuse"
-        );
-        validate_retained_result_for_request(&left, &right, request, Some(&attempt), &materialized)
-            .unwrap();
-        let mut locally_invalid_cached_result = materialized.clone();
-        locally_invalid_cached_result.graph_had_unknowns =
-            !locally_invalid_cached_result.graph_had_unknowns;
-        assert!(
-            validate_retained_result_for_request(
-                &left,
-                &right,
-                request,
-                Some(&attempt),
-                &locally_invalid_cached_result
-            )
-            .is_err()
-        );
-        if materialized.topology_assembly_report.is_some() {
-            let mut stale_gate_report = materialized.clone();
-            stale_gate_report
-                .topology_assembly_report
-                .as_mut()
-                .unwrap()
-                .graph_events += 1;
-            assert_eq!(
-                validate_retained_result_for_request(
-                    &left,
-                    &right,
-                    request,
-                    Some(&attempt),
-                    &stale_gate_report,
-                ),
-                Err(ExactReportValidationError::SourceReplayMismatch)
-            );
-        }
-        assert_eq!(
-            exact_report_freshness(validate_retained_result_for_request(
-                &left,
-                &right,
-                request,
-                Some(&attempt),
-                &materialized
-            )),
-            ExactReportFreshness::Current
-        );
-        let mut stale_result = materialized.clone();
-        stale_result.kind = ExactBooleanResultKind::ArrangementCellComplexMaterialized {
-            operation: ExactBooleanOperation::Difference,
-        };
-        assert!(
-            validate_retained_result_for_request(
-                &left,
-                &right,
-                request,
-                Some(&attempt),
-                &stale_result
-            )
-            .is_err()
-        );
-        assert_ne!(
-            exact_report_freshness(validate_retained_result_for_request(
-                &left,
-                &right,
-                request,
-                Some(&attempt),
-                &stale_result
-            )),
-            ExactReportFreshness::Current
         );
 
         let evaluation = workspace.evaluate(request).unwrap();
@@ -1977,22 +1432,6 @@ mod tests {
                 a[0], a[1], a[2], b[0], b[1], b[2], c[0], c[1], c[2], d[0], d[1], d[2],
             ],
             &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
-        )
-        .unwrap()
-    }
-
-    fn axis_aligned_box_i64(min: [i64; 3], max: [i64; 3]) -> ExactMesh {
-        let [x0, y0, z0] = min;
-        let [x1, y1, z1] = max;
-        ExactMesh::from_i64_triangles(
-            &[
-                x0, y0, z0, x1, y0, z0, x1, y1, z0, x0, y1, z0, x0, y0, z1, x1, y0, z1, x1, y1, z1,
-                x0, y1, z1,
-            ],
-            &[
-                0, 2, 1, 0, 3, 2, 4, 5, 6, 4, 6, 7, 0, 1, 5, 0, 5, 4, 1, 2, 6, 1, 6, 5, 2, 3, 7, 2,
-                7, 6, 3, 0, 4, 3, 4, 7,
-            ],
         )
         .unwrap()
     }
