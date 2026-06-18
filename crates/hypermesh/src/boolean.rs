@@ -2342,7 +2342,8 @@ impl ExactBooleanEvaluation {
         self.preflight.is_certified()
             && !matches!(
                 self.preflight.support,
-                ExactBooleanSupport::CertifiedArrangementCellComplex
+                ExactBooleanSupport::SelectedRegionPolicy
+                    | ExactBooleanSupport::CertifiedArrangementCellComplex
             )
     }
 
@@ -11340,15 +11341,6 @@ mod tests {
             .winding_readiness
     }
 
-    fn test_graph_winding_readiness(
-        request: ExactBooleanRequest,
-        left: &ExactMesh,
-        right: &ExactMesh,
-    ) -> ExactWindingReadinessReport {
-        let graph = validated_intersection_graph(left, right).unwrap();
-        winding_readiness_report_for_request_from_graph(&graph, left, right, request).unwrap()
-    }
-
     fn test_volumetric_boundary_closure(
         request: ExactBooleanRequest,
         left: &ExactMesh,
@@ -11908,15 +11900,17 @@ mod tests {
             ValidationPolicy::ALLOW_BOUNDARY,
         )
         .unwrap();
-        let readiness = test_graph_winding_readiness(
-            ExactBooleanRequest::with_boundary_policy(
-                ExactBooleanOperation::SelectedRegions(ExactRegionSelection::KeepAll),
-                ValidationPolicy::ALLOW_BOUNDARY,
-                ExactBoundaryBooleanPolicy::Reject,
-            ),
-            &left,
-            &right,
+        let request = ExactBooleanRequest::with_boundary_policy(
+            ExactBooleanOperation::SelectedRegions(ExactRegionSelection::KeepAll),
+            ValidationPolicy::ALLOW_BOUNDARY,
+            ExactBoundaryBooleanPolicy::Reject,
         );
+        let evaluation = test_evaluation(request, &left, &right);
+        assert!(
+            evaluation.result.is_none(),
+            "selected-region evaluation should retain certifications without eager materialization"
+        );
+        let readiness = evaluation.certifications.winding_readiness;
         assert_eq!(
             readiness.status,
             ExactWindingReadinessStatus::NotNamedOperation
@@ -11943,15 +11937,7 @@ mod tests {
             ValidationPolicy::ALLOW_BOUNDARY,
         )
         .unwrap();
-        let disjoint_readiness = test_graph_winding_readiness(
-            ExactBooleanRequest::with_boundary_policy(
-                ExactBooleanOperation::SelectedRegions(ExactRegionSelection::KeepAll),
-                ValidationPolicy::ALLOW_BOUNDARY,
-                ExactBoundaryBooleanPolicy::Reject,
-            ),
-            &left,
-            &disjoint_right,
-        );
+        let disjoint_readiness = test_winding_readiness(request, &left, &disjoint_right);
         assert_eq!(
             disjoint_readiness.status,
             ExactWindingReadinessStatus::NotNamedOperation

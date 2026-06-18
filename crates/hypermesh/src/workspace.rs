@@ -268,7 +268,9 @@ impl<'a> ExactBooleanWorkspace<'a> {
             regularized_arrangement,
             regularized_attempt,
         )?;
-        let result = if preflight.is_certified() {
+        let result = if preflight.is_certified()
+            && !matches!(preflight.support, ExactBooleanSupport::SelectedRegionPolicy)
+        {
             if let Some(result) = cached_retained_materialization(
                 &self.materializations,
                 self.left,
