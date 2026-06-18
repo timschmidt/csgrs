@@ -6,7 +6,45 @@
 
 use crate::{
     Classification, Contour2, ContourPointLocation, CurveError, CurvePolicy, CurveResult, Region2,
+    RetainedTopologyStatus, UncertaintyReason,
 };
+
+/// Material/hole role assigned to one closed boundary contour.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum RegionBoundaryContourRole2 {
+    /// The contour contributes filled material.
+    Material,
+    /// The contour contributes a subtractive hole.
+    Hole,
+}
+
+/// Role assignment for one source boundary contour.
+#[derive(Clone, Debug, PartialEq)]
+pub struct RegionBoundaryContourRoleReport2 {
+    source_contour_index: usize,
+    nesting_depth: usize,
+    role: RegionBoundaryContourRole2,
+    output_role_index: usize,
+    status: RetainedTopologyStatus,
+}
+
+/// Report for building a region from already-closed boundary contours.
+#[derive(Clone, Debug, PartialEq)]
+pub struct RegionBoundaryContourBuildReport2 {
+    source_contour_count: usize,
+    material_contour_count: Option<usize>,
+    hole_contour_count: Option<usize>,
+    role_reports: Vec<RegionBoundaryContourRoleReport2>,
+    status: RetainedTopologyStatus,
+    blocker: Option<UncertaintyReason>,
+}
+
+/// Result of report-bearing boundary contour region construction.
+#[derive(Clone, Debug, PartialEq)]
+pub struct RegionBoundaryContourBuildResult2 {
+    region: Option<Region2>,
+    report: RegionBoundaryContourBuildReport2,
+}
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 struct BoundaryContourNestingDepths {
@@ -24,25 +62,190 @@ impl Region2 {
         contours: Vec<Contour2>,
         policy: &CurvePolicy,
     ) -> CurveResult<Classification<Self>> {
+        let built = Self::from_boundary_contours_with_report(contours, policy)?;
+        let blocker = built
+            .report()
+            .blocker()
+            .unwrap_or(UncertaintyReason::Unsupported);
+        if let Some(region) = built.into_region() {
+            Ok(Classification::Decided(region))
+        } else {
+            Ok(Classification::Uncertain(blocker))
+        }
+    }
+
+    /// Builds a region by nesting closed boundary contours and retaining role evidence.
+    ///
+    /// This is the report-bearing counterpart to
+    /// [`Region2::from_boundary_contours`]. Contours at even containment depth
+    /// become material and odd-depth contours become holes. If intersections,
+    /// touches, or undecided containment predicates prevent role assignment, no
+    /// region is materialized and the report carries the blocker.
+    pub fn from_boundary_contours_with_report(
+        contours: Vec<Contour2>,
+        policy: &CurvePolicy,
+    ) -> CurveResult<RegionBoundaryContourBuildResult2> {
+        let source_contour_count = contours.len();
         let nesting = match contour_nesting_depths(&contours, policy)? {
             Classification::Decided(nesting) => nesting,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+            Classification::Uncertain(reason) => {
+                return Ok(blocked_boundary_contour_region_result(
+                    source_contour_count,
+                    retained_status_for_boundary_contour_blocker(reason),
+                    reason,
+                ));
+            }
         };
         let mut material_contours = Vec::new();
         let mut hole_contours = Vec::new();
+        let mut role_reports = Vec::with_capacity(source_contour_count);
 
-        for (contour, depth) in contours.into_iter().zip(nesting.depths.iter().copied()) {
+        for (source_contour_index, (contour, depth)) in contours
+            .into_iter()
+            .zip(nesting.depths.iter().copied())
+            .enumerate()
+        {
             if depth % 2 == 0 {
+                let output_role_index = material_contours.len();
                 material_contours.push(contour);
+                role_reports.push(RegionBoundaryContourRoleReport2 {
+                    source_contour_index,
+                    nesting_depth: depth,
+                    role: RegionBoundaryContourRole2::Material,
+                    output_role_index,
+                    status: RetainedTopologyStatus::NativeExact,
+                });
             } else {
+                let output_role_index = hole_contours.len();
                 hole_contours.push(contour);
+                role_reports.push(RegionBoundaryContourRoleReport2 {
+                    source_contour_index,
+                    nesting_depth: depth,
+                    role: RegionBoundaryContourRole2::Hole,
+                    output_role_index,
+                    status: RetainedTopologyStatus::NativeExact,
+                });
             }
         }
 
-        Ok(Classification::Decided(Region2::new(
-            material_contours,
-            hole_contours,
-        )))
+        let material_contour_count = material_contours.len();
+        let hole_contour_count = hole_contours.len();
+        Ok(RegionBoundaryContourBuildResult2 {
+            region: Some(Region2::new(material_contours, hole_contours)),
+            report: RegionBoundaryContourBuildReport2 {
+                source_contour_count,
+                material_contour_count: Some(material_contour_count),
+                hole_contour_count: Some(hole_contour_count),
+                role_reports,
+                status: RetainedTopologyStatus::NativeExact,
+                blocker: None,
+            },
+        })
+    }
+}
+
+impl RegionBoundaryContourRoleReport2 {
+    /// Returns the source contour index assigned by this report.
+    pub const fn source_contour_index(&self) -> usize {
+        self.source_contour_index
+    }
+
+    /// Returns exact containment depth used for material/hole parity.
+    pub const fn nesting_depth(&self) -> usize {
+        self.nesting_depth
+    }
+
+    /// Returns the assigned material/hole role.
+    pub const fn role(&self) -> RegionBoundaryContourRole2 {
+        self.role
+    }
+
+    /// Returns this contour's index inside its output role bin.
+    pub const fn output_role_index(&self) -> usize {
+        self.output_role_index
+    }
+
+    /// Returns retained topology status for this role assignment.
+    pub const fn status(&self) -> RetainedTopologyStatus {
+        self.status
+    }
+}
+
+impl RegionBoundaryContourBuildReport2 {
+    /// Returns the number of source boundary contours considered.
+    pub const fn source_contour_count(&self) -> usize {
+        self.source_contour_count
+    }
+
+    /// Returns material contour count when role assignment materialized.
+    pub const fn material_contour_count(&self) -> Option<usize> {
+        self.material_contour_count
+    }
+
+    /// Returns hole contour count when role assignment materialized.
+    pub const fn hole_contour_count(&self) -> Option<usize> {
+        self.hole_contour_count
+    }
+
+    /// Returns per-contour exact role reports.
+    pub fn role_reports(&self) -> &[RegionBoundaryContourRoleReport2] {
+        &self.role_reports
+    }
+
+    /// Returns region construction status.
+    pub const fn status(&self) -> RetainedTopologyStatus {
+        self.status
+    }
+
+    /// Returns the exact blocker for non-materialized construction attempts.
+    pub const fn blocker(&self) -> Option<UncertaintyReason> {
+        self.blocker
+    }
+}
+
+impl RegionBoundaryContourBuildResult2 {
+    /// Returns the materialized region, if role assignment succeeded.
+    pub const fn region(&self) -> Option<&Region2> {
+        self.region.as_ref()
+    }
+
+    /// Consumes this result and returns the materialized region, if any.
+    pub fn into_region(self) -> Option<Region2> {
+        self.region
+    }
+
+    /// Returns the retained region-construction report.
+    pub const fn report(&self) -> &RegionBoundaryContourBuildReport2 {
+        &self.report
+    }
+}
+
+fn blocked_boundary_contour_region_result(
+    source_contour_count: usize,
+    status: RetainedTopologyStatus,
+    blocker: UncertaintyReason,
+) -> RegionBoundaryContourBuildResult2 {
+    RegionBoundaryContourBuildResult2 {
+        region: None,
+        report: RegionBoundaryContourBuildReport2 {
+            source_contour_count,
+            material_contour_count: None,
+            hole_contour_count: None,
+            role_reports: Vec::new(),
+            status,
+            blocker: Some(blocker),
+        },
+    }
+}
+
+fn retained_status_for_boundary_contour_blocker(
+    reason: UncertaintyReason,
+) -> RetainedTopologyStatus {
+    match reason {
+        UncertaintyReason::Boundary | UncertaintyReason::Unsupported => {
+            RetainedTopologyStatus::Unsupported
+        }
+        _ => RetainedTopologyStatus::Unresolved,
     }
 }
 

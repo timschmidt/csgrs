@@ -196,6 +196,10 @@ pub use region_events::{
     RegionSide,
 };
 pub use region_fragments::{RegionContourFragments, RegionFragmentSet};
+pub use region_nesting::{
+    RegionBoundaryContourBuildReport2, RegionBoundaryContourBuildResult2,
+    RegionBoundaryContourRole2, RegionBoundaryContourRoleReport2,
+};
 pub use retained_curve::{
     RetainedCurveCacheSummary2, RetainedCurveFamily2, RetainedCurveIdentity2,
     RetainedCurvePeriodicity1, RetainedCurveProfile2, RetainedEndpointEvidence2,

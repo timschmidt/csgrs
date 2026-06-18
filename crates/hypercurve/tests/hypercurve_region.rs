@@ -1,8 +1,8 @@
 use hypercurve::{
     BulgeVertex2, CircularArc2, Classification, Contour2, CurveError, CurvePolicy, CurveString2,
-    FiniteProjectionOptions, Real, Region2, RegionPointLocation, RegionView2, Segment2,
-    UncertaintyReason, finite_polyline_vertex_centroid, finite_ring_signed_area,
-    try_finite_polyline_vertex_centroid, try_finite_ring_signed_area,
+    FiniteProjectionOptions, Real, Region2, RegionBoundaryContourRole2, RegionPointLocation,
+    RegionView2, Segment2, UncertaintyReason, finite_polyline_vertex_centroid,
+    finite_ring_signed_area, try_finite_polyline_vertex_centroid, try_finite_ring_signed_area,
 };
 use proptest::prelude::*;
 
@@ -161,6 +161,49 @@ fn boundary_contour_nesting_assigns_disjoint_nested_roles() {
 }
 
 #[test]
+fn boundary_contour_region_report_assigns_material_and_hole_roles() {
+    let built = Region2::from_boundary_contours_with_report(
+        vec![rectangle(0, 0, 10, 10), rectangle(3, 3, 7, 7)],
+        &policy(),
+    )
+    .unwrap();
+    let report = built.report();
+
+    assert!(report.status().is_native_exact());
+    assert_eq!(report.source_contour_count(), 2);
+    assert_eq!(report.material_contour_count(), Some(1));
+    assert_eq!(report.hole_contour_count(), Some(1));
+    assert_eq!(report.blocker(), None);
+    assert_eq!(report.role_reports().len(), 2);
+
+    let outer = &report.role_reports()[0];
+    assert_eq!(outer.source_contour_index(), 0);
+    assert_eq!(outer.nesting_depth(), 0);
+    assert_eq!(outer.role(), RegionBoundaryContourRole2::Material);
+    assert_eq!(outer.output_role_index(), 0);
+    assert!(outer.status().is_native_exact());
+
+    let hole = &report.role_reports()[1];
+    assert_eq!(hole.source_contour_index(), 1);
+    assert_eq!(hole.nesting_depth(), 1);
+    assert_eq!(hole.role(), RegionBoundaryContourRole2::Hole);
+    assert_eq!(hole.output_role_index(), 0);
+    assert!(hole.status().is_native_exact());
+
+    let region = built.region().unwrap();
+    assert_eq!(region.material_contours().len(), 1);
+    assert_eq!(region.hole_contours().len(), 1);
+    assert_eq!(
+        region.classify_point(&p(1, 1), &policy()),
+        Classification::Decided(RegionPointLocation::Inside)
+    );
+    assert_eq!(
+        region.classify_point(&p(5, 5), &policy()),
+        Classification::Decided(RegionPointLocation::Outside)
+    );
+}
+
+#[test]
 fn boundary_contour_nesting_rejects_crossing_or_touching_loops() {
     assert_eq!(
         Region2::from_boundary_contours(
@@ -178,6 +221,24 @@ fn boundary_contour_nesting_rejects_crossing_or_touching_loops() {
         .unwrap(),
         Classification::Uncertain(UncertaintyReason::Boundary)
     );
+}
+
+#[test]
+fn boundary_contour_region_report_blocks_crossing_roles() {
+    let built = Region2::from_boundary_contours_with_report(
+        vec![rectangle(0, 0, 4, 4), rectangle(2, -1, 6, 3)],
+        &policy(),
+    )
+    .unwrap();
+    let report = built.report();
+
+    assert!(built.region().is_none());
+    assert!(report.status().is_retained_evidence());
+    assert_eq!(report.blocker(), Some(UncertaintyReason::Boundary));
+    assert_eq!(report.source_contour_count(), 2);
+    assert_eq!(report.material_contour_count(), None);
+    assert_eq!(report.hole_contour_count(), None);
+    assert!(report.role_reports().is_empty());
 }
 
 #[test]
