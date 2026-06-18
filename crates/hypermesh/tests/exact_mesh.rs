@@ -1,25 +1,19 @@
-use hyperlimit::{Point2, Point3, SourceProvenance};
+use hyperlimit::{Point3, SourceProvenance};
 use hypermesh::{
-    ExactArrangement2dBoundaryPolicy, ExactArrangement2dRegion, ExactArrangement2dRegionRing,
-    ExactArrangement2dSetOperation, ExactBooleanOperation, ExactBooleanRequest, ExactBooleanResult,
-    ExactBooleanWorkspace, ExactBoundaryBooleanPolicy, ExactI64MeshInputReadiness,
-    ExactI64MeshInputReportValidationError, ExactMesh, ExactMeshAuditError,
-    ExactMeshConsumerDomain, ExactMeshHandoffPackageError, ExactMeshProposalAcceptance,
-    ExactMeshProposalReport, ExactMeshProposalReportError, ExactMeshProposalSourceKind,
-    ExactOutputTriangleOrientation, ExactRegionSelection, ExactRegularizationPolicy,
-    ExactReportFreshness, LossyF64MeshInputReadiness, LossyF64MeshInputReportValidationError,
-    MeshArtifactBlocker, MeshArtifactFaceRecord, MeshArtifactManifest, MeshArtifactReportError,
-    MeshArtifactRole, MeshArtifactSourceKind, MeshArtifactVertexRecord, MeshCoordinateEvidence,
-    MeshTopologyEvidence, ValidationPolicy,
+    ExactBooleanOperation, ExactBooleanRequest, ExactBooleanResult, ExactBooleanWorkspace,
+    ExactBoundaryBooleanPolicy, ExactI64MeshInputReadiness, ExactI64MeshInputReportValidationError,
+    ExactMesh, ExactMeshAuditError, ExactMeshConsumerDomain, ExactMeshHandoffPackageError,
+    ExactMeshProposalAcceptance, ExactMeshProposalReport, ExactMeshProposalReportError,
+    ExactMeshProposalSourceKind, ExactOutputTriangleOrientation, ExactRegionSelection,
+    ExactRegularizationPolicy, ExactReportFreshness, LossyF64MeshInputReadiness,
+    LossyF64MeshInputReportValidationError, MeshArtifactBlocker, MeshArtifactFaceRecord,
+    MeshArtifactManifest, MeshArtifactReportError, MeshArtifactRole, MeshArtifactSourceKind,
+    MeshArtifactVertexRecord, MeshCoordinateEvidence, MeshTopologyEvidence, ValidationPolicy,
 };
 use hyperreal::Real;
 
 fn p(x: i64, y: i64, z: i64) -> Point3 {
     Point3::new(Real::from(x), Real::from(y), Real::from(z))
-}
-
-fn p2(x: i64, y: i64) -> Point2 {
-    Point2::new(Real::from(x), Real::from(y))
 }
 
 fn exact_boolean_evaluation(
@@ -254,37 +248,6 @@ fn combine_exact_meshes(left: &ExactMesh, right: &ExactMesh, label: &'static str
         SourceProvenance::exact(label),
     )
     .unwrap()
-}
-
-#[test]
-fn exact_arrangement2d_boundary_policy_is_publicly_available() {
-    let rings = [
-        ExactArrangement2dRegionRing::new(
-            ExactArrangement2dRegion::Left,
-            vec![p2(0, 0), p2(4, 0), p2(4, 2), p2(0, 2)],
-        ),
-        ExactArrangement2dRegionRing::new(
-            ExactArrangement2dRegion::Right,
-            vec![p2(2, 0), p2(6, 0), p2(6, 2), p2(2, 2)],
-        ),
-    ];
-
-    let simplified =
-        ExactArrangement2dRegionRing::overlay(&rings, ExactArrangement2dSetOperation::Union);
-    let preserved = ExactArrangement2dRegionRing::overlay_with_boundary_policy(
-        &rings,
-        ExactArrangement2dSetOperation::Union,
-        ExactArrangement2dBoundaryPolicy::PreserveCollinear,
-    );
-
-    assert!(simplified.is_complete(), "{:?}", simplified.blockers);
-    assert!(preserved.is_complete(), "{:?}", preserved.blockers);
-    assert_eq!(simplified.output_loops.len(), 1);
-    assert_eq!(preserved.output_loops.len(), 1);
-    assert_eq!(simplified.output_loops[0].points.len(), 4);
-    assert_eq!(preserved.output_loops[0].points.len(), 8);
-    assert_eq!(simplified.output_loops[0].signed_area_twice, Real::from(24));
-    assert_eq!(preserved.output_loops[0].signed_area_twice, Real::from(24));
 }
 
 #[test]

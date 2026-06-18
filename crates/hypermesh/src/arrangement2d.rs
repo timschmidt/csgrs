@@ -47,8 +47,6 @@ pub enum ExactArrangement2dSetOperation {
 pub enum ExactArrangement2dSegmentSource {
     /// The segment is identified only by caller-local ordinal.
     Anonymous(usize),
-    /// The segment came from an input segment stream at this index.
-    InputSegment(usize),
     /// The segment came from a region boundary ring.
     RegionBoundary {
         /// Region owning the boundary ring.
@@ -90,23 +88,6 @@ impl ExactArrangement2dRegionRing {
     /// Construct a region boundary ring.
     pub fn new(region: ExactArrangement2dRegion, vertices: Vec<Point2>) -> Self {
         Self { region, vertices }
-    }
-
-    /// Build a 2D region-ring overlay and simplify selected cells into loops.
-    pub fn overlay(
-        rings: &[ExactArrangement2dRegionRing],
-        operation: ExactArrangement2dSetOperation,
-    ) -> ExactArrangement2dOverlay {
-        build_exact_arrangement2d_overlay(rings, operation)
-    }
-
-    /// Build a 2D region-ring overlay with explicit output boundary policy.
-    pub fn overlay_with_boundary_policy(
-        rings: &[ExactArrangement2dRegionRing],
-        operation: ExactArrangement2dSetOperation,
-        boundary_policy: ExactArrangement2dBoundaryPolicy,
-    ) -> ExactArrangement2dOverlay {
-        build_exact_arrangement2d_overlay_with_boundary_policy(rings, operation, boundary_policy)
     }
 }
 
@@ -311,13 +292,6 @@ pub struct ExactArrangement2d {
     pub faces: Vec<ExactArrangement2dFace>,
     /// Explicit reasons why construction is incomplete.
     pub blockers: Vec<ExactArrangement2dBlocker>,
-}
-
-impl ExactArrangement2d {
-    /// Return whether every required exact predicate and construction completed.
-    pub fn is_complete(&self) -> bool {
-        self.blockers.is_empty()
-    }
 }
 
 /// Build an exact 2D arrangement from closed input segments.
@@ -1839,7 +1813,7 @@ mod tests {
     fn segment(index: usize, start: (i64, i64), end: (i64, i64)) -> ExactArrangement2dInputSegment {
         ExactArrangement2dInputSegment::new(
             [p(start.0, start.1), p(end.0, end.1)],
-            ExactArrangement2dSegmentSource::InputSegment(index),
+            ExactArrangement2dSegmentSource::Anonymous(index),
         )
     }
 

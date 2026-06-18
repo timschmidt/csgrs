@@ -61,10 +61,6 @@ pub use adapter::{
     ExactI64MeshInputReadiness, ExactI64MeshInputReportValidationError, LossyF64MeshInputReadiness,
     LossyF64MeshInputReportValidationError,
 };
-pub use arrangement2d::{
-    ExactArrangement2dBoundaryPolicy, ExactArrangement2dRegion, ExactArrangement2dRegionRing,
-    ExactArrangement2dSetOperation,
-};
 pub use artifact::{
     MeshArtifactBlocker, MeshArtifactFaceRecord, MeshArtifactManifest, MeshArtifactReport,
     MeshArtifactReportError, MeshArtifactRole, MeshArtifactSourceKind, MeshArtifactVertexRecord,
