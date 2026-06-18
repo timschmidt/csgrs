@@ -137,6 +137,36 @@ fn bench_curve_string_checked_offset(iterations: u32) -> CurveResult<()> {
     Ok(())
 }
 
+fn bench_curve_string_checked_offset_report(iterations: u32) -> CurveResult<()> {
+    let curve = CurveString2::try_new(vec![
+        line_segment(0, 0, 4, 0),
+        line_segment(4, 0, 4, 3),
+        line_segment(4, 3, 7, 3),
+    ])?;
+    let policy = CurvePolicy::certified();
+    let started = Instant::now();
+    let mut total_segments = 0_usize;
+
+    for _ in 0..iterations {
+        let result = curve.offset_left_checked_with_report(s(1), &policy)?;
+        if !result.report().status().is_native_exact() {
+            panic!("curve_string_checked_offset_report became non-native");
+        }
+        let offset = result
+            .curve_string()
+            .expect("curve_string_checked_offset_report should materialize");
+        total_segments += black_box(offset.len());
+        total_segments += black_box(result.report().raw_offset_segment_count().unwrap_or(0));
+    }
+
+    let elapsed = started.elapsed();
+    println!(
+        "curve_string_checked_offset_report: {iterations} iterations in {elapsed:?} ({:?}/iter), total segments={total_segments}",
+        elapsed / iterations
+    );
+    Ok(())
+}
+
 fn bench_curve_string_round_cap_outline(iterations: u32) -> CurveResult<()> {
     let curve = CurveString2::try_new(vec![
         line_segment(0, 0, 4, 0),
@@ -158,6 +188,36 @@ fn bench_curve_string_round_cap_outline(iterations: u32) -> CurveResult<()> {
     let elapsed = started.elapsed();
     println!(
         "curve_string_round_cap_outline: {iterations} iterations in {elapsed:?} ({:?}/iter), total segments={total_segments}",
+        elapsed / iterations
+    );
+    Ok(())
+}
+
+fn bench_curve_string_round_cap_outline_report(iterations: u32) -> CurveResult<()> {
+    let curve = CurveString2::try_new(vec![
+        line_segment(0, 0, 4, 0),
+        line_segment(4, 0, 4, 3),
+        line_segment(4, 3, 7, 3),
+    ])?;
+    let policy = CurvePolicy::certified();
+    let started = Instant::now();
+    let mut total_segments = 0_usize;
+
+    for _ in 0..iterations {
+        let result = curve.offset_outline_round_caps_with_report(s(1), &policy)?;
+        if !result.report().status().is_native_exact() {
+            panic!("curve_string_round_cap_outline_report became non-native");
+        }
+        let outline = result
+            .outline()
+            .expect("curve_string_round_cap_outline_report should materialize");
+        total_segments += black_box(outline.len());
+        total_segments += black_box(result.report().outline_segment_count().unwrap_or(0));
+    }
+
+    let elapsed = started.elapsed();
+    println!(
+        "curve_string_round_cap_outline_report: {iterations} iterations in {elapsed:?} ({:?}/iter), total segments={total_segments}",
         elapsed / iterations
     );
     Ok(())
@@ -269,6 +329,37 @@ fn bench_contour_checked_offset(iterations: u32) -> CurveResult<()> {
     Ok(())
 }
 
+fn bench_contour_checked_offset_report(iterations: u32) -> CurveResult<()> {
+    let contour = Contour2::from_bulge_vertices(&[
+        vertex(0, 0, 0),
+        vertex(10, 0, 0),
+        vertex(10, 7, 0),
+        vertex(0, 7, 0),
+    ])?;
+    let policy = CurvePolicy::certified();
+    let started = Instant::now();
+    let mut total_segments = 0_usize;
+
+    for _ in 0..iterations {
+        let result = contour.offset_left_checked_with_report(s(1), &policy)?;
+        if !result.report().status().is_native_exact() {
+            panic!("contour_checked_offset_report became non-native");
+        }
+        let offset = result
+            .contour()
+            .expect("contour_checked_offset_report should materialize");
+        total_segments += black_box(offset.len());
+        total_segments += black_box(result.report().raw_offset_segment_count().unwrap_or(0));
+    }
+
+    let elapsed = started.elapsed();
+    println!(
+        "contour_checked_offset_report: {iterations} iterations in {elapsed:?} ({:?}/iter), total segments={total_segments}",
+        elapsed / iterations
+    );
+    Ok(())
+}
+
 fn main() -> CurveResult<()> {
     bench_line_offset(100_000)?;
 
@@ -298,11 +389,14 @@ fn main() -> CurveResult<()> {
     bench_curve_string_joined_offset(100_000)?;
     bench_curve_string_round_join_offset(100_000)?;
     bench_curve_string_checked_offset(100_000)?;
+    bench_curve_string_checked_offset_report(100_000)?;
     bench_curve_string_round_cap_outline(100_000)?;
+    bench_curve_string_round_cap_outline_report(100_000)?;
     bench_curve_string_butt_cap_outline(100_000)?;
     bench_curve_string_square_cap_outline(100_000)?;
     bench_contour_joined_offset(100_000)?;
     bench_contour_checked_offset(100_000)?;
+    bench_contour_checked_offset_report(100_000)?;
 
     Ok(())
 }
