@@ -1755,6 +1755,14 @@ fn curve_string_trim_inside_region_materializes_inside_window() {
     assert_eq!(right_hit.region_param(), &q(1, 4));
     assert_eq!(trimmed.report().interval_reports().len(), 3);
     assert_eq!(
+        trimmed.report().interval_reports()[1].range_start_point(),
+        &p(0, 1)
+    );
+    assert_eq!(
+        trimmed.report().interval_reports()[1].range_end_point(),
+        &p(4, 1)
+    );
+    assert_eq!(
         trimmed.report().interval_reports()[1].location(),
         Some(RegionPointLocation::Inside)
     );
