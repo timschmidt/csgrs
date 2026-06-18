@@ -243,6 +243,7 @@ fn curve_string_remove_adjacent_reversed_duplicates_reports_removed_pairs() {
     assert!(deduped.report().status().is_native_exact());
     assert_eq!(deduped.report().source_segment_count(), 4);
     assert_eq!(deduped.report().output_segment_count(), Some(2));
+    assert_eq!(deduped.report().retained_source_segment_indices(), &[0, 3]);
     assert_eq!(deduped.report().removed_pairs().len(), 1);
     assert_eq!(
         deduped.report().removed_pairs()[0].first_source_segment_index(),
@@ -281,6 +282,12 @@ fn curve_string_remove_adjacent_reversed_duplicates_reports_empty_output_blocker
     assert!(deduped.report().status().is_retained_evidence());
     assert_eq!(deduped.report().source_segment_count(), 4);
     assert_eq!(deduped.report().output_segment_count(), None);
+    assert!(
+        deduped
+            .report()
+            .retained_source_segment_indices()
+            .is_empty()
+    );
     assert_eq!(deduped.report().removed_pairs().len(), 2);
     assert_eq!(
         deduped.report().blocker(),
@@ -298,6 +305,7 @@ fn curve_string_remove_adjacent_reversed_duplicates_keeps_partial_backtrack() {
     assert!(deduped.report().status().is_native_exact());
     assert_eq!(deduped.report().removed_pairs().len(), 0);
     assert_eq!(deduped.report().output_segment_count(), Some(2));
+    assert_eq!(deduped.report().retained_source_segment_indices(), &[0, 1]);
     let curve = deduped
         .curve_string()
         .expect("nonduplicate partial backtrack should remain materialized");

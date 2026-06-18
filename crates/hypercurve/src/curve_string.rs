@@ -199,6 +199,7 @@ pub struct CurveStringReversedDuplicatePairReport2 {
 pub struct CurveStringDeduplicateReport2 {
     source_segment_count: usize,
     output_segment_count: Option<usize>,
+    retained_source_segment_indices: Vec<usize>,
     removed_pairs: Vec<CurveStringReversedDuplicatePairReport2>,
     status: RetainedTopologyStatus,
     blocker: Option<UncertaintyReason>,
@@ -947,6 +948,7 @@ impl CurveString2 {
                 report: CurveStringDeduplicateReport2 {
                     source_segment_count: self.len(),
                     output_segment_count: None,
+                    retained_source_segment_indices: Vec::new(),
                     removed_pairs,
                     status: RetainedTopologyStatus::Unsupported,
                     blocker: Some(UncertaintyReason::Boundary),
@@ -954,6 +956,10 @@ impl CurveString2 {
             });
         }
 
+        let retained_source_segment_indices = retained
+            .iter()
+            .map(|(source_index, _)| *source_index)
+            .collect::<Vec<_>>();
         let segments = retained
             .into_iter()
             .map(|(_, segment)| segment)
@@ -963,6 +969,7 @@ impl CurveString2 {
             report: CurveStringDeduplicateReport2 {
                 source_segment_count: self.len(),
                 output_segment_count: Some(curve_string.len()),
+                retained_source_segment_indices,
                 removed_pairs,
                 status: RetainedTopologyStatus::NativeExact,
                 blocker: None,
@@ -4605,6 +4612,11 @@ impl CurveStringDeduplicateReport2 {
     /// Returns the output segment count when de-duplication materialized.
     pub const fn output_segment_count(&self) -> Option<usize> {
         self.output_segment_count
+    }
+
+    /// Returns source segment indices retained in output order.
+    pub fn retained_source_segment_indices(&self) -> &[usize] {
+        &self.retained_source_segment_indices
     }
 
     /// Returns exact reversed duplicate pairs removed by this operation.
