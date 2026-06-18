@@ -49,6 +49,10 @@ pub enum CurveStringIntersectionPredicatePath2 {
 pub struct CurveStringIntersectionReport2 {
     first_segment_count: usize,
     second_segment_count: usize,
+    first_decided_segment_box_count: usize,
+    second_decided_segment_box_count: usize,
+    first_undecided_segment_box_count: usize,
+    second_undecided_segment_box_count: usize,
     candidate_pair_count: usize,
     skipped_aabb_pair_count: usize,
     tested_pair_count: usize,
@@ -5434,6 +5438,10 @@ impl CurveStringIntersectionReport2 {
     pub(crate) const fn new_native_exact(
         first_segment_count: usize,
         second_segment_count: usize,
+        first_decided_segment_box_count: usize,
+        second_decided_segment_box_count: usize,
+        first_undecided_segment_box_count: usize,
+        second_undecided_segment_box_count: usize,
         candidate_pair_count: usize,
         skipped_aabb_pair_count: usize,
         tested_pair_count: usize,
@@ -5443,6 +5451,10 @@ impl CurveStringIntersectionReport2 {
         Self {
             first_segment_count,
             second_segment_count,
+            first_decided_segment_box_count,
+            second_decided_segment_box_count,
+            first_undecided_segment_box_count,
+            second_undecided_segment_box_count,
             candidate_pair_count,
             skipped_aabb_pair_count,
             tested_pair_count,
@@ -5462,6 +5474,26 @@ impl CurveStringIntersectionReport2 {
     /// Returns the second curve-string segment count.
     pub const fn second_segment_count(&self) -> usize {
         self.second_segment_count
+    }
+
+    /// Returns decided segment boxes available for the first curve string.
+    pub const fn first_decided_segment_box_count(&self) -> usize {
+        self.first_decided_segment_box_count
+    }
+
+    /// Returns decided segment boxes available for the second curve string.
+    pub const fn second_decided_segment_box_count(&self) -> usize {
+        self.second_decided_segment_box_count
+    }
+
+    /// Returns first-curve segments whose boxes stayed undecided.
+    pub const fn first_undecided_segment_box_count(&self) -> usize {
+        self.first_undecided_segment_box_count
+    }
+
+    /// Returns second-curve segments whose boxes stayed undecided.
+    pub const fn second_undecided_segment_box_count(&self) -> usize {
+        self.second_undecided_segment_box_count
     }
 
     /// Returns the total flat segment-pair candidates before broad-phase skips.
@@ -6410,6 +6442,13 @@ pub(crate) fn intersect_curve_strings_with_cached_aabbs_with_report(
 ) -> CurveResult<CurveStringIntersectionResult2> {
     let mut intersections = Vec::new();
     let candidate_pair_count = first.segments.len() * second.segments.len();
+    let first_decided_segment_box_count = decided_segment_box_count(first_segment_boxes);
+    let second_decided_segment_box_count = decided_segment_box_count(second_segment_boxes);
+    let first_undecided_segment_box_count =
+        first.len().saturating_sub(first_decided_segment_box_count);
+    let second_undecided_segment_box_count = second
+        .len()
+        .saturating_sub(second_decided_segment_box_count);
     let mut skipped_aabb_pair_count = 0_usize;
     let mut tested_pair_count = 0_usize;
 
@@ -6448,6 +6487,10 @@ pub(crate) fn intersect_curve_strings_with_cached_aabbs_with_report(
         report: CurveStringIntersectionReport2 {
             first_segment_count: first.len(),
             second_segment_count: second.len(),
+            first_decided_segment_box_count,
+            second_decided_segment_box_count,
+            first_undecided_segment_box_count,
+            second_undecided_segment_box_count,
             candidate_pair_count,
             skipped_aabb_pair_count,
             tested_pair_count,
@@ -6458,6 +6501,10 @@ pub(crate) fn intersect_curve_strings_with_cached_aabbs_with_report(
             blocker: None,
         },
     })
+}
+
+pub(crate) fn decided_segment_box_count(segment_boxes: &[Option<Aabb2>]) -> usize {
+    segment_boxes.iter().filter(|bbox| bbox.is_some()).count()
 }
 
 const fn intersection_predicate_path(

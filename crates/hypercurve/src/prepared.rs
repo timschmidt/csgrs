@@ -8,6 +8,7 @@
 //! while preserving Shewchuk-style certified predicates for topology branches.
 
 use crate::bbox::{Aabb2, aabb_decided_misses_point, aabbs_decided_disjoint, decided_segment_aabb};
+use crate::curve_string::decided_segment_box_count;
 use crate::facts::{CurveStringFacts, RegionFacts};
 use crate::region_events::RegionIntersectionWorkload;
 use crate::{
@@ -1313,11 +1314,23 @@ fn intersect_prepared_segment_pairs_with_cached_aabbs(
     }
 
     let intersection_count = intersections.len();
+    let first_decided_segment_box_count = decided_segment_box_count(first_segment_boxes);
+    let second_decided_segment_box_count = decided_segment_box_count(second_segment_boxes);
+    let first_undecided_segment_box_count = first_prepared_segments
+        .len()
+        .saturating_sub(first_decided_segment_box_count);
+    let second_undecided_segment_box_count = second_prepared_segments
+        .len()
+        .saturating_sub(second_decided_segment_box_count);
     Ok(CurveStringIntersectionResult2::from_parts(
         intersections,
         CurveStringIntersectionReport2::new_native_exact(
             first_prepared_segments.len(),
             second_prepared_segments.len(),
+            first_decided_segment_box_count,
+            second_decided_segment_box_count,
+            first_undecided_segment_box_count,
+            second_undecided_segment_box_count,
             candidate_pair_count,
             skipped_aabb_pair_count,
             tested_pair_count,
