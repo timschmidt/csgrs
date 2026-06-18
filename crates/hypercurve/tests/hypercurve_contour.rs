@@ -252,6 +252,14 @@ fn contour_chamfer_line_line_vertex_materializes_closed_contour() {
         CurveStringChamferInputPath2::Parameters
     );
     assert_eq!(chamfer.report().source_segment_count(), 4);
+    assert_eq!(chamfer.report().output_segment_count(), Some(5));
+    assert_eq!(
+        chamfer.report().output_segment_count(),
+        chamfer
+            .report()
+            .curve_string_report()
+            .output_segment_count()
+    );
     assert_eq!(chamfer.report().fill_rule(), FillRule::NonZero);
     assert_eq!(
         chamfer
@@ -318,6 +326,14 @@ fn contour_chamfer_reports_boundary_parameters() {
             .chamfer_segment_index(),
         None
     );
+    assert_eq!(chamfer.report().output_segment_count(), None);
+    assert_eq!(
+        chamfer.report().output_segment_count(),
+        chamfer
+            .report()
+            .curve_string_report()
+            .output_segment_count()
+    );
 }
 
 #[test]
@@ -350,6 +366,7 @@ fn contour_chamfer_line_line_vertex_by_points_materializes_closed_contour() {
         chamfer.report().curve_string_report().next_trim().param(),
         &q(1, 4)
     );
+    assert_eq!(chamfer.report().output_segment_count(), Some(5));
     let contour = chamfer
         .contour()
         .expect("point-bearing contour chamfer should materialize");
@@ -386,6 +403,7 @@ fn contour_chamfer_line_line_vertex_by_points_reports_off_segment_boundary() {
             .chamfer_segment_index(),
         None
     );
+    assert_eq!(chamfer.report().output_segment_count(), None);
 }
 
 #[test]
@@ -414,6 +432,7 @@ fn contour_chamfer_line_line_wraparound_vertex_materializes_closed_contour() {
         chamfer.report().curve_string_report().next_segment_index(),
         0
     );
+    assert_eq!(chamfer.report().output_segment_count(), Some(5));
     assert_eq!(
         chamfer
             .report()
@@ -526,6 +545,11 @@ fn contour_fillet_line_line_vertex_materializes_closed_contour() {
         CurveStringFilletInputPath2::Points
     );
     assert_eq!(fillet.report().source_segment_count(), 4);
+    assert_eq!(fillet.report().output_segment_count(), Some(5));
+    assert_eq!(
+        fillet.report().output_segment_count(),
+        fillet.report().curve_string_report().output_segment_count()
+    );
     assert_eq!(fillet.report().fill_rule(), FillRule::NonZero);
     assert_eq!(
         fillet.report().curve_string_report().center(),
@@ -539,6 +563,7 @@ fn contour_fillet_line_line_vertex_materializes_closed_contour() {
         fillet.report().curve_string_report().fillet_segment_index(),
         Some(1)
     );
+    assert_eq!(fillet.report().output_segment_count(), Some(5));
 
     let contour = fillet
         .contour()
@@ -648,6 +673,11 @@ fn contour_fillet_reports_wrong_orientation_boundary() {
         fillet.report().curve_string_report().fillet_segment_index(),
         None
     );
+    assert_eq!(fillet.report().output_segment_count(), None);
+    assert_eq!(
+        fillet.report().output_segment_count(),
+        fillet.report().curve_string_report().output_segment_count()
+    );
 }
 
 #[test]
@@ -676,6 +706,7 @@ fn contour_fillet_line_line_wraparound_vertex_materializes_closed_contour() {
         fillet.report().curve_string_report().next_segment_index(),
         0
     );
+    assert_eq!(fillet.report().output_segment_count(), Some(5));
     assert_eq!(
         fillet
             .report()

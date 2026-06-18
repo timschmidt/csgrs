@@ -69,6 +69,7 @@ pub struct ContourChamferReport2 {
     vertex_index: usize,
     curve_string_report: CurveStringChamferReport2,
     source_segment_count: usize,
+    output_segment_count: Option<usize>,
     fill_rule: FillRule,
     status: RetainedTopologyStatus,
     blocker: Option<UncertaintyReason>,
@@ -97,6 +98,7 @@ pub struct ContourFilletReport2 {
     vertex_index: usize,
     curve_string_report: CurveStringFilletReport2,
     source_segment_count: usize,
+    output_segment_count: Option<usize>,
     fill_rule: FillRule,
     status: RetainedTopologyStatus,
     blocker: Option<UncertaintyReason>,
@@ -438,6 +440,7 @@ impl Contour2 {
         } else {
             ContourChamferStage2::CurveStringEdit
         };
+        let output_segment_count = contour.as_ref().map(Contour2::len);
         Ok(ContourChamferResult2 {
             contour,
             report: ContourChamferReport2 {
@@ -445,6 +448,7 @@ impl Contour2 {
                 vertex_index,
                 curve_string_report,
                 source_segment_count: self.segments().len(),
+                output_segment_count,
                 fill_rule: self.fill_rule,
                 status,
                 blocker,
@@ -506,6 +510,7 @@ impl Contour2 {
         } else {
             ContourChamferStage2::CurveStringEdit
         };
+        let output_segment_count = contour.as_ref().map(Contour2::len);
         Ok(ContourChamferResult2 {
             contour,
             report: ContourChamferReport2 {
@@ -513,6 +518,7 @@ impl Contour2 {
                 vertex_index,
                 curve_string_report,
                 source_segment_count: self.segments().len(),
+                output_segment_count,
                 fill_rule: self.fill_rule,
                 status,
                 blocker,
@@ -579,6 +585,7 @@ impl Contour2 {
         } else {
             ContourFilletStage2::CurveStringEdit
         };
+        let output_segment_count = contour.as_ref().map(Contour2::len);
         Ok(ContourFilletResult2 {
             contour,
             report: ContourFilletReport2 {
@@ -586,6 +593,7 @@ impl Contour2 {
                 vertex_index,
                 curve_string_report,
                 source_segment_count: self.segments().len(),
+                output_segment_count,
                 fill_rule: self.fill_rule,
                 status,
                 blocker,
@@ -654,6 +662,7 @@ impl Contour2 {
         } else {
             ContourFilletStage2::CurveStringEdit
         };
+        let output_segment_count = contour.as_ref().map(Contour2::len);
         Ok(ContourFilletResult2 {
             contour,
             report: ContourFilletReport2 {
@@ -661,6 +670,7 @@ impl Contour2 {
                 vertex_index,
                 curve_string_report,
                 source_segment_count: self.segments().len(),
+                output_segment_count,
                 fill_rule: self.fill_rule,
                 status,
                 blocker,
@@ -900,6 +910,11 @@ impl ContourChamferReport2 {
         self.source_segment_count
     }
 
+    /// Returns output segment count when the edited contour materialized.
+    pub const fn output_segment_count(&self) -> Option<usize> {
+        self.output_segment_count
+    }
+
     /// Returns the fill rule preserved by this contour edit.
     pub const fn fill_rule(&self) -> FillRule {
         self.fill_rule
@@ -952,6 +967,11 @@ impl ContourFilletReport2 {
     /// Returns the source contour segment count captured by this report.
     pub const fn source_segment_count(&self) -> usize {
         self.source_segment_count
+    }
+
+    /// Returns output segment count when the edited contour materialized.
+    pub const fn output_segment_count(&self) -> Option<usize> {
+        self.output_segment_count
     }
 
     /// Returns the fill rule preserved by this contour edit.
