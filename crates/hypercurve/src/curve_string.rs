@@ -283,6 +283,8 @@ pub struct CurveStringChamferReport2 {
     next_segment_index: usize,
     previous_trim: CurveStringTrimPoint2,
     next_trim: CurveStringTrimPoint2,
+    previous_cut_point: Option<Point2>,
+    next_cut_point: Option<Point2>,
     segment_reports: Vec<CurveStringTrimSegmentReport2>,
     chamfer_segment_index: Option<usize>,
     source_segment_count: usize,
@@ -314,6 +316,8 @@ pub struct CurveStringFilletReport2 {
     next_segment_index: usize,
     previous_trim: CurveStringTrimPoint2,
     next_trim: CurveStringTrimPoint2,
+    previous_tangent_point: Option<Point2>,
+    next_tangent_point: Option<Point2>,
     center: Option<Point2>,
     radius_squared: Option<Real>,
     segment_reports: Vec<CurveStringTrimSegmentReport2>,
@@ -1356,6 +1360,8 @@ impl CurveString2 {
 
         let previous_cut = previous_line.point_at(previous_trim.param().clone());
         let next_cut = next_line.point_at(next_trim.param().clone());
+        let previous_cut_point = previous_cut.clone();
+        let next_cut_point = next_cut.clone();
         let previous_range = ParamRange::new(Real::zero(), previous_trim.param().clone());
         let next_range = ParamRange::new(next_trim.param().clone(), Real::one());
         let previous_segment =
@@ -1391,6 +1397,8 @@ impl CurveString2 {
                 next_segment_index,
                 previous_trim,
                 next_trim,
+                previous_cut_point: Some(previous_cut_point),
+                next_cut_point: Some(next_cut_point),
                 segment_reports,
                 chamfer_segment_index: Some(chamfer_segment_index),
                 source_segment_count: self.len(),
@@ -1825,6 +1833,8 @@ impl CurveString2 {
                 next_segment_index,
                 previous_trim,
                 next_trim,
+                previous_tangent_point: Some((*previous_point).clone()),
+                next_tangent_point: Some((*next_point).clone()),
                 center: Some(center.clone()),
                 radius_squared: Some(radius_squared),
                 segment_reports,
@@ -2586,6 +2596,16 @@ impl CurveStringChamferReport2 {
         &self.next_trim
     }
 
+    /// Returns the exact previous-line cut point when the chamfer materialized.
+    pub const fn previous_cut_point(&self) -> Option<&Point2> {
+        self.previous_cut_point.as_ref()
+    }
+
+    /// Returns the exact next-line cut point when the chamfer materialized.
+    pub const fn next_cut_point(&self) -> Option<&Point2> {
+        self.next_cut_point.as_ref()
+    }
+
     /// Returns retained source ranges for the shortened adjacent line segments.
     pub fn segment_reports(&self) -> &[CurveStringTrimSegmentReport2] {
         &self.segment_reports
@@ -2667,6 +2687,16 @@ impl CurveStringFilletReport2 {
     /// Returns the next line trim point.
     pub const fn next_trim(&self) -> &CurveStringTrimPoint2 {
         &self.next_trim
+    }
+
+    /// Returns the exact previous-line tangent point when the fillet materialized.
+    pub const fn previous_tangent_point(&self) -> Option<&Point2> {
+        self.previous_tangent_point.as_ref()
+    }
+
+    /// Returns the exact next-line tangent point when the fillet materialized.
+    pub const fn next_tangent_point(&self) -> Option<&Point2> {
+        self.next_tangent_point.as_ref()
     }
 
     /// Returns the certified fillet center when the attempt reached center validation.
@@ -4139,6 +4169,8 @@ fn blocked_chamfer_result(
             next_segment_index,
             previous_trim,
             next_trim,
+            previous_cut_point: None,
+            next_cut_point: None,
             segment_reports,
             chamfer_segment_index: None,
             source_segment_count: curve_string.len(),
@@ -4168,6 +4200,8 @@ fn blocked_fillet_result(
             next_segment_index,
             previous_trim,
             next_trim,
+            previous_tangent_point: None,
+            next_tangent_point: None,
             center,
             radius_squared,
             segment_reports,

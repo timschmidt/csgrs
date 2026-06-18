@@ -938,6 +938,8 @@ fn curve_string_chamfer_line_line_vertex_materializes_exact_segments() {
     assert_eq!(chamfer.report().next_segment_index(), 1);
     assert_eq!(chamfer.report().previous_trim().param(), &q(3, 4));
     assert_eq!(chamfer.report().next_trim().param(), &q(1, 4));
+    assert_eq!(chamfer.report().previous_cut_point(), Some(&p(3, 0)));
+    assert_eq!(chamfer.report().next_cut_point(), Some(&p(4, 1)));
     assert_eq!(chamfer.report().chamfer_segment_index(), Some(1));
     assert_eq!(chamfer.report().source_segment_count(), 2);
     assert_eq!(chamfer.report().segment_reports().len(), 2);
@@ -986,6 +988,8 @@ fn curve_string_chamfer_line_line_vertex_by_points_materializes_exact_segments()
     );
     assert_eq!(chamfer.report().previous_trim().param(), &q(3, 4));
     assert_eq!(chamfer.report().next_trim().param(), &q(1, 4));
+    assert_eq!(chamfer.report().previous_cut_point(), Some(&p(3, 0)));
+    assert_eq!(chamfer.report().next_cut_point(), Some(&p(4, 1)));
     let curve = chamfer
         .curve_string()
         .expect("point-bearing line-line chamfer should materialize");
@@ -1015,6 +1019,8 @@ fn curve_string_chamfer_line_line_vertex_by_points_reports_off_segment_boundary(
         chamfer.report().blocker(),
         Some(UncertaintyReason::Boundary)
     );
+    assert_eq!(chamfer.report().previous_cut_point(), None);
+    assert_eq!(chamfer.report().next_cut_point(), None);
 }
 
 #[test]
@@ -1033,6 +1039,8 @@ fn curve_string_chamfer_line_line_vertex_reports_boundary_parameters() {
         Some(UncertaintyReason::Boundary)
     );
     assert_eq!(chamfer.report().chamfer_segment_index(), None);
+    assert_eq!(chamfer.report().previous_cut_point(), None);
+    assert_eq!(chamfer.report().next_cut_point(), None);
 }
 
 #[test]
@@ -1053,6 +1061,8 @@ fn curve_string_chamfer_arc_neighbor_reports_unsupported() {
         chamfer.report().blocker(),
         Some(UncertaintyReason::Unsupported)
     );
+    assert_eq!(chamfer.report().previous_cut_point(), None);
+    assert_eq!(chamfer.report().next_cut_point(), None);
 }
 
 #[test]
@@ -1073,6 +1083,8 @@ fn curve_string_fillet_line_line_vertex_materializes_exact_arc() {
     assert_eq!(fillet.report().next_segment_index(), 1);
     assert_eq!(fillet.report().previous_trim().param(), &q(3, 4));
     assert_eq!(fillet.report().next_trim().param(), &q(1, 4));
+    assert_eq!(fillet.report().previous_tangent_point(), Some(&p(3, 0)));
+    assert_eq!(fillet.report().next_tangent_point(), Some(&p(4, 1)));
     assert_eq!(fillet.report().center(), Some(&p(3, 1)));
     assert_eq!(fillet.report().radius_squared(), Some(&s(1)));
     assert_eq!(fillet.report().fillet_segment_index(), Some(1));
@@ -1129,6 +1141,8 @@ fn curve_string_fillet_line_line_vertex_by_parameters_materializes_exact_arc() {
     );
     assert_eq!(fillet.report().previous_trim().param(), &q(3, 4));
     assert_eq!(fillet.report().next_trim().param(), &q(1, 4));
+    assert_eq!(fillet.report().previous_tangent_point(), Some(&p(3, 0)));
+    assert_eq!(fillet.report().next_tangent_point(), Some(&p(4, 1)));
     assert_eq!(fillet.report().center(), Some(&p(3, 1)));
     assert_eq!(fillet.report().radius_squared(), Some(&s(1)));
     assert_eq!(fillet.report().fillet_segment_index(), Some(1));
@@ -1160,6 +1174,8 @@ fn curve_string_fillet_reports_radius_mismatch_boundary() {
     assert!(fillet.curve_string().is_none());
     assert!(fillet.report().status().is_retained_evidence());
     assert_eq!(fillet.report().center(), Some(&p(3, 2)));
+    assert_eq!(fillet.report().previous_tangent_point(), None);
+    assert_eq!(fillet.report().next_tangent_point(), None);
     assert_eq!(fillet.report().blocker(), Some(UncertaintyReason::Boundary));
 }
 
@@ -1176,6 +1192,8 @@ fn curve_string_fillet_reports_wrong_orientation_boundary() {
     assert!(fillet.report().status().is_retained_evidence());
     assert_eq!(fillet.report().blocker(), Some(UncertaintyReason::Boundary));
     assert_eq!(fillet.report().fillet_segment_index(), None);
+    assert_eq!(fillet.report().previous_tangent_point(), None);
+    assert_eq!(fillet.report().next_tangent_point(), None);
 }
 
 #[test]
@@ -1191,6 +1209,8 @@ fn curve_string_fillet_reports_boundary_parameters() {
     assert!(fillet.report().status().is_retained_evidence());
     assert_eq!(fillet.report().blocker(), Some(UncertaintyReason::Boundary));
     assert_eq!(fillet.report().fillet_segment_index(), None);
+    assert_eq!(fillet.report().previous_tangent_point(), None);
+    assert_eq!(fillet.report().next_tangent_point(), None);
 }
 
 #[test]
