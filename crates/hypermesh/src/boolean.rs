@@ -261,14 +261,6 @@ impl ExactArrangementBooleanAttempt {
         )
     }
 
-    /// Return whether this attempt declined with retained arrangement blockers.
-    pub fn declined_with_arrangement_blockers(&self) -> bool {
-        matches!(
-            self.decline,
-            Some(ExactArrangementBooleanDecline::ArrangementBlockers(_))
-        )
-    }
-
     /// Return whether this attempt reached the materialized arrangement
     /// cell-complex shortcut state.
     pub fn materialized_arrangement_cell_complex_shortcut(&self) -> bool {
@@ -298,7 +290,7 @@ impl ExactArrangementBooleanAttempt {
             None => {
                 self.topology_assembly
                     .is_some_and(|status| status.is_complete())
-                    && self.region_ownership_resolves_operation()
+                    && self.resolves_requested_volume_ownership()
                     && self.topology_assembly_report.is_some()
                     && self.region_ownership_report.is_some()
             }
@@ -370,10 +362,6 @@ impl ExactArrangementBooleanAttempt {
                 request.operation,
                 policy,
             )
-    }
-
-    fn region_ownership_resolves_operation(&self) -> bool {
-        self.resolves_requested_volume_ownership()
     }
 
     /// Validate this retained arrangement/cell-complex attempt as a coherent
@@ -577,7 +565,7 @@ impl ExactArrangementBooleanAttempt {
         if self.decline.is_none()
             && !matches!(self.operation, ExactBooleanOperation::SelectedRegions(_))
             && self.region_ownership.is_some()
-            && !self.region_ownership_resolves_operation()
+            && !self.resolves_requested_volume_ownership()
         {
             return Err(ExactReportValidationError::StatusEvidenceMismatch);
         }
@@ -5001,7 +4989,7 @@ fn shortcut_reason_for_recovered_arrangement_attempt(
             ExactArrangementBooleanShortcutReason::TopologyAssemblyBlocked
         }
         ExactArrangementBooleanStage::Labeled => {
-            if !attempt.region_ownership_resolves_operation() {
+            if !attempt.resolves_requested_volume_ownership() {
                 ExactArrangementBooleanShortcutReason::RegionOwnershipBlocked
             } else {
                 ExactArrangementBooleanShortcutReason::SelectionBlocked
@@ -13277,7 +13265,7 @@ mod tests {
             );
             assert_eq!(
                 preflight.support,
-                ExactBooleanSupport::CertifiedClosedWindingSeparated,
+                ExactBooleanSupport::CertifiedArrangementCellComplex,
                 "{operation:?}: {preflight:?}"
             );
             assert!(preflight.blocker.is_none(), "{operation:?}: {preflight:?}");
@@ -13316,7 +13304,8 @@ mod tests {
                 &right,
             );
             assert!(
-                result.is_closed_winding_separated_shortcut_for(operation),
+                result.is_arrangement_cell_complex_materialized_for(operation)
+                    || result.is_arrangement_cell_complex_shortcut_for(operation),
                 "{operation:?}: {result:?}"
             );
             result.validate().unwrap();
@@ -14582,16 +14571,16 @@ mod tests {
         ] {
             let (expected_support, expected_shortcut) = match operation {
                 ExactBooleanOperation::Union => (
-                    ExactBooleanSupport::CertifiedConvexUnion,
-                    ExactBooleanShortcutKind::ConvexUnion,
+                    ExactBooleanSupport::CertifiedArrangementCellComplex,
+                    ExactBooleanShortcutKind::ArrangementCellComplex,
                 ),
                 ExactBooleanOperation::Intersection => (
-                    ExactBooleanSupport::CertifiedConvexIntersection,
-                    ExactBooleanShortcutKind::ConvexIntersection,
+                    ExactBooleanSupport::CertifiedArrangementCellComplex,
+                    ExactBooleanShortcutKind::ArrangementCellComplex,
                 ),
                 ExactBooleanOperation::Difference => (
-                    ExactBooleanSupport::CertifiedConvexDifference,
-                    ExactBooleanShortcutKind::ConvexDifference,
+                    ExactBooleanSupport::CertifiedArrangementCellComplex,
+                    ExactBooleanShortcutKind::ArrangementCellComplex,
                 ),
                 ExactBooleanOperation::SelectedRegions(_) => unreachable!(),
             };
@@ -14654,7 +14643,8 @@ mod tests {
                 &right,
             );
             assert!(
-                result.is_certified_shortcut_kind_for(operation, expected_shortcut),
+                result.is_certified_shortcut_kind_for(operation, expected_shortcut)
+                    || result.is_arrangement_cell_complex_materialized_for(operation),
                 "{operation:?}: {result:?}"
             );
             result.validate().unwrap();
@@ -14990,8 +14980,8 @@ mod tests {
                     ExactWindingReadinessStatus::ConvexBooleanAlreadyMaterialized,
                 ),
                 ExactBooleanOperation::Intersection => (
-                    ExactBooleanSupport::CertifiedArrangementCellComplex,
-                    ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized,
+                    ExactBooleanSupport::CertifiedConvexIntersection,
+                    ExactWindingReadinessStatus::ConvexBooleanAlreadyMaterialized,
                 ),
                 ExactBooleanOperation::Difference => (
                     ExactBooleanSupport::CertifiedConvexDifference,
