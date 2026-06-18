@@ -140,6 +140,9 @@ pub struct RegionLineSegmentRegionBuildReport2 {
     split_skipped_aabb_pair_count: usize,
     split_tested_pair_count: usize,
     split_intersection_event_count: usize,
+    split_point_relation_count: usize,
+    split_overlap_relation_count: usize,
+    split_uncertain_relation_count: usize,
     split_intersection_points: Vec<Point2>,
     split_intersection_reports: Vec<RegionLineSegmentSplitIntersectionReport2>,
     split_output_segment_count: Option<usize>,
@@ -363,6 +366,9 @@ impl Region2 {
                 split_skipped_aabb_pair_count: arranged.report.skipped_aabb_pair_count,
                 split_tested_pair_count: arranged.report.tested_pair_count,
                 split_intersection_event_count: arranged.report.intersection_event_count,
+                split_point_relation_count: arranged.report.point_relation_count,
+                split_overlap_relation_count: arranged.report.overlap_relation_count,
+                split_uncertain_relation_count: arranged.report.uncertain_relation_count,
                 split_intersection_points: arranged.report.intersection_points,
                 split_intersection_reports: arranged.report.intersection_reports,
                 split_output_segment_count: Some(arranged.segments.len()),
@@ -565,6 +571,9 @@ impl Region2 {
                 split_skipped_aabb_pair_count: arranged.report.skipped_aabb_pair_count,
                 split_tested_pair_count: arranged.report.tested_pair_count,
                 split_intersection_event_count: arranged.report.intersection_event_count,
+                split_point_relation_count: arranged.report.point_relation_count,
+                split_overlap_relation_count: arranged.report.overlap_relation_count,
+                split_uncertain_relation_count: arranged.report.uncertain_relation_count,
                 split_intersection_points: arranged.report.intersection_points,
                 split_intersection_reports: arranged.report.intersection_reports,
                 split_output_segment_count: Some(arranged.segments.len()),
@@ -1068,6 +1077,21 @@ impl RegionLineSegmentRegionBuildReport2 {
         self.split_intersection_event_count
     }
 
+    /// Returns source segment-pair relations that produced one or more exact split points.
+    pub const fn split_point_relation_count(&self) -> usize {
+        self.split_point_relation_count
+    }
+
+    /// Returns source segment-pair relations blocked by exact overlap topology.
+    pub const fn split_overlap_relation_count(&self) -> usize {
+        self.split_overlap_relation_count
+    }
+
+    /// Returns source segment-pair relations left unresolved by the active policy.
+    pub const fn split_uncertain_relation_count(&self) -> usize {
+        self.split_uncertain_relation_count
+    }
+
     /// Returns exact point-intersection events retained during split arrangement.
     pub fn split_intersection_points(&self) -> &[Point2] {
         &self.split_intersection_points
@@ -1332,6 +1356,9 @@ struct LineSegmentSplitReportParts {
     skipped_aabb_pair_count: usize,
     tested_pair_count: usize,
     intersection_event_count: usize,
+    point_relation_count: usize,
+    overlap_relation_count: usize,
+    uncertain_relation_count: usize,
     intersection_points: Vec<Point2>,
     intersection_reports: Vec<RegionLineSegmentSplitIntersectionReport2>,
     output_segment_count: Option<usize>,
@@ -1712,6 +1739,7 @@ fn arrange_line_segments_at_point_intersections(
                     b_param,
                     ..
                 } => {
+                    report.point_relation_count += 1;
                     report.intersection_event_count += 1;
                     report.intersection_points.push(point.clone());
                     report
@@ -1745,6 +1773,7 @@ fn arrange_line_segments_at_point_intersections(
                     }
                 }
                 LineLineIntersection::Overlap { .. } => {
+                    report.overlap_relation_count += 1;
                     set_split_blocker_pair(
                         &mut report,
                         first_index,
@@ -1759,6 +1788,7 @@ fn arrange_line_segments_at_point_intersections(
                     return Ok(Err((report, UncertaintyReason::Boundary)));
                 }
                 LineLineIntersection::Uncertain { reason } => {
+                    report.uncertain_relation_count += 1;
                     set_split_blocker_pair(
                         &mut report,
                         first_index,
@@ -1910,6 +1940,7 @@ fn arrange_native_segments_at_point_intersections(
             match native_segment_intersection_split_markers(first, second, policy)? {
                 NativeSegmentIntersectionMarkers::None => {}
                 NativeSegmentIntersectionMarkers::Points(points) => {
+                    report.point_relation_count += 1;
                     report.intersection_event_count += points.len();
                     for point in points {
                         report.intersection_points.push(point.point.clone());
@@ -1959,6 +1990,7 @@ fn arrange_native_segments_at_point_intersections(
                     }
                 }
                 NativeSegmentIntersectionMarkers::Overlap => {
+                    report.overlap_relation_count += 1;
                     set_split_blocker_pair(
                         &mut report,
                         first_index,
@@ -1973,6 +2005,7 @@ fn arrange_native_segments_at_point_intersections(
                     return Ok(Err((report, UncertaintyReason::Boundary)));
                 }
                 NativeSegmentIntersectionMarkers::Uncertain(reason) => {
+                    report.uncertain_relation_count += 1;
                     set_split_blocker_pair(
                         &mut report,
                         first_index,
@@ -2733,6 +2766,9 @@ fn blocked_line_segment_region_report(
         split_skipped_aabb_pair_count: split_report.skipped_aabb_pair_count,
         split_tested_pair_count: split_report.tested_pair_count,
         split_intersection_event_count: split_report.intersection_event_count,
+        split_point_relation_count: split_report.point_relation_count,
+        split_overlap_relation_count: split_report.overlap_relation_count,
+        split_uncertain_relation_count: split_report.uncertain_relation_count,
         split_intersection_points: split_report.intersection_points,
         split_intersection_reports: split_report.intersection_reports,
         split_output_segment_count: split_report.output_segment_count,
