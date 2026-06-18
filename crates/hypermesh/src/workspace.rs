@@ -100,7 +100,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
     }
 
     /// Returns the exact arrangement for `policy`, building it once per policy.
-    pub fn arrangement(
+    pub(crate) fn arrangement(
         &mut self,
         policy: ExactRegularizationPolicy,
     ) -> Result<&ExactArrangement, MeshError> {

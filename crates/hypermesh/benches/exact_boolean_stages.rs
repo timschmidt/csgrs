@@ -316,17 +316,6 @@ fn run_case(case: &BenchCase) {
         },
     );
 
-    workspace.arrangement(case.regularization).unwrap();
-    time_stage(case, "workspace_arrangement_cached", || {
-        let arrangement = workspace.arrangement(case.regularization).unwrap();
-        black_box((
-            arrangement.vertices.len(),
-            arrangement.edges.len(),
-            arrangement.face_cells.len(),
-            arrangement.blockers.len(),
-        ));
-    });
-
     workspace.evaluate(request).unwrap();
     time_stage(
         case,
@@ -700,11 +689,7 @@ fn retained_workspace_for_case<'a>(
     case: &'a BenchCase,
     _request: ExactBooleanRequest,
 ) -> ExactBooleanWorkspace<'a> {
-    let mut retained_workspace = retained_graph_workspace_for_case(case);
-    retained_workspace
-        .arrangement(ExactRegularizationPolicy::REGULARIZED_SOLID)
-        .unwrap();
-    retained_workspace
+    retained_graph_workspace_for_case(case)
 }
 
 fn retained_workspace_and_certification_for_case<'a, T>(
