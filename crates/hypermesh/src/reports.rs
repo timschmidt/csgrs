@@ -1778,34 +1778,6 @@ impl ExactBooleanResult {
         }
     }
 
-    /// Classify whether this result still matches its full operation replay.
-    pub fn operation_freshness_against_sources(
-        &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-        operation: ExactBooleanOperation,
-        validation: ValidationPolicy,
-        boundary_policy: ExactBoundaryBooleanPolicy,
-    ) -> ExactReportFreshness {
-        let request =
-            ExactBooleanRequest::with_boundary_policy(operation, validation, boundary_policy);
-        if !self.matches_request(request) {
-            return ExactReportFreshness::OperationReplayMismatch;
-        }
-        if let Err(error) = self.validate_against_sources(left, right) {
-            return error.into();
-        }
-        match self.retained_arrangement_artifacts_certify_operation_replay(left, right, request) {
-            Ok(true) => return ExactReportFreshness::Current,
-            Ok(false) => {}
-            Err(error) => return error.into(),
-        }
-        match self.operation_replay_matches_sources(left, right, request) {
-            Ok(true) => ExactReportFreshness::Current,
-            Ok(false) | Err(_) => ExactReportFreshness::OperationReplayMismatch,
-        }
-    }
-
     fn operation_replay_matches_sources(
         &self,
         left: &ExactMesh,
@@ -6960,13 +6932,13 @@ mod tests {
             ExactReportFreshness::Current
         );
         assert_eq!(
-            result.operation_freshness_against_sources(
+            exact_report_freshness(result.validate_operation_against_sources(
                 &left,
                 &right,
                 ExactBooleanOperation::Union,
                 ValidationPolicy::CLOSED,
                 ExactBoundaryBooleanPolicy::Reject,
-            ),
+            )),
             ExactReportFreshness::Current
         );
 
@@ -6981,15 +6953,16 @@ mod tests {
             result.freshness_against_sources(&left, &left),
             ExactReportFreshness::SourceReplayMismatch
         );
-        assert_eq!(
-            result.operation_freshness_against_sources(
-                &left,
-                &right,
-                ExactBooleanOperation::Intersection,
-                ValidationPolicy::CLOSED,
-                ExactBoundaryBooleanPolicy::Reject,
-            ),
-            ExactReportFreshness::OperationReplayMismatch
+        assert!(
+            result
+                .validate_operation_against_sources(
+                    &left,
+                    &right,
+                    ExactBooleanOperation::Intersection,
+                    ValidationPolicy::CLOSED,
+                    ExactBoundaryBooleanPolicy::Reject,
+                )
+                .is_err()
         );
     }
 
