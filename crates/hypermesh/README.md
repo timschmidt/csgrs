@@ -63,11 +63,11 @@ from exact predicates and retained evidence.
 
 ## Main Types
 
-- `exact::ExactMesh`, `hyperlimit::Point3`, `Triangle`, `MeshFacts`, and
-  `ValidationReport` describe exact-aware mesh inputs and diagnostics.
-- `ValidationPolicy`, `BoundaryPolicy`, `MeshValidationFacts`, `VertexFacts`,
-  `EdgeFacts`, `FaceFacts`, and `FacePlaneFacts` retain topology and determinant-form
-  face-plane evidence.
+- `ExactMesh`, `hyperlimit::Point3`, `Triangle`, and `ValidationPolicy`
+  describe exact-aware mesh inputs and validation contracts.
+- Retained mesh facts, vertex/edge/face evidence, and determinant-form face
+  planes remain attached to `ExactMesh` and replay through the canonical
+  reports rather than a broad root-level facts API.
 - `SourceProvenance`, `ApproximationPolicy`, `PredicateUse`, and construction
   provenance records preserve import and decision history.
 - `ExactBooleanWorkspace` retains graph, arrangement, attempt, evaluation, and

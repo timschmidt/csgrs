@@ -88,5 +88,5 @@ pub use proposal::{
 pub use region::{ExactOutputTriangleOrientation, ExactRegionSelection};
 pub use regularization::ExactRegularizationPolicy;
 pub use reports::{ExactBooleanResult, ExactReportFreshness, ExactReportValidationError};
-pub use validation::{BoundaryPolicy, ValidationPolicy, ValidationReport};
+pub use validation::ValidationPolicy;
 pub use workspace::ExactBooleanWorkspace;

@@ -42,7 +42,7 @@ pub enum BoundaryPolicy {
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct ValidationPolicy {
     /// How boundary edges are handled.
-    pub boundary: BoundaryPolicy,
+    pub(crate) boundary: BoundaryPolicy,
 }
 
 impl ValidationPolicy {

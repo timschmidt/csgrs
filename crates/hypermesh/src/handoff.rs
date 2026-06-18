@@ -12,6 +12,7 @@ use hyperlimit::MeshSource;
 
 use super::{ExactMesh, ValidationPolicy};
 use crate::audit::{ExactMeshAuditReport, audit_exact_mesh};
+use crate::validation::BoundaryPolicy;
 
 /// Exact solid handoff report for downstream crates.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -388,7 +389,7 @@ impl ExactSurfaceHandoffReport {
     pub const fn boundary_allowed(&self) -> bool {
         matches!(
             self.validation_policy.boundary,
-            super::BoundaryPolicy::AllowBoundary
+            BoundaryPolicy::AllowBoundary
         )
     }
 }
