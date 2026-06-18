@@ -207,7 +207,11 @@ fn finite_line_string_import_preserves_step_tolerance_evidence() {
     assert_eq!(record.source_tolerance(), Some(tolerance));
     assert_eq!(record.input_point_count(), 3);
     assert_eq!(record.emitted_segment_count(), 1);
+    assert_eq!(record.source_edge_count(), 2);
     assert_eq!(record.discarded_duplicate_count(), 1);
+    assert!(record.has_discarded_duplicate_edges());
+    assert!(record.has_source_tolerance());
+    assert!(!record.has_zero_source_tolerance());
     assert!(record.topology_status().is_imported_lossy());
 }
 
@@ -234,7 +238,11 @@ fn finite_ring_import_preserves_dxf_handle_and_closure_evidence() {
     assert_eq!(record.source_index(), 0xabc);
     assert_eq!(record.source_version(), 0);
     assert_eq!(record.source_tolerance().unwrap().relative(), 1.0e-7);
+    assert!(record.has_source_tolerance());
+    assert!(!record.has_zero_source_tolerance());
+    assert_eq!(record.source_edge_count(), 4);
     assert_eq!(record.discarded_duplicate_count(), 1);
+    assert!(record.has_discarded_duplicate_edges());
     assert!(record.topology_status().is_imported_lossy());
 }
 
@@ -256,8 +264,29 @@ fn finite_ring_import_accepts_unrepeated_closed_edge_accounting() {
         record.source_topology(),
         RetainedImportTopology2::ClosedRing
     );
+    assert_eq!(record.source_edge_count(), 4);
     assert_eq!(record.emitted_segment_count(), 4);
     assert_eq!(record.discarded_duplicate_count(), 0);
+    assert!(!record.has_discarded_duplicate_edges());
+    assert!(!record.has_source_tolerance());
+    assert!(!record.has_zero_source_tolerance());
+}
+
+#[test]
+fn finite_import_record_exposes_zero_tolerance_boundary_claim() {
+    let tolerance = RetainedSourceTolerance2::try_new(0.0, 0.0).unwrap();
+    let import = CurveString2::import_finite_line_string_with_source(
+        &[[0.0, 0.0], [1.0, 0.0]],
+        RetainedImportFormat2::Application,
+        9,
+        Some(tolerance),
+    )
+    .unwrap();
+
+    assert!(import.record().has_source_tolerance());
+    assert!(import.record().has_zero_source_tolerance());
+    assert_eq!(import.record().source_edge_count(), 1);
+    assert!(!import.record().has_discarded_duplicate_edges());
 }
 
 #[test]

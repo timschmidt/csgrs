@@ -333,9 +333,34 @@ impl RetainedImportRecord2 {
         self.emitted_segment_count
     }
 
+    /// Returns the number of source edge records accounted for by this import.
+    ///
+    /// Open line strings account for `input_point_count - 1` source edges;
+    /// closed rings account for one edge per input point, including the closing
+    /// edge. The value is preserved as emitted native segments plus discarded
+    /// duplicate source edges.
+    pub const fn source_edge_count(&self) -> usize {
+        self.emitted_segment_count + self.discarded_duplicate_count
+    }
+
     /// Returns duplicate finite edges discarded before topology construction.
     pub const fn discarded_duplicate_count(&self) -> usize {
         self.discarded_duplicate_count
+    }
+
+    /// Returns true when finite duplicate source edges were discarded at import.
+    pub const fn has_discarded_duplicate_edges(&self) -> bool {
+        self.discarded_duplicate_count != 0
+    }
+
+    /// Returns true when the source supplied explicit tolerance evidence.
+    pub const fn has_source_tolerance(&self) -> bool {
+        self.source_tolerance.is_some()
+    }
+
+    /// Returns true when the source supplied an exact zero tolerance claim.
+    pub const fn has_zero_source_tolerance(&self) -> bool {
+        matches!(self.source_tolerance, Some(tolerance) if tolerance.is_zero())
     }
 
     /// Returns the topology readiness status for this retained import.
