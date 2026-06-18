@@ -2,8 +2,9 @@ use std::hint::black_box;
 use std::time::Instant;
 
 use hypercurve::{
-    BulgeVertex2, CircularArc2, Contour2, CurvePolicy, CurveResult, CurveString2,
-    CurveStringEndpoint2, CurveStringTrimPoint2, LineSeg2, Point2, Real, Region2, Segment2,
+    BooleanOp, BulgeVertex2, CircularArc2, Contour2, CurvePolicy, CurveResult, CurveString2,
+    CurveStringEndpoint2, CurveStringTrimPoint2, FillRule, LineSeg2, Point2, Real, Region2,
+    RegionBooleanQueryPath2, Segment2,
 };
 
 fn s(value: i32) -> Real {
@@ -312,6 +313,74 @@ fn bench_boundary_contour_region_build(iterations: u32) -> CurveResult<()> {
     Ok(())
 }
 
+fn bench_region_boolean_report(iterations: u32) -> CurveResult<()> {
+    let first = Region2::from_material_contours(vec![rectangle(0, 0, 4, 4)]);
+    let second = Region2::from_material_contours(vec![rectangle(2, -1, 6, 3)]);
+    let policy = CurvePolicy::certified();
+    let started = Instant::now();
+    let mut total_boundary_contours = 0_usize;
+
+    for _ in 0..iterations {
+        let result = first.boolean_region_with_report(
+            &second,
+            BooleanOp::Union,
+            FillRule::NonZero,
+            &policy,
+        )?;
+        let report = result.report();
+        if !report.status().is_native_exact()
+            || report.query_path() != RegionBooleanQueryPath2::Direct
+            || result.region().is_none()
+        {
+            panic!("region boolean benchmark became non-native or used the wrong query path");
+        }
+        total_boundary_contours += black_box(report.boundary_contour_count().unwrap_or_default());
+    }
+
+    let elapsed = started.elapsed();
+    println!(
+        "region_boolean_report: {iterations} iterations in {elapsed:?} ({:?}/iter), total boundary contours={total_boundary_contours}",
+        elapsed / iterations
+    );
+    Ok(())
+}
+
+fn bench_prepared_region_boolean_report(iterations: u32) -> CurveResult<()> {
+    let first = Region2::from_material_contours(vec![rectangle(0, 0, 4, 4)]);
+    let second = Region2::from_material_contours(vec![rectangle(2, -1, 6, 3)]);
+    let policy = CurvePolicy::certified();
+    let prepared_first = first.prepare_topology_queries(&policy);
+    let prepared_second = second.prepare_topology_queries(&policy);
+    let started = Instant::now();
+    let mut total_boundary_contours = 0_usize;
+
+    for _ in 0..iterations {
+        let result = prepared_first.boolean_region_with_report(
+            &prepared_second,
+            BooleanOp::Union,
+            FillRule::NonZero,
+            &policy,
+        )?;
+        let report = result.report();
+        if !report.status().is_native_exact()
+            || report.query_path() != RegionBooleanQueryPath2::Prepared
+            || result.region().is_none()
+        {
+            panic!(
+                "prepared region boolean benchmark became non-native or used the wrong query path"
+            );
+        }
+        total_boundary_contours += black_box(report.boundary_contour_count().unwrap_or_default());
+    }
+
+    let elapsed = started.elapsed();
+    println!(
+        "prepared_region_boolean_report: {iterations} iterations in {elapsed:?} ({:?}/iter), total boundary contours={total_boundary_contours}",
+        elapsed / iterations
+    );
+    Ok(())
+}
+
 fn main() -> CurveResult<()> {
     let iterations = 10_000;
     bench_parameter_trim(iterations)?;
@@ -324,5 +393,7 @@ fn main() -> CurveResult<()> {
     bench_line_fillet(iterations)?;
     bench_arc_extension(iterations)?;
     bench_boundary_contour_region_build(1_000)?;
+    bench_region_boolean_report(1_000)?;
+    bench_prepared_region_boolean_report(1_000)?;
     Ok(())
 }
