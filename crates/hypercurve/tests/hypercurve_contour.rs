@@ -1,7 +1,7 @@
 use hypercurve::{
     BulgeVertex2, Classification, Contour2, ContourPointLocation, CurveError, CurvePolicy,
-    CurveString2, CurveStringFilletInputPath2, FillRule, Real, Region2, RegionPointLocation,
-    Segment2, UncertaintyReason,
+    CurveString2, CurveStringChamferInputPath2, CurveStringFilletInputPath2, FillRule, Real,
+    Region2, RegionPointLocation, Segment2, UncertaintyReason,
 };
 
 fn s(value: i32) -> Real {
@@ -216,6 +216,10 @@ fn contour_chamfer_line_line_vertex_materializes_closed_contour() {
 
     assert!(chamfer.report().status().is_native_exact());
     assert_eq!(chamfer.report().vertex_index(), 1);
+    assert_eq!(
+        chamfer.report().curve_string_report().input_path(),
+        CurveStringChamferInputPath2::Parameters
+    );
     assert_eq!(chamfer.report().source_segment_count(), 4);
     assert_eq!(chamfer.report().fill_rule(), FillRule::NonZero);
     assert_eq!(
@@ -291,6 +295,10 @@ fn contour_chamfer_line_line_vertex_by_points_materializes_closed_contour() {
 
     assert!(chamfer.report().status().is_native_exact());
     assert_eq!(chamfer.report().vertex_index(), 1);
+    assert_eq!(
+        chamfer.report().curve_string_report().input_path(),
+        CurveStringChamferInputPath2::Points
+    );
     assert_eq!(
         chamfer
             .report()

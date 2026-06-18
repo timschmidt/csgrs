@@ -1,10 +1,11 @@
 use hypercurve::{
     BulgeVertex2, CircularArc2, Classification, Contour2, CurveError, CurvePolicy, CurveString2,
-    CurveStringCurveTrimQueryPath2, CurveStringEndpoint2, CurveStringEndpointConnectionStatus2,
-    CurveStringFilletInputPath2, CurveStringIntersectionQueryPath2, CurveStringLinkKind2,
-    CurveStringRegionTrimQueryPath2, CurveStringTrimPoint2, IntersectionKind, LineArcIntersection,
-    LineArcOrder, LineSeg2, Point2, Real, Region2, RegionContourRole, RegionPointLocation,
-    Segment2, SegmentIntersection, UncertaintyReason,
+    CurveStringChamferInputPath2, CurveStringCurveTrimQueryPath2, CurveStringEndpoint2,
+    CurveStringEndpointConnectionStatus2, CurveStringFilletInputPath2,
+    CurveStringIntersectionQueryPath2, CurveStringLinkKind2, CurveStringRegionTrimQueryPath2,
+    CurveStringTrimPoint2, IntersectionKind, LineArcIntersection, LineArcOrder, LineSeg2, Point2,
+    Real, Region2, RegionContourRole, RegionPointLocation, Segment2, SegmentIntersection,
+    UncertaintyReason,
 };
 
 fn s(value: i32) -> Real {
@@ -780,6 +781,10 @@ fn curve_string_chamfer_line_line_vertex_materializes_exact_segments() {
         .unwrap();
 
     assert!(chamfer.report().status().is_native_exact());
+    assert_eq!(
+        chamfer.report().input_path(),
+        CurveStringChamferInputPath2::Parameters
+    );
     assert_eq!(chamfer.report().previous_segment_index(), 0);
     assert_eq!(chamfer.report().next_segment_index(), 1);
     assert_eq!(chamfer.report().previous_trim().param(), &q(3, 4));
@@ -826,6 +831,10 @@ fn curve_string_chamfer_line_line_vertex_by_points_materializes_exact_segments()
         .unwrap();
 
     assert!(chamfer.report().status().is_native_exact());
+    assert_eq!(
+        chamfer.report().input_path(),
+        CurveStringChamferInputPath2::Points
+    );
     assert_eq!(chamfer.report().previous_trim().param(), &q(3, 4));
     assert_eq!(chamfer.report().next_trim().param(), &q(1, 4));
     let curve = chamfer
@@ -849,6 +858,10 @@ fn curve_string_chamfer_line_line_vertex_by_points_reports_off_segment_boundary(
 
     assert!(chamfer.curve_string().is_none());
     assert!(chamfer.report().status().is_retained_evidence());
+    assert_eq!(
+        chamfer.report().input_path(),
+        CurveStringChamferInputPath2::Points
+    );
     assert_eq!(
         chamfer.report().blocker(),
         Some(UncertaintyReason::Boundary)

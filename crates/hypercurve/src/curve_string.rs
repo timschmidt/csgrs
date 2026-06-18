@@ -232,6 +232,7 @@ pub struct CurveStringExtendResult2 {
 /// Report for a line-line chamfer at one open curve-string vertex.
 #[derive(Clone, Debug, PartialEq)]
 pub struct CurveStringChamferReport2 {
+    input_path: CurveStringChamferInputPath2,
     previous_segment_index: usize,
     next_segment_index: usize,
     previous_trim: CurveStringTrimPoint2,
@@ -241,6 +242,15 @@ pub struct CurveStringChamferReport2 {
     source_segment_count: usize,
     status: RetainedTopologyStatus,
     blocker: Option<UncertaintyReason>,
+}
+
+/// Input path used by a report-bearing line-line chamfer operation.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum CurveStringChamferInputPath2 {
+    /// Cut points were supplied by exact segment parameters.
+    Parameters,
+    /// Cut points were supplied directly as exact points.
+    Points,
 }
 
 /// Result of a report-bearing line-line chamfer operation.
@@ -1205,7 +1215,7 @@ impl CurveString2 {
         ) {
             (Segment2::Line(previous), Segment2::Line(next)) => (previous, next),
             _ => {
-                return Ok(blocked_chamfer_result(
+                let mut result = blocked_chamfer_result(
                     self,
                     previous_segment_index,
                     next_segment_index,
@@ -1214,7 +1224,9 @@ impl CurveString2 {
                     Vec::new(),
                     RetainedTopologyStatus::Unsupported,
                     Some(UncertaintyReason::Unsupported),
-                ));
+                );
+                result.report_mut().input_path = CurveStringChamferInputPath2::Points;
+                return Ok(result);
             }
         };
 
@@ -1288,6 +1300,7 @@ impl CurveString2 {
         Ok(CurveStringChamferResult2 {
             curve_string: Some(curve_string),
             report: CurveStringChamferReport2 {
+                input_path: CurveStringChamferInputPath2::Parameters,
                 previous_segment_index,
                 next_segment_index,
                 previous_trim,
@@ -1346,7 +1359,7 @@ impl CurveString2 {
             match line_chamfer_point_parameter(previous_line, previous_point, policy)? {
                 Classification::Decided(param) => param,
                 Classification::Uncertain(reason) => {
-                    return Ok(blocked_chamfer_result(
+                    let mut result = blocked_chamfer_result(
                         self,
                         previous_segment_index,
                         next_segment_index,
@@ -1355,7 +1368,9 @@ impl CurveString2 {
                         Vec::new(),
                         retained_status_for_uncertainty(reason),
                         Some(reason),
-                    ));
+                    );
+                    result.report_mut().input_path = CurveStringChamferInputPath2::Points;
+                    return Ok(result);
                 }
             };
         let previous_trim =
@@ -1363,7 +1378,7 @@ impl CurveString2 {
         let next_param = match line_chamfer_point_parameter(next_line, next_point, policy)? {
             Classification::Decided(param) => param,
             Classification::Uncertain(reason) => {
-                return Ok(blocked_chamfer_result(
+                let mut result = blocked_chamfer_result(
                     self,
                     previous_segment_index,
                     next_segment_index,
@@ -1372,16 +1387,20 @@ impl CurveString2 {
                     Vec::new(),
                     retained_status_for_uncertainty(reason),
                     Some(reason),
-                ));
+                );
+                result.report_mut().input_path = CurveStringChamferInputPath2::Points;
+                return Ok(result);
             }
         };
 
-        self.chamfer_line_line_vertex_by_parameters(
+        let mut result = self.chamfer_line_line_vertex_by_parameters(
             vertex_index,
             previous_param,
             next_param,
             policy,
-        )
+        )?;
+        result.report_mut().input_path = CurveStringChamferInputPath2::Points;
+        Ok(result)
     }
 
     /// Fillets one interior line-line vertex from exact parameters and center.
@@ -2442,6 +2461,11 @@ impl CurveStringTrimResult2 {
 }
 
 impl CurveStringChamferReport2 {
+    /// Returns how the cut-point evidence was supplied to the chamfer.
+    pub const fn input_path(&self) -> CurveStringChamferInputPath2 {
+        self.input_path
+    }
+
     /// Returns the previous source segment index at the chamfered vertex.
     pub const fn previous_segment_index(&self) -> usize {
         self.previous_segment_index
@@ -3768,6 +3792,7 @@ fn blocked_chamfer_result(
     CurveStringChamferResult2 {
         curve_string: None,
         report: CurveStringChamferReport2 {
+            input_path: CurveStringChamferInputPath2::Parameters,
             previous_segment_index,
             next_segment_index,
             previous_trim,
