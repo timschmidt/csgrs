@@ -3,9 +3,9 @@ use hypercurve::{
     CurveStringChamferInputPath2, CurveStringConnectSource2, CurveStringCurveTrimQueryPath2,
     CurveStringEndpoint2, CurveStringEndpointConnectionStatus2, CurveStringFilletInputPath2,
     CurveStringIntersectionQueryPath2, CurveStringLinkKind2, CurveStringLinkSourceInput2,
-    CurveStringRegionTrimQueryPath2, CurveStringTrimPoint2, IntersectionKind, LineArcIntersection,
-    LineArcOrder, LineSeg2, Point2, Real, Region2, RegionContourRole, RegionPointLocation,
-    Segment2, SegmentIntersection, UncertaintyReason,
+    CurveStringRegionTrimQueryPath2, CurveStringTrimInputPath2, CurveStringTrimPoint2,
+    IntersectionKind, LineArcIntersection, LineArcOrder, LineSeg2, Point2, Real, Region2,
+    RegionContourRole, RegionPointLocation, Segment2, SegmentIntersection, UncertaintyReason,
 };
 
 fn s(value: i32) -> Real {
@@ -1184,6 +1184,10 @@ fn curve_string_trim_materializes_exact_line_subsegment_with_report() {
         .unwrap();
 
     assert!(trim.report().status().is_native_exact());
+    assert_eq!(
+        trim.report().input_path(),
+        CurveStringTrimInputPath2::Parameters
+    );
     assert_eq!(trim.report().source_segment_count(), 1);
     assert_eq!(trim.report().segment_reports().len(), 1);
     assert_eq!(trim.report().segment_reports()[0].source_segment_index(), 0);
@@ -1270,6 +1274,10 @@ fn curve_string_trim_reports_partial_arc_as_unsupported_without_materializing() 
     assert!(trim.curve_string().is_none());
     assert!(trim.report().status().is_retained_evidence());
     assert_eq!(
+        trim.report().input_path(),
+        CurveStringTrimInputPath2::Parameters
+    );
+    assert_eq!(
         trim.report().blocker(),
         Some(UncertaintyReason::Unsupported)
     );
@@ -1324,6 +1332,10 @@ fn curve_string_trim_between_points_materializes_line_subsegment() {
         .unwrap();
 
     assert!(trim.report().status().is_native_exact());
+    assert_eq!(
+        trim.report().input_path(),
+        CurveStringTrimInputPath2::Points
+    );
     assert_eq!(trim.report().start().segment_index(), 0);
     assert_eq!(trim.report().start().param(), &q(1, 4));
     assert_eq!(trim.report().end().segment_index(), 0);
@@ -1345,6 +1357,10 @@ fn curve_string_trim_between_points_materializes_partial_arc() {
         .unwrap();
 
     assert!(trim.report().status().is_native_exact());
+    assert_eq!(
+        trim.report().input_path(),
+        CurveStringTrimInputPath2::Points
+    );
     assert_eq!(trim.report().segment_reports().len(), 1);
     assert_eq!(
         trim.report().segment_reports()[0].source_range().start(),
@@ -1401,6 +1417,10 @@ fn curve_string_trim_between_points_reports_repeated_nonadjacent_point_boundary(
 
     assert!(trim.curve_string().is_none());
     assert!(trim.report().status().is_retained_evidence());
+    assert_eq!(
+        trim.report().input_path(),
+        CurveStringTrimInputPath2::Points
+    );
     assert_eq!(trim.report().blocker(), Some(UncertaintyReason::Boundary));
 }
 

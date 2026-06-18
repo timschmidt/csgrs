@@ -354,12 +354,22 @@ pub struct CurveStringTrimSegmentReport2 {
 /// Report for an open curve-string trim attempt.
 #[derive(Clone, Debug, PartialEq)]
 pub struct CurveStringTrimReport2 {
+    input_path: CurveStringTrimInputPath2,
     start: CurveStringTrimPoint2,
     end: CurveStringTrimPoint2,
     source_segment_count: usize,
     segment_reports: Vec<CurveStringTrimSegmentReport2>,
     status: RetainedTopologyStatus,
     blocker: Option<UncertaintyReason>,
+}
+
+/// Input path used by a report-bearing open curve-string trim.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum CurveStringTrimInputPath2 {
+    /// Trim boundaries were supplied by exact segment parameters.
+    Parameters,
+    /// Trim boundaries were supplied directly as exact points.
+    Points,
 }
 
 /// Result of a report-bearing open curve-string trim.
@@ -1054,6 +1064,7 @@ impl CurveString2 {
                     start,
                     end,
                     Vec::new(),
+                    CurveStringTrimInputPath2::Parameters,
                     RetainedTopologyStatus::Unresolved,
                     Some(UncertaintyReason::Ordering),
                 ));
@@ -1098,6 +1109,7 @@ impl CurveString2 {
                         start,
                         end,
                         segment_reports,
+                        CurveStringTrimInputPath2::Parameters,
                         RetainedTopologyStatus::Unsupported,
                         Some(reason),
                     ));
@@ -1111,6 +1123,7 @@ impl CurveString2 {
                         start,
                         end,
                         segment_reports,
+                        CurveStringTrimInputPath2::Parameters,
                         RetainedTopologyStatus::Unresolved,
                         Some(reason),
                     ));
@@ -1123,6 +1136,7 @@ impl CurveString2 {
         }
         let curve_string = CurveString2::try_new(trimmed_segments)?;
         let report = CurveStringTrimReport2 {
+            input_path: CurveStringTrimInputPath2::Parameters,
             start,
             end,
             source_segment_count: self.len(),
@@ -1158,6 +1172,7 @@ impl CurveString2 {
                     CurveStringTrimPoint2::new(0, Real::zero()),
                     CurveStringTrimPoint2::new(0, Real::zero()),
                     Vec::new(),
+                    CurveStringTrimInputPath2::Points,
                     RetainedTopologyStatus::Unresolved,
                     Some(reason),
                 ));
@@ -1171,6 +1186,7 @@ impl CurveString2 {
                     start.trim_point.clone(),
                     start.trim_point.clone(),
                     Vec::new(),
+                    CurveStringTrimInputPath2::Points,
                     RetainedTopologyStatus::Unresolved,
                     Some(reason),
                 ));
@@ -1186,6 +1202,7 @@ impl CurveString2 {
                     start.trim_point,
                     end.trim_point,
                     Vec::new(),
+                    CurveStringTrimInputPath2::Points,
                     RetainedTopologyStatus::Unresolved,
                     Some(UncertaintyReason::Ordering),
                 ));
@@ -2257,6 +2274,7 @@ impl CurveString2 {
                         start.trim_point,
                         end.trim_point,
                         segment_reports,
+                        CurveStringTrimInputPath2::Points,
                         RetainedTopologyStatus::Unsupported,
                         Some(reason),
                     ));
@@ -2270,6 +2288,7 @@ impl CurveString2 {
                         start.trim_point,
                         end.trim_point,
                         segment_reports,
+                        CurveStringTrimInputPath2::Points,
                         RetainedTopologyStatus::Unresolved,
                         Some(reason),
                     ));
@@ -2282,6 +2301,7 @@ impl CurveString2 {
         }
         let curve_string = CurveString2::try_new(trimmed_segments)?;
         let report = CurveStringTrimReport2 {
+            input_path: CurveStringTrimInputPath2::Points,
             start: start.trim_point,
             end: end.trim_point,
             source_segment_count: self.len(),
@@ -2471,6 +2491,11 @@ impl CurveStringTrimSegmentReport2 {
 }
 
 impl CurveStringTrimReport2 {
+    /// Returns how trim boundary evidence was supplied.
+    pub const fn input_path(&self) -> CurveStringTrimInputPath2 {
+        self.input_path
+    }
+
     /// Returns the requested trim start.
     pub const fn start(&self) -> &CurveStringTrimPoint2 {
         &self.start
@@ -4076,12 +4101,14 @@ fn blocked_trim_result(
     start: CurveStringTrimPoint2,
     end: CurveStringTrimPoint2,
     segment_reports: Vec<CurveStringTrimSegmentReport2>,
+    input_path: CurveStringTrimInputPath2,
     status: RetainedTopologyStatus,
     blocker: Option<UncertaintyReason>,
 ) -> CurveStringTrimResult2 {
     CurveStringTrimResult2 {
         curve_string: None,
         report: CurveStringTrimReport2 {
+            input_path,
             start,
             end,
             source_segment_count: curve_string.len(),
