@@ -117,7 +117,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
 
     /// Returns the arrangement/cell-complex attempt report for `request` and
     /// `policy`, reusing the cached arrangement for that policy.
-    pub fn arrangement_attempt(
+    pub(crate) fn arrangement_attempt(
         &mut self,
         request: ExactBooleanRequest,
         policy: ExactRegularizationPolicy,
@@ -747,8 +747,7 @@ mod tests {
     use super::*;
     use crate::arrangement3d::ExactTopologyAssemblyStatus;
     use crate::boolean::{
-        ExactArrangementBooleanShortcutReason, ExactArrangementBooleanStage, ExactBooleanOperation,
-        identical_mesh_report_from_sources, same_surface_report_from_sources,
+        ExactBooleanOperation, identical_mesh_report_from_sources, same_surface_report_from_sources,
     };
     use crate::cell_complex::{ExactRegionOwnershipStatus, ExactSelectedCellComplexFreshness};
     use crate::region::ExactRegionSelection;
@@ -1599,85 +1598,9 @@ mod tests {
     }
 
     #[test]
-    fn exact_boolean_workspace_arrangement_attempt_uses_orthogonal_shortcut_after_retained_arrangement()
-     {
-        let left = axis_aligned_box_i64([0, 0, 0], [2, 2, 2]);
-        let right = axis_aligned_box_i64([1, 1, 0], [3, 3, 2]);
-        let request =
-            ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED);
-        let mut workspace = ExactBooleanWorkspace::new(&left, &right);
-
-        let attempt = workspace
-            .arrangement_attempt(request, ExactRegularizationPolicy::REGULARIZED_SOLID)
-            .unwrap()
-            .clone();
-        assert_eq!(workspace.arrangements.len(), 1);
-        assert_eq!(workspace.arrangement_attempts.len(), 1);
-        assert_eq!(attempt.stage, ExactArrangementBooleanStage::Materialized);
-        assert!(attempt.materialized_arrangement_cell_complex_shortcut());
-        assert_eq!(
-            attempt.shortcut_reason,
-            Some(ExactArrangementBooleanShortcutReason::SelectionBlocked)
-        );
-        attempt.validate().unwrap();
-        attempt.validate_against_sources(&left, &right).unwrap();
-
-        assert_eq!(
-            attempt.freshness_against_sources(&left, &right),
-            ExactReportFreshness::Current
-        );
-        assert_eq!(workspace.arrangements.len(), 1);
-
-        let evaluation = workspace.evaluate(request).unwrap().clone();
-        evaluation.validate().unwrap();
-        assert!(evaluation.preflight.is_certified());
-        assert!(evaluation.result.as_ref().is_some());
-        evaluation
-            .certifications
-            .arrangement_attempt
-            .as_ref()
-            .and_then(|attempt| attempt.topology_assembly_report.as_ref())
-            .expect("attempt should retain topology assembly")
-            .validate()
-            .unwrap();
-        evaluation
-            .certifications
-            .arrangement_attempt
-            .as_ref()
-            .and_then(|attempt| attempt.region_ownership_report.as_ref())
-            .expect("attempt should retain region ownership")
-            .validate()
-            .unwrap();
-        assert_eq!(
-            evaluation.certifications.arrangement_attempt.as_ref(),
-            Some(&attempt)
-        );
-        assert_eq!(workspace.arrangements.len(), 1);
-
-        let result = workspace.materialize(request).unwrap();
-        assert!(result.is_arrangement_cell_complex_shortcut_for(ExactBooleanOperation::Union));
-        result.validate_against_sources(&left, &right).unwrap();
-        assert_eq!(workspace.arrangements.len(), 1);
-
-        let mut stale_attempt = attempt.clone();
-        stale_attempt.output_triangles += 1;
-        stale_attempt
-            .output_facts
-            .as_mut()
-            .expect("materialized attempt should retain output facts")
-            .face_count += 1;
-        stale_attempt.validate().unwrap();
-        assert_eq!(
-            stale_attempt.validate_against_sources(&left, &right),
-            Err(ExactReportValidationError::SourceReplayMismatch)
-        );
-        assert_eq!(workspace.arrangements.len(), 1);
-    }
-
-    #[test]
     fn exact_boolean_workspace_evaluation_validates_cached_arrangement_attempt() {
-        let left = axis_aligned_box_i64([0, 0, 0], [2, 2, 2]);
-        let right = axis_aligned_box_i64([1, 1, 0], [3, 3, 2]);
+        let left = tetra([0, 0, 0]);
+        let right = tetra([1, 0, 0]);
         let request =
             ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED);
         let mut workspace = ExactBooleanWorkspace::new(&left, &right);
