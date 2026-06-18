@@ -665,6 +665,14 @@ fn curve_string_connect_end_to_start_inserts_exact_line() {
         None
     );
     assert_eq!(
+        connected.report().output_segments()[1].output_start_point(),
+        &p(1, 0)
+    );
+    assert_eq!(
+        connected.report().output_segments()[1].output_end_point(),
+        &p(3, 1)
+    );
+    assert_eq!(
         connected.report().output_segments()[2].source(),
         CurveStringConnectSource2::Second
     );
@@ -703,8 +711,24 @@ fn curve_string_connect_selected_endpoints_orients_inputs() {
         CurveStringConnectSource2::Second
     );
     assert_eq!(
+        connected.report().output_segments()[0].output_start_point(),
+        &p(3, 0)
+    );
+    assert_eq!(
+        connected.report().output_segments()[0].output_end_point(),
+        &p(4, 0)
+    );
+    assert_eq!(
         connected.report().output_segments()[1].source(),
         CurveStringConnectSource2::Connector
+    );
+    assert_eq!(
+        connected.report().output_segments()[1].output_start_point(),
+        &p(4, 0)
+    );
+    assert_eq!(
+        connected.report().output_segments()[1].output_end_point(),
+        &p(0, 0)
     );
     assert_eq!(
         connected.report().output_segments()[2].source(),
@@ -745,10 +769,26 @@ fn curve_string_connect_nearest_endpoints_selects_unique_pair() {
         CurveStringConnectSource2::Connector
     );
     assert_eq!(
+        connected.report().output_segments()[1].output_start_point(),
+        &p(1, 0)
+    );
+    assert_eq!(
+        connected.report().output_segments()[1].output_end_point(),
+        &p(3, 0)
+    );
+    assert_eq!(
         connected.report().output_segments()[2].source(),
         CurveStringConnectSource2::Second
     );
     assert!(connected.report().output_segments()[2].reversed());
+    assert_eq!(
+        connected.report().output_segments()[2].output_start_point(),
+        &p(3, 0)
+    );
+    assert_eq!(
+        connected.report().output_segments()[2].output_end_point(),
+        &p(4, 0)
+    );
     let curve = connected
         .curve_string()
         .expect("nearest endpoint connector should materialize");

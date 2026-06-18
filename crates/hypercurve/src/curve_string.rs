@@ -189,12 +189,14 @@ pub enum CurveStringConnectSource2 {
 }
 
 /// Source provenance for one segment emitted by a connector operation.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct CurveStringConnectOutputSegmentReport2 {
     output_segment_index: usize,
     source: CurveStringConnectSource2,
     source_segment_index: Option<usize>,
     reversed: bool,
+    output_start_point: Point2,
+    output_end_point: Point2,
 }
 
 /// A connected open curve string with retained connector provenance.
@@ -820,7 +822,7 @@ impl CurveString2 {
             first_segment_count: self.len(),
             second_segment_count: other.len(),
             connector_segment_index: Some(connector_segment_index),
-            output_segments: connect_output_segment_reports(self.len(), other.len(), kind),
+            output_segments: connect_output_segment_reports(self, other, kind)?,
             status: RetainedTopologyStatus::NativeExact,
             blocker: None,
         };
@@ -902,7 +904,7 @@ impl CurveString2 {
             first_segment_count: self.len(),
             second_segment_count: other.len(),
             connector_segment_index: Some(connector_segment_index),
-            output_segments: connect_output_segment_reports(self.len(), other.len(), kind),
+            output_segments: connect_output_segment_reports(self, other, kind)?,
             status: RetainedTopologyStatus::NativeExact,
             blocker: None,
         };
@@ -5008,6 +5010,16 @@ impl CurveStringConnectOutputSegmentReport2 {
     pub const fn reversed(&self) -> bool {
         self.reversed
     }
+
+    /// Returns the exact start point of this emitted output segment.
+    pub const fn output_start_point(&self) -> &Point2 {
+        &self.output_start_point
+    }
+
+    /// Returns the exact end point of this emitted output segment.
+    pub const fn output_end_point(&self) -> &Point2 {
+        &self.output_end_point
+    }
 }
 
 impl ConnectedCurveString2 {
@@ -5307,22 +5319,30 @@ fn push_link_output_segment_reports<I>(
 }
 
 fn connect_output_segment_reports(
-    first_segment_count: usize,
-    second_segment_count: usize,
+    first: &CurveString2,
+    second: &CurveString2,
     kind: CurveStringLinkKind2,
-) -> Vec<CurveStringConnectOutputSegmentReport2> {
+) -> CurveResult<Vec<CurveStringConnectOutputSegmentReport2>> {
+    let first_segment_count = first.len();
+    let second_segment_count = second.len();
     let mut output_segments = Vec::with_capacity(first_segment_count + second_segment_count + 1);
     match kind {
         CurveStringLinkKind2::FirstEndToSecondStart => {
             push_connect_input_segment_reports(
                 &mut output_segments,
+                first,
                 CurveStringConnectSource2::First,
                 0..first_segment_count,
                 false,
             );
-            push_connect_connector_report(&mut output_segments);
+            push_connect_connector_report(
+                &mut output_segments,
+                first.end().ok_or(CurveError::EmptyCurveString)?,
+                second.start().ok_or(CurveError::EmptyCurveString)?,
+            );
             push_connect_input_segment_reports(
                 &mut output_segments,
+                second,
                 CurveStringConnectSource2::Second,
                 0..second_segment_count,
                 false,
@@ -5331,13 +5351,19 @@ fn connect_output_segment_reports(
         CurveStringLinkKind2::FirstEndToSecondEnd => {
             push_connect_input_segment_reports(
                 &mut output_segments,
+                first,
                 CurveStringConnectSource2::First,
                 0..first_segment_count,
                 false,
             );
-            push_connect_connector_report(&mut output_segments);
+            push_connect_connector_report(
+                &mut output_segments,
+                first.end().ok_or(CurveError::EmptyCurveString)?,
+                second.end().ok_or(CurveError::EmptyCurveString)?,
+            );
             push_connect_input_segment_reports(
                 &mut output_segments,
+                second,
                 CurveStringConnectSource2::Second,
                 (0..second_segment_count).rev(),
                 true,
@@ -5346,13 +5372,19 @@ fn connect_output_segment_reports(
         CurveStringLinkKind2::FirstStartToSecondStart => {
             push_connect_input_segment_reports(
                 &mut output_segments,
+                first,
                 CurveStringConnectSource2::First,
                 (0..first_segment_count).rev(),
                 true,
             );
-            push_connect_connector_report(&mut output_segments);
+            push_connect_connector_report(
+                &mut output_segments,
+                first.start().ok_or(CurveError::EmptyCurveString)?,
+                second.start().ok_or(CurveError::EmptyCurveString)?,
+            );
             push_connect_input_segment_reports(
                 &mut output_segments,
+                second,
                 CurveStringConnectSource2::Second,
                 0..second_segment_count,
                 false,
@@ -5361,24 +5393,31 @@ fn connect_output_segment_reports(
         CurveStringLinkKind2::FirstStartToSecondEnd => {
             push_connect_input_segment_reports(
                 &mut output_segments,
+                second,
                 CurveStringConnectSource2::Second,
                 0..second_segment_count,
                 false,
             );
-            push_connect_connector_report(&mut output_segments);
+            push_connect_connector_report(
+                &mut output_segments,
+                second.end().ok_or(CurveError::EmptyCurveString)?,
+                first.start().ok_or(CurveError::EmptyCurveString)?,
+            );
             push_connect_input_segment_reports(
                 &mut output_segments,
+                first,
                 CurveStringConnectSource2::First,
                 0..first_segment_count,
                 false,
             );
         }
     }
-    output_segments
+    Ok(output_segments)
 }
 
 fn push_connect_input_segment_reports<I>(
     output_segments: &mut Vec<CurveStringConnectOutputSegmentReport2>,
+    source_curve_string: &CurveString2,
     source: CurveStringConnectSource2,
     source_segment_indices: I,
     reversed: bool,
@@ -5386,23 +5425,35 @@ fn push_connect_input_segment_reports<I>(
     I: IntoIterator<Item = usize>,
 {
     for source_segment_index in source_segment_indices {
+        let source_segment = &source_curve_string.segments()[source_segment_index];
+        let (output_start_point, output_end_point) = if reversed {
+            (source_segment.end().clone(), source_segment.start().clone())
+        } else {
+            (source_segment.start().clone(), source_segment.end().clone())
+        };
         output_segments.push(CurveStringConnectOutputSegmentReport2 {
             output_segment_index: output_segments.len(),
             source,
             source_segment_index: Some(source_segment_index),
             reversed,
+            output_start_point,
+            output_end_point,
         });
     }
 }
 
 fn push_connect_connector_report(
     output_segments: &mut Vec<CurveStringConnectOutputSegmentReport2>,
+    output_start_point: &Point2,
+    output_end_point: &Point2,
 ) {
     output_segments.push(CurveStringConnectOutputSegmentReport2 {
         output_segment_index: output_segments.len(),
         source: CurveStringConnectSource2::Connector,
         source_segment_index: None,
         reversed: false,
+        output_start_point: output_start_point.clone(),
+        output_end_point: output_end_point.clone(),
     });
 }
 
