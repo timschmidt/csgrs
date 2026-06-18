@@ -1,11 +1,12 @@
 use hypercurve::{
     BooleanBoundaryChain, BooleanBoundaryChainAssemblyStage2, BooleanBoundaryChainSet,
-    BooleanBoundaryContourTransferStage2, BooleanBoundaryFragmentSet, BooleanBoundaryLoop,
-    BooleanBoundaryLoopExtractionStage2, BooleanBoundaryLoopSet, BooleanFragmentAction,
-    BooleanFragmentClassification, BooleanFragmentSelection, BooleanFragmentSelectionStage2,
-    BooleanOp, BulgeVertex2, Classification, Contour2, CurveError, CurvePolicy,
-    DirectedBooleanFragment, FillRule, LineSeg2, Real, Region2, RegionContourKey,
-    RegionContourRole, RegionPointLocation, RegionSide, Segment2, UncertaintyReason,
+    BooleanBoundaryContourTransferStage2, BooleanBoundaryFragmentEmissionStage2,
+    BooleanBoundaryFragmentSet, BooleanBoundaryLoop, BooleanBoundaryLoopExtractionStage2,
+    BooleanBoundaryLoopSet, BooleanFragmentAction, BooleanFragmentClassification,
+    BooleanFragmentSelection, BooleanFragmentSelectionStage2, BooleanOp, BulgeVertex2,
+    Classification, Contour2, CurveError, CurvePolicy, DirectedBooleanFragment, FillRule, LineSeg2,
+    Real, Region2, RegionContourKey, RegionContourRole, RegionPointLocation, RegionSide, Segment2,
+    UncertaintyReason,
 };
 
 fn s(value: i32) -> Real {
@@ -231,7 +232,46 @@ fn boolean_fragment_selection_emits_directed_boundary_fragments() {
         Some(union.count_action(BooleanFragmentAction::KeepReversed))
     );
 
-    let emitted = union.emit_boundary_fragments(&fragments).unwrap();
+    let emitted_result = union
+        .emit_boundary_fragments_with_report(&fragments)
+        .unwrap();
+    assert!(emitted_result.report().status().is_native_exact());
+    assert_eq!(
+        emitted_result.report().stage(),
+        BooleanBoundaryFragmentEmissionStage2::FragmentEmission
+    );
+    assert_eq!(
+        emitted_result.report().source_classification_count(),
+        union.len()
+    );
+    assert_eq!(
+        emitted_result.report().discard_count(),
+        union.count_action(BooleanFragmentAction::Discard)
+    );
+    assert_eq!(
+        emitted_result.report().keep_source_direction_count(),
+        union.count_action(BooleanFragmentAction::KeepSourceDirection)
+    );
+    assert_eq!(
+        emitted_result.report().keep_reversed_count(),
+        union.count_action(BooleanFragmentAction::KeepReversed)
+    );
+    assert_eq!(
+        emitted_result.report().boundary_needs_resolution_count(),
+        union.count_action(BooleanFragmentAction::BoundaryNeedsResolution)
+    );
+    assert_eq!(
+        emitted_result.report().directed_fragment_count(),
+        Some(
+            union.count_action(BooleanFragmentAction::KeepSourceDirection)
+                + union.count_action(BooleanFragmentAction::KeepReversed)
+        )
+    );
+    assert_eq!(emitted_result.report().unresolved_boundary_count(), Some(0));
+    assert_eq!(emitted_result.report().blocker(), None);
+    let emitted = emitted_result
+        .fragments()
+        .expect("reported emission should materialize");
 
     assert_eq!(
         emitted.directed_len(),
@@ -499,7 +539,26 @@ fn boolean_fragment_selection_defers_shared_boundary_fragments() {
         Some(selection.count_action(BooleanFragmentAction::BoundaryNeedsResolution))
     );
     assert_eq!(reported.report().blocker(), None);
-    let emitted = selection.emit_boundary_fragments(&fragments).unwrap();
+    let emitted_result = selection
+        .emit_boundary_fragments_with_report(&fragments)
+        .unwrap();
+    assert!(emitted_result.report().status().is_native_exact());
+    assert_eq!(
+        emitted_result.report().stage(),
+        BooleanBoundaryFragmentEmissionStage2::FragmentEmission
+    );
+    assert_eq!(
+        emitted_result.report().boundary_needs_resolution_count(),
+        selection.count_action(BooleanFragmentAction::BoundaryNeedsResolution)
+    );
+    assert_eq!(
+        emitted_result.report().unresolved_boundary_count(),
+        Some(selection.count_action(BooleanFragmentAction::BoundaryNeedsResolution))
+    );
+    assert_eq!(emitted_result.report().blocker(), None);
+    let emitted = emitted_result
+        .fragments()
+        .expect("reported unresolved emission should materialize");
     assert!(!emitted.is_ready_for_traversal());
     assert_eq!(
         emitted.unresolved_len(),

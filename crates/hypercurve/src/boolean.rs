@@ -100,6 +100,37 @@ pub struct BooleanFragmentSelectionResult2 {
     report: BooleanFragmentSelectionReport2,
 }
 
+/// Report for emitting selected boolean classifications as boundary fragments.
+#[derive(Clone, Debug, PartialEq)]
+pub struct BooleanBoundaryFragmentEmissionReport2 {
+    stage: BooleanBoundaryFragmentEmissionStage2,
+    source_classification_count: usize,
+    discard_count: usize,
+    keep_source_direction_count: usize,
+    keep_reversed_count: usize,
+    boundary_needs_resolution_count: usize,
+    directed_fragment_count: Option<usize>,
+    unresolved_boundary_count: Option<usize>,
+    status: RetainedTopologyStatus,
+    blocker: Option<UncertaintyReason>,
+}
+
+/// Furthest exact stage reached by boolean boundary fragment emission.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum BooleanBoundaryFragmentEmissionStage2 {
+    /// Selection ownership was being validated against the supplied fragments.
+    SourceValidation,
+    /// Selected fragments were emitted in traversal direction or deferred.
+    FragmentEmission,
+}
+
+/// Result of report-bearing boolean boundary fragment emission.
+#[derive(Clone, Debug, PartialEq)]
+pub struct BooleanBoundaryFragmentEmissionResult2 {
+    fragments: Option<BooleanBoundaryFragmentSet>,
+    report: BooleanBoundaryFragmentEmissionReport2,
+}
+
 impl BooleanFragmentSelection {
     /// Constructs a selection from already-classified fragments.
     pub fn new(classifications: Vec<BooleanFragmentClassification>) -> CurveResult<Self> {
@@ -152,6 +183,17 @@ impl BooleanFragmentSelection {
         &self,
         fragments: &RegionFragmentSet,
     ) -> CurveResult<BooleanBoundaryFragmentSet> {
+        let result = self.emit_boundary_fragments_with_report(fragments)?;
+        result.into_fragments().ok_or_else(|| {
+            CurveError::Topology("boolean boundary fragment emission did not materialize".into())
+        })
+    }
+
+    /// Converts selected classifications into boundary fragments and retains evidence.
+    pub fn emit_boundary_fragments_with_report(
+        &self,
+        fragments: &RegionFragmentSet,
+    ) -> CurveResult<BooleanBoundaryFragmentEmissionResult2> {
         validate_boolean_selection_matches_fragments(&self.classifications, fragments)?;
 
         let mut directed_fragments = Vec::new();
@@ -181,7 +223,125 @@ impl BooleanFragmentSelection {
             }
         }
 
-        BooleanBoundaryFragmentSet::new(directed_fragments, unresolved_boundaries)
+        let directed_fragment_count = directed_fragments.len();
+        let unresolved_boundary_count = unresolved_boundaries.len();
+        match BooleanBoundaryFragmentSet::new(directed_fragments, unresolved_boundaries) {
+            Ok(fragments) => Ok(BooleanBoundaryFragmentEmissionResult2 {
+                fragments: Some(fragments),
+                report: BooleanBoundaryFragmentEmissionReport2 {
+                    stage: BooleanBoundaryFragmentEmissionStage2::FragmentEmission,
+                    source_classification_count: self.len(),
+                    discard_count: self.count_action(BooleanFragmentAction::Discard),
+                    keep_source_direction_count: self
+                        .count_action(BooleanFragmentAction::KeepSourceDirection),
+                    keep_reversed_count: self.count_action(BooleanFragmentAction::KeepReversed),
+                    boundary_needs_resolution_count: self
+                        .count_action(BooleanFragmentAction::BoundaryNeedsResolution),
+                    directed_fragment_count: Some(directed_fragment_count),
+                    unresolved_boundary_count: Some(unresolved_boundary_count),
+                    status: RetainedTopologyStatus::NativeExact,
+                    blocker: None,
+                },
+            }),
+            Err(_) => Ok(blocked_boolean_boundary_fragment_emission_result(
+                self,
+                BooleanBoundaryFragmentEmissionStage2::FragmentEmission,
+                UncertaintyReason::Unsupported,
+            )),
+        }
+    }
+}
+
+impl BooleanBoundaryFragmentEmissionReport2 {
+    /// Returns the furthest exact emission stage reached.
+    pub const fn stage(&self) -> BooleanBoundaryFragmentEmissionStage2 {
+        self.stage
+    }
+
+    /// Returns source classification count.
+    pub const fn source_classification_count(&self) -> usize {
+        self.source_classification_count
+    }
+
+    /// Returns discard action count.
+    pub const fn discard_count(&self) -> usize {
+        self.discard_count
+    }
+
+    /// Returns source-direction emission action count.
+    pub const fn keep_source_direction_count(&self) -> usize {
+        self.keep_source_direction_count
+    }
+
+    /// Returns reversed emission action count.
+    pub const fn keep_reversed_count(&self) -> usize {
+        self.keep_reversed_count
+    }
+
+    /// Returns unresolved-boundary action count.
+    pub const fn boundary_needs_resolution_count(&self) -> usize {
+        self.boundary_needs_resolution_count
+    }
+
+    /// Returns emitted directed fragment count when materialized.
+    pub const fn directed_fragment_count(&self) -> Option<usize> {
+        self.directed_fragment_count
+    }
+
+    /// Returns unresolved boundary fragment count when materialized.
+    pub const fn unresolved_boundary_count(&self) -> Option<usize> {
+        self.unresolved_boundary_count
+    }
+
+    /// Returns retained topology status for emission.
+    pub const fn status(&self) -> RetainedTopologyStatus {
+        self.status
+    }
+
+    /// Returns the exact blocker for non-materialized emission.
+    pub const fn blocker(&self) -> Option<UncertaintyReason> {
+        self.blocker
+    }
+}
+
+impl BooleanBoundaryFragmentEmissionResult2 {
+    /// Returns emitted boundary fragments, if emission succeeded.
+    pub const fn fragments(&self) -> Option<&BooleanBoundaryFragmentSet> {
+        self.fragments.as_ref()
+    }
+
+    /// Consumes this result and returns emitted boundary fragments, if any.
+    pub fn into_fragments(self) -> Option<BooleanBoundaryFragmentSet> {
+        self.fragments
+    }
+
+    /// Returns retained emission evidence.
+    pub const fn report(&self) -> &BooleanBoundaryFragmentEmissionReport2 {
+        &self.report
+    }
+}
+
+fn blocked_boolean_boundary_fragment_emission_result(
+    selection: &BooleanFragmentSelection,
+    stage: BooleanBoundaryFragmentEmissionStage2,
+    blocker: UncertaintyReason,
+) -> BooleanBoundaryFragmentEmissionResult2 {
+    BooleanBoundaryFragmentEmissionResult2 {
+        fragments: None,
+        report: BooleanBoundaryFragmentEmissionReport2 {
+            stage,
+            source_classification_count: selection.len(),
+            discard_count: selection.count_action(BooleanFragmentAction::Discard),
+            keep_source_direction_count: selection
+                .count_action(BooleanFragmentAction::KeepSourceDirection),
+            keep_reversed_count: selection.count_action(BooleanFragmentAction::KeepReversed),
+            boundary_needs_resolution_count: selection
+                .count_action(BooleanFragmentAction::BoundaryNeedsResolution),
+            directed_fragment_count: None,
+            unresolved_boundary_count: None,
+            status: RetainedTopologyStatus::Unsupported,
+            blocker: Some(blocker),
+        },
     }
 }
 
