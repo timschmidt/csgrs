@@ -203,6 +203,7 @@ fn finite_line_string_import_preserves_step_tolerance_evidence() {
         RetainedImportTopology2::OpenLineString
     );
     assert_eq!(record.source_index(), 42);
+    assert_eq!(record.source_version(), 0);
     assert_eq!(record.source_tolerance(), Some(tolerance));
     assert_eq!(record.input_point_count(), 3);
     assert_eq!(record.emitted_segment_count(), 1);
@@ -231,6 +232,7 @@ fn finite_ring_import_preserves_dxf_handle_and_closure_evidence() {
         RetainedImportTopology2::ClosedRing
     );
     assert_eq!(record.source_index(), 0xabc);
+    assert_eq!(record.source_version(), 0);
     assert_eq!(record.source_tolerance().unwrap().relative(), 1.0e-7);
     assert_eq!(record.discarded_duplicate_count(), 1);
     assert!(record.topology_status().is_imported_lossy());
@@ -256,6 +258,40 @@ fn finite_ring_import_accepts_unrepeated_closed_edge_accounting() {
     );
     assert_eq!(record.emitted_segment_count(), 4);
     assert_eq!(record.discarded_duplicate_count(), 0);
+}
+
+#[test]
+fn finite_imports_preserve_source_versions() {
+    let open = CurveString2::import_finite_line_string_with_source_version(
+        &[[0.0, 0.0], [1.0, 0.0]],
+        RetainedImportFormat2::Step,
+        42,
+        7,
+        None,
+    )
+    .unwrap();
+    assert_eq!(open.record().source_index(), 42);
+    assert_eq!(open.record().source_version(), 7);
+    assert_eq!(
+        open.record().source_topology(),
+        RetainedImportTopology2::OpenLineString
+    );
+
+    let closed = Contour2::import_finite_ring_with_source_version(
+        &[[0.0, 0.0], [4.0, 0.0], [4.0, 3.0]],
+        FillRule::NonZero,
+        RetainedImportFormat2::Dxf,
+        0xdef,
+        11,
+        None,
+    )
+    .unwrap();
+    assert_eq!(closed.record().source_index(), 0xdef);
+    assert_eq!(closed.record().source_version(), 11);
+    assert_eq!(
+        closed.record().source_topology(),
+        RetainedImportTopology2::ClosedRing
+    );
 }
 
 #[test]
@@ -402,4 +438,19 @@ fn retained_import_record_rejects_cross_topology_edge_evidence() {
         closed.source_topology(),
         RetainedImportTopology2::ClosedRing
     );
+    assert_eq!(open.source_version(), 0);
+    assert_eq!(closed.source_version(), 0);
+
+    let versioned = RetainedImportRecord2::try_new_open_line_string_with_source_version(
+        RetainedImportFormat2::Application,
+        9,
+        17,
+        None,
+        3,
+        2,
+        0,
+    )
+    .unwrap();
+    assert_eq!(versioned.source_index(), 9);
+    assert_eq!(versioned.source_version(), 17);
 }

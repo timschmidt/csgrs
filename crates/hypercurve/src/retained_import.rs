@@ -49,6 +49,7 @@ pub struct RetainedImportRecord2 {
     format: RetainedImportFormat2,
     source_topology: RetainedImportTopology2,
     source_index: u64,
+    source_version: u64,
     source_tolerance: Option<RetainedSourceTolerance2>,
     input_point_count: usize,
     emitted_segment_count: usize,
@@ -97,9 +98,32 @@ impl RetainedImportRecord2 {
         emitted_segment_count: usize,
         discarded_duplicate_count: usize,
     ) -> CurveResult<Self> {
-        Self::try_new_open_line_string(
+        Self::try_new_with_source_version(
             format,
             source_index,
+            0,
+            source_tolerance,
+            input_point_count,
+            emitted_segment_count,
+            discarded_duplicate_count,
+        )
+    }
+
+    /// Constructs an open-line-string retained lossy-import audit record with
+    /// explicit source version evidence.
+    pub fn try_new_with_source_version(
+        format: RetainedImportFormat2,
+        source_index: u64,
+        source_version: u64,
+        source_tolerance: Option<RetainedSourceTolerance2>,
+        input_point_count: usize,
+        emitted_segment_count: usize,
+        discarded_duplicate_count: usize,
+    ) -> CurveResult<Self> {
+        Self::try_new_open_line_string_with_source_version(
+            format,
+            source_index,
+            source_version,
             source_tolerance,
             input_point_count,
             emitted_segment_count,
@@ -111,6 +135,28 @@ impl RetainedImportRecord2 {
     pub fn try_new_open_line_string(
         format: RetainedImportFormat2,
         source_index: u64,
+        source_tolerance: Option<RetainedSourceTolerance2>,
+        input_point_count: usize,
+        emitted_segment_count: usize,
+        discarded_duplicate_count: usize,
+    ) -> CurveResult<Self> {
+        Self::try_new_open_line_string_with_source_version(
+            format,
+            source_index,
+            0,
+            source_tolerance,
+            input_point_count,
+            emitted_segment_count,
+            discarded_duplicate_count,
+        )
+    }
+
+    /// Constructs an open-line-string retained lossy-import audit record with
+    /// explicit source version evidence.
+    pub fn try_new_open_line_string_with_source_version(
+        format: RetainedImportFormat2,
+        source_index: u64,
+        source_version: u64,
         source_tolerance: Option<RetainedSourceTolerance2>,
         input_point_count: usize,
         emitted_segment_count: usize,
@@ -130,6 +176,7 @@ impl RetainedImportRecord2 {
             format,
             RetainedImportTopology2::OpenLineString,
             source_index,
+            source_version,
             source_tolerance,
             input_point_count,
             emitted_segment_count,
@@ -141,6 +188,28 @@ impl RetainedImportRecord2 {
     pub fn try_new_closed_ring(
         format: RetainedImportFormat2,
         source_index: u64,
+        source_tolerance: Option<RetainedSourceTolerance2>,
+        input_point_count: usize,
+        emitted_segment_count: usize,
+        discarded_duplicate_count: usize,
+    ) -> CurveResult<Self> {
+        Self::try_new_closed_ring_with_source_version(
+            format,
+            source_index,
+            0,
+            source_tolerance,
+            input_point_count,
+            emitted_segment_count,
+            discarded_duplicate_count,
+        )
+    }
+
+    /// Constructs a closed-ring retained lossy-import audit record with
+    /// explicit source version evidence.
+    pub fn try_new_closed_ring_with_source_version(
+        format: RetainedImportFormat2,
+        source_index: u64,
+        source_version: u64,
         source_tolerance: Option<RetainedSourceTolerance2>,
         input_point_count: usize,
         emitted_segment_count: usize,
@@ -160,6 +229,7 @@ impl RetainedImportRecord2 {
             format,
             RetainedImportTopology2::ClosedRing,
             source_index,
+            source_version,
             source_tolerance,
             input_point_count,
             emitted_segment_count,
@@ -171,6 +241,7 @@ impl RetainedImportRecord2 {
         format: RetainedImportFormat2,
         source_topology: RetainedImportTopology2,
         source_index: u64,
+        source_version: u64,
         source_tolerance: Option<RetainedSourceTolerance2>,
         input_point_count: usize,
         emitted_segment_count: usize,
@@ -180,6 +251,7 @@ impl RetainedImportRecord2 {
             format,
             source_topology,
             source_index,
+            source_version,
             source_tolerance,
             input_point_count,
             emitted_segment_count,
@@ -196,9 +268,10 @@ impl RetainedImportRecord2 {
         emitted_segment_count: usize,
         discarded_duplicate_count: usize,
     ) -> CurveResult<Self> {
-        Self::try_new_open_line_string(
+        Self::try_new_open_line_string_with_source_version(
             RetainedImportFormat2::Step,
             entity_id,
+            0,
             source_tolerance,
             input_point_count,
             emitted_segment_count,
@@ -214,9 +287,10 @@ impl RetainedImportRecord2 {
         emitted_segment_count: usize,
         discarded_duplicate_count: usize,
     ) -> CurveResult<Self> {
-        Self::try_new_open_line_string(
+        Self::try_new_open_line_string_with_source_version(
             RetainedImportFormat2::Dxf,
             handle_index,
+            0,
             source_tolerance,
             input_point_count,
             emitted_segment_count,
@@ -237,6 +311,11 @@ impl RetainedImportRecord2 {
     /// Returns the opaque source index.
     pub const fn source_index(&self) -> u64 {
         self.source_index
+    }
+
+    /// Returns the retained source version/revision.
+    pub const fn source_version(&self) -> u64 {
+        self.source_version
     }
 
     /// Returns source tolerance evidence, if supplied by the importer.

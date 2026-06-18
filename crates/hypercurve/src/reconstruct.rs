@@ -280,6 +280,24 @@ impl CurveString2 {
         source_index: u64,
         source_tolerance: Option<RetainedSourceTolerance2>,
     ) -> CurveResult<FiniteCurveStringImport2> {
+        Self::import_finite_line_string_with_source_version(
+            points,
+            format,
+            source_index,
+            0,
+            source_tolerance,
+        )
+    }
+
+    /// Imports an open finite line string with retained source metadata and a
+    /// source version/revision.
+    pub fn import_finite_line_string_with_source_version(
+        points: &[[f64; 2]],
+        format: RetainedImportFormat2,
+        source_index: u64,
+        source_version: u64,
+        source_tolerance: Option<RetainedSourceTolerance2>,
+    ) -> CurveResult<FiniteCurveStringImport2> {
         if points.len() < 2 {
             return Err(CurveError::InsufficientVertices);
         }
@@ -296,9 +314,10 @@ impl CurveString2 {
             }
         }
         let curve = Self::try_new(segments)?;
-        let record = RetainedImportRecord2::try_new_open_line_string(
+        let record = RetainedImportRecord2::try_new_open_line_string_with_source_version(
             format,
             source_index,
+            source_version,
             source_tolerance,
             points.len(),
             curve.len(),
@@ -422,15 +441,36 @@ impl Contour2 {
         source_index: u64,
         source_tolerance: Option<RetainedSourceTolerance2>,
     ) -> CurveResult<FiniteContourImport2> {
+        Self::import_finite_ring_with_source_version(
+            points,
+            fill_rule,
+            format,
+            source_index,
+            0,
+            source_tolerance,
+        )
+    }
+
+    /// Imports a closed finite ring with retained source metadata and a source
+    /// version/revision.
+    pub fn import_finite_ring_with_source_version(
+        points: &[[f64; 2]],
+        fill_rule: FillRule,
+        format: RetainedImportFormat2,
+        source_index: u64,
+        source_version: u64,
+        source_tolerance: Option<RetainedSourceTolerance2>,
+    ) -> CurveResult<FiniteContourImport2> {
         if points.len() < 3 {
             return Err(CurveError::InsufficientVertices);
         }
 
         let (vertices, discarded_duplicate_count) = finite_ring_vertices(points)?;
         let contour = Self::from_bulge_vertices_with_fill_rule(&vertices, fill_rule)?;
-        let record = RetainedImportRecord2::try_new_closed_ring(
+        let record = RetainedImportRecord2::try_new_closed_ring_with_source_version(
             format,
             source_index,
+            source_version,
             source_tolerance,
             points.len(),
             contour.len(),
