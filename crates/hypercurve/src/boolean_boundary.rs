@@ -10,7 +10,8 @@ use crate::boolean::{
 use crate::classify::is_zero;
 use crate::{
     Classification, Contour2, CurveError, CurvePolicy, CurveResult, FillRule, RegionContourKey,
-    RegionContourRole, RegionSide, RetainedTopologyStatus, Segment2, UncertaintyReason,
+    RegionContourRole, RegionSide, RetainedTopologyStatus, Segment2, SegmentKindCounts,
+    UncertaintyReason,
 };
 
 /// A selected fragment with geometry already oriented for result traversal.
@@ -36,11 +37,13 @@ pub struct BooleanBoundaryFragmentSet {
 pub struct BooleanBoundaryChainAssemblyReport2 {
     stage: BooleanBoundaryChainAssemblyStage2,
     directed_fragment_count: usize,
+    directed_fragment_kind_counts: SegmentKindCounts,
     unresolved_boundary_count: usize,
     chain_count: Option<usize>,
     closed_chain_count: Option<usize>,
     open_chain_count: Option<usize>,
     output_fragment_count: Option<usize>,
+    output_fragment_kind_counts: Option<SegmentKindCounts>,
     status: RetainedTopologyStatus,
     blocker: Option<UncertaintyReason>,
 }
@@ -69,10 +72,12 @@ pub struct BooleanBoundaryLoopExtractionReport2 {
     stage: BooleanBoundaryLoopExtractionStage2,
     source_chain_count: usize,
     source_fragment_count: usize,
+    source_fragment_kind_counts: SegmentKindCounts,
     closed_chain_count: usize,
     open_chain_count: usize,
     loop_count: Option<usize>,
     output_fragment_count: Option<usize>,
+    output_fragment_kind_counts: Option<SegmentKindCounts>,
     status: RetainedTopologyStatus,
     blocker: Option<UncertaintyReason>,
 }
@@ -100,8 +105,10 @@ pub struct BooleanBoundaryContourTransferReport2 {
     stage: BooleanBoundaryContourTransferStage2,
     source_loop_count: usize,
     source_fragment_count: usize,
+    source_fragment_kind_counts: SegmentKindCounts,
     contour_count: Option<usize>,
     output_segment_count: Option<usize>,
+    output_segment_kind_counts: Option<SegmentKindCounts>,
     status: RetainedTopologyStatus,
     blocker: Option<UncertaintyReason>,
 }
@@ -275,6 +282,11 @@ impl BooleanBoundaryChainAssemblyReport2 {
         self.directed_fragment_count
     }
 
+    /// Returns primitive-family counts for directed fragments supplied for traversal.
+    pub const fn directed_fragment_kind_counts(&self) -> SegmentKindCounts {
+        self.directed_fragment_kind_counts
+    }
+
     /// Returns the number of unresolved shared-boundary fragments.
     pub const fn unresolved_boundary_count(&self) -> usize {
         self.unresolved_boundary_count
@@ -298,6 +310,11 @@ impl BooleanBoundaryChainAssemblyReport2 {
     /// Returns output fragment count when materialized.
     pub const fn output_fragment_count(&self) -> Option<usize> {
         self.output_fragment_count
+    }
+
+    /// Returns primitive-family counts for output chain fragments when materialized.
+    pub const fn output_fragment_kind_counts(&self) -> Option<SegmentKindCounts> {
+        self.output_fragment_kind_counts
     }
 
     /// Returns retained topology status for chain assembly.
@@ -494,6 +511,7 @@ impl BooleanBoundaryChainSet {
 
         let source_chain_count = self.len();
         let source_fragment_count = chain_set_fragment_count(&self);
+        let source_fragment_kind_counts = chain_set_fragment_kind_counts(&self);
         let closed_chain_count = self.closed_count();
         let loops = match self
             .chains
@@ -507,6 +525,7 @@ impl BooleanBoundaryChainSet {
                     BooleanBoundaryLoopExtractionStage2::LoopMaterialization,
                     source_chain_count,
                     source_fragment_count,
+                    source_fragment_kind_counts,
                     closed_chain_count,
                     0,
                     UncertaintyReason::Unsupported,
@@ -517,6 +536,7 @@ impl BooleanBoundaryChainSet {
             Ok(loop_set) => decided_boolean_boundary_loop_extraction_counts_result(
                 source_chain_count,
                 source_fragment_count,
+                source_fragment_kind_counts,
                 closed_chain_count,
                 0,
                 loop_set,
@@ -525,6 +545,7 @@ impl BooleanBoundaryChainSet {
                 BooleanBoundaryLoopExtractionStage2::LoopMaterialization,
                 source_chain_count,
                 source_fragment_count,
+                source_fragment_kind_counts,
                 closed_chain_count,
                 0,
                 UncertaintyReason::Unsupported,
@@ -549,6 +570,11 @@ impl BooleanBoundaryLoopExtractionReport2 {
         self.source_fragment_count
     }
 
+    /// Returns primitive-family counts for source chain fragments.
+    pub const fn source_fragment_kind_counts(&self) -> SegmentKindCounts {
+        self.source_fragment_kind_counts
+    }
+
     /// Returns source closed chain count.
     pub const fn closed_chain_count(&self) -> usize {
         self.closed_chain_count
@@ -567,6 +593,11 @@ impl BooleanBoundaryLoopExtractionReport2 {
     /// Returns output fragment count when materialized.
     pub const fn output_fragment_count(&self) -> Option<usize> {
         self.output_fragment_count
+    }
+
+    /// Returns primitive-family counts for output loop fragments when materialized.
+    pub const fn output_fragment_kind_counts(&self) -> Option<SegmentKindCounts> {
+        self.output_fragment_kind_counts
     }
 
     /// Returns retained topology status for loop extraction.
@@ -771,6 +802,7 @@ impl BooleanBoundaryLoopSet {
                     return blocked_boolean_boundary_contour_transfer_result(
                         self.len(),
                         loop_set_fragment_count(self),
+                        loop_set_fragment_kind_counts(self),
                         fill_rule,
                         BooleanBoundaryContourTransferStage2::ContourMaterialization,
                         UncertaintyReason::Unsupported,
@@ -781,6 +813,7 @@ impl BooleanBoundaryLoopSet {
         decided_boolean_boundary_contour_transfer_result(
             self.len(),
             loop_set_fragment_count(self),
+            loop_set_fragment_kind_counts(self),
             fill_rule,
             contours,
         )
@@ -801,6 +834,7 @@ impl BooleanBoundaryLoopSet {
     ) -> BooleanBoundaryContourTransferResult2 {
         let source_loop_count = self.len();
         let source_fragment_count = loop_set_fragment_count(&self);
+        let source_fragment_kind_counts = loop_set_fragment_kind_counts(&self);
         let mut contours = Vec::with_capacity(source_loop_count);
         for boundary_loop in self.loops {
             match boundary_loop.into_contour(fill_rule) {
@@ -809,6 +843,7 @@ impl BooleanBoundaryLoopSet {
                     return blocked_boolean_boundary_contour_transfer_result(
                         source_loop_count,
                         source_fragment_count,
+                        source_fragment_kind_counts,
                         fill_rule,
                         BooleanBoundaryContourTransferStage2::ContourMaterialization,
                         UncertaintyReason::Unsupported,
@@ -819,6 +854,7 @@ impl BooleanBoundaryLoopSet {
         decided_boolean_boundary_contour_transfer_result(
             source_loop_count,
             source_fragment_count,
+            source_fragment_kind_counts,
             fill_rule,
             contours,
         )
@@ -846,6 +882,11 @@ impl BooleanBoundaryContourTransferReport2 {
         self.source_fragment_count
     }
 
+    /// Returns primitive-family counts for source loop fragments.
+    pub const fn source_fragment_kind_counts(&self) -> SegmentKindCounts {
+        self.source_fragment_kind_counts
+    }
+
     /// Returns contour count when transfer materialized.
     pub const fn contour_count(&self) -> Option<usize> {
         self.contour_count
@@ -854,6 +895,11 @@ impl BooleanBoundaryContourTransferReport2 {
     /// Returns output contour segment count when transfer materialized.
     pub const fn output_segment_count(&self) -> Option<usize> {
         self.output_segment_count
+    }
+
+    /// Returns primitive-family counts for output contour segments when materialized.
+    pub const fn output_segment_kind_counts(&self) -> Option<SegmentKindCounts> {
+        self.output_segment_kind_counts
     }
 
     /// Returns retained topology status for contour transfer.
@@ -1111,16 +1157,21 @@ fn decided_boolean_boundary_chain_assembly_result(
     let chain_count = chains.len();
     let closed_chain_count = chains.closed_count();
     let output_fragment_count = chains.chains().iter().map(BooleanBoundaryChain::len).sum();
+    let output_fragment_kind_counts = chain_set_fragment_kind_counts(&chains);
     BooleanBoundaryChainAssemblyResult2 {
         chains: Some(chains),
         report: BooleanBoundaryChainAssemblyReport2 {
             stage: BooleanBoundaryChainAssemblyStage2::ChainMaterialization,
             directed_fragment_count: source.directed_len(),
+            directed_fragment_kind_counts: directed_boolean_fragment_kind_counts(
+                source.directed_fragments(),
+            ),
             unresolved_boundary_count: source.unresolved_len(),
             chain_count: Some(chain_count),
             closed_chain_count: Some(closed_chain_count),
             open_chain_count: Some(chain_count - closed_chain_count),
             output_fragment_count: Some(output_fragment_count),
+            output_fragment_kind_counts: Some(output_fragment_kind_counts),
             status: RetainedTopologyStatus::NativeExact,
             blocker: None,
         },
@@ -1137,11 +1188,15 @@ fn blocked_boolean_boundary_chain_assembly_result(
         report: BooleanBoundaryChainAssemblyReport2 {
             stage,
             directed_fragment_count: source.directed_len(),
+            directed_fragment_kind_counts: directed_boolean_fragment_kind_counts(
+                source.directed_fragments(),
+            ),
             unresolved_boundary_count: source.unresolved_len(),
             chain_count: None,
             closed_chain_count: None,
             open_chain_count: None,
             output_fragment_count: None,
+            output_fragment_kind_counts: None,
             status: retained_status_for_chain_assembly_blocker(blocker),
             blocker: Some(blocker),
         },
@@ -1166,6 +1221,7 @@ fn decided_boolean_boundary_loop_extraction_result(
     decided_boolean_boundary_loop_extraction_counts_result(
         source.len(),
         chain_set_fragment_count(source),
+        chain_set_fragment_kind_counts(source),
         source.closed_count(),
         source.len() - source.closed_count(),
         loops,
@@ -1175,21 +1231,25 @@ fn decided_boolean_boundary_loop_extraction_result(
 fn decided_boolean_boundary_loop_extraction_counts_result(
     source_chain_count: usize,
     source_fragment_count: usize,
+    source_fragment_kind_counts: SegmentKindCounts,
     closed_chain_count: usize,
     open_chain_count: usize,
     loops: BooleanBoundaryLoopSet,
 ) -> BooleanBoundaryLoopExtractionResult2 {
     let output_fragment_count = loops.loops().iter().map(BooleanBoundaryLoop::len).sum();
+    let output_fragment_kind_counts = loop_set_fragment_kind_counts(&loops);
     BooleanBoundaryLoopExtractionResult2 {
         loops: Some(loops),
         report: BooleanBoundaryLoopExtractionReport2 {
             stage: BooleanBoundaryLoopExtractionStage2::LoopMaterialization,
             source_chain_count,
             source_fragment_count,
+            source_fragment_kind_counts,
             closed_chain_count,
             open_chain_count,
             loop_count: Some(closed_chain_count),
             output_fragment_count: Some(output_fragment_count),
+            output_fragment_kind_counts: Some(output_fragment_kind_counts),
             status: RetainedTopologyStatus::NativeExact,
             blocker: None,
         },
@@ -1205,6 +1265,7 @@ fn blocked_boolean_boundary_loop_extraction_result(
         stage,
         source.len(),
         chain_set_fragment_count(source),
+        chain_set_fragment_kind_counts(source),
         source.closed_count(),
         source.len() - source.closed_count(),
         blocker,
@@ -1215,6 +1276,7 @@ fn blocked_boolean_boundary_loop_extraction_counts_result(
     stage: BooleanBoundaryLoopExtractionStage2,
     source_chain_count: usize,
     source_fragment_count: usize,
+    source_fragment_kind_counts: SegmentKindCounts,
     closed_chain_count: usize,
     open_chain_count: usize,
     blocker: UncertaintyReason,
@@ -1225,10 +1287,12 @@ fn blocked_boolean_boundary_loop_extraction_counts_result(
             stage,
             source_chain_count,
             source_fragment_count,
+            source_fragment_kind_counts,
             closed_chain_count,
             open_chain_count,
             loop_count: None,
             output_fragment_count: None,
+            output_fragment_kind_counts: None,
             status: retained_status_for_loop_extraction_blocker(blocker),
             blocker: Some(blocker),
         },
@@ -1248,21 +1312,33 @@ fn chain_set_fragment_count(chains: &BooleanBoundaryChainSet) -> usize {
     chains.chains().iter().map(BooleanBoundaryChain::len).sum()
 }
 
+fn chain_set_fragment_kind_counts(chains: &BooleanBoundaryChainSet) -> SegmentKindCounts {
+    let mut counts = SegmentKindCounts::default();
+    for chain in chains.chains() {
+        add_directed_fragment_kind_counts(&mut counts, chain.fragments());
+    }
+    counts
+}
+
 fn decided_boolean_boundary_contour_transfer_result(
     source_loop_count: usize,
     source_fragment_count: usize,
+    source_fragment_kind_counts: SegmentKindCounts,
     fill_rule: FillRule,
     contours: Vec<Contour2>,
 ) -> BooleanBoundaryContourTransferResult2 {
     let output_segment_count = contours.iter().map(Contour2::len).sum();
+    let output_segment_kind_counts = contour_segment_kind_counts(&contours);
     BooleanBoundaryContourTransferResult2 {
         report: BooleanBoundaryContourTransferReport2 {
             fill_rule,
             stage: BooleanBoundaryContourTransferStage2::ContourMaterialization,
             source_loop_count,
             source_fragment_count,
+            source_fragment_kind_counts,
             contour_count: Some(contours.len()),
             output_segment_count: Some(output_segment_count),
+            output_segment_kind_counts: Some(output_segment_kind_counts),
             status: RetainedTopologyStatus::NativeExact,
             blocker: None,
         },
@@ -1273,6 +1349,7 @@ fn decided_boolean_boundary_contour_transfer_result(
 fn blocked_boolean_boundary_contour_transfer_result(
     source_loop_count: usize,
     source_fragment_count: usize,
+    source_fragment_kind_counts: SegmentKindCounts,
     fill_rule: FillRule,
     stage: BooleanBoundaryContourTransferStage2,
     blocker: UncertaintyReason,
@@ -1284,8 +1361,10 @@ fn blocked_boolean_boundary_contour_transfer_result(
             stage,
             source_loop_count,
             source_fragment_count,
+            source_fragment_kind_counts,
             contour_count: None,
             output_segment_count: None,
+            output_segment_kind_counts: None,
             status: RetainedTopologyStatus::Unsupported,
             blocker: Some(blocker),
         },
@@ -1294,6 +1373,48 @@ fn blocked_boolean_boundary_contour_transfer_result(
 
 fn loop_set_fragment_count(loops: &BooleanBoundaryLoopSet) -> usize {
     loops.loops().iter().map(BooleanBoundaryLoop::len).sum()
+}
+
+fn loop_set_fragment_kind_counts(loops: &BooleanBoundaryLoopSet) -> SegmentKindCounts {
+    let mut counts = SegmentKindCounts::default();
+    for boundary_loop in loops.loops() {
+        add_directed_fragment_kind_counts(&mut counts, boundary_loop.fragments());
+    }
+    counts
+}
+
+fn directed_boolean_fragment_kind_counts(
+    fragments: &[DirectedBooleanFragment],
+) -> SegmentKindCounts {
+    let mut counts = SegmentKindCounts::default();
+    add_directed_fragment_kind_counts(&mut counts, fragments);
+    counts
+}
+
+fn add_directed_fragment_kind_counts(
+    counts: &mut SegmentKindCounts,
+    fragments: &[DirectedBooleanFragment],
+) {
+    for fragment in fragments {
+        add_segment_kind_count(counts, &fragment.segment);
+    }
+}
+
+fn contour_segment_kind_counts(contours: &[Contour2]) -> SegmentKindCounts {
+    let mut counts = SegmentKindCounts::default();
+    for contour in contours {
+        for segment in contour.segments() {
+            add_segment_kind_count(&mut counts, segment);
+        }
+    }
+    counts
+}
+
+fn add_segment_kind_count(counts: &mut SegmentKindCounts, segment: &Segment2) {
+    match segment {
+        Segment2::Line(_) => counts.lines += 1,
+        Segment2::Arc(_) => counts.arcs += 1,
+    }
 }
 
 fn endpoint_adjacency(

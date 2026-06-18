@@ -303,6 +303,13 @@ fn boolean_fragment_selection_emits_directed_boundary_fragments() {
         assembled.report().directed_fragment_count(),
         emitted.directed_len()
     );
+    assert_eq!(
+        assembled.report().directed_fragment_kind_counts(),
+        SegmentKindCounts {
+            lines: emitted.directed_len(),
+            arcs: 0,
+        }
+    );
     assert_eq!(assembled.report().unresolved_boundary_count(), 0);
     assert_eq!(assembled.report().chain_count(), Some(1));
     assert_eq!(assembled.report().closed_chain_count(), Some(1));
@@ -310,6 +317,13 @@ fn boolean_fragment_selection_emits_directed_boundary_fragments() {
     assert_eq!(
         assembled.report().output_fragment_count(),
         Some(emitted.directed_len())
+    );
+    assert_eq!(
+        assembled.report().output_fragment_kind_counts(),
+        Some(SegmentKindCounts {
+            lines: emitted.directed_len(),
+            arcs: 0,
+        })
     );
     assert_eq!(assembled.report().blocker(), None);
     let chains = assembled
@@ -330,12 +344,26 @@ fn boolean_fragment_selection_emits_directed_boundary_fragments() {
         extracted.report().source_fragment_count(),
         emitted.directed_len()
     );
+    assert_eq!(
+        extracted.report().source_fragment_kind_counts(),
+        SegmentKindCounts {
+            lines: emitted.directed_len(),
+            arcs: 0,
+        }
+    );
     assert_eq!(extracted.report().closed_chain_count(), 1);
     assert_eq!(extracted.report().open_chain_count(), 0);
     assert_eq!(extracted.report().loop_count(), Some(1));
     assert_eq!(
         extracted.report().output_fragment_count(),
         Some(emitted.directed_len())
+    );
+    assert_eq!(
+        extracted.report().output_fragment_kind_counts(),
+        Some(SegmentKindCounts {
+            lines: emitted.directed_len(),
+            arcs: 0,
+        })
     );
     assert_eq!(extracted.report().blocker(), None);
     let loops = extracted
@@ -355,10 +383,24 @@ fn boolean_fragment_selection_emits_directed_boundary_fragments() {
         transferred.report().source_fragment_count(),
         emitted.directed_len()
     );
+    assert_eq!(
+        transferred.report().source_fragment_kind_counts(),
+        SegmentKindCounts {
+            lines: emitted.directed_len(),
+            arcs: 0,
+        }
+    );
     assert_eq!(transferred.report().contour_count(), Some(1));
     assert_eq!(
         transferred.report().output_segment_count(),
         Some(emitted.directed_len())
+    );
+    assert_eq!(
+        transferred.report().output_segment_kind_counts(),
+        Some(SegmentKindCounts {
+            lines: emitted.directed_len(),
+            arcs: 0,
+        })
     );
     assert_eq!(transferred.report().blocker(), None);
     let contours = transferred
@@ -439,10 +481,18 @@ fn boolean_boundary_chain_assembly_keeps_disjoint_loops_separate() {
     );
     assert_eq!(extracted.report().source_chain_count(), 2);
     assert_eq!(extracted.report().source_fragment_count(), 8);
+    assert_eq!(
+        extracted.report().source_fragment_kind_counts(),
+        SegmentKindCounts { lines: 8, arcs: 0 }
+    );
     assert_eq!(extracted.report().closed_chain_count(), 2);
     assert_eq!(extracted.report().open_chain_count(), 0);
     assert_eq!(extracted.report().loop_count(), Some(2));
     assert_eq!(extracted.report().output_fragment_count(), Some(8));
+    assert_eq!(
+        extracted.report().output_fragment_kind_counts(),
+        Some(SegmentKindCounts { lines: 8, arcs: 0 })
+    );
     assert!(
         extracted.loops().is_some(),
         "reported disjoint loop extraction should materialize"
@@ -457,8 +507,16 @@ fn boolean_boundary_chain_assembly_keeps_disjoint_loops_separate() {
     assert_eq!(transferred.report().fill_rule(), FillRule::NonZero);
     assert_eq!(transferred.report().source_loop_count(), 2);
     assert_eq!(transferred.report().source_fragment_count(), 8);
+    assert_eq!(
+        transferred.report().source_fragment_kind_counts(),
+        SegmentKindCounts { lines: 8, arcs: 0 }
+    );
     assert_eq!(transferred.report().contour_count(), Some(2));
     assert_eq!(transferred.report().output_segment_count(), Some(8));
+    assert_eq!(
+        transferred.report().output_segment_kind_counts(),
+        Some(SegmentKindCounts { lines: 8, arcs: 0 })
+    );
     assert_eq!(transferred.report().blocker(), None);
     let contours = transferred.into_contours().unwrap();
     assert_eq!(contours.len(), 2);
@@ -826,6 +884,11 @@ fn boundary_chain_assembly_rejects_branch_points() {
         BooleanBoundaryChainAssemblyStage2::EndpointAdjacency
     );
     assert_eq!(assembled.report().directed_fragment_count(), 3);
+    assert_eq!(
+        assembled.report().directed_fragment_kind_counts(),
+        SegmentKindCounts { lines: 3, arcs: 0 }
+    );
+    assert_eq!(assembled.report().output_fragment_kind_counts(), None);
     assert_eq!(assembled.report().unresolved_boundary_count(), 0);
     assert_eq!(
         assembled.report().blocker(),
@@ -864,10 +927,18 @@ fn boundary_loop_extraction_rejects_open_chains() {
         BooleanBoundaryChainAssemblyStage2::ChainMaterialization
     );
     assert_eq!(assembled.report().directed_fragment_count(), 2);
+    assert_eq!(
+        assembled.report().directed_fragment_kind_counts(),
+        SegmentKindCounts { lines: 2, arcs: 0 }
+    );
     assert_eq!(assembled.report().chain_count(), Some(1));
     assert_eq!(assembled.report().closed_chain_count(), Some(0));
     assert_eq!(assembled.report().open_chain_count(), Some(1));
     assert_eq!(assembled.report().output_fragment_count(), Some(2));
+    assert_eq!(
+        assembled.report().output_fragment_kind_counts(),
+        Some(SegmentKindCounts { lines: 2, arcs: 0 })
+    );
     assert_eq!(assembled.report().blocker(), None);
     let chains = assembled
         .chains()
@@ -883,9 +954,14 @@ fn boundary_loop_extraction_rejects_open_chains() {
     );
     assert_eq!(extracted.report().source_chain_count(), 1);
     assert_eq!(extracted.report().source_fragment_count(), 2);
+    assert_eq!(
+        extracted.report().source_fragment_kind_counts(),
+        SegmentKindCounts { lines: 2, arcs: 0 }
+    );
     assert_eq!(extracted.report().closed_chain_count(), 0);
     assert_eq!(extracted.report().open_chain_count(), 1);
     assert_eq!(extracted.report().loop_count(), None);
+    assert_eq!(extracted.report().output_fragment_kind_counts(), None);
     assert_eq!(
         extracted.report().blocker(),
         Some(UncertaintyReason::Unsupported)
