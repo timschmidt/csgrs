@@ -232,8 +232,9 @@ pub use region_fragments::{
 pub use region_nesting::{
     RegionBoundaryContourBuildReport2, RegionBoundaryContourBuildResult2,
     RegionBoundaryContourBuildStage2, RegionBoundaryContourRole2, RegionBoundaryContourRoleReport2,
-    RegionLineSegmentRegionBuildReport2, RegionLineSegmentRegionBuildResult2,
-    RegionLineSegmentRegionBuildStage2, RegionLineSegmentRingSourceReport2,
+    RegionLineSegmentArrangedSourceReport2, RegionLineSegmentRegionBuildReport2,
+    RegionLineSegmentRegionBuildResult2, RegionLineSegmentRegionBuildStage2,
+    RegionLineSegmentRingSourceReport2,
 };
 pub use retained_curve::{
     RetainedCurveCacheSummary2, RetainedCurveFamily2, RetainedCurveIdentity2,

@@ -92,6 +92,17 @@ pub struct RegionLineSegmentRingSourceReport2 {
     status: RetainedTopologyStatus,
 }
 
+/// Source provenance for one arranged fragment before ring traversal.
+#[derive(Clone, Debug, PartialEq)]
+pub struct RegionLineSegmentArrangedSourceReport2 {
+    source_segment_index: usize,
+    source_range: ParamRange,
+    arranged_segment_index: usize,
+    output_start_point: Point2,
+    output_end_point: Point2,
+    status: RetainedTopologyStatus,
+}
+
 /// Report for constructing a region from unordered exact line segments.
 #[derive(Clone, Debug, PartialEq)]
 pub struct RegionLineSegmentRegionBuildReport2 {
@@ -116,6 +127,7 @@ pub struct RegionLineSegmentRegionBuildReport2 {
     reversed_source_segment_count: usize,
     output_ring_count: Option<usize>,
     output_boundary_segment_count: Option<usize>,
+    arranged_source_reports: Vec<RegionLineSegmentArrangedSourceReport2>,
     source_reports: Vec<RegionLineSegmentRingSourceReport2>,
     boundary_build_report: Option<RegionBoundaryContourBuildReport2>,
     status: RetainedTopologyStatus,
@@ -225,6 +237,7 @@ impl Region2 {
                         segments.len(),
                         Some(split_report),
                         None,
+                        Vec::new(),
                         LineSegmentRingAssemblyReportParts::default(),
                         RegionLineSegmentRegionBuildStage2::RingAssembly,
                         retained_status_for_line_segment_region_blocker(blocker),
@@ -244,6 +257,7 @@ impl Region2 {
                             segments.len(),
                             Some(arranged.report),
                             Some(endpoint_graph),
+                            line_arranged_source_reports(&arranged.segments),
                             LineSegmentRingAssemblyReportParts {
                                 counts,
                                 ..LineSegmentRingAssemblyReportParts::default()
@@ -265,6 +279,7 @@ impl Region2 {
                         segments.len(),
                         Some(arranged.report),
                         Some(endpoint_graph),
+                        line_arranged_source_reports(&arranged.segments),
                         report,
                         RegionLineSegmentRegionBuildStage2::RingAssembly,
                         retained_status_for_line_segment_region_blocker(blocker),
@@ -331,6 +346,7 @@ impl Region2 {
                 reversed_source_segment_count: assembled.reversed_source_segment_count,
                 output_ring_count,
                 output_boundary_segment_count,
+                arranged_source_reports: line_arranged_source_reports(&arranged.segments),
                 source_reports: assembled.source_reports,
                 boundary_build_report: Some(boundary_build_report),
                 status,
@@ -388,6 +404,7 @@ impl Region2 {
                         segments.len(),
                         Some(split_report),
                         None,
+                        Vec::new(),
                         LineSegmentRingAssemblyReportParts::default(),
                         RegionLineSegmentRegionBuildStage2::RingAssembly,
                         retained_status_for_line_segment_region_blocker(blocker),
@@ -407,6 +424,7 @@ impl Region2 {
                             segments.len(),
                             Some(arranged.report),
                             Some(endpoint_graph),
+                            native_arranged_source_reports(&arranged.segments),
                             LineSegmentRingAssemblyReportParts {
                                 counts,
                                 ..LineSegmentRingAssemblyReportParts::default()
@@ -428,6 +446,7 @@ impl Region2 {
                         segments.len(),
                         Some(arranged.report),
                         Some(endpoint_graph),
+                        native_arranged_source_reports(&arranged.segments),
                         report,
                         RegionLineSegmentRegionBuildStage2::RingAssembly,
                         retained_status_for_line_segment_region_blocker(blocker),
@@ -490,6 +509,7 @@ impl Region2 {
                 reversed_source_segment_count: assembled.reversed_source_segment_count,
                 output_ring_count,
                 output_boundary_segment_count,
+                arranged_source_reports: native_arranged_source_reports(&arranged.segments),
                 source_reports: assembled.source_reports,
                 boundary_build_report: Some(boundary_build_report),
                 status,
@@ -828,6 +848,38 @@ impl RegionLineSegmentRingSourceReport2 {
     }
 }
 
+impl RegionLineSegmentArrangedSourceReport2 {
+    /// Returns the source segment index used by this arranged fragment.
+    pub const fn source_segment_index(&self) -> usize {
+        self.source_segment_index
+    }
+
+    /// Returns the retained parameter range on the source segment.
+    pub const fn source_range(&self) -> &ParamRange {
+        &self.source_range
+    }
+
+    /// Returns the arranged fragment index after exact splitting.
+    pub const fn arranged_segment_index(&self) -> usize {
+        self.arranged_segment_index
+    }
+
+    /// Returns the arranged fragment start point.
+    pub const fn output_start_point(&self) -> &Point2 {
+        &self.output_start_point
+    }
+
+    /// Returns the arranged fragment end point.
+    pub const fn output_end_point(&self) -> &Point2 {
+        &self.output_end_point
+    }
+
+    /// Returns retained topology status for this source-to-fragment mapping.
+    pub const fn status(&self) -> RetainedTopologyStatus {
+        self.status
+    }
+}
+
 impl RegionLineSegmentRegionBuildReport2 {
     /// Returns the furthest exact line-region construction stage reached.
     pub const fn stage(&self) -> RegionLineSegmentRegionBuildStage2 {
@@ -932,6 +984,11 @@ impl RegionLineSegmentRegionBuildReport2 {
     /// Returns output boundary segment count when available.
     pub const fn output_boundary_segment_count(&self) -> Option<usize> {
         self.output_boundary_segment_count
+    }
+
+    /// Returns per-arranged-fragment source provenance after exact splitting.
+    pub fn arranged_source_reports(&self) -> &[RegionLineSegmentArrangedSourceReport2] {
+        &self.arranged_source_reports
     }
 
     /// Returns per-output segment source provenance.
@@ -2117,10 +2174,49 @@ fn append_native_segment_ring_source_report(
     });
 }
 
+fn line_arranged_source_reports(
+    segments: &[ArrangedLineSegment],
+) -> Vec<RegionLineSegmentArrangedSourceReport2> {
+    segments
+        .iter()
+        .enumerate()
+        .map(
+            |(arranged_segment_index, segment)| RegionLineSegmentArrangedSourceReport2 {
+                source_segment_index: segment.source_segment_index,
+                source_range: segment.source_range.clone(),
+                arranged_segment_index,
+                output_start_point: segment.line.start().clone(),
+                output_end_point: segment.line.end().clone(),
+                status: RetainedTopologyStatus::NativeExact,
+            },
+        )
+        .collect()
+}
+
+fn native_arranged_source_reports(
+    segments: &[ArrangedNativeSegment],
+) -> Vec<RegionLineSegmentArrangedSourceReport2> {
+    segments
+        .iter()
+        .enumerate()
+        .map(
+            |(arranged_segment_index, segment)| RegionLineSegmentArrangedSourceReport2 {
+                source_segment_index: segment.source_segment_index,
+                source_range: segment.source_range.clone(),
+                arranged_segment_index,
+                output_start_point: segment.segment.start().clone(),
+                output_end_point: segment.segment.end().clone(),
+                status: RetainedTopologyStatus::NativeExact,
+            },
+        )
+        .collect()
+}
+
 fn blocked_line_segment_region_report(
     source_segment_count: usize,
     split_report: Option<LineSegmentSplitReportParts>,
     endpoint_graph_report: Option<LineSegmentEndpointGraphReportParts>,
+    arranged_source_reports: Vec<RegionLineSegmentArrangedSourceReport2>,
     report: LineSegmentRingAssemblyReportParts,
     stage: RegionLineSegmentRegionBuildStage2,
     status: RetainedTopologyStatus,
@@ -2156,6 +2252,7 @@ fn blocked_line_segment_region_report(
         reversed_source_segment_count: report.reversed_source_segment_count,
         output_ring_count: None,
         output_boundary_segment_count: None,
+        arranged_source_reports,
         source_reports: report.source_reports,
         boundary_build_report: None,
         status,

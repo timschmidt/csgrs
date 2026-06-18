@@ -11,6 +11,10 @@ fn s(value: i32) -> Real {
     value.into()
 }
 
+fn q(numerator: i32, denominator: i32) -> Real {
+    (Real::from(numerator) / Real::from(denominator)).unwrap()
+}
+
 fn p(x: i32, y: i32) -> hypercurve::Point2 {
     hypercurve::Point2::new(s(x), s(y))
 }
@@ -353,6 +357,15 @@ fn unordered_line_segments_build_region_with_source_provenance() {
     assert_eq!(report.reversed_source_segment_count(), 2);
     assert_eq!(report.output_ring_count(), Some(1));
     assert_eq!(report.output_boundary_segment_count(), Some(4));
+    assert_eq!(report.arranged_source_reports().len(), 4);
+    assert_eq!(
+        report.arranged_source_reports()[0].source_segment_index(),
+        0
+    );
+    assert_eq!(
+        report.arranged_source_reports()[0].source_range(),
+        &hypercurve::ParamRange::new(s(0), s(1))
+    );
     assert_eq!(report.source_reports().len(), 4);
     assert_eq!(report.source_reports()[0].source_segment_index(), 0);
     assert_eq!(
@@ -414,6 +427,7 @@ fn unordered_line_segments_report_disconnected_boundary_blocker() {
     assert_eq!(report.endpoint_graph_max_structural_bucket_size(), Some(1));
     assert_eq!(report.endpoint_graph_dangling_endpoint_count(), Some(4));
     assert_eq!(report.endpoint_graph_branch_endpoint_count(), Some(0));
+    assert_eq!(report.arranged_source_reports().len(), 2);
     assert_eq!(report.output_ring_count(), None);
     assert_eq!(report.output_boundary_segment_count(), None);
     assert_eq!(report.source_reports().len(), 0);
@@ -453,6 +467,15 @@ fn unordered_line_segments_split_crossings_before_boundary_blocker() {
     assert_eq!(report.endpoint_graph_max_structural_bucket_size(), Some(4));
     assert_eq!(report.endpoint_graph_dangling_endpoint_count(), Some(4));
     assert_eq!(report.endpoint_graph_branch_endpoint_count(), Some(4));
+    assert_eq!(report.arranged_source_reports().len(), 4);
+    assert_eq!(
+        report.arranged_source_reports()[0].source_segment_index(),
+        0
+    );
+    assert_eq!(
+        report.arranged_source_reports()[0].source_range(),
+        &hypercurve::ParamRange::new(s(0), q(1, 2))
+    );
     assert_eq!(report.source_reports().len(), 0);
     assert_eq!(report.blocker(), Some(UncertaintyReason::Boundary));
 }
@@ -494,6 +517,15 @@ fn unordered_native_segments_build_line_arc_region_with_source_provenance() {
     assert_eq!(report.reversed_source_segment_count(), 0);
     assert_eq!(report.output_ring_count(), Some(1));
     assert_eq!(report.output_boundary_segment_count(), Some(2));
+    assert_eq!(report.arranged_source_reports().len(), 2);
+    assert_eq!(
+        report.arranged_source_reports()[0].source_segment_index(),
+        0
+    );
+    assert_eq!(
+        report.arranged_source_reports()[1].source_segment_index(),
+        1
+    );
     assert_eq!(report.source_reports().len(), 2);
     assert_eq!(report.source_reports()[0].source_segment_index(), 0);
     assert_eq!(report.source_reports()[1].source_segment_index(), 1);
@@ -559,6 +591,7 @@ fn unordered_native_segments_report_arc_overlap_boundary_blocker() {
     assert_eq!(report.split_output_segment_count(), None);
     assert_eq!(report.endpoint_graph_endpoint_count(), None);
     assert_eq!(report.endpoint_graph_structural_bucket_count(), None);
+    assert_eq!(report.arranged_source_reports().len(), 0);
     assert_eq!(report.source_reports().len(), 0);
     assert_eq!(report.blocker(), Some(UncertaintyReason::Boundary));
 }
@@ -598,6 +631,15 @@ fn unordered_native_segments_split_line_arc_crossing_before_boundary_blocker() {
     assert_eq!(report.endpoint_graph_max_structural_bucket_size(), Some(4));
     assert_eq!(report.endpoint_graph_dangling_endpoint_count(), Some(4));
     assert_eq!(report.endpoint_graph_branch_endpoint_count(), Some(4));
+    assert_eq!(report.arranged_source_reports().len(), 4);
+    assert_eq!(
+        report.arranged_source_reports()[0].source_segment_index(),
+        0
+    );
+    assert_eq!(
+        report.arranged_source_reports()[0].source_range(),
+        &hypercurve::ParamRange::new(s(0), q(1, 2))
+    );
     assert_eq!(report.source_reports().len(), 0);
     assert_eq!(report.blocker(), Some(UncertaintyReason::Boundary));
 }
@@ -639,6 +681,15 @@ fn unordered_native_segments_split_arc_arc_crossing_before_boundary_blocker() {
     assert_eq!(report.endpoint_graph_max_structural_bucket_size(), Some(4));
     assert_eq!(report.endpoint_graph_dangling_endpoint_count(), Some(4));
     assert_eq!(report.endpoint_graph_branch_endpoint_count(), Some(4));
+    assert_eq!(report.arranged_source_reports().len(), 4);
+    assert_eq!(
+        report.arranged_source_reports()[0].source_segment_index(),
+        0
+    );
+    assert_eq!(
+        report.arranged_source_reports()[0].source_range(),
+        &hypercurve::ParamRange::new(s(0), q(1, 10))
+    );
     assert_eq!(report.source_reports().len(), 0);
     assert_eq!(report.blocker(), Some(UncertaintyReason::Boundary));
 }
