@@ -379,6 +379,34 @@ pub enum MeshArtifactReportError {
     },
 }
 
+impl MeshArtifactReportError {
+    /// Return whether this error reports a mismatch in `field`.
+    pub fn is_report_mismatch(&self, field: &str) -> bool {
+        matches!(self, Self::ReportMismatch { field: actual } if *actual == field)
+    }
+
+    /// Return whether exact coordinate replay was required but its blocker was
+    /// missing from the report.
+    pub const fn is_missing_exact_coordinate_replay_blocker(&self) -> bool {
+        matches!(
+            self,
+            Self::MissingBlocker {
+                blocker: MeshArtifactBlocker::MissingExactCoordinateReplay
+            }
+        )
+    }
+
+    /// Return whether the report duplicated the preview/export-only blocker.
+    pub const fn is_duplicate_preview_or_export_only_blocker(&self) -> bool {
+        matches!(
+            self,
+            Self::DuplicateBlocker {
+                blocker: MeshArtifactBlocker::PreviewOrExportOnly
+            }
+        )
+    }
+}
+
 impl MeshArtifactManifest {
     /// Build a manifest from an accepted [`ExactMesh`].
     ///

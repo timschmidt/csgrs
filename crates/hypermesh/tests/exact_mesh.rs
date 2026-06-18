@@ -6,7 +6,7 @@ use hypermesh::{
     ExactMeshProposalReportError, ExactOutputTriangleOrientation, ExactRegionSelection,
     ExactRegularizationPolicy, ExactReportFreshness, LossyF64MeshInputReadiness,
     LossyF64MeshInputReportValidationError, MeshArtifactBlocker, MeshArtifactFaceRecord,
-    MeshArtifactManifest, MeshArtifactReportError, MeshArtifactVertexRecord, ValidationPolicy,
+    MeshArtifactManifest, MeshArtifactVertexRecord, ValidationPolicy,
 };
 use hyperreal::Real;
 
@@ -745,11 +745,10 @@ fn exact_mesh_proposal_and_artifact_reports_are_publicly_replayable() {
 
     let mut forged_handoff_ready = artifact.clone();
     forged_handoff_ready.validation_handoff_ready = false;
-    assert_eq!(
-        forged_handoff_ready.validate(),
-        Err(MeshArtifactReportError::ReportMismatch {
-            field: "validation_handoff_ready"
-        })
+    assert!(
+        forged_handoff_ready
+            .validate()
+            .is_err_and(|error| error.is_report_mismatch("validation_handoff_ready"))
     );
 
     let proposal_artifact = exact.proposal_artifact_manifest(&proposal).unwrap().report();
@@ -800,21 +799,19 @@ fn exact_mesh_proposal_and_artifact_reports_are_publicly_replayable() {
     preview_missing_blocker
         .blockers
         .retain(|blocker| *blocker != MeshArtifactBlocker::MissingExactCoordinateReplay);
-    assert_eq!(
-        preview_missing_blocker.validate(),
-        Err(MeshArtifactReportError::MissingBlocker {
-            blocker: MeshArtifactBlocker::MissingExactCoordinateReplay
-        })
+    assert!(
+        preview_missing_blocker
+            .validate()
+            .is_err_and(|error| error.is_missing_exact_coordinate_replay_blocker())
     );
     let mut duplicate_preview_blocker = preview.clone();
     duplicate_preview_blocker
         .blockers
         .push(MeshArtifactBlocker::PreviewOrExportOnly);
-    assert_eq!(
-        duplicate_preview_blocker.validate(),
-        Err(MeshArtifactReportError::DuplicateBlocker {
-            blocker: MeshArtifactBlocker::PreviewOrExportOnly
-        })
+    assert!(
+        duplicate_preview_blocker
+            .validate()
+            .is_err_and(|error| error.is_duplicate_preview_or_export_only_blocker())
     );
 
     let brep_triangle_handoff = |face| {
