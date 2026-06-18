@@ -2,8 +2,8 @@ use hypercurve::{
     BulgeVertex2, CircularArc2, Classification, Contour2, CurveError, CurvePolicy, CurveString2,
     CurveStringCurveTrimQueryPath2, CurveStringEndpoint2, CurveStringEndpointConnectionStatus2,
     CurveStringIntersectionQueryPath2, CurveStringLinkKind2, CurveStringTrimPoint2,
-    IntersectionKind, LineArcIntersection, LineArcOrder, LineSeg2, Point2, Real, Segment2,
-    SegmentIntersection, UncertaintyReason,
+    IntersectionKind, LineArcIntersection, LineArcOrder, LineSeg2, Point2, Real, Region2,
+    RegionContourRole, RegionPointLocation, Segment2, SegmentIntersection, UncertaintyReason,
 };
 
 fn s(value: i32) -> Real {
@@ -20,6 +20,18 @@ fn p(x: i32, y: i32) -> Point2 {
 
 fn line_segment(start_x: i32, start_y: i32, end_x: i32, end_y: i32) -> Segment2 {
     Segment2::Line(LineSeg2::try_new(p(start_x, start_y), p(end_x, end_y)).unwrap())
+}
+
+fn rectangle_region(xmin: i32, ymin: i32, xmax: i32, ymax: i32) -> Region2 {
+    Region2::from_material_contours(vec![
+        Contour2::from_bulge_vertices(&[
+            BulgeVertex2::new(p(xmin, ymin), s(0)),
+            BulgeVertex2::new(p(xmax, ymin), s(0)),
+            BulgeVertex2::new(p(xmax, ymax), s(0)),
+            BulgeVertex2::new(p(xmin, ymax), s(0)),
+        ])
+        .unwrap(),
+    ])
 }
 
 fn assert_line(segment: &Segment2, start: Point2, end: Point2) {
@@ -1301,6 +1313,102 @@ fn curve_string_trim_between_curve_intersections_reports_overlap_blocker() {
     assert!(trim.report().start_hits().is_empty());
     assert_eq!(trim.report().end_hits().len(), 1);
     assert!(trim.report().trim_report().is_none());
+}
+
+#[test]
+fn curve_string_trim_inside_region_materializes_inside_window() {
+    let curve = CurveString2::try_new(vec![line_segment(-2, 1, 6, 1)]).unwrap();
+    let region = rectangle_region(0, 0, 4, 4);
+
+    let trimmed = curve.trim_inside_region(&region, &policy()).unwrap();
+
+    assert!(trimmed.report().status().is_native_exact());
+    assert_eq!(trimmed.report().source_segment_count(), 1);
+    assert_eq!(trimmed.report().region_material_contour_count(), 1);
+    assert_eq!(trimmed.report().region_hole_contour_count(), 0);
+    assert_eq!(trimmed.report().output_curve_string_count(), Some(1));
+    assert_eq!(trimmed.report().boundary_hits().len(), 2);
+    assert_eq!(
+        trimmed.report().boundary_hits()[0].region_contour_role(),
+        RegionContourRole::Material
+    );
+    assert_eq!(trimmed.report().interval_reports().len(), 3);
+    assert_eq!(
+        trimmed.report().interval_reports()[1].location(),
+        Some(RegionPointLocation::Inside)
+    );
+    assert_eq!(
+        trimmed.report().interval_reports()[1].output_curve_string_index(),
+        Some(0)
+    );
+    assert_eq!(
+        trimmed.report().interval_reports()[1].output_segment_index(),
+        Some(0)
+    );
+
+    assert_eq!(trimmed.curve_strings().len(), 1);
+    assert_eq!(trimmed.curve_strings()[0].len(), 1);
+    assert_line(&trimmed.curve_strings()[0].segments()[0], p(0, 1), p(4, 1));
+}
+
+#[test]
+fn curve_string_trim_inside_region_splits_disconnected_inside_windows() {
+    let curve = CurveString2::try_new(vec![line_segment(-2, 1, 8, 1)]).unwrap();
+    let first = rectangle_region(0, 0, 2, 2);
+    let second = rectangle_region(4, 0, 6, 2);
+    let region = Region2::from_material_contours(vec![
+        first.material_contours()[0].clone(),
+        second.material_contours()[0].clone(),
+    ]);
+
+    let trimmed = curve.trim_inside_region(&region, &policy()).unwrap();
+
+    assert!(trimmed.report().status().is_native_exact());
+    assert_eq!(trimmed.report().output_curve_string_count(), Some(2));
+    assert_eq!(trimmed.curve_strings().len(), 2);
+    assert_line(&trimmed.curve_strings()[0].segments()[0], p(0, 1), p(2, 1));
+    assert_line(&trimmed.curve_strings()[1].segments()[0], p(4, 1), p(6, 1));
+}
+
+#[test]
+fn curve_string_trim_inside_region_respects_holes() {
+    let material = rectangle_region(0, 0, 10, 4).material_contours()[0].clone();
+    let hole = rectangle_region(4, 0, 6, 4).material_contours()[0].clone();
+    let region = Region2::new(vec![material], vec![hole]);
+    let curve = CurveString2::try_new(vec![line_segment(1, 2, 9, 2)]).unwrap();
+
+    let trimmed = curve.trim_inside_region(&region, &policy()).unwrap();
+
+    assert!(trimmed.report().status().is_native_exact());
+    assert_eq!(trimmed.report().region_hole_contour_count(), 1);
+    assert_eq!(trimmed.report().output_curve_string_count(), Some(2));
+    assert_eq!(
+        trimmed
+            .report()
+            .boundary_hits()
+            .iter()
+            .filter(|hit| hit.region_contour_role() == RegionContourRole::Hole)
+            .count(),
+        2
+    );
+    assert_line(&trimmed.curve_strings()[0].segments()[0], p(1, 2), p(4, 2));
+    assert_line(&trimmed.curve_strings()[1].segments()[0], p(6, 2), p(9, 2));
+}
+
+#[test]
+fn curve_string_trim_inside_region_reports_boundary_overlap_blocker() {
+    let region = rectangle_region(0, 0, 4, 4);
+    let curve = CurveString2::try_new(vec![line_segment(0, 0, 4, 0)]).unwrap();
+
+    let trimmed = curve.trim_inside_region(&region, &policy()).unwrap();
+
+    assert!(trimmed.curve_strings().is_empty());
+    assert!(trimmed.report().status().is_retained_evidence());
+    assert_eq!(
+        trimmed.report().blocker(),
+        Some(UncertaintyReason::Unsupported)
+    );
+    assert_eq!(trimmed.report().output_curve_string_count(), None);
 }
 
 #[test]

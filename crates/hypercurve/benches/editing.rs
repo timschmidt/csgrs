@@ -147,6 +147,30 @@ fn bench_prepared_curve_intersection_trim(iterations: u32) -> CurveResult<()> {
     Ok(())
 }
 
+fn bench_region_trim(iterations: u32) -> CurveResult<()> {
+    let curve = CurveString2::try_new(vec![line_segment(-2, 1, 8, 1)])?;
+    let region =
+        Region2::from_material_contours(vec![rectangle(0, 0, 2, 2), rectangle(4, 0, 6, 2)]);
+    let policy = CurvePolicy::certified();
+    let started = Instant::now();
+    let mut total_outputs = 0_usize;
+
+    for _ in 0..iterations {
+        let result = curve.trim_inside_region(&region, &policy)?;
+        if !result.report().status().is_native_exact() {
+            panic!("region trim benchmark became non-native");
+        }
+        total_outputs += black_box(result.curve_strings().len());
+    }
+
+    let elapsed = started.elapsed();
+    println!(
+        "curve_string_region_trim: {iterations} iterations in {elapsed:?} ({:?}/iter), total outputs={total_outputs}",
+        elapsed / iterations
+    );
+    Ok(())
+}
+
 fn bench_line_chamfer(iterations: u32) -> CurveResult<()> {
     let curve = CurveString2::try_new(vec![
         line_segment(0, 0, 4, 0),
@@ -235,6 +259,7 @@ fn main() -> CurveResult<()> {
     bench_point_arc_trim(iterations)?;
     bench_curve_intersection_trim(iterations)?;
     bench_prepared_curve_intersection_trim(iterations)?;
+    bench_region_trim(iterations)?;
     bench_line_chamfer(iterations)?;
     bench_arc_extension(iterations)?;
     bench_boundary_contour_region_build(1_000)?;
