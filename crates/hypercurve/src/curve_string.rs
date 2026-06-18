@@ -260,6 +260,7 @@ pub struct CurveStringDeduplicateResult2 {
 pub struct CurveStringExtendReport2 {
     endpoint: CurveStringEndpoint2,
     source_segment_index: usize,
+    source_endpoint_point: Point2,
     target_point: Point2,
     source_param: Option<Real>,
     source_segment_count: usize,
@@ -1989,6 +1990,7 @@ impl CurveString2 {
             report: CurveStringExtendReport2 {
                 endpoint,
                 source_segment_index,
+                source_endpoint_point: line_endpoint_point(line, endpoint).clone(),
                 target_point,
                 source_param: Some(source_param),
                 source_segment_count: self.len(),
@@ -2156,6 +2158,7 @@ impl CurveString2 {
             report: CurveStringExtendReport2 {
                 endpoint,
                 source_segment_index,
+                source_endpoint_point: arc_endpoint_point(arc, endpoint).clone(),
                 target_point,
                 source_param: None,
                 source_segment_count: self.len(),
@@ -2981,6 +2984,11 @@ impl CurveStringExtendReport2 {
     /// Returns the endpoint segment index in the source curve string.
     pub const fn source_segment_index(&self) -> usize {
         self.source_segment_index
+    }
+
+    /// Returns the exact source endpoint point before extension.
+    pub const fn source_endpoint_point(&self) -> &Point2 {
+        &self.source_endpoint_point
     }
 
     /// Returns the requested exact target point.
@@ -4086,12 +4094,30 @@ fn blocked_extend_result(
         report: CurveStringExtendReport2 {
             endpoint,
             source_segment_index,
+            source_endpoint_point: curve_string
+                .endpoint(endpoint)
+                .expect("blocked extension source endpoint should exist")
+                .clone(),
             target_point,
             source_param,
             source_segment_count: curve_string.len(),
             status,
             blocker,
         },
+    }
+}
+
+fn line_endpoint_point(line: &LineSeg2, endpoint: CurveStringEndpoint2) -> &Point2 {
+    match endpoint {
+        CurveStringEndpoint2::Start => line.start(),
+        CurveStringEndpoint2::End => line.end(),
+    }
+}
+
+fn arc_endpoint_point(arc: &CircularArc2, endpoint: CurveStringEndpoint2) -> &Point2 {
+    match endpoint {
+        CurveStringEndpoint2::Start => arc.start(),
+        CurveStringEndpoint2::End => arc.end(),
     }
 }
 
