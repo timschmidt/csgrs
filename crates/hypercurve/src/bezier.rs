@@ -10,7 +10,10 @@
 use hyperreal::{Real, ZeroKnowledge as ZeroStatus};
 
 use crate::classify::is_zero;
-use crate::{Aabb2, Classification, CurvePolicy, Point2};
+use crate::{
+    Aabb2, Classification, CurvePolicy, CurveResult, Point2, RetainedTopologyStatus,
+    UncertaintyReason,
+};
 
 /// An endpoint of a parametric Bezier segment.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -34,6 +37,36 @@ pub struct EndpointTangent2 {
     dx: Real,
     dy: Real,
     zero_status: ZeroStatus,
+}
+
+/// Report for exact quadratic interpolation through a retained midpoint.
+#[derive(Clone, Debug, PartialEq)]
+pub struct QuadraticBezierMidpointInterpolationReport2 {
+    stage: QuadraticBezierMidpointInterpolationStage2,
+    interpolation_parameter: Real,
+    start_point: Point2,
+    midpoint_constraint: Point2,
+    end_point: Point2,
+    solved_control_point: Option<Point2>,
+    replayed_midpoint: Option<Point2>,
+    status: RetainedTopologyStatus,
+    blocker: Option<UncertaintyReason>,
+}
+
+/// Furthest exact stage reached by quadratic midpoint interpolation.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum QuadraticBezierMidpointInterpolationStage2 {
+    /// The exact Bernstein control point was being solved.
+    ControlSolve,
+    /// The native quadratic span was materialized and replayed.
+    SegmentMaterialization,
+}
+
+/// Result of exact quadratic interpolation through a retained midpoint.
+#[derive(Clone, Debug, PartialEq)]
+pub struct QuadraticBezierMidpointInterpolationResult2 {
+    curve: Option<QuadraticBezier2>,
+    report: QuadraticBezierMidpointInterpolationReport2,
 }
 
 impl EndpointTangent2 {
@@ -64,6 +97,70 @@ impl EndpointTangent2 {
     }
 }
 
+impl QuadraticBezierMidpointInterpolationReport2 {
+    /// Returns the furthest exact interpolation stage reached.
+    pub const fn stage(&self) -> QuadraticBezierMidpointInterpolationStage2 {
+        self.stage
+    }
+
+    /// Returns the retained interpolation parameter.
+    pub const fn interpolation_parameter(&self) -> &Real {
+        &self.interpolation_parameter
+    }
+
+    /// Returns the exact start-point constraint.
+    pub const fn start_point(&self) -> &Point2 {
+        &self.start_point
+    }
+
+    /// Returns the exact midpoint constraint at `t = 1/2`.
+    pub const fn midpoint_constraint(&self) -> &Point2 {
+        &self.midpoint_constraint
+    }
+
+    /// Returns the exact end-point constraint.
+    pub const fn end_point(&self) -> &Point2 {
+        &self.end_point
+    }
+
+    /// Returns the solved quadratic control point, when materialized.
+    pub const fn solved_control_point(&self) -> Option<&Point2> {
+        self.solved_control_point.as_ref()
+    }
+
+    /// Returns the replayed curve point at the interpolation parameter.
+    pub const fn replayed_midpoint(&self) -> Option<&Point2> {
+        self.replayed_midpoint.as_ref()
+    }
+
+    /// Returns the interpolation status.
+    pub const fn status(&self) -> RetainedTopologyStatus {
+        self.status
+    }
+
+    /// Returns the exact blocker for non-materialized interpolation attempts.
+    pub const fn blocker(&self) -> Option<UncertaintyReason> {
+        self.blocker
+    }
+}
+
+impl QuadraticBezierMidpointInterpolationResult2 {
+    /// Returns the materialized quadratic Bezier span, if supported.
+    pub const fn curve(&self) -> Option<&QuadraticBezier2> {
+        self.curve.as_ref()
+    }
+
+    /// Consumes this result and returns the materialized quadratic Bezier span, if any.
+    pub fn into_curve(self) -> Option<QuadraticBezier2> {
+        self.curve
+    }
+
+    /// Returns retained interpolation evidence.
+    pub const fn report(&self) -> &QuadraticBezierMidpointInterpolationReport2 {
+        &self.report
+    }
+}
+
 /// A polynomial quadratic Bezier segment with three exact control points.
 ///
 /// The segment is represented by `(start, control, end)` and evaluated with
@@ -86,6 +183,56 @@ impl QuadraticBezier2 {
             control,
             end,
         }
+    }
+
+    /// Constructs the exact quadratic Bezier span through `midpoint` at `t = 1/2`.
+    ///
+    /// This solves the Bernstein equation
+    /// `B(1/2) = (start + 2 * control + end) / 4` exactly over [`Real`], then
+    /// replays the retained midpoint constraint against the materialized curve.
+    pub fn interpolate_midpoint(start: Point2, midpoint: Point2, end: Point2) -> CurveResult<Self> {
+        Self::interpolate_midpoint_with_report(start, midpoint, end).map(|result| {
+            result
+                .into_curve()
+                .expect("exact midpoint interpolation materializes")
+        })
+    }
+
+    /// Constructs the exact quadratic Bezier span through `midpoint` at `t = 1/2`.
+    ///
+    /// The returned report records the exact constraint points, retained
+    /// parameter, solved control point, and replayed midpoint image.
+    pub fn interpolate_midpoint_with_report(
+        start: Point2,
+        midpoint: Point2,
+        end: Point2,
+    ) -> CurveResult<QuadraticBezierMidpointInterpolationResult2> {
+        let two = Real::from(2_i8);
+        let four = Real::from(4_i8);
+        let half = (Real::one() / two.clone())?;
+
+        let four_midpoint_x = midpoint.x() * &four;
+        let four_midpoint_y = midpoint.y() * &four;
+        let control_x = (((&four_midpoint_x - start.x()) - end.x()) / two.clone())?;
+        let control_y = (((&four_midpoint_y - start.y()) - end.y()) / two)?;
+        let control = Point2::new(control_x, control_y);
+        let curve = Self::new(start.clone(), control.clone(), end.clone());
+        let replayed_midpoint = curve.point_at(half.clone());
+
+        Ok(QuadraticBezierMidpointInterpolationResult2 {
+            curve: Some(curve),
+            report: QuadraticBezierMidpointInterpolationReport2 {
+                stage: QuadraticBezierMidpointInterpolationStage2::SegmentMaterialization,
+                interpolation_parameter: half,
+                start_point: start,
+                midpoint_constraint: midpoint,
+                end_point: end,
+                solved_control_point: Some(control),
+                replayed_midpoint: Some(replayed_midpoint),
+                status: RetainedTopologyStatus::NativeExact,
+                blocker: None,
+            },
+        })
     }
 
     /// Returns the start point.

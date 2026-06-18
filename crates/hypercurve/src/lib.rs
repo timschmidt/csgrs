@@ -61,7 +61,11 @@ mod transform;
 mod triangulation;
 
 pub use bbox::Aabb2;
-pub use bezier::{BezierEndpoint, CubicBezier2, EndpointTangent2, QuadraticBezier2};
+pub use bezier::{
+    BezierEndpoint, CubicBezier2, EndpointTangent2, QuadraticBezier2,
+    QuadraticBezierMidpointInterpolationReport2, QuadraticBezierMidpointInterpolationResult2,
+    QuadraticBezierMidpointInterpolationStage2,
+};
 pub use bezier_algebraic_image::{
     BezierAlgebraicCoordinateImage, BezierAlgebraicImageStatus, BezierAlgebraicPointImage2,
     BezierAlgebraicRationalCoordinateImage, BezierAlgebraicTangentImage2,
