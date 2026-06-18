@@ -339,6 +339,29 @@ impl Region2 {
         })
     }
 
+    /// Builds a region from unordered exact native line/arc segments that form closed rings.
+    ///
+    /// This is the convenience wrapper for
+    /// [`Region2::from_unordered_segments_with_report`]. It returns decided
+    /// regions only when the report-bearing path materializes native exact
+    /// topology; otherwise it preserves the reported blocker as uncertainty.
+    pub fn from_unordered_segments(
+        segments: Vec<Segment2>,
+        fill_rule: FillRule,
+        policy: &CurvePolicy,
+    ) -> CurveResult<Classification<Self>> {
+        let built = Self::from_unordered_segments_with_report(segments, fill_rule, policy)?;
+        let blocker = built
+            .report()
+            .blocker()
+            .unwrap_or(UncertaintyReason::Unsupported);
+        if let Some(region) = built.into_region() {
+            Ok(Classification::Decided(region))
+        } else {
+            Ok(Classification::Uncertain(blocker))
+        }
+    }
+
     /// Builds a region from unordered exact native line/arc segments.
     ///
     /// This is the native-segment counterpart to

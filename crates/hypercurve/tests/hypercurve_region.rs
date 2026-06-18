@@ -511,6 +511,59 @@ fn unordered_native_segments_build_line_arc_region_with_source_provenance() {
 }
 
 #[test]
+fn unordered_native_segments_convenience_returns_decided_region() {
+    let built = Region2::from_unordered_segments(
+        vec![
+            Segment2::Arc(arc_bulge(0, 0, 4, 0, 1)),
+            Segment2::Line(line(4, 0, 0, 0)),
+        ],
+        FillRule::NonZero,
+        &policy(),
+    )
+    .unwrap();
+
+    let Classification::Decided(region) = built else {
+        panic!("line-arc native region should materialize");
+    };
+    assert_eq!(
+        region.classify_point(&p(2, -1), &policy()),
+        Classification::Decided(RegionPointLocation::Inside)
+    );
+}
+
+#[test]
+fn unordered_native_segments_report_arc_overlap_boundary_blocker() {
+    let built = Region2::from_unordered_segments_with_report(
+        vec![
+            Segment2::Arc(arc_bulge(0, 0, 4, 0, 1)),
+            Segment2::Arc(arc_bulge(0, 0, 4, 0, 1)),
+        ],
+        FillRule::NonZero,
+        &policy(),
+    )
+    .unwrap();
+    let report = built.report();
+
+    assert!(built.region().is_none());
+    assert!(report.status().is_retained_evidence());
+    assert_eq!(
+        report.stage(),
+        RegionLineSegmentRegionBuildStage2::RingAssembly
+    );
+    assert_eq!(report.source_segment_count(), 2);
+    assert_eq!(report.arranged_segment_count(), None);
+    assert_eq!(report.split_candidate_pair_count(), 1);
+    assert_eq!(report.split_skipped_aabb_pair_count(), 0);
+    assert_eq!(report.split_tested_pair_count(), 1);
+    assert_eq!(report.split_intersection_event_count(), 0);
+    assert_eq!(report.split_output_segment_count(), None);
+    assert_eq!(report.endpoint_graph_endpoint_count(), None);
+    assert_eq!(report.endpoint_graph_structural_bucket_count(), None);
+    assert_eq!(report.source_reports().len(), 0);
+    assert_eq!(report.blocker(), Some(UncertaintyReason::Boundary));
+}
+
+#[test]
 fn hole_boundary_is_explicit() {
     let region = Region2::new(vec![rectangle(0, 0, 10, 10)], vec![rectangle(3, 3, 7, 7)]);
 
