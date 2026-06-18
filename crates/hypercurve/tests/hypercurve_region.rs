@@ -338,6 +338,12 @@ fn unordered_line_segments_build_region_with_source_provenance() {
     assert_eq!(report.split_intersection_event_count(), 4);
     assert_eq!(report.split_output_segment_count(), Some(4));
     assert_eq!(report.endpoint_graph_endpoint_count(), Some(8));
+    assert_eq!(report.endpoint_graph_structural_bucket_count(), Some(4));
+    assert_eq!(
+        report.endpoint_graph_structural_singleton_bucket_count(),
+        Some(0)
+    );
+    assert_eq!(report.endpoint_graph_max_structural_bucket_size(), Some(2));
     assert_eq!(report.endpoint_graph_dangling_endpoint_count(), Some(0));
     assert_eq!(report.endpoint_graph_branch_endpoint_count(), Some(0));
     assert_eq!(report.reversed_source_segment_count(), 2);
@@ -396,6 +402,12 @@ fn unordered_line_segments_report_disconnected_boundary_blocker() {
     assert_eq!(report.split_intersection_event_count(), 0);
     assert_eq!(report.split_output_segment_count(), Some(2));
     assert_eq!(report.endpoint_graph_endpoint_count(), Some(4));
+    assert_eq!(report.endpoint_graph_structural_bucket_count(), Some(4));
+    assert_eq!(
+        report.endpoint_graph_structural_singleton_bucket_count(),
+        Some(4)
+    );
+    assert_eq!(report.endpoint_graph_max_structural_bucket_size(), Some(1));
     assert_eq!(report.endpoint_graph_dangling_endpoint_count(), Some(4));
     assert_eq!(report.endpoint_graph_branch_endpoint_count(), Some(0));
     assert_eq!(report.output_ring_count(), None);
@@ -429,6 +441,12 @@ fn unordered_line_segments_split_crossings_before_boundary_blocker() {
     assert_eq!(report.split_intersection_event_count(), 1);
     assert_eq!(report.split_output_segment_count(), Some(4));
     assert_eq!(report.endpoint_graph_endpoint_count(), Some(8));
+    assert_eq!(report.endpoint_graph_structural_bucket_count(), Some(5));
+    assert_eq!(
+        report.endpoint_graph_structural_singleton_bucket_count(),
+        Some(4)
+    );
+    assert_eq!(report.endpoint_graph_max_structural_bucket_size(), Some(4));
     assert_eq!(report.endpoint_graph_dangling_endpoint_count(), Some(4));
     assert_eq!(report.endpoint_graph_branch_endpoint_count(), Some(4));
     assert_eq!(report.source_reports().len(), 0);
@@ -881,6 +899,12 @@ proptest! {
         prop_assert_eq!(report.split_tested_pair_count(), 4);
         prop_assert_eq!(report.split_intersection_event_count(), 4);
         prop_assert_eq!(report.endpoint_graph_endpoint_count(), Some(8));
+        prop_assert_eq!(report.endpoint_graph_structural_bucket_count(), Some(4));
+        prop_assert_eq!(
+            report.endpoint_graph_structural_singleton_bucket_count(),
+            Some(0)
+        );
+        prop_assert_eq!(report.endpoint_graph_max_structural_bucket_size(), Some(2));
         prop_assert_eq!(report.endpoint_graph_dangling_endpoint_count(), Some(0));
         prop_assert_eq!(report.endpoint_graph_branch_endpoint_count(), Some(0));
         prop_assert_eq!(report.output_ring_count(), Some(1));

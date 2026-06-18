@@ -103,6 +103,9 @@ pub struct RegionLineSegmentRegionBuildReport2 {
     split_intersection_event_count: usize,
     split_output_segment_count: Option<usize>,
     endpoint_graph_endpoint_count: Option<usize>,
+    endpoint_graph_structural_bucket_count: Option<usize>,
+    endpoint_graph_structural_singleton_bucket_count: Option<usize>,
+    endpoint_graph_max_structural_bucket_size: Option<usize>,
     endpoint_graph_dangling_endpoint_count: Option<usize>,
     endpoint_graph_branch_endpoint_count: Option<usize>,
     attempted_endpoint_connection_count: usize,
@@ -297,6 +300,15 @@ impl Region2 {
                 split_intersection_event_count: arranged.report.intersection_event_count,
                 split_output_segment_count: Some(arranged.segments.len()),
                 endpoint_graph_endpoint_count: Some(endpoint_graph.endpoint_count),
+                endpoint_graph_structural_bucket_count: Some(
+                    endpoint_graph.structural_bucket_count,
+                ),
+                endpoint_graph_structural_singleton_bucket_count: Some(
+                    endpoint_graph.structural_singleton_bucket_count,
+                ),
+                endpoint_graph_max_structural_bucket_size: Some(
+                    endpoint_graph.max_structural_bucket_size,
+                ),
                 endpoint_graph_dangling_endpoint_count: Some(
                     endpoint_graph.dangling_endpoint_count,
                 ),
@@ -702,6 +714,21 @@ impl RegionLineSegmentRegionBuildReport2 {
         self.endpoint_graph_endpoint_count
     }
 
+    /// Returns structurally identical endpoint bucket count.
+    pub const fn endpoint_graph_structural_bucket_count(&self) -> Option<usize> {
+        self.endpoint_graph_structural_bucket_count
+    }
+
+    /// Returns structurally identical endpoint buckets containing exactly one endpoint.
+    pub const fn endpoint_graph_structural_singleton_bucket_count(&self) -> Option<usize> {
+        self.endpoint_graph_structural_singleton_bucket_count
+    }
+
+    /// Returns the largest structurally identical endpoint bucket size.
+    pub const fn endpoint_graph_max_structural_bucket_size(&self) -> Option<usize> {
+        self.endpoint_graph_max_structural_bucket_size
+    }
+
     /// Returns arranged endpoints with no exact mate.
     pub const fn endpoint_graph_dangling_endpoint_count(&self) -> Option<usize> {
         self.endpoint_graph_dangling_endpoint_count
@@ -796,6 +823,9 @@ struct LineSegmentRingAssemblyCounts {
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
 struct LineSegmentEndpointGraphReportParts {
     endpoint_count: usize,
+    structural_bucket_count: usize,
+    structural_singleton_bucket_count: usize,
+    max_structural_bucket_size: usize,
     dangling_endpoint_count: usize,
     branch_endpoint_count: usize,
 }
@@ -882,10 +912,7 @@ fn validate_arranged_line_endpoint_graph(
     ),
 > {
     let endpoints = arranged_line_endpoints(segments);
-    let mut graph = LineSegmentEndpointGraphReportParts {
-        endpoint_count: endpoints.len(),
-        ..LineSegmentEndpointGraphReportParts::default()
-    };
+    let mut graph = structural_endpoint_bucket_report(segments, &endpoints);
     let mut counts = LineSegmentRingAssemblyCounts::default();
 
     for (endpoint_index, endpoint) in endpoints.iter().enumerate() {
@@ -919,6 +946,32 @@ fn validate_arranged_line_endpoint_graph(
         Err((graph, counts, UncertaintyReason::Boundary))
     } else {
         Ok((graph, counts))
+    }
+}
+
+fn structural_endpoint_bucket_report(
+    segments: &[ArrangedLineSegment],
+    endpoints: &[ArrangedLineEndpoint],
+) -> LineSegmentEndpointGraphReportParts {
+    let mut buckets: Vec<(Point2, usize)> = Vec::new();
+    for endpoint in endpoints {
+        let point = arranged_line_endpoint_point(segments, *endpoint);
+        if let Some((_, count)) = buckets
+            .iter_mut()
+            .find(|(bucket_point, _)| bucket_point == point)
+        {
+            *count += 1;
+        } else {
+            buckets.push((point.clone(), 1));
+        }
+    }
+
+    LineSegmentEndpointGraphReportParts {
+        endpoint_count: endpoints.len(),
+        structural_bucket_count: buckets.len(),
+        structural_singleton_bucket_count: buckets.iter().filter(|(_, count)| *count == 1).count(),
+        max_structural_bucket_size: buckets.iter().map(|(_, count)| *count).max().unwrap_or(0),
+        ..LineSegmentEndpointGraphReportParts::default()
     }
 }
 
@@ -1289,6 +1342,12 @@ fn blocked_line_segment_region_report(
         split_intersection_event_count: split_report.intersection_event_count,
         split_output_segment_count: split_report.output_segment_count,
         endpoint_graph_endpoint_count: endpoint_graph_report.map(|report| report.endpoint_count),
+        endpoint_graph_structural_bucket_count: endpoint_graph_report
+            .map(|report| report.structural_bucket_count),
+        endpoint_graph_structural_singleton_bucket_count: endpoint_graph_report
+            .map(|report| report.structural_singleton_bucket_count),
+        endpoint_graph_max_structural_bucket_size: endpoint_graph_report
+            .map(|report| report.max_structural_bucket_size),
         endpoint_graph_dangling_endpoint_count: endpoint_graph_report
             .map(|report| report.dangling_endpoint_count),
         endpoint_graph_branch_endpoint_count: endpoint_graph_report
