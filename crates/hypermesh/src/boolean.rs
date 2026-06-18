@@ -1294,23 +1294,15 @@ impl ExactBooleanCertificationSet {
             .and_then(|attempt| attempt.topology_assembly_report.as_ref())
     }
 
-    fn region_ownership_report(&self) -> Option<&ExactRegionOwnershipReport> {
-        self.arrangement_attempt
-            .as_ref()
-            .and_then(|attempt| attempt.region_ownership_report.as_ref())
-    }
-
     fn topology_assembly_complete(&self) -> bool {
         self.topology_assembly_report()
             .is_some_and(|topology| topology.validate().is_ok() && topology.is_complete())
     }
 
     fn region_ownership_resolves_operation(&self, operation: ExactBooleanOperation) -> bool {
-        self.arrangement_attempt.as_ref().is_some_and(|attempt| {
-            attempt.resolves_volume_ownership_for_operation(operation)
-        }) || self.region_ownership_report().is_some_and(|ownership| {
-            ownership.validate().is_ok() && ownership.resolves_operation_selection(operation)
-        })
+        self.arrangement_attempt
+            .as_ref()
+            .is_some_and(|attempt| attempt.resolves_volume_ownership_for_operation(operation))
     }
 
     fn arrangement_attempt_certifies_output_for_operation(
