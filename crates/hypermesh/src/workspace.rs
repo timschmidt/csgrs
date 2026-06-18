@@ -77,6 +77,14 @@ impl<'a> ExactBooleanWorkspace<'a> {
         Ok(graph)
     }
 
+    pub(crate) fn into_validated_graph(mut self) -> Result<ExactIntersectionGraph, MeshError> {
+        self.validated_graph()?;
+        Ok(self
+            .graph
+            .take()
+            .expect("validated graph cache was just populated"))
+    }
+
     fn regularized_solid_arrangement(&self) -> Option<&ExactArrangement> {
         cached_by_policy_index(
             &self.arrangements,
