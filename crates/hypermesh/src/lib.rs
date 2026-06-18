@@ -86,10 +86,7 @@ pub use proposal::{
     ExactMeshProposalSourceKind,
 };
 pub use region::{ExactOutputTriangleOrientation, ExactRegionSelection};
-pub use regularization::{
-    ExactArrangementBlocker, ExactLowerDimensionalPolicy, ExactRegularizationPolicy,
-    ExactUnresolvedPolicy,
-};
+pub use regularization::ExactRegularizationPolicy;
 pub use reports::{ExactBooleanResult, ExactReportFreshness, ExactReportValidationError};
 pub use validation::{BoundaryPolicy, ValidationPolicy, ValidationReport};
 pub use workspace::ExactBooleanWorkspace;

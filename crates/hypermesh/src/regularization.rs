@@ -31,9 +31,9 @@ pub enum ExactUnresolvedPolicy {
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct ExactRegularizationPolicy {
     /// How lower-dimensional contacts are handled.
-    pub lower_dimensional: ExactLowerDimensionalPolicy,
+    pub(crate) lower_dimensional: ExactLowerDimensionalPolicy,
     /// How unresolved predicates/constructions are handled.
-    pub unresolved: ExactUnresolvedPolicy,
+    pub(crate) unresolved: ExactUnresolvedPolicy,
 }
 
 impl ExactRegularizationPolicy {
