@@ -314,7 +314,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
             .iter()
             .find(|(stored_request, _)| *stored_request == request)
             .map(|(_, evaluation)| evaluation)
-            && let Some(result) = evaluation.materialized_result()
+            && let Some(result) = evaluation.result.as_ref()
         {
             evaluation
                 .validate()
@@ -347,7 +347,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
             evaluation
                 .validate()
                 .map_err(workspace_report_validation_error)?;
-            if let Some(result) = evaluation.materialized_result().cloned() {
+            if let Some(result) = evaluation.result.as_ref().cloned() {
                 let retained_attempt = self.regularized_solid_arrangement_attempt(request).cloned();
                 let result = store_replayable_result_or_return(
                     &mut self.materializations,
@@ -434,7 +434,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
             evaluation
                 .validate()
                 .map_err(workspace_report_validation_error)?;
-            match evaluation.materialized_result() {
+            match evaluation.result.as_ref() {
                 Some(existing) if existing == result => Ok(()),
                 Some(_) => Err(workspace_report_validation_error(
                     ExactReportValidationError::StatusEvidenceMismatch,
@@ -448,7 +448,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
             }
         } else {
             let evaluation = self.evaluate(request)?;
-            if evaluation.materialized_result() == Some(result) {
+            if evaluation.result.as_ref() == Some(result) {
                 Ok(())
             } else {
                 Err(workspace_report_validation_error(
@@ -1113,7 +1113,10 @@ mod tests {
             .unwrap();
         let evaluation = workspace.evaluate(request).unwrap().clone();
         evaluation.validate().unwrap();
-        assert_eq!(evaluation.arrangement_attempt(), Some(&attempt));
+        assert_eq!(
+            evaluation.certifications.arrangement_attempt.as_ref(),
+            Some(&attempt)
+        );
 
         let refinement_report = evaluation.certifications.refinement.clone();
         assert_eq!(
@@ -1438,7 +1441,7 @@ mod tests {
             "first-call materialize should promote the evaluation cache"
         );
         assert_eq!(
-            materialize_workspace.evaluations[0].1.materialized_result(),
+            materialize_workspace.evaluations[0].1.result.as_ref(),
             Some(&materialized)
         );
         assert_eq!(materialize_workspace.materializations.len(), 1);
@@ -1531,7 +1534,10 @@ mod tests {
         );
 
         let evaluation = workspace.evaluate(request).unwrap();
-        assert_eq!(evaluation.arrangement_attempt(), Some(&attempt));
+        assert_eq!(
+            evaluation.certifications.arrangement_attempt.as_ref(),
+            Some(&attempt)
+        );
         evaluation.validate().unwrap();
         let first_evaluation = evaluation as *const ExactBooleanEvaluation;
         let second_evaluation =
@@ -1569,7 +1575,11 @@ mod tests {
             "evaluation should promote cell-complex certification through the retained attempt cache"
         );
         assert_eq!(
-            workspace.evaluations[0].1.arrangement_attempt(),
+            workspace.evaluations[0]
+                .1
+                .certifications
+                .arrangement_attempt
+                .as_ref(),
             Some(&workspace.arrangement_attempts[0].2)
         );
         let second = workspace.evaluate(request).unwrap() as *const ExactBooleanEvaluation;
@@ -1633,21 +1643,28 @@ mod tests {
 
         let evaluation = workspace.evaluate(request).unwrap().clone();
         evaluation.validate().unwrap();
-        assert!(evaluation.preflight().is_certified());
-        assert!(evaluation.materialized_result().is_some());
+        assert!(evaluation.preflight.is_certified());
+        assert!(evaluation.result.as_ref().is_some());
         evaluation
-            .arrangement_attempt()
+            .certifications
+            .arrangement_attempt
+            .as_ref()
             .and_then(|attempt| attempt.topology_assembly_report.as_ref())
             .expect("attempt should retain topology assembly")
             .validate()
             .unwrap();
         evaluation
-            .arrangement_attempt()
+            .certifications
+            .arrangement_attempt
+            .as_ref()
             .and_then(|attempt| attempt.region_ownership_report.as_ref())
             .expect("attempt should retain region ownership")
             .validate()
             .unwrap();
-        assert_eq!(evaluation.arrangement_attempt(), Some(&attempt));
+        assert_eq!(
+            evaluation.certifications.arrangement_attempt.as_ref(),
+            Some(&attempt)
+        );
         assert_eq!(workspace.arrangements.len(), 1);
 
         let result = workspace.materialize(request).unwrap();
@@ -1825,11 +1842,11 @@ mod tests {
         assert_eq!(workspace.materializations.len(), 1);
         assert_eq!(workspace.evaluations.len(), 1);
         assert_eq!(
-            workspace.evaluations[0].1.materialized_result(),
+            workspace.evaluations[0].1.result.as_ref(),
             Some(&materialized)
         );
         let evaluation = workspace.evaluate(request).unwrap().clone();
-        assert_eq!(evaluation.materialized_result(), Some(&materialized));
+        assert_eq!(evaluation.result.as_ref(), Some(&materialized));
         assert_eq!(workspace.evaluations.len(), 1);
         assert_eq!(workspace.materializations.len(), 1);
         evaluation.validate().unwrap();
@@ -1860,7 +1877,8 @@ mod tests {
 
         let evaluation = workspace.evaluate(request).unwrap().clone();
         let evaluated_result = evaluation
-            .materialized_result()
+            .result
+            .as_ref()
             .cloned()
             .expect("certified test request should retain a result");
         assert!(workspace.materializations.is_empty());

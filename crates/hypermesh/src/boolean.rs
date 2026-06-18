@@ -2241,16 +2241,6 @@ pub struct ExactBooleanEvaluation {
 }
 
 impl ExactBooleanEvaluation {
-    /// Returns the exact boolean request evaluated by this session snapshot.
-    pub fn request(&self) -> ExactBooleanRequest {
-        self.request
-    }
-
-    /// Returns the retained exact preflight/scheduling result.
-    pub fn preflight(&self) -> &ExactBooleanPreflight {
-        &self.preflight
-    }
-
     /// Returns whether retained arrangement/cell-complex evidence already
     /// materializes the request without falling through to winding.
     pub fn materializes_arrangement_cell_complex(&self) -> bool {
@@ -2267,17 +2257,6 @@ impl ExactBooleanEvaluation {
                 .certifications
                 .winding_readiness
                 .materializes_arrangement_cell_complex()
-    }
-
-    /// Returns the retained materialized exact result, when this evaluation
-    /// could certify one for the request.
-    pub fn materialized_result(&self) -> Option<&ExactBooleanResult> {
-        self.result.as_ref()
-    }
-
-    /// Returns the retained arrangement/cell-complex materialization attempt.
-    pub fn arrangement_attempt(&self) -> Option<&ExactArrangementBooleanAttempt> {
-        self.certifications.arrangement_attempt.as_ref()
     }
 
     /// Validate the retained evaluation shape without replaying sources.
@@ -12539,7 +12518,9 @@ mod tests {
             .validate_against_sources(&left, &right, request)
             .unwrap();
         let attempt = evaluation
-            .arrangement_attempt()
+            .certifications
+            .arrangement_attempt
+            .as_ref()
             .expect("workspace evaluation should retain an arrangement attempt");
         assert!(
             attempt.materialized_arrangement_cell_complex_output(),
