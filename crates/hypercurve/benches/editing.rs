@@ -510,6 +510,7 @@ fn bench_region_boolean_report(iterations: u32) -> CurveResult<()> {
     let policy = CurvePolicy::certified();
     let started = Instant::now();
     let mut total_boundary_contours = 0_usize;
+    let mut total_fragment_events = 0_usize;
 
     for _ in 0..iterations {
         let result = first.boolean_region_with_report(
@@ -526,11 +527,17 @@ fn bench_region_boolean_report(iterations: u32) -> CurveResult<()> {
             panic!("region boolean benchmark became non-native or used the wrong query path");
         }
         total_boundary_contours += black_box(report.boundary_contour_count().unwrap_or_default());
+        total_fragment_events += black_box(
+            report
+                .pipeline_report()
+                .map(|pipeline| pipeline.fragment_build_report().intersection_event_count())
+                .unwrap_or_default(),
+        );
     }
 
     let elapsed = started.elapsed();
     println!(
-        "region_boolean_report: {iterations} iterations in {elapsed:?} ({:?}/iter), total boundary contours={total_boundary_contours}",
+        "region_boolean_report: {iterations} iterations in {elapsed:?} ({:?}/iter), total boundary contours={total_boundary_contours}, fragment events={total_fragment_events}",
         elapsed / iterations
     );
     Ok(())
@@ -544,6 +551,7 @@ fn bench_prepared_region_boolean_report(iterations: u32) -> CurveResult<()> {
     let prepared_second = second.prepare_topology_queries(&policy);
     let started = Instant::now();
     let mut total_boundary_contours = 0_usize;
+    let mut total_fragment_events = 0_usize;
 
     for _ in 0..iterations {
         let result = prepared_first.boolean_region_with_report(
@@ -562,11 +570,17 @@ fn bench_prepared_region_boolean_report(iterations: u32) -> CurveResult<()> {
             );
         }
         total_boundary_contours += black_box(report.boundary_contour_count().unwrap_or_default());
+        total_fragment_events += black_box(
+            report
+                .pipeline_report()
+                .map(|pipeline| pipeline.fragment_build_report().intersection_event_count())
+                .unwrap_or_default(),
+        );
     }
 
     let elapsed = started.elapsed();
     println!(
-        "prepared_region_boolean_report: {iterations} iterations in {elapsed:?} ({:?}/iter), total boundary contours={total_boundary_contours}",
+        "prepared_region_boolean_report: {iterations} iterations in {elapsed:?} ({:?}/iter), total boundary contours={total_boundary_contours}, fragment events={total_fragment_events}",
         elapsed / iterations
     );
     Ok(())

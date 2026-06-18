@@ -154,6 +154,12 @@ fn boolean_region_report_retains_boundary_role_assignment() {
     );
     assert_eq!(
         pipeline_report
+            .fragment_build_report()
+            .intersection_event_count(),
+        2
+    );
+    assert_eq!(
+        pipeline_report
             .fragment_selection_report()
             .source_fragment_count(),
         pipeline_report

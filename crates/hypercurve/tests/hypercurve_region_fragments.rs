@@ -68,6 +68,10 @@ fn region_fragments_split_all_keyed_contours() {
         intersections.intersecting_pair_count()
     );
     assert_eq!(
+        built.report().intersection_event_count(),
+        intersections.event_count()
+    );
+    assert_eq!(
         built.report().candidate_pair_count(),
         intersections.candidate_pair_count()
     );
@@ -283,6 +287,10 @@ fn region_fragments_keep_disjoint_contours_unsplit() {
         .split_regions_with_report(&first.as_view(), &second.as_view(), &policy())
         .unwrap();
     assert!(built.report().status().is_native_exact());
+    assert_eq!(
+        built.report().intersection_event_count(),
+        intersections.event_count()
+    );
     assert_eq!(built.report().first_material_source_segment_count(), 4);
     assert_eq!(built.report().first_hole_source_segment_count(), 0);
     assert_eq!(built.report().second_material_source_segment_count(), 4);
