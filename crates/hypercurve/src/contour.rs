@@ -6,9 +6,10 @@ use hyperreal::{Real, ZeroKnowledge as ZeroStatus};
 
 use crate::bbox::{Aabb2, aabb_decided_misses_point, decided_contour_aabb, decided_segment_aabb};
 use crate::classify::{classify_oriented_line, compare_reals};
+use crate::curve_string::merge_adjacent_line_segments;
 use crate::{
     BulgeVertex2, Classification, CurveError, CurvePolicy, CurveResult, CurveString2,
-    CurveStringChamferReport2, LineSide, Point2, RetainedTopologyStatus, Segment2,
+    CurveStringChamferReport2, LineSeg2, LineSide, Point2, RetainedTopologyStatus, Segment2,
     UncertaintyReason,
 };
 
@@ -48,6 +49,32 @@ pub struct ContourChamferReport2 {
 pub struct ContourChamferResult2 {
     contour: Option<Contour2>,
     report: ContourChamferReport2,
+}
+
+/// One retained source run emitted by a closed-contour line merge.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ContourLineMergeSpanReport2 {
+    source_segment_indices: Vec<usize>,
+    output_segment_index: usize,
+    status: RetainedTopologyStatus,
+}
+
+/// Report for exact adjacent-line merging on a closed contour.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ContourLineMergeReport2 {
+    source_segment_count: usize,
+    output_segment_count: Option<usize>,
+    fill_rule: FillRule,
+    spans: Vec<ContourLineMergeSpanReport2>,
+    status: RetainedTopologyStatus,
+    blocker: Option<UncertaintyReason>,
+}
+
+/// Result of report-bearing closed-contour adjacent-line merging.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ContourLineMergeResult2 {
+    contour: Option<Contour2>,
+    report: ContourLineMergeReport2,
 }
 
 /// A closed sequence of connected native segments.
@@ -126,6 +153,108 @@ impl Contour2 {
     /// Returns the fill rule.
     pub const fn fill_rule(&self) -> FillRule {
         self.fill_rule
+    }
+
+    /// Merges adjacent same-direction line segments around this closed contour.
+    ///
+    /// This is the closed-boundary counterpart to
+    /// [`CurveString2::merge_adjacent_collinear_lines`]. It inspects the
+    /// wraparound adjacency as well as interior adjacencies, preserves corners,
+    /// arcs, and collinear reversals, and reports source segment indices for
+    /// every output contour segment. If any line-line support or direction
+    /// predicate is unresolved, no contour is materialized.
+    pub fn merge_adjacent_collinear_lines(
+        &self,
+        policy: &CurvePolicy,
+    ) -> CurveResult<ContourLineMergeResult2> {
+        let source_segment_count = self.segments().len();
+        let mut adjacency = Vec::with_capacity(source_segment_count);
+        let mut break_index = None;
+        for index in 0..source_segment_count {
+            let next_index = (index + 1) % source_segment_count;
+            match merge_adjacent_line_segments(
+                &self.segments()[index],
+                &self.segments()[next_index],
+                policy,
+            )? {
+                Classification::Decided(Some(_)) => adjacency.push(true),
+                Classification::Decided(None) => {
+                    adjacency.push(false);
+                    break_index = Some(index);
+                }
+                Classification::Uncertain(reason) => {
+                    return Ok(ContourLineMergeResult2 {
+                        contour: None,
+                        report: ContourLineMergeReport2 {
+                            source_segment_count,
+                            output_segment_count: None,
+                            fill_rule: self.fill_rule,
+                            spans: Vec::new(),
+                            status: RetainedTopologyStatus::Unresolved,
+                            blocker: Some(reason),
+                        },
+                    });
+                }
+            }
+        }
+
+        let Some(break_index) = break_index else {
+            return Ok(ContourLineMergeResult2 {
+                contour: None,
+                report: ContourLineMergeReport2 {
+                    source_segment_count,
+                    output_segment_count: None,
+                    fill_rule: self.fill_rule,
+                    spans: Vec::new(),
+                    status: RetainedTopologyStatus::Unsupported,
+                    blocker: Some(UncertaintyReason::Boundary),
+                },
+            });
+        };
+
+        let start_index = (break_index + 1) % source_segment_count;
+        let mut output_segments = Vec::with_capacity(source_segment_count);
+        let mut spans = Vec::new();
+        let mut run = vec![start_index];
+        let mut current_index = start_index;
+        loop {
+            let next_index = (current_index + 1) % source_segment_count;
+            if next_index == start_index {
+                push_contour_line_merge_run(
+                    self.segments(),
+                    &run,
+                    &mut output_segments,
+                    &mut spans,
+                )?;
+                break;
+            }
+
+            if adjacency[current_index] {
+                run.push(next_index);
+            } else {
+                push_contour_line_merge_run(
+                    self.segments(),
+                    &run,
+                    &mut output_segments,
+                    &mut spans,
+                )?;
+                run = vec![next_index];
+            }
+            current_index = next_index;
+        }
+
+        let contour = Self::try_new_with_fill_rule(output_segments, self.fill_rule)?;
+        Ok(ContourLineMergeResult2 {
+            report: ContourLineMergeReport2 {
+                source_segment_count,
+                output_segment_count: Some(contour.len()),
+                fill_rule: self.fill_rule,
+                spans,
+                status: RetainedTopologyStatus::NativeExact,
+                blocker: None,
+            },
+            contour: Some(contour),
+        })
     }
 
     /// Chamfers an interior line-line contour vertex by exact parameters.
@@ -454,6 +583,72 @@ impl ContourChamferResult2 {
     }
 }
 
+impl ContourLineMergeSpanReport2 {
+    /// Returns source segment indices included in this output segment.
+    pub fn source_segment_indices(&self) -> &[usize] {
+        &self.source_segment_indices
+    }
+
+    /// Returns the output segment index produced for this source run.
+    pub const fn output_segment_index(&self) -> usize {
+        self.output_segment_index
+    }
+
+    /// Returns retained topology status for this source run.
+    pub const fn status(&self) -> RetainedTopologyStatus {
+        self.status
+    }
+}
+
+impl ContourLineMergeReport2 {
+    /// Returns the source contour segment count captured by this report.
+    pub const fn source_segment_count(&self) -> usize {
+        self.source_segment_count
+    }
+
+    /// Returns the output segment count when the merge materialized.
+    pub const fn output_segment_count(&self) -> Option<usize> {
+        self.output_segment_count
+    }
+
+    /// Returns the fill rule preserved by this contour edit.
+    pub const fn fill_rule(&self) -> FillRule {
+        self.fill_rule
+    }
+
+    /// Returns retained source runs for materialized output segments.
+    pub fn spans(&self) -> &[ContourLineMergeSpanReport2] {
+        &self.spans
+    }
+
+    /// Returns merge materialization status.
+    pub const fn status(&self) -> RetainedTopologyStatus {
+        self.status
+    }
+
+    /// Returns the exact blocker for non-materialized merge attempts.
+    pub const fn blocker(&self) -> Option<UncertaintyReason> {
+        self.blocker
+    }
+}
+
+impl ContourLineMergeResult2 {
+    /// Returns the materialized merged contour, if supported.
+    pub const fn contour(&self) -> Option<&Contour2> {
+        self.contour.as_ref()
+    }
+
+    /// Consumes this result and returns the materialized merged contour, if any.
+    pub fn into_contour(self) -> Option<Contour2> {
+        self.contour
+    }
+
+    /// Returns the retained contour line-merge report.
+    pub const fn report(&self) -> &ContourLineMergeReport2 {
+        &self.report
+    }
+}
+
 pub(crate) fn classify_contour_point_with_cached_aabbs(
     contour: &Contour2,
     point: &Point2,
@@ -638,6 +833,34 @@ fn remap_wraparound_chamfer_source_index(index: usize, source_segment_count: usi
     } else {
         index - 1
     }
+}
+
+fn push_contour_line_merge_run(
+    source_segments: &[Segment2],
+    source_indices: &[usize],
+    output_segments: &mut Vec<Segment2>,
+    spans: &mut Vec<ContourLineMergeSpanReport2>,
+) -> CurveResult<()> {
+    let output_segment_index = output_segments.len();
+    let segment = if source_indices.len() == 1 {
+        source_segments[source_indices[0]].clone()
+    } else {
+        let first = &source_segments[source_indices[0]];
+        let last = &source_segments[*source_indices
+            .last()
+            .expect("line merge run should not be empty")];
+        Segment2::Line(LineSeg2::try_new(
+            first.start().clone(),
+            last.end().clone(),
+        )?)
+    };
+    output_segments.push(segment);
+    spans.push(ContourLineMergeSpanReport2 {
+        source_segment_indices: source_indices.to_vec(),
+        output_segment_index,
+        status: RetainedTopologyStatus::NativeExact,
+    });
+    Ok(())
 }
 
 fn validate_closed_curve_string(curve: &CurveString2) -> CurveResult<()> {

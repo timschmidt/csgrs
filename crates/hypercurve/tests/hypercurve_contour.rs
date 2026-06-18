@@ -19,6 +19,14 @@ fn vertex(x: i32, y: i32, bulge: i32) -> BulgeVertex2 {
     BulgeVertex2::new(p(x, y), s(bulge))
 }
 
+fn assert_line(segment: &Segment2, start: hypercurve::Point2, end: hypercurve::Point2) {
+    let Segment2::Line(line) = segment else {
+        panic!("expected line segment");
+    };
+    assert_eq!(line.start(), &start);
+    assert_eq!(line.end(), &end);
+}
+
 fn policy() -> CurvePolicy {
     CurvePolicy::certified()
 }
@@ -76,6 +84,61 @@ fn contour_rejects_open_segment_chain() {
 
     let err = Contour2::try_new(segments).expect_err("open chain is not a contour");
     assert_eq!(err, CurveError::DisconnectedCurveString);
+}
+
+#[test]
+fn contour_merge_adjacent_collinear_lines_reports_source_runs() {
+    let contour = Contour2::from_bulge_vertices(&[
+        vertex(0, 0, 0),
+        vertex(2, 0, 0),
+        vertex(4, 0, 0),
+        vertex(4, 4, 0),
+        vertex(0, 4, 0),
+    ])
+    .unwrap();
+
+    let merged = contour.merge_adjacent_collinear_lines(&policy()).unwrap();
+
+    assert!(merged.report().status().is_native_exact());
+    assert_eq!(merged.report().source_segment_count(), 5);
+    assert_eq!(merged.report().output_segment_count(), Some(4));
+    assert_eq!(merged.report().fill_rule(), FillRule::NonZero);
+    assert_eq!(merged.report().spans().len(), 4);
+    assert_eq!(merged.report().spans()[0].source_segment_indices(), &[0, 1]);
+    assert_eq!(merged.report().spans()[0].output_segment_index(), 0);
+    let contour = merged
+        .contour()
+        .expect("certified contour line merge should materialize");
+    assert_eq!(contour.len(), 4);
+    assert_eq!(contour.fill_rule(), FillRule::NonZero);
+    assert_line(&contour.segments()[0], p(0, 0), p(4, 0));
+}
+
+#[test]
+fn contour_merge_adjacent_collinear_lines_merges_wraparound_run() {
+    let contour = Contour2::from_bulge_vertices(&[
+        vertex(2, 0, 0),
+        vertex(4, 0, 0),
+        vertex(4, 4, 0),
+        vertex(0, 4, 0),
+        vertex(0, 0, 0),
+    ])
+    .unwrap();
+
+    let merged = contour.merge_adjacent_collinear_lines(&policy()).unwrap();
+
+    assert!(merged.report().status().is_native_exact());
+    assert_eq!(merged.report().source_segment_count(), 5);
+    assert_eq!(merged.report().output_segment_count(), Some(4));
+    assert_eq!(merged.report().spans()[0].source_segment_indices(), &[4, 0]);
+    assert_eq!(merged.report().spans()[0].output_segment_index(), 0);
+    let contour = merged
+        .contour()
+        .expect("certified wraparound contour line merge should materialize");
+    assert_eq!(contour.len(), 4);
+    assert_line(&contour.segments()[0], p(0, 0), p(4, 0));
+    assert_line(&contour.segments()[1], p(4, 0), p(4, 4));
+    assert_line(&contour.segments()[3], p(0, 4), p(0, 0));
 }
 
 #[test]

@@ -1900,7 +1900,7 @@ fn blocked_chamfer_result(
     }
 }
 
-fn merge_adjacent_line_segments(
+pub(crate) fn merge_adjacent_line_segments(
     current: &Segment2,
     next: &Segment2,
     policy: &CurvePolicy,
