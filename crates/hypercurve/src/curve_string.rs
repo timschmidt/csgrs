@@ -1,10 +1,14 @@
 //! Ordered open curve strings.
 
+use std::cmp::Ordering;
+
+use hyperreal::Real;
+
 use crate::bbox::{Aabb2, aabbs_decided_disjoint, decided_segment_aabb};
-use crate::classify::is_zero;
+use crate::classify::{compare_reals, in_closed_unit_interval, is_zero};
 use crate::{
-    BulgeVertex2, CurveError, CurvePolicy, CurveResult, Point2, RetainedTopologyStatus, Segment2,
-    SegmentIntersection, UncertaintyReason,
+    BulgeVertex2, CurveError, CurvePolicy, CurveResult, LineSeg2, ParamRange, Point2,
+    RetainedTopologyStatus, Segment2, SegmentIntersection, UncertaintyReason,
 };
 
 /// One segment-pair event between two curve strings.
@@ -75,6 +79,39 @@ pub struct CurveStringLinkReport2 {
 pub struct LinkedCurveString2 {
     curve_string: CurveString2,
     report: CurveStringLinkReport2,
+}
+
+/// Segment-local retained trim point on an open curve string.
+#[derive(Clone, Debug, PartialEq)]
+pub struct CurveStringTrimPoint2 {
+    segment_index: usize,
+    param: Real,
+}
+
+/// Report for one source segment range retained by a trim attempt.
+#[derive(Clone, Debug, PartialEq)]
+pub struct CurveStringTrimSegmentReport2 {
+    source_segment_index: usize,
+    source_range: ParamRange,
+    status: RetainedTopologyStatus,
+}
+
+/// Report for an open curve-string trim attempt.
+#[derive(Clone, Debug, PartialEq)]
+pub struct CurveStringTrimReport2 {
+    start: CurveStringTrimPoint2,
+    end: CurveStringTrimPoint2,
+    source_segment_count: usize,
+    segment_reports: Vec<CurveStringTrimSegmentReport2>,
+    status: RetainedTopologyStatus,
+    blocker: Option<UncertaintyReason>,
+}
+
+/// Result of a report-bearing open curve-string trim.
+#[derive(Clone, Debug, PartialEq)]
+pub struct CurveStringTrimResult2 {
+    curve_string: Option<CurveString2>,
+    report: CurveStringTrimReport2,
 }
 
 /// An ordered sequence of connected native segments.
@@ -249,6 +286,115 @@ impl CurveString2 {
         })))
     }
 
+    /// Trims this open curve string between two segment-local parameters.
+    ///
+    /// The result always carries a report. Materialization currently supports
+    /// exact line subsegments and whole native segments. Partial arc ranges are
+    /// retained as unsupported blockers because the existing arc split
+    /// parameter is chord-projection evidence; without a point-bearing split
+    /// marker or stronger arc parameter, constructing a new arc endpoint would
+    /// cross the exactness boundary. This keeps future point/curve/region trim
+    /// paths free to supply certified split points without letting this API
+    /// guess.
+    pub fn trim_between_parameters(
+        &self,
+        start: CurveStringTrimPoint2,
+        end: CurveStringTrimPoint2,
+        policy: &CurvePolicy,
+    ) -> CurveResult<CurveStringTrimResult2> {
+        validate_trim_point(self, &start, policy)?;
+        validate_trim_point(self, &end, policy)?;
+        match compare_trim_points(&start, &end, policy) {
+            Some(Ordering::Less) => {}
+            Some(Ordering::Equal | Ordering::Greater) => return Err(CurveError::InvalidCurveRange),
+            None => {
+                return Ok(blocked_trim_result(
+                    self,
+                    start,
+                    end,
+                    Vec::new(),
+                    RetainedTopologyStatus::Unresolved,
+                    Some(UncertaintyReason::Ordering),
+                ));
+            }
+        }
+
+        let mut segment_reports = Vec::new();
+        let mut trimmed_segments = Vec::new();
+        for source_segment_index in start.segment_index..=end.segment_index {
+            let range_start = if source_segment_index == start.segment_index {
+                start.param.clone()
+            } else {
+                Real::zero()
+            };
+            let range_end = if source_segment_index == end.segment_index {
+                end.param.clone()
+            } else {
+                Real::one()
+            };
+            let source_range = ParamRange::new(range_start, range_end);
+            let segment_report = CurveStringTrimSegmentReport2 {
+                source_segment_index,
+                source_range: source_range.clone(),
+                status: RetainedTopologyStatus::NativeExact,
+            };
+            match trim_segment_by_range(
+                &self.segments[source_segment_index],
+                &source_range,
+                policy,
+            )? {
+                SegmentTrimMaterialization::Materialized(segment) => {
+                    segment_reports.push(segment_report);
+                    trimmed_segments.push(segment);
+                }
+                SegmentTrimMaterialization::SkippedEmpty => {}
+                SegmentTrimMaterialization::Unsupported(reason) => {
+                    let mut segment_report = segment_report;
+                    segment_report.status = RetainedTopologyStatus::Unsupported;
+                    segment_reports.push(segment_report);
+                    return Ok(blocked_trim_result(
+                        self,
+                        start,
+                        end,
+                        segment_reports,
+                        RetainedTopologyStatus::Unsupported,
+                        Some(reason),
+                    ));
+                }
+                SegmentTrimMaterialization::Unresolved(reason) => {
+                    let mut segment_report = segment_report;
+                    segment_report.status = RetainedTopologyStatus::Unresolved;
+                    segment_reports.push(segment_report);
+                    return Ok(blocked_trim_result(
+                        self,
+                        start,
+                        end,
+                        segment_reports,
+                        RetainedTopologyStatus::Unresolved,
+                        Some(reason),
+                    ));
+                }
+            }
+        }
+
+        if trimmed_segments.is_empty() {
+            return Err(CurveError::InvalidCurveRange);
+        }
+        let curve_string = CurveString2::try_new(trimmed_segments)?;
+        let report = CurveStringTrimReport2 {
+            start,
+            end,
+            source_segment_count: self.len(),
+            segment_reports,
+            status: RetainedTopologyStatus::NativeExact,
+            blocker: None,
+        };
+        Ok(CurveStringTrimResult2 {
+            curve_string: Some(curve_string),
+            report,
+        })
+    }
+
     /// Collects all nonempty segment-pair intersections against another curve string.
     ///
     /// Segment axis-aligned bounding boxes are used as a conservative broad
@@ -327,6 +473,200 @@ impl CurveString2 {
                 )?,
             ),
         ])
+    }
+}
+
+impl CurveStringTrimPoint2 {
+    /// Constructs a segment-local trim point.
+    pub const fn new(segment_index: usize, param: Real) -> Self {
+        Self {
+            segment_index,
+            param,
+        }
+    }
+
+    /// Returns the source segment index.
+    pub const fn segment_index(&self) -> usize {
+        self.segment_index
+    }
+
+    /// Returns the local segment parameter.
+    pub const fn param(&self) -> &Real {
+        &self.param
+    }
+}
+
+impl CurveStringTrimSegmentReport2 {
+    /// Returns the retained source segment index.
+    pub const fn source_segment_index(&self) -> usize {
+        self.source_segment_index
+    }
+
+    /// Returns the retained source parameter range.
+    pub const fn source_range(&self) -> &ParamRange {
+        &self.source_range
+    }
+
+    /// Returns topology status for this retained source range.
+    pub const fn status(&self) -> RetainedTopologyStatus {
+        self.status
+    }
+}
+
+impl CurveStringTrimReport2 {
+    /// Returns the requested trim start.
+    pub const fn start(&self) -> &CurveStringTrimPoint2 {
+        &self.start
+    }
+
+    /// Returns the requested trim end.
+    pub const fn end(&self) -> &CurveStringTrimPoint2 {
+        &self.end
+    }
+
+    /// Returns the source curve-string segment count captured by this report.
+    pub const fn source_segment_count(&self) -> usize {
+        self.source_segment_count
+    }
+
+    /// Returns retained source segment ranges considered by this trim.
+    pub fn segment_reports(&self) -> &[CurveStringTrimSegmentReport2] {
+        &self.segment_reports
+    }
+
+    /// Returns the trim materialization status.
+    pub const fn status(&self) -> RetainedTopologyStatus {
+        self.status
+    }
+
+    /// Returns the exact blocker for non-materialized trims.
+    pub const fn blocker(&self) -> Option<UncertaintyReason> {
+        self.blocker
+    }
+}
+
+impl CurveStringTrimResult2 {
+    /// Returns the materialized native trim, if this trim was supported.
+    pub const fn curve_string(&self) -> Option<&CurveString2> {
+        self.curve_string.as_ref()
+    }
+
+    /// Consumes this result and returns the materialized native trim, if any.
+    pub fn into_curve_string(self) -> Option<CurveString2> {
+        self.curve_string
+    }
+
+    /// Returns the retained trim report.
+    pub const fn report(&self) -> &CurveStringTrimReport2 {
+        &self.report
+    }
+}
+
+enum SegmentTrimMaterialization {
+    Materialized(Segment2),
+    SkippedEmpty,
+    Unsupported(UncertaintyReason),
+    Unresolved(UncertaintyReason),
+}
+
+fn validate_trim_point(
+    curve_string: &CurveString2,
+    point: &CurveStringTrimPoint2,
+    policy: &CurvePolicy,
+) -> CurveResult<()> {
+    if point.segment_index >= curve_string.len() {
+        return Err(CurveError::InvalidCurveRange);
+    }
+    match in_closed_unit_interval(&point.param, policy) {
+        Some(true) => Ok(()),
+        Some(false) => Err(CurveError::InvalidCurveParameter),
+        None => Ok(()),
+    }
+}
+
+fn compare_trim_points(
+    start: &CurveStringTrimPoint2,
+    end: &CurveStringTrimPoint2,
+    policy: &CurvePolicy,
+) -> Option<Ordering> {
+    match start.segment_index.cmp(&end.segment_index) {
+        Ordering::Less => Some(Ordering::Less),
+        Ordering::Greater => Some(Ordering::Greater),
+        Ordering::Equal => compare_reals(&start.param, &end.param, policy),
+    }
+}
+
+fn trim_segment_by_range(
+    source_segment: &Segment2,
+    source_range: &ParamRange,
+    policy: &CurvePolicy,
+) -> CurveResult<SegmentTrimMaterialization> {
+    let ordering = match compare_reals(source_range.start(), source_range.end(), policy) {
+        Some(ordering) => ordering,
+        None => {
+            return Ok(SegmentTrimMaterialization::Unresolved(
+                UncertaintyReason::Ordering,
+            ));
+        }
+    };
+    match ordering {
+        Ordering::Greater => return Err(CurveError::InvalidCurveRange),
+        Ordering::Equal => return Ok(SegmentTrimMaterialization::SkippedEmpty),
+        Ordering::Less => {}
+    }
+
+    let is_full_range = trim_range_is_full(source_range, policy);
+    match is_full_range {
+        Some(true) => Ok(SegmentTrimMaterialization::Materialized(
+            source_segment.clone(),
+        )),
+        Some(false) => match source_segment {
+            Segment2::Line(line) => trim_line_segment_by_range(line, source_range),
+            Segment2::Arc(_) => Ok(SegmentTrimMaterialization::Unsupported(
+                UncertaintyReason::Unsupported,
+            )),
+        },
+        None => Ok(SegmentTrimMaterialization::Unresolved(
+            UncertaintyReason::Ordering,
+        )),
+    }
+}
+
+fn trim_line_segment_by_range(
+    line: &LineSeg2,
+    source_range: &ParamRange,
+) -> CurveResult<SegmentTrimMaterialization> {
+    let start = line.point_at(source_range.start().clone());
+    let end = line.point_at(source_range.end().clone());
+    LineSeg2::try_new(start, end)
+        .map(Segment2::Line)
+        .map(SegmentTrimMaterialization::Materialized)
+}
+
+fn trim_range_is_full(range: &ParamRange, policy: &CurvePolicy) -> Option<bool> {
+    let start_is_zero = compare_reals(range.start(), &Real::zero(), policy)? == Ordering::Equal;
+    let end_is_one = compare_reals(range.end(), &Real::one(), policy)? == Ordering::Equal;
+    Some(start_is_zero && end_is_one)
+}
+
+fn blocked_trim_result(
+    curve_string: &CurveString2,
+    start: CurveStringTrimPoint2,
+    end: CurveStringTrimPoint2,
+    segment_reports: Vec<CurveStringTrimSegmentReport2>,
+    status: RetainedTopologyStatus,
+    blocker: Option<UncertaintyReason>,
+) -> CurveStringTrimResult2 {
+    CurveStringTrimResult2 {
+        curve_string: None,
+        report: CurveStringTrimReport2 {
+            start,
+            end,
+            source_segment_count: curve_string.len(),
+            segment_reports,
+            status,
+            blocker,
+        },
     }
 }
 

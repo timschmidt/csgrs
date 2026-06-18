@@ -141,7 +141,8 @@ pub use contour::{Contour2, ContourPointLocation, FillRule};
 pub use curve_string::{
     CurveString2, CurveStringEndpoint2, CurveStringEndpointConnectionReport2,
     CurveStringEndpointConnectionStatus2, CurveStringIntersection, CurveStringLinkKind2,
-    CurveStringLinkReport2, LinkedCurveString2,
+    CurveStringLinkReport2, CurveStringTrimPoint2, CurveStringTrimReport2, CurveStringTrimResult2,
+    CurveStringTrimSegmentReport2, LinkedCurveString2,
 };
 pub use error::{CurveError, CurveResult};
 pub use events::{

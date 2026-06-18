@@ -42,6 +42,10 @@ pub enum CurveError {
     InvalidBezierParameter,
     /// A Bezier segment range is outside the stored path facts.
     InvalidBezierRange,
+    /// A native curve parameter is certified outside its accepted domain.
+    InvalidCurveParameter,
+    /// A native curve trim range is empty, reversed, or outside the source path.
+    InvalidCurveRange,
     /// A Bezier parameter polynomial is structurally invalid.
     InvalidBezierPolynomial,
     /// A Bezier algebraic parameter does not certify one isolated root.
@@ -92,6 +96,8 @@ impl fmt::Display for CurveError {
                 write!(f, "Bezier parameter is outside the closed unit interval")
             }
             Self::InvalidBezierRange => write!(f, "Bezier segment range is invalid"),
+            Self::InvalidCurveParameter => write!(f, "curve parameter is invalid"),
+            Self::InvalidCurveRange => write!(f, "curve trim range is invalid"),
             Self::InvalidBezierPolynomial => write!(f, "Bezier parameter polynomial is invalid"),
             Self::InvalidBezierAlgebraicParameter => {
                 write!(

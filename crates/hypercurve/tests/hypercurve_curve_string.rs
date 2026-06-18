@@ -1,12 +1,16 @@
 use hypercurve::{
     BulgeVertex2, CircularArc2, Classification, Contour2, CurveError, CurvePolicy, CurveString2,
     CurveStringEndpoint2, CurveStringEndpointConnectionStatus2, CurveStringLinkKind2,
-    LineArcIntersection, LineArcOrder, LineSeg2, Point2, Real, Segment2, SegmentIntersection,
-    UncertaintyReason,
+    CurveStringTrimPoint2, LineArcIntersection, LineArcOrder, LineSeg2, Point2, Real, Segment2,
+    SegmentIntersection, UncertaintyReason,
 };
 
 fn s(value: i32) -> Real {
     value.into()
+}
+
+fn q(numerator: i32, denominator: i32) -> Real {
+    (Real::from(numerator) / Real::from(denominator)).unwrap()
 }
 
 fn p(x: i32, y: i32) -> Point2 {
@@ -170,6 +174,150 @@ fn curve_string_endpoint_report_rejects_empty_unchecked_input() {
             )
             .unwrap_err(),
         CurveError::EmptyCurveString
+    );
+}
+
+#[test]
+fn curve_string_trim_materializes_exact_line_subsegment_with_report() {
+    let curve = CurveString2::try_new(vec![line_segment(0, 0, 4, 0)]).unwrap();
+
+    let trim = curve
+        .trim_between_parameters(
+            CurveStringTrimPoint2::new(0, q(1, 4)),
+            CurveStringTrimPoint2::new(0, q(3, 4)),
+            &policy(),
+        )
+        .unwrap();
+
+    assert!(trim.report().status().is_native_exact());
+    assert_eq!(trim.report().source_segment_count(), 1);
+    assert_eq!(trim.report().segment_reports().len(), 1);
+    assert_eq!(trim.report().segment_reports()[0].source_segment_index(), 0);
+    assert_eq!(
+        trim.report().segment_reports()[0].source_range().start(),
+        &q(1, 4)
+    );
+    assert_eq!(
+        trim.report().segment_reports()[0].source_range().end(),
+        &q(3, 4)
+    );
+    let trimmed = trim.curve_string().expect("line trim should materialize");
+    assert_eq!(trimmed.start(), Some(&p(1, 0)));
+    assert_eq!(trimmed.end(), Some(&p(3, 0)));
+}
+
+#[test]
+fn curve_string_trim_materializes_across_line_segments_with_source_ranges() {
+    let curve = CurveString2::try_new(vec![
+        line_segment(0, 0, 4, 0),
+        line_segment(4, 0, 4, 4),
+        line_segment(4, 4, 8, 4),
+    ])
+    .unwrap();
+
+    let trim = curve
+        .trim_between_parameters(
+            CurveStringTrimPoint2::new(0, q(1, 2)),
+            CurveStringTrimPoint2::new(2, q(1, 2)),
+            &policy(),
+        )
+        .unwrap();
+
+    assert!(trim.report().status().is_native_exact());
+    let reports = trim.report().segment_reports();
+    assert_eq!(reports.len(), 3);
+    assert_eq!(reports[0].source_range().start(), &q(1, 2));
+    assert_eq!(reports[0].source_range().end(), &s(1));
+    assert_eq!(reports[1].source_range().start(), &s(0));
+    assert_eq!(reports[1].source_range().end(), &s(1));
+    assert_eq!(reports[2].source_range().start(), &s(0));
+    assert_eq!(reports[2].source_range().end(), &q(1, 2));
+
+    let trimmed = trim
+        .curve_string()
+        .expect("line-chain trim should materialize");
+    assert_eq!(trimmed.len(), 3);
+    assert_eq!(trimmed.start(), Some(&p(2, 0)));
+    assert_eq!(trimmed.end(), Some(&p(6, 4)));
+}
+
+#[test]
+fn curve_string_trim_preserves_whole_arc_segment() {
+    let arc = Segment2::Arc(CircularArc2::from_bulge(p(0, 0), p(2, 0), s(1)).unwrap());
+    let curve = CurveString2::try_new(vec![arc.clone()]).unwrap();
+
+    let trim = curve
+        .trim_between_parameters(
+            CurveStringTrimPoint2::new(0, s(0)),
+            CurveStringTrimPoint2::new(0, s(1)),
+            &policy(),
+        )
+        .unwrap();
+
+    assert!(trim.report().status().is_native_exact());
+    assert_eq!(trim.curve_string().unwrap().segments(), &[arc]);
+}
+
+#[test]
+fn curve_string_trim_reports_partial_arc_as_unsupported_without_materializing() {
+    let curve = CurveString2::try_new(vec![Segment2::Arc(
+        CircularArc2::from_bulge(p(0, 0), p(2, 0), s(1)).unwrap(),
+    )])
+    .unwrap();
+
+    let trim = curve
+        .trim_between_parameters(
+            CurveStringTrimPoint2::new(0, q(1, 4)),
+            CurveStringTrimPoint2::new(0, q(3, 4)),
+            &policy(),
+        )
+        .unwrap();
+
+    assert!(trim.curve_string().is_none());
+    assert!(trim.report().status().is_retained_evidence());
+    assert_eq!(
+        trim.report().blocker(),
+        Some(UncertaintyReason::Unsupported)
+    );
+    assert_eq!(trim.report().segment_reports().len(), 1);
+    assert!(
+        trim.report().segment_reports()[0]
+            .status()
+            .is_retained_evidence()
+    );
+    assert_eq!(
+        trim.report().segment_reports()[0].source_range().start(),
+        &q(1, 4)
+    );
+    assert_eq!(
+        trim.report().segment_reports()[0].source_range().end(),
+        &q(3, 4)
+    );
+}
+
+#[test]
+fn curve_string_trim_rejects_reversed_and_out_of_domain_ranges() {
+    let curve = CurveString2::try_new(vec![line_segment(0, 0, 4, 0)]).unwrap();
+
+    assert_eq!(
+        curve
+            .trim_between_parameters(
+                CurveStringTrimPoint2::new(0, q(3, 4)),
+                CurveStringTrimPoint2::new(0, q(1, 4)),
+                &policy(),
+            )
+            .unwrap_err(),
+        CurveError::InvalidCurveRange
+    );
+    assert_eq!(
+        curve
+            .trim_between_parameters(
+                CurveStringTrimPoint2::new(0, s(-1)),
+                CurveStringTrimPoint2::new(0, q(1, 4)),
+                &policy(),
+            )
+            .unwrap_err(),
+        CurveError::InvalidCurveParameter
     );
 }
 
