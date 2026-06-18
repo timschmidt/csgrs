@@ -1,4 +1,8 @@
-use hypercurve::{Point2, QuadraticBezier2, QuadraticBezierMidpointInterpolationStage2, Real};
+use hypercurve::{
+    Classification, CurvePolicy, Point2, QuadraticBezier2,
+    QuadraticBezierMidpointInterpolationStage2, QuadraticBezierPointInterpolationStage2, Real,
+    UncertaintyReason,
+};
 
 fn r(value: i32) -> Real {
     value.into()
@@ -10,6 +14,126 @@ fn q(numerator: i32, denominator: i32) -> Real {
 
 fn p(x: i32, y: i32) -> Point2 {
     Point2::new(r(x), r(y))
+}
+
+fn policy() -> CurvePolicy {
+    CurvePolicy::certified()
+}
+
+#[test]
+fn quadratic_point_interpolation_solves_non_midpoint_control_and_replays_constraint() {
+    let t = q(1, 4);
+    let result = QuadraticBezier2::interpolate_point_at_parameter_with_report(
+        p(0, 0),
+        t.clone(),
+        Point2::new(r(1), q(3, 2)),
+        p(4, 0),
+        &policy(),
+    )
+    .unwrap();
+    let report = result.report();
+
+    assert!(report.status().is_native_exact());
+    assert_eq!(
+        report.stage(),
+        QuadraticBezierPointInterpolationStage2::SegmentMaterialization
+    );
+    assert_eq!(report.interpolation_parameter(), &t);
+    assert_eq!(report.start_point(), &p(0, 0));
+    assert_eq!(report.interpolation_point(), &Point2::new(r(1), q(3, 2)));
+    assert_eq!(report.end_point(), &p(4, 0));
+    assert_eq!(report.solved_control_point(), Some(&p(2, 4)));
+    assert_eq!(report.replayed_point(), Some(&Point2::new(r(1), q(3, 2))));
+    assert_eq!(report.blocker(), None);
+
+    let curve = result
+        .curve()
+        .expect("interior parameter should materialize");
+    assert_eq!(curve.control(), &p(2, 4));
+    assert_eq!(curve.point_at(t), Point2::new(r(1), q(3, 2)));
+}
+
+#[test]
+fn quadratic_point_interpolation_convenience_returns_decided_curve() {
+    let curve = QuadraticBezier2::interpolate_point_at_parameter(
+        p(0, 0),
+        q(3, 4),
+        Point2::new(r(3), q(3, 2)),
+        p(4, 0),
+        &policy(),
+    )
+    .unwrap();
+
+    let Classification::Decided(curve) = curve else {
+        panic!("interior exact interpolation should decide");
+    };
+    assert_eq!(curve.control(), &p(2, 4));
+    assert_eq!(curve.point_at(q(3, 4)), Point2::new(r(3), q(3, 2)));
+}
+
+#[test]
+fn quadratic_point_interpolation_reports_endpoint_parameter_blocker() {
+    let result = QuadraticBezier2::interpolate_point_at_parameter_with_report(
+        p(0, 0),
+        r(0),
+        p(0, 0),
+        p(4, 0),
+        &policy(),
+    )
+    .unwrap();
+    let report = result.report();
+
+    assert!(result.curve().is_none());
+    assert!(report.status().is_retained_evidence());
+    assert_eq!(
+        report.stage(),
+        QuadraticBezierPointInterpolationStage2::ParameterValidation
+    );
+    assert_eq!(report.interpolation_parameter(), &r(0));
+    assert_eq!(report.solved_control_point(), None);
+    assert_eq!(report.replayed_point(), None);
+    assert_eq!(report.blocker(), Some(UncertaintyReason::Boundary));
+}
+
+#[test]
+fn quadratic_point_interpolation_reports_out_of_domain_parameter_blocker() {
+    let result = QuadraticBezier2::interpolate_point_at_parameter_with_report(
+        p(0, 0),
+        r(2),
+        p(8, 0),
+        p(4, 0),
+        &policy(),
+    )
+    .unwrap();
+    let report = result.report();
+
+    assert!(result.curve().is_none());
+    assert!(report.status().is_retained_evidence());
+    assert_eq!(
+        report.stage(),
+        QuadraticBezierPointInterpolationStage2::ParameterValidation
+    );
+    assert_eq!(report.interpolation_parameter(), &r(2));
+    assert_eq!(report.solved_control_point(), None);
+    assert_eq!(report.replayed_point(), None);
+    assert_eq!(report.blocker(), Some(UncertaintyReason::Boundary));
+}
+
+#[test]
+fn quadratic_point_interpolation_convenience_returns_boundary_uncertainty() {
+    let result = QuadraticBezier2::interpolate_point_at_parameter(
+        p(0, 0),
+        r(1),
+        p(4, 0),
+        p(4, 0),
+        &policy(),
+    )
+    .unwrap();
+
+    assert_eq!(
+        result,
+        Classification::Uncertain(UncertaintyReason::Boundary)
+    );
 }
 
 #[test]
