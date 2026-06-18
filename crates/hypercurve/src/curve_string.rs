@@ -289,6 +289,8 @@ pub struct CurveStringConnectReport2 {
     disconnected_endpoint_pair_count: usize,
     unresolved_endpoint_pair_count: usize,
     connector_segment_index: Option<usize>,
+    connector_start_point: Option<Point2>,
+    connector_end_point: Option<Point2>,
     output_segment_count: Option<usize>,
     output_segment_kind_counts: Option<SegmentKindCounts>,
     output_segments: Vec<CurveStringConnectOutputSegmentReport2>,
@@ -1249,6 +1251,9 @@ impl CurveString2 {
         let (curve_string, connector_segment_index) = connected_curve_string(self, other, kind)?;
         let output_segment_count = Some(curve_string.len());
         let output_segment_kind_counts = Some(curve_string_segment_kind_counts(&curve_string));
+        let output_segments = connect_output_segment_reports(self, other, kind)?;
+        let (connector_start_point, connector_end_point) =
+            connector_endpoint_points(&output_segments)?;
         let report = CurveStringConnectReport2 {
             stage: CurveStringConnectStage2::ConnectorMaterialization,
             kind: Some(kind),
@@ -1263,9 +1268,11 @@ impl CurveString2 {
             disconnected_endpoint_pair_count: endpoint_summary.disconnected_count,
             unresolved_endpoint_pair_count: endpoint_summary.unresolved_count,
             connector_segment_index: Some(connector_segment_index),
+            connector_start_point: Some(connector_start_point),
+            connector_end_point: Some(connector_end_point),
             output_segment_count,
             output_segment_kind_counts,
-            output_segments: connect_output_segment_reports(self, other, kind)?,
+            output_segments,
             status: RetainedTopologyStatus::NativeExact,
             blocker: None,
         };
@@ -1370,6 +1377,9 @@ impl CurveString2 {
         let (curve_string, connector_segment_index) = connected_curve_string(self, other, kind)?;
         let output_segment_count = Some(curve_string.len());
         let output_segment_kind_counts = Some(curve_string_segment_kind_counts(&curve_string));
+        let output_segments = connect_output_segment_reports(self, other, kind)?;
+        let (connector_start_point, connector_end_point) =
+            connector_endpoint_points(&output_segments)?;
         let report = CurveStringConnectReport2 {
             stage: CurveStringConnectStage2::ConnectorMaterialization,
             kind: Some(kind),
@@ -1384,9 +1394,11 @@ impl CurveString2 {
             disconnected_endpoint_pair_count: endpoint_summary.disconnected_count,
             unresolved_endpoint_pair_count: endpoint_summary.unresolved_count,
             connector_segment_index: Some(connector_segment_index),
+            connector_start_point: Some(connector_start_point),
+            connector_end_point: Some(connector_end_point),
             output_segment_count,
             output_segment_kind_counts,
-            output_segments: connect_output_segment_reports(self, other, kind)?,
+            output_segments,
             status: RetainedTopologyStatus::NativeExact,
             blocker: None,
         };
@@ -6662,6 +6674,16 @@ impl CurveStringConnectReport2 {
         self.connector_segment_index
     }
 
+    /// Returns the exact start point of the inserted connector segment.
+    pub const fn connector_start_point(&self) -> Option<&Point2> {
+        self.connector_start_point.as_ref()
+    }
+
+    /// Returns the exact end point of the inserted connector segment.
+    pub const fn connector_end_point(&self) -> Option<&Point2> {
+        self.connector_end_point.as_ref()
+    }
+
     /// Returns the output segment count when a connector was materialized.
     pub const fn output_segment_count(&self) -> Option<usize> {
         self.output_segment_count
@@ -7298,6 +7320,19 @@ fn push_connect_connector_report(
     });
 }
 
+fn connector_endpoint_points(
+    output_segments: &[CurveStringConnectOutputSegmentReport2],
+) -> CurveResult<(Point2, Point2)> {
+    let connector = output_segments
+        .iter()
+        .find(|segment| segment.source == CurveStringConnectSource2::Connector)
+        .ok_or(CurveError::InvalidCurveRange)?;
+    Ok((
+        connector.output_start_point.clone(),
+        connector.output_end_point.clone(),
+    ))
+}
+
 fn ordered_link_source_indices(
     accumulated_source_indices: &[usize],
     next_source_index: usize,
@@ -7347,6 +7382,8 @@ fn blocked_connected_curve_string(
             disconnected_endpoint_pair_count: endpoint_summary.disconnected_count,
             unresolved_endpoint_pair_count: endpoint_summary.unresolved_count,
             connector_segment_index: None,
+            connector_start_point: None,
+            connector_end_point: None,
             output_segment_count: None,
             output_segment_kind_counts: None,
             output_segments: Vec::new(),

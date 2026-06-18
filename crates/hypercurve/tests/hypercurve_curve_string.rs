@@ -1308,6 +1308,8 @@ fn curve_string_connect_end_to_start_inserts_exact_line() {
         Some(CurveStringLinkKind2::FirstEndToSecondStart)
     );
     assert_eq!(connected.report().connector_segment_index(), Some(1));
+    assert_eq!(connected.report().connector_start_point(), Some(&p(1, 0)));
+    assert_eq!(connected.report().connector_end_point(), Some(&p(3, 1)));
     assert_eq!(connected.report().output_segment_count(), Some(3));
     assert_eq!(
         connected.report().output_segment_kind_counts(),
@@ -1462,6 +1464,8 @@ fn curve_string_connect_selected_endpoints_orients_inputs() {
         Some(CurveStringLinkKind2::FirstStartToSecondEnd)
     );
     assert_eq!(connected.report().connector_segment_index(), Some(1));
+    assert_eq!(connected.report().connector_start_point(), Some(&p(4, 0)));
+    assert_eq!(connected.report().connector_end_point(), Some(&p(0, 0)));
     assert_eq!(connected.report().output_segment_count(), Some(3));
     assert_eq!(connected.report().output_segments().len(), 3);
     assert_eq!(
@@ -1522,6 +1526,8 @@ fn curve_string_connect_nearest_endpoints_selects_unique_pair() {
         Some(CurveStringLinkKind2::FirstEndToSecondEnd)
     );
     assert_eq!(connected.report().connector_segment_index(), Some(1));
+    assert_eq!(connected.report().connector_start_point(), Some(&p(1, 0)));
+    assert_eq!(connected.report().connector_end_point(), Some(&p(3, 0)));
     assert_eq!(connected.report().output_segment_count(), Some(3));
     assert_eq!(connected.report().output_segments().len(), 3);
     assert_eq!(
@@ -1583,6 +1589,8 @@ fn curve_string_connect_nearest_endpoints_reports_tie_boundary() {
     assert_eq!(connected.report().disconnected_endpoint_pair_count(), 4);
     assert_eq!(connected.report().unresolved_endpoint_pair_count(), 0);
     assert_eq!(connected.report().connector_segment_index(), None);
+    assert_eq!(connected.report().connector_start_point(), None);
+    assert_eq!(connected.report().connector_end_point(), None);
     assert_eq!(connected.report().output_segment_count(), None);
     assert_eq!(
         connected.report().first_segment_kind_counts(),
@@ -1617,6 +1625,8 @@ fn curve_string_connect_end_to_start_blocks_already_connected_endpoints() {
     assert_eq!(connected.report().disconnected_endpoint_pair_count(), 0);
     assert_eq!(connected.report().unresolved_endpoint_pair_count(), 0);
     assert_eq!(connected.report().connector_segment_index(), None);
+    assert_eq!(connected.report().connector_start_point(), None);
+    assert_eq!(connected.report().connector_end_point(), None);
     assert_eq!(connected.report().output_segment_count(), None);
     assert_eq!(
         connected.report().first_segment_kind_counts(),
