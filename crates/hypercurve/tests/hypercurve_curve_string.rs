@@ -3,13 +3,13 @@ use hypercurve::{
     CurveStringChamferInputPath2, CurveStringChamferStage2, CurveStringConnectSource2,
     CurveStringConnectStage2, CurveStringCurveTrimQueryPath2, CurveStringCurveTrimStage2,
     CurveStringDeduplicateStage2, CurveStringEndpoint2, CurveStringEndpointConnectionStatus2,
-    CurveStringFilletInputPath2, CurveStringFilletStage2, CurveStringIntersectionPredicatePath2,
-    CurveStringIntersectionQueryPath2, CurveStringLineMergeStage2, CurveStringLinkKind2,
-    CurveStringLinkSourceInput2, CurveStringLinkStage2, CurveStringOrderedLinkStage2,
-    CurveStringRegionTrimQueryPath2, CurveStringRegionTrimStage2, CurveStringTrimInputPath2,
-    CurveStringTrimPoint2, IntersectionKind, LineArcIntersection, LineArcOrder, LineSeg2, Point2,
-    Real, Region2, RegionContourRole, RegionPointLocation, Segment2, SegmentIntersection,
-    UncertaintyReason,
+    CurveStringExtendStage2, CurveStringFilletInputPath2, CurveStringFilletStage2,
+    CurveStringIntersectionPredicatePath2, CurveStringIntersectionQueryPath2,
+    CurveStringLineMergeStage2, CurveStringLinkKind2, CurveStringLinkSourceInput2,
+    CurveStringLinkStage2, CurveStringOrderedLinkStage2, CurveStringRegionTrimQueryPath2,
+    CurveStringRegionTrimStage2, CurveStringTrimInputPath2, CurveStringTrimPoint2,
+    IntersectionKind, LineArcIntersection, LineArcOrder, LineSeg2, Point2, Real, Region2,
+    RegionContourRole, RegionPointLocation, Segment2, SegmentIntersection, UncertaintyReason,
 };
 
 fn s(value: i32) -> Real {
@@ -1045,6 +1045,10 @@ fn curve_string_extend_line_end_to_exact_target() {
         .unwrap();
 
     assert!(extended.report().status().is_native_exact());
+    assert_eq!(
+        extended.report().stage(),
+        CurveStringExtendStage2::SegmentMaterialization
+    );
     assert_eq!(extended.report().endpoint(), CurveStringEndpoint2::End);
     assert_eq!(extended.report().source_segment_index(), 0);
     assert_eq!(extended.report().source_endpoint_point(), &p(2, 0));
@@ -1092,6 +1096,10 @@ fn curve_string_extend_line_reports_interior_target_boundary() {
 
     assert!(extended.curve_string().is_none());
     assert!(extended.report().status().is_retained_evidence());
+    assert_eq!(
+        extended.report().stage(),
+        CurveStringExtendStage2::TargetValidation
+    );
     assert_eq!(extended.report().source_endpoint_point(), &p(4, 0));
     assert_eq!(extended.report().target_point(), &p(1, 0));
     assert_eq!(extended.report().source_param(), Some(&q(1, 4)));
@@ -1132,6 +1140,10 @@ fn curve_string_extend_arc_endpoint_to_same_circle_target() {
         .unwrap();
 
     assert!(extended.report().status().is_native_exact());
+    assert_eq!(
+        extended.report().stage(),
+        CurveStringExtendStage2::SegmentMaterialization
+    );
     assert_eq!(extended.report().endpoint(), CurveStringEndpoint2::End);
     assert_eq!(extended.report().source_segment_index(), 0);
     assert_eq!(extended.report().source_endpoint_point(), &p(0, 1));
@@ -1163,6 +1175,10 @@ fn curve_string_extend_arc_endpoint_reports_off_circle_boundary() {
 
     assert!(extended.curve_string().is_none());
     assert!(extended.report().status().is_retained_evidence());
+    assert_eq!(
+        extended.report().stage(),
+        CurveStringExtendStage2::TargetValidation
+    );
     assert_eq!(extended.report().source_endpoint_point(), &p(2, 0));
     assert_eq!(extended.report().target_point(), &p(3, 0));
     assert_eq!(

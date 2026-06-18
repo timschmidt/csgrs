@@ -345,6 +345,7 @@ pub struct CurveStringDeduplicateResult2 {
 /// Report for extending one open curve-string endpoint to an exact target point.
 #[derive(Clone, Debug, PartialEq)]
 pub struct CurveStringExtendReport2 {
+    stage: CurveStringExtendStage2,
     endpoint: CurveStringEndpoint2,
     source_segment_index: usize,
     source_endpoint_point: Point2,
@@ -353,6 +354,15 @@ pub struct CurveStringExtendReport2 {
     source_segment_count: usize,
     status: RetainedTopologyStatus,
     blocker: Option<UncertaintyReason>,
+}
+
+/// Furthest exact stage reached by endpoint extension.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum CurveStringExtendStage2 {
+    /// Target support, parameter, and retained sweep evidence were being validated.
+    TargetValidation,
+    /// The endpoint segment was materialized with exact target geometry.
+    SegmentMaterialization,
 }
 
 /// Result of a report-bearing open curve-string extension.
@@ -2222,6 +2232,7 @@ impl CurveString2 {
         Ok(CurveStringExtendResult2 {
             curve_string: Some(curve_string),
             report: CurveStringExtendReport2 {
+                stage: CurveStringExtendStage2::SegmentMaterialization,
                 endpoint,
                 source_segment_index,
                 source_endpoint_point: line_endpoint_point(line, endpoint).clone(),
@@ -2390,6 +2401,7 @@ impl CurveString2 {
         Ok(CurveStringExtendResult2 {
             curve_string: Some(curve_string),
             report: CurveStringExtendReport2 {
+                stage: CurveStringExtendStage2::SegmentMaterialization,
                 endpoint,
                 source_segment_index,
                 source_endpoint_point: arc_endpoint_point(arc, endpoint).clone(),
@@ -3288,6 +3300,11 @@ impl CurveStringRegionTrimResult2 {
 }
 
 impl CurveStringExtendReport2 {
+    /// Returns the furthest exact extension stage reached.
+    pub const fn stage(&self) -> CurveStringExtendStage2 {
+        self.stage
+    }
+
     /// Returns which endpoint was extended.
     pub const fn endpoint(&self) -> CurveStringEndpoint2 {
         self.endpoint
@@ -4507,6 +4524,7 @@ fn blocked_extend_result(
     CurveStringExtendResult2 {
         curve_string: None,
         report: CurveStringExtendReport2 {
+            stage: CurveStringExtendStage2::TargetValidation,
             endpoint,
             source_segment_index,
             source_endpoint_point: curve_string
