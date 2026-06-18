@@ -1,10 +1,10 @@
 use hypercurve::{
     BulgeVertex2, CircularArc2, Classification, Contour2, CurveError, CurvePolicy, CurveString2,
     CurveStringCurveTrimQueryPath2, CurveStringEndpoint2, CurveStringEndpointConnectionStatus2,
-    CurveStringIntersectionQueryPath2, CurveStringLinkKind2, CurveStringRegionTrimQueryPath2,
-    CurveStringTrimPoint2, IntersectionKind, LineArcIntersection, LineArcOrder, LineSeg2, Point2,
-    Real, Region2, RegionContourRole, RegionPointLocation, Segment2, SegmentIntersection,
-    UncertaintyReason,
+    CurveStringFilletInputPath2, CurveStringIntersectionQueryPath2, CurveStringLinkKind2,
+    CurveStringRegionTrimQueryPath2, CurveStringTrimPoint2, IntersectionKind, LineArcIntersection,
+    LineArcOrder, LineSeg2, Point2, Real, Region2, RegionContourRole, RegionPointLocation,
+    Segment2, SegmentIntersection, UncertaintyReason,
 };
 
 fn s(value: i32) -> Real {
@@ -903,6 +903,10 @@ fn curve_string_fillet_line_line_vertex_materializes_exact_arc() {
         .unwrap();
 
     assert!(fillet.report().status().is_native_exact());
+    assert_eq!(
+        fillet.report().input_path(),
+        CurveStringFilletInputPath2::Points
+    );
     assert_eq!(fillet.report().previous_segment_index(), 0);
     assert_eq!(fillet.report().next_segment_index(), 1);
     assert_eq!(fillet.report().previous_trim().param(), &q(3, 4));
@@ -957,6 +961,10 @@ fn curve_string_fillet_line_line_vertex_by_parameters_materializes_exact_arc() {
         .unwrap();
 
     assert!(fillet.report().status().is_native_exact());
+    assert_eq!(
+        fillet.report().input_path(),
+        CurveStringFilletInputPath2::Parameters
+    );
     assert_eq!(fillet.report().previous_trim().param(), &q(3, 4));
     assert_eq!(fillet.report().next_trim().param(), &q(1, 4));
     assert_eq!(fillet.report().center(), Some(&p(3, 1)));

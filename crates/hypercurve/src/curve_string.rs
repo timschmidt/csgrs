@@ -253,6 +253,7 @@ pub struct CurveStringChamferResult2 {
 /// Report for a line-line fillet at one open curve-string vertex.
 #[derive(Clone, Debug, PartialEq)]
 pub struct CurveStringFilletReport2 {
+    input_path: CurveStringFilletInputPath2,
     previous_segment_index: usize,
     next_segment_index: usize,
     previous_trim: CurveStringTrimPoint2,
@@ -264,6 +265,15 @@ pub struct CurveStringFilletReport2 {
     source_segment_count: usize,
     status: RetainedTopologyStatus,
     blocker: Option<UncertaintyReason>,
+}
+
+/// Input path used by a report-bearing line-line fillet operation.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum CurveStringFilletInputPath2 {
+    /// Tangent points were supplied by exact segment parameters.
+    Parameters,
+    /// Tangent points were supplied directly as exact points.
+    Points,
 }
 
 /// Result of a report-bearing line-line fillet operation.
@@ -1408,7 +1418,7 @@ impl CurveString2 {
         ) {
             (Segment2::Line(previous), Segment2::Line(next)) => (previous, next),
             _ => {
-                return Ok(blocked_fillet_result(
+                let mut result = blocked_fillet_result(
                     self,
                     previous_segment_index,
                     next_segment_index,
@@ -1419,20 +1429,24 @@ impl CurveString2 {
                     Vec::new(),
                     RetainedTopologyStatus::Unsupported,
                     Some(UncertaintyReason::Unsupported),
-                ));
+                );
+                result.report_mut().input_path = CurveStringFilletInputPath2::Parameters;
+                return Ok(result);
             }
         };
 
         let previous_point = previous_line.point_at(previous_trim.param().clone());
         let next_point = next_line.point_at(next_trim.param().clone());
-        self.fillet_line_line_vertex_by_points(
+        let mut result = self.fillet_line_line_vertex_by_points(
             vertex_index,
             &previous_point,
             &next_point,
             center,
             clockwise,
             policy,
-        )
+        )?;
+        result.report_mut().input_path = CurveStringFilletInputPath2::Parameters;
+        Ok(result)
     }
 
     /// Fillets one interior line-line vertex from exact tangent points and center.
@@ -1701,6 +1715,7 @@ impl CurveString2 {
         Ok(CurveStringFilletResult2 {
             curve_string: Some(curve_string),
             report: CurveStringFilletReport2 {
+                input_path: CurveStringFilletInputPath2::Points,
                 previous_segment_index,
                 next_segment_index,
                 previous_trim,
@@ -2505,6 +2520,11 @@ impl CurveStringChamferResult2 {
 }
 
 impl CurveStringFilletReport2 {
+    /// Returns how the tangent-point evidence was supplied to the fillet.
+    pub const fn input_path(&self) -> CurveStringFilletInputPath2 {
+        self.input_path
+    }
+
     /// Returns the previous source segment index at the filleted vertex.
     pub const fn previous_segment_index(&self) -> usize {
         self.previous_segment_index
@@ -3776,6 +3796,7 @@ fn blocked_fillet_result(
     CurveStringFilletResult2 {
         curve_string: None,
         report: CurveStringFilletReport2 {
+            input_path: CurveStringFilletInputPath2::Points,
             previous_segment_index,
             next_segment_index,
             previous_trim,

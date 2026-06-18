@@ -1,6 +1,7 @@
 use hypercurve::{
     BulgeVertex2, Classification, Contour2, ContourPointLocation, CurveError, CurvePolicy,
-    CurveString2, FillRule, Real, Region2, RegionPointLocation, Segment2, UncertaintyReason,
+    CurveString2, CurveStringFilletInputPath2, FillRule, Real, Region2, RegionPointLocation,
+    Segment2, UncertaintyReason,
 };
 
 fn s(value: i32) -> Real {
@@ -457,6 +458,10 @@ fn contour_fillet_line_line_vertex_materializes_closed_contour() {
 
     assert!(fillet.report().status().is_native_exact());
     assert_eq!(fillet.report().vertex_index(), 1);
+    assert_eq!(
+        fillet.report().curve_string_report().input_path(),
+        CurveStringFilletInputPath2::Points
+    );
     assert_eq!(fillet.report().source_segment_count(), 4);
     assert_eq!(fillet.report().fill_rule(), FillRule::NonZero);
     assert_eq!(
@@ -501,6 +506,10 @@ fn contour_fillet_line_line_vertex_by_parameters_materializes_closed_contour() {
 
     assert!(fillet.report().status().is_native_exact());
     assert_eq!(fillet.report().vertex_index(), 1);
+    assert_eq!(
+        fillet.report().curve_string_report().input_path(),
+        CurveStringFilletInputPath2::Parameters
+    );
     assert_eq!(
         fillet
             .report()
