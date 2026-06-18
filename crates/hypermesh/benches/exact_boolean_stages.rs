@@ -115,38 +115,6 @@ fn run_case(case: &BenchCase) {
         );
     });
 
-    time_stage(case, "intersection_graph_build", || {
-        let mut workspace = ExactBooleanWorkspace::new(&case.left, &case.right);
-        let graph = workspace.graph().unwrap();
-        black_box((graph.face_pairs.len(), graph.event_count()));
-    });
-
-    let mut graph_workspace = ExactBooleanWorkspace::new(&case.left, &case.right);
-    let graph = graph_workspace.graph().unwrap().clone();
-    time_stage(case, "intersection_graph_validate", || {
-        black_box(
-            graph
-                .validate_against_meshes(&case.left, &case.right)
-                .unwrap(),
-        );
-    });
-
-    time_stage(case, "split_topology_plan", || {
-        black_box(graph.checked_split_topology_plan().ok());
-    });
-
-    time_stage(case, "face_split_geometry", || {
-        black_box(graph.face_split_geometry_plan(&case.left, &case.right).ok());
-    });
-
-    time_stage(case, "face_cell_cdt", || {
-        black_box(
-            graph
-                .triangulate_face_cells_with_cdt(&case.left, &case.right)
-                .ok(),
-        );
-    });
-
     time_stage(case, "arrangement_attempt_from_evaluation", || {
         let mut workspace = ExactBooleanWorkspace::new(&case.left, &case.right);
         let attempt = workspace
@@ -214,12 +182,6 @@ fn run_case(case: &BenchCase) {
     });
 
     let mut workspace = ExactBooleanWorkspace::new(&case.left, &case.right);
-    workspace.graph().unwrap();
-    time_stage(case, "workspace_graph_cached", || {
-        let graph = workspace.graph().unwrap();
-        black_box((graph.face_pairs.len(), graph.event_count()));
-    });
-
     workspace.evaluate(request).ok();
     time_stage(
         case,
@@ -637,17 +599,11 @@ fn run_case(case: &BenchCase) {
     });
 }
 
-fn retained_graph_workspace_for_case<'a>(case: &'a BenchCase) -> ExactBooleanWorkspace<'a> {
-    let mut retained_workspace = ExactBooleanWorkspace::new(&case.left, &case.right);
-    retained_workspace.graph().unwrap();
-    retained_workspace
-}
-
 fn retained_workspace_for_case<'a>(
     case: &'a BenchCase,
     _request: ExactBooleanRequest,
 ) -> ExactBooleanWorkspace<'a> {
-    retained_graph_workspace_for_case(case)
+    ExactBooleanWorkspace::new(&case.left, &case.right)
 }
 
 fn retained_workspace_and_certification_for_case<'a, T>(

@@ -4477,13 +4477,18 @@ fn exact_contained_face_adjacent_union_is_publicly_replayable() {
 }
 
 #[test]
-fn exact_intersection_graph_rejects_disjoint_bounds_publicly() {
+fn exact_evaluation_preflight_reports_disjoint_bounds_without_retained_pairs() {
     let left = tetra([0, 0, 0]);
     let right = tetra([3, 0, 0]);
 
-    let mut workspace = ExactBooleanWorkspace::new(&left, &right);
-    let graph = workspace.graph().unwrap();
-    assert!(graph.face_pairs.is_empty());
+    let evaluation = exact_boolean_evaluation(
+        &left,
+        &right,
+        ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED),
+    );
+    assert_eq!(evaluation.preflight.retained_face_pairs, 0);
+    assert_eq!(evaluation.preflight.retained_events, 0);
+    evaluation.validate_against_sources(&left, &right).unwrap();
 }
 
 #[test]
