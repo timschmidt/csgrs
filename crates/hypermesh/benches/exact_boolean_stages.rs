@@ -294,7 +294,7 @@ fn run_case(case: &BenchCase) {
         case,
         "workspace_validate_coplanar_volumetric_evidence_from_evaluation",
         || retained_workspace_and_evaluation_for_case(case, request),
-        |(retained_workspace, evaluation)| {
+        |(_retained_workspace, evaluation)| {
             if let Some(evaluation) = evaluation.as_ref() {
                 let report = evaluation
                     .preflight
@@ -308,10 +308,7 @@ fn run_case(case: &BenchCase) {
                 if let Some(report) = report {
                     black_box(
                         report
-                            .validate_against_sources(
-                                retained_workspace.left(),
-                                retained_workspace.right(),
-                            )
+                            .validate_against_sources(&case.left, &case.right)
                             .ok(),
                     );
                 }
@@ -440,10 +437,10 @@ fn run_case(case: &BenchCase) {
         case,
         "attempt_validate_source_replay",
         || retained_workspace_and_arrangement_attempt_for_case(case, request),
-        |(retained_workspace, attempt)| {
+        |(_retained_workspace, attempt)| {
             black_box(
                 attempt
-                    .validate_against_sources(retained_workspace.left(), retained_workspace.right())
+                    .validate_against_sources(&case.left, &case.right)
                     .ok(),
             );
         },
@@ -547,10 +544,10 @@ fn run_case(case: &BenchCase) {
                 evaluation.certifications.refinement.clone()
             })
         },
-        |(retained_workspace, report)| {
+        |(_retained_workspace, report)| {
             black_box(
                 report
-                    .validate_against_sources(retained_workspace.left(), retained_workspace.right())
+                    .validate_against_sources(&case.left, &case.right)
                     .ok(),
             );
         },
@@ -564,10 +561,10 @@ fn run_case(case: &BenchCase) {
                 evaluation.certifications.adjacent_union_completion.clone()
             })
         },
-        |(retained_workspace, report)| {
+        |(_retained_workspace, report)| {
             black_box(
                 report
-                    .validate_against_sources(retained_workspace.left(), retained_workspace.right())
+                    .validate_against_sources(&case.left, &case.right)
                     .ok(),
             );
         },
@@ -581,10 +578,10 @@ fn run_case(case: &BenchCase) {
                 evaluation.certifications.identical.clone()
             })
         },
-        |(retained_workspace, report)| {
+        |(_retained_workspace, report)| {
             black_box(
                 report
-                    .validate_against_sources(retained_workspace.left(), retained_workspace.right())
+                    .validate_against_sources(&case.left, &case.right)
                     .ok(),
             );
         },
@@ -598,10 +595,10 @@ fn run_case(case: &BenchCase) {
                 evaluation.certifications.same_surface.clone()
             })
         },
-        |(retained_workspace, report)| {
+        |(_retained_workspace, report)| {
             black_box(
                 report
-                    .validate_against_sources(retained_workspace.left(), retained_workspace.right())
+                    .validate_against_sources(&case.left, &case.right)
                     .ok(),
             );
         },
@@ -615,10 +612,10 @@ fn run_case(case: &BenchCase) {
                 evaluation.certifications.boundary_touching.clone()
             })
         },
-        |(retained_workspace, report)| {
+        |(_retained_workspace, report)| {
             black_box(
                 report
-                    .validate_against_sources(retained_workspace.left(), retained_workspace.right())
+                    .validate_against_sources(&case.left, &case.right)
                     .ok(),
             );
         },
@@ -632,10 +629,10 @@ fn run_case(case: &BenchCase) {
                 evaluation.certifications.open_surface_disjoint.clone()
             })
         },
-        |(retained_workspace, report)| {
+        |(_retained_workspace, report)| {
             black_box(
                 report
-                    .validate_against_sources(retained_workspace.left(), retained_workspace.right())
+                    .validate_against_sources(&case.left, &case.right)
                     .ok(),
             );
         },
@@ -652,14 +649,11 @@ fn run_case(case: &BenchCase) {
                     .clone()
             })
         },
-        |(retained_workspace, report)| {
+        |(_retained_workspace, report)| {
             if let Some(report) = report.as_ref() {
                 black_box(
                     report
-                        .validate_against_sources(
-                            retained_workspace.left(),
-                            retained_workspace.right(),
-                        )
+                        .validate_against_sources(&case.left, &case.right)
                         .ok(),
                 );
             }
@@ -674,12 +668,12 @@ fn run_case(case: &BenchCase) {
                 evaluation.certifications.winding_readiness.clone()
             })
         },
-        |(retained_workspace, readiness)| {
+        |(_retained_workspace, readiness)| {
             black_box(
                 readiness
                     .validate_against_sources_with_boundary_policy(
-                        retained_workspace.left(),
-                        retained_workspace.right(),
+                        &case.left,
+                        &case.right,
                         request.validation,
                         request.boundary_policy,
                     )
@@ -696,10 +690,10 @@ fn run_case(case: &BenchCase) {
                 evaluation.certifications.planar_arrangement.clone()
             })
         },
-        |(retained_workspace, report)| {
+        |(_retained_workspace, report)| {
             black_box(
                 report
-                    .validate_against_sources(retained_workspace.left(), retained_workspace.right())
+                    .validate_against_sources(&case.left, &case.right)
                     .ok(),
             );
         },
@@ -727,14 +721,11 @@ fn run_case(case: &BenchCase) {
         case,
         "evaluation_validate_source_replay",
         || retained_workspace_and_evaluation_for_case(case, request),
-        |(retained_workspace, evaluation)| {
+        |(_retained_workspace, evaluation)| {
             if let Some(evaluation) = evaluation.as_ref() {
                 black_box(
                     evaluation
-                        .validate_against_sources(
-                            retained_workspace.left(),
-                            retained_workspace.right(),
-                        )
+                        .validate_against_sources(&case.left, &case.right)
                         .ok(),
                 );
             }
@@ -745,13 +736,13 @@ fn run_case(case: &BenchCase) {
         case,
         "result_validate_operation_replay",
         || retained_workspace_and_result_for_case(case, request),
-        |(retained_workspace, result)| {
+        |(_retained_workspace, result)| {
             if let Some(result) = result.as_ref() {
                 black_box(
                     result
                         .validate_operation_against_sources(
-                            retained_workspace.left(),
-                            retained_workspace.right(),
+                            &case.left,
+                            &case.right,
                             request.operation,
                             request.validation,
                             request.boundary_policy,

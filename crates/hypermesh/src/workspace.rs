@@ -52,16 +52,6 @@ impl<'a> ExactBooleanWorkspace<'a> {
         }
     }
 
-    /// Returns the left source mesh.
-    pub fn left(&self) -> &'a ExactMesh {
-        self.left
-    }
-
-    /// Returns the right source mesh.
-    pub fn right(&self) -> &'a ExactMesh {
-        self.right
-    }
-
     /// Returns the exact intersection graph, building it once per workspace.
     pub fn graph(&mut self) -> Result<&ExactIntersectionGraph, MeshError> {
         if self.graph.is_none() {
@@ -799,9 +789,6 @@ mod tests {
         let request =
             ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED);
         let mut workspace = ExactBooleanWorkspace::new(&left, &right);
-
-        assert_eq!(workspace.left(), &left);
-        assert_eq!(workspace.right(), &right);
 
         let first_graph = workspace.graph().unwrap() as *const ExactIntersectionGraph;
         let second_graph = workspace.graph().unwrap() as *const ExactIntersectionGraph;
