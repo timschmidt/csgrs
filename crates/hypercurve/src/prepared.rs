@@ -440,8 +440,9 @@ impl<'a> PreparedCurveStringView2<'a> {
         end_cutter: &PreparedCurveStringView2<'_>,
         policy: &CurvePolicy,
     ) -> CurveResult<CurveStringCurveTrimResult2> {
-        let start_events = self.intersect_prepared_curve_string(start_cutter, policy)?;
-        let end_events = self.intersect_prepared_curve_string(end_cutter, policy)?;
+        let start_events =
+            self.intersect_prepared_curve_string_with_report(start_cutter, policy)?;
+        let end_events = self.intersect_prepared_curve_string_with_report(end_cutter, policy)?;
         self.curve.trim_between_curve_intersection_events(
             start_events,
             end_events,

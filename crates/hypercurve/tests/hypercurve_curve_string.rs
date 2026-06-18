@@ -1081,6 +1081,36 @@ fn curve_string_trim_between_curve_intersections_materializes_line_window() {
         trim.report().query_path(),
         CurveStringCurveTrimQueryPath2::Direct
     );
+    assert_eq!(
+        trim.report().start_intersection_report().query_path(),
+        CurveStringIntersectionQueryPath2::Direct
+    );
+    assert_eq!(
+        trim.report().end_intersection_report().query_path(),
+        CurveStringIntersectionQueryPath2::Direct
+    );
+    assert_eq!(
+        trim.report()
+            .start_intersection_report()
+            .candidate_pair_count(),
+        1
+    );
+    assert_eq!(
+        trim.report()
+            .start_intersection_report()
+            .tested_pair_count(),
+        1
+    );
+    assert_eq!(
+        trim.report()
+            .start_intersection_report()
+            .intersection_count(),
+        1
+    );
+    assert_eq!(
+        trim.report().end_intersection_report().intersection_count(),
+        1
+    );
     assert!(trim.report().blocker().is_none());
     assert_eq!(trim.report().start_hits().len(), 1);
     assert_eq!(trim.report().end_hits().len(), 1);
@@ -1128,6 +1158,34 @@ fn prepared_curve_string_trim_between_curve_intersections_reuses_cached_evidence
         prepared.report().query_path(),
         CurveStringCurveTrimQueryPath2::Prepared
     );
+    assert_eq!(
+        prepared.report().start_intersection_report().query_path(),
+        CurveStringIntersectionQueryPath2::Prepared
+    );
+    assert_eq!(
+        prepared.report().end_intersection_report().query_path(),
+        CurveStringIntersectionQueryPath2::Prepared
+    );
+    assert_eq!(
+        prepared
+            .report()
+            .start_intersection_report()
+            .intersection_count(),
+        direct
+            .report()
+            .start_intersection_report()
+            .intersection_count()
+    );
+    assert_eq!(
+        prepared
+            .report()
+            .end_intersection_report()
+            .intersection_count(),
+        direct
+            .report()
+            .end_intersection_report()
+            .intersection_count()
+    );
     assert_eq!(prepared.report().start_hits(), direct.report().start_hits());
     assert_eq!(prepared.report().end_hits(), direct.report().end_hits());
     assert_eq!(
@@ -1160,6 +1218,20 @@ fn curve_string_trim_between_curve_intersections_reports_ambiguous_cutter_hits()
     assert_eq!(trim.report().blocker(), Some(UncertaintyReason::Boundary));
     assert_eq!(trim.report().start_hits().len(), 2);
     assert_eq!(trim.report().end_hits().len(), 1);
+    assert_eq!(
+        trim.report().start_intersection_report().query_path(),
+        CurveStringIntersectionQueryPath2::Direct
+    );
+    assert_eq!(
+        trim.report()
+            .start_intersection_report()
+            .intersection_count(),
+        2
+    );
+    assert_eq!(
+        trim.report().end_intersection_report().intersection_count(),
+        1
+    );
     assert!(trim.report().trim_report().is_none());
 }
 
