@@ -651,9 +651,11 @@ pub struct CurveStringCurveTrimResult2 {
 #[derive(Clone, Debug, PartialEq)]
 pub struct CurveStringRegionTrimHit2 {
     source_segment_index: usize,
+    source_segment_kind: SegmentKind,
     region_contour_role: RegionContourRole,
     region_contour_index: usize,
     region_segment_index: usize,
+    region_segment_kind: SegmentKind,
     point: Point2,
     source_param: Real,
     region_param: Real,
@@ -3529,6 +3531,11 @@ impl CurveStringRegionTrimHit2 {
         self.source_segment_index
     }
 
+    /// Returns the primitive family of the source curve-string segment.
+    pub const fn source_segment_kind(&self) -> SegmentKind {
+        self.source_segment_kind
+    }
+
     /// Returns whether the hit came from a material or hole contour.
     pub const fn region_contour_role(&self) -> RegionContourRole {
         self.region_contour_role
@@ -3542,6 +3549,11 @@ impl CurveStringRegionTrimHit2 {
     /// Returns the region boundary segment index.
     pub const fn region_segment_index(&self) -> usize {
         self.region_segment_index
+    }
+
+    /// Returns the primitive family of the region boundary segment.
+    pub const fn region_segment_kind(&self) -> SegmentKind {
+        self.region_segment_kind
     }
 
     /// Returns the exact boundary point witness.
@@ -4520,9 +4532,11 @@ fn append_region_trim_hits_from_relation(
         }) => push_region_trim_hit(
             hits,
             source_segment_index,
+            source_segment,
             role,
             contour_index,
             region_segment_index,
+            region_segment,
             point,
             a_param,
             b_param,
@@ -4537,9 +4551,11 @@ fn append_region_trim_hits_from_relation(
                 Ok((source_param, region_param)) => push_region_trim_hit(
                     hits,
                     source_segment_index,
+                    source_segment,
                     role,
                     contour_index,
                     region_segment_index,
+                    region_segment,
                     hit.point,
                     source_param,
                     region_param,
@@ -4553,9 +4569,11 @@ fn append_region_trim_hits_from_relation(
                 Ok((source_param, region_param)) => push_region_trim_hit(
                     hits,
                     source_segment_index,
+                    source_segment,
                     role,
                     contour_index,
                     region_segment_index,
+                    region_segment,
                     hit.point,
                     source_param,
                     region_param,
@@ -4581,9 +4599,11 @@ fn append_region_trim_hits_from_relation(
             push_region_trim_hit(
                 hits,
                 source_segment_index,
+                source_segment,
                 role,
                 contour_index,
                 region_segment_index,
+                region_segment,
                 first.point,
                 source_param,
                 region_param,
@@ -4602,9 +4622,11 @@ fn append_region_trim_hits_from_relation(
             push_region_trim_hit(
                 hits,
                 source_segment_index,
+                source_segment,
                 role,
                 contour_index,
                 region_segment_index,
+                region_segment,
                 second.point,
                 source_param,
                 region_param,
@@ -4626,9 +4648,11 @@ fn append_region_trim_hits_from_relation(
             push_region_trim_hit(
                 hits,
                 source_segment_index,
+                source_segment,
                 role,
                 contour_index,
                 region_segment_index,
+                region_segment,
                 first.point,
                 source_param,
                 region_param,
@@ -4646,9 +4670,11 @@ fn append_region_trim_hits_from_relation(
             push_region_trim_hit(
                 hits,
                 source_segment_index,
+                source_segment,
                 role,
                 contour_index,
                 region_segment_index,
+                region_segment,
                 second.point,
                 source_param,
                 region_param,
@@ -4675,9 +4701,11 @@ fn append_region_trim_hits_from_relation(
 fn push_region_trim_hit(
     hits: &mut Vec<CurveStringRegionTrimHit2>,
     source_segment_index: usize,
+    source_segment: &Segment2,
     role: RegionContourRole,
     contour_index: usize,
     region_segment_index: usize,
+    region_segment: &Segment2,
     point: Point2,
     source_param: Real,
     region_param: Real,
@@ -4685,9 +4713,11 @@ fn push_region_trim_hit(
 ) -> CurveResult<Option<(RetainedTopologyStatus, UncertaintyReason)>> {
     hits.push(CurveStringRegionTrimHit2 {
         source_segment_index,
+        source_segment_kind: source_segment.structural_facts().kind,
         region_contour_role: role,
         region_contour_index: contour_index,
         region_segment_index,
+        region_segment_kind: region_segment.structural_facts().kind,
         point,
         source_param,
         region_param,

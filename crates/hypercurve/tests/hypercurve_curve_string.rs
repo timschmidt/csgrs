@@ -2871,8 +2871,10 @@ fn curve_string_trim_inside_region_materializes_inside_window() {
         .iter()
         .find(|hit| hit.point() == &p(0, 1))
         .expect("left boundary hit is retained");
+    assert_eq!(left_hit.source_segment_kind(), SegmentKind::Line);
     assert_eq!(left_hit.source_param(), &q(1, 4));
     assert_eq!(left_hit.region_segment_index(), 3);
+    assert_eq!(left_hit.region_segment_kind(), SegmentKind::Line);
     assert_eq!(left_hit.region_param(), &q(3, 4));
     let right_hit = trimmed
         .report()
@@ -2880,8 +2882,10 @@ fn curve_string_trim_inside_region_materializes_inside_window() {
         .iter()
         .find(|hit| hit.point() == &p(4, 1))
         .expect("right boundary hit is retained");
+    assert_eq!(right_hit.source_segment_kind(), SegmentKind::Line);
     assert_eq!(right_hit.source_param(), &q(3, 4));
     assert_eq!(right_hit.region_segment_index(), 1);
+    assert_eq!(right_hit.region_segment_kind(), SegmentKind::Line);
     assert_eq!(right_hit.region_param(), &q(1, 4));
     assert_eq!(trimmed.report().interval_reports().len(), 3);
     assert_eq!(
@@ -2982,6 +2986,14 @@ fn prepared_curve_string_trim_inside_region_matches_direct_result() {
     assert_eq!(
         prepared.report().boundary_hits(),
         direct.report().boundary_hits()
+    );
+    assert!(
+        prepared
+            .report()
+            .boundary_hits()
+            .iter()
+            .all(|hit| hit.source_segment_kind() == SegmentKind::Line
+                && hit.region_segment_kind() == SegmentKind::Line)
     );
     assert_eq!(
         prepared.report().interval_reports(),
