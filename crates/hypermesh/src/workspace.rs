@@ -13,7 +13,7 @@ use super::boolean::{
 use super::error::{DiagnosticKind, MeshDiagnostic, MeshError, Severity};
 use super::graph::{ExactIntersectionGraph, build_intersection_graph};
 use super::mesh::ExactMesh;
-use super::regularization::{ExactArrangementBlocker, ExactRegularizationPolicy};
+use super::regularization::ExactRegularizationPolicy;
 use super::reports::{
     ExactBooleanPreflight, ExactBooleanResult, ExactBooleanSupport, ExactReportValidationError,
 };
@@ -112,9 +112,13 @@ impl<'a> ExactBooleanWorkspace<'a> {
         let arrangement = ExactArrangement::from_intersection_graph_with_policy(
             graph, self.left, self.right, policy,
         )?;
-        arrangement
-            .validate()
-            .map_err(workspace_arrangement_blocker_error)?;
+        arrangement.validate().map_err(|blocker| {
+            MeshError::one(MeshDiagnostic::new(
+                Severity::Error,
+                DiagnosticKind::UnsupportedExactOperation,
+                format!("exact boolean workspace arrangement report failed: {blocker:?}"),
+            ))
+        })?;
         self.arrangements.push((policy, arrangement));
         Ok(&self
             .arrangements
@@ -454,14 +458,6 @@ impl<'a> ExactBooleanWorkspace<'a> {
             }
         }
     }
-}
-
-fn workspace_arrangement_blocker_error(blocker: ExactArrangementBlocker) -> MeshError {
-    MeshError::one(MeshDiagnostic::new(
-        Severity::Error,
-        DiagnosticKind::UnsupportedExactOperation,
-        format!("exact boolean workspace arrangement report failed: {blocker:?}"),
-    ))
 }
 
 fn store_replayable_result_or_return(
