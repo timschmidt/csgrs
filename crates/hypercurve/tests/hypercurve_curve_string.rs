@@ -1968,6 +1968,11 @@ fn curve_string_chamfer_line_line_vertex_materializes_exact_segments() {
         chamfer.report().chamfer_segment_kind(),
         Some(SegmentKind::Line)
     );
+    assert_eq!(
+        chamfer.report().chamfer_segment_start_point(),
+        Some(&p(3, 0))
+    );
+    assert_eq!(chamfer.report().chamfer_segment_end_point(), Some(&p(4, 1)));
     assert_eq!(chamfer.report().source_segment_count(), 2);
     assert_eq!(
         chamfer.report().source_segment_kind_counts(),
@@ -2043,6 +2048,11 @@ fn curve_string_chamfer_line_line_vertex_by_points_materializes_exact_segments()
     assert_eq!(chamfer.report().next_trim().param(), &q(1, 4));
     assert_eq!(chamfer.report().previous_cut_point(), Some(&p(3, 0)));
     assert_eq!(chamfer.report().next_cut_point(), Some(&p(4, 1)));
+    assert_eq!(
+        chamfer.report().chamfer_segment_start_point(),
+        Some(&p(3, 0))
+    );
+    assert_eq!(chamfer.report().chamfer_segment_end_point(), Some(&p(4, 1)));
     assert_eq!(chamfer.report().output_segment_count(), Some(3));
     assert_eq!(
         chamfer.report().output_segment_kind_counts(),
@@ -2083,6 +2093,8 @@ fn curve_string_chamfer_line_line_vertex_by_points_reports_off_segment_boundary(
     );
     assert_eq!(chamfer.report().previous_cut_point(), None);
     assert_eq!(chamfer.report().next_cut_point(), None);
+    assert_eq!(chamfer.report().chamfer_segment_start_point(), None);
+    assert_eq!(chamfer.report().chamfer_segment_end_point(), None);
     assert_eq!(chamfer.report().output_segment_count(), None);
     assert_eq!(
         chamfer.report().source_segment_kind_counts(),
@@ -2108,6 +2120,8 @@ fn curve_string_chamfer_line_line_vertex_reports_boundary_parameters() {
     );
     assert_eq!(chamfer.report().chamfer_segment_index(), None);
     assert_eq!(chamfer.report().chamfer_segment_kind(), None);
+    assert_eq!(chamfer.report().chamfer_segment_start_point(), None);
+    assert_eq!(chamfer.report().chamfer_segment_end_point(), None);
     assert_eq!(chamfer.report().previous_cut_point(), None);
     assert_eq!(chamfer.report().next_cut_point(), None);
     assert_eq!(chamfer.report().output_segment_count(), None);
@@ -2133,6 +2147,8 @@ fn curve_string_chamfer_arc_neighbor_reports_unsupported() {
     );
     assert_eq!(chamfer.report().previous_cut_point(), None);
     assert_eq!(chamfer.report().next_cut_point(), None);
+    assert_eq!(chamfer.report().chamfer_segment_start_point(), None);
+    assert_eq!(chamfer.report().chamfer_segment_end_point(), None);
     assert_eq!(chamfer.report().output_segment_count(), None);
 }
 
@@ -2167,6 +2183,8 @@ fn curve_string_fillet_line_line_vertex_materializes_exact_arc() {
         fillet.report().fillet_segment_kind(),
         Some(SegmentKind::Arc)
     );
+    assert_eq!(fillet.report().fillet_segment_start_point(), Some(&p(3, 0)));
+    assert_eq!(fillet.report().fillet_segment_end_point(), Some(&p(4, 1)));
     assert_eq!(fillet.report().source_segment_count(), 2);
     assert_eq!(
         fillet.report().source_segment_kind_counts(),
@@ -2251,6 +2269,8 @@ fn curve_string_fillet_line_line_vertex_by_parameters_materializes_exact_arc() {
     assert_eq!(fillet.report().center(), Some(&p(3, 1)));
     assert_eq!(fillet.report().radius_squared(), Some(&s(1)));
     assert_eq!(fillet.report().fillet_segment_index(), Some(1));
+    assert_eq!(fillet.report().fillet_segment_start_point(), Some(&p(3, 0)));
+    assert_eq!(fillet.report().fillet_segment_end_point(), Some(&p(4, 1)));
     assert_eq!(fillet.report().output_segment_count(), Some(3));
     assert_eq!(
         fillet.report().output_segment_kind_counts(),
@@ -2290,6 +2310,8 @@ fn curve_string_fillet_reports_radius_mismatch_boundary() {
     assert_eq!(fillet.report().center(), Some(&p(3, 2)));
     assert_eq!(fillet.report().previous_tangent_point(), None);
     assert_eq!(fillet.report().next_tangent_point(), None);
+    assert_eq!(fillet.report().fillet_segment_start_point(), None);
+    assert_eq!(fillet.report().fillet_segment_end_point(), None);
     assert_eq!(
         fillet.report().source_segment_kind_counts(),
         SegmentKindCounts { lines: 2, arcs: 0 }
@@ -2312,6 +2334,8 @@ fn curve_string_fillet_reports_wrong_orientation_boundary() {
     assert_eq!(fillet.report().blocker(), Some(UncertaintyReason::Boundary));
     assert_eq!(fillet.report().fillet_segment_index(), None);
     assert_eq!(fillet.report().fillet_segment_kind(), None);
+    assert_eq!(fillet.report().fillet_segment_start_point(), None);
+    assert_eq!(fillet.report().fillet_segment_end_point(), None);
     assert_eq!(fillet.report().previous_tangent_point(), None);
     assert_eq!(fillet.report().next_tangent_point(), None);
     assert_eq!(fillet.report().output_segment_count(), None);
@@ -2330,6 +2354,8 @@ fn curve_string_fillet_reports_boundary_parameters() {
     assert!(fillet.report().status().is_retained_evidence());
     assert_eq!(fillet.report().blocker(), Some(UncertaintyReason::Boundary));
     assert_eq!(fillet.report().fillet_segment_index(), None);
+    assert_eq!(fillet.report().fillet_segment_start_point(), None);
+    assert_eq!(fillet.report().fillet_segment_end_point(), None);
     assert_eq!(fillet.report().previous_tangent_point(), None);
     assert_eq!(fillet.report().next_tangent_point(), None);
     assert_eq!(fillet.report().output_segment_count(), None);

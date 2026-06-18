@@ -489,6 +489,8 @@ pub struct CurveStringChamferReport2 {
     segment_reports: Vec<CurveStringTrimSegmentReport2>,
     chamfer_segment_index: Option<usize>,
     chamfer_segment_kind: Option<SegmentKind>,
+    chamfer_segment_start_point: Option<Point2>,
+    chamfer_segment_end_point: Option<Point2>,
     source_segment_count: usize,
     source_segment_kind_counts: SegmentKindCounts,
     output_segment_count: Option<usize>,
@@ -538,6 +540,8 @@ pub struct CurveStringFilletReport2 {
     segment_reports: Vec<CurveStringTrimSegmentReport2>,
     fillet_segment_index: Option<usize>,
     fillet_segment_kind: Option<SegmentKind>,
+    fillet_segment_start_point: Option<Point2>,
+    fillet_segment_end_point: Option<Point2>,
     source_segment_count: usize,
     source_segment_kind_counts: SegmentKindCounts,
     output_segment_count: Option<usize>,
@@ -1977,11 +1981,13 @@ impl CurveString2 {
                 next_segment_index,
                 previous_trim,
                 next_trim,
-                previous_cut_point: Some(previous_cut_point),
-                next_cut_point: Some(next_cut_point),
+                previous_cut_point: Some(previous_cut_point.clone()),
+                next_cut_point: Some(next_cut_point.clone()),
                 segment_reports,
                 chamfer_segment_index: Some(chamfer_segment_index),
                 chamfer_segment_kind: Some(SegmentKind::Line),
+                chamfer_segment_start_point: Some(previous_cut_point.clone()),
+                chamfer_segment_end_point: Some(next_cut_point.clone()),
                 source_segment_count: self.len(),
                 source_segment_kind_counts: curve_string_segment_kind_counts(self),
                 output_segment_count: Some(output_segment_count),
@@ -2435,6 +2441,8 @@ impl CurveString2 {
                 segment_reports,
                 fillet_segment_index: Some(fillet_segment_index),
                 fillet_segment_kind: Some(SegmentKind::Arc),
+                fillet_segment_start_point: Some((*previous_point).clone()),
+                fillet_segment_end_point: Some((*next_point).clone()),
                 source_segment_count: self.len(),
                 source_segment_kind_counts: curve_string_segment_kind_counts(self),
                 output_segment_count: Some(output_segment_count),
@@ -3293,6 +3301,16 @@ impl CurveStringChamferReport2 {
         self.chamfer_segment_kind
     }
 
+    /// Returns the exact start point of the inserted chamfer segment.
+    pub const fn chamfer_segment_start_point(&self) -> Option<&Point2> {
+        self.chamfer_segment_start_point.as_ref()
+    }
+
+    /// Returns the exact end point of the inserted chamfer segment.
+    pub const fn chamfer_segment_end_point(&self) -> Option<&Point2> {
+        self.chamfer_segment_end_point.as_ref()
+    }
+
     /// Returns the source curve-string segment count captured by this report.
     pub const fn source_segment_count(&self) -> usize {
         self.source_segment_count
@@ -3424,6 +3442,16 @@ impl CurveStringFilletReport2 {
     /// Returns the primitive family of the inserted fillet segment, when materialized.
     pub const fn fillet_segment_kind(&self) -> Option<SegmentKind> {
         self.fillet_segment_kind
+    }
+
+    /// Returns the exact start point of the inserted fillet arc.
+    pub const fn fillet_segment_start_point(&self) -> Option<&Point2> {
+        self.fillet_segment_start_point.as_ref()
+    }
+
+    /// Returns the exact end point of the inserted fillet arc.
+    pub const fn fillet_segment_end_point(&self) -> Option<&Point2> {
+        self.fillet_segment_end_point.as_ref()
     }
 
     /// Returns the source curve-string segment count captured by this report.
@@ -5463,6 +5491,8 @@ fn blocked_chamfer_result(
             segment_reports,
             chamfer_segment_index: None,
             chamfer_segment_kind: None,
+            chamfer_segment_start_point: None,
+            chamfer_segment_end_point: None,
             source_segment_count: curve_string.len(),
             source_segment_kind_counts: curve_string_segment_kind_counts(curve_string),
             output_segment_count: None,
@@ -5505,6 +5535,8 @@ fn blocked_fillet_result(
             segment_reports,
             fillet_segment_index: None,
             fillet_segment_kind: None,
+            fillet_segment_start_point: None,
+            fillet_segment_end_point: None,
             source_segment_count: curve_string.len(),
             source_segment_kind_counts: curve_string_segment_kind_counts(curve_string),
             output_segment_count: None,
