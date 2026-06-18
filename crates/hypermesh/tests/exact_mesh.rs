@@ -46,6 +46,25 @@ fn exact_boolean_result(
     workspace.materialize(request).unwrap()
 }
 
+fn exact_boolean_evaluated_result(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    request: ExactBooleanRequest,
+) -> ExactBooleanResult {
+    let evaluation = exact_boolean_evaluation(left, right, request);
+    evaluation.validate().unwrap();
+    evaluation
+        .validate_materialized_result_against_sources(left, right)
+        .unwrap();
+    assert_eq!(
+        evaluation.materialized_result_freshness_against_sources(left, right),
+        ExactReportFreshness::Current
+    );
+    evaluation
+        .result
+        .expect("certified boolean evaluation should retain materialized result")
+}
+
 fn exact_boolean_materialize_result(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -1023,18 +1042,17 @@ fn exact_mesh_handoff_package_domains_are_publicly_replayable() {
 fn exact_affine_orthogonal_solid_boolean_is_publicly_replayable() {
     let left = skew_affine_box([0, 0, 0], [1, 1, 1]);
     let right = skew_affine_box([2, 0, 0], [3, 1, 1]);
-    let mut workspace = ExactBooleanWorkspace::new(&left, &right);
-
     let operation = ExactBooleanOperation::Union;
-    let result = workspace
-        .materialize(ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED))
-        .unwrap();
+    let result = exact_boolean_evaluated_result(
+        &left,
+        &right,
+        ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
+    );
     assert!(
         result.is_certified_shortcut_for(operation),
         "{operation:?}: {result:?}"
     );
     result.validate().unwrap();
-    result.validate_against_sources(&left, &right).unwrap();
     let mut stale_output = result.clone();
     stale_output.mesh = left.clone();
     assert_ne!(
@@ -1123,7 +1141,7 @@ fn exact_axis_aligned_orthogonal_solid_boolean_is_publicly_replayable() {
             "{operation:?}: {disjoint_replay:?}"
         );
 
-        let result = exact_boolean_result(
+        let result = exact_boolean_evaluated_result(
             &left,
             &right,
             ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
@@ -1133,11 +1151,6 @@ fn exact_axis_aligned_orthogonal_solid_boolean_is_publicly_replayable() {
             "{operation:?}: {result:?}"
         );
         result.validate().unwrap();
-        result.validate_against_sources(&left, &right).unwrap();
-        assert_eq!(
-            result.freshness_against_sources(&left, &right),
-            ExactReportFreshness::Current
-        );
         let mut stale_output = result.clone();
         stale_output.mesh = ExactMesh::from_i64_triangles_with_policy(
             &[0, 0, 0, 1, 0, 0, 0, 1, 0],
