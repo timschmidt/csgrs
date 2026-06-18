@@ -725,6 +725,36 @@ impl MeshArtifactManifest {
 }
 
 impl MeshArtifactReport {
+    /// Return whether this report describes an accepted exact `hypermesh`
+    /// artifact.
+    pub const fn is_hypermesh_exact(&self) -> bool {
+        matches!(self.source_kind, MeshArtifactSourceKind::HypermeshExact)
+    }
+
+    /// Return whether this report describes accepted lossy-float input that
+    /// replayed through exact dyadic coordinates.
+    pub const fn is_hypermesh_lossy_f64_replay(&self) -> bool {
+        matches!(
+            self.source_kind,
+            MeshArtifactSourceKind::HypermeshLossyF64Replay
+        )
+    }
+
+    /// Return whether this report is a solid handoff artifact.
+    pub const fn is_solid_handoff(&self) -> bool {
+        matches!(self.role, MeshArtifactRole::SolidHandoff)
+    }
+
+    /// Return whether this artifact used a lossy primitive-float adapter route.
+    pub const fn used_lossy_float_adapter_route(&self) -> bool {
+        self.numeric_contract.primitive_float_lowering
+            && self.numeric_contract.lossy_adapter_route
+            && matches!(
+                self.numeric_contract.coordinate_evidence,
+                MeshCoordinateEvidence::ExactDyadicFromLossyFloat
+            )
+    }
+
     /// Validate report-internal artifact consistency without producer records.
     ///
     /// A summary report cannot re-check face rows after the manifest has been

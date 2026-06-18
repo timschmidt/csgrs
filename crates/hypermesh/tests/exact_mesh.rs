@@ -6,8 +6,8 @@ use hypermesh::{
     ExactMeshProposalReportError, ExactOutputTriangleOrientation, ExactRegionSelection,
     ExactRegularizationPolicy, ExactReportFreshness, LossyF64MeshInputReadiness,
     LossyF64MeshInputReportValidationError, MeshArtifactBlocker, MeshArtifactFaceRecord,
-    MeshArtifactManifest, MeshArtifactReportError, MeshArtifactRole, MeshArtifactSourceKind,
-    MeshArtifactVertexRecord, MeshCoordinateEvidence, MeshTopologyEvidence, ValidationPolicy,
+    MeshArtifactManifest, MeshArtifactReportError, MeshArtifactVertexRecord, MeshCoordinateEvidence,
+    MeshTopologyEvidence, ValidationPolicy,
 };
 use hyperreal::Real;
 
@@ -741,8 +741,8 @@ fn exact_mesh_proposal_and_artifact_reports_are_publicly_replayable() {
         .unwrap()
         .report();
     artifact.validate().unwrap();
-    assert_eq!(artifact.source_kind, MeshArtifactSourceKind::HypermeshExact);
-    assert_eq!(artifact.role, MeshArtifactRole::SolidHandoff);
+    assert!(artifact.is_hypermesh_exact());
+    assert!(artifact.is_solid_handoff());
     assert!(artifact.validation_handoff_ready, "{:?}", artifact.blockers);
     assert!(artifact.blockers.is_empty());
 
@@ -775,17 +775,9 @@ fn exact_mesh_proposal_and_artifact_reports_are_publicly_replayable() {
         .unwrap()
         .report();
     lossy_artifact.validate().unwrap();
-    assert_eq!(
-        lossy_artifact.source_kind,
-        MeshArtifactSourceKind::HypermeshLossyF64Replay
-    );
+    assert!(lossy_artifact.is_hypermesh_lossy_f64_replay());
     assert!(lossy_artifact.validation_handoff_ready);
-    assert!(lossy_artifact.numeric_contract.primitive_float_lowering);
-    assert!(lossy_artifact.numeric_contract.lossy_adapter_route);
-    assert_eq!(
-        lossy_artifact.numeric_contract.coordinate_evidence,
-        MeshCoordinateEvidence::ExactDyadicFromLossyFloat
-    );
+    assert!(lossy_artifact.used_lossy_float_adapter_route());
 
     let preview = MeshArtifactManifest::sdf_surface_nets_preview("preview", 3, 1).report();
     preview.validate().unwrap();
