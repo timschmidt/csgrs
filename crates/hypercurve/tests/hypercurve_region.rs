@@ -686,6 +686,10 @@ fn prepared_region_classifier_matches_owned_region() {
     assert!(prepared.region_box().is_some());
     assert_eq!(prepared.material_contours().len(), 2);
     assert_eq!(prepared.hole_contours().len(), 1);
+    assert_eq!(prepared.prepared_contour_count(), 3);
+    assert_eq!(prepared.prepared_segment_count(), 12);
+    assert_eq!(prepared.decided_segment_box_count(), 12);
+    assert_eq!(prepared.undecided_segment_box_count(), 0);
 
     for point in [p(1, 1), p(3, 3), p(5, 5), p(11, 1), p(100, 100)] {
         assert_eq!(

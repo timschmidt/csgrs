@@ -156,6 +156,55 @@ fn prepared_curve_string_intersection_report_matches_plain_events() {
 }
 
 #[test]
+fn prepared_curve_string_reports_cached_segment_box_counts() {
+    let curve = CurveString2::try_new(vec![
+        line_segment(0, 0, 2, 0),
+        line_segment(2, 0, 2, 3),
+        line_segment(2, 3, 5, 3),
+    ])
+    .unwrap();
+    let prepared = curve.prepare_topology_queries(&policy());
+
+    assert_eq!(prepared.prepared_segment_count(), 3);
+    assert_eq!(
+        prepared.prepared_segment_count(),
+        prepared.segment_boxes().len()
+    );
+    assert_eq!(
+        prepared.prepared_segment_count(),
+        prepared.prepared_segments().len()
+    );
+    assert_eq!(prepared.decided_segment_box_count(), 3);
+    assert_eq!(prepared.undecided_segment_box_count(), 0);
+    assert!(prepared.curve_box().is_some());
+}
+
+#[test]
+fn prepared_contour_reports_cached_segment_box_counts() {
+    let contour = Contour2::from_bulge_vertices(&[
+        BulgeVertex2::new(p(0, 0), s(0)),
+        BulgeVertex2::new(p(4, 0), s(0)),
+        BulgeVertex2::new(p(4, 3), s(0)),
+        BulgeVertex2::new(p(0, 3), s(0)),
+    ])
+    .unwrap();
+    let prepared = contour.prepare_topology_queries(&policy());
+
+    assert_eq!(prepared.prepared_segment_count(), 4);
+    assert_eq!(
+        prepared.prepared_segment_count(),
+        prepared.segment_boxes().len()
+    );
+    assert_eq!(
+        prepared.prepared_segment_count(),
+        prepared.prepared_segments().len()
+    );
+    assert_eq!(prepared.decided_segment_box_count(), 4);
+    assert_eq!(prepared.undecided_segment_box_count(), 0);
+    assert!(prepared.contour_box().is_some());
+}
+
+#[test]
 fn curve_string_merge_adjacent_collinear_lines_reports_source_runs() {
     let curve = CurveString2::try_new(vec![
         line_segment(0, 0, 2, 0),
