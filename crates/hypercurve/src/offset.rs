@@ -81,8 +81,11 @@ pub enum ContourOffsetStage2 {
 pub struct ContourOffsetReport2 {
     stage: ContourOffsetStage2,
     source_segment_count: usize,
+    source_segment_kind_counts: SegmentKindCounts,
     raw_offset_segment_count: Option<usize>,
+    raw_offset_segment_kind_counts: Option<SegmentKindCounts>,
     output_segment_count: Option<usize>,
+    output_segment_kind_counts: Option<SegmentKindCounts>,
     fill_rule: FillRule,
     status: RetainedTopologyStatus,
     blocker: Option<UncertaintyReason>,
@@ -547,6 +550,7 @@ impl Contour2 {
         policy: &CurvePolicy,
     ) -> CurveResult<ContourOffsetResult2> {
         let source_segment_count = self.len();
+        let source_segment_kind_counts = segment_kind_counts(self.segments());
         let fill_rule = self.fill_rule();
         let offset = match self.offset_left_with_line_joins(distance, policy)? {
             Classification::Decided(offset) => offset,
@@ -554,6 +558,8 @@ impl Contour2 {
                 return Ok(blocked_contour_offset_result(
                     ContourOffsetStage2::OffsetConstruction,
                     source_segment_count,
+                    source_segment_kind_counts,
+                    None,
                     None,
                     fill_rule,
                     retained_status_for_offset_blocker(reason),
@@ -562,6 +568,7 @@ impl Contour2 {
             }
         };
         let raw_offset_segment_count = offset.len();
+        let raw_offset_segment_kind_counts = segment_kind_counts(offset.segments());
 
         match offset.has_self_contacts(policy)? {
             Classification::Decided(false) => Ok(ContourOffsetResult2 {
@@ -569,8 +576,11 @@ impl Contour2 {
                 report: ContourOffsetReport2 {
                     stage: ContourOffsetStage2::SelfContactValidation,
                     source_segment_count,
+                    source_segment_kind_counts,
                     raw_offset_segment_count: Some(raw_offset_segment_count),
+                    raw_offset_segment_kind_counts: Some(raw_offset_segment_kind_counts),
                     output_segment_count: Some(raw_offset_segment_count),
+                    output_segment_kind_counts: Some(raw_offset_segment_kind_counts),
                     fill_rule,
                     status: RetainedTopologyStatus::NativeExact,
                     blocker: None,
@@ -579,7 +589,9 @@ impl Contour2 {
             Classification::Decided(true) => Ok(blocked_contour_offset_result(
                 ContourOffsetStage2::SelfContactValidation,
                 source_segment_count,
+                source_segment_kind_counts,
                 Some(raw_offset_segment_count),
+                Some(raw_offset_segment_kind_counts),
                 fill_rule,
                 RetainedTopologyStatus::Unsupported,
                 UncertaintyReason::Unsupported,
@@ -587,7 +599,9 @@ impl Contour2 {
             Classification::Uncertain(reason) => Ok(blocked_contour_offset_result(
                 ContourOffsetStage2::SelfContactValidation,
                 source_segment_count,
+                source_segment_kind_counts,
                 Some(raw_offset_segment_count),
+                Some(raw_offset_segment_kind_counts),
                 fill_rule,
                 retained_status_for_offset_blocker(reason),
                 reason,
@@ -607,14 +621,29 @@ impl ContourOffsetReport2 {
         self.source_segment_count
     }
 
+    /// Returns primitive-family counts for the source contour.
+    pub const fn source_segment_kind_counts(&self) -> SegmentKindCounts {
+        self.source_segment_kind_counts
+    }
+
     /// Returns the raw joined offset segment count before self-contact rejection.
     pub const fn raw_offset_segment_count(&self) -> Option<usize> {
         self.raw_offset_segment_count
     }
 
+    /// Returns primitive-family counts for the raw joined contour offset.
+    pub const fn raw_offset_segment_kind_counts(&self) -> Option<SegmentKindCounts> {
+        self.raw_offset_segment_kind_counts
+    }
+
     /// Returns output segment count when the checked offset materialized.
     pub const fn output_segment_count(&self) -> Option<usize> {
         self.output_segment_count
+    }
+
+    /// Returns primitive-family counts for the checked materialized contour offset.
+    pub const fn output_segment_kind_counts(&self) -> Option<SegmentKindCounts> {
+        self.output_segment_kind_counts
     }
 
     /// Returns the fill rule retained from the source contour.
@@ -812,7 +841,9 @@ fn blocked_curve_string_offset_result(
 fn blocked_contour_offset_result(
     stage: ContourOffsetStage2,
     source_segment_count: usize,
+    source_segment_kind_counts: SegmentKindCounts,
     raw_offset_segment_count: Option<usize>,
+    raw_offset_segment_kind_counts: Option<SegmentKindCounts>,
     fill_rule: FillRule,
     status: RetainedTopologyStatus,
     blocker: UncertaintyReason,
@@ -822,8 +853,11 @@ fn blocked_contour_offset_result(
         report: ContourOffsetReport2 {
             stage,
             source_segment_count,
+            source_segment_kind_counts,
             raw_offset_segment_count,
+            raw_offset_segment_kind_counts,
             output_segment_count: None,
+            output_segment_kind_counts: None,
             fill_rule,
             status,
             blocker: Some(blocker),

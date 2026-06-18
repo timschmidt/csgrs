@@ -814,8 +814,20 @@ fn contour_checked_offset_report_materializes_simple_rectangle() {
         ContourOffsetStage2::SelfContactValidation
     );
     assert_eq!(offset.report().source_segment_count(), 4);
+    assert_eq!(
+        offset.report().source_segment_kind_counts(),
+        SegmentKindCounts { lines: 4, arcs: 0 }
+    );
     assert_eq!(offset.report().raw_offset_segment_count(), Some(4));
+    assert_eq!(
+        offset.report().raw_offset_segment_kind_counts(),
+        Some(SegmentKindCounts { lines: 4, arcs: 0 })
+    );
     assert_eq!(offset.report().output_segment_count(), Some(4));
+    assert_eq!(
+        offset.report().output_segment_kind_counts(),
+        Some(SegmentKindCounts { lines: 4, arcs: 0 })
+    );
     assert_eq!(offset.report().fill_rule(), FillRule::NonZero);
     assert_eq!(offset.report().blocker(), None);
     assert_eq!(offset.contour().unwrap().len(), 4);
@@ -858,8 +870,17 @@ fn contour_checked_offset_report_blocks_self_contacting_result() {
         ContourOffsetStage2::SelfContactValidation
     );
     assert_eq!(offset.report().source_segment_count(), 4);
+    assert_eq!(
+        offset.report().source_segment_kind_counts(),
+        SegmentKindCounts { lines: 4, arcs: 0 }
+    );
     assert_eq!(offset.report().raw_offset_segment_count(), Some(4));
+    assert_eq!(
+        offset.report().raw_offset_segment_kind_counts(),
+        Some(SegmentKindCounts { lines: 4, arcs: 0 })
+    );
     assert_eq!(offset.report().output_segment_count(), None);
+    assert_eq!(offset.report().output_segment_kind_counts(), None);
     assert_eq!(offset.report().fill_rule(), FillRule::NonZero);
     assert_eq!(
         offset.report().blocker(),
