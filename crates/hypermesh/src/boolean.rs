@@ -15640,7 +15640,7 @@ mod tests {
             &left,
             &right,
         );
-        assert!(union.is_identical_shortcut_for(ExactBooleanOperation::Union));
+        assert!(union.is_certified_shortcut_for(ExactBooleanOperation::Union));
         union
             .validate_operation_against_sources(
                 &left,

@@ -2643,7 +2643,7 @@ fn exact_coplanar_mesh_overlay_arrangement_is_publicly_replayable() {
         ),
     );
     assert!(
-        identical_result.is_identical_shortcut_for(ExactBooleanOperation::Union),
+        identical_result.is_certified_shortcut_for(ExactBooleanOperation::Union),
         "{identical_result:?}"
     );
 }
@@ -5152,7 +5152,7 @@ fn trivial_boolean_shortcuts_are_publicly_replayable() {
             &disjoint_solid,
             operation,
             ValidationPolicy::CLOSED,
-            ExactBooleanResult::is_empty_operand_shortcut_for,
+            |result, operation| result.is_certified_shortcut_for(operation),
         );
         let empty_evaluation = exact_boolean_evaluation(
             &empty,
@@ -5188,7 +5188,7 @@ fn trivial_boolean_shortcuts_are_publicly_replayable() {
             &open_disjoint_left,
             operation,
             ValidationPolicy::CLOSED,
-            ExactBooleanResult::is_empty_operand_shortcut_for,
+            |result, operation| result.is_certified_shortcut_for(operation),
         );
         assert!(empty_open_result.mesh.triangles().is_empty());
         assert!(empty_open_result.mesh.facts().mesh.closed_manifold);
@@ -5201,7 +5201,7 @@ fn trivial_boolean_shortcuts_are_publicly_replayable() {
         assert_eq!(replayed_empty_open.kind, empty_open_result.kind);
         assert!(replayed_empty_open.mesh.triangles().is_empty());
         assert!(
-            replayed_empty_open.is_empty_operand_shortcut_for(operation),
+            replayed_empty_open.is_certified_shortcut_for(operation),
             "{operation:?}: {replayed_empty_open:?}"
         );
 
@@ -5210,7 +5210,7 @@ fn trivial_boolean_shortcuts_are_publicly_replayable() {
             &empty,
             ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
         );
-        assert!(open_empty_result.is_empty_operand_shortcut_for(operation));
+        assert!(open_empty_result.is_certified_shortcut_for(operation));
         assert!(open_empty_result.mesh.triangles().is_empty());
         assert!(open_empty_result.mesh.facts().mesh.closed_manifold);
         open_empty_result
@@ -5277,7 +5277,7 @@ fn trivial_boolean_shortcuts_are_publicly_replayable() {
             &open_same_surface_right,
             operation,
             ValidationPolicy::ALLOW_BOUNDARY,
-            ExactBooleanResult::is_identical_shortcut_for,
+            |result, operation| result.is_certified_shortcut_for(operation),
         );
         let identical_evaluation = exact_boolean_evaluation(
             &open_identical_left,
@@ -5527,7 +5527,7 @@ fn trivial_boolean_shortcuts_are_publicly_replayable() {
         ),
     );
     assert!(
-        identical_replay.is_identical_shortcut_for(ExactBooleanOperation::Union),
+        identical_replay.is_certified_shortcut_for(ExactBooleanOperation::Union),
         "{identical_replay:?}"
     );
     let closed_disjoint = exact_boolean_result(

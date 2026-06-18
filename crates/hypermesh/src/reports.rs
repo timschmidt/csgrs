@@ -830,19 +830,9 @@ impl ExactBooleanResult {
         self.is_shortcut_for(operation, shortcut)
     }
 
-    /// Return whether this result is the exact empty-operand shortcut.
-    pub fn is_empty_operand_shortcut_for(&self, operation: ExactBooleanOperation) -> bool {
-        self.is_shortcut_for(operation, ExactBooleanShortcutKind::EmptyOperand)
-    }
-
     /// Return whether this result is the certified disjoint-bounds shortcut.
     pub fn is_bounds_disjoint_shortcut_for(&self, operation: ExactBooleanOperation) -> bool {
         self.is_shortcut_for(operation, ExactBooleanShortcutKind::BoundsDisjoint)
-    }
-
-    /// Return whether this result is the exact identical-mesh shortcut.
-    pub fn is_identical_shortcut_for(&self, operation: ExactBooleanOperation) -> bool {
-        self.is_shortcut_for(operation, ExactBooleanShortcutKind::Identical)
     }
 
     /// Return whether this result is the exact same-surface shortcut.
