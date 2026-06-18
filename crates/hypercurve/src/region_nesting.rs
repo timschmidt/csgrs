@@ -131,8 +131,12 @@ pub struct RegionLineSegmentRegionBuildReport2 {
     split_output_segment_count: Option<usize>,
     split_blocker_first_source_segment_index: Option<usize>,
     split_blocker_first_source_segment_kind: Option<SegmentKind>,
+    split_blocker_first_source_start_point: Option<Point2>,
+    split_blocker_first_source_end_point: Option<Point2>,
     split_blocker_second_source_segment_index: Option<usize>,
     split_blocker_second_source_segment_kind: Option<SegmentKind>,
+    split_blocker_second_source_start_point: Option<Point2>,
+    split_blocker_second_source_end_point: Option<Point2>,
     endpoint_graph_endpoint_count: Option<usize>,
     endpoint_graph_structural_bucket_count: Option<usize>,
     endpoint_graph_structural_singleton_bucket_count: Option<usize>,
@@ -352,12 +356,24 @@ impl Region2 {
                 split_blocker_first_source_segment_kind: arranged
                     .report
                     .blocker_first_source_segment_kind,
+                split_blocker_first_source_start_point: arranged
+                    .report
+                    .blocker_first_source_start_point,
+                split_blocker_first_source_end_point: arranged
+                    .report
+                    .blocker_first_source_end_point,
                 split_blocker_second_source_segment_index: arranged
                     .report
                     .blocker_second_source_segment_index,
                 split_blocker_second_source_segment_kind: arranged
                     .report
                     .blocker_second_source_segment_kind,
+                split_blocker_second_source_start_point: arranged
+                    .report
+                    .blocker_second_source_start_point,
+                split_blocker_second_source_end_point: arranged
+                    .report
+                    .blocker_second_source_end_point,
                 endpoint_graph_endpoint_count: Some(endpoint_graph.endpoint_count),
                 endpoint_graph_structural_bucket_count: Some(
                     endpoint_graph.structural_bucket_count,
@@ -540,12 +556,24 @@ impl Region2 {
                 split_blocker_first_source_segment_kind: arranged
                     .report
                     .blocker_first_source_segment_kind,
+                split_blocker_first_source_start_point: arranged
+                    .report
+                    .blocker_first_source_start_point,
+                split_blocker_first_source_end_point: arranged
+                    .report
+                    .blocker_first_source_end_point,
                 split_blocker_second_source_segment_index: arranged
                     .report
                     .blocker_second_source_segment_index,
                 split_blocker_second_source_segment_kind: arranged
                     .report
                     .blocker_second_source_segment_kind,
+                split_blocker_second_source_start_point: arranged
+                    .report
+                    .blocker_second_source_start_point,
+                split_blocker_second_source_end_point: arranged
+                    .report
+                    .blocker_second_source_end_point,
                 endpoint_graph_endpoint_count: Some(endpoint_graph.endpoint_count),
                 endpoint_graph_structural_bucket_count: Some(
                     endpoint_graph.structural_bucket_count,
@@ -1037,6 +1065,16 @@ impl RegionLineSegmentRegionBuildReport2 {
         self.split_blocker_first_source_segment_kind
     }
 
+    /// Returns the exact start point of the first source segment in a split-stage blocker.
+    pub const fn split_blocker_first_source_start_point(&self) -> Option<&Point2> {
+        self.split_blocker_first_source_start_point.as_ref()
+    }
+
+    /// Returns the exact end point of the first source segment in a split-stage blocker.
+    pub const fn split_blocker_first_source_end_point(&self) -> Option<&Point2> {
+        self.split_blocker_first_source_end_point.as_ref()
+    }
+
     /// Returns the second source segment in a split-stage blocker, when known.
     pub const fn split_blocker_second_source_segment_index(&self) -> Option<usize> {
         self.split_blocker_second_source_segment_index
@@ -1045,6 +1083,16 @@ impl RegionLineSegmentRegionBuildReport2 {
     /// Returns the primitive family of the second source segment in a split-stage blocker.
     pub const fn split_blocker_second_source_segment_kind(&self) -> Option<SegmentKind> {
         self.split_blocker_second_source_segment_kind
+    }
+
+    /// Returns the exact start point of the second source segment in a split-stage blocker.
+    pub const fn split_blocker_second_source_start_point(&self) -> Option<&Point2> {
+        self.split_blocker_second_source_start_point.as_ref()
+    }
+
+    /// Returns the exact end point of the second source segment in a split-stage blocker.
+    pub const fn split_blocker_second_source_end_point(&self) -> Option<&Point2> {
+        self.split_blocker_second_source_end_point.as_ref()
     }
 
     /// Returns arranged endpoint count validated before ring traversal.
@@ -1222,8 +1270,12 @@ struct LineSegmentSplitReportParts {
     output_segment_count: Option<usize>,
     blocker_first_source_segment_index: Option<usize>,
     blocker_first_source_segment_kind: Option<SegmentKind>,
+    blocker_first_source_start_point: Option<Point2>,
+    blocker_first_source_end_point: Option<Point2>,
     blocker_second_source_segment_index: Option<usize>,
     blocker_second_source_segment_kind: Option<SegmentKind>,
+    blocker_second_source_start_point: Option<Point2>,
+    blocker_second_source_end_point: Option<Point2>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -1600,8 +1652,12 @@ fn arrange_line_segments_at_point_intersections(
                             &mut report,
                             first_index,
                             SegmentKind::Line,
+                            first.start(),
+                            first.end(),
                             second_index,
                             SegmentKind::Line,
+                            second.start(),
+                            second.end(),
                         );
                         return Ok(Err((report, UncertaintyReason::Ordering)));
                     }
@@ -1611,8 +1667,12 @@ fn arrange_line_segments_at_point_intersections(
                         &mut report,
                         first_index,
                         SegmentKind::Line,
+                        first.start(),
+                        first.end(),
                         second_index,
                         SegmentKind::Line,
+                        second.start(),
+                        second.end(),
                     );
                     return Ok(Err((report, UncertaintyReason::Boundary)));
                 }
@@ -1621,8 +1681,12 @@ fn arrange_line_segments_at_point_intersections(
                         &mut report,
                         first_index,
                         SegmentKind::Line,
+                        first.start(),
+                        first.end(),
                         second_index,
                         SegmentKind::Line,
+                        second.start(),
+                        second.end(),
                     );
                     return Ok(Err((report, reason)));
                 }
@@ -1697,14 +1761,22 @@ fn set_split_blocker_pair(
     report: &mut LineSegmentSplitReportParts,
     first_source_segment_index: usize,
     first_source_segment_kind: SegmentKind,
+    first_source_start_point: &Point2,
+    first_source_end_point: &Point2,
     second_source_segment_index: usize,
     second_source_segment_kind: SegmentKind,
+    second_source_start_point: &Point2,
+    second_source_end_point: &Point2,
 ) {
     if report.blocker_first_source_segment_index.is_none() {
         report.blocker_first_source_segment_index = Some(first_source_segment_index);
         report.blocker_first_source_segment_kind = Some(first_source_segment_kind);
+        report.blocker_first_source_start_point = Some(first_source_start_point.clone());
+        report.blocker_first_source_end_point = Some(first_source_end_point.clone());
         report.blocker_second_source_segment_index = Some(second_source_segment_index);
         report.blocker_second_source_segment_kind = Some(second_source_segment_kind);
+        report.blocker_second_source_start_point = Some(second_source_start_point.clone());
+        report.blocker_second_source_end_point = Some(second_source_end_point.clone());
     }
 }
 
@@ -1781,8 +1853,12 @@ fn arrange_native_segments_at_point_intersections(
                                 &mut report,
                                 first_index,
                                 first.structural_facts().kind,
+                                first.start(),
+                                first.end(),
                                 second_index,
                                 second.structural_facts().kind,
+                                second.start(),
+                                second.end(),
                             );
                             return Ok(Err((report, UncertaintyReason::Ordering)));
                         }
@@ -1793,8 +1869,12 @@ fn arrange_native_segments_at_point_intersections(
                         &mut report,
                         first_index,
                         first.structural_facts().kind,
+                        first.start(),
+                        first.end(),
                         second_index,
                         second.structural_facts().kind,
+                        second.start(),
+                        second.end(),
                     );
                     return Ok(Err((report, UncertaintyReason::Boundary)));
                 }
@@ -1803,8 +1883,12 @@ fn arrange_native_segments_at_point_intersections(
                         &mut report,
                         first_index,
                         first.structural_facts().kind,
+                        first.start(),
+                        first.end(),
                         second_index,
                         second.structural_facts().kind,
+                        second.start(),
+                        second.end(),
                     );
                     return Ok(Err((report, reason)));
                 }
@@ -2558,8 +2642,12 @@ fn blocked_line_segment_region_report(
         split_output_segment_count: split_report.output_segment_count,
         split_blocker_first_source_segment_index: split_report.blocker_first_source_segment_index,
         split_blocker_first_source_segment_kind: split_report.blocker_first_source_segment_kind,
+        split_blocker_first_source_start_point: split_report.blocker_first_source_start_point,
+        split_blocker_first_source_end_point: split_report.blocker_first_source_end_point,
         split_blocker_second_source_segment_index: split_report.blocker_second_source_segment_index,
         split_blocker_second_source_segment_kind: split_report.blocker_second_source_segment_kind,
+        split_blocker_second_source_start_point: split_report.blocker_second_source_start_point,
+        split_blocker_second_source_end_point: split_report.blocker_second_source_end_point,
         endpoint_graph_endpoint_count: endpoint_graph_report
             .as_ref()
             .map(|report| report.endpoint_count),

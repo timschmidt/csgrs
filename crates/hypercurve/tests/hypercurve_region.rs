@@ -360,8 +360,12 @@ fn unordered_line_segments_build_region_with_source_provenance() {
     assert_eq!(report.split_output_segment_count(), Some(4));
     assert_eq!(report.split_blocker_first_source_segment_index(), None);
     assert_eq!(report.split_blocker_first_source_segment_kind(), None);
+    assert_eq!(report.split_blocker_first_source_start_point(), None);
+    assert_eq!(report.split_blocker_first_source_end_point(), None);
     assert_eq!(report.split_blocker_second_source_segment_index(), None);
     assert_eq!(report.split_blocker_second_source_segment_kind(), None);
+    assert_eq!(report.split_blocker_second_source_start_point(), None);
+    assert_eq!(report.split_blocker_second_source_end_point(), None);
     assert_eq!(report.endpoint_graph_endpoint_count(), Some(8));
     assert_eq!(report.endpoint_graph_structural_bucket_count(), Some(4));
     assert_eq!(
@@ -579,10 +583,26 @@ fn unordered_line_segments_report_overlap_source_pair_blocker() {
         report.split_blocker_first_source_segment_kind(),
         Some(SegmentKind::Line)
     );
+    assert_eq!(
+        report.split_blocker_first_source_start_point(),
+        Some(&p(0, 0))
+    );
+    assert_eq!(
+        report.split_blocker_first_source_end_point(),
+        Some(&p(4, 0))
+    );
     assert_eq!(report.split_blocker_second_source_segment_index(), Some(1));
     assert_eq!(
         report.split_blocker_second_source_segment_kind(),
         Some(SegmentKind::Line)
+    );
+    assert_eq!(
+        report.split_blocker_second_source_start_point(),
+        Some(&p(2, 0))
+    );
+    assert_eq!(
+        report.split_blocker_second_source_end_point(),
+        Some(&p(6, 0))
     );
     assert_eq!(report.arranged_source_reports().len(), 0);
     assert_eq!(report.output_boundary_segment_kind_counts(), None);
@@ -626,8 +646,12 @@ fn unordered_native_segments_build_line_arc_region_with_source_provenance() {
     assert_eq!(report.split_output_segment_count(), Some(2));
     assert_eq!(report.split_blocker_first_source_segment_index(), None);
     assert_eq!(report.split_blocker_first_source_segment_kind(), None);
+    assert_eq!(report.split_blocker_first_source_start_point(), None);
+    assert_eq!(report.split_blocker_first_source_end_point(), None);
     assert_eq!(report.split_blocker_second_source_segment_index(), None);
     assert_eq!(report.split_blocker_second_source_segment_kind(), None);
+    assert_eq!(report.split_blocker_second_source_start_point(), None);
+    assert_eq!(report.split_blocker_second_source_end_point(), None);
     assert_eq!(report.endpoint_graph_endpoint_count(), Some(4));
     assert_eq!(report.endpoint_graph_structural_bucket_count(), Some(2));
     assert_eq!(
@@ -761,10 +785,26 @@ fn unordered_native_segments_report_arc_overlap_boundary_blocker() {
         report.split_blocker_first_source_segment_kind(),
         Some(SegmentKind::Arc)
     );
+    assert_eq!(
+        report.split_blocker_first_source_start_point(),
+        Some(&p(0, 0))
+    );
+    assert_eq!(
+        report.split_blocker_first_source_end_point(),
+        Some(&p(4, 0))
+    );
     assert_eq!(report.split_blocker_second_source_segment_index(), Some(1));
     assert_eq!(
         report.split_blocker_second_source_segment_kind(),
         Some(SegmentKind::Arc)
+    );
+    assert_eq!(
+        report.split_blocker_second_source_start_point(),
+        Some(&p(0, 0))
+    );
+    assert_eq!(
+        report.split_blocker_second_source_end_point(),
+        Some(&p(4, 0))
     );
     assert_eq!(report.endpoint_graph_endpoint_count(), None);
     assert_eq!(report.endpoint_graph_structural_bucket_count(), None);
