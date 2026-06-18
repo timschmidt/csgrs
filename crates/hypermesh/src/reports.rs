@@ -829,23 +829,6 @@ impl ExactBooleanResult {
         self.is_shortcut_for(operation, shortcut)
     }
 
-    /// Return whether this result is a closed-boundary-touching shortcut.
-    pub fn is_closed_boundary_touching_shortcut_for(
-        &self,
-        operation: ExactBooleanOperation,
-    ) -> bool {
-        matches!(
-            self.kind,
-            ExactBooleanResultKind::CertifiedShortcut {
-                operation: result_operation,
-                shortcut:
-                    ExactBooleanShortcutKind::ClosedBoundaryTouchingUnion
-                    | ExactBooleanShortcutKind::ClosedBoundaryTouchingIntersection
-                    | ExactBooleanShortcutKind::ClosedBoundaryTouchingDifference,
-            } if result_operation == operation
-        )
-    }
-
     /// Return whether this result is the arrangement/cell-complex shortcut.
     pub fn is_arrangement_cell_complex_shortcut_for(
         &self,

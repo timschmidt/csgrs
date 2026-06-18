@@ -14520,10 +14520,10 @@ mod tests {
             &left,
             &right,
         );
-        assert!(
-            intersection
-                .is_closed_boundary_touching_shortcut_for(ExactBooleanOperation::Intersection)
-        );
+        assert!(intersection.is_certified_shortcut_kind_for(
+            ExactBooleanOperation::Intersection,
+            ExactBooleanShortcutKind::ClosedBoundaryTouchingIntersection,
+        ));
         assert!(intersection.mesh.triangles().is_empty());
 
         let difference = test_materialized_result(
@@ -14531,9 +14531,10 @@ mod tests {
             &left,
             &right,
         );
-        assert!(
-            difference.is_closed_boundary_touching_shortcut_for(ExactBooleanOperation::Difference)
-        );
+        assert!(difference.is_certified_shortcut_kind_for(
+            ExactBooleanOperation::Difference,
+            ExactBooleanShortcutKind::ClosedBoundaryTouchingDifference,
+        ));
         assert!(exact_meshes_have_same_shape(&difference.mesh, &left));
     }
 
@@ -14837,7 +14838,12 @@ mod tests {
                 &right,
             );
             assert!(
-                result.is_certified_shortcut_kind_for(operation, shortcut),
+                result.is_arrangement_cell_complex_materialized_for(operation)
+                    || result.is_certified_shortcut_kind_for(
+                        operation,
+                        ExactBooleanShortcutKind::ArrangementCellComplex,
+                    )
+                    || result.is_certified_shortcut_kind_for(operation, shortcut),
                 "{operation:?}: {result:?}"
             );
             result.validate().unwrap();

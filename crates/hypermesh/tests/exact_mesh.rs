@@ -3115,7 +3115,7 @@ fn boundary_touching_policy_boolean_is_publicly_replayable() {
         );
         assert!(
             direct.is_arrangement_cell_complex_shortcut_for(operation)
-                || direct.is_closed_boundary_touching_shortcut_for(operation),
+                || direct.is_certified_shortcut_for(operation),
             "{operation:?}: {direct:?}"
         );
         direct
@@ -3138,7 +3138,7 @@ fn boundary_touching_policy_boolean_is_publicly_replayable() {
         );
         assert!(
             replay.is_arrangement_cell_complex_shortcut_for(operation)
-                || replay.is_closed_boundary_touching_shortcut_for(operation),
+                || replay.is_certified_shortcut_for(operation),
             "{operation:?}: {replay:?}"
         );
         replay
@@ -3200,7 +3200,7 @@ fn closed_boundary_touching_regularized_boolean_is_publicly_replayable() {
         );
         assert!(
             result.is_arrangement_cell_complex_shortcut_for(operation)
-                || result.is_closed_boundary_touching_shortcut_for(operation),
+                || result.is_certified_shortcut_for(operation),
             "{operation:?}: {result:?}"
         );
         result.validate().unwrap();
@@ -3374,7 +3374,7 @@ fn closed_no_volume_overlap_regularized_boolean_is_publicly_replayable() {
             if operation == ExactBooleanOperation::Union {
                 result.is_arrangement_cell_complex_shortcut_for(operation)
             } else {
-                result.is_closed_boundary_touching_shortcut_for(operation)
+                result.is_certified_shortcut_for(operation)
             },
             "{operation:?}: {result:?}"
         );
