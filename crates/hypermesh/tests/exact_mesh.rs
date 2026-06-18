@@ -1205,7 +1205,7 @@ fn exact_affine_orthogonal_solid_boolean_is_publicly_replayable() {
             ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
         );
         assert!(
-            disjoint_replay.is_bounds_disjoint_shortcut_for(operation),
+            disjoint_replay.is_certified_shortcut_for(operation),
             "{operation:?}: {disjoint_replay:?}"
         );
 
@@ -1324,7 +1324,7 @@ fn exact_axis_aligned_orthogonal_solid_boolean_is_publicly_replayable() {
             ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
         );
         assert!(
-            disjoint_replay.is_bounds_disjoint_shortcut_for(operation),
+            disjoint_replay.is_certified_shortcut_for(operation),
             "{operation:?}: {disjoint_replay:?}"
         );
 
@@ -2992,7 +2992,7 @@ fn mixed_dimensional_regularized_solid_boolean_is_publicly_replayable() {
                 ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
             );
             assert!(
-                boundary_result.is_bounds_disjoint_shortcut_for(operation),
+                boundary_result.is_certified_shortcut_for(operation),
                 "{operation:?}: {boundary_result:?}"
             );
             boundary_result
@@ -5010,7 +5010,7 @@ fn exact_boolean_public_shortcuts_handle_disjoint_operands() {
         ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED),
     );
     assert!(
-        union.is_bounds_disjoint_shortcut_for(ExactBooleanOperation::Union),
+        union.is_certified_shortcut_for(ExactBooleanOperation::Union),
         "{union:?}"
     );
     union.mesh.validate_retained_state().unwrap();
@@ -5236,7 +5236,7 @@ fn trivial_boolean_shortcuts_are_publicly_replayable() {
             &solid,
             operation,
             ValidationPolicy::CLOSED,
-            ExactBooleanResult::is_bounds_disjoint_shortcut_for,
+            |result, operation| result.is_certified_shortcut_for(operation),
         );
         let disjoint_evaluation = exact_boolean_evaluation(
             &solid,
@@ -5346,7 +5346,7 @@ fn trivial_boolean_shortcuts_are_publicly_replayable() {
             &open_disjoint_right,
             operation,
             ValidationPolicy::ALLOW_BOUNDARY,
-            ExactBooleanResult::is_same_surface_shortcut_for,
+            |result, operation| result.is_certified_shortcut_for(operation),
         );
         let same_surface_evaluation = exact_boolean_evaluation(
             &open_identical_left,
@@ -5515,7 +5515,7 @@ fn trivial_boolean_shortcuts_are_publicly_replayable() {
         ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED),
     );
     assert!(
-        solid_disjoint.is_bounds_disjoint_shortcut_for(ExactBooleanOperation::Union),
+        solid_disjoint.is_certified_shortcut_for(ExactBooleanOperation::Union),
         "{solid_disjoint:?}"
     );
     let identical_replay = exact_boolean_result(
@@ -5536,7 +5536,7 @@ fn trivial_boolean_shortcuts_are_publicly_replayable() {
         ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED),
     );
     assert!(
-        closed_disjoint.is_bounds_disjoint_shortcut_for(ExactBooleanOperation::Union),
+        closed_disjoint.is_certified_shortcut_for(ExactBooleanOperation::Union),
         "{closed_disjoint:?}"
     );
 }
@@ -5662,7 +5662,7 @@ fn closed_same_surface_boolean_is_publicly_replayable() {
         ),
     );
     assert!(
-        open_same_surface.is_same_surface_shortcut_for(ExactBooleanOperation::Union),
+        open_same_surface.is_certified_shortcut_for(ExactBooleanOperation::Union),
         "{open_same_surface:?}"
     );
     let stale_replay = exact_boolean_result(
@@ -5671,7 +5671,7 @@ fn closed_same_surface_boolean_is_publicly_replayable() {
         ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED),
     );
     assert!(
-        stale_replay.is_bounds_disjoint_shortcut_for(ExactBooleanOperation::Union),
+        stale_replay.is_certified_shortcut_for(ExactBooleanOperation::Union),
         "{stale_replay:?}"
     );
 

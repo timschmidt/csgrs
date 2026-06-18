@@ -830,16 +830,6 @@ impl ExactBooleanResult {
         self.is_shortcut_for(operation, shortcut)
     }
 
-    /// Return whether this result is the certified disjoint-bounds shortcut.
-    pub fn is_bounds_disjoint_shortcut_for(&self, operation: ExactBooleanOperation) -> bool {
-        self.is_shortcut_for(operation, ExactBooleanShortcutKind::BoundsDisjoint)
-    }
-
-    /// Return whether this result is the exact same-surface shortcut.
-    pub fn is_same_surface_shortcut_for(&self, operation: ExactBooleanOperation) -> bool {
-        self.is_shortcut_for(operation, ExactBooleanShortcutKind::SameSurface)
-    }
-
     /// Return whether this result is the mixed-dimensional regularized-solid shortcut.
     pub fn is_mixed_dimensional_regularized_solid_shortcut_for(
         &self,

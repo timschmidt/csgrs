@@ -15574,7 +15574,7 @@ mod tests {
                 &right,
             );
             assert!(
-                result.is_same_surface_shortcut_for(operation),
+                result.is_certified_shortcut_for(operation),
                 "{operation:?}: {result:?}"
             );
             result.validate().unwrap();
