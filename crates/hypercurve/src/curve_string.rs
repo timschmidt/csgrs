@@ -33,6 +33,17 @@ pub enum CurveStringIntersectionQueryPath2 {
     Prepared,
 }
 
+/// Predicate/filter stage reached by a curve-string intersection query.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum CurveStringIntersectionPredicatePath2 {
+    /// No segment-pair candidates existed.
+    NoCandidates,
+    /// All candidates were eliminated by decided disjoint broad-phase boxes.
+    AabbOnly,
+    /// At least one candidate reached exact segment-pair intersection predicates.
+    ExactSegmentPredicates,
+}
+
 /// Report for a curve-string intersection query.
 #[derive(Clone, Debug, PartialEq)]
 pub struct CurveStringIntersectionReport2 {
@@ -43,6 +54,7 @@ pub struct CurveStringIntersectionReport2 {
     tested_pair_count: usize,
     intersection_count: usize,
     query_path: CurveStringIntersectionQueryPath2,
+    predicate_path: CurveStringIntersectionPredicatePath2,
     status: RetainedTopologyStatus,
     blocker: Option<UncertaintyReason>,
 }
@@ -4976,6 +4988,7 @@ impl CurveStringIntersectionReport2 {
             tested_pair_count,
             intersection_count,
             query_path,
+            predicate_path: intersection_predicate_path(candidate_pair_count, tested_pair_count),
             status: RetainedTopologyStatus::NativeExact,
             blocker: None,
         }
@@ -5014,6 +5027,11 @@ impl CurveStringIntersectionReport2 {
     /// Returns the query path used to collect intersections.
     pub const fn query_path(&self) -> CurveStringIntersectionQueryPath2 {
         self.query_path
+    }
+
+    /// Returns the predicate/filter path reached by this intersection query.
+    pub const fn predicate_path(&self) -> CurveStringIntersectionPredicatePath2 {
+        self.predicate_path
     }
 
     /// Returns intersection collection status.
@@ -5901,8 +5919,22 @@ pub(crate) fn intersect_curve_strings_with_cached_aabbs_with_report(
             tested_pair_count,
             intersection_count,
             query_path,
+            predicate_path: intersection_predicate_path(candidate_pair_count, tested_pair_count),
             status: RetainedTopologyStatus::NativeExact,
             blocker: None,
         },
     })
+}
+
+const fn intersection_predicate_path(
+    candidate_pair_count: usize,
+    tested_pair_count: usize,
+) -> CurveStringIntersectionPredicatePath2 {
+    if candidate_pair_count == 0 {
+        CurveStringIntersectionPredicatePath2::NoCandidates
+    } else if tested_pair_count == 0 {
+        CurveStringIntersectionPredicatePath2::AabbOnly
+    } else {
+        CurveStringIntersectionPredicatePath2::ExactSegmentPredicates
+    }
 }

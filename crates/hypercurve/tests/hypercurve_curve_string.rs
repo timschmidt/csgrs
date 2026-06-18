@@ -2,10 +2,11 @@ use hypercurve::{
     BulgeVertex2, CircularArc2, Classification, Contour2, CurveError, CurvePolicy, CurveString2,
     CurveStringChamferInputPath2, CurveStringConnectSource2, CurveStringCurveTrimQueryPath2,
     CurveStringEndpoint2, CurveStringEndpointConnectionStatus2, CurveStringFilletInputPath2,
-    CurveStringIntersectionQueryPath2, CurveStringLinkKind2, CurveStringLinkSourceInput2,
-    CurveStringRegionTrimQueryPath2, CurveStringTrimInputPath2, CurveStringTrimPoint2,
-    IntersectionKind, LineArcIntersection, LineArcOrder, LineSeg2, Point2, Real, Region2,
-    RegionContourRole, RegionPointLocation, Segment2, SegmentIntersection, UncertaintyReason,
+    CurveStringIntersectionPredicatePath2, CurveStringIntersectionQueryPath2, CurveStringLinkKind2,
+    CurveStringLinkSourceInput2, CurveStringRegionTrimQueryPath2, CurveStringTrimInputPath2,
+    CurveStringTrimPoint2, IntersectionKind, LineArcIntersection, LineArcOrder, LineSeg2, Point2,
+    Real, Region2, RegionContourRole, RegionPointLocation, Segment2, SegmentIntersection,
+    UncertaintyReason,
 };
 
 fn s(value: i32) -> Real {
@@ -121,6 +122,10 @@ fn curve_string_intersection_report_counts_aabb_skips() {
         report.query_path(),
         CurveStringIntersectionQueryPath2::Direct
     );
+    assert_eq!(
+        report.predicate_path(),
+        CurveStringIntersectionPredicatePath2::ExactSegmentPredicates
+    );
     assert_eq!(report.first_segment_count(), 2);
     assert_eq!(report.second_segment_count(), 1);
     assert_eq!(report.candidate_pair_count(), 2);
@@ -129,6 +134,27 @@ fn curve_string_intersection_report_counts_aabb_skips() {
     assert_eq!(report.intersection_count(), 1);
     assert_eq!(report.blocker(), None);
     assert_eq!(intersections.intersections().len(), 1);
+}
+
+#[test]
+fn curve_string_intersection_report_names_aabb_only_predicate_path() {
+    let first = CurveString2::try_new(vec![line_segment(0, 0, 1, 0)]).unwrap();
+    let second = CurveString2::try_new(vec![line_segment(3, 0, 4, 0)]).unwrap();
+
+    let intersections = first
+        .intersect_curve_string_with_report(&second, &policy())
+        .unwrap();
+    let report = intersections.report();
+
+    assert_eq!(
+        report.predicate_path(),
+        CurveStringIntersectionPredicatePath2::AabbOnly
+    );
+    assert_eq!(report.candidate_pair_count(), 1);
+    assert_eq!(report.skipped_aabb_pair_count(), 1);
+    assert_eq!(report.tested_pair_count(), 0);
+    assert_eq!(report.intersection_count(), 0);
+    assert!(intersections.intersections().is_empty());
 }
 
 #[test]
@@ -148,6 +174,10 @@ fn prepared_curve_string_intersection_report_matches_plain_events() {
     assert_eq!(
         prepared.report().query_path(),
         CurveStringIntersectionQueryPath2::Prepared
+    );
+    assert_eq!(
+        prepared.report().predicate_path(),
+        CurveStringIntersectionPredicatePath2::ExactSegmentPredicates
     );
     assert_eq!(prepared.report().candidate_pair_count(), 1);
     assert_eq!(prepared.report().tested_pair_count(), 1);
