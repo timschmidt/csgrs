@@ -5,8 +5,8 @@
 //! already been resolved by earlier topology stages.
 
 use crate::{
-    Classification, Contour2, ContourPointLocation, CurveError, CurvePolicy, CurveResult, Region2,
-    RetainedTopologyStatus, UncertaintyReason,
+    Classification, Contour2, ContourPointLocation, CurveError, CurvePolicy, CurveResult, Point2,
+    Region2, RetainedTopologyStatus, UncertaintyReason,
 };
 
 /// Material/hole role assigned to one closed boundary contour.
@@ -22,6 +22,8 @@ pub enum RegionBoundaryContourRole2 {
 #[derive(Clone, Debug, PartialEq)]
 pub struct RegionBoundaryContourRoleReport2 {
     source_contour_index: usize,
+    nesting_sample_point: Point2,
+    containing_contour_indices: Vec<usize>,
     nesting_depth: usize,
     role: RegionBoundaryContourRole2,
     output_role_index: usize,
@@ -46,9 +48,15 @@ pub struct RegionBoundaryContourBuildResult2 {
     report: RegionBoundaryContourBuildReport2,
 }
 
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 struct BoundaryContourNestingDepths {
-    depths: Vec<usize>,
+    entries: Vec<BoundaryContourNestingEntry>,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+struct BoundaryContourNestingEntry {
+    sample_point: Point2,
+    containing_contour_indices: Vec<usize>,
 }
 
 impl Region2 {
@@ -100,16 +108,17 @@ impl Region2 {
         let mut hole_contours = Vec::new();
         let mut role_reports = Vec::with_capacity(source_contour_count);
 
-        for (source_contour_index, (contour, depth)) in contours
-            .into_iter()
-            .zip(nesting.depths.iter().copied())
-            .enumerate()
+        for (source_contour_index, (contour, entry)) in
+            contours.into_iter().zip(nesting.entries.iter()).enumerate()
         {
+            let depth = entry.containing_contour_indices.len();
             if depth % 2 == 0 {
                 let output_role_index = material_contours.len();
                 material_contours.push(contour);
                 role_reports.push(RegionBoundaryContourRoleReport2 {
                     source_contour_index,
+                    nesting_sample_point: entry.sample_point.clone(),
+                    containing_contour_indices: entry.containing_contour_indices.clone(),
                     nesting_depth: depth,
                     role: RegionBoundaryContourRole2::Material,
                     output_role_index,
@@ -120,6 +129,8 @@ impl Region2 {
                 hole_contours.push(contour);
                 role_reports.push(RegionBoundaryContourRoleReport2 {
                     source_contour_index,
+                    nesting_sample_point: entry.sample_point.clone(),
+                    containing_contour_indices: entry.containing_contour_indices.clone(),
                     nesting_depth: depth,
                     role: RegionBoundaryContourRole2::Hole,
                     output_role_index,
@@ -148,6 +159,16 @@ impl RegionBoundaryContourRoleReport2 {
     /// Returns the source contour index assigned by this report.
     pub const fn source_contour_index(&self) -> usize {
         self.source_contour_index
+    }
+
+    /// Returns the exact source point used for containment classification.
+    pub const fn nesting_sample_point(&self) -> &Point2 {
+        &self.nesting_sample_point
+    }
+
+    /// Returns source contour indices that exactly contained the sample point.
+    pub fn containing_contour_indices(&self) -> &[usize] {
+        &self.containing_contour_indices
     }
 
     /// Returns exact containment depth used for material/hole parity.
@@ -263,7 +284,7 @@ fn contour_nesting_depths(
         }
     }
 
-    let mut depths = Vec::with_capacity(contours.len());
+    let mut entries = Vec::with_capacity(contours.len());
 
     for (candidate_index, candidate) in contours.iter().enumerate() {
         // A point on the candidate boundary is sufficient for nesting against
@@ -278,7 +299,7 @@ fn contour_nesting_depths(
             .first()
             .ok_or(CurveError::EmptyCurveString)?
             .start();
-        let mut depth = 0_usize;
+        let mut containing_contour_indices = Vec::new();
 
         for (container_index, container) in contours.iter().enumerate() {
             if candidate_index == container_index {
@@ -286,7 +307,9 @@ fn contour_nesting_depths(
             }
 
             match container.classify_point(sample, policy) {
-                Classification::Decided(ContourPointLocation::Inside) => depth += 1,
+                Classification::Decided(ContourPointLocation::Inside) => {
+                    containing_contour_indices.push(container_index);
+                }
                 Classification::Decided(ContourPointLocation::Outside) => {}
                 Classification::Decided(ContourPointLocation::Boundary) => {
                     return Ok(Classification::Uncertain(
@@ -297,10 +320,13 @@ fn contour_nesting_depths(
             }
         }
 
-        depths.push(depth);
+        entries.push(BoundaryContourNestingEntry {
+            sample_point: sample.clone(),
+            containing_contour_indices,
+        });
     }
 
     Ok(Classification::Decided(BoundaryContourNestingDepths {
-        depths,
+        entries,
     }))
 }

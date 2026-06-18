@@ -178,6 +178,8 @@ fn boundary_contour_region_report_assigns_material_and_hole_roles() {
 
     let outer = &report.role_reports()[0];
     assert_eq!(outer.source_contour_index(), 0);
+    assert_eq!(outer.nesting_sample_point(), &p(0, 0));
+    assert!(outer.containing_contour_indices().is_empty());
     assert_eq!(outer.nesting_depth(), 0);
     assert_eq!(outer.role(), RegionBoundaryContourRole2::Material);
     assert_eq!(outer.output_role_index(), 0);
@@ -185,6 +187,8 @@ fn boundary_contour_region_report_assigns_material_and_hole_roles() {
 
     let hole = &report.role_reports()[1];
     assert_eq!(hole.source_contour_index(), 1);
+    assert_eq!(hole.nesting_sample_point(), &p(3, 3));
+    assert_eq!(hole.containing_contour_indices(), &[0]);
     assert_eq!(hole.nesting_depth(), 1);
     assert_eq!(hole.role(), RegionBoundaryContourRole2::Hole);
     assert_eq!(hole.output_role_index(), 0);
