@@ -20,6 +20,7 @@ use std::cmp::Ordering;
 #[derive(Clone, Debug, PartialEq)]
 pub struct RegionBooleanReport2 {
     op: BooleanOp,
+    fill_rule: FillRule,
     query_path: RegionBooleanQueryPath2,
     first_material_contour_count: usize,
     first_hole_contour_count: usize,
@@ -593,6 +594,11 @@ impl RegionBooleanReport2 {
         self.op
     }
 
+    /// Returns the fill rule used to materialize boolean boundary contours.
+    pub const fn fill_rule(&self) -> FillRule {
+        self.fill_rule
+    }
+
     /// Returns whether this report used direct or prepared region queries.
     pub const fn query_path(&self) -> RegionBooleanQueryPath2 {
         self.query_path
@@ -978,6 +984,7 @@ pub(crate) fn boolean_region_between_with_report(
                 first,
                 second,
                 op,
+                fill_rule,
                 RegionBooleanQueryPath2::Direct,
                 &boundary_events,
                 retained_status_for_boolean_blocker(reason),
@@ -989,6 +996,7 @@ pub(crate) fn boolean_region_between_with_report(
         first,
         second,
         op,
+        fill_rule,
         RegionBooleanQueryPath2::Direct,
         &boundary_events,
         contours,
@@ -1000,6 +1008,7 @@ pub(crate) fn region_boolean_result_from_boundary_contours(
     first: &RegionView2<'_>,
     second: &RegionView2<'_>,
     op: BooleanOp,
+    fill_rule: FillRule,
     query_path: RegionBooleanQueryPath2,
     boundary_events: &RegionIntersectionSet,
     contours: Vec<Contour2>,
@@ -1016,6 +1025,7 @@ pub(crate) fn region_boolean_result_from_boundary_contours(
         region: built.into_region(),
         report: RegionBooleanReport2 {
             op,
+            fill_rule,
             query_path,
             first_material_contour_count: first.material_contours().len(),
             first_hole_contour_count: first.hole_contours().len(),
@@ -1039,6 +1049,7 @@ pub(crate) fn blocked_region_boolean_result(
     first: &RegionView2<'_>,
     second: &RegionView2<'_>,
     op: BooleanOp,
+    fill_rule: FillRule,
     query_path: RegionBooleanQueryPath2,
     boundary_events: &RegionIntersectionSet,
     status: RetainedTopologyStatus,
@@ -1048,6 +1059,7 @@ pub(crate) fn blocked_region_boolean_result(
         region: None,
         report: RegionBooleanReport2 {
             op,
+            fill_rule,
             query_path,
             first_material_contour_count: first.material_contours().len(),
             first_hole_contour_count: first.hole_contours().len(),
