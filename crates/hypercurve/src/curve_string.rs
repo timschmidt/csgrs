@@ -512,6 +512,17 @@ pub enum CurveStringRegionTrimQueryPath2 {
     Prepared,
 }
 
+/// Furthest exact stage reached by a trim-by-region attempt.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum CurveStringRegionTrimStage2 {
+    /// Region boundary intersections were being collected.
+    BoundaryCollection,
+    /// Source intervals were split and classified against the region.
+    IntervalClassification,
+    /// Classified intervals were materialized into output curve strings.
+    OutputMaterialization,
+}
+
 /// Report for retaining portions of an open curve string inside a region.
 #[derive(Clone, Debug, PartialEq)]
 pub struct CurveStringRegionTrimReport2 {
@@ -525,6 +536,7 @@ pub struct CurveStringRegionTrimReport2 {
     interval_reports: Vec<CurveStringRegionTrimIntervalReport2>,
     output_curve_string_count: Option<usize>,
     query_path: CurveStringRegionTrimQueryPath2,
+    stage: CurveStringRegionTrimStage2,
     status: RetainedTopologyStatus,
     blocker: Option<UncertaintyReason>,
 }
@@ -3148,6 +3160,11 @@ impl CurveStringRegionTrimReport2 {
         self.query_path
     }
 
+    /// Returns the furthest exact trim-by-region stage reached.
+    pub const fn stage(&self) -> CurveStringRegionTrimStage2 {
+        self.stage
+    }
+
     /// Returns trim-by-region materialization status.
     pub const fn status(&self) -> RetainedTopologyStatus {
         self.status
@@ -3326,6 +3343,7 @@ fn trim_curve_string_inside_region(
             boundary_hits,
             Vec::new(),
             CurveStringRegionTrimQueryPath2::Direct,
+            CurveStringRegionTrimStage2::BoundaryCollection,
             status,
             blocker,
         ));
@@ -3365,6 +3383,7 @@ fn trim_curve_string_inside_prepared_region(
             boundary_hits,
             Vec::new(),
             CurveStringRegionTrimQueryPath2::Prepared,
+            CurveStringRegionTrimStage2::BoundaryCollection,
             status,
             blocker,
         ));
@@ -3413,6 +3432,7 @@ fn trim_curve_string_inside_region_with_hits(
                     boundary_hits,
                     interval_reports,
                     query_path,
+                    CurveStringRegionTrimStage2::IntervalClassification,
                     retained_status_for_uncertainty(reason),
                     reason,
                 ));
@@ -3454,6 +3474,7 @@ fn trim_curve_string_inside_region_with_hits(
                         boundary_hits,
                         interval_reports,
                         query_path,
+                        CurveStringRegionTrimStage2::IntervalClassification,
                         RetainedTopologyStatus::Unsupported,
                         reason,
                     ));
@@ -3479,6 +3500,7 @@ fn trim_curve_string_inside_region_with_hits(
                         boundary_hits,
                         interval_reports,
                         query_path,
+                        CurveStringRegionTrimStage2::IntervalClassification,
                         RetainedTopologyStatus::Unresolved,
                         reason,
                     ));
@@ -3508,6 +3530,7 @@ fn trim_curve_string_inside_region_with_hits(
                         boundary_hits,
                         interval_reports,
                         query_path,
+                        CurveStringRegionTrimStage2::IntervalClassification,
                         retained_status_for_uncertainty(reason),
                         reason,
                     ));
@@ -3537,6 +3560,7 @@ fn trim_curve_string_inside_region_with_hits(
                         boundary_hits,
                         interval_reports,
                         query_path,
+                        CurveStringRegionTrimStage2::IntervalClassification,
                         retained_status_for_uncertainty(reason),
                         reason,
                     ));
@@ -3597,6 +3621,7 @@ fn trim_curve_string_inside_region_with_hits(
                         boundary_hits,
                         interval_reports,
                         query_path,
+                        CurveStringRegionTrimStage2::IntervalClassification,
                         RetainedTopologyStatus::Unsupported,
                         UncertaintyReason::Boundary,
                     ));
@@ -3623,6 +3648,7 @@ fn trim_curve_string_inside_region_with_hits(
             interval_reports,
             output_curve_string_count: Some(curve_strings.len()),
             query_path,
+            stage: CurveStringRegionTrimStage2::OutputMaterialization,
             status: RetainedTopologyStatus::NativeExact,
             blocker: None,
         },
@@ -4124,6 +4150,7 @@ fn blocked_region_trim_result(
     boundary_hits: Vec<CurveStringRegionTrimHit2>,
     interval_reports: Vec<CurveStringRegionTrimIntervalReport2>,
     query_path: CurveStringRegionTrimQueryPath2,
+    stage: CurveStringRegionTrimStage2,
     status: RetainedTopologyStatus,
     blocker: UncertaintyReason,
 ) -> CurveStringRegionTrimResult2 {
@@ -4140,6 +4167,7 @@ fn blocked_region_trim_result(
             interval_reports,
             output_curve_string_count: None,
             query_path,
+            stage,
             status,
             blocker: Some(blocker),
         },

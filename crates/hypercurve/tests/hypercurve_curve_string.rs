@@ -4,9 +4,10 @@ use hypercurve::{
     CurveStringCurveTrimStage2, CurveStringEndpoint2, CurveStringEndpointConnectionStatus2,
     CurveStringFilletInputPath2, CurveStringIntersectionPredicatePath2,
     CurveStringIntersectionQueryPath2, CurveStringLinkKind2, CurveStringLinkSourceInput2,
-    CurveStringRegionTrimQueryPath2, CurveStringTrimInputPath2, CurveStringTrimPoint2,
-    IntersectionKind, LineArcIntersection, LineArcOrder, LineSeg2, Point2, Real, Region2,
-    RegionContourRole, RegionPointLocation, Segment2, SegmentIntersection, UncertaintyReason,
+    CurveStringRegionTrimQueryPath2, CurveStringRegionTrimStage2, CurveStringTrimInputPath2,
+    CurveStringTrimPoint2, IntersectionKind, LineArcIntersection, LineArcOrder, LineSeg2, Point2,
+    Real, Region2, RegionContourRole, RegionPointLocation, Segment2, SegmentIntersection,
+    UncertaintyReason,
 };
 
 fn s(value: i32) -> Real {
@@ -1975,6 +1976,10 @@ fn curve_string_trim_inside_region_materializes_inside_window() {
         trimmed.report().query_path(),
         CurveStringRegionTrimQueryPath2::Direct
     );
+    assert_eq!(
+        trimmed.report().stage(),
+        CurveStringRegionTrimStage2::OutputMaterialization
+    );
     assert_eq!(trimmed.report().source_segment_count(), 1);
     assert_eq!(trimmed.report().region_material_contour_count(), 1);
     assert_eq!(trimmed.report().region_hole_contour_count(), 0);
@@ -2052,6 +2057,10 @@ fn prepared_curve_string_trim_inside_region_matches_direct_result() {
         prepared.report().query_path(),
         CurveStringRegionTrimQueryPath2::Prepared
     );
+    assert_eq!(
+        prepared.report().stage(),
+        CurveStringRegionTrimStage2::OutputMaterialization
+    );
     assert_eq!(direct.report().boundary_candidate_pair_count(), 8);
     assert_eq!(direct.report().boundary_skipped_aabb_pair_count(), 0);
     assert_eq!(direct.report().boundary_tested_pair_count(), 8);
@@ -2128,6 +2137,10 @@ fn curve_string_trim_inside_region_reports_boundary_overlap_blocker() {
 
     assert!(trimmed.curve_strings().is_empty());
     assert!(trimmed.report().status().is_retained_evidence());
+    assert_eq!(
+        trimmed.report().stage(),
+        CurveStringRegionTrimStage2::BoundaryCollection
+    );
     assert_eq!(
         trimmed.report().blocker(),
         Some(UncertaintyReason::Unsupported)
