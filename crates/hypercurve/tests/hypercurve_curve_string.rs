@@ -2512,6 +2512,14 @@ fn curve_string_trim_between_curve_intersections_materializes_line_window() {
     assert_eq!(trim.report().end_hits().len(), 1);
     assert_eq!(trim.report().start_hits()[0].source_segment_index(), 0);
     assert_eq!(trim.report().start_hits()[0].cutter_segment_index(), 0);
+    assert_eq!(
+        trim.report().start_hits()[0].source_segment_kind(),
+        SegmentKind::Line
+    );
+    assert_eq!(
+        trim.report().start_hits()[0].cutter_segment_kind(),
+        SegmentKind::Line
+    );
     assert_eq!(trim.report().start_hits()[0].source_param(), &q(1, 5));
     assert_eq!(trim.report().start_hits()[0].cutter_param(), &q(1, 2));
     assert_eq!(trim.report().start_hits()[0].point(), &p(2, 0));
@@ -2520,6 +2528,14 @@ fn curve_string_trim_between_curve_intersections_materializes_line_window() {
         IntersectionKind::Crossing
     );
     assert_eq!(trim.report().end_hits()[0].source_param(), &q(4, 5));
+    assert_eq!(
+        trim.report().end_hits()[0].source_segment_kind(),
+        SegmentKind::Line
+    );
+    assert_eq!(
+        trim.report().end_hits()[0].cutter_segment_kind(),
+        SegmentKind::Line
+    );
     assert_eq!(trim.report().end_hits()[0].cutter_param(), &q(1, 2));
     assert_eq!(trim.report().end_hits()[0].point(), &p(8, 0));
 
@@ -2636,6 +2652,13 @@ fn curve_string_trim_between_curve_intersections_reports_ambiguous_cutter_hits()
     assert_eq!(trim.report().blocker(), Some(UncertaintyReason::Boundary));
     assert_eq!(trim.report().start_hits().len(), 2);
     assert_eq!(trim.report().end_hits().len(), 1);
+    assert!(
+        trim.report()
+            .start_hits()
+            .iter()
+            .all(|hit| hit.source_segment_kind() == SegmentKind::Line
+                && hit.cutter_segment_kind() == SegmentKind::Line)
+    );
     assert_eq!(
         trim.report().start_intersection_report().query_path(),
         CurveStringIntersectionQueryPath2::Direct

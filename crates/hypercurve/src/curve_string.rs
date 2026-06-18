@@ -584,6 +584,8 @@ pub struct CurveStringTrimResult2 {
 pub struct CurveStringCurveTrimHit2 {
     source_segment_index: usize,
     cutter_segment_index: usize,
+    source_segment_kind: SegmentKind,
+    cutter_segment_kind: SegmentKind,
     source_param: Real,
     cutter_param: Real,
     point: Point2,
@@ -3369,6 +3371,16 @@ impl CurveStringCurveTrimHit2 {
         self.cutter_segment_index
     }
 
+    /// Returns the primitive family of the source segment that produced this hit.
+    pub const fn source_segment_kind(&self) -> SegmentKind {
+        self.source_segment_kind
+    }
+
+    /// Returns the primitive family of the cutter segment that produced this hit.
+    pub const fn cutter_segment_kind(&self) -> SegmentKind {
+        self.cutter_segment_kind
+    }
+
     /// Returns the exact affine parameter on the source segment.
     pub const fn source_param(&self) -> &Real {
         &self.source_param
@@ -4818,6 +4830,8 @@ fn extract_curve_trim_hits(
                 b_param,
                 kind,
             }) => hits.push(curve_trim_hit(
+                source,
+                cutter,
                 event,
                 a_param.clone(),
                 b_param.clone(),
@@ -4838,6 +4852,8 @@ fn extract_curve_trim_hits(
                 LineArcIntersection::Point(hit) => {
                     match line_arc_curve_trim_params(source, cutter, event, *order, hit, policy)? {
                         Ok((source_param, cutter_param)) => hits.push(curve_trim_hit(
+                            source,
+                            cutter,
                             event,
                             source_param,
                             cutter_param,
@@ -4855,6 +4871,8 @@ fn extract_curve_trim_hits(
                             source, cutter, event, *order, hit, policy,
                         )? {
                             Ok((source_param, cutter_param)) => hits.push(curve_trim_hit(
+                                source,
+                                cutter,
                                 event,
                                 source_param,
                                 cutter_param,
@@ -4875,6 +4893,8 @@ fn extract_curve_trim_hits(
             SegmentIntersection::ArcArc(ArcArcIntersection::Point(hit)) => {
                 match point_curve_trim_params(source, cutter, event, &hit.point, policy)? {
                     Ok((source_param, cutter_param)) => hits.push(curve_trim_hit(
+                        source,
+                        cutter,
                         event,
                         source_param,
                         cutter_param,
@@ -4890,6 +4910,8 @@ fn extract_curve_trim_hits(
                 for hit in [first, second] {
                     match point_curve_trim_params(source, cutter, event, &hit.point, policy)? {
                         Ok((source_param, cutter_param)) => hits.push(curve_trim_hit(
+                            source,
+                            cutter,
                             event,
                             source_param,
                             cutter_param,
@@ -4966,6 +4988,8 @@ fn point_curve_trim_params(
 }
 
 fn curve_trim_hit(
+    source: &CurveString2,
+    cutter: &CurveString2,
     event: &CurveStringIntersection,
     source_param: Real,
     cutter_param: Real,
@@ -4975,6 +4999,12 @@ fn curve_trim_hit(
     CurveStringCurveTrimHit2 {
         source_segment_index: event.a_segment_index,
         cutter_segment_index: event.b_segment_index,
+        source_segment_kind: source.segments[event.a_segment_index]
+            .structural_facts()
+            .kind,
+        cutter_segment_kind: cutter.segments[event.b_segment_index]
+            .structural_facts()
+            .kind,
         source_param,
         cutter_param,
         point,
