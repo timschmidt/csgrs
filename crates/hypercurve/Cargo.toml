@@ -68,5 +68,9 @@ name = "offset"
 harness = false
 
 [[bench]]
+name = "editing"
+harness = false
+
+[[bench]]
 name = "reconstruction"
 harness = false
