@@ -664,28 +664,10 @@ impl ExactLabeledCellComplex {
             .iter()
             .map(|adjacency| adjacency.separating_face_cells.len())
             .sum();
-        let volume_selection_resolved = volume_evidence_resolves_named_selection(
+        let volume_resolution = volume_selection_resolution(
             &self.faces,
             &self.volume_regions,
             &self.volume_adjacencies,
-        );
-        let volume_union_resolved = volume_evidence_resolves_named_operation(
-            &self.faces,
-            &self.volume_regions,
-            &self.volume_adjacencies,
-            ExactBooleanOperation::Union,
-        );
-        let volume_intersection_resolved = volume_evidence_resolves_named_operation(
-            &self.faces,
-            &self.volume_regions,
-            &self.volume_adjacencies,
-            ExactBooleanOperation::Intersection,
-        );
-        let volume_difference_resolved = volume_evidence_resolves_named_operation(
-            &self.faces,
-            &self.volume_regions,
-            &self.volume_adjacencies,
-            ExactBooleanOperation::Difference,
         );
         let (
             lower_dimensional_point_contacts,
@@ -705,7 +687,7 @@ impl ExactLabeledCellComplex {
             opposite_unknown_faces,
             self.volume_regions.len(),
             self.volume_adjacencies.len(),
-            volume_selection_resolved,
+            volume_resolution.all_named,
         );
         ExactRegionOwnershipReport {
             status,
@@ -729,10 +711,10 @@ impl ExactLabeledCellComplex {
             volume_adjacencies: self.volume_adjacencies.len(),
             volume_adjacency_face_sides,
             volume_adjacency_separating_faces,
-            volume_selection_resolved,
-            volume_union_resolved,
-            volume_intersection_resolved,
-            volume_difference_resolved,
+            volume_selection_resolved: volume_resolution.all_named,
+            volume_union_resolved: volume_resolution.union,
+            volume_intersection_resolved: volume_resolution.intersection,
+            volume_difference_resolved: volume_resolution.difference,
             lower_dimensional_artifacts: self.lower_dimensional_artifacts.len(),
             lower_dimensional_point_contacts,
             lower_dimensional_edge_contacts,
@@ -1304,22 +1286,7 @@ fn volume_evidence_resolves_named_selection(
     volume_regions: &[ExactCellComplexVolumeRegion],
     volume_adjacencies: &[ArrangementVolumeAdjacency],
 ) -> bool {
-    volume_evidence_resolves_named_operation(
-        faces,
-        volume_regions,
-        volume_adjacencies,
-        ExactBooleanOperation::Union,
-    ) && volume_evidence_resolves_named_operation(
-        faces,
-        volume_regions,
-        volume_adjacencies,
-        ExactBooleanOperation::Intersection,
-    ) && volume_evidence_resolves_named_operation(
-        faces,
-        volume_regions,
-        volume_adjacencies,
-        ExactBooleanOperation::Difference,
-    )
+    volume_selection_resolution(faces, volume_regions, volume_adjacencies).all_named
 }
 
 fn volume_evidence_resolves_named_operation(
@@ -1354,6 +1321,45 @@ fn checked_volume_evidence_resolves_named_operation(
         select_faces_from_volume_adjacencies(faces, volume_regions, volume_adjacencies, operation),
         Ok(Some(_))
     ))
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+struct ExactVolumeSelectionResolution {
+    all_named: bool,
+    union: bool,
+    intersection: bool,
+    difference: bool,
+}
+
+fn volume_selection_resolution(
+    faces: &[ExactCellComplexFace],
+    volume_regions: &[ExactCellComplexVolumeRegion],
+    volume_adjacencies: &[ArrangementVolumeAdjacency],
+) -> ExactVolumeSelectionResolution {
+    let union = volume_evidence_resolves_named_operation(
+        faces,
+        volume_regions,
+        volume_adjacencies,
+        ExactBooleanOperation::Union,
+    );
+    let intersection = volume_evidence_resolves_named_operation(
+        faces,
+        volume_regions,
+        volume_adjacencies,
+        ExactBooleanOperation::Intersection,
+    );
+    let difference = volume_evidence_resolves_named_operation(
+        faces,
+        volume_regions,
+        volume_adjacencies,
+        ExactBooleanOperation::Difference,
+    );
+    ExactVolumeSelectionResolution {
+        all_named: union && intersection && difference,
+        union,
+        intersection,
+        difference,
+    }
 }
 
 fn arrangement_has_only_region_classification_blockers(arrangement: &ExactArrangement3d) -> bool {
