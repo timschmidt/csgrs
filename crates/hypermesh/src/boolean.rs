@@ -2355,6 +2355,18 @@ impl ExactBooleanEvaluation {
         )
     }
 
+    pub(crate) fn validate_result_shape_for_request(
+        request: ExactBooleanRequest,
+        result: &ExactBooleanResult,
+    ) -> Result<(), ExactReportValidationError> {
+        result.validate()?;
+        if result.satisfies_request_shape(request) {
+            Ok(())
+        } else {
+            Err(ExactReportValidationError::StatusEvidenceMismatch)
+        }
+    }
+
     /// Classify only the materialized result retained by this evaluation,
     /// replaying from retained exact artifacts first.
     pub fn materialized_result_freshness_against_sources(

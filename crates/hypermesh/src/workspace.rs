@@ -482,14 +482,8 @@ fn store_replayable_result_or_return(
             cached: true,
         });
     }
-    result
-        .validate()
+    ExactBooleanEvaluation::validate_result_shape_for_request(request, &result)
         .map_err(workspace_report_validation_error)?;
-    if !result.satisfies_request_shape(request) {
-        return Err(workspace_report_validation_error(
-            ExactReportValidationError::StatusEvidenceMismatch,
-        ));
-    }
     Ok(StoredMaterialization {
         result,
         cached: false,
