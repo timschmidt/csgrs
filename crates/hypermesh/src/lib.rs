@@ -57,10 +57,7 @@ mod winding;
 mod witness;
 mod workspace;
 
-pub use adapter::{
-    ExactI64MeshInputReadiness, ExactI64MeshInputReportValidationError, LossyF64MeshInputReadiness,
-    LossyF64MeshInputReportValidationError,
-};
+pub use adapter::{ExactI64MeshInputReadiness, LossyF64MeshInputReadiness};
 pub use artifact::{
     MeshArtifactBlocker, MeshArtifactFaceRecord, MeshArtifactManifest, MeshArtifactVertexRecord,
 };

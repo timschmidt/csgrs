@@ -143,6 +143,50 @@ pub enum ExactI64MeshInputReportValidationError {
     CheckedIndexCountOverflow,
 }
 
+impl LossyF64MeshInputReportValidationError {
+    /// Return whether exact-coordinate replay evidence is inconsistent.
+    pub fn is_exact_coordinate_count_mismatch(&self) -> bool {
+        matches!(self, Self::ExactCoordinateCountMismatch)
+    }
+
+    /// Return whether checked-index replay evidence is inconsistent.
+    pub fn is_checked_index_count_mismatch(&self) -> bool {
+        matches!(self, Self::CheckedIndexCountMismatch)
+    }
+
+    /// Return whether invalid coordinate arity lacked its diagnostic.
+    pub fn is_missing_coordinate_arity_diagnostic(&self) -> bool {
+        matches!(self, Self::MissingCoordinateArityDiagnostic)
+    }
+
+    /// Return whether invalid index arity lacked its diagnostic.
+    pub fn is_missing_index_arity_diagnostic(&self) -> bool {
+        matches!(self, Self::MissingIndexArityDiagnostic)
+    }
+}
+
+impl ExactI64MeshInputReportValidationError {
+    /// Return whether exact-coordinate replay evidence is inconsistent.
+    pub fn is_exact_coordinate_count_mismatch(&self) -> bool {
+        matches!(self, Self::ExactCoordinateCountMismatch)
+    }
+
+    /// Return whether checked-index replay evidence is inconsistent.
+    pub fn is_checked_index_count_mismatch(&self) -> bool {
+        matches!(self, Self::CheckedIndexCountMismatch)
+    }
+
+    /// Return whether invalid coordinate arity lacked its diagnostic.
+    pub fn is_missing_coordinate_arity_diagnostic(&self) -> bool {
+        matches!(self, Self::MissingCoordinateArityDiagnostic)
+    }
+
+    /// Return whether invalid index arity lacked its diagnostic.
+    pub fn is_missing_index_arity_diagnostic(&self) -> bool {
+        matches!(self, Self::MissingIndexArityDiagnostic)
+    }
+}
+
 /// Readiness status for a primitive-float input report.
 ///
 /// This is a preconstruction adapter diagnostic, not a topology claim. `Ready`
