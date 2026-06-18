@@ -404,6 +404,14 @@ fn unordered_line_segments_build_region_with_source_provenance() {
         &hypercurve::ParamRange::new(s(0), s(1))
     );
     assert!(!report.source_reports()[0].reversed());
+    assert_eq!(
+        report.source_reports()[0].source_segment_kind(),
+        SegmentKind::Line
+    );
+    assert_eq!(
+        report.source_reports()[0].output_segment_kind(),
+        SegmentKind::Line
+    );
     assert_eq!(report.source_reports()[1].source_segment_index(), 3);
     assert!(!report.source_reports()[1].reversed());
     assert_eq!(report.source_reports()[2].source_segment_index(), 1);
@@ -663,6 +671,22 @@ fn unordered_native_segments_build_line_arc_region_with_source_provenance() {
     assert_eq!(report.source_reports().len(), 2);
     assert_eq!(report.source_reports()[0].source_segment_index(), 0);
     assert_eq!(report.source_reports()[1].source_segment_index(), 1);
+    assert_eq!(
+        report.source_reports()[0].source_segment_kind(),
+        SegmentKind::Line
+    );
+    assert_eq!(
+        report.source_reports()[0].output_segment_kind(),
+        SegmentKind::Line
+    );
+    assert_eq!(
+        report.source_reports()[1].source_segment_kind(),
+        SegmentKind::Arc
+    );
+    assert_eq!(
+        report.source_reports()[1].output_segment_kind(),
+        SegmentKind::Arc
+    );
     assert_eq!(report.blocker(), None);
 
     let region = built.region().unwrap();

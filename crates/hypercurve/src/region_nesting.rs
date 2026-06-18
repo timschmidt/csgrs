@@ -83,9 +83,11 @@ pub struct RegionBoundaryContourBuildResult2 {
 #[derive(Clone, Debug, PartialEq)]
 pub struct RegionLineSegmentRingSourceReport2 {
     source_segment_index: usize,
+    source_segment_kind: SegmentKind,
     source_range: ParamRange,
     output_ring_index: usize,
     output_segment_index: usize,
+    output_segment_kind: SegmentKind,
     reversed: bool,
     output_start_point: Point2,
     output_end_point: Point2,
@@ -878,12 +880,17 @@ impl RegionBoundaryContourBuildResult2 {
 }
 
 impl RegionLineSegmentRingSourceReport2 {
-    /// Returns the source line segment index used by this output segment.
+    /// Returns the source segment index used by this output segment.
     pub const fn source_segment_index(&self) -> usize {
         self.source_segment_index
     }
 
-    /// Returns the retained parameter range on the source line segment.
+    /// Returns the primitive family of the source segment.
+    pub const fn source_segment_kind(&self) -> SegmentKind {
+        self.source_segment_kind
+    }
+
+    /// Returns the retained parameter range on the source segment.
     pub const fn source_range(&self) -> &ParamRange {
         &self.source_range
     }
@@ -898,7 +905,12 @@ impl RegionLineSegmentRingSourceReport2 {
         self.output_segment_index
     }
 
-    /// Returns whether the source line segment was reversed for ring traversal.
+    /// Returns the primitive family of the emitted output segment.
+    pub const fn output_segment_kind(&self) -> SegmentKind {
+        self.output_segment_kind
+    }
+
+    /// Returns whether the source segment was reversed for ring traversal.
     pub const fn reversed(&self) -> bool {
         self.reversed
     }
@@ -2373,9 +2385,11 @@ fn append_line_segment_ring_source_report(
 ) {
     source_reports.push(RegionLineSegmentRingSourceReport2 {
         source_segment_index: segment.source_segment_index,
+        source_segment_kind: SegmentKind::Line,
         source_range: segment.source_range.clone(),
         output_ring_index,
         output_segment_index,
+        output_segment_kind: SegmentKind::Line,
         reversed,
         output_start_point: segment.line.start().clone(),
         output_end_point: segment.line.end().clone(),
@@ -2392,9 +2406,11 @@ fn append_native_segment_ring_source_report(
 ) {
     source_reports.push(RegionLineSegmentRingSourceReport2 {
         source_segment_index: segment.source_segment_index,
+        source_segment_kind: segment.segment.structural_facts().kind,
         source_range: segment.source_range.clone(),
         output_ring_index,
         output_segment_index,
+        output_segment_kind: segment.segment.structural_facts().kind,
         reversed,
         output_start_point: segment.segment.start().clone(),
         output_end_point: segment.segment.end().clone(),
