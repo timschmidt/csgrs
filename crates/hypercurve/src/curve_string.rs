@@ -11,7 +11,7 @@ use crate::{
     CurveResult, IntersectionKind, LineArcIntersection, LineArcOrder, LineLineIntersection,
     LineSeg2, LineSide, ParamRange, Point2, PreparedRegionView2, Region2, RegionContourRole,
     RegionPointLocation, RetainedTopologyStatus, Segment2, SegmentIntersection, SegmentKind,
-    UncertaintyReason,
+    SegmentKindCounts, UncertaintyReason,
 };
 
 /// One segment-pair event between two curve strings.
@@ -547,8 +547,10 @@ pub struct CurveStringTrimReport2 {
     start: CurveStringTrimPoint2,
     end: CurveStringTrimPoint2,
     source_segment_count: usize,
+    source_segment_kind_counts: SegmentKindCounts,
     segment_reports: Vec<CurveStringTrimSegmentReport2>,
     output_segment_count: Option<usize>,
+    output_segment_kind_counts: Option<SegmentKindCounts>,
     status: RetainedTopologyStatus,
     blocker: Option<UncertaintyReason>,
 }
@@ -1576,8 +1578,10 @@ impl CurveString2 {
             start,
             end,
             source_segment_count: self.len(),
+            source_segment_kind_counts: curve_string_segment_kind_counts(self),
             segment_reports,
             output_segment_count: Some(curve_string.len()),
+            output_segment_kind_counts: Some(curve_string_segment_kind_counts(&curve_string)),
             status: RetainedTopologyStatus::NativeExact,
             blocker: None,
         };
@@ -2797,8 +2801,10 @@ impl CurveString2 {
             start: start.trim_point,
             end: end.trim_point,
             source_segment_count: self.len(),
+            source_segment_kind_counts: curve_string_segment_kind_counts(self),
             segment_reports,
             output_segment_count: Some(curve_string.len()),
+            output_segment_kind_counts: Some(curve_string_segment_kind_counts(&curve_string)),
             status: RetainedTopologyStatus::NativeExact,
             blocker: None,
         };
@@ -3024,6 +3030,11 @@ impl CurveStringTrimReport2 {
         self.source_segment_count
     }
 
+    /// Returns primitive-family counts for the source curve string.
+    pub const fn source_segment_kind_counts(&self) -> SegmentKindCounts {
+        self.source_segment_kind_counts
+    }
+
     /// Returns retained source segment ranges considered by this trim.
     pub fn segment_reports(&self) -> &[CurveStringTrimSegmentReport2] {
         &self.segment_reports
@@ -3032,6 +3043,11 @@ impl CurveStringTrimReport2 {
     /// Returns output segment count when trim materialized.
     pub const fn output_segment_count(&self) -> Option<usize> {
         self.output_segment_count
+    }
+
+    /// Returns primitive-family counts for the materialized trim output.
+    pub const fn output_segment_kind_counts(&self) -> Option<SegmentKindCounts> {
+        self.output_segment_kind_counts
     }
 
     /// Returns the trim materialization status.
@@ -5203,6 +5219,17 @@ fn trim_range_is_full(range: &ParamRange, policy: &CurvePolicy) -> Option<bool> 
     Some(start_is_zero && end_is_one)
 }
 
+fn curve_string_segment_kind_counts(curve_string: &CurveString2) -> SegmentKindCounts {
+    let mut counts = SegmentKindCounts::default();
+    for segment in curve_string.segments() {
+        match segment {
+            Segment2::Line(_) => counts.lines += 1,
+            Segment2::Arc(_) => counts.arcs += 1,
+        }
+    }
+    counts
+}
+
 fn blocked_trim_result(
     curve_string: &CurveString2,
     start: CurveStringTrimPoint2,
@@ -5219,8 +5246,10 @@ fn blocked_trim_result(
             start,
             end,
             source_segment_count: curve_string.len(),
+            source_segment_kind_counts: curve_string_segment_kind_counts(curve_string),
             segment_reports,
             output_segment_count: None,
+            output_segment_kind_counts: None,
             status,
             blocker,
         },

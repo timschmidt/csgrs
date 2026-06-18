@@ -10,7 +10,7 @@ use hypercurve::{
     CurveStringRegionTrimStage2, CurveStringTrimInputPath2, CurveStringTrimPoint2,
     IntersectionKind, LineArcIntersection, LineArcOrder, LineSeg2, Point2, Real, Region2,
     RegionContourRole, RegionPointLocation, Segment2, SegmentIntersection, SegmentKind,
-    UncertaintyReason,
+    SegmentKindCounts, UncertaintyReason,
 };
 
 fn s(value: i32) -> Real {
@@ -2037,7 +2037,15 @@ fn curve_string_trim_materializes_exact_line_subsegment_with_report() {
         CurveStringTrimInputPath2::Parameters
     );
     assert_eq!(trim.report().source_segment_count(), 1);
+    assert_eq!(
+        trim.report().source_segment_kind_counts(),
+        SegmentKindCounts { lines: 1, arcs: 0 }
+    );
     assert_eq!(trim.report().output_segment_count(), Some(1));
+    assert_eq!(
+        trim.report().output_segment_kind_counts(),
+        Some(SegmentKindCounts { lines: 1, arcs: 0 })
+    );
     assert_eq!(trim.report().segment_reports().len(), 1);
     assert_eq!(trim.report().segment_reports()[0].source_segment_index(), 0);
     assert_eq!(
@@ -2082,6 +2090,14 @@ fn curve_string_trim_materializes_across_line_segments_with_source_ranges() {
 
     assert!(trim.report().status().is_native_exact());
     assert_eq!(trim.report().output_segment_count(), Some(3));
+    assert_eq!(
+        trim.report().source_segment_kind_counts(),
+        SegmentKindCounts { lines: 3, arcs: 0 }
+    );
+    assert_eq!(
+        trim.report().output_segment_kind_counts(),
+        Some(SegmentKindCounts { lines: 3, arcs: 0 })
+    );
     let reports = trim.report().segment_reports();
     assert_eq!(reports.len(), 3);
     assert_eq!(reports[0].source_range().start(), &q(1, 2));
@@ -2114,6 +2130,14 @@ fn curve_string_trim_preserves_whole_arc_segment() {
 
     assert!(trim.report().status().is_native_exact());
     assert_eq!(trim.report().output_segment_count(), Some(1));
+    assert_eq!(
+        trim.report().source_segment_kind_counts(),
+        SegmentKindCounts { lines: 0, arcs: 1 }
+    );
+    assert_eq!(
+        trim.report().output_segment_kind_counts(),
+        Some(SegmentKindCounts { lines: 0, arcs: 1 })
+    );
     assert_eq!(trim.curve_string().unwrap().segments(), &[arc]);
 }
 
@@ -2143,6 +2167,11 @@ fn curve_string_trim_reports_partial_arc_as_unsupported_without_materializing() 
         Some(UncertaintyReason::Unsupported)
     );
     assert_eq!(trim.report().output_segment_count(), None);
+    assert_eq!(
+        trim.report().source_segment_kind_counts(),
+        SegmentKindCounts { lines: 0, arcs: 1 }
+    );
+    assert_eq!(trim.report().output_segment_kind_counts(), None);
     assert_eq!(trim.report().segment_reports().len(), 1);
     assert!(
         trim.report().segment_reports()[0]
@@ -2245,6 +2274,14 @@ fn curve_string_trim_between_points_materializes_partial_arc() {
     );
     assert_eq!(trim.report().segment_reports().len(), 1);
     assert_eq!(trim.report().output_segment_count(), Some(1));
+    assert_eq!(
+        trim.report().source_segment_kind_counts(),
+        SegmentKindCounts { lines: 0, arcs: 1 }
+    );
+    assert_eq!(
+        trim.report().output_segment_kind_counts(),
+        Some(SegmentKindCounts { lines: 0, arcs: 1 })
+    );
     assert_eq!(
         trim.report().segment_reports()[0].source_segment_kind(),
         SegmentKind::Arc
