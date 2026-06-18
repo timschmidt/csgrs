@@ -692,19 +692,11 @@ impl ExactArrangementBooleanAttempt {
         left: &ExactMesh,
         right: &ExactMesh,
     ) -> Result<(), ExactReportValidationError> {
-        self.validate()?;
-        let replay = workspace_arrangement_attempt_for_replay(
+        self.validate_against_sources_for_request(
             left,
             right,
             ExactBooleanRequest::new(self.operation, self.output_validation),
-            self.policy,
-        )?;
-        replay.validate()?;
-        if self == &replay {
-            Ok(())
-        } else {
-            Err(ExactReportValidationError::SourceReplayMismatch)
-        }
+        )
     }
 
     /// Validate this attempt by replaying it under an explicit output
@@ -715,13 +707,21 @@ impl ExactArrangementBooleanAttempt {
         right: &ExactMesh,
         validation: ValidationPolicy,
     ) -> Result<(), ExactReportValidationError> {
-        self.validate()?;
-        let replay = workspace_arrangement_attempt_for_replay(
+        self.validate_against_sources_for_request(
             left,
             right,
             ExactBooleanRequest::new(self.operation, validation),
-            self.policy,
-        )?;
+        )
+    }
+
+    fn validate_against_sources_for_request(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+        request: ExactBooleanRequest,
+    ) -> Result<(), ExactReportValidationError> {
+        self.validate()?;
+        let replay = workspace_arrangement_attempt_for_replay(left, right, request, self.policy)?;
         replay.validate()?;
         if self == &replay {
             Ok(())
