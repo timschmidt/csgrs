@@ -2222,6 +2222,22 @@ pub struct ExactBooleanEvaluation {
 }
 
 impl ExactBooleanEvaluation {
+    pub(crate) fn from_parts(
+        request: ExactBooleanRequest,
+        preflight: ExactBooleanPreflight,
+        certifications: ExactBooleanCertificationSet,
+        result: Option<ExactBooleanResult>,
+    ) -> Result<Self, ExactReportValidationError> {
+        let evaluation = Self {
+            request,
+            preflight,
+            certifications,
+            result,
+        };
+        evaluation.validate()?;
+        Ok(evaluation)
+    }
+
     /// Return the retained arrangement/cell-complex attempt for this request,
     /// when evaluation reached that canonical pipeline.
     pub fn retained_arrangement_attempt(&self) -> Option<&ExactArrangementBooleanAttempt> {

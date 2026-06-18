@@ -308,20 +308,9 @@ impl<'a> ExactBooleanWorkspace<'a> {
         } else {
             None
         };
-        let evaluation = ExactBooleanEvaluation {
-            request,
-            preflight,
-            certifications,
-            result,
-        };
-        if evaluation.request != request {
-            return Err(workspace_report_validation_error(
-                ExactReportValidationError::StatusEvidenceMismatch,
-            ));
-        }
-        evaluation
-            .validate()
-            .map_err(workspace_report_validation_error)?;
+        let evaluation =
+            ExactBooleanEvaluation::from_parts(request, preflight, certifications, result)
+                .map_err(workspace_report_validation_error)?;
         self.evaluations.push((request, evaluation));
         Ok(&self
             .evaluations
