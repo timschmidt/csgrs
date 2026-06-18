@@ -72,10 +72,6 @@ pub use boolean::{
     ExactBooleanRequest, ExactBoundaryBooleanPolicy,
 };
 pub use error::{DiagnosticKind, MeshDiagnostic, MeshError, Severity};
-pub use facts::{
-    EdgeFacts, FaceFacts, FacePlaneFacts, MeshFacts, MeshFactsValidationError, MeshValidationFacts,
-    OrientedFaceFacts, TriangleFacts, VertexFacts, VertexLinkKind,
-};
 pub use mesh::{ExactMesh, ExactMeshValidationError, Triangle};
 pub use package::{
     ExactMeshConsumerDomain, ExactMeshDomainSummaryError, ExactMeshHandoffPackage,

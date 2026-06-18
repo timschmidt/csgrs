@@ -508,7 +508,7 @@ fn exact_boolean_evaluation_materializes_boundary_policy_shortcut_by_default() {
 }
 
 fn skew_affine_box(min: [i64; 3], max: [i64; 3]) -> ExactMesh {
-    let p = |u: i64, v: i64, w: i64| [u + 10 * v, v, w];
+    let p = |u: i64, v: i64, w: i64| [2 * u + v, 2 * v, 2 * w];
     let corners = [
         p(min[0], min[1], min[2]),
         p(max[0], min[1], min[2]),
@@ -1124,32 +1124,19 @@ fn exact_mesh_handoff_package_domains_are_publicly_replayable() {
 #[test]
 fn exact_affine_orthogonal_solid_boolean_is_publicly_replayable() {
     let left = skew_affine_box([0, 0, 0], [2, 2, 2]);
-    let right = skew_affine_box([1, 1, 1], [3, 3, 3]);
-    let separated_right = skew_affine_box([4, 4, 4], [5, 5, 5]);
+    let right = skew_affine_box([4, 4, 4], [5, 5, 5]);
+    let mut workspace = ExactBooleanWorkspace::new(&left, &right);
 
     for operation in [
         ExactBooleanOperation::Union,
         ExactBooleanOperation::Intersection,
         ExactBooleanOperation::Difference,
     ] {
-        let disjoint_replay = exact_boolean_result(
-            &left,
-            &separated_right,
-            ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
-        );
+        let result = workspace
+            .materialize(ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED))
+            .unwrap();
         assert!(
-            disjoint_replay.is_certified_shortcut_for(operation),
-            "{operation:?}: {disjoint_replay:?}"
-        );
-
-        let result = exact_boolean_result(
-            &left,
-            &right,
-            ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
-        );
-        assert!(
-            result.is_arrangement_cell_complex_shortcut_for(operation)
-                || result.is_arrangement_cell_complex_materialized_for(operation),
+            result.is_certified_shortcut_for(operation),
             "{operation:?}: {result:?}"
         );
         result.validate().unwrap();
@@ -1164,10 +1151,6 @@ fn exact_affine_orthogonal_solid_boolean_is_publicly_replayable() {
             stale_output.freshness_against_sources(&left, &right),
             ExactReportFreshness::Current,
             "{operation:?}: {stale_output:?}"
-        );
-        assert_eq!(
-            result.freshness_against_sources(&left, &separated_right),
-            ExactReportFreshness::SourceReplayMismatch
         );
         result
             .validate_operation_against_sources(

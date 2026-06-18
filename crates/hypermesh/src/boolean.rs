@@ -58,7 +58,8 @@ use super::intersection::MeshFacePairRelation;
 use super::loop_triangulation::{group_exact_coplanar_loops, triangulate_exact_loop_group};
 use super::mesh::{ExactMesh, Triangle};
 use super::orthogonal_solid::{
-    AxisAlignedOrthogonalSolidOperation, has_empty_axis_aligned_orthogonal_solid_cell_intersection,
+    AxisAlignedOrthogonalSolidOperation, axis_aligned_orthogonal_solid_cell_selected_count,
+    has_empty_axis_aligned_orthogonal_solid_cell_intersection,
     materialize_axis_aligned_orthogonal_solid_cell_output,
 };
 #[cfg(test)]
@@ -1992,60 +1993,39 @@ pub struct ExactArrangementCellComplexShortcutFacts {
 impl ExactArrangementCellComplexShortcutFacts {
     fn from_sources(left: &ExactMesh, right: &ExactMesh) -> Self {
         Self {
-            axis_aligned_union: boolean_arrangement_orthogonal_solid_cell_recovery(
+            axis_aligned_union: axis_aligned_orthogonal_solid_cell_selected_count(
                 left,
                 right,
-                ExactBooleanOperation::Union,
-                ValidationPolicy::CLOSED,
+                AxisAlignedOrthogonalSolidOperation::Union,
             )
-            .ok()
-            .flatten()
             .is_some(),
-            axis_aligned_intersection: boolean_arrangement_orthogonal_solid_cell_recovery(
+            axis_aligned_intersection: axis_aligned_orthogonal_solid_cell_selected_count(
                 left,
                 right,
-                ExactBooleanOperation::Intersection,
-                ValidationPolicy::CLOSED,
+                AxisAlignedOrthogonalSolidOperation::Intersection,
             )
-            .ok()
-            .flatten()
             .is_some(),
-            axis_aligned_difference: boolean_arrangement_orthogonal_solid_cell_recovery(
+            axis_aligned_difference: axis_aligned_orthogonal_solid_cell_selected_count(
                 left,
                 right,
-                ExactBooleanOperation::Difference,
-                ValidationPolicy::CLOSED,
+                AxisAlignedOrthogonalSolidOperation::Difference,
             )
-            .ok()
-            .flatten()
             .is_some(),
-            affine_union: boolean_arrangement_affine_orthogonal_solid_recovery(
+            affine_union: has_affine_orthogonal_solid_cells(
                 left,
                 right,
-                ExactBooleanOperation::Union,
-                ValidationPolicy::CLOSED,
-            )
-            .ok()
-            .flatten()
-            .is_some(),
-            affine_intersection: boolean_arrangement_affine_orthogonal_solid_recovery(
+                AffineOrthogonalSolidOperation::Union,
+            ),
+            affine_intersection: has_affine_orthogonal_solid_cells(
                 left,
                 right,
-                ExactBooleanOperation::Intersection,
-                ValidationPolicy::CLOSED,
-            )
-            .ok()
-            .flatten()
-            .is_some(),
-            affine_difference: boolean_arrangement_affine_orthogonal_solid_recovery(
+                AffineOrthogonalSolidOperation::Intersection,
+            ),
+            affine_difference: has_affine_orthogonal_solid_cells(
                 left,
                 right,
-                ExactBooleanOperation::Difference,
-                ValidationPolicy::CLOSED,
-            )
-            .ok()
-            .flatten()
-            .is_some(),
+                AffineOrthogonalSolidOperation::Difference,
+            ),
         }
     }
 
