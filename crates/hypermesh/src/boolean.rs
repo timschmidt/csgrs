@@ -11356,6 +11356,16 @@ mod tests {
         left: &ExactMesh,
         right: &ExactMesh,
     ) -> ExactWindingReadinessReport {
+        test_evaluation(request, left, right)
+            .certifications
+            .winding_readiness
+    }
+
+    fn test_graph_winding_readiness(
+        request: ExactBooleanRequest,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> ExactWindingReadinessReport {
         let graph = validated_intersection_graph(left, right).unwrap();
         winding_readiness_report_for_request_from_graph(&graph, left, right, request).unwrap()
     }
@@ -11919,7 +11929,7 @@ mod tests {
             ValidationPolicy::ALLOW_BOUNDARY,
         )
         .unwrap();
-        let readiness = test_winding_readiness(
+        let readiness = test_graph_winding_readiness(
             ExactBooleanRequest::with_boundary_policy(
                 ExactBooleanOperation::SelectedRegions(ExactRegionSelection::KeepAll),
                 ValidationPolicy::ALLOW_BOUNDARY,
@@ -11954,7 +11964,7 @@ mod tests {
             ValidationPolicy::ALLOW_BOUNDARY,
         )
         .unwrap();
-        let disjoint_readiness = test_winding_readiness(
+        let disjoint_readiness = test_graph_winding_readiness(
             ExactBooleanRequest::with_boundary_policy(
                 ExactBooleanOperation::SelectedRegions(ExactRegionSelection::KeepAll),
                 ValidationPolicy::ALLOW_BOUNDARY,
@@ -13461,9 +13471,14 @@ mod tests {
                 &left,
                 &right,
             );
+            let arrangement_materialized = operation == ExactBooleanOperation::Intersection;
+            let expected_status = if arrangement_materialized {
+                ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized
+            } else {
+                ExactWindingReadinessStatus::LowerDimensionalRegularizedSolidAlreadyMaterialized
+            };
             assert_eq!(
-                readiness.status,
-                ExactWindingReadinessStatus::LowerDimensionalRegularizedSolidAlreadyMaterialized,
+                readiness.status, expected_status,
                 "{operation:?}: {readiness:?}"
             );
             assert_eq!(
@@ -13471,11 +13486,20 @@ mod tests {
                 ExactBooleanBlockerKind::NeedsWinding,
                 "{operation:?}: {readiness:?}"
             );
-            assert_eq!(readiness.retained_face_pairs, 0);
-            assert_eq!(readiness.retained_events, 0);
+            assert_eq!(
+                readiness.retained_face_pairs,
+                usize::from(arrangement_materialized)
+            );
+            assert_eq!(
+                readiness.retained_events,
+                if arrangement_materialized { 4 } else { 0 }
+            );
             assert_eq!(readiness.region_count, 0);
             assert!(readiness.status.is_already_materialized());
-            assert!(!readiness.status.materializes_arrangement_cell_complex());
+            assert_eq!(
+                readiness.status.materializes_arrangement_cell_complex(),
+                arrangement_materialized
+            );
             readiness.validate().unwrap();
             readiness
                 .validate_against_sources_with_validation(&left, &right, ValidationPolicy::CLOSED)
