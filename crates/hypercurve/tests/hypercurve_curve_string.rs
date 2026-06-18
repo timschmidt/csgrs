@@ -2889,6 +2889,14 @@ fn curve_string_trim_inside_region_materializes_inside_window() {
     assert_eq!(right_hit.region_param(), &q(1, 4));
     assert_eq!(trimmed.report().interval_reports().len(), 3);
     assert_eq!(
+        trimmed.report().interval_reports()[0].source_segment_kind(),
+        SegmentKind::Line
+    );
+    assert_eq!(
+        trimmed.report().interval_reports()[0].output_segment_kind(),
+        None
+    );
+    assert_eq!(
         trimmed.report().interval_reports()[1].range_start_point(),
         &p(0, 1)
     );
@@ -2901,12 +2909,20 @@ fn curve_string_trim_inside_region_materializes_inside_window() {
         Some(RegionPointLocation::Inside)
     );
     assert_eq!(
+        trimmed.report().interval_reports()[1].source_segment_kind(),
+        SegmentKind::Line
+    );
+    assert_eq!(
         trimmed.report().interval_reports()[1].output_curve_string_index(),
         Some(0)
     );
     assert_eq!(
         trimmed.report().interval_reports()[1].output_segment_index(),
         Some(0)
+    );
+    assert_eq!(
+        trimmed.report().interval_reports()[1].output_segment_kind(),
+        Some(SegmentKind::Line)
     );
 
     assert_eq!(trimmed.curve_strings().len(), 1);
