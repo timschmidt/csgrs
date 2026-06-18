@@ -154,6 +154,31 @@ pub struct CurveStringLineMergeResult2 {
     report: CurveStringLineMergeReport2,
 }
 
+/// One exact reversed duplicate pair removed from an open curve string.
+#[derive(Clone, Debug, PartialEq)]
+pub struct CurveStringReversedDuplicatePairReport2 {
+    first_source_segment_index: usize,
+    second_source_segment_index: usize,
+    status: RetainedTopologyStatus,
+}
+
+/// Report for exact adjacent reversed-duplicate removal on an open curve string.
+#[derive(Clone, Debug, PartialEq)]
+pub struct CurveStringDeduplicateReport2 {
+    source_segment_count: usize,
+    output_segment_count: Option<usize>,
+    removed_pairs: Vec<CurveStringReversedDuplicatePairReport2>,
+    status: RetainedTopologyStatus,
+    blocker: Option<UncertaintyReason>,
+}
+
+/// Result of report-bearing exact adjacent reversed-duplicate removal.
+#[derive(Clone, Debug, PartialEq)]
+pub struct CurveStringDeduplicateResult2 {
+    curve_string: Option<CurveString2>,
+    report: CurveStringDeduplicateReport2,
+}
+
 /// Report for extending one open curve-string endpoint to an exact target point.
 #[derive(Clone, Debug, PartialEq)]
 pub struct CurveStringExtendReport2 {
@@ -743,6 +768,68 @@ impl CurveString2 {
                 source_segment_count: self.len(),
                 output_segment_count: Some(curve_string.len()),
                 spans,
+                status: RetainedTopologyStatus::NativeExact,
+                blocker: None,
+            },
+            curve_string: Some(curve_string),
+        })
+    }
+
+    /// Removes adjacent exact reversed duplicate segment pairs.
+    ///
+    /// This is a structural de-duplication utility for authored backtracking,
+    /// not an overlap resolver: only `segment == next.reversed()` is removed.
+    /// Same-support partial overlaps, same-direction repeats, and geometric
+    /// coincidences with different segmentation remain intact for the
+    /// arrangement pipeline. If every segment cancels, no empty `CurveString2`
+    /// is materialized and the report carries an explicit boundary blocker.
+    pub fn remove_adjacent_reversed_duplicates(
+        &self,
+    ) -> CurveResult<CurveStringDeduplicateResult2> {
+        let mut retained: Vec<(usize, Segment2)> = Vec::with_capacity(self.len());
+        let mut removed_pairs = Vec::new();
+
+        for (source_index, segment) in self.segments.iter().cloned().enumerate() {
+            if retained
+                .last()
+                .is_some_and(|(_, previous)| previous == &segment.reversed())
+            {
+                let (first_source_segment_index, _) = retained
+                    .pop()
+                    .expect("retained stack should have a previous segment");
+                removed_pairs.push(CurveStringReversedDuplicatePairReport2 {
+                    first_source_segment_index,
+                    second_source_segment_index: source_index,
+                    status: RetainedTopologyStatus::NativeExact,
+                });
+            } else {
+                retained.push((source_index, segment));
+            }
+        }
+
+        if retained.is_empty() {
+            return Ok(CurveStringDeduplicateResult2 {
+                curve_string: None,
+                report: CurveStringDeduplicateReport2 {
+                    source_segment_count: self.len(),
+                    output_segment_count: None,
+                    removed_pairs,
+                    status: RetainedTopologyStatus::Unsupported,
+                    blocker: Some(UncertaintyReason::Boundary),
+                },
+            });
+        }
+
+        let segments = retained
+            .into_iter()
+            .map(|(_, segment)| segment)
+            .collect::<Vec<_>>();
+        let curve_string = CurveString2::try_new(segments)?;
+        Ok(CurveStringDeduplicateResult2 {
+            report: CurveStringDeduplicateReport2 {
+                source_segment_count: self.len(),
+                output_segment_count: Some(curve_string.len()),
+                removed_pairs,
                 status: RetainedTopologyStatus::NativeExact,
                 blocker: None,
             },
@@ -2624,6 +2711,67 @@ impl CurveStringLineMergeResult2 {
 
     /// Returns the retained line-merge report.
     pub const fn report(&self) -> &CurveStringLineMergeReport2 {
+        &self.report
+    }
+}
+
+impl CurveStringReversedDuplicatePairReport2 {
+    /// Returns the first source segment index removed by this cancellation.
+    pub const fn first_source_segment_index(&self) -> usize {
+        self.first_source_segment_index
+    }
+
+    /// Returns the second source segment index removed by this cancellation.
+    pub const fn second_source_segment_index(&self) -> usize {
+        self.second_source_segment_index
+    }
+
+    /// Returns retained topology status for this duplicate-pair removal.
+    pub const fn status(&self) -> RetainedTopologyStatus {
+        self.status
+    }
+}
+
+impl CurveStringDeduplicateReport2 {
+    /// Returns the source curve-string segment count captured by this report.
+    pub const fn source_segment_count(&self) -> usize {
+        self.source_segment_count
+    }
+
+    /// Returns the output segment count when de-duplication materialized.
+    pub const fn output_segment_count(&self) -> Option<usize> {
+        self.output_segment_count
+    }
+
+    /// Returns exact reversed duplicate pairs removed by this operation.
+    pub fn removed_pairs(&self) -> &[CurveStringReversedDuplicatePairReport2] {
+        &self.removed_pairs
+    }
+
+    /// Returns de-duplication materialization status.
+    pub const fn status(&self) -> RetainedTopologyStatus {
+        self.status
+    }
+
+    /// Returns the exact blocker for non-materialized de-duplication attempts.
+    pub const fn blocker(&self) -> Option<UncertaintyReason> {
+        self.blocker
+    }
+}
+
+impl CurveStringDeduplicateResult2 {
+    /// Returns the materialized de-duplicated curve string, if supported.
+    pub const fn curve_string(&self) -> Option<&CurveString2> {
+        self.curve_string.as_ref()
+    }
+
+    /// Consumes this result and returns the materialized curve string, if any.
+    pub fn into_curve_string(self) -> Option<CurveString2> {
+        self.curve_string
+    }
+
+    /// Returns retained de-duplication evidence.
+    pub const fn report(&self) -> &CurveStringDeduplicateReport2 {
         &self.report
     }
 }

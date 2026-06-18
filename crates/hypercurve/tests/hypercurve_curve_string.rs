@@ -158,6 +158,84 @@ fn curve_string_merge_adjacent_collinear_lines_preserves_reversal() {
 }
 
 #[test]
+fn curve_string_remove_adjacent_reversed_duplicates_reports_removed_pairs() {
+    let curve = CurveString2::try_new(vec![
+        line_segment(0, 0, 1, 0),
+        line_segment(1, 0, 2, 0),
+        line_segment(2, 0, 1, 0),
+        line_segment(1, 0, 3, 0),
+    ])
+    .unwrap();
+
+    let deduped = curve.remove_adjacent_reversed_duplicates().unwrap();
+
+    assert!(deduped.report().status().is_native_exact());
+    assert_eq!(deduped.report().source_segment_count(), 4);
+    assert_eq!(deduped.report().output_segment_count(), Some(2));
+    assert_eq!(deduped.report().removed_pairs().len(), 1);
+    assert_eq!(
+        deduped.report().removed_pairs()[0].first_source_segment_index(),
+        1
+    );
+    assert_eq!(
+        deduped.report().removed_pairs()[0].second_source_segment_index(),
+        2
+    );
+    assert!(
+        deduped.report().removed_pairs()[0]
+            .status()
+            .is_native_exact()
+    );
+    let curve = deduped
+        .curve_string()
+        .expect("partial exact duplicate removal should materialize");
+    assert_eq!(curve.len(), 2);
+    assert_line(&curve.segments()[0], p(0, 0), p(1, 0));
+    assert_line(&curve.segments()[1], p(1, 0), p(3, 0));
+}
+
+#[test]
+fn curve_string_remove_adjacent_reversed_duplicates_reports_empty_output_blocker() {
+    let curve = CurveString2::try_new(vec![
+        line_segment(0, 0, 1, 0),
+        line_segment(1, 0, 2, 0),
+        line_segment(2, 0, 1, 0),
+        line_segment(1, 0, 0, 0),
+    ])
+    .unwrap();
+
+    let deduped = curve.remove_adjacent_reversed_duplicates().unwrap();
+
+    assert!(deduped.curve_string().is_none());
+    assert!(deduped.report().status().is_retained_evidence());
+    assert_eq!(deduped.report().source_segment_count(), 4);
+    assert_eq!(deduped.report().output_segment_count(), None);
+    assert_eq!(deduped.report().removed_pairs().len(), 2);
+    assert_eq!(
+        deduped.report().blocker(),
+        Some(UncertaintyReason::Boundary)
+    );
+}
+
+#[test]
+fn curve_string_remove_adjacent_reversed_duplicates_keeps_partial_backtrack() {
+    let curve =
+        CurveString2::try_new(vec![line_segment(0, 0, 3, 0), line_segment(3, 0, 1, 0)]).unwrap();
+
+    let deduped = curve.remove_adjacent_reversed_duplicates().unwrap();
+
+    assert!(deduped.report().status().is_native_exact());
+    assert_eq!(deduped.report().removed_pairs().len(), 0);
+    assert_eq!(deduped.report().output_segment_count(), Some(2));
+    let curve = deduped
+        .curve_string()
+        .expect("nonduplicate partial backtrack should remain materialized");
+    assert_eq!(curve.len(), 2);
+    assert_line(&curve.segments()[0], p(0, 0), p(3, 0));
+    assert_line(&curve.segments()[1], p(3, 0), p(1, 0));
+}
+
+#[test]
 fn curve_string_link_materializes_unique_end_start_connection() {
     let first = CurveString2::try_new(vec![line_segment(0, 0, 1, 0)]).unwrap();
     let second = CurveString2::try_new(vec![line_segment(1, 0, 2, 0)]).unwrap();
