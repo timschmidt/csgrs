@@ -2,14 +2,14 @@
 
 use std::cmp::Ordering;
 
-use hyperreal::Real;
+use hyperreal::{Real, RealSign};
 
 use crate::bbox::{Aabb2, aabbs_decided_disjoint, decided_segment_aabb};
-use crate::classify::{compare_reals, in_closed_unit_interval, is_zero};
+use crate::classify::{compare_reals, in_closed_unit_interval, is_zero, real_sign};
 use crate::{
     ArcArcIntersection, BulgeVertex2, CircularArc2, Classification, CurveError, CurvePolicy,
-    CurveResult, IntersectionKind, LineArcIntersection, LineLineIntersection, LineSeg2, ParamRange,
-    Point2, RetainedTopologyStatus, Segment2, SegmentIntersection, UncertaintyReason,
+    CurveResult, IntersectionKind, LineArcIntersection, LineLineIntersection, LineSeg2, LineSide,
+    ParamRange, Point2, RetainedTopologyStatus, Segment2, SegmentIntersection, UncertaintyReason,
 };
 
 /// One segment-pair event between two curve strings.
@@ -99,6 +99,32 @@ pub struct CurveStringConnectReport2 {
 pub struct ConnectedCurveString2 {
     curve_string: Option<CurveString2>,
     report: CurveStringConnectReport2,
+}
+
+/// One retained source run emitted by a line-merge operation.
+#[derive(Clone, Debug, PartialEq)]
+pub struct CurveStringLineMergeSpanReport2 {
+    source_start_segment_index: usize,
+    source_end_segment_index: usize,
+    output_segment_index: usize,
+    status: RetainedTopologyStatus,
+}
+
+/// Report for exact adjacent-line merging on an open curve string.
+#[derive(Clone, Debug, PartialEq)]
+pub struct CurveStringLineMergeReport2 {
+    source_segment_count: usize,
+    output_segment_count: Option<usize>,
+    spans: Vec<CurveStringLineMergeSpanReport2>,
+    status: RetainedTopologyStatus,
+    blocker: Option<UncertaintyReason>,
+}
+
+/// Result of report-bearing adjacent-line merging.
+#[derive(Clone, Debug, PartialEq)]
+pub struct CurveStringLineMergeResult2 {
+    curve_string: Option<CurveString2>,
+    report: CurveStringLineMergeReport2,
 }
 
 /// Report for extending one open curve-string endpoint to an exact target point.
@@ -527,6 +553,81 @@ impl CurveString2 {
         Ok(ConnectedCurveString2 {
             curve_string: Some(curve_string),
             report,
+        })
+    }
+
+    /// Merges adjacent same-direction line segments when collinearity is certified.
+    ///
+    /// This is an explicit editing utility, not constructor normalization:
+    /// source segment runs are retained in the report, mixed line/arc topology
+    /// is preserved, and collinear reversals are not collapsed because they are
+    /// real authored backtracking topology. If a line-line pair cannot be
+    /// classified under the active policy, the operation returns an unresolved
+    /// report instead of guessing a merge boundary.
+    pub fn merge_adjacent_collinear_lines(
+        &self,
+        policy: &CurvePolicy,
+    ) -> CurveResult<CurveStringLineMergeResult2> {
+        let mut merged_segments = Vec::with_capacity(self.len());
+        let mut spans = Vec::new();
+        let mut current_segment = self
+            .segments
+            .first()
+            .cloned()
+            .ok_or(CurveError::EmptyCurveString)?;
+        let mut current_start_index = 0_usize;
+
+        for (next_index, next_segment) in self.segments.iter().enumerate().skip(1) {
+            match merge_adjacent_line_segments(&current_segment, next_segment, policy)? {
+                Classification::Decided(Some(merged)) => {
+                    current_segment = Segment2::Line(merged);
+                }
+                Classification::Decided(None) => {
+                    let output_segment_index = merged_segments.len();
+                    merged_segments.push(current_segment);
+                    spans.push(CurveStringLineMergeSpanReport2 {
+                        source_start_segment_index: current_start_index,
+                        source_end_segment_index: next_index - 1,
+                        output_segment_index,
+                        status: RetainedTopologyStatus::NativeExact,
+                    });
+                    current_segment = next_segment.clone();
+                    current_start_index = next_index;
+                }
+                Classification::Uncertain(reason) => {
+                    return Ok(CurveStringLineMergeResult2 {
+                        curve_string: None,
+                        report: CurveStringLineMergeReport2 {
+                            source_segment_count: self.len(),
+                            output_segment_count: None,
+                            spans,
+                            status: RetainedTopologyStatus::Unresolved,
+                            blocker: Some(reason),
+                        },
+                    });
+                }
+            }
+        }
+
+        let output_segment_index = merged_segments.len();
+        merged_segments.push(current_segment);
+        spans.push(CurveStringLineMergeSpanReport2 {
+            source_start_segment_index: current_start_index,
+            source_end_segment_index: self.len() - 1,
+            output_segment_index,
+            status: RetainedTopologyStatus::NativeExact,
+        });
+
+        let curve_string = CurveString2::try_new(merged_segments)?;
+        Ok(CurveStringLineMergeResult2 {
+            report: CurveStringLineMergeReport2 {
+                source_segment_count: self.len(),
+                output_segment_count: Some(curve_string.len()),
+                spans,
+                status: RetainedTopologyStatus::NativeExact,
+                blocker: None,
+            },
+            curve_string: Some(curve_string),
         })
     }
 
@@ -1799,6 +1900,34 @@ fn blocked_chamfer_result(
     }
 }
 
+fn merge_adjacent_line_segments(
+    current: &Segment2,
+    next: &Segment2,
+    policy: &CurvePolicy,
+) -> CurveResult<Classification<Option<LineSeg2>>> {
+    let (Segment2::Line(current), Segment2::Line(next)) = (current, next) else {
+        return Ok(Classification::Decided(None));
+    };
+
+    match current.classify_point(next.end(), policy) {
+        Classification::Decided(LineSide::On) => {}
+        Classification::Decided(_) => return Ok(Classification::Decided(None)),
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    }
+
+    let (current_dx, current_dy) = current.delta();
+    let (next_dx, next_dy) = next.delta();
+    let dot = (&current_dx * &next_dx) + (&current_dy * &next_dy);
+    match real_sign(&dot, policy) {
+        Some(RealSign::Positive) => Ok(Classification::Decided(Some(LineSeg2::try_new(
+            current.start().clone(),
+            next.end().clone(),
+        )?))),
+        Some(RealSign::Zero | RealSign::Negative) => Ok(Classification::Decided(None)),
+        None => Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+    }
+}
+
 fn validate_trim_point(
     curve_string: &CurveString2,
     point: &CurveStringTrimPoint2,
@@ -2239,6 +2368,72 @@ impl ConnectedCurveString2 {
 
     /// Returns the retained connector report.
     pub const fn report(&self) -> &CurveStringConnectReport2 {
+        &self.report
+    }
+}
+
+impl CurveStringLineMergeSpanReport2 {
+    /// Returns the first source segment index included in this output segment.
+    pub const fn source_start_segment_index(&self) -> usize {
+        self.source_start_segment_index
+    }
+
+    /// Returns the final source segment index included in this output segment.
+    pub const fn source_end_segment_index(&self) -> usize {
+        self.source_end_segment_index
+    }
+
+    /// Returns the output segment index produced for this source run.
+    pub const fn output_segment_index(&self) -> usize {
+        self.output_segment_index
+    }
+
+    /// Returns retained topology status for this source run.
+    pub const fn status(&self) -> RetainedTopologyStatus {
+        self.status
+    }
+}
+
+impl CurveStringLineMergeReport2 {
+    /// Returns the source curve-string segment count captured by this report.
+    pub const fn source_segment_count(&self) -> usize {
+        self.source_segment_count
+    }
+
+    /// Returns the output segment count when the merge materialized.
+    pub const fn output_segment_count(&self) -> Option<usize> {
+        self.output_segment_count
+    }
+
+    /// Returns retained source runs for materialized output segments.
+    pub fn spans(&self) -> &[CurveStringLineMergeSpanReport2] {
+        &self.spans
+    }
+
+    /// Returns merge materialization status.
+    pub const fn status(&self) -> RetainedTopologyStatus {
+        self.status
+    }
+
+    /// Returns the exact blocker for non-materialized merge attempts.
+    pub const fn blocker(&self) -> Option<UncertaintyReason> {
+        self.blocker
+    }
+}
+
+impl CurveStringLineMergeResult2 {
+    /// Returns the materialized merged curve string, if supported.
+    pub const fn curve_string(&self) -> Option<&CurveString2> {
+        self.curve_string.as_ref()
+    }
+
+    /// Consumes this result and returns the materialized merged curve string, if any.
+    pub fn into_curve_string(self) -> Option<CurveString2> {
+        self.curve_string
+    }
+
+    /// Returns the retained line-merge report.
+    pub const fn report(&self) -> &CurveStringLineMergeReport2 {
         &self.report
     }
 }

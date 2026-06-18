@@ -146,6 +146,7 @@ pub use curve_string::{
     CurveStringCurveTrimReport2, CurveStringCurveTrimResult2, CurveStringEndpoint2,
     CurveStringEndpointConnectionReport2, CurveStringEndpointConnectionStatus2,
     CurveStringExtendReport2, CurveStringExtendResult2, CurveStringIntersection,
+    CurveStringLineMergeReport2, CurveStringLineMergeResult2, CurveStringLineMergeSpanReport2,
     CurveStringLinkKind2, CurveStringLinkReport2, CurveStringTrimPoint2, CurveStringTrimReport2,
     CurveStringTrimResult2, CurveStringTrimSegmentReport2, LinkedCurveString2,
 };

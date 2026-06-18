@@ -21,6 +21,14 @@ fn line_segment(start_x: i32, start_y: i32, end_x: i32, end_y: i32) -> Segment2 
     Segment2::Line(LineSeg2::try_new(p(start_x, start_y), p(end_x, end_y)).unwrap())
 }
 
+fn assert_line(segment: &Segment2, start: Point2, end: Point2) {
+    let Segment2::Line(line) = segment else {
+        panic!("expected line segment");
+    };
+    assert_eq!(line.start(), &start);
+    assert_eq!(line.end(), &end);
+}
+
 fn policy() -> CurvePolicy {
     CurvePolicy::certified()
 }
@@ -80,6 +88,73 @@ fn curve_string_endpoint_report_certifies_exact_connection() {
     );
     assert!(report.topology_status().is_native_exact());
     assert_eq!(report.distance_squared(), &s(0));
+}
+
+#[test]
+fn curve_string_merge_adjacent_collinear_lines_reports_source_runs() {
+    let curve = CurveString2::try_new(vec![
+        line_segment(0, 0, 2, 0),
+        line_segment(2, 0, 5, 0),
+        line_segment(5, 0, 5, 2),
+        line_segment(5, 2, 5, 6),
+    ])
+    .unwrap();
+
+    let merged = curve.merge_adjacent_collinear_lines(&policy()).unwrap();
+
+    assert!(merged.report().status().is_native_exact());
+    assert_eq!(merged.report().source_segment_count(), 4);
+    assert_eq!(merged.report().output_segment_count(), Some(2));
+    assert_eq!(merged.report().spans().len(), 2);
+    assert_eq!(merged.report().spans()[0].source_start_segment_index(), 0);
+    assert_eq!(merged.report().spans()[0].source_end_segment_index(), 1);
+    assert_eq!(merged.report().spans()[0].output_segment_index(), 0);
+    assert_eq!(merged.report().spans()[1].source_start_segment_index(), 2);
+    assert_eq!(merged.report().spans()[1].source_end_segment_index(), 3);
+    assert_eq!(merged.report().spans()[1].output_segment_index(), 1);
+
+    let curve = merged
+        .curve_string()
+        .expect("certified same-direction line runs should materialize");
+    assert_eq!(curve.len(), 2);
+    assert_line(&curve.segments()[0], p(0, 0), p(5, 0));
+    assert_line(&curve.segments()[1], p(5, 0), p(5, 6));
+}
+
+#[test]
+fn curve_string_merge_adjacent_collinear_lines_preserves_corners() {
+    let curve =
+        CurveString2::try_new(vec![line_segment(0, 0, 2, 0), line_segment(2, 0, 2, 3)]).unwrap();
+
+    let merged = curve.merge_adjacent_collinear_lines(&policy()).unwrap();
+
+    assert!(merged.report().status().is_native_exact());
+    assert_eq!(merged.report().output_segment_count(), Some(2));
+    assert_eq!(merged.report().spans().len(), 2);
+    let curve = merged
+        .curve_string()
+        .expect("certified corner preservation should materialize");
+    assert_eq!(curve.len(), 2);
+    assert_line(&curve.segments()[0], p(0, 0), p(2, 0));
+    assert_line(&curve.segments()[1], p(2, 0), p(2, 3));
+}
+
+#[test]
+fn curve_string_merge_adjacent_collinear_lines_preserves_reversal() {
+    let curve =
+        CurveString2::try_new(vec![line_segment(0, 0, 2, 0), line_segment(2, 0, 1, 0)]).unwrap();
+
+    let merged = curve.merge_adjacent_collinear_lines(&policy()).unwrap();
+
+    assert!(merged.report().status().is_native_exact());
+    assert_eq!(merged.report().output_segment_count(), Some(2));
+    assert_eq!(merged.report().spans().len(), 2);
+    let curve = merged
+        .curve_string()
+        .expect("certified reversal preservation should materialize");
+    assert_eq!(curve.len(), 2);
+    assert_line(&curve.segments()[0], p(0, 0), p(2, 0));
+    assert_line(&curve.segments()[1], p(2, 0), p(1, 0));
 }
 
 #[test]
