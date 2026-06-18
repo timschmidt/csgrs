@@ -111,6 +111,7 @@ fn prepared_curve_facts_summarize_segment_families_and_dependencies() {
     assert_eq!(prepared.prepared_segments().len(), 2);
     assert!(prepared.prepared_segments()[0].is_line());
     assert!(prepared.prepared_segments()[1].is_arc());
+    assert_eq!(prepared.prepared_segment_kind_counts(), facts.segment_kinds);
     assert_eq!(facts.segment_kinds.lines, 1);
     assert_eq!(facts.segment_kinds.arcs, 1);
     assert_eq!(facts.segment_kinds.total(), 2);

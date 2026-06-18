@@ -901,6 +901,10 @@ fn prepared_contour_classification_matches_plain_contour() {
     assert_eq!(prepared.contour(), &contour);
     assert!(prepared.contour_box().is_some());
     assert_eq!(prepared.segment_boxes().len(), contour.segments().len());
+    assert_eq!(
+        prepared.prepared_segment_kind_counts(),
+        SegmentKindCounts { lines: 4, arcs: 0 }
+    );
 
     for point in [p(1, 1), p(-1, 1), p(4, 2), p(0, 0), p(9, 2)] {
         assert_eq!(

@@ -368,6 +368,11 @@ impl<'a> PreparedCurveStringView2<'a> {
         self.prepared_segments.len()
     }
 
+    /// Returns primitive-family counts for prepared source segments.
+    pub fn prepared_segment_kind_counts(&self) -> SegmentKindCounts {
+        prepared_segment_kind_counts(&self.prepared_segments)
+    }
+
     /// Returns the number of segment boxes that were decided during preparation.
     pub fn decided_segment_box_count(&self) -> usize {
         self.segment_boxes
@@ -571,6 +576,11 @@ impl<'a> PreparedContourView2<'a> {
     /// Returns the number of prepared source segments.
     pub fn prepared_segment_count(&self) -> usize {
         self.prepared_segments.len()
+    }
+
+    /// Returns primitive-family counts for prepared source segments.
+    pub fn prepared_segment_kind_counts(&self) -> SegmentKindCounts {
+        prepared_segment_kind_counts(&self.prepared_segments)
     }
 
     /// Returns the number of segment boxes that were decided during preparation.
