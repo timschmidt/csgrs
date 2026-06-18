@@ -8,7 +8,7 @@
 //! while preserving Shewchuk-style certified predicates for topology branches.
 
 use crate::bbox::{Aabb2, aabb_decided_misses_point, aabbs_decided_disjoint, decided_segment_aabb};
-use crate::curve_string::decided_segment_box_count;
+use crate::curve_string::{curve_string_intersection_relation_counts, decided_segment_box_count};
 use crate::facts::{CurveStringFacts, RegionFacts};
 use crate::region_events::RegionIntersectionWorkload;
 use crate::{
@@ -1381,6 +1381,7 @@ fn intersect_prepared_segment_pairs_with_cached_aabbs(
     }
 
     let intersection_count = intersections.len();
+    let relation_counts = curve_string_intersection_relation_counts(&intersections);
     let first_decided_segment_box_count = decided_segment_box_count(first_segment_boxes);
     let second_decided_segment_box_count = decided_segment_box_count(second_segment_boxes);
     let first_undecided_segment_box_count = first_prepared_segments
@@ -1404,6 +1405,9 @@ fn intersect_prepared_segment_pairs_with_cached_aabbs(
             skipped_aabb_pair_count,
             tested_pair_count,
             intersection_count,
+            relation_counts.point,
+            relation_counts.overlap,
+            relation_counts.uncertain,
             query_path,
             prepared_cache_report,
         ),

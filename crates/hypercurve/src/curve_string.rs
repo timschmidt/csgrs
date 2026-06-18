@@ -85,6 +85,9 @@ pub struct CurveStringIntersectionReport2 {
     skipped_aabb_pair_count: usize,
     tested_pair_count: usize,
     intersection_count: usize,
+    point_relation_count: usize,
+    overlap_relation_count: usize,
+    uncertain_relation_count: usize,
     query_path: CurveStringIntersectionQueryPath2,
     predicate_path: CurveStringIntersectionPredicatePath2,
     prepared_cache_report: Option<CurveStringIntersectionPreparedCacheReport2>,
@@ -6307,6 +6310,9 @@ impl CurveStringIntersectionReport2 {
         skipped_aabb_pair_count: usize,
         tested_pair_count: usize,
         intersection_count: usize,
+        point_relation_count: usize,
+        overlap_relation_count: usize,
+        uncertain_relation_count: usize,
         query_path: CurveStringIntersectionQueryPath2,
         prepared_cache_report: Option<CurveStringIntersectionPreparedCacheReport2>,
     ) -> Self {
@@ -6323,6 +6329,9 @@ impl CurveStringIntersectionReport2 {
             skipped_aabb_pair_count,
             tested_pair_count,
             intersection_count,
+            point_relation_count,
+            overlap_relation_count,
+            uncertain_relation_count,
             query_path,
             predicate_path: intersection_predicate_path(candidate_pair_count, tested_pair_count),
             prepared_cache_report,
@@ -6389,6 +6398,21 @@ impl CurveStringIntersectionReport2 {
     /// Returns nonempty segment-pair intersections collected.
     pub const fn intersection_count(&self) -> usize {
         self.intersection_count
+    }
+
+    /// Returns nonempty segment-pair relations whose exact topology is point-like.
+    pub const fn point_relation_count(&self) -> usize {
+        self.point_relation_count
+    }
+
+    /// Returns nonempty segment-pair relations whose exact topology is overlapping.
+    pub const fn overlap_relation_count(&self) -> usize {
+        self.overlap_relation_count
+    }
+
+    /// Returns nonempty segment-pair relations left unresolved by the active policy.
+    pub const fn uncertain_relation_count(&self) -> usize {
+        self.uncertain_relation_count
     }
 
     /// Returns the query path used to collect intersections.
@@ -7568,6 +7592,7 @@ pub(crate) fn intersect_curve_strings_with_cached_aabbs_with_report(
     }
 
     let intersection_count = intersections.len();
+    let relation_counts = curve_string_intersection_relation_counts(&intersections);
     Ok(CurveStringIntersectionResult2 {
         intersections,
         report: CurveStringIntersectionReport2 {
@@ -7583,6 +7608,9 @@ pub(crate) fn intersect_curve_strings_with_cached_aabbs_with_report(
             skipped_aabb_pair_count,
             tested_pair_count,
             intersection_count,
+            point_relation_count: relation_counts.point,
+            overlap_relation_count: relation_counts.overlap,
+            uncertain_relation_count: relation_counts.uncertain,
             query_path,
             predicate_path: intersection_predicate_path(candidate_pair_count, tested_pair_count),
             prepared_cache_report: None,
@@ -7594,6 +7622,68 @@ pub(crate) fn intersect_curve_strings_with_cached_aabbs_with_report(
 
 pub(crate) fn decided_segment_box_count(segment_boxes: &[Option<Aabb2>]) -> usize {
     segment_boxes.iter().filter(|bbox| bbox.is_some()).count()
+}
+
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+pub(crate) struct CurveStringIntersectionRelationCounts {
+    pub(crate) point: usize,
+    pub(crate) overlap: usize,
+    pub(crate) uncertain: usize,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum CurveStringIntersectionRelationClass {
+    None,
+    Point,
+    Overlap,
+    Uncertain,
+}
+
+pub(crate) fn curve_string_intersection_relation_counts(
+    intersections: &[CurveStringIntersection],
+) -> CurveStringIntersectionRelationCounts {
+    let mut counts = CurveStringIntersectionRelationCounts::default();
+    for intersection in intersections {
+        match curve_string_intersection_relation_class(&intersection.relation) {
+            CurveStringIntersectionRelationClass::None => {}
+            CurveStringIntersectionRelationClass::Point => counts.point += 1,
+            CurveStringIntersectionRelationClass::Overlap => counts.overlap += 1,
+            CurveStringIntersectionRelationClass::Uncertain => counts.uncertain += 1,
+        }
+    }
+    counts
+}
+
+fn curve_string_intersection_relation_class(
+    relation: &SegmentIntersection,
+) -> CurveStringIntersectionRelationClass {
+    match relation {
+        SegmentIntersection::LineLine(result) => match result {
+            LineLineIntersection::None => CurveStringIntersectionRelationClass::None,
+            LineLineIntersection::Point { .. } => CurveStringIntersectionRelationClass::Point,
+            LineLineIntersection::Overlap { .. } => CurveStringIntersectionRelationClass::Overlap,
+            LineLineIntersection::Uncertain { .. } => {
+                CurveStringIntersectionRelationClass::Uncertain
+            }
+        },
+        SegmentIntersection::LineArc { result, .. } => match result {
+            LineArcIntersection::None => CurveStringIntersectionRelationClass::None,
+            LineArcIntersection::Point(_) | LineArcIntersection::TwoPoints { .. } => {
+                CurveStringIntersectionRelationClass::Point
+            }
+            LineArcIntersection::Uncertain { .. } => {
+                CurveStringIntersectionRelationClass::Uncertain
+            }
+        },
+        SegmentIntersection::ArcArc(result) => match result {
+            ArcArcIntersection::None => CurveStringIntersectionRelationClass::None,
+            ArcArcIntersection::Point(_) | ArcArcIntersection::TwoPoints { .. } => {
+                CurveStringIntersectionRelationClass::Point
+            }
+            ArcArcIntersection::Overlap { .. } => CurveStringIntersectionRelationClass::Overlap,
+            ArcArcIntersection::Uncertain { .. } => CurveStringIntersectionRelationClass::Uncertain,
+        },
+    }
 }
 
 const fn intersection_predicate_path(

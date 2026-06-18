@@ -148,6 +148,9 @@ fn curve_string_intersection_report_counts_aabb_skips() {
     assert_eq!(report.skipped_aabb_pair_count(), 1);
     assert_eq!(report.tested_pair_count(), 1);
     assert_eq!(report.intersection_count(), 1);
+    assert_eq!(report.point_relation_count(), 1);
+    assert_eq!(report.overlap_relation_count(), 0);
+    assert_eq!(report.uncertain_relation_count(), 0);
     assert_eq!(report.prepared_cache_report(), None);
     assert_eq!(report.blocker(), None);
     assert_eq!(intersections.intersections().len(), 1);
@@ -179,7 +182,32 @@ fn curve_string_intersection_report_names_aabb_only_predicate_path() {
     assert_eq!(report.skipped_aabb_pair_count(), 1);
     assert_eq!(report.tested_pair_count(), 0);
     assert_eq!(report.intersection_count(), 0);
+    assert_eq!(report.point_relation_count(), 0);
+    assert_eq!(report.overlap_relation_count(), 0);
+    assert_eq!(report.uncertain_relation_count(), 0);
     assert!(intersections.intersections().is_empty());
+}
+
+#[test]
+fn curve_string_intersection_report_counts_overlap_relations() {
+    let first = CurveString2::try_new(vec![line_segment(0, 0, 4, 0)]).unwrap();
+    let second = CurveString2::try_new(vec![line_segment(2, 0, 6, 0)]).unwrap();
+
+    let intersections = first
+        .intersect_curve_string_with_report(&second, &policy())
+        .unwrap();
+    let report = intersections.report();
+
+    assert_eq!(report.intersection_count(), 1);
+    assert_eq!(report.point_relation_count(), 0);
+    assert_eq!(report.overlap_relation_count(), 1);
+    assert_eq!(report.uncertain_relation_count(), 0);
+    assert_eq!(intersections.intersections().len(), 1);
+    let SegmentIntersection::LineLine(hypercurve::LineLineIntersection::Overlap { .. }) =
+        &intersections.intersections()[0].relation
+    else {
+        panic!("expected line-line overlap relation");
+    };
 }
 
 #[test]
@@ -244,6 +272,9 @@ fn prepared_curve_string_intersection_report_matches_plain_events() {
     assert!(prepared_cache.second().curve_box_decided());
     assert_eq!(prepared.report().tested_pair_count(), 1);
     assert_eq!(prepared.report().intersection_count(), plain.len());
+    assert_eq!(prepared.report().point_relation_count(), 1);
+    assert_eq!(prepared.report().overlap_relation_count(), 0);
+    assert_eq!(prepared.report().uncertain_relation_count(), 0);
     assert_eq!(prepared.intersections(), plain.as_slice());
 }
 
