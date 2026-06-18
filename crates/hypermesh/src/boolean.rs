@@ -2269,6 +2269,21 @@ impl ExactBooleanEvaluation {
         Ok(())
     }
 
+    pub(crate) fn retain_materialized_result(
+        &mut self,
+        result: &ExactBooleanResult,
+    ) -> Result<(), ExactReportValidationError> {
+        self.validate()?;
+        match self.result.as_ref() {
+            Some(existing) if existing == result => Ok(()),
+            Some(_) => Err(ExactReportValidationError::StatusEvidenceMismatch),
+            None => {
+                self.result = Some(result.clone());
+                self.validate()
+            }
+        }
+    }
+
     /// Validate the retained evaluation by replaying all source-bound reports
     /// and the materialized result under the original request policy.
     pub fn validate_against_sources(

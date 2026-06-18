@@ -439,20 +439,8 @@ impl<'a> ExactBooleanWorkspace<'a> {
         if let Some(index) = cached_by_request_index(&self.evaluations, request) {
             let evaluation = &mut self.evaluations[index].1;
             evaluation
-                .validate()
-                .map_err(workspace_report_validation_error)?;
-            match evaluation.result.as_ref() {
-                Some(existing) if existing == result => Ok(()),
-                Some(_) => Err(workspace_report_validation_error(
-                    ExactReportValidationError::StatusEvidenceMismatch,
-                )),
-                None => {
-                    evaluation.result = Some(result.clone());
-                    evaluation
-                        .validate()
-                        .map_err(workspace_report_validation_error)
-                }
-            }
+                .retain_materialized_result(result)
+                .map_err(workspace_report_validation_error)
         } else {
             let evaluation = self.evaluate(request)?;
             if evaluation.result.as_ref() == Some(result) {
