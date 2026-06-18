@@ -318,17 +318,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
             )
             .is_ok()
             {
-                let retained_attempt = self.regularized_solid_arrangement_attempt(request).cloned();
-                let result = store_replayable_result_or_return(
-                    &mut self.materializations,
-                    self.left,
-                    self.right,
-                    request,
-                    retained_attempt.as_ref(),
-                    result.clone(),
-                )?;
-                self.promote_evaluation_cache_from_materialization(request, &result)?;
-                return Ok(result);
+                return self.store_materialization_and_promote_evaluation(request, result.clone());
             }
         }
         let preflight = self.preflight(request)?;
@@ -338,17 +328,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
                 .validate()
                 .map_err(workspace_report_validation_error)?;
             if let Some(result) = evaluation.result.as_ref().cloned() {
-                let retained_attempt = self.regularized_solid_arrangement_attempt(request).cloned();
-                let result = store_replayable_result_or_return(
-                    &mut self.materializations,
-                    self.left,
-                    self.right,
-                    request,
-                    retained_attempt.as_ref(),
-                    result,
-                )?;
-                self.promote_evaluation_cache_from_materialization(request, &result)?;
-                return Ok(result);
+                return self.store_materialization_and_promote_evaluation(request, result);
             }
             if preflight.support == ExactBooleanSupport::CertifiedArrangementCellComplex
                 && self
@@ -371,17 +351,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
                 regularized_arrangement,
                 self.regularized_solid_arrangement_attempt(request),
             )?;
-            let retained_attempt = self.regularized_solid_arrangement_attempt(request).cloned();
-            let result = store_replayable_result_or_return(
-                &mut self.materializations,
-                self.left,
-                self.right,
-                request,
-                retained_attempt.as_ref(),
-                result,
-            )?;
-            self.promote_evaluation_cache_from_materialization(request, &result)?;
-            return Ok(result);
+            return self.store_materialization_and_promote_evaluation(request, result);
         }
         let graph = self
             .graph
@@ -390,6 +360,14 @@ impl<'a> ExactBooleanWorkspace<'a> {
         let result = materialize_boolean_exact_request_from_retained_graph(
             graph, self.left, self.right, request,
         )?;
+        self.store_materialization_and_promote_evaluation(request, result)
+    }
+
+    fn store_materialization_and_promote_evaluation(
+        &mut self,
+        request: ExactBooleanRequest,
+        result: ExactBooleanResult,
+    ) -> Result<ExactBooleanResult, MeshError> {
         let retained_attempt = self.regularized_solid_arrangement_attempt(request).cloned();
         let result = store_replayable_result_or_return(
             &mut self.materializations,
