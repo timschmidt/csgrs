@@ -921,16 +921,6 @@ impl ExactBooleanResult {
         self.is_shortcut_for(operation, ExactBooleanShortcutKind::ArrangementCellComplex)
     }
 
-    /// Return whether this result is a closed-convex separated shortcut.
-    pub fn is_convex_separated_shortcut_for(&self, operation: ExactBooleanOperation) -> bool {
-        self.is_shortcut_for(operation, ExactBooleanShortcutKind::ConvexSeparated)
-    }
-
-    /// Return whether this result is a closed-convex containment shortcut.
-    pub fn is_convex_containment_shortcut_for(&self, operation: ExactBooleanOperation) -> bool {
-        self.is_shortcut_for(operation, ExactBooleanShortcutKind::ConvexContainment)
-    }
-
     /// Return whether this result is a caller boundary-policy projection.
     pub fn is_boundary_policy_shortcut_for(&self, operation: ExactBooleanOperation) -> bool {
         matches!(

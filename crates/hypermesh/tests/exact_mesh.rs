@@ -1611,7 +1611,7 @@ fn exact_closed_convex_boolean_is_publicly_replayable() {
         ),
     );
     assert!(
-        separated.is_convex_separated_shortcut_for(ExactBooleanOperation::Intersection),
+        separated.is_certified_shortcut_for(ExactBooleanOperation::Intersection),
         "{separated:?}"
     );
     separated.validate().unwrap();
@@ -1675,7 +1675,7 @@ fn exact_closed_convex_boolean_is_publicly_replayable() {
         ExactBooleanRequest::new(ExactBooleanOperation::Difference, ValidationPolicy::CLOSED),
     );
     assert!(
-        containment.is_convex_containment_shortcut_for(ExactBooleanOperation::Difference),
+        containment.is_certified_shortcut_for(ExactBooleanOperation::Difference),
         "{containment:?}"
     );
     containment.validate().unwrap();
@@ -3601,9 +3601,7 @@ fn assert_convex_public_replay(result: &ExactBooleanResult, operation: ExactBool
     assert!(
         result.is_arrangement_cell_complex_shortcut_for(operation)
             || result.is_arrangement_cell_complex_materialized_for(operation)
-            || result.is_certified_shortcut_for(operation)
-            || result.is_convex_separated_shortcut_for(operation)
-            || result.is_convex_containment_shortcut_for(operation),
+            || result.is_certified_shortcut_for(operation),
         "{operation:?}: expected convex public replay, got {result:?}"
     );
 }
