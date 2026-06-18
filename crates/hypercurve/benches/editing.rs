@@ -27,6 +27,10 @@ fn line_segment(start_x: i32, start_y: i32, end_x: i32, end_y: i32) -> Segment2 
     Segment2::Line(LineSeg2::try_new(p(start_x, start_y), p(end_x, end_y)).unwrap())
 }
 
+fn line(start_x: i32, start_y: i32, end_x: i32, end_y: i32) -> LineSeg2 {
+    LineSeg2::try_new(p(start_x, start_y), p(end_x, end_y)).unwrap()
+}
+
 fn rectangle(xmin: i32, ymin: i32, xmax: i32, ymax: i32) -> Contour2 {
     Contour2::from_bulge_vertices(&[
         vertex(xmin, ymin, 0),
@@ -479,6 +483,42 @@ fn bench_boundary_contour_region_build(iterations: u32) -> CurveResult<()> {
     Ok(())
 }
 
+fn bench_unordered_line_segment_region_build(iterations: u32) -> CurveResult<()> {
+    let lines = vec![
+        line(0, 0, 10, 0),
+        line(0, 10, 10, 10),
+        line(0, 0, 0, 10),
+        line(10, 0, 10, 10),
+    ];
+    let policy = CurvePolicy::certified();
+    let started = Instant::now();
+    let mut total_segments = 0_usize;
+    let mut total_endpoint_checks = 0_usize;
+
+    for _ in 0..iterations {
+        let result = Region2::from_unordered_line_segments_with_report(
+            lines.clone(),
+            FillRule::NonZero,
+            &policy,
+        )?;
+        let report = result.report();
+        if !report.status().is_native_exact() || result.region().is_none() {
+            panic!("unordered line segment region build benchmark became non-native");
+        }
+        total_segments += black_box(report.split_output_segment_count().unwrap_or_default());
+        total_segments += black_box(report.output_boundary_segment_count().unwrap_or_default());
+        total_endpoint_checks += black_box(report.attempted_endpoint_connection_count());
+        total_endpoint_checks += black_box(report.endpoint_graph_endpoint_count().unwrap_or(0));
+    }
+
+    let elapsed = started.elapsed();
+    println!(
+        "unordered_line_segment_region_build: {iterations} iterations in {elapsed:?} ({:?}/iter), total segments={total_segments}, endpoint checks={total_endpoint_checks}",
+        elapsed / iterations
+    );
+    Ok(())
+}
+
 fn bench_contour_line_merge_report(iterations: u32) -> CurveResult<()> {
     let contour = Contour2::from_bulge_vertices(&[
         vertex(0, 0, 0),
@@ -617,6 +657,7 @@ fn main() -> CurveResult<()> {
     bench_curve_string_ordered_link_report(iterations)?;
     bench_curve_string_connect_report(iterations)?;
     bench_boundary_contour_region_build(1_000)?;
+    bench_unordered_line_segment_region_build(1_000)?;
     bench_contour_line_merge_report(1_000)?;
     bench_region_boolean_report(1_000)?;
     bench_prepared_region_boolean_report(1_000)?;
