@@ -85,6 +85,7 @@ pub struct LinkedCurveString2 {
 /// Report for connecting `first.end` to `second.start` with an exact line segment.
 #[derive(Clone, Debug, PartialEq)]
 pub struct CurveStringConnectReport2 {
+    kind: Option<CurveStringLinkKind2>,
     endpoint_report: CurveStringEndpointConnectionReport2,
     first_segment_count: usize,
     second_segment_count: usize,
@@ -372,17 +373,27 @@ impl CurveString2 {
         other: &Self,
         policy: &CurvePolicy,
     ) -> CurveResult<ConnectedCurveString2> {
-        let endpoint_report = self.endpoint_connection_report(
-            other,
-            CurveStringEndpoint2::End,
-            CurveStringEndpoint2::Start,
-            policy,
-        )?;
+        self.connect_endpoints_with_line(other, CurveStringLinkKind2::FirstEndToSecondStart, policy)
+    }
+
+    /// Connects a selected endpoint pair with an exact line segment.
+    ///
+    /// The selected endpoints are compared exactly first. Equal endpoints are
+    /// blocked as a link case, unresolved equality stays unresolved, and only a
+    /// certified positive endpoint gap materializes a connector.
+    pub fn connect_endpoints_with_line(
+        &self,
+        other: &Self,
+        kind: CurveStringLinkKind2,
+        policy: &CurvePolicy,
+    ) -> CurveResult<ConnectedCurveString2> {
+        let endpoint_report = self.endpoint_connection_report_for_kind(other, kind, policy)?;
         match endpoint_report.status {
             CurveStringEndpointConnectionStatus2::NativeExact => {
                 return Ok(blocked_connected_curve_string(
                     self,
                     other,
+                    Some(kind),
                     endpoint_report,
                     RetainedTopologyStatus::Unsupported,
                     Some(UncertaintyReason::Boundary),
@@ -393,6 +404,7 @@ impl CurveString2 {
                 return Ok(blocked_connected_curve_string(
                     self,
                     other,
+                    Some(kind),
                     endpoint_report,
                     RetainedTopologyStatus::Unresolved,
                     Some(reason),
@@ -400,17 +412,90 @@ impl CurveString2 {
             }
         }
 
-        let connector = LineSeg2::try_new(
-            self.end().ok_or(CurveError::EmptyCurveString)?.clone(),
-            other.start().ok_or(CurveError::EmptyCurveString)?.clone(),
-        )?;
-        let connector_segment_index = self.len();
-        let mut segments = Vec::with_capacity(self.len() + 1 + other.len());
-        segments.extend(self.segments().iter().cloned());
-        segments.push(Segment2::Line(connector));
-        segments.extend(other.segments().iter().cloned());
-        let curve_string = CurveString2::try_new(segments)?;
+        let (curve_string, connector_segment_index) = connected_curve_string(self, other, kind)?;
         let report = CurveStringConnectReport2 {
+            kind: Some(kind),
+            endpoint_report,
+            first_segment_count: self.len(),
+            second_segment_count: other.len(),
+            connector_segment_index: Some(connector_segment_index),
+            status: RetainedTopologyStatus::NativeExact,
+            blocker: None,
+        };
+        Ok(ConnectedCurveString2 {
+            curve_string: Some(curve_string),
+            report,
+        })
+    }
+
+    /// Connects the uniquely nearest certified-disconnected endpoint pair.
+    ///
+    /// All four endpoint pairs are inspected with exact squared-distance
+    /// evidence. Existing exact endpoint equality is blocked as a link case;
+    /// unresolved endpoint equality or unresolved distance ordering blocks the
+    /// auto-choice; equal nearest distances are reported as boundary ambiguity.
+    pub fn connect_nearest_endpoints_with_line(
+        &self,
+        other: &Self,
+        policy: &CurvePolicy,
+    ) -> CurveResult<ConnectedCurveString2> {
+        let reports = self.endpoint_link_reports(other, policy)?;
+        let mut candidates = Vec::new();
+        for (kind, report) in reports {
+            match report.status {
+                CurveStringEndpointConnectionStatus2::NativeExact => {
+                    return Ok(blocked_connected_curve_string(
+                        self,
+                        other,
+                        Some(kind),
+                        report,
+                        RetainedTopologyStatus::Unsupported,
+                        Some(UncertaintyReason::Boundary),
+                    ));
+                }
+                CurveStringEndpointConnectionStatus2::Disconnected => {
+                    candidates.push((kind, report));
+                }
+                CurveStringEndpointConnectionStatus2::Unresolved(reason) => {
+                    return Ok(blocked_connected_curve_string(
+                        self,
+                        other,
+                        Some(kind),
+                        report,
+                        RetainedTopologyStatus::Unresolved,
+                        Some(reason),
+                    ));
+                }
+            }
+        }
+
+        let (kind, endpoint_report) = match unique_nearest_endpoint_report(candidates, policy) {
+            NearestEndpointChoice::Selected(kind, report) => (kind, report),
+            NearestEndpointChoice::Ambiguous(kind, report) => {
+                return Ok(blocked_connected_curve_string(
+                    self,
+                    other,
+                    Some(kind),
+                    report,
+                    RetainedTopologyStatus::Unsupported,
+                    Some(UncertaintyReason::Boundary),
+                ));
+            }
+            NearestEndpointChoice::Unresolved(kind, report, reason) => {
+                return Ok(blocked_connected_curve_string(
+                    self,
+                    other,
+                    Some(kind),
+                    report,
+                    RetainedTopologyStatus::Unresolved,
+                    Some(reason),
+                ));
+            }
+            NearestEndpointChoice::Empty => return Err(CurveError::EmptyCurveString),
+        };
+        let (curve_string, connector_segment_index) = connected_curve_string(self, other, kind)?;
+        let report = CurveStringConnectReport2 {
+            kind: Some(kind),
             endpoint_report,
             first_segment_count: self.len(),
             second_segment_count: other.len(),
@@ -977,6 +1062,40 @@ impl CurveString2 {
             ),
         ])
     }
+
+    fn endpoint_connection_report_for_kind(
+        &self,
+        other: &Self,
+        kind: CurveStringLinkKind2,
+        policy: &CurvePolicy,
+    ) -> CurveResult<CurveStringEndpointConnectionReport2> {
+        match kind {
+            CurveStringLinkKind2::FirstEndToSecondStart => self.endpoint_connection_report(
+                other,
+                CurveStringEndpoint2::End,
+                CurveStringEndpoint2::Start,
+                policy,
+            ),
+            CurveStringLinkKind2::FirstEndToSecondEnd => self.endpoint_connection_report(
+                other,
+                CurveStringEndpoint2::End,
+                CurveStringEndpoint2::End,
+                policy,
+            ),
+            CurveStringLinkKind2::FirstStartToSecondStart => self.endpoint_connection_report(
+                other,
+                CurveStringEndpoint2::Start,
+                CurveStringEndpoint2::Start,
+                policy,
+            ),
+            CurveStringLinkKind2::FirstStartToSecondEnd => self.endpoint_connection_report(
+                other,
+                CurveStringEndpoint2::Start,
+                CurveStringEndpoint2::End,
+                policy,
+            ),
+        }
+    }
 }
 
 impl CurveStringTrimPoint2 {
@@ -1206,6 +1325,17 @@ struct LocatedTrimPoint2 {
 struct CurveTrimHitExtraction {
     hits: Vec<CurveStringCurveTrimHit2>,
     blocker: Option<(RetainedTopologyStatus, UncertaintyReason)>,
+}
+
+enum NearestEndpointChoice {
+    Selected(CurveStringLinkKind2, CurveStringEndpointConnectionReport2),
+    Ambiguous(CurveStringLinkKind2, CurveStringEndpointConnectionReport2),
+    Unresolved(
+        CurveStringLinkKind2,
+        CurveStringEndpointConnectionReport2,
+        UncertaintyReason,
+    ),
+    Empty,
 }
 
 fn extract_curve_trim_hits(events: &[CurveStringIntersection]) -> CurveTrimHitExtraction {
@@ -1702,6 +1832,11 @@ impl LinkedCurveString2 {
 }
 
 impl CurveStringConnectReport2 {
+    /// Returns the selected connector orientation, when one was selected.
+    pub const fn kind(&self) -> Option<CurveStringLinkKind2> {
+        self.kind
+    }
+
     /// Returns endpoint equality evidence for the connector endpoints.
     pub const fn endpoint_report(&self) -> &CurveStringEndpointConnectionReport2 {
         &self.endpoint_report
@@ -1781,6 +1916,7 @@ fn linked_curve_string(
 fn blocked_connected_curve_string(
     first: &CurveString2,
     second: &CurveString2,
+    kind: Option<CurveStringLinkKind2>,
     endpoint_report: CurveStringEndpointConnectionReport2,
     status: RetainedTopologyStatus,
     blocker: Option<UncertaintyReason>,
@@ -1788,6 +1924,7 @@ fn blocked_connected_curve_string(
     ConnectedCurveString2 {
         curve_string: None,
         report: CurveStringConnectReport2 {
+            kind,
             endpoint_report,
             first_segment_count: first.len(),
             second_segment_count: second.len(),
@@ -1795,6 +1932,101 @@ fn blocked_connected_curve_string(
             status,
             blocker,
         },
+    }
+}
+
+fn connected_curve_string(
+    first: &CurveString2,
+    second: &CurveString2,
+    kind: CurveStringLinkKind2,
+) -> CurveResult<(CurveString2, usize)> {
+    let mut segments = Vec::with_capacity(first.len() + 1 + second.len());
+    let (connector_start, connector_end, connector_segment_index) = match kind {
+        CurveStringLinkKind2::FirstEndToSecondStart => {
+            segments.extend(first.segments().iter().cloned());
+            let connector_segment_index = segments.len();
+            let connector_start = first.end().ok_or(CurveError::EmptyCurveString)?.clone();
+            let connector_end = second.start().ok_or(CurveError::EmptyCurveString)?.clone();
+            (connector_start, connector_end, connector_segment_index)
+        }
+        CurveStringLinkKind2::FirstEndToSecondEnd => {
+            segments.extend(first.segments().iter().cloned());
+            let connector_segment_index = segments.len();
+            let connector_start = first.end().ok_or(CurveError::EmptyCurveString)?.clone();
+            let connector_end = second.end().ok_or(CurveError::EmptyCurveString)?.clone();
+            (connector_start, connector_end, connector_segment_index)
+        }
+        CurveStringLinkKind2::FirstStartToSecondStart => {
+            segments.extend(reversed_segments(first.segments()));
+            let connector_segment_index = segments.len();
+            let connector_start = first.start().ok_or(CurveError::EmptyCurveString)?.clone();
+            let connector_end = second.start().ok_or(CurveError::EmptyCurveString)?.clone();
+            (connector_start, connector_end, connector_segment_index)
+        }
+        CurveStringLinkKind2::FirstStartToSecondEnd => {
+            segments.extend(second.segments().iter().cloned());
+            let connector_segment_index = segments.len();
+            let connector_start = second.end().ok_or(CurveError::EmptyCurveString)?.clone();
+            let connector_end = first.start().ok_or(CurveError::EmptyCurveString)?.clone();
+            (connector_start, connector_end, connector_segment_index)
+        }
+    };
+
+    segments.push(Segment2::Line(LineSeg2::try_new(
+        connector_start,
+        connector_end,
+    )?));
+    match kind {
+        CurveStringLinkKind2::FirstEndToSecondStart => {
+            segments.extend(second.segments().iter().cloned());
+        }
+        CurveStringLinkKind2::FirstEndToSecondEnd => {
+            segments.extend(reversed_segments(second.segments()));
+        }
+        CurveStringLinkKind2::FirstStartToSecondStart => {
+            segments.extend(second.segments().iter().cloned());
+        }
+        CurveStringLinkKind2::FirstStartToSecondEnd => {
+            segments.extend(first.segments().iter().cloned());
+        }
+    }
+
+    CurveString2::try_new(segments).map(|curve_string| (curve_string, connector_segment_index))
+}
+
+fn unique_nearest_endpoint_report(
+    candidates: Vec<(CurveStringLinkKind2, CurveStringEndpointConnectionReport2)>,
+    policy: &CurvePolicy,
+) -> NearestEndpointChoice {
+    let mut best: Option<(CurveStringLinkKind2, CurveStringEndpointConnectionReport2)> = None;
+    for candidate in candidates {
+        let Some((_, best_report)) = best.as_ref() else {
+            best = Some(candidate);
+            continue;
+        };
+        match compare_reals(
+            candidate.1.distance_squared(),
+            best_report.distance_squared(),
+            policy,
+        ) {
+            Some(Ordering::Less) => best = Some(candidate),
+            Some(Ordering::Greater) => {}
+            Some(Ordering::Equal) => {
+                return NearestEndpointChoice::Ambiguous(candidate.0, candidate.1);
+            }
+            None => {
+                return NearestEndpointChoice::Unresolved(
+                    candidate.0,
+                    candidate.1,
+                    UncertaintyReason::Ordering,
+                );
+            }
+        }
+    }
+
+    match best {
+        Some((kind, report)) => NearestEndpointChoice::Selected(kind, report),
+        None => NearestEndpointChoice::Empty,
     }
 }
 

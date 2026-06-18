@@ -165,6 +165,10 @@ fn curve_string_connect_end_to_start_inserts_exact_line() {
     );
     assert_eq!(connected.report().first_segment_count(), 1);
     assert_eq!(connected.report().second_segment_count(), 1);
+    assert_eq!(
+        connected.report().kind(),
+        Some(CurveStringLinkKind2::FirstEndToSecondStart)
+    );
     assert_eq!(connected.report().connector_segment_index(), Some(1));
     let curve = connected
         .curve_string()
@@ -174,6 +178,77 @@ fn curve_string_connect_end_to_start_inserts_exact_line() {
     assert_eq!(curve.end(), Some(&p(4, 1)));
     assert_eq!(curve.segments()[1].start(), &p(1, 0));
     assert_eq!(curve.segments()[1].end(), &p(3, 1));
+}
+
+#[test]
+fn curve_string_connect_selected_endpoints_orients_inputs() {
+    let first = CurveString2::try_new(vec![line_segment(0, 0, 1, 0)]).unwrap();
+    let second = CurveString2::try_new(vec![line_segment(3, 0, 4, 0)]).unwrap();
+
+    let connected = first
+        .connect_endpoints_with_line(
+            &second,
+            CurveStringLinkKind2::FirstStartToSecondEnd,
+            &policy(),
+        )
+        .unwrap();
+
+    assert!(connected.report().status().is_native_exact());
+    assert_eq!(
+        connected.report().kind(),
+        Some(CurveStringLinkKind2::FirstStartToSecondEnd)
+    );
+    assert_eq!(connected.report().connector_segment_index(), Some(1));
+    let curve = connected
+        .curve_string()
+        .expect("selected endpoint connector should materialize");
+    assert_eq!(curve.len(), 3);
+    assert_eq!(curve.start(), Some(&p(3, 0)));
+    assert_eq!(curve.segments()[1].start(), &p(4, 0));
+    assert_eq!(curve.segments()[1].end(), &p(0, 0));
+    assert_eq!(curve.end(), Some(&p(1, 0)));
+}
+
+#[test]
+fn curve_string_connect_nearest_endpoints_selects_unique_pair() {
+    let first = CurveString2::try_new(vec![line_segment(0, 0, 1, 0)]).unwrap();
+    let second = CurveString2::try_new(vec![line_segment(4, 0, 3, 0)]).unwrap();
+
+    let connected = first
+        .connect_nearest_endpoints_with_line(&second, &policy())
+        .unwrap();
+
+    assert!(connected.report().status().is_native_exact());
+    assert_eq!(
+        connected.report().kind(),
+        Some(CurveStringLinkKind2::FirstEndToSecondEnd)
+    );
+    assert_eq!(connected.report().connector_segment_index(), Some(1));
+    let curve = connected
+        .curve_string()
+        .expect("nearest endpoint connector should materialize");
+    assert_eq!(curve.start(), Some(&p(0, 0)));
+    assert_eq!(curve.segments()[1].start(), &p(1, 0));
+    assert_eq!(curve.segments()[1].end(), &p(3, 0));
+    assert_eq!(curve.end(), Some(&p(4, 0)));
+}
+
+#[test]
+fn curve_string_connect_nearest_endpoints_reports_tie_boundary() {
+    let first = CurveString2::try_new(vec![line_segment(0, 0, 2, 0)]).unwrap();
+    let second = CurveString2::try_new(vec![line_segment(1, 3, 1, 5)]).unwrap();
+
+    let connected = first
+        .connect_nearest_endpoints_with_line(&second, &policy())
+        .unwrap();
+
+    assert!(connected.curve_string().is_none());
+    assert!(connected.report().status().is_retained_evidence());
+    assert_eq!(
+        connected.report().blocker(),
+        Some(UncertaintyReason::Boundary)
+    );
+    assert_eq!(connected.report().connector_segment_index(), None);
 }
 
 #[test]
