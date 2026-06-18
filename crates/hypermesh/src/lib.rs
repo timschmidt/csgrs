@@ -80,7 +80,6 @@ pub use facts::{
     EdgeFacts, FaceFacts, FacePlaneFacts, MeshFacts, MeshFactsValidationError, MeshValidationFacts,
     OrientedFaceFacts, TriangleFacts, VertexFacts, VertexLinkKind,
 };
-pub use graph::{FaceSplitBoundaryNode, MeshSide};
 pub use mesh::{ExactMesh, ExactMeshValidationError, Triangle};
 pub use package::{
     ExactMeshConsumerDomain, ExactMeshDomainSummaryError, ExactMeshHandoffPackage,

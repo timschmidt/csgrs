@@ -787,6 +787,22 @@ impl ExactBooleanAssemblyPlan {
         validate_assembly_source_face_incidence(self, left, right)
     }
 
+    /// Return the first retained original source-vertex handle in the output
+    /// assembly.
+    ///
+    /// This keeps public provenance audits from matching on graph-internal
+    /// boundary-node variants when they only need to perturb source incidence
+    /// and verify replay freshness.
+    pub fn first_original_source_vertex_mut(&mut self) -> Option<&mut usize> {
+        self.vertices
+            .iter_mut()
+            .find_map(|vertex| match &mut vertex.source {
+                FaceSplitBoundaryNode::OriginalVertex { vertex, .. } => Some(vertex),
+                FaceSplitBoundaryNode::GraphVertex { .. }
+                | FaceSplitBoundaryNode::FaceInterior { .. } => None,
+            })
+    }
+
     /// Split exact-equal assembly vertices whose retained triangle fans are
     /// disconnected.
     ///

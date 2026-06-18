@@ -2447,19 +2447,10 @@ fn exact_selected_region_boolean_is_publicly_replayable() {
     );
 
     let mut stale_assembly_source_vertex = result.clone();
-    let Some(hypermesh::FaceSplitBoundaryNode::OriginalVertex { vertex, .. }) =
-        stale_assembly_source_vertex
-            .assembly
-            .vertices
-            .iter_mut()
-            .find_map(|output_vertex| match &mut output_vertex.source {
-                source @ hypermesh::FaceSplitBoundaryNode::OriginalVertex { .. } => Some(source),
-                hypermesh::FaceSplitBoundaryNode::GraphVertex { .. }
-                | hypermesh::FaceSplitBoundaryNode::FaceInterior { .. } => None,
-            })
-    else {
-        panic!("selected-region assembly should retain at least one original source vertex");
-    };
+    let vertex = stale_assembly_source_vertex
+        .assembly
+        .first_original_source_vertex_mut()
+        .expect("selected-region assembly should retain at least one original source vertex");
     *vertex = usize::MAX;
     stale_assembly_source_vertex.validate().unwrap();
     assert!(
@@ -5275,10 +5266,7 @@ fn exact_volumetric_region_reports_replay_from_boolean_result() {
                 .map(|classification| (classification, triangulation))
         })
         .expect("volumetric classification should replay from retained sources");
-    let target = match classification.region_side {
-        hypermesh::MeshSide::Left => &right,
-        hypermesh::MeshSide::Right => &left,
-    };
+    let target = classification.replay_target_mesh(&left, &right);
     assert!(classification.relation.is_materialization_decided());
     classification
         .validate_against_sources(triangulation, target)
