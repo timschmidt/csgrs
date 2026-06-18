@@ -92,6 +92,43 @@ pub struct ContourOffsetResult2 {
     report: ContourOffsetReport2,
 }
 
+/// Furthest exact stage reached by checked open curve-string outline offsetting.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum CurveStringOutlineOffsetStage2 {
+    /// The requested outline half-width was being classified.
+    DistanceValidation,
+    /// The source open curve string was checked for self-contacting topology.
+    SourceSelfContactValidation,
+    /// The left offset trace was being materialized.
+    LeftOffsetConstruction,
+    /// The right offset trace was being materialized.
+    RightOffsetConstruction,
+    /// Endpoint caps and cap-specific trace extensions were being materialized.
+    CapConstruction,
+    /// The closed outline contour was checked for closure and self-contacting topology.
+    OutlineTopologyValidation,
+}
+
+/// Report for a checked closed outline around an open curve string.
+#[derive(Clone, Debug, PartialEq)]
+pub struct CurveStringOutlineOffsetReport2 {
+    stage: CurveStringOutlineOffsetStage2,
+    cap: OffsetCap,
+    source_segment_count: usize,
+    left_offset_segment_count: Option<usize>,
+    right_offset_segment_count: Option<usize>,
+    outline_segment_count: Option<usize>,
+    status: RetainedTopologyStatus,
+    blocker: Option<UncertaintyReason>,
+}
+
+/// Result of report-bearing checked open curve-string outline offsetting.
+#[derive(Clone, Debug, PartialEq)]
+pub struct CurveStringOutlineOffsetResult2 {
+    outline: Option<Contour2>,
+    report: CurveStringOutlineOffsetReport2,
+}
+
 impl LineSeg2 {
     /// Returns the constant-distance segment on this segment's left side.
     ///
@@ -313,10 +350,61 @@ impl CurveString2 {
         cap: OffsetCap,
         policy: &CurvePolicy,
     ) -> CurveResult<Classification<Contour2>> {
-        match cap {
-            OffsetCap::Round => self.offset_outline_round_caps(distance, policy),
-            OffsetCap::Butt => self.offset_outline_butt_caps(distance, policy),
-            OffsetCap::Square => self.offset_outline_square_caps(distance, policy),
+        self.offset_outline_with_report(distance, cap, policy)
+            .map(Self::outline_classification_from_report)
+    }
+
+    /// Builds a report-bearing checked closed outline around this open curve string.
+    ///
+    /// The report records cap style, source and intermediate segment counts,
+    /// the furthest exact stage reached, and the exact blocker for unresolved
+    /// or unsupported outline topology.
+    pub fn offset_outline_with_report(
+        &self,
+        distance: Real,
+        cap: OffsetCap,
+        policy: &CurvePolicy,
+    ) -> CurveResult<CurveStringOutlineOffsetResult2> {
+        checked_outline_with_report(self, distance, cap, policy)
+    }
+
+    /// Builds a report-bearing checked closed outline with round endpoint caps.
+    pub fn offset_outline_round_caps_with_report(
+        &self,
+        distance: Real,
+        policy: &CurvePolicy,
+    ) -> CurveResult<CurveStringOutlineOffsetResult2> {
+        self.offset_outline_with_report(distance, OffsetCap::Round, policy)
+    }
+
+    /// Builds a report-bearing checked closed outline with butt endpoint caps.
+    pub fn offset_outline_butt_caps_with_report(
+        &self,
+        distance: Real,
+        policy: &CurvePolicy,
+    ) -> CurveResult<CurveStringOutlineOffsetResult2> {
+        self.offset_outline_with_report(distance, OffsetCap::Butt, policy)
+    }
+
+    /// Builds a report-bearing checked closed outline with square endpoint caps.
+    pub fn offset_outline_square_caps_with_report(
+        &self,
+        distance: Real,
+        policy: &CurvePolicy,
+    ) -> CurveResult<CurveStringOutlineOffsetResult2> {
+        self.offset_outline_with_report(distance, OffsetCap::Square, policy)
+    }
+
+    fn outline_classification_from_report(
+        result: CurveStringOutlineOffsetResult2,
+    ) -> Classification<Contour2> {
+        let blocker = result
+            .report()
+            .blocker()
+            .unwrap_or(UncertaintyReason::Unsupported);
+        match result.into_outline() {
+            Some(outline) => Classification::Decided(outline),
+            None => Classification::Uncertain(blocker),
         }
     }
 
@@ -336,34 +424,8 @@ impl CurveString2 {
         distance: Real,
         policy: &CurvePolicy,
     ) -> CurveResult<Classification<Contour2>> {
-        let offsets = match checked_outline_offsets(self, distance, policy)? {
-            Classification::Decided(offsets) => offsets,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
-        let OutlineOffsets {
-            left,
-            right,
-            start_center,
-            end_center,
-            left_start,
-            left_end,
-            right_start,
-            right_end,
-        } = offsets;
-
-        let mut segments = Vec::with_capacity(left.len() + right.len() + 2);
-        segments.extend(left.into_segments());
-        match round_cap_arc(&left_end, &right_end, &end_center, policy)? {
-            Classification::Decided(cap) => segments.push(Segment2::Arc(cap)),
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        }
-        segments.extend(reversed_segments(right.into_segments()));
-        match round_cap_arc(&right_start, &left_start, &start_center, policy)? {
-            Classification::Decided(cap) => segments.push(Segment2::Arc(cap)),
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        }
-
-        checked_outline_contour(segments, policy)
+        self.offset_outline_round_caps_with_report(distance, policy)
+            .map(Self::outline_classification_from_report)
     }
 
     /// Builds a checked closed outline around this open curve string.
@@ -380,33 +442,8 @@ impl CurveString2 {
         distance: Real,
         policy: &CurvePolicy,
     ) -> CurveResult<Classification<Contour2>> {
-        let offsets = match checked_outline_offsets(self, distance, policy)? {
-            Classification::Decided(offsets) => offsets,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
-        let OutlineOffsets {
-            left,
-            right,
-            left_start,
-            left_end,
-            right_start,
-            right_end,
-            ..
-        } = offsets;
-
-        let mut segments = Vec::with_capacity(left.len() + right.len() + 2);
-        segments.extend(left.into_segments());
-        match cap_line(&left_end, &right_end)? {
-            Classification::Decided(cap) => segments.push(Segment2::Line(cap)),
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        }
-        segments.extend(reversed_segments(right.into_segments()));
-        match cap_line(&right_start, &left_start)? {
-            Classification::Decided(cap) => segments.push(Segment2::Line(cap)),
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        }
-
-        checked_outline_contour(segments, policy)
+        self.offset_outline_butt_caps_with_report(distance, policy)
+            .map(Self::outline_classification_from_report)
     }
 
     /// Builds a checked closed outline with square endpoint caps.
@@ -424,68 +461,8 @@ impl CurveString2 {
         distance: Real,
         policy: &CurvePolicy,
     ) -> CurveResult<Classification<Contour2>> {
-        let offsets = match checked_outline_offsets(self, distance.clone(), policy)? {
-            Classification::Decided(offsets) => offsets,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
-        let OutlineOffsets {
-            left,
-            right,
-            left_start,
-            left_end,
-            right_start,
-            right_end,
-            ..
-        } = offsets;
-
-        let start_tangent = unit_tangent_at_segment_start(
-            self.segments()
-                .first()
-                .ok_or(CurveError::EmptyCurveString)?,
-        )?;
-        let end_tangent = unit_tangent_at_segment_end(
-            self.segments().last().ok_or(CurveError::EmptyCurveString)?,
-        )?;
-        let start_dx = &start_tangent.0 * &distance;
-        let start_dy = &start_tangent.1 * &distance;
-        let end_dx = &end_tangent.0 * &distance;
-        let end_dy = &end_tangent.1 * &distance;
-
-        let left_start_square = left_start.translated(-start_dx.clone(), -start_dy.clone());
-        let right_start_square = right_start.translated(-start_dx, -start_dy);
-        let left_end_square = left_end.translated(end_dx.clone(), end_dy.clone());
-        let right_end_square = right_end.translated(end_dx, end_dy);
-
-        let left = match extend_square_cap_trace(
-            left.into_segments(),
-            left_start_square.clone(),
-            left_end_square.clone(),
-        )? {
-            Classification::Decided(left) => left,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
-        let right = match extend_square_cap_trace(
-            right.into_segments(),
-            right_start_square.clone(),
-            right_end_square.clone(),
-        )? {
-            Classification::Decided(right) => right,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
-
-        let mut segments = Vec::with_capacity(left.len() + right.len() + 2);
-        segments.extend(left);
-        match cap_line(&left_end_square, &right_end_square)? {
-            Classification::Decided(cap) => segments.push(Segment2::Line(cap)),
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        }
-        segments.extend(reversed_segments(right));
-        match cap_line(&right_start_square, &left_start_square)? {
-            Classification::Decided(cap) => segments.push(Segment2::Line(cap)),
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        }
-
-        checked_outline_contour(segments, policy)
+        self.offset_outline_square_caps_with_report(distance, policy)
+            .map(Self::outline_classification_from_report)
     }
 }
 
@@ -659,6 +636,65 @@ impl ContourOffsetResult2 {
     }
 }
 
+impl CurveStringOutlineOffsetReport2 {
+    /// Returns the furthest exact outline-offset stage reached.
+    pub const fn stage(&self) -> CurveStringOutlineOffsetStage2 {
+        self.stage
+    }
+
+    /// Returns the endpoint cap style used by this outline construction.
+    pub const fn cap(&self) -> OffsetCap {
+        self.cap
+    }
+
+    /// Returns the source open curve-string segment count.
+    pub const fn source_segment_count(&self) -> usize {
+        self.source_segment_count
+    }
+
+    /// Returns the left offset trace segment count after raw joining.
+    pub const fn left_offset_segment_count(&self) -> Option<usize> {
+        self.left_offset_segment_count
+    }
+
+    /// Returns the right offset trace segment count after raw joining.
+    pub const fn right_offset_segment_count(&self) -> Option<usize> {
+        self.right_offset_segment_count
+    }
+
+    /// Returns the closed outline segment count before final topology rejection.
+    pub const fn outline_segment_count(&self) -> Option<usize> {
+        self.outline_segment_count
+    }
+
+    /// Returns checked outline topology status.
+    pub const fn status(&self) -> RetainedTopologyStatus {
+        self.status
+    }
+
+    /// Returns the exact blocker for non-materialized outline offsets.
+    pub const fn blocker(&self) -> Option<UncertaintyReason> {
+        self.blocker
+    }
+}
+
+impl CurveStringOutlineOffsetResult2 {
+    /// Returns the materialized checked outline, if accepted.
+    pub const fn outline(&self) -> Option<&Contour2> {
+        self.outline.as_ref()
+    }
+
+    /// Consumes this result and returns the materialized checked outline.
+    pub fn into_outline(self) -> Option<Contour2> {
+        self.outline
+    }
+
+    /// Returns retained checked-outline evidence.
+    pub const fn report(&self) -> &CurveStringOutlineOffsetReport2 {
+        &self.report
+    }
+}
+
 impl CurveStringOffsetReport2 {
     /// Returns the furthest exact checked-offset stage reached.
     pub const fn stage(&self) -> CurveStringOffsetStage2 {
@@ -750,6 +786,31 @@ fn blocked_contour_offset_result(
     }
 }
 
+fn blocked_curve_string_outline_offset_result(
+    stage: CurveStringOutlineOffsetStage2,
+    cap: OffsetCap,
+    source_segment_count: usize,
+    left_offset_segment_count: Option<usize>,
+    right_offset_segment_count: Option<usize>,
+    outline_segment_count: Option<usize>,
+    status: RetainedTopologyStatus,
+    blocker: UncertaintyReason,
+) -> CurveStringOutlineOffsetResult2 {
+    CurveStringOutlineOffsetResult2 {
+        outline: None,
+        report: CurveStringOutlineOffsetReport2 {
+            stage,
+            cap,
+            source_segment_count,
+            left_offset_segment_count,
+            right_offset_segment_count,
+            outline_segment_count,
+            status,
+            blocker: Some(blocker),
+        },
+    }
+}
+
 const fn retained_status_for_offset_blocker(reason: UncertaintyReason) -> RetainedTopologyStatus {
     match reason {
         UncertaintyReason::Unsupported | UncertaintyReason::Boundary => {
@@ -757,6 +818,299 @@ const fn retained_status_for_offset_blocker(reason: UncertaintyReason) -> Retain
         }
         _ => RetainedTopologyStatus::Unresolved,
     }
+}
+
+fn checked_outline_with_report(
+    source: &CurveString2,
+    distance: Real,
+    cap: OffsetCap,
+    policy: &CurvePolicy,
+) -> CurveResult<CurveStringOutlineOffsetResult2> {
+    let source_segment_count = source.len();
+    match real_sign(&distance, policy) {
+        Some(RealSign::Positive) => {}
+        Some(RealSign::Zero | RealSign::Negative) => {
+            return Ok(blocked_curve_string_outline_offset_result(
+                CurveStringOutlineOffsetStage2::DistanceValidation,
+                cap,
+                source_segment_count,
+                None,
+                None,
+                None,
+                RetainedTopologyStatus::Unsupported,
+                UncertaintyReason::Unsupported,
+            ));
+        }
+        None => {
+            return Ok(blocked_curve_string_outline_offset_result(
+                CurveStringOutlineOffsetStage2::DistanceValidation,
+                cap,
+                source_segment_count,
+                None,
+                None,
+                None,
+                RetainedTopologyStatus::Unresolved,
+                UncertaintyReason::RealSign,
+            ));
+        }
+    }
+
+    match source.has_self_contacts(policy)? {
+        Classification::Decided(false) => {}
+        Classification::Decided(true) => {
+            return Ok(blocked_curve_string_outline_offset_result(
+                CurveStringOutlineOffsetStage2::SourceSelfContactValidation,
+                cap,
+                source_segment_count,
+                None,
+                None,
+                None,
+                RetainedTopologyStatus::Unsupported,
+                UncertaintyReason::Unsupported,
+            ));
+        }
+        Classification::Uncertain(reason) => {
+            return Ok(blocked_curve_string_outline_offset_result(
+                CurveStringOutlineOffsetStage2::SourceSelfContactValidation,
+                cap,
+                source_segment_count,
+                None,
+                None,
+                None,
+                retained_status_for_offset_blocker(reason),
+                reason,
+            ));
+        }
+    }
+
+    let left = match source.offset_left_with_line_joins(distance.clone(), policy)? {
+        Classification::Decided(left) => left,
+        Classification::Uncertain(reason) => {
+            return Ok(blocked_curve_string_outline_offset_result(
+                CurveStringOutlineOffsetStage2::LeftOffsetConstruction,
+                cap,
+                source_segment_count,
+                None,
+                None,
+                None,
+                retained_status_for_offset_blocker(reason),
+                reason,
+            ));
+        }
+    };
+    let left_offset_segment_count = left.len();
+
+    let right = match source.offset_left_with_line_joins(-distance.clone(), policy)? {
+        Classification::Decided(right) => right,
+        Classification::Uncertain(reason) => {
+            return Ok(blocked_curve_string_outline_offset_result(
+                CurveStringOutlineOffsetStage2::RightOffsetConstruction,
+                cap,
+                source_segment_count,
+                Some(left_offset_segment_count),
+                None,
+                None,
+                retained_status_for_offset_blocker(reason),
+                reason,
+            ));
+        }
+    };
+    let right_offset_segment_count = right.len();
+
+    let offsets = OutlineOffsets {
+        start_center: source.start().ok_or(CurveError::EmptyCurveString)?.clone(),
+        end_center: source.end().ok_or(CurveError::EmptyCurveString)?.clone(),
+        left_start: left.start().ok_or(CurveError::EmptyCurveString)?.clone(),
+        left_end: left.end().ok_or(CurveError::EmptyCurveString)?.clone(),
+        right_start: right.start().ok_or(CurveError::EmptyCurveString)?.clone(),
+        right_end: right.end().ok_or(CurveError::EmptyCurveString)?.clone(),
+        left,
+        right,
+    };
+
+    let segments = match outline_segments_for_cap(source, offsets, distance, cap, policy)? {
+        Classification::Decided(segments) => segments,
+        Classification::Uncertain(reason) => {
+            return Ok(blocked_curve_string_outline_offset_result(
+                CurveStringOutlineOffsetStage2::CapConstruction,
+                cap,
+                source_segment_count,
+                Some(left_offset_segment_count),
+                Some(right_offset_segment_count),
+                None,
+                retained_status_for_offset_blocker(reason),
+                reason,
+            ));
+        }
+    };
+    let outline_segment_count = segments.len();
+
+    match checked_outline_contour(segments, policy)? {
+        Classification::Decided(outline) => Ok(CurveStringOutlineOffsetResult2 {
+            outline: Some(outline),
+            report: CurveStringOutlineOffsetReport2 {
+                stage: CurveStringOutlineOffsetStage2::OutlineTopologyValidation,
+                cap,
+                source_segment_count,
+                left_offset_segment_count: Some(left_offset_segment_count),
+                right_offset_segment_count: Some(right_offset_segment_count),
+                outline_segment_count: Some(outline_segment_count),
+                status: RetainedTopologyStatus::NativeExact,
+                blocker: None,
+            },
+        }),
+        Classification::Uncertain(reason) => Ok(blocked_curve_string_outline_offset_result(
+            CurveStringOutlineOffsetStage2::OutlineTopologyValidation,
+            cap,
+            source_segment_count,
+            Some(left_offset_segment_count),
+            Some(right_offset_segment_count),
+            Some(outline_segment_count),
+            retained_status_for_offset_blocker(reason),
+            reason,
+        )),
+    }
+}
+
+fn outline_segments_for_cap(
+    source: &CurveString2,
+    offsets: OutlineOffsets,
+    distance: Real,
+    cap: OffsetCap,
+    policy: &CurvePolicy,
+) -> CurveResult<Classification<Vec<Segment2>>> {
+    match cap {
+        OffsetCap::Round => outline_segments_with_round_caps(offsets, policy),
+        OffsetCap::Butt => outline_segments_with_butt_caps(offsets),
+        OffsetCap::Square => outline_segments_with_square_caps(source, offsets, distance),
+    }
+}
+
+fn outline_segments_with_round_caps(
+    offsets: OutlineOffsets,
+    policy: &CurvePolicy,
+) -> CurveResult<Classification<Vec<Segment2>>> {
+    let OutlineOffsets {
+        left,
+        right,
+        start_center,
+        end_center,
+        left_start,
+        left_end,
+        right_start,
+        right_end,
+    } = offsets;
+
+    let mut segments = Vec::with_capacity(left.len() + right.len() + 2);
+    segments.extend(left.into_segments());
+    match round_cap_arc(&left_end, &right_end, &end_center, policy)? {
+        Classification::Decided(cap) => segments.push(Segment2::Arc(cap)),
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    }
+    segments.extend(reversed_segments(right.into_segments()));
+    match round_cap_arc(&right_start, &left_start, &start_center, policy)? {
+        Classification::Decided(cap) => segments.push(Segment2::Arc(cap)),
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    }
+
+    Ok(Classification::Decided(segments))
+}
+
+fn outline_segments_with_butt_caps(
+    offsets: OutlineOffsets,
+) -> CurveResult<Classification<Vec<Segment2>>> {
+    let OutlineOffsets {
+        left,
+        right,
+        left_start,
+        left_end,
+        right_start,
+        right_end,
+        ..
+    } = offsets;
+
+    let mut segments = Vec::with_capacity(left.len() + right.len() + 2);
+    segments.extend(left.into_segments());
+    match cap_line(&left_end, &right_end)? {
+        Classification::Decided(cap) => segments.push(Segment2::Line(cap)),
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    }
+    segments.extend(reversed_segments(right.into_segments()));
+    match cap_line(&right_start, &left_start)? {
+        Classification::Decided(cap) => segments.push(Segment2::Line(cap)),
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    }
+
+    Ok(Classification::Decided(segments))
+}
+
+fn outline_segments_with_square_caps(
+    source: &CurveString2,
+    offsets: OutlineOffsets,
+    distance: Real,
+) -> CurveResult<Classification<Vec<Segment2>>> {
+    let OutlineOffsets {
+        left,
+        right,
+        left_start,
+        left_end,
+        right_start,
+        right_end,
+        ..
+    } = offsets;
+
+    let start_tangent = unit_tangent_at_segment_start(
+        source
+            .segments()
+            .first()
+            .ok_or(CurveError::EmptyCurveString)?,
+    )?;
+    let end_tangent = unit_tangent_at_segment_end(
+        source
+            .segments()
+            .last()
+            .ok_or(CurveError::EmptyCurveString)?,
+    )?;
+    let start_dx = &start_tangent.0 * &distance;
+    let start_dy = &start_tangent.1 * &distance;
+    let end_dx = &end_tangent.0 * &distance;
+    let end_dy = &end_tangent.1 * &distance;
+
+    let left_start_square = left_start.translated(-start_dx.clone(), -start_dy.clone());
+    let right_start_square = right_start.translated(-start_dx, -start_dy);
+    let left_end_square = left_end.translated(end_dx.clone(), end_dy.clone());
+    let right_end_square = right_end.translated(end_dx, end_dy);
+
+    let left = match extend_square_cap_trace(
+        left.into_segments(),
+        left_start_square.clone(),
+        left_end_square.clone(),
+    )? {
+        Classification::Decided(left) => left,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    let right = match extend_square_cap_trace(
+        right.into_segments(),
+        right_start_square.clone(),
+        right_end_square.clone(),
+    )? {
+        Classification::Decided(right) => right,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+
+    let mut segments = Vec::with_capacity(left.len() + right.len() + 2);
+    segments.extend(left);
+    match cap_line(&left_end_square, &right_end_square)? {
+        Classification::Decided(cap) => segments.push(Segment2::Line(cap)),
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    }
+    segments.extend(reversed_segments(right));
+    match cap_line(&right_start_square, &left_start_square)? {
+        Classification::Decided(cap) => segments.push(Segment2::Line(cap)),
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    }
+
+    Ok(Classification::Decided(segments))
 }
 
 fn scale_from_center(point: &Point2, center: &Point2, scale: &Real) -> Point2 {
@@ -776,52 +1130,6 @@ struct OutlineOffsets {
     left_end: Point2,
     right_start: Point2,
     right_end: Point2,
-}
-
-// Shared setup for open-profile outlines. The public cap variants differ only
-// in how they connect the two offset traces; both must enforce the same
-// positive-distance and no-self-contact preconditions before exposing a closed
-// contour to callers.
-fn checked_outline_offsets(
-    source: &CurveString2,
-    distance: Real,
-    policy: &CurvePolicy,
-) -> CurveResult<Classification<OutlineOffsets>> {
-    match real_sign(&distance, policy) {
-        Some(RealSign::Positive) => {}
-        Some(RealSign::Zero | RealSign::Negative) => {
-            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-        }
-        None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
-    }
-
-    match source.has_self_contacts(policy)? {
-        Classification::Decided(false) => {}
-        Classification::Decided(true) => {
-            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-        }
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    }
-
-    let left = match source.offset_left_with_line_joins(distance.clone(), policy)? {
-        Classification::Decided(left) => left,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
-    let right = match source.offset_left_with_line_joins(-distance, policy)? {
-        Classification::Decided(right) => right,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
-
-    Ok(Classification::Decided(OutlineOffsets {
-        start_center: source.start().ok_or(CurveError::EmptyCurveString)?.clone(),
-        end_center: source.end().ok_or(CurveError::EmptyCurveString)?.clone(),
-        left_start: left.start().ok_or(CurveError::EmptyCurveString)?.clone(),
-        left_end: left.end().ok_or(CurveError::EmptyCurveString)?.clone(),
-        right_start: right.start().ok_or(CurveError::EmptyCurveString)?.clone(),
-        right_end: right.end().ok_or(CurveError::EmptyCurveString)?.clone(),
-        left,
-        right,
-    }))
 }
 
 // Contour closure and self-contact checks are deliberately centralized so every

@@ -1,7 +1,7 @@
 use hypercurve::{
     BulgeVertex2, CircularArc2, Classification, Contour2, ContourOffsetStage2, CurvePolicy,
-    CurveString2, CurveStringOffsetStage2, FillRule, LineSeg2, OffsetCap, Point2, Real, Segment2,
-    UncertaintyReason,
+    CurveString2, CurveStringOffsetStage2, CurveStringOutlineOffsetStage2, FillRule, LineSeg2,
+    OffsetCap, Point2, Real, Segment2, UncertaintyReason,
 };
 
 fn s(value: i32) -> Real {
@@ -368,6 +368,27 @@ fn curve_string_round_cap_outline_wraps_single_line() {
 }
 
 #[test]
+fn curve_string_round_cap_outline_report_materializes_single_line() {
+    let curve = CurveString2::try_new(vec![line_segment(0, 0, 4, 0)]).unwrap();
+    let outline = curve
+        .offset_outline_round_caps_with_report(s(1), &policy())
+        .unwrap();
+
+    assert!(outline.report().status().is_native_exact());
+    assert_eq!(
+        outline.report().stage(),
+        CurveStringOutlineOffsetStage2::OutlineTopologyValidation
+    );
+    assert_eq!(outline.report().cap(), OffsetCap::Round);
+    assert_eq!(outline.report().source_segment_count(), 1);
+    assert_eq!(outline.report().left_offset_segment_count(), Some(1));
+    assert_eq!(outline.report().right_offset_segment_count(), Some(1));
+    assert_eq!(outline.report().outline_segment_count(), Some(4));
+    assert_eq!(outline.report().blocker(), None);
+    assert_eq!(outline.outline().unwrap().len(), 4);
+}
+
+#[test]
 fn curve_string_round_cap_outline_keeps_mitered_corners() {
     let curve =
         CurveString2::try_new(vec![line_segment(0, 0, 4, 0), line_segment(4, 0, 4, 3)]).unwrap();
@@ -407,6 +428,30 @@ fn curve_string_round_cap_outline_rejects_nonpositive_distance() {
 }
 
 #[test]
+fn curve_string_round_cap_outline_report_blocks_nonpositive_distance() {
+    let curve = CurveString2::try_new(vec![line_segment(0, 0, 4, 0)]).unwrap();
+    let outline = curve
+        .offset_outline_with_report(s(0), OffsetCap::Round, &policy())
+        .unwrap();
+
+    assert!(outline.outline().is_none());
+    assert!(outline.report().status().is_retained_evidence());
+    assert_eq!(
+        outline.report().stage(),
+        CurveStringOutlineOffsetStage2::DistanceValidation
+    );
+    assert_eq!(outline.report().cap(), OffsetCap::Round);
+    assert_eq!(outline.report().source_segment_count(), 1);
+    assert_eq!(outline.report().left_offset_segment_count(), None);
+    assert_eq!(outline.report().right_offset_segment_count(), None);
+    assert_eq!(outline.report().outline_segment_count(), None);
+    assert_eq!(
+        outline.report().blocker(),
+        Some(UncertaintyReason::Unsupported)
+    );
+}
+
+#[test]
 fn curve_string_round_cap_outline_rejects_self_contacting_input() {
     let curve = CurveString2::try_new(vec![
         line_segment(0, 0, 4, 4),
@@ -418,6 +463,36 @@ fn curve_string_round_cap_outline_rejects_self_contacting_input() {
     assert_eq!(
         curve.offset_outline_round_caps(s(1), &policy()).unwrap(),
         Classification::Uncertain(UncertaintyReason::Unsupported)
+    );
+}
+
+#[test]
+fn curve_string_round_cap_outline_report_blocks_self_contacting_input() {
+    let curve = CurveString2::try_new(vec![
+        line_segment(0, 0, 4, 4),
+        line_segment(4, 4, 0, 4),
+        line_segment(0, 4, 4, 0),
+    ])
+    .unwrap();
+
+    let outline = curve
+        .offset_outline_round_caps_with_report(s(1), &policy())
+        .unwrap();
+
+    assert!(outline.outline().is_none());
+    assert!(outline.report().status().is_retained_evidence());
+    assert_eq!(
+        outline.report().stage(),
+        CurveStringOutlineOffsetStage2::SourceSelfContactValidation
+    );
+    assert_eq!(outline.report().cap(), OffsetCap::Round);
+    assert_eq!(outline.report().source_segment_count(), 3);
+    assert_eq!(outline.report().left_offset_segment_count(), None);
+    assert_eq!(outline.report().right_offset_segment_count(), None);
+    assert_eq!(outline.report().outline_segment_count(), None);
+    assert_eq!(
+        outline.report().blocker(),
+        Some(UncertaintyReason::Unsupported)
     );
 }
 
