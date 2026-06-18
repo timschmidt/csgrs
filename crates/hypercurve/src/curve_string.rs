@@ -326,6 +326,10 @@ pub struct CurveStringLineMergeResult2 {
 pub struct CurveStringReversedDuplicatePairReport2 {
     first_source_segment_index: usize,
     second_source_segment_index: usize,
+    first_start_point: Point2,
+    first_end_point: Point2,
+    second_start_point: Point2,
+    second_end_point: Point2,
     status: RetainedTopologyStatus,
 }
 
@@ -1316,12 +1320,16 @@ impl CurveString2 {
                 .last()
                 .is_some_and(|(_, previous)| previous == &segment.reversed())
             {
-                let (first_source_segment_index, _) = retained
+                let (first_source_segment_index, first_segment) = retained
                     .pop()
                     .expect("retained stack should have a previous segment");
                 removed_pairs.push(CurveStringReversedDuplicatePairReport2 {
                     first_source_segment_index,
                     second_source_segment_index: source_index,
+                    first_start_point: first_segment.start().clone(),
+                    first_end_point: first_segment.end().clone(),
+                    second_start_point: segment.start().clone(),
+                    second_end_point: segment.end().clone(),
                     status: RetainedTopologyStatus::NativeExact,
                 });
             } else {
@@ -5744,6 +5752,26 @@ impl CurveStringReversedDuplicatePairReport2 {
     /// Returns the second source segment index removed by this cancellation.
     pub const fn second_source_segment_index(&self) -> usize {
         self.second_source_segment_index
+    }
+
+    /// Returns the exact start point of the first removed segment.
+    pub const fn first_start_point(&self) -> &Point2 {
+        &self.first_start_point
+    }
+
+    /// Returns the exact end point of the first removed segment.
+    pub const fn first_end_point(&self) -> &Point2 {
+        &self.first_end_point
+    }
+
+    /// Returns the exact start point of the second removed segment.
+    pub const fn second_start_point(&self) -> &Point2 {
+        &self.second_start_point
+    }
+
+    /// Returns the exact end point of the second removed segment.
+    pub const fn second_end_point(&self) -> &Point2 {
+        &self.second_end_point
     }
 
     /// Returns retained topology status for this duplicate-pair removal.

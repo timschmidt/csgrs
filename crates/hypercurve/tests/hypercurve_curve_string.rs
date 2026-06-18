@@ -347,6 +347,22 @@ fn curve_string_remove_adjacent_reversed_duplicates_reports_removed_pairs() {
         deduped.report().removed_pairs()[0].second_source_segment_index(),
         2
     );
+    assert_eq!(
+        deduped.report().removed_pairs()[0].first_start_point(),
+        &p(1, 0)
+    );
+    assert_eq!(
+        deduped.report().removed_pairs()[0].first_end_point(),
+        &p(2, 0)
+    );
+    assert_eq!(
+        deduped.report().removed_pairs()[0].second_start_point(),
+        &p(2, 0)
+    );
+    assert_eq!(
+        deduped.report().removed_pairs()[0].second_end_point(),
+        &p(1, 0)
+    );
     assert!(
         deduped.report().removed_pairs()[0]
             .status()
@@ -421,6 +437,38 @@ fn curve_string_remove_adjacent_reversed_duplicates_reports_empty_output_blocker
     );
     assert!(deduped.report().retained_segments().is_empty());
     assert_eq!(deduped.report().removed_pairs().len(), 2);
+    assert_eq!(
+        deduped.report().removed_pairs()[0].first_start_point(),
+        &p(1, 0)
+    );
+    assert_eq!(
+        deduped.report().removed_pairs()[0].first_end_point(),
+        &p(2, 0)
+    );
+    assert_eq!(
+        deduped.report().removed_pairs()[0].second_start_point(),
+        &p(2, 0)
+    );
+    assert_eq!(
+        deduped.report().removed_pairs()[0].second_end_point(),
+        &p(1, 0)
+    );
+    assert_eq!(
+        deduped.report().removed_pairs()[1].first_start_point(),
+        &p(0, 0)
+    );
+    assert_eq!(
+        deduped.report().removed_pairs()[1].first_end_point(),
+        &p(1, 0)
+    );
+    assert_eq!(
+        deduped.report().removed_pairs()[1].second_start_point(),
+        &p(1, 0)
+    );
+    assert_eq!(
+        deduped.report().removed_pairs()[1].second_end_point(),
+        &p(0, 0)
+    );
     assert_eq!(
         deduped.report().blocker(),
         Some(UncertaintyReason::Boundary)
