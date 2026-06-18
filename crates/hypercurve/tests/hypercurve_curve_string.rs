@@ -292,6 +292,14 @@ fn curve_string_merge_adjacent_collinear_lines_reports_source_runs() {
     assert_eq!(merged.report().merged_pair_count(), 2);
     assert_eq!(merged.report().preserved_pair_count(), 1);
     assert_eq!(merged.report().output_segment_count(), Some(2));
+    assert_eq!(
+        merged.report().source_segment_kind_counts(),
+        SegmentKindCounts { lines: 4, arcs: 0 }
+    );
+    assert_eq!(
+        merged.report().output_segment_kind_counts(),
+        Some(SegmentKindCounts { lines: 2, arcs: 0 })
+    );
     assert_eq!(merged.report().spans().len(), 2);
     assert_eq!(merged.report().spans()[0].source_start_segment_index(), 0);
     assert_eq!(merged.report().spans()[0].source_end_segment_index(), 1);
@@ -379,6 +387,14 @@ fn curve_string_remove_adjacent_reversed_duplicates_reports_removed_pairs() {
     );
     assert_eq!(deduped.report().source_segment_count(), 4);
     assert_eq!(deduped.report().output_segment_count(), Some(2));
+    assert_eq!(
+        deduped.report().source_segment_kind_counts(),
+        SegmentKindCounts { lines: 4, arcs: 0 }
+    );
+    assert_eq!(
+        deduped.report().output_segment_kind_counts(),
+        Some(SegmentKindCounts { lines: 2, arcs: 0 })
+    );
     assert_eq!(deduped.report().retained_source_segment_indices(), &[0, 3]);
     assert_eq!(deduped.report().removed_pairs().len(), 1);
     assert_eq!(
@@ -489,6 +505,14 @@ fn curve_string_remove_adjacent_reversed_duplicates_reports_mixed_segment_kinds(
     );
     assert_eq!(report.source_segment_count(), 5);
     assert_eq!(report.output_segment_count(), Some(1));
+    assert_eq!(
+        report.source_segment_kind_counts(),
+        SegmentKindCounts { lines: 3, arcs: 2 }
+    );
+    assert_eq!(
+        report.output_segment_kind_counts(),
+        Some(SegmentKindCounts { lines: 1, arcs: 0 })
+    );
     assert_eq!(report.retained_source_segment_indices(), &[4]);
     assert_eq!(report.removed_pairs().len(), 2);
     assert_eq!(report.removed_pairs()[0].first_source_segment_index(), 1);
@@ -561,6 +585,11 @@ fn curve_string_remove_adjacent_reversed_duplicates_reports_empty_output_blocker
     );
     assert_eq!(deduped.report().source_segment_count(), 4);
     assert_eq!(deduped.report().output_segment_count(), None);
+    assert_eq!(
+        deduped.report().source_segment_kind_counts(),
+        SegmentKindCounts { lines: 4, arcs: 0 }
+    );
+    assert_eq!(deduped.report().output_segment_kind_counts(), None);
     assert!(
         deduped
             .report()

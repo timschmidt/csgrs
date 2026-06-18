@@ -316,10 +316,12 @@ pub struct CurveStringLineMergeSpanReport2 {
 pub struct CurveStringLineMergeReport2 {
     stage: CurveStringLineMergeStage2,
     source_segment_count: usize,
+    source_segment_kind_counts: SegmentKindCounts,
     adjacent_pair_count: usize,
     merged_pair_count: usize,
     preserved_pair_count: usize,
     output_segment_count: Option<usize>,
+    output_segment_kind_counts: Option<SegmentKindCounts>,
     spans: Vec<CurveStringLineMergeSpanReport2>,
     status: RetainedTopologyStatus,
     blocker: Option<UncertaintyReason>,
@@ -372,7 +374,9 @@ pub struct CurveStringDeduplicateRetainedSegmentReport2 {
 pub struct CurveStringDeduplicateReport2 {
     stage: CurveStringDeduplicateStage2,
     source_segment_count: usize,
+    source_segment_kind_counts: SegmentKindCounts,
     output_segment_count: Option<usize>,
+    output_segment_kind_counts: Option<SegmentKindCounts>,
     retained_source_segment_indices: Vec<usize>,
     retained_segments: Vec<CurveStringDeduplicateRetainedSegmentReport2>,
     removed_pairs: Vec<CurveStringReversedDuplicatePairReport2>,
@@ -1346,10 +1350,12 @@ impl CurveString2 {
                         report: CurveStringLineMergeReport2 {
                             stage: CurveStringLineMergeStage2::PairClassification,
                             source_segment_count: self.len(),
+                            source_segment_kind_counts: curve_string_segment_kind_counts(self),
                             adjacent_pair_count,
                             merged_pair_count,
                             preserved_pair_count,
                             output_segment_count: None,
+                            output_segment_kind_counts: None,
                             spans,
                             status: RetainedTopologyStatus::Unresolved,
                             blocker: Some(reason),
@@ -1374,14 +1380,17 @@ impl CurveString2 {
         });
 
         let curve_string = CurveString2::try_new(merged_segments)?;
+        let output_segment_kind_counts = curve_string_segment_kind_counts(&curve_string);
         Ok(CurveStringLineMergeResult2 {
             report: CurveStringLineMergeReport2 {
                 stage: CurveStringLineMergeStage2::SegmentMaterialization,
                 source_segment_count: self.len(),
+                source_segment_kind_counts: curve_string_segment_kind_counts(self),
                 adjacent_pair_count,
                 merged_pair_count,
                 preserved_pair_count,
                 output_segment_count: Some(curve_string.len()),
+                output_segment_kind_counts: Some(output_segment_kind_counts),
                 spans,
                 status: RetainedTopologyStatus::NativeExact,
                 blocker: None,
@@ -1434,7 +1443,9 @@ impl CurveString2 {
                 report: CurveStringDeduplicateReport2 {
                     stage: CurveStringDeduplicateStage2::PairCancellation,
                     source_segment_count: self.len(),
+                    source_segment_kind_counts: curve_string_segment_kind_counts(self),
                     output_segment_count: None,
+                    output_segment_kind_counts: None,
                     retained_source_segment_indices: Vec::new(),
                     retained_segments: Vec::new(),
                     removed_pairs,
@@ -1468,11 +1479,14 @@ impl CurveString2 {
             .map(|(_, segment)| segment)
             .collect::<Vec<_>>();
         let curve_string = CurveString2::try_new(segments)?;
+        let output_segment_kind_counts = curve_string_segment_kind_counts(&curve_string);
         Ok(CurveStringDeduplicateResult2 {
             report: CurveStringDeduplicateReport2 {
                 stage: CurveStringDeduplicateStage2::SegmentMaterialization,
                 source_segment_count: self.len(),
+                source_segment_kind_counts: curve_string_segment_kind_counts(self),
                 output_segment_count: Some(curve_string.len()),
+                output_segment_kind_counts: Some(output_segment_kind_counts),
                 retained_source_segment_indices,
                 retained_segments,
                 removed_pairs,
@@ -6290,6 +6304,11 @@ impl CurveStringLineMergeReport2 {
         self.source_segment_count
     }
 
+    /// Returns the primitive-family inventory captured before merging.
+    pub const fn source_segment_kind_counts(&self) -> SegmentKindCounts {
+        self.source_segment_kind_counts
+    }
+
     /// Returns adjacent source segment pairs classified during this merge.
     pub const fn adjacent_pair_count(&self) -> usize {
         self.adjacent_pair_count
@@ -6308,6 +6327,11 @@ impl CurveStringLineMergeReport2 {
     /// Returns the output segment count when the merge materialized.
     pub const fn output_segment_count(&self) -> Option<usize> {
         self.output_segment_count
+    }
+
+    /// Returns the primitive-family inventory after merging, when materialized.
+    pub const fn output_segment_kind_counts(&self) -> Option<SegmentKindCounts> {
+        self.output_segment_kind_counts
     }
 
     /// Returns retained source runs for materialized output segments.
@@ -6438,9 +6462,19 @@ impl CurveStringDeduplicateReport2 {
         self.source_segment_count
     }
 
+    /// Returns the primitive-family inventory captured before de-duplication.
+    pub const fn source_segment_kind_counts(&self) -> SegmentKindCounts {
+        self.source_segment_kind_counts
+    }
+
     /// Returns the output segment count when de-duplication materialized.
     pub const fn output_segment_count(&self) -> Option<usize> {
         self.output_segment_count
+    }
+
+    /// Returns the primitive-family inventory after de-duplication, when materialized.
+    pub const fn output_segment_kind_counts(&self) -> Option<SegmentKindCounts> {
+        self.output_segment_kind_counts
     }
 
     /// Returns source segment indices retained in output order.
