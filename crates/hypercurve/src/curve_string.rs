@@ -1283,6 +1283,23 @@ impl CurveString2 {
         target_point: Point2,
         policy: &CurvePolicy,
     ) -> CurveResult<CurveStringExtendResult2> {
+        self.extend_endpoint_to_point(endpoint, target_point, policy)
+    }
+
+    /// Extends one endpoint segment to an exact target point.
+    ///
+    /// Lines extend along their supporting line. Circular arcs extend only when
+    /// the target is certified on the same circle and outside the current
+    /// finite arc. The resulting same-orientation native arc must replay both
+    /// the old endpoint and an interior witness from the source arc, so the
+    /// operation extends the existing topology instead of replacing it with an
+    /// unrelated chord or sampled sweep.
+    pub fn extend_endpoint_to_point(
+        &self,
+        endpoint: CurveStringEndpoint2,
+        target_point: Point2,
+        policy: &CurvePolicy,
+    ) -> CurveResult<CurveStringExtendResult2> {
         let source_segment_index = match endpoint {
             CurveStringEndpoint2::Start => 0,
             CurveStringEndpoint2::End => self
@@ -1294,21 +1311,32 @@ impl CurveString2 {
             .segments
             .get(source_segment_index)
             .ok_or(CurveError::EmptyCurveString)?;
-        let line = match segment {
-            Segment2::Line(line) => line,
-            Segment2::Arc(_) => {
-                return Ok(blocked_extend_result(
-                    self,
-                    endpoint,
-                    source_segment_index,
-                    target_point,
-                    None,
-                    RetainedTopologyStatus::Unsupported,
-                    Some(UncertaintyReason::Unsupported),
-                ));
-            }
-        };
+        match segment {
+            Segment2::Line(line) => self.extend_line_endpoint_segment_to_point(
+                endpoint,
+                source_segment_index,
+                line,
+                target_point,
+                policy,
+            ),
+            Segment2::Arc(arc) => self.extend_arc_endpoint_segment_to_point(
+                endpoint,
+                source_segment_index,
+                arc,
+                target_point,
+                policy,
+            ),
+        }
+    }
 
+    fn extend_line_endpoint_segment_to_point(
+        &self,
+        endpoint: CurveStringEndpoint2,
+        source_segment_index: usize,
+        line: &LineSeg2,
+        target_point: Point2,
+        policy: &CurvePolicy,
+    ) -> CurveResult<CurveStringExtendResult2> {
         match line.classify_point(&target_point, policy) {
             Classification::Decided(crate::LineSide::On) => {}
             Classification::Decided(_) => {
@@ -1398,6 +1426,173 @@ impl CurveString2 {
                 source_segment_index,
                 target_point,
                 source_param: Some(source_param),
+                source_segment_count: self.len(),
+                status: RetainedTopologyStatus::NativeExact,
+                blocker: None,
+            },
+        })
+    }
+
+    fn extend_arc_endpoint_segment_to_point(
+        &self,
+        endpoint: CurveStringEndpoint2,
+        source_segment_index: usize,
+        arc: &CircularArc2,
+        target_point: Point2,
+        policy: &CurvePolicy,
+    ) -> CurveResult<CurveStringExtendResult2> {
+        let radius_delta = target_point.distance_squared(arc.center()) - arc.radius_squared();
+        match is_zero(&radius_delta, policy) {
+            Some(true) => {}
+            Some(false) => {
+                return Ok(blocked_extend_result(
+                    self,
+                    endpoint,
+                    source_segment_index,
+                    target_point,
+                    None,
+                    RetainedTopologyStatus::Unsupported,
+                    Some(UncertaintyReason::Boundary),
+                ));
+            }
+            None => {
+                return Ok(blocked_extend_result(
+                    self,
+                    endpoint,
+                    source_segment_index,
+                    target_point,
+                    None,
+                    RetainedTopologyStatus::Unresolved,
+                    Some(UncertaintyReason::RealSign),
+                ));
+            }
+        }
+
+        match arc.contains_point(&target_point, policy) {
+            Classification::Decided(false) => {}
+            Classification::Decided(true) => {
+                return Ok(blocked_extend_result(
+                    self,
+                    endpoint,
+                    source_segment_index,
+                    target_point,
+                    None,
+                    RetainedTopologyStatus::Unsupported,
+                    Some(UncertaintyReason::Boundary),
+                ));
+            }
+            Classification::Uncertain(reason) => {
+                return Ok(blocked_extend_result(
+                    self,
+                    endpoint,
+                    source_segment_index,
+                    target_point,
+                    None,
+                    RetainedTopologyStatus::Unresolved,
+                    Some(reason),
+                ));
+            }
+        }
+
+        let extended_arc = match endpoint {
+            CurveStringEndpoint2::Start => CircularArc2::new_unchecked_with_radius(
+                target_point.clone(),
+                arc.end().clone(),
+                arc.center().clone(),
+                arc.radius_squared(),
+                arc.is_clockwise(),
+                None,
+            ),
+            CurveStringEndpoint2::End => CircularArc2::new_unchecked_with_radius(
+                arc.start().clone(),
+                target_point.clone(),
+                arc.center().clone(),
+                arc.radius_squared(),
+                arc.is_clockwise(),
+                None,
+            ),
+        };
+
+        let retained_endpoint = match endpoint {
+            CurveStringEndpoint2::Start => arc.start(),
+            CurveStringEndpoint2::End => arc.end(),
+        };
+        match extended_arc.contains_point(retained_endpoint, policy) {
+            Classification::Decided(true) => {}
+            Classification::Decided(false) => {
+                return Ok(blocked_extend_result(
+                    self,
+                    endpoint,
+                    source_segment_index,
+                    target_point,
+                    None,
+                    RetainedTopologyStatus::Unsupported,
+                    Some(UncertaintyReason::Unsupported),
+                ));
+            }
+            Classification::Uncertain(reason) => {
+                return Ok(blocked_extend_result(
+                    self,
+                    endpoint,
+                    source_segment_index,
+                    target_point,
+                    None,
+                    RetainedTopologyStatus::Unresolved,
+                    Some(reason),
+                ));
+            }
+        }
+
+        let representative = match arc.representative_point(policy)? {
+            Classification::Decided(point) => point,
+            Classification::Uncertain(reason) => {
+                return Ok(blocked_extend_result(
+                    self,
+                    endpoint,
+                    source_segment_index,
+                    target_point,
+                    None,
+                    RetainedTopologyStatus::Unresolved,
+                    Some(reason),
+                ));
+            }
+        };
+        match extended_arc.contains_point(&representative, policy) {
+            Classification::Decided(true) => {}
+            Classification::Decided(false) => {
+                return Ok(blocked_extend_result(
+                    self,
+                    endpoint,
+                    source_segment_index,
+                    target_point,
+                    None,
+                    RetainedTopologyStatus::Unsupported,
+                    Some(UncertaintyReason::Unsupported),
+                ));
+            }
+            Classification::Uncertain(reason) => {
+                return Ok(blocked_extend_result(
+                    self,
+                    endpoint,
+                    source_segment_index,
+                    target_point,
+                    None,
+                    RetainedTopologyStatus::Unresolved,
+                    Some(reason),
+                ));
+            }
+        }
+
+        let mut segments = self.segments.clone();
+        segments[source_segment_index] = Segment2::Arc(extended_arc);
+        let curve_string = CurveString2::try_new(segments)?;
+        Ok(CurveStringExtendResult2 {
+            curve_string: Some(curve_string),
+            report: CurveStringExtendReport2 {
+                endpoint,
+                source_segment_index,
+                target_point,
+                source_param: None,
                 source_segment_count: self.len(),
                 status: RetainedTopologyStatus::NativeExact,
                 blocker: None,

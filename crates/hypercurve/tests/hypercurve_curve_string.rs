@@ -692,7 +692,35 @@ fn curve_string_extend_line_reports_off_support_boundary() {
 }
 
 #[test]
-fn curve_string_extend_arc_endpoint_reports_unsupported() {
+fn curve_string_extend_arc_endpoint_to_same_circle_target() {
+    let curve = CurveString2::try_new(vec![Segment2::Arc(
+        CircularArc2::try_from_center(p(1, 0), p(0, 1), p(0, 0), false).unwrap(),
+    )])
+    .unwrap();
+
+    let extended = curve
+        .extend_endpoint_to_point(CurveStringEndpoint2::End, p(-1, 0), &policy())
+        .unwrap();
+
+    assert!(extended.report().status().is_native_exact());
+    assert_eq!(extended.report().endpoint(), CurveStringEndpoint2::End);
+    assert_eq!(extended.report().source_segment_index(), 0);
+    assert_eq!(extended.report().source_param(), None);
+    let curve = extended
+        .curve_string()
+        .expect("same-circle arc extension should materialize");
+    let Segment2::Arc(arc) = &curve.segments()[0] else {
+        panic!("expected extended arc");
+    };
+    assert_eq!(arc.start(), &p(1, 0));
+    assert_eq!(arc.end(), &p(-1, 0));
+    assert_eq!(arc.center(), &p(0, 0));
+    assert_eq!(arc.radius_squared(), s(1));
+    assert!(!arc.is_clockwise());
+}
+
+#[test]
+fn curve_string_extend_arc_endpoint_reports_off_circle_boundary() {
     let curve = CurveString2::try_new(vec![Segment2::Arc(
         CircularArc2::from_bulge(p(0, 0), p(2, 0), s(1)).unwrap(),
     )])
@@ -706,7 +734,26 @@ fn curve_string_extend_arc_endpoint_reports_unsupported() {
     assert!(extended.report().status().is_retained_evidence());
     assert_eq!(
         extended.report().blocker(),
-        Some(UncertaintyReason::Unsupported)
+        Some(UncertaintyReason::Boundary)
+    );
+}
+
+#[test]
+fn curve_string_extend_arc_endpoint_blocks_existing_arc_point() {
+    let curve = CurveString2::try_new(vec![Segment2::Arc(
+        CircularArc2::from_bulge(p(0, 0), p(2, 0), s(1)).unwrap(),
+    )])
+    .unwrap();
+
+    let extended = curve
+        .extend_endpoint_to_point(CurveStringEndpoint2::End, p(1, -1), &policy())
+        .unwrap();
+
+    assert!(extended.curve_string().is_none());
+    assert!(extended.report().status().is_retained_evidence());
+    assert_eq!(
+        extended.report().blocker(),
+        Some(UncertaintyReason::Boundary)
     );
 }
 
