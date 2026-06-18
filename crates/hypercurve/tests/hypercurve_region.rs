@@ -345,6 +345,8 @@ fn unordered_line_segments_build_region_with_source_provenance() {
     assert_eq!(report.split_tested_pair_count(), 4);
     assert_eq!(report.split_intersection_event_count(), 4);
     assert_eq!(report.split_output_segment_count(), Some(4));
+    assert_eq!(report.split_blocker_first_source_segment_index(), None);
+    assert_eq!(report.split_blocker_second_source_segment_index(), None);
     assert_eq!(report.endpoint_graph_endpoint_count(), Some(8));
     assert_eq!(report.endpoint_graph_structural_bucket_count(), Some(4));
     assert_eq!(
@@ -489,6 +491,35 @@ fn unordered_line_segments_split_crossings_before_boundary_blocker() {
 }
 
 #[test]
+fn unordered_line_segments_report_overlap_source_pair_blocker() {
+    let built = Region2::from_unordered_line_segments_with_report(
+        vec![line(0, 0, 4, 0), line(2, 0, 6, 0)],
+        FillRule::NonZero,
+        &policy(),
+    )
+    .unwrap();
+    let report = built.report();
+
+    assert!(built.region().is_none());
+    assert!(report.status().is_retained_evidence());
+    assert_eq!(
+        report.stage(),
+        RegionLineSegmentRegionBuildStage2::RingAssembly
+    );
+    assert_eq!(report.source_segment_count(), 2);
+    assert_eq!(report.arranged_segment_count(), None);
+    assert_eq!(report.split_candidate_pair_count(), 1);
+    assert_eq!(report.split_skipped_aabb_pair_count(), 0);
+    assert_eq!(report.split_tested_pair_count(), 1);
+    assert_eq!(report.split_intersection_event_count(), 0);
+    assert_eq!(report.split_output_segment_count(), None);
+    assert_eq!(report.split_blocker_first_source_segment_index(), Some(0));
+    assert_eq!(report.split_blocker_second_source_segment_index(), Some(1));
+    assert_eq!(report.arranged_source_reports().len(), 0);
+    assert_eq!(report.blocker(), Some(UncertaintyReason::Boundary));
+}
+
+#[test]
 fn unordered_native_segments_build_line_arc_region_with_source_provenance() {
     let built = Region2::from_unordered_segments_with_report(
         vec![
@@ -513,6 +544,8 @@ fn unordered_native_segments_build_line_arc_region_with_source_provenance() {
     assert_eq!(report.split_tested_pair_count(), 1);
     assert_eq!(report.split_intersection_event_count(), 2);
     assert_eq!(report.split_output_segment_count(), Some(2));
+    assert_eq!(report.split_blocker_first_source_segment_index(), None);
+    assert_eq!(report.split_blocker_second_source_segment_index(), None);
     assert_eq!(report.endpoint_graph_endpoint_count(), Some(4));
     assert_eq!(report.endpoint_graph_structural_bucket_count(), Some(2));
     assert_eq!(
@@ -613,6 +646,8 @@ fn unordered_native_segments_report_arc_overlap_boundary_blocker() {
     assert_eq!(report.split_tested_pair_count(), 1);
     assert_eq!(report.split_intersection_event_count(), 0);
     assert_eq!(report.split_output_segment_count(), None);
+    assert_eq!(report.split_blocker_first_source_segment_index(), Some(0));
+    assert_eq!(report.split_blocker_second_source_segment_index(), Some(1));
     assert_eq!(report.endpoint_graph_endpoint_count(), None);
     assert_eq!(report.endpoint_graph_structural_bucket_count(), None);
     assert_eq!(report.arranged_source_reports().len(), 0);
