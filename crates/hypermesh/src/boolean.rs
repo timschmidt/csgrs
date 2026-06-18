@@ -13495,8 +13495,8 @@ mod tests {
         let right = tetrahedron_i64([1, 1, 1], [5, 1, 1], [1, 5, 1], [1, 1, 5]);
         assert!(left.facts().mesh.closed_manifold, "{:?}", left.facts().mesh);
         assert!(right.facts().mesh.closed_manifold);
-        let graph = build_intersection_graph(&left, &right).unwrap();
-        validate_graph_source_handoff(&graph, &left, &right).unwrap();
+        let mut graph_workspace = ExactBooleanWorkspace::new(&left, &right);
+        let graph = graph_workspace.validated_graph().unwrap();
 
         let preflight = test_preflight(
             ExactBooleanRequest::with_boundary_policy(
