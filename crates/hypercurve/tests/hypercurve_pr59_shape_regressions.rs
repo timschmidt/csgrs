@@ -134,6 +134,7 @@ fn boolean_region_report_retains_boundary_role_assignment() {
     assert_eq!(report.boundary_skipped_aabb_pair_count(), 0);
     assert_eq!(report.boundary_tested_pair_count(), 1);
     assert_eq!(report.boundary_intersecting_pair_count(), 1);
+    assert_eq!(report.boundary_intersection_event_count(), 2);
     assert_eq!(report.boundary_contour_count(), Some(1));
     assert_eq!(report.result_material_contour_count(), Some(1));
     assert_eq!(report.result_hole_contour_count(), Some(0));
@@ -329,6 +330,10 @@ fn prepared_boolean_region_report_matches_plain_materialization() {
     assert_eq!(
         built.report().boundary_intersecting_pair_count(),
         plain.report().boundary_intersecting_pair_count()
+    );
+    assert_eq!(
+        built.report().boundary_intersection_event_count(),
+        plain.report().boundary_intersection_event_count()
     );
     assert_eq!(
         built.report().boundary_build_report(),
