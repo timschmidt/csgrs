@@ -373,6 +373,8 @@ fn region_boolean_prepared_cache_report(
 fn prepared_region_cache_audit(region: &PreparedRegionView2<'_>) -> RegionPreparedCacheAudit2 {
     RegionPreparedCacheAudit2::new(
         region.prepared_contour_count(),
+        region.prepared_material_segment_count(),
+        region.prepared_hole_segment_count(),
         region.prepared_segment_count(),
         region.decided_segment_box_count(),
         region.undecided_segment_box_count(),

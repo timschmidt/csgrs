@@ -219,8 +219,8 @@ fn boolean_region_report_retains_boundary_role_assignment() {
 
 #[test]
 fn prepared_boolean_region_report_matches_plain_materialization() {
-    let first = region(&[(0.0, 0.0, 4.0, 4.0)], &[]);
-    let second = region(&[(2.0, -1.0, 6.0, 3.0)], &[]);
+    let first = region(&[(0.0, 0.0, 4.0, 4.0)], &[(1.0, 1.0, 2.0, 2.0)]);
+    let second = region(&[(3.0, -1.0, 6.0, 3.0)], &[]);
     let prepared_second = second.prepare_topology_queries(&policy());
 
     let built = first
@@ -270,11 +270,15 @@ fn prepared_boolean_region_report_matches_plain_materialization() {
         prepared_cache.second().freshness(),
         RegionPreparedCacheFreshness2::BorrowedCurrentSource
     );
-    assert_eq!(prepared_cache.first().prepared_contour_count(), 1);
+    assert_eq!(prepared_cache.first().prepared_contour_count(), 2);
     assert_eq!(prepared_cache.second().prepared_contour_count(), 1);
-    assert_eq!(prepared_cache.first().prepared_segment_count(), 4);
+    assert_eq!(prepared_cache.first().prepared_material_segment_count(), 4);
+    assert_eq!(prepared_cache.first().prepared_hole_segment_count(), 4);
+    assert_eq!(prepared_cache.second().prepared_material_segment_count(), 4);
+    assert_eq!(prepared_cache.second().prepared_hole_segment_count(), 0);
+    assert_eq!(prepared_cache.first().prepared_segment_count(), 8);
     assert_eq!(prepared_cache.second().prepared_segment_count(), 4);
-    assert_eq!(prepared_cache.first().decided_segment_box_count(), 4);
+    assert_eq!(prepared_cache.first().decided_segment_box_count(), 8);
     assert_eq!(prepared_cache.second().decided_segment_box_count(), 4);
     assert_eq!(prepared_cache.first().undecided_segment_box_count(), 0);
     assert_eq!(prepared_cache.second().undecided_segment_box_count(), 0);
@@ -289,7 +293,7 @@ fn prepared_boolean_region_report_matches_plain_materialization() {
         built.report().second_boundary_segment_count(),
         plain.report().second_boundary_segment_count()
     );
-    assert_eq!(built.report().boundary_first_contour_count(), Some(1));
+    assert_eq!(built.report().boundary_first_contour_count(), Some(2));
     assert_eq!(built.report().boundary_second_contour_count(), Some(1));
     assert_eq!(
         built.report().boundary_first_contour_count(),
@@ -323,8 +327,8 @@ fn prepared_boolean_region_report_matches_plain_materialization() {
         built.report().result_boundary_segment_count(),
         plain.report().result_boundary_segment_count()
     );
-    assert!(inside(built.region().unwrap(), 3.0, 1.0));
-    assert!(!inside(built.region().unwrap(), 1.0, 1.0));
+    assert!(inside(built.region().unwrap(), 3.5, 1.0));
+    assert!(!inside(built.region().unwrap(), 1.5, 1.5));
 }
 
 #[test]

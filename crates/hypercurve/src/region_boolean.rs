@@ -90,6 +90,8 @@ pub struct RegionBooleanPreparedCacheReport2 {
 pub struct RegionPreparedCacheAudit2 {
     freshness: RegionPreparedCacheFreshness2,
     prepared_contour_count: usize,
+    prepared_material_segment_count: usize,
+    prepared_hole_segment_count: usize,
     prepared_segment_count: usize,
     decided_segment_box_count: usize,
     undecided_segment_box_count: usize,
@@ -829,6 +831,8 @@ impl RegionPreparedCacheAudit2 {
     /// Builds per-region prepared cache evidence.
     pub(crate) const fn new(
         prepared_contour_count: usize,
+        prepared_material_segment_count: usize,
+        prepared_hole_segment_count: usize,
         prepared_segment_count: usize,
         decided_segment_box_count: usize,
         undecided_segment_box_count: usize,
@@ -837,6 +841,8 @@ impl RegionPreparedCacheAudit2 {
         Self {
             freshness: RegionPreparedCacheFreshness2::BorrowedCurrentSource,
             prepared_contour_count,
+            prepared_material_segment_count,
+            prepared_hole_segment_count,
             prepared_segment_count,
             decided_segment_box_count,
             undecided_segment_box_count,
@@ -852,6 +858,16 @@ impl RegionPreparedCacheAudit2 {
     /// Returns the number of prepared material and hole contours.
     pub const fn prepared_contour_count(&self) -> usize {
         self.prepared_contour_count
+    }
+
+    /// Returns the number of prepared material boundary segments.
+    pub const fn prepared_material_segment_count(&self) -> usize {
+        self.prepared_material_segment_count
+    }
+
+    /// Returns the number of prepared hole boundary segments.
+    pub const fn prepared_hole_segment_count(&self) -> usize {
+        self.prepared_hole_segment_count
     }
 
     /// Returns the number of prepared boundary segments.
