@@ -4,6 +4,7 @@ use hypercurve::{
     QuadraticBezierMidpointInterpolationStage2, QuadraticBezierPointInterpolationStage2, Real,
     UncertaintyReason,
 };
+use proptest::prelude::*;
 
 fn r(value: i32) -> Real {
     value.into()
@@ -19,6 +20,18 @@ fn p(x: i32, y: i32) -> Point2 {
 
 fn policy() -> CurvePolicy {
     CurvePolicy::certified()
+}
+
+fn bounded_real() -> impl Strategy<Value = Real> {
+    (-12_i32..=12).prop_map(r)
+}
+
+fn bounded_point() -> impl Strategy<Value = Point2> {
+    (bounded_real(), bounded_real()).prop_map(|(x, y)| Point2::new(x, y))
+}
+
+fn interior_parameter() -> impl Strategy<Value = Real> {
+    (1_i32..=5).prop_map(|numerator| q(numerator, 6))
 }
 
 #[test]
@@ -234,4 +247,75 @@ fn quadratic_midpoint_interpolation_preserves_exact_collinear_shape() {
     assert_eq!(curve.control(), &p(2, 0));
     assert_eq!(curve.end(), &p(4, 0));
     assert_eq!(curve.point_at(q(1, 2)), p(2, 0));
+}
+
+proptest! {
+    #![proptest_config(ProptestConfig {
+        cases: 48,
+        ..ProptestConfig::default()
+    })]
+
+    #[test]
+    fn generated_quadratic_point_interpolation_replays_known_exact_curve(
+        start in bounded_point(),
+        control in bounded_point(),
+        end in bounded_point(),
+        t in interior_parameter(),
+    ) {
+        let source = QuadraticBezier2::new(start.clone(), control, end.clone());
+        let point = source.point_at(t.clone());
+
+        let result = QuadraticBezier2::interpolate_point_at_parameter_with_report(
+            start,
+            t.clone(),
+            point.clone(),
+            end,
+            &policy(),
+        )?;
+        let report = result.report();
+
+        prop_assert!(report.status().is_native_exact());
+        prop_assert_eq!(
+            report.stage(),
+            QuadraticBezierPointInterpolationStage2::SegmentMaterialization
+        );
+        prop_assert_eq!(report.interpolation_parameter(), &t);
+        prop_assert_eq!(report.interpolation_point(), &point);
+        prop_assert_eq!(report.replayed_point(), Some(&point));
+        prop_assert_eq!(report.blocker(), None);
+        let curve = result.curve().expect("interior parameter should materialize");
+        prop_assert_eq!(curve.point_at(t), point);
+    }
+
+    #[test]
+    fn generated_cubic_hermite_interpolation_replays_endpoint_tangents(
+        start in bounded_point(),
+        control1 in bounded_point(),
+        control2 in bounded_point(),
+        end in bounded_point(),
+    ) {
+        let source = CubicBezier2::new(start.clone(), control1, control2, end.clone());
+        let start_tangent = source.endpoint_tangent(BezierEndpoint::Start);
+        let end_tangent = source.endpoint_tangent(BezierEndpoint::End);
+
+        let result = CubicBezier2::interpolate_hermite_with_report(
+            start,
+            start_tangent.clone(),
+            end,
+            end_tangent.clone(),
+        )?;
+        let report = result.report();
+
+        prop_assert!(report.status().is_native_exact());
+        prop_assert_eq!(
+            report.stage(),
+            CubicBezierHermiteInterpolationStage2::SegmentMaterialization
+        );
+        prop_assert_eq!(report.replayed_start_tangent(), Some(&start_tangent));
+        prop_assert_eq!(report.replayed_end_tangent(), Some(&end_tangent));
+        prop_assert_eq!(report.blocker(), None);
+        let curve = result.curve().expect("Hermite interpolation should materialize");
+        prop_assert_eq!(curve.endpoint_tangent(BezierEndpoint::Start), start_tangent);
+        prop_assert_eq!(curve.endpoint_tangent(BezierEndpoint::End), end_tangent);
+    }
 }
