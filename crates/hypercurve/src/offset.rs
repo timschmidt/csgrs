@@ -15,7 +15,10 @@ use crate::classify::{is_zero, real_sign};
 use crate::contour::{Contour2, FillRule};
 use crate::curve_string::CurveString2;
 use crate::segment::{CircularArc2, LineSeg2, Segment2};
-use crate::{Classification, CurveError, CurvePolicy, CurveResult, Point2, UncertaintyReason};
+use crate::{
+    Classification, CurveError, CurvePolicy, CurveResult, Point2, RetainedTopologyStatus,
+    UncertaintyReason,
+};
 
 /// Endpoint cap style for checked open curve-string outlines.
 ///
@@ -32,6 +35,33 @@ pub enum OffsetCap {
     /// Extend each trace by one half-width along endpoint tangents before
     /// adding straight endpoint connectors.
     Square,
+}
+
+/// Furthest exact stage reached by checked open curve-string offsetting.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum CurveStringOffsetStage2 {
+    /// Primitive offset segments and joins were being materialized.
+    OffsetConstruction,
+    /// The raw joined offset was checked for self-contacting topology.
+    SelfContactValidation,
+}
+
+/// Report for a checked open curve-string left offset.
+#[derive(Clone, Debug, PartialEq)]
+pub struct CurveStringOffsetReport2 {
+    stage: CurveStringOffsetStage2,
+    source_segment_count: usize,
+    raw_offset_segment_count: Option<usize>,
+    output_segment_count: Option<usize>,
+    status: RetainedTopologyStatus,
+    blocker: Option<UncertaintyReason>,
+}
+
+/// Result of report-bearing checked open curve-string offsetting.
+#[derive(Clone, Debug, PartialEq)]
+pub struct CurveStringOffsetResult2 {
+    curve_string: Option<CurveString2>,
+    report: CurveStringOffsetReport2,
 }
 
 impl LineSeg2 {
@@ -172,17 +202,69 @@ impl CurveString2 {
         distance: Real,
         policy: &CurvePolicy,
     ) -> CurveResult<Classification<Self>> {
+        let result = self.offset_left_checked_with_report(distance, policy)?;
+        let blocker = result
+            .report()
+            .blocker()
+            .unwrap_or(UncertaintyReason::Unsupported);
+        if let Some(curve_string) = result.into_curve_string() {
+            Ok(Classification::Decided(curve_string))
+        } else {
+            Ok(Classification::Uncertain(blocker))
+        }
+    }
+
+    /// Returns a report-bearing raw joined left offset, rejecting self-contacting output.
+    ///
+    /// The report records source inventory, the raw joined offset segment count
+    /// before self-contact validation, the final output count when accepted,
+    /// and the exact blocker otherwise.
+    pub fn offset_left_checked_with_report(
+        &self,
+        distance: Real,
+        policy: &CurvePolicy,
+    ) -> CurveResult<CurveStringOffsetResult2> {
+        let source_segment_count = self.len();
         let offset = match self.offset_left_with_line_joins(distance, policy)? {
             Classification::Decided(offset) => offset,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+            Classification::Uncertain(reason) => {
+                return Ok(blocked_curve_string_offset_result(
+                    CurveStringOffsetStage2::OffsetConstruction,
+                    source_segment_count,
+                    None,
+                    retained_status_for_offset_blocker(reason),
+                    reason,
+                ));
+            }
         };
+        let raw_offset_segment_count = offset.len();
 
         match offset.has_self_contacts(policy)? {
-            Classification::Decided(false) => Ok(Classification::Decided(offset)),
-            Classification::Decided(true) => {
-                Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
-            }
-            Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
+            Classification::Decided(false) => Ok(CurveStringOffsetResult2 {
+                curve_string: Some(offset),
+                report: CurveStringOffsetReport2 {
+                    stage: CurveStringOffsetStage2::SelfContactValidation,
+                    source_segment_count,
+                    raw_offset_segment_count: Some(raw_offset_segment_count),
+                    output_segment_count: Some(raw_offset_segment_count),
+                    status: RetainedTopologyStatus::NativeExact,
+                    blocker: None,
+                },
+            }),
+            Classification::Decided(true) => Ok(blocked_curve_string_offset_result(
+                CurveStringOffsetStage2::SelfContactValidation,
+                source_segment_count,
+                Some(raw_offset_segment_count),
+                RetainedTopologyStatus::Unsupported,
+                UncertaintyReason::Unsupported,
+            )),
+            Classification::Uncertain(reason) => Ok(blocked_curve_string_offset_result(
+                CurveStringOffsetStage2::SelfContactValidation,
+                source_segment_count,
+                Some(raw_offset_segment_count),
+                retained_status_for_offset_blocker(reason),
+                reason,
+            )),
         }
     }
 
@@ -435,6 +517,84 @@ impl Contour2 {
             }
             Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
         }
+    }
+}
+
+impl CurveStringOffsetReport2 {
+    /// Returns the furthest exact checked-offset stage reached.
+    pub const fn stage(&self) -> CurveStringOffsetStage2 {
+        self.stage
+    }
+
+    /// Returns the source curve-string segment count.
+    pub const fn source_segment_count(&self) -> usize {
+        self.source_segment_count
+    }
+
+    /// Returns the raw joined offset segment count before self-contact rejection.
+    pub const fn raw_offset_segment_count(&self) -> Option<usize> {
+        self.raw_offset_segment_count
+    }
+
+    /// Returns output segment count when the checked offset materialized.
+    pub const fn output_segment_count(&self) -> Option<usize> {
+        self.output_segment_count
+    }
+
+    /// Returns checked offset topology status.
+    pub const fn status(&self) -> RetainedTopologyStatus {
+        self.status
+    }
+
+    /// Returns the exact blocker for non-materialized checked offsets.
+    pub const fn blocker(&self) -> Option<UncertaintyReason> {
+        self.blocker
+    }
+}
+
+impl CurveStringOffsetResult2 {
+    /// Returns the materialized checked offset, if accepted.
+    pub const fn curve_string(&self) -> Option<&CurveString2> {
+        self.curve_string.as_ref()
+    }
+
+    /// Consumes this result and returns the materialized checked offset.
+    pub fn into_curve_string(self) -> Option<CurveString2> {
+        self.curve_string
+    }
+
+    /// Returns retained checked-offset evidence.
+    pub const fn report(&self) -> &CurveStringOffsetReport2 {
+        &self.report
+    }
+}
+
+fn blocked_curve_string_offset_result(
+    stage: CurveStringOffsetStage2,
+    source_segment_count: usize,
+    raw_offset_segment_count: Option<usize>,
+    status: RetainedTopologyStatus,
+    blocker: UncertaintyReason,
+) -> CurveStringOffsetResult2 {
+    CurveStringOffsetResult2 {
+        curve_string: None,
+        report: CurveStringOffsetReport2 {
+            stage,
+            source_segment_count,
+            raw_offset_segment_count,
+            output_segment_count: None,
+            status,
+            blocker: Some(blocker),
+        },
+    }
+}
+
+const fn retained_status_for_offset_blocker(reason: UncertaintyReason) -> RetainedTopologyStatus {
+    match reason {
+        UncertaintyReason::Unsupported | UncertaintyReason::Boundary => {
+            RetainedTopologyStatus::Unsupported
+        }
+        _ => RetainedTopologyStatus::Unresolved,
     }
 }
 

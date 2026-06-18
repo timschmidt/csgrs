@@ -194,7 +194,9 @@ pub use intersect::{
     LineArcIntersection, LineArcIntersectionPoint, LineArcOrder, LineCircleRelation,
     LineLineIntersection, ParamRange, SegmentIntersection,
 };
-pub use offset::OffsetCap;
+pub use offset::{
+    CurveStringOffsetReport2, CurveStringOffsetResult2, CurveStringOffsetStage2, OffsetCap,
+};
 pub use planar_pcurve::{
     PlanarPcurveImageEqualityReport2, PlanarPcurveImageRelation2, PreparedRetainedPlanarFace2,
     RetainedPlanarFace2, RetainedPlanarFaceEdgeUseRelation2, RetainedPlanarFaceEdgeUseReport2,

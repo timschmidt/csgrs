@@ -1,6 +1,6 @@
 use hypercurve::{
-    BulgeVertex2, CircularArc2, Classification, Contour2, CurvePolicy, CurveString2, LineSeg2,
-    OffsetCap, Point2, Real, Segment2, UncertaintyReason,
+    BulgeVertex2, CircularArc2, Classification, Contour2, CurvePolicy, CurveString2,
+    CurveStringOffsetStage2, LineSeg2, OffsetCap, Point2, Real, Segment2, UncertaintyReason,
 };
 
 fn s(value: i32) -> Real {
@@ -251,6 +251,26 @@ fn curve_string_checked_offset_accepts_simple_open_path() {
 }
 
 #[test]
+fn curve_string_checked_offset_report_materializes_simple_open_path() {
+    let curve =
+        CurveString2::try_new(vec![line_segment(0, 0, 4, 0), line_segment(4, 0, 4, 3)]).unwrap();
+    let offset = curve
+        .offset_left_checked_with_report(s(1), &policy())
+        .unwrap();
+
+    assert!(offset.report().status().is_native_exact());
+    assert_eq!(
+        offset.report().stage(),
+        CurveStringOffsetStage2::SelfContactValidation
+    );
+    assert_eq!(offset.report().source_segment_count(), 2);
+    assert_eq!(offset.report().raw_offset_segment_count(), Some(2));
+    assert_eq!(offset.report().output_segment_count(), Some(2));
+    assert_eq!(offset.report().blocker(), None);
+    assert_eq!(offset.curve_string().unwrap().len(), 2);
+}
+
+#[test]
 fn curve_string_checked_offset_rejects_self_contacting_result() {
     let curve = CurveString2::try_new(vec![
         line_segment(0, 0, 4, 4),
@@ -262,6 +282,34 @@ fn curve_string_checked_offset_rejects_self_contacting_result() {
     assert_eq!(
         curve.offset_left_checked(s(0), &policy()).unwrap(),
         Classification::Uncertain(UncertaintyReason::Unsupported)
+    );
+}
+
+#[test]
+fn curve_string_checked_offset_report_blocks_self_contacting_result() {
+    let curve = CurveString2::try_new(vec![
+        line_segment(0, 0, 4, 4),
+        line_segment(4, 4, 0, 4),
+        line_segment(0, 4, 4, 0),
+    ])
+    .unwrap();
+
+    let offset = curve
+        .offset_left_checked_with_report(s(0), &policy())
+        .unwrap();
+
+    assert!(offset.curve_string().is_none());
+    assert!(offset.report().status().is_retained_evidence());
+    assert_eq!(
+        offset.report().stage(),
+        CurveStringOffsetStage2::SelfContactValidation
+    );
+    assert_eq!(offset.report().source_segment_count(), 3);
+    assert_eq!(offset.report().raw_offset_segment_count(), Some(3));
+    assert_eq!(offset.report().output_segment_count(), None);
+    assert_eq!(
+        offset.report().blocker(),
+        Some(UncertaintyReason::Unsupported)
     );
 }
 
