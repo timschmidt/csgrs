@@ -168,6 +168,7 @@ pub struct BooleanBoundaryContourTransferReport2 {
     source_fragment_kind_counts: SegmentKindCounts,
     contour_count: Option<usize>,
     output_segment_count: Option<usize>,
+    output_source_segment_kind_counts: Option<SegmentKindCounts>,
     output_segment_kind_counts: Option<SegmentKindCounts>,
     output_segments: Vec<BooleanBoundaryOutputFragmentReport2>,
     status: RetainedTopologyStatus,
@@ -1179,6 +1180,11 @@ impl BooleanBoundaryContourTransferReport2 {
         self.output_segment_count
     }
 
+    /// Returns primitive-family counts for output segment source geometry when materialized.
+    pub const fn output_source_segment_kind_counts(&self) -> Option<SegmentKindCounts> {
+        self.output_source_segment_kind_counts
+    }
+
     /// Returns primitive-family counts for output contour segments when materialized.
     pub const fn output_segment_kind_counts(&self) -> Option<SegmentKindCounts> {
         self.output_segment_kind_counts
@@ -1708,6 +1714,8 @@ fn decided_boolean_boundary_contour_transfer_result(
 ) -> BooleanBoundaryContourTransferResult2 {
     let output_segment_count = contours.iter().map(Contour2::len).sum();
     let output_segment_kind_counts = contour_segment_kind_counts(&contours);
+    let output_source_segment_kind_counts =
+        boolean_boundary_output_report_source_kind_counts(&output_segments);
     BooleanBoundaryContourTransferResult2 {
         report: BooleanBoundaryContourTransferReport2 {
             fill_rule,
@@ -1717,6 +1725,7 @@ fn decided_boolean_boundary_contour_transfer_result(
             source_fragment_kind_counts,
             contour_count: Some(contours.len()),
             output_segment_count: Some(output_segment_count),
+            output_source_segment_kind_counts: Some(output_source_segment_kind_counts),
             output_segment_kind_counts: Some(output_segment_kind_counts),
             output_segments,
             status: RetainedTopologyStatus::NativeExact,
@@ -1744,6 +1753,7 @@ fn blocked_boolean_boundary_contour_transfer_result(
             source_fragment_kind_counts,
             contour_count: None,
             output_segment_count: None,
+            output_source_segment_kind_counts: None,
             output_segment_kind_counts: None,
             output_segments: Vec::new(),
             status: RetainedTopologyStatus::Unsupported,
