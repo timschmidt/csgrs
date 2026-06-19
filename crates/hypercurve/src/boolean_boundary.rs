@@ -166,6 +166,7 @@ pub struct BooleanBoundaryContourTransferReport2 {
     contour_count: Option<usize>,
     output_segment_count: Option<usize>,
     output_segment_kind_counts: Option<SegmentKindCounts>,
+    output_segments: Vec<BooleanBoundaryOutputFragmentReport2>,
     status: RetainedTopologyStatus,
     blocker: Option<UncertaintyReason>,
 }
@@ -1074,6 +1075,7 @@ impl BooleanBoundaryLoopSet {
             self.len(),
             loop_set_fragment_count(self),
             loop_set_fragment_kind_counts(self),
+            loop_set_output_fragment_reports(self),
             fill_rule,
             contours,
         )
@@ -1095,6 +1097,7 @@ impl BooleanBoundaryLoopSet {
         let source_loop_count = self.len();
         let source_fragment_count = loop_set_fragment_count(&self);
         let source_fragment_kind_counts = loop_set_fragment_kind_counts(&self);
+        let output_segments = loop_set_output_fragment_reports(&self);
         let mut contours = Vec::with_capacity(source_loop_count);
         for boundary_loop in self.loops {
             match boundary_loop.into_contour(fill_rule) {
@@ -1115,6 +1118,7 @@ impl BooleanBoundaryLoopSet {
             source_loop_count,
             source_fragment_count,
             source_fragment_kind_counts,
+            output_segments,
             fill_rule,
             contours,
         )
@@ -1160,6 +1164,11 @@ impl BooleanBoundaryContourTransferReport2 {
     /// Returns primitive-family counts for output contour segments when materialized.
     pub const fn output_segment_kind_counts(&self) -> Option<SegmentKindCounts> {
         self.output_segment_kind_counts
+    }
+
+    /// Returns per-output-segment source provenance when contours materialized.
+    pub fn output_segments(&self) -> &[BooleanBoundaryOutputFragmentReport2] {
+        &self.output_segments
     }
 
     /// Returns retained topology status for contour transfer.
@@ -1664,6 +1673,7 @@ fn decided_boolean_boundary_contour_transfer_result(
     source_loop_count: usize,
     source_fragment_count: usize,
     source_fragment_kind_counts: SegmentKindCounts,
+    output_segments: Vec<BooleanBoundaryOutputFragmentReport2>,
     fill_rule: FillRule,
     contours: Vec<Contour2>,
 ) -> BooleanBoundaryContourTransferResult2 {
@@ -1679,6 +1689,7 @@ fn decided_boolean_boundary_contour_transfer_result(
             contour_count: Some(contours.len()),
             output_segment_count: Some(output_segment_count),
             output_segment_kind_counts: Some(output_segment_kind_counts),
+            output_segments,
             status: RetainedTopologyStatus::NativeExact,
             blocker: None,
         },
@@ -1705,6 +1716,7 @@ fn blocked_boolean_boundary_contour_transfer_result(
             contour_count: None,
             output_segment_count: None,
             output_segment_kind_counts: None,
+            output_segments: Vec::new(),
             status: RetainedTopologyStatus::Unsupported,
             blocker: Some(blocker),
         },

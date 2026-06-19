@@ -522,6 +522,37 @@ fn boolean_fragment_selection_emits_directed_boundary_fragments() {
             arcs: 0,
         })
     );
+    assert_eq!(
+        transferred.report().output_segments().len(),
+        emitted.directed_len()
+    );
+    let transferred_first_report = &transferred.report().output_segments()[0];
+    assert_eq!(transferred_first_report.key(), extracted_first_report.key());
+    assert_eq!(
+        transferred_first_report.fragment_index(),
+        extracted_first_report.fragment_index()
+    );
+    assert_eq!(
+        transferred_first_report.source_segment_index(),
+        extracted_first_report.source_segment_index()
+    );
+    assert_eq!(
+        transferred_first_report.source_segment_start_point(),
+        extracted_first_report.source_segment_start_point()
+    );
+    assert_eq!(
+        transferred_first_report.source_segment_end_point(),
+        extracted_first_report.source_segment_end_point()
+    );
+    assert_eq!(
+        transferred_first_report.source_range(),
+        extracted_first_report.source_range()
+    );
+    assert_eq!(
+        transferred_first_report.reversed(),
+        extracted_first_report.reversed()
+    );
+    assert_eq!(transferred_first_report.output_fragment_index(), 0);
     assert_eq!(transferred.report().blocker(), None);
     let contours = transferred
         .contours()
@@ -637,6 +668,7 @@ fn boolean_boundary_chain_assembly_keeps_disjoint_loops_separate() {
         transferred.report().output_segment_kind_counts(),
         Some(SegmentKindCounts { lines: 8, arcs: 0 })
     );
+    assert_eq!(transferred.report().output_segments().len(), 8);
     assert_eq!(transferred.report().blocker(), None);
     let contours = transferred.into_contours().unwrap();
     assert_eq!(contours.len(), 2);
