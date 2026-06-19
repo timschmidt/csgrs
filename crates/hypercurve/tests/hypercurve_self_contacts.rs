@@ -1,6 +1,6 @@
 use hypercurve::{
     BulgeVertex2, Classification, Contour2, CurvePolicy, CurveString2, LineSeg2, Point2, Real,
-    Segment2, SegmentKindCounts, SelfContactPreparedCacheFreshness2,
+    Segment2, SegmentKindCounts, SelfContactPredicatePath2, SelfContactPreparedCacheFreshness2,
 };
 
 fn s(value: i32) -> Real {
@@ -46,6 +46,10 @@ fn curve_string_self_contact_detector_ignores_adjacent_corner() {
         SegmentKindCounts { lines: 2, arcs: 0 }
     );
     assert_eq!(reported.report().prepared_cache_report(), None);
+    assert_eq!(
+        reported.report().predicate_path(),
+        SelfContactPredicatePath2::AabbFilteredExactSegmentIntersections
+    );
     assert_eq!(reported.report().candidate_pair_count(), 1);
     assert_eq!(reported.report().skipped_aabb_pair_count(), 0);
     assert_eq!(reported.report().tested_pair_count(), 1);
@@ -159,6 +163,10 @@ fn prepared_curve_string_self_contact_detector_matches_plain_detector() {
         plain_reported.has_self_contacts()
     );
     assert_eq!(plain_reported.report().prepared_cache_report(), None);
+    assert_eq!(
+        prepared_reported.report().predicate_path(),
+        SelfContactPredicatePath2::AabbFilteredExactSegmentIntersections
+    );
     let prepared_cache = prepared_reported.report().prepared_cache_report().unwrap();
     assert_eq!(
         prepared_cache.freshness(),

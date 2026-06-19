@@ -265,8 +265,8 @@ pub use retained_import::{
 pub use retained_status::RetainedTopologyStatus;
 pub use segment::{CircularArc2, LineSeg2, Segment2};
 pub use self_intersect::{
-    SelfContactPreparedCacheFreshness2, SelfContactPreparedCacheReport2, SelfContactReport2,
-    SelfContactResult2,
+    SelfContactPredicatePath2, SelfContactPreparedCacheFreshness2, SelfContactPreparedCacheReport2,
+    SelfContactReport2, SelfContactResult2,
 };
 pub use split::{ContourSplitMap, ContourSplitMarkers, SegmentSplitMarker, SegmentSplitPoint};
 #[cfg(feature = "svg")]

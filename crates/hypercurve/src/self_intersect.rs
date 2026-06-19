@@ -16,6 +16,7 @@ pub struct SelfContactReport2 {
     segment_count: usize,
     segment_kind_counts: SegmentKindCounts,
     prepared_cache_report: Option<SelfContactPreparedCacheReport2>,
+    predicate_path: SelfContactPredicatePath2,
     candidate_pair_count: usize,
     skipped_aabb_pair_count: usize,
     tested_pair_count: usize,
@@ -34,6 +35,13 @@ pub struct SelfContactReport2 {
 pub struct SelfContactResult2 {
     has_self_contacts: Classification<bool>,
     report: SelfContactReport2,
+}
+
+/// Exact predicate family used while scanning non-adjacent segment contacts.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum SelfContactPredicatePath2 {
+    /// Segment pairs were filtered by AABB before exact segment-intersection predicates.
+    AabbFilteredExactSegmentIntersections,
 }
 
 /// Prepared-cache evidence consumed by a self-contact scan.
@@ -168,6 +176,8 @@ pub(crate) fn segments_have_self_contacts_with_cached_aabbs_and_report(
                             segment_count: segments.len(),
                             segment_kind_counts,
                             prepared_cache_report: None,
+                            predicate_path:
+                                SelfContactPredicatePath2::AabbFilteredExactSegmentIntersections,
                             candidate_pair_count,
                             skipped_aabb_pair_count,
                             tested_pair_count,
@@ -199,6 +209,8 @@ pub(crate) fn segments_have_self_contacts_with_cached_aabbs_and_report(
                             segment_count: segments.len(),
                             segment_kind_counts,
                             prepared_cache_report: None,
+                            predicate_path:
+                                SelfContactPredicatePath2::AabbFilteredExactSegmentIntersections,
                             candidate_pair_count,
                             skipped_aabb_pair_count,
                             tested_pair_count,
@@ -224,6 +236,7 @@ pub(crate) fn segments_have_self_contacts_with_cached_aabbs_and_report(
             segment_count: segments.len(),
             segment_kind_counts,
             prepared_cache_report: None,
+            predicate_path: SelfContactPredicatePath2::AabbFilteredExactSegmentIntersections,
             candidate_pair_count,
             skipped_aabb_pair_count,
             tested_pair_count,
@@ -258,6 +271,11 @@ impl SelfContactReport2 {
     /// Returns prepared-cache inventory and freshness evidence, when used.
     pub const fn prepared_cache_report(&self) -> Option<&SelfContactPreparedCacheReport2> {
         self.prepared_cache_report.as_ref()
+    }
+
+    /// Returns the exact predicate/filter path used by the self-contact scan.
+    pub const fn predicate_path(&self) -> SelfContactPredicatePath2 {
+        self.predicate_path
     }
 
     /// Returns visited segment-pair candidates before early decision.
