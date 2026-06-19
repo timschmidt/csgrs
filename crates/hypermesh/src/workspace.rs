@@ -396,8 +396,8 @@ impl<'a> ExactBooleanWorkspace<'a> {
             request,
             retained_attempt,
         )? {
+            self.promote_evaluation_cache_from_materialization_index(request, index)?;
             let result = self.materializations[index].1.clone();
-            self.promote_evaluation_cache_from_materialization(request, &result)?;
             return Ok(result);
         }
         let result = self.materialize_uncached(request)?;
@@ -581,9 +581,15 @@ impl<'a> ExactBooleanWorkspace<'a> {
                 .retain_materialized_result(result)
                 .map_err(workspace_report_validation_error)
         } else {
-            let result = self.materializations[materialization_index].1.clone();
-            let evaluation = self.evaluate(request)?;
-            if evaluation.materialized_result() == Some(&result) {
+            self.evaluate(request)?;
+            let result = &self.materializations[materialization_index].1;
+            let evaluation_index =
+                cached_by_request_index(&self.evaluations, request).ok_or_else(|| {
+                    workspace_report_validation_error(
+                        ExactReportValidationError::StatusEvidenceMismatch,
+                    )
+                })?;
+            if self.evaluations[evaluation_index].1.materialized_result() == Some(result) {
                 Ok(())
             } else {
                 Err(workspace_report_validation_error(
