@@ -1288,13 +1288,14 @@ fn full_face_adjacent_union_refines_side_faces_for_boundary_subdivided_shared_fa
     assert_public_full_face_adjacent_union(&left, &right, 0, 1);
 
     let request = ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED);
-    let evaluation = exact_boolean_evaluation(&left, &right, request);
-    evaluation.validate().unwrap();
-    evaluation.validate_against_sources(&left, &right).unwrap();
-    assert_eq!(
-        evaluation.freshness_against_sources(&left, &right),
-        ExactReportFreshness::Current
-    );
+    with_exact_boolean_evaluation(&left, &right, request, |evaluation| {
+        evaluation.validate().unwrap();
+        evaluation.validate_against_sources(&left, &right).unwrap();
+        assert_eq!(
+            evaluation.freshness_against_sources(&left, &right),
+            ExactReportFreshness::Current
+        );
+    });
 }
 
 #[test]
@@ -1357,9 +1358,10 @@ fn full_face_adjacent_union_accepts_dual_boundary_subdivided_shared_face() {
     assert_public_full_face_adjacent_union(&left, &right, 0, 1);
 
     let request = ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED);
-    let evaluation = exact_boolean_evaluation(&left, &right, request);
-    evaluation.validate().unwrap();
-    evaluation.validate_against_sources(&left, &right).unwrap();
+    with_exact_boolean_evaluation(&left, &right, request, |evaluation| {
+        evaluation.validate().unwrap();
+        evaluation.validate_against_sources(&left, &right).unwrap();
+    });
 }
 
 fn tetra_with_subdivided_base() -> ExactMesh {
@@ -1419,17 +1421,18 @@ fn adjacent_union_completion_boolean_is_publicly_replayable() {
     let separated_right = tetra_from_corners([20, 0, 0], [24, 0, 0], [20, 4, 0], [20, 0, 4]);
 
     let request = ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED);
-    let evaluation = exact_boolean_evaluation(&left, &right, request);
-    evaluation.validate().unwrap();
-    evaluation.validate_against_sources(&left, &right).unwrap();
-    assert_eq!(
-        evaluation.freshness_against_sources(&left, &right),
-        ExactReportFreshness::Current
-    );
-    assert_eq!(
-        evaluation.freshness_against_sources(&left, &separated_right),
-        ExactReportFreshness::SourceReplayMismatch
-    );
+    with_exact_boolean_evaluation(&left, &right, request, |evaluation| {
+        evaluation.validate().unwrap();
+        evaluation.validate_against_sources(&left, &right).unwrap();
+        assert_eq!(
+            evaluation.freshness_against_sources(&left, &right),
+            ExactReportFreshness::Current
+        );
+        assert_eq!(
+            evaluation.freshness_against_sources(&left, &separated_right),
+            ExactReportFreshness::SourceReplayMismatch
+        );
+    });
 
     let result = exact_boolean_result(
         &left,
@@ -1457,11 +1460,10 @@ fn adjacent_union_completion_boolean_is_publicly_replayable() {
         ExactBooleanOperation::Intersection,
         ValidationPolicy::CLOSED,
     );
-    let intersection_evaluation = exact_boolean_evaluation(&left, &right, intersection_request);
-    intersection_evaluation.validate().unwrap();
-    intersection_evaluation
-        .validate_against_sources(&left, &right)
-        .unwrap();
+    with_exact_boolean_evaluation(&left, &right, intersection_request, |evaluation| {
+        evaluation.validate().unwrap();
+        evaluation.validate_against_sources(&left, &right).unwrap();
+    });
 
     let axis_left = axis_aligned_box([0, 0, 0], [1, 1, 1]);
     let axis_right = axis_aligned_box([1, 0, 0], [2, 1, 1]);
@@ -1479,11 +1481,12 @@ fn adjacent_union_completion_boolean_is_publicly_replayable() {
     let crossing_right = tetra_from_corners([1, 1, -1], [5, 1, -1], [1, 5, -1], [1, 1, 3]);
     let crossing_request =
         ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED);
-    let crossing_evaluation = exact_boolean_evaluation(&left, &crossing_right, crossing_request);
-    crossing_evaluation.validate().unwrap();
-    crossing_evaluation
-        .validate_against_sources(&left, &crossing_right)
-        .unwrap();
+    with_exact_boolean_evaluation(&left, &crossing_right, crossing_request, |evaluation| {
+        evaluation.validate().unwrap();
+        evaluation
+            .validate_against_sources(&left, &crossing_right)
+            .unwrap();
+    });
 }
 
 #[test]
