@@ -1895,41 +1895,25 @@ fn lower_dimensional_regularized_boolean_is_publicly_replayable() {
     ] {
         let request = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED);
         with_exact_boolean_evaluation(&left, &right, request, |evaluation| {
-            assert!(evaluation.is_certified_lower_dimensional_regularized_solid());
             evaluation.validate().unwrap();
             evaluation.validate_against_sources(&left, &right).unwrap();
+            let materialized = evaluation
+                .materialized_result()
+                .expect("lower-dimensional regularized evaluation should materialize");
+            assert!(
+                materialized.is_certified_shortcut_for(operation),
+                "{operation:?}: {evaluation:?}"
+            );
             assert_eq!(
                 evaluation.freshness_against_sources(&left, &closed_right),
                 ExactReportFreshness::SourceReplayMismatch
             );
-
-            let readiness_materialized_lower =
-                evaluation.is_certified_lower_dimensional_regularized_solid();
-            let readiness_materialized_arrangement =
-                evaluation.materializes_arrangement_cell_complex();
-            assert!(
-                readiness_materialized_lower || readiness_materialized_arrangement,
-                "{operation:?}: {evaluation:?}"
+            assert_eq!(evaluation.retained_face_pairs(), 0);
+            assert_eq!(evaluation.retained_events(), 0);
+            assert_eq!(
+                evaluation.freshness_against_sources(&left, &right),
+                ExactReportFreshness::Current
             );
-            if readiness_materialized_lower {
-                assert_eq!(evaluation.retained_face_pairs(), 0);
-                assert_eq!(evaluation.retained_events(), 0);
-            }
-            if readiness_materialized_lower {
-                evaluation.validate_against_sources(&left, &right).unwrap();
-                assert_eq!(
-                    evaluation.freshness_against_sources(&left, &right),
-                    ExactReportFreshness::Current
-                );
-                assert_eq!(
-                    evaluation.freshness_against_sources(&left, &closed_right),
-                    ExactReportFreshness::SourceReplayMismatch
-                );
-            } else {
-                assert!(evaluation.materializes_arrangement_cell_complex());
-                evaluation.validate().unwrap();
-                evaluation.validate_against_sources(&left, &right).unwrap();
-            }
         });
 
         let result = exact_boolean_result(
@@ -1956,15 +1940,15 @@ fn lower_dimensional_regularized_boolean_is_publicly_replayable() {
         );
         let disjoint_request = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED);
         with_exact_boolean_evaluation(&left, &disjoint_right, disjoint_request, |evaluation| {
-            assert!(
-                evaluation.is_certified_lower_dimensional_regularized_solid(),
-                "{operation:?}: {evaluation:?}"
-            );
+            evaluation.validate().unwrap();
             evaluation
                 .validate_against_sources(&left, &disjoint_right)
                 .unwrap();
+            let materialized = evaluation
+                .materialized_result()
+                .expect("disjoint lower-dimensional evaluation should materialize");
             assert!(
-                evaluation.is_certified_lower_dimensional_regularized_solid(),
+                materialized.is_certified_shortcut_for(operation),
                 "{operation:?}: {evaluation:?}"
             );
         });
@@ -3992,8 +3976,12 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
         &right,
         closed_intersection_request,
         |closed_intersection_evaluation| {
+            closed_intersection_evaluation.validate().unwrap();
+            let materialized = closed_intersection_evaluation
+                .materialized_result()
+                .expect("closed lower-dimensional intersection should materialize");
             assert!(
-                closed_intersection_evaluation.is_certified_lower_dimensional_regularized_solid(),
+                materialized.is_certified_shortcut_for(ExactBooleanOperation::Intersection),
                 "{closed_intersection_evaluation:?}"
             );
             closed_intersection_evaluation
@@ -4030,8 +4018,12 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
             &right,
             closed_policy_request,
             |closed_policy_evaluation| {
+                closed_policy_evaluation.validate().unwrap();
+                let materialized = closed_policy_evaluation
+                    .materialized_result()
+                    .expect("closed lower-dimensional policy evaluation should materialize");
                 assert!(
-                    closed_policy_evaluation.is_certified_lower_dimensional_regularized_solid(),
+                    materialized.is_certified_shortcut_for(operation),
                     "{operation:?}: {closed_policy_evaluation:?}"
                 );
                 closed_policy_evaluation

@@ -2419,12 +2419,6 @@ impl ExactBooleanEvaluation {
         self.preflight.is_certified_arrangement_cell_complex()
     }
 
-    /// Return whether this evaluation was certified by closed lower-dimensional regularization.
-    pub fn is_certified_lower_dimensional_regularized_solid(&self) -> bool {
-        self.preflight
-            .is_certified_lower_dimensional_regularized_solid()
-    }
-
     /// Return whether this evaluation retained an explicit blocker.
     pub fn has_blocker(&self) -> bool {
         self.preflight.blocker().is_some()

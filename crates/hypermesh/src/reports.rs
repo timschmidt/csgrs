@@ -4182,14 +4182,6 @@ impl ExactBooleanPreflight {
         ) && self.blocker.is_none()
     }
 
-    /// Return whether this request was certified by closed lower-dimensional regularization.
-    pub const fn is_certified_lower_dimensional_regularized_solid(&self) -> bool {
-        matches!(
-            self.support,
-            ExactBooleanSupport::CertifiedLowerDimensionalRegularizedSolid
-        ) && self.blocker.is_none()
-    }
-
     /// Validate this preflight report against the supplied source meshes.
     ///
     /// [`validate`](Self::validate) checks internal consistency. This method
