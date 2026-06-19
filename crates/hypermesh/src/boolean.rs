@@ -13742,14 +13742,21 @@ mod tests {
             "closed replay should not certify allow-boundary readiness"
         );
 
-        let result = {
-            let mut workspace = ExactBooleanWorkspace::new(&left, &right);
-            workspace.materialize(ExactBooleanRequest::new(
-                ExactBooleanOperation::Union,
-                ValidationPolicy::CLOSED,
-            ))
-        };
-        assert!(result.is_err(), "{result:?}");
+        let closed_evaluation = test_evaluation(
+            ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED),
+            &left,
+            &right,
+        );
+        closed_evaluation.validate().unwrap();
+        assert!(
+            !closed_evaluation.preflight.is_certified(),
+            "{closed_evaluation:?}"
+        );
+        assert!(
+            closed_evaluation.preflight.blocker.is_some(),
+            "{closed_evaluation:?}"
+        );
+        assert!(closed_evaluation.result.is_none(), "{closed_evaluation:?}");
 
         let materialized = materialize_volumetric_winding_region_plan_from_graph(
             &graph,
