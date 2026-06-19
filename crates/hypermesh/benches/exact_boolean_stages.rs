@@ -86,7 +86,7 @@ fn run_case(case: &BenchCase) {
         ),
         Err(error) => print_metadata(case.name, "preflight_support", format!("error:{error:?}")),
     }
-    match metadata_workspace.materialize(request) {
+    match metadata_workspace.materialize_ref(request) {
         Ok(result) => print_metadata(
             case.name,
             "materialized_result_kind",
@@ -449,7 +449,7 @@ fn run_case(case: &BenchCase) {
     );
 
     let mut materialize_cache_workspace = retained_workspace_for_case(case, request);
-    materialize_cache_workspace.materialize(request).ok();
+    materialize_cache_workspace.materialize_ref(request).ok();
     time_stage(case, "workspace_materialization_cached", || {
         black_box(materialize_cache_workspace.materialize_ref(request).ok());
     });
