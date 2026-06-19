@@ -11802,13 +11802,14 @@ mod tests {
         workspace.preflight(request).unwrap()
     }
 
-    fn test_evaluation(
+    fn with_test_evaluation<R>(
         request: ExactBooleanRequest,
         left: &ExactMesh,
         right: &ExactMesh,
-    ) -> ExactBooleanEvaluation {
+        f: impl FnOnce(&ExactBooleanEvaluation) -> R,
+    ) -> R {
         let mut workspace = ExactBooleanWorkspace::new(left, right);
-        workspace.evaluate(request).unwrap().clone()
+        f(workspace.evaluate(request).unwrap())
     }
 
     fn test_materialized_result(
@@ -11825,9 +11826,9 @@ mod tests {
         left: &ExactMesh,
         right: &ExactMesh,
     ) -> ExactWindingReadinessReport {
-        test_evaluation(request, left, right)
-            .certifications
-            .winding_readiness
+        with_test_evaluation(request, left, right, |evaluation| {
+            evaluation.certifications.winding_readiness.clone()
+        })
     }
 
     fn test_volumetric_boundary_closure(
@@ -12193,26 +12194,27 @@ mod tests {
         preflight.validate().unwrap();
         preflight.validate_against_sources(&left, &right).unwrap();
 
-        let evaluation = test_evaluation(request, &left, &right);
-        assert_eq!(
-            evaluation.preflight().support,
-            ExactBooleanSupport::CertifiedOpenSurfaceDisjoint,
-            "{evaluation:?}"
-        );
-        let materialized = evaluation
-            .materialized_result()
-            .expect("open-surface disjoint support should materialize");
-        assert!(
-            materialized.is_certified_shortcut_kind_for(
-                ExactBooleanOperation::Union,
-                ExactBooleanShortcutKind::OpenSurfaceDisjoint,
-            ),
-            "{materialized:?}"
-        );
-        materialized.validate().unwrap();
-        materialized
-            .validate_against_sources(&left, &right)
-            .unwrap();
+        with_test_evaluation(request, &left, &right, |evaluation| {
+            assert_eq!(
+                evaluation.preflight().support,
+                ExactBooleanSupport::CertifiedOpenSurfaceDisjoint,
+                "{evaluation:?}"
+            );
+            let materialized = evaluation
+                .materialized_result()
+                .expect("open-surface disjoint support should materialize");
+            assert!(
+                materialized.is_certified_shortcut_kind_for(
+                    ExactBooleanOperation::Union,
+                    ExactBooleanShortcutKind::OpenSurfaceDisjoint,
+                ),
+                "{materialized:?}"
+            );
+            materialized.validate().unwrap();
+            materialized
+                .validate_against_sources(&left, &right)
+                .unwrap();
+        });
     }
 
     #[test]
@@ -12378,12 +12380,13 @@ mod tests {
             ValidationPolicy::ALLOW_BOUNDARY,
             ExactBoundaryBooleanPolicy::Reject,
         );
-        let evaluation = test_evaluation(request, &left, &right);
-        assert!(
-            evaluation.materialized_result().is_none(),
-            "selected-region evaluation should retain certifications when materialization declines"
-        );
-        let readiness = evaluation.certifications().winding_readiness().clone();
+        let readiness = with_test_evaluation(request, &left, &right, |evaluation| {
+            assert!(
+                evaluation.materialized_result().is_none(),
+                "selected-region evaluation should retain certifications when materialization declines"
+            );
+            evaluation.certifications().winding_readiness().clone()
+        });
         assert_eq!(
             readiness.status,
             ExactWindingReadinessStatus::NotNamedOperation
@@ -12954,7 +12957,7 @@ mod tests {
             ValidationPolicy::ALLOW_BOUNDARY,
         );
         let mut workspace = ExactBooleanWorkspace::new(&left, &right);
-        let evaluation = workspace.evaluate(request).unwrap().clone();
+        let evaluation = workspace.evaluate(request).unwrap();
         evaluation.validate().unwrap();
         evaluation.validate_against_sources(&left, &right).unwrap();
         let attempt = evaluation
@@ -12989,7 +12992,7 @@ mod tests {
             .arrangement_attempt(request, ExactRegularizationPolicy::REGULARIZED_SOLID)
             .unwrap()
             .clone();
-        let evaluation = workspace.evaluate(request).unwrap().clone();
+        let evaluation = workspace.evaluate(request).unwrap();
         evaluation.validate().unwrap();
         evaluation.validate_against_sources(&left, &right).unwrap();
         assert_eq!(
@@ -13896,39 +13899,40 @@ mod tests {
             ExactBooleanOperation::Difference,
         ] {
             let request = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED);
-            let evaluation = test_evaluation(request, &left, &right);
-            let readiness = evaluation.certifications().winding_readiness();
-            let arrangement_materialized = operation == ExactBooleanOperation::Intersection;
-            let expected_status = if arrangement_materialized {
-                ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized
-            } else {
-                ExactWindingReadinessStatus::LowerDimensionalRegularizedSolidAlreadyMaterialized
-            };
-            assert_eq!(
-                readiness.status, expected_status,
-                "{operation:?}: {readiness:?}"
-            );
-            assert_eq!(
-                readiness.blocker.kind,
-                ExactBooleanBlockerKind::NeedsWinding,
-                "{operation:?}: {readiness:?}"
-            );
-            assert_eq!(
-                readiness.retained_face_pairs,
-                usize::from(arrangement_materialized)
-            );
-            assert_eq!(
-                readiness.retained_events,
-                if arrangement_materialized { 4 } else { 0 }
-            );
-            assert_eq!(readiness.region_count, 0);
-            assert!(readiness.status.is_already_materialized());
-            assert_eq!(
-                readiness.status.materializes_arrangement_cell_complex(),
-                arrangement_materialized
-            );
-            readiness.validate().unwrap();
-            evaluation.validate_against_sources(&left, &right).unwrap();
+            with_test_evaluation(request, &left, &right, |evaluation| {
+                let readiness = evaluation.certifications().winding_readiness();
+                let arrangement_materialized = operation == ExactBooleanOperation::Intersection;
+                let expected_status = if arrangement_materialized {
+                    ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized
+                } else {
+                    ExactWindingReadinessStatus::LowerDimensionalRegularizedSolidAlreadyMaterialized
+                };
+                assert_eq!(
+                    readiness.status, expected_status,
+                    "{operation:?}: {readiness:?}"
+                );
+                assert_eq!(
+                    readiness.blocker.kind,
+                    ExactBooleanBlockerKind::NeedsWinding,
+                    "{operation:?}: {readiness:?}"
+                );
+                assert_eq!(
+                    readiness.retained_face_pairs,
+                    usize::from(arrangement_materialized)
+                );
+                assert_eq!(
+                    readiness.retained_events,
+                    if arrangement_materialized { 4 } else { 0 }
+                );
+                assert_eq!(readiness.region_count, 0);
+                assert!(readiness.status.is_already_materialized());
+                assert_eq!(
+                    readiness.status.materializes_arrangement_cell_complex(),
+                    arrangement_materialized
+                );
+                readiness.validate().unwrap();
+                evaluation.validate_against_sources(&left, &right).unwrap();
+            });
         }
     }
 
@@ -14068,62 +14072,67 @@ mod tests {
             ExactBooleanOperation::Union,
             ValidationPolicy::ALLOW_BOUNDARY,
         );
-        let boundary_evaluation = test_evaluation(boundary_request, &left, &right);
-        let boundary_readiness = boundary_evaluation.certifications().winding_readiness();
-        assert_eq!(
-            boundary_readiness.status,
-            ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized,
-            "{boundary_readiness:?}"
-        );
-        assert_eq!(
-            boundary_readiness.blocker.kind,
-            ExactBooleanBlockerKind::NeedsWinding,
-            "{boundary_readiness:?}"
-        );
-        assert_eq!(
-            boundary_readiness.retained_face_pairs,
-            graph.face_pairs.len()
-        );
-        assert_eq!(boundary_readiness.retained_events, graph.event_count());
-        assert_eq!(boundary_readiness.region_count, 0);
-        assert!(boundary_readiness.status.is_already_materialized());
-        assert!(
-            boundary_readiness
-                .status
-                .materializes_arrangement_cell_complex()
-        );
-        boundary_readiness.validate().unwrap();
-        boundary_evaluation
-            .validate_against_sources(&left, &right)
-            .unwrap();
-        let closed_replay = test_evaluation(
+        with_test_evaluation(boundary_request, &left, &right, |boundary_evaluation| {
+            let boundary_readiness = boundary_evaluation.certifications().winding_readiness();
+            assert_eq!(
+                boundary_readiness.status,
+                ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized,
+                "{boundary_readiness:?}"
+            );
+            assert_eq!(
+                boundary_readiness.blocker.kind,
+                ExactBooleanBlockerKind::NeedsWinding,
+                "{boundary_readiness:?}"
+            );
+            assert_eq!(
+                boundary_readiness.retained_face_pairs,
+                graph.face_pairs.len()
+            );
+            assert_eq!(boundary_readiness.retained_events, graph.event_count());
+            assert_eq!(boundary_readiness.region_count, 0);
+            assert!(boundary_readiness.status.is_already_materialized());
+            assert!(
+                boundary_readiness
+                    .status
+                    .materializes_arrangement_cell_complex()
+            );
+            boundary_readiness.validate().unwrap();
+            boundary_evaluation
+                .validate_against_sources(&left, &right)
+                .unwrap();
+        });
+        with_test_evaluation(
             ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED),
             &left,
             &right,
-        );
-        assert!(
-            !closed_replay.preflight().is_certified()
-                || closed_replay.materialized_result().is_none(),
-            "closed replay should not certify allow-boundary readiness"
+            |closed_replay| {
+                assert!(
+                    !closed_replay.preflight().is_certified()
+                        || closed_replay.materialized_result().is_none(),
+                    "closed replay should not certify allow-boundary readiness"
+                );
+            },
         );
 
-        let closed_evaluation = test_evaluation(
+        with_test_evaluation(
             ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED),
             &left,
             &right,
-        );
-        closed_evaluation.validate().unwrap();
-        assert!(
-            !closed_evaluation.preflight().is_certified(),
-            "{closed_evaluation:?}"
-        );
-        assert!(
-            closed_evaluation.preflight().blocker.is_some(),
-            "{closed_evaluation:?}"
-        );
-        assert!(
-            closed_evaluation.materialized_result().is_none(),
-            "{closed_evaluation:?}"
+            |closed_evaluation| {
+                closed_evaluation.validate().unwrap();
+                assert!(
+                    !closed_evaluation.preflight().is_certified(),
+                    "{closed_evaluation:?}"
+                );
+                assert!(
+                    closed_evaluation.preflight().blocker.is_some(),
+                    "{closed_evaluation:?}"
+                );
+                assert!(
+                    closed_evaluation.materialized_result().is_none(),
+                    "{closed_evaluation:?}"
+                );
+            },
         );
 
         let materialized = materialize_volumetric_winding_region_plan_from_graph(

@@ -1478,16 +1478,17 @@ fn report_error(error: ConvexSolidReportError) -> MeshError {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::boolean::{ExactBooleanEvaluation, ExactBooleanOperation, ExactBooleanRequest};
+    use crate::boolean::{ExactBooleanOperation, ExactBooleanRequest};
     use crate::workspace::ExactBooleanWorkspace;
 
-    fn materialized_evaluation_for_test(
+    fn with_materialized_evaluation_for_test<R>(
         left: &ExactMesh,
         right: &ExactMesh,
         request: ExactBooleanRequest,
-    ) -> ExactBooleanEvaluation {
+        f: impl FnOnce(&crate::ExactBooleanEvaluation) -> R,
+    ) -> R {
         let mut workspace = ExactBooleanWorkspace::new(left, right);
-        workspace.evaluate(request).unwrap().clone()
+        f(workspace.evaluate(request).unwrap())
     }
 
     fn tetrahedron_i64(a: [i64; 3], b: [i64; 3], c: [i64; 3], d: [i64; 3]) -> ExactMesh {
@@ -1510,25 +1511,27 @@ mod tests {
         union.validate().unwrap();
         assert!(union.mesh.facts().mesh.closed_manifold);
         assert_eq!(union.mesh.facts().mesh.boundary_edges, 0);
-        materialized_evaluation_for_test(
+        with_materialized_evaluation_for_test(
             &left,
             &right,
             ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED),
-        )
-        .validate_against_sources(&left, &right)
-        .unwrap();
+            |evaluation| {
+                evaluation.validate_against_sources(&left, &right).unwrap();
+            },
+        );
 
         let difference = subtract_closed_convex_solids(&left, &right)
             .expect("certified convex difference should orient paired cut faces");
         difference.validate().unwrap();
         assert!(difference.mesh.facts().mesh.closed_manifold);
         assert_eq!(difference.mesh.facts().mesh.boundary_edges, 0);
-        materialized_evaluation_for_test(
+        with_materialized_evaluation_for_test(
             &left,
             &right,
             ExactBooleanRequest::new(ExactBooleanOperation::Difference, ValidationPolicy::CLOSED),
-        )
-        .validate_against_sources(&left, &right)
-        .unwrap();
+            |evaluation| {
+                evaluation.validate_against_sources(&left, &right).unwrap();
+            },
+        );
     }
 }
