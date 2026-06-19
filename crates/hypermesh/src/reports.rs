@@ -4206,20 +4206,6 @@ impl ExactBooleanPreflight {
         ) && self.blocker.is_none()
     }
 
-    /// Return whether this request was certified by mixed-dimensional regularized-solid semantics.
-    pub const fn is_certified_mixed_dimensional_regularized_solid(&self) -> bool {
-        matches!(
-            self.support,
-            ExactBooleanSupport::CertifiedMixedDimensionalRegularizedSolid
-        ) && self.blocker.is_none()
-    }
-
-    /// Return whether this request was certified by disjoint exact bounds.
-    pub const fn is_certified_bounds_disjoint(&self) -> bool {
-        matches!(self.support, ExactBooleanSupport::CertifiedBoundsDisjoint)
-            && self.blocker.is_none()
-    }
-
     /// Return whether caller boundary policy has certified the requested output.
     pub const fn is_certified_boundary_policy_shortcut(&self) -> bool {
         matches!(
@@ -4258,18 +4244,6 @@ impl ExactBooleanPreflight {
                 .blocker
                 .as_ref()
                 .is_some_and(|blocker| blocker.kind == ExactBooleanBlockerKind::NeedsRefinement)
-    }
-
-    /// Returns whether retained graph/classification/provenance evidence is
-    /// present for downstream exact policy decisions.
-    pub fn has_retained_exact_evidence(&self) -> bool {
-        self.retained_face_pairs != 0
-            || self.retained_events != 0
-            || self.region_count != 0
-            || !self.region_classifications.is_empty()
-            || self.arrangement_readiness.is_some()
-            || self.coplanar_volumetric_evidence.is_some()
-            || self.blocker.is_some()
     }
 
     /// Validate this preflight report against the supplied source meshes.

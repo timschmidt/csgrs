@@ -313,7 +313,7 @@ fn exact_boolean_evaluation_materializes_boundary_policy_shortcut_by_default() {
         assert!(!evaluation.has_blocker());
         assert!(evaluation.is_certified());
         assert!(evaluation.is_certified_boundary_policy_shortcut());
-        assert!(evaluation.has_retained_exact_evidence());
+        assert!(evaluation.retained_face_pairs() > 0 || evaluation.retained_events() > 0);
         let result = evaluation
             .materialized_result()
             .expect("boundary-policy evaluation should materialize");
@@ -2075,17 +2075,6 @@ fn mixed_dimensional_regularized_solid_boolean_is_publicly_replayable() {
             ExactBooleanOperation::Intersection,
             ExactBooleanOperation::Difference,
         ] {
-            with_exact_boolean_evaluation(
-                left,
-                right,
-                ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
-                |evaluation| {
-                    assert!(
-                        evaluation.is_certified_mixed_dimensional_regularized_solid(),
-                        "{operation:?}: {evaluation:?}"
-                    );
-                },
-            );
             let result = exact_boolean_result(
                 left,
                 right,
@@ -2103,17 +2092,6 @@ fn mixed_dimensional_regularized_solid_boolean_is_publicly_replayable() {
                 "{operation:?}: {result:?}"
             );
 
-            with_exact_boolean_evaluation(
-                left,
-                right,
-                ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
-                |boundary_evaluation| {
-                    assert!(
-                        boundary_evaluation.is_certified_bounds_disjoint(),
-                        "{operation:?}: {boundary_evaluation:?}"
-                    );
-                },
-            );
             let boundary_result = exact_boolean_result(
                 left,
                 right,

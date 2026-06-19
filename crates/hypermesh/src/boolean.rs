@@ -2398,11 +2398,6 @@ impl ExactBooleanEvaluation {
         self.certifications.arrangement_attempt.as_ref()
     }
 
-    /// Return the request policy evaluated by this retained evaluation.
-    pub fn request(&self) -> ExactBooleanRequest {
-        self.request
-    }
-
     /// Return the exact boolean operation requested by this evaluation.
     pub fn operation(&self) -> ExactBooleanOperation {
         self.request.operation
@@ -2429,21 +2424,10 @@ impl ExactBooleanEvaluation {
         self.preflight.is_certified_boundary_policy_shortcut()
     }
 
-    /// Return whether this evaluation was certified by disjoint exact bounds.
-    pub fn is_certified_bounds_disjoint(&self) -> bool {
-        self.preflight.is_certified_bounds_disjoint()
-    }
-
     /// Return whether this evaluation was certified by closed lower-dimensional regularization.
     pub fn is_certified_lower_dimensional_regularized_solid(&self) -> bool {
         self.preflight
             .is_certified_lower_dimensional_regularized_solid()
-    }
-
-    /// Return whether this evaluation was certified by mixed-dimensional regularized-solid semantics.
-    pub fn is_certified_mixed_dimensional_regularized_solid(&self) -> bool {
-        self.preflight
-            .is_certified_mixed_dimensional_regularized_solid()
     }
 
     /// Return whether closed boundary-touching semantics certified this evaluation.
@@ -2454,11 +2438,6 @@ impl ExactBooleanEvaluation {
     /// Return whether this evaluation is waiting on explicit caller boundary policy.
     pub fn requires_boundary_policy(&self) -> bool {
         self.preflight.requires_boundary_policy()
-    }
-
-    /// Return whether this evaluation retained nontrivial exact preflight evidence.
-    pub fn has_retained_exact_evidence(&self) -> bool {
-        self.preflight.has_retained_exact_evidence()
     }
 
     /// Return whether graph extraction retained unknown events before policy checks.
