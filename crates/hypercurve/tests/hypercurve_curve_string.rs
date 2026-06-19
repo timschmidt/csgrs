@@ -3335,12 +3335,28 @@ fn curve_string_trim_inside_region_materializes_inside_window() {
         SegmentKind::Line
     );
     assert_eq!(
+        trimmed.report().interval_reports()[0].source_segment_start_point(),
+        &p(-2, 1)
+    );
+    assert_eq!(
+        trimmed.report().interval_reports()[0].source_segment_end_point(),
+        &p(6, 1)
+    );
+    assert_eq!(
         trimmed.report().interval_reports()[0].output_segment_kind(),
         None
     );
     assert_eq!(
         trimmed.report().interval_reports()[1].range_start_point(),
         &p(0, 1)
+    );
+    assert_eq!(
+        trimmed.report().interval_reports()[1].source_segment_start_point(),
+        &p(-2, 1)
+    );
+    assert_eq!(
+        trimmed.report().interval_reports()[1].source_segment_end_point(),
+        &p(6, 1)
     );
     assert_eq!(
         trimmed.report().interval_reports()[1].range_end_point(),

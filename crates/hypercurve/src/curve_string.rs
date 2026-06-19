@@ -724,6 +724,8 @@ pub struct CurveStringRegionTrimHit2 {
 pub struct CurveStringRegionTrimIntervalReport2 {
     source_segment_index: usize,
     source_segment_kind: SegmentKind,
+    source_segment_start_point: Point2,
+    source_segment_end_point: Point2,
     source_range: ParamRange,
     range_start_point: Point2,
     range_end_point: Point2,
@@ -4016,6 +4018,16 @@ impl CurveStringRegionTrimIntervalReport2 {
         self.source_segment_kind
     }
 
+    /// Returns the exact start point of the source curve-string segment.
+    pub const fn source_segment_start_point(&self) -> &Point2 {
+        &self.source_segment_start_point
+    }
+
+    /// Returns the exact end point of the source curve-string segment.
+    pub const fn source_segment_end_point(&self) -> &Point2 {
+        &self.source_segment_end_point
+    }
+
     /// Returns the retained source parameter range.
     pub const fn source_range(&self) -> &ParamRange {
         &self.source_range
@@ -4706,6 +4718,8 @@ fn trim_curve_string_inside_region_with_hits(
                     interval_reports.push(CurveStringRegionTrimIntervalReport2 {
                         source_segment_index,
                         source_segment_kind: source_segment.structural_facts().kind,
+                        source_segment_start_point: source_segment.start().clone(),
+                        source_segment_end_point: source_segment.end().clone(),
                         source_range,
                         range_start_point: start.point.clone(),
                         range_end_point: end.point.clone(),
@@ -4741,6 +4755,8 @@ fn trim_curve_string_inside_region_with_hits(
                     interval_reports.push(CurveStringRegionTrimIntervalReport2 {
                         source_segment_index,
                         source_segment_kind: source_segment.structural_facts().kind,
+                        source_segment_start_point: source_segment.start().clone(),
+                        source_segment_end_point: source_segment.end().clone(),
                         source_range,
                         range_start_point: start.point.clone(),
                         range_end_point: end.point.clone(),
@@ -4780,6 +4796,8 @@ fn trim_curve_string_inside_region_with_hits(
                     interval_reports.push(CurveStringRegionTrimIntervalReport2 {
                         source_segment_index,
                         source_segment_kind: source_segment.structural_facts().kind,
+                        source_segment_start_point: source_segment.start().clone(),
+                        source_segment_end_point: source_segment.end().clone(),
                         source_range,
                         range_start_point: start.point.clone(),
                         range_end_point: end.point.clone(),
@@ -4820,6 +4838,8 @@ fn trim_curve_string_inside_region_with_hits(
                     interval_reports.push(CurveStringRegionTrimIntervalReport2 {
                         source_segment_index,
                         source_segment_kind: source_segment.structural_facts().kind,
+                        source_segment_start_point: source_segment.start().clone(),
+                        source_segment_end_point: source_segment.end().clone(),
                         source_range,
                         range_start_point: start.point.clone(),
                         range_end_point: end.point.clone(),
@@ -4862,6 +4882,8 @@ fn trim_curve_string_inside_region_with_hits(
                     interval_reports.push(CurveStringRegionTrimIntervalReport2 {
                         source_segment_index,
                         source_segment_kind: source_segment.structural_facts().kind,
+                        source_segment_start_point: source_segment.start().clone(),
+                        source_segment_end_point: source_segment.end().clone(),
                         source_range,
                         range_start_point: start.point.clone(),
                         range_end_point: end.point.clone(),
@@ -4879,6 +4901,8 @@ fn trim_curve_string_inside_region_with_hits(
                     interval_reports.push(CurveStringRegionTrimIntervalReport2 {
                         source_segment_index,
                         source_segment_kind: source_segment.structural_facts().kind,
+                        source_segment_start_point: source_segment.start().clone(),
+                        source_segment_end_point: source_segment.end().clone(),
                         source_range,
                         range_start_point: start.point.clone(),
                         range_end_point: end.point.clone(),
@@ -4895,6 +4919,8 @@ fn trim_curve_string_inside_region_with_hits(
                     interval_reports.push(CurveStringRegionTrimIntervalReport2 {
                         source_segment_index,
                         source_segment_kind: source_segment.structural_facts().kind,
+                        source_segment_start_point: source_segment.start().clone(),
+                        source_segment_end_point: source_segment.end().clone(),
                         source_range,
                         range_start_point: start.point.clone(),
                         range_end_point: end.point.clone(),
