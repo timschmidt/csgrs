@@ -582,7 +582,7 @@ fn cache_replayable_result(
         cache.push((request, result.clone()));
         return Ok(Some(cache.len() - 1));
     }
-    ExactBooleanEvaluation::validate_result_shape_for_request(request, result)
+    validate_result_shape_for_request(request, result)
         .map_err(workspace_report_validation_error)?;
     Ok(None)
 }
@@ -613,14 +613,26 @@ fn validate_replayable_result_for_cache(
     retained_arrangement_attempt: Option<&ExactArrangementBooleanAttempt>,
     result: &ExactBooleanResult,
 ) -> Result<(), MeshError> {
-    ExactBooleanEvaluation::validate_result_against_sources_for_request(
-        left,
-        right,
-        request,
-        retained_arrangement_attempt,
-        result,
-    )
-    .map_err(workspace_report_validation_error)
+    result
+        .validate_request_against_sources_with_retained_attempt(
+            left,
+            right,
+            request,
+            retained_arrangement_attempt,
+        )
+        .map_err(workspace_report_validation_error)
+}
+
+fn validate_result_shape_for_request(
+    request: ExactBooleanRequest,
+    result: &ExactBooleanResult,
+) -> Result<(), ExactReportValidationError> {
+    result.validate()?;
+    if result.satisfies_request_shape(request) {
+        Ok(())
+    } else {
+        Err(ExactReportValidationError::StatusEvidenceMismatch)
+    }
 }
 
 fn cached_retained_materialization_index(
@@ -631,14 +643,15 @@ fn cached_retained_materialization_index(
     retained_arrangement_attempt: Option<&ExactArrangementBooleanAttempt>,
 ) -> Result<Option<usize>, MeshError> {
     if let Some(index) = cached_by_request_index(cache, request) {
-        ExactBooleanEvaluation::validate_result_against_sources_for_request(
-            left,
-            right,
-            request,
-            retained_arrangement_attempt,
-            &cache[index].1,
-        )
-        .map_err(workspace_report_validation_error)?;
+        cache[index]
+            .1
+            .validate_request_against_sources_with_retained_attempt(
+                left,
+                right,
+                request,
+                retained_arrangement_attempt,
+            )
+            .map_err(workspace_report_validation_error)?;
         return Ok(Some(index));
     }
     Ok(None)
@@ -648,18 +661,14 @@ fn cached_by_policy_index<T>(
     cache: &[(ExactRegularizationPolicy, T)],
     policy: ExactRegularizationPolicy,
 ) -> Option<usize> {
-    cache
-        .iter()
-        .position(|(stored_policy, _)| *stored_policy == policy)
+    cache.iter().position(|(cached, _)| *cached == policy)
 }
 
 fn cached_by_request_index<T>(
     cache: &[(ExactBooleanRequest, T)],
     request: ExactBooleanRequest,
 ) -> Option<usize> {
-    cache
-        .iter()
-        .position(|(stored_request, _)| *stored_request == request)
+    cache.iter().position(|(cached, _)| *cached == request)
 }
 
 fn cached_by_request_and_policy_index<T>(
@@ -667,8 +676,8 @@ fn cached_by_request_and_policy_index<T>(
     request: ExactBooleanRequest,
     policy: ExactRegularizationPolicy,
 ) -> Option<usize> {
-    cache.iter().position(|(stored_request, stored_policy, _)| {
-        *stored_request == request && *stored_policy == policy
+    cache.iter().position(|(cached_request, cached_policy, _)| {
+        *cached_request == request && *cached_policy == policy
     })
 }
 
@@ -1171,14 +1180,8 @@ mod tests {
         );
         let relabelled = workspace.materializations[0].1.clone();
         assert!(
-            ExactBooleanEvaluation::validate_result_against_sources_for_request(
-                &left,
-                &right,
-                request,
-                None,
-                &relabelled
-            )
-            .is_err(),
+            validate_replayable_result_for_cache(&left, &right, request, None, &relabelled)
+                .is_err(),
             "cached result validation must reject relabelled operations"
         );
         assert!(

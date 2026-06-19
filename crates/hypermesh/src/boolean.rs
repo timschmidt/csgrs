@@ -2573,36 +2573,6 @@ impl ExactBooleanEvaluation {
         }
     }
 
-    pub(crate) fn validate_result_against_sources_for_request(
-        left: &ExactMesh,
-        right: &ExactMesh,
-        request: ExactBooleanRequest,
-        retained_arrangement_attempt: Option<&ExactArrangementBooleanAttempt>,
-        result: &ExactBooleanResult,
-    ) -> Result<(), ExactReportValidationError> {
-        if !result.satisfies_request_shape(request) {
-            return Err(ExactReportValidationError::StatusEvidenceMismatch);
-        }
-        result.validate_request_against_sources_with_retained_attempt(
-            left,
-            right,
-            request,
-            retained_arrangement_attempt,
-        )
-    }
-
-    pub(crate) fn validate_result_shape_for_request(
-        request: ExactBooleanRequest,
-        result: &ExactBooleanResult,
-    ) -> Result<(), ExactReportValidationError> {
-        result.validate()?;
-        if result.satisfies_request_shape(request) {
-            Ok(())
-        } else {
-            Err(ExactReportValidationError::StatusEvidenceMismatch)
-        }
-    }
-
     /// Classify whether this retained evaluation is fresh for the source
     /// meshes under its original request policy.
     pub fn freshness_against_sources(
