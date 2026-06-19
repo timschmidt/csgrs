@@ -125,7 +125,10 @@ fn run_case(case: &BenchCase) {
         black_box(attempt.map(|attempt| {
             let (output_vertices, output_triangles) = attempt.output_counts();
             (
-                attempt.topology_assembly_complete(),
+                attempt
+                    .topology_assembly_report
+                    .as_ref()
+                    .is_some_and(|report| report.is_complete()),
                 attempt.region_ownership_volume_resolved(),
                 attempt.materialized_arrangement_cell_complex_output(),
                 output_vertices,
@@ -336,7 +339,10 @@ fn run_case(case: &BenchCase) {
         black_box(attempt.map(|attempt| {
             (
                 attempt.output_counts(),
-                attempt.topology_assembly_complete(),
+                attempt
+                    .topology_assembly_report
+                    .as_ref()
+                    .is_some_and(|report| report.is_complete()),
                 attempt
                     .region_ownership_report
                     .as_ref()

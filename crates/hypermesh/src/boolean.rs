@@ -275,12 +275,6 @@ impl ExactArrangementBooleanAttempt {
         self.region_ownership_report = Some(report);
     }
 
-    /// Return whether retained topology assembly reached a complete state.
-    pub fn topology_assembly_complete(&self) -> bool {
-        self.topology_assembly
-            .is_some_and(|status| status.is_complete())
-    }
-
     /// Return whether retained region ownership resolved volume labels.
     pub fn region_ownership_volume_resolved(&self) -> bool {
         self.region_ownership

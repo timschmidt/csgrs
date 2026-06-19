@@ -4953,7 +4953,12 @@ fn exact_boolean_attempt_public_path_reports_blockers_or_cells() {
         ExactRegularizationPolicy::REGULARIZED_SOLID,
     );
     attempt.validate().unwrap();
-    assert!(attempt.topology_assembly_complete());
+    assert!(
+        attempt
+            .topology_assembly_report
+            .as_ref()
+            .is_some_and(|report| report.is_complete())
+    );
     assert!(attempt.region_ownership_volume_resolved());
     attempt.validate_against_sources(&left, &right).unwrap();
     assert_eq!(
