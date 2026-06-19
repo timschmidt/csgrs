@@ -15,6 +15,7 @@ pub struct SelfContactReport2 {
     closed: bool,
     segment_count: usize,
     segment_kind_counts: SegmentKindCounts,
+    prepared_cache_report: Option<SelfContactPreparedCacheReport2>,
     candidate_pair_count: usize,
     skipped_aabb_pair_count: usize,
     tested_pair_count: usize,
@@ -29,6 +30,24 @@ pub struct SelfContactReport2 {
 pub struct SelfContactResult2 {
     has_self_contacts: Classification<bool>,
     report: SelfContactReport2,
+}
+
+/// Prepared-cache evidence consumed by a self-contact scan.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct SelfContactPreparedCacheReport2 {
+    freshness: SelfContactPreparedCacheFreshness2,
+    prepared_segment_count: usize,
+    prepared_segment_kind_counts: SegmentKindCounts,
+    decided_segment_box_count: usize,
+    undecided_segment_box_count: usize,
+    path_box_decided: bool,
+}
+
+/// Freshness claim for prepared self-contact cache evidence.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum SelfContactPreparedCacheFreshness2 {
+    /// Prepared cache borrows the current source path for this query.
+    BorrowedCurrentSource,
 }
 
 impl CurveString2 {
@@ -144,6 +163,7 @@ pub(crate) fn segments_have_self_contacts_with_cached_aabbs_and_report(
                             closed,
                             segment_count: segments.len(),
                             segment_kind_counts,
+                            prepared_cache_report: None,
                             candidate_pair_count,
                             skipped_aabb_pair_count,
                             tested_pair_count,
@@ -162,6 +182,7 @@ pub(crate) fn segments_have_self_contacts_with_cached_aabbs_and_report(
                             closed,
                             segment_count: segments.len(),
                             segment_kind_counts,
+                            prepared_cache_report: None,
                             candidate_pair_count,
                             skipped_aabb_pair_count,
                             tested_pair_count,
@@ -182,6 +203,7 @@ pub(crate) fn segments_have_self_contacts_with_cached_aabbs_and_report(
             closed,
             segment_count: segments.len(),
             segment_kind_counts,
+            prepared_cache_report: None,
             candidate_pair_count,
             skipped_aabb_pair_count,
             tested_pair_count,
@@ -207,6 +229,11 @@ impl SelfContactReport2 {
     /// Returns primitive-family counts for scanned segments.
     pub const fn segment_kind_counts(&self) -> SegmentKindCounts {
         self.segment_kind_counts
+    }
+
+    /// Returns prepared-cache inventory and freshness evidence, when used.
+    pub const fn prepared_cache_report(&self) -> Option<&SelfContactPreparedCacheReport2> {
+        self.prepared_cache_report.as_ref()
     }
 
     /// Returns visited segment-pair candidates before early decision.
@@ -254,6 +281,65 @@ impl SelfContactResult2 {
     /// Returns retained scan evidence for self-contact classification.
     pub const fn report(&self) -> &SelfContactReport2 {
         &self.report
+    }
+
+    /// Attaches prepared-cache evidence to a self-contact scan result.
+    pub(crate) fn with_prepared_cache(
+        mut self,
+        prepared_cache_report: SelfContactPreparedCacheReport2,
+    ) -> Self {
+        self.report.prepared_cache_report = Some(prepared_cache_report);
+        self
+    }
+}
+
+impl SelfContactPreparedCacheReport2 {
+    /// Builds prepared-cache evidence for one self-contact scan source.
+    pub(crate) const fn new(
+        prepared_segment_count: usize,
+        prepared_segment_kind_counts: SegmentKindCounts,
+        decided_segment_box_count: usize,
+        undecided_segment_box_count: usize,
+        path_box_decided: bool,
+    ) -> Self {
+        Self {
+            freshness: SelfContactPreparedCacheFreshness2::BorrowedCurrentSource,
+            prepared_segment_count,
+            prepared_segment_kind_counts,
+            decided_segment_box_count,
+            undecided_segment_box_count,
+            path_box_decided,
+        }
+    }
+
+    /// Returns the freshness claim for the prepared cache.
+    pub const fn freshness(&self) -> SelfContactPreparedCacheFreshness2 {
+        self.freshness
+    }
+
+    /// Returns prepared source segment count.
+    pub const fn prepared_segment_count(&self) -> usize {
+        self.prepared_segment_count
+    }
+
+    /// Returns primitive-family counts for prepared source segments.
+    pub const fn prepared_segment_kind_counts(&self) -> SegmentKindCounts {
+        self.prepared_segment_kind_counts
+    }
+
+    /// Returns source segment boxes that were decided during preparation.
+    pub const fn decided_segment_box_count(&self) -> usize {
+        self.decided_segment_box_count
+    }
+
+    /// Returns source segment boxes that stayed undecided during preparation.
+    pub const fn undecided_segment_box_count(&self) -> usize {
+        self.undecided_segment_box_count
+    }
+
+    /// Returns whether the whole source path box was decided during preparation.
+    pub const fn path_box_decided(&self) -> bool {
+        self.path_box_decided
     }
 }
 

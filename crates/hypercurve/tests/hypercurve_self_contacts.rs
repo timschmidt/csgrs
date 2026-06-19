@@ -1,6 +1,6 @@
 use hypercurve::{
     BulgeVertex2, Classification, Contour2, CurvePolicy, CurveString2, LineSeg2, Point2, Real,
-    Segment2, SegmentKindCounts,
+    Segment2, SegmentKindCounts, SelfContactPreparedCacheFreshness2,
 };
 
 fn s(value: i32) -> Real {
@@ -45,6 +45,7 @@ fn curve_string_self_contact_detector_ignores_adjacent_corner() {
         reported.report().segment_kind_counts(),
         SegmentKindCounts { lines: 2, arcs: 0 }
     );
+    assert_eq!(reported.report().prepared_cache_report(), None);
     assert_eq!(reported.report().candidate_pair_count(), 1);
     assert_eq!(reported.report().skipped_aabb_pair_count(), 0);
     assert_eq!(reported.report().tested_pair_count(), 1);
@@ -121,7 +122,32 @@ fn prepared_curve_string_self_contact_detector_matches_plain_detector() {
     );
     let prepared_reported = prepared.has_self_contacts_with_report(&policy).unwrap();
     let plain_reported = curve.has_self_contacts_with_report(&policy).unwrap();
-    assert_eq!(prepared_reported, plain_reported);
+    assert_eq!(
+        prepared_reported.has_self_contacts(),
+        plain_reported.has_self_contacts()
+    );
+    assert_eq!(plain_reported.report().prepared_cache_report(), None);
+    let prepared_cache = prepared_reported.report().prepared_cache_report().unwrap();
+    assert_eq!(
+        prepared_cache.freshness(),
+        SelfContactPreparedCacheFreshness2::BorrowedCurrentSource
+    );
+    assert_eq!(prepared_cache.prepared_segment_count(), 3);
+    assert_eq!(
+        prepared_cache.prepared_segment_kind_counts(),
+        SegmentKindCounts { lines: 3, arcs: 0 }
+    );
+    assert_eq!(prepared_cache.decided_segment_box_count(), 3);
+    assert_eq!(prepared_cache.undecided_segment_box_count(), 0);
+    assert!(prepared_cache.path_box_decided());
+    assert_eq!(
+        prepared_reported.report().candidate_pair_count(),
+        plain_reported.report().candidate_pair_count()
+    );
+    assert_eq!(
+        prepared_reported.report().tested_pair_count(),
+        plain_reported.report().tested_pair_count()
+    );
 }
 
 #[test]
@@ -226,7 +252,36 @@ fn prepared_contour_self_contact_detector_matches_plain_detector() {
     );
     let prepared_reported = prepared.has_self_contacts_with_report(&policy).unwrap();
     let plain_reported = pinched.has_self_contacts_with_report(&policy).unwrap();
-    assert_eq!(prepared_reported, plain_reported);
+    assert_eq!(
+        prepared_reported.has_self_contacts(),
+        plain_reported.has_self_contacts()
+    );
+    assert_eq!(plain_reported.report().prepared_cache_report(), None);
+    let prepared_cache = prepared_reported.report().prepared_cache_report().unwrap();
+    assert_eq!(
+        prepared_cache.freshness(),
+        SelfContactPreparedCacheFreshness2::BorrowedCurrentSource
+    );
+    assert_eq!(prepared_cache.prepared_segment_count(), 6);
+    assert_eq!(
+        prepared_cache.prepared_segment_kind_counts(),
+        SegmentKindCounts { lines: 6, arcs: 0 }
+    );
+    assert_eq!(prepared_cache.decided_segment_box_count(), 6);
+    assert_eq!(prepared_cache.undecided_segment_box_count(), 0);
+    assert!(prepared_cache.path_box_decided());
+    assert_eq!(
+        prepared_reported
+            .report()
+            .first_contact_first_segment_index(),
+        plain_reported.report().first_contact_first_segment_index()
+    );
+    assert_eq!(
+        prepared_reported
+            .report()
+            .first_contact_second_segment_index(),
+        plain_reported.report().first_contact_second_segment_index()
+    );
 }
 
 #[test]

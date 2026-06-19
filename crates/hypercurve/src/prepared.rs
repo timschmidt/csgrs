@@ -536,6 +536,9 @@ impl<'a> PreparedCurveStringView2<'a> {
             false,
             policy,
         )
+        .map(|result| {
+            result.with_prepared_cache(prepared_self_contact_cache_report_for_curve(self))
+        })
     }
 }
 
@@ -725,6 +728,9 @@ impl<'a> PreparedContourView2<'a> {
             true,
             policy,
         )
+        .map(|result| {
+            result.with_prepared_cache(prepared_self_contact_cache_report_for_contour(self))
+        })
     }
 }
 
@@ -1451,6 +1457,30 @@ fn prepared_curve_string_cache_audit(
         curve.decided_segment_box_count(),
         curve.undecided_segment_box_count(),
         curve.curve_box().is_some(),
+    )
+}
+
+fn prepared_self_contact_cache_report_for_curve(
+    curve: &PreparedCurveStringView2<'_>,
+) -> crate::SelfContactPreparedCacheReport2 {
+    crate::SelfContactPreparedCacheReport2::new(
+        curve.prepared_segment_count(),
+        curve.prepared_segment_kind_counts(),
+        curve.decided_segment_box_count(),
+        curve.undecided_segment_box_count(),
+        curve.curve_box().is_some(),
+    )
+}
+
+fn prepared_self_contact_cache_report_for_contour(
+    contour: &PreparedContourView2<'_>,
+) -> crate::SelfContactPreparedCacheReport2 {
+    crate::SelfContactPreparedCacheReport2::new(
+        contour.prepared_segment_count(),
+        contour.prepared_segment_kind_counts(),
+        contour.decided_segment_box_count(),
+        contour.undecided_segment_box_count(),
+        contour.contour_box().is_some(),
     )
 }
 
