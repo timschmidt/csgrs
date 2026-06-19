@@ -78,10 +78,9 @@ fn run_case(case: &BenchCase) {
             case.name,
             "preflight_support",
             format!(
-                "certified={};pairs={};events={}",
+                "certified={};retained_graph={}",
                 evaluation.is_certified(),
-                evaluation.retained_face_pairs(),
-                evaluation.retained_events()
+                evaluation.has_retained_graph_evidence(),
             ),
         ),
         Err(error) => print_metadata(case.name, "preflight_support", format!("error:{error:?}")),
@@ -180,7 +179,7 @@ fn run_case(case: &BenchCase) {
             black_box(evaluation.has_coplanar_volumetric_evidence().then(|| {
                 (
                     evaluation.requires_coplanar_volumetric_cells(),
-                    evaluation.retained_candidate_pairs(),
+                    evaluation.has_retained_blocker_evidence(),
                 )
             }));
         },

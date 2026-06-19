@@ -304,7 +304,7 @@ fn exact_boolean_evaluation_materializes_boundary_policy_shortcut_by_default() {
         assert!(evaluation.materialized_result().is_some());
         assert!(!evaluation.has_blocker());
         assert!(evaluation.is_certified());
-        assert!(evaluation.retained_face_pairs() > 0 || evaluation.retained_events() > 0);
+        assert!(evaluation.has_retained_graph_evidence());
         let result = evaluation
             .materialized_result()
             .expect("boundary-policy evaluation should materialize");
@@ -1878,8 +1878,7 @@ fn lower_dimensional_regularized_boolean_is_publicly_replayable() {
                 evaluation.freshness_against_sources(&left, &closed_right),
                 ExactReportFreshness::SourceReplayMismatch
             );
-            assert_eq!(evaluation.retained_face_pairs(), 0);
-            assert_eq!(evaluation.retained_events(), 0);
+            assert!(!evaluation.has_retained_graph_evidence());
             assert_eq!(
                 evaluation.freshness_against_sources(&left, &right),
                 ExactReportFreshness::Current
@@ -2193,7 +2192,7 @@ fn closed_boundary_touching_regularized_boolean_is_publicly_replayable() {
                 "{operation:?}: {preflight_evaluation:?}"
             );
             assert!(
-                preflight_evaluation.retained_face_pairs() > 0,
+                preflight_evaluation.has_retained_graph_evidence(),
                 "closed boundary-touching request should retain graph evidence: {operation:?}: {preflight_evaluation:?}"
             );
             preflight_evaluation.validate().unwrap();
@@ -2262,7 +2261,7 @@ fn closed_no_volume_overlap_regularized_boolean_is_publicly_replayable() {
                     "{operation:?}: {preflight_evaluation:?}"
                 );
                 assert!(
-                    preflight_evaluation.retained_face_pairs() > 0,
+                    preflight_evaluation.has_retained_graph_evidence(),
                     "positive-area no-volume shortcut should retain graph evidence: {operation:?}: {preflight_evaluation:?}"
                 );
                 preflight_evaluation.validate().unwrap();
@@ -2934,8 +2933,7 @@ fn exact_evaluation_preflight_reports_disjoint_bounds_without_retained_pairs() {
         &right,
         ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED),
         |evaluation| {
-            assert_eq!(evaluation.retained_face_pairs(), 0);
-            assert_eq!(evaluation.retained_events(), 0);
+            assert!(!evaluation.has_retained_graph_evidence());
             evaluation.validate_against_sources(&left, &right).unwrap();
         },
     );
@@ -2973,8 +2971,7 @@ fn public_exact_blocker_reports_replay_remaining_decisions() {
         assert!(
             evaluation.materialized_result().is_some()
                 || evaluation.retained_arrangement_attempt().is_some()
-                || evaluation.retained_face_pairs() > 0
-                || evaluation.retained_events() > 0,
+                || evaluation.has_retained_graph_evidence(),
             "{evaluation:?}"
         );
         assert_eq!(
@@ -3092,8 +3089,8 @@ fn open_surface_disjoint_report_classifies_retained_coplanar_overlap_blocker() {
         assert!(!evaluation.is_certified(), "{evaluation:?}");
         assert!(evaluation.materialized_result().is_none(), "{evaluation:?}");
         assert!(evaluation.has_blocker(), "{evaluation:?}");
-        assert!(evaluation.retained_coplanar_overlapping_pairs() > 0);
-        assert!(evaluation.retained_face_pairs() > 0);
+        assert!(evaluation.has_retained_blocker_evidence(), "{evaluation:?}");
+        assert!(evaluation.has_retained_graph_evidence(), "{evaluation:?}");
         evaluation.validate_against_sources(&left, &right).unwrap();
     });
 }
@@ -3121,7 +3118,7 @@ fn planar_arrangement_report_classifies_noncoplanar_candidates_as_winding_blocke
         assert!(!evaluation.is_certified(), "{evaluation:?}");
         assert!(evaluation.materialized_result().is_none(), "{evaluation:?}");
         assert!(evaluation.has_blocker(), "{evaluation:?}");
-        assert!(evaluation.retained_candidate_pairs() > 0, "{evaluation:?}");
+        assert!(evaluation.has_retained_blocker_evidence(), "{evaluation:?}");
         evaluation.validate_against_sources(&left, &right).unwrap();
     });
 }
@@ -3784,15 +3781,13 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
         ExactBooleanOperation::Union,
         ValidationPolicy::ALLOW_BOUNDARY,
     );
-    let default_evidence = with_exact_boolean_evaluation(&left, &right, request, |evaluation| {
-        assert!(evaluation.is_certified(), "{evaluation:?}");
-        assert!(evaluation.materialized_result().is_some(), "{evaluation:?}");
-        evaluation.validate_against_sources(&left, &right).unwrap();
-        (
-            evaluation.retained_face_pairs(),
-            evaluation.retained_events(),
-        )
-    });
+    let default_retains_graph_evidence =
+        with_exact_boolean_evaluation(&left, &right, request, |evaluation| {
+            assert!(evaluation.is_certified(), "{evaluation:?}");
+            assert!(evaluation.materialized_result().is_some(), "{evaluation:?}");
+            evaluation.validate_against_sources(&left, &right).unwrap();
+            evaluation.has_retained_graph_evidence()
+        });
     with_exact_boolean_evaluation(
         &left,
         &right,
@@ -3830,13 +3825,10 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
         );
         assert!(!policy_evaluation.has_blocker(), "{policy_evaluation:?}");
         assert_eq!(
-            (
-                policy_evaluation.retained_face_pairs(),
-                policy_evaluation.retained_events()
-            ),
-            default_evidence
+            policy_evaluation.has_retained_graph_evidence(),
+            default_retains_graph_evidence
         );
-        assert!(default_evidence.0 > 0 || default_evidence.1 > 0);
+        assert!(default_retains_graph_evidence);
         policy_evaluation
             .validate_against_sources(&left, &right)
             .unwrap();
@@ -4044,7 +4036,7 @@ fn boundary_touching_report_classifies_proper_crossing_as_winding_blocker() {
         assert!(!evaluation.is_certified(), "{evaluation:?}");
         assert!(evaluation.materialized_result().is_none(), "{evaluation:?}");
         assert!(evaluation.has_blocker(), "{evaluation:?}");
-        assert!(evaluation.retained_candidate_pairs() > 0, "{evaluation:?}");
+        assert!(evaluation.has_retained_blocker_evidence(), "{evaluation:?}");
         evaluation.validate_against_sources(&left, &right).unwrap();
     });
 }

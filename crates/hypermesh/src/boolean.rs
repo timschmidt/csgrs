@@ -2332,28 +2332,16 @@ impl ExactBooleanEvaluation {
         self.preflight.blocker().is_some()
     }
 
-    /// Return retained non-coplanar candidate face-pair count from the blocker.
-    pub fn retained_candidate_pairs(&self) -> usize {
+    /// Return whether exact preflight retained graph evidence.
+    pub fn has_retained_graph_evidence(&self) -> bool {
+        self.preflight.retained_face_pairs() != 0 || self.preflight.retained_events() != 0
+    }
+
+    /// Return whether this evaluation retained blocker evidence.
+    pub fn has_retained_blocker_evidence(&self) -> bool {
         self.preflight
             .blocker()
-            .map_or(0, ExactBooleanBlocker::candidate_pairs)
-    }
-
-    /// Return retained positive-area coplanar overlap face-pair count from the blocker.
-    pub fn retained_coplanar_overlapping_pairs(&self) -> usize {
-        self.preflight
-            .blocker()
-            .map_or(0, ExactBooleanBlocker::coplanar_overlapping_pairs)
-    }
-
-    /// Return the retained face-pair count from exact preflight scheduling.
-    pub fn retained_face_pairs(&self) -> usize {
-        self.preflight.retained_face_pairs()
-    }
-
-    /// Return the retained graph-event count from exact preflight scheduling.
-    pub fn retained_events(&self) -> usize {
-        self.preflight.retained_events()
+            .is_some_and(ExactBooleanBlocker::has_evidence)
     }
 
     /// Return the replayable certification bundle retained by this evaluation.

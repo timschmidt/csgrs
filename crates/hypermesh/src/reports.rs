@@ -457,7 +457,7 @@ fn validate_arrangement_readiness_matches_blocker(
     }
 }
 
-fn blocker_has_any_evidence(blocker: &ExactBooleanBlocker) -> bool {
+const fn blocker_has_any_evidence(blocker: &ExactBooleanBlocker) -> bool {
     blocker.candidate_pairs != 0
         || blocker.coplanar_overlapping_pairs != 0
         || blocker.coplanar_touching_pairs != 0
@@ -4629,14 +4629,9 @@ impl Default for ExactBooleanBlocker {
 }
 
 impl ExactBooleanBlocker {
-    /// Return the retained non-coplanar candidate face-pair count.
-    pub(crate) const fn candidate_pairs(&self) -> usize {
-        self.candidate_pairs
-    }
-
-    /// Return the retained positive-area coplanar overlap face-pair count.
-    pub(crate) const fn coplanar_overlapping_pairs(&self) -> usize {
-        self.coplanar_overlapping_pairs
+    /// Return whether the blocker retained graph evidence.
+    pub(crate) const fn has_evidence(&self) -> bool {
+        blocker_has_any_evidence(self)
     }
 
     /// Return this exact graph-count blocker with a different semantic kind.
