@@ -3906,14 +3906,19 @@ fn exact_boolean_attempt_public_path_reports_blockers_or_cells() {
     let left = tetra([0, 0, 0]);
     let right = tetra([1, 0, 0]);
 
+    let request = ExactBooleanRequest::new(
+        ExactBooleanOperation::Union,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    );
     let attempt = exact_boolean_arrangement_attempt(
         &left,
         &right,
-        ExactBooleanRequest::new(
-            ExactBooleanOperation::Union,
-            ValidationPolicy::ALLOW_BOUNDARY,
-        ),
+        request,
         ExactRegularizationPolicy::REGULARIZED_SOLID,
+    );
+    assert_eq!(
+        attempt.boundary_policy(),
+        ExactBoundaryBooleanPolicy::PreserveSeparateShells
     );
     attempt.validate().unwrap();
     assert!(
@@ -3930,6 +3935,18 @@ fn exact_boolean_attempt_public_path_reports_blockers_or_cells() {
     assert_eq!(
         attempt.freshness_against_sources(&left, &right),
         ExactReportFreshness::Current
+    );
+    assert_eq!(
+        attempt.freshness_against_sources_for_request(
+            &left,
+            &right,
+            ExactBooleanRequest::with_boundary_policy(
+                ExactBooleanOperation::Union,
+                ValidationPolicy::ALLOW_BOUNDARY,
+                ExactBoundaryBooleanPolicy::Reject,
+            ),
+        ),
+        ExactReportFreshness::SourceReplayMismatch
     );
 }
 

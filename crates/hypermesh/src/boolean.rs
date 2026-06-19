@@ -193,6 +193,8 @@ pub struct ExactArrangementBooleanAttempt {
     pub(crate) policy: ExactRegularizationPolicy,
     /// Output validation policy used by shortcut recovery and final mesh copy.
     pub(crate) output_validation: ValidationPolicy,
+    /// Boundary-only projection policy from the exact Boolean request.
+    pub(crate) boundary_policy: ExactBoundaryBooleanPolicy,
     /// Furthest stage reached.
     pub(crate) stage: ExactArrangementBooleanStage,
     /// Reason no output was produced, when the attempt declined.
@@ -264,6 +266,11 @@ impl ExactArrangementBooleanAttempt {
     /// Return the output validation policy used by this attempt.
     pub const fn output_validation(&self) -> ValidationPolicy {
         self.output_validation
+    }
+
+    /// Return the boundary-only projection policy used by this attempt.
+    pub const fn boundary_policy(&self) -> ExactBoundaryBooleanPolicy {
+        self.boundary_policy
     }
 
     /// Return retained topology assembly gate evidence, when present.
@@ -398,6 +405,7 @@ impl ExactArrangementBooleanAttempt {
         self.operation == request.operation
             && self.policy == policy
             && self.output_validation == request.validation
+            && self.boundary_policy == request.boundary_policy
     }
 
     pub(crate) fn validate_for_request_policy(
@@ -734,7 +742,11 @@ impl ExactArrangementBooleanAttempt {
         self.validate_against_sources_for_request(
             left,
             right,
-            ExactBooleanRequest::new(self.operation, self.output_validation),
+            ExactBooleanRequest::with_boundary_policy(
+                self.operation,
+                self.output_validation,
+                self.boundary_policy,
+            ),
         )
     }
 
@@ -2639,9 +2651,8 @@ pub(crate) fn try_materialize_certified_boolean_support_with_artifacts(
                         graph,
                         left,
                         right,
-                        operation,
+                        request,
                         ExactRegularizationPolicy::REGULARIZED_SOLID,
-                        Some(validation),
                         true,
                     )?
                     && result.validate_against_sources(left, right).is_ok()
@@ -2873,9 +2884,8 @@ fn materialize_certified_arrangement_cell_complex_support_with_arrangement(
             arrangement,
             left,
             right,
-            operation,
+            request,
             ExactRegularizationPolicy::REGULARIZED_SOLID,
-            Some(validation),
             true,
         )?;
         if let ArrangementCellComplexOutcome::Materialized(result, attempt) = outcome
@@ -5099,6 +5109,7 @@ fn not_attempted_arrangement_attempt_for_request(
         operation: request.operation,
         policy,
         output_validation: request.validation,
+        boundary_policy: request.boundary_policy,
         stage: ExactArrangementBooleanStage::NotAttempted,
         decline: None,
         materialized_shortcut: None,
@@ -5263,9 +5274,8 @@ pub(crate) fn arrangement_boolean_attempt_report_from_arrangement(
         arrangement,
         left,
         right,
-        request.operation,
+        request,
         policy,
-        Some(request.validation),
         true,
     )?;
     Ok(match outcome {
@@ -5334,9 +5344,8 @@ fn certified_arrangement_cell_complex_result_from_graph(
         graph,
         left,
         right,
-        operation,
+        ExactBooleanRequest::new(operation, validation),
         ExactRegularizationPolicy::REGULARIZED_SOLID,
-        Some(validation),
         regularize_unregularized_sheet_complex,
     ) {
         Ok(outcome) => outcome,
@@ -5442,9 +5451,8 @@ fn run_arrangement_cell_complex_attempt_from_graph(
     graph: &ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
-    operation: ExactBooleanOperation,
+    request: ExactBooleanRequest,
     policy: ExactRegularizationPolicy,
-    validation: Option<ValidationPolicy>,
     regularize_unregularized_sheet_complex: bool,
 ) -> Result<ArrangementCellComplexOutcome, MeshError> {
     let arrangement =
@@ -5453,9 +5461,8 @@ fn run_arrangement_cell_complex_attempt_from_graph(
         &arrangement,
         left,
         right,
-        operation,
+        request,
         policy,
-        validation,
         regularize_unregularized_sheet_complex,
     )
 }
@@ -5464,15 +5471,17 @@ fn run_arrangement_cell_complex_attempt_from_arrangement(
     arrangement: &ExactArrangement,
     left: &ExactMesh,
     right: &ExactMesh,
-    operation: ExactBooleanOperation,
+    request: ExactBooleanRequest,
     policy: ExactRegularizationPolicy,
-    validation: Option<ValidationPolicy>,
     regularize_unregularized_sheet_complex: bool,
 ) -> Result<ArrangementCellComplexOutcome, MeshError> {
+    let operation = request.operation;
+    let validation = request.validation;
     let mut attempt = ExactArrangementBooleanAttempt {
         operation,
         policy,
-        output_validation: validation.unwrap_or_default(),
+        output_validation: validation,
+        boundary_policy: request.boundary_policy,
         stage: ExactArrangementBooleanStage::ArrangementBuilt,
         decline: None,
         materialized_shortcut: None,
@@ -5544,7 +5553,7 @@ fn run_arrangement_cell_complex_attempt_from_arrangement(
             left,
             right,
             operation,
-            validation,
+            Some(validation),
             arrangement,
         ) {
             Ok(Some(result)) => {
@@ -5566,7 +5575,6 @@ fn run_arrangement_cell_complex_attempt_from_arrangement(
         }
         if regularize_unregularized_sheet_complex
             && unregularized_sheet_complex
-            && let Some(validation) = validation
             && let Some(result) = boolean_arrangement_regularized_sheet_complex_from_graph(
                 &arrangement.graph,
                 left,
@@ -5594,7 +5602,7 @@ fn run_arrangement_cell_complex_attempt_from_arrangement(
         )? {
             return Ok(outcome);
         }
-        if unregularized_sheet_complex && let Some(validation) = validation {
+        if unregularized_sheet_complex {
             if let Some(result) = boolean_arrangement_convex_regularized_sheet_recovery(
                 left, right, operation, validation,
             )? {
@@ -5791,9 +5799,6 @@ fn run_arrangement_cell_complex_attempt_from_arrangement(
     };
     attempt.stage = ExactArrangementBooleanStage::Triangulated;
     record_attempt_output_mesh(&mut attempt, &mesh);
-    let Some(validation) = validation else {
-        return Ok(ArrangementCellComplexOutcome::Declined(attempt));
-    };
     let mesh = match copy_mesh(
         &mesh,
         "exact arrangement cell-complex boolean result",
@@ -5823,7 +5828,7 @@ fn run_arrangement_cell_complex_attempt_from_arrangement(
             if let Some(outcome) = arrangement_cell_complex_recovery_outcome_if_available(
                 regularize_unregularized_sheet_complex,
                 regularized_sheet_recovery_surface,
-                Some(validation),
+                validation,
                 &mut attempt,
                 &arrangement.graph,
                 left,
@@ -6643,17 +6648,14 @@ fn arrangement_volumetric_split_cell_recovery_outcome(
 fn arrangement_cell_complex_recovery_outcome_if_available(
     enabled: bool,
     regularized_sheet_recovery_surface: bool,
-    validation: Option<ValidationPolicy>,
+    validation: ValidationPolicy,
     attempt: &mut ExactArrangementBooleanAttempt,
     graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
 ) -> Result<Option<ArrangementCellComplexOutcome>, MeshError> {
-    if enabled
-        && regularized_sheet_recovery_surface
-        && let Some(validation) = validation
-    {
+    if enabled && regularized_sheet_recovery_surface {
         if let Some(result) = boolean_arrangement_regularized_sheet_complex_from_graph(
             graph, left, right, operation, validation,
         )? {
@@ -6675,16 +6677,13 @@ fn arrangement_cell_complex_recovery_outcome_if_available(
             )));
         }
     }
-    if let Some(validation) = validation.filter(|_| enabled)
+    if enabled
         && let Some(outcome) = arrangement_volumetric_split_cell_recovery_outcome(
             attempt, graph, left, right, operation, validation,
         )?
     {
         return Ok(Some(outcome));
     }
-    let Some(validation) = validation else {
-        return Ok(None);
-    };
     if !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
         && !open_surface_disjoint_report_from_graph(graph, left, right).is_certified()
     {
@@ -14148,9 +14147,8 @@ mod tests {
             &graph,
             left,
             right,
-            operation,
+            ExactBooleanRequest::new(operation, validation),
             ExactRegularizationPolicy::REGULARIZED_SOLID,
-            Some(validation),
             true,
         ) {
             Ok(ArrangementCellComplexOutcome::Materialized(result, attempt)) => {
