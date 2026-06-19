@@ -1161,6 +1161,38 @@ fn curve_string_ordered_link_materializes_multistep_chain() {
 }
 
 #[test]
+fn borrowed_curve_string_ordered_link_materializes_multistep_chain() {
+    let curve_strings = vec![
+        CurveString2::try_new(vec![line_segment(0, 0, 1, 0)]).unwrap(),
+        CurveString2::try_new(vec![line_segment(1, 0, 2, 0)]).unwrap(),
+        CurveString2::try_new(vec![line_segment(2, 0, 3, 0)]).unwrap(),
+    ];
+
+    let linked =
+        CurveString2::link_ordered_connected_endpoints_borrowed(&curve_strings, &policy()).unwrap();
+
+    assert_eq!(curve_strings.len(), 3);
+    assert!(linked.report().status().is_native_exact());
+    assert_eq!(
+        linked.report().stage(),
+        CurveStringOrderedLinkStage2::ChainMaterialization
+    );
+    assert_eq!(linked.report().source_curve_string_count(), 3);
+    assert_eq!(linked.report().attempted_link_step_count(), 2);
+    assert_eq!(linked.report().materialized_link_step_count(), 2);
+    assert_eq!(linked.report().blocked_link_step_count(), 0);
+    assert_eq!(linked.report().output_segment_count(), Some(3));
+    assert_eq!(linked.report().output_source_indices(), &[0, 1, 2]);
+    assert_eq!(linked.report().steps().len(), 2);
+    let curve = linked
+        .curve_string()
+        .expect("borrowed ordered exact links should materialize");
+    assert_eq!(curve.len(), 3);
+    assert_line(&curve.segments()[0], p(0, 0), p(1, 0));
+    assert_line(&curve.segments()[2], p(2, 0), p(3, 0));
+}
+
+#[test]
 fn curve_string_ordered_link_reports_reversed_accumulated_sources() {
     let linked = CurveString2::link_ordered_connected_endpoints(
         vec![
@@ -1292,12 +1324,50 @@ fn curve_string_ordered_link_reports_disconnected_step() {
 }
 
 #[test]
+fn borrowed_curve_string_ordered_link_reports_disconnected_step() {
+    let curve_strings = vec![
+        CurveString2::try_new(vec![line_segment(0, 0, 1, 0)]).unwrap(),
+        CurveString2::try_new(vec![line_segment(3, 0, 4, 0)]).unwrap(),
+    ];
+
+    let linked =
+        CurveString2::link_ordered_connected_endpoints_borrowed(&curve_strings, &policy()).unwrap();
+
+    assert_eq!(curve_strings.len(), 2);
+    assert!(linked.curve_string().is_none());
+    assert!(linked.report().status().is_retained_evidence());
+    assert_eq!(
+        linked.report().stage(),
+        CurveStringOrderedLinkStage2::StepLinking
+    );
+    assert_eq!(linked.report().blocker(), Some(UncertaintyReason::Boundary));
+    assert_eq!(linked.report().attempted_link_step_count(), 1);
+    assert_eq!(linked.report().materialized_link_step_count(), 0);
+    assert_eq!(linked.report().blocked_link_step_count(), 1);
+    assert_eq!(linked.report().output_segment_count(), None);
+    assert_eq!(linked.report().output_source_indices(), &[0]);
+    assert_eq!(linked.report().steps().len(), 1);
+    assert_eq!(
+        linked.report().steps()[0].blocker(),
+        Some(UncertaintyReason::Boundary)
+    );
+    assert!(linked.report().steps()[0].link_report().is_none());
+    assert_eq!(
+        linked.report().steps()[0]
+            .link_attempt_report()
+            .unwrap()
+            .endpoint_pair_count(),
+        4
+    );
+}
+
+#[test]
 fn curve_string_connect_end_to_start_inserts_exact_line() {
     let first = CurveString2::try_new(vec![line_segment(0, 0, 1, 0)]).unwrap();
     let second = CurveString2::try_new(vec![line_segment(3, 1, 4, 1)]).unwrap();
 
     let connected = first
-        .connect_end_to_start_with_line(&second, &policy())
+        .connect_end_to_start_with_line_with_report(&second, &policy())
         .unwrap();
 
     assert!(connected.report().status().is_native_exact());
@@ -1477,7 +1547,7 @@ fn curve_string_connect_selected_endpoints_orients_inputs() {
     let second = CurveString2::try_new(vec![line_segment(3, 0, 4, 0)]).unwrap();
 
     let connected = first
-        .connect_endpoints_with_line(
+        .connect_endpoints_with_line_with_report(
             &second,
             CurveStringLinkKind2::FirstStartToSecondEnd,
             &policy(),
@@ -1543,7 +1613,7 @@ fn curve_string_connect_nearest_endpoints_selects_unique_pair() {
     let second = CurveString2::try_new(vec![line_segment(4, 0, 3, 0)]).unwrap();
 
     let connected = first
-        .connect_nearest_endpoints_with_line(&second, &policy())
+        .connect_nearest_endpoints_with_line_with_report(&second, &policy())
         .unwrap();
 
     assert!(connected.report().status().is_native_exact());

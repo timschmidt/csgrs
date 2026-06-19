@@ -1,12 +1,13 @@
 use hypercurve::{
     BooleanBoundaryChain, BooleanBoundaryChainAssemblyStage2, BooleanBoundaryChainSet,
     BooleanBoundaryContourTransferStage2, BooleanBoundaryFragmentEmissionStage2,
-    BooleanBoundaryFragmentSet, BooleanBoundaryLoop, BooleanBoundaryLoopExtractionStage2,
-    BooleanBoundaryLoopSet, BooleanFragmentAction, BooleanFragmentClassification,
-    BooleanFragmentSelection, BooleanFragmentSelectionStage2, BooleanOp, BulgeVertex2,
-    Classification, Contour2, CurveError, CurvePolicy, DirectedBooleanFragment, FillRule, LineSeg2,
-    Real, Region2, RegionContourKey, RegionContourRole, RegionPointLocation, RegionSide, Segment2,
-    SegmentKindCounts, UncertaintyReason,
+    BooleanBoundaryFragmentSet, BooleanBoundaryLoop, BooleanBoundaryLoopConstructionStage2,
+    BooleanBoundaryLoopExtractionStage2, BooleanBoundaryLoopSet, BooleanFragmentAction,
+    BooleanFragmentClassification, BooleanFragmentSelection, BooleanFragmentSelectionStage2,
+    BooleanOp, BulgeVertex2, Classification, Contour2, CurveError, CurvePolicy,
+    DirectedBooleanFragment, FillRule, LineSeg2, Real, Region2, RegionContourKey,
+    RegionContourRole, RegionPointLocation, RegionSide, Segment2, SegmentKindCounts,
+    UncertaintyReason,
 };
 
 fn s(value: i32) -> Real {
@@ -858,6 +859,53 @@ fn boolean_boundary_loop_set_checks_contour_transfer() {
         .unwrap(),
         Classification::Uncertain(UncertaintyReason::Boundary)
     );
+}
+
+#[test]
+fn boolean_boundary_loop_set_from_contours_retains_construction_report() {
+    let contours = vec![rectangle(0, 0, 2, 2), rectangle(3, 3, 5, 5)];
+    let built = BooleanBoundaryLoopSet::from_contours_with_report(contours).unwrap();
+    let report = built.report();
+
+    assert!(report.status().is_native_exact());
+    assert_eq!(
+        report.stage(),
+        BooleanBoundaryLoopConstructionStage2::LoopMaterialization
+    );
+    assert_eq!(report.source_contour_count(), 2);
+    assert_eq!(report.source_segment_count(), 8);
+    assert_eq!(
+        report.source_segment_kind_counts(),
+        SegmentKindCounts { lines: 8, arcs: 0 }
+    );
+    assert_eq!(report.loop_count(), Some(2));
+    assert_eq!(report.output_fragment_count(), Some(8));
+    assert_eq!(
+        report.output_fragment_kind_counts(),
+        Some(SegmentKindCounts { lines: 8, arcs: 0 })
+    );
+    assert_eq!(report.blocker(), None);
+
+    let loops = built.loops().unwrap();
+    assert_eq!(loops.len(), 2);
+    assert_eq!(loops.loops()[0].fragments()[0].fragment_index, 0);
+    assert_eq!(loops.loops()[1].fragments()[3].fragment_index, 3);
+}
+
+#[test]
+fn boolean_boundary_loop_set_from_borrowed_contours_keeps_inputs_available() {
+    let contours = vec![rectangle(0, 0, 2, 2)];
+    let built = BooleanBoundaryLoopSet::from_contours_borrowed_with_report(&contours).unwrap();
+
+    assert_eq!(contours.len(), 1);
+    assert!(built.report().status().is_native_exact());
+    assert_eq!(built.report().source_contour_count(), 1);
+    assert_eq!(built.report().source_segment_count(), 4);
+    assert_eq!(built.loops().unwrap().len(), 1);
+
+    let loops = BooleanBoundaryLoopSet::from_contours_borrowed(&contours).unwrap();
+    assert_eq!(contours.len(), 1);
+    assert_eq!(loops.len(), 1);
 }
 
 #[test]

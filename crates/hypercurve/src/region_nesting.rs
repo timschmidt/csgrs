@@ -262,6 +262,40 @@ impl Region2 {
         }
     }
 
+    /// Builds a region from borrowed unordered exact line segments.
+    ///
+    /// This is the borrowed counterpart to
+    /// [`Region2::from_unordered_line_segments`]. The exact segment carriers
+    /// are cloned into the existing arrangement-first implementation so source
+    /// ordering, split parameters, endpoint graph evidence, and blockers remain
+    /// identical to the owned path.
+    pub fn from_unordered_line_segments_borrowed(
+        segments: &[LineSeg2],
+        fill_rule: FillRule,
+        policy: &CurvePolicy,
+    ) -> CurveResult<Classification<Self>> {
+        let built =
+            Self::from_unordered_line_segments_borrowed_with_report(segments, fill_rule, policy)?;
+        let blocker = built
+            .report()
+            .blocker()
+            .unwrap_or(UncertaintyReason::Unsupported);
+        if let Some(region) = built.into_region() {
+            Ok(Classification::Decided(region))
+        } else {
+            Ok(Classification::Uncertain(blocker))
+        }
+    }
+
+    /// Builds a region from borrowed unordered exact line segments and retains evidence.
+    pub fn from_unordered_line_segments_borrowed_with_report(
+        segments: &[LineSeg2],
+        fill_rule: FillRule,
+        policy: &CurvePolicy,
+    ) -> CurveResult<RegionLineSegmentRegionBuildResult2> {
+        Self::from_unordered_line_segments_with_report(segments.to_vec(), fill_rule, policy)
+    }
+
     /// Builds a region from unordered exact line segments and retains assembly evidence.
     pub fn from_unordered_line_segments_with_report(
         segments: Vec<LineSeg2>,
@@ -462,6 +496,38 @@ impl Region2 {
         } else {
             Ok(Classification::Uncertain(blocker))
         }
+    }
+
+    /// Builds a region from borrowed unordered exact native line/arc segments.
+    ///
+    /// This is the borrowed counterpart to [`Region2::from_unordered_segments`].
+    /// It delegates to the same exact arrangement, splitting, endpoint graph,
+    /// ring traversal, and boundary role-assignment pipeline as the owned API.
+    pub fn from_unordered_segments_borrowed(
+        segments: &[Segment2],
+        fill_rule: FillRule,
+        policy: &CurvePolicy,
+    ) -> CurveResult<Classification<Self>> {
+        let built =
+            Self::from_unordered_segments_borrowed_with_report(segments, fill_rule, policy)?;
+        let blocker = built
+            .report()
+            .blocker()
+            .unwrap_or(UncertaintyReason::Unsupported);
+        if let Some(region) = built.into_region() {
+            Ok(Classification::Decided(region))
+        } else {
+            Ok(Classification::Uncertain(blocker))
+        }
+    }
+
+    /// Builds a region from borrowed unordered native line/arc segments and retains evidence.
+    pub fn from_unordered_segments_borrowed_with_report(
+        segments: &[Segment2],
+        fill_rule: FillRule,
+        policy: &CurvePolicy,
+    ) -> CurveResult<RegionLineSegmentRegionBuildResult2> {
+        Self::from_unordered_segments_with_report(segments.to_vec(), fill_rule, policy)
     }
 
     /// Builds a region from unordered exact native line/arc segments.
@@ -671,6 +737,27 @@ impl Region2 {
         }
     }
 
+    /// Builds a region by nesting borrowed closed boundary contours.
+    ///
+    /// This clones the exact contour carriers at the API boundary, then uses
+    /// the same exact nesting and role-assignment pipeline as
+    /// [`Region2::from_boundary_contours`].
+    pub fn from_boundary_contours_borrowed(
+        contours: &[Contour2],
+        policy: &CurvePolicy,
+    ) -> CurveResult<Classification<Self>> {
+        let built = Self::from_boundary_contours_borrowed_with_report(contours, policy)?;
+        let blocker = built
+            .report()
+            .blocker()
+            .unwrap_or(UncertaintyReason::Unsupported);
+        if let Some(region) = built.into_region() {
+            Ok(Classification::Decided(region))
+        } else {
+            Ok(Classification::Uncertain(blocker))
+        }
+    }
+
     /// Builds a region by nesting closed boundary contours and retaining role evidence.
     ///
     /// This is the report-bearing counterpart to
@@ -778,6 +865,19 @@ impl Region2 {
                 blocker: None,
             },
         })
+    }
+
+    /// Builds a region from borrowed closed boundary contours and retains role evidence.
+    ///
+    /// This clones the exact contour carriers at the API boundary, then
+    /// delegates to [`Region2::from_boundary_contours_with_report`] so the
+    /// retained nesting, validation, and material/hole role reports are
+    /// identical to the owned constructor.
+    pub fn from_boundary_contours_borrowed_with_report(
+        contours: &[Contour2],
+        policy: &CurvePolicy,
+    ) -> CurveResult<RegionBoundaryContourBuildResult2> {
+        Self::from_boundary_contours_with_report(contours.to_vec(), policy)
     }
 }
 

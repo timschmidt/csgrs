@@ -98,6 +98,36 @@ pub struct BooleanBoundaryLoopExtractionResult2 {
     report: BooleanBoundaryLoopExtractionReport2,
 }
 
+/// Report for transferring already-decided contours into boolean boundary loops.
+#[derive(Clone, Debug, PartialEq)]
+pub struct BooleanBoundaryLoopConstructionReport2 {
+    stage: BooleanBoundaryLoopConstructionStage2,
+    source_contour_count: usize,
+    source_segment_count: usize,
+    source_segment_kind_counts: SegmentKindCounts,
+    loop_count: Option<usize>,
+    output_fragment_count: Option<usize>,
+    output_fragment_kind_counts: Option<SegmentKindCounts>,
+    status: RetainedTopologyStatus,
+    blocker: Option<UncertaintyReason>,
+}
+
+/// Furthest exact stage reached by contour-to-boolean-loop construction.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum BooleanBoundaryLoopConstructionStage2 {
+    /// Source contour segments were replayed as directed boundary fragments.
+    ContourGeometryReplay,
+    /// Checked closed boundary loops were materialized.
+    LoopMaterialization,
+}
+
+/// Result of report-bearing boolean boundary loop construction.
+#[derive(Clone, Debug, PartialEq)]
+pub struct BooleanBoundaryLoopConstructionResult2 {
+    loops: Option<BooleanBoundaryLoopSet>,
+    report: BooleanBoundaryLoopConstructionReport2,
+}
+
 /// Report for converting closed boolean boundary loops into checked contours.
 #[derive(Clone, Debug, PartialEq)]
 pub struct BooleanBoundaryContourTransferReport2 {
@@ -628,6 +658,70 @@ impl BooleanBoundaryLoopExtractionResult2 {
     }
 }
 
+impl BooleanBoundaryLoopConstructionReport2 {
+    /// Returns the furthest exact construction stage reached.
+    pub const fn stage(&self) -> BooleanBoundaryLoopConstructionStage2 {
+        self.stage
+    }
+
+    /// Returns the number of source contours replayed.
+    pub const fn source_contour_count(&self) -> usize {
+        self.source_contour_count
+    }
+
+    /// Returns total source segment count across contours.
+    pub const fn source_segment_count(&self) -> usize {
+        self.source_segment_count
+    }
+
+    /// Returns primitive-family counts for source contour segments.
+    pub const fn source_segment_kind_counts(&self) -> SegmentKindCounts {
+        self.source_segment_kind_counts
+    }
+
+    /// Returns output loop count when materialized.
+    pub const fn loop_count(&self) -> Option<usize> {
+        self.loop_count
+    }
+
+    /// Returns output directed-fragment count when materialized.
+    pub const fn output_fragment_count(&self) -> Option<usize> {
+        self.output_fragment_count
+    }
+
+    /// Returns primitive-family counts for output fragments when materialized.
+    pub const fn output_fragment_kind_counts(&self) -> Option<SegmentKindCounts> {
+        self.output_fragment_kind_counts
+    }
+
+    /// Returns retained topology status for loop construction.
+    pub const fn status(&self) -> RetainedTopologyStatus {
+        self.status
+    }
+
+    /// Returns the exact blocker for non-materialized loop construction.
+    pub const fn blocker(&self) -> Option<UncertaintyReason> {
+        self.blocker
+    }
+}
+
+impl BooleanBoundaryLoopConstructionResult2 {
+    /// Returns materialized loops, if construction succeeded.
+    pub const fn loops(&self) -> Option<&BooleanBoundaryLoopSet> {
+        self.loops.as_ref()
+    }
+
+    /// Consumes this result and returns materialized loops, if any.
+    pub fn into_loops(self) -> Option<BooleanBoundaryLoopSet> {
+        self.loops
+    }
+
+    /// Returns retained loop-construction evidence.
+    pub const fn report(&self) -> &BooleanBoundaryLoopConstructionReport2 {
+        &self.report
+    }
+}
+
 /// One closed boolean result boundary loop.
 ///
 /// A loop is a stronger result than a chain: all fragments are ordered in
@@ -725,6 +819,42 @@ impl BooleanBoundaryLoopSet {
     /// Greiner and Hormann, "Efficient clipping of arbitrary polygons," ACM TOG 17(2),
     /// 71-83, 1998.
     pub fn from_contours(contours: Vec<Contour2>) -> CurveResult<Self> {
+        Self::from_contours_with_report(contours)?
+            .into_loops()
+            .ok_or_else(|| {
+                CurveError::Topology(
+                    "boolean boundary loop construction did not materialize loops".to_owned(),
+                )
+            })
+    }
+
+    /// Builds a loop set from borrowed already-decided closed contours.
+    ///
+    /// This clones the exact contour carriers at the API boundary and then uses
+    /// the same report-bearing structural transfer as
+    /// [`BooleanBoundaryLoopSet::from_contours_with_report`].
+    pub fn from_contours_borrowed(contours: &[Contour2]) -> CurveResult<Self> {
+        Self::from_contours_borrowed_with_report(contours)?
+            .into_loops()
+            .ok_or_else(|| {
+                CurveError::Topology(
+                    "boolean boundary loop construction did not materialize loops".to_owned(),
+                )
+            })
+    }
+
+    /// Builds a loop set from already-decided contours and retains transfer evidence.
+    ///
+    /// Each source contour segment is replayed as a directed boolean fragment
+    /// with retained source contour/fragment indices. Validation remains
+    /// structural: this constructor does not claim to resolve boolean graph
+    /// topology, it preserves a prior exact decision as closed boundary loops.
+    pub fn from_contours_with_report(
+        contours: Vec<Contour2>,
+    ) -> CurveResult<BooleanBoundaryLoopConstructionResult2> {
+        let source_contour_count = contours.len();
+        let source_segment_count = contours.iter().map(Contour2::len).sum();
+        let source_segment_kind_counts = contour_segment_kind_counts(&contours);
         let mut loops = Vec::with_capacity(contours.len());
 
         for (index, contour) in contours.into_iter().enumerate() {
@@ -742,10 +872,46 @@ impl BooleanBoundaryLoopSet {
                     segment: segment.clone(),
                 })
                 .collect();
-            loops.push(BooleanBoundaryLoop::new(fragments)?);
+            match BooleanBoundaryLoop::new(fragments) {
+                Ok(boundary_loop) => loops.push(boundary_loop),
+                Err(_) => {
+                    return Ok(blocked_boolean_boundary_loop_construction_result(
+                        source_contour_count,
+                        source_segment_count,
+                        source_segment_kind_counts,
+                        BooleanBoundaryLoopConstructionStage2::LoopMaterialization,
+                        UncertaintyReason::Unsupported,
+                    ));
+                }
+            }
         }
 
-        Self::new(loops)
+        match Self::new(loops) {
+            Ok(loop_set) => Ok(decided_boolean_boundary_loop_construction_result(
+                source_contour_count,
+                source_segment_count,
+                source_segment_kind_counts,
+                loop_set,
+            )),
+            Err(_) => Ok(blocked_boolean_boundary_loop_construction_result(
+                source_contour_count,
+                source_segment_count,
+                source_segment_kind_counts,
+                BooleanBoundaryLoopConstructionStage2::LoopMaterialization,
+                UncertaintyReason::Unsupported,
+            )),
+        }
+    }
+
+    /// Builds a loop set from borrowed already-decided contours and retains transfer evidence.
+    ///
+    /// This clones exact contour carriers only at the API boundary, preserving
+    /// the same retained source contour/fragment reports as the owned
+    /// constructor.
+    pub fn from_contours_borrowed_with_report(
+        contours: &[Contour2],
+    ) -> CurveResult<BooleanBoundaryLoopConstructionResult2> {
+        Self::from_contours_with_report(contours.to_vec())
     }
 
     /// Converts a decided contour set into a checked loop set while preserving
@@ -1305,6 +1471,53 @@ fn retained_status_for_loop_extraction_blocker(
     match blocker {
         UncertaintyReason::Unsupported => RetainedTopologyStatus::Unsupported,
         _ => RetainedTopologyStatus::Unresolved,
+    }
+}
+
+fn decided_boolean_boundary_loop_construction_result(
+    source_contour_count: usize,
+    source_segment_count: usize,
+    source_segment_kind_counts: SegmentKindCounts,
+    loops: BooleanBoundaryLoopSet,
+) -> BooleanBoundaryLoopConstructionResult2 {
+    let output_fragment_count = loop_set_fragment_count(&loops);
+    let output_fragment_kind_counts = loop_set_fragment_kind_counts(&loops);
+    BooleanBoundaryLoopConstructionResult2 {
+        loops: Some(loops),
+        report: BooleanBoundaryLoopConstructionReport2 {
+            stage: BooleanBoundaryLoopConstructionStage2::LoopMaterialization,
+            source_contour_count,
+            source_segment_count,
+            source_segment_kind_counts,
+            loop_count: Some(source_contour_count),
+            output_fragment_count: Some(output_fragment_count),
+            output_fragment_kind_counts: Some(output_fragment_kind_counts),
+            status: RetainedTopologyStatus::NativeExact,
+            blocker: None,
+        },
+    }
+}
+
+fn blocked_boolean_boundary_loop_construction_result(
+    source_contour_count: usize,
+    source_segment_count: usize,
+    source_segment_kind_counts: SegmentKindCounts,
+    stage: BooleanBoundaryLoopConstructionStage2,
+    blocker: UncertaintyReason,
+) -> BooleanBoundaryLoopConstructionResult2 {
+    BooleanBoundaryLoopConstructionResult2 {
+        loops: None,
+        report: BooleanBoundaryLoopConstructionReport2 {
+            stage,
+            source_contour_count,
+            source_segment_count,
+            source_segment_kind_counts,
+            loop_count: None,
+            output_fragment_count: None,
+            output_fragment_kind_counts: None,
+            status: RetainedTopologyStatus::Unsupported,
+            blocker: Some(blocker),
+        },
     }
 }
 

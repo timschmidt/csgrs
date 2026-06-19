@@ -245,6 +245,61 @@ fn boundary_contour_region_report_assigns_material_and_hole_roles() {
 }
 
 #[test]
+fn borrowed_boundary_contours_build_region_with_report() {
+    let contours = vec![rectangle(0, 0, 10, 10), rectangle(3, 3, 7, 7)];
+    let built = Region2::from_boundary_contours_borrowed_with_report(&contours, &policy()).unwrap();
+    let report = built.report();
+
+    assert!(report.status().is_native_exact());
+    assert_eq!(
+        report.stage(),
+        RegionBoundaryContourBuildStage2::RoleAssignment
+    );
+    assert_eq!(report.source_contour_count(), 2);
+    assert_eq!(report.source_segment_count(), 8);
+    assert_eq!(report.output_contour_count(), Some(2));
+    assert_eq!(report.output_segment_count(), Some(8));
+    assert_eq!(report.material_contour_count(), Some(1));
+    assert_eq!(report.hole_contour_count(), Some(1));
+    assert_eq!(report.blocker(), None);
+    assert_eq!(report.role_reports().len(), 2);
+    assert_eq!(
+        report.role_reports()[0].role(),
+        RegionBoundaryContourRole2::Material
+    );
+    assert_eq!(
+        report.role_reports()[1].role(),
+        RegionBoundaryContourRole2::Hole
+    );
+
+    assert_eq!(contours.len(), 2);
+    let region = built.region().unwrap();
+    assert_eq!(region.material_contours().len(), 1);
+    assert_eq!(region.hole_contours().len(), 1);
+}
+
+#[test]
+fn borrowed_boundary_contours_convenience_returns_decided_region() {
+    let contours = vec![rectangle(0, 0, 5, 5), rectangle(1, 1, 3, 3)];
+    let region = match Region2::from_boundary_contours_borrowed(&contours, &policy()).unwrap() {
+        Classification::Decided(region) => region,
+        Classification::Uncertain(reason) => panic!("unexpected uncertainty: {reason:?}"),
+    };
+
+    assert_eq!(contours.len(), 2);
+    assert_eq!(region.material_contours().len(), 1);
+    assert_eq!(region.hole_contours().len(), 1);
+    assert_eq!(
+        region.classify_point(&p(4, 4), &policy()),
+        Classification::Decided(RegionPointLocation::Inside)
+    );
+    assert_eq!(
+        region.classify_point(&p(2, 2), &policy()),
+        Classification::Decided(RegionPointLocation::Outside)
+    );
+}
+
+#[test]
 fn boundary_contour_nesting_rejects_crossing_or_touching_loops() {
     assert_eq!(
         Region2::from_boundary_contours(
@@ -643,6 +698,36 @@ fn unordered_line_segments_report_overlap_source_pair_blocker() {
 }
 
 #[test]
+fn borrowed_unordered_line_segments_build_region_with_report() {
+    let segments = vec![
+        line(0, 0, 4, 0),
+        line(0, 4, 4, 4),
+        line(0, 0, 0, 4),
+        line(4, 0, 4, 4),
+    ];
+
+    let built = Region2::from_unordered_line_segments_borrowed_with_report(
+        &segments,
+        FillRule::NonZero,
+        &policy(),
+    )
+    .unwrap();
+    let report = built.report();
+
+    assert!(built.region().is_some());
+    assert_eq!(segments.len(), 4);
+    assert!(report.status().is_native_exact());
+    assert_eq!(report.source_segment_count(), 4);
+    assert_eq!(
+        report.source_segment_kind_counts(),
+        SegmentKindCounts { lines: 4, arcs: 0 }
+    );
+    assert_eq!(report.arranged_segment_count(), Some(4));
+    assert_eq!(report.arranged_source_reports().len(), 4);
+    assert_eq!(report.source_reports().len(), 4);
+}
+
+#[test]
 fn unordered_native_segments_build_line_arc_region_with_source_provenance() {
     let built = Region2::from_unordered_segments_with_report(
         vec![
@@ -764,6 +849,34 @@ fn unordered_native_segments_build_line_arc_region_with_source_provenance() {
         region.classify_point(&p(2, 0), &policy()),
         Classification::Decided(RegionPointLocation::Boundary)
     );
+}
+
+#[test]
+fn borrowed_unordered_native_segments_build_line_arc_region_with_report() {
+    let segments = vec![
+        Segment2::Line(line(4, 0, 0, 0)),
+        Segment2::Arc(arc_bulge(0, 0, 4, 0, 1)),
+    ];
+
+    let built = Region2::from_unordered_segments_borrowed_with_report(
+        &segments,
+        FillRule::NonZero,
+        &policy(),
+    )
+    .unwrap();
+    let report = built.report();
+
+    assert!(built.region().is_some());
+    assert_eq!(segments.len(), 2);
+    assert!(report.status().is_native_exact());
+    assert_eq!(report.source_segment_count(), 2);
+    assert_eq!(
+        report.source_segment_kind_counts(),
+        SegmentKindCounts { lines: 1, arcs: 1 }
+    );
+    assert_eq!(report.arranged_segment_count(), Some(2));
+    assert_eq!(report.arranged_source_reports().len(), 2);
+    assert_eq!(report.source_reports().len(), 2);
 }
 
 #[test]

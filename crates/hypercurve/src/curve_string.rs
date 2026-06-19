@@ -1200,6 +1200,19 @@ impl CurveString2 {
         })
     }
 
+    /// Links a borrowed ordered sequence of open curve strings by certified endpoints.
+    ///
+    /// This is the borrowed counterpart to
+    /// [`CurveString2::link_ordered_connected_endpoints`]. It uses the same
+    /// exact pairwise endpoint-linking pipeline and report types, while letting
+    /// editing callers retain ownership of their source chains.
+    pub fn link_ordered_connected_endpoints_borrowed(
+        curve_strings: &[Self],
+        policy: &CurvePolicy,
+    ) -> CurveResult<OrderedLinkedCurveString2> {
+        Self::link_ordered_connected_endpoints(curve_strings.to_vec(), policy)
+    }
+
     /// Connects `self.end` to `other.start` with an exact line segment.
     ///
     /// This operation is the explicit-connector counterpart to
@@ -1212,7 +1225,25 @@ impl CurveString2 {
         other: &Self,
         policy: &CurvePolicy,
     ) -> CurveResult<ConnectedCurveString2> {
-        self.connect_endpoints_with_line(other, CurveStringLinkKind2::FirstEndToSecondStart, policy)
+        self.connect_end_to_start_with_line_with_report(other, policy)
+    }
+
+    /// Connects `self.end` to `other.start` with an exact line segment and retains evidence.
+    ///
+    /// This is the report-bearing entry point for the explicit-connector
+    /// operation. It materializes only when the selected endpoints are
+    /// certified distinct and records the endpoint predicate, inserted
+    /// connector index, and output segment provenance.
+    pub fn connect_end_to_start_with_line_with_report(
+        &self,
+        other: &Self,
+        policy: &CurvePolicy,
+    ) -> CurveResult<ConnectedCurveString2> {
+        self.connect_endpoints_with_line_with_report(
+            other,
+            CurveStringLinkKind2::FirstEndToSecondStart,
+            policy,
+        )
     }
 
     /// Connects a selected endpoint pair with an exact line segment.
@@ -1221,6 +1252,21 @@ impl CurveString2 {
     /// blocked as a link case, unresolved equality stays unresolved, and only a
     /// certified positive endpoint gap materializes a connector.
     pub fn connect_endpoints_with_line(
+        &self,
+        other: &Self,
+        kind: CurveStringLinkKind2,
+        policy: &CurvePolicy,
+    ) -> CurveResult<ConnectedCurveString2> {
+        self.connect_endpoints_with_line_with_report(other, kind, policy)
+    }
+
+    /// Connects a selected endpoint pair with an exact line segment and retains evidence.
+    ///
+    /// The report records the selected endpoint relation, exact/disconnected/
+    /// unresolved endpoint counts, connector placement, and full output segment
+    /// provenance. Equal endpoints are blocked as a link case rather than
+    /// producing a zero-length connector.
+    pub fn connect_endpoints_with_line_with_report(
         &self,
         other: &Self,
         kind: CurveStringLinkKind2,
@@ -1297,6 +1343,19 @@ impl CurveString2 {
     /// unresolved endpoint equality or unresolved distance ordering blocks the
     /// auto-choice; equal nearest distances are reported as boundary ambiguity.
     pub fn connect_nearest_endpoints_with_line(
+        &self,
+        other: &Self,
+        policy: &CurvePolicy,
+    ) -> CurveResult<ConnectedCurveString2> {
+        self.connect_nearest_endpoints_with_line_with_report(other, policy)
+    }
+
+    /// Connects the uniquely nearest certified-disconnected endpoint pair and retains evidence.
+    ///
+    /// All four endpoint pairs are inspected and recorded. Existing exact
+    /// endpoint equality, unresolved equality, unresolved distance ordering, or
+    /// tied nearest distances block materialization with explicit report status.
+    pub fn connect_nearest_endpoints_with_line_with_report(
         &self,
         other: &Self,
         policy: &CurvePolicy,

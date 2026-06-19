@@ -19,6 +19,8 @@ pub enum RetainedImportFormat2 {
     Step,
     /// DXF entity evidence, typically keyed by a handle table index.
     Dxf,
+    /// SVG path evidence, typically keyed by a document/path index.
+    Svg,
     /// Application-local import evidence.
     Application,
 }

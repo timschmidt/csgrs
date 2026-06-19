@@ -56,6 +56,8 @@ mod retained_status;
 mod segment;
 mod self_intersect;
 mod split;
+#[cfg(feature = "svg")]
+mod svg_io;
 mod transform;
 #[cfg(feature = "triangulation")]
 mod triangulation;
@@ -139,8 +141,10 @@ pub use boolean_boundary::{
     BooleanBoundaryChainAssemblyStage2, BooleanBoundaryChainSet,
     BooleanBoundaryContourTransferReport2, BooleanBoundaryContourTransferResult2,
     BooleanBoundaryContourTransferStage2, BooleanBoundaryFragmentSet, BooleanBoundaryLoop,
-    BooleanBoundaryLoopExtractionReport2, BooleanBoundaryLoopExtractionResult2,
-    BooleanBoundaryLoopExtractionStage2, BooleanBoundaryLoopSet, DirectedBooleanFragment,
+    BooleanBoundaryLoopConstructionReport2, BooleanBoundaryLoopConstructionResult2,
+    BooleanBoundaryLoopConstructionStage2, BooleanBoundaryLoopExtractionReport2,
+    BooleanBoundaryLoopExtractionResult2, BooleanBoundaryLoopExtractionStage2,
+    BooleanBoundaryLoopSet, DirectedBooleanFragment,
 };
 pub use bspline::{
     PolynomialBSplineBezierExtraction2, PolynomialBSplineCurve2, RationalBSplineBezierExtraction2,
@@ -258,6 +262,14 @@ pub use retained_status::RetainedTopologyStatus;
 pub use segment::{CircularArc2, LineSeg2, Segment2};
 pub use self_intersect::{SelfContactReport2, SelfContactResult2};
 pub use split::{ContourSplitMap, ContourSplitMarkers, SegmentSplitMarker, SegmentSplitPoint};
+#[cfg(feature = "svg")]
+pub use svg_io::{
+    SvgContourImportReport2, SvgContourImportResult2, SvgPathExportReport2, SvgPathExportResult2,
+    SvgPathExportTarget2, SvgPathImportReport2, SvgPathImportResult2, SvgRegionImportReport2,
+    SvgRegionImportResult2, import_svg_contour_path_data_with_report,
+    import_svg_path_data_with_report, import_svg_region_path_data_with_report,
+    retained_svg_import_record,
+};
 pub use transform::Similarity2;
 #[cfg(feature = "triangulation")]
 pub use triangulation::{FiniteTriangle2, triangulate_finite_rings};
