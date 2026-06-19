@@ -2832,13 +2832,12 @@ fn arrangement_cell_complex_sources_match(
             return Ok(true);
         }
     }
-    let preflight = workspace_evaluation_for_replay(
+    let evaluation = workspace_evaluation_for_replay(
         left,
         right,
         ExactBooleanRequest::new(operation, validation),
-    )?
-    .preflight()
-    .clone();
+    )?;
+    let preflight = evaluation.preflight();
     preflight.validate()?;
     Ok(preflight.support == ExactBooleanSupport::CertifiedArrangementCellComplex)
 }
@@ -4023,9 +4022,8 @@ impl ExactBooleanPreflight {
         request: ExactBooleanRequest,
     ) -> Result<(), ExactReportValidationError> {
         self.validate()?;
-        let replay = workspace_evaluation_for_replay(left, right, request)
-            .map(|evaluation| evaluation.preflight().clone())?;
-        if self == &replay {
+        let replay = workspace_evaluation_for_replay(left, right, request)?;
+        if self == replay.preflight() {
             Ok(())
         } else {
             Err(ExactReportValidationError::SourceReplayMismatch)
