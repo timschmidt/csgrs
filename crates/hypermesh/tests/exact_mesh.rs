@@ -1401,15 +1401,6 @@ fn exact_closed_convex_boolean_is_publicly_replayable() {
         ExactReportFreshness::StaleStatusEvidence,
         "{stale_separated_output:?}"
     );
-    separated
-        .validate_operation_against_sources(
-            &separated_left,
-            &separated_right,
-            ExactBooleanOperation::Intersection,
-            ValidationPolicy::CLOSED,
-            ExactBoundaryBooleanPolicy::Reject,
-        )
-        .unwrap();
     let separated_evaluation = exact_boolean_evaluation(
         &separated_left,
         &separated_right,
@@ -1419,6 +1410,9 @@ fn exact_closed_convex_boolean_is_publicly_replayable() {
         ),
     );
     separated_evaluation.validate().unwrap();
+    separated_evaluation
+        .validate_materialized_result_against_sources(&separated_left, &separated_right)
+        .unwrap();
     let mut relabeled_winding_report = separated_evaluation.clone();
     relabeled_winding_report
         .certifications
