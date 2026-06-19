@@ -4206,11 +4206,6 @@ impl ExactBooleanPreflight {
         ) && self.blocker.is_none()
     }
 
-    /// Return whether this request is waiting on explicit caller boundary policy.
-    pub const fn requires_boundary_policy(&self) -> bool {
-        matches!(self.support, ExactBooleanSupport::RequiresBoundaryPolicy)
-    }
-
     /// Returns whether this preflight is blocked by unresolved exact
     /// predicate or construction evidence.
     pub fn requires_refinement(&self) -> bool {

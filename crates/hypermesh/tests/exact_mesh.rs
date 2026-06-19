@@ -3836,7 +3836,15 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
         ),
         |rejected_policy_evaluation| {
             assert!(
-                rejected_policy_evaluation.requires_boundary_policy(),
+                !rejected_policy_evaluation.is_certified(),
+                "{rejected_policy_evaluation:?}"
+            );
+            assert!(
+                rejected_policy_evaluation.materialized_result().is_none(),
+                "{rejected_policy_evaluation:?}"
+            );
+            assert!(
+                rejected_policy_evaluation.has_blocker(),
                 "{rejected_policy_evaluation:?}"
             );
         },
@@ -3894,8 +3902,16 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
         ),
         |rejected_policy_evaluation| {
             assert!(
-                rejected_policy_evaluation.requires_boundary_policy(),
+                !rejected_policy_evaluation.is_certified(),
                 "strict replay should not certify a boundary-policy shortcut"
+            );
+            assert!(
+                rejected_policy_evaluation.materialized_result().is_none(),
+                "strict replay should not materialize a boundary-policy shortcut"
+            );
+            assert!(
+                rejected_policy_evaluation.has_blocker(),
+                "strict replay should retain the boundary-policy blocker"
             );
         },
     );

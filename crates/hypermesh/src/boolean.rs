@@ -2425,11 +2425,6 @@ impl ExactBooleanEvaluation {
             .is_certified_lower_dimensional_regularized_solid()
     }
 
-    /// Return whether this evaluation is waiting on explicit caller boundary policy.
-    pub fn requires_boundary_policy(&self) -> bool {
-        self.preflight.requires_boundary_policy()
-    }
-
     /// Return whether graph extraction retained unknown events before policy checks.
     pub fn graph_had_unknowns(&self) -> bool {
         self.preflight.graph_had_unknowns()
