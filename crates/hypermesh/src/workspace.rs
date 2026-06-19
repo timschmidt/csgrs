@@ -643,15 +643,13 @@ fn cached_retained_materialization_index(
     retained_arrangement_attempt: Option<&ExactArrangementBooleanAttempt>,
 ) -> Result<Option<usize>, MeshError> {
     if let Some(index) = cached_by_request_index(cache, request) {
-        cache[index]
-            .1
-            .validate_request_against_sources_with_retained_attempt(
-                left,
-                right,
-                request,
-                retained_arrangement_attempt,
-            )
-            .map_err(workspace_report_validation_error)?;
+        validate_replayable_result_for_cache(
+            left,
+            right,
+            request,
+            retained_arrangement_attempt,
+            &cache[index].1,
+        )?;
         return Ok(Some(index));
     }
     Ok(None)
