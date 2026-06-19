@@ -1193,6 +1193,43 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
         Some(endpoint_cache.max_structural_bucket_size()),
         result.report().endpoint_graph_max_structural_bucket_size()
     );
+    let arranged_endpoint_bucket_cache = endpoint_cache.endpoint_bucket_cache();
+    assert_eq!(
+        arranged_endpoint_bucket_cache.endpoint_count(),
+        endpoint_cache.endpoint_count()
+    );
+    assert_eq!(
+        arranged_endpoint_bucket_cache.bucket_count(),
+        endpoint_cache.structural_bucket_count()
+    );
+    assert_eq!(
+        arranged_endpoint_bucket_cache.singleton_bucket_count(),
+        endpoint_cache.structural_singleton_bucket_count()
+    );
+    assert_eq!(
+        arranged_endpoint_bucket_cache.max_bucket_size(),
+        endpoint_cache.max_structural_bucket_size()
+    );
+    assert_eq!(arranged_endpoint_bucket_cache.buckets().len(), 4);
+    let first_arranged_endpoint_bucket = &arranged_endpoint_bucket_cache.buckets()[0];
+    assert_eq!(first_arranged_endpoint_bucket.point(), &p(4, 0));
+    assert_eq!(first_arranged_endpoint_bucket.endpoints().len(), 2);
+    assert_eq!(
+        first_arranged_endpoint_bucket.endpoints()[0].arranged_segment_index(),
+        0
+    );
+    assert_eq!(
+        first_arranged_endpoint_bucket.endpoints()[0].endpoint(),
+        RegionLineSegmentArrangedEndpoint2::Start
+    );
+    assert_eq!(
+        first_arranged_endpoint_bucket.endpoints()[1].arranged_segment_index(),
+        1
+    );
+    assert_eq!(
+        first_arranged_endpoint_bucket.endpoints()[1].endpoint(),
+        RegionLineSegmentArrangedEndpoint2::End
+    );
     assert_eq!(endpoint_cache.dangling_endpoint_count(), 0);
     assert_eq!(endpoint_cache.branch_endpoint_count(), 0);
     assert_eq!(endpoint_cache.blocker_arranged_segment_index(), None);
@@ -1396,6 +1433,43 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
     assert_eq!(
         Some(endpoint_cache.max_structural_bucket_size()),
         result.report().endpoint_graph_max_structural_bucket_size()
+    );
+    let arranged_endpoint_bucket_cache = endpoint_cache.endpoint_bucket_cache();
+    assert_eq!(
+        arranged_endpoint_bucket_cache.endpoint_count(),
+        endpoint_cache.endpoint_count()
+    );
+    assert_eq!(
+        arranged_endpoint_bucket_cache.bucket_count(),
+        endpoint_cache.structural_bucket_count()
+    );
+    assert_eq!(
+        arranged_endpoint_bucket_cache.singleton_bucket_count(),
+        endpoint_cache.structural_singleton_bucket_count()
+    );
+    assert_eq!(
+        arranged_endpoint_bucket_cache.max_bucket_size(),
+        endpoint_cache.max_structural_bucket_size()
+    );
+    assert_eq!(arranged_endpoint_bucket_cache.buckets().len(), 2);
+    let first_arranged_endpoint_bucket = &arranged_endpoint_bucket_cache.buckets()[0];
+    assert_eq!(first_arranged_endpoint_bucket.point(), &p(4, 0));
+    assert_eq!(first_arranged_endpoint_bucket.endpoints().len(), 2);
+    assert_eq!(
+        first_arranged_endpoint_bucket.endpoints()[0].arranged_segment_index(),
+        0
+    );
+    assert_eq!(
+        first_arranged_endpoint_bucket.endpoints()[0].endpoint(),
+        RegionLineSegmentArrangedEndpoint2::Start
+    );
+    assert_eq!(
+        first_arranged_endpoint_bucket.endpoints()[1].arranged_segment_index(),
+        1
+    );
+    assert_eq!(
+        first_arranged_endpoint_bucket.endpoints()[1].endpoint(),
+        RegionLineSegmentArrangedEndpoint2::End
     );
     assert_eq!(
         Some(endpoint_cache.dangling_endpoint_count()),

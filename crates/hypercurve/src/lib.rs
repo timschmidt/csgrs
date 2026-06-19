@@ -257,6 +257,8 @@ pub use region_fragments::{
     RegionFragmentBuildStage2, RegionFragmentSet,
 };
 pub use region_nesting::{
+    ExactCurveArrangementArrangedEndpointBucket2,
+    ExactCurveArrangementArrangedEndpointBucketCache2, ExactCurveArrangementArrangedEndpointRef2,
     ExactCurveArrangementAttempt2, ExactCurveArrangementEndpointGraphCache2,
     ExactCurveArrangementEvaluation2, ExactCurveArrangementOutputCache2,
     ExactCurveArrangementRequest2, ExactCurveArrangementResult2,
