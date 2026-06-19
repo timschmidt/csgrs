@@ -10,12 +10,12 @@ use hypercurve::{
     CurveStringIntersectionPredicatePath2, CurveStringIntersectionQueryPath2,
     CurveStringLineMergePredicatePath2, CurveStringLineMergeStage2, CurveStringLinkKind2,
     CurveStringLinkPredicatePath2, CurveStringLinkSourceInput2, CurveStringLinkStage2,
-    CurveStringOrderedLinkStage2, CurveStringPreparedCacheFreshness2,
-    CurveStringRegionTrimBoundaryPredicatePath2, CurveStringRegionTrimQueryPath2,
-    CurveStringRegionTrimStage2, CurveStringTrimInputPath2, CurveStringTrimPoint2,
-    CurveStringTrimPredicatePath2, IntersectionKind, LineArcIntersection, LineArcOrder, LineSeg2,
-    Point2, Real, Region2, RegionContourRole, RegionPointLocation, Segment2, SegmentIntersection,
-    SegmentKind, SegmentKindCounts, UncertaintyReason,
+    CurveStringOrderedLinkPredicatePath2, CurveStringOrderedLinkStage2,
+    CurveStringPreparedCacheFreshness2, CurveStringRegionTrimBoundaryPredicatePath2,
+    CurveStringRegionTrimQueryPath2, CurveStringRegionTrimStage2, CurveStringTrimInputPath2,
+    CurveStringTrimPoint2, CurveStringTrimPredicatePath2, IntersectionKind, LineArcIntersection,
+    LineArcOrder, LineSeg2, Point2, Real, Region2, RegionContourRole, RegionPointLocation,
+    Segment2, SegmentIntersection, SegmentKind, SegmentKindCounts, UncertaintyReason,
 };
 
 fn s(value: i32) -> Real {
@@ -1238,6 +1238,10 @@ fn curve_string_ordered_link_materializes_multistep_chain() {
         linked.report().stage(),
         CurveStringOrderedLinkStage2::ChainMaterialization
     );
+    assert_eq!(
+        linked.report().predicate_path(),
+        CurveStringOrderedLinkPredicatePath2::RepeatedExhaustiveEndpointPairClassification
+    );
     assert_eq!(linked.report().source_curve_string_count(), 3);
     assert_eq!(linked.report().attempted_link_step_count(), 2);
     assert_eq!(linked.report().materialized_link_step_count(), 2);
@@ -1351,6 +1355,10 @@ fn borrowed_curve_string_ordered_link_materializes_multistep_chain() {
         linked.report().stage(),
         CurveStringOrderedLinkStage2::ChainMaterialization
     );
+    assert_eq!(
+        linked.report().predicate_path(),
+        CurveStringOrderedLinkPredicatePath2::RepeatedExhaustiveEndpointPairClassification
+    );
     assert_eq!(linked.report().source_curve_string_count(), 3);
     assert_eq!(linked.report().attempted_link_step_count(), 2);
     assert_eq!(linked.report().materialized_link_step_count(), 2);
@@ -1453,6 +1461,10 @@ fn curve_string_ordered_link_reports_disconnected_step() {
         linked.report().stage(),
         CurveStringOrderedLinkStage2::StepLinking
     );
+    assert_eq!(
+        linked.report().predicate_path(),
+        CurveStringOrderedLinkPredicatePath2::RepeatedExhaustiveEndpointPairClassification
+    );
     assert_eq!(linked.report().blocker(), Some(UncertaintyReason::Boundary));
     assert_eq!(linked.report().attempted_link_step_count(), 1);
     assert_eq!(linked.report().materialized_link_step_count(), 0);
@@ -1513,6 +1525,10 @@ fn borrowed_curve_string_ordered_link_reports_disconnected_step() {
     assert_eq!(
         linked.report().stage(),
         CurveStringOrderedLinkStage2::StepLinking
+    );
+    assert_eq!(
+        linked.report().predicate_path(),
+        CurveStringOrderedLinkPredicatePath2::RepeatedExhaustiveEndpointPairClassification
     );
     assert_eq!(linked.report().blocker(), Some(UncertaintyReason::Boundary));
     assert_eq!(linked.report().attempted_link_step_count(), 1);

@@ -282,6 +282,7 @@ pub struct CurveStringOrderedLinkStepReport2 {
 #[derive(Clone, Debug, PartialEq)]
 pub struct CurveStringOrderedLinkReport2 {
     stage: CurveStringOrderedLinkStage2,
+    predicate_path: CurveStringOrderedLinkPredicatePath2,
     source_curve_string_count: usize,
     source_segment_kind_counts: SegmentKindCounts,
     attempted_link_step_count: usize,
@@ -302,6 +303,13 @@ pub enum CurveStringOrderedLinkStage2 {
     StepLinking,
     /// The full ordered chain was materialized.
     ChainMaterialization,
+}
+
+/// Exact predicate path used while linking an ordered open-chain sequence.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum CurveStringOrderedLinkPredicatePath2 {
+    /// Each ordered step used the exhaustive exact pairwise endpoint-link predicate path.
+    RepeatedExhaustiveEndpointPairClassification,
 }
 
 /// Result of report-bearing ordered open-chain linking.
@@ -1359,6 +1367,8 @@ impl CurveString2 {
                         curve_string: None,
                         report: CurveStringOrderedLinkReport2 {
                             stage: CurveStringOrderedLinkStage2::StepLinking,
+                            predicate_path: CurveStringOrderedLinkPredicatePath2::
+                                RepeatedExhaustiveEndpointPairClassification,
                             source_curve_string_count,
                             attempted_link_step_count,
                             materialized_link_step_count,
@@ -1379,6 +1389,8 @@ impl CurveString2 {
         Ok(OrderedLinkedCurveString2 {
             report: CurveStringOrderedLinkReport2 {
                 stage: CurveStringOrderedLinkStage2::ChainMaterialization,
+                predicate_path: CurveStringOrderedLinkPredicatePath2::
+                    RepeatedExhaustiveEndpointPairClassification,
                 source_curve_string_count,
                 source_segment_kind_counts,
                 attempted_link_step_count: steps.len(),
@@ -7457,6 +7469,11 @@ impl CurveStringOrderedLinkReport2 {
     /// Returns the furthest exact ordered-link stage reached.
     pub const fn stage(&self) -> CurveStringOrderedLinkStage2 {
         self.stage
+    }
+
+    /// Returns the exact predicate path used while linking ordered steps.
+    pub const fn predicate_path(&self) -> CurveStringOrderedLinkPredicatePath2 {
+        self.predicate_path
     }
 
     /// Returns the source curve-string count captured by this report.
