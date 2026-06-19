@@ -924,7 +924,7 @@ mod tests {
         assert_eq!(workspace.materializations.len(), 1);
 
         let mut corrupt_workspace = ExactBooleanWorkspace::new(&left, &right);
-        corrupt_workspace.materialize_ref(request).cloned().unwrap();
+        corrupt_workspace.materialize_ref(request).unwrap();
         corrupt_workspace.evaluations.clear();
         let graph_had_unknowns = corrupt_workspace.materializations[0].1.graph_had_unknowns();
         corrupt_workspace.materializations[0]
@@ -964,8 +964,8 @@ mod tests {
         assert_eq!(workspace.materializations.len(), 1);
         assert_eq!(workspace.materializations[0].1, evaluated_result);
         assert_eq!(
-            workspace.materialize_ref(request).cloned().unwrap(),
-            evaluated_result
+            workspace.materialize_ref(request).unwrap(),
+            &evaluated_result
         );
         assert_eq!(workspace.materializations.len(), 1);
         let borrowed = workspace.materialize_ref(request).unwrap() as *const ExactBooleanResult;
@@ -1042,10 +1042,7 @@ mod tests {
             .unwrap();
         assert_eq!(materialized, expected_result);
         assert_eq!(workspace.materializations.len(), 1);
-        assert_eq!(
-            workspace.materialize_ref(request).cloned().unwrap(),
-            materialized
-        );
+        assert_eq!(workspace.materialize_ref(request).unwrap(), &materialized);
         assert_eq!(workspace.materializations.len(), 1);
 
         let mut relabelled = materialized.clone();
@@ -1099,10 +1096,7 @@ mod tests {
             .coplanar_volumetric_evidence;
         assert_eq!(materialized, expected_result);
         assert_eq!(workspace.materializations.len(), 1);
-        assert_eq!(
-            workspace.materialize_ref(request).cloned().unwrap(),
-            materialized
-        );
+        assert_eq!(workspace.materialize_ref(request).unwrap(), &materialized);
         assert_eq!(workspace.materializations.len(), 1);
         assert_eq!(
             workspace
@@ -1147,10 +1141,7 @@ mod tests {
         .0;
         materialized.validate().unwrap();
         assert!(materialized.matches_request(request));
-        assert_eq!(
-            workspace.materialize_ref(request).cloned().unwrap(),
-            materialized
-        );
+        assert_eq!(workspace.materialize_ref(request).unwrap(), &materialized);
         let evaluation = workspace.evaluate(request).unwrap();
         evaluation.validate().unwrap();
         assert_eq!(
