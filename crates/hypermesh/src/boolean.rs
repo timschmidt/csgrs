@@ -1841,7 +1841,7 @@ impl ExactBooleanCertificationSet {
     ) -> Result<(), ExactReportValidationError> {
         self.validate_for_request(request)?;
         let replay = workspace_evaluation_for_replay(left, right, request)?;
-        if self == &replay.certifications {
+        if self == replay.certifications() {
             Ok(())
         } else {
             Err(ExactReportValidationError::SourceReplayMismatch)
@@ -2291,7 +2291,8 @@ impl ExactBooleanEvaluation {
     ) -> Result<(), ExactReportValidationError> {
         self.validate()?;
         let replay = workspace_evaluation_for_replay(left, right, self.request)?;
-        if self.preflight != replay.preflight || self.certifications != replay.certifications {
+        if &self.preflight != replay.preflight() || &self.certifications != replay.certifications()
+        {
             return Err(ExactReportValidationError::SourceReplayMismatch);
         }
         self.validate_materialized_result_against_sources(left, right)?;
@@ -11825,13 +11826,13 @@ mod tests {
         preflight.validate().unwrap();
         preflight.validate_against_sources(&left, &right).unwrap();
 
-        let result = test_evaluation(request, &left, &right);
+        let evaluation = test_evaluation(request, &left, &right);
         assert_eq!(
-            result.preflight.support,
+            evaluation.preflight().support,
             ExactBooleanSupport::CertifiedOpenSurfaceDisjoint,
-            "{result:?}"
+            "{evaluation:?}"
         );
-        let materialized = result
+        let materialized = evaluation
             .materialized_result()
             .expect("open-surface disjoint support should materialize");
         assert!(
@@ -11841,8 +11842,10 @@ mod tests {
             ),
             "{materialized:?}"
         );
-        result.validate().unwrap();
-        result.validate_against_sources(&left, &right).unwrap();
+        materialized.validate().unwrap();
+        materialized
+            .validate_against_sources(&left, &right)
+            .unwrap();
     }
 
     #[test]
