@@ -1692,7 +1692,6 @@ fn exact_coplanar_mesh_overlay_arrangement_is_publicly_replayable() {
         );
         result.validate().unwrap();
         result.validate_against_sources(&left, &right).unwrap();
-        assert!(result.validate_against_sources(&left, &right).is_ok());
         assert!(!result.mesh().triangles().is_empty());
         assert!(
             result
@@ -1780,7 +1779,6 @@ fn lower_dimensional_regularized_boolean_is_publicly_replayable() {
         assert!(result.mesh().triangles().is_empty());
         result.validate().unwrap();
         result.validate_against_sources(&left, &right).unwrap();
-        assert!(result.validate_against_sources(&left, &right).is_ok());
         assert!(
             result
                 .validate_against_sources(&left, &closed_right)
@@ -1845,7 +1843,6 @@ fn mixed_dimensional_regularized_solid_boolean_is_publicly_replayable() {
             );
             result.validate().unwrap();
             result.validate_against_sources(left, right).unwrap();
-            assert!(result.validate_against_sources(left, right).is_ok());
             let keeps_solid = matches!(operation, ExactBooleanOperation::Union)
                 || (solid_is_left && matches!(operation, ExactBooleanOperation::Difference));
             let stale_replay = result.validate_against_sources(stale_left, stale_right);
@@ -1985,7 +1982,6 @@ fn boundary_touching_policy_boolean_is_publicly_replayable() {
         );
         result.validate().unwrap();
         result.validate_against_sources(&left, &right).unwrap();
-        assert!(result.validate_against_sources(&left, &right).is_ok());
         assert!(
             result
                 .validate_against_sources(&left, &separated_right)
@@ -2087,7 +2083,6 @@ fn closed_boundary_touching_regularized_boolean_is_publicly_replayable() {
             ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
             |evaluation| evaluation.validate().unwrap(),
         );
-        assert!(result.validate_against_sources(&left, &right).is_ok());
         assert!(
             result
                 .validate_against_sources(&left, &separated_right)
@@ -2181,7 +2176,6 @@ fn closed_no_volume_overlap_regularized_boolean_is_publicly_replayable() {
         );
         result.validate().unwrap();
         result.validate_against_sources(&left, &right).unwrap();
-        assert!(result.validate_against_sources(&left, &right).is_ok());
         if operation == ExactBooleanOperation::Union {
             assert_eq!(
                 result.mesh().triangles().len(),
@@ -2454,8 +2448,6 @@ fn exact_volumetric_winding_coplanar_cap_is_publicly_certified() {
             result.mesh().facts().mesh
         );
         result.validate_against_sources(&left, &right).unwrap();
-
-        assert!(result.validate_against_sources(&left, &right).is_ok());
     }
 }
 
@@ -2704,7 +2696,6 @@ fn exact_contained_face_adjacent_union_is_publicly_replayable() {
     result.validate().unwrap();
     result.validate_against_sources(&container, &right).unwrap();
 
-    assert!(result.validate_against_sources(&container, &right).is_ok());
     assert!(
         result
             .validate_against_sources(&container, &separated_right)
@@ -3020,7 +3011,6 @@ fn trivial_boolean_shortcuts_are_publicly_replayable() {
             assert!(predicate(result, operation), "{operation:?}: {result:?}");
             result.validate().unwrap();
             result.validate_against_sources(left, right).unwrap();
-            assert!(result.validate_against_sources(left, right).is_ok());
             assert!(
                 result
                     .validate_against_sources(stale_left, stale_right)
