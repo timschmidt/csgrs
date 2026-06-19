@@ -1314,63 +1314,41 @@ impl Region2 {
             .evaluate(policy)?
             .region_result)
     }
+}
 
-    fn from_unordered_line_segments_with_report_impl(
-        segments: Vec<LineSeg2>,
-        fill_rule: FillRule,
-        policy: &CurvePolicy,
-    ) -> CurveResult<RegionLineSegmentRegionBuildResult2> {
-        if segments.is_empty() {
-            return Err(CurveError::EmptyCurveString);
+fn evaluate_unordered_line_segments_region_result(
+    segments: Vec<LineSeg2>,
+    fill_rule: FillRule,
+    policy: &CurvePolicy,
+) -> CurveResult<RegionLineSegmentRegionBuildResult2> {
+    if segments.is_empty() {
+        return Err(CurveError::EmptyCurveString);
+    }
+
+    let arranged = match arrange_line_segments_at_point_intersections(&segments, policy)? {
+        Ok(arranged) => arranged,
+        Err((split_report, blocker)) => {
+            return Ok(RegionLineSegmentRegionBuildResult2 {
+                region: None,
+                report: blocked_line_segment_region_report(
+                    segments.len(),
+                    line_segment_kind_counts(segments.len()),
+                    Some(split_report),
+                    None,
+                    Vec::new(),
+                    LineSegmentRingAssemblyReportParts::default(),
+                    RegionLineSegmentRegionBuildStage2::RingAssembly,
+                    retained_status_for_line_segment_region_blocker(blocker),
+                    blocker,
+                ),
+            });
         }
+    };
 
-        let arranged = match arrange_line_segments_at_point_intersections(&segments, policy)? {
-            Ok(arranged) => arranged,
-            Err((split_report, blocker)) => {
-                return Ok(RegionLineSegmentRegionBuildResult2 {
-                    region: None,
-                    report: blocked_line_segment_region_report(
-                        segments.len(),
-                        line_segment_kind_counts(segments.len()),
-                        Some(split_report),
-                        None,
-                        Vec::new(),
-                        LineSegmentRingAssemblyReportParts::default(),
-                        RegionLineSegmentRegionBuildStage2::RingAssembly,
-                        retained_status_for_line_segment_region_blocker(blocker),
-                        blocker,
-                    ),
-                });
-            }
-        };
-
-        let (endpoint_graph, endpoint_counts) =
-            match validate_arranged_line_endpoint_graph(&arranged.segments, policy) {
-                Ok(endpoint_graph) => endpoint_graph,
-                Err((endpoint_graph, counts, blocker)) => {
-                    return Ok(RegionLineSegmentRegionBuildResult2 {
-                        region: None,
-                        report: blocked_line_segment_region_report(
-                            segments.len(),
-                            line_segment_kind_counts(segments.len()),
-                            Some(arranged.report),
-                            Some(endpoint_graph),
-                            line_arranged_source_reports(&arranged.segments),
-                            LineSegmentRingAssemblyReportParts {
-                                counts,
-                                ..LineSegmentRingAssemblyReportParts::default()
-                            },
-                            RegionLineSegmentRegionBuildStage2::RingAssembly,
-                            retained_status_for_line_segment_region_blocker(blocker),
-                            blocker,
-                        ),
-                    });
-                }
-            };
-
-        let assembled = match assemble_unordered_line_segment_rings(&arranged.segments, policy)? {
-            Ok(assembled) => assembled,
-            Err((report, blocker)) => {
+    let (endpoint_graph, endpoint_counts) =
+        match validate_arranged_line_endpoint_graph(&arranged.segments, policy) {
+            Ok(endpoint_graph) => endpoint_graph,
+            Err((endpoint_graph, counts, blocker)) => {
                 return Ok(RegionLineSegmentRegionBuildResult2 {
                     region: None,
                     report: blocked_line_segment_region_report(
@@ -1379,7 +1357,10 @@ impl Region2 {
                         Some(arranged.report),
                         Some(endpoint_graph),
                         line_arranged_source_reports(&arranged.segments),
-                        report,
+                        LineSegmentRingAssemblyReportParts {
+                            counts,
+                            ..LineSegmentRingAssemblyReportParts::default()
+                        },
                         RegionLineSegmentRegionBuildStage2::RingAssembly,
                         retained_status_for_line_segment_region_blocker(blocker),
                         blocker,
@@ -1388,118 +1369,129 @@ impl Region2 {
             }
         };
 
-        let mut contours = Vec::with_capacity(assembled.rings.len());
-        for ring in assembled.rings {
-            let contour = Contour2::try_new_with_fill_rule(
-                ring.into_iter().map(Segment2::Line).collect(),
-                fill_rule,
-            )?;
-            contours.push(contour);
+    let assembled = match assemble_unordered_line_segment_rings(&arranged.segments, policy)? {
+        Ok(assembled) => assembled,
+        Err((report, blocker)) => {
+            return Ok(RegionLineSegmentRegionBuildResult2 {
+                region: None,
+                report: blocked_line_segment_region_report(
+                    segments.len(),
+                    line_segment_kind_counts(segments.len()),
+                    Some(arranged.report),
+                    Some(endpoint_graph),
+                    line_arranged_source_reports(&arranged.segments),
+                    report,
+                    RegionLineSegmentRegionBuildStage2::RingAssembly,
+                    retained_status_for_line_segment_region_blocker(blocker),
+                    blocker,
+                ),
+            });
         }
+    };
 
-        let built = Region2::from_boundary_contours_with_report(contours, policy)?;
-        let status = built.report().status();
-        let blocker = built.report().blocker();
-        let boundary_build_report = built.report().clone();
-        let output_ring_count = boundary_build_report.output_contour_count();
-        let output_boundary_segment_count = boundary_build_report.output_segment_count();
-        let output_boundary_segment_kind_counts = built.region().map(region_segment_kind_counts);
-        Ok(RegionLineSegmentRegionBuildResult2 {
-            region: built.into_region(),
-            report: RegionLineSegmentRegionBuildReport2 {
-                stage: RegionLineSegmentRegionBuildStage2::RegionRoleAssignment,
-                source_segment_count: segments.len(),
-                source_segment_kind_counts: line_segment_kind_counts(segments.len()),
-                arranged_segment_count: Some(arranged.segments.len()),
-                arranged_segment_kind_counts: Some(line_segment_kind_counts(
-                    arranged.segments.len(),
-                )),
-                split_predicate_path: arranged.report.predicate_path,
-                endpoint_graph_predicate_path: Some(
-                    RegionLineSegmentEndpointGraphPredicatePath2::ExactStructuralEndpointBuckets,
-                ),
-                ring_assembly_predicate_path: Some(
-                    RegionLineSegmentRingAssemblyPredicatePath2::ExactEndpointBucketTraversal,
-                ),
-                split_candidate_pair_count: arranged.report.candidate_pair_count,
-                split_skipped_aabb_pair_count: arranged.report.skipped_aabb_pair_count,
-                split_tested_pair_count: arranged.report.tested_pair_count,
-                split_intersection_event_count: arranged.report.intersection_event_count,
-                split_point_relation_count: arranged.report.point_relation_count,
-                split_overlap_relation_count: arranged.report.overlap_relation_count,
-                split_uncertain_relation_count: arranged.report.uncertain_relation_count,
-                split_intersection_points: arranged.report.intersection_points,
-                split_intersection_reports: arranged.report.intersection_reports,
-                split_output_segment_count: Some(arranged.segments.len()),
-                split_blocker_first_source_segment_index: arranged
-                    .report
-                    .blocker_first_source_segment_index,
-                split_blocker_first_source_segment_kind: arranged
-                    .report
-                    .blocker_first_source_segment_kind,
-                split_blocker_first_source_start_point: arranged
-                    .report
-                    .blocker_first_source_start_point,
-                split_blocker_first_source_end_point: arranged
-                    .report
-                    .blocker_first_source_end_point,
-                split_blocker_second_source_segment_index: arranged
-                    .report
-                    .blocker_second_source_segment_index,
-                split_blocker_second_source_segment_kind: arranged
-                    .report
-                    .blocker_second_source_segment_kind,
-                split_blocker_second_source_start_point: arranged
-                    .report
-                    .blocker_second_source_start_point,
-                split_blocker_second_source_end_point: arranged
-                    .report
-                    .blocker_second_source_end_point,
-                endpoint_graph_endpoint_count: Some(endpoint_graph.endpoint_count),
-                endpoint_graph_structural_bucket_count: Some(
-                    endpoint_graph.structural_bucket_count,
-                ),
-                endpoint_graph_structural_singleton_bucket_count: Some(
-                    endpoint_graph.structural_singleton_bucket_count,
-                ),
-                endpoint_graph_max_structural_bucket_size: Some(
-                    endpoint_graph.max_structural_bucket_size,
-                ),
-                endpoint_graph_dangling_endpoint_count: Some(
-                    endpoint_graph.dangling_endpoint_count,
-                ),
-                endpoint_graph_branch_endpoint_count: Some(endpoint_graph.branch_endpoint_count),
-                endpoint_graph_blocker_arranged_segment_index: endpoint_graph
-                    .blocker_arranged_segment_index,
-                endpoint_graph_blocker_endpoint: endpoint_graph.blocker_endpoint,
-                endpoint_graph_blocker_point: endpoint_graph.blocker_point,
-                attempted_endpoint_connection_count: assembled
-                    .counts
-                    .attempted_endpoint_connection_count
-                    + endpoint_counts.attempted_endpoint_connection_count,
-                exact_endpoint_connection_count: assembled.counts.exact_endpoint_connection_count
-                    + endpoint_counts.exact_endpoint_connection_count,
-                disconnected_endpoint_connection_count: assembled
-                    .counts
-                    .disconnected_endpoint_connection_count
-                    + endpoint_counts.disconnected_endpoint_connection_count,
-                unresolved_endpoint_connection_count: assembled
-                    .counts
-                    .unresolved_endpoint_connection_count
-                    + endpoint_counts.unresolved_endpoint_connection_count,
-                reversed_source_segment_count: assembled.reversed_source_segment_count,
-                output_ring_count,
-                output_boundary_segment_count,
-                output_boundary_segment_kind_counts,
-                arranged_source_reports: line_arranged_source_reports(&arranged.segments),
-                source_reports: assembled.source_reports,
-                boundary_build_report: Some(boundary_build_report),
-                status,
-                blocker,
-            },
-        })
+    let mut contours = Vec::with_capacity(assembled.rings.len());
+    for ring in assembled.rings {
+        let contour = Contour2::try_new_with_fill_rule(
+            ring.into_iter().map(Segment2::Line).collect(),
+            fill_rule,
+        )?;
+        contours.push(contour);
     }
 
+    let built = Region2::from_boundary_contours_with_report(contours, policy)?;
+    let status = built.report().status();
+    let blocker = built.report().blocker();
+    let boundary_build_report = built.report().clone();
+    let output_ring_count = boundary_build_report.output_contour_count();
+    let output_boundary_segment_count = boundary_build_report.output_segment_count();
+    let output_boundary_segment_kind_counts = built.region().map(region_segment_kind_counts);
+    Ok(RegionLineSegmentRegionBuildResult2 {
+        region: built.into_region(),
+        report: RegionLineSegmentRegionBuildReport2 {
+            stage: RegionLineSegmentRegionBuildStage2::RegionRoleAssignment,
+            source_segment_count: segments.len(),
+            source_segment_kind_counts: line_segment_kind_counts(segments.len()),
+            arranged_segment_count: Some(arranged.segments.len()),
+            arranged_segment_kind_counts: Some(line_segment_kind_counts(arranged.segments.len())),
+            split_predicate_path: arranged.report.predicate_path,
+            endpoint_graph_predicate_path: Some(
+                RegionLineSegmentEndpointGraphPredicatePath2::ExactStructuralEndpointBuckets,
+            ),
+            ring_assembly_predicate_path: Some(
+                RegionLineSegmentRingAssemblyPredicatePath2::ExactEndpointBucketTraversal,
+            ),
+            split_candidate_pair_count: arranged.report.candidate_pair_count,
+            split_skipped_aabb_pair_count: arranged.report.skipped_aabb_pair_count,
+            split_tested_pair_count: arranged.report.tested_pair_count,
+            split_intersection_event_count: arranged.report.intersection_event_count,
+            split_point_relation_count: arranged.report.point_relation_count,
+            split_overlap_relation_count: arranged.report.overlap_relation_count,
+            split_uncertain_relation_count: arranged.report.uncertain_relation_count,
+            split_intersection_points: arranged.report.intersection_points,
+            split_intersection_reports: arranged.report.intersection_reports,
+            split_output_segment_count: Some(arranged.segments.len()),
+            split_blocker_first_source_segment_index: arranged
+                .report
+                .blocker_first_source_segment_index,
+            split_blocker_first_source_segment_kind: arranged
+                .report
+                .blocker_first_source_segment_kind,
+            split_blocker_first_source_start_point: arranged
+                .report
+                .blocker_first_source_start_point,
+            split_blocker_first_source_end_point: arranged.report.blocker_first_source_end_point,
+            split_blocker_second_source_segment_index: arranged
+                .report
+                .blocker_second_source_segment_index,
+            split_blocker_second_source_segment_kind: arranged
+                .report
+                .blocker_second_source_segment_kind,
+            split_blocker_second_source_start_point: arranged
+                .report
+                .blocker_second_source_start_point,
+            split_blocker_second_source_end_point: arranged.report.blocker_second_source_end_point,
+            endpoint_graph_endpoint_count: Some(endpoint_graph.endpoint_count),
+            endpoint_graph_structural_bucket_count: Some(endpoint_graph.structural_bucket_count),
+            endpoint_graph_structural_singleton_bucket_count: Some(
+                endpoint_graph.structural_singleton_bucket_count,
+            ),
+            endpoint_graph_max_structural_bucket_size: Some(
+                endpoint_graph.max_structural_bucket_size,
+            ),
+            endpoint_graph_dangling_endpoint_count: Some(endpoint_graph.dangling_endpoint_count),
+            endpoint_graph_branch_endpoint_count: Some(endpoint_graph.branch_endpoint_count),
+            endpoint_graph_blocker_arranged_segment_index: endpoint_graph
+                .blocker_arranged_segment_index,
+            endpoint_graph_blocker_endpoint: endpoint_graph.blocker_endpoint,
+            endpoint_graph_blocker_point: endpoint_graph.blocker_point,
+            attempted_endpoint_connection_count: assembled
+                .counts
+                .attempted_endpoint_connection_count
+                + endpoint_counts.attempted_endpoint_connection_count,
+            exact_endpoint_connection_count: assembled.counts.exact_endpoint_connection_count
+                + endpoint_counts.exact_endpoint_connection_count,
+            disconnected_endpoint_connection_count: assembled
+                .counts
+                .disconnected_endpoint_connection_count
+                + endpoint_counts.disconnected_endpoint_connection_count,
+            unresolved_endpoint_connection_count: assembled
+                .counts
+                .unresolved_endpoint_connection_count
+                + endpoint_counts.unresolved_endpoint_connection_count,
+            reversed_source_segment_count: assembled.reversed_source_segment_count,
+            output_ring_count,
+            output_boundary_segment_count,
+            output_boundary_segment_kind_counts,
+            arranged_source_reports: line_arranged_source_reports(&arranged.segments),
+            source_reports: assembled.source_reports,
+            boundary_build_report: Some(boundary_build_report),
+            status,
+            blocker,
+        },
+    })
+}
+
+impl Region2 {
     /// Builds a region from unordered exact native line/arc segments that form closed rings.
     ///
     /// This is the convenience wrapper for
@@ -1581,63 +1573,41 @@ impl Region2 {
             .evaluate(policy)?
             .region_result)
     }
+}
 
-    fn from_unordered_segments_with_report_impl(
-        segments: Vec<Segment2>,
-        fill_rule: FillRule,
-        policy: &CurvePolicy,
-    ) -> CurveResult<RegionLineSegmentRegionBuildResult2> {
-        if segments.is_empty() {
-            return Err(CurveError::EmptyCurveString);
+fn evaluate_unordered_segments_region_result(
+    segments: Vec<Segment2>,
+    fill_rule: FillRule,
+    policy: &CurvePolicy,
+) -> CurveResult<RegionLineSegmentRegionBuildResult2> {
+    if segments.is_empty() {
+        return Err(CurveError::EmptyCurveString);
+    }
+
+    let arranged = match arrange_native_segments_at_point_intersections(&segments, policy)? {
+        Ok(arranged) => arranged,
+        Err((split_report, blocker)) => {
+            return Ok(RegionLineSegmentRegionBuildResult2 {
+                region: None,
+                report: blocked_line_segment_region_report(
+                    segments.len(),
+                    segment_kind_counts(&segments),
+                    Some(split_report),
+                    None,
+                    Vec::new(),
+                    LineSegmentRingAssemblyReportParts::default(),
+                    RegionLineSegmentRegionBuildStage2::RingAssembly,
+                    retained_status_for_line_segment_region_blocker(blocker),
+                    blocker,
+                ),
+            });
         }
+    };
 
-        let arranged = match arrange_native_segments_at_point_intersections(&segments, policy)? {
-            Ok(arranged) => arranged,
-            Err((split_report, blocker)) => {
-                return Ok(RegionLineSegmentRegionBuildResult2 {
-                    region: None,
-                    report: blocked_line_segment_region_report(
-                        segments.len(),
-                        segment_kind_counts(&segments),
-                        Some(split_report),
-                        None,
-                        Vec::new(),
-                        LineSegmentRingAssemblyReportParts::default(),
-                        RegionLineSegmentRegionBuildStage2::RingAssembly,
-                        retained_status_for_line_segment_region_blocker(blocker),
-                        blocker,
-                    ),
-                });
-            }
-        };
-
-        let (endpoint_graph, endpoint_counts) =
-            match validate_arranged_native_endpoint_graph(&arranged.segments, policy) {
-                Ok(endpoint_graph) => endpoint_graph,
-                Err((endpoint_graph, counts, blocker)) => {
-                    return Ok(RegionLineSegmentRegionBuildResult2 {
-                        region: None,
-                        report: blocked_line_segment_region_report(
-                            segments.len(),
-                            segment_kind_counts(&segments),
-                            Some(arranged.report),
-                            Some(endpoint_graph),
-                            native_arranged_source_reports(&segments, &arranged.segments),
-                            LineSegmentRingAssemblyReportParts {
-                                counts,
-                                ..LineSegmentRingAssemblyReportParts::default()
-                            },
-                            RegionLineSegmentRegionBuildStage2::RingAssembly,
-                            retained_status_for_line_segment_region_blocker(blocker),
-                            blocker,
-                        ),
-                    });
-                }
-            };
-
-        let assembled = match assemble_unordered_native_segment_rings(&arranged.segments, policy)? {
-            Ok(assembled) => assembled,
-            Err((report, blocker)) => {
+    let (endpoint_graph, endpoint_counts) =
+        match validate_arranged_native_endpoint_graph(&arranged.segments, policy) {
+            Ok(endpoint_graph) => endpoint_graph,
+            Err((endpoint_graph, counts, blocker)) => {
                 return Ok(RegionLineSegmentRegionBuildResult2 {
                     region: None,
                     report: blocked_line_segment_region_report(
@@ -1646,7 +1616,10 @@ impl Region2 {
                         Some(arranged.report),
                         Some(endpoint_graph),
                         native_arranged_source_reports(&segments, &arranged.segments),
-                        report,
+                        LineSegmentRingAssemblyReportParts {
+                            counts,
+                            ..LineSegmentRingAssemblyReportParts::default()
+                        },
                         RegionLineSegmentRegionBuildStage2::RingAssembly,
                         retained_status_for_line_segment_region_blocker(blocker),
                         blocker,
@@ -1655,117 +1628,127 @@ impl Region2 {
             }
         };
 
-        let mut contours = Vec::with_capacity(assembled.rings.len());
-        for ring in assembled.rings {
-            contours.push(Contour2::try_new_with_fill_rule(ring, fill_rule)?);
+    let assembled = match assemble_unordered_native_segment_rings(&arranged.segments, policy)? {
+        Ok(assembled) => assembled,
+        Err((report, blocker)) => {
+            return Ok(RegionLineSegmentRegionBuildResult2 {
+                region: None,
+                report: blocked_line_segment_region_report(
+                    segments.len(),
+                    segment_kind_counts(&segments),
+                    Some(arranged.report),
+                    Some(endpoint_graph),
+                    native_arranged_source_reports(&segments, &arranged.segments),
+                    report,
+                    RegionLineSegmentRegionBuildStage2::RingAssembly,
+                    retained_status_for_line_segment_region_blocker(blocker),
+                    blocker,
+                ),
+            });
         }
+    };
 
-        let built = Region2::from_boundary_contours_with_report(contours, policy)?;
-        let status = built.report().status();
-        let blocker = built.report().blocker();
-        let boundary_build_report = built.report().clone();
-        let output_ring_count = boundary_build_report.output_contour_count();
-        let output_boundary_segment_count = boundary_build_report.output_segment_count();
-        let output_boundary_segment_kind_counts = built.region().map(region_segment_kind_counts);
-        Ok(RegionLineSegmentRegionBuildResult2 {
-            region: built.into_region(),
-            report: RegionLineSegmentRegionBuildReport2 {
-                stage: RegionLineSegmentRegionBuildStage2::RegionRoleAssignment,
-                source_segment_count: segments.len(),
-                source_segment_kind_counts: segment_kind_counts(&segments),
-                arranged_segment_count: Some(arranged.segments.len()),
-                arranged_segment_kind_counts: Some(native_arranged_segment_kind_counts(
-                    &arranged.segments,
-                )),
-                split_predicate_path: arranged.report.predicate_path,
-                endpoint_graph_predicate_path: Some(
-                    RegionLineSegmentEndpointGraphPredicatePath2::ExactStructuralEndpointBuckets,
-                ),
-                ring_assembly_predicate_path: Some(
-                    RegionLineSegmentRingAssemblyPredicatePath2::ExactEndpointBucketTraversal,
-                ),
-                split_candidate_pair_count: arranged.report.candidate_pair_count,
-                split_skipped_aabb_pair_count: arranged.report.skipped_aabb_pair_count,
-                split_tested_pair_count: arranged.report.tested_pair_count,
-                split_intersection_event_count: arranged.report.intersection_event_count,
-                split_point_relation_count: arranged.report.point_relation_count,
-                split_overlap_relation_count: arranged.report.overlap_relation_count,
-                split_uncertain_relation_count: arranged.report.uncertain_relation_count,
-                split_intersection_points: arranged.report.intersection_points,
-                split_intersection_reports: arranged.report.intersection_reports,
-                split_output_segment_count: Some(arranged.segments.len()),
-                split_blocker_first_source_segment_index: arranged
-                    .report
-                    .blocker_first_source_segment_index,
-                split_blocker_first_source_segment_kind: arranged
-                    .report
-                    .blocker_first_source_segment_kind,
-                split_blocker_first_source_start_point: arranged
-                    .report
-                    .blocker_first_source_start_point,
-                split_blocker_first_source_end_point: arranged
-                    .report
-                    .blocker_first_source_end_point,
-                split_blocker_second_source_segment_index: arranged
-                    .report
-                    .blocker_second_source_segment_index,
-                split_blocker_second_source_segment_kind: arranged
-                    .report
-                    .blocker_second_source_segment_kind,
-                split_blocker_second_source_start_point: arranged
-                    .report
-                    .blocker_second_source_start_point,
-                split_blocker_second_source_end_point: arranged
-                    .report
-                    .blocker_second_source_end_point,
-                endpoint_graph_endpoint_count: Some(endpoint_graph.endpoint_count),
-                endpoint_graph_structural_bucket_count: Some(
-                    endpoint_graph.structural_bucket_count,
-                ),
-                endpoint_graph_structural_singleton_bucket_count: Some(
-                    endpoint_graph.structural_singleton_bucket_count,
-                ),
-                endpoint_graph_max_structural_bucket_size: Some(
-                    endpoint_graph.max_structural_bucket_size,
-                ),
-                endpoint_graph_dangling_endpoint_count: Some(
-                    endpoint_graph.dangling_endpoint_count,
-                ),
-                endpoint_graph_branch_endpoint_count: Some(endpoint_graph.branch_endpoint_count),
-                endpoint_graph_blocker_arranged_segment_index: endpoint_graph
-                    .blocker_arranged_segment_index,
-                endpoint_graph_blocker_endpoint: endpoint_graph.blocker_endpoint,
-                endpoint_graph_blocker_point: endpoint_graph.blocker_point,
-                attempted_endpoint_connection_count: assembled
-                    .counts
-                    .attempted_endpoint_connection_count
-                    + endpoint_counts.attempted_endpoint_connection_count,
-                exact_endpoint_connection_count: assembled.counts.exact_endpoint_connection_count
-                    + endpoint_counts.exact_endpoint_connection_count,
-                disconnected_endpoint_connection_count: assembled
-                    .counts
-                    .disconnected_endpoint_connection_count
-                    + endpoint_counts.disconnected_endpoint_connection_count,
-                unresolved_endpoint_connection_count: assembled
-                    .counts
-                    .unresolved_endpoint_connection_count
-                    + endpoint_counts.unresolved_endpoint_connection_count,
-                reversed_source_segment_count: assembled.reversed_source_segment_count,
-                output_ring_count,
-                output_boundary_segment_count,
-                output_boundary_segment_kind_counts,
-                arranged_source_reports: native_arranged_source_reports(
-                    &segments,
-                    &arranged.segments,
-                ),
-                source_reports: assembled.source_reports,
-                boundary_build_report: Some(boundary_build_report),
-                status,
-                blocker,
-            },
-        })
+    let mut contours = Vec::with_capacity(assembled.rings.len());
+    for ring in assembled.rings {
+        contours.push(Contour2::try_new_with_fill_rule(ring, fill_rule)?);
     }
 
+    let built = Region2::from_boundary_contours_with_report(contours, policy)?;
+    let status = built.report().status();
+    let blocker = built.report().blocker();
+    let boundary_build_report = built.report().clone();
+    let output_ring_count = boundary_build_report.output_contour_count();
+    let output_boundary_segment_count = boundary_build_report.output_segment_count();
+    let output_boundary_segment_kind_counts = built.region().map(region_segment_kind_counts);
+    Ok(RegionLineSegmentRegionBuildResult2 {
+        region: built.into_region(),
+        report: RegionLineSegmentRegionBuildReport2 {
+            stage: RegionLineSegmentRegionBuildStage2::RegionRoleAssignment,
+            source_segment_count: segments.len(),
+            source_segment_kind_counts: segment_kind_counts(&segments),
+            arranged_segment_count: Some(arranged.segments.len()),
+            arranged_segment_kind_counts: Some(native_arranged_segment_kind_counts(
+                &arranged.segments,
+            )),
+            split_predicate_path: arranged.report.predicate_path,
+            endpoint_graph_predicate_path: Some(
+                RegionLineSegmentEndpointGraphPredicatePath2::ExactStructuralEndpointBuckets,
+            ),
+            ring_assembly_predicate_path: Some(
+                RegionLineSegmentRingAssemblyPredicatePath2::ExactEndpointBucketTraversal,
+            ),
+            split_candidate_pair_count: arranged.report.candidate_pair_count,
+            split_skipped_aabb_pair_count: arranged.report.skipped_aabb_pair_count,
+            split_tested_pair_count: arranged.report.tested_pair_count,
+            split_intersection_event_count: arranged.report.intersection_event_count,
+            split_point_relation_count: arranged.report.point_relation_count,
+            split_overlap_relation_count: arranged.report.overlap_relation_count,
+            split_uncertain_relation_count: arranged.report.uncertain_relation_count,
+            split_intersection_points: arranged.report.intersection_points,
+            split_intersection_reports: arranged.report.intersection_reports,
+            split_output_segment_count: Some(arranged.segments.len()),
+            split_blocker_first_source_segment_index: arranged
+                .report
+                .blocker_first_source_segment_index,
+            split_blocker_first_source_segment_kind: arranged
+                .report
+                .blocker_first_source_segment_kind,
+            split_blocker_first_source_start_point: arranged
+                .report
+                .blocker_first_source_start_point,
+            split_blocker_first_source_end_point: arranged.report.blocker_first_source_end_point,
+            split_blocker_second_source_segment_index: arranged
+                .report
+                .blocker_second_source_segment_index,
+            split_blocker_second_source_segment_kind: arranged
+                .report
+                .blocker_second_source_segment_kind,
+            split_blocker_second_source_start_point: arranged
+                .report
+                .blocker_second_source_start_point,
+            split_blocker_second_source_end_point: arranged.report.blocker_second_source_end_point,
+            endpoint_graph_endpoint_count: Some(endpoint_graph.endpoint_count),
+            endpoint_graph_structural_bucket_count: Some(endpoint_graph.structural_bucket_count),
+            endpoint_graph_structural_singleton_bucket_count: Some(
+                endpoint_graph.structural_singleton_bucket_count,
+            ),
+            endpoint_graph_max_structural_bucket_size: Some(
+                endpoint_graph.max_structural_bucket_size,
+            ),
+            endpoint_graph_dangling_endpoint_count: Some(endpoint_graph.dangling_endpoint_count),
+            endpoint_graph_branch_endpoint_count: Some(endpoint_graph.branch_endpoint_count),
+            endpoint_graph_blocker_arranged_segment_index: endpoint_graph
+                .blocker_arranged_segment_index,
+            endpoint_graph_blocker_endpoint: endpoint_graph.blocker_endpoint,
+            endpoint_graph_blocker_point: endpoint_graph.blocker_point,
+            attempted_endpoint_connection_count: assembled
+                .counts
+                .attempted_endpoint_connection_count
+                + endpoint_counts.attempted_endpoint_connection_count,
+            exact_endpoint_connection_count: assembled.counts.exact_endpoint_connection_count
+                + endpoint_counts.exact_endpoint_connection_count,
+            disconnected_endpoint_connection_count: assembled
+                .counts
+                .disconnected_endpoint_connection_count
+                + endpoint_counts.disconnected_endpoint_connection_count,
+            unresolved_endpoint_connection_count: assembled
+                .counts
+                .unresolved_endpoint_connection_count
+                + endpoint_counts.unresolved_endpoint_connection_count,
+            reversed_source_segment_count: assembled.reversed_source_segment_count,
+            output_ring_count,
+            output_boundary_segment_count,
+            output_boundary_segment_kind_counts,
+            arranged_source_reports: native_arranged_source_reports(&segments, &arranged.segments),
+            source_reports: assembled.source_reports,
+            boundary_build_report: Some(boundary_build_report),
+            status,
+            blocker,
+        },
+    })
+}
+
+impl Region2 {
     /// Builds a region by nesting closed boundary contours into material/hole bins.
     ///
     /// Contours at even containment depth become material. Contours at odd
@@ -6044,13 +6027,13 @@ impl ExactCurveArrangementAttempt2 {
     pub fn evaluate(&self, policy: &CurvePolicy) -> CurveResult<ExactCurveArrangementResult2> {
         let region_result =
             if let Some(source_line_segments) = self.request.source_line_segments.as_ref() {
-                Region2::from_unordered_line_segments_with_report_impl(
+                evaluate_unordered_line_segments_region_result(
                     source_line_segments.clone(),
                     self.request.fill_rule,
                     policy,
                 )?
             } else {
-                Region2::from_unordered_segments_with_report_impl(
+                evaluate_unordered_segments_region_result(
                     self.request.source_segments.clone(),
                     self.request.fill_rule,
                     policy,
