@@ -1298,7 +1298,7 @@ fn exact_coplanar_volumetric_cell_evidence_is_retained_by_public_evaluation() {
         .as_ref()
         .expect("coplanar volumetric blocker should retain source-aware evidence");
     report.validate().unwrap();
-    report.validate_against_sources(&left, &right).unwrap();
+    evaluation.validate_against_sources(&left, &right).unwrap();
     assert!(report.obstacle.requires_coplanar_volumetric_cells());
     assert!(report.positive_area_coplanar_overlapping_pairs > 0);
     assert!(report.same_side_coplanar_overlapping_pairs > 0);
@@ -1309,7 +1309,7 @@ fn exact_coplanar_volumetric_cell_evidence_is_retained_by_public_evaluation() {
 
     let separated_right = tetra([10, 0, 0]);
     assert!(
-        report
+        evaluation
             .validate_against_sources(&left, &separated_right)
             .is_err()
     );
@@ -2749,7 +2749,6 @@ fn closed_boundary_touching_regularized_boolean_is_publicly_replayable() {
         preflight.validate_against_sources(&left, &right).unwrap();
         if let Some(evidence) = preflight.coplanar_volumetric_evidence.as_ref() {
             evidence.validate().unwrap();
-            evidence.validate_against_sources(&left, &right).unwrap();
         }
 
         let result = exact_boolean_result(
@@ -2855,7 +2854,6 @@ fn closed_no_volume_overlap_regularized_boolean_is_publicly_replayable() {
             "positive-area no-volume shortcut should retain source-aware boundary-only evidence",
         );
         evidence.validate().unwrap();
-        evidence.validate_against_sources(&left, &right).unwrap();
         assert!(evidence.positive_area_coplanar_overlapping_pairs > 0);
         if let Some(retained_evidence) = retained_evidence.as_ref() {
             assert_eq!(

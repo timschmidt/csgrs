@@ -84,51 +84,6 @@ pub enum CoplanarVolumetricCellEvidenceError {
     SourceReplayMismatch,
 }
 
-/// Freshness status for retained coplanar volumetric-cell evidence.
-///
-/// The variants separate local report drift from source-replay drift. That
-/// predicate/construction state as auditable objects, then require those
-/// objects to replay from their source operands before topology consumes them.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum CoplanarVolumetricCellEvidenceFreshness {
-    /// The report validates locally and replays exactly from the source meshes.
-    Current,
-    /// Face-pair relation counters no longer sum to retained graph evidence.
-    StaleFacePairCounts,
-    /// Candidate-pair counters no longer match retained candidate evidence.
-    StaleCandidatePairCounts,
-    /// Segment/plane event counters no longer match retained event evidence.
-    StaleSegmentPlaneEventCounts,
-    /// Coplanar face-pair and coplanar event counters disagree.
-    StaleCoplanarEvidence,
-    /// The named obstacle no longer matches retained exact evidence.
-    StaleObstacle,
-    /// The report is locally valid but no longer replays from the sources.
-    SourceReplayMismatch,
-}
-
-impl From<CoplanarVolumetricCellEvidenceError> for CoplanarVolumetricCellEvidenceFreshness {
-    fn from(error: CoplanarVolumetricCellEvidenceError) -> Self {
-        match error {
-            CoplanarVolumetricCellEvidenceError::FacePairCountMismatch => Self::StaleFacePairCounts,
-            CoplanarVolumetricCellEvidenceError::CandidatePairCountMismatch => {
-                Self::StaleCandidatePairCounts
-            }
-            CoplanarVolumetricCellEvidenceError::SegmentPlaneEventCountMismatch => {
-                Self::StaleSegmentPlaneEventCounts
-            }
-            CoplanarVolumetricCellEvidenceError::CoplanarEvidenceMismatch => {
-                Self::StaleCoplanarEvidence
-            }
-            CoplanarVolumetricCellEvidenceError::CoplanarSideEvidenceMismatch => {
-                Self::StaleCoplanarEvidence
-            }
-            CoplanarVolumetricCellEvidenceError::ObstacleMismatch => Self::StaleObstacle,
-            CoplanarVolumetricCellEvidenceError::SourceReplayMismatch => Self::SourceReplayMismatch,
-        }
-    }
-}
-
 /// Replayable summary of retained volumetric coplanar-cell evidence.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct CoplanarVolumetricCellEvidenceReport {
@@ -393,7 +348,7 @@ impl CoplanarVolumetricCellEvidenceReport {
     /// evidence report, and requires byte-for-byte equality. This keeps
     /// coplanar volumetric-cell blockers attached to the exact source objects
     /// computation model.
-    pub fn validate_against_sources(
+    pub(crate) fn validate_against_sources(
         &self,
         left: &ExactMesh,
         right: &ExactMesh,
@@ -405,22 +360,6 @@ impl CoplanarVolumetricCellEvidenceReport {
             Ok(())
         } else {
             Err(CoplanarVolumetricCellEvidenceError::SourceReplayMismatch)
-        }
-    }
-
-    /// Classify whether this retained report is fresh for the source meshes.
-    ///
-    /// Local validation runs before source replay so a scheduler can report
-    /// whether copied volumetric-cell evidence has mutated internally or has
-    /// extraction explicit instead of collapsing it to a tolerance decision.
-    pub fn freshness_against_sources(
-        &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-    ) -> CoplanarVolumetricCellEvidenceFreshness {
-        match self.validate_against_sources(left, right) {
-            Ok(()) => CoplanarVolumetricCellEvidenceFreshness::Current,
-            Err(error) => error.into(),
         }
     }
 }

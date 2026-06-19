@@ -214,7 +214,7 @@ fn run_case(case: &BenchCase) {
 
     time_prepared_stage(
         case,
-        "workspace_validate_coplanar_volumetric_evidence_from_evaluation",
+        "workspace_validate_evaluation_with_coplanar_volumetric_evidence",
         || retained_workspace_and_evaluation_for_case(case, request),
         |(_retained_workspace, evaluation)| {
             if let Some(evaluation) = evaluation.as_ref() {
@@ -228,11 +228,12 @@ fn run_case(case: &BenchCase) {
                         .coplanar_volumetric_evidence
                         .as_ref());
                 if let Some(report) = report {
-                    black_box(
-                        report
+                    black_box((
+                        report.obstacle,
+                        evaluation
                             .validate_against_sources(&case.left, &case.right)
                             .ok(),
-                    );
+                    ));
                 }
             }
         },
