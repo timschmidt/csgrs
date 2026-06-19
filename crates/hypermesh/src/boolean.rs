@@ -959,7 +959,7 @@ impl ExactBooleanRequest {
 #[derive(Clone, Debug, PartialEq)]
 pub struct ExactBooleanCertificationSet {
     /// Source-shape facts used by trivial shortcut supports.
-    pub trivial: ExactTrivialBooleanFacts,
+    trivial: ExactTrivialBooleanFacts,
     /// Source-shape facts used by closed regularized-solid shortcut supports.
     regularized_solid: ExactRegularizedSolidBooleanFacts,
     /// Exact graph refinement status.
@@ -1007,6 +1007,16 @@ impl ExactBooleanCertificationSet {
     /// Return the retained arrangement/cell-complex attempt mutably.
     pub fn arrangement_attempt_mut(&mut self) -> Option<&mut ExactArrangementBooleanAttempt> {
         self.arrangement_attempt.as_mut()
+    }
+
+    /// Return source-shape facts used by trivial shortcut supports.
+    pub fn trivial(&self) -> &ExactTrivialBooleanFacts {
+        &self.trivial
+    }
+
+    /// Return source-shape facts used by trivial shortcut supports mutably.
+    pub fn trivial_mut(&mut self) -> &mut ExactTrivialBooleanFacts {
+        &mut self.trivial
     }
 
     /// Return the retained volumetric boundary closure evidence, when the

@@ -4166,11 +4166,11 @@ fn trivial_boolean_shortcuts_are_publicly_replayable() {
         let mut relabeled_empty_facts = empty_evaluation.clone();
         relabeled_empty_facts
             .certifications_mut()
-            .trivial
+            .trivial_mut()
             .left_empty = false;
         relabeled_empty_facts
             .certifications_mut()
-            .trivial
+            .trivial_mut()
             .right_empty = false;
         assert_report_validation_error!(
             relabeled_empty_facts.validate(),
@@ -4245,7 +4245,7 @@ fn trivial_boolean_shortcuts_are_publicly_replayable() {
         let mut relabeled_disjoint_facts = disjoint_evaluation.clone();
         relabeled_disjoint_facts
             .certifications_mut()
-            .trivial
+            .trivial_mut()
             .bounds_disjoint = false;
         assert_report_validation_error!(
             relabeled_disjoint_facts.validate(),
