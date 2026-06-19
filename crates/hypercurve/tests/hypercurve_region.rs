@@ -1336,6 +1336,41 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
         first_split_intersection_bucket.point(),
         result.report().split_intersection_reports()[0].point()
     );
+    let split_intersection_parameter_cache = split_cache.intersection_parameter_cache();
+    assert_eq!(
+        split_intersection_parameter_cache.intersection_event_count(),
+        result.report().split_intersection_reports().len()
+    );
+    assert_eq!(
+        split_intersection_parameter_cache.source_parameter_ref_count(),
+        result.report().split_intersection_reports().len() * 2
+    );
+    assert_eq!(
+        split_intersection_parameter_cache.parameters().len(),
+        result.report().split_intersection_reports().len()
+    );
+    let first_split_parameter = &split_intersection_parameter_cache.parameters()[0];
+    assert_eq!(first_split_parameter.intersection_report_index(), 0);
+    assert_eq!(
+        first_split_parameter.first_source_segment_index(),
+        result.report().split_intersection_reports()[0].first_source_segment_index()
+    );
+    assert_eq!(
+        first_split_parameter.first_source_param(),
+        result.report().split_intersection_reports()[0].first_source_param()
+    );
+    assert_eq!(
+        first_split_parameter.second_source_segment_index(),
+        result.report().split_intersection_reports()[0].second_source_segment_index()
+    );
+    assert_eq!(
+        first_split_parameter.second_source_param(),
+        result.report().split_intersection_reports()[0].second_source_param()
+    );
+    assert_eq!(
+        first_split_parameter.point(),
+        result.report().split_intersection_reports()[0].point()
+    );
     let endpoint_cache = result.workspace().endpoint_graph_cache().unwrap();
     assert_eq!(
         Some(endpoint_cache.predicate_path()),
@@ -2406,6 +2441,41 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
     );
     assert_eq!(
         first_split_intersection_bucket.point(),
+        result.report().split_intersection_reports()[0].point()
+    );
+    let split_intersection_parameter_cache = split_cache.intersection_parameter_cache();
+    assert_eq!(
+        split_intersection_parameter_cache.intersection_event_count(),
+        result.report().split_intersection_reports().len()
+    );
+    assert_eq!(
+        split_intersection_parameter_cache.source_parameter_ref_count(),
+        result.report().split_intersection_reports().len() * 2
+    );
+    assert_eq!(
+        split_intersection_parameter_cache.parameters().len(),
+        result.report().split_intersection_reports().len()
+    );
+    let first_split_parameter = &split_intersection_parameter_cache.parameters()[0];
+    assert_eq!(first_split_parameter.intersection_report_index(), 0);
+    assert_eq!(
+        first_split_parameter.first_source_segment_index(),
+        result.report().split_intersection_reports()[0].first_source_segment_index()
+    );
+    assert_eq!(
+        first_split_parameter.first_source_param(),
+        result.report().split_intersection_reports()[0].first_source_param()
+    );
+    assert_eq!(
+        first_split_parameter.second_source_segment_index(),
+        result.report().split_intersection_reports()[0].second_source_segment_index()
+    );
+    assert_eq!(
+        first_split_parameter.second_source_param(),
+        result.report().split_intersection_reports()[0].second_source_param()
+    );
+    assert_eq!(
+        first_split_parameter.point(),
         result.report().split_intersection_reports()[0].point()
     );
     let endpoint_cache = result.workspace().endpoint_graph_cache().unwrap();

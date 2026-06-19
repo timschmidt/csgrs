@@ -220,6 +220,7 @@ pub struct ExactCurveArrangementSplitCache2 {
     intersection_points: Vec<Point2>,
     intersection_reports: Vec<RegionLineSegmentSplitIntersectionReport2>,
     intersection_bucket_cache: ExactCurveArrangementSplitIntersectionBucketCache2,
+    intersection_parameter_cache: ExactCurveArrangementSplitIntersectionParameterCache2,
     blocker_cache: Option<ExactCurveArrangementSplitBlockerCache2>,
     output_segment_count: Option<usize>,
 }
@@ -259,6 +260,25 @@ pub struct ExactCurveArrangementSplitIntersectionBucketCache2 {
     singleton_bucket_count: usize,
     max_bucket_size: usize,
     buckets: Vec<ExactCurveArrangementSplitIntersectionBucket2>,
+}
+
+/// Exact source-parameter evidence retained for one split intersection.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ExactCurveArrangementSplitIntersectionParameterRef2 {
+    intersection_report_index: usize,
+    first_source_segment_index: usize,
+    first_source_param: Real,
+    second_source_segment_index: usize,
+    second_source_param: Real,
+    point: Point2,
+}
+
+/// Exact source-parameter evidence retained for split intersections.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ExactCurveArrangementSplitIntersectionParameterCache2 {
+    intersection_event_count: usize,
+    source_parameter_ref_count: usize,
+    parameters: Vec<ExactCurveArrangementSplitIntersectionParameterRef2>,
 }
 
 /// Retained exact endpoint-bucket evidence cached by an evaluated arrangement workspace.
@@ -2374,6 +2394,10 @@ impl ExactCurveArrangementSplitCache2 {
     fn from_region_build_report(report: &RegionLineSegmentRegionBuildReport2) -> Self {
         let intersection_bucket_cache =
             split_intersection_bucket_cache(&report.split_intersection_reports);
+        let intersection_parameter_cache =
+            ExactCurveArrangementSplitIntersectionParameterCache2::from_intersection_reports(
+                &report.split_intersection_reports,
+            );
         let blocker_cache =
             ExactCurveArrangementSplitBlockerCache2::from_region_build_report(report);
         Self {
@@ -2388,6 +2412,7 @@ impl ExactCurveArrangementSplitCache2 {
             intersection_points: report.split_intersection_points.clone(),
             intersection_reports: report.split_intersection_reports.clone(),
             intersection_bucket_cache,
+            intersection_parameter_cache,
             blocker_cache,
             output_segment_count: report.split_output_segment_count,
         }
@@ -2448,6 +2473,13 @@ impl ExactCurveArrangementSplitCache2 {
         &self,
     ) -> &ExactCurveArrangementSplitIntersectionBucketCache2 {
         &self.intersection_bucket_cache
+    }
+
+    /// Returns exact source-parameter evidence for retained split intersections.
+    pub const fn intersection_parameter_cache(
+        &self,
+    ) -> &ExactCurveArrangementSplitIntersectionParameterCache2 {
+        &self.intersection_parameter_cache
     }
 
     /// Returns split-stage blocker source-pair evidence, when split arrangement blocked.
@@ -2565,6 +2597,78 @@ impl ExactCurveArrangementSplitIntersectionBucketCache2 {
     /// Returns exact structural split-intersection buckets in report encounter order.
     pub fn buckets(&self) -> &[ExactCurveArrangementSplitIntersectionBucket2] {
         &self.buckets
+    }
+}
+
+impl ExactCurveArrangementSplitIntersectionParameterRef2 {
+    /// Returns the retained split-intersection report index.
+    pub const fn intersection_report_index(&self) -> usize {
+        self.intersection_report_index
+    }
+
+    /// Returns the first source segment index for this split event.
+    pub const fn first_source_segment_index(&self) -> usize {
+        self.first_source_segment_index
+    }
+
+    /// Returns the retained local parameter on the first source segment.
+    pub const fn first_source_param(&self) -> &Real {
+        &self.first_source_param
+    }
+
+    /// Returns the second source segment index for this split event.
+    pub const fn second_source_segment_index(&self) -> usize {
+        self.second_source_segment_index
+    }
+
+    /// Returns the retained local parameter on the second source segment.
+    pub const fn second_source_param(&self) -> &Real {
+        &self.second_source_param
+    }
+
+    /// Returns the exact point shared by both source parameters.
+    pub const fn point(&self) -> &Point2 {
+        &self.point
+    }
+}
+
+impl ExactCurveArrangementSplitIntersectionParameterCache2 {
+    fn from_intersection_reports(
+        intersection_reports: &[RegionLineSegmentSplitIntersectionReport2],
+    ) -> Self {
+        let mut parameters = Vec::new();
+
+        for (intersection_report_index, report) in intersection_reports.iter().enumerate() {
+            parameters.push(ExactCurveArrangementSplitIntersectionParameterRef2 {
+                intersection_report_index,
+                first_source_segment_index: report.first_source_segment_index(),
+                first_source_param: report.first_source_param().clone(),
+                second_source_segment_index: report.second_source_segment_index(),
+                second_source_param: report.second_source_param().clone(),
+                point: report.point().clone(),
+            });
+        }
+
+        Self {
+            intersection_event_count: parameters.len(),
+            source_parameter_ref_count: parameters.len().saturating_mul(2),
+            parameters,
+        }
+    }
+
+    /// Returns the number of retained split-intersection events.
+    pub const fn intersection_event_count(&self) -> usize {
+        self.intersection_event_count
+    }
+
+    /// Returns the number of retained source parameter references.
+    pub const fn source_parameter_ref_count(&self) -> usize {
+        self.source_parameter_ref_count
+    }
+
+    /// Returns retained split-intersection source parameters in report order.
+    pub fn parameters(&self) -> &[ExactCurveArrangementSplitIntersectionParameterRef2] {
+        &self.parameters
     }
 }
 
