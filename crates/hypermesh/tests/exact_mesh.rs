@@ -4784,31 +4784,20 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let report = exact_boolean_evaluation(
-        &left,
-        &right,
-        ExactBooleanRequest::new(
-            ExactBooleanOperation::Union,
-            ValidationPolicy::ALLOW_BOUNDARY,
-        ),
-    )
-    .certifications
-    .boundary_touching
-    .clone();
+    let request = ExactBooleanRequest::new(
+        ExactBooleanOperation::Union,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    );
+    let evaluation = exact_boolean_evaluation(&left, &right, request);
+    let report = evaluation.certifications.boundary_touching.clone();
     assert!(report.is_certified(), "{report:?}");
     report.validate().unwrap();
-    report.validate_against_sources(&left, &right).unwrap();
+    evaluation
+        .certifications
+        .validate_against_sources(&left, &right, request)
+        .unwrap();
 
-    let preflight = exact_boolean_evaluation(
-        &left,
-        &right,
-        ExactBooleanRequest::new(
-            ExactBooleanOperation::Union,
-            ValidationPolicy::ALLOW_BOUNDARY,
-        ),
-    )
-    .preflight
-    .clone();
+    let preflight = evaluation.preflight.clone();
     assert!(
         preflight.is_certified_boundary_policy_shortcut(),
         "{preflight:?}"
@@ -5136,23 +5125,21 @@ fn boundary_touching_report_classifies_proper_crossing_as_winding_blocker() {
     )
     .unwrap();
 
-    let report = exact_boolean_evaluation(
-        &left,
-        &right,
-        ExactBooleanRequest::new(
-            ExactBooleanOperation::Union,
-            ValidationPolicy::ALLOW_BOUNDARY,
-        ),
-    )
-    .certifications
-    .boundary_touching
-    .clone();
+    let request = ExactBooleanRequest::new(
+        ExactBooleanOperation::Union,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    );
+    let evaluation = exact_boolean_evaluation(&left, &right, request);
+    let report = evaluation.certifications.boundary_touching.clone();
 
     assert!(!report.is_certified());
     assert!(report.blocker.requires_winding());
     assert!(report.blocker.candidate_pairs > 0);
     report.validate().unwrap();
-    report.validate_against_sources(&left, &right).unwrap();
+    evaluation
+        .certifications
+        .validate_against_sources(&left, &right, request)
+        .unwrap();
 
     let mut stale = report;
     stale.blocker.coplanar_touching_pairs = 1;

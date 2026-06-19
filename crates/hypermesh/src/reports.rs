@@ -5676,7 +5676,7 @@ impl ExactBoundaryTouchingReport {
     ///
     /// Boundary-only contact is a policy boundary over a resolved exact graph.
     /// Recomputing the report from the source meshes ensures the retained
-    pub fn validate_against_sources(
+    pub(crate) fn validate_against_sources(
         &self,
         left: &ExactMesh,
         right: &ExactMesh,
@@ -5693,7 +5693,8 @@ impl ExactBoundaryTouchingReport {
     }
 
     /// Classify whether this retained boundary-touching report is fresh.
-    pub fn freshness_against_sources(
+    #[cfg(test)]
+    pub(crate) fn freshness_against_sources(
         &self,
         left: &ExactMesh,
         right: &ExactMesh,
