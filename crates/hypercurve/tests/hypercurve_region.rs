@@ -1484,11 +1484,11 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
     );
     assert_eq!(
         arranged_endpoint_side_bucket_cache.start_endpoint_ref_count(),
-        result.report().arranged_source_reports().len()
+        result.arranged_source_reports().unwrap().len()
     );
     assert_eq!(
         arranged_endpoint_side_bucket_cache.end_endpoint_ref_count(),
-        result.report().arranged_source_reports().len()
+        result.arranged_source_reports().unwrap().len()
     );
     assert_eq!(arranged_endpoint_side_bucket_cache.max_bucket_size(), 4);
     assert_eq!(
@@ -1499,11 +1499,11 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
         arranged_endpoint_side_bucket_cache.buckets()[0]
             .endpoints()
             .len(),
-        result.report().arranged_source_reports().len()
+        result.arranged_source_reports().unwrap().len()
     );
     assert_eq!(
         arranged_endpoint_side_bucket_cache.buckets()[0].endpoints()[0].arranged_segment_index(),
-        result.report().arranged_source_reports()[0].arranged_segment_index()
+        result.arranged_source_reports().unwrap()[0].arranged_segment_index()
     );
     assert_eq!(
         arranged_endpoint_side_bucket_cache.buckets()[0].endpoints()[0].endpoint(),
@@ -1517,7 +1517,7 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
         arranged_endpoint_side_bucket_cache.buckets()[1]
             .endpoints()
             .len(),
-        result.report().arranged_source_reports().len()
+        result.arranged_source_reports().unwrap().len()
     );
     assert_eq!(
         arranged_endpoint_side_bucket_cache.buckets()[1].endpoints()[0].endpoint(),
@@ -1526,7 +1526,7 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
     let arranged_endpoint_point_cache = endpoint_cache.endpoint_point_cache();
     assert_eq!(
         arranged_endpoint_point_cache.arranged_fragment_ref_count(),
-        result.report().arranged_source_reports().len()
+        result.arranged_source_reports().unwrap().len()
     );
     assert_eq!(
         arranged_endpoint_point_cache.endpoint_ref_count(),
@@ -1534,20 +1534,20 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
     );
     assert_eq!(
         arranged_endpoint_point_cache.endpoints().len(),
-        result.report().arranged_source_reports().len()
+        result.arranged_source_reports().unwrap().len()
     );
     let arranged_endpoint_point_ref = &arranged_endpoint_point_cache.endpoints()[0];
     assert_eq!(
         arranged_endpoint_point_ref.arranged_segment_index(),
-        result.report().arranged_source_reports()[0].arranged_segment_index()
+        result.arranged_source_reports().unwrap()[0].arranged_segment_index()
     );
     assert_eq!(
         arranged_endpoint_point_ref.output_start_point(),
-        result.report().arranged_source_reports()[0].output_start_point()
+        result.arranged_source_reports().unwrap()[0].output_start_point()
     );
     assert_eq!(
         arranged_endpoint_point_ref.output_end_point(),
-        result.report().arranged_source_reports()[0].output_end_point()
+        result.arranged_source_reports().unwrap()[0].output_end_point()
     );
     let arranged_endpoint_degree_bucket_cache = endpoint_cache.endpoint_degree_bucket_cache();
     assert_eq!(arranged_endpoint_degree_bucket_cache.bucket_count(), 3);
@@ -1642,8 +1642,8 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
     assert_eq!(result.output_ring_count(), Some(1));
     assert_eq!(result.output_boundary_segment_count(), Some(4));
     assert_eq!(
-        result.arranged_source_reports().unwrap(),
-        result.report().arranged_source_reports()
+        ring_cache.arranged_source_reports(),
+        result.arranged_source_reports().unwrap()
     );
     let arranged_fragment_cache = ring_cache.arranged_fragment_cache();
     assert_eq!(arranged_fragment_cache.arranged_fragment_count(), 4);
@@ -1801,15 +1801,15 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
     assert_eq!(arranged_source_range_ref.arranged_source_report_index(), 0);
     assert_eq!(
         arranged_source_range_ref.source_segment_index(),
-        result.report().arranged_source_reports()[0].source_segment_index()
+        result.arranged_source_reports().unwrap()[0].source_segment_index()
     );
     assert_eq!(
         arranged_source_range_ref.source_range(),
-        result.report().arranged_source_reports()[0].source_range()
+        result.arranged_source_reports().unwrap()[0].source_range()
     );
     assert_eq!(
         arranged_source_range_ref.arranged_segment_index(),
-        result.report().arranged_source_reports()[0].arranged_segment_index()
+        result.arranged_source_reports().unwrap()[0].arranged_segment_index()
     );
     assert!(arranged_source_range_ref.covers_full_source_range());
     assert_eq!(arranged_fragment_cache.max_source_ref_count(), 1);
@@ -1819,11 +1819,11 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
     assert_eq!(arranged_fragment.arranged_segment_kind(), SegmentKind::Line);
     assert_eq!(
         arranged_fragment.output_start_point(),
-        result.report().arranged_source_reports()[0].output_start_point()
+        result.arranged_source_reports().unwrap()[0].output_start_point()
     );
     assert_eq!(
         arranged_fragment.output_end_point(),
-        result.report().arranged_source_reports()[0].output_end_point()
+        result.arranged_source_reports().unwrap()[0].output_end_point()
     );
     assert_eq!(arranged_fragment.source_refs().len(), 1);
     assert_eq!(
@@ -1833,15 +1833,15 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
     assert_eq!(arranged_fragment.source_refs()[0].source_segment_index(), 0);
     assert_eq!(
         arranged_fragment.source_refs()[0].source_range(),
-        result.report().arranged_source_reports()[0].source_range()
+        result.arranged_source_reports().unwrap()[0].source_range()
     );
     assert_eq!(
         arranged_fragment.source_refs()[0].status(),
-        result.report().arranged_source_reports()[0].status()
+        result.arranged_source_reports().unwrap()[0].status()
     );
     assert_eq!(
-        result.source_reports().unwrap(),
-        result.report().source_reports()
+        ring_cache.source_reports(),
+        result.source_reports().unwrap()
     );
     let output_ring_bucket_cache = ring_cache.output_ring_bucket_cache();
     assert_eq!(output_ring_bucket_cache.ring_count(), 1);
@@ -1855,7 +1855,7 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
     assert_eq!(output_ring_bucket.segments()[0].output_segment_index(), 0);
     assert_eq!(
         output_ring_bucket.segments()[0].reversed(),
-        result.report().source_reports()[0].reversed()
+        result.source_reports().unwrap()[0].reversed()
     );
     let output_segment_kind_bucket_cache = ring_cache.output_segment_kind_bucket_cache();
     assert_eq!(output_segment_kind_bucket_cache.bucket_count(), 2);
@@ -1887,14 +1887,14 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
     );
     assert_eq!(
         output_segment_kind_bucket_cache.buckets()[0].segment_refs()[0].output_ring_index(),
-        result.report().source_reports()[0].output_ring_index()
+        result.source_reports().unwrap()[0].output_ring_index()
     );
     assert_eq!(
         output_segment_kind_bucket_cache.buckets()[0].segment_refs()[0].output_segment_index(),
-        result.report().source_reports()[0].output_segment_index()
+        result.source_reports().unwrap()[0].output_segment_index()
     );
     assert_eq!(
-        result.report().source_reports()
+        result.source_reports().unwrap()
             [output_segment_kind_bucket_cache.buckets()[0].segment_refs()[0].source_report_index()]
         .output_segment_kind(),
         SegmentKind::Line
@@ -1932,14 +1932,14 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
     let source_ref = &output_segment_source_bucket_cache.buckets()[0].segment_refs()[0];
     assert_eq!(
         source_ref.output_ring_index(),
-        result.report().source_reports()[source_ref.source_report_index()].output_ring_index()
+        result.source_reports().unwrap()[source_ref.source_report_index()].output_ring_index()
     );
     assert_eq!(
         source_ref.output_segment_index(),
-        result.report().source_reports()[source_ref.source_report_index()].output_segment_index()
+        result.source_reports().unwrap()[source_ref.source_report_index()].output_segment_index()
     );
     assert_eq!(
-        result.report().source_reports()[source_ref.source_report_index()].source_segment_index(),
+        result.source_reports().unwrap()[source_ref.source_report_index()].source_segment_index(),
         output_segment_source_bucket_cache.buckets()[0].source_segment_index()
     );
     let output_segment_source_range_cache = ring_cache.output_segment_source_range_cache();
@@ -1963,19 +1963,19 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
     assert_eq!(source_range_ref.source_report_index(), 0);
     assert_eq!(
         source_range_ref.source_segment_index(),
-        result.report().source_reports()[0].source_segment_index()
+        result.source_reports().unwrap()[0].source_segment_index()
     );
     assert_eq!(
         source_range_ref.source_range(),
-        result.report().source_reports()[0].source_range()
+        result.source_reports().unwrap()[0].source_range()
     );
     assert_eq!(
         source_range_ref.output_ring_index(),
-        result.report().source_reports()[0].output_ring_index()
+        result.source_reports().unwrap()[0].output_ring_index()
     );
     assert_eq!(
         source_range_ref.output_segment_index(),
-        result.report().source_reports()[0].output_segment_index()
+        result.source_reports().unwrap()[0].output_segment_index()
     );
     assert!(source_range_ref.covers_full_source_range());
     let output_segment_endpoint_cache = ring_cache.output_segment_endpoint_cache();
@@ -1995,19 +1995,19 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
     assert_eq!(endpoint_ref.source_report_index(), 0);
     assert_eq!(
         endpoint_ref.output_ring_index(),
-        result.report().source_reports()[0].output_ring_index()
+        result.source_reports().unwrap()[0].output_ring_index()
     );
     assert_eq!(
         endpoint_ref.output_segment_index(),
-        result.report().source_reports()[0].output_segment_index()
+        result.source_reports().unwrap()[0].output_segment_index()
     );
     assert_eq!(
         endpoint_ref.output_start_point(),
-        result.report().source_reports()[0].output_start_point()
+        result.source_reports().unwrap()[0].output_start_point()
     );
     assert_eq!(
         endpoint_ref.output_end_point(),
-        result.report().source_reports()[0].output_end_point()
+        result.source_reports().unwrap()[0].output_end_point()
     );
     let output_ring_continuity_cache = ring_cache.output_ring_continuity_cache();
     assert_eq!(
@@ -2031,23 +2031,23 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
     assert_eq!(continuity_ref.next_source_report_index(), 1);
     assert_eq!(
         continuity_ref.output_ring_index(),
-        result.report().source_reports()[0].output_ring_index()
+        result.source_reports().unwrap()[0].output_ring_index()
     );
     assert_eq!(
         continuity_ref.output_segment_index(),
-        result.report().source_reports()[0].output_segment_index()
+        result.source_reports().unwrap()[0].output_segment_index()
     );
     assert_eq!(
         continuity_ref.next_output_segment_index(),
-        result.report().source_reports()[1].output_segment_index()
+        result.source_reports().unwrap()[1].output_segment_index()
     );
     assert_eq!(
         continuity_ref.output_end_point(),
-        result.report().source_reports()[0].output_end_point()
+        result.source_reports().unwrap()[0].output_end_point()
     );
     assert_eq!(
         continuity_ref.next_output_start_point(),
-        result.report().source_reports()[1].output_start_point()
+        result.source_reports().unwrap()[1].output_start_point()
     );
     assert_eq!(
         continuity_ref.output_end_point(),
@@ -2104,14 +2104,14 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
     );
     assert_eq!(
         output_segment_status_bucket_cache.buckets()[0].segment_refs()[0].output_ring_index(),
-        result.report().source_reports()[0].output_ring_index()
+        result.source_reports().unwrap()[0].output_ring_index()
     );
     assert_eq!(
         output_segment_status_bucket_cache.buckets()[0].segment_refs()[0].output_segment_index(),
-        result.report().source_reports()[0].output_segment_index()
+        result.source_reports().unwrap()[0].output_segment_index()
     );
     assert_eq!(
-        result.report().source_reports()[output_segment_status_bucket_cache.buckets()[0]
+        result.source_reports().unwrap()[output_segment_status_bucket_cache.buckets()[0]
             .segment_refs()[0]
             .source_report_index()]
         .status(),
@@ -2161,14 +2161,14 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
         let forward_ref = &output_segment_direction_bucket_cache.buckets()[0].segment_refs()[0];
         assert_eq!(
             forward_ref.output_ring_index(),
-            result.report().source_reports()[forward_ref.source_report_index()].output_ring_index()
+            result.source_reports().unwrap()[forward_ref.source_report_index()].output_ring_index()
         );
         assert_eq!(
             forward_ref.output_segment_index(),
-            result.report().source_reports()[forward_ref.source_report_index()]
+            result.source_reports().unwrap()[forward_ref.source_report_index()]
                 .output_segment_index()
         );
-        assert!(!result.report().source_reports()[forward_ref.source_report_index()].reversed());
+        assert!(!result.source_reports().unwrap()[forward_ref.source_report_index()].reversed());
     }
     assert!(output_segment_direction_bucket_cache.buckets()[1].reversed());
     assert_eq!(
@@ -2181,15 +2181,15 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
         let reversed_ref = &output_segment_direction_bucket_cache.buckets()[1].segment_refs()[0];
         assert_eq!(
             reversed_ref.output_ring_index(),
-            result.report().source_reports()[reversed_ref.source_report_index()]
+            result.source_reports().unwrap()[reversed_ref.source_report_index()]
                 .output_ring_index()
         );
         assert_eq!(
             reversed_ref.output_segment_index(),
-            result.report().source_reports()[reversed_ref.source_report_index()]
+            result.source_reports().unwrap()[reversed_ref.source_report_index()]
                 .output_segment_index()
         );
-        assert!(result.report().source_reports()[reversed_ref.source_report_index()].reversed());
+        assert!(result.source_reports().unwrap()[reversed_ref.source_report_index()].reversed());
     }
     assert!(result.evaluated_output());
     assert_eq!(result.materialized_region(), Some(true));
@@ -2940,7 +2940,7 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
     );
     assert_eq!(
         arranged_endpoint_side_bucket_cache.buckets()[0].endpoints()[0].arranged_segment_index(),
-        result.report().arranged_source_reports()[0].arranged_segment_index()
+        result.arranged_source_reports().unwrap()[0].arranged_segment_index()
     );
     assert_eq!(
         arranged_endpoint_side_bucket_cache.buckets()[0].endpoints()[0].endpoint(),
@@ -2957,7 +2957,7 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
     let arranged_endpoint_point_cache = endpoint_cache.endpoint_point_cache();
     assert_eq!(
         arranged_endpoint_point_cache.arranged_fragment_ref_count(),
-        result.report().arranged_source_reports().len()
+        result.arranged_source_reports().unwrap().len()
     );
     assert_eq!(
         arranged_endpoint_point_cache.endpoint_ref_count(),
@@ -2965,20 +2965,20 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
     );
     assert_eq!(
         arranged_endpoint_point_cache.endpoints().len(),
-        result.report().arranged_source_reports().len()
+        result.arranged_source_reports().unwrap().len()
     );
     let arranged_endpoint_point_ref = &arranged_endpoint_point_cache.endpoints()[0];
     assert_eq!(
         arranged_endpoint_point_ref.arranged_segment_index(),
-        result.report().arranged_source_reports()[0].arranged_segment_index()
+        result.arranged_source_reports().unwrap()[0].arranged_segment_index()
     );
     assert_eq!(
         arranged_endpoint_point_ref.output_start_point(),
-        result.report().arranged_source_reports()[0].output_start_point()
+        result.arranged_source_reports().unwrap()[0].output_start_point()
     );
     assert_eq!(
         arranged_endpoint_point_ref.output_end_point(),
-        result.report().arranged_source_reports()[0].output_end_point()
+        result.arranged_source_reports().unwrap()[0].output_end_point()
     );
     let arranged_endpoint_degree_bucket_cache = endpoint_cache.endpoint_degree_bucket_cache();
     assert_eq!(arranged_endpoint_degree_bucket_cache.bucket_count(), 3);
@@ -3061,8 +3061,8 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
         result.report().output_boundary_segment_kind_counts()
     );
     assert_eq!(
-        result.arranged_source_reports().unwrap(),
-        result.report().arranged_source_reports()
+        ring_cache.arranged_source_reports(),
+        result.arranged_source_reports().unwrap()
     );
     let arranged_fragment_cache = ring_cache.arranged_fragment_cache();
     assert_eq!(arranged_fragment_cache.arranged_fragment_count(), 2);
@@ -3209,15 +3209,15 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
     assert_eq!(arranged_source_range_ref.arranged_source_report_index(), 0);
     assert_eq!(
         arranged_source_range_ref.source_segment_index(),
-        result.report().arranged_source_reports()[0].source_segment_index()
+        result.arranged_source_reports().unwrap()[0].source_segment_index()
     );
     assert_eq!(
         arranged_source_range_ref.source_range(),
-        result.report().arranged_source_reports()[0].source_range()
+        result.arranged_source_reports().unwrap()[0].source_range()
     );
     assert_eq!(
         arranged_source_range_ref.arranged_segment_index(),
-        result.report().arranged_source_reports()[0].arranged_segment_index()
+        result.arranged_source_reports().unwrap()[0].arranged_segment_index()
     );
     assert!(arranged_source_range_ref.covers_full_source_range());
     assert_eq!(arranged_fragment_cache.max_source_ref_count(), 1);
@@ -3227,11 +3227,11 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
     assert_eq!(arranged_fragment.arranged_segment_kind(), SegmentKind::Line);
     assert_eq!(
         arranged_fragment.output_start_point(),
-        result.report().arranged_source_reports()[0].output_start_point()
+        result.arranged_source_reports().unwrap()[0].output_start_point()
     );
     assert_eq!(
         arranged_fragment.output_end_point(),
-        result.report().arranged_source_reports()[0].output_end_point()
+        result.arranged_source_reports().unwrap()[0].output_end_point()
     );
     assert_eq!(arranged_fragment.source_refs().len(), 1);
     assert_eq!(
@@ -3245,11 +3245,11 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
     );
     assert_eq!(
         arranged_fragment.source_refs()[0].source_range(),
-        result.report().arranged_source_reports()[0].source_range()
+        result.arranged_source_reports().unwrap()[0].source_range()
     );
     assert_eq!(
-        result.source_reports().unwrap(),
-        result.report().source_reports()
+        ring_cache.source_reports(),
+        result.source_reports().unwrap()
     );
     let output_ring_bucket_cache = ring_cache.output_ring_bucket_cache();
     assert_eq!(output_ring_bucket_cache.ring_count(), 1);
@@ -3263,7 +3263,7 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
     assert_eq!(output_ring_bucket.segments()[0].output_segment_index(), 0);
     assert_eq!(
         output_ring_bucket.segments()[0].reversed(),
-        result.report().source_reports()[0].reversed()
+        result.source_reports().unwrap()[0].reversed()
     );
     let output_segment_kind_bucket_cache = ring_cache.output_segment_kind_bucket_cache();
     assert_eq!(output_segment_kind_bucket_cache.bucket_count(), 2);
@@ -3279,7 +3279,7 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
         SegmentKind::Line
     );
     assert_eq!(
-        result.report().source_reports()
+        result.source_reports().unwrap()
             [output_segment_kind_bucket_cache.buckets()[0].segment_refs()[0].source_report_index()]
         .output_segment_kind(),
         SegmentKind::Line
@@ -3289,7 +3289,7 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
         SegmentKind::Arc
     );
     assert_eq!(
-        result.report().source_reports()
+        result.source_reports().unwrap()
             [output_segment_kind_bucket_cache.buckets()[1].segment_refs()[0].source_report_index()]
         .output_segment_kind(),
         SegmentKind::Arc
@@ -3318,14 +3318,14 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
     let source_ref = &output_segment_source_bucket_cache.buckets()[0].segment_refs()[0];
     assert_eq!(
         source_ref.output_ring_index(),
-        result.report().source_reports()[source_ref.source_report_index()].output_ring_index()
+        result.source_reports().unwrap()[source_ref.source_report_index()].output_ring_index()
     );
     assert_eq!(
         source_ref.output_segment_index(),
-        result.report().source_reports()[source_ref.source_report_index()].output_segment_index()
+        result.source_reports().unwrap()[source_ref.source_report_index()].output_segment_index()
     );
     assert_eq!(
-        result.report().source_reports()[source_ref.source_report_index()].source_segment_index(),
+        result.source_reports().unwrap()[source_ref.source_report_index()].source_segment_index(),
         output_segment_source_bucket_cache.buckets()[0].source_segment_index()
     );
     let output_segment_source_range_cache = ring_cache.output_segment_source_range_cache();
@@ -3349,19 +3349,19 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
     assert_eq!(source_range_ref.source_report_index(), 0);
     assert_eq!(
         source_range_ref.source_segment_index(),
-        result.report().source_reports()[0].source_segment_index()
+        result.source_reports().unwrap()[0].source_segment_index()
     );
     assert_eq!(
         source_range_ref.source_range(),
-        result.report().source_reports()[0].source_range()
+        result.source_reports().unwrap()[0].source_range()
     );
     assert_eq!(
         source_range_ref.output_ring_index(),
-        result.report().source_reports()[0].output_ring_index()
+        result.source_reports().unwrap()[0].output_ring_index()
     );
     assert_eq!(
         source_range_ref.output_segment_index(),
-        result.report().source_reports()[0].output_segment_index()
+        result.source_reports().unwrap()[0].output_segment_index()
     );
     assert!(source_range_ref.covers_full_source_range());
     let output_segment_endpoint_cache = ring_cache.output_segment_endpoint_cache();
@@ -3381,19 +3381,19 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
     assert_eq!(endpoint_ref.source_report_index(), 0);
     assert_eq!(
         endpoint_ref.output_ring_index(),
-        result.report().source_reports()[0].output_ring_index()
+        result.source_reports().unwrap()[0].output_ring_index()
     );
     assert_eq!(
         endpoint_ref.output_segment_index(),
-        result.report().source_reports()[0].output_segment_index()
+        result.source_reports().unwrap()[0].output_segment_index()
     );
     assert_eq!(
         endpoint_ref.output_start_point(),
-        result.report().source_reports()[0].output_start_point()
+        result.source_reports().unwrap()[0].output_start_point()
     );
     assert_eq!(
         endpoint_ref.output_end_point(),
-        result.report().source_reports()[0].output_end_point()
+        result.source_reports().unwrap()[0].output_end_point()
     );
     let output_ring_continuity_cache = ring_cache.output_ring_continuity_cache();
     assert_eq!(
@@ -3417,23 +3417,23 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
     assert_eq!(continuity_ref.next_source_report_index(), 1);
     assert_eq!(
         continuity_ref.output_ring_index(),
-        result.report().source_reports()[0].output_ring_index()
+        result.source_reports().unwrap()[0].output_ring_index()
     );
     assert_eq!(
         continuity_ref.output_segment_index(),
-        result.report().source_reports()[0].output_segment_index()
+        result.source_reports().unwrap()[0].output_segment_index()
     );
     assert_eq!(
         continuity_ref.next_output_segment_index(),
-        result.report().source_reports()[1].output_segment_index()
+        result.source_reports().unwrap()[1].output_segment_index()
     );
     assert_eq!(
         continuity_ref.output_end_point(),
-        result.report().source_reports()[0].output_end_point()
+        result.source_reports().unwrap()[0].output_end_point()
     );
     assert_eq!(
         continuity_ref.next_output_start_point(),
-        result.report().source_reports()[1].output_start_point()
+        result.source_reports().unwrap()[1].output_start_point()
     );
     assert_eq!(
         continuity_ref.output_end_point(),
@@ -3490,14 +3490,14 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
     );
     assert_eq!(
         output_segment_status_bucket_cache.buckets()[0].segment_refs()[0].output_ring_index(),
-        result.report().source_reports()[0].output_ring_index()
+        result.source_reports().unwrap()[0].output_ring_index()
     );
     assert_eq!(
         output_segment_status_bucket_cache.buckets()[0].segment_refs()[0].output_segment_index(),
-        result.report().source_reports()[0].output_segment_index()
+        result.source_reports().unwrap()[0].output_segment_index()
     );
     assert_eq!(
-        result.report().source_reports()[output_segment_status_bucket_cache.buckets()[0]
+        result.source_reports().unwrap()[output_segment_status_bucket_cache.buckets()[0]
             .segment_refs()[0]
             .source_report_index()]
         .status(),
@@ -3547,14 +3547,14 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
         let forward_ref = &output_segment_direction_bucket_cache.buckets()[0].segment_refs()[0];
         assert_eq!(
             forward_ref.output_ring_index(),
-            result.report().source_reports()[forward_ref.source_report_index()].output_ring_index()
+            result.source_reports().unwrap()[forward_ref.source_report_index()].output_ring_index()
         );
         assert_eq!(
             forward_ref.output_segment_index(),
-            result.report().source_reports()[forward_ref.source_report_index()]
+            result.source_reports().unwrap()[forward_ref.source_report_index()]
                 .output_segment_index()
         );
-        assert!(!result.report().source_reports()[forward_ref.source_report_index()].reversed());
+        assert!(!result.source_reports().unwrap()[forward_ref.source_report_index()].reversed());
     }
     assert!(output_segment_direction_bucket_cache.buckets()[1].reversed());
     assert_eq!(
@@ -3567,15 +3567,15 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
         let reversed_ref = &output_segment_direction_bucket_cache.buckets()[1].segment_refs()[0];
         assert_eq!(
             reversed_ref.output_ring_index(),
-            result.report().source_reports()[reversed_ref.source_report_index()]
+            result.source_reports().unwrap()[reversed_ref.source_report_index()]
                 .output_ring_index()
         );
         assert_eq!(
             reversed_ref.output_segment_index(),
-            result.report().source_reports()[reversed_ref.source_report_index()]
+            result.source_reports().unwrap()[reversed_ref.source_report_index()]
                 .output_segment_index()
         );
-        assert!(result.report().source_reports()[reversed_ref.source_report_index()].reversed());
+        assert!(result.source_reports().unwrap()[reversed_ref.source_report_index()].reversed());
     }
     assert!(result.evaluated_output());
     assert_eq!(result.materialized_region(), Some(true));
