@@ -1743,6 +1743,61 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
     assert_eq!(role_cache.hole_contour_count(), 0);
     assert_eq!(role_cache.material_segment_count(), 4);
     assert_eq!(role_cache.hole_segment_count(), 0);
+    let role_status_bucket_cache = role_cache.role_status_bucket_cache();
+    assert_eq!(role_status_bucket_cache.bucket_count(), 6);
+    assert_eq!(
+        role_status_bucket_cache.assignment_ref_count(),
+        role_cache.role_report_count()
+    );
+    assert_eq!(
+        role_status_bucket_cache.native_exact_ref_count(),
+        role_cache.role_report_count()
+    );
+    assert_eq!(
+        role_status_bucket_cache.certified_approximation_ref_count(),
+        0
+    );
+    assert_eq!(role_status_bucket_cache.display_or_export_ref_count(), 0);
+    assert_eq!(role_status_bucket_cache.imported_lossy_ref_count(), 0);
+    assert_eq!(role_status_bucket_cache.unsupported_ref_count(), 0);
+    assert_eq!(role_status_bucket_cache.unresolved_ref_count(), 0);
+    assert_eq!(role_status_bucket_cache.max_bucket_size(), 1);
+    assert_eq!(role_status_bucket_cache.buckets().len(), 6);
+    assert_eq!(
+        role_status_bucket_cache.buckets()[0].status(),
+        RetainedTopologyStatus::NativeExact
+    );
+    assert_eq!(
+        role_status_bucket_cache.buckets()[0].assignments().len(),
+        role_cache.role_report_count()
+    );
+    assert_eq!(
+        role_status_bucket_cache.buckets()[0].assignments()[0].role(),
+        RegionBoundaryContourRole2::Material
+    );
+    assert_eq!(
+        role_status_bucket_cache.buckets()[0].assignments()[0].assignment_index(),
+        0
+    );
+    assert_eq!(
+        role_status_bucket_cache.buckets()[0].assignments()[0].role_report_index(),
+        0
+    );
+    assert_eq!(
+        role_cache.buckets()[0].assignments()
+            [role_status_bucket_cache.buckets()[0].assignments()[0].assignment_index()]
+        .status(),
+        RetainedTopologyStatus::NativeExact
+    );
+    assert_eq!(
+        role_status_bucket_cache.buckets()[1].status(),
+        RetainedTopologyStatus::CertifiedApproximation
+    );
+    assert!(
+        role_status_bucket_cache.buckets()[1]
+            .assignments()
+            .is_empty()
+    );
     assert_eq!(role_cache.buckets().len(), 2);
     assert_eq!(
         role_cache.buckets()[0].role(),
@@ -2385,6 +2440,60 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
     assert_eq!(role_cache.hole_contour_count(), 0);
     assert_eq!(role_cache.material_segment_count(), 2);
     assert_eq!(role_cache.hole_segment_count(), 0);
+    let role_status_bucket_cache = role_cache.role_status_bucket_cache();
+    assert_eq!(role_status_bucket_cache.bucket_count(), 6);
+    assert_eq!(
+        role_status_bucket_cache.assignment_ref_count(),
+        role_cache.role_report_count()
+    );
+    assert_eq!(
+        role_status_bucket_cache.native_exact_ref_count(),
+        role_cache.role_report_count()
+    );
+    assert_eq!(
+        role_status_bucket_cache.certified_approximation_ref_count(),
+        0
+    );
+    assert_eq!(role_status_bucket_cache.display_or_export_ref_count(), 0);
+    assert_eq!(role_status_bucket_cache.imported_lossy_ref_count(), 0);
+    assert_eq!(role_status_bucket_cache.unsupported_ref_count(), 0);
+    assert_eq!(role_status_bucket_cache.unresolved_ref_count(), 0);
+    assert_eq!(role_status_bucket_cache.max_bucket_size(), 1);
+    assert_eq!(
+        role_status_bucket_cache.buckets()[0].status(),
+        RetainedTopologyStatus::NativeExact
+    );
+    assert_eq!(
+        role_status_bucket_cache.buckets()[0].assignments().len(),
+        role_cache.role_report_count()
+    );
+    assert_eq!(
+        role_status_bucket_cache.buckets()[0].assignments()[0].role(),
+        RegionBoundaryContourRole2::Material
+    );
+    assert_eq!(
+        role_status_bucket_cache.buckets()[0].assignments()[0].assignment_index(),
+        0
+    );
+    assert_eq!(
+        role_status_bucket_cache.buckets()[0].assignments()[0].role_report_index(),
+        0
+    );
+    assert_eq!(
+        role_cache.buckets()[0].assignments()
+            [role_status_bucket_cache.buckets()[0].assignments()[0].assignment_index()]
+        .status(),
+        RetainedTopologyStatus::NativeExact
+    );
+    assert_eq!(
+        role_status_bucket_cache.buckets()[1].status(),
+        RetainedTopologyStatus::CertifiedApproximation
+    );
+    assert!(
+        role_status_bucket_cache.buckets()[1]
+            .assignments()
+            .is_empty()
+    );
     assert_eq!(role_cache.buckets().len(), 2);
     assert_eq!(
         role_cache.buckets()[0].role(),

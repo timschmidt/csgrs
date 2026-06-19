@@ -471,11 +471,41 @@ pub struct ExactCurveArrangementOutputRoleAssignment2 {
     status: RetainedTopologyStatus,
 }
 
+/// Reference to a retained output role assignment inside a status bucket.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ExactCurveArrangementOutputRoleStatusRef2 {
+    role: RegionBoundaryContourRole2,
+    assignment_index: usize,
+    role_report_index: usize,
+}
+
 /// Output role bucket retained after boundary contour role assignment.
 #[derive(Clone, Debug, PartialEq)]
 pub struct ExactCurveArrangementOutputRoleBucket2 {
     role: RegionBoundaryContourRole2,
     assignments: Vec<ExactCurveArrangementOutputRoleAssignment2>,
+}
+
+/// Output role assignment bucket grouped by retained topology status.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ExactCurveArrangementOutputRoleStatusBucket2 {
+    status: RetainedTopologyStatus,
+    assignments: Vec<ExactCurveArrangementOutputRoleStatusRef2>,
+}
+
+/// Output role assignment topology-status buckets retained after role assignment.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ExactCurveArrangementOutputRoleStatusBucketCache2 {
+    bucket_count: usize,
+    assignment_ref_count: usize,
+    native_exact_ref_count: usize,
+    certified_approximation_ref_count: usize,
+    display_or_export_ref_count: usize,
+    imported_lossy_ref_count: usize,
+    unsupported_ref_count: usize,
+    unresolved_ref_count: usize,
+    max_bucket_size: usize,
+    buckets: Vec<ExactCurveArrangementOutputRoleStatusBucket2>,
 }
 
 /// Output material/hole role buckets retained after boundary contour role assignment.
@@ -486,6 +516,7 @@ pub struct ExactCurveArrangementOutputRoleCache2 {
     hole_contour_count: usize,
     material_segment_count: usize,
     hole_segment_count: usize,
+    role_status_bucket_cache: ExactCurveArrangementOutputRoleStatusBucketCache2,
     buckets: Vec<ExactCurveArrangementOutputRoleBucket2>,
 }
 
@@ -3284,6 +3315,23 @@ impl ExactCurveArrangementOutputRoleAssignment2 {
     }
 }
 
+impl ExactCurveArrangementOutputRoleStatusRef2 {
+    /// Returns the role bucket containing this assignment.
+    pub const fn role(&self) -> RegionBoundaryContourRole2 {
+        self.role
+    }
+
+    /// Returns the assignment index inside the retained role bucket.
+    pub const fn assignment_index(&self) -> usize {
+        self.assignment_index
+    }
+
+    /// Returns the retained boundary role report index.
+    pub const fn role_report_index(&self) -> usize {
+        self.role_report_index
+    }
+}
+
 impl ExactCurveArrangementOutputRoleBucket2 {
     /// Returns the material/hole role represented by this bucket.
     pub const fn role(&self) -> RegionBoundaryContourRole2 {
@@ -3293,6 +3341,161 @@ impl ExactCurveArrangementOutputRoleBucket2 {
     /// Returns role assignments in output role index order.
     pub fn assignments(&self) -> &[ExactCurveArrangementOutputRoleAssignment2] {
         &self.assignments
+    }
+}
+
+impl ExactCurveArrangementOutputRoleStatusBucket2 {
+    /// Returns the retained topology status represented by this bucket.
+    pub const fn status(&self) -> RetainedTopologyStatus {
+        self.status
+    }
+
+    /// Returns output role assignment references with this retained topology status.
+    pub fn assignments(&self) -> &[ExactCurveArrangementOutputRoleStatusRef2] {
+        &self.assignments
+    }
+}
+
+impl ExactCurveArrangementOutputRoleStatusBucketCache2 {
+    fn from_role_assignments(
+        material_assignments: &[ExactCurveArrangementOutputRoleAssignment2],
+        hole_assignments: &[ExactCurveArrangementOutputRoleAssignment2],
+    ) -> Self {
+        let mut native_exact_refs = Vec::new();
+        let mut certified_approximation_refs = Vec::new();
+        let mut display_or_export_refs = Vec::new();
+        let mut imported_lossy_refs = Vec::new();
+        let mut unsupported_refs = Vec::new();
+        let mut unresolved_refs = Vec::new();
+
+        for (role, assignments) in [
+            (RegionBoundaryContourRole2::Material, material_assignments),
+            (RegionBoundaryContourRole2::Hole, hole_assignments),
+        ] {
+            for (assignment_index, assignment) in assignments.iter().enumerate() {
+                let status_ref = ExactCurveArrangementOutputRoleStatusRef2 {
+                    role,
+                    assignment_index,
+                    role_report_index: assignment.role_report_index(),
+                };
+                match assignment.status() {
+                    RetainedTopologyStatus::NativeExact => native_exact_refs.push(status_ref),
+                    RetainedTopologyStatus::CertifiedApproximation => {
+                        certified_approximation_refs.push(status_ref)
+                    }
+                    RetainedTopologyStatus::DisplayOrExport => {
+                        display_or_export_refs.push(status_ref)
+                    }
+                    RetainedTopologyStatus::ImportedLossy => imported_lossy_refs.push(status_ref),
+                    RetainedTopologyStatus::Unsupported => unsupported_refs.push(status_ref),
+                    RetainedTopologyStatus::Unresolved => unresolved_refs.push(status_ref),
+                }
+            }
+        }
+
+        let native_exact_ref_count = native_exact_refs.len();
+        let certified_approximation_ref_count = certified_approximation_refs.len();
+        let display_or_export_ref_count = display_or_export_refs.len();
+        let imported_lossy_ref_count = imported_lossy_refs.len();
+        let unsupported_ref_count = unsupported_refs.len();
+        let unresolved_ref_count = unresolved_refs.len();
+        let buckets = vec![
+            ExactCurveArrangementOutputRoleStatusBucket2 {
+                status: RetainedTopologyStatus::NativeExact,
+                assignments: native_exact_refs,
+            },
+            ExactCurveArrangementOutputRoleStatusBucket2 {
+                status: RetainedTopologyStatus::CertifiedApproximation,
+                assignments: certified_approximation_refs,
+            },
+            ExactCurveArrangementOutputRoleStatusBucket2 {
+                status: RetainedTopologyStatus::DisplayOrExport,
+                assignments: display_or_export_refs,
+            },
+            ExactCurveArrangementOutputRoleStatusBucket2 {
+                status: RetainedTopologyStatus::ImportedLossy,
+                assignments: imported_lossy_refs,
+            },
+            ExactCurveArrangementOutputRoleStatusBucket2 {
+                status: RetainedTopologyStatus::Unsupported,
+                assignments: unsupported_refs,
+            },
+            ExactCurveArrangementOutputRoleStatusBucket2 {
+                status: RetainedTopologyStatus::Unresolved,
+                assignments: unresolved_refs,
+            },
+        ];
+        let assignment_ref_count = material_assignments
+            .len()
+            .saturating_add(hole_assignments.len());
+        let max_bucket_size = buckets
+            .iter()
+            .map(|bucket| bucket.assignments.len())
+            .max()
+            .unwrap_or(0);
+
+        Self {
+            bucket_count: buckets.len(),
+            assignment_ref_count,
+            native_exact_ref_count,
+            certified_approximation_ref_count,
+            display_or_export_ref_count,
+            imported_lossy_ref_count,
+            unsupported_ref_count,
+            unresolved_ref_count,
+            max_bucket_size,
+            buckets,
+        }
+    }
+
+    /// Returns the number of retained topology-status buckets.
+    pub const fn bucket_count(&self) -> usize {
+        self.bucket_count
+    }
+
+    /// Returns the number of retained output role assignment references.
+    pub const fn assignment_ref_count(&self) -> usize {
+        self.assignment_ref_count
+    }
+
+    /// Returns the number of native-exact role assignment references.
+    pub const fn native_exact_ref_count(&self) -> usize {
+        self.native_exact_ref_count
+    }
+
+    /// Returns the number of certified-approximation role assignment references.
+    pub const fn certified_approximation_ref_count(&self) -> usize {
+        self.certified_approximation_ref_count
+    }
+
+    /// Returns the number of display/export-only role assignment references.
+    pub const fn display_or_export_ref_count(&self) -> usize {
+        self.display_or_export_ref_count
+    }
+
+    /// Returns the number of lossy-import role assignment references.
+    pub const fn imported_lossy_ref_count(&self) -> usize {
+        self.imported_lossy_ref_count
+    }
+
+    /// Returns the number of unsupported role assignment references.
+    pub const fn unsupported_ref_count(&self) -> usize {
+        self.unsupported_ref_count
+    }
+
+    /// Returns the number of unresolved role assignment references.
+    pub const fn unresolved_ref_count(&self) -> usize {
+        self.unresolved_ref_count
+    }
+
+    /// Returns the largest topology-status bucket size.
+    pub const fn max_bucket_size(&self) -> usize {
+        self.max_bucket_size
+    }
+
+    /// Returns output role assignment status buckets in stable status order.
+    pub fn buckets(&self) -> &[ExactCurveArrangementOutputRoleStatusBucket2] {
+        &self.buckets
     }
 }
 
@@ -3325,6 +3528,11 @@ impl ExactCurveArrangementOutputRoleCache2 {
 
         material_assignments.sort_by_key(|assignment| assignment.output_role_index);
         hole_assignments.sort_by_key(|assignment| assignment.output_role_index);
+        let role_status_bucket_cache =
+            ExactCurveArrangementOutputRoleStatusBucketCache2::from_role_assignments(
+                &material_assignments,
+                &hole_assignments,
+            );
 
         Some(Self {
             role_report_count: report.role_reports().len(),
@@ -3332,6 +3540,7 @@ impl ExactCurveArrangementOutputRoleCache2 {
             hole_contour_count,
             material_segment_count,
             hole_segment_count,
+            role_status_bucket_cache,
             buckets: vec![
                 ExactCurveArrangementOutputRoleBucket2 {
                     role: RegionBoundaryContourRole2::Material,
@@ -3368,6 +3577,13 @@ impl ExactCurveArrangementOutputRoleCache2 {
     /// Returns the number of hole boundary segments.
     pub const fn hole_segment_count(&self) -> usize {
         self.hole_segment_count
+    }
+
+    /// Returns output role assignment buckets grouped by topology status.
+    pub const fn role_status_bucket_cache(
+        &self,
+    ) -> &ExactCurveArrangementOutputRoleStatusBucketCache2 {
+        &self.role_status_bucket_cache
     }
 
     /// Returns material and hole role buckets in stable order.
