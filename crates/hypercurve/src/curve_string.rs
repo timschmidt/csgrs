@@ -543,6 +543,7 @@ pub struct CurveStringExtendResult2 {
 pub struct CurveStringChamferReport2 {
     input_path: CurveStringChamferInputPath2,
     stage: CurveStringChamferStage2,
+    predicate_path: CurveStringChamferPredicatePath2,
     previous_segment_index: usize,
     next_segment_index: usize,
     previous_segment_start_point: Point2,
@@ -564,6 +565,21 @@ pub struct CurveStringChamferReport2 {
     output_segment_kind_counts: Option<SegmentKindCounts>,
     status: RetainedTopologyStatus,
     blocker: Option<UncertaintyReason>,
+}
+
+/// Exact predicate path used to validate one line-line chamfer.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum CurveStringChamferPredicatePath2 {
+    /// Both adjacent segments were lines and both cut parameters were strict interior values.
+    LineLineStrictInteriorParameters,
+    /// At least one adjacent segment is not a line, so this chamfer slice cannot materialize.
+    UnsupportedSegmentFamily,
+    /// A point-supplied cut could not be certified on its selected source line segment.
+    PointCutNotOnSourceSegment,
+    /// A cut parameter was on or outside the valid strict interior range.
+    CutParameterNotStrictInterior,
+    /// Cut-parameter ordering or point-support predicates were unresolved.
+    CutValidationUnresolved,
 }
 
 /// Input path used by a report-bearing line-line chamfer operation.
@@ -2132,6 +2148,7 @@ impl CurveString2 {
                     previous_trim,
                     next_trim,
                     Vec::new(),
+                    CurveStringChamferPredicatePath2::UnsupportedSegmentFamily,
                     RetainedTopologyStatus::Unsupported,
                     Some(UncertaintyReason::Unsupported),
                 );
@@ -2160,6 +2177,7 @@ impl CurveString2 {
                     previous_trim,
                     next_trim,
                     Vec::new(),
+                    CurveStringChamferPredicatePath2::CutParameterNotStrictInterior,
                     RetainedTopologyStatus::Unsupported,
                     Some(UncertaintyReason::Boundary),
                 ));
@@ -2172,6 +2190,7 @@ impl CurveString2 {
                     previous_trim,
                     next_trim,
                     Vec::new(),
+                    CurveStringChamferPredicatePath2::CutValidationUnresolved,
                     RetainedTopologyStatus::Unresolved,
                     Some(UncertaintyReason::Ordering),
                 ));
@@ -2234,6 +2253,7 @@ impl CurveString2 {
             report: CurveStringChamferReport2 {
                 input_path: CurveStringChamferInputPath2::Parameters,
                 stage: CurveStringChamferStage2::SegmentMaterialization,
+                predicate_path: CurveStringChamferPredicatePath2::LineLineStrictInteriorParameters,
                 previous_segment_index,
                 next_segment_index,
                 previous_segment_start_point: previous_line.start().clone(),
@@ -2310,6 +2330,7 @@ impl CurveString2 {
                     previous_zero,
                     next_zero,
                     Vec::new(),
+                    CurveStringChamferPredicatePath2::UnsupportedSegmentFamily,
                     RetainedTopologyStatus::Unsupported,
                     Some(UncertaintyReason::Unsupported),
                 ));
@@ -2327,6 +2348,11 @@ impl CurveString2 {
                         previous_zero,
                         next_zero,
                         Vec::new(),
+                        if reason == UncertaintyReason::Boundary {
+                            CurveStringChamferPredicatePath2::PointCutNotOnSourceSegment
+                        } else {
+                            CurveStringChamferPredicatePath2::CutValidationUnresolved
+                        },
                         retained_status_for_uncertainty(reason),
                         Some(reason),
                     );
@@ -2346,6 +2372,11 @@ impl CurveString2 {
                     previous_trim,
                     next_zero,
                     Vec::new(),
+                    if reason == UncertaintyReason::Boundary {
+                        CurveStringChamferPredicatePath2::PointCutNotOnSourceSegment
+                    } else {
+                        CurveStringChamferPredicatePath2::CutValidationUnresolved
+                    },
                     retained_status_for_uncertainty(reason),
                     Some(reason),
                 );
@@ -3662,6 +3693,11 @@ impl CurveStringChamferReport2 {
     /// Returns the furthest exact chamfer stage reached.
     pub const fn stage(&self) -> CurveStringChamferStage2 {
         self.stage
+    }
+
+    /// Returns the exact predicate path used to validate this chamfer.
+    pub const fn predicate_path(&self) -> CurveStringChamferPredicatePath2 {
+        self.predicate_path
     }
 
     /// Returns the previous source segment index at the chamfered vertex.
@@ -6116,6 +6152,7 @@ fn blocked_chamfer_result(
     previous_trim: CurveStringTrimPoint2,
     next_trim: CurveStringTrimPoint2,
     segment_reports: Vec<CurveStringTrimSegmentReport2>,
+    predicate_path: CurveStringChamferPredicatePath2,
     status: RetainedTopologyStatus,
     blocker: Option<UncertaintyReason>,
 ) -> CurveStringChamferResult2 {
@@ -6128,6 +6165,7 @@ fn blocked_chamfer_result(
             } else {
                 CurveStringChamferStage2::SegmentMaterialization
             },
+            predicate_path,
             previous_segment_index,
             next_segment_index,
             previous_segment_start_point: curve_string.segments[previous_segment_index]

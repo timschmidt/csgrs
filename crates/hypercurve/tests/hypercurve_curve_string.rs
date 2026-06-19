@@ -1,8 +1,8 @@
 use hypercurve::{
     BulgeVertex2, CircularArc2, Classification, Contour2, CurveError, CurvePolicy, CurveString2,
-    CurveStringChamferInputPath2, CurveStringChamferStage2, CurveStringConnectSource2,
-    CurveStringConnectStage2, CurveStringCurveTrimQueryPath2, CurveStringCurveTrimStage2,
-    CurveStringDeduplicateStage2, CurveStringEndpoint2,
+    CurveStringChamferInputPath2, CurveStringChamferPredicatePath2, CurveStringChamferStage2,
+    CurveStringConnectSource2, CurveStringConnectStage2, CurveStringCurveTrimQueryPath2,
+    CurveStringCurveTrimStage2, CurveStringDeduplicateStage2, CurveStringEndpoint2,
     CurveStringEndpointConnectionPredicatePath2, CurveStringEndpointConnectionStatus2,
     CurveStringExtendPredicatePath2, CurveStringExtendStage2, CurveStringFilletInputPath2,
     CurveStringFilletStage2, CurveStringIntersectionPredicatePath2,
@@ -2276,6 +2276,10 @@ fn curve_string_chamfer_line_line_vertex_materializes_exact_segments() {
         chamfer.report().stage(),
         CurveStringChamferStage2::SegmentMaterialization
     );
+    assert_eq!(
+        chamfer.report().predicate_path(),
+        CurveStringChamferPredicatePath2::LineLineStrictInteriorParameters
+    );
     assert_eq!(chamfer.report().previous_segment_index(), 0);
     assert_eq!(chamfer.report().next_segment_index(), 1);
     assert_eq!(chamfer.report().previous_segment_start_point(), &p(0, 0));
@@ -2399,6 +2403,10 @@ fn curve_string_chamfer_line_line_vertex_by_points_materializes_exact_segments()
         chamfer.report().input_path(),
         CurveStringChamferInputPath2::Points
     );
+    assert_eq!(
+        chamfer.report().predicate_path(),
+        CurveStringChamferPredicatePath2::LineLineStrictInteriorParameters
+    );
     assert_eq!(chamfer.report().previous_trim().param(), &q(3, 4));
     assert_eq!(chamfer.report().next_trim().param(), &q(1, 4));
     assert_eq!(chamfer.report().previous_cut_point(), Some(&p(3, 0)));
@@ -2443,6 +2451,10 @@ fn curve_string_chamfer_line_line_vertex_by_points_reports_off_segment_boundary(
         CurveStringChamferInputPath2::Points
     );
     assert_eq!(
+        chamfer.report().predicate_path(),
+        CurveStringChamferPredicatePath2::PointCutNotOnSourceSegment
+    );
+    assert_eq!(
         chamfer.report().blocker(),
         Some(UncertaintyReason::Boundary)
     );
@@ -2474,6 +2486,10 @@ fn curve_string_chamfer_line_line_vertex_reports_boundary_parameters() {
     assert!(chamfer.curve_string().is_none());
     assert!(chamfer.report().status().is_retained_evidence());
     assert_eq!(
+        chamfer.report().predicate_path(),
+        CurveStringChamferPredicatePath2::CutParameterNotStrictInterior
+    );
+    assert_eq!(
         chamfer.report().blocker(),
         Some(UncertaintyReason::Boundary)
     );
@@ -2500,6 +2516,10 @@ fn curve_string_chamfer_arc_neighbor_reports_unsupported() {
 
     assert!(chamfer.curve_string().is_none());
     assert!(chamfer.report().status().is_retained_evidence());
+    assert_eq!(
+        chamfer.report().predicate_path(),
+        CurveStringChamferPredicatePath2::UnsupportedSegmentFamily
+    );
     assert_eq!(
         chamfer.report().blocker(),
         Some(UncertaintyReason::Unsupported)
