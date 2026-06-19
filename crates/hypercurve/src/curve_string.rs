@@ -387,6 +387,7 @@ pub struct CurveStringLineMergeSpanReport2 {
 #[derive(Clone, Debug, PartialEq)]
 pub struct CurveStringLineMergeReport2 {
     stage: CurveStringLineMergeStage2,
+    predicate_path: CurveStringLineMergePredicatePath2,
     source_segment_count: usize,
     source_segment_kind_counts: SegmentKindCounts,
     adjacent_pair_count: usize,
@@ -397,6 +398,13 @@ pub struct CurveStringLineMergeReport2 {
     spans: Vec<CurveStringLineMergeSpanReport2>,
     status: RetainedTopologyStatus,
     blocker: Option<UncertaintyReason>,
+}
+
+/// Exact predicate path used while classifying adjacent line-merge pairs.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum CurveStringLineMergePredicatePath2 {
+    /// Adjacent line candidates were classified by exact support and direction predicates.
+    ExactLineSupportAndDirection,
 }
 
 /// Furthest exact stage reached by adjacent line merging.
@@ -1677,6 +1685,8 @@ impl CurveString2 {
                         curve_string: None,
                         report: CurveStringLineMergeReport2 {
                             stage: CurveStringLineMergeStage2::PairClassification,
+                            predicate_path:
+                                CurveStringLineMergePredicatePath2::ExactLineSupportAndDirection,
                             source_segment_count: self.len(),
                             source_segment_kind_counts: curve_string_segment_kind_counts(self),
                             adjacent_pair_count,
@@ -1719,6 +1729,7 @@ impl CurveString2 {
         Ok(CurveStringLineMergeResult2 {
             report: CurveStringLineMergeReport2 {
                 stage: CurveStringLineMergeStage2::SegmentMaterialization,
+                predicate_path: CurveStringLineMergePredicatePath2::ExactLineSupportAndDirection,
                 source_segment_count: self.len(),
                 source_segment_kind_counts: curve_string_segment_kind_counts(self),
                 adjacent_pair_count,
@@ -7659,6 +7670,11 @@ impl CurveStringLineMergeReport2 {
     /// Returns the furthest exact line-merge stage reached.
     pub const fn stage(&self) -> CurveStringLineMergeStage2 {
         self.stage
+    }
+
+    /// Returns the exact predicate path used while classifying adjacent pairs.
+    pub const fn predicate_path(&self) -> CurveStringLineMergePredicatePath2 {
+        self.predicate_path
     }
 
     /// Returns the source curve-string segment count captured by this report.

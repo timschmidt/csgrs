@@ -7,13 +7,13 @@ use hypercurve::{
     CurveStringExtendPredicatePath2, CurveStringExtendStage2, CurveStringFilletInputPath2,
     CurveStringFilletPredicatePath2, CurveStringFilletStage2,
     CurveStringIntersectionPredicatePath2, CurveStringIntersectionQueryPath2,
-    CurveStringLineMergeStage2, CurveStringLinkKind2, CurveStringLinkSourceInput2,
-    CurveStringLinkStage2, CurveStringOrderedLinkStage2, CurveStringPreparedCacheFreshness2,
-    CurveStringRegionTrimBoundaryPredicatePath2, CurveStringRegionTrimQueryPath2,
-    CurveStringRegionTrimStage2, CurveStringTrimInputPath2, CurveStringTrimPoint2,
-    IntersectionKind, LineArcIntersection, LineArcOrder, LineSeg2, Point2, Real, Region2,
-    RegionContourRole, RegionPointLocation, Segment2, SegmentIntersection, SegmentKind,
-    SegmentKindCounts, UncertaintyReason,
+    CurveStringLineMergePredicatePath2, CurveStringLineMergeStage2, CurveStringLinkKind2,
+    CurveStringLinkSourceInput2, CurveStringLinkStage2, CurveStringOrderedLinkStage2,
+    CurveStringPreparedCacheFreshness2, CurveStringRegionTrimBoundaryPredicatePath2,
+    CurveStringRegionTrimQueryPath2, CurveStringRegionTrimStage2, CurveStringTrimInputPath2,
+    CurveStringTrimPoint2, IntersectionKind, LineArcIntersection, LineArcOrder, LineSeg2, Point2,
+    Real, Region2, RegionContourRole, RegionPointLocation, Segment2, SegmentIntersection,
+    SegmentKind, SegmentKindCounts, UncertaintyReason,
 };
 
 fn s(value: i32) -> Real {
@@ -429,6 +429,10 @@ fn curve_string_merge_adjacent_collinear_lines_reports_source_runs() {
         merged.report().stage(),
         CurveStringLineMergeStage2::SegmentMaterialization
     );
+    assert_eq!(
+        merged.report().predicate_path(),
+        CurveStringLineMergePredicatePath2::ExactLineSupportAndDirection
+    );
     assert_eq!(merged.report().source_segment_count(), 4);
     assert_eq!(merged.report().adjacent_pair_count(), 3);
     assert_eq!(merged.report().merged_pair_count(), 2);
@@ -488,6 +492,10 @@ fn curve_string_merge_adjacent_collinear_lines_preserves_corners() {
     let merged = curve.merge_adjacent_collinear_lines(&policy()).unwrap();
 
     assert!(merged.report().status().is_native_exact());
+    assert_eq!(
+        merged.report().predicate_path(),
+        CurveStringLineMergePredicatePath2::ExactLineSupportAndDirection
+    );
     assert_eq!(merged.report().adjacent_pair_count(), 1);
     assert_eq!(merged.report().merged_pair_count(), 0);
     assert_eq!(merged.report().preserved_pair_count(), 1);
@@ -514,6 +522,10 @@ fn curve_string_line_merge_span_reports_preserve_mixed_segment_kinds() {
     let merged = curve.merge_adjacent_collinear_lines(&policy()).unwrap();
 
     assert!(merged.report().status().is_native_exact());
+    assert_eq!(
+        merged.report().predicate_path(),
+        CurveStringLineMergePredicatePath2::ExactLineSupportAndDirection
+    );
     assert_eq!(merged.report().merged_pair_count(), 0);
     assert_eq!(merged.report().preserved_pair_count(), 1);
     assert_eq!(merged.report().spans().len(), 2);
@@ -547,6 +559,10 @@ fn curve_string_merge_adjacent_collinear_lines_preserves_reversal() {
     let merged = curve.merge_adjacent_collinear_lines(&policy()).unwrap();
 
     assert!(merged.report().status().is_native_exact());
+    assert_eq!(
+        merged.report().predicate_path(),
+        CurveStringLineMergePredicatePath2::ExactLineSupportAndDirection
+    );
     assert_eq!(merged.report().adjacent_pair_count(), 1);
     assert_eq!(merged.report().merged_pair_count(), 0);
     assert_eq!(merged.report().preserved_pair_count(), 1);
