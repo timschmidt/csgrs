@@ -342,7 +342,7 @@ impl ExactArrangementBooleanAttempt {
             && report.resolves_operation_selection(self.operation)
     }
 
-    pub fn resolves_volume_ownership_for_operation(
+    pub(crate) fn resolves_volume_ownership_for_operation(
         &self,
         operation: ExactBooleanOperation,
     ) -> bool {

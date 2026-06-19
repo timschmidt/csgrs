@@ -1264,9 +1264,7 @@ fn exact_coplanar_volumetric_cell_evidence_is_retained_by_public_evaluation() {
     assert!(
         evaluation
             .retained_arrangement_attempt()
-            .is_some_and(|attempt| {
-                attempt.resolves_volume_ownership_for_operation(evaluation.request.operation)
-            })
+            .is_some_and(|attempt| attempt.resolves_requested_volume_ownership())
             || evaluation_materializes_arrangement_cell_complex(&evaluation)
             || preflight.coplanar_volumetric_evidence.is_some(),
         "{evaluation:?}"
