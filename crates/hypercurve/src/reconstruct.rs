@@ -77,6 +77,7 @@ pub struct PolylineReconstructionSegmentReport2 {
     retained_start_sample_index: usize,
     retained_end_sample_index: usize,
     retained_sample_count: usize,
+    wraps_retained_samples: bool,
     output_start_point: Point2,
     output_end_point: Point2,
     status: RetainedTopologyStatus,
@@ -230,6 +231,11 @@ impl PolylineReconstructionSegmentReport2 {
     /// Returns retained source samples spanned by this output segment.
     pub const fn retained_sample_count(&self) -> usize {
         self.retained_sample_count
+    }
+
+    /// Returns true when this segment crosses the retained closed-ring sample seam.
+    pub const fn wraps_retained_samples(&self) -> bool {
+        self.wraps_retained_samples
     }
 
     /// Returns the exact output segment start point.
@@ -956,12 +962,15 @@ fn polyline_reconstruction_segment_reports(
             } else {
                 span.end
             };
+            let wraps_retained_samples =
+                closed && retained_end_sample_index < retained_start_sample_index;
             PolylineReconstructionSegmentReport2 {
                 output_segment_index,
                 output_segment_kind: segment.structural_facts().kind,
                 retained_start_sample_index,
                 retained_end_sample_index,
                 retained_sample_count: span.end - span.start + 1,
+                wraps_retained_samples,
                 output_start_point: segment.start().clone(),
                 output_end_point: segment.end().clone(),
                 status: RetainedTopologyStatus::ImportedLossy,

@@ -68,6 +68,7 @@ fn open_polyline_reconstruction_report_records_lossy_boundary() {
     assert_eq!(report.segment_reports()[0].retained_start_sample_index(), 0);
     assert_eq!(report.segment_reports()[0].retained_end_sample_index(), 2);
     assert_eq!(report.segment_reports()[0].retained_sample_count(), 3);
+    assert!(!report.segment_reports()[0].wraps_retained_samples());
     assert_eq!(report.segment_reports()[0].output_start_point(), &points[0]);
     assert_eq!(report.segment_reports()[0].output_end_point(), &points[3]);
     assert!(report.segment_reports()[0].status().is_imported_lossy());
@@ -236,6 +237,7 @@ fn closed_polyline_reconstruction_report_records_fill_and_closure_evidence() {
     assert_eq!(report.segment_reports()[0].retained_end_sample_index(), 1);
     assert_eq!(report.segment_reports()[3].retained_start_sample_index(), 3);
     assert_eq!(report.segment_reports()[3].retained_end_sample_index(), 0);
+    assert!(report.segment_reports()[3].wraps_retained_samples());
     assert_eq!(report.segment_reports()[3].output_start_point(), &points[3]);
     assert_eq!(report.segment_reports()[3].output_end_point(), &points[0]);
     assert!(report.lossy_boundary());
