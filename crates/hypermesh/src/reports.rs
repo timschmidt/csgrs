@@ -2874,7 +2874,8 @@ fn arrangement_cell_complex_sources_match(
         right,
         ExactBooleanRequest::new(operation, validation),
     )?
-    .preflight;
+    .preflight()
+    .clone();
     preflight.validate()?;
     Ok(preflight.support == ExactBooleanSupport::CertifiedArrangementCellComplex)
 }
@@ -3971,7 +3972,7 @@ fn validate_winding_readiness_against_sources_for_request(
     request: ExactBooleanRequest,
 ) -> Result<(), ExactReportValidationError> {
     if let Ok(evaluation) = workspace_evaluation_for_replay(left, right, request)
-        && report == &evaluation.certifications.winding_readiness
+        && report == &evaluation.certifications().winding_readiness
     {
         return Ok(());
     }
@@ -4186,7 +4187,8 @@ impl ExactBooleanPreflight {
         right: &ExactMesh,
         request: ExactBooleanRequest,
     ) -> Result<ExactBooleanPreflight, ExactReportValidationError> {
-        workspace_evaluation_for_replay(left, right, request).map(|evaluation| evaluation.preflight)
+        workspace_evaluation_for_replay(left, right, request)
+            .map(|evaluation| evaluation.preflight().clone())
     }
 
     /// Classify whether this retained preflight is fresh for the source meshes.
@@ -4876,7 +4878,7 @@ impl ExactRefinementReport {
         self.validate()?;
         let request = ExactBooleanRequest::new(self.operation, ValidationPolicy::ALLOW_BOUNDARY);
         if let Ok(evaluation) = workspace_evaluation_for_replay(left, right, request)
-            && self == &evaluation.certifications.refinement
+            && self == &evaluation.certifications().refinement
         {
             Ok(())
         } else {
@@ -5885,7 +5887,7 @@ impl ExactPlanarArrangementReport {
         self.validate()?;
         let request = ExactBooleanRequest::new(self.operation, ValidationPolicy::ALLOW_BOUNDARY);
         if let Ok(evaluation) = workspace_evaluation_for_replay(left, right, request)
-            && self == &evaluation.certifications.planar_arrangement
+            && self == &evaluation.certifications().planar_arrangement
         {
             Ok(())
         } else {
@@ -6890,7 +6892,7 @@ mod tests {
                 ValidationPolicy::ALLOW_BOUNDARY,
             ),
         )
-        .map(|evaluation| evaluation.preflight)
+        .map(|evaluation| evaluation.preflight().clone())
         .unwrap();
         assert_eq!(
             preflight.freshness_against_sources(&left, &right),

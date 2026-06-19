@@ -361,11 +361,12 @@ impl<'a> ExactBooleanWorkspace<'a> {
         evaluation
             .validate()
             .map_err(workspace_report_validation_error)?;
-        if evaluation.preflight.is_certified() {
+        if evaluation.preflight().is_certified() {
             if let Some(result) = evaluation.materialized_result().cloned() {
                 return Ok(result);
             }
-            if evaluation.preflight.support == ExactBooleanSupport::CertifiedArrangementCellComplex
+            if evaluation.preflight().support
+                == ExactBooleanSupport::CertifiedArrangementCellComplex
                 && self
                     .validated_regularized_solid_arrangement_attempt(request)?
                     .is_none()
@@ -373,7 +374,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
                 self.arrangement_attempt(request, ExactRegularizationPolicy::REGULARIZED_SOLID)?;
             }
             let result = self
-                .try_materialize_certified_support(request, evaluation.preflight.support)?
+                .try_materialize_certified_support(request, evaluation.preflight().support)?
                 .ok_or_else(|| {
                     workspace_report_validation_error(
                         ExactReportValidationError::StatusEvidenceMismatch,
@@ -819,7 +820,11 @@ mod tests {
             ExactReportFreshness::Current
         );
 
-        let certifications = workspace.evaluate(request).unwrap().certifications.clone();
+        let certifications = workspace
+            .evaluate(request)
+            .unwrap()
+            .certifications()
+            .clone();
         certifications
             .validate_against_sources(&left, &right, request)
             .unwrap();
@@ -827,7 +832,7 @@ mod tests {
         evaluation.validate().unwrap();
         assert_eq!(evaluation.retained_arrangement_attempt(), Some(&attempt));
 
-        let refinement_report = evaluation.certifications.refinement.clone();
+        let refinement_report = evaluation.certifications().refinement.clone();
         assert_eq!(
             refinement_report.freshness_against_sources(&left, &right),
             ExactReportFreshness::Current
@@ -890,7 +895,11 @@ mod tests {
         let second = workspace.evaluate(request).unwrap() as *const ExactBooleanEvaluation;
         assert_eq!(first, second);
 
-        let certifications = workspace.evaluate(request).unwrap().certifications.clone();
+        let certifications = workspace
+            .evaluate(request)
+            .unwrap()
+            .certifications()
+            .clone();
         certifications.validate_for_request(request).unwrap();
         certifications
             .validate_against_sources(&left, &right, request)
@@ -1016,7 +1025,7 @@ mod tests {
         );
 
         let mut stale = retained.clone();
-        stale.preflight.retained_events += 1;
+        stale.preflight_mut().retained_events += 1;
         assert_eq!(
             stale.validate_against_sources(&left, &right),
             Err(ExactReportValidationError::StatusEvidenceMismatch)
@@ -1030,7 +1039,7 @@ mod tests {
         corrupt_proof_workspace.evaluate(request).unwrap();
         corrupt_proof_workspace.evaluations[0]
             .1
-            .preflight
+            .preflight_mut()
             .retained_events += 1;
         assert!(
             corrupt_proof_workspace.materialize(request).is_err(),
@@ -1236,7 +1245,7 @@ mod tests {
         let expected_evidence = ExactBooleanWorkspace::new(&left, &right)
             .evaluate(request)
             .unwrap()
-            .preflight
+            .preflight()
             .clone()
             .coplanar_volumetric_evidence;
         assert_eq!(materialized, expected_result);
@@ -1288,7 +1297,10 @@ mod tests {
         let evaluation = workspace.evaluate(request).unwrap().clone();
         evaluation.validate().unwrap();
         assert_eq!(
-            evaluation.certifications.adjacent_union_completion.clone(),
+            evaluation
+                .certifications()
+                .adjacent_union_completion
+                .clone(),
             expected_report
         );
     }

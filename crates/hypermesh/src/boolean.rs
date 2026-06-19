@@ -2221,6 +2221,11 @@ impl ExactBooleanEvaluation {
         &self.certifications
     }
 
+    #[cfg(test)]
+    pub(crate) fn preflight_mut(&mut self) -> &mut ExactBooleanPreflight {
+        &mut self.preflight
+    }
+
     /// Return the materialized result retained by this evaluation, when the
     /// request reached a certified output.
     pub fn materialized_result(&self) -> Option<&ExactBooleanResult> {
@@ -12008,7 +12013,7 @@ mod tests {
             !evaluation.has_materialized_result(),
             "selected-region evaluation should retain certifications when materialization declines"
         );
-        let readiness = evaluation.certifications.winding_readiness;
+        let readiness = evaluation.certifications().winding_readiness.clone();
         assert_eq!(
             readiness.status,
             ExactWindingReadinessStatus::NotNamedOperation
@@ -12626,7 +12631,7 @@ mod tests {
             evaluation.retained_arrangement_attempt(),
             Some(&retained_attempt)
         );
-        let certifications = evaluation.certifications;
+        let certifications = evaluation.certifications().clone();
         certifications.validate_for_request(request).unwrap();
         certifications
             .validate_against_sources(&left, &right, request)
@@ -13530,7 +13535,7 @@ mod tests {
         ] {
             let request = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED);
             let evaluation = test_evaluation(request, &left, &right);
-            let readiness = &evaluation.certifications.winding_readiness;
+            let readiness = &evaluation.certifications().winding_readiness;
             let arrangement_materialized = operation == ExactBooleanOperation::Intersection;
             let expected_status = if arrangement_materialized {
                 ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized
@@ -13715,7 +13720,7 @@ mod tests {
             ValidationPolicy::ALLOW_BOUNDARY,
         );
         let boundary_evaluation = test_evaluation(boundary_request, &left, &right);
-        let boundary_readiness = &boundary_evaluation.certifications.winding_readiness;
+        let boundary_readiness = &boundary_evaluation.certifications().winding_readiness;
         assert_eq!(
             boundary_readiness.status,
             ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized,
@@ -13765,11 +13770,11 @@ mod tests {
         );
         closed_evaluation.validate().unwrap();
         assert!(
-            !closed_evaluation.preflight.is_certified(),
+            !closed_evaluation.preflight().is_certified(),
             "{closed_evaluation:?}"
         );
         assert!(
-            closed_evaluation.preflight.blocker.is_some(),
+            closed_evaluation.preflight().blocker.is_some(),
             "{closed_evaluation:?}"
         );
         assert!(
