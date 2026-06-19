@@ -35,7 +35,10 @@ fn exact_boolean_result(
     request: ExactBooleanRequest,
 ) -> ExactBooleanResult {
     let mut workspace = ExactBooleanWorkspace::new(left, right);
-    let result = workspace.materialize(request).unwrap();
+    let result = workspace
+        .materialize_ref(request)
+        .cloned()
+        .unwrap_or_else(|_| workspace.materialize(request).unwrap());
     workspace
         .evaluate(request)
         .unwrap()
@@ -2726,7 +2729,10 @@ fn arrangement_cell_complex_request_materialization_is_publicly_replayable() {
         ValidationPolicy::ALLOW_BOUNDARY,
     );
     let mut workspace = ExactBooleanWorkspace::new(&left, &right);
-    let result = workspace.materialize(request).unwrap();
+    let result = workspace
+        .materialize_ref(request)
+        .cloned()
+        .unwrap_or_else(|_| workspace.materialize(request).unwrap());
     assert!(
         result.is_arrangement_cell_complex_materialized_for(ExactBooleanOperation::Union)
             || result.is_arrangement_cell_complex_shortcut_for(ExactBooleanOperation::Union),
@@ -2776,8 +2782,13 @@ fn arrangement_cell_complex_request_materialization_is_publicly_replayable() {
     );
     let mut convex_workspace = ExactBooleanWorkspace::new(&convex_left, &convex_right);
     let convex_intersection = convex_workspace
-        .materialize(convex_intersection_request)
-        .unwrap();
+        .materialize_ref(convex_intersection_request)
+        .cloned()
+        .unwrap_or_else(|_| {
+            convex_workspace
+                .materialize(convex_intersection_request)
+                .unwrap()
+        });
     if convex_intersection
         .is_arrangement_cell_complex_materialized_for(ExactBooleanOperation::Intersection)
     {
