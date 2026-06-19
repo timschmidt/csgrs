@@ -4902,26 +4902,6 @@ impl ExactBooleanBlocker {
         self.construction_failed_events
     }
 
-    /// Return the retained non-coplanar candidate face-pair count mutably.
-    pub fn candidate_pairs_mut(&mut self) -> &mut usize {
-        &mut self.candidate_pairs
-    }
-
-    /// Return the retained positive-area coplanar overlap face-pair count mutably.
-    pub fn coplanar_overlapping_pairs_mut(&mut self) -> &mut usize {
-        &mut self.coplanar_overlapping_pairs
-    }
-
-    /// Return the retained coplanar touching face-pair count mutably.
-    pub fn coplanar_touching_pairs_mut(&mut self) -> &mut usize {
-        &mut self.coplanar_touching_pairs
-    }
-
-    /// Return the retained unknown face-pair count mutably.
-    pub fn unknown_pairs_mut(&mut self) -> &mut usize {
-        &mut self.unknown_pairs
-    }
-
     /// Return whether this blocker is waiting on predicate or construction refinement.
     pub const fn requires_refinement(&self) -> bool {
         matches!(self.kind, ExactBooleanBlockerKind::NeedsRefinement)
