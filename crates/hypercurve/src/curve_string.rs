@@ -772,6 +772,13 @@ pub enum CurveStringRegionTrimQueryPath2 {
     Prepared,
 }
 
+/// Exact predicate family used while collecting trim-by-region boundary hits.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum CurveStringRegionTrimBoundaryPredicatePath2 {
+    /// Source/region segment pairs were filtered by AABB before exact segment predicates.
+    AabbFilteredExactSegmentIntersections,
+}
+
 /// Prepared-cache evidence consumed by a trim-by-region query.
 #[derive(Clone, Debug, PartialEq)]
 pub struct CurveStringRegionTrimPreparedCacheReport2 {
@@ -817,6 +824,7 @@ pub struct CurveStringRegionTrimReport2 {
     region_hole_segment_count: usize,
     region_material_segment_kind_counts: SegmentKindCounts,
     region_hole_segment_kind_counts: SegmentKindCounts,
+    boundary_predicate_path: CurveStringRegionTrimBoundaryPredicatePath2,
     boundary_candidate_pair_count: usize,
     boundary_skipped_aabb_pair_count: usize,
     boundary_tested_pair_count: usize,
@@ -4234,6 +4242,11 @@ impl CurveStringRegionTrimReport2 {
         self.region_hole_segment_kind_counts
     }
 
+    /// Returns the exact predicate/filter path used for region-boundary hits.
+    pub const fn boundary_predicate_path(&self) -> CurveStringRegionTrimBoundaryPredicatePath2 {
+        self.boundary_predicate_path
+    }
+
     /// Returns boundary segment-pair candidates considered while collecting trim hits.
     pub const fn boundary_candidate_pair_count(&self) -> usize {
         self.boundary_candidate_pair_count
@@ -5104,6 +5117,8 @@ fn trim_curve_string_inside_region_with_hits(
             region_hole_segment_count,
             region_material_segment_kind_counts,
             region_hole_segment_kind_counts,
+            boundary_predicate_path:
+                CurveStringRegionTrimBoundaryPredicatePath2::AabbFilteredExactSegmentIntersections,
             boundary_candidate_pair_count: boundary_workload.candidate_pair_count,
             boundary_skipped_aabb_pair_count: boundary_workload.skipped_aabb_pair_count,
             boundary_tested_pair_count: boundary_workload.tested_pair_count,
@@ -5700,6 +5715,8 @@ fn blocked_region_trim_result(
             region_hole_segment_count,
             region_material_segment_kind_counts,
             region_hole_segment_kind_counts,
+            boundary_predicate_path:
+                CurveStringRegionTrimBoundaryPredicatePath2::AabbFilteredExactSegmentIntersections,
             boundary_candidate_pair_count: boundary_workload.candidate_pair_count,
             boundary_skipped_aabb_pair_count: boundary_workload.skipped_aabb_pair_count,
             boundary_tested_pair_count: boundary_workload.tested_pair_count,

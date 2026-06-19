@@ -7,10 +7,11 @@ use hypercurve::{
     CurveStringIntersectionPredicatePath2, CurveStringIntersectionQueryPath2,
     CurveStringLineMergeStage2, CurveStringLinkKind2, CurveStringLinkSourceInput2,
     CurveStringLinkStage2, CurveStringOrderedLinkStage2, CurveStringPreparedCacheFreshness2,
-    CurveStringRegionTrimQueryPath2, CurveStringRegionTrimStage2, CurveStringTrimInputPath2,
-    CurveStringTrimPoint2, IntersectionKind, LineArcIntersection, LineArcOrder, LineSeg2, Point2,
-    Real, Region2, RegionContourRole, RegionPointLocation, Segment2, SegmentIntersection,
-    SegmentKind, SegmentKindCounts, UncertaintyReason,
+    CurveStringRegionTrimBoundaryPredicatePath2, CurveStringRegionTrimQueryPath2,
+    CurveStringRegionTrimStage2, CurveStringTrimInputPath2, CurveStringTrimPoint2,
+    IntersectionKind, LineArcIntersection, LineArcOrder, LineSeg2, Point2, Real, Region2,
+    RegionContourRole, RegionPointLocation, Segment2, SegmentIntersection, SegmentKind,
+    SegmentKindCounts, UncertaintyReason,
 };
 
 fn s(value: i32) -> Real {
@@ -3665,6 +3666,14 @@ fn prepared_curve_string_trim_inside_region_matches_direct_result() {
     assert_eq!(prepared_cache.region().decided_segment_box_count(), 8);
     assert_eq!(prepared_cache.region().undecided_segment_box_count(), 0);
     assert!(prepared_cache.region().region_box_decided());
+    assert_eq!(
+        direct.report().boundary_predicate_path(),
+        CurveStringRegionTrimBoundaryPredicatePath2::AabbFilteredExactSegmentIntersections
+    );
+    assert_eq!(
+        prepared.report().boundary_predicate_path(),
+        CurveStringRegionTrimBoundaryPredicatePath2::AabbFilteredExactSegmentIntersections
+    );
     assert_eq!(direct.report().boundary_candidate_pair_count(), 8);
     assert_eq!(direct.report().boundary_skipped_aabb_pair_count(), 4);
     assert_eq!(direct.report().boundary_tested_pair_count(), 4);
@@ -3754,6 +3763,10 @@ fn curve_string_trim_inside_region_splits_disconnected_inside_windows() {
     assert_eq!(trimmed.report().output_segment_count(), Some(2));
     assert_eq!(trimmed.report().region_material_segment_count(), 8);
     assert_eq!(trimmed.report().region_hole_segment_count(), 0);
+    assert_eq!(
+        trimmed.report().boundary_predicate_path(),
+        CurveStringRegionTrimBoundaryPredicatePath2::AabbFilteredExactSegmentIntersections
+    );
     assert_eq!(trimmed.report().boundary_candidate_pair_count(), 8);
     assert_eq!(trimmed.report().boundary_skipped_aabb_pair_count(), 4);
     assert_eq!(trimmed.report().boundary_tested_pair_count(), 4);
