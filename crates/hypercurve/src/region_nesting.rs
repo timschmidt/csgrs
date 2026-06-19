@@ -245,6 +245,7 @@ pub struct ExactCurveArrangementEndpointGraphCache2 {
     structural_singleton_bucket_count: usize,
     max_structural_bucket_size: usize,
     endpoint_bucket_cache: ExactCurveArrangementArrangedEndpointBucketCache2,
+    endpoint_side_bucket_cache: ExactCurveArrangementArrangedEndpointSideBucketCache2,
     dangling_endpoint_count: usize,
     branch_endpoint_count: usize,
     blocker_arranged_segment_index: Option<usize>,
@@ -257,6 +258,24 @@ pub struct ExactCurveArrangementEndpointGraphCache2 {
 pub struct ExactCurveArrangementArrangedEndpointRef2 {
     arranged_segment_index: usize,
     endpoint: RegionLineSegmentArrangedEndpoint2,
+}
+
+/// Arranged endpoint bucket grouped by retained endpoint side.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ExactCurveArrangementArrangedEndpointSideBucket2 {
+    endpoint: RegionLineSegmentArrangedEndpoint2,
+    endpoints: Vec<ExactCurveArrangementArrangedEndpointRef2>,
+}
+
+/// Arranged endpoint side buckets retained by endpoint-graph validation.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ExactCurveArrangementArrangedEndpointSideBucketCache2 {
+    bucket_count: usize,
+    endpoint_ref_count: usize,
+    start_endpoint_ref_count: usize,
+    end_endpoint_ref_count: usize,
+    max_bucket_size: usize,
+    buckets: Vec<ExactCurveArrangementArrangedEndpointSideBucket2>,
 }
 
 /// Exact structural arranged endpoint bucket retained by endpoint-graph validation.
@@ -2198,6 +2217,10 @@ impl ExactCurveArrangementSplitIntersectionBucketCache2 {
 impl ExactCurveArrangementEndpointGraphCache2 {
     fn from_region_build_report(report: &RegionLineSegmentRegionBuildReport2) -> Option<Self> {
         let endpoint_bucket_cache = arranged_endpoint_bucket_cache(&report.arranged_source_reports);
+        let endpoint_side_bucket_cache =
+            ExactCurveArrangementArrangedEndpointSideBucketCache2::from_arranged_source_reports(
+                &report.arranged_source_reports,
+            );
         Some(Self {
             predicate_path: report.endpoint_graph_predicate_path?,
             endpoint_count: report.endpoint_graph_endpoint_count?,
@@ -2206,6 +2229,7 @@ impl ExactCurveArrangementEndpointGraphCache2 {
                 .endpoint_graph_structural_singleton_bucket_count?,
             max_structural_bucket_size: report.endpoint_graph_max_structural_bucket_size?,
             endpoint_bucket_cache,
+            endpoint_side_bucket_cache,
             dangling_endpoint_count: report.endpoint_graph_dangling_endpoint_count?,
             branch_endpoint_count: report.endpoint_graph_branch_endpoint_count?,
             blocker_arranged_segment_index: report.endpoint_graph_blocker_arranged_segment_index,
@@ -2246,6 +2270,13 @@ impl ExactCurveArrangementEndpointGraphCache2 {
         &self.endpoint_bucket_cache
     }
 
+    /// Returns arranged endpoints grouped by retained endpoint side.
+    pub const fn endpoint_side_bucket_cache(
+        &self,
+    ) -> &ExactCurveArrangementArrangedEndpointSideBucketCache2 {
+        &self.endpoint_side_bucket_cache
+    }
+
     /// Returns dangling endpoint count found during validation.
     pub const fn dangling_endpoint_count(&self) -> usize {
         self.dangling_endpoint_count
@@ -2281,6 +2312,97 @@ impl ExactCurveArrangementArrangedEndpointRef2 {
     /// Returns which arranged fragment endpoint this reference points at.
     pub const fn endpoint(&self) -> RegionLineSegmentArrangedEndpoint2 {
         self.endpoint
+    }
+}
+
+impl ExactCurveArrangementArrangedEndpointSideBucket2 {
+    /// Returns the arranged endpoint side represented by this bucket.
+    pub const fn endpoint(&self) -> RegionLineSegmentArrangedEndpoint2 {
+        self.endpoint
+    }
+
+    /// Returns arranged endpoint references with this retained endpoint side.
+    pub fn endpoints(&self) -> &[ExactCurveArrangementArrangedEndpointRef2] {
+        &self.endpoints
+    }
+}
+
+impl ExactCurveArrangementArrangedEndpointSideBucketCache2 {
+    fn from_arranged_source_reports(
+        arranged_source_reports: &[RegionLineSegmentArrangedSourceReport2],
+    ) -> Self {
+        let mut start_refs = Vec::new();
+        let mut end_refs = Vec::new();
+
+        for report in arranged_source_reports {
+            let arranged_segment_index = report.arranged_segment_index();
+            start_refs.push(ExactCurveArrangementArrangedEndpointRef2 {
+                arranged_segment_index,
+                endpoint: RegionLineSegmentArrangedEndpoint2::Start,
+            });
+            end_refs.push(ExactCurveArrangementArrangedEndpointRef2 {
+                arranged_segment_index,
+                endpoint: RegionLineSegmentArrangedEndpoint2::End,
+            });
+        }
+
+        let start_endpoint_ref_count = start_refs.len();
+        let end_endpoint_ref_count = end_refs.len();
+        let buckets = vec![
+            ExactCurveArrangementArrangedEndpointSideBucket2 {
+                endpoint: RegionLineSegmentArrangedEndpoint2::Start,
+                endpoints: start_refs,
+            },
+            ExactCurveArrangementArrangedEndpointSideBucket2 {
+                endpoint: RegionLineSegmentArrangedEndpoint2::End,
+                endpoints: end_refs,
+            },
+        ];
+        let endpoint_ref_count = arranged_source_reports.len().saturating_mul(2);
+        let max_bucket_size = buckets
+            .iter()
+            .map(|bucket| bucket.endpoints.len())
+            .max()
+            .unwrap_or(0);
+
+        Self {
+            bucket_count: buckets.len(),
+            endpoint_ref_count,
+            start_endpoint_ref_count,
+            end_endpoint_ref_count,
+            max_bucket_size,
+            buckets,
+        }
+    }
+
+    /// Returns the number of endpoint-side buckets.
+    pub const fn bucket_count(&self) -> usize {
+        self.bucket_count
+    }
+
+    /// Returns the number of retained arranged endpoint references.
+    pub const fn endpoint_ref_count(&self) -> usize {
+        self.endpoint_ref_count
+    }
+
+    /// Returns the number of retained start endpoint references.
+    pub const fn start_endpoint_ref_count(&self) -> usize {
+        self.start_endpoint_ref_count
+    }
+
+    /// Returns the number of retained end endpoint references.
+    pub const fn end_endpoint_ref_count(&self) -> usize {
+        self.end_endpoint_ref_count
+    }
+
+    /// Returns the largest endpoint-side bucket size.
+    pub const fn max_bucket_size(&self) -> usize {
+        self.max_bucket_size
+    }
+
+    /// Returns endpoint-side buckets in stable start/end order.
+    pub fn buckets(&self) -> &[ExactCurveArrangementArrangedEndpointSideBucket2] {
+        &self.buckets
     }
 }
 
