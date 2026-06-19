@@ -980,20 +980,17 @@ impl ExactBooleanCertificationSet {
         retained_arrangement_attempt: Option<&ExactArrangementBooleanAttempt>,
     ) -> Result<Self, MeshError> {
         validate_graph_source_handoff(graph, left, right)?;
-        let retained_arrangement_attempt = retained_arrangement_attempt_for_request(
-            retained_arrangement_attempt,
-            left,
-            right,
-            request,
-            ExactRegularizationPolicy::REGULARIZED_SOLID,
-        )
-        .map_err(|error| {
-            MeshError::one(MeshDiagnostic::new(
-                Severity::Error,
-                DiagnosticKind::UnsupportedExactOperation,
-                format!("retained arrangement attempt failed validation: {error:?}"),
-            ))
-        })?;
+        if let Some(attempt) = retained_arrangement_attempt {
+            attempt
+                .validate_for_request_policy(request, ExactRegularizationPolicy::REGULARIZED_SOLID)
+                .map_err(|error| {
+                    MeshError::one(MeshDiagnostic::new(
+                        Severity::Error,
+                        DiagnosticKind::UnsupportedExactOperation,
+                        format!("retained arrangement attempt failed validation: {error:?}"),
+                    ))
+                })?;
+        }
         let trivial = ExactTrivialBooleanFacts::from_sources(left, right);
         let regularized_solid = ExactRegularizedSolidBooleanFacts::from_sources(left, right);
         let refinement = refinement_report_from_graph(graph, request.operation);
