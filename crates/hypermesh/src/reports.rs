@@ -707,7 +707,7 @@ pub struct ExactBooleanResult {
 
 impl ExactBooleanResult {
     /// Return the declared production path for this result.
-    pub fn kind(&self) -> ExactBooleanResultKind {
+    pub(crate) fn kind(&self) -> ExactBooleanResultKind {
         self.kind
     }
 

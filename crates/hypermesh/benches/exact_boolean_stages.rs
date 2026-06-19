@@ -93,8 +93,10 @@ fn run_case(case: &BenchCase) {
             case.name,
             "materialized_result_kind",
             format!(
-                "{:?};triangles={}",
-                result.kind(),
+                "arrangement_materialized={};arrangement_shortcut={};certified_shortcut={};triangles={}",
+                result.is_arrangement_cell_complex_materialized_for(request.operation()),
+                result.is_arrangement_cell_complex_shortcut_for(request.operation()),
+                result.is_certified_shortcut_for(request.operation()),
                 result.mesh().triangles().len()
             ),
         ),

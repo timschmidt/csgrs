@@ -1219,7 +1219,13 @@ fn exact_closed_convex_boolean_is_publicly_replayable() {
             ValidationPolicy::CLOSED,
         ),
     );
-    assert_eq!(dispatched.kind(), separated.kind());
+    assert!(
+        dispatched.is_certified_shortcut_for(ExactBooleanOperation::Intersection),
+        "{dispatched:?}"
+    );
+    dispatched
+        .validate_against_sources(&separated_left, &separated_right)
+        .unwrap();
 
     let contained_on_boundary = tetra_from_corners([1, 1, 0], [2, 1, 0], [1, 2, 0], [1, 1, 1]);
     let container = tetra_from_corners([0, 0, 0], [10, 0, 0], [0, 10, 0], [0, 0, 10]);
@@ -3349,12 +3355,11 @@ fn trivial_boolean_shortcuts_are_publicly_replayable() {
             &open_disjoint_left,
             ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
         );
-        assert_eq!(replayed_empty_open.kind(), empty_open_result.kind());
-        assert!(replayed_empty_open.mesh().triangles().is_empty());
         assert!(
             replayed_empty_open.is_certified_shortcut_for(operation),
             "{operation:?}: {replayed_empty_open:?}"
         );
+        assert!(replayed_empty_open.mesh().triangles().is_empty());
 
         let open_empty_result = exact_boolean_result(
             &open_disjoint_left,
@@ -3660,8 +3665,7 @@ fn closed_same_surface_boolean_is_publicly_replayable() {
                         ),
                     );
                     panic!(
-                        "right_index={right_index} operation={operation:?} error={error:?} result={:?} replay={:?}",
-                        result.kind(), replay.kind()
+                        "right_index={right_index} operation={operation:?} error={error:?} result={result:?} replay={replay:?}"
                     );
                 });
         }
