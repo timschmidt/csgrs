@@ -975,9 +975,9 @@ pub struct ExactBooleanCertificationSet {
     /// Same-surface shortcut status.
     pub same_surface: ExactSameSurfaceReport,
     /// Left vertices classified against the right closed mesh.
-    pub closed_winding_left_in_right: ClosedMeshWindingMeshReport,
+    closed_winding_left_in_right: ClosedMeshWindingMeshReport,
     /// Right vertices classified against the left closed mesh.
-    pub closed_winding_right_in_left: ClosedMeshWindingMeshReport,
+    closed_winding_right_in_left: ClosedMeshWindingMeshReport,
     /// Left vertices classified against the right convex solid.
     convex_left_in_right: ConvexSolidMeshClassification,
     /// Right vertices classified against the left convex solid.
@@ -1023,6 +1023,26 @@ impl ExactBooleanCertificationSet {
     /// Return source-shape facts used by closed regularized-solid shortcuts mutably.
     pub fn regularized_solid_mut(&mut self) -> &mut ExactRegularizedSolidBooleanFacts {
         &mut self.regularized_solid
+    }
+
+    /// Return the left-against-right closed-winding classification report.
+    pub fn closed_winding_left_in_right(&self) -> &ClosedMeshWindingMeshReport {
+        &self.closed_winding_left_in_right
+    }
+
+    /// Return the left-against-right closed-winding classification report mutably.
+    pub fn closed_winding_left_in_right_mut(&mut self) -> &mut ClosedMeshWindingMeshReport {
+        &mut self.closed_winding_left_in_right
+    }
+
+    /// Return the right-against-left closed-winding classification report.
+    pub fn closed_winding_right_in_left(&self) -> &ClosedMeshWindingMeshReport {
+        &self.closed_winding_right_in_left
+    }
+
+    /// Return the right-against-left closed-winding classification report mutably.
+    pub fn closed_winding_right_in_left_mut(&mut self) -> &mut ClosedMeshWindingMeshReport {
+        &mut self.closed_winding_right_in_left
     }
 
     pub(crate) fn from_graph_and_regularized_arrangement(

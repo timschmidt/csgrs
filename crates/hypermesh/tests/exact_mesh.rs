@@ -1422,7 +1422,7 @@ fn exact_closed_convex_boolean_is_publicly_replayable() {
     let mut relabeled_winding_report = separated_evaluation.clone();
     relabeled_winding_report
         .certifications_mut()
-        .closed_winding_left_in_right
+        .closed_winding_left_in_right_mut()
         .target_closed = false;
     assert_report_validation_error!(
         relabeled_winding_report.validate(),
@@ -2999,12 +2999,12 @@ fn closed_winding_shortcuts_are_publicly_replayable() {
         let mut relabeled_winding_report = separated_evaluation.clone();
         relabeled_winding_report
             .certifications_mut()
-            .closed_winding_left_in_right
+            .closed_winding_left_in_right_mut()
             .target_closed = false;
         assert!(
             relabeled_winding_report
                 .certifications()
-                .closed_winding_left_in_right
+                .closed_winding_left_in_right()
                 .validate()
                 .is_err()
         );
