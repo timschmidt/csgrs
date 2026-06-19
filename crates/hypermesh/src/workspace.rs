@@ -906,20 +906,25 @@ mod tests {
             .unwrap();
         workspace.preflight(request).unwrap();
 
-        let materialized = workspace.materialize_ref(request).cloned().unwrap();
+        workspace.materialize_ref(request).unwrap();
         assert_eq!(workspace.materializations.len(), 1);
         assert_eq!(workspace.evaluations.len(), 1);
+        let cached_materialized = &workspace.materializations[0].1;
         assert_eq!(
             workspace.evaluations[0].1.materialized_result(),
-            Some(&materialized)
+            Some(cached_materialized)
         );
         {
             let evaluation = workspace.evaluate(request).unwrap();
-            assert_eq!(evaluation.materialized_result(), Some(&materialized));
             evaluation.validate().unwrap();
         }
         assert_eq!(workspace.evaluations.len(), 1);
         assert_eq!(workspace.materializations.len(), 1);
+        let cached_materialized = &workspace.materializations[0].1;
+        assert_eq!(
+            workspace.evaluations[0].1.materialized_result(),
+            Some(cached_materialized)
+        );
 
         let mut corrupt_workspace = ExactBooleanWorkspace::new(&left, &right);
         corrupt_workspace.materialize_ref(request).unwrap();
