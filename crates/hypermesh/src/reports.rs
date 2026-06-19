@@ -1794,7 +1794,7 @@ impl ExactBooleanResult {
     /// requires the whole result object to match. That closes the shortcut
     /// replay gap: a certified output mesh cannot be relabeled as a different
     /// named operation or shortcut kind while still passing the source audit.
-    pub fn validate_operation_against_sources(
+    pub(crate) fn validate_operation_against_sources(
         &self,
         left: &ExactMesh,
         right: &ExactMesh,

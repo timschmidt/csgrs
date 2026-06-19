@@ -2171,17 +2171,6 @@ fn exact_selected_region_boolean_is_publicly_replayable() {
             ValidationPolicy::ALLOW_BOUNDARY,
         ),
     );
-    assert!(
-        keep_left
-            .validate_operation_against_sources(
-                &left,
-                &right,
-                ExactBooleanOperation::SelectedRegions(ExactRegionSelection::KeepAll),
-                ValidationPolicy::ALLOW_BOUNDARY,
-                ExactBoundaryBooleanPolicy::Reject,
-            )
-            .is_err()
-    );
     let mut stale_materialization = result.clone();
     stale_materialization.assembly = keep_left.assembly;
     stale_materialization.mesh = keep_left.mesh;
@@ -3248,17 +3237,10 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
     }
     assert!(!result.mesh.triangles().is_empty());
     assert!(
-        result
-            .validate_operation_against_sources(
-                &left,
-                &right,
-                ExactBooleanOperation::Intersection,
-                ValidationPolicy::ALLOW_BOUNDARY,
-                ExactBoundaryBooleanPolicy::Reject,
-            )
-            .is_err(),
-        "{result:?}"
+        !result.is_arrangement_cell_complex_materialized_for(ExactBooleanOperation::Intersection)
     );
+    assert!(!result.is_arrangement_cell_complex_shortcut_for(ExactBooleanOperation::Intersection));
+    assert!(!result.is_certified_shortcut_for(ExactBooleanOperation::Intersection));
     if result.volumetric_classifications.len() > 1 {
         let mut stale_volumetric_order = result.clone();
         stale_volumetric_order.volumetric_classifications.swap(0, 1);
@@ -4004,17 +3986,7 @@ fn exact_boolean_public_shortcuts_handle_disjoint_operands() {
             ValidationPolicy::ALLOW_BOUNDARY,
         ),
     );
-    assert!(
-        intersection
-            .validate_operation_against_sources(
-                &left,
-                &right,
-                ExactBooleanOperation::Union,
-                ValidationPolicy::ALLOW_BOUNDARY,
-                ExactBoundaryBooleanPolicy::Reject,
-            )
-            .is_err()
-    );
+    assert!(!intersection.is_certified_shortcut_for(ExactBooleanOperation::Union));
 
     assert!(intersection.mesh.triangles().is_empty());
 }
