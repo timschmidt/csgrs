@@ -2369,6 +2369,20 @@ impl ExactBooleanEvaluation {
         }
     }
 
+    /// Validate the retained arrangement attempt for this evaluation request,
+    /// when the evaluation reached the arrangement/cell-complex pipeline.
+    pub fn validate_retained_arrangement_attempt_against_sources(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> Result<bool, ExactReportValidationError> {
+        let Some(attempt) = self.retained_arrangement_attempt() else {
+            return Ok(false);
+        };
+        attempt.validate_against_sources_for_request(left, right, self.request)?;
+        Ok(true)
+    }
+
     fn requires_materialized_result(&self) -> bool {
         self.preflight.is_certified()
             && !matches!(
