@@ -470,6 +470,36 @@ fn prepared_boolean_region_report_matches_plain_materialization() {
         built.report().boundary_build_report(),
         plain.report().boundary_build_report()
     );
+    let built_pipeline = built.report().pipeline_report().unwrap();
+    let plain_pipeline = plain.report().pipeline_report().unwrap();
+    assert_eq!(
+        built_pipeline.fragment_build_report(),
+        plain_pipeline.fragment_build_report()
+    );
+    assert_eq!(
+        built_pipeline.fragment_selection_report(),
+        plain_pipeline.fragment_selection_report()
+    );
+    assert_eq!(
+        built_pipeline.boundary_fragment_emission_report(),
+        plain_pipeline.boundary_fragment_emission_report()
+    );
+    assert_eq!(
+        built_pipeline.chain_assembly_report(),
+        plain_pipeline.chain_assembly_report()
+    );
+    assert_eq!(
+        built_pipeline.loop_extraction_report(),
+        plain_pipeline.loop_extraction_report()
+    );
+    assert_eq!(
+        built_pipeline.contour_transfer_report(),
+        plain_pipeline.contour_transfer_report()
+    );
+    assert_eq!(
+        built_pipeline.boundary_build_report(),
+        built.report().boundary_build_report()
+    );
     assert_eq!(
         built.report().result_boundary_segment_count(),
         plain.report().result_boundary_segment_count()

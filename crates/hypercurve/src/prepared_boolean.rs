@@ -9,9 +9,10 @@
 use crate::prepared::{PreparedContourView2, PreparedRegionView2};
 use crate::{
     BooleanBoundaryLoopSet, BooleanFragmentSelection, BooleanOp, Classification, Contour2,
-    CurvePolicy, CurveResult, FillRule, Region2, RegionBooleanPreparedCacheReport2,
-    RegionBooleanResult2, RegionFragmentSet, RegionIntersectionSet, RegionPointLocation,
-    RegionPreparedCacheAudit2, RegionSide,
+    CurvePolicy, CurveResult, FillRule, Region2, RegionBooleanPipelineReport2,
+    RegionBooleanPreparedCacheReport2, RegionBooleanResult2, RegionFragmentSet,
+    RegionIntersectionSet, RegionPointLocation, RegionPreparedCacheAudit2, RegionSide,
+    UncertaintyReason,
 };
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -328,9 +329,16 @@ pub(crate) fn boolean_region_between_prepared_with_report(
     let first_view = first.as_region_view();
     let second_view = second.as_region_view();
     let boundary_events = first.intersect_prepared_region(second, policy)?;
-    let contours =
-        match boolean_boundary_contours_between_prepared(first, second, op, fill_rule, policy)? {
-            Classification::Decided(contours) => contours,
+    let (contours, pipeline_report) =
+        match boolean_boundary_contours_between_prepared_with_pipeline_report(
+            first,
+            second,
+            op,
+            fill_rule,
+            &boundary_events,
+            policy,
+        )? {
+            Classification::Decided(result) => result,
             Classification::Uncertain(reason) => {
                 return Ok(
                     crate::region_boolean::blocked_region_boolean_result_with_prepared_cache(
@@ -347,7 +355,7 @@ pub(crate) fn boolean_region_between_prepared_with_report(
                 );
             }
         };
-    crate::region_boolean::region_boolean_result_from_boundary_contours_with_prepared_cache(
+    crate::region_boolean::region_boolean_result_from_boundary_contours_with_prepared_cache_and_pipeline_report(
         &first_view,
         &second_view,
         op,
@@ -356,8 +364,184 @@ pub(crate) fn boolean_region_between_prepared_with_report(
         &boundary_events,
         contours,
         Some(region_boolean_prepared_cache_report(first, second)),
+        pipeline_report,
         policy,
     )
+}
+
+fn boolean_boundary_contours_between_prepared_with_pipeline_report(
+    first: &PreparedRegionView2<'_>,
+    second: &PreparedRegionView2<'_>,
+    op: BooleanOp,
+    fill_rule: FillRule,
+    boundary_events: &RegionIntersectionSet,
+    policy: &CurvePolicy,
+) -> CurveResult<Classification<(Vec<Contour2>, Option<RegionBooleanPipelineReport2>)>> {
+    let first_view = first.as_region_view();
+    let second_view = second.as_region_view();
+    if crate::region_boolean::same_region_view(&first_view, &second_view) {
+        return Ok(Classification::Decided((
+            match op {
+                BooleanOp::Union | BooleanOp::Intersection => {
+                    crate::region_boolean::clone_boundary_contours(&first_view)
+                }
+                BooleanOp::Difference | BooleanOp::Xor => Vec::new(),
+            },
+            None,
+        )));
+    }
+    if first_view.is_empty() || second_view.is_empty() {
+        return Ok(Classification::Decided((
+            crate::region_boolean::empty_operand_boundary_contours(&first_view, &second_view, op),
+            None,
+        )));
+    }
+    match crate::region_boolean::coextensive_axis_rect_region_boolean(
+        &first_view,
+        &second_view,
+        op,
+        policy,
+    )? {
+        Classification::Decided(Some(region)) => {
+            return Ok(Classification::Decided((
+                crate::region_boolean::clone_boundary_contours(&region.as_view()),
+                None,
+            )));
+        }
+        Classification::Decided(None) => {}
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    }
+    match boundary_contact_resolution_prepared(first, second, policy)? {
+        Classification::Decided(Some(PreparedBoundaryContactResolution::BoundaryOnly(kind))) => {
+            return match boundary_contact_boundary_contours_prepared(
+                first, second, op, fill_rule, policy, kind,
+            )? {
+                Classification::Decided(contours) => Ok(Classification::Decided((contours, None))),
+                Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
+            };
+        }
+        Classification::Decided(Some(PreparedBoundaryContactResolution::Containment {
+            relation,
+            contact,
+        })) => {
+            if let Some(contours) =
+                containment_boundary_contours_prepared(first, second, op, relation)
+            {
+                return Ok(Classification::Decided((contours, None)));
+            }
+            if relation == crate::region_boolean::BoundaryContainmentRelation::FirstContainsSecond
+                && contact == PreparedBoundaryContactKind::Overlap
+                && op == BooleanOp::Difference
+            {
+                return match containment_difference_boundary_contours_prepared(
+                    first, second, fill_rule, policy,
+                )? {
+                    Classification::Decided(contours) => {
+                        Ok(Classification::Decided((contours, None)))
+                    }
+                    Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
+                };
+            }
+        }
+        Classification::Decided(None) => {}
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    }
+    if op == BooleanOp::Xor {
+        return match xor_boundary_contours_by_prepared_region(first, second, fill_rule, policy)? {
+            Classification::Decided(contours) => Ok(Classification::Decided((contours, None))),
+            Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
+        };
+    }
+
+    let fragment_result =
+        boundary_events.split_regions_with_report(&first_view, &second_view, policy)?;
+    let fragments = match fragment_result.fragments() {
+        Some(fragments) => fragments,
+        None => {
+            return Ok(Classification::Uncertain(
+                fragment_result
+                    .report()
+                    .blocker()
+                    .unwrap_or(UncertaintyReason::Unsupported),
+            ));
+        }
+    };
+    let selection_result = fragments.classify_for_boolean_with_point_classifier_with_report(
+        op,
+        policy,
+        |source_side, sample| match source_side {
+            RegionSide::First => second.classify_point(sample, policy),
+            RegionSide::Second => first.classify_point(sample, policy),
+        },
+    )?;
+    let selection = match selection_result.selection() {
+        Some(selection) => selection,
+        None => {
+            return Ok(Classification::Uncertain(
+                selection_result
+                    .report()
+                    .blocker()
+                    .unwrap_or(UncertaintyReason::Unsupported),
+            ));
+        }
+    };
+    let emission_result = selection.emit_boundary_fragments_with_report(fragments)?;
+    let emitted = match emission_result.fragments() {
+        Some(emitted) => emitted,
+        None => {
+            return Ok(Classification::Uncertain(
+                emission_result
+                    .report()
+                    .blocker()
+                    .unwrap_or(UncertaintyReason::Unsupported),
+            ));
+        }
+    };
+    let chain_result = emitted.assemble_chains_with_report(policy);
+    let chains = match chain_result.chains() {
+        Some(chains) => chains,
+        None => {
+            return Ok(Classification::Uncertain(
+                chain_result
+                    .report()
+                    .blocker()
+                    .unwrap_or(UncertaintyReason::Unsupported),
+            ));
+        }
+    };
+    let loop_result = chains.closed_loops_with_report();
+    let loops = match loop_result.loops() {
+        Some(loops) => loops,
+        None => {
+            return Ok(Classification::Uncertain(
+                loop_result
+                    .report()
+                    .blocker()
+                    .unwrap_or(UncertaintyReason::Unsupported),
+            ));
+        }
+    };
+    let contour_result = loops.to_contours_with_report(fill_rule);
+    let contours = match contour_result.contours() {
+        Some(contours) => contours.to_vec(),
+        None => {
+            return Ok(Classification::Uncertain(
+                contour_result
+                    .report()
+                    .blocker()
+                    .unwrap_or(UncertaintyReason::Unsupported),
+            ));
+        }
+    };
+    let pipeline_report = RegionBooleanPipelineReport2::new(
+        fragment_result.report().clone(),
+        selection_result.report().clone(),
+        emission_result.report().clone(),
+        chain_result.report().clone(),
+        loop_result.report().clone(),
+        contour_result.report().clone(),
+    );
+    Ok(Classification::Decided((contours, Some(pipeline_report))))
 }
 
 fn region_boolean_prepared_cache_report(

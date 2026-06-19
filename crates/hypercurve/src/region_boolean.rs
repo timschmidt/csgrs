@@ -820,6 +820,27 @@ impl RegionBooleanReport2 {
 }
 
 impl RegionBooleanPipelineReport2 {
+    /// Builds a retained boolean pipeline report from stage reports.
+    #[allow(clippy::too_many_arguments)]
+    pub(crate) const fn new(
+        fragment_build_report: RegionFragmentBuildReport2,
+        fragment_selection_report: BooleanFragmentSelectionReport2,
+        boundary_fragment_emission_report: BooleanBoundaryFragmentEmissionReport2,
+        chain_assembly_report: BooleanBoundaryChainAssemblyReport2,
+        loop_extraction_report: BooleanBoundaryLoopExtractionReport2,
+        contour_transfer_report: BooleanBoundaryContourTransferReport2,
+    ) -> Self {
+        Self {
+            fragment_build_report,
+            fragment_selection_report,
+            boundary_fragment_emission_report,
+            chain_assembly_report,
+            loop_extraction_report,
+            contour_transfer_report,
+            boundary_build_report: None,
+        }
+    }
+
     /// Returns retained region-fragment split evidence.
     pub const fn fragment_build_report(&self) -> &RegionFragmentBuildReport2 {
         &self.fragment_build_report
@@ -1457,42 +1478,15 @@ fn boolean_boundary_contours_between_with_pipeline_report(
             ));
         }
     };
-    let pipeline_report = RegionBooleanPipelineReport2 {
-        fragment_build_report: fragment_result.report().clone(),
-        fragment_selection_report: selection_result.report().clone(),
-        boundary_fragment_emission_report: emission_result.report().clone(),
-        chain_assembly_report: chain_result.report().clone(),
-        loop_extraction_report: loop_result.report().clone(),
-        contour_transfer_report: contour_result.report().clone(),
-        boundary_build_report: None,
-    };
+    let pipeline_report = RegionBooleanPipelineReport2::new(
+        fragment_result.report().clone(),
+        selection_result.report().clone(),
+        emission_result.report().clone(),
+        chain_result.report().clone(),
+        loop_result.report().clone(),
+        contour_result.report().clone(),
+    );
     Ok(Classification::Decided((contours, Some(pipeline_report))))
-}
-
-#[allow(clippy::too_many_arguments)]
-pub(crate) fn region_boolean_result_from_boundary_contours_with_prepared_cache(
-    first: &RegionView2<'_>,
-    second: &RegionView2<'_>,
-    op: BooleanOp,
-    fill_rule: FillRule,
-    query_path: RegionBooleanQueryPath2,
-    boundary_events: &RegionIntersectionSet,
-    contours: Vec<Contour2>,
-    prepared_cache_report: Option<RegionBooleanPreparedCacheReport2>,
-    policy: &CurvePolicy,
-) -> CurveResult<RegionBooleanResult2> {
-    region_boolean_result_from_boundary_contours_with_prepared_cache_and_pipeline_report(
-        first,
-        second,
-        op,
-        fill_rule,
-        query_path,
-        boundary_events,
-        contours,
-        prepared_cache_report,
-        None,
-        policy,
-    )
 }
 
 #[allow(clippy::too_many_arguments)]
