@@ -2819,13 +2819,6 @@ fn materialize_certified_arrangement_cell_complex_support_with_arrangement(
             return Ok(Some(*result));
         }
     }
-    if !graph.face_pairs.is_empty()
-        && let Some(result) = certified_arrangement_cell_complex_result_from_graph(
-            graph, left, right, operation, validation, true,
-        )?
-    {
-        return Ok(Some(result));
-    }
     if operation == ExactBooleanOperation::Union
         && let Some((result, _report)) =
             materialize_adjacent_union_completion_from_graph_for_request(
@@ -4926,13 +4919,6 @@ fn materialize_boolean_exact_request_from_ready_graph(
     if let Some(result) = materialize_arrangement_volumetric_split_cell_result_from_graph(
         graph, left, right, operation, validation,
     )? {
-        return Ok(result);
-    }
-    if !graph.face_pairs.is_empty()
-        && let Some(result) = certified_arrangement_cell_complex_result_from_graph(
-            graph, left, right, operation, validation, true,
-        )?
-    {
         return Ok(result);
     }
     if let Some(result) = certified_arrangement_cell_complex_result_from_graph(
