@@ -118,7 +118,7 @@ fn run_case(case: &BenchCase) {
         let mut workspace = ExactBooleanWorkspace::new(&case.left, &case.right);
         let evaluation = workspace.evaluate(request).unwrap();
         black_box((
-            evaluation.retained_arrangement_attempt().is_some(),
+            evaluation.has_retained_arrangement_attempt(),
             evaluation.topology_assembly_is_complete(),
             evaluation.region_ownership_is_volume_resolved(),
         ));
@@ -221,7 +221,7 @@ fn run_case(case: &BenchCase) {
     time_stage(case, "workspace_evaluation_attempt_cached", || {
         let evaluation = workspace.evaluate(request).unwrap();
         black_box((
-            evaluation.retained_arrangement_attempt().is_some(),
+            evaluation.has_retained_arrangement_attempt(),
             evaluation.topology_assembly_is_complete(),
             evaluation.region_ownership_is_resolved(),
             evaluation.region_ownership_is_volume_resolved(),

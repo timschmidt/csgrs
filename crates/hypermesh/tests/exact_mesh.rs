@@ -23,7 +23,7 @@ fn with_exact_boolean_evaluation<R>(
 
 fn assert_evaluation_retains_attempt_gate_reports(evaluation: &hypermesh::ExactBooleanEvaluation) {
     assert!(
-        evaluation.retained_arrangement_attempt().is_some(),
+        evaluation.has_retained_arrangement_attempt(),
         "evaluation should retain an arrangement attempt"
     );
     assert!(evaluation.topology_assembly_is_complete(), "{evaluation:?}");
@@ -227,7 +227,7 @@ fn exact_boolean_evaluation_retains_region_ownership_report() {
     with_exact_boolean_evaluation(&left, &right, request, |evaluation| {
         evaluation.validate_against_sources(&left, &right).unwrap();
         assert!(
-            evaluation.retained_arrangement_attempt().is_some(),
+            evaluation.has_retained_arrangement_attempt(),
             "named boolean certifications should retain arrangement attempt"
         );
         assert!(evaluation.region_ownership_is_resolved());
@@ -1000,7 +1000,7 @@ fn exact_coplanar_volumetric_cell_policy_is_publicly_replayable() {
             evaluation.validate().unwrap();
             assert!(
                 evaluation.has_blocker()
-                    || evaluation.retained_arrangement_attempt().is_some()
+                    || evaluation.has_retained_arrangement_attempt()
                     || evaluation.materialized_result().is_some(),
                 "{evaluation:?}"
             );
@@ -2298,7 +2298,7 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
         evaluation.validate().unwrap();
 
         assert!(
-            evaluation.retained_arrangement_attempt().is_some(),
+            evaluation.has_retained_arrangement_attempt(),
             "{evaluation:?}"
         );
 
@@ -2715,7 +2715,7 @@ fn public_exact_blocker_reports_replay_remaining_decisions() {
             .unwrap();
         assert!(
             evaluation.materialized_result().is_some()
-                || evaluation.retained_arrangement_attempt().is_some()
+                || evaluation.has_retained_arrangement_attempt()
                 || evaluation.has_blocker(),
             "{evaluation:?}"
         );
@@ -2740,7 +2740,7 @@ fn public_exact_blocker_reports_replay_remaining_decisions() {
         |planar_evaluation| {
             assert!(
                 planar_evaluation.materialized_result().is_some()
-                    || planar_evaluation.retained_arrangement_attempt().is_some()
+                    || planar_evaluation.has_retained_arrangement_attempt()
                     || planar_evaluation.has_blocker(),
                 "{planar_evaluation:?}"
             );

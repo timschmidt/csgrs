@@ -2215,6 +2215,11 @@ impl ExactBooleanEvaluation {
         self.certifications.arrangement_attempt.as_ref()
     }
 
+    /// Return whether this evaluation retained an arrangement/cell-complex attempt.
+    pub fn has_retained_arrangement_attempt(&self) -> bool {
+        self.certifications.arrangement_attempt.is_some()
+    }
+
     /// Return the exact preflight/scheduling report retained by this evaluation.
     pub(crate) fn preflight(&self) -> &ExactBooleanPreflight {
         &self.preflight
