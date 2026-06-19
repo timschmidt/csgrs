@@ -10,8 +10,9 @@ use hypercurve::{
     BooleanBoundaryChainAssemblyStage2, BooleanBoundaryContourTransferStage2,
     BooleanBoundaryFragmentEmissionStage2, BooleanBoundaryLoopExtractionStage2, BooleanOp,
     BulgeVertex2, Classification, Contour2, CurvePolicy, FillRule, Point2, Real, Region2,
-    RegionBooleanQueryPath2, RegionBooleanStage2, RegionFragmentBuildStage2, RegionPointLocation,
-    RegionPreparedCacheFreshness2, SegmentKindCounts,
+    RegionBooleanBoundaryPredicatePath2, RegionBooleanQueryPath2, RegionBooleanStage2,
+    RegionFragmentBuildStage2, RegionPointLocation, RegionPreparedCacheFreshness2,
+    SegmentKindCounts,
 };
 
 type HPoint = Point2;
@@ -138,6 +139,10 @@ fn boolean_region_report_retains_boundary_role_assignment() {
     );
     assert_eq!(report.boundary_first_contour_count(), Some(1));
     assert_eq!(report.boundary_second_contour_count(), Some(1));
+    assert_eq!(
+        report.boundary_predicate_path(),
+        Some(RegionBooleanBoundaryPredicatePath2::AabbFilteredContourIntersection)
+    );
     assert_eq!(report.boundary_candidate_pair_count(), 1);
     assert_eq!(report.boundary_skipped_aabb_pair_count(), 0);
     assert_eq!(report.boundary_tested_pair_count(), 1);
@@ -399,6 +404,10 @@ fn prepared_boolean_region_report_matches_plain_materialization() {
     assert_eq!(
         plain.report().stage(),
         RegionBooleanStage2::RegionRoleAssignment
+    );
+    assert_eq!(
+        built.report().boundary_predicate_path(),
+        Some(RegionBooleanBoundaryPredicatePath2::AabbFilteredContourIntersection)
     );
     assert_eq!(built.report().boundary_contour_count(), Some(1));
     assert_eq!(built.report().result_material_contour_count(), Some(1));

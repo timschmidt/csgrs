@@ -36,6 +36,7 @@ pub struct RegionBooleanReport2 {
     second_boundary_segment_kind_counts: SegmentKindCounts,
     boundary_first_contour_count: Option<usize>,
     boundary_second_contour_count: Option<usize>,
+    boundary_predicate_path: Option<RegionBooleanBoundaryPredicatePath2>,
     boundary_candidate_pair_count: usize,
     boundary_skipped_aabb_pair_count: usize,
     boundary_tested_pair_count: usize,
@@ -78,6 +79,13 @@ pub enum RegionBooleanQueryPath2 {
     Direct,
     /// Boolean materialization used caller-supplied prepared region views.
     Prepared,
+}
+
+/// Exact predicate family used while collecting boolean boundary events.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum RegionBooleanBoundaryPredicatePath2 {
+    /// Region contour pairs were filtered by AABB before exact contour intersection predicates.
+    AabbFilteredContourIntersection,
 }
 
 /// Furthest exact materialization stage reached by a region boolean report.
@@ -729,6 +737,11 @@ impl RegionBooleanReport2 {
     /// Returns the second operand contour count reported by boundary events.
     pub const fn boundary_second_contour_count(&self) -> Option<usize> {
         self.boundary_second_contour_count
+    }
+
+    /// Returns the exact predicate/filter path used for boolean boundary events.
+    pub const fn boundary_predicate_path(&self) -> Option<RegionBooleanBoundaryPredicatePath2> {
+        self.boundary_predicate_path
     }
 
     /// Returns region contour-pair candidates considered before boolean splitting.
@@ -1583,6 +1596,9 @@ pub(crate) fn region_boolean_result_from_boundary_contours_with_prepared_cache_a
             second_boundary_segment_kind_counts: region_view_boundary_segment_kind_counts(second),
             boundary_first_contour_count: boundary_events.first_contour_count(),
             boundary_second_contour_count: boundary_events.second_contour_count(),
+            boundary_predicate_path: Some(
+                RegionBooleanBoundaryPredicatePath2::AabbFilteredContourIntersection,
+            ),
             boundary_candidate_pair_count: boundary_events.candidate_pair_count(),
             boundary_skipped_aabb_pair_count: boundary_events.skipped_aabb_pair_count(),
             boundary_tested_pair_count: boundary_events.tested_pair_count(),
@@ -1662,6 +1678,9 @@ pub(crate) fn blocked_region_boolean_result_with_prepared_cache(
             second_boundary_segment_kind_counts: region_view_boundary_segment_kind_counts(second),
             boundary_first_contour_count: boundary_events.first_contour_count(),
             boundary_second_contour_count: boundary_events.second_contour_count(),
+            boundary_predicate_path: Some(
+                RegionBooleanBoundaryPredicatePath2::AabbFilteredContourIntersection,
+            ),
             boundary_candidate_pair_count: boundary_events.candidate_pair_count(),
             boundary_skipped_aabb_pair_count: boundary_events.skipped_aabb_pair_count(),
             boundary_tested_pair_count: boundary_events.tested_pair_count(),
