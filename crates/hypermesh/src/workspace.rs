@@ -98,6 +98,27 @@ impl<'a> ExactBooleanWorkspace<'a> {
             .expect("validated graph cache was just populated"))
     }
 
+    pub(crate) fn into_arrangement_attempt(
+        mut self,
+        request: ExactBooleanRequest,
+        policy: ExactRegularizationPolicy,
+    ) -> Result<ExactArrangementBooleanAttempt, MeshError> {
+        self.arrangement_attempt(request, policy)?;
+        let index = cached_by_request_and_policy_index(&self.arrangement_attempts, request, policy)
+            .expect("arrangement attempt cache was just populated");
+        Ok(self.arrangement_attempts.swap_remove(index).2)
+    }
+
+    pub(crate) fn into_evaluation(
+        mut self,
+        request: ExactBooleanRequest,
+    ) -> Result<ExactBooleanEvaluation, MeshError> {
+        self.evaluate(request)?;
+        let index = cached_by_request_index(&self.evaluations, request)
+            .expect("evaluation cache was just populated");
+        Ok(self.evaluations.swap_remove(index).1)
+    }
+
     fn regularized_solid_arrangement(&self) -> Option<&ExactArrangement> {
         cached_by_policy_index(
             &self.arrangements,
