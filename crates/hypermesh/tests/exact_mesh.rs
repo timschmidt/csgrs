@@ -1930,7 +1930,7 @@ fn exact_open_surface_arrangement_is_publicly_replayable() {
             stale_preflight_counts.validate(),
             "{operation:?}: {stale_preflight_counts:?}"
         );
-        assert!(!result.region_classifications.is_empty());
+        assert!(!result.region_classifications().is_empty());
         assert!(!result.triangulations.is_empty());
         if matches!(operation, ExactBooleanOperation::Intersection) {
             assert!(result.mesh().triangles().is_empty());
@@ -2121,7 +2121,7 @@ fn exact_selected_region_boolean_is_publicly_replayable() {
         result.freshness_against_sources(&left, &separated_right),
         ExactReportFreshness::SourceReplayMismatch
     );
-    assert!(!result.region_classifications.is_empty());
+    assert!(!result.region_classifications().is_empty());
     assert!(!result.triangulations.is_empty());
     assert!(!result.assembly.triangles.is_empty());
     assert!(!result.mesh().triangles().is_empty());
@@ -2146,7 +2146,7 @@ fn exact_selected_region_boolean_is_publicly_replayable() {
         .cloned()
         .expect("selected-region evaluation should materialize");
     let classification = stale_result
-        .region_classifications
+        .region_classifications_mut()
         .first_mut()
         .expect("selected-region result should retain region facts");
     classification.plane_face = usize::MAX;
@@ -3126,7 +3126,7 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
         .expect("certified arrangement evaluation should retain union result");
 
     if result.is_arrangement_cell_complex_materialized_for(ExactBooleanOperation::Union) {
-        assert!(!result.region_classifications.is_empty());
+        assert!(!result.region_classifications().is_empty());
         assert!(!result.triangulations.is_empty());
         assert!(!result.volumetric_classifications().is_empty());
         assert!(!result.assembly.triangles.is_empty());
@@ -3208,7 +3208,7 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
         "{stale_readiness_counts:?}"
     );
     if result.is_arrangement_cell_complex_materialized_for(ExactBooleanOperation::Union) {
-        assert!(!result.region_classifications.is_empty());
+        assert!(!result.region_classifications().is_empty());
         assert!(!result.triangulations.is_empty());
         assert!(!result.volumetric_classifications().is_empty());
         assert!(!result.assembly.triangles.is_empty());
@@ -3445,7 +3445,7 @@ fn arrangement_cell_complex_request_materialization_is_publicly_replayable() {
         "canonical replay must reject stale source operands"
     );
     if result.is_arrangement_cell_complex_materialized_for(ExactBooleanOperation::Union) {
-        assert!(!result.region_classifications.is_empty());
+        assert!(!result.region_classifications().is_empty());
         assert!(!result.triangulations.is_empty());
         assert!(!result.volumetric_classifications().is_empty());
         assert!(!result.assembly.triangles.is_empty());
@@ -3486,7 +3486,7 @@ fn arrangement_cell_complex_request_materialization_is_publicly_replayable() {
     if convex_intersection
         .is_arrangement_cell_complex_materialized_for(ExactBooleanOperation::Intersection)
     {
-        assert!(!convex_intersection.region_classifications.is_empty());
+        assert!(!convex_intersection.region_classifications().is_empty());
         assert!(!convex_intersection.triangulations.is_empty());
         assert!(!convex_intersection.volumetric_classifications().is_empty());
         assert!(!convex_intersection.assembly.triangles.is_empty());

@@ -688,7 +688,7 @@ pub struct ExactBooleanResult {
     pub(crate) graph_had_unknowns: bool,
     /// Certified classifications of split regions against opposite face
     /// planes.
-    pub region_classifications: Vec<FaceRegionPlaneClassification>,
+    pub(crate) region_classifications: Vec<FaceRegionPlaneClassification>,
     /// Exact projected triangulations used for assembly.
     pub triangulations: Vec<FaceRegionTriangulation>,
     /// Non-mutating exact output assembly.
@@ -724,6 +724,16 @@ impl ExactBooleanResult {
     /// Update whether graph extraction contained unknown events before policy checks.
     pub fn set_graph_had_unknowns(&mut self, graph_had_unknowns: bool) {
         self.graph_had_unknowns = graph_had_unknowns;
+    }
+
+    /// Borrow retained split-region plane classifications.
+    pub fn region_classifications(&self) -> &[FaceRegionPlaneClassification] {
+        &self.region_classifications
+    }
+
+    /// Borrow retained split-region plane classifications mutably.
+    pub fn region_classifications_mut(&mut self) -> &mut [FaceRegionPlaneClassification] {
+        &mut self.region_classifications
     }
 
     /// Borrow retained volumetric triangle classifications.
