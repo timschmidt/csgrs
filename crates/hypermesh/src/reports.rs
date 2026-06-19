@@ -5878,7 +5878,7 @@ impl ExactPlanarArrangementReport {
     }
 
     /// Return the retained coplanar arrangement readiness summary.
-    pub fn arrangement_readiness(&self) -> Option<&CoplanarArrangementReadinessReport> {
+    pub(crate) fn arrangement_readiness(&self) -> Option<&CoplanarArrangementReadinessReport> {
         self.arrangement_readiness.as_ref()
     }
 
@@ -6247,7 +6247,7 @@ impl ExactWindingReadinessReport {
     }
 
     /// Return the retained split-region classifications.
-    pub fn region_classifications(&self) -> &[FaceRegionPlaneClassification] {
+    pub(crate) fn region_classifications(&self) -> &[FaceRegionPlaneClassification] {
         &self.region_classifications
     }
 
@@ -6257,12 +6257,14 @@ impl ExactWindingReadinessReport {
     }
 
     /// Return the retained coplanar arrangement readiness summary.
-    pub fn arrangement_readiness(&self) -> Option<&CoplanarArrangementReadinessReport> {
+    pub(crate) fn arrangement_readiness(&self) -> Option<&CoplanarArrangementReadinessReport> {
         self.arrangement_readiness.as_ref()
     }
 
     /// Return the retained coplanar volumetric-cell evidence.
-    pub fn coplanar_volumetric_evidence(&self) -> Option<&CoplanarVolumetricCellEvidenceReport> {
+    pub(crate) fn coplanar_volumetric_evidence(
+        &self,
+    ) -> Option<&CoplanarVolumetricCellEvidenceReport> {
         self.coplanar_volumetric_evidence.as_ref()
     }
 
