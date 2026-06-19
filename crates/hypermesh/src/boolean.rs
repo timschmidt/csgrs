@@ -278,6 +278,41 @@ impl ExactArrangementBooleanAttempt {
         }
     }
 
+    fn cell_complex_gate_reports_match(
+        &self,
+        topology_report: Option<&ExactTopologyAssemblyReport>,
+        ownership_report: Option<&ExactRegionOwnershipReport>,
+    ) -> bool {
+        let Some((topology, ownership)) = self.retained_gate_reports() else {
+            return false;
+        };
+        topology_report == Some(topology) && ownership_report == Some(ownership)
+    }
+
+    fn selected_cell_complex_retains_gate_reports(
+        &self,
+        selected: &ExactSelectedCellComplex,
+    ) -> bool {
+        self.cell_complex_gate_reports_match(
+            selected.topology_assembly_report.as_ref(),
+            selected.region_ownership_report.as_ref(),
+        )
+    }
+
+    pub(crate) fn simplified_cell_complex_with_retained_gate_reports(
+        &self,
+    ) -> Option<&ExactSimplifiedCellComplex> {
+        let simplified = self.simplified_cell_complex.as_ref()?;
+        if self.cell_complex_gate_reports_match(
+            simplified.topology_assembly_report.as_ref(),
+            simplified.region_ownership_report.as_ref(),
+        ) {
+            Some(simplified)
+        } else {
+            None
+        }
+    }
+
     /// Return whether this attempt reached the materialized arrangement
     /// cell-complex shortcut state.
     pub(crate) fn materialized_arrangement_cell_complex_shortcut(&self) -> bool {
@@ -477,8 +512,7 @@ impl ExactArrangementBooleanAttempt {
                 < arrangement_attempt_stage_rank(ExactArrangementBooleanStage::Selected)
                 || selected.operation != self.operation
                 || selected.validate().is_err()
-                || selected.topology_assembly_report != self.topology_assembly_report
-                || selected.region_ownership_report != self.region_ownership_report
+                || !self.selected_cell_complex_retains_gate_reports(selected)
                 || counts.selected_faces != self.selected_faces
                 || counts.selected_volume_regions != self.selected_volume_regions
                 || counts.reversed_selected_faces != self.reversed_selected_faces
@@ -494,8 +528,7 @@ impl ExactArrangementBooleanAttempt {
                 || self.selected_cell_complex.is_none()
                 || simplified.operation != self.operation
                 || simplified.validate().is_err()
-                || simplified.topology_assembly_report != self.topology_assembly_report
-                || simplified.region_ownership_report != self.region_ownership_report
+                || self.simplified_cell_complex_with_retained_gate_reports() != Some(simplified)
                 || simplified.selected_faces_before_simplification != self.selected_faces
                 || simplified.oriented_selected_faces_before_simplification != self.selected_faces
                 || simplified.reversed_selected_faces_before_simplification
@@ -2885,7 +2918,7 @@ pub(crate) fn rematerialize_retained_arrangement_cell_complex_attempt(
     {
         return Ok(None);
     }
-    let Some(simplified) = attempt.simplified_cell_complex.as_ref() else {
+    let Some(simplified) = attempt.simplified_cell_complex_with_retained_gate_reports() else {
         return Ok(None);
     };
     if simplified.operation != request.operation || simplified.validate().is_err() {
@@ -5007,10 +5040,9 @@ fn materialized_arrangement_attempt_outcome(
     attempt.decline = None;
     attempt.materialized_shortcut = materialized_shortcut;
     attempt.shortcut_reason = shortcut_reason;
-    result.retain_missing_gate_reports(
-        attempt.topology_assembly_report.as_ref(),
-        attempt.region_ownership_report.as_ref(),
-    );
+    if let Some((topology, ownership)) = attempt.retained_gate_reports() {
+        result.retain_missing_gate_reports(Some(topology), Some(ownership));
+    }
     if clear_arrangement_blockers {
         attempt.arrangement_blockers = 0;
     }

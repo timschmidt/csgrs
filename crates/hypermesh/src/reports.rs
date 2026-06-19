@@ -1902,10 +1902,15 @@ impl ExactBooleanResult {
             {
                 return Ok(false);
             }
-        } else if self.topology_assembly_report != attempt.topology_assembly_report
-            || self.region_ownership_report != attempt.region_ownership_report
-        {
-            return Ok(false);
+        } else {
+            let Some((topology, ownership)) = attempt.retained_gate_reports() else {
+                return Err(ExactReportValidationError::StatusEvidenceMismatch);
+            };
+            if self.topology_assembly_report.as_ref() != Some(topology)
+                || self.region_ownership_report.as_ref() != Some(ownership)
+            {
+                return Ok(false);
+            }
         }
         let Some(output_facts) = attempt.output_facts.as_ref() else {
             return Err(ExactReportValidationError::StatusEvidenceMismatch);
