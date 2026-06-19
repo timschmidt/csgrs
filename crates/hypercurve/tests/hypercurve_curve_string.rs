@@ -1837,6 +1837,8 @@ fn curve_string_extend_line_end_to_exact_target() {
         Some(&p(0, 0))
     );
     assert_eq!(extended.report().output_segment_end_point(), Some(&p(5, 0)));
+    assert_eq!(extended.report().source_segment_start_point(), &p(0, 0));
+    assert_eq!(extended.report().source_segment_end_point(), &p(2, 0));
     assert_eq!(extended.report().source_endpoint_point(), &p(2, 0));
     assert_eq!(extended.report().target_point(), &p(5, 0));
     assert_eq!(extended.report().source_param(), Some(&q(5, 2)));
@@ -1916,6 +1918,8 @@ fn curve_string_extend_line_reports_interior_target_boundary() {
     assert_eq!(extended.report().output_segment_index(), None);
     assert_eq!(extended.report().output_segment_start_point(), None);
     assert_eq!(extended.report().output_segment_end_point(), None);
+    assert_eq!(extended.report().source_segment_start_point(), &p(0, 0));
+    assert_eq!(extended.report().source_segment_end_point(), &p(4, 0));
     assert_eq!(extended.report().source_param(), Some(&q(1, 4)));
     assert_eq!(extended.report().source_segment_count(), 1);
     assert_eq!(
@@ -1993,6 +1997,8 @@ fn curve_string_extend_arc_endpoint_to_same_circle_target() {
         extended.report().output_segment_end_point(),
         Some(&p(-1, 0))
     );
+    assert_eq!(extended.report().source_segment_start_point(), &p(1, 0));
+    assert_eq!(extended.report().source_segment_end_point(), &p(0, 1));
     assert_eq!(extended.report().source_endpoint_point(), &p(0, 1));
     assert_eq!(extended.report().target_point(), &p(-1, 0));
     assert_eq!(extended.report().source_param(), None);

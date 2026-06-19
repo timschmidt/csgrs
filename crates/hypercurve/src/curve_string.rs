@@ -455,6 +455,8 @@ pub struct CurveStringExtendReport2 {
     output_segment_kind: Option<SegmentKind>,
     output_segment_start_point: Option<Point2>,
     output_segment_end_point: Option<Point2>,
+    source_segment_start_point: Point2,
+    source_segment_end_point: Point2,
     source_endpoint_point: Point2,
     target_point: Point2,
     source_param: Option<Real>,
@@ -2830,6 +2832,8 @@ impl CurveString2 {
                 output_segment_kind: Some(SegmentKind::Line),
                 output_segment_start_point: Some(output_segment_start_point),
                 output_segment_end_point: Some(output_segment_end_point),
+                source_segment_start_point: line.start().clone(),
+                source_segment_end_point: line.end().clone(),
                 source_endpoint_point: line_endpoint_point(line, endpoint).clone(),
                 target_point,
                 source_param: Some(source_param),
@@ -3011,6 +3015,8 @@ impl CurveString2 {
                 output_segment_kind: Some(SegmentKind::Arc),
                 output_segment_start_point: Some(output_segment_start_point),
                 output_segment_end_point: Some(output_segment_end_point),
+                source_segment_start_point: arc.start().clone(),
+                source_segment_end_point: arc.end().clone(),
                 source_endpoint_point: arc_endpoint_point(arc, endpoint).clone(),
                 target_point,
                 source_param: None,
@@ -4271,6 +4277,16 @@ impl CurveStringExtendReport2 {
     /// Returns the exact end point of the extended output segment.
     pub const fn output_segment_end_point(&self) -> Option<&Point2> {
         self.output_segment_end_point.as_ref()
+    }
+
+    /// Returns the exact start point of the source endpoint segment before extension.
+    pub const fn source_segment_start_point(&self) -> &Point2 {
+        &self.source_segment_start_point
+    }
+
+    /// Returns the exact end point of the source endpoint segment before extension.
+    pub const fn source_segment_end_point(&self) -> &Point2 {
+        &self.source_segment_end_point
     }
 
     /// Returns the exact source endpoint point before extension.
@@ -5711,19 +5727,20 @@ fn blocked_extend_result(
     status: RetainedTopologyStatus,
     blocker: Option<UncertaintyReason>,
 ) -> CurveStringExtendResult2 {
+    let source_segment = &curve_string.segments()[source_segment_index];
     CurveStringExtendResult2 {
         curve_string: None,
         report: CurveStringExtendReport2 {
             stage: CurveStringExtendStage2::TargetValidation,
             endpoint,
             source_segment_index,
-            source_segment_kind: curve_string.segments()[source_segment_index]
-                .structural_facts()
-                .kind,
+            source_segment_kind: source_segment.structural_facts().kind,
             output_segment_index: None,
             output_segment_kind: None,
             output_segment_start_point: None,
             output_segment_end_point: None,
+            source_segment_start_point: source_segment.start().clone(),
+            source_segment_end_point: source_segment.end().clone(),
             source_endpoint_point: curve_string
                 .endpoint(endpoint)
                 .expect("blocked extension source endpoint should exist")
