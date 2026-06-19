@@ -1,3 +1,5 @@
+#![cfg(feature = "predicates")]
+
 use hypercurve::{
     BezierAlgebraicEndpointImage2, BezierAlgebraicParameter2,
     BezierAlgebraicSameTangentOrderStatus, BezierAlgebraicTangentOrderStatus,

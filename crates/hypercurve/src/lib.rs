@@ -220,7 +220,7 @@ pub use offset::{
     ContourOffsetReport2, ContourOffsetResult2, ContourOffsetStage2, CurveStringOffsetReport2,
     CurveStringOffsetResult2, CurveStringOffsetStage2, CurveStringOutlineOffsetReport2,
     CurveStringOutlineOffsetResult2, CurveStringOutlineOffsetStage2, OffsetCap,
-    OffsetConstructionPath2,
+    OffsetConstructionPath2, OutlineCapConstructionPath2,
 };
 pub use planar_pcurve::{
     PlanarPcurveImageEqualityReport2, PlanarPcurveImageRelation2, PreparedRetainedPlanarFace2,

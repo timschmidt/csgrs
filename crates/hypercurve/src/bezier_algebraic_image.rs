@@ -15,9 +15,12 @@
 use hyperreal::Real;
 use hypersolve::{
     AlgebraicRootKind, AlgebraicRootPolynomialImageReport, AlgebraicRootPolynomialImageStatus,
-    AlgebraicRootRationalImageReport, AlgebraicRootRationalImageStatus,
-    AlgebraicRootRepresentation, AlgebraicRootValidationReport, AlgebraicRootValidationStatus,
-    IsolatedRootInterval, SymbolId, transform_algebraic_root_polynomial_image,
+    AlgebraicRootRationalImageReport, AlgebraicRootRepresentation, AlgebraicRootValidationReport,
+    AlgebraicRootValidationStatus, IsolatedRootInterval, SymbolId,
+};
+#[cfg(feature = "predicates")]
+use hypersolve::{
+    AlgebraicRootRationalImageStatus, transform_algebraic_root_polynomial_image,
     transform_algebraic_root_rational_image, validate_algebraic_root_representation,
 };
 
@@ -637,6 +640,29 @@ fn coordinate_image(
             coefficients,
         });
     }
+    coordinate_image_from_replay(parameter, coefficients, policy)
+}
+
+fn rational_coordinate_image(
+    parameter: &AlgebraicRootRepresentation,
+    numerator_coefficients: Vec<Real>,
+    denominator_coefficients: Vec<Real>,
+    policy: &CurvePolicy,
+) -> Option<BezierAlgebraicRationalCoordinateImage> {
+    rational_coordinate_image_from_replay(
+        parameter,
+        numerator_coefficients,
+        denominator_coefficients,
+        policy,
+    )
+}
+
+#[cfg(feature = "predicates")]
+fn coordinate_image_from_replay(
+    parameter: &AlgebraicRootRepresentation,
+    coefficients: Vec<Real>,
+    policy: &CurvePolicy,
+) -> Option<BezierAlgebraicCoordinateImage> {
     let report = transform_algebraic_root_polynomial_image(
         parameter,
         &coefficients,
@@ -650,7 +676,17 @@ fn coordinate_image(
     )
 }
 
-fn rational_coordinate_image(
+#[cfg(not(feature = "predicates"))]
+fn coordinate_image_from_replay(
+    _parameter: &AlgebraicRootRepresentation,
+    _coefficients: Vec<Real>,
+    _policy: &CurvePolicy,
+) -> Option<BezierAlgebraicCoordinateImage> {
+    None
+}
+
+#[cfg(feature = "predicates")]
+fn rational_coordinate_image_from_replay(
     parameter: &AlgebraicRootRepresentation,
     numerator_coefficients: Vec<Real>,
     denominator_coefficients: Vec<Real>,
@@ -669,6 +705,16 @@ fn rational_coordinate_image(
             report,
         },
     )
+}
+
+#[cfg(not(feature = "predicates"))]
+fn rational_coordinate_image_from_replay(
+    _parameter: &AlgebraicRootRepresentation,
+    _numerator_coefficients: Vec<Real>,
+    _denominator_coefficients: Vec<Real>,
+    _policy: &CurvePolicy,
+) -> Option<BezierAlgebraicRationalCoordinateImage> {
+    None
 }
 
 fn exact_real_representation(value: &Real) -> AlgebraicRootRepresentation {
@@ -727,9 +773,24 @@ fn parameter_representation(
             message: None,
         },
     };
-    representation.validation =
-        validate_algebraic_root_representation(&representation, policy.predicate_policy);
+    validate_parameter_representation(&mut representation, policy);
     representation
+}
+
+#[cfg(feature = "predicates")]
+fn validate_parameter_representation(
+    representation: &mut AlgebraicRootRepresentation,
+    policy: &CurvePolicy,
+) {
+    representation.validation =
+        validate_algebraic_root_representation(representation, policy.predicate_policy);
+}
+
+#[cfg(not(feature = "predicates"))]
+fn validate_parameter_representation(
+    _representation: &mut AlgebraicRootRepresentation,
+    _policy: &CurvePolicy,
+) {
 }
 
 fn linear_parameter_witness(

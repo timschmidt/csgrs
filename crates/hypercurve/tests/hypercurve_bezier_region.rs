@@ -59,6 +59,7 @@ fn retained_loop(fragments: Vec<BezierSplitFragment2>) -> BezierRetainedBoundary
     BezierRetainedBoundaryLoop2::new(fragments).unwrap()
 }
 
+#[cfg(feature = "predicates")]
 fn reversed_algebraic_fragment(fragment: &BezierSplitFragment2) -> BezierSplitFragment2 {
     let BezierSplitFragment2::AlgebraicEndpointImages {
         start,
@@ -95,6 +96,7 @@ fn algebraic_midpoint_parameter() -> BezierAlgebraicParameter2 {
     decided(BezierAlgebraicParameter2::try_isolate(polynomial, interval, &policy()).unwrap())
 }
 
+#[cfg(feature = "predicates")]
 fn algebraic_sqrt_half_parameter() -> BezierAlgebraicParameter2 {
     let polynomial = decided(
         BezierParameterPolynomial::try_new_power_basis(vec![r(-1), r(0), r(2)], &policy()).unwrap(),
@@ -103,6 +105,7 @@ fn algebraic_sqrt_half_parameter() -> BezierAlgebraicParameter2 {
     decided(BezierAlgebraicParameter2::try_isolate(polynomial, interval, &policy()).unwrap())
 }
 
+#[cfg(feature = "predicates")]
 fn algebraic_sqrt_eighth_parameter() -> BezierAlgebraicParameter2 {
     let polynomial = decided(
         BezierParameterPolynomial::try_new_power_basis(vec![r(-1), r(0), r(8)], &policy()).unwrap(),
@@ -782,6 +785,7 @@ fn retained_line_image_role_report_accepts_exact_algebraic_endpoint_carriers() {
 }
 
 #[test]
+#[cfg(feature = "predicates")]
 fn retained_line_image_role_report_rejects_nonrational_algebraic_endpoint() {
     let parameter = BezierParameter2::algebraic(algebraic_sqrt_half_parameter());
     let nonrational_x = QuadraticBezier2::new(p(0, 0), Point2::new(q(1, 2), r(0)), p(1, 0));
@@ -1094,6 +1098,7 @@ fn retained_curve_envelope_includes_native_bezier_interior_extrema() {
 }
 
 #[test]
+#[cfg(feature = "predicates")]
 fn retained_curve_envelope_uses_source_bounds_for_algebraic_split_fragments() {
     let curve = QuadraticBezier2::new(p(0, 0), p(2, 4), p(4, 0));
     let split = decided(
@@ -1139,6 +1144,7 @@ fn retained_curve_envelope_uses_source_bounds_for_algebraic_split_fragments() {
 }
 
 #[test]
+#[cfg(feature = "predicates")]
 fn retained_curve_envelope_uses_algebraic_parameter_interval_hull() {
     let curve = QuadraticBezier2::new(p(0, 0), p(2, 4), p(4, 0));
     let split = decided(
@@ -1169,6 +1175,7 @@ fn retained_curve_envelope_uses_algebraic_parameter_interval_hull() {
 }
 
 #[test]
+#[cfg(feature = "predicates")]
 fn retained_curve_envelope_uses_algebraic_endpoint_image_before_interval_hull() {
     let curve = QuadraticBezier2::new(p(0, 0), p(0, 0), p(8, 0));
     let split = decided(

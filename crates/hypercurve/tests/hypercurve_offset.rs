@@ -1,8 +1,8 @@
 use hypercurve::{
     BulgeVertex2, CircularArc2, Classification, Contour2, ContourOffsetStage2, CurvePolicy,
     CurveString2, CurveStringOffsetStage2, CurveStringOutlineOffsetStage2, FillRule, LineSeg2,
-    OffsetCap, OffsetConstructionPath2, Point2, Real, Segment2, SegmentKindCounts,
-    SelfContactPredicatePath2, UncertaintyReason,
+    OffsetCap, OffsetConstructionPath2, OutlineCapConstructionPath2, Point2, Real, Segment2,
+    SegmentKindCounts, SelfContactPredicatePath2, UncertaintyReason,
 };
 
 fn s(value: i32) -> Real {
@@ -466,13 +466,25 @@ fn curve_string_round_cap_outline_report_materializes_single_line() {
     );
     assert_eq!(outline.report().left_offset_segment_count(), Some(1));
     assert_eq!(
+        outline.report().left_offset_construction_path(),
+        Some(OffsetConstructionPath2::PrimitiveParallelSegmentsWithExactJoins)
+    );
+    assert_eq!(
         outline.report().left_offset_segment_kind_counts(),
         Some(SegmentKindCounts { lines: 1, arcs: 0 })
     );
     assert_eq!(outline.report().right_offset_segment_count(), Some(1));
     assert_eq!(
+        outline.report().right_offset_construction_path(),
+        Some(OffsetConstructionPath2::PrimitiveParallelSegmentsWithExactJoins)
+    );
+    assert_eq!(
         outline.report().right_offset_segment_kind_counts(),
         Some(SegmentKindCounts { lines: 1, arcs: 0 })
+    );
+    assert_eq!(
+        outline.report().cap_construction_path(),
+        Some(OutlineCapConstructionPath2::RoundEndpointArcCaps)
     );
     assert_eq!(outline.report().outline_segment_count(), Some(4));
     assert_eq!(
@@ -566,10 +578,13 @@ fn curve_string_round_cap_outline_report_blocks_nonpositive_distance() {
         SegmentKindCounts { lines: 1, arcs: 0 }
     );
     assert_eq!(outline.report().source_self_contact_report(), None);
+    assert_eq!(outline.report().left_offset_construction_path(), None);
     assert_eq!(outline.report().left_offset_segment_count(), None);
     assert_eq!(outline.report().left_offset_segment_kind_counts(), None);
+    assert_eq!(outline.report().right_offset_construction_path(), None);
     assert_eq!(outline.report().right_offset_segment_count(), None);
     assert_eq!(outline.report().right_offset_segment_kind_counts(), None);
+    assert_eq!(outline.report().cap_construction_path(), None);
     assert_eq!(outline.report().outline_segment_count(), None);
     assert_eq!(outline.report().outline_segment_kind_counts(), None);
     assert_eq!(outline.report().outline_self_contact_report(), None);
@@ -641,10 +656,13 @@ fn curve_string_round_cap_outline_report_blocks_self_contacting_input() {
         source_self_contact.first_contact_second_segment_index(),
         Some(2)
     );
+    assert_eq!(outline.report().left_offset_construction_path(), None);
     assert_eq!(outline.report().left_offset_segment_count(), None);
     assert_eq!(outline.report().left_offset_segment_kind_counts(), None);
+    assert_eq!(outline.report().right_offset_construction_path(), None);
     assert_eq!(outline.report().right_offset_segment_count(), None);
     assert_eq!(outline.report().right_offset_segment_kind_counts(), None);
+    assert_eq!(outline.report().cap_construction_path(), None);
     assert_eq!(outline.report().outline_segment_count(), None);
     assert_eq!(outline.report().outline_segment_kind_counts(), None);
     assert_eq!(outline.report().outline_self_contact_report(), None);
@@ -767,6 +785,31 @@ fn curve_string_square_cap_outline_extends_single_line() {
     assert_line(&outline.segments()[1], p(5, 1), p(5, -1));
     assert_line(&outline.segments()[2], p(5, -1), p(-1, -1));
     assert_line(&outline.segments()[3], p(-1, -1), p(-1, 1));
+}
+
+#[test]
+fn curve_string_square_cap_outline_report_names_cap_construction_path() {
+    let curve = CurveString2::try_new(vec![line_segment(0, 0, 4, 0)]).unwrap();
+    let outline = curve
+        .offset_outline_square_caps_with_report(s(1), &policy())
+        .unwrap();
+
+    assert!(outline.report().status().is_native_exact());
+    assert_eq!(outline.report().cap(), OffsetCap::Square);
+    assert_eq!(
+        outline.report().left_offset_construction_path(),
+        Some(OffsetConstructionPath2::PrimitiveParallelSegmentsWithExactJoins)
+    );
+    assert_eq!(
+        outline.report().right_offset_construction_path(),
+        Some(OffsetConstructionPath2::PrimitiveParallelSegmentsWithExactJoins)
+    );
+    assert_eq!(
+        outline.report().cap_construction_path(),
+        Some(OutlineCapConstructionPath2::SquareTangentExtensionLineCaps)
+    );
+    assert_eq!(outline.report().outline_segment_count(), Some(4));
+    assert_eq!(outline.report().blocker(), None);
 }
 
 #[test]

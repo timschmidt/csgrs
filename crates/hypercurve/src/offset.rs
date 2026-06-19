@@ -53,6 +53,17 @@ pub enum OffsetConstructionPath2 {
     PrimitiveParallelSegmentsWithExactJoins,
 }
 
+/// Exact construction family used to close an open offset outline with endpoint caps.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum OutlineCapConstructionPath2 {
+    /// Endpoint caps were circular arcs centered at source endpoints.
+    RoundEndpointArcCaps,
+    /// Endpoint caps were direct line connectors between left and right traces.
+    ButtEndpointLineCaps,
+    /// Endpoint traces were tangent-extended, then closed with line connectors.
+    SquareTangentExtensionLineCaps,
+}
+
 /// Report for a checked open curve-string left offset.
 #[derive(Clone, Debug, PartialEq)]
 pub struct CurveStringOffsetReport2 {
@@ -134,10 +145,13 @@ pub struct CurveStringOutlineOffsetReport2 {
     source_segment_count: usize,
     source_segment_kind_counts: SegmentKindCounts,
     source_self_contact_report: Option<SelfContactReport2>,
+    left_offset_construction_path: Option<OffsetConstructionPath2>,
     left_offset_segment_count: Option<usize>,
     left_offset_segment_kind_counts: Option<SegmentKindCounts>,
+    right_offset_construction_path: Option<OffsetConstructionPath2>,
     right_offset_segment_count: Option<usize>,
     right_offset_segment_kind_counts: Option<SegmentKindCounts>,
+    cap_construction_path: Option<OutlineCapConstructionPath2>,
     outline_segment_count: Option<usize>,
     outline_segment_kind_counts: Option<SegmentKindCounts>,
     outline_self_contact_report: Option<SelfContactReport2>,
@@ -770,6 +784,11 @@ impl CurveStringOutlineOffsetReport2 {
         }
     }
 
+    /// Returns the exact construction family used for the left offset trace.
+    pub const fn left_offset_construction_path(&self) -> Option<OffsetConstructionPath2> {
+        self.left_offset_construction_path
+    }
+
     /// Returns the left offset trace segment count after raw joining.
     pub const fn left_offset_segment_count(&self) -> Option<usize> {
         self.left_offset_segment_count
@@ -780,6 +799,11 @@ impl CurveStringOutlineOffsetReport2 {
         self.left_offset_segment_kind_counts
     }
 
+    /// Returns the exact construction family used for the right offset trace.
+    pub const fn right_offset_construction_path(&self) -> Option<OffsetConstructionPath2> {
+        self.right_offset_construction_path
+    }
+
     /// Returns the right offset trace segment count after raw joining.
     pub const fn right_offset_segment_count(&self) -> Option<usize> {
         self.right_offset_segment_count
@@ -788,6 +812,11 @@ impl CurveStringOutlineOffsetReport2 {
     /// Returns primitive-family counts for the right offset trace.
     pub const fn right_offset_segment_kind_counts(&self) -> Option<SegmentKindCounts> {
         self.right_offset_segment_kind_counts
+    }
+
+    /// Returns the exact construction family used for endpoint caps.
+    pub const fn cap_construction_path(&self) -> Option<OutlineCapConstructionPath2> {
+        self.cap_construction_path
     }
 
     /// Returns the closed outline segment count before final topology rejection.
@@ -1000,10 +1029,13 @@ fn blocked_curve_string_outline_offset_result(
     source_segment_count: usize,
     source_segment_kind_counts: SegmentKindCounts,
     source_self_contact_report: Option<SelfContactReport2>,
+    left_offset_construction_path: Option<OffsetConstructionPath2>,
     left_offset_segment_count: Option<usize>,
     left_offset_segment_kind_counts: Option<SegmentKindCounts>,
+    right_offset_construction_path: Option<OffsetConstructionPath2>,
     right_offset_segment_count: Option<usize>,
     right_offset_segment_kind_counts: Option<SegmentKindCounts>,
+    cap_construction_path: Option<OutlineCapConstructionPath2>,
     outline_segment_count: Option<usize>,
     outline_segment_kind_counts: Option<SegmentKindCounts>,
     outline_self_contact_report: Option<SelfContactReport2>,
@@ -1018,10 +1050,13 @@ fn blocked_curve_string_outline_offset_result(
             source_segment_count,
             source_segment_kind_counts,
             source_self_contact_report,
+            left_offset_construction_path,
             left_offset_segment_count,
             left_offset_segment_kind_counts,
+            right_offset_construction_path,
             right_offset_segment_count,
             right_offset_segment_kind_counts,
+            cap_construction_path,
             outline_segment_count,
             outline_segment_kind_counts,
             outline_self_contact_report,
@@ -1064,6 +1099,9 @@ fn checked_outline_with_report(
                 None,
                 None,
                 None,
+                None,
+                None,
+                None,
                 RetainedTopologyStatus::Unsupported,
                 UncertaintyReason::Unsupported,
             ));
@@ -1074,6 +1112,9 @@ fn checked_outline_with_report(
                 cap,
                 source_segment_count,
                 source_segment_kind_counts,
+                None,
+                None,
+                None,
                 None,
                 None,
                 None,
@@ -1106,6 +1147,9 @@ fn checked_outline_with_report(
                 None,
                 None,
                 None,
+                None,
+                None,
+                None,
                 RetainedTopologyStatus::Unsupported,
                 UncertaintyReason::Unsupported,
             ));
@@ -1117,6 +1161,9 @@ fn checked_outline_with_report(
                 source_segment_count,
                 source_segment_kind_counts,
                 Some(source_self_contact_report),
+                None,
+                None,
+                None,
                 None,
                 None,
                 None,
@@ -1139,6 +1186,9 @@ fn checked_outline_with_report(
                 source_segment_count,
                 source_segment_kind_counts,
                 Some(source_self_contact_report.clone()),
+                Some(OffsetConstructionPath2::PrimitiveParallelSegmentsWithExactJoins),
+                None,
+                None,
                 None,
                 None,
                 None,
@@ -1163,8 +1213,11 @@ fn checked_outline_with_report(
                 source_segment_count,
                 source_segment_kind_counts,
                 Some(source_self_contact_report.clone()),
+                Some(OffsetConstructionPath2::PrimitiveParallelSegmentsWithExactJoins),
                 Some(left_offset_segment_count),
                 Some(left_offset_segment_kind_counts),
+                Some(OffsetConstructionPath2::PrimitiveParallelSegmentsWithExactJoins),
+                None,
                 None,
                 None,
                 None,
@@ -1198,10 +1251,13 @@ fn checked_outline_with_report(
                 source_segment_count,
                 source_segment_kind_counts,
                 Some(source_self_contact_report.clone()),
+                Some(OffsetConstructionPath2::PrimitiveParallelSegmentsWithExactJoins),
                 Some(left_offset_segment_count),
                 Some(left_offset_segment_kind_counts),
+                Some(OffsetConstructionPath2::PrimitiveParallelSegmentsWithExactJoins),
                 Some(right_offset_segment_count),
                 Some(right_offset_segment_kind_counts),
+                Some(outline_cap_construction_path(cap)),
                 None,
                 None,
                 None,
@@ -1223,10 +1279,17 @@ fn checked_outline_with_report(
                 source_segment_count,
                 source_segment_kind_counts,
                 source_self_contact_report: Some(source_self_contact_report.clone()),
+                left_offset_construction_path: Some(
+                    OffsetConstructionPath2::PrimitiveParallelSegmentsWithExactJoins,
+                ),
                 left_offset_segment_count: Some(left_offset_segment_count),
                 left_offset_segment_kind_counts: Some(left_offset_segment_kind_counts),
+                right_offset_construction_path: Some(
+                    OffsetConstructionPath2::PrimitiveParallelSegmentsWithExactJoins,
+                ),
                 right_offset_segment_count: Some(right_offset_segment_count),
                 right_offset_segment_kind_counts: Some(right_offset_segment_kind_counts),
+                cap_construction_path: Some(outline_cap_construction_path(cap)),
                 outline_segment_count: Some(outline_segment_count),
                 outline_segment_kind_counts: Some(outline_segment_kind_counts),
                 outline_self_contact_report: checked_outline.self_contact_report,
@@ -1240,10 +1303,13 @@ fn checked_outline_with_report(
             source_segment_count,
             source_segment_kind_counts,
             Some(source_self_contact_report),
+            Some(OffsetConstructionPath2::PrimitiveParallelSegmentsWithExactJoins),
             Some(left_offset_segment_count),
             Some(left_offset_segment_kind_counts),
+            Some(OffsetConstructionPath2::PrimitiveParallelSegmentsWithExactJoins),
             Some(right_offset_segment_count),
             Some(right_offset_segment_kind_counts),
+            Some(outline_cap_construction_path(cap)),
             Some(outline_segment_count),
             Some(outline_segment_kind_counts),
             checked_outline.self_contact_report,
@@ -1264,6 +1330,14 @@ fn outline_segments_for_cap(
         OffsetCap::Round => outline_segments_with_round_caps(offsets, policy),
         OffsetCap::Butt => outline_segments_with_butt_caps(offsets),
         OffsetCap::Square => outline_segments_with_square_caps(source, offsets, distance),
+    }
+}
+
+const fn outline_cap_construction_path(cap: OffsetCap) -> OutlineCapConstructionPath2 {
+    match cap {
+        OffsetCap::Round => OutlineCapConstructionPath2::RoundEndpointArcCaps,
+        OffsetCap::Butt => OutlineCapConstructionPath2::ButtEndpointLineCaps,
+        OffsetCap::Square => OutlineCapConstructionPath2::SquareTangentExtensionLineCaps,
     }
 }
 

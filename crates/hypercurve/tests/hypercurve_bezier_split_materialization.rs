@@ -1,9 +1,13 @@
+#[cfg(feature = "predicates")]
 use hypercurve::{
-    BezierAlgebraicEndpointImage2, BezierAlgebraicImageStatus, BezierAlgebraicParameter2,
-    BezierEndpointPointImage2, BezierEndpointTangentImage2, BezierParameter2,
-    BezierParameterInterval, BezierParameterPolynomial, BezierSplitFragment2,
-    BezierSplitMaterialization2, BezierSubcurve2, Classification, CubicBezier2, CurveError,
-    CurvePolicy, Point2, QuadraticBezier2, RationalQuadraticBezier2, Real, UncertaintyReason,
+    BezierAlgebraicEndpointImage2, BezierAlgebraicImageStatus, BezierEndpointPointImage2,
+    BezierEndpointTangentImage2,
+};
+use hypercurve::{
+    BezierAlgebraicParameter2, BezierParameter2, BezierParameterInterval,
+    BezierParameterPolynomial, BezierSplitFragment2, BezierSplitMaterialization2, BezierSubcurve2,
+    Classification, CubicBezier2, CurveError, CurvePolicy, Point2, QuadraticBezier2,
+    RationalQuadraticBezier2, Real, UncertaintyReason,
 };
 use proptest::prelude::*;
 
@@ -111,6 +115,7 @@ fn algebraic_cubic_midpoint_interval() -> BezierParameter2 {
     }
 }
 
+#[cfg(feature = "predicates")]
 fn assert_polynomial_endpoint_image(image: &Option<BezierAlgebraicEndpointImage2>) {
     let image = image
         .as_ref()
@@ -138,6 +143,7 @@ fn assert_polynomial_endpoint_image(image: &Option<BezierAlgebraicEndpointImage2
     }
 }
 
+#[cfg(feature = "predicates")]
 fn assert_rational_endpoint_image(image: &Option<BezierAlgebraicEndpointImage2>) {
     let image = image
         .as_ref()
@@ -186,6 +192,7 @@ fn assert_rational_endpoint_image(image: &Option<BezierAlgebraicEndpointImage2>)
     }
 }
 
+#[cfg(feature = "predicates")]
 fn assert_rational_second_derivative_endpoint_image(image: &BezierAlgebraicEndpointImage2) {
     match image
         .second_derivative()
@@ -343,6 +350,7 @@ fn split_materialization_constructor_rejects_materialized_algebraic_range() {
 }
 
 #[test]
+#[cfg(feature = "predicates")]
 fn split_materialization_constructor_rejects_forged_algebraic_endpoint_evidence() {
     let curve = QuadraticBezier2::new(p(0, 0), p(2, 4), p(4, 0));
     let materialization = match curve
@@ -467,6 +475,7 @@ fn linear_algebraic_boundary_materializes_native_subcurves() {
 }
 
 #[test]
+#[cfg(feature = "predicates")]
 fn algebraic_boundary_carries_endpoint_images_without_approximate_materialization() {
     let curve = QuadraticBezier2::new(p(0, 0), p(2, 4), p(4, 0));
     let materialization = match curve
@@ -519,6 +528,7 @@ fn algebraic_boundary_carries_endpoint_images_without_approximate_materializatio
 }
 
 #[test]
+#[cfg(feature = "predicates")]
 fn rational_algebraic_boundary_carries_conic_endpoint_images() {
     let curve =
         RationalQuadraticBezier2::try_unit_end_weights(p(1, 0), p(1, 1), p(0, 1), q(1, 2)).unwrap();
@@ -554,6 +564,7 @@ fn rational_algebraic_boundary_carries_conic_endpoint_images() {
 }
 
 #[test]
+#[cfg(feature = "predicates")]
 fn rational_algebraic_endpoint_retains_second_derivative_when_constructed() {
     let curve =
         RationalQuadraticBezier2::try_new(p(-1, 1), p(0, -1), p(1, 1), r(1), r(1), r(1)).unwrap();
