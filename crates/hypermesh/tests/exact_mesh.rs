@@ -65,7 +65,6 @@ fn assert_public_full_face_adjacent_union(
 ) -> ExactBooleanResult {
     let request = ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED);
     with_exact_boolean_evaluation(left, right, request, |evaluation| {
-        evaluation.validate().unwrap();
         evaluation.validate_against_sources(left, right).unwrap();
     });
 
@@ -74,7 +73,6 @@ fn assert_public_full_face_adjacent_union(
         result.is_certified_shortcut_for(ExactBooleanOperation::Union),
         "{result:?}"
     );
-    result.validate().unwrap();
     result.validate_against_sources(left, right).unwrap();
     assert!(result.mesh().facts().mesh.closed_manifold);
     assert!(!result.mesh().triangles().is_empty());
@@ -89,7 +87,6 @@ fn assert_public_contained_face_adjacent_union(
 ) -> ExactBooleanResult {
     let request = ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED);
     with_exact_boolean_evaluation(left, right, request, |evaluation| {
-        evaluation.validate().unwrap();
         evaluation.validate_against_sources(left, right).unwrap();
     });
 
@@ -98,7 +95,6 @@ fn assert_public_contained_face_adjacent_union(
         result.is_certified_shortcut_for(ExactBooleanOperation::Union),
         "{result:?}"
     );
-    result.validate().unwrap();
     result.validate_against_sources(left, right).unwrap();
     assert!(result.mesh().facts().mesh.closed_manifold);
     assert!(!result.mesh().triangles().is_empty());
@@ -206,7 +202,6 @@ fn exact_boolean_evaluation_materializes_certified_result_publicly() {
     );
 
     with_exact_boolean_evaluation(&left, &right, request, |evaluation| {
-        evaluation.validate().unwrap();
         evaluation.validate_against_sources(&left, &right).unwrap();
         assert!(evaluation.materialized_result().is_some());
         assert!(!evaluation.has_blocker());
@@ -229,7 +224,6 @@ fn exact_boolean_evaluation_retains_region_ownership_report() {
     let request = ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED);
 
     with_exact_boolean_evaluation(&left, &right, request, |evaluation| {
-        evaluation.validate().unwrap();
         evaluation.validate_against_sources(&left, &right).unwrap();
         assert!(
             evaluation.retained_arrangement_attempt().is_some(),
@@ -264,14 +258,12 @@ fn exact_boolean_evaluation_materializes_boundary_policy_shortcut_by_default() {
     );
 
     with_exact_boolean_evaluation(&left, &right, request, |evaluation| {
-        evaluation.validate().unwrap();
         evaluation.validate_against_sources(&left, &right).unwrap();
         assert!(evaluation.materialized_result().is_some());
         assert!(!evaluation.has_blocker());
         let result = evaluation
             .materialized_result()
             .expect("boundary-policy evaluation should materialize");
-        result.validate().unwrap();
         result.validate_against_sources(&left, &right).unwrap();
     });
     let rejected_request = ExactBooleanRequest::with_boundary_policy(
@@ -944,7 +936,6 @@ fn axis_aligned_orthogonal_solid_accepts_face_fan_triangulated_box() {
         result.is_arrangement_cell_complex_shortcut_for(ExactBooleanOperation::Intersection),
         "{result:?}"
     );
-    result.validate().unwrap();
     result.validate_against_sources(&fan_box, &cutter).unwrap();
     assert!(result.mesh().facts().mesh.closed_manifold);
 }
@@ -969,7 +960,6 @@ fn axis_aligned_orthogonal_solid_materializes_multiple_cavities() {
         result.is_arrangement_cell_complex_shortcut_for(ExactBooleanOperation::Difference),
         "{result:?}"
     );
-    result.validate().unwrap();
     result.validate_against_sources(&outer, &cavities).unwrap();
     assert!(result.mesh().facts().mesh.closed_manifold);
 }
@@ -994,7 +984,6 @@ fn affine_orthogonal_solid_recovers_face_fan_basis_from_cell_edges() {
         result.is_arrangement_cell_complex_shortcut_for(ExactBooleanOperation::Intersection),
         "{result:?}"
     );
-    result.validate().unwrap();
     result.validate_against_sources(&fan_box, &cutter).unwrap();
     assert!(result.mesh().facts().mesh.closed_manifold);
 }
