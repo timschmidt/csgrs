@@ -581,6 +581,14 @@ fn curve_string_remove_adjacent_reversed_duplicates_reports_removed_pairs() {
         0
     );
     assert_eq!(
+        deduped.report().retained_segments()[0].source_segment_start_point(),
+        &p(0, 0)
+    );
+    assert_eq!(
+        deduped.report().retained_segments()[0].source_segment_end_point(),
+        &p(1, 0)
+    );
+    assert_eq!(
         deduped.report().retained_segments()[0].output_start_point(),
         &p(0, 0)
     );
@@ -595,6 +603,14 @@ fn curve_string_remove_adjacent_reversed_duplicates_reports_removed_pairs() {
     assert_eq!(
         deduped.report().retained_segments()[1].output_segment_index(),
         1
+    );
+    assert_eq!(
+        deduped.report().retained_segments()[1].source_segment_start_point(),
+        &p(1, 0)
+    );
+    assert_eq!(
+        deduped.report().retained_segments()[1].source_segment_end_point(),
+        &p(3, 0)
     );
     assert_eq!(
         deduped.report().retained_segments()[1].output_start_point(),

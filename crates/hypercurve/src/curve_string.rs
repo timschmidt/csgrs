@@ -412,6 +412,8 @@ pub struct CurveStringDeduplicateRetainedSegmentReport2 {
     source_segment_index: usize,
     source_segment_kind: SegmentKind,
     output_segment_kind: SegmentKind,
+    source_segment_start_point: Point2,
+    source_segment_end_point: Point2,
     output_start_point: Point2,
     output_end_point: Point2,
     status: RetainedTopologyStatus,
@@ -1676,6 +1678,8 @@ impl CurveString2 {
                     source_segment_index: *source_segment_index,
                     source_segment_kind: segment.structural_facts().kind,
                     output_segment_kind: segment.structural_facts().kind,
+                    source_segment_start_point: segment.start().clone(),
+                    source_segment_end_point: segment.end().clone(),
                     output_start_point: segment.start().clone(),
                     output_end_point: segment.end().clone(),
                     status: RetainedTopologyStatus::NativeExact,
@@ -7365,6 +7369,16 @@ impl CurveStringDeduplicateRetainedSegmentReport2 {
     /// Returns the primitive family of the emitted output segment.
     pub const fn output_segment_kind(&self) -> SegmentKind {
         self.output_segment_kind
+    }
+
+    /// Returns the exact start point of the retained source segment.
+    pub const fn source_segment_start_point(&self) -> &Point2 {
+        &self.source_segment_start_point
+    }
+
+    /// Returns the exact end point of the retained source segment.
+    pub const fn source_segment_end_point(&self) -> &Point2 {
+        &self.source_segment_end_point
     }
 
     /// Returns the exact output start point for this retained segment.
