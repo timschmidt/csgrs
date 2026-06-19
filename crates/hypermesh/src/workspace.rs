@@ -1,10 +1,11 @@
 use super::arrangement3d::ExactArrangement;
+#[cfg(test)]
+use super::boolean::materialize_boolean_exact_request_from_retained_graph;
 use super::boolean::{
     ExactArrangementBooleanAttempt, ExactBooleanCertificationSet, ExactBooleanEvaluation,
     ExactBooleanRequest, arrangement_boolean_attempt_report_from_arrangement,
     arrangement_cell_complex_shortcut_attempt,
     certified_arrangement_cell_complex_preflight_from_retained_attempt,
-    materialize_boolean_exact_request_from_retained_graph,
     preflight_boolean_exact_request_from_graph_with_retained_attempt,
     try_materialize_certified_boolean_support_with_artifacts,
 };
@@ -321,10 +322,10 @@ impl<'a> ExactBooleanWorkspace<'a> {
         Ok(&self.evaluations[index].1)
     }
 
-    /// Materializes `request`, reusing a cached certified evaluation when the
-    /// workspace has one and otherwise reusing retained graph, preflight, and
-    /// arrangement artifacts for certified supports.
-    pub fn materialize(
+    /// Internal materialization path used to validate the retained result cache
+    /// while the public session flow goes through [`Self::evaluate`].
+    #[cfg(test)]
+    fn materialize(
         &mut self,
         request: ExactBooleanRequest,
     ) -> Result<ExactBooleanResult, MeshError> {
@@ -346,6 +347,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
         self.store_materialization_and_promote_evaluation(request, result)
     }
 
+    #[cfg(test)]
     fn materialize_uncached(
         &mut self,
         request: ExactBooleanRequest,
@@ -392,13 +394,9 @@ impl<'a> ExactBooleanWorkspace<'a> {
         Ok(result)
     }
 
-    /// Materializes `request` and returns the retained replayable result by
-    /// borrow.
-    ///
-    /// This is the preferred workspace API when callers can keep using the
-    /// session: it validates cached artifacts exactly like [`Self::materialize`]
-    /// while avoiding a result clone after the materialization is retained.
-    pub fn materialize_ref(
+    /// Internal borrowed materialization path for retained cache validation.
+    #[cfg(test)]
+    fn materialize_ref(
         &mut self,
         request: ExactBooleanRequest,
     ) -> Result<&ExactBooleanResult, MeshError> {
@@ -450,6 +448,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
         )
     }
 
+    #[cfg(test)]
     fn store_materialization_and_promote_evaluation(
         &mut self,
         request: ExactBooleanRequest,
@@ -472,6 +471,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
         Ok(result)
     }
 
+    #[cfg(test)]
     fn promote_evaluation_cache_from_materialization(
         &mut self,
         request: ExactBooleanRequest,
@@ -495,6 +495,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
         }
     }
 
+    #[cfg(test)]
     fn promote_evaluation_cache_from_materialization_index(
         &mut self,
         request: ExactBooleanRequest,
@@ -521,6 +522,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
     }
 }
 
+#[cfg(test)]
 fn cache_replayable_result(
     cache: &mut Vec<(ExactBooleanRequest, ExactBooleanResult)>,
     left: &ExactMesh,
@@ -546,6 +548,7 @@ fn cache_replayable_result(
     Ok(false)
 }
 
+#[cfg(test)]
 fn retain_replayable_result(
     cache: &mut Vec<(ExactBooleanRequest, ExactBooleanResult)>,
     left: &ExactMesh,
@@ -565,6 +568,7 @@ fn retain_replayable_result(
     Ok(cache.len() - 1)
 }
 
+#[cfg(test)]
 fn validate_replayable_result_for_cache(
     left: &ExactMesh,
     right: &ExactMesh,
