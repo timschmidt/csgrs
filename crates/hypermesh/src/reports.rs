@@ -5940,7 +5940,7 @@ impl ExactBoundaryTouchingReport {
 }
 
 /// Certification status for planar-arrangement blockers.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ExactPlanarArrangementStatus {
     /// Selected-region assembly already carries its own explicit region policy.
     NotNamedOperation,
@@ -5970,23 +5970,63 @@ pub enum ExactPlanarArrangementStatus {
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ExactPlanarArrangementReport {
     /// Requested named operation.
-    pub operation: ExactBooleanOperation,
+    pub(crate) operation: ExactBooleanOperation,
     /// Coarse planar-arrangement certification status.
-    pub status: ExactPlanarArrangementStatus,
+    pub(crate) status: ExactPlanarArrangementStatus,
     /// Whether graph extraction retained unknown events.
-    pub graph_had_unknowns: bool,
+    pub(crate) graph_had_unknowns: bool,
     /// Retained face-pair records after exact scheduling.
-    pub retained_face_pairs: usize,
+    pub(crate) retained_face_pairs: usize,
     /// Total retained event records.
-    pub retained_events: usize,
+    pub(crate) retained_events: usize,
     /// Relation counts for retained face pairs.
-    pub blocker: ExactBooleanBlocker,
+    pub(crate) blocker: ExactBooleanBlocker,
     /// Checked coplanar-overlap readiness summary retained from the graph
     /// layer.
-    pub arrangement_readiness: Option<CoplanarArrangementReadinessReport>,
+    pub(crate) arrangement_readiness: Option<CoplanarArrangementReadinessReport>,
 }
 
 impl ExactPlanarArrangementReport {
+    /// Return the requested named operation.
+    pub const fn operation(&self) -> ExactBooleanOperation {
+        self.operation
+    }
+
+    /// Return the coarse planar-arrangement status.
+    pub const fn status(&self) -> ExactPlanarArrangementStatus {
+        self.status
+    }
+
+    /// Return whether graph extraction retained unknown events.
+    pub const fn graph_had_unknowns(&self) -> bool {
+        self.graph_had_unknowns
+    }
+
+    /// Return the retained face-pair record count.
+    pub const fn retained_face_pairs(&self) -> usize {
+        self.retained_face_pairs
+    }
+
+    /// Return the retained event record count.
+    pub const fn retained_events(&self) -> usize {
+        self.retained_events
+    }
+
+    /// Return the retained relation-count blocker.
+    pub const fn blocker(&self) -> &ExactBooleanBlocker {
+        &self.blocker
+    }
+
+    /// Return the retained relation-count blocker mutably.
+    pub fn blocker_mut(&mut self) -> &mut ExactBooleanBlocker {
+        &mut self.blocker
+    }
+
+    /// Return the retained coplanar arrangement readiness summary.
+    pub fn arrangement_readiness(&self) -> Option<&CoplanarArrangementReadinessReport> {
+        self.arrangement_readiness.as_ref()
+    }
+
     /// Return whether this operation is blocked on planar arrangement output.
     pub const fn is_required(&self) -> bool {
         matches!(self.status, ExactPlanarArrangementStatus::Required)

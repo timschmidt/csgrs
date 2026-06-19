@@ -1346,15 +1346,15 @@ impl ExactBooleanCertificationSet {
             .map_err(|_| ExactReportValidationError::StatusEvidenceMismatch)?;
         self.convex_capabilities.validate()?;
         self.arrangement_cell_complex_shortcuts.validate()?;
-        if self.refinement.graph_had_unknowns != self.boundary_touching.graph_had_unknowns
-            || self.refinement.retained_face_pairs != self.boundary_touching.retained_face_pairs
-            || self.refinement.retained_events != self.boundary_touching.retained_events
+        if self.refinement.graph_had_unknowns() != self.boundary_touching.graph_had_unknowns()
+            || self.refinement.retained_face_pairs() != self.boundary_touching.retained_face_pairs()
+            || self.refinement.retained_events() != self.boundary_touching.retained_events()
         {
             return Err(ExactReportValidationError::StatusEvidenceMismatch);
         }
         self.planar_arrangement.validate()?;
         self.winding_readiness.validate()?;
-        if self.planar_arrangement.operation != request.operation
+        if self.planar_arrangement.operation() != request.operation
             || self.winding_readiness.operation != request.operation
         {
             return Err(ExactReportValidationError::StatusEvidenceMismatch);
@@ -1408,9 +1408,10 @@ impl ExactBooleanCertificationSet {
         if !self.topology_assembly_complete() {
             return Err(ExactReportValidationError::StatusEvidenceMismatch);
         }
-        if self.refinement.graph_had_unknowns != self.planar_arrangement.graph_had_unknowns
-            || self.refinement.retained_face_pairs != self.planar_arrangement.retained_face_pairs
-            || self.refinement.retained_events != self.planar_arrangement.retained_events
+        if self.refinement.graph_had_unknowns() != self.planar_arrangement.graph_had_unknowns()
+            || self.refinement.retained_face_pairs()
+                != self.planar_arrangement.retained_face_pairs()
+            || self.refinement.retained_events() != self.planar_arrangement.retained_events()
         {
             return Err(ExactReportValidationError::StatusEvidenceMismatch);
         }
@@ -1548,13 +1549,14 @@ impl ExactBooleanCertificationSet {
 
     fn planar_arrangement_matches_preflight(&self, preflight: &ExactBooleanPreflight) -> bool {
         self.winding_readiness.status == ExactWindingReadinessStatus::PlanarArrangementRequired
-            && preflight.graph_had_unknowns == self.planar_arrangement.graph_had_unknowns
-            && preflight.retained_face_pairs == self.planar_arrangement.retained_face_pairs
-            && preflight.retained_events == self.planar_arrangement.retained_events
+            && preflight.graph_had_unknowns == self.planar_arrangement.graph_had_unknowns()
+            && preflight.retained_face_pairs == self.planar_arrangement.retained_face_pairs()
+            && preflight.retained_events == self.planar_arrangement.retained_events()
             && preflight.region_count == 0
             && preflight.region_classifications.is_empty()
-            && preflight.blocker.as_ref() == Some(&self.planar_arrangement.blocker)
-            && preflight.arrangement_readiness == self.planar_arrangement.arrangement_readiness
+            && preflight.blocker.as_ref() == Some(self.planar_arrangement.blocker())
+            && preflight.arrangement_readiness.as_ref()
+                == self.planar_arrangement.arrangement_readiness()
             && preflight.coplanar_volumetric_evidence.is_none()
     }
 

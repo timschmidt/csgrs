@@ -3996,8 +3996,8 @@ fn planar_arrangement_report_classifies_noncoplanar_candidates_as_winding_blocke
 
     assert!(!report.is_required());
     assert!(!report.is_already_materialized());
-    assert!(report.blocker.requires_winding());
-    assert!(report.blocker.candidate_pairs > 0);
+    assert!(report.blocker().requires_winding());
+    assert!(report.blocker().candidate_pairs > 0);
     report.validate().unwrap();
     evaluation
         .certifications()
@@ -4005,7 +4005,7 @@ fn planar_arrangement_report_classifies_noncoplanar_candidates_as_winding_blocke
         .unwrap();
 
     let mut stale = report;
-    stale.blocker.coplanar_overlapping_pairs = 1;
+    stale.blocker_mut().coplanar_overlapping_pairs = 1;
     assert!(stale.validate().is_err());
 }
 
