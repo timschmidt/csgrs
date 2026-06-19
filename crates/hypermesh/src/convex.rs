@@ -1478,16 +1478,17 @@ fn report_error(error: ConvexSolidReportError) -> MeshError {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::boolean::{ExactBooleanOperation, ExactBooleanRequest, ExactBoundaryBooleanPolicy};
+    use crate::boolean::{ExactBooleanEvaluation, ExactBooleanOperation, ExactBooleanRequest};
     use crate::workspace::ExactBooleanWorkspace;
 
-    fn materialize_for_test(
+    fn materialized_evaluation_for_test(
         left: &ExactMesh,
         right: &ExactMesh,
         request: ExactBooleanRequest,
-    ) -> crate::reports::ExactBooleanResult {
+    ) -> ExactBooleanEvaluation {
         let mut workspace = ExactBooleanWorkspace::new(left, right);
-        workspace.materialize(request).unwrap()
+        workspace.materialize_ref(request).unwrap();
+        workspace.evaluate(request).unwrap().clone()
     }
 
     fn tetrahedron_i64(a: [i64; 3], b: [i64; 3], c: [i64; 3], d: [i64; 3]) -> ExactMesh {
@@ -1510,18 +1511,12 @@ mod tests {
         union.validate().unwrap();
         assert!(union.mesh.facts().mesh.closed_manifold);
         assert_eq!(union.mesh.facts().mesh.boundary_edges, 0);
-        materialize_for_test(
+        materialized_evaluation_for_test(
             &left,
             &right,
             ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED),
         )
-        .validate_operation_against_sources(
-            &left,
-            &right,
-            ExactBooleanOperation::Union,
-            ValidationPolicy::CLOSED,
-            ExactBoundaryBooleanPolicy::Reject,
-        )
+        .validate_materialized_result_against_sources(&left, &right)
         .unwrap();
 
         let difference = subtract_closed_convex_solids(&left, &right)
@@ -1529,18 +1524,12 @@ mod tests {
         difference.validate().unwrap();
         assert!(difference.mesh.facts().mesh.closed_manifold);
         assert_eq!(difference.mesh.facts().mesh.boundary_edges, 0);
-        materialize_for_test(
+        materialized_evaluation_for_test(
             &left,
             &right,
             ExactBooleanRequest::new(ExactBooleanOperation::Difference, ValidationPolicy::CLOSED),
         )
-        .validate_operation_against_sources(
-            &left,
-            &right,
-            ExactBooleanOperation::Difference,
-            ValidationPolicy::CLOSED,
-            ExactBoundaryBooleanPolicy::Reject,
-        )
+        .validate_materialized_result_against_sources(&left, &right)
         .unwrap();
     }
 }
