@@ -140,7 +140,9 @@ pub struct ContourLineMergeSpanReport2 {
 pub struct ContourLineMergeReport2 {
     stage: ContourLineMergeStage2,
     source_segment_count: usize,
+    source_segment_kind_counts: SegmentKindCounts,
     output_segment_count: Option<usize>,
+    output_segment_kind_counts: Option<SegmentKindCounts>,
     adjacent_pair_count: usize,
     merged_pair_count: usize,
     preserved_pair_count: usize,
@@ -301,6 +303,7 @@ impl Contour2 {
         policy: &CurvePolicy,
     ) -> CurveResult<ContourLineMergeResult2> {
         let source_segment_count = self.segments().len();
+        let source_segment_kind_counts = segment_kind_counts(self.segments());
         let mut adjacency = Vec::with_capacity(source_segment_count);
         let mut break_index = None;
         let mut adjacent_pair_count = 0_usize;
@@ -329,7 +332,9 @@ impl Contour2 {
                         report: ContourLineMergeReport2 {
                             stage: ContourLineMergeStage2::AdjacencyClassification,
                             source_segment_count,
+                            source_segment_kind_counts,
                             output_segment_count: None,
+                            output_segment_kind_counts: None,
                             adjacent_pair_count,
                             merged_pair_count,
                             preserved_pair_count,
@@ -349,7 +354,9 @@ impl Contour2 {
                 report: ContourLineMergeReport2 {
                     stage: ContourLineMergeStage2::AdjacencyClassification,
                     source_segment_count,
+                    source_segment_kind_counts,
                     output_segment_count: None,
+                    output_segment_kind_counts: None,
                     adjacent_pair_count,
                     merged_pair_count,
                     preserved_pair_count,
@@ -393,11 +400,14 @@ impl Contour2 {
         }
 
         let contour = Self::try_new_with_fill_rule(output_segments, self.fill_rule)?;
+        let output_segment_kind_counts = segment_kind_counts(contour.segments());
         Ok(ContourLineMergeResult2 {
             report: ContourLineMergeReport2 {
                 stage: ContourLineMergeStage2::ContourMaterialization,
                 source_segment_count,
+                source_segment_kind_counts,
                 output_segment_count: Some(contour.len()),
+                output_segment_kind_counts: Some(output_segment_kind_counts),
                 adjacent_pair_count,
                 merged_pair_count,
                 preserved_pair_count,
@@ -1284,9 +1294,19 @@ impl ContourLineMergeReport2 {
         self.source_segment_count
     }
 
+    /// Returns primitive-family counts for the source contour.
+    pub const fn source_segment_kind_counts(&self) -> SegmentKindCounts {
+        self.source_segment_kind_counts
+    }
+
     /// Returns the output segment count when the merge materialized.
     pub const fn output_segment_count(&self) -> Option<usize> {
         self.output_segment_count
+    }
+
+    /// Returns primitive-family counts for the materialized output contour.
+    pub const fn output_segment_kind_counts(&self) -> Option<SegmentKindCounts> {
+        self.output_segment_kind_counts
     }
 
     /// Returns adjacent contour segment pairs classified, including wraparound.
@@ -1576,6 +1596,17 @@ fn contour_line_merge_run_kind_counts(
     let mut counts = SegmentKindCounts::default();
     for source_index in source_indices {
         match &source_segments[*source_index] {
+            Segment2::Line(_) => counts.lines += 1,
+            Segment2::Arc(_) => counts.arcs += 1,
+        }
+    }
+    counts
+}
+
+fn segment_kind_counts(segments: &[Segment2]) -> SegmentKindCounts {
+    let mut counts = SegmentKindCounts::default();
+    for segment in segments {
+        match segment {
             Segment2::Line(_) => counts.lines += 1,
             Segment2::Arc(_) => counts.arcs += 1,
         }

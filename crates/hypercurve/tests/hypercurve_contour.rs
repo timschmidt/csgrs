@@ -185,7 +185,15 @@ fn contour_merge_adjacent_collinear_lines_reports_source_runs() {
         ContourLineMergeStage2::ContourMaterialization
     );
     assert_eq!(merged.report().source_segment_count(), 5);
+    assert_eq!(
+        merged.report().source_segment_kind_counts(),
+        SegmentKindCounts { lines: 5, arcs: 0 }
+    );
     assert_eq!(merged.report().output_segment_count(), Some(4));
+    assert_eq!(
+        merged.report().output_segment_kind_counts(),
+        Some(SegmentKindCounts { lines: 4, arcs: 0 })
+    );
     assert_eq!(merged.report().adjacent_pair_count(), 5);
     assert_eq!(merged.report().merged_pair_count(), 1);
     assert_eq!(merged.report().preserved_pair_count(), 4);
@@ -226,6 +234,14 @@ fn contour_line_merge_span_reports_preserve_mixed_segment_kinds() {
 
     assert!(merged.report().status().is_native_exact());
     assert_eq!(merged.report().merged_pair_count(), 0);
+    assert_eq!(
+        merged.report().source_segment_kind_counts(),
+        SegmentKindCounts { lines: 2, arcs: 1 }
+    );
+    assert_eq!(
+        merged.report().output_segment_kind_counts(),
+        Some(SegmentKindCounts { lines: 2, arcs: 1 })
+    );
     assert_eq!(merged.report().spans().len(), 3);
     assert_eq!(
         merged.report().spans()[0].source_segment_kind_counts(),
