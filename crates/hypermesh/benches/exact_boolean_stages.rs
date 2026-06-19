@@ -172,12 +172,11 @@ fn run_case(case: &BenchCase) {
         "workspace_coplanar_volumetric_evidence_from_evaluation",
         || {
             let evaluation = workspace.evaluate(request).unwrap();
-            black_box(evaluation.has_coplanar_volumetric_evidence().then(|| {
-                (
-                    evaluation.requires_coplanar_volumetric_cells(),
-                    evaluation.has_retained_blocker_evidence(),
-                )
-            }));
+            black_box(
+                evaluation
+                    .has_coplanar_volumetric_evidence()
+                    .then(|| evaluation.requires_coplanar_volumetric_cells()),
+            );
         },
     );
 

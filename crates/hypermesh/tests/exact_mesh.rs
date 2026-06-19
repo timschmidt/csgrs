@@ -3050,7 +3050,6 @@ fn open_surface_disjoint_report_classifies_retained_coplanar_overlap_blocker() {
         assert!(!evaluation.is_certified(), "{evaluation:?}");
         assert!(evaluation.materialized_result().is_none(), "{evaluation:?}");
         assert!(evaluation.has_blocker(), "{evaluation:?}");
-        assert!(evaluation.has_retained_blocker_evidence(), "{evaluation:?}");
         assert!(evaluation.has_retained_graph_evidence(), "{evaluation:?}");
         evaluation.validate_against_sources(&left, &right).unwrap();
     });
@@ -3079,7 +3078,6 @@ fn planar_arrangement_report_classifies_noncoplanar_candidates_as_winding_blocke
         assert!(!evaluation.is_certified(), "{evaluation:?}");
         assert!(evaluation.materialized_result().is_none(), "{evaluation:?}");
         assert!(evaluation.has_blocker(), "{evaluation:?}");
-        assert!(evaluation.has_retained_blocker_evidence(), "{evaluation:?}");
         evaluation.validate_against_sources(&left, &right).unwrap();
     });
 }
@@ -4000,7 +3998,6 @@ fn boundary_touching_report_classifies_proper_crossing_as_winding_blocker() {
         assert!(!evaluation.is_certified(), "{evaluation:?}");
         assert!(evaluation.materialized_result().is_none(), "{evaluation:?}");
         assert!(evaluation.has_blocker(), "{evaluation:?}");
-        assert!(evaluation.has_retained_blocker_evidence(), "{evaluation:?}");
         evaluation.validate_against_sources(&left, &right).unwrap();
     });
 }

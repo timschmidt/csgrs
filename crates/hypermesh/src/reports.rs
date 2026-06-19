@@ -4560,11 +4560,6 @@ impl Default for ExactBooleanBlocker {
 }
 
 impl ExactBooleanBlocker {
-    /// Return whether the blocker retained graph evidence.
-    pub(crate) const fn has_evidence(&self) -> bool {
-        blocker_has_any_evidence(self)
-    }
-
     /// Return this exact graph-count blocker with a different semantic kind.
     pub(crate) fn into_blocker(mut self, kind: ExactBooleanBlockerKind) -> Self {
         self.kind = kind;
