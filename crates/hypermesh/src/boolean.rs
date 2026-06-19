@@ -2261,7 +2261,7 @@ pub struct ExactBooleanEvaluation {
     /// Request policy evaluated.
     request: ExactBooleanRequest,
     /// Exact preflight/scheduling result.
-    pub preflight: ExactBooleanPreflight,
+    preflight: ExactBooleanPreflight,
     /// Replayable exact certification reports for the request.
     pub certifications: ExactBooleanCertificationSet,
     /// Materialized exact result, when available under `request`.
@@ -2314,9 +2314,14 @@ impl ExactBooleanEvaluation {
         &self.certifications
     }
 
-    #[cfg(test)]
-    pub(crate) fn preflight_mut(&mut self) -> &mut ExactBooleanPreflight {
+    /// Return the exact preflight/scheduling report mutably.
+    pub fn preflight_mut(&mut self) -> &mut ExactBooleanPreflight {
         &mut self.preflight
+    }
+
+    /// Replace the retained exact preflight/scheduling report.
+    pub fn replace_preflight(&mut self, preflight: ExactBooleanPreflight) -> ExactBooleanPreflight {
+        std::mem::replace(&mut self.preflight, preflight)
     }
 
     /// Return the materialized result retained by this evaluation, when the

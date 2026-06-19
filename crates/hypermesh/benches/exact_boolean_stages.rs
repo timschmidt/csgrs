@@ -181,7 +181,7 @@ fn run_case(case: &BenchCase) {
         || {
             let evaluation = workspace.evaluate(request).unwrap();
             let report = evaluation
-                .preflight
+                .preflight()
                 .coplanar_volumetric_evidence
                 .as_ref()
                 .or(evaluation
@@ -209,7 +209,7 @@ fn run_case(case: &BenchCase) {
         |(_retained_workspace, evaluation)| {
             if let Some(evaluation) = evaluation.as_ref() {
                 let report = evaluation
-                    .preflight
+                    .preflight()
                     .coplanar_volumetric_evidence
                     .as_ref()
                     .or(evaluation

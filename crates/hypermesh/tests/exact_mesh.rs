@@ -290,10 +290,10 @@ fn exact_boolean_evaluation_materializes_certified_result_publicly() {
         evaluation.freshness_against_sources(&left, &right),
         hypermesh::ExactReportFreshness::Current
     );
-    assert!(evaluation.preflight.is_certified());
+    assert!(evaluation.preflight().is_certified());
     assert!(evaluation.has_materialized_result());
-    assert_eq!(evaluation.preflight.required_blocker_kind(), None);
-    assert!(evaluation.preflight.is_certified());
+    assert_eq!(evaluation.preflight().required_blocker_kind(), None);
+    assert!(evaluation.preflight().is_certified());
     assert!(
         evaluation.materialized_result().is_some_and(|result| {
             result.is_certified_shortcut_for(ExactBooleanOperation::Union)
@@ -319,17 +319,19 @@ fn exact_boolean_evaluation_materializes_certified_result_publicly() {
     let mut relabeled_support = evaluation.clone();
     let convex_left = axis_aligned_box([0, 0, 0], [2, 2, 2]);
     let convex_right = axis_aligned_box([1, 1, 1], [3, 3, 3]);
-    relabeled_support.preflight = exact_boolean_evaluation(
-        &convex_left,
-        &convex_right,
-        ExactBooleanRequest::new(
-            ExactBooleanOperation::Union,
-            ValidationPolicy::ALLOW_BOUNDARY,
-        ),
-    )
-    .preflight
-    .clone();
-    relabeled_support.preflight.validate().unwrap();
+    relabeled_support.replace_preflight(
+        exact_boolean_evaluation(
+            &convex_left,
+            &convex_right,
+            ExactBooleanRequest::new(
+                ExactBooleanOperation::Union,
+                ValidationPolicy::ALLOW_BOUNDARY,
+            ),
+        )
+        .preflight()
+        .clone(),
+    );
+    relabeled_support.preflight().validate().unwrap();
     assert_report_validation_error!(relabeled_support.validate());
     let mut relabeled_winding_status = evaluation.clone();
     relabeled_winding_status
@@ -434,12 +436,16 @@ fn exact_boolean_evaluation_materializes_boundary_policy_shortcut_by_default() {
 
     evaluation.validate().unwrap();
     evaluation.validate_against_sources(&left, &right).unwrap();
-    assert!(evaluation.preflight.is_certified());
+    assert!(evaluation.preflight().is_certified());
     assert!(evaluation.has_materialized_result());
-    assert_eq!(evaluation.preflight.required_blocker_kind(), None);
-    assert!(evaluation.preflight.is_certified());
-    assert!(evaluation.preflight.is_certified_boundary_policy_shortcut());
-    assert!(evaluation.preflight.has_retained_exact_evidence());
+    assert_eq!(evaluation.preflight().required_blocker_kind(), None);
+    assert!(evaluation.preflight().is_certified());
+    assert!(
+        evaluation
+            .preflight()
+            .is_certified_boundary_policy_shortcut()
+    );
+    assert!(evaluation.preflight().has_retained_exact_evidence());
     let result = evaluation
         .materialized_result()
         .expect("boundary-policy evaluation should materialize");
@@ -478,7 +484,7 @@ fn exact_boolean_evaluation_materializes_boundary_policy_shortcut_by_default() {
     );
     let rejected = exact_boolean_evaluation(&left, &right, rejected_request);
     rejected.validate().unwrap();
-    assert!(!rejected.preflight.is_certified());
+    assert!(!rejected.preflight().is_certified());
     assert!(!rejected.has_materialized_result());
     assert!(
         ExactBooleanWorkspace::new(&left, &right)
@@ -1059,7 +1065,7 @@ fn affine_orthogonal_solid_recovers_multi_cell_basis_without_sampling_limits() {
             &right,
             ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
         );
-        let preflight = &preflight_evaluation.preflight;
+        let preflight = preflight_evaluation.preflight();
         assert!(
             preflight.is_certified_arrangement_cell_complex(),
             "{operation:?}: {preflight:?}"
@@ -1246,7 +1252,7 @@ fn exact_coplanar_volumetric_cell_evidence_is_retained_by_public_evaluation() {
         ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED),
     );
     evaluation.validate().unwrap();
-    let preflight = &evaluation.preflight;
+    let preflight = evaluation.preflight();
     assert!(
         preflight.blocker.is_some() || preflight.is_certified_arrangement_cell_complex(),
         "{preflight:?}"
@@ -1284,7 +1290,7 @@ fn exact_coplanar_volumetric_cell_evidence_is_retained_by_public_evaluation() {
         assert!(preflight.coplanar_volumetric_evidence.is_some());
     }
     let report = evaluation
-        .preflight
+        .preflight()
         .coplanar_volumetric_evidence
         .as_ref()
         .expect("coplanar volumetric blocker should retain source-aware evidence");
@@ -1924,8 +1930,8 @@ fn exact_open_surface_arrangement_is_publicly_replayable() {
         );
         evaluation.validate().unwrap();
         let mut stale_preflight_counts = evaluation.clone();
-        stale_preflight_counts.preflight.retained_events += 1;
-        stale_preflight_counts.preflight.validate().unwrap();
+        stale_preflight_counts.preflight_mut().retained_events += 1;
+        stale_preflight_counts.preflight().validate().unwrap();
         assert_report_validation_error!(
             stale_preflight_counts.validate(),
             "{operation:?}: {stale_preflight_counts:?}"
@@ -2312,7 +2318,7 @@ fn lower_dimensional_regularized_boolean_is_publicly_replayable() {
     ] {
         let request = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED);
         let evaluation = exact_boolean_evaluation(&left, &right, request);
-        let preflight = &evaluation.preflight;
+        let preflight = evaluation.preflight();
         assert!(preflight.is_certified_lower_dimensional_regularized_solid());
         preflight.validate().unwrap();
         evaluation.validate_against_sources(&left, &right).unwrap();
@@ -2389,7 +2395,7 @@ fn lower_dimensional_regularized_boolean_is_publicly_replayable() {
         let disjoint_request = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED);
         let disjoint_evaluation =
             exact_boolean_evaluation(&left, &disjoint_right, disjoint_request);
-        let disjoint_preflight = &disjoint_evaluation.preflight;
+        let disjoint_preflight = disjoint_evaluation.preflight();
         assert!(
             disjoint_preflight.is_certified_lower_dimensional_regularized_solid(),
             "{operation:?}: {disjoint_preflight:?}"
@@ -2523,7 +2529,7 @@ fn mixed_dimensional_regularized_solid_boolean_is_publicly_replayable() {
                 right,
                 ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
             )
-            .preflight
+            .preflight()
             .clone();
             assert!(
                 preflight.is_certified_mixed_dimensional_regularized_solid(),
@@ -2563,7 +2569,7 @@ fn mixed_dimensional_regularized_solid_boolean_is_publicly_replayable() {
                 right,
                 ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
             )
-            .preflight
+            .preflight()
             .clone();
             assert!(
                 boundary_preflight.is_certified_bounds_disjoint(),
@@ -2621,8 +2627,8 @@ fn boundary_touching_policy_boolean_is_publicly_replayable() {
             !reject_evaluation.has_materialized_result(),
             "{reject_evaluation:?}"
         );
-        assert!(!reject_evaluation.preflight.is_certified());
-        assert!(reject_evaluation.preflight.blocker.is_some());
+        assert!(!reject_evaluation.preflight().is_certified());
+        assert!(reject_evaluation.preflight().blocker.is_some());
 
         let result = exact_boolean_result(
             &left,
@@ -2709,7 +2715,7 @@ fn closed_boundary_touching_regularized_boolean_is_publicly_replayable() {
         let preflight_request =
             ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY);
         let preflight_evaluation = exact_boolean_evaluation(&left, &right, preflight_request);
-        let preflight = &preflight_evaluation.preflight;
+        let preflight = preflight_evaluation.preflight();
         assert!(
             preflight.is_certified_arrangement_cell_complex()
                 || preflight.is_certified_closed_boundary_touching(),
@@ -2814,7 +2820,7 @@ fn closed_no_volume_overlap_regularized_boolean_is_publicly_replayable() {
         let preflight_request =
             ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY);
         let preflight_evaluation = exact_boolean_evaluation(&left, &right, preflight_request);
-        let preflight = &preflight_evaluation.preflight;
+        let preflight = preflight_evaluation.preflight();
         assert!(
             preflight.is_certified_arrangement_cell_complex(),
             "{operation:?}: {preflight:?}"
@@ -3101,7 +3107,7 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
     );
     let mut workspace = ExactBooleanWorkspace::new(&left, &right);
     let evaluation = workspace.evaluate(union_request).unwrap().clone();
-    let preflight = evaluation.preflight.clone();
+    let preflight = evaluation.preflight().clone();
     assert!(
         preflight.is_certified_arrangement_cell_complex(),
         "{preflight:?}"
@@ -3146,7 +3152,9 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
     );
     evaluation.validate().unwrap();
     assert!(
-        evaluation.preflight.is_certified_arrangement_cell_complex(),
+        evaluation
+            .preflight()
+            .is_certified_arrangement_cell_complex(),
         "{evaluation:?}"
     );
     let mut unresolved_ownership = evaluation.clone();
@@ -3339,7 +3347,7 @@ fn exact_volumetric_winding_coplanar_cap_is_publicly_certified() {
             )
             .unwrap();
 
-        let preflight = &evaluation.preflight;
+        let preflight = evaluation.preflight();
         assert!(
             preflight.is_certified_arrangement_cell_complex(),
             "{operation:?}: {preflight:?}"
@@ -3758,8 +3766,8 @@ fn exact_evaluation_preflight_reports_disjoint_bounds_without_retained_pairs() {
         &right,
         ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED),
     );
-    assert_eq!(evaluation.preflight.retained_face_pairs, 0);
-    assert_eq!(evaluation.preflight.retained_events, 0);
+    assert_eq!(evaluation.preflight().retained_face_pairs, 0);
+    assert_eq!(evaluation.preflight().retained_events, 0);
     evaluation.validate_against_sources(&left, &right).unwrap();
 }
 
@@ -3989,7 +3997,7 @@ fn exact_boolean_public_shortcuts_handle_disjoint_operands() {
             ValidationPolicy::ALLOW_BOUNDARY,
         ),
     )
-    .preflight
+    .preflight()
     .clone();
     assert!(!preflight.graph_had_unknowns);
 
@@ -4772,7 +4780,7 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
         .validate_against_sources(&left, &right, request)
         .unwrap();
 
-    let preflight = evaluation.preflight.clone();
+    let preflight = evaluation.preflight().clone();
     assert!(
         preflight.is_certified_boundary_policy_shortcut(),
         "{preflight:?}"
@@ -4786,7 +4794,7 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
             ExactBoundaryBooleanPolicy::Reject,
         ),
     )
-    .preflight
+    .preflight()
     .clone();
     assert!(
         rejected_policy_preflight.requires_boundary_policy(),
@@ -4799,7 +4807,7 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
         ExactBoundaryBooleanPolicy::PreserveSeparateShells,
     );
     let policy_evaluation = exact_boolean_evaluation(&left, &right, policy_request);
-    let policy_preflight = &policy_evaluation.preflight;
+    let policy_preflight = policy_evaluation.preflight();
     assert!(
         policy_preflight.is_certified_boundary_policy_shortcut(),
         "{policy_preflight:?}"
@@ -4932,7 +4940,7 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
     );
     let closed_intersection_evaluation =
         exact_boolean_evaluation(&left, &right, closed_intersection_request);
-    let closed_intersection_preflight = &closed_intersection_evaluation.preflight;
+    let closed_intersection_preflight = closed_intersection_evaluation.preflight();
     assert!(
         closed_intersection_preflight.is_certified_lower_dimensional_regularized_solid(),
         "{closed_intersection_preflight:?}"
@@ -4976,7 +4984,7 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
         );
         let closed_policy_evaluation =
             exact_boolean_evaluation(&left, &right, closed_policy_request);
-        let closed_policy_preflight = &closed_policy_evaluation.preflight;
+        let closed_policy_preflight = closed_policy_evaluation.preflight();
         assert!(
             closed_policy_preflight.is_certified_lower_dimensional_regularized_solid(),
             "{operation:?}: {closed_policy_preflight:?}"
