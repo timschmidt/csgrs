@@ -4103,7 +4103,8 @@ impl ExactBooleanPreflight {
     /// frames exact geometric state as certified computation history; a cached
     /// preflight report must therefore stay tied to the sources that produced
     /// its graph counts, blockers, and retained classifications.
-    pub fn validate_against_sources(
+    #[cfg(test)]
+    pub(crate) fn validate_against_sources(
         &self,
         left: &ExactMesh,
         right: &ExactMesh,
@@ -4129,7 +4130,8 @@ impl ExactBooleanPreflight {
     /// need replay to include that policy, otherwise a materialized
     /// arrangement/cell-complex preflight could be incorrectly compared
     /// against the closed-output blocker report.
-    pub fn validate_against_sources_with_validation(
+    #[cfg(test)]
+    pub(crate) fn validate_against_sources_with_validation(
         &self,
         left: &ExactMesh,
         right: &ExactMesh,
@@ -4156,7 +4158,8 @@ impl ExactBooleanPreflight {
     /// contact. This replay includes that chosen policy, allowing a retained
     /// `CertifiedBoundaryPolicyShortcut` preflight to prove it still matches
     /// the exact graph and output validation contract.
-    pub fn validate_against_sources_with_boundary_policy(
+    #[cfg(test)]
+    pub(crate) fn validate_against_sources_with_boundary_policy(
         &self,
         left: &ExactMesh,
         right: &ExactMesh,
@@ -4176,6 +4179,7 @@ impl ExactBooleanPreflight {
         }
     }
 
+    #[cfg(test)]
     fn replay_against_sources(
         &self,
         left: &ExactMesh,
@@ -4190,7 +4194,8 @@ impl ExactBooleanPreflight {
     /// This uses the default strict closed-output preflight contract. Use
     /// [`Self::freshness_against_sources_with_validation`] when a caller
     /// deliberately accepted a different output validation policy.
-    pub fn freshness_against_sources(
+    #[cfg(test)]
+    pub(crate) fn freshness_against_sources(
         &self,
         left: &ExactMesh,
         right: &ExactMesh,
@@ -4199,7 +4204,8 @@ impl ExactBooleanPreflight {
     }
 
     /// Classify whether this retained preflight is fresh under `validation`.
-    pub fn freshness_against_sources_with_validation(
+    #[cfg(test)]
+    pub(crate) fn freshness_against_sources_with_validation(
         &self,
         left: &ExactMesh,
         right: &ExactMesh,
@@ -4212,7 +4218,8 @@ impl ExactBooleanPreflight {
 
     /// Classify whether this retained preflight is fresh under `validation`
     /// and `boundary_policy`.
-    pub fn freshness_against_sources_with_boundary_policy(
+    #[cfg(test)]
+    pub(crate) fn freshness_against_sources_with_boundary_policy(
         &self,
         left: &ExactMesh,
         right: &ExactMesh,
