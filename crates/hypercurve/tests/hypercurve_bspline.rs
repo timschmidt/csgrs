@@ -1,10 +1,10 @@
 use hypercurve::{
     Aabb2, BezierBoundaryLoop2, BezierRegion2, BezierSubcurve2, Classification, CurveError,
     CurvePolicy, Point2, PolynomialBSplineCurve2, QuadraticBezier2, RationalBSplineCurve2,
-    RationalBSplineNativeTopologyReport2, RationalBezierSpanTopologyReport2,
-    RationalQuadraticBSplineCurve2, Real, RetainedBSplineSpanFactReport2,
-    RetainedBSplineSpanFacts2, RetainedCurveCacheSummary2, RetainedCurveFamily2,
-    RetainedCurveIdentity2, RetainedCurvePeriodicity1, RetainedCurveProfile2,
+    RationalBSplineNativeTopologyReport2, RationalBezierSpanTopologyPath2,
+    RationalBezierSpanTopologyReport2, RationalQuadraticBSplineCurve2, Real,
+    RetainedBSplineSpanFactReport2, RetainedBSplineSpanFacts2, RetainedCurveCacheSummary2,
+    RetainedCurveFamily2, RetainedCurveIdentity2, RetainedCurvePeriodicity1, RetainedCurveProfile2,
     RetainedEndpointEvidence2, RetainedParameterDomain1, RetainedSpanAxisMonotonicity,
     RetainedSpanWeightDomainReport2, RetainedTopologyStatus, RetainedTrimDirection,
     RetainedTrimInterval1,
@@ -35,6 +35,26 @@ fn decided<T>(classification: Classification<T>) -> T {
 
 fn assert_topology_error<T>(result: Result<T, CurveError>) {
     assert!(matches!(result, Err(CurveError::Topology(_))));
+}
+
+fn span_topology_report(
+    span_index: usize,
+    degree: usize,
+    knot_start: Real,
+    knot_end: Real,
+    status: RetainedTopologyStatus,
+    decision_path: RationalBezierSpanTopologyPath2,
+    native_subcurve: Option<BezierSubcurve2>,
+) -> Result<RationalBezierSpanTopologyReport2, CurveError> {
+    RationalBezierSpanTopologyReport2::new(
+        span_index,
+        degree,
+        knot_start,
+        knot_end,
+        status,
+        decision_path,
+        native_subcurve,
+    )
 }
 
 fn assert_point_eq(left: &Point2, right: &Point2) {
@@ -330,8 +350,14 @@ fn retained_rational_quadratic_spans_promote_to_native_conic_topology() {
         .unwrap(),
     );
     let extraction = decided(spline.extract_bezier_spans(&policy()).unwrap());
+    let report = decided(extraction.native_topology_report(&policy()).unwrap());
     let native = decided(extraction.native_subcurves(&policy()).unwrap());
 
+    assert_eq!(report.span_reports().len(), 1);
+    assert_eq!(
+        report.span_reports()[0].decision_path(),
+        RationalBezierSpanTopologyPath2::NativeRationalQuadraticSpan
+    );
     assert_eq!(native.len(), 1);
     match &native[0] {
         BezierSubcurve2::RationalQuadratic(curve) => {
@@ -401,6 +427,8 @@ fn nonuniform_retained_rational_cubic_spans_do_not_promote_to_native_topology() 
     assert!(report.span_reports().iter().all(|span| {
         span.degree() == 3
             && span.status() == RetainedTopologyStatus::Unsupported
+            && span.decision_path()
+                == RationalBezierSpanTopologyPath2::RetainedUnequalWeightCubicSpan
             && span.native_subcurve().is_none()
             && span.status().is_retained_evidence()
     }));
@@ -432,6 +460,10 @@ fn equal_weight_rational_cubic_topology_report_names_native_exact_spans() {
         assert_eq!(span.span_index(), index);
         assert_eq!(span.degree(), 3);
         assert_eq!(span.status(), RetainedTopologyStatus::NativeExact);
+        assert_eq!(
+            span.decision_path(),
+            RationalBezierSpanTopologyPath2::NativeEqualWeightCubicSpan
+        );
         assert!(matches!(
             span.native_subcurve(),
             Some(BezierSubcurve2::Cubic(_))
@@ -948,57 +980,88 @@ fn retained_span_fact_constructors_reject_forged_evidence() {
 #[test]
 fn retained_rational_span_topology_reports_reject_forged_native_evidence() {
     assert_topology_error(RationalBSplineNativeTopologyReport2::new(Vec::new()));
-    assert_topology_error(RationalBezierSpanTopologyReport2::new(
+    assert_topology_error(span_topology_report(
         0,
         1,
         r(0),
         r(1),
         RetainedTopologyStatus::Unsupported,
+        RationalBezierSpanTopologyPath2::RetainedUnsupportedDegree,
         None,
     ));
-    assert_topology_error(RationalBezierSpanTopologyReport2::new(
+    assert_topology_error(span_topology_report(
         0,
         2,
         r(1),
         r(1),
         RetainedTopologyStatus::Unsupported,
+        RationalBezierSpanTopologyPath2::RetainedControlNetShapeMismatch,
         None,
     ));
-    assert_topology_error(RationalBezierSpanTopologyReport2::new(
+    assert_topology_error(span_topology_report(
         0,
         2,
         r(2),
         r(1),
         RetainedTopologyStatus::Unsupported,
+        RationalBezierSpanTopologyPath2::RetainedControlNetShapeMismatch,
         None,
     ));
-    assert_topology_error(RationalBezierSpanTopologyReport2::new(
+    assert_topology_error(span_topology_report(
         0,
         2,
         r(0),
         r(1),
         RetainedTopologyStatus::NativeExact,
+        RationalBezierSpanTopologyPath2::NativeRationalQuadraticSpan,
         None,
     ));
-    assert_topology_error(RationalBezierSpanTopologyReport2::new(
+    assert_topology_error(span_topology_report(
         0,
         2,
         r(0),
         r(1),
         RetainedTopologyStatus::Unsupported,
+        RationalBezierSpanTopologyPath2::RetainedControlNetShapeMismatch,
         Some(BezierSubcurve2::Quadratic(QuadraticBezier2::new(
             p(0, 0),
             p(1, 0),
             p(2, 0),
         ))),
     ));
+    assert_topology_error(span_topology_report(
+        0,
+        3,
+        r(0),
+        r(1),
+        RetainedTopologyStatus::Unsupported,
+        RationalBezierSpanTopologyPath2::RetainedUnsupportedDegree,
+        None,
+    ));
+    for topology_status in [
+        RetainedTopologyStatus::Unresolved,
+        RetainedTopologyStatus::CertifiedApproximation,
+        RetainedTopologyStatus::DisplayOrExport,
+        RetainedTopologyStatus::ImportedLossy,
+    ] {
+        assert_topology_error(span_topology_report(
+            0,
+            3,
+            r(0),
+            r(1),
+            topology_status,
+            RationalBezierSpanTopologyPath2::RetainedUnequalWeightCubicSpan,
+            None,
+        ));
+    }
 
-    let skipped_index = RationalBezierSpanTopologyReport2::new(
+    let skipped_index = span_topology_report(
         1,
         3,
         r(0),
         r(1),
         RetainedTopologyStatus::Unsupported,
+        RationalBezierSpanTopologyPath2::RetainedUnequalWeightCubicSpan,
         None,
     )
     .unwrap();
@@ -1006,21 +1069,23 @@ fn retained_rational_span_topology_reports_reject_forged_native_evidence() {
         skipped_index,
     ]));
 
-    let first_report = RationalBezierSpanTopologyReport2::new(
+    let first_report = span_topology_report(
         0,
         2,
         r(0),
         r(1),
         RetainedTopologyStatus::Unsupported,
+        RationalBezierSpanTopologyPath2::RetainedControlNetShapeMismatch,
         None,
     )
     .unwrap();
-    let gapped_report = RationalBezierSpanTopologyReport2::new(
+    let gapped_report = span_topology_report(
         1,
         2,
         r(2),
         r(3),
         RetainedTopologyStatus::Unsupported,
+        RationalBezierSpanTopologyPath2::RetainedControlNetShapeMismatch,
         None,
     )
     .unwrap();
@@ -1029,12 +1094,13 @@ fn retained_rational_span_topology_reports_reject_forged_native_evidence() {
         gapped_report,
     ]));
 
-    let mixed_degree_report = RationalBezierSpanTopologyReport2::new(
+    let mixed_degree_report = span_topology_report(
         1,
         3,
         r(1),
         r(2),
         RetainedTopologyStatus::Unsupported,
+        RationalBezierSpanTopologyPath2::RetainedUnequalWeightCubicSpan,
         None,
     )
     .unwrap();

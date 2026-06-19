@@ -137,7 +137,23 @@ pub struct RationalBezierSpanTopologyReport2 {
     knot_start: Real,
     knot_end: Real,
     status: RetainedTopologyStatus,
+    decision_path: RationalBezierSpanTopologyPath2,
     native_subcurve: Option<BezierSubcurve2>,
+}
+
+/// Exact decision path used to classify one retained rational Bezier span.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum RationalBezierSpanTopologyPath2 {
+    /// The retained span did not carry the expected `degree + 1` controls and weights.
+    RetainedControlNetShapeMismatch,
+    /// A degree-two rational span promoted directly to native conic topology.
+    NativeRationalQuadraticSpan,
+    /// A degree-three rational span promoted to a polynomial cubic because all weights match.
+    NativeEqualWeightCubicSpan,
+    /// A degree-three rational span stayed retained because its weights are not all equal.
+    RetainedUnequalWeightCubicSpan,
+    /// A degree greater than three stayed retained because this kernel has no native span type.
+    RetainedUnsupportedDegree,
 }
 
 /// Certified or retained monotonicity evidence for one extracted spline span.
@@ -1136,6 +1152,7 @@ impl RationalBezierSpanTopologyReport2 {
         knot_start: Real,
         knot_end: Real,
         status: RetainedTopologyStatus,
+        decision_path: RationalBezierSpanTopologyPath2,
         native_subcurve: Option<BezierSubcurve2>,
     ) -> CurveResult<Self> {
         validate_rational_span_topology_evidence(
@@ -1143,6 +1160,7 @@ impl RationalBezierSpanTopologyReport2 {
             &knot_start,
             &knot_end,
             status,
+            decision_path,
             native_subcurve.as_ref(),
         )?;
         Ok(Self {
@@ -1151,6 +1169,7 @@ impl RationalBezierSpanTopologyReport2 {
             knot_start,
             knot_end,
             status,
+            decision_path,
             native_subcurve,
         })
     }
@@ -1173,6 +1192,11 @@ impl RationalBezierSpanTopologyReport2 {
     /// Returns the span's topology-readiness status.
     pub const fn status(&self) -> RetainedTopologyStatus {
         self.status
+    }
+
+    /// Returns the exact decision path that produced this status.
+    pub const fn decision_path(&self) -> RationalBezierSpanTopologyPath2 {
+        self.decision_path
     }
 
     /// Returns the exact native subcurve when one exists.
@@ -1329,12 +1353,47 @@ fn validate_rational_span_topology_evidence(
     knot_start: &Real,
     knot_end: &Real,
     status: RetainedTopologyStatus,
+    decision_path: RationalBezierSpanTopologyPath2,
     native_subcurve: Option<&BezierSubcurve2>,
 ) -> CurveResult<()> {
     validate_positive_knot_interval(knot_start, knot_end)?;
     if degree < 2 {
         return Err(CurveError::Topology(
             "retained rational span topology report degree must be at least two".into(),
+        ));
+    }
+    if !status.is_native_exact() && status != RetainedTopologyStatus::Unsupported {
+        return Err(CurveError::Topology(
+            "retained rational span topology report must carry exact native or unsupported evidence status"
+                .into(),
+        ));
+    }
+    let path_matches_status = match decision_path {
+        RationalBezierSpanTopologyPath2::RetainedControlNetShapeMismatch => {
+            status == RetainedTopologyStatus::Unsupported && native_subcurve.is_none()
+        }
+        RationalBezierSpanTopologyPath2::NativeRationalQuadraticSpan => {
+            degree == 2
+                && status.is_native_exact()
+                && matches!(native_subcurve, Some(BezierSubcurve2::RationalQuadratic(_)))
+        }
+        RationalBezierSpanTopologyPath2::NativeEqualWeightCubicSpan => {
+            degree == 3
+                && status.is_native_exact()
+                && matches!(native_subcurve, Some(BezierSubcurve2::Cubic(_)))
+        }
+        RationalBezierSpanTopologyPath2::RetainedUnequalWeightCubicSpan => {
+            degree == 3
+                && status == RetainedTopologyStatus::Unsupported
+                && native_subcurve.is_none()
+        }
+        RationalBezierSpanTopologyPath2::RetainedUnsupportedDegree => {
+            degree > 3 && status == RetainedTopologyStatus::Unsupported && native_subcurve.is_none()
+        }
+    };
+    if !path_matches_status {
+        return Err(CurveError::Topology(
+            "retained rational span topology path does not match status evidence".into(),
         ));
     }
     match (status.is_native_exact(), native_subcurve) {
@@ -1431,6 +1490,7 @@ impl RationalBezierSpan2 {
                     self.knot_start.clone(),
                     self.knot_end.clone(),
                     RetainedTopologyStatus::Unsupported,
+                    RationalBezierSpanTopologyPath2::RetainedControlNetShapeMismatch,
                     None,
                 )?,
             ));
@@ -1452,6 +1512,7 @@ impl RationalBezierSpan2 {
                         self.knot_start.clone(),
                         self.knot_end.clone(),
                         RetainedTopologyStatus::NativeExact,
+                        RationalBezierSpanTopologyPath2::NativeRationalQuadraticSpan,
                         Some(BezierSubcurve2::RationalQuadratic(curve)),
                     )?,
                 ))
@@ -1464,6 +1525,7 @@ impl RationalBezierSpan2 {
                         self.knot_start.clone(),
                         self.knot_end.clone(),
                         RetainedTopologyStatus::NativeExact,
+                        RationalBezierSpanTopologyPath2::NativeEqualWeightCubicSpan,
                         Some(BezierSubcurve2::Cubic(CubicBezier2::new(
                             self.control_points[0].clone(),
                             self.control_points[1].clone(),
@@ -1479,6 +1541,7 @@ impl RationalBezierSpan2 {
                         self.knot_start.clone(),
                         self.knot_end.clone(),
                         RetainedTopologyStatus::Unsupported,
+                        RationalBezierSpanTopologyPath2::RetainedUnequalWeightCubicSpan,
                         None,
                     )?,
                 )),
@@ -1491,6 +1554,7 @@ impl RationalBezierSpan2 {
                     self.knot_start.clone(),
                     self.knot_end.clone(),
                     RetainedTopologyStatus::Unsupported,
+                    RationalBezierSpanTopologyPath2::RetainedUnsupportedDegree,
                     None,
                 )?,
             )),
