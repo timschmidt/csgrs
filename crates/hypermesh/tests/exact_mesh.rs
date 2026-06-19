@@ -4306,27 +4306,6 @@ fn trivial_boolean_shortcuts_are_publicly_replayable() {
             ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
         );
         same_surface_evaluation.validate().unwrap();
-        let mut relabeled_same_surface_report = same_surface_evaluation.clone();
-        let replacement_same_surface = exact_boolean_evaluation(
-            &open_identical_left,
-            &open_disjoint_left,
-            ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
-        )
-        .certifications()
-        .same_surface()
-        .clone();
-        *relabeled_same_surface_report
-            .certifications_mut()
-            .same_surface_mut() = replacement_same_surface;
-        relabeled_same_surface_report
-            .certifications()
-            .same_surface()
-            .validate()
-            .unwrap();
-        assert_report_validation_error!(
-            relabeled_same_surface_report.validate(),
-            "{operation:?}: {relabeled_same_surface_report:?}"
-        );
         if matches!(
             operation,
             ExactBooleanOperation::Union | ExactBooleanOperation::Intersection
@@ -4406,27 +4385,6 @@ fn trivial_boolean_shortcuts_are_publicly_replayable() {
             ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
         );
         open_disjoint_evaluation.validate().unwrap();
-        let mut relabeled_disjoint_report = open_disjoint_evaluation.clone();
-        let replacement_open_disjoint = exact_boolean_evaluation(
-            &solid,
-            &open_disjoint_right,
-            ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
-        )
-        .certifications()
-        .open_surface_disjoint()
-        .clone();
-        *relabeled_disjoint_report
-            .certifications_mut()
-            .open_surface_disjoint_mut() = replacement_open_disjoint;
-        relabeled_disjoint_report
-            .certifications()
-            .open_surface_disjoint()
-            .validate()
-            .unwrap();
-        assert_report_validation_error!(
-            relabeled_disjoint_report.validate(),
-            "{operation:?}: {relabeled_disjoint_report:?}"
-        );
         if matches!(
             operation,
             ExactBooleanOperation::Union | ExactBooleanOperation::Difference
