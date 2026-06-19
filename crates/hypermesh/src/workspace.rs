@@ -374,10 +374,9 @@ impl<'a> ExactBooleanWorkspace<'a> {
             .preflight()
             .is_certified()
             .then_some(evaluation.preflight().support);
-        let retained_result = evaluation.materialized_result().cloned();
         if let Some(support) = certified_support {
-            if let Some(result) = retained_result {
-                return Ok(result);
+            if let Some(result) = evaluation.materialized_result() {
+                return Ok(result.clone());
             }
             let regularized_arrangement = self.regularized_solid_arrangement();
             let regularized_attempt =
