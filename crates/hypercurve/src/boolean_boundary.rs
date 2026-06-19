@@ -136,6 +136,7 @@ pub struct BooleanBoundaryLoopConstructionReport2 {
     source_segment_kind_counts: SegmentKindCounts,
     loop_count: Option<usize>,
     output_fragment_count: Option<usize>,
+    output_source_segment_kind_counts: Option<SegmentKindCounts>,
     output_fragment_kind_counts: Option<SegmentKindCounts>,
     output_fragments: Vec<BooleanBoundaryOutputFragmentReport2>,
     status: RetainedTopologyStatus,
@@ -791,6 +792,11 @@ impl BooleanBoundaryLoopConstructionReport2 {
     /// Returns output directed-fragment count when materialized.
     pub const fn output_fragment_count(&self) -> Option<usize> {
         self.output_fragment_count
+    }
+
+    /// Returns primitive-family counts for output fragment source segments when materialized.
+    pub const fn output_source_segment_kind_counts(&self) -> Option<SegmentKindCounts> {
+        self.output_source_segment_kind_counts
     }
 
     /// Returns primitive-family counts for output fragments when materialized.
@@ -1626,6 +1632,8 @@ fn decided_boolean_boundary_loop_construction_result(
     let output_fragment_count = loop_set_fragment_count(&loops);
     let output_fragment_kind_counts = loop_set_fragment_kind_counts(&loops);
     let output_fragments = loop_set_output_fragment_reports(&loops);
+    let output_source_segment_kind_counts =
+        boolean_boundary_output_report_source_kind_counts(&output_fragments);
     BooleanBoundaryLoopConstructionResult2 {
         loops: Some(loops),
         report: BooleanBoundaryLoopConstructionReport2 {
@@ -1635,6 +1643,7 @@ fn decided_boolean_boundary_loop_construction_result(
             source_segment_kind_counts,
             loop_count: Some(source_contour_count),
             output_fragment_count: Some(output_fragment_count),
+            output_source_segment_kind_counts: Some(output_source_segment_kind_counts),
             output_fragment_kind_counts: Some(output_fragment_kind_counts),
             output_fragments,
             status: RetainedTopologyStatus::NativeExact,
@@ -1659,6 +1668,7 @@ fn blocked_boolean_boundary_loop_construction_result(
             source_segment_kind_counts,
             loop_count: None,
             output_fragment_count: None,
+            output_source_segment_kind_counts: None,
             output_fragment_kind_counts: None,
             output_fragments: Vec::new(),
             status: RetainedTopologyStatus::Unsupported,

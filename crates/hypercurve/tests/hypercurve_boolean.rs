@@ -1120,12 +1120,20 @@ fn boolean_boundary_loop_set_from_contours_retains_construction_report() {
     assert_eq!(report.loop_count(), Some(2));
     assert_eq!(report.output_fragment_count(), Some(8));
     assert_eq!(
+        report.output_source_segment_kind_counts(),
+        Some(SegmentKindCounts { lines: 8, arcs: 0 })
+    );
+    assert_eq!(
         report.output_fragment_kind_counts(),
         Some(SegmentKindCounts { lines: 8, arcs: 0 })
     );
     assert_eq!(report.output_fragments().len(), 8);
     assert_eq!(report.output_fragments()[0].fragment_index(), 0);
     assert_eq!(report.output_fragments()[0].source_segment_index(), 0);
+    assert_eq!(
+        report.output_fragments()[0].source_segment_kind(),
+        SegmentKind::Line
+    );
     assert_eq!(
         report.output_fragments()[0].source_segment_start_point(),
         &p(0, 0)
