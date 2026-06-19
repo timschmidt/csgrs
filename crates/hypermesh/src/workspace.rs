@@ -51,6 +51,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
     }
 
     /// Returns the exact intersection graph, building it once per workspace.
+    #[cfg(test)]
     pub(crate) fn graph(&mut self) -> Result<&ExactIntersectionGraph, MeshError> {
         if self.graph.is_none() {
             self.graph = Some(build_intersection_graph(self.left, self.right)?);
@@ -62,11 +63,23 @@ impl<'a> ExactBooleanWorkspace<'a> {
     }
 
     pub(crate) fn validated_graph(&mut self) -> Result<&ExactIntersectionGraph, MeshError> {
-        let left = self.left;
-        let right = self.right;
-        let graph = self.graph()?;
+        self.ensure_validated_graph()?;
+        Ok(self
+            .graph
+            .as_ref()
+            .expect("validated graph cache was just populated"))
+    }
+
+    fn ensure_validated_graph(&mut self) -> Result<(), MeshError> {
+        if self.graph.is_none() {
+            self.graph = Some(build_intersection_graph(self.left, self.right)?);
+        }
+        let graph = self
+            .graph
+            .as_ref()
+            .expect("intersection graph was just initialized");
         graph
-            .validate_against_meshes(left, right)
+            .validate_against_meshes(self.left, self.right)
             .map_err(|error| {
                 MeshError::one(MeshDiagnostic::new(
                     Severity::Error,
@@ -74,7 +87,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
                     format!("exact boolean workspace graph failed validation: {error:?}"),
                 ))
             })?;
-        Ok(graph)
+        Ok(())
     }
 
     pub(crate) fn into_validated_graph(mut self) -> Result<ExactIntersectionGraph, MeshError> {
@@ -95,30 +108,13 @@ impl<'a> ExactBooleanWorkspace<'a> {
         ),
         MeshError,
     > {
-        let retained_attempt_index = self.regularized_solid_arrangement_attempt_index(request);
-        if let Some(index) = retained_attempt_index {
-            self.arrangement_attempts[index]
-                .2
-                .validate_against_sources_for_request(self.left, self.right, request)
-                .map_err(workspace_report_validation_error)?;
-        }
-
-        if self.graph.is_none() {
-            self.graph = Some(build_intersection_graph(self.left, self.right)?);
-        }
+        let retained_attempt_index =
+            self.validated_regularized_solid_arrangement_attempt_index(request)?;
+        self.ensure_validated_graph()?;
         let graph = self
             .graph
             .as_ref()
-            .expect("intersection graph was just initialized");
-        graph
-            .validate_against_meshes(self.left, self.right)
-            .map_err(|error| {
-                MeshError::one(MeshDiagnostic::new(
-                    Severity::Error,
-                    DiagnosticKind::UnsupportedExactOperation,
-                    format!("exact boolean workspace graph failed validation: {error:?}"),
-                ))
-            })?;
+            .expect("validated graph cache was just populated");
         let retained_attempt =
             retained_attempt_index.map(|index| &self.arrangement_attempts[index].2);
         Ok((graph, retained_attempt))
