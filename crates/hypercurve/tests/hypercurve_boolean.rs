@@ -1044,6 +1044,21 @@ fn boolean_boundary_loop_set_from_contours_retains_construction_report() {
         report.output_fragment_kind_counts(),
         Some(SegmentKindCounts { lines: 8, arcs: 0 })
     );
+    assert_eq!(report.output_fragments().len(), 8);
+    assert_eq!(report.output_fragments()[0].fragment_index(), 0);
+    assert_eq!(report.output_fragments()[0].source_segment_index(), 0);
+    assert_eq!(
+        report.output_fragments()[0].source_segment_start_point(),
+        &p(0, 0)
+    );
+    assert_eq!(
+        report.output_fragments()[0].source_segment_end_point(),
+        &p(2, 0)
+    );
+    assert_eq!(report.output_fragments()[0].source_range().start(), &s(0));
+    assert_eq!(report.output_fragments()[0].source_range().end(), &s(1));
+    assert!(!report.output_fragments()[0].reversed());
+    assert_eq!(report.output_fragments()[0].output_fragment_index(), 0);
     assert_eq!(report.blocker(), None);
 
     let loops = built.loops().unwrap();
@@ -1061,6 +1076,7 @@ fn boolean_boundary_loop_set_from_borrowed_contours_keeps_inputs_available() {
     assert!(built.report().status().is_native_exact());
     assert_eq!(built.report().source_contour_count(), 1);
     assert_eq!(built.report().source_segment_count(), 4);
+    assert_eq!(built.report().output_fragments().len(), 4);
     assert_eq!(built.loops().unwrap().len(), 1);
 
     let loops = BooleanBoundaryLoopSet::from_contours_borrowed(&contours).unwrap();

@@ -134,6 +134,7 @@ pub struct BooleanBoundaryLoopConstructionReport2 {
     loop_count: Option<usize>,
     output_fragment_count: Option<usize>,
     output_fragment_kind_counts: Option<SegmentKindCounts>,
+    output_fragments: Vec<BooleanBoundaryOutputFragmentReport2>,
     status: RetainedTopologyStatus,
     blocker: Option<UncertaintyReason>,
 }
@@ -775,6 +776,11 @@ impl BooleanBoundaryLoopConstructionReport2 {
     /// Returns primitive-family counts for output fragments when materialized.
     pub const fn output_fragment_kind_counts(&self) -> Option<SegmentKindCounts> {
         self.output_fragment_kind_counts
+    }
+
+    /// Returns per-output-fragment source provenance when loops materialized.
+    pub fn output_fragments(&self) -> &[BooleanBoundaryOutputFragmentReport2] {
+        &self.output_fragments
     }
 
     /// Returns retained topology status for loop construction.
@@ -1576,6 +1582,7 @@ fn decided_boolean_boundary_loop_construction_result(
 ) -> BooleanBoundaryLoopConstructionResult2 {
     let output_fragment_count = loop_set_fragment_count(&loops);
     let output_fragment_kind_counts = loop_set_fragment_kind_counts(&loops);
+    let output_fragments = loop_set_output_fragment_reports(&loops);
     BooleanBoundaryLoopConstructionResult2 {
         loops: Some(loops),
         report: BooleanBoundaryLoopConstructionReport2 {
@@ -1586,6 +1593,7 @@ fn decided_boolean_boundary_loop_construction_result(
             loop_count: Some(source_contour_count),
             output_fragment_count: Some(output_fragment_count),
             output_fragment_kind_counts: Some(output_fragment_kind_counts),
+            output_fragments,
             status: RetainedTopologyStatus::NativeExact,
             blocker: None,
         },
@@ -1609,6 +1617,7 @@ fn blocked_boolean_boundary_loop_construction_result(
             loop_count: None,
             output_fragment_count: None,
             output_fragment_kind_counts: None,
+            output_fragments: Vec::new(),
             status: RetainedTopologyStatus::Unsupported,
             blocker: Some(blocker),
         },
