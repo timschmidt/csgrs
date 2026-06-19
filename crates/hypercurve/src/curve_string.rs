@@ -6549,6 +6549,53 @@ fn arc_chord_parameter(arc: &CircularArc2, point: &Point2) -> CurveResult<Classi
         .map_err(Into::into)
 }
 
+impl CurveStringIntersection {
+    /// Returns the segment index in the first curve string.
+    pub const fn a_segment_index(&self) -> usize {
+        self.a_segment_index
+    }
+
+    /// Returns the segment index in the second curve string.
+    pub const fn b_segment_index(&self) -> usize {
+        self.b_segment_index
+    }
+
+    /// Returns the primitive family of the first source segment.
+    pub const fn a_segment_kind(&self) -> SegmentKind {
+        self.a_segment_kind
+    }
+
+    /// Returns the primitive family of the second source segment.
+    pub const fn b_segment_kind(&self) -> SegmentKind {
+        self.b_segment_kind
+    }
+
+    /// Returns the exact start point of the first source segment.
+    pub const fn a_segment_start_point(&self) -> &Point2 {
+        &self.a_segment_start_point
+    }
+
+    /// Returns the exact end point of the first source segment.
+    pub const fn a_segment_end_point(&self) -> &Point2 {
+        &self.a_segment_end_point
+    }
+
+    /// Returns the exact start point of the second source segment.
+    pub const fn b_segment_start_point(&self) -> &Point2 {
+        &self.b_segment_start_point
+    }
+
+    /// Returns the exact end point of the second source segment.
+    pub const fn b_segment_end_point(&self) -> &Point2 {
+        &self.b_segment_end_point
+    }
+
+    /// Returns the exact segment relation retained for this pair.
+    pub const fn relation(&self) -> &SegmentIntersection {
+        &self.relation
+    }
+}
+
 impl CurveStringEndpointConnectionReport2 {
     /// Returns the tested endpoint on the first curve string.
     pub const fn first_endpoint(&self) -> CurveStringEndpoint2 {
