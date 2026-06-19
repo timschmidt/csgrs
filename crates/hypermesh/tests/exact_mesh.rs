@@ -1084,8 +1084,6 @@ fn exact_coplanar_volumetric_cell_evidence_is_retained_by_public_evaluation() {
             );
             evaluation.validate_against_sources(&left, &right).unwrap();
             assert!(evaluation.requires_coplanar_volumetric_cells());
-            assert!(evaluation.positive_area_coplanar_volumetric_overlapping_pairs() > 0);
-            assert!(evaluation.same_side_coplanar_volumetric_overlapping_pairs() > 0);
 
             let separated_right = tetra([10, 0, 0]);
             assert!(
@@ -2245,7 +2243,7 @@ fn closed_no_volume_overlap_regularized_boolean_is_publicly_replayable() {
     );
     let right = tetra_from_corners([2, 0, 0], [6, 0, 0], [2, 4, 0], [2, 0, -4]);
 
-    let mut retained_evidence_counts = None;
+    let mut retained_requires_coplanar_volumetric_cells = None;
 
     for operation in [
         ExactBooleanOperation::Union,
@@ -2254,7 +2252,7 @@ fn closed_no_volume_overlap_regularized_boolean_is_publicly_replayable() {
     ] {
         let preflight_request =
             ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY);
-        let evidence_counts = with_exact_boolean_evaluation(
+        let requires_coplanar_volumetric_cells = with_exact_boolean_evaluation(
             &left,
             &right,
             preflight_request,
@@ -2272,25 +2270,18 @@ fn closed_no_volume_overlap_regularized_boolean_is_publicly_replayable() {
                     preflight_evaluation.has_coplanar_volumetric_evidence(),
                     "positive-area no-volume shortcut should retain source-aware boundary-only evidence"
                 );
-                assert!(
-                    preflight_evaluation.positive_area_coplanar_volumetric_overlapping_pairs() > 0
-                );
-                (
-                    preflight_evaluation.coplanar_volumetric_retained_face_pairs(),
-                    preflight_evaluation.coplanar_volumetric_overlapping_pairs(),
-                    preflight_evaluation.positive_area_coplanar_volumetric_overlapping_pairs(),
-                    preflight_evaluation.same_side_coplanar_volumetric_overlapping_pairs(),
-                    preflight_evaluation.requires_coplanar_volumetric_cells(),
-                )
+                preflight_evaluation.requires_coplanar_volumetric_cells()
             },
         );
-        if let Some(retained_evidence_counts) = retained_evidence_counts {
+        if let Some(retained_requires_coplanar_volumetric_cells) =
+            retained_requires_coplanar_volumetric_cells
+        {
             assert_eq!(
-                evidence_counts, retained_evidence_counts,
-                "{operation:?}: positive-area no-volume shortcut should retain stable source-aware boundary-only evidence"
+                requires_coplanar_volumetric_cells, retained_requires_coplanar_volumetric_cells,
+                "{operation:?}: positive-area no-volume shortcut should retain stable source-aware boundary-only evidence policy"
             );
         } else {
-            retained_evidence_counts = Some(evidence_counts);
+            retained_requires_coplanar_volumetric_cells = Some(requires_coplanar_volumetric_cells);
         }
 
         if matches!(
@@ -2311,18 +2302,12 @@ fn closed_no_volume_overlap_regularized_boolean_is_publicly_replayable() {
                         readiness_evaluation.materializes_arrangement_cell_complex(),
                         "{operation:?}: {readiness_evaluation:?}"
                     );
+                    assert!(readiness_evaluation.has_coplanar_volumetric_evidence());
                     assert_eq!(
-                        (
-                            readiness_evaluation.coplanar_volumetric_retained_face_pairs(),
-                            readiness_evaluation.coplanar_volumetric_overlapping_pairs(),
-                            readiness_evaluation
-                                .positive_area_coplanar_volumetric_overlapping_pairs(),
-                            readiness_evaluation.same_side_coplanar_volumetric_overlapping_pairs(),
-                            readiness_evaluation.requires_coplanar_volumetric_cells(),
-                        ),
-                        retained_evidence_counts
-                            .expect("preflight should retain coplanar volumetric evidence counts"),
-                        "{operation:?}: no-volume readiness should retain consumed source-aware evidence"
+                        readiness_evaluation.requires_coplanar_volumetric_cells(),
+                        retained_requires_coplanar_volumetric_cells
+                            .expect("preflight should retain coplanar volumetric evidence policy"),
+                        "{operation:?}: no-volume readiness should retain consumed source-aware evidence policy"
                     );
                 },
             );

@@ -2408,31 +2408,6 @@ impl ExactBooleanEvaluation {
             .is_some_and(|evidence| evidence.obstacle.requires_coplanar_volumetric_cells())
     }
 
-    /// Return retained coplanar volumetric evidence face-pair count.
-    pub fn coplanar_volumetric_retained_face_pairs(&self) -> usize {
-        self.coplanar_volumetric_evidence()
-            .map_or(0, |evidence| evidence.retained_face_pair_count)
-    }
-
-    /// Return retained coplanar overlapping face-pair count.
-    pub fn coplanar_volumetric_overlapping_pairs(&self) -> usize {
-        self.coplanar_volumetric_evidence()
-            .map_or(0, |evidence| evidence.coplanar_overlapping_pairs)
-    }
-
-    /// Return retained positive-area coplanar overlapping face-pair count.
-    pub fn positive_area_coplanar_volumetric_overlapping_pairs(&self) -> usize {
-        self.coplanar_volumetric_evidence().map_or(0, |evidence| {
-            evidence.positive_area_coplanar_overlapping_pairs
-        })
-    }
-
-    /// Return retained same-side positive-area coplanar overlap count.
-    pub fn same_side_coplanar_volumetric_overlapping_pairs(&self) -> usize {
-        self.coplanar_volumetric_evidence()
-            .map_or(0, |evidence| evidence.same_side_coplanar_overlapping_pairs)
-    }
-
     #[cfg(test)]
     pub(crate) fn materialized_result_mut(&mut self) -> Option<&mut ExactBooleanResult> {
         self.result.as_mut()

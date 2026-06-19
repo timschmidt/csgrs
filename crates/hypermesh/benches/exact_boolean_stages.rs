@@ -180,11 +180,7 @@ fn run_case(case: &BenchCase) {
             black_box(evaluation.has_coplanar_volumetric_evidence().then(|| {
                 (
                     evaluation.requires_coplanar_volumetric_cells(),
-                    evaluation.coplanar_volumetric_retained_face_pairs(),
                     evaluation.retained_candidate_pairs(),
-                    evaluation.coplanar_volumetric_overlapping_pairs(),
-                    evaluation.positive_area_coplanar_volumetric_overlapping_pairs(),
-                    evaluation.same_side_coplanar_volumetric_overlapping_pairs(),
                 )
             }));
         },
