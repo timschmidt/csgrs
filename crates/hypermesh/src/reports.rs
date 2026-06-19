@@ -5735,19 +5735,9 @@ impl ExactAdjacentUnionCompletionReport {
         self.retained_face_pairs
     }
 
-    /// Return the retained face-pair record count mutably.
-    pub fn retained_face_pairs_mut(&mut self) -> &mut usize {
-        &mut self.retained_face_pairs
-    }
-
     /// Return the retained event record count.
     pub const fn retained_events(&self) -> usize {
         self.retained_events
-    }
-
-    /// Return the retained event record count mutably.
-    pub fn retained_events_mut(&mut self) -> &mut usize {
-        &mut self.retained_events
     }
 
     /// Return the retained relation-count blocker.
@@ -5760,11 +5750,6 @@ impl ExactAdjacentUnionCompletionReport {
         self.full_face_shared_faces
     }
 
-    /// Return the exact whole-face pair count mutably.
-    pub fn full_face_shared_faces_mut(&mut self) -> &mut usize {
-        &mut self.full_face_shared_faces
-    }
-
     /// Return the exact source-owned full patch count consumed by completion.
     pub const fn full_face_shared_patches(&self) -> usize {
         self.full_face_shared_patches
@@ -5775,29 +5760,14 @@ impl ExactAdjacentUnionCompletionReport {
         self.contained_containing_side
     }
 
-    /// Return the containing side evidence mutably.
-    pub fn contained_containing_side_mut(&mut self) -> &mut Option<MeshSide> {
-        &mut self.contained_containing_side
-    }
-
     /// Return the count of opposite-source faces removed by contained completion.
     pub const fn contained_faces(&self) -> usize {
         self.contained_faces
     }
 
-    /// Return the count of opposite-source faces mutably.
-    pub fn contained_faces_mut(&mut self) -> &mut usize {
-        &mut self.contained_faces
-    }
-
     /// Return the count of source faces replaced by holed remnants.
     pub const fn containing_faces(&self) -> usize {
         self.containing_faces
-    }
-
-    /// Return the count of source faces replaced by holed remnants mutably.
-    pub fn containing_faces_mut(&mut self) -> &mut usize {
-        &mut self.containing_faces
     }
 
     /// Return whether adjacent union completion was certified.

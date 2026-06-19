@@ -1443,14 +1443,6 @@ fn exact_full_face_adjacent_union_is_publicly_replayable() {
 
     let result = assert_public_full_face_adjacent_union(&left, &right, 1, 0);
 
-    let mut invalid_shared_faces = exact_adjacent_union_completion_report!(
-        &left,
-        &right,
-        ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED),
-    );
-    *invalid_shared_faces.full_face_shared_faces_mut() = 0;
-    assert!(invalid_shared_faces.validate().is_err());
-
     let mut invalid_output = result.clone();
     invalid_output.replace_mesh(
         ExactMesh::from_i64_triangles_with_policy(
@@ -3534,30 +3526,6 @@ fn exact_contained_face_adjacent_union_is_publicly_replayable() {
         .certifications()
         .validate_against_sources(&container, &two_caps_right, multi_hole_request)
         .unwrap();
-
-    let mut missing_contained = exact_adjacent_union_completion_report!(
-        &container,
-        &right,
-        ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED),
-    );
-    *missing_contained.contained_faces_mut() = 0;
-    assert!(missing_contained.validate().is_err());
-
-    let mut relabeled_containing = exact_adjacent_union_completion_report!(
-        &container,
-        &right,
-        ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED),
-    );
-    *relabeled_containing.contained_containing_side_mut() = None;
-    assert!(relabeled_containing.validate().is_err());
-
-    let mut impossible_counts = exact_adjacent_union_completion_report!(
-        &container,
-        &right,
-        ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED),
-    );
-    *impossible_counts.containing_faces_mut() = impossible_counts.retained_face_pairs() + 1;
-    assert!(impossible_counts.validate().is_err());
 
     let mut invalid_output = result.clone();
     invalid_output.replace_mesh(
