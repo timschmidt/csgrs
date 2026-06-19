@@ -164,6 +164,8 @@ pub struct CurveStringLinkOutputSegmentReport2 {
     source_segment_kind: SegmentKind,
     output_segment_kind: SegmentKind,
     reversed: bool,
+    source_segment_start_point: Point2,
+    source_segment_end_point: Point2,
     output_start_point: Point2,
     output_end_point: Point2,
 }
@@ -330,6 +332,8 @@ pub struct CurveStringConnectOutputSegmentReport2 {
     source_segment_kind: Option<SegmentKind>,
     output_segment_kind: SegmentKind,
     reversed: bool,
+    source_segment_start_point: Option<Point2>,
+    source_segment_end_point: Option<Point2>,
     output_start_point: Point2,
     output_end_point: Point2,
 }
@@ -6508,6 +6512,16 @@ impl CurveStringLinkOutputSegmentReport2 {
         self.reversed
     }
 
+    /// Returns the exact start point of the contributing source segment.
+    pub const fn source_segment_start_point(&self) -> &Point2 {
+        &self.source_segment_start_point
+    }
+
+    /// Returns the exact end point of the contributing source segment.
+    pub const fn source_segment_end_point(&self) -> &Point2 {
+        &self.source_segment_end_point
+    }
+
     /// Returns the exact start point of this emitted output segment.
     pub const fn output_start_point(&self) -> &Point2 {
         &self.output_start_point
@@ -7126,6 +7140,16 @@ impl CurveStringConnectOutputSegmentReport2 {
         self.reversed
     }
 
+    /// Returns the exact start point of the contributing source segment, if any.
+    pub const fn source_segment_start_point(&self) -> Option<&Point2> {
+        self.source_segment_start_point.as_ref()
+    }
+
+    /// Returns the exact end point of the contributing source segment, if any.
+    pub const fn source_segment_end_point(&self) -> Option<&Point2> {
+        self.source_segment_end_point.as_ref()
+    }
+
     /// Returns the exact start point of this emitted output segment.
     pub const fn output_start_point(&self) -> &Point2 {
         &self.output_start_point
@@ -7556,6 +7580,8 @@ fn push_link_output_segment_reports<I>(
             source_segment_kind: source_segment.structural_facts().kind,
             output_segment_kind: source_segment.structural_facts().kind,
             reversed,
+            source_segment_start_point: source_segment.start().clone(),
+            source_segment_end_point: source_segment.end().clone(),
             output_start_point,
             output_end_point,
         });
@@ -7682,6 +7708,8 @@ fn push_connect_input_segment_reports<I>(
             source_segment_kind: Some(source_segment.structural_facts().kind),
             output_segment_kind: source_segment.structural_facts().kind,
             reversed,
+            source_segment_start_point: Some(source_segment.start().clone()),
+            source_segment_end_point: Some(source_segment.end().clone()),
             output_start_point,
             output_end_point,
         });
@@ -7700,6 +7728,8 @@ fn push_connect_connector_report(
         source_segment_kind: None,
         output_segment_kind: SegmentKind::Line,
         reversed: false,
+        source_segment_start_point: None,
+        source_segment_end_point: None,
         output_start_point: output_start_point.clone(),
         output_end_point: output_end_point.clone(),
     });

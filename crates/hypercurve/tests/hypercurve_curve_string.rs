@@ -873,6 +873,14 @@ fn curve_string_link_materializes_unique_end_start_connection() {
     );
     assert!(!linked.report().output_segments()[1].reversed());
     assert_eq!(
+        linked.report().output_segments()[1].source_segment_start_point(),
+        &p(1, 0)
+    );
+    assert_eq!(
+        linked.report().output_segments()[1].source_segment_end_point(),
+        &p(2, 0)
+    );
+    assert_eq!(
         linked.report().output_segments()[1].output_start_point(),
         &p(1, 0)
     );
@@ -977,6 +985,14 @@ fn curve_string_link_reverses_second_curve_when_endpoints_match_end_to_end() {
         0
     );
     assert!(linked.report().output_segments()[1].reversed());
+    assert_eq!(
+        linked.report().output_segments()[1].source_segment_start_point(),
+        &p(2, 0)
+    );
+    assert_eq!(
+        linked.report().output_segments()[1].source_segment_end_point(),
+        &p(1, 0)
+    );
     assert_eq!(
         linked.report().output_segments()[1].output_start_point(),
         &p(1, 0)
@@ -1430,6 +1446,14 @@ fn curve_string_connect_end_to_start_inserts_exact_line() {
         Some(SegmentKind::Line)
     );
     assert_eq!(
+        connected.report().output_segments()[0].source_segment_start_point(),
+        Some(&p(0, 0))
+    );
+    assert_eq!(
+        connected.report().output_segments()[0].source_segment_end_point(),
+        Some(&p(1, 0))
+    );
+    assert_eq!(
         connected.report().output_segments()[0].output_segment_kind(),
         SegmentKind::Line
     );
@@ -1443,6 +1467,14 @@ fn curve_string_connect_end_to_start_inserts_exact_line() {
     );
     assert_eq!(
         connected.report().output_segments()[1].source_segment_kind(),
+        None
+    );
+    assert_eq!(
+        connected.report().output_segments()[1].source_segment_start_point(),
+        None
+    );
+    assert_eq!(
+        connected.report().output_segments()[1].source_segment_end_point(),
         None
     );
     assert_eq!(
@@ -1460,6 +1492,14 @@ fn curve_string_connect_end_to_start_inserts_exact_line() {
     assert_eq!(
         connected.report().output_segments()[2].source(),
         CurveStringConnectSource2::Second
+    );
+    assert_eq!(
+        connected.report().output_segments()[2].source_segment_start_point(),
+        Some(&p(3, 1))
+    );
+    assert_eq!(
+        connected.report().output_segments()[2].source_segment_end_point(),
+        Some(&p(4, 1))
     );
     let curve = connected
         .curve_string()
@@ -1652,6 +1692,14 @@ fn curve_string_connect_nearest_endpoints_selects_unique_pair() {
         CurveStringConnectSource2::Second
     );
     assert!(connected.report().output_segments()[2].reversed());
+    assert_eq!(
+        connected.report().output_segments()[2].source_segment_start_point(),
+        Some(&p(4, 0))
+    );
+    assert_eq!(
+        connected.report().output_segments()[2].source_segment_end_point(),
+        Some(&p(3, 0))
+    );
     assert_eq!(
         connected.report().output_segments()[2].output_start_point(),
         &p(3, 0)
