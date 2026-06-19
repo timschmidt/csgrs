@@ -737,14 +737,6 @@ impl ExactBooleanResult {
         !self.assembly.triangles.is_empty()
     }
 
-    /// Return whether retained output assembly includes a reversed source triangle.
-    pub fn has_reversed_source_output_triangle(&self) -> bool {
-        self.assembly
-            .triangles
-            .iter()
-            .any(|triangle| triangle.orientation == ExactOutputTriangleOrientation::ReverseSource)
-    }
-
     /// Return whether this result retained volumetric classification evidence.
     pub fn has_retained_volumetric_classification_evidence(&self) -> bool {
         !self.volumetric_classifications.is_empty()

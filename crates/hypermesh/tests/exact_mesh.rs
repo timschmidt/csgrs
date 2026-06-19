@@ -2554,10 +2554,9 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
         .expect("certified arrangement evaluation should retain difference result");
     difference.validate().unwrap();
     if difference.is_arrangement_cell_complex_materialized_for(ExactBooleanOperation::Difference) {
-        assert!(
-            difference.has_reversed_source_output_triangle(),
-            "volumetric difference should retain a reversed source triangle"
-        );
+        assert!(difference.has_retained_split_region_evidence());
+        assert!(difference.has_retained_volumetric_classification_evidence());
+        assert!(difference.has_retained_output_assembly());
     } else {
         assert!(
             difference.is_arrangement_cell_complex_shortcut_for(ExactBooleanOperation::Difference),
