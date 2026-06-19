@@ -2874,11 +2874,12 @@ fn arrangement_cell_complex_sources_match(
             return Ok(true);
         }
     }
-    let preflight = workspace_preflight_for_report_replay(
+    let preflight = workspace_evaluation_for_report_replay(
         left,
         right,
         ExactBooleanRequest::new(operation, validation),
-    )?;
+    )?
+    .preflight;
     preflight.validate()?;
     Ok(preflight.support == ExactBooleanSupport::CertifiedArrangementCellComplex)
 }
@@ -3966,15 +3967,6 @@ impl ExactVolumetricBoundaryClosureReport {
     }
 }
 
-fn workspace_preflight_for_report_replay(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    request: ExactBooleanRequest,
-) -> Result<ExactBooleanPreflight, ExactReportValidationError> {
-    workspace_evaluation_for_report_replay(left, right, request)
-        .map(|evaluation| evaluation.preflight)
-}
-
 fn workspace_evaluation_for_report_replay(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -4214,7 +4206,8 @@ impl ExactBooleanPreflight {
         right: &ExactMesh,
         request: ExactBooleanRequest,
     ) -> Result<ExactBooleanPreflight, ExactReportValidationError> {
-        workspace_preflight_for_report_replay(left, right, request)
+        workspace_evaluation_for_report_replay(left, right, request)
+            .map(|evaluation| evaluation.preflight)
     }
 
     /// Classify whether this retained preflight is fresh for the source meshes.
@@ -7026,7 +7019,7 @@ mod tests {
         let left = report_test_tetra([0, 0, 0]);
         let right = report_test_tetra([3, 0, 0]);
 
-        let preflight = workspace_preflight_for_report_replay(
+        let preflight = workspace_evaluation_for_report_replay(
             &left,
             &right,
             ExactBooleanRequest::new(
@@ -7034,6 +7027,7 @@ mod tests {
                 ValidationPolicy::ALLOW_BOUNDARY,
             ),
         )
+        .map(|evaluation| evaluation.preflight)
         .unwrap();
         assert_eq!(
             preflight.freshness_against_sources(&left, &right),
