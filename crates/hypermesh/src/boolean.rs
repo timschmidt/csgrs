@@ -266,11 +266,6 @@ impl ExactArrangementBooleanAttempt {
         self.output_validation
     }
 
-    /// Return the output validation policy mutably.
-    pub fn output_validation_mut(&mut self) -> &mut ValidationPolicy {
-        &mut self.output_validation
-    }
-
     /// Return retained topology assembly gate evidence, when present.
     pub fn topology_assembly_report(&self) -> Option<&ExactTopologyAssemblyReport> {
         self.topology_assembly_report.as_ref()

@@ -315,13 +315,6 @@ fn exact_boolean_evaluation_materializes_certified_result_publicly() {
         evaluation.freshness_against_sources(&left, &stale_right),
         hypermesh::ExactReportFreshness::SourceReplayMismatch
     );
-    let mut stale_attempt_policy = evaluation.clone();
-    *stale_attempt_policy
-        .certifications_mut()
-        .arrangement_attempt_mut()
-        .expect("named evaluation should retain arrangement attempt")
-        .output_validation_mut() = ValidationPolicy::CLOSED;
-    assert_report_validation_error!(stale_attempt_policy.validate());
     let mut relabeled_support = evaluation.clone();
     let convex_left = axis_aligned_box([0, 0, 0], [2, 2, 2]);
     let convex_right = axis_aligned_box([1, 1, 1], [3, 3, 3]);
@@ -3216,13 +3209,6 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
         incomplete_topology.freshness_against_sources(&left, &right),
         ExactReportFreshness::StaleStatusEvidence
     );
-    let mut declined_arrangement_attempt = evaluation.clone();
-    let stale_validation_attempt = declined_arrangement_attempt
-        .certifications_mut()
-        .arrangement_attempt_mut()
-        .expect("named evaluation should retain arrangement attempt");
-    *stale_validation_attempt.output_validation_mut() = ValidationPolicy::CLOSED;
-    assert_report_validation_error!(declined_arrangement_attempt.validate());
     let mut stale_attempt_gate = evaluation.clone();
     let attempt = stale_attempt_gate
         .certifications_mut()
