@@ -106,6 +106,14 @@ fn contour_closure_report_materializes_closed_curve_string() {
         ContourClosureStage2::ContourMaterialization
     );
     assert_eq!(closed.report().source_segment_count(), 4);
+    assert_eq!(
+        closed.report().source_segment_kind_counts(),
+        SegmentKindCounts { lines: 4, arcs: 0 }
+    );
+    assert_eq!(
+        closed.report().output_segment_kind_counts(),
+        Some(SegmentKindCounts { lines: 4, arcs: 0 })
+    );
     assert_eq!(closed.report().source_start_point(), &p(0, 0));
     assert_eq!(closed.report().source_end_point(), &p(0, 0));
     assert_eq!(closed.report().endpoint_distance_squared(), &s(0));
@@ -133,6 +141,11 @@ fn contour_closure_report_blocks_certified_open_curve_string() {
         ContourClosureStage2::EndpointValidation
     );
     assert_eq!(closed.report().source_segment_count(), 2);
+    assert_eq!(
+        closed.report().source_segment_kind_counts(),
+        SegmentKindCounts { lines: 2, arcs: 0 }
+    );
+    assert_eq!(closed.report().output_segment_kind_counts(), None);
     assert_eq!(closed.report().source_start_point(), &p(0, 0));
     assert_eq!(closed.report().source_end_point(), &p(2, 0));
     assert_eq!(closed.report().endpoint_distance_squared(), &s(4));

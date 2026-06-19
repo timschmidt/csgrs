@@ -39,6 +39,8 @@ pub enum ContourPointLocation {
 pub struct ContourClosureReport2 {
     stage: ContourClosureStage2,
     source_segment_count: usize,
+    source_segment_kind_counts: SegmentKindCounts,
+    output_segment_kind_counts: Option<SegmentKindCounts>,
     source_start_point: Point2,
     source_end_point: Point2,
     endpoint_distance_squared: Real,
@@ -207,6 +209,7 @@ impl Contour2 {
         fill_rule: FillRule,
     ) -> CurveResult<ContourClosureResult2> {
         let source_segment_count = curve.len();
+        let source_segment_kind_counts = segment_kind_counts(curve.segments());
         let source_start_point = curve.start().ok_or(CurveError::EmptyCurveString)?.clone();
         let source_end_point = curve.end().ok_or(CurveError::EmptyCurveString)?.clone();
         let endpoint_distance_squared = source_start_point.distance_squared(&source_end_point);
@@ -216,6 +219,8 @@ impl Contour2 {
                 report: ContourClosureReport2 {
                     stage: ContourClosureStage2::ContourMaterialization,
                     source_segment_count,
+                    source_segment_kind_counts,
+                    output_segment_kind_counts: Some(source_segment_kind_counts),
                     source_start_point,
                     source_end_point,
                     endpoint_distance_squared,
@@ -229,6 +234,8 @@ impl Contour2 {
                 report: ContourClosureReport2 {
                     stage: ContourClosureStage2::EndpointValidation,
                     source_segment_count,
+                    source_segment_kind_counts,
+                    output_segment_kind_counts: None,
                     source_start_point,
                     source_end_point,
                     endpoint_distance_squared,
@@ -948,6 +955,16 @@ impl ContourClosureReport2 {
     /// Returns the source curve-string segment count.
     pub const fn source_segment_count(&self) -> usize {
         self.source_segment_count
+    }
+
+    /// Returns primitive-family counts for the source curve string.
+    pub const fn source_segment_kind_counts(&self) -> SegmentKindCounts {
+        self.source_segment_kind_counts
+    }
+
+    /// Returns primitive-family counts for the materialized contour.
+    pub const fn output_segment_kind_counts(&self) -> Option<SegmentKindCounts> {
+        self.output_segment_kind_counts
     }
 
     /// Returns the exact source curve-string start point tested for closure.
