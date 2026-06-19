@@ -491,6 +491,10 @@ pub struct CurveStringChamferReport2 {
     stage: CurveStringChamferStage2,
     previous_segment_index: usize,
     next_segment_index: usize,
+    previous_segment_start_point: Point2,
+    previous_segment_end_point: Point2,
+    next_segment_start_point: Point2,
+    next_segment_end_point: Point2,
     previous_trim: CurveStringTrimPoint2,
     next_trim: CurveStringTrimPoint2,
     previous_cut_point: Option<Point2>,
@@ -540,6 +544,10 @@ pub struct CurveStringFilletReport2 {
     stage: CurveStringFilletStage2,
     previous_segment_index: usize,
     next_segment_index: usize,
+    previous_segment_start_point: Point2,
+    previous_segment_end_point: Point2,
+    next_segment_start_point: Point2,
+    next_segment_end_point: Point2,
     previous_trim: CurveStringTrimPoint2,
     next_trim: CurveStringTrimPoint2,
     previous_tangent_point: Option<Point2>,
@@ -2118,6 +2126,10 @@ impl CurveString2 {
                 stage: CurveStringChamferStage2::SegmentMaterialization,
                 previous_segment_index,
                 next_segment_index,
+                previous_segment_start_point: previous_line.start().clone(),
+                previous_segment_end_point: previous_line.end().clone(),
+                next_segment_start_point: next_line.start().clone(),
+                next_segment_end_point: next_line.end().clone(),
                 previous_trim,
                 next_trim,
                 previous_cut_point: Some(previous_cut_point.clone()),
@@ -2627,6 +2639,10 @@ impl CurveString2 {
                 stage: CurveStringFilletStage2::ArcMaterialization,
                 previous_segment_index,
                 next_segment_index,
+                previous_segment_start_point: previous_line.start().clone(),
+                previous_segment_end_point: previous_line.end().clone(),
+                next_segment_start_point: next_line.start().clone(),
+                next_segment_end_point: next_line.end().clone(),
                 previous_trim,
                 next_trim,
                 previous_tangent_point: Some((*previous_point).clone()),
@@ -3488,6 +3504,26 @@ impl CurveStringChamferReport2 {
         self.next_segment_index
     }
 
+    /// Returns the exact start point of the previous source segment.
+    pub const fn previous_segment_start_point(&self) -> &Point2 {
+        &self.previous_segment_start_point
+    }
+
+    /// Returns the exact end point of the previous source segment.
+    pub const fn previous_segment_end_point(&self) -> &Point2 {
+        &self.previous_segment_end_point
+    }
+
+    /// Returns the exact start point of the next source segment.
+    pub const fn next_segment_start_point(&self) -> &Point2 {
+        &self.next_segment_start_point
+    }
+
+    /// Returns the exact end point of the next source segment.
+    pub const fn next_segment_end_point(&self) -> &Point2 {
+        &self.next_segment_end_point
+    }
+
     /// Returns the previous line trim point.
     pub const fn previous_trim(&self) -> &CurveStringTrimPoint2 {
         &self.previous_trim
@@ -3619,6 +3655,26 @@ impl CurveStringFilletReport2 {
     /// Returns the next source segment index at the filleted vertex.
     pub const fn next_segment_index(&self) -> usize {
         self.next_segment_index
+    }
+
+    /// Returns the exact start point of the previous source segment.
+    pub const fn previous_segment_start_point(&self) -> &Point2 {
+        &self.previous_segment_start_point
+    }
+
+    /// Returns the exact end point of the previous source segment.
+    pub const fn previous_segment_end_point(&self) -> &Point2 {
+        &self.previous_segment_end_point
+    }
+
+    /// Returns the exact start point of the next source segment.
+    pub const fn next_segment_start_point(&self) -> &Point2 {
+        &self.next_segment_start_point
+    }
+
+    /// Returns the exact end point of the next source segment.
+    pub const fn next_segment_end_point(&self) -> &Point2 {
+        &self.next_segment_end_point
     }
 
     /// Returns the previous line trim point.
@@ -5792,6 +5848,12 @@ fn blocked_chamfer_result(
             },
             previous_segment_index,
             next_segment_index,
+            previous_segment_start_point: curve_string.segments[previous_segment_index]
+                .start()
+                .clone(),
+            previous_segment_end_point: curve_string.segments[previous_segment_index].end().clone(),
+            next_segment_start_point: curve_string.segments[next_segment_index].start().clone(),
+            next_segment_end_point: curve_string.segments[next_segment_index].end().clone(),
             previous_trim,
             next_trim,
             previous_cut_point: None,
@@ -5834,6 +5896,12 @@ fn blocked_fillet_result(
             },
             previous_segment_index,
             next_segment_index,
+            previous_segment_start_point: curve_string.segments[previous_segment_index]
+                .start()
+                .clone(),
+            previous_segment_end_point: curve_string.segments[previous_segment_index].end().clone(),
+            next_segment_start_point: curve_string.segments[next_segment_index].start().clone(),
+            next_segment_end_point: curve_string.segments[next_segment_index].end().clone(),
             previous_trim,
             next_trim,
             previous_tangent_point: None,
