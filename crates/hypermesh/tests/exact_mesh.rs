@@ -10,15 +10,6 @@ fn p(x: i64, y: i64, z: i64) -> Point3 {
     Point3::new(Real::from(x), Real::from(y), Real::from(z))
 }
 
-fn exact_boolean_evaluation(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    request: ExactBooleanRequest,
-) -> hypermesh::ExactBooleanEvaluation {
-    let mut workspace = ExactBooleanWorkspace::new(left, right);
-    workspace.evaluate(request).unwrap().clone()
-}
-
 fn with_exact_boolean_evaluation<R>(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -2572,76 +2563,84 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
         ValidationPolicy::ALLOW_BOUNDARY,
     );
     let mut workspace = ExactBooleanWorkspace::new(&left, &right);
-    let evaluation = workspace.evaluate(union_request).unwrap().clone();
-    assert!(
-        evaluation.is_certified_arrangement_cell_complex(),
-        "{evaluation:?}"
-    );
-    evaluation.validate().unwrap();
-
-    assert!(
-        evaluation.materializes_arrangement_cell_complex(),
-        "{evaluation:?}"
-    );
-    assert_eq!(evaluation.region_count(), 0);
-
-    let result = evaluation
-        .materialized_result()
-        .expect("certified arrangement evaluation should retain union result");
-
-    if result.is_arrangement_cell_complex_materialized_for(ExactBooleanOperation::Union) {
-        assert!(result.region_classification_count() > 0);
-        assert!(result.triangulation_count() > 0);
-        assert!(result.volumetric_classification_count() > 0);
-        assert!(result.assembly_triangle_count() > 0);
-    } else {
+    {
+        let evaluation = workspace.evaluate(union_request).unwrap();
         assert!(
-            result.is_arrangement_cell_complex_shortcut_for(ExactBooleanOperation::Union),
-            "{result:?}"
+            evaluation.is_certified_arrangement_cell_complex(),
+            "{evaluation:?}"
         );
-        assert_evaluation_retains_attempt_gate_reports(&evaluation);
-    }
+        evaluation.validate().unwrap();
 
-    result.validate().unwrap();
-    assert_eq!(
-        result.freshness_against_sources(&left, &right),
-        ExactReportFreshness::Current
-    );
-    evaluation.validate().unwrap();
-    assert!(
-        evaluation.is_certified_arrangement_cell_complex(),
-        "{evaluation:?}"
-    );
-    if result.is_arrangement_cell_complex_materialized_for(ExactBooleanOperation::Union) {
-        assert!(result.region_classification_count() > 0);
-        assert!(result.triangulation_count() > 0);
-        assert!(result.volumetric_classification_count() > 0);
-        assert!(result.assembly_triangle_count() > 0);
-    } else {
         assert!(
-            result.is_arrangement_cell_complex_shortcut_for(ExactBooleanOperation::Union),
-            "{result:?}"
+            evaluation.materializes_arrangement_cell_complex(),
+            "{evaluation:?}"
         );
-        assert_evaluation_retains_attempt_gate_reports(&evaluation);
+        assert_eq!(evaluation.region_count(), 0);
+
+        let result = evaluation
+            .materialized_result()
+            .expect("certified arrangement evaluation should retain union result");
+
+        if result.is_arrangement_cell_complex_materialized_for(ExactBooleanOperation::Union) {
+            assert!(result.region_classification_count() > 0);
+            assert!(result.triangulation_count() > 0);
+            assert!(result.volumetric_classification_count() > 0);
+            assert!(result.assembly_triangle_count() > 0);
+        } else {
+            assert!(
+                result.is_arrangement_cell_complex_shortcut_for(ExactBooleanOperation::Union),
+                "{result:?}"
+            );
+            assert_evaluation_retains_attempt_gate_reports(evaluation);
+        }
+
+        result.validate().unwrap();
+        assert_eq!(
+            result.freshness_against_sources(&left, &right),
+            ExactReportFreshness::Current
+        );
+        evaluation.validate().unwrap();
+        assert!(
+            evaluation.is_certified_arrangement_cell_complex(),
+            "{evaluation:?}"
+        );
+        if result.is_arrangement_cell_complex_materialized_for(ExactBooleanOperation::Union) {
+            assert!(result.region_classification_count() > 0);
+            assert!(result.triangulation_count() > 0);
+            assert!(result.volumetric_classification_count() > 0);
+            assert!(result.assembly_triangle_count() > 0);
+        } else {
+            assert!(
+                result.is_arrangement_cell_complex_shortcut_for(ExactBooleanOperation::Union),
+                "{result:?}"
+            );
+            assert_evaluation_retains_attempt_gate_reports(evaluation);
+        }
+        assert!(!result.mesh().triangles().is_empty());
+        assert!(
+            !result
+                .is_arrangement_cell_complex_materialized_for(ExactBooleanOperation::Intersection)
+        );
+        assert!(
+            !result.is_arrangement_cell_complex_shortcut_for(ExactBooleanOperation::Intersection)
+        );
+        assert!(!result.is_certified_shortcut_for(ExactBooleanOperation::Intersection));
+        assert_eq!(
+            result.freshness_against_sources(&left, &separated_right),
+            ExactReportFreshness::SourceReplayMismatch
+        );
     }
-    assert!(!result.mesh().triangles().is_empty());
-    assert!(
-        !result.is_arrangement_cell_complex_materialized_for(ExactBooleanOperation::Intersection)
-    );
-    assert!(!result.is_arrangement_cell_complex_shortcut_for(ExactBooleanOperation::Intersection));
-    assert!(!result.is_certified_shortcut_for(ExactBooleanOperation::Intersection));
     let difference_request = ExactBooleanRequest::new(
         ExactBooleanOperation::Difference,
         ValidationPolicy::ALLOW_BOUNDARY,
     );
-    let difference_evaluation = workspace.evaluate(difference_request).unwrap().clone();
+    let difference_evaluation = workspace.evaluate(difference_request).unwrap();
     difference_evaluation.validate().unwrap();
     difference_evaluation
         .validate_against_sources(&left, &right)
         .unwrap();
     let difference = difference_evaluation
         .materialized_result()
-        .cloned()
         .expect("certified arrangement evaluation should retain difference result");
     difference.validate().unwrap();
     if difference.is_arrangement_cell_complex_materialized_for(ExactBooleanOperation::Difference) {
@@ -2654,12 +2653,8 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
             difference.is_arrangement_cell_complex_shortcut_for(ExactBooleanOperation::Difference),
             "{difference:?}"
         );
-        assert_evaluation_retains_attempt_gate_reports(&difference_evaluation);
+        assert_evaluation_retains_attempt_gate_reports(difference_evaluation);
     }
-    assert_eq!(
-        result.freshness_against_sources(&left, &separated_right),
-        ExactReportFreshness::SourceReplayMismatch
-    );
 }
 
 #[test]
@@ -2688,34 +2683,36 @@ fn exact_volumetric_winding_coplanar_cap_is_publicly_certified() {
         ExactBooleanOperation::Intersection,
         ExactBooleanOperation::Difference,
     ] {
-        let evaluation = exact_boolean_evaluation(
-            &left,
-            &right,
-            ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
-        );
-        assert!(
-            evaluation.is_certified_arrangement_cell_complex(),
-            "{operation:?}: {evaluation:?}"
-        );
-        evaluation.validate().unwrap();
-        evaluation.validate_against_sources(&left, &right).unwrap();
+        let evaluation_request =
+            ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY);
+        let mut workspace = ExactBooleanWorkspace::new(&left, &right);
+        {
+            let evaluation = workspace.evaluate(evaluation_request).unwrap();
+            assert!(
+                evaluation.is_certified_arrangement_cell_complex(),
+                "{operation:?}: {evaluation:?}"
+            );
+            evaluation.validate().unwrap();
+            evaluation.validate_against_sources(&left, &right).unwrap();
 
-        assert!(
-            evaluation_materializes_arrangement_cell_complex(&evaluation),
-            "{operation:?}: {evaluation:?}"
-        );
+            assert!(
+                evaluation_materializes_arrangement_cell_complex(evaluation),
+                "{operation:?}: {evaluation:?}"
+            );
+            assert_evaluation_retains_attempt_gate_reports(evaluation);
+        }
 
-        let result = exact_boolean_result(
-            &left,
-            &right,
-            ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
-        );
+        let result = workspace
+            .materialize(ExactBooleanRequest::new(
+                operation,
+                ValidationPolicy::CLOSED,
+            ))
+            .unwrap();
         assert!(
             result.is_arrangement_cell_complex_shortcut_for(operation),
             "{operation:?}: {result:?}"
         );
         result.validate().unwrap();
-        assert_evaluation_retains_attempt_gate_reports(&evaluation);
         assert!(
             result.mesh().facts().mesh.closed_manifold || result.mesh().triangles().is_empty(),
             "{operation:?}: {:?}",
@@ -2811,10 +2808,10 @@ fn arrangement_cell_complex_request_materialization_is_publicly_replayable() {
         ExactBooleanOperation::Intersection,
         ValidationPolicy::CLOSED,
     );
-    let convex_intersection_evaluation =
-        exact_boolean_evaluation(&convex_left, &convex_right, convex_intersection_request);
-    let convex_intersection =
-        exact_boolean_result(&convex_left, &convex_right, convex_intersection_request);
+    let mut convex_workspace = ExactBooleanWorkspace::new(&convex_left, &convex_right);
+    let convex_intersection = convex_workspace
+        .materialize(convex_intersection_request)
+        .unwrap();
     if convex_intersection
         .is_arrangement_cell_complex_materialized_for(ExactBooleanOperation::Intersection)
     {
@@ -2833,7 +2830,10 @@ fn arrangement_cell_complex_request_materialization_is_publicly_replayable() {
         if convex_intersection
             .is_arrangement_cell_complex_shortcut_for(ExactBooleanOperation::Intersection)
         {
-            assert_evaluation_retains_attempt_gate_reports(&convex_intersection_evaluation);
+            let convex_intersection_evaluation = convex_workspace
+                .evaluate(convex_intersection_request)
+                .unwrap();
+            assert_evaluation_retains_attempt_gate_reports(convex_intersection_evaluation);
         }
     }
 }
