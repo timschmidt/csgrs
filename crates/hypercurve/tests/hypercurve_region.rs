@@ -2191,11 +2191,6 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
         );
         assert!(result.report().source_reports()[reversed_ref.source_report_index()].reversed());
     }
-    let output_cache = result.output_cache().unwrap();
-    assert!(output_cache.materialized_region());
-    assert_eq!(output_cache.stage(), result.report().stage());
-    assert_eq!(output_cache.status(), result.report().status());
-    assert_eq!(output_cache.blocker(), None);
     assert!(result.evaluated_output());
     assert_eq!(result.materialized_region(), Some(true));
     assert_eq!(result.stage(), Some(result.report().stage()));
@@ -2236,26 +2231,23 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
     assert_eq!(summary_cache.output_contour_count(), Some(1));
     assert_eq!(summary_cache.output_segment_count(), Some(4));
     assert_eq!(
-        output_cache.boundary_build_report(),
+        result.boundary_build_report(),
         result.report().boundary_build_report()
     );
-    let boundary_report = output_cache.boundary_build_report().unwrap();
+    let boundary_report = result.boundary_build_report().unwrap();
     assert_eq!(boundary_report.material_contour_count(), Some(1));
     assert_eq!(boundary_report.hole_contour_count(), Some(0));
-    let boundary_output_cache = output_cache.boundary_output_cache().unwrap();
-    assert_eq!(boundary_output_cache.output_contour_count(), 1);
-    assert_eq!(boundary_output_cache.output_segment_count(), 4);
+    let boundary_output_cache = result.boundary_output_cache().unwrap();
+    assert_eq!(result.output_contour_count(), Some(1));
+    assert_eq!(result.output_segment_count(), Some(4));
     assert_eq!(
-        boundary_output_cache.output_segment_kind_counts(),
-        result
-            .report()
-            .output_boundary_segment_kind_counts()
-            .unwrap()
+        result.output_segment_kind_counts(),
+        result.report().output_boundary_segment_kind_counts()
     );
-    assert_eq!(boundary_output_cache.material_contour_count(), 1);
-    assert_eq!(boundary_output_cache.hole_contour_count(), 0);
-    assert_eq!(boundary_output_cache.material_segment_count(), 4);
-    assert_eq!(boundary_output_cache.hole_segment_count(), 0);
+    assert_eq!(result.material_contour_count(), Some(1));
+    assert_eq!(result.hole_contour_count(), Some(0));
+    assert_eq!(result.material_segment_count(), Some(4));
+    assert_eq!(result.hole_segment_count(), Some(0));
     let boundary_role_bucket_cache = boundary_output_cache.role_bucket_cache();
     assert_eq!(boundary_role_bucket_cache.bucket_count(), 2);
     assert_eq!(boundary_role_bucket_cache.output_contour_count(), 1);
@@ -2286,15 +2278,15 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
         boundary_role_bucket_cache.buckets()[1].output_segment_count(),
         0
     );
-    let role_cache = output_cache.role_cache().unwrap();
+    let role_cache = result.role_cache().unwrap();
     assert_eq!(
-        role_cache.role_report_count(),
+        result.role_report_count().unwrap(),
         boundary_report.role_reports().len()
     );
-    assert_eq!(role_cache.material_contour_count(), 1);
-    assert_eq!(role_cache.hole_contour_count(), 0);
-    assert_eq!(role_cache.material_segment_count(), 4);
-    assert_eq!(role_cache.hole_segment_count(), 0);
+    assert_eq!(result.material_contour_count(), Some(1));
+    assert_eq!(result.hole_contour_count(), Some(0));
+    assert_eq!(result.material_segment_count(), Some(4));
+    assert_eq!(result.hole_segment_count(), Some(0));
     let role_status_bucket_cache = role_cache.role_status_bucket_cache();
     assert_eq!(role_status_bucket_cache.bucket_count(), 6);
     assert_eq!(
@@ -2463,19 +2455,18 @@ fn exact_curve_arrangement_attempt_retains_output_role_containment() {
     let result = ExactCurveArrangementAttempt2::new(request)
         .evaluate(&policy())
         .unwrap();
-    let output_cache = result.output_cache().unwrap();
-    let boundary_report = output_cache.boundary_build_report().unwrap();
-    let role_cache = output_cache.role_cache().unwrap();
+    let boundary_report = result.boundary_build_report().unwrap();
+    let role_cache = result.role_cache().unwrap();
 
-    assert!(result.report().status().is_native_exact());
-    assert_eq!(result.report().output_ring_count(), Some(2));
+    assert!(result.status().unwrap().is_native_exact());
+    assert_eq!(result.output_ring_count(), Some(2));
     assert_eq!(boundary_report.material_contour_count(), Some(1));
     assert_eq!(boundary_report.hole_contour_count(), Some(1));
-    assert_eq!(role_cache.role_report_count(), 2);
-    assert_eq!(role_cache.material_contour_count(), 1);
-    assert_eq!(role_cache.hole_contour_count(), 1);
+    assert_eq!(result.role_report_count(), Some(2));
+    assert_eq!(result.material_contour_count(), Some(1));
+    assert_eq!(result.hole_contour_count(), Some(1));
 
-    let boundary_output_cache = output_cache.boundary_output_cache().unwrap();
+    let boundary_output_cache = result.boundary_output_cache().unwrap();
     let boundary_role_bucket_cache = boundary_output_cache.role_bucket_cache();
     assert_eq!(boundary_role_bucket_cache.bucket_count(), 2);
     assert_eq!(boundary_role_bucket_cache.output_contour_count(), 2);
@@ -3586,11 +3577,6 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
         );
         assert!(result.report().source_reports()[reversed_ref.source_report_index()].reversed());
     }
-    let output_cache = result.output_cache().unwrap();
-    assert!(output_cache.materialized_region());
-    assert_eq!(output_cache.stage(), result.report().stage());
-    assert_eq!(output_cache.status(), result.report().status());
-    assert_eq!(output_cache.blocker(), None);
     assert!(result.evaluated_output());
     assert_eq!(result.materialized_region(), Some(true));
     assert_eq!(result.stage(), Some(result.report().stage()));
@@ -3631,24 +3617,21 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
     assert_eq!(summary_cache.output_contour_count(), Some(1));
     assert_eq!(summary_cache.output_segment_count(), Some(2));
     assert_eq!(
-        output_cache.boundary_build_report(),
+        result.boundary_build_report(),
         result.report().boundary_build_report()
     );
-    let boundary_report = output_cache.boundary_build_report().unwrap();
-    let boundary_output_cache = output_cache.boundary_output_cache().unwrap();
-    assert_eq!(boundary_output_cache.output_contour_count(), 1);
-    assert_eq!(boundary_output_cache.output_segment_count(), 2);
+    let boundary_report = result.boundary_build_report().unwrap();
+    let boundary_output_cache = result.boundary_output_cache().unwrap();
+    assert_eq!(result.output_contour_count(), Some(1));
+    assert_eq!(result.output_segment_count(), Some(2));
     assert_eq!(
-        boundary_output_cache.output_segment_kind_counts(),
-        result
-            .report()
-            .output_boundary_segment_kind_counts()
-            .unwrap()
+        result.output_segment_kind_counts(),
+        result.report().output_boundary_segment_kind_counts()
     );
-    assert_eq!(boundary_output_cache.material_contour_count(), 1);
-    assert_eq!(boundary_output_cache.hole_contour_count(), 0);
-    assert_eq!(boundary_output_cache.material_segment_count(), 2);
-    assert_eq!(boundary_output_cache.hole_segment_count(), 0);
+    assert_eq!(result.material_contour_count(), Some(1));
+    assert_eq!(result.hole_contour_count(), Some(0));
+    assert_eq!(result.material_segment_count(), Some(2));
+    assert_eq!(result.hole_segment_count(), Some(0));
     let boundary_role_bucket_cache = boundary_output_cache.role_bucket_cache();
     assert_eq!(boundary_role_bucket_cache.bucket_count(), 2);
     assert_eq!(boundary_role_bucket_cache.output_contour_count(), 1);
@@ -3679,15 +3662,15 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
         boundary_role_bucket_cache.buckets()[1].output_segment_count(),
         0
     );
-    let role_cache = output_cache.role_cache().unwrap();
+    let role_cache = result.role_cache().unwrap();
     assert_eq!(
-        role_cache.role_report_count(),
+        result.role_report_count().unwrap(),
         boundary_report.role_reports().len()
     );
-    assert_eq!(role_cache.material_contour_count(), 1);
-    assert_eq!(role_cache.hole_contour_count(), 0);
-    assert_eq!(role_cache.material_segment_count(), 2);
-    assert_eq!(role_cache.hole_segment_count(), 0);
+    assert_eq!(result.material_contour_count(), Some(1));
+    assert_eq!(result.hole_contour_count(), Some(0));
+    assert_eq!(result.material_segment_count(), Some(2));
+    assert_eq!(result.hole_segment_count(), Some(0));
     let role_status_bucket_cache = role_cache.role_status_bucket_cache();
     assert_eq!(role_status_bucket_cache.bucket_count(), 6);
     assert_eq!(
@@ -3967,14 +3950,13 @@ fn exact_curve_arrangement_attempt_retains_overlap_blocker() {
     assert!(split_intersection_bucket_cache.buckets().is_empty());
     assert!(result.endpoint_graph_cache().is_none());
     assert!(result.ring_assembly_cache().is_none());
-    let output_cache = result.output_cache().unwrap();
-    assert!(!output_cache.materialized_region());
-    assert_eq!(output_cache.stage(), result.report().stage());
-    assert_eq!(output_cache.status(), result.report().status());
-    assert_eq!(output_cache.blocker(), Some(UncertaintyReason::Boundary));
-    assert_eq!(output_cache.boundary_build_report(), None);
-    assert_eq!(output_cache.boundary_output_cache(), None);
-    assert_eq!(output_cache.role_cache(), None);
+    assert_eq!(result.materialized_region(), Some(false));
+    assert_eq!(result.stage(), Some(result.report().stage()));
+    assert_eq!(result.status(), Some(result.report().status()));
+    assert_eq!(result.blocker(), Some(UncertaintyReason::Boundary));
+    assert_eq!(result.boundary_build_report(), None);
+    assert_eq!(result.boundary_output_cache(), None);
+    assert_eq!(result.role_cache(), None);
     let summary_cache = result.summary_cache();
     assert!(summary_cache.evaluated_output());
     assert_eq!(summary_cache.materialized_region(), Some(false));
