@@ -2523,22 +2523,14 @@ pub(crate) fn try_materialize_certified_boolean_support_with_artifacts(
             }
             let retained_arrangement_attempt =
                 retained_arrangement_attempt_for_support(retained_arrangement_attempt)?;
-            if let Some(attempt) = retained_arrangement_attempt
-                && let Some(result) = materialize_retained_arrangement_cell_complex_attempt(
-                    left, right, request, attempt,
-                )?
-            {
-                Some(result)
-            } else {
-                materialize_certified_arrangement_cell_complex_support_with_arrangement(
-                    left,
-                    right,
-                    request,
-                    Some(graph),
-                    retained_regularized_arrangement,
-                    retained_arrangement_attempt,
-                )?
-            }
+            materialize_certified_arrangement_cell_complex_support_with_arrangement(
+                left,
+                right,
+                request,
+                Some(graph),
+                retained_regularized_arrangement,
+                retained_arrangement_attempt,
+            )?
         }
         ExactBooleanSupport::CertifiedArrangementCellComplex => {
             let retained_arrangement_attempt =
