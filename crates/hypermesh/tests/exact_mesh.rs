@@ -4167,19 +4167,6 @@ fn trivial_boolean_shortcuts_are_publicly_replayable() {
             ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
         );
         empty_evaluation.validate().unwrap();
-        let mut relabeled_empty_facts = empty_evaluation.clone();
-        *relabeled_empty_facts
-            .certifications_mut()
-            .trivial_mut()
-            .left_empty_mut() = false;
-        *relabeled_empty_facts
-            .certifications_mut()
-            .trivial_mut()
-            .right_empty_mut() = false;
-        assert_report_validation_error!(
-            relabeled_empty_facts.validate(),
-            "{operation:?}: {relabeled_empty_facts:?}"
-        );
         if operation == ExactBooleanOperation::Union {
             assert_eq!(
                 empty_result.freshness_against_sources(&empty, &disjoint_solid),
@@ -4246,15 +4233,6 @@ fn trivial_boolean_shortcuts_are_publicly_replayable() {
             ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
         );
         disjoint_evaluation.validate().unwrap();
-        let mut relabeled_disjoint_facts = disjoint_evaluation.clone();
-        *relabeled_disjoint_facts
-            .certifications_mut()
-            .trivial_mut()
-            .bounds_disjoint_mut() = false;
-        assert_report_validation_error!(
-            relabeled_disjoint_facts.validate(),
-            "{operation:?}: {relabeled_disjoint_facts:?}"
-        );
         if matches!(
             operation,
             ExactBooleanOperation::Union | ExactBooleanOperation::Difference
@@ -4384,15 +4362,6 @@ fn trivial_boolean_shortcuts_are_publicly_replayable() {
             ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
         );
         lower_dimensional_evaluation.validate().unwrap();
-        let mut relabeled_lower_dimensional_facts = lower_dimensional_evaluation.clone();
-        *relabeled_lower_dimensional_facts
-            .certifications_mut()
-            .regularized_solid_mut()
-            .left_open_surface_mut() = false;
-        assert_report_validation_error!(
-            relabeled_lower_dimensional_facts.validate(),
-            "{operation:?}: {relabeled_lower_dimensional_facts:?}"
-        );
 
         let mixed_dimensional_result = exact_boolean_result(
             &solid,
@@ -4415,15 +4384,6 @@ fn trivial_boolean_shortcuts_are_publicly_replayable() {
             ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
         );
         mixed_dimensional_evaluation.validate().unwrap();
-        let mut relabeled_mixed_dimensional_facts = mixed_dimensional_evaluation.clone();
-        *relabeled_mixed_dimensional_facts
-            .certifications_mut()
-            .regularized_solid_mut()
-            .right_open_surface_mut() = false;
-        assert_report_validation_error!(
-            relabeled_mixed_dimensional_facts.validate(),
-            "{operation:?}: {relabeled_mixed_dimensional_facts:?}"
-        );
 
         let open_disjoint_result = exact_boolean_result(
             &open_disjoint_left,

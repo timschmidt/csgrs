@@ -1054,11 +1054,6 @@ impl ExactBooleanCertificationSet {
         &self.trivial
     }
 
-    /// Return source-shape facts used by trivial shortcut supports mutably.
-    pub fn trivial_mut(&mut self) -> &mut ExactTrivialBooleanFacts {
-        &mut self.trivial
-    }
-
     /// Return the identical-mesh shortcut certification report.
     pub fn identical(&self) -> &ExactIdenticalMeshReport {
         &self.identical
@@ -1123,11 +1118,6 @@ impl ExactBooleanCertificationSet {
     /// Return source-shape facts used by closed regularized-solid shortcuts.
     pub fn regularized_solid(&self) -> &ExactRegularizedSolidBooleanFacts {
         &self.regularized_solid
-    }
-
-    /// Return source-shape facts used by closed regularized-solid shortcuts mutably.
-    pub fn regularized_solid_mut(&mut self) -> &mut ExactRegularizedSolidBooleanFacts {
-        &mut self.regularized_solid
     }
 
     /// Return the left-against-right closed-winding classification report.
@@ -2124,21 +2114,6 @@ impl ExactTrivialBooleanFacts {
     pub const fn bounds_disjoint(&self) -> bool {
         self.bounds_disjoint
     }
-
-    /// Return the left-empty fact mutably.
-    pub fn left_empty_mut(&mut self) -> &mut bool {
-        &mut self.left_empty
-    }
-
-    /// Return the right-empty fact mutably.
-    pub fn right_empty_mut(&mut self) -> &mut bool {
-        &mut self.right_empty
-    }
-
-    /// Return the exact bounds-disjoint fact mutably.
-    pub fn bounds_disjoint_mut(&mut self) -> &mut bool {
-        &mut self.bounds_disjoint
-    }
 }
 
 /// Replayable source-shape facts for closed regularized-solid shortcut
@@ -2198,16 +2173,6 @@ impl ExactRegularizedSolidBooleanFacts {
     /// Return whether the right source is a supported non-empty open surface.
     pub const fn right_open_surface(&self) -> bool {
         self.right_open_surface
-    }
-
-    /// Return the left open-surface fact mutably.
-    pub fn left_open_surface_mut(&mut self) -> &mut bool {
-        &mut self.left_open_surface
-    }
-
-    /// Return the right open-surface fact mutably.
-    pub fn right_open_surface_mut(&mut self) -> &mut bool {
-        &mut self.right_open_surface
     }
 }
 
