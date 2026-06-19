@@ -168,21 +168,6 @@ fn run_case(case: &BenchCase) {
         black_box(evaluation.validate().ok());
     });
 
-    time_prepared_stage(
-        case,
-        "workspace_evaluation_source_replay",
-        || retained_workspace_with_evaluation_for_case(case, request),
-        |retained| {
-            if let Some(evaluation) = retained.evaluate(request).ok() {
-                black_box(
-                    evaluation
-                        .validate_against_sources(&case.left, &case.right)
-                        .ok(),
-                );
-            }
-        },
-    );
-
     workspace.evaluate(request).unwrap();
     time_stage(
         case,
