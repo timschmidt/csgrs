@@ -1556,13 +1556,10 @@ impl ExactBooleanCertificationSet {
         result: &ExactBooleanResult,
         request: ExactBooleanRequest,
     ) -> bool {
-        let arrangement_attempt_certifies_request =
-            self.arrangement_attempt_certifies_output_for_operation(request.operation);
-        let arrangement_shortcut_attempt_certifies_request =
-            self.arrangement_attempt_certifies_shortcut_for_operation(request.operation);
         match result.kind() {
             ExactBooleanResultKind::ArrangementCellComplexMaterialized { operation } => {
-                operation == request.operation && arrangement_attempt_certifies_request
+                operation == request.operation
+                    && self.arrangement_attempt_certifies_output_for_operation(request.operation)
             }
             ExactBooleanResultKind::CertifiedShortcut {
                 shortcut: ExactBooleanShortcutKind::ArrangementCellComplex,
@@ -1573,10 +1570,13 @@ impl ExactBooleanCertificationSet {
                         .arrangement_cell_complex_shortcuts
                         .certified_support(operation)
                         == Some(ExactBooleanSupport::CertifiedArrangementCellComplex)
-                        && arrangement_shortcut_attempt_certifies_request)
+                        && self.arrangement_attempt_certifies_shortcut_for_operation(
+                            request.operation,
+                        ))
                         || (self.adjacent_union_completion.is_certified()
                             && self.adjacent_union_completion.operation() == operation)
-                        || arrangement_attempt_certifies_request)
+                        || self
+                            .arrangement_attempt_certifies_output_for_operation(request.operation))
             }
             _ => true,
         }
