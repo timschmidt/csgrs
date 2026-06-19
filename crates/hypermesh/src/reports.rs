@@ -1860,7 +1860,9 @@ impl ExactBooleanResult {
         if self.retained_arrangement_artifacts_certify_operation_replay(left, right, request)? {
             return Ok(());
         }
-        if self.operation_replay_matches_sources(left, right, request)? {
+        let replay = replay_boolean_exact_request_for_result_validation(left, right, request)
+            .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+        if self == &replay {
             Ok(())
         } else {
             Err(ExactReportValidationError::SourceReplayMismatch)
@@ -1930,17 +1932,6 @@ impl ExactBooleanResult {
     ) -> bool {
         self.topology_assembly_report.as_ref() == Some(topology)
             && self.region_ownership_report.as_ref() == Some(ownership)
-    }
-
-    fn operation_replay_matches_sources(
-        &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-        request: ExactBooleanRequest,
-    ) -> Result<bool, ExactReportValidationError> {
-        let replay = replay_boolean_exact_request_for_result_validation(left, right, request)
-            .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
-        Ok(self == &replay)
     }
 
     fn retained_arrangement_artifacts_certify_operation_replay(
