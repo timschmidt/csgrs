@@ -2817,13 +2817,6 @@ fn arrangement_cell_complex_sources_match(
             return Ok(true);
         }
     }
-    if replay_closed_same_surface_boolean_result_if_certified(left, right, operation, validation)
-        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
-        .is_some()
-    {
-        return Ok(true);
-    }
-
     let graph = validated_report_intersection_graph(left, right)?;
     if graph.has_unknowns() || graph.face_pairs.is_empty() {
         return Ok(false);
