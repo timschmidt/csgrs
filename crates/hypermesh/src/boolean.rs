@@ -2064,7 +2064,7 @@ impl ExactBooleanCertificationSet {
 /// lower-level bounds helper: an empty operand is certified as empty, not as a
 /// bounds-disjoint non-empty pair even when it has no mesh bounds.
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub struct ExactTrivialBooleanFacts {
+pub(crate) struct ExactTrivialBooleanFacts {
     /// The left source has no input triangles.
     pub(crate) left_empty: bool,
     /// The right source has no input triangles.
@@ -2081,7 +2081,7 @@ pub struct ExactTrivialBooleanFacts {
 /// represented as lower-dimensional here because the public dispatcher gives
 /// them distinct empty-operand provenance before regularized-solid shortcuts.
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub struct ExactRegularizedSolidBooleanFacts {
+pub(crate) struct ExactRegularizedSolidBooleanFacts {
     /// The left source is a non-empty closed manifold solid.
     pub(crate) left_closed_solid: bool,
     /// The right source is a non-empty closed manifold solid.
@@ -2102,7 +2102,7 @@ impl ExactRegularizedSolidBooleanFacts {
         }
     }
 
-    pub fn validate(&self) -> Result<(), ExactReportValidationError> {
+    fn validate(&self) -> Result<(), ExactReportValidationError> {
         if (self.left_closed_solid && self.left_open_surface)
             || (self.right_closed_solid && self.right_open_surface)
         {
@@ -2115,7 +2115,7 @@ impl ExactRegularizedSolidBooleanFacts {
 
 /// Replayable source facts for closed-convex boolean shortcuts.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct ExactConvexBooleanCapabilityFacts {
+pub(crate) struct ExactConvexBooleanCapabilityFacts {
     /// Exact closed-convex union can be certified by the shortcut.
     pub(crate) can_union: bool,
     /// Exact closed-convex intersection can be certified by the shortcut.
@@ -2148,7 +2148,7 @@ impl ExactConvexBooleanCapabilityFacts {
         }
     }
 
-    pub fn validate(&self) -> Result<(), ExactReportValidationError> {
+    fn validate(&self) -> Result<(), ExactReportValidationError> {
         Ok(())
     }
 
@@ -2165,7 +2165,7 @@ impl ExactConvexBooleanCapabilityFacts {
 /// Replayable source facts for arrangement-cell-complex shortcut materializers
 /// that cover cases the general arrangement attempt does not consume yet.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct ExactArrangementCellComplexShortcutFacts {
+pub(crate) struct ExactArrangementCellComplexShortcutFacts {
     /// Axis-aligned orthogonal cell decomposition supports union.
     pub(crate) axis_aligned_union: bool,
     /// Axis-aligned orthogonal cell decomposition supports intersection.
@@ -2219,7 +2219,7 @@ impl ExactArrangementCellComplexShortcutFacts {
         }
     }
 
-    pub fn validate(&self) -> Result<(), ExactReportValidationError> {
+    fn validate(&self) -> Result<(), ExactReportValidationError> {
         let has_axis_aligned_support = self.axis_aligned_union
             || self.axis_aligned_intersection
             || self.axis_aligned_difference;
@@ -2257,7 +2257,7 @@ impl ExactArrangementCellComplexShortcutFacts {
 
 /// Replayable exact identity certificate for the identical-mesh shortcut.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactIdenticalMeshReport {
+pub(crate) struct ExactIdenticalMeshReport {
     /// Coarse identity status.
     status: ExactIdenticalMeshStatus,
     /// Number of left source vertices compared in original order.
@@ -2274,7 +2274,7 @@ pub struct ExactIdenticalMeshReport {
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum ExactIdenticalMeshStatus {
+pub(crate) enum ExactIdenticalMeshStatus {
     /// Vertex counts differ.
     VertexCountMismatch,
     /// A coordinate comparison was undecided.
@@ -2288,11 +2288,11 @@ pub enum ExactIdenticalMeshStatus {
 }
 
 impl ExactIdenticalMeshReport {
-    pub const fn is_certified(&self) -> bool {
+    const fn is_certified(&self) -> bool {
         matches!(self.status, ExactIdenticalMeshStatus::Certified)
     }
 
-    pub fn validate(&self) -> Result<(), ExactReportValidationError> {
+    fn validate(&self) -> Result<(), ExactReportValidationError> {
         if self.predicates.len() > self.left_vertices.saturating_mul(3) {
             return Err(ExactReportValidationError::StatusEvidenceMismatch);
         }
