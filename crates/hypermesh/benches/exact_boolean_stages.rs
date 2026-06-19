@@ -156,9 +156,9 @@ fn run_case(case: &BenchCase) {
         black_box(workspace.evaluate(request).ok());
     });
 
-    time_stage(case, "boolean_materialize", || {
+    time_stage(case, "boolean_materialize_ref", || {
         let mut workspace = ExactBooleanWorkspace::new(&case.left, &case.right);
-        black_box(workspace.materialize(request).ok());
+        black_box(workspace.materialize_ref(request).ok());
     });
 
     let mut workspace = ExactBooleanWorkspace::new(&case.left, &case.right);
@@ -385,10 +385,10 @@ fn run_case(case: &BenchCase) {
 
     time_prepared_stage(
         case,
-        "workspace_materialize_from_retained_artifacts",
+        "workspace_materialize_ref_from_retained_artifacts",
         || retained_workspace_for_case(case, request),
         |retained_workspace| {
-            black_box(retained_workspace.materialize(request).ok());
+            black_box(retained_workspace.materialize_ref(request).ok());
         },
     );
 
@@ -421,8 +421,8 @@ fn run_case(case: &BenchCase) {
         black_box(workspace.evaluate(request).ok());
     });
 
-    time_stage(case, "workspace_cached_materialization", || {
-        black_box(workspace.materialize(request).ok());
+    time_stage(case, "workspace_cached_materialization_ref", || {
+        black_box(workspace.materialize_ref(request).ok());
     });
 }
 

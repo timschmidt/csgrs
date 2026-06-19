@@ -35,10 +35,7 @@ fn exact_boolean_result(
     request: ExactBooleanRequest,
 ) -> ExactBooleanResult {
     let mut workspace = ExactBooleanWorkspace::new(left, right);
-    let result = workspace
-        .materialize_ref(request)
-        .cloned()
-        .unwrap_or_else(|_| workspace.materialize(request).unwrap());
+    let result = workspace.materialize_ref(request).cloned().unwrap();
     workspace
         .evaluate(request)
         .unwrap()
@@ -296,7 +293,7 @@ fn exact_boolean_evaluation_materializes_boundary_policy_shortcut_by_default() {
     });
     assert!(
         ExactBooleanWorkspace::new(&left, &right)
-            .materialize(rejected_request)
+            .materialize_ref(rejected_request)
             .is_err()
     );
 }
@@ -2487,10 +2484,11 @@ fn exact_volumetric_winding_coplanar_cap_is_publicly_certified() {
         }
 
         let result = workspace
-            .materialize(ExactBooleanRequest::new(
+            .materialize_ref(ExactBooleanRequest::new(
                 operation,
                 ValidationPolicy::CLOSED,
             ))
+            .cloned()
             .unwrap();
         assert!(
             result.is_arrangement_cell_complex_shortcut_for(operation),
@@ -2544,10 +2542,7 @@ fn arrangement_cell_complex_request_materialization_is_publicly_replayable() {
         ValidationPolicy::ALLOW_BOUNDARY,
     );
     let mut workspace = ExactBooleanWorkspace::new(&left, &right);
-    let result = workspace
-        .materialize_ref(request)
-        .cloned()
-        .unwrap_or_else(|_| workspace.materialize(request).unwrap());
+    let result = workspace.materialize_ref(request).cloned().unwrap();
     assert!(
         result.is_arrangement_cell_complex_materialized_for(ExactBooleanOperation::Union)
             || result.is_arrangement_cell_complex_shortcut_for(ExactBooleanOperation::Union),
@@ -2595,11 +2590,7 @@ fn arrangement_cell_complex_request_materialization_is_publicly_replayable() {
     let convex_intersection = convex_workspace
         .materialize_ref(convex_intersection_request)
         .cloned()
-        .unwrap_or_else(|_| {
-            convex_workspace
-                .materialize(convex_intersection_request)
-                .unwrap()
-        });
+        .unwrap();
     if !convex_intersection
         .is_arrangement_cell_complex_materialized_for(ExactBooleanOperation::Intersection)
     {
