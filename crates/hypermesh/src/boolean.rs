@@ -2566,8 +2566,8 @@ impl ExactBooleanEvaluation {
         &mut self.certifications
     }
 
-    /// Return the exact preflight/scheduling report mutably.
-    pub fn preflight_mut(&mut self) -> &mut ExactBooleanPreflight {
+    #[cfg(test)]
+    pub(crate) fn preflight_mut(&mut self) -> &mut ExactBooleanPreflight {
         &mut self.preflight
     }
 
