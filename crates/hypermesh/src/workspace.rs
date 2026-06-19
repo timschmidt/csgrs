@@ -98,25 +98,6 @@ impl<'a> ExactBooleanWorkspace<'a> {
             .expect("validated graph cache was just populated"))
     }
 
-    fn validated_graph_and_regularized_solid_arrangement_attempt(
-        &mut self,
-        request: ExactBooleanRequest,
-    ) -> Result<
-        (
-            &ExactIntersectionGraph,
-            Option<&ExactArrangementBooleanAttempt>,
-        ),
-        MeshError,
-    > {
-        self.ensure_validated_graph()?;
-        let retained_attempt = self.validated_regularized_solid_arrangement_attempt(request)?;
-        let graph = self
-            .graph
-            .as_ref()
-            .expect("validated graph cache was just populated");
-        Ok((graph, retained_attempt))
-    }
-
     fn regularized_solid_arrangement(&self) -> Option<&ExactArrangement> {
         cached_by_policy_index(
             &self.arrangements,
@@ -259,8 +240,12 @@ impl<'a> ExactBooleanWorkspace<'a> {
         {
             let _ = self.arrangement_attempt(request, ExactRegularizationPolicy::REGULARIZED_SOLID);
         }
-        let (graph, retained_attempt) =
-            self.validated_graph_and_regularized_solid_arrangement_attempt(request)?;
+        self.ensure_validated_graph()?;
+        let retained_attempt = self.validated_regularized_solid_arrangement_attempt(request)?;
+        let graph = self
+            .graph
+            .as_ref()
+            .expect("validated graph cache was just populated");
         let graph_preflight = preflight_boolean_exact_request_from_graph_with_retained_attempt(
             graph,
             left,
