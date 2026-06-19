@@ -5025,6 +5025,41 @@ fn materialized_arrangement_attempt_outcome(
     ArrangementCellComplexOutcome::Materialized(Box::new(result), attempt.clone())
 }
 
+fn not_attempted_arrangement_attempt_for_request(
+    request: ExactBooleanRequest,
+    policy: ExactRegularizationPolicy,
+) -> ExactArrangementBooleanAttempt {
+    ExactArrangementBooleanAttempt {
+        operation: request.operation,
+        policy,
+        output_validation: request.validation,
+        stage: ExactArrangementBooleanStage::NotAttempted,
+        decline: None,
+        materialized_shortcut: None,
+        shortcut_reason: None,
+        arrangement_blockers: 0,
+        face_cells: 0,
+        regions: 0,
+        volume_regions: 0,
+        volume_adjacencies: 0,
+        lower_dimensional_artifacts: 0,
+        topology_assembly: None,
+        topology_assembly_report: None,
+        region_ownership: None,
+        region_ownership_report: None,
+        selected_faces: 0,
+        reversed_selected_faces: 0,
+        volume_oriented_selected_faces: 0,
+        label_oriented_selected_faces: 0,
+        selected_volume_regions: 0,
+        selected_cell_complex: None,
+        simplified_cell_complex: None,
+        output_vertices: 0,
+        output_triangles: 0,
+        output_facts: None,
+    }
+}
+
 fn shortcut_reason_for_recovered_arrangement_attempt(
     attempt: &ExactArrangementBooleanAttempt,
 ) -> ExactArrangementBooleanShortcutReason {
@@ -5137,35 +5172,18 @@ pub(crate) fn arrangement_cell_complex_shortcut_attempt(
     } else {
         return Ok(None);
     };
-    Ok(Some(ExactArrangementBooleanAttempt {
-        operation: request.operation,
-        policy,
-        output_validation: request.validation,
-        stage: ExactArrangementBooleanStage::Materialized,
-        decline: None,
-        materialized_shortcut: Some(ExactBooleanShortcutKind::ArrangementCellComplex),
-        shortcut_reason: Some(ExactArrangementBooleanShortcutReason::ShortcutSupportOnly),
-        arrangement_blockers: 0,
-        face_cells: 0,
-        regions: 0,
-        volume_regions: 0,
-        volume_adjacencies: 0,
-        lower_dimensional_artifacts: 0,
-        topology_assembly: None,
-        topology_assembly_report: None,
-        region_ownership: None,
-        region_ownership_report: None,
-        selected_faces: 0,
-        reversed_selected_faces: 0,
-        volume_oriented_selected_faces: 0,
-        label_oriented_selected_faces: 0,
-        selected_volume_regions: 0,
-        selected_cell_complex: None,
-        simplified_cell_complex: None,
-        output_vertices: result.mesh.vertices().len(),
-        output_triangles: result.mesh.triangles().len(),
-        output_facts: Some(result.mesh.facts().mesh.clone()),
-    }))
+    let mut attempt = not_attempted_arrangement_attempt_for_request(request, policy);
+    let ArrangementCellComplexOutcome::Materialized(_, attempt) =
+        materialized_arrangement_attempt_outcome(
+            &mut attempt,
+            result,
+            false,
+            Some(ExactBooleanShortcutKind::ArrangementCellComplex),
+        )
+    else {
+        unreachable!("support-only shortcut materialization cannot decline")
+    };
+    Ok(Some(attempt))
 }
 
 pub(crate) fn arrangement_boolean_attempt_report_from_arrangement(
