@@ -516,16 +516,16 @@ fn run_case(case: &BenchCase) {
 
     time_prepared_stage(
         case,
-        "workspace_validate_planar_arrangement_from_retained_artifacts",
+        "workspace_validate_certifications_with_planar_arrangement_retained",
         || {
             retained_workspace_and_certification_for_case(case, request, |evaluation| {
-                evaluation.certifications.planar_arrangement.clone()
+                evaluation.certifications.clone()
             })
         },
-        |(_retained_workspace, report)| {
+        |(_retained_workspace, certifications)| {
             black_box(
-                report
-                    .validate_against_sources(&case.left, &case.right)
+                certifications
+                    .validate_against_sources(&case.left, &case.right, request)
                     .ok(),
             );
         },

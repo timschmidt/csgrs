@@ -28,9 +28,9 @@ use super::boolean::{
     ExactBoundaryBooleanPolicy, adjacent_union_completion_certification,
     boolean_coplanar_mesh_overlay_optional, boundary_policy_shortcut_result_matches_sources,
     boundary_touching_report_from_graph, materialize_volumetric_coplanar_boundary_closure_output,
-    no_materialized_boundary_output_report, not_named_planar_arrangement_report,
-    open_surface_disjoint_report_from_graph, open_surface_disjoint_result_matches_sources,
-    planar_arrangement_report_from_graph, rematerialize_retained_arrangement_cell_complex_attempt,
+    no_materialized_boundary_output_report, open_surface_disjoint_report_from_graph,
+    open_surface_disjoint_result_matches_sources,
+    rematerialize_retained_arrangement_cell_complex_attempt,
     replay_boolean_exact_request_for_result_validation,
     replay_closed_same_surface_boolean_result_if_certified,
     replay_generic_arrangement_cell_complex_result, replay_open_surface_arrangement_result,
@@ -38,6 +38,8 @@ use super::boolean::{
     volumetric_boundary_closure_report_from_graph, winding_readiness_report_for_request_from_graph,
     workspace_evaluation_for_replay,
 };
+#[cfg(test)]
+use super::boolean::{not_named_planar_arrangement_report, planar_arrangement_report_from_graph};
 use super::bounds::AabbIntersectionKind;
 use super::cell_complex::{
     ExactRegionOwnershipReport, arrangement_cell_complex_labeling_policy,
@@ -5902,7 +5904,8 @@ impl ExactPlanarArrangementReport {
     /// The retained arrangement-readiness summary is a compact view of exact
     /// coplanar graph state. This source replay recomputes that view for the
     /// same operation and rejects stale count/blocker summaries before a
-    pub fn validate_against_sources(
+    #[cfg(test)]
+    pub(crate) fn validate_against_sources(
         &self,
         left: &ExactMesh,
         right: &ExactMesh,
@@ -5927,18 +5930,6 @@ impl ExactPlanarArrangementReport {
                 Err(ExactReportValidationError::SourceReplayMismatch)
             }
         }
-    }
-
-    /// Classify whether this retained blocker report is fresh for `left` and `right`.
-    ///
-    /// The method first checks local report integrity and then recomputes the
-    /// and source-drift are distinct facts a scheduler can react to.
-    pub fn freshness_against_sources(
-        &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-    ) -> ExactReportFreshness {
-        exact_report_freshness(self.validate_against_sources(left, right))
     }
 }
 

@@ -3790,29 +3790,33 @@ fn public_exact_blocker_reports_replay_remaining_decisions() {
         ExactReportFreshness::SourceReplayMismatch
     );
 
-    let planar = exact_boolean_evaluation(
-        &left,
-        &overlapping_right,
-        ExactBooleanRequest::new(
-            ExactBooleanOperation::Union,
-            ValidationPolicy::ALLOW_BOUNDARY,
-        ),
-    )
-    .certifications
-    .planar_arrangement
-    .clone();
+    let planar_request = ExactBooleanRequest::new(
+        ExactBooleanOperation::Union,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    );
+    let planar_evaluation = exact_boolean_evaluation(&left, &overlapping_right, planar_request);
+    let planar = planar_evaluation.certifications.planar_arrangement.clone();
     assert!(planar.is_already_materialized());
     assert!(!planar.is_required());
     planar.validate().unwrap();
-    planar
-        .validate_against_sources(&left, &overlapping_right)
+    planar_evaluation
+        .certifications
+        .validate_against_sources(&left, &overlapping_right, planar_request)
         .unwrap();
     assert_eq!(
-        planar.freshness_against_sources(&left, &overlapping_right),
+        planar_evaluation.certifications.freshness_against_sources(
+            &left,
+            &overlapping_right,
+            planar_request
+        ),
         ExactReportFreshness::Current
     );
     assert_eq!(
-        planar.freshness_against_sources(&left, &separated_right),
+        planar_evaluation.certifications.freshness_against_sources(
+            &left,
+            &separated_right,
+            planar_request
+        ),
         ExactReportFreshness::SourceReplayMismatch
     );
 
@@ -3931,24 +3935,22 @@ fn planar_arrangement_report_classifies_noncoplanar_candidates_as_winding_blocke
     )
     .unwrap();
 
-    let report = exact_boolean_evaluation(
-        &left,
-        &right,
-        ExactBooleanRequest::new(
-            ExactBooleanOperation::Union,
-            ValidationPolicy::ALLOW_BOUNDARY,
-        ),
-    )
-    .certifications
-    .planar_arrangement
-    .clone();
+    let request = ExactBooleanRequest::new(
+        ExactBooleanOperation::Union,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    );
+    let evaluation = exact_boolean_evaluation(&left, &right, request);
+    let report = evaluation.certifications.planar_arrangement.clone();
 
     assert!(!report.is_required());
     assert!(!report.is_already_materialized());
     assert!(report.blocker.requires_winding());
     assert!(report.blocker.candidate_pairs > 0);
     report.validate().unwrap();
-    report.validate_against_sources(&left, &right).unwrap();
+    evaluation
+        .certifications
+        .validate_against_sources(&left, &right, request)
+        .unwrap();
 
     let mut stale = report;
     stale.blocker.coplanar_overlapping_pairs = 1;
