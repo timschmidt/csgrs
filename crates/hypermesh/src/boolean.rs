@@ -2539,28 +2539,14 @@ pub(crate) fn try_materialize_certified_boolean_support_with_artifacts(
             {
                 Some(result)
             } else {
-                if let ArrangementCellComplexOutcome::Materialized(result, _attempt) =
-                    run_arrangement_cell_complex_attempt_from_graph(
-                        graph,
-                        left,
-                        right,
-                        request,
-                        ExactRegularizationPolicy::REGULARIZED_SOLID,
-                        true,
-                    )?
-                    && result.validate_against_sources(left, right).is_ok()
-                {
-                    Some(*result)
-                } else {
-                    materialize_certified_arrangement_cell_complex_support_with_arrangement(
-                        left,
-                        right,
-                        request,
-                        Some(graph),
-                        retained_regularized_arrangement,
-                        retained_arrangement_attempt,
-                    )?
-                }
+                materialize_certified_arrangement_cell_complex_support_with_arrangement(
+                    left,
+                    right,
+                    request,
+                    Some(graph),
+                    retained_regularized_arrangement,
+                    retained_arrangement_attempt,
+                )?
             }
         }
         ExactBooleanSupport::CertifiedArrangementCellComplex => {
