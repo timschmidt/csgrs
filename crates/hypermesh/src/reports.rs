@@ -4081,7 +4081,7 @@ fn validate_winding_readiness_against_sources_for_request(
     request: ExactBooleanRequest,
 ) -> Result<(), ExactReportValidationError> {
     if let Ok(evaluation) = workspace_evaluation_for_replay(left, right, request)
-        && report == &evaluation.certifications().winding_readiness
+        && report == evaluation.certifications().winding_readiness()
     {
         return Ok(());
     }

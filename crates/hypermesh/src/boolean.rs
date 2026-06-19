@@ -990,7 +990,7 @@ pub struct ExactBooleanCertificationSet {
     /// Planar-arrangement readiness for coplanar surface output.
     planar_arrangement: ExactPlanarArrangementReport,
     /// Winding/inside-outside readiness for named volumetric output.
-    pub winding_readiness: ExactWindingReadinessReport,
+    winding_readiness: ExactWindingReadinessReport,
     /// Volumetric boundary closure readiness, when meaningful for the request.
     volumetric_boundary_closure: Option<ExactVolumetricBoundaryClosureReport>,
     /// Arrangement/cell-complex materialization attempt.
@@ -1077,6 +1077,16 @@ impl ExactBooleanCertificationSet {
     /// Return the planar-arrangement readiness certification report.
     pub fn planar_arrangement(&self) -> &ExactPlanarArrangementReport {
         &self.planar_arrangement
+    }
+
+    /// Return the winding/inside-outside readiness certification report.
+    pub fn winding_readiness(&self) -> &ExactWindingReadinessReport {
+        &self.winding_readiness
+    }
+
+    /// Return the winding/inside-outside readiness certification report mutably.
+    pub fn winding_readiness_mut(&mut self) -> &mut ExactWindingReadinessReport {
+        &mut self.winding_readiness
     }
 
     /// Return the retained volumetric boundary closure evidence, when the

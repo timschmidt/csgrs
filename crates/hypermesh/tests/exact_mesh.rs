@@ -37,7 +37,7 @@ fn evaluation_materializes_arrangement_cell_complex(
             || result.is_arrangement_cell_complex_shortcut_for(evaluation.operation())
     }) || evaluation
         .certifications()
-        .winding_readiness
+        .winding_readiness()
         .materializes_arrangement_cell_complex()
 }
 
@@ -342,11 +342,11 @@ fn exact_boolean_evaluation_materializes_certified_result_publicly() {
     let mut relabeled_winding_status = evaluation.clone();
     relabeled_winding_status
         .certifications_mut()
-        .winding_readiness
+        .winding_readiness_mut()
         .operation = ExactBooleanOperation::Difference;
     relabeled_winding_status
         .certifications()
-        .winding_readiness
+        .winding_readiness()
         .validate()
         .unwrap();
     assert_report_validation_error!(relabeled_winding_status.validate());
@@ -374,12 +374,12 @@ fn exact_boolean_evaluation_retains_region_ownership_report() {
         ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED),
     )
     .certifications()
-    .winding_readiness
+    .winding_readiness()
     .clone();
     let mut attempt_backed_evaluation = evaluation.clone();
-    attempt_backed_evaluation
+    *attempt_backed_evaluation
         .certifications_mut()
-        .winding_readiness = disjoint_readiness;
+        .winding_readiness_mut() = disjoint_readiness;
     assert!(
         evaluation_materializes_arrangement_cell_complex(&attempt_backed_evaluation),
         "{attempt_backed_evaluation:?}"
@@ -477,11 +477,11 @@ fn exact_boolean_evaluation_materializes_boundary_policy_shortcut_by_default() {
     let mut relabeled_winding_status = evaluation.clone();
     relabeled_winding_status
         .certifications_mut()
-        .winding_readiness
+        .winding_readiness_mut()
         .operation = ExactBooleanOperation::Difference;
     relabeled_winding_status
         .certifications()
-        .winding_readiness
+        .winding_readiness()
         .validate()
         .unwrap();
     assert_report_validation_error!(relabeled_winding_status.validate());
@@ -1283,7 +1283,7 @@ fn exact_coplanar_volumetric_cell_evidence_is_retained_by_public_evaluation() {
     evaluation.validate_against_sources(&left, &right).unwrap();
     if evaluation
         .certifications()
-        .winding_readiness
+        .winding_readiness()
         .coplanar_volumetric_evidence
         .is_some()
     {
@@ -1291,7 +1291,7 @@ fn exact_coplanar_volumetric_cell_evidence_is_retained_by_public_evaluation() {
             preflight.coplanar_volumetric_evidence,
             evaluation
                 .certifications()
-                .winding_readiness
+                .winding_readiness()
                 .coplanar_volumetric_evidence
         );
     } else {
@@ -2181,7 +2181,7 @@ fn exact_selected_region_boolean_is_publicly_replayable() {
     let mut stale_winding_handoff = evaluation.clone();
     stale_winding_handoff
         .certifications_mut()
-        .winding_readiness
+        .winding_readiness_mut()
         .retained_events += 1;
     assert!(
         stale_winding_handoff.validate().is_err(),
@@ -2344,7 +2344,7 @@ fn lower_dimensional_regularized_boolean_is_publicly_replayable() {
             ExactReportFreshness::SourceReplayMismatch
         );
 
-        let readiness = evaluation.certifications().winding_readiness.clone();
+        let readiness = evaluation.certifications().winding_readiness().clone();
         let readiness_materialized_lower =
             readiness.is_lower_dimensional_regularized_solid_materialized();
         let readiness_materialized_arrangement = readiness.materializes_arrangement_cell_complex();
@@ -2428,7 +2428,7 @@ fn lower_dimensional_regularized_boolean_is_publicly_replayable() {
             ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
         )
         .certifications()
-        .winding_readiness
+        .winding_readiness()
         .clone();
         assert!(
             disjoint_readiness.is_lower_dimensional_regularized_solid_materialized(),
@@ -2560,7 +2560,7 @@ fn mixed_dimensional_regularized_solid_boolean_is_publicly_replayable() {
                 ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
             )
             .certifications()
-            .winding_readiness
+            .winding_readiness()
             .clone();
             assert!(
                 readiness.is_mixed_dimensional_regularized_solid_materialized(),
@@ -2878,7 +2878,7 @@ fn closed_no_volume_overlap_regularized_boolean_is_publicly_replayable() {
             let readiness_evaluation = exact_boolean_evaluation(&left, &right, readiness_request);
             let readiness = readiness_evaluation
                 .certifications()
-                .winding_readiness
+                .winding_readiness()
                 .clone();
             assert!(
                 readiness.is_arrangement_cell_complex_materialized(),
@@ -2903,7 +2903,7 @@ fn closed_no_volume_overlap_regularized_boolean_is_publicly_replayable() {
             let mut cleared_handoff_evidence = evaluation.clone();
             cleared_handoff_evidence
                 .certifications_mut()
-                .winding_readiness
+                .winding_readiness_mut()
                 .coplanar_volumetric_evidence = None;
             assert!(
                 cleared_handoff_evidence.validate().is_err(),
@@ -3133,7 +3133,7 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
     );
     preflight.validate().unwrap();
 
-    let readiness = evaluation.certifications().winding_readiness.clone();
+    let readiness = evaluation.certifications().winding_readiness().clone();
     assert!(
         readiness.materializes_arrangement_cell_complex(),
         "{readiness:?}"
@@ -3224,11 +3224,11 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
     let mut stale_readiness_counts = evaluation.clone();
     stale_readiness_counts
         .certifications_mut()
-        .winding_readiness
+        .winding_readiness_mut()
         .retained_face_pairs += 1;
     stale_readiness_counts
         .certifications_mut()
-        .winding_readiness
+        .winding_readiness_mut()
         .retained_events += 1;
     assert!(
         stale_readiness_counts.validate().is_err(),
@@ -4880,14 +4880,17 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
         ),
     )
     .certifications()
-    .winding_readiness
+    .winding_readiness()
     .clone();
     assert!(
         rejected_readiness.requires_boundary_policy(),
         "{rejected_readiness:?}"
     );
 
-    let policy_readiness = policy_evaluation.certifications().winding_readiness.clone();
+    let policy_readiness = policy_evaluation
+        .certifications()
+        .winding_readiness()
+        .clone();
     assert!(
         policy_readiness.is_boundary_policy_shortcut_materialized(),
         "{policy_readiness:?}"
@@ -4986,7 +4989,7 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
         .unwrap();
     let closed_intersection_readiness = closed_intersection_evaluation
         .certifications()
-        .winding_readiness
+        .winding_readiness()
         .clone();
     assert!(
         closed_intersection_readiness.is_lower_dimensional_regularized_solid_materialized(),
@@ -5030,7 +5033,7 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
             .unwrap();
         let closed_policy_readiness = closed_policy_evaluation
             .certifications()
-            .winding_readiness
+            .winding_readiness()
             .clone();
         assert!(
             closed_policy_readiness.is_lower_dimensional_regularized_solid_materialized(),

@@ -186,7 +186,7 @@ fn run_case(case: &BenchCase) {
                 .as_ref()
                 .or(evaluation
                     .certifications()
-                    .winding_readiness
+                    .winding_readiness()
                     .coplanar_volumetric_evidence
                     .as_ref());
             black_box(report.map(|report| {
@@ -214,7 +214,7 @@ fn run_case(case: &BenchCase) {
                     .as_ref()
                     .or(evaluation
                         .certifications()
-                        .winding_readiness
+                        .winding_readiness()
                         .coplanar_volumetric_evidence
                         .as_ref());
                 if let Some(report) = report {
