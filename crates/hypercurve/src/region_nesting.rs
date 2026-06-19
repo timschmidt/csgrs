@@ -823,6 +823,35 @@ pub struct ExactCurveArrangementOutputRoleNestingDepthBucketCache2 {
     buckets: Vec<ExactCurveArrangementOutputRoleNestingDepthBucket2>,
 }
 
+/// Reference to retained containment evidence for one output role assignment.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ExactCurveArrangementOutputRoleContainmentRef2 {
+    role: RegionBoundaryContourRole2,
+    assignment_index: usize,
+    role_report_index: usize,
+    source_contour_index: usize,
+    containing_contour_index: usize,
+    containing_contour_ref_index: usize,
+    output_role_index: usize,
+}
+
+/// Output role containment bucket grouped by exact containing source contour.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ExactCurveArrangementOutputRoleContainmentBucket2 {
+    containing_contour_index: usize,
+    containments: Vec<ExactCurveArrangementOutputRoleContainmentRef2>,
+}
+
+/// Output role containment evidence grouped by exact containing source contour.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ExactCurveArrangementOutputRoleContainmentBucketCache2 {
+    containing_contour_bucket_count: usize,
+    containment_ref_count: usize,
+    uncontained_assignment_ref_count: usize,
+    max_bucket_size: usize,
+    buckets: Vec<ExactCurveArrangementOutputRoleContainmentBucket2>,
+}
+
 /// Output material/hole role buckets retained after boundary contour role assignment.
 #[derive(Clone, Debug, PartialEq)]
 pub struct ExactCurveArrangementOutputRoleCache2 {
@@ -834,6 +863,7 @@ pub struct ExactCurveArrangementOutputRoleCache2 {
     role_status_bucket_cache: ExactCurveArrangementOutputRoleStatusBucketCache2,
     role_source_contour_bucket_cache: ExactCurveArrangementOutputRoleSourceContourBucketCache2,
     role_nesting_depth_bucket_cache: ExactCurveArrangementOutputRoleNestingDepthBucketCache2,
+    role_containment_bucket_cache: ExactCurveArrangementOutputRoleContainmentBucketCache2,
     buckets: Vec<ExactCurveArrangementOutputRoleBucket2>,
 }
 
@@ -5199,6 +5229,158 @@ impl ExactCurveArrangementOutputRoleNestingDepthBucketCache2 {
     }
 }
 
+impl ExactCurveArrangementOutputRoleContainmentRef2 {
+    /// Returns the role bucket containing this assignment.
+    pub const fn role(&self) -> RegionBoundaryContourRole2 {
+        self.role
+    }
+
+    /// Returns the assignment index inside the retained role bucket.
+    pub const fn assignment_index(&self) -> usize {
+        self.assignment_index
+    }
+
+    /// Returns the retained boundary role report index.
+    pub const fn role_report_index(&self) -> usize {
+        self.role_report_index
+    }
+
+    /// Returns the source contour whose nesting evidence is retained.
+    pub const fn source_contour_index(&self) -> usize {
+        self.source_contour_index
+    }
+
+    /// Returns the exact source contour that contained the assignment sample point.
+    pub const fn containing_contour_index(&self) -> usize {
+        self.containing_contour_index
+    }
+
+    /// Returns the index inside the assignment's retained containing-contour list.
+    pub const fn containing_contour_ref_index(&self) -> usize {
+        self.containing_contour_ref_index
+    }
+
+    /// Returns this contour's index inside its output role bin.
+    pub const fn output_role_index(&self) -> usize {
+        self.output_role_index
+    }
+}
+
+impl ExactCurveArrangementOutputRoleContainmentBucket2 {
+    /// Returns the retained source contour that contains these assignments.
+    pub const fn containing_contour_index(&self) -> usize {
+        self.containing_contour_index
+    }
+
+    /// Returns retained containment references for this containing contour.
+    pub fn containments(&self) -> &[ExactCurveArrangementOutputRoleContainmentRef2] {
+        &self.containments
+    }
+}
+
+impl ExactCurveArrangementOutputRoleContainmentBucketCache2 {
+    fn from_role_assignments(
+        material_assignments: &[ExactCurveArrangementOutputRoleAssignment2],
+        hole_assignments: &[ExactCurveArrangementOutputRoleAssignment2],
+    ) -> Self {
+        let mut buckets: Vec<ExactCurveArrangementOutputRoleContainmentBucket2> = Vec::new();
+        let mut uncontained_assignment_ref_count = 0_usize;
+
+        for (role, assignments) in [
+            (RegionBoundaryContourRole2::Material, material_assignments),
+            (RegionBoundaryContourRole2::Hole, hole_assignments),
+        ] {
+            for (assignment_index, assignment) in assignments.iter().enumerate() {
+                if assignment.containing_contour_indices().is_empty() {
+                    uncontained_assignment_ref_count += 1;
+                    continue;
+                }
+
+                for (containing_contour_ref_index, containing_contour_index) in
+                    assignment.containing_contour_indices().iter().enumerate()
+                {
+                    let bucket_index = buckets
+                        .iter()
+                        .position(|bucket| {
+                            bucket.containing_contour_index == *containing_contour_index
+                        })
+                        .unwrap_or_else(|| {
+                            buckets.push(ExactCurveArrangementOutputRoleContainmentBucket2 {
+                                containing_contour_index: *containing_contour_index,
+                                containments: Vec::new(),
+                            });
+                            buckets.len() - 1
+                        });
+                    buckets[bucket_index].containments.push(
+                        ExactCurveArrangementOutputRoleContainmentRef2 {
+                            role,
+                            assignment_index,
+                            role_report_index: assignment.role_report_index(),
+                            source_contour_index: assignment.source_contour_index(),
+                            containing_contour_index: *containing_contour_index,
+                            containing_contour_ref_index,
+                            output_role_index: assignment.output_role_index(),
+                        },
+                    );
+                }
+            }
+        }
+
+        buckets.sort_by_key(|bucket| bucket.containing_contour_index);
+        for bucket in &mut buckets {
+            bucket.containments.sort_by_key(|containment| {
+                (
+                    containment.role_report_index,
+                    containment.source_contour_index,
+                    containment.containing_contour_ref_index,
+                    containment.output_role_index,
+                    containment.assignment_index,
+                )
+            });
+        }
+
+        let containment_ref_count = buckets.iter().map(|bucket| bucket.containments.len()).sum();
+        let max_bucket_size = buckets
+            .iter()
+            .map(|bucket| bucket.containments.len())
+            .max()
+            .unwrap_or(0);
+
+        Self {
+            containing_contour_bucket_count: buckets.len(),
+            containment_ref_count,
+            uncontained_assignment_ref_count,
+            max_bucket_size,
+            buckets,
+        }
+    }
+
+    /// Returns the number of retained containing-contour buckets.
+    pub const fn containing_contour_bucket_count(&self) -> usize {
+        self.containing_contour_bucket_count
+    }
+
+    /// Returns the number of retained containment references.
+    pub const fn containment_ref_count(&self) -> usize {
+        self.containment_ref_count
+    }
+
+    /// Returns assignments whose retained containing-contour list is empty.
+    pub const fn uncontained_assignment_ref_count(&self) -> usize {
+        self.uncontained_assignment_ref_count
+    }
+
+    /// Returns the largest containment count for one containing contour.
+    pub const fn max_bucket_size(&self) -> usize {
+        self.max_bucket_size
+    }
+
+    /// Returns containment buckets in containing source contour order.
+    pub fn buckets(&self) -> &[ExactCurveArrangementOutputRoleContainmentBucket2] {
+        &self.buckets
+    }
+}
+
 impl ExactCurveArrangementOutputRoleCache2 {
     fn from_boundary_build_report(report: &RegionBoundaryContourBuildReport2) -> Option<Self> {
         let material_contour_count = report.material_contour_count()?;
@@ -5243,6 +5425,11 @@ impl ExactCurveArrangementOutputRoleCache2 {
                 &material_assignments,
                 &hole_assignments,
             );
+        let role_containment_bucket_cache =
+            ExactCurveArrangementOutputRoleContainmentBucketCache2::from_role_assignments(
+                &material_assignments,
+                &hole_assignments,
+            );
 
         Some(Self {
             role_report_count: report.role_reports().len(),
@@ -5253,6 +5440,7 @@ impl ExactCurveArrangementOutputRoleCache2 {
             role_status_bucket_cache,
             role_source_contour_bucket_cache,
             role_nesting_depth_bucket_cache,
+            role_containment_bucket_cache,
             buckets: vec![
                 ExactCurveArrangementOutputRoleBucket2 {
                     role: RegionBoundaryContourRole2::Material,
@@ -5310,6 +5498,13 @@ impl ExactCurveArrangementOutputRoleCache2 {
         &self,
     ) -> &ExactCurveArrangementOutputRoleNestingDepthBucketCache2 {
         &self.role_nesting_depth_bucket_cache
+    }
+
+    /// Returns output role containment evidence grouped by containing source contour.
+    pub const fn role_containment_bucket_cache(
+        &self,
+    ) -> &ExactCurveArrangementOutputRoleContainmentBucketCache2 {
+        &self.role_containment_bucket_cache
     }
 
     /// Returns material and hole role buckets in stable order.

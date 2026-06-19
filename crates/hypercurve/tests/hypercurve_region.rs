@@ -2376,6 +2376,67 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
 }
 
 #[test]
+fn exact_curve_arrangement_attempt_retains_output_role_containment() {
+    let lines = vec![
+        line(0, 0, 10, 0),
+        line(10, 0, 10, 10),
+        line(10, 10, 0, 10),
+        line(0, 10, 0, 0),
+        line(3, 3, 7, 3),
+        line(7, 3, 7, 7),
+        line(7, 7, 3, 7),
+        line(3, 7, 3, 3),
+    ];
+    let request = ExactCurveArrangementRequest2::from_borrowed_unordered_line_segments(
+        &lines,
+        FillRule::NonZero,
+    );
+    let result = ExactCurveArrangementAttempt2::new(request)
+        .evaluate(&policy())
+        .unwrap();
+    let output_cache = result.workspace().output_cache().unwrap();
+    let boundary_report = output_cache.boundary_build_report().unwrap();
+    let role_cache = output_cache.role_cache().unwrap();
+
+    assert!(result.report().status().is_native_exact());
+    assert_eq!(result.report().output_ring_count(), Some(2));
+    assert_eq!(boundary_report.material_contour_count(), Some(1));
+    assert_eq!(boundary_report.hole_contour_count(), Some(1));
+    assert_eq!(role_cache.role_report_count(), 2);
+    assert_eq!(role_cache.material_contour_count(), 1);
+    assert_eq!(role_cache.hole_contour_count(), 1);
+
+    let containment_cache = role_cache.role_containment_bucket_cache();
+    assert_eq!(containment_cache.containing_contour_bucket_count(), 1);
+    assert_eq!(containment_cache.containment_ref_count(), 1);
+    assert_eq!(containment_cache.uncontained_assignment_ref_count(), 1);
+    assert_eq!(containment_cache.max_bucket_size(), 1);
+    assert_eq!(containment_cache.buckets().len(), 1);
+    let containment_bucket = &containment_cache.buckets()[0];
+    assert_eq!(containment_bucket.containing_contour_index(), 0);
+    assert_eq!(containment_bucket.containments().len(), 1);
+    let containment = &containment_bucket.containments()[0];
+    assert_eq!(containment.role(), RegionBoundaryContourRole2::Hole);
+    assert_eq!(containment.assignment_index(), 0);
+    assert_eq!(containment.role_report_index(), 1);
+    assert_eq!(containment.source_contour_index(), 1);
+    assert_eq!(containment.containing_contour_index(), 0);
+    assert_eq!(containment.containing_contour_ref_index(), 0);
+    assert_eq!(containment.output_role_index(), 0);
+    assert_eq!(
+        role_cache.buckets()[1].assignments()[containment.assignment_index()]
+            .containing_contour_indices(),
+        &[0]
+    );
+
+    let nesting_depth_cache = role_cache.role_nesting_depth_bucket_cache();
+    assert_eq!(nesting_depth_cache.nesting_depth_bucket_count(), 2);
+    assert_eq!(nesting_depth_cache.assignment_ref_count(), 2);
+    assert_eq!(nesting_depth_cache.buckets()[0].nesting_depth(), 0);
+    assert_eq!(nesting_depth_cache.buckets()[1].nesting_depth(), 1);
+}
+
+#[test]
 fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace() {
     let segments = vec![
         Segment2::Line(line(4, 0, 0, 0)),
