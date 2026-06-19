@@ -1247,14 +1247,9 @@ impl Region2 {
     ) -> CurveResult<Classification<Self>> {
         let request =
             ExactCurveArrangementRequest2::from_unordered_line_segments(segments, fill_rule);
-        let built = ExactCurveArrangementAttempt2::new(request)
-            .evaluate(policy)?
-            .into_region_build_result();
-        let blocker = built
-            .report()
-            .blocker()
-            .unwrap_or(UncertaintyReason::Unsupported);
-        if let Some(region) = built.into_region() {
+        let result = ExactCurveArrangementAttempt2::new(request).evaluate(policy)?;
+        let blocker = result.blocker().unwrap_or(UncertaintyReason::Unsupported);
+        if let Some(region) = result.into_region() {
             Ok(Classification::Decided(region))
         } else {
             Ok(Classification::Uncertain(blocker))
@@ -1276,14 +1271,9 @@ impl Region2 {
         let request = ExactCurveArrangementRequest2::from_borrowed_unordered_line_segments(
             segments, fill_rule,
         );
-        let built = ExactCurveArrangementAttempt2::new(request)
-            .evaluate(policy)?
-            .into_region_build_result();
-        let blocker = built
-            .report()
-            .blocker()
-            .unwrap_or(UncertaintyReason::Unsupported);
-        if let Some(region) = built.into_region() {
+        let result = ExactCurveArrangementAttempt2::new(request).evaluate(policy)?;
+        let blocker = result.blocker().unwrap_or(UncertaintyReason::Unsupported);
+        if let Some(region) = result.into_region() {
             Ok(Classification::Decided(region))
         } else {
             Ok(Classification::Uncertain(blocker))
@@ -1522,14 +1512,9 @@ impl Region2 {
         policy: &CurvePolicy,
     ) -> CurveResult<Classification<Self>> {
         let request = ExactCurveArrangementRequest2::from_unordered_segments(segments, fill_rule);
-        let built = ExactCurveArrangementAttempt2::new(request)
-            .evaluate(policy)?
-            .into_region_build_result();
-        let blocker = built
-            .report()
-            .blocker()
-            .unwrap_or(UncertaintyReason::Unsupported);
-        if let Some(region) = built.into_region() {
+        let result = ExactCurveArrangementAttempt2::new(request).evaluate(policy)?;
+        let blocker = result.blocker().unwrap_or(UncertaintyReason::Unsupported);
+        if let Some(region) = result.into_region() {
             Ok(Classification::Decided(region))
         } else {
             Ok(Classification::Uncertain(blocker))
@@ -1548,14 +1533,9 @@ impl Region2 {
     ) -> CurveResult<Classification<Self>> {
         let request =
             ExactCurveArrangementRequest2::from_borrowed_unordered_segments(segments, fill_rule);
-        let built = ExactCurveArrangementAttempt2::new(request)
-            .evaluate(policy)?
-            .into_region_build_result();
-        let blocker = built
-            .report()
-            .blocker()
-            .unwrap_or(UncertaintyReason::Unsupported);
-        if let Some(region) = built.into_region() {
+        let result = ExactCurveArrangementAttempt2::new(request).evaluate(policy)?;
+        let blocker = result.blocker().unwrap_or(UncertaintyReason::Unsupported);
+        if let Some(region) = result.into_region() {
             Ok(Classification::Decided(region))
         } else {
             Ok(Classification::Uncertain(blocker))
