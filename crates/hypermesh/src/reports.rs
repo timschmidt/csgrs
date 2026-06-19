@@ -1750,7 +1750,9 @@ impl ExactBooleanResult {
                 && let Some(attempt) = evaluation.retained_arrangement_attempt()
                 && let Some((topology, ownership)) = attempt.retained_gate_reports()
             {
-                if self.has_retained_gate_reports(topology, ownership) {
+                if self.topology_assembly_report.as_ref() == Some(topology)
+                    && self.region_ownership_report.as_ref() == Some(ownership)
+                {
                     return Ok(());
                 }
                 return Err(ExactReportValidationError::SourceReplayMismatch);
@@ -1823,11 +1825,13 @@ impl ExactBooleanResult {
     ///
     /// [`Self::validate_against_sources`] audits retained source provenance,
     /// including arrangement-cell-complex gate reports when present. This
-    /// stronger replay recomputes the public exact boolean entry point for the
-    /// same operands, operation, validation policy, and boundary policy, then
-    /// requires the whole result object to match. That closes the shortcut
-    /// replay gap: a certified output mesh cannot be relabeled as a different
-    /// named operation or shortcut kind while still passing the source audit.
+    /// stronger replay accepts a retained certified arrangement attempt only
+    /// when its materialized mesh and gate reports match the result, otherwise
+    /// it recomputes the public exact boolean entry point for the same
+    /// operands, operation, validation policy, and boundary policy. That closes
+    /// the shortcut replay gap: a certified output mesh cannot be relabeled as
+    /// a different named operation or shortcut kind while still passing the
+    /// source audit.
     pub(crate) fn validate_request_against_sources(
         &self,
         left: &ExactMesh,
@@ -1922,7 +1926,9 @@ impl ExactBooleanResult {
             let Some((topology, ownership)) = attempt.retained_gate_reports() else {
                 return Err(ExactReportValidationError::StatusEvidenceMismatch);
             };
-            if !self.has_retained_gate_reports(topology, ownership) {
+            if self.topology_assembly_report.as_ref() != Some(topology)
+                || self.region_ownership_report.as_ref() != Some(ownership)
+            {
                 return Ok(false);
             }
         }
@@ -1936,15 +1942,6 @@ impl ExactBooleanResult {
             return Ok(false);
         }
         Ok(true)
-    }
-
-    fn has_retained_gate_reports(
-        &self,
-        topology: &ExactTopologyAssemblyReport,
-        ownership: &ExactRegionOwnershipReport,
-    ) -> bool {
-        self.topology_assembly_report.as_ref() == Some(topology)
-            && self.region_ownership_report.as_ref() == Some(ownership)
     }
 }
 
