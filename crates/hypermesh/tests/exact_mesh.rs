@@ -1180,18 +1180,20 @@ fn exact_closed_convex_boolean_is_publicly_replayable() {
     separated
         .validate_against_sources(&separated_left, &separated_right)
         .unwrap();
-    let separated_evaluation = exact_boolean_evaluation(
+    with_exact_boolean_evaluation(
         &separated_left,
         &separated_right,
         ExactBooleanRequest::new(
             ExactBooleanOperation::Intersection,
             ValidationPolicy::CLOSED,
         ),
+        |separated_evaluation| {
+            separated_evaluation.validate().unwrap();
+            separated_evaluation
+                .validate_against_sources(&separated_left, &separated_right)
+                .unwrap();
+        },
     );
-    separated_evaluation.validate().unwrap();
-    separated_evaluation
-        .validate_against_sources(&separated_left, &separated_right)
-        .unwrap();
     let dispatched = exact_boolean_result(
         &separated_left,
         &separated_right,
@@ -2080,14 +2082,16 @@ fn mixed_dimensional_regularized_solid_boolean_is_publicly_replayable() {
             ExactBooleanOperation::Intersection,
             ExactBooleanOperation::Difference,
         ] {
-            let evaluation = exact_boolean_evaluation(
+            with_exact_boolean_evaluation(
                 left,
                 right,
                 ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
-            );
-            assert!(
-                evaluation.is_certified_mixed_dimensional_regularized_solid(),
-                "{operation:?}: {evaluation:?}"
+                |evaluation| {
+                    assert!(
+                        evaluation.is_certified_mixed_dimensional_regularized_solid(),
+                        "{operation:?}: {evaluation:?}"
+                    );
+                },
             );
             let result = exact_boolean_result(
                 left,
@@ -2106,14 +2110,16 @@ fn mixed_dimensional_regularized_solid_boolean_is_publicly_replayable() {
                 "{operation:?}: {result:?}"
             );
 
-            let boundary_evaluation = exact_boolean_evaluation(
+            with_exact_boolean_evaluation(
                 left,
                 right,
                 ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
-            );
-            assert!(
-                boundary_evaluation.is_certified_bounds_disjoint(),
-                "{operation:?}: {boundary_evaluation:?}"
+                |boundary_evaluation| {
+                    assert!(
+                        boundary_evaluation.is_certified_bounds_disjoint(),
+                        "{operation:?}: {boundary_evaluation:?}"
+                    );
+                },
             );
             let boundary_result = exact_boolean_result(
                 left,
