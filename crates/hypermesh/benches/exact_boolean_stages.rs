@@ -77,7 +77,11 @@ fn run_case(case: &BenchCase) {
         Ok(evaluation) => print_metadata(
             case.name,
             "preflight_support",
-            format!("certified={}", evaluation.is_certified()),
+            format!(
+                "materialized={};blocked={}",
+                evaluation.materialized_result().is_some(),
+                evaluation.has_blocker()
+            ),
         ),
         Err(error) => print_metadata(case.name, "preflight_support", format!("error:{error:?}")),
     }

@@ -219,10 +219,8 @@ fn exact_boolean_evaluation_materializes_certified_result_publicly() {
     with_exact_boolean_evaluation(&left, &right, request, |evaluation| {
         evaluation.validate().unwrap();
         evaluation.validate_against_sources(&left, &right).unwrap();
-        assert!(evaluation.is_certified());
         assert!(evaluation.materialized_result().is_some());
         assert!(!evaluation.has_blocker());
-        assert!(evaluation.is_certified());
         assert!(evaluation.materialized_result().is_some_and(|result| {
             result.is_certified_shortcut_for(ExactBooleanOperation::Union)
         }));
@@ -279,10 +277,8 @@ fn exact_boolean_evaluation_materializes_boundary_policy_shortcut_by_default() {
     with_exact_boolean_evaluation(&left, &right, request, |evaluation| {
         evaluation.validate().unwrap();
         evaluation.validate_against_sources(&left, &right).unwrap();
-        assert!(evaluation.is_certified());
         assert!(evaluation.materialized_result().is_some());
         assert!(!evaluation.has_blocker());
-        assert!(evaluation.is_certified());
         let result = evaluation
             .materialized_result()
             .expect("boundary-policy evaluation should materialize");
@@ -296,7 +292,6 @@ fn exact_boolean_evaluation_materializes_boundary_policy_shortcut_by_default() {
     );
     with_exact_boolean_evaluation(&left, &right, rejected_request, |rejected| {
         rejected.validate().unwrap();
-        assert!(!rejected.is_certified());
         assert!(rejected.materialized_result().is_none());
     });
     assert!(
@@ -2022,7 +2017,6 @@ fn boundary_touching_policy_boolean_is_publicly_replayable() {
             reject_evaluation.materialized_result().is_none(),
             "{reject_evaluation:?}"
         );
-        assert!(!reject_evaluation.is_certified());
         assert!(reject_evaluation.has_blocker());
 
         let result = exact_boolean_result(
@@ -2111,9 +2105,10 @@ fn closed_boundary_touching_regularized_boolean_is_publicly_replayable() {
             ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY);
         with_exact_boolean_evaluation(&left, &right, preflight_request, |preflight_evaluation| {
             assert!(
-                preflight_evaluation.is_certified(),
+                preflight_evaluation.materialized_result().is_some(),
                 "{operation:?}: {preflight_evaluation:?}"
             );
+            assert!(!preflight_evaluation.has_blocker());
             preflight_evaluation.validate().unwrap();
             preflight_evaluation
                 .validate_against_sources(&left, &right)
@@ -2933,7 +2928,6 @@ fn open_surface_disjoint_report_classifies_retained_coplanar_overlap_blocker() {
         ValidationPolicy::ALLOW_BOUNDARY,
     );
     with_exact_boolean_evaluation(&left, &right, request, |evaluation| {
-        assert!(!evaluation.is_certified(), "{evaluation:?}");
         assert!(evaluation.materialized_result().is_none(), "{evaluation:?}");
         assert!(evaluation.has_blocker(), "{evaluation:?}");
         evaluation.validate_against_sources(&left, &right).unwrap();
@@ -2960,7 +2954,6 @@ fn planar_arrangement_report_classifies_noncoplanar_candidates_as_winding_blocke
         ValidationPolicy::ALLOW_BOUNDARY,
     );
     with_exact_boolean_evaluation(&left, &right, request, |evaluation| {
-        assert!(!evaluation.is_certified(), "{evaluation:?}");
         assert!(evaluation.materialized_result().is_none(), "{evaluation:?}");
         assert!(evaluation.has_blocker(), "{evaluation:?}");
         evaluation.validate_against_sources(&left, &right).unwrap();
@@ -2980,7 +2973,6 @@ fn exact_boolean_public_shortcuts_handle_disjoint_operands() {
             ValidationPolicy::ALLOW_BOUNDARY,
         ),
         |preflight_evaluation| {
-            assert!(preflight_evaluation.is_certified());
             assert!(
                 preflight_evaluation.materialized_result().is_some(),
                 "{preflight_evaluation:?}"
@@ -3626,8 +3618,8 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
         ValidationPolicy::ALLOW_BOUNDARY,
     );
     with_exact_boolean_evaluation(&left, &right, request, |evaluation| {
-        assert!(evaluation.is_certified(), "{evaluation:?}");
         assert!(evaluation.materialized_result().is_some(), "{evaluation:?}");
+        assert!(!evaluation.has_blocker(), "{evaluation:?}");
         evaluation.validate_against_sources(&left, &right).unwrap();
     });
     with_exact_boolean_evaluation(
@@ -3639,10 +3631,6 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
             ExactBoundaryBooleanPolicy::Reject,
         ),
         |rejected_policy_evaluation| {
-            assert!(
-                !rejected_policy_evaluation.is_certified(),
-                "{rejected_policy_evaluation:?}"
-            );
             assert!(
                 rejected_policy_evaluation.materialized_result().is_none(),
                 "{rejected_policy_evaluation:?}"
@@ -3660,7 +3648,6 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
         ExactBoundaryBooleanPolicy::PreserveSeparateShells,
     );
     with_exact_boolean_evaluation(&left, &right, policy_request, |policy_evaluation| {
-        assert!(policy_evaluation.is_certified(), "{policy_evaluation:?}");
         assert!(
             policy_evaluation.materialized_result().is_some(),
             "{policy_evaluation:?}"
@@ -3675,7 +3662,11 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
                 .is_ok(),
             "default replay should certify a boundary-policy preflight"
         );
-        assert!(policy_evaluation.is_certified(), "{policy_evaluation:?}");
+        assert!(
+            policy_evaluation.materialized_result().is_some(),
+            "{policy_evaluation:?}"
+        );
+        assert!(!policy_evaluation.has_blocker(), "{policy_evaluation:?}");
         policy_evaluation
             .validate_against_sources(&left, &right)
             .unwrap();
@@ -3689,10 +3680,6 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
             ExactBoundaryBooleanPolicy::Reject,
         ),
         |rejected_policy_evaluation| {
-            assert!(
-                !rejected_policy_evaluation.is_certified(),
-                "strict replay should not certify a boundary-policy shortcut"
-            );
             assert!(
                 rejected_policy_evaluation.materialized_result().is_none(),
                 "strict replay should not materialize a boundary-policy shortcut"
@@ -3862,7 +3849,6 @@ fn boundary_touching_report_classifies_proper_crossing_as_winding_blocker() {
         ValidationPolicy::ALLOW_BOUNDARY,
     );
     with_exact_boolean_evaluation(&left, &right, request, |evaluation| {
-        assert!(!evaluation.is_certified(), "{evaluation:?}");
         assert!(evaluation.materialized_result().is_none(), "{evaluation:?}");
         assert!(evaluation.has_blocker(), "{evaluation:?}");
         evaluation.validate_against_sources(&left, &right).unwrap();

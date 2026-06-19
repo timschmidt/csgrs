@@ -2249,12 +2249,6 @@ impl ExactBooleanEvaluation {
         &self.preflight
     }
 
-    /// Return whether this evaluation has certified support for materializing
-    /// the requested operation under the retained request policy.
-    pub fn is_certified(&self) -> bool {
-        self.preflight.is_certified()
-    }
-
     /// Return whether this evaluation retained an explicit blocker.
     pub fn has_blocker(&self) -> bool {
         self.preflight.blocker().is_some()
