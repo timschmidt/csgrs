@@ -612,6 +612,7 @@ pub struct CurveStringChamferResult2 {
 pub struct CurveStringFilletReport2 {
     input_path: CurveStringFilletInputPath2,
     stage: CurveStringFilletStage2,
+    predicate_path: CurveStringFilletPredicatePath2,
     previous_segment_index: usize,
     next_segment_index: usize,
     previous_segment_start_point: Point2,
@@ -635,6 +636,31 @@ pub struct CurveStringFilletReport2 {
     output_segment_kind_counts: Option<SegmentKindCounts>,
     status: RetainedTopologyStatus,
     blocker: Option<UncertaintyReason>,
+}
+
+/// Exact predicate path used to validate one line-line fillet.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum CurveStringFilletPredicatePath2 {
+    /// Line-line tangent, nonzero/equal-radius, and orientation predicates all passed.
+    LineLineTangentArc,
+    /// At least one adjacent segment is not a line, so this fillet slice cannot materialize.
+    UnsupportedSegmentFamily,
+    /// A point-supplied tangent could not be certified on its selected source line segment.
+    TangentPointNotOnSourceSegment,
+    /// A tangent parameter was on or outside the valid strict interior range.
+    TangentParameterNotStrictInterior,
+    /// Tangent-parameter ordering or point-support predicates were unresolved.
+    TangentValidationUnresolved,
+    /// The radius was certified zero.
+    ZeroRadius,
+    /// The two tangent radii were certified unequal.
+    RadiusMismatch,
+    /// Radius sign or equality predicates were unresolved.
+    RadiusValidationUnresolved,
+    /// Tangency or traversal orientation predicates rejected the fillet.
+    TangencyOrOrientationRejected,
+    /// Tangency or traversal orientation predicates were unresolved.
+    TangencyOrOrientationUnresolved,
 }
 
 /// Input path used by a report-bearing line-line fillet operation.
@@ -2458,6 +2484,7 @@ impl CurveString2 {
                     Some(center.clone()),
                     None,
                     Vec::new(),
+                    CurveStringFilletPredicatePath2::UnsupportedSegmentFamily,
                     RetainedTopologyStatus::Unsupported,
                     Some(UncertaintyReason::Unsupported),
                 );
@@ -2538,6 +2565,7 @@ impl CurveString2 {
                     Some(center.clone()),
                     None,
                     Vec::new(),
+                    CurveStringFilletPredicatePath2::UnsupportedSegmentFamily,
                     RetainedTopologyStatus::Unsupported,
                     Some(UncertaintyReason::Unsupported),
                 ));
@@ -2557,6 +2585,11 @@ impl CurveString2 {
                         Some(center.clone()),
                         None,
                         Vec::new(),
+                        if reason == UncertaintyReason::Boundary {
+                            CurveStringFilletPredicatePath2::TangentPointNotOnSourceSegment
+                        } else {
+                            CurveStringFilletPredicatePath2::TangentValidationUnresolved
+                        },
                         retained_status_for_uncertainty(reason),
                         Some(reason),
                     ));
@@ -2576,6 +2609,11 @@ impl CurveString2 {
                     Some(center.clone()),
                     None,
                     Vec::new(),
+                    if reason == UncertaintyReason::Boundary {
+                        CurveStringFilletPredicatePath2::TangentPointNotOnSourceSegment
+                    } else {
+                        CurveStringFilletPredicatePath2::TangentValidationUnresolved
+                    },
                     retained_status_for_uncertainty(reason),
                     Some(reason),
                 ));
@@ -2607,6 +2645,7 @@ impl CurveString2 {
                     Some(center.clone()),
                     None,
                     Vec::new(),
+                    CurveStringFilletPredicatePath2::TangentParameterNotStrictInterior,
                     RetainedTopologyStatus::Unsupported,
                     Some(UncertaintyReason::Boundary),
                 ));
@@ -2621,6 +2660,7 @@ impl CurveString2 {
                     Some(center.clone()),
                     None,
                     Vec::new(),
+                    CurveStringFilletPredicatePath2::TangentValidationUnresolved,
                     RetainedTopologyStatus::Unresolved,
                     Some(UncertaintyReason::Ordering),
                 ));
@@ -2640,6 +2680,7 @@ impl CurveString2 {
                     Some(center.clone()),
                     Some(radius_squared),
                     Vec::new(),
+                    CurveStringFilletPredicatePath2::ZeroRadius,
                     RetainedTopologyStatus::Unsupported,
                     Some(UncertaintyReason::Boundary),
                 ));
@@ -2654,6 +2695,7 @@ impl CurveString2 {
                     Some(center.clone()),
                     Some(radius_squared),
                     Vec::new(),
+                    CurveStringFilletPredicatePath2::RadiusValidationUnresolved,
                     RetainedTopologyStatus::Unresolved,
                     Some(UncertaintyReason::RealSign),
                 ));
@@ -2674,6 +2716,7 @@ impl CurveString2 {
                     Some(center.clone()),
                     Some(radius_squared),
                     Vec::new(),
+                    CurveStringFilletPredicatePath2::RadiusMismatch,
                     RetainedTopologyStatus::Unsupported,
                     Some(UncertaintyReason::Boundary),
                 ));
@@ -2688,6 +2731,7 @@ impl CurveString2 {
                     Some(center.clone()),
                     Some(radius_squared),
                     Vec::new(),
+                    CurveStringFilletPredicatePath2::RadiusValidationUnresolved,
                     RetainedTopologyStatus::Unresolved,
                     Some(UncertaintyReason::RealSign),
                 ));
@@ -2710,6 +2754,11 @@ impl CurveString2 {
                 Some(center.clone()),
                 Some(radius_squared),
                 Vec::new(),
+                if reason == UncertaintyReason::Boundary {
+                    CurveStringFilletPredicatePath2::TangencyOrOrientationRejected
+                } else {
+                    CurveStringFilletPredicatePath2::TangencyOrOrientationUnresolved
+                },
                 retained_status_for_uncertainty(reason),
                 Some(reason),
             ));
@@ -2726,6 +2775,11 @@ impl CurveString2 {
                 Some(center.clone()),
                 Some(radius_squared),
                 Vec::new(),
+                if reason == UncertaintyReason::Boundary {
+                    CurveStringFilletPredicatePath2::TangencyOrOrientationRejected
+                } else {
+                    CurveStringFilletPredicatePath2::TangencyOrOrientationUnresolved
+                },
                 retained_status_for_uncertainty(reason),
                 Some(reason),
             ));
@@ -2788,6 +2842,7 @@ impl CurveString2 {
             report: CurveStringFilletReport2 {
                 input_path: CurveStringFilletInputPath2::Points,
                 stage: CurveStringFilletStage2::ArcMaterialization,
+                predicate_path: CurveStringFilletPredicatePath2::LineLineTangentArc,
                 previous_segment_index,
                 next_segment_index,
                 previous_segment_start_point: previous_line.start().clone(),
@@ -3851,6 +3906,11 @@ impl CurveStringFilletReport2 {
     /// Returns the furthest exact fillet stage reached.
     pub const fn stage(&self) -> CurveStringFilletStage2 {
         self.stage
+    }
+
+    /// Returns the exact predicate path used to validate this fillet.
+    pub const fn predicate_path(&self) -> CurveStringFilletPredicatePath2 {
+        self.predicate_path
     }
 
     /// Returns the previous source segment index at the filleted vertex.
@@ -6202,6 +6262,7 @@ fn blocked_fillet_result(
     center: Option<Point2>,
     radius_squared: Option<Real>,
     segment_reports: Vec<CurveStringTrimSegmentReport2>,
+    predicate_path: CurveStringFilletPredicatePath2,
     status: RetainedTopologyStatus,
     blocker: Option<UncertaintyReason>,
 ) -> CurveStringFilletResult2 {
@@ -6214,6 +6275,7 @@ fn blocked_fillet_result(
             } else {
                 CurveStringFilletStage2::InputValidation
             },
+            predicate_path,
             previous_segment_index,
             next_segment_index,
             previous_segment_start_point: curve_string.segments[previous_segment_index]

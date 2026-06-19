@@ -5,14 +5,15 @@ use hypercurve::{
     CurveStringCurveTrimStage2, CurveStringDeduplicateStage2, CurveStringEndpoint2,
     CurveStringEndpointConnectionPredicatePath2, CurveStringEndpointConnectionStatus2,
     CurveStringExtendPredicatePath2, CurveStringExtendStage2, CurveStringFilletInputPath2,
-    CurveStringFilletStage2, CurveStringIntersectionPredicatePath2,
-    CurveStringIntersectionQueryPath2, CurveStringLineMergeStage2, CurveStringLinkKind2,
-    CurveStringLinkSourceInput2, CurveStringLinkStage2, CurveStringOrderedLinkStage2,
-    CurveStringPreparedCacheFreshness2, CurveStringRegionTrimBoundaryPredicatePath2,
-    CurveStringRegionTrimQueryPath2, CurveStringRegionTrimStage2, CurveStringTrimInputPath2,
-    CurveStringTrimPoint2, IntersectionKind, LineArcIntersection, LineArcOrder, LineSeg2, Point2,
-    Real, Region2, RegionContourRole, RegionPointLocation, Segment2, SegmentIntersection,
-    SegmentKind, SegmentKindCounts, UncertaintyReason,
+    CurveStringFilletPredicatePath2, CurveStringFilletStage2,
+    CurveStringIntersectionPredicatePath2, CurveStringIntersectionQueryPath2,
+    CurveStringLineMergeStage2, CurveStringLinkKind2, CurveStringLinkSourceInput2,
+    CurveStringLinkStage2, CurveStringOrderedLinkStage2, CurveStringPreparedCacheFreshness2,
+    CurveStringRegionTrimBoundaryPredicatePath2, CurveStringRegionTrimQueryPath2,
+    CurveStringRegionTrimStage2, CurveStringTrimInputPath2, CurveStringTrimPoint2,
+    IntersectionKind, LineArcIntersection, LineArcOrder, LineSeg2, Point2, Real, Region2,
+    RegionContourRole, RegionPointLocation, Segment2, SegmentIntersection, SegmentKind,
+    SegmentKindCounts, UncertaintyReason,
 };
 
 fn s(value: i32) -> Real {
@@ -2560,6 +2561,10 @@ fn curve_string_fillet_line_line_vertex_materializes_exact_arc() {
         fillet.report().stage(),
         CurveStringFilletStage2::ArcMaterialization
     );
+    assert_eq!(
+        fillet.report().predicate_path(),
+        CurveStringFilletPredicatePath2::LineLineTangentArc
+    );
     assert_eq!(fillet.report().previous_segment_index(), 0);
     assert_eq!(fillet.report().next_segment_index(), 1);
     assert_eq!(fillet.report().previous_segment_start_point(), &p(0, 0));
@@ -2688,6 +2693,10 @@ fn curve_string_fillet_line_line_vertex_by_parameters_materializes_exact_arc() {
         fillet.report().input_path(),
         CurveStringFilletInputPath2::Parameters
     );
+    assert_eq!(
+        fillet.report().predicate_path(),
+        CurveStringFilletPredicatePath2::LineLineTangentArc
+    );
     assert_eq!(fillet.report().previous_trim().param(), &q(3, 4));
     assert_eq!(fillet.report().next_trim().param(), &q(1, 4));
     assert_eq!(fillet.report().previous_tangent_point(), Some(&p(3, 0)));
@@ -2733,6 +2742,10 @@ fn curve_string_fillet_reports_radius_mismatch_boundary() {
         fillet.report().stage(),
         CurveStringFilletStage2::RadiusAndTangencyValidation
     );
+    assert_eq!(
+        fillet.report().predicate_path(),
+        CurveStringFilletPredicatePath2::RadiusMismatch
+    );
     assert_eq!(fillet.report().previous_segment_start_point(), &p(0, 0));
     assert_eq!(fillet.report().previous_segment_end_point(), &p(4, 0));
     assert_eq!(fillet.report().next_segment_start_point(), &p(4, 0));
@@ -2761,6 +2774,10 @@ fn curve_string_fillet_reports_wrong_orientation_boundary() {
 
     assert!(fillet.curve_string().is_none());
     assert!(fillet.report().status().is_retained_evidence());
+    assert_eq!(
+        fillet.report().predicate_path(),
+        CurveStringFilletPredicatePath2::TangencyOrOrientationRejected
+    );
     assert_eq!(fillet.report().blocker(), Some(UncertaintyReason::Boundary));
     assert_eq!(fillet.report().fillet_segment_index(), None);
     assert_eq!(fillet.report().fillet_segment_kind(), None);
@@ -2782,6 +2799,10 @@ fn curve_string_fillet_reports_boundary_parameters() {
 
     assert!(fillet.curve_string().is_none());
     assert!(fillet.report().status().is_retained_evidence());
+    assert_eq!(
+        fillet.report().predicate_path(),
+        CurveStringFilletPredicatePath2::TangentParameterNotStrictInterior
+    );
     assert_eq!(fillet.report().blocker(), Some(UncertaintyReason::Boundary));
     assert_eq!(fillet.report().fillet_segment_index(), None);
     assert_eq!(fillet.report().fillet_segment_start_point(), None);
