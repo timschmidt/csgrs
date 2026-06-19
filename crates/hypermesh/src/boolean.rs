@@ -2581,14 +2581,6 @@ impl ExactBooleanEvaluation {
         &mut self.certifications
     }
 
-    /// Replace the retained certification bundle.
-    pub fn replace_certifications(
-        &mut self,
-        certifications: ExactBooleanCertificationSet,
-    ) -> ExactBooleanCertificationSet {
-        std::mem::replace(&mut self.certifications, certifications)
-    }
-
     /// Return the exact preflight/scheduling report mutably.
     pub fn preflight_mut(&mut self) -> &mut ExactBooleanPreflight {
         &mut self.preflight
