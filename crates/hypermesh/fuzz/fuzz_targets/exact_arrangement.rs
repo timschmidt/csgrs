@@ -1,8 +1,7 @@
 #![no_main]
 
 use hypermesh::{
-    ExactBooleanOperation, ExactBooleanRequest, ExactBooleanWorkspace, ExactMesh,
-    ExactReportFreshness, ValidationPolicy,
+    ExactBooleanOperation, ExactBooleanRequest, ExactBooleanWorkspace, ExactMesh, ValidationPolicy,
 };
 use libfuzzer_sys::fuzz_target;
 
@@ -63,7 +62,6 @@ fn exercise_workspace_requests(left: &ExactMesh, right: &ExactMesh, validation: 
         if let Ok(evaluation) = workspace.evaluate(request) {
             let _ = evaluation.validate();
             let _ = evaluation.validate_against_sources(left, right);
-            let _ = evaluation.freshness_against_sources(left, right);
             if let Some(attempt) = evaluation.retained_arrangement_attempt() {
                 let _ = attempt.validate();
                 let _ = attempt.validate_against_sources_for_request(left, right, request);
@@ -86,7 +84,7 @@ fn exercise_workspace_requests(left: &ExactMesh, right: &ExactMesh, validation: 
         ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::ALLOW_BOUNDARY);
     let mut workspace = ExactBooleanWorkspace::new(left, right);
     if let Ok(evaluation) = workspace.evaluate(disjoint_request)
-        && evaluation.freshness_against_sources(left, right) == ExactReportFreshness::Current
+        && evaluation.validate_against_sources(left, right).is_ok()
         && let Ok(result) = workspace.materialize_ref(disjoint_request)
     {
         let _ = result.validate();

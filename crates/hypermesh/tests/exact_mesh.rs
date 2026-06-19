@@ -70,10 +70,6 @@ fn assert_public_full_face_adjacent_union(
     with_exact_boolean_evaluation(left, right, request, |evaluation| {
         evaluation.validate().unwrap();
         evaluation.validate_against_sources(left, right).unwrap();
-        assert_eq!(
-            evaluation.freshness_against_sources(left, right),
-            ExactReportFreshness::Current
-        );
     });
 
     let result = exact_boolean_result(left, right, request);
@@ -102,10 +98,6 @@ fn assert_public_contained_face_adjacent_union(
     with_exact_boolean_evaluation(left, right, request, |evaluation| {
         evaluation.validate().unwrap();
         evaluation.validate_against_sources(left, right).unwrap();
-        assert_eq!(
-            evaluation.freshness_against_sources(left, right),
-            ExactReportFreshness::Current
-        );
     });
 
     let result = exact_boolean_result(left, right, request);
@@ -227,10 +219,6 @@ fn exact_boolean_evaluation_materializes_certified_result_publicly() {
     with_exact_boolean_evaluation(&left, &right, request, |evaluation| {
         evaluation.validate().unwrap();
         evaluation.validate_against_sources(&left, &right).unwrap();
-        assert_eq!(
-            evaluation.freshness_against_sources(&left, &right),
-            hypermesh::ExactReportFreshness::Current
-        );
         assert!(evaluation.is_certified());
         assert!(evaluation.materialized_result().is_some());
         assert!(!evaluation.has_blocker());
@@ -243,10 +231,6 @@ fn exact_boolean_evaluation_materializes_certified_result_publicly() {
             evaluation
                 .validate_against_sources(&left, &stale_right)
                 .is_err()
-        );
-        assert_eq!(
-            evaluation.freshness_against_sources(&left, &stale_right),
-            hypermesh::ExactReportFreshness::SourceReplayMismatch
         );
     });
 }
@@ -1263,10 +1247,6 @@ fn full_face_adjacent_union_refines_side_faces_for_boundary_subdivided_shared_fa
     with_exact_boolean_evaluation(&left, &right, request, |evaluation| {
         evaluation.validate().unwrap();
         evaluation.validate_against_sources(&left, &right).unwrap();
-        assert_eq!(
-            evaluation.freshness_against_sources(&left, &right),
-            ExactReportFreshness::Current
-        );
     });
 }
 
@@ -1396,13 +1376,10 @@ fn adjacent_union_completion_boolean_is_publicly_replayable() {
     with_exact_boolean_evaluation(&left, &right, request, |evaluation| {
         evaluation.validate().unwrap();
         evaluation.validate_against_sources(&left, &right).unwrap();
-        assert_eq!(
-            evaluation.freshness_against_sources(&left, &right),
-            ExactReportFreshness::Current
-        );
-        assert_eq!(
-            evaluation.freshness_against_sources(&left, &separated_right),
-            ExactReportFreshness::SourceReplayMismatch
+        assert!(
+            evaluation
+                .validate_against_sources(&left, &separated_right)
+                .is_err()
         );
     });
 
@@ -1824,13 +1801,10 @@ fn lower_dimensional_regularized_boolean_is_publicly_replayable() {
                 materialized.is_certified_shortcut_for(operation),
                 "{operation:?}: {evaluation:?}"
             );
-            assert_eq!(
-                evaluation.freshness_against_sources(&left, &closed_right),
-                ExactReportFreshness::SourceReplayMismatch
-            );
-            assert_eq!(
-                evaluation.freshness_against_sources(&left, &right),
-                ExactReportFreshness::Current
+            assert!(
+                evaluation
+                    .validate_against_sources(&left, &closed_right)
+                    .is_err()
             );
         });
 
@@ -2587,9 +2561,10 @@ fn arrangement_cell_complex_request_materialization_is_publicly_replayable() {
     result.validate().unwrap();
     let evaluation = workspace.evaluate(request).unwrap();
     evaluation.validate_against_sources(&left, &right).unwrap();
-    assert_eq!(
-        evaluation.freshness_against_sources(&left, &stale_right),
-        ExactReportFreshness::SourceReplayMismatch,
+    assert!(
+        evaluation
+            .validate_against_sources(&left, &stale_right)
+            .is_err(),
         "canonical replay must reject stale source operands"
     );
     if !result.is_arrangement_cell_complex_materialized_for(ExactBooleanOperation::Union) {
@@ -2775,13 +2750,10 @@ fn exact_contained_face_adjacent_union_is_publicly_replayable() {
         evaluation
             .validate_against_sources(&container, &right)
             .unwrap();
-        assert_eq!(
-            evaluation.freshness_against_sources(&container, &right),
-            ExactReportFreshness::Current
-        );
-        assert_eq!(
-            evaluation.freshness_against_sources(&container, &separated_right),
-            ExactReportFreshness::SourceReplayMismatch
+        assert!(
+            evaluation
+                .validate_against_sources(&container, &separated_right)
+                .is_err()
         );
     });
     let result = exact_boolean_result(
@@ -2856,13 +2828,13 @@ fn public_exact_blocker_reports_replay_remaining_decisions() {
                 || evaluation.has_blocker(),
             "{evaluation:?}"
         );
-        assert_eq!(
-            evaluation.freshness_against_sources(&left, &overlapping_right),
-            ExactReportFreshness::Current
-        );
-        assert_eq!(
-            evaluation.freshness_against_sources(&left, &separated_right),
-            ExactReportFreshness::SourceReplayMismatch
+        evaluation
+            .validate_against_sources(&left, &overlapping_right)
+            .unwrap();
+        assert!(
+            evaluation
+                .validate_against_sources(&left, &separated_right)
+                .is_err()
         );
     });
 
@@ -2884,13 +2856,10 @@ fn public_exact_blocker_reports_replay_remaining_decisions() {
             planar_evaluation
                 .validate_against_sources(&left, &overlapping_right)
                 .unwrap();
-            assert_eq!(
-                planar_evaluation.freshness_against_sources(&left, &overlapping_right),
-                ExactReportFreshness::Current
-            );
-            assert_eq!(
-                planar_evaluation.freshness_against_sources(&left, &separated_right),
-                ExactReportFreshness::SourceReplayMismatch
+            assert!(
+                planar_evaluation
+                    .validate_against_sources(&left, &separated_right)
+                    .is_err()
             );
         },
     );
@@ -2909,13 +2878,10 @@ fn public_exact_blocker_reports_replay_remaining_decisions() {
         same_evaluation
             .validate_against_sources(&left, &left)
             .unwrap();
-        assert_eq!(
-            same_evaluation.freshness_against_sources(&left, &left),
-            ExactReportFreshness::Current
-        );
-        assert_eq!(
-            same_evaluation.freshness_against_sources(&left, &separated_right),
-            ExactReportFreshness::SourceReplayMismatch
+        assert!(
+            same_evaluation
+                .validate_against_sources(&left, &separated_right)
+                .is_err()
         );
     });
 
@@ -2939,13 +2905,10 @@ fn public_exact_blocker_reports_replay_remaining_decisions() {
         open_evaluation
             .validate_against_sources(&left, &parallel_right)
             .unwrap();
-        assert_eq!(
-            open_evaluation.freshness_against_sources(&left, &parallel_right),
-            ExactReportFreshness::Current
-        );
-        assert_eq!(
-            open_evaluation.freshness_against_sources(&left, &overlapping_right),
-            ExactReportFreshness::SourceReplayMismatch
+        assert!(
+            open_evaluation
+                .validate_against_sources(&left, &overlapping_right)
+                .is_err()
         );
     });
 }
@@ -3706,10 +3669,6 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
         policy_evaluation
             .validate_against_sources(&left, &right)
             .unwrap();
-        assert_eq!(
-            policy_evaluation.freshness_against_sources(&left, &right),
-            hypermesh::ExactReportFreshness::Current
-        );
         assert!(
             policy_evaluation
                 .validate_against_sources(&left, &right)
@@ -3720,10 +3679,6 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
         policy_evaluation
             .validate_against_sources(&left, &right)
             .unwrap();
-        assert_eq!(
-            policy_evaluation.freshness_against_sources(&left, &right),
-            hypermesh::ExactReportFreshness::Current
-        );
     });
     with_exact_boolean_evaluation(
         &left,

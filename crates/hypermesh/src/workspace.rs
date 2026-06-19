@@ -922,10 +922,6 @@ mod tests {
         evaluation.validate_against_sources(&left, &right).unwrap();
         let certifications = evaluation.certifications().clone();
         certifications.validate_for_request(request).unwrap();
-        assert_eq!(
-            evaluation.freshness_against_sources(&left, &right),
-            ExactReportFreshness::Current
-        );
 
         let mut stale = certifications;
         stale.refinement_mut().retained_events += 1;
@@ -1029,20 +1025,12 @@ mod tests {
 
         let retained = workspace.evaluate(request).unwrap();
         retained.validate_against_sources(&left, &right).unwrap();
-        assert_eq!(
-            retained.freshness_against_sources(&left, &right),
-            ExactReportFreshness::Current
-        );
 
         let mut stale = retained.clone();
         stale.preflight_mut().retained_events += 1;
         assert_eq!(
             stale.validate_against_sources(&left, &right),
             Err(ExactReportValidationError::StatusEvidenceMismatch)
-        );
-        assert_ne!(
-            stale.freshness_against_sources(&left, &right),
-            ExactReportFreshness::Current
         );
 
         let mut corrupt_proof_workspace = ExactBooleanWorkspace::new(&left, &right);

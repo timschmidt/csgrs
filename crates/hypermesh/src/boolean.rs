@@ -82,7 +82,6 @@ use super::reports::{
     ExactRefinementStatus, ExactReportValidationError, ExactSameSurfaceReport,
     ExactSameSurfaceStatus, ExactVolumetricBoundaryClosureReport,
     ExactVolumetricBoundaryClosureStatus, ExactWindingReadinessReport, ExactWindingReadinessStatus,
-    exact_report_freshness,
 };
 pub use super::reports::{ExactBooleanResult, ExactReportFreshness};
 use super::simplify::ExactSimplifiedCellComplex;
@@ -2376,16 +2375,6 @@ impl ExactBooleanEvaluation {
         } else {
             Ok(())
         }
-    }
-
-    /// Classify whether this retained evaluation is fresh for the source
-    /// meshes under its original request policy.
-    pub fn freshness_against_sources(
-        &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-    ) -> ExactReportFreshness {
-        exact_report_freshness(self.validate_against_sources(left, right))
     }
 
     fn requires_materialized_result(&self) -> bool {
