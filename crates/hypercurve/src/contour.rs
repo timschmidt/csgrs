@@ -126,6 +126,8 @@ pub enum ContourFilletStage2 {
 /// One retained source run emitted by a closed-contour line merge.
 #[derive(Clone, Debug, PartialEq)]
 pub struct ContourLineMergeSpanReport2 {
+    source_start_segment_index: usize,
+    source_end_segment_index: usize,
     source_segment_indices: Vec<usize>,
     source_segment_kind_counts: SegmentKindCounts,
     source_start_point: Point2,
@@ -1254,6 +1256,16 @@ impl ContourFilletResult2 {
 }
 
 impl ContourLineMergeSpanReport2 {
+    /// Returns the first source segment index included in this output segment.
+    pub const fn source_start_segment_index(&self) -> usize {
+        self.source_start_segment_index
+    }
+
+    /// Returns the final source segment index included in this output segment.
+    pub const fn source_end_segment_index(&self) -> usize {
+        self.source_end_segment_index
+    }
+
     /// Returns source segment indices included in this output segment.
     pub fn source_segment_indices(&self) -> &[usize] {
         &self.source_segment_indices
@@ -1588,6 +1600,8 @@ fn push_contour_line_merge_run(
     };
     output_segments.push(segment);
     spans.push(ContourLineMergeSpanReport2 {
+        source_start_segment_index: first_source_index,
+        source_end_segment_index: last_source_index,
         source_segment_indices: source_indices.to_vec(),
         source_segment_kind_counts: contour_line_merge_run_kind_counts(
             source_segments,
