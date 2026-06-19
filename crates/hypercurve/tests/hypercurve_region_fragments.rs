@@ -183,6 +183,10 @@ fn region_fragments_split_all_keyed_contours() {
         0
     );
     assert_eq!(
+        built.report().contour_reports()[0].output_fragments()[0].source_segment_kind(),
+        SegmentKind::Line
+    );
+    assert_eq!(
         built.report().contour_reports()[0].output_fragments()[0].source_segment_start_point(),
         &p(0, 0)
     );
