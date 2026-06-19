@@ -44,6 +44,8 @@ pub struct RegionBooleanReport2 {
     boundary_point_event_count: usize,
     boundary_overlap_event_count: usize,
     boundary_uncertain_event_count: usize,
+    boundary_first_event_segment_kind_counts: SegmentKindCounts,
+    boundary_second_event_segment_kind_counts: SegmentKindCounts,
     boundary_contour_count: Option<usize>,
     result_material_contour_count: Option<usize>,
     result_hole_contour_count: Option<usize>,
@@ -766,6 +768,16 @@ impl RegionBooleanReport2 {
     /// Returns retained unresolved boundary-intersection events consumed by boolean splitting.
     pub const fn boundary_uncertain_event_count(&self) -> usize {
         self.boundary_uncertain_event_count
+    }
+
+    /// Returns primitive families touched by retained first-region boundary events.
+    pub const fn boundary_first_event_segment_kind_counts(&self) -> SegmentKindCounts {
+        self.boundary_first_event_segment_kind_counts
+    }
+
+    /// Returns primitive families touched by retained second-region boundary events.
+    pub const fn boundary_second_event_segment_kind_counts(&self) -> SegmentKindCounts {
+        self.boundary_second_event_segment_kind_counts
     }
 
     /// Returns checked output boundary contour count when available.
@@ -1568,6 +1580,10 @@ pub(crate) fn region_boolean_result_from_boundary_contours_with_prepared_cache_a
             boundary_point_event_count: boundary_events.point_event_count(),
             boundary_overlap_event_count: boundary_events.overlap_event_count(),
             boundary_uncertain_event_count: boundary_events.uncertain_event_count(),
+            boundary_first_event_segment_kind_counts: boundary_events
+                .first_event_segment_kind_counts(),
+            boundary_second_event_segment_kind_counts: boundary_events
+                .second_event_segment_kind_counts(),
             boundary_contour_count: Some(boundary_contour_count),
             result_material_contour_count,
             result_hole_contour_count,
@@ -1642,6 +1658,10 @@ pub(crate) fn blocked_region_boolean_result_with_prepared_cache(
             boundary_point_event_count: boundary_events.point_event_count(),
             boundary_overlap_event_count: boundary_events.overlap_event_count(),
             boundary_uncertain_event_count: boundary_events.uncertain_event_count(),
+            boundary_first_event_segment_kind_counts: boundary_events
+                .first_event_segment_kind_counts(),
+            boundary_second_event_segment_kind_counts: boundary_events
+                .second_event_segment_kind_counts(),
             boundary_contour_count: None,
             result_material_contour_count: None,
             result_hole_contour_count: None,
