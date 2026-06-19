@@ -241,8 +241,9 @@ pub use region_events::{
     RegionSide,
 };
 pub use region_fragments::{
-    RegionContourFragmentReport2, RegionContourFragments, RegionFragmentBuildReport2,
-    RegionFragmentBuildResult2, RegionFragmentBuildStage2, RegionFragmentSet,
+    RegionContourFragmentReport2, RegionContourFragments, RegionContourOutputFragmentReport2,
+    RegionFragmentBuildReport2, RegionFragmentBuildResult2, RegionFragmentBuildStage2,
+    RegionFragmentSet,
 };
 pub use region_nesting::{
     RegionBoundaryContourBuildReport2, RegionBoundaryContourBuildResult2,

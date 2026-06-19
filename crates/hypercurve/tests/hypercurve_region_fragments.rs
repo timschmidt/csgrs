@@ -1,11 +1,15 @@
 use hypercurve::{
     BulgeVertex2, Classification, Contour2, CurveError, CurvePolicy, Real, Region2,
     RegionContourFragments, RegionContourKey, RegionContourRole, RegionFragmentBuildStage2,
-    RegionFragmentSet, RegionSide,
+    RegionFragmentSet, RegionSide, SegmentKind,
 };
 
 fn s(value: i32) -> Real {
     value.into()
+}
+
+fn q(numerator: i32, denominator: i32) -> Real {
+    (Real::from(numerator) / Real::from(denominator)).unwrap()
 }
 
 fn p(x: i32, y: i32) -> hypercurve::Point2 {
@@ -153,6 +157,42 @@ fn region_fragments_split_all_keyed_contours() {
     assert_eq!(
         built.report().contour_reports()[0].output_fragment_count(),
         6
+    );
+    assert_eq!(
+        built.report().contour_reports()[0].output_fragments().len(),
+        6
+    );
+    assert_eq!(
+        built.report().contour_reports()[0].output_fragments()[0].source_segment_index(),
+        0
+    );
+    assert_eq!(
+        built.report().contour_reports()[0].output_fragments()[0].source_segment_start_point(),
+        &p(0, 0)
+    );
+    assert_eq!(
+        built.report().contour_reports()[0].output_fragments()[0].source_segment_end_point(),
+        &p(10, 0)
+    );
+    assert_eq!(
+        built.report().contour_reports()[0].output_fragments()[0]
+            .source_range()
+            .start(),
+        &s(0)
+    );
+    assert_eq!(
+        built.report().contour_reports()[0].output_fragments()[0]
+            .source_range()
+            .end(),
+        &q(1, 2)
+    );
+    assert_eq!(
+        built.report().contour_reports()[0].output_fragments()[0].output_fragment_index(),
+        0
+    );
+    assert_eq!(
+        built.report().contour_reports()[0].output_fragments()[0].output_fragment_kind(),
+        SegmentKind::Line
     );
     assert!(
         built.report().contour_reports()[0]
@@ -310,7 +350,28 @@ fn region_fragments_keep_disjoint_contours_unsplit() {
         assert_eq!(report.contributing_pair_count(), 0);
         assert_eq!(report.intersection_event_count(), 0);
         assert_eq!(report.output_fragment_count(), 4);
+        assert_eq!(report.output_fragments().len(), 4);
     }
+    assert_eq!(
+        built.report().contour_reports()[0].output_fragments()[0].source_segment_start_point(),
+        &p(0, 0)
+    );
+    assert_eq!(
+        built.report().contour_reports()[0].output_fragments()[0].source_segment_end_point(),
+        &p(2, 0)
+    );
+    assert_eq!(
+        built.report().contour_reports()[0].output_fragments()[0]
+            .source_range()
+            .start(),
+        &s(0)
+    );
+    assert_eq!(
+        built.report().contour_reports()[0].output_fragments()[0]
+            .source_range()
+            .end(),
+        &s(1)
+    );
 }
 
 #[test]

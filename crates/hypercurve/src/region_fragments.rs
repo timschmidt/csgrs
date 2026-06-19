@@ -11,8 +11,9 @@
 
 use crate::{
     Classification, Contour2, ContourFragmentSet, ContourOperand, ContourSplitMarkers, CurveError,
-    CurvePolicy, CurveResult, RegionContourKey, RegionContourRole, RegionIntersectionSet,
-    RegionSide, RegionView2, RetainedTopologyStatus, UncertaintyReason,
+    CurvePolicy, CurveResult, ParamRange, Point2, RegionContourKey, RegionContourRole,
+    RegionIntersectionSet, RegionSide, RegionView2, RetainedTopologyStatus, SegmentKind,
+    UncertaintyReason,
 };
 
 /// Fragments for one keyed contour in a region-pair query.
@@ -32,7 +33,19 @@ pub struct RegionContourFragmentReport2 {
     contributing_pair_count: usize,
     intersection_event_count: usize,
     output_fragment_count: usize,
+    output_fragments: Vec<RegionContourOutputFragmentReport2>,
     status: RetainedTopologyStatus,
+}
+
+/// Source provenance for one output fragment produced from a keyed contour.
+#[derive(Clone, Debug, PartialEq)]
+pub struct RegionContourOutputFragmentReport2 {
+    source_segment_index: usize,
+    source_segment_start_point: Point2,
+    source_segment_end_point: Point2,
+    source_range: ParamRange,
+    output_fragment_index: usize,
+    output_fragment_kind: SegmentKind,
 }
 
 /// Report for splitting two region views at retained intersection evidence.
@@ -368,9 +381,46 @@ impl RegionContourFragmentReport2 {
         self.output_fragment_count
     }
 
+    /// Returns per-output-fragment source provenance.
+    pub fn output_fragments(&self) -> &[RegionContourOutputFragmentReport2] {
+        &self.output_fragments
+    }
+
     /// Returns retained topology status for this contour split.
     pub const fn status(&self) -> RetainedTopologyStatus {
         self.status
+    }
+}
+
+impl RegionContourOutputFragmentReport2 {
+    /// Returns the source segment index in the original contour.
+    pub const fn source_segment_index(&self) -> usize {
+        self.source_segment_index
+    }
+
+    /// Returns the exact start point of the original source segment.
+    pub const fn source_segment_start_point(&self) -> &Point2 {
+        &self.source_segment_start_point
+    }
+
+    /// Returns the exact end point of the original source segment.
+    pub const fn source_segment_end_point(&self) -> &Point2 {
+        &self.source_segment_end_point
+    }
+
+    /// Returns the retained parameter range on the source segment.
+    pub const fn source_range(&self) -> &ParamRange {
+        &self.source_range
+    }
+
+    /// Returns the output fragment index in contour traversal order.
+    pub const fn output_fragment_index(&self) -> usize {
+        self.output_fragment_index
+    }
+
+    /// Returns the output fragment kind.
+    pub const fn output_fragment_kind(&self) -> SegmentKind {
+        self.output_fragment_kind
     }
 }
 
@@ -741,12 +791,33 @@ fn append_region_contours(
             contributing_pair_count,
             intersection_event_count,
             output_fragment_count: fragments.len(),
+            output_fragments: region_contour_output_fragment_reports(&fragments),
             status: RetainedTopologyStatus::NativeExact,
         });
         out.push(RegionContourFragments { key, fragments });
     }
 
     Ok(Classification::Decided(()))
+}
+
+fn region_contour_output_fragment_reports(
+    fragments: &ContourFragmentSet,
+) -> Vec<RegionContourOutputFragmentReport2> {
+    fragments
+        .fragments()
+        .iter()
+        .enumerate()
+        .map(
+            |(output_fragment_index, fragment)| RegionContourOutputFragmentReport2 {
+                source_segment_index: fragment.source_segment_index,
+                source_segment_start_point: fragment.source_segment_start_point.clone(),
+                source_segment_end_point: fragment.source_segment_end_point.clone(),
+                source_range: fragment.source_range.clone(),
+                output_fragment_index,
+                output_fragment_kind: fragment.segment.structural_facts().kind,
+            },
+        )
+        .collect()
 }
 
 fn split_keyed_contour(
