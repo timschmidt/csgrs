@@ -51,6 +51,13 @@ pub struct RegionContourOutputFragmentReport2 {
     output_fragment_kind: SegmentKind,
 }
 
+/// Exact predicate family used by the retained region-intersection evidence.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum RegionFragmentBuildPredicatePath2 {
+    /// Region contour pairs were filtered by AABB before exact contour intersection predicates.
+    AabbFilteredContourIntersection,
+}
+
 /// Report for splitting two region views at retained intersection evidence.
 #[derive(Clone, Debug, PartialEq)]
 pub struct RegionFragmentBuildReport2 {
@@ -63,6 +70,7 @@ pub struct RegionFragmentBuildReport2 {
     second_hole_source_segment_count: usize,
     first_source_segment_count: usize,
     second_source_segment_count: usize,
+    predicate_path: RegionFragmentBuildPredicatePath2,
     intersection_pair_count: usize,
     intersection_event_count: usize,
     point_event_count: usize,
@@ -335,6 +343,7 @@ pub(crate) fn split_region_views_at_intersections_with_report(
             second_hole_source_segment_count,
             first_source_segment_count,
             second_source_segment_count,
+            predicate_path: RegionFragmentBuildPredicatePath2::AabbFilteredContourIntersection,
             intersection_pair_count: intersections.intersecting_pair_count(),
             intersection_event_count: intersections.event_count(),
             point_event_count: intersections.point_event_count(),
@@ -490,6 +499,11 @@ impl RegionFragmentBuildReport2 {
     /// Returns the number of source contour segments in the second region view.
     pub const fn second_source_segment_count(&self) -> usize {
         self.second_source_segment_count
+    }
+
+    /// Returns the exact predicate/filter path used by the retained intersection evidence.
+    pub const fn predicate_path(&self) -> RegionFragmentBuildPredicatePath2 {
+        self.predicate_path
     }
 
     /// Returns the number of keyed contour pairs that retained intersections.
@@ -650,6 +664,7 @@ fn blocked_region_fragment_build_result(
             second_hole_source_segment_count,
             first_source_segment_count,
             second_source_segment_count,
+            predicate_path: RegionFragmentBuildPredicatePath2::AabbFilteredContourIntersection,
             intersection_pair_count: intersections.intersecting_pair_count(),
             intersection_event_count: intersections.event_count(),
             point_event_count: intersections.point_event_count(),
