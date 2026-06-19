@@ -116,7 +116,22 @@ pub struct ExactCurveArrangementSplitCache2 {
     intersection_points: Vec<Point2>,
     intersection_reports: Vec<RegionLineSegmentSplitIntersectionReport2>,
     intersection_bucket_cache: ExactCurveArrangementSplitIntersectionBucketCache2,
+    blocker_cache: Option<ExactCurveArrangementSplitBlockerCache2>,
     output_segment_count: Option<usize>,
+}
+
+/// Retained source-pair blocker evidence from exact split arrangement.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ExactCurveArrangementSplitBlockerCache2 {
+    first_source_segment_index: usize,
+    first_source_segment_kind: SegmentKind,
+    first_source_start_point: Point2,
+    first_source_end_point: Point2,
+    second_source_segment_index: usize,
+    second_source_segment_kind: SegmentKind,
+    second_source_start_point: Point2,
+    second_source_end_point: Point2,
+    blocker: Option<UncertaintyReason>,
 }
 
 /// Reference to a retained split-intersection report inside an exact point bucket.
@@ -1423,6 +1438,8 @@ impl ExactCurveArrangementSplitCache2 {
     fn from_region_build_report(report: &RegionLineSegmentRegionBuildReport2) -> Self {
         let intersection_bucket_cache =
             split_intersection_bucket_cache(&report.split_intersection_reports);
+        let blocker_cache =
+            ExactCurveArrangementSplitBlockerCache2::from_region_build_report(report);
         Self {
             predicate_path: report.split_predicate_path,
             candidate_pair_count: report.split_candidate_pair_count,
@@ -1435,6 +1452,7 @@ impl ExactCurveArrangementSplitCache2 {
             intersection_points: report.split_intersection_points.clone(),
             intersection_reports: report.split_intersection_reports.clone(),
             intersection_bucket_cache,
+            blocker_cache,
             output_segment_count: report.split_output_segment_count,
         }
     }
@@ -1496,9 +1514,75 @@ impl ExactCurveArrangementSplitCache2 {
         &self.intersection_bucket_cache
     }
 
+    /// Returns split-stage blocker source-pair evidence, when split arrangement blocked.
+    pub const fn blocker_cache(&self) -> Option<&ExactCurveArrangementSplitBlockerCache2> {
+        self.blocker_cache.as_ref()
+    }
+
     /// Returns arranged output segment count when splitting completed.
     pub const fn output_segment_count(&self) -> Option<usize> {
         self.output_segment_count
+    }
+}
+
+impl ExactCurveArrangementSplitBlockerCache2 {
+    fn from_region_build_report(report: &RegionLineSegmentRegionBuildReport2) -> Option<Self> {
+        Some(Self {
+            first_source_segment_index: report.split_blocker_first_source_segment_index?,
+            first_source_segment_kind: report.split_blocker_first_source_segment_kind?,
+            first_source_start_point: report.split_blocker_first_source_start_point.clone()?,
+            first_source_end_point: report.split_blocker_first_source_end_point.clone()?,
+            second_source_segment_index: report.split_blocker_second_source_segment_index?,
+            second_source_segment_kind: report.split_blocker_second_source_segment_kind?,
+            second_source_start_point: report.split_blocker_second_source_start_point.clone()?,
+            second_source_end_point: report.split_blocker_second_source_end_point.clone()?,
+            blocker: report.blocker,
+        })
+    }
+
+    /// Returns the first source segment index in the split blocker pair.
+    pub const fn first_source_segment_index(&self) -> usize {
+        self.first_source_segment_index
+    }
+
+    /// Returns the primitive family of the first blocked source segment.
+    pub const fn first_source_segment_kind(&self) -> SegmentKind {
+        self.first_source_segment_kind
+    }
+
+    /// Returns the exact start point of the first blocked source segment.
+    pub const fn first_source_start_point(&self) -> &Point2 {
+        &self.first_source_start_point
+    }
+
+    /// Returns the exact end point of the first blocked source segment.
+    pub const fn first_source_end_point(&self) -> &Point2 {
+        &self.first_source_end_point
+    }
+
+    /// Returns the second source segment index in the split blocker pair.
+    pub const fn second_source_segment_index(&self) -> usize {
+        self.second_source_segment_index
+    }
+
+    /// Returns the primitive family of the second blocked source segment.
+    pub const fn second_source_segment_kind(&self) -> SegmentKind {
+        self.second_source_segment_kind
+    }
+
+    /// Returns the exact start point of the second blocked source segment.
+    pub const fn second_source_start_point(&self) -> &Point2 {
+        &self.second_source_start_point
+    }
+
+    /// Returns the exact end point of the second blocked source segment.
+    pub const fn second_source_end_point(&self) -> &Point2 {
+        &self.second_source_end_point
+    }
+
+    /// Returns the retained blocker reason reported for this split blocker pair.
+    pub const fn blocker(&self) -> Option<UncertaintyReason> {
+        self.blocker
     }
 }
 

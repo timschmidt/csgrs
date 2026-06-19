@@ -1149,6 +1149,7 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
         result.report().split_intersection_reports()
     );
     assert_eq!(split_cache.output_segment_count(), Some(4));
+    assert_eq!(split_cache.blocker_cache(), None);
     let split_intersection_bucket_cache = split_cache.intersection_bucket_cache();
     assert_eq!(
         split_intersection_bucket_cache.intersection_event_count(),
@@ -1356,6 +1357,7 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
         split_cache.output_segment_count(),
         result.report().split_output_segment_count()
     );
+    assert_eq!(split_cache.blocker_cache(), None);
     let split_intersection_bucket_cache = split_cache.intersection_bucket_cache();
     assert_eq!(
         split_intersection_bucket_cache.intersection_event_count(),
@@ -1495,6 +1497,64 @@ fn exact_curve_arrangement_attempt_retains_overlap_blocker() {
         split_cache.intersection_points(),
         result.report().split_intersection_points()
     );
+    let split_blocker_cache = split_cache.blocker_cache().unwrap();
+    assert_eq!(
+        split_blocker_cache.first_source_segment_index(),
+        result
+            .report()
+            .split_blocker_first_source_segment_index()
+            .unwrap()
+    );
+    assert_eq!(
+        split_blocker_cache.first_source_segment_kind(),
+        result
+            .report()
+            .split_blocker_first_source_segment_kind()
+            .unwrap()
+    );
+    assert_eq!(
+        split_blocker_cache.first_source_start_point(),
+        result
+            .report()
+            .split_blocker_first_source_start_point()
+            .unwrap()
+    );
+    assert_eq!(
+        split_blocker_cache.first_source_end_point(),
+        result
+            .report()
+            .split_blocker_first_source_end_point()
+            .unwrap()
+    );
+    assert_eq!(
+        split_blocker_cache.second_source_segment_index(),
+        result
+            .report()
+            .split_blocker_second_source_segment_index()
+            .unwrap()
+    );
+    assert_eq!(
+        split_blocker_cache.second_source_segment_kind(),
+        result
+            .report()
+            .split_blocker_second_source_segment_kind()
+            .unwrap()
+    );
+    assert_eq!(
+        split_blocker_cache.second_source_start_point(),
+        result
+            .report()
+            .split_blocker_second_source_start_point()
+            .unwrap()
+    );
+    assert_eq!(
+        split_blocker_cache.second_source_end_point(),
+        result
+            .report()
+            .split_blocker_second_source_end_point()
+            .unwrap()
+    );
+    assert_eq!(split_blocker_cache.blocker(), result.report().blocker());
     let split_intersection_bucket_cache = split_cache.intersection_bucket_cache();
     assert_eq!(
         split_intersection_bucket_cache.intersection_event_count(),
