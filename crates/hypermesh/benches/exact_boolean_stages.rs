@@ -81,9 +81,9 @@ fn run_case(case: &BenchCase) {
             "preflight_support",
             format!(
                 "{:?};pairs={};events={}",
-                evaluation.preflight().support,
-                evaluation.preflight().retained_face_pairs,
-                evaluation.preflight().retained_events
+                evaluation.preflight().support(),
+                evaluation.preflight().retained_face_pairs(),
+                evaluation.preflight().retained_events()
             ),
         ),
         Err(error) => print_metadata(case.name, "preflight_support", format!("error:{error:?}")),
@@ -182,8 +182,7 @@ fn run_case(case: &BenchCase) {
             let evaluation = workspace.evaluate(request).unwrap();
             let report = evaluation
                 .preflight()
-                .coplanar_volumetric_evidence
-                .as_ref()
+                .coplanar_volumetric_evidence()
                 .or(evaluation
                     .certifications()
                     .winding_readiness()
@@ -209,8 +208,7 @@ fn run_case(case: &BenchCase) {
             if let Some(evaluation) = evaluation.as_ref() {
                 let report = evaluation
                     .preflight()
-                    .coplanar_volumetric_evidence
-                    .as_ref()
+                    .coplanar_volumetric_evidence()
                     .or(evaluation
                         .certifications()
                         .winding_readiness()

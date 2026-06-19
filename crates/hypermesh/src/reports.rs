@@ -3726,30 +3726,30 @@ impl ExactBooleanSupport {
 #[derive(Clone, Debug, PartialEq)]
 pub struct ExactBooleanPreflight {
     /// Requested operation.
-    pub operation: ExactBooleanOperation,
+    pub(crate) operation: ExactBooleanOperation,
     /// Certified support level for the request.
-    pub support: ExactBooleanSupport,
+    pub(crate) support: ExactBooleanSupport,
     /// Whether retained graph events contain explicit unknowns.
-    pub graph_had_unknowns: bool,
+    pub(crate) graph_had_unknowns: bool,
     /// Retained face-pair records after exact broad/narrow scheduling.
-    pub retained_face_pairs: usize,
+    pub(crate) retained_face_pairs: usize,
     /// Total retained event records across all retained face pairs.
-    pub retained_events: usize,
+    pub(crate) retained_events: usize,
     /// Number of split-region boundaries produced for classification.
-    pub region_count: usize,
+    pub(crate) region_count: usize,
     /// Certified classifications of split regions against opposite face
     /// planes.
-    pub region_classifications: Vec<FaceRegionPlaneClassification>,
+    pub(crate) region_classifications: Vec<FaceRegionPlaneClassification>,
     /// Structured explanation for named operations that are certified enough
     /// to inspect but not yet executable by the selected policy.
-    pub blocker: Option<ExactBooleanBlocker>,
+    pub(crate) blocker: Option<ExactBooleanBlocker>,
     /// Checked coplanar-overlap readiness retained when preflight stops at a
     /// planar arrangement boundary.
     ///
     /// This deliberately keeps the exact graph handoff visible at the public
     /// structured program state; the positive-area coplanar graph evidence
     /// must not be flattened into a generic "unsupported" boolean.
-    pub arrangement_readiness: Option<CoplanarArrangementReadinessReport>,
+    pub(crate) arrangement_readiness: Option<CoplanarArrangementReadinessReport>,
     /// Source-aware coplanar volumetric-cell evidence retained when the
     /// preflight crosses that exact boundary.
     ///
@@ -3758,7 +3758,7 @@ pub struct ExactBooleanPreflight {
     /// exact object evidence that authorized a blocker, a no-volume boundary
     /// shortcut, or an arrangement-materialized consumption of coplanar
     /// source-face cells.
-    pub coplanar_volumetric_evidence: Option<CoplanarVolumetricCellEvidenceReport>,
+    pub(crate) coplanar_volumetric_evidence: Option<CoplanarVolumetricCellEvidenceReport>,
 }
 
 /// Closure status for a materialized volumetric boundary-output Boolean.
@@ -4176,6 +4176,58 @@ fn validate_winding_readiness_against_sources_for_request(
 }
 
 impl ExactBooleanPreflight {
+    /// Return the requested operation.
+    pub const fn operation(&self) -> ExactBooleanOperation {
+        self.operation
+    }
+
+    /// Return the certified support level for this request.
+    pub const fn support(&self) -> ExactBooleanSupport {
+        self.support
+    }
+
+    /// Return whether retained graph events contain explicit unknowns.
+    pub const fn graph_had_unknowns(&self) -> bool {
+        self.graph_had_unknowns
+    }
+
+    /// Return the retained face-pair count.
+    pub const fn retained_face_pairs(&self) -> usize {
+        self.retained_face_pairs
+    }
+
+    /// Return the retained event count.
+    pub const fn retained_events(&self) -> usize {
+        self.retained_events
+    }
+
+    /// Return the number of split-region boundaries produced for classification.
+    pub const fn region_count(&self) -> usize {
+        self.region_count
+    }
+
+    /// Return the certified split-region plane classifications.
+    pub fn region_classifications(&self) -> &[FaceRegionPlaneClassification] {
+        &self.region_classifications
+    }
+
+    /// Return the retained blocker, if this preflight is blocked.
+    pub const fn blocker(&self) -> Option<&ExactBooleanBlocker> {
+        self.blocker.as_ref()
+    }
+
+    /// Return retained coplanar arrangement readiness evidence, if present.
+    pub const fn arrangement_readiness(&self) -> Option<&CoplanarArrangementReadinessReport> {
+        self.arrangement_readiness.as_ref()
+    }
+
+    /// Return retained coplanar volumetric-cell evidence, if present.
+    pub const fn coplanar_volumetric_evidence(
+        &self,
+    ) -> Option<&CoplanarVolumetricCellEvidenceReport> {
+        self.coplanar_volumetric_evidence.as_ref()
+    }
+
     /// Returns whether this preflight has certified support for materializing
     /// the requested operation under the policy used to produce the report.
     pub fn is_certified(&self) -> bool {

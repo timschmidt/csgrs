@@ -1078,7 +1078,10 @@ fn affine_orthogonal_solid_recovers_multi_cell_basis_without_sampling_limits() {
             preflight.is_certified_arrangement_cell_complex(),
             "{operation:?}: {preflight:?}"
         );
-        assert!(preflight.blocker.is_none(), "{operation:?}: {preflight:?}");
+        assert!(
+            preflight.blocker().is_none(),
+            "{operation:?}: {preflight:?}"
+        );
         preflight.validate().unwrap();
         preflight_evaluation
             .validate_against_sources(&left, &right)
@@ -1262,7 +1265,7 @@ fn exact_coplanar_volumetric_cell_evidence_is_retained_by_public_evaluation() {
     evaluation.validate().unwrap();
     let preflight = evaluation.preflight();
     assert!(
-        preflight.blocker.is_some() || preflight.is_certified_arrangement_cell_complex(),
+        preflight.blocker().is_some() || preflight.is_certified_arrangement_cell_complex(),
         "{preflight:?}"
     );
     assert!(
@@ -1277,7 +1280,7 @@ fn exact_coplanar_volumetric_cell_evidence_is_retained_by_public_evaluation() {
                 report.validate().is_ok() && report.resolves_operation_selection(attempt.operation)
             })
             || evaluation_materializes_arrangement_cell_complex(&evaluation)
-            || preflight.coplanar_volumetric_evidence.is_some(),
+            || preflight.coplanar_volumetric_evidence().is_some(),
         "{evaluation:?}"
     );
     evaluation.validate_against_sources(&left, &right).unwrap();
@@ -1288,19 +1291,18 @@ fn exact_coplanar_volumetric_cell_evidence_is_retained_by_public_evaluation() {
         .is_some()
     {
         assert_eq!(
-            preflight.coplanar_volumetric_evidence.as_ref(),
+            preflight.coplanar_volumetric_evidence(),
             evaluation
                 .certifications()
                 .winding_readiness()
                 .coplanar_volumetric_evidence()
         );
     } else {
-        assert!(preflight.coplanar_volumetric_evidence.is_some());
+        assert!(preflight.coplanar_volumetric_evidence().is_some());
     }
     let report = evaluation
         .preflight()
-        .coplanar_volumetric_evidence
-        .as_ref()
+        .coplanar_volumetric_evidence()
         .expect("coplanar volumetric blocker should retain source-aware evidence");
     report.validate().unwrap();
     evaluation.validate_against_sources(&left, &right).unwrap();
@@ -1947,7 +1949,15 @@ fn exact_open_surface_arrangement_is_publicly_replayable() {
         );
         evaluation.validate().unwrap();
         let mut stale_preflight_counts = evaluation.clone();
-        stale_preflight_counts.preflight_mut().retained_events += 1;
+        stale_preflight_counts.replace_preflight(
+            exact_boolean_evaluation(
+                &left,
+                &right,
+                ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
+            )
+            .preflight()
+            .clone(),
+        );
         stale_preflight_counts.preflight().validate().unwrap();
         assert_report_validation_error!(
             stale_preflight_counts.validate(),
@@ -2647,7 +2657,7 @@ fn boundary_touching_policy_boolean_is_publicly_replayable() {
             "{reject_evaluation:?}"
         );
         assert!(!reject_evaluation.preflight().is_certified());
-        assert!(reject_evaluation.preflight().blocker.is_some());
+        assert!(reject_evaluation.preflight().blocker().is_some());
 
         let result = exact_boolean_result(
             &left,
@@ -2741,14 +2751,14 @@ fn closed_boundary_touching_regularized_boolean_is_publicly_replayable() {
             "{operation:?}: {preflight:?}"
         );
         assert!(
-            preflight.retained_face_pairs > 0,
+            preflight.retained_face_pairs() > 0,
             "closed boundary-touching request should retain graph evidence: {operation:?}: {preflight:?}"
         );
         preflight.validate().unwrap();
         preflight_evaluation
             .validate_against_sources(&left, &right)
             .unwrap();
-        if let Some(evidence) = preflight.coplanar_volumetric_evidence.as_ref() {
+        if let Some(evidence) = preflight.coplanar_volumetric_evidence() {
             evidence.validate().unwrap();
         }
 
@@ -2845,10 +2855,10 @@ fn closed_no_volume_overlap_regularized_boolean_is_publicly_replayable() {
             "{operation:?}: {preflight:?}"
         );
         assert!(
-            preflight.retained_face_pairs > 0,
+            preflight.retained_face_pairs() > 0,
             "positive-area no-volume shortcut should retain graph evidence: {operation:?}: {preflight:?}"
         );
-        let evidence = preflight.coplanar_volumetric_evidence.as_ref().expect(
+        let evidence = preflight.coplanar_volumetric_evidence().expect(
             "positive-area no-volume shortcut should retain source-aware boundary-only evidence",
         );
         evidence.validate().unwrap();
@@ -3141,10 +3151,10 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
     );
     assert_eq!(
         readiness.retained_face_pairs(),
-        preflight.retained_face_pairs,
+        preflight.retained_face_pairs(),
         "{readiness:?}"
     );
-    assert_eq!(readiness.retained_events(), preflight.retained_events);
+    assert_eq!(readiness.retained_events(), preflight.retained_events());
     assert_eq!(readiness.region_count(), 0);
     readiness.validate().unwrap();
 
@@ -3791,8 +3801,8 @@ fn exact_evaluation_preflight_reports_disjoint_bounds_without_retained_pairs() {
         &right,
         ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED),
     );
-    assert_eq!(evaluation.preflight().retained_face_pairs, 0);
-    assert_eq!(evaluation.preflight().retained_events, 0);
+    assert_eq!(evaluation.preflight().retained_face_pairs(), 0);
+    assert_eq!(evaluation.preflight().retained_events(), 0);
     evaluation.validate_against_sources(&left, &right).unwrap();
 }
 
@@ -4026,7 +4036,7 @@ fn exact_boolean_public_shortcuts_handle_disjoint_operands() {
     )
     .preflight()
     .clone();
-    assert!(!preflight.graph_had_unknowns);
+    assert!(!preflight.graph_had_unknowns());
 
     let union = exact_boolean_result(
         &left,
@@ -4849,12 +4859,12 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
         policy_preflight.is_certified_boundary_policy_shortcut(),
         "{policy_preflight:?}"
     );
-    assert!(policy_preflight.blocker.is_none(), "{policy_preflight:?}");
+    assert!(policy_preflight.blocker().is_none(), "{policy_preflight:?}");
     assert_eq!(
-        policy_preflight.retained_face_pairs,
+        policy_preflight.retained_face_pairs(),
         report.retained_face_pairs()
     );
-    assert_eq!(policy_preflight.retained_events, report.retained_events());
+    assert_eq!(policy_preflight.retained_events(), report.retained_events());
     policy_evaluation
         .certifications()
         .validate_against_sources(&left, &right, policy_request)
