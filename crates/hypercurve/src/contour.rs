@@ -9,8 +9,9 @@ use crate::classify::{classify_oriented_line, compare_reals};
 use crate::curve_string::merge_adjacent_line_segments;
 use crate::{
     BulgeVertex2, Classification, CurveError, CurvePolicy, CurveResult, CurveString2,
-    CurveStringChamferReport2, CurveStringFilletReport2, CurveStringTrimPoint2, LineSeg2, LineSide,
-    Point2, RetainedTopologyStatus, Segment2, SegmentKind, SegmentKindCounts, UncertaintyReason,
+    CurveStringChamferReport2, CurveStringFilletReport2, CurveStringTrimPoint2,
+    CurveStringTrimSegmentReport2, LineSeg2, LineSide, Point2, RetainedTopologyStatus, Segment2,
+    SegmentKind, SegmentKindCounts, UncertaintyReason,
 };
 
 /// Fill rule used when classifying contour interiors.
@@ -1033,6 +1034,16 @@ impl ContourChamferReport2 {
         self.curve_string_report.next_cut_point()
     }
 
+    /// Returns retained source ranges for the shortened adjacent contour segments.
+    pub fn segment_reports(&self) -> &[CurveStringTrimSegmentReport2] {
+        self.curve_string_report.segment_reports()
+    }
+
+    /// Returns retained adjacent-source trim range count.
+    pub const fn trim_segment_report_count(&self) -> usize {
+        self.curve_string_report.trim_segment_report_count()
+    }
+
     /// Returns the inserted chamfer segment index in the output contour.
     pub const fn chamfer_segment_index(&self) -> Option<usize> {
         self.curve_string_report.chamfer_segment_index()
@@ -1145,6 +1156,16 @@ impl ContourFilletReport2 {
     /// Returns the certified squared radius when validation reached that stage.
     pub const fn radius_squared(&self) -> Option<&Real> {
         self.curve_string_report.radius_squared()
+    }
+
+    /// Returns retained source ranges for the shortened adjacent contour segments.
+    pub fn segment_reports(&self) -> &[CurveStringTrimSegmentReport2] {
+        self.curve_string_report.segment_reports()
+    }
+
+    /// Returns retained adjacent-source trim range count.
+    pub const fn trim_segment_report_count(&self) -> usize {
+        self.curve_string_report.trim_segment_report_count()
     }
 
     /// Returns the inserted fillet arc segment index in the output contour.

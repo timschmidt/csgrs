@@ -319,6 +319,32 @@ fn contour_chamfer_line_line_vertex_materializes_closed_contour() {
     assert_eq!(chamfer.report().next_trim().param(), &q(1, 4));
     assert_eq!(chamfer.report().previous_cut_point(), Some(&p(3, 0)));
     assert_eq!(chamfer.report().next_cut_point(), Some(&p(4, 1)));
+    assert_eq!(chamfer.report().trim_segment_report_count(), 2);
+    assert_eq!(chamfer.report().segment_reports().len(), 2);
+    assert_eq!(
+        chamfer.report().segment_reports()[0].output_segment_index(),
+        Some(0)
+    );
+    assert_eq!(
+        chamfer.report().segment_reports()[0].output_segment_start_point(),
+        Some(&p(0, 0))
+    );
+    assert_eq!(
+        chamfer.report().segment_reports()[0].output_segment_end_point(),
+        Some(&p(3, 0))
+    );
+    assert_eq!(
+        chamfer.report().segment_reports()[1].output_segment_index(),
+        Some(2)
+    );
+    assert_eq!(
+        chamfer.report().segment_reports()[1].output_segment_start_point(),
+        Some(&p(4, 1))
+    );
+    assert_eq!(
+        chamfer.report().segment_reports()[1].output_segment_end_point(),
+        Some(&p(4, 4))
+    );
     assert_eq!(
         chamfer
             .report()
@@ -640,6 +666,32 @@ fn contour_fillet_line_line_vertex_materializes_closed_contour() {
     assert_eq!(fillet.report().next_trim().param(), &q(1, 4));
     assert_eq!(fillet.report().previous_tangent_point(), Some(&p(3, 0)));
     assert_eq!(fillet.report().next_tangent_point(), Some(&p(4, 1)));
+    assert_eq!(fillet.report().trim_segment_report_count(), 2);
+    assert_eq!(fillet.report().segment_reports().len(), 2);
+    assert_eq!(
+        fillet.report().segment_reports()[0].output_segment_index(),
+        Some(0)
+    );
+    assert_eq!(
+        fillet.report().segment_reports()[0].output_segment_start_point(),
+        Some(&p(0, 0))
+    );
+    assert_eq!(
+        fillet.report().segment_reports()[0].output_segment_end_point(),
+        Some(&p(3, 0))
+    );
+    assert_eq!(
+        fillet.report().segment_reports()[1].output_segment_index(),
+        Some(2)
+    );
+    assert_eq!(
+        fillet.report().segment_reports()[1].output_segment_start_point(),
+        Some(&p(4, 1))
+    );
+    assert_eq!(
+        fillet.report().segment_reports()[1].output_segment_end_point(),
+        Some(&p(4, 4))
+    );
     assert_eq!(
         fillet
             .report()
