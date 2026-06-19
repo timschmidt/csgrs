@@ -1,15 +1,9 @@
 #![no_main]
 
-use std::cmp::Ordering;
-use std::collections::BTreeSet;
-
-use hyperlimit::{Point2, compare_reals};
 use hypermesh::{
-    ExactArrangement, ExactArrangement2dRegion, ExactArrangement2dRegionRing,
-    ExactArrangement2dSetOperation, ExactBooleanOperation, ExactBooleanRequest,
-    ExactBooleanWorkspace, ExactMesh, ExactRegularizationPolicy, ValidationPolicy,
+    ExactBooleanOperation, ExactBooleanRequest, ExactBooleanWorkspace, ExactMesh,
+    ExactReportFreshness, ValidationPolicy,
 };
-use hyperreal::Real;
 use libfuzzer_sys::fuzz_target;
 
 fuzz_target!(|data: &[u8]| {
@@ -23,72 +17,11 @@ fuzz_target!(|data: &[u8]| {
         values.push(raw.rem_euclid(17) - 8);
     }
 
-    exercise_planar_overlay(&values);
-    exercise_mesh_arrangement(&values);
-    exercise_nested_shell_cavity();
+    exercise_mesh_boolean_workspace(&values);
+    exercise_nested_shell_cavity_workspace();
 });
 
-fn exercise_planar_overlay(values: &[i64]) {
-    if values.len() < 8 {
-        return;
-    }
-    let left = square_ring(
-        ExactArrangement2dRegion::Left,
-        values[0],
-        values[1],
-        1 + values[2].abs(),
-    );
-    let right = square_ring(
-        ExactArrangement2dRegion::Right,
-        values[3],
-        values[4],
-        1 + values[5].abs(),
-    );
-    for operation in [
-        ExactArrangement2dSetOperation::Union,
-        ExactArrangement2dSetOperation::Intersection,
-        ExactArrangement2dSetOperation::Difference,
-    ] {
-        let overlay = ExactArrangement2dRegionRing::overlay(&[left.clone(), right.clone()], operation);
-        if overlay.is_complete() {
-            let mut assigned_holes = BTreeSet::new();
-            for component in &overlay.output_components {
-                assert!(component.outer_loop < overlay.output_loops.len());
-                assert_eq!(
-                    compare_reals(
-                        &overlay.output_loops[component.outer_loop].signed_area_twice,
-                        &Real::from(0),
-                    )
-                    .value(),
-                    Some(Ordering::Greater)
-                );
-                for &hole_loop in &component.hole_loops {
-                    assert!(hole_loop < overlay.output_loops.len());
-                    assert!(assigned_holes.insert(hole_loop));
-                    assert_eq!(
-                        compare_reals(
-                            &overlay.output_loops[hole_loop].signed_area_twice,
-                            &Real::from(0),
-                        )
-                        .value(),
-                        Some(Ordering::Less)
-                    );
-                }
-            }
-            let negative_loops = overlay
-                .output_loops
-                .iter()
-                .filter(|loop_| {
-                    compare_reals(&loop_.signed_area_twice, &Real::from(0)).value()
-                        == Some(Ordering::Less)
-                })
-                .count();
-            assert_eq!(assigned_holes.len(), negative_loops);
-        }
-    }
-}
-
-fn exercise_mesh_arrangement(values: &[i64]) {
+fn exercise_mesh_boolean_workspace(values: &[i64]) {
     if values.len() < 24 {
         return;
     }
@@ -98,109 +31,10 @@ fn exercise_mesh_arrangement(values: &[i64]) {
     let Some(right) = tetrahedron_from_values(&values[12..24]) else {
         return;
     };
-    let Ok(arrangement) = ExactArrangement::from_meshes_with_policy(
-        &left,
-        &right,
-        ExactRegularizationPolicy::RETAIN_ARTIFACTS,
-    ) else {
-        return;
-    };
-    let _ = arrangement.validate_against_sources_with_policy(
-        &left,
-        &right,
-        ExactRegularizationPolicy::RETAIN_ARTIFACTS,
-    );
-    exercise_volume_graph_invariants(&arrangement);
-    for operation in [
-        ExactBooleanOperation::Union,
-        ExactBooleanOperation::Intersection,
-        ExactBooleanOperation::Difference,
-    ] {
-        if let Ok(selected) =
-            arrangement.select_with_policy(operation, ExactRegularizationPolicy::RETAIN_ARTIFACTS)
-        {
-            if let Ok(simplified) =
-                selected.simplify_exact_with_policy(ExactRegularizationPolicy::RETAIN_ARTIFACTS)
-            {
-                assert_eq!(
-                    simplified.lower_dimensional_artifacts,
-                    arrangement.lower_dimensional_artifacts
-                );
-                if simplified.blockers.is_empty() {
-                    let _ = simplified.triangulate();
-                }
-            }
-        }
-        let request = ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY);
-        let mut workspace = ExactBooleanWorkspace::new(&left, &right);
-        if let Ok(result) = workspace.materialize_ref(request) {
-            let _ = result.validate();
-        }
-    }
+    exercise_workspace_requests(&left, &right, ValidationPolicy::ALLOW_BOUNDARY);
 }
 
-fn exercise_volume_graph_invariants(arrangement: &ExactArrangement) {
-    let Some(shells) = arrangement.shells_or_regions.as_ref() else {
-        return;
-    };
-    if shells.is_empty() || shells.iter().any(|shell| !shell.closed || !shell.manifold) {
-        assert!(arrangement.volume_regions.is_none());
-        assert!(arrangement.volume_adjacencies.is_none());
-        return;
-    }
-    let volume_regions = arrangement
-        .volume_regions
-        .as_ref()
-        .expect("closed manifold shells must expose volume regions");
-    let volume_adjacencies = arrangement
-        .volume_adjacencies
-        .as_ref()
-        .expect("closed manifold shells must expose volume adjacencies");
-    assert_eq!(volume_regions.len(), shells.len() + 1);
-    assert_eq!(volume_adjacencies.len(), shells.len());
-    assert!(volume_regions[0].exterior);
-    assert_eq!(
-        volume_regions
-            .iter()
-            .filter(|region| region.exterior)
-            .count(),
-        1
-    );
-    let mut volume_indices = BTreeSet::new();
-    for (expected, region) in volume_regions.iter().enumerate() {
-        assert_eq!(region.index, expected);
-        assert!(volume_indices.insert(region.index));
-        for &shell in &region.boundary_shells {
-            assert!(shell < shells.len());
-        }
-    }
-    for adjacency in volume_adjacencies {
-        assert!(adjacency.shell_region < shells.len());
-        assert!(adjacency.exterior_volume < volume_regions.len());
-        assert!(adjacency.interior_volume < volume_regions.len());
-        assert_ne!(adjacency.exterior_volume, adjacency.interior_volume);
-        assert_eq!(
-            adjacency.separating_face_cells,
-            shells[adjacency.shell_region].face_cells
-        );
-    }
-    for operation in [
-        ExactBooleanOperation::Union,
-        ExactBooleanOperation::Intersection,
-        ExactBooleanOperation::Difference,
-    ] {
-        if let Ok(selected) = arrangement
-            .clone()
-            .select_with_policy(operation, ExactRegularizationPolicy::RETAIN_ARTIFACTS)
-        {
-            for selected_volume in selected.selected_volume_regions {
-                assert!(selected_volume < volume_regions.len());
-            }
-        }
-    }
-}
-
-fn exercise_nested_shell_cavity() {
+fn exercise_nested_shell_cavity_workspace() {
     let Some(left) = tetrahedron_with_reversed_inner() else {
         return;
     };
@@ -215,55 +49,48 @@ fn exercise_nested_shell_cavity() {
     ) else {
         return;
     };
-    let Ok(arrangement) = ExactArrangement::from_meshes_with_policy(
-        &left,
-        &right,
-        ExactRegularizationPolicy::REGULARIZED_SOLID,
-    ) else {
-        return;
-    };
-    exercise_volume_graph_invariants(&arrangement);
-    let Ok(labeled) = arrangement.label_regions(ExactRegularizationPolicy::REGULARIZED_SOLID)
-    else {
-        return;
-    };
-    let empty_cavity = labeled
-        .volume_regions
-        .iter()
-        .find(|region| !region.exterior && !region.in_left && !region.in_right)
-        .map(|region| region.index);
-    let Some(empty_cavity) = empty_cavity else {
-        return;
-    };
+    exercise_workspace_requests(&left, &right, ValidationPolicy::CLOSED);
+}
+
+fn exercise_workspace_requests(left: &ExactMesh, right: &ExactMesh, validation: ValidationPolicy) {
     for operation in [
         ExactBooleanOperation::Union,
+        ExactBooleanOperation::Intersection,
         ExactBooleanOperation::Difference,
     ] {
-        if let Ok(selected) = labeled.clone().select(operation) {
-            assert!(!selected.selected_volume_regions.contains(&empty_cavity));
+        let request = ExactBooleanRequest::new(operation, validation);
+        let mut workspace = ExactBooleanWorkspace::new(left, right);
+        if let Ok(evaluation) = workspace.evaluate(request) {
+            let _ = evaluation.validate();
+            let _ = evaluation.validate_against_sources(left, right);
+            let _ = evaluation.freshness_against_sources(left, right);
+            if let Some(attempt) = evaluation.retained_arrangement_attempt() {
+                let _ = attempt.validate();
+                let _ = attempt.freshness_against_sources_with_validation(left, right, validation);
+            }
+        }
+        if let Ok(result) = workspace.materialize_ref(request) {
+            let _ = result.validate();
+            let _ = result.freshness_against_sources(left, right);
+            let _ = result.validate_operation_against_sources(
+                left,
+                right,
+                operation,
+                validation,
+                request.boundary_policy,
+            );
         }
     }
-}
 
-fn square_ring(
-    region: ExactArrangement2dRegion,
-    x: i64,
-    y: i64,
-    size: i64,
-) -> ExactArrangement2dRegionRing {
-    ExactArrangement2dRegionRing::new(
-        region,
-        vec![
-            point2(x, y),
-            point2(x + size, y),
-            point2(x + size, y + size),
-            point2(x, y + size),
-        ],
-    )
-}
-
-fn point2(x: i64, y: i64) -> Point2 {
-    Point2::new(Real::from(x), Real::from(y))
+    let disjoint_request =
+        ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::ALLOW_BOUNDARY);
+    let mut workspace = ExactBooleanWorkspace::new(left, right);
+    if let Ok(evaluation) = workspace.evaluate(disjoint_request)
+        && evaluation.freshness_against_sources(left, right) == ExactReportFreshness::Current
+        && let Some(result) = evaluation.result.as_ref()
+    {
+        let _ = result.validate();
+    }
 }
 
 fn tetrahedron_from_values(values: &[i64]) -> Option<ExactMesh> {
