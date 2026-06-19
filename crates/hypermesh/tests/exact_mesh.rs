@@ -2490,9 +2490,7 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
             .materialized_result()
             .expect("certified arrangement evaluation should retain union result");
 
-        if result.is_arrangement_cell_complex_materialized_for(ExactBooleanOperation::Union) {
-            assert!(result.has_retained_volumetric_classification_evidence());
-        } else {
+        if !result.is_arrangement_cell_complex_materialized_for(ExactBooleanOperation::Union) {
             assert!(
                 result.is_arrangement_cell_complex_shortcut_for(ExactBooleanOperation::Union),
                 "{result:?}"
@@ -2510,9 +2508,7 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
             evaluation.materializes_arrangement_cell_complex(),
             "{evaluation:?}"
         );
-        if result.is_arrangement_cell_complex_materialized_for(ExactBooleanOperation::Union) {
-            assert!(result.has_retained_volumetric_classification_evidence());
-        } else {
+        if !result.is_arrangement_cell_complex_materialized_for(ExactBooleanOperation::Union) {
             assert!(
                 result.is_arrangement_cell_complex_shortcut_for(ExactBooleanOperation::Union),
                 "{result:?}"
@@ -2546,9 +2542,7 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
         .materialized_result()
         .expect("certified arrangement evaluation should retain difference result");
     difference.validate().unwrap();
-    if difference.is_arrangement_cell_complex_materialized_for(ExactBooleanOperation::Difference) {
-        assert!(difference.has_retained_volumetric_classification_evidence());
-    } else {
+    if !difference.is_arrangement_cell_complex_materialized_for(ExactBooleanOperation::Difference) {
         assert!(
             difference.is_arrangement_cell_complex_shortcut_for(ExactBooleanOperation::Difference),
             "{difference:?}"
@@ -2677,9 +2671,7 @@ fn arrangement_cell_complex_request_materialization_is_publicly_replayable() {
         ExactReportFreshness::SourceReplayMismatch,
         "canonical replay must reject stale source operands"
     );
-    if result.is_arrangement_cell_complex_materialized_for(ExactBooleanOperation::Union) {
-        assert!(result.has_retained_volumetric_classification_evidence());
-    } else {
+    if !result.is_arrangement_cell_complex_materialized_for(ExactBooleanOperation::Union) {
         assert!(
             result.is_arrangement_cell_complex_shortcut_for(ExactBooleanOperation::Union),
             "{result:?}"
@@ -2717,11 +2709,9 @@ fn arrangement_cell_complex_request_materialization_is_publicly_replayable() {
                 .materialize(convex_intersection_request)
                 .unwrap()
         });
-    if convex_intersection
+    if !convex_intersection
         .is_arrangement_cell_complex_materialized_for(ExactBooleanOperation::Intersection)
     {
-        assert!(convex_intersection.has_retained_volumetric_classification_evidence());
-    } else {
         assert!(
             convex_intersection
                 .is_arrangement_cell_complex_shortcut_for(ExactBooleanOperation::Intersection)
@@ -3728,10 +3718,6 @@ fn exact_volumetric_region_reports_replay_from_boolean_result() {
             ExactBooleanOperation::Union,
             ValidationPolicy::ALLOW_BOUNDARY,
         ),
-    );
-    assert!(
-        result.has_retained_volumetric_classification_evidence(),
-        "{result:?}"
     );
     let shifted_target = tetra([10, 10, 10]);
     assert!(

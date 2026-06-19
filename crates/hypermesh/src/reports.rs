@@ -727,11 +727,6 @@ impl ExactBooleanResult {
         self.graph_had_unknowns = graph_had_unknowns;
     }
 
-    /// Return whether this result retained volumetric classification evidence.
-    pub fn has_retained_volumetric_classification_evidence(&self) -> bool {
-        !self.volumetric_classifications.is_empty()
-    }
-
     /// Return retained topology assembly gate evidence, when present.
     pub(crate) fn topology_assembly_report(&self) -> Option<&ExactTopologyAssemblyReport> {
         self.topology_assembly_report.as_ref()
