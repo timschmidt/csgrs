@@ -11576,35 +11576,16 @@ mod tests {
         stage: ExactArrangementBooleanStage,
         decline: Option<ExactArrangementBooleanDecline>,
     ) -> ExactArrangementBooleanAttempt {
-        ExactArrangementBooleanAttempt {
-            operation: ExactBooleanOperation::Union,
-            policy: ExactRegularizationPolicy::REGULARIZED_SOLID,
-            output_validation: ValidationPolicy::ALLOW_BOUNDARY,
-            stage,
-            decline,
-            materialized_shortcut: None,
-            shortcut_reason: None,
-            arrangement_blockers: 0,
-            face_cells: 0,
-            regions: 0,
-            volume_regions: 0,
-            volume_adjacencies: 0,
-            lower_dimensional_artifacts: 0,
-            topology_assembly: None,
-            topology_assembly_report: None,
-            region_ownership: None,
-            region_ownership_report: None,
-            selected_faces: 0,
-            reversed_selected_faces: 0,
-            volume_oriented_selected_faces: 0,
-            label_oriented_selected_faces: 0,
-            selected_volume_regions: 0,
-            selected_cell_complex: None,
-            simplified_cell_complex: None,
-            output_vertices: 0,
-            output_triangles: 0,
-            output_facts: None,
-        }
+        let mut attempt = not_attempted_arrangement_attempt_for_request(
+            ExactBooleanRequest::new(
+                ExactBooleanOperation::Union,
+                ValidationPolicy::ALLOW_BOUNDARY,
+            ),
+            ExactRegularizationPolicy::REGULARIZED_SOLID,
+        );
+        attempt.stage = stage;
+        attempt.decline = decline;
+        attempt
     }
 
     #[test]
