@@ -14670,6 +14670,76 @@ mod tests {
     }
 
     #[test]
+    fn retained_volume_ownership_preflight_rejects_stale_source_replay() {
+        let left = tetrahedron_i64([0, 0, 0], [10, 0, 0], [0, 10, 0], [0, 0, 10]);
+        let right = tetrahedron_i64([1, 1, 1], [2, 1, 1], [1, 2, 1], [1, 1, 2]);
+        let request =
+            ExactBooleanRequest::new(ExactBooleanOperation::Difference, ValidationPolicy::CLOSED);
+        let mut attempt = test_arrangement_attempt(
+            request,
+            &left,
+            &right,
+            ExactRegularizationPolicy::REGULARIZED_SOLID,
+        );
+        let mesh = copy_mesh(
+            &left,
+            "exact arrangement cell-complex boolean result",
+            ValidationPolicy::CLOSED,
+        )
+        .unwrap();
+        let result = certified_shortcut_result(
+            mesh,
+            ExactBooleanOperation::Difference,
+            ExactBooleanShortcutKind::ArrangementCellComplex,
+        );
+        let ArrangementCellComplexOutcome::Materialized(_, mut retained_attempt) =
+            materialized_arrangement_attempt_outcome(&mut attempt, result, false, None)
+        else {
+            panic!("materialized helper should return a result");
+        };
+
+        let mut ownership = retained_attempt.region_ownership_report.clone().unwrap();
+        ownership.status = ExactRegionOwnershipStatus::RequiresWinding;
+        ownership.blockers = vec![ExactArrangementBlocker::UnresolvedRegionClassification];
+        ownership.opposite_inside_faces = 0;
+        ownership.opposite_outside_faces = 0;
+        ownership.opposite_boundary_faces = 0;
+        ownership.opposite_unknown_faces = ownership.face_cells;
+        ownership.volume_selection_resolved = false;
+        ownership.volume_union_resolved = false;
+        ownership.volume_intersection_resolved = false;
+        ownership.volume_difference_resolved = true;
+        ownership.validate().unwrap();
+
+        retained_attempt.region_ownership = Some(ownership.status);
+        retained_attempt.region_ownership_report = Some(ownership.clone());
+        if let Some(selected) = retained_attempt.selected_cell_complex.as_mut() {
+            selected.region_ownership_report = Some(ownership.clone());
+        }
+        if let Some(simplified) = retained_attempt.simplified_cell_complex.as_mut() {
+            simplified.region_ownership_report = Some(ownership);
+        }
+        retained_attempt.validate().unwrap();
+        assert!(retained_attempt.resolves_requested_volume_ownership());
+
+        let mut graph_workspace = ExactBooleanWorkspace::new(&left, &right);
+        let graph = graph_workspace.validated_graph().unwrap();
+        let error = certified_arrangement_cell_complex_preflight_from_retained_attempt(
+            &graph,
+            &left,
+            &right,
+            request,
+            ExactRegularizationPolicy::REGULARIZED_SOLID,
+            &retained_attempt,
+        )
+        .expect_err("source-stale retained ownership must not certify preflight");
+        assert!(
+            format!("{error:?}").contains("SourceReplayMismatch"),
+            "{error:?}"
+        );
+    }
+
+    #[test]
     fn crossing_open_surface_boolean_materializes_inside_arrangement_attempt() {
         let left = ExactMesh::from_i64_triangles_with_policy(
             &[0, 0, 0, 4, 0, 0, 0, 4, 0],
