@@ -75,3 +75,8 @@ harness = false
 [[bench]]
 name = "reconstruction"
 harness = false
+
+[[bench]]
+name = "svg_io"
+harness = false
+required-features = ["svg"]

@@ -221,6 +221,7 @@ cargo bench --bench containment
 cargo bench --bench intersection
 cargo bench --bench offset
 cargo bench --bench reconstruction
+cargo bench --bench svg_io --features svg
 ```
 
 ## References
