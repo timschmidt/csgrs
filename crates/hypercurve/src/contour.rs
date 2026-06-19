@@ -156,6 +156,7 @@ pub struct ContourLineMergeSpanReport2 {
 #[derive(Clone, Debug, PartialEq)]
 pub struct ContourLineMergeReport2 {
     stage: ContourLineMergeStage2,
+    predicate_path: ContourLineMergePredicatePath2,
     source_segment_count: usize,
     source_segment_kind_counts: SegmentKindCounts,
     output_segment_count: Option<usize>,
@@ -183,6 +184,13 @@ pub enum ContourLineMergeStage2 {
     AdjacencyClassification,
     /// The merged segment sequence was validated as a closed contour.
     ContourMaterialization,
+}
+
+/// Exact predicate path used while classifying closed-contour line-merge pairs.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum ContourLineMergePredicatePath2 {
+    /// Adjacent line candidates were classified by exact support and direction predicates.
+    ExactLineSupportAndDirection,
 }
 
 /// A closed sequence of connected native segments.
@@ -356,6 +364,8 @@ impl Contour2 {
                         contour: None,
                         report: ContourLineMergeReport2 {
                             stage: ContourLineMergeStage2::AdjacencyClassification,
+                            predicate_path:
+                                ContourLineMergePredicatePath2::ExactLineSupportAndDirection,
                             source_segment_count,
                             source_segment_kind_counts,
                             output_segment_count: None,
@@ -378,6 +388,7 @@ impl Contour2 {
                 contour: None,
                 report: ContourLineMergeReport2 {
                     stage: ContourLineMergeStage2::AdjacencyClassification,
+                    predicate_path: ContourLineMergePredicatePath2::ExactLineSupportAndDirection,
                     source_segment_count,
                     source_segment_kind_counts,
                     output_segment_count: None,
@@ -429,6 +440,7 @@ impl Contour2 {
         Ok(ContourLineMergeResult2 {
             report: ContourLineMergeReport2 {
                 stage: ContourLineMergeStage2::ContourMaterialization,
+                predicate_path: ContourLineMergePredicatePath2::ExactLineSupportAndDirection,
                 source_segment_count,
                 source_segment_kind_counts,
                 output_segment_count: Some(contour.len()),
@@ -1347,6 +1359,11 @@ impl ContourLineMergeReport2 {
     /// Returns the furthest exact contour line-merge stage reached.
     pub const fn stage(&self) -> ContourLineMergeStage2 {
         self.stage
+    }
+
+    /// Returns the exact predicate path used while classifying adjacent merge pairs.
+    pub const fn predicate_path(&self) -> ContourLineMergePredicatePath2 {
+        self.predicate_path
     }
 
     /// Returns the source contour segment count captured by this report.

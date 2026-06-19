@@ -160,8 +160,8 @@ pub use contour::{
     Contour2, ContourChamferReport2, ContourChamferResult2, ContourChamferStage2,
     ContourClosurePredicatePath2, ContourClosureReport2, ContourClosureResult2,
     ContourClosureStage2, ContourFilletReport2, ContourFilletResult2, ContourFilletStage2,
-    ContourLineMergeReport2, ContourLineMergeResult2, ContourLineMergeSpanReport2,
-    ContourLineMergeStage2, ContourPointLocation, FillRule,
+    ContourLineMergePredicatePath2, ContourLineMergeReport2, ContourLineMergeResult2,
+    ContourLineMergeSpanReport2, ContourLineMergeStage2, ContourPointLocation, FillRule,
 };
 pub use curve_string::{
     ConnectedCurveString2, CurveString2, CurveStringChamferInputPath2,

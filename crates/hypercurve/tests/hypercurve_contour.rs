@@ -1,10 +1,10 @@
 use hypercurve::{
     BulgeVertex2, Classification, Contour2, ContourChamferStage2, ContourClosurePredicatePath2,
-    ContourClosureStage2, ContourFilletStage2, ContourLineMergeStage2, ContourPointLocation,
-    CurveError, CurvePolicy, CurveString2, CurveStringChamferInputPath2,
-    CurveStringChamferPredicatePath2, CurveStringFilletInputPath2, CurveStringFilletPredicatePath2,
-    FillRule, Real, Region2, RegionPointLocation, Segment2, SegmentKind, SegmentKindCounts,
-    UncertaintyReason,
+    ContourClosureStage2, ContourFilletStage2, ContourLineMergePredicatePath2,
+    ContourLineMergeStage2, ContourPointLocation, CurveError, CurvePolicy, CurveString2,
+    CurveStringChamferInputPath2, CurveStringChamferPredicatePath2, CurveStringFilletInputPath2,
+    CurveStringFilletPredicatePath2, FillRule, Real, Region2, RegionPointLocation, Segment2,
+    SegmentKind, SegmentKindCounts, UncertaintyReason,
 };
 
 fn s(value: i32) -> Real {
@@ -207,6 +207,10 @@ fn contour_merge_adjacent_collinear_lines_reports_source_runs() {
         merged.report().stage(),
         ContourLineMergeStage2::ContourMaterialization
     );
+    assert_eq!(
+        merged.report().predicate_path(),
+        ContourLineMergePredicatePath2::ExactLineSupportAndDirection
+    );
     assert_eq!(merged.report().source_segment_count(), 5);
     assert_eq!(
         merged.report().source_segment_kind_counts(),
@@ -258,6 +262,10 @@ fn contour_line_merge_span_reports_preserve_mixed_segment_kinds() {
     let merged = contour.merge_adjacent_collinear_lines(&policy()).unwrap();
 
     assert!(merged.report().status().is_native_exact());
+    assert_eq!(
+        merged.report().predicate_path(),
+        ContourLineMergePredicatePath2::ExactLineSupportAndDirection
+    );
     assert_eq!(merged.report().merged_pair_count(), 0);
     assert_eq!(
         merged.report().source_segment_kind_counts(),
@@ -305,6 +313,10 @@ fn contour_merge_adjacent_collinear_lines_merges_wraparound_run() {
     assert_eq!(
         merged.report().stage(),
         ContourLineMergeStage2::ContourMaterialization
+    );
+    assert_eq!(
+        merged.report().predicate_path(),
+        ContourLineMergePredicatePath2::ExactLineSupportAndDirection
     );
     assert_eq!(merged.report().source_segment_count(), 5);
     assert_eq!(merged.report().output_segment_count(), Some(4));
