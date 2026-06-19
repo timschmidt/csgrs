@@ -932,11 +932,11 @@ pub enum ExactBoundaryBooleanPolicy {
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct ExactBooleanRequest {
     /// Named or selected-region operation to evaluate.
-    pub operation: ExactBooleanOperation,
+    pub(crate) operation: ExactBooleanOperation,
     /// Output mesh validation policy.
-    pub validation: ValidationPolicy,
+    pub(crate) validation: ValidationPolicy,
     /// Explicit boundary-only projection policy.
-    pub boundary_policy: ExactBoundaryBooleanPolicy,
+    pub(crate) boundary_policy: ExactBoundaryBooleanPolicy,
 }
 
 impl ExactBooleanRequest {
@@ -967,6 +967,21 @@ impl ExactBooleanRequest {
             validation,
             boundary_policy,
         }
+    }
+
+    /// Return the named or selected-region operation to evaluate.
+    pub const fn operation(&self) -> ExactBooleanOperation {
+        self.operation
+    }
+
+    /// Return the output mesh validation policy.
+    pub const fn validation(&self) -> ValidationPolicy {
+        self.validation
+    }
+
+    /// Return the explicit boundary-only projection policy.
+    pub const fn boundary_policy(&self) -> ExactBoundaryBooleanPolicy {
+        self.boundary_policy
     }
 }
 
