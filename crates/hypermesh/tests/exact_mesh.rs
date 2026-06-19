@@ -1738,7 +1738,6 @@ fn exact_selected_region_boolean_is_publicly_replayable() {
         ExactReportFreshness::SourceReplayMismatch
     );
     assert!(result.has_retained_split_region_evidence());
-    assert!(result.has_retained_output_assembly());
     assert!(!result.mesh().triangles().is_empty());
     assert_eq!(
         result.mesh().validation_policy(),
@@ -2496,7 +2495,6 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
         if result.is_arrangement_cell_complex_materialized_for(ExactBooleanOperation::Union) {
             assert!(result.has_retained_split_region_evidence());
             assert!(result.has_retained_volumetric_classification_evidence());
-            assert!(result.has_retained_output_assembly());
         } else {
             assert!(
                 result.is_arrangement_cell_complex_shortcut_for(ExactBooleanOperation::Union),
@@ -2518,7 +2516,6 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
         if result.is_arrangement_cell_complex_materialized_for(ExactBooleanOperation::Union) {
             assert!(result.has_retained_split_region_evidence());
             assert!(result.has_retained_volumetric_classification_evidence());
-            assert!(result.has_retained_output_assembly());
         } else {
             assert!(
                 result.is_arrangement_cell_complex_shortcut_for(ExactBooleanOperation::Union),
@@ -2556,7 +2553,6 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
     if difference.is_arrangement_cell_complex_materialized_for(ExactBooleanOperation::Difference) {
         assert!(difference.has_retained_split_region_evidence());
         assert!(difference.has_retained_volumetric_classification_evidence());
-        assert!(difference.has_retained_output_assembly());
     } else {
         assert!(
             difference.is_arrangement_cell_complex_shortcut_for(ExactBooleanOperation::Difference),
@@ -2689,7 +2685,6 @@ fn arrangement_cell_complex_request_materialization_is_publicly_replayable() {
     if result.is_arrangement_cell_complex_materialized_for(ExactBooleanOperation::Union) {
         assert!(result.has_retained_split_region_evidence());
         assert!(result.has_retained_volumetric_classification_evidence());
-        assert!(result.has_retained_output_assembly());
     } else {
         assert!(
             result.is_arrangement_cell_complex_shortcut_for(ExactBooleanOperation::Union),
@@ -2733,7 +2728,6 @@ fn arrangement_cell_complex_request_materialization_is_publicly_replayable() {
     {
         assert!(convex_intersection.has_retained_split_region_evidence());
         assert!(convex_intersection.has_retained_volumetric_classification_evidence());
-        assert!(convex_intersection.has_retained_output_assembly());
     } else {
         assert!(
             convex_intersection

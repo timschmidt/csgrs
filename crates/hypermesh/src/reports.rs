@@ -732,11 +732,6 @@ impl ExactBooleanResult {
         !self.region_classifications.is_empty() && !self.triangulations.is_empty()
     }
 
-    /// Return whether this result retained materialized output assembly.
-    pub fn has_retained_output_assembly(&self) -> bool {
-        !self.assembly.triangles.is_empty()
-    }
-
     /// Return whether this result retained volumetric classification evidence.
     pub fn has_retained_volumetric_classification_evidence(&self) -> bool {
         !self.volumetric_classifications.is_empty()
