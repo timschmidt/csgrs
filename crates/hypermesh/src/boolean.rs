@@ -275,13 +275,122 @@ impl ExactArrangementBooleanAttempt {
     }
 
     /// Return retained topology assembly gate evidence, when present.
-    pub fn topology_assembly_report(&self) -> Option<&ExactTopologyAssemblyReport> {
+    #[cfg(test)]
+    pub(crate) fn topology_assembly_report(&self) -> Option<&ExactTopologyAssemblyReport> {
         self.topology_assembly_report.as_ref()
     }
 
     /// Return retained region ownership gate evidence, when present.
-    pub fn region_ownership_report(&self) -> Option<&ExactRegionOwnershipReport> {
+    #[cfg(test)]
+    pub(crate) fn region_ownership_report(&self) -> Option<&ExactRegionOwnershipReport> {
         self.region_ownership_report.as_ref()
+    }
+
+    /// Return whether this attempt retained topology assembly evidence.
+    pub fn has_topology_assembly_evidence(&self) -> bool {
+        self.topology_assembly_report
+            .as_ref()
+            .is_some_and(|report| report.validate().is_ok())
+    }
+
+    /// Return whether this attempt retained region ownership evidence.
+    pub fn has_region_ownership_evidence(&self) -> bool {
+        self.region_ownership_report
+            .as_ref()
+            .is_some_and(|report| report.validate().is_ok())
+    }
+
+    /// Return whether retained topology assembly evidence completed.
+    pub fn topology_assembly_is_complete(&self) -> bool {
+        self.topology_assembly_report
+            .as_ref()
+            .is_some_and(|report| report.validate().is_ok() && report.is_complete())
+    }
+
+    /// Return whether retained region ownership resolves named Boolean selection.
+    pub fn region_ownership_is_resolved(&self) -> bool {
+        self.region_ownership_report
+            .as_ref()
+            .is_some_and(|report| report.validate().is_ok() && report.is_resolved())
+    }
+
+    /// Return whether retained volume ownership resolves named Boolean selection.
+    pub fn region_ownership_is_volume_resolved(&self) -> bool {
+        self.region_ownership_report
+            .as_ref()
+            .is_some_and(|report| report.validate().is_ok() && report.status.is_volume_resolved())
+    }
+
+    /// Return whether retained ownership evidence resolves this attempt's operation.
+    pub fn region_ownership_resolves_requested_operation(&self) -> bool {
+        self.resolves_requested_volume_ownership()
+    }
+
+    /// Return retained arrangement blocker count.
+    pub const fn arrangement_blockers(&self) -> usize {
+        self.arrangement_blockers
+    }
+
+    /// Return retained arrangement face-cell count.
+    pub const fn face_cells(&self) -> usize {
+        self.face_cells
+    }
+
+    /// Return retained connected shell/region count.
+    pub const fn regions(&self) -> usize {
+        self.regions
+    }
+
+    /// Return retained volume-region count.
+    pub const fn volume_regions(&self) -> usize {
+        self.volume_regions
+    }
+
+    /// Return retained volume adjacency count.
+    pub const fn volume_adjacencies(&self) -> usize {
+        self.volume_adjacencies
+    }
+
+    /// Return retained lower-dimensional artifact count.
+    pub const fn lower_dimensional_artifacts(&self) -> usize {
+        self.lower_dimensional_artifacts
+    }
+
+    /// Return selected face-cell count.
+    pub const fn selected_faces(&self) -> usize {
+        self.selected_faces
+    }
+
+    /// Return selected volume-region count.
+    pub const fn selected_volume_regions(&self) -> usize {
+        self.selected_volume_regions
+    }
+
+    /// Return selected faces oriented by retained volume adjacency evidence.
+    pub const fn volume_oriented_selected_faces(&self) -> usize {
+        self.volume_oriented_selected_faces
+    }
+
+    /// Return selected faces oriented by source-label operation rules.
+    pub const fn label_oriented_selected_faces(&self) -> usize {
+        self.label_oriented_selected_faces
+    }
+
+    /// Return output vertex count, when the attempt built a mesh.
+    pub const fn output_vertices(&self) -> usize {
+        self.output_vertices
+    }
+
+    /// Return output triangle count, when the attempt built a mesh.
+    pub const fn output_triangles(&self) -> usize {
+        self.output_triangles
+    }
+
+    /// Return volume regions owned by both operands, when ownership evidence is retained.
+    pub fn shared_owned_volume_regions(&self) -> usize {
+        self.region_ownership_report
+            .as_ref()
+            .map_or(0, |report| report.shared_owned_volumes)
     }
 
     fn retain_topology_assembly_report(&mut self, report: ExactTopologyAssemblyReport) {

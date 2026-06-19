@@ -79,6 +79,7 @@ pub enum ExactArrangementBlocker {
     /// needed to form closed shells.
     UnregularizedOpenSheetComplex,
     /// The primitive family is outside the current exact arrangement kernel.
+    #[allow(dead_code)]
     UnsupportedCurvedPrimitive,
     /// The requested output requires an explicit approximation/export policy.
     ApproximationPolicyRequired,

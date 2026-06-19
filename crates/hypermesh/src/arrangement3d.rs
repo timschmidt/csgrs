@@ -1104,6 +1104,8 @@ impl ExactTopologyAssemblyReport {
 
     /// Validate this topology report by replaying arrangement construction from
     /// source operands.
+    #[cfg(test)]
+    #[allow(dead_code)]
     pub fn validate_against_sources(
         &self,
         left: &ExactMesh,
@@ -1116,19 +1118,8 @@ impl ExactTopologyAssemblyReport {
         self.validate_against_arrangement(&arrangement, left, right, policy)
     }
 
-    pub fn status_against_sources(
-        &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-        policy: ExactRegularizationPolicy,
-    ) -> ExactTopologyAssemblyStatus {
-        let arrangement = match ExactArrangement::from_meshes_with_policy(left, right, policy) {
-            Ok(arrangement) => arrangement,
-            Err(_) => return ExactTopologyAssemblyStatus::SourceReplayBlocked,
-        };
-        self.status_against_arrangement(&arrangement, left, right, policy)
-    }
-
+    #[cfg(test)]
+    #[allow(dead_code)]
     pub(crate) fn validate_against_arrangement(
         &self,
         arrangement: &ExactArrangement,
@@ -1142,24 +1133,6 @@ impl ExactTopologyAssemblyReport {
             Ok(())
         } else {
             Err(ExactArrangementBlocker::UnresolvedRegionClassification)
-        }
-    }
-
-    pub(crate) fn status_against_arrangement(
-        &self,
-        arrangement: &ExactArrangement,
-        left: &ExactMesh,
-        right: &ExactMesh,
-        policy: ExactRegularizationPolicy,
-    ) -> ExactTopologyAssemblyStatus {
-        if self.validate().is_err() {
-            return ExactTopologyAssemblyStatus::StaleArrangement;
-        }
-        let replay = arrangement.topology_assembly_report_with_policy(left, right, policy);
-        if self == &replay {
-            self.status
-        } else {
-            ExactTopologyAssemblyStatus::StaleArrangement
         }
     }
 }

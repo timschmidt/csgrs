@@ -30,14 +30,8 @@ fn assert_evaluation_retains_attempt_gate_reports(evaluation: &hypermesh::ExactB
     let attempt = evaluation
         .retained_arrangement_attempt()
         .expect("evaluation should retain an arrangement attempt");
-    assert!(
-        attempt.topology_assembly_report().is_some(),
-        "{evaluation:?}"
-    );
-    assert!(
-        attempt.region_ownership_report().is_some(),
-        "{evaluation:?}"
-    );
+    assert!(attempt.has_topology_assembly_evidence(), "{evaluation:?}");
+    assert!(attempt.has_region_ownership_evidence(), "{evaluation:?}");
 }
 
 fn exact_boolean_result(
@@ -280,21 +274,15 @@ fn exact_boolean_evaluation_retains_region_ownership_report() {
         evaluation.retained_arrangement_attempt().is_some(),
         "named boolean certifications should retain arrangement attempt"
     );
-    let ownership = evaluation
+    let attempt = evaluation
         .retained_arrangement_attempt()
-        .and_then(|attempt| attempt.region_ownership_report())
-        .expect("named boolean certifications should retain region ownership");
-    ownership.validate().unwrap();
-    assert!(ownership.is_resolved());
-    assert!(ownership.status.is_volume_resolved());
-    assert_eq!(ownership.volume_regions, 3);
-    assert_eq!(ownership.shared_owned_volumes, 1);
-    evaluation
-        .retained_arrangement_attempt()
-        .and_then(|attempt| attempt.topology_assembly_report())
-        .expect("named boolean certifications should retain topology assembly")
-        .validate()
-        .unwrap();
+        .expect("named boolean certifications should retain arrangement attempt");
+    assert!(attempt.has_region_ownership_evidence());
+    assert!(attempt.region_ownership_is_resolved());
+    assert!(attempt.region_ownership_is_volume_resolved());
+    assert_eq!(attempt.volume_regions(), 3);
+    assert_eq!(attempt.shared_owned_volume_regions(), 1);
+    assert!(attempt.has_topology_assembly_evidence());
 }
 
 #[test]
@@ -1087,15 +1075,7 @@ fn exact_coplanar_volumetric_cell_evidence_is_retained_by_public_evaluation() {
     assert!(
         evaluation
             .retained_arrangement_attempt()
-            .and_then(|attempt| {
-                attempt
-                    .region_ownership_report()
-                    .map(|report| (attempt, report))
-            })
-            .is_some_and(|(attempt, report)| {
-                report.validate().is_ok()
-                    && report.resolves_operation_selection(attempt.operation())
-            })
+            .is_some_and(|attempt| attempt.region_ownership_resolves_requested_operation())
             || evaluation_materializes_arrangement_cell_complex(&evaluation)
             || evaluation.coplanar_volumetric_evidence().is_some(),
         "{evaluation:?}"
@@ -3716,16 +3696,8 @@ fn exact_boolean_attempt_public_path_reports_blockers_or_cells() {
         ExactBoundaryBooleanPolicy::PreserveSeparateShells
     );
     attempt.validate().unwrap();
-    assert!(
-        attempt
-            .topology_assembly_report()
-            .is_some_and(|report| report.is_complete())
-    );
-    assert!(
-        attempt
-            .region_ownership_report()
-            .is_some_and(|report| report.status.is_volume_resolved())
-    );
+    assert!(attempt.topology_assembly_is_complete());
+    assert!(attempt.region_ownership_is_volume_resolved());
     attempt.validate_against_sources(&left, &right).unwrap();
     assert_eq!(
         attempt.freshness_against_sources(&left, &right),

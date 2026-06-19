@@ -3,8 +3,7 @@ use std::time::{Duration, Instant};
 
 use hypermesh::{
     ExactArrangementBooleanAttempt, ExactBooleanEvaluation, ExactBooleanOperation,
-    ExactBooleanRequest, ExactBooleanWorkspace, ExactMesh, ExactRegularizationPolicy,
-    ValidationPolicy,
+    ExactBooleanRequest, ExactBooleanWorkspace, ExactMesh, ValidationPolicy,
 };
 
 struct BenchCase {
@@ -130,39 +129,33 @@ fn run_case(case: &BenchCase) {
             .cloned();
         black_box(attempt.map(|attempt| {
             (
-                attempt
-                    .topology_assembly_report()
-                    .is_some_and(|report| report.is_complete()),
-                attempt
-                    .region_ownership_report()
-                    .is_some_and(|report| report.status.is_volume_resolved()),
+                attempt.topology_assembly_is_complete(),
+                attempt.region_ownership_is_volume_resolved(),
             )
         }));
     });
 
     let attempt = retained_arrangement_attempt_for_case(case, request);
-    time_stage(case, "attempt_topology_assembly_report", || {
-        if let Some(report) = attempt.topology_assembly_report() {
-            black_box((
-                report.status,
-                report.graph_events,
-                report.split_graph_vertices,
-                report.region_boundaries,
-                report.arrangement_face_cells,
-            ));
-        }
+    time_stage(case, "attempt_topology_assembly_evidence", || {
+        black_box((
+            attempt.has_topology_assembly_evidence(),
+            attempt.topology_assembly_is_complete(),
+            attempt.arrangement_blockers(),
+            attempt.face_cells(),
+            attempt.regions(),
+            attempt.lower_dimensional_artifacts(),
+        ));
     });
 
-    time_stage(case, "attempt_region_ownership_report", || {
-        if let Some(report) = attempt.region_ownership_report() {
-            black_box((
-                report.status,
-                report.face_cells,
-                report.opposite_unknown_faces,
-                report.volume_regions,
-                report.shared_owned_volumes,
-            ));
-        }
+    time_stage(case, "attempt_region_ownership_evidence", || {
+        black_box((
+            attempt.has_region_ownership_evidence(),
+            attempt.region_ownership_is_resolved(),
+            attempt.region_ownership_is_volume_resolved(),
+            attempt.volume_regions(),
+            attempt.volume_adjacencies(),
+            attempt.shared_owned_volume_regions(),
+        ));
     });
 
     time_stage(case, "boolean_evaluate", || {
@@ -218,95 +211,72 @@ fn run_case(case: &BenchCase) {
     workspace.evaluate(request).unwrap();
     time_stage(
         case,
-        "workspace_topology_assembly_report_from_evaluation_attempt",
+        "workspace_topology_assembly_evidence_from_evaluation_attempt",
         || {
-            let report = workspace
+            let attempt = workspace
                 .evaluate(request)
                 .unwrap()
-                .retained_arrangement_attempt()
-                .and_then(|attempt| attempt.topology_assembly_report());
-            if let Some(report) = report {
-                black_box((
-                    report.status,
-                    report.graph_events,
-                    report.region_boundaries,
-                    report.arrangement_face_cells,
-                    report.arrangement_face_cell_boundary_nodes,
-                    report.arrangement_face_cell_boundary_points,
-                    report.arrangement_regions,
-                    report.arrangement_region_edge_incidences,
-                    report.arrangement_region_boundary_edges,
-                    report.arrangement_region_non_manifold_edges,
-                    report.lower_dimensional_point_contacts,
-                    report.lower_dimensional_edge_contacts,
-                    report.volume_adjacency_face_sides,
-                    report.volume_adjacency_separating_faces,
-                ));
-            }
+                .retained_arrangement_attempt();
+            black_box(attempt.map(|attempt| {
+                (
+                    attempt.has_topology_assembly_evidence(),
+                    attempt.topology_assembly_is_complete(),
+                    attempt.face_cells(),
+                    attempt.regions(),
+                    attempt.lower_dimensional_artifacts(),
+                )
+            }));
         },
     );
 
     time_prepared_stage(
         case,
-        "topology_assembly_report_replay_validate_from_attempt",
+        "attempt_source_replay_validate_for_topology_evidence",
         || retained_arrangement_attempt_for_case(case, request),
         |attempt| {
-            if let Some(report) = attempt.topology_assembly_report() {
-                black_box(
-                    report
-                        .validate_against_sources(
-                            &case.left,
-                            &case.right,
-                            ExactRegularizationPolicy::REGULARIZED_SOLID,
-                        )
-                        .ok(),
-                );
-            }
+            black_box(
+                attempt
+                    .validate_against_sources_for_request(&case.left, &case.right, request)
+                    .ok()
+                    .zip(Some(attempt.topology_assembly_is_complete())),
+            );
         },
     );
 
     time_stage(
         case,
-        "workspace_region_ownership_report_from_evaluation_attempt",
+        "workspace_region_ownership_evidence_from_evaluation_attempt",
         || {
-            let report = workspace
+            let attempt = workspace
                 .evaluate(request)
                 .unwrap()
-                .retained_arrangement_attempt()
-                .and_then(|attempt| attempt.region_ownership_report());
-            if let Some(report) = report {
-                black_box((
-                    report.status,
-                    report.face_cells,
-                    report.face_cell_boundary_nodes,
-                    report.face_cell_boundary_points,
-                    report.opposite_unknown_faces,
-                    report.volume_regions,
-                    report.lower_dimensional_point_contacts,
-                    report.lower_dimensional_edge_contacts,
-                    report.volume_adjacency_face_sides,
-                    report.volume_adjacency_separating_faces,
-                ));
-            }
+                .retained_arrangement_attempt();
+            black_box(attempt.map(|attempt| {
+                (
+                    attempt.has_region_ownership_evidence(),
+                    attempt.region_ownership_is_resolved(),
+                    attempt.region_ownership_is_volume_resolved(),
+                    attempt.region_ownership_resolves_requested_operation(),
+                    attempt.volume_regions(),
+                    attempt.shared_owned_volume_regions(),
+                )
+            }));
         },
     );
 
     time_prepared_stage(
         case,
-        "region_ownership_report_replay_validate_from_attempt",
+        "attempt_source_replay_validate_for_ownership_evidence",
         || retained_arrangement_attempt_for_case(case, request),
         |attempt| {
-            if let Some(report) = attempt.region_ownership_report() {
-                black_box(
-                    report
-                        .validate_against_sources(
-                            &case.left,
-                            &case.right,
-                            ExactRegularizationPolicy::REGULARIZED_SOLID,
-                        )
-                        .ok(),
-                );
-            }
+            black_box(
+                attempt
+                    .validate_against_sources_for_request(&case.left, &case.right, request)
+                    .ok()
+                    .zip(Some(
+                        attempt.region_ownership_resolves_requested_operation(),
+                    )),
+            );
         },
     );
 
@@ -316,15 +286,9 @@ fn run_case(case: &BenchCase) {
         let attempt = evaluation.retained_arrangement_attempt();
         black_box(attempt.map(|attempt| {
             (
-                attempt
-                    .topology_assembly_report()
-                    .is_some_and(|report| report.is_complete()),
-                attempt
-                    .region_ownership_report()
-                    .is_some_and(|report| report.status.is_resolved()),
-                attempt
-                    .region_ownership_report()
-                    .is_some_and(|report| report.status.is_volume_resolved()),
+                attempt.topology_assembly_is_complete(),
+                attempt.region_ownership_is_resolved(),
+                attempt.region_ownership_is_volume_resolved(),
             )
         }));
     });
