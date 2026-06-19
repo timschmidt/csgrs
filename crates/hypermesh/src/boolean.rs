@@ -2382,16 +2382,6 @@ impl ExactBooleanEvaluation {
         }
     }
 
-    /// Classify only the materialized result retained by this evaluation,
-    /// replaying from retained exact artifacts first.
-    pub fn materialized_result_freshness_against_sources(
-        &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-    ) -> ExactReportFreshness {
-        exact_report_freshness(self.validate_materialized_result_against_sources(left, right))
-    }
-
     /// Classify whether this retained evaluation is fresh for the source
     /// meshes under its original request policy.
     pub fn freshness_against_sources(

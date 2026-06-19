@@ -65,10 +65,6 @@ fn exact_boolean_evaluated_result(
     evaluation
         .validate_materialized_result_against_sources(left, right)
         .unwrap();
-    assert_eq!(
-        evaluation.materialized_result_freshness_against_sources(left, right),
-        ExactReportFreshness::Current
-    );
     evaluation
         .result
         .expect("certified boolean evaluation should retain materialized result")
@@ -1095,10 +1091,6 @@ fn affine_orthogonal_solid_recovers_multi_cell_basis_without_sampling_limits() {
             .validate_materialized_result_against_sources(&left, &right)
             .unwrap();
         result.validate().unwrap();
-        assert_eq!(
-            evaluation.materialized_result_freshness_against_sources(&left, &right),
-            ExactReportFreshness::Current
-        );
         assert!(result.mesh.facts().mesh.closed_manifold);
     }
 }
