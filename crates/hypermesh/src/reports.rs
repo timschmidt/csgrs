@@ -6028,12 +6028,11 @@ impl ExactWindingReadinessReport {
                 self.status,
                 ExactWindingReadinessStatus::Ready
                     | ExactWindingReadinessStatus::VolumetricAssemblyRequired
-                    | ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized
-                    | ExactWindingReadinessStatus::CoplanarVolumetricCellsAlreadyMaterialized
                     | ExactWindingReadinessStatus::CoplanarVolumetricCellsRequired
                     | ExactWindingReadinessStatus::SurfaceEqualityAlreadyMaterialized
                     | ExactWindingReadinessStatus::ClosedBoundaryTouchingAlreadyMaterialized
             )
+            && !self.status.materializes_arrangement_cell_complex()
         {
             return Err(ExactReportValidationError::UnexpectedCoplanarVolumetricEvidence);
         }
