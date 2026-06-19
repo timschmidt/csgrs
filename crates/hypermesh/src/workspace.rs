@@ -369,10 +369,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
             && let Some(result) = {
                 let evaluation = &self.evaluations[index].1;
                 evaluation
-                    .validate()
-                    .map_err(workspace_report_validation_error)?;
-                evaluation
-                    .validate_materialized_result_against_sources(self.left, self.right)
+                    .validate_against_sources(self.left, self.right)
                     .map_err(workspace_report_validation_error)?;
                 evaluation.materialized_result().cloned()
             }

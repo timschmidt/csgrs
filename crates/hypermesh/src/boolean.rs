@@ -2355,7 +2355,7 @@ impl ExactBooleanEvaluation {
     /// Validate only the materialized result retained by this evaluation,
     /// replaying from the retained arrangement attempt before falling back to
     /// broader result replay.
-    pub(crate) fn validate_materialized_result_against_sources(
+    fn validate_materialized_result_against_sources(
         &self,
         left: &ExactMesh,
         right: &ExactMesh,
