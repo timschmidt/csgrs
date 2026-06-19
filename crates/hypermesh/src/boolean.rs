@@ -1022,7 +1022,8 @@ impl ExactBooleanCertificationSet {
     }
 
     /// Return the winding/inside-outside readiness certification report.
-    pub fn winding_readiness(&self) -> &ExactWindingReadinessReport {
+    #[cfg(test)]
+    pub(crate) fn winding_readiness(&self) -> &ExactWindingReadinessReport {
         &self.winding_readiness
     }
 
@@ -2316,6 +2317,28 @@ impl ExactBooleanEvaluation {
     /// request reached a certified output.
     pub fn materialized_result(&self) -> Option<&ExactBooleanResult> {
         self.result.as_ref()
+    }
+
+    /// Return whether this evaluation reached arrangement/cell-complex
+    /// materialization evidence for the requested operation.
+    pub fn materializes_arrangement_cell_complex(&self) -> bool {
+        self.result.as_ref().is_some_and(|result| {
+            result.is_arrangement_cell_complex_materialized_for(self.operation())
+                || result.is_arrangement_cell_complex_shortcut_for(self.operation())
+        }) || self.preflight.is_certified_arrangement_cell_complex()
+            || self
+                .certifications
+                .winding_readiness
+                .materializes_arrangement_cell_complex()
+    }
+
+    /// Return retained source-aware coplanar volumetric-cell evidence, if the
+    /// canonical evaluation retained any for this request.
+    pub fn coplanar_volumetric_evidence(&self) -> Option<&CoplanarVolumetricCellEvidenceReport> {
+        self.preflight.coplanar_volumetric_evidence().or(self
+            .certifications
+            .winding_readiness
+            .coplanar_volumetric_evidence())
     }
 
     #[cfg(test)]

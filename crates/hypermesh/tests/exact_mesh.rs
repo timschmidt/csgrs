@@ -23,13 +23,7 @@ fn exact_boolean_evaluation(
 fn evaluation_materializes_arrangement_cell_complex(
     evaluation: &hypermesh::ExactBooleanEvaluation,
 ) -> bool {
-    evaluation.materialized_result().is_some_and(|result| {
-        result.is_arrangement_cell_complex_materialized_for(evaluation.operation())
-            || result.is_arrangement_cell_complex_shortcut_for(evaluation.operation())
-    }) || evaluation
-        .certifications()
-        .winding_readiness()
-        .materializes_arrangement_cell_complex()
+    evaluation.materializes_arrangement_cell_complex()
 }
 
 fn assert_evaluation_retains_attempt_gate_reports(evaluation: &hypermesh::ExactBooleanEvaluation) {
@@ -1113,22 +1107,11 @@ fn exact_coplanar_volumetric_cell_evidence_is_retained_by_public_evaluation() {
         "{evaluation:?}"
     );
     evaluation.validate_against_sources(&left, &right).unwrap();
-    if evaluation
-        .certifications()
-        .winding_readiness()
-        .coplanar_volumetric_evidence()
-        .is_some()
-    {
-        assert_eq!(
-            preflight.coplanar_volumetric_evidence(),
-            evaluation
-                .certifications()
-                .winding_readiness()
-                .coplanar_volumetric_evidence()
-        );
-    } else {
-        assert!(preflight.coplanar_volumetric_evidence().is_some());
-    }
+    assert_eq!(
+        evaluation.coplanar_volumetric_evidence(),
+        preflight.coplanar_volumetric_evidence()
+    );
+    assert!(preflight.coplanar_volumetric_evidence().is_some());
     let report = evaluation
         .preflight()
         .coplanar_volumetric_evidence()
@@ -1933,24 +1916,18 @@ fn lower_dimensional_regularized_boolean_is_publicly_replayable() {
             ExactReportFreshness::SourceReplayMismatch
         );
 
-        let readiness = evaluation.certifications().winding_readiness().clone();
         let readiness_materialized_lower =
-            readiness.is_lower_dimensional_regularized_solid_materialized();
-        let readiness_materialized_arrangement = readiness.materializes_arrangement_cell_complex();
+            preflight.is_certified_lower_dimensional_regularized_solid();
+        let readiness_materialized_arrangement = evaluation.materializes_arrangement_cell_complex();
         assert!(
             readiness_materialized_lower || readiness_materialized_arrangement,
-            "{operation:?}: {readiness:?}"
-        );
-        assert!(
-            readiness.blocker().requires_winding(),
-            "{operation:?}: {readiness:?}"
+            "{operation:?}: {evaluation:?}"
         );
         if readiness_materialized_lower {
-            assert_eq!(readiness.retained_face_pairs(), 0);
-            assert_eq!(readiness.retained_events(), 0);
+            assert_eq!(preflight.retained_face_pairs(), 0);
+            assert_eq!(preflight.retained_events(), 0);
         }
-        assert_eq!(readiness.region_count(), 0);
-        readiness.validate().unwrap();
+        assert_eq!(preflight.region_count(), 0);
         if readiness_materialized_lower {
             evaluation.validate_against_sources(&left, &right).unwrap();
             assert_eq!(
@@ -2002,17 +1979,9 @@ fn lower_dimensional_regularized_boolean_is_publicly_replayable() {
         disjoint_evaluation
             .validate_against_sources(&left, &disjoint_right)
             .unwrap();
-        let disjoint_readiness = exact_boolean_evaluation(
-            &left,
-            &disjoint_right,
-            ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
-        )
-        .certifications()
-        .winding_readiness()
-        .clone();
         assert!(
-            disjoint_readiness.is_lower_dimensional_regularized_solid_materialized(),
-            "{operation:?}: {disjoint_readiness:?}"
+            disjoint_preflight.is_certified_lower_dimensional_regularized_solid(),
+            "{operation:?}: {disjoint_evaluation:?}"
         );
         let disjoint_result = exact_boolean_result(
             &left,
@@ -2133,18 +2102,6 @@ fn mixed_dimensional_regularized_solid_boolean_is_publicly_replayable() {
             assert!(
                 preflight.is_certified_mixed_dimensional_regularized_solid(),
                 "{operation:?}: {preflight:?}"
-            );
-            let readiness = exact_boolean_evaluation(
-                left,
-                right,
-                ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
-            )
-            .certifications()
-            .winding_readiness()
-            .clone();
-            assert!(
-                readiness.is_mixed_dimensional_regularized_solid_materialized(),
-                "{operation:?}: {readiness:?}"
             );
             let result = exact_boolean_result(
                 left,
@@ -2419,20 +2376,15 @@ fn closed_no_volume_overlap_regularized_boolean_is_publicly_replayable() {
                 ExactBoundaryBooleanPolicy::PreserveSeparateShells,
             );
             let readiness_evaluation = exact_boolean_evaluation(&left, &right, readiness_request);
-            let readiness = readiness_evaluation
-                .certifications()
-                .winding_readiness()
-                .clone();
             assert!(
-                readiness.is_arrangement_cell_complex_materialized(),
-                "{operation:?}: {readiness:?}"
+                readiness_evaluation.materializes_arrangement_cell_complex(),
+                "{operation:?}: {readiness_evaluation:?}"
             );
             assert_eq!(
-                readiness.coplanar_volumetric_evidence(),
+                readiness_evaluation.coplanar_volumetric_evidence(),
                 retained_evidence.as_ref(),
                 "{operation:?}: no-volume readiness should retain consumed source-aware evidence"
             );
-            readiness.validate().unwrap();
             readiness_evaluation
                 .validate_against_sources(&left, &right)
                 .unwrap();
@@ -2616,19 +2568,11 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
     );
     preflight.validate().unwrap();
 
-    let readiness = evaluation.certifications().winding_readiness().clone();
     assert!(
-        readiness.materializes_arrangement_cell_complex(),
-        "{readiness:?}"
+        evaluation.materializes_arrangement_cell_complex(),
+        "{evaluation:?}"
     );
-    assert_eq!(
-        readiness.retained_face_pairs(),
-        preflight.retained_face_pairs(),
-        "{readiness:?}"
-    );
-    assert_eq!(readiness.retained_events(), preflight.retained_events());
-    assert_eq!(readiness.region_count(), 0);
-    readiness.validate().unwrap();
+    assert_eq!(preflight.region_count(), 0);
 
     let result = evaluation
         .materialized_result()
@@ -3983,41 +3927,14 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
         "default replay should certify a boundary-policy preflight"
     );
 
-    let rejected_readiness = exact_boolean_evaluation(
-        &left,
-        &right,
-        ExactBooleanRequest::with_boundary_policy(
-            ExactBooleanOperation::Union,
-            ValidationPolicy::ALLOW_BOUNDARY,
-            ExactBoundaryBooleanPolicy::Reject,
-        ),
-    )
-    .certifications()
-    .winding_readiness()
-    .clone();
     assert!(
-        rejected_readiness.requires_boundary_policy(),
-        "{rejected_readiness:?}"
+        rejected_policy_preflight.requires_boundary_policy(),
+        "{rejected_policy_preflight:?}"
     );
-
-    let policy_readiness = policy_evaluation
-        .certifications()
-        .winding_readiness()
-        .clone();
     assert!(
-        policy_readiness.is_boundary_policy_shortcut_materialized(),
-        "{policy_readiness:?}"
+        policy_preflight.is_certified_boundary_policy_shortcut(),
+        "{policy_preflight:?}"
     );
-    assert!(policy_readiness.blocker().requires_boundary_policy());
-    assert_eq!(
-        policy_readiness.retained_face_pairs(),
-        preflight.retained_face_pairs()
-    );
-    assert_eq!(
-        policy_readiness.retained_events(),
-        preflight.retained_events()
-    );
-    policy_readiness.validate().unwrap();
     policy_evaluation
         .validate_against_sources(&left, &right)
         .unwrap();
@@ -4026,8 +3943,8 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
         hypermesh::ExactReportFreshness::Current
     );
     assert!(
-        rejected_readiness.requires_boundary_policy(),
-        "strict replay should not certify a boundary-policy readiness report"
+        rejected_policy_preflight.requires_boundary_policy(),
+        "strict replay should not certify a boundary-policy shortcut"
     );
     let default_result = exact_boolean_result(
         &left,
@@ -4087,15 +4004,6 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
     closed_intersection_evaluation
         .validate_against_sources(&left, &right)
         .unwrap();
-    let closed_intersection_readiness = closed_intersection_evaluation
-        .certifications()
-        .winding_readiness()
-        .clone();
-    assert!(
-        closed_intersection_readiness.is_lower_dimensional_regularized_solid_materialized(),
-        "{closed_intersection_readiness:?}"
-    );
-
     let closed_intersection = exact_boolean_result(
         &left,
         &right,
@@ -4130,14 +4038,6 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
         closed_policy_evaluation
             .validate_against_sources(&left, &right)
             .unwrap();
-        let closed_policy_readiness = closed_policy_evaluation
-            .certifications()
-            .winding_readiness()
-            .clone();
-        assert!(
-            closed_policy_readiness.is_lower_dimensional_regularized_solid_materialized(),
-            "{operation:?}: {closed_policy_readiness:?}"
-        );
         let materialized = exact_boolean_result(
             &left,
             &right,

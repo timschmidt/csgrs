@@ -180,13 +180,7 @@ fn run_case(case: &BenchCase) {
         "workspace_coplanar_volumetric_evidence_from_evaluation",
         || {
             let evaluation = workspace.evaluate(request).unwrap();
-            let report = evaluation
-                .preflight()
-                .coplanar_volumetric_evidence()
-                .or(evaluation
-                    .certifications()
-                    .winding_readiness()
-                    .coplanar_volumetric_evidence());
+            let report = evaluation.coplanar_volumetric_evidence();
             black_box(report.map(|report| {
                 (
                     report.obstacle,
@@ -206,13 +200,7 @@ fn run_case(case: &BenchCase) {
         || retained_workspace_and_evaluation_for_case(case, request),
         |(_retained_workspace, evaluation)| {
             if let Some(evaluation) = evaluation.as_ref() {
-                let report = evaluation
-                    .preflight()
-                    .coplanar_volumetric_evidence()
-                    .or(evaluation
-                        .certifications()
-                        .winding_readiness()
-                        .coplanar_volumetric_evidence());
+                let report = evaluation.coplanar_volumetric_evidence();
                 if let Some(report) = report {
                     black_box((
                         report.obstacle,

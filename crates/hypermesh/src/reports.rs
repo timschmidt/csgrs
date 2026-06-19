@@ -6183,6 +6183,7 @@ pub enum ExactWindingReadinessStatus {
 impl ExactWindingReadinessStatus {
     /// Returns whether this readiness state records a certified materialized
     /// path rather than an unresolved winding handoff.
+    #[cfg(test)]
     pub const fn is_already_materialized(&self) -> bool {
         matches!(
             self,
@@ -6319,64 +6320,10 @@ impl ExactWindingReadinessReport {
         matches!(self.status, ExactWindingReadinessStatus::Ready)
     }
 
-    /// Return whether this report records a certified materialized path
-    /// rather than an unresolved winding handoff.
-    pub const fn is_already_materialized(&self) -> bool {
-        self.status.is_already_materialized()
-    }
-
     /// Return whether this report materialized through the arrangement/cell
     /// complex path that supersedes winding.
     pub const fn materializes_arrangement_cell_complex(&self) -> bool {
         self.status.materializes_arrangement_cell_complex()
-    }
-
-    /// Return whether this report is blocked on caller boundary-output policy.
-    pub const fn requires_boundary_policy(&self) -> bool {
-        matches!(
-            self.status,
-            ExactWindingReadinessStatus::BoundaryPolicyRequired
-        )
-    }
-
-    /// Return whether caller boundary policy has already materialized output.
-    pub const fn is_boundary_policy_shortcut_materialized(&self) -> bool {
-        matches!(
-            self.status,
-            ExactWindingReadinessStatus::BoundaryPolicyShortcutAlreadyMaterialized
-        )
-    }
-
-    /// Return whether closed lower-dimensional regularization materialized output.
-    pub const fn is_lower_dimensional_regularized_solid_materialized(&self) -> bool {
-        matches!(
-            self.status,
-            ExactWindingReadinessStatus::LowerDimensionalRegularizedSolidAlreadyMaterialized
-        )
-    }
-
-    /// Return whether mixed-dimensional regularized-solid semantics materialized output.
-    pub const fn is_mixed_dimensional_regularized_solid_materialized(&self) -> bool {
-        matches!(
-            self.status,
-            ExactWindingReadinessStatus::MixedDimensionalRegularizedSolidAlreadyMaterialized
-        )
-    }
-
-    /// Return whether closed boundary-touching regularized semantics materialized output.
-    pub const fn is_closed_boundary_touching_materialized(&self) -> bool {
-        matches!(
-            self.status,
-            ExactWindingReadinessStatus::ClosedBoundaryTouchingAlreadyMaterialized
-        )
-    }
-
-    /// Return whether arrangement/cell-complex semantics materialized output.
-    pub const fn is_arrangement_cell_complex_materialized(&self) -> bool {
-        matches!(
-            self.status,
-            ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized
-        )
     }
 
     /// Validate this winding-readiness report against the source meshes.
@@ -6398,13 +6345,6 @@ impl ExactWindingReadinessReport {
             ExactBoundaryBooleanPolicy::Reject,
         );
         validate_winding_readiness_against_sources_for_request(self, left, right, request)
-    }
-
-    /// Return whether every retained predicate route was proof-producing.
-    pub fn all_proof_producing(&self) -> bool {
-        self.region_classifications
-            .iter()
-            .all(FaceRegionPlaneClassification::all_proof_producing)
     }
 
     /// Validate status, blocker, and checked-region artifact consistency.
