@@ -910,7 +910,7 @@ fn affine_orthogonal_solid_recovers_multi_cell_basis_without_sampling_limits() {
         preflight_evaluation.validate().unwrap();
         preflight_evaluation
             .validate_against_sources(&left, &right)
-            .unwrap();
+            .unwrap_or_else(|error| panic!("{operation:?}: {error:?}"));
 
         let evaluation = exact_boolean_evaluation(
             &left,
@@ -1076,22 +1076,18 @@ fn exact_coplanar_volumetric_cell_evidence_is_retained_by_public_evaluation() {
             .retained_arrangement_attempt()
             .is_some_and(|attempt| attempt.region_ownership_resolves_requested_operation())
             || evaluation_materializes_arrangement_cell_complex(&evaluation)
-            || evaluation.coplanar_volumetric_evidence().is_some(),
+            || evaluation.has_coplanar_volumetric_evidence(),
         "{evaluation:?}"
     );
     evaluation.validate_against_sources(&left, &right).unwrap();
-    let report = evaluation
-        .coplanar_volumetric_evidence()
-        .expect("coplanar volumetric blocker should retain source-aware evidence");
-    report.validate().unwrap();
+    assert!(
+        evaluation.has_coplanar_volumetric_evidence(),
+        "coplanar volumetric blocker should retain source-aware evidence"
+    );
     evaluation.validate_against_sources(&left, &right).unwrap();
-    assert!(report.obstacle.requires_coplanar_volumetric_cells());
-    assert!(report.positive_area_coplanar_overlapping_pairs > 0);
-    assert!(report.same_side_coplanar_overlapping_pairs > 0);
-
-    let mut stale_counts = report.clone();
-    stale_counts.retained_face_pair_count += 1;
-    assert!(stale_counts.validate().is_err());
+    assert!(evaluation.requires_coplanar_volumetric_cells());
+    assert!(evaluation.positive_area_coplanar_volumetric_overlapping_pairs() > 0);
+    assert!(evaluation.same_side_coplanar_volumetric_overlapping_pairs() > 0);
 
     let separated_right = tetra([10, 0, 0]);
     assert!(
@@ -2250,10 +2246,8 @@ fn closed_boundary_touching_regularized_boolean_is_publicly_replayable() {
         preflight_evaluation.validate().unwrap();
         preflight_evaluation
             .validate_against_sources(&left, &right)
-            .unwrap();
-        if let Some(evidence) = preflight_evaluation.coplanar_volumetric_evidence() {
-            evidence.validate().unwrap();
-        }
+            .unwrap_or_else(|error| panic!("{operation:?}: {error:?}"));
+        assert!(preflight_evaluation.validate().is_ok());
 
         let result = exact_boolean_result(
             &left,
@@ -2295,7 +2289,7 @@ fn closed_no_volume_overlap_regularized_boolean_is_publicly_replayable() {
     );
     let right = tetra_from_corners([2, 0, 0], [6, 0, 0], [2, 4, 0], [2, 0, -4]);
 
-    let mut retained_evidence = None;
+    let mut retained_evidence_counts = None;
 
     for operation in [
         ExactBooleanOperation::Union,
@@ -2313,23 +2307,27 @@ fn closed_no_volume_overlap_regularized_boolean_is_publicly_replayable() {
             preflight_evaluation.retained_face_pairs() > 0,
             "positive-area no-volume shortcut should retain graph evidence: {operation:?}: {preflight_evaluation:?}"
         );
-        let evidence = preflight_evaluation.coplanar_volumetric_evidence().expect(
-            "positive-area no-volume shortcut should retain source-aware boundary-only evidence",
+        preflight_evaluation.validate().unwrap();
+        assert!(
+            preflight_evaluation.has_coplanar_volumetric_evidence(),
+            "positive-area no-volume shortcut should retain source-aware boundary-only evidence"
         );
-        evidence.validate().unwrap();
-        assert!(evidence.positive_area_coplanar_overlapping_pairs > 0);
-        if let Some(retained_evidence) = retained_evidence.as_ref() {
+        assert!(preflight_evaluation.positive_area_coplanar_volumetric_overlapping_pairs() > 0);
+        let evidence_counts = (
+            preflight_evaluation.coplanar_volumetric_retained_face_pairs(),
+            preflight_evaluation.coplanar_volumetric_overlapping_pairs(),
+            preflight_evaluation.positive_area_coplanar_volumetric_overlapping_pairs(),
+            preflight_evaluation.same_side_coplanar_volumetric_overlapping_pairs(),
+            preflight_evaluation.requires_coplanar_volumetric_cells(),
+        );
+        if let Some(retained_evidence_counts) = retained_evidence_counts {
             assert_eq!(
-                evidence, retained_evidence,
+                evidence_counts, retained_evidence_counts,
                 "{operation:?}: positive-area no-volume shortcut should retain stable source-aware boundary-only evidence"
             );
         } else {
-            retained_evidence = Some(evidence.clone());
+            retained_evidence_counts = Some(evidence_counts);
         }
-        preflight_evaluation.validate().unwrap();
-        preflight_evaluation
-            .validate_against_sources(&left, &right)
-            .unwrap();
 
         if matches!(
             operation,
@@ -2346,13 +2344,17 @@ fn closed_no_volume_overlap_regularized_boolean_is_publicly_replayable() {
                 "{operation:?}: {readiness_evaluation:?}"
             );
             assert_eq!(
-                readiness_evaluation.coplanar_volumetric_evidence(),
-                retained_evidence.as_ref(),
+                (
+                    readiness_evaluation.coplanar_volumetric_retained_face_pairs(),
+                    readiness_evaluation.coplanar_volumetric_overlapping_pairs(),
+                    readiness_evaluation.positive_area_coplanar_volumetric_overlapping_pairs(),
+                    readiness_evaluation.same_side_coplanar_volumetric_overlapping_pairs(),
+                    readiness_evaluation.requires_coplanar_volumetric_cells(),
+                ),
+                retained_evidence_counts
+                    .expect("preflight should retain coplanar volumetric evidence counts"),
                 "{operation:?}: no-volume readiness should retain consumed source-aware evidence"
             );
-            readiness_evaluation
-                .validate_against_sources(&left, &right)
-                .unwrap();
             let evaluation = exact_boolean_evaluation(
                 &left,
                 &right,

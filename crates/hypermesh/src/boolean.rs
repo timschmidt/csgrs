@@ -2552,11 +2552,49 @@ impl ExactBooleanEvaluation {
 
     /// Return retained source-aware coplanar volumetric-cell evidence, if the
     /// canonical evaluation retained any for this request.
-    pub fn coplanar_volumetric_evidence(&self) -> Option<&CoplanarVolumetricCellEvidenceReport> {
+    pub(crate) fn coplanar_volumetric_evidence(
+        &self,
+    ) -> Option<&CoplanarVolumetricCellEvidenceReport> {
         self.preflight.coplanar_volumetric_evidence().or(self
             .certifications
             .winding_readiness
             .coplanar_volumetric_evidence())
+    }
+
+    /// Return whether this evaluation retained coplanar volumetric-cell evidence.
+    pub fn has_coplanar_volumetric_evidence(&self) -> bool {
+        self.coplanar_volumetric_evidence().is_some()
+    }
+
+    /// Return whether retained evidence requires coplanar volumetric cells.
+    pub fn requires_coplanar_volumetric_cells(&self) -> bool {
+        self.coplanar_volumetric_evidence()
+            .is_some_and(|evidence| evidence.obstacle.requires_coplanar_volumetric_cells())
+    }
+
+    /// Return retained coplanar volumetric evidence face-pair count.
+    pub fn coplanar_volumetric_retained_face_pairs(&self) -> usize {
+        self.coplanar_volumetric_evidence()
+            .map_or(0, |evidence| evidence.retained_face_pair_count)
+    }
+
+    /// Return retained coplanar overlapping face-pair count.
+    pub fn coplanar_volumetric_overlapping_pairs(&self) -> usize {
+        self.coplanar_volumetric_evidence()
+            .map_or(0, |evidence| evidence.coplanar_overlapping_pairs)
+    }
+
+    /// Return retained positive-area coplanar overlapping face-pair count.
+    pub fn positive_area_coplanar_volumetric_overlapping_pairs(&self) -> usize {
+        self.coplanar_volumetric_evidence().map_or(0, |evidence| {
+            evidence.positive_area_coplanar_overlapping_pairs
+        })
+    }
+
+    /// Return retained same-side positive-area coplanar overlap count.
+    pub fn same_side_coplanar_volumetric_overlapping_pairs(&self) -> usize {
+        self.coplanar_volumetric_evidence()
+            .map_or(0, |evidence| evidence.same_side_coplanar_overlapping_pairs)
     }
 
     #[cfg(test)]

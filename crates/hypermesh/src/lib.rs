@@ -25,6 +25,7 @@ mod boolean;
 mod bounds;
 mod box_solid;
 mod cell_complex;
+#[allow(dead_code)]
 mod cells;
 mod construction;
 mod contained_adjacent;
@@ -32,6 +33,7 @@ mod convex;
 mod error;
 mod exact_key;
 mod facts;
+#[allow(dead_code)]
 mod graph;
 mod handoff;
 mod intersection;
@@ -42,6 +44,7 @@ mod orthogonal_solid;
 mod package;
 mod proposal;
 mod readiness;
+#[allow(dead_code)]
 mod region;
 mod regularization;
 mod reports;

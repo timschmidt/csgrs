@@ -175,15 +175,14 @@ fn run_case(case: &BenchCase) {
         "workspace_coplanar_volumetric_evidence_from_evaluation",
         || {
             let evaluation = workspace.evaluate(request).unwrap();
-            let report = evaluation.coplanar_volumetric_evidence();
-            black_box(report.map(|report| {
+            black_box(evaluation.has_coplanar_volumetric_evidence().then(|| {
                 (
-                    report.obstacle,
-                    report.retained_face_pair_count,
-                    report.candidate_pairs,
-                    report.coplanar_overlapping_pairs,
-                    report.positive_area_coplanar_overlapping_pairs,
-                    report.same_side_coplanar_overlapping_pairs,
+                    evaluation.requires_coplanar_volumetric_cells(),
+                    evaluation.coplanar_volumetric_retained_face_pairs(),
+                    evaluation.retained_candidate_pairs(),
+                    evaluation.coplanar_volumetric_overlapping_pairs(),
+                    evaluation.positive_area_coplanar_volumetric_overlapping_pairs(),
+                    evaluation.same_side_coplanar_volumetric_overlapping_pairs(),
                 )
             }));
         },
@@ -195,10 +194,9 @@ fn run_case(case: &BenchCase) {
         || retained_workspace_and_evaluation_for_case(case, request),
         |(_retained_workspace, evaluation)| {
             if let Some(evaluation) = evaluation.as_ref() {
-                let report = evaluation.coplanar_volumetric_evidence();
-                if let Some(report) = report {
+                if evaluation.has_coplanar_volumetric_evidence() {
                     black_box((
-                        report.obstacle,
+                        evaluation.requires_coplanar_volumetric_cells(),
                         evaluation
                             .validate_against_sources(&case.left, &case.right)
                             .ok(),
