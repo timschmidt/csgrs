@@ -522,7 +522,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
             self.validated_regularized_solid_arrangement_attempt_index(request)?;
         let retained_attempt =
             retained_attempt_index.map(|index| &self.arrangement_attempts[index].2);
-        let cached = cache_replayable_result(
+        let cached_index = cache_replayable_result(
             &mut self.materializations,
             self.left,
             self.right,
@@ -530,33 +530,10 @@ impl<'a> ExactBooleanWorkspace<'a> {
             retained_attempt,
             &result,
         )?;
-        if cached {
-            self.promote_evaluation_cache_from_materialization(request, &result)?;
+        if let Some(index) = cached_index {
+            self.promote_evaluation_cache_from_materialization_index(request, index)?;
         }
         Ok(result)
-    }
-
-    fn promote_evaluation_cache_from_materialization(
-        &mut self,
-        request: ExactBooleanRequest,
-        result: &ExactBooleanResult,
-    ) -> Result<(), MeshError> {
-        debug_assert!(cached_by_request_index(&self.materializations, request).is_some());
-        if let Some(index) = cached_by_request_index(&self.evaluations, request) {
-            let evaluation = &mut self.evaluations[index].1;
-            evaluation
-                .retain_materialized_result(result)
-                .map_err(workspace_report_validation_error)
-        } else {
-            let evaluation = self.evaluate(request)?;
-            if evaluation.materialized_result() == Some(result) {
-                Ok(())
-            } else {
-                Err(workspace_report_validation_error(
-                    ExactReportValidationError::StatusEvidenceMismatch,
-                ))
-            }
-        }
     }
 
     fn promote_evaluation_cache_from_materialization_index(
@@ -598,7 +575,7 @@ fn cache_replayable_result(
     request: ExactBooleanRequest,
     retained_arrangement_attempt: Option<&ExactArrangementBooleanAttempt>,
     result: &ExactBooleanResult,
-) -> Result<bool, MeshError> {
+) -> Result<Option<usize>, MeshError> {
     if validate_replayable_result_for_cache(
         left,
         right,
@@ -609,11 +586,11 @@ fn cache_replayable_result(
     .is_ok()
     {
         cache.push((request, result.clone()));
-        return Ok(true);
+        return Ok(Some(cache.len() - 1));
     }
     ExactBooleanEvaluation::validate_result_shape_for_request(request, result)
         .map_err(workspace_report_validation_error)?;
-    Ok(false)
+    Ok(None)
 }
 
 fn retain_replayable_result(
