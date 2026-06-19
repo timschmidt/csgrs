@@ -783,40 +783,20 @@ mod tests {
         );
         let preflight = first_preflight;
         preflight
-            .validate_against_sources_with_boundary_policy(
-                &left,
-                &right,
-                request.validation,
-                request.boundary_policy,
-            )
+            .validate_against_sources_for_request(&left, &right, request)
             .unwrap();
         assert_eq!(
-            preflight.freshness_against_sources_with_boundary_policy(
-                &left,
-                &right,
-                request.validation,
-                request.boundary_policy
-            ),
+            preflight.freshness_against_sources_for_request(&left, &right, request),
             ExactReportFreshness::Current
         );
         let mut stale_preflight = preflight.clone();
         stale_preflight.retained_events += 1;
         assert_eq!(
-            stale_preflight.validate_against_sources_with_boundary_policy(
-                &left,
-                &right,
-                request.validation,
-                request.boundary_policy,
-            ),
+            stale_preflight.validate_against_sources_for_request(&left, &right, request),
             Err(ExactReportValidationError::SourceReplayMismatch)
         );
         assert_ne!(
-            stale_preflight.freshness_against_sources_with_boundary_policy(
-                &left,
-                &right,
-                request.validation,
-                request.boundary_policy
-            ),
+            stale_preflight.freshness_against_sources_for_request(&left, &right, request),
             ExactReportFreshness::Current
         );
 

@@ -4306,69 +4306,28 @@ impl ExactBooleanPreflight {
         left: &ExactMesh,
         right: &ExactMesh,
     ) -> Result<(), ExactReportValidationError> {
-        self.validate()?;
-        let replay = self.replay_against_sources(
+        self.validate_against_sources_for_request(
             left,
             right,
             ExactBooleanRequest::new(self.operation, ValidationPolicy::ALLOW_BOUNDARY),
-        )?;
-        if self == &replay {
-            Ok(())
-        } else {
-            Err(ExactReportValidationError::SourceReplayMismatch)
-        }
+        )
     }
 
-    /// Validate this preflight report against source meshes and an explicit
-    /// output validation policy.
+    /// Validate this preflight report against source meshes and request.
     ///
-    /// The default source replay intentionally uses the strict closed-output
-    /// preflight contract. Policy-aware callers that accepted boundary output
-    /// need replay to include that policy, otherwise a materialized
-    /// arrangement/cell-complex preflight could be incorrectly compared
-    /// against the closed-output blocker report.
+    /// Boundary-only named booleans are intentionally blocked until a caller
+    /// chooses how to project lower-dimensional contact. Request-native replay
+    /// preserves that complete choice instead of splitting validation and
+    /// boundary policy away from the operation they certify.
     #[cfg(test)]
-    pub(crate) fn validate_against_sources_with_validation(
+    pub(crate) fn validate_against_sources_for_request(
         &self,
         left: &ExactMesh,
         right: &ExactMesh,
-        validation: ValidationPolicy,
+        request: ExactBooleanRequest,
     ) -> Result<(), ExactReportValidationError> {
         self.validate()?;
-        let replay = self.replay_against_sources(
-            left,
-            right,
-            ExactBooleanRequest::new(self.operation, validation),
-        )?;
-        if self == &replay {
-            Ok(())
-        } else {
-            Err(ExactReportValidationError::SourceReplayMismatch)
-        }
-    }
-
-    /// Validate this preflight report against source meshes, validation policy,
-    /// and boundary-output policy.
-    ///
-    /// Boundary-only named booleans are intentionally blocked by the default
-    /// preflight until a caller chooses how to project lower-dimensional
-    /// contact. This replay includes that chosen policy, allowing a retained
-    /// `CertifiedBoundaryPolicyShortcut` preflight to prove it still matches
-    /// the exact graph and output validation contract.
-    #[cfg(test)]
-    pub(crate) fn validate_against_sources_with_boundary_policy(
-        &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-        validation: ValidationPolicy,
-        boundary_policy: ExactBoundaryBooleanPolicy,
-    ) -> Result<(), ExactReportValidationError> {
-        self.validate()?;
-        let replay = self.replay_against_sources(
-            left,
-            right,
-            ExactBooleanRequest::with_boundary_policy(self.operation, validation, boundary_policy),
-        )?;
+        let replay = self.replay_against_sources(left, right, request)?;
         if self == &replay {
             Ok(())
         } else {
@@ -4389,9 +4348,9 @@ impl ExactBooleanPreflight {
 
     /// Classify whether this retained preflight is fresh for the source meshes.
     ///
-    /// This uses the default strict closed-output preflight contract. Use
-    /// [`Self::freshness_against_sources_with_validation`] when a caller
-    /// deliberately accepted a different output validation policy.
+    /// This uses the default allow-boundary preflight contract for the retained
+    /// operation. Use [`Self::freshness_against_sources_for_request`] when a
+    /// caller deliberately accepted a different request contract.
     #[cfg(test)]
     pub(crate) fn freshness_against_sources(
         &self,
@@ -4401,35 +4360,15 @@ impl ExactBooleanPreflight {
         exact_report_freshness(self.validate_against_sources(left, right))
     }
 
-    /// Classify whether this retained preflight is fresh under `validation`.
+    /// Classify whether this retained preflight is fresh under `request`.
     #[cfg(test)]
-    pub(crate) fn freshness_against_sources_with_validation(
+    pub(crate) fn freshness_against_sources_for_request(
         &self,
         left: &ExactMesh,
         right: &ExactMesh,
-        validation: ValidationPolicy,
+        request: ExactBooleanRequest,
     ) -> ExactReportFreshness {
-        exact_report_freshness(
-            self.validate_against_sources_with_validation(left, right, validation),
-        )
-    }
-
-    /// Classify whether this retained preflight is fresh under `validation`
-    /// and `boundary_policy`.
-    #[cfg(test)]
-    pub(crate) fn freshness_against_sources_with_boundary_policy(
-        &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-        validation: ValidationPolicy,
-        boundary_policy: ExactBoundaryBooleanPolicy,
-    ) -> ExactReportFreshness {
-        exact_report_freshness(self.validate_against_sources_with_boundary_policy(
-            left,
-            right,
-            validation,
-            boundary_policy,
-        ))
+        exact_report_freshness(self.validate_against_sources_for_request(left, right, request))
     }
 
     /// Validate support, blocker, and retained artifact consistency.
@@ -7405,10 +7344,10 @@ mod tests {
             ExactReportFreshness::Current
         );
         assert_eq!(
-            preflight.freshness_against_sources_with_validation(
+            preflight.freshness_against_sources_for_request(
                 &left,
                 &right,
-                ValidationPolicy::CLOSED
+                ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED)
             ),
             ExactReportFreshness::Current
         );

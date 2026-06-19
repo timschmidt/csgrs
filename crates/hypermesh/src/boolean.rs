@@ -13698,15 +13698,12 @@ mod tests {
         let mut graph_workspace = ExactBooleanWorkspace::new(&left, &right);
         let graph = graph_workspace.validated_graph().unwrap();
 
-        let preflight = test_preflight(
-            ExactBooleanRequest::with_boundary_policy(
-                ExactBooleanOperation::Union,
-                ValidationPolicy::CLOSED,
-                ExactBoundaryBooleanPolicy::Reject,
-            ),
-            &left,
-            &right,
+        let reject_closed_request = ExactBooleanRequest::with_boundary_policy(
+            ExactBooleanOperation::Union,
+            ValidationPolicy::CLOSED,
+            ExactBoundaryBooleanPolicy::Reject,
         );
+        let preflight = test_preflight(reject_closed_request, &left, &right);
         assert_eq!(
             preflight.support,
             ExactBooleanSupport::RequiresCertifiedWinding,
@@ -13715,12 +13712,7 @@ mod tests {
         assert!(preflight.blocker.is_some(), "{preflight:?}");
         preflight.validate().unwrap();
         preflight
-            .validate_against_sources_with_boundary_policy(
-                &left,
-                &right,
-                ValidationPolicy::CLOSED,
-                ExactBoundaryBooleanPolicy::Reject,
-            )
+            .validate_against_sources_for_request(&left, &right, reject_closed_request)
             .unwrap();
         let fake_shortcut = ExactBooleanResult {
             kind: ExactBooleanResultKind::CertifiedShortcut {
@@ -13778,20 +13770,18 @@ mod tests {
         assert_eq!(boundary_preflight.retained_events, graph.event_count());
         boundary_preflight.validate().unwrap();
         boundary_preflight
-            .validate_against_sources_with_validation(
+            .validate_against_sources_for_request(
                 &left,
                 &right,
-                ValidationPolicy::ALLOW_BOUNDARY,
+                ExactBooleanRequest::new(
+                    ExactBooleanOperation::Union,
+                    ValidationPolicy::ALLOW_BOUNDARY,
+                ),
             )
             .unwrap();
         assert!(
             boundary_preflight
-                .validate_against_sources_with_boundary_policy(
-                    &left,
-                    &right,
-                    ValidationPolicy::CLOSED,
-                    ExactBoundaryBooleanPolicy::Reject,
-                )
+                .validate_against_sources_for_request(&left, &right, reject_closed_request)
                 .is_err(),
             "closed replay should not certify an allow-boundary preflight"
         );
@@ -15974,7 +15964,11 @@ mod tests {
             assert!(preflight.blocker.is_none(), "{preflight:?}");
             preflight.validate().unwrap();
             preflight
-                .validate_against_sources_with_validation(&left, &right, validation)
+                .validate_against_sources_for_request(
+                    &left,
+                    &right,
+                    ExactBooleanRequest::new(ExactBooleanOperation::Union, validation),
+                )
                 .unwrap();
         }
     }
