@@ -718,7 +718,7 @@ impl ExactBooleanResult {
     }
 
     /// Return whether graph extraction contained unknown events before policy checks.
-    pub fn graph_had_unknowns(&self) -> bool {
+    pub(crate) fn graph_had_unknowns(&self) -> bool {
         self.graph_had_unknowns
     }
 
