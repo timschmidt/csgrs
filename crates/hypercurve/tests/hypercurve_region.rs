@@ -1613,6 +1613,39 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
             .source_refs()
             .is_empty()
     );
+    let arranged_fragment_source_range_cache =
+        arranged_fragment_cache.arranged_fragment_source_range_cache();
+    assert_eq!(
+        arranged_fragment_source_range_cache.source_ref_count(),
+        arranged_fragment_cache.source_ref_count()
+    );
+    assert_eq!(
+        arranged_fragment_source_range_cache.full_source_range_ref_count(),
+        arranged_fragment_cache.source_ref_count()
+    );
+    assert_eq!(
+        arranged_fragment_source_range_cache.partial_source_range_ref_count(),
+        0
+    );
+    assert_eq!(
+        arranged_fragment_source_range_cache.ranges().len(),
+        arranged_fragment_cache.source_ref_count()
+    );
+    let arranged_source_range_ref = &arranged_fragment_source_range_cache.ranges()[0];
+    assert_eq!(arranged_source_range_ref.arranged_source_report_index(), 0);
+    assert_eq!(
+        arranged_source_range_ref.source_segment_index(),
+        result.report().arranged_source_reports()[0].source_segment_index()
+    );
+    assert_eq!(
+        arranged_source_range_ref.source_range(),
+        result.report().arranged_source_reports()[0].source_range()
+    );
+    assert_eq!(
+        arranged_source_range_ref.arranged_segment_index(),
+        result.report().arranged_source_reports()[0].arranged_segment_index()
+    );
+    assert!(arranged_source_range_ref.covers_full_source_range());
     assert_eq!(arranged_fragment_cache.max_source_ref_count(), 1);
     assert_eq!(arranged_fragment_cache.fragments().len(), 4);
     let arranged_fragment = &arranged_fragment_cache.fragments()[0];
@@ -2617,6 +2650,39 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
             .source_refs()
             .is_empty()
     );
+    let arranged_fragment_source_range_cache =
+        arranged_fragment_cache.arranged_fragment_source_range_cache();
+    assert_eq!(
+        arranged_fragment_source_range_cache.source_ref_count(),
+        arranged_fragment_cache.source_ref_count()
+    );
+    assert_eq!(
+        arranged_fragment_source_range_cache.full_source_range_ref_count(),
+        arranged_fragment_cache.source_ref_count()
+    );
+    assert_eq!(
+        arranged_fragment_source_range_cache.partial_source_range_ref_count(),
+        0
+    );
+    assert_eq!(
+        arranged_fragment_source_range_cache.ranges().len(),
+        arranged_fragment_cache.source_ref_count()
+    );
+    let arranged_source_range_ref = &arranged_fragment_source_range_cache.ranges()[0];
+    assert_eq!(arranged_source_range_ref.arranged_source_report_index(), 0);
+    assert_eq!(
+        arranged_source_range_ref.source_segment_index(),
+        result.report().arranged_source_reports()[0].source_segment_index()
+    );
+    assert_eq!(
+        arranged_source_range_ref.source_range(),
+        result.report().arranged_source_reports()[0].source_range()
+    );
+    assert_eq!(
+        arranged_source_range_ref.arranged_segment_index(),
+        result.report().arranged_source_reports()[0].arranged_segment_index()
+    );
+    assert!(arranged_source_range_ref.covers_full_source_range());
     assert_eq!(arranged_fragment_cache.max_source_ref_count(), 1);
     assert_eq!(arranged_fragment_cache.fragments().len(), 2);
     let arranged_fragment = &arranged_fragment_cache.fragments()[0];

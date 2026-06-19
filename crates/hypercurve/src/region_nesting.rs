@@ -394,6 +394,24 @@ pub struct ExactCurveArrangementArrangedFragmentStatusBucketCache2 {
     buckets: Vec<ExactCurveArrangementArrangedFragmentStatusBucket2>,
 }
 
+/// Arranged fragment source-parameter range retained after exact splitting.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ExactCurveArrangementArrangedFragmentSourceRangeRef2 {
+    arranged_source_report_index: usize,
+    source_segment_index: usize,
+    source_range: ParamRange,
+    arranged_segment_index: usize,
+}
+
+/// Arranged fragment source-parameter ranges retained after exact splitting.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ExactCurveArrangementArrangedFragmentSourceRangeCache2 {
+    source_ref_count: usize,
+    full_source_range_ref_count: usize,
+    partial_source_range_ref_count: usize,
+    ranges: Vec<ExactCurveArrangementArrangedFragmentSourceRangeRef2>,
+}
+
 /// Arranged fragment provenance cache retained after exact splitting.
 #[derive(Clone, Debug, PartialEq)]
 pub struct ExactCurveArrangementArrangedFragmentCache2 {
@@ -403,6 +421,7 @@ pub struct ExactCurveArrangementArrangedFragmentCache2 {
     arranged_segment_kind_counts: SegmentKindCounts,
     arranged_fragment_kind_bucket_cache: ExactCurveArrangementArrangedFragmentKindBucketCache2,
     arranged_fragment_status_bucket_cache: ExactCurveArrangementArrangedFragmentStatusBucketCache2,
+    arranged_fragment_source_range_cache: ExactCurveArrangementArrangedFragmentSourceRangeCache2,
     max_source_ref_count: usize,
     fragments: Vec<ExactCurveArrangementArrangedFragment2>,
 }
@@ -3095,6 +3114,94 @@ impl ExactCurveArrangementArrangedFragmentStatusBucketCache2 {
     }
 }
 
+impl ExactCurveArrangementArrangedFragmentSourceRangeRef2 {
+    /// Returns the retained arranged source report index.
+    pub const fn arranged_source_report_index(&self) -> usize {
+        self.arranged_source_report_index
+    }
+
+    /// Returns the source segment index used by this arranged fragment.
+    pub const fn source_segment_index(&self) -> usize {
+        self.source_segment_index
+    }
+
+    /// Returns the exact retained source parameter range.
+    pub const fn source_range(&self) -> &ParamRange {
+        &self.source_range
+    }
+
+    /// Returns the arranged fragment index after exact splitting.
+    pub const fn arranged_segment_index(&self) -> usize {
+        self.arranged_segment_index
+    }
+
+    /// Returns whether this arranged fragment covers the complete source parameter range.
+    pub fn covers_full_source_range(&self) -> bool {
+        source_range_is_full(&self.source_range)
+    }
+}
+
+impl ExactCurveArrangementArrangedFragmentSourceRangeCache2 {
+    fn from_arranged_source_reports(
+        arranged_source_reports: &[RegionLineSegmentArrangedSourceReport2],
+    ) -> Self {
+        let mut full_source_range_ref_count = 0_usize;
+        let mut partial_source_range_ref_count = 0_usize;
+        let mut ranges = Vec::new();
+
+        for (arranged_source_report_index, source_report) in
+            arranged_source_reports.iter().enumerate()
+        {
+            if source_range_is_full(source_report.source_range()) {
+                full_source_range_ref_count += 1;
+            } else {
+                partial_source_range_ref_count += 1;
+            }
+
+            ranges.push(ExactCurveArrangementArrangedFragmentSourceRangeRef2 {
+                arranged_source_report_index,
+                source_segment_index: source_report.source_segment_index(),
+                source_range: source_report.source_range().clone(),
+                arranged_segment_index: source_report.arranged_segment_index(),
+            });
+        }
+
+        ranges.sort_by_key(|range_ref| {
+            (
+                range_ref.arranged_segment_index,
+                range_ref.arranged_source_report_index,
+            )
+        });
+
+        Self {
+            source_ref_count: ranges.len(),
+            full_source_range_ref_count,
+            partial_source_range_ref_count,
+            ranges,
+        }
+    }
+
+    /// Returns the number of retained arranged fragment source range references.
+    pub const fn source_ref_count(&self) -> usize {
+        self.source_ref_count
+    }
+
+    /// Returns the number of arranged fragments covering a complete source segment.
+    pub const fn full_source_range_ref_count(&self) -> usize {
+        self.full_source_range_ref_count
+    }
+
+    /// Returns the number of arranged fragments covering a proper source subrange.
+    pub const fn partial_source_range_ref_count(&self) -> usize {
+        self.partial_source_range_ref_count
+    }
+
+    /// Returns arranged fragment source ranges in arranged fragment order.
+    pub fn ranges(&self) -> &[ExactCurveArrangementArrangedFragmentSourceRangeRef2] {
+        &self.ranges
+    }
+}
+
 impl ExactCurveArrangementArrangedFragmentCache2 {
     fn from_arranged_source_reports(
         arranged_source_reports: &[RegionLineSegmentArrangedSourceReport2],
@@ -3147,6 +3254,10 @@ impl ExactCurveArrangementArrangedFragmentCache2 {
             ExactCurveArrangementArrangedFragmentKindBucketCache2::from_fragments(&fragments);
         let arranged_fragment_status_bucket_cache =
             ExactCurveArrangementArrangedFragmentStatusBucketCache2::from_fragments(&fragments);
+        let arranged_fragment_source_range_cache =
+            ExactCurveArrangementArrangedFragmentSourceRangeCache2::from_arranged_source_reports(
+                arranged_source_reports,
+            );
         let max_source_ref_count = fragments
             .iter()
             .map(|fragment| fragment.source_refs.len())
@@ -3160,6 +3271,7 @@ impl ExactCurveArrangementArrangedFragmentCache2 {
             arranged_segment_kind_counts,
             arranged_fragment_kind_bucket_cache,
             arranged_fragment_status_bucket_cache,
+            arranged_fragment_source_range_cache,
             max_source_ref_count,
             fragments,
         }
@@ -3197,6 +3309,13 @@ impl ExactCurveArrangementArrangedFragmentCache2 {
         &self,
     ) -> &ExactCurveArrangementArrangedFragmentStatusBucketCache2 {
         &self.arranged_fragment_status_bucket_cache
+    }
+
+    /// Returns retained arranged fragment source-parameter range records.
+    pub const fn arranged_fragment_source_range_cache(
+        &self,
+    ) -> &ExactCurveArrangementArrangedFragmentSourceRangeCache2 {
+        &self.arranged_fragment_source_range_cache
     }
 
     /// Returns the largest source reference count for one arranged fragment.
