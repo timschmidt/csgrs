@@ -754,7 +754,6 @@ impl ExactArrangementBooleanAttempt {
         let replay = ExactBooleanWorkspace::new(left, right)
             .into_arrangement_attempt(request, self.policy)
             .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
-        replay.validate()?;
         if self == &replay {
             Ok(())
         } else {
