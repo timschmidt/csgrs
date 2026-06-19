@@ -124,27 +124,6 @@ impl<'a> ExactBooleanWorkspace<'a> {
         Ok(Some(&self.arrangement_attempts[index].2))
     }
 
-    fn cached_retained_materialization_index(
-        &self,
-        request: ExactBooleanRequest,
-    ) -> Result<Option<usize>, MeshError> {
-        let retained_attempt = self.validated_regularized_solid_arrangement_attempt(request)?;
-        if let Some(index) = cached_by_request_index(&self.materializations, request) {
-            self.materializations[index]
-                .1
-                .validate_request_against_sources_with_retained_attempt(
-                    self.left,
-                    self.right,
-                    request,
-                    retained_attempt,
-                )
-                .map_err(workspace_report_validation_error)?;
-            Ok(Some(index))
-        } else {
-            Ok(None)
-        }
-    }
-
     /// Returns the exact arrangement for `policy`, building it once per policy.
     pub(crate) fn arrangement(
         &mut self,
@@ -322,7 +301,16 @@ impl<'a> ExactBooleanWorkspace<'a> {
             regularized_attempt,
         )?;
         let result = if preflight.is_certified() {
-            if let Some(index) = self.cached_retained_materialization_index(request)? {
+            if let Some(index) = cached_by_request_index(&self.materializations, request) {
+                self.materializations[index]
+                    .1
+                    .validate_request_against_sources_with_retained_attempt(
+                        self.left,
+                        self.right,
+                        request,
+                        regularized_attempt,
+                    )
+                    .map_err(workspace_report_validation_error)?;
                 Some(self.materializations[index].1.clone())
             } else if matches!(preflight.support, ExactBooleanSupport::SelectedRegionPolicy) {
                 self.try_materialize_certified_support(request, preflight.support)
@@ -404,7 +392,20 @@ impl<'a> ExactBooleanWorkspace<'a> {
         &mut self,
         request: ExactBooleanRequest,
     ) -> Result<&ExactBooleanResult, MeshError> {
-        if let Some(index) = self.cached_retained_materialization_index(request)? {
+        if let Some(index) = cached_by_request_index(&self.materializations, request) {
+            {
+                let retained_attempt =
+                    self.validated_regularized_solid_arrangement_attempt(request)?;
+                self.materializations[index]
+                    .1
+                    .validate_request_against_sources_with_retained_attempt(
+                        self.left,
+                        self.right,
+                        request,
+                        retained_attempt,
+                    )
+                    .map_err(workspace_report_validation_error)?;
+            }
             self.promote_evaluation_cache_from_materialization_index(request, index)?;
             return Ok(&self.materializations[index].1);
         }
