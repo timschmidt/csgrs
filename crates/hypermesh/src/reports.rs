@@ -5013,16 +5013,6 @@ pub struct ExactRefinementReport {
 }
 
 impl ExactRefinementReport {
-    /// Return the named operation whose graph was inspected.
-    pub const fn operation(&self) -> ExactBooleanOperation {
-        self.operation
-    }
-
-    /// Return the coarse refinement status.
-    pub const fn status(&self) -> ExactRefinementStatus {
-        self.status
-    }
-
     /// Return whether graph extraction retained unknown predicate outcomes.
     pub const fn graph_had_unknowns(&self) -> bool {
         self.graph_had_unknowns
@@ -5036,16 +5026,6 @@ impl ExactRefinementReport {
     /// Return the retained event record count.
     pub const fn retained_events(&self) -> usize {
         self.retained_events
-    }
-
-    /// Return the refinement blocker counts, when refinement is required.
-    pub fn blocker(&self) -> Option<&ExactBooleanBlocker> {
-        self.blocker.as_ref()
-    }
-
-    /// Return whether exact predicate/construction refinement is required.
-    pub const fn is_required(&self) -> bool {
-        matches!(self.status, ExactRefinementStatus::Required)
     }
 
     /// Validate this refinement report against the source meshes.

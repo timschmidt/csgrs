@@ -3075,9 +3075,7 @@ fn public_exact_blocker_reports_replay_remaining_decisions() {
         ValidationPolicy::ALLOW_BOUNDARY,
     );
     let evaluation = exact_boolean_evaluation(&left, &overlapping_right, request);
-    let refinement = evaluation.certifications().refinement().clone();
-    assert!(!refinement.is_required());
-    refinement.validate().unwrap();
+    assert!(!evaluation.preflight().requires_refinement());
     evaluation
         .validate_against_sources(&left, &overlapping_right)
         .unwrap();

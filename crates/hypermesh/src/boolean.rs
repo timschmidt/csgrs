@@ -999,7 +999,8 @@ pub struct ExactBooleanCertificationSet {
 
 impl ExactBooleanCertificationSet {
     /// Return the exact graph refinement certification report.
-    pub fn refinement(&self) -> &ExactRefinementReport {
+    #[cfg(test)]
+    pub(crate) fn refinement(&self) -> &ExactRefinementReport {
         &self.refinement
     }
 
