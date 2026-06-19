@@ -3743,7 +3743,7 @@ pub(crate) struct ExactBooleanPreflight {
 
 /// Closure status for a materialized volumetric boundary-output Boolean.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub enum ExactVolumetricBoundaryClosureStatus {
+pub(crate) enum ExactVolumetricBoundaryClosureStatus {
     /// No retained volumetric boundary output was materialized for the request.
     NoMaterializedBoundaryOutput,
     /// The materialized output is already closed under the requested topology.
@@ -3767,7 +3767,7 @@ pub enum ExactVolumetricBoundaryClosureStatus {
 
 /// Auditable closure-readiness report for volumetric split-cell output.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct ExactVolumetricBoundaryClosureReport {
+pub(crate) struct ExactVolumetricBoundaryClosureReport {
     /// Requested named operation.
     pub(crate) operation: ExactBooleanOperation,
     /// Certified closure status.
@@ -4833,7 +4833,7 @@ pub(crate) enum ExactBooleanBlockerKind {
 /// whose endpoint predicates certified an event but whose exact point/parameter
 /// from winding or planar-arrangement policy, so it has a separate report.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum ExactRefinementStatus {
+pub(crate) enum ExactRefinementStatus {
     /// The graph contains no retained unknowns or construction failures.
     NotRequired,
     /// The graph contains retained evidence that must be refined before policy.
@@ -4848,7 +4848,7 @@ pub enum ExactRefinementStatus {
 /// answer. Later boundary, planar-arrangement, or winding reports should only
 /// run as policy once this report is not required.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct ExactRefinementReport {
+pub(crate) struct ExactRefinementReport {
     /// Named operation whose graph was inspected.
     pub(crate) operation: ExactBooleanOperation,
     /// Coarse refinement status.
@@ -4958,7 +4958,7 @@ impl ExactRefinementReport {
 /// allows vertex reindexing and face orientation changes when exact coordinate
 /// equality proves a bijection and the remapped triangle vertex sets match.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum ExactSameSurfaceStatus {
+pub(crate) enum ExactSameSurfaceStatus {
     /// The meshes have different vertex counts.
     VertexCountMismatch,
     /// The meshes have different triangle counts.
@@ -4980,7 +4980,7 @@ pub enum ExactSameSurfaceStatus {
 /// predicate certificates used to prove coordinate equality. The design
 /// predicate trail rather than collapsing directly to `bool`.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct ExactSameSurfaceReport {
+pub(crate) struct ExactSameSurfaceReport {
     /// Coarse same-surface certification status.
     pub(crate) status: ExactSameSurfaceStatus,
     /// Mapping from each left vertex index to the matched right vertex index.
@@ -5127,7 +5127,7 @@ fn validate_full_permutation(
 
 /// Certification status for an open-surface disjoint shortcut.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum ExactOpenSurfaceDisjointStatus {
+pub(crate) enum ExactOpenSurfaceDisjointStatus {
     /// At least one input is not an open surface mesh under exact validation facts.
     NotOpenSurface,
     /// Exact graph extraction retained unresolved events.
@@ -5143,7 +5143,7 @@ pub enum ExactOpenSurfaceDisjointStatus {
 /// This report retains the mesh-shape precondition and exact graph relation
 /// as a hidden primitive-float or AABB-only decision.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct ExactOpenSurfaceDisjointReport {
+pub(crate) struct ExactOpenSurfaceDisjointReport {
     /// Coarse certification status.
     pub(crate) status: ExactOpenSurfaceDisjointStatus,
     /// Whether the left mesh satisfies the exact open-surface precondition.
@@ -5250,7 +5250,7 @@ impl ExactOpenSurfaceDisjointReport {
 
 /// Certification status for boundary-only graph shortcuts.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum ExactBoundaryTouchingStatus {
+pub(crate) enum ExactBoundaryTouchingStatus {
     /// Exact graph extraction retained unresolved events.
     GraphUnknowns,
     /// Retained graph pairs were not exclusively certified boundary-only
@@ -5270,7 +5270,7 @@ pub enum ExactBoundaryTouchingStatus {
 /// This report retains the exact graph counts that justify that policy gap,
 /// computation sense.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct ExactBoundaryTouchingReport {
+pub(crate) struct ExactBoundaryTouchingReport {
     /// Coarse boundary-touching certification status.
     pub(crate) status: ExactBoundaryTouchingStatus,
     /// Whether graph extraction retained unknown events.
@@ -5285,7 +5285,7 @@ pub struct ExactBoundaryTouchingReport {
 
 /// Certification status for closed-solid adjacent union completion.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum ExactAdjacentUnionCompletionStatus {
+pub(crate) enum ExactAdjacentUnionCompletionStatus {
     /// The requested operation is not union, so this completion path cannot
     /// apply.
     NotUnion,
@@ -5318,7 +5318,7 @@ pub enum ExactAdjacentUnionCompletionStatus {
 /// [`Self::validate_against_sources`] recomputes the private adjacency
 /// certificates to prove the report still belongs to the supplied sources.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct ExactAdjacentUnionCompletionReport {
+pub(crate) struct ExactAdjacentUnionCompletionReport {
     /// Requested named operation.
     pub(crate) operation: ExactBooleanOperation,
     /// Coarse certification status.
@@ -5706,7 +5706,7 @@ impl ExactBoundaryTouchingReport {
 
 /// Certification status for planar-arrangement blockers.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum ExactPlanarArrangementStatus {
+pub(crate) enum ExactPlanarArrangementStatus {
     /// Selected-region assembly already carries its own explicit region policy.
     NotNamedOperation,
     /// Exact graph extraction retained unresolved events.
@@ -5733,7 +5733,7 @@ pub enum ExactPlanarArrangementStatus {
 /// volumetric winding rule. Narrow single-triangle outputs are reported
 /// topology is explicit certified state rather than an approximate fallback.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct ExactPlanarArrangementReport {
+pub(crate) struct ExactPlanarArrangementReport {
     /// Requested named operation.
     pub(crate) operation: ExactBooleanOperation,
     /// Coarse planar-arrangement certification status.
@@ -5958,7 +5958,7 @@ impl ExactPlanarArrangementReport {
 
 /// Certification status for the remaining exact winding handoff.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum ExactWindingReadinessStatus {
+pub(crate) enum ExactWindingReadinessStatus {
     /// Selected-region assembly already carries its own explicit region policy.
     NotNamedOperation,
     /// Exact graph extraction retained unresolved events.
@@ -6086,7 +6086,7 @@ impl ExactWindingReadinessStatus {
 /// topological policy remains explicit state instead of a hidden tolerance
 /// decision.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactWindingReadinessReport {
+pub(crate) struct ExactWindingReadinessReport {
     /// Requested named operation.
     pub(crate) operation: ExactBooleanOperation,
     /// Coarse readiness status.
