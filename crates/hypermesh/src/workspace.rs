@@ -172,13 +172,18 @@ impl<'a> ExactBooleanWorkspace<'a> {
             self.validated_regularized_solid_arrangement_attempt_index(request)?;
         let retained_attempt =
             retained_attempt_index.map(|index| &self.arrangement_attempts[index].2);
-        cached_retained_materialization_index(
-            &self.materializations,
-            self.left,
-            self.right,
-            request,
-            retained_attempt,
-        )
+        if let Some(index) = cached_by_request_index(&self.materializations, request) {
+            validate_replayable_result_for_cache(
+                self.left,
+                self.right,
+                request,
+                retained_attempt,
+                &self.materializations[index].1,
+            )?;
+            Ok(Some(index))
+        } else {
+            Ok(None)
+        }
     }
 
     /// Returns the exact arrangement for `policy`, building it once per policy.
@@ -524,26 +529,6 @@ fn validate_replayable_result_for_cache(
             retained_arrangement_attempt,
         )
         .map_err(workspace_report_validation_error)
-}
-
-fn cached_retained_materialization_index(
-    cache: &[(ExactBooleanRequest, ExactBooleanResult)],
-    left: &ExactMesh,
-    right: &ExactMesh,
-    request: ExactBooleanRequest,
-    retained_arrangement_attempt: Option<&ExactArrangementBooleanAttempt>,
-) -> Result<Option<usize>, MeshError> {
-    if let Some(index) = cached_by_request_index(cache, request) {
-        validate_replayable_result_for_cache(
-            left,
-            right,
-            request,
-            retained_arrangement_attempt,
-            &cache[index].1,
-        )?;
-        return Ok(Some(index));
-    }
-    Ok(None)
 }
 
 fn cached_by_policy_index<T>(
