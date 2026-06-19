@@ -359,13 +359,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
             regularized_attempt,
         )?;
         let result = if preflight.is_certified() {
-            if let Some(index) = cached_retained_materialization_index(
-                &self.materializations,
-                self.left,
-                self.right,
-                request,
-                regularized_attempt,
-            )? {
+            if let Some(index) = self.cached_retained_materialization_index(request)? {
                 Some(self.materializations[index].1.clone())
             } else if matches!(preflight.support, ExactBooleanSupport::SelectedRegionPolicy) {
                 self.try_materialize_certified_support(request, preflight.support)
