@@ -460,14 +460,14 @@ fn exact_boolean_evaluation_materializes_boundary_policy_shortcut_by_default() {
     result.validate().unwrap();
     result.validate_against_sources(&left, &right).unwrap();
     let mut mixed_graph_snapshot = evaluation.clone();
-    mixed_graph_snapshot
+    *mixed_graph_snapshot
         .certifications_mut()
         .refinement_mut()
-        .retained_face_pairs = 0;
-    mixed_graph_snapshot
+        .retained_face_pairs_mut() = 0;
+    *mixed_graph_snapshot
         .certifications_mut()
         .refinement_mut()
-        .retained_events = 0;
+        .retained_events_mut() = 0;
     mixed_graph_snapshot
         .certifications()
         .refinement()

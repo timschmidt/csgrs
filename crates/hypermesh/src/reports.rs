@@ -4935,7 +4935,7 @@ pub enum ExactBooleanBlockerKind {
 /// graph extraction retained an unknown predicate outcome or a construction
 /// whose endpoint predicates certified an event but whose exact point/parameter
 /// from winding or planar-arrangement policy, so it has a separate report.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ExactRefinementStatus {
     /// The graph contains no retained unknowns or construction failures.
     NotRequired,
@@ -4953,20 +4953,65 @@ pub enum ExactRefinementStatus {
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ExactRefinementReport {
     /// Named operation whose graph was inspected.
-    pub operation: ExactBooleanOperation,
+    pub(crate) operation: ExactBooleanOperation,
     /// Coarse refinement status.
-    pub status: ExactRefinementStatus,
+    pub(crate) status: ExactRefinementStatus,
     /// Whether graph extraction retained unknown predicate outcomes.
-    pub graph_had_unknowns: bool,
+    pub(crate) graph_had_unknowns: bool,
     /// Retained face-pair records after exact scheduling.
-    pub retained_face_pairs: usize,
+    pub(crate) retained_face_pairs: usize,
     /// Total retained event records.
-    pub retained_events: usize,
+    pub(crate) retained_events: usize,
     /// Refinement blocker counts, present only when refinement is required.
-    pub blocker: Option<ExactBooleanBlocker>,
+    pub(crate) blocker: Option<ExactBooleanBlocker>,
 }
 
 impl ExactRefinementReport {
+    /// Return the named operation whose graph was inspected.
+    pub const fn operation(&self) -> ExactBooleanOperation {
+        self.operation
+    }
+
+    /// Return the named operation mutably.
+    pub fn operation_mut(&mut self) -> &mut ExactBooleanOperation {
+        &mut self.operation
+    }
+
+    /// Return the coarse refinement status.
+    pub const fn status(&self) -> ExactRefinementStatus {
+        self.status
+    }
+
+    /// Return whether graph extraction retained unknown predicate outcomes.
+    pub const fn graph_had_unknowns(&self) -> bool {
+        self.graph_had_unknowns
+    }
+
+    /// Return the retained face-pair record count.
+    pub const fn retained_face_pairs(&self) -> usize {
+        self.retained_face_pairs
+    }
+
+    /// Return the retained face-pair record count mutably.
+    pub fn retained_face_pairs_mut(&mut self) -> &mut usize {
+        &mut self.retained_face_pairs
+    }
+
+    /// Return the retained event record count.
+    pub const fn retained_events(&self) -> usize {
+        self.retained_events
+    }
+
+    /// Return the retained event record count mutably.
+    pub fn retained_events_mut(&mut self) -> &mut usize {
+        &mut self.retained_events
+    }
+
+    /// Return the refinement blocker counts, when refinement is required.
+    pub fn blocker(&self) -> Option<&ExactBooleanBlocker> {
+        self.blocker.as_ref()
+    }
+
     /// Return whether exact predicate/construction refinement is required.
     pub const fn is_required(&self) -> bool {
         matches!(self.status, ExactRefinementStatus::Required)
