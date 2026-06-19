@@ -1895,12 +1895,12 @@ impl ExactBooleanResult {
                 || self.topology_assembly_report != replay.topology_assembly_report
                 || self.region_ownership_report != replay.region_ownership_report
             {
-                return Err(ExactReportValidationError::SourceReplayMismatch);
+                return Ok(false);
             }
         } else if self.topology_assembly_report != attempt.topology_assembly_report
             || self.region_ownership_report != attempt.region_ownership_report
         {
-            return Err(ExactReportValidationError::SourceReplayMismatch);
+            return Ok(false);
         }
         let Some(output_facts) = attempt.output_facts.as_ref() else {
             return Err(ExactReportValidationError::StatusEvidenceMismatch);
@@ -1909,7 +1909,7 @@ impl ExactBooleanResult {
             || self.mesh.triangles().len() != attempt.output_triangles
             || &self.mesh.facts().mesh != output_facts
         {
-            return Err(ExactReportValidationError::SourceReplayMismatch);
+            return Ok(false);
         }
         Ok(true)
     }

@@ -2789,6 +2789,12 @@ fn materialize_certified_arrangement_cell_complex_support_with_arrangement(
     let operation = request.operation;
     let validation = request.validation;
     let mut owned_graph = None;
+    let graph = graph_for_certified_materialization(retained_graph, &mut owned_graph, left, right)?;
+    if let Some(result) = materialize_arrangement_volumetric_split_cell_result_from_graph(
+        graph, left, right, operation, validation,
+    )? {
+        return Ok(Some(result));
+    }
     if let Some(attempt) = retained_arrangement_attempt
         && let Some(result) =
             materialize_retained_arrangement_cell_complex_attempt(left, right, request, attempt)?
@@ -2813,7 +2819,6 @@ fn materialize_certified_arrangement_cell_complex_support_with_arrangement(
             return Ok(Some(*result));
         }
     }
-    let graph = graph_for_certified_materialization(retained_graph, &mut owned_graph, left, right)?;
     if !graph.face_pairs.is_empty()
         && let Some(result) = certified_arrangement_cell_complex_result_from_graph(
             graph, left, right, operation, validation, true,
@@ -2827,11 +2832,6 @@ fn materialize_certified_arrangement_cell_complex_support_with_arrangement(
                 graph, left, right, request,
             )?
     {
-        return Ok(Some(result));
-    }
-    if let Some(result) = materialize_arrangement_volumetric_split_cell_result_from_graph(
-        graph, left, right, operation, validation,
-    )? {
         return Ok(Some(result));
     }
     if let Some((result, _closure)) =
@@ -4894,13 +4894,6 @@ fn materialize_boolean_exact_request_from_ready_graph(
     )? {
         return Ok(result);
     }
-    if !graph.face_pairs.is_empty()
-        && let Some(result) = certified_arrangement_cell_complex_result_from_graph(
-            graph, left, right, operation, validation, true,
-        )?
-    {
-        return Ok(result);
-    }
     if let Some(result) = boolean_convex_meshes_optional(left, right, operation, validation)? {
         return Ok(result);
     }
@@ -4933,6 +4926,13 @@ fn materialize_boolean_exact_request_from_ready_graph(
     if let Some(result) = materialize_arrangement_volumetric_split_cell_result_from_graph(
         graph, left, right, operation, validation,
     )? {
+        return Ok(result);
+    }
+    if !graph.face_pairs.is_empty()
+        && let Some(result) = certified_arrangement_cell_complex_result_from_graph(
+            graph, left, right, operation, validation, true,
+        )?
+    {
         return Ok(result);
     }
     if let Some(result) = certified_arrangement_cell_complex_result_from_graph(
