@@ -314,28 +314,6 @@ fn run_case(case: &BenchCase) {
         },
     );
 
-    time_prepared_stage(
-        case,
-        "evaluation_validate_source_replay",
-        || retained_workspace_with_evaluation_for_case(case, request),
-        |retained| {
-            black_box(validate_retained_evaluation_for_case(
-                case, retained, request,
-            ));
-        },
-    );
-
-    time_prepared_stage(
-        case,
-        "evaluation_validate_retained_replay",
-        || retained_workspace_with_evaluation_for_case(case, request),
-        |retained| {
-            black_box(validate_retained_evaluation_for_case(
-                case, retained, request,
-            ));
-        },
-    );
-
     let mut materialize_cache_workspace = retained_workspace_for_case(case);
     materialize_cache_workspace.materialize_ref(request).ok();
     time_stage(case, "workspace_materialization_cached", || {
