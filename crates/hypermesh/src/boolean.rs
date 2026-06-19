@@ -1027,7 +1027,17 @@ impl ExactBooleanCertificationSet {
             if matches!(request.operation, ExactBooleanOperation::SelectedRegions(_)) {
                 not_named_planar_arrangement_report(request.operation)
             } else {
-                planar_arrangement_report_from_graph(graph, left, right, request.operation)?
+                let mut arrangement_cell_complex_preflight:
+                    CertifiedArrangementCellComplexPreflightCache = None;
+                planar_arrangement_report_from_graph_with_cell_complex_cache(
+                    graph,
+                    left,
+                    right,
+                    request.operation,
+                    &mut arrangement_cell_complex_preflight,
+                    Some(request),
+                    retained_arrangement_attempt,
+                )?
             };
         let volumetric_boundary_closure =
             if matches!(request.operation, ExactBooleanOperation::SelectedRegions(_)) {
@@ -9786,6 +9796,8 @@ pub(crate) fn planar_arrangement_report_from_graph(
         right,
         operation,
         &mut arrangement_cell_complex_preflight,
+        None,
+        None,
     )
 }
 
@@ -9795,6 +9807,8 @@ fn planar_arrangement_report_from_graph_with_cell_complex_cache(
     right: &ExactMesh,
     operation: ExactBooleanOperation,
     arrangement_cell_complex_preflight: &mut CertifiedArrangementCellComplexPreflightCache,
+    retained_request: Option<ExactBooleanRequest>,
+    retained_attempt: Option<&ExactArrangementBooleanAttempt>,
 ) -> Result<ExactPlanarArrangementReport, MeshError> {
     if matches!(operation, ExactBooleanOperation::SelectedRegions(_)) {
         return Ok(not_named_planar_arrangement_report(operation));
@@ -9838,8 +9852,8 @@ fn planar_arrangement_report_from_graph_with_cell_complex_cache(
             graph,
             left,
             right,
-            None,
-            None,
+            retained_request,
+            retained_attempt,
         )?
         .is_some()
     {
@@ -10256,6 +10270,8 @@ fn winding_readiness_report_from_graph(
         right,
         operation,
         &mut arrangement_cell_complex_preflight,
+        None,
+        None,
     )?;
     if planar_report.is_required() {
         return Ok(winding_readiness_report(
