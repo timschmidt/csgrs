@@ -182,6 +182,7 @@ fn svg_closed_line_path_import_materializes_contour_with_closure_evidence() {
         imported.report().status(),
         RetainedTopologyStatus::ImportedLossy
     );
+    assert!(imported.report().lossy_boundary());
     assert_eq!(imported.report().blocker(), None);
     assert_eq!(imported.report().path_report().source_index(), 12);
     assert_eq!(
@@ -232,6 +233,7 @@ fn svg_region_import_materializes_nested_closed_line_subpaths() {
         imported.report().status(),
         RetainedTopologyStatus::ImportedLossy
     );
+    assert!(imported.report().lossy_boundary());
     assert_eq!(imported.report().blocker(), None);
     assert_eq!(imported.report().source_index(), 21);
     assert_eq!(imported.report().source_version(), 6);
@@ -261,6 +263,7 @@ fn svg_region_import_rejects_open_subpath_with_report() {
         imported.report().status(),
         RetainedTopologyStatus::Unsupported
     );
+    assert!(imported.report().lossy_boundary());
     assert_eq!(
         imported.report().blocker(),
         Some(UncertaintyReason::Unsupported)

@@ -111,6 +111,7 @@ pub struct SvgRegionImportReport2 {
     input_byte_count: usize,
     subpath_count: usize,
     materialized_contour_count: usize,
+    lossy_boundary: bool,
     status: RetainedTopologyStatus,
     blocker: Option<UncertaintyReason>,
 }
@@ -374,6 +375,11 @@ impl SvgContourImportReport2 {
         self.fill_rule
     }
 
+    /// Returns true because the contour import crossed the SVG import boundary.
+    pub const fn lossy_boundary(&self) -> bool {
+        self.path_report.lossy_boundary()
+    }
+
     /// Returns contour import status.
     pub const fn status(&self) -> RetainedTopologyStatus {
         self.status
@@ -451,6 +457,11 @@ impl SvgRegionImportReport2 {
     /// Returns the number of closed contours materialized before region role assignment.
     pub const fn materialized_contour_count(&self) -> usize {
         self.materialized_contour_count
+    }
+
+    /// Returns true because the region import crossed the SVG import boundary.
+    pub const fn lossy_boundary(&self) -> bool {
+        self.lossy_boundary
     }
 
     /// Returns region import status.
@@ -867,6 +878,7 @@ pub fn import_svg_region_path_data_with_report(
             input_byte_count: path_data.len(),
             subpath_count: subpaths.len(),
             status: RetainedTopologyStatus::ImportedLossy,
+            lossy_boundary: true,
             blocker: None,
         },
     }
@@ -1248,6 +1260,7 @@ fn blocked_svg_region_import(
             source_tolerance,
             input_byte_count,
             subpath_count,
+            lossy_boundary: true,
             status,
             blocker,
         },
