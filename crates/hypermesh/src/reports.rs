@@ -5457,7 +5457,7 @@ impl ExactOpenSurfaceDisjointReport {
 }
 
 /// Certification status for boundary-only graph shortcuts.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ExactBoundaryTouchingStatus {
     /// Exact graph extraction retained unresolved events.
     GraphUnknowns,
@@ -5480,15 +5480,15 @@ pub enum ExactBoundaryTouchingStatus {
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ExactBoundaryTouchingReport {
     /// Coarse boundary-touching certification status.
-    pub status: ExactBoundaryTouchingStatus,
+    pub(crate) status: ExactBoundaryTouchingStatus,
     /// Whether graph extraction retained unknown events.
-    pub graph_had_unknowns: bool,
+    pub(crate) graph_had_unknowns: bool,
     /// Retained face-pair records after exact scheduling.
-    pub retained_face_pairs: usize,
+    pub(crate) retained_face_pairs: usize,
     /// Total retained event records.
-    pub retained_events: usize,
+    pub(crate) retained_events: usize,
     /// Relation counts for retained face pairs.
-    pub blocker: ExactBooleanBlocker,
+    pub(crate) blocker: ExactBooleanBlocker,
 }
 
 /// Certification status for closed-solid adjacent union completion.
@@ -5813,6 +5813,36 @@ impl ExactAdjacentUnionCompletionReport {
 }
 
 impl ExactBoundaryTouchingReport {
+    /// Return the coarse boundary-touching status.
+    pub const fn status(&self) -> ExactBoundaryTouchingStatus {
+        self.status
+    }
+
+    /// Return whether graph extraction retained unknown events.
+    pub const fn graph_had_unknowns(&self) -> bool {
+        self.graph_had_unknowns
+    }
+
+    /// Return the retained face-pair record count.
+    pub const fn retained_face_pairs(&self) -> usize {
+        self.retained_face_pairs
+    }
+
+    /// Return the retained event record count.
+    pub const fn retained_events(&self) -> usize {
+        self.retained_events
+    }
+
+    /// Return the retained relation-count blocker.
+    pub const fn blocker(&self) -> &ExactBooleanBlocker {
+        &self.blocker
+    }
+
+    /// Return the retained relation-count blocker mutably.
+    pub fn blocker_mut(&mut self) -> &mut ExactBooleanBlocker {
+        &mut self.blocker
+    }
+
     /// Return whether the graph is certified boundary-only contact.
     pub const fn is_certified(&self) -> bool {
         matches!(self.status, ExactBoundaryTouchingStatus::Certified)

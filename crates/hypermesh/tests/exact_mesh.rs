@@ -2774,7 +2774,7 @@ fn closed_boundary_touching_regularized_boolean_is_publicly_replayable() {
         relabeled_boundary_report
             .certifications_mut()
             .boundary_touching_mut()
-            .blocker
+            .blocker_mut()
             .unknown_pairs = 1;
         assert!(
             relabeled_boundary_report.validate().is_err(),
@@ -4850,9 +4850,9 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
     assert!(policy_preflight.blocker.is_none(), "{policy_preflight:?}");
     assert_eq!(
         policy_preflight.retained_face_pairs,
-        report.retained_face_pairs
+        report.retained_face_pairs()
     );
-    assert_eq!(policy_preflight.retained_events, report.retained_events);
+    assert_eq!(policy_preflight.retained_events, report.retained_events());
     policy_evaluation
         .certifications()
         .validate_against_sources(&left, &right, policy_request)
@@ -4898,9 +4898,9 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
     assert!(policy_readiness.blocker.requires_boundary_policy());
     assert_eq!(
         policy_readiness.retained_face_pairs,
-        report.retained_face_pairs
+        report.retained_face_pairs()
     );
-    assert_eq!(policy_readiness.retained_events, report.retained_events);
+    assert_eq!(policy_readiness.retained_events, report.retained_events());
     policy_readiness.validate().unwrap();
     policy_evaluation
         .certifications()
@@ -5091,8 +5091,8 @@ fn boundary_touching_report_classifies_proper_crossing_as_winding_blocker() {
     let report = evaluation.certifications().boundary_touching().clone();
 
     assert!(!report.is_certified());
-    assert!(report.blocker.requires_winding());
-    assert!(report.blocker.candidate_pairs > 0);
+    assert!(report.blocker().requires_winding());
+    assert!(report.blocker().candidate_pairs > 0);
     report.validate().unwrap();
     evaluation
         .certifications()
@@ -5100,6 +5100,6 @@ fn boundary_touching_report_classifies_proper_crossing_as_winding_blocker() {
         .unwrap();
 
     let mut stale = report;
-    stale.blocker.coplanar_touching_pairs = 1;
+    stale.blocker_mut().coplanar_touching_pairs = 1;
     assert!(stale.validate().is_err());
 }
