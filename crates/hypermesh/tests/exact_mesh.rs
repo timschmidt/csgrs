@@ -21,12 +21,6 @@ fn with_exact_boolean_evaluation<R>(
     f(evaluation)
 }
 
-fn evaluation_materializes_arrangement_cell_complex(
-    evaluation: &hypermesh::ExactBooleanEvaluation,
-) -> bool {
-    evaluation.materializes_arrangement_cell_complex()
-}
-
 fn assert_evaluation_retains_attempt_gate_reports(evaluation: &hypermesh::ExactBooleanEvaluation) {
     let attempt = evaluation
         .retained_arrangement_attempt()
@@ -268,7 +262,7 @@ fn exact_boolean_evaluation_retains_region_ownership_report() {
         evaluation.validate().unwrap();
         evaluation.validate_against_sources(&left, &right).unwrap();
         assert!(
-            evaluation_materializes_arrangement_cell_complex(evaluation),
+            evaluation.materializes_arrangement_cell_complex(),
             "{evaluation:?}"
         );
         assert!(
@@ -1082,7 +1076,7 @@ fn exact_coplanar_volumetric_cell_evidence_is_retained_by_public_evaluation() {
                 evaluation
                     .retained_arrangement_attempt()
                     .is_some_and(|attempt| attempt.region_ownership_resolves_requested_operation())
-                    || evaluation_materializes_arrangement_cell_complex(evaluation)
+                    || evaluation.materializes_arrangement_cell_complex()
                     || evaluation.has_coplanar_volumetric_evidence(),
                 "{evaluation:?}"
             );
@@ -1933,7 +1927,7 @@ fn lower_dimensional_regularized_boolean_is_publicly_replayable() {
                     ExactReportFreshness::SourceReplayMismatch
                 );
             } else {
-                assert!(evaluation_materializes_arrangement_cell_complex(evaluation));
+                assert!(evaluation.materializes_arrangement_cell_complex());
                 evaluation.validate().unwrap();
                 evaluation.validate_against_sources(&left, &right).unwrap();
             }
@@ -2682,7 +2676,7 @@ fn exact_volumetric_winding_coplanar_cap_is_publicly_certified() {
             evaluation.validate_against_sources(&left, &right).unwrap();
 
             assert!(
-                evaluation_materializes_arrangement_cell_complex(evaluation),
+                evaluation.materializes_arrangement_cell_complex(),
                 "{operation:?}: {evaluation:?}"
             );
             assert_evaluation_retains_attempt_gate_reports(evaluation);
@@ -3052,7 +3046,7 @@ fn public_exact_blocker_reports_replay_remaining_decisions() {
         planar_request,
         |planar_evaluation| {
             assert!(
-                evaluation_materializes_arrangement_cell_complex(planar_evaluation),
+                planar_evaluation.materializes_arrangement_cell_complex(),
                 "{planar_evaluation:?}"
             );
             planar_evaluation
