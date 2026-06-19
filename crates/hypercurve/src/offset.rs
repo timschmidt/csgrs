@@ -46,12 +46,20 @@ pub enum CurveStringOffsetStage2 {
     SelfContactValidation,
 }
 
+/// Exact construction family used to build raw offset segments before validation.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum OffsetConstructionPath2 {
+    /// Source line/arc segments were offset as primitive parallels and joined exactly.
+    PrimitiveParallelSegmentsWithExactJoins,
+}
+
 /// Report for a checked open curve-string left offset.
 #[derive(Clone, Debug, PartialEq)]
 pub struct CurveStringOffsetReport2 {
     stage: CurveStringOffsetStage2,
     source_segment_count: usize,
     source_segment_kind_counts: SegmentKindCounts,
+    raw_offset_construction_path: Option<OffsetConstructionPath2>,
     raw_offset_segment_count: Option<usize>,
     raw_offset_segment_kind_counts: Option<SegmentKindCounts>,
     self_contact_report: Option<SelfContactReport2>,
@@ -83,6 +91,7 @@ pub struct ContourOffsetReport2 {
     stage: ContourOffsetStage2,
     source_segment_count: usize,
     source_segment_kind_counts: SegmentKindCounts,
+    raw_offset_construction_path: Option<OffsetConstructionPath2>,
     raw_offset_segment_count: Option<usize>,
     raw_offset_segment_kind_counts: Option<SegmentKindCounts>,
     self_contact_report: Option<SelfContactReport2>,
@@ -312,6 +321,7 @@ impl CurveString2 {
                     CurveStringOffsetStage2::OffsetConstruction,
                     source_segment_count,
                     source_segment_kind_counts,
+                    Some(OffsetConstructionPath2::PrimitiveParallelSegmentsWithExactJoins),
                     None,
                     None,
                     None,
@@ -331,6 +341,9 @@ impl CurveString2 {
                     stage: CurveStringOffsetStage2::SelfContactValidation,
                     source_segment_count,
                     source_segment_kind_counts,
+                    raw_offset_construction_path: Some(
+                        OffsetConstructionPath2::PrimitiveParallelSegmentsWithExactJoins,
+                    ),
                     raw_offset_segment_count: Some(raw_offset_segment_count),
                     raw_offset_segment_kind_counts: Some(raw_offset_segment_kind_counts),
                     self_contact_report: Some(self_contact.report().clone()),
@@ -344,6 +357,7 @@ impl CurveString2 {
                 CurveStringOffsetStage2::SelfContactValidation,
                 source_segment_count,
                 source_segment_kind_counts,
+                Some(OffsetConstructionPath2::PrimitiveParallelSegmentsWithExactJoins),
                 Some(raw_offset_segment_count),
                 Some(raw_offset_segment_kind_counts),
                 Some(self_contact.report().clone()),
@@ -354,6 +368,7 @@ impl CurveString2 {
                 CurveStringOffsetStage2::SelfContactValidation,
                 source_segment_count,
                 source_segment_kind_counts,
+                Some(OffsetConstructionPath2::PrimitiveParallelSegmentsWithExactJoins),
                 Some(raw_offset_segment_count),
                 Some(raw_offset_segment_kind_counts),
                 Some(self_contact.report().clone()),
@@ -572,6 +587,7 @@ impl Contour2 {
                     ContourOffsetStage2::OffsetConstruction,
                     source_segment_count,
                     source_segment_kind_counts,
+                    Some(OffsetConstructionPath2::PrimitiveParallelSegmentsWithExactJoins),
                     None,
                     None,
                     None,
@@ -592,6 +608,9 @@ impl Contour2 {
                     stage: ContourOffsetStage2::SelfContactValidation,
                     source_segment_count,
                     source_segment_kind_counts,
+                    raw_offset_construction_path: Some(
+                        OffsetConstructionPath2::PrimitiveParallelSegmentsWithExactJoins,
+                    ),
                     raw_offset_segment_count: Some(raw_offset_segment_count),
                     raw_offset_segment_kind_counts: Some(raw_offset_segment_kind_counts),
                     self_contact_report: Some(self_contact.report().clone()),
@@ -606,6 +625,7 @@ impl Contour2 {
                 ContourOffsetStage2::SelfContactValidation,
                 source_segment_count,
                 source_segment_kind_counts,
+                Some(OffsetConstructionPath2::PrimitiveParallelSegmentsWithExactJoins),
                 Some(raw_offset_segment_count),
                 Some(raw_offset_segment_kind_counts),
                 Some(self_contact.report().clone()),
@@ -617,6 +637,7 @@ impl Contour2 {
                 ContourOffsetStage2::SelfContactValidation,
                 source_segment_count,
                 source_segment_kind_counts,
+                Some(OffsetConstructionPath2::PrimitiveParallelSegmentsWithExactJoins),
                 Some(raw_offset_segment_count),
                 Some(raw_offset_segment_kind_counts),
                 Some(self_contact.report().clone()),
@@ -642,6 +663,11 @@ impl ContourOffsetReport2 {
     /// Returns primitive-family counts for the source contour.
     pub const fn source_segment_kind_counts(&self) -> SegmentKindCounts {
         self.source_segment_kind_counts
+    }
+
+    /// Returns the exact construction family used for raw offset segments.
+    pub const fn raw_offset_construction_path(&self) -> Option<OffsetConstructionPath2> {
+        self.raw_offset_construction_path
     }
 
     /// Returns the raw joined offset segment count before self-contact rejection.
@@ -831,6 +857,11 @@ impl CurveStringOffsetReport2 {
         self.source_segment_kind_counts
     }
 
+    /// Returns the exact construction family used for raw offset segments.
+    pub const fn raw_offset_construction_path(&self) -> Option<OffsetConstructionPath2> {
+        self.raw_offset_construction_path
+    }
+
     /// Returns the raw joined offset segment count before self-contact rejection.
     pub const fn raw_offset_segment_count(&self) -> Option<usize> {
         self.raw_offset_segment_count
@@ -907,6 +938,7 @@ fn blocked_curve_string_offset_result(
     stage: CurveStringOffsetStage2,
     source_segment_count: usize,
     source_segment_kind_counts: SegmentKindCounts,
+    raw_offset_construction_path: Option<OffsetConstructionPath2>,
     raw_offset_segment_count: Option<usize>,
     raw_offset_segment_kind_counts: Option<SegmentKindCounts>,
     self_contact_report: Option<SelfContactReport2>,
@@ -919,6 +951,7 @@ fn blocked_curve_string_offset_result(
             stage,
             source_segment_count,
             source_segment_kind_counts,
+            raw_offset_construction_path,
             raw_offset_segment_count,
             raw_offset_segment_kind_counts,
             self_contact_report,
@@ -934,6 +967,7 @@ fn blocked_contour_offset_result(
     stage: ContourOffsetStage2,
     source_segment_count: usize,
     source_segment_kind_counts: SegmentKindCounts,
+    raw_offset_construction_path: Option<OffsetConstructionPath2>,
     raw_offset_segment_count: Option<usize>,
     raw_offset_segment_kind_counts: Option<SegmentKindCounts>,
     self_contact_report: Option<SelfContactReport2>,
@@ -947,6 +981,7 @@ fn blocked_contour_offset_result(
             stage,
             source_segment_count,
             source_segment_kind_counts,
+            raw_offset_construction_path,
             raw_offset_segment_count,
             raw_offset_segment_kind_counts,
             self_contact_report,
