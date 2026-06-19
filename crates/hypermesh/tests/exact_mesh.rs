@@ -3841,13 +3841,18 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
         ExactBooleanOperation::Union,
         ValidationPolicy::ALLOW_BOUNDARY,
     );
-    let evaluation = exact_boolean_evaluation(&left, &right, request);
-    assert!(
-        evaluation.is_certified_boundary_policy_shortcut(),
-        "{evaluation:?}"
-    );
-    evaluation.validate_against_sources(&left, &right).unwrap();
-    let rejected_policy_evaluation = exact_boolean_evaluation(
+    let default_evidence = with_exact_boolean_evaluation(&left, &right, request, |evaluation| {
+        assert!(
+            evaluation.is_certified_boundary_policy_shortcut(),
+            "{evaluation:?}"
+        );
+        evaluation.validate_against_sources(&left, &right).unwrap();
+        (
+            evaluation.retained_face_pairs(),
+            evaluation.retained_events(),
+        )
+    });
+    with_exact_boolean_evaluation(
         &left,
         &right,
         ExactBooleanRequest::with_boundary_policy(
@@ -3855,10 +3860,12 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
             ValidationPolicy::ALLOW_BOUNDARY,
             ExactBoundaryBooleanPolicy::Reject,
         ),
-    );
-    assert!(
-        rejected_policy_evaluation.requires_boundary_policy(),
-        "{rejected_policy_evaluation:?}"
+        |rejected_policy_evaluation| {
+            assert!(
+                rejected_policy_evaluation.requires_boundary_policy(),
+                "{rejected_policy_evaluation:?}"
+            );
+        },
     );
 
     let policy_request = ExactBooleanRequest::with_boundary_policy(
@@ -3866,52 +3873,58 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
         ValidationPolicy::ALLOW_BOUNDARY,
         ExactBoundaryBooleanPolicy::PreserveSeparateShells,
     );
-    let policy_evaluation = exact_boolean_evaluation(&left, &right, policy_request);
-    assert!(
-        policy_evaluation.is_certified_boundary_policy_shortcut(),
-        "{policy_evaluation:?}"
-    );
-    assert!(!policy_evaluation.has_blocker(), "{policy_evaluation:?}");
-    assert_eq!(
-        policy_evaluation.retained_face_pairs(),
-        evaluation.retained_face_pairs()
-    );
-    assert_eq!(
-        policy_evaluation.retained_events(),
-        evaluation.retained_events()
-    );
-    policy_evaluation
-        .validate_against_sources(&left, &right)
-        .unwrap();
-    assert_eq!(
-        policy_evaluation.freshness_against_sources(&left, &right),
-        hypermesh::ExactReportFreshness::Current
-    );
-    assert!(
+    with_exact_boolean_evaluation(&left, &right, policy_request, |policy_evaluation| {
+        assert!(
+            policy_evaluation.is_certified_boundary_policy_shortcut(),
+            "{policy_evaluation:?}"
+        );
+        assert!(!policy_evaluation.has_blocker(), "{policy_evaluation:?}");
+        assert_eq!(
+            (
+                policy_evaluation.retained_face_pairs(),
+                policy_evaluation.retained_events()
+            ),
+            default_evidence
+        );
         policy_evaluation
             .validate_against_sources(&left, &right)
-            .is_ok(),
-        "default replay should certify a boundary-policy preflight"
-    );
-
-    assert!(
-        rejected_policy_evaluation.requires_boundary_policy(),
-        "{rejected_policy_evaluation:?}"
-    );
-    assert!(
-        policy_evaluation.is_certified_boundary_policy_shortcut(),
-        "{policy_evaluation:?}"
-    );
-    policy_evaluation
-        .validate_against_sources(&left, &right)
-        .unwrap();
-    assert_eq!(
-        policy_evaluation.freshness_against_sources(&left, &right),
-        hypermesh::ExactReportFreshness::Current
-    );
-    assert!(
-        rejected_policy_evaluation.requires_boundary_policy(),
-        "strict replay should not certify a boundary-policy shortcut"
+            .unwrap();
+        assert_eq!(
+            policy_evaluation.freshness_against_sources(&left, &right),
+            hypermesh::ExactReportFreshness::Current
+        );
+        assert!(
+            policy_evaluation
+                .validate_against_sources(&left, &right)
+                .is_ok(),
+            "default replay should certify a boundary-policy preflight"
+        );
+        assert!(
+            policy_evaluation.is_certified_boundary_policy_shortcut(),
+            "{policy_evaluation:?}"
+        );
+        policy_evaluation
+            .validate_against_sources(&left, &right)
+            .unwrap();
+        assert_eq!(
+            policy_evaluation.freshness_against_sources(&left, &right),
+            hypermesh::ExactReportFreshness::Current
+        );
+    });
+    with_exact_boolean_evaluation(
+        &left,
+        &right,
+        ExactBooleanRequest::with_boundary_policy(
+            ExactBooleanOperation::Union,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            ExactBoundaryBooleanPolicy::Reject,
+        ),
+        |rejected_policy_evaluation| {
+            assert!(
+                rejected_policy_evaluation.requires_boundary_policy(),
+                "strict replay should not certify a boundary-policy shortcut"
+            );
+        },
     );
     let default_result = exact_boolean_result(
         &left,
@@ -3950,26 +3963,33 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
             .validate_against_sources(&left, &separated_right)
             .is_err()
     );
-    assert!(
-        policy_evaluation
-            .validate_against_sources(&left, &separated_right)
-            .is_err()
-    );
+    with_exact_boolean_evaluation(&left, &right, policy_request, |policy_evaluation| {
+        assert!(
+            policy_evaluation
+                .validate_against_sources(&left, &separated_right)
+                .is_err()
+        );
+    });
 
     let closed_intersection_request = ExactBooleanRequest::with_boundary_policy(
         ExactBooleanOperation::Intersection,
         ValidationPolicy::CLOSED,
         ExactBoundaryBooleanPolicy::PreserveSeparateShells,
     );
-    let closed_intersection_evaluation =
-        exact_boolean_evaluation(&left, &right, closed_intersection_request);
-    assert!(
-        closed_intersection_evaluation.is_certified_lower_dimensional_regularized_solid(),
-        "{closed_intersection_evaluation:?}"
+    with_exact_boolean_evaluation(
+        &left,
+        &right,
+        closed_intersection_request,
+        |closed_intersection_evaluation| {
+            assert!(
+                closed_intersection_evaluation.is_certified_lower_dimensional_regularized_solid(),
+                "{closed_intersection_evaluation:?}"
+            );
+            closed_intersection_evaluation
+                .validate_against_sources(&left, &right)
+                .unwrap();
+        },
     );
-    closed_intersection_evaluation
-        .validate_against_sources(&left, &right)
-        .unwrap();
     let closed_intersection = exact_boolean_result(
         &left,
         &right,
@@ -3994,15 +4014,20 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
             ValidationPolicy::CLOSED,
             ExactBoundaryBooleanPolicy::PreserveSeparateShells,
         );
-        let closed_policy_evaluation =
-            exact_boolean_evaluation(&left, &right, closed_policy_request);
-        assert!(
-            closed_policy_evaluation.is_certified_lower_dimensional_regularized_solid(),
-            "{operation:?}: {closed_policy_evaluation:?}"
+        with_exact_boolean_evaluation(
+            &left,
+            &right,
+            closed_policy_request,
+            |closed_policy_evaluation| {
+                assert!(
+                    closed_policy_evaluation.is_certified_lower_dimensional_regularized_solid(),
+                    "{operation:?}: {closed_policy_evaluation:?}"
+                );
+                closed_policy_evaluation
+                    .validate_against_sources(&left, &right)
+                    .unwrap();
+            },
         );
-        closed_policy_evaluation
-            .validate_against_sources(&left, &right)
-            .unwrap();
         let materialized = exact_boolean_result(
             &left,
             &right,
@@ -4051,10 +4076,11 @@ fn boundary_touching_report_classifies_proper_crossing_as_winding_blocker() {
         ExactBooleanOperation::Union,
         ValidationPolicy::ALLOW_BOUNDARY,
     );
-    let evaluation = exact_boolean_evaluation(&left, &right, request);
-    assert!(
-        evaluation.requires_winding() && evaluation.retained_candidate_pairs() > 0,
-        "{evaluation:?}"
-    );
-    evaluation.validate_against_sources(&left, &right).unwrap();
+    with_exact_boolean_evaluation(&left, &right, request, |evaluation| {
+        assert!(
+            evaluation.requires_winding() && evaluation.retained_candidate_pairs() > 0,
+            "{evaluation:?}"
+        );
+        evaluation.validate_against_sources(&left, &right).unwrap();
+    });
 }
