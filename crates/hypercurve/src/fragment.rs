@@ -17,7 +17,7 @@ use crate::classify::{
 };
 use crate::{
     CircularArc2, Classification, Contour2, ContourSplitMarkers, CurveError, CurvePolicy,
-    CurveResult, LineSeg2, NumericMode, ParamRange, Segment2, SegmentSplitMarker,
+    CurveResult, LineSeg2, NumericMode, ParamRange, Point2, Segment2, SegmentSplitMarker,
     UncertaintyReason,
 };
 
@@ -26,6 +26,10 @@ use crate::{
 pub struct ContourFragment {
     /// Source segment index in the original contour.
     pub source_segment_index: usize,
+    /// Exact start point of the original source segment.
+    pub source_segment_start_point: Point2,
+    /// Exact end point of the original source segment.
+    pub source_segment_end_point: Point2,
     /// Parameter interval on the source segment.
     pub source_range: ParamRange,
     /// Fragment geometry in source traversal direction.
@@ -444,6 +448,8 @@ fn append_segment_fragments(
         };
         fragments.push(ContourFragment {
             source_segment_index: segment_index,
+            source_segment_start_point: source_segment.start().clone(),
+            source_segment_end_point: source_segment.end().clone(),
             source_range: ParamRange::new(start.param.clone(), end.param.clone()),
             segment,
         });

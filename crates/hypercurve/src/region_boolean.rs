@@ -2472,10 +2472,14 @@ mod tests {
     }
 
     fn fragment_set_for(key: RegionContourKey, segment: Segment2) -> RegionContourFragments {
+        let source_segment_start_point = segment.start().clone();
+        let source_segment_end_point = segment.end().clone();
         RegionContourFragments {
             key,
             fragments: ContourFragmentSet::new(vec![ContourFragment {
                 source_segment_index: 0,
+                source_segment_start_point,
+                source_segment_end_point,
                 source_range: ParamRange::new(real(0), real(1)),
                 segment,
             }])

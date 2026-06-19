@@ -86,9 +86,13 @@ fn contour_fragments_split_line_segments_at_point_events() {
 
     assert_eq!(fragments.len(), 6);
     assert_eq!(fragments.fragments()[0].source_segment_index, 0);
+    assert_eq!(fragments.fragments()[0].source_segment_start_point, p(0, 0));
+    assert_eq!(fragments.fragments()[0].source_segment_end_point, p(4, 0));
     assert_eq!(fragments.fragments()[0].source_range.start(), &s(0));
     assert_eq!(fragments.fragments()[0].source_range.end(), &q(1, 4));
     assert_line(&fragments.fragments()[0].segment, p(0, 0), p(1, 0));
+    assert_eq!(fragments.fragments()[1].source_segment_start_point, p(0, 0));
+    assert_eq!(fragments.fragments()[1].source_segment_end_point, p(4, 0));
     assert_line(&fragments.fragments()[1].segment, p(1, 0), p(3, 0));
     assert_line(&fragments.fragments()[2].segment, p(3, 0), p(4, 0));
 }
@@ -209,11 +213,15 @@ fn contour_fragments_reject_forged_line_split_marker_geometry() {
 fn contour_fragment_set_constructor_validates_source_ranges() {
     let base = ContourFragment {
         source_segment_index: 0,
+        source_segment_start_point: p(0, 0),
+        source_segment_end_point: p(4, 0),
         source_range: ParamRange::new(s(0), q(1, 2)),
         segment: line_segment(0, 0, 2, 0),
     };
     let adjacent = ContourFragment {
         source_segment_index: 0,
+        source_segment_start_point: p(0, 0),
+        source_segment_end_point: p(4, 0),
         source_range: ParamRange::new(q(1, 2), s(1)),
         segment: line_segment(2, 0, 4, 0),
     };
@@ -233,6 +241,8 @@ fn contour_fragment_set_constructor_validates_source_ranges() {
 
     let overlapping = ContourFragment {
         source_segment_index: 0,
+        source_segment_start_point: p(0, 0),
+        source_segment_end_point: p(4, 0),
         source_range: ParamRange::new(q(1, 4), q(3, 4)),
         segment: line_segment(1, 0, 3, 0),
     };
@@ -240,6 +250,8 @@ fn contour_fragment_set_constructor_validates_source_ranges() {
 
     let same_range_different_source = ContourFragment {
         source_segment_index: 1,
+        source_segment_start_point: p(0, 1),
+        source_segment_end_point: p(4, 1),
         source_range: base.source_range.clone(),
         segment: line_segment(0, 1, 2, 1),
     };
