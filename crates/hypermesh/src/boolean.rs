@@ -7251,8 +7251,8 @@ fn validate_volumetric_arrangement_result_against_graph(
         return Err(ExactReportValidationError::SourceReplayMismatch);
     };
     let mut replay = volumetric_arrangement_cell_complex_result(operation, materialized);
-    replay.topology_assembly_report = result.topology_assembly_report.clone();
-    replay.region_ownership_report = result.region_ownership_report.clone();
+    replay.replace_topology_assembly_report(result.topology_assembly_report().cloned());
+    replay.replace_region_ownership_report(result.region_ownership_report().cloned());
     replay.validate()?;
     if result == &replay {
         Ok(())
@@ -11633,15 +11633,15 @@ mod tests {
         attempt: &ExactArrangementBooleanAttempt,
     ) {
         result.validate().unwrap();
-        assert!(result.topology_assembly_report.is_some(), "{result:?}");
-        assert!(result.region_ownership_report.is_some(), "{result:?}");
+        assert!(result.topology_assembly_report().is_some(), "{result:?}");
+        assert!(result.region_ownership_report().is_some(), "{result:?}");
         assert_eq!(
-            result.topology_assembly_report,
-            attempt.topology_assembly_report
+            result.topology_assembly_report(),
+            attempt.topology_assembly_report()
         );
         assert_eq!(
-            result.region_ownership_report,
-            attempt.region_ownership_report
+            result.region_ownership_report(),
+            attempt.region_ownership_report()
         );
     }
 

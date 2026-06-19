@@ -3135,8 +3135,8 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
             result.is_arrangement_cell_complex_shortcut_for(ExactBooleanOperation::Union),
             "{result:?}"
         );
-        assert!(result.topology_assembly_report.is_some(), "{result:?}");
-        assert!(result.region_ownership_report.is_some(), "{result:?}");
+        assert!(result.topology_assembly_report().is_some(), "{result:?}");
+        assert!(result.region_ownership_report().is_some(), "{result:?}");
     }
 
     result.validate().unwrap();
@@ -3217,8 +3217,8 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
             result.is_arrangement_cell_complex_shortcut_for(ExactBooleanOperation::Union),
             "{result:?}"
         );
-        assert!(result.topology_assembly_report.is_some(), "{result:?}");
-        assert!(result.region_ownership_report.is_some(), "{result:?}");
+        assert!(result.topology_assembly_report().is_some(), "{result:?}");
+        assert!(result.region_ownership_report().is_some(), "{result:?}");
     }
     assert!(!result.mesh().triangles().is_empty());
     assert!(
@@ -3273,11 +3273,11 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
             "{difference:?}"
         );
         assert!(
-            difference.topology_assembly_report.is_some(),
+            difference.topology_assembly_report().is_some(),
             "{difference:?}"
         );
         assert!(
-            difference.region_ownership_report.is_some(),
+            difference.region_ownership_report().is_some(),
             "{difference:?}"
         );
     }
@@ -3361,11 +3361,11 @@ fn exact_volumetric_winding_coplanar_cap_is_publicly_certified() {
         );
         result.validate().unwrap();
         assert!(
-            result.topology_assembly_report.is_some(),
+            result.topology_assembly_report().is_some(),
             "{operation:?}: {result:?}"
         );
         assert!(
-            result.region_ownership_report.is_some(),
+            result.region_ownership_report().is_some(),
             "{operation:?}: {result:?}"
         );
         assert!(
@@ -3452,8 +3452,8 @@ fn arrangement_cell_complex_request_materialization_is_publicly_replayable() {
             result.is_arrangement_cell_complex_shortcut_for(ExactBooleanOperation::Union),
             "{result:?}"
         );
-        assert!(result.topology_assembly_report.is_some(), "{result:?}");
-        assert!(result.region_ownership_report.is_some(), "{result:?}");
+        assert!(result.topology_assembly_report().is_some(), "{result:?}");
+        assert!(result.region_ownership_report().is_some(), "{result:?}");
     }
 
     let horizontal = axis_aligned_box([0, 0, 0], [2, 2, 2]);
@@ -3500,11 +3500,11 @@ fn arrangement_cell_complex_request_materialization_is_publicly_replayable() {
             .is_arrangement_cell_complex_shortcut_for(ExactBooleanOperation::Intersection)
         {
             assert!(
-                convex_intersection.topology_assembly_report.is_some(),
+                convex_intersection.topology_assembly_report().is_some(),
                 "{convex_intersection:?}"
             );
             assert!(
-                convex_intersection.region_ownership_report.is_some(),
+                convex_intersection.region_ownership_report().is_some(),
                 "{convex_intersection:?}"
             );
         }

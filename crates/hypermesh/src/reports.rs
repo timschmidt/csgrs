@@ -697,10 +697,10 @@ pub struct ExactBooleanResult {
     pub volumetric_classifications: Vec<ExactVolumetricRegionClassification>,
     /// Topology assembly report consumed by an arrangement/cell-complex output,
     /// when the materialization path retained that gate evidence.
-    pub topology_assembly_report: Option<ExactTopologyAssemblyReport>,
+    pub(crate) topology_assembly_report: Option<ExactTopologyAssemblyReport>,
     /// Region ownership report consumed by an arrangement/cell-complex output,
     /// when the materialization path retained that gate evidence.
-    pub region_ownership_report: Option<ExactRegionOwnershipReport>,
+    pub(crate) region_ownership_report: Option<ExactRegionOwnershipReport>,
     /// Materialized exact output mesh validated under the requested policy.
     pub(crate) mesh: ExactMesh,
 }
@@ -724,6 +724,32 @@ impl ExactBooleanResult {
     /// Update whether graph extraction contained unknown events before policy checks.
     pub fn set_graph_had_unknowns(&mut self, graph_had_unknowns: bool) {
         self.graph_had_unknowns = graph_had_unknowns;
+    }
+
+    /// Return retained topology assembly gate evidence, when present.
+    pub fn topology_assembly_report(&self) -> Option<&ExactTopologyAssemblyReport> {
+        self.topology_assembly_report.as_ref()
+    }
+
+    /// Replace retained topology assembly gate evidence.
+    pub fn replace_topology_assembly_report(
+        &mut self,
+        report: Option<ExactTopologyAssemblyReport>,
+    ) -> Option<ExactTopologyAssemblyReport> {
+        std::mem::replace(&mut self.topology_assembly_report, report)
+    }
+
+    /// Return retained region ownership gate evidence, when present.
+    pub fn region_ownership_report(&self) -> Option<&ExactRegionOwnershipReport> {
+        self.region_ownership_report.as_ref()
+    }
+
+    /// Replace retained region ownership gate evidence.
+    pub fn replace_region_ownership_report(
+        &mut self,
+        report: Option<ExactRegionOwnershipReport>,
+    ) -> Option<ExactRegionOwnershipReport> {
+        std::mem::replace(&mut self.region_ownership_report, report)
     }
 
     /// Borrow the materialized exact output mesh.
