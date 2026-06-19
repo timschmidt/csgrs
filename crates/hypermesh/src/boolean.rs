@@ -1009,11 +1009,6 @@ impl ExactBooleanCertificationSet {
         &mut self.refinement
     }
 
-    /// Return the open-surface disjointness shortcut certification report.
-    pub fn open_surface_disjoint(&self) -> &ExactOpenSurfaceDisjointReport {
-        &self.open_surface_disjoint
-    }
-
     /// Return the adjacent closed-solid union completion certification report.
     #[cfg(test)]
     pub(crate) fn adjacent_union_completion(&self) -> &ExactAdjacentUnionCompletionReport {

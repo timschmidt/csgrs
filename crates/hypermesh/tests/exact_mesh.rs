@@ -3146,12 +3146,12 @@ fn public_exact_blocker_reports_replay_remaining_decisions() {
         ValidationPolicy::ALLOW_BOUNDARY,
     );
     let open_evaluation = exact_boolean_evaluation(&left, &parallel_right, open_request);
-    let open_disjoint = open_evaluation
-        .certifications()
-        .open_surface_disjoint()
-        .clone();
-    assert!(open_disjoint.is_certified());
-    open_disjoint.validate().unwrap();
+    assert!(
+        open_evaluation.materialized_result().is_some_and(|result| {
+            result.is_certified_shortcut_for(ExactBooleanOperation::Union)
+        }),
+        "{open_evaluation:?}"
+    );
     open_evaluation
         .validate_against_sources(&left, &parallel_right)
         .unwrap();
@@ -3185,13 +3185,12 @@ fn open_surface_disjoint_report_classifies_retained_coplanar_overlap_blocker() {
         ValidationPolicy::ALLOW_BOUNDARY,
     );
     let evaluation = exact_boolean_evaluation(&left, &right, request);
-    let report = evaluation.certifications().open_surface_disjoint().clone();
 
-    assert!(!report.is_certified());
-    assert!(report.blocker().requires_planar_arrangement());
-    assert!(report.blocker().coplanar_overlapping_pairs() > 0);
-    assert!(report.retained_face_pairs() > 0);
-    report.validate().unwrap();
+    let preflight = evaluation.preflight();
+    assert!(preflight.blocker().is_some_and(|blocker| {
+        blocker.requires_planar_arrangement() && blocker.coplanar_overlapping_pairs() > 0
+    }));
+    assert!(preflight.retained_face_pairs() > 0);
     evaluation.validate_against_sources(&left, &right).unwrap();
 }
 

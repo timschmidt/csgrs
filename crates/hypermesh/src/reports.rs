@@ -5310,41 +5310,6 @@ pub struct ExactOpenSurfaceDisjointReport {
 }
 
 impl ExactOpenSurfaceDisjointReport {
-    /// Return the coarse open-surface disjointness status.
-    pub const fn status(&self) -> ExactOpenSurfaceDisjointStatus {
-        self.status
-    }
-
-    /// Return whether the left mesh satisfies the exact open-surface precondition.
-    pub const fn left_open_surface(&self) -> bool {
-        self.left_open_surface
-    }
-
-    /// Return whether the right mesh satisfies the exact open-surface precondition.
-    pub const fn right_open_surface(&self) -> bool {
-        self.right_open_surface
-    }
-
-    /// Return whether graph extraction retained unknown events.
-    pub const fn graph_had_unknowns(&self) -> bool {
-        self.graph_had_unknowns
-    }
-
-    /// Return the retained face-pair record count.
-    pub const fn retained_face_pairs(&self) -> usize {
-        self.retained_face_pairs
-    }
-
-    /// Return the retained event record count.
-    pub const fn retained_events(&self) -> usize {
-        self.retained_events
-    }
-
-    /// Return the retained relation-count blocker.
-    pub const fn blocker(&self) -> &ExactBooleanBlocker {
-        &self.blocker
-    }
-
     /// Return whether open-surface disjointness was certified.
     pub const fn is_certified(&self) -> bool {
         matches!(self.status, ExactOpenSurfaceDisjointStatus::Certified)
