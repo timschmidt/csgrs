@@ -2357,8 +2357,6 @@ impl ExactBooleanEvaluation {
             return Err(ExactReportValidationError::StatusEvidenceMismatch);
         }
         result.retained_arrangement_attempt_matches_output_for_request(
-            left,
-            right,
             request,
             retained_arrangement_attempt,
         )?;
@@ -2881,8 +2879,7 @@ fn materialize_retained_arrangement_cell_complex_attempt(
     request: ExactBooleanRequest,
     attempt: &ExactArrangementBooleanAttempt,
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
-    let Some(result) =
-        rematerialize_retained_arrangement_cell_complex_attempt(left, right, request, attempt)?
+    let Some(result) = rematerialize_retained_arrangement_cell_complex_attempt(request, attempt)?
     else {
         return Ok(None);
     };
@@ -2894,8 +2891,6 @@ fn materialize_retained_arrangement_cell_complex_attempt(
 }
 
 pub(crate) fn rematerialize_retained_arrangement_cell_complex_attempt(
-    _left: &ExactMesh,
-    _right: &ExactMesh,
     request: ExactBooleanRequest,
     attempt: &ExactArrangementBooleanAttempt,
 ) -> Result<Option<ExactBooleanResult>, MeshError> {

@@ -1834,8 +1834,6 @@ impl ExactBooleanResult {
         }
         self.validate()?;
         if self.retained_arrangement_attempt_certifies_operation_replay(
-            left,
-            right,
             request,
             retained_arrangement_attempt,
         )? {
@@ -1853,14 +1851,10 @@ impl ExactBooleanResult {
 
     fn retained_arrangement_attempt_certifies_operation_replay(
         &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
         request: ExactBooleanRequest,
         retained_arrangement_attempt: Option<&ExactArrangementBooleanAttempt>,
     ) -> Result<bool, ExactReportValidationError> {
         self.retained_arrangement_attempt_matches_output_for_request(
-            left,
-            right,
             request,
             retained_arrangement_attempt,
         )
@@ -1869,8 +1863,6 @@ impl ExactBooleanResult {
 
     pub(crate) fn retained_arrangement_attempt_matches_output_for_request(
         &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
         request: ExactBooleanRequest,
         retained_arrangement_attempt: Option<&ExactArrangementBooleanAttempt>,
     ) -> Result<bool, ExactReportValidationError> {
@@ -1896,11 +1888,9 @@ impl ExactBooleanResult {
             return Err(ExactReportValidationError::StatusEvidenceMismatch);
         }
         if attempt.materialized_without_shortcut() {
-            let replay = rematerialize_retained_arrangement_cell_complex_attempt(
-                left, right, request, attempt,
-            )
-            .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
-            .ok_or(ExactReportValidationError::SourceReplayMismatch)?;
+            let replay = rematerialize_retained_arrangement_cell_complex_attempt(request, attempt)
+                .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
+                .ok_or(ExactReportValidationError::SourceReplayMismatch)?;
             if self.mesh != replay.mesh
                 || self.topology_assembly_report != replay.topology_assembly_report
                 || self.region_ownership_report != replay.region_ownership_report
