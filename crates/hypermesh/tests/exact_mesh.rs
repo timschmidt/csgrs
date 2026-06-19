@@ -2132,15 +2132,6 @@ fn exact_selected_region_boolean_is_publicly_replayable() {
 
     result.validate().unwrap();
     result.validate_against_sources(&left, &right).unwrap();
-    result
-        .validate_operation_against_sources(
-            &left,
-            &right,
-            ExactBooleanOperation::SelectedRegions(selection),
-            validation,
-            ExactBoundaryBooleanPolicy::Reject,
-        )
-        .unwrap();
     assert_eq!(
         result.freshness_against_sources(&left, &right),
         ExactReportFreshness::Current
@@ -2166,6 +2157,9 @@ fn exact_selected_region_boolean_is_publicly_replayable() {
         ),
     );
     evaluation.validate().unwrap();
+    evaluation
+        .validate_materialized_result_against_sources(&left, &right)
+        .unwrap();
     let mut stale_evaluation_region_fact = evaluation.clone();
     let classification = stale_evaluation_region_fact
         .result
