@@ -144,7 +144,7 @@ pub use boolean_boundary::{
     BooleanBoundaryLoopConstructionReport2, BooleanBoundaryLoopConstructionResult2,
     BooleanBoundaryLoopConstructionStage2, BooleanBoundaryLoopExtractionReport2,
     BooleanBoundaryLoopExtractionResult2, BooleanBoundaryLoopExtractionStage2,
-    BooleanBoundaryLoopSet, DirectedBooleanFragment,
+    BooleanBoundaryLoopSet, BooleanBoundaryOutputFragmentReport2, DirectedBooleanFragment,
 };
 pub use bspline::{
     PolynomialBSplineBezierExtraction2, PolynomialBSplineCurve2, RationalBSplineBezierExtraction2,

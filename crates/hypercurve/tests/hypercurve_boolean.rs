@@ -386,6 +386,34 @@ fn boolean_fragment_selection_emits_directed_boundary_fragments() {
             arcs: 0,
         })
     );
+    assert_eq!(
+        assembled.report().output_fragments().len(),
+        emitted.directed_len()
+    );
+    let assembled_first_report = &assembled.report().output_fragments()[0];
+    assert_eq!(assembled_first_report.key(), emitted_first.key);
+    assert_eq!(
+        assembled_first_report.fragment_index(),
+        emitted_first.fragment_index
+    );
+    assert_eq!(
+        assembled_first_report.source_segment_index(),
+        emitted_first.source_segment_index
+    );
+    assert_eq!(
+        assembled_first_report.source_segment_start_point(),
+        &emitted_first.source_segment_start_point
+    );
+    assert_eq!(
+        assembled_first_report.source_segment_end_point(),
+        &emitted_first.source_segment_end_point
+    );
+    assert_eq!(
+        assembled_first_report.source_range(),
+        &emitted_first.source_range
+    );
+    assert_eq!(assembled_first_report.reversed(), emitted_first.reversed);
+    assert_eq!(assembled_first_report.output_fragment_index(), 0);
     assert_eq!(assembled.report().blocker(), None);
     let chains = assembled
         .chains()
@@ -1034,6 +1062,7 @@ fn boundary_chain_assembly_rejects_branch_points() {
         SegmentKindCounts { lines: 3, arcs: 0 }
     );
     assert_eq!(assembled.report().output_fragment_kind_counts(), None);
+    assert_eq!(assembled.report().output_fragments().len(), 0);
     assert_eq!(assembled.report().unresolved_boundary_count(), 0);
     assert_eq!(
         assembled.report().blocker(),

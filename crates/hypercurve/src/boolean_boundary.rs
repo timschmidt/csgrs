@@ -10,7 +10,7 @@ use crate::boolean::{
 use crate::classify::is_zero;
 use crate::{
     Classification, Contour2, CurveError, CurvePolicy, CurveResult, FillRule, ParamRange, Point2,
-    RegionContourKey, RegionContourRole, RegionSide, RetainedTopologyStatus, Segment2,
+    RegionContourKey, RegionContourRole, RegionSide, RetainedTopologyStatus, Segment2, SegmentKind,
     SegmentKindCounts, UncertaintyReason,
 };
 
@@ -54,8 +54,23 @@ pub struct BooleanBoundaryChainAssemblyReport2 {
     open_chain_count: Option<usize>,
     output_fragment_count: Option<usize>,
     output_fragment_kind_counts: Option<SegmentKindCounts>,
+    output_fragments: Vec<BooleanBoundaryOutputFragmentReport2>,
     status: RetainedTopologyStatus,
     blocker: Option<UncertaintyReason>,
+}
+
+/// Source provenance for one output fragment produced by boolean boundary traversal.
+#[derive(Clone, Debug, PartialEq)]
+pub struct BooleanBoundaryOutputFragmentReport2 {
+    key: RegionContourKey,
+    fragment_index: usize,
+    source_segment_index: usize,
+    source_segment_start_point: Point2,
+    source_segment_end_point: Point2,
+    source_range: ParamRange,
+    reversed: bool,
+    output_fragment_index: usize,
+    output_fragment_kind: SegmentKind,
 }
 
 /// Furthest exact stage reached by boolean boundary chain assembly.
@@ -357,6 +372,11 @@ impl BooleanBoundaryChainAssemblyReport2 {
         self.output_fragment_kind_counts
     }
 
+    /// Returns per-output-fragment source provenance when chains materialized.
+    pub fn output_fragments(&self) -> &[BooleanBoundaryOutputFragmentReport2] {
+        &self.output_fragments
+    }
+
     /// Returns retained topology status for chain assembly.
     pub const fn status(&self) -> RetainedTopologyStatus {
         self.status
@@ -365,6 +385,53 @@ impl BooleanBoundaryChainAssemblyReport2 {
     /// Returns the exact blocker for non-materialized chain assembly.
     pub const fn blocker(&self) -> Option<UncertaintyReason> {
         self.blocker
+    }
+}
+
+impl BooleanBoundaryOutputFragmentReport2 {
+    /// Returns the source keyed contour.
+    pub const fn key(&self) -> RegionContourKey {
+        self.key
+    }
+
+    /// Returns the source contour fragment index.
+    pub const fn fragment_index(&self) -> usize {
+        self.fragment_index
+    }
+
+    /// Returns the source segment index in the original contour.
+    pub const fn source_segment_index(&self) -> usize {
+        self.source_segment_index
+    }
+
+    /// Returns the exact start point of the original source segment.
+    pub const fn source_segment_start_point(&self) -> &Point2 {
+        &self.source_segment_start_point
+    }
+
+    /// Returns the exact end point of the original source segment.
+    pub const fn source_segment_end_point(&self) -> &Point2 {
+        &self.source_segment_end_point
+    }
+
+    /// Returns the retained parameter range on the source segment.
+    pub const fn source_range(&self) -> &ParamRange {
+        &self.source_range
+    }
+
+    /// Returns true when the output fragment is opposite source traversal.
+    pub const fn reversed(&self) -> bool {
+        self.reversed
+    }
+
+    /// Returns the output fragment index after chain assembly.
+    pub const fn output_fragment_index(&self) -> usize {
+        self.output_fragment_index
+    }
+
+    /// Returns the output fragment primitive kind.
+    pub const fn output_fragment_kind(&self) -> SegmentKind {
+        self.output_fragment_kind
     }
 }
 
@@ -1339,6 +1406,7 @@ fn decided_boolean_boundary_chain_assembly_result(
     let closed_chain_count = chains.closed_count();
     let output_fragment_count = chains.chains().iter().map(BooleanBoundaryChain::len).sum();
     let output_fragment_kind_counts = chain_set_fragment_kind_counts(&chains);
+    let output_fragments = chain_set_output_fragment_reports(&chains);
     BooleanBoundaryChainAssemblyResult2 {
         chains: Some(chains),
         report: BooleanBoundaryChainAssemblyReport2 {
@@ -1353,6 +1421,7 @@ fn decided_boolean_boundary_chain_assembly_result(
             open_chain_count: Some(chain_count - closed_chain_count),
             output_fragment_count: Some(output_fragment_count),
             output_fragment_kind_counts: Some(output_fragment_kind_counts),
+            output_fragments,
             status: RetainedTopologyStatus::NativeExact,
             blocker: None,
         },
@@ -1378,6 +1447,7 @@ fn blocked_boolean_boundary_chain_assembly_result(
             open_chain_count: None,
             output_fragment_count: None,
             output_fragment_kind_counts: None,
+            output_fragments: Vec::new(),
             status: retained_status_for_chain_assembly_blocker(blocker),
             blocker: Some(blocker),
         },
@@ -1546,6 +1616,30 @@ fn chain_set_fragment_kind_counts(chains: &BooleanBoundaryChainSet) -> SegmentKi
         add_directed_fragment_kind_counts(&mut counts, chain.fragments());
     }
     counts
+}
+
+fn chain_set_output_fragment_reports(
+    chains: &BooleanBoundaryChainSet,
+) -> Vec<BooleanBoundaryOutputFragmentReport2> {
+    chains
+        .chains()
+        .iter()
+        .flat_map(BooleanBoundaryChain::fragments)
+        .enumerate()
+        .map(
+            |(output_fragment_index, fragment)| BooleanBoundaryOutputFragmentReport2 {
+                key: fragment.key,
+                fragment_index: fragment.fragment_index,
+                source_segment_index: fragment.source_segment_index,
+                source_segment_start_point: fragment.source_segment_start_point.clone(),
+                source_segment_end_point: fragment.source_segment_end_point.clone(),
+                source_range: fragment.source_range.clone(),
+                reversed: fragment.reversed,
+                output_fragment_index,
+                output_fragment_kind: fragment.segment.structural_facts().kind,
+            },
+        )
+        .collect()
 }
 
 fn decided_boolean_boundary_contour_transfer_result(
