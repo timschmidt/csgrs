@@ -7,7 +7,8 @@
 
 use crate::bbox::{aabbs_decided_disjoint, decided_contour_aabb};
 use crate::{
-    Classification, ContourIntersectionSet, CurveError, CurvePolicy, CurveResult, RegionView2,
+    Classification, ContourIntersectionSet, ContourOperand, CurveError, CurvePolicy, CurveResult,
+    RegionView2, SegmentKind, SegmentKindCounts,
 };
 
 /// Which region side a contour key belongs to.
@@ -190,6 +191,16 @@ impl RegionIntersectionSet {
             .sum()
     }
 
+    /// Returns primitive families touched by retained first-region event segments.
+    pub fn first_event_segment_kind_counts(&self) -> SegmentKindCounts {
+        region_event_segment_kind_counts(self, ContourOperand::First)
+    }
+
+    /// Returns primitive families touched by retained second-region event segments.
+    pub fn second_event_segment_kind_counts(&self) -> SegmentKindCounts {
+        region_event_segment_kind_counts(self, ContourOperand::Second)
+    }
+
     /// Returns true when at least one normalized contour-level event was retained.
     pub fn has_events(&self) -> bool {
         self.event_count() != 0
@@ -313,6 +324,22 @@ fn validate_region_intersection_pairs(pairs: &[RegionContourIntersection]) -> Cu
         ));
     }
     Ok(())
+}
+
+fn region_event_segment_kind_counts(
+    events: &RegionIntersectionSet,
+    operand: ContourOperand,
+) -> SegmentKindCounts {
+    let mut counts = SegmentKindCounts::default();
+    for pair in events.pairs() {
+        for event in pair.intersections.events() {
+            match event.segment_kind(operand) {
+                SegmentKind::Line => counts.lines += 1,
+                SegmentKind::Arc => counts.arcs += 1,
+            }
+        }
+    }
+    counts
 }
 
 fn collect_role_pairs(

@@ -1,7 +1,7 @@
 use hypercurve::{
     BulgeVertex2, Classification, Contour2, ContourIntersection, ContourIntersectionSet,
     ContourOperand, ContourSplitMap, CurvePolicy, Real, Region2, RegionContourIntersection,
-    RegionContourKey, RegionContourRole, RegionIntersectionSet, RegionSide,
+    RegionContourKey, RegionContourRole, RegionIntersectionSet, RegionSide, SegmentKindCounts,
 };
 
 fn s(value: i32) -> Real {
@@ -50,6 +50,14 @@ fn region_events_keep_material_and_hole_roles() {
     assert_eq!(events.len(), 2);
     assert!(events.has_events());
     assert_eq!(events.event_count(), 4);
+    assert_eq!(
+        events.first_event_segment_kind_counts(),
+        SegmentKindCounts { lines: 4, arcs: 0 }
+    );
+    assert_eq!(
+        events.second_event_segment_kind_counts(),
+        SegmentKindCounts { lines: 4, arcs: 0 }
+    );
 
     let material_key = RegionContourKey::new(RegionSide::First, RegionContourRole::Material, 0);
     let hole_key = RegionContourKey::new(RegionSide::First, RegionContourRole::Hole, 0);
@@ -70,6 +78,14 @@ fn region_intersection_set_constructor_validates_pair_ownership() {
     assert_eq!(empty.first_contour_count(), None);
     assert_eq!(empty.second_contour_count(), None);
     assert_eq!(empty.event_count(), 0);
+    assert_eq!(
+        empty.first_event_segment_kind_counts(),
+        SegmentKindCounts { lines: 0, arcs: 0 }
+    );
+    assert_eq!(
+        empty.second_event_segment_kind_counts(),
+        SegmentKindCounts { lines: 0, arcs: 0 }
+    );
     assert!(!empty.has_events());
 
     let first = Region2::from_material_contours(vec![rectangle(0, 0, 4, 4)]);

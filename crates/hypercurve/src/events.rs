@@ -272,6 +272,24 @@ impl ContourIntersection {
         }
     }
 
+    /// Returns the retained primitive family on one side of the event.
+    pub const fn segment_kind(&self, operand: ContourOperand) -> SegmentKind {
+        match self {
+            Self::Point(event) => match operand {
+                ContourOperand::First => event.a_segment_kind,
+                ContourOperand::Second => event.b_segment_kind,
+            },
+            Self::Overlap(event) => match operand {
+                ContourOperand::First => event.a_segment_kind,
+                ContourOperand::Second => event.b_segment_kind,
+            },
+            Self::Uncertain(event) => match operand {
+                ContourOperand::First => event.a_segment_kind,
+                ContourOperand::Second => event.b_segment_kind,
+            },
+        }
+    }
+
     fn order_param(
         &self,
         operand: ContourOperand,
