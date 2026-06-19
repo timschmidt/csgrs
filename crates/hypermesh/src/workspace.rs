@@ -295,6 +295,10 @@ impl<'a> ExactBooleanWorkspace<'a> {
         request: ExactBooleanRequest,
     ) -> Result<&ExactBooleanEvaluation, MeshError> {
         if let Some(index) = cached_by_request_index(&self.evaluations, request) {
+            self.evaluations[index]
+                .1
+                .validate_against_sources(self.left, self.right)
+                .map_err(workspace_report_validation_error)?;
             return Ok(&self.evaluations[index].1);
         }
 
