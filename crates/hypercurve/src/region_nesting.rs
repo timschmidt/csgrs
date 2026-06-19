@@ -84,6 +84,30 @@ pub struct ExactCurveArrangementSourceAabbBucketCache2 {
     buckets: Vec<ExactCurveArrangementSourceAabbBucket2>,
 }
 
+/// Reference to a retained source segment fact inside a primitive-family bucket.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ExactCurveArrangementSourceSegmentKindRef2 {
+    source_segment_index: usize,
+}
+
+/// Source segment bucket grouped by retained primitive family.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ExactCurveArrangementSourceSegmentKindBucket2 {
+    source_segment_kind: SegmentKind,
+    source_refs: Vec<ExactCurveArrangementSourceSegmentKindRef2>,
+}
+
+/// Source segment primitive-family buckets retained during workspace preparation.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ExactCurveArrangementSourceSegmentKindBucketCache2 {
+    bucket_count: usize,
+    source_segment_ref_count: usize,
+    line_segment_ref_count: usize,
+    arc_segment_ref_count: usize,
+    max_bucket_size: usize,
+    buckets: Vec<ExactCurveArrangementSourceSegmentKindBucket2>,
+}
+
 /// Source segment fact cache retained during workspace preparation.
 #[derive(Clone, Debug, PartialEq)]
 pub struct ExactCurveArrangementSourceSegmentCache2 {
@@ -93,6 +117,7 @@ pub struct ExactCurveArrangementSourceSegmentCache2 {
     undecided_source_segment_aabb_count: usize,
     source_aabb: Option<Aabb2>,
     source_aabb_bucket_cache: ExactCurveArrangementSourceAabbBucketCache2,
+    source_segment_kind_bucket_cache: ExactCurveArrangementSourceSegmentKindBucketCache2,
     segments: Vec<ExactCurveArrangementSourceSegmentFact2>,
 }
 
@@ -1625,6 +1650,100 @@ impl ExactCurveArrangementSourceAabbBucketCache2 {
     }
 }
 
+impl ExactCurveArrangementSourceSegmentKindRef2 {
+    /// Returns the index into [`ExactCurveArrangementSourceSegmentCache2::segments`].
+    pub const fn source_segment_index(&self) -> usize {
+        self.source_segment_index
+    }
+}
+
+impl ExactCurveArrangementSourceSegmentKindBucket2 {
+    /// Returns the retained primitive family represented by this bucket.
+    pub const fn source_segment_kind(&self) -> SegmentKind {
+        self.source_segment_kind
+    }
+
+    /// Returns source segment references with this retained primitive family.
+    pub fn source_refs(&self) -> &[ExactCurveArrangementSourceSegmentKindRef2] {
+        &self.source_refs
+    }
+}
+
+impl ExactCurveArrangementSourceSegmentKindBucketCache2 {
+    fn from_segments(segments: &[ExactCurveArrangementSourceSegmentFact2]) -> Self {
+        let mut line_refs = Vec::new();
+        let mut arc_refs = Vec::new();
+
+        for segment in segments {
+            let source_ref = ExactCurveArrangementSourceSegmentKindRef2 {
+                source_segment_index: segment.source_segment_index(),
+            };
+            match segment.source_segment_kind() {
+                SegmentKind::Line => line_refs.push(source_ref),
+                SegmentKind::Arc => arc_refs.push(source_ref),
+            }
+        }
+
+        let line_segment_ref_count = line_refs.len();
+        let arc_segment_ref_count = arc_refs.len();
+        let buckets = vec![
+            ExactCurveArrangementSourceSegmentKindBucket2 {
+                source_segment_kind: SegmentKind::Line,
+                source_refs: line_refs,
+            },
+            ExactCurveArrangementSourceSegmentKindBucket2 {
+                source_segment_kind: SegmentKind::Arc,
+                source_refs: arc_refs,
+            },
+        ];
+        let source_segment_ref_count = segments.len();
+        let max_bucket_size = buckets
+            .iter()
+            .map(|bucket| bucket.source_refs.len())
+            .max()
+            .unwrap_or(0);
+
+        Self {
+            bucket_count: buckets.len(),
+            source_segment_ref_count,
+            line_segment_ref_count,
+            arc_segment_ref_count,
+            max_bucket_size,
+            buckets,
+        }
+    }
+
+    /// Returns the number of primitive-family buckets.
+    pub const fn bucket_count(&self) -> usize {
+        self.bucket_count
+    }
+
+    /// Returns the number of retained source segment references.
+    pub const fn source_segment_ref_count(&self) -> usize {
+        self.source_segment_ref_count
+    }
+
+    /// Returns the number of retained line source segment references.
+    pub const fn line_segment_ref_count(&self) -> usize {
+        self.line_segment_ref_count
+    }
+
+    /// Returns the number of retained arc source segment references.
+    pub const fn arc_segment_ref_count(&self) -> usize {
+        self.arc_segment_ref_count
+    }
+
+    /// Returns the largest primitive-family bucket size.
+    pub const fn max_bucket_size(&self) -> usize {
+        self.max_bucket_size
+    }
+
+    /// Returns source segment primitive-family buckets in stable kind order.
+    pub fn buckets(&self) -> &[ExactCurveArrangementSourceSegmentKindBucket2] {
+        &self.buckets
+    }
+}
+
 impl ExactCurveArrangementSourceSegmentCache2 {
     fn from_sources(
         source_segments: &[Segment2],
@@ -1652,6 +1771,8 @@ impl ExactCurveArrangementSourceSegmentCache2 {
             .count();
         let source_aabb_bucket_cache =
             ExactCurveArrangementSourceAabbBucketCache2::from_source_aabbs(source_segment_aabbs);
+        let source_segment_kind_bucket_cache =
+            ExactCurveArrangementSourceSegmentKindBucketCache2::from_segments(&segments);
         Self {
             source_segment_count: source_segments.len(),
             source_segment_kind_counts,
@@ -1661,6 +1782,7 @@ impl ExactCurveArrangementSourceSegmentCache2 {
                 .saturating_sub(decided_source_segment_aabb_count),
             source_aabb,
             source_aabb_bucket_cache,
+            source_segment_kind_bucket_cache,
             segments,
         }
     }
@@ -1693,6 +1815,13 @@ impl ExactCurveArrangementSourceSegmentCache2 {
     /// Returns retained source AABB buckets grouped by certification status.
     pub const fn source_aabb_bucket_cache(&self) -> &ExactCurveArrangementSourceAabbBucketCache2 {
         &self.source_aabb_bucket_cache
+    }
+
+    /// Returns retained source segment buckets grouped by primitive family.
+    pub const fn source_segment_kind_bucket_cache(
+        &self,
+    ) -> &ExactCurveArrangementSourceSegmentKindBucketCache2 {
+        &self.source_segment_kind_bucket_cache
     }
 
     /// Returns source segment facts in request order.
