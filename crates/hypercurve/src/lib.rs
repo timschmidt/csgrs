@@ -189,9 +189,9 @@ pub use curve_string::{
     CurveStringRegionTrimIntervalReport2, CurveStringRegionTrimPreparedCacheReport2,
     CurveStringRegionTrimQueryPath2, CurveStringRegionTrimReport2, CurveStringRegionTrimResult2,
     CurveStringRegionTrimStage2, CurveStringReversedDuplicatePairReport2,
-    CurveStringTrimInputPath2, CurveStringTrimPoint2, CurveStringTrimReport2,
-    CurveStringTrimResult2, CurveStringTrimSegmentReport2, LinkedCurveString2,
-    OrderedLinkedCurveString2, RegionTrimPreparedCacheAudit2,
+    CurveStringTrimInputPath2, CurveStringTrimPoint2, CurveStringTrimPredicatePath2,
+    CurveStringTrimReport2, CurveStringTrimResult2, CurveStringTrimSegmentReport2,
+    LinkedCurveString2, OrderedLinkedCurveString2, RegionTrimPreparedCacheAudit2,
 };
 pub use error::{CurveError, CurveResult};
 pub use events::{

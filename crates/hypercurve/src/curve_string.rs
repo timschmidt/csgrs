@@ -735,6 +735,7 @@ pub struct CurveStringTrimSegmentReport2 {
 #[derive(Clone, Debug, PartialEq)]
 pub struct CurveStringTrimReport2 {
     input_path: CurveStringTrimInputPath2,
+    predicate_path: CurveStringTrimPredicatePath2,
     start: CurveStringTrimPoint2,
     end: CurveStringTrimPoint2,
     source_segment_count: usize,
@@ -753,6 +754,15 @@ pub enum CurveStringTrimInputPath2 {
     Parameters,
     /// Trim boundaries were supplied directly as exact points.
     Points,
+}
+
+/// Exact predicate path used while trimming an open curve string.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum CurveStringTrimPredicatePath2 {
+    /// Segment ranges were ordered and materialized from retained exact segment parameters.
+    ExactParameterRange,
+    /// Segment ranges were ordered and materialized from exact located path-point witnesses.
+    ExactLocatedPointRange,
 }
 
 /// Result of a report-bearing open curve-string trim.
@@ -1984,6 +1994,7 @@ impl CurveString2 {
         let curve_string = CurveString2::try_new(trimmed_segments)?;
         let report = CurveStringTrimReport2 {
             input_path: CurveStringTrimInputPath2::Parameters,
+            predicate_path: CurveStringTrimPredicatePath2::ExactParameterRange,
             start,
             end,
             source_segment_count: self.len(),
@@ -3459,6 +3470,7 @@ impl CurveString2 {
         let curve_string = CurveString2::try_new(trimmed_segments)?;
         let report = CurveStringTrimReport2 {
             input_path: CurveStringTrimInputPath2::Points,
+            predicate_path: CurveStringTrimPredicatePath2::ExactLocatedPointRange,
             start: start.trim_point,
             end: end.trim_point,
             source_segment_count: self.len(),
@@ -3699,6 +3711,11 @@ impl CurveStringTrimReport2 {
     /// Returns how trim boundary evidence was supplied.
     pub const fn input_path(&self) -> CurveStringTrimInputPath2 {
         self.input_path
+    }
+
+    /// Returns the exact predicate path used while retaining trim ranges.
+    pub const fn predicate_path(&self) -> CurveStringTrimPredicatePath2 {
+        self.predicate_path
     }
 
     /// Returns the requested trim start.
@@ -6577,6 +6594,7 @@ fn blocked_trim_result(
         curve_string: None,
         report: CurveStringTrimReport2 {
             input_path,
+            predicate_path: trim_predicate_path(input_path),
             start,
             end,
             source_segment_count: curve_string.len(),
@@ -6587,6 +6605,15 @@ fn blocked_trim_result(
             status,
             blocker,
         },
+    }
+}
+
+const fn trim_predicate_path(
+    input_path: CurveStringTrimInputPath2,
+) -> CurveStringTrimPredicatePath2 {
+    match input_path {
+        CurveStringTrimInputPath2::Parameters => CurveStringTrimPredicatePath2::ExactParameterRange,
+        CurveStringTrimInputPath2::Points => CurveStringTrimPredicatePath2::ExactLocatedPointRange,
     }
 }
 
