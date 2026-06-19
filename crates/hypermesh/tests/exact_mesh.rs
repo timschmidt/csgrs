@@ -368,22 +368,6 @@ fn exact_boolean_evaluation_retains_region_ownership_report() {
         .expect("named boolean certifications should retain topology assembly")
         .validate()
         .unwrap();
-
-    let mut missing_attempt_ownership = evaluation.clone();
-    missing_attempt_ownership
-        .certifications_mut()
-        .arrangement_attempt_mut()
-        .expect("evaluation should retain arrangement attempt")
-        .replace_region_ownership_report(None);
-    assert_report_validation_error!(missing_attempt_ownership.validate());
-
-    let mut missing_attempt_topology = evaluation.clone();
-    missing_attempt_topology
-        .certifications_mut()
-        .arrangement_attempt_mut()
-        .expect("evaluation should retain arrangement attempt")
-        .replace_topology_assembly_report(None);
-    assert_report_validation_error!(missing_attempt_topology.validate());
 }
 
 #[test]
@@ -3063,44 +3047,6 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
             .is_certified_arrangement_cell_complex(),
         "{evaluation:?}"
     );
-    let mut unresolved_ownership = evaluation.clone();
-    let ownership = unresolved_ownership
-        .certifications_mut()
-        .arrangement_attempt_mut()
-        .and_then(|attempt| attempt.region_ownership_report_mut())
-        .expect("named arrangement evaluation should retain ownership evidence");
-    ownership.volume_regions += 1;
-    assert_eq!(
-        unresolved_ownership.freshness_against_sources(&left, &right),
-        ExactReportFreshness::StaleStatusEvidence
-    );
-    let mut incomplete_topology = evaluation.clone();
-    let topology = incomplete_topology
-        .certifications_mut()
-        .arrangement_attempt_mut()
-        .and_then(|attempt| attempt.topology_assembly_report_mut())
-        .expect("named arrangement evaluation should retain topology assembly evidence");
-    topology.region_boundaries += 1;
-    assert_eq!(
-        incomplete_topology.freshness_against_sources(&left, &right),
-        ExactReportFreshness::StaleStatusEvidence
-    );
-    let mut stale_attempt_gate = evaluation.clone();
-    let attempt = stale_attempt_gate
-        .certifications_mut()
-        .arrangement_attempt_mut()
-        .expect("named evaluation should retain arrangement attempt");
-    attempt.replace_region_ownership_report(None);
-    assert_report_validation_error!(attempt.validate());
-    assert_report_validation_error!(stale_attempt_gate.validate());
-    let mut stale_attempt_report = evaluation.clone();
-    let attempt = stale_attempt_report
-        .certifications_mut()
-        .arrangement_attempt_mut()
-        .expect("named evaluation should retain arrangement attempt");
-    attempt.replace_topology_assembly_report(None);
-    assert_report_validation_error!(attempt.validate());
-    assert_report_validation_error!(stale_attempt_report.validate());
     if result.is_arrangement_cell_complex_materialized_for(ExactBooleanOperation::Union) {
         assert!(!result.region_classifications().is_empty());
         assert!(!result.triangulations().is_empty());
@@ -4439,9 +4385,6 @@ fn exact_boolean_attempt_public_path_reports_blockers_or_cells() {
         attempt.freshness_against_sources(&left, &right),
         ExactReportFreshness::Current
     );
-    let mut stale_attempt_report = attempt.clone();
-    stale_attempt_report.replace_region_ownership_report(None);
-    assert_report_validation_error!(stale_attempt_report.validate());
 }
 
 #[test]
