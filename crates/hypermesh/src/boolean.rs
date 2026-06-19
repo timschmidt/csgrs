@@ -75,15 +75,16 @@ use super::region::{
 use super::regularization::{ExactArrangementBlocker, ExactRegularizationPolicy};
 use super::reports::{
     ExactAdjacentUnionCompletionReport, ExactAdjacentUnionCompletionStatus, ExactBooleanBlocker,
-    ExactBooleanBlockerKind, ExactBooleanPreflight, ExactBooleanResult, ExactBooleanResultKind,
+    ExactBooleanBlockerKind, ExactBooleanPreflight, ExactBooleanResultKind,
     ExactBooleanShortcutKind, ExactBooleanSupport, ExactBoundaryTouchingReport,
     ExactBoundaryTouchingStatus, ExactOpenSurfaceDisjointReport, ExactOpenSurfaceDisjointStatus,
     ExactPlanarArrangementReport, ExactPlanarArrangementStatus, ExactRefinementReport,
-    ExactRefinementStatus, ExactReportFreshness, ExactReportValidationError,
-    ExactSameSurfaceReport, ExactSameSurfaceStatus, ExactVolumetricBoundaryClosureReport,
+    ExactRefinementStatus, ExactReportValidationError, ExactSameSurfaceReport,
+    ExactSameSurfaceStatus, ExactVolumetricBoundaryClosureReport,
     ExactVolumetricBoundaryClosureStatus, ExactWindingReadinessReport, ExactWindingReadinessStatus,
     exact_report_freshness,
 };
+pub use super::reports::{ExactBooleanResult, ExactReportFreshness};
 use super::simplify::ExactSimplifiedCellComplex;
 use super::solid::{
     ConvexSolidMeshClassification, ConvexSolidMeshRelation, ConvexSolidPointRelation,

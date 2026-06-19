@@ -60,13 +60,12 @@ mod workspace;
 pub use artifact::MeshArtifactManifest;
 pub use boolean::{
     ExactArrangementBooleanAttempt, ExactBooleanEvaluation, ExactBooleanOperation,
-    ExactBooleanRequest, ExactBoundaryBooleanPolicy,
+    ExactBooleanRequest, ExactBooleanResult, ExactBoundaryBooleanPolicy, ExactReportFreshness,
 };
 pub use error::MeshError;
 pub use mesh::{ExactMesh, ExactMeshValidationError, Triangle};
 pub use package::ExactMeshConsumerDomain;
 pub use region::{ExactOutputTriangleOrientation, ExactRegionSelection};
 pub use regularization::ExactRegularizationPolicy;
-pub use reports::{ExactBooleanResult, ExactReportFreshness};
 pub use validation::ValidationPolicy;
 pub use workspace::ExactBooleanWorkspace;
