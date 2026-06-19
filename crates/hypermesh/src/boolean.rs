@@ -398,13 +398,6 @@ impl ExactArrangementBooleanAttempt {
             && report.resolves_operation_selection(self.operation)
     }
 
-    pub(crate) fn resolves_volume_ownership_for_operation(
-        &self,
-        operation: ExactBooleanOperation,
-    ) -> bool {
-        self.operation == operation && self.resolves_requested_volume_ownership()
-    }
-
     pub(crate) fn matches_request_policy(
         &self,
         request: ExactBooleanRequest,
@@ -1331,7 +1324,8 @@ impl ExactBooleanCertificationSet {
     fn region_ownership_resolves_operation(&self, operation: ExactBooleanOperation) -> bool {
         self.arrangement_attempt.as_ref().is_some_and(|attempt| {
             attempt.retained_gate_reports().is_some()
-                && attempt.resolves_volume_ownership_for_operation(operation)
+                && attempt.operation == operation
+                && attempt.resolves_requested_volume_ownership()
         })
     }
 
