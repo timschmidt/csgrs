@@ -132,14 +132,6 @@ impl<'a> ExactBooleanWorkspace<'a> {
         .map(|index| &self.arrangements[index].1)
     }
 
-    fn regularized_solid_arrangement_attempt(
-        &self,
-        request: ExactBooleanRequest,
-    ) -> Option<&ExactArrangementBooleanAttempt> {
-        self.regularized_solid_arrangement_attempt_index(request)
-            .map(|index| &self.arrangement_attempts[index].2)
-    }
-
     fn regularized_solid_arrangement_attempt_index(
         &self,
         request: ExactBooleanRequest,
@@ -169,13 +161,11 @@ impl<'a> ExactBooleanWorkspace<'a> {
         &self,
         request: ExactBooleanRequest,
     ) -> Result<Option<&ExactArrangementBooleanAttempt>, MeshError> {
-        let Some(attempt) = self.regularized_solid_arrangement_attempt(request) else {
+        let Some(index) = self.validated_regularized_solid_arrangement_attempt_index(request)?
+        else {
             return Ok(None);
         };
-        attempt
-            .validate_against_sources(self.left, self.right)
-            .map_err(workspace_report_validation_error)?;
-        Ok(Some(attempt))
+        Ok(Some(&self.arrangement_attempts[index].2))
     }
 
     fn cached_retained_materialization_index(
@@ -280,7 +270,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
         let left = self.left;
         let right = self.right;
         if self
-            .regularized_solid_arrangement_attempt(request)
+            .regularized_solid_arrangement_attempt_index(request)
             .is_none()
             && !matches!(
                 request.operation,
