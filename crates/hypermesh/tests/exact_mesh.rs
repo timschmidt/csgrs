@@ -1584,7 +1584,6 @@ fn exact_open_surface_arrangement_is_publicly_replayable() {
             ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
             |evaluation| evaluation.validate().unwrap(),
         );
-        assert!(result.has_retained_split_region_evidence());
         if matches!(operation, ExactBooleanOperation::Intersection) {
             assert!(result.mesh().triangles().is_empty());
         } else {
@@ -1737,7 +1736,6 @@ fn exact_selected_region_boolean_is_publicly_replayable() {
         result.freshness_against_sources(&left, &separated_right),
         ExactReportFreshness::SourceReplayMismatch
     );
-    assert!(result.has_retained_split_region_evidence());
     assert!(!result.mesh().triangles().is_empty());
     assert_eq!(
         result.mesh().validation_policy(),
@@ -2493,7 +2491,6 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
             .expect("certified arrangement evaluation should retain union result");
 
         if result.is_arrangement_cell_complex_materialized_for(ExactBooleanOperation::Union) {
-            assert!(result.has_retained_split_region_evidence());
             assert!(result.has_retained_volumetric_classification_evidence());
         } else {
             assert!(
@@ -2514,7 +2511,6 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
             "{evaluation:?}"
         );
         if result.is_arrangement_cell_complex_materialized_for(ExactBooleanOperation::Union) {
-            assert!(result.has_retained_split_region_evidence());
             assert!(result.has_retained_volumetric_classification_evidence());
         } else {
             assert!(
@@ -2551,7 +2547,6 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
         .expect("certified arrangement evaluation should retain difference result");
     difference.validate().unwrap();
     if difference.is_arrangement_cell_complex_materialized_for(ExactBooleanOperation::Difference) {
-        assert!(difference.has_retained_split_region_evidence());
         assert!(difference.has_retained_volumetric_classification_evidence());
     } else {
         assert!(
@@ -2683,7 +2678,6 @@ fn arrangement_cell_complex_request_materialization_is_publicly_replayable() {
         "canonical replay must reject stale source operands"
     );
     if result.is_arrangement_cell_complex_materialized_for(ExactBooleanOperation::Union) {
-        assert!(result.has_retained_split_region_evidence());
         assert!(result.has_retained_volumetric_classification_evidence());
     } else {
         assert!(
@@ -2726,7 +2720,6 @@ fn arrangement_cell_complex_request_materialization_is_publicly_replayable() {
     if convex_intersection
         .is_arrangement_cell_complex_materialized_for(ExactBooleanOperation::Intersection)
     {
-        assert!(convex_intersection.has_retained_split_region_evidence());
         assert!(convex_intersection.has_retained_volumetric_classification_evidence());
     } else {
         assert!(

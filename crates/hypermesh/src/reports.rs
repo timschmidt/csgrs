@@ -727,11 +727,6 @@ impl ExactBooleanResult {
         self.graph_had_unknowns = graph_had_unknowns;
     }
 
-    /// Return whether this result retained split-region evidence.
-    pub fn has_retained_split_region_evidence(&self) -> bool {
-        !self.region_classifications.is_empty() && !self.triangulations.is_empty()
-    }
-
     /// Return whether this result retained volumetric classification evidence.
     pub fn has_retained_volumetric_classification_evidence(&self) -> bool {
         !self.volumetric_classifications.is_empty()
