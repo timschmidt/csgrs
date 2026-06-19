@@ -365,6 +365,36 @@ impl SvgContourImportReport2 {
         &self.path_report
     }
 
+    /// Returns the opaque SVG source index.
+    pub const fn source_index(&self) -> u64 {
+        self.path_report.source_index()
+    }
+
+    /// Returns the retained SVG source version.
+    pub const fn source_version(&self) -> u64 {
+        self.path_report.source_version()
+    }
+
+    /// Returns source tolerance evidence, if supplied.
+    pub const fn source_tolerance(&self) -> Option<RetainedSourceTolerance2> {
+        self.path_report.source_tolerance()
+    }
+
+    /// Returns the number of input bytes inspected.
+    pub const fn input_byte_count(&self) -> usize {
+        self.path_report.input_byte_count()
+    }
+
+    /// Returns the number of path command letters found.
+    pub const fn command_count(&self) -> usize {
+        self.path_report.command_count()
+    }
+
+    /// Returns retained import evidence when a contour carrier was emitted.
+    pub const fn retained_import(&self) -> Option<&RetainedImportRecord2> {
+        self.path_report.retained_import()
+    }
+
     /// Returns exact curve-string closure evidence, when closure was attempted.
     pub const fn closure_report(&self) -> Option<&ContourClosureReport2> {
         self.closure_report.as_ref()

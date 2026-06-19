@@ -165,13 +165,9 @@ fn svg_curved_path_import_remains_explicitly_unsupported() {
 
 #[test]
 fn svg_closed_line_path_import_materializes_contour_with_closure_evidence() {
-    let imported = import_svg_contour_path_data_with_report(
-        "M 0 0 L 2 0 L 2 1 L 0 1 Z",
-        FillRule::EvenOdd,
-        12,
-        4,
-        None,
-    );
+    let path_data = "M 0 0 L 2 0 L 2 1 L 0 1 Z";
+    let imported =
+        import_svg_contour_path_data_with_report(path_data, FillRule::EvenOdd, 12, 4, None);
 
     let contour = imported
         .contour()
@@ -184,6 +180,15 @@ fn svg_closed_line_path_import_materializes_contour_with_closure_evidence() {
     );
     assert!(imported.report().lossy_boundary());
     assert_eq!(imported.report().blocker(), None);
+    assert_eq!(imported.report().source_index(), 12);
+    assert_eq!(imported.report().source_version(), 4);
+    assert_eq!(imported.report().source_tolerance(), None);
+    assert_eq!(imported.report().input_byte_count(), path_data.len());
+    assert_eq!(imported.report().command_count(), 5);
+    let record = imported.report().retained_import().unwrap();
+    assert_eq!(record.format(), RetainedImportFormat2::Svg);
+    assert_eq!(record.source_index(), 12);
+    assert_eq!(record.source_version(), 4);
     assert_eq!(imported.report().path_report().source_index(), 12);
     assert_eq!(
         imported.report().closure_report().unwrap().stage(),
