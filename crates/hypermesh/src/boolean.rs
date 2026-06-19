@@ -1044,8 +1044,8 @@ impl ExactBooleanCertificationSet {
         &self.refinement
     }
 
-    /// Return the exact graph refinement certification report mutably.
-    pub fn refinement_mut(&mut self) -> &mut ExactRefinementReport {
+    #[cfg(test)]
+    pub(crate) fn refinement_mut(&mut self) -> &mut ExactRefinementReport {
         &mut self.refinement
     }
 
@@ -1077,11 +1077,6 @@ impl ExactBooleanCertificationSet {
     /// Return the boundary-contact policy certification report.
     pub fn boundary_touching(&self) -> &ExactBoundaryTouchingReport {
         &self.boundary_touching
-    }
-
-    /// Return the boundary-contact policy certification report mutably.
-    pub fn boundary_touching_mut(&mut self) -> &mut ExactBoundaryTouchingReport {
-        &mut self.boundary_touching
     }
 
     /// Return the planar-arrangement readiness certification report.
@@ -2509,11 +2504,6 @@ impl ExactBooleanEvaluation {
     #[cfg(test)]
     pub(crate) fn preflight_mut(&mut self) -> &mut ExactBooleanPreflight {
         &mut self.preflight
-    }
-
-    /// Replace the retained exact preflight/scheduling report.
-    pub fn replace_preflight(&mut self, preflight: ExactBooleanPreflight) -> ExactBooleanPreflight {
-        std::mem::replace(&mut self.preflight, preflight)
     }
 
     /// Return the materialized result retained by this evaluation, when the

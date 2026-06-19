@@ -315,23 +315,6 @@ fn exact_boolean_evaluation_materializes_certified_result_publicly() {
         evaluation.freshness_against_sources(&left, &stale_right),
         hypermesh::ExactReportFreshness::SourceReplayMismatch
     );
-    let mut relabeled_support = evaluation.clone();
-    let convex_left = axis_aligned_box([0, 0, 0], [2, 2, 2]);
-    let convex_right = axis_aligned_box([1, 1, 1], [3, 3, 3]);
-    relabeled_support.replace_preflight(
-        exact_boolean_evaluation(
-            &convex_left,
-            &convex_right,
-            ExactBooleanRequest::new(
-                ExactBooleanOperation::Union,
-                ValidationPolicy::ALLOW_BOUNDARY,
-            ),
-        )
-        .preflight()
-        .clone(),
-    );
-    relabeled_support.preflight().validate().unwrap();
-    assert_report_validation_error!(relabeled_support.validate());
 }
 
 #[test]
@@ -1886,21 +1869,6 @@ fn exact_open_surface_arrangement_is_publicly_replayable() {
             ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
         );
         evaluation.validate().unwrap();
-        let mut stale_preflight_counts = evaluation.clone();
-        stale_preflight_counts.replace_preflight(
-            exact_boolean_evaluation(
-                &left,
-                &right,
-                ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
-            )
-            .preflight()
-            .clone(),
-        );
-        stale_preflight_counts.preflight().validate().unwrap();
-        assert_report_validation_error!(
-            stale_preflight_counts.validate(),
-            "{operation:?}: {stale_preflight_counts:?}"
-        );
         assert!(!result.region_classifications().is_empty());
         assert!(!result.triangulations().is_empty());
         if matches!(operation, ExactBooleanOperation::Intersection) {
