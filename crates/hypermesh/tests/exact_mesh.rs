@@ -64,15 +64,6 @@ fn exact_boolean_evaluated_result(
         .expect("certified boolean evaluation should retain materialized result")
 }
 
-fn exact_boolean_materialize_result(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    request: ExactBooleanRequest,
-) -> Result<ExactBooleanResult, hypermesh::MeshError> {
-    let mut workspace = ExactBooleanWorkspace::new(left, right);
-    workspace.materialize_ref(request).cloned()
-}
-
 fn exact_boolean_arrangement_attempt(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -2699,18 +2690,18 @@ fn boundary_touching_policy_boolean_is_publicly_replayable() {
         ExactBooleanOperation::Intersection,
         ExactBooleanOperation::Difference,
     ] {
-        assert!(
-            exact_boolean_materialize_result(
-                &left,
-                &right,
-                ExactBooleanRequest::with_boundary_policy(
-                    operation,
-                    ValidationPolicy::ALLOW_BOUNDARY,
-                    ExactBoundaryBooleanPolicy::Reject,
-                ),
-            )
-            .is_err()
-        );
+        let mut reject_workspace = ExactBooleanWorkspace::new(&left, &right);
+        let reject_evaluation = reject_workspace
+            .evaluate(ExactBooleanRequest::with_boundary_policy(
+                operation,
+                ValidationPolicy::ALLOW_BOUNDARY,
+                ExactBoundaryBooleanPolicy::Reject,
+            ))
+            .unwrap();
+        reject_evaluation.validate().unwrap();
+        assert!(reject_evaluation.result.is_none(), "{reject_evaluation:?}");
+        assert!(!reject_evaluation.preflight.is_certified());
+        assert!(reject_evaluation.preflight.blocker.is_some());
 
         let result = exact_boolean_result(
             &left,
@@ -3297,7 +3288,10 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
     assert_eq!(readiness.region_count, 0);
     readiness.validate().unwrap();
 
-    let result = workspace.materialize(union_request).unwrap();
+    let result = evaluation
+        .result
+        .clone()
+        .expect("certified arrangement evaluation should retain union result");
 
     if result.is_arrangement_cell_complex_materialized_for(ExactBooleanOperation::Union) {
         assert!(!result.region_classifications.is_empty());
@@ -3426,12 +3420,18 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
         );
     }
 
-    let difference = workspace
-        .materialize(ExactBooleanRequest::new(
-            ExactBooleanOperation::Difference,
-            ValidationPolicy::ALLOW_BOUNDARY,
-        ))
+    let difference_request = ExactBooleanRequest::new(
+        ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    );
+    let difference_evaluation = workspace.evaluate(difference_request).unwrap().clone();
+    difference_evaluation.validate().unwrap();
+    difference_evaluation
+        .validate_materialized_result_against_sources(&left, &right)
         .unwrap();
+    let difference = difference_evaluation
+        .result
+        .expect("certified arrangement evaluation should retain difference result");
     difference.validate().unwrap();
     if difference.is_arrangement_cell_complex_materialized_for(ExactBooleanOperation::Difference) {
         let Some(reversed_triangle) = difference.assembly.triangles.iter().position(|triangle| {

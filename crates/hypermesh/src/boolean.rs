@@ -12584,7 +12584,10 @@ mod tests {
         );
         assert!(attempt.topology_assembly_report.is_some());
         assert!(attempt.region_ownership_report.is_some());
-        let result = workspace.materialize(request).unwrap();
+        let result = evaluation
+            .result
+            .as_ref()
+            .expect("certified arrangement evaluation should retain materialized result");
         assert!(result.is_arrangement_cell_complex_materialized_for(ExactBooleanOperation::Union));
         result.validate().unwrap();
     }
