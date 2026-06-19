@@ -52,9 +52,6 @@ pub enum ConvexSolidReportError {
     NotClosedStateMismatch,
     /// Unknown orientation was paired with a decided convexity state.
     UnknownOrientationHasDecidedConvexity,
-    /// A certified orientation was paired with `Unknown` or `NotClosed`
-    /// convexity in a way this module never constructs.
-    OrientedStateHasUnsupportedConvexity,
     /// A non-certified state retained point halfspace predicates.
     NonCertifiedPointHasPredicates,
     /// A mesh/solid report claims a certified relation without certified
@@ -71,44 +68,9 @@ pub enum ConvexSolidReportError {
     MeshVertexCountMismatch,
     /// A nested solid-facts or point-classification report was invalid.
     NestedReport,
-    /// The retained report no longer matches facts recomputed from the
-    /// supplied source solid, point, or subject mesh.
+    /// The retained mesh/solid report no longer matches facts recomputed from
+    /// the supplied source meshes.
     SourceReplayMismatch,
-}
-
-/// Freshness status for retained convex-solid reports.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum ConvexSolidReportFreshness {
-    /// The report is locally valid and replays from source evidence.
-    Current,
-    /// Retained solid orientation/convexity facts are internally inconsistent.
-    StaleSolidFacts,
-    /// Retained point/solid predicate evidence is internally inconsistent.
-    StalePointEvidence,
-    /// Retained mesh/solid summary evidence is internally inconsistent.
-    StaleMeshEvidence,
-    /// A nested retained convex report failed its own audit.
-    InvalidNestedReport,
-    /// The report is locally valid but no longer replays from source evidence.
-    SourceReplayMismatch,
-}
-
-impl From<ConvexSolidReportError> for ConvexSolidReportFreshness {
-    fn from(error: ConvexSolidReportError) -> Self {
-        match error {
-            ConvexSolidReportError::NotClosedStateMismatch
-            | ConvexSolidReportError::UnknownOrientationHasDecidedConvexity
-            | ConvexSolidReportError::OrientedStateHasUnsupportedConvexity => Self::StaleSolidFacts,
-            ConvexSolidReportError::NonCertifiedPointHasPredicates => Self::StalePointEvidence,
-            ConvexSolidReportError::CertifiedMeshRelationWithoutCertifiedSolid
-            | ConvexSolidReportError::NonCertifiedMeshHasVertices
-            | ConvexSolidReportError::UnexpectedVertexRelation
-            | ConvexSolidReportError::MeshRelationMismatch
-            | ConvexSolidReportError::MeshVertexCountMismatch => Self::StaleMeshEvidence,
-            ConvexSolidReportError::NestedReport => Self::InvalidNestedReport,
-            ConvexSolidReportError::SourceReplayMismatch => Self::SourceReplayMismatch,
-        }
-    }
 }
 
 /// Exact facts retained while certifying a closed convex solid.
@@ -167,29 +129,6 @@ impl ConvexSolidFacts {
             ) => Ok(()),
         }
     }
-
-    /// Validate these retained facts against their source mesh.
-    ///
-    /// The local validator checks only the state tuple and retained predicate
-    /// shape. This replay check recomputes convex-solid certification from the
-    /// boundary between a coherent certificate object and one still attached
-    /// to the particular geometry whose predicates produced it.
-    pub fn validate_against_source(&self, mesh: &ExactMesh) -> Result<(), ConvexSolidReportError> {
-        self.validate()?;
-        if self == &certify_convex_solid(mesh) {
-            Ok(())
-        } else {
-            Err(ConvexSolidReportError::SourceReplayMismatch)
-        }
-    }
-
-    /// Classify whether these retained convex-solid facts are fresh for `mesh`.
-    pub fn freshness_against_source(&self, mesh: &ExactMesh) -> ConvexSolidReportFreshness {
-        match self.validate_against_source(mesh) {
-            Ok(()) => ConvexSolidReportFreshness::Current,
-            Err(error) => error.into(),
-        }
-    }
 }
 
 /// Certified point/solid classification with retained predicate provenance.
@@ -202,14 +141,6 @@ pub struct ConvexSolidPointClassification {
 }
 
 impl ConvexSolidPointClassification {
-    /// Return whether every retained predicate route was proof-producing.
-    pub fn all_proof_producing(&self) -> bool {
-        self.predicates
-            .iter()
-            .copied()
-            .all(PredicateUse::is_proof_producing)
-    }
-
     /// Validate point/solid classification report invariants.
     ///
     /// Non-certified point reports are produced before any face halfspace
@@ -223,37 +154,6 @@ impl ConvexSolidPointClassification {
             return Err(ConvexSolidReportError::NonCertifiedPointHasPredicates);
         }
         Ok(())
-    }
-
-    /// Validate this point/solid classification against its source objects.
-    ///
-    /// This recomputes the point halfspace walk from `point` and `solid` after
-    /// the local report audit succeeds. Keeping the retained relation and
-    /// predicate certificates replayable against the original source objects
-    /// from the exact predicates that justified it.
-    pub fn validate_against_sources(
-        &self,
-        point: &Point3,
-        solid: &ExactMesh,
-    ) -> Result<(), ConvexSolidReportError> {
-        self.validate()?;
-        if self == &classify_point_against_convex_solid_report(point, solid) {
-            Ok(())
-        } else {
-            Err(ConvexSolidReportError::SourceReplayMismatch)
-        }
-    }
-
-    /// Classify whether this retained point/solid report is fresh.
-    pub fn freshness_against_sources(
-        &self,
-        point: &Point3,
-        solid: &ExactMesh,
-    ) -> ConvexSolidReportFreshness {
-        match self.validate_against_sources(point, solid) {
-            Ok(()) => ConvexSolidReportFreshness::Current,
-            Err(error) => error.into(),
-        }
     }
 }
 
@@ -302,15 +202,6 @@ pub struct ConvexSolidMeshClassification {
 }
 
 impl ConvexSolidMeshClassification {
-    /// Return whether every retained predicate route was proof-producing.
-    pub fn all_proof_producing(&self) -> bool {
-        self.solid_facts.all_proof_producing()
-            && self
-                .vertices
-                .iter()
-                .all(ConvexSolidPointClassification::all_proof_producing)
-    }
-
     /// Validate mesh/solid vertex-classification report invariants.
     ///
     /// The mesh summary must be derivable from the retained per-vertex point
@@ -404,9 +295,10 @@ impl ConvexSolidMeshClassification {
     /// Validate this mesh/solid classification against its source meshes.
     ///
     /// The local audit proves that the summary relation follows from the
-    /// retained per-vertex point classifications. This replay check
-    /// recomputes the whole report from `subject` and `solid`, catching stale
-    /// report objects that remain internally coherent but no longer belong to
+    /// retained per-vertex point classifications. This replay check recomputes
+    /// the whole report from `subject` and `solid`, catching stale report
+    /// objects that remain internally coherent but no longer belong to the
+    /// source meshes.
     pub fn validate_against_sources(
         &self,
         subject: &ExactMesh,
@@ -417,18 +309,6 @@ impl ConvexSolidMeshClassification {
             Ok(())
         } else {
             Err(ConvexSolidReportError::SourceReplayMismatch)
-        }
-    }
-
-    /// Classify whether this retained mesh/solid report is fresh.
-    pub fn freshness_against_sources(
-        &self,
-        subject: &ExactMesh,
-        solid: &ExactMesh,
-    ) -> ConvexSolidReportFreshness {
-        match self.validate_against_sources(subject, solid) {
-            Ok(()) => ConvexSolidReportFreshness::Current,
-            Err(error) => error.into(),
         }
     }
 }
