@@ -1270,6 +1270,20 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
         ring_cache.source_reports(),
         result.report().source_reports()
     );
+    let output_ring_bucket_cache = ring_cache.output_ring_bucket_cache();
+    assert_eq!(output_ring_bucket_cache.ring_count(), 1);
+    assert_eq!(output_ring_bucket_cache.segment_ref_count(), 4);
+    assert_eq!(output_ring_bucket_cache.max_ring_segment_count(), 4);
+    assert_eq!(output_ring_bucket_cache.rings().len(), 1);
+    let output_ring_bucket = &output_ring_bucket_cache.rings()[0];
+    assert_eq!(output_ring_bucket.output_ring_index(), 0);
+    assert_eq!(output_ring_bucket.segments().len(), 4);
+    assert_eq!(output_ring_bucket.segments()[0].source_report_index(), 0);
+    assert_eq!(output_ring_bucket.segments()[0].output_segment_index(), 0);
+    assert_eq!(
+        output_ring_bucket.segments()[0].reversed(),
+        result.report().source_reports()[0].reversed()
+    );
     let output_cache = result.workspace().output_cache().unwrap();
     assert!(output_cache.materialized_region());
     assert_eq!(output_cache.status(), result.report().status());
@@ -1504,6 +1518,20 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
     assert_eq!(
         ring_cache.source_reports(),
         result.report().source_reports()
+    );
+    let output_ring_bucket_cache = ring_cache.output_ring_bucket_cache();
+    assert_eq!(output_ring_bucket_cache.ring_count(), 1);
+    assert_eq!(output_ring_bucket_cache.segment_ref_count(), 2);
+    assert_eq!(output_ring_bucket_cache.max_ring_segment_count(), 2);
+    assert_eq!(output_ring_bucket_cache.rings().len(), 1);
+    let output_ring_bucket = &output_ring_bucket_cache.rings()[0];
+    assert_eq!(output_ring_bucket.output_ring_index(), 0);
+    assert_eq!(output_ring_bucket.segments().len(), 2);
+    assert_eq!(output_ring_bucket.segments()[0].source_report_index(), 0);
+    assert_eq!(output_ring_bucket.segments()[0].output_segment_index(), 0);
+    assert_eq!(
+        output_ring_bucket.segments()[0].reversed(),
+        result.report().source_reports()[0].reversed()
     );
     let output_cache = result.workspace().output_cache().unwrap();
     assert!(output_cache.materialized_region());

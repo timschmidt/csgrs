@@ -197,6 +197,30 @@ pub struct ExactCurveArrangementArrangedEndpointBucketCache2 {
     buckets: Vec<ExactCurveArrangementArrangedEndpointBucket2>,
 }
 
+/// Output segment provenance retained for one assembled ring bucket.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ExactCurveArrangementOutputRingSegmentRef2 {
+    source_report_index: usize,
+    output_segment_index: usize,
+    reversed: bool,
+}
+
+/// Output ring bucket retained by exact ring assembly.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ExactCurveArrangementOutputRingBucket2 {
+    output_ring_index: usize,
+    segments: Vec<ExactCurveArrangementOutputRingSegmentRef2>,
+}
+
+/// Output ring buckets retained by exact ring assembly.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ExactCurveArrangementOutputRingBucketCache2 {
+    ring_count: usize,
+    segment_ref_count: usize,
+    max_ring_segment_count: usize,
+    rings: Vec<ExactCurveArrangementOutputRingBucket2>,
+}
+
 /// Retained exact ring-traversal evidence cached by an evaluated arrangement workspace.
 #[derive(Clone, Debug, PartialEq)]
 pub struct ExactCurveArrangementRingAssemblyCache2 {
@@ -211,6 +235,7 @@ pub struct ExactCurveArrangementRingAssemblyCache2 {
     output_boundary_segment_kind_counts: Option<SegmentKindCounts>,
     arranged_source_reports: Vec<RegionLineSegmentArrangedSourceReport2>,
     source_reports: Vec<RegionLineSegmentRingSourceReport2>,
+    output_ring_bucket_cache: ExactCurveArrangementOutputRingBucketCache2,
 }
 
 /// Retained final output evidence cached by an evaluated arrangement workspace.
@@ -1785,6 +1810,102 @@ impl ExactCurveArrangementArrangedEndpointBucketCache2 {
     }
 }
 
+impl ExactCurveArrangementOutputRingSegmentRef2 {
+    /// Returns the retained source report index for this output segment.
+    pub const fn source_report_index(&self) -> usize {
+        self.source_report_index
+    }
+
+    /// Returns the output segment index inside its ring.
+    pub const fn output_segment_index(&self) -> usize {
+        self.output_segment_index
+    }
+
+    /// Returns whether the source segment was reversed for ring traversal.
+    pub const fn reversed(&self) -> bool {
+        self.reversed
+    }
+}
+
+impl ExactCurveArrangementOutputRingBucket2 {
+    /// Returns the output ring index.
+    pub const fn output_ring_index(&self) -> usize {
+        self.output_ring_index
+    }
+
+    /// Returns output segment references in ring traversal order.
+    pub fn segments(&self) -> &[ExactCurveArrangementOutputRingSegmentRef2] {
+        &self.segments
+    }
+}
+
+impl ExactCurveArrangementOutputRingBucketCache2 {
+    fn from_source_reports(source_reports: &[RegionLineSegmentRingSourceReport2]) -> Self {
+        let mut rings: Vec<ExactCurveArrangementOutputRingBucket2> = Vec::new();
+
+        for (source_report_index, source_report) in source_reports.iter().enumerate() {
+            let output_ring_index = source_report.output_ring_index();
+            let ring_index = rings
+                .iter()
+                .position(|ring| ring.output_ring_index == output_ring_index)
+                .unwrap_or_else(|| {
+                    rings.push(ExactCurveArrangementOutputRingBucket2 {
+                        output_ring_index,
+                        segments: Vec::new(),
+                    });
+                    rings.len() - 1
+                });
+            rings[ring_index]
+                .segments
+                .push(ExactCurveArrangementOutputRingSegmentRef2 {
+                    source_report_index,
+                    output_segment_index: source_report.output_segment_index(),
+                    reversed: source_report.reversed(),
+                });
+        }
+
+        rings.sort_by_key(|ring| ring.output_ring_index);
+        for ring in &mut rings {
+            ring.segments
+                .sort_by_key(|segment| segment.output_segment_index);
+        }
+
+        let segment_ref_count = source_reports.len();
+        let max_ring_segment_count = rings
+            .iter()
+            .map(|ring| ring.segments.len())
+            .max()
+            .unwrap_or(0);
+
+        Self {
+            ring_count: rings.len(),
+            segment_ref_count,
+            max_ring_segment_count,
+            rings,
+        }
+    }
+
+    /// Returns the number of output rings retained.
+    pub const fn ring_count(&self) -> usize {
+        self.ring_count
+    }
+
+    /// Returns the number of output segment provenance references retained.
+    pub const fn segment_ref_count(&self) -> usize {
+        self.segment_ref_count
+    }
+
+    /// Returns the largest output ring segment count.
+    pub const fn max_ring_segment_count(&self) -> usize {
+        self.max_ring_segment_count
+    }
+
+    /// Returns output ring buckets in output ring index order.
+    pub fn rings(&self) -> &[ExactCurveArrangementOutputRingBucket2] {
+        &self.rings
+    }
+}
+
 impl ExactCurveArrangementRingAssemblyCache2 {
     fn from_region_build_report(report: &RegionLineSegmentRegionBuildReport2) -> Option<Self> {
         Some(Self {
@@ -1799,6 +1920,10 @@ impl ExactCurveArrangementRingAssemblyCache2 {
             output_boundary_segment_kind_counts: report.output_boundary_segment_kind_counts,
             arranged_source_reports: report.arranged_source_reports.clone(),
             source_reports: report.source_reports.clone(),
+            output_ring_bucket_cache:
+                ExactCurveArrangementOutputRingBucketCache2::from_source_reports(
+                    &report.source_reports,
+                ),
         })
     }
 
@@ -1855,6 +1980,11 @@ impl ExactCurveArrangementRingAssemblyCache2 {
     /// Returns per-output segment source provenance.
     pub fn source_reports(&self) -> &[RegionLineSegmentRingSourceReport2] {
         &self.source_reports
+    }
+
+    /// Returns per-output-ring source provenance buckets.
+    pub const fn output_ring_bucket_cache(&self) -> &ExactCurveArrangementOutputRingBucketCache2 {
+        &self.output_ring_bucket_cache
     }
 }
 
