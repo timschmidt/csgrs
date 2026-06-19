@@ -3958,9 +3958,9 @@ fn open_surface_disjoint_report_classifies_retained_coplanar_overlap_blocker() {
     let report = evaluation.certifications().open_surface_disjoint().clone();
 
     assert!(!report.is_certified());
-    assert!(report.blocker.requires_planar_arrangement());
-    assert!(report.blocker.coplanar_overlapping_pairs > 0);
-    assert!(report.retained_face_pairs > 0);
+    assert!(report.blocker().requires_planar_arrangement());
+    assert!(report.blocker().coplanar_overlapping_pairs > 0);
+    assert!(report.retained_face_pairs() > 0);
     report.validate().unwrap();
     evaluation
         .certifications()
@@ -3968,7 +3968,7 @@ fn open_surface_disjoint_report_classifies_retained_coplanar_overlap_blocker() {
         .unwrap();
 
     let mut relabeled = report;
-    relabeled.blocker.candidate_pairs = 1;
+    relabeled.blocker_mut().candidate_pairs = 1;
     assert_report_validation_error!(relabeled.validate());
 }
 
