@@ -108,15 +108,12 @@ impl<'a> ExactBooleanWorkspace<'a> {
         ),
         MeshError,
     > {
-        let retained_attempt_index =
-            self.validated_regularized_solid_arrangement_attempt_index(request)?;
         self.ensure_validated_graph()?;
+        let retained_attempt = self.validated_regularized_solid_arrangement_attempt(request)?;
         let graph = self
             .graph
             .as_ref()
             .expect("validated graph cache was just populated");
-        let retained_attempt =
-            retained_attempt_index.map(|index| &self.arrangement_attempts[index].2);
         Ok((graph, retained_attempt))
     }
 
