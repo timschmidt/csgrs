@@ -4126,18 +4126,18 @@ pub(crate) fn certified_arrangement_cell_complex_preflight_from_retained_attempt
     policy: ExactRegularizationPolicy,
     attempt: &ExactArrangementBooleanAttempt,
 ) -> Result<Option<ExactBooleanPreflight>, MeshError> {
-    let retained =
-        retained_arrangement_attempt_for_request(Some(attempt), left, right, request, policy)
-            .map_err(|error| {
-                MeshError::one(MeshDiagnostic::new(
-                    Severity::Error,
-                    DiagnosticKind::UnsupportedExactOperation,
-                    format!("retained arrangement attempt failed validation: {error:?}"),
-                ))
-            })?;
-    if let Some(attempt) = retained
-        && materialize_retained_arrangement_cell_complex_attempt(left, right, request, attempt)?
-            .is_some()
+    attempt
+        .validate_for_request_policy(request, policy)
+        .and_then(|()| attempt.validate_against_sources_for_request(left, right, request))
+        .map_err(|error| {
+            MeshError::one(MeshDiagnostic::new(
+                Severity::Error,
+                DiagnosticKind::UnsupportedExactOperation,
+                format!("retained arrangement attempt failed validation: {error:?}"),
+            ))
+        })?;
+    if materialize_retained_arrangement_cell_complex_attempt(left, right, request, attempt)?
+        .is_some()
     {
         Ok(Some(certified_preflight(
             request.operation,
