@@ -2606,7 +2606,7 @@ pub(crate) fn try_materialize_certified_boolean_support_with_artifacts(
                 else {
                     return Ok(None);
                 };
-                return Ok(public_operation_replayable_result(
+                return Ok(public_request_replayable_result(
                     Some(result),
                     left,
                     right,
@@ -2691,7 +2691,7 @@ pub(crate) fn try_materialize_certified_boolean_support_with_artifacts(
             {
                 None
             } else {
-                public_operation_replayable_result(
+                public_request_replayable_result(
                     Some(boolean_empty_operand(left, right, operation, validation)?),
                     left,
                     right,
@@ -2713,7 +2713,7 @@ pub(crate) fn try_materialize_certified_boolean_support_with_artifacts(
             {
                 None
             } else {
-                public_operation_replayable_result(
+                public_request_replayable_result(
                     Some(boolean_disjoint_meshes(left, right, operation, validation)?),
                     left,
                     right,
@@ -2734,7 +2734,7 @@ pub(crate) fn try_materialize_certified_boolean_support_with_artifacts(
             {
                 None
             } else {
-                public_operation_replayable_result(
+                public_request_replayable_result(
                     Some(boolean_identical_meshes(left, operation, validation)?),
                     left,
                     right,
@@ -2756,7 +2756,7 @@ pub(crate) fn try_materialize_certified_boolean_support_with_artifacts(
             {
                 None
             } else {
-                public_operation_replayable_result(
+                public_request_replayable_result(
                     Some(boolean_same_surface_meshes(left, operation, validation)?),
                     left,
                     right,
@@ -2796,7 +2796,7 @@ pub(crate) fn try_materialize_certified_boolean_support_with_artifacts(
             {
                 None
             } else {
-                public_operation_replayable_result(
+                public_request_replayable_result(
                     boolean_closed_regularized_lower_dimensional_optional(
                         left, right, operation, validation,
                     )?,
@@ -2811,7 +2811,7 @@ pub(crate) fn try_materialize_certified_boolean_support_with_artifacts(
             }
         }
         ExactBooleanSupport::CertifiedLowerDimensionalRegularizedSolid => {
-            public_operation_replayable_result(
+            public_request_replayable_result(
                 boolean_closed_regularized_lower_dimensional_optional(
                     left, right, operation, validation,
                 )?,
@@ -2826,7 +2826,7 @@ pub(crate) fn try_materialize_certified_boolean_support_with_artifacts(
         }
         ExactBooleanSupport::CertifiedConvexUnion
         | ExactBooleanSupport::CertifiedConvexIntersection
-        | ExactBooleanSupport::CertifiedConvexDifference => public_operation_replayable_result(
+        | ExactBooleanSupport::CertifiedConvexDifference => public_request_replayable_result(
             boolean_convex_meshes_optional(left, right, operation, validation)?,
             left,
             right,
@@ -2840,7 +2840,7 @@ pub(crate) fn try_materialize_certified_boolean_support_with_artifacts(
         | ExactBooleanSupport::CertifiedConvexContainment => {
             let graph =
                 graph_for_certified_materialization(retained_graph, &mut owned_graph, left, right)?;
-            public_operation_replayable_result(
+            public_request_replayable_result(
                 boolean_convex_relation_meshes_optional_from_graph(
                     graph, left, right, operation, validation,
                 )?,
@@ -2937,7 +2937,7 @@ fn materialize_certified_arrangement_cell_complex_support_with_arrangement(
     )? {
         return Ok(Some(result));
     }
-    if let Some(result) = public_operation_replayable_result(
+    if let Some(result) = public_request_replayable_result(
         boolean_arrangement_orthogonal_solid_cell_recovery(left, right, operation, validation)?,
         left,
         right,
@@ -2949,7 +2949,7 @@ fn materialize_certified_arrangement_cell_complex_support_with_arrangement(
     ) {
         return Ok(Some(result));
     }
-    Ok(public_operation_replayable_result(
+    Ok(public_request_replayable_result(
         boolean_arrangement_affine_orthogonal_solid_recovery(left, right, operation, validation)?,
         left,
         right,
@@ -4716,7 +4716,7 @@ fn materialize_graph_shortcut_from_graph_for_request(
                 {
                     return Ok(None);
                 }
-                return Ok(public_operation_replayable_result(
+                return Ok(public_request_replayable_result(
                     Some(result),
                     left,
                     right,
@@ -4738,7 +4738,7 @@ fn materialize_graph_shortcut_from_graph_for_request(
             else {
                 return Ok(None);
             };
-            return Ok(public_operation_replayable_result(
+            return Ok(public_request_replayable_result(
                 Some(result),
                 left,
                 right,
@@ -4782,7 +4782,7 @@ fn materialize_graph_shortcut_from_graph_for_request(
         }
         _ => return Ok(None),
     };
-    Ok(public_operation_replayable_result(
+    Ok(public_request_replayable_result(
         result,
         left,
         right,
@@ -4839,7 +4839,7 @@ fn boolean_closed_winding_separated_meshes_from_graph(
     )))
 }
 
-fn public_operation_replayable_result(
+fn public_request_replayable_result(
     result: Option<ExactBooleanResult>,
     left: &ExactMesh,
     right: &ExactMesh,
