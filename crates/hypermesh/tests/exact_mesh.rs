@@ -2773,7 +2773,7 @@ fn closed_boundary_touching_regularized_boolean_is_publicly_replayable() {
         let mut relabeled_boundary_report = evaluation.clone();
         relabeled_boundary_report
             .certifications_mut()
-            .boundary_touching
+            .boundary_touching_mut()
             .blocker
             .unknown_pairs = 1;
         assert!(
@@ -4807,7 +4807,7 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
         ValidationPolicy::ALLOW_BOUNDARY,
     );
     let evaluation = exact_boolean_evaluation(&left, &right, request);
-    let report = evaluation.certifications().boundary_touching.clone();
+    let report = evaluation.certifications().boundary_touching().clone();
     assert!(report.is_certified(), "{report:?}");
     report.validate().unwrap();
     evaluation
@@ -5085,7 +5085,7 @@ fn boundary_touching_report_classifies_proper_crossing_as_winding_blocker() {
         ValidationPolicy::ALLOW_BOUNDARY,
     );
     let evaluation = exact_boolean_evaluation(&left, &right, request);
-    let report = evaluation.certifications().boundary_touching.clone();
+    let report = evaluation.certifications().boundary_touching().clone();
 
     assert!(!report.is_certified());
     assert!(report.blocker.requires_winding());
