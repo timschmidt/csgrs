@@ -8,12 +8,13 @@ use hypercurve::{
     CurveStringFilletInputPath2, CurveStringFilletPredicatePath2, CurveStringFilletStage2,
     CurveStringIntersectionPredicatePath2, CurveStringIntersectionQueryPath2,
     CurveStringLineMergePredicatePath2, CurveStringLineMergeStage2, CurveStringLinkKind2,
-    CurveStringLinkSourceInput2, CurveStringLinkStage2, CurveStringOrderedLinkStage2,
-    CurveStringPreparedCacheFreshness2, CurveStringRegionTrimBoundaryPredicatePath2,
-    CurveStringRegionTrimQueryPath2, CurveStringRegionTrimStage2, CurveStringTrimInputPath2,
-    CurveStringTrimPoint2, CurveStringTrimPredicatePath2, IntersectionKind, LineArcIntersection,
-    LineArcOrder, LineSeg2, Point2, Real, Region2, RegionContourRole, RegionPointLocation,
-    Segment2, SegmentIntersection, SegmentKind, SegmentKindCounts, UncertaintyReason,
+    CurveStringLinkPredicatePath2, CurveStringLinkSourceInput2, CurveStringLinkStage2,
+    CurveStringOrderedLinkStage2, CurveStringPreparedCacheFreshness2,
+    CurveStringRegionTrimBoundaryPredicatePath2, CurveStringRegionTrimQueryPath2,
+    CurveStringRegionTrimStage2, CurveStringTrimInputPath2, CurveStringTrimPoint2,
+    CurveStringTrimPredicatePath2, IntersectionKind, LineArcIntersection, LineArcOrder, LineSeg2,
+    Point2, Real, Region2, RegionContourRole, RegionPointLocation, Segment2, SegmentIntersection,
+    SegmentKind, SegmentKindCounts, UncertaintyReason,
 };
 
 fn s(value: i32) -> Real {
@@ -935,6 +936,10 @@ fn curve_string_link_materializes_unique_end_start_connection() {
         CurveStringLinkStage2::SegmentMaterialization
     );
     assert_eq!(
+        reported.report().predicate_path(),
+        CurveStringLinkPredicatePath2::ExhaustiveEndpointPairClassification
+    );
+    assert_eq!(
         reported.report().selected_kind(),
         Some(CurveStringLinkKind2::FirstEndToSecondStart)
     );
@@ -969,6 +974,10 @@ fn curve_string_link_materializes_unique_end_start_connection() {
     assert_eq!(
         linked.report().endpoint_report().predicate_path(),
         CurveStringEndpointConnectionPredicatePath2::ExactSquaredDistanceZero
+    );
+    assert_eq!(
+        linked.report().predicate_path(),
+        CurveStringLinkPredicatePath2::ExhaustiveEndpointPairClassification
     );
     assert_eq!(linked.report().first_segment_count(), 1);
     assert_eq!(linked.report().second_segment_count(), 1);
@@ -1182,6 +1191,10 @@ fn curve_string_link_returns_none_for_certified_disconnected_inputs() {
     assert_eq!(
         reported.report().stage(),
         CurveStringLinkStage2::EndpointSelection
+    );
+    assert_eq!(
+        reported.report().predicate_path(),
+        CurveStringLinkPredicatePath2::ExhaustiveEndpointPairClassification
     );
     assert_eq!(reported.report().selected_kind(), None);
     assert!(reported.report().selected_endpoint_report().is_none());

@@ -198,6 +198,7 @@ pub struct CurveStringLinkOutputSegmentReport2 {
 #[derive(Clone, Debug, PartialEq)]
 pub struct CurveStringLinkReport2 {
     stage: CurveStringLinkStage2,
+    predicate_path: CurveStringLinkPredicatePath2,
     kind: CurveStringLinkKind2,
     endpoint_report: CurveStringEndpointConnectionReport2,
     first_segment_count: usize,
@@ -223,6 +224,13 @@ pub enum CurveStringLinkStage2 {
     SegmentMaterialization,
 }
 
+/// Exact predicate path used while selecting a pairwise endpoint link.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum CurveStringLinkPredicatePath2 {
+    /// All four endpoint pairs were classified by exact endpoint-connection predicates.
+    ExhaustiveEndpointPairClassification,
+}
+
 /// A linked open curve string with retained endpoint provenance.
 #[derive(Clone, Debug, PartialEq)]
 pub struct LinkedCurveString2 {
@@ -234,6 +242,7 @@ pub struct LinkedCurveString2 {
 #[derive(Clone, Debug, PartialEq)]
 pub struct CurveStringLinkAttemptReport2 {
     stage: CurveStringLinkStage2,
+    predicate_path: CurveStringLinkPredicatePath2,
     selected_kind: Option<CurveStringLinkKind2>,
     selected_endpoint_report: Option<CurveStringEndpointConnectionReport2>,
     first_segment_count: usize,
@@ -1151,6 +1160,8 @@ impl CurveString2 {
                 linked: None,
                 report: CurveStringLinkAttemptReport2 {
                     stage: CurveStringLinkStage2::EndpointSelection,
+                    predicate_path:
+                        CurveStringLinkPredicatePath2::ExhaustiveEndpointPairClassification,
                     selected_kind: None,
                     selected_endpoint_report: None,
                     first_segment_count: self.len(),
@@ -1174,6 +1185,8 @@ impl CurveString2 {
                 linked: None,
                 report: CurveStringLinkAttemptReport2 {
                     stage: CurveStringLinkStage2::EndpointSelection,
+                    predicate_path:
+                        CurveStringLinkPredicatePath2::ExhaustiveEndpointPairClassification,
                     selected_kind: None,
                     selected_endpoint_report: None,
                     first_segment_count: self.len(),
@@ -1197,6 +1210,8 @@ impl CurveString2 {
                 linked: None,
                 report: CurveStringLinkAttemptReport2 {
                     stage: CurveStringLinkStage2::EndpointSelection,
+                    predicate_path:
+                        CurveStringLinkPredicatePath2::ExhaustiveEndpointPairClassification,
                     selected_kind: None,
                     selected_endpoint_report: None,
                     first_segment_count: self.len(),
@@ -1222,6 +1237,7 @@ impl CurveString2 {
         let output_segments = link_output_segment_reports(self, other, kind);
         let report = CurveStringLinkReport2 {
             stage: CurveStringLinkStage2::SegmentMaterialization,
+            predicate_path: CurveStringLinkPredicatePath2::ExhaustiveEndpointPairClassification,
             kind,
             endpoint_report: endpoint_report.clone(),
             first_segment_count: self.len(),
@@ -1244,6 +1260,7 @@ impl CurveString2 {
             }),
             report: CurveStringLinkAttemptReport2 {
                 stage: CurveStringLinkStage2::SegmentMaterialization,
+                predicate_path: CurveStringLinkPredicatePath2::ExhaustiveEndpointPairClassification,
                 selected_kind: Some(kind),
                 selected_endpoint_report: Some(endpoint_report),
                 first_segment_count: self.len(),
@@ -6892,6 +6909,11 @@ impl CurveStringLinkReport2 {
         self.stage
     }
 
+    /// Returns the exact predicate path used to select this endpoint link.
+    pub const fn predicate_path(&self) -> CurveStringLinkPredicatePath2 {
+        self.predicate_path
+    }
+
     /// Returns the selected link orientation.
     pub const fn kind(&self) -> CurveStringLinkKind2 {
         self.kind
@@ -7036,6 +7058,11 @@ impl CurveStringLinkAttemptReport2 {
     /// Returns the furthest exact link-attempt stage reached.
     pub const fn stage(&self) -> CurveStringLinkStage2 {
         self.stage
+    }
+
+    /// Returns the exact predicate path used to select or block this endpoint link attempt.
+    pub const fn predicate_path(&self) -> CurveStringLinkPredicatePath2 {
+        self.predicate_path
     }
 
     /// Returns the selected link orientation, when exactly one endpoint pair matched.
