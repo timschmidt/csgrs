@@ -2,10 +2,10 @@ use hypercurve::{
     BulgeVertex2, CircularArc2, Classification, Contour2, CurveError, CurvePolicy, CurveString2,
     CurveStringChamferInputPath2, CurveStringChamferPredicatePath2, CurveStringChamferStage2,
     CurveStringConnectSource2, CurveStringConnectStage2, CurveStringCurveTrimQueryPath2,
-    CurveStringCurveTrimStage2, CurveStringDeduplicateStage2, CurveStringEndpoint2,
-    CurveStringEndpointConnectionPredicatePath2, CurveStringEndpointConnectionStatus2,
-    CurveStringExtendPredicatePath2, CurveStringExtendStage2, CurveStringFilletInputPath2,
-    CurveStringFilletPredicatePath2, CurveStringFilletStage2,
+    CurveStringCurveTrimStage2, CurveStringDeduplicatePredicatePath2, CurveStringDeduplicateStage2,
+    CurveStringEndpoint2, CurveStringEndpointConnectionPredicatePath2,
+    CurveStringEndpointConnectionStatus2, CurveStringExtendPredicatePath2, CurveStringExtendStage2,
+    CurveStringFilletInputPath2, CurveStringFilletPredicatePath2, CurveStringFilletStage2,
     CurveStringIntersectionPredicatePath2, CurveStringIntersectionQueryPath2,
     CurveStringLineMergePredicatePath2, CurveStringLineMergeStage2, CurveStringLinkKind2,
     CurveStringLinkSourceInput2, CurveStringLinkStage2, CurveStringOrderedLinkStage2,
@@ -595,6 +595,10 @@ fn curve_string_remove_adjacent_reversed_duplicates_reports_removed_pairs() {
         deduped.report().stage(),
         CurveStringDeduplicateStage2::SegmentMaterialization
     );
+    assert_eq!(
+        deduped.report().predicate_path(),
+        CurveStringDeduplicatePredicatePath2::ExactReversedSegmentEquality
+    );
     assert_eq!(deduped.report().source_segment_count(), 4);
     assert_eq!(deduped.report().output_segment_count(), Some(2));
     assert_eq!(
@@ -614,6 +618,10 @@ fn curve_string_remove_adjacent_reversed_duplicates_reports_removed_pairs() {
     assert_eq!(
         deduped.report().removed_pairs()[0].second_source_segment_index(),
         2
+    );
+    assert_eq!(
+        deduped.report().removed_pairs()[0].predicate_path(),
+        CurveStringDeduplicatePredicatePath2::ExactReversedSegmentEquality
     );
     assert_eq!(
         deduped.report().removed_pairs()[0].first_source_segment_kind(),
@@ -729,6 +737,10 @@ fn curve_string_remove_adjacent_reversed_duplicates_reports_mixed_segment_kinds(
         report.stage(),
         CurveStringDeduplicateStage2::SegmentMaterialization
     );
+    assert_eq!(
+        report.predicate_path(),
+        CurveStringDeduplicatePredicatePath2::ExactReversedSegmentEquality
+    );
     assert_eq!(report.source_segment_count(), 5);
     assert_eq!(report.output_segment_count(), Some(1));
     assert_eq!(
@@ -779,6 +791,13 @@ fn curve_string_remove_adjacent_reversed_duplicates_reports_mixed_segment_kinds(
     );
     assert!(
         report
+            .removed_pairs()
+            .iter()
+            .all(|pair| pair.predicate_path()
+                == CurveStringDeduplicatePredicatePath2::ExactReversedSegmentEquality)
+    );
+    assert!(
+        report
             .retained_segments()
             .iter()
             .all(|segment| segment.status().is_native_exact())
@@ -809,6 +828,10 @@ fn curve_string_remove_adjacent_reversed_duplicates_reports_empty_output_blocker
         deduped.report().stage(),
         CurveStringDeduplicateStage2::PairCancellation
     );
+    assert_eq!(
+        deduped.report().predicate_path(),
+        CurveStringDeduplicatePredicatePath2::ExactReversedSegmentEquality
+    );
     assert_eq!(deduped.report().source_segment_count(), 4);
     assert_eq!(deduped.report().output_segment_count(), None);
     assert_eq!(
@@ -824,6 +847,14 @@ fn curve_string_remove_adjacent_reversed_duplicates_reports_empty_output_blocker
     );
     assert!(deduped.report().retained_segments().is_empty());
     assert_eq!(deduped.report().removed_pairs().len(), 2);
+    assert!(
+        deduped
+            .report()
+            .removed_pairs()
+            .iter()
+            .all(|pair| pair.predicate_path()
+                == CurveStringDeduplicatePredicatePath2::ExactReversedSegmentEquality)
+    );
     assert_eq!(
         deduped.report().removed_pairs()[0].first_start_point(),
         &p(1, 0)

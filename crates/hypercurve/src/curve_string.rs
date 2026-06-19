@@ -428,6 +428,7 @@ pub struct CurveStringLineMergeResult2 {
 pub struct CurveStringReversedDuplicatePairReport2 {
     first_source_segment_index: usize,
     second_source_segment_index: usize,
+    predicate_path: CurveStringDeduplicatePredicatePath2,
     first_source_segment_kind: SegmentKind,
     second_source_segment_kind: SegmentKind,
     first_start_point: Point2,
@@ -455,6 +456,7 @@ pub struct CurveStringDeduplicateRetainedSegmentReport2 {
 #[derive(Clone, Debug, PartialEq)]
 pub struct CurveStringDeduplicateReport2 {
     stage: CurveStringDeduplicateStage2,
+    predicate_path: CurveStringDeduplicatePredicatePath2,
     source_segment_count: usize,
     source_segment_kind_counts: SegmentKindCounts,
     output_segment_count: Option<usize>,
@@ -464,6 +466,13 @@ pub struct CurveStringDeduplicateReport2 {
     removed_pairs: Vec<CurveStringReversedDuplicatePairReport2>,
     status: RetainedTopologyStatus,
     blocker: Option<UncertaintyReason>,
+}
+
+/// Exact predicate path used while removing adjacent reversed duplicates.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum CurveStringDeduplicatePredicatePath2 {
+    /// Adjacent candidates were cancelled only when one exact segment equaled the other's reversal.
+    ExactReversedSegmentEquality,
 }
 
 /// Furthest exact stage reached by adjacent reversed-duplicate removal.
@@ -1770,6 +1779,8 @@ impl CurveString2 {
                 removed_pairs.push(CurveStringReversedDuplicatePairReport2 {
                     first_source_segment_index,
                     second_source_segment_index: source_index,
+                    predicate_path:
+                        CurveStringDeduplicatePredicatePath2::ExactReversedSegmentEquality,
                     first_source_segment_kind: first_segment.structural_facts().kind,
                     second_source_segment_kind: segment.structural_facts().kind,
                     first_start_point: first_segment.start().clone(),
@@ -1788,6 +1799,8 @@ impl CurveString2 {
                 curve_string: None,
                 report: CurveStringDeduplicateReport2 {
                     stage: CurveStringDeduplicateStage2::PairCancellation,
+                    predicate_path:
+                        CurveStringDeduplicatePredicatePath2::ExactReversedSegmentEquality,
                     source_segment_count: self.len(),
                     source_segment_kind_counts: curve_string_segment_kind_counts(self),
                     output_segment_count: None,
@@ -1831,6 +1844,7 @@ impl CurveString2 {
         Ok(CurveStringDeduplicateResult2 {
             report: CurveStringDeduplicateReport2 {
                 stage: CurveStringDeduplicateStage2::SegmentMaterialization,
+                predicate_path: CurveStringDeduplicatePredicatePath2::ExactReversedSegmentEquality,
                 source_segment_count: self.len(),
                 source_segment_kind_counts: curve_string_segment_kind_counts(self),
                 output_segment_count: Some(curve_string.len()),
@@ -7756,6 +7770,11 @@ impl CurveStringReversedDuplicatePairReport2 {
         self.second_source_segment_index
     }
 
+    /// Returns the exact predicate path used to remove this duplicate pair.
+    pub const fn predicate_path(&self) -> CurveStringDeduplicatePredicatePath2 {
+        self.predicate_path
+    }
+
     /// Returns the primitive family of the first removed source segment.
     pub const fn first_source_segment_kind(&self) -> SegmentKind {
         self.first_source_segment_kind
@@ -7843,6 +7862,11 @@ impl CurveStringDeduplicateReport2 {
     /// Returns the furthest exact de-duplication stage reached.
     pub const fn stage(&self) -> CurveStringDeduplicateStage2 {
         self.stage
+    }
+
+    /// Returns the exact predicate path used while cancelling adjacent pairs.
+    pub const fn predicate_path(&self) -> CurveStringDeduplicatePredicatePath2 {
+        self.predicate_path
     }
 
     /// Returns the source curve-string segment count captured by this report.
