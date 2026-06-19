@@ -478,6 +478,7 @@ pub struct CurveStringDeduplicateResult2 {
 #[derive(Clone, Debug, PartialEq)]
 pub struct CurveStringExtendReport2 {
     stage: CurveStringExtendStage2,
+    predicate_path: CurveStringExtendPredicatePath2,
     endpoint: CurveStringEndpoint2,
     source_segment_index: usize,
     source_segment_kind: SegmentKind,
@@ -496,6 +497,29 @@ pub struct CurveStringExtendReport2 {
     output_segment_kind_counts: Option<SegmentKindCounts>,
     status: RetainedTopologyStatus,
     blocker: Option<UncertaintyReason>,
+}
+
+/// Exact predicate path used to validate one endpoint extension target.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum CurveStringExtendPredicatePath2 {
+    /// Line target was certified on support and outside the selected endpoint.
+    LineSupportOutsideEndpoint,
+    /// Line target was certified off the source line support.
+    LineTargetOffSupport,
+    /// Line target was on support but not outside the selected endpoint.
+    LineTargetNotOutsideEndpoint,
+    /// Line support or outside-parameter predicates were unresolved.
+    LineTargetUnresolved,
+    /// Arc target was certified on the same circle and the extended sweep replay kept source points.
+    ArcSameCircleSweepReplay,
+    /// Arc target was certified off the source circle.
+    ArcTargetOffCircle,
+    /// Arc target was already on the finite source arc sweep.
+    ArcTargetAlreadyOnSweep,
+    /// Arc target passed circle/sweep checks but replay did not preserve source arc evidence.
+    ArcSweepReplayRejected,
+    /// Arc circle, sweep, or replay predicates were unresolved.
+    ArcTargetUnresolved,
 }
 
 /// Furthest exact stage reached by endpoint extension.
@@ -2856,6 +2880,7 @@ impl CurveString2 {
                     source_segment_index,
                     target_point,
                     None,
+                    CurveStringExtendPredicatePath2::LineTargetOffSupport,
                     RetainedTopologyStatus::Unsupported,
                     Some(UncertaintyReason::Boundary),
                 ));
@@ -2867,6 +2892,7 @@ impl CurveString2 {
                     source_segment_index,
                     target_point,
                     None,
+                    CurveStringExtendPredicatePath2::LineTargetUnresolved,
                     RetainedTopologyStatus::Unresolved,
                     Some(reason),
                 ));
@@ -2882,6 +2908,7 @@ impl CurveString2 {
                     source_segment_index,
                     target_point,
                     None,
+                    CurveStringExtendPredicatePath2::LineTargetUnresolved,
                     RetainedTopologyStatus::Unresolved,
                     Some(reason),
                 ));
@@ -2901,6 +2928,7 @@ impl CurveString2 {
                     source_segment_index,
                     target_point,
                     Some(source_param),
+                    CurveStringExtendPredicatePath2::LineTargetNotOutsideEndpoint,
                     RetainedTopologyStatus::Unsupported,
                     Some(UncertaintyReason::Boundary),
                 ));
@@ -2912,6 +2940,7 @@ impl CurveString2 {
                     source_segment_index,
                     target_point,
                     Some(source_param),
+                    CurveStringExtendPredicatePath2::LineTargetUnresolved,
                     RetainedTopologyStatus::Unresolved,
                     Some(UncertaintyReason::Ordering),
                 ));
@@ -2937,6 +2966,7 @@ impl CurveString2 {
             curve_string: Some(curve_string),
             report: CurveStringExtendReport2 {
                 stage: CurveStringExtendStage2::SegmentMaterialization,
+                predicate_path: CurveStringExtendPredicatePath2::LineSupportOutsideEndpoint,
                 endpoint,
                 source_segment_index,
                 source_segment_kind: SegmentKind::Line,
@@ -2977,6 +3007,7 @@ impl CurveString2 {
                     source_segment_index,
                     target_point,
                     None,
+                    CurveStringExtendPredicatePath2::ArcTargetOffCircle,
                     RetainedTopologyStatus::Unsupported,
                     Some(UncertaintyReason::Boundary),
                 ));
@@ -2988,6 +3019,7 @@ impl CurveString2 {
                     source_segment_index,
                     target_point,
                     None,
+                    CurveStringExtendPredicatePath2::ArcTargetUnresolved,
                     RetainedTopologyStatus::Unresolved,
                     Some(UncertaintyReason::RealSign),
                 ));
@@ -3003,6 +3035,7 @@ impl CurveString2 {
                     source_segment_index,
                     target_point,
                     None,
+                    CurveStringExtendPredicatePath2::ArcTargetAlreadyOnSweep,
                     RetainedTopologyStatus::Unsupported,
                     Some(UncertaintyReason::Boundary),
                 ));
@@ -3014,6 +3047,7 @@ impl CurveString2 {
                     source_segment_index,
                     target_point,
                     None,
+                    CurveStringExtendPredicatePath2::ArcTargetUnresolved,
                     RetainedTopologyStatus::Unresolved,
                     Some(reason),
                 ));
@@ -3052,6 +3086,7 @@ impl CurveString2 {
                     source_segment_index,
                     target_point,
                     None,
+                    CurveStringExtendPredicatePath2::ArcSweepReplayRejected,
                     RetainedTopologyStatus::Unsupported,
                     Some(UncertaintyReason::Unsupported),
                 ));
@@ -3063,6 +3098,7 @@ impl CurveString2 {
                     source_segment_index,
                     target_point,
                     None,
+                    CurveStringExtendPredicatePath2::ArcTargetUnresolved,
                     RetainedTopologyStatus::Unresolved,
                     Some(reason),
                 ));
@@ -3078,6 +3114,7 @@ impl CurveString2 {
                     source_segment_index,
                     target_point,
                     None,
+                    CurveStringExtendPredicatePath2::ArcTargetUnresolved,
                     RetainedTopologyStatus::Unresolved,
                     Some(reason),
                 ));
@@ -3092,6 +3129,7 @@ impl CurveString2 {
                     source_segment_index,
                     target_point,
                     None,
+                    CurveStringExtendPredicatePath2::ArcSweepReplayRejected,
                     RetainedTopologyStatus::Unsupported,
                     Some(UncertaintyReason::Unsupported),
                 ));
@@ -3103,6 +3141,7 @@ impl CurveString2 {
                     source_segment_index,
                     target_point,
                     None,
+                    CurveStringExtendPredicatePath2::ArcTargetUnresolved,
                     RetainedTopologyStatus::Unresolved,
                     Some(reason),
                 ));
@@ -3120,6 +3159,7 @@ impl CurveString2 {
             curve_string: Some(curve_string),
             report: CurveStringExtendReport2 {
                 stage: CurveStringExtendStage2::SegmentMaterialization,
+                predicate_path: CurveStringExtendPredicatePath2::ArcSameCircleSweepReplay,
                 endpoint,
                 source_segment_index,
                 source_segment_kind: SegmentKind::Arc,
@@ -4493,6 +4533,11 @@ impl CurveStringExtendReport2 {
     /// Returns the furthest exact extension stage reached.
     pub const fn stage(&self) -> CurveStringExtendStage2 {
         self.stage
+    }
+
+    /// Returns the exact predicate path used to validate the extension target.
+    pub const fn predicate_path(&self) -> CurveStringExtendPredicatePath2 {
+        self.predicate_path
     }
 
     /// Returns which endpoint was extended.
@@ -6015,6 +6060,7 @@ fn blocked_extend_result(
     source_segment_index: usize,
     target_point: Point2,
     source_param: Option<Real>,
+    predicate_path: CurveStringExtendPredicatePath2,
     status: RetainedTopologyStatus,
     blocker: Option<UncertaintyReason>,
 ) -> CurveStringExtendResult2 {
@@ -6023,6 +6069,7 @@ fn blocked_extend_result(
         curve_string: None,
         report: CurveStringExtendReport2 {
             stage: CurveStringExtendStage2::TargetValidation,
+            predicate_path,
             endpoint,
             source_segment_index,
             source_segment_kind: source_segment.structural_facts().kind,
