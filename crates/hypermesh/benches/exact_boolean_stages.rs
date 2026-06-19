@@ -88,19 +88,16 @@ fn run_case(case: &BenchCase) {
         ),
         Err(error) => print_metadata(case.name, "preflight_support", format!("error:{error:?}")),
     }
-    match metadata_workspace.evaluate(request) {
-        Ok(evaluation) => match evaluation.result.as_ref() {
-            Some(result) => print_metadata(
-                case.name,
-                "materialized_result_kind",
-                format!(
-                    "{:?};triangles={}",
-                    result.kind,
-                    result.mesh.triangles().len()
-                ),
+    match metadata_workspace.materialize(request) {
+        Ok(result) => print_metadata(
+            case.name,
+            "materialized_result_kind",
+            format!(
+                "{:?};triangles={}",
+                result.kind,
+                result.mesh.triangles().len()
             ),
-            None => print_metadata(case.name, "materialized_result_kind", "none".to_string()),
-        },
+        ),
         Err(error) => print_metadata(
             case.name,
             "materialized_result_kind",
@@ -173,14 +170,9 @@ fn run_case(case: &BenchCase) {
         black_box(workspace.evaluate(request).ok());
     });
 
-    time_stage(case, "boolean_evaluate_retained_result_or_block", || {
+    time_stage(case, "boolean_materialize", || {
         let mut workspace = ExactBooleanWorkspace::new(&case.left, &case.right);
-        black_box(
-            workspace
-                .evaluate(request)
-                .ok()
-                .and_then(|evaluation| evaluation.result.as_ref()),
-        );
+        black_box(workspace.materialize(request).ok());
     });
 
     let mut workspace = ExactBooleanWorkspace::new(&case.left, &case.right);
@@ -533,15 +525,10 @@ fn run_case(case: &BenchCase) {
 
     time_prepared_stage(
         case,
-        "workspace_evaluation_result_from_retained_artifacts",
+        "workspace_materialize_from_retained_artifacts",
         || retained_workspace_for_case(case, request),
         |retained_workspace| {
-            black_box(
-                retained_workspace
-                    .evaluate(request)
-                    .ok()
-                    .and_then(|evaluation| evaluation.result.as_ref()),
-            );
+            black_box(retained_workspace.materialize(request).ok());
         },
     );
 
@@ -576,14 +563,9 @@ fn run_case(case: &BenchCase) {
     );
 
     let mut materialize_cache_workspace = retained_workspace_for_case(case, request);
-    materialize_cache_workspace.evaluate(request).ok();
-    time_stage(case, "workspace_evaluation_result_cached", || {
-        black_box(
-            materialize_cache_workspace
-                .evaluate(request)
-                .ok()
-                .and_then(|evaluation| evaluation.result.as_ref()),
-        );
+    materialize_cache_workspace.materialize(request).ok();
+    time_stage(case, "workspace_materialization_cached", || {
+        black_box(materialize_cache_workspace.materialize_ref(request).ok());
     });
 
     workspace.evaluate(request).ok();
@@ -591,13 +573,8 @@ fn run_case(case: &BenchCase) {
         black_box(workspace.evaluate(request).ok());
     });
 
-    time_stage(case, "workspace_cached_evaluation_result", || {
-        black_box(
-            workspace
-                .evaluate(request)
-                .ok()
-                .and_then(|evaluation| evaluation.result.as_ref()),
-        );
+    time_stage(case, "workspace_cached_materialization", || {
+        black_box(workspace.materialize(request).ok());
     });
 }
 

@@ -46,7 +46,10 @@ fn exercise_workspace_pair(left: &ExactMesh, right: &ExactMesh, validation: Vali
                 let _ = attempt.validate();
                 let _ = attempt.validate_against_sources_with_validation(left, right, validation);
             }
-            if evaluation.result.is_some() {
+        }
+        if let Ok(result) = workspace.materialize(request) {
+            let _ = result.validate();
+            if let Ok(evaluation) = workspace.evaluate(request) {
                 let _ = evaluation.validate_materialized_result_against_sources(left, right);
             }
         }
