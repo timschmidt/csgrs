@@ -1308,17 +1308,12 @@ impl ExactBooleanCertificationSet {
         }
     }
 
-    fn topology_assembly_report(&self) -> Option<&ExactTopologyAssemblyReport> {
-        self.arrangement_attempt.as_ref().and_then(|attempt| {
+    fn topology_assembly_complete(&self) -> bool {
+        self.arrangement_attempt.as_ref().is_some_and(|attempt| {
             attempt
                 .retained_gate_reports()
-                .map(|(topology, _)| topology)
+                .is_some_and(|(topology, _)| topology.validate().is_ok() && topology.is_complete())
         })
-    }
-
-    fn topology_assembly_complete(&self) -> bool {
-        self.topology_assembly_report()
-            .is_some_and(|topology| topology.validate().is_ok() && topology.is_complete())
     }
 
     fn region_ownership_resolves_operation(&self, operation: ExactBooleanOperation) -> bool {
