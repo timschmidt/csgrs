@@ -6191,6 +6191,14 @@ impl ExactWindingReadinessReport {
         )
     }
 
+    /// Return whether arrangement/cell-complex semantics materialized output.
+    pub const fn is_arrangement_cell_complex_materialized(&self) -> bool {
+        matches!(
+            self.status,
+            ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized
+        )
+    }
+
     /// Validate this winding-readiness report against the source meshes.
     ///
     /// Winding readiness retains exact split-region and opposite-plane facts
@@ -6553,11 +6561,6 @@ impl ExactWindingReadinessReport {
                 };
                 blocker_kind(Some(&self.blocker), expected)?;
                 self.blocker.validate_for_kind(expected)?;
-                validate_blocker_count_bounds(
-                    &self.blocker,
-                    self.retained_face_pairs,
-                    self.retained_events,
-                )?;
                 match (expected, self.coplanar_volumetric_evidence.as_ref()) {
                     (ExactBooleanBlockerKind::NeedsCoplanarVolumetricCells, Some(evidence)) => {
                         validate_coplanar_volumetric_evidence_matches_blocker(
@@ -6576,18 +6579,38 @@ impl ExactWindingReadinessReport {
                         return Err(ExactReportValidationError::MissingCoplanarVolumetricEvidence);
                     }
                     (ExactBooleanBlockerKind::NeedsBoundaryPolicy, Some(evidence)) => {
+                        validate_coplanar_volumetric_evidence_matches_blocker(
+                            evidence,
+                            &self.blocker,
+                            self.retained_face_pairs,
+                            self.retained_events,
+                        )?;
                         validate_arrangement_materialized_coplanar_evidence(
                             evidence,
                             self.retained_face_pairs,
                             self.retained_events,
                         )?;
                     }
+                    (ExactBooleanBlockerKind::NeedsBoundaryPolicy, None)
+                    | (ExactBooleanBlockerKind::NeedsWinding, None) => {
+                        validate_blocker_count_bounds(
+                            &self.blocker,
+                            self.retained_face_pairs,
+                            self.retained_events,
+                        )?;
+                    }
+                    (
+                        ExactBooleanBlockerKind::NeedsRefinement
+                        | ExactBooleanBlockerKind::NeedsPlanarArrangement,
+                        None,
+                    ) => {
+                        return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                    }
                     (_, Some(_)) => {
                         return Err(
                             ExactReportValidationError::UnexpectedCoplanarVolumetricEvidence,
                         );
                     }
-                    (_, None) => {}
                 }
                 no_region_facts(self.region_count, &self.region_classifications)
             }

@@ -9688,14 +9688,22 @@ fn arrangement_cell_complex_already_materialized_winding_readiness(
     operation: ExactBooleanOperation,
 ) -> ExactWindingReadinessReport {
     let counts = retained_graph_counts(graph);
-    let needs_coplanar_volumetric =
-        graph_requires_coplanar_volumetric_cells_for_sources(graph, left, right);
-    let blocker_kind = if graph_has_only_boundary_contact_pairs(graph, left, right) {
-        ExactBooleanBlockerKind::NeedsBoundaryPolicy
-    } else if needs_coplanar_volumetric {
-        ExactBooleanBlockerKind::NeedsCoplanarVolumetricCells
-    } else {
-        ExactBooleanBlockerKind::NeedsWinding
+    let coplanar_evidence =
+        certified_arrangement_cell_complex_coplanar_evidence(graph, left, right);
+    let blocker_kind = match coplanar_evidence.as_ref().map(|evidence| evidence.obstacle) {
+        Some(CoplanarVolumetricCellObstacle::BoundaryOnlyContact) => {
+            ExactBooleanBlockerKind::NeedsBoundaryPolicy
+        }
+        Some(obstacle) if obstacle.requires_coplanar_volumetric_cells() => {
+            ExactBooleanBlockerKind::NeedsCoplanarVolumetricCells
+        }
+        _ if graph_has_only_boundary_contact_pairs(graph, left, right) => {
+            ExactBooleanBlockerKind::NeedsBoundaryPolicy
+        }
+        _ if graph_requires_coplanar_volumetric_cells_for_sources(graph, left, right) => {
+            ExactBooleanBlockerKind::NeedsCoplanarVolumetricCells
+        }
+        _ => ExactBooleanBlockerKind::NeedsWinding,
     };
     winding_readiness_report(
         operation,
@@ -9707,11 +9715,7 @@ fn arrangement_cell_complex_already_materialized_winding_readiness(
         Vec::new(),
         counts.into_blocker(blocker_kind),
         None,
-        if needs_coplanar_volumetric {
-            coplanar_volumetric_evidence_if_required(graph, left, right)
-        } else {
-            None
-        },
+        coplanar_evidence,
     )
 }
 
@@ -10110,19 +10114,39 @@ fn winding_readiness_report_from_graph(
         )?
         .is_some()
     {
-        let blocker = counts.into_blocker(ExactBooleanBlockerKind::NeedsWinding);
-        let (retained_face_pairs, retained_events, blocker) = if blocker
-            .validate_for_kind(ExactBooleanBlockerKind::NeedsWinding)
-            .is_ok()
-        {
-            (graph.face_pairs.len(), graph.event_count(), blocker)
-        } else {
-            (
-                0,
-                0,
-                ExactBooleanBlocker::default().into_blocker(ExactBooleanBlockerKind::NeedsWinding),
-            )
+        let coplanar_evidence =
+            certified_arrangement_cell_complex_coplanar_evidence(graph, left, right);
+        let blocker_kind = match coplanar_evidence.as_ref().map(|evidence| evidence.obstacle) {
+            Some(CoplanarVolumetricCellObstacle::BoundaryOnlyContact) => {
+                ExactBooleanBlockerKind::NeedsBoundaryPolicy
+            }
+            Some(obstacle) if obstacle.requires_coplanar_volumetric_cells() => {
+                ExactBooleanBlockerKind::NeedsCoplanarVolumetricCells
+            }
+            _ => ExactBooleanBlockerKind::NeedsWinding,
         };
+        let blocker = counts.into_blocker(blocker_kind);
+        let (retained_face_pairs, retained_events, blocker, coplanar_evidence) =
+            if coplanar_evidence.is_some()
+                || blocker
+                    .validate_for_kind(ExactBooleanBlockerKind::NeedsWinding)
+                    .is_ok()
+            {
+                (
+                    graph.face_pairs.len(),
+                    graph.event_count(),
+                    blocker,
+                    coplanar_evidence,
+                )
+            } else {
+                (
+                    0,
+                    0,
+                    ExactBooleanBlocker::default()
+                        .into_blocker(ExactBooleanBlockerKind::NeedsWinding),
+                    None,
+                )
+            };
         return Ok(winding_readiness_report(
             operation,
             ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized,
@@ -10133,7 +10157,7 @@ fn winding_readiness_report_from_graph(
             Vec::new(),
             blocker,
             None,
-            None,
+            coplanar_evidence,
         ));
     }
     if arrangement_cell_complex_shortcut_support
@@ -10239,6 +10263,8 @@ fn winding_readiness_report_from_graph(
         ));
     }
     if arrangement_cell_complex_shortcut_materializes && boundary_policy_required {
+        let coplanar_evidence =
+            certified_arrangement_cell_complex_coplanar_evidence(graph, left, right);
         return Ok(winding_readiness_report(
             operation,
             ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized,
@@ -10249,7 +10275,7 @@ fn winding_readiness_report_from_graph(
             Vec::new(),
             counts.into_blocker(ExactBooleanBlockerKind::NeedsBoundaryPolicy),
             None,
-            None,
+            coplanar_evidence,
         ));
     }
     if boundary_policy_required {
@@ -15860,6 +15886,61 @@ mod tests {
                 .validate_against_sources_with_validation(&left, &right, validation)
                 .unwrap();
         }
+    }
+
+    #[test]
+    fn arrangement_materialized_readiness_retains_boundary_only_evidence() {
+        let left_a = tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]);
+        let left_b = tetrahedron_i64([10, 0, 0], [12, 0, 0], [10, 2, 0], [10, 0, 2]);
+        let mut vertices = left_a.vertices().to_vec();
+        let offset = vertices.len();
+        vertices.extend_from_slice(left_b.vertices());
+        let mut triangles = left_a.triangles().to_vec();
+        triangles.extend(
+            left_b
+                .triangles()
+                .iter()
+                .map(|triangle| Triangle(triangle.0.map(|index| index + offset))),
+        );
+        let left = ExactMesh::new_with_policy(
+            vertices,
+            triangles,
+            SourceProvenance::exact("readiness disconnected positive-area boundary fixture"),
+            ValidationPolicy::CLOSED,
+        )
+        .unwrap();
+        let right = tetrahedron_i64([2, 0, 0], [6, 0, 0], [2, 4, 0], [2, 0, -4]);
+        let graph = build_intersection_graph(&left, &right).unwrap();
+        validate_graph_source_handoff(&graph, &left, &right).unwrap();
+
+        let readiness = arrangement_cell_complex_already_materialized_winding_readiness(
+            &graph,
+            &left,
+            &right,
+            ExactBooleanOperation::Union,
+        );
+
+        assert_eq!(
+            readiness.status,
+            ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized
+        );
+        assert_eq!(
+            readiness.blocker.kind,
+            ExactBooleanBlockerKind::NeedsBoundaryPolicy
+        );
+        let evidence = readiness
+            .coplanar_volumetric_evidence
+            .as_ref()
+            .expect("arrangement readiness should retain boundary-only evidence");
+        assert_eq!(
+            evidence.obstacle,
+            CoplanarVolumetricCellObstacle::BoundaryOnlyContact
+        );
+        assert_eq!(
+            evidence.retained_face_pair_count,
+            readiness.retained_face_pairs
+        );
+        readiness.validate().unwrap();
     }
 
     #[test]

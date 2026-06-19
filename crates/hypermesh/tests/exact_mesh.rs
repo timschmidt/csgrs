@@ -3043,17 +3043,10 @@ fn closed_no_volume_overlap_regularized_boolean_is_publicly_replayable() {
         )
         .preflight
         .clone();
-        if operation == ExactBooleanOperation::Union {
-            assert!(
-                preflight.is_certified_arrangement_cell_complex(),
-                "{operation:?}: {preflight:?}"
-            );
-        } else {
-            assert!(
-                preflight.is_certified_closed_boundary_touching(),
-                "{operation:?}: {preflight:?}"
-            );
-        }
+        assert!(
+            preflight.is_certified_arrangement_cell_complex(),
+            "{operation:?}: {preflight:?}"
+        );
         assert!(
             preflight.retained_face_pairs > 0,
             "positive-area no-volume shortcut should retain graph evidence: {operation:?}: {preflight:?}"
@@ -3088,7 +3081,7 @@ fn closed_no_volume_overlap_regularized_boolean_is_publicly_replayable() {
             .winding_readiness
             .clone();
             assert!(
-                readiness.is_closed_boundary_touching_materialized(),
+                readiness.is_arrangement_cell_complex_materialized(),
                 "{operation:?}: {readiness:?}"
             );
             assert_eq!(
@@ -3097,7 +3090,14 @@ fn closed_no_volume_overlap_regularized_boolean_is_publicly_replayable() {
                 "{operation:?}: no-volume readiness should retain consumed source-aware evidence"
             );
             readiness.validate().unwrap();
-            readiness.validate_against_sources(&left, &right).unwrap();
+            readiness
+                .validate_against_sources_with_boundary_policy(
+                    &left,
+                    &right,
+                    ValidationPolicy::ALLOW_BOUNDARY,
+                    ExactBoundaryBooleanPolicy::PreserveSeparateShells,
+                )
+                .unwrap();
             let evaluation = exact_boolean_evaluation(
                 &left,
                 &right,
