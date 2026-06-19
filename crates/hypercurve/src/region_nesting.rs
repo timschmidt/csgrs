@@ -323,11 +323,50 @@ pub struct ExactCurveArrangementEndpointGraphCache2 {
     endpoint_bucket_cache: ExactCurveArrangementArrangedEndpointBucketCache2,
     endpoint_side_bucket_cache: ExactCurveArrangementArrangedEndpointSideBucketCache2,
     endpoint_point_cache: ExactCurveArrangementArrangedEndpointPointCache2,
+    endpoint_degree_bucket_cache: ExactCurveArrangementArrangedEndpointDegreeBucketCache2,
     dangling_endpoint_count: usize,
     branch_endpoint_count: usize,
     blocker_arranged_segment_index: Option<usize>,
     blocker_endpoint: Option<RegionLineSegmentArrangedEndpoint2>,
     blocker_point: Option<Point2>,
+}
+
+/// Retained arranged endpoint structural degree.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum ExactCurveArrangementArrangedEndpointDegree2 {
+    /// One arranged endpoint occupies the structural point.
+    Dangling,
+    /// Two arranged endpoints occupy the structural point and form a chain connection.
+    Chain,
+    /// More than two arranged endpoints occupy the structural point.
+    Branch,
+}
+
+/// Reference to a structural arranged endpoint bucket classified by degree.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ExactCurveArrangementArrangedEndpointDegreeRef2 {
+    structural_bucket_index: usize,
+    endpoint_ref_count: usize,
+    point: Point2,
+}
+
+/// Structural arranged endpoint buckets grouped by retained degree.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ExactCurveArrangementArrangedEndpointDegreeBucket2 {
+    degree: ExactCurveArrangementArrangedEndpointDegree2,
+    endpoint_buckets: Vec<ExactCurveArrangementArrangedEndpointDegreeRef2>,
+}
+
+/// Arranged endpoint structural degree buckets retained by endpoint-graph validation.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ExactCurveArrangementArrangedEndpointDegreeBucketCache2 {
+    bucket_count: usize,
+    structural_bucket_ref_count: usize,
+    dangling_structural_bucket_count: usize,
+    chain_structural_bucket_count: usize,
+    branch_structural_bucket_count: usize,
+    max_bucket_size: usize,
+    buckets: Vec<ExactCurveArrangementArrangedEndpointDegreeBucket2>,
 }
 
 /// Arranged fragment endpoint reference retained in an exact endpoint bucket.
@@ -2830,6 +2869,10 @@ impl ExactCurveArrangementEndpointGraphCache2 {
             ExactCurveArrangementArrangedEndpointPointCache2::from_arranged_source_reports(
                 &report.arranged_source_reports,
             );
+        let endpoint_degree_bucket_cache =
+            ExactCurveArrangementArrangedEndpointDegreeBucketCache2::from_endpoint_bucket_cache(
+                &endpoint_bucket_cache,
+            );
         Some(Self {
             predicate_path: report.endpoint_graph_predicate_path?,
             endpoint_count: report.endpoint_graph_endpoint_count?,
@@ -2840,6 +2883,7 @@ impl ExactCurveArrangementEndpointGraphCache2 {
             endpoint_bucket_cache,
             endpoint_side_bucket_cache,
             endpoint_point_cache,
+            endpoint_degree_bucket_cache,
             dangling_endpoint_count: report.endpoint_graph_dangling_endpoint_count?,
             branch_endpoint_count: report.endpoint_graph_branch_endpoint_count?,
             blocker_arranged_segment_index: report.endpoint_graph_blocker_arranged_segment_index,
@@ -2892,6 +2936,13 @@ impl ExactCurveArrangementEndpointGraphCache2 {
         &self.endpoint_point_cache
     }
 
+    /// Returns structural arranged endpoints grouped by retained degree.
+    pub const fn endpoint_degree_bucket_cache(
+        &self,
+    ) -> &ExactCurveArrangementArrangedEndpointDegreeBucketCache2 {
+        &self.endpoint_degree_bucket_cache
+    }
+
     /// Returns dangling endpoint count found during validation.
     pub const fn dangling_endpoint_count(&self) -> usize {
         self.dangling_endpoint_count
@@ -2915,6 +2966,128 @@ impl ExactCurveArrangementEndpointGraphCache2 {
     /// Returns the blocker point, when validation blocked.
     pub const fn blocker_point(&self) -> Option<&Point2> {
         self.blocker_point.as_ref()
+    }
+}
+
+impl ExactCurveArrangementArrangedEndpointDegreeRef2 {
+    /// Returns the index into [`ExactCurveArrangementArrangedEndpointBucketCache2::buckets`].
+    pub const fn structural_bucket_index(&self) -> usize {
+        self.structural_bucket_index
+    }
+
+    /// Returns the number of arranged endpoint references in the structural bucket.
+    pub const fn endpoint_ref_count(&self) -> usize {
+        self.endpoint_ref_count
+    }
+
+    /// Returns the exact structural endpoint point for this bucket.
+    pub const fn point(&self) -> &Point2 {
+        &self.point
+    }
+}
+
+impl ExactCurveArrangementArrangedEndpointDegreeBucket2 {
+    /// Returns the structural endpoint degree represented by this bucket.
+    pub const fn degree(&self) -> ExactCurveArrangementArrangedEndpointDegree2 {
+        self.degree
+    }
+
+    /// Returns structural endpoint buckets with this retained degree.
+    pub fn endpoint_buckets(&self) -> &[ExactCurveArrangementArrangedEndpointDegreeRef2] {
+        &self.endpoint_buckets
+    }
+}
+
+impl ExactCurveArrangementArrangedEndpointDegreeBucketCache2 {
+    fn from_endpoint_bucket_cache(
+        endpoint_bucket_cache: &ExactCurveArrangementArrangedEndpointBucketCache2,
+    ) -> Self {
+        let mut dangling_refs = Vec::new();
+        let mut chain_refs = Vec::new();
+        let mut branch_refs = Vec::new();
+
+        for (structural_bucket_index, bucket) in endpoint_bucket_cache.buckets().iter().enumerate()
+        {
+            let degree_ref = ExactCurveArrangementArrangedEndpointDegreeRef2 {
+                structural_bucket_index,
+                endpoint_ref_count: bucket.endpoints().len(),
+                point: bucket.point().clone(),
+            };
+            match degree_ref.endpoint_ref_count {
+                0 | 1 => dangling_refs.push(degree_ref),
+                2 => chain_refs.push(degree_ref),
+                _ => branch_refs.push(degree_ref),
+            }
+        }
+
+        let dangling_structural_bucket_count = dangling_refs.len();
+        let chain_structural_bucket_count = chain_refs.len();
+        let branch_structural_bucket_count = branch_refs.len();
+        let buckets = vec![
+            ExactCurveArrangementArrangedEndpointDegreeBucket2 {
+                degree: ExactCurveArrangementArrangedEndpointDegree2::Dangling,
+                endpoint_buckets: dangling_refs,
+            },
+            ExactCurveArrangementArrangedEndpointDegreeBucket2 {
+                degree: ExactCurveArrangementArrangedEndpointDegree2::Chain,
+                endpoint_buckets: chain_refs,
+            },
+            ExactCurveArrangementArrangedEndpointDegreeBucket2 {
+                degree: ExactCurveArrangementArrangedEndpointDegree2::Branch,
+                endpoint_buckets: branch_refs,
+            },
+        ];
+        let structural_bucket_ref_count = endpoint_bucket_cache.bucket_count();
+        let max_bucket_size = buckets
+            .iter()
+            .map(|bucket| bucket.endpoint_buckets.len())
+            .max()
+            .unwrap_or(0);
+
+        Self {
+            bucket_count: buckets.len(),
+            structural_bucket_ref_count,
+            dangling_structural_bucket_count,
+            chain_structural_bucket_count,
+            branch_structural_bucket_count,
+            max_bucket_size,
+            buckets,
+        }
+    }
+
+    /// Returns the number of retained degree buckets.
+    pub const fn bucket_count(&self) -> usize {
+        self.bucket_count
+    }
+
+    /// Returns the number of structural endpoint buckets classified by degree.
+    pub const fn structural_bucket_ref_count(&self) -> usize {
+        self.structural_bucket_ref_count
+    }
+
+    /// Returns structural endpoint buckets with dangling degree.
+    pub const fn dangling_structural_bucket_count(&self) -> usize {
+        self.dangling_structural_bucket_count
+    }
+
+    /// Returns structural endpoint buckets with chain degree.
+    pub const fn chain_structural_bucket_count(&self) -> usize {
+        self.chain_structural_bucket_count
+    }
+
+    /// Returns structural endpoint buckets with branch degree.
+    pub const fn branch_structural_bucket_count(&self) -> usize {
+        self.branch_structural_bucket_count
+    }
+
+    /// Returns the largest structural-bucket count inside one degree bucket.
+    pub const fn max_bucket_size(&self) -> usize {
+        self.max_bucket_size
+    }
+
+    /// Returns endpoint degree buckets in stable dangling/chain/branch order.
+    pub fn buckets(&self) -> &[ExactCurveArrangementArrangedEndpointDegreeBucket2] {
+        &self.buckets
     }
 }
 

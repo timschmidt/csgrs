@@ -1,15 +1,16 @@
 use hypercurve::{
     BulgeVertex2, CircularArc2, Classification, Contour2, CurveError, CurvePolicy, CurveString2,
-    ExactCurveArrangementAttempt2, ExactCurveArrangementRequest2,
-    ExactCurveArrangementSourceAabbStatus2, ExactCurveArrangementSourceEndpoint2,
-    ExactCurveArrangementSplitCandidateAabbStatus2, ExactCurveArrangementSplitRelationClass2,
-    FillRule, FiniteProjectionOptions, Real, Region2, RegionBoundaryContourBuildPredicatePath2,
-    RegionBoundaryContourBuildStage2, RegionBoundaryContourRole2,
-    RegionLineSegmentArrangedEndpoint2, RegionLineSegmentEndpointGraphPredicatePath2,
-    RegionLineSegmentRegionBuildStage2, RegionLineSegmentRingAssemblyPredicatePath2,
-    RegionLineSegmentSplitPredicatePath2, RegionPointLocation, RegionView2, RetainedTopologyStatus,
-    Segment2, SegmentKind, SegmentKindCounts, UncertaintyReason, finite_polyline_vertex_centroid,
-    finite_ring_signed_area, try_finite_polyline_vertex_centroid, try_finite_ring_signed_area,
+    ExactCurveArrangementArrangedEndpointDegree2, ExactCurveArrangementAttempt2,
+    ExactCurveArrangementRequest2, ExactCurveArrangementSourceAabbStatus2,
+    ExactCurveArrangementSourceEndpoint2, ExactCurveArrangementSplitCandidateAabbStatus2,
+    ExactCurveArrangementSplitRelationClass2, FillRule, FiniteProjectionOptions, Real, Region2,
+    RegionBoundaryContourBuildPredicatePath2, RegionBoundaryContourBuildStage2,
+    RegionBoundaryContourRole2, RegionLineSegmentArrangedEndpoint2,
+    RegionLineSegmentEndpointGraphPredicatePath2, RegionLineSegmentRegionBuildStage2,
+    RegionLineSegmentRingAssemblyPredicatePath2, RegionLineSegmentSplitPredicatePath2,
+    RegionPointLocation, RegionView2, RetainedTopologyStatus, Segment2, SegmentKind,
+    SegmentKindCounts, UncertaintyReason, finite_polyline_vertex_centroid, finite_ring_signed_area,
+    try_finite_polyline_vertex_centroid, try_finite_ring_signed_area,
 };
 use proptest::prelude::*;
 
@@ -1549,6 +1550,66 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
         arranged_endpoint_point_ref.output_end_point(),
         result.report().arranged_source_reports()[0].output_end_point()
     );
+    let arranged_endpoint_degree_bucket_cache = endpoint_cache.endpoint_degree_bucket_cache();
+    assert_eq!(arranged_endpoint_degree_bucket_cache.bucket_count(), 3);
+    assert_eq!(
+        arranged_endpoint_degree_bucket_cache.structural_bucket_ref_count(),
+        endpoint_cache.structural_bucket_count()
+    );
+    assert_eq!(
+        arranged_endpoint_degree_bucket_cache.dangling_structural_bucket_count(),
+        0
+    );
+    assert_eq!(
+        arranged_endpoint_degree_bucket_cache.chain_structural_bucket_count(),
+        endpoint_cache.structural_bucket_count()
+    );
+    assert_eq!(
+        arranged_endpoint_degree_bucket_cache.branch_structural_bucket_count(),
+        0
+    );
+    assert_eq!(arranged_endpoint_degree_bucket_cache.max_bucket_size(), 4);
+    assert_eq!(
+        arranged_endpoint_degree_bucket_cache.buckets()[0].degree(),
+        ExactCurveArrangementArrangedEndpointDegree2::Dangling
+    );
+    assert!(
+        arranged_endpoint_degree_bucket_cache.buckets()[0]
+            .endpoint_buckets()
+            .is_empty()
+    );
+    assert_eq!(
+        arranged_endpoint_degree_bucket_cache.buckets()[1].degree(),
+        ExactCurveArrangementArrangedEndpointDegree2::Chain
+    );
+    assert_eq!(
+        arranged_endpoint_degree_bucket_cache.buckets()[1]
+            .endpoint_buckets()
+            .len(),
+        endpoint_cache.structural_bucket_count()
+    );
+    let first_degree_ref =
+        &arranged_endpoint_degree_bucket_cache.buckets()[1].endpoint_buckets()[0];
+    assert_eq!(first_degree_ref.structural_bucket_index(), 0);
+    assert_eq!(
+        first_degree_ref.endpoint_ref_count(),
+        arranged_endpoint_bucket_cache.buckets()[0]
+            .endpoints()
+            .len()
+    );
+    assert_eq!(
+        first_degree_ref.point(),
+        arranged_endpoint_bucket_cache.buckets()[0].point()
+    );
+    assert_eq!(
+        arranged_endpoint_degree_bucket_cache.buckets()[2].degree(),
+        ExactCurveArrangementArrangedEndpointDegree2::Branch
+    );
+    assert!(
+        arranged_endpoint_degree_bucket_cache.buckets()[2]
+            .endpoint_buckets()
+            .is_empty()
+    );
     assert_eq!(endpoint_cache.dangling_endpoint_count(), 0);
     assert_eq!(endpoint_cache.branch_endpoint_count(), 0);
     assert_eq!(endpoint_cache.blocker_arranged_segment_index(), None);
@@ -2708,6 +2769,60 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
     assert_eq!(
         arranged_endpoint_point_ref.output_end_point(),
         result.report().arranged_source_reports()[0].output_end_point()
+    );
+    let arranged_endpoint_degree_bucket_cache = endpoint_cache.endpoint_degree_bucket_cache();
+    assert_eq!(arranged_endpoint_degree_bucket_cache.bucket_count(), 3);
+    assert_eq!(
+        arranged_endpoint_degree_bucket_cache.structural_bucket_ref_count(),
+        endpoint_cache.structural_bucket_count()
+    );
+    assert_eq!(
+        arranged_endpoint_degree_bucket_cache.dangling_structural_bucket_count(),
+        0
+    );
+    assert_eq!(
+        arranged_endpoint_degree_bucket_cache.chain_structural_bucket_count(),
+        endpoint_cache.structural_bucket_count()
+    );
+    assert_eq!(
+        arranged_endpoint_degree_bucket_cache.branch_structural_bucket_count(),
+        0
+    );
+    assert_eq!(arranged_endpoint_degree_bucket_cache.max_bucket_size(), 2);
+    assert_eq!(
+        arranged_endpoint_degree_bucket_cache.buckets()[0].degree(),
+        ExactCurveArrangementArrangedEndpointDegree2::Dangling
+    );
+    assert!(
+        arranged_endpoint_degree_bucket_cache.buckets()[0]
+            .endpoint_buckets()
+            .is_empty()
+    );
+    assert_eq!(
+        arranged_endpoint_degree_bucket_cache.buckets()[1].degree(),
+        ExactCurveArrangementArrangedEndpointDegree2::Chain
+    );
+    let first_degree_ref =
+        &arranged_endpoint_degree_bucket_cache.buckets()[1].endpoint_buckets()[0];
+    assert_eq!(first_degree_ref.structural_bucket_index(), 0);
+    assert_eq!(
+        first_degree_ref.endpoint_ref_count(),
+        arranged_endpoint_bucket_cache.buckets()[0]
+            .endpoints()
+            .len()
+    );
+    assert_eq!(
+        first_degree_ref.point(),
+        arranged_endpoint_bucket_cache.buckets()[0].point()
+    );
+    assert_eq!(
+        arranged_endpoint_degree_bucket_cache.buckets()[2].degree(),
+        ExactCurveArrangementArrangedEndpointDegree2::Branch
+    );
+    assert!(
+        arranged_endpoint_degree_bucket_cache.buckets()[2]
+            .endpoint_buckets()
+            .is_empty()
     );
     assert_eq!(
         Some(endpoint_cache.dangling_endpoint_count()),
