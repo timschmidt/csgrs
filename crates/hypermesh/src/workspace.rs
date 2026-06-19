@@ -160,6 +160,10 @@ impl<'a> ExactBooleanWorkspace<'a> {
         if let Some(index) =
             cached_by_request_and_policy_index(&self.arrangement_attempts, request, policy)
         {
+            self.arrangement_attempts[index]
+                .2
+                .validate_against_sources_for_request(self.left, self.right, request)
+                .map_err(workspace_report_validation_error)?;
             return Ok(&self.arrangement_attempts[index].2);
         }
 
