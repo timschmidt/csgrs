@@ -133,7 +133,6 @@ fn run_case(case: &BenchCase) {
                     .region_ownership_report
                     .as_ref()
                     .is_some_and(|report| report.status.is_volume_resolved()),
-                attempt.materialized_arrangement_cell_complex_output(),
                 output_vertices,
                 output_triangles,
             )
@@ -169,7 +168,6 @@ fn run_case(case: &BenchCase) {
         black_box((
             attempt.output_counts(),
             attempt.declined_output_validation(),
-            attempt.materialized_arrangement_cell_complex_output(),
         ));
     });
 

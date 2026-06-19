@@ -294,7 +294,7 @@ impl ExactArrangementBooleanAttempt {
     /// Return whether this attempt materialized an arrangement cell-complex
     /// output, either through the generic path or through a certified
     /// arrangement shortcut/recovery path.
-    pub fn materialized_arrangement_cell_complex_output(&self) -> bool {
+    pub(crate) fn materialized_arrangement_cell_complex_output(&self) -> bool {
         if self.stage != ExactArrangementBooleanStage::Materialized || self.decline.is_some() {
             return false;
         }

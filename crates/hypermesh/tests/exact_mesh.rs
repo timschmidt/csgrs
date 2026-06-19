@@ -32,19 +32,13 @@ fn exact_boolean_evaluation(
 fn evaluation_materializes_arrangement_cell_complex(
     evaluation: &hypermesh::ExactBooleanEvaluation,
 ) -> bool {
-    evaluation
-        .retained_arrangement_attempt()
-        .is_some_and(|attempt| {
-            attempt.operation == evaluation.request.operation
-                && attempt.policy == ExactRegularizationPolicy::REGULARIZED_SOLID
-                && attempt.output_validation == evaluation.request.validation
-                && attempt.validate().is_ok()
-                && attempt.materialized_arrangement_cell_complex_output()
-        })
-        || evaluation
-            .certifications
-            .winding_readiness
-            .materializes_arrangement_cell_complex()
+    evaluation.result.as_ref().is_some_and(|result| {
+        result.is_arrangement_cell_complex_materialized_for(evaluation.request.operation)
+            || result.is_arrangement_cell_complex_shortcut_for(evaluation.request.operation)
+    }) || evaluation
+        .certifications
+        .winding_readiness
+        .materializes_arrangement_cell_complex()
 }
 
 fn exact_boolean_result(
