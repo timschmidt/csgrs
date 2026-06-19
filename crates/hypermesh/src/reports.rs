@@ -1951,10 +1951,13 @@ impl ExactBooleanResult {
             return Err(ExactReportValidationError::SourceReplayMismatch);
         }
         self.validate()?;
-        if self.retained_arrangement_attempt_certifies_operation_replay(
-            request,
-            retained_arrangement_attempt,
-        )? {
+        if self
+            .retained_arrangement_attempt_matches_output_for_request(
+                request,
+                retained_arrangement_attempt,
+            )
+            .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
+        {
             return Ok(());
         }
         if self.retained_arrangement_artifacts_certify_operation_replay(left, right, request)? {
@@ -1965,18 +1968,6 @@ impl ExactBooleanResult {
         } else {
             Err(ExactReportValidationError::SourceReplayMismatch)
         }
-    }
-
-    fn retained_arrangement_attempt_certifies_operation_replay(
-        &self,
-        request: ExactBooleanRequest,
-        retained_arrangement_attempt: Option<&ExactArrangementBooleanAttempt>,
-    ) -> Result<bool, ExactReportValidationError> {
-        self.retained_arrangement_attempt_matches_output_for_request(
-            request,
-            retained_arrangement_attempt,
-        )
-        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)
     }
 
     pub(crate) fn retained_arrangement_attempt_matches_output_for_request(
