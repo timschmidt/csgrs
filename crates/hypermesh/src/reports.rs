@@ -1926,18 +1926,7 @@ impl ExactBooleanResult {
         right: &ExactMesh,
         request: ExactBooleanRequest,
     ) -> Result<(), ExactReportValidationError> {
-        if !self.matches_request(request) {
-            return Err(ExactReportValidationError::SourceReplayMismatch);
-        }
-        self.validate()?;
-        if self.retained_arrangement_artifacts_certify_operation_replay(left, right, request)? {
-            return Ok(());
-        }
-        if self.operation_replay_matches_sources(left, right, request)? {
-            Ok(())
-        } else {
-            Err(ExactReportValidationError::SourceReplayMismatch)
-        }
+        self.validate_request_against_sources_with_retained_attempt(left, right, request, None)
     }
 
     pub(crate) fn validate_request_against_sources_with_retained_attempt(
