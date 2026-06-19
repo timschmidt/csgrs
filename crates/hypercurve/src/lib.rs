@@ -64,12 +64,12 @@ mod triangulation;
 
 pub use bbox::Aabb2;
 pub use bezier::{
-    BezierEndpoint, CubicBezier2, CubicBezierHermiteInterpolationReport2,
-    CubicBezierHermiteInterpolationResult2, CubicBezierHermiteInterpolationStage2,
-    EndpointTangent2, QuadraticBezier2, QuadraticBezierMidpointInterpolationReport2,
-    QuadraticBezierMidpointInterpolationResult2, QuadraticBezierMidpointInterpolationStage2,
-    QuadraticBezierPointInterpolationReport2, QuadraticBezierPointInterpolationResult2,
-    QuadraticBezierPointInterpolationStage2,
+    BezierEndpoint, BezierInterpolationReplayPath2, CubicBezier2,
+    CubicBezierHermiteInterpolationReport2, CubicBezierHermiteInterpolationResult2,
+    CubicBezierHermiteInterpolationStage2, EndpointTangent2, QuadraticBezier2,
+    QuadraticBezierMidpointInterpolationReport2, QuadraticBezierMidpointInterpolationResult2,
+    QuadraticBezierMidpointInterpolationStage2, QuadraticBezierPointInterpolationReport2,
+    QuadraticBezierPointInterpolationResult2, QuadraticBezierPointInterpolationStage2,
 };
 pub use bezier_algebraic_image::{
     BezierAlgebraicCoordinateImage, BezierAlgebraicImageStatus, BezierAlgebraicPointImage2,
