@@ -5589,7 +5589,7 @@ impl ExactAdjacentUnionCompletionReport {
 
     /// Validate this report by replaying adjacency completion from source
     /// operands.
-    pub fn validate_against_sources(
+    pub(crate) fn validate_against_sources(
         &self,
         left: &ExactMesh,
         right: &ExactMesh,
@@ -5603,15 +5603,6 @@ impl ExactAdjacentUnionCompletionReport {
         } else {
             Err(ExactReportValidationError::SourceReplayMismatch)
         }
-    }
-
-    /// Classify whether this retained report is fresh for the source operands.
-    pub fn freshness_against_sources(
-        &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-    ) -> ExactReportFreshness {
-        exact_report_freshness(self.validate_against_sources(left, right))
     }
 }
 
