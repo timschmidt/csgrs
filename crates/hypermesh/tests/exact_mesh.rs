@@ -3909,7 +3909,7 @@ fn public_exact_blocker_reports_replay_remaining_decisions() {
     let open_evaluation = exact_boolean_evaluation(&left, &parallel_right, open_request);
     let open_disjoint = open_evaluation
         .certifications()
-        .open_surface_disjoint
+        .open_surface_disjoint()
         .clone();
     assert!(open_disjoint.is_certified());
     open_disjoint.validate().unwrap();
@@ -3955,7 +3955,7 @@ fn open_surface_disjoint_report_classifies_retained_coplanar_overlap_blocker() {
         ValidationPolicy::ALLOW_BOUNDARY,
     );
     let evaluation = exact_boolean_evaluation(&left, &right, request);
-    let report = evaluation.certifications().open_surface_disjoint.clone();
+    let report = evaluation.certifications().open_surface_disjoint().clone();
 
     assert!(!report.is_certified());
     assert!(report.blocker.requires_planar_arrangement());
@@ -4459,19 +4459,20 @@ fn trivial_boolean_shortcuts_are_publicly_replayable() {
         );
         open_disjoint_evaluation.validate().unwrap();
         let mut relabeled_disjoint_report = open_disjoint_evaluation.clone();
-        relabeled_disjoint_report
-            .certifications_mut()
-            .open_surface_disjoint = exact_boolean_evaluation(
+        let replacement_open_disjoint = exact_boolean_evaluation(
             &solid,
             &open_disjoint_right,
             ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
         )
         .certifications()
-        .open_surface_disjoint
+        .open_surface_disjoint()
         .clone();
+        *relabeled_disjoint_report
+            .certifications_mut()
+            .open_surface_disjoint_mut() = replacement_open_disjoint;
         relabeled_disjoint_report
             .certifications()
-            .open_surface_disjoint
+            .open_surface_disjoint()
             .validate()
             .unwrap();
         assert_report_validation_error!(

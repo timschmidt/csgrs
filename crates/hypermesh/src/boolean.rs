@@ -967,7 +967,7 @@ pub struct ExactBooleanCertificationSet {
     /// Boundary-contact policy status.
     pub boundary_touching: ExactBoundaryTouchingReport,
     /// Open-surface disjointness shortcut status.
-    pub open_surface_disjoint: ExactOpenSurfaceDisjointReport,
+    open_surface_disjoint: ExactOpenSurfaceDisjointReport,
     /// Adjacent closed-solid union completion shortcut status.
     pub adjacent_union_completion: ExactAdjacentUnionCompletionReport,
     /// Identical-mesh shortcut status.
@@ -1037,6 +1037,16 @@ impl ExactBooleanCertificationSet {
     /// Return the same-surface shortcut certification report mutably.
     pub fn same_surface_mut(&mut self) -> &mut ExactSameSurfaceReport {
         &mut self.same_surface
+    }
+
+    /// Return the open-surface disjointness shortcut certification report.
+    pub fn open_surface_disjoint(&self) -> &ExactOpenSurfaceDisjointReport {
+        &self.open_surface_disjoint
+    }
+
+    /// Return the open-surface disjointness shortcut certification report mutably.
+    pub fn open_surface_disjoint_mut(&mut self) -> &mut ExactOpenSurfaceDisjointReport {
+        &mut self.open_surface_disjoint
     }
 
     /// Return the retained volumetric boundary closure evidence, when the
