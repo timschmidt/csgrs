@@ -963,7 +963,7 @@ pub struct ExactBooleanCertificationSet {
     /// Source-shape facts used by closed regularized-solid shortcut supports.
     regularized_solid: ExactRegularizedSolidBooleanFacts,
     /// Exact graph refinement status.
-    pub refinement: ExactRefinementReport,
+    refinement: ExactRefinementReport,
     /// Boundary-contact policy status.
     boundary_touching: ExactBoundaryTouchingReport,
     /// Open-surface disjointness shortcut status.
@@ -1007,6 +1007,16 @@ impl ExactBooleanCertificationSet {
     /// Return the retained arrangement/cell-complex attempt mutably.
     pub fn arrangement_attempt_mut(&mut self) -> Option<&mut ExactArrangementBooleanAttempt> {
         self.arrangement_attempt.as_mut()
+    }
+
+    /// Return the exact graph refinement certification report.
+    pub fn refinement(&self) -> &ExactRefinementReport {
+        &self.refinement
+    }
+
+    /// Return the exact graph refinement certification report mutably.
+    pub fn refinement_mut(&mut self) -> &mut ExactRefinementReport {
+        &mut self.refinement
     }
 
     /// Return source-shape facts used by trivial shortcut supports.

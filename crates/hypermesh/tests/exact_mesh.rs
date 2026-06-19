@@ -462,15 +462,15 @@ fn exact_boolean_evaluation_materializes_boundary_policy_shortcut_by_default() {
     let mut mixed_graph_snapshot = evaluation.clone();
     mixed_graph_snapshot
         .certifications_mut()
-        .refinement
+        .refinement_mut()
         .retained_face_pairs = 0;
     mixed_graph_snapshot
         .certifications_mut()
-        .refinement
+        .refinement_mut()
         .retained_events = 0;
     mixed_graph_snapshot
         .certifications()
-        .refinement
+        .refinement()
         .validate()
         .unwrap();
     assert_report_validation_error!(mixed_graph_snapshot.validate());
@@ -3820,7 +3820,7 @@ fn public_exact_blocker_reports_replay_remaining_decisions() {
         ValidationPolicy::ALLOW_BOUNDARY,
     );
     let evaluation = exact_boolean_evaluation(&left, &overlapping_right, request);
-    let refinement = evaluation.certifications().refinement.clone();
+    let refinement = evaluation.certifications().refinement().clone();
     assert!(!refinement.is_required());
     refinement.validate().unwrap();
     evaluation

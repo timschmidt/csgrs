@@ -4987,7 +4987,7 @@ impl ExactRefinementReport {
         self.validate()?;
         let request = ExactBooleanRequest::new(self.operation, ValidationPolicy::ALLOW_BOUNDARY);
         if let Ok(evaluation) = workspace_evaluation_for_replay(left, right, request)
-            && self == &evaluation.certifications().refinement
+            && self == evaluation.certifications().refinement()
         {
             Ok(())
         } else {
