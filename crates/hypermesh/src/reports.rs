@@ -4214,23 +4214,6 @@ impl ExactBooleanPreflight {
         ) && self.blocker.is_none()
     }
 
-    /// Return whether closed boundary-touching semantics certified this request.
-    pub const fn is_certified_closed_boundary_touching(&self) -> bool {
-        matches!(
-            (self.operation, self.support),
-            (
-                ExactBooleanOperation::Union,
-                ExactBooleanSupport::CertifiedClosedBoundaryTouchingUnion
-            ) | (
-                ExactBooleanOperation::Intersection,
-                ExactBooleanSupport::CertifiedClosedBoundaryTouchingIntersection
-            ) | (
-                ExactBooleanOperation::Difference,
-                ExactBooleanSupport::CertifiedClosedBoundaryTouchingDifference
-            )
-        ) && self.blocker.is_none()
-    }
-
     /// Return whether this request is waiting on explicit caller boundary policy.
     pub const fn requires_boundary_policy(&self) -> bool {
         matches!(self.support, ExactBooleanSupport::RequiresBoundaryPolicy)

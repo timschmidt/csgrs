@@ -2233,8 +2233,7 @@ fn closed_boundary_touching_regularized_boolean_is_publicly_replayable() {
             ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY);
         with_exact_boolean_evaluation(&left, &right, preflight_request, |preflight_evaluation| {
             assert!(
-                preflight_evaluation.is_certified_arrangement_cell_complex()
-                    || preflight_evaluation.is_certified_closed_boundary_touching(),
+                preflight_evaluation.is_certified(),
                 "{operation:?}: {preflight_evaluation:?}"
             );
             assert!(

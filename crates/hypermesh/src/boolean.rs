@@ -2430,11 +2430,6 @@ impl ExactBooleanEvaluation {
             .is_certified_lower_dimensional_regularized_solid()
     }
 
-    /// Return whether closed boundary-touching semantics certified this evaluation.
-    pub fn is_certified_closed_boundary_touching(&self) -> bool {
-        self.preflight.is_certified_closed_boundary_touching()
-    }
-
     /// Return whether this evaluation is waiting on explicit caller boundary policy.
     pub fn requires_boundary_policy(&self) -> bool {
         self.preflight.requires_boundary_policy()
