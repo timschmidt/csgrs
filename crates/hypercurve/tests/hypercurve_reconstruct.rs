@@ -187,16 +187,17 @@ fn reconstruction_rejects_invalid_options() {
 #[test]
 fn finite_line_string_import_preserves_step_tolerance_evidence() {
     let tolerance = RetainedSourceTolerance2::try_new(1.0e-5, 1.0e-8).unwrap();
-    let import = CurveString2::import_finite_line_string_with_source(
+    let import = CurveString2::import_finite_line_string_with_source_report(
         &[[0.0, 0.0], [0.0, 0.0], [2.0, 0.0]],
         RetainedImportFormat2::Step,
         42,
         Some(tolerance),
     )
     .unwrap();
-    let record = import.record();
+    let record = import.report();
 
     assert_eq!(import.curve_string().len(), 1);
+    assert_eq!(import.record(), record);
     assert_eq!(record.format(), RetainedImportFormat2::Step);
     assert_eq!(
         record.source_topology(),
@@ -218,7 +219,7 @@ fn finite_line_string_import_preserves_step_tolerance_evidence() {
 #[test]
 fn finite_ring_import_preserves_dxf_handle_and_closure_evidence() {
     let tolerance = RetainedSourceTolerance2::try_new(0.0, 1.0e-7).unwrap();
-    let import = Contour2::import_finite_ring_with_source(
+    let import = Contour2::import_finite_ring_with_source_report(
         &[[0.0, 0.0], [4.0, 0.0], [4.0, 3.0], [0.0, 0.0]],
         FillRule::EvenOdd,
         RetainedImportFormat2::Dxf,
@@ -226,9 +227,10 @@ fn finite_ring_import_preserves_dxf_handle_and_closure_evidence() {
         Some(tolerance),
     )
     .unwrap();
-    let record = import.record();
+    let record = import.report();
 
     assert_eq!(import.contour().len(), 3);
+    assert_eq!(import.record(), record);
     assert_eq!(import.contour().fill_rule(), FillRule::EvenOdd);
     assert_eq!(record.format(), RetainedImportFormat2::Dxf);
     assert_eq!(
@@ -291,7 +293,7 @@ fn finite_import_record_exposes_zero_tolerance_boundary_claim() {
 
 #[test]
 fn finite_imports_preserve_source_versions() {
-    let open = CurveString2::import_finite_line_string_with_source_version(
+    let open = CurveString2::import_finite_line_string_with_source_version_report(
         &[[0.0, 0.0], [1.0, 0.0]],
         RetainedImportFormat2::Step,
         42,
@@ -306,7 +308,7 @@ fn finite_imports_preserve_source_versions() {
         RetainedImportTopology2::OpenLineString
     );
 
-    let closed = Contour2::import_finite_ring_with_source_version(
+    let closed = Contour2::import_finite_ring_with_source_version_report(
         &[[0.0, 0.0], [4.0, 0.0], [4.0, 3.0]],
         FillRule::NonZero,
         RetainedImportFormat2::Dxf,

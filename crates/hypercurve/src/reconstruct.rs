@@ -115,6 +115,11 @@ impl FiniteCurveStringImport2 {
     }
 
     /// Returns retained import evidence for the finite source.
+    pub const fn report(&self) -> &RetainedImportRecord2 {
+        &self.record
+    }
+
+    /// Returns retained import evidence for the finite source.
     pub const fn record(&self) -> &RetainedImportRecord2 {
         &self.record
     }
@@ -134,6 +139,11 @@ impl FiniteContourImport2 {
     /// Returns the imported native contour.
     pub const fn contour(&self) -> &Contour2 {
         &self.contour
+    }
+
+    /// Returns retained import evidence for the finite source.
+    pub const fn report(&self) -> &RetainedImportRecord2 {
+        &self.record
     }
 
     /// Returns retained import evidence for the finite source.
@@ -266,6 +276,14 @@ impl CurveString2 {
         )
     }
 
+    /// Imports an open finite line string as native line geometry and returns
+    /// retained source evidence.
+    pub fn import_finite_line_string_with_report(
+        points: &[[f64; 2]],
+    ) -> CurveResult<FiniteCurveStringImport2> {
+        Self::import_finite_line_string(points)
+    }
+
     /// Imports an open finite line string with retained source metadata.
     ///
     /// This method is the adapter hook for STEP/DXF readers that already
@@ -324,6 +342,35 @@ impl CurveString2 {
             discarded_duplicate_count,
         )?;
         Ok(FiniteCurveStringImport2 { curve, record })
+    }
+
+    /// Imports an open finite line string with retained source metadata and
+    /// report-bearing naming.
+    pub fn import_finite_line_string_with_source_report(
+        points: &[[f64; 2]],
+        format: RetainedImportFormat2,
+        source_index: u64,
+        source_tolerance: Option<RetainedSourceTolerance2>,
+    ) -> CurveResult<FiniteCurveStringImport2> {
+        Self::import_finite_line_string_with_source(points, format, source_index, source_tolerance)
+    }
+
+    /// Imports an open finite line string with retained source metadata,
+    /// version evidence, and report-bearing naming.
+    pub fn import_finite_line_string_with_source_version_report(
+        points: &[[f64; 2]],
+        format: RetainedImportFormat2,
+        source_index: u64,
+        source_version: u64,
+        source_tolerance: Option<RetainedSourceTolerance2>,
+    ) -> CurveResult<FiniteCurveStringImport2> {
+        Self::import_finite_line_string_with_source_version(
+            points,
+            format,
+            source_index,
+            source_version,
+            source_tolerance,
+        )
     }
 
     /// Reconstructs an open curve string from sampled polyline points.
@@ -414,6 +461,14 @@ impl Contour2 {
         )
     }
 
+    /// Imports a closed finite line ring as native contour geometry and
+    /// returns retained source evidence.
+    pub fn import_finite_ring_with_report(
+        points: &[[f64; 2]],
+    ) -> CurveResult<FiniteContourImport2> {
+        Self::import_finite_ring(points)
+    }
+
     /// Imports a closed finite line ring with an explicit fill rule.
     pub fn import_finite_ring_with_fill_rule(
         points: &[[f64; 2]],
@@ -426,6 +481,15 @@ impl Contour2 {
             0,
             None,
         )
+    }
+
+    /// Imports a closed finite line ring with an explicit fill rule and
+    /// report-bearing naming.
+    pub fn import_finite_ring_with_fill_rule_report(
+        points: &[[f64; 2]],
+        fill_rule: FillRule,
+    ) -> CurveResult<FiniteContourImport2> {
+        Self::import_finite_ring_with_fill_rule(points, fill_rule)
     }
 
     /// Imports a closed finite ring with retained source metadata.
@@ -447,6 +511,24 @@ impl Contour2 {
             format,
             source_index,
             0,
+            source_tolerance,
+        )
+    }
+
+    /// Imports a closed finite line ring with retained source metadata and
+    /// report-bearing naming.
+    pub fn import_finite_ring_with_source_report(
+        points: &[[f64; 2]],
+        fill_rule: FillRule,
+        format: RetainedImportFormat2,
+        source_index: u64,
+        source_tolerance: Option<RetainedSourceTolerance2>,
+    ) -> CurveResult<FiniteContourImport2> {
+        Self::import_finite_ring_with_source(
+            points,
+            fill_rule,
+            format,
+            source_index,
             source_tolerance,
         )
     }
@@ -477,6 +559,26 @@ impl Contour2 {
             discarded_duplicate_count,
         )?;
         Ok(FiniteContourImport2 { contour, record })
+    }
+
+    /// Imports a closed finite line ring with retained source metadata,
+    /// version evidence, and report-bearing naming.
+    pub fn import_finite_ring_with_source_version_report(
+        points: &[[f64; 2]],
+        fill_rule: FillRule,
+        format: RetainedImportFormat2,
+        source_index: u64,
+        source_version: u64,
+        source_tolerance: Option<RetainedSourceTolerance2>,
+    ) -> CurveResult<FiniteContourImport2> {
+        Self::import_finite_ring_with_source_version(
+            points,
+            fill_rule,
+            format,
+            source_index,
+            source_version,
+            source_tolerance,
+        )
     }
 
     /// Reconstructs a closed contour from sampled polyline points using the

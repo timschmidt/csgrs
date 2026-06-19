@@ -1307,7 +1307,8 @@ fn finite_line_string_import_promotes_boundary_f64_to_native_lines() {
     let iter_curve =
         CurveString2::from_finite_point_iter([[0.0, 0.0], [2.0, 0.0], [2.0, 1.0]]).unwrap();
     let import =
-        CurveString2::import_finite_line_string(&[[0.0, 0.0], [2.0, 0.0], [2.0, 1.0]]).unwrap();
+        CurveString2::import_finite_line_string_with_report(&[[0.0, 0.0], [2.0, 0.0], [2.0, 1.0]])
+            .unwrap();
 
     assert_eq!(iter_curve, curve);
     assert_eq!(curve.len(), 2);
@@ -1327,7 +1328,8 @@ fn finite_line_string_import_promotes_boundary_f64_to_native_lines() {
 #[test]
 fn finite_line_string_import_skips_duplicate_edges() {
     let import =
-        CurveString2::import_finite_line_string(&[[0.0, 0.0], [0.0, 0.0], [2.0, 0.0]]).unwrap();
+        CurveString2::import_finite_line_string_with_report(&[[0.0, 0.0], [0.0, 0.0], [2.0, 0.0]])
+            .unwrap();
 
     assert_eq!(import.curve_string().len(), 1);
 }
@@ -1337,9 +1339,14 @@ fn finite_ring_import_accepts_repeated_closing_point_without_sample_ownership() 
     let contour =
         Contour2::from_finite_ring(&[[0.0, 0.0], [4.0, 0.0], [4.0, 3.0], [0.0, 3.0], [0.0, 0.0]])
             .unwrap();
-    let import =
-        Contour2::import_finite_ring(&[[0.0, 0.0], [4.0, 0.0], [4.0, 3.0], [0.0, 3.0], [0.0, 0.0]])
-            .unwrap();
+    let import = Contour2::import_finite_ring_with_report(&[
+        [0.0, 0.0],
+        [4.0, 0.0],
+        [4.0, 3.0],
+        [0.0, 3.0],
+        [0.0, 0.0],
+    ])
+    .unwrap();
 
     assert_eq!(contour.len(), 4);
     assert_eq!(import.contour(), &contour);
