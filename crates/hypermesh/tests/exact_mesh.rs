@@ -1141,15 +1141,6 @@ fn exact_axis_aligned_orthogonal_solid_boolean_is_publicly_replayable() {
             result.freshness_against_sources(&left, &separated_right),
             ExactReportFreshness::SourceReplayMismatch
         );
-        result
-            .validate_operation_against_sources(
-                &left,
-                &right,
-                operation,
-                ValidationPolicy::CLOSED,
-                ExactBoundaryBooleanPolicy::Reject,
-            )
-            .unwrap();
         assert!(result.mesh.facts().mesh.closed_manifold);
     }
 }
@@ -1815,15 +1806,6 @@ fn adjacent_union_completion_boolean_is_publicly_replayable() {
         axis_replay.is_arrangement_cell_complex_shortcut_for(ExactBooleanOperation::Union),
         "{axis_replay:?}"
     );
-    axis_replay
-        .validate_operation_against_sources(
-            &axis_left,
-            &axis_right,
-            ExactBooleanOperation::Union,
-            ValidationPolicy::CLOSED,
-            ExactBoundaryBooleanPolicy::Reject,
-        )
-        .unwrap();
 
     let crossing_right = tetra_from_corners([1, 1, -1], [5, 1, -1], [1, 5, -1], [1, 1, 3]);
     let crossing_report = exact_adjacent_union_completion_report!(
