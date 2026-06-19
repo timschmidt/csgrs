@@ -21,6 +21,10 @@ pub struct SelfContactReport2 {
     tested_pair_count: usize,
     first_contact_first_segment_index: Option<usize>,
     first_contact_second_segment_index: Option<usize>,
+    first_contact_first_segment_start_point: Option<Point2>,
+    first_contact_first_segment_end_point: Option<Point2>,
+    first_contact_second_segment_start_point: Option<Point2>,
+    first_contact_second_segment_end_point: Option<Point2>,
     status: RetainedTopologyStatus,
     blocker: Option<UncertaintyReason>,
 }
@@ -169,6 +173,18 @@ pub(crate) fn segments_have_self_contacts_with_cached_aabbs_and_report(
                             tested_pair_count,
                             first_contact_first_segment_index: Some(first_index),
                             first_contact_second_segment_index: Some(second_index),
+                            first_contact_first_segment_start_point: Some(
+                                segments[first_index].start().clone(),
+                            ),
+                            first_contact_first_segment_end_point: Some(
+                                segments[first_index].end().clone(),
+                            ),
+                            first_contact_second_segment_start_point: Some(
+                                segments[second_index].start().clone(),
+                            ),
+                            first_contact_second_segment_end_point: Some(
+                                segments[second_index].end().clone(),
+                            ),
                             status: RetainedTopologyStatus::NativeExact,
                             blocker: None,
                         },
@@ -188,6 +204,10 @@ pub(crate) fn segments_have_self_contacts_with_cached_aabbs_and_report(
                             tested_pair_count,
                             first_contact_first_segment_index: None,
                             first_contact_second_segment_index: None,
+                            first_contact_first_segment_start_point: None,
+                            first_contact_first_segment_end_point: None,
+                            first_contact_second_segment_start_point: None,
+                            first_contact_second_segment_end_point: None,
                             status: RetainedTopologyStatus::Unresolved,
                             blocker: Some(reason),
                         },
@@ -209,6 +229,10 @@ pub(crate) fn segments_have_self_contacts_with_cached_aabbs_and_report(
             tested_pair_count,
             first_contact_first_segment_index: None,
             first_contact_second_segment_index: None,
+            first_contact_first_segment_start_point: None,
+            first_contact_first_segment_end_point: None,
+            first_contact_second_segment_start_point: None,
+            first_contact_second_segment_end_point: None,
             status: RetainedTopologyStatus::NativeExact,
             blocker: None,
         },
@@ -259,6 +283,26 @@ impl SelfContactReport2 {
     /// Returns the second segment index of the first certified self contact.
     pub const fn first_contact_second_segment_index(&self) -> Option<usize> {
         self.first_contact_second_segment_index
+    }
+
+    /// Returns the exact start point of the first contacted segment, when certified.
+    pub const fn first_contact_first_segment_start_point(&self) -> Option<&Point2> {
+        self.first_contact_first_segment_start_point.as_ref()
+    }
+
+    /// Returns the exact end point of the first contacted segment, when certified.
+    pub const fn first_contact_first_segment_end_point(&self) -> Option<&Point2> {
+        self.first_contact_first_segment_end_point.as_ref()
+    }
+
+    /// Returns the exact start point of the second contacted segment, when certified.
+    pub const fn first_contact_second_segment_start_point(&self) -> Option<&Point2> {
+        self.first_contact_second_segment_start_point.as_ref()
+    }
+
+    /// Returns the exact end point of the second contacted segment, when certified.
+    pub const fn first_contact_second_segment_end_point(&self) -> Option<&Point2> {
+        self.first_contact_second_segment_end_point.as_ref()
     }
 
     /// Returns retained topology status for the self-contact classification.

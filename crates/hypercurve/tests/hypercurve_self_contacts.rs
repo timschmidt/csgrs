@@ -51,6 +51,22 @@ fn curve_string_self_contact_detector_ignores_adjacent_corner() {
     assert_eq!(reported.report().tested_pair_count(), 1);
     assert_eq!(reported.report().first_contact_first_segment_index(), None);
     assert_eq!(reported.report().first_contact_second_segment_index(), None);
+    assert_eq!(
+        reported.report().first_contact_first_segment_start_point(),
+        None
+    );
+    assert_eq!(
+        reported.report().first_contact_first_segment_end_point(),
+        None
+    );
+    assert_eq!(
+        reported.report().first_contact_second_segment_start_point(),
+        None
+    );
+    assert_eq!(
+        reported.report().first_contact_second_segment_end_point(),
+        None
+    );
     assert_eq!(reported.report().blocker(), None);
 }
 
@@ -80,6 +96,22 @@ fn curve_string_self_contact_detector_finds_nonadjacent_crossing() {
     assert_eq!(
         reported.report().first_contact_second_segment_index(),
         Some(2)
+    );
+    assert_eq!(
+        reported.report().first_contact_first_segment_start_point(),
+        Some(&p(0, 0))
+    );
+    assert_eq!(
+        reported.report().first_contact_first_segment_end_point(),
+        Some(&p(4, 4))
+    );
+    assert_eq!(
+        reported.report().first_contact_second_segment_start_point(),
+        Some(&p(0, 4))
+    );
+    assert_eq!(
+        reported.report().first_contact_second_segment_end_point(),
+        Some(&p(4, 0))
     );
 }
 
