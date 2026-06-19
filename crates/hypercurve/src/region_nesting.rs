@@ -34,6 +34,7 @@ pub struct ExactCurveWorkspace2 {
     source_aabb: Option<Aabb2>,
     split_cache: Option<ExactCurveArrangementSplitCache2>,
     endpoint_graph_cache: Option<ExactCurveArrangementEndpointGraphCache2>,
+    ring_assembly_cache: Option<ExactCurveArrangementRingAssemblyCache2>,
 }
 
 /// Retained exact split evidence cached by an evaluated arrangement workspace.
@@ -65,6 +66,22 @@ pub struct ExactCurveArrangementEndpointGraphCache2 {
     blocker_arranged_segment_index: Option<usize>,
     blocker_endpoint: Option<RegionLineSegmentArrangedEndpoint2>,
     blocker_point: Option<Point2>,
+}
+
+/// Retained exact ring-traversal evidence cached by an evaluated arrangement workspace.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ExactCurveArrangementRingAssemblyCache2 {
+    predicate_path: RegionLineSegmentRingAssemblyPredicatePath2,
+    attempted_endpoint_connection_count: usize,
+    exact_endpoint_connection_count: usize,
+    disconnected_endpoint_connection_count: usize,
+    unresolved_endpoint_connection_count: usize,
+    reversed_source_segment_count: usize,
+    output_ring_count: Option<usize>,
+    output_boundary_segment_count: Option<usize>,
+    output_boundary_segment_kind_counts: Option<SegmentKindCounts>,
+    arranged_source_reports: Vec<RegionLineSegmentArrangedSourceReport2>,
+    source_reports: Vec<RegionLineSegmentRingSourceReport2>,
 }
 
 /// Evaluation record for a retained exact curve arrangement attempt.
@@ -1111,6 +1128,7 @@ impl ExactCurveWorkspace2 {
             source_aabb,
             split_cache: None,
             endpoint_graph_cache: None,
+            ring_assembly_cache: None,
         })
     }
 
@@ -1123,6 +1141,10 @@ impl ExactCurveWorkspace2 {
         ));
         self.endpoint_graph_cache =
             ExactCurveArrangementEndpointGraphCache2::from_region_build_report(
+                region_result.report(),
+            );
+        self.ring_assembly_cache =
+            ExactCurveArrangementRingAssemblyCache2::from_region_build_report(
                 region_result.report(),
             );
         self
@@ -1171,6 +1193,11 @@ impl ExactCurveWorkspace2 {
     /// Returns exact endpoint-bucket evidence retained from the evaluated arrangement.
     pub const fn endpoint_graph_cache(&self) -> Option<&ExactCurveArrangementEndpointGraphCache2> {
         self.endpoint_graph_cache.as_ref()
+    }
+
+    /// Returns exact ring-traversal evidence retained from the evaluated arrangement.
+    pub const fn ring_assembly_cache(&self) -> Option<&ExactCurveArrangementRingAssemblyCache2> {
+        self.ring_assembly_cache.as_ref()
     }
 }
 
@@ -1312,6 +1339,79 @@ impl ExactCurveArrangementEndpointGraphCache2 {
     /// Returns the blocker point, when validation blocked.
     pub const fn blocker_point(&self) -> Option<&Point2> {
         self.blocker_point.as_ref()
+    }
+}
+
+impl ExactCurveArrangementRingAssemblyCache2 {
+    fn from_region_build_report(report: &RegionLineSegmentRegionBuildReport2) -> Option<Self> {
+        Some(Self {
+            predicate_path: report.ring_assembly_predicate_path?,
+            attempted_endpoint_connection_count: report.attempted_endpoint_connection_count,
+            exact_endpoint_connection_count: report.exact_endpoint_connection_count,
+            disconnected_endpoint_connection_count: report.disconnected_endpoint_connection_count,
+            unresolved_endpoint_connection_count: report.unresolved_endpoint_connection_count,
+            reversed_source_segment_count: report.reversed_source_segment_count,
+            output_ring_count: report.output_ring_count,
+            output_boundary_segment_count: report.output_boundary_segment_count,
+            output_boundary_segment_kind_counts: report.output_boundary_segment_kind_counts,
+            arranged_source_reports: report.arranged_source_reports.clone(),
+            source_reports: report.source_reports.clone(),
+        })
+    }
+
+    /// Returns the exact predicate family used for ring traversal.
+    pub const fn predicate_path(&self) -> RegionLineSegmentRingAssemblyPredicatePath2 {
+        self.predicate_path
+    }
+
+    /// Returns endpoint pair comparisons attempted during ring assembly.
+    pub const fn attempted_endpoint_connection_count(&self) -> usize {
+        self.attempted_endpoint_connection_count
+    }
+
+    /// Returns endpoint pair comparisons certified as equal.
+    pub const fn exact_endpoint_connection_count(&self) -> usize {
+        self.exact_endpoint_connection_count
+    }
+
+    /// Returns endpoint pair comparisons certified as disconnected.
+    pub const fn disconnected_endpoint_connection_count(&self) -> usize {
+        self.disconnected_endpoint_connection_count
+    }
+
+    /// Returns endpoint pair comparisons whose equality could not be certified.
+    pub const fn unresolved_endpoint_connection_count(&self) -> usize {
+        self.unresolved_endpoint_connection_count
+    }
+
+    /// Returns source segments reversed while materializing ring traversal.
+    pub const fn reversed_source_segment_count(&self) -> usize {
+        self.reversed_source_segment_count
+    }
+
+    /// Returns output ring count when available.
+    pub const fn output_ring_count(&self) -> Option<usize> {
+        self.output_ring_count
+    }
+
+    /// Returns output boundary segment count when available.
+    pub const fn output_boundary_segment_count(&self) -> Option<usize> {
+        self.output_boundary_segment_count
+    }
+
+    /// Returns output boundary segment primitive-family counts when available.
+    pub const fn output_boundary_segment_kind_counts(&self) -> Option<SegmentKindCounts> {
+        self.output_boundary_segment_kind_counts
+    }
+
+    /// Returns per-arranged-fragment source provenance after exact splitting.
+    pub fn arranged_source_reports(&self) -> &[RegionLineSegmentArrangedSourceReport2] {
+        &self.arranged_source_reports
+    }
+
+    /// Returns per-output segment source provenance.
+    pub fn source_reports(&self) -> &[RegionLineSegmentRingSourceReport2] {
+        &self.source_reports
     }
 }
 
