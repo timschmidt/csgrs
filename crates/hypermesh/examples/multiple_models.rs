@@ -37,8 +37,9 @@ fn setup(
     let right = exact_box([0, -1, -1], [3, 1, 1]);
     let request =
         ExactBooleanRequest::new(ExactBooleanOperation::Difference, ValidationPolicy::CLOSED);
-    let difference = ExactBooleanWorkspace::new(&left, &right)
-        .materialize(request)
+    let mut workspace = ExactBooleanWorkspace::new(&left, &right);
+    let difference = workspace
+        .materialize_ref(request)
         .expect("overlapping boxes should materialize exact boolean output")
         .mesh()
         .clone();
