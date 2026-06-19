@@ -934,10 +934,25 @@ pub struct ExactCurveArrangementOutputCache2 {
     blocker: Option<UncertaintyReason>,
 }
 
+/// Final retained evaluation facts derived from workspace caches.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ExactCurveArrangementEvaluationSummaryCache2 {
+    evaluated_output: bool,
+    materialized_region: Option<bool>,
+    status: Option<RetainedTopologyStatus>,
+    blocker: Option<UncertaintyReason>,
+    output_ring_count: Option<usize>,
+    output_boundary_segment_count: Option<usize>,
+    output_boundary_segment_kind_counts: Option<SegmentKindCounts>,
+    output_contour_count: Option<usize>,
+    output_segment_count: Option<usize>,
+}
+
 /// Evaluation record for a retained exact curve arrangement attempt.
 #[derive(Clone, Debug, PartialEq)]
 pub struct ExactCurveArrangementEvaluation2 {
     workspace: ExactCurveWorkspace2,
+    summary_cache: ExactCurveArrangementEvaluationSummaryCache2,
 }
 
 /// Canonical exact curve arrangement attempt.
@@ -5892,15 +5907,92 @@ impl ExactCurveArrangementOutputCache2 {
     }
 }
 
+impl ExactCurveArrangementEvaluationSummaryCache2 {
+    fn from_workspace(workspace: &ExactCurveWorkspace2) -> Self {
+        let output_cache = workspace.output_cache();
+        let ring_cache = workspace.ring_assembly_cache();
+        let boundary_output_cache = output_cache.and_then(|cache| cache.boundary_output_cache());
+
+        Self {
+            evaluated_output: output_cache.is_some(),
+            materialized_region: output_cache.map(|cache| cache.materialized_region()),
+            status: output_cache.map(|cache| cache.status()),
+            blocker: output_cache.and_then(|cache| cache.blocker()),
+            output_ring_count: ring_cache.and_then(|cache| cache.output_ring_count()),
+            output_boundary_segment_count: ring_cache
+                .and_then(|cache| cache.output_boundary_segment_count()),
+            output_boundary_segment_kind_counts: ring_cache
+                .and_then(|cache| cache.output_boundary_segment_kind_counts()),
+            output_contour_count: boundary_output_cache.map(|cache| cache.output_contour_count()),
+            output_segment_count: boundary_output_cache.map(|cache| cache.output_segment_count()),
+        }
+    }
+
+    /// Returns whether final output evaluation facts were retained.
+    pub const fn evaluated_output(&self) -> bool {
+        self.evaluated_output
+    }
+
+    /// Returns whether the evaluation materialized a region, when evaluated.
+    pub const fn materialized_region(&self) -> Option<bool> {
+        self.materialized_region
+    }
+
+    /// Returns the final retained topology status, when evaluated.
+    pub const fn status(&self) -> Option<RetainedTopologyStatus> {
+        self.status
+    }
+
+    /// Returns the final blocker, when the evaluated arrangement blocked.
+    pub const fn blocker(&self) -> Option<UncertaintyReason> {
+        self.blocker
+    }
+
+    /// Returns output ring count retained by ring assembly, when available.
+    pub const fn output_ring_count(&self) -> Option<usize> {
+        self.output_ring_count
+    }
+
+    /// Returns output boundary segment count retained by ring assembly, when available.
+    pub const fn output_boundary_segment_count(&self) -> Option<usize> {
+        self.output_boundary_segment_count
+    }
+
+    /// Returns output boundary primitive-family counts retained by ring assembly, when available.
+    pub const fn output_boundary_segment_kind_counts(&self) -> Option<SegmentKindCounts> {
+        self.output_boundary_segment_kind_counts
+    }
+
+    /// Returns final output contour count retained after boundary role assignment.
+    pub const fn output_contour_count(&self) -> Option<usize> {
+        self.output_contour_count
+    }
+
+    /// Returns final output boundary segment count retained after boundary role assignment.
+    pub const fn output_segment_count(&self) -> Option<usize> {
+        self.output_segment_count
+    }
+}
+
 impl ExactCurveArrangementEvaluation2 {
     /// Builds an evaluation record from retained workspace facts.
-    pub const fn new(workspace: ExactCurveWorkspace2) -> Self {
-        Self { workspace }
+    pub fn new(workspace: ExactCurveWorkspace2) -> Self {
+        let summary_cache =
+            ExactCurveArrangementEvaluationSummaryCache2::from_workspace(&workspace);
+        Self {
+            workspace,
+            summary_cache,
+        }
     }
 
     /// Returns the retained workspace consumed by this evaluation.
     pub const fn workspace(&self) -> &ExactCurveWorkspace2 {
         &self.workspace
+    }
+
+    /// Returns final retained evaluation facts derived from workspace caches.
+    pub const fn summary_cache(&self) -> &ExactCurveArrangementEvaluationSummaryCache2 {
+        &self.summary_cache
     }
 }
 
@@ -5949,6 +6041,11 @@ impl ExactCurveArrangementResult2 {
     /// Returns the retained workspace consumed by the evaluation.
     pub const fn workspace(&self) -> &ExactCurveWorkspace2 {
         self.evaluation.workspace()
+    }
+
+    /// Returns final retained evaluation facts derived from workspace caches.
+    pub const fn summary_cache(&self) -> &ExactCurveArrangementEvaluationSummaryCache2 {
+        self.evaluation.summary_cache()
     }
 
     /// Returns the underlying region build result.
