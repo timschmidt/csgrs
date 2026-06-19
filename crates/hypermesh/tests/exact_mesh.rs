@@ -1898,44 +1898,44 @@ fn lower_dimensional_regularized_boolean_is_publicly_replayable() {
         ExactBooleanOperation::Difference,
     ] {
         let request = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED);
-        let evaluation = exact_boolean_evaluation(&left, &right, request);
-        assert!(evaluation.is_certified_lower_dimensional_regularized_solid());
-        evaluation.validate().unwrap();
-        evaluation.validate_against_sources(&left, &right).unwrap();
-        assert_eq!(
-            evaluation.freshness_against_sources(&left, &closed_right),
-            ExactReportFreshness::SourceReplayMismatch
-        );
-
-        let readiness_materialized_lower =
-            evaluation.is_certified_lower_dimensional_regularized_solid();
-        let readiness_materialized_arrangement = evaluation.materializes_arrangement_cell_complex();
-        assert!(
-            readiness_materialized_lower || readiness_materialized_arrangement,
-            "{operation:?}: {evaluation:?}"
-        );
-        if readiness_materialized_lower {
-            assert_eq!(evaluation.retained_face_pairs(), 0);
-            assert_eq!(evaluation.retained_events(), 0);
-        }
-        assert_eq!(evaluation.region_count(), 0);
-        if readiness_materialized_lower {
+        with_exact_boolean_evaluation(&left, &right, request, |evaluation| {
+            assert!(evaluation.is_certified_lower_dimensional_regularized_solid());
+            evaluation.validate().unwrap();
             evaluation.validate_against_sources(&left, &right).unwrap();
-            assert_eq!(
-                evaluation.freshness_against_sources(&left, &right),
-                ExactReportFreshness::Current
-            );
             assert_eq!(
                 evaluation.freshness_against_sources(&left, &closed_right),
                 ExactReportFreshness::SourceReplayMismatch
             );
-        } else {
-            assert!(evaluation_materializes_arrangement_cell_complex(
-                &evaluation
-            ));
-            evaluation.validate().unwrap();
-            evaluation.validate_against_sources(&left, &right).unwrap();
-        }
+
+            let readiness_materialized_lower =
+                evaluation.is_certified_lower_dimensional_regularized_solid();
+            let readiness_materialized_arrangement =
+                evaluation.materializes_arrangement_cell_complex();
+            assert!(
+                readiness_materialized_lower || readiness_materialized_arrangement,
+                "{operation:?}: {evaluation:?}"
+            );
+            if readiness_materialized_lower {
+                assert_eq!(evaluation.retained_face_pairs(), 0);
+                assert_eq!(evaluation.retained_events(), 0);
+            }
+            assert_eq!(evaluation.region_count(), 0);
+            if readiness_materialized_lower {
+                evaluation.validate_against_sources(&left, &right).unwrap();
+                assert_eq!(
+                    evaluation.freshness_against_sources(&left, &right),
+                    ExactReportFreshness::Current
+                );
+                assert_eq!(
+                    evaluation.freshness_against_sources(&left, &closed_right),
+                    ExactReportFreshness::SourceReplayMismatch
+                );
+            } else {
+                assert!(evaluation_materializes_arrangement_cell_complex(evaluation));
+                evaluation.validate().unwrap();
+                evaluation.validate_against_sources(&left, &right).unwrap();
+            }
+        });
 
         let result = exact_boolean_result(
             &left,
@@ -1960,19 +1960,19 @@ fn lower_dimensional_regularized_boolean_is_publicly_replayable() {
             ExactReportFreshness::SourceReplayMismatch
         );
         let disjoint_request = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED);
-        let disjoint_evaluation =
-            exact_boolean_evaluation(&left, &disjoint_right, disjoint_request);
-        assert!(
-            disjoint_evaluation.is_certified_lower_dimensional_regularized_solid(),
-            "{operation:?}: {disjoint_evaluation:?}"
-        );
-        disjoint_evaluation
-            .validate_against_sources(&left, &disjoint_right)
-            .unwrap();
-        assert!(
-            disjoint_evaluation.is_certified_lower_dimensional_regularized_solid(),
-            "{operation:?}: {disjoint_evaluation:?}"
-        );
+        with_exact_boolean_evaluation(&left, &disjoint_right, disjoint_request, |evaluation| {
+            assert!(
+                evaluation.is_certified_lower_dimensional_regularized_solid(),
+                "{operation:?}: {evaluation:?}"
+            );
+            evaluation
+                .validate_against_sources(&left, &disjoint_right)
+                .unwrap();
+            assert!(
+                evaluation.is_certified_lower_dimensional_regularized_solid(),
+                "{operation:?}: {evaluation:?}"
+            );
+        });
         let disjoint_result = exact_boolean_result(
             &left,
             &disjoint_right,
