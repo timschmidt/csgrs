@@ -104,6 +104,7 @@ pub struct BooleanBoundaryLoopExtractionReport2 {
     open_chain_count: usize,
     loop_count: Option<usize>,
     output_fragment_count: Option<usize>,
+    output_source_segment_kind_counts: Option<SegmentKindCounts>,
     output_fragment_kind_counts: Option<SegmentKindCounts>,
     output_fragments: Vec<BooleanBoundaryOutputFragmentReport2>,
     status: RetainedTopologyStatus,
@@ -715,6 +716,11 @@ impl BooleanBoundaryLoopExtractionReport2 {
     /// Returns output fragment count when materialized.
     pub const fn output_fragment_count(&self) -> Option<usize> {
         self.output_fragment_count
+    }
+
+    /// Returns primitive-family counts for output fragment source segments when materialized.
+    pub const fn output_source_segment_kind_counts(&self) -> Option<SegmentKindCounts> {
+        self.output_source_segment_kind_counts
     }
 
     /// Returns primitive-family counts for output loop fragments when materialized.
@@ -1529,6 +1535,8 @@ fn decided_boolean_boundary_loop_extraction_counts_result(
     let output_fragment_count = loops.loops().iter().map(BooleanBoundaryLoop::len).sum();
     let output_fragment_kind_counts = loop_set_fragment_kind_counts(&loops);
     let output_fragments = loop_set_output_fragment_reports(&loops);
+    let output_source_segment_kind_counts =
+        boolean_boundary_output_report_source_kind_counts(&output_fragments);
     BooleanBoundaryLoopExtractionResult2 {
         loops: Some(loops),
         report: BooleanBoundaryLoopExtractionReport2 {
@@ -1540,6 +1548,7 @@ fn decided_boolean_boundary_loop_extraction_counts_result(
             open_chain_count,
             loop_count: Some(closed_chain_count),
             output_fragment_count: Some(output_fragment_count),
+            output_source_segment_kind_counts: Some(output_source_segment_kind_counts),
             output_fragment_kind_counts: Some(output_fragment_kind_counts),
             output_fragments,
             status: RetainedTopologyStatus::NativeExact,
@@ -1584,6 +1593,7 @@ fn blocked_boolean_boundary_loop_extraction_counts_result(
             open_chain_count,
             loop_count: None,
             output_fragment_count: None,
+            output_source_segment_kind_counts: None,
             output_fragment_kind_counts: None,
             output_fragments: Vec::new(),
             status: retained_status_for_loop_extraction_blocker(blocker),
@@ -1794,6 +1804,19 @@ fn loop_set_output_fragment_reports(
             },
         )
         .collect()
+}
+
+fn boolean_boundary_output_report_source_kind_counts(
+    reports: &[BooleanBoundaryOutputFragmentReport2],
+) -> SegmentKindCounts {
+    let mut counts = SegmentKindCounts::default();
+    for report in reports {
+        match report.source_segment_kind {
+            SegmentKind::Line => counts.lines += 1,
+            SegmentKind::Arc => counts.arcs += 1,
+        }
+    }
+    counts
 }
 
 fn contour_segment_kind_counts(contours: &[Contour2]) -> SegmentKindCounts {
