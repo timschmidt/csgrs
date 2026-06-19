@@ -259,11 +259,6 @@ impl ExactArrangementBooleanAttempt {
         self.output_validation
     }
 
-    /// Return the boundary-only projection policy used by this attempt.
-    pub const fn boundary_policy(&self) -> ExactBoundaryBooleanPolicy {
-        self.boundary_policy
-    }
-
     /// Return retained topology assembly gate evidence, when present.
     #[cfg(test)]
     pub(crate) fn topology_assembly_report(&self) -> Option<&ExactTopologyAssemblyReport> {

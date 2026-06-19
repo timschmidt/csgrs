@@ -3727,10 +3727,6 @@ fn exact_boolean_attempt_public_path_reports_blockers_or_cells() {
         request,
         ExactRegularizationPolicy::REGULARIZED_SOLID,
         |attempt| {
-            assert_eq!(
-                attempt.boundary_policy(),
-                ExactBoundaryBooleanPolicy::PreserveSeparateShells
-            );
             attempt.validate().unwrap();
             assert!(attempt.topology_assembly_is_complete());
             assert!(attempt.region_ownership_is_volume_resolved());
