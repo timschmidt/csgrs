@@ -2129,29 +2129,6 @@ impl ExactIdenticalMeshReport {
         }
         Ok(())
     }
-
-    /// Validate this report against the source meshes that produced it.
-    pub fn validate_against_sources(
-        &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-    ) -> Result<(), ExactReportValidationError> {
-        self.validate()?;
-        if self == &identical_mesh_report_from_sources(left, right) {
-            Ok(())
-        } else {
-            Err(ExactReportValidationError::SourceReplayMismatch)
-        }
-    }
-
-    /// Classify whether this retained identical-mesh report is fresh.
-    pub fn freshness_against_sources(
-        &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-    ) -> ExactReportFreshness {
-        exact_report_freshness(self.validate_against_sources(left, right))
-    }
 }
 
 impl ExactTrivialBooleanFacts {
