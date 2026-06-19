@@ -51,6 +51,39 @@ pub struct ExactCurveArrangementSourceSegmentFact2 {
     source_aabb: Option<Aabb2>,
 }
 
+/// AABB certification status retained for one source segment.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum ExactCurveArrangementSourceAabbStatus2 {
+    /// The source segment box was certified during workspace preparation.
+    Decided,
+    /// The source segment box stayed uncertain during workspace preparation.
+    Undecided,
+}
+
+/// Reference to a retained source segment AABB fact.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ExactCurveArrangementSourceAabbRef2 {
+    source_segment_index: usize,
+}
+
+/// Source segment bucket grouped by retained AABB certification status.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ExactCurveArrangementSourceAabbBucket2 {
+    aabb_status: ExactCurveArrangementSourceAabbStatus2,
+    source_refs: Vec<ExactCurveArrangementSourceAabbRef2>,
+}
+
+/// Source segment AABB buckets retained during workspace preparation.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ExactCurveArrangementSourceAabbBucketCache2 {
+    bucket_count: usize,
+    source_ref_count: usize,
+    decided_source_ref_count: usize,
+    undecided_source_ref_count: usize,
+    max_bucket_size: usize,
+    buckets: Vec<ExactCurveArrangementSourceAabbBucket2>,
+}
+
 /// Source segment fact cache retained during workspace preparation.
 #[derive(Clone, Debug, PartialEq)]
 pub struct ExactCurveArrangementSourceSegmentCache2 {
@@ -59,6 +92,7 @@ pub struct ExactCurveArrangementSourceSegmentCache2 {
     decided_source_segment_aabb_count: usize,
     undecided_source_segment_aabb_count: usize,
     source_aabb: Option<Aabb2>,
+    source_aabb_bucket_cache: ExactCurveArrangementSourceAabbBucketCache2,
     segments: Vec<ExactCurveArrangementSourceSegmentFact2>,
 }
 
@@ -1425,6 +1459,101 @@ impl ExactCurveArrangementSourceSegmentFact2 {
     }
 }
 
+impl ExactCurveArrangementSourceAabbRef2 {
+    /// Returns the index into [`ExactCurveArrangementSourceSegmentCache2::segments`].
+    pub const fn source_segment_index(&self) -> usize {
+        self.source_segment_index
+    }
+}
+
+impl ExactCurveArrangementSourceAabbBucket2 {
+    /// Returns the retained AABB certification status represented by this bucket.
+    pub const fn aabb_status(&self) -> ExactCurveArrangementSourceAabbStatus2 {
+        self.aabb_status
+    }
+
+    /// Returns source segment references with this retained AABB status.
+    pub fn source_refs(&self) -> &[ExactCurveArrangementSourceAabbRef2] {
+        &self.source_refs
+    }
+}
+
+impl ExactCurveArrangementSourceAabbBucketCache2 {
+    fn from_source_aabbs(source_segment_aabbs: &[Option<Aabb2>]) -> Self {
+        let mut decided_refs = Vec::new();
+        let mut undecided_refs = Vec::new();
+
+        for (source_segment_index, source_aabb) in source_segment_aabbs.iter().enumerate() {
+            let source_ref = ExactCurveArrangementSourceAabbRef2 {
+                source_segment_index,
+            };
+            if source_aabb.is_some() {
+                decided_refs.push(source_ref);
+            } else {
+                undecided_refs.push(source_ref);
+            }
+        }
+
+        let decided_source_ref_count = decided_refs.len();
+        let undecided_source_ref_count = undecided_refs.len();
+        let buckets = vec![
+            ExactCurveArrangementSourceAabbBucket2 {
+                aabb_status: ExactCurveArrangementSourceAabbStatus2::Decided,
+                source_refs: decided_refs,
+            },
+            ExactCurveArrangementSourceAabbBucket2 {
+                aabb_status: ExactCurveArrangementSourceAabbStatus2::Undecided,
+                source_refs: undecided_refs,
+            },
+        ];
+        let source_ref_count = source_segment_aabbs.len();
+        let max_bucket_size = buckets
+            .iter()
+            .map(|bucket| bucket.source_refs.len())
+            .max()
+            .unwrap_or(0);
+
+        Self {
+            bucket_count: buckets.len(),
+            source_ref_count,
+            decided_source_ref_count,
+            undecided_source_ref_count,
+            max_bucket_size,
+            buckets,
+        }
+    }
+
+    /// Returns the number of AABB-status buckets.
+    pub const fn bucket_count(&self) -> usize {
+        self.bucket_count
+    }
+
+    /// Returns the number of retained source AABB references.
+    pub const fn source_ref_count(&self) -> usize {
+        self.source_ref_count
+    }
+
+    /// Returns the number of source segment boxes certified during workspace preparation.
+    pub const fn decided_source_ref_count(&self) -> usize {
+        self.decided_source_ref_count
+    }
+
+    /// Returns the number of source segment boxes that stayed uncertain.
+    pub const fn undecided_source_ref_count(&self) -> usize {
+        self.undecided_source_ref_count
+    }
+
+    /// Returns the largest AABB-status bucket size.
+    pub const fn max_bucket_size(&self) -> usize {
+        self.max_bucket_size
+    }
+
+    /// Returns source AABB buckets in stable status order.
+    pub fn buckets(&self) -> &[ExactCurveArrangementSourceAabbBucket2] {
+        &self.buckets
+    }
+}
+
 impl ExactCurveArrangementSourceSegmentCache2 {
     fn from_sources(
         source_segments: &[Segment2],
@@ -1450,6 +1579,8 @@ impl ExactCurveArrangementSourceSegmentCache2 {
             .iter()
             .filter(|source_aabb| source_aabb.is_some())
             .count();
+        let source_aabb_bucket_cache =
+            ExactCurveArrangementSourceAabbBucketCache2::from_source_aabbs(source_segment_aabbs);
         Self {
             source_segment_count: source_segments.len(),
             source_segment_kind_counts,
@@ -1458,6 +1589,7 @@ impl ExactCurveArrangementSourceSegmentCache2 {
                 .len()
                 .saturating_sub(decided_source_segment_aabb_count),
             source_aabb,
+            source_aabb_bucket_cache,
             segments,
         }
     }
@@ -1485,6 +1617,11 @@ impl ExactCurveArrangementSourceSegmentCache2 {
     /// Returns the retained aggregate source box when every source box was decided.
     pub const fn source_aabb(&self) -> Option<&Aabb2> {
         self.source_aabb.as_ref()
+    }
+
+    /// Returns retained source AABB buckets grouped by certification status.
+    pub const fn source_aabb_bucket_cache(&self) -> &ExactCurveArrangementSourceAabbBucketCache2 {
+        &self.source_aabb_bucket_cache
     }
 
     /// Returns source segment facts in request order.
@@ -1568,17 +1705,14 @@ impl ExactCurveWorkspace2 {
 
     /// Returns the number of source segment boxes certified during workspace preparation.
     pub fn decided_source_segment_aabb_count(&self) -> usize {
-        self.source_segment_aabbs
-            .iter()
-            .filter(|bbox| bbox.is_some())
-            .count()
+        self.source_segment_cache
+            .decided_source_segment_aabb_count()
     }
 
     /// Returns the number of source segment boxes that stayed uncertain.
     pub fn undecided_source_segment_aabb_count(&self) -> usize {
-        self.source_segment_aabbs
-            .len()
-            .saturating_sub(self.decided_source_segment_aabb_count())
+        self.source_segment_cache
+            .undecided_source_segment_aabb_count()
     }
 
     /// Returns retained source segment facts prepared before split scheduling.

@@ -1,14 +1,15 @@
 use hypercurve::{
     BulgeVertex2, CircularArc2, Classification, Contour2, CurveError, CurvePolicy, CurveString2,
     ExactCurveArrangementAttempt2, ExactCurveArrangementRequest2,
-    ExactCurveArrangementSourceEndpoint2, ExactCurveArrangementSplitCandidateAabbStatus2, FillRule,
-    FiniteProjectionOptions, Real, Region2, RegionBoundaryContourBuildPredicatePath2,
-    RegionBoundaryContourBuildStage2, RegionBoundaryContourRole2,
-    RegionLineSegmentArrangedEndpoint2, RegionLineSegmentEndpointGraphPredicatePath2,
-    RegionLineSegmentRegionBuildStage2, RegionLineSegmentRingAssemblyPredicatePath2,
-    RegionLineSegmentSplitPredicatePath2, RegionPointLocation, RegionView2, Segment2, SegmentKind,
-    SegmentKindCounts, UncertaintyReason, finite_polyline_vertex_centroid, finite_ring_signed_area,
-    try_finite_polyline_vertex_centroid, try_finite_ring_signed_area,
+    ExactCurveArrangementSourceAabbStatus2, ExactCurveArrangementSourceEndpoint2,
+    ExactCurveArrangementSplitCandidateAabbStatus2, FillRule, FiniteProjectionOptions, Real,
+    Region2, RegionBoundaryContourBuildPredicatePath2, RegionBoundaryContourBuildStage2,
+    RegionBoundaryContourRole2, RegionLineSegmentArrangedEndpoint2,
+    RegionLineSegmentEndpointGraphPredicatePath2, RegionLineSegmentRegionBuildStage2,
+    RegionLineSegmentRingAssemblyPredicatePath2, RegionLineSegmentSplitPredicatePath2,
+    RegionPointLocation, RegionView2, Segment2, SegmentKind, SegmentKindCounts, UncertaintyReason,
+    finite_polyline_vertex_centroid, finite_ring_signed_area, try_finite_polyline_vertex_centroid,
+    try_finite_ring_signed_area,
 };
 use proptest::prelude::*;
 
@@ -1081,6 +1082,40 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
             .source_aabb()
             .map(|bbox| (bbox.min().clone(), bbox.max().clone()))
     );
+    let source_aabb_bucket_cache = source_segment_cache.source_aabb_bucket_cache();
+    assert_eq!(source_aabb_bucket_cache.bucket_count(), 2);
+    assert_eq!(source_aabb_bucket_cache.source_ref_count(), 4);
+    assert_eq!(source_aabb_bucket_cache.decided_source_ref_count(), 4);
+    assert_eq!(source_aabb_bucket_cache.undecided_source_ref_count(), 0);
+    assert_eq!(source_aabb_bucket_cache.max_bucket_size(), 4);
+    assert_eq!(source_aabb_bucket_cache.buckets().len(), 2);
+    assert_eq!(
+        source_aabb_bucket_cache.buckets()[0].aabb_status(),
+        ExactCurveArrangementSourceAabbStatus2::Decided
+    );
+    assert_eq!(
+        source_aabb_bucket_cache.buckets()[0].source_refs().len(),
+        source_segment_cache.decided_source_segment_aabb_count()
+    );
+    assert_eq!(
+        source_aabb_bucket_cache.buckets()[0].source_refs()[0].source_segment_index(),
+        0
+    );
+    assert!(
+        source_segment_cache.segments()
+            [source_aabb_bucket_cache.buckets()[0].source_refs()[0].source_segment_index()]
+        .source_aabb()
+        .is_some()
+    );
+    assert_eq!(
+        source_aabb_bucket_cache.buckets()[1].aabb_status(),
+        ExactCurveArrangementSourceAabbStatus2::Undecided
+    );
+    assert!(
+        source_aabb_bucket_cache.buckets()[1]
+            .source_refs()
+            .is_empty()
+    );
     assert_eq!(source_segment_cache.segments().len(), 4);
     let first_source_segment = &source_segment_cache.segments()[0];
     assert_eq!(first_source_segment.source_segment_index(), 0);
@@ -1527,6 +1562,26 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
     assert_eq!(
         source_segment_cache.undecided_source_segment_aabb_count(),
         0
+    );
+    let source_aabb_bucket_cache = source_segment_cache.source_aabb_bucket_cache();
+    assert_eq!(source_aabb_bucket_cache.bucket_count(), 2);
+    assert_eq!(source_aabb_bucket_cache.source_ref_count(), 2);
+    assert_eq!(source_aabb_bucket_cache.decided_source_ref_count(), 2);
+    assert_eq!(source_aabb_bucket_cache.undecided_source_ref_count(), 0);
+    assert_eq!(source_aabb_bucket_cache.max_bucket_size(), 2);
+    assert_eq!(
+        source_aabb_bucket_cache.buckets()[0].aabb_status(),
+        ExactCurveArrangementSourceAabbStatus2::Decided
+    );
+    assert_eq!(source_aabb_bucket_cache.buckets()[0].source_refs().len(), 2);
+    assert_eq!(
+        source_aabb_bucket_cache.buckets()[1].aabb_status(),
+        ExactCurveArrangementSourceAabbStatus2::Undecided
+    );
+    assert!(
+        source_aabb_bucket_cache.buckets()[1]
+            .source_refs()
+            .is_empty()
     );
     assert_eq!(source_segment_cache.segments().len(), 2);
     let first_source_segment = &source_segment_cache.segments()[0];
