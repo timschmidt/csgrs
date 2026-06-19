@@ -3112,7 +3112,7 @@ fn arrangement_cell_complex_output_matches_sources(
         }
         _ => {}
     }
-    if adjacent_report.status != ExactAdjacentUnionCompletionStatus::NoAdjacencyCertificate {
+    if adjacent_report.status() != ExactAdjacentUnionCompletionStatus::NoAdjacencyCertificate {
         return Ok(None);
     }
 
@@ -5492,7 +5492,7 @@ pub struct ExactBoundaryTouchingReport {
 }
 
 /// Certification status for closed-solid adjacent union completion.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ExactAdjacentUnionCompletionStatus {
     /// The requested operation is not union, so this completion path cannot
     /// apply.
@@ -5528,41 +5528,151 @@ pub enum ExactAdjacentUnionCompletionStatus {
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ExactAdjacentUnionCompletionReport {
     /// Requested named operation.
-    pub operation: ExactBooleanOperation,
+    pub(crate) operation: ExactBooleanOperation,
     /// Coarse certification status.
-    pub status: ExactAdjacentUnionCompletionStatus,
+    pub(crate) status: ExactAdjacentUnionCompletionStatus,
     /// Whether the left source mesh was a closed manifold.
-    pub left_closed: bool,
+    pub(crate) left_closed: bool,
     /// Whether the right source mesh was a closed manifold.
-    pub right_closed: bool,
+    pub(crate) right_closed: bool,
     /// Whether the stronger axis-aligned box path owns this pair.
-    pub axis_aligned_box_pair: bool,
+    pub(crate) axis_aligned_box_pair: bool,
     /// Whether another exact kernel should materialize this union first.
-    pub stronger_kernel_available: bool,
+    pub(crate) stronger_kernel_available: bool,
     /// Whether graph extraction retained unknown events.
-    pub graph_had_unknowns: bool,
+    pub(crate) graph_had_unknowns: bool,
     /// Retained face-pair records after exact scheduling.
-    pub retained_face_pairs: usize,
+    pub(crate) retained_face_pairs: usize,
     /// Total retained event records.
-    pub retained_events: usize,
+    pub(crate) retained_events: usize,
     /// Relation counts for retained face pairs.
-    pub blocker: ExactBooleanBlocker,
+    pub(crate) blocker: ExactBooleanBlocker,
     /// Count of exact whole-face pairs consumed by full-face completion.
-    pub full_face_shared_faces: usize,
+    pub(crate) full_face_shared_faces: usize,
     /// Count of exact source-owned full patches consumed by full-face
     /// completion.
-    pub full_face_shared_patches: usize,
+    pub(crate) full_face_shared_patches: usize,
     /// Source side whose faces contain the opposite caps for contained-face
     /// completion.
-    pub contained_containing_side: Option<MeshSide>,
+    pub(crate) contained_containing_side: Option<MeshSide>,
     /// Count of opposite-source faces removed by contained-face completion.
-    pub contained_faces: usize,
+    pub(crate) contained_faces: usize,
     /// Count of source faces replaced by holed remnants in contained-face
     /// completion.
-    pub containing_faces: usize,
+    pub(crate) containing_faces: usize,
 }
 
 impl ExactAdjacentUnionCompletionReport {
+    /// Return the requested named operation.
+    pub const fn operation(&self) -> ExactBooleanOperation {
+        self.operation
+    }
+
+    /// Return the coarse adjacent-union completion status.
+    pub const fn status(&self) -> ExactAdjacentUnionCompletionStatus {
+        self.status
+    }
+
+    /// Return whether the left source mesh was a closed manifold.
+    pub const fn left_closed(&self) -> bool {
+        self.left_closed
+    }
+
+    /// Return whether the right source mesh was a closed manifold.
+    pub const fn right_closed(&self) -> bool {
+        self.right_closed
+    }
+
+    /// Return whether the stronger axis-aligned box path owns this pair.
+    pub const fn axis_aligned_box_pair(&self) -> bool {
+        self.axis_aligned_box_pair
+    }
+
+    /// Return whether another exact kernel should materialize this union first.
+    pub const fn stronger_kernel_available(&self) -> bool {
+        self.stronger_kernel_available
+    }
+
+    /// Return whether graph extraction retained unknown events.
+    pub const fn graph_had_unknowns(&self) -> bool {
+        self.graph_had_unknowns
+    }
+
+    /// Return the retained face-pair record count.
+    pub const fn retained_face_pairs(&self) -> usize {
+        self.retained_face_pairs
+    }
+
+    /// Return the retained face-pair record count mutably.
+    pub fn retained_face_pairs_mut(&mut self) -> &mut usize {
+        &mut self.retained_face_pairs
+    }
+
+    /// Return the retained event record count.
+    pub const fn retained_events(&self) -> usize {
+        self.retained_events
+    }
+
+    /// Return the retained event record count mutably.
+    pub fn retained_events_mut(&mut self) -> &mut usize {
+        &mut self.retained_events
+    }
+
+    /// Return the retained relation-count blocker.
+    pub const fn blocker(&self) -> &ExactBooleanBlocker {
+        &self.blocker
+    }
+
+    /// Return the retained relation-count blocker mutably.
+    pub fn blocker_mut(&mut self) -> &mut ExactBooleanBlocker {
+        &mut self.blocker
+    }
+
+    /// Return the exact whole-face pair count consumed by completion.
+    pub const fn full_face_shared_faces(&self) -> usize {
+        self.full_face_shared_faces
+    }
+
+    /// Return the exact whole-face pair count mutably.
+    pub fn full_face_shared_faces_mut(&mut self) -> &mut usize {
+        &mut self.full_face_shared_faces
+    }
+
+    /// Return the exact source-owned full patch count consumed by completion.
+    pub const fn full_face_shared_patches(&self) -> usize {
+        self.full_face_shared_patches
+    }
+
+    /// Return the side whose faces contain opposite caps, when certified.
+    pub const fn contained_containing_side(&self) -> Option<MeshSide> {
+        self.contained_containing_side
+    }
+
+    /// Return the containing side evidence mutably.
+    pub fn contained_containing_side_mut(&mut self) -> &mut Option<MeshSide> {
+        &mut self.contained_containing_side
+    }
+
+    /// Return the count of opposite-source faces removed by contained completion.
+    pub const fn contained_faces(&self) -> usize {
+        self.contained_faces
+    }
+
+    /// Return the count of opposite-source faces mutably.
+    pub fn contained_faces_mut(&mut self) -> &mut usize {
+        &mut self.contained_faces
+    }
+
+    /// Return the count of source faces replaced by holed remnants.
+    pub const fn containing_faces(&self) -> usize {
+        self.containing_faces
+    }
+
+    /// Return the count of source faces replaced by holed remnants mutably.
+    pub fn containing_faces_mut(&mut self) -> &mut usize {
+        &mut self.containing_faces
+    }
+
     /// Return whether adjacent union completion was certified.
     pub const fn is_certified(&self) -> bool {
         matches!(

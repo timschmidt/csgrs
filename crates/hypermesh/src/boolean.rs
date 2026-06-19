@@ -1316,12 +1316,12 @@ impl ExactBooleanCertificationSet {
         self.refinement.validate()?;
         self.adjacent_union_completion.validate()?;
         if self.refinement.operation != request.operation
-            || self.adjacent_union_completion.operation != request.operation
+            || self.adjacent_union_completion.operation() != request.operation
         {
             return Err(ExactReportValidationError::StatusEvidenceMismatch);
         }
         let adjacent_union_completion_certified = self.adjacent_union_completion.is_certified()
-            && self.adjacent_union_completion.operation == request.operation
+            && self.adjacent_union_completion.operation() == request.operation
             && request.operation == ExactBooleanOperation::Union
             && self.arrangement_attempt.is_none();
         if adjacent_union_completion_certified {
@@ -1514,11 +1514,11 @@ impl ExactBooleanCertificationSet {
         preflight: &ExactBooleanPreflight,
     ) -> bool {
         self.adjacent_union_completion.is_certified()
-            && self.adjacent_union_completion.operation == preflight.operation
+            && self.adjacent_union_completion.operation() == preflight.operation
             && preflight.operation == ExactBooleanOperation::Union
-            && preflight.graph_had_unknowns == self.adjacent_union_completion.graph_had_unknowns
-            && preflight.retained_face_pairs == self.adjacent_union_completion.retained_face_pairs
-            && preflight.retained_events == self.adjacent_union_completion.retained_events
+            && preflight.graph_had_unknowns == self.adjacent_union_completion.graph_had_unknowns()
+            && preflight.retained_face_pairs == self.adjacent_union_completion.retained_face_pairs()
+            && preflight.retained_events == self.adjacent_union_completion.retained_events()
             && preflight.region_count == 0
             && preflight.region_classifications.is_empty()
             && preflight.blocker.is_none()
@@ -1715,7 +1715,7 @@ impl ExactBooleanCertificationSet {
                         == Some(ExactBooleanSupport::CertifiedArrangementCellComplex)
                         && arrangement_shortcut_attempt_certifies_request)
                         || (self.adjacent_union_completion.is_certified()
-                            && self.adjacent_union_completion.operation == operation)
+                            && self.adjacent_union_completion.operation() == operation)
                         || arrangement_attempt_certifies_request)
             }
             _ => true,

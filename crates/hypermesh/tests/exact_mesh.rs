@@ -110,8 +110,8 @@ fn assert_public_full_face_adjacent_union(
         .adjacent_union_completion()
         .clone();
     assert!(report.is_certified_full_face());
-    assert_eq!(report.full_face_shared_faces, expected_shared_faces);
-    assert_eq!(report.full_face_shared_patches, expected_shared_patches);
+    assert_eq!(report.full_face_shared_faces(), expected_shared_faces);
+    assert_eq!(report.full_face_shared_patches(), expected_shared_patches);
     assert!(report.is_certified());
     report.validate().unwrap();
     evaluation
@@ -154,8 +154,8 @@ fn assert_public_contained_face_adjacent_union(
         .adjacent_union_completion()
         .clone();
     assert!(report.is_certified_contained_face());
-    assert_eq!(report.containing_faces, expected_containing_faces);
-    assert_eq!(report.contained_faces, expected_contained_faces);
+    assert_eq!(report.containing_faces(), expected_containing_faces);
+    assert_eq!(report.contained_faces(), expected_contained_faces);
     assert!(report.is_certified());
     report.validate().unwrap();
     evaluation
@@ -1489,7 +1489,7 @@ fn exact_full_face_adjacent_union_is_publicly_replayable() {
         &right,
         ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED),
     );
-    invalid_shared_faces.full_face_shared_faces = 0;
+    *invalid_shared_faces.full_face_shared_faces_mut() = 0;
     assert!(invalid_shared_faces.validate().is_err());
 
     let mut invalid_output = result.clone();
@@ -1559,9 +1559,9 @@ fn full_face_adjacent_union_refines_side_faces_for_boundary_subdivided_shared_fa
         .adjacent_union_completion()
         .clone();
     assert!(report.is_certified_full_face());
-    assert_eq!(report.full_face_shared_faces, 0);
-    assert_eq!(report.full_face_shared_patches, 1);
-    assert!(!report.stronger_kernel_available);
+    assert_eq!(report.full_face_shared_faces(), 0);
+    assert_eq!(report.full_face_shared_patches(), 1);
+    assert!(!report.stronger_kernel_available());
     report.validate().unwrap();
     evaluation
         .certifications()
@@ -1641,8 +1641,8 @@ fn full_face_adjacent_union_accepts_dual_boundary_subdivided_shared_face() {
         .adjacent_union_completion()
         .clone();
     assert!(report.is_certified_full_face());
-    assert_eq!(report.full_face_shared_faces, 0);
-    assert_eq!(report.full_face_shared_patches, 1);
+    assert_eq!(report.full_face_shared_faces(), 0);
+    assert_eq!(report.full_face_shared_patches(), 1);
     report.validate().unwrap();
     evaluation
         .certifications()
@@ -1714,8 +1714,8 @@ fn adjacent_union_completion_boolean_is_publicly_replayable() {
         .clone();
     assert!(report.is_certified_full_face());
     assert!(report.is_certified());
-    assert!(report.full_face_shared_faces + report.full_face_shared_patches > 0);
-    assert_eq!(report.contained_faces, 0);
+    assert!(report.full_face_shared_faces() + report.full_face_shared_patches() > 0);
+    assert_eq!(report.contained_faces(), 0);
     report.validate().unwrap();
     evaluation
         .certifications()
@@ -1776,9 +1776,9 @@ fn adjacent_union_completion_boolean_is_publicly_replayable() {
     assert!(!intersection_report.is_certified());
     intersection_report.validate().unwrap();
     let mut stale_intersection_report = intersection_report.clone();
-    stale_intersection_report.retained_face_pairs = 1;
-    stale_intersection_report.retained_events = 1;
-    stale_intersection_report.blocker.candidate_pairs = 1;
+    *stale_intersection_report.retained_face_pairs_mut() = 1;
+    *stale_intersection_report.retained_events_mut() = 1;
+    stale_intersection_report.blocker_mut().candidate_pairs = 1;
     assert!(stale_intersection_report.validate().is_err());
 
     let axis_left = axis_aligned_box([0, 0, 0], [1, 1, 1]);
@@ -1791,9 +1791,9 @@ fn adjacent_union_completion_boolean_is_publicly_replayable() {
     assert!(axis_report.is_axis_aligned_box_pair());
     axis_report.validate().unwrap();
     let mut stale_axis_report = axis_report.clone();
-    stale_axis_report.retained_face_pairs = 1;
-    stale_axis_report.retained_events = 1;
-    stale_axis_report.blocker.candidate_pairs = 1;
+    *stale_axis_report.retained_face_pairs_mut() = 1;
+    *stale_axis_report.retained_events_mut() = 1;
+    stale_axis_report.blocker_mut().candidate_pairs = 1;
     assert!(stale_axis_report.validate().is_err());
 
     let axis_replay = exact_boolean_result(
@@ -1816,8 +1816,8 @@ fn adjacent_union_completion_boolean_is_publicly_replayable() {
         .adjacent_union_completion()
         .clone();
     assert!(crossing_report.has_no_adjacency_certificate());
-    assert!(crossing_report.blocker.requires_winding());
-    assert!(crossing_report.blocker.candidate_pairs > 0);
+    assert!(crossing_report.blocker().requires_winding());
+    assert!(crossing_report.blocker().candidate_pairs > 0);
     crossing_report.validate().unwrap();
     crossing_evaluation
         .certifications()
@@ -1825,7 +1825,7 @@ fn adjacent_union_completion_boolean_is_publicly_replayable() {
         .unwrap();
 
     let mut stale_crossing = crossing_report;
-    stale_crossing.blocker.unknown_pairs = 1;
+    stale_crossing.blocker_mut().unknown_pairs = 1;
     assert!(stale_crossing.validate().is_err());
 }
 
@@ -3622,8 +3622,8 @@ fn exact_contained_face_adjacent_union_is_publicly_replayable() {
         .adjacent_union_completion()
         .clone();
     assert!(multi_hole_report.is_certified_contained_face());
-    assert_eq!(multi_hole_report.containing_faces, 1);
-    assert_eq!(multi_hole_report.contained_faces, 2);
+    assert_eq!(multi_hole_report.containing_faces(), 1);
+    assert_eq!(multi_hole_report.contained_faces(), 2);
     multi_hole_report.validate().unwrap();
     multi_hole_evaluation
         .certifications()
@@ -3635,7 +3635,7 @@ fn exact_contained_face_adjacent_union_is_publicly_replayable() {
         &right,
         ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED),
     );
-    missing_contained.contained_faces = 0;
+    *missing_contained.contained_faces_mut() = 0;
     assert!(missing_contained.validate().is_err());
 
     let mut relabeled_containing = exact_adjacent_union_completion_report!(
@@ -3643,7 +3643,7 @@ fn exact_contained_face_adjacent_union_is_publicly_replayable() {
         &right,
         ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED),
     );
-    relabeled_containing.contained_containing_side = None;
+    *relabeled_containing.contained_containing_side_mut() = None;
     assert!(relabeled_containing.validate().is_err());
 
     let mut impossible_counts = exact_adjacent_union_completion_report!(
@@ -3651,7 +3651,7 @@ fn exact_contained_face_adjacent_union_is_publicly_replayable() {
         &right,
         ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED),
     );
-    impossible_counts.containing_faces = impossible_counts.retained_face_pairs + 1;
+    *impossible_counts.containing_faces_mut() = impossible_counts.retained_face_pairs() + 1;
     assert!(impossible_counts.validate().is_err());
 
     let mut invalid_output = result.clone();
@@ -3685,8 +3685,8 @@ fn exact_contained_face_adjacent_union_is_publicly_replayable() {
         .adjacent_union_completion()
         .clone();
     assert!(split_report.is_certified_contained_face());
-    assert_eq!(split_report.containing_faces, 2);
-    assert_eq!(split_report.contained_faces, 1);
+    assert_eq!(split_report.containing_faces(), 2);
+    assert_eq!(split_report.contained_faces(), 1);
     split_report.validate().unwrap();
     split_evaluation
         .certifications()
@@ -3705,8 +3705,8 @@ fn exact_contained_face_adjacent_union_is_publicly_replayable() {
         .adjacent_union_completion()
         .clone();
     assert!(square_disk_report.is_certified_contained_face());
-    assert_eq!(square_disk_report.containing_faces, 2);
-    assert_eq!(square_disk_report.contained_faces, 2);
+    assert_eq!(square_disk_report.containing_faces(), 2);
+    assert_eq!(square_disk_report.contained_faces(), 2);
     square_disk_report.validate().unwrap();
     square_disk_evaluation
         .certifications()
@@ -3726,12 +3726,12 @@ fn exact_contained_face_adjacent_union_is_publicly_replayable() {
     assert!(completion_report.is_certified_contained_face());
     assert!(completion_report.is_certified());
     assert_eq!(
-        completion_report.full_face_shared_faces + completion_report.full_face_shared_patches,
+        completion_report.full_face_shared_faces() + completion_report.full_face_shared_patches(),
         0
     );
-    assert!(completion_report.contained_faces > 0);
-    assert!(completion_report.containing_faces > 0);
-    assert!(completion_report.contained_containing_side.is_some());
+    assert!(completion_report.contained_faces() > 0);
+    assert!(completion_report.containing_faces() > 0);
+    assert!(completion_report.contained_containing_side().is_some());
     completion_report.validate().unwrap();
     evaluation
         .certifications()
