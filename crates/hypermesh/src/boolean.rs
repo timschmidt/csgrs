@@ -751,7 +751,10 @@ impl ExactArrangementBooleanAttempt {
         request: ExactBooleanRequest,
     ) -> Result<(), ExactReportValidationError> {
         self.validate()?;
-        let replay = workspace_arrangement_attempt_for_replay(left, right, request, self.policy)?;
+        let replay = ExactBooleanWorkspace::new(left, right)
+            .arrangement_attempt(request, self.policy)
+            .map(Clone::clone)
+            .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
         replay.validate()?;
         if self == &replay {
             Ok(())
@@ -759,19 +762,6 @@ impl ExactArrangementBooleanAttempt {
             Err(ExactReportValidationError::SourceReplayMismatch)
         }
     }
-}
-
-fn workspace_arrangement_attempt_for_replay(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    request: ExactBooleanRequest,
-    policy: ExactRegularizationPolicy,
-) -> Result<ExactArrangementBooleanAttempt, ExactReportValidationError> {
-    let mut workspace = ExactBooleanWorkspace::new(left, right);
-    workspace
-        .arrangement_attempt(request, policy)
-        .map(Clone::clone)
-        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)
 }
 
 pub(crate) fn workspace_evaluation_for_replay(
