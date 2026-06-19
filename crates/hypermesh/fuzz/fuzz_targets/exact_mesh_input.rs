@@ -47,15 +47,10 @@ fn exercise_workspace_pair(left: &ExactMesh, right: &ExactMesh, validation: Vali
                 let _ = attempt.validate_against_sources_with_validation(left, right, validation);
             }
         }
-        if let Ok(result) = workspace.materialize_ref(request) {
-            let _ = result.validate();
-            let _ = result.validate_operation_against_sources(
-                left,
-                right,
-                operation,
-                validation,
-                request.boundary_policy,
-            );
+        if workspace.materialize_ref(request).is_ok()
+            && let Ok(evaluation) = workspace.evaluate(request)
+        {
+            let _ = evaluation.validate_materialized_result_against_sources(left, right);
         }
     }
 }
