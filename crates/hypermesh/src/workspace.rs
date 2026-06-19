@@ -125,39 +125,21 @@ impl<'a> ExactBooleanWorkspace<'a> {
         .map(|index| &self.arrangements[index].1)
     }
 
-    fn regularized_solid_arrangement_attempt_index(
+    fn validated_regularized_solid_arrangement_attempt(
         &self,
         request: ExactBooleanRequest,
-    ) -> Option<usize> {
-        cached_by_request_and_policy_index(
+    ) -> Result<Option<&ExactArrangementBooleanAttempt>, MeshError> {
+        let Some(index) = cached_by_request_and_policy_index(
             &self.arrangement_attempts,
             request,
             ExactRegularizationPolicy::REGULARIZED_SOLID,
-        )
-    }
-
-    fn validated_regularized_solid_arrangement_attempt_index(
-        &self,
-        request: ExactBooleanRequest,
-    ) -> Result<Option<usize>, MeshError> {
-        let Some(index) = self.regularized_solid_arrangement_attempt_index(request) else {
+        ) else {
             return Ok(None);
         };
         self.arrangement_attempts[index]
             .2
             .validate_against_sources_for_request(self.left, self.right, request)
             .map_err(workspace_report_validation_error)?;
-        Ok(Some(index))
-    }
-
-    fn validated_regularized_solid_arrangement_attempt(
-        &self,
-        request: ExactBooleanRequest,
-    ) -> Result<Option<&ExactArrangementBooleanAttempt>, MeshError> {
-        let Some(index) = self.validated_regularized_solid_arrangement_attempt_index(request)?
-        else {
-            return Ok(None);
-        };
         Ok(Some(&self.arrangement_attempts[index].2))
     }
 
@@ -264,9 +246,12 @@ impl<'a> ExactBooleanWorkspace<'a> {
     ) -> Result<ExactBooleanPreflight, MeshError> {
         let left = self.left;
         let right = self.right;
-        if self
-            .regularized_solid_arrangement_attempt_index(request)
-            .is_none()
+        if cached_by_request_and_policy_index(
+            &self.arrangement_attempts,
+            request,
+            ExactRegularizationPolicy::REGULARIZED_SOLID,
+        )
+        .is_none()
             && !matches!(
                 request.operation,
                 super::boolean::ExactBooleanOperation::SelectedRegions(_)
