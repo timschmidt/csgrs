@@ -261,6 +261,23 @@ impl ExactArrangementBooleanAttempt {
         self.region_ownership_report = Some(report);
     }
 
+    pub(crate) fn retained_gate_reports(
+        &self,
+    ) -> Option<(&ExactTopologyAssemblyReport, &ExactRegionOwnershipReport)> {
+        let topology = self.topology_assembly_report.as_ref()?;
+        let ownership = self.region_ownership_report.as_ref()?;
+        if topology.validate().is_ok()
+            && topology.is_complete()
+            && ownership.validate().is_ok()
+            && self.topology_assembly == Some(topology.status)
+            && self.region_ownership == Some(ownership.status)
+        {
+            Some((topology, ownership))
+        } else {
+            None
+        }
+    }
+
     /// Return whether this attempt reached the materialized arrangement
     /// cell-complex shortcut state.
     pub(crate) fn materialized_arrangement_cell_complex_shortcut(&self) -> bool {
@@ -288,11 +305,7 @@ impl ExactArrangementBooleanAttempt {
             Some(ExactBooleanShortcutKind::ArrangementCellComplex) => true,
             Some(_) => false,
             None => {
-                self.topology_assembly
-                    .is_some_and(|status| status.is_complete())
-                    && self.resolves_requested_volume_ownership()
-                    && self.topology_assembly_report.is_some()
-                    && self.region_ownership_report.is_some()
+                self.retained_gate_reports().is_some() && self.resolves_requested_volume_ownership()
             }
         }
     }
@@ -1020,11 +1033,8 @@ impl ExactBooleanCertificationSet {
             && !retained_arrangement_attempt_materializes_output
             && (retained_arrangement_cell_complex_shortcut_attempt.is_some()
                 || arrangement_cell_complex_shortcut_attempt_report.is_some());
-        let retained_attempt_has_regularized_reports =
-            retained_arrangement_attempt.is_some_and(|attempt| {
-                attempt.topology_assembly_report.is_some()
-                    && attempt.region_ownership_report.is_some()
-            });
+        let retained_attempt_has_regularized_reports = retained_arrangement_attempt
+            .is_some_and(|attempt| attempt.retained_gate_reports().is_some());
         let owned_regularized_arrangement;
         let regularized_arrangement =
             if matches!(request.operation, ExactBooleanOperation::SelectedRegions(_))
@@ -1256,9 +1266,11 @@ impl ExactBooleanCertificationSet {
     }
 
     fn topology_assembly_report(&self) -> Option<&ExactTopologyAssemblyReport> {
-        self.arrangement_attempt
-            .as_ref()
-            .and_then(|attempt| attempt.topology_assembly_report.as_ref())
+        self.arrangement_attempt.as_ref().and_then(|attempt| {
+            attempt
+                .retained_gate_reports()
+                .map(|(topology, _)| topology)
+        })
     }
 
     fn topology_assembly_complete(&self) -> bool {
@@ -1267,9 +1279,10 @@ impl ExactBooleanCertificationSet {
     }
 
     fn region_ownership_resolves_operation(&self, operation: ExactBooleanOperation) -> bool {
-        self.arrangement_attempt
-            .as_ref()
-            .is_some_and(|attempt| attempt.resolves_volume_ownership_for_operation(operation))
+        self.arrangement_attempt.as_ref().is_some_and(|attempt| {
+            attempt.retained_gate_reports().is_some()
+                && attempt.resolves_volume_ownership_for_operation(operation)
+        })
     }
 
     fn arrangement_attempt_certifies_output_for_operation(
