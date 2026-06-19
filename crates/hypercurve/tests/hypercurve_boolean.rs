@@ -6,7 +6,7 @@ use hypercurve::{
     BooleanFragmentClassification, BooleanFragmentSelection, BooleanFragmentSelectionStage2,
     BooleanOp, BulgeVertex2, Classification, Contour2, CurveError, CurvePolicy,
     DirectedBooleanFragment, FillRule, LineSeg2, ParamRange, Real, Region2, RegionContourKey,
-    RegionContourRole, RegionPointLocation, RegionSide, Segment2, SegmentKindCounts,
+    RegionContourRole, RegionPointLocation, RegionSide, Segment2, SegmentKind, SegmentKindCounts,
     UncertaintyReason,
 };
 
@@ -401,6 +401,10 @@ fn boolean_fragment_selection_emits_directed_boundary_fragments() {
         emitted_first.source_segment_index
     );
     assert_eq!(
+        assembled_first_report.source_segment_kind(),
+        SegmentKind::Line
+    );
+    assert_eq!(
         assembled_first_report.source_segment_start_point(),
         &emitted_first.source_segment_start_point
     );
@@ -469,6 +473,10 @@ fn boolean_fragment_selection_emits_directed_boundary_fragments() {
         assembled_first_report.source_segment_index()
     );
     assert_eq!(
+        extracted_first_report.source_segment_kind(),
+        assembled_first_report.source_segment_kind()
+    );
+    assert_eq!(
         extracted_first_report.source_segment_start_point(),
         assembled_first_report.source_segment_start_point()
     );
@@ -535,6 +543,10 @@ fn boolean_fragment_selection_emits_directed_boundary_fragments() {
     assert_eq!(
         transferred_first_report.source_segment_index(),
         extracted_first_report.source_segment_index()
+    );
+    assert_eq!(
+        transferred_first_report.source_segment_kind(),
+        extracted_first_report.source_segment_kind()
     );
     assert_eq!(
         transferred_first_report.source_segment_start_point(),

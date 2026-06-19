@@ -65,6 +65,7 @@ pub struct BooleanBoundaryOutputFragmentReport2 {
     key: RegionContourKey,
     fragment_index: usize,
     source_segment_index: usize,
+    source_segment_kind: SegmentKind,
     source_segment_start_point: Point2,
     source_segment_end_point: Point2,
     source_range: ParamRange,
@@ -405,6 +406,11 @@ impl BooleanBoundaryOutputFragmentReport2 {
     /// Returns the source segment index in the original contour.
     pub const fn source_segment_index(&self) -> usize {
         self.source_segment_index
+    }
+
+    /// Returns the source segment primitive kind in the original contour.
+    pub const fn source_segment_kind(&self) -> SegmentKind {
+        self.source_segment_kind
     }
 
     /// Returns the exact start point of the original source segment.
@@ -1658,6 +1664,7 @@ fn chain_set_output_fragment_reports(
                 key: fragment.key,
                 fragment_index: fragment.fragment_index,
                 source_segment_index: fragment.source_segment_index,
+                source_segment_kind: fragment.segment.structural_facts().kind,
                 source_segment_start_point: fragment.source_segment_start_point.clone(),
                 source_segment_end_point: fragment.source_segment_end_point.clone(),
                 source_range: fragment.source_range.clone(),
@@ -1765,6 +1772,7 @@ fn loop_set_output_fragment_reports(
                 key: fragment.key,
                 fragment_index: fragment.fragment_index,
                 source_segment_index: fragment.source_segment_index,
+                source_segment_kind: fragment.segment.structural_facts().kind,
                 source_segment_start_point: fragment.source_segment_start_point.clone(),
                 source_segment_end_point: fragment.source_segment_end_point.clone(),
                 source_range: fragment.source_range.clone(),
