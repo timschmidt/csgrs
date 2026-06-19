@@ -254,11 +254,6 @@ pub struct ExactArrangementBooleanAttempt {
 }
 
 impl ExactArrangementBooleanAttempt {
-    /// Return the output validation policy used by this attempt.
-    pub const fn output_validation(&self) -> ValidationPolicy {
-        self.output_validation
-    }
-
     /// Return retained topology assembly gate evidence, when present.
     #[cfg(test)]
     pub(crate) fn topology_assembly_report(&self) -> Option<&ExactTopologyAssemblyReport> {

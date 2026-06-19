@@ -1510,7 +1510,6 @@ fn exact_open_surface_arrangement_is_publicly_replayable() {
                 ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
                 ExactRegularizationPolicy::REGULARIZED_SOLID,
                 |closed_attempt| {
-                    assert_eq!(closed_attempt.output_validation(), ValidationPolicy::CLOSED);
                     closed_attempt.validate().unwrap();
                     closed_attempt
                         .validate_against_sources_for_request(
@@ -1545,10 +1544,6 @@ fn exact_open_surface_arrangement_is_publicly_replayable() {
             ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
             ExactRegularizationPolicy::REGULARIZED_SOLID,
             |attempt| {
-                assert_eq!(
-                    attempt.output_validation(),
-                    ValidationPolicy::ALLOW_BOUNDARY
-                );
                 attempt.validate().unwrap();
                 attempt.validate_against_sources(&left, &right).unwrap();
                 attempt
@@ -1648,7 +1643,6 @@ fn arrangement_attempt_output_validation_is_publicly_replayable() {
             ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
             ExactRegularizationPolicy::REGULARIZED_SOLID,
             |closed_attempt| {
-                assert_eq!(closed_attempt.output_validation(), ValidationPolicy::CLOSED);
                 closed_attempt.validate().unwrap();
                 closed_attempt
                     .validate_against_sources(&left, &right)
@@ -1685,10 +1679,6 @@ fn arrangement_attempt_output_validation_is_publicly_replayable() {
             ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
             ExactRegularizationPolicy::REGULARIZED_SOLID,
             |boundary_attempt| {
-                assert_eq!(
-                    boundary_attempt.output_validation(),
-                    ValidationPolicy::ALLOW_BOUNDARY
-                );
                 boundary_attempt.validate().unwrap();
                 boundary_attempt
                     .validate_against_sources_for_request(
