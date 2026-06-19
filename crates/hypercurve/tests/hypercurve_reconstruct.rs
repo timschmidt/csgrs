@@ -1,7 +1,7 @@
 use hypercurve::{
     BulgeVertex2, Contour2, CurveError, CurveString2, FillRule, Point2,
     PolylineReconstructionOptions, Real, RetainedImportFormat2, RetainedImportRecord2,
-    RetainedImportTopology2, RetainedSourceTolerance2, Segment2, SegmentKindCounts,
+    RetainedImportTopology2, RetainedSourceTolerance2, Segment2, SegmentKind, SegmentKindCounts,
 };
 
 fn r(value: f64) -> Real {
@@ -59,6 +59,18 @@ fn open_polyline_reconstruction_report_records_lossy_boundary() {
         report.output_segment_kind_counts(),
         Some(SegmentKindCounts { lines: 1, arcs: 0 })
     );
+    assert_eq!(report.segment_reports().len(), 1);
+    assert_eq!(report.segment_reports()[0].output_segment_index(), 0);
+    assert_eq!(
+        report.segment_reports()[0].output_segment_kind(),
+        SegmentKind::Line
+    );
+    assert_eq!(report.segment_reports()[0].retained_start_sample_index(), 0);
+    assert_eq!(report.segment_reports()[0].retained_end_sample_index(), 2);
+    assert_eq!(report.segment_reports()[0].retained_sample_count(), 3);
+    assert_eq!(report.segment_reports()[0].output_start_point(), &points[0]);
+    assert_eq!(report.segment_reports()[0].output_end_point(), &points[3]);
+    assert!(report.segment_reports()[0].status().is_imported_lossy());
     assert_eq!(report.options(), options);
     assert!(report.lossy_boundary());
     assert!(report.status().is_imported_lossy());
@@ -108,6 +120,20 @@ fn reconstruction_promotes_consistent_semicircle_samples_to_arc() {
     assert_close(arc.bulge().unwrap().to_f64_lossy().unwrap(), 1.0);
     assert_close(arc.center().x().to_f64_lossy().unwrap(), 1.0);
     assert_close(arc.center().y().to_f64_lossy().unwrap(), 0.0);
+
+    let reconstructed =
+        CurveString2::reconstruct_from_polyline_with_report(&points, options).unwrap();
+    let report = reconstructed.report();
+    assert_eq!(report.segment_reports().len(), 1);
+    assert_eq!(
+        report.segment_reports()[0].output_segment_kind(),
+        SegmentKind::Arc
+    );
+    assert_eq!(report.segment_reports()[0].retained_start_sample_index(), 0);
+    assert_eq!(report.segment_reports()[0].retained_end_sample_index(), 4);
+    assert_eq!(report.segment_reports()[0].retained_sample_count(), 5);
+    assert_eq!(report.segment_reports()[0].output_start_point(), &points[0]);
+    assert_eq!(report.segment_reports()[0].output_end_point(), &points[4]);
 }
 
 #[test]
@@ -205,6 +231,13 @@ fn closed_polyline_reconstruction_report_records_fill_and_closure_evidence() {
         report.output_segment_kind_counts(),
         Some(SegmentKindCounts { lines: 4, arcs: 0 })
     );
+    assert_eq!(report.segment_reports().len(), 4);
+    assert_eq!(report.segment_reports()[0].retained_start_sample_index(), 0);
+    assert_eq!(report.segment_reports()[0].retained_end_sample_index(), 1);
+    assert_eq!(report.segment_reports()[3].retained_start_sample_index(), 3);
+    assert_eq!(report.segment_reports()[3].retained_end_sample_index(), 0);
+    assert_eq!(report.segment_reports()[3].output_start_point(), &points[3]);
+    assert_eq!(report.segment_reports()[3].output_end_point(), &points[0]);
     assert!(report.lossy_boundary());
     assert!(report.status().is_imported_lossy());
 }

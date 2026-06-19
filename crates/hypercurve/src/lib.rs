@@ -228,7 +228,7 @@ pub use rational_bezier::{RationalQuadraticBezier2, RationalQuadraticConicKind};
 pub use reconstruct::{
     ContourPolylineReconstructionResult2, CurveStringPolylineReconstructionResult2,
     FiniteContourImport2, FiniteCurveStringImport2, PolylineReconstructionOptions,
-    PolylineReconstructionReport2,
+    PolylineReconstructionReport2, PolylineReconstructionSegmentReport2,
 };
 pub use region::{Region2, RegionContourProfile, RegionPointLocation, RegionView2};
 pub use region_boolean::{
