@@ -2270,11 +2270,6 @@ impl ExactBooleanEvaluation {
         self.certifications.arrangement_attempt.as_ref()
     }
 
-    /// Return the exact boolean operation requested by this evaluation.
-    pub fn operation(&self) -> ExactBooleanOperation {
-        self.request.operation
-    }
-
     /// Return the exact preflight/scheduling report retained by this evaluation.
     pub(crate) fn preflight(&self) -> &ExactBooleanPreflight {
         &self.preflight
@@ -2324,8 +2319,8 @@ impl ExactBooleanEvaluation {
     /// materialization evidence for the requested operation.
     pub fn materializes_arrangement_cell_complex(&self) -> bool {
         self.result.as_ref().is_some_and(|result| {
-            result.is_arrangement_cell_complex_materialized_for(self.operation())
-                || result.is_arrangement_cell_complex_shortcut_for(self.operation())
+            result.is_arrangement_cell_complex_materialized_for(self.request.operation)
+                || result.is_arrangement_cell_complex_shortcut_for(self.request.operation)
         }) || self.preflight.is_certified_arrangement_cell_complex()
             || self
                 .certifications
