@@ -1058,11 +1058,6 @@ impl ExactBooleanCertificationSet {
         &self.winding_readiness
     }
 
-    /// Return the winding/inside-outside readiness certification report mutably.
-    pub fn winding_readiness_mut(&mut self) -> &mut ExactWindingReadinessReport {
-        &mut self.winding_readiness
-    }
-
     /// Return the retained volumetric boundary closure evidence, when the
     /// request reached that certified shortcut.
     pub fn volumetric_boundary_closure(&self) -> Option<&ExactVolumetricBoundaryClosureReport> {
@@ -1077,11 +1072,6 @@ impl ExactBooleanCertificationSet {
     /// Return the left-against-right closed-winding classification report.
     pub fn closed_winding_left_in_right(&self) -> &ClosedMeshWindingMeshReport {
         &self.closed_winding_left_in_right
-    }
-
-    /// Return the left-against-right closed-winding classification report mutably.
-    pub fn closed_winding_left_in_right_mut(&mut self) -> &mut ClosedMeshWindingMeshReport {
-        &mut self.closed_winding_left_in_right
     }
 
     /// Return the right-against-left closed-winding classification report.
@@ -2463,11 +2453,6 @@ impl ExactBooleanEvaluation {
     /// Return the replayable certification bundle retained by this evaluation.
     pub fn certifications(&self) -> &ExactBooleanCertificationSet {
         &self.certifications
-    }
-
-    /// Return the replayable certification bundle mutably.
-    pub fn certifications_mut(&mut self) -> &mut ExactBooleanCertificationSet {
-        &mut self.certifications
     }
 
     #[cfg(test)]

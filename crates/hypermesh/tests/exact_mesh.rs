@@ -331,24 +331,6 @@ fn exact_boolean_evaluation_retains_region_ownership_report() {
         evaluation_materializes_arrangement_cell_complex(&evaluation),
         "{evaluation:?}"
     );
-    let disjoint_left = axis_aligned_box([0, 0, 0], [1, 1, 1]);
-    let disjoint_right = axis_aligned_box([3, 3, 3], [4, 4, 4]);
-    let disjoint_readiness = exact_boolean_evaluation(
-        &disjoint_left,
-        &disjoint_right,
-        ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED),
-    )
-    .certifications()
-    .winding_readiness()
-    .clone();
-    let mut attempt_backed_evaluation = evaluation.clone();
-    *attempt_backed_evaluation
-        .certifications_mut()
-        .winding_readiness_mut() = disjoint_readiness;
-    assert!(
-        evaluation_materializes_arrangement_cell_complex(&attempt_backed_evaluation),
-        "{attempt_backed_evaluation:?}"
-    );
     assert!(
         evaluation.retained_arrangement_attempt().is_some(),
         "named boolean certifications should retain arrangement attempt"
@@ -1345,15 +1327,6 @@ fn exact_closed_convex_boolean_is_publicly_replayable() {
     separated_evaluation
         .validate_materialized_result_against_sources(&separated_left, &separated_right)
         .unwrap();
-    let mut relabeled_winding_report = separated_evaluation.clone();
-    relabeled_winding_report
-        .certifications_mut()
-        .closed_winding_left_in_right_mut()
-        .target_closed = false;
-    assert_report_validation_error!(
-        relabeled_winding_report.validate(),
-        "{relabeled_winding_report:?}"
-    );
     let dispatched = exact_boolean_result(
         &separated_left,
         &separated_right,
@@ -2866,22 +2839,6 @@ fn closed_winding_shortcuts_are_publicly_replayable() {
             ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
         );
         separated_evaluation.validate().unwrap();
-        let mut relabeled_winding_report = separated_evaluation.clone();
-        relabeled_winding_report
-            .certifications_mut()
-            .closed_winding_left_in_right_mut()
-            .target_closed = false;
-        assert!(
-            relabeled_winding_report
-                .certifications()
-                .closed_winding_left_in_right()
-                .validate()
-                .is_err()
-        );
-        assert_report_validation_error!(
-            relabeled_winding_report.validate(),
-            "{operation:?}: {relabeled_winding_report:?}"
-        );
         assert_eq!(
             result.freshness_against_sources(&separated_left, &intersecting_right),
             ExactReportFreshness::SourceReplayMismatch
