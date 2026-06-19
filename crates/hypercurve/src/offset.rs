@@ -17,7 +17,7 @@ use crate::curve_string::CurveString2;
 use crate::segment::{CircularArc2, LineSeg2, Segment2};
 use crate::{
     Classification, CurveError, CurvePolicy, CurveResult, Point2, RetainedTopologyStatus,
-    SegmentKindCounts, SelfContactReport2, UncertaintyReason,
+    SegmentKindCounts, SelfContactPredicatePath2, SelfContactReport2, UncertaintyReason,
 };
 
 /// Endpoint cap style for checked open curve-string outlines.
@@ -659,6 +659,14 @@ impl ContourOffsetReport2 {
         self.self_contact_report.as_ref()
     }
 
+    /// Returns the predicate/filter path used by self-contact validation, when reached.
+    pub const fn self_contact_predicate_path(&self) -> Option<SelfContactPredicatePath2> {
+        match self.self_contact_report.as_ref() {
+            Some(report) => Some(report.predicate_path()),
+            None => None,
+        }
+    }
+
     /// Returns output segment count when the checked offset materialized.
     pub const fn output_segment_count(&self) -> Option<usize> {
         self.output_segment_count
@@ -728,6 +736,14 @@ impl CurveStringOutlineOffsetReport2 {
         self.source_self_contact_report.as_ref()
     }
 
+    /// Returns the predicate/filter path used by source self-contact validation, when reached.
+    pub const fn source_self_contact_predicate_path(&self) -> Option<SelfContactPredicatePath2> {
+        match self.source_self_contact_report.as_ref() {
+            Some(report) => Some(report.predicate_path()),
+            None => None,
+        }
+    }
+
     /// Returns the left offset trace segment count after raw joining.
     pub const fn left_offset_segment_count(&self) -> Option<usize> {
         self.left_offset_segment_count
@@ -761,6 +777,14 @@ impl CurveStringOutlineOffsetReport2 {
     /// Returns final closed-outline self-contact validation evidence when reached.
     pub const fn outline_self_contact_report(&self) -> Option<&SelfContactReport2> {
         self.outline_self_contact_report.as_ref()
+    }
+
+    /// Returns the predicate/filter path used by outline self-contact validation, when reached.
+    pub const fn outline_self_contact_predicate_path(&self) -> Option<SelfContactPredicatePath2> {
+        match self.outline_self_contact_report.as_ref() {
+            Some(report) => Some(report.predicate_path()),
+            None => None,
+        }
     }
 
     /// Returns checked outline topology status.
@@ -820,6 +844,14 @@ impl CurveStringOffsetReport2 {
     /// Returns self-contact scan evidence when validation was reached.
     pub const fn self_contact_report(&self) -> Option<&SelfContactReport2> {
         self.self_contact_report.as_ref()
+    }
+
+    /// Returns the predicate/filter path used by self-contact validation, when reached.
+    pub const fn self_contact_predicate_path(&self) -> Option<SelfContactPredicatePath2> {
+        match self.self_contact_report.as_ref() {
+            Some(report) => Some(report.predicate_path()),
+            None => None,
+        }
     }
 
     /// Returns output segment count when the checked offset materialized.

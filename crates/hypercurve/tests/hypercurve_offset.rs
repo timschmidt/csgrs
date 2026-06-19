@@ -1,7 +1,8 @@
 use hypercurve::{
     BulgeVertex2, CircularArc2, Classification, Contour2, ContourOffsetStage2, CurvePolicy,
     CurveString2, CurveStringOffsetStage2, CurveStringOutlineOffsetStage2, FillRule, LineSeg2,
-    OffsetCap, Point2, Real, Segment2, SegmentKindCounts, UncertaintyReason,
+    OffsetCap, Point2, Real, Segment2, SegmentKindCounts, SelfContactPredicatePath2,
+    UncertaintyReason,
 };
 
 fn s(value: i32) -> Real {
@@ -283,6 +284,10 @@ fn curve_string_checked_offset_report_materializes_simple_open_path() {
     assert_eq!(self_contact.candidate_pair_count(), 1);
     assert_eq!(self_contact.skipped_aabb_pair_count(), 0);
     assert_eq!(self_contact.tested_pair_count(), 1);
+    assert_eq!(
+        offset.report().self_contact_predicate_path(),
+        Some(SelfContactPredicatePath2::AabbFilteredExactSegmentIntersections)
+    );
     assert_eq!(self_contact.first_contact_first_segment_index(), None);
     assert_eq!(self_contact.first_contact_second_segment_index(), None);
     assert_eq!(offset.report().output_segment_count(), Some(2));
@@ -343,6 +348,10 @@ fn curve_string_checked_offset_report_blocks_self_contacting_result() {
     assert_eq!(self_contact.candidate_pair_count(), 2);
     assert_eq!(self_contact.skipped_aabb_pair_count(), 0);
     assert_eq!(self_contact.tested_pair_count(), 2);
+    assert_eq!(
+        offset.report().self_contact_predicate_path(),
+        Some(SelfContactPredicatePath2::AabbFilteredExactSegmentIntersections)
+    );
     assert_eq!(self_contact.first_contact_first_segment_index(), Some(0));
     assert_eq!(self_contact.first_contact_second_segment_index(), Some(2));
     assert_eq!(offset.report().output_segment_count(), None);
@@ -434,6 +443,10 @@ fn curve_string_round_cap_outline_report_materializes_single_line() {
         source_self_contact.segment_kind_counts(),
         SegmentKindCounts { lines: 1, arcs: 0 }
     );
+    assert_eq!(
+        outline.report().source_self_contact_predicate_path(),
+        Some(SelfContactPredicatePath2::AabbFilteredExactSegmentIntersections)
+    );
     assert_eq!(source_self_contact.blocker(), None);
     assert_eq!(
         source_self_contact.first_contact_first_segment_index(),
@@ -468,6 +481,10 @@ fn curve_string_round_cap_outline_report_materializes_single_line() {
     assert_eq!(
         outline_self_contact.segment_kind_counts(),
         SegmentKindCounts { lines: 2, arcs: 2 }
+    );
+    assert_eq!(
+        outline.report().outline_self_contact_predicate_path(),
+        Some(SelfContactPredicatePath2::AabbFilteredExactSegmentIntersections)
     );
     assert_eq!(outline_self_contact.blocker(), None);
     assert_eq!(
@@ -603,6 +620,10 @@ fn curve_string_round_cap_outline_report_blocks_self_contacting_input() {
     assert_eq!(
         source_self_contact.segment_kind_counts(),
         SegmentKindCounts { lines: 3, arcs: 0 }
+    );
+    assert_eq!(
+        outline.report().source_self_contact_predicate_path(),
+        Some(SelfContactPredicatePath2::AabbFilteredExactSegmentIntersections)
     );
     assert_eq!(
         source_self_contact.first_contact_first_segment_index(),
@@ -992,6 +1013,10 @@ fn contour_checked_offset_report_blocks_self_contacting_result() {
     assert_eq!(self_contact.candidate_pair_count(), 2);
     assert_eq!(self_contact.skipped_aabb_pair_count(), 0);
     assert_eq!(self_contact.tested_pair_count(), 2);
+    assert_eq!(
+        offset.report().self_contact_predicate_path(),
+        Some(SelfContactPredicatePath2::AabbFilteredExactSegmentIntersections)
+    );
     assert_eq!(self_contact.first_contact_first_segment_index(), Some(0));
     assert_eq!(self_contact.first_contact_second_segment_index(), Some(2));
     assert_eq!(offset.report().output_segment_count(), None);
