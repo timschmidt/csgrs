@@ -1,18 +1,16 @@
-#![allow(deprecated)]
-
 use hypercurve::{
     BulgeVertex2, CircularArc2, Classification, Contour2, CurveError, CurvePolicy, CurveString2,
     ExactCurveArrangementArrangedEndpointDegree2, ExactCurveArrangementAttempt2,
-    ExactCurveArrangementRequest2, ExactCurveArrangementSourceAabbStatus2,
-    ExactCurveArrangementSourceEndpoint2, ExactCurveArrangementSplitCandidateAabbStatus2,
-    ExactCurveArrangementSplitRelationClass2, FillRule, FiniteProjectionOptions, Real, Region2,
-    RegionBoundaryContourBuildPredicatePath2, RegionBoundaryContourBuildStage2,
-    RegionBoundaryContourRole2, RegionLineSegmentArrangedEndpoint2,
-    RegionLineSegmentEndpointGraphPredicatePath2, RegionLineSegmentRegionBuildStage2,
-    RegionLineSegmentRingAssemblyPredicatePath2, RegionLineSegmentSplitPredicatePath2,
-    RegionPointLocation, RegionView2, RetainedTopologyStatus, Segment2, SegmentKind,
-    SegmentKindCounts, UncertaintyReason, finite_polyline_vertex_centroid, finite_ring_signed_area,
-    try_finite_polyline_vertex_centroid, try_finite_ring_signed_area,
+    ExactCurveArrangementRequest2, ExactCurveArrangementResult2,
+    ExactCurveArrangementSourceAabbStatus2, ExactCurveArrangementSourceEndpoint2,
+    ExactCurveArrangementSplitCandidateAabbStatus2, ExactCurveArrangementSplitRelationClass2,
+    FillRule, FiniteProjectionOptions, Real, Region2, RegionBoundaryContourBuildPredicatePath2,
+    RegionBoundaryContourBuildStage2, RegionBoundaryContourRole2,
+    RegionLineSegmentArrangedEndpoint2, RegionLineSegmentEndpointGraphPredicatePath2,
+    RegionLineSegmentRegionBuildStage2, RegionLineSegmentRingAssemblyPredicatePath2,
+    RegionLineSegmentSplitPredicatePath2, RegionPointLocation, RegionView2, RetainedTopologyStatus,
+    Segment2, SegmentKind, SegmentKindCounts, UncertaintyReason, finite_polyline_vertex_centroid,
+    finite_ring_signed_area, try_finite_polyline_vertex_centroid, try_finite_ring_signed_area,
 };
 use proptest::prelude::*;
 
@@ -66,6 +64,50 @@ fn reversed_rectangle(xmin: i32, ymin: i32, xmax: i32, ymax: i32) -> Contour2 {
 
 fn policy() -> CurvePolicy {
     CurvePolicy::certified()
+}
+
+fn evaluate_unordered_line_segments(
+    segments: Vec<hypercurve::LineSeg2>,
+    fill_rule: FillRule,
+    policy: &CurvePolicy,
+) -> hypercurve::CurveResult<ExactCurveArrangementResult2> {
+    ExactCurveArrangementAttempt2::new(ExactCurveArrangementRequest2::from_unordered_line_segments(
+        segments, fill_rule,
+    ))
+    .evaluate(policy)
+}
+
+fn evaluate_borrowed_unordered_line_segments(
+    segments: &[hypercurve::LineSeg2],
+    fill_rule: FillRule,
+    policy: &CurvePolicy,
+) -> hypercurve::CurveResult<ExactCurveArrangementResult2> {
+    ExactCurveArrangementAttempt2::new(
+        ExactCurveArrangementRequest2::from_borrowed_unordered_line_segments(segments, fill_rule),
+    )
+    .evaluate(policy)
+}
+
+fn evaluate_unordered_segments(
+    segments: Vec<Segment2>,
+    fill_rule: FillRule,
+    policy: &CurvePolicy,
+) -> hypercurve::CurveResult<ExactCurveArrangementResult2> {
+    ExactCurveArrangementAttempt2::new(ExactCurveArrangementRequest2::from_unordered_segments(
+        segments, fill_rule,
+    ))
+    .evaluate(policy)
+}
+
+fn evaluate_borrowed_unordered_segments(
+    segments: &[Segment2],
+    fill_rule: FillRule,
+    policy: &CurvePolicy,
+) -> hypercurve::CurveResult<ExactCurveArrangementResult2> {
+    ExactCurveArrangementAttempt2::new(
+        ExactCurveArrangementRequest2::from_borrowed_unordered_segments(segments, fill_rule),
+    )
+    .evaluate(policy)
 }
 
 #[test]
@@ -404,7 +446,7 @@ fn boundary_contour_region_report_blocks_touching_roles_with_source_pair() {
 
 #[test]
 fn unordered_line_segments_build_region_with_source_provenance() {
-    let built = Region2::from_unordered_line_segments_with_report(
+    let built = evaluate_unordered_line_segments(
         vec![
             line(0, 0, 4, 0),
             line(0, 4, 4, 4),
@@ -565,7 +607,7 @@ fn unordered_line_segments_build_region_with_source_provenance() {
 
 #[test]
 fn unordered_line_segments_report_disconnected_boundary_blocker() {
-    let built = Region2::from_unordered_line_segments_with_report(
+    let built = evaluate_unordered_line_segments(
         vec![line(0, 0, 1, 0), line(3, 0, 4, 0)],
         FillRule::NonZero,
         &policy(),
@@ -626,7 +668,7 @@ fn unordered_line_segments_report_disconnected_boundary_blocker() {
 
 #[test]
 fn unordered_line_segments_split_crossings_before_boundary_blocker() {
-    let built = Region2::from_unordered_line_segments_with_report(
+    let built = evaluate_unordered_line_segments(
         vec![line(0, 0, 4, 4), line(0, 4, 4, 0)],
         FillRule::NonZero,
         &policy(),
@@ -710,7 +752,7 @@ fn unordered_line_segments_split_crossings_before_boundary_blocker() {
 
 #[test]
 fn unordered_line_segments_report_overlap_source_pair_blocker() {
-    let built = Region2::from_unordered_line_segments_with_report(
+    let built = evaluate_unordered_line_segments(
         vec![line(0, 0, 4, 0), line(2, 0, 6, 0)],
         FillRule::NonZero,
         &policy(),
@@ -788,12 +830,8 @@ fn borrowed_unordered_line_segments_build_region_with_report() {
         line(4, 0, 4, 4),
     ];
 
-    let built = Region2::from_unordered_line_segments_borrowed_with_report(
-        &segments,
-        FillRule::NonZero,
-        &policy(),
-    )
-    .unwrap();
+    let built =
+        evaluate_borrowed_unordered_line_segments(&segments, FillRule::NonZero, &policy()).unwrap();
     let report = built.report();
 
     assert!(built.region().is_some());
@@ -811,7 +849,7 @@ fn borrowed_unordered_line_segments_build_region_with_report() {
 
 #[test]
 fn unordered_native_segments_build_line_arc_region_with_source_provenance() {
-    let built = Region2::from_unordered_segments_with_report(
+    let built = evaluate_unordered_segments(
         vec![
             Segment2::Line(line(4, 0, 0, 0)),
             Segment2::Arc(arc_bulge(0, 0, 4, 0, 1)),
@@ -984,12 +1022,8 @@ fn borrowed_unordered_native_segments_build_line_arc_region_with_report() {
         Segment2::Arc(arc_bulge(0, 0, 4, 0, 1)),
     ];
 
-    let built = Region2::from_unordered_segments_borrowed_with_report(
-        &segments,
-        FillRule::NonZero,
-        &policy(),
-    )
-    .unwrap();
+    let built =
+        evaluate_borrowed_unordered_segments(&segments, FillRule::NonZero, &policy()).unwrap();
     let report = built.report();
 
     assert!(built.region().is_some());
@@ -3931,7 +3965,7 @@ fn unordered_native_segments_convenience_returns_decided_region() {
 
 #[test]
 fn unordered_native_segments_report_arc_overlap_boundary_blocker() {
-    let built = Region2::from_unordered_segments_with_report(
+    let built = evaluate_unordered_segments(
         vec![
             Segment2::Arc(arc_bulge(0, 0, 4, 0, 1)),
             Segment2::Arc(arc_bulge(0, 0, 4, 0, 1)),
@@ -4002,7 +4036,7 @@ fn unordered_native_segments_report_arc_overlap_boundary_blocker() {
 
 #[test]
 fn unordered_native_segments_split_line_arc_crossing_before_boundary_blocker() {
-    let built = Region2::from_unordered_segments_with_report(
+    let built = evaluate_unordered_segments(
         vec![
             Segment2::Arc(arc_bulge(0, 0, 4, 0, 1)),
             Segment2::Line(line(2, -3, 2, 1)),
@@ -4139,7 +4173,7 @@ fn unordered_native_segments_split_line_arc_crossing_before_boundary_blocker() {
 
 #[test]
 fn unordered_native_segments_split_arc_arc_crossing_before_boundary_blocker() {
-    let built = Region2::from_unordered_segments_with_report(
+    let built = evaluate_unordered_segments(
         vec![
             Segment2::Arc(
                 CircularArc2::try_from_center(p(5, 0), p(-5, 0), p(0, 0), false).unwrap(),
@@ -4643,7 +4677,7 @@ proptest! {
             _ => lines.reverse(),
         }
 
-        let built = Region2::from_unordered_line_segments_with_report(
+        let built = evaluate_unordered_line_segments(
             lines,
             FillRule::NonZero,
             &policy(),
@@ -4707,7 +4741,7 @@ proptest! {
             segments.swap(0, 1);
         }
 
-        let built = Region2::from_unordered_segments_with_report(
+        let built = evaluate_unordered_segments(
             segments,
             FillRule::NonZero,
             &policy(),
