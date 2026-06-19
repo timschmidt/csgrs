@@ -21,6 +21,8 @@ use super::affine_solid::{
     materialize_affine_orthogonal_solid_intersection, materialize_affine_orthogonal_solid_union,
 };
 use super::arrangement3d::{ExactArrangement, ExactTopologyAssemblyReport};
+#[cfg(test)]
+use super::boolean::refinement_report_from_graph;
 use super::boolean::{
     ExactArrangementBooleanAttempt, ExactBooleanOperation, ExactBooleanRequest,
     ExactBoundaryBooleanPolicy, adjacent_union_completion_certification,
@@ -28,8 +30,7 @@ use super::boolean::{
     boundary_touching_report_from_graph, materialize_volumetric_coplanar_boundary_closure_output,
     no_materialized_boundary_output_report, not_named_planar_arrangement_report,
     open_surface_disjoint_report_from_graph, open_surface_disjoint_result_matches_sources,
-    planar_arrangement_report_from_graph, refinement_report_from_graph,
-    rematerialize_retained_arrangement_cell_complex_attempt,
+    planar_arrangement_report_from_graph, rematerialize_retained_arrangement_cell_complex_attempt,
     replay_boolean_exact_request_for_result_validation,
     replay_closed_same_surface_boolean_result_if_certified,
     replay_generic_arrangement_cell_complex_result, replay_open_surface_arrangement_result,
@@ -4884,7 +4885,8 @@ impl ExactRefinementReport {
     /// recomputes the retained graph report from `left` and `right` for the
     /// same operation and requires equality, keeping refinement evidence tied
     /// to the source objects whose exact predicates produced it as required by
-    pub fn validate_against_sources(
+    #[cfg(test)]
+    pub(crate) fn validate_against_sources(
         &self,
         left: &ExactMesh,
         right: &ExactMesh,
@@ -4907,7 +4909,8 @@ impl ExactRefinementReport {
     }
 
     /// Classify whether this retained refinement report is fresh.
-    pub fn freshness_against_sources(
+    #[cfg(test)]
+    pub(crate) fn freshness_against_sources(
         &self,
         left: &ExactMesh,
         right: &ExactMesh,

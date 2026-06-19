@@ -3765,28 +3765,28 @@ fn public_exact_blocker_reports_replay_remaining_decisions() {
     )
     .unwrap();
 
-    let refinement = exact_boolean_evaluation(
-        &left,
-        &overlapping_right,
-        ExactBooleanRequest::new(
-            ExactBooleanOperation::Union,
-            ValidationPolicy::ALLOW_BOUNDARY,
-        ),
-    )
-    .certifications
-    .refinement
-    .clone();
+    let request = ExactBooleanRequest::new(
+        ExactBooleanOperation::Union,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    );
+    let evaluation = exact_boolean_evaluation(&left, &overlapping_right, request);
+    let refinement = evaluation.certifications.refinement.clone();
     assert!(!refinement.is_required());
     refinement.validate().unwrap();
-    refinement
-        .validate_against_sources(&left, &overlapping_right)
+    evaluation
+        .certifications
+        .validate_against_sources(&left, &overlapping_right, request)
         .unwrap();
     assert_eq!(
-        refinement.freshness_against_sources(&left, &overlapping_right),
+        evaluation
+            .certifications
+            .freshness_against_sources(&left, &overlapping_right, request),
         ExactReportFreshness::Current
     );
     assert_eq!(
-        refinement.freshness_against_sources(&left, &separated_right),
+        evaluation
+            .certifications
+            .freshness_against_sources(&left, &separated_right, request),
         ExactReportFreshness::SourceReplayMismatch
     );
 
