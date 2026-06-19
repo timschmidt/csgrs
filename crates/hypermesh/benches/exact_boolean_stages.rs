@@ -129,7 +129,10 @@ fn run_case(case: &BenchCase) {
                     .topology_assembly_report
                     .as_ref()
                     .is_some_and(|report| report.is_complete()),
-                attempt.region_ownership_volume_resolved(),
+                attempt
+                    .region_ownership_report
+                    .as_ref()
+                    .is_some_and(|report| report.status.is_volume_resolved()),
                 attempt.materialized_arrangement_cell_complex_output(),
                 output_vertices,
                 output_triangles,
@@ -347,7 +350,10 @@ fn run_case(case: &BenchCase) {
                     .region_ownership_report
                     .as_ref()
                     .is_some_and(|report| report.status.is_resolved()),
-                attempt.region_ownership_volume_resolved(),
+                attempt
+                    .region_ownership_report
+                    .as_ref()
+                    .is_some_and(|report| report.status.is_volume_resolved()),
             )
         }));
     });

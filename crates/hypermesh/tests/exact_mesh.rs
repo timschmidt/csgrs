@@ -4959,7 +4959,12 @@ fn exact_boolean_attempt_public_path_reports_blockers_or_cells() {
             .as_ref()
             .is_some_and(|report| report.is_complete())
     );
-    assert!(attempt.region_ownership_volume_resolved());
+    assert!(
+        attempt
+            .region_ownership_report
+            .as_ref()
+            .is_some_and(|report| report.status.is_volume_resolved())
+    );
     attempt.validate_against_sources(&left, &right).unwrap();
     assert_eq!(
         attempt.freshness_against_sources(&left, &right),

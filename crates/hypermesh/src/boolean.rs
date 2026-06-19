@@ -275,12 +275,6 @@ impl ExactArrangementBooleanAttempt {
         self.region_ownership_report = Some(report);
     }
 
-    /// Return whether retained region ownership resolved volume labels.
-    pub fn region_ownership_volume_resolved(&self) -> bool {
-        self.region_ownership
-            .is_some_and(|status| status.is_volume_resolved())
-    }
-
     /// Return whether this attempt reached the materialized arrangement
     /// cell-complex shortcut state.
     pub fn materialized_arrangement_cell_complex_shortcut(&self) -> bool {
