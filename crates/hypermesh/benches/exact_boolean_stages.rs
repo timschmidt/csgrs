@@ -165,10 +165,7 @@ fn run_case(case: &BenchCase) {
     });
 
     time_stage(case, "attempt_public_materialization_summary", || {
-        black_box((
-            attempt.output_counts(),
-            attempt.declined_output_validation(),
-        ));
+        black_box(attempt.output_counts());
     });
 
     time_stage(case, "boolean_evaluate", || {

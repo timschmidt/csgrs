@@ -251,15 +251,6 @@ pub struct ExactArrangementBooleanAttempt {
 }
 
 impl ExactArrangementBooleanAttempt {
-    /// Return whether this attempt declined because the produced mesh did not
-    /// satisfy the requested output validation policy.
-    pub fn declined_output_validation(&self) -> bool {
-        matches!(
-            self.decline,
-            Some(ExactArrangementBooleanDecline::OutputValidation)
-        )
-    }
-
     /// Return the retained output vertex and triangle counts.
     pub const fn output_counts(&self) -> (usize, usize) {
         (self.output_vertices, self.output_triangles)
