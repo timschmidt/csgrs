@@ -11759,7 +11759,9 @@ mod tests {
         );
         assert!(preflight.blocker.is_none(), "{preflight:?}");
         preflight.validate().unwrap();
-        preflight.validate_against_sources(&left, &right).unwrap();
+        preflight
+            .validate_against_sources_for_request(&left, &right, request)
+            .unwrap();
 
         with_test_evaluation(request, &left, &right, |evaluation| {
             assert_eq!(
@@ -12326,14 +12328,11 @@ mod tests {
             )
             .is_some()
         );
-        let preflight = test_preflight(
-            ExactBooleanRequest::new(
-                ExactBooleanOperation::Difference,
-                ValidationPolicy::ALLOW_BOUNDARY,
-            ),
-            &left,
-            &opening_plus_hole,
+        let request = ExactBooleanRequest::new(
+            ExactBooleanOperation::Difference,
+            ValidationPolicy::ALLOW_BOUNDARY,
         );
+        let preflight = test_preflight(request, &left, &opening_plus_hole);
         assert_eq!(
             preflight.support,
             ExactBooleanSupport::CertifiedArrangementCellComplex,
@@ -12341,7 +12340,7 @@ mod tests {
         );
         assert!(preflight.blocker.is_none(), "{preflight:?}");
         preflight
-            .validate_against_sources(&left, &opening_plus_hole)
+            .validate_against_sources_for_request(&left, &opening_plus_hole, request)
             .unwrap();
         let result = boolean_coplanar_mesh_overlay_optional(
             &left,
@@ -12509,8 +12508,14 @@ mod tests {
         .unwrap()
         .expect("overlapping exact boxes should materialize through arrangement");
 
+        let request = ExactBooleanRequest::new(
+            ExactBooleanOperation::Union,
+            ValidationPolicy::ALLOW_BOUNDARY,
+        );
         preflight.validate().unwrap();
-        preflight.validate_against_sources(&left, &right).unwrap();
+        preflight
+            .validate_against_sources_for_request(&left, &right, request)
+            .unwrap();
         assert_eq!(
             preflight.support,
             ExactBooleanSupport::CertifiedArrangementCellComplex
@@ -12519,10 +12524,6 @@ mod tests {
         assert_eq!(preflight.retained_face_pairs, graph.face_pairs.len());
         assert_eq!(preflight.retained_events, graph.event_count());
 
-        let request = ExactBooleanRequest::new(
-            ExactBooleanOperation::Union,
-            ValidationPolicy::ALLOW_BOUNDARY,
-        );
         let mut workspace = ExactBooleanWorkspace::new(&left, &right);
         let evaluation = workspace.evaluate(request).unwrap();
         evaluation.validate().unwrap();
@@ -12603,11 +12604,8 @@ mod tests {
                 "{operation:?}"
             );
 
-            let preflight = test_preflight(
-                ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
-                &left,
-                &right,
-            );
+            let request = ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY);
+            let preflight = test_preflight(request, &left, &right);
             assert_eq!(
                 preflight.support,
                 ExactBooleanSupport::CertifiedArrangementCellComplex,
@@ -12778,11 +12776,8 @@ mod tests {
             ExactBooleanOperation::Intersection,
             ExactBooleanOperation::Difference,
         ] {
-            let preflight = test_preflight(
-                ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
-                &left,
-                &right,
-            );
+            let request = ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY);
+            let preflight = test_preflight(request, &left, &right);
             assert_eq!(
                 preflight.support,
                 ExactBooleanSupport::CertifiedArrangementCellComplex,
@@ -12823,14 +12818,11 @@ mod tests {
             &left, &right
         ));
 
-        let preflight = test_preflight(
-            ExactBooleanRequest::new(
-                ExactBooleanOperation::Intersection,
-                ValidationPolicy::ALLOW_BOUNDARY,
-            ),
-            &left,
-            &right,
+        let request = ExactBooleanRequest::new(
+            ExactBooleanOperation::Intersection,
+            ValidationPolicy::ALLOW_BOUNDARY,
         );
+        let preflight = test_preflight(request, &left, &right);
         assert_eq!(
             preflight.support,
             ExactBooleanSupport::CertifiedArrangementCellComplex,
@@ -12864,11 +12856,8 @@ mod tests {
             ExactBooleanOperation::Intersection,
             ExactBooleanOperation::Difference,
         ] {
-            let preflight = test_preflight(
-                ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
-                &left,
-                &right,
-            );
+            let request = ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY);
+            let preflight = test_preflight(request, &left, &right);
             assert_eq!(
                 preflight.support,
                 ExactBooleanSupport::CertifiedArrangementCellComplex,
@@ -13105,11 +13094,8 @@ mod tests {
                 ExactBooleanOperation::Intersection,
                 ExactBooleanOperation::Difference,
             ] {
-                let preflight = test_preflight(
-                    ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
-                    left,
-                    right,
-                );
+                let request = ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY);
+                let preflight = test_preflight(request, left, right);
                 assert_eq!(preflight.support, support, "{operation:?}: {preflight:?}");
                 assert!(preflight.blocker.is_none(), "{operation:?}: {preflight:?}");
 
@@ -13179,11 +13165,8 @@ mod tests {
                 ExactBooleanOperation::Intersection,
                 ExactBooleanOperation::Difference,
             ] {
-                let preflight = test_preflight(
-                    ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
-                    left,
-                    right,
-                );
+                let request = ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY);
+                let preflight = test_preflight(request, left, right);
                 assert_eq!(
                     preflight.support,
                     ExactBooleanSupport::CertifiedArrangementCellComplex,
@@ -13191,7 +13174,9 @@ mod tests {
                 );
                 assert!(preflight.blocker.is_none(), "{operation:?}: {preflight:?}");
                 preflight.validate().unwrap();
-                preflight.validate_against_sources(left, right).unwrap();
+                preflight
+                    .validate_against_sources_for_request(left, right, request)
+                    .unwrap();
 
                 let readiness = test_winding_readiness(
                     ExactBooleanRequest::with_boundary_policy(
@@ -13287,11 +13272,8 @@ mod tests {
             ExactBooleanOperation::Intersection,
             ExactBooleanOperation::Difference,
         ] {
-            let preflight = test_preflight(
-                ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
-                &left,
-                &right,
-            );
+            let request = ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY);
+            let preflight = test_preflight(request, &left, &right);
             assert_eq!(
                 preflight.support,
                 ExactBooleanSupport::CertifiedArrangementCellComplex,
@@ -13299,7 +13281,9 @@ mod tests {
             );
             assert!(preflight.blocker.is_none(), "{operation:?}: {preflight:?}");
             preflight.validate().unwrap();
-            preflight.validate_against_sources(&left, &right).unwrap();
+            preflight
+                .validate_against_sources_for_request(&left, &right, request)
+                .unwrap();
 
             let readiness = test_winding_readiness(
                 ExactBooleanRequest::with_boundary_policy(
@@ -13925,11 +13909,8 @@ mod tests {
             closure.validate().unwrap();
             closure.validate_against_sources(&left, &right).unwrap();
 
-            let preflight = test_preflight(
-                ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
-                &left,
-                &right,
-            );
+            let request = ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY);
+            let preflight = test_preflight(request, &left, &right);
             assert_eq!(
                 preflight.support,
                 ExactBooleanSupport::CertifiedArrangementCellComplex,
@@ -13937,7 +13918,9 @@ mod tests {
             );
             assert!(preflight.blocker.is_none(), "{operation:?}: {preflight:?}");
             preflight.validate().unwrap();
-            preflight.validate_against_sources(&left, &right).unwrap();
+            preflight
+                .validate_against_sources_for_request(&left, &right, request)
+                .unwrap();
 
             let readiness = test_winding_readiness(
                 ExactBooleanRequest::with_boundary_policy(
@@ -14058,11 +14041,8 @@ mod tests {
                 )
                 .unwrap()
             );
-            let preflight = test_preflight(
-                ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
-                &left,
-                &right,
-            );
+            let request = ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY);
+            let preflight = test_preflight(request, &left, &right);
             assert!(
                 matches!(
                     preflight.support,
@@ -14464,11 +14444,8 @@ mod tests {
                 }
                 ExactBooleanOperation::SelectedRegions(_) => unreachable!(),
             };
-            let preflight = test_preflight(
-                ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
-                &left,
-                &right,
-            );
+            let request = ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY);
+            let preflight = test_preflight(request, &left, &right);
             assert_eq!(
                 preflight.support, expected_support,
                 "{operation:?}: {preflight:?}"
@@ -14476,7 +14453,9 @@ mod tests {
             assert!(preflight.blocker.is_none(), "{operation:?}: {preflight:?}");
             assert!(preflight.region_count > 0, "{operation:?}: {preflight:?}");
             assert!(preflight.validate().is_ok(), "{operation:?}: {preflight:?}");
-            preflight.validate_against_sources(&left, &right).unwrap();
+            preflight
+                .validate_against_sources_for_request(&left, &right, request)
+                .unwrap();
 
             let readiness = test_winding_readiness(
                 ExactBooleanRequest::with_boundary_policy(
@@ -14624,14 +14603,11 @@ mod tests {
         let left = tetrahedron_i64([0, 0, 0], [6, 0, 0], [0, 6, 0], [0, 0, 6]);
         let right = tetrahedron_i64([2, 2, 2], [4, 1, 1], [1, 4, 1], [3, 3, 3]);
 
-        let intersection = test_preflight(
-            ExactBooleanRequest::new(
-                ExactBooleanOperation::Intersection,
-                ValidationPolicy::ALLOW_BOUNDARY,
-            ),
-            &left,
-            &right,
+        let intersection_request = ExactBooleanRequest::new(
+            ExactBooleanOperation::Intersection,
+            ValidationPolicy::ALLOW_BOUNDARY,
         );
+        let intersection = test_preflight(intersection_request, &left, &right);
         assert_eq!(
             intersection.support,
             ExactBooleanSupport::CertifiedArrangementCellComplex
@@ -14640,17 +14616,14 @@ mod tests {
         assert!(intersection.blocker.is_none());
         intersection.validate().unwrap();
         intersection
-            .validate_against_sources(&left, &right)
+            .validate_against_sources_for_request(&left, &right, intersection_request)
             .unwrap();
 
-        let difference = test_preflight(
-            ExactBooleanRequest::new(
-                ExactBooleanOperation::Difference,
-                ValidationPolicy::ALLOW_BOUNDARY,
-            ),
-            &left,
-            &right,
+        let difference_request = ExactBooleanRequest::new(
+            ExactBooleanOperation::Difference,
+            ValidationPolicy::ALLOW_BOUNDARY,
         );
+        let difference = test_preflight(difference_request, &left, &right);
         assert_eq!(
             difference.support,
             ExactBooleanSupport::CertifiedClosedBoundaryTouchingDifference
@@ -14658,7 +14631,9 @@ mod tests {
         assert!(difference.retained_face_pairs > 0, "{difference:?}");
         assert!(difference.blocker.is_none());
         difference.validate().unwrap();
-        difference.validate_against_sources(&left, &right).unwrap();
+        difference
+            .validate_against_sources_for_request(&left, &right, difference_request)
+            .unwrap();
 
         let intersection = test_materialized_result(
             ExactBooleanRequest::new(
@@ -14711,11 +14686,8 @@ mod tests {
                 ),
                 ExactBooleanOperation::SelectedRegions(_) => unreachable!(),
             };
-            let preflight = test_preflight(
-                ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
-                &left,
-                &right,
-            );
+            let request = ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY);
+            let preflight = test_preflight(request, &left, &right);
             assert_eq!(
                 preflight.support, expected_support,
                 "{operation:?}: {preflight:?}"
@@ -14853,11 +14825,8 @@ mod tests {
             ExactBooleanOperation::Intersection,
             ExactBooleanOperation::Difference,
         ] {
-            let preflight = test_preflight(
-                ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
-                &left,
-                &right,
-            );
+            let request = ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY);
+            let preflight = test_preflight(request, &left, &right);
             assert_eq!(
                 preflight.support,
                 ExactBooleanSupport::CertifiedArrangementCellComplex,
@@ -14951,15 +14920,14 @@ mod tests {
                 ExactBooleanShortcutKind::ClosedBoundaryTouchingDifference,
             ),
         ] {
-            let preflight = test_preflight(
-                ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
-                &left,
-                &right,
-            );
+            let request = ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY);
+            let preflight = test_preflight(request, &left, &right);
             assert_eq!(preflight.support, support, "{operation:?}: {preflight:?}");
             assert!(preflight.blocker.is_none(), "{operation:?}: {preflight:?}");
             preflight.validate().unwrap();
-            preflight.validate_against_sources(&left, &right).unwrap();
+            preflight
+                .validate_against_sources_for_request(&left, &right, request)
+                .unwrap();
 
             let readiness = test_winding_readiness(
                 ExactBooleanRequest::with_boundary_policy(
@@ -15112,11 +15080,8 @@ mod tests {
             ExactBooleanOperation::Intersection,
             ExactBooleanOperation::Difference,
         ] {
-            let preflight = test_preflight(
-                ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
-                &left,
-                &right,
-            );
+            let request = ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY);
+            let preflight = test_preflight(request, &left, &right);
             assert_eq!(
                 preflight.support,
                 ExactBooleanSupport::CertifiedArrangementCellComplex,
@@ -15126,7 +15091,9 @@ mod tests {
             assert_eq!(preflight.retained_events, graph.event_count());
             assert!(preflight.blocker.is_none(), "{operation:?}: {preflight:?}");
             preflight.validate().unwrap();
-            preflight.validate_against_sources(&left, &right).unwrap();
+            preflight
+                .validate_against_sources_for_request(&left, &right, request)
+                .unwrap();
 
             let readiness = test_winding_readiness(
                 ExactBooleanRequest::with_boundary_policy(
@@ -15974,14 +15941,11 @@ mod tests {
         .expect("regularized boundary-touch intersection should materialize through overlay");
         let graph = build_intersection_graph(&left, &right).unwrap();
         validate_graph_source_handoff(&graph, &left, &right).unwrap();
-        let preflight = test_preflight(
-            ExactBooleanRequest::new(
-                ExactBooleanOperation::Intersection,
-                ValidationPolicy::ALLOW_BOUNDARY,
-            ),
-            &left,
-            &right,
+        let request = ExactBooleanRequest::new(
+            ExactBooleanOperation::Intersection,
+            ValidationPolicy::ALLOW_BOUNDARY,
         );
+        let preflight = test_preflight(request, &left, &right);
         assert_eq!(
             preflight.support,
             ExactBooleanSupport::CertifiedArrangementCellComplex,
@@ -15990,7 +15954,9 @@ mod tests {
         assert!(preflight.blocker.is_none(), "{preflight:?}");
         assert_eq!(preflight.retained_face_pairs, graph.face_pairs.len());
         assert_eq!(preflight.retained_events, graph.event_count());
-        preflight.validate_against_sources(&left, &right).unwrap();
+        preflight
+            .validate_against_sources_for_request(&left, &right, request)
+            .unwrap();
         assert!(
             result.is_arrangement_cell_complex_shortcut_for(ExactBooleanOperation::Intersection)
         );

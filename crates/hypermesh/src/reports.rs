@@ -4025,26 +4025,6 @@ impl ExactBooleanPreflight {
         self.support.is_certified() && self.blocker.is_none()
     }
 
-    /// Validate this preflight report against the supplied source meshes.
-    ///
-    /// [`validate`](Self::validate) checks internal consistency. This method
-    /// also replays the exact preflight construction from the original meshes
-    /// frames exact geometric state as certified computation history; a cached
-    /// preflight report must therefore stay tied to the sources that produced
-    /// its graph counts, blockers, and retained classifications.
-    #[cfg(test)]
-    pub(crate) fn validate_against_sources(
-        &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-    ) -> Result<(), ExactReportValidationError> {
-        self.validate_against_sources_for_request(
-            left,
-            right,
-            ExactBooleanRequest::new(self.operation, ValidationPolicy::ALLOW_BOUNDARY),
-        )
-    }
-
     /// Validate this preflight report against source meshes and request.
     ///
     /// Boundary-only named booleans are intentionally blocked until a caller
