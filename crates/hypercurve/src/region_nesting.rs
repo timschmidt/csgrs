@@ -296,6 +296,30 @@ pub struct ExactCurveArrangementArrangedFragment2 {
     source_refs: Vec<ExactCurveArrangementArrangedFragmentSourceRef2>,
 }
 
+/// Reference to a retained arranged fragment fact.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ExactCurveArrangementArrangedFragmentRef2 {
+    arranged_fragment_index: usize,
+}
+
+/// Arranged fragment bucket grouped by retained primitive family.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ExactCurveArrangementArrangedFragmentKindBucket2 {
+    arranged_segment_kind: SegmentKind,
+    fragment_refs: Vec<ExactCurveArrangementArrangedFragmentRef2>,
+}
+
+/// Arranged fragment primitive-family buckets retained after exact splitting.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ExactCurveArrangementArrangedFragmentKindBucketCache2 {
+    bucket_count: usize,
+    arranged_fragment_ref_count: usize,
+    line_fragment_ref_count: usize,
+    arc_fragment_ref_count: usize,
+    max_bucket_size: usize,
+    buckets: Vec<ExactCurveArrangementArrangedFragmentKindBucket2>,
+}
+
 /// Arranged fragment provenance cache retained after exact splitting.
 #[derive(Clone, Debug, PartialEq)]
 pub struct ExactCurveArrangementArrangedFragmentCache2 {
@@ -303,6 +327,7 @@ pub struct ExactCurveArrangementArrangedFragmentCache2 {
     source_ref_count: usize,
     source_segment_kind_counts: SegmentKindCounts,
     arranged_segment_kind_counts: SegmentKindCounts,
+    arranged_fragment_kind_bucket_cache: ExactCurveArrangementArrangedFragmentKindBucketCache2,
     max_source_ref_count: usize,
     fragments: Vec<ExactCurveArrangementArrangedFragment2>,
 }
@@ -2325,6 +2350,100 @@ impl ExactCurveArrangementArrangedFragment2 {
     }
 }
 
+impl ExactCurveArrangementArrangedFragmentRef2 {
+    /// Returns the index into [`ExactCurveArrangementArrangedFragmentCache2::fragments`].
+    pub const fn arranged_fragment_index(&self) -> usize {
+        self.arranged_fragment_index
+    }
+}
+
+impl ExactCurveArrangementArrangedFragmentKindBucket2 {
+    /// Returns the retained primitive family represented by this bucket.
+    pub const fn arranged_segment_kind(&self) -> SegmentKind {
+        self.arranged_segment_kind
+    }
+
+    /// Returns arranged fragment references with this retained primitive family.
+    pub fn fragment_refs(&self) -> &[ExactCurveArrangementArrangedFragmentRef2] {
+        &self.fragment_refs
+    }
+}
+
+impl ExactCurveArrangementArrangedFragmentKindBucketCache2 {
+    fn from_fragments(fragments: &[ExactCurveArrangementArrangedFragment2]) -> Self {
+        let mut line_refs = Vec::new();
+        let mut arc_refs = Vec::new();
+
+        for (arranged_fragment_index, fragment) in fragments.iter().enumerate() {
+            let fragment_ref = ExactCurveArrangementArrangedFragmentRef2 {
+                arranged_fragment_index,
+            };
+            match fragment.arranged_segment_kind() {
+                SegmentKind::Line => line_refs.push(fragment_ref),
+                SegmentKind::Arc => arc_refs.push(fragment_ref),
+            }
+        }
+
+        let line_fragment_ref_count = line_refs.len();
+        let arc_fragment_ref_count = arc_refs.len();
+        let buckets = vec![
+            ExactCurveArrangementArrangedFragmentKindBucket2 {
+                arranged_segment_kind: SegmentKind::Line,
+                fragment_refs: line_refs,
+            },
+            ExactCurveArrangementArrangedFragmentKindBucket2 {
+                arranged_segment_kind: SegmentKind::Arc,
+                fragment_refs: arc_refs,
+            },
+        ];
+        let arranged_fragment_ref_count = fragments.len();
+        let max_bucket_size = buckets
+            .iter()
+            .map(|bucket| bucket.fragment_refs.len())
+            .max()
+            .unwrap_or(0);
+
+        Self {
+            bucket_count: buckets.len(),
+            arranged_fragment_ref_count,
+            line_fragment_ref_count,
+            arc_fragment_ref_count,
+            max_bucket_size,
+            buckets,
+        }
+    }
+
+    /// Returns the number of primitive-family buckets.
+    pub const fn bucket_count(&self) -> usize {
+        self.bucket_count
+    }
+
+    /// Returns the number of retained arranged fragment references.
+    pub const fn arranged_fragment_ref_count(&self) -> usize {
+        self.arranged_fragment_ref_count
+    }
+
+    /// Returns the number of retained line fragment references.
+    pub const fn line_fragment_ref_count(&self) -> usize {
+        self.line_fragment_ref_count
+    }
+
+    /// Returns the number of retained arc fragment references.
+    pub const fn arc_fragment_ref_count(&self) -> usize {
+        self.arc_fragment_ref_count
+    }
+
+    /// Returns the largest primitive-family bucket size.
+    pub const fn max_bucket_size(&self) -> usize {
+        self.max_bucket_size
+    }
+
+    /// Returns arranged fragment primitive-family buckets in stable kind order.
+    pub fn buckets(&self) -> &[ExactCurveArrangementArrangedFragmentKindBucket2] {
+        &self.buckets
+    }
+}
+
 impl ExactCurveArrangementArrangedFragmentCache2 {
     fn from_arranged_source_reports(
         arranged_source_reports: &[RegionLineSegmentArrangedSourceReport2],
@@ -2373,6 +2492,8 @@ impl ExactCurveArrangementArrangedFragmentCache2 {
         let source_ref_count = arranged_source_reports.len();
         let arranged_segment_kind_counts =
             arranged_report_segment_kind_counts(arranged_source_reports);
+        let arranged_fragment_kind_bucket_cache =
+            ExactCurveArrangementArrangedFragmentKindBucketCache2::from_fragments(&fragments);
         let max_source_ref_count = fragments
             .iter()
             .map(|fragment| fragment.source_refs.len())
@@ -2384,6 +2505,7 @@ impl ExactCurveArrangementArrangedFragmentCache2 {
             source_ref_count,
             source_segment_kind_counts,
             arranged_segment_kind_counts,
+            arranged_fragment_kind_bucket_cache,
             max_source_ref_count,
             fragments,
         }
@@ -2407,6 +2529,13 @@ impl ExactCurveArrangementArrangedFragmentCache2 {
     /// Returns arranged fragment primitive-family counts after exact splitting.
     pub const fn arranged_segment_kind_counts(&self) -> SegmentKindCounts {
         self.arranged_segment_kind_counts
+    }
+
+    /// Returns retained arranged fragment buckets grouped by primitive family.
+    pub const fn arranged_fragment_kind_bucket_cache(
+        &self,
+    ) -> &ExactCurveArrangementArrangedFragmentKindBucketCache2 {
+        &self.arranged_fragment_kind_bucket_cache
     }
 
     /// Returns the largest source reference count for one arranged fragment.

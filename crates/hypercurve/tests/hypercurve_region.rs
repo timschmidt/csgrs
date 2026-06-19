@@ -1398,6 +1398,54 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
         arranged_fragment_cache.arranged_segment_kind_counts(),
         SegmentKindCounts { lines: 4, arcs: 0 }
     );
+    let arranged_fragment_kind_bucket_cache =
+        arranged_fragment_cache.arranged_fragment_kind_bucket_cache();
+    assert_eq!(arranged_fragment_kind_bucket_cache.bucket_count(), 2);
+    assert_eq!(
+        arranged_fragment_kind_bucket_cache.arranged_fragment_ref_count(),
+        4
+    );
+    assert_eq!(
+        arranged_fragment_kind_bucket_cache.line_fragment_ref_count(),
+        4
+    );
+    assert_eq!(
+        arranged_fragment_kind_bucket_cache.arc_fragment_ref_count(),
+        0
+    );
+    assert_eq!(arranged_fragment_kind_bucket_cache.max_bucket_size(), 4);
+    assert_eq!(arranged_fragment_kind_bucket_cache.buckets().len(), 2);
+    assert_eq!(
+        arranged_fragment_kind_bucket_cache.buckets()[0].arranged_segment_kind(),
+        SegmentKind::Line
+    );
+    assert_eq!(
+        arranged_fragment_kind_bucket_cache.buckets()[0]
+            .fragment_refs()
+            .len(),
+        arranged_fragment_cache.arranged_segment_kind_counts().lines
+    );
+    assert_eq!(
+        arranged_fragment_kind_bucket_cache.buckets()[0].fragment_refs()[0]
+            .arranged_fragment_index(),
+        0
+    );
+    assert_eq!(
+        arranged_fragment_cache.fragments()[arranged_fragment_kind_bucket_cache.buckets()[0]
+            .fragment_refs()[0]
+            .arranged_fragment_index()]
+        .arranged_segment_kind(),
+        SegmentKind::Line
+    );
+    assert_eq!(
+        arranged_fragment_kind_bucket_cache.buckets()[1].arranged_segment_kind(),
+        SegmentKind::Arc
+    );
+    assert!(
+        arranged_fragment_kind_bucket_cache.buckets()[1]
+            .fragment_refs()
+            .is_empty()
+    );
     assert_eq!(arranged_fragment_cache.max_source_ref_count(), 1);
     assert_eq!(arranged_fragment_cache.fragments().len(), 4);
     let arranged_fragment = &arranged_fragment_cache.fragments()[0];
@@ -1822,6 +1870,44 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
     assert_eq!(
         arranged_fragment_cache.arranged_segment_kind_counts(),
         SegmentKindCounts { lines: 1, arcs: 1 }
+    );
+    let arranged_fragment_kind_bucket_cache =
+        arranged_fragment_cache.arranged_fragment_kind_bucket_cache();
+    assert_eq!(arranged_fragment_kind_bucket_cache.bucket_count(), 2);
+    assert_eq!(
+        arranged_fragment_kind_bucket_cache.arranged_fragment_ref_count(),
+        2
+    );
+    assert_eq!(
+        arranged_fragment_kind_bucket_cache.line_fragment_ref_count(),
+        1
+    );
+    assert_eq!(
+        arranged_fragment_kind_bucket_cache.arc_fragment_ref_count(),
+        1
+    );
+    assert_eq!(arranged_fragment_kind_bucket_cache.max_bucket_size(), 1);
+    assert_eq!(
+        arranged_fragment_kind_bucket_cache.buckets()[0].arranged_segment_kind(),
+        SegmentKind::Line
+    );
+    assert_eq!(
+        arranged_fragment_cache.fragments()[arranged_fragment_kind_bucket_cache.buckets()[0]
+            .fragment_refs()[0]
+            .arranged_fragment_index()]
+        .arranged_segment_kind(),
+        SegmentKind::Line
+    );
+    assert_eq!(
+        arranged_fragment_kind_bucket_cache.buckets()[1].arranged_segment_kind(),
+        SegmentKind::Arc
+    );
+    assert_eq!(
+        arranged_fragment_cache.fragments()[arranged_fragment_kind_bucket_cache.buckets()[1]
+            .fragment_refs()[0]
+            .arranged_fragment_index()]
+        .arranged_segment_kind(),
+        SegmentKind::Arc
     );
     assert_eq!(arranged_fragment_cache.max_source_ref_count(), 1);
     assert_eq!(arranged_fragment_cache.fragments().len(), 2);
