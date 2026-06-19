@@ -930,21 +930,6 @@ impl ExactBooleanRequest {
             boundary_policy,
         }
     }
-
-    /// Return the named or selected-region operation to evaluate.
-    pub const fn operation(&self) -> ExactBooleanOperation {
-        self.operation
-    }
-
-    /// Return the output mesh validation policy.
-    pub const fn validation(&self) -> ValidationPolicy {
-        self.validation
-    }
-
-    /// Return the explicit boundary-only projection policy.
-    pub const fn boundary_policy(&self) -> ExactBoundaryBooleanPolicy {
-        self.boundary_policy
-    }
 }
 
 /// Replayable certification bundle for an exact boolean request.

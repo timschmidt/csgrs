@@ -91,9 +91,9 @@ fn run_case(case: &BenchCase) {
             "materialized_result_kind",
             format!(
                 "arrangement_materialized={};arrangement_shortcut={};certified_shortcut={};triangles={}",
-                result.is_arrangement_cell_complex_materialized_for(request.operation()),
-                result.is_arrangement_cell_complex_shortcut_for(request.operation()),
-                result.is_certified_shortcut_for(request.operation()),
+                result.is_arrangement_cell_complex_materialized_for(case.operation),
+                result.is_arrangement_cell_complex_shortcut_for(case.operation),
+                result.is_certified_shortcut_for(case.operation),
                 result.mesh().triangles().len()
             ),
         ),
