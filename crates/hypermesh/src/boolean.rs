@@ -2201,6 +2201,16 @@ impl ExactBooleanEvaluation {
         self.certifications.arrangement_attempt.as_ref()
     }
 
+    /// Return the exact preflight/scheduling report retained by this evaluation.
+    pub fn preflight(&self) -> &ExactBooleanPreflight {
+        &self.preflight
+    }
+
+    /// Return the replayable certification bundle retained by this evaluation.
+    pub fn certifications(&self) -> &ExactBooleanCertificationSet {
+        &self.certifications
+    }
+
     /// Return the materialized result retained by this evaluation, when the
     /// request reached a certified output.
     pub fn materialized_result(&self) -> Option<&ExactBooleanResult> {

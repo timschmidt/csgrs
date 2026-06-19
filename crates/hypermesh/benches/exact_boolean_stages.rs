@@ -81,9 +81,9 @@ fn run_case(case: &BenchCase) {
             "preflight_support",
             format!(
                 "{:?};pairs={};events={}",
-                evaluation.preflight.support,
-                evaluation.preflight.retained_face_pairs,
-                evaluation.preflight.retained_events
+                evaluation.preflight().support,
+                evaluation.preflight().retained_face_pairs,
+                evaluation.preflight().retained_events
             ),
         ),
         Err(error) => print_metadata(case.name, "preflight_support", format!("error:{error:?}")),
@@ -366,7 +366,7 @@ fn run_case(case: &BenchCase) {
         "workspace_validate_certifications_from_retained_artifacts",
         || {
             retained_workspace_and_certification_for_case(case, request, |evaluation| {
-                evaluation.certifications.clone()
+                evaluation.certifications().clone()
             })
         },
         |(_retained_workspace, certifications)| {
@@ -383,7 +383,7 @@ fn run_case(case: &BenchCase) {
         "workspace_validate_certifications_with_adjacent_union_retained",
         || {
             retained_workspace_and_certification_for_case(case, request, |evaluation| {
-                evaluation.certifications.clone()
+                evaluation.certifications().clone()
             })
         },
         |(_retained_workspace, certifications)| {
@@ -400,7 +400,7 @@ fn run_case(case: &BenchCase) {
         "workspace_validate_certifications_with_identical_retained",
         || {
             retained_workspace_and_certification_for_case(case, request, |evaluation| {
-                evaluation.certifications.clone()
+                evaluation.certifications().clone()
             })
         },
         |(_retained_workspace, certifications)| {
@@ -417,7 +417,7 @@ fn run_case(case: &BenchCase) {
         "workspace_validate_certifications_with_same_surface_retained",
         || {
             retained_workspace_and_certification_for_case(case, request, |evaluation| {
-                evaluation.certifications.clone()
+                evaluation.certifications().clone()
             })
         },
         |(_retained_workspace, certifications)| {
@@ -434,7 +434,7 @@ fn run_case(case: &BenchCase) {
         "workspace_validate_certifications_with_boundary_touching_retained",
         || {
             retained_workspace_and_certification_for_case(case, request, |evaluation| {
-                evaluation.certifications.clone()
+                evaluation.certifications().clone()
             })
         },
         |(_retained_workspace, certifications)| {
@@ -451,7 +451,7 @@ fn run_case(case: &BenchCase) {
         "workspace_validate_certifications_with_open_surface_disjoint_retained",
         || {
             retained_workspace_and_certification_for_case(case, request, |evaluation| {
-                evaluation.certifications.clone()
+                evaluation.certifications().clone()
             })
         },
         |(_retained_workspace, certifications)| {
@@ -468,7 +468,7 @@ fn run_case(case: &BenchCase) {
         "workspace_validate_certifications_with_boundary_closure_retained",
         || {
             retained_workspace_and_certification_for_case(case, request, |evaluation| {
-                evaluation.certifications.clone()
+                evaluation.certifications().clone()
             })
         },
         |(_retained_workspace, certifications)| {
@@ -485,7 +485,7 @@ fn run_case(case: &BenchCase) {
         "workspace_validate_certifications_with_winding_readiness_retained",
         || {
             retained_workspace_and_certification_for_case(case, request, |evaluation| {
-                evaluation.certifications.clone()
+                evaluation.certifications().clone()
             })
         },
         |(_retained_workspace, certifications)| {
@@ -502,7 +502,7 @@ fn run_case(case: &BenchCase) {
         "workspace_validate_certifications_with_planar_arrangement_retained",
         || {
             retained_workspace_and_certification_for_case(case, request, |evaluation| {
-                evaluation.certifications.clone()
+                evaluation.certifications().clone()
             })
         },
         |(_retained_workspace, certifications)| {
