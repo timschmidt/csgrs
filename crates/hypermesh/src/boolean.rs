@@ -738,22 +738,8 @@ impl ExactArrangementBooleanAttempt {
         )
     }
 
-    /// Validate this attempt by replaying it under an explicit output
-    /// validation policy.
-    pub fn validate_against_sources_with_validation(
-        &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-        validation: ValidationPolicy,
-    ) -> Result<(), ExactReportValidationError> {
-        self.validate_against_sources_for_request(
-            left,
-            right,
-            ExactBooleanRequest::new(self.operation, validation),
-        )
-    }
-
-    fn validate_against_sources_for_request(
+    /// Validate this attempt by replaying it for an exact Boolean request.
+    pub fn validate_against_sources_for_request(
         &self,
         left: &ExactMesh,
         right: &ExactMesh,
@@ -778,17 +764,15 @@ impl ExactArrangementBooleanAttempt {
         exact_report_freshness(self.validate_against_sources(left, right))
     }
 
-    /// Classify whether this retained arrangement attempt is fresh under an
-    /// explicit output validation policy.
-    pub fn freshness_against_sources_with_validation(
+    /// Classify whether this retained arrangement attempt is fresh for an
+    /// exact Boolean request.
+    pub fn freshness_against_sources_for_request(
         &self,
         left: &ExactMesh,
         right: &ExactMesh,
-        validation: ValidationPolicy,
+        request: ExactBooleanRequest,
     ) -> ExactReportFreshness {
-        exact_report_freshness(
-            self.validate_against_sources_with_validation(left, right, validation),
-        )
+        exact_report_freshness(self.validate_against_sources_for_request(left, right, request))
     }
 }
 
@@ -852,7 +836,7 @@ fn retained_arrangement_attempt_for_request<'a>(
         return Ok(None);
     };
     attempt.validate_for_request_policy(request, policy)?;
-    attempt.validate_against_sources_with_validation(left, right, request.validation)?;
+    attempt.validate_against_sources_for_request(left, right, request)?;
     Ok(Some(attempt))
 }
 

@@ -1602,21 +1602,25 @@ fn exact_open_surface_arrangement_is_publicly_replayable() {
             assert_eq!(closed_attempt.output_validation(), ValidationPolicy::CLOSED);
             closed_attempt.validate().unwrap();
             closed_attempt
-                .validate_against_sources_with_validation(&left, &right, ValidationPolicy::CLOSED)
-                .unwrap();
-            assert_eq!(
-                closed_attempt.freshness_against_sources_with_validation(
+                .validate_against_sources_for_request(
                     &left,
                     &right,
-                    ValidationPolicy::CLOSED,
+                    ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
+                )
+                .unwrap();
+            assert_eq!(
+                closed_attempt.freshness_against_sources_for_request(
+                    &left,
+                    &right,
+                    ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
                 ),
                 ExactReportFreshness::Current
             );
             assert_eq!(
-                closed_attempt.freshness_against_sources_with_validation(
+                closed_attempt.freshness_against_sources_for_request(
                     &left,
                     &right,
-                    ValidationPolicy::ALLOW_BOUNDARY,
+                    ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
                 ),
                 ExactReportFreshness::SourceReplayMismatch
             );
@@ -1642,10 +1646,10 @@ fn exact_open_surface_arrangement_is_publicly_replayable() {
         attempt.validate().unwrap();
         attempt.validate_against_sources(&left, &right).unwrap();
         attempt
-            .validate_against_sources_with_validation(
+            .validate_against_sources_for_request(
                 &left,
                 &right,
-                ValidationPolicy::ALLOW_BOUNDARY,
+                ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
             )
             .unwrap();
         assert_eq!(
@@ -1653,18 +1657,18 @@ fn exact_open_surface_arrangement_is_publicly_replayable() {
             ExactReportFreshness::Current
         );
         assert_eq!(
-            attempt.freshness_against_sources_with_validation(
+            attempt.freshness_against_sources_for_request(
                 &left,
                 &right,
-                ValidationPolicy::ALLOW_BOUNDARY,
+                ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
             ),
             ExactReportFreshness::Current
         );
         assert_eq!(
-            attempt.freshness_against_sources_with_validation(
+            attempt.freshness_against_sources_for_request(
                 &left,
                 &right,
-                ValidationPolicy::CLOSED,
+                ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
             ),
             ExactReportFreshness::SourceReplayMismatch
         );
@@ -1742,21 +1746,25 @@ fn arrangement_attempt_output_validation_is_publicly_replayable() {
             .validate_against_sources(&left, &right)
             .unwrap();
         closed_attempt
-            .validate_against_sources_with_validation(&left, &right, ValidationPolicy::CLOSED)
-            .unwrap();
-        assert_eq!(
-            closed_attempt.freshness_against_sources_with_validation(
+            .validate_against_sources_for_request(
                 &left,
                 &right,
-                ValidationPolicy::CLOSED,
+                ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
+            )
+            .unwrap();
+        assert_eq!(
+            closed_attempt.freshness_against_sources_for_request(
+                &left,
+                &right,
+                ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
             ),
             ExactReportFreshness::Current
         );
         assert_eq!(
-            closed_attempt.freshness_against_sources_with_validation(
+            closed_attempt.freshness_against_sources_for_request(
                 &left,
                 &right,
-                ValidationPolicy::ALLOW_BOUNDARY,
+                ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
             ),
             ExactReportFreshness::SourceReplayMismatch
         );
@@ -1780,25 +1788,25 @@ fn arrangement_attempt_output_validation_is_publicly_replayable() {
         );
         boundary_attempt.validate().unwrap();
         boundary_attempt
-            .validate_against_sources_with_validation(
+            .validate_against_sources_for_request(
                 &left,
                 &right,
-                ValidationPolicy::ALLOW_BOUNDARY,
+                ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
             )
             .unwrap();
         assert_eq!(
-            boundary_attempt.freshness_against_sources_with_validation(
+            boundary_attempt.freshness_against_sources_for_request(
                 &left,
                 &right,
-                ValidationPolicy::ALLOW_BOUNDARY,
+                ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
             ),
             ExactReportFreshness::Current
         );
         assert_eq!(
-            boundary_attempt.freshness_against_sources_with_validation(
+            boundary_attempt.freshness_against_sources_for_request(
                 &left,
                 &right,
-                ValidationPolicy::CLOSED,
+                ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
             ),
             ExactReportFreshness::SourceReplayMismatch
         );
