@@ -443,14 +443,15 @@ impl<'a> ExactBooleanWorkspace<'a> {
             self.validated_regularized_solid_arrangement_attempt_index(request)?;
         let retained_attempt =
             retained_attempt_index.map(|index| &self.arrangement_attempts[index].2);
-        let index = retain_replayable_result(
-            &mut self.materializations,
+        validate_replayable_result_for_cache(
             self.left,
             self.right,
             request,
             retained_attempt,
-            result,
+            &result,
         )?;
+        self.materializations.push((request, result));
+        let index = self.materializations.len() - 1;
         self.promote_evaluation_cache_from_materialization_index(request, index)?;
         Ok(&self.materializations[index].1)
     }
@@ -506,25 +507,6 @@ impl<'a> ExactBooleanWorkspace<'a> {
             }
         }
     }
-}
-
-fn retain_replayable_result(
-    cache: &mut Vec<(ExactBooleanRequest, ExactBooleanResult)>,
-    left: &ExactMesh,
-    right: &ExactMesh,
-    request: ExactBooleanRequest,
-    retained_arrangement_attempt: Option<&ExactArrangementBooleanAttempt>,
-    result: ExactBooleanResult,
-) -> Result<usize, MeshError> {
-    validate_replayable_result_for_cache(
-        left,
-        right,
-        request,
-        retained_arrangement_attempt,
-        &result,
-    )?;
-    cache.push((request, result));
-    Ok(cache.len() - 1)
 }
 
 fn validate_replayable_result_for_cache(
