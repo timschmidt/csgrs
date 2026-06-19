@@ -988,7 +988,7 @@ pub struct ExactBooleanCertificationSet {
     /// consumed by the full arrangement attempt report.
     arrangement_cell_complex_shortcuts: ExactArrangementCellComplexShortcutFacts,
     /// Planar-arrangement readiness for coplanar surface output.
-    pub planar_arrangement: ExactPlanarArrangementReport,
+    planar_arrangement: ExactPlanarArrangementReport,
     /// Winding/inside-outside readiness for named volumetric output.
     pub winding_readiness: ExactWindingReadinessReport,
     /// Volumetric boundary closure readiness, when meaningful for the request.
@@ -1057,6 +1057,11 @@ impl ExactBooleanCertificationSet {
     /// Return the boundary-contact policy certification report mutably.
     pub fn boundary_touching_mut(&mut self) -> &mut ExactBoundaryTouchingReport {
         &mut self.boundary_touching
+    }
+
+    /// Return the planar-arrangement readiness certification report.
+    pub fn planar_arrangement(&self) -> &ExactPlanarArrangementReport {
+        &self.planar_arrangement
     }
 
     /// Return the retained volumetric boundary closure evidence, when the
