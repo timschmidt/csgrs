@@ -1857,7 +1857,20 @@ impl ExactBooleanResult {
         {
             return Ok(());
         }
-        if self.retained_arrangement_artifacts_certify_operation_replay(left, right, request)? {
+        if matches!(
+            self.kind,
+            ExactBooleanResultKind::OpenSurfaceArrangement { .. }
+        ) && self.satisfies_request_shape(request)
+        {
+            self.validate_against_sources(left, right)?;
+            return Ok(());
+        }
+        if self.topology_assembly_report.is_some()
+            && self.region_ownership_report.is_some()
+            && self.arrangement_cell_complex_operation() == Some(request.operation)
+            && self.satisfies_request_shape(request)
+        {
+            self.validate_against_sources(left, right)?;
             return Ok(());
         }
         let replay = replay_boolean_exact_request_for_result_validation(left, right, request)
@@ -1932,32 +1945,6 @@ impl ExactBooleanResult {
     ) -> bool {
         self.topology_assembly_report.as_ref() == Some(topology)
             && self.region_ownership_report.as_ref() == Some(ownership)
-    }
-
-    fn retained_arrangement_artifacts_certify_operation_replay(
-        &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-        request: ExactBooleanRequest,
-    ) -> Result<bool, ExactReportValidationError> {
-        if matches!(
-            self.kind,
-            ExactBooleanResultKind::OpenSurfaceArrangement { .. }
-        ) && self.satisfies_request_shape(request)
-        {
-            self.validate_against_sources(left, right)?;
-            return Ok(true);
-        }
-        if self.topology_assembly_report.is_none() || self.region_ownership_report.is_none() {
-            return Ok(false);
-        }
-        if self.arrangement_cell_complex_operation() != Some(request.operation)
-            || !self.satisfies_request_shape(request)
-        {
-            return Ok(false);
-        }
-        self.validate_against_sources(left, right)?;
-        Ok(true)
     }
 }
 
