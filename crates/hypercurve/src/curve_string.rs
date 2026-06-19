@@ -1707,6 +1707,16 @@ impl CurveString2 {
         end: CurveStringTrimPoint2,
         policy: &CurvePolicy,
     ) -> CurveResult<CurveStringTrimResult2> {
+        self.trim_between_parameters_with_report(start, end, policy)
+    }
+
+    /// Trims this open curve string between two segment-local parameters and retains evidence.
+    pub fn trim_between_parameters_with_report(
+        &self,
+        start: CurveStringTrimPoint2,
+        end: CurveStringTrimPoint2,
+        policy: &CurvePolicy,
+    ) -> CurveResult<CurveStringTrimResult2> {
         validate_trim_point(self, &start, policy)?;
         validate_trim_point(self, &end, policy)?;
         match compare_trim_points(&start, &end, policy) {
@@ -1827,6 +1837,16 @@ impl CurveString2 {
         end_point: &Point2,
         policy: &CurvePolicy,
     ) -> CurveResult<CurveStringTrimResult2> {
+        self.trim_between_points_with_report(start_point, end_point, policy)
+    }
+
+    /// Trims this open curve string between two exact path points and retains evidence.
+    pub fn trim_between_points_with_report(
+        &self,
+        start_point: &Point2,
+        end_point: &Point2,
+        policy: &CurvePolicy,
+    ) -> CurveResult<CurveStringTrimResult2> {
         let start = match locate_trim_point(self, start_point, policy)? {
             Classification::Decided(point) => point,
             Classification::Uncertain(reason) => {
@@ -1888,6 +1908,19 @@ impl CurveString2 {
         end_cutter: &Self,
         policy: &CurvePolicy,
     ) -> CurveResult<CurveStringCurveTrimResult2> {
+        self.trim_between_curve_intersections_with_report(start_cutter, end_cutter, policy)
+    }
+
+    /// Trims this open curve string between exact point intersections with two cutters.
+    ///
+    /// This report-bearing entry point records both cutter intersection
+    /// reports, hit selection, blocker causes, and the final trim report.
+    pub fn trim_between_curve_intersections_with_report(
+        &self,
+        start_cutter: &Self,
+        end_cutter: &Self,
+        policy: &CurvePolicy,
+    ) -> CurveResult<CurveStringCurveTrimResult2> {
         let start_events = self.intersect_curve_string_with_report(start_cutter, policy)?;
         let end_events = self.intersect_curve_string_with_report(end_cutter, policy)?;
         self.trim_between_curve_intersection_events(
@@ -1910,6 +1943,15 @@ impl CurveString2 {
     /// segment relations remain explicit blockers because they require a
     /// higher-order boundary traversal rather than a local interval decision.
     pub fn trim_inside_region(
+        &self,
+        region: &Region2,
+        policy: &CurvePolicy,
+    ) -> CurveResult<CurveStringRegionTrimResult2> {
+        self.trim_inside_region_with_report(region, policy)
+    }
+
+    /// Retains the portions of this open curve string inside a region and retains evidence.
+    pub fn trim_inside_region_with_report(
         &self,
         region: &Region2,
         policy: &CurvePolicy,
@@ -2545,7 +2587,17 @@ impl CurveString2 {
         target_point: Point2,
         policy: &CurvePolicy,
     ) -> CurveResult<CurveStringExtendResult2> {
-        self.extend_endpoint_to_point(endpoint, target_point, policy)
+        self.extend_line_endpoint_to_point_with_report(endpoint, target_point, policy)
+    }
+
+    /// Extends one endpoint line segment to an exact point and retains evidence.
+    pub fn extend_line_endpoint_to_point_with_report(
+        &self,
+        endpoint: CurveStringEndpoint2,
+        target_point: Point2,
+        policy: &CurvePolicy,
+    ) -> CurveResult<CurveStringExtendResult2> {
+        self.extend_endpoint_to_point_with_report(endpoint, target_point, policy)
     }
 
     /// Extends one endpoint segment to an exact target point.
@@ -2557,6 +2609,16 @@ impl CurveString2 {
     /// operation extends the existing topology instead of replacing it with an
     /// unrelated chord or sampled sweep.
     pub fn extend_endpoint_to_point(
+        &self,
+        endpoint: CurveStringEndpoint2,
+        target_point: Point2,
+        policy: &CurvePolicy,
+    ) -> CurveResult<CurveStringExtendResult2> {
+        self.extend_endpoint_to_point_with_report(endpoint, target_point, policy)
+    }
+
+    /// Extends one endpoint segment to an exact target point and retains evidence.
+    pub fn extend_endpoint_to_point_with_report(
         &self,
         endpoint: CurveStringEndpoint2,
         target_point: Point2,

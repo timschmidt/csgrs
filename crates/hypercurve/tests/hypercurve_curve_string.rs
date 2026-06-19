@@ -1816,7 +1816,7 @@ fn curve_string_extend_line_end_to_exact_target() {
     let curve = CurveString2::try_new(vec![line_segment(0, 0, 2, 0)]).unwrap();
 
     let extended = curve
-        .extend_line_endpoint_to_point(CurveStringEndpoint2::End, p(5, 0), &policy())
+        .extend_line_endpoint_to_point_with_report(CurveStringEndpoint2::End, p(5, 0), &policy())
         .unwrap();
 
     assert!(extended.report().status().is_native_exact());
@@ -1969,7 +1969,7 @@ fn curve_string_extend_arc_endpoint_to_same_circle_target() {
     .unwrap();
 
     let extended = curve
-        .extend_endpoint_to_point(CurveStringEndpoint2::End, p(-1, 0), &policy())
+        .extend_endpoint_to_point_with_report(CurveStringEndpoint2::End, p(-1, 0), &policy())
         .unwrap();
 
     assert!(extended.report().status().is_native_exact());
@@ -2503,7 +2503,7 @@ fn curve_string_trim_materializes_exact_line_subsegment_with_report() {
     let curve = CurveString2::try_new(vec![line_segment(0, 0, 4, 0)]).unwrap();
 
     let trim = curve
-        .trim_between_parameters(
+        .trim_between_parameters_with_report(
             CurveStringTrimPoint2::new(0, q(1, 4)),
             CurveStringTrimPoint2::new(0, q(3, 4)),
             &policy(),
@@ -2708,7 +2708,7 @@ fn curve_string_trim_between_points_materializes_line_subsegment() {
     let curve = CurveString2::try_new(vec![line_segment(0, 0, 4, 0)]).unwrap();
 
     let trim = curve
-        .trim_between_points(&p(1, 0), &p(3, 0), &policy())
+        .trim_between_points_with_report(&p(1, 0), &p(3, 0), &policy())
         .unwrap();
 
     assert!(trim.report().status().is_native_exact());
@@ -2847,7 +2847,7 @@ fn curve_string_trim_between_curve_intersections_materializes_line_window() {
     let end_cutter = CurveString2::try_new(vec![line_segment(8, -1, 8, 1)]).unwrap();
 
     let trim = curve
-        .trim_between_curve_intersections(&start_cutter, &end_cutter, &policy())
+        .trim_between_curve_intersections_with_report(&start_cutter, &end_cutter, &policy())
         .unwrap();
 
     assert!(trim.report().status().is_native_exact());
@@ -3132,7 +3132,9 @@ fn curve_string_trim_inside_region_materializes_inside_window() {
     let curve = CurveString2::try_new(vec![line_segment(-2, 1, 6, 1)]).unwrap();
     let region = rectangle_region(0, 0, 4, 4);
 
-    let trimmed = curve.trim_inside_region(&region, &policy()).unwrap();
+    let trimmed = curve
+        .trim_inside_region_with_report(&region, &policy())
+        .unwrap();
 
     assert!(trimmed.report().status().is_native_exact());
     assert_eq!(
