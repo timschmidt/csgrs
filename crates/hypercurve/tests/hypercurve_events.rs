@@ -1,7 +1,7 @@
 use hypercurve::{
     BulgeVertex2, CircularArc2, Classification, Contour2, ContourIntersection,
     ContourIntersectionSet, ContourOperand, ContourOverlapIntersection, ContourPointIntersection,
-    CurveError, CurvePolicy, IntersectionKind, LineSeg2, ParamRange, Real, Segment2,
+    CurveError, CurvePolicy, IntersectionKind, LineSeg2, ParamRange, Real, Segment2, SegmentKind,
 };
 
 fn s(value: i32) -> Real {
@@ -103,6 +103,8 @@ fn contour_intersection_set_constructor_validates_event_parameters() {
     let point = ContourIntersection::Point(ContourPointIntersection {
         a_segment_index: 0,
         b_segment_index: 1,
+        a_segment_kind: SegmentKind::Line,
+        b_segment_kind: SegmentKind::Line,
         point: p(1, 0),
         a_param: q(1, 2),
         b_param: q(1, 2),
@@ -142,6 +144,8 @@ fn contour_intersection_set_constructor_validates_event_parameters() {
     let overlap = ContourIntersection::Overlap(ContourOverlapIntersection {
         a_segment_index: 0,
         b_segment_index: 1,
+        a_segment_kind: SegmentKind::Line,
+        b_segment_kind: SegmentKind::Line,
         segment: overlap_segment,
         a_range: ParamRange::new(s(0), s(1)),
         b_range: ParamRange::new(s(1), s(0)),
@@ -212,6 +216,8 @@ fn contour_events_preserve_line_overlap() {
 
     assert_eq!(overlap.a_segment_index, 0);
     assert_eq!(overlap.b_segment_index, 0);
+    assert_eq!(overlap.a_segment_kind, SegmentKind::Line);
+    assert_eq!(overlap.b_segment_kind, SegmentKind::Line);
     assert!(matches!(overlap.segment, Segment2::Line(_)));
 }
 
@@ -240,6 +246,8 @@ fn contour_events_preserve_arc_overlap() {
 
     assert_eq!(overlap.a_segment_index, 0);
     assert_eq!(overlap.b_segment_index, 0);
+    assert_eq!(overlap.a_segment_kind, SegmentKind::Arc);
+    assert_eq!(overlap.b_segment_kind, SegmentKind::Arc);
 }
 
 #[test]
@@ -257,7 +265,10 @@ fn contour_event_kinds_are_carried_to_point_events() {
         matches!(
             event,
             ContourIntersection::Point(point)
-                if point.point == p(4, 0) && point.kind == IntersectionKind::Endpoint
+                if point.point == p(4, 0)
+                    && point.kind == IntersectionKind::Endpoint
+                    && point.a_segment_kind == SegmentKind::Line
+                    && point.b_segment_kind == SegmentKind::Line
         )
     }));
 }

@@ -18,7 +18,7 @@ use crate::classify::{
 use crate::{
     ArcArcIntersection, Classification, Contour2, CurveError, CurvePolicy, CurveResult,
     IntersectionKind, LineArcIntersection, LineArcOrder, LineLineIntersection, ParamRange, Point2,
-    Segment2, SegmentIntersection, UncertaintyReason,
+    Segment2, SegmentIntersection, SegmentKind, UncertaintyReason,
 };
 
 /// Which side of a contour-pair event to inspect.
@@ -302,6 +302,10 @@ pub struct ContourPointIntersection {
     pub a_segment_index: usize,
     /// Segment index in the second contour.
     pub b_segment_index: usize,
+    /// Primitive family of the first contour segment.
+    pub a_segment_kind: SegmentKind,
+    /// Primitive family of the second contour segment.
+    pub b_segment_kind: SegmentKind,
     /// Intersection point.
     pub point: Point2,
     /// Local parameter on the first contour segment.
@@ -319,6 +323,10 @@ pub struct ContourOverlapIntersection {
     pub a_segment_index: usize,
     /// Segment index in the second contour.
     pub b_segment_index: usize,
+    /// Primitive family of the first contour segment.
+    pub a_segment_kind: SegmentKind,
+    /// Primitive family of the second contour segment.
+    pub b_segment_kind: SegmentKind,
     /// Overlap geometry.
     pub segment: Segment2,
     /// Parameter range on the first contour segment.
@@ -334,6 +342,10 @@ pub struct ContourUncertainIntersection {
     pub a_segment_index: usize,
     /// Segment index in the second contour.
     pub b_segment_index: usize,
+    /// Primitive family of the first contour segment.
+    pub a_segment_kind: SegmentKind,
+    /// Primitive family of the second contour segment.
+    pub b_segment_kind: SegmentKind,
     /// Why classification stopped.
     pub reason: UncertaintyReason,
 }
@@ -495,6 +507,8 @@ fn append_segment_relation_events(
         }) => events.push(ContourIntersection::Point(ContourPointIntersection {
             a_segment_index,
             b_segment_index,
+            a_segment_kind: a_segment.structural_facts().kind,
+            b_segment_kind: b_segment.structural_facts().kind,
             point,
             a_param,
             b_param,
@@ -507,12 +521,21 @@ fn append_segment_relation_events(
         }) => events.push(ContourIntersection::Overlap(ContourOverlapIntersection {
             a_segment_index,
             b_segment_index,
+            a_segment_kind: a_segment.structural_facts().kind,
+            b_segment_kind: b_segment.structural_facts().kind,
             segment: Segment2::Line(segment),
             a_range,
             b_range,
         })),
         SegmentIntersection::LineLine(LineLineIntersection::Uncertain { reason }) => {
-            append_uncertain(events, a_segment_index, b_segment_index, reason);
+            append_uncertain(
+                events,
+                a_segment_index,
+                b_segment_index,
+                a_segment,
+                b_segment,
+                reason,
+            );
         }
         SegmentIntersection::LineArc { order, result } => {
             append_line_arc_events(
@@ -568,12 +591,21 @@ fn append_segment_relation_events(
         }) => events.push(ContourIntersection::Overlap(ContourOverlapIntersection {
             a_segment_index,
             b_segment_index,
+            a_segment_kind: a_segment.structural_facts().kind,
+            b_segment_kind: b_segment.structural_facts().kind,
             segment: Segment2::Arc(segment),
             a_range,
             b_range,
         })),
         SegmentIntersection::ArcArc(ArcArcIntersection::Uncertain { reason }) => {
-            append_uncertain(events, a_segment_index, b_segment_index, reason);
+            append_uncertain(
+                events,
+                a_segment_index,
+                b_segment_index,
+                a_segment,
+                b_segment,
+                reason,
+            );
         }
     }
 
@@ -628,7 +660,14 @@ fn append_line_arc_events(
             )?;
         }
         LineArcIntersection::Uncertain { reason } => {
-            append_uncertain(events, a_segment_index, b_segment_index, reason);
+            append_uncertain(
+                events,
+                a_segment_index,
+                b_segment_index,
+                a_segment,
+                b_segment,
+                reason,
+            );
         }
     }
 
@@ -661,6 +700,8 @@ fn append_line_arc_hit(
         events,
         a_segment_index,
         b_segment_index,
+        a_segment,
+        b_segment,
         point,
         a_param,
         b_param,
@@ -687,6 +728,8 @@ fn append_point_from_segments(
         events,
         a_segment_index,
         b_segment_index,
+        a_segment,
+        b_segment,
         point,
         a_param,
         b_param,
@@ -700,6 +743,8 @@ fn append_certified_point_event(
     events: &mut Vec<ContourIntersection>,
     a_segment_index: usize,
     b_segment_index: usize,
+    a_segment: &Segment2,
+    b_segment: &Segment2,
     point: Point2,
     a_param: Real,
     b_param: Real,
@@ -712,6 +757,8 @@ fn append_certified_point_event(
         events.push(ContourIntersection::Point(ContourPointIntersection {
             a_segment_index,
             b_segment_index,
+            a_segment_kind: a_segment.structural_facts().kind,
+            b_segment_kind: b_segment.structural_facts().kind,
             point,
             a_param,
             b_param,
@@ -722,6 +769,8 @@ fn append_certified_point_event(
             events,
             a_segment_index,
             b_segment_index,
+            a_segment,
+            b_segment,
             UncertaintyReason::Ordering,
         );
     }
@@ -731,12 +780,16 @@ fn append_uncertain(
     events: &mut Vec<ContourIntersection>,
     a_segment_index: usize,
     b_segment_index: usize,
+    a_segment: &Segment2,
+    b_segment: &Segment2,
     reason: UncertaintyReason,
 ) {
     events.push(ContourIntersection::Uncertain(
         ContourUncertainIntersection {
             a_segment_index,
             b_segment_index,
+            a_segment_kind: a_segment.structural_facts().kind,
+            b_segment_kind: b_segment.structural_facts().kind,
             reason,
         },
     ));
