@@ -85,7 +85,31 @@ pub struct ExactCurveArrangementSplitCache2 {
     uncertain_relation_count: usize,
     intersection_points: Vec<Point2>,
     intersection_reports: Vec<RegionLineSegmentSplitIntersectionReport2>,
+    intersection_bucket_cache: ExactCurveArrangementSplitIntersectionBucketCache2,
     output_segment_count: Option<usize>,
+}
+
+/// Reference to a retained split-intersection report inside an exact point bucket.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ExactCurveArrangementSplitIntersectionRef2 {
+    intersection_report_index: usize,
+}
+
+/// Exact structural split-intersection bucket retained by an evaluated workspace.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ExactCurveArrangementSplitIntersectionBucket2 {
+    point: Point2,
+    intersections: Vec<ExactCurveArrangementSplitIntersectionRef2>,
+}
+
+/// Exact structural split-intersection buckets retained by an evaluated workspace.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ExactCurveArrangementSplitIntersectionBucketCache2 {
+    intersection_event_count: usize,
+    bucket_count: usize,
+    singleton_bucket_count: usize,
+    max_bucket_size: usize,
+    buckets: Vec<ExactCurveArrangementSplitIntersectionBucket2>,
 }
 
 /// Retained exact endpoint-bucket evidence cached by an evaluated arrangement workspace.
@@ -1316,6 +1340,8 @@ impl ExactCurveArrangementSourceEndpointBucketCache2 {
 
 impl ExactCurveArrangementSplitCache2 {
     fn from_region_build_report(report: &RegionLineSegmentRegionBuildReport2) -> Self {
+        let intersection_bucket_cache =
+            split_intersection_bucket_cache(&report.split_intersection_reports);
         Self {
             predicate_path: report.split_predicate_path,
             candidate_pair_count: report.split_candidate_pair_count,
@@ -1327,6 +1353,7 @@ impl ExactCurveArrangementSplitCache2 {
             uncertain_relation_count: report.split_uncertain_relation_count,
             intersection_points: report.split_intersection_points.clone(),
             intersection_reports: report.split_intersection_reports.clone(),
+            intersection_bucket_cache,
             output_segment_count: report.split_output_segment_count,
         }
     }
@@ -1381,9 +1408,62 @@ impl ExactCurveArrangementSplitCache2 {
         &self.intersection_reports
     }
 
+    /// Returns exact split-intersection point buckets derived from retained split reports.
+    pub const fn intersection_bucket_cache(
+        &self,
+    ) -> &ExactCurveArrangementSplitIntersectionBucketCache2 {
+        &self.intersection_bucket_cache
+    }
+
     /// Returns arranged output segment count when splitting completed.
     pub const fn output_segment_count(&self) -> Option<usize> {
         self.output_segment_count
+    }
+}
+
+impl ExactCurveArrangementSplitIntersectionRef2 {
+    /// Returns the index into [`ExactCurveArrangementSplitCache2::intersection_reports`].
+    pub const fn intersection_report_index(&self) -> usize {
+        self.intersection_report_index
+    }
+}
+
+impl ExactCurveArrangementSplitIntersectionBucket2 {
+    /// Returns the exact structural point shared by this split-intersection bucket.
+    pub const fn point(&self) -> &Point2 {
+        &self.point
+    }
+
+    /// Returns retained split-intersection report references in report order.
+    pub fn intersections(&self) -> &[ExactCurveArrangementSplitIntersectionRef2] {
+        &self.intersections
+    }
+}
+
+impl ExactCurveArrangementSplitIntersectionBucketCache2 {
+    /// Returns the number of retained split-intersection events bucketed.
+    pub const fn intersection_event_count(&self) -> usize {
+        self.intersection_event_count
+    }
+
+    /// Returns the number of exact structural split-intersection buckets.
+    pub const fn bucket_count(&self) -> usize {
+        self.bucket_count
+    }
+
+    /// Returns split-intersection buckets containing one event.
+    pub const fn singleton_bucket_count(&self) -> usize {
+        self.singleton_bucket_count
+    }
+
+    /// Returns the largest split-intersection bucket size.
+    pub const fn max_bucket_size(&self) -> usize {
+        self.max_bucket_size
+    }
+
+    /// Returns exact structural split-intersection buckets in report encounter order.
+    pub fn buckets(&self) -> &[ExactCurveArrangementSplitIntersectionBucket2] {
+        &self.buckets
     }
 }
 
@@ -3729,6 +3809,55 @@ fn add_source_endpoint_bucket_ref(
         buckets.push(ExactCurveArrangementSourceEndpointBucket2 {
             point: point.clone(),
             endpoints: vec![endpoint_ref],
+        });
+    }
+}
+
+fn split_intersection_bucket_cache(
+    intersection_reports: &[RegionLineSegmentSplitIntersectionReport2],
+) -> ExactCurveArrangementSplitIntersectionBucketCache2 {
+    let mut buckets: Vec<ExactCurveArrangementSplitIntersectionBucket2> = Vec::new();
+    for (intersection_report_index, report) in intersection_reports.iter().enumerate() {
+        add_split_intersection_bucket_ref(
+            &mut buckets,
+            report.point(),
+            ExactCurveArrangementSplitIntersectionRef2 {
+                intersection_report_index,
+            },
+        );
+    }
+
+    let intersection_event_count = intersection_reports.len();
+    let bucket_count = buckets.len();
+    let singleton_bucket_count = buckets
+        .iter()
+        .filter(|bucket| bucket.intersections.len() == 1)
+        .count();
+    let max_bucket_size = buckets
+        .iter()
+        .map(|bucket| bucket.intersections.len())
+        .max()
+        .unwrap_or(0);
+    ExactCurveArrangementSplitIntersectionBucketCache2 {
+        intersection_event_count,
+        bucket_count,
+        singleton_bucket_count,
+        max_bucket_size,
+        buckets,
+    }
+}
+
+fn add_split_intersection_bucket_ref(
+    buckets: &mut Vec<ExactCurveArrangementSplitIntersectionBucket2>,
+    point: &Point2,
+    intersection_ref: ExactCurveArrangementSplitIntersectionRef2,
+) {
+    if let Some(bucket) = buckets.iter_mut().find(|bucket| bucket.point() == point) {
+        bucket.intersections.push(intersection_ref);
+    } else {
+        buckets.push(ExactCurveArrangementSplitIntersectionBucket2 {
+            point: point.clone(),
+            intersections: vec![intersection_ref],
         });
     }
 }

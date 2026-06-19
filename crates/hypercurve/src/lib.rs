@@ -263,6 +263,8 @@ pub use region_nesting::{
     ExactCurveArrangementRingAssemblyCache2, ExactCurveArrangementSourceEndpoint2,
     ExactCurveArrangementSourceEndpointBucket2, ExactCurveArrangementSourceEndpointBucketCache2,
     ExactCurveArrangementSourceEndpointRef2, ExactCurveArrangementSplitCache2,
+    ExactCurveArrangementSplitIntersectionBucket2,
+    ExactCurveArrangementSplitIntersectionBucketCache2, ExactCurveArrangementSplitIntersectionRef2,
     ExactCurveWorkspace2, RegionBoundaryContourBuildPredicatePath2,
     RegionBoundaryContourBuildReport2, RegionBoundaryContourBuildResult2,
     RegionBoundaryContourBuildStage2, RegionBoundaryContourRole2, RegionBoundaryContourRoleReport2,

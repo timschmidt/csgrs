@@ -1110,6 +1110,26 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
         result.report().split_intersection_reports()
     );
     assert_eq!(split_cache.output_segment_count(), Some(4));
+    let split_intersection_bucket_cache = split_cache.intersection_bucket_cache();
+    assert_eq!(
+        split_intersection_bucket_cache.intersection_event_count(),
+        4
+    );
+    assert_eq!(split_intersection_bucket_cache.bucket_count(), 4);
+    assert_eq!(split_intersection_bucket_cache.singleton_bucket_count(), 4);
+    assert_eq!(split_intersection_bucket_cache.max_bucket_size(), 1);
+    assert_eq!(split_intersection_bucket_cache.buckets().len(), 4);
+    let first_split_intersection_bucket = &split_intersection_bucket_cache.buckets()[0];
+    assert_eq!(first_split_intersection_bucket.point(), &p(4, 0));
+    assert_eq!(first_split_intersection_bucket.intersections().len(), 1);
+    assert_eq!(
+        first_split_intersection_bucket.intersections()[0].intersection_report_index(),
+        0
+    );
+    assert_eq!(
+        first_split_intersection_bucket.point(),
+        result.report().split_intersection_reports()[0].point()
+    );
     let endpoint_cache = result.workspace().endpoint_graph_cache().unwrap();
     assert_eq!(
         Some(endpoint_cache.predicate_path()),
@@ -1270,6 +1290,28 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
         split_cache.output_segment_count(),
         result.report().split_output_segment_count()
     );
+    let split_intersection_bucket_cache = split_cache.intersection_bucket_cache();
+    assert_eq!(
+        split_intersection_bucket_cache.intersection_event_count(),
+        result.report().split_intersection_event_count()
+    );
+    assert_eq!(
+        split_intersection_bucket_cache.bucket_count(),
+        result.report().split_intersection_points().len()
+    );
+    assert_eq!(split_intersection_bucket_cache.singleton_bucket_count(), 2);
+    assert_eq!(split_intersection_bucket_cache.max_bucket_size(), 1);
+    assert_eq!(split_intersection_bucket_cache.buckets().len(), 2);
+    let first_split_intersection_bucket = &split_intersection_bucket_cache.buckets()[0];
+    assert_eq!(first_split_intersection_bucket.intersections().len(), 1);
+    assert_eq!(
+        first_split_intersection_bucket.intersections()[0].intersection_report_index(),
+        0
+    );
+    assert_eq!(
+        first_split_intersection_bucket.point(),
+        result.report().split_intersection_reports()[0].point()
+    );
     let endpoint_cache = result.workspace().endpoint_graph_cache().unwrap();
     assert_eq!(
         Some(endpoint_cache.predicate_path()),
@@ -1368,6 +1410,15 @@ fn exact_curve_arrangement_attempt_retains_overlap_blocker() {
         split_cache.intersection_points(),
         result.report().split_intersection_points()
     );
+    let split_intersection_bucket_cache = split_cache.intersection_bucket_cache();
+    assert_eq!(
+        split_intersection_bucket_cache.intersection_event_count(),
+        0
+    );
+    assert_eq!(split_intersection_bucket_cache.bucket_count(), 0);
+    assert_eq!(split_intersection_bucket_cache.singleton_bucket_count(), 0);
+    assert_eq!(split_intersection_bucket_cache.max_bucket_size(), 0);
+    assert!(split_intersection_bucket_cache.buckets().is_empty());
     assert!(result.workspace().endpoint_graph_cache().is_none());
     assert!(result.workspace().ring_assembly_cache().is_none());
     let output_cache = result.workspace().output_cache().unwrap();
