@@ -19,6 +19,17 @@ fn exact_boolean_evaluation(
     workspace.evaluate(request).unwrap().clone()
 }
 
+fn with_exact_boolean_evaluation<R>(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    request: ExactBooleanRequest,
+    f: impl FnOnce(&hypermesh::ExactBooleanEvaluation) -> R,
+) -> R {
+    let mut workspace = ExactBooleanWorkspace::new(left, right);
+    let evaluation = workspace.evaluate(request).unwrap();
+    f(evaluation)
+}
+
 fn evaluation_materializes_arrangement_cell_complex(
     evaluation: &hypermesh::ExactBooleanEvaluation,
 ) -> bool {
@@ -71,13 +82,14 @@ fn assert_public_full_face_adjacent_union(
     _expected_shared_patches: usize,
 ) -> ExactBooleanResult {
     let request = ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED);
-    let evaluation = exact_boolean_evaluation(left, right, request);
-    evaluation.validate().unwrap();
-    evaluation.validate_against_sources(left, right).unwrap();
-    assert_eq!(
-        evaluation.freshness_against_sources(left, right),
-        ExactReportFreshness::Current
-    );
+    with_exact_boolean_evaluation(left, right, request, |evaluation| {
+        evaluation.validate().unwrap();
+        evaluation.validate_against_sources(left, right).unwrap();
+        assert_eq!(
+            evaluation.freshness_against_sources(left, right),
+            ExactReportFreshness::Current
+        );
+    });
 
     let result = exact_boolean_result(left, right, request);
     assert!(
@@ -102,13 +114,14 @@ fn assert_public_contained_face_adjacent_union(
     _expected_contained_faces: usize,
 ) -> ExactBooleanResult {
     let request = ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED);
-    let evaluation = exact_boolean_evaluation(left, right, request);
-    evaluation.validate().unwrap();
-    evaluation.validate_against_sources(left, right).unwrap();
-    assert_eq!(
-        evaluation.freshness_against_sources(left, right),
-        ExactReportFreshness::Current
-    );
+    with_exact_boolean_evaluation(left, right, request, |evaluation| {
+        evaluation.validate().unwrap();
+        evaluation.validate_against_sources(left, right).unwrap();
+        assert_eq!(
+            evaluation.freshness_against_sources(left, right),
+            ExactReportFreshness::Current
+        );
+    });
 
     let result = exact_boolean_result(left, right, request);
     assert!(
@@ -226,33 +239,31 @@ fn exact_boolean_evaluation_materializes_certified_result_publicly() {
         ValidationPolicy::ALLOW_BOUNDARY,
     );
 
-    let evaluation = exact_boolean_evaluation(&left, &right, request);
-
-    evaluation.validate().unwrap();
-    evaluation.validate_against_sources(&left, &right).unwrap();
-    assert_eq!(
-        evaluation.freshness_against_sources(&left, &right),
-        hypermesh::ExactReportFreshness::Current
-    );
-    assert!(evaluation.is_certified());
-    assert!(evaluation.materialized_result().is_some());
-    assert!(!evaluation.has_blocker());
-    assert!(evaluation.is_certified());
-    assert!(
-        evaluation.materialized_result().is_some_and(|result| {
+    with_exact_boolean_evaluation(&left, &right, request, |evaluation| {
+        evaluation.validate().unwrap();
+        evaluation.validate_against_sources(&left, &right).unwrap();
+        assert_eq!(
+            evaluation.freshness_against_sources(&left, &right),
+            hypermesh::ExactReportFreshness::Current
+        );
+        assert!(evaluation.is_certified());
+        assert!(evaluation.materialized_result().is_some());
+        assert!(!evaluation.has_blocker());
+        assert!(evaluation.is_certified());
+        assert!(evaluation.materialized_result().is_some_and(|result| {
             result.is_certified_shortcut_for(ExactBooleanOperation::Union)
-        })
-    );
-    let stale_right = tetra([8, 0, 0]);
-    assert!(
-        evaluation
-            .validate_against_sources(&left, &stale_right)
-            .is_err()
-    );
-    assert_eq!(
-        evaluation.freshness_against_sources(&left, &stale_right),
-        hypermesh::ExactReportFreshness::SourceReplayMismatch
-    );
+        }));
+        let stale_right = tetra([8, 0, 0]);
+        assert!(
+            evaluation
+                .validate_against_sources(&left, &stale_right)
+                .is_err()
+        );
+        assert_eq!(
+            evaluation.freshness_against_sources(&left, &stale_right),
+            hypermesh::ExactReportFreshness::SourceReplayMismatch
+        );
+    });
 }
 
 #[test]
@@ -261,27 +272,27 @@ fn exact_boolean_evaluation_retains_region_ownership_report() {
     let right = tetra_from_corners([1, 1, 1], [2, 1, 1], [1, 2, 1], [1, 1, 2]);
     let request = ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED);
 
-    let evaluation = exact_boolean_evaluation(&left, &right, request);
-
-    evaluation.validate().unwrap();
-    evaluation.validate_against_sources(&left, &right).unwrap();
-    assert!(
-        evaluation_materializes_arrangement_cell_complex(&evaluation),
-        "{evaluation:?}"
-    );
-    assert!(
-        evaluation.retained_arrangement_attempt().is_some(),
-        "named boolean certifications should retain arrangement attempt"
-    );
-    let attempt = evaluation
-        .retained_arrangement_attempt()
-        .expect("named boolean certifications should retain arrangement attempt");
-    assert!(attempt.has_region_ownership_evidence());
-    assert!(attempt.region_ownership_is_resolved());
-    assert!(attempt.region_ownership_is_volume_resolved());
-    assert_eq!(attempt.volume_regions(), 3);
-    assert_eq!(attempt.shared_owned_volume_regions(), 1);
-    assert!(attempt.has_topology_assembly_evidence());
+    with_exact_boolean_evaluation(&left, &right, request, |evaluation| {
+        evaluation.validate().unwrap();
+        evaluation.validate_against_sources(&left, &right).unwrap();
+        assert!(
+            evaluation_materializes_arrangement_cell_complex(evaluation),
+            "{evaluation:?}"
+        );
+        assert!(
+            evaluation.retained_arrangement_attempt().is_some(),
+            "named boolean certifications should retain arrangement attempt"
+        );
+        let attempt = evaluation
+            .retained_arrangement_attempt()
+            .expect("named boolean certifications should retain arrangement attempt");
+        assert!(attempt.has_region_ownership_evidence());
+        assert!(attempt.region_ownership_is_resolved());
+        assert!(attempt.region_ownership_is_volume_resolved());
+        assert_eq!(attempt.volume_regions(), 3);
+        assert_eq!(attempt.shared_owned_volume_regions(), 1);
+        assert!(attempt.has_topology_assembly_evidence());
+    });
 }
 
 #[test]
@@ -303,30 +314,31 @@ fn exact_boolean_evaluation_materializes_boundary_policy_shortcut_by_default() {
         ValidationPolicy::ALLOW_BOUNDARY,
     );
 
-    let evaluation = exact_boolean_evaluation(&left, &right, request);
-
-    evaluation.validate().unwrap();
-    evaluation.validate_against_sources(&left, &right).unwrap();
-    assert!(evaluation.is_certified());
-    assert!(evaluation.materialized_result().is_some());
-    assert!(!evaluation.has_blocker());
-    assert!(evaluation.is_certified());
-    assert!(evaluation.is_certified_boundary_policy_shortcut());
-    assert!(evaluation.has_retained_exact_evidence());
-    let result = evaluation
-        .materialized_result()
-        .expect("boundary-policy evaluation should materialize");
-    result.validate().unwrap();
-    result.validate_against_sources(&left, &right).unwrap();
+    with_exact_boolean_evaluation(&left, &right, request, |evaluation| {
+        evaluation.validate().unwrap();
+        evaluation.validate_against_sources(&left, &right).unwrap();
+        assert!(evaluation.is_certified());
+        assert!(evaluation.materialized_result().is_some());
+        assert!(!evaluation.has_blocker());
+        assert!(evaluation.is_certified());
+        assert!(evaluation.is_certified_boundary_policy_shortcut());
+        assert!(evaluation.has_retained_exact_evidence());
+        let result = evaluation
+            .materialized_result()
+            .expect("boundary-policy evaluation should materialize");
+        result.validate().unwrap();
+        result.validate_against_sources(&left, &right).unwrap();
+    });
     let rejected_request = ExactBooleanRequest::with_boundary_policy(
         ExactBooleanOperation::Union,
         ValidationPolicy::ALLOW_BOUNDARY,
         ExactBoundaryBooleanPolicy::Reject,
     );
-    let rejected = exact_boolean_evaluation(&left, &right, rejected_request);
-    rejected.validate().unwrap();
-    assert!(!rejected.is_certified());
-    assert!(rejected.materialized_result().is_none());
+    with_exact_boolean_evaluation(&left, &right, rejected_request, |rejected| {
+        rejected.validate().unwrap();
+        assert!(!rejected.is_certified());
+        assert!(rejected.materialized_result().is_none());
+    });
     assert!(
         ExactBooleanWorkspace::new(&left, &right)
             .materialize(rejected_request)
