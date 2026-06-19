@@ -158,7 +158,6 @@ fn run_case(case: &BenchCase) {
             attempt.region_ownership_is_resolved(),
             attempt.region_ownership_is_volume_resolved(),
             attempt.volume_regions(),
-            attempt.volume_adjacencies(),
             attempt.shared_owned_volume_regions(),
         ));
     });

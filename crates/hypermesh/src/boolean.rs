@@ -331,11 +331,6 @@ impl ExactArrangementBooleanAttempt {
         self.volume_regions
     }
 
-    /// Return retained volume adjacency count.
-    pub const fn volume_adjacencies(&self) -> usize {
-        self.volume_adjacencies
-    }
-
     /// Return volume regions owned by both operands, when ownership evidence is retained.
     pub fn shared_owned_volume_regions(&self) -> usize {
         self.region_ownership_report
