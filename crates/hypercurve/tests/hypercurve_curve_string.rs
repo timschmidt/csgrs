@@ -1,11 +1,12 @@
 use hypercurve::{
     BulgeVertex2, CircularArc2, Classification, Contour2, CurveError, CurvePolicy, CurveString2,
     CurveStringChamferInputPath2, CurveStringChamferPredicatePath2, CurveStringChamferStage2,
-    CurveStringConnectSource2, CurveStringConnectStage2, CurveStringCurveTrimQueryPath2,
-    CurveStringCurveTrimStage2, CurveStringDeduplicatePredicatePath2, CurveStringDeduplicateStage2,
-    CurveStringEndpoint2, CurveStringEndpointConnectionPredicatePath2,
-    CurveStringEndpointConnectionStatus2, CurveStringExtendPredicatePath2, CurveStringExtendStage2,
-    CurveStringFilletInputPath2, CurveStringFilletPredicatePath2, CurveStringFilletStage2,
+    CurveStringConnectPredicatePath2, CurveStringConnectSource2, CurveStringConnectStage2,
+    CurveStringCurveTrimQueryPath2, CurveStringCurveTrimStage2,
+    CurveStringDeduplicatePredicatePath2, CurveStringDeduplicateStage2, CurveStringEndpoint2,
+    CurveStringEndpointConnectionPredicatePath2, CurveStringEndpointConnectionStatus2,
+    CurveStringExtendPredicatePath2, CurveStringExtendStage2, CurveStringFilletInputPath2,
+    CurveStringFilletPredicatePath2, CurveStringFilletStage2,
     CurveStringIntersectionPredicatePath2, CurveStringIntersectionQueryPath2,
     CurveStringLineMergePredicatePath2, CurveStringLineMergeStage2, CurveStringLinkKind2,
     CurveStringLinkPredicatePath2, CurveStringLinkSourceInput2, CurveStringLinkStage2,
@@ -1548,6 +1549,10 @@ fn curve_string_connect_end_to_start_inserts_exact_line() {
         connected.report().stage(),
         CurveStringConnectStage2::ConnectorMaterialization
     );
+    assert_eq!(
+        connected.report().predicate_path(),
+        CurveStringConnectPredicatePath2::SelectedEndpointPairClassification
+    );
     assert!(connected.report().blocker().is_none());
     assert_eq!(
         connected.report().endpoint_report().status(),
@@ -1760,6 +1765,10 @@ fn curve_string_connect_selected_endpoints_orients_inputs() {
         .unwrap();
 
     assert!(connected.report().status().is_native_exact());
+    assert_eq!(
+        connected.report().predicate_path(),
+        CurveStringConnectPredicatePath2::SelectedEndpointPairClassification
+    );
     assert_eq!(connected.report().endpoint_pair_count(), 1);
     assert_eq!(connected.report().endpoint_reports().len(), 1);
     assert_eq!(connected.report().exact_endpoint_pair_count(), 0);
@@ -1822,6 +1831,10 @@ fn curve_string_connect_nearest_endpoints_selects_unique_pair() {
         .unwrap();
 
     assert!(connected.report().status().is_native_exact());
+    assert_eq!(
+        connected.report().predicate_path(),
+        CurveStringConnectPredicatePath2::ExhaustiveEndpointPairDistanceSelection
+    );
     assert_eq!(connected.report().endpoint_pair_count(), 4);
     assert_eq!(connected.report().endpoint_reports().len(), 4);
     assert_eq!(connected.report().exact_endpoint_pair_count(), 0);
@@ -1894,6 +1907,10 @@ fn curve_string_connect_nearest_endpoints_reports_tie_boundary() {
     assert!(connected.curve_string().is_none());
     assert!(connected.report().status().is_retained_evidence());
     assert_eq!(
+        connected.report().predicate_path(),
+        CurveStringConnectPredicatePath2::ExhaustiveEndpointPairDistanceSelection
+    );
+    assert_eq!(
         connected.report().blocker(),
         Some(UncertaintyReason::Boundary)
     );
@@ -1929,6 +1946,10 @@ fn curve_string_connect_end_to_start_blocks_already_connected_endpoints() {
 
     assert!(connected.curve_string().is_none());
     assert!(connected.report().status().is_retained_evidence());
+    assert_eq!(
+        connected.report().predicate_path(),
+        CurveStringConnectPredicatePath2::SelectedEndpointPairClassification
+    );
     assert_eq!(
         connected.report().stage(),
         CurveStringConnectStage2::EndpointSelection

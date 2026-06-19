@@ -315,6 +315,7 @@ pub struct OrderedLinkedCurveString2 {
 #[derive(Clone, Debug, PartialEq)]
 pub struct CurveStringConnectReport2 {
     stage: CurveStringConnectStage2,
+    predicate_path: CurveStringConnectPredicatePath2,
     kind: Option<CurveStringLinkKind2>,
     endpoint_report: CurveStringEndpointConnectionReport2,
     endpoint_reports: Vec<CurveStringEndpointConnectionReport2>,
@@ -343,6 +344,15 @@ pub enum CurveStringConnectStage2 {
     EndpointSelection,
     /// Connector and output segment provenance were materialized.
     ConnectorMaterialization,
+}
+
+/// Exact predicate path used while selecting an explicit connector.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum CurveStringConnectPredicatePath2 {
+    /// The caller-selected endpoint pair was classified by exact endpoint predicates.
+    SelectedEndpointPairClassification,
+    /// All four endpoint pairs were classified before choosing the unique nearest disconnected pair.
+    ExhaustiveEndpointPairDistanceSelection,
 }
 
 /// Source kind for one segment emitted by a connector operation.
@@ -1468,6 +1478,7 @@ impl CurveString2 {
                     endpoint_report.clone(),
                     vec![endpoint_report],
                     endpoint_summary,
+                    CurveStringConnectPredicatePath2::SelectedEndpointPairClassification,
                     RetainedTopologyStatus::Unsupported,
                     Some(UncertaintyReason::Boundary),
                 ));
@@ -1481,6 +1492,7 @@ impl CurveString2 {
                     endpoint_report.clone(),
                     vec![endpoint_report],
                     endpoint_summary,
+                    CurveStringConnectPredicatePath2::SelectedEndpointPairClassification,
                     RetainedTopologyStatus::Unresolved,
                     Some(reason),
                 ));
@@ -1495,6 +1507,7 @@ impl CurveString2 {
             connector_endpoint_points(&output_segments)?;
         let report = CurveStringConnectReport2 {
             stage: CurveStringConnectStage2::ConnectorMaterialization,
+            predicate_path: CurveStringConnectPredicatePath2::SelectedEndpointPairClassification,
             kind: Some(kind),
             endpoint_report: endpoint_report.clone(),
             endpoint_reports: vec![endpoint_report],
@@ -1581,6 +1594,7 @@ impl CurveString2 {
                 report,
                 endpoint_reports.clone(),
                 endpoint_summary,
+                CurveStringConnectPredicatePath2::ExhaustiveEndpointPairDistanceSelection,
                 RetainedTopologyStatus::Unsupported,
                 Some(UncertaintyReason::Boundary),
             ));
@@ -1593,6 +1607,7 @@ impl CurveString2 {
                 report,
                 endpoint_reports.clone(),
                 endpoint_summary,
+                CurveStringConnectPredicatePath2::ExhaustiveEndpointPairDistanceSelection,
                 RetainedTopologyStatus::Unresolved,
                 Some(reason),
             ));
@@ -1608,6 +1623,7 @@ impl CurveString2 {
                     report,
                     endpoint_reports.clone(),
                     endpoint_summary,
+                    CurveStringConnectPredicatePath2::ExhaustiveEndpointPairDistanceSelection,
                     RetainedTopologyStatus::Unsupported,
                     Some(UncertaintyReason::Boundary),
                 ));
@@ -1620,6 +1636,7 @@ impl CurveString2 {
                     report,
                     endpoint_reports.clone(),
                     endpoint_summary,
+                    CurveStringConnectPredicatePath2::ExhaustiveEndpointPairDistanceSelection,
                     RetainedTopologyStatus::Unresolved,
                     Some(reason),
                 ));
@@ -1634,6 +1651,8 @@ impl CurveString2 {
             connector_endpoint_points(&output_segments)?;
         let report = CurveStringConnectReport2 {
             stage: CurveStringConnectStage2::ConnectorMaterialization,
+            predicate_path:
+                CurveStringConnectPredicatePath2::ExhaustiveEndpointPairDistanceSelection,
             kind: Some(kind),
             endpoint_report: endpoint_report.clone(),
             endpoint_reports,
@@ -7522,6 +7541,11 @@ impl CurveStringConnectReport2 {
         self.stage
     }
 
+    /// Returns the exact predicate path used to select this connector.
+    pub const fn predicate_path(&self) -> CurveStringConnectPredicatePath2 {
+        self.predicate_path
+    }
+
     /// Returns the selected connector orientation, when one was selected.
     pub const fn kind(&self) -> Option<CurveStringLinkKind2> {
         self.kind
@@ -8312,6 +8336,7 @@ fn blocked_connected_curve_string(
     endpoint_report: CurveStringEndpointConnectionReport2,
     endpoint_reports: Vec<CurveStringEndpointConnectionReport2>,
     endpoint_summary: EndpointPairSummary,
+    predicate_path: CurveStringConnectPredicatePath2,
     status: RetainedTopologyStatus,
     blocker: Option<UncertaintyReason>,
 ) -> ConnectedCurveString2 {
@@ -8319,6 +8344,7 @@ fn blocked_connected_curve_string(
         curve_string: None,
         report: CurveStringConnectReport2 {
             stage: CurveStringConnectStage2::EndpointSelection,
+            predicate_path,
             kind,
             endpoint_report,
             endpoint_reports,
