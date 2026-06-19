@@ -1054,6 +1054,36 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
             .map(|bbox| (bbox.min().clone(), bbox.max().clone())),
         Some((p(0, 0), p(4, 4)))
     );
+    let split_cache = result.workspace().split_cache().unwrap();
+    assert_eq!(
+        split_cache.predicate_path(),
+        result.report().split_predicate_path()
+    );
+    assert_eq!(
+        split_cache.candidate_pair_count(),
+        result.report().split_candidate_pair_count()
+    );
+    assert_eq!(
+        split_cache.skipped_aabb_pair_count(),
+        result.report().split_skipped_aabb_pair_count()
+    );
+    assert_eq!(
+        split_cache.tested_pair_count(),
+        result.report().split_tested_pair_count()
+    );
+    assert_eq!(
+        split_cache.intersection_event_count(),
+        result.report().split_intersection_event_count()
+    );
+    assert_eq!(
+        split_cache.intersection_points(),
+        result.report().split_intersection_points()
+    );
+    assert_eq!(
+        split_cache.intersection_reports(),
+        result.report().split_intersection_reports()
+    );
+    assert_eq!(split_cache.output_segment_count(), Some(4));
     assert!(result.region().is_some());
     assert_eq!(
         result.report().split_predicate_path(),
@@ -1099,6 +1129,23 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
             .map(|bbox| bbox.min().clone()),
         Some(p(0, -2))
     );
+    let split_cache = result.workspace().split_cache().unwrap();
+    assert_eq!(
+        split_cache.predicate_path(),
+        result.report().split_predicate_path()
+    );
+    assert_eq!(
+        split_cache.intersection_event_count(),
+        result.report().split_intersection_event_count()
+    );
+    assert_eq!(
+        split_cache.intersection_reports(),
+        result.report().split_intersection_reports()
+    );
+    assert_eq!(
+        split_cache.output_segment_count(),
+        result.report().split_output_segment_count()
+    );
     assert!(result.region().is_some());
     assert!(result.report().status().is_native_exact());
     assert_eq!(result.report(), legacy.report());
@@ -1126,6 +1173,13 @@ fn exact_curve_arrangement_attempt_retains_overlap_blocker() {
         RegionLineSegmentRegionBuildStage2::RingAssembly
     );
     assert_eq!(result.report().blocker(), Some(UncertaintyReason::Boundary));
+    let split_cache = result.workspace().split_cache().unwrap();
+    assert_eq!(split_cache.overlap_relation_count(), 1);
+    assert_eq!(split_cache.output_segment_count(), None);
+    assert_eq!(
+        split_cache.intersection_points(),
+        result.report().split_intersection_points()
+    );
     assert_eq!(result.report(), legacy.report());
 }
 

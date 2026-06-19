@@ -258,9 +258,10 @@ pub use region_fragments::{
 };
 pub use region_nesting::{
     ExactCurveArrangementAttempt2, ExactCurveArrangementEvaluation2, ExactCurveArrangementRequest2,
-    ExactCurveArrangementResult2, ExactCurveWorkspace2, RegionBoundaryContourBuildPredicatePath2,
-    RegionBoundaryContourBuildReport2, RegionBoundaryContourBuildResult2,
-    RegionBoundaryContourBuildStage2, RegionBoundaryContourRole2, RegionBoundaryContourRoleReport2,
+    ExactCurveArrangementResult2, ExactCurveArrangementSplitCache2, ExactCurveWorkspace2,
+    RegionBoundaryContourBuildPredicatePath2, RegionBoundaryContourBuildReport2,
+    RegionBoundaryContourBuildResult2, RegionBoundaryContourBuildStage2,
+    RegionBoundaryContourRole2, RegionBoundaryContourRoleReport2,
     RegionLineSegmentArrangedEndpoint2, RegionLineSegmentArrangedSourceReport2,
     RegionLineSegmentEndpointGraphPredicatePath2, RegionLineSegmentRegionBuildReport2,
     RegionLineSegmentRegionBuildResult2, RegionLineSegmentRegionBuildStage2,

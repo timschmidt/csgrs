@@ -32,6 +32,23 @@ pub struct ExactCurveWorkspace2 {
     source_segment_kind_counts: SegmentKindCounts,
     source_segment_aabbs: Vec<Option<Aabb2>>,
     source_aabb: Option<Aabb2>,
+    split_cache: Option<ExactCurveArrangementSplitCache2>,
+}
+
+/// Retained exact split evidence cached by an evaluated arrangement workspace.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ExactCurveArrangementSplitCache2 {
+    predicate_path: Option<RegionLineSegmentSplitPredicatePath2>,
+    candidate_pair_count: usize,
+    skipped_aabb_pair_count: usize,
+    tested_pair_count: usize,
+    intersection_event_count: usize,
+    point_relation_count: usize,
+    overlap_relation_count: usize,
+    uncertain_relation_count: usize,
+    intersection_points: Vec<Point2>,
+    intersection_reports: Vec<RegionLineSegmentSplitIntersectionReport2>,
+    output_segment_count: Option<usize>,
 }
 
 /// Evaluation record for a retained exact curve arrangement attempt.
@@ -1076,7 +1093,18 @@ impl ExactCurveWorkspace2 {
             source_segment_kind_counts,
             source_segment_aabbs,
             source_aabb,
+            split_cache: None,
         })
+    }
+
+    fn with_region_result_facts(
+        mut self,
+        region_result: &RegionLineSegmentRegionBuildResult2,
+    ) -> Self {
+        self.split_cache = Some(ExactCurveArrangementSplitCache2::from_region_build_report(
+            region_result.report(),
+        ));
+        self
     }
 
     /// Returns the retained request.
@@ -1113,6 +1141,84 @@ impl ExactCurveWorkspace2 {
             .len()
             .saturating_sub(self.decided_source_segment_aabb_count())
     }
+
+    /// Returns exact split evidence retained from the evaluated arrangement.
+    pub const fn split_cache(&self) -> Option<&ExactCurveArrangementSplitCache2> {
+        self.split_cache.as_ref()
+    }
+}
+
+impl ExactCurveArrangementSplitCache2 {
+    fn from_region_build_report(report: &RegionLineSegmentRegionBuildReport2) -> Self {
+        Self {
+            predicate_path: report.split_predicate_path,
+            candidate_pair_count: report.split_candidate_pair_count,
+            skipped_aabb_pair_count: report.split_skipped_aabb_pair_count,
+            tested_pair_count: report.split_tested_pair_count,
+            intersection_event_count: report.split_intersection_event_count,
+            point_relation_count: report.split_point_relation_count,
+            overlap_relation_count: report.split_overlap_relation_count,
+            uncertain_relation_count: report.split_uncertain_relation_count,
+            intersection_points: report.split_intersection_points.clone(),
+            intersection_reports: report.split_intersection_reports.clone(),
+            output_segment_count: report.split_output_segment_count,
+        }
+    }
+
+    /// Returns the exact predicate family used for source splitting.
+    pub const fn predicate_path(&self) -> Option<RegionLineSegmentSplitPredicatePath2> {
+        self.predicate_path
+    }
+
+    /// Returns source segment pairs considered by the split stage.
+    pub const fn candidate_pair_count(&self) -> usize {
+        self.candidate_pair_count
+    }
+
+    /// Returns source segment pairs skipped by certified AABB disjointness.
+    pub const fn skipped_aabb_pair_count(&self) -> usize {
+        self.skipped_aabb_pair_count
+    }
+
+    /// Returns source segment pairs tested by exact segment predicates.
+    pub const fn tested_pair_count(&self) -> usize {
+        self.tested_pair_count
+    }
+
+    /// Returns exact point-intersection event count found during splitting.
+    pub const fn intersection_event_count(&self) -> usize {
+        self.intersection_event_count
+    }
+
+    /// Returns source-pair relations classified as point intersections.
+    pub const fn point_relation_count(&self) -> usize {
+        self.point_relation_count
+    }
+
+    /// Returns source-pair relations classified as overlaps.
+    pub const fn overlap_relation_count(&self) -> usize {
+        self.overlap_relation_count
+    }
+
+    /// Returns source-pair relations that remained uncertain.
+    pub const fn uncertain_relation_count(&self) -> usize {
+        self.uncertain_relation_count
+    }
+
+    /// Returns exact intersection points retained by the split stage.
+    pub fn intersection_points(&self) -> &[Point2] {
+        &self.intersection_points
+    }
+
+    /// Returns exact per-event source and parameter evidence retained by the split stage.
+    pub fn intersection_reports(&self) -> &[RegionLineSegmentSplitIntersectionReport2] {
+        &self.intersection_reports
+    }
+
+    /// Returns arranged output segment count when splitting completed.
+    pub const fn output_segment_count(&self) -> Option<usize> {
+        self.output_segment_count
+    }
 }
 
 impl ExactCurveArrangementEvaluation2 {
@@ -1140,21 +1246,22 @@ impl ExactCurveArrangementAttempt2 {
 
     /// Evaluates the request through the retained exact arrangement pipeline.
     pub fn evaluate(&self, policy: &CurvePolicy) -> CurveResult<ExactCurveArrangementResult2> {
-        let workspace = ExactCurveWorkspace2::from_request(self.request.clone(), policy)?;
         let region_result =
-            if let Some(source_line_segments) = workspace.request.source_line_segments.as_ref() {
+            if let Some(source_line_segments) = self.request.source_line_segments.as_ref() {
                 Region2::from_unordered_line_segments_with_report_impl(
                     source_line_segments.clone(),
-                    workspace.request.fill_rule,
+                    self.request.fill_rule,
                     policy,
                 )?
             } else {
                 Region2::from_unordered_segments_with_report_impl(
-                    workspace.request.source_segments.clone(),
-                    workspace.request.fill_rule,
+                    self.request.source_segments.clone(),
+                    self.request.fill_rule,
                     policy,
                 )?
             };
+        let workspace = ExactCurveWorkspace2::from_request(self.request.clone(), policy)?
+            .with_region_result_facts(&region_result);
         Ok(ExactCurveArrangementResult2 {
             evaluation: ExactCurveArrangementEvaluation2::new(workspace),
             region_result,
