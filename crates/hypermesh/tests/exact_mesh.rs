@@ -1502,21 +1502,17 @@ fn exact_open_surface_arrangement_is_publicly_replayable() {
                             ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
                         )
                         .unwrap();
-                    assert_eq!(
-                        closed_attempt.freshness_against_sources_for_request(
-                            &left,
-                            &right,
-                            ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
-                        ),
-                        ExactReportFreshness::Current
-                    );
-                    assert_eq!(
-                        closed_attempt.freshness_against_sources_for_request(
-                            &left,
-                            &right,
-                            ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
-                        ),
-                        ExactReportFreshness::SourceReplayMismatch
+                    assert!(
+                        closed_attempt
+                            .validate_against_sources_for_request(
+                                &left,
+                                &right,
+                                ExactBooleanRequest::new(
+                                    operation,
+                                    ValidationPolicy::ALLOW_BOUNDARY
+                                ),
+                            )
+                            .is_err()
                     );
                 },
             );
@@ -1536,21 +1532,14 @@ fn exact_open_surface_arrangement_is_publicly_replayable() {
                         ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
                     )
                     .unwrap();
-                assert_eq!(
-                    attempt.freshness_against_sources_for_request(
-                        &left,
-                        &right,
-                        ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
-                    ),
-                    ExactReportFreshness::Current
-                );
-                assert_eq!(
-                    attempt.freshness_against_sources_for_request(
-                        &left,
-                        &right,
-                        ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
-                    ),
-                    ExactReportFreshness::SourceReplayMismatch
+                assert!(
+                    attempt
+                        .validate_against_sources_for_request(
+                            &left,
+                            &right,
+                            ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
+                        )
+                        .is_err()
                 );
             },
         );
@@ -1628,21 +1617,14 @@ fn arrangement_attempt_output_validation_is_publicly_replayable() {
                         ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
                     )
                     .unwrap();
-                assert_eq!(
-                    closed_attempt.freshness_against_sources_for_request(
-                        &left,
-                        &right,
-                        ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
-                    ),
-                    ExactReportFreshness::Current
-                );
-                assert_eq!(
-                    closed_attempt.freshness_against_sources_for_request(
-                        &left,
-                        &right,
-                        ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
-                    ),
-                    ExactReportFreshness::SourceReplayMismatch
+                assert!(
+                    closed_attempt
+                        .validate_against_sources_for_request(
+                            &left,
+                            &right,
+                            ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
+                        )
+                        .is_err()
                 );
             },
         );
@@ -1661,21 +1643,14 @@ fn arrangement_attempt_output_validation_is_publicly_replayable() {
                         ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
                     )
                     .unwrap();
-                assert_eq!(
-                    boundary_attempt.freshness_against_sources_for_request(
-                        &left,
-                        &right,
-                        ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
-                    ),
-                    ExactReportFreshness::Current
-                );
-                assert_eq!(
-                    boundary_attempt.freshness_against_sources_for_request(
-                        &left,
-                        &right,
-                        ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
-                    ),
-                    ExactReportFreshness::SourceReplayMismatch
+                assert!(
+                    boundary_attempt
+                        .validate_against_sources_for_request(
+                            &left,
+                            &right,
+                            ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
+                        )
+                        .is_err()
                 );
             },
         );
@@ -3609,21 +3584,18 @@ fn exact_boolean_attempt_public_path_reports_blockers_or_cells() {
             attempt
                 .validate_against_sources_for_request(&left, &right, request)
                 .unwrap();
-            assert_eq!(
-                attempt.freshness_against_sources_for_request(&left, &right, request),
-                ExactReportFreshness::Current
-            );
-            assert_eq!(
-                attempt.freshness_against_sources_for_request(
-                    &left,
-                    &right,
-                    ExactBooleanRequest::with_boundary_policy(
-                        ExactBooleanOperation::Union,
-                        ValidationPolicy::ALLOW_BOUNDARY,
-                        ExactBoundaryBooleanPolicy::Reject,
-                    ),
-                ),
-                ExactReportFreshness::SourceReplayMismatch
+            assert!(
+                attempt
+                    .validate_against_sources_for_request(
+                        &left,
+                        &right,
+                        ExactBooleanRequest::with_boundary_policy(
+                            ExactBooleanOperation::Union,
+                            ValidationPolicy::ALLOW_BOUNDARY,
+                            ExactBoundaryBooleanPolicy::Reject,
+                        ),
+                    )
+                    .is_err()
             );
         },
     );

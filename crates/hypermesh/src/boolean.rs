@@ -758,17 +758,6 @@ impl ExactArrangementBooleanAttempt {
             Err(ExactReportValidationError::SourceReplayMismatch)
         }
     }
-
-    /// Classify whether this retained arrangement attempt is fresh for an
-    /// exact Boolean request.
-    pub fn freshness_against_sources_for_request(
-        &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-        request: ExactBooleanRequest,
-    ) -> ExactReportFreshness {
-        exact_report_freshness(self.validate_against_sources_for_request(left, right, request))
-    }
 }
 
 fn workspace_arrangement_attempt_for_replay(
@@ -11558,11 +11547,6 @@ mod tests {
         attempt
             .validate_against_sources_for_request(left, right, request)
             .unwrap();
-        assert_eq!(
-            attempt.freshness_against_sources_for_request(left, right, request),
-            ExactReportFreshness::Current,
-            "{attempt:?}"
-        );
         if attempt.stage == ExactArrangementBooleanStage::Materialized
             && attempt.output_triangles > 0
         {
