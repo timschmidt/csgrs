@@ -870,7 +870,6 @@ fn affine_orthogonal_solid_recovers_multi_cell_basis_without_sampling_limits() {
                     result.is_arrangement_cell_complex_shortcut_for(operation),
                     "{operation:?}: {result:?}"
                 );
-                evaluation.validate().unwrap();
                 evaluation.validate_against_sources(&left, &right).unwrap();
                 result.validate().unwrap();
                 assert!(result.mesh().facts().mesh.closed_manifold);
@@ -1062,7 +1061,6 @@ fn exact_closed_convex_boolean_is_publicly_replayable() {
             ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
         );
         assert!(predicate(&result, operation), "{operation:?}: {result:?}");
-        result.validate().unwrap();
         result.validate_against_sources(&left, &right).unwrap();
         assert!(
             result
@@ -1204,7 +1202,6 @@ fn full_face_adjacent_union_refines_side_faces_for_boundary_subdivided_shared_fa
 
     let request = ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED);
     with_exact_boolean_evaluation(&left, &right, request, |evaluation| {
-        evaluation.validate().unwrap();
         evaluation.validate_against_sources(&left, &right).unwrap();
     });
 }
@@ -1270,7 +1267,6 @@ fn full_face_adjacent_union_accepts_dual_boundary_subdivided_shared_face() {
 
     let request = ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED);
     with_exact_boolean_evaluation(&left, &right, request, |evaluation| {
-        evaluation.validate().unwrap();
         evaluation.validate_against_sources(&left, &right).unwrap();
     });
 }
@@ -1333,7 +1329,6 @@ fn adjacent_union_completion_boolean_is_publicly_replayable() {
 
     let request = ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED);
     with_exact_boolean_evaluation(&left, &right, request, |evaluation| {
-        evaluation.validate().unwrap();
         evaluation.validate_against_sources(&left, &right).unwrap();
         assert!(
             evaluation
@@ -1351,7 +1346,6 @@ fn adjacent_union_completion_boolean_is_publicly_replayable() {
         result.is_arrangement_cell_complex_shortcut_for(ExactBooleanOperation::Union),
         "{result:?}"
     );
-    result.validate().unwrap();
     result.validate_against_sources(&left, &right).unwrap();
     assert!(
         result
@@ -1365,7 +1359,6 @@ fn adjacent_union_completion_boolean_is_publicly_replayable() {
         ValidationPolicy::CLOSED,
     );
     with_exact_boolean_evaluation(&left, &right, intersection_request, |evaluation| {
-        evaluation.validate().unwrap();
         evaluation.validate_against_sources(&left, &right).unwrap();
     });
 
@@ -1481,7 +1474,6 @@ fn exact_open_surface_arrangement_is_publicly_replayable() {
             &right,
             ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
         );
-        result.validate().unwrap();
         result.validate_against_sources(&left, &right).unwrap();
         with_exact_boolean_evaluation(
             &left,
@@ -1618,7 +1610,6 @@ fn exact_selected_region_boolean_is_publicly_replayable() {
         ),
     );
 
-    result.validate().unwrap();
     result.validate_against_sources(&left, &right).unwrap();
     assert!(
         result
@@ -1638,7 +1629,6 @@ fn exact_selected_region_boolean_is_publicly_replayable() {
             validation,
         ),
         |evaluation| {
-            evaluation.validate().unwrap();
             evaluation.validate_against_sources(&left, &right).unwrap();
         },
     );
