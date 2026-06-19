@@ -742,14 +742,6 @@ impl ExactBooleanResult {
         &self.assembly
     }
 
-    /// Replace the retained exact output assembly plan.
-    pub fn replace_assembly(
-        &mut self,
-        assembly: ExactBooleanAssemblyPlan,
-    ) -> ExactBooleanAssemblyPlan {
-        std::mem::replace(&mut self.assembly, assembly)
-    }
-
     /// Borrow retained volumetric triangle classifications.
     pub fn volumetric_classifications(&self) -> &[ExactVolumetricRegionClassification] {
         &self.volumetric_classifications

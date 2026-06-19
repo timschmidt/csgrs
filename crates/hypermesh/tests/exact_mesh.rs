@@ -1840,36 +1840,6 @@ fn exact_open_surface_arrangement_is_publicly_replayable() {
             );
         }
     }
-
-    let union = exact_boolean_result(
-        &left,
-        &right,
-        ExactBooleanRequest::new(
-            ExactBooleanOperation::Union,
-            ValidationPolicy::ALLOW_BOUNDARY,
-        ),
-    );
-    let difference = exact_boolean_result(
-        &left,
-        &right,
-        ExactBooleanRequest::new(
-            ExactBooleanOperation::Difference,
-            ValidationPolicy::ALLOW_BOUNDARY,
-        ),
-    );
-    let mut stale_materialization = union.clone();
-    let difference_mesh = difference.mesh().clone();
-    stale_materialization.replace_assembly(difference.assembly().clone());
-    stale_materialization.replace_mesh(difference_mesh);
-    assert!(
-        stale_materialization.validate().is_err(),
-        "{stale_materialization:?}"
-    );
-    assert_eq!(
-        stale_materialization.freshness_against_sources(&left, &right),
-        ExactReportFreshness::StaleStatusEvidence,
-        "{stale_materialization:?}"
-    );
 }
 
 #[test]
@@ -2028,27 +1998,6 @@ fn exact_selected_region_boolean_is_publicly_replayable() {
     evaluation
         .validate_materialized_result_against_sources(&left, &right)
         .unwrap();
-    let keep_left = exact_boolean_result(
-        &left,
-        &right,
-        ExactBooleanRequest::new(
-            ExactBooleanOperation::SelectedRegions(ExactRegionSelection::KeepLeft),
-            ValidationPolicy::ALLOW_BOUNDARY,
-        ),
-    );
-    let mut stale_materialization = result.clone();
-    let keep_left_mesh = keep_left.mesh().clone();
-    stale_materialization.replace_assembly(keep_left.assembly().clone());
-    stale_materialization.replace_mesh(keep_left_mesh);
-    assert!(
-        stale_materialization.validate().is_err(),
-        "{stale_materialization:?}"
-    );
-    assert_eq!(
-        stale_materialization.freshness_against_sources(&left, &right),
-        ExactReportFreshness::StaleStatusEvidence,
-        "{stale_materialization:?}"
-    );
 }
 
 #[test]
