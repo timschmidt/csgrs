@@ -2442,28 +2442,6 @@ fn unsupported_certified_materialization_error(support: ExactBooleanSupport) -> 
     ))
 }
 
-fn retained_arrangement_attempt_for_certified_materialization<'a>(
-    retained_arrangement_attempt: Option<&'a ExactArrangementBooleanAttempt>,
-    left: &ExactMesh,
-    right: &ExactMesh,
-    request: ExactBooleanRequest,
-) -> Result<Option<&'a ExactArrangementBooleanAttempt>, MeshError> {
-    retained_arrangement_attempt_for_request(
-        retained_arrangement_attempt,
-        left,
-        right,
-        request,
-        ExactRegularizationPolicy::REGULARIZED_SOLID,
-    )
-    .map_err(|error| {
-        MeshError::one(MeshDiagnostic::new(
-            Severity::Error,
-            DiagnosticKind::UnsupportedExactOperation,
-            format!("retained arrangement attempt failed validation: {error:?}"),
-        ))
-    })
-}
-
 pub(crate) fn try_materialize_certified_boolean_support_with_artifacts(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -2476,6 +2454,22 @@ pub(crate) fn try_materialize_certified_boolean_support_with_artifacts(
     let operation = request.operation;
     let validation = request.validation;
     let mut owned_graph = None;
+    let retained_arrangement_attempt_for_support = |retained_arrangement_attempt| {
+        retained_arrangement_attempt_for_request(
+            retained_arrangement_attempt,
+            left,
+            right,
+            request,
+            ExactRegularizationPolicy::REGULARIZED_SOLID,
+        )
+        .map_err(|error| {
+            MeshError::one(MeshDiagnostic::new(
+                Severity::Error,
+                DiagnosticKind::UnsupportedExactOperation,
+                format!("retained arrangement attempt failed validation: {error:?}"),
+            ))
+        })
+    };
     let result = match support {
         ExactBooleanSupport::SelectedRegionPolicy => {
             let ExactBooleanOperation::SelectedRegions(selection) = operation else {
@@ -2528,12 +2522,7 @@ pub(crate) fn try_materialize_certified_boolean_support_with_artifacts(
                 return Ok(Some(result));
             }
             let retained_arrangement_attempt =
-                retained_arrangement_attempt_for_certified_materialization(
-                    retained_arrangement_attempt,
-                    left,
-                    right,
-                    request,
-                )?;
+                retained_arrangement_attempt_for_support(retained_arrangement_attempt)?;
             if let Some(attempt) = retained_arrangement_attempt
                 && let Some(result) = materialize_retained_arrangement_cell_complex_attempt(
                     left, right, request, attempt,
@@ -2553,12 +2542,7 @@ pub(crate) fn try_materialize_certified_boolean_support_with_artifacts(
         }
         ExactBooleanSupport::CertifiedArrangementCellComplex => {
             let retained_arrangement_attempt =
-                retained_arrangement_attempt_for_certified_materialization(
-                    retained_arrangement_attempt,
-                    left,
-                    right,
-                    request,
-                )?;
+                retained_arrangement_attempt_for_support(retained_arrangement_attempt)?;
             materialize_certified_arrangement_cell_complex_support_with_arrangement(
                 left,
                 right,
