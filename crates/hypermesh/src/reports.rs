@@ -692,7 +692,7 @@ pub struct ExactBooleanResult {
     /// Exact projected triangulations used for assembly.
     pub(crate) triangulations: Vec<FaceRegionTriangulation>,
     /// Non-mutating exact output assembly.
-    pub assembly: ExactBooleanAssemblyPlan,
+    pub(crate) assembly: ExactBooleanAssemblyPlan,
     /// Exact winding classifications used by volumetric arrangement materialization.
     pub(crate) volumetric_classifications: Vec<ExactVolumetricRegionClassification>,
     /// Topology assembly report consumed by an arrangement/cell-complex output,
@@ -739,6 +739,24 @@ impl ExactBooleanResult {
     /// Borrow retained exact projected triangulations.
     pub fn triangulations(&self) -> &[FaceRegionTriangulation] {
         &self.triangulations
+    }
+
+    /// Borrow the retained exact output assembly plan.
+    pub fn assembly(&self) -> &ExactBooleanAssemblyPlan {
+        &self.assembly
+    }
+
+    /// Borrow the retained exact output assembly plan mutably.
+    pub fn assembly_mut(&mut self) -> &mut ExactBooleanAssemblyPlan {
+        &mut self.assembly
+    }
+
+    /// Replace the retained exact output assembly plan.
+    pub fn replace_assembly(
+        &mut self,
+        assembly: ExactBooleanAssemblyPlan,
+    ) -> ExactBooleanAssemblyPlan {
+        std::mem::replace(&mut self.assembly, assembly)
     }
 
     /// Borrow retained volumetric triangle classifications.

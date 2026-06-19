@@ -1972,7 +1972,7 @@ fn exact_open_surface_arrangement_is_publicly_replayable() {
     );
     let mut stale_materialization = union.clone();
     let difference_mesh = difference.mesh().clone();
-    stale_materialization.assembly = difference.assembly;
+    stale_materialization.replace_assembly(difference.assembly().clone());
     stale_materialization.replace_mesh(difference_mesh);
     assert!(
         stale_materialization.validate().is_err(),
@@ -2123,7 +2123,7 @@ fn exact_selected_region_boolean_is_publicly_replayable() {
     );
     assert!(!result.region_classifications().is_empty());
     assert!(!result.triangulations().is_empty());
-    assert!(!result.assembly.triangles.is_empty());
+    assert!(!result.assembly().triangles.is_empty());
     assert!(!result.mesh().triangles().is_empty());
     assert_eq!(
         result.mesh().validation_policy(),
@@ -2167,7 +2167,7 @@ fn exact_selected_region_boolean_is_publicly_replayable() {
 
     let mut stale_assembly_source_vertex = result.clone();
     let vertex = stale_assembly_source_vertex
-        .assembly
+        .assembly_mut()
         .first_original_source_vertex_mut()
         .expect("selected-region assembly should retain at least one original source vertex");
     *vertex = usize::MAX;
@@ -2192,7 +2192,7 @@ fn exact_selected_region_boolean_is_publicly_replayable() {
     );
     let mut stale_materialization = result.clone();
     let keep_left_mesh = keep_left.mesh().clone();
-    stale_materialization.assembly = keep_left.assembly;
+    stale_materialization.replace_assembly(keep_left.assembly().clone());
     stale_materialization.replace_mesh(keep_left_mesh);
     assert!(
         stale_materialization.validate().is_err(),
@@ -3129,7 +3129,7 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
         assert!(!result.region_classifications().is_empty());
         assert!(!result.triangulations().is_empty());
         assert!(!result.volumetric_classifications().is_empty());
-        assert!(!result.assembly.triangles.is_empty());
+        assert!(!result.assembly().triangles.is_empty());
     } else {
         assert!(
             result.is_arrangement_cell_complex_shortcut_for(ExactBooleanOperation::Union),
@@ -3211,7 +3211,7 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
         assert!(!result.region_classifications().is_empty());
         assert!(!result.triangulations().is_empty());
         assert!(!result.volumetric_classifications().is_empty());
-        assert!(!result.assembly.triangles.is_empty());
+        assert!(!result.assembly().triangles.is_empty());
     } else {
         assert!(
             result.is_arrangement_cell_complex_shortcut_for(ExactBooleanOperation::Union),
@@ -3257,13 +3257,13 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
         .expect("certified arrangement evaluation should retain difference result");
     difference.validate().unwrap();
     if difference.is_arrangement_cell_complex_materialized_for(ExactBooleanOperation::Difference) {
-        let Some(reversed_triangle) = difference.assembly.triangles.iter().position(|triangle| {
+        let Some(reversed_triangle) = difference.assembly().triangles.iter().position(|triangle| {
             triangle.orientation == ExactOutputTriangleOrientation::ReverseSource
         }) else {
             panic!("volumetric difference should retain a reversed source triangle");
         };
         let mut stale_difference_orientation = difference.clone();
-        stale_difference_orientation.assembly.triangles[reversed_triangle].orientation =
+        stale_difference_orientation.assembly_mut().triangles[reversed_triangle].orientation =
             ExactOutputTriangleOrientation::PreserveSource;
         assert_report_validation_error!(
             stale_difference_orientation.validate(),
@@ -3448,7 +3448,7 @@ fn arrangement_cell_complex_request_materialization_is_publicly_replayable() {
         assert!(!result.region_classifications().is_empty());
         assert!(!result.triangulations().is_empty());
         assert!(!result.volumetric_classifications().is_empty());
-        assert!(!result.assembly.triangles.is_empty());
+        assert!(!result.assembly().triangles.is_empty());
     } else {
         assert!(
             result.is_arrangement_cell_complex_shortcut_for(ExactBooleanOperation::Union),
@@ -3489,7 +3489,7 @@ fn arrangement_cell_complex_request_materialization_is_publicly_replayable() {
         assert!(!convex_intersection.region_classifications().is_empty());
         assert!(!convex_intersection.triangulations().is_empty());
         assert!(!convex_intersection.volumetric_classifications().is_empty());
-        assert!(!convex_intersection.assembly.triangles.is_empty());
+        assert!(!convex_intersection.assembly().triangles.is_empty());
     } else {
         assert!(
             convex_intersection
