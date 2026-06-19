@@ -1,8 +1,9 @@
 use hypercurve::{
-    BulgeVertex2, Classification, Contour2, ContourChamferStage2, ContourClosureStage2,
-    ContourFilletStage2, ContourLineMergeStage2, ContourPointLocation, CurveError, CurvePolicy,
-    CurveString2, CurveStringChamferInputPath2, CurveStringFilletInputPath2, FillRule, Real,
-    Region2, RegionPointLocation, Segment2, SegmentKind, SegmentKindCounts, UncertaintyReason,
+    BulgeVertex2, Classification, Contour2, ContourChamferStage2, ContourClosurePredicatePath2,
+    ContourClosureStage2, ContourFilletStage2, ContourLineMergeStage2, ContourPointLocation,
+    CurveError, CurvePolicy, CurveString2, CurveStringChamferInputPath2,
+    CurveStringFilletInputPath2, FillRule, Real, Region2, RegionPointLocation, Segment2,
+    SegmentKind, SegmentKindCounts, UncertaintyReason,
 };
 
 fn s(value: i32) -> Real {
@@ -105,6 +106,10 @@ fn contour_closure_report_materializes_closed_curve_string() {
         closed.report().stage(),
         ContourClosureStage2::ContourMaterialization
     );
+    assert_eq!(
+        closed.report().predicate_path(),
+        ContourClosurePredicatePath2::ExactSquaredEndpointDistanceZero
+    );
     assert_eq!(closed.report().source_segment_count(), 4);
     assert_eq!(
         closed.report().source_segment_kind_counts(),
@@ -139,6 +144,10 @@ fn contour_closure_report_blocks_certified_open_curve_string() {
     assert_eq!(
         closed.report().stage(),
         ContourClosureStage2::EndpointValidation
+    );
+    assert_eq!(
+        closed.report().predicate_path(),
+        ContourClosurePredicatePath2::ExactSquaredEndpointDistanceNonzero
     );
     assert_eq!(closed.report().source_segment_count(), 2);
     assert_eq!(

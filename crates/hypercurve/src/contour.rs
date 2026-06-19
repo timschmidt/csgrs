@@ -38,6 +38,7 @@ pub enum ContourPointLocation {
 #[derive(Clone, Debug, PartialEq)]
 pub struct ContourClosureReport2 {
     stage: ContourClosureStage2,
+    predicate_path: ContourClosurePredicatePath2,
     source_segment_count: usize,
     source_segment_kind_counts: SegmentKindCounts,
     output_segment_kind_counts: Option<SegmentKindCounts>,
@@ -56,6 +57,17 @@ pub enum ContourClosureStage2 {
     EndpointValidation,
     /// The closed contour was materialized with the requested fill rule.
     ContourMaterialization,
+}
+
+/// Exact predicate path used while validating curve-string closure.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum ContourClosurePredicatePath2 {
+    /// Squared endpoint distance was proven exactly zero.
+    ExactSquaredEndpointDistanceZero,
+    /// Squared endpoint distance was proven exactly nonzero.
+    ExactSquaredEndpointDistanceNonzero,
+    /// The active arithmetic policy could not decide the squared endpoint distance sign.
+    UnresolvedSquaredEndpointDistanceSign,
 }
 
 /// Result of report-bearing curve-string closure.
@@ -215,11 +227,13 @@ impl Contour2 {
         let source_start_point = curve.start().ok_or(CurveError::EmptyCurveString)?.clone();
         let source_end_point = curve.end().ok_or(CurveError::EmptyCurveString)?.clone();
         let endpoint_distance_squared = source_start_point.distance_squared(&source_end_point);
+        let predicate_path = contour_closure_predicate_path(&endpoint_distance_squared);
         match closure_status_from_distance(&endpoint_distance_squared) {
             Classification::Decided(()) => Ok(ContourClosureResult2 {
                 contour: Some(Self { curve, fill_rule }),
                 report: ContourClosureReport2 {
                     stage: ContourClosureStage2::ContourMaterialization,
+                    predicate_path,
                     source_segment_count,
                     source_segment_kind_counts,
                     output_segment_kind_counts: Some(source_segment_kind_counts),
@@ -235,6 +249,7 @@ impl Contour2 {
                 contour: None,
                 report: ContourClosureReport2 {
                     stage: ContourClosureStage2::EndpointValidation,
+                    predicate_path,
                     source_segment_count,
                     source_segment_kind_counts,
                     output_segment_kind_counts: None,
@@ -954,6 +969,11 @@ impl ContourClosureReport2 {
         self.stage
     }
 
+    /// Returns the exact predicate path used to validate closure.
+    pub const fn predicate_path(&self) -> ContourClosurePredicatePath2 {
+        self.predicate_path
+    }
+
     /// Returns the source curve-string segment count.
     pub const fn source_segment_count(&self) -> usize {
         self.source_segment_count
@@ -1669,6 +1689,14 @@ fn closure_status_from_distance(distance_squared: &Real) -> Classification<()> {
         ZeroStatus::Zero => Classification::Decided(()),
         ZeroStatus::NonZero => Classification::Uncertain(UncertaintyReason::Boundary),
         ZeroStatus::Unknown => Classification::Uncertain(UncertaintyReason::RealSign),
+    }
+}
+
+fn contour_closure_predicate_path(distance_squared: &Real) -> ContourClosurePredicatePath2 {
+    match distance_squared.zero_status() {
+        ZeroStatus::Zero => ContourClosurePredicatePath2::ExactSquaredEndpointDistanceZero,
+        ZeroStatus::NonZero => ContourClosurePredicatePath2::ExactSquaredEndpointDistanceNonzero,
+        ZeroStatus::Unknown => ContourClosurePredicatePath2::UnresolvedSquaredEndpointDistanceSign,
     }
 }
 
