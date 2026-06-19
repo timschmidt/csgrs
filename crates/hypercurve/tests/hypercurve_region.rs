@@ -1810,6 +1810,56 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
         endpoint_ref.output_end_point(),
         result.report().source_reports()[0].output_end_point()
     );
+    let output_ring_continuity_cache = ring_cache.output_ring_continuity_cache();
+    assert_eq!(
+        output_ring_continuity_cache.output_ring_ref_count(),
+        ring_cache.output_ring_bucket_cache().ring_count()
+    );
+    assert_eq!(
+        output_ring_continuity_cache.output_connection_ref_count(),
+        ring_cache.source_reports().len()
+    );
+    assert_eq!(
+        output_ring_continuity_cache.max_ring_connection_count(),
+        ring_cache.source_reports().len()
+    );
+    assert_eq!(
+        output_ring_continuity_cache.connections().len(),
+        ring_cache.source_reports().len()
+    );
+    let continuity_ref = &output_ring_continuity_cache.connections()[0];
+    assert_eq!(continuity_ref.source_report_index(), 0);
+    assert_eq!(continuity_ref.next_source_report_index(), 1);
+    assert_eq!(
+        continuity_ref.output_ring_index(),
+        result.report().source_reports()[0].output_ring_index()
+    );
+    assert_eq!(
+        continuity_ref.output_segment_index(),
+        result.report().source_reports()[0].output_segment_index()
+    );
+    assert_eq!(
+        continuity_ref.next_output_segment_index(),
+        result.report().source_reports()[1].output_segment_index()
+    );
+    assert_eq!(
+        continuity_ref.output_end_point(),
+        result.report().source_reports()[0].output_end_point()
+    );
+    assert_eq!(
+        continuity_ref.next_output_start_point(),
+        result.report().source_reports()[1].output_start_point()
+    );
+    assert_eq!(
+        continuity_ref.output_end_point(),
+        continuity_ref.next_output_start_point()
+    );
+    let closing_continuity_ref = output_ring_continuity_cache.connections().last().unwrap();
+    assert_eq!(closing_continuity_ref.next_source_report_index(), 0);
+    assert_eq!(
+        closing_continuity_ref.output_end_point(),
+        closing_continuity_ref.next_output_start_point()
+    );
     let output_segment_status_bucket_cache = ring_cache.output_segment_status_bucket_cache();
     assert_eq!(output_segment_status_bucket_cache.bucket_count(), 6);
     assert_eq!(
@@ -2741,6 +2791,56 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
     assert_eq!(
         endpoint_ref.output_end_point(),
         result.report().source_reports()[0].output_end_point()
+    );
+    let output_ring_continuity_cache = ring_cache.output_ring_continuity_cache();
+    assert_eq!(
+        output_ring_continuity_cache.output_ring_ref_count(),
+        ring_cache.output_ring_bucket_cache().ring_count()
+    );
+    assert_eq!(
+        output_ring_continuity_cache.output_connection_ref_count(),
+        ring_cache.source_reports().len()
+    );
+    assert_eq!(
+        output_ring_continuity_cache.max_ring_connection_count(),
+        ring_cache.source_reports().len()
+    );
+    assert_eq!(
+        output_ring_continuity_cache.connections().len(),
+        ring_cache.source_reports().len()
+    );
+    let continuity_ref = &output_ring_continuity_cache.connections()[0];
+    assert_eq!(continuity_ref.source_report_index(), 0);
+    assert_eq!(continuity_ref.next_source_report_index(), 1);
+    assert_eq!(
+        continuity_ref.output_ring_index(),
+        result.report().source_reports()[0].output_ring_index()
+    );
+    assert_eq!(
+        continuity_ref.output_segment_index(),
+        result.report().source_reports()[0].output_segment_index()
+    );
+    assert_eq!(
+        continuity_ref.next_output_segment_index(),
+        result.report().source_reports()[1].output_segment_index()
+    );
+    assert_eq!(
+        continuity_ref.output_end_point(),
+        result.report().source_reports()[0].output_end_point()
+    );
+    assert_eq!(
+        continuity_ref.next_output_start_point(),
+        result.report().source_reports()[1].output_start_point()
+    );
+    assert_eq!(
+        continuity_ref.output_end_point(),
+        continuity_ref.next_output_start_point()
+    );
+    let closing_continuity_ref = output_ring_continuity_cache.connections().last().unwrap();
+    assert_eq!(closing_continuity_ref.next_source_report_index(), 0);
+    assert_eq!(
+        closing_continuity_ref.output_end_point(),
+        closing_continuity_ref.next_output_start_point()
     );
     let output_segment_status_bucket_cache = ring_cache.output_segment_status_bucket_cache();
     assert_eq!(output_segment_status_bucket_cache.bucket_count(), 6);

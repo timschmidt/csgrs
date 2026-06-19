@@ -270,6 +270,7 @@ pub use region_nesting::{
     ExactCurveArrangementEndpointGraphCache2, ExactCurveArrangementEvaluation2,
     ExactCurveArrangementOutputBoundaryCache2, ExactCurveArrangementOutputCache2,
     ExactCurveArrangementOutputRingBucket2, ExactCurveArrangementOutputRingBucketCache2,
+    ExactCurveArrangementOutputRingContinuityCache2, ExactCurveArrangementOutputRingContinuityRef2,
     ExactCurveArrangementOutputRingSegmentRef2, ExactCurveArrangementOutputRoleAssignment2,
     ExactCurveArrangementOutputRoleBucket2, ExactCurveArrangementOutputRoleCache2,
     ExactCurveArrangementOutputRoleStatusBucket2,
