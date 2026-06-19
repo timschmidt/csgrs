@@ -1038,6 +1038,22 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
         result.workspace().source_segment_kind_counts(),
         SegmentKindCounts { lines: 4, arcs: 0 }
     );
+    assert_eq!(result.workspace().source_segment_aabbs().len(), 4);
+    assert_eq!(result.workspace().decided_source_segment_aabb_count(), 4);
+    assert_eq!(result.workspace().undecided_source_segment_aabb_count(), 0);
+    assert_eq!(
+        result.workspace().source_segment_aabbs()[0]
+            .as_ref()
+            .map(|bbox| (bbox.min().clone(), bbox.max().clone())),
+        Some((p(0, 0), p(4, 0)))
+    );
+    assert_eq!(
+        result
+            .workspace()
+            .source_aabb()
+            .map(|bbox| (bbox.min().clone(), bbox.max().clone())),
+        Some((p(0, 0), p(4, 4)))
+    );
     assert!(result.region().is_some());
     assert_eq!(
         result.report().split_predicate_path(),
@@ -1072,6 +1088,16 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
     assert_eq!(
         result.workspace().source_segment_kind_counts(),
         SegmentKindCounts { lines: 1, arcs: 1 }
+    );
+    assert_eq!(result.workspace().source_segment_aabbs().len(), 2);
+    assert_eq!(result.workspace().decided_source_segment_aabb_count(), 2);
+    assert_eq!(result.workspace().undecided_source_segment_aabb_count(), 0);
+    assert_eq!(
+        result
+            .workspace()
+            .source_aabb()
+            .map(|bbox| bbox.min().clone()),
+        Some(p(0, -2))
     );
     assert!(result.region().is_some());
     assert!(result.report().status().is_native_exact());

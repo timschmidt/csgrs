@@ -30,6 +30,8 @@ pub struct ExactCurveArrangementRequest2 {
 pub struct ExactCurveWorkspace2 {
     request: ExactCurveArrangementRequest2,
     source_segment_kind_counts: SegmentKindCounts,
+    source_segment_aabbs: Vec<Option<Aabb2>>,
+    source_aabb: Option<Aabb2>,
 }
 
 /// Evaluation record for a retained exact curve arrangement attempt.
@@ -1062,12 +1064,19 @@ impl ExactCurveArrangementRequest2 {
 
 impl ExactCurveWorkspace2 {
     /// Builds retained workspace facts for a canonical arrangement request.
-    pub fn from_request(request: ExactCurveArrangementRequest2) -> Self {
+    pub fn from_request(
+        request: ExactCurveArrangementRequest2,
+        policy: &CurvePolicy,
+    ) -> CurveResult<Self> {
         let source_segment_kind_counts = segment_kind_counts(&request.source_segments);
-        Self {
+        let source_segment_aabbs = source_segment_aabbs(&request.source_segments, policy)?;
+        let source_aabb = union_decided_aabbs(&source_segment_aabbs, policy);
+        Ok(Self {
             request,
             source_segment_kind_counts,
-        }
+            source_segment_aabbs,
+            source_aabb,
+        })
     }
 
     /// Returns the retained request.
@@ -1078,6 +1087,31 @@ impl ExactCurveWorkspace2 {
     /// Returns retained source segment primitive-family counts.
     pub const fn source_segment_kind_counts(&self) -> SegmentKindCounts {
         self.source_segment_kind_counts
+    }
+
+    /// Returns retained source segment boxes in request order.
+    pub fn source_segment_aabbs(&self) -> &[Option<Aabb2>] {
+        &self.source_segment_aabbs
+    }
+
+    /// Returns a retained aggregate source box when every source box was decided.
+    pub const fn source_aabb(&self) -> Option<&Aabb2> {
+        self.source_aabb.as_ref()
+    }
+
+    /// Returns the number of source segment boxes certified during workspace preparation.
+    pub fn decided_source_segment_aabb_count(&self) -> usize {
+        self.source_segment_aabbs
+            .iter()
+            .filter(|bbox| bbox.is_some())
+            .count()
+    }
+
+    /// Returns the number of source segment boxes that stayed uncertain.
+    pub fn undecided_source_segment_aabb_count(&self) -> usize {
+        self.source_segment_aabbs
+            .len()
+            .saturating_sub(self.decided_source_segment_aabb_count())
     }
 }
 
@@ -1106,7 +1140,7 @@ impl ExactCurveArrangementAttempt2 {
 
     /// Evaluates the request through the retained exact arrangement pipeline.
     pub fn evaluate(&self, policy: &CurvePolicy) -> CurveResult<ExactCurveArrangementResult2> {
-        let workspace = ExactCurveWorkspace2::from_request(self.request.clone());
+        let workspace = ExactCurveWorkspace2::from_request(self.request.clone(), policy)?;
         let region_result =
             if let Some(source_line_segments) = workspace.request.source_line_segments.as_ref() {
                 Region2::from_unordered_line_segments_with_report_impl(
@@ -3181,6 +3215,34 @@ fn segment_kind_counts(segments: &[Segment2]) -> SegmentKindCounts {
         add_segment_kind(&mut counts, segment);
     }
     counts
+}
+
+fn source_segment_aabbs(
+    segments: &[Segment2],
+    policy: &CurvePolicy,
+) -> CurveResult<Vec<Option<Aabb2>>> {
+    segments
+        .iter()
+        .map(|segment| match Aabb2::from_segment(segment, policy)? {
+            Classification::Decided(bbox) => Ok(Some(bbox)),
+            Classification::Uncertain(_) => Ok(None),
+        })
+        .collect()
+}
+
+fn union_decided_aabbs(segment_aabbs: &[Option<Aabb2>], policy: &CurvePolicy) -> Option<Aabb2> {
+    if segment_aabbs.iter().any(Option::is_none) {
+        return None;
+    }
+    let mut boxes = segment_aabbs.iter().filter_map(Option::as_ref);
+    let mut source_aabb = boxes.next()?.clone();
+    for bbox in boxes {
+        source_aabb = match source_aabb.union(bbox, policy) {
+            Classification::Decided(merged) => merged,
+            Classification::Uncertain(_) => return None,
+        };
+    }
+    Some(source_aabb)
 }
 
 fn native_arranged_segment_kind_counts(segments: &[ArrangedNativeSegment]) -> SegmentKindCounts {
