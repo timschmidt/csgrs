@@ -6062,6 +6062,31 @@ impl ExactCurveArrangementResult2 {
         self.evaluation.summary_cache()
     }
 
+    /// Returns whether final output evaluation facts were retained.
+    pub const fn evaluated_output(&self) -> bool {
+        self.summary_cache().evaluated_output()
+    }
+
+    /// Returns whether the retained evaluation materialized a region, when evaluated.
+    pub const fn materialized_region(&self) -> Option<bool> {
+        self.summary_cache().materialized_region()
+    }
+
+    /// Returns the final retained build stage, when evaluated.
+    pub const fn stage(&self) -> Option<RegionLineSegmentRegionBuildStage2> {
+        self.summary_cache().stage()
+    }
+
+    /// Returns the final retained topology status, when evaluated.
+    pub const fn status(&self) -> Option<RetainedTopologyStatus> {
+        self.summary_cache().status()
+    }
+
+    /// Returns the final retained blocker, when the evaluated arrangement blocked.
+    pub const fn blocker(&self) -> Option<UncertaintyReason> {
+        self.summary_cache().blocker()
+    }
+
     /// Returns the underlying region build result.
     pub const fn region_build_result(&self) -> &RegionLineSegmentRegionBuildResult2 {
         &self.region_result
