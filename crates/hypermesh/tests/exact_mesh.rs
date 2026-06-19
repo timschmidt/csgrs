@@ -3119,9 +3119,12 @@ fn public_exact_blocker_reports_replay_remaining_decisions() {
         ValidationPolicy::ALLOW_BOUNDARY,
     );
     let same_evaluation = exact_boolean_evaluation(&left, &left, same_request);
-    let same_surface = same_evaluation.certifications().same_surface().clone();
-    assert!(same_surface.is_certified());
-    same_surface.validate().unwrap();
+    assert!(
+        same_evaluation.materialized_result().is_some_and(|result| {
+            result.is_certified_shortcut_for(ExactBooleanOperation::Union)
+        }),
+        "{same_evaluation:?}"
+    );
     same_evaluation
         .validate_against_sources(&left, &left)
         .unwrap();

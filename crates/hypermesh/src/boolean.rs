@@ -1008,11 +1008,6 @@ impl ExactBooleanCertificationSet {
         &mut self.refinement
     }
 
-    /// Return the same-surface shortcut certification report.
-    pub fn same_surface(&self) -> &ExactSameSurfaceReport {
-        &self.same_surface
-    }
-
     /// Return the open-surface disjointness shortcut certification report.
     pub fn open_surface_disjoint(&self) -> &ExactOpenSurfaceDisjointReport {
         &self.open_surface_disjoint

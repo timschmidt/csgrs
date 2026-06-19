@@ -5165,36 +5165,6 @@ pub struct ExactSameSurfaceReport {
 }
 
 impl ExactSameSurfaceReport {
-    /// Return the coarse same-surface certification status.
-    pub const fn status(&self) -> ExactSameSurfaceStatus {
-        self.status
-    }
-
-    /// Return the left-to-right vertex bijection witness.
-    pub fn left_to_right(&self) -> &[usize] {
-        &self.left_to_right
-    }
-
-    /// Return the right-to-left vertex bijection witness.
-    pub fn right_to_left(&self) -> &[usize] {
-        &self.right_to_left
-    }
-
-    /// Return the sorted left triangle sets used for same-surface replay.
-    pub fn left_triangles(&self) -> &[[usize; 3]] {
-        &self.left_triangles
-    }
-
-    /// Return the sorted right triangle sets remapped into left vertex indices.
-    pub fn right_triangles(&self) -> &[[usize; 3]] {
-        &self.right_triangles
-    }
-
-    /// Return the retained predicate certificates.
-    pub fn predicates(&self) -> &[PredicateUse] {
-        &self.predicates
-    }
-
     /// Return whether same-surface equivalence was certified.
     pub const fn is_certified(&self) -> bool {
         matches!(self.status, ExactSameSurfaceStatus::Certified)
