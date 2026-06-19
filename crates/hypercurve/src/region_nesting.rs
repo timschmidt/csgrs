@@ -500,6 +500,24 @@ pub struct ExactCurveArrangementOutputSegmentSourceRangeCache2 {
     ranges: Vec<ExactCurveArrangementOutputSegmentSourceRangeRef2>,
 }
 
+/// Output segment exact endpoints retained after ring assembly.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ExactCurveArrangementOutputSegmentEndpointRef2 {
+    source_report_index: usize,
+    output_ring_index: usize,
+    output_segment_index: usize,
+    output_start_point: Point2,
+    output_end_point: Point2,
+}
+
+/// Output segment endpoint cache retained after ring assembly.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ExactCurveArrangementOutputSegmentEndpointCache2 {
+    output_segment_ref_count: usize,
+    output_endpoint_ref_count: usize,
+    segments: Vec<ExactCurveArrangementOutputSegmentEndpointRef2>,
+}
+
 /// Output segment reference retained in a topology-status bucket.
 #[derive(Clone, Debug, PartialEq)]
 pub struct ExactCurveArrangementOutputSegmentStatusRef2 {
@@ -650,6 +668,7 @@ pub struct ExactCurveArrangementRingAssemblyCache2 {
     output_segment_kind_bucket_cache: ExactCurveArrangementOutputSegmentKindBucketCache2,
     output_segment_source_bucket_cache: ExactCurveArrangementOutputSegmentSourceBucketCache2,
     output_segment_source_range_cache: ExactCurveArrangementOutputSegmentSourceRangeCache2,
+    output_segment_endpoint_cache: ExactCurveArrangementOutputSegmentEndpointCache2,
     output_segment_status_bucket_cache: ExactCurveArrangementOutputSegmentStatusBucketCache2,
     output_segment_direction_bucket_cache: ExactCurveArrangementOutputSegmentDirectionBucketCache2,
 }
@@ -3563,6 +3582,78 @@ impl ExactCurveArrangementOutputSegmentSourceRangeCache2 {
     }
 }
 
+impl ExactCurveArrangementOutputSegmentEndpointRef2 {
+    /// Returns the retained ring source report index for this output segment.
+    pub const fn source_report_index(&self) -> usize {
+        self.source_report_index
+    }
+
+    /// Returns the output ring index.
+    pub const fn output_ring_index(&self) -> usize {
+        self.output_ring_index
+    }
+
+    /// Returns the output segment index inside its ring.
+    pub const fn output_segment_index(&self) -> usize {
+        self.output_segment_index
+    }
+
+    /// Returns the exact emitted segment start point.
+    pub const fn output_start_point(&self) -> &Point2 {
+        &self.output_start_point
+    }
+
+    /// Returns the exact emitted segment end point.
+    pub const fn output_end_point(&self) -> &Point2 {
+        &self.output_end_point
+    }
+}
+
+impl ExactCurveArrangementOutputSegmentEndpointCache2 {
+    fn from_source_reports(source_reports: &[RegionLineSegmentRingSourceReport2]) -> Self {
+        let mut segments = Vec::new();
+
+        for (source_report_index, source_report) in source_reports.iter().enumerate() {
+            segments.push(ExactCurveArrangementOutputSegmentEndpointRef2 {
+                source_report_index,
+                output_ring_index: source_report.output_ring_index(),
+                output_segment_index: source_report.output_segment_index(),
+                output_start_point: source_report.output_start_point().clone(),
+                output_end_point: source_report.output_end_point().clone(),
+            });
+        }
+
+        segments.sort_by_key(|segment| {
+            (
+                segment.output_ring_index,
+                segment.output_segment_index,
+                segment.source_report_index,
+            )
+        });
+
+        Self {
+            output_segment_ref_count: segments.len(),
+            output_endpoint_ref_count: segments.len().saturating_mul(2),
+            segments,
+        }
+    }
+
+    /// Returns the number of retained output segment endpoint records.
+    pub const fn output_segment_ref_count(&self) -> usize {
+        self.output_segment_ref_count
+    }
+
+    /// Returns the number of retained output endpoint references.
+    pub const fn output_endpoint_ref_count(&self) -> usize {
+        self.output_endpoint_ref_count
+    }
+
+    /// Returns output segment endpoint records in output traversal order.
+    pub fn segments(&self) -> &[ExactCurveArrangementOutputSegmentEndpointRef2] {
+        &self.segments
+    }
+}
+
 impl ExactCurveArrangementOutputSegmentStatusRef2 {
     /// Returns the retained ring source report index for this output segment.
     pub const fn source_report_index(&self) -> usize {
@@ -4238,6 +4329,10 @@ impl ExactCurveArrangementRingAssemblyCache2 {
                 ExactCurveArrangementOutputSegmentSourceRangeCache2::from_source_reports(
                     &report.source_reports,
                 ),
+            output_segment_endpoint_cache:
+                ExactCurveArrangementOutputSegmentEndpointCache2::from_source_reports(
+                    &report.source_reports,
+                ),
             output_segment_status_bucket_cache:
                 ExactCurveArrangementOutputSegmentStatusBucketCache2::from_source_reports(
                     &report.source_reports,
@@ -4333,6 +4428,13 @@ impl ExactCurveArrangementRingAssemblyCache2 {
         &self,
     ) -> &ExactCurveArrangementOutputSegmentSourceRangeCache2 {
         &self.output_segment_source_range_cache
+    }
+
+    /// Returns retained output segment exact endpoint records.
+    pub const fn output_segment_endpoint_cache(
+        &self,
+    ) -> &ExactCurveArrangementOutputSegmentEndpointCache2 {
+        &self.output_segment_endpoint_cache
     }
 
     /// Returns retained output segment buckets grouped by topology status.
