@@ -1001,6 +1001,52 @@ fn borrowed_unordered_native_segments_build_line_arc_region_with_report() {
 }
 
 #[test]
+fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report() {
+    let lines = vec![
+        line(4, 0, 0, 0),
+        line(4, 4, 4, 0),
+        line(0, 4, 4, 4),
+        line(0, 0, 0, 4),
+    ];
+    let request = ExactCurveArrangementRequest2::from_borrowed_unordered_line_segments(
+        &lines,
+        FillRule::NonZero,
+    );
+    let attempt = ExactCurveArrangementAttempt2::new(request);
+    let result = attempt.evaluate(&policy()).unwrap();
+    let legacy = Region2::from_unordered_line_segments_with_report(
+        lines.clone(),
+        FillRule::NonZero,
+        &policy(),
+    )
+    .unwrap();
+
+    assert_eq!(attempt.request().source_segment_count(), 4);
+    assert_eq!(
+        attempt.request().source_line_segments(),
+        Some(lines.as_slice())
+    );
+    assert_eq!(attempt.request().source_segments().len(), 4);
+    assert!(
+        attempt
+            .request()
+            .source_segments()
+            .iter()
+            .all(|segment| matches!(segment, Segment2::Line(_)))
+    );
+    assert_eq!(
+        result.workspace().source_segment_kind_counts(),
+        SegmentKindCounts { lines: 4, arcs: 0 }
+    );
+    assert!(result.region().is_some());
+    assert_eq!(
+        result.report().split_predicate_path(),
+        Some(RegionLineSegmentSplitPredicatePath2::AabbFilteredExactLineLine)
+    );
+    assert_eq!(result.report(), legacy.report());
+}
+
+#[test]
 fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace() {
     let segments = vec![
         Segment2::Line(line(4, 0, 0, 0)),

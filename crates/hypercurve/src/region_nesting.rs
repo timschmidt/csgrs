@@ -21,6 +21,7 @@ use crate::{
 #[derive(Clone, Debug, PartialEq)]
 pub struct ExactCurveArrangementRequest2 {
     source_segments: Vec<Segment2>,
+    source_line_segments: Option<Vec<LineSeg2>>,
     fill_rule: FillRule,
 }
 
@@ -373,6 +374,18 @@ impl Region2 {
 
     /// Builds a region from unordered exact line segments and retains assembly evidence.
     pub fn from_unordered_line_segments_with_report(
+        segments: Vec<LineSeg2>,
+        fill_rule: FillRule,
+        policy: &CurvePolicy,
+    ) -> CurveResult<RegionLineSegmentRegionBuildResult2> {
+        let request =
+            ExactCurveArrangementRequest2::from_unordered_line_segments(segments, fill_rule);
+        Ok(ExactCurveArrangementAttempt2::new(request)
+            .evaluate(policy)?
+            .into_region_build_result())
+    }
+
+    fn from_unordered_line_segments_with_report_impl(
         segments: Vec<LineSeg2>,
         fill_rule: FillRule,
         policy: &CurvePolicy,
@@ -988,6 +1001,24 @@ impl ExactCurveArrangementRequest2 {
     pub fn from_unordered_segments(source_segments: Vec<Segment2>, fill_rule: FillRule) -> Self {
         Self {
             source_segments,
+            source_line_segments: None,
+            fill_rule,
+        }
+    }
+
+    /// Builds a canonical arrangement request from unordered exact line segments.
+    pub fn from_unordered_line_segments(
+        source_line_segments: Vec<LineSeg2>,
+        fill_rule: FillRule,
+    ) -> Self {
+        let source_segments = source_line_segments
+            .iter()
+            .cloned()
+            .map(Segment2::Line)
+            .collect();
+        Self {
+            source_segments,
+            source_line_segments: Some(source_line_segments),
             fill_rule,
         }
     }
@@ -1000,9 +1031,22 @@ impl ExactCurveArrangementRequest2 {
         Self::from_unordered_segments(source_segments.to_vec(), fill_rule)
     }
 
+    /// Builds a canonical arrangement request by cloning borrowed exact line segments.
+    pub fn from_borrowed_unordered_line_segments(
+        source_line_segments: &[LineSeg2],
+        fill_rule: FillRule,
+    ) -> Self {
+        Self::from_unordered_line_segments(source_line_segments.to_vec(), fill_rule)
+    }
+
     /// Returns the source segments supplied to the arrangement attempt.
     pub fn source_segments(&self) -> &[Segment2] {
         &self.source_segments
+    }
+
+    /// Returns line-only source carriers when the request came from the line-specific API.
+    pub fn source_line_segments(&self) -> Option<&[LineSeg2]> {
+        self.source_line_segments.as_deref()
     }
 
     /// Returns the fill rule used when closed loops become contours.
@@ -1063,11 +1107,20 @@ impl ExactCurveArrangementAttempt2 {
     /// Evaluates the request through the retained exact arrangement pipeline.
     pub fn evaluate(&self, policy: &CurvePolicy) -> CurveResult<ExactCurveArrangementResult2> {
         let workspace = ExactCurveWorkspace2::from_request(self.request.clone());
-        let region_result = Region2::from_unordered_segments_with_report_impl(
-            workspace.request.source_segments.clone(),
-            workspace.request.fill_rule,
-            policy,
-        )?;
+        let region_result =
+            if let Some(source_line_segments) = workspace.request.source_line_segments.as_ref() {
+                Region2::from_unordered_line_segments_with_report_impl(
+                    source_line_segments.clone(),
+                    workspace.request.fill_rule,
+                    policy,
+                )?
+            } else {
+                Region2::from_unordered_segments_with_report_impl(
+                    workspace.request.source_segments.clone(),
+                    workspace.request.fill_rule,
+                    policy,
+                )?
+            };
         Ok(ExactCurveArrangementResult2 {
             evaluation: ExactCurveArrangementEvaluation2::new(workspace),
             region_result,
