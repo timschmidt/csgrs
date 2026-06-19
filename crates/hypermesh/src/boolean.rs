@@ -2272,11 +2272,6 @@ impl ExactBooleanEvaluation {
         self.preflight.blocker().is_some()
     }
 
-    /// Return whether exact preflight retained graph evidence.
-    pub fn has_retained_graph_evidence(&self) -> bool {
-        self.preflight.retained_face_pairs() != 0 || self.preflight.retained_events() != 0
-    }
-
     /// Return the replayable certification bundle retained by this evaluation.
     #[cfg(test)]
     pub(crate) fn certifications(&self) -> &ExactBooleanCertificationSet {

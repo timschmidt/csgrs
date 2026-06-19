@@ -4041,16 +4041,6 @@ fn validate_winding_readiness_against_sources_for_request(
 }
 
 impl ExactBooleanPreflight {
-    /// Return the retained face-pair count.
-    pub(crate) const fn retained_face_pairs(&self) -> usize {
-        self.retained_face_pairs
-    }
-
-    /// Return the retained event count.
-    pub(crate) const fn retained_events(&self) -> usize {
-        self.retained_events
-    }
-
     /// Return the retained blocker, if this preflight is blocked.
     pub(crate) const fn blocker(&self) -> Option<&ExactBooleanBlocker> {
         self.blocker.as_ref()

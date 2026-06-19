@@ -77,11 +77,7 @@ fn run_case(case: &BenchCase) {
         Ok(evaluation) => print_metadata(
             case.name,
             "preflight_support",
-            format!(
-                "certified={};retained_graph={}",
-                evaluation.is_certified(),
-                evaluation.has_retained_graph_evidence(),
-            ),
+            format!("certified={}", evaluation.is_certified()),
         ),
         Err(error) => print_metadata(case.name, "preflight_support", format!("error:{error:?}")),
     }

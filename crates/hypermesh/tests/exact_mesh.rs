@@ -303,7 +303,6 @@ fn exact_boolean_evaluation_materializes_boundary_policy_shortcut_by_default() {
         assert!(evaluation.materialized_result().is_some());
         assert!(!evaluation.has_blocker());
         assert!(evaluation.is_certified());
-        assert!(evaluation.has_retained_graph_evidence());
         let result = evaluation
             .materialized_result()
             .expect("boundary-policy evaluation should materialize");
@@ -1864,7 +1863,6 @@ fn lower_dimensional_regularized_boolean_is_publicly_replayable() {
                 evaluation.freshness_against_sources(&left, &closed_right),
                 ExactReportFreshness::SourceReplayMismatch
             );
-            assert!(!evaluation.has_retained_graph_evidence());
             assert_eq!(
                 evaluation.freshness_against_sources(&left, &right),
                 ExactReportFreshness::Current
@@ -2177,10 +2175,6 @@ fn closed_boundary_touching_regularized_boolean_is_publicly_replayable() {
                 preflight_evaluation.is_certified(),
                 "{operation:?}: {preflight_evaluation:?}"
             );
-            assert!(
-                preflight_evaluation.has_retained_graph_evidence(),
-                "closed boundary-touching request should retain graph evidence: {operation:?}: {preflight_evaluation:?}"
-            );
             preflight_evaluation.validate().unwrap();
             preflight_evaluation
                 .validate_against_sources(&left, &right)
@@ -2245,10 +2239,6 @@ fn closed_no_volume_overlap_regularized_boolean_is_publicly_replayable() {
                 assert!(
                     preflight_evaluation.materializes_arrangement_cell_complex(),
                     "{operation:?}: {preflight_evaluation:?}"
-                );
-                assert!(
-                    preflight_evaluation.has_retained_graph_evidence(),
-                    "positive-area no-volume shortcut should retain graph evidence: {operation:?}: {preflight_evaluation:?}"
                 );
                 preflight_evaluation.validate().unwrap();
                 assert!(
@@ -2885,7 +2875,7 @@ fn exact_contained_face_adjacent_union_is_publicly_replayable() {
 }
 
 #[test]
-fn exact_evaluation_preflight_reports_disjoint_bounds_without_retained_pairs() {
+fn exact_evaluation_preflight_replays_disjoint_bounds() {
     let left = tetra([0, 0, 0]);
     let right = tetra([3, 0, 0]);
 
@@ -2894,7 +2884,6 @@ fn exact_evaluation_preflight_reports_disjoint_bounds_without_retained_pairs() {
         &right,
         ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED),
         |evaluation| {
-            assert!(!evaluation.has_retained_graph_evidence());
             evaluation.validate_against_sources(&left, &right).unwrap();
         },
     );
@@ -2932,7 +2921,7 @@ fn public_exact_blocker_reports_replay_remaining_decisions() {
         assert!(
             evaluation.materialized_result().is_some()
                 || evaluation.retained_arrangement_attempt().is_some()
-                || evaluation.has_retained_graph_evidence(),
+                || evaluation.has_blocker(),
             "{evaluation:?}"
         );
         assert_eq!(
@@ -3050,7 +3039,6 @@ fn open_surface_disjoint_report_classifies_retained_coplanar_overlap_blocker() {
         assert!(!evaluation.is_certified(), "{evaluation:?}");
         assert!(evaluation.materialized_result().is_none(), "{evaluation:?}");
         assert!(evaluation.has_blocker(), "{evaluation:?}");
-        assert!(evaluation.has_retained_graph_evidence(), "{evaluation:?}");
         evaluation.validate_against_sources(&left, &right).unwrap();
     });
 }
@@ -3743,13 +3731,11 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
         ExactBooleanOperation::Union,
         ValidationPolicy::ALLOW_BOUNDARY,
     );
-    let default_retains_graph_evidence =
-        with_exact_boolean_evaluation(&left, &right, request, |evaluation| {
-            assert!(evaluation.is_certified(), "{evaluation:?}");
-            assert!(evaluation.materialized_result().is_some(), "{evaluation:?}");
-            evaluation.validate_against_sources(&left, &right).unwrap();
-            evaluation.has_retained_graph_evidence()
-        });
+    with_exact_boolean_evaluation(&left, &right, request, |evaluation| {
+        assert!(evaluation.is_certified(), "{evaluation:?}");
+        assert!(evaluation.materialized_result().is_some(), "{evaluation:?}");
+        evaluation.validate_against_sources(&left, &right).unwrap();
+    });
     with_exact_boolean_evaluation(
         &left,
         &right,
@@ -3786,11 +3772,6 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
             "{policy_evaluation:?}"
         );
         assert!(!policy_evaluation.has_blocker(), "{policy_evaluation:?}");
-        assert_eq!(
-            policy_evaluation.has_retained_graph_evidence(),
-            default_retains_graph_evidence
-        );
-        assert!(default_retains_graph_evidence);
         policy_evaluation
             .validate_against_sources(&left, &right)
             .unwrap();
