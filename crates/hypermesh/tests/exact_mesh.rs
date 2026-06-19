@@ -2,7 +2,7 @@ use hyperlimit::{Point3, SourceProvenance};
 use hypermesh::{
     ExactBooleanOperation, ExactBooleanRequest, ExactBooleanResult, ExactBooleanWorkspace,
     ExactBoundaryBooleanPolicy, ExactMesh, ExactMeshConsumerDomain, ExactRegionSelection,
-    ExactRegularizationPolicy, ExactReportFreshness, MeshArtifactManifest, ValidationPolicy,
+    ExactRegularizationPolicy, MeshArtifactManifest, ValidationPolicy,
 };
 use hyperreal::Real;
 
@@ -76,10 +76,7 @@ fn assert_public_full_face_adjacent_union(
     );
     result.validate().unwrap();
     result.validate_against_sources(left, right).unwrap();
-    assert_eq!(
-        result.freshness_against_sources(left, right),
-        ExactReportFreshness::Current
-    );
+    assert!(result.validate_against_sources(left, right).is_ok());
     assert!(result.mesh().facts().mesh.closed_manifold);
     assert!(!result.mesh().triangles().is_empty());
     result
@@ -104,10 +101,7 @@ fn assert_public_contained_face_adjacent_union(
     );
     result.validate().unwrap();
     result.validate_against_sources(left, right).unwrap();
-    assert_eq!(
-        result.freshness_against_sources(left, right),
-        ExactReportFreshness::Current
-    );
+    assert!(result.validate_against_sources(left, right).is_ok());
     assert!(result.mesh().facts().mesh.closed_manifold);
     assert!(!result.mesh().triangles().is_empty());
     result
@@ -926,9 +920,10 @@ fn exact_axis_aligned_orthogonal_solid_boolean_is_publicly_replayable() {
             "{operation:?}: {result:?}"
         );
         result.validate().unwrap();
-        assert_eq!(
-            result.freshness_against_sources(&left, &separated_right),
-            ExactReportFreshness::SourceReplayMismatch
+        assert!(
+            result
+                .validate_against_sources(&left, &separated_right)
+                .is_err()
         );
         assert!(result.mesh().facts().mesh.closed_manifold);
     }
@@ -953,10 +948,7 @@ fn axis_aligned_orthogonal_solid_accepts_face_fan_triangulated_box() {
     );
     result.validate().unwrap();
     result.validate_against_sources(&fan_box, &cutter).unwrap();
-    assert_eq!(
-        result.freshness_against_sources(&fan_box, &cutter),
-        ExactReportFreshness::Current
-    );
+    assert!(result.validate_against_sources(&fan_box, &cutter).is_ok());
     assert!(result.mesh().facts().mesh.closed_manifold);
 }
 
@@ -982,10 +974,7 @@ fn axis_aligned_orthogonal_solid_materializes_multiple_cavities() {
     );
     result.validate().unwrap();
     result.validate_against_sources(&outer, &cavities).unwrap();
-    assert_eq!(
-        result.freshness_against_sources(&outer, &cavities),
-        ExactReportFreshness::Current
-    );
+    assert!(result.validate_against_sources(&outer, &cavities).is_ok());
     assert!(result.mesh().facts().mesh.closed_manifold);
 }
 
@@ -1011,10 +1000,7 @@ fn affine_orthogonal_solid_recovers_face_fan_basis_from_cell_edges() {
     );
     result.validate().unwrap();
     result.validate_against_sources(&fan_box, &cutter).unwrap();
-    assert_eq!(
-        result.freshness_against_sources(&fan_box, &cutter),
-        ExactReportFreshness::Current
-    );
+    assert!(result.validate_against_sources(&fan_box, &cutter).is_ok());
     assert!(result.mesh().facts().mesh.closed_manifold);
 }
 
@@ -1095,13 +1081,11 @@ fn exact_closed_convex_boolean_is_publicly_replayable() {
         assert!(predicate(&result, operation), "{operation:?}: {result:?}");
         result.validate().unwrap();
         result.validate_against_sources(&left, &right).unwrap();
-        assert_eq!(
-            result.freshness_against_sources(&left, &right),
-            ExactReportFreshness::Current
-        );
-        assert_eq!(
-            result.freshness_against_sources(&left, &stale_open_right),
-            ExactReportFreshness::SourceReplayMismatch
+        assert!(result.validate_against_sources(&left, &right).is_ok());
+        assert!(
+            result
+                .validate_against_sources(&left, &stale_open_right)
+                .is_err()
         );
         assert!(result.mesh().facts().mesh.closed_manifold);
     }
@@ -1190,9 +1174,10 @@ fn exact_full_face_adjacent_union_is_publicly_replayable() {
     let result = assert_public_full_face_adjacent_union(&left, &right, 1, 0);
 
     let separated_right = tetra_from_corners([20, 0, 0], [24, 0, 0], [20, 4, 0], [20, 0, 4]);
-    assert_eq!(
-        result.freshness_against_sources(&left, &separated_right),
-        ExactReportFreshness::SourceReplayMismatch
+    assert!(
+        result
+            .validate_against_sources(&left, &separated_right)
+            .is_err()
     );
 }
 
@@ -1387,13 +1372,11 @@ fn adjacent_union_completion_boolean_is_publicly_replayable() {
     result.validate().unwrap();
     result.validate_against_sources(&left, &right).unwrap();
 
-    assert_eq!(
-        result.freshness_against_sources(&left, &right),
-        ExactReportFreshness::Current
-    );
-    assert_eq!(
-        result.freshness_against_sources(&left, &separated_right),
-        ExactReportFreshness::SourceReplayMismatch
+    assert!(result.validate_against_sources(&left, &right).is_ok());
+    assert!(
+        result
+            .validate_against_sources(&left, &separated_right)
+            .is_err()
     );
     assert!(result.mesh().facts().mesh.closed_manifold);
 
@@ -1520,10 +1503,7 @@ fn exact_open_surface_arrangement_is_publicly_replayable() {
         );
         result.validate().unwrap();
         result.validate_against_sources(&left, &right).unwrap();
-        assert_eq!(
-            result.freshness_against_sources(&left, &right),
-            ExactReportFreshness::Current
-        );
+        assert!(result.validate_against_sources(&left, &right).is_ok());
         with_exact_boolean_evaluation(
             &left,
             &right,
@@ -1535,9 +1515,10 @@ fn exact_open_surface_arrangement_is_publicly_replayable() {
         } else {
             assert!(!result.mesh().triangles().is_empty());
         }
-        assert_eq!(
-            result.freshness_against_sources(&left, &separated_right),
-            ExactReportFreshness::SourceReplayMismatch
+        assert!(
+            result
+                .validate_against_sources(&left, &separated_right)
+                .is_err()
         );
         if matches!(operation, ExactBooleanOperation::Intersection) {
             let replay = exact_boolean_result(
@@ -1660,13 +1641,11 @@ fn exact_selected_region_boolean_is_publicly_replayable() {
 
     result.validate().unwrap();
     result.validate_against_sources(&left, &right).unwrap();
-    assert_eq!(
-        result.freshness_against_sources(&left, &right),
-        ExactReportFreshness::Current
-    );
-    assert_eq!(
-        result.freshness_against_sources(&left, &separated_right),
-        ExactReportFreshness::SourceReplayMismatch
+    assert!(result.validate_against_sources(&left, &right).is_ok());
+    assert!(
+        result
+            .validate_against_sources(&left, &separated_right)
+            .is_err()
     );
     assert!(!result.mesh().triangles().is_empty());
     assert_eq!(
@@ -1724,14 +1703,12 @@ fn exact_coplanar_mesh_overlay_arrangement_is_publicly_replayable() {
         );
         result.validate().unwrap();
         result.validate_against_sources(&left, &right).unwrap();
-        assert_eq!(
-            result.freshness_against_sources(&left, &right),
-            ExactReportFreshness::Current
-        );
+        assert!(result.validate_against_sources(&left, &right).is_ok());
         assert!(!result.mesh().triangles().is_empty());
-        assert_eq!(
-            result.freshness_against_sources(&left, &separated_right),
-            ExactReportFreshness::SourceReplayMismatch
+        assert!(
+            result
+                .validate_against_sources(&left, &separated_right)
+                .is_err()
         );
     }
 
@@ -1814,13 +1791,11 @@ fn lower_dimensional_regularized_boolean_is_publicly_replayable() {
         assert!(result.mesh().triangles().is_empty());
         result.validate().unwrap();
         result.validate_against_sources(&left, &right).unwrap();
-        assert_eq!(
-            result.freshness_against_sources(&left, &right),
-            ExactReportFreshness::Current
-        );
-        assert_eq!(
-            result.freshness_against_sources(&left, &closed_right),
-            ExactReportFreshness::SourceReplayMismatch
+        assert!(result.validate_against_sources(&left, &right).is_ok());
+        assert!(
+            result
+                .validate_against_sources(&left, &closed_right)
+                .is_err()
         );
         let disjoint_request = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED);
         with_exact_boolean_evaluation(&left, &disjoint_right, disjoint_request, |evaluation| {
@@ -1881,21 +1856,15 @@ fn mixed_dimensional_regularized_solid_boolean_is_publicly_replayable() {
             );
             result.validate().unwrap();
             result.validate_against_sources(left, right).unwrap();
-            assert_eq!(
-                result.freshness_against_sources(left, right),
-                ExactReportFreshness::Current
-            );
+            assert!(result.validate_against_sources(left, right).is_ok());
             let keeps_solid = matches!(operation, ExactBooleanOperation::Union)
                 || (solid_is_left && matches!(operation, ExactBooleanOperation::Difference));
-            let expected_stale_freshness = if keeps_solid {
-                ExactReportFreshness::SourceReplayMismatch
+            let stale_replay = result.validate_against_sources(stale_left, stale_right);
+            if keeps_solid {
+                assert!(stale_replay.is_err());
             } else {
-                ExactReportFreshness::Current
-            };
-            assert_eq!(
-                result.freshness_against_sources(stale_left, stale_right),
-                expected_stale_freshness
-            );
+                stale_replay.unwrap();
+            }
             if keeps_solid {
                 assert!(result.mesh().facts().mesh.closed_manifold);
                 assert!(!result.mesh().triangles().is_empty());
@@ -2027,13 +1996,11 @@ fn boundary_touching_policy_boolean_is_publicly_replayable() {
         );
         result.validate().unwrap();
         result.validate_against_sources(&left, &right).unwrap();
-        assert_eq!(
-            result.freshness_against_sources(&left, &right),
-            ExactReportFreshness::Current
-        );
-        assert_eq!(
-            result.freshness_against_sources(&left, &separated_right),
-            ExactReportFreshness::SourceReplayMismatch
+        assert!(result.validate_against_sources(&left, &right).is_ok());
+        assert!(
+            result
+                .validate_against_sources(&left, &separated_right)
+                .is_err()
         );
     }
 
@@ -2131,13 +2098,11 @@ fn closed_boundary_touching_regularized_boolean_is_publicly_replayable() {
             ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
             |evaluation| evaluation.validate().unwrap(),
         );
-        assert_eq!(
-            result.freshness_against_sources(&left, &right),
-            ExactReportFreshness::Current
-        );
-        assert_eq!(
-            result.freshness_against_sources(&left, &separated_right),
-            ExactReportFreshness::SourceReplayMismatch
+        assert!(result.validate_against_sources(&left, &right).is_ok());
+        assert!(
+            result
+                .validate_against_sources(&left, &separated_right)
+                .is_err()
         );
     }
 }
@@ -2227,10 +2192,7 @@ fn closed_no_volume_overlap_regularized_boolean_is_publicly_replayable() {
         );
         result.validate().unwrap();
         result.validate_against_sources(&left, &right).unwrap();
-        assert_eq!(
-            result.freshness_against_sources(&left, &right),
-            ExactReportFreshness::Current
-        );
+        assert!(result.validate_against_sources(&left, &right).is_ok());
         if operation == ExactBooleanOperation::Union {
             assert_eq!(
                 result.mesh().triangles().len(),
@@ -2273,9 +2235,10 @@ fn closed_winding_shortcuts_are_publicly_replayable() {
         result
             .validate_against_sources(&separated_left, &separated_right)
             .unwrap();
-        assert_eq!(
-            result.freshness_against_sources(&separated_left, &separated_right),
-            ExactReportFreshness::Current
+        assert!(
+            result
+                .validate_against_sources(&separated_left, &separated_right)
+                .is_ok()
         );
         with_exact_boolean_evaluation(
             &separated_left,
@@ -2283,9 +2246,10 @@ fn closed_winding_shortcuts_are_publicly_replayable() {
             ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
             |separated_evaluation| separated_evaluation.validate().unwrap(),
         );
-        assert_eq!(
-            result.freshness_against_sources(&separated_left, &intersecting_right),
-            ExactReportFreshness::SourceReplayMismatch
+        assert!(
+            result
+                .validate_against_sources(&separated_left, &intersecting_right)
+                .is_err()
         );
     }
 
@@ -2319,13 +2283,15 @@ fn closed_winding_shortcuts_are_publicly_replayable() {
         result
             .validate_against_sources(&container, &contained)
             .unwrap();
-        assert_eq!(
-            result.freshness_against_sources(&container, &contained),
-            ExactReportFreshness::Current
+        assert!(
+            result
+                .validate_against_sources(&container, &contained)
+                .is_ok()
         );
-        assert_eq!(
-            result.freshness_against_sources(&container, &uncontained),
-            ExactReportFreshness::SourceReplayMismatch
+        assert!(
+            result
+                .validate_against_sources(&container, &uncontained)
+                .is_err()
         );
     }
 }
@@ -2398,10 +2364,7 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
         }
 
         result.validate().unwrap();
-        assert_eq!(
-            result.freshness_against_sources(&left, &right),
-            ExactReportFreshness::Current
-        );
+        assert!(result.validate_against_sources(&left, &right).is_ok());
         evaluation.validate().unwrap();
         if !result.is_arrangement_cell_complex_materialized_for(ExactBooleanOperation::Union) {
             assert!(
@@ -2419,9 +2382,10 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
             !result.is_arrangement_cell_complex_shortcut_for(ExactBooleanOperation::Intersection)
         );
         assert!(!result.is_certified_shortcut_for(ExactBooleanOperation::Intersection));
-        assert_eq!(
-            result.freshness_against_sources(&left, &separated_right),
-            ExactReportFreshness::SourceReplayMismatch
+        assert!(
+            result
+                .validate_against_sources(&left, &separated_right)
+                .is_err()
         );
     }
     let difference_request = ExactBooleanRequest::new(
@@ -2502,11 +2466,7 @@ fn exact_volumetric_winding_coplanar_cap_is_publicly_certified() {
         );
         result.validate_against_sources(&left, &right).unwrap();
 
-        assert_eq!(
-            result.freshness_against_sources(&left, &right),
-            ExactReportFreshness::Current,
-            "{operation:?}: {result:?}"
-        );
+        assert!(result.validate_against_sources(&left, &right).is_ok());
     }
 }
 
@@ -2698,9 +2658,10 @@ fn exact_contained_face_adjacent_union_is_publicly_replayable() {
         },
     );
 
-    assert_eq!(
-        result.freshness_against_sources(&container, &separated_right),
-        ExactReportFreshness::SourceReplayMismatch
+    assert!(
+        result
+            .validate_against_sources(&container, &separated_right)
+            .is_err()
     );
     let split_request =
         ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED);
@@ -2754,13 +2715,11 @@ fn exact_contained_face_adjacent_union_is_publicly_replayable() {
     result.validate().unwrap();
     result.validate_against_sources(&container, &right).unwrap();
 
-    assert_eq!(
-        result.freshness_against_sources(&container, &right),
-        ExactReportFreshness::Current
-    );
-    assert_eq!(
-        result.freshness_against_sources(&container, &separated_right),
-        ExactReportFreshness::SourceReplayMismatch
+    assert!(result.validate_against_sources(&container, &right).is_ok());
+    assert!(
+        result
+            .validate_against_sources(&container, &separated_right)
+            .is_err()
     );
 }
 
@@ -3072,13 +3031,11 @@ fn trivial_boolean_shortcuts_are_publicly_replayable() {
             assert!(predicate(result, operation), "{operation:?}: {result:?}");
             result.validate().unwrap();
             result.validate_against_sources(left, right).unwrap();
-            assert_eq!(
-                result.freshness_against_sources(left, right),
-                ExactReportFreshness::Current
-            );
-            assert_eq!(
-                result.freshness_against_sources(stale_left, stale_right),
-                ExactReportFreshness::SourceReplayMismatch
+            assert!(result.validate_against_sources(left, right).is_ok());
+            assert!(
+                result
+                    .validate_against_sources(stale_left, stale_right)
+                    .is_err()
             );
         };
 
@@ -3109,9 +3066,10 @@ fn trivial_boolean_shortcuts_are_publicly_replayable() {
             |evaluation| evaluation.validate().unwrap(),
         );
         if operation == ExactBooleanOperation::Union {
-            assert_eq!(
-                empty_result.freshness_against_sources(&empty, &disjoint_solid),
-                ExactReportFreshness::SourceReplayMismatch
+            assert!(
+                empty_result
+                    .validate_against_sources(&empty, &disjoint_solid)
+                    .is_err()
             );
         }
 
@@ -3177,9 +3135,10 @@ fn trivial_boolean_shortcuts_are_publicly_replayable() {
             operation,
             ExactBooleanOperation::Union | ExactBooleanOperation::Difference
         ) {
-            assert_eq!(
-                disjoint_result.freshness_against_sources(&far_solid, &farther_solid),
-                ExactReportFreshness::SourceReplayMismatch
+            assert!(
+                disjoint_result
+                    .validate_against_sources(&far_solid, &farther_solid)
+                    .is_err()
             );
         }
 
@@ -3208,10 +3167,10 @@ fn trivial_boolean_shortcuts_are_publicly_replayable() {
             operation,
             ExactBooleanOperation::Union | ExactBooleanOperation::Intersection
         ) {
-            assert_eq!(
+            assert!(
                 identical_result
-                    .freshness_against_sources(&open_identical_alt_left, &open_identical_alt_right),
-                ExactReportFreshness::SourceReplayMismatch
+                    .validate_against_sources(&open_identical_alt_left, &open_identical_alt_right)
+                    .is_err()
             );
         }
         let closed_identical_result = exact_boolean_result(
@@ -3250,12 +3209,13 @@ fn trivial_boolean_shortcuts_are_publicly_replayable() {
             operation,
             ExactBooleanOperation::Union | ExactBooleanOperation::Intersection
         ) {
-            assert_eq!(
-                same_surface_result.freshness_against_sources(
-                    &open_identical_alt_left,
-                    &open_same_surface_alt_right,
-                ),
-                ExactReportFreshness::SourceReplayMismatch
+            assert!(
+                same_surface_result
+                    .validate_against_sources(
+                        &open_identical_alt_left,
+                        &open_same_surface_alt_right,
+                    )
+                    .is_err()
             );
         }
         let closed_same_surface_result = exact_boolean_result(
@@ -3329,10 +3289,10 @@ fn trivial_boolean_shortcuts_are_publicly_replayable() {
             operation,
             ExactBooleanOperation::Union | ExactBooleanOperation::Difference
         ) {
-            assert_eq!(
+            assert!(
                 open_disjoint_result
-                    .freshness_against_sources(&open_disjoint_alt_left, &open_disjoint_alt_right),
-                ExactReportFreshness::SourceReplayMismatch
+                    .validate_against_sources(&open_disjoint_alt_left, &open_disjoint_alt_right)
+                    .is_err()
             );
         }
     }
@@ -3431,9 +3391,10 @@ fn closed_same_surface_boolean_is_publicly_replayable() {
                 "{operation:?}: {result:?}"
             );
             result.validate().unwrap();
-            assert_eq!(
-                result.freshness_against_sources(&left, &stale_right),
-                ExactReportFreshness::SourceReplayMismatch
+            assert!(
+                result
+                    .validate_against_sources(&left, &stale_right)
+                    .is_err()
             );
             result
                 .validate_against_sources(&left, right)

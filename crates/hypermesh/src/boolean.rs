@@ -73,6 +73,7 @@ use super::region::{
     checked_triangulate_face_regions_with_earcut, choose_region_projection,
 };
 use super::regularization::{ExactArrangementBlocker, ExactRegularizationPolicy};
+pub use super::reports::ExactBooleanResult;
 use super::reports::{
     ExactAdjacentUnionCompletionReport, ExactAdjacentUnionCompletionStatus, ExactBooleanBlocker,
     ExactBooleanBlockerKind, ExactBooleanPreflight, ExactBooleanResultKind,
@@ -83,7 +84,6 @@ use super::reports::{
     ExactSameSurfaceStatus, ExactVolumetricBoundaryClosureReport,
     ExactVolumetricBoundaryClosureStatus, ExactWindingReadinessReport, ExactWindingReadinessStatus,
 };
-pub use super::reports::{ExactBooleanResult, ExactReportFreshness};
 use super::simplify::ExactSimplifiedCellComplex;
 use super::solid::{
     ConvexSolidMeshClassification, ConvexSolidMeshRelation, ConvexSolidPointRelation,
@@ -11428,6 +11428,7 @@ fn concatenate_meshes(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::reports::ExactReportFreshness;
 
     fn test_preflight(
         request: ExactBooleanRequest,

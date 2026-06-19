@@ -235,7 +235,8 @@ pub enum ExactReportValidationError {
 /// and source-replay drift while keeping [`ExactReportValidationError`] as the
 /// detailed diagnostic surface.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum ExactReportFreshness {
+#[cfg(test)]
+pub(crate) enum ExactReportFreshness {
     /// The report validates locally and replays exactly from the source meshes.
     Current,
     /// The unknown-graph flag no longer matches the reported status.
@@ -264,15 +265,11 @@ pub enum ExactReportFreshness {
     /// Volumetric-cell evidence counts no longer agree with retained blocker
     /// counts or report status.
     StaleCoplanarVolumetricEvidence,
-    /// A validation error outside the report's freshness categories occurred.
-    InvalidReportShape,
     /// The report is locally valid but no longer replays from the sources.
     SourceReplayMismatch,
-    /// The report replays from the sources, but not for the requested
-    /// operation, validation policy, or boundary policy.
-    OperationReplayMismatch,
 }
 
+#[cfg(test)]
 impl From<ExactReportValidationError> for ExactReportFreshness {
     fn from(error: ExactReportValidationError) -> Self {
         match error {
@@ -349,6 +346,7 @@ impl From<ExactReportValidationError> for ExactReportFreshness {
     }
 }
 
+#[cfg(test)]
 pub(crate) fn exact_report_freshness(
     validation: Result<(), ExactReportValidationError>,
 ) -> ExactReportFreshness {
@@ -1723,7 +1721,8 @@ impl ExactBooleanResult {
     /// Local report integrity is checked before source replay so copied
     /// materialized outputs can distinguish stale retained artifacts from
     /// source-geometry drift.
-    pub fn freshness_against_sources(
+    #[cfg(test)]
+    pub(crate) fn freshness_against_sources(
         &self,
         left: &ExactMesh,
         right: &ExactMesh,
