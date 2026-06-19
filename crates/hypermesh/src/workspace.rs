@@ -1307,7 +1307,7 @@ mod tests {
         assert_eq!(
             evaluation
                 .certifications()
-                .adjacent_union_completion
+                .adjacent_union_completion()
                 .clone(),
             expected_report
         );

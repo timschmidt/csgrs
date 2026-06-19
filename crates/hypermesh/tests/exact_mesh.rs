@@ -92,7 +92,7 @@ macro_rules! exact_adjacent_union_completion_report {
     ($left:expr, $right:expr, $request:expr $(,)?) => {
         exact_adjacent_union_completion_evaluation($left, $right, $request)
             .certifications()
-            .adjacent_union_completion
+            .adjacent_union_completion()
             .clone()
     };
 }
@@ -107,7 +107,7 @@ fn assert_public_full_face_adjacent_union(
     let evaluation = exact_adjacent_union_completion_evaluation(left, right, request);
     let report = evaluation
         .certifications()
-        .adjacent_union_completion
+        .adjacent_union_completion()
         .clone();
     assert!(report.is_certified_full_face());
     assert_eq!(report.full_face_shared_faces, expected_shared_faces);
@@ -151,7 +151,7 @@ fn assert_public_contained_face_adjacent_union(
     let evaluation = exact_adjacent_union_completion_evaluation(left, right, request);
     let report = evaluation
         .certifications()
-        .adjacent_union_completion
+        .adjacent_union_completion()
         .clone();
     assert!(report.is_certified_contained_face());
     assert_eq!(report.containing_faces, expected_containing_faces);
@@ -1556,7 +1556,7 @@ fn full_face_adjacent_union_refines_side_faces_for_boundary_subdivided_shared_fa
     let evaluation = exact_adjacent_union_completion_evaluation(&left, &right, request);
     let report = evaluation
         .certifications()
-        .adjacent_union_completion
+        .adjacent_union_completion()
         .clone();
     assert!(report.is_certified_full_face());
     assert_eq!(report.full_face_shared_faces, 0);
@@ -1638,7 +1638,7 @@ fn full_face_adjacent_union_accepts_dual_boundary_subdivided_shared_face() {
     let evaluation = exact_adjacent_union_completion_evaluation(&left, &right, request);
     let report = evaluation
         .certifications()
-        .adjacent_union_completion
+        .adjacent_union_completion()
         .clone();
     assert!(report.is_certified_full_face());
     assert_eq!(report.full_face_shared_faces, 0);
@@ -1710,7 +1710,7 @@ fn adjacent_union_completion_boolean_is_publicly_replayable() {
     let evaluation = exact_adjacent_union_completion_evaluation(&left, &right, request);
     let report = evaluation
         .certifications()
-        .adjacent_union_completion
+        .adjacent_union_completion()
         .clone();
     assert!(report.is_certified_full_face());
     assert!(report.is_certified());
@@ -1813,7 +1813,7 @@ fn adjacent_union_completion_boolean_is_publicly_replayable() {
         exact_adjacent_union_completion_evaluation(&left, &crossing_right, crossing_request);
     let crossing_report = crossing_evaluation
         .certifications()
-        .adjacent_union_completion
+        .adjacent_union_completion()
         .clone();
     assert!(crossing_report.has_no_adjacency_certificate());
     assert!(crossing_report.blocker.requires_winding());
@@ -3617,7 +3617,7 @@ fn exact_contained_face_adjacent_union_is_publicly_replayable() {
         exact_adjacent_union_completion_evaluation(&container, &two_caps_right, multi_hole_request);
     let multi_hole_report = multi_hole_evaluation
         .certifications()
-        .adjacent_union_completion
+        .adjacent_union_completion()
         .clone();
     assert!(multi_hole_report.is_certified_contained_face());
     assert_eq!(multi_hole_report.containing_faces, 1);
@@ -3680,7 +3680,7 @@ fn exact_contained_face_adjacent_union_is_publicly_replayable() {
     );
     let split_report = split_evaluation
         .certifications()
-        .adjacent_union_completion
+        .adjacent_union_completion()
         .clone();
     assert!(split_report.is_certified_contained_face());
     assert_eq!(split_report.containing_faces, 2);
@@ -3700,7 +3700,7 @@ fn exact_contained_face_adjacent_union_is_publicly_replayable() {
     );
     let square_disk_report = square_disk_evaluation
         .certifications()
-        .adjacent_union_completion
+        .adjacent_union_completion()
         .clone();
     assert!(square_disk_report.is_certified_contained_face());
     assert_eq!(square_disk_report.containing_faces, 2);
@@ -3719,7 +3719,7 @@ fn exact_contained_face_adjacent_union_is_publicly_replayable() {
     let evaluation = exact_adjacent_union_completion_evaluation(&container, &right, request);
     let completion_report = evaluation
         .certifications()
-        .adjacent_union_completion
+        .adjacent_union_completion()
         .clone();
     assert!(completion_report.is_certified_contained_face());
     assert!(completion_report.is_certified());
