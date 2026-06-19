@@ -2466,11 +2466,6 @@ impl ExactBooleanEvaluation {
         self.result.as_ref()
     }
 
-    /// Return whether this evaluation retained a certified materialized result.
-    pub fn has_materialized_result(&self) -> bool {
-        self.result.is_some()
-    }
-
     #[cfg(test)]
     pub(crate) fn materialized_result_mut(&mut self) -> Option<&mut ExactBooleanResult> {
         self.result.as_mut()
@@ -12246,7 +12241,7 @@ mod tests {
         );
         let evaluation = test_evaluation(request, &left, &right);
         assert!(
-            !evaluation.has_materialized_result(),
+            evaluation.materialized_result().is_none(),
             "selected-region evaluation should retain certifications when materialization declines"
         );
         let readiness = evaluation.certifications().winding_readiness().clone();
@@ -14012,7 +14007,7 @@ mod tests {
             "{closed_evaluation:?}"
         );
         assert!(
-            !closed_evaluation.has_materialized_result(),
+            closed_evaluation.materialized_result().is_none(),
             "{closed_evaluation:?}"
         );
 

@@ -263,7 +263,7 @@ fn exact_boolean_evaluation_materializes_certified_result_publicly() {
         hypermesh::ExactReportFreshness::Current
     );
     assert!(evaluation.preflight().is_certified());
-    assert!(evaluation.has_materialized_result());
+    assert!(evaluation.materialized_result().is_some());
     assert_eq!(evaluation.preflight().required_blocker_kind(), None);
     assert!(evaluation.preflight().is_certified());
     assert!(
@@ -342,7 +342,7 @@ fn exact_boolean_evaluation_materializes_boundary_policy_shortcut_by_default() {
     evaluation.validate().unwrap();
     evaluation.validate_against_sources(&left, &right).unwrap();
     assert!(evaluation.preflight().is_certified());
-    assert!(evaluation.has_materialized_result());
+    assert!(evaluation.materialized_result().is_some());
     assert_eq!(evaluation.preflight().required_blocker_kind(), None);
     assert!(evaluation.preflight().is_certified());
     assert!(
@@ -364,7 +364,7 @@ fn exact_boolean_evaluation_materializes_boundary_policy_shortcut_by_default() {
     let rejected = exact_boolean_evaluation(&left, &right, rejected_request);
     rejected.validate().unwrap();
     assert!(!rejected.preflight().is_certified());
-    assert!(!rejected.has_materialized_result());
+    assert!(rejected.materialized_result().is_none());
     assert!(
         ExactBooleanWorkspace::new(&left, &right)
             .materialize(rejected_request)
@@ -2300,7 +2300,7 @@ fn boundary_touching_policy_boolean_is_publicly_replayable() {
             .unwrap();
         reject_evaluation.validate().unwrap();
         assert!(
-            !reject_evaluation.has_materialized_result(),
+            reject_evaluation.materialized_result().is_none(),
             "{reject_evaluation:?}"
         );
         assert!(!reject_evaluation.preflight().is_certified());
