@@ -132,9 +132,9 @@ pub use bezier_topology::{
 };
 pub use boolean::{
     BooleanBoundaryFragmentEmissionReport2, BooleanBoundaryFragmentEmissionResult2,
-    BooleanBoundaryFragmentEmissionStage2, BooleanFragmentAction, BooleanFragmentClassification,
-    BooleanFragmentSelection, BooleanFragmentSelectionReport2, BooleanFragmentSelectionResult2,
-    BooleanFragmentSelectionStage2, BooleanOp,
+    BooleanBoundaryFragmentEmissionStage2, BooleanDirectedFragmentReport2, BooleanFragmentAction,
+    BooleanFragmentClassification, BooleanFragmentSelection, BooleanFragmentSelectionReport2,
+    BooleanFragmentSelectionResult2, BooleanFragmentSelectionStage2, BooleanOp,
 };
 pub use boolean_boundary::{
     BooleanBoundaryChain, BooleanBoundaryChainAssemblyReport2, BooleanBoundaryChainAssemblyResult2,

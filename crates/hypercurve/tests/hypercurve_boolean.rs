@@ -286,6 +286,11 @@ fn boolean_fragment_selection_emits_directed_boundary_fragments() {
             arcs: 0,
         })
     );
+    assert_eq!(
+        emitted_result.report().directed_fragments().len(),
+        union.count_action(BooleanFragmentAction::KeepSourceDirection)
+            + union.count_action(BooleanFragmentAction::KeepReversed)
+    );
     assert_eq!(emitted_result.report().unresolved_boundary_count(), Some(0));
     assert_eq!(emitted_result.report().blocker(), None);
     let emitted = emitted_result
@@ -324,6 +329,30 @@ fn boolean_fragment_selection_emits_directed_boundary_fragments() {
         emitted_first_source.source_range
     );
     assert!(!emitted_first.reversed);
+    let emitted_first_report = &emitted_result.report().directed_fragments()[0];
+    assert_eq!(emitted_first_report.key(), emitted_first.key);
+    assert_eq!(
+        emitted_first_report.fragment_index(),
+        emitted_first.fragment_index
+    );
+    assert_eq!(
+        emitted_first_report.source_segment_index(),
+        emitted_first.source_segment_index
+    );
+    assert_eq!(
+        emitted_first_report.source_segment_start_point(),
+        &emitted_first.source_segment_start_point
+    );
+    assert_eq!(
+        emitted_first_report.source_segment_end_point(),
+        &emitted_first.source_segment_end_point
+    );
+    assert_eq!(
+        emitted_first_report.source_range(),
+        &emitted_first.source_range
+    );
+    assert_eq!(emitted_first_report.reversed(), emitted_first.reversed);
+    assert_eq!(emitted_first_report.output_fragment_index(), 0);
 
     let assembled = emitted.assemble_chains_with_report(&policy());
     assert!(assembled.report().status().is_native_exact());
@@ -608,6 +637,31 @@ fn boolean_fragment_selection_reverses_emitted_second_difference_fragments() {
     );
     assert_eq!(directed.source_range, source.source_range);
     assert!(directed.reversed);
+    let emitted_report = difference
+        .emit_boundary_fragments_with_report(&fragments)
+        .unwrap();
+    let directed_report = emitted_report
+        .report()
+        .directed_fragments()
+        .iter()
+        .find(|fragment| {
+            fragment.key() == second_key && fragment.fragment_index() == reversed.fragment_index
+        })
+        .expect("expected emitted reversed fragment report");
+    assert_eq!(
+        directed_report.source_segment_index(),
+        directed.source_segment_index
+    );
+    assert_eq!(
+        directed_report.source_segment_start_point(),
+        &directed.source_segment_start_point
+    );
+    assert_eq!(
+        directed_report.source_segment_end_point(),
+        &directed.source_segment_end_point
+    );
+    assert_eq!(directed_report.source_range(), &directed.source_range);
+    assert!(directed_report.reversed());
 }
 
 #[test]

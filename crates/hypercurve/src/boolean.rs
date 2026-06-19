@@ -6,9 +6,9 @@
 
 use crate::boolean_boundary::{BooleanBoundaryFragmentSet, DirectedBooleanFragment};
 use crate::{
-    Classification, CurveError, CurvePolicy, CurveResult, RegionContourRole, RegionFragmentSet,
-    RegionPointLocation, RegionSide, RegionView2, RetainedTopologyStatus, Segment2,
-    SegmentKindCounts, UncertaintyReason,
+    Classification, CurveError, CurvePolicy, CurveResult, ParamRange, Point2, RegionContourKey,
+    RegionContourRole, RegionFragmentSet, RegionPointLocation, RegionSide, RegionView2,
+    RetainedTopologyStatus, Segment2, SegmentKind, SegmentKindCounts, UncertaintyReason,
 };
 
 /// Boolean operation requested between two regions.
@@ -113,9 +113,24 @@ pub struct BooleanBoundaryFragmentEmissionReport2 {
     boundary_needs_resolution_count: usize,
     directed_fragment_count: Option<usize>,
     directed_fragment_kind_counts: Option<SegmentKindCounts>,
+    directed_fragments: Vec<BooleanDirectedFragmentReport2>,
     unresolved_boundary_count: Option<usize>,
     status: RetainedTopologyStatus,
     blocker: Option<UncertaintyReason>,
+}
+
+/// Source provenance for one directed boundary fragment emitted by a boolean selection.
+#[derive(Clone, Debug, PartialEq)]
+pub struct BooleanDirectedFragmentReport2 {
+    key: RegionContourKey,
+    fragment_index: usize,
+    source_segment_index: usize,
+    source_segment_start_point: Point2,
+    source_segment_end_point: Point2,
+    source_range: ParamRange,
+    reversed: bool,
+    output_fragment_index: usize,
+    output_fragment_kind: SegmentKind,
 }
 
 /// Furthest exact stage reached by boolean boundary fragment emission.
@@ -234,6 +249,7 @@ impl BooleanFragmentSelection {
         let directed_fragment_count = directed_fragments.len();
         let directed_fragment_kind_counts =
             directed_boolean_fragment_kind_counts(&directed_fragments);
+        let directed_fragment_reports = boolean_directed_fragment_reports(&directed_fragments);
         let unresolved_boundary_count = unresolved_boundaries.len();
         match BooleanBoundaryFragmentSet::new(directed_fragments, unresolved_boundaries) {
             Ok(fragments) => Ok(BooleanBoundaryFragmentEmissionResult2 {
@@ -249,6 +265,7 @@ impl BooleanFragmentSelection {
                         .count_action(BooleanFragmentAction::BoundaryNeedsResolution),
                     directed_fragment_count: Some(directed_fragment_count),
                     directed_fragment_kind_counts: Some(directed_fragment_kind_counts),
+                    directed_fragments: directed_fragment_reports,
                     unresolved_boundary_count: Some(unresolved_boundary_count),
                     status: RetainedTopologyStatus::NativeExact,
                     blocker: None,
@@ -304,6 +321,11 @@ impl BooleanBoundaryFragmentEmissionReport2 {
         self.directed_fragment_kind_counts
     }
 
+    /// Returns provenance for emitted directed fragments when materialized.
+    pub fn directed_fragments(&self) -> &[BooleanDirectedFragmentReport2] {
+        &self.directed_fragments
+    }
+
     /// Returns unresolved boundary fragment count when materialized.
     pub const fn unresolved_boundary_count(&self) -> Option<usize> {
         self.unresolved_boundary_count
@@ -317,6 +339,53 @@ impl BooleanBoundaryFragmentEmissionReport2 {
     /// Returns the exact blocker for non-materialized emission.
     pub const fn blocker(&self) -> Option<UncertaintyReason> {
         self.blocker
+    }
+}
+
+impl BooleanDirectedFragmentReport2 {
+    /// Returns the source keyed contour.
+    pub const fn key(&self) -> RegionContourKey {
+        self.key
+    }
+
+    /// Returns the source contour fragment index.
+    pub const fn fragment_index(&self) -> usize {
+        self.fragment_index
+    }
+
+    /// Returns the source segment index in the original contour.
+    pub const fn source_segment_index(&self) -> usize {
+        self.source_segment_index
+    }
+
+    /// Returns the exact start point of the original source segment.
+    pub const fn source_segment_start_point(&self) -> &Point2 {
+        &self.source_segment_start_point
+    }
+
+    /// Returns the exact end point of the original source segment.
+    pub const fn source_segment_end_point(&self) -> &Point2 {
+        &self.source_segment_end_point
+    }
+
+    /// Returns the retained parameter range on the source segment.
+    pub const fn source_range(&self) -> &ParamRange {
+        &self.source_range
+    }
+
+    /// Returns true when the output fragment was emitted opposite source traversal.
+    pub const fn reversed(&self) -> bool {
+        self.reversed
+    }
+
+    /// Returns the output directed-fragment index.
+    pub const fn output_fragment_index(&self) -> usize {
+        self.output_fragment_index
+    }
+
+    /// Returns the output directed-fragment primitive kind.
+    pub const fn output_fragment_kind(&self) -> SegmentKind {
+        self.output_fragment_kind
     }
 }
 
@@ -355,11 +424,34 @@ fn blocked_boolean_boundary_fragment_emission_result(
                 .count_action(BooleanFragmentAction::BoundaryNeedsResolution),
             directed_fragment_count: None,
             directed_fragment_kind_counts: None,
+            directed_fragments: Vec::new(),
             unresolved_boundary_count: None,
             status: RetainedTopologyStatus::Unsupported,
             blocker: Some(blocker),
         },
     }
+}
+
+fn boolean_directed_fragment_reports(
+    fragments: &[DirectedBooleanFragment],
+) -> Vec<BooleanDirectedFragmentReport2> {
+    fragments
+        .iter()
+        .enumerate()
+        .map(
+            |(output_fragment_index, fragment)| BooleanDirectedFragmentReport2 {
+                key: fragment.key,
+                fragment_index: fragment.fragment_index,
+                source_segment_index: fragment.source_segment_index,
+                source_segment_start_point: fragment.source_segment_start_point.clone(),
+                source_segment_end_point: fragment.source_segment_end_point.clone(),
+                source_range: fragment.source_range.clone(),
+                reversed: fragment.reversed,
+                output_fragment_index,
+                output_fragment_kind: fragment.segment.structural_facts().kind,
+            },
+        )
+        .collect()
 }
 
 impl BooleanOp {
