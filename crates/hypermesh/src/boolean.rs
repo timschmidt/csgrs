@@ -285,7 +285,7 @@ impl ExactArrangementBooleanAttempt {
 
     /// Return whether this attempt materialized through the generic
     /// arrangement/cell-complex path without a certified shortcut.
-    pub fn materialized_without_shortcut(&self) -> bool {
+    pub(crate) fn materialized_without_shortcut(&self) -> bool {
         self.stage == ExactArrangementBooleanStage::Materialized
             && self.decline.is_none()
             && self.materialized_shortcut.is_none()
