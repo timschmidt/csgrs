@@ -702,10 +702,25 @@ pub struct ExactBooleanResult {
     /// when the materialization path retained that gate evidence.
     pub region_ownership_report: Option<ExactRegionOwnershipReport>,
     /// Materialized exact output mesh validated under the requested policy.
-    pub mesh: ExactMesh,
+    pub(crate) mesh: ExactMesh,
 }
 
 impl ExactBooleanResult {
+    /// Borrow the materialized exact output mesh.
+    pub fn mesh(&self) -> &ExactMesh {
+        &self.mesh
+    }
+
+    /// Borrow the materialized exact output mesh mutably.
+    pub fn mesh_mut(&mut self) -> &mut ExactMesh {
+        &mut self.mesh
+    }
+
+    /// Replace the materialized exact output mesh.
+    pub fn replace_mesh(&mut self, mesh: ExactMesh) -> ExactMesh {
+        std::mem::replace(&mut self.mesh, mesh)
+    }
+
     pub(crate) fn with_gate_reports(
         mut self,
         topology_assembly_report: Option<ExactTopologyAssemblyReport>,

@@ -40,7 +40,8 @@ fn setup(
     let difference = ExactBooleanWorkspace::new(&left, &right)
         .materialize(request)
         .expect("overlapping boxes should materialize exact boolean output")
-        .mesh;
+        .mesh()
+        .clone();
 
     let meshes_to_draw = [left, right, difference];
     let colors = [BLUE, GREEN, WHITE];

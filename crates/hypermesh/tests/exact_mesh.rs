@@ -133,8 +133,8 @@ fn assert_public_full_face_adjacent_union(
         result.freshness_against_sources(left, right),
         ExactReportFreshness::Current
     );
-    assert!(result.mesh.facts().mesh.closed_manifold);
-    assert!(!result.mesh.triangles().is_empty());
+    assert!(result.mesh().facts().mesh.closed_manifold);
+    assert!(!result.mesh().triangles().is_empty());
     result
 }
 
@@ -174,8 +174,8 @@ fn assert_public_contained_face_adjacent_union(
         result.freshness_against_sources(left, right),
         ExactReportFreshness::Current
     );
-    assert!(result.mesh.facts().mesh.closed_manifold);
-    assert!(!result.mesh.triangles().is_empty());
+    assert!(result.mesh().facts().mesh.closed_manifold);
+    assert!(!result.mesh().triangles().is_empty());
     result
 }
 
@@ -1030,13 +1030,13 @@ fn exact_affine_orthogonal_solid_boolean_is_publicly_replayable() {
     );
     result.validate().unwrap();
     let mut stale_output = result.clone();
-    stale_output.mesh = left.clone();
+    stale_output.replace_mesh(left.clone());
     assert_ne!(
         stale_output.freshness_against_sources(&left, &right),
         ExactReportFreshness::Current,
         "{operation:?}: {stale_output:?}"
     );
-    assert!(result.mesh.facts().mesh.closed_manifold);
+    assert!(result.mesh().facts().mesh.closed_manifold);
 }
 
 #[test]
@@ -1088,7 +1088,7 @@ fn affine_orthogonal_solid_recovers_multi_cell_basis_without_sampling_limits() {
             .validate_materialized_result_against_sources(&left, &right)
             .unwrap();
         result.validate().unwrap();
-        assert!(result.mesh.facts().mesh.closed_manifold);
+        assert!(result.mesh().facts().mesh.closed_manifold);
     }
 }
 
@@ -1124,12 +1124,14 @@ fn exact_axis_aligned_orthogonal_solid_boolean_is_publicly_replayable() {
         );
         result.validate().unwrap();
         let mut stale_output = result.clone();
-        stale_output.mesh = ExactMesh::from_i64_triangles_with_policy(
-            &[0, 0, 0, 1, 0, 0, 0, 1, 0],
-            &[0, 1, 2],
-            ValidationPolicy::ALLOW_BOUNDARY,
-        )
-        .unwrap();
+        stale_output.replace_mesh(
+            ExactMesh::from_i64_triangles_with_policy(
+                &[0, 0, 0, 1, 0, 0, 0, 1, 0],
+                &[0, 1, 2],
+                ValidationPolicy::ALLOW_BOUNDARY,
+            )
+            .unwrap(),
+        );
         assert!(
             stale_output.validate().is_err(),
             "{operation:?}: {stale_output:?}"
@@ -1143,7 +1145,7 @@ fn exact_axis_aligned_orthogonal_solid_boolean_is_publicly_replayable() {
             result.freshness_against_sources(&left, &separated_right),
             ExactReportFreshness::SourceReplayMismatch
         );
-        assert!(result.mesh.facts().mesh.closed_manifold);
+        assert!(result.mesh().facts().mesh.closed_manifold);
     }
 }
 
@@ -1170,7 +1172,7 @@ fn axis_aligned_orthogonal_solid_accepts_face_fan_triangulated_box() {
         result.freshness_against_sources(&fan_box, &cutter),
         ExactReportFreshness::Current
     );
-    assert!(result.mesh.facts().mesh.closed_manifold);
+    assert!(result.mesh().facts().mesh.closed_manifold);
 }
 
 #[test]
@@ -1199,7 +1201,7 @@ fn axis_aligned_orthogonal_solid_materializes_multiple_cavities() {
         result.freshness_against_sources(&outer, &cavities),
         ExactReportFreshness::Current
     );
-    assert!(result.mesh.facts().mesh.closed_manifold);
+    assert!(result.mesh().facts().mesh.closed_manifold);
 }
 
 #[test]
@@ -1228,7 +1230,7 @@ fn affine_orthogonal_solid_recovers_face_fan_basis_from_cell_edges() {
         result.freshness_against_sources(&fan_box, &cutter),
         ExactReportFreshness::Current
     );
-    assert!(result.mesh.facts().mesh.closed_manifold);
+    assert!(result.mesh().facts().mesh.closed_manifold);
 }
 
 #[test]
@@ -1349,7 +1351,7 @@ fn exact_closed_convex_boolean_is_publicly_replayable() {
             ExactReportFreshness::SourceReplayMismatch
         );
         let mut stale_output = result.clone();
-        stale_output.mesh = left.clone();
+        stale_output.replace_mesh(left.clone());
         assert!(
             stale_output.validate().is_err(),
             "{operation:?}: {stale_output:?}"
@@ -1359,7 +1361,7 @@ fn exact_closed_convex_boolean_is_publicly_replayable() {
             ExactReportFreshness::StaleRegionFacts,
             "{operation:?}: {stale_output:?}"
         );
-        assert!(result.mesh.facts().mesh.closed_manifold);
+        assert!(result.mesh().facts().mesh.closed_manifold);
     }
 
     let separated_left = tetra_from_corners([0, 0, 0], [2, 0, 0], [0, 2, 0], [0, 0, 2]);
@@ -1381,7 +1383,7 @@ fn exact_closed_convex_boolean_is_publicly_replayable() {
         .validate_against_sources(&separated_left, &separated_right)
         .unwrap();
     let mut stale_separated_output = separated.clone();
-    stale_separated_output.mesh = separated_left.clone();
+    stale_separated_output.replace_mesh(separated_left.clone());
     assert!(
         stale_separated_output.validate().is_err(),
         "{stale_separated_output:?}"
@@ -1438,7 +1440,7 @@ fn exact_closed_convex_boolean_is_publicly_replayable() {
         .validate_against_sources(&contained_on_boundary, &container)
         .unwrap();
     let mut stale_containment_output = containment.clone();
-    stale_containment_output.mesh = container.clone();
+    stale_containment_output.replace_mesh(container.clone());
     assert!(
         stale_containment_output.validate().is_err(),
         "{stale_containment_output:?}"
@@ -1448,7 +1450,7 @@ fn exact_closed_convex_boolean_is_publicly_replayable() {
         ExactReportFreshness::StaleRegionFacts,
         "{stale_containment_output:?}"
     );
-    assert!(containment.mesh.triangles().is_empty());
+    assert!(containment.mesh().triangles().is_empty());
 
     let axis_overlap = exact_boolean_result(
         &axis_aligned_box([0, 0, 0], [2, 2, 2]),
@@ -1477,12 +1479,14 @@ fn exact_full_face_adjacent_union_is_publicly_replayable() {
     assert!(invalid_shared_faces.validate().is_err());
 
     let mut invalid_output = result.clone();
-    invalid_output.mesh = ExactMesh::from_i64_triangles_with_policy(
-        &[0, 0, 0, 1, 0, 0, 0, 1, 0],
-        &[0, 1, 2],
-        ValidationPolicy::ALLOW_BOUNDARY,
-    )
-    .unwrap();
+    invalid_output.replace_mesh(
+        ExactMesh::from_i64_triangles_with_policy(
+            &[0, 0, 0, 1, 0, 0, 0, 1, 0],
+            &[0, 1, 2],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap(),
+    );
     assert_eq!(
         invalid_output.freshness_against_sources(&left, &right),
         ExactReportFreshness::StaleRegionFacts
@@ -1724,7 +1728,7 @@ fn adjacent_union_completion_boolean_is_publicly_replayable() {
         ExactReportFreshness::Current
     );
     let mut stale_output = result.clone();
-    stale_output.mesh = left.clone();
+    stale_output.replace_mesh(left.clone());
     assert!(stale_output.validate().is_err(), "{stale_output:?}");
     assert_eq!(
         stale_output.freshness_against_sources(&left, &right),
@@ -1735,7 +1739,7 @@ fn adjacent_union_completion_boolean_is_publicly_replayable() {
         result.freshness_against_sources(&left, &separated_right),
         ExactReportFreshness::SourceReplayMismatch
     );
-    assert!(result.mesh.facts().mesh.closed_manifold);
+    assert!(result.mesh().facts().mesh.closed_manifold);
 
     let intersection_report = exact_adjacent_union_completion_report!(
         &left,
@@ -1929,9 +1933,9 @@ fn exact_open_surface_arrangement_is_publicly_replayable() {
         assert!(!result.region_classifications.is_empty());
         assert!(!result.triangulations.is_empty());
         if matches!(operation, ExactBooleanOperation::Intersection) {
-            assert!(result.mesh.triangles().is_empty());
+            assert!(result.mesh().triangles().is_empty());
         } else {
-            assert!(!result.mesh.triangles().is_empty());
+            assert!(!result.mesh().triangles().is_empty());
         }
         assert_eq!(
             result.freshness_against_sources(&left, &separated_right),
@@ -1967,8 +1971,9 @@ fn exact_open_surface_arrangement_is_publicly_replayable() {
         ),
     );
     let mut stale_materialization = union.clone();
+    let difference_mesh = difference.mesh().clone();
     stale_materialization.assembly = difference.assembly;
-    stale_materialization.mesh = difference.mesh;
+    stale_materialization.replace_mesh(difference_mesh);
     assert!(
         stale_materialization.validate().is_err(),
         "{stale_materialization:?}"
@@ -2119,9 +2124,9 @@ fn exact_selected_region_boolean_is_publicly_replayable() {
     assert!(!result.region_classifications.is_empty());
     assert!(!result.triangulations.is_empty());
     assert!(!result.assembly.triangles.is_empty());
-    assert!(!result.mesh.triangles().is_empty());
+    assert!(!result.mesh().triangles().is_empty());
     assert_eq!(
-        result.mesh.validation_policy(),
+        result.mesh().validation_policy(),
         ValidationPolicy::ALLOW_BOUNDARY
     );
     let evaluation = exact_boolean_evaluation(
@@ -2186,8 +2191,9 @@ fn exact_selected_region_boolean_is_publicly_replayable() {
         ),
     );
     let mut stale_materialization = result.clone();
+    let keep_left_mesh = keep_left.mesh().clone();
     stale_materialization.assembly = keep_left.assembly;
-    stale_materialization.mesh = keep_left.mesh;
+    stale_materialization.replace_mesh(keep_left_mesh);
     assert!(
         stale_materialization.validate().is_err(),
         "{stale_materialization:?}"
@@ -2240,13 +2246,13 @@ fn exact_coplanar_mesh_overlay_arrangement_is_publicly_replayable() {
             result.freshness_against_sources(&left, &right),
             ExactReportFreshness::Current
         );
-        assert!(!result.mesh.triangles().is_empty());
+        assert!(!result.mesh().triangles().is_empty());
         assert_eq!(
             result.freshness_against_sources(&left, &separated_right),
             ExactReportFreshness::SourceReplayMismatch
         );
         let mut stale_output = result.clone();
-        stale_output.mesh = left.clone();
+        stale_output.replace_mesh(left.clone());
         assert!(
             stale_output.validate().is_err(),
             "{operation:?}: {stale_output:?}"
@@ -2369,7 +2375,7 @@ fn lower_dimensional_regularized_boolean_is_publicly_replayable() {
                 || result.is_arrangement_cell_complex_materialized_for(operation),
             "{operation:?}: {result:?}"
         );
-        assert!(result.mesh.triangles().is_empty());
+        assert!(result.mesh().triangles().is_empty());
         result.validate().unwrap();
         result.validate_against_sources(&left, &right).unwrap();
         assert_eq!(
@@ -2412,8 +2418,8 @@ fn lower_dimensional_regularized_boolean_is_publicly_replayable() {
             disjoint_result.is_certified_shortcut_for(operation),
             "{operation:?}: {disjoint_result:?}"
         );
-        assert!(disjoint_result.mesh.triangles().is_empty());
-        assert!(disjoint_result.mesh.facts().mesh.closed_manifold);
+        assert!(disjoint_result.mesh().triangles().is_empty());
+        assert!(disjoint_result.mesh().facts().mesh.closed_manifold);
     }
 }
 
@@ -2464,11 +2470,11 @@ fn mixed_dimensional_regularized_solid_boolean_is_publicly_replayable() {
                 expected_stale_freshness
             );
             if keeps_solid {
-                assert!(result.mesh.facts().mesh.closed_manifold);
-                assert!(!result.mesh.triangles().is_empty());
+                assert!(result.mesh().facts().mesh.closed_manifold);
+                assert!(!result.mesh().triangles().is_empty());
             } else {
                 assert!(
-                    result.mesh.triangles().is_empty(),
+                    result.mesh().triangles().is_empty(),
                     "{operation:?}: {result:?}"
                 );
             }
@@ -2547,7 +2553,7 @@ fn mixed_dimensional_regularized_solid_boolean_is_publicly_replayable() {
             let keeps_solid = matches!(operation, ExactBooleanOperation::Union)
                 || (solid_is_left && matches!(operation, ExactBooleanOperation::Difference));
             assert_eq!(
-                result.mesh.triangles().is_empty(),
+                result.mesh().triangles().is_empty(),
                 !keeps_solid,
                 "{operation:?}: {result:?}"
             );
@@ -2760,7 +2766,7 @@ fn closed_boundary_touching_regularized_boolean_is_publicly_replayable() {
         );
         if operation == ExactBooleanOperation::Intersection {
             let mut stale_output = result.clone();
-            stale_output.mesh = left.clone();
+            stale_output.replace_mesh(left.clone());
             assert!(stale_output.validate().is_err(), "{stale_output:?}");
             let expected_freshness = if result.is_arrangement_cell_complex_shortcut_for(operation) {
                 ExactReportFreshness::StaleRegionFacts
@@ -2775,7 +2781,7 @@ fn closed_boundary_touching_regularized_boolean_is_publicly_replayable() {
         }
         if operation == ExactBooleanOperation::Difference {
             let mut stale_output = result.clone();
-            stale_output.mesh = right.clone();
+            stale_output.replace_mesh(right.clone());
             assert!(stale_output.validate().is_err(), "{stale_output:?}");
             assert_eq!(
                 stale_output.freshness_against_sources(&left, &right),
@@ -2901,7 +2907,7 @@ fn closed_no_volume_overlap_regularized_boolean_is_publicly_replayable() {
         );
         if operation == ExactBooleanOperation::Union {
             let mut stale_output = result.clone();
-            stale_output.mesh = left.clone();
+            stale_output.replace_mesh(left.clone());
             assert!(stale_output.validate().is_err(), "{stale_output:?}");
             assert_eq!(
                 stale_output.freshness_against_sources(&left, &right),
@@ -2915,10 +2921,10 @@ fn closed_no_volume_overlap_regularized_boolean_is_publicly_replayable() {
         );
         if operation == ExactBooleanOperation::Union {
             assert_eq!(
-                result.mesh.triangles().len(),
+                result.mesh().triangles().len(),
                 left.triangles().len() + right.triangles().len()
             );
-            assert!(result.mesh.facts().mesh.closed_manifold);
+            assert!(result.mesh().facts().mesh.closed_manifold);
         }
     }
 }
@@ -2987,7 +2993,7 @@ fn closed_winding_shortcuts_are_publicly_replayable() {
         );
         if operation == ExactBooleanOperation::Intersection {
             let mut stale_output = result.clone();
-            stale_output.mesh = separated_left.clone();
+            stale_output.replace_mesh(separated_left.clone());
             assert!(stale_output.validate().is_err(), "{stale_output:?}");
             assert_eq!(
                 stale_output.freshness_against_sources(&separated_left, &separated_right),
@@ -3037,7 +3043,7 @@ fn closed_winding_shortcuts_are_publicly_replayable() {
         );
         if operation == ExactBooleanOperation::Difference {
             let mut stale_output = result.clone();
-            stale_output.mesh = container.clone();
+            stale_output.replace_mesh(container.clone());
             assert!(stale_output.validate().is_err(), "{stale_output:?}");
             assert_eq!(
                 stale_output.freshness_against_sources(&container, &contained),
@@ -3214,7 +3220,7 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
         assert!(result.topology_assembly_report.is_some(), "{result:?}");
         assert!(result.region_ownership_report.is_some(), "{result:?}");
     }
-    assert!(!result.mesh.triangles().is_empty());
+    assert!(!result.mesh().triangles().is_empty());
     assert!(
         !result.is_arrangement_cell_complex_materialized_for(ExactBooleanOperation::Intersection)
     );
@@ -3363,9 +3369,9 @@ fn exact_volumetric_winding_coplanar_cap_is_publicly_certified() {
             "{operation:?}: {result:?}"
         );
         assert!(
-            result.mesh.facts().mesh.closed_manifold || result.mesh.triangles().is_empty(),
+            result.mesh().facts().mesh.closed_manifold || result.mesh().triangles().is_empty(),
             "{operation:?}: {:?}",
-            result.mesh.facts().mesh
+            result.mesh().facts().mesh
         );
         result.validate_against_sources(&left, &right).unwrap();
 
@@ -3375,7 +3381,7 @@ fn exact_volumetric_winding_coplanar_cap_is_publicly_certified() {
             "{operation:?}: {result:?}"
         );
         let mut stale_output = result.clone();
-        stale_output.mesh = left.clone();
+        stale_output.replace_mesh(left.clone());
         assert!(
             stale_output.validate().is_err(),
             "{operation:?}: {stale_output:?}"
@@ -3619,12 +3625,14 @@ fn exact_contained_face_adjacent_union_is_publicly_replayable() {
     assert!(impossible_counts.validate().is_err());
 
     let mut invalid_output = result.clone();
-    invalid_output.mesh = ExactMesh::from_i64_triangles_with_policy(
-        &[0, 0, 0, 1, 0, 0, 0, 1, 0],
-        &[0, 1, 2],
-        ValidationPolicy::ALLOW_BOUNDARY,
-    )
-    .unwrap();
+    invalid_output.replace_mesh(
+        ExactMesh::from_i64_triangles_with_policy(
+            &[0, 0, 0, 1, 0, 0, 0, 1, 0],
+            &[0, 1, 2],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap(),
+    );
     assert!(invalid_output.validate().is_err(), "{invalid_output:?}");
     assert_ne!(
         invalid_output.freshness_against_sources(&container, &right),
@@ -3725,7 +3733,7 @@ fn exact_contained_face_adjacent_union_is_publicly_replayable() {
         ExactReportFreshness::Current
     );
     let mut stale_output = result.clone();
-    stale_output.mesh = container.clone();
+    stale_output.replace_mesh(container.clone());
     assert!(stale_output.validate().is_err(), "{stale_output:?}");
     assert_eq!(
         stale_output.freshness_against_sources(&container, &right),
@@ -3992,7 +4000,7 @@ fn exact_boolean_public_shortcuts_handle_disjoint_operands() {
         union.is_certified_shortcut_for(ExactBooleanOperation::Union),
         "{union:?}"
     );
-    union.mesh.validate_retained_state().unwrap();
+    union.mesh().validate_retained_state().unwrap();
     union.validate_against_sources(&left, &right).unwrap();
     assert!(union.validate_against_sources(&left, &left).is_err());
     let intersection = exact_boolean_result(
@@ -4005,7 +4013,7 @@ fn exact_boolean_public_shortcuts_handle_disjoint_operands() {
     );
     assert!(!intersection.is_certified_shortcut_for(ExactBooleanOperation::Union));
 
-    assert!(intersection.mesh.triangles().is_empty());
+    assert!(intersection.mesh().triangles().is_empty());
 }
 
 #[test]
@@ -4149,8 +4157,8 @@ fn trivial_boolean_shortcuts_are_publicly_replayable() {
             ValidationPolicy::CLOSED,
             |result, operation| result.is_certified_shortcut_for(operation),
         );
-        assert!(empty_open_result.mesh.triangles().is_empty());
-        assert!(empty_open_result.mesh.facts().mesh.closed_manifold);
+        assert!(empty_open_result.mesh().triangles().is_empty());
+        assert!(empty_open_result.mesh().facts().mesh.closed_manifold);
 
         let replayed_empty_open = exact_boolean_result(
             &empty,
@@ -4158,7 +4166,7 @@ fn trivial_boolean_shortcuts_are_publicly_replayable() {
             ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
         );
         assert_eq!(replayed_empty_open.kind, empty_open_result.kind);
-        assert!(replayed_empty_open.mesh.triangles().is_empty());
+        assert!(replayed_empty_open.mesh().triangles().is_empty());
         assert!(
             replayed_empty_open.is_certified_shortcut_for(operation),
             "{operation:?}: {replayed_empty_open:?}"
@@ -4170,8 +4178,8 @@ fn trivial_boolean_shortcuts_are_publicly_replayable() {
             ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
         );
         assert!(open_empty_result.is_certified_shortcut_for(operation));
-        assert!(open_empty_result.mesh.triangles().is_empty());
-        assert!(open_empty_result.mesh.facts().mesh.closed_manifold);
+        assert!(open_empty_result.mesh().triangles().is_empty());
+        assert!(open_empty_result.mesh().facts().mesh.closed_manifold);
         let disjoint_result = exact_boolean_result(
             &solid,
             &disjoint_solid,
@@ -4268,8 +4276,8 @@ fn trivial_boolean_shortcuts_are_publicly_replayable() {
             closed_identical_result.is_certified_shortcut_for(operation),
             "{operation:?}: {closed_identical_result:?}"
         );
-        assert!(closed_identical_result.mesh.triangles().is_empty());
-        assert!(closed_identical_result.mesh.facts().mesh.closed_manifold);
+        assert!(closed_identical_result.mesh().triangles().is_empty());
+        assert!(closed_identical_result.mesh().facts().mesh.closed_manifold);
         let same_surface_result = exact_boolean_result(
             &open_identical_left,
             &open_same_surface_right,
@@ -4330,8 +4338,14 @@ fn trivial_boolean_shortcuts_are_publicly_replayable() {
             closed_same_surface_result.is_certified_shortcut_for(operation),
             "{operation:?}: {closed_same_surface_result:?}"
         );
-        assert!(closed_same_surface_result.mesh.triangles().is_empty());
-        assert!(closed_same_surface_result.mesh.facts().mesh.closed_manifold);
+        assert!(closed_same_surface_result.mesh().triangles().is_empty());
+        assert!(
+            closed_same_surface_result
+                .mesh()
+                .facts()
+                .mesh
+                .closed_manifold
+        );
         let lower_dimensional_evaluation = exact_boolean_evaluation(
             &open_identical_left,
             &open_same_surface_right,
@@ -4527,7 +4541,7 @@ fn closed_same_surface_boolean_is_publicly_replayable() {
             );
             result.validate().unwrap();
             let mut stale_output = result.clone();
-            stale_output.mesh = stale_right.clone();
+            stale_output.replace_mesh(stale_right.clone());
             assert!(stale_output.validate().is_err(), "{stale_output:?}");
             assert_eq!(
                 stale_output.freshness_against_sources(&left, right),
@@ -4885,7 +4899,7 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
         ),
     );
     projected.validate().unwrap();
-    projected.mesh.validate_retained_state().unwrap();
+    projected.mesh().validate_retained_state().unwrap();
     projected.validate_against_sources(&left, &right).unwrap();
 
     let separated_right = ExactMesh::from_i64_triangles_with_policy(
@@ -4944,8 +4958,8 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
         closed_intersection.is_certified_shortcut_for(ExactBooleanOperation::Intersection),
         "{closed_intersection:?}"
     );
-    assert!(closed_intersection.mesh.triangles().is_empty());
-    assert!(closed_intersection.mesh.facts().mesh.closed_manifold);
+    assert!(closed_intersection.mesh().triangles().is_empty());
+    assert!(closed_intersection.mesh().facts().mesh.closed_manifold);
     for operation in [
         ExactBooleanOperation::Union,
         ExactBooleanOperation::Difference,

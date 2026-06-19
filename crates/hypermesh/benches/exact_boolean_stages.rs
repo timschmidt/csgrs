@@ -95,7 +95,7 @@ fn run_case(case: &BenchCase) {
             format!(
                 "{:?};triangles={}",
                 result.kind,
-                result.mesh.triangles().len()
+                result.mesh().triangles().len()
             ),
         ),
         Err(error) => print_metadata(
