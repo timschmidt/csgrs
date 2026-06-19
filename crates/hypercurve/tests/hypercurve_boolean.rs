@@ -454,6 +454,37 @@ fn boolean_fragment_selection_emits_directed_boundary_fragments() {
             arcs: 0,
         })
     );
+    assert_eq!(
+        extracted.report().output_fragments().len(),
+        emitted.directed_len()
+    );
+    let extracted_first_report = &extracted.report().output_fragments()[0];
+    assert_eq!(extracted_first_report.key(), assembled_first_report.key());
+    assert_eq!(
+        extracted_first_report.fragment_index(),
+        assembled_first_report.fragment_index()
+    );
+    assert_eq!(
+        extracted_first_report.source_segment_index(),
+        assembled_first_report.source_segment_index()
+    );
+    assert_eq!(
+        extracted_first_report.source_segment_start_point(),
+        assembled_first_report.source_segment_start_point()
+    );
+    assert_eq!(
+        extracted_first_report.source_segment_end_point(),
+        assembled_first_report.source_segment_end_point()
+    );
+    assert_eq!(
+        extracted_first_report.source_range(),
+        assembled_first_report.source_range()
+    );
+    assert_eq!(
+        extracted_first_report.reversed(),
+        assembled_first_report.reversed()
+    );
+    assert_eq!(extracted_first_report.output_fragment_index(), 0);
     assert_eq!(extracted.report().blocker(), None);
     let loops = extracted
         .loops()
@@ -1127,6 +1158,7 @@ fn boundary_loop_extraction_rejects_open_chains() {
     assert_eq!(extracted.report().open_chain_count(), 1);
     assert_eq!(extracted.report().loop_count(), None);
     assert_eq!(extracted.report().output_fragment_kind_counts(), None);
+    assert_eq!(extracted.report().output_fragments().len(), 0);
     assert_eq!(
         extracted.report().blocker(),
         Some(UncertaintyReason::Unsupported)
