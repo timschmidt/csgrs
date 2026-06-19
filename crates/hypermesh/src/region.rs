@@ -509,6 +509,8 @@ pub struct ExactBooleanAssemblyPlan {
 
 impl ExactBooleanAssemblyPlan {
     /// Assemble exact output triangles from region triangulations.
+    #[cfg(test)]
+    #[allow(dead_code)]
     pub fn from_region_triangulations(
         triangulations: &[FaceRegionTriangulation],
         selection: ExactRegionSelection,
@@ -534,7 +536,7 @@ impl ExactBooleanAssemblyPlan {
     /// predicates and flips individual emitted triangles as needed. That keeps
     /// model: representation changes are allowed only when the predicate facts
     /// needed to justify their combinatorics are retained and replayable. See
-    pub fn from_region_triangulations_with_sources(
+    pub(crate) fn from_region_triangulations_with_sources(
         triangulations: &[FaceRegionTriangulation],
         selection: ExactRegionSelection,
         left: &ExactMesh,
@@ -561,6 +563,8 @@ impl ExactBooleanAssemblyPlan {
     /// The same split-region triangulation can be reused under alternate
     /// inside/outside semantics without replaying the narrow phase. This
     /// artifact, while semantic policy stays explicit at the assembly boundary.
+    #[cfg(test)]
+    #[allow(dead_code)]
     pub fn from_region_triangulations_with_selection(
         triangulations: &[FaceRegionTriangulation],
         mut should_keep: impl FnMut(&FaceRegionTriangulation) -> bool,
@@ -582,6 +586,8 @@ impl ExactBooleanAssemblyPlan {
     /// the opposite closed mesh; this method then records that decision as
     /// kept, dropped, or source-reversed output topology. The split geometry
     /// and semantic retention policy remain separate auditable artifacts, as
+    #[cfg(test)]
+    #[allow(dead_code)]
     pub fn from_region_triangulations_with_retention(
         triangulations: &[FaceRegionTriangulation],
         mut retain: impl FnMut(&FaceRegionTriangulation) -> ExactRegionRetention,
@@ -596,6 +602,8 @@ impl ExactBooleanAssemblyPlan {
     /// decides whether a split region is kept, dropped, or reversed, and this
     /// method uses exact source-face orientation predicates to make the emitted
     /// than a convention inherited blindly from a triangulation index buffer.
+    #[cfg(test)]
+    #[allow(dead_code)]
     pub fn from_region_triangulations_with_retention_and_sources(
         triangulations: &[FaceRegionTriangulation],
         left: &ExactMesh,
@@ -616,7 +624,7 @@ impl ExactBooleanAssemblyPlan {
     /// would collapse those exact cells back into an approximation, so this
     /// entry point exposes the local triangulation triangle to the caller's
     /// winding policy. Orientation replay is still source-aware and exact, in
-    pub fn from_region_triangulations_with_triangle_retention_and_sources(
+    pub(crate) fn from_region_triangulations_with_triangle_retention_and_sources(
         triangulations: &[FaceRegionTriangulation],
         left: &ExactMesh,
         right: &ExactMesh,
@@ -719,6 +727,8 @@ impl ExactBooleanAssemblyPlan {
     /// by the selected-region pipeline: index/provenance invariants are
     /// checked before exact mesh validation consumes the output triangles.
     /// combinatorics before committing them to mesh topology.
+    #[cfg(test)]
+    #[allow(dead_code)]
     pub fn checked_to_exact_mesh(
         &self,
         policy: ValidationPolicy,
@@ -793,6 +803,8 @@ impl ExactBooleanAssemblyPlan {
     /// This keeps public provenance audits from matching on graph-internal
     /// boundary-node variants when they only need to perturb source incidence
     /// and verify replay freshness.
+    #[cfg(test)]
+    #[allow(dead_code)]
     pub fn first_original_source_vertex_mut(&mut self) -> Option<&mut usize> {
         self.vertices
             .iter_mut()
@@ -974,6 +986,7 @@ impl ExactBooleanAssemblyPlan {
     /// the selected-region policy part of the exact artifact boundary, in the
     /// consume a locally valid assembly that was relabeled from a different
     /// source pair or region-retention rule.
+    #[cfg(test)]
     pub fn validate_against_sources(
         &self,
         left: &ExactMesh,

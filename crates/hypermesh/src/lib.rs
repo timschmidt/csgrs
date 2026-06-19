@@ -65,7 +65,7 @@ pub use boolean::{
 pub use error::MeshError;
 pub use mesh::{ExactMesh, ExactMeshValidationError, Triangle};
 pub use package::ExactMeshConsumerDomain;
-pub use region::{ExactOutputTriangleOrientation, ExactRegionSelection};
+pub use region::ExactRegionSelection;
 pub use regularization::ExactRegularizationPolicy;
 pub use validation::ValidationPolicy;
 pub use workspace::ExactBooleanWorkspace;

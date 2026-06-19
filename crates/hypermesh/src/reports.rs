@@ -727,9 +727,9 @@ impl ExactBooleanResult {
         self.graph_had_unknowns = graph_had_unknowns;
     }
 
-    /// Borrow retained split-region plane classifications.
-    pub fn region_classifications(&self) -> &[FaceRegionPlaneClassification] {
-        &self.region_classifications
+    /// Return retained split-region plane classification count.
+    pub fn region_classification_count(&self) -> usize {
+        self.region_classifications.len()
     }
 
     /// Borrow retained exact projected triangulations.
@@ -737,14 +737,32 @@ impl ExactBooleanResult {
         &self.triangulations
     }
 
-    /// Borrow the retained exact output assembly plan.
-    pub fn assembly(&self) -> &ExactBooleanAssemblyPlan {
-        &self.assembly
+    /// Return retained exact projected triangulation count.
+    pub fn triangulation_count(&self) -> usize {
+        self.triangulations.len()
+    }
+
+    /// Return retained exact output assembly triangle count.
+    pub fn assembly_triangle_count(&self) -> usize {
+        self.assembly.triangles.len()
+    }
+
+    /// Return whether retained output assembly includes a reversed source triangle.
+    pub fn has_reversed_source_output_triangle(&self) -> bool {
+        self.assembly
+            .triangles
+            .iter()
+            .any(|triangle| triangle.orientation == ExactOutputTriangleOrientation::ReverseSource)
     }
 
     /// Borrow retained volumetric triangle classifications.
     pub fn volumetric_classifications(&self) -> &[ExactVolumetricRegionClassification] {
         &self.volumetric_classifications
+    }
+
+    /// Return retained volumetric triangle classification count.
+    pub fn volumetric_classification_count(&self) -> usize {
+        self.volumetric_classifications.len()
     }
 
     /// Return retained topology assembly gate evidence, when present.

@@ -1,9 +1,8 @@
 use hyperlimit::{Point3, SourceProvenance};
 use hypermesh::{
     ExactBooleanOperation, ExactBooleanRequest, ExactBooleanResult, ExactBooleanWorkspace,
-    ExactBoundaryBooleanPolicy, ExactMesh, ExactMeshConsumerDomain, ExactOutputTriangleOrientation,
-    ExactRegionSelection, ExactRegularizationPolicy, ExactReportFreshness, MeshArtifactManifest,
-    ValidationPolicy,
+    ExactBoundaryBooleanPolicy, ExactMesh, ExactMeshConsumerDomain, ExactRegionSelection,
+    ExactRegularizationPolicy, ExactReportFreshness, MeshArtifactManifest, ValidationPolicy,
 };
 use hyperreal::Real;
 
@@ -1599,8 +1598,8 @@ fn exact_open_surface_arrangement_is_publicly_replayable() {
             ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
         );
         evaluation.validate().unwrap();
-        assert!(!result.region_classifications().is_empty());
-        assert!(!result.triangulations().is_empty());
+        assert!(result.region_classification_count() > 0);
+        assert!(result.triangulation_count() > 0);
         if matches!(operation, ExactBooleanOperation::Intersection) {
             assert!(result.mesh().triangles().is_empty());
         } else {
@@ -1764,9 +1763,9 @@ fn exact_selected_region_boolean_is_publicly_replayable() {
         result.freshness_against_sources(&left, &separated_right),
         ExactReportFreshness::SourceReplayMismatch
     );
-    assert!(!result.region_classifications().is_empty());
-    assert!(!result.triangulations().is_empty());
-    assert!(!result.assembly().triangles.is_empty());
+    assert!(result.region_classification_count() > 0);
+    assert!(result.triangulation_count() > 0);
+    assert!(result.assembly_triangle_count() > 0);
     assert!(!result.mesh().triangles().is_empty());
     assert_eq!(
         result.mesh().validation_policy(),
@@ -2544,10 +2543,10 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
         .expect("certified arrangement evaluation should retain union result");
 
     if result.is_arrangement_cell_complex_materialized_for(ExactBooleanOperation::Union) {
-        assert!(!result.region_classifications().is_empty());
-        assert!(!result.triangulations().is_empty());
-        assert!(!result.volumetric_classifications().is_empty());
-        assert!(!result.assembly().triangles.is_empty());
+        assert!(result.region_classification_count() > 0);
+        assert!(result.triangulation_count() > 0);
+        assert!(result.volumetric_classification_count() > 0);
+        assert!(result.assembly_triangle_count() > 0);
     } else {
         assert!(
             result.is_arrangement_cell_complex_shortcut_for(ExactBooleanOperation::Union),
@@ -2567,10 +2566,10 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
         "{evaluation:?}"
     );
     if result.is_arrangement_cell_complex_materialized_for(ExactBooleanOperation::Union) {
-        assert!(!result.region_classifications().is_empty());
-        assert!(!result.triangulations().is_empty());
-        assert!(!result.volumetric_classifications().is_empty());
-        assert!(!result.assembly().triangles.is_empty());
+        assert!(result.region_classification_count() > 0);
+        assert!(result.triangulation_count() > 0);
+        assert!(result.volumetric_classification_count() > 0);
+        assert!(result.assembly_triangle_count() > 0);
     } else {
         assert!(
             result.is_arrangement_cell_complex_shortcut_for(ExactBooleanOperation::Union),
@@ -2599,14 +2598,9 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
         .expect("certified arrangement evaluation should retain difference result");
     difference.validate().unwrap();
     if difference.is_arrangement_cell_complex_materialized_for(ExactBooleanOperation::Difference) {
-        let Some(reversed_triangle) = difference.assembly().triangles.iter().position(|triangle| {
-            triangle.orientation == ExactOutputTriangleOrientation::ReverseSource
-        }) else {
-            panic!("volumetric difference should retain a reversed source triangle");
-        };
-        assert_eq!(
-            difference.assembly().triangles[reversed_triangle].orientation,
-            ExactOutputTriangleOrientation::ReverseSource
+        assert!(
+            difference.has_reversed_source_output_triangle(),
+            "volumetric difference should retain a reversed source triangle"
         );
     } else {
         assert!(
@@ -2738,10 +2732,10 @@ fn arrangement_cell_complex_request_materialization_is_publicly_replayable() {
         "canonical replay must reject stale source operands"
     );
     if result.is_arrangement_cell_complex_materialized_for(ExactBooleanOperation::Union) {
-        assert!(!result.region_classifications().is_empty());
-        assert!(!result.triangulations().is_empty());
-        assert!(!result.volumetric_classifications().is_empty());
-        assert!(!result.assembly().triangles.is_empty());
+        assert!(result.region_classification_count() > 0);
+        assert!(result.triangulation_count() > 0);
+        assert!(result.volumetric_classification_count() > 0);
+        assert!(result.assembly_triangle_count() > 0);
     } else {
         assert!(
             result.is_arrangement_cell_complex_shortcut_for(ExactBooleanOperation::Union),
@@ -2778,10 +2772,10 @@ fn arrangement_cell_complex_request_materialization_is_publicly_replayable() {
     if convex_intersection
         .is_arrangement_cell_complex_materialized_for(ExactBooleanOperation::Intersection)
     {
-        assert!(!convex_intersection.region_classifications().is_empty());
-        assert!(!convex_intersection.triangulations().is_empty());
-        assert!(!convex_intersection.volumetric_classifications().is_empty());
-        assert!(!convex_intersection.assembly().triangles.is_empty());
+        assert!(convex_intersection.region_classification_count() > 0);
+        assert!(convex_intersection.triangulation_count() > 0);
+        assert!(convex_intersection.volumetric_classification_count() > 0);
+        assert!(convex_intersection.assembly_triangle_count() > 0);
     } else {
         assert!(
             convex_intersection
@@ -3751,10 +3745,7 @@ fn exact_volumetric_region_reports_replay_from_boolean_result() {
             ValidationPolicy::ALLOW_BOUNDARY,
         ),
     );
-    assert!(
-        !result.volumetric_classifications().is_empty(),
-        "{result:?}"
-    );
+    assert!(result.volumetric_classification_count() > 0, "{result:?}");
     let shifted_target = tetra([10, 10, 10]);
     let (classification, triangulation) = result
         .triangulations()
