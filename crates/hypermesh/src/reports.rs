@@ -4059,14 +4059,6 @@ impl ExactBooleanPreflight {
         self.support.is_certified() && self.blocker.is_none()
     }
 
-    /// Return whether this request was certified by the arrangement/cell-complex path.
-    pub(crate) const fn is_certified_arrangement_cell_complex(&self) -> bool {
-        matches!(
-            self.support,
-            ExactBooleanSupport::CertifiedArrangementCellComplex
-        ) && self.blocker.is_none()
-    }
-
     /// Validate this preflight report against the supplied source meshes.
     ///
     /// [`validate`](Self::validate) checks internal consistency. This method
@@ -6046,12 +6038,6 @@ impl ExactWindingReadinessReport {
     /// Return whether the report reached the winding-ready handoff.
     pub(crate) const fn is_ready(&self) -> bool {
         matches!(self.status, ExactWindingReadinessStatus::Ready)
-    }
-
-    /// Return whether this report materialized through the arrangement/cell
-    /// complex path that supersedes winding.
-    pub(crate) const fn materializes_arrangement_cell_complex(&self) -> bool {
-        self.status.materializes_arrangement_cell_complex()
     }
 
     /// Validate this winding-readiness report against the source meshes.

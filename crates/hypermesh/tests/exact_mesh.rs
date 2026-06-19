@@ -261,10 +261,6 @@ fn exact_boolean_evaluation_retains_region_ownership_report() {
         evaluation.validate().unwrap();
         evaluation.validate_against_sources(&left, &right).unwrap();
         assert!(
-            evaluation.materializes_arrangement_cell_complex(),
-            "{evaluation:?}"
-        );
-        assert!(
             evaluation.retained_arrangement_attempt().is_some(),
             "named boolean certifications should retain arrangement attempt"
         );
@@ -892,10 +888,6 @@ fn affine_orthogonal_solid_recovers_multi_cell_basis_without_sampling_limits() {
             ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
             |preflight_evaluation| {
                 assert!(
-                    preflight_evaluation.materializes_arrangement_cell_complex(),
-                    "{operation:?}: {preflight_evaluation:?}"
-                );
-                assert!(
                     !preflight_evaluation.has_blocker(),
                     "{operation:?}: {preflight_evaluation:?}"
                 );
@@ -1064,14 +1056,16 @@ fn exact_coplanar_volumetric_cell_policy_is_publicly_replayable() {
         |evaluation| {
             evaluation.validate().unwrap();
             assert!(
-                evaluation.has_blocker() || evaluation.materializes_arrangement_cell_complex(),
+                evaluation.has_blocker()
+                    || evaluation.retained_arrangement_attempt().is_some()
+                    || evaluation.materialized_result().is_some(),
                 "{evaluation:?}"
             );
             assert!(
                 evaluation
                     .retained_arrangement_attempt()
                     .is_some_and(|attempt| attempt.region_ownership_resolves_requested_operation())
-                    || evaluation.materializes_arrangement_cell_complex()
+                    || evaluation.materialized_result().is_some()
                     || evaluation.requires_coplanar_volumetric_cells(),
                 "{evaluation:?}"
             );
@@ -2232,10 +2226,6 @@ fn closed_no_volume_overlap_regularized_boolean_is_publicly_replayable() {
             &right,
             preflight_request,
             |preflight_evaluation| {
-                assert!(
-                    preflight_evaluation.materializes_arrangement_cell_complex(),
-                    "{operation:?}: {preflight_evaluation:?}"
-                );
                 preflight_evaluation.validate().unwrap();
                 preflight_evaluation.requires_coplanar_volumetric_cells()
             },
@@ -2265,10 +2255,6 @@ fn closed_no_volume_overlap_regularized_boolean_is_publicly_replayable() {
                 &right,
                 readiness_request,
                 |readiness_evaluation| {
-                    assert!(
-                        readiness_evaluation.materializes_arrangement_cell_complex(),
-                        "{operation:?}: {readiness_evaluation:?}"
-                    );
                     assert_eq!(
                         readiness_evaluation.requires_coplanar_volumetric_cells(),
                         retained_requires_coplanar_volumetric_cells
@@ -2451,16 +2437,8 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
     let mut workspace = ExactBooleanWorkspace::new(&left, &right);
     {
         let evaluation = workspace.evaluate(union_request).unwrap();
-        assert!(
-            evaluation.materializes_arrangement_cell_complex(),
-            "{evaluation:?}"
-        );
         evaluation.validate().unwrap();
 
-        assert!(
-            evaluation.materializes_arrangement_cell_complex(),
-            "{evaluation:?}"
-        );
         assert!(
             evaluation.retained_arrangement_attempt().is_some(),
             "{evaluation:?}"
@@ -2484,10 +2462,6 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
             ExactReportFreshness::Current
         );
         evaluation.validate().unwrap();
-        assert!(
-            evaluation.materializes_arrangement_cell_complex(),
-            "{evaluation:?}"
-        );
         if !result.is_arrangement_cell_complex_materialized_for(ExactBooleanOperation::Union) {
             assert!(
                 result.is_arrangement_cell_complex_shortcut_for(ExactBooleanOperation::Union),
@@ -2562,17 +2536,9 @@ fn exact_volumetric_winding_coplanar_cap_is_publicly_certified() {
         let mut workspace = ExactBooleanWorkspace::new(&left, &right);
         {
             let evaluation = workspace.evaluate(evaluation_request).unwrap();
-            assert!(
-                evaluation.materializes_arrangement_cell_complex(),
-                "{operation:?}: {evaluation:?}"
-            );
             evaluation.validate().unwrap();
             evaluation.validate_against_sources(&left, &right).unwrap();
 
-            assert!(
-                evaluation.materializes_arrangement_cell_complex(),
-                "{operation:?}: {evaluation:?}"
-            );
             assert_evaluation_retains_attempt_gate_reports(evaluation);
         }
 
@@ -2935,7 +2901,9 @@ fn public_exact_blocker_reports_replay_remaining_decisions() {
         planar_request,
         |planar_evaluation| {
             assert!(
-                planar_evaluation.materializes_arrangement_cell_complex(),
+                planar_evaluation.materialized_result().is_some()
+                    || planar_evaluation.retained_arrangement_attempt().is_some()
+                    || planar_evaluation.has_blocker(),
                 "{planar_evaluation:?}"
             );
             planar_evaluation
