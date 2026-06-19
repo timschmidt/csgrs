@@ -333,11 +333,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
         }
 
         let preflight = self.preflight(request)?;
-        if preflight.support == ExactBooleanSupport::CertifiedArrangementCellComplex
-            && self
-                .validated_regularized_solid_arrangement_attempt(request)?
-                .is_none()
-        {
+        if preflight.support == ExactBooleanSupport::CertifiedArrangementCellComplex {
             self.arrangement_attempt(request, ExactRegularizationPolicy::REGULARIZED_SOLID)?;
         }
         let graph = self
