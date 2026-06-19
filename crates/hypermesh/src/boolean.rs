@@ -356,36 +356,6 @@ impl ExactArrangementBooleanAttempt {
         self.lower_dimensional_artifacts
     }
 
-    /// Return selected face-cell count.
-    pub const fn selected_faces(&self) -> usize {
-        self.selected_faces
-    }
-
-    /// Return selected volume-region count.
-    pub const fn selected_volume_regions(&self) -> usize {
-        self.selected_volume_regions
-    }
-
-    /// Return selected faces oriented by retained volume adjacency evidence.
-    pub const fn volume_oriented_selected_faces(&self) -> usize {
-        self.volume_oriented_selected_faces
-    }
-
-    /// Return selected faces oriented by source-label operation rules.
-    pub const fn label_oriented_selected_faces(&self) -> usize {
-        self.label_oriented_selected_faces
-    }
-
-    /// Return output vertex count, when the attempt built a mesh.
-    pub const fn output_vertices(&self) -> usize {
-        self.output_vertices
-    }
-
-    /// Return output triangle count, when the attempt built a mesh.
-    pub const fn output_triangles(&self) -> usize {
-        self.output_triangles
-    }
-
     /// Return volume regions owned by both operands, when ownership evidence is retained.
     pub fn shared_owned_volume_regions(&self) -> usize {
         self.region_ownership_report
