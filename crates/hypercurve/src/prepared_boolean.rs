@@ -329,7 +329,7 @@ pub(crate) fn boolean_region_between_prepared_with_report(
     let first_view = first.as_region_view();
     let second_view = second.as_region_view();
     let boundary_events = first.intersect_prepared_region(second, policy)?;
-    let (contours, pipeline_report) =
+    let (contours, boundary_contour_source_path, pipeline_report) =
         match boolean_boundary_contours_between_prepared_with_pipeline_report(
             first,
             second,
@@ -363,6 +363,7 @@ pub(crate) fn boolean_region_between_prepared_with_report(
         crate::RegionBooleanQueryPath2::Prepared,
         &boundary_events,
         contours,
+        boundary_contour_source_path,
         Some(region_boolean_prepared_cache_report(first, second)),
         pipeline_report,
         policy,
@@ -376,7 +377,13 @@ fn boolean_boundary_contours_between_prepared_with_pipeline_report(
     fill_rule: FillRule,
     boundary_events: &RegionIntersectionSet,
     policy: &CurvePolicy,
-) -> CurveResult<Classification<(Vec<Contour2>, Option<RegionBooleanPipelineReport2>)>> {
+) -> CurveResult<
+    Classification<(
+        Vec<Contour2>,
+        crate::RegionBooleanBoundaryContourSourcePath2,
+        Option<RegionBooleanPipelineReport2>,
+    )>,
+> {
     let first_view = first.as_region_view();
     let second_view = second.as_region_view();
     if crate::region_boolean::same_region_view(&first_view, &second_view) {
@@ -387,12 +394,14 @@ fn boolean_boundary_contours_between_prepared_with_pipeline_report(
                 }
                 BooleanOp::Difference | BooleanOp::Xor => Vec::new(),
             },
+            crate::RegionBooleanBoundaryContourSourcePath2::IdenticalOperandShortcut,
             None,
         )));
     }
     if first_view.is_empty() || second_view.is_empty() {
         return Ok(Classification::Decided((
             crate::region_boolean::empty_operand_boundary_contours(&first_view, &second_view, op),
+            crate::RegionBooleanBoundaryContourSourcePath2::EmptyOperandShortcut,
             None,
         )));
     }
@@ -405,6 +414,7 @@ fn boolean_boundary_contours_between_prepared_with_pipeline_report(
         Classification::Decided(Some(region)) => {
             return Ok(Classification::Decided((
                 crate::region_boolean::clone_boundary_contours(&region.as_view()),
+                crate::RegionBooleanBoundaryContourSourcePath2::CoextensiveAxisRectShortcut,
                 None,
             )));
         }
@@ -416,7 +426,11 @@ fn boolean_boundary_contours_between_prepared_with_pipeline_report(
             return match boundary_contact_boundary_contours_prepared(
                 first, second, op, fill_rule, policy, kind,
             )? {
-                Classification::Decided(contours) => Ok(Classification::Decided((contours, None))),
+                Classification::Decided(contours) => Ok(Classification::Decided((
+                    contours,
+                    crate::RegionBooleanBoundaryContourSourcePath2::BoundaryContactShortcut,
+                    None,
+                ))),
                 Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
             };
         }
@@ -427,7 +441,11 @@ fn boolean_boundary_contours_between_prepared_with_pipeline_report(
             if let Some(contours) =
                 containment_boundary_contours_prepared(first, second, op, relation)
             {
-                return Ok(Classification::Decided((contours, None)));
+                return Ok(Classification::Decided((
+                    contours,
+                    crate::RegionBooleanBoundaryContourSourcePath2::ContainmentShortcut,
+                    None,
+                )));
             }
             if relation == crate::region_boolean::BoundaryContainmentRelation::FirstContainsSecond
                 && contact == PreparedBoundaryContactKind::Overlap
@@ -436,9 +454,11 @@ fn boolean_boundary_contours_between_prepared_with_pipeline_report(
                 return match containment_difference_boundary_contours_prepared(
                     first, second, fill_rule, policy,
                 )? {
-                    Classification::Decided(contours) => {
-                        Ok(Classification::Decided((contours, None)))
-                    }
+                    Classification::Decided(contours) => Ok(Classification::Decided((
+                        contours,
+                        crate::RegionBooleanBoundaryContourSourcePath2::ContainmentDifferenceOverlapShortcut,
+                        None,
+                    ))),
                     Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
                 };
             }
@@ -448,7 +468,11 @@ fn boolean_boundary_contours_between_prepared_with_pipeline_report(
     }
     if op == BooleanOp::Xor {
         return match xor_boundary_contours_by_prepared_region(first, second, fill_rule, policy)? {
-            Classification::Decided(contours) => Ok(Classification::Decided((contours, None))),
+            Classification::Decided(contours) => Ok(Classification::Decided((
+                contours,
+                crate::RegionBooleanBoundaryContourSourcePath2::XorDifferenceUnionShortcut,
+                None,
+            ))),
             Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
         };
     }
@@ -541,7 +565,11 @@ fn boolean_boundary_contours_between_prepared_with_pipeline_report(
         loop_result.report().clone(),
         contour_result.report().clone(),
     );
-    Ok(Classification::Decided((contours, Some(pipeline_report))))
+    Ok(Classification::Decided((
+        contours,
+        crate::RegionBooleanBoundaryContourSourcePath2::ArrangementPipeline,
+        Some(pipeline_report),
+    )))
 }
 
 fn region_boolean_prepared_cache_report(

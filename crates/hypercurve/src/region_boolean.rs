@@ -37,6 +37,7 @@ pub struct RegionBooleanReport2 {
     boundary_first_contour_count: Option<usize>,
     boundary_second_contour_count: Option<usize>,
     boundary_predicate_path: Option<RegionBooleanBoundaryPredicatePath2>,
+    boundary_contour_source_path: Option<RegionBooleanBoundaryContourSourcePath2>,
     boundary_candidate_pair_count: usize,
     boundary_skipped_aabb_pair_count: usize,
     boundary_tested_pair_count: usize,
@@ -86,6 +87,29 @@ pub enum RegionBooleanQueryPath2 {
 pub enum RegionBooleanBoundaryPredicatePath2 {
     /// Region contour pairs were filtered by AABB before exact contour intersection predicates.
     AabbFilteredContourIntersection,
+}
+
+/// Provenance path used to produce checked boolean boundary contours.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum RegionBooleanBoundaryContourSourcePath2 {
+    /// Output contours came from an identical-operand set identity.
+    IdenticalOperandShortcut,
+    /// Output contours came from an empty-operand set identity.
+    EmptyOperandShortcut,
+    /// Output contours came from a certified coextensive axis-aligned rectangle shortcut.
+    CoextensiveAxisRectShortcut,
+    /// Output contours came from a boundary-only contact shortcut.
+    BoundaryContactShortcut,
+    /// Output contours came from a certified containment shortcut.
+    ContainmentShortcut,
+    /// Output contours came from a containment-with-overlap difference shortcut.
+    ContainmentDifferenceOverlapShortcut,
+    /// Output contours came from a shared-boundary union shortcut.
+    BoundaryOverlapUnionShortcut,
+    /// Output contours came from difference/union composition for XOR.
+    XorDifferenceUnionShortcut,
+    /// Output contours came from the generic split/classify/chain/loop pipeline.
+    ArrangementPipeline,
 }
 
 /// Furthest exact materialization stage reached by a region boolean report.
@@ -744,6 +768,13 @@ impl RegionBooleanReport2 {
         self.boundary_predicate_path
     }
 
+    /// Returns the exact path that produced checked boolean boundary contours.
+    pub const fn boundary_contour_source_path(
+        &self,
+    ) -> Option<RegionBooleanBoundaryContourSourcePath2> {
+        self.boundary_contour_source_path
+    }
+
     /// Returns region contour-pair candidates considered before boolean splitting.
     pub const fn boundary_candidate_pair_count(&self) -> usize {
         self.boundary_candidate_pair_count
@@ -1317,28 +1348,29 @@ pub(crate) fn boolean_region_between_with_report(
     policy: &CurvePolicy,
 ) -> CurveResult<RegionBooleanResult2> {
     let boundary_events = first.intersect_region(second, policy)?;
-    let (contours, pipeline_report) = match boolean_boundary_contours_between_with_pipeline_report(
-        first,
-        second,
-        op,
-        fill_rule,
-        &boundary_events,
-        policy,
-    )? {
-        Classification::Decided(result) => result,
-        Classification::Uncertain(reason) => {
-            return Ok(blocked_region_boolean_result(
-                first,
-                second,
-                op,
-                fill_rule,
-                RegionBooleanQueryPath2::Direct,
-                &boundary_events,
-                retained_status_for_boolean_blocker(reason),
-                reason,
-            ));
-        }
-    };
+    let (contours, boundary_contour_source_path, pipeline_report) =
+        match boolean_boundary_contours_between_with_pipeline_report(
+            first,
+            second,
+            op,
+            fill_rule,
+            &boundary_events,
+            policy,
+        )? {
+            Classification::Decided(result) => result,
+            Classification::Uncertain(reason) => {
+                return Ok(blocked_region_boolean_result(
+                    first,
+                    second,
+                    op,
+                    fill_rule,
+                    RegionBooleanQueryPath2::Direct,
+                    &boundary_events,
+                    retained_status_for_boolean_blocker(reason),
+                    reason,
+                ));
+            }
+        };
     region_boolean_result_from_boundary_contours_with_pipeline_report(
         first,
         second,
@@ -1347,6 +1379,7 @@ pub(crate) fn boolean_region_between_with_report(
         RegionBooleanQueryPath2::Direct,
         &boundary_events,
         contours,
+        boundary_contour_source_path,
         pipeline_report,
         policy,
     )
@@ -1359,19 +1392,27 @@ fn boolean_boundary_contours_between_with_pipeline_report(
     fill_rule: FillRule,
     boundary_events: &RegionIntersectionSet,
     policy: &CurvePolicy,
-) -> CurveResult<Classification<(Vec<Contour2>, Option<RegionBooleanPipelineReport2>)>> {
+) -> CurveResult<
+    Classification<(
+        Vec<Contour2>,
+        RegionBooleanBoundaryContourSourcePath2,
+        Option<RegionBooleanPipelineReport2>,
+    )>,
+> {
     if same_region_view(first, second) {
         return Ok(Classification::Decided((
             match op {
                 BooleanOp::Union | BooleanOp::Intersection => clone_boundary_contours(first),
                 BooleanOp::Difference | BooleanOp::Xor => Vec::new(),
             },
+            RegionBooleanBoundaryContourSourcePath2::IdenticalOperandShortcut,
             None,
         )));
     }
     if first.is_empty() || second.is_empty() {
         return Ok(Classification::Decided((
             empty_operand_boundary_contours(first, second, op),
+            RegionBooleanBoundaryContourSourcePath2::EmptyOperandShortcut,
             None,
         )));
     }
@@ -1379,6 +1420,7 @@ fn boolean_boundary_contours_between_with_pipeline_report(
         Classification::Decided(Some(region)) => {
             return Ok(Classification::Decided((
                 clone_boundary_contours(&region.as_view()),
+                RegionBooleanBoundaryContourSourcePath2::CoextensiveAxisRectShortcut,
                 None,
             )));
         }
@@ -1392,7 +1434,11 @@ fn boolean_boundary_contours_between_with_pipeline_report(
             return match boundary_contact_boundary_contours(
                 first, second, op, fill_rule, policy, kind,
             )? {
-                Classification::Decided(contours) => Ok(Classification::Decided((contours, None))),
+                Classification::Decided(contours) => Ok(Classification::Decided((
+                    contours,
+                    RegionBooleanBoundaryContourSourcePath2::BoundaryContactShortcut,
+                    None,
+                ))),
                 Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
             };
         }
@@ -1401,7 +1447,11 @@ fn boolean_boundary_contours_between_with_pipeline_report(
             contact,
         })) => {
             if let Some(contours) = containment_boundary_contours(first, second, op, relation) {
-                return Ok(Classification::Decided((contours, None)));
+                return Ok(Classification::Decided((
+                    contours,
+                    RegionBooleanBoundaryContourSourcePath2::ContainmentShortcut,
+                    None,
+                )));
             }
             if relation == BoundaryContainmentRelation::FirstContainsSecond
                 && contact == BoundaryContactKind::Overlap
@@ -1410,9 +1460,11 @@ fn boolean_boundary_contours_between_with_pipeline_report(
                 return match containment_difference_boundary_contours(
                     first, second, fill_rule, policy,
                 )? {
-                    Classification::Decided(contours) => {
-                        Ok(Classification::Decided((contours, None)))
-                    }
+                    Classification::Decided(contours) => Ok(Classification::Decided((
+                        contours,
+                        RegionBooleanBoundaryContourSourcePath2::ContainmentDifferenceOverlapShortcut,
+                        None,
+                    ))),
                     Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
                 };
             }
@@ -1421,9 +1473,11 @@ fn boolean_boundary_contours_between_with_pipeline_report(
             if op == BooleanOp::Union && region_boundary_has_overlap(first, second, policy)? {
                 return match boundary_overlap_union_contours(first, second, op, fill_rule, policy)?
                 {
-                    Classification::Decided(contours) => {
-                        Ok(Classification::Decided((contours, None)))
-                    }
+                    Classification::Decided(contours) => Ok(Classification::Decided((
+                        contours,
+                        RegionBooleanBoundaryContourSourcePath2::BoundaryOverlapUnionShortcut,
+                        None,
+                    ))),
                     Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
                 };
             }
@@ -1432,7 +1486,11 @@ fn boolean_boundary_contours_between_with_pipeline_report(
     }
     if op == BooleanOp::Xor {
         return match xor_boundary_contours_by_region(first, second, fill_rule, policy)? {
-            Classification::Decided(contours) => Ok(Classification::Decided((contours, None))),
+            Classification::Decided(contours) => Ok(Classification::Decided((
+                contours,
+                RegionBooleanBoundaryContourSourcePath2::XorDifferenceUnionShortcut,
+                None,
+            ))),
             Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
         };
     }
@@ -1517,7 +1575,11 @@ fn boolean_boundary_contours_between_with_pipeline_report(
         loop_result.report().clone(),
         contour_result.report().clone(),
     );
-    Ok(Classification::Decided((contours, Some(pipeline_report))))
+    Ok(Classification::Decided((
+        contours,
+        RegionBooleanBoundaryContourSourcePath2::ArrangementPipeline,
+        Some(pipeline_report),
+    )))
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -1529,6 +1591,7 @@ pub(crate) fn region_boolean_result_from_boundary_contours_with_pipeline_report(
     query_path: RegionBooleanQueryPath2,
     boundary_events: &RegionIntersectionSet,
     contours: Vec<Contour2>,
+    boundary_contour_source_path: RegionBooleanBoundaryContourSourcePath2,
     pipeline_report: Option<RegionBooleanPipelineReport2>,
     policy: &CurvePolicy,
 ) -> CurveResult<RegionBooleanResult2> {
@@ -1540,6 +1603,7 @@ pub(crate) fn region_boolean_result_from_boundary_contours_with_pipeline_report(
         query_path,
         boundary_events,
         contours,
+        boundary_contour_source_path,
         None,
         pipeline_report,
         policy,
@@ -1555,6 +1619,7 @@ pub(crate) fn region_boolean_result_from_boundary_contours_with_prepared_cache_a
     query_path: RegionBooleanQueryPath2,
     boundary_events: &RegionIntersectionSet,
     contours: Vec<Contour2>,
+    boundary_contour_source_path: RegionBooleanBoundaryContourSourcePath2,
     prepared_cache_report: Option<RegionBooleanPreparedCacheReport2>,
     pipeline_report: Option<RegionBooleanPipelineReport2>,
     policy: &CurvePolicy,
@@ -1599,6 +1664,7 @@ pub(crate) fn region_boolean_result_from_boundary_contours_with_prepared_cache_a
             boundary_predicate_path: Some(
                 RegionBooleanBoundaryPredicatePath2::AabbFilteredContourIntersection,
             ),
+            boundary_contour_source_path: Some(boundary_contour_source_path),
             boundary_candidate_pair_count: boundary_events.candidate_pair_count(),
             boundary_skipped_aabb_pair_count: boundary_events.skipped_aabb_pair_count(),
             boundary_tested_pair_count: boundary_events.tested_pair_count(),
@@ -1681,6 +1747,7 @@ pub(crate) fn blocked_region_boolean_result_with_prepared_cache(
             boundary_predicate_path: Some(
                 RegionBooleanBoundaryPredicatePath2::AabbFilteredContourIntersection,
             ),
+            boundary_contour_source_path: None,
             boundary_candidate_pair_count: boundary_events.candidate_pair_count(),
             boundary_skipped_aabb_pair_count: boundary_events.skipped_aabb_pair_count(),
             boundary_tested_pair_count: boundary_events.tested_pair_count(),
@@ -2655,6 +2722,7 @@ mod tests {
             RegionBooleanStage2::BoundaryExtraction
         );
         assert_eq!(result.report().boundary_contour_count(), None);
+        assert_eq!(result.report().boundary_contour_source_path(), None);
         assert_eq!(result.report().result_boundary_segment_count(), None);
         assert_eq!(
             result.report().blocker(),
@@ -2709,6 +2777,7 @@ mod tests {
             RegionBooleanQueryPath2::Direct,
             &boundary_events,
             crossing_contours,
+            RegionBooleanBoundaryContourSourcePath2::ArrangementPipeline,
             None,
             &CurvePolicy::certified(),
         )

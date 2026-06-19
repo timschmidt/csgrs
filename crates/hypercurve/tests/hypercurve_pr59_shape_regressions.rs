@@ -10,9 +10,10 @@ use hypercurve::{
     BooleanBoundaryChainAssemblyStage2, BooleanBoundaryContourTransferStage2,
     BooleanBoundaryFragmentEmissionStage2, BooleanBoundaryLoopExtractionStage2, BooleanOp,
     BulgeVertex2, Classification, Contour2, CurvePolicy, FillRule, Point2, Real, Region2,
-    RegionBooleanBoundaryPredicatePath2, RegionBooleanQueryPath2, RegionBooleanStage2,
-    RegionFragmentBuildPredicatePath2, RegionFragmentBuildStage2, RegionPointLocation,
-    RegionPreparedCacheFreshness2, SegmentKindCounts,
+    RegionBooleanBoundaryContourSourcePath2, RegionBooleanBoundaryPredicatePath2,
+    RegionBooleanQueryPath2, RegionBooleanStage2, RegionFragmentBuildPredicatePath2,
+    RegionFragmentBuildStage2, RegionPointLocation, RegionPreparedCacheFreshness2,
+    SegmentKindCounts,
 };
 
 type HPoint = Point2;
@@ -142,6 +143,10 @@ fn boolean_region_report_retains_boundary_role_assignment() {
     assert_eq!(
         report.boundary_predicate_path(),
         Some(RegionBooleanBoundaryPredicatePath2::AabbFilteredContourIntersection)
+    );
+    assert_eq!(
+        report.boundary_contour_source_path(),
+        Some(RegionBooleanBoundaryContourSourcePath2::ArrangementPipeline)
     );
     assert_eq!(report.boundary_candidate_pair_count(), 1);
     assert_eq!(report.boundary_skipped_aabb_pair_count(), 0);
@@ -370,6 +375,26 @@ fn boolean_region_report_retains_boundary_role_assignment() {
 }
 
 #[test]
+fn boolean_region_report_names_identical_operand_shortcut() {
+    let first = region(&[(0.0, 0.0, 4.0, 4.0)], &[]);
+
+    let built = first
+        .boolean_region_with_report(&first, BooleanOp::Union, FillRule::NonZero, &policy())
+        .unwrap();
+    let report = built.report();
+
+    assert!(report.status().is_native_exact());
+    assert_eq!(
+        report.boundary_contour_source_path(),
+        Some(RegionBooleanBoundaryContourSourcePath2::IdenticalOperandShortcut)
+    );
+    assert_eq!(report.pipeline_report(), None);
+    assert!(report.boundary_build_report().is_some());
+    assert_eq!(report.result_material_contour_count(), Some(1));
+    assert_eq!(report.blocker(), None);
+}
+
+#[test]
 fn prepared_boolean_region_report_matches_plain_materialization() {
     let first = region(&[(0.0, 0.0, 4.0, 4.0)], &[(1.0, 1.0, 2.0, 2.0)]);
     let second = region(&[(3.0, -1.0, 6.0, 3.0)], &[]);
@@ -412,6 +437,14 @@ fn prepared_boolean_region_report_matches_plain_materialization() {
     assert_eq!(
         built.report().boundary_predicate_path(),
         Some(RegionBooleanBoundaryPredicatePath2::AabbFilteredContourIntersection)
+    );
+    assert_eq!(
+        built.report().boundary_contour_source_path(),
+        Some(RegionBooleanBoundaryContourSourcePath2::ArrangementPipeline)
+    );
+    assert_eq!(
+        plain.report().boundary_contour_source_path(),
+        Some(RegionBooleanBoundaryContourSourcePath2::ArrangementPipeline)
     );
     assert_eq!(built.report().boundary_contour_count(), Some(1));
     assert_eq!(built.report().result_material_contour_count(), Some(1));
