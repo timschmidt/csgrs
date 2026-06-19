@@ -2818,20 +2818,8 @@ fn materialize_certified_arrangement_cell_complex_support_with_arrangement(
     )? {
         return Ok(Some(result));
     }
-    if let Some(result) = request_replayable_result(
-        boolean_arrangement_orthogonal_solid_cell_recovery(left, right, operation, validation)?,
-        left,
-        right,
-        ExactBooleanRequest::with_boundary_policy(
-            operation,
-            validation,
-            ExactBoundaryBooleanPolicy::Reject,
-        ),
-    ) {
-        return Ok(Some(result));
-    }
     Ok(request_replayable_result(
-        boolean_arrangement_affine_orthogonal_solid_recovery(left, right, operation, validation)?,
+        boolean_arrangement_cell_complex_recovery(left, right, operation, validation)?,
         left,
         right,
         ExactBooleanRequest::with_boundary_policy(
@@ -4820,14 +4808,9 @@ fn materialize_boolean_exact_request_with_graph(
             materialize_boolean_exact_request_from_ready_graph(&graph, left, right, request)
         }
         Err(error) => {
-            if let Some(result) = boolean_arrangement_orthogonal_solid_cell_recovery(
-                left, right, operation, validation,
-            )? {
-                return Ok(result);
-            }
-            if let Some(result) = boolean_arrangement_affine_orthogonal_solid_recovery(
-                left, right, operation, validation,
-            )? {
+            if let Some(result) =
+                boolean_arrangement_cell_complex_recovery(left, right, operation, validation)?
+            {
                 return Ok(result);
             }
             if let Some(result) =
@@ -5133,21 +5116,13 @@ pub(crate) fn arrangement_cell_complex_shortcut_attempt(
     {
         return Ok(None);
     }
-    let result = if let Some(result) = boolean_arrangement_orthogonal_solid_cell_recovery(
+    let Some(result) = boolean_arrangement_cell_complex_recovery(
         left,
         right,
         request.operation,
         request.validation,
-    )? {
-        result
-    } else if let Some(result) = boolean_arrangement_affine_orthogonal_solid_recovery(
-        left,
-        right,
-        request.operation,
-        request.validation,
-    )? {
-        result
-    } else {
+    )?
+    else {
         return Ok(None);
     };
     let mut attempt = not_attempted_arrangement_attempt_for_request(request, policy);
@@ -6611,18 +6586,8 @@ fn arrangement_cell_complex_recovery_outcome_if_available(
     )? {
         return Ok(Some(outcome));
     }
-    if let Some(result) =
-        boolean_arrangement_orthogonal_solid_cell_recovery(left, right, operation, validation)?
-    {
-        return Ok(Some(materialized_arrangement_attempt_outcome(
-            attempt,
-            result,
-            true,
-            Some(ExactBooleanShortcutKind::ArrangementCellComplex),
-        )));
-    }
     let Some(result) =
-        boolean_arrangement_affine_orthogonal_solid_recovery(left, right, operation, validation)?
+        boolean_arrangement_cell_complex_recovery(left, right, operation, validation)?
     else {
         return Ok(None);
     };
@@ -8770,6 +8735,20 @@ const fn axis_aligned_orthogonal_solid_operation(
         ExactBooleanOperation::Difference => Some(AxisAlignedOrthogonalSolidOperation::Difference),
         ExactBooleanOperation::SelectedRegions(_) => None,
     }
+}
+
+fn boolean_arrangement_cell_complex_recovery(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+) -> Result<Option<ExactBooleanResult>, MeshError> {
+    if let Some(result) =
+        boolean_arrangement_orthogonal_solid_cell_recovery(left, right, operation, validation)?
+    {
+        return Ok(Some(result));
+    }
+    boolean_arrangement_affine_orthogonal_solid_recovery(left, right, operation, validation)
 }
 
 fn boolean_arrangement_orthogonal_solid_cell_recovery(
