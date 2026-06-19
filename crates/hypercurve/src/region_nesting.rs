@@ -457,6 +457,36 @@ pub struct ExactCurveArrangementOutputSegmentKindBucketCache2 {
     buckets: Vec<ExactCurveArrangementOutputSegmentKindBucket2>,
 }
 
+/// Output segment reference retained in a topology-status bucket.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ExactCurveArrangementOutputSegmentStatusRef2 {
+    source_report_index: usize,
+    output_ring_index: usize,
+    output_segment_index: usize,
+}
+
+/// Output segment bucket grouped by retained topology status.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ExactCurveArrangementOutputSegmentStatusBucket2 {
+    status: RetainedTopologyStatus,
+    segment_refs: Vec<ExactCurveArrangementOutputSegmentStatusRef2>,
+}
+
+/// Output segment topology-status buckets retained after ring assembly.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ExactCurveArrangementOutputSegmentStatusBucketCache2 {
+    bucket_count: usize,
+    output_segment_ref_count: usize,
+    native_exact_ref_count: usize,
+    certified_approximation_ref_count: usize,
+    display_or_export_ref_count: usize,
+    imported_lossy_ref_count: usize,
+    unsupported_ref_count: usize,
+    unresolved_ref_count: usize,
+    max_bucket_size: usize,
+    buckets: Vec<ExactCurveArrangementOutputSegmentStatusBucket2>,
+}
+
 /// Output role assignment evidence retained for one boundary contour.
 #[derive(Clone, Debug, PartialEq)]
 pub struct ExactCurveArrangementOutputRoleAssignment2 {
@@ -549,6 +579,7 @@ pub struct ExactCurveArrangementRingAssemblyCache2 {
     arranged_fragment_cache: ExactCurveArrangementArrangedFragmentCache2,
     output_ring_bucket_cache: ExactCurveArrangementOutputRingBucketCache2,
     output_segment_kind_bucket_cache: ExactCurveArrangementOutputSegmentKindBucketCache2,
+    output_segment_status_bucket_cache: ExactCurveArrangementOutputSegmentStatusBucketCache2,
 }
 
 /// Retained final output evidence cached by an evaluated arrangement workspace.
@@ -3268,6 +3299,166 @@ impl ExactCurveArrangementOutputSegmentKindBucketCache2 {
     }
 }
 
+impl ExactCurveArrangementOutputSegmentStatusRef2 {
+    /// Returns the retained ring source report index for this output segment.
+    pub const fn source_report_index(&self) -> usize {
+        self.source_report_index
+    }
+
+    /// Returns the output ring index.
+    pub const fn output_ring_index(&self) -> usize {
+        self.output_ring_index
+    }
+
+    /// Returns the output segment index inside its ring.
+    pub const fn output_segment_index(&self) -> usize {
+        self.output_segment_index
+    }
+}
+
+impl ExactCurveArrangementOutputSegmentStatusBucket2 {
+    /// Returns the retained topology status represented by this bucket.
+    pub const fn status(&self) -> RetainedTopologyStatus {
+        self.status
+    }
+
+    /// Returns output segment references with this retained topology status.
+    pub fn segment_refs(&self) -> &[ExactCurveArrangementOutputSegmentStatusRef2] {
+        &self.segment_refs
+    }
+}
+
+impl ExactCurveArrangementOutputSegmentStatusBucketCache2 {
+    fn from_source_reports(source_reports: &[RegionLineSegmentRingSourceReport2]) -> Self {
+        let mut native_exact_refs = Vec::new();
+        let mut certified_approximation_refs = Vec::new();
+        let mut display_or_export_refs = Vec::new();
+        let mut imported_lossy_refs = Vec::new();
+        let mut unsupported_refs = Vec::new();
+        let mut unresolved_refs = Vec::new();
+
+        for (source_report_index, source_report) in source_reports.iter().enumerate() {
+            let segment_ref = ExactCurveArrangementOutputSegmentStatusRef2 {
+                source_report_index,
+                output_ring_index: source_report.output_ring_index(),
+                output_segment_index: source_report.output_segment_index(),
+            };
+            match source_report.status() {
+                RetainedTopologyStatus::NativeExact => native_exact_refs.push(segment_ref),
+                RetainedTopologyStatus::CertifiedApproximation => {
+                    certified_approximation_refs.push(segment_ref)
+                }
+                RetainedTopologyStatus::DisplayOrExport => display_or_export_refs.push(segment_ref),
+                RetainedTopologyStatus::ImportedLossy => imported_lossy_refs.push(segment_ref),
+                RetainedTopologyStatus::Unsupported => unsupported_refs.push(segment_ref),
+                RetainedTopologyStatus::Unresolved => unresolved_refs.push(segment_ref),
+            }
+        }
+
+        let native_exact_ref_count = native_exact_refs.len();
+        let certified_approximation_ref_count = certified_approximation_refs.len();
+        let display_or_export_ref_count = display_or_export_refs.len();
+        let imported_lossy_ref_count = imported_lossy_refs.len();
+        let unsupported_ref_count = unsupported_refs.len();
+        let unresolved_ref_count = unresolved_refs.len();
+        let buckets = vec![
+            ExactCurveArrangementOutputSegmentStatusBucket2 {
+                status: RetainedTopologyStatus::NativeExact,
+                segment_refs: native_exact_refs,
+            },
+            ExactCurveArrangementOutputSegmentStatusBucket2 {
+                status: RetainedTopologyStatus::CertifiedApproximation,
+                segment_refs: certified_approximation_refs,
+            },
+            ExactCurveArrangementOutputSegmentStatusBucket2 {
+                status: RetainedTopologyStatus::DisplayOrExport,
+                segment_refs: display_or_export_refs,
+            },
+            ExactCurveArrangementOutputSegmentStatusBucket2 {
+                status: RetainedTopologyStatus::ImportedLossy,
+                segment_refs: imported_lossy_refs,
+            },
+            ExactCurveArrangementOutputSegmentStatusBucket2 {
+                status: RetainedTopologyStatus::Unsupported,
+                segment_refs: unsupported_refs,
+            },
+            ExactCurveArrangementOutputSegmentStatusBucket2 {
+                status: RetainedTopologyStatus::Unresolved,
+                segment_refs: unresolved_refs,
+            },
+        ];
+        let output_segment_ref_count = source_reports.len();
+        let max_bucket_size = buckets
+            .iter()
+            .map(|bucket| bucket.segment_refs.len())
+            .max()
+            .unwrap_or(0);
+
+        Self {
+            bucket_count: buckets.len(),
+            output_segment_ref_count,
+            native_exact_ref_count,
+            certified_approximation_ref_count,
+            display_or_export_ref_count,
+            imported_lossy_ref_count,
+            unsupported_ref_count,
+            unresolved_ref_count,
+            max_bucket_size,
+            buckets,
+        }
+    }
+
+    /// Returns the number of retained topology-status buckets.
+    pub const fn bucket_count(&self) -> usize {
+        self.bucket_count
+    }
+
+    /// Returns the number of retained output segment references.
+    pub const fn output_segment_ref_count(&self) -> usize {
+        self.output_segment_ref_count
+    }
+
+    /// Returns the number of native-exact output segment references.
+    pub const fn native_exact_ref_count(&self) -> usize {
+        self.native_exact_ref_count
+    }
+
+    /// Returns the number of certified-approximation output segment references.
+    pub const fn certified_approximation_ref_count(&self) -> usize {
+        self.certified_approximation_ref_count
+    }
+
+    /// Returns the number of display/export-only output segment references.
+    pub const fn display_or_export_ref_count(&self) -> usize {
+        self.display_or_export_ref_count
+    }
+
+    /// Returns the number of lossy-import output segment references.
+    pub const fn imported_lossy_ref_count(&self) -> usize {
+        self.imported_lossy_ref_count
+    }
+
+    /// Returns the number of unsupported output segment references.
+    pub const fn unsupported_ref_count(&self) -> usize {
+        self.unsupported_ref_count
+    }
+
+    /// Returns the number of unresolved output segment references.
+    pub const fn unresolved_ref_count(&self) -> usize {
+        self.unresolved_ref_count
+    }
+
+    /// Returns the largest topology-status bucket size.
+    pub const fn max_bucket_size(&self) -> usize {
+        self.max_bucket_size
+    }
+
+    /// Returns output segment status buckets in stable status order.
+    pub fn buckets(&self) -> &[ExactCurveArrangementOutputSegmentStatusBucket2] {
+        &self.buckets
+    }
+}
+
 impl ExactCurveArrangementOutputRoleAssignment2 {
     /// Returns the retained boundary role report index.
     pub const fn role_report_index(&self) -> usize {
@@ -3668,6 +3859,10 @@ impl ExactCurveArrangementRingAssemblyCache2 {
                 ExactCurveArrangementOutputSegmentKindBucketCache2::from_source_reports(
                     &report.source_reports,
                 ),
+            output_segment_status_bucket_cache:
+                ExactCurveArrangementOutputSegmentStatusBucketCache2::from_source_reports(
+                    &report.source_reports,
+                ),
         })
     }
 
@@ -3741,6 +3936,13 @@ impl ExactCurveArrangementRingAssemblyCache2 {
         &self,
     ) -> &ExactCurveArrangementOutputSegmentKindBucketCache2 {
         &self.output_segment_kind_bucket_cache
+    }
+
+    /// Returns retained output segment buckets grouped by topology status.
+    pub const fn output_segment_status_bucket_cache(
+        &self,
+    ) -> &ExactCurveArrangementOutputSegmentStatusBucketCache2 {
+        &self.output_segment_status_bucket_cache
     }
 }
 
