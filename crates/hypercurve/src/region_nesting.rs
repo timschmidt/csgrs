@@ -6079,6 +6079,130 @@ impl ExactCurveArrangementResult2 {
         self.workspace().split_cache()
     }
 
+    /// Returns the exact predicate family used by retained split evaluation.
+    pub const fn split_predicate_path(&self) -> Option<RegionLineSegmentSplitPredicatePath2> {
+        match self.split_cache() {
+            Some(split_cache) => split_cache.predicate_path(),
+            None => None,
+        }
+    }
+
+    /// Returns source segment pairs considered by retained split evaluation.
+    pub const fn split_candidate_pair_count(&self) -> Option<usize> {
+        match self.split_cache() {
+            Some(split_cache) => Some(split_cache.candidate_pair_count()),
+            None => None,
+        }
+    }
+
+    /// Returns source segment pairs skipped by certified AABB disjointness.
+    pub const fn split_skipped_aabb_pair_count(&self) -> Option<usize> {
+        match self.split_cache() {
+            Some(split_cache) => Some(split_cache.skipped_aabb_pair_count()),
+            None => None,
+        }
+    }
+
+    /// Returns source segment pairs tested by exact split predicates.
+    pub const fn split_tested_pair_count(&self) -> Option<usize> {
+        match self.split_cache() {
+            Some(split_cache) => Some(split_cache.tested_pair_count()),
+            None => None,
+        }
+    }
+
+    /// Returns exact point-intersection event count found during splitting.
+    pub const fn split_intersection_event_count(&self) -> Option<usize> {
+        match self.split_cache() {
+            Some(split_cache) => Some(split_cache.intersection_event_count()),
+            None => None,
+        }
+    }
+
+    /// Returns source-pair relations classified as point intersections.
+    pub const fn split_point_relation_count(&self) -> Option<usize> {
+        match self.split_cache() {
+            Some(split_cache) => Some(split_cache.point_relation_count()),
+            None => None,
+        }
+    }
+
+    /// Returns source-pair relations classified as overlaps.
+    pub const fn split_overlap_relation_count(&self) -> Option<usize> {
+        match self.split_cache() {
+            Some(split_cache) => Some(split_cache.overlap_relation_count()),
+            None => None,
+        }
+    }
+
+    /// Returns source-pair relations that remained uncertain.
+    pub const fn split_uncertain_relation_count(&self) -> Option<usize> {
+        match self.split_cache() {
+            Some(split_cache) => Some(split_cache.uncertain_relation_count()),
+            None => None,
+        }
+    }
+
+    /// Returns exact intersection points retained by split evaluation.
+    pub fn split_intersection_points(&self) -> Option<&[Point2]> {
+        self.split_cache()
+            .map(ExactCurveArrangementSplitCache2::intersection_points)
+    }
+
+    /// Returns exact per-event source and parameter evidence retained by split evaluation.
+    pub fn split_intersection_reports(
+        &self,
+    ) -> Option<&[RegionLineSegmentSplitIntersectionReport2]> {
+        self.split_cache()
+            .map(ExactCurveArrangementSplitCache2::intersection_reports)
+    }
+
+    /// Returns retained split-stage relation buckets.
+    pub const fn split_relation_bucket_cache(
+        &self,
+    ) -> Option<&ExactCurveArrangementSplitRelationBucketCache2> {
+        match self.split_cache() {
+            Some(split_cache) => Some(split_cache.relation_bucket_cache()),
+            None => None,
+        }
+    }
+
+    /// Returns exact split-intersection point buckets.
+    pub const fn split_intersection_bucket_cache(
+        &self,
+    ) -> Option<&ExactCurveArrangementSplitIntersectionBucketCache2> {
+        match self.split_cache() {
+            Some(split_cache) => Some(split_cache.intersection_bucket_cache()),
+            None => None,
+        }
+    }
+
+    /// Returns exact source-parameter evidence for retained split intersections.
+    pub const fn split_intersection_parameter_cache(
+        &self,
+    ) -> Option<&ExactCurveArrangementSplitIntersectionParameterCache2> {
+        match self.split_cache() {
+            Some(split_cache) => Some(split_cache.intersection_parameter_cache()),
+            None => None,
+        }
+    }
+
+    /// Returns split-stage blocker source-pair evidence, when split evaluation blocked.
+    pub const fn split_blocker_cache(&self) -> Option<&ExactCurveArrangementSplitBlockerCache2> {
+        match self.split_cache() {
+            Some(split_cache) => split_cache.blocker_cache(),
+            None => None,
+        }
+    }
+
+    /// Returns arranged output segment count when retained splitting completed.
+    pub const fn split_output_segment_count(&self) -> Option<usize> {
+        match self.split_cache() {
+            Some(split_cache) => split_cache.output_segment_count(),
+            None => None,
+        }
+    }
+
     /// Returns exact endpoint-bucket evidence retained from the evaluated arrangement.
     pub const fn endpoint_graph_cache(&self) -> Option<&ExactCurveArrangementEndpointGraphCache2> {
         self.workspace().endpoint_graph_cache()

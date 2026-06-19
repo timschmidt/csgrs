@@ -1286,56 +1286,55 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
             ExactCurveArrangementSplitCandidateAabbStatus2::DecidedDisjoint,
         )
     );
-    let split_cache = result.split_cache().unwrap();
     assert_eq!(
-        split_cache.predicate_path(),
+        result.split_predicate_path(),
         result.report().split_predicate_path()
     );
     assert_eq!(
-        split_cache.candidate_pair_count(),
+        result.split_candidate_pair_count().unwrap(),
         result.report().split_candidate_pair_count()
     );
     assert_eq!(
-        split_cache.skipped_aabb_pair_count(),
+        result.split_skipped_aabb_pair_count().unwrap(),
         result.report().split_skipped_aabb_pair_count()
     );
     assert_eq!(
-        split_cache.tested_pair_count(),
+        result.split_tested_pair_count().unwrap(),
         result.report().split_tested_pair_count()
     );
     assert_eq!(
-        split_cache.intersection_event_count(),
+        result.split_intersection_event_count().unwrap(),
         result.report().split_intersection_event_count()
     );
     assert_eq!(
-        split_cache.intersection_points(),
+        result.split_intersection_points().unwrap(),
         result.report().split_intersection_points()
     );
     assert_eq!(
-        split_cache.intersection_reports(),
+        result.split_intersection_reports().unwrap(),
         result.report().split_intersection_reports()
     );
-    assert_eq!(split_cache.output_segment_count(), Some(4));
-    assert_eq!(split_cache.blocker_cache(), None);
-    let split_relation_bucket_cache = split_cache.relation_bucket_cache();
+    assert_eq!(result.split_output_segment_count(), Some(4));
+    assert_eq!(result.split_blocker_cache(), None);
+    let split_relation_bucket_cache = result.split_relation_bucket_cache().unwrap();
     assert_eq!(split_relation_bucket_cache.bucket_count(), 3);
     assert_eq!(
         split_relation_bucket_cache.relation_count(),
-        split_cache.point_relation_count()
-            + split_cache.overlap_relation_count()
-            + split_cache.uncertain_relation_count()
+        result.split_point_relation_count().unwrap()
+            + result.split_overlap_relation_count().unwrap()
+            + result.split_uncertain_relation_count().unwrap()
     );
     assert_eq!(
         split_relation_bucket_cache.point_relation_count(),
-        split_cache.point_relation_count()
+        result.split_point_relation_count().unwrap()
     );
     assert_eq!(
         split_relation_bucket_cache.overlap_relation_count(),
-        split_cache.overlap_relation_count()
+        result.split_overlap_relation_count().unwrap()
     );
     assert_eq!(
         split_relation_bucket_cache.uncertain_relation_count(),
-        split_cache.uncertain_relation_count()
+        result.split_uncertain_relation_count().unwrap()
     );
     assert_eq!(split_relation_bucket_cache.buckets().len(), 3);
     assert_eq!(
@@ -1344,7 +1343,7 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
     );
     assert_eq!(
         split_relation_bucket_cache.buckets()[0].relation_count(),
-        split_cache.point_relation_count()
+        result.split_point_relation_count().unwrap()
     );
     assert_eq!(
         split_relation_bucket_cache.buckets()[1].relation(),
@@ -1352,7 +1351,7 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
     );
     assert_eq!(
         split_relation_bucket_cache.buckets()[1].relation_count(),
-        split_cache.overlap_relation_count()
+        result.split_overlap_relation_count().unwrap()
     );
     assert_eq!(
         split_relation_bucket_cache.buckets()[2].relation(),
@@ -1360,9 +1359,9 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
     );
     assert_eq!(
         split_relation_bucket_cache.buckets()[2].relation_count(),
-        split_cache.uncertain_relation_count()
+        result.split_uncertain_relation_count().unwrap()
     );
-    let split_intersection_bucket_cache = split_cache.intersection_bucket_cache();
+    let split_intersection_bucket_cache = result.split_intersection_bucket_cache().unwrap();
     assert_eq!(
         split_intersection_bucket_cache.intersection_event_count(),
         4
@@ -1382,7 +1381,7 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
         first_split_intersection_bucket.point(),
         result.report().split_intersection_reports()[0].point()
     );
-    let split_intersection_parameter_cache = split_cache.intersection_parameter_cache();
+    let split_intersection_parameter_cache = result.split_intersection_parameter_cache().unwrap();
     assert_eq!(
         split_intersection_parameter_cache.intersection_event_count(),
         result.report().split_intersection_reports().len()
@@ -2756,43 +2755,42 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
             ExactCurveArrangementSplitCandidateAabbStatus2::NotDecidedDisjoint,
         )
     );
-    let split_cache = result.split_cache().unwrap();
     assert_eq!(
-        split_cache.predicate_path(),
+        result.split_predicate_path(),
         result.report().split_predicate_path()
     );
     assert_eq!(
-        split_cache.intersection_event_count(),
+        result.split_intersection_event_count().unwrap(),
         result.report().split_intersection_event_count()
     );
     assert_eq!(
-        split_cache.intersection_reports(),
+        result.split_intersection_reports().unwrap(),
         result.report().split_intersection_reports()
     );
     assert_eq!(
-        split_cache.output_segment_count(),
+        result.split_output_segment_count(),
         result.report().split_output_segment_count()
     );
-    assert_eq!(split_cache.blocker_cache(), None);
-    let split_relation_bucket_cache = split_cache.relation_bucket_cache();
+    assert_eq!(result.split_blocker_cache(), None);
+    let split_relation_bucket_cache = result.split_relation_bucket_cache().unwrap();
     assert_eq!(split_relation_bucket_cache.bucket_count(), 3);
     assert_eq!(
         split_relation_bucket_cache.relation_count(),
-        split_cache.point_relation_count()
-            + split_cache.overlap_relation_count()
-            + split_cache.uncertain_relation_count()
+        result.split_point_relation_count().unwrap()
+            + result.split_overlap_relation_count().unwrap()
+            + result.split_uncertain_relation_count().unwrap()
     );
     assert_eq!(
         split_relation_bucket_cache.point_relation_count(),
-        split_cache.point_relation_count()
+        result.split_point_relation_count().unwrap()
     );
     assert_eq!(
         split_relation_bucket_cache.overlap_relation_count(),
-        split_cache.overlap_relation_count()
+        result.split_overlap_relation_count().unwrap()
     );
     assert_eq!(
         split_relation_bucket_cache.uncertain_relation_count(),
-        split_cache.uncertain_relation_count()
+        result.split_uncertain_relation_count().unwrap()
     );
     assert_eq!(split_relation_bucket_cache.buckets().len(), 3);
     assert_eq!(
@@ -2801,7 +2799,7 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
     );
     assert_eq!(
         split_relation_bucket_cache.buckets()[0].relation_count(),
-        split_cache.point_relation_count()
+        result.split_point_relation_count().unwrap()
     );
     assert_eq!(
         split_relation_bucket_cache.buckets()[1].relation(),
@@ -2809,7 +2807,7 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
     );
     assert_eq!(
         split_relation_bucket_cache.buckets()[1].relation_count(),
-        split_cache.overlap_relation_count()
+        result.split_overlap_relation_count().unwrap()
     );
     assert_eq!(
         split_relation_bucket_cache.buckets()[2].relation(),
@@ -2817,9 +2815,9 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
     );
     assert_eq!(
         split_relation_bucket_cache.buckets()[2].relation_count(),
-        split_cache.uncertain_relation_count()
+        result.split_uncertain_relation_count().unwrap()
     );
-    let split_intersection_bucket_cache = split_cache.intersection_bucket_cache();
+    let split_intersection_bucket_cache = result.split_intersection_bucket_cache().unwrap();
     assert_eq!(
         split_intersection_bucket_cache.intersection_event_count(),
         result.report().split_intersection_event_count()
@@ -2841,7 +2839,7 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
         first_split_intersection_bucket.point(),
         result.report().split_intersection_reports()[0].point()
     );
-    let split_intersection_parameter_cache = split_cache.intersection_parameter_cache();
+    let split_intersection_parameter_cache = result.split_intersection_parameter_cache().unwrap();
     assert_eq!(
         split_intersection_parameter_cache.intersection_event_count(),
         result.report().split_intersection_reports().len()
@@ -3894,14 +3892,13 @@ fn exact_curve_arrangement_attempt_retains_overlap_blocker() {
         split_schedule_cache.candidate_pairs()[0].aabb_status(),
         ExactCurveArrangementSplitCandidateAabbStatus2::NotDecidedDisjoint
     );
-    let split_cache = result.split_cache().unwrap();
-    assert_eq!(split_cache.overlap_relation_count(), 1);
-    assert_eq!(split_cache.output_segment_count(), None);
+    assert_eq!(result.split_overlap_relation_count(), Some(1));
+    assert_eq!(result.split_output_segment_count(), None);
     assert_eq!(
-        split_cache.intersection_points(),
+        result.split_intersection_points().unwrap(),
         result.report().split_intersection_points()
     );
-    let split_blocker_cache = split_cache.blocker_cache().unwrap();
+    let split_blocker_cache = result.split_blocker_cache().unwrap();
     assert_eq!(
         split_blocker_cache.first_source_segment_index(),
         result
@@ -3959,7 +3956,7 @@ fn exact_curve_arrangement_attempt_retains_overlap_blocker() {
             .unwrap()
     );
     assert_eq!(split_blocker_cache.blocker(), result.report().blocker());
-    let split_intersection_bucket_cache = split_cache.intersection_bucket_cache();
+    let split_intersection_bucket_cache = result.split_intersection_bucket_cache().unwrap();
     assert_eq!(
         split_intersection_bucket_cache.intersection_event_count(),
         0
