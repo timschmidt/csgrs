@@ -256,8 +256,9 @@ pub use region_fragments::{
     RegionFragmentBuildStage2, RegionFragmentSet,
 };
 pub use region_nesting::{
-    RegionBoundaryContourBuildReport2, RegionBoundaryContourBuildResult2,
-    RegionBoundaryContourBuildStage2, RegionBoundaryContourRole2, RegionBoundaryContourRoleReport2,
+    RegionBoundaryContourBuildPredicatePath2, RegionBoundaryContourBuildReport2,
+    RegionBoundaryContourBuildResult2, RegionBoundaryContourBuildStage2,
+    RegionBoundaryContourRole2, RegionBoundaryContourRoleReport2,
     RegionLineSegmentArrangedEndpoint2, RegionLineSegmentArrangedSourceReport2,
     RegionLineSegmentRegionBuildReport2, RegionLineSegmentRegionBuildResult2,
     RegionLineSegmentRegionBuildStage2, RegionLineSegmentRingSourceReport2,

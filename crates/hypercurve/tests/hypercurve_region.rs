@@ -1,11 +1,11 @@
 use hypercurve::{
     BulgeVertex2, CircularArc2, Classification, Contour2, CurveError, CurvePolicy, CurveString2,
-    FillRule, FiniteProjectionOptions, Real, Region2, RegionBoundaryContourBuildStage2,
-    RegionBoundaryContourRole2, RegionLineSegmentArrangedEndpoint2,
-    RegionLineSegmentRegionBuildStage2, RegionLineSegmentSplitPredicatePath2, RegionPointLocation,
-    RegionView2, Segment2, SegmentKind, SegmentKindCounts, UncertaintyReason,
-    finite_polyline_vertex_centroid, finite_ring_signed_area, try_finite_polyline_vertex_centroid,
-    try_finite_ring_signed_area,
+    FillRule, FiniteProjectionOptions, Real, Region2, RegionBoundaryContourBuildPredicatePath2,
+    RegionBoundaryContourBuildStage2, RegionBoundaryContourRole2,
+    RegionLineSegmentArrangedEndpoint2, RegionLineSegmentRegionBuildStage2,
+    RegionLineSegmentSplitPredicatePath2, RegionPointLocation, RegionView2, Segment2, SegmentKind,
+    SegmentKindCounts, UncertaintyReason, finite_polyline_vertex_centroid, finite_ring_signed_area,
+    try_finite_polyline_vertex_centroid, try_finite_ring_signed_area,
 };
 use proptest::prelude::*;
 
@@ -193,6 +193,10 @@ fn boundary_contour_region_report_assigns_material_and_hole_roles() {
         report.stage(),
         RegionBoundaryContourBuildStage2::RoleAssignment
     );
+    assert_eq!(
+        report.predicate_path(),
+        RegionBoundaryContourBuildPredicatePath2::ExactContourIntersectionAndPointContainment
+    );
     assert_eq!(report.source_contour_count(), 2);
     assert_eq!(report.source_segment_count(), 8);
     assert_eq!(report.validation_candidate_pair_count(), 1);
@@ -255,6 +259,10 @@ fn borrowed_boundary_contours_build_region_with_report() {
     assert_eq!(
         report.stage(),
         RegionBoundaryContourBuildStage2::RoleAssignment
+    );
+    assert_eq!(
+        report.predicate_path(),
+        RegionBoundaryContourBuildPredicatePath2::ExactContourIntersectionAndPointContainment
     );
     assert_eq!(report.source_contour_count(), 2);
     assert_eq!(report.source_segment_count(), 8);
@@ -335,6 +343,10 @@ fn boundary_contour_region_report_blocks_crossing_roles() {
         report.stage(),
         RegionBoundaryContourBuildStage2::NestingValidation
     );
+    assert_eq!(
+        report.predicate_path(),
+        RegionBoundaryContourBuildPredicatePath2::ExactContourIntersectionAndPointContainment
+    );
     assert_eq!(report.blocker(), Some(UncertaintyReason::Boundary));
     assert_eq!(report.source_contour_count(), 2);
     assert_eq!(report.source_segment_count(), 8);
@@ -367,6 +379,10 @@ fn boundary_contour_region_report_blocks_touching_roles_with_source_pair() {
     assert_eq!(
         report.stage(),
         RegionBoundaryContourBuildStage2::NestingValidation
+    );
+    assert_eq!(
+        report.predicate_path(),
+        RegionBoundaryContourBuildPredicatePath2::ExactContourIntersectionAndPointContainment
     );
     assert_eq!(report.blocker(), Some(UncertaintyReason::Boundary));
     assert_eq!(report.validation_candidate_pair_count(), 1);

@@ -44,6 +44,7 @@ pub struct RegionBoundaryContourRoleReport2 {
 #[derive(Clone, Debug, PartialEq)]
 pub struct RegionBoundaryContourBuildReport2 {
     stage: RegionBoundaryContourBuildStage2,
+    predicate_path: RegionBoundaryContourBuildPredicatePath2,
     source_contour_count: usize,
     source_segment_count: usize,
     validation_candidate_pair_count: usize,
@@ -70,6 +71,13 @@ pub enum RegionBoundaryContourBuildStage2 {
     NestingValidation,
     /// Material and hole role bins were assigned and materialized.
     RoleAssignment,
+}
+
+/// Exact predicate path used while nesting closed boundary contours.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum RegionBoundaryContourBuildPredicatePath2 {
+    /// Boundary validation used contour intersections and exact point-containment nesting tests.
+    ExactContourIntersectionAndPointContainment,
 }
 
 /// Result of report-bearing boundary contour region construction.
@@ -866,6 +874,8 @@ impl Region2 {
             region: Some(Region2::new(material_contours, hole_contours)),
             report: RegionBoundaryContourBuildReport2 {
                 stage: RegionBoundaryContourBuildStage2::RoleAssignment,
+                predicate_path:
+                    RegionBoundaryContourBuildPredicatePath2::ExactContourIntersectionAndPointContainment,
                 source_contour_count,
                 source_segment_count,
                 validation_candidate_pair_count: counts.candidate_pair_count,
@@ -952,6 +962,11 @@ impl RegionBoundaryContourBuildReport2 {
     /// Returns the furthest exact region-construction stage reached.
     pub const fn stage(&self) -> RegionBoundaryContourBuildStage2 {
         self.stage
+    }
+
+    /// Returns the exact predicate path used for boundary validation and nesting.
+    pub const fn predicate_path(&self) -> RegionBoundaryContourBuildPredicatePath2 {
+        self.predicate_path
     }
 
     /// Returns the number of source boundary contours considered.
@@ -3051,6 +3066,8 @@ fn blocked_boundary_contour_region_result(
         region: None,
         report: RegionBoundaryContourBuildReport2 {
             stage: RegionBoundaryContourBuildStage2::NestingValidation,
+            predicate_path:
+                RegionBoundaryContourBuildPredicatePath2::ExactContourIntersectionAndPointContainment,
             source_contour_count,
             source_segment_count,
             validation_candidate_pair_count: counts.candidate_pair_count,
