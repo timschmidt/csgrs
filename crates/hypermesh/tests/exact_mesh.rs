@@ -76,7 +76,6 @@ fn assert_public_full_face_adjacent_union(
     );
     result.validate().unwrap();
     result.validate_against_sources(left, right).unwrap();
-    assert!(result.validate_against_sources(left, right).is_ok());
     assert!(result.mesh().facts().mesh.closed_manifold);
     assert!(!result.mesh().triangles().is_empty());
     result
@@ -101,7 +100,6 @@ fn assert_public_contained_face_adjacent_union(
     );
     result.validate().unwrap();
     result.validate_against_sources(left, right).unwrap();
-    assert!(result.validate_against_sources(left, right).is_ok());
     assert!(result.mesh().facts().mesh.closed_manifold);
     assert!(!result.mesh().triangles().is_empty());
     result
@@ -948,7 +946,6 @@ fn axis_aligned_orthogonal_solid_accepts_face_fan_triangulated_box() {
     );
     result.validate().unwrap();
     result.validate_against_sources(&fan_box, &cutter).unwrap();
-    assert!(result.validate_against_sources(&fan_box, &cutter).is_ok());
     assert!(result.mesh().facts().mesh.closed_manifold);
 }
 
@@ -974,7 +971,6 @@ fn axis_aligned_orthogonal_solid_materializes_multiple_cavities() {
     );
     result.validate().unwrap();
     result.validate_against_sources(&outer, &cavities).unwrap();
-    assert!(result.validate_against_sources(&outer, &cavities).is_ok());
     assert!(result.mesh().facts().mesh.closed_manifold);
 }
 
@@ -1000,7 +996,6 @@ fn affine_orthogonal_solid_recovers_face_fan_basis_from_cell_edges() {
     );
     result.validate().unwrap();
     result.validate_against_sources(&fan_box, &cutter).unwrap();
-    assert!(result.validate_against_sources(&fan_box, &cutter).is_ok());
     assert!(result.mesh().facts().mesh.closed_manifold);
 }
 
@@ -1031,7 +1026,6 @@ fn exact_coplanar_volumetric_cell_policy_is_publicly_replayable() {
                     || evaluation.requires_coplanar_volumetric_cells(),
                 "{evaluation:?}"
             );
-            evaluation.validate_against_sources(&left, &right).unwrap();
             evaluation.validate_against_sources(&left, &right).unwrap();
             assert!(evaluation.requires_coplanar_volumetric_cells());
 
