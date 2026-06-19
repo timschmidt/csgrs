@@ -930,6 +930,7 @@ pub struct ExactCurveArrangementOutputCache2 {
     boundary_build_report: Option<RegionBoundaryContourBuildReport2>,
     boundary_output_cache: Option<ExactCurveArrangementOutputBoundaryCache2>,
     role_cache: Option<ExactCurveArrangementOutputRoleCache2>,
+    stage: RegionLineSegmentRegionBuildStage2,
     status: RetainedTopologyStatus,
     blocker: Option<UncertaintyReason>,
 }
@@ -939,6 +940,7 @@ pub struct ExactCurveArrangementOutputCache2 {
 pub struct ExactCurveArrangementEvaluationSummaryCache2 {
     evaluated_output: bool,
     materialized_region: Option<bool>,
+    stage: Option<RegionLineSegmentRegionBuildStage2>,
     status: Option<RetainedTopologyStatus>,
     blocker: Option<UncertaintyReason>,
     output_ring_count: Option<usize>,
@@ -5869,6 +5871,7 @@ impl ExactCurveArrangementOutputCache2 {
             boundary_build_report,
             boundary_output_cache,
             role_cache,
+            stage: region_result.report().stage,
             status: region_result.report().status,
             blocker: region_result.report().blocker,
         }
@@ -5896,6 +5899,11 @@ impl ExactCurveArrangementOutputCache2 {
         self.role_cache.as_ref()
     }
 
+    /// Returns the final retained build stage reached by the arrangement.
+    pub const fn stage(&self) -> RegionLineSegmentRegionBuildStage2 {
+        self.stage
+    }
+
     /// Returns final retained topology status for the arrangement.
     pub const fn status(&self) -> RetainedTopologyStatus {
         self.status
@@ -5916,6 +5924,7 @@ impl ExactCurveArrangementEvaluationSummaryCache2 {
         Self {
             evaluated_output: output_cache.is_some(),
             materialized_region: output_cache.map(|cache| cache.materialized_region()),
+            stage: output_cache.map(|cache| cache.stage()),
             status: output_cache.map(|cache| cache.status()),
             blocker: output_cache.and_then(|cache| cache.blocker()),
             output_ring_count: ring_cache.and_then(|cache| cache.output_ring_count()),
@@ -5936,6 +5945,11 @@ impl ExactCurveArrangementEvaluationSummaryCache2 {
     /// Returns whether the evaluation materialized a region, when evaluated.
     pub const fn materialized_region(&self) -> Option<bool> {
         self.materialized_region
+    }
+
+    /// Returns the final retained build stage, when evaluated.
+    pub const fn stage(&self) -> Option<RegionLineSegmentRegionBuildStage2> {
+        self.stage
     }
 
     /// Returns the final retained topology status, when evaluated.

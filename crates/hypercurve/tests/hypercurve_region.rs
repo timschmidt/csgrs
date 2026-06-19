@@ -2194,11 +2194,13 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
     }
     let output_cache = result.workspace().output_cache().unwrap();
     assert!(output_cache.materialized_region());
+    assert_eq!(output_cache.stage(), result.report().stage());
     assert_eq!(output_cache.status(), result.report().status());
     assert_eq!(output_cache.blocker(), None);
     let summary_cache = result.summary_cache();
     assert!(summary_cache.evaluated_output());
     assert_eq!(summary_cache.materialized_region(), Some(true));
+    assert_eq!(summary_cache.stage(), Some(result.report().stage()));
     assert_eq!(summary_cache.status(), Some(result.report().status()));
     assert_eq!(summary_cache.blocker(), None);
     assert_eq!(
@@ -3569,11 +3571,13 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
     }
     let output_cache = result.workspace().output_cache().unwrap();
     assert!(output_cache.materialized_region());
+    assert_eq!(output_cache.stage(), result.report().stage());
     assert_eq!(output_cache.status(), result.report().status());
     assert_eq!(output_cache.blocker(), None);
     let summary_cache = result.summary_cache();
     assert!(summary_cache.evaluated_output());
     assert_eq!(summary_cache.materialized_region(), Some(true));
+    assert_eq!(summary_cache.stage(), Some(result.report().stage()));
     assert_eq!(summary_cache.status(), Some(result.report().status()));
     assert_eq!(summary_cache.blocker(), None);
     assert_eq!(
@@ -3917,6 +3921,7 @@ fn exact_curve_arrangement_attempt_retains_overlap_blocker() {
     assert!(result.workspace().ring_assembly_cache().is_none());
     let output_cache = result.workspace().output_cache().unwrap();
     assert!(!output_cache.materialized_region());
+    assert_eq!(output_cache.stage(), result.report().stage());
     assert_eq!(output_cache.status(), result.report().status());
     assert_eq!(output_cache.blocker(), Some(UncertaintyReason::Boundary));
     assert_eq!(output_cache.boundary_build_report(), None);
@@ -3925,6 +3930,7 @@ fn exact_curve_arrangement_attempt_retains_overlap_blocker() {
     let summary_cache = result.summary_cache();
     assert!(summary_cache.evaluated_output());
     assert_eq!(summary_cache.materialized_region(), Some(false));
+    assert_eq!(summary_cache.stage(), Some(result.report().stage()));
     assert_eq!(summary_cache.status(), Some(result.report().status()));
     assert_eq!(summary_cache.blocker(), Some(UncertaintyReason::Boundary));
     assert_eq!(summary_cache.output_ring_count(), None);
