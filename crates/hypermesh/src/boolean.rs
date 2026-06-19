@@ -2747,17 +2747,17 @@ fn materialize_certified_arrangement_cell_complex_support_with_arrangement(
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
     let operation = request.operation;
     let validation = request.validation;
+    if let Some(attempt) = retained_arrangement_attempt
+        && let Some(result) =
+            materialize_retained_arrangement_cell_complex_attempt(left, right, request, attempt)?
+    {
+        return Ok(Some(result));
+    }
     let mut owned_graph = None;
     let graph = graph_for_certified_materialization(retained_graph, &mut owned_graph, left, right)?;
     if let Some(result) = materialize_arrangement_volumetric_split_cell_result_from_graph(
         graph, left, right, operation, validation,
     )? {
-        return Ok(Some(result));
-    }
-    if let Some(attempt) = retained_arrangement_attempt
-        && let Some(result) =
-            materialize_retained_arrangement_cell_complex_attempt(left, right, request, attempt)?
-    {
         return Ok(Some(result));
     }
     if let Some(arrangement) = retained_regularized_arrangement {
