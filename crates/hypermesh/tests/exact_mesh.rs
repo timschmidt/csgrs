@@ -3286,12 +3286,12 @@ fn trivial_boolean_shortcuts_are_publicly_replayable() {
             ValidationPolicy::CLOSED,
             |result, operation| result.is_certified_shortcut_for(operation),
         );
-        let empty_evaluation = exact_boolean_evaluation(
+        with_exact_boolean_evaluation(
             &empty,
             &solid,
             ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
+            |evaluation| evaluation.validate().unwrap(),
         );
-        empty_evaluation.validate().unwrap();
         if operation == ExactBooleanOperation::Union {
             assert_eq!(
                 empty_result.freshness_against_sources(&empty, &disjoint_solid),
@@ -3351,12 +3351,12 @@ fn trivial_boolean_shortcuts_are_publicly_replayable() {
             ValidationPolicy::CLOSED,
             |result, operation| result.is_certified_shortcut_for(operation),
         );
-        let disjoint_evaluation = exact_boolean_evaluation(
+        with_exact_boolean_evaluation(
             &solid,
             &disjoint_solid,
             ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
+            |evaluation| evaluation.validate().unwrap(),
         );
-        disjoint_evaluation.validate().unwrap();
         if matches!(
             operation,
             ExactBooleanOperation::Union | ExactBooleanOperation::Difference
@@ -3382,12 +3382,12 @@ fn trivial_boolean_shortcuts_are_publicly_replayable() {
             ValidationPolicy::ALLOW_BOUNDARY,
             |result, operation| result.is_certified_shortcut_for(operation),
         );
-        let identical_evaluation = exact_boolean_evaluation(
+        with_exact_boolean_evaluation(
             &open_identical_left,
             &open_identical_right,
             ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
+            |evaluation| evaluation.validate().unwrap(),
         );
-        identical_evaluation.validate().unwrap();
         if matches!(
             operation,
             ExactBooleanOperation::Union | ExactBooleanOperation::Intersection
@@ -3424,12 +3424,12 @@ fn trivial_boolean_shortcuts_are_publicly_replayable() {
             ValidationPolicy::ALLOW_BOUNDARY,
             |result, operation| result.is_certified_shortcut_for(operation),
         );
-        let same_surface_evaluation = exact_boolean_evaluation(
+        with_exact_boolean_evaluation(
             &open_identical_left,
             &open_same_surface_right,
             ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
+            |evaluation| evaluation.validate().unwrap(),
         );
-        same_surface_evaluation.validate().unwrap();
         if matches!(
             operation,
             ExactBooleanOperation::Union | ExactBooleanOperation::Intersection
@@ -3459,12 +3459,12 @@ fn trivial_boolean_shortcuts_are_publicly_replayable() {
                 .mesh
                 .closed_manifold
         );
-        let lower_dimensional_evaluation = exact_boolean_evaluation(
+        with_exact_boolean_evaluation(
             &open_identical_left,
             &open_same_surface_right,
             ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
+            |evaluation| evaluation.validate().unwrap(),
         );
-        lower_dimensional_evaluation.validate().unwrap();
 
         let mixed_dimensional_result = exact_boolean_result(
             &solid,
@@ -3481,12 +3481,12 @@ fn trivial_boolean_shortcuts_are_publicly_replayable() {
             ValidationPolicy::CLOSED,
             |result, operation| result.is_certified_shortcut_for(operation),
         );
-        let mixed_dimensional_evaluation = exact_boolean_evaluation(
+        with_exact_boolean_evaluation(
             &solid,
             &open_disjoint_left,
             ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
+            |evaluation| evaluation.validate().unwrap(),
         );
-        mixed_dimensional_evaluation.validate().unwrap();
 
         let open_disjoint_result = exact_boolean_result(
             &open_disjoint_left,
@@ -3503,12 +3503,12 @@ fn trivial_boolean_shortcuts_are_publicly_replayable() {
             ValidationPolicy::ALLOW_BOUNDARY,
             |result, operation| result.is_certified_shortcut_for(operation),
         );
-        let open_disjoint_evaluation = exact_boolean_evaluation(
+        with_exact_boolean_evaluation(
             &open_disjoint_left,
             &open_disjoint_right,
             ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
+            |evaluation| evaluation.validate().unwrap(),
         );
-        open_disjoint_evaluation.validate().unwrap();
         if matches!(
             operation,
             ExactBooleanOperation::Union | ExactBooleanOperation::Difference
