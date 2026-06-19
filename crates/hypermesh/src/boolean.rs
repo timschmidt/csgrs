@@ -2310,6 +2310,58 @@ impl ExactBooleanEvaluation {
         self.preflight.is_certified()
     }
 
+    /// Return whether this evaluation was certified by the arrangement/cell-complex path.
+    pub fn is_certified_arrangement_cell_complex(&self) -> bool {
+        self.preflight.is_certified_arrangement_cell_complex()
+    }
+
+    /// Return whether caller boundary policy certified this evaluation.
+    pub fn is_certified_boundary_policy_shortcut(&self) -> bool {
+        self.preflight.is_certified_boundary_policy_shortcut()
+    }
+
+    /// Return whether this evaluation was certified by disjoint exact bounds.
+    pub fn is_certified_bounds_disjoint(&self) -> bool {
+        self.preflight.is_certified_bounds_disjoint()
+    }
+
+    /// Return whether this evaluation was certified by closed lower-dimensional regularization.
+    pub fn is_certified_lower_dimensional_regularized_solid(&self) -> bool {
+        self.preflight
+            .is_certified_lower_dimensional_regularized_solid()
+    }
+
+    /// Return whether this evaluation was certified by mixed-dimensional regularized-solid semantics.
+    pub fn is_certified_mixed_dimensional_regularized_solid(&self) -> bool {
+        self.preflight
+            .is_certified_mixed_dimensional_regularized_solid()
+    }
+
+    /// Return whether closed boundary-touching semantics certified this evaluation.
+    pub fn is_certified_closed_boundary_touching(&self) -> bool {
+        self.preflight.is_certified_closed_boundary_touching()
+    }
+
+    /// Return whether this evaluation is waiting on explicit caller boundary policy.
+    pub fn requires_boundary_policy(&self) -> bool {
+        self.preflight.requires_boundary_policy()
+    }
+
+    /// Return whether this evaluation retained nontrivial exact preflight evidence.
+    pub fn has_retained_exact_evidence(&self) -> bool {
+        self.preflight.has_retained_exact_evidence()
+    }
+
+    /// Return whether graph extraction retained unknown events before policy checks.
+    pub fn graph_had_unknowns(&self) -> bool {
+        self.preflight.graph_had_unknowns()
+    }
+
+    /// Return the number of split-region boundaries retained for classification.
+    pub fn region_count(&self) -> usize {
+        self.preflight.region_count()
+    }
+
     /// Return whether this evaluation retained an explicit blocker.
     pub fn has_blocker(&self) -> bool {
         self.preflight.blocker().is_some()
