@@ -46,8 +46,7 @@ fn exact_boolean_result(
     right: &ExactMesh,
     request: ExactBooleanRequest,
 ) -> ExactBooleanResult {
-    let mut workspace = ExactBooleanWorkspace::new(left, right);
-    workspace.materialize_ref(request).unwrap().clone()
+    exact_boolean_evaluated_result(left, right, request)
 }
 
 fn exact_boolean_evaluated_result(
