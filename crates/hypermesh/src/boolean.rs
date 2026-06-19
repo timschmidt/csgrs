@@ -1002,12 +1002,6 @@ pub struct ExactBooleanCertificationSet {
 }
 
 impl ExactBooleanCertificationSet {
-    /// Return the retained arrangement/cell-complex attempt for this
-    /// certification set, when evaluation reached that canonical pipeline.
-    pub fn arrangement_attempt(&self) -> Option<&ExactArrangementBooleanAttempt> {
-        self.arrangement_attempt.as_ref()
-    }
-
     /// Return the exact graph refinement certification report.
     pub fn refinement(&self) -> &ExactRefinementReport {
         &self.refinement
@@ -2432,7 +2426,7 @@ impl ExactBooleanEvaluation {
     /// Return the retained arrangement/cell-complex attempt for this request,
     /// when evaluation reached that canonical pipeline.
     pub fn retained_arrangement_attempt(&self) -> Option<&ExactArrangementBooleanAttempt> {
-        self.certifications.arrangement_attempt()
+        self.certifications.arrangement_attempt.as_ref()
     }
 
     /// Return the request policy evaluated by this retained evaluation.
@@ -12822,8 +12816,7 @@ mod tests {
             .validate_against_sources(&left, &right, request)
             .unwrap();
         let attempt = evaluation
-            .certifications
-            .arrangement_attempt()
+            .retained_arrangement_attempt()
             .expect("workspace evaluation should retain an arrangement attempt");
         assert!(
             attempt.certifies_arrangement_cell_complex_output_for_request(
@@ -12867,7 +12860,8 @@ mod tests {
             .validate_against_sources(&left, &right, request)
             .unwrap();
         let attempt = certifications
-            .arrangement_attempt()
+            .arrangement_attempt
+            .as_ref()
             .expect("nested tetrahedra should retain an arrangement attempt");
         assert!(
             attempt.certifies_arrangement_cell_complex_output_for_request(
