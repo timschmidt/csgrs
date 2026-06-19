@@ -36,7 +36,7 @@ fn evaluation_materializes_arrangement_cell_complex(
         result.is_arrangement_cell_complex_materialized_for(evaluation.operation())
             || result.is_arrangement_cell_complex_shortcut_for(evaluation.operation())
     }) || evaluation
-        .certifications
+        .certifications()
         .winding_readiness
         .materializes_arrangement_cell_complex()
 }
@@ -91,7 +91,7 @@ fn exact_adjacent_union_completion_evaluation(
 macro_rules! exact_adjacent_union_completion_report {
     ($left:expr, $right:expr, $request:expr $(,)?) => {
         exact_adjacent_union_completion_evaluation($left, $right, $request)
-            .certifications
+            .certifications()
             .adjacent_union_completion
             .clone()
     };
@@ -105,19 +105,22 @@ fn assert_public_full_face_adjacent_union(
 ) -> ExactBooleanResult {
     let request = ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED);
     let evaluation = exact_adjacent_union_completion_evaluation(left, right, request);
-    let report = evaluation.certifications.adjacent_union_completion.clone();
+    let report = evaluation
+        .certifications()
+        .adjacent_union_completion
+        .clone();
     assert!(report.is_certified_full_face());
     assert_eq!(report.full_face_shared_faces, expected_shared_faces);
     assert_eq!(report.full_face_shared_patches, expected_shared_patches);
     assert!(report.is_certified());
     report.validate().unwrap();
     evaluation
-        .certifications
+        .certifications()
         .validate_against_sources(left, right, request)
         .unwrap();
     assert_eq!(
         evaluation
-            .certifications
+            .certifications()
             .freshness_against_sources(left, right, request),
         ExactReportFreshness::Current
     );
@@ -146,19 +149,22 @@ fn assert_public_contained_face_adjacent_union(
 ) -> ExactBooleanResult {
     let request = ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED);
     let evaluation = exact_adjacent_union_completion_evaluation(left, right, request);
-    let report = evaluation.certifications.adjacent_union_completion.clone();
+    let report = evaluation
+        .certifications()
+        .adjacent_union_completion
+        .clone();
     assert!(report.is_certified_contained_face());
     assert_eq!(report.containing_faces, expected_containing_faces);
     assert_eq!(report.contained_faces, expected_contained_faces);
     assert!(report.is_certified());
     report.validate().unwrap();
     evaluation
-        .certifications
+        .certifications()
         .validate_against_sources(left, right, request)
         .unwrap();
     assert_eq!(
         evaluation
-            .certifications
+            .certifications()
             .freshness_against_sources(left, right, request),
         ExactReportFreshness::Current
     );
@@ -311,7 +317,7 @@ fn exact_boolean_evaluation_materializes_certified_result_publicly() {
     );
     let mut stale_attempt_policy = evaluation.clone();
     stale_attempt_policy
-        .certifications
+        .certifications_mut()
         .arrangement_attempt_mut()
         .expect("named evaluation should retain arrangement attempt")
         .output_validation = ValidationPolicy::CLOSED;
@@ -335,11 +341,11 @@ fn exact_boolean_evaluation_materializes_certified_result_publicly() {
     assert_report_validation_error!(relabeled_support.validate());
     let mut relabeled_winding_status = evaluation.clone();
     relabeled_winding_status
-        .certifications
+        .certifications_mut()
         .winding_readiness
         .operation = ExactBooleanOperation::Difference;
     relabeled_winding_status
-        .certifications
+        .certifications()
         .winding_readiness
         .validate()
         .unwrap();
@@ -367,11 +373,13 @@ fn exact_boolean_evaluation_retains_region_ownership_report() {
         &disjoint_right,
         ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED),
     )
-    .certifications
+    .certifications()
     .winding_readiness
     .clone();
     let mut attempt_backed_evaluation = evaluation.clone();
-    attempt_backed_evaluation.certifications.winding_readiness = disjoint_readiness;
+    attempt_backed_evaluation
+        .certifications_mut()
+        .winding_readiness = disjoint_readiness;
     assert!(
         evaluation_materializes_arrangement_cell_complex(&attempt_backed_evaluation),
         "{attempt_backed_evaluation:?}"
@@ -398,7 +406,7 @@ fn exact_boolean_evaluation_retains_region_ownership_report() {
 
     let mut missing_attempt_ownership = evaluation.clone();
     missing_attempt_ownership
-        .certifications
+        .certifications_mut()
         .arrangement_attempt_mut()
         .expect("evaluation should retain arrangement attempt")
         .replace_region_ownership_report(None);
@@ -406,7 +414,7 @@ fn exact_boolean_evaluation_retains_region_ownership_report() {
 
     let mut missing_attempt_topology = evaluation.clone();
     missing_attempt_topology
-        .certifications
+        .certifications_mut()
         .arrangement_attempt_mut()
         .expect("evaluation should retain arrangement attempt")
         .replace_topology_assembly_report(None);
@@ -453,26 +461,26 @@ fn exact_boolean_evaluation_materializes_boundary_policy_shortcut_by_default() {
     result.validate_against_sources(&left, &right).unwrap();
     let mut mixed_graph_snapshot = evaluation.clone();
     mixed_graph_snapshot
-        .certifications
+        .certifications_mut()
         .refinement
         .retained_face_pairs = 0;
     mixed_graph_snapshot
-        .certifications
+        .certifications_mut()
         .refinement
         .retained_events = 0;
     mixed_graph_snapshot
-        .certifications
+        .certifications()
         .refinement
         .validate()
         .unwrap();
     assert_report_validation_error!(mixed_graph_snapshot.validate());
     let mut relabeled_winding_status = evaluation.clone();
     relabeled_winding_status
-        .certifications
+        .certifications_mut()
         .winding_readiness
         .operation = ExactBooleanOperation::Difference;
     relabeled_winding_status
-        .certifications
+        .certifications()
         .winding_readiness
         .validate()
         .unwrap();
@@ -1274,7 +1282,7 @@ fn exact_coplanar_volumetric_cell_evidence_is_retained_by_public_evaluation() {
     );
     evaluation.validate_against_sources(&left, &right).unwrap();
     if evaluation
-        .certifications
+        .certifications()
         .winding_readiness
         .coplanar_volumetric_evidence
         .is_some()
@@ -1282,7 +1290,7 @@ fn exact_coplanar_volumetric_cell_evidence_is_retained_by_public_evaluation() {
         assert_eq!(
             preflight.coplanar_volumetric_evidence,
             evaluation
-                .certifications
+                .certifications()
                 .winding_readiness
                 .coplanar_volumetric_evidence
         );
@@ -1413,7 +1421,7 @@ fn exact_closed_convex_boolean_is_publicly_replayable() {
         .unwrap();
     let mut relabeled_winding_report = separated_evaluation.clone();
     relabeled_winding_report
-        .certifications
+        .certifications_mut()
         .closed_winding_left_in_right
         .target_closed = false;
     assert_report_validation_error!(
@@ -1546,19 +1554,22 @@ fn full_face_adjacent_union_refines_side_faces_for_boundary_subdivided_shared_fa
 
     let request = ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED);
     let evaluation = exact_adjacent_union_completion_evaluation(&left, &right, request);
-    let report = evaluation.certifications.adjacent_union_completion.clone();
+    let report = evaluation
+        .certifications()
+        .adjacent_union_completion
+        .clone();
     assert!(report.is_certified_full_face());
     assert_eq!(report.full_face_shared_faces, 0);
     assert_eq!(report.full_face_shared_patches, 1);
     assert!(!report.stronger_kernel_available);
     report.validate().unwrap();
     evaluation
-        .certifications
+        .certifications()
         .validate_against_sources(&left, &right, request)
         .unwrap();
     assert_eq!(
         evaluation
-            .certifications
+            .certifications()
             .freshness_against_sources(&left, &right, request),
         ExactReportFreshness::Current
     );
@@ -1625,13 +1636,16 @@ fn full_face_adjacent_union_accepts_dual_boundary_subdivided_shared_face() {
 
     let request = ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED);
     let evaluation = exact_adjacent_union_completion_evaluation(&left, &right, request);
-    let report = evaluation.certifications.adjacent_union_completion.clone();
+    let report = evaluation
+        .certifications()
+        .adjacent_union_completion
+        .clone();
     assert!(report.is_certified_full_face());
     assert_eq!(report.full_face_shared_faces, 0);
     assert_eq!(report.full_face_shared_patches, 1);
     report.validate().unwrap();
     evaluation
-        .certifications
+        .certifications()
         .validate_against_sources(&left, &right, request)
         .unwrap();
 }
@@ -1694,25 +1708,28 @@ fn adjacent_union_completion_boolean_is_publicly_replayable() {
 
     let request = ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED);
     let evaluation = exact_adjacent_union_completion_evaluation(&left, &right, request);
-    let report = evaluation.certifications.adjacent_union_completion.clone();
+    let report = evaluation
+        .certifications()
+        .adjacent_union_completion
+        .clone();
     assert!(report.is_certified_full_face());
     assert!(report.is_certified());
     assert!(report.full_face_shared_faces + report.full_face_shared_patches > 0);
     assert_eq!(report.contained_faces, 0);
     report.validate().unwrap();
     evaluation
-        .certifications
+        .certifications()
         .validate_against_sources(&left, &right, request)
         .unwrap();
     assert_eq!(
         evaluation
-            .certifications
+            .certifications()
             .freshness_against_sources(&left, &right, request),
         ExactReportFreshness::Current
     );
     assert_eq!(
         evaluation
-            .certifications
+            .certifications()
             .freshness_against_sources(&left, &separated_right, request),
         ExactReportFreshness::SourceReplayMismatch
     );
@@ -1795,7 +1812,7 @@ fn adjacent_union_completion_boolean_is_publicly_replayable() {
     let crossing_evaluation =
         exact_adjacent_union_completion_evaluation(&left, &crossing_right, crossing_request);
     let crossing_report = crossing_evaluation
-        .certifications
+        .certifications()
         .adjacent_union_completion
         .clone();
     assert!(crossing_report.has_no_adjacency_certificate());
@@ -1803,7 +1820,7 @@ fn adjacent_union_completion_boolean_is_publicly_replayable() {
     assert!(crossing_report.blocker.candidate_pairs > 0);
     crossing_report.validate().unwrap();
     crossing_evaluation
-        .certifications
+        .certifications()
         .validate_against_sources(&left, &crossing_right, crossing_request)
         .unwrap();
 
@@ -2163,7 +2180,7 @@ fn exact_selected_region_boolean_is_publicly_replayable() {
     );
     let mut stale_winding_handoff = evaluation.clone();
     stale_winding_handoff
-        .certifications
+        .certifications_mut()
         .winding_readiness
         .retained_events += 1;
     assert!(
@@ -2327,7 +2344,7 @@ fn lower_dimensional_regularized_boolean_is_publicly_replayable() {
             ExactReportFreshness::SourceReplayMismatch
         );
 
-        let readiness = evaluation.certifications.winding_readiness.clone();
+        let readiness = evaluation.certifications().winding_readiness.clone();
         let readiness_materialized_lower =
             readiness.is_lower_dimensional_regularized_solid_materialized();
         let readiness_materialized_arrangement = readiness.materializes_arrangement_cell_complex();
@@ -2347,19 +2364,21 @@ fn lower_dimensional_regularized_boolean_is_publicly_replayable() {
         readiness.validate().unwrap();
         if readiness_materialized_lower {
             evaluation
-                .certifications
+                .certifications()
                 .validate_against_sources(&left, &right, request)
                 .unwrap();
             assert_eq!(
                 evaluation
-                    .certifications
+                    .certifications()
                     .freshness_against_sources(&left, &right, request),
                 ExactReportFreshness::Current
             );
             assert_eq!(
-                evaluation
-                    .certifications
-                    .freshness_against_sources(&left, &closed_right, request),
+                evaluation.certifications().freshness_against_sources(
+                    &left,
+                    &closed_right,
+                    request
+                ),
                 ExactReportFreshness::SourceReplayMismatch
             );
         } else {
@@ -2408,7 +2427,7 @@ fn lower_dimensional_regularized_boolean_is_publicly_replayable() {
             &disjoint_right,
             ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
         )
-        .certifications
+        .certifications()
         .winding_readiness
         .clone();
         assert!(
@@ -2540,7 +2559,7 @@ fn mixed_dimensional_regularized_solid_boolean_is_publicly_replayable() {
                 right,
                 ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
             )
-            .certifications
+            .certifications()
             .winding_readiness
             .clone();
             assert!(
@@ -2753,7 +2772,7 @@ fn closed_boundary_touching_regularized_boolean_is_publicly_replayable() {
         evaluation.validate().unwrap();
         let mut relabeled_boundary_report = evaluation.clone();
         relabeled_boundary_report
-            .certifications
+            .certifications_mut()
             .boundary_touching
             .blocker
             .unknown_pairs = 1;
@@ -2858,7 +2877,7 @@ fn closed_no_volume_overlap_regularized_boolean_is_publicly_replayable() {
             );
             let readiness_evaluation = exact_boolean_evaluation(&left, &right, readiness_request);
             let readiness = readiness_evaluation
-                .certifications
+                .certifications()
                 .winding_readiness
                 .clone();
             assert!(
@@ -2872,7 +2891,7 @@ fn closed_no_volume_overlap_regularized_boolean_is_publicly_replayable() {
             );
             readiness.validate().unwrap();
             readiness_evaluation
-                .certifications
+                .certifications()
                 .validate_against_sources(&left, &right, readiness_request)
                 .unwrap();
             let evaluation = exact_boolean_evaluation(
@@ -2883,7 +2902,7 @@ fn closed_no_volume_overlap_regularized_boolean_is_publicly_replayable() {
             evaluation.validate().unwrap();
             let mut cleared_handoff_evidence = evaluation.clone();
             cleared_handoff_evidence
-                .certifications
+                .certifications_mut()
                 .winding_readiness
                 .coplanar_volumetric_evidence = None;
             assert!(
@@ -2979,12 +2998,12 @@ fn closed_winding_shortcuts_are_publicly_replayable() {
         separated_evaluation.validate().unwrap();
         let mut relabeled_winding_report = separated_evaluation.clone();
         relabeled_winding_report
-            .certifications
+            .certifications_mut()
             .closed_winding_left_in_right
             .target_closed = false;
         assert!(
             relabeled_winding_report
-                .certifications
+                .certifications()
                 .closed_winding_left_in_right
                 .validate()
                 .is_err()
@@ -3114,7 +3133,7 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
     );
     preflight.validate().unwrap();
 
-    let readiness = evaluation.certifications.winding_readiness.clone();
+    let readiness = evaluation.certifications().winding_readiness.clone();
     assert!(
         readiness.materializes_arrangement_cell_complex(),
         "{readiness:?}"
@@ -3159,7 +3178,7 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
     );
     let mut unresolved_ownership = evaluation.clone();
     let ownership = unresolved_ownership
-        .certifications
+        .certifications_mut()
         .arrangement_attempt_mut()
         .and_then(|attempt| attempt.region_ownership_report_mut())
         .expect("named arrangement evaluation should retain ownership evidence");
@@ -3170,7 +3189,7 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
     );
     let mut incomplete_topology = evaluation.clone();
     let topology = incomplete_topology
-        .certifications
+        .certifications_mut()
         .arrangement_attempt_mut()
         .and_then(|attempt| attempt.topology_assembly_report_mut())
         .expect("named arrangement evaluation should retain topology assembly evidence");
@@ -3181,14 +3200,14 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
     );
     let mut declined_arrangement_attempt = evaluation.clone();
     let stale_validation_attempt = declined_arrangement_attempt
-        .certifications
+        .certifications_mut()
         .arrangement_attempt_mut()
         .expect("named evaluation should retain arrangement attempt");
     stale_validation_attempt.output_validation = ValidationPolicy::CLOSED;
     assert_report_validation_error!(declined_arrangement_attempt.validate());
     let mut stale_attempt_gate = evaluation.clone();
     let attempt = stale_attempt_gate
-        .certifications
+        .certifications_mut()
         .arrangement_attempt_mut()
         .expect("named evaluation should retain arrangement attempt");
     attempt.replace_region_ownership_report(None);
@@ -3196,7 +3215,7 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
     assert_report_validation_error!(stale_attempt_gate.validate());
     let mut stale_attempt_report = evaluation.clone();
     let attempt = stale_attempt_report
-        .certifications
+        .certifications_mut()
         .arrangement_attempt_mut()
         .expect("named evaluation should retain arrangement attempt");
     attempt.replace_topology_assembly_report(None);
@@ -3204,11 +3223,11 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
     assert_report_validation_error!(stale_attempt_report.validate());
     let mut stale_readiness_counts = evaluation.clone();
     stale_readiness_counts
-        .certifications
+        .certifications_mut()
         .winding_readiness
         .retained_face_pairs += 1;
     stale_readiness_counts
-        .certifications
+        .certifications_mut()
         .winding_readiness
         .retained_events += 1;
     assert!(
@@ -3329,7 +3348,7 @@ fn exact_volumetric_winding_coplanar_cap_is_publicly_certified() {
             ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
         );
         let closure = evaluation
-            .certifications
+            .certifications()
             .volumetric_boundary_closure
             .as_ref()
             .expect("coplanar closure evaluation should retain boundary closure evidence");
@@ -3339,7 +3358,7 @@ fn exact_volumetric_winding_coplanar_cap_is_publicly_certified() {
         );
         closure.validate().unwrap();
         evaluation
-            .certifications
+            .certifications()
             .validate_against_sources(
                 &left,
                 &right,
@@ -3598,7 +3617,7 @@ fn exact_contained_face_adjacent_union_is_publicly_replayable() {
     let multi_hole_evaluation =
         exact_adjacent_union_completion_evaluation(&container, &two_caps_right, multi_hole_request);
     let multi_hole_report = multi_hole_evaluation
-        .certifications
+        .certifications()
         .adjacent_union_completion
         .clone();
     assert!(multi_hole_report.is_certified_contained_face());
@@ -3606,7 +3625,7 @@ fn exact_contained_face_adjacent_union_is_publicly_replayable() {
     assert_eq!(multi_hole_report.contained_faces, 2);
     multi_hole_report.validate().unwrap();
     multi_hole_evaluation
-        .certifications
+        .certifications()
         .validate_against_sources(&container, &two_caps_right, multi_hole_request)
         .unwrap();
 
@@ -3661,7 +3680,7 @@ fn exact_contained_face_adjacent_union_is_publicly_replayable() {
         split_request,
     );
     let split_report = split_evaluation
-        .certifications
+        .certifications()
         .adjacent_union_completion
         .clone();
     assert!(split_report.is_certified_contained_face());
@@ -3669,7 +3688,7 @@ fn exact_contained_face_adjacent_union_is_publicly_replayable() {
     assert_eq!(split_report.contained_faces, 1);
     split_report.validate().unwrap();
     split_evaluation
-        .certifications
+        .certifications()
         .validate_against_sources(&split_container, &split_crossing_right, split_request)
         .unwrap();
 
@@ -3681,7 +3700,7 @@ fn exact_contained_face_adjacent_union_is_publicly_replayable() {
         square_disk_request,
     );
     let square_disk_report = square_disk_evaluation
-        .certifications
+        .certifications()
         .adjacent_union_completion
         .clone();
     assert!(square_disk_report.is_certified_contained_face());
@@ -3689,7 +3708,7 @@ fn exact_contained_face_adjacent_union_is_publicly_replayable() {
     assert_eq!(square_disk_report.contained_faces, 2);
     square_disk_report.validate().unwrap();
     square_disk_evaluation
-        .certifications
+        .certifications()
         .validate_against_sources(
             &square_disk_container,
             &square_disk_cap_right,
@@ -3699,7 +3718,10 @@ fn exact_contained_face_adjacent_union_is_publicly_replayable() {
 
     let request = ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED);
     let evaluation = exact_adjacent_union_completion_evaluation(&container, &right, request);
-    let completion_report = evaluation.certifications.adjacent_union_completion.clone();
+    let completion_report = evaluation
+        .certifications()
+        .adjacent_union_completion
+        .clone();
     assert!(completion_report.is_certified_contained_face());
     assert!(completion_report.is_certified());
     assert_eq!(
@@ -3711,19 +3733,21 @@ fn exact_contained_face_adjacent_union_is_publicly_replayable() {
     assert!(completion_report.contained_containing_side.is_some());
     completion_report.validate().unwrap();
     evaluation
-        .certifications
+        .certifications()
         .validate_against_sources(&container, &right, request)
         .unwrap();
     assert_eq!(
         evaluation
-            .certifications
+            .certifications()
             .freshness_against_sources(&container, &right, request),
         ExactReportFreshness::Current
     );
     assert_eq!(
-        evaluation
-            .certifications
-            .freshness_against_sources(&container, &separated_right, request),
+        evaluation.certifications().freshness_against_sources(
+            &container,
+            &separated_right,
+            request
+        ),
         ExactReportFreshness::SourceReplayMismatch
     );
     let result = exact_boolean_result(
@@ -3797,22 +3821,22 @@ fn public_exact_blocker_reports_replay_remaining_decisions() {
         ValidationPolicy::ALLOW_BOUNDARY,
     );
     let evaluation = exact_boolean_evaluation(&left, &overlapping_right, request);
-    let refinement = evaluation.certifications.refinement.clone();
+    let refinement = evaluation.certifications().refinement.clone();
     assert!(!refinement.is_required());
     refinement.validate().unwrap();
     evaluation
-        .certifications
+        .certifications()
         .validate_against_sources(&left, &overlapping_right, request)
         .unwrap();
     assert_eq!(
         evaluation
-            .certifications
+            .certifications()
             .freshness_against_sources(&left, &overlapping_right, request),
         ExactReportFreshness::Current
     );
     assert_eq!(
         evaluation
-            .certifications
+            .certifications()
             .freshness_against_sources(&left, &separated_right, request),
         ExactReportFreshness::SourceReplayMismatch
     );
@@ -3822,28 +3846,27 @@ fn public_exact_blocker_reports_replay_remaining_decisions() {
         ValidationPolicy::ALLOW_BOUNDARY,
     );
     let planar_evaluation = exact_boolean_evaluation(&left, &overlapping_right, planar_request);
-    let planar = planar_evaluation.certifications.planar_arrangement.clone();
+    let planar = planar_evaluation
+        .certifications()
+        .planar_arrangement
+        .clone();
     assert!(planar.is_already_materialized());
     assert!(!planar.is_required());
     planar.validate().unwrap();
     planar_evaluation
-        .certifications
+        .certifications()
         .validate_against_sources(&left, &overlapping_right, planar_request)
         .unwrap();
     assert_eq!(
-        planar_evaluation.certifications.freshness_against_sources(
-            &left,
-            &overlapping_right,
-            planar_request
-        ),
+        planar_evaluation
+            .certifications()
+            .freshness_against_sources(&left, &overlapping_right, planar_request),
         ExactReportFreshness::Current
     );
     assert_eq!(
-        planar_evaluation.certifications.freshness_against_sources(
-            &left,
-            &separated_right,
-            planar_request
-        ),
+        planar_evaluation
+            .certifications()
+            .freshness_against_sources(&left, &separated_right, planar_request),
         ExactReportFreshness::SourceReplayMismatch
     );
 
@@ -3852,21 +3875,21 @@ fn public_exact_blocker_reports_replay_remaining_decisions() {
         ValidationPolicy::ALLOW_BOUNDARY,
     );
     let same_evaluation = exact_boolean_evaluation(&left, &left, same_request);
-    let same_surface = same_evaluation.certifications.same_surface.clone();
+    let same_surface = same_evaluation.certifications().same_surface.clone();
     assert!(same_surface.is_certified());
     same_surface.validate().unwrap();
     same_evaluation
-        .certifications
+        .certifications()
         .validate_against_sources(&left, &left, same_request)
         .unwrap();
     assert_eq!(
         same_evaluation
-            .certifications
+            .certifications()
             .freshness_against_sources(&left, &left, same_request),
         ExactReportFreshness::Current
     );
     assert_eq!(
-        same_evaluation.certifications.freshness_against_sources(
+        same_evaluation.certifications().freshness_against_sources(
             &left,
             &separated_right,
             same_request
@@ -3885,15 +3908,18 @@ fn public_exact_blocker_reports_replay_remaining_decisions() {
         ValidationPolicy::ALLOW_BOUNDARY,
     );
     let open_evaluation = exact_boolean_evaluation(&left, &parallel_right, open_request);
-    let open_disjoint = open_evaluation.certifications.open_surface_disjoint.clone();
+    let open_disjoint = open_evaluation
+        .certifications()
+        .open_surface_disjoint
+        .clone();
     assert!(open_disjoint.is_certified());
     open_disjoint.validate().unwrap();
     open_evaluation
-        .certifications
+        .certifications()
         .validate_against_sources(&left, &parallel_right, open_request)
         .unwrap();
     assert_eq!(
-        open_evaluation.certifications.freshness_against_sources(
+        open_evaluation.certifications().freshness_against_sources(
             &left,
             &parallel_right,
             open_request
@@ -3901,7 +3927,7 @@ fn public_exact_blocker_reports_replay_remaining_decisions() {
         ExactReportFreshness::Current
     );
     assert_eq!(
-        open_evaluation.certifications.freshness_against_sources(
+        open_evaluation.certifications().freshness_against_sources(
             &left,
             &overlapping_right,
             open_request
@@ -3930,7 +3956,7 @@ fn open_surface_disjoint_report_classifies_retained_coplanar_overlap_blocker() {
         ValidationPolicy::ALLOW_BOUNDARY,
     );
     let evaluation = exact_boolean_evaluation(&left, &right, request);
-    let report = evaluation.certifications.open_surface_disjoint.clone();
+    let report = evaluation.certifications().open_surface_disjoint.clone();
 
     assert!(!report.is_certified());
     assert!(report.blocker.requires_planar_arrangement());
@@ -3938,7 +3964,7 @@ fn open_surface_disjoint_report_classifies_retained_coplanar_overlap_blocker() {
     assert!(report.retained_face_pairs > 0);
     report.validate().unwrap();
     evaluation
-        .certifications
+        .certifications()
         .validate_against_sources(&left, &right, request)
         .unwrap();
 
@@ -3967,7 +3993,7 @@ fn planar_arrangement_report_classifies_noncoplanar_candidates_as_winding_blocke
         ValidationPolicy::ALLOW_BOUNDARY,
     );
     let evaluation = exact_boolean_evaluation(&left, &right, request);
-    let report = evaluation.certifications.planar_arrangement.clone();
+    let report = evaluation.certifications().planar_arrangement.clone();
 
     assert!(!report.is_required());
     assert!(!report.is_already_materialized());
@@ -3975,7 +4001,7 @@ fn planar_arrangement_report_classifies_noncoplanar_candidates_as_winding_blocke
     assert!(report.blocker.candidate_pairs > 0);
     report.validate().unwrap();
     evaluation
-        .certifications
+        .certifications()
         .validate_against_sources(&left, &right, request)
         .unwrap();
 
@@ -4139,8 +4165,14 @@ fn trivial_boolean_shortcuts_are_publicly_replayable() {
         );
         empty_evaluation.validate().unwrap();
         let mut relabeled_empty_facts = empty_evaluation.clone();
-        relabeled_empty_facts.certifications.trivial.left_empty = false;
-        relabeled_empty_facts.certifications.trivial.right_empty = false;
+        relabeled_empty_facts
+            .certifications_mut()
+            .trivial
+            .left_empty = false;
+        relabeled_empty_facts
+            .certifications_mut()
+            .trivial
+            .right_empty = false;
         assert_report_validation_error!(
             relabeled_empty_facts.validate(),
             "{operation:?}: {relabeled_empty_facts:?}"
@@ -4213,7 +4245,7 @@ fn trivial_boolean_shortcuts_are_publicly_replayable() {
         disjoint_evaluation.validate().unwrap();
         let mut relabeled_disjoint_facts = disjoint_evaluation.clone();
         relabeled_disjoint_facts
-            .certifications
+            .certifications_mut()
             .trivial
             .bounds_disjoint = false;
         assert_report_validation_error!(
@@ -4253,12 +4285,12 @@ fn trivial_boolean_shortcuts_are_publicly_replayable() {
         identical_evaluation.validate().unwrap();
         let mut relabeled_identity_report = identical_evaluation.clone();
         relabeled_identity_report
-            .certifications
+            .certifications_mut()
             .identical
             .left_triangles += 1;
         assert!(
             relabeled_identity_report
-                .certifications
+                .certifications()
                 .identical
                 .validate()
                 .is_err()
@@ -4310,16 +4342,18 @@ fn trivial_boolean_shortcuts_are_publicly_replayable() {
         );
         same_surface_evaluation.validate().unwrap();
         let mut relabeled_same_surface_report = same_surface_evaluation.clone();
-        relabeled_same_surface_report.certifications.same_surface = exact_boolean_evaluation(
+        relabeled_same_surface_report
+            .certifications_mut()
+            .same_surface = exact_boolean_evaluation(
             &open_identical_left,
             &open_disjoint_left,
             ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
         )
-        .certifications
+        .certifications()
         .same_surface
         .clone();
         relabeled_same_surface_report
-            .certifications
+            .certifications()
             .same_surface
             .validate()
             .unwrap();
@@ -4364,7 +4398,7 @@ fn trivial_boolean_shortcuts_are_publicly_replayable() {
         lower_dimensional_evaluation.validate().unwrap();
         let mut relabeled_lower_dimensional_facts = lower_dimensional_evaluation.clone();
         relabeled_lower_dimensional_facts
-            .certifications
+            .certifications_mut()
             .regularized_solid
             .left_open_surface = false;
         assert_report_validation_error!(
@@ -4395,7 +4429,7 @@ fn trivial_boolean_shortcuts_are_publicly_replayable() {
         mixed_dimensional_evaluation.validate().unwrap();
         let mut relabeled_mixed_dimensional_facts = mixed_dimensional_evaluation.clone();
         relabeled_mixed_dimensional_facts
-            .certifications
+            .certifications_mut()
             .regularized_solid
             .right_open_surface = false;
         assert_report_validation_error!(
@@ -4426,17 +4460,17 @@ fn trivial_boolean_shortcuts_are_publicly_replayable() {
         open_disjoint_evaluation.validate().unwrap();
         let mut relabeled_disjoint_report = open_disjoint_evaluation.clone();
         relabeled_disjoint_report
-            .certifications
+            .certifications_mut()
             .open_surface_disjoint = exact_boolean_evaluation(
             &solid,
             &open_disjoint_right,
             ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
         )
-        .certifications
+        .certifications()
         .open_surface_disjoint
         .clone();
         relabeled_disjoint_report
-            .certifications
+            .certifications()
             .open_surface_disjoint
             .validate()
             .unwrap();
@@ -4772,11 +4806,11 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
         ValidationPolicy::ALLOW_BOUNDARY,
     );
     let evaluation = exact_boolean_evaluation(&left, &right, request);
-    let report = evaluation.certifications.boundary_touching.clone();
+    let report = evaluation.certifications().boundary_touching.clone();
     assert!(report.is_certified(), "{report:?}");
     report.validate().unwrap();
     evaluation
-        .certifications
+        .certifications()
         .validate_against_sources(&left, &right, request)
         .unwrap();
 
@@ -4819,12 +4853,12 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
     );
     assert_eq!(policy_preflight.retained_events, report.retained_events);
     policy_evaluation
-        .certifications
+        .certifications()
         .validate_against_sources(&left, &right, policy_request)
         .unwrap();
     assert_eq!(
         policy_evaluation
-            .certifications
+            .certifications()
             .freshness_against_sources(&left, &right, policy_request),
         hypermesh::ExactReportFreshness::Current
     );
@@ -4844,7 +4878,7 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
             ExactBoundaryBooleanPolicy::Reject,
         ),
     )
-    .certifications
+    .certifications()
     .winding_readiness
     .clone();
     assert!(
@@ -4852,7 +4886,7 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
         "{rejected_readiness:?}"
     );
 
-    let policy_readiness = policy_evaluation.certifications.winding_readiness.clone();
+    let policy_readiness = policy_evaluation.certifications().winding_readiness.clone();
     assert!(
         policy_readiness.is_boundary_policy_shortcut_materialized(),
         "{policy_readiness:?}"
@@ -4865,18 +4899,18 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
     assert_eq!(policy_readiness.retained_events, report.retained_events);
     policy_readiness.validate().unwrap();
     policy_evaluation
-        .certifications
+        .certifications()
         .validate_against_sources(&left, &right, policy_request)
         .unwrap();
     assert_eq!(
         policy_evaluation
-            .certifications
+            .certifications()
             .freshness_against_sources(&left, &right, policy_request),
         hypermesh::ExactReportFreshness::Current
     );
     assert!(
         policy_evaluation
-            .certifications
+            .certifications()
             .validate_against_sources(
                 &left,
                 &right,
@@ -4928,7 +4962,7 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
     );
     assert!(
         policy_evaluation
-            .certifications
+            .certifications()
             .validate_against_sources(&left, &separated_right, policy_request,)
             .is_err()
     );
@@ -4946,11 +4980,11 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
         "{closed_intersection_preflight:?}"
     );
     closed_intersection_evaluation
-        .certifications
+        .certifications()
         .validate_against_sources(&left, &right, closed_intersection_request)
         .unwrap();
     let closed_intersection_readiness = closed_intersection_evaluation
-        .certifications
+        .certifications()
         .winding_readiness
         .clone();
     assert!(
@@ -4990,11 +5024,11 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
             "{operation:?}: {closed_policy_preflight:?}"
         );
         closed_policy_evaluation
-            .certifications
+            .certifications()
             .validate_against_sources(&left, &right, closed_policy_request)
             .unwrap();
         let closed_policy_readiness = closed_policy_evaluation
-            .certifications
+            .certifications()
             .winding_readiness
             .clone();
         assert!(
@@ -5050,14 +5084,14 @@ fn boundary_touching_report_classifies_proper_crossing_as_winding_blocker() {
         ValidationPolicy::ALLOW_BOUNDARY,
     );
     let evaluation = exact_boolean_evaluation(&left, &right, request);
-    let report = evaluation.certifications.boundary_touching.clone();
+    let report = evaluation.certifications().boundary_touching.clone();
 
     assert!(!report.is_certified());
     assert!(report.blocker.requires_winding());
     assert!(report.blocker.candidate_pairs > 0);
     report.validate().unwrap();
     evaluation
-        .certifications
+        .certifications()
         .validate_against_sources(&left, &right, request)
         .unwrap();
 

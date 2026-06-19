@@ -185,7 +185,7 @@ fn run_case(case: &BenchCase) {
                 .coplanar_volumetric_evidence
                 .as_ref()
                 .or(evaluation
-                    .certifications
+                    .certifications()
                     .winding_readiness
                     .coplanar_volumetric_evidence
                     .as_ref());
@@ -213,7 +213,7 @@ fn run_case(case: &BenchCase) {
                     .coplanar_volumetric_evidence
                     .as_ref()
                     .or(evaluation
-                        .certifications
+                        .certifications()
                         .winding_readiness
                         .coplanar_volumetric_evidence
                         .as_ref());

@@ -2263,7 +2263,7 @@ pub struct ExactBooleanEvaluation {
     /// Exact preflight/scheduling result.
     preflight: ExactBooleanPreflight,
     /// Replayable exact certification reports for the request.
-    pub certifications: ExactBooleanCertificationSet,
+    certifications: ExactBooleanCertificationSet,
     /// Materialized exact result, when available under `request`.
     ///
     /// Borrow through [`Self::materialized_result`] or request an owned result
@@ -2312,6 +2312,19 @@ impl ExactBooleanEvaluation {
     /// Return the replayable certification bundle retained by this evaluation.
     pub fn certifications(&self) -> &ExactBooleanCertificationSet {
         &self.certifications
+    }
+
+    /// Return the replayable certification bundle mutably.
+    pub fn certifications_mut(&mut self) -> &mut ExactBooleanCertificationSet {
+        &mut self.certifications
+    }
+
+    /// Replace the retained certification bundle.
+    pub fn replace_certifications(
+        &mut self,
+        certifications: ExactBooleanCertificationSet,
+    ) -> ExactBooleanCertificationSet {
+        std::mem::replace(&mut self.certifications, certifications)
     }
 
     /// Return the exact preflight/scheduling report mutably.
