@@ -807,7 +807,7 @@ mod tests {
             ExactReportFreshness::Current
         );
 
-        let evaluation = workspace.evaluate(request).unwrap().clone();
+        let evaluation = workspace.evaluate(request).unwrap();
         evaluation.validate().unwrap();
         evaluation.validate_against_sources(&left, &right).unwrap();
         assert_eq!(evaluation.retained_arrangement_attempt(), Some(&attempt));
@@ -876,7 +876,7 @@ mod tests {
         let second = workspace.evaluate(request).unwrap() as *const ExactBooleanEvaluation;
         assert_eq!(first, second);
 
-        let evaluation = workspace.evaluate(request).unwrap().clone();
+        let evaluation = workspace.evaluate(request).unwrap();
         evaluation.validate_against_sources(&left, &right).unwrap();
         let certifications = evaluation.certifications().clone();
         certifications.validate_for_request(request).unwrap();
@@ -985,7 +985,7 @@ mod tests {
             .unwrap();
         workspace.preflight(request).unwrap();
 
-        let retained = workspace.evaluate(request).unwrap().clone();
+        let retained = workspace.evaluate(request).unwrap();
         retained.validate_against_sources(&left, &right).unwrap();
         assert_eq!(
             retained.freshness_against_sources(&left, &right),
@@ -1050,11 +1050,13 @@ mod tests {
             workspace.evaluations[0].1.materialized_result(),
             Some(&materialized)
         );
-        let evaluation = workspace.evaluate(request).unwrap().clone();
-        assert_eq!(evaluation.materialized_result(), Some(&materialized));
+        {
+            let evaluation = workspace.evaluate(request).unwrap();
+            assert_eq!(evaluation.materialized_result(), Some(&materialized));
+            evaluation.validate().unwrap();
+        }
         assert_eq!(workspace.evaluations.len(), 1);
         assert_eq!(workspace.materializations.len(), 1);
-        evaluation.validate().unwrap();
 
         let mut corrupt_workspace = ExactBooleanWorkspace::new(&left, &right);
         corrupt_workspace.materialize(request).unwrap();
@@ -1082,11 +1084,14 @@ mod tests {
             .unwrap();
         workspace.preflight(request).unwrap();
 
-        let evaluation = workspace.evaluate(request).unwrap().clone();
-        let evaluated_result = evaluation
-            .materialized_result()
-            .cloned()
-            .expect("certified test request should retain a result");
+        let evaluated_result = {
+            let evaluation = workspace.evaluate(request).unwrap();
+            evaluation.validate().unwrap();
+            evaluation
+                .materialized_result()
+                .cloned()
+                .expect("certified test request should retain a result")
+        };
         assert!(workspace.materializations.is_empty());
 
         let materialized = workspace.materialize(request).unwrap();
@@ -1270,7 +1275,7 @@ mod tests {
         materialized.validate().unwrap();
         assert!(materialized.matches_request(request));
         assert_eq!(workspace.materialize(request).unwrap(), materialized);
-        let evaluation = workspace.evaluate(request).unwrap().clone();
+        let evaluation = workspace.evaluate(request).unwrap();
         evaluation.validate().unwrap();
         assert_eq!(
             evaluation
