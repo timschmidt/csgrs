@@ -1077,39 +1077,41 @@ fn exact_coplanar_volumetric_cell_evidence_is_retained_by_public_evaluation() {
     let left = combine_exact_meshes(&left_a, &left_b, "test disconnected same-side fixture");
     let right = tetra_from_corners([0, 0, 0], [8, 0, 0], [0, 8, 0], [0, 0, 8]);
 
-    let evaluation = exact_boolean_evaluation(
+    with_exact_boolean_evaluation(
         &left,
         &right,
         ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED),
-    );
-    evaluation.validate().unwrap();
-    assert!(
-        evaluation.has_blocker() || evaluation.is_certified_arrangement_cell_complex(),
-        "{evaluation:?}"
-    );
-    assert!(
-        evaluation
-            .retained_arrangement_attempt()
-            .is_some_and(|attempt| attempt.region_ownership_resolves_requested_operation())
-            || evaluation_materializes_arrangement_cell_complex(&evaluation)
-            || evaluation.has_coplanar_volumetric_evidence(),
-        "{evaluation:?}"
-    );
-    evaluation.validate_against_sources(&left, &right).unwrap();
-    assert!(
-        evaluation.has_coplanar_volumetric_evidence(),
-        "coplanar volumetric blocker should retain source-aware evidence"
-    );
-    evaluation.validate_against_sources(&left, &right).unwrap();
-    assert!(evaluation.requires_coplanar_volumetric_cells());
-    assert!(evaluation.positive_area_coplanar_volumetric_overlapping_pairs() > 0);
-    assert!(evaluation.same_side_coplanar_volumetric_overlapping_pairs() > 0);
+        |evaluation| {
+            evaluation.validate().unwrap();
+            assert!(
+                evaluation.has_blocker() || evaluation.is_certified_arrangement_cell_complex(),
+                "{evaluation:?}"
+            );
+            assert!(
+                evaluation
+                    .retained_arrangement_attempt()
+                    .is_some_and(|attempt| attempt.region_ownership_resolves_requested_operation())
+                    || evaluation_materializes_arrangement_cell_complex(evaluation)
+                    || evaluation.has_coplanar_volumetric_evidence(),
+                "{evaluation:?}"
+            );
+            evaluation.validate_against_sources(&left, &right).unwrap();
+            assert!(
+                evaluation.has_coplanar_volumetric_evidence(),
+                "coplanar volumetric blocker should retain source-aware evidence"
+            );
+            evaluation.validate_against_sources(&left, &right).unwrap();
+            assert!(evaluation.requires_coplanar_volumetric_cells());
+            assert!(evaluation.positive_area_coplanar_volumetric_overlapping_pairs() > 0);
+            assert!(evaluation.same_side_coplanar_volumetric_overlapping_pairs() > 0);
 
-    let separated_right = tetra([10, 0, 0]);
-    assert!(
-        evaluation
-            .validate_against_sources(&left, &separated_right)
-            .is_err()
+            let separated_right = tetra([10, 0, 0]);
+            assert!(
+                evaluation
+                    .validate_against_sources(&left, &separated_right)
+                    .is_err()
+            );
+        },
     );
 }
 
