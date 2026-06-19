@@ -4068,20 +4068,6 @@ impl ExactBooleanPreflight {
         }
     }
 
-    /// Classify whether this retained preflight is fresh for the source meshes.
-    ///
-    /// This uses the default allow-boundary preflight contract for the retained
-    /// operation. Use [`Self::freshness_against_sources_for_request`] when a
-    /// caller deliberately accepted a different request contract.
-    #[cfg(test)]
-    pub(crate) fn freshness_against_sources(
-        &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-    ) -> ExactReportFreshness {
-        exact_report_freshness(self.validate_against_sources(left, right))
-    }
-
     /// Classify whether this retained preflight is fresh under `request`.
     #[cfg(test)]
     pub(crate) fn freshness_against_sources_for_request(
@@ -6732,8 +6718,12 @@ mod tests {
         )
         .map(|evaluation| evaluation.preflight().clone())
         .unwrap();
+        let allow_boundary_union = ExactBooleanRequest::new(
+            ExactBooleanOperation::Union,
+            ValidationPolicy::ALLOW_BOUNDARY,
+        );
         assert_eq!(
-            preflight.freshness_against_sources(&left, &right),
+            preflight.freshness_against_sources_for_request(&left, &right, allow_boundary_union),
             ExactReportFreshness::Current
         );
         assert_eq!(
@@ -6748,13 +6738,21 @@ mod tests {
         let mut stale_preflight = preflight.clone();
         stale_preflight.retained_events = 1;
         assert_eq!(
-            stale_preflight.freshness_against_sources(&left, &right),
+            stale_preflight.freshness_against_sources_for_request(
+                &left,
+                &right,
+                allow_boundary_union
+            ),
             ExactReportFreshness::StaleStatusEvidence
         );
 
         let overlapping_right = report_test_tetra([0, 0, 0]);
         assert_eq!(
-            preflight.freshness_against_sources(&left, &overlapping_right),
+            preflight.freshness_against_sources_for_request(
+                &left,
+                &overlapping_right,
+                allow_boundary_union
+            ),
             ExactReportFreshness::SourceReplayMismatch
         );
 
