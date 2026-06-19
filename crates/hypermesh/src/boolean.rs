@@ -2480,9 +2480,17 @@ pub(crate) fn try_materialize_certified_boolean_support_with_artifacts(
                         validation,
                         boundary_policy,
                     ),
+                    retained_arrangement_attempt,
                 ));
             }
-            materialize_graph_shortcut_from_graph_for_request(graph, left, right, request, support)?
+            materialize_graph_shortcut_from_graph_for_request(
+                graph,
+                left,
+                right,
+                request,
+                support,
+                retained_arrangement_attempt,
+            )?
         }
         ExactBooleanSupport::CertifiedOpenSurfaceArrangementUnion
         | ExactBooleanSupport::CertifiedOpenSurfaceArrangementIntersection
@@ -2529,6 +2537,7 @@ pub(crate) fn try_materialize_certified_boolean_support_with_artifacts(
                         validation,
                         ExactBoundaryBooleanPolicy::Reject,
                     ),
+                    retained_arrangement_attempt,
                 )
             }
         }
@@ -2551,6 +2560,7 @@ pub(crate) fn try_materialize_certified_boolean_support_with_artifacts(
                         validation,
                         ExactBoundaryBooleanPolicy::Reject,
                     ),
+                    retained_arrangement_attempt,
                 )
             }
         }
@@ -2572,6 +2582,7 @@ pub(crate) fn try_materialize_certified_boolean_support_with_artifacts(
                         validation,
                         ExactBoundaryBooleanPolicy::Reject,
                     ),
+                    retained_arrangement_attempt,
                 )
             }
         }
@@ -2594,6 +2605,7 @@ pub(crate) fn try_materialize_certified_boolean_support_with_artifacts(
                         validation,
                         ExactBoundaryBooleanPolicy::Reject,
                     ),
+                    retained_arrangement_attempt,
                 )
             }
         }
@@ -2609,13 +2621,27 @@ pub(crate) fn try_materialize_certified_boolean_support_with_artifacts(
         ExactBooleanSupport::CertifiedOpenSurfaceDisjoint => {
             let graph =
                 graph_for_certified_materialization(retained_graph, &mut owned_graph, left, right)?;
-            materialize_graph_shortcut_from_graph_for_request(graph, left, right, request, support)?
+            materialize_graph_shortcut_from_graph_for_request(
+                graph,
+                left,
+                right,
+                request,
+                support,
+                retained_arrangement_attempt,
+            )?
         }
         ExactBooleanSupport::CertifiedClosedWindingSeparated
         | ExactBooleanSupport::CertifiedClosedWindingContainment => {
             let graph =
                 graph_for_certified_materialization(retained_graph, &mut owned_graph, left, right)?;
-            materialize_graph_shortcut_from_graph_for_request(graph, left, right, request, support)?
+            materialize_graph_shortcut_from_graph_for_request(
+                graph,
+                left,
+                right,
+                request,
+                support,
+                retained_arrangement_attempt,
+            )?
         }
         ExactBooleanSupport::CertifiedMixedDimensionalRegularizedSolid => {
             if matches!(operation, ExactBooleanOperation::SelectedRegions(_))
@@ -2636,6 +2662,7 @@ pub(crate) fn try_materialize_certified_boolean_support_with_artifacts(
                         validation,
                         ExactBoundaryBooleanPolicy::Reject,
                     ),
+                    retained_arrangement_attempt,
                 )
             }
         }
@@ -2651,6 +2678,7 @@ pub(crate) fn try_materialize_certified_boolean_support_with_artifacts(
                     validation,
                     ExactBoundaryBooleanPolicy::Reject,
                 ),
+                retained_arrangement_attempt,
             )
         }
         ExactBooleanSupport::CertifiedConvexUnion
@@ -2664,6 +2692,7 @@ pub(crate) fn try_materialize_certified_boolean_support_with_artifacts(
                 validation,
                 ExactBoundaryBooleanPolicy::Reject,
             ),
+            retained_arrangement_attempt,
         ),
         ExactBooleanSupport::CertifiedConvexSeparated
         | ExactBooleanSupport::CertifiedConvexContainment => {
@@ -2680,6 +2709,7 @@ pub(crate) fn try_materialize_certified_boolean_support_with_artifacts(
                     validation,
                     ExactBoundaryBooleanPolicy::Reject,
                 ),
+                retained_arrangement_attempt,
             )
         }
         ExactBooleanSupport::RequiresBoundaryPolicy
@@ -2789,6 +2819,7 @@ fn materialize_certified_arrangement_cell_complex_support_with_arrangement(
             validation,
             ExactBoundaryBooleanPolicy::Reject,
         ),
+        retained_arrangement_attempt,
     ))
 }
 
@@ -4522,6 +4553,7 @@ fn materialize_graph_shortcut_from_graph_for_request(
     right: &ExactMesh,
     request: ExactBooleanRequest,
     support: ExactBooleanSupport,
+    retained_arrangement_attempt: Option<&ExactArrangementBooleanAttempt>,
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
     let operation = request.operation;
     let validation = request.validation;
@@ -4542,7 +4574,7 @@ fn materialize_graph_shortcut_from_graph_for_request(
                             validation,
                             ExactBoundaryBooleanPolicy::Reject,
                         ),
-                        None,
+                        retained_arrangement_attempt,
                     )
                     .is_err()
                 {
@@ -4557,6 +4589,7 @@ fn materialize_graph_shortcut_from_graph_for_request(
                         validation,
                         boundary_policy,
                     ),
+                    retained_arrangement_attempt,
                 ));
             }
             let Some(result) = boolean_boundary_touching_meshes_from_graph(
@@ -4575,6 +4608,7 @@ fn materialize_graph_shortcut_from_graph_for_request(
                 left,
                 right,
                 ExactBooleanRequest::with_boundary_policy(operation, validation, boundary_policy),
+                retained_arrangement_attempt,
             ));
         }
         ExactBooleanSupport::CertifiedOpenSurfaceDisjoint => {
@@ -4623,6 +4657,7 @@ fn materialize_graph_shortcut_from_graph_for_request(
             validation,
             ExactBoundaryBooleanPolicy::Reject,
         ),
+        retained_arrangement_attempt,
     ))
 }
 
@@ -4676,10 +4711,16 @@ fn request_replayable_result(
     left: &ExactMesh,
     right: &ExactMesh,
     request: ExactBooleanRequest,
+    retained_arrangement_attempt: Option<&ExactArrangementBooleanAttempt>,
 ) -> Option<ExactBooleanResult> {
     let result = result?;
     result
-        .validate_request_against_sources_with_retained_attempt(left, right, request, None)
+        .validate_request_against_sources_with_retained_attempt(
+            left,
+            right,
+            request,
+            retained_arrangement_attempt,
+        )
         .is_ok()
         .then_some(result)
 }
