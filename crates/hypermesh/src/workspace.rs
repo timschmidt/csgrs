@@ -85,6 +85,45 @@ impl<'a> ExactBooleanWorkspace<'a> {
             .expect("validated graph cache was just populated"))
     }
 
+    fn validated_graph_and_regularized_solid_arrangement_attempt(
+        &mut self,
+        request: ExactBooleanRequest,
+    ) -> Result<
+        (
+            &ExactIntersectionGraph,
+            Option<&ExactArrangementBooleanAttempt>,
+        ),
+        MeshError,
+    > {
+        let retained_attempt_index = self.regularized_solid_arrangement_attempt_index(request);
+        if let Some(index) = retained_attempt_index {
+            self.arrangement_attempts[index]
+                .2
+                .validate_against_sources(self.left, self.right)
+                .map_err(workspace_report_validation_error)?;
+        }
+
+        if self.graph.is_none() {
+            self.graph = Some(build_intersection_graph(self.left, self.right)?);
+        }
+        let graph = self
+            .graph
+            .as_ref()
+            .expect("intersection graph was just initialized");
+        graph
+            .validate_against_meshes(self.left, self.right)
+            .map_err(|error| {
+                MeshError::one(MeshDiagnostic::new(
+                    Severity::Error,
+                    DiagnosticKind::UnsupportedExactOperation,
+                    format!("exact boolean workspace graph failed validation: {error:?}"),
+                ))
+            })?;
+        let retained_attempt =
+            retained_attempt_index.map(|index| &self.arrangement_attempts[index].2);
+        Ok((graph, retained_attempt))
+    }
+
     fn regularized_solid_arrangement(&self) -> Option<&ExactArrangement> {
         cached_by_policy_index(
             &self.arrangements,
@@ -233,16 +272,14 @@ impl<'a> ExactBooleanWorkspace<'a> {
         {
             let _ = self.arrangement_attempt(request, ExactRegularizationPolicy::REGULARIZED_SOLID);
         }
-        let retained_attempt = self
-            .validated_regularized_solid_arrangement_attempt(request)?
-            .cloned();
-        let graph = self.validated_graph()?;
+        let (graph, retained_attempt) =
+            self.validated_graph_and_regularized_solid_arrangement_attempt(request)?;
         let graph_preflight = preflight_boolean_exact_request_from_graph_with_retained_attempt(
             graph,
             left,
             right,
             request,
-            retained_attempt.as_ref(),
+            retained_attempt,
         )?;
         if graph_preflight.operation != request.operation {
             return Err(workspace_report_validation_error(
@@ -263,7 +300,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
         ) {
             return Ok(graph_preflight);
         }
-        if let Some(attempt) = retained_attempt.as_ref()
+        if let Some(attempt) = retained_attempt
             && let Some(preflight) =
                 certified_arrangement_cell_complex_preflight_from_retained_attempt(
                     graph,
