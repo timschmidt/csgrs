@@ -2414,11 +2414,6 @@ impl ExactBooleanEvaluation {
         self.preflight.is_certified()
     }
 
-    /// Return whether this evaluation was certified by the arrangement/cell-complex path.
-    pub fn is_certified_arrangement_cell_complex(&self) -> bool {
-        self.preflight.is_certified_arrangement_cell_complex()
-    }
-
     /// Return whether this evaluation retained an explicit blocker.
     pub fn has_blocker(&self) -> bool {
         self.preflight.blocker().is_some()

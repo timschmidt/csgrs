@@ -897,7 +897,7 @@ fn affine_orthogonal_solid_recovers_multi_cell_basis_without_sampling_limits() {
             ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
             |preflight_evaluation| {
                 assert!(
-                    preflight_evaluation.is_certified_arrangement_cell_complex(),
+                    preflight_evaluation.materializes_arrangement_cell_complex(),
                     "{operation:?}: {preflight_evaluation:?}"
                 );
                 assert!(
@@ -1069,7 +1069,7 @@ fn exact_coplanar_volumetric_cell_evidence_is_retained_by_public_evaluation() {
         |evaluation| {
             evaluation.validate().unwrap();
             assert!(
-                evaluation.has_blocker() || evaluation.is_certified_arrangement_cell_complex(),
+                evaluation.has_blocker() || evaluation.materializes_arrangement_cell_complex(),
                 "{evaluation:?}"
             );
             assert!(
@@ -2288,7 +2288,7 @@ fn closed_no_volume_overlap_regularized_boolean_is_publicly_replayable() {
             preflight_request,
             |preflight_evaluation| {
                 assert!(
-                    preflight_evaluation.is_certified_arrangement_cell_complex(),
+                    preflight_evaluation.materializes_arrangement_cell_complex(),
                     "{operation:?}: {preflight_evaluation:?}"
                 );
                 assert!(
@@ -2529,7 +2529,7 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
     {
         let evaluation = workspace.evaluate(union_request).unwrap();
         assert!(
-            evaluation.is_certified_arrangement_cell_complex(),
+            evaluation.materializes_arrangement_cell_complex(),
             "{evaluation:?}"
         );
         evaluation.validate().unwrap();
@@ -2567,7 +2567,7 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
         );
         evaluation.validate().unwrap();
         assert!(
-            evaluation.is_certified_arrangement_cell_complex(),
+            evaluation.materializes_arrangement_cell_complex(),
             "{evaluation:?}"
         );
         if result.is_arrangement_cell_complex_materialized_for(ExactBooleanOperation::Union) {
@@ -2655,7 +2655,7 @@ fn exact_volumetric_winding_coplanar_cap_is_publicly_certified() {
         {
             let evaluation = workspace.evaluate(evaluation_request).unwrap();
             assert!(
-                evaluation.is_certified_arrangement_cell_complex(),
+                evaluation.materializes_arrangement_cell_complex(),
                 "{operation:?}: {evaluation:?}"
             );
             evaluation.validate().unwrap();
