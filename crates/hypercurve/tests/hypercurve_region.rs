@@ -1055,6 +1055,47 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
             .map(|bbox| (bbox.min().clone(), bbox.max().clone())),
         Some((p(0, 0), p(4, 4)))
     );
+    let source_segment_cache = result.workspace().source_segment_cache();
+    assert_eq!(
+        source_segment_cache.source_segment_count(),
+        attempt.request().source_segment_count()
+    );
+    assert_eq!(
+        source_segment_cache.source_segment_kind_counts(),
+        result.workspace().source_segment_kind_counts()
+    );
+    assert_eq!(
+        source_segment_cache.decided_source_segment_aabb_count(),
+        result.workspace().decided_source_segment_aabb_count()
+    );
+    assert_eq!(
+        source_segment_cache.undecided_source_segment_aabb_count(),
+        result.workspace().undecided_source_segment_aabb_count()
+    );
+    assert_eq!(
+        source_segment_cache
+            .source_aabb()
+            .map(|bbox| (bbox.min().clone(), bbox.max().clone())),
+        result
+            .workspace()
+            .source_aabb()
+            .map(|bbox| (bbox.min().clone(), bbox.max().clone()))
+    );
+    assert_eq!(source_segment_cache.segments().len(), 4);
+    let first_source_segment = &source_segment_cache.segments()[0];
+    assert_eq!(first_source_segment.source_segment_index(), 0);
+    assert_eq!(
+        first_source_segment.source_segment_kind(),
+        SegmentKind::Line
+    );
+    assert_eq!(first_source_segment.source_start_point(), &p(4, 0));
+    assert_eq!(first_source_segment.source_end_point(), &p(0, 0));
+    assert_eq!(
+        first_source_segment
+            .source_aabb()
+            .map(|bbox| (bbox.min().clone(), bbox.max().clone())),
+        Some((p(0, 0), p(4, 0)))
+    );
     let source_endpoint_cache = result.workspace().source_endpoint_bucket_cache();
     assert_eq!(source_endpoint_cache.endpoint_count(), 8);
     assert_eq!(source_endpoint_cache.bucket_count(), 4);
@@ -1428,6 +1469,37 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
             .map(|bbox| bbox.min().clone()),
         Some(p(0, -2))
     );
+    let source_segment_cache = result.workspace().source_segment_cache();
+    assert_eq!(
+        source_segment_cache.source_segment_count(),
+        attempt.request().source_segment_count()
+    );
+    assert_eq!(
+        source_segment_cache.source_segment_kind_counts(),
+        result.workspace().source_segment_kind_counts()
+    );
+    assert_eq!(source_segment_cache.decided_source_segment_aabb_count(), 2);
+    assert_eq!(
+        source_segment_cache.undecided_source_segment_aabb_count(),
+        0
+    );
+    assert_eq!(source_segment_cache.segments().len(), 2);
+    let first_source_segment = &source_segment_cache.segments()[0];
+    assert_eq!(first_source_segment.source_segment_index(), 0);
+    assert_eq!(
+        first_source_segment.source_segment_kind(),
+        SegmentKind::Line
+    );
+    assert_eq!(first_source_segment.source_start_point(), &p(4, 0));
+    assert_eq!(first_source_segment.source_end_point(), &p(0, 0));
+    let second_source_segment = &source_segment_cache.segments()[1];
+    assert_eq!(second_source_segment.source_segment_index(), 1);
+    assert_eq!(
+        second_source_segment.source_segment_kind(),
+        SegmentKind::Arc
+    );
+    assert_eq!(second_source_segment.source_start_point(), &p(0, 0));
+    assert_eq!(second_source_segment.source_end_point(), &p(4, 0));
     let source_endpoint_cache = result.workspace().source_endpoint_bucket_cache();
     assert_eq!(source_endpoint_cache.endpoint_count(), 4);
     assert_eq!(source_endpoint_cache.bucket_count(), 2);

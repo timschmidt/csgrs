@@ -32,12 +32,34 @@ pub struct ExactCurveWorkspace2 {
     source_segment_kind_counts: SegmentKindCounts,
     source_segment_aabbs: Vec<Option<Aabb2>>,
     source_aabb: Option<Aabb2>,
+    source_segment_cache: ExactCurveArrangementSourceSegmentCache2,
     source_endpoint_bucket_cache: ExactCurveArrangementSourceEndpointBucketCache2,
     split_schedule_cache: ExactCurveArrangementSplitScheduleCache2,
     split_cache: Option<ExactCurveArrangementSplitCache2>,
     endpoint_graph_cache: Option<ExactCurveArrangementEndpointGraphCache2>,
     ring_assembly_cache: Option<ExactCurveArrangementRingAssemblyCache2>,
     output_cache: Option<ExactCurveArrangementOutputCache2>,
+}
+
+/// Source segment fact retained during workspace preparation.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ExactCurveArrangementSourceSegmentFact2 {
+    source_segment_index: usize,
+    source_segment_kind: SegmentKind,
+    source_start_point: Point2,
+    source_end_point: Point2,
+    source_aabb: Option<Aabb2>,
+}
+
+/// Source segment fact cache retained during workspace preparation.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ExactCurveArrangementSourceSegmentCache2 {
+    source_segment_count: usize,
+    source_segment_kind_counts: SegmentKindCounts,
+    decided_source_segment_aabb_count: usize,
+    undecided_source_segment_aabb_count: usize,
+    source_aabb: Option<Aabb2>,
+    segments: Vec<ExactCurveArrangementSourceSegmentFact2>,
 }
 
 /// Source endpoint of a retained exact arrangement input segment.
@@ -1353,6 +1375,101 @@ impl ExactCurveArrangementRequest2 {
     }
 }
 
+impl ExactCurveArrangementSourceSegmentFact2 {
+    /// Returns the source segment index in request order.
+    pub const fn source_segment_index(&self) -> usize {
+        self.source_segment_index
+    }
+
+    /// Returns the primitive family of the source segment.
+    pub const fn source_segment_kind(&self) -> SegmentKind {
+        self.source_segment_kind
+    }
+
+    /// Returns the exact source segment start point.
+    pub const fn source_start_point(&self) -> &Point2 {
+        &self.source_start_point
+    }
+
+    /// Returns the exact source segment end point.
+    pub const fn source_end_point(&self) -> &Point2 {
+        &self.source_end_point
+    }
+
+    /// Returns the certified source segment AABB when available.
+    pub const fn source_aabb(&self) -> Option<&Aabb2> {
+        self.source_aabb.as_ref()
+    }
+}
+
+impl ExactCurveArrangementSourceSegmentCache2 {
+    fn from_sources(
+        source_segments: &[Segment2],
+        source_segment_aabbs: &[Option<Aabb2>],
+        source_segment_kind_counts: SegmentKindCounts,
+        source_aabb: Option<Aabb2>,
+    ) -> Self {
+        let segments = source_segments
+            .iter()
+            .zip(source_segment_aabbs.iter())
+            .enumerate()
+            .map(|(source_segment_index, (source_segment, source_aabb))| {
+                ExactCurveArrangementSourceSegmentFact2 {
+                    source_segment_index,
+                    source_segment_kind: source_segment.structural_facts().kind,
+                    source_start_point: source_segment.start().clone(),
+                    source_end_point: source_segment.end().clone(),
+                    source_aabb: source_aabb.clone(),
+                }
+            })
+            .collect::<Vec<_>>();
+        let decided_source_segment_aabb_count = source_segment_aabbs
+            .iter()
+            .filter(|source_aabb| source_aabb.is_some())
+            .count();
+        Self {
+            source_segment_count: source_segments.len(),
+            source_segment_kind_counts,
+            decided_source_segment_aabb_count,
+            undecided_source_segment_aabb_count: source_segments
+                .len()
+                .saturating_sub(decided_source_segment_aabb_count),
+            source_aabb,
+            segments,
+        }
+    }
+
+    /// Returns the number of retained source segments.
+    pub const fn source_segment_count(&self) -> usize {
+        self.source_segment_count
+    }
+
+    /// Returns source segment primitive-family counts.
+    pub const fn source_segment_kind_counts(&self) -> SegmentKindCounts {
+        self.source_segment_kind_counts
+    }
+
+    /// Returns the number of source segment boxes certified during workspace preparation.
+    pub const fn decided_source_segment_aabb_count(&self) -> usize {
+        self.decided_source_segment_aabb_count
+    }
+
+    /// Returns the number of source segment boxes that stayed uncertain.
+    pub const fn undecided_source_segment_aabb_count(&self) -> usize {
+        self.undecided_source_segment_aabb_count
+    }
+
+    /// Returns the retained aggregate source box when every source box was decided.
+    pub const fn source_aabb(&self) -> Option<&Aabb2> {
+        self.source_aabb.as_ref()
+    }
+
+    /// Returns source segment facts in request order.
+    pub fn segments(&self) -> &[ExactCurveArrangementSourceSegmentFact2] {
+        &self.segments
+    }
+}
+
 impl ExactCurveWorkspace2 {
     /// Builds retained workspace facts for a canonical arrangement request.
     pub fn from_request(
@@ -1362,6 +1479,12 @@ impl ExactCurveWorkspace2 {
         let source_segment_kind_counts = segment_kind_counts(&request.source_segments);
         let source_segment_aabbs = source_segment_aabbs(&request.source_segments, policy)?;
         let source_aabb = union_decided_aabbs(&source_segment_aabbs, policy);
+        let source_segment_cache = ExactCurveArrangementSourceSegmentCache2::from_sources(
+            &request.source_segments,
+            &source_segment_aabbs,
+            source_segment_kind_counts,
+            source_aabb.clone(),
+        );
         let source_endpoint_bucket_cache = source_endpoint_bucket_cache(&request.source_segments);
         let split_schedule_cache = split_schedule_cache(&source_segment_aabbs, policy);
         Ok(Self {
@@ -1369,6 +1492,7 @@ impl ExactCurveWorkspace2 {
             source_segment_kind_counts,
             source_segment_aabbs,
             source_aabb,
+            source_segment_cache,
             source_endpoint_bucket_cache,
             split_schedule_cache,
             split_cache: None,
@@ -1432,6 +1556,11 @@ impl ExactCurveWorkspace2 {
         self.source_segment_aabbs
             .len()
             .saturating_sub(self.decided_source_segment_aabb_count())
+    }
+
+    /// Returns retained source segment facts prepared before split scheduling.
+    pub const fn source_segment_cache(&self) -> &ExactCurveArrangementSourceSegmentCache2 {
+        &self.source_segment_cache
     }
 
     /// Returns exact source endpoint buckets retained during workspace preparation.
