@@ -1355,7 +1355,7 @@ impl ExactBooleanCertificationSet {
         self.planar_arrangement.validate()?;
         self.winding_readiness.validate()?;
         if self.planar_arrangement.operation() != request.operation
-            || self.winding_readiness.operation != request.operation
+            || self.winding_readiness.operation() != request.operation
         {
             return Err(ExactReportValidationError::StatusEvidenceMismatch);
         }
@@ -1371,7 +1371,7 @@ impl ExactBooleanCertificationSet {
         }
         let boundary_policy_shortcut_certified = self.boundary_touching.is_certified()
             && matches!(
-                self.winding_readiness.status,
+                self.winding_readiness.status(),
                 ExactWindingReadinessStatus::BoundaryPolicyShortcutAlreadyMaterialized
                     | ExactWindingReadinessStatus::BoundaryPolicyRequired
             );
@@ -1423,7 +1423,7 @@ impl ExactBooleanCertificationSet {
         &self,
         operation: ExactBooleanOperation,
     ) -> bool {
-        match self.winding_readiness.status {
+        match self.winding_readiness.status() {
             ExactWindingReadinessStatus::EmptyOperandAlreadyMaterialized => {
                 self.trivial.has_empty_operand()
             }
@@ -1504,7 +1504,7 @@ impl ExactBooleanCertificationSet {
         &self,
         preflight: &ExactBooleanPreflight,
     ) -> bool {
-        self.winding_readiness.status
+        self.winding_readiness.status()
             == ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized
             && self.arrangement_attempt_certifies_output_for_operation(preflight.operation)
     }
@@ -1541,14 +1541,14 @@ impl ExactBooleanCertificationSet {
         &self,
         preflight: &ExactBooleanPreflight,
     ) -> bool {
-        (self.winding_readiness.status
+        (self.winding_readiness.status()
             == ExactWindingReadinessStatus::OpenSurfaceDisjointAlreadyMaterialized
             || self.arrangement_attempt_matches_certified_preflight(preflight))
             && self.open_surface_disjoint_matches_preflight(preflight)
     }
 
     fn planar_arrangement_matches_preflight(&self, preflight: &ExactBooleanPreflight) -> bool {
-        self.winding_readiness.status == ExactWindingReadinessStatus::PlanarArrangementRequired
+        self.winding_readiness.status() == ExactWindingReadinessStatus::PlanarArrangementRequired
             && preflight.graph_had_unknowns == self.planar_arrangement.graph_had_unknowns()
             && preflight.retained_face_pairs == self.planar_arrangement.retained_face_pairs()
             && preflight.retained_events == self.planar_arrangement.retained_events()
@@ -1561,7 +1561,7 @@ impl ExactBooleanCertificationSet {
     }
 
     fn selected_region_policy_matches_preflight(&self, preflight: &ExactBooleanPreflight) -> bool {
-        self.winding_readiness.status == ExactWindingReadinessStatus::NotNamedOperation
+        self.winding_readiness.status() == ExactWindingReadinessStatus::NotNamedOperation
             && matches!(
                 preflight.operation,
                 ExactBooleanOperation::SelectedRegions(_)
@@ -1569,18 +1569,18 @@ impl ExactBooleanCertificationSet {
             && preflight.graph_had_unknowns == self.refinement.graph_had_unknowns
             && preflight.retained_face_pairs == self.refinement.retained_face_pairs
             && preflight.retained_events == self.refinement.retained_events
-            && preflight.graph_had_unknowns == self.winding_readiness.graph_had_unknowns
-            && preflight.retained_face_pairs == self.winding_readiness.retained_face_pairs
-            && preflight.retained_events == self.winding_readiness.retained_events
+            && preflight.graph_had_unknowns == self.winding_readiness.graph_had_unknowns()
+            && preflight.retained_face_pairs == self.winding_readiness.retained_face_pairs()
+            && preflight.retained_events == self.winding_readiness.retained_events()
             && preflight.blocker.is_none()
             && preflight.arrangement_readiness.is_none()
             && preflight.coplanar_volumetric_evidence.is_none()
-            && self.winding_readiness.region_count == 0
-            && self.winding_readiness.region_classifications.is_empty()
-            && self.winding_readiness.arrangement_readiness.is_none()
+            && self.winding_readiness.region_count() == 0
+            && self.winding_readiness.region_classifications().is_empty()
+            && self.winding_readiness.arrangement_readiness().is_none()
             && self
                 .winding_readiness
-                .coplanar_volumetric_evidence
+                .coplanar_volumetric_evidence()
                 .is_none()
     }
 
@@ -1589,7 +1589,8 @@ impl ExactBooleanCertificationSet {
         preflight: &ExactBooleanPreflight,
     ) -> bool {
         self.boundary_touching.is_certified()
-            && self.winding_readiness.status == ExactWindingReadinessStatus::BoundaryPolicyRequired
+            && self.winding_readiness.status()
+                == ExactWindingReadinessStatus::BoundaryPolicyRequired
             && self.boundary_report_matches_preflight(preflight, true)
     }
 
@@ -1599,7 +1600,7 @@ impl ExactBooleanCertificationSet {
     ) -> bool {
         self.boundary_touching.is_certified()
             && (matches!(
-                self.winding_readiness.status,
+                self.winding_readiness.status(),
                 ExactWindingReadinessStatus::BoundaryPolicyShortcutAlreadyMaterialized
                     | ExactWindingReadinessStatus::BoundaryPolicyRequired
             ) || self.materialized_shortcut_certified_for_operation(preflight.operation))
@@ -1630,22 +1631,22 @@ impl ExactBooleanCertificationSet {
         preflight: &ExactBooleanPreflight,
     ) -> bool {
         self.closed_boundary_touching_materialization_certified_by_retained_evidence()
-            && ((self.winding_readiness.status
+            && ((self.winding_readiness.status()
                 == ExactWindingReadinessStatus::ClosedBoundaryTouchingAlreadyMaterialized
                 && (self.boundary_report_matches_preflight(preflight, false)
                     || (preflight.graph_had_unknowns
-                        == self.winding_readiness.graph_had_unknowns
+                        == self.winding_readiness.graph_had_unknowns()
                         && preflight.retained_face_pairs
-                            == self.winding_readiness.retained_face_pairs
-                        && preflight.retained_events == self.winding_readiness.retained_events
-                        && preflight.region_count == self.winding_readiness.region_count
+                            == self.winding_readiness.retained_face_pairs()
+                        && preflight.retained_events == self.winding_readiness.retained_events()
+                        && preflight.region_count == self.winding_readiness.region_count()
                         && preflight.region_classifications
-                            == self.winding_readiness.region_classifications
+                            == self.winding_readiness.region_classifications()
                         && preflight.blocker.is_none()
                         && preflight.arrangement_readiness.is_none()
                         && preflight.coplanar_volumetric_evidence.is_some()
-                        && preflight.coplanar_volumetric_evidence
-                            == self.winding_readiness.coplanar_volumetric_evidence)))
+                        && preflight.coplanar_volumetric_evidence.as_ref()
+                            == self.winding_readiness.coplanar_volumetric_evidence())))
                 || self.arrangement_attempt_matches_certified_preflight(preflight))
     }
 
@@ -1653,8 +1654,7 @@ impl ExactBooleanCertificationSet {
         self.boundary_touching.is_certified()
             || self
                 .winding_readiness
-                .coplanar_volumetric_evidence
-                .as_ref()
+                .coplanar_volumetric_evidence()
                 .is_some_and(|evidence| {
                     evidence.obstacle == CoplanarVolumetricCellObstacle::BoundaryOnlyContact
                         && evidence.positive_area_coplanar_overlapping_pairs != 0
@@ -1666,19 +1666,19 @@ impl ExactBooleanCertificationSet {
         &self,
         preflight: &ExactBooleanPreflight,
     ) -> bool {
-        (self.winding_readiness.status
+        (self.winding_readiness.status()
             == ExactWindingReadinessStatus::OpenSurfaceArrangementAlreadyMaterialized
-            && preflight.graph_had_unknowns == self.winding_readiness.graph_had_unknowns
-            && preflight.retained_face_pairs == self.winding_readiness.retained_face_pairs
-            && preflight.retained_events == self.winding_readiness.retained_events
-            && preflight.region_count == self.winding_readiness.region_count
-            && preflight.region_classifications == self.winding_readiness.region_classifications
+            && preflight.graph_had_unknowns == self.winding_readiness.graph_had_unknowns()
+            && preflight.retained_face_pairs == self.winding_readiness.retained_face_pairs()
+            && preflight.retained_events == self.winding_readiness.retained_events()
+            && preflight.region_count == self.winding_readiness.region_count()
+            && preflight.region_classifications == self.winding_readiness.region_classifications()
             && preflight.blocker.is_none()
             && preflight.arrangement_readiness.is_none()
             && preflight.coplanar_volumetric_evidence.is_none()
             && self
                 .winding_readiness
-                .coplanar_volumetric_evidence
+                .coplanar_volumetric_evidence()
                 .is_none())
             || (self.arrangement_attempt_matches_certified_preflight(preflight)
                 && preflight.graph_had_unknowns == self.refinement.graph_had_unknowns
@@ -1726,13 +1726,13 @@ impl ExactBooleanCertificationSet {
         &self,
         preflight: &ExactBooleanPreflight,
     ) -> bool {
-        self.winding_readiness.status
+        self.winding_readiness.status()
             == ExactWindingReadinessStatus::CoplanarVolumetricCellsRequired
             && self.winding_handoff_matches_preflight(preflight)
     }
 
     fn unresolved_graph_matches_preflight(&self, preflight: &ExactBooleanPreflight) -> bool {
-        self.winding_readiness.status == ExactWindingReadinessStatus::GraphUnknowns
+        self.winding_readiness.status() == ExactWindingReadinessStatus::GraphUnknowns
             && self.winding_handoff_matches_preflight(preflight)
     }
 
@@ -1740,7 +1740,9 @@ impl ExactBooleanCertificationSet {
         &self,
         preflight: &ExactBooleanPreflight,
     ) -> bool {
-        self.winding_readiness.status.routes_to_certified_winding()
+        self.winding_readiness
+            .status()
+            .routes_to_certified_winding()
             && self.winding_handoff_matches_preflight(preflight)
     }
 
@@ -1758,33 +1760,33 @@ impl ExactBooleanCertificationSet {
     }
 
     fn winding_handoff_matches_preflight(&self, preflight: &ExactBooleanPreflight) -> bool {
-        preflight.graph_had_unknowns == self.winding_readiness.graph_had_unknowns
-            && preflight.retained_face_pairs == self.winding_readiness.retained_face_pairs
-            && preflight.retained_events == self.winding_readiness.retained_events
-            && preflight.region_count == self.winding_readiness.region_count
-            && preflight.region_classifications == self.winding_readiness.region_classifications
-            && preflight.blocker.as_ref() == Some(&self.winding_readiness.blocker)
+        preflight.graph_had_unknowns == self.winding_readiness.graph_had_unknowns()
+            && preflight.retained_face_pairs == self.winding_readiness.retained_face_pairs()
+            && preflight.retained_events == self.winding_readiness.retained_events()
+            && preflight.region_count == self.winding_readiness.region_count()
+            && preflight.region_classifications == self.winding_readiness.region_classifications()
+            && preflight.blocker.as_ref() == Some(self.winding_readiness.blocker())
             && preflight.arrangement_readiness.is_none()
-            && preflight.coplanar_volumetric_evidence
-                == self.winding_readiness.coplanar_volumetric_evidence
+            && preflight.coplanar_volumetric_evidence.as_ref()
+                == self.winding_readiness.coplanar_volumetric_evidence()
     }
 
     fn empty_operand_matches_preflight(&self, preflight: &ExactBooleanPreflight) -> bool {
-        (self.winding_readiness.status
+        (self.winding_readiness.status()
             == ExactWindingReadinessStatus::EmptyOperandAlreadyMaterialized
             || self.arrangement_attempt_matches_certified_preflight(preflight))
             && self.trivial.has_empty_operand()
     }
 
     fn bounds_disjoint_matches_preflight(&self, preflight: &ExactBooleanPreflight) -> bool {
-        (self.winding_readiness.status
+        (self.winding_readiness.status()
             == ExactWindingReadinessStatus::BoundsDisjointAlreadyMaterialized
             || self.arrangement_attempt_matches_certified_preflight(preflight))
             && self.trivial.bounds_disjoint
     }
 
     fn identical_matches_preflight(&self, preflight: &ExactBooleanPreflight) -> bool {
-        (self.winding_readiness.status
+        (self.winding_readiness.status()
             == ExactWindingReadinessStatus::SurfaceEqualityAlreadyMaterialized
             || self.arrangement_attempt_matches_certified_preflight(preflight))
             && self.identical.is_certified()
@@ -1792,7 +1794,7 @@ impl ExactBooleanCertificationSet {
     }
 
     fn same_surface_matches_preflight(&self, preflight: &ExactBooleanPreflight) -> bool {
-        (self.winding_readiness.status
+        (self.winding_readiness.status()
             == ExactWindingReadinessStatus::SurfaceEqualityAlreadyMaterialized
             || self.arrangement_attempt_matches_certified_preflight(preflight))
             && self.same_surface.is_certified()
@@ -1813,7 +1815,7 @@ impl ExactBooleanCertificationSet {
         &self,
         preflight: &ExactBooleanPreflight,
     ) -> bool {
-        (self.winding_readiness.status
+        (self.winding_readiness.status()
             == ExactWindingReadinessStatus::ClosedWindingSeparatedAlreadyMaterialized
             || self.arrangement_attempt_matches_certified_preflight(preflight))
             && self.closed_winding_reports_match_separated()
@@ -1823,7 +1825,7 @@ impl ExactBooleanCertificationSet {
         &self,
         preflight: &ExactBooleanPreflight,
     ) -> bool {
-        (self.winding_readiness.status
+        (self.winding_readiness.status()
             == ExactWindingReadinessStatus::ClosedWindingContainmentAlreadyMaterialized
             || self.arrangement_attempt_matches_certified_preflight(preflight))
             && self.closed_winding_reports_match_containment()
@@ -1833,7 +1835,7 @@ impl ExactBooleanCertificationSet {
         &self,
         preflight: &ExactBooleanPreflight,
     ) -> bool {
-        (self.winding_readiness.status
+        (self.winding_readiness.status()
             == ExactWindingReadinessStatus::MixedDimensionalRegularizedSolidAlreadyMaterialized
             || self.arrangement_attempt_matches_certified_preflight(preflight))
             && ((self.regularized_solid.left_closed_solid
@@ -1846,7 +1848,7 @@ impl ExactBooleanCertificationSet {
         &self,
         preflight: &ExactBooleanPreflight,
     ) -> bool {
-        (self.winding_readiness.status
+        (self.winding_readiness.status()
             == ExactWindingReadinessStatus::LowerDimensionalRegularizedSolidAlreadyMaterialized
             || self.arrangement_attempt_matches_certified_preflight(preflight))
             && self.regularized_solid.left_open_surface
@@ -1872,27 +1874,27 @@ impl ExactBooleanCertificationSet {
     }
 
     fn convex_boolean_matches_preflight(&self, preflight: &ExactBooleanPreflight) -> bool {
-        (self.winding_readiness.status
+        (self.winding_readiness.status()
             == ExactWindingReadinessStatus::ConvexBooleanAlreadyMaterialized
             || self.arrangement_attempt_matches_certified_preflight(preflight))
             && self.convex_reports_match_preflight_support(preflight)
     }
 
     fn convex_separated_matches_preflight(&self, preflight: &ExactBooleanPreflight) -> bool {
-        (self.winding_readiness.status
+        (self.winding_readiness.status()
             == ExactWindingReadinessStatus::ConvexBooleanAlreadyMaterialized
             && self.convex_reports_match_preflight_support(preflight))
-            || (self.winding_readiness.status
+            || (self.winding_readiness.status()
                 == ExactWindingReadinessStatus::ClosedWindingSeparatedAlreadyMaterialized
                 && self.closed_winding_reports_match_separated())
             || self.arrangement_attempt_matches_certified_preflight(preflight)
     }
 
     fn convex_containment_matches_preflight(&self, preflight: &ExactBooleanPreflight) -> bool {
-        (self.winding_readiness.status
+        (self.winding_readiness.status()
             == ExactWindingReadinessStatus::ConvexBooleanAlreadyMaterialized
             && self.convex_reports_match_preflight_support(preflight))
-            || (self.winding_readiness.status
+            || (self.winding_readiness.status()
                 == ExactWindingReadinessStatus::ClosedWindingContainmentAlreadyMaterialized
                 && self.closed_winding_reports_match_containment())
             || self.arrangement_attempt_matches_certified_preflight(preflight)
@@ -1916,21 +1918,21 @@ impl ExactBooleanCertificationSet {
                 && self.topology_assembly_complete()
                 && {
                     let region_handoff_matches = (preflight.region_count
-                        == self.winding_readiness.region_count
+                        == self.winding_readiness.region_count()
                         && preflight.region_classifications
-                            == self.winding_readiness.region_classifications)
+                            == self.winding_readiness.region_classifications())
                         || (preflight.region_count == 0
                             && preflight.region_classifications.is_empty());
-                    preflight.graph_had_unknowns == self.winding_readiness.graph_had_unknowns
+                    preflight.graph_had_unknowns == self.winding_readiness.graph_had_unknowns()
                         && preflight.retained_face_pairs
-                            == self.winding_readiness.retained_face_pairs
-                        && preflight.retained_events == self.winding_readiness.retained_events
+                            == self.winding_readiness.retained_face_pairs()
+                        && preflight.retained_events == self.winding_readiness.retained_events()
                         && region_handoff_matches
                         && preflight.blocker.is_none()
-                        && preflight.arrangement_readiness
-                            == self.winding_readiness.arrangement_readiness
-                        && preflight.coplanar_volumetric_evidence
-                            == self.winding_readiness.coplanar_volumetric_evidence
+                        && preflight.arrangement_readiness.as_ref()
+                            == self.winding_readiness.arrangement_readiness()
+                        && preflight.coplanar_volumetric_evidence.as_ref()
+                            == self.winding_readiness.coplanar_volumetric_evidence()
                 })
     }
 

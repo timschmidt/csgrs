@@ -340,10 +340,10 @@ fn exact_boolean_evaluation_materializes_certified_result_publicly() {
     relabeled_support.preflight().validate().unwrap();
     assert_report_validation_error!(relabeled_support.validate());
     let mut relabeled_winding_status = evaluation.clone();
-    relabeled_winding_status
+    *relabeled_winding_status
         .certifications_mut()
         .winding_readiness_mut()
-        .operation = ExactBooleanOperation::Difference;
+        .operation_mut() = ExactBooleanOperation::Difference;
     relabeled_winding_status
         .certifications()
         .winding_readiness()
@@ -475,10 +475,10 @@ fn exact_boolean_evaluation_materializes_boundary_policy_shortcut_by_default() {
         .unwrap();
     assert_report_validation_error!(mixed_graph_snapshot.validate());
     let mut relabeled_winding_status = evaluation.clone();
-    relabeled_winding_status
+    *relabeled_winding_status
         .certifications_mut()
         .winding_readiness_mut()
-        .operation = ExactBooleanOperation::Difference;
+        .operation_mut() = ExactBooleanOperation::Difference;
     relabeled_winding_status
         .certifications()
         .winding_readiness()
@@ -1284,15 +1284,15 @@ fn exact_coplanar_volumetric_cell_evidence_is_retained_by_public_evaluation() {
     if evaluation
         .certifications()
         .winding_readiness()
-        .coplanar_volumetric_evidence
+        .coplanar_volumetric_evidence()
         .is_some()
     {
         assert_eq!(
-            preflight.coplanar_volumetric_evidence,
+            preflight.coplanar_volumetric_evidence.as_ref(),
             evaluation
                 .certifications()
                 .winding_readiness()
-                .coplanar_volumetric_evidence
+                .coplanar_volumetric_evidence()
         );
     } else {
         assert!(preflight.coplanar_volumetric_evidence.is_some());
@@ -2179,10 +2179,10 @@ fn exact_selected_region_boolean_is_publicly_replayable() {
         "{stale_result:?}"
     );
     let mut stale_winding_handoff = evaluation.clone();
-    stale_winding_handoff
+    *stale_winding_handoff
         .certifications_mut()
         .winding_readiness_mut()
-        .retained_events += 1;
+        .retained_events_mut() += 1;
     assert!(
         stale_winding_handoff.validate().is_err(),
         "{stale_winding_handoff:?}"
@@ -2353,14 +2353,14 @@ fn lower_dimensional_regularized_boolean_is_publicly_replayable() {
             "{operation:?}: {readiness:?}"
         );
         assert!(
-            readiness.blocker.requires_winding(),
+            readiness.blocker().requires_winding(),
             "{operation:?}: {readiness:?}"
         );
         if readiness_materialized_lower {
-            assert_eq!(readiness.retained_face_pairs, 0);
-            assert_eq!(readiness.retained_events, 0);
+            assert_eq!(readiness.retained_face_pairs(), 0);
+            assert_eq!(readiness.retained_events(), 0);
         }
-        assert_eq!(readiness.region_count, 0);
+        assert_eq!(readiness.region_count(), 0);
         readiness.validate().unwrap();
         if readiness_materialized_lower {
             evaluation
@@ -2885,7 +2885,7 @@ fn closed_no_volume_overlap_regularized_boolean_is_publicly_replayable() {
                 "{operation:?}: {readiness:?}"
             );
             assert_eq!(
-                readiness.coplanar_volumetric_evidence.as_ref(),
+                readiness.coplanar_volumetric_evidence(),
                 retained_evidence.as_ref(),
                 "{operation:?}: no-volume readiness should retain consumed source-aware evidence"
             );
@@ -2904,7 +2904,8 @@ fn closed_no_volume_overlap_regularized_boolean_is_publicly_replayable() {
             cleared_handoff_evidence
                 .certifications_mut()
                 .winding_readiness_mut()
-                .coplanar_volumetric_evidence = None;
+                .coplanar_volumetric_evidence_mut()
+                .take();
             assert!(
                 cleared_handoff_evidence.validate().is_err(),
                 "{operation:?}: {cleared_handoff_evidence:?}"
@@ -3139,11 +3140,12 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
         "{readiness:?}"
     );
     assert_eq!(
-        readiness.retained_face_pairs, preflight.retained_face_pairs,
+        readiness.retained_face_pairs(),
+        preflight.retained_face_pairs,
         "{readiness:?}"
     );
-    assert_eq!(readiness.retained_events, preflight.retained_events);
-    assert_eq!(readiness.region_count, 0);
+    assert_eq!(readiness.retained_events(), preflight.retained_events);
+    assert_eq!(readiness.region_count(), 0);
     readiness.validate().unwrap();
 
     let result = evaluation
@@ -3222,14 +3224,14 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
     assert_report_validation_error!(attempt.validate());
     assert_report_validation_error!(stale_attempt_report.validate());
     let mut stale_readiness_counts = evaluation.clone();
-    stale_readiness_counts
+    *stale_readiness_counts
         .certifications_mut()
         .winding_readiness_mut()
-        .retained_face_pairs += 1;
-    stale_readiness_counts
+        .retained_face_pairs_mut() += 1;
+    *stale_readiness_counts
         .certifications_mut()
         .winding_readiness_mut()
-        .retained_events += 1;
+        .retained_events_mut() += 1;
     assert!(
         stale_readiness_counts.validate().is_err(),
         "{stale_readiness_counts:?}"
@@ -4895,12 +4897,12 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
         policy_readiness.is_boundary_policy_shortcut_materialized(),
         "{policy_readiness:?}"
     );
-    assert!(policy_readiness.blocker.requires_boundary_policy());
+    assert!(policy_readiness.blocker().requires_boundary_policy());
     assert_eq!(
-        policy_readiness.retained_face_pairs,
+        policy_readiness.retained_face_pairs(),
         report.retained_face_pairs()
     );
-    assert_eq!(policy_readiness.retained_events, report.retained_events());
+    assert_eq!(policy_readiness.retained_events(), report.retained_events());
     policy_readiness.validate().unwrap();
     policy_evaluation
         .certifications()

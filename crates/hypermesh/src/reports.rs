@@ -6202,7 +6202,7 @@ impl ExactPlanarArrangementReport {
 }
 
 /// Certification status for the remaining exact winding handoff.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ExactWindingReadinessStatus {
     /// Selected-region assembly already carries its own explicit region policy.
     NotNamedOperation,
@@ -6332,34 +6332,106 @@ impl ExactWindingReadinessStatus {
 #[derive(Clone, Debug, PartialEq)]
 pub struct ExactWindingReadinessReport {
     /// Requested named operation.
-    pub operation: ExactBooleanOperation,
+    pub(crate) operation: ExactBooleanOperation,
     /// Coarse readiness status.
-    pub status: ExactWindingReadinessStatus,
+    pub(crate) status: ExactWindingReadinessStatus,
     /// Whether graph extraction retained unknown events.
-    pub graph_had_unknowns: bool,
+    pub(crate) graph_had_unknowns: bool,
     /// Retained face-pair records after exact scheduling.
-    pub retained_face_pairs: usize,
+    pub(crate) retained_face_pairs: usize,
     /// Total retained event records.
-    pub retained_events: usize,
+    pub(crate) retained_events: usize,
     /// Number of checked split regions prepared for winding.
-    pub region_count: usize,
+    pub(crate) region_count: usize,
     /// Certified region-vs-opposite-plane classifications.
-    pub region_classifications: Vec<FaceRegionPlaneClassification>,
+    pub(crate) region_classifications: Vec<FaceRegionPlaneClassification>,
     /// Relation counts for the blocker represented by this report.
-    pub blocker: ExactBooleanBlocker,
+    pub(crate) blocker: ExactBooleanBlocker,
     /// Checked coplanar-overlap readiness retained when winding is blocked by
     /// planar-cell extraction rather than by volumetric inside/outside policy.
-    pub arrangement_readiness: Option<CoplanarArrangementReadinessReport>,
+    pub(crate) arrangement_readiness: Option<CoplanarArrangementReadinessReport>,
     /// Source-aware coplanar volumetric-cell evidence retained when readiness
     /// is blocked by, or has just consumed, coplanar source-face cells.
     ///
     /// The winding handoff must not reduce this state to raw coplanar pair
     /// counts: exact side evidence is what distinguishes boundary-only contact
     /// from a real volumetric-cell topology obligation.
-    pub coplanar_volumetric_evidence: Option<CoplanarVolumetricCellEvidenceReport>,
+    pub(crate) coplanar_volumetric_evidence: Option<CoplanarVolumetricCellEvidenceReport>,
 }
 
 impl ExactWindingReadinessReport {
+    /// Return the requested named operation.
+    pub const fn operation(&self) -> ExactBooleanOperation {
+        self.operation
+    }
+
+    /// Return the requested named operation mutably.
+    pub fn operation_mut(&mut self) -> &mut ExactBooleanOperation {
+        &mut self.operation
+    }
+
+    /// Return the coarse winding-readiness status.
+    pub const fn status(&self) -> ExactWindingReadinessStatus {
+        self.status
+    }
+
+    /// Return whether graph extraction retained unknown events.
+    pub const fn graph_had_unknowns(&self) -> bool {
+        self.graph_had_unknowns
+    }
+
+    /// Return the retained face-pair record count.
+    pub const fn retained_face_pairs(&self) -> usize {
+        self.retained_face_pairs
+    }
+
+    /// Return the retained face-pair record count mutably.
+    pub fn retained_face_pairs_mut(&mut self) -> &mut usize {
+        &mut self.retained_face_pairs
+    }
+
+    /// Return the retained event record count.
+    pub const fn retained_events(&self) -> usize {
+        self.retained_events
+    }
+
+    /// Return the retained event record count mutably.
+    pub fn retained_events_mut(&mut self) -> &mut usize {
+        &mut self.retained_events
+    }
+
+    /// Return the checked split-region count.
+    pub const fn region_count(&self) -> usize {
+        self.region_count
+    }
+
+    /// Return the retained split-region classifications.
+    pub fn region_classifications(&self) -> &[FaceRegionPlaneClassification] {
+        &self.region_classifications
+    }
+
+    /// Return the retained relation-count blocker.
+    pub const fn blocker(&self) -> &ExactBooleanBlocker {
+        &self.blocker
+    }
+
+    /// Return the retained coplanar arrangement readiness summary.
+    pub fn arrangement_readiness(&self) -> Option<&CoplanarArrangementReadinessReport> {
+        self.arrangement_readiness.as_ref()
+    }
+
+    /// Return the retained coplanar volumetric-cell evidence.
+    pub fn coplanar_volumetric_evidence(&self) -> Option<&CoplanarVolumetricCellEvidenceReport> {
+        self.coplanar_volumetric_evidence.as_ref()
+    }
+
+    /// Return the retained coplanar volumetric-cell evidence mutably.
+    pub fn coplanar_volumetric_evidence_mut(
+        &mut self,
+    ) -> &mut Option<CoplanarVolumetricCellEvidenceReport> {
+        &mut self.coplanar_volumetric_evidence
+    }
+
     /// Return whether the report reached the winding-ready handoff.
     pub const fn is_ready(&self) -> bool {
         matches!(self.status, ExactWindingReadinessStatus::Ready)
