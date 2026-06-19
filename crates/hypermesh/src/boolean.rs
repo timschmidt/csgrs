@@ -766,7 +766,7 @@ fn workspace_arrangement_attempt_for_replay(
         .map_err(|_| ExactReportValidationError::SourceReplayMismatch)
 }
 
-fn workspace_evaluation_for_replay(
+pub(crate) fn workspace_evaluation_for_replay(
     left: &ExactMesh,
     right: &ExactMesh,
     request: ExactBooleanRequest,

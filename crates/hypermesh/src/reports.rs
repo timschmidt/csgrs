@@ -22,8 +22,8 @@ use super::affine_solid::{
 };
 use super::arrangement3d::{ExactArrangement, ExactTopologyAssemblyReport};
 use super::boolean::{
-    ExactArrangementBooleanAttempt, ExactBooleanEvaluation, ExactBooleanOperation,
-    ExactBooleanRequest, ExactBoundaryBooleanPolicy, adjacent_union_completion_certification,
+    ExactArrangementBooleanAttempt, ExactBooleanOperation, ExactBooleanRequest,
+    ExactBoundaryBooleanPolicy, adjacent_union_completion_certification,
     boolean_coplanar_mesh_overlay_optional, boundary_policy_shortcut_result_matches_sources,
     boundary_touching_report_from_graph, materialize_volumetric_coplanar_boundary_closure_output,
     no_materialized_boundary_output_report, not_named_planar_arrangement_report,
@@ -35,6 +35,7 @@ use super::boolean::{
     replay_generic_arrangement_cell_complex_result, replay_open_surface_arrangement_result,
     replay_selected_region_boolean_result, same_surface_report_from_sources,
     volumetric_boundary_closure_report_from_graph, winding_readiness_report_for_request_from_graph,
+    workspace_evaluation_for_replay,
 };
 use super::bounds::AabbIntersectionKind;
 use super::cell_complex::{
@@ -2873,7 +2874,7 @@ fn arrangement_cell_complex_sources_match(
             return Ok(true);
         }
     }
-    let preflight = workspace_evaluation_for_report_replay(
+    let preflight = workspace_evaluation_for_replay(
         left,
         right,
         ExactBooleanRequest::new(operation, validation),
@@ -3966,25 +3967,13 @@ impl ExactVolumetricBoundaryClosureReport {
     }
 }
 
-fn workspace_evaluation_for_report_replay(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    request: ExactBooleanRequest,
-) -> Result<ExactBooleanEvaluation, ExactReportValidationError> {
-    let mut workspace = ExactBooleanWorkspace::new(left, right);
-    workspace
-        .evaluate(request)
-        .map(Clone::clone)
-        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)
-}
-
 fn validate_winding_readiness_against_sources_for_request(
     report: &ExactWindingReadinessReport,
     left: &ExactMesh,
     right: &ExactMesh,
     request: ExactBooleanRequest,
 ) -> Result<(), ExactReportValidationError> {
-    if let Ok(evaluation) = workspace_evaluation_for_report_replay(left, right, request)
+    if let Ok(evaluation) = workspace_evaluation_for_replay(left, right, request)
         && report == &evaluation.certifications.winding_readiness
     {
         return Ok(());
@@ -4196,8 +4185,7 @@ impl ExactBooleanPreflight {
         right: &ExactMesh,
         request: ExactBooleanRequest,
     ) -> Result<ExactBooleanPreflight, ExactReportValidationError> {
-        workspace_evaluation_for_report_replay(left, right, request)
-            .map(|evaluation| evaluation.preflight)
+        workspace_evaluation_for_replay(left, right, request).map(|evaluation| evaluation.preflight)
     }
 
     /// Classify whether this retained preflight is fresh for the source meshes.
@@ -4913,7 +4901,7 @@ impl ExactRefinementReport {
     ) -> Result<(), ExactReportValidationError> {
         self.validate()?;
         let request = ExactBooleanRequest::new(self.operation, ValidationPolicy::ALLOW_BOUNDARY);
-        if let Ok(evaluation) = workspace_evaluation_for_report_replay(left, right, request)
+        if let Ok(evaluation) = workspace_evaluation_for_replay(left, right, request)
             && self == &evaluation.certifications.refinement
         {
             Ok(())
@@ -5925,7 +5913,7 @@ impl ExactPlanarArrangementReport {
     ) -> Result<(), ExactReportValidationError> {
         self.validate()?;
         let request = ExactBooleanRequest::new(self.operation, ValidationPolicy::ALLOW_BOUNDARY);
-        if let Ok(evaluation) = workspace_evaluation_for_report_replay(left, right, request)
+        if let Ok(evaluation) = workspace_evaluation_for_replay(left, right, request)
             && self == &evaluation.certifications.planar_arrangement
         {
             Ok(())
@@ -7009,7 +6997,7 @@ mod tests {
         let left = report_test_tetra([0, 0, 0]);
         let right = report_test_tetra([3, 0, 0]);
 
-        let preflight = workspace_evaluation_for_report_replay(
+        let preflight = workspace_evaluation_for_replay(
             &left,
             &right,
             ExactBooleanRequest::new(
