@@ -326,11 +326,6 @@ impl ExactArrangementBooleanAttempt {
         self.resolves_requested_volume_ownership()
     }
 
-    /// Return retained arrangement blocker count.
-    pub const fn arrangement_blockers(&self) -> usize {
-        self.arrangement_blockers
-    }
-
     /// Return retained arrangement face-cell count.
     pub const fn face_cells(&self) -> usize {
         self.face_cells
@@ -349,11 +344,6 @@ impl ExactArrangementBooleanAttempt {
     /// Return retained volume adjacency count.
     pub const fn volume_adjacencies(&self) -> usize {
         self.volume_adjacencies
-    }
-
-    /// Return retained lower-dimensional artifact count.
-    pub const fn lower_dimensional_artifacts(&self) -> usize {
-        self.lower_dimensional_artifacts
     }
 
     /// Return volume regions owned by both operands, when ownership evidence is retained.

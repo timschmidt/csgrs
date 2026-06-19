@@ -144,10 +144,8 @@ fn run_case(case: &BenchCase) {
         black_box((
             attempt.has_topology_assembly_evidence(),
             attempt.topology_assembly_is_complete(),
-            attempt.arrangement_blockers(),
             attempt.face_cells(),
             attempt.regions(),
-            attempt.lower_dimensional_artifacts(),
         ));
     });
 
@@ -230,7 +228,6 @@ fn run_case(case: &BenchCase) {
                     attempt.topology_assembly_is_complete(),
                     attempt.face_cells(),
                     attempt.regions(),
-                    attempt.lower_dimensional_artifacts(),
                 )
             }));
         },
