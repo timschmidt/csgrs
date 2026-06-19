@@ -1915,8 +1915,7 @@ fn exact_open_surface_arrangement_is_publicly_replayable() {
             attempt.operation == operation
                 && attempt.policy == ExactRegularizationPolicy::REGULARIZED_SOLID
                 && attempt.output_validation == ValidationPolicy::ALLOW_BOUNDARY
-                && attempt.validate().is_ok()
-                && attempt.materialized_arrangement_cell_complex_shortcut(),
+                && attempt.validate().is_ok(),
             "{operation:?}: {attempt:?}"
         );
         assert_eq!(attempt.output_validation, ValidationPolicy::ALLOW_BOUNDARY);
@@ -2119,8 +2118,7 @@ fn arrangement_attempt_output_validation_is_publicly_replayable() {
             boundary_attempt.operation == operation
                 && boundary_attempt.policy == ExactRegularizationPolicy::REGULARIZED_SOLID
                 && boundary_attempt.output_validation == ValidationPolicy::ALLOW_BOUNDARY
-                && boundary_attempt.validate().is_ok()
-                && boundary_attempt.materialized_arrangement_cell_complex_shortcut(),
+                && boundary_attempt.validate().is_ok(),
             "{operation:?}: {boundary_attempt:?}"
         );
         boundary_attempt.validate().unwrap();

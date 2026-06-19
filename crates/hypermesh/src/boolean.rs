@@ -277,7 +277,7 @@ impl ExactArrangementBooleanAttempt {
 
     /// Return whether this attempt reached the materialized arrangement
     /// cell-complex shortcut state.
-    pub fn materialized_arrangement_cell_complex_shortcut(&self) -> bool {
+    pub(crate) fn materialized_arrangement_cell_complex_shortcut(&self) -> bool {
         self.stage == ExactArrangementBooleanStage::Materialized
             && self.decline.is_none()
             && self.materialized_shortcut == Some(ExactBooleanShortcutKind::ArrangementCellComplex)

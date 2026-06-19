@@ -169,7 +169,6 @@ fn run_case(case: &BenchCase) {
         black_box((
             attempt.output_counts(),
             attempt.declined_output_validation(),
-            attempt.materialized_arrangement_cell_complex_shortcut(),
             attempt.materialized_arrangement_cell_complex_output(),
         ));
     });
