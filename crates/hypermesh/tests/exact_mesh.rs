@@ -4286,22 +4286,6 @@ fn trivial_boolean_shortcuts_are_publicly_replayable() {
             ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
         );
         identical_evaluation.validate().unwrap();
-        let mut relabeled_identity_report = identical_evaluation.clone();
-        *relabeled_identity_report
-            .certifications_mut()
-            .identical_mut()
-            .left_triangles_mut() += 1;
-        assert!(
-            relabeled_identity_report
-                .certifications()
-                .identical()
-                .validate()
-                .is_err()
-        );
-        assert_report_validation_error!(
-            relabeled_identity_report.validate(),
-            "{operation:?}: {relabeled_identity_report:?}"
-        );
         if matches!(
             operation,
             ExactBooleanOperation::Union | ExactBooleanOperation::Intersection

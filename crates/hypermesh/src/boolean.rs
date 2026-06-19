@@ -1064,11 +1064,6 @@ impl ExactBooleanCertificationSet {
         &self.identical
     }
 
-    /// Return the identical-mesh shortcut certification report mutably.
-    pub fn identical_mut(&mut self) -> &mut ExactIdenticalMeshReport {
-        &mut self.identical
-    }
-
     /// Return the same-surface shortcut certification report.
     pub fn same_surface(&self) -> &ExactSameSurfaceReport {
         &self.same_surface
@@ -2409,11 +2404,6 @@ impl ExactIdenticalMeshReport {
     /// Return the number of left source triangles compared.
     pub const fn left_triangles(&self) -> usize {
         self.left_triangles
-    }
-
-    /// Return the left source triangle count mutably.
-    pub fn left_triangles_mut(&mut self) -> &mut usize {
-        &mut self.left_triangles
     }
 
     /// Return the number of right source triangles compared.
