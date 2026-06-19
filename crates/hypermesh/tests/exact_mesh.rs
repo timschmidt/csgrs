@@ -316,11 +316,11 @@ fn exact_boolean_evaluation_materializes_certified_result_publicly() {
         hypermesh::ExactReportFreshness::SourceReplayMismatch
     );
     let mut stale_attempt_policy = evaluation.clone();
-    stale_attempt_policy
+    *stale_attempt_policy
         .certifications_mut()
         .arrangement_attempt_mut()
         .expect("named evaluation should retain arrangement attempt")
-        .output_validation = ValidationPolicy::CLOSED;
+        .output_validation_mut() = ValidationPolicy::CLOSED;
     assert_report_validation_error!(stale_attempt_policy.validate());
     let mut relabeled_support = evaluation.clone();
     let convex_left = axis_aligned_box([0, 0, 0], [2, 2, 2]);
@@ -1277,7 +1277,8 @@ fn exact_coplanar_volumetric_cell_evidence_is_retained_by_public_evaluation() {
                     .map(|report| (attempt, report))
             })
             .is_some_and(|(attempt, report)| {
-                report.validate().is_ok() && report.resolves_operation_selection(attempt.operation)
+                report.validate().is_ok()
+                    && report.resolves_operation_selection(attempt.operation())
             })
             || evaluation_materializes_arrangement_cell_complex(&evaluation)
             || preflight.coplanar_volumetric_evidence().is_some(),
@@ -1866,7 +1867,7 @@ fn exact_open_surface_arrangement_is_publicly_replayable() {
                 ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
                 ExactRegularizationPolicy::REGULARIZED_SOLID,
             );
-            assert_eq!(closed_attempt.output_validation, ValidationPolicy::CLOSED);
+            assert_eq!(closed_attempt.output_validation(), ValidationPolicy::CLOSED);
             closed_attempt.validate().unwrap();
             closed_attempt
                 .validate_against_sources_with_validation(&left, &right, ValidationPolicy::CLOSED)
@@ -1896,13 +1897,16 @@ fn exact_open_surface_arrangement_is_publicly_replayable() {
             ExactRegularizationPolicy::REGULARIZED_SOLID,
         );
         assert!(
-            attempt.operation == operation
-                && attempt.policy == ExactRegularizationPolicy::REGULARIZED_SOLID
-                && attempt.output_validation == ValidationPolicy::ALLOW_BOUNDARY
+            attempt.operation() == operation
+                && attempt.policy() == ExactRegularizationPolicy::REGULARIZED_SOLID
+                && attempt.output_validation() == ValidationPolicy::ALLOW_BOUNDARY
                 && attempt.validate().is_ok(),
             "{operation:?}: {attempt:?}"
         );
-        assert_eq!(attempt.output_validation, ValidationPolicy::ALLOW_BOUNDARY);
+        assert_eq!(
+            attempt.output_validation(),
+            ValidationPolicy::ALLOW_BOUNDARY
+        );
         attempt.validate().unwrap();
         attempt.validate_against_sources(&left, &right).unwrap();
         attempt
@@ -2045,7 +2049,7 @@ fn arrangement_attempt_output_validation_is_publicly_replayable() {
             ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
             ExactRegularizationPolicy::REGULARIZED_SOLID,
         );
-        assert_eq!(closed_attempt.output_validation, ValidationPolicy::CLOSED);
+        assert_eq!(closed_attempt.output_validation(), ValidationPolicy::CLOSED);
         closed_attempt.validate().unwrap();
         closed_attempt
             .validate_against_sources(&left, &right)
@@ -2077,13 +2081,13 @@ fn arrangement_attempt_output_validation_is_publicly_replayable() {
             ExactRegularizationPolicy::REGULARIZED_SOLID,
         );
         assert_eq!(
-            boundary_attempt.output_validation,
+            boundary_attempt.output_validation(),
             ValidationPolicy::ALLOW_BOUNDARY
         );
         assert!(
-            boundary_attempt.operation == operation
-                && boundary_attempt.policy == ExactRegularizationPolicy::REGULARIZED_SOLID
-                && boundary_attempt.output_validation == ValidationPolicy::ALLOW_BOUNDARY
+            boundary_attempt.operation() == operation
+                && boundary_attempt.policy() == ExactRegularizationPolicy::REGULARIZED_SOLID
+                && boundary_attempt.output_validation() == ValidationPolicy::ALLOW_BOUNDARY
                 && boundary_attempt.validate().is_ok(),
             "{operation:?}: {boundary_attempt:?}"
         );
@@ -3217,7 +3221,7 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
         .certifications_mut()
         .arrangement_attempt_mut()
         .expect("named evaluation should retain arrangement attempt");
-    stale_validation_attempt.output_validation = ValidationPolicy::CLOSED;
+    *stale_validation_attempt.output_validation_mut() = ValidationPolicy::CLOSED;
     assert_report_validation_error!(declined_arrangement_attempt.validate());
     let mut stale_attempt_gate = evaluation.clone();
     let attempt = stale_attempt_gate

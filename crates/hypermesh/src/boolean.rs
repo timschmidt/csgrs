@@ -188,11 +188,11 @@ pub(crate) enum ExactArrangementBooleanShortcutReason {
 #[derive(Clone, Debug, PartialEq)]
 pub struct ExactArrangementBooleanAttempt {
     /// Operation attempted.
-    pub operation: ExactBooleanOperation,
+    pub(crate) operation: ExactBooleanOperation,
     /// Regularization policy used by the arrangement pipeline.
-    pub policy: ExactRegularizationPolicy,
+    pub(crate) policy: ExactRegularizationPolicy,
     /// Output validation policy used by shortcut recovery and final mesh copy.
-    pub output_validation: ValidationPolicy,
+    pub(crate) output_validation: ValidationPolicy,
     /// Furthest stage reached.
     pub(crate) stage: ExactArrangementBooleanStage,
     /// Reason no output was produced, when the attempt declined.
@@ -251,6 +251,26 @@ pub struct ExactArrangementBooleanAttempt {
 }
 
 impl ExactArrangementBooleanAttempt {
+    /// Return the operation attempted.
+    pub const fn operation(&self) -> ExactBooleanOperation {
+        self.operation
+    }
+
+    /// Return the regularization policy used by the arrangement pipeline.
+    pub const fn policy(&self) -> ExactRegularizationPolicy {
+        self.policy
+    }
+
+    /// Return the output validation policy used by this attempt.
+    pub const fn output_validation(&self) -> ValidationPolicy {
+        self.output_validation
+    }
+
+    /// Return the output validation policy mutably.
+    pub fn output_validation_mut(&mut self) -> &mut ValidationPolicy {
+        &mut self.output_validation
+    }
+
     /// Return retained topology assembly gate evidence, when present.
     pub fn topology_assembly_report(&self) -> Option<&ExactTopologyAssemblyReport> {
         self.topology_assembly_report.as_ref()
