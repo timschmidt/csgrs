@@ -1147,6 +1147,17 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
         ring_cache.source_reports(),
         result.report().source_reports()
     );
+    let output_cache = result.workspace().output_cache().unwrap();
+    assert!(output_cache.materialized_region());
+    assert_eq!(output_cache.status(), result.report().status());
+    assert_eq!(output_cache.blocker(), None);
+    assert_eq!(
+        output_cache.boundary_build_report(),
+        result.report().boundary_build_report()
+    );
+    let boundary_report = output_cache.boundary_build_report().unwrap();
+    assert_eq!(boundary_report.material_contour_count(), Some(1));
+    assert_eq!(boundary_report.hole_contour_count(), Some(0));
     assert!(result.region().is_some());
     assert_eq!(
         result.report().split_predicate_path(),
@@ -1260,6 +1271,14 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
         ring_cache.source_reports(),
         result.report().source_reports()
     );
+    let output_cache = result.workspace().output_cache().unwrap();
+    assert!(output_cache.materialized_region());
+    assert_eq!(output_cache.status(), result.report().status());
+    assert_eq!(output_cache.blocker(), None);
+    assert_eq!(
+        output_cache.boundary_build_report(),
+        result.report().boundary_build_report()
+    );
     assert!(result.region().is_some());
     assert!(result.report().status().is_native_exact());
     assert_eq!(result.report(), legacy.report());
@@ -1296,6 +1315,11 @@ fn exact_curve_arrangement_attempt_retains_overlap_blocker() {
     );
     assert!(result.workspace().endpoint_graph_cache().is_none());
     assert!(result.workspace().ring_assembly_cache().is_none());
+    let output_cache = result.workspace().output_cache().unwrap();
+    assert!(!output_cache.materialized_region());
+    assert_eq!(output_cache.status(), result.report().status());
+    assert_eq!(output_cache.blocker(), Some(UncertaintyReason::Boundary));
+    assert_eq!(output_cache.boundary_build_report(), None);
     assert_eq!(result.report(), legacy.report());
 }
 

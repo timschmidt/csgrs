@@ -35,6 +35,7 @@ pub struct ExactCurveWorkspace2 {
     split_cache: Option<ExactCurveArrangementSplitCache2>,
     endpoint_graph_cache: Option<ExactCurveArrangementEndpointGraphCache2>,
     ring_assembly_cache: Option<ExactCurveArrangementRingAssemblyCache2>,
+    output_cache: Option<ExactCurveArrangementOutputCache2>,
 }
 
 /// Retained exact split evidence cached by an evaluated arrangement workspace.
@@ -82,6 +83,15 @@ pub struct ExactCurveArrangementRingAssemblyCache2 {
     output_boundary_segment_kind_counts: Option<SegmentKindCounts>,
     arranged_source_reports: Vec<RegionLineSegmentArrangedSourceReport2>,
     source_reports: Vec<RegionLineSegmentRingSourceReport2>,
+}
+
+/// Retained final output evidence cached by an evaluated arrangement workspace.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ExactCurveArrangementOutputCache2 {
+    materialized_region: bool,
+    boundary_build_report: Option<RegionBoundaryContourBuildReport2>,
+    status: RetainedTopologyStatus,
+    blocker: Option<UncertaintyReason>,
 }
 
 /// Evaluation record for a retained exact curve arrangement attempt.
@@ -1129,6 +1139,7 @@ impl ExactCurveWorkspace2 {
             split_cache: None,
             endpoint_graph_cache: None,
             ring_assembly_cache: None,
+            output_cache: None,
         })
     }
 
@@ -1147,6 +1158,9 @@ impl ExactCurveWorkspace2 {
             ExactCurveArrangementRingAssemblyCache2::from_region_build_report(
                 region_result.report(),
             );
+        self.output_cache = Some(ExactCurveArrangementOutputCache2::from_region_build_result(
+            region_result,
+        ));
         self
     }
 
@@ -1198,6 +1212,11 @@ impl ExactCurveWorkspace2 {
     /// Returns exact ring-traversal evidence retained from the evaluated arrangement.
     pub const fn ring_assembly_cache(&self) -> Option<&ExactCurveArrangementRingAssemblyCache2> {
         self.ring_assembly_cache.as_ref()
+    }
+
+    /// Returns final output evidence retained from the evaluated arrangement.
+    pub const fn output_cache(&self) -> Option<&ExactCurveArrangementOutputCache2> {
+        self.output_cache.as_ref()
     }
 }
 
@@ -1412,6 +1431,37 @@ impl ExactCurveArrangementRingAssemblyCache2 {
     /// Returns per-output segment source provenance.
     pub fn source_reports(&self) -> &[RegionLineSegmentRingSourceReport2] {
         &self.source_reports
+    }
+}
+
+impl ExactCurveArrangementOutputCache2 {
+    fn from_region_build_result(region_result: &RegionLineSegmentRegionBuildResult2) -> Self {
+        Self {
+            materialized_region: region_result.region().is_some(),
+            boundary_build_report: region_result.report().boundary_build_report.clone(),
+            status: region_result.report().status,
+            blocker: region_result.report().blocker,
+        }
+    }
+
+    /// Returns whether the arrangement produced an owned region.
+    pub const fn materialized_region(&self) -> bool {
+        self.materialized_region
+    }
+
+    /// Returns delegated boundary-contour role assignment evidence, when reached.
+    pub const fn boundary_build_report(&self) -> Option<&RegionBoundaryContourBuildReport2> {
+        self.boundary_build_report.as_ref()
+    }
+
+    /// Returns final retained topology status for the arrangement.
+    pub const fn status(&self) -> RetainedTopologyStatus {
+        self.status
+    }
+
+    /// Returns the final blocker when arrangement did not materialize a region.
+    pub const fn blocker(&self) -> Option<UncertaintyReason> {
+        self.blocker
     }
 }
 
