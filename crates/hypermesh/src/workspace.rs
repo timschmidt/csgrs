@@ -178,6 +178,23 @@ impl<'a> ExactBooleanWorkspace<'a> {
         Ok(Some(attempt))
     }
 
+    fn cached_retained_materialization_index(
+        &self,
+        request: ExactBooleanRequest,
+    ) -> Result<Option<usize>, MeshError> {
+        let retained_attempt_index =
+            self.validated_regularized_solid_arrangement_attempt_index(request)?;
+        let retained_attempt =
+            retained_attempt_index.map(|index| &self.arrangement_attempts[index].2);
+        cached_retained_materialization_index(
+            &self.materializations,
+            self.left,
+            self.right,
+            request,
+            retained_attempt,
+        )
+    }
+
     /// Returns the exact arrangement for `policy`, building it once per policy.
     pub(crate) fn arrangement(
         &mut self,
@@ -385,17 +402,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
         &mut self,
         request: ExactBooleanRequest,
     ) -> Result<ExactBooleanResult, MeshError> {
-        let retained_attempt_index =
-            self.validated_regularized_solid_arrangement_attempt_index(request)?;
-        let retained_attempt =
-            retained_attempt_index.map(|index| &self.arrangement_attempts[index].2);
-        if let Some(index) = cached_retained_materialization_index(
-            &self.materializations,
-            self.left,
-            self.right,
-            request,
-            retained_attempt,
-        )? {
+        if let Some(index) = self.cached_retained_materialization_index(request)? {
             self.promote_evaluation_cache_from_materialization_index(request, index)?;
             let result = self.materializations[index].1.clone();
             return Ok(result);
@@ -473,19 +480,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
         &mut self,
         request: ExactBooleanRequest,
     ) -> Result<&ExactBooleanResult, MeshError> {
-        if let Some(index) = {
-            let retained_attempt_index =
-                self.validated_regularized_solid_arrangement_attempt_index(request)?;
-            let retained_attempt =
-                retained_attempt_index.map(|index| &self.arrangement_attempts[index].2);
-            cached_retained_materialization_index(
-                &self.materializations,
-                self.left,
-                self.right,
-                request,
-                retained_attempt,
-            )?
-        } {
+        if let Some(index) = self.cached_retained_materialization_index(request)? {
             self.promote_evaluation_cache_from_materialization_index(request, index)?;
             return Ok(&self.materializations[index].1);
         }
