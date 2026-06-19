@@ -280,6 +280,8 @@ pub use region_nesting::{
     ExactCurveArrangementOutputSegmentKindBucketCache2, ExactCurveArrangementOutputSegmentKindRef2,
     ExactCurveArrangementOutputSegmentSourceBucket2,
     ExactCurveArrangementOutputSegmentSourceBucketCache2,
+    ExactCurveArrangementOutputSegmentSourceRangeCache2,
+    ExactCurveArrangementOutputSegmentSourceRangeRef2,
     ExactCurveArrangementOutputSegmentSourceRef2, ExactCurveArrangementOutputSegmentStatusBucket2,
     ExactCurveArrangementOutputSegmentStatusBucketCache2,
     ExactCurveArrangementOutputSegmentStatusRef2, ExactCurveArrangementRequest2,

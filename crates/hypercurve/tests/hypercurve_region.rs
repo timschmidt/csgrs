@@ -1743,6 +1743,42 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
         result.report().source_reports()[source_ref.source_report_index()].source_segment_index(),
         output_segment_source_bucket_cache.buckets()[0].source_segment_index()
     );
+    let output_segment_source_range_cache = ring_cache.output_segment_source_range_cache();
+    assert_eq!(
+        output_segment_source_range_cache.output_segment_ref_count(),
+        ring_cache.source_reports().len()
+    );
+    assert_eq!(
+        output_segment_source_range_cache.full_source_range_ref_count(),
+        ring_cache.source_reports().len()
+    );
+    assert_eq!(
+        output_segment_source_range_cache.partial_source_range_ref_count(),
+        0
+    );
+    assert_eq!(
+        output_segment_source_range_cache.ranges().len(),
+        ring_cache.source_reports().len()
+    );
+    let source_range_ref = &output_segment_source_range_cache.ranges()[0];
+    assert_eq!(source_range_ref.source_report_index(), 0);
+    assert_eq!(
+        source_range_ref.source_segment_index(),
+        result.report().source_reports()[0].source_segment_index()
+    );
+    assert_eq!(
+        source_range_ref.source_range(),
+        result.report().source_reports()[0].source_range()
+    );
+    assert_eq!(
+        source_range_ref.output_ring_index(),
+        result.report().source_reports()[0].output_ring_index()
+    );
+    assert_eq!(
+        source_range_ref.output_segment_index(),
+        result.report().source_reports()[0].output_segment_index()
+    );
+    assert!(source_range_ref.covers_full_source_range());
     let output_segment_status_bucket_cache = ring_cache.output_segment_status_bucket_cache();
     assert_eq!(output_segment_status_bucket_cache.bucket_count(), 6);
     assert_eq!(
@@ -2608,6 +2644,42 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
         result.report().source_reports()[source_ref.source_report_index()].source_segment_index(),
         output_segment_source_bucket_cache.buckets()[0].source_segment_index()
     );
+    let output_segment_source_range_cache = ring_cache.output_segment_source_range_cache();
+    assert_eq!(
+        output_segment_source_range_cache.output_segment_ref_count(),
+        ring_cache.source_reports().len()
+    );
+    assert_eq!(
+        output_segment_source_range_cache.full_source_range_ref_count(),
+        ring_cache.source_reports().len()
+    );
+    assert_eq!(
+        output_segment_source_range_cache.partial_source_range_ref_count(),
+        0
+    );
+    assert_eq!(
+        output_segment_source_range_cache.ranges().len(),
+        ring_cache.source_reports().len()
+    );
+    let source_range_ref = &output_segment_source_range_cache.ranges()[0];
+    assert_eq!(source_range_ref.source_report_index(), 0);
+    assert_eq!(
+        source_range_ref.source_segment_index(),
+        result.report().source_reports()[0].source_segment_index()
+    );
+    assert_eq!(
+        source_range_ref.source_range(),
+        result.report().source_reports()[0].source_range()
+    );
+    assert_eq!(
+        source_range_ref.output_ring_index(),
+        result.report().source_reports()[0].output_ring_index()
+    );
+    assert_eq!(
+        source_range_ref.output_segment_index(),
+        result.report().source_reports()[0].output_segment_index()
+    );
+    assert!(source_range_ref.covers_full_source_range());
     let output_segment_status_bucket_cache = ring_cache.output_segment_status_bucket_cache();
     assert_eq!(output_segment_status_bucket_cache.bucket_count(), 6);
     assert_eq!(

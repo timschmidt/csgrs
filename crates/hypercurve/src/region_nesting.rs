@@ -481,6 +481,25 @@ pub struct ExactCurveArrangementOutputSegmentSourceBucketCache2 {
     buckets: Vec<ExactCurveArrangementOutputSegmentSourceBucket2>,
 }
 
+/// Output segment source-parameter range retained after ring assembly.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ExactCurveArrangementOutputSegmentSourceRangeRef2 {
+    source_report_index: usize,
+    source_segment_index: usize,
+    source_range: ParamRange,
+    output_ring_index: usize,
+    output_segment_index: usize,
+}
+
+/// Output segment source-parameter ranges retained after ring assembly.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ExactCurveArrangementOutputSegmentSourceRangeCache2 {
+    output_segment_ref_count: usize,
+    full_source_range_ref_count: usize,
+    partial_source_range_ref_count: usize,
+    ranges: Vec<ExactCurveArrangementOutputSegmentSourceRangeRef2>,
+}
+
 /// Output segment reference retained in a topology-status bucket.
 #[derive(Clone, Debug, PartialEq)]
 pub struct ExactCurveArrangementOutputSegmentStatusRef2 {
@@ -630,6 +649,7 @@ pub struct ExactCurveArrangementRingAssemblyCache2 {
     output_ring_bucket_cache: ExactCurveArrangementOutputRingBucketCache2,
     output_segment_kind_bucket_cache: ExactCurveArrangementOutputSegmentKindBucketCache2,
     output_segment_source_bucket_cache: ExactCurveArrangementOutputSegmentSourceBucketCache2,
+    output_segment_source_range_cache: ExactCurveArrangementOutputSegmentSourceRangeCache2,
     output_segment_status_bucket_cache: ExactCurveArrangementOutputSegmentStatusBucketCache2,
     output_segment_direction_bucket_cache: ExactCurveArrangementOutputSegmentDirectionBucketCache2,
 }
@@ -3452,6 +3472,97 @@ impl ExactCurveArrangementOutputSegmentSourceBucketCache2 {
     }
 }
 
+impl ExactCurveArrangementOutputSegmentSourceRangeRef2 {
+    /// Returns the retained ring source report index for this output segment.
+    pub const fn source_report_index(&self) -> usize {
+        self.source_report_index
+    }
+
+    /// Returns the source segment index used by this output segment.
+    pub const fn source_segment_index(&self) -> usize {
+        self.source_segment_index
+    }
+
+    /// Returns the exact retained source parameter range.
+    pub const fn source_range(&self) -> &ParamRange {
+        &self.source_range
+    }
+
+    /// Returns the output ring index.
+    pub const fn output_ring_index(&self) -> usize {
+        self.output_ring_index
+    }
+
+    /// Returns the output segment index inside its ring.
+    pub const fn output_segment_index(&self) -> usize {
+        self.output_segment_index
+    }
+
+    /// Returns whether this output segment covers the complete source parameter range.
+    pub fn covers_full_source_range(&self) -> bool {
+        source_range_is_full(&self.source_range)
+    }
+}
+
+impl ExactCurveArrangementOutputSegmentSourceRangeCache2 {
+    fn from_source_reports(source_reports: &[RegionLineSegmentRingSourceReport2]) -> Self {
+        let mut full_source_range_ref_count = 0_usize;
+        let mut partial_source_range_ref_count = 0_usize;
+        let mut ranges = Vec::new();
+
+        for (source_report_index, source_report) in source_reports.iter().enumerate() {
+            if source_range_is_full(source_report.source_range()) {
+                full_source_range_ref_count += 1;
+            } else {
+                partial_source_range_ref_count += 1;
+            }
+
+            ranges.push(ExactCurveArrangementOutputSegmentSourceRangeRef2 {
+                source_report_index,
+                source_segment_index: source_report.source_segment_index(),
+                source_range: source_report.source_range().clone(),
+                output_ring_index: source_report.output_ring_index(),
+                output_segment_index: source_report.output_segment_index(),
+            });
+        }
+
+        ranges.sort_by_key(|range_ref| {
+            (
+                range_ref.output_ring_index,
+                range_ref.output_segment_index,
+                range_ref.source_report_index,
+            )
+        });
+
+        Self {
+            output_segment_ref_count: ranges.len(),
+            full_source_range_ref_count,
+            partial_source_range_ref_count,
+            ranges,
+        }
+    }
+
+    /// Returns the number of retained output segment source range references.
+    pub const fn output_segment_ref_count(&self) -> usize {
+        self.output_segment_ref_count
+    }
+
+    /// Returns the number of output segments covering a complete source segment.
+    pub const fn full_source_range_ref_count(&self) -> usize {
+        self.full_source_range_ref_count
+    }
+
+    /// Returns the number of output segments covering a proper source subrange.
+    pub const fn partial_source_range_ref_count(&self) -> usize {
+        self.partial_source_range_ref_count
+    }
+
+    /// Returns output segment source ranges in output traversal order.
+    pub fn ranges(&self) -> &[ExactCurveArrangementOutputSegmentSourceRangeRef2] {
+        &self.ranges
+    }
+}
+
 impl ExactCurveArrangementOutputSegmentStatusRef2 {
     /// Returns the retained ring source report index for this output segment.
     pub const fn source_report_index(&self) -> usize {
@@ -4123,6 +4234,10 @@ impl ExactCurveArrangementRingAssemblyCache2 {
                 ExactCurveArrangementOutputSegmentSourceBucketCache2::from_source_reports(
                     &report.source_reports,
                 ),
+            output_segment_source_range_cache:
+                ExactCurveArrangementOutputSegmentSourceRangeCache2::from_source_reports(
+                    &report.source_reports,
+                ),
             output_segment_status_bucket_cache:
                 ExactCurveArrangementOutputSegmentStatusBucketCache2::from_source_reports(
                     &report.source_reports,
@@ -4211,6 +4326,13 @@ impl ExactCurveArrangementRingAssemblyCache2 {
         &self,
     ) -> &ExactCurveArrangementOutputSegmentSourceBucketCache2 {
         &self.output_segment_source_bucket_cache
+    }
+
+    /// Returns retained output segment source parameter ranges.
+    pub const fn output_segment_source_range_cache(
+        &self,
+    ) -> &ExactCurveArrangementOutputSegmentSourceRangeCache2 {
+        &self.output_segment_source_range_cache
     }
 
     /// Returns retained output segment buckets grouped by topology status.
@@ -6374,6 +6496,10 @@ fn line_segment_kind_counts(segment_count: usize) -> SegmentKindCounts {
         lines: segment_count,
         arcs: 0,
     }
+}
+
+fn source_range_is_full(source_range: &ParamRange) -> bool {
+    source_range.start() == &Real::zero() && source_range.end() == &Real::one()
 }
 
 fn segment_kind_counts(segments: &[Segment2]) -> SegmentKindCounts {
