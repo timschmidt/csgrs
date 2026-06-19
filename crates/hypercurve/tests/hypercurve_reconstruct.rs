@@ -1,7 +1,7 @@
 use hypercurve::{
     BulgeVertex2, Contour2, CurveError, CurveString2, FillRule, Point2,
     PolylineReconstructionOptions, Real, RetainedImportFormat2, RetainedImportRecord2,
-    RetainedImportTopology2, RetainedSourceTolerance2, Segment2,
+    RetainedImportTopology2, RetainedSourceTolerance2, Segment2, SegmentKindCounts,
 };
 
 fn r(value: f64) -> Real {
@@ -34,6 +34,34 @@ fn reconstruction_merges_collinear_polyline_to_one_line() {
     };
     assert_eq!(line.start(), &points[0]);
     assert_eq!(line.end(), &points[3]);
+}
+
+#[test]
+fn open_polyline_reconstruction_report_records_lossy_boundary() {
+    let points = [p(0.0, 0.0), p(0.0, 0.0), p(1.0, 0.0), p(2.0, 0.0)];
+    let options = PolylineReconstructionOptions {
+        distance_tolerance: 1.0e-7,
+        ..PolylineReconstructionOptions::default()
+    };
+
+    let reconstructed = CurveString2::reconstruct_from_polyline_with_report(&points, options)
+        .expect("duplicate-filtered collinear polyline should reconstruct");
+    let report = reconstructed.report();
+
+    assert_eq!(reconstructed.curve_string().len(), 1);
+    assert!(!report.closed());
+    assert_eq!(report.fill_rule(), None);
+    assert_eq!(report.input_point_count(), 4);
+    assert_eq!(report.retained_sample_count(), 3);
+    assert_eq!(report.discarded_duplicate_count(), 1);
+    assert_eq!(report.output_segment_count(), Some(1));
+    assert_eq!(
+        report.output_segment_kind_counts(),
+        Some(SegmentKindCounts { lines: 1, arcs: 0 })
+    );
+    assert_eq!(report.options(), options);
+    assert!(report.lossy_boundary());
+    assert!(report.status().is_imported_lossy());
 }
 
 #[test]
@@ -146,6 +174,39 @@ fn reconstruction_accepts_closed_polyline_with_repeated_first_point() {
 
     assert_eq!(contour.len(), 4);
     assert_eq!(contour.fill_rule(), FillRule::EvenOdd);
+}
+
+#[test]
+fn closed_polyline_reconstruction_report_records_fill_and_closure_evidence() {
+    let points = [
+        p(0.0, 0.0),
+        p(4.0, 0.0),
+        p(4.0, 3.0),
+        p(0.0, 3.0),
+        p(0.0, 0.0),
+    ];
+
+    let reconstructed = Contour2::reconstruct_from_closed_polyline_with_fill_rule_and_report(
+        &points,
+        PolylineReconstructionOptions::default(),
+        FillRule::EvenOdd,
+    )
+    .expect("closed rectangle samples should reconstruct");
+    let report = reconstructed.report();
+
+    assert_eq!(reconstructed.contour().len(), 4);
+    assert!(report.closed());
+    assert_eq!(report.fill_rule(), Some(FillRule::EvenOdd));
+    assert_eq!(report.input_point_count(), 5);
+    assert_eq!(report.retained_sample_count(), 4);
+    assert_eq!(report.discarded_duplicate_count(), 1);
+    assert_eq!(report.output_segment_count(), Some(4));
+    assert_eq!(
+        report.output_segment_kind_counts(),
+        Some(SegmentKindCounts { lines: 4, arcs: 0 })
+    );
+    assert!(report.lossy_boundary());
+    assert!(report.status().is_imported_lossy());
 }
 
 #[test]

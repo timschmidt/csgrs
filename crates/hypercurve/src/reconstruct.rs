@@ -20,7 +20,8 @@ use hyperreal::Real;
 
 use crate::{
     BulgeVertex2, Contour2, CurveError, CurveResult, CurveString2, FillRule, Point2,
-    RetainedImportFormat2, RetainedImportRecord2, RetainedSourceTolerance2,
+    RetainedImportFormat2, RetainedImportRecord2, RetainedSourceTolerance2, RetainedTopologyStatus,
+    Segment2, SegmentKindCounts,
 };
 
 const DEFAULT_DISTANCE_TOLERANCE: f64 = 1e-6;
@@ -66,6 +67,35 @@ pub struct FiniteCurveStringImport2 {
 pub struct FiniteContourImport2 {
     contour: Contour2,
     record: RetainedImportRecord2,
+}
+
+/// Report for finite polyline reconstruction into native line/arc topology.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct PolylineReconstructionReport2 {
+    closed: bool,
+    fill_rule: Option<FillRule>,
+    input_point_count: usize,
+    retained_sample_count: usize,
+    discarded_duplicate_count: usize,
+    output_segment_count: Option<usize>,
+    output_segment_kind_counts: Option<SegmentKindCounts>,
+    options: PolylineReconstructionOptions,
+    lossy_boundary: bool,
+    status: RetainedTopologyStatus,
+}
+
+/// Result of report-bearing open polyline reconstruction.
+#[derive(Clone, Debug, PartialEq)]
+pub struct CurveStringPolylineReconstructionResult2 {
+    curve_string: CurveString2,
+    report: PolylineReconstructionReport2,
+}
+
+/// Result of report-bearing closed polyline reconstruction.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ContourPolylineReconstructionResult2 {
+    contour: Contour2,
+    report: PolylineReconstructionReport2,
 }
 
 impl PolylineReconstructionOptions {
@@ -162,6 +192,92 @@ impl FiniteContourImport2 {
     }
 }
 
+impl PolylineReconstructionReport2 {
+    /// Returns whether the source samples were interpreted as a closed ring.
+    pub const fn closed(&self) -> bool {
+        self.closed
+    }
+
+    /// Returns the fill rule for closed reconstruction results.
+    pub const fn fill_rule(&self) -> Option<FillRule> {
+        self.fill_rule
+    }
+
+    /// Returns the number of source sample points supplied.
+    pub const fn input_point_count(&self) -> usize {
+        self.input_point_count
+    }
+
+    /// Returns the number of samples retained after duplicate/closure filtering.
+    pub const fn retained_sample_count(&self) -> usize {
+        self.retained_sample_count
+    }
+
+    /// Returns finite duplicate samples consumed as reconstruction metadata.
+    pub const fn discarded_duplicate_count(&self) -> usize {
+        self.discarded_duplicate_count
+    }
+
+    /// Returns output segment count when reconstruction materialized.
+    pub const fn output_segment_count(&self) -> Option<usize> {
+        self.output_segment_count
+    }
+
+    /// Returns primitive-family counts for materialized output segments.
+    pub const fn output_segment_kind_counts(&self) -> Option<SegmentKindCounts> {
+        self.output_segment_kind_counts
+    }
+
+    /// Returns the reconstruction options used for this finite source.
+    pub const fn options(&self) -> PolylineReconstructionOptions {
+        self.options
+    }
+
+    /// Returns true because reconstruction crosses a finite lossy boundary.
+    pub const fn lossy_boundary(&self) -> bool {
+        self.lossy_boundary
+    }
+
+    /// Returns retained topology status for the reconstructed carrier.
+    pub const fn status(&self) -> RetainedTopologyStatus {
+        self.status
+    }
+}
+
+impl CurveStringPolylineReconstructionResult2 {
+    /// Returns the reconstructed native curve string.
+    pub const fn curve_string(&self) -> &CurveString2 {
+        &self.curve_string
+    }
+
+    /// Consumes this result and returns the reconstructed curve string.
+    pub fn into_curve_string(self) -> CurveString2 {
+        self.curve_string
+    }
+
+    /// Returns retained reconstruction evidence.
+    pub const fn report(&self) -> &PolylineReconstructionReport2 {
+        &self.report
+    }
+}
+
+impl ContourPolylineReconstructionResult2 {
+    /// Returns the reconstructed native contour.
+    pub const fn contour(&self) -> &Contour2 {
+        &self.contour
+    }
+
+    /// Consumes this result and returns the reconstructed contour.
+    pub fn into_contour(self) -> Contour2 {
+        self.contour
+    }
+
+    /// Returns retained reconstruction evidence.
+    pub const fn report(&self) -> &PolylineReconstructionReport2 {
+        &self.report
+    }
+}
+
 impl Default for PolylineReconstructionOptions {
     fn default() -> Self {
         Self::DEFAULT
@@ -185,18 +301,7 @@ impl BulgeVertex2 {
         }
 
         let spans = reconstruct_spans(&samples, options)?;
-        let mut vertices = Vec::with_capacity(spans.len() + 1);
-        for span in &spans {
-            vertices.push(BulgeVertex2::new(
-                samples[span.start].point.clone(),
-                real_from_f64(span.bulge)?,
-            ));
-        }
-        vertices.push(BulgeVertex2::new(
-            samples[samples.len() - 1].point.clone(),
-            Real::zero(),
-        ));
-        Ok(vertices)
+        bulge_vertices_from_reconstruction_spans(&samples, &spans)
     }
 }
 
@@ -382,8 +487,38 @@ impl CurveString2 {
         points: &[Point2],
         options: PolylineReconstructionOptions,
     ) -> CurveResult<Self> {
-        let vertices = BulgeVertex2::reconstruct_polyline(points, options)?;
-        Self::from_bulge_vertices(&vertices)
+        Self::reconstruct_from_polyline_with_report(points, options)
+            .map(CurveStringPolylineReconstructionResult2::into_curve_string)
+    }
+
+    /// Reconstructs an open curve string from sampled polyline points and
+    /// retains finite reconstruction evidence.
+    pub fn reconstruct_from_polyline_with_report(
+        points: &[Point2],
+        options: PolylineReconstructionOptions,
+    ) -> CurveResult<CurveStringPolylineReconstructionResult2> {
+        let options = options.validate()?;
+        let samples = sample_open_points(points, options)?;
+        if samples.len() < 2 {
+            return Err(CurveError::InsufficientVertices);
+        }
+
+        let spans = reconstruct_spans(&samples, options)?;
+        let vertices = bulge_vertices_from_reconstruction_spans(&samples, &spans)?;
+        let curve_string = Self::from_bulge_vertices(&vertices)?;
+        let report = polyline_reconstruction_report(
+            false,
+            None,
+            points.len(),
+            samples.len(),
+            points.len().saturating_sub(samples.len()),
+            curve_string.segments(),
+            options,
+        );
+        Ok(CurveStringPolylineReconstructionResult2 {
+            curve_string,
+            report,
+        })
     }
 }
 
@@ -600,13 +735,27 @@ impl Contour2 {
         options: PolylineReconstructionOptions,
         fill_rule: FillRule,
     ) -> CurveResult<Self> {
+        Self::reconstruct_from_closed_polyline_with_fill_rule_and_report(points, options, fill_rule)
+            .map(ContourPolylineReconstructionResult2::into_contour)
+    }
+
+    /// Reconstructs a closed contour from sampled polyline points with an
+    /// explicit fill rule and retained finite reconstruction evidence.
+    pub fn reconstruct_from_closed_polyline_with_fill_rule_and_report(
+        points: &[Point2],
+        options: PolylineReconstructionOptions,
+        fill_rule: FillRule,
+    ) -> CurveResult<ContourPolylineReconstructionResult2> {
         let options = options.validate()?;
         let mut samples = sample_open_points(points, options)?;
+        let duplicate_count = points.len().saturating_sub(samples.len());
+        let mut discarded_duplicate_count = duplicate_count;
         if samples.len() >= 2
             && distance(&samples[0], &samples[samples.len() - 1])
                 <= options.duplicate_point_tolerance
         {
             samples.pop();
+            discarded_duplicate_count += 1;
         }
         if samples.len() < 3 {
             return Err(CurveError::InsufficientVertices);
@@ -615,7 +764,30 @@ impl Contour2 {
         let mut closed_points: Vec<_> = samples.iter().map(|sample| sample.point.clone()).collect();
         closed_points.push(samples[0].point.clone());
         let curve = CurveString2::reconstruct_from_polyline(&closed_points, options)?;
-        Self::try_new_with_fill_rule(curve.into_segments(), fill_rule)
+        let contour = Self::try_new_with_fill_rule(curve.into_segments(), fill_rule)?;
+        let report = polyline_reconstruction_report(
+            true,
+            Some(fill_rule),
+            points.len(),
+            samples.len(),
+            discarded_duplicate_count,
+            contour.segments(),
+            options,
+        );
+        Ok(ContourPolylineReconstructionResult2 { contour, report })
+    }
+
+    /// Reconstructs a closed contour from sampled polyline points using the
+    /// non-zero fill rule and retains finite reconstruction evidence.
+    pub fn reconstruct_from_closed_polyline_with_report(
+        points: &[Point2],
+        options: PolylineReconstructionOptions,
+    ) -> CurveResult<ContourPolylineReconstructionResult2> {
+        Self::reconstruct_from_closed_polyline_with_fill_rule_and_report(
+            points,
+            options,
+            FillRule::NonZero,
+        )
     }
 }
 
@@ -648,6 +820,58 @@ fn finite_ring_vertices(points: &[[f64; 2]]) -> CurveResult<(Vec<BulgeVertex2>, 
         .map(|point| BulgeVertex2::new(point, Real::zero()))
         .collect();
     Ok((vertices, discarded_duplicate_count))
+}
+
+fn bulge_vertices_from_reconstruction_spans(
+    samples: &[SamplePoint],
+    spans: &[Span],
+) -> CurveResult<Vec<BulgeVertex2>> {
+    let mut vertices = Vec::with_capacity(spans.len() + 1);
+    for span in spans {
+        vertices.push(BulgeVertex2::new(
+            samples[span.start].point.clone(),
+            real_from_f64(span.bulge)?,
+        ));
+    }
+    vertices.push(BulgeVertex2::new(
+        samples[samples.len() - 1].point.clone(),
+        Real::zero(),
+    ));
+    Ok(vertices)
+}
+
+fn polyline_reconstruction_report(
+    closed: bool,
+    fill_rule: Option<FillRule>,
+    input_point_count: usize,
+    retained_sample_count: usize,
+    discarded_duplicate_count: usize,
+    output_segments: &[Segment2],
+    options: PolylineReconstructionOptions,
+) -> PolylineReconstructionReport2 {
+    PolylineReconstructionReport2 {
+        closed,
+        fill_rule,
+        input_point_count,
+        retained_sample_count,
+        discarded_duplicate_count,
+        output_segment_count: Some(output_segments.len()),
+        output_segment_kind_counts: Some(segment_kind_counts(output_segments)),
+        options,
+        lossy_boundary: true,
+        status: RetainedTopologyStatus::ImportedLossy,
+    }
+}
+
+fn segment_kind_counts(segments: &[Segment2]) -> SegmentKindCounts {
+    let mut counts = SegmentKindCounts::default();
+    for segment in segments {
+        match segment {
+            Segment2::Line(_) => counts.lines += 1,
+            Segment2::Arc(_) => counts.arcs += 1,
+        }
+    }
+    counts
 }
 
 fn cyclic_duplicate_edge_count(points: &[Point2]) -> usize {
