@@ -458,6 +458,26 @@ fn curve_string_round_cap_outline_report_materializes_single_line() {
         outline.report().outline_segment_kind_counts(),
         Some(SegmentKindCounts { lines: 2, arcs: 2 })
     );
+    let outline_self_contact = outline
+        .report()
+        .outline_self_contact_report()
+        .expect("final outline self-contact validation should be retained");
+    assert!(outline_self_contact.status().is_native_exact());
+    assert!(outline_self_contact.closed());
+    assert_eq!(outline_self_contact.segment_count(), 4);
+    assert_eq!(
+        outline_self_contact.segment_kind_counts(),
+        SegmentKindCounts { lines: 2, arcs: 2 }
+    );
+    assert_eq!(outline_self_contact.blocker(), None);
+    assert_eq!(
+        outline_self_contact.first_contact_first_segment_index(),
+        None
+    );
+    assert_eq!(
+        outline_self_contact.first_contact_second_segment_index(),
+        None
+    );
     assert_eq!(outline.report().blocker(), None);
     assert_eq!(outline.outline().unwrap().len(), 4);
 }
@@ -527,6 +547,7 @@ fn curve_string_round_cap_outline_report_blocks_nonpositive_distance() {
     assert_eq!(outline.report().right_offset_segment_kind_counts(), None);
     assert_eq!(outline.report().outline_segment_count(), None);
     assert_eq!(outline.report().outline_segment_kind_counts(), None);
+    assert_eq!(outline.report().outline_self_contact_report(), None);
     assert_eq!(
         outline.report().blocker(),
         Some(UncertaintyReason::Unsupported)
@@ -597,6 +618,7 @@ fn curve_string_round_cap_outline_report_blocks_self_contacting_input() {
     assert_eq!(outline.report().right_offset_segment_kind_counts(), None);
     assert_eq!(outline.report().outline_segment_count(), None);
     assert_eq!(outline.report().outline_segment_kind_counts(), None);
+    assert_eq!(outline.report().outline_self_contact_report(), None);
     assert_eq!(
         outline.report().blocker(),
         Some(UncertaintyReason::Unsupported)

@@ -131,6 +131,7 @@ pub struct CurveStringOutlineOffsetReport2 {
     right_offset_segment_kind_counts: Option<SegmentKindCounts>,
     outline_segment_count: Option<usize>,
     outline_segment_kind_counts: Option<SegmentKindCounts>,
+    outline_self_contact_report: Option<SelfContactReport2>,
     status: RetainedTopologyStatus,
     blocker: Option<UncertaintyReason>,
 }
@@ -757,6 +758,11 @@ impl CurveStringOutlineOffsetReport2 {
         self.outline_segment_kind_counts
     }
 
+    /// Returns final closed-outline self-contact validation evidence when reached.
+    pub const fn outline_self_contact_report(&self) -> Option<&SelfContactReport2> {
+        self.outline_self_contact_report.as_ref()
+    }
+
     /// Returns checked outline topology status.
     pub const fn status(&self) -> RetainedTopologyStatus {
         self.status
@@ -933,6 +939,7 @@ fn blocked_curve_string_outline_offset_result(
     right_offset_segment_kind_counts: Option<SegmentKindCounts>,
     outline_segment_count: Option<usize>,
     outline_segment_kind_counts: Option<SegmentKindCounts>,
+    outline_self_contact_report: Option<SelfContactReport2>,
     status: RetainedTopologyStatus,
     blocker: UncertaintyReason,
 ) -> CurveStringOutlineOffsetResult2 {
@@ -950,6 +957,7 @@ fn blocked_curve_string_outline_offset_result(
             right_offset_segment_kind_counts,
             outline_segment_count,
             outline_segment_kind_counts,
+            outline_self_contact_report,
             status,
             blocker: Some(blocker),
         },
@@ -988,6 +996,7 @@ fn checked_outline_with_report(
                 None,
                 None,
                 None,
+                None,
                 RetainedTopologyStatus::Unsupported,
                 UncertaintyReason::Unsupported,
             ));
@@ -998,6 +1007,7 @@ fn checked_outline_with_report(
                 cap,
                 source_segment_count,
                 source_segment_kind_counts,
+                None,
                 None,
                 None,
                 None,
@@ -1028,6 +1038,7 @@ fn checked_outline_with_report(
                 None,
                 None,
                 None,
+                None,
                 RetainedTopologyStatus::Unsupported,
                 UncertaintyReason::Unsupported,
             ));
@@ -1039,6 +1050,7 @@ fn checked_outline_with_report(
                 source_segment_count,
                 source_segment_kind_counts,
                 Some(source_self_contact_report),
+                None,
                 None,
                 None,
                 None,
@@ -1066,6 +1078,7 @@ fn checked_outline_with_report(
                 None,
                 None,
                 None,
+                None,
                 retained_status_for_offset_blocker(reason),
                 reason,
             ));
@@ -1085,6 +1098,7 @@ fn checked_outline_with_report(
                 Some(source_self_contact_report.clone()),
                 Some(left_offset_segment_count),
                 Some(left_offset_segment_kind_counts),
+                None,
                 None,
                 None,
                 None,
@@ -1123,6 +1137,7 @@ fn checked_outline_with_report(
                 Some(right_offset_segment_kind_counts),
                 None,
                 None,
+                None,
                 retained_status_for_offset_blocker(reason),
                 reason,
             ));
@@ -1131,8 +1146,9 @@ fn checked_outline_with_report(
     let outline_segment_count = segments.len();
     let outline_segment_kind_counts = segment_kind_counts(&segments);
 
-    match checked_outline_contour(segments, policy)? {
-        Classification::Decided(outline) => Ok(CurveStringOutlineOffsetResult2 {
+    let checked_outline = checked_outline_contour_with_report(segments, policy)?;
+    match checked_outline.contour {
+        Some(outline) => Ok(CurveStringOutlineOffsetResult2 {
             outline: Some(outline),
             report: CurveStringOutlineOffsetReport2 {
                 stage: CurveStringOutlineOffsetStage2::OutlineTopologyValidation,
@@ -1146,11 +1162,12 @@ fn checked_outline_with_report(
                 right_offset_segment_kind_counts: Some(right_offset_segment_kind_counts),
                 outline_segment_count: Some(outline_segment_count),
                 outline_segment_kind_counts: Some(outline_segment_kind_counts),
+                outline_self_contact_report: checked_outline.self_contact_report,
                 status: RetainedTopologyStatus::NativeExact,
                 blocker: None,
             },
         }),
-        Classification::Uncertain(reason) => Ok(blocked_curve_string_outline_offset_result(
+        None => Ok(blocked_curve_string_outline_offset_result(
             CurveStringOutlineOffsetStage2::OutlineTopologyValidation,
             cap,
             source_segment_count,
@@ -1162,8 +1179,9 @@ fn checked_outline_with_report(
             Some(right_offset_segment_kind_counts),
             Some(outline_segment_count),
             Some(outline_segment_kind_counts),
-            retained_status_for_offset_blocker(reason),
-            reason,
+            checked_outline.self_contact_report,
+            retained_status_for_offset_blocker(checked_outline.blocker),
+            checked_outline.blocker,
         )),
     }
 }
@@ -1328,29 +1346,55 @@ struct OutlineOffsets {
     right_end: Point2,
 }
 
+struct CheckedOutlineContour {
+    contour: Option<Contour2>,
+    self_contact_report: Option<SelfContactReport2>,
+    blocker: UncertaintyReason,
+}
+
 // Contour closure and self-contact checks are deliberately centralized so every
 // open-outline cap style preserves the same "raw construction, no trimming"
 // contract described by Tiller and Hanson (1984).
-fn checked_outline_contour(
+fn checked_outline_contour_with_report(
     segments: Vec<Segment2>,
     policy: &CurvePolicy,
-) -> CurveResult<Classification<Contour2>> {
+) -> CurveResult<CheckedOutlineContour> {
     let outline = match Contour2::try_new(segments) {
         Ok(outline) => outline,
         Err(CurveError::DisconnectedCurveString) => {
-            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            return Ok(CheckedOutlineContour {
+                contour: None,
+                self_contact_report: None,
+                blocker: UncertaintyReason::Unsupported,
+            });
         }
         Err(CurveError::AmbiguousCurveStringConnection) => {
-            return Ok(Classification::Uncertain(UncertaintyReason::RealSign));
+            return Ok(CheckedOutlineContour {
+                contour: None,
+                self_contact_report: None,
+                blocker: UncertaintyReason::RealSign,
+            });
         }
         Err(error) => return Err(error),
     };
-    match outline.has_self_contacts(policy)? {
-        Classification::Decided(false) => Ok(Classification::Decided(outline)),
-        Classification::Decided(true) => {
-            Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
-        }
-        Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
+    let self_contact = outline.has_self_contacts_with_report(policy)?;
+    let self_contact_report = self_contact.report().clone();
+    match self_contact.has_self_contacts() {
+        Classification::Decided(false) => Ok(CheckedOutlineContour {
+            contour: Some(outline),
+            self_contact_report: Some(self_contact_report),
+            blocker: UncertaintyReason::Unsupported,
+        }),
+        Classification::Decided(true) => Ok(CheckedOutlineContour {
+            contour: None,
+            self_contact_report: Some(self_contact_report),
+            blocker: UncertaintyReason::Unsupported,
+        }),
+        Classification::Uncertain(reason) => Ok(CheckedOutlineContour {
+            contour: None,
+            self_contact_report: Some(self_contact_report),
+            blocker: reason,
+        }),
     }
 }
 
