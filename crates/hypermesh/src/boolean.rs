@@ -1015,11 +1015,6 @@ impl ExactBooleanCertificationSet {
         &self.adjacent_union_completion
     }
 
-    /// Return the boundary-contact policy certification report.
-    pub fn boundary_touching(&self) -> &ExactBoundaryTouchingReport {
-        &self.boundary_touching
-    }
-
     /// Return the planar-arrangement readiness certification report.
     #[cfg(test)]
     pub(crate) fn planar_arrangement(&self) -> &ExactPlanarArrangementReport {

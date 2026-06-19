@@ -3927,16 +3927,12 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
         ValidationPolicy::ALLOW_BOUNDARY,
     );
     let evaluation = exact_boolean_evaluation(&left, &right, request);
-    let report = evaluation.certifications().boundary_touching().clone();
-    assert!(report.is_certified(), "{report:?}");
-    report.validate().unwrap();
-    evaluation.validate_against_sources(&left, &right).unwrap();
-
     let preflight = evaluation.preflight().clone();
     assert!(
         preflight.is_certified_boundary_policy_shortcut(),
         "{preflight:?}"
     );
+    evaluation.validate_against_sources(&left, &right).unwrap();
     let rejected_policy_preflight = exact_boolean_evaluation(
         &left,
         &right,
@@ -3967,9 +3963,12 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
     assert!(policy_preflight.blocker().is_none(), "{policy_preflight:?}");
     assert_eq!(
         policy_preflight.retained_face_pairs(),
-        report.retained_face_pairs()
+        preflight.retained_face_pairs()
     );
-    assert_eq!(policy_preflight.retained_events(), report.retained_events());
+    assert_eq!(
+        policy_preflight.retained_events(),
+        preflight.retained_events()
+    );
     policy_evaluation
         .validate_against_sources(&left, &right)
         .unwrap();
@@ -4012,9 +4011,12 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
     assert!(policy_readiness.blocker().requires_boundary_policy());
     assert_eq!(
         policy_readiness.retained_face_pairs(),
-        report.retained_face_pairs()
+        preflight.retained_face_pairs()
     );
-    assert_eq!(policy_readiness.retained_events(), report.retained_events());
+    assert_eq!(
+        policy_readiness.retained_events(),
+        preflight.retained_events()
+    );
     policy_readiness.validate().unwrap();
     policy_evaluation
         .validate_against_sources(&left, &right)
@@ -4185,11 +4187,12 @@ fn boundary_touching_report_classifies_proper_crossing_as_winding_blocker() {
         ValidationPolicy::ALLOW_BOUNDARY,
     );
     let evaluation = exact_boolean_evaluation(&left, &right, request);
-    let report = evaluation.certifications().boundary_touching().clone();
-
-    assert!(!report.is_certified());
-    assert!(report.blocker().requires_winding());
-    assert!(report.blocker().candidate_pairs() > 0);
-    report.validate().unwrap();
+    let preflight = evaluation.preflight();
+    assert!(
+        preflight
+            .blocker()
+            .is_some_and(|blocker| blocker.requires_winding() && blocker.candidate_pairs() > 0),
+        "{preflight:?}"
+    );
     evaluation.validate_against_sources(&left, &right).unwrap();
 }

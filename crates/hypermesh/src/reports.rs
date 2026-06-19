@@ -5742,11 +5742,6 @@ impl ExactAdjacentUnionCompletionReport {
 }
 
 impl ExactBoundaryTouchingReport {
-    /// Return the coarse boundary-touching status.
-    pub const fn status(&self) -> ExactBoundaryTouchingStatus {
-        self.status
-    }
-
     /// Return whether graph extraction retained unknown events.
     pub const fn graph_had_unknowns(&self) -> bool {
         self.graph_had_unknowns
@@ -5760,11 +5755,6 @@ impl ExactBoundaryTouchingReport {
     /// Return the retained event record count.
     pub const fn retained_events(&self) -> usize {
         self.retained_events
-    }
-
-    /// Return the retained relation-count blocker.
-    pub const fn blocker(&self) -> &ExactBooleanBlocker {
-        &self.blocker
     }
 
     /// Return whether the graph is certified boundary-only contact.
