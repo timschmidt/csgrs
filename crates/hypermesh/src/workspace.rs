@@ -381,27 +381,12 @@ impl<'a> ExactBooleanWorkspace<'a> {
         &mut self,
         request: ExactBooleanRequest,
     ) -> Result<ExactBooleanResult, MeshError> {
-        let (certified_support, retained_result) =
-            if let Some(index) = cached_by_request_index(&self.evaluations, request) {
-                let evaluation = &self.evaluations[index].1;
-                evaluation
-                    .validate_against_sources(self.left, self.right)
-                    .map_err(workspace_report_validation_error)?;
-                let certified_support = evaluation
-                    .preflight()
-                    .is_certified()
-                    .then_some(evaluation.preflight().support);
-                let retained_result = evaluation.materialized_result().cloned();
-                (certified_support, retained_result)
-            } else {
-                let evaluation = self.evaluate(request)?;
-                let certified_support = evaluation
-                    .preflight()
-                    .is_certified()
-                    .then_some(evaluation.preflight().support);
-                let retained_result = evaluation.materialized_result().cloned();
-                (certified_support, retained_result)
-            };
+        let evaluation = self.evaluate(request)?;
+        let certified_support = evaluation
+            .preflight()
+            .is_certified()
+            .then_some(evaluation.preflight().support);
+        let retained_result = evaluation.materialized_result().cloned();
         if let Some(support) = certified_support {
             if let Some(result) = retained_result {
                 return Ok(result);
