@@ -33,6 +33,7 @@ pub struct ExactCurveWorkspace2 {
     source_segment_aabbs: Vec<Option<Aabb2>>,
     source_aabb: Option<Aabb2>,
     source_endpoint_bucket_cache: ExactCurveArrangementSourceEndpointBucketCache2,
+    split_schedule_cache: ExactCurveArrangementSplitScheduleCache2,
     split_cache: Option<ExactCurveArrangementSplitCache2>,
     endpoint_graph_cache: Option<ExactCurveArrangementEndpointGraphCache2>,
     ring_assembly_cache: Option<ExactCurveArrangementRingAssemblyCache2>,
@@ -70,6 +71,35 @@ pub struct ExactCurveArrangementSourceEndpointBucketCache2 {
     singleton_bucket_count: usize,
     max_bucket_size: usize,
     buckets: Vec<ExactCurveArrangementSourceEndpointBucket2>,
+}
+
+/// AABB pruning status retained for one scheduled source split candidate pair.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum ExactCurveArrangementSplitCandidateAabbStatus2 {
+    /// The source boxes were both decided and certified disjoint.
+    DecidedDisjoint,
+    /// The source boxes were both decided and not certified disjoint.
+    NotDecidedDisjoint,
+    /// One or both source boxes were not certified during workspace preparation.
+    Undecided,
+}
+
+/// Source segment pair scheduled for exact split predicate evaluation or AABB pruning.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ExactCurveArrangementSplitCandidatePair2 {
+    first_source_segment_index: usize,
+    second_source_segment_index: usize,
+    aabb_status: ExactCurveArrangementSplitCandidateAabbStatus2,
+}
+
+/// Retained exact source-pair schedule used before split predicate evaluation.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ExactCurveArrangementSplitScheduleCache2 {
+    candidate_pair_count: usize,
+    decided_disjoint_pair_count: usize,
+    predicate_candidate_pair_count: usize,
+    undecided_aabb_pair_count: usize,
+    candidate_pairs: Vec<ExactCurveArrangementSplitCandidatePair2>,
 }
 
 /// Retained exact split evidence cached by an evaluated arrangement workspace.
@@ -1190,12 +1220,14 @@ impl ExactCurveWorkspace2 {
         let source_segment_aabbs = source_segment_aabbs(&request.source_segments, policy)?;
         let source_aabb = union_decided_aabbs(&source_segment_aabbs, policy);
         let source_endpoint_bucket_cache = source_endpoint_bucket_cache(&request.source_segments);
+        let split_schedule_cache = split_schedule_cache(&source_segment_aabbs, policy);
         Ok(Self {
             request,
             source_segment_kind_counts,
             source_segment_aabbs,
             source_aabb,
             source_endpoint_bucket_cache,
+            split_schedule_cache,
             split_cache: None,
             endpoint_graph_cache: None,
             ring_assembly_cache: None,
@@ -1264,6 +1296,11 @@ impl ExactCurveWorkspace2 {
         &self,
     ) -> &ExactCurveArrangementSourceEndpointBucketCache2 {
         &self.source_endpoint_bucket_cache
+    }
+
+    /// Returns the retained source-pair schedule prepared before split predicates run.
+    pub const fn split_schedule_cache(&self) -> &ExactCurveArrangementSplitScheduleCache2 {
+        &self.split_schedule_cache
     }
 
     /// Returns exact split evidence retained from the evaluated arrangement.
@@ -1335,6 +1372,50 @@ impl ExactCurveArrangementSourceEndpointBucketCache2 {
     /// Returns exact structural source endpoint buckets in encounter order.
     pub fn buckets(&self) -> &[ExactCurveArrangementSourceEndpointBucket2] {
         &self.buckets
+    }
+}
+
+impl ExactCurveArrangementSplitCandidatePair2 {
+    /// Returns the first source segment index in this scheduled pair.
+    pub const fn first_source_segment_index(&self) -> usize {
+        self.first_source_segment_index
+    }
+
+    /// Returns the second source segment index in this scheduled pair.
+    pub const fn second_source_segment_index(&self) -> usize {
+        self.second_source_segment_index
+    }
+
+    /// Returns the retained AABB pruning status for this scheduled pair.
+    pub const fn aabb_status(&self) -> ExactCurveArrangementSplitCandidateAabbStatus2 {
+        self.aabb_status
+    }
+}
+
+impl ExactCurveArrangementSplitScheduleCache2 {
+    /// Returns the total number of scheduled source segment pairs.
+    pub const fn candidate_pair_count(&self) -> usize {
+        self.candidate_pair_count
+    }
+
+    /// Returns scheduled pairs certified disjoint by retained source AABBs.
+    pub const fn decided_disjoint_pair_count(&self) -> usize {
+        self.decided_disjoint_pair_count
+    }
+
+    /// Returns scheduled pairs that require split predicate evaluation.
+    pub const fn predicate_candidate_pair_count(&self) -> usize {
+        self.predicate_candidate_pair_count
+    }
+
+    /// Returns scheduled pairs whose AABB pruning status stayed undecided.
+    pub const fn undecided_aabb_pair_count(&self) -> usize {
+        self.undecided_aabb_pair_count
+    }
+
+    /// Returns scheduled source segment pairs in canonical `i < j` order.
+    pub fn candidate_pairs(&self) -> &[ExactCurveArrangementSplitCandidatePair2] {
+        &self.candidate_pairs
     }
 }
 
@@ -3810,6 +3891,56 @@ fn add_source_endpoint_bucket_ref(
             point: point.clone(),
             endpoints: vec![endpoint_ref],
         });
+    }
+}
+
+fn split_schedule_cache(
+    source_segment_aabbs: &[Option<Aabb2>],
+    policy: &CurvePolicy,
+) -> ExactCurveArrangementSplitScheduleCache2 {
+    let candidate_pair_count = source_segment_aabbs
+        .len()
+        .saturating_mul(source_segment_aabbs.len().saturating_sub(1))
+        / 2;
+    let mut decided_disjoint_pair_count = 0_usize;
+    let mut undecided_aabb_pair_count = 0_usize;
+    let mut candidate_pairs = Vec::with_capacity(candidate_pair_count);
+
+    for first_source_segment_index in 0..source_segment_aabbs.len() {
+        for second_source_segment_index in
+            first_source_segment_index + 1..source_segment_aabbs.len()
+        {
+            let aabb_status = match (
+                &source_segment_aabbs[first_source_segment_index],
+                &source_segment_aabbs[second_source_segment_index],
+            ) {
+                (Some(first), Some(second)) if aabbs_decided_disjoint(first, second, policy) => {
+                    decided_disjoint_pair_count += 1;
+                    ExactCurveArrangementSplitCandidateAabbStatus2::DecidedDisjoint
+                }
+                (Some(_), Some(_)) => {
+                    ExactCurveArrangementSplitCandidateAabbStatus2::NotDecidedDisjoint
+                }
+                _ => {
+                    undecided_aabb_pair_count += 1;
+                    ExactCurveArrangementSplitCandidateAabbStatus2::Undecided
+                }
+            };
+            candidate_pairs.push(ExactCurveArrangementSplitCandidatePair2 {
+                first_source_segment_index,
+                second_source_segment_index,
+                aabb_status,
+            });
+        }
+    }
+
+    ExactCurveArrangementSplitScheduleCache2 {
+        candidate_pair_count,
+        decided_disjoint_pair_count,
+        predicate_candidate_pair_count: candidate_pair_count
+            .saturating_sub(decided_disjoint_pair_count),
+        undecided_aabb_pair_count,
+        candidate_pairs,
     }
 }
 
