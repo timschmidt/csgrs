@@ -2166,7 +2166,7 @@ impl ExactTrivialBooleanFacts {
 #[derive(Clone, Debug, PartialEq)]
 pub struct ExactBooleanEvaluation {
     /// Request policy evaluated.
-    pub request: ExactBooleanRequest,
+    request: ExactBooleanRequest,
     /// Exact preflight/scheduling result.
     pub preflight: ExactBooleanPreflight,
     /// Replayable exact certification reports for the request.
@@ -2199,6 +2199,16 @@ impl ExactBooleanEvaluation {
     /// when evaluation reached that canonical pipeline.
     pub fn retained_arrangement_attempt(&self) -> Option<&ExactArrangementBooleanAttempt> {
         self.certifications.arrangement_attempt.as_ref()
+    }
+
+    /// Return the request policy evaluated by this retained evaluation.
+    pub fn request(&self) -> ExactBooleanRequest {
+        self.request
+    }
+
+    /// Return the exact boolean operation requested by this evaluation.
+    pub fn operation(&self) -> ExactBooleanOperation {
+        self.request.operation
     }
 
     /// Return the exact preflight/scheduling report retained by this evaluation.

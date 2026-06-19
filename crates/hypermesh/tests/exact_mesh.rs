@@ -33,8 +33,8 @@ fn evaluation_materializes_arrangement_cell_complex(
     evaluation: &hypermesh::ExactBooleanEvaluation,
 ) -> bool {
     evaluation.materialized_result().is_some_and(|result| {
-        result.is_arrangement_cell_complex_materialized_for(evaluation.request.operation)
-            || result.is_arrangement_cell_complex_shortcut_for(evaluation.request.operation)
+        result.is_arrangement_cell_complex_materialized_for(evaluation.operation())
+            || result.is_arrangement_cell_complex_shortcut_for(evaluation.operation())
     }) || evaluation
         .certifications
         .winding_readiness
@@ -309,12 +309,6 @@ fn exact_boolean_evaluation_materializes_certified_result_publicly() {
         evaluation.freshness_against_sources(&left, &stale_right),
         hypermesh::ExactReportFreshness::SourceReplayMismatch
     );
-    let mut relabeled_request = evaluation.clone();
-    relabeled_request.request = ExactBooleanRequest::new(
-        ExactBooleanOperation::Intersection,
-        ValidationPolicy::ALLOW_BOUNDARY,
-    );
-    assert_report_validation_error!(relabeled_request.validate());
     let mut stale_attempt_policy = evaluation.clone();
     stale_attempt_policy
         .certifications
