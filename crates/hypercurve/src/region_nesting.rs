@@ -32,10 +32,44 @@ pub struct ExactCurveWorkspace2 {
     source_segment_kind_counts: SegmentKindCounts,
     source_segment_aabbs: Vec<Option<Aabb2>>,
     source_aabb: Option<Aabb2>,
+    source_endpoint_bucket_cache: ExactCurveArrangementSourceEndpointBucketCache2,
     split_cache: Option<ExactCurveArrangementSplitCache2>,
     endpoint_graph_cache: Option<ExactCurveArrangementEndpointGraphCache2>,
     ring_assembly_cache: Option<ExactCurveArrangementRingAssemblyCache2>,
     output_cache: Option<ExactCurveArrangementOutputCache2>,
+}
+
+/// Source endpoint of a retained exact arrangement input segment.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum ExactCurveArrangementSourceEndpoint2 {
+    /// Start point of the source segment.
+    Start,
+    /// End point of the source segment.
+    End,
+}
+
+/// Source-segment endpoint reference retained in a source endpoint bucket.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ExactCurveArrangementSourceEndpointRef2 {
+    source_segment_index: usize,
+    endpoint: ExactCurveArrangementSourceEndpoint2,
+}
+
+/// Exact structural source endpoint bucket retained during workspace preparation.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ExactCurveArrangementSourceEndpointBucket2 {
+    point: Point2,
+    endpoints: Vec<ExactCurveArrangementSourceEndpointRef2>,
+}
+
+/// Exact structural source endpoint buckets retained during workspace preparation.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ExactCurveArrangementSourceEndpointBucketCache2 {
+    endpoint_count: usize,
+    bucket_count: usize,
+    singleton_bucket_count: usize,
+    max_bucket_size: usize,
+    buckets: Vec<ExactCurveArrangementSourceEndpointBucket2>,
 }
 
 /// Retained exact split evidence cached by an evaluated arrangement workspace.
@@ -1131,11 +1165,13 @@ impl ExactCurveWorkspace2 {
         let source_segment_kind_counts = segment_kind_counts(&request.source_segments);
         let source_segment_aabbs = source_segment_aabbs(&request.source_segments, policy)?;
         let source_aabb = union_decided_aabbs(&source_segment_aabbs, policy);
+        let source_endpoint_bucket_cache = source_endpoint_bucket_cache(&request.source_segments);
         Ok(Self {
             request,
             source_segment_kind_counts,
             source_segment_aabbs,
             source_aabb,
+            source_endpoint_bucket_cache,
             split_cache: None,
             endpoint_graph_cache: None,
             ring_assembly_cache: None,
@@ -1199,6 +1235,13 @@ impl ExactCurveWorkspace2 {
             .saturating_sub(self.decided_source_segment_aabb_count())
     }
 
+    /// Returns exact source endpoint buckets retained during workspace preparation.
+    pub const fn source_endpoint_bucket_cache(
+        &self,
+    ) -> &ExactCurveArrangementSourceEndpointBucketCache2 {
+        &self.source_endpoint_bucket_cache
+    }
+
     /// Returns exact split evidence retained from the evaluated arrangement.
     pub const fn split_cache(&self) -> Option<&ExactCurveArrangementSplitCache2> {
         self.split_cache.as_ref()
@@ -1217,6 +1260,57 @@ impl ExactCurveWorkspace2 {
     /// Returns final output evidence retained from the evaluated arrangement.
     pub const fn output_cache(&self) -> Option<&ExactCurveArrangementOutputCache2> {
         self.output_cache.as_ref()
+    }
+}
+
+impl ExactCurveArrangementSourceEndpointRef2 {
+    /// Returns the source segment index that owns this endpoint.
+    pub const fn source_segment_index(&self) -> usize {
+        self.source_segment_index
+    }
+
+    /// Returns which source endpoint this reference points at.
+    pub const fn endpoint(&self) -> ExactCurveArrangementSourceEndpoint2 {
+        self.endpoint
+    }
+}
+
+impl ExactCurveArrangementSourceEndpointBucket2 {
+    /// Returns the exact structural point shared by this source endpoint bucket.
+    pub const fn point(&self) -> &Point2 {
+        &self.point
+    }
+
+    /// Returns source endpoints in request encounter order.
+    pub fn endpoints(&self) -> &[ExactCurveArrangementSourceEndpointRef2] {
+        &self.endpoints
+    }
+}
+
+impl ExactCurveArrangementSourceEndpointBucketCache2 {
+    /// Returns the number of source endpoints bucketed.
+    pub const fn endpoint_count(&self) -> usize {
+        self.endpoint_count
+    }
+
+    /// Returns the number of exact structural source endpoint buckets.
+    pub const fn bucket_count(&self) -> usize {
+        self.bucket_count
+    }
+
+    /// Returns buckets containing one source endpoint.
+    pub const fn singleton_bucket_count(&self) -> usize {
+        self.singleton_bucket_count
+    }
+
+    /// Returns the largest source endpoint bucket size.
+    pub const fn max_bucket_size(&self) -> usize {
+        self.max_bucket_size
+    }
+
+    /// Returns exact structural source endpoint buckets in encounter order.
+    pub fn buckets(&self) -> &[ExactCurveArrangementSourceEndpointBucket2] {
+        &self.buckets
     }
 }
 
@@ -3579,6 +3673,64 @@ fn source_segment_aabbs(
             Classification::Uncertain(_) => Ok(None),
         })
         .collect()
+}
+
+fn source_endpoint_bucket_cache(
+    segments: &[Segment2],
+) -> ExactCurveArrangementSourceEndpointBucketCache2 {
+    let mut buckets: Vec<ExactCurveArrangementSourceEndpointBucket2> = Vec::new();
+    for (source_segment_index, segment) in segments.iter().enumerate() {
+        add_source_endpoint_bucket_ref(
+            &mut buckets,
+            segment.start(),
+            ExactCurveArrangementSourceEndpointRef2 {
+                source_segment_index,
+                endpoint: ExactCurveArrangementSourceEndpoint2::Start,
+            },
+        );
+        add_source_endpoint_bucket_ref(
+            &mut buckets,
+            segment.end(),
+            ExactCurveArrangementSourceEndpointRef2 {
+                source_segment_index,
+                endpoint: ExactCurveArrangementSourceEndpoint2::End,
+            },
+        );
+    }
+
+    let endpoint_count = segments.len() * 2;
+    let bucket_count = buckets.len();
+    let singleton_bucket_count = buckets
+        .iter()
+        .filter(|bucket| bucket.endpoints.len() == 1)
+        .count();
+    let max_bucket_size = buckets
+        .iter()
+        .map(|bucket| bucket.endpoints.len())
+        .max()
+        .unwrap_or(0);
+    ExactCurveArrangementSourceEndpointBucketCache2 {
+        endpoint_count,
+        bucket_count,
+        singleton_bucket_count,
+        max_bucket_size,
+        buckets,
+    }
+}
+
+fn add_source_endpoint_bucket_ref(
+    buckets: &mut Vec<ExactCurveArrangementSourceEndpointBucket2>,
+    point: &Point2,
+    endpoint_ref: ExactCurveArrangementSourceEndpointRef2,
+) {
+    if let Some(bucket) = buckets.iter_mut().find(|bucket| bucket.point() == point) {
+        bucket.endpoints.push(endpoint_ref);
+    } else {
+        buckets.push(ExactCurveArrangementSourceEndpointBucket2 {
+            point: point.clone(),
+            endpoints: vec![endpoint_ref],
+        });
+    }
 }
 
 fn union_decided_aabbs(segment_aabbs: &[Option<Aabb2>], policy: &CurvePolicy) -> Option<Aabb2> {

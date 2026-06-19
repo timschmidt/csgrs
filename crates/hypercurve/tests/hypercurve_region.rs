@@ -1,13 +1,14 @@
 use hypercurve::{
     BulgeVertex2, CircularArc2, Classification, Contour2, CurveError, CurvePolicy, CurveString2,
-    ExactCurveArrangementAttempt2, ExactCurveArrangementRequest2, FillRule,
-    FiniteProjectionOptions, Real, Region2, RegionBoundaryContourBuildPredicatePath2,
-    RegionBoundaryContourBuildStage2, RegionBoundaryContourRole2,
-    RegionLineSegmentArrangedEndpoint2, RegionLineSegmentEndpointGraphPredicatePath2,
-    RegionLineSegmentRegionBuildStage2, RegionLineSegmentRingAssemblyPredicatePath2,
-    RegionLineSegmentSplitPredicatePath2, RegionPointLocation, RegionView2, Segment2, SegmentKind,
-    SegmentKindCounts, UncertaintyReason, finite_polyline_vertex_centroid, finite_ring_signed_area,
-    try_finite_polyline_vertex_centroid, try_finite_ring_signed_area,
+    ExactCurveArrangementAttempt2, ExactCurveArrangementRequest2,
+    ExactCurveArrangementSourceEndpoint2, FillRule, FiniteProjectionOptions, Real, Region2,
+    RegionBoundaryContourBuildPredicatePath2, RegionBoundaryContourBuildStage2,
+    RegionBoundaryContourRole2, RegionLineSegmentArrangedEndpoint2,
+    RegionLineSegmentEndpointGraphPredicatePath2, RegionLineSegmentRegionBuildStage2,
+    RegionLineSegmentRingAssemblyPredicatePath2, RegionLineSegmentSplitPredicatePath2,
+    RegionPointLocation, RegionView2, Segment2, SegmentKind, SegmentKindCounts, UncertaintyReason,
+    finite_polyline_vertex_centroid, finite_ring_signed_area, try_finite_polyline_vertex_centroid,
+    try_finite_ring_signed_area,
 };
 use proptest::prelude::*;
 
@@ -1054,6 +1055,31 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
             .map(|bbox| (bbox.min().clone(), bbox.max().clone())),
         Some((p(0, 0), p(4, 4)))
     );
+    let source_endpoint_cache = result.workspace().source_endpoint_bucket_cache();
+    assert_eq!(source_endpoint_cache.endpoint_count(), 8);
+    assert_eq!(source_endpoint_cache.bucket_count(), 4);
+    assert_eq!(source_endpoint_cache.singleton_bucket_count(), 0);
+    assert_eq!(source_endpoint_cache.max_bucket_size(), 2);
+    assert_eq!(source_endpoint_cache.buckets().len(), 4);
+    let first_source_endpoint_bucket = &source_endpoint_cache.buckets()[0];
+    assert_eq!(first_source_endpoint_bucket.point(), &p(4, 0));
+    assert_eq!(first_source_endpoint_bucket.endpoints().len(), 2);
+    assert_eq!(
+        first_source_endpoint_bucket.endpoints()[0].source_segment_index(),
+        0
+    );
+    assert_eq!(
+        first_source_endpoint_bucket.endpoints()[0].endpoint(),
+        ExactCurveArrangementSourceEndpoint2::Start
+    );
+    assert_eq!(
+        first_source_endpoint_bucket.endpoints()[1].source_segment_index(),
+        1
+    );
+    assert_eq!(
+        first_source_endpoint_bucket.endpoints()[1].endpoint(),
+        ExactCurveArrangementSourceEndpoint2::End
+    );
     let split_cache = result.workspace().split_cache().unwrap();
     assert_eq!(
         split_cache.predicate_path(),
@@ -1203,6 +1229,30 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
             .map(|bbox| bbox.min().clone()),
         Some(p(0, -2))
     );
+    let source_endpoint_cache = result.workspace().source_endpoint_bucket_cache();
+    assert_eq!(source_endpoint_cache.endpoint_count(), 4);
+    assert_eq!(source_endpoint_cache.bucket_count(), 2);
+    assert_eq!(source_endpoint_cache.singleton_bucket_count(), 0);
+    assert_eq!(source_endpoint_cache.max_bucket_size(), 2);
+    let first_source_endpoint_bucket = &source_endpoint_cache.buckets()[0];
+    assert_eq!(first_source_endpoint_bucket.point(), &p(4, 0));
+    assert_eq!(first_source_endpoint_bucket.endpoints().len(), 2);
+    assert_eq!(
+        first_source_endpoint_bucket.endpoints()[0].source_segment_index(),
+        0
+    );
+    assert_eq!(
+        first_source_endpoint_bucket.endpoints()[0].endpoint(),
+        ExactCurveArrangementSourceEndpoint2::Start
+    );
+    assert_eq!(
+        first_source_endpoint_bucket.endpoints()[1].source_segment_index(),
+        1
+    );
+    assert_eq!(
+        first_source_endpoint_bucket.endpoints()[1].endpoint(),
+        ExactCurveArrangementSourceEndpoint2::End
+    );
     let split_cache = result.workspace().split_cache().unwrap();
     assert_eq!(
         split_cache.predicate_path(),
@@ -1306,6 +1356,11 @@ fn exact_curve_arrangement_attempt_retains_overlap_blocker() {
         RegionLineSegmentRegionBuildStage2::RingAssembly
     );
     assert_eq!(result.report().blocker(), Some(UncertaintyReason::Boundary));
+    let source_endpoint_cache = result.workspace().source_endpoint_bucket_cache();
+    assert_eq!(source_endpoint_cache.endpoint_count(), 4);
+    assert_eq!(source_endpoint_cache.bucket_count(), 2);
+    assert_eq!(source_endpoint_cache.singleton_bucket_count(), 0);
+    assert_eq!(source_endpoint_cache.max_bucket_size(), 2);
     let split_cache = result.workspace().split_cache().unwrap();
     assert_eq!(split_cache.overlap_relation_count(), 1);
     assert_eq!(split_cache.output_segment_count(), None);
