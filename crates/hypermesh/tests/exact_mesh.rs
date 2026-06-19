@@ -80,14 +80,9 @@ fn assert_public_full_face_adjacent_union(
     assert_eq!(report.full_face_shared_patches(), expected_shared_patches);
     assert!(report.is_certified());
     report.validate().unwrap();
-    evaluation
-        .certifications()
-        .validate_against_sources(left, right, request)
-        .unwrap();
+    evaluation.validate_against_sources(left, right).unwrap();
     assert_eq!(
-        evaluation
-            .certifications()
-            .freshness_against_sources(left, right, request),
+        evaluation.freshness_against_sources(left, right),
         ExactReportFreshness::Current
     );
 
@@ -124,14 +119,9 @@ fn assert_public_contained_face_adjacent_union(
     assert_eq!(report.contained_faces(), expected_contained_faces);
     assert!(report.is_certified());
     report.validate().unwrap();
-    evaluation
-        .certifications()
-        .validate_against_sources(left, right, request)
-        .unwrap();
+    evaluation.validate_against_sources(left, right).unwrap();
     assert_eq!(
-        evaluation
-            .certifications()
-            .freshness_against_sources(left, right, request),
+        evaluation.freshness_against_sources(left, right),
         ExactReportFreshness::Current
     );
 
@@ -1348,14 +1338,9 @@ fn full_face_adjacent_union_refines_side_faces_for_boundary_subdivided_shared_fa
     assert_eq!(report.full_face_shared_patches(), 1);
     assert!(!report.stronger_kernel_available());
     report.validate().unwrap();
-    evaluation
-        .certifications()
-        .validate_against_sources(&left, &right, request)
-        .unwrap();
+    evaluation.validate_against_sources(&left, &right).unwrap();
     assert_eq!(
-        evaluation
-            .certifications()
-            .freshness_against_sources(&left, &right, request),
+        evaluation.freshness_against_sources(&left, &right),
         ExactReportFreshness::Current
     );
 }
@@ -1429,10 +1414,7 @@ fn full_face_adjacent_union_accepts_dual_boundary_subdivided_shared_face() {
     assert_eq!(report.full_face_shared_faces(), 0);
     assert_eq!(report.full_face_shared_patches(), 1);
     report.validate().unwrap();
-    evaluation
-        .certifications()
-        .validate_against_sources(&left, &right, request)
-        .unwrap();
+    evaluation.validate_against_sources(&left, &right).unwrap();
 }
 
 fn tetra_with_subdivided_base() -> ExactMesh {
@@ -1502,20 +1484,13 @@ fn adjacent_union_completion_boolean_is_publicly_replayable() {
     assert!(report.full_face_shared_faces() + report.full_face_shared_patches() > 0);
     assert_eq!(report.contained_faces(), 0);
     report.validate().unwrap();
-    evaluation
-        .certifications()
-        .validate_against_sources(&left, &right, request)
-        .unwrap();
+    evaluation.validate_against_sources(&left, &right).unwrap();
     assert_eq!(
-        evaluation
-            .certifications()
-            .freshness_against_sources(&left, &right, request),
+        evaluation.freshness_against_sources(&left, &right),
         ExactReportFreshness::Current
     );
     assert_eq!(
-        evaluation
-            .certifications()
-            .freshness_against_sources(&left, &separated_right, request),
+        evaluation.freshness_against_sources(&left, &separated_right),
         ExactReportFreshness::SourceReplayMismatch
     );
 
@@ -1587,8 +1562,7 @@ fn adjacent_union_completion_boolean_is_publicly_replayable() {
     assert!(crossing_report.blocker().candidate_pairs() > 0);
     crossing_report.validate().unwrap();
     crossing_evaluation
-        .certifications()
-        .validate_against_sources(&left, &crossing_right, crossing_request)
+        .validate_against_sources(&left, &crossing_right)
         .unwrap();
 }
 
@@ -2020,22 +1994,13 @@ fn lower_dimensional_regularized_boolean_is_publicly_replayable() {
         assert_eq!(readiness.region_count(), 0);
         readiness.validate().unwrap();
         if readiness_materialized_lower {
-            evaluation
-                .certifications()
-                .validate_against_sources(&left, &right, request)
-                .unwrap();
+            evaluation.validate_against_sources(&left, &right).unwrap();
             assert_eq!(
-                evaluation
-                    .certifications()
-                    .freshness_against_sources(&left, &right, request),
+                evaluation.freshness_against_sources(&left, &right),
                 ExactReportFreshness::Current
             );
             assert_eq!(
-                evaluation.certifications().freshness_against_sources(
-                    &left,
-                    &closed_right,
-                    request
-                ),
+                evaluation.freshness_against_sources(&left, &closed_right),
                 ExactReportFreshness::SourceReplayMismatch
             );
         } else {
@@ -2511,8 +2476,7 @@ fn closed_no_volume_overlap_regularized_boolean_is_publicly_replayable() {
             );
             readiness.validate().unwrap();
             readiness_evaluation
-                .certifications()
-                .validate_against_sources(&left, &right, readiness_request)
+                .validate_against_sources(&left, &right)
                 .unwrap();
             let evaluation = exact_boolean_evaluation(
                 &left,
@@ -2841,14 +2805,7 @@ fn exact_volumetric_winding_coplanar_cap_is_publicly_certified() {
             "{operation:?}: {closure:?}"
         );
         closure.validate().unwrap();
-        evaluation
-            .certifications()
-            .validate_against_sources(
-                &left,
-                &right,
-                ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
-            )
-            .unwrap();
+        evaluation.validate_against_sources(&left, &right).unwrap();
 
         let preflight = evaluation.preflight();
         assert!(
@@ -3098,8 +3055,7 @@ fn exact_contained_face_adjacent_union_is_publicly_replayable() {
     assert_eq!(multi_hole_report.contained_faces(), 2);
     multi_hole_report.validate().unwrap();
     multi_hole_evaluation
-        .certifications()
-        .validate_against_sources(&container, &two_caps_right, multi_hole_request)
+        .validate_against_sources(&container, &two_caps_right)
         .unwrap();
 
     assert_eq!(
@@ -3119,8 +3075,7 @@ fn exact_contained_face_adjacent_union_is_publicly_replayable() {
     assert_eq!(split_report.contained_faces(), 1);
     split_report.validate().unwrap();
     split_evaluation
-        .certifications()
-        .validate_against_sources(&split_container, &split_crossing_right, split_request)
+        .validate_against_sources(&split_container, &split_crossing_right)
         .unwrap();
 
     let square_disk_request =
@@ -3139,12 +3094,7 @@ fn exact_contained_face_adjacent_union_is_publicly_replayable() {
     assert_eq!(square_disk_report.contained_faces(), 2);
     square_disk_report.validate().unwrap();
     square_disk_evaluation
-        .certifications()
-        .validate_against_sources(
-            &square_disk_container,
-            &square_disk_cap_right,
-            square_disk_request,
-        )
+        .validate_against_sources(&square_disk_container, &square_disk_cap_right)
         .unwrap();
 
     let request = ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED);
@@ -3164,21 +3114,14 @@ fn exact_contained_face_adjacent_union_is_publicly_replayable() {
     assert!(completion_report.contained_containing_side().is_some());
     completion_report.validate().unwrap();
     evaluation
-        .certifications()
-        .validate_against_sources(&container, &right, request)
+        .validate_against_sources(&container, &right)
         .unwrap();
     assert_eq!(
-        evaluation
-            .certifications()
-            .freshness_against_sources(&container, &right, request),
+        evaluation.freshness_against_sources(&container, &right),
         ExactReportFreshness::Current
     );
     assert_eq!(
-        evaluation.certifications().freshness_against_sources(
-            &container,
-            &separated_right,
-            request
-        ),
+        evaluation.freshness_against_sources(&container, &separated_right),
         ExactReportFreshness::SourceReplayMismatch
     );
     let result = exact_boolean_result(
@@ -3248,19 +3191,14 @@ fn public_exact_blocker_reports_replay_remaining_decisions() {
     assert!(!refinement.is_required());
     refinement.validate().unwrap();
     evaluation
-        .certifications()
-        .validate_against_sources(&left, &overlapping_right, request)
+        .validate_against_sources(&left, &overlapping_right)
         .unwrap();
     assert_eq!(
-        evaluation
-            .certifications()
-            .freshness_against_sources(&left, &overlapping_right, request),
+        evaluation.freshness_against_sources(&left, &overlapping_right),
         ExactReportFreshness::Current
     );
     assert_eq!(
-        evaluation
-            .certifications()
-            .freshness_against_sources(&left, &separated_right, request),
+        evaluation.freshness_against_sources(&left, &separated_right),
         ExactReportFreshness::SourceReplayMismatch
     );
 
@@ -3277,19 +3215,14 @@ fn public_exact_blocker_reports_replay_remaining_decisions() {
     assert!(!planar.is_required());
     planar.validate().unwrap();
     planar_evaluation
-        .certifications()
-        .validate_against_sources(&left, &overlapping_right, planar_request)
+        .validate_against_sources(&left, &overlapping_right)
         .unwrap();
     assert_eq!(
-        planar_evaluation
-            .certifications()
-            .freshness_against_sources(&left, &overlapping_right, planar_request),
+        planar_evaluation.freshness_against_sources(&left, &overlapping_right),
         ExactReportFreshness::Current
     );
     assert_eq!(
-        planar_evaluation
-            .certifications()
-            .freshness_against_sources(&left, &separated_right, planar_request),
+        planar_evaluation.freshness_against_sources(&left, &separated_right),
         ExactReportFreshness::SourceReplayMismatch
     );
 
@@ -3302,21 +3235,14 @@ fn public_exact_blocker_reports_replay_remaining_decisions() {
     assert!(same_surface.is_certified());
     same_surface.validate().unwrap();
     same_evaluation
-        .certifications()
-        .validate_against_sources(&left, &left, same_request)
+        .validate_against_sources(&left, &left)
         .unwrap();
     assert_eq!(
-        same_evaluation
-            .certifications()
-            .freshness_against_sources(&left, &left, same_request),
+        same_evaluation.freshness_against_sources(&left, &left),
         ExactReportFreshness::Current
     );
     assert_eq!(
-        same_evaluation.certifications().freshness_against_sources(
-            &left,
-            &separated_right,
-            same_request
-        ),
+        same_evaluation.freshness_against_sources(&left, &separated_right),
         ExactReportFreshness::SourceReplayMismatch
     );
 
@@ -3338,23 +3264,14 @@ fn public_exact_blocker_reports_replay_remaining_decisions() {
     assert!(open_disjoint.is_certified());
     open_disjoint.validate().unwrap();
     open_evaluation
-        .certifications()
-        .validate_against_sources(&left, &parallel_right, open_request)
+        .validate_against_sources(&left, &parallel_right)
         .unwrap();
     assert_eq!(
-        open_evaluation.certifications().freshness_against_sources(
-            &left,
-            &parallel_right,
-            open_request
-        ),
+        open_evaluation.freshness_against_sources(&left, &parallel_right),
         ExactReportFreshness::Current
     );
     assert_eq!(
-        open_evaluation.certifications().freshness_against_sources(
-            &left,
-            &overlapping_right,
-            open_request
-        ),
+        open_evaluation.freshness_against_sources(&left, &overlapping_right),
         ExactReportFreshness::SourceReplayMismatch
     );
 }
@@ -3386,10 +3303,7 @@ fn open_surface_disjoint_report_classifies_retained_coplanar_overlap_blocker() {
     assert!(report.blocker().coplanar_overlapping_pairs() > 0);
     assert!(report.retained_face_pairs() > 0);
     report.validate().unwrap();
-    evaluation
-        .certifications()
-        .validate_against_sources(&left, &right, request)
-        .unwrap();
+    evaluation.validate_against_sources(&left, &right).unwrap();
 }
 
 #[test]
@@ -3419,10 +3333,7 @@ fn planar_arrangement_report_classifies_noncoplanar_candidates_as_winding_blocke
     assert!(report.blocker().requires_winding());
     assert!(report.blocker().candidate_pairs() > 0);
     report.validate().unwrap();
-    evaluation
-        .certifications()
-        .validate_against_sources(&left, &right, request)
-        .unwrap();
+    evaluation.validate_against_sources(&left, &right).unwrap();
 }
 
 #[test]
@@ -4117,10 +4028,7 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
     let report = evaluation.certifications().boundary_touching().clone();
     assert!(report.is_certified(), "{report:?}");
     report.validate().unwrap();
-    evaluation
-        .certifications()
-        .validate_against_sources(&left, &right, request)
-        .unwrap();
+    evaluation.validate_against_sources(&left, &right).unwrap();
 
     let preflight = evaluation.preflight().clone();
     assert!(
@@ -4161,13 +4069,10 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
     );
     assert_eq!(policy_preflight.retained_events(), report.retained_events());
     policy_evaluation
-        .certifications()
-        .validate_against_sources(&left, &right, policy_request)
+        .validate_against_sources(&left, &right)
         .unwrap();
     assert_eq!(
-        policy_evaluation
-            .certifications()
-            .freshness_against_sources(&left, &right, policy_request),
+        policy_evaluation.freshness_against_sources(&left, &right),
         hypermesh::ExactReportFreshness::Current
     );
     assert!(
@@ -4210,28 +4115,14 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
     assert_eq!(policy_readiness.retained_events(), report.retained_events());
     policy_readiness.validate().unwrap();
     policy_evaluation
-        .certifications()
-        .validate_against_sources(&left, &right, policy_request)
+        .validate_against_sources(&left, &right)
         .unwrap();
     assert_eq!(
-        policy_evaluation
-            .certifications()
-            .freshness_against_sources(&left, &right, policy_request),
+        policy_evaluation.freshness_against_sources(&left, &right),
         hypermesh::ExactReportFreshness::Current
     );
     assert!(
-        policy_evaluation
-            .certifications()
-            .validate_against_sources(
-                &left,
-                &right,
-                ExactBooleanRequest::with_boundary_policy(
-                    ExactBooleanOperation::Union,
-                    ValidationPolicy::ALLOW_BOUNDARY,
-                    ExactBoundaryBooleanPolicy::Reject,
-                ),
-            )
-            .is_err(),
+        rejected_readiness.requires_boundary_policy(),
         "strict replay should not certify a boundary-policy readiness report"
     );
     let default_result = exact_boolean_result(
@@ -4273,8 +4164,7 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
     );
     assert!(
         policy_evaluation
-            .certifications()
-            .validate_against_sources(&left, &separated_right, policy_request,)
+            .validate_against_sources(&left, &separated_right)
             .is_err()
     );
 
@@ -4291,8 +4181,7 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
         "{closed_intersection_preflight:?}"
     );
     closed_intersection_evaluation
-        .certifications()
-        .validate_against_sources(&left, &right, closed_intersection_request)
+        .validate_against_sources(&left, &right)
         .unwrap();
     let closed_intersection_readiness = closed_intersection_evaluation
         .certifications()
@@ -4335,8 +4224,7 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
             "{operation:?}: {closed_policy_preflight:?}"
         );
         closed_policy_evaluation
-            .certifications()
-            .validate_against_sources(&left, &right, closed_policy_request)
+            .validate_against_sources(&left, &right)
             .unwrap();
         let closed_policy_readiness = closed_policy_evaluation
             .certifications()
@@ -4401,8 +4289,5 @@ fn boundary_touching_report_classifies_proper_crossing_as_winding_blocker() {
     assert!(report.blocker().requires_winding());
     assert!(report.blocker().candidate_pairs() > 0);
     report.validate().unwrap();
-    evaluation
-        .certifications()
-        .validate_against_sources(&left, &right, request)
-        .unwrap();
+    evaluation.validate_against_sources(&left, &right).unwrap();
 }

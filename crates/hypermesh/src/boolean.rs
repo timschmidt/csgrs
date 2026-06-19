@@ -1255,7 +1255,7 @@ impl ExactBooleanCertificationSet {
 
     /// Validate this certification bundle against the request it claims to
     /// explain, without replaying source geometry.
-    pub fn validate_for_request(
+    pub(crate) fn validate_for_request(
         &self,
         request: ExactBooleanRequest,
     ) -> Result<(), ExactReportValidationError> {
@@ -1990,34 +1990,6 @@ impl ExactBooleanCertificationSet {
             None => {}
         }
         Ok(())
-    }
-
-    /// Validate this retained certification bundle by replaying the canonical
-    /// workspace evaluation under the request policy that produced it.
-    pub fn validate_against_sources(
-        &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-        request: ExactBooleanRequest,
-    ) -> Result<(), ExactReportValidationError> {
-        self.validate_for_request(request)?;
-        let replay = workspace_evaluation_for_replay(left, right, request)?;
-        if self == replay.certifications() {
-            Ok(())
-        } else {
-            Err(ExactReportValidationError::SourceReplayMismatch)
-        }
-    }
-
-    /// Classify whether this retained certification bundle is fresh for the
-    /// source meshes and request policy.
-    pub fn freshness_against_sources(
-        &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-        request: ExactBooleanRequest,
-    ) -> ExactReportFreshness {
-        exact_report_freshness(self.validate_against_sources(left, right, request))
     }
 }
 
@@ -12811,10 +12783,7 @@ mod tests {
         let mut workspace = ExactBooleanWorkspace::new(&left, &right);
         let evaluation = workspace.evaluate(request).unwrap().clone();
         evaluation.validate().unwrap();
-        evaluation
-            .certifications
-            .validate_against_sources(&left, &right, request)
-            .unwrap();
+        evaluation.validate_against_sources(&left, &right).unwrap();
         let attempt = evaluation
             .retained_arrangement_attempt()
             .expect("workspace evaluation should retain an arrangement attempt");
@@ -12856,9 +12825,6 @@ mod tests {
         );
         let certifications = evaluation.certifications().clone();
         certifications.validate_for_request(request).unwrap();
-        certifications
-            .validate_against_sources(&left, &right, request)
-            .unwrap();
         let attempt = certifications
             .arrangement_attempt
             .as_ref()
@@ -13789,10 +13755,7 @@ mod tests {
                 arrangement_materialized
             );
             readiness.validate().unwrap();
-            evaluation
-                .certifications
-                .validate_against_sources(&left, &right, request)
-                .unwrap();
+            evaluation.validate_against_sources(&left, &right).unwrap();
         }
     }
 
@@ -13968,21 +13931,16 @@ mod tests {
         );
         boundary_readiness.validate().unwrap();
         boundary_evaluation
-            .certifications
-            .validate_against_sources(&left, &right, boundary_request)
+            .validate_against_sources(&left, &right)
             .unwrap();
+        let closed_replay = test_evaluation(
+            ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED),
+            &left,
+            &right,
+        );
         assert!(
-            boundary_evaluation
-                .certifications
-                .validate_against_sources(
-                    &left,
-                    &right,
-                    ExactBooleanRequest::new(
-                        ExactBooleanOperation::Union,
-                        ValidationPolicy::CLOSED
-                    ),
-                )
-                .is_err(),
+            !closed_replay.preflight().is_certified()
+                || closed_replay.materialized_result().is_none(),
             "closed replay should not certify allow-boundary readiness"
         );
 

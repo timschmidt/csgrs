@@ -820,16 +820,9 @@ mod tests {
             ExactReportFreshness::Current
         );
 
-        let certifications = workspace
-            .evaluate(request)
-            .unwrap()
-            .certifications()
-            .clone();
-        certifications
-            .validate_against_sources(&left, &right, request)
-            .unwrap();
         let evaluation = workspace.evaluate(request).unwrap().clone();
         evaluation.validate().unwrap();
+        evaluation.validate_against_sources(&left, &right).unwrap();
         assert_eq!(evaluation.retained_arrangement_attempt(), Some(&attempt));
 
         let refinement_report = evaluation.certifications().refinement().clone();
@@ -837,10 +830,11 @@ mod tests {
             refinement_report.freshness_against_sources(&left, &right),
             ExactReportFreshness::Current
         );
+        let certifications = evaluation.certifications().clone();
         let mut stale_refinement_bundle = certifications.clone();
         stale_refinement_bundle.refinement_mut().retained_events += 1;
         assert_eq!(
-            stale_refinement_bundle.validate_against_sources(&left, &right, request),
+            stale_refinement_bundle.validate_for_request(request),
             Err(ExactReportValidationError::StatusEvidenceMismatch)
         );
         let mut relabeled_refinement_bundle = certifications.clone();
@@ -895,17 +889,12 @@ mod tests {
         let second = workspace.evaluate(request).unwrap() as *const ExactBooleanEvaluation;
         assert_eq!(first, second);
 
-        let certifications = workspace
-            .evaluate(request)
-            .unwrap()
-            .certifications()
-            .clone();
+        let evaluation = workspace.evaluate(request).unwrap().clone();
+        evaluation.validate_against_sources(&left, &right).unwrap();
+        let certifications = evaluation.certifications().clone();
         certifications.validate_for_request(request).unwrap();
-        certifications
-            .validate_against_sources(&left, &right, request)
-            .unwrap();
         assert_eq!(
-            certifications.freshness_against_sources(&left, &right, request),
+            evaluation.freshness_against_sources(&left, &right),
             ExactReportFreshness::Current
         );
 
@@ -914,14 +903,6 @@ mod tests {
         assert_eq!(
             stale.validate_for_request(request),
             Err(ExactReportValidationError::StatusEvidenceMismatch)
-        );
-        assert_eq!(
-            stale.validate_against_sources(&left, &right, request),
-            Err(ExactReportValidationError::StatusEvidenceMismatch)
-        );
-        assert_ne!(
-            stale.freshness_against_sources(&left, &right, request),
-            ExactReportFreshness::Current
         );
     }
 

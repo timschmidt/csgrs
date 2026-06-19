@@ -354,154 +354,82 @@ fn run_case(case: &BenchCase) {
 
     time_prepared_stage(
         case,
-        "workspace_validate_certifications_from_retained_artifacts",
-        || {
-            retained_workspace_and_certification_for_case(case, request, |evaluation| {
-                evaluation.certifications().clone()
-            })
-        },
-        |(_retained_workspace, certifications)| {
-            black_box(
-                certifications
-                    .validate_against_sources(&case.left, &case.right, request)
-                    .ok(),
-            );
+        "workspace_validate_evaluation_from_retained_artifacts",
+        || retained_workspace_and_evaluation_for_case(case, request),
+        |(_retained_workspace, evaluation)| {
+            black_box(validate_retained_evaluation_for_case(case, evaluation));
         },
     );
 
     time_prepared_stage(
         case,
-        "workspace_validate_certifications_with_adjacent_union_retained",
-        || {
-            retained_workspace_and_certification_for_case(case, request, |evaluation| {
-                evaluation.certifications().clone()
-            })
-        },
-        |(_retained_workspace, certifications)| {
-            black_box(
-                certifications
-                    .validate_against_sources(&case.left, &case.right, request)
-                    .ok(),
-            );
+        "workspace_validate_evaluation_with_adjacent_union_retained",
+        || retained_workspace_and_evaluation_for_case(case, request),
+        |(_retained_workspace, evaluation)| {
+            black_box(validate_retained_evaluation_for_case(case, evaluation));
         },
     );
 
     time_prepared_stage(
         case,
-        "workspace_validate_certifications_with_identical_retained",
-        || {
-            retained_workspace_and_certification_for_case(case, request, |evaluation| {
-                evaluation.certifications().clone()
-            })
-        },
-        |(_retained_workspace, certifications)| {
-            black_box(
-                certifications
-                    .validate_against_sources(&case.left, &case.right, request)
-                    .ok(),
-            );
+        "workspace_validate_evaluation_with_identical_retained",
+        || retained_workspace_and_evaluation_for_case(case, request),
+        |(_retained_workspace, evaluation)| {
+            black_box(validate_retained_evaluation_for_case(case, evaluation));
         },
     );
 
     time_prepared_stage(
         case,
-        "workspace_validate_certifications_with_same_surface_retained",
-        || {
-            retained_workspace_and_certification_for_case(case, request, |evaluation| {
-                evaluation.certifications().clone()
-            })
-        },
-        |(_retained_workspace, certifications)| {
-            black_box(
-                certifications
-                    .validate_against_sources(&case.left, &case.right, request)
-                    .ok(),
-            );
+        "workspace_validate_evaluation_with_same_surface_retained",
+        || retained_workspace_and_evaluation_for_case(case, request),
+        |(_retained_workspace, evaluation)| {
+            black_box(validate_retained_evaluation_for_case(case, evaluation));
         },
     );
 
     time_prepared_stage(
         case,
-        "workspace_validate_certifications_with_boundary_touching_retained",
-        || {
-            retained_workspace_and_certification_for_case(case, request, |evaluation| {
-                evaluation.certifications().clone()
-            })
-        },
-        |(_retained_workspace, certifications)| {
-            black_box(
-                certifications
-                    .validate_against_sources(&case.left, &case.right, request)
-                    .ok(),
-            );
+        "workspace_validate_evaluation_with_boundary_touching_retained",
+        || retained_workspace_and_evaluation_for_case(case, request),
+        |(_retained_workspace, evaluation)| {
+            black_box(validate_retained_evaluation_for_case(case, evaluation));
         },
     );
 
     time_prepared_stage(
         case,
-        "workspace_validate_certifications_with_open_surface_disjoint_retained",
-        || {
-            retained_workspace_and_certification_for_case(case, request, |evaluation| {
-                evaluation.certifications().clone()
-            })
-        },
-        |(_retained_workspace, certifications)| {
-            black_box(
-                certifications
-                    .validate_against_sources(&case.left, &case.right, request)
-                    .ok(),
-            );
+        "workspace_validate_evaluation_with_open_surface_disjoint_retained",
+        || retained_workspace_and_evaluation_for_case(case, request),
+        |(_retained_workspace, evaluation)| {
+            black_box(validate_retained_evaluation_for_case(case, evaluation));
         },
     );
 
     time_prepared_stage(
         case,
-        "workspace_validate_certifications_with_boundary_closure_retained",
-        || {
-            retained_workspace_and_certification_for_case(case, request, |evaluation| {
-                evaluation.certifications().clone()
-            })
-        },
-        |(_retained_workspace, certifications)| {
-            black_box(
-                certifications
-                    .validate_against_sources(&case.left, &case.right, request)
-                    .ok(),
-            );
+        "workspace_validate_evaluation_with_boundary_closure_retained",
+        || retained_workspace_and_evaluation_for_case(case, request),
+        |(_retained_workspace, evaluation)| {
+            black_box(validate_retained_evaluation_for_case(case, evaluation));
         },
     );
 
     time_prepared_stage(
         case,
-        "workspace_validate_certifications_with_winding_readiness_retained",
-        || {
-            retained_workspace_and_certification_for_case(case, request, |evaluation| {
-                evaluation.certifications().clone()
-            })
-        },
-        |(_retained_workspace, certifications)| {
-            black_box(
-                certifications
-                    .validate_against_sources(&case.left, &case.right, request)
-                    .ok(),
-            );
+        "workspace_validate_evaluation_with_winding_readiness_retained",
+        || retained_workspace_and_evaluation_for_case(case, request),
+        |(_retained_workspace, evaluation)| {
+            black_box(validate_retained_evaluation_for_case(case, evaluation));
         },
     );
 
     time_prepared_stage(
         case,
-        "workspace_validate_certifications_with_planar_arrangement_retained",
-        || {
-            retained_workspace_and_certification_for_case(case, request, |evaluation| {
-                evaluation.certifications().clone()
-            })
-        },
-        |(_retained_workspace, certifications)| {
-            black_box(
-                certifications
-                    .validate_against_sources(&case.left, &case.right, request)
-                    .ok(),
-            );
+        "workspace_validate_evaluation_with_planar_arrangement_retained",
+        || retained_workspace_and_evaluation_for_case(case, request),
+        |(_retained_workspace, evaluation)| {
+            black_box(validate_retained_evaluation_for_case(case, evaluation));
         },
     );
 
@@ -576,16 +504,6 @@ fn retained_workspace_for_case<'a>(
     ExactBooleanWorkspace::new(&case.left, &case.right)
 }
 
-fn retained_workspace_and_certification_for_case<'a, T>(
-    case: &'a BenchCase,
-    request: ExactBooleanRequest,
-    project: impl FnOnce(&ExactBooleanEvaluation) -> T,
-) -> (ExactBooleanWorkspace<'a>, T) {
-    let mut retained_workspace = retained_workspace_for_case(case, request);
-    let report = project(retained_workspace.evaluate(request).unwrap());
-    (retained_workspace, report)
-}
-
 fn retained_workspace_and_evaluation_for_case<'a>(
     case: &'a BenchCase,
     request: ExactBooleanRequest,
@@ -593,6 +511,16 @@ fn retained_workspace_and_evaluation_for_case<'a>(
     let mut retained_workspace = retained_workspace_for_case(case, request);
     let evaluation = retained_workspace.evaluate(request).ok().cloned();
     (retained_workspace, evaluation)
+}
+
+fn validate_retained_evaluation_for_case(
+    case: &BenchCase,
+    evaluation: &Option<ExactBooleanEvaluation>,
+) -> Option<()> {
+    evaluation
+        .as_ref()?
+        .validate_against_sources(&case.left, &case.right)
+        .ok()
 }
 
 fn retained_workspace_and_arrangement_attempt_for_case<'a>(
