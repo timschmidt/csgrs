@@ -3093,13 +3093,10 @@ fn public_exact_blocker_reports_replay_remaining_decisions() {
         ValidationPolicy::ALLOW_BOUNDARY,
     );
     let planar_evaluation = exact_boolean_evaluation(&left, &overlapping_right, planar_request);
-    let planar = planar_evaluation
-        .certifications()
-        .planar_arrangement()
-        .clone();
-    assert!(planar.is_already_materialized());
-    assert!(!planar.is_required());
-    planar.validate().unwrap();
+    assert!(
+        evaluation_materializes_arrangement_cell_complex(&planar_evaluation),
+        "{planar_evaluation:?}"
+    );
     planar_evaluation
         .validate_against_sources(&left, &overlapping_right)
         .unwrap();
@@ -3214,13 +3211,13 @@ fn planar_arrangement_report_classifies_noncoplanar_candidates_as_winding_blocke
         ValidationPolicy::ALLOW_BOUNDARY,
     );
     let evaluation = exact_boolean_evaluation(&left, &right, request);
-    let report = evaluation.certifications().planar_arrangement().clone();
 
-    assert!(!report.is_required());
-    assert!(!report.is_already_materialized());
-    assert!(report.blocker().requires_winding());
-    assert!(report.blocker().candidate_pairs() > 0);
-    report.validate().unwrap();
+    let preflight = evaluation.preflight();
+    assert!(
+        preflight
+            .blocker()
+            .is_some_and(|blocker| { blocker.requires_winding() && blocker.candidate_pairs() > 0 })
+    );
     evaluation.validate_against_sources(&left, &right).unwrap();
 }
 

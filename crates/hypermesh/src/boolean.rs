@@ -1021,7 +1021,8 @@ impl ExactBooleanCertificationSet {
     }
 
     /// Return the planar-arrangement readiness certification report.
-    pub fn planar_arrangement(&self) -> &ExactPlanarArrangementReport {
+    #[cfg(test)]
+    pub(crate) fn planar_arrangement(&self) -> &ExactPlanarArrangementReport {
         &self.planar_arrangement
     }
 

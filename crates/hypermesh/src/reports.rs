@@ -5916,11 +5916,6 @@ impl ExactPlanarArrangementReport {
         self.operation
     }
 
-    /// Return the coarse planar-arrangement status.
-    pub const fn status(&self) -> ExactPlanarArrangementStatus {
-        self.status
-    }
-
     /// Return whether graph extraction retained unknown events.
     pub const fn graph_had_unknowns(&self) -> bool {
         self.graph_had_unknowns
