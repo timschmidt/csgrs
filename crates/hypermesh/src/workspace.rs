@@ -714,7 +714,6 @@ mod tests {
         assert_eq!(first_evaluation, second_evaluation);
         workspace
             .materialize_ref(request)
-            .cloned()
             .unwrap()
             .validate_against_sources(&left, &right)
             .unwrap();
