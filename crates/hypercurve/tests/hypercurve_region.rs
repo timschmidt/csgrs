@@ -2310,6 +2310,36 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
     assert_eq!(source_contour_assignment.assignment_index(), 0);
     assert_eq!(source_contour_assignment.role_report_index(), 0);
     assert_eq!(source_contour_assignment.output_role_index(), 0);
+    let role_nesting_depth_bucket_cache = role_cache.role_nesting_depth_bucket_cache();
+    assert_eq!(
+        role_nesting_depth_bucket_cache.nesting_depth_bucket_count(),
+        1
+    );
+    assert_eq!(
+        role_nesting_depth_bucket_cache.assignment_ref_count(),
+        role_cache.role_report_count()
+    );
+    assert_eq!(role_nesting_depth_bucket_cache.max_bucket_size(), 1);
+    assert_eq!(role_nesting_depth_bucket_cache.buckets().len(), 1);
+    assert_eq!(
+        role_nesting_depth_bucket_cache.buckets()[0].nesting_depth(),
+        boundary_report.role_reports()[0].nesting_depth()
+    );
+    assert_eq!(
+        role_nesting_depth_bucket_cache.buckets()[0]
+            .assignments()
+            .len(),
+        1
+    );
+    let nesting_depth_assignment = &role_nesting_depth_bucket_cache.buckets()[0].assignments()[0];
+    assert_eq!(
+        nesting_depth_assignment.role(),
+        RegionBoundaryContourRole2::Material
+    );
+    assert_eq!(nesting_depth_assignment.assignment_index(), 0);
+    assert_eq!(nesting_depth_assignment.role_report_index(), 0);
+    assert_eq!(nesting_depth_assignment.source_contour_index(), 0);
+    assert_eq!(nesting_depth_assignment.output_role_index(), 0);
     assert_eq!(role_cache.buckets().len(), 2);
     assert_eq!(
         role_cache.buckets()[0].role(),
@@ -3511,6 +3541,36 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
     assert_eq!(source_contour_assignment.assignment_index(), 0);
     assert_eq!(source_contour_assignment.role_report_index(), 0);
     assert_eq!(source_contour_assignment.output_role_index(), 0);
+    let role_nesting_depth_bucket_cache = role_cache.role_nesting_depth_bucket_cache();
+    assert_eq!(
+        role_nesting_depth_bucket_cache.nesting_depth_bucket_count(),
+        1
+    );
+    assert_eq!(
+        role_nesting_depth_bucket_cache.assignment_ref_count(),
+        role_cache.role_report_count()
+    );
+    assert_eq!(role_nesting_depth_bucket_cache.max_bucket_size(), 1);
+    assert_eq!(role_nesting_depth_bucket_cache.buckets().len(), 1);
+    assert_eq!(
+        role_nesting_depth_bucket_cache.buckets()[0].nesting_depth(),
+        boundary_report.role_reports()[0].nesting_depth()
+    );
+    assert_eq!(
+        role_nesting_depth_bucket_cache.buckets()[0]
+            .assignments()
+            .len(),
+        1
+    );
+    let nesting_depth_assignment = &role_nesting_depth_bucket_cache.buckets()[0].assignments()[0];
+    assert_eq!(
+        nesting_depth_assignment.role(),
+        RegionBoundaryContourRole2::Material
+    );
+    assert_eq!(nesting_depth_assignment.assignment_index(), 0);
+    assert_eq!(nesting_depth_assignment.role_report_index(), 0);
+    assert_eq!(nesting_depth_assignment.source_contour_index(), 0);
+    assert_eq!(nesting_depth_assignment.output_role_index(), 0);
     assert_eq!(role_cache.buckets().len(), 2);
     assert_eq!(
         role_cache.buckets()[0].role(),

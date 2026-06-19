@@ -797,6 +797,32 @@ pub struct ExactCurveArrangementOutputRoleSourceContourBucketCache2 {
     buckets: Vec<ExactCurveArrangementOutputRoleSourceContourBucket2>,
 }
 
+/// Reference to a retained output role assignment inside a nesting-depth bucket.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ExactCurveArrangementOutputRoleNestingDepthRef2 {
+    role: RegionBoundaryContourRole2,
+    assignment_index: usize,
+    role_report_index: usize,
+    source_contour_index: usize,
+    output_role_index: usize,
+}
+
+/// Output role assignment bucket grouped by exact nesting depth.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ExactCurveArrangementOutputRoleNestingDepthBucket2 {
+    nesting_depth: usize,
+    assignments: Vec<ExactCurveArrangementOutputRoleNestingDepthRef2>,
+}
+
+/// Output role assignments grouped by retained exact nesting depth.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ExactCurveArrangementOutputRoleNestingDepthBucketCache2 {
+    nesting_depth_bucket_count: usize,
+    assignment_ref_count: usize,
+    max_bucket_size: usize,
+    buckets: Vec<ExactCurveArrangementOutputRoleNestingDepthBucket2>,
+}
+
 /// Output material/hole role buckets retained after boundary contour role assignment.
 #[derive(Clone, Debug, PartialEq)]
 pub struct ExactCurveArrangementOutputRoleCache2 {
@@ -807,6 +833,7 @@ pub struct ExactCurveArrangementOutputRoleCache2 {
     hole_segment_count: usize,
     role_status_bucket_cache: ExactCurveArrangementOutputRoleStatusBucketCache2,
     role_source_contour_bucket_cache: ExactCurveArrangementOutputRoleSourceContourBucketCache2,
+    role_nesting_depth_bucket_cache: ExactCurveArrangementOutputRoleNestingDepthBucketCache2,
     buckets: Vec<ExactCurveArrangementOutputRoleBucket2>,
 }
 
@@ -5048,6 +5075,130 @@ impl ExactCurveArrangementOutputRoleSourceContourBucketCache2 {
     }
 }
 
+impl ExactCurveArrangementOutputRoleNestingDepthRef2 {
+    /// Returns the role bucket containing this assignment.
+    pub const fn role(&self) -> RegionBoundaryContourRole2 {
+        self.role
+    }
+
+    /// Returns the assignment index inside the retained role bucket.
+    pub const fn assignment_index(&self) -> usize {
+        self.assignment_index
+    }
+
+    /// Returns the retained boundary role report index.
+    pub const fn role_report_index(&self) -> usize {
+        self.role_report_index
+    }
+
+    /// Returns the source contour index assigned by this report.
+    pub const fn source_contour_index(&self) -> usize {
+        self.source_contour_index
+    }
+
+    /// Returns this contour's index inside its output role bin.
+    pub const fn output_role_index(&self) -> usize {
+        self.output_role_index
+    }
+}
+
+impl ExactCurveArrangementOutputRoleNestingDepthBucket2 {
+    /// Returns the exact containment depth represented by this bucket.
+    pub const fn nesting_depth(&self) -> usize {
+        self.nesting_depth
+    }
+
+    /// Returns retained role assignments with this exact nesting depth.
+    pub fn assignments(&self) -> &[ExactCurveArrangementOutputRoleNestingDepthRef2] {
+        &self.assignments
+    }
+}
+
+impl ExactCurveArrangementOutputRoleNestingDepthBucketCache2 {
+    fn from_role_assignments(
+        material_assignments: &[ExactCurveArrangementOutputRoleAssignment2],
+        hole_assignments: &[ExactCurveArrangementOutputRoleAssignment2],
+    ) -> Self {
+        let mut buckets: Vec<ExactCurveArrangementOutputRoleNestingDepthBucket2> = Vec::new();
+
+        for (role, assignments) in [
+            (RegionBoundaryContourRole2::Material, material_assignments),
+            (RegionBoundaryContourRole2::Hole, hole_assignments),
+        ] {
+            for (assignment_index, assignment) in assignments.iter().enumerate() {
+                let nesting_depth = assignment.nesting_depth();
+                let bucket_index = buckets
+                    .iter()
+                    .position(|bucket| bucket.nesting_depth == nesting_depth)
+                    .unwrap_or_else(|| {
+                        buckets.push(ExactCurveArrangementOutputRoleNestingDepthBucket2 {
+                            nesting_depth,
+                            assignments: Vec::new(),
+                        });
+                        buckets.len() - 1
+                    });
+                buckets[bucket_index].assignments.push(
+                    ExactCurveArrangementOutputRoleNestingDepthRef2 {
+                        role,
+                        assignment_index,
+                        role_report_index: assignment.role_report_index(),
+                        source_contour_index: assignment.source_contour_index(),
+                        output_role_index: assignment.output_role_index(),
+                    },
+                );
+            }
+        }
+
+        buckets.sort_by_key(|bucket| bucket.nesting_depth);
+        for bucket in &mut buckets {
+            bucket.assignments.sort_by_key(|assignment| {
+                (
+                    assignment.role_report_index,
+                    assignment.source_contour_index,
+                    assignment.output_role_index,
+                    assignment.assignment_index,
+                )
+            });
+        }
+
+        let assignment_ref_count = material_assignments
+            .len()
+            .saturating_add(hole_assignments.len());
+        let max_bucket_size = buckets
+            .iter()
+            .map(|bucket| bucket.assignments.len())
+            .max()
+            .unwrap_or(0);
+
+        Self {
+            nesting_depth_bucket_count: buckets.len(),
+            assignment_ref_count,
+            max_bucket_size,
+            buckets,
+        }
+    }
+
+    /// Returns the number of retained nesting-depth buckets.
+    pub const fn nesting_depth_bucket_count(&self) -> usize {
+        self.nesting_depth_bucket_count
+    }
+
+    /// Returns the number of retained output role assignment references.
+    pub const fn assignment_ref_count(&self) -> usize {
+        self.assignment_ref_count
+    }
+
+    /// Returns the largest assignment count for one nesting depth.
+    pub const fn max_bucket_size(&self) -> usize {
+        self.max_bucket_size
+    }
+
+    /// Returns nesting-depth buckets in increasing depth order.
+    pub fn buckets(&self) -> &[ExactCurveArrangementOutputRoleNestingDepthBucket2] {
+        &self.buckets
+    }
+}
+
 impl ExactCurveArrangementOutputRoleCache2 {
     fn from_boundary_build_report(report: &RegionBoundaryContourBuildReport2) -> Option<Self> {
         let material_contour_count = report.material_contour_count()?;
@@ -5087,6 +5238,11 @@ impl ExactCurveArrangementOutputRoleCache2 {
                 &material_assignments,
                 &hole_assignments,
             );
+        let role_nesting_depth_bucket_cache =
+            ExactCurveArrangementOutputRoleNestingDepthBucketCache2::from_role_assignments(
+                &material_assignments,
+                &hole_assignments,
+            );
 
         Some(Self {
             role_report_count: report.role_reports().len(),
@@ -5096,6 +5252,7 @@ impl ExactCurveArrangementOutputRoleCache2 {
             hole_segment_count,
             role_status_bucket_cache,
             role_source_contour_bucket_cache,
+            role_nesting_depth_bucket_cache,
             buckets: vec![
                 ExactCurveArrangementOutputRoleBucket2 {
                     role: RegionBoundaryContourRole2::Material,
@@ -5146,6 +5303,13 @@ impl ExactCurveArrangementOutputRoleCache2 {
         &self,
     ) -> &ExactCurveArrangementOutputRoleSourceContourBucketCache2 {
         &self.role_source_contour_bucket_cache
+    }
+
+    /// Returns output role assignment buckets grouped by exact nesting depth.
+    pub const fn role_nesting_depth_bucket_cache(
+        &self,
+    ) -> &ExactCurveArrangementOutputRoleNestingDepthBucketCache2 {
+        &self.role_nesting_depth_bucket_cache
     }
 
     /// Returns material and hole role buckets in stable order.
