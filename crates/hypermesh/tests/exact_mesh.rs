@@ -50,20 +50,21 @@ fn exact_boolean_result(
     result
 }
 
-fn exact_boolean_arrangement_attempt(
+fn with_exact_boolean_arrangement_attempt<R>(
     left: &ExactMesh,
     right: &ExactMesh,
     request: ExactBooleanRequest,
     policy: ExactRegularizationPolicy,
-) -> hypermesh::ExactArrangementBooleanAttempt {
+    f: impl FnOnce(&hypermesh::ExactArrangementBooleanAttempt) -> R,
+) -> R {
     assert_eq!(policy, ExactRegularizationPolicy::REGULARIZED_SOLID);
     let mut workspace = ExactBooleanWorkspace::new(left, right);
-    workspace
+    let attempt = workspace
         .evaluate(request)
         .unwrap()
         .retained_arrangement_attempt()
-        .expect("evaluation should retain an arrangement attempt")
-        .clone()
+        .expect("evaluation should retain an arrangement attempt");
+    f(attempt)
 }
 
 fn assert_public_full_face_adjacent_union(
@@ -1510,84 +1511,88 @@ fn exact_open_surface_arrangement_is_publicly_replayable() {
         ExactBooleanOperation::Difference,
     ] {
         if !matches!(operation, ExactBooleanOperation::Intersection) {
-            let closed_attempt = exact_boolean_arrangement_attempt(
+            with_exact_boolean_arrangement_attempt(
                 &left,
                 &right,
                 ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
                 ExactRegularizationPolicy::REGULARIZED_SOLID,
-            );
-            assert_eq!(closed_attempt.output_validation(), ValidationPolicy::CLOSED);
-            closed_attempt.validate().unwrap();
-            closed_attempt
-                .validate_against_sources_for_request(
-                    &left,
-                    &right,
-                    ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
-                )
-                .unwrap();
-            assert_eq!(
-                closed_attempt.freshness_against_sources_for_request(
-                    &left,
-                    &right,
-                    ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
-                ),
-                ExactReportFreshness::Current
-            );
-            assert_eq!(
-                closed_attempt.freshness_against_sources_for_request(
-                    &left,
-                    &right,
-                    ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
-                ),
-                ExactReportFreshness::SourceReplayMismatch
+                |closed_attempt| {
+                    assert_eq!(closed_attempt.output_validation(), ValidationPolicy::CLOSED);
+                    closed_attempt.validate().unwrap();
+                    closed_attempt
+                        .validate_against_sources_for_request(
+                            &left,
+                            &right,
+                            ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
+                        )
+                        .unwrap();
+                    assert_eq!(
+                        closed_attempt.freshness_against_sources_for_request(
+                            &left,
+                            &right,
+                            ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
+                        ),
+                        ExactReportFreshness::Current
+                    );
+                    assert_eq!(
+                        closed_attempt.freshness_against_sources_for_request(
+                            &left,
+                            &right,
+                            ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
+                        ),
+                        ExactReportFreshness::SourceReplayMismatch
+                    );
+                },
             );
         }
 
-        let attempt = exact_boolean_arrangement_attempt(
+        with_exact_boolean_arrangement_attempt(
             &left,
             &right,
             ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
             ExactRegularizationPolicy::REGULARIZED_SOLID,
-        );
-        assert!(
-            attempt.operation() == operation
-                && attempt.policy() == ExactRegularizationPolicy::REGULARIZED_SOLID
-                && attempt.output_validation() == ValidationPolicy::ALLOW_BOUNDARY
-                && attempt.validate().is_ok(),
-            "{operation:?}: {attempt:?}"
-        );
-        assert_eq!(
-            attempt.output_validation(),
-            ValidationPolicy::ALLOW_BOUNDARY
-        );
-        attempt.validate().unwrap();
-        attempt.validate_against_sources(&left, &right).unwrap();
-        attempt
-            .validate_against_sources_for_request(
-                &left,
-                &right,
-                ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
-            )
-            .unwrap();
-        assert_eq!(
-            attempt.freshness_against_sources(&left, &right),
-            ExactReportFreshness::Current
-        );
-        assert_eq!(
-            attempt.freshness_against_sources_for_request(
-                &left,
-                &right,
-                ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
-            ),
-            ExactReportFreshness::Current
-        );
-        assert_eq!(
-            attempt.freshness_against_sources_for_request(
-                &left,
-                &right,
-                ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
-            ),
-            ExactReportFreshness::SourceReplayMismatch
+            |attempt| {
+                assert!(
+                    attempt.operation() == operation
+                        && attempt.policy() == ExactRegularizationPolicy::REGULARIZED_SOLID
+                        && attempt.output_validation() == ValidationPolicy::ALLOW_BOUNDARY
+                        && attempt.validate().is_ok(),
+                    "{operation:?}: {attempt:?}"
+                );
+                assert_eq!(
+                    attempt.output_validation(),
+                    ValidationPolicy::ALLOW_BOUNDARY
+                );
+                attempt.validate().unwrap();
+                attempt.validate_against_sources(&left, &right).unwrap();
+                attempt
+                    .validate_against_sources_for_request(
+                        &left,
+                        &right,
+                        ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
+                    )
+                    .unwrap();
+                assert_eq!(
+                    attempt.freshness_against_sources(&left, &right),
+                    ExactReportFreshness::Current
+                );
+                assert_eq!(
+                    attempt.freshness_against_sources_for_request(
+                        &left,
+                        &right,
+                        ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
+                    ),
+                    ExactReportFreshness::Current
+                );
+                assert_eq!(
+                    attempt.freshness_against_sources_for_request(
+                        &left,
+                        &right,
+                        ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
+                    ),
+                    ExactReportFreshness::SourceReplayMismatch
+                );
+            },
         );
 
         let result = exact_boolean_result(
@@ -1651,81 +1656,86 @@ fn arrangement_attempt_output_validation_is_publicly_replayable() {
         ExactBooleanOperation::Union,
         ExactBooleanOperation::Intersection,
     ] {
-        let closed_attempt = exact_boolean_arrangement_attempt(
+        with_exact_boolean_arrangement_attempt(
             &left,
             &right,
             ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
             ExactRegularizationPolicy::REGULARIZED_SOLID,
-        );
-        assert_eq!(closed_attempt.output_validation(), ValidationPolicy::CLOSED);
-        closed_attempt.validate().unwrap();
-        closed_attempt
-            .validate_against_sources(&left, &right)
-            .unwrap();
-        closed_attempt
-            .validate_against_sources_for_request(
-                &left,
-                &right,
-                ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
-            )
-            .unwrap();
-        assert_eq!(
-            closed_attempt.freshness_against_sources_for_request(
-                &left,
-                &right,
-                ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
-            ),
-            ExactReportFreshness::Current
-        );
-        assert_eq!(
-            closed_attempt.freshness_against_sources_for_request(
-                &left,
-                &right,
-                ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
-            ),
-            ExactReportFreshness::SourceReplayMismatch
+            |closed_attempt| {
+                assert_eq!(closed_attempt.output_validation(), ValidationPolicy::CLOSED);
+                closed_attempt.validate().unwrap();
+                closed_attempt
+                    .validate_against_sources(&left, &right)
+                    .unwrap();
+                closed_attempt
+                    .validate_against_sources_for_request(
+                        &left,
+                        &right,
+                        ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
+                    )
+                    .unwrap();
+                assert_eq!(
+                    closed_attempt.freshness_against_sources_for_request(
+                        &left,
+                        &right,
+                        ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
+                    ),
+                    ExactReportFreshness::Current
+                );
+                assert_eq!(
+                    closed_attempt.freshness_against_sources_for_request(
+                        &left,
+                        &right,
+                        ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
+                    ),
+                    ExactReportFreshness::SourceReplayMismatch
+                );
+            },
         );
 
-        let boundary_attempt = exact_boolean_arrangement_attempt(
+        with_exact_boolean_arrangement_attempt(
             &left,
             &right,
             ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
             ExactRegularizationPolicy::REGULARIZED_SOLID,
-        );
-        assert_eq!(
-            boundary_attempt.output_validation(),
-            ValidationPolicy::ALLOW_BOUNDARY
-        );
-        assert!(
-            boundary_attempt.operation() == operation
-                && boundary_attempt.policy() == ExactRegularizationPolicy::REGULARIZED_SOLID
-                && boundary_attempt.output_validation() == ValidationPolicy::ALLOW_BOUNDARY
-                && boundary_attempt.validate().is_ok(),
-            "{operation:?}: {boundary_attempt:?}"
-        );
-        boundary_attempt.validate().unwrap();
-        boundary_attempt
-            .validate_against_sources_for_request(
-                &left,
-                &right,
-                ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
-            )
-            .unwrap();
-        assert_eq!(
-            boundary_attempt.freshness_against_sources_for_request(
-                &left,
-                &right,
-                ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
-            ),
-            ExactReportFreshness::Current
-        );
-        assert_eq!(
-            boundary_attempt.freshness_against_sources_for_request(
-                &left,
-                &right,
-                ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
-            ),
-            ExactReportFreshness::SourceReplayMismatch
+            |boundary_attempt| {
+                assert_eq!(
+                    boundary_attempt.output_validation(),
+                    ValidationPolicy::ALLOW_BOUNDARY
+                );
+                assert!(
+                    boundary_attempt.operation() == operation
+                        && boundary_attempt.policy()
+                            == ExactRegularizationPolicy::REGULARIZED_SOLID
+                        && boundary_attempt.output_validation() == ValidationPolicy::ALLOW_BOUNDARY
+                        && boundary_attempt.validate().is_ok(),
+                    "{operation:?}: {boundary_attempt:?}"
+                );
+                boundary_attempt.validate().unwrap();
+                boundary_attempt
+                    .validate_against_sources_for_request(
+                        &left,
+                        &right,
+                        ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
+                    )
+                    .unwrap();
+                assert_eq!(
+                    boundary_attempt.freshness_against_sources_for_request(
+                        &left,
+                        &right,
+                        ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
+                    ),
+                    ExactReportFreshness::Current
+                );
+                assert_eq!(
+                    boundary_attempt.freshness_against_sources_for_request(
+                        &left,
+                        &right,
+                        ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
+                    ),
+                    ExactReportFreshness::SourceReplayMismatch
+                );
+            },
         );
     }
 }
@@ -3739,35 +3749,37 @@ fn exact_boolean_attempt_public_path_reports_blockers_or_cells() {
         ExactBooleanOperation::Union,
         ValidationPolicy::ALLOW_BOUNDARY,
     );
-    let attempt = exact_boolean_arrangement_attempt(
+    with_exact_boolean_arrangement_attempt(
         &left,
         &right,
         request,
         ExactRegularizationPolicy::REGULARIZED_SOLID,
-    );
-    assert_eq!(
-        attempt.boundary_policy(),
-        ExactBoundaryBooleanPolicy::PreserveSeparateShells
-    );
-    attempt.validate().unwrap();
-    assert!(attempt.topology_assembly_is_complete());
-    assert!(attempt.region_ownership_is_volume_resolved());
-    attempt.validate_against_sources(&left, &right).unwrap();
-    assert_eq!(
-        attempt.freshness_against_sources(&left, &right),
-        ExactReportFreshness::Current
-    );
-    assert_eq!(
-        attempt.freshness_against_sources_for_request(
-            &left,
-            &right,
-            ExactBooleanRequest::with_boundary_policy(
-                ExactBooleanOperation::Union,
-                ValidationPolicy::ALLOW_BOUNDARY,
-                ExactBoundaryBooleanPolicy::Reject,
-            ),
-        ),
-        ExactReportFreshness::SourceReplayMismatch
+        |attempt| {
+            assert_eq!(
+                attempt.boundary_policy(),
+                ExactBoundaryBooleanPolicy::PreserveSeparateShells
+            );
+            attempt.validate().unwrap();
+            assert!(attempt.topology_assembly_is_complete());
+            assert!(attempt.region_ownership_is_volume_resolved());
+            attempt.validate_against_sources(&left, &right).unwrap();
+            assert_eq!(
+                attempt.freshness_against_sources(&left, &right),
+                ExactReportFreshness::Current
+            );
+            assert_eq!(
+                attempt.freshness_against_sources_for_request(
+                    &left,
+                    &right,
+                    ExactBooleanRequest::with_boundary_policy(
+                        ExactBooleanOperation::Union,
+                        ValidationPolicy::ALLOW_BOUNDARY,
+                        ExactBoundaryBooleanPolicy::Reject,
+                    ),
+                ),
+                ExactReportFreshness::SourceReplayMismatch
+            );
+        },
     );
 }
 
