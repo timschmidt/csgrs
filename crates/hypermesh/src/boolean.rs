@@ -326,16 +326,6 @@ impl ExactArrangementBooleanAttempt {
         self.resolves_requested_volume_ownership()
     }
 
-    /// Return retained arrangement face-cell count.
-    pub const fn face_cells(&self) -> usize {
-        self.face_cells
-    }
-
-    /// Return retained connected shell/region count.
-    pub const fn regions(&self) -> usize {
-        self.regions
-    }
-
     /// Return retained volume-region count.
     pub const fn volume_regions(&self) -> usize {
         self.volume_regions
