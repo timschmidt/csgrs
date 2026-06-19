@@ -34,9 +34,10 @@ fuzz_target!(|data: &[u8]| {
         if let Ok(evaluation) = workspace.evaluate(request) {
             let _ = evaluation.validate();
             let _ = evaluation.validate_against_sources(&left, &right);
-        }
-        if let Ok(result) = workspace.materialize_ref(request) {
-            let _ = result.validate();
+            if let Some(result) = evaluation.result.as_ref() {
+                let _ = result.validate();
+                let _ = evaluation.validate_materialized_result_against_sources(&left, &right);
+            }
         }
     }
 });

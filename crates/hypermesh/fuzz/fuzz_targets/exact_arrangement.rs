@@ -68,12 +68,9 @@ fn exercise_workspace_requests(left: &ExactMesh, right: &ExactMesh, validation: 
                 let _ = attempt.validate();
                 let _ = attempt.freshness_against_sources_with_validation(left, right, validation);
             }
-        }
-        if workspace.materialize_ref(request).is_ok()
-            && let Ok(evaluation) = workspace.evaluate(request)
-        {
-            let _ = evaluation.validate_materialized_result_against_sources(left, right);
-            let _ = evaluation.freshness_against_sources(left, right);
+            if evaluation.result.is_some() {
+                let _ = evaluation.validate_materialized_result_against_sources(left, right);
+            }
         }
     }
 

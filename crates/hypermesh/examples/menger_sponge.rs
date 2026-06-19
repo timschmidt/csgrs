@@ -7,7 +7,7 @@ use bevy::pbr::wireframe::{Wireframe, WireframeColor, WireframePlugin};
 use bevy::prelude::*;
 use bevy::render::mesh::PrimitiveTopology;
 use bevy_panorbit_camera::{PanOrbitCamera, PanOrbitCameraPlugin};
-use hypermesh::{ExactMesh, ExactMeshHandoffPackage, ValidationPolicy};
+use hypermesh::{ExactMesh, ValidationPolicy};
 
 use std::time::Instant;
 
@@ -132,8 +132,9 @@ fn append_box(min: [i64; 3], max: [i64; 3], coordinates: &mut Vec<i64>, indices:
 }
 
 fn bevy_mesh_from_exact(mesh: &ExactMesh) -> Mesh {
-    let package =
-        ExactMeshHandoffPackage::from_mesh(mesh).expect("exact mesh should have a fresh handoff");
+    let package = mesh
+        .handoff_package()
+        .expect("exact mesh should have a fresh handoff");
     let view = package
         .approximate_f64_view
         .as_ref()
