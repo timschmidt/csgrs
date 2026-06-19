@@ -1295,7 +1295,7 @@ impl Region2 {
         );
         Ok(ExactCurveArrangementAttempt2::new(request)
             .evaluate(policy)?
-            .into_region_build_result())
+            .region_result)
     }
 
     /// Builds a region from unordered exact line segments and retains assembly evidence.
@@ -1312,7 +1312,7 @@ impl Region2 {
             ExactCurveArrangementRequest2::from_unordered_line_segments(segments, fill_rule);
         Ok(ExactCurveArrangementAttempt2::new(request)
             .evaluate(policy)?
-            .into_region_build_result())
+            .region_result)
     }
 
     fn from_unordered_line_segments_with_report_impl(
@@ -1556,7 +1556,7 @@ impl Region2 {
             ExactCurveArrangementRequest2::from_borrowed_unordered_segments(segments, fill_rule);
         Ok(ExactCurveArrangementAttempt2::new(request)
             .evaluate(policy)?
-            .into_region_build_result())
+            .region_result)
     }
 
     /// Builds a region from unordered exact native line/arc segments.
@@ -1579,7 +1579,7 @@ impl Region2 {
         let request = ExactCurveArrangementRequest2::from_unordered_segments(segments, fill_rule);
         Ok(ExactCurveArrangementAttempt2::new(request)
             .evaluate(policy)?
-            .into_region_build_result())
+            .region_result)
     }
 
     fn from_unordered_segments_with_report_impl(
@@ -6512,7 +6512,11 @@ impl ExactCurveArrangementResult2 {
         self.summary_cache().output_segment_count()
     }
 
-    /// Returns the underlying region build result.
+    /// Returns the underlying legacy region build result.
+    #[deprecated(
+        since = "0.3.0",
+        note = "use ExactCurveArrangementResult2 retained accessors, or report() when a derived compatibility report is required"
+    )]
     pub const fn region_build_result(&self) -> &RegionLineSegmentRegionBuildResult2 {
         &self.region_result
     }
@@ -6527,7 +6531,11 @@ impl ExactCurveArrangementResult2 {
         self.region_result.report()
     }
 
-    /// Consumes this result and returns the underlying region build result.
+    /// Consumes this result and returns the underlying legacy region build result.
+    #[deprecated(
+        since = "0.3.0",
+        note = "use ExactCurveArrangementResult2 retained accessors, into_region(), or report() when a derived compatibility report is required"
+    )]
     pub fn into_region_build_result(self) -> RegionLineSegmentRegionBuildResult2 {
         self.region_result
     }
