@@ -11954,7 +11954,6 @@ mod tests {
             readiness.blocker.kind,
             ExactBooleanBlockerKind::NeedsWinding
         );
-        readiness.validate().unwrap();
         readiness.validate_against_sources(&left, &right).unwrap();
     }
 
@@ -11994,7 +11993,6 @@ mod tests {
         );
         assert_eq!(readiness.blocker.coplanar_overlapping_pairs, 1);
         assert_eq!(readiness.blocker.coplanar_touching_pairs, 2);
-        readiness.validate().unwrap();
         readiness.validate_against_sources(&left, &right).unwrap();
 
         let mut stale = readiness.clone();
@@ -12554,7 +12552,6 @@ mod tests {
 
         let mut workspace = ExactBooleanWorkspace::new(&left, &right);
         let evaluation = workspace.evaluate(request).unwrap();
-        evaluation.validate().unwrap();
         evaluation.validate_against_sources(&left, &right).unwrap();
         let attempt = evaluation
             .retained_arrangement_attempt()
@@ -12671,7 +12668,6 @@ mod tests {
                 ExactBooleanBlockerKind::NeedsWinding,
                 "{operation:?}: {readiness:?}"
             );
-            readiness.validate().unwrap();
             readiness.validate_against_sources(&left, &right).unwrap();
 
             let request = ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY);
@@ -12689,7 +12685,6 @@ mod tests {
             )
             .unwrap()
             .expect("orthogonal cell shortcut should materialize through certified replay");
-            direct.validate().unwrap();
             direct.validate_against_sources(&left, &right).unwrap();
 
             let attempt = test_arrangement_attempt(
@@ -12728,7 +12723,6 @@ mod tests {
                 result.is_arrangement_cell_complex_shortcut_for(operation),
                 "{operation:?}: {result:?}"
             );
-            result.validate().unwrap();
             result.validate_against_sources(&left, &right).unwrap();
             assert!(
                 result.mesh.facts().mesh.closed_manifold || result.mesh.triangles().is_empty(),
@@ -12868,7 +12862,6 @@ mod tests {
         assert!(
             result.is_arrangement_cell_complex_shortcut_for(ExactBooleanOperation::Intersection)
         );
-        result.validate().unwrap();
         result.validate_against_sources(&left, &right).unwrap();
         assert!(result.mesh.triangles().is_empty());
     }
