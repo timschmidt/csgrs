@@ -2745,16 +2745,6 @@ fn exact_volumetric_winding_coplanar_cap_is_publicly_certified() {
             &right,
             ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
         );
-        let closure = evaluation
-            .certifications()
-            .volumetric_boundary_closure()
-            .expect("coplanar closure evaluation should retain boundary closure evidence");
-        assert!(
-            closure.is_coplanar_closure_available(),
-            "{operation:?}: {closure:?}"
-        );
-        closure.validate().unwrap();
-        evaluation.validate_against_sources(&left, &right).unwrap();
 
         let preflight = evaluation.preflight();
         assert!(

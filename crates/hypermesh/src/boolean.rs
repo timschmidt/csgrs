@@ -1039,12 +1039,6 @@ impl ExactBooleanCertificationSet {
         &self.winding_readiness
     }
 
-    /// Return the retained volumetric boundary closure evidence, when the
-    /// request reached that certified shortcut.
-    pub fn volumetric_boundary_closure(&self) -> Option<&ExactVolumetricBoundaryClosureReport> {
-        self.volumetric_boundary_closure.as_ref()
-    }
-
     pub(crate) fn from_graph_and_regularized_arrangement(
         graph: &ExactIntersectionGraph,
         left: &ExactMesh,

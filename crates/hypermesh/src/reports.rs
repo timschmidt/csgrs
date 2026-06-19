@@ -3788,77 +3788,67 @@ pub struct ExactVolumetricBoundaryClosureReport {
 }
 
 impl ExactVolumetricBoundaryClosureReport {
-    /// Return the requested named operation.
-    pub const fn operation(&self) -> ExactBooleanOperation {
-        self.operation
-    }
-
     /// Return the certified closure status.
     pub const fn status(&self) -> &ExactVolumetricBoundaryClosureStatus {
         &self.status
     }
 
     /// Return the retained output triangle count.
+    #[cfg(test)]
     pub const fn output_triangles(&self) -> usize {
         self.output_triangles
     }
 
     /// Return the retained boundary edge count.
+    #[cfg(test)]
     pub const fn boundary_edges(&self) -> usize {
         self.boundary_edges
     }
 
     /// Return the directed boundary loop count.
+    #[cfg(test)]
     pub const fn boundary_loops(&self) -> usize {
         self.boundary_loops
     }
 
-    /// Return the invalid outgoing boundary-vertex degree count.
-    pub const fn boundary_vertices_with_invalid_outgoing_degree(&self) -> usize {
-        self.boundary_vertices_with_invalid_outgoing_degree
-    }
-
-    /// Return the invalid incoming boundary-vertex degree count.
-    pub const fn boundary_vertices_with_invalid_incoming_degree(&self) -> usize {
-        self.boundary_vertices_with_invalid_incoming_degree
-    }
-
-    /// Return the overused undirected boundary-edge count.
-    pub const fn overused_boundary_edges(&self) -> usize {
-        self.overused_boundary_edges
-    }
-
     /// Return the noncoplanar boundary-loop count.
+    #[cfg(test)]
     pub const fn noncoplanar_boundary_loops(&self) -> usize {
         self.noncoplanar_boundary_loops
     }
 
     /// Return the repeated exact boundary-point count.
+    #[cfg(test)]
     pub const fn repeated_exact_boundary_points(&self) -> usize {
         self.repeated_exact_boundary_points
     }
 
     /// Return the exact self-contact point-class count.
+    #[cfg(test)]
     pub const fn self_contact_exact_points(&self) -> usize {
         self.self_contact_exact_points
     }
 
     /// Return the topological vertices participating in exact self-contact.
+    #[cfg(test)]
     pub const fn self_contact_topological_vertices(&self) -> usize {
         self.self_contact_topological_vertices
     }
 
     /// Return the degenerate self-contact split-cycle count.
+    #[cfg(test)]
     pub const fn self_contact_degenerate_cycles(&self) -> usize {
         self.self_contact_degenerate_cycles
     }
 
     /// Return the nondegenerate self-contact split-cycle count.
+    #[cfg(test)]
     pub const fn self_contact_nondegenerate_cycles(&self) -> usize {
         self.self_contact_nondegenerate_cycles
     }
 
     /// Return the coplanar loop group count.
+    #[cfg(test)]
     pub const fn coplanar_loop_groups(&self) -> usize {
         self.coplanar_loop_groups
     }
