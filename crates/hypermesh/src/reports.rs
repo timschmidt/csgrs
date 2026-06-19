@@ -5609,26 +5609,6 @@ impl ExactAdjacentUnionCompletionReport {
         self.status
     }
 
-    /// Return whether the left source mesh was a closed manifold.
-    pub const fn left_closed(&self) -> bool {
-        self.left_closed
-    }
-
-    /// Return whether the right source mesh was a closed manifold.
-    pub const fn right_closed(&self) -> bool {
-        self.right_closed
-    }
-
-    /// Return whether the stronger axis-aligned box path owns this pair.
-    pub const fn axis_aligned_box_pair(&self) -> bool {
-        self.axis_aligned_box_pair
-    }
-
-    /// Return whether another exact kernel should materialize this union first.
-    pub const fn stronger_kernel_available(&self) -> bool {
-        self.stronger_kernel_available
-    }
-
     /// Return whether graph extraction retained unknown events.
     pub const fn graph_had_unknowns(&self) -> bool {
         self.graph_had_unknowns
@@ -5644,79 +5624,12 @@ impl ExactAdjacentUnionCompletionReport {
         self.retained_events
     }
 
-    /// Return the retained relation-count blocker.
-    pub const fn blocker(&self) -> &ExactBooleanBlocker {
-        &self.blocker
-    }
-
-    /// Return the exact whole-face pair count consumed by completion.
-    pub const fn full_face_shared_faces(&self) -> usize {
-        self.full_face_shared_faces
-    }
-
-    /// Return the exact source-owned full patch count consumed by completion.
-    pub const fn full_face_shared_patches(&self) -> usize {
-        self.full_face_shared_patches
-    }
-
-    /// Return the side whose faces contain opposite caps, when certified.
-    pub const fn contained_containing_side(&self) -> Option<MeshSide> {
-        self.contained_containing_side
-    }
-
-    /// Return the count of opposite-source faces removed by contained completion.
-    pub const fn contained_faces(&self) -> usize {
-        self.contained_faces
-    }
-
-    /// Return the count of source faces replaced by holed remnants.
-    pub const fn containing_faces(&self) -> usize {
-        self.containing_faces
-    }
-
     /// Return whether adjacent union completion was certified.
     pub const fn is_certified(&self) -> bool {
         matches!(
             self.status,
             ExactAdjacentUnionCompletionStatus::CertifiedFullFace
                 | ExactAdjacentUnionCompletionStatus::CertifiedContainedFace
-        )
-    }
-
-    /// Return whether full-face adjacency completed the union.
-    pub const fn is_certified_full_face(&self) -> bool {
-        matches!(
-            self.status,
-            ExactAdjacentUnionCompletionStatus::CertifiedFullFace
-        )
-    }
-
-    /// Return whether contained-face adjacency completed the union.
-    pub const fn is_certified_contained_face(&self) -> bool {
-        matches!(
-            self.status,
-            ExactAdjacentUnionCompletionStatus::CertifiedContainedFace
-        )
-    }
-
-    /// Return whether this retained state belongs to a non-union request.
-    pub const fn is_not_union(&self) -> bool {
-        matches!(self.status, ExactAdjacentUnionCompletionStatus::NotUnion)
-    }
-
-    /// Return whether an axis-aligned box shortcut superseded adjacency.
-    pub const fn is_axis_aligned_box_pair(&self) -> bool {
-        matches!(
-            self.status,
-            ExactAdjacentUnionCompletionStatus::AxisAlignedBoxPair
-        )
-    }
-
-    /// Return whether no adjacent-union certificate was available.
-    pub const fn has_no_adjacency_certificate(&self) -> bool {
-        matches!(
-            self.status,
-            ExactAdjacentUnionCompletionStatus::NoAdjacencyCertificate
         )
     }
 

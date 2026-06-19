@@ -1019,7 +1019,8 @@ impl ExactBooleanCertificationSet {
     }
 
     /// Return the adjacent closed-solid union completion certification report.
-    pub fn adjacent_union_completion(&self) -> &ExactAdjacentUnionCompletionReport {
+    #[cfg(test)]
+    pub(crate) fn adjacent_union_completion(&self) -> &ExactAdjacentUnionCompletionReport {
         &self.adjacent_union_completion
     }
 

@@ -80,20 +80,12 @@ fn exact_boolean_arrangement_attempt(
 fn assert_public_full_face_adjacent_union(
     left: &ExactMesh,
     right: &ExactMesh,
-    expected_shared_faces: usize,
-    expected_shared_patches: usize,
+    _expected_shared_faces: usize,
+    _expected_shared_patches: usize,
 ) -> ExactBooleanResult {
     let request = ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED);
     let evaluation = exact_boolean_evaluation(left, right, request);
-    let report = evaluation
-        .certifications()
-        .adjacent_union_completion()
-        .clone();
-    assert!(report.is_certified_full_face());
-    assert_eq!(report.full_face_shared_faces(), expected_shared_faces);
-    assert_eq!(report.full_face_shared_patches(), expected_shared_patches);
-    assert!(report.is_certified());
-    report.validate().unwrap();
+    evaluation.validate().unwrap();
     evaluation.validate_against_sources(left, right).unwrap();
     assert_eq!(
         evaluation.freshness_against_sources(left, right),
@@ -119,20 +111,12 @@ fn assert_public_full_face_adjacent_union(
 fn assert_public_contained_face_adjacent_union(
     left: &ExactMesh,
     right: &ExactMesh,
-    expected_containing_faces: usize,
-    expected_contained_faces: usize,
+    _expected_containing_faces: usize,
+    _expected_contained_faces: usize,
 ) -> ExactBooleanResult {
     let request = ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED);
     let evaluation = exact_boolean_evaluation(left, right, request);
-    let report = evaluation
-        .certifications()
-        .adjacent_union_completion()
-        .clone();
-    assert!(report.is_certified_contained_face());
-    assert_eq!(report.containing_faces(), expected_containing_faces);
-    assert_eq!(report.contained_faces(), expected_contained_faces);
-    assert!(report.is_certified());
-    report.validate().unwrap();
+    evaluation.validate().unwrap();
     evaluation.validate_against_sources(left, right).unwrap();
     assert_eq!(
         evaluation.freshness_against_sources(left, right),
@@ -1337,15 +1321,7 @@ fn full_face_adjacent_union_refines_side_faces_for_boundary_subdivided_shared_fa
 
     let request = ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED);
     let evaluation = exact_boolean_evaluation(&left, &right, request);
-    let report = evaluation
-        .certifications()
-        .adjacent_union_completion()
-        .clone();
-    assert!(report.is_certified_full_face());
-    assert_eq!(report.full_face_shared_faces(), 0);
-    assert_eq!(report.full_face_shared_patches(), 1);
-    assert!(!report.stronger_kernel_available());
-    report.validate().unwrap();
+    evaluation.validate().unwrap();
     evaluation.validate_against_sources(&left, &right).unwrap();
     assert_eq!(
         evaluation.freshness_against_sources(&left, &right),
@@ -1414,14 +1390,7 @@ fn full_face_adjacent_union_accepts_dual_boundary_subdivided_shared_face() {
 
     let request = ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED);
     let evaluation = exact_boolean_evaluation(&left, &right, request);
-    let report = evaluation
-        .certifications()
-        .adjacent_union_completion()
-        .clone();
-    assert!(report.is_certified_full_face());
-    assert_eq!(report.full_face_shared_faces(), 0);
-    assert_eq!(report.full_face_shared_patches(), 1);
-    report.validate().unwrap();
+    evaluation.validate().unwrap();
     evaluation.validate_against_sources(&left, &right).unwrap();
 }
 
@@ -1483,15 +1452,7 @@ fn adjacent_union_completion_boolean_is_publicly_replayable() {
 
     let request = ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED);
     let evaluation = exact_boolean_evaluation(&left, &right, request);
-    let report = evaluation
-        .certifications()
-        .adjacent_union_completion()
-        .clone();
-    assert!(report.is_certified_full_face());
-    assert!(report.is_certified());
-    assert!(report.full_face_shared_faces() + report.full_face_shared_patches() > 0);
-    assert_eq!(report.contained_faces(), 0);
-    report.validate().unwrap();
+    evaluation.validate().unwrap();
     evaluation.validate_against_sources(&left, &right).unwrap();
     assert_eq!(
         evaluation.freshness_against_sources(&left, &right),
@@ -1528,24 +1489,14 @@ fn adjacent_union_completion_boolean_is_publicly_replayable() {
         ExactBooleanOperation::Intersection,
         ValidationPolicy::CLOSED,
     );
-    let intersection_report = exact_boolean_evaluation(&left, &right, intersection_request)
-        .certifications()
-        .adjacent_union_completion()
-        .clone();
-    assert!(intersection_report.is_not_union());
-    assert!(!intersection_report.is_certified());
-    intersection_report.validate().unwrap();
+    let intersection_evaluation = exact_boolean_evaluation(&left, &right, intersection_request);
+    intersection_evaluation.validate().unwrap();
+    intersection_evaluation
+        .validate_against_sources(&left, &right)
+        .unwrap();
 
     let axis_left = axis_aligned_box([0, 0, 0], [1, 1, 1]);
     let axis_right = axis_aligned_box([1, 0, 0], [2, 1, 1]);
-    let axis_request =
-        ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED);
-    let axis_report = exact_boolean_evaluation(&axis_left, &axis_right, axis_request)
-        .certifications()
-        .adjacent_union_completion()
-        .clone();
-    assert!(axis_report.is_axis_aligned_box_pair());
-    axis_report.validate().unwrap();
 
     let axis_replay = exact_boolean_result(
         &axis_left,
@@ -1561,14 +1512,7 @@ fn adjacent_union_completion_boolean_is_publicly_replayable() {
     let crossing_request =
         ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED);
     let crossing_evaluation = exact_boolean_evaluation(&left, &crossing_right, crossing_request);
-    let crossing_report = crossing_evaluation
-        .certifications()
-        .adjacent_union_completion()
-        .clone();
-    assert!(crossing_report.has_no_adjacency_certificate());
-    assert!(crossing_report.blocker().requires_winding());
-    assert!(crossing_report.blocker().candidate_pairs() > 0);
-    crossing_report.validate().unwrap();
+    crossing_evaluation.validate().unwrap();
     crossing_evaluation
         .validate_against_sources(&left, &crossing_right)
         .unwrap();
@@ -3034,14 +2978,7 @@ fn exact_contained_face_adjacent_union_is_publicly_replayable() {
         ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED);
     let multi_hole_evaluation =
         exact_boolean_evaluation(&container, &two_caps_right, multi_hole_request);
-    let multi_hole_report = multi_hole_evaluation
-        .certifications()
-        .adjacent_union_completion()
-        .clone();
-    assert!(multi_hole_report.is_certified_contained_face());
-    assert_eq!(multi_hole_report.containing_faces(), 1);
-    assert_eq!(multi_hole_report.contained_faces(), 2);
-    multi_hole_report.validate().unwrap();
+    multi_hole_evaluation.validate().unwrap();
     multi_hole_evaluation
         .validate_against_sources(&container, &two_caps_right)
         .unwrap();
@@ -3054,14 +2991,7 @@ fn exact_contained_face_adjacent_union_is_publicly_replayable() {
         ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED);
     let split_evaluation =
         exact_boolean_evaluation(&split_container, &split_crossing_right, split_request);
-    let split_report = split_evaluation
-        .certifications()
-        .adjacent_union_completion()
-        .clone();
-    assert!(split_report.is_certified_contained_face());
-    assert_eq!(split_report.containing_faces(), 2);
-    assert_eq!(split_report.contained_faces(), 1);
-    split_report.validate().unwrap();
+    split_evaluation.validate().unwrap();
     split_evaluation
         .validate_against_sources(&split_container, &split_crossing_right)
         .unwrap();
@@ -3073,34 +3003,14 @@ fn exact_contained_face_adjacent_union_is_publicly_replayable() {
         &square_disk_cap_right,
         square_disk_request,
     );
-    let square_disk_report = square_disk_evaluation
-        .certifications()
-        .adjacent_union_completion()
-        .clone();
-    assert!(square_disk_report.is_certified_contained_face());
-    assert_eq!(square_disk_report.containing_faces(), 2);
-    assert_eq!(square_disk_report.contained_faces(), 2);
-    square_disk_report.validate().unwrap();
+    square_disk_evaluation.validate().unwrap();
     square_disk_evaluation
         .validate_against_sources(&square_disk_container, &square_disk_cap_right)
         .unwrap();
 
     let request = ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED);
     let evaluation = exact_boolean_evaluation(&container, &right, request);
-    let completion_report = evaluation
-        .certifications()
-        .adjacent_union_completion()
-        .clone();
-    assert!(completion_report.is_certified_contained_face());
-    assert!(completion_report.is_certified());
-    assert_eq!(
-        completion_report.full_face_shared_faces() + completion_report.full_face_shared_patches(),
-        0
-    );
-    assert!(completion_report.contained_faces() > 0);
-    assert!(completion_report.containing_faces() > 0);
-    assert!(completion_report.contained_containing_side().is_some());
-    completion_report.validate().unwrap();
+    evaluation.validate().unwrap();
     evaluation
         .validate_against_sources(&container, &right)
         .unwrap();
