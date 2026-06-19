@@ -778,11 +778,6 @@ impl ExactBooleanResult {
         &self.mesh
     }
 
-    /// Replace the materialized exact output mesh.
-    pub fn replace_mesh(&mut self, mesh: ExactMesh) -> ExactMesh {
-        std::mem::replace(&mut self.mesh, mesh)
-    }
-
     pub(crate) fn with_gate_reports(
         mut self,
         topology_assembly_report: Option<ExactTopologyAssemblyReport>,
