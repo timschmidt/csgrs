@@ -2603,19 +2603,6 @@ impl ExactBooleanEvaluation {
         }
     }
 
-    pub(crate) fn replayable_materialized_result(
-        &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-    ) -> Result<Option<ExactBooleanResult>, ExactReportValidationError> {
-        self.validate()?;
-        let Some(result) = self.result.as_ref() else {
-            return Ok(None);
-        };
-        self.validate_materialized_result_against_sources(left, right)?;
-        Ok(Some(result.clone()))
-    }
-
     pub(crate) fn validate_result_against_sources_for_request(
         left: &ExactMesh,
         right: &ExactMesh,
