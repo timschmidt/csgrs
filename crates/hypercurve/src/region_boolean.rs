@@ -50,6 +50,7 @@ pub struct RegionBooleanReport2 {
     result_material_contour_count: Option<usize>,
     result_hole_contour_count: Option<usize>,
     result_boundary_segment_count: Option<usize>,
+    result_boundary_source_segment_kind_counts: Option<SegmentKindCounts>,
     result_boundary_segment_kind_counts: Option<SegmentKindCounts>,
     pipeline_report: Option<RegionBooleanPipelineReport2>,
     boundary_build_report: Option<RegionBoundaryContourBuildReport2>,
@@ -798,6 +799,11 @@ impl RegionBooleanReport2 {
     /// Returns total result boundary segment count when a boolean region materialized.
     pub const fn result_boundary_segment_count(&self) -> Option<usize> {
         self.result_boundary_segment_count
+    }
+
+    /// Returns source primitive-family counts for result boundary segments when available.
+    pub const fn result_boundary_source_segment_kind_counts(&self) -> Option<SegmentKindCounts> {
+        self.result_boundary_source_segment_kind_counts
     }
 
     /// Returns line/arc boundary segment counts in the result region when available.
@@ -1551,6 +1557,11 @@ pub(crate) fn region_boolean_result_from_boundary_contours_with_prepared_cache_a
         .region()
         .map(|region| region_view_boundary_segment_kind_counts(&region.as_view()));
     let boundary_build_report = built.report().clone();
+    let result_boundary_source_segment_kind_counts = pipeline_report.as_ref().and_then(|report| {
+        report
+            .contour_transfer_report()
+            .output_source_segment_kind_counts()
+    });
     let pipeline_report = pipeline_report.map(|mut report| {
         report.boundary_build_report = Some(boundary_build_report.clone());
         report
@@ -1588,6 +1599,7 @@ pub(crate) fn region_boolean_result_from_boundary_contours_with_prepared_cache_a
             result_material_contour_count,
             result_hole_contour_count,
             result_boundary_segment_count,
+            result_boundary_source_segment_kind_counts,
             result_boundary_segment_kind_counts,
             pipeline_report,
             boundary_build_report: Some(boundary_build_report),
@@ -1666,6 +1678,7 @@ pub(crate) fn blocked_region_boolean_result_with_prepared_cache(
             result_material_contour_count: None,
             result_hole_contour_count: None,
             result_boundary_segment_count: None,
+            result_boundary_source_segment_kind_counts: None,
             result_boundary_segment_kind_counts: None,
             pipeline_report: None,
             boundary_build_report: None,

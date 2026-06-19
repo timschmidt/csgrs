@@ -159,6 +159,10 @@ fn boolean_region_report_retains_boundary_role_assignment() {
     assert_eq!(report.result_hole_contour_count(), Some(0));
     assert_eq!(report.result_boundary_segment_count(), Some(8));
     assert_eq!(
+        report.result_boundary_source_segment_kind_counts(),
+        Some(SegmentKindCounts { lines: 8, arcs: 0 })
+    );
+    assert_eq!(
         report.result_boundary_segment_kind_counts(),
         Some(SegmentKindCounts { lines: 8, arcs: 0 })
     );
@@ -555,6 +559,10 @@ fn prepared_boolean_region_report_matches_plain_materialization() {
     assert_eq!(
         built.report().result_boundary_segment_count(),
         plain.report().result_boundary_segment_count()
+    );
+    assert_eq!(
+        built.report().result_boundary_source_segment_kind_counts(),
+        plain.report().result_boundary_source_segment_kind_counts()
     );
     assert_eq!(
         built.report().result_boundary_segment_kind_counts(),
