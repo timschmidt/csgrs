@@ -4849,18 +4849,18 @@ impl ExactBooleanPreflight {
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct ExactBooleanBlocker {
     /// Missing policy or refinement class.
-    pub kind: ExactBooleanBlockerKind,
+    pub(crate) kind: ExactBooleanBlockerKind,
     /// Number of retained non-coplanar candidate face pairs.
-    pub candidate_pairs: usize,
+    pub(crate) candidate_pairs: usize,
     /// Number of retained coplanar positive-overlap face pairs.
-    pub coplanar_overlapping_pairs: usize,
+    pub(crate) coplanar_overlapping_pairs: usize,
     /// Number of retained coplanar touching face pairs.
-    pub coplanar_touching_pairs: usize,
+    pub(crate) coplanar_touching_pairs: usize,
     /// Number of retained unknown face pairs.
-    pub unknown_pairs: usize,
+    pub(crate) unknown_pairs: usize,
     /// Number of retained segment/plane events whose endpoint predicates
     /// certified a crossing but whose exact construction failed.
-    pub construction_failed_events: usize,
+    pub(crate) construction_failed_events: usize,
 }
 
 impl Default for ExactBooleanBlocker {
@@ -4877,6 +4877,66 @@ impl Default for ExactBooleanBlocker {
 }
 
 impl ExactBooleanBlocker {
+    /// Return the missing policy or refinement class.
+    pub const fn kind(&self) -> ExactBooleanBlockerKind {
+        self.kind
+    }
+
+    /// Return the retained non-coplanar candidate face-pair count.
+    pub const fn candidate_pairs(&self) -> usize {
+        self.candidate_pairs
+    }
+
+    /// Return the retained positive-area coplanar overlap face-pair count.
+    pub const fn coplanar_overlapping_pairs(&self) -> usize {
+        self.coplanar_overlapping_pairs
+    }
+
+    /// Return the retained coplanar touching face-pair count.
+    pub const fn coplanar_touching_pairs(&self) -> usize {
+        self.coplanar_touching_pairs
+    }
+
+    /// Return the retained unknown face-pair count.
+    pub const fn unknown_pairs(&self) -> usize {
+        self.unknown_pairs
+    }
+
+    /// Return the retained failed exact construction event count.
+    pub const fn construction_failed_events(&self) -> usize {
+        self.construction_failed_events
+    }
+
+    /// Return the missing policy or refinement class mutably.
+    pub fn kind_mut(&mut self) -> &mut ExactBooleanBlockerKind {
+        &mut self.kind
+    }
+
+    /// Return the retained non-coplanar candidate face-pair count mutably.
+    pub fn candidate_pairs_mut(&mut self) -> &mut usize {
+        &mut self.candidate_pairs
+    }
+
+    /// Return the retained positive-area coplanar overlap face-pair count mutably.
+    pub fn coplanar_overlapping_pairs_mut(&mut self) -> &mut usize {
+        &mut self.coplanar_overlapping_pairs
+    }
+
+    /// Return the retained coplanar touching face-pair count mutably.
+    pub fn coplanar_touching_pairs_mut(&mut self) -> &mut usize {
+        &mut self.coplanar_touching_pairs
+    }
+
+    /// Return the retained unknown face-pair count mutably.
+    pub fn unknown_pairs_mut(&mut self) -> &mut usize {
+        &mut self.unknown_pairs
+    }
+
+    /// Return the retained failed exact construction event count mutably.
+    pub fn construction_failed_events_mut(&mut self) -> &mut usize {
+        &mut self.construction_failed_events
+    }
+
     /// Return whether this blocker is waiting on predicate or construction refinement.
     pub const fn requires_refinement(&self) -> bool {
         matches!(self.kind, ExactBooleanBlockerKind::NeedsRefinement)

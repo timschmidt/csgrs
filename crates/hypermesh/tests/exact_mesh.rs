@@ -1780,7 +1780,9 @@ fn adjacent_union_completion_boolean_is_publicly_replayable() {
     let mut stale_intersection_report = intersection_report.clone();
     *stale_intersection_report.retained_face_pairs_mut() = 1;
     *stale_intersection_report.retained_events_mut() = 1;
-    stale_intersection_report.blocker_mut().candidate_pairs = 1;
+    *stale_intersection_report
+        .blocker_mut()
+        .candidate_pairs_mut() = 1;
     assert!(stale_intersection_report.validate().is_err());
 
     let axis_left = axis_aligned_box([0, 0, 0], [1, 1, 1]);
@@ -1795,7 +1797,7 @@ fn adjacent_union_completion_boolean_is_publicly_replayable() {
     let mut stale_axis_report = axis_report.clone();
     *stale_axis_report.retained_face_pairs_mut() = 1;
     *stale_axis_report.retained_events_mut() = 1;
-    stale_axis_report.blocker_mut().candidate_pairs = 1;
+    *stale_axis_report.blocker_mut().candidate_pairs_mut() = 1;
     assert!(stale_axis_report.validate().is_err());
 
     let axis_replay = exact_boolean_result(
@@ -1819,7 +1821,7 @@ fn adjacent_union_completion_boolean_is_publicly_replayable() {
         .clone();
     assert!(crossing_report.has_no_adjacency_certificate());
     assert!(crossing_report.blocker().requires_winding());
-    assert!(crossing_report.blocker().candidate_pairs > 0);
+    assert!(crossing_report.blocker().candidate_pairs() > 0);
     crossing_report.validate().unwrap();
     crossing_evaluation
         .certifications()
@@ -1827,7 +1829,7 @@ fn adjacent_union_completion_boolean_is_publicly_replayable() {
         .unwrap();
 
     let mut stale_crossing = crossing_report;
-    stale_crossing.blocker_mut().unknown_pairs = 1;
+    *stale_crossing.blocker_mut().unknown_pairs_mut() = 1;
     assert!(stale_crossing.validate().is_err());
 }
 
@@ -2781,11 +2783,11 @@ fn closed_boundary_touching_regularized_boolean_is_publicly_replayable() {
         );
         evaluation.validate().unwrap();
         let mut relabeled_boundary_report = evaluation.clone();
-        relabeled_boundary_report
+        *relabeled_boundary_report
             .certifications_mut()
             .boundary_touching_mut()
             .blocker_mut()
-            .unknown_pairs = 1;
+            .unknown_pairs_mut() = 1;
         assert!(
             relabeled_boundary_report.validate().is_err(),
             "{operation:?}: {relabeled_boundary_report:?}"
@@ -3971,7 +3973,7 @@ fn open_surface_disjoint_report_classifies_retained_coplanar_overlap_blocker() {
 
     assert!(!report.is_certified());
     assert!(report.blocker().requires_planar_arrangement());
-    assert!(report.blocker().coplanar_overlapping_pairs > 0);
+    assert!(report.blocker().coplanar_overlapping_pairs() > 0);
     assert!(report.retained_face_pairs() > 0);
     report.validate().unwrap();
     evaluation
@@ -3980,7 +3982,7 @@ fn open_surface_disjoint_report_classifies_retained_coplanar_overlap_blocker() {
         .unwrap();
 
     let mut relabeled = report;
-    relabeled.blocker_mut().candidate_pairs = 1;
+    *relabeled.blocker_mut().candidate_pairs_mut() = 1;
     assert_report_validation_error!(relabeled.validate());
 }
 
@@ -4009,7 +4011,7 @@ fn planar_arrangement_report_classifies_noncoplanar_candidates_as_winding_blocke
     assert!(!report.is_required());
     assert!(!report.is_already_materialized());
     assert!(report.blocker().requires_winding());
-    assert!(report.blocker().candidate_pairs > 0);
+    assert!(report.blocker().candidate_pairs() > 0);
     report.validate().unwrap();
     evaluation
         .certifications()
@@ -4017,7 +4019,7 @@ fn planar_arrangement_report_classifies_noncoplanar_candidates_as_winding_blocke
         .unwrap();
 
     let mut stale = report;
-    stale.blocker_mut().coplanar_overlapping_pairs = 1;
+    *stale.blocker_mut().coplanar_overlapping_pairs_mut() = 1;
     assert!(stale.validate().is_err());
 }
 
@@ -5104,7 +5106,7 @@ fn boundary_touching_report_classifies_proper_crossing_as_winding_blocker() {
 
     assert!(!report.is_certified());
     assert!(report.blocker().requires_winding());
-    assert!(report.blocker().candidate_pairs > 0);
+    assert!(report.blocker().candidate_pairs() > 0);
     report.validate().unwrap();
     evaluation
         .certifications()
@@ -5112,6 +5114,6 @@ fn boundary_touching_report_classifies_proper_crossing_as_winding_blocker() {
         .unwrap();
 
     let mut stale = report;
-    stale.blocker_mut().coplanar_touching_pairs = 1;
+    *stale.blocker_mut().coplanar_touching_pairs_mut() = 1;
     assert!(stale.validate().is_err());
 }
