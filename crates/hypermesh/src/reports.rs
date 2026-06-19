@@ -3666,7 +3666,7 @@ pub(crate) enum ExactBooleanSupport {
 impl ExactBooleanSupport {
     /// Returns whether this support state represents an executable exact
     /// decision rather than a retained blocker.
-    pub const fn is_certified(self) -> bool {
+    pub(crate) const fn is_certified(self) -> bool {
         matches!(
             self,
             Self::SelectedRegionPolicy
@@ -3809,73 +3809,73 @@ pub(crate) struct ExactVolumetricBoundaryClosureReport {
 
 impl ExactVolumetricBoundaryClosureReport {
     /// Return the certified closure status.
-    pub const fn status(&self) -> &ExactVolumetricBoundaryClosureStatus {
+    pub(crate) const fn status(&self) -> &ExactVolumetricBoundaryClosureStatus {
         &self.status
     }
 
     /// Return the retained output triangle count.
     #[cfg(test)]
-    pub const fn output_triangles(&self) -> usize {
+    pub(crate) const fn output_triangles(&self) -> usize {
         self.output_triangles
     }
 
     /// Return the retained boundary edge count.
     #[cfg(test)]
-    pub const fn boundary_edges(&self) -> usize {
+    pub(crate) const fn boundary_edges(&self) -> usize {
         self.boundary_edges
     }
 
     /// Return the directed boundary loop count.
     #[cfg(test)]
-    pub const fn boundary_loops(&self) -> usize {
+    pub(crate) const fn boundary_loops(&self) -> usize {
         self.boundary_loops
     }
 
     /// Return the noncoplanar boundary-loop count.
     #[cfg(test)]
-    pub const fn noncoplanar_boundary_loops(&self) -> usize {
+    pub(crate) const fn noncoplanar_boundary_loops(&self) -> usize {
         self.noncoplanar_boundary_loops
     }
 
     /// Return the repeated exact boundary-point count.
     #[cfg(test)]
-    pub const fn repeated_exact_boundary_points(&self) -> usize {
+    pub(crate) const fn repeated_exact_boundary_points(&self) -> usize {
         self.repeated_exact_boundary_points
     }
 
     /// Return the exact self-contact point-class count.
     #[cfg(test)]
-    pub const fn self_contact_exact_points(&self) -> usize {
+    pub(crate) const fn self_contact_exact_points(&self) -> usize {
         self.self_contact_exact_points
     }
 
     /// Return the topological vertices participating in exact self-contact.
     #[cfg(test)]
-    pub const fn self_contact_topological_vertices(&self) -> usize {
+    pub(crate) const fn self_contact_topological_vertices(&self) -> usize {
         self.self_contact_topological_vertices
     }
 
     /// Return the degenerate self-contact split-cycle count.
     #[cfg(test)]
-    pub const fn self_contact_degenerate_cycles(&self) -> usize {
+    pub(crate) const fn self_contact_degenerate_cycles(&self) -> usize {
         self.self_contact_degenerate_cycles
     }
 
     /// Return the nondegenerate self-contact split-cycle count.
     #[cfg(test)]
-    pub const fn self_contact_nondegenerate_cycles(&self) -> usize {
+    pub(crate) const fn self_contact_nondegenerate_cycles(&self) -> usize {
         self.self_contact_nondegenerate_cycles
     }
 
     /// Return the coplanar loop group count.
     #[cfg(test)]
-    pub const fn coplanar_loop_groups(&self) -> usize {
+    pub(crate) const fn coplanar_loop_groups(&self) -> usize {
         self.coplanar_loop_groups
     }
 
     /// Return whether retained evidence proves coplanar boundary closure is
     /// available for the materialized volumetric output.
-    pub const fn is_coplanar_closure_available(&self) -> bool {
+    pub(crate) const fn is_coplanar_closure_available(&self) -> bool {
         matches!(
             self.status,
             ExactVolumetricBoundaryClosureStatus::CoplanarClosureAvailable
@@ -3917,7 +3917,7 @@ impl ExactVolumetricBoundaryClosureReport {
     }
 
     /// Validate status and retained closure counts.
-    pub fn validate(&self) -> Result<(), ExactReportValidationError> {
+    pub(crate) fn validate(&self) -> Result<(), ExactReportValidationError> {
         if self.has_impossible_boundary_count_bounds() {
             return Err(ExactReportValidationError::StatusEvidenceMismatch);
         }
@@ -4147,22 +4147,22 @@ fn validate_winding_readiness_against_sources_for_request(
 
 impl ExactBooleanPreflight {
     /// Return the retained face-pair count.
-    pub const fn retained_face_pairs(&self) -> usize {
+    pub(crate) const fn retained_face_pairs(&self) -> usize {
         self.retained_face_pairs
     }
 
     /// Return the retained event count.
-    pub const fn retained_events(&self) -> usize {
+    pub(crate) const fn retained_events(&self) -> usize {
         self.retained_events
     }
 
     /// Return the retained blocker, if this preflight is blocked.
-    pub const fn blocker(&self) -> Option<&ExactBooleanBlocker> {
+    pub(crate) const fn blocker(&self) -> Option<&ExactBooleanBlocker> {
         self.blocker.as_ref()
     }
 
     /// Return retained coplanar volumetric-cell evidence, if present.
-    pub const fn coplanar_volumetric_evidence(
+    pub(crate) const fn coplanar_volumetric_evidence(
         &self,
     ) -> Option<&CoplanarVolumetricCellEvidenceReport> {
         self.coplanar_volumetric_evidence.as_ref()
@@ -4170,12 +4170,12 @@ impl ExactBooleanPreflight {
 
     /// Returns whether this preflight has certified support for materializing
     /// the requested operation under the policy used to produce the report.
-    pub fn is_certified(&self) -> bool {
+    pub(crate) fn is_certified(&self) -> bool {
         self.support.is_certified() && self.blocker.is_none()
     }
 
     /// Return whether this request was certified by the arrangement/cell-complex path.
-    pub const fn is_certified_arrangement_cell_complex(&self) -> bool {
+    pub(crate) const fn is_certified_arrangement_cell_complex(&self) -> bool {
         matches!(
             self.support,
             ExactBooleanSupport::CertifiedArrangementCellComplex
@@ -4261,7 +4261,7 @@ impl ExactBooleanPreflight {
     }
 
     /// Validate support, blocker, and retained artifact consistency.
-    pub fn validate(&self) -> Result<(), ExactReportValidationError> {
+    pub(crate) fn validate(&self) -> Result<(), ExactReportValidationError> {
         // Preflight is the public contract between exact graph construction and
         // expose exact state rather than hide contradictions behind a boolean
         // success/failure bit.
@@ -4666,12 +4666,12 @@ impl Default for ExactBooleanBlocker {
 
 impl ExactBooleanBlocker {
     /// Return the retained non-coplanar candidate face-pair count.
-    pub const fn candidate_pairs(&self) -> usize {
+    pub(crate) const fn candidate_pairs(&self) -> usize {
         self.candidate_pairs
     }
 
     /// Return the retained positive-area coplanar overlap face-pair count.
-    pub const fn coplanar_overlapping_pairs(&self) -> usize {
+    pub(crate) const fn coplanar_overlapping_pairs(&self) -> usize {
         self.coplanar_overlapping_pairs
     }
 
@@ -4766,7 +4766,7 @@ impl ExactBooleanBlocker {
     /// says "needs planar arrangement" while retaining unknown or non-coplanar
     /// candidate pairs would collapse distinct exact computation states into
     /// states to stay explicit.
-    pub fn validate_for_kind(
+    pub(crate) fn validate_for_kind(
         &self,
         expected: ExactBooleanBlockerKind,
     ) -> Result<(), ExactReportValidationError> {
@@ -4865,17 +4865,17 @@ pub(crate) struct ExactRefinementReport {
 
 impl ExactRefinementReport {
     /// Return whether graph extraction retained unknown predicate outcomes.
-    pub const fn graph_had_unknowns(&self) -> bool {
+    pub(crate) const fn graph_had_unknowns(&self) -> bool {
         self.graph_had_unknowns
     }
 
     /// Return the retained face-pair record count.
-    pub const fn retained_face_pairs(&self) -> usize {
+    pub(crate) const fn retained_face_pairs(&self) -> usize {
         self.retained_face_pairs
     }
 
     /// Return the retained event record count.
-    pub const fn retained_events(&self) -> usize {
+    pub(crate) const fn retained_events(&self) -> usize {
         self.retained_events
     }
 
@@ -4919,7 +4919,7 @@ impl ExactRefinementReport {
     }
 
     /// Validate status, retained counts, and refinement blocker consistency.
-    pub fn validate(&self) -> Result<(), ExactReportValidationError> {
+    pub(crate) fn validate(&self) -> Result<(), ExactReportValidationError> {
         validate_retained_graph_count_shape(self.retained_face_pairs, self.retained_events)
             .map_err(|_| ExactReportValidationError::InvalidBlockerCounts)?;
         match self.status {
@@ -4997,12 +4997,12 @@ pub(crate) struct ExactSameSurfaceReport {
 
 impl ExactSameSurfaceReport {
     /// Return whether same-surface equivalence was certified.
-    pub const fn is_certified(&self) -> bool {
+    pub(crate) const fn is_certified(&self) -> bool {
         matches!(self.status, ExactSameSurfaceStatus::Certified)
     }
 
     /// Return whether every retained predicate route was proof-producing.
-    pub fn all_proof_producing(&self) -> bool {
+    pub(crate) fn all_proof_producing(&self) -> bool {
         self.predicates
             .iter()
             .copied()
@@ -5016,7 +5016,7 @@ impl ExactSameSurfaceReport {
     /// partial left-to-right matches and predicate trail, and triangle-set
     /// mismatches must retain a valid full vertex permutation. This keeps a
     /// allowing callers to attach arbitrary topology artifacts to a rejection.
-    pub fn validate(&self) -> Result<(), ExactReportValidationError> {
+    pub(crate) fn validate(&self) -> Result<(), ExactReportValidationError> {
         match self.status {
             ExactSameSurfaceStatus::VertexCountMismatch
             | ExactSameSurfaceStatus::TriangleCountMismatch => {
@@ -5162,7 +5162,7 @@ pub(crate) struct ExactOpenSurfaceDisjointReport {
 
 impl ExactOpenSurfaceDisjointReport {
     /// Return whether open-surface disjointness was certified.
-    pub const fn is_certified(&self) -> bool {
+    pub(crate) const fn is_certified(&self) -> bool {
         matches!(self.status, ExactOpenSurfaceDisjointStatus::Certified)
     }
 
@@ -5196,7 +5196,7 @@ impl ExactOpenSurfaceDisjointReport {
     }
 
     /// Validate status, graph counts, and blocker consistency.
-    pub fn validate(&self) -> Result<(), ExactReportValidationError> {
+    pub(crate) fn validate(&self) -> Result<(), ExactReportValidationError> {
         validate_retained_graph_count_shape(self.retained_face_pairs, self.retained_events)?;
         if matches!(self.status, ExactOpenSurfaceDisjointStatus::GraphUnknowns)
             != self.graph_had_unknowns
@@ -5356,32 +5356,32 @@ pub(crate) struct ExactAdjacentUnionCompletionReport {
 
 impl ExactAdjacentUnionCompletionReport {
     /// Return the requested named operation.
-    pub const fn operation(&self) -> ExactBooleanOperation {
+    pub(crate) const fn operation(&self) -> ExactBooleanOperation {
         self.operation
     }
 
     /// Return the coarse adjacent-union completion status.
-    pub const fn status(&self) -> ExactAdjacentUnionCompletionStatus {
+    pub(crate) const fn status(&self) -> ExactAdjacentUnionCompletionStatus {
         self.status
     }
 
     /// Return whether graph extraction retained unknown events.
-    pub const fn graph_had_unknowns(&self) -> bool {
+    pub(crate) const fn graph_had_unknowns(&self) -> bool {
         self.graph_had_unknowns
     }
 
     /// Return the retained face-pair record count.
-    pub const fn retained_face_pairs(&self) -> usize {
+    pub(crate) const fn retained_face_pairs(&self) -> usize {
         self.retained_face_pairs
     }
 
     /// Return the retained event record count.
-    pub const fn retained_events(&self) -> usize {
+    pub(crate) const fn retained_events(&self) -> usize {
         self.retained_events
     }
 
     /// Return whether adjacent union completion was certified.
-    pub const fn is_certified(&self) -> bool {
+    pub(crate) const fn is_certified(&self) -> bool {
         matches!(
             self.status,
             ExactAdjacentUnionCompletionStatus::CertifiedFullFace
@@ -5390,7 +5390,7 @@ impl ExactAdjacentUnionCompletionReport {
     }
 
     /// Validate status, graph counts, and consumed topology counts.
-    pub fn validate(&self) -> Result<(), ExactReportValidationError> {
+    pub(crate) fn validate(&self) -> Result<(), ExactReportValidationError> {
         validate_retained_graph_count_shape(self.retained_face_pairs, self.retained_events)?;
         if matches!(
             self.status,
@@ -5594,27 +5594,27 @@ impl ExactAdjacentUnionCompletionReport {
 
 impl ExactBoundaryTouchingReport {
     /// Return whether graph extraction retained unknown events.
-    pub const fn graph_had_unknowns(&self) -> bool {
+    pub(crate) const fn graph_had_unknowns(&self) -> bool {
         self.graph_had_unknowns
     }
 
     /// Return the retained face-pair record count.
-    pub const fn retained_face_pairs(&self) -> usize {
+    pub(crate) const fn retained_face_pairs(&self) -> usize {
         self.retained_face_pairs
     }
 
     /// Return the retained event record count.
-    pub const fn retained_events(&self) -> usize {
+    pub(crate) const fn retained_events(&self) -> usize {
         self.retained_events
     }
 
     /// Return whether the graph is certified boundary-only contact.
-    pub const fn is_certified(&self) -> bool {
+    pub(crate) const fn is_certified(&self) -> bool {
         matches!(self.status, ExactBoundaryTouchingStatus::Certified)
     }
 
     /// Validate status, retained relation counts, and blocker consistency.
-    pub fn validate(&self) -> Result<(), ExactReportValidationError> {
+    pub(crate) fn validate(&self) -> Result<(), ExactReportValidationError> {
         validate_retained_graph_count_shape(self.retained_face_pairs, self.retained_events)?;
         if matches!(self.status, ExactBoundaryTouchingStatus::GraphUnknowns)
             != self.graph_had_unknowns
@@ -5753,27 +5753,27 @@ pub(crate) struct ExactPlanarArrangementReport {
 
 impl ExactPlanarArrangementReport {
     /// Return the requested named operation.
-    pub const fn operation(&self) -> ExactBooleanOperation {
+    pub(crate) const fn operation(&self) -> ExactBooleanOperation {
         self.operation
     }
 
     /// Return whether graph extraction retained unknown events.
-    pub const fn graph_had_unknowns(&self) -> bool {
+    pub(crate) const fn graph_had_unknowns(&self) -> bool {
         self.graph_had_unknowns
     }
 
     /// Return the retained face-pair record count.
-    pub const fn retained_face_pairs(&self) -> usize {
+    pub(crate) const fn retained_face_pairs(&self) -> usize {
         self.retained_face_pairs
     }
 
     /// Return the retained event record count.
-    pub const fn retained_events(&self) -> usize {
+    pub(crate) const fn retained_events(&self) -> usize {
         self.retained_events
     }
 
     /// Return the retained relation-count blocker.
-    pub const fn blocker(&self) -> &ExactBooleanBlocker {
+    pub(crate) const fn blocker(&self) -> &ExactBooleanBlocker {
         &self.blocker
     }
 
@@ -5783,13 +5783,13 @@ impl ExactPlanarArrangementReport {
     }
 
     /// Return whether this operation is blocked on planar arrangement output.
-    pub const fn is_required(&self) -> bool {
+    pub(crate) const fn is_required(&self) -> bool {
         matches!(self.status, ExactPlanarArrangementStatus::Required)
     }
 
     /// Return whether planar arrangement topology has already been
     /// materialized by a narrower certified path.
-    pub const fn is_already_materialized(&self) -> bool {
+    pub(crate) const fn is_already_materialized(&self) -> bool {
         matches!(
             self.status,
             ExactPlanarArrangementStatus::AlreadyMaterialized
@@ -5797,7 +5797,7 @@ impl ExactPlanarArrangementReport {
     }
 
     /// Validate status, retained relation counts, and blocker consistency.
-    pub fn validate(&self) -> Result<(), ExactReportValidationError> {
+    pub(crate) fn validate(&self) -> Result<(), ExactReportValidationError> {
         validate_retained_graph_count_shape(self.retained_face_pairs, self.retained_events)?;
         if matches!(self.status, ExactPlanarArrangementStatus::GraphUnknowns)
             != self.graph_had_unknowns
@@ -6035,7 +6035,7 @@ impl ExactWindingReadinessStatus {
     /// Returns whether this readiness state records a certified materialized
     /// path rather than an unresolved winding handoff.
     #[cfg(test)]
-    pub const fn is_already_materialized(&self) -> bool {
+    pub(crate) const fn is_already_materialized(&self) -> bool {
         matches!(
             self,
             Self::PlanarArrangementAlreadyMaterialized
@@ -6058,7 +6058,7 @@ impl ExactWindingReadinessStatus {
 
     /// Returns whether the materialized path specifically produced the exact
     /// arrangement/cell-complex topology needed before winding policy.
-    pub const fn materializes_arrangement_cell_complex(&self) -> bool {
+    pub(crate) const fn materializes_arrangement_cell_complex(&self) -> bool {
         matches!(
             self,
             Self::PlanarArrangementAlreadyMaterialized
@@ -6070,7 +6070,7 @@ impl ExactWindingReadinessStatus {
     /// Returns whether this state belongs to the certified-winding handoff
     /// support path rather than to a shortcut, caller policy, or arrangement
     /// prerequisite.
-    pub const fn routes_to_certified_winding(&self) -> bool {
+    pub(crate) const fn routes_to_certified_winding(&self) -> bool {
         matches!(
             self,
             Self::Ready | Self::NoNontrivialOverlap | Self::VolumetricAssemblyRequired
@@ -6117,32 +6117,32 @@ pub(crate) struct ExactWindingReadinessReport {
 
 impl ExactWindingReadinessReport {
     /// Return the requested named operation.
-    pub const fn operation(&self) -> ExactBooleanOperation {
+    pub(crate) const fn operation(&self) -> ExactBooleanOperation {
         self.operation
     }
 
     /// Return the coarse winding-readiness status.
-    pub const fn status(&self) -> ExactWindingReadinessStatus {
+    pub(crate) const fn status(&self) -> ExactWindingReadinessStatus {
         self.status
     }
 
     /// Return whether graph extraction retained unknown events.
-    pub const fn graph_had_unknowns(&self) -> bool {
+    pub(crate) const fn graph_had_unknowns(&self) -> bool {
         self.graph_had_unknowns
     }
 
     /// Return the retained face-pair record count.
-    pub const fn retained_face_pairs(&self) -> usize {
+    pub(crate) const fn retained_face_pairs(&self) -> usize {
         self.retained_face_pairs
     }
 
     /// Return the retained event record count.
-    pub const fn retained_events(&self) -> usize {
+    pub(crate) const fn retained_events(&self) -> usize {
         self.retained_events
     }
 
     /// Return the checked split-region count.
-    pub const fn region_count(&self) -> usize {
+    pub(crate) const fn region_count(&self) -> usize {
         self.region_count
     }
 
@@ -6152,7 +6152,7 @@ impl ExactWindingReadinessReport {
     }
 
     /// Return the retained relation-count blocker.
-    pub const fn blocker(&self) -> &ExactBooleanBlocker {
+    pub(crate) const fn blocker(&self) -> &ExactBooleanBlocker {
         &self.blocker
     }
 
@@ -6169,13 +6169,13 @@ impl ExactWindingReadinessReport {
     }
 
     /// Return whether the report reached the winding-ready handoff.
-    pub const fn is_ready(&self) -> bool {
+    pub(crate) const fn is_ready(&self) -> bool {
         matches!(self.status, ExactWindingReadinessStatus::Ready)
     }
 
     /// Return whether this report materialized through the arrangement/cell
     /// complex path that supersedes winding.
-    pub const fn materializes_arrangement_cell_complex(&self) -> bool {
+    pub(crate) const fn materializes_arrangement_cell_complex(&self) -> bool {
         self.status.materializes_arrangement_cell_complex()
     }
 
@@ -6201,7 +6201,7 @@ impl ExactWindingReadinessReport {
     }
 
     /// Validate status, blocker, and checked-region artifact consistency.
-    pub fn validate(&self) -> Result<(), ExactReportValidationError> {
+    pub(crate) fn validate(&self) -> Result<(), ExactReportValidationError> {
         validate_retained_graph_count_shape(self.retained_face_pairs, self.retained_events)?;
         if matches!(self.status, ExactWindingReadinessStatus::GraphUnknowns)
             != self.graph_had_unknowns
