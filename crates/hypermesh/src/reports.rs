@@ -3525,7 +3525,7 @@ fn selection_keeps(selection: ExactRegionSelection, side: MeshSide) -> bool {
 /// These variants therefore distinguish executable certified shortcuts from
 /// cases whose split regions are available but still need exact winding policy.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum ExactBooleanSupport {
+pub(crate) enum ExactBooleanSupport {
     /// The request is an explicit selected-region assembly policy.
     SelectedRegionPolicy,
     /// A named operation was answered by exact empty-operand semantics.
@@ -3646,29 +3646,6 @@ impl ExactBooleanSupport {
         )
     }
 
-    /// Returns the blocker class required by this support state, when the
-    /// operation is not yet executable under the current request policy.
-    pub const fn required_blocker_kind(self) -> Option<ExactBooleanBlockerKind> {
-        match self {
-            Self::RequiresBoundaryPolicy => Some(ExactBooleanBlockerKind::NeedsBoundaryPolicy),
-            Self::RequiresPlanarArrangement => {
-                Some(ExactBooleanBlockerKind::NeedsPlanarArrangement)
-            }
-            Self::RequiresCoplanarVolumetricCells => {
-                Some(ExactBooleanBlockerKind::NeedsCoplanarVolumetricCells)
-            }
-            Self::RequiresCertifiedWinding => Some(ExactBooleanBlockerKind::NeedsWinding),
-            Self::UnresolvedGraph => Some(ExactBooleanBlockerKind::NeedsRefinement),
-            _ => None,
-        }
-    }
-
-    /// Returns whether this support state can become materialized by changing
-    /// caller policy instead of refining geometry.
-    pub const fn requires_caller_policy(self) -> bool {
-        matches!(self, Self::RequiresBoundaryPolicy)
-    }
-
     /// Returns whether exact predicate/construction refinement is required
     /// before topology policy can safely consume the graph.
     pub const fn requires_refinement(self) -> bool {
@@ -3684,7 +3661,7 @@ impl ExactBooleanSupport {
 /// plane classifications that a future exact winding/inside-outside rule must
 /// consume, without dispatching to the specialized tolerance kernel.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactBooleanPreflight {
+pub(crate) struct ExactBooleanPreflight {
     /// Requested operation.
     pub(crate) operation: ExactBooleanOperation,
     /// Certified support level for the request.
@@ -4126,16 +4103,6 @@ fn validate_winding_readiness_against_sources_for_request(
 }
 
 impl ExactBooleanPreflight {
-    /// Return the requested operation.
-    pub const fn operation(&self) -> ExactBooleanOperation {
-        self.operation
-    }
-
-    /// Return the certified support level for this request.
-    pub const fn support(&self) -> ExactBooleanSupport {
-        self.support
-    }
-
     /// Return whether retained graph events contain explicit unknowns.
     pub const fn graph_had_unknowns(&self) -> bool {
         self.graph_had_unknowns
@@ -4156,19 +4123,9 @@ impl ExactBooleanPreflight {
         self.region_count
     }
 
-    /// Return the certified split-region plane classifications.
-    pub fn region_classifications(&self) -> &[FaceRegionPlaneClassification] {
-        &self.region_classifications
-    }
-
     /// Return the retained blocker, if this preflight is blocked.
     pub const fn blocker(&self) -> Option<&ExactBooleanBlocker> {
         self.blocker.as_ref()
-    }
-
-    /// Return retained coplanar arrangement readiness evidence, if present.
-    pub const fn arrangement_readiness(&self) -> Option<&CoplanarArrangementReadinessReport> {
-        self.arrangement_readiness.as_ref()
     }
 
     /// Return retained coplanar volumetric-cell evidence, if present.
@@ -4182,13 +4139,6 @@ impl ExactBooleanPreflight {
     /// the requested operation under the policy used to produce the report.
     pub fn is_certified(&self) -> bool {
         self.support.is_certified() && self.blocker.is_none()
-    }
-
-    /// Returns the exact blocker class retained by this preflight, if any.
-    pub fn required_blocker_kind(&self) -> Option<ExactBooleanBlockerKind> {
-        self.support
-            .required_blocker_kind()
-            .or_else(|| self.blocker.as_ref().map(|blocker| blocker.kind))
     }
 
     /// Return whether this request was certified by the arrangement/cell-complex path.
@@ -4259,16 +4209,6 @@ impl ExactBooleanPreflight {
                 .blocker
                 .as_ref()
                 .is_some_and(|blocker| blocker.kind == ExactBooleanBlockerKind::NeedsRefinement)
-    }
-
-    /// Returns whether a caller-supplied policy can unlock this exact state
-    /// without changing source geometry.
-    pub fn requires_caller_policy(&self) -> bool {
-        self.support.requires_caller_policy()
-            || self
-                .blocker
-                .as_ref()
-                .is_some_and(|blocker| blocker.kind == ExactBooleanBlockerKind::NeedsBoundaryPolicy)
     }
 
     /// Returns whether retained graph/classification/provenance evidence is
@@ -4736,7 +4676,7 @@ impl ExactBooleanPreflight {
 /// policy" or "needs predicate refinement" without interpreting prose
 /// diagnostics.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub struct ExactBooleanBlocker {
+pub(crate) struct ExactBooleanBlocker {
     /// Missing policy or refinement class.
     pub(crate) kind: ExactBooleanBlockerKind,
     /// Number of retained non-coplanar candidate face pairs.
@@ -4766,11 +4706,6 @@ impl Default for ExactBooleanBlocker {
 }
 
 impl ExactBooleanBlocker {
-    /// Return the missing policy or refinement class.
-    pub const fn kind(&self) -> ExactBooleanBlockerKind {
-        self.kind
-    }
-
     /// Return the retained non-coplanar candidate face-pair count.
     pub const fn candidate_pairs(&self) -> usize {
         self.candidate_pairs
@@ -4781,42 +4716,9 @@ impl ExactBooleanBlocker {
         self.coplanar_overlapping_pairs
     }
 
-    /// Return the retained coplanar touching face-pair count.
-    pub const fn coplanar_touching_pairs(&self) -> usize {
-        self.coplanar_touching_pairs
-    }
-
-    /// Return the retained unknown face-pair count.
-    pub const fn unknown_pairs(&self) -> usize {
-        self.unknown_pairs
-    }
-
-    /// Return the retained failed exact construction event count.
-    pub const fn construction_failed_events(&self) -> usize {
-        self.construction_failed_events
-    }
-
-    /// Return whether this blocker is waiting on predicate or construction refinement.
-    pub const fn requires_refinement(&self) -> bool {
-        matches!(self.kind, ExactBooleanBlockerKind::NeedsRefinement)
-    }
-
-    /// Return whether this blocker is waiting on caller boundary-output policy.
-    pub const fn requires_boundary_policy(&self) -> bool {
-        matches!(self.kind, ExactBooleanBlockerKind::NeedsBoundaryPolicy)
-    }
-
     /// Return whether this blocker is waiting on planar arrangement topology.
     pub const fn requires_planar_arrangement(&self) -> bool {
         matches!(self.kind, ExactBooleanBlockerKind::NeedsPlanarArrangement)
-    }
-
-    /// Return whether this blocker is waiting on coplanar volumetric cells.
-    pub const fn requires_coplanar_volumetric_cells(&self) -> bool {
-        matches!(
-            self.kind,
-            ExactBooleanBlockerKind::NeedsCoplanarVolumetricCells
-        )
     }
 
     /// Return whether this blocker is waiting on certified winding/ownership.
@@ -4961,7 +4863,7 @@ impl ExactBooleanBlocker {
 
 /// Exact boolean preflight blocker kind.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum ExactBooleanBlockerKind {
+pub(crate) enum ExactBooleanBlockerKind {
     /// Predicate or equality refinement is required before policy can run.
     NeedsRefinement,
     /// A lower-dimensional shared-boundary output policy is required.

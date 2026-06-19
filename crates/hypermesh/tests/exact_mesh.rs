@@ -1080,10 +1080,9 @@ fn exact_coplanar_volumetric_cell_evidence_is_retained_by_public_evaluation() {
         ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED),
     );
     evaluation.validate().unwrap();
-    let preflight = evaluation.preflight();
     assert!(
-        preflight.blocker().is_some() || preflight.is_certified_arrangement_cell_complex(),
-        "{preflight:?}"
+        evaluation.has_blocker() || evaluation.is_certified_arrangement_cell_complex(),
+        "{evaluation:?}"
     );
     assert!(
         evaluation
@@ -1098,17 +1097,11 @@ fn exact_coplanar_volumetric_cell_evidence_is_retained_by_public_evaluation() {
                     && report.resolves_operation_selection(attempt.operation())
             })
             || evaluation_materializes_arrangement_cell_complex(&evaluation)
-            || preflight.coplanar_volumetric_evidence().is_some(),
+            || evaluation.coplanar_volumetric_evidence().is_some(),
         "{evaluation:?}"
     );
     evaluation.validate_against_sources(&left, &right).unwrap();
-    assert_eq!(
-        evaluation.coplanar_volumetric_evidence(),
-        preflight.coplanar_volumetric_evidence()
-    );
-    assert!(preflight.coplanar_volumetric_evidence().is_some());
     let report = evaluation
-        .preflight()
         .coplanar_volumetric_evidence()
         .expect("coplanar volumetric blocker should retain source-aware evidence");
     report.validate().unwrap();
@@ -2266,21 +2259,20 @@ fn closed_boundary_touching_regularized_boolean_is_publicly_replayable() {
         let preflight_request =
             ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY);
         let preflight_evaluation = exact_boolean_evaluation(&left, &right, preflight_request);
-        let preflight = preflight_evaluation.preflight();
         assert!(
-            preflight.is_certified_arrangement_cell_complex()
-                || preflight.is_certified_closed_boundary_touching(),
-            "{operation:?}: {preflight:?}"
+            preflight_evaluation.is_certified_arrangement_cell_complex()
+                || preflight_evaluation.is_certified_closed_boundary_touching(),
+            "{operation:?}: {preflight_evaluation:?}"
         );
         assert!(
-            preflight.retained_face_pairs() > 0,
-            "closed boundary-touching request should retain graph evidence: {operation:?}: {preflight:?}"
+            preflight_evaluation.retained_face_pairs() > 0,
+            "closed boundary-touching request should retain graph evidence: {operation:?}: {preflight_evaluation:?}"
         );
-        preflight.validate().unwrap();
+        preflight_evaluation.validate().unwrap();
         preflight_evaluation
             .validate_against_sources(&left, &right)
             .unwrap();
-        if let Some(evidence) = preflight.coplanar_volumetric_evidence() {
+        if let Some(evidence) = preflight_evaluation.coplanar_volumetric_evidence() {
             evidence.validate().unwrap();
         }
 
@@ -2334,16 +2326,15 @@ fn closed_no_volume_overlap_regularized_boolean_is_publicly_replayable() {
         let preflight_request =
             ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY);
         let preflight_evaluation = exact_boolean_evaluation(&left, &right, preflight_request);
-        let preflight = preflight_evaluation.preflight();
         assert!(
-            preflight.is_certified_arrangement_cell_complex(),
-            "{operation:?}: {preflight:?}"
+            preflight_evaluation.is_certified_arrangement_cell_complex(),
+            "{operation:?}: {preflight_evaluation:?}"
         );
         assert!(
-            preflight.retained_face_pairs() > 0,
-            "positive-area no-volume shortcut should retain graph evidence: {operation:?}: {preflight:?}"
+            preflight_evaluation.retained_face_pairs() > 0,
+            "positive-area no-volume shortcut should retain graph evidence: {operation:?}: {preflight_evaluation:?}"
         );
-        let evidence = preflight.coplanar_volumetric_evidence().expect(
+        let evidence = preflight_evaluation.coplanar_volumetric_evidence().expect(
             "positive-area no-volume shortcut should retain source-aware boundary-only evidence",
         );
         evidence.validate().unwrap();
@@ -2356,7 +2347,7 @@ fn closed_no_volume_overlap_regularized_boolean_is_publicly_replayable() {
         } else {
             retained_evidence = Some(evidence.clone());
         }
-        preflight.validate().unwrap();
+        preflight_evaluation.validate().unwrap();
         preflight_evaluation
             .validate_against_sources(&left, &right)
             .unwrap();
@@ -3118,11 +3109,9 @@ fn open_surface_disjoint_report_classifies_retained_coplanar_overlap_blocker() {
     );
     let evaluation = exact_boolean_evaluation(&left, &right, request);
 
-    let preflight = evaluation.preflight();
-    assert!(preflight.blocker().is_some_and(|blocker| {
-        blocker.requires_planar_arrangement() && blocker.coplanar_overlapping_pairs() > 0
-    }));
-    assert!(preflight.retained_face_pairs() > 0);
+    assert!(evaluation.requires_planar_arrangement());
+    assert!(evaluation.retained_coplanar_overlapping_pairs() > 0);
+    assert!(evaluation.retained_face_pairs() > 0);
     evaluation.validate_against_sources(&left, &right).unwrap();
 }
 
@@ -3147,11 +3136,9 @@ fn planar_arrangement_report_classifies_noncoplanar_candidates_as_winding_blocke
     );
     let evaluation = exact_boolean_evaluation(&left, &right, request);
 
-    let preflight = evaluation.preflight();
     assert!(
-        preflight
-            .blocker()
-            .is_some_and(|blocker| { blocker.requires_winding() && blocker.candidate_pairs() > 0 })
+        evaluation.requires_winding() && evaluation.retained_candidate_pairs() > 0,
+        "{evaluation:?}"
     );
     evaluation.validate_against_sources(&left, &right).unwrap();
 }
@@ -4068,12 +4055,9 @@ fn boundary_touching_report_classifies_proper_crossing_as_winding_blocker() {
         ValidationPolicy::ALLOW_BOUNDARY,
     );
     let evaluation = exact_boolean_evaluation(&left, &right, request);
-    let preflight = evaluation.preflight();
     assert!(
-        preflight
-            .blocker()
-            .is_some_and(|blocker| blocker.requires_winding() && blocker.candidate_pairs() > 0),
-        "{preflight:?}"
+        evaluation.requires_winding() && evaluation.retained_candidate_pairs() > 0,
+        "{evaluation:?}"
     );
     evaluation.validate_against_sources(&left, &right).unwrap();
 }

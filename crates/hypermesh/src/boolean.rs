@@ -2300,7 +2300,7 @@ impl ExactBooleanEvaluation {
     }
 
     /// Return the exact preflight/scheduling report retained by this evaluation.
-    pub fn preflight(&self) -> &ExactBooleanPreflight {
+    pub(crate) fn preflight(&self) -> &ExactBooleanPreflight {
         &self.preflight
     }
 
@@ -2365,6 +2365,34 @@ impl ExactBooleanEvaluation {
     /// Return whether this evaluation retained an explicit blocker.
     pub fn has_blocker(&self) -> bool {
         self.preflight.blocker().is_some()
+    }
+
+    /// Return whether this evaluation is blocked on planar arrangement topology.
+    pub fn requires_planar_arrangement(&self) -> bool {
+        self.preflight
+            .blocker()
+            .is_some_and(ExactBooleanBlocker::requires_planar_arrangement)
+    }
+
+    /// Return whether this evaluation is blocked on certified winding/ownership.
+    pub fn requires_winding(&self) -> bool {
+        self.preflight
+            .blocker()
+            .is_some_and(ExactBooleanBlocker::requires_winding)
+    }
+
+    /// Return retained non-coplanar candidate face-pair count from the blocker.
+    pub fn retained_candidate_pairs(&self) -> usize {
+        self.preflight
+            .blocker()
+            .map_or(0, ExactBooleanBlocker::candidate_pairs)
+    }
+
+    /// Return retained positive-area coplanar overlap face-pair count from the blocker.
+    pub fn retained_coplanar_overlapping_pairs(&self) -> usize {
+        self.preflight
+            .blocker()
+            .map_or(0, ExactBooleanBlocker::coplanar_overlapping_pairs)
     }
 
     /// Return whether this evaluation is blocked by unresolved exact
