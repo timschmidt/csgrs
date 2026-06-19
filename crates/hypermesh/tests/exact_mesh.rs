@@ -25,8 +25,8 @@ fn assert_evaluation_retains_attempt_gate_reports(evaluation: &hypermesh::ExactB
     let attempt = evaluation
         .retained_arrangement_attempt()
         .expect("evaluation should retain an arrangement attempt");
-    assert!(attempt.has_topology_assembly_evidence(), "{evaluation:?}");
-    assert!(attempt.has_region_ownership_evidence(), "{evaluation:?}");
+    assert!(attempt.topology_assembly_is_complete(), "{evaluation:?}");
+    assert!(attempt.region_ownership_is_resolved(), "{evaluation:?}");
 }
 
 fn exact_boolean_result(
@@ -271,10 +271,9 @@ fn exact_boolean_evaluation_retains_region_ownership_report() {
         let attempt = evaluation
             .retained_arrangement_attempt()
             .expect("named boolean certifications should retain arrangement attempt");
-        assert!(attempt.has_region_ownership_evidence());
         assert!(attempt.region_ownership_is_resolved());
         assert!(attempt.region_ownership_is_volume_resolved());
-        assert!(attempt.has_topology_assembly_evidence());
+        assert!(attempt.topology_assembly_is_complete());
     });
 }
 

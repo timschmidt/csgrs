@@ -134,26 +134,22 @@ fn run_case(case: &BenchCase) {
 
     let mut attempt_workspace = retained_workspace_for_case(case, request);
     attempt_workspace.evaluate(request).unwrap();
-    time_stage(case, "attempt_topology_assembly_evidence", || {
+    time_stage(case, "attempt_topology_assembly_completion", || {
         let attempt = attempt_workspace
             .evaluate(request)
             .unwrap()
             .retained_arrangement_attempt()
             .expect("evaluation should retain an arrangement attempt");
-        black_box((
-            attempt.has_topology_assembly_evidence(),
-            attempt.topology_assembly_is_complete(),
-        ));
+        black_box(attempt.topology_assembly_is_complete());
     });
 
-    time_stage(case, "attempt_region_ownership_evidence", || {
+    time_stage(case, "attempt_region_ownership_resolution", || {
         let attempt = attempt_workspace
             .evaluate(request)
             .unwrap()
             .retained_arrangement_attempt()
             .expect("evaluation should retain an arrangement attempt");
         black_box((
-            attempt.has_region_ownership_evidence(),
             attempt.region_ownership_is_resolved(),
             attempt.region_ownership_is_volume_resolved(),
         ));
@@ -206,18 +202,13 @@ fn run_case(case: &BenchCase) {
     workspace.evaluate(request).unwrap();
     time_stage(
         case,
-        "workspace_topology_assembly_evidence_from_evaluation_attempt",
+        "workspace_topology_assembly_completion_from_evaluation_attempt",
         || {
             let attempt = workspace
                 .evaluate(request)
                 .unwrap()
                 .retained_arrangement_attempt();
-            black_box(attempt.map(|attempt| {
-                (
-                    attempt.has_topology_assembly_evidence(),
-                    attempt.topology_assembly_is_complete(),
-                )
-            }));
+            black_box(attempt.map(|attempt| attempt.topology_assembly_is_complete()));
         },
     );
 
@@ -243,7 +234,7 @@ fn run_case(case: &BenchCase) {
 
     time_stage(
         case,
-        "workspace_region_ownership_evidence_from_evaluation_attempt",
+        "workspace_region_ownership_resolution_from_evaluation_attempt",
         || {
             let attempt = workspace
                 .evaluate(request)
@@ -251,7 +242,6 @@ fn run_case(case: &BenchCase) {
                 .retained_arrangement_attempt();
             black_box(attempt.map(|attempt| {
                 (
-                    attempt.has_region_ownership_evidence(),
                     attempt.region_ownership_is_resolved(),
                     attempt.region_ownership_is_volume_resolved(),
                     attempt.region_ownership_resolves_requested_operation(),

@@ -266,20 +266,6 @@ impl ExactArrangementBooleanAttempt {
         self.region_ownership_report.as_ref()
     }
 
-    /// Return whether this attempt retained topology assembly evidence.
-    pub fn has_topology_assembly_evidence(&self) -> bool {
-        self.topology_assembly_report
-            .as_ref()
-            .is_some_and(|report| report.validate().is_ok())
-    }
-
-    /// Return whether this attempt retained region ownership evidence.
-    pub fn has_region_ownership_evidence(&self) -> bool {
-        self.region_ownership_report
-            .as_ref()
-            .is_some_and(|report| report.validate().is_ok())
-    }
-
     /// Return whether retained topology assembly evidence completed.
     pub fn topology_assembly_is_complete(&self) -> bool {
         self.topology_assembly_report
