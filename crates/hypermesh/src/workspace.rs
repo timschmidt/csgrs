@@ -420,8 +420,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
             request,
             retained_attempt.as_ref(),
         )? {
-            let result = self.materializations[index].1.clone();
-            self.promote_evaluation_cache_from_materialization(request, &result)?;
+            self.promote_evaluation_cache_from_materialization_index(request, index)?;
             return Ok(&self.materializations[index].1);
         }
 
@@ -436,8 +435,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
         )?;
         let index = cached_by_request_index(&self.materializations, request)
             .expect("retained materialization cache entry was just populated");
-        let result = self.materializations[index].1.clone();
-        self.promote_evaluation_cache_from_materialization(request, &result)?;
+        self.promote_evaluation_cache_from_materialization_index(request, index)?;
         Ok(&self.materializations[index].1)
     }
 
@@ -498,6 +496,31 @@ impl<'a> ExactBooleanWorkspace<'a> {
         } else {
             let evaluation = self.evaluate(request)?;
             if evaluation.result.as_ref() == Some(result) {
+                Ok(())
+            } else {
+                Err(workspace_report_validation_error(
+                    ExactReportValidationError::StatusEvidenceMismatch,
+                ))
+            }
+        }
+    }
+
+    fn promote_evaluation_cache_from_materialization_index(
+        &mut self,
+        request: ExactBooleanRequest,
+        materialization_index: usize,
+    ) -> Result<(), MeshError> {
+        debug_assert_eq!(self.materializations[materialization_index].0, request);
+        if let Some(index) = cached_by_request_index(&self.evaluations, request) {
+            let result = &self.materializations[materialization_index].1;
+            let evaluation = &mut self.evaluations[index].1;
+            evaluation
+                .retain_materialized_result(result)
+                .map_err(workspace_report_validation_error)
+        } else {
+            let result = self.materializations[materialization_index].1.clone();
+            let evaluation = self.evaluate(request)?;
+            if evaluation.result.as_ref() == Some(&result) {
                 Ok(())
             } else {
                 Err(workspace_report_validation_error(
