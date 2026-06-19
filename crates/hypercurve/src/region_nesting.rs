@@ -322,6 +322,7 @@ pub struct ExactCurveArrangementEndpointGraphCache2 {
     max_structural_bucket_size: usize,
     endpoint_bucket_cache: ExactCurveArrangementArrangedEndpointBucketCache2,
     endpoint_side_bucket_cache: ExactCurveArrangementArrangedEndpointSideBucketCache2,
+    endpoint_point_cache: ExactCurveArrangementArrangedEndpointPointCache2,
     dangling_endpoint_count: usize,
     branch_endpoint_count: usize,
     blocker_arranged_segment_index: Option<usize>,
@@ -369,6 +370,22 @@ pub struct ExactCurveArrangementArrangedEndpointBucketCache2 {
     singleton_bucket_count: usize,
     max_bucket_size: usize,
     buckets: Vec<ExactCurveArrangementArrangedEndpointBucket2>,
+}
+
+/// Exact endpoints retained for one arranged fragment.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ExactCurveArrangementArrangedEndpointPointRef2 {
+    arranged_segment_index: usize,
+    output_start_point: Point2,
+    output_end_point: Point2,
+}
+
+/// Exact arranged endpoint records retained by endpoint-graph validation.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ExactCurveArrangementArrangedEndpointPointCache2 {
+    arranged_fragment_ref_count: usize,
+    endpoint_ref_count: usize,
+    endpoints: Vec<ExactCurveArrangementArrangedEndpointPointRef2>,
 }
 
 /// Source provenance retained for one arranged fragment.
@@ -2809,6 +2826,10 @@ impl ExactCurveArrangementEndpointGraphCache2 {
             ExactCurveArrangementArrangedEndpointSideBucketCache2::from_arranged_source_reports(
                 &report.arranged_source_reports,
             );
+        let endpoint_point_cache =
+            ExactCurveArrangementArrangedEndpointPointCache2::from_arranged_source_reports(
+                &report.arranged_source_reports,
+            );
         Some(Self {
             predicate_path: report.endpoint_graph_predicate_path?,
             endpoint_count: report.endpoint_graph_endpoint_count?,
@@ -2818,6 +2839,7 @@ impl ExactCurveArrangementEndpointGraphCache2 {
             max_structural_bucket_size: report.endpoint_graph_max_structural_bucket_size?,
             endpoint_bucket_cache,
             endpoint_side_bucket_cache,
+            endpoint_point_cache,
             dangling_endpoint_count: report.endpoint_graph_dangling_endpoint_count?,
             branch_endpoint_count: report.endpoint_graph_branch_endpoint_count?,
             blocker_arranged_segment_index: report.endpoint_graph_blocker_arranged_segment_index,
@@ -2863,6 +2885,11 @@ impl ExactCurveArrangementEndpointGraphCache2 {
         &self,
     ) -> &ExactCurveArrangementArrangedEndpointSideBucketCache2 {
         &self.endpoint_side_bucket_cache
+    }
+
+    /// Returns exact endpoint records for arranged fragments.
+    pub const fn endpoint_point_cache(&self) -> &ExactCurveArrangementArrangedEndpointPointCache2 {
+        &self.endpoint_point_cache
     }
 
     /// Returns dangling endpoint count found during validation.
@@ -3030,6 +3057,70 @@ impl ExactCurveArrangementArrangedEndpointBucketCache2 {
     /// Returns exact structural arranged endpoint buckets in encounter order.
     pub fn buckets(&self) -> &[ExactCurveArrangementArrangedEndpointBucket2] {
         &self.buckets
+    }
+}
+
+impl ExactCurveArrangementArrangedEndpointPointRef2 {
+    /// Returns the arranged fragment index after exact splitting.
+    pub const fn arranged_segment_index(&self) -> usize {
+        self.arranged_segment_index
+    }
+
+    /// Returns the exact arranged fragment start point.
+    pub const fn output_start_point(&self) -> &Point2 {
+        &self.output_start_point
+    }
+
+    /// Returns the exact arranged fragment end point.
+    pub const fn output_end_point(&self) -> &Point2 {
+        &self.output_end_point
+    }
+}
+
+impl ExactCurveArrangementArrangedEndpointPointCache2 {
+    fn from_arranged_source_reports(
+        arranged_source_reports: &[RegionLineSegmentArrangedSourceReport2],
+    ) -> Self {
+        let mut endpoints: Vec<ExactCurveArrangementArrangedEndpointPointRef2> = Vec::new();
+
+        for source_report in arranged_source_reports {
+            let arranged_segment_index = source_report.arranged_segment_index();
+            if endpoints
+                .iter()
+                .any(|endpoint| endpoint.arranged_segment_index == arranged_segment_index)
+            {
+                continue;
+            }
+
+            endpoints.push(ExactCurveArrangementArrangedEndpointPointRef2 {
+                arranged_segment_index,
+                output_start_point: source_report.output_start_point().clone(),
+                output_end_point: source_report.output_end_point().clone(),
+            });
+        }
+
+        endpoints.sort_by_key(|endpoint| endpoint.arranged_segment_index);
+
+        Self {
+            arranged_fragment_ref_count: endpoints.len(),
+            endpoint_ref_count: endpoints.len().saturating_mul(2),
+            endpoints,
+        }
+    }
+
+    /// Returns the number of retained arranged fragment endpoint records.
+    pub const fn arranged_fragment_ref_count(&self) -> usize {
+        self.arranged_fragment_ref_count
+    }
+
+    /// Returns the number of retained arranged endpoint references.
+    pub const fn endpoint_ref_count(&self) -> usize {
+        self.endpoint_ref_count
+    }
+
+    /// Returns exact arranged endpoint records in arranged segment order.
+    pub fn endpoints(&self) -> &[ExactCurveArrangementArrangedEndpointPointRef2] {
+        &self.endpoints
     }
 }
 

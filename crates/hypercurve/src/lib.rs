@@ -258,7 +258,9 @@ pub use region_fragments::{
 };
 pub use region_nesting::{
     ExactCurveArrangementArrangedEndpointBucket2,
-    ExactCurveArrangementArrangedEndpointBucketCache2, ExactCurveArrangementArrangedEndpointRef2,
+    ExactCurveArrangementArrangedEndpointBucketCache2,
+    ExactCurveArrangementArrangedEndpointPointCache2,
+    ExactCurveArrangementArrangedEndpointPointRef2, ExactCurveArrangementArrangedEndpointRef2,
     ExactCurveArrangementArrangedEndpointSideBucket2,
     ExactCurveArrangementArrangedEndpointSideBucketCache2, ExactCurveArrangementArrangedFragment2,
     ExactCurveArrangementArrangedFragmentCache2, ExactCurveArrangementArrangedFragmentKindBucket2,

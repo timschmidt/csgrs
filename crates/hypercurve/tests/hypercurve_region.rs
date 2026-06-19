@@ -1523,6 +1523,32 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
         arranged_endpoint_side_bucket_cache.buckets()[1].endpoints()[0].endpoint(),
         RegionLineSegmentArrangedEndpoint2::End
     );
+    let arranged_endpoint_point_cache = endpoint_cache.endpoint_point_cache();
+    assert_eq!(
+        arranged_endpoint_point_cache.arranged_fragment_ref_count(),
+        result.report().arranged_source_reports().len()
+    );
+    assert_eq!(
+        arranged_endpoint_point_cache.endpoint_ref_count(),
+        endpoint_cache.endpoint_count()
+    );
+    assert_eq!(
+        arranged_endpoint_point_cache.endpoints().len(),
+        result.report().arranged_source_reports().len()
+    );
+    let arranged_endpoint_point_ref = &arranged_endpoint_point_cache.endpoints()[0];
+    assert_eq!(
+        arranged_endpoint_point_ref.arranged_segment_index(),
+        result.report().arranged_source_reports()[0].arranged_segment_index()
+    );
+    assert_eq!(
+        arranged_endpoint_point_ref.output_start_point(),
+        result.report().arranged_source_reports()[0].output_start_point()
+    );
+    assert_eq!(
+        arranged_endpoint_point_ref.output_end_point(),
+        result.report().arranged_source_reports()[0].output_end_point()
+    );
     assert_eq!(endpoint_cache.dangling_endpoint_count(), 0);
     assert_eq!(endpoint_cache.branch_endpoint_count(), 0);
     assert_eq!(endpoint_cache.blocker_arranged_segment_index(), None);
@@ -2656,6 +2682,32 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
     assert_eq!(
         arranged_endpoint_side_bucket_cache.buckets()[1].endpoints()[0].endpoint(),
         RegionLineSegmentArrangedEndpoint2::End
+    );
+    let arranged_endpoint_point_cache = endpoint_cache.endpoint_point_cache();
+    assert_eq!(
+        arranged_endpoint_point_cache.arranged_fragment_ref_count(),
+        result.report().arranged_source_reports().len()
+    );
+    assert_eq!(
+        arranged_endpoint_point_cache.endpoint_ref_count(),
+        endpoint_cache.endpoint_count()
+    );
+    assert_eq!(
+        arranged_endpoint_point_cache.endpoints().len(),
+        result.report().arranged_source_reports().len()
+    );
+    let arranged_endpoint_point_ref = &arranged_endpoint_point_cache.endpoints()[0];
+    assert_eq!(
+        arranged_endpoint_point_ref.arranged_segment_index(),
+        result.report().arranged_source_reports()[0].arranged_segment_index()
+    );
+    assert_eq!(
+        arranged_endpoint_point_ref.output_start_point(),
+        result.report().arranged_source_reports()[0].output_start_point()
+    );
+    assert_eq!(
+        arranged_endpoint_point_ref.output_end_point(),
+        result.report().arranged_source_reports()[0].output_end_point()
     );
     assert_eq!(
         Some(endpoint_cache.dangling_endpoint_count()),
