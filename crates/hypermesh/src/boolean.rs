@@ -2419,11 +2419,6 @@ impl ExactBooleanEvaluation {
         self.preflight.is_certified_arrangement_cell_complex()
     }
 
-    /// Return whether caller boundary policy certified this evaluation.
-    pub fn is_certified_boundary_policy_shortcut(&self) -> bool {
-        self.preflight.is_certified_boundary_policy_shortcut()
-    }
-
     /// Return whether this evaluation was certified by closed lower-dimensional regularization.
     pub fn is_certified_lower_dimensional_regularized_solid(&self) -> bool {
         self.preflight

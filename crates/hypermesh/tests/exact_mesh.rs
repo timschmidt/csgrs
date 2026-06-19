@@ -312,7 +312,6 @@ fn exact_boolean_evaluation_materializes_boundary_policy_shortcut_by_default() {
         assert!(evaluation.materialized_result().is_some());
         assert!(!evaluation.has_blocker());
         assert!(evaluation.is_certified());
-        assert!(evaluation.is_certified_boundary_policy_shortcut());
         assert!(evaluation.retained_face_pairs() > 0 || evaluation.retained_events() > 0);
         let result = evaluation
             .materialized_result()
@@ -3819,10 +3818,8 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
         ValidationPolicy::ALLOW_BOUNDARY,
     );
     let default_evidence = with_exact_boolean_evaluation(&left, &right, request, |evaluation| {
-        assert!(
-            evaluation.is_certified_boundary_policy_shortcut(),
-            "{evaluation:?}"
-        );
+        assert!(evaluation.is_certified(), "{evaluation:?}");
+        assert!(evaluation.materialized_result().is_some(), "{evaluation:?}");
         evaluation.validate_against_sources(&left, &right).unwrap();
         (
             evaluation.retained_face_pairs(),
@@ -3851,8 +3848,9 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
         ExactBoundaryBooleanPolicy::PreserveSeparateShells,
     );
     with_exact_boolean_evaluation(&left, &right, policy_request, |policy_evaluation| {
+        assert!(policy_evaluation.is_certified(), "{policy_evaluation:?}");
         assert!(
-            policy_evaluation.is_certified_boundary_policy_shortcut(),
+            policy_evaluation.materialized_result().is_some(),
             "{policy_evaluation:?}"
         );
         assert!(!policy_evaluation.has_blocker(), "{policy_evaluation:?}");
@@ -3863,6 +3861,7 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
             ),
             default_evidence
         );
+        assert!(default_evidence.0 > 0 || default_evidence.1 > 0);
         policy_evaluation
             .validate_against_sources(&left, &right)
             .unwrap();
@@ -3876,10 +3875,7 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
                 .is_ok(),
             "default replay should certify a boundary-policy preflight"
         );
-        assert!(
-            policy_evaluation.is_certified_boundary_policy_shortcut(),
-            "{policy_evaluation:?}"
-        );
+        assert!(policy_evaluation.is_certified(), "{policy_evaluation:?}");
         policy_evaluation
             .validate_against_sources(&left, &right)
             .unwrap();

@@ -4206,14 +4206,6 @@ impl ExactBooleanPreflight {
         ) && self.blocker.is_none()
     }
 
-    /// Return whether caller boundary policy has certified the requested output.
-    pub const fn is_certified_boundary_policy_shortcut(&self) -> bool {
-        matches!(
-            self.support,
-            ExactBooleanSupport::CertifiedBoundaryPolicyShortcut
-        ) && self.blocker.is_none()
-    }
-
     /// Return whether this request is waiting on explicit caller boundary policy.
     pub const fn requires_boundary_policy(&self) -> bool {
         matches!(self.support, ExactBooleanSupport::RequiresBoundaryPolicy)
