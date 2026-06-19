@@ -420,19 +420,14 @@ impl<'a> ExactBooleanWorkspace<'a> {
         request: ExactBooleanRequest,
     ) -> Result<&ExactBooleanResult, MeshError> {
         if let Some(index) = cached_by_request_index(&self.materializations, request) {
-            self.validate_materialized_result_for_request(
-                request,
-                &self.materializations[index].1,
-            )?;
-            self.promote_evaluation_cache_from_materialization_index(request, index)?;
+            self.validate_materialization_and_sync_evaluation_cache(request, index)?;
             return Ok(&self.materializations[index].1);
         }
 
         let result = self.materialize_uncached(request)?;
-        self.validate_materialized_result_for_request(request, &result)?;
         self.materializations.push((request, result));
         let index = self.materializations.len() - 1;
-        self.promote_evaluation_cache_from_materialization_index(request, index)?;
+        self.validate_materialization_and_sync_evaluation_cache(request, index)?;
         Ok(&self.materializations[index].1)
     }
 
@@ -474,12 +469,16 @@ impl<'a> ExactBooleanWorkspace<'a> {
         )
     }
 
-    fn promote_evaluation_cache_from_materialization_index(
+    fn validate_materialization_and_sync_evaluation_cache(
         &mut self,
         request: ExactBooleanRequest,
         materialization_index: usize,
     ) -> Result<(), MeshError> {
         debug_assert_eq!(self.materializations[materialization_index].0, request);
+        self.validate_materialized_result_for_request(
+            request,
+            &self.materializations[materialization_index].1,
+        )?;
         if let Some(index) = cached_by_request_index(&self.evaluations, request) {
             let result = &self.materializations[materialization_index].1;
             let evaluation = &mut self.evaluations[index].1;
