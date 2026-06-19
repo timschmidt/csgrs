@@ -2610,9 +2610,11 @@ pub(crate) fn try_materialize_certified_boolean_support_with_artifacts(
                     Some(result),
                     left,
                     right,
-                    operation,
-                    validation,
-                    boundary_policy,
+                    ExactBooleanRequest::with_boundary_policy(
+                        operation,
+                        validation,
+                        boundary_policy,
+                    ),
                 ));
             }
             materialize_graph_shortcut_from_graph_for_request(graph, left, right, request, support)?
@@ -2693,9 +2695,11 @@ pub(crate) fn try_materialize_certified_boolean_support_with_artifacts(
                     Some(boolean_empty_operand(left, right, operation, validation)?),
                     left,
                     right,
-                    operation,
-                    validation,
-                    ExactBoundaryBooleanPolicy::Reject,
+                    ExactBooleanRequest::with_boundary_policy(
+                        operation,
+                        validation,
+                        ExactBoundaryBooleanPolicy::Reject,
+                    ),
                 )
             }
         }
@@ -2713,9 +2717,11 @@ pub(crate) fn try_materialize_certified_boolean_support_with_artifacts(
                     Some(boolean_disjoint_meshes(left, right, operation, validation)?),
                     left,
                     right,
-                    operation,
-                    validation,
-                    ExactBoundaryBooleanPolicy::Reject,
+                    ExactBooleanRequest::with_boundary_policy(
+                        operation,
+                        validation,
+                        ExactBoundaryBooleanPolicy::Reject,
+                    ),
                 )
             }
         }
@@ -2732,9 +2738,11 @@ pub(crate) fn try_materialize_certified_boolean_support_with_artifacts(
                     Some(boolean_identical_meshes(left, operation, validation)?),
                     left,
                     right,
-                    operation,
-                    validation,
-                    ExactBoundaryBooleanPolicy::Reject,
+                    ExactBooleanRequest::with_boundary_policy(
+                        operation,
+                        validation,
+                        ExactBoundaryBooleanPolicy::Reject,
+                    ),
                 )
             }
         }
@@ -2752,9 +2760,11 @@ pub(crate) fn try_materialize_certified_boolean_support_with_artifacts(
                     Some(boolean_same_surface_meshes(left, operation, validation)?),
                     left,
                     right,
-                    operation,
-                    validation,
-                    ExactBoundaryBooleanPolicy::Reject,
+                    ExactBooleanRequest::with_boundary_policy(
+                        operation,
+                        validation,
+                        ExactBoundaryBooleanPolicy::Reject,
+                    ),
                 )
             }
         }
@@ -2792,9 +2802,11 @@ pub(crate) fn try_materialize_certified_boolean_support_with_artifacts(
                     )?,
                     left,
                     right,
-                    operation,
-                    validation,
-                    ExactBoundaryBooleanPolicy::Reject,
+                    ExactBooleanRequest::with_boundary_policy(
+                        operation,
+                        validation,
+                        ExactBoundaryBooleanPolicy::Reject,
+                    ),
                 )
             }
         }
@@ -2805,9 +2817,11 @@ pub(crate) fn try_materialize_certified_boolean_support_with_artifacts(
                 )?,
                 left,
                 right,
-                operation,
-                validation,
-                ExactBoundaryBooleanPolicy::Reject,
+                ExactBooleanRequest::with_boundary_policy(
+                    operation,
+                    validation,
+                    ExactBoundaryBooleanPolicy::Reject,
+                ),
             )
         }
         ExactBooleanSupport::CertifiedConvexUnion
@@ -2816,9 +2830,11 @@ pub(crate) fn try_materialize_certified_boolean_support_with_artifacts(
             boolean_convex_meshes_optional(left, right, operation, validation)?,
             left,
             right,
-            operation,
-            validation,
-            ExactBoundaryBooleanPolicy::Reject,
+            ExactBooleanRequest::with_boundary_policy(
+                operation,
+                validation,
+                ExactBoundaryBooleanPolicy::Reject,
+            ),
         ),
         ExactBooleanSupport::CertifiedConvexSeparated
         | ExactBooleanSupport::CertifiedConvexContainment => {
@@ -2830,9 +2846,11 @@ pub(crate) fn try_materialize_certified_boolean_support_with_artifacts(
                 )?,
                 left,
                 right,
-                operation,
-                validation,
-                ExactBoundaryBooleanPolicy::Reject,
+                ExactBooleanRequest::with_boundary_policy(
+                    operation,
+                    validation,
+                    ExactBoundaryBooleanPolicy::Reject,
+                ),
             )
         }
         ExactBooleanSupport::RequiresBoundaryPolicy
@@ -2923,9 +2941,11 @@ fn materialize_certified_arrangement_cell_complex_support_with_arrangement(
         boolean_arrangement_orthogonal_solid_cell_recovery(left, right, operation, validation)?,
         left,
         right,
-        operation,
-        validation,
-        ExactBoundaryBooleanPolicy::Reject,
+        ExactBooleanRequest::with_boundary_policy(
+            operation,
+            validation,
+            ExactBoundaryBooleanPolicy::Reject,
+        ),
     ) {
         return Ok(Some(result));
     }
@@ -2933,9 +2953,11 @@ fn materialize_certified_arrangement_cell_complex_support_with_arrangement(
         boolean_arrangement_affine_orthogonal_solid_recovery(left, right, operation, validation)?,
         left,
         right,
-        operation,
-        validation,
-        ExactBoundaryBooleanPolicy::Reject,
+        ExactBooleanRequest::with_boundary_policy(
+            operation,
+            validation,
+            ExactBoundaryBooleanPolicy::Reject,
+        ),
     ))
 }
 
@@ -4698,9 +4720,11 @@ fn materialize_graph_shortcut_from_graph_for_request(
                     Some(result),
                     left,
                     right,
-                    operation,
-                    validation,
-                    boundary_policy,
+                    ExactBooleanRequest::with_boundary_policy(
+                        operation,
+                        validation,
+                        boundary_policy,
+                    ),
                 ));
             }
             let Some(result) = boolean_boundary_touching_meshes_from_graph(
@@ -4718,9 +4742,7 @@ fn materialize_graph_shortcut_from_graph_for_request(
                 Some(result),
                 left,
                 right,
-                operation,
-                validation,
-                boundary_policy,
+                ExactBooleanRequest::with_boundary_policy(operation, validation, boundary_policy),
             ));
         }
         ExactBooleanSupport::CertifiedOpenSurfaceDisjoint => {
@@ -4764,9 +4786,11 @@ fn materialize_graph_shortcut_from_graph_for_request(
         result,
         left,
         right,
-        operation,
-        validation,
-        ExactBoundaryBooleanPolicy::Reject,
+        ExactBooleanRequest::with_boundary_policy(
+            operation,
+            validation,
+            ExactBoundaryBooleanPolicy::Reject,
+        ),
     ))
 }
 
@@ -4819,17 +4843,11 @@ fn public_operation_replayable_result(
     result: Option<ExactBooleanResult>,
     left: &ExactMesh,
     right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: ValidationPolicy,
-    boundary_policy: ExactBoundaryBooleanPolicy,
+    request: ExactBooleanRequest,
 ) -> Option<ExactBooleanResult> {
     let result = result?;
     result
-        .validate_request_against_sources(
-            left,
-            right,
-            ExactBooleanRequest::with_boundary_policy(operation, validation, boundary_policy),
-        )
+        .validate_request_against_sources(left, right, request)
         .is_ok()
         .then_some(result)
 }
