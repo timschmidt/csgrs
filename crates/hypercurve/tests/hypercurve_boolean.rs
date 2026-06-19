@@ -340,6 +340,10 @@ fn boolean_fragment_selection_emits_directed_boundary_fragments() {
         emitted_first.source_segment_index
     );
     assert_eq!(
+        emitted_first_report.source_segment_kind(),
+        SegmentKind::Line
+    );
+    assert_eq!(
         emitted_first_report.source_segment_start_point(),
         &emitted_first.source_segment_start_point
     );
