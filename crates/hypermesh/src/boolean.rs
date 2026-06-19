@@ -2271,21 +2271,21 @@ impl ExactArrangementCellComplexShortcutFacts {
 #[derive(Clone, Debug, PartialEq)]
 pub struct ExactIdenticalMeshReport {
     /// Coarse identity status.
-    pub status: ExactIdenticalMeshStatus,
+    status: ExactIdenticalMeshStatus,
     /// Number of left source vertices compared in original order.
-    pub left_vertices: usize,
+    left_vertices: usize,
     /// Number of right source vertices compared in original order.
-    pub right_vertices: usize,
+    right_vertices: usize,
     /// Number of left source triangles compared in original order.
-    pub left_triangles: usize,
+    left_triangles: usize,
     /// Number of right source triangles compared in original order.
-    pub right_triangles: usize,
+    right_triangles: usize,
     /// Exact coordinate comparison predicates used for original-order vertex
     /// identity.
-    pub predicates: Vec<PredicateUse>,
+    predicates: Vec<PredicateUse>,
 }
 
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ExactIdenticalMeshStatus {
     /// Vertex counts differ.
     VertexCountMismatch,
@@ -2300,6 +2300,41 @@ pub enum ExactIdenticalMeshStatus {
 }
 
 impl ExactIdenticalMeshReport {
+    /// Return the coarse identical-mesh certification status.
+    pub const fn status(&self) -> ExactIdenticalMeshStatus {
+        self.status
+    }
+
+    /// Return the number of left source vertices compared.
+    pub const fn left_vertices(&self) -> usize {
+        self.left_vertices
+    }
+
+    /// Return the number of right source vertices compared.
+    pub const fn right_vertices(&self) -> usize {
+        self.right_vertices
+    }
+
+    /// Return the number of left source triangles compared.
+    pub const fn left_triangles(&self) -> usize {
+        self.left_triangles
+    }
+
+    /// Return the left source triangle count mutably.
+    pub fn left_triangles_mut(&mut self) -> &mut usize {
+        &mut self.left_triangles
+    }
+
+    /// Return the number of right source triangles compared.
+    pub const fn right_triangles(&self) -> usize {
+        self.right_triangles
+    }
+
+    /// Return the retained coordinate predicate certificates.
+    pub fn predicates(&self) -> &[PredicateUse] {
+        &self.predicates
+    }
+
     pub const fn is_certified(&self) -> bool {
         matches!(self.status, ExactIdenticalMeshStatus::Certified)
     }
@@ -12242,7 +12277,7 @@ mod tests {
             !evaluation.has_materialized_result(),
             "selected-region evaluation should retain certifications when materialization declines"
         );
-        let readiness = evaluation.certifications().winding_readiness.clone();
+        let readiness = evaluation.certifications().winding_readiness().clone();
         assert_eq!(
             readiness.status,
             ExactWindingReadinessStatus::NotNamedOperation
@@ -13762,7 +13797,7 @@ mod tests {
         ] {
             let request = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED);
             let evaluation = test_evaluation(request, &left, &right);
-            let readiness = &evaluation.certifications().winding_readiness;
+            let readiness = evaluation.certifications().winding_readiness();
             let arrangement_materialized = operation == ExactBooleanOperation::Intersection;
             let expected_status = if arrangement_materialized {
                 ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized
@@ -13947,7 +13982,7 @@ mod tests {
             ValidationPolicy::ALLOW_BOUNDARY,
         );
         let boundary_evaluation = test_evaluation(boundary_request, &left, &right);
-        let boundary_readiness = &boundary_evaluation.certifications().winding_readiness;
+        let boundary_readiness = boundary_evaluation.certifications().winding_readiness();
         assert_eq!(
             boundary_readiness.status,
             ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized,

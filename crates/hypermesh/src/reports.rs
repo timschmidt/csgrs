@@ -5050,7 +5050,7 @@ impl ExactRefinementReport {
 /// Same-surface detection is stronger than identical storage equality: it
 /// allows vertex reindexing and face orientation changes when exact coordinate
 /// equality proves a bijection and the remapped triangle vertex sets match.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ExactSameSurfaceStatus {
     /// The meshes have different vertex counts.
     VertexCountMismatch,
@@ -5075,20 +5075,50 @@ pub enum ExactSameSurfaceStatus {
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ExactSameSurfaceReport {
     /// Coarse same-surface certification status.
-    pub status: ExactSameSurfaceStatus,
+    pub(crate) status: ExactSameSurfaceStatus,
     /// Mapping from each left vertex index to the matched right vertex index.
-    pub left_to_right: Vec<usize>,
+    pub(crate) left_to_right: Vec<usize>,
     /// Mapping from each right vertex index to the matched left vertex index.
-    pub right_to_left: Vec<usize>,
+    pub(crate) right_to_left: Vec<usize>,
     /// Sorted left triangle vertex sets.
-    pub left_triangles: Vec<[usize; 3]>,
+    pub(crate) left_triangles: Vec<[usize; 3]>,
     /// Sorted right triangle vertex sets remapped into left vertex indices.
-    pub right_triangles: Vec<[usize; 3]>,
+    pub(crate) right_triangles: Vec<[usize; 3]>,
     /// Predicate certificates used by exact coordinate equality checks.
-    pub predicates: Vec<PredicateUse>,
+    pub(crate) predicates: Vec<PredicateUse>,
 }
 
 impl ExactSameSurfaceReport {
+    /// Return the coarse same-surface certification status.
+    pub const fn status(&self) -> ExactSameSurfaceStatus {
+        self.status
+    }
+
+    /// Return the left-to-right vertex bijection witness.
+    pub fn left_to_right(&self) -> &[usize] {
+        &self.left_to_right
+    }
+
+    /// Return the right-to-left vertex bijection witness.
+    pub fn right_to_left(&self) -> &[usize] {
+        &self.right_to_left
+    }
+
+    /// Return the sorted left triangle sets used for same-surface replay.
+    pub fn left_triangles(&self) -> &[[usize; 3]] {
+        &self.left_triangles
+    }
+
+    /// Return the sorted right triangle sets remapped into left vertex indices.
+    pub fn right_triangles(&self) -> &[[usize; 3]] {
+        &self.right_triangles
+    }
+
+    /// Return the retained predicate certificates.
+    pub fn predicates(&self) -> &[PredicateUse] {
+        &self.predicates
+    }
+
     /// Return whether same-surface equivalence was certified.
     pub const fn is_certified(&self) -> bool {
         matches!(self.status, ExactSameSurfaceStatus::Certified)
