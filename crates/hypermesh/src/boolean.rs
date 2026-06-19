@@ -958,10 +958,21 @@ pub struct ExactBooleanCertificationSet {
     /// Volumetric boundary closure readiness, when meaningful for the request.
     pub volumetric_boundary_closure: Option<ExactVolumetricBoundaryClosureReport>,
     /// Arrangement/cell-complex materialization attempt.
-    pub arrangement_attempt: Option<ExactArrangementBooleanAttempt>,
+    arrangement_attempt: Option<ExactArrangementBooleanAttempt>,
 }
 
 impl ExactBooleanCertificationSet {
+    /// Return the retained arrangement/cell-complex attempt for this
+    /// certification set, when evaluation reached that canonical pipeline.
+    pub fn arrangement_attempt(&self) -> Option<&ExactArrangementBooleanAttempt> {
+        self.arrangement_attempt.as_ref()
+    }
+
+    /// Return the retained arrangement/cell-complex attempt mutably.
+    pub fn arrangement_attempt_mut(&mut self) -> Option<&mut ExactArrangementBooleanAttempt> {
+        self.arrangement_attempt.as_mut()
+    }
+
     pub(crate) fn from_graph_and_regularized_arrangement(
         graph: &ExactIntersectionGraph,
         left: &ExactMesh,
@@ -2244,7 +2255,7 @@ impl ExactBooleanEvaluation {
     /// Return the retained arrangement/cell-complex attempt for this request,
     /// when evaluation reached that canonical pipeline.
     pub fn retained_arrangement_attempt(&self) -> Option<&ExactArrangementBooleanAttempt> {
-        self.certifications.arrangement_attempt.as_ref()
+        self.certifications.arrangement_attempt()
     }
 
     /// Return the request policy evaluated by this retained evaluation.
@@ -12640,8 +12651,7 @@ mod tests {
             .unwrap();
         let attempt = evaluation
             .certifications
-            .arrangement_attempt
-            .as_ref()
+            .arrangement_attempt()
             .expect("workspace evaluation should retain an arrangement attempt");
         assert!(
             attempt.certifies_arrangement_cell_complex_output_for_request(
@@ -12685,8 +12695,7 @@ mod tests {
             .validate_against_sources(&left, &right, request)
             .unwrap();
         let attempt = certifications
-            .arrangement_attempt
-            .as_ref()
+            .arrangement_attempt()
             .expect("nested tetrahedra should retain an arrangement attempt");
         assert!(
             attempt.certifies_arrangement_cell_complex_output_for_request(

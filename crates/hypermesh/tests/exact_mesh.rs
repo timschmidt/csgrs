@@ -312,8 +312,7 @@ fn exact_boolean_evaluation_materializes_certified_result_publicly() {
     let mut stale_attempt_policy = evaluation.clone();
     stale_attempt_policy
         .certifications
-        .arrangement_attempt
-        .as_mut()
+        .arrangement_attempt_mut()
         .expect("named evaluation should retain arrangement attempt")
         .output_validation = ValidationPolicy::CLOSED;
     assert_report_validation_error!(stale_attempt_policy.validate());
@@ -398,8 +397,7 @@ fn exact_boolean_evaluation_retains_region_ownership_report() {
     let mut missing_attempt_ownership = evaluation.clone();
     missing_attempt_ownership
         .certifications
-        .arrangement_attempt
-        .as_mut()
+        .arrangement_attempt_mut()
         .expect("evaluation should retain arrangement attempt")
         .region_ownership_report = None;
     assert_report_validation_error!(missing_attempt_ownership.validate());
@@ -407,8 +405,7 @@ fn exact_boolean_evaluation_retains_region_ownership_report() {
     let mut missing_attempt_topology = evaluation.clone();
     missing_attempt_topology
         .certifications
-        .arrangement_attempt
-        .as_mut()
+        .arrangement_attempt_mut()
         .expect("evaluation should retain arrangement attempt")
         .topology_assembly_report = None;
     assert_report_validation_error!(missing_attempt_topology.validate());
@@ -3150,8 +3147,7 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
     let mut unresolved_ownership = evaluation.clone();
     let ownership = unresolved_ownership
         .certifications
-        .arrangement_attempt
-        .as_mut()
+        .arrangement_attempt_mut()
         .and_then(|attempt| attempt.region_ownership_report.as_mut())
         .expect("named arrangement evaluation should retain ownership evidence");
     ownership.volume_regions += 1;
@@ -3162,8 +3158,7 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
     let mut incomplete_topology = evaluation.clone();
     let topology = incomplete_topology
         .certifications
-        .arrangement_attempt
-        .as_mut()
+        .arrangement_attempt_mut()
         .and_then(|attempt| attempt.topology_assembly_report.as_mut())
         .expect("named arrangement evaluation should retain topology assembly evidence");
     topology.region_boundaries += 1;
@@ -3174,16 +3169,14 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
     let mut declined_arrangement_attempt = evaluation.clone();
     let stale_validation_attempt = declined_arrangement_attempt
         .certifications
-        .arrangement_attempt
-        .as_mut()
+        .arrangement_attempt_mut()
         .expect("named evaluation should retain arrangement attempt");
     stale_validation_attempt.output_validation = ValidationPolicy::CLOSED;
     assert_report_validation_error!(declined_arrangement_attempt.validate());
     let mut stale_attempt_gate = evaluation.clone();
     let attempt = stale_attempt_gate
         .certifications
-        .arrangement_attempt
-        .as_mut()
+        .arrangement_attempt_mut()
         .expect("named evaluation should retain arrangement attempt");
     attempt.region_ownership_report = None;
     assert_report_validation_error!(attempt.validate());
@@ -3191,8 +3184,7 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
     let mut stale_attempt_report = evaluation.clone();
     let attempt = stale_attempt_report
         .certifications
-        .arrangement_attempt
-        .as_mut()
+        .arrangement_attempt_mut()
         .expect("named evaluation should retain arrangement attempt");
     attempt.topology_assembly_report = None;
     assert_report_validation_error!(attempt.validate());
