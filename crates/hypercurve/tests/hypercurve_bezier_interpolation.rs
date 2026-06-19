@@ -1,8 +1,7 @@
 use hypercurve::{
-    BezierEndpoint, Classification, CubicBezier2, CubicBezierHermiteInterpolationStage2,
-    CurvePolicy, EndpointTangent2, Point2, QuadraticBezier2,
-    QuadraticBezierMidpointInterpolationStage2, QuadraticBezierPointInterpolationStage2, Real,
-    UncertaintyReason,
+    BezierEndpoint, CubicBezier2, CubicBezierHermiteInterpolationStage2, CurvePolicy,
+    EndpointTangent2, Point2, QuadraticBezier2, QuadraticBezierMidpointInterpolationStage2,
+    QuadraticBezierPointInterpolationStage2, Real, UncertaintyReason,
 };
 use proptest::prelude::*;
 
@@ -75,14 +74,32 @@ fn cubic_hermite_interpolation_solves_controls_and_replays_endpoint_tangents() {
 
 #[test]
 fn cubic_hermite_interpolation_preserves_zero_endpoint_derivative_evidence() {
-    let curve = CubicBezier2::interpolate_hermite(
+    let result = CubicBezier2::interpolate_hermite_with_report(
         p(0, 0),
         EndpointTangent2::new(r(0), r(0)),
         p(3, 0),
         EndpointTangent2::new(r(0), r(0)),
     )
     .unwrap();
+    let report = result.report();
 
+    assert!(report.status().is_native_exact());
+    assert_eq!(
+        report.stage(),
+        CubicBezierHermiteInterpolationStage2::SegmentMaterialization
+    );
+    assert_eq!(
+        report.replayed_start_tangent(),
+        Some(&EndpointTangent2::new(r(0), r(0)))
+    );
+    assert_eq!(
+        report.replayed_end_tangent(),
+        Some(&EndpointTangent2::new(r(0), r(0)))
+    );
+    assert_eq!(report.blocker(), None);
+    let curve = result
+        .curve()
+        .expect("Hermite interpolation should materialize");
     assert_eq!(curve.control1(), &p(0, 0));
     assert_eq!(curve.control2(), &p(3, 0));
     assert_eq!(
@@ -129,8 +146,8 @@ fn quadratic_point_interpolation_solves_non_midpoint_control_and_replays_constra
 }
 
 #[test]
-fn quadratic_point_interpolation_convenience_returns_decided_curve() {
-    let curve = QuadraticBezier2::interpolate_point_at_parameter(
+fn quadratic_point_interpolation_report_materializes_decided_curve() {
+    let result = QuadraticBezier2::interpolate_point_at_parameter_with_report(
         p(0, 0),
         q(3, 4),
         Point2::new(r(3), q(3, 2)),
@@ -138,10 +155,13 @@ fn quadratic_point_interpolation_convenience_returns_decided_curve() {
         &policy(),
     )
     .unwrap();
+    let report = result.report();
 
-    let Classification::Decided(curve) = curve else {
-        panic!("interior exact interpolation should decide");
-    };
+    assert!(report.status().is_native_exact());
+    assert_eq!(report.blocker(), None);
+    let curve = result
+        .curve()
+        .expect("interior exact interpolation should materialize");
     assert_eq!(curve.control(), &p(2, 4));
     assert_eq!(curve.point_at(q(3, 4)), Point2::new(r(3), q(3, 2)));
 }
@@ -195,8 +215,8 @@ fn quadratic_point_interpolation_reports_out_of_domain_parameter_blocker() {
 }
 
 #[test]
-fn quadratic_point_interpolation_convenience_returns_boundary_uncertainty() {
-    let result = QuadraticBezier2::interpolate_point_at_parameter(
+fn quadratic_point_interpolation_report_returns_boundary_blocker() {
+    let result = QuadraticBezier2::interpolate_point_at_parameter_with_report(
         p(0, 0),
         r(1),
         p(4, 0),
@@ -204,11 +224,15 @@ fn quadratic_point_interpolation_convenience_returns_boundary_uncertainty() {
         &policy(),
     )
     .unwrap();
+    let report = result.report();
 
+    assert!(result.curve().is_none());
+    assert!(report.status().is_retained_evidence());
     assert_eq!(
-        result,
-        Classification::Uncertain(UncertaintyReason::Boundary)
+        report.stage(),
+        QuadraticBezierPointInterpolationStage2::ParameterValidation
     );
+    assert_eq!(report.blocker(), Some(UncertaintyReason::Boundary));
 }
 
 #[test]
@@ -241,8 +265,21 @@ fn quadratic_midpoint_interpolation_solves_control_and_replays_constraint() {
 
 #[test]
 fn quadratic_midpoint_interpolation_preserves_exact_collinear_shape() {
-    let curve = QuadraticBezier2::interpolate_midpoint(p(0, 0), p(2, 0), p(4, 0)).unwrap();
+    let result =
+        QuadraticBezier2::interpolate_midpoint_with_report(p(0, 0), p(2, 0), p(4, 0)).unwrap();
+    let report = result.report();
 
+    assert!(report.status().is_native_exact());
+    assert_eq!(
+        report.stage(),
+        QuadraticBezierMidpointInterpolationStage2::SegmentMaterialization
+    );
+    assert_eq!(report.solved_control_point(), Some(&p(2, 0)));
+    assert_eq!(report.replayed_midpoint(), Some(&p(2, 0)));
+    assert_eq!(report.blocker(), None);
+    let curve = result
+        .curve()
+        .expect("midpoint interpolation should materialize");
     assert_eq!(curve.start(), &p(0, 0));
     assert_eq!(curve.control(), &p(2, 0));
     assert_eq!(curve.end(), &p(4, 0));
