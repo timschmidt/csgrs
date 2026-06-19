@@ -11426,8 +11426,9 @@ mod tests {
         left: &ExactMesh,
         right: &ExactMesh,
     ) -> ExactBooleanResult {
-        let mut workspace = ExactBooleanWorkspace::new(left, right);
-        workspace.materialize(request).unwrap()
+        test_evaluation(request, left, right)
+            .result
+            .expect("certified boolean evaluation should retain materialized result")
     }
 
     fn test_winding_readiness(

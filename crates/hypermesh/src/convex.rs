@@ -1487,7 +1487,6 @@ mod tests {
         request: ExactBooleanRequest,
     ) -> ExactBooleanEvaluation {
         let mut workspace = ExactBooleanWorkspace::new(left, right);
-        workspace.materialize_ref(request).unwrap();
         workspace.evaluate(request).unwrap().clone()
     }
 

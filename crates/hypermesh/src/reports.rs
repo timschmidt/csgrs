@@ -6842,7 +6842,12 @@ mod tests {
         request: ExactBooleanRequest,
     ) -> ExactBooleanResult {
         let mut workspace = ExactBooleanWorkspace::new(left, right);
-        workspace.materialize(request).unwrap()
+        workspace
+            .evaluate(request)
+            .unwrap()
+            .result
+            .clone()
+            .expect("certified boolean evaluation should retain materialized result")
     }
 
     #[test]
