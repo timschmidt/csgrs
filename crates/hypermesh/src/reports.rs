@@ -1735,6 +1735,20 @@ impl ExactBooleanResult {
         if !self.has_arrangement_cell_complex_gate_reports() {
             return Ok(());
         }
+        if let Some(operation) = self.arrangement_cell_complex_operation() {
+            let request = ExactBooleanRequest::new(operation, self.mesh.validation_policy());
+            if let Ok(evaluation) = workspace_evaluation_for_replay(left, right, request)
+                && let Some(attempt) = evaluation.retained_arrangement_attempt()
+                && let Some((topology, ownership)) = attempt.retained_gate_reports()
+            {
+                if self.topology_assembly_report.as_ref() == Some(topology)
+                    && self.region_ownership_report.as_ref() == Some(ownership)
+                {
+                    return Ok(());
+                }
+                return Err(ExactReportValidationError::SourceReplayMismatch);
+            }
+        }
         let arrangement = ExactArrangement::from_meshes_with_policy(
             left,
             right,
