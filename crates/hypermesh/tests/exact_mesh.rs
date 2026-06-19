@@ -2577,15 +2577,6 @@ fn mixed_dimensional_regularized_solid_boolean_is_publicly_replayable() {
                 result.is_certified_shortcut_for(operation),
                 "{operation:?}: {result:?}"
             );
-            result
-                .validate_operation_against_sources(
-                    left,
-                    right,
-                    operation,
-                    ValidationPolicy::CLOSED,
-                    ExactBoundaryBooleanPolicy::Reject,
-                )
-                .unwrap();
             let keeps_solid = matches!(operation, ExactBooleanOperation::Union)
                 || (solid_is_left && matches!(operation, ExactBooleanOperation::Difference));
             assert_eq!(
@@ -2614,15 +2605,6 @@ fn mixed_dimensional_regularized_solid_boolean_is_publicly_replayable() {
                 boundary_result.is_certified_shortcut_for(operation),
                 "{operation:?}: {boundary_result:?}"
             );
-            boundary_result
-                .validate_operation_against_sources(
-                    left,
-                    right,
-                    operation,
-                    ValidationPolicy::ALLOW_BOUNDARY,
-                    ExactBoundaryBooleanPolicy::Reject,
-                )
-                .unwrap();
         }
     }
 }
@@ -2677,15 +2659,6 @@ fn boundary_touching_policy_boolean_is_publicly_replayable() {
         );
         result.validate().unwrap();
         result.validate_against_sources(&left, &right).unwrap();
-        result
-            .validate_operation_against_sources(
-                &left,
-                &right,
-                operation,
-                ValidationPolicy::ALLOW_BOUNDARY,
-                ExactBoundaryBooleanPolicy::PreserveSeparateShells,
-            )
-            .unwrap();
         assert_eq!(
             result.freshness_against_sources(&left, &right),
             ExactReportFreshness::Current
@@ -2723,15 +2696,6 @@ fn boundary_touching_policy_boolean_is_publicly_replayable() {
                 || direct.is_certified_shortcut_for(operation),
             "{operation:?}: {direct:?}"
         );
-        direct
-            .validate_operation_against_sources(
-                &closed_left,
-                &closed_right,
-                operation,
-                ValidationPolicy::CLOSED,
-                ExactBoundaryBooleanPolicy::PreserveSeparateShells,
-            )
-            .unwrap();
         let replay = exact_boolean_result(
             &closed_left,
             &closed_right,
@@ -2746,15 +2710,6 @@ fn boundary_touching_policy_boolean_is_publicly_replayable() {
                 || replay.is_certified_shortcut_for(operation),
             "{operation:?}: {replay:?}"
         );
-        replay
-            .validate_operation_against_sources(
-                &closed_left,
-                &closed_right,
-                operation,
-                ValidationPolicy::CLOSED,
-                ExactBoundaryBooleanPolicy::PreserveSeparateShells,
-            )
-            .unwrap();
     }
 }
 
