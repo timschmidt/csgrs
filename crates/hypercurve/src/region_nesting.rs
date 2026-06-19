@@ -6208,9 +6208,155 @@ impl ExactCurveArrangementResult2 {
         self.workspace().endpoint_graph_cache()
     }
 
+    /// Returns the exact predicate family used by retained endpoint-graph validation.
+    pub const fn endpoint_graph_predicate_path(
+        &self,
+    ) -> Option<RegionLineSegmentEndpointGraphPredicatePath2> {
+        match self.endpoint_graph_cache() {
+            Some(endpoint_cache) => Some(endpoint_cache.predicate_path()),
+            None => None,
+        }
+    }
+
+    /// Returns arranged endpoint count validated by retained endpoint-graph evidence.
+    pub const fn endpoint_graph_endpoint_count(&self) -> Option<usize> {
+        match self.endpoint_graph_cache() {
+            Some(endpoint_cache) => Some(endpoint_cache.endpoint_count()),
+            None => None,
+        }
+    }
+
+    /// Returns exact structural endpoint bucket count.
+    pub const fn endpoint_graph_structural_bucket_count(&self) -> Option<usize> {
+        match self.endpoint_graph_cache() {
+            Some(endpoint_cache) => Some(endpoint_cache.structural_bucket_count()),
+            None => None,
+        }
+    }
+
+    /// Returns structural endpoint singleton bucket count.
+    pub const fn endpoint_graph_structural_singleton_bucket_count(&self) -> Option<usize> {
+        match self.endpoint_graph_cache() {
+            Some(endpoint_cache) => Some(endpoint_cache.structural_singleton_bucket_count()),
+            None => None,
+        }
+    }
+
+    /// Returns the largest retained structural endpoint bucket size.
+    pub const fn endpoint_graph_max_structural_bucket_size(&self) -> Option<usize> {
+        match self.endpoint_graph_cache() {
+            Some(endpoint_cache) => Some(endpoint_cache.max_structural_bucket_size()),
+            None => None,
+        }
+    }
+
+    /// Returns dangling endpoint count found during endpoint-graph validation.
+    pub const fn endpoint_graph_dangling_endpoint_count(&self) -> Option<usize> {
+        match self.endpoint_graph_cache() {
+            Some(endpoint_cache) => Some(endpoint_cache.dangling_endpoint_count()),
+            None => None,
+        }
+    }
+
+    /// Returns branch endpoint count found during endpoint-graph validation.
+    pub const fn endpoint_graph_branch_endpoint_count(&self) -> Option<usize> {
+        match self.endpoint_graph_cache() {
+            Some(endpoint_cache) => Some(endpoint_cache.branch_endpoint_count()),
+            None => None,
+        }
+    }
+
+    /// Returns the blocker arranged segment index from endpoint validation, when blocked.
+    pub const fn endpoint_graph_blocker_arranged_segment_index(&self) -> Option<usize> {
+        match self.endpoint_graph_cache() {
+            Some(endpoint_cache) => endpoint_cache.blocker_arranged_segment_index(),
+            None => None,
+        }
+    }
+
+    /// Returns the blocker endpoint from endpoint validation, when blocked.
+    pub const fn endpoint_graph_blocker_endpoint(
+        &self,
+    ) -> Option<RegionLineSegmentArrangedEndpoint2> {
+        match self.endpoint_graph_cache() {
+            Some(endpoint_cache) => endpoint_cache.blocker_endpoint(),
+            None => None,
+        }
+    }
+
+    /// Returns the exact blocker point from endpoint validation, when blocked.
+    pub const fn endpoint_graph_blocker_point(&self) -> Option<&Point2> {
+        match self.endpoint_graph_cache() {
+            Some(endpoint_cache) => endpoint_cache.blocker_point(),
+            None => None,
+        }
+    }
+
     /// Returns exact ring-traversal evidence retained from the evaluated arrangement.
     pub const fn ring_assembly_cache(&self) -> Option<&ExactCurveArrangementRingAssemblyCache2> {
         self.workspace().ring_assembly_cache()
+    }
+
+    /// Returns the exact predicate family used by retained ring traversal.
+    pub const fn ring_assembly_predicate_path(
+        &self,
+    ) -> Option<RegionLineSegmentRingAssemblyPredicatePath2> {
+        match self.ring_assembly_cache() {
+            Some(ring_cache) => Some(ring_cache.predicate_path()),
+            None => None,
+        }
+    }
+
+    /// Returns endpoint pair comparisons attempted during retained ring traversal.
+    pub const fn attempted_endpoint_connection_count(&self) -> Option<usize> {
+        match self.ring_assembly_cache() {
+            Some(ring_cache) => Some(ring_cache.attempted_endpoint_connection_count()),
+            None => None,
+        }
+    }
+
+    /// Returns endpoint pair comparisons certified as equal during ring traversal.
+    pub const fn exact_endpoint_connection_count(&self) -> Option<usize> {
+        match self.ring_assembly_cache() {
+            Some(ring_cache) => Some(ring_cache.exact_endpoint_connection_count()),
+            None => None,
+        }
+    }
+
+    /// Returns endpoint pair comparisons certified as disconnected during ring traversal.
+    pub const fn disconnected_endpoint_connection_count(&self) -> Option<usize> {
+        match self.ring_assembly_cache() {
+            Some(ring_cache) => Some(ring_cache.disconnected_endpoint_connection_count()),
+            None => None,
+        }
+    }
+
+    /// Returns endpoint pair comparisons unresolved during ring traversal.
+    pub const fn unresolved_endpoint_connection_count(&self) -> Option<usize> {
+        match self.ring_assembly_cache() {
+            Some(ring_cache) => Some(ring_cache.unresolved_endpoint_connection_count()),
+            None => None,
+        }
+    }
+
+    /// Returns source segments reversed while materializing retained ring traversal.
+    pub const fn reversed_source_segment_count(&self) -> Option<usize> {
+        match self.ring_assembly_cache() {
+            Some(ring_cache) => Some(ring_cache.reversed_source_segment_count()),
+            None => None,
+        }
+    }
+
+    /// Returns per-arranged-fragment source provenance retained after exact splitting.
+    pub fn arranged_source_reports(&self) -> Option<&[RegionLineSegmentArrangedSourceReport2]> {
+        self.ring_assembly_cache()
+            .map(ExactCurveArrangementRingAssemblyCache2::arranged_source_reports)
+    }
+
+    /// Returns per-output segment source provenance retained by ring traversal.
+    pub fn source_reports(&self) -> Option<&[RegionLineSegmentRingSourceReport2]> {
+        self.ring_assembly_cache()
+            .map(ExactCurveArrangementRingAssemblyCache2::source_reports)
     }
 
     /// Returns final output evidence retained from the evaluated arrangement.

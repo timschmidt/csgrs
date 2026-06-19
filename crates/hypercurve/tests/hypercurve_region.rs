@@ -1418,25 +1418,25 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
     );
     let endpoint_cache = result.endpoint_graph_cache().unwrap();
     assert_eq!(
-        Some(endpoint_cache.predicate_path()),
+        result.endpoint_graph_predicate_path(),
         result.report().endpoint_graph_predicate_path()
     );
     assert_eq!(
-        Some(endpoint_cache.endpoint_count()),
+        result.endpoint_graph_endpoint_count(),
         result.report().endpoint_graph_endpoint_count()
     );
     assert_eq!(
-        Some(endpoint_cache.structural_bucket_count()),
+        result.endpoint_graph_structural_bucket_count(),
         result.report().endpoint_graph_structural_bucket_count()
     );
     assert_eq!(
-        Some(endpoint_cache.structural_singleton_bucket_count()),
+        result.endpoint_graph_structural_singleton_bucket_count(),
         result
             .report()
             .endpoint_graph_structural_singleton_bucket_count()
     );
     assert_eq!(
-        Some(endpoint_cache.max_structural_bucket_size()),
+        result.endpoint_graph_max_structural_bucket_size(),
         result.report().endpoint_graph_max_structural_bucket_size()
     );
     let arranged_endpoint_bucket_cache = endpoint_cache.endpoint_bucket_cache();
@@ -1609,40 +1609,40 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
             .endpoint_buckets()
             .is_empty()
     );
-    assert_eq!(endpoint_cache.dangling_endpoint_count(), 0);
-    assert_eq!(endpoint_cache.branch_endpoint_count(), 0);
-    assert_eq!(endpoint_cache.blocker_arranged_segment_index(), None);
-    assert_eq!(endpoint_cache.blocker_endpoint(), None);
-    assert_eq!(endpoint_cache.blocker_point(), None);
+    assert_eq!(result.endpoint_graph_dangling_endpoint_count(), Some(0));
+    assert_eq!(result.endpoint_graph_branch_endpoint_count(), Some(0));
+    assert_eq!(result.endpoint_graph_blocker_arranged_segment_index(), None);
+    assert_eq!(result.endpoint_graph_blocker_endpoint(), None);
+    assert_eq!(result.endpoint_graph_blocker_point(), None);
     let ring_cache = result.ring_assembly_cache().unwrap();
     assert_eq!(
-        Some(ring_cache.predicate_path()),
+        result.ring_assembly_predicate_path(),
         result.report().ring_assembly_predicate_path()
     );
     assert_eq!(
-        ring_cache.attempted_endpoint_connection_count(),
-        result.report().attempted_endpoint_connection_count()
+        result.attempted_endpoint_connection_count(),
+        Some(result.report().attempted_endpoint_connection_count())
     );
     assert_eq!(
-        ring_cache.exact_endpoint_connection_count(),
-        result.report().exact_endpoint_connection_count()
+        result.exact_endpoint_connection_count(),
+        Some(result.report().exact_endpoint_connection_count())
     );
     assert_eq!(
-        ring_cache.disconnected_endpoint_connection_count(),
-        result.report().disconnected_endpoint_connection_count()
+        result.disconnected_endpoint_connection_count(),
+        Some(result.report().disconnected_endpoint_connection_count())
     );
     assert_eq!(
-        ring_cache.unresolved_endpoint_connection_count(),
-        result.report().unresolved_endpoint_connection_count()
+        result.unresolved_endpoint_connection_count(),
+        Some(result.report().unresolved_endpoint_connection_count())
     );
     assert_eq!(
-        ring_cache.reversed_source_segment_count(),
-        result.report().reversed_source_segment_count()
+        result.reversed_source_segment_count(),
+        Some(result.report().reversed_source_segment_count())
     );
-    assert_eq!(ring_cache.output_ring_count(), Some(1));
-    assert_eq!(ring_cache.output_boundary_segment_count(), Some(4));
+    assert_eq!(result.output_ring_count(), Some(1));
+    assert_eq!(result.output_boundary_segment_count(), Some(4));
     assert_eq!(
-        ring_cache.arranged_source_reports(),
+        result.arranged_source_reports().unwrap(),
         result.report().arranged_source_reports()
     );
     let arranged_fragment_cache = ring_cache.arranged_fragment_cache();
@@ -1840,7 +1840,7 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
         result.report().arranged_source_reports()[0].status()
     );
     assert_eq!(
-        ring_cache.source_reports(),
+        result.source_reports().unwrap(),
         result.report().source_reports()
     );
     let output_ring_bucket_cache = ring_cache.output_ring_bucket_cache();
@@ -2876,19 +2876,19 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
     );
     let endpoint_cache = result.endpoint_graph_cache().unwrap();
     assert_eq!(
-        Some(endpoint_cache.predicate_path()),
+        result.endpoint_graph_predicate_path(),
         result.report().endpoint_graph_predicate_path()
     );
     assert_eq!(
-        Some(endpoint_cache.endpoint_count()),
+        result.endpoint_graph_endpoint_count(),
         result.report().endpoint_graph_endpoint_count()
     );
     assert_eq!(
-        Some(endpoint_cache.structural_bucket_count()),
+        result.endpoint_graph_structural_bucket_count(),
         result.report().endpoint_graph_structural_bucket_count()
     );
     assert_eq!(
-        Some(endpoint_cache.max_structural_bucket_size()),
+        result.endpoint_graph_max_structural_bucket_size(),
         result.report().endpoint_graph_max_structural_bucket_size()
     );
     let arranged_endpoint_bucket_cache = endpoint_cache.endpoint_bucket_cache();
@@ -3044,33 +3044,33 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
             .is_empty()
     );
     assert_eq!(
-        Some(endpoint_cache.dangling_endpoint_count()),
+        result.endpoint_graph_dangling_endpoint_count(),
         result.report().endpoint_graph_dangling_endpoint_count()
     );
     assert_eq!(
-        Some(endpoint_cache.branch_endpoint_count()),
+        result.endpoint_graph_branch_endpoint_count(),
         result.report().endpoint_graph_branch_endpoint_count()
     );
-    assert_eq!(endpoint_cache.blocker_point(), None);
+    assert_eq!(result.endpoint_graph_blocker_point(), None);
     let ring_cache = result.ring_assembly_cache().unwrap();
     assert_eq!(
-        Some(ring_cache.predicate_path()),
+        result.ring_assembly_predicate_path(),
         result.report().ring_assembly_predicate_path()
     );
     assert_eq!(
-        ring_cache.attempted_endpoint_connection_count(),
-        result.report().attempted_endpoint_connection_count()
+        result.attempted_endpoint_connection_count(),
+        Some(result.report().attempted_endpoint_connection_count())
     );
     assert_eq!(
-        ring_cache.output_ring_count(),
+        result.output_ring_count(),
         result.report().output_ring_count()
     );
     assert_eq!(
-        ring_cache.output_boundary_segment_kind_counts(),
+        result.output_boundary_segment_kind_counts(),
         result.report().output_boundary_segment_kind_counts()
     );
     assert_eq!(
-        ring_cache.arranged_source_reports(),
+        result.arranged_source_reports().unwrap(),
         result.report().arranged_source_reports()
     );
     let arranged_fragment_cache = ring_cache.arranged_fragment_cache();
@@ -3257,7 +3257,7 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
         result.report().arranged_source_reports()[0].source_range()
     );
     assert_eq!(
-        ring_cache.source_reports(),
+        result.source_reports().unwrap(),
         result.report().source_reports()
     );
     let output_ring_bucket_cache = ring_cache.output_ring_bucket_cache();
