@@ -923,16 +923,6 @@ impl ExactBooleanResult {
         )
     }
 
-    /// Return whether this result materialized the requested selected regions.
-    pub(crate) fn is_selected_regions_for(&self, selection: ExactRegionSelection) -> bool {
-        matches!(
-            self.kind,
-            ExactBooleanResultKind::SelectedRegions {
-                selection: result_selection,
-            } if result_selection == selection
-        )
-    }
-
     /// Return whether this result is an open-surface arrangement output.
     pub(crate) fn is_open_surface_arrangement_for(&self, operation: ExactBooleanOperation) -> bool {
         matches!(

@@ -3001,7 +3001,13 @@ fn replay_selected_region_boolean_result_from_graph(
     validate_graph_source_handoff(graph, left, right)?;
     let result =
         materialize_selected_region_result_from_graph(graph, left, right, selection, validation)?;
-    if !result.is_selected_regions_for(selection) || result.mesh.validation_policy() != validation {
+    if !matches!(
+        result.kind(),
+        ExactBooleanResultKind::SelectedRegions {
+            selection: result_selection,
+        } if result_selection == selection
+    ) || result.mesh.validation_policy() != validation
+    {
         return Err(MeshError::one(MeshDiagnostic::new(
             Severity::Error,
             DiagnosticKind::UnsupportedExactOperation,
