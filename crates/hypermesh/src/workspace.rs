@@ -50,18 +50,6 @@ impl<'a> ExactBooleanWorkspace<'a> {
         }
     }
 
-    /// Returns the exact intersection graph, building it once per workspace.
-    #[cfg(test)]
-    pub(crate) fn graph(&mut self) -> Result<&ExactIntersectionGraph, MeshError> {
-        if self.graph.is_none() {
-            self.graph = Some(build_intersection_graph(self.left, self.right)?);
-        }
-        Ok(self
-            .graph
-            .as_ref()
-            .expect("intersection graph was just initialized"))
-    }
-
     pub(crate) fn validated_graph(&mut self) -> Result<&ExactIntersectionGraph, MeshError> {
         self.ensure_validated_graph()?;
         Ok(self
@@ -562,14 +550,9 @@ mod tests {
             ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED);
         let mut workspace = ExactBooleanWorkspace::new(&left, &right);
 
-        let first_graph = workspace.graph().unwrap() as *const ExactIntersectionGraph;
-        let second_graph = workspace.graph().unwrap() as *const ExactIntersectionGraph;
+        let first_graph = workspace.validated_graph().unwrap() as *const ExactIntersectionGraph;
+        let second_graph = workspace.validated_graph().unwrap() as *const ExactIntersectionGraph;
         assert_eq!(first_graph, second_graph);
-        workspace
-            .graph()
-            .unwrap()
-            .validate_against_meshes(&left, &right)
-            .unwrap();
 
         let first_arrangement = workspace
             .arrangement(ExactRegularizationPolicy::REGULARIZED_SOLID)
@@ -753,7 +736,7 @@ mod tests {
         let request =
             ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED);
         let mut workspace = ExactBooleanWorkspace::new(&left, &right);
-        workspace.graph().unwrap();
+        workspace.validated_graph().unwrap();
         workspace
             .arrangement(ExactRegularizationPolicy::REGULARIZED_SOLID)
             .unwrap();
@@ -878,7 +861,7 @@ mod tests {
         let request =
             ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED);
         let mut workspace = ExactBooleanWorkspace::new(&left, &right);
-        workspace.graph().unwrap();
+        workspace.validated_graph().unwrap();
         workspace
             .arrangement(ExactRegularizationPolicy::REGULARIZED_SOLID)
             .unwrap();
@@ -928,7 +911,7 @@ mod tests {
         let request =
             ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED);
         let mut workspace = ExactBooleanWorkspace::new(&left, &right);
-        workspace.graph().unwrap();
+        workspace.validated_graph().unwrap();
         workspace
             .arrangement(ExactRegularizationPolicy::REGULARIZED_SOLID)
             .unwrap();
@@ -969,7 +952,7 @@ mod tests {
         let request =
             ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED);
         let mut workspace = ExactBooleanWorkspace::new(&left, &right);
-        workspace.graph().unwrap();
+        workspace.validated_graph().unwrap();
         workspace
             .arrangement(ExactRegularizationPolicy::REGULARIZED_SOLID)
             .unwrap();
