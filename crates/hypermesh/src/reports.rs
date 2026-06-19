@@ -1741,9 +1741,7 @@ impl ExactBooleanResult {
                 && let Some(attempt) = evaluation.retained_arrangement_attempt()
                 && let Some((topology, ownership)) = attempt.retained_gate_reports()
             {
-                if self.topology_assembly_report.as_ref() == Some(topology)
-                    && self.region_ownership_report.as_ref() == Some(ownership)
-                {
+                if self.has_retained_gate_reports(topology, ownership) {
                     return Ok(());
                 }
                 return Err(ExactReportValidationError::SourceReplayMismatch);
@@ -1884,7 +1882,7 @@ impl ExactBooleanResult {
         }
     }
 
-    pub(crate) fn retained_arrangement_attempt_matches_output_for_request(
+    fn retained_arrangement_attempt_matches_output_for_request(
         &self,
         request: ExactBooleanRequest,
         retained_arrangement_attempt: Option<&ExactArrangementBooleanAttempt>,
@@ -1924,9 +1922,7 @@ impl ExactBooleanResult {
             let Some((topology, ownership)) = attempt.retained_gate_reports() else {
                 return Err(ExactReportValidationError::StatusEvidenceMismatch);
             };
-            if self.topology_assembly_report.as_ref() != Some(topology)
-                || self.region_ownership_report.as_ref() != Some(ownership)
-            {
+            if !self.has_retained_gate_reports(topology, ownership) {
                 return Ok(false);
             }
         }
@@ -1940,6 +1936,15 @@ impl ExactBooleanResult {
             return Ok(false);
         }
         Ok(true)
+    }
+
+    fn has_retained_gate_reports(
+        &self,
+        topology: &ExactTopologyAssemblyReport,
+        ownership: &ExactRegionOwnershipReport,
+    ) -> bool {
+        self.topology_assembly_report.as_ref() == Some(topology)
+            && self.region_ownership_report.as_ref() == Some(ownership)
     }
 
     fn operation_replay_matches_sources(
