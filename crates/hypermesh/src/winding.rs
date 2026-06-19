@@ -435,18 +435,6 @@ impl ClosedMeshWindingMeshReport {
             Err(WindingReportError::SourceReplayMismatch)
         }
     }
-
-    /// Classify whether this retained mesh/mesh winding report is fresh.
-    pub fn freshness_against_sources(
-        &self,
-        subject: &ExactMesh,
-        target: &ExactMesh,
-    ) -> WindingReportFreshness {
-        match self.validate_against_sources(subject, target) {
-            Ok(()) => WindingReportFreshness::Current,
-            Err(error) => error.into(),
-        }
-    }
 }
 
 /// Validation or source-replay failure for winding reports.

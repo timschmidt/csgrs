@@ -1012,16 +1012,6 @@ impl ExactBooleanCertificationSet {
         &mut self.refinement
     }
 
-    /// Return source-shape facts used by trivial shortcut supports.
-    pub fn trivial(&self) -> &ExactTrivialBooleanFacts {
-        &self.trivial
-    }
-
-    /// Return the identical-mesh shortcut certification report.
-    pub fn identical(&self) -> &ExactIdenticalMeshReport {
-        &self.identical
-    }
-
     /// Return the same-surface shortcut certification report.
     pub fn same_surface(&self) -> &ExactSameSurfaceReport {
         &self.same_surface
@@ -1056,21 +1046,6 @@ impl ExactBooleanCertificationSet {
     /// request reached that certified shortcut.
     pub fn volumetric_boundary_closure(&self) -> Option<&ExactVolumetricBoundaryClosureReport> {
         self.volumetric_boundary_closure.as_ref()
-    }
-
-    /// Return source-shape facts used by closed regularized-solid shortcuts.
-    pub fn regularized_solid(&self) -> &ExactRegularizedSolidBooleanFacts {
-        &self.regularized_solid
-    }
-
-    /// Return the left-against-right closed-winding classification report.
-    pub fn closed_winding_left_in_right(&self) -> &ClosedMeshWindingMeshReport {
-        &self.closed_winding_left_in_right
-    }
-
-    /// Return the right-against-left closed-winding classification report.
-    pub fn closed_winding_right_in_left(&self) -> &ClosedMeshWindingMeshReport {
-        &self.closed_winding_right_in_left
     }
 
     pub(crate) fn from_graph_and_regularized_arrangement(
@@ -2009,23 +1984,6 @@ pub struct ExactTrivialBooleanFacts {
     pub(crate) bounds_disjoint: bool,
 }
 
-impl ExactTrivialBooleanFacts {
-    /// Return whether the left source has no input triangles.
-    pub const fn left_empty(&self) -> bool {
-        self.left_empty
-    }
-
-    /// Return whether the right source has no input triangles.
-    pub const fn right_empty(&self) -> bool {
-        self.right_empty
-    }
-
-    /// Return whether both non-empty source bounds are exactly disjoint.
-    pub const fn bounds_disjoint(&self) -> bool {
-        self.bounds_disjoint
-    }
-}
-
 /// Replayable source-shape facts for closed regularized-solid shortcut
 /// supports.
 ///
@@ -2063,26 +2021,6 @@ impl ExactRegularizedSolidBooleanFacts {
         } else {
             Ok(())
         }
-    }
-
-    /// Return whether the left source is a non-empty closed solid.
-    pub const fn left_closed_solid(&self) -> bool {
-        self.left_closed_solid
-    }
-
-    /// Return whether the right source is a non-empty closed solid.
-    pub const fn right_closed_solid(&self) -> bool {
-        self.right_closed_solid
-    }
-
-    /// Return whether the left source is a supported non-empty open surface.
-    pub const fn left_open_surface(&self) -> bool {
-        self.left_open_surface
-    }
-
-    /// Return whether the right source is a supported non-empty open surface.
-    pub const fn right_open_surface(&self) -> bool {
-        self.right_open_surface
     }
 }
 
@@ -2261,36 +2199,6 @@ pub enum ExactIdenticalMeshStatus {
 }
 
 impl ExactIdenticalMeshReport {
-    /// Return the coarse identical-mesh certification status.
-    pub const fn status(&self) -> ExactIdenticalMeshStatus {
-        self.status
-    }
-
-    /// Return the number of left source vertices compared.
-    pub const fn left_vertices(&self) -> usize {
-        self.left_vertices
-    }
-
-    /// Return the number of right source vertices compared.
-    pub const fn right_vertices(&self) -> usize {
-        self.right_vertices
-    }
-
-    /// Return the number of left source triangles compared.
-    pub const fn left_triangles(&self) -> usize {
-        self.left_triangles
-    }
-
-    /// Return the number of right source triangles compared.
-    pub const fn right_triangles(&self) -> usize {
-        self.right_triangles
-    }
-
-    /// Return the retained coordinate predicate certificates.
-    pub fn predicates(&self) -> &[PredicateUse] {
-        &self.predicates
-    }
-
     pub const fn is_certified(&self) -> bool {
         matches!(self.status, ExactIdenticalMeshStatus::Certified)
     }
