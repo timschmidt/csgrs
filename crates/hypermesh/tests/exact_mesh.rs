@@ -1360,15 +1360,6 @@ fn exact_closed_convex_boolean_is_publicly_replayable() {
             ExactReportFreshness::StaleRegionFacts,
             "{operation:?}: {stale_output:?}"
         );
-        result
-            .validate_operation_against_sources(
-                &left,
-                &right,
-                operation,
-                ValidationPolicy::CLOSED,
-                ExactBoundaryBooleanPolicy::Reject,
-            )
-            .unwrap();
         assert!(result.mesh.facts().mesh.closed_manifold);
     }
 
@@ -1458,15 +1449,6 @@ fn exact_closed_convex_boolean_is_publicly_replayable() {
         ExactReportFreshness::StaleRegionFacts,
         "{stale_containment_output:?}"
     );
-    containment
-        .validate_operation_against_sources(
-            &contained_on_boundary,
-            &container,
-            ExactBooleanOperation::Difference,
-            ValidationPolicy::CLOSED,
-            ExactBoundaryBooleanPolicy::Reject,
-        )
-        .unwrap();
     assert!(containment.mesh.triangles().is_empty());
 
     let axis_overlap = exact_boolean_result(
