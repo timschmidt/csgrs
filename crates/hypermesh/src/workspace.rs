@@ -1050,7 +1050,7 @@ mod tests {
             .1
             .materialized_result_mut()
             .expect("certified test request should retain a result");
-        cached_result.graph_had_unknowns = !cached_result.graph_had_unknowns;
+        cached_result.set_graph_had_unknowns(!cached_result.graph_had_unknowns());
         let corrupted = workspace.evaluations[0].1.clone();
         assert!(
             corrupted.validate_against_sources(&left, &right).is_err(),
@@ -1091,8 +1091,10 @@ mod tests {
         let mut corrupt_workspace = ExactBooleanWorkspace::new(&left, &right);
         corrupt_workspace.materialize(request).unwrap();
         corrupt_workspace.evaluations.clear();
-        corrupt_workspace.materializations[0].1.graph_had_unknowns =
-            !corrupt_workspace.materializations[0].1.graph_had_unknowns;
+        let graph_had_unknowns = corrupt_workspace.materializations[0].1.graph_had_unknowns();
+        corrupt_workspace.materializations[0]
+            .1
+            .set_graph_had_unknowns(!graph_had_unknowns);
         assert!(
             corrupt_workspace.evaluate(request).is_err(),
             "cached materialization must validate before evaluation reuse"
@@ -1216,8 +1218,10 @@ mod tests {
         );
         workspace.materializations[0].1 = materialized.clone();
 
-        workspace.materializations[0].1.graph_had_unknowns =
-            !workspace.materializations[0].1.graph_had_unknowns;
+        let graph_had_unknowns = workspace.materializations[0].1.graph_had_unknowns();
+        workspace.materializations[0]
+            .1
+            .set_graph_had_unknowns(!graph_had_unknowns);
         assert!(
             workspace.materialize(request).is_err(),
             "cached boundary-touching materialization must validate before reuse"
@@ -1262,8 +1266,10 @@ mod tests {
             expected_evidence
         );
 
-        workspace.materializations[0].1.graph_had_unknowns =
-            !workspace.materializations[0].1.graph_had_unknowns;
+        let graph_had_unknowns = workspace.materializations[0].1.graph_had_unknowns();
+        workspace.materializations[0]
+            .1
+            .set_graph_had_unknowns(!graph_had_unknowns);
         assert!(
             workspace.materialize(request).is_err(),
             "cached no-volume materialization must validate before reuse"

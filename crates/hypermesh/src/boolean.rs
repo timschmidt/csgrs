@@ -2495,7 +2495,7 @@ impl ExactBooleanEvaluation {
         if match result.kind() {
             ExactBooleanResultKind::SelectedRegions { .. }
             | ExactBooleanResultKind::OpenSurfaceArrangement { .. } => {
-                result.graph_had_unknowns != self.preflight.graph_had_unknowns
+                result.graph_had_unknowns() != self.preflight.graph_had_unknowns
                     || result.region_classifications != self.preflight.region_classifications
             }
             ExactBooleanResultKind::ArrangementCellComplexMaterialized { .. }

@@ -685,7 +685,7 @@ pub struct ExactBooleanResult {
     /// Declared production path for this result.
     pub(crate) kind: ExactBooleanResultKind,
     /// Whether graph extraction contained unknown events before policy checks.
-    pub graph_had_unknowns: bool,
+    pub(crate) graph_had_unknowns: bool,
     /// Certified classifications of split regions against opposite face
     /// planes.
     pub region_classifications: Vec<FaceRegionPlaneClassification>,
@@ -714,6 +714,16 @@ impl ExactBooleanResult {
     /// Replace the declared production path for this result.
     pub fn replace_kind(&mut self, kind: ExactBooleanResultKind) -> ExactBooleanResultKind {
         std::mem::replace(&mut self.kind, kind)
+    }
+
+    /// Return whether graph extraction contained unknown events before policy checks.
+    pub fn graph_had_unknowns(&self) -> bool {
+        self.graph_had_unknowns
+    }
+
+    /// Update whether graph extraction contained unknown events before policy checks.
+    pub fn set_graph_had_unknowns(&mut self, graph_had_unknowns: bool) {
+        self.graph_had_unknowns = graph_had_unknowns;
     }
 
     /// Borrow the materialized exact output mesh.
