@@ -1333,6 +1333,42 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
     let boundary_report = output_cache.boundary_build_report().unwrap();
     assert_eq!(boundary_report.material_contour_count(), Some(1));
     assert_eq!(boundary_report.hole_contour_count(), Some(0));
+    let role_cache = output_cache.role_cache().unwrap();
+    assert_eq!(
+        role_cache.role_report_count(),
+        boundary_report.role_reports().len()
+    );
+    assert_eq!(role_cache.material_contour_count(), 1);
+    assert_eq!(role_cache.hole_contour_count(), 0);
+    assert_eq!(role_cache.material_segment_count(), 4);
+    assert_eq!(role_cache.hole_segment_count(), 0);
+    assert_eq!(role_cache.buckets().len(), 2);
+    assert_eq!(
+        role_cache.buckets()[0].role(),
+        RegionBoundaryContourRole2::Material
+    );
+    assert_eq!(role_cache.buckets()[0].assignments().len(), 1);
+    assert_eq!(
+        role_cache.buckets()[1].role(),
+        RegionBoundaryContourRole2::Hole
+    );
+    assert!(role_cache.buckets()[1].assignments().is_empty());
+    let role_assignment = &role_cache.buckets()[0].assignments()[0];
+    assert_eq!(role_assignment.role_report_index(), 0);
+    assert_eq!(role_assignment.source_contour_index(), 0);
+    assert_eq!(role_assignment.source_segment_count(), 4);
+    assert_eq!(role_assignment.source_fill_rule(), FillRule::NonZero);
+    assert_eq!(
+        role_assignment.nesting_sample_point(),
+        boundary_report.role_reports()[0].nesting_sample_point()
+    );
+    assert_eq!(role_assignment.containing_contour_indices(), &[]);
+    assert_eq!(role_assignment.nesting_depth(), 0);
+    assert_eq!(role_assignment.output_role_index(), 0);
+    assert_eq!(
+        role_assignment.status(),
+        boundary_report.role_reports()[0].status()
+    );
     assert!(result.region().is_some());
     assert_eq!(
         result.report().split_predicate_path(),
@@ -1617,6 +1653,43 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
         output_cache.boundary_build_report(),
         result.report().boundary_build_report()
     );
+    let boundary_report = output_cache.boundary_build_report().unwrap();
+    let role_cache = output_cache.role_cache().unwrap();
+    assert_eq!(
+        role_cache.role_report_count(),
+        boundary_report.role_reports().len()
+    );
+    assert_eq!(role_cache.material_contour_count(), 1);
+    assert_eq!(role_cache.hole_contour_count(), 0);
+    assert_eq!(role_cache.material_segment_count(), 2);
+    assert_eq!(role_cache.hole_segment_count(), 0);
+    assert_eq!(role_cache.buckets().len(), 2);
+    assert_eq!(
+        role_cache.buckets()[0].role(),
+        RegionBoundaryContourRole2::Material
+    );
+    assert_eq!(role_cache.buckets()[0].assignments().len(), 1);
+    assert_eq!(
+        role_cache.buckets()[1].role(),
+        RegionBoundaryContourRole2::Hole
+    );
+    assert!(role_cache.buckets()[1].assignments().is_empty());
+    let role_assignment = &role_cache.buckets()[0].assignments()[0];
+    assert_eq!(role_assignment.role_report_index(), 0);
+    assert_eq!(role_assignment.source_contour_index(), 0);
+    assert_eq!(role_assignment.source_segment_count(), 2);
+    assert_eq!(role_assignment.source_fill_rule(), FillRule::NonZero);
+    assert_eq!(
+        role_assignment.nesting_sample_point(),
+        boundary_report.role_reports()[0].nesting_sample_point()
+    );
+    assert_eq!(role_assignment.containing_contour_indices(), &[]);
+    assert_eq!(role_assignment.nesting_depth(), 0);
+    assert_eq!(role_assignment.output_role_index(), 0);
+    assert_eq!(
+        role_assignment.status(),
+        boundary_report.role_reports()[0].status()
+    );
     assert!(result.region().is_some());
     assert!(result.report().status().is_native_exact());
     assert_eq!(result.report(), legacy.report());
@@ -1749,6 +1822,7 @@ fn exact_curve_arrangement_attempt_retains_overlap_blocker() {
     assert_eq!(output_cache.status(), result.report().status());
     assert_eq!(output_cache.blocker(), Some(UncertaintyReason::Boundary));
     assert_eq!(output_cache.boundary_build_report(), None);
+    assert_eq!(output_cache.role_cache(), None);
     assert_eq!(result.report(), legacy.report());
 }
 
