@@ -1155,11 +1155,6 @@ impl ExactBooleanCertificationSet {
         &self.closed_winding_right_in_left
     }
 
-    /// Return the right-against-left closed-winding classification report mutably.
-    pub fn closed_winding_right_in_left_mut(&mut self) -> &mut ClosedMeshWindingMeshReport {
-        &mut self.closed_winding_right_in_left
-    }
-
     pub(crate) fn from_graph_and_regularized_arrangement(
         graph: &ExactIntersectionGraph,
         left: &ExactMesh,
@@ -2213,16 +2208,6 @@ impl ExactRegularizedSolidBooleanFacts {
     /// Return whether the right source is a supported non-empty open surface.
     pub const fn right_open_surface(&self) -> bool {
         self.right_open_surface
-    }
-
-    /// Return the left closed-solid fact mutably.
-    pub fn left_closed_solid_mut(&mut self) -> &mut bool {
-        &mut self.left_closed_solid
-    }
-
-    /// Return the right closed-solid fact mutably.
-    pub fn right_closed_solid_mut(&mut self) -> &mut bool {
-        &mut self.right_closed_solid
     }
 
     /// Return the left open-surface fact mutably.

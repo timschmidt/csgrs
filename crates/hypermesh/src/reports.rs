@@ -800,11 +800,6 @@ impl ExactBooleanResult {
         &self.mesh
     }
 
-    /// Borrow the materialized exact output mesh mutably.
-    pub fn mesh_mut(&mut self) -> &mut ExactMesh {
-        &mut self.mesh
-    }
-
     /// Replace the materialized exact output mesh.
     pub fn replace_mesh(&mut self, mesh: ExactMesh) -> ExactMesh {
         std::mem::replace(&mut self.mesh, mesh)
@@ -4907,11 +4902,6 @@ impl ExactBooleanBlocker {
         self.construction_failed_events
     }
 
-    /// Return the missing policy or refinement class mutably.
-    pub fn kind_mut(&mut self) -> &mut ExactBooleanBlockerKind {
-        &mut self.kind
-    }
-
     /// Return the retained non-coplanar candidate face-pair count mutably.
     pub fn candidate_pairs_mut(&mut self) -> &mut usize {
         &mut self.candidate_pairs
@@ -4930,11 +4920,6 @@ impl ExactBooleanBlocker {
     /// Return the retained unknown face-pair count mutably.
     pub fn unknown_pairs_mut(&mut self) -> &mut usize {
         &mut self.unknown_pairs
-    }
-
-    /// Return the retained failed exact construction event count mutably.
-    pub fn construction_failed_events_mut(&mut self) -> &mut usize {
-        &mut self.construction_failed_events
     }
 
     /// Return whether this blocker is waiting on predicate or construction refinement.
