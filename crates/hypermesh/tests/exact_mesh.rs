@@ -35,10 +35,11 @@ fn evaluation_materializes_arrangement_cell_complex(
     evaluation
         .retained_arrangement_attempt()
         .is_some_and(|attempt| {
-            attempt.certifies_arrangement_cell_complex_output_for_request(
-                evaluation.request,
-                ExactRegularizationPolicy::REGULARIZED_SOLID,
-            )
+            attempt.operation == evaluation.request.operation
+                && attempt.policy == ExactRegularizationPolicy::REGULARIZED_SOLID
+                && attempt.output_validation == evaluation.request.validation
+                && attempt.validate().is_ok()
+                && attempt.materialized_arrangement_cell_complex_output()
         })
         || evaluation
             .certifications
@@ -1911,10 +1912,11 @@ fn exact_open_surface_arrangement_is_publicly_replayable() {
             ExactRegularizationPolicy::REGULARIZED_SOLID,
         );
         assert!(
-            attempt.certifies_arrangement_cell_complex_shortcut_for_request(
-                ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
-                ExactRegularizationPolicy::REGULARIZED_SOLID,
-            ),
+            attempt.operation == operation
+                && attempt.policy == ExactRegularizationPolicy::REGULARIZED_SOLID
+                && attempt.output_validation == ValidationPolicy::ALLOW_BOUNDARY
+                && attempt.validate().is_ok()
+                && attempt.materialized_arrangement_cell_complex_shortcut(),
             "{operation:?}: {attempt:?}"
         );
         assert_eq!(attempt.output_validation, ValidationPolicy::ALLOW_BOUNDARY);
@@ -2114,10 +2116,11 @@ fn arrangement_attempt_output_validation_is_publicly_replayable() {
             ValidationPolicy::ALLOW_BOUNDARY
         );
         assert!(
-            boundary_attempt.certifies_arrangement_cell_complex_shortcut_for_request(
-                ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
-                ExactRegularizationPolicy::REGULARIZED_SOLID,
-            ),
+            boundary_attempt.operation == operation
+                && boundary_attempt.policy == ExactRegularizationPolicy::REGULARIZED_SOLID
+                && boundary_attempt.output_validation == ValidationPolicy::ALLOW_BOUNDARY
+                && boundary_attempt.validate().is_ok()
+                && boundary_attempt.materialized_arrangement_cell_complex_shortcut(),
             "{operation:?}: {boundary_attempt:?}"
         );
         boundary_attempt.validate().unwrap();
