@@ -961,7 +961,7 @@ pub struct ExactBooleanCertificationSet {
     /// Source-shape facts used by trivial shortcut supports.
     pub trivial: ExactTrivialBooleanFacts,
     /// Source-shape facts used by closed regularized-solid shortcut supports.
-    pub regularized_solid: ExactRegularizedSolidBooleanFacts,
+    regularized_solid: ExactRegularizedSolidBooleanFacts,
     /// Exact graph refinement status.
     pub refinement: ExactRefinementReport,
     /// Boundary-contact policy status.
@@ -1013,6 +1013,16 @@ impl ExactBooleanCertificationSet {
     /// request reached that certified shortcut.
     pub fn volumetric_boundary_closure(&self) -> Option<&ExactVolumetricBoundaryClosureReport> {
         self.volumetric_boundary_closure.as_ref()
+    }
+
+    /// Return source-shape facts used by closed regularized-solid shortcuts.
+    pub fn regularized_solid(&self) -> &ExactRegularizedSolidBooleanFacts {
+        &self.regularized_solid
+    }
+
+    /// Return source-shape facts used by closed regularized-solid shortcuts mutably.
+    pub fn regularized_solid_mut(&mut self) -> &mut ExactRegularizedSolidBooleanFacts {
+        &mut self.regularized_solid
     }
 
     pub(crate) fn from_graph_and_regularized_arrangement(

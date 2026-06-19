@@ -4398,7 +4398,7 @@ fn trivial_boolean_shortcuts_are_publicly_replayable() {
         let mut relabeled_lower_dimensional_facts = lower_dimensional_evaluation.clone();
         relabeled_lower_dimensional_facts
             .certifications_mut()
-            .regularized_solid
+            .regularized_solid_mut()
             .left_open_surface = false;
         assert_report_validation_error!(
             relabeled_lower_dimensional_facts.validate(),
@@ -4429,7 +4429,7 @@ fn trivial_boolean_shortcuts_are_publicly_replayable() {
         let mut relabeled_mixed_dimensional_facts = mixed_dimensional_evaluation.clone();
         relabeled_mixed_dimensional_facts
             .certifications_mut()
-            .regularized_solid
+            .regularized_solid_mut()
             .right_open_surface = false;
         assert_report_validation_error!(
             relabeled_mixed_dimensional_facts.validate(),
