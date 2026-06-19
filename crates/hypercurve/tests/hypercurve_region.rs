@@ -1136,6 +1136,51 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
     );
     assert_eq!(split_schedule_cache.undecided_aabb_pair_count(), 0);
     assert_eq!(split_schedule_cache.candidate_pairs().len(), 6);
+    let split_schedule_bucket_cache = split_schedule_cache.bucket_cache();
+    assert_eq!(split_schedule_bucket_cache.bucket_count(), 3);
+    assert_eq!(split_schedule_bucket_cache.candidate_ref_count(), 6);
+    assert_eq!(split_schedule_bucket_cache.max_bucket_size(), 4);
+    assert_eq!(split_schedule_bucket_cache.buckets().len(), 3);
+    assert_eq!(
+        split_schedule_bucket_cache.buckets()[0].aabb_status(),
+        ExactCurveArrangementSplitCandidateAabbStatus2::DecidedDisjoint
+    );
+    assert_eq!(
+        split_schedule_bucket_cache.buckets()[0]
+            .candidate_refs()
+            .len(),
+        split_schedule_cache.decided_disjoint_pair_count()
+    );
+    assert_eq!(
+        split_schedule_bucket_cache.buckets()[0].candidate_refs()[0].candidate_pair_index(),
+        1
+    );
+    assert_eq!(
+        split_schedule_cache.candidate_pairs()
+            [split_schedule_bucket_cache.buckets()[0].candidate_refs()[0].candidate_pair_index()]
+        .aabb_status(),
+        ExactCurveArrangementSplitCandidateAabbStatus2::DecidedDisjoint
+    );
+    assert_eq!(
+        split_schedule_bucket_cache.buckets()[1].aabb_status(),
+        ExactCurveArrangementSplitCandidateAabbStatus2::NotDecidedDisjoint
+    );
+    assert_eq!(
+        split_schedule_bucket_cache.buckets()[1]
+            .candidate_refs()
+            .len(),
+        split_schedule_cache.predicate_candidate_pair_count()
+    );
+    assert_eq!(
+        split_schedule_bucket_cache.buckets()[2].aabb_status(),
+        ExactCurveArrangementSplitCandidateAabbStatus2::Undecided
+    );
+    assert_eq!(
+        split_schedule_bucket_cache.buckets()[2]
+            .candidate_refs()
+            .len(),
+        split_schedule_cache.undecided_aabb_pair_count()
+    );
     assert_eq!(
         (
             split_schedule_cache.candidate_pairs()[0].first_source_segment_index(),
@@ -1539,6 +1584,43 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
     );
     assert_eq!(split_schedule_cache.undecided_aabb_pair_count(), 0);
     assert_eq!(split_schedule_cache.candidate_pairs().len(), 1);
+    let split_schedule_bucket_cache = split_schedule_cache.bucket_cache();
+    assert_eq!(split_schedule_bucket_cache.bucket_count(), 3);
+    assert_eq!(split_schedule_bucket_cache.candidate_ref_count(), 1);
+    assert_eq!(split_schedule_bucket_cache.max_bucket_size(), 1);
+    assert_eq!(split_schedule_bucket_cache.buckets().len(), 3);
+    assert_eq!(
+        split_schedule_bucket_cache.buckets()[0].aabb_status(),
+        ExactCurveArrangementSplitCandidateAabbStatus2::DecidedDisjoint
+    );
+    assert!(
+        split_schedule_bucket_cache.buckets()[0]
+            .candidate_refs()
+            .is_empty()
+    );
+    assert_eq!(
+        split_schedule_bucket_cache.buckets()[1].aabb_status(),
+        ExactCurveArrangementSplitCandidateAabbStatus2::NotDecidedDisjoint
+    );
+    assert_eq!(
+        split_schedule_bucket_cache.buckets()[1]
+            .candidate_refs()
+            .len(),
+        1
+    );
+    assert_eq!(
+        split_schedule_bucket_cache.buckets()[1].candidate_refs()[0].candidate_pair_index(),
+        0
+    );
+    assert_eq!(
+        split_schedule_bucket_cache.buckets()[2].aabb_status(),
+        ExactCurveArrangementSplitCandidateAabbStatus2::Undecided
+    );
+    assert!(
+        split_schedule_bucket_cache.buckets()[2]
+            .candidate_refs()
+            .is_empty()
+    );
     assert_eq!(
         (
             split_schedule_cache.candidate_pairs()[0].first_source_segment_index(),

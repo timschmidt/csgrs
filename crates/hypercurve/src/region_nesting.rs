@@ -114,6 +114,28 @@ pub struct ExactCurveArrangementSplitCandidatePair2 {
     aabb_status: ExactCurveArrangementSplitCandidateAabbStatus2,
 }
 
+/// Reference to a retained scheduled split candidate pair.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ExactCurveArrangementSplitScheduleRef2 {
+    candidate_pair_index: usize,
+}
+
+/// Scheduled split candidate bucket grouped by retained AABB pruning status.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ExactCurveArrangementSplitScheduleBucket2 {
+    aabb_status: ExactCurveArrangementSplitCandidateAabbStatus2,
+    candidate_refs: Vec<ExactCurveArrangementSplitScheduleRef2>,
+}
+
+/// Scheduled split candidate buckets grouped by retained AABB pruning status.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ExactCurveArrangementSplitScheduleBucketCache2 {
+    bucket_count: usize,
+    candidate_ref_count: usize,
+    max_bucket_size: usize,
+    buckets: Vec<ExactCurveArrangementSplitScheduleBucket2>,
+}
+
 /// Retained exact source-pair schedule used before split predicate evaluation.
 #[derive(Clone, Debug, PartialEq)]
 pub struct ExactCurveArrangementSplitScheduleCache2 {
@@ -121,6 +143,7 @@ pub struct ExactCurveArrangementSplitScheduleCache2 {
     decided_disjoint_pair_count: usize,
     predicate_candidate_pair_count: usize,
     undecided_aabb_pair_count: usize,
+    bucket_cache: ExactCurveArrangementSplitScheduleBucketCache2,
     candidate_pairs: Vec<ExactCurveArrangementSplitCandidatePair2>,
 }
 
@@ -1664,6 +1687,98 @@ impl ExactCurveArrangementSplitCandidatePair2 {
     }
 }
 
+impl ExactCurveArrangementSplitScheduleRef2 {
+    /// Returns the index into [`ExactCurveArrangementSplitScheduleCache2::candidate_pairs`].
+    pub const fn candidate_pair_index(&self) -> usize {
+        self.candidate_pair_index
+    }
+}
+
+impl ExactCurveArrangementSplitScheduleBucket2 {
+    /// Returns the retained AABB pruning status represented by this bucket.
+    pub const fn aabb_status(&self) -> ExactCurveArrangementSplitCandidateAabbStatus2 {
+        self.aabb_status
+    }
+
+    /// Returns scheduled candidate pair references with this AABB status.
+    pub fn candidate_refs(&self) -> &[ExactCurveArrangementSplitScheduleRef2] {
+        &self.candidate_refs
+    }
+}
+
+impl ExactCurveArrangementSplitScheduleBucketCache2 {
+    fn from_candidate_pairs(candidate_pairs: &[ExactCurveArrangementSplitCandidatePair2]) -> Self {
+        let mut decided_disjoint_refs = Vec::new();
+        let mut not_decided_disjoint_refs = Vec::new();
+        let mut undecided_refs = Vec::new();
+
+        for (candidate_pair_index, candidate_pair) in candidate_pairs.iter().enumerate() {
+            let candidate_ref = ExactCurveArrangementSplitScheduleRef2 {
+                candidate_pair_index,
+            };
+            match candidate_pair.aabb_status() {
+                ExactCurveArrangementSplitCandidateAabbStatus2::DecidedDisjoint => {
+                    decided_disjoint_refs.push(candidate_ref)
+                }
+                ExactCurveArrangementSplitCandidateAabbStatus2::NotDecidedDisjoint => {
+                    not_decided_disjoint_refs.push(candidate_ref)
+                }
+                ExactCurveArrangementSplitCandidateAabbStatus2::Undecided => {
+                    undecided_refs.push(candidate_ref)
+                }
+            }
+        }
+
+        let buckets = vec![
+            ExactCurveArrangementSplitScheduleBucket2 {
+                aabb_status: ExactCurveArrangementSplitCandidateAabbStatus2::DecidedDisjoint,
+                candidate_refs: decided_disjoint_refs,
+            },
+            ExactCurveArrangementSplitScheduleBucket2 {
+                aabb_status: ExactCurveArrangementSplitCandidateAabbStatus2::NotDecidedDisjoint,
+                candidate_refs: not_decided_disjoint_refs,
+            },
+            ExactCurveArrangementSplitScheduleBucket2 {
+                aabb_status: ExactCurveArrangementSplitCandidateAabbStatus2::Undecided,
+                candidate_refs: undecided_refs,
+            },
+        ];
+        let candidate_ref_count = candidate_pairs.len();
+        let max_bucket_size = buckets
+            .iter()
+            .map(|bucket| bucket.candidate_refs.len())
+            .max()
+            .unwrap_or(0);
+
+        Self {
+            bucket_count: buckets.len(),
+            candidate_ref_count,
+            max_bucket_size,
+            buckets,
+        }
+    }
+
+    /// Returns the number of AABB-status buckets.
+    pub const fn bucket_count(&self) -> usize {
+        self.bucket_count
+    }
+
+    /// Returns the number of scheduled candidate references retained.
+    pub const fn candidate_ref_count(&self) -> usize {
+        self.candidate_ref_count
+    }
+
+    /// Returns the largest AABB-status bucket size.
+    pub const fn max_bucket_size(&self) -> usize {
+        self.max_bucket_size
+    }
+
+    /// Returns AABB-status buckets in stable status order.
+    pub fn buckets(&self) -> &[ExactCurveArrangementSplitScheduleBucket2] {
+        &self.buckets
+    }
+}
+
 impl ExactCurveArrangementSplitScheduleCache2 {
     /// Returns the total number of scheduled source segment pairs.
     pub const fn candidate_pair_count(&self) -> usize {
@@ -1683,6 +1798,11 @@ impl ExactCurveArrangementSplitScheduleCache2 {
     /// Returns scheduled pairs whose AABB pruning status stayed undecided.
     pub const fn undecided_aabb_pair_count(&self) -> usize {
         self.undecided_aabb_pair_count
+    }
+
+    /// Returns scheduled split candidate buckets grouped by retained AABB pruning status.
+    pub const fn bucket_cache(&self) -> &ExactCurveArrangementSplitScheduleBucketCache2 {
+        &self.bucket_cache
     }
 
     /// Returns scheduled source segment pairs in canonical `i < j` order.
@@ -4809,12 +4929,16 @@ fn split_schedule_cache(
         }
     }
 
+    let bucket_cache =
+        ExactCurveArrangementSplitScheduleBucketCache2::from_candidate_pairs(&candidate_pairs);
+
     ExactCurveArrangementSplitScheduleCache2 {
         candidate_pair_count,
         decided_disjoint_pair_count,
         predicate_candidate_pair_count: candidate_pair_count
             .saturating_sub(decided_disjoint_pair_count),
         undecided_aabb_pair_count,
+        bucket_cache,
         candidate_pairs,
     }
 }
