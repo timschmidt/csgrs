@@ -424,6 +424,25 @@ fn curve_string_round_cap_outline_report_materializes_single_line() {
         outline.report().source_segment_kind_counts(),
         SegmentKindCounts { lines: 1, arcs: 0 }
     );
+    let source_self_contact = outline
+        .report()
+        .source_self_contact_report()
+        .expect("source self-contact validation should be retained");
+    assert!(source_self_contact.status().is_native_exact());
+    assert_eq!(source_self_contact.segment_count(), 1);
+    assert_eq!(
+        source_self_contact.segment_kind_counts(),
+        SegmentKindCounts { lines: 1, arcs: 0 }
+    );
+    assert_eq!(source_self_contact.blocker(), None);
+    assert_eq!(
+        source_self_contact.first_contact_first_segment_index(),
+        None
+    );
+    assert_eq!(
+        source_self_contact.first_contact_second_segment_index(),
+        None
+    );
     assert_eq!(outline.report().left_offset_segment_count(), Some(1));
     assert_eq!(
         outline.report().left_offset_segment_kind_counts(),
@@ -501,6 +520,7 @@ fn curve_string_round_cap_outline_report_blocks_nonpositive_distance() {
         outline.report().source_segment_kind_counts(),
         SegmentKindCounts { lines: 1, arcs: 0 }
     );
+    assert_eq!(outline.report().source_self_contact_report(), None);
     assert_eq!(outline.report().left_offset_segment_count(), None);
     assert_eq!(outline.report().left_offset_segment_kind_counts(), None);
     assert_eq!(outline.report().right_offset_segment_count(), None);
@@ -552,6 +572,24 @@ fn curve_string_round_cap_outline_report_blocks_self_contacting_input() {
     assert_eq!(
         outline.report().source_segment_kind_counts(),
         SegmentKindCounts { lines: 3, arcs: 0 }
+    );
+    let source_self_contact = outline
+        .report()
+        .source_self_contact_report()
+        .expect("source self-contact blocker should retain scan evidence");
+    assert!(source_self_contact.status().is_native_exact());
+    assert_eq!(source_self_contact.segment_count(), 3);
+    assert_eq!(
+        source_self_contact.segment_kind_counts(),
+        SegmentKindCounts { lines: 3, arcs: 0 }
+    );
+    assert_eq!(
+        source_self_contact.first_contact_first_segment_index(),
+        Some(0)
+    );
+    assert_eq!(
+        source_self_contact.first_contact_second_segment_index(),
+        Some(2)
     );
     assert_eq!(outline.report().left_offset_segment_count(), None);
     assert_eq!(outline.report().left_offset_segment_kind_counts(), None);

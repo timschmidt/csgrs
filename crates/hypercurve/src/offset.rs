@@ -124,6 +124,7 @@ pub struct CurveStringOutlineOffsetReport2 {
     cap: OffsetCap,
     source_segment_count: usize,
     source_segment_kind_counts: SegmentKindCounts,
+    source_self_contact_report: Option<SelfContactReport2>,
     left_offset_segment_count: Option<usize>,
     left_offset_segment_kind_counts: Option<SegmentKindCounts>,
     right_offset_segment_count: Option<usize>,
@@ -721,6 +722,11 @@ impl CurveStringOutlineOffsetReport2 {
         self.source_segment_kind_counts
     }
 
+    /// Returns source self-contact validation evidence when that stage was reached.
+    pub const fn source_self_contact_report(&self) -> Option<&SelfContactReport2> {
+        self.source_self_contact_report.as_ref()
+    }
+
     /// Returns the left offset trace segment count after raw joining.
     pub const fn left_offset_segment_count(&self) -> Option<usize> {
         self.left_offset_segment_count
@@ -920,6 +926,7 @@ fn blocked_curve_string_outline_offset_result(
     cap: OffsetCap,
     source_segment_count: usize,
     source_segment_kind_counts: SegmentKindCounts,
+    source_self_contact_report: Option<SelfContactReport2>,
     left_offset_segment_count: Option<usize>,
     left_offset_segment_kind_counts: Option<SegmentKindCounts>,
     right_offset_segment_count: Option<usize>,
@@ -936,6 +943,7 @@ fn blocked_curve_string_outline_offset_result(
             cap,
             source_segment_count,
             source_segment_kind_counts,
+            source_self_contact_report,
             left_offset_segment_count,
             left_offset_segment_kind_counts,
             right_offset_segment_count,
@@ -979,6 +987,7 @@ fn checked_outline_with_report(
                 None,
                 None,
                 None,
+                None,
                 RetainedTopologyStatus::Unsupported,
                 UncertaintyReason::Unsupported,
             ));
@@ -995,13 +1004,16 @@ fn checked_outline_with_report(
                 None,
                 None,
                 None,
+                None,
                 RetainedTopologyStatus::Unresolved,
                 UncertaintyReason::RealSign,
             ));
         }
     }
 
-    match source.has_self_contacts(policy)? {
+    let source_self_contact = source.has_self_contacts_with_report(policy)?;
+    let source_self_contact_report = source_self_contact.report().clone();
+    match source_self_contact.has_self_contacts() {
         Classification::Decided(false) => {}
         Classification::Decided(true) => {
             return Ok(blocked_curve_string_outline_offset_result(
@@ -1009,6 +1021,7 @@ fn checked_outline_with_report(
                 cap,
                 source_segment_count,
                 source_segment_kind_counts,
+                Some(source_self_contact_report),
                 None,
                 None,
                 None,
@@ -1025,6 +1038,7 @@ fn checked_outline_with_report(
                 cap,
                 source_segment_count,
                 source_segment_kind_counts,
+                Some(source_self_contact_report),
                 None,
                 None,
                 None,
@@ -1045,6 +1059,7 @@ fn checked_outline_with_report(
                 cap,
                 source_segment_count,
                 source_segment_kind_counts,
+                Some(source_self_contact_report.clone()),
                 None,
                 None,
                 None,
@@ -1067,6 +1082,7 @@ fn checked_outline_with_report(
                 cap,
                 source_segment_count,
                 source_segment_kind_counts,
+                Some(source_self_contact_report.clone()),
                 Some(left_offset_segment_count),
                 Some(left_offset_segment_kind_counts),
                 None,
@@ -1100,6 +1116,7 @@ fn checked_outline_with_report(
                 cap,
                 source_segment_count,
                 source_segment_kind_counts,
+                Some(source_self_contact_report.clone()),
                 Some(left_offset_segment_count),
                 Some(left_offset_segment_kind_counts),
                 Some(right_offset_segment_count),
@@ -1122,6 +1139,7 @@ fn checked_outline_with_report(
                 cap,
                 source_segment_count,
                 source_segment_kind_counts,
+                source_self_contact_report: Some(source_self_contact_report.clone()),
                 left_offset_segment_count: Some(left_offset_segment_count),
                 left_offset_segment_kind_counts: Some(left_offset_segment_kind_counts),
                 right_offset_segment_count: Some(right_offset_segment_count),
@@ -1137,6 +1155,7 @@ fn checked_outline_with_report(
             cap,
             source_segment_count,
             source_segment_kind_counts,
+            Some(source_self_contact_report),
             Some(left_offset_segment_count),
             Some(left_offset_segment_kind_counts),
             Some(right_offset_segment_count),
