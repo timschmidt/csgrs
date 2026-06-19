@@ -694,7 +694,7 @@ pub struct ExactBooleanResult {
     /// Non-mutating exact output assembly.
     pub assembly: ExactBooleanAssemblyPlan,
     /// Exact winding classifications used by volumetric arrangement materialization.
-    pub volumetric_classifications: Vec<ExactVolumetricRegionClassification>,
+    pub(crate) volumetric_classifications: Vec<ExactVolumetricRegionClassification>,
     /// Topology assembly report consumed by an arrangement/cell-complex output,
     /// when the materialization path retained that gate evidence.
     pub(crate) topology_assembly_report: Option<ExactTopologyAssemblyReport>,
@@ -724,6 +724,16 @@ impl ExactBooleanResult {
     /// Update whether graph extraction contained unknown events before policy checks.
     pub fn set_graph_had_unknowns(&mut self, graph_had_unknowns: bool) {
         self.graph_had_unknowns = graph_had_unknowns;
+    }
+
+    /// Borrow retained volumetric triangle classifications.
+    pub fn volumetric_classifications(&self) -> &[ExactVolumetricRegionClassification] {
+        &self.volumetric_classifications
+    }
+
+    /// Borrow retained volumetric triangle classifications mutably.
+    pub fn volumetric_classifications_mut(&mut self) -> &mut [ExactVolumetricRegionClassification] {
+        &mut self.volumetric_classifications
     }
 
     /// Return retained topology assembly gate evidence, when present.

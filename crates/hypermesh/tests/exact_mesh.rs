@@ -3128,7 +3128,7 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
     if result.is_arrangement_cell_complex_materialized_for(ExactBooleanOperation::Union) {
         assert!(!result.region_classifications.is_empty());
         assert!(!result.triangulations.is_empty());
-        assert!(!result.volumetric_classifications.is_empty());
+        assert!(!result.volumetric_classifications().is_empty());
         assert!(!result.assembly.triangles.is_empty());
     } else {
         assert!(
@@ -3210,7 +3210,7 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
     if result.is_arrangement_cell_complex_materialized_for(ExactBooleanOperation::Union) {
         assert!(!result.region_classifications.is_empty());
         assert!(!result.triangulations.is_empty());
-        assert!(!result.volumetric_classifications.is_empty());
+        assert!(!result.volumetric_classifications().is_empty());
         assert!(!result.assembly.triangles.is_empty());
     } else {
         assert!(
@@ -3226,9 +3226,11 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
     );
     assert!(!result.is_arrangement_cell_complex_shortcut_for(ExactBooleanOperation::Intersection));
     assert!(!result.is_certified_shortcut_for(ExactBooleanOperation::Intersection));
-    if result.volumetric_classifications.len() > 1 {
+    if result.volumetric_classifications().len() > 1 {
         let mut stale_volumetric_order = result.clone();
-        stale_volumetric_order.volumetric_classifications.swap(0, 1);
+        stale_volumetric_order
+            .volumetric_classifications_mut()
+            .swap(0, 1);
         assert!(
             stale_volumetric_order.validate().is_err(),
             "{stale_volumetric_order:?}"
@@ -3445,7 +3447,7 @@ fn arrangement_cell_complex_request_materialization_is_publicly_replayable() {
     if result.is_arrangement_cell_complex_materialized_for(ExactBooleanOperation::Union) {
         assert!(!result.region_classifications.is_empty());
         assert!(!result.triangulations.is_empty());
-        assert!(!result.volumetric_classifications.is_empty());
+        assert!(!result.volumetric_classifications().is_empty());
         assert!(!result.assembly.triangles.is_empty());
     } else {
         assert!(
@@ -3486,7 +3488,7 @@ fn arrangement_cell_complex_request_materialization_is_publicly_replayable() {
     {
         assert!(!convex_intersection.region_classifications.is_empty());
         assert!(!convex_intersection.triangulations.is_empty());
-        assert!(!convex_intersection.volumetric_classifications.is_empty());
+        assert!(!convex_intersection.volumetric_classifications().is_empty());
         assert!(!convex_intersection.assembly.triangles.is_empty());
     } else {
         assert!(
@@ -4696,14 +4698,17 @@ fn exact_volumetric_region_reports_replay_from_boolean_result() {
             ValidationPolicy::ALLOW_BOUNDARY,
         ),
     );
-    assert!(!result.volumetric_classifications.is_empty(), "{result:?}");
+    assert!(
+        !result.volumetric_classifications().is_empty(),
+        "{result:?}"
+    );
     let shifted_target = tetra([10, 10, 10]);
     let (classification, triangulation) = result
         .triangulations
         .iter()
         .find_map(|triangulation| {
             result
-                .volumetric_classifications
+                .volumetric_classifications()
                 .iter()
                 .find(|classification| {
                     triangulation.side == classification.region_side
