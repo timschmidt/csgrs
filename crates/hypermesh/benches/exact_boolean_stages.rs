@@ -337,7 +337,10 @@ fn run_case(case: &BenchCase) {
             (
                 attempt.output_counts(),
                 attempt.topology_assembly_complete(),
-                attempt.region_ownership_resolved(),
+                attempt
+                    .region_ownership_report
+                    .as_ref()
+                    .is_some_and(|report| report.status.is_resolved()),
                 attempt.region_ownership_volume_resolved(),
             )
         }));

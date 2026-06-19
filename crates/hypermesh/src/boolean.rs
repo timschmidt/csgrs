@@ -281,12 +281,6 @@ impl ExactArrangementBooleanAttempt {
             .is_some_and(|status| status.is_complete())
     }
 
-    /// Return whether retained region ownership resolved source-side labels.
-    pub fn region_ownership_resolved(&self) -> bool {
-        self.region_ownership
-            .is_some_and(|status| status.is_resolved())
-    }
-
     /// Return whether retained region ownership resolved volume labels.
     pub fn region_ownership_volume_resolved(&self) -> bool {
         self.region_ownership
