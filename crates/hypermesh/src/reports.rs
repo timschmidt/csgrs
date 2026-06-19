@@ -732,11 +732,6 @@ impl ExactBooleanResult {
         self.region_classifications.len()
     }
 
-    /// Borrow retained exact projected triangulations.
-    pub fn triangulations(&self) -> &[FaceRegionTriangulation] {
-        &self.triangulations
-    }
-
     /// Return retained exact projected triangulation count.
     pub fn triangulation_count(&self) -> usize {
         self.triangulations.len()
@@ -755,14 +750,50 @@ impl ExactBooleanResult {
             .any(|triangle| triangle.orientation == ExactOutputTriangleOrientation::ReverseSource)
     }
 
-    /// Borrow retained volumetric triangle classifications.
-    pub fn volumetric_classifications(&self) -> &[ExactVolumetricRegionClassification] {
-        &self.volumetric_classifications
-    }
-
     /// Return retained volumetric triangle classification count.
     pub fn volumetric_classification_count(&self) -> usize {
         self.volumetric_classifications.len()
+    }
+
+    /// Return whether retained volumetric classifications replay from source
+    /// evidence and reject stale/missing witness evidence.
+    pub fn has_replayable_volumetric_classification_witness(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+        stale_target: &ExactMesh,
+    ) -> bool {
+        self.triangulations.iter().any(|triangulation| {
+            self.volumetric_classifications
+                .iter()
+                .filter(|classification| {
+                    triangulation.side == classification.region_side
+                        && triangulation.face == classification.region_face
+                        && triangulation
+                            .triangles
+                            .chunks_exact(3)
+                            .any(|triangle| triangle == classification.triangle)
+                })
+                .any(|classification| {
+                    let target = classification.replay_target_mesh(left, right);
+                    if !classification.relation.is_materialization_decided()
+                        || classification
+                            .validate_against_sources(triangulation, target)
+                            .is_err()
+                        || classification
+                            .validate_against_sources(triangulation, stale_target)
+                            .is_ok()
+                    {
+                        return false;
+                    }
+
+                    let mut stale_attempts = classification.clone();
+                    stale_attempts.witness_attempts.clear();
+                    stale_attempts
+                        .validate_against_sources(triangulation, target)
+                        .is_err()
+                })
+        })
     }
 
     /// Return retained topology assembly gate evidence, when present.

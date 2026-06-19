@@ -3749,45 +3749,9 @@ fn exact_volumetric_region_reports_replay_from_boolean_result() {
     );
     assert!(result.volumetric_classification_count() > 0, "{result:?}");
     let shifted_target = tetra([10, 10, 10]);
-    let (classification, triangulation) = result
-        .triangulations()
-        .iter()
-        .find_map(|triangulation| {
-            result
-                .volumetric_classifications()
-                .iter()
-                .find(|classification| {
-                    triangulation.side == classification.region_side
-                        && triangulation.face == classification.region_face
-                        && triangulation
-                            .triangles
-                            .chunks_exact(3)
-                            .any(|triangle| triangle == classification.triangle)
-                        && classification
-                            .validate_against_sources(triangulation, &shifted_target)
-                            .is_err()
-                })
-                .map(|classification| (classification, triangulation))
-        })
-        .expect("volumetric classification should replay from retained sources");
-    let target = classification.replay_target_mesh(&left, &right);
-    assert!(classification.relation.is_materialization_decided());
-    classification
-        .validate_against_sources(triangulation, target)
-        .unwrap();
-
-    let mut stale_attempts = classification.clone();
-    stale_attempts.witness_attempts.clear();
     assert!(
-        stale_attempts
-            .validate_against_sources(triangulation, target)
-            .is_err()
-    );
-
-    assert!(
-        classification
-            .validate_against_sources(triangulation, &shifted_target)
-            .is_err()
+        result.has_replayable_volumetric_classification_witness(&left, &right, &shifted_target),
+        "{result:?}"
     );
 }
 
