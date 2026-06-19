@@ -160,6 +160,10 @@ fn region_fragments_split_all_keyed_contours() {
         4
     );
     assert_eq!(
+        built.report().contour_reports()[0].source_segment_kind_counts(),
+        SegmentKindCounts { lines: 4, arcs: 0 }
+    );
+    assert_eq!(
         built.report().contour_reports()[0].contributing_pair_count(),
         intersections.pairs_for_contour(material_key).count()
     );
@@ -173,6 +177,10 @@ fn region_fragments_split_all_keyed_contours() {
     assert_eq!(
         built.report().contour_reports()[0].output_fragment_count(),
         6
+    );
+    assert_eq!(
+        built.report().contour_reports()[0].output_fragment_kind_counts(),
+        SegmentKindCounts { lines: 6, arcs: 0 }
     );
     assert_eq!(
         built.report().contour_reports()[0].output_fragments().len(),

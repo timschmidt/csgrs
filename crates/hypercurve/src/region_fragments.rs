@@ -13,7 +13,7 @@ use crate::{
     Classification, Contour2, ContourFragmentSet, ContourOperand, ContourSplitMarkers, CurveError,
     CurvePolicy, CurveResult, ParamRange, Point2, RegionContourKey, RegionContourRole,
     RegionIntersectionSet, RegionSide, RegionView2, RetainedTopologyStatus, SegmentKind,
-    UncertaintyReason,
+    SegmentKindCounts, UncertaintyReason,
 };
 
 /// Fragments for one keyed contour in a region-pair query.
@@ -30,9 +30,11 @@ pub struct RegionContourFragments {
 pub struct RegionContourFragmentReport2 {
     key: RegionContourKey,
     source_segment_count: usize,
+    source_segment_kind_counts: SegmentKindCounts,
     contributing_pair_count: usize,
     intersection_event_count: usize,
     output_fragment_count: usize,
+    output_fragment_kind_counts: SegmentKindCounts,
     output_fragments: Vec<RegionContourOutputFragmentReport2>,
     status: RetainedTopologyStatus,
 }
@@ -371,6 +373,11 @@ impl RegionContourFragmentReport2 {
         self.source_segment_count
     }
 
+    /// Returns primitive-family counts for the source contour before splitting.
+    pub const fn source_segment_kind_counts(&self) -> SegmentKindCounts {
+        self.source_segment_kind_counts
+    }
+
     /// Returns the number of contour-pair event reports that contributed split evidence.
     pub const fn contributing_pair_count(&self) -> usize {
         self.contributing_pair_count
@@ -384,6 +391,11 @@ impl RegionContourFragmentReport2 {
     /// Returns the number of retained fragments emitted for this contour.
     pub const fn output_fragment_count(&self) -> usize {
         self.output_fragment_count
+    }
+
+    /// Returns primitive-family counts for retained output fragments.
+    pub const fn output_fragment_kind_counts(&self) -> SegmentKindCounts {
+        self.output_fragment_kind_counts
     }
 
     /// Returns per-output-fragment source provenance.
@@ -810,9 +822,11 @@ fn append_region_contours(
         reports.push(RegionContourFragmentReport2 {
             key,
             source_segment_count: contour.len(),
+            source_segment_kind_counts: contour_segment_kind_counts(contour),
             contributing_pair_count,
             intersection_event_count,
             output_fragment_count: fragments.len(),
+            output_fragment_kind_counts: fragment_set_segment_kind_counts(&fragments),
             output_fragments: region_contour_output_fragment_reports(&fragments),
             status: RetainedTopologyStatus::NativeExact,
         });
@@ -841,6 +855,28 @@ fn region_contour_output_fragment_reports(
             },
         )
         .collect()
+}
+
+fn contour_segment_kind_counts(contour: &Contour2) -> SegmentKindCounts {
+    let mut counts = SegmentKindCounts::default();
+    for segment in contour.segments() {
+        match segment.structural_facts().kind {
+            SegmentKind::Line => counts.lines += 1,
+            SegmentKind::Arc => counts.arcs += 1,
+        }
+    }
+    counts
+}
+
+fn fragment_set_segment_kind_counts(fragments: &ContourFragmentSet) -> SegmentKindCounts {
+    let mut counts = SegmentKindCounts::default();
+    for fragment in fragments.fragments() {
+        match fragment.segment.structural_facts().kind {
+            SegmentKind::Line => counts.lines += 1,
+            SegmentKind::Arc => counts.arcs += 1,
+        }
+    }
+    counts
 }
 
 fn split_keyed_contour(
