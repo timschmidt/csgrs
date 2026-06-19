@@ -88,20 +88,16 @@ fn run_case(case: &BenchCase) {
     match metadata_workspace.materialize_ref(request) {
         Ok(result) => print_metadata(
             case.name,
-            "materialized_result_kind",
+            "materialized_result",
             format!(
-                "arrangement_materialized={};arrangement_shortcut={};certified_shortcut={};triangles={}",
-                result.is_arrangement_cell_complex_materialized_for(case.operation),
-                result.is_arrangement_cell_complex_shortcut_for(case.operation),
-                result.is_certified_shortcut_for(case.operation),
+                "replay_valid={};triangles={}",
+                result
+                    .validate_against_sources(&case.left, &case.right)
+                    .is_ok(),
                 result.mesh().triangles().len()
             ),
         ),
-        Err(error) => print_metadata(
-            case.name,
-            "materialized_result_kind",
-            format!("error:{error:?}"),
-        ),
+        Err(error) => print_metadata(case.name, "materialized_result", format!("error:{error:?}")),
     }
 
     time_stage(case, "mesh_retained_state", || {
