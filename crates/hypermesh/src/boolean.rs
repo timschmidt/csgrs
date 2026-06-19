@@ -12646,13 +12646,12 @@ mod tests {
             readiness.validate().unwrap();
             readiness.validate_against_sources(&left, &right).unwrap();
 
-            let planar = test_planar_arrangement_report(
-                ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
-                &left,
-                &right,
-            );
+            let request = ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY);
+            let planar = test_planar_arrangement_report(request, &left, &right);
             planar.validate().unwrap();
-            planar.validate_against_sources(&left, &right).unwrap();
+            planar
+                .validate_against_sources_for_request(&left, &right, request)
+                .unwrap();
 
             let direct = boolean_arrangement_orthogonal_solid_cell_recovery(
                 &left,
@@ -12887,13 +12886,12 @@ mod tests {
             readiness.validate().unwrap();
             readiness.validate_against_sources(&left, &right).unwrap();
 
-            let planar = test_planar_arrangement_report(
-                ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
-                &left,
-                &right,
-            );
+            let request = ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY);
+            let planar = test_planar_arrangement_report(request, &left, &right);
             planar.validate().unwrap();
-            planar.validate_against_sources(&left, &right).unwrap();
+            planar
+                .validate_against_sources_for_request(&left, &right, request)
+                .unwrap();
         }
     }
 

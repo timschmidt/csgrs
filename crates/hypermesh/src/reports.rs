@@ -4668,20 +4668,20 @@ impl ExactRefinementReport {
         self.retained_events
     }
 
-    /// Validate this refinement report against the source meshes.
+    /// Validate this refinement report against source meshes and request.
     ///
     /// The local audit checks status/blocker/count coherence. This replay
     /// recomputes the retained graph report from `left` and `right` for the
     /// same operation and requires equality, keeping refinement evidence tied
     /// to the source objects whose exact predicates produced it as required by
     #[cfg(test)]
-    pub(crate) fn validate_against_sources(
+    pub(crate) fn validate_against_sources_for_request(
         &self,
         left: &ExactMesh,
         right: &ExactMesh,
+        request: ExactBooleanRequest,
     ) -> Result<(), ExactReportValidationError> {
         self.validate()?;
-        let request = ExactBooleanRequest::new(self.operation, ValidationPolicy::ALLOW_BOUNDARY);
         if let Ok(evaluation) = workspace_evaluation_for_replay(left, right, request)
             && self == evaluation.certifications().refinement()
         {
@@ -4690,14 +4690,15 @@ impl ExactRefinementReport {
         Err(ExactReportValidationError::SourceReplayMismatch)
     }
 
-    /// Classify whether this retained refinement report is fresh.
+    /// Classify whether this retained refinement report is fresh under `request`.
     #[cfg(test)]
-    pub(crate) fn freshness_against_sources(
+    pub(crate) fn freshness_against_sources_for_request(
         &self,
         left: &ExactMesh,
         right: &ExactMesh,
+        request: ExactBooleanRequest,
     ) -> ExactReportFreshness {
-        exact_report_freshness(self.validate_against_sources(left, right))
+        exact_report_freshness(self.validate_against_sources_for_request(left, right, request))
     }
 
     /// Validate status, retained counts, and refinement blocker consistency.
@@ -5704,19 +5705,19 @@ impl ExactPlanarArrangementReport {
         Ok(())
     }
 
-    /// Validate this planar-arrangement report against the source meshes.
+    /// Validate this planar-arrangement report against source meshes and request.
     ///
     /// The retained arrangement-readiness summary is a compact view of exact
     /// coplanar graph state. This source replay recomputes that view for the
     /// same operation and rejects stale count/blocker summaries before a
     #[cfg(test)]
-    pub(crate) fn validate_against_sources(
+    pub(crate) fn validate_against_sources_for_request(
         &self,
         left: &ExactMesh,
         right: &ExactMesh,
+        request: ExactBooleanRequest,
     ) -> Result<(), ExactReportValidationError> {
         self.validate()?;
-        let request = ExactBooleanRequest::new(self.operation, ValidationPolicy::ALLOW_BOUNDARY);
         if let Ok(evaluation) = workspace_evaluation_for_replay(left, right, request)
             && self == evaluation.certifications().planar_arrangement()
         {
@@ -6764,15 +6765,19 @@ mod tests {
 
         let graph = validated_report_intersection_graph(&left, &right).unwrap();
         let refinement = refinement_report_from_graph(&graph, ExactBooleanOperation::Union);
+        let union_request = ExactBooleanRequest::new(
+            ExactBooleanOperation::Union,
+            ValidationPolicy::ALLOW_BOUNDARY,
+        );
         assert_eq!(
-            refinement.freshness_against_sources(&left, &right),
+            refinement.freshness_against_sources_for_request(&left, &right, union_request),
             ExactReportFreshness::Current
         );
 
         let mut stale_refinement = refinement.clone();
         stale_refinement.graph_had_unknowns = true;
         assert_eq!(
-            stale_refinement.freshness_against_sources(&left, &right),
+            stale_refinement.freshness_against_sources_for_request(&left, &right, union_request),
             ExactReportFreshness::StaleBlockerEvidence
         );
 

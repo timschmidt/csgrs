@@ -700,7 +700,7 @@ mod tests {
 
         let refinement_report = evaluation.certifications().refinement().clone();
         assert_eq!(
-            refinement_report.freshness_against_sources(&left, &right),
+            refinement_report.freshness_against_sources_for_request(&left, &right, request),
             ExactReportFreshness::Current
         );
         let certifications = evaluation.certifications().clone();
