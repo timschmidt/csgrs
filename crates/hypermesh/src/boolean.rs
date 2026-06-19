@@ -971,7 +971,7 @@ pub struct ExactBooleanCertificationSet {
     /// Adjacent closed-solid union completion shortcut status.
     pub adjacent_union_completion: ExactAdjacentUnionCompletionReport,
     /// Identical-mesh shortcut status.
-    pub identical: ExactIdenticalMeshReport,
+    identical: ExactIdenticalMeshReport,
     /// Same-surface shortcut status.
     pub same_surface: ExactSameSurfaceReport,
     /// Left vertices classified against the right closed mesh.
@@ -1017,6 +1017,16 @@ impl ExactBooleanCertificationSet {
     /// Return source-shape facts used by trivial shortcut supports mutably.
     pub fn trivial_mut(&mut self) -> &mut ExactTrivialBooleanFacts {
         &mut self.trivial
+    }
+
+    /// Return the identical-mesh shortcut certification report.
+    pub fn identical(&self) -> &ExactIdenticalMeshReport {
+        &self.identical
+    }
+
+    /// Return the identical-mesh shortcut certification report mutably.
+    pub fn identical_mut(&mut self) -> &mut ExactIdenticalMeshReport {
+        &mut self.identical
     }
 
     /// Return the retained volumetric boundary closure evidence, when the

@@ -4285,12 +4285,12 @@ fn trivial_boolean_shortcuts_are_publicly_replayable() {
         let mut relabeled_identity_report = identical_evaluation.clone();
         relabeled_identity_report
             .certifications_mut()
-            .identical
+            .identical_mut()
             .left_triangles += 1;
         assert!(
             relabeled_identity_report
                 .certifications()
-                .identical
+                .identical()
                 .validate()
                 .is_err()
         );
