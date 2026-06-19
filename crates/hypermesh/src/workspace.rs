@@ -139,11 +139,9 @@ impl<'a> ExactBooleanWorkspace<'a> {
             ))
         })?;
         self.arrangements.push((policy, arrangement));
-        Ok(&self
-            .arrangements
-            .last()
-            .expect("arrangement cache was just populated")
-            .1)
+        let index = self.arrangements.len() - 1;
+        debug_assert_eq!(self.arrangements[index].0, policy);
+        Ok(&self.arrangements[index].1)
     }
 
     /// Returns the arrangement/cell-complex attempt report for `request` and
@@ -191,11 +189,10 @@ impl<'a> ExactBooleanWorkspace<'a> {
             .validate_for_request_policy(request, policy)
             .map_err(workspace_report_validation_error)?;
         self.arrangement_attempts.push((request, policy, attempt));
-        Ok(&self
-            .arrangement_attempts
-            .last()
-            .expect("arrangement attempt cache was just populated")
-            .2)
+        let index = self.arrangement_attempts.len() - 1;
+        debug_assert_eq!(self.arrangement_attempts[index].0, request);
+        debug_assert_eq!(self.arrangement_attempts[index].1, policy);
+        Ok(&self.arrangement_attempts[index].2)
     }
 
     /// Derive preflight for `request` from the retained graph.
