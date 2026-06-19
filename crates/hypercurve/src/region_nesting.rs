@@ -160,6 +160,13 @@ pub enum RegionLineSegmentEndpointGraphPredicatePath2 {
     ExactStructuralEndpointBuckets,
 }
 
+/// Exact predicate family used while traversing validated endpoint topology into rings.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum RegionLineSegmentRingAssemblyPredicatePath2 {
+    /// Ring traversal followed exact structural endpoint buckets.
+    ExactEndpointBucketTraversal,
+}
+
 /// Report for constructing a region from unordered exact line segments.
 #[derive(Clone, Debug, PartialEq)]
 pub struct RegionLineSegmentRegionBuildReport2 {
@@ -170,6 +177,7 @@ pub struct RegionLineSegmentRegionBuildReport2 {
     arranged_segment_kind_counts: Option<SegmentKindCounts>,
     split_predicate_path: Option<RegionLineSegmentSplitPredicatePath2>,
     endpoint_graph_predicate_path: Option<RegionLineSegmentEndpointGraphPredicatePath2>,
+    ring_assembly_predicate_path: Option<RegionLineSegmentRingAssemblyPredicatePath2>,
     split_candidate_pair_count: usize,
     split_skipped_aabb_pair_count: usize,
     split_tested_pair_count: usize,
@@ -434,6 +442,9 @@ impl Region2 {
                 endpoint_graph_predicate_path: Some(
                     RegionLineSegmentEndpointGraphPredicatePath2::ExactStructuralEndpointBuckets,
                 ),
+                ring_assembly_predicate_path: Some(
+                    RegionLineSegmentRingAssemblyPredicatePath2::ExactEndpointBucketTraversal,
+                ),
                 split_candidate_pair_count: arranged.report.candidate_pair_count,
                 split_skipped_aabb_pair_count: arranged.report.skipped_aabb_pair_count,
                 split_tested_pair_count: arranged.report.tested_pair_count,
@@ -674,6 +685,9 @@ impl Region2 {
                 split_predicate_path: arranged.report.predicate_path,
                 endpoint_graph_predicate_path: Some(
                     RegionLineSegmentEndpointGraphPredicatePath2::ExactStructuralEndpointBuckets,
+                ),
+                ring_assembly_predicate_path: Some(
+                    RegionLineSegmentRingAssemblyPredicatePath2::ExactEndpointBucketTraversal,
                 ),
                 split_candidate_pair_count: arranged.report.candidate_pair_count,
                 split_skipped_aabb_pair_count: arranged.report.skipped_aabb_pair_count,
@@ -1236,6 +1250,13 @@ impl RegionLineSegmentRegionBuildReport2 {
         &self,
     ) -> Option<RegionLineSegmentEndpointGraphPredicatePath2> {
         self.endpoint_graph_predicate_path
+    }
+
+    /// Returns the exact predicate family used for ring traversal, when reached.
+    pub const fn ring_assembly_predicate_path(
+        &self,
+    ) -> Option<RegionLineSegmentRingAssemblyPredicatePath2> {
+        self.ring_assembly_predicate_path
     }
 
     /// Returns source line pairs considered for splitting.
@@ -3002,6 +3023,9 @@ fn blocked_line_segment_region_report(
         endpoint_graph_predicate_path: endpoint_graph_report
             .as_ref()
             .map(|_| RegionLineSegmentEndpointGraphPredicatePath2::ExactStructuralEndpointBuckets),
+        ring_assembly_predicate_path: endpoint_graph_report
+            .as_ref()
+            .map(|_| RegionLineSegmentRingAssemblyPredicatePath2::ExactEndpointBucketTraversal),
         split_candidate_pair_count: split_report.candidate_pair_count,
         split_skipped_aabb_pair_count: split_report.skipped_aabb_pair_count,
         split_tested_pair_count: split_report.tested_pair_count,
