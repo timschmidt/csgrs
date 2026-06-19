@@ -4059,23 +4059,13 @@ impl ExactBooleanPreflight {
         request: ExactBooleanRequest,
     ) -> Result<(), ExactReportValidationError> {
         self.validate()?;
-        let replay = self.replay_against_sources(left, right, request)?;
+        let replay = workspace_evaluation_for_replay(left, right, request)
+            .map(|evaluation| evaluation.preflight().clone())?;
         if self == &replay {
             Ok(())
         } else {
             Err(ExactReportValidationError::SourceReplayMismatch)
         }
-    }
-
-    #[cfg(test)]
-    fn replay_against_sources(
-        &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-        request: ExactBooleanRequest,
-    ) -> Result<ExactBooleanPreflight, ExactReportValidationError> {
-        workspace_evaluation_for_replay(left, right, request)
-            .map(|evaluation| evaluation.preflight().clone())
     }
 
     /// Classify whether this retained preflight is fresh for the source meshes.
