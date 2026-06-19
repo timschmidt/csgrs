@@ -52,7 +52,7 @@ fn exact_boolean_result(
     request: ExactBooleanRequest,
 ) -> ExactBooleanResult {
     let mut workspace = ExactBooleanWorkspace::new(left, right);
-    workspace.materialize(request).unwrap()
+    workspace.materialize_ref(request).unwrap().clone()
 }
 
 fn exact_boolean_evaluated_result(
@@ -80,7 +80,7 @@ fn exact_boolean_materialize_result(
     request: ExactBooleanRequest,
 ) -> Result<ExactBooleanResult, hypermesh::MeshError> {
     let mut workspace = ExactBooleanWorkspace::new(left, right);
-    workspace.materialize(request)
+    workspace.materialize_ref(request).cloned()
 }
 
 fn exact_boolean_arrangement_attempt(
