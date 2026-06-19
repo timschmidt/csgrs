@@ -425,7 +425,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
         }
 
         let result = self.materialize_uncached(request)?;
-        retain_replayable_result(
+        let index = retain_replayable_result(
             &mut self.materializations,
             self.left,
             self.right,
@@ -433,8 +433,6 @@ impl<'a> ExactBooleanWorkspace<'a> {
             retained_attempt.as_ref(),
             result,
         )?;
-        let index = cached_by_request_index(&self.materializations, request)
-            .expect("retained materialization cache entry was just populated");
         self.promote_evaluation_cache_from_materialization_index(request, index)?;
         Ok(&self.materializations[index].1)
     }
@@ -539,12 +537,12 @@ fn cache_replayable_result(
     retained_arrangement_attempt: Option<&ExactArrangementBooleanAttempt>,
     result: &ExactBooleanResult,
 ) -> Result<bool, MeshError> {
-    if ExactBooleanEvaluation::validate_result_against_sources_for_request(
+    if validate_replayable_result_for_cache(
         left,
         right,
         request,
         retained_arrangement_attempt,
-        &result,
+        result,
     )
     .is_ok()
     {
@@ -563,17 +561,33 @@ fn retain_replayable_result(
     request: ExactBooleanRequest,
     retained_arrangement_attempt: Option<&ExactArrangementBooleanAttempt>,
     result: ExactBooleanResult,
+) -> Result<usize, MeshError> {
+    validate_replayable_result_for_cache(
+        left,
+        right,
+        request,
+        retained_arrangement_attempt,
+        &result,
+    )?;
+    cache.push((request, result));
+    Ok(cache.len() - 1)
+}
+
+fn validate_replayable_result_for_cache(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    request: ExactBooleanRequest,
+    retained_arrangement_attempt: Option<&ExactArrangementBooleanAttempt>,
+    result: &ExactBooleanResult,
 ) -> Result<(), MeshError> {
     ExactBooleanEvaluation::validate_result_against_sources_for_request(
         left,
         right,
         request,
         retained_arrangement_attempt,
-        &result,
+        result,
     )
-    .map_err(workspace_report_validation_error)?;
-    cache.push((request, result));
-    Ok(())
+    .map_err(workspace_report_validation_error)
 }
 
 fn cached_retained_materialization_index(
