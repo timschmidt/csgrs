@@ -422,8 +422,6 @@ impl<'a> ExactBooleanWorkspace<'a> {
         )? {
             let result = self.materializations[index].1.clone();
             self.promote_evaluation_cache_from_materialization(request, &result)?;
-            let index = cached_by_request_index(&self.materializations, request)
-                .expect("validated materialization cache entry must still exist");
             return Ok(&self.materializations[index].1);
         }
 
@@ -440,9 +438,6 @@ impl<'a> ExactBooleanWorkspace<'a> {
             .expect("retained materialization cache entry was just populated");
         let result = self.materializations[index].1.clone();
         self.promote_evaluation_cache_from_materialization(request, &result)?;
-        let index = cached_by_request_index(&self.materializations, request).ok_or_else(|| {
-            workspace_report_validation_error(ExactReportValidationError::SourceReplayMismatch)
-        })?;
         Ok(&self.materializations[index].1)
     }
 
