@@ -80,10 +80,10 @@ fn run_case(case: &BenchCase) {
             case.name,
             "preflight_support",
             format!(
-                "{:?};pairs={};events={}",
-                evaluation.preflight().support(),
-                evaluation.preflight().retained_face_pairs(),
-                evaluation.preflight().retained_events()
+                "certified={};pairs={};events={}",
+                evaluation.is_certified(),
+                evaluation.retained_face_pairs(),
+                evaluation.retained_events()
             ),
         ),
         Err(error) => print_metadata(case.name, "preflight_support", format!("error:{error:?}")),

@@ -2304,6 +2304,33 @@ impl ExactBooleanEvaluation {
         &self.preflight
     }
 
+    /// Return whether this evaluation has certified support for materializing
+    /// the requested operation under the retained request policy.
+    pub fn is_certified(&self) -> bool {
+        self.preflight.is_certified()
+    }
+
+    /// Return whether this evaluation retained an explicit blocker.
+    pub fn has_blocker(&self) -> bool {
+        self.preflight.blocker().is_some()
+    }
+
+    /// Return whether this evaluation is blocked by unresolved exact
+    /// predicate or construction evidence.
+    pub fn requires_refinement(&self) -> bool {
+        self.preflight.requires_refinement()
+    }
+
+    /// Return the retained face-pair count from exact preflight scheduling.
+    pub fn retained_face_pairs(&self) -> usize {
+        self.preflight.retained_face_pairs()
+    }
+
+    /// Return the retained graph-event count from exact preflight scheduling.
+    pub fn retained_events(&self) -> usize {
+        self.preflight.retained_events()
+    }
+
     /// Return the replayable certification bundle retained by this evaluation.
     #[cfg(test)]
     pub(crate) fn certifications(&self) -> &ExactBooleanCertificationSet {

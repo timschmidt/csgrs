@@ -241,10 +241,10 @@ fn exact_boolean_evaluation_materializes_certified_result_publicly() {
         evaluation.freshness_against_sources(&left, &right),
         hypermesh::ExactReportFreshness::Current
     );
-    assert!(evaluation.preflight().is_certified());
+    assert!(evaluation.is_certified());
     assert!(evaluation.materialized_result().is_some());
-    assert_eq!(evaluation.preflight().required_blocker_kind(), None);
-    assert!(evaluation.preflight().is_certified());
+    assert!(!evaluation.has_blocker());
+    assert!(evaluation.is_certified());
     assert!(
         evaluation.materialized_result().is_some_and(|result| {
             result.is_certified_shortcut_for(ExactBooleanOperation::Union)
@@ -320,10 +320,10 @@ fn exact_boolean_evaluation_materializes_boundary_policy_shortcut_by_default() {
 
     evaluation.validate().unwrap();
     evaluation.validate_against_sources(&left, &right).unwrap();
-    assert!(evaluation.preflight().is_certified());
+    assert!(evaluation.is_certified());
     assert!(evaluation.materialized_result().is_some());
-    assert_eq!(evaluation.preflight().required_blocker_kind(), None);
-    assert!(evaluation.preflight().is_certified());
+    assert!(!evaluation.has_blocker());
+    assert!(evaluation.is_certified());
     assert!(
         evaluation
             .preflight()
@@ -342,7 +342,7 @@ fn exact_boolean_evaluation_materializes_boundary_policy_shortcut_by_default() {
     );
     let rejected = exact_boolean_evaluation(&left, &right, rejected_request);
     rejected.validate().unwrap();
-    assert!(!rejected.preflight().is_certified());
+    assert!(!rejected.is_certified());
     assert!(rejected.materialized_result().is_none());
     assert!(
         ExactBooleanWorkspace::new(&left, &right)
@@ -2189,8 +2189,8 @@ fn boundary_touching_policy_boolean_is_publicly_replayable() {
             reject_evaluation.materialized_result().is_none(),
             "{reject_evaluation:?}"
         );
-        assert!(!reject_evaluation.preflight().is_certified());
-        assert!(reject_evaluation.preflight().blocker().is_some());
+        assert!(!reject_evaluation.is_certified());
+        assert!(reject_evaluation.has_blocker());
 
         let result = exact_boolean_result(
             &left,
@@ -2994,8 +2994,8 @@ fn exact_evaluation_preflight_reports_disjoint_bounds_without_retained_pairs() {
         &right,
         ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED),
     );
-    assert_eq!(evaluation.preflight().retained_face_pairs(), 0);
-    assert_eq!(evaluation.preflight().retained_events(), 0);
+    assert_eq!(evaluation.retained_face_pairs(), 0);
+    assert_eq!(evaluation.retained_events(), 0);
     evaluation.validate_against_sources(&left, &right).unwrap();
 }
 
@@ -3025,7 +3025,7 @@ fn public_exact_blocker_reports_replay_remaining_decisions() {
         ValidationPolicy::ALLOW_BOUNDARY,
     );
     let evaluation = exact_boolean_evaluation(&left, &overlapping_right, request);
-    assert!(!evaluation.preflight().requires_refinement());
+    assert!(!evaluation.requires_refinement());
     evaluation
         .validate_against_sources(&left, &overlapping_right)
         .unwrap();
