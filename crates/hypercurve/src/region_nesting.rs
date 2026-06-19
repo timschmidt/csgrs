@@ -487,6 +487,32 @@ pub struct ExactCurveArrangementOutputSegmentStatusBucketCache2 {
     buckets: Vec<ExactCurveArrangementOutputSegmentStatusBucket2>,
 }
 
+/// Output segment reference retained in a traversal-direction bucket.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ExactCurveArrangementOutputSegmentDirectionRef2 {
+    source_report_index: usize,
+    output_ring_index: usize,
+    output_segment_index: usize,
+}
+
+/// Output segment bucket grouped by whether ring traversal reversed the source segment.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ExactCurveArrangementOutputSegmentDirectionBucket2 {
+    reversed: bool,
+    segment_refs: Vec<ExactCurveArrangementOutputSegmentDirectionRef2>,
+}
+
+/// Output segment traversal-direction buckets retained after ring assembly.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ExactCurveArrangementOutputSegmentDirectionBucketCache2 {
+    bucket_count: usize,
+    output_segment_ref_count: usize,
+    forward_segment_ref_count: usize,
+    reversed_segment_ref_count: usize,
+    max_bucket_size: usize,
+    buckets: Vec<ExactCurveArrangementOutputSegmentDirectionBucket2>,
+}
+
 /// Output role assignment evidence retained for one boundary contour.
 #[derive(Clone, Debug, PartialEq)]
 pub struct ExactCurveArrangementOutputRoleAssignment2 {
@@ -580,6 +606,7 @@ pub struct ExactCurveArrangementRingAssemblyCache2 {
     output_ring_bucket_cache: ExactCurveArrangementOutputRingBucketCache2,
     output_segment_kind_bucket_cache: ExactCurveArrangementOutputSegmentKindBucketCache2,
     output_segment_status_bucket_cache: ExactCurveArrangementOutputSegmentStatusBucketCache2,
+    output_segment_direction_bucket_cache: ExactCurveArrangementOutputSegmentDirectionBucketCache2,
 }
 
 /// Retained final output evidence cached by an evaluated arrangement workspace.
@@ -3459,6 +3486,113 @@ impl ExactCurveArrangementOutputSegmentStatusBucketCache2 {
     }
 }
 
+impl ExactCurveArrangementOutputSegmentDirectionRef2 {
+    /// Returns the retained ring source report index for this output segment.
+    pub const fn source_report_index(&self) -> usize {
+        self.source_report_index
+    }
+
+    /// Returns the output ring index.
+    pub const fn output_ring_index(&self) -> usize {
+        self.output_ring_index
+    }
+
+    /// Returns the output segment index inside its ring.
+    pub const fn output_segment_index(&self) -> usize {
+        self.output_segment_index
+    }
+}
+
+impl ExactCurveArrangementOutputSegmentDirectionBucket2 {
+    /// Returns whether this bucket contains source segments reversed for ring traversal.
+    pub const fn reversed(&self) -> bool {
+        self.reversed
+    }
+
+    /// Returns output segment references with this retained traversal direction.
+    pub fn segment_refs(&self) -> &[ExactCurveArrangementOutputSegmentDirectionRef2] {
+        &self.segment_refs
+    }
+}
+
+impl ExactCurveArrangementOutputSegmentDirectionBucketCache2 {
+    fn from_source_reports(source_reports: &[RegionLineSegmentRingSourceReport2]) -> Self {
+        let mut forward_refs = Vec::new();
+        let mut reversed_refs = Vec::new();
+
+        for (source_report_index, source_report) in source_reports.iter().enumerate() {
+            let segment_ref = ExactCurveArrangementOutputSegmentDirectionRef2 {
+                source_report_index,
+                output_ring_index: source_report.output_ring_index(),
+                output_segment_index: source_report.output_segment_index(),
+            };
+            if source_report.reversed() {
+                reversed_refs.push(segment_ref);
+            } else {
+                forward_refs.push(segment_ref);
+            }
+        }
+
+        let forward_segment_ref_count = forward_refs.len();
+        let reversed_segment_ref_count = reversed_refs.len();
+        let buckets = vec![
+            ExactCurveArrangementOutputSegmentDirectionBucket2 {
+                reversed: false,
+                segment_refs: forward_refs,
+            },
+            ExactCurveArrangementOutputSegmentDirectionBucket2 {
+                reversed: true,
+                segment_refs: reversed_refs,
+            },
+        ];
+        let output_segment_ref_count = source_reports.len();
+        let max_bucket_size = buckets
+            .iter()
+            .map(|bucket| bucket.segment_refs.len())
+            .max()
+            .unwrap_or(0);
+
+        Self {
+            bucket_count: buckets.len(),
+            output_segment_ref_count,
+            forward_segment_ref_count,
+            reversed_segment_ref_count,
+            max_bucket_size,
+            buckets,
+        }
+    }
+
+    /// Returns the number of traversal-direction buckets.
+    pub const fn bucket_count(&self) -> usize {
+        self.bucket_count
+    }
+
+    /// Returns the number of retained output segment references.
+    pub const fn output_segment_ref_count(&self) -> usize {
+        self.output_segment_ref_count
+    }
+
+    /// Returns the number of output segment references emitted in source direction.
+    pub const fn forward_segment_ref_count(&self) -> usize {
+        self.forward_segment_ref_count
+    }
+
+    /// Returns the number of output segment references emitted in reversed source direction.
+    pub const fn reversed_segment_ref_count(&self) -> usize {
+        self.reversed_segment_ref_count
+    }
+
+    /// Returns the largest traversal-direction bucket size.
+    pub const fn max_bucket_size(&self) -> usize {
+        self.max_bucket_size
+    }
+
+    /// Returns output segment direction buckets in stable forward/reversed order.
+    pub fn buckets(&self) -> &[ExactCurveArrangementOutputSegmentDirectionBucket2] {
+        &self.buckets
+    }
+}
+
 impl ExactCurveArrangementOutputRoleAssignment2 {
     /// Returns the retained boundary role report index.
     pub const fn role_report_index(&self) -> usize {
@@ -3863,6 +3997,10 @@ impl ExactCurveArrangementRingAssemblyCache2 {
                 ExactCurveArrangementOutputSegmentStatusBucketCache2::from_source_reports(
                     &report.source_reports,
                 ),
+            output_segment_direction_bucket_cache:
+                ExactCurveArrangementOutputSegmentDirectionBucketCache2::from_source_reports(
+                    &report.source_reports,
+                ),
         })
     }
 
@@ -3943,6 +4081,13 @@ impl ExactCurveArrangementRingAssemblyCache2 {
         &self,
     ) -> &ExactCurveArrangementOutputSegmentStatusBucketCache2 {
         &self.output_segment_status_bucket_cache
+    }
+
+    /// Returns retained output segment buckets grouped by traversal direction.
+    pub const fn output_segment_direction_bucket_cache(
+        &self,
+    ) -> &ExactCurveArrangementOutputSegmentDirectionBucketCache2 {
+        &self.output_segment_direction_bucket_cache
     }
 }
 

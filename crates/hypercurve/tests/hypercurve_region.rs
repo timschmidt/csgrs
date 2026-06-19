@@ -1776,6 +1776,71 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
             .segment_refs()
             .is_empty()
     );
+    let output_segment_direction_bucket_cache = ring_cache.output_segment_direction_bucket_cache();
+    let reversed_source_segment_count = ring_cache.reversed_source_segment_count();
+    let forward_source_segment_count = ring_cache
+        .source_reports()
+        .len()
+        .saturating_sub(reversed_source_segment_count);
+    assert_eq!(output_segment_direction_bucket_cache.bucket_count(), 2);
+    assert_eq!(
+        output_segment_direction_bucket_cache.output_segment_ref_count(),
+        ring_cache.source_reports().len()
+    );
+    assert_eq!(
+        output_segment_direction_bucket_cache.forward_segment_ref_count(),
+        forward_source_segment_count
+    );
+    assert_eq!(
+        output_segment_direction_bucket_cache.reversed_segment_ref_count(),
+        reversed_source_segment_count
+    );
+    assert_eq!(
+        output_segment_direction_bucket_cache.max_bucket_size(),
+        forward_source_segment_count.max(reversed_source_segment_count)
+    );
+    assert_eq!(output_segment_direction_bucket_cache.buckets().len(), 2);
+    assert!(!output_segment_direction_bucket_cache.buckets()[0].reversed());
+    assert_eq!(
+        output_segment_direction_bucket_cache.buckets()[0]
+            .segment_refs()
+            .len(),
+        forward_source_segment_count
+    );
+    if forward_source_segment_count > 0 {
+        let forward_ref = &output_segment_direction_bucket_cache.buckets()[0].segment_refs()[0];
+        assert_eq!(
+            forward_ref.output_ring_index(),
+            result.report().source_reports()[forward_ref.source_report_index()].output_ring_index()
+        );
+        assert_eq!(
+            forward_ref.output_segment_index(),
+            result.report().source_reports()[forward_ref.source_report_index()]
+                .output_segment_index()
+        );
+        assert!(!result.report().source_reports()[forward_ref.source_report_index()].reversed());
+    }
+    assert!(output_segment_direction_bucket_cache.buckets()[1].reversed());
+    assert_eq!(
+        output_segment_direction_bucket_cache.buckets()[1]
+            .segment_refs()
+            .len(),
+        reversed_source_segment_count
+    );
+    if reversed_source_segment_count > 0 {
+        let reversed_ref = &output_segment_direction_bucket_cache.buckets()[1].segment_refs()[0];
+        assert_eq!(
+            reversed_ref.output_ring_index(),
+            result.report().source_reports()[reversed_ref.source_report_index()]
+                .output_ring_index()
+        );
+        assert_eq!(
+            reversed_ref.output_segment_index(),
+            result.report().source_reports()[reversed_ref.source_report_index()]
+                .output_segment_index()
+        );
+        assert!(result.report().source_reports()[reversed_ref.source_report_index()].reversed());
+    }
     let output_cache = result.workspace().output_cache().unwrap();
     assert!(output_cache.materialized_region());
     assert_eq!(output_cache.status(), result.report().status());
@@ -2542,6 +2607,71 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
             .segment_refs()
             .is_empty()
     );
+    let output_segment_direction_bucket_cache = ring_cache.output_segment_direction_bucket_cache();
+    let reversed_source_segment_count = ring_cache.reversed_source_segment_count();
+    let forward_source_segment_count = ring_cache
+        .source_reports()
+        .len()
+        .saturating_sub(reversed_source_segment_count);
+    assert_eq!(output_segment_direction_bucket_cache.bucket_count(), 2);
+    assert_eq!(
+        output_segment_direction_bucket_cache.output_segment_ref_count(),
+        ring_cache.source_reports().len()
+    );
+    assert_eq!(
+        output_segment_direction_bucket_cache.forward_segment_ref_count(),
+        forward_source_segment_count
+    );
+    assert_eq!(
+        output_segment_direction_bucket_cache.reversed_segment_ref_count(),
+        reversed_source_segment_count
+    );
+    assert_eq!(
+        output_segment_direction_bucket_cache.max_bucket_size(),
+        forward_source_segment_count.max(reversed_source_segment_count)
+    );
+    assert_eq!(output_segment_direction_bucket_cache.buckets().len(), 2);
+    assert!(!output_segment_direction_bucket_cache.buckets()[0].reversed());
+    assert_eq!(
+        output_segment_direction_bucket_cache.buckets()[0]
+            .segment_refs()
+            .len(),
+        forward_source_segment_count
+    );
+    if forward_source_segment_count > 0 {
+        let forward_ref = &output_segment_direction_bucket_cache.buckets()[0].segment_refs()[0];
+        assert_eq!(
+            forward_ref.output_ring_index(),
+            result.report().source_reports()[forward_ref.source_report_index()].output_ring_index()
+        );
+        assert_eq!(
+            forward_ref.output_segment_index(),
+            result.report().source_reports()[forward_ref.source_report_index()]
+                .output_segment_index()
+        );
+        assert!(!result.report().source_reports()[forward_ref.source_report_index()].reversed());
+    }
+    assert!(output_segment_direction_bucket_cache.buckets()[1].reversed());
+    assert_eq!(
+        output_segment_direction_bucket_cache.buckets()[1]
+            .segment_refs()
+            .len(),
+        reversed_source_segment_count
+    );
+    if reversed_source_segment_count > 0 {
+        let reversed_ref = &output_segment_direction_bucket_cache.buckets()[1].segment_refs()[0];
+        assert_eq!(
+            reversed_ref.output_ring_index(),
+            result.report().source_reports()[reversed_ref.source_report_index()]
+                .output_ring_index()
+        );
+        assert_eq!(
+            reversed_ref.output_segment_index(),
+            result.report().source_reports()[reversed_ref.source_report_index()]
+                .output_segment_index()
+        );
+        assert!(result.report().source_reports()[reversed_ref.source_report_index()].reversed());
+    }
     let output_cache = result.workspace().output_cache().unwrap();
     assert!(output_cache.materialized_region());
     assert_eq!(output_cache.status(), result.report().status());
