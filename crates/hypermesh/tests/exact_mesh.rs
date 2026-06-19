@@ -1915,7 +1915,6 @@ fn lower_dimensional_regularized_boolean_is_publicly_replayable() {
                 assert_eq!(evaluation.retained_face_pairs(), 0);
                 assert_eq!(evaluation.retained_events(), 0);
             }
-            assert_eq!(evaluation.region_count(), 0);
             if readiness_materialized_lower {
                 evaluation.validate_against_sources(&left, &right).unwrap();
                 assert_eq!(
@@ -2555,7 +2554,10 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
             evaluation.materializes_arrangement_cell_complex(),
             "{evaluation:?}"
         );
-        assert_eq!(evaluation.region_count(), 0);
+        assert!(
+            evaluation.retained_arrangement_attempt().is_some(),
+            "{evaluation:?}"
+        );
 
         let result = evaluation
             .materialized_result()

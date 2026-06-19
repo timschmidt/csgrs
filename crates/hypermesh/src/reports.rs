@@ -4156,11 +4156,6 @@ impl ExactBooleanPreflight {
         self.retained_events
     }
 
-    /// Return the number of split-region boundaries produced for classification.
-    pub const fn region_count(&self) -> usize {
-        self.region_count
-    }
-
     /// Return the retained blocker, if this preflight is blocked.
     pub const fn blocker(&self) -> Option<&ExactBooleanBlocker> {
         self.blocker.as_ref()

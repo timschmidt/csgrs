@@ -2425,11 +2425,6 @@ impl ExactBooleanEvaluation {
             .is_certified_lower_dimensional_regularized_solid()
     }
 
-    /// Return the number of split-region boundaries retained for classification.
-    pub fn region_count(&self) -> usize {
-        self.preflight.region_count()
-    }
-
     /// Return whether this evaluation retained an explicit blocker.
     pub fn has_blocker(&self) -> bool {
         self.preflight.blocker().is_some()
