@@ -21,6 +21,14 @@ pub struct CurveStringIntersection {
     pub a_segment_index: usize,
     /// Segment index in the second curve string.
     pub b_segment_index: usize,
+    /// Exact start point of the first source segment.
+    pub a_segment_start_point: Point2,
+    /// Exact end point of the first source segment.
+    pub a_segment_end_point: Point2,
+    /// Exact start point of the second source segment.
+    pub b_segment_start_point: Point2,
+    /// Exact end point of the second source segment.
+    pub b_segment_end_point: Point2,
     /// Segment relation for this pair.
     pub relation: SegmentIntersection,
 }
@@ -8020,6 +8028,10 @@ pub(crate) fn intersect_curve_strings_with_cached_aabbs_with_report(
                 intersections.push(CurveStringIntersection {
                     a_segment_index,
                     b_segment_index,
+                    a_segment_start_point: a_segment.start().clone(),
+                    a_segment_end_point: a_segment.end().clone(),
+                    b_segment_start_point: b_segment.start().clone(),
+                    b_segment_end_point: b_segment.end().clone(),
                     relation,
                 });
             }

@@ -154,6 +154,24 @@ fn curve_string_intersection_report_counts_aabb_skips() {
     assert_eq!(report.prepared_cache_report(), None);
     assert_eq!(report.blocker(), None);
     assert_eq!(intersections.intersections().len(), 1);
+    assert_eq!(intersections.intersections()[0].a_segment_index, 0);
+    assert_eq!(intersections.intersections()[0].b_segment_index, 0);
+    assert_eq!(
+        intersections.intersections()[0].a_segment_start_point,
+        p(0, 0)
+    );
+    assert_eq!(
+        intersections.intersections()[0].a_segment_end_point,
+        p(2, 0)
+    );
+    assert_eq!(
+        intersections.intersections()[0].b_segment_start_point,
+        p(1, -1)
+    );
+    assert_eq!(
+        intersections.intersections()[0].b_segment_end_point,
+        p(1, 1)
+    );
 }
 
 #[test]
@@ -203,6 +221,22 @@ fn curve_string_intersection_report_counts_overlap_relations() {
     assert_eq!(report.overlap_relation_count(), 1);
     assert_eq!(report.uncertain_relation_count(), 0);
     assert_eq!(intersections.intersections().len(), 1);
+    assert_eq!(
+        intersections.intersections()[0].a_segment_start_point,
+        p(0, 0)
+    );
+    assert_eq!(
+        intersections.intersections()[0].a_segment_end_point,
+        p(4, 0)
+    );
+    assert_eq!(
+        intersections.intersections()[0].b_segment_start_point,
+        p(2, 0)
+    );
+    assert_eq!(
+        intersections.intersections()[0].b_segment_end_point,
+        p(6, 0)
+    );
     let SegmentIntersection::LineLine(hypercurve::LineLineIntersection::Overlap { .. }) =
         &intersections.intersections()[0].relation
     else {

@@ -275,6 +275,22 @@ impl<'a> PreparedSegment2<'a> {
         }
     }
 
+    /// Returns the exact start point of the prepared source segment.
+    pub const fn start(&self) -> &Point2 {
+        match self {
+            Self::Line(line) => line.line_segment().start(),
+            Self::Arc(arc) => arc.circular_arc().start(),
+        }
+    }
+
+    /// Returns the exact end point of the prepared source segment.
+    pub const fn end(&self) -> &Point2 {
+        match self {
+            Self::Line(line) => line.line_segment().end(),
+            Self::Arc(arc) => arc.circular_arc().end(),
+        }
+    }
+
     /// Intersects two prepared native segment handles.
     ///
     /// This is the prepared segment-pair batch boundary used by prepared curve
@@ -1398,6 +1414,10 @@ fn intersect_prepared_segment_pairs_with_cached_aabbs(
                 intersections.push(CurveStringIntersection {
                     a_segment_index,
                     b_segment_index,
+                    a_segment_start_point: a_segment.start().clone(),
+                    a_segment_end_point: a_segment.end().clone(),
+                    b_segment_start_point: b_segment.start().clone(),
+                    b_segment_end_point: b_segment.end().clone(),
                     relation,
                 });
             }
