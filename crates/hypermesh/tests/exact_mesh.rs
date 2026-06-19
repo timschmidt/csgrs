@@ -3461,17 +3461,10 @@ fn arrangement_cell_complex_request_materialization_is_publicly_replayable() {
     );
     result.validate().unwrap();
     result.validate_against_sources(&left, &right).unwrap();
-    assert!(
-        result
-            .validate_operation_against_sources(
-                &left,
-                &stale_right,
-                ExactBooleanOperation::Union,
-                ValidationPolicy::ALLOW_BOUNDARY,
-                ExactBoundaryBooleanPolicy::Reject,
-            )
-            .is_err(),
-        "operation replay must reject stale source operands"
+    assert_eq!(
+        result.freshness_against_sources(&left, &stale_right),
+        ExactReportFreshness::SourceReplayMismatch,
+        "canonical replay must reject stale source operands"
     );
     if result.is_arrangement_cell_complex_materialized_for(ExactBooleanOperation::Union) {
         assert!(!result.region_classifications.is_empty());
@@ -4557,13 +4550,7 @@ fn closed_same_surface_boolean_is_publicly_replayable() {
                 ExactReportFreshness::SourceReplayMismatch
             );
             result
-                .validate_operation_against_sources(
-                    &left,
-                    right,
-                    operation,
-                    ValidationPolicy::CLOSED,
-                    ExactBoundaryBooleanPolicy::Reject,
-                )
+                .validate_against_sources(&left, right)
                 .unwrap_or_else(|error| {
                     let replay = exact_boolean_result(
                         &left,
