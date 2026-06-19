@@ -810,7 +810,7 @@ impl ExactBooleanResult {
 /// application contracts even when they all produce an empty mesh. The design
 /// topology.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum ExactBooleanResultKind {
+pub(crate) enum ExactBooleanResultKind {
     /// The result came from split-region classification and selected assembly.
     SelectedRegions {
         /// Requested split-region retention rule.
@@ -856,7 +856,7 @@ pub enum ExactBooleanResultKind {
 /// exact shortcut reason on [`ExactBooleanResultKind`] gives downstream audit
 /// reducing all shortcut outputs to an undifferentiated mesh.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum ExactBooleanShortcutKind {
+pub(crate) enum ExactBooleanShortcutKind {
     /// Exact empty-operand semantics.
     EmptyOperand,
     /// Certified disjoint mesh AABBs.
