@@ -56,7 +56,7 @@ fn exact_boolean_result(
     workspace
         .evaluate(request)
         .unwrap()
-        .validate_materialized_result_against_sources(left, right)
+        .validate_against_sources(left, right)
         .unwrap();
     result
 }
@@ -259,9 +259,6 @@ fn exact_boolean_evaluation_materializes_certified_result_publicly() {
 
     evaluation.validate().unwrap();
     evaluation.validate_against_sources(&left, &right).unwrap();
-    evaluation
-        .validate_materialized_result_against_sources(&left, &right)
-        .unwrap();
     assert_eq!(
         evaluation.freshness_against_sources(&left, &right),
         hypermesh::ExactReportFreshness::Current
@@ -969,9 +966,6 @@ fn affine_orthogonal_solid_recovers_multi_cell_basis_without_sampling_limits() {
         );
         evaluation.validate().unwrap();
         evaluation.validate_against_sources(&left, &right).unwrap();
-        evaluation
-            .validate_materialized_result_against_sources(&left, &right)
-            .unwrap();
         result.validate().unwrap();
         assert!(result.mesh().facts().mesh.closed_manifold);
     }
@@ -1248,7 +1242,7 @@ fn exact_closed_convex_boolean_is_publicly_replayable() {
     );
     separated_evaluation.validate().unwrap();
     separated_evaluation
-        .validate_materialized_result_against_sources(&separated_left, &separated_right)
+        .validate_against_sources(&separated_left, &separated_right)
         .unwrap();
     let dispatched = exact_boolean_result(
         &separated_left,
@@ -1886,9 +1880,7 @@ fn exact_selected_region_boolean_is_publicly_replayable() {
         ),
     );
     evaluation.validate().unwrap();
-    evaluation
-        .validate_materialized_result_against_sources(&left, &right)
-        .unwrap();
+    evaluation.validate_against_sources(&left, &right).unwrap();
 }
 
 #[test]
@@ -2748,7 +2740,7 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
     let difference_evaluation = workspace.evaluate(difference_request).unwrap().clone();
     difference_evaluation.validate().unwrap();
     difference_evaluation
-        .validate_materialized_result_against_sources(&left, &right)
+        .validate_against_sources(&left, &right)
         .unwrap();
     let difference = difference_evaluation
         .materialized_result()
@@ -2899,9 +2891,7 @@ fn arrangement_cell_complex_request_materialization_is_publicly_replayable() {
     );
     result.validate().unwrap();
     let evaluation = workspace.evaluate(request).unwrap();
-    evaluation
-        .validate_materialized_result_against_sources(&left, &right)
-        .unwrap();
+    evaluation.validate_against_sources(&left, &right).unwrap();
     assert_eq!(
         evaluation.freshness_against_sources(&left, &stale_right),
         ExactReportFreshness::SourceReplayMismatch,

@@ -72,7 +72,7 @@ fn exercise_workspace_requests(left: &ExactMesh, right: &ExactMesh, validation: 
         if let Ok(result) = workspace.materialize(request) {
             let _ = result.validate();
             if let Ok(evaluation) = workspace.evaluate(request) {
-                let _ = evaluation.validate_materialized_result_against_sources(left, right);
+                let _ = evaluation.validate_against_sources(left, right);
             }
         }
     }

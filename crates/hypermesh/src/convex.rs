@@ -1515,7 +1515,7 @@ mod tests {
             &right,
             ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED),
         )
-        .validate_materialized_result_against_sources(&left, &right)
+        .validate_against_sources(&left, &right)
         .unwrap();
 
         let difference = subtract_closed_convex_solids(&left, &right)
@@ -1528,7 +1528,7 @@ mod tests {
             &right,
             ExactBooleanRequest::new(ExactBooleanOperation::Difference, ValidationPolicy::CLOSED),
         )
-        .validate_materialized_result_against_sources(&left, &right)
+        .validate_against_sources(&left, &right)
         .unwrap();
     }
 }

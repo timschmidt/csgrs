@@ -468,13 +468,13 @@ fn run_case(case: &BenchCase) {
 
     time_prepared_stage(
         case,
-        "evaluation_result_validate_retained_replay",
+        "evaluation_validate_retained_replay",
         || retained_workspace_and_evaluation_for_case(case, request),
         |(_retained_workspace, evaluation)| {
             if let Some(evaluation) = evaluation.as_ref() {
                 black_box(
                     evaluation
-                        .validate_materialized_result_against_sources(&case.left, &case.right)
+                        .validate_against_sources(&case.left, &case.right)
                         .ok(),
                 );
             }
