@@ -332,17 +332,6 @@ fn exact_boolean_evaluation_materializes_certified_result_publicly() {
     );
     relabeled_support.preflight().validate().unwrap();
     assert_report_validation_error!(relabeled_support.validate());
-    let mut relabeled_winding_status = evaluation.clone();
-    *relabeled_winding_status
-        .certifications_mut()
-        .winding_readiness_mut()
-        .operation_mut() = ExactBooleanOperation::Difference;
-    relabeled_winding_status
-        .certifications()
-        .winding_readiness()
-        .validate()
-        .unwrap();
-    assert_report_validation_error!(relabeled_winding_status.validate());
 }
 
 #[test]
@@ -452,32 +441,6 @@ fn exact_boolean_evaluation_materializes_boundary_policy_shortcut_by_default() {
         .expect("boundary-policy evaluation should materialize");
     result.validate().unwrap();
     result.validate_against_sources(&left, &right).unwrap();
-    let mut mixed_graph_snapshot = evaluation.clone();
-    *mixed_graph_snapshot
-        .certifications_mut()
-        .refinement_mut()
-        .retained_face_pairs_mut() = 0;
-    *mixed_graph_snapshot
-        .certifications_mut()
-        .refinement_mut()
-        .retained_events_mut() = 0;
-    mixed_graph_snapshot
-        .certifications()
-        .refinement()
-        .validate()
-        .unwrap();
-    assert_report_validation_error!(mixed_graph_snapshot.validate());
-    let mut relabeled_winding_status = evaluation.clone();
-    *relabeled_winding_status
-        .certifications_mut()
-        .winding_readiness_mut()
-        .operation_mut() = ExactBooleanOperation::Difference;
-    relabeled_winding_status
-        .certifications()
-        .winding_readiness()
-        .validate()
-        .unwrap();
-    assert_report_validation_error!(relabeled_winding_status.validate());
     let rejected_request = ExactBooleanRequest::with_boundary_policy(
         ExactBooleanOperation::Union,
         ValidationPolicy::ALLOW_BOUNDARY,
@@ -2171,16 +2134,6 @@ fn exact_selected_region_boolean_is_publicly_replayable() {
         stale_result.validate_against_sources(&left, &right),
         "{stale_result:?}"
     );
-    let mut stale_winding_handoff = evaluation.clone();
-    *stale_winding_handoff
-        .certifications_mut()
-        .winding_readiness_mut()
-        .retained_events_mut() += 1;
-    assert!(
-        stale_winding_handoff.validate().is_err(),
-        "{stale_winding_handoff:?}"
-    );
-
     let mut stale_assembly_source_vertex = result.clone();
     let vertex = stale_assembly_source_vertex
         .assembly_mut()
@@ -2882,16 +2835,6 @@ fn closed_no_volume_overlap_regularized_boolean_is_publicly_replayable() {
                 ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
             );
             evaluation.validate().unwrap();
-            let mut cleared_handoff_evidence = evaluation.clone();
-            cleared_handoff_evidence
-                .certifications_mut()
-                .winding_readiness_mut()
-                .coplanar_volumetric_evidence_mut()
-                .take();
-            assert!(
-                cleared_handoff_evidence.validate().is_err(),
-                "{operation:?}: {cleared_handoff_evidence:?}"
-            );
         }
 
         let result = exact_boolean_result(
@@ -3198,19 +3141,6 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
     attempt.replace_topology_assembly_report(None);
     assert_report_validation_error!(attempt.validate());
     assert_report_validation_error!(stale_attempt_report.validate());
-    let mut stale_readiness_counts = evaluation.clone();
-    *stale_readiness_counts
-        .certifications_mut()
-        .winding_readiness_mut()
-        .retained_face_pairs_mut() += 1;
-    *stale_readiness_counts
-        .certifications_mut()
-        .winding_readiness_mut()
-        .retained_events_mut() += 1;
-    assert!(
-        stale_readiness_counts.validate().is_err(),
-        "{stale_readiness_counts:?}"
-    );
     if result.is_arrangement_cell_complex_materialized_for(ExactBooleanOperation::Union) {
         assert!(!result.region_classifications().is_empty());
         assert!(!result.triangulations().is_empty());

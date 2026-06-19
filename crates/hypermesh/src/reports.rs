@@ -5124,11 +5124,6 @@ impl ExactRefinementReport {
         self.operation
     }
 
-    /// Return the named operation mutably.
-    pub fn operation_mut(&mut self) -> &mut ExactBooleanOperation {
-        &mut self.operation
-    }
-
     /// Return the coarse refinement status.
     pub const fn status(&self) -> ExactRefinementStatus {
         self.status
@@ -5144,19 +5139,9 @@ impl ExactRefinementReport {
         self.retained_face_pairs
     }
 
-    /// Return the retained face-pair record count mutably.
-    pub fn retained_face_pairs_mut(&mut self) -> &mut usize {
-        &mut self.retained_face_pairs
-    }
-
     /// Return the retained event record count.
     pub const fn retained_events(&self) -> usize {
         self.retained_events
-    }
-
-    /// Return the retained event record count mutably.
-    pub fn retained_events_mut(&mut self) -> &mut usize {
-        &mut self.retained_events
     }
 
     /// Return the refinement blocker counts, when refinement is required.
@@ -6607,11 +6592,6 @@ impl ExactWindingReadinessReport {
         self.operation
     }
 
-    /// Return the requested named operation mutably.
-    pub fn operation_mut(&mut self) -> &mut ExactBooleanOperation {
-        &mut self.operation
-    }
-
     /// Return the coarse winding-readiness status.
     pub const fn status(&self) -> ExactWindingReadinessStatus {
         self.status
@@ -6627,19 +6607,9 @@ impl ExactWindingReadinessReport {
         self.retained_face_pairs
     }
 
-    /// Return the retained face-pair record count mutably.
-    pub fn retained_face_pairs_mut(&mut self) -> &mut usize {
-        &mut self.retained_face_pairs
-    }
-
     /// Return the retained event record count.
     pub const fn retained_events(&self) -> usize {
         self.retained_events
-    }
-
-    /// Return the retained event record count mutably.
-    pub fn retained_events_mut(&mut self) -> &mut usize {
-        &mut self.retained_events
     }
 
     /// Return the checked split-region count.
@@ -6665,13 +6635,6 @@ impl ExactWindingReadinessReport {
     /// Return the retained coplanar volumetric-cell evidence.
     pub fn coplanar_volumetric_evidence(&self) -> Option<&CoplanarVolumetricCellEvidenceReport> {
         self.coplanar_volumetric_evidence.as_ref()
-    }
-
-    /// Return the retained coplanar volumetric-cell evidence mutably.
-    pub fn coplanar_volumetric_evidence_mut(
-        &mut self,
-    ) -> &mut Option<CoplanarVolumetricCellEvidenceReport> {
-        &mut self.coplanar_volumetric_evidence
     }
 
     /// Return whether the report reached the winding-ready handoff.

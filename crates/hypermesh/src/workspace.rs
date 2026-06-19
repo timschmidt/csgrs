@@ -838,16 +838,13 @@ mod tests {
             ExactReportFreshness::Current
         );
         let mut stale_refinement_bundle = certifications.clone();
-        *stale_refinement_bundle
-            .refinement_mut()
-            .retained_events_mut() += 1;
+        stale_refinement_bundle.refinement_mut().retained_events += 1;
         assert_eq!(
             stale_refinement_bundle.validate_against_sources(&left, &right, request),
             Err(ExactReportValidationError::StatusEvidenceMismatch)
         );
         let mut relabeled_refinement_bundle = certifications.clone();
-        *relabeled_refinement_bundle.refinement_mut().operation_mut() =
-            ExactBooleanOperation::Difference;
+        relabeled_refinement_bundle.refinement_mut().operation = ExactBooleanOperation::Difference;
         assert_eq!(
             relabeled_refinement_bundle.validate_for_request(request),
             Err(ExactReportValidationError::StatusEvidenceMismatch)
@@ -913,7 +910,7 @@ mod tests {
         );
 
         let mut stale = certifications;
-        *stale.refinement_mut().retained_events_mut() += 1;
+        stale.refinement_mut().retained_events += 1;
         assert_eq!(
             stale.validate_for_request(request),
             Err(ExactReportValidationError::StatusEvidenceMismatch)
