@@ -168,10 +168,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
         &self,
         request: ExactBooleanRequest,
     ) -> Result<Option<usize>, MeshError> {
-        let retained_attempt_index =
-            self.validated_regularized_solid_arrangement_attempt_index(request)?;
-        let retained_attempt =
-            retained_attempt_index.map(|index| &self.arrangement_attempts[index].2);
+        let retained_attempt = self.validated_regularized_solid_arrangement_attempt(request)?;
         if let Some(index) = cached_by_request_index(&self.materializations, request) {
             validate_replayable_result_for_cache(
                 self.left,
@@ -444,10 +441,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
         }
 
         let result = self.materialize_uncached(request)?;
-        let retained_attempt_index =
-            self.validated_regularized_solid_arrangement_attempt_index(request)?;
-        let retained_attempt =
-            retained_attempt_index.map(|index| &self.arrangement_attempts[index].2);
+        let retained_attempt = self.validated_regularized_solid_arrangement_attempt(request)?;
         validate_replayable_result_for_cache(
             self.left,
             self.right,
