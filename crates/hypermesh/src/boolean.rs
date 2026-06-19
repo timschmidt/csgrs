@@ -2583,10 +2583,6 @@ impl ExactBooleanEvaluation {
         if !result.satisfies_request_shape(request) {
             return Err(ExactReportValidationError::StatusEvidenceMismatch);
         }
-        result.retained_arrangement_attempt_matches_output_for_request(
-            request,
-            retained_arrangement_attempt,
-        )?;
         result.validate_request_against_sources_with_retained_attempt(
             left,
             right,
