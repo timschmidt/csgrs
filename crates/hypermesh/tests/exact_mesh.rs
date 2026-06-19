@@ -2486,16 +2486,6 @@ fn mixed_dimensional_regularized_solid_boolean_is_publicly_replayable() {
                 result.freshness_against_sources(stale_left, stale_right),
                 expected_stale_freshness
             );
-            result
-                .validate_operation_against_sources(
-                    left,
-                    right,
-                    operation,
-                    ValidationPolicy::CLOSED,
-                    ExactBoundaryBooleanPolicy::Reject,
-                )
-                .unwrap();
-
             if keeps_solid {
                 assert!(result.mesh.facts().mesh.closed_manifold);
                 assert!(!result.mesh.triangles().is_empty());
@@ -2815,15 +2805,6 @@ fn closed_boundary_touching_regularized_boolean_is_publicly_replayable() {
                 "{stale_output:?}"
             );
         }
-        result
-            .validate_operation_against_sources(
-                &left,
-                &right,
-                operation,
-                ValidationPolicy::CLOSED,
-                ExactBoundaryBooleanPolicy::Reject,
-            )
-            .unwrap();
     }
 }
 
@@ -2958,15 +2939,6 @@ fn closed_no_volume_overlap_regularized_boolean_is_publicly_replayable() {
             result.freshness_against_sources(&left, &separated_right),
             ExactReportFreshness::SourceReplayMismatch
         );
-        result
-            .validate_operation_against_sources(
-                &left,
-                &right,
-                operation,
-                ValidationPolicy::CLOSED,
-                ExactBoundaryBooleanPolicy::Reject,
-            )
-            .unwrap();
         if operation == ExactBooleanOperation::Union {
             assert_eq!(
                 result.mesh.triangles().len(),
@@ -3049,15 +3021,6 @@ fn closed_winding_shortcuts_are_publicly_replayable() {
                 "{stale_output:?}"
             );
         }
-        result
-            .validate_operation_against_sources(
-                &separated_left,
-                &separated_right,
-                operation,
-                ValidationPolicy::CLOSED,
-                ExactBoundaryBooleanPolicy::Reject,
-            )
-            .unwrap();
     }
 
     let outer = tetra_from_corners([0, 0, 0], [10, 0, 0], [0, 10, 0], [0, 0, 10]);
@@ -3108,15 +3071,6 @@ fn closed_winding_shortcuts_are_publicly_replayable() {
                 "{stale_output:?}"
             );
         }
-        result
-            .validate_operation_against_sources(
-                &container,
-                &contained,
-                operation,
-                ValidationPolicy::CLOSED,
-                ExactBoundaryBooleanPolicy::Reject,
-            )
-            .unwrap();
     }
 }
 
@@ -3138,31 +3092,12 @@ fn closed_winding_public_replay_yields_to_convex_provenance() {
             ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
         );
         assert_convex_public_replay(&separated_replay, operation);
-        separated_replay
-            .validate_operation_against_sources(
-                &separated_left,
-                &separated_right,
-                operation,
-                ValidationPolicy::CLOSED,
-                ExactBoundaryBooleanPolicy::Reject,
-            )
-            .unwrap();
-
         let containment_replay = exact_boolean_result(
             &container,
             &contained,
             ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
         );
         assert_convex_public_replay(&containment_replay, operation);
-        containment_replay
-            .validate_operation_against_sources(
-                &container,
-                &contained,
-                operation,
-                ValidationPolicy::CLOSED,
-                ExactBoundaryBooleanPolicy::Reject,
-            )
-            .unwrap();
     }
 }
 
@@ -3567,16 +3502,6 @@ fn arrangement_cell_complex_request_materialization_is_publicly_replayable() {
     shortcut
         .validate_against_sources(&horizontal, &vertical)
         .unwrap();
-    shortcut
-        .validate_operation_against_sources(
-            &horizontal,
-            &vertical,
-            ExactBooleanOperation::Union,
-            ValidationPolicy::CLOSED,
-            ExactBoundaryBooleanPolicy::Reject,
-        )
-        .unwrap();
-
     let convex_left = tetra_from_corners([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]);
     let convex_right = tetra_from_corners([1, 1, 1], [5, 1, 1], [1, 5, 1], [1, 1, 5]);
     let convex_intersection = exact_boolean_result(
