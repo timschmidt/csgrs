@@ -2,10 +2,10 @@
 
 use hypercurve::{
     BulgeVertex2, CircularArc2, Contour2, ContourClosureStage2, CurveString2, FillRule, LineSeg2,
-    Point2, Real, Region2, RetainedImportFormat2, RetainedTopologyStatus, Segment2, SegmentKind,
-    SvgPathExportTarget2, UncertaintyReason, import_svg_contour_path_data_with_report,
-    import_svg_path_data_with_report, import_svg_region_path_data_with_report,
-    retained_svg_import_record,
+    Point2, Real, Region2, RetainedImportFormat2, RetainedImportTopology2, RetainedTopologyStatus,
+    Segment2, SegmentKind, SvgPathExportTarget2, UncertaintyReason,
+    import_svg_contour_path_data_with_report, import_svg_path_data_with_report,
+    import_svg_region_path_data_with_report, retained_svg_import_record,
 };
 
 fn s(value: i32) -> Real {
@@ -147,11 +147,62 @@ fn svg_line_path_import_materializes_with_retained_report() {
 }
 
 #[test]
-fn svg_curved_path_import_remains_explicitly_unsupported() {
+fn svg_circular_semicircle_arc_import_materializes_with_retained_report() {
+    let imported = import_svg_path_data_with_report("M 0 0 A 1 1 0 0 0 2 0", 8, 1, None);
+
+    let curve = imported
+        .curve_string()
+        .expect("circular semicircle arc path should materialize");
+    assert_eq!(curve.len(), 1);
+    assert_eq!(
+        curve
+            .to_svg_path_data_with_report()
+            .unwrap()
+            .path_data()
+            .unwrap(),
+        "M 0 0 A 1 1 0 0 0 2 0"
+    );
+    assert_eq!(imported.report().source_index(), 8);
+    assert_eq!(imported.report().source_version(), 1);
+    assert_eq!(imported.report().command_count(), 2);
+    assert_eq!(
+        imported.report().status(),
+        RetainedTopologyStatus::ImportedLossy
+    );
+    assert_eq!(imported.report().blocker(), None);
+    let record = imported.report().retained_import().unwrap();
+    assert_eq!(record.format(), RetainedImportFormat2::Svg);
+    assert_eq!(
+        record.source_topology(),
+        RetainedImportTopology2::OpenCurveString
+    );
+    assert_eq!(record.input_point_count(), 2);
+    assert_eq!(record.emitted_segment_count(), 1);
+}
+
+#[test]
+fn svg_cubic_path_import_remains_explicitly_unsupported() {
     let imported = import_svg_path_data_with_report("M 0 0 C 1 0 1 1 2 1", 8, 1, None);
 
     assert!(imported.curve_string().is_none());
     assert_eq!(imported.report().source_index(), 8);
+    assert_eq!(imported.report().command_count(), 2);
+    assert_eq!(
+        imported.report().status(),
+        RetainedTopologyStatus::Unsupported
+    );
+    assert_eq!(
+        imported.report().blocker(),
+        Some(UncertaintyReason::Unsupported)
+    );
+}
+
+#[test]
+fn svg_non_semicircle_arc_import_remains_explicitly_unsupported() {
+    let imported = import_svg_path_data_with_report("M 0 0 A 2 2 0 0 0 2 0", 9, 1, None);
+
+    assert!(imported.curve_string().is_none());
+    assert_eq!(imported.report().source_index(), 9);
     assert_eq!(imported.report().command_count(), 2);
     assert_eq!(
         imported.report().status(),
@@ -194,6 +245,33 @@ fn svg_closed_line_path_import_materializes_contour_with_closure_evidence() {
         imported.report().closure_report().unwrap().stage(),
         ContourClosureStage2::ContourMaterialization
     );
+}
+
+#[test]
+fn svg_closed_semicircle_arc_import_materializes_two_segment_contour() {
+    let path_data = "M 0 0 A 1 1 0 0 0 2 0 Z";
+    let imported =
+        import_svg_contour_path_data_with_report(path_data, FillRule::NonZero, 10, 1, None);
+
+    assert_eq!(
+        imported.report().path_report().status(),
+        RetainedTopologyStatus::ImportedLossy
+    );
+    assert_eq!(
+        imported.report().status(),
+        RetainedTopologyStatus::ImportedLossy
+    );
+    let contour = imported
+        .contour()
+        .expect("closed semicircle arc path should materialize");
+    assert_eq!(contour.len(), 2);
+    let record = imported.report().retained_import().unwrap();
+    assert_eq!(
+        record.source_topology(),
+        RetainedImportTopology2::ClosedContour
+    );
+    assert_eq!(record.input_point_count(), 2);
+    assert_eq!(record.emitted_segment_count(), 2);
 }
 
 #[test]

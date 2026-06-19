@@ -4,15 +4,16 @@
 //! named boundary instead of allowing finite path syntax to silently become
 //! native topology. Export of native line/arc carriers is exact-string
 //! preserving with retained segment counts. Import materializes a conservative
-//! exact line-path subset and returns explicit report evidence for unsupported
-//! path commands instead of guessing topology.
+//! exact native line and restricted circular-arc subset and returns explicit
+//! report evidence for unsupported path commands instead of guessing topology.
 
 use crate::{
-    Contour2, ContourClosureReport2, CurvePolicy, CurveResult, CurveString2, FillRule, LineSeg2,
-    Point2, Rational, Real, Region2, RegionBoundaryContourBuildReport2, RetainedImportFormat2,
-    RetainedImportRecord2, RetainedSourceTolerance2, RetainedTopologyStatus, Segment2, SegmentKind,
-    SegmentKindCounts, UncertaintyReason,
+    CircularArc2, Contour2, ContourClosureReport2, CurvePolicy, CurveResult, CurveString2,
+    FillRule, LineSeg2, Point2, Rational, Real, Region2, RegionBoundaryContourBuildReport2,
+    RetainedImportFormat2, RetainedImportRecord2, RetainedSourceTolerance2, RetainedTopologyStatus,
+    Segment2, SegmentKind, SegmentKindCounts, UncertaintyReason,
 };
+use hyperreal::RealSign;
 use std::fmt::Write;
 
 /// SVG path serialization target.
@@ -81,7 +82,7 @@ pub struct SvgPathImportResult2 {
     report: SvgPathImportReport2,
 }
 
-/// Report for importing one closed SVG line-path as a contour.
+/// Report for importing one closed SVG native path as a contour.
 #[derive(Clone, Debug, PartialEq)]
 pub struct SvgContourImportReport2 {
     path_report: SvgPathImportReport2,
@@ -98,7 +99,7 @@ pub struct SvgContourImportResult2 {
     report: SvgContourImportReport2,
 }
 
-/// Report for importing SVG closed line subpaths as a region.
+/// Report for importing SVG closed native subpaths as a region.
 #[derive(Clone, Debug, PartialEq)]
 pub struct SvgRegionImportReport2 {
     path_reports: Vec<SvgPathImportReport2>,
@@ -148,8 +149,8 @@ impl SvgPathImportResult2 {
     /// Constructs an unsupported SVG path import result.
     ///
     /// The returned report records the named SVG boundary and leaves
-    /// materialization unsupported for path syntax outside the exact line-path
-    /// subset.
+    /// materialization unsupported for path syntax outside the exact native
+    /// line/restricted-circular-arc subset.
     pub fn unsupported_path_data(
         path_data: &str,
         source_index: u64,
@@ -739,7 +740,7 @@ pub fn import_svg_path_data_with_report(
     }
 }
 
-/// Imports one explicitly closed SVG line path as a contour with retained reports.
+/// Imports one explicitly closed SVG native path as a contour with retained reports.
 pub fn import_svg_contour_path_data_with_report(
     path_data: &str,
     fill_rule: FillRule,
@@ -799,7 +800,7 @@ pub fn import_svg_contour_path_data_with_report(
     }
 }
 
-/// Imports absolute closed SVG line subpaths as one region with retained reports.
+/// Imports absolute closed SVG native subpaths as one region with retained reports.
 pub fn import_svg_region_path_data_with_report(
     path_data: &str,
     fill_rule: FillRule,
@@ -938,6 +939,8 @@ pub fn retained_svg_import_record(
 #[derive(Clone, Debug)]
 struct ParsedSvgLinePath {
     points: Vec<Point2>,
+    segments: Vec<Segment2>,
+    discarded_duplicate_count: usize,
     closed: bool,
 }
 
@@ -954,14 +957,11 @@ fn import_parsed_svg_line_path(
     source_tolerance: Option<RetainedSourceTolerance2>,
     parsed: ParsedSvgLinePath,
 ) -> SvgPathImportResult2 {
-    let mut segments = Vec::new();
-    let mut discarded_duplicate_count = 0_usize;
-    for points in parsed.points.windows(2) {
-        match LineSeg2::try_new(points[0].clone(), points[1].clone()) {
-            Ok(line) => segments.push(Segment2::Line(line)),
-            Err(_) => discarded_duplicate_count += 1,
-        }
-    }
+    let mut segments = parsed.segments;
+    let mut discarded_duplicate_count = parsed.discarded_duplicate_count;
+    let has_non_line_segment = segments
+        .iter()
+        .any(|segment| !matches!(segment, Segment2::Line(_)));
 
     if parsed.closed {
         let Some(start) = parsed.points.first().cloned() else {
@@ -995,8 +995,28 @@ fn import_parsed_svg_line_path(
         );
     };
 
-    let retained_import = if parsed.closed {
+    let retained_import = if parsed.closed && has_non_line_segment {
+        RetainedImportRecord2::try_new_closed_contour_with_source_version(
+            RetainedImportFormat2::Svg,
+            source_index,
+            source_version,
+            source_tolerance,
+            parsed.points.len(),
+            curve_string.len(),
+            discarded_duplicate_count,
+        )
+    } else if parsed.closed {
         RetainedImportRecord2::try_new_closed_ring_with_source_version(
+            RetainedImportFormat2::Svg,
+            source_index,
+            source_version,
+            source_tolerance,
+            parsed.points.len(),
+            curve_string.len(),
+            discarded_duplicate_count,
+        )
+    } else if has_non_line_segment {
+        RetainedImportRecord2::try_new_open_curve_string_with_source_version(
             RetainedImportFormat2::Svg,
             source_index,
             source_version,
@@ -1048,11 +1068,37 @@ fn parse_svg_line_path(path_data: &str) -> Result<ParsedSvgLinePath, ()> {
     parser.parse()
 }
 
+fn svg_semicircle_arc(
+    start: Point2,
+    end: Point2,
+    rx: Real,
+    ry: Real,
+    rotation: Real,
+    large_arc: bool,
+    sweep: bool,
+) -> Result<CircularArc2, ()> {
+    if rotation != Real::zero() || rx != ry || large_arc {
+        return Err(());
+    }
+    if rx.structural_facts().sign != Some(RealSign::Positive) {
+        return Err(());
+    }
+    let chord_squared = start.distance_squared(&end);
+    let radius_squared = &rx * &rx;
+    if chord_squared != Real::from(4_i8) * &radius_squared {
+        return Err(());
+    }
+    let bulge = if sweep { -Real::one() } else { Real::one() };
+    CircularArc2::from_bulge(start, end, bulge).map_err(|_| ())
+}
+
 struct SvgLinePathParser<'a> {
     tokens: Vec<SvgPathToken<'a>>,
     index: usize,
     command: Option<char>,
     points: Vec<Point2>,
+    segments: Vec<Segment2>,
+    discarded_duplicate_count: usize,
     current: Option<Point2>,
     closed: bool,
 }
@@ -1064,6 +1110,8 @@ impl<'a> SvgLinePathParser<'a> {
             index: 0,
             command: None,
             points: Vec::new(),
+            segments: Vec::new(),
+            discarded_duplicate_count: 0,
             current: None,
             closed: false,
         }
@@ -1080,6 +1128,7 @@ impl<'a> SvgLinePathParser<'a> {
                 'L' => self.parse_line()?,
                 'H' => self.parse_horizontal()?,
                 'V' => self.parse_vertical()?,
+                'A' => self.parse_arc()?,
                 'Z' => {
                     self.closed = true;
                     self.command = None;
@@ -1095,6 +1144,8 @@ impl<'a> SvgLinePathParser<'a> {
         }
         Ok(ParsedSvgLinePath {
             points: self.points.clone(),
+            segments: self.segments.clone(),
+            discarded_duplicate_count: self.discarded_duplicate_count,
             closed: self.closed,
         })
     }
@@ -1112,6 +1163,16 @@ impl<'a> SvgLinePathParser<'a> {
 
     fn parse_line(&mut self) -> Result<(), ()> {
         let point = self.parse_point()?;
+        self.push_line_to(point.clone())?;
+        Ok(())
+    }
+
+    fn push_line_to(&mut self, point: Point2) -> Result<(), ()> {
+        let current = self.current.as_ref().ok_or(())?;
+        match LineSeg2::try_new(current.clone(), point.clone()) {
+            Ok(line) => self.segments.push(Segment2::Line(line)),
+            Err(_) => self.discarded_duplicate_count += 1,
+        }
         self.current = Some(point.clone());
         self.points.push(point);
         Ok(())
@@ -1121,17 +1182,28 @@ impl<'a> SvgLinePathParser<'a> {
         let x = self.parse_number()?;
         let current = self.current.as_ref().ok_or(())?;
         let point = Point2::new(x, current.y().clone());
-        self.current = Some(point.clone());
-        self.points.push(point);
-        Ok(())
+        self.push_line_to(point)
     }
 
     fn parse_vertical(&mut self) -> Result<(), ()> {
         let y = self.parse_number()?;
         let current = self.current.as_ref().ok_or(())?;
         let point = Point2::new(current.x().clone(), y);
-        self.current = Some(point.clone());
-        self.points.push(point);
+        self.push_line_to(point)
+    }
+
+    fn parse_arc(&mut self) -> Result<(), ()> {
+        let rx = self.parse_number()?;
+        let ry = self.parse_number()?;
+        let rotation = self.parse_number()?;
+        let large_arc = self.parse_flag()?;
+        let sweep = self.parse_flag()?;
+        let end = self.parse_point()?;
+        let start = self.current.as_ref().ok_or(())?.clone();
+        let arc = svg_semicircle_arc(start, end.clone(), rx, ry, rotation, large_arc, sweep)?;
+        self.segments.push(Segment2::Arc(arc));
+        self.current = Some(end.clone());
+        self.points.push(end);
         Ok(())
     }
 
@@ -1147,6 +1219,17 @@ impl<'a> SvgLinePathParser<'a> {
         };
         self.index += 1;
         exact_svg_number(number)
+    }
+
+    fn parse_flag(&mut self) -> Result<bool, ()> {
+        let value = self.parse_number()?;
+        if value == Real::zero() {
+            Ok(false)
+        } else if value == Real::one() {
+            Ok(true)
+        } else {
+            Err(())
+        }
     }
 
     fn consume_command(&mut self) -> Option<char> {
@@ -1171,7 +1254,7 @@ fn tokenize_svg_path(path_data: &str) -> Result<Vec<SvgPathToken<'_>>, ()> {
             continue;
         }
         if ch.is_ascii_alphabetic() {
-            if !matches!(ch, 'M' | 'L' | 'H' | 'V' | 'Z') {
+            if !matches!(ch, 'M' | 'L' | 'H' | 'V' | 'A' | 'Z') {
                 return Err(());
             }
             tokens.push(SvgPathToken::Command(ch));

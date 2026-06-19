@@ -30,8 +30,12 @@ pub enum RetainedImportFormat2 {
 pub enum RetainedImportTopology2 {
     /// The source evidence was an open finite line string.
     OpenLineString,
+    /// The source evidence was an open finite curve string with non-line carriers.
+    OpenCurveString,
     /// The source evidence was a closed finite ring.
     ClosedRing,
+    /// The source evidence was a closed finite contour with non-line carriers.
+    ClosedContour,
 }
 
 /// Absolute/relative tolerance carried from an import source.
@@ -186,6 +190,39 @@ impl RetainedImportRecord2 {
         ))
     }
 
+    /// Constructs an open-curve-string retained lossy-import audit record with
+    /// explicit source version evidence.
+    pub fn try_new_open_curve_string_with_source_version(
+        format: RetainedImportFormat2,
+        source_index: u64,
+        source_version: u64,
+        source_tolerance: Option<RetainedSourceTolerance2>,
+        input_point_count: usize,
+        emitted_segment_count: usize,
+        discarded_duplicate_count: usize,
+    ) -> CurveResult<Self> {
+        let edge_evidence_count = emitted_segment_count
+            .checked_add(discarded_duplicate_count)
+            .ok_or(CurveError::InvalidImportRecord)?;
+        if input_point_count < 2
+            || emitted_segment_count == 0
+            || edge_evidence_count != input_point_count - 1
+        {
+            return Err(CurveError::InvalidImportRecord);
+        }
+
+        Ok(Self::from_validated_counts(
+            format,
+            RetainedImportTopology2::OpenCurveString,
+            source_index,
+            source_version,
+            source_tolerance,
+            input_point_count,
+            emitted_segment_count,
+            discarded_duplicate_count,
+        ))
+    }
+
     /// Constructs a closed-ring retained lossy-import audit record.
     pub fn try_new_closed_ring(
         format: RetainedImportFormat2,
@@ -230,6 +267,39 @@ impl RetainedImportRecord2 {
         Ok(Self::from_validated_counts(
             format,
             RetainedImportTopology2::ClosedRing,
+            source_index,
+            source_version,
+            source_tolerance,
+            input_point_count,
+            emitted_segment_count,
+            discarded_duplicate_count,
+        ))
+    }
+
+    /// Constructs a closed-contour retained lossy-import audit record with
+    /// explicit source version evidence.
+    pub fn try_new_closed_contour_with_source_version(
+        format: RetainedImportFormat2,
+        source_index: u64,
+        source_version: u64,
+        source_tolerance: Option<RetainedSourceTolerance2>,
+        input_point_count: usize,
+        emitted_segment_count: usize,
+        discarded_duplicate_count: usize,
+    ) -> CurveResult<Self> {
+        let edge_evidence_count = emitted_segment_count
+            .checked_add(discarded_duplicate_count)
+            .ok_or(CurveError::InvalidImportRecord)?;
+        if input_point_count < 2
+            || emitted_segment_count < 2
+            || edge_evidence_count != input_point_count
+        {
+            return Err(CurveError::InvalidImportRecord);
+        }
+
+        Ok(Self::from_validated_counts(
+            format,
+            RetainedImportTopology2::ClosedContour,
             source_index,
             source_version,
             source_tolerance,
