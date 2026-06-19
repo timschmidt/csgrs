@@ -313,11 +313,21 @@ impl<'a> ExactBooleanWorkspace<'a> {
                     .map_err(workspace_report_validation_error)?;
                 Some(self.materializations[index].1.clone())
             } else if matches!(preflight.support, ExactBooleanSupport::SelectedRegionPolicy) {
-                self.try_materialize_certified_support(request, preflight.support)
-                    .ok()
-                    .flatten()
+                self.try_materialize_certified_support(
+                    request,
+                    preflight.support,
+                    regularized_arrangement,
+                    regularized_attempt,
+                )
+                .ok()
+                .flatten()
             } else {
-                self.try_materialize_certified_support(request, preflight.support)?
+                self.try_materialize_certified_support(
+                    request,
+                    preflight.support,
+                    regularized_arrangement,
+                    regularized_attempt,
+                )?
             }
         } else {
             None
@@ -365,8 +375,16 @@ impl<'a> ExactBooleanWorkspace<'a> {
             if let Some(result) = retained_result {
                 return Ok(result);
             }
+            let regularized_arrangement = self.regularized_solid_arrangement();
+            let regularized_attempt =
+                self.validated_regularized_solid_arrangement_attempt(request)?;
             let result = self
-                .try_materialize_certified_support(request, support)?
+                .try_materialize_certified_support(
+                    request,
+                    support,
+                    regularized_arrangement,
+                    regularized_attempt,
+                )?
                 .ok_or_else(|| {
                     workspace_report_validation_error(
                         ExactReportValidationError::StatusEvidenceMismatch,
@@ -430,19 +448,20 @@ impl<'a> ExactBooleanWorkspace<'a> {
         &self,
         request: ExactBooleanRequest,
         support: ExactBooleanSupport,
+        regularized_arrangement: Option<&ExactArrangement>,
+        regularized_attempt: Option<&ExactArrangementBooleanAttempt>,
     ) -> Result<Option<ExactBooleanResult>, MeshError> {
         let graph = self
             .graph
             .as_ref()
             .expect("intersection graph cache was just populated");
-        let regularized_attempt = self.validated_regularized_solid_arrangement_attempt(request)?;
         try_materialize_certified_boolean_support_with_artifacts(
             self.left,
             self.right,
             request,
             support,
             Some(graph),
-            self.regularized_solid_arrangement(),
+            regularized_arrangement,
             regularized_attempt,
         )
     }
