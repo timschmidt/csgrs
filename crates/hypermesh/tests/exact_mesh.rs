@@ -4182,14 +4182,14 @@ fn trivial_boolean_shortcuts_are_publicly_replayable() {
         );
         empty_evaluation.validate().unwrap();
         let mut relabeled_empty_facts = empty_evaluation.clone();
-        relabeled_empty_facts
+        *relabeled_empty_facts
             .certifications_mut()
             .trivial_mut()
-            .left_empty = false;
-        relabeled_empty_facts
+            .left_empty_mut() = false;
+        *relabeled_empty_facts
             .certifications_mut()
             .trivial_mut()
-            .right_empty = false;
+            .right_empty_mut() = false;
         assert_report_validation_error!(
             relabeled_empty_facts.validate(),
             "{operation:?}: {relabeled_empty_facts:?}"
@@ -4261,10 +4261,10 @@ fn trivial_boolean_shortcuts_are_publicly_replayable() {
         );
         disjoint_evaluation.validate().unwrap();
         let mut relabeled_disjoint_facts = disjoint_evaluation.clone();
-        relabeled_disjoint_facts
+        *relabeled_disjoint_facts
             .certifications_mut()
             .trivial_mut()
-            .bounds_disjoint = false;
+            .bounds_disjoint_mut() = false;
         assert_report_validation_error!(
             relabeled_disjoint_facts.validate(),
             "{operation:?}: {relabeled_disjoint_facts:?}"
@@ -4415,10 +4415,10 @@ fn trivial_boolean_shortcuts_are_publicly_replayable() {
         );
         lower_dimensional_evaluation.validate().unwrap();
         let mut relabeled_lower_dimensional_facts = lower_dimensional_evaluation.clone();
-        relabeled_lower_dimensional_facts
+        *relabeled_lower_dimensional_facts
             .certifications_mut()
             .regularized_solid_mut()
-            .left_open_surface = false;
+            .left_open_surface_mut() = false;
         assert_report_validation_error!(
             relabeled_lower_dimensional_facts.validate(),
             "{operation:?}: {relabeled_lower_dimensional_facts:?}"
@@ -4446,10 +4446,10 @@ fn trivial_boolean_shortcuts_are_publicly_replayable() {
         );
         mixed_dimensional_evaluation.validate().unwrap();
         let mut relabeled_mixed_dimensional_facts = mixed_dimensional_evaluation.clone();
-        relabeled_mixed_dimensional_facts
+        *relabeled_mixed_dimensional_facts
             .certifications_mut()
             .regularized_solid_mut()
-            .right_open_surface = false;
+            .right_open_surface_mut() = false;
         assert_report_validation_error!(
             relabeled_mixed_dimensional_facts.validate(),
             "{operation:?}: {relabeled_mixed_dimensional_facts:?}"

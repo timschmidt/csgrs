@@ -2117,11 +2117,43 @@ impl ExactBooleanCertificationSet {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ExactTrivialBooleanFacts {
     /// The left source has no input triangles.
-    pub left_empty: bool,
+    pub(crate) left_empty: bool,
     /// The right source has no input triangles.
-    pub right_empty: bool,
+    pub(crate) right_empty: bool,
     /// Both sources are non-empty and their exact mesh AABBs are disjoint.
-    pub bounds_disjoint: bool,
+    pub(crate) bounds_disjoint: bool,
+}
+
+impl ExactTrivialBooleanFacts {
+    /// Return whether the left source has no input triangles.
+    pub const fn left_empty(&self) -> bool {
+        self.left_empty
+    }
+
+    /// Return whether the right source has no input triangles.
+    pub const fn right_empty(&self) -> bool {
+        self.right_empty
+    }
+
+    /// Return whether both non-empty source bounds are exactly disjoint.
+    pub const fn bounds_disjoint(&self) -> bool {
+        self.bounds_disjoint
+    }
+
+    /// Return the left-empty fact mutably.
+    pub fn left_empty_mut(&mut self) -> &mut bool {
+        &mut self.left_empty
+    }
+
+    /// Return the right-empty fact mutably.
+    pub fn right_empty_mut(&mut self) -> &mut bool {
+        &mut self.right_empty
+    }
+
+    /// Return the exact bounds-disjoint fact mutably.
+    pub fn bounds_disjoint_mut(&mut self) -> &mut bool {
+        &mut self.bounds_disjoint
+    }
 }
 
 /// Replayable source-shape facts for closed regularized-solid shortcut
@@ -2134,13 +2166,13 @@ pub struct ExactTrivialBooleanFacts {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ExactRegularizedSolidBooleanFacts {
     /// The left source is a non-empty closed manifold solid.
-    pub left_closed_solid: bool,
+    pub(crate) left_closed_solid: bool,
     /// The right source is a non-empty closed manifold solid.
-    pub right_closed_solid: bool,
+    pub(crate) right_closed_solid: bool,
     /// The left source is a supported non-empty open manifold surface.
-    pub left_open_surface: bool,
+    pub(crate) left_open_surface: bool,
     /// The right source is a supported non-empty open manifold surface.
-    pub right_open_surface: bool,
+    pub(crate) right_open_surface: bool,
 }
 
 impl ExactRegularizedSolidBooleanFacts {
@@ -2162,17 +2194,57 @@ impl ExactRegularizedSolidBooleanFacts {
             Ok(())
         }
     }
+
+    /// Return whether the left source is a non-empty closed solid.
+    pub const fn left_closed_solid(&self) -> bool {
+        self.left_closed_solid
+    }
+
+    /// Return whether the right source is a non-empty closed solid.
+    pub const fn right_closed_solid(&self) -> bool {
+        self.right_closed_solid
+    }
+
+    /// Return whether the left source is a supported non-empty open surface.
+    pub const fn left_open_surface(&self) -> bool {
+        self.left_open_surface
+    }
+
+    /// Return whether the right source is a supported non-empty open surface.
+    pub const fn right_open_surface(&self) -> bool {
+        self.right_open_surface
+    }
+
+    /// Return the left closed-solid fact mutably.
+    pub fn left_closed_solid_mut(&mut self) -> &mut bool {
+        &mut self.left_closed_solid
+    }
+
+    /// Return the right closed-solid fact mutably.
+    pub fn right_closed_solid_mut(&mut self) -> &mut bool {
+        &mut self.right_closed_solid
+    }
+
+    /// Return the left open-surface fact mutably.
+    pub fn left_open_surface_mut(&mut self) -> &mut bool {
+        &mut self.left_open_surface
+    }
+
+    /// Return the right open-surface fact mutably.
+    pub fn right_open_surface_mut(&mut self) -> &mut bool {
+        &mut self.right_open_surface
+    }
 }
 
 /// Replayable source facts for closed-convex boolean shortcuts.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ExactConvexBooleanCapabilityFacts {
     /// Exact closed-convex union can be certified by the shortcut.
-    pub can_union: bool,
+    pub(crate) can_union: bool,
     /// Exact closed-convex intersection can be certified by the shortcut.
-    pub can_intersection: bool,
+    pub(crate) can_intersection: bool,
     /// Exact closed-convex difference can be certified by the shortcut.
-    pub can_difference: bool,
+    pub(crate) can_difference: bool,
 }
 
 impl ExactConvexBooleanCapabilityFacts {
@@ -2218,17 +2290,17 @@ impl ExactConvexBooleanCapabilityFacts {
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ExactArrangementCellComplexShortcutFacts {
     /// Axis-aligned orthogonal cell decomposition supports union.
-    pub axis_aligned_union: bool,
+    pub(crate) axis_aligned_union: bool,
     /// Axis-aligned orthogonal cell decomposition supports intersection.
-    pub axis_aligned_intersection: bool,
+    pub(crate) axis_aligned_intersection: bool,
     /// Axis-aligned orthogonal cell decomposition supports difference.
-    pub axis_aligned_difference: bool,
+    pub(crate) axis_aligned_difference: bool,
     /// Affine orthogonal cell decomposition supports union.
-    pub affine_union: bool,
+    pub(crate) affine_union: bool,
     /// Affine orthogonal cell decomposition supports intersection.
-    pub affine_intersection: bool,
+    pub(crate) affine_intersection: bool,
     /// Affine orthogonal cell decomposition supports difference.
-    pub affine_difference: bool,
+    pub(crate) affine_difference: bool,
 }
 
 impl ExactArrangementCellComplexShortcutFacts {
