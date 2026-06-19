@@ -1823,15 +1823,6 @@ impl ExactBooleanResult {
     /// the shortcut replay gap: a certified output mesh cannot be relabeled as
     /// a different named operation or shortcut kind while still passing the
     /// source audit.
-    pub(crate) fn validate_request_against_sources(
-        &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-        request: ExactBooleanRequest,
-    ) -> Result<(), ExactReportValidationError> {
-        self.validate_request_against_sources_with_retained_attempt(left, right, request, None)
-    }
-
     pub(crate) fn validate_request_against_sources_with_retained_attempt(
         &self,
         left: &ExactMesh,
@@ -6837,15 +6828,18 @@ mod tests {
             ExactReportFreshness::Current
         );
         assert_eq!(
-            exact_report_freshness(result.validate_request_against_sources(
-                &left,
-                &right,
-                ExactBooleanRequest::with_boundary_policy(
-                    ExactBooleanOperation::Union,
-                    ValidationPolicy::CLOSED,
-                    ExactBoundaryBooleanPolicy::Reject,
-                ),
-            )),
+            exact_report_freshness(
+                result.validate_request_against_sources_with_retained_attempt(
+                    &left,
+                    &right,
+                    ExactBooleanRequest::with_boundary_policy(
+                        ExactBooleanOperation::Union,
+                        ValidationPolicy::CLOSED,
+                        ExactBoundaryBooleanPolicy::Reject,
+                    ),
+                    None,
+                )
+            ),
             ExactReportFreshness::Current
         );
 
@@ -6862,7 +6856,7 @@ mod tests {
         );
         assert!(
             result
-                .validate_request_against_sources(
+                .validate_request_against_sources_with_retained_attempt(
                     &left,
                     &right,
                     ExactBooleanRequest::with_boundary_policy(
@@ -6870,6 +6864,7 @@ mod tests {
                         ValidationPolicy::CLOSED,
                         ExactBoundaryBooleanPolicy::Reject,
                     ),
+                    None,
                 )
                 .is_err()
         );
