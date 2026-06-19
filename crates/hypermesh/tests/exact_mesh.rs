@@ -47,21 +47,17 @@ fn exact_boolean_result(
     result
 }
 
-fn with_exact_boolean_arrangement_attempt<R>(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    request: ExactBooleanRequest,
-    policy: ExactRegularizationPolicy,
-    f: impl FnOnce(&hypermesh::ExactArrangementBooleanAttempt) -> R,
-) -> R {
-    assert_eq!(policy, ExactRegularizationPolicy::REGULARIZED_SOLID);
-    let mut workspace = ExactBooleanWorkspace::new(left, right);
-    let attempt = workspace
-        .evaluate(request)
-        .unwrap()
-        .retained_arrangement_attempt()
-        .expect("evaluation should retain an arrangement attempt");
-    f(attempt)
+macro_rules! with_exact_boolean_arrangement_attempt {
+    ($left:expr, $right:expr, $request:expr, $policy:expr, |$attempt:ident| $body:block $(,)?) => {{
+        assert_eq!($policy, ExactRegularizationPolicy::REGULARIZED_SOLID);
+        let mut workspace = ExactBooleanWorkspace::new($left, $right);
+        let $attempt = workspace
+            .evaluate($request)
+            .unwrap()
+            .retained_arrangement_attempt()
+            .expect("evaluation should retain an arrangement attempt");
+        $body
+    }};
 }
 
 fn assert_public_full_face_adjacent_union(
@@ -1508,7 +1504,7 @@ fn exact_open_surface_arrangement_is_publicly_replayable() {
         ExactBooleanOperation::Difference,
     ] {
         if !matches!(operation, ExactBooleanOperation::Intersection) {
-            with_exact_boolean_arrangement_attempt(
+            with_exact_boolean_arrangement_attempt!(
                 &left,
                 &right,
                 ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
@@ -1543,7 +1539,7 @@ fn exact_open_surface_arrangement_is_publicly_replayable() {
             );
         }
 
-        with_exact_boolean_arrangement_attempt(
+        with_exact_boolean_arrangement_attempt!(
             &left,
             &right,
             ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
@@ -1653,7 +1649,7 @@ fn arrangement_attempt_output_validation_is_publicly_replayable() {
         ExactBooleanOperation::Union,
         ExactBooleanOperation::Intersection,
     ] {
-        with_exact_boolean_arrangement_attempt(
+        with_exact_boolean_arrangement_attempt!(
             &left,
             &right,
             ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
@@ -1690,7 +1686,7 @@ fn arrangement_attempt_output_validation_is_publicly_replayable() {
             },
         );
 
-        with_exact_boolean_arrangement_attempt(
+        with_exact_boolean_arrangement_attempt!(
             &left,
             &right,
             ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
@@ -3740,7 +3736,7 @@ fn exact_boolean_attempt_public_path_reports_blockers_or_cells() {
         ExactBooleanOperation::Union,
         ValidationPolicy::ALLOW_BOUNDARY,
     );
-    with_exact_boolean_arrangement_attempt(
+    with_exact_boolean_arrangement_attempt!(
         &left,
         &right,
         request,

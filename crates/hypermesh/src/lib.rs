@@ -62,8 +62,8 @@ mod workspace;
 
 pub use artifact::MeshArtifactManifest;
 pub use boolean::{
-    ExactArrangementBooleanAttempt, ExactBooleanEvaluation, ExactBooleanOperation,
-    ExactBooleanRequest, ExactBooleanResult, ExactBoundaryBooleanPolicy, ExactReportFreshness,
+    ExactBooleanEvaluation, ExactBooleanOperation, ExactBooleanRequest, ExactBooleanResult,
+    ExactBoundaryBooleanPolicy, ExactReportFreshness,
 };
 pub use error::MeshError;
 pub use mesh::{ExactMesh, ExactMeshValidationError, Triangle};
