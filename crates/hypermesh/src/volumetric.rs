@@ -124,23 +124,6 @@ pub struct ExactVolumetricWitnessAttempt {
 }
 
 impl ExactVolumetricRegionClassification {
-    /// Return the opposite source mesh used to replay this classification's
-    /// retained winding evidence.
-    ///
-    /// The classification stores the side of the split region, but callers
-    /// validating public boolean results should not need to name the internal
-    /// side enum just to choose the replay target.
-    pub const fn replay_target_mesh<'a>(
-        &self,
-        left: &'a ExactMesh,
-        right: &'a ExactMesh,
-    ) -> &'a ExactMesh {
-        match self.region_side {
-            MeshSide::Left => right,
-            MeshSide::Right => left,
-        }
-    }
-
     /// Validate local consistency between retained representative, relation,
     /// and winding report.
     ///

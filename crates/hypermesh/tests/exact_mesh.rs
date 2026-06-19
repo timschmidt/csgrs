@@ -3748,7 +3748,9 @@ fn exact_volumetric_region_reports_replay_from_boolean_result() {
     );
     let shifted_target = tetra([10, 10, 10]);
     assert!(
-        result.has_replayable_volumetric_classification_witness(&left, &right, &shifted_target),
+        result
+            .validate_against_sources(&left, &shifted_target)
+            .is_err(),
         "{result:?}"
     );
 }

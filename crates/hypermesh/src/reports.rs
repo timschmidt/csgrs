@@ -742,47 +742,6 @@ impl ExactBooleanResult {
         !self.volumetric_classifications.is_empty()
     }
 
-    /// Return whether retained volumetric classifications replay from source
-    /// evidence and reject stale/missing witness evidence.
-    pub fn has_replayable_volumetric_classification_witness(
-        &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-        stale_target: &ExactMesh,
-    ) -> bool {
-        self.triangulations.iter().any(|triangulation| {
-            self.volumetric_classifications
-                .iter()
-                .filter(|classification| {
-                    triangulation.side == classification.region_side
-                        && triangulation.face == classification.region_face
-                        && triangulation
-                            .triangles
-                            .chunks_exact(3)
-                            .any(|triangle| triangle == classification.triangle)
-                })
-                .any(|classification| {
-                    let target = classification.replay_target_mesh(left, right);
-                    if !classification.relation.is_materialization_decided()
-                        || classification
-                            .validate_against_sources(triangulation, target)
-                            .is_err()
-                        || classification
-                            .validate_against_sources(triangulation, stale_target)
-                            .is_ok()
-                    {
-                        return false;
-                    }
-
-                    let mut stale_attempts = classification.clone();
-                    stale_attempts.witness_attempts.clear();
-                    stale_attempts
-                        .validate_against_sources(triangulation, target)
-                        .is_err()
-                })
-        })
-    }
-
     /// Return retained topology assembly gate evidence, when present.
     pub(crate) fn topology_assembly_report(&self) -> Option<&ExactTopologyAssemblyReport> {
         self.topology_assembly_report.as_ref()
