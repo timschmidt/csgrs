@@ -2,7 +2,8 @@ use hypercurve::{
     BulgeVertex2, CircularArc2, Classification, Contour2, CurveError, CurvePolicy, CurveString2,
     CurveStringChamferInputPath2, CurveStringChamferStage2, CurveStringConnectSource2,
     CurveStringConnectStage2, CurveStringCurveTrimQueryPath2, CurveStringCurveTrimStage2,
-    CurveStringDeduplicateStage2, CurveStringEndpoint2, CurveStringEndpointConnectionStatus2,
+    CurveStringDeduplicateStage2, CurveStringEndpoint2,
+    CurveStringEndpointConnectionPredicatePath2, CurveStringEndpointConnectionStatus2,
     CurveStringExtendStage2, CurveStringFilletInputPath2, CurveStringFilletStage2,
     CurveStringIntersectionPredicatePath2, CurveStringIntersectionQueryPath2,
     CurveStringLineMergeStage2, CurveStringLinkKind2, CurveStringLinkSourceInput2,
@@ -108,6 +109,10 @@ fn curve_string_endpoint_report_certifies_exact_connection() {
         CurveStringEndpointConnectionStatus2::NativeExact
     );
     assert!(report.topology_status().is_native_exact());
+    assert_eq!(
+        report.predicate_path(),
+        CurveStringEndpointConnectionPredicatePath2::ExactSquaredDistanceZero
+    );
     assert_eq!(report.distance_squared(), &s(0));
 }
 
@@ -893,6 +898,14 @@ fn curve_string_link_materializes_unique_end_start_connection() {
             .status(),
         CurveStringEndpointConnectionStatus2::NativeExact
     );
+    assert_eq!(
+        reported
+            .report()
+            .selected_endpoint_report()
+            .unwrap()
+            .predicate_path(),
+        CurveStringEndpointConnectionPredicatePath2::ExactSquaredDistanceZero
+    );
     assert_eq!(reported.report().first_segment_count(), 1);
     assert_eq!(reported.report().second_segment_count(), 1);
     assert_eq!(reported.report().endpoint_pair_count(), 4);
@@ -905,6 +918,10 @@ fn curve_string_link_materializes_unique_end_start_connection() {
     assert_eq!(reported.report().blocker(), None);
     assert_eq!(linked.report().endpoint_report().first_point(), &p(1, 0));
     assert_eq!(linked.report().endpoint_report().second_point(), &p(1, 0));
+    assert_eq!(
+        linked.report().endpoint_report().predicate_path(),
+        CurveStringEndpointConnectionPredicatePath2::ExactSquaredDistanceZero
+    );
     assert_eq!(linked.report().first_segment_count(), 1);
     assert_eq!(linked.report().second_segment_count(), 1);
     assert_eq!(linked.report().endpoint_pair_count(), 4);
@@ -1099,6 +1116,10 @@ fn curve_string_link_returns_none_for_certified_disconnected_inputs() {
     assert_eq!(
         disconnected.status(),
         CurveStringEndpointConnectionStatus2::Disconnected
+    );
+    assert_eq!(
+        disconnected.predicate_path(),
+        CurveStringEndpointConnectionPredicatePath2::ExactSquaredDistanceNonzero
     );
     assert_eq!(disconnected.first_point(), &p(1, 0));
     assert_eq!(disconnected.second_point(), &p(3, 0));
@@ -1471,6 +1492,10 @@ fn curve_string_connect_end_to_start_inserts_exact_line() {
         connected.report().endpoint_report().status(),
         CurveStringEndpointConnectionStatus2::Disconnected
     );
+    assert_eq!(
+        connected.report().endpoint_report().predicate_path(),
+        CurveStringEndpointConnectionPredicatePath2::ExactSquaredDistanceNonzero
+    );
     assert_eq!(connected.report().endpoint_report().first_point(), &p(1, 0));
     assert_eq!(
         connected.report().endpoint_report().second_point(),
@@ -1491,6 +1516,10 @@ fn curve_string_connect_end_to_start_inserts_exact_line() {
     assert_eq!(
         connected.report().endpoint_reports()[0].status(),
         CurveStringEndpointConnectionStatus2::Disconnected
+    );
+    assert_eq!(
+        connected.report().endpoint_reports()[0].predicate_path(),
+        CurveStringEndpointConnectionPredicatePath2::ExactSquaredDistanceNonzero
     );
     assert_eq!(connected.report().exact_endpoint_pair_count(), 0);
     assert_eq!(connected.report().disconnected_endpoint_pair_count(), 1);

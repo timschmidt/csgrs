@@ -134,6 +134,17 @@ pub enum CurveStringEndpointConnectionStatus2 {
     Unresolved(UncertaintyReason),
 }
 
+/// Exact predicate path used to classify one endpoint pair.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum CurveStringEndpointConnectionPredicatePath2 {
+    /// Squared endpoint distance was proven exactly zero.
+    ExactSquaredDistanceZero,
+    /// Squared endpoint distance was proven exactly nonzero.
+    ExactSquaredDistanceNonzero,
+    /// The active policy could not decide the squared endpoint distance sign.
+    UnresolvedSquaredDistanceSign,
+}
+
 /// Report for one tested endpoint pair.
 #[derive(Clone, Debug, PartialEq)]
 pub struct CurveStringEndpointConnectionReport2 {
@@ -142,6 +153,7 @@ pub struct CurveStringEndpointConnectionReport2 {
     first_point: Point2,
     second_point: Point2,
     distance_squared: crate::Real,
+    predicate_path: CurveStringEndpointConnectionPredicatePath2,
     status: CurveStringEndpointConnectionStatus2,
 }
 
@@ -959,10 +971,19 @@ impl CurveString2 {
         let first_point = self.endpoint(first_endpoint)?;
         let second_point = other.endpoint(second_endpoint)?;
         let distance_squared = first_point.distance_squared(second_point);
-        let status = match is_zero(&distance_squared, policy) {
-            Some(true) => CurveStringEndpointConnectionStatus2::NativeExact,
-            Some(false) => CurveStringEndpointConnectionStatus2::Disconnected,
-            None => CurveStringEndpointConnectionStatus2::Unresolved(UncertaintyReason::RealSign),
+        let (predicate_path, status) = match is_zero(&distance_squared, policy) {
+            Some(true) => (
+                CurveStringEndpointConnectionPredicatePath2::ExactSquaredDistanceZero,
+                CurveStringEndpointConnectionStatus2::NativeExact,
+            ),
+            Some(false) => (
+                CurveStringEndpointConnectionPredicatePath2::ExactSquaredDistanceNonzero,
+                CurveStringEndpointConnectionStatus2::Disconnected,
+            ),
+            None => (
+                CurveStringEndpointConnectionPredicatePath2::UnresolvedSquaredDistanceSign,
+                CurveStringEndpointConnectionStatus2::Unresolved(UncertaintyReason::RealSign),
+            ),
         };
 
         Ok(CurveStringEndpointConnectionReport2 {
@@ -971,6 +992,7 @@ impl CurveString2 {
             first_point: first_point.clone(),
             second_point: second_point.clone(),
             distance_squared,
+            predicate_path,
             status,
         })
     }
@@ -6637,6 +6659,11 @@ impl CurveStringEndpointConnectionReport2 {
     /// Returns exact squared endpoint distance evidence.
     pub const fn distance_squared(&self) -> &crate::Real {
         &self.distance_squared
+    }
+
+    /// Returns the exact predicate path used for this endpoint decision.
+    pub const fn predicate_path(&self) -> CurveStringEndpointConnectionPredicatePath2 {
+        self.predicate_path
     }
 
     /// Returns the exact connectivity status for this endpoint pair.
