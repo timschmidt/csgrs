@@ -2205,6 +2205,14 @@ fn curve_string_chamfer_line_line_vertex_materializes_exact_segments() {
         &q(3, 4)
     );
     assert_eq!(
+        chamfer.report().segment_reports()[0].source_segment_start_point(),
+        &p(0, 0)
+    );
+    assert_eq!(
+        chamfer.report().segment_reports()[0].source_segment_end_point(),
+        &p(4, 0)
+    );
+    assert_eq!(
         chamfer.report().segment_reports()[0].range_start_point(),
         Some(&p(0, 0))
     );
@@ -2640,6 +2648,14 @@ fn curve_string_trim_materializes_exact_line_subsegment_with_report() {
         Some(SegmentKind::Line)
     );
     assert_eq!(
+        trim.report().segment_reports()[0].source_segment_start_point(),
+        &p(0, 0)
+    );
+    assert_eq!(
+        trim.report().segment_reports()[0].source_segment_end_point(),
+        &p(4, 0)
+    );
+    assert_eq!(
         trim.report().segment_reports()[0].source_range().start(),
         &q(1, 4)
     );
@@ -2872,6 +2888,14 @@ fn curve_string_trim_between_points_materializes_partial_arc() {
     assert_eq!(
         trim.report().segment_reports()[0].output_segment_kind(),
         Some(SegmentKind::Arc)
+    );
+    assert_eq!(
+        trim.report().segment_reports()[0].source_segment_start_point(),
+        &p(0, 0)
+    );
+    assert_eq!(
+        trim.report().segment_reports()[0].source_segment_end_point(),
+        &p(2, 0)
     );
     assert_eq!(
         trim.report().segment_reports()[0].source_range().start(),

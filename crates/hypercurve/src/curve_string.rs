@@ -613,6 +613,8 @@ pub struct CurveStringTrimSegmentReport2 {
     source_segment_index: usize,
     source_segment_kind: SegmentKind,
     output_segment_kind: Option<SegmentKind>,
+    source_segment_start_point: Point2,
+    source_segment_end_point: Point2,
     source_range: ParamRange,
     range_start_point: Option<Point2>,
     range_end_point: Option<Point2>,
@@ -1767,10 +1769,13 @@ impl CurveString2 {
                 Real::one()
             };
             let source_range = ParamRange::new(range_start, range_end);
+            let source_segment = &self.segments[source_segment_index];
             let segment_report = CurveStringTrimSegmentReport2 {
                 source_segment_index,
-                source_segment_kind: self.segments[source_segment_index].structural_facts().kind,
+                source_segment_kind: source_segment.structural_facts().kind,
                 output_segment_kind: None,
+                source_segment_start_point: source_segment.start().clone(),
+                source_segment_end_point: source_segment.end().clone(),
                 source_range: source_range.clone(),
                 range_start_point: None,
                 range_end_point: None,
@@ -2112,6 +2117,8 @@ impl CurveString2 {
                 source_segment_index: previous_segment_index,
                 source_segment_kind: SegmentKind::Line,
                 output_segment_kind: Some(SegmentKind::Line),
+                source_segment_start_point: previous_line.start().clone(),
+                source_segment_end_point: previous_line.end().clone(),
                 source_range: previous_range,
                 range_start_point: Some(previous_line.start().clone()),
                 range_end_point: Some(previous_cut_point.clone()),
@@ -2121,6 +2128,8 @@ impl CurveString2 {
                 source_segment_index: next_segment_index,
                 source_segment_kind: SegmentKind::Line,
                 output_segment_kind: Some(SegmentKind::Line),
+                source_segment_start_point: next_line.start().clone(),
+                source_segment_end_point: next_line.end().clone(),
                 source_range: next_range,
                 range_start_point: Some(next_cut_point.clone()),
                 range_end_point: Some(next_line.end().clone()),
@@ -2625,6 +2634,8 @@ impl CurveString2 {
                 source_segment_index: previous_segment_index,
                 source_segment_kind: SegmentKind::Line,
                 output_segment_kind: Some(SegmentKind::Line),
+                source_segment_start_point: previous_line.start().clone(),
+                source_segment_end_point: previous_line.end().clone(),
                 source_range: previous_range,
                 range_start_point: Some(previous_line.start().clone()),
                 range_end_point: Some((*previous_point).clone()),
@@ -2634,6 +2645,8 @@ impl CurveString2 {
                 source_segment_index: next_segment_index,
                 source_segment_kind: SegmentKind::Line,
                 output_segment_kind: Some(SegmentKind::Line),
+                source_segment_start_point: next_line.start().clone(),
+                source_segment_end_point: next_line.end().clone(),
                 source_range: next_range,
                 range_start_point: Some((*next_point).clone()),
                 range_end_point: Some(next_line.end().clone()),
@@ -3151,10 +3164,13 @@ impl CurveString2 {
                 self.segments[source_segment_index].end().clone()
             };
             let source_range = ParamRange::new(range_start, range_end);
+            let source_segment = &self.segments[source_segment_index];
             let segment_report = CurveStringTrimSegmentReport2 {
                 source_segment_index,
-                source_segment_kind: self.segments[source_segment_index].structural_facts().kind,
+                source_segment_kind: source_segment.structural_facts().kind,
                 output_segment_kind: None,
+                source_segment_start_point: source_segment.start().clone(),
+                source_segment_end_point: source_segment.end().clone(),
                 source_range: source_range.clone(),
                 range_start_point: Some(range_start_point.clone()),
                 range_end_point: Some(range_end_point.clone()),
@@ -3399,6 +3415,16 @@ impl CurveStringTrimSegmentReport2 {
     /// Returns the primitive family of the emitted segment, when materialized.
     pub const fn output_segment_kind(&self) -> Option<SegmentKind> {
         self.output_segment_kind
+    }
+
+    /// Returns the exact start point of the retained source segment.
+    pub const fn source_segment_start_point(&self) -> &Point2 {
+        &self.source_segment_start_point
+    }
+
+    /// Returns the exact end point of the retained source segment.
+    pub const fn source_segment_end_point(&self) -> &Point2 {
+        &self.source_segment_end_point
     }
 
     /// Returns the retained source parameter range.
