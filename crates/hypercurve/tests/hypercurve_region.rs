@@ -2202,6 +2202,20 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
     assert_eq!(result.stage(), Some(result.report().stage()));
     assert_eq!(result.status(), Some(result.report().status()));
     assert_eq!(result.blocker(), None);
+    assert_eq!(
+        result.output_ring_count(),
+        result.report().output_ring_count()
+    );
+    assert_eq!(
+        result.output_boundary_segment_count(),
+        result.report().output_boundary_segment_count()
+    );
+    assert_eq!(
+        result.output_boundary_segment_kind_counts(),
+        result.report().output_boundary_segment_kind_counts()
+    );
+    assert_eq!(result.output_contour_count(), Some(1));
+    assert_eq!(result.output_segment_count(), Some(4));
     let summary_cache = result.summary_cache();
     assert!(summary_cache.evaluated_output());
     assert_eq!(summary_cache.materialized_region(), Some(true));
@@ -3584,6 +3598,20 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
     assert_eq!(result.stage(), Some(result.report().stage()));
     assert_eq!(result.status(), Some(result.report().status()));
     assert_eq!(result.blocker(), None);
+    assert_eq!(
+        result.output_ring_count(),
+        result.report().output_ring_count()
+    );
+    assert_eq!(
+        result.output_boundary_segment_count(),
+        result.report().output_boundary_segment_count()
+    );
+    assert_eq!(
+        result.output_boundary_segment_kind_counts(),
+        result.report().output_boundary_segment_kind_counts()
+    );
+    assert_eq!(result.output_contour_count(), Some(1));
+    assert_eq!(result.output_segment_count(), Some(2));
     let summary_cache = result.summary_cache();
     assert!(summary_cache.evaluated_output());
     assert_eq!(summary_cache.materialized_region(), Some(true));
@@ -3832,6 +3860,11 @@ fn exact_curve_arrangement_attempt_retains_overlap_blocker() {
     );
     assert_eq!(result.status(), Some(result.report().status()));
     assert_eq!(result.blocker(), Some(UncertaintyReason::Boundary));
+    assert_eq!(result.output_ring_count(), None);
+    assert_eq!(result.output_boundary_segment_count(), None);
+    assert_eq!(result.output_boundary_segment_kind_counts(), None);
+    assert_eq!(result.output_contour_count(), None);
+    assert_eq!(result.output_segment_count(), None);
     assert_eq!(
         result.report().stage(),
         RegionLineSegmentRegionBuildStage2::RingAssembly
