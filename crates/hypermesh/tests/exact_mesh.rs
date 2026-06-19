@@ -3110,12 +3110,12 @@ fn open_surface_disjoint_report_classifies_retained_coplanar_overlap_blocker() {
         ExactBooleanOperation::Union,
         ValidationPolicy::ALLOW_BOUNDARY,
     );
-    let evaluation = exact_boolean_evaluation(&left, &right, request);
-
-    assert!(evaluation.requires_planar_arrangement());
-    assert!(evaluation.retained_coplanar_overlapping_pairs() > 0);
-    assert!(evaluation.retained_face_pairs() > 0);
-    evaluation.validate_against_sources(&left, &right).unwrap();
+    with_exact_boolean_evaluation(&left, &right, request, |evaluation| {
+        assert!(evaluation.requires_planar_arrangement());
+        assert!(evaluation.retained_coplanar_overlapping_pairs() > 0);
+        assert!(evaluation.retained_face_pairs() > 0);
+        evaluation.validate_against_sources(&left, &right).unwrap();
+    });
 }
 
 #[test]
@@ -3137,13 +3137,13 @@ fn planar_arrangement_report_classifies_noncoplanar_candidates_as_winding_blocke
         ExactBooleanOperation::Union,
         ValidationPolicy::ALLOW_BOUNDARY,
     );
-    let evaluation = exact_boolean_evaluation(&left, &right, request);
-
-    assert!(
-        evaluation.requires_winding() && evaluation.retained_candidate_pairs() > 0,
-        "{evaluation:?}"
-    );
-    evaluation.validate_against_sources(&left, &right).unwrap();
+    with_exact_boolean_evaluation(&left, &right, request, |evaluation| {
+        assert!(
+            evaluation.requires_winding() && evaluation.retained_candidate_pairs() > 0,
+            "{evaluation:?}"
+        );
+        evaluation.validate_against_sources(&left, &right).unwrap();
+    });
 }
 
 #[test]
@@ -3151,15 +3151,15 @@ fn exact_boolean_public_shortcuts_handle_disjoint_operands() {
     let left = tetra([0, 0, 0]);
     let right = tetra([3, 0, 0]);
 
-    let preflight_evaluation = exact_boolean_evaluation(
+    with_exact_boolean_evaluation(
         &left,
         &right,
         ExactBooleanRequest::new(
             ExactBooleanOperation::Union,
             ValidationPolicy::ALLOW_BOUNDARY,
         ),
+        |preflight_evaluation| assert!(!preflight_evaluation.graph_had_unknowns()),
     );
-    assert!(!preflight_evaluation.graph_had_unknowns());
 
     let union = exact_boolean_result(
         &left,
