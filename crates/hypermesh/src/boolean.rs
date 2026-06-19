@@ -979,14 +979,14 @@ pub struct ExactBooleanCertificationSet {
     /// Right vertices classified against the left closed mesh.
     pub closed_winding_right_in_left: ClosedMeshWindingMeshReport,
     /// Left vertices classified against the right convex solid.
-    pub convex_left_in_right: ConvexSolidMeshClassification,
+    convex_left_in_right: ConvexSolidMeshClassification,
     /// Right vertices classified against the left convex solid.
-    pub convex_right_in_left: ConvexSolidMeshClassification,
+    convex_right_in_left: ConvexSolidMeshClassification,
     /// Closed-convex shortcut capabilities.
-    pub convex_capabilities: ExactConvexBooleanCapabilityFacts,
+    convex_capabilities: ExactConvexBooleanCapabilityFacts,
     /// Arrangement-cell shortcut capabilities that cover cases not yet
     /// consumed by the full arrangement attempt report.
-    pub arrangement_cell_complex_shortcuts: ExactArrangementCellComplexShortcutFacts,
+    arrangement_cell_complex_shortcuts: ExactArrangementCellComplexShortcutFacts,
     /// Planar-arrangement readiness for coplanar surface output.
     pub planar_arrangement: ExactPlanarArrangementReport,
     /// Winding/inside-outside readiness for named volumetric output.
