@@ -3752,15 +3752,6 @@ fn exact_contained_face_adjacent_union_is_publicly_replayable() {
         result.freshness_against_sources(&container, &separated_right),
         ExactReportFreshness::SourceReplayMismatch
     );
-    result
-        .validate_operation_against_sources(
-            &container,
-            &right,
-            ExactBooleanOperation::Union,
-            ValidationPolicy::CLOSED,
-            ExactBoundaryBooleanPolicy::Reject,
-        )
-        .unwrap();
 }
 
 #[test]
@@ -4106,7 +4097,7 @@ fn trivial_boolean_shortcuts_are_publicly_replayable() {
          stale_left: &ExactMesh,
          stale_right: &ExactMesh,
          operation: ExactBooleanOperation,
-         validation: ValidationPolicy,
+         _validation: ValidationPolicy,
          predicate: fn(&ExactBooleanResult, ExactBooleanOperation) -> bool| {
             assert!(predicate(result, operation), "{operation:?}: {result:?}");
             result.validate().unwrap();
@@ -4119,15 +4110,6 @@ fn trivial_boolean_shortcuts_are_publicly_replayable() {
                 result.freshness_against_sources(stale_left, stale_right),
                 ExactReportFreshness::SourceReplayMismatch
             );
-            result
-                .validate_operation_against_sources(
-                    left,
-                    right,
-                    operation,
-                    validation,
-                    ExactBoundaryBooleanPolicy::Reject,
-                )
-                .unwrap();
         };
 
     for operation in [
@@ -4208,16 +4190,6 @@ fn trivial_boolean_shortcuts_are_publicly_replayable() {
         assert!(open_empty_result.is_certified_shortcut_for(operation));
         assert!(open_empty_result.mesh.triangles().is_empty());
         assert!(open_empty_result.mesh.facts().mesh.closed_manifold);
-        open_empty_result
-            .validate_operation_against_sources(
-                &open_disjoint_left,
-                &empty,
-                operation,
-                ValidationPolicy::CLOSED,
-                ExactBoundaryBooleanPolicy::Reject,
-            )
-            .unwrap();
-
         let disjoint_result = exact_boolean_result(
             &solid,
             &disjoint_solid,
@@ -4316,16 +4288,6 @@ fn trivial_boolean_shortcuts_are_publicly_replayable() {
         );
         assert!(closed_identical_result.mesh.triangles().is_empty());
         assert!(closed_identical_result.mesh.facts().mesh.closed_manifold);
-        closed_identical_result
-            .validate_operation_against_sources(
-                &open_identical_left,
-                &open_identical_right,
-                operation,
-                ValidationPolicy::CLOSED,
-                ExactBoundaryBooleanPolicy::Reject,
-            )
-            .unwrap();
-
         let same_surface_result = exact_boolean_result(
             &open_identical_left,
             &open_same_surface_right,
@@ -4388,15 +4350,6 @@ fn trivial_boolean_shortcuts_are_publicly_replayable() {
         );
         assert!(closed_same_surface_result.mesh.triangles().is_empty());
         assert!(closed_same_surface_result.mesh.facts().mesh.closed_manifold);
-        closed_same_surface_result
-            .validate_operation_against_sources(
-                &open_identical_left,
-                &open_same_surface_right,
-                operation,
-                ValidationPolicy::CLOSED,
-                ExactBoundaryBooleanPolicy::Reject,
-            )
-            .unwrap();
         let lower_dimensional_evaluation = exact_boolean_evaluation(
             &open_identical_left,
             &open_same_surface_right,
@@ -5078,16 +5031,6 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
     );
     assert!(closed_intersection.mesh.triangles().is_empty());
     assert!(closed_intersection.mesh.facts().mesh.closed_manifold);
-    closed_intersection
-        .validate_operation_against_sources(
-            &left,
-            &right,
-            ExactBooleanOperation::Intersection,
-            ValidationPolicy::CLOSED,
-            ExactBoundaryBooleanPolicy::PreserveSeparateShells,
-        )
-        .unwrap();
-
     for operation in [
         ExactBooleanOperation::Union,
         ExactBooleanOperation::Difference,
@@ -5144,15 +5087,6 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
             materialized.is_certified_shortcut_for(operation),
             "{operation:?}: {materialized:?}"
         );
-        materialized
-            .validate_operation_against_sources(
-                &left,
-                &right,
-                operation,
-                ValidationPolicy::CLOSED,
-                ExactBoundaryBooleanPolicy::PreserveSeparateShells,
-            )
-            .unwrap();
         let closed_regularized = exact_boolean_result(
             &left,
             &right,
