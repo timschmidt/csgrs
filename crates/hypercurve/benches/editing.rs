@@ -3,7 +3,8 @@ use std::time::Instant;
 
 use hypercurve::{
     BooleanOp, BulgeVertex2, CircularArc2, Contour2, CurvePolicy, CurveResult, CurveString2,
-    CurveStringEndpoint2, CurveStringTrimPoint2, FillRule, LineSeg2, Point2, Real, Region2,
+    CurveStringEndpoint2, CurveStringTrimPoint2, ExactCurveArrangementAttempt2,
+    ExactCurveArrangementRequest2, FillRule, LineSeg2, Point2, Real, Region2,
     RegionBooleanQueryPath2, Segment2,
 };
 
@@ -496,24 +497,27 @@ fn bench_unordered_line_segment_region_build(iterations: u32) -> CurveResult<()>
     let mut total_endpoint_checks = 0_usize;
 
     for _ in 0..iterations {
-        let result = Region2::from_unordered_line_segments_with_report(
-            lines.clone(),
+        let request = ExactCurveArrangementRequest2::from_borrowed_unordered_line_segments(
+            &lines,
             FillRule::NonZero,
-            &policy,
-        )?;
-        let report = result.report();
-        if !report.status().is_native_exact() || result.region().is_none() {
+        );
+        let result = ExactCurveArrangementAttempt2::new(request).evaluate(&policy)?;
+        if !result.status().unwrap().is_native_exact() || result.region().is_none() {
             panic!("unordered line segment region build benchmark became non-native");
         }
-        total_segments += black_box(report.split_output_segment_count().unwrap_or_default());
-        total_segments += black_box(report.output_boundary_segment_count().unwrap_or_default());
-        total_segments += black_box(report.split_skipped_aabb_pair_count());
-        total_endpoint_checks += black_box(report.attempted_endpoint_connection_count());
-        total_endpoint_checks += black_box(report.endpoint_graph_endpoint_count().unwrap_or(0));
-        total_endpoint_checks +=
-            black_box(report.endpoint_graph_structural_bucket_count().unwrap_or(0));
+        total_segments += black_box(result.split_output_segment_count().unwrap_or_default());
+        total_segments += black_box(result.output_boundary_segment_count().unwrap_or_default());
+        total_segments += black_box(result.split_skipped_aabb_pair_count().unwrap_or_default());
         total_endpoint_checks += black_box(
-            report
+            result
+                .attempted_endpoint_connection_count()
+                .unwrap_or_default(),
+        );
+        total_endpoint_checks += black_box(result.endpoint_graph_endpoint_count().unwrap_or(0));
+        total_endpoint_checks +=
+            black_box(result.endpoint_graph_structural_bucket_count().unwrap_or(0));
+        total_endpoint_checks += black_box(
+            result
                 .endpoint_graph_max_structural_bucket_size()
                 .unwrap_or(0),
         );
@@ -538,21 +542,24 @@ fn bench_unordered_native_segment_region_build(iterations: u32) -> CurveResult<(
     let mut total_endpoint_checks = 0_usize;
 
     for _ in 0..iterations {
-        let result = Region2::from_unordered_segments_with_report(
-            segments.clone(),
+        let request = ExactCurveArrangementRequest2::from_borrowed_unordered_segments(
+            &segments,
             FillRule::NonZero,
-            &policy,
-        )?;
-        let report = result.report();
-        if !report.status().is_native_exact() || result.region().is_none() {
+        );
+        let result = ExactCurveArrangementAttempt2::new(request).evaluate(&policy)?;
+        if !result.status().unwrap().is_native_exact() || result.region().is_none() {
             panic!("unordered native segment region build benchmark became non-native");
         }
-        total_segments += black_box(report.split_output_segment_count().unwrap_or_default());
-        total_segments += black_box(report.output_boundary_segment_count().unwrap_or_default());
-        total_endpoint_checks += black_box(report.attempted_endpoint_connection_count());
-        total_endpoint_checks += black_box(report.endpoint_graph_endpoint_count().unwrap_or(0));
+        total_segments += black_box(result.split_output_segment_count().unwrap_or_default());
+        total_segments += black_box(result.output_boundary_segment_count().unwrap_or_default());
+        total_endpoint_checks += black_box(
+            result
+                .attempted_endpoint_connection_count()
+                .unwrap_or_default(),
+        );
+        total_endpoint_checks += black_box(result.endpoint_graph_endpoint_count().unwrap_or(0));
         total_endpoint_checks +=
-            black_box(report.endpoint_graph_structural_bucket_count().unwrap_or(0));
+            black_box(result.endpoint_graph_structural_bucket_count().unwrap_or(0));
     }
 
     let elapsed = started.elapsed();

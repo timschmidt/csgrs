@@ -1,3 +1,5 @@
+#![allow(deprecated)]
+
 use hypercurve::{
     BulgeVertex2, CircularArc2, Classification, Contour2, CurveError, CurvePolicy, CurveString2,
     ExactCurveArrangementArrangedEndpointDegree2, ExactCurveArrangementAttempt2,
@@ -1017,12 +1019,6 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
     );
     let attempt = ExactCurveArrangementAttempt2::new(request);
     let result = attempt.evaluate(&policy()).unwrap();
-    let legacy = Region2::from_unordered_line_segments_with_report(
-        lines.clone(),
-        FillRule::NonZero,
-        &policy(),
-    )
-    .unwrap();
 
     assert_eq!(attempt.request().source_segment_count(), 4);
     assert_eq!(
@@ -2429,7 +2425,6 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
         result.split_predicate_path(),
         Some(RegionLineSegmentSplitPredicatePath2::AabbFilteredExactLineLine)
     );
-    assert_eq!(result.report(), legacy.report());
 }
 
 #[test]
@@ -2535,12 +2530,6 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
     );
     let attempt = ExactCurveArrangementAttempt2::new(request);
     let result = attempt.evaluate(&policy()).unwrap();
-    let legacy = Region2::from_unordered_segments_with_report(
-        segments.clone(),
-        FillRule::NonZero,
-        &policy(),
-    )
-    .unwrap();
 
     assert_eq!(attempt.request().source_segment_count(), 2);
     assert_eq!(attempt.request().fill_rule(), FillRule::NonZero);
@@ -3804,7 +3793,6 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
     );
     assert!(result.region().is_some());
     assert!(result.status().unwrap().is_native_exact());
-    assert_eq!(result.report(), legacy.report());
 }
 
 #[test]
@@ -3818,9 +3806,6 @@ fn exact_curve_arrangement_attempt_retains_overlap_blocker() {
     )
     .evaluate(&policy())
     .unwrap();
-    let legacy =
-        Region2::from_unordered_segments_with_report(segments, FillRule::NonZero, &policy())
-            .unwrap();
 
     assert!(result.region().is_none());
     assert!(result.status().unwrap().is_retained_evidence());
@@ -3921,7 +3906,6 @@ fn exact_curve_arrangement_attempt_retains_overlap_blocker() {
     assert_eq!(summary_cache.output_boundary_segment_kind_counts(), None);
     assert_eq!(summary_cache.output_contour_count(), None);
     assert_eq!(summary_cache.output_segment_count(), None);
-    assert_eq!(result.report(), legacy.report());
 }
 
 #[test]

@@ -1245,7 +1245,11 @@ impl Region2 {
         fill_rule: FillRule,
         policy: &CurvePolicy,
     ) -> CurveResult<Classification<Self>> {
-        let built = Self::from_unordered_line_segments_with_report(segments, fill_rule, policy)?;
+        let request =
+            ExactCurveArrangementRequest2::from_unordered_line_segments(segments, fill_rule);
+        let built = ExactCurveArrangementAttempt2::new(request)
+            .evaluate(policy)?
+            .into_region_build_result();
         let blocker = built
             .report()
             .blocker()
@@ -1269,8 +1273,12 @@ impl Region2 {
         fill_rule: FillRule,
         policy: &CurvePolicy,
     ) -> CurveResult<Classification<Self>> {
-        let built =
-            Self::from_unordered_line_segments_borrowed_with_report(segments, fill_rule, policy)?;
+        let request = ExactCurveArrangementRequest2::from_borrowed_unordered_line_segments(
+            segments, fill_rule,
+        );
+        let built = ExactCurveArrangementAttempt2::new(request)
+            .evaluate(policy)?
+            .into_region_build_result();
         let blocker = built
             .report()
             .blocker()
@@ -1283,15 +1291,28 @@ impl Region2 {
     }
 
     /// Builds a region from borrowed unordered exact line segments and retains evidence.
+    #[deprecated(
+        since = "0.3.0",
+        note = "use ExactCurveArrangementRequest2::from_borrowed_unordered_line_segments with ExactCurveArrangementAttempt2::evaluate"
+    )]
     pub fn from_unordered_line_segments_borrowed_with_report(
         segments: &[LineSeg2],
         fill_rule: FillRule,
         policy: &CurvePolicy,
     ) -> CurveResult<RegionLineSegmentRegionBuildResult2> {
-        Self::from_unordered_line_segments_with_report(segments.to_vec(), fill_rule, policy)
+        let request = ExactCurveArrangementRequest2::from_borrowed_unordered_line_segments(
+            segments, fill_rule,
+        );
+        Ok(ExactCurveArrangementAttempt2::new(request)
+            .evaluate(policy)?
+            .into_region_build_result())
     }
 
     /// Builds a region from unordered exact line segments and retains assembly evidence.
+    #[deprecated(
+        since = "0.3.0",
+        note = "use ExactCurveArrangementRequest2::from_unordered_line_segments with ExactCurveArrangementAttempt2::evaluate"
+    )]
     pub fn from_unordered_line_segments_with_report(
         segments: Vec<LineSeg2>,
         fill_rule: FillRule,
@@ -1500,7 +1521,10 @@ impl Region2 {
         fill_rule: FillRule,
         policy: &CurvePolicy,
     ) -> CurveResult<Classification<Self>> {
-        let built = Self::from_unordered_segments_with_report(segments, fill_rule, policy)?;
+        let request = ExactCurveArrangementRequest2::from_unordered_segments(segments, fill_rule);
+        let built = ExactCurveArrangementAttempt2::new(request)
+            .evaluate(policy)?
+            .into_region_build_result();
         let blocker = built
             .report()
             .blocker()
@@ -1522,8 +1546,11 @@ impl Region2 {
         fill_rule: FillRule,
         policy: &CurvePolicy,
     ) -> CurveResult<Classification<Self>> {
-        let built =
-            Self::from_unordered_segments_borrowed_with_report(segments, fill_rule, policy)?;
+        let request =
+            ExactCurveArrangementRequest2::from_borrowed_unordered_segments(segments, fill_rule);
+        let built = ExactCurveArrangementAttempt2::new(request)
+            .evaluate(policy)?
+            .into_region_build_result();
         let blocker = built
             .report()
             .blocker()
@@ -1536,12 +1563,20 @@ impl Region2 {
     }
 
     /// Builds a region from borrowed unordered native line/arc segments and retains evidence.
+    #[deprecated(
+        since = "0.3.0",
+        note = "use ExactCurveArrangementRequest2::from_borrowed_unordered_segments with ExactCurveArrangementAttempt2::evaluate"
+    )]
     pub fn from_unordered_segments_borrowed_with_report(
         segments: &[Segment2],
         fill_rule: FillRule,
         policy: &CurvePolicy,
     ) -> CurveResult<RegionLineSegmentRegionBuildResult2> {
-        Self::from_unordered_segments_with_report(segments.to_vec(), fill_rule, policy)
+        let request =
+            ExactCurveArrangementRequest2::from_borrowed_unordered_segments(segments, fill_rule);
+        Ok(ExactCurveArrangementAttempt2::new(request)
+            .evaluate(policy)?
+            .into_region_build_result())
     }
 
     /// Builds a region from unordered exact native line/arc segments.
@@ -1552,6 +1587,10 @@ impl Region2 {
     /// line/arc fragments from exact split points, and then assembles closed
     /// rings by exact endpoint equality. Overlaps, ambiguous ordering, and
     /// branching/dangling endpoint graphs remain explicit blockers.
+    #[deprecated(
+        since = "0.3.0",
+        note = "use ExactCurveArrangementRequest2::from_unordered_segments with ExactCurveArrangementAttempt2::evaluate"
+    )]
     pub fn from_unordered_segments_with_report(
         segments: Vec<Segment2>,
         fill_rule: FillRule,
