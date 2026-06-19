@@ -1,6 +1,7 @@
 use hypercurve::{
     BulgeVertex2, CircularArc2, Classification, Contour2, CurveError, CurvePolicy, CurveString2,
-    FillRule, FiniteProjectionOptions, Real, Region2, RegionBoundaryContourBuildPredicatePath2,
+    ExactCurveArrangementAttempt2, ExactCurveArrangementRequest2, FillRule,
+    FiniteProjectionOptions, Real, Region2, RegionBoundaryContourBuildPredicatePath2,
     RegionBoundaryContourBuildStage2, RegionBoundaryContourRole2,
     RegionLineSegmentArrangedEndpoint2, RegionLineSegmentEndpointGraphPredicatePath2,
     RegionLineSegmentRegionBuildStage2, RegionLineSegmentRingAssemblyPredicatePath2,
@@ -997,6 +998,63 @@ fn borrowed_unordered_native_segments_build_line_arc_region_with_report() {
     assert_eq!(report.arranged_segment_count(), Some(2));
     assert_eq!(report.arranged_source_reports().len(), 2);
     assert_eq!(report.source_reports().len(), 2);
+}
+
+#[test]
+fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace() {
+    let segments = vec![
+        Segment2::Line(line(4, 0, 0, 0)),
+        Segment2::Arc(arc_bulge(0, 0, 4, 0, 1)),
+    ];
+    let request = ExactCurveArrangementRequest2::from_borrowed_unordered_segments(
+        &segments,
+        FillRule::NonZero,
+    );
+    let attempt = ExactCurveArrangementAttempt2::new(request);
+    let result = attempt.evaluate(&policy()).unwrap();
+    let legacy = Region2::from_unordered_segments_with_report(
+        segments.clone(),
+        FillRule::NonZero,
+        &policy(),
+    )
+    .unwrap();
+
+    assert_eq!(attempt.request().source_segment_count(), 2);
+    assert_eq!(attempt.request().fill_rule(), FillRule::NonZero);
+    assert_eq!(attempt.request().source_segments(), segments.as_slice());
+    assert_eq!(result.workspace().request(), attempt.request());
+    assert_eq!(
+        result.workspace().source_segment_kind_counts(),
+        SegmentKindCounts { lines: 1, arcs: 1 }
+    );
+    assert!(result.region().is_some());
+    assert!(result.report().status().is_native_exact());
+    assert_eq!(result.report(), legacy.report());
+}
+
+#[test]
+fn exact_curve_arrangement_attempt_retains_overlap_blocker() {
+    let segments = vec![
+        Segment2::Arc(arc_bulge(0, 0, 4, 0, 1)),
+        Segment2::Arc(arc_bulge(0, 0, 4, 0, 1)),
+    ];
+    let result = ExactCurveArrangementAttempt2::new(
+        ExactCurveArrangementRequest2::from_unordered_segments(segments.clone(), FillRule::NonZero),
+    )
+    .evaluate(&policy())
+    .unwrap();
+    let legacy =
+        Region2::from_unordered_segments_with_report(segments, FillRule::NonZero, &policy())
+            .unwrap();
+
+    assert!(result.region().is_none());
+    assert!(result.report().status().is_retained_evidence());
+    assert_eq!(
+        result.report().stage(),
+        RegionLineSegmentRegionBuildStage2::RingAssembly
+    );
+    assert_eq!(result.report().blocker(), Some(UncertaintyReason::Boundary));
+    assert_eq!(result.report(), legacy.report());
 }
 
 #[test]

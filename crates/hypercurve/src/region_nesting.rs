@@ -17,6 +17,39 @@ use crate::{
     SegmentKind, SegmentKindCounts, UncertaintyReason,
 };
 
+/// Canonical retained arrangement request for exact curve topology.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ExactCurveArrangementRequest2 {
+    source_segments: Vec<Segment2>,
+    fill_rule: FillRule,
+}
+
+/// Retained workspace for a single exact curve arrangement attempt.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ExactCurveWorkspace2 {
+    request: ExactCurveArrangementRequest2,
+    source_segment_kind_counts: SegmentKindCounts,
+}
+
+/// Evaluation record for a retained exact curve arrangement attempt.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ExactCurveArrangementEvaluation2 {
+    workspace: ExactCurveWorkspace2,
+}
+
+/// Canonical exact curve arrangement attempt.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ExactCurveArrangementAttempt2 {
+    request: ExactCurveArrangementRequest2,
+}
+
+/// Result of a retained exact curve arrangement attempt.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ExactCurveArrangementResult2 {
+    evaluation: ExactCurveArrangementEvaluation2,
+    region_result: RegionLineSegmentRegionBuildResult2,
+}
+
 /// Material/hole role assigned to one closed boundary contour.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum RegionBoundaryContourRole2 {
@@ -592,6 +625,17 @@ impl Region2 {
         fill_rule: FillRule,
         policy: &CurvePolicy,
     ) -> CurveResult<RegionLineSegmentRegionBuildResult2> {
+        let request = ExactCurveArrangementRequest2::from_unordered_segments(segments, fill_rule);
+        Ok(ExactCurveArrangementAttempt2::new(request)
+            .evaluate(policy)?
+            .into_region_build_result())
+    }
+
+    fn from_unordered_segments_with_report_impl(
+        segments: Vec<Segment2>,
+        fill_rule: FillRule,
+        policy: &CurvePolicy,
+    ) -> CurveResult<RegionLineSegmentRegionBuildResult2> {
         if segments.is_empty() {
             return Err(CurveError::EmptyCurveString);
         }
@@ -936,6 +980,135 @@ impl Region2 {
         policy: &CurvePolicy,
     ) -> CurveResult<RegionBoundaryContourBuildResult2> {
         Self::from_boundary_contours_with_report(contours.to_vec(), policy)
+    }
+}
+
+impl ExactCurveArrangementRequest2 {
+    /// Builds a canonical arrangement request from unordered exact native segments.
+    pub fn from_unordered_segments(source_segments: Vec<Segment2>, fill_rule: FillRule) -> Self {
+        Self {
+            source_segments,
+            fill_rule,
+        }
+    }
+
+    /// Builds a canonical arrangement request by cloning borrowed exact native segments.
+    pub fn from_borrowed_unordered_segments(
+        source_segments: &[Segment2],
+        fill_rule: FillRule,
+    ) -> Self {
+        Self::from_unordered_segments(source_segments.to_vec(), fill_rule)
+    }
+
+    /// Returns the source segments supplied to the arrangement attempt.
+    pub fn source_segments(&self) -> &[Segment2] {
+        &self.source_segments
+    }
+
+    /// Returns the fill rule used when closed loops become contours.
+    pub const fn fill_rule(&self) -> FillRule {
+        self.fill_rule
+    }
+
+    /// Returns the number of source segments supplied to the attempt.
+    pub fn source_segment_count(&self) -> usize {
+        self.source_segments.len()
+    }
+}
+
+impl ExactCurveWorkspace2 {
+    /// Builds retained workspace facts for a canonical arrangement request.
+    pub fn from_request(request: ExactCurveArrangementRequest2) -> Self {
+        let source_segment_kind_counts = segment_kind_counts(&request.source_segments);
+        Self {
+            request,
+            source_segment_kind_counts,
+        }
+    }
+
+    /// Returns the retained request.
+    pub const fn request(&self) -> &ExactCurveArrangementRequest2 {
+        &self.request
+    }
+
+    /// Returns retained source segment primitive-family counts.
+    pub const fn source_segment_kind_counts(&self) -> SegmentKindCounts {
+        self.source_segment_kind_counts
+    }
+}
+
+impl ExactCurveArrangementEvaluation2 {
+    /// Builds an evaluation record from retained workspace facts.
+    pub const fn new(workspace: ExactCurveWorkspace2) -> Self {
+        Self { workspace }
+    }
+
+    /// Returns the retained workspace consumed by this evaluation.
+    pub const fn workspace(&self) -> &ExactCurveWorkspace2 {
+        &self.workspace
+    }
+}
+
+impl ExactCurveArrangementAttempt2 {
+    /// Creates a canonical exact arrangement attempt from a retained request.
+    pub const fn new(request: ExactCurveArrangementRequest2) -> Self {
+        Self { request }
+    }
+
+    /// Returns the retained request.
+    pub const fn request(&self) -> &ExactCurveArrangementRequest2 {
+        &self.request
+    }
+
+    /// Evaluates the request through the retained exact arrangement pipeline.
+    pub fn evaluate(&self, policy: &CurvePolicy) -> CurveResult<ExactCurveArrangementResult2> {
+        let workspace = ExactCurveWorkspace2::from_request(self.request.clone());
+        let region_result = Region2::from_unordered_segments_with_report_impl(
+            workspace.request.source_segments.clone(),
+            workspace.request.fill_rule,
+            policy,
+        )?;
+        Ok(ExactCurveArrangementResult2 {
+            evaluation: ExactCurveArrangementEvaluation2::new(workspace),
+            region_result,
+        })
+    }
+}
+
+impl ExactCurveArrangementResult2 {
+    /// Returns the retained evaluation record.
+    pub const fn evaluation(&self) -> &ExactCurveArrangementEvaluation2 {
+        &self.evaluation
+    }
+
+    /// Returns the retained workspace consumed by the evaluation.
+    pub const fn workspace(&self) -> &ExactCurveWorkspace2 {
+        self.evaluation.workspace()
+    }
+
+    /// Returns the underlying region build result.
+    pub const fn region_build_result(&self) -> &RegionLineSegmentRegionBuildResult2 {
+        &self.region_result
+    }
+
+    /// Returns the materialized region, if the arrangement succeeded.
+    pub const fn region(&self) -> Option<&Region2> {
+        self.region_result.region()
+    }
+
+    /// Returns the derived retained arrangement report.
+    pub const fn report(&self) -> &RegionLineSegmentRegionBuildReport2 {
+        self.region_result.report()
+    }
+
+    /// Consumes this result and returns the underlying region build result.
+    pub fn into_region_build_result(self) -> RegionLineSegmentRegionBuildResult2 {
+        self.region_result
+    }
+
+    /// Consumes this result and returns the materialized region, if any.
+    pub fn into_region(self) -> Option<Region2> {
+        self.region_result.into_region()
     }
 }
 
