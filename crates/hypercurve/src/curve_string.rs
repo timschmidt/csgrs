@@ -21,6 +21,10 @@ pub struct CurveStringIntersection {
     pub a_segment_index: usize,
     /// Segment index in the second curve string.
     pub b_segment_index: usize,
+    /// Primitive family of the first source segment.
+    pub a_segment_kind: SegmentKind,
+    /// Primitive family of the second source segment.
+    pub b_segment_kind: SegmentKind,
     /// Exact start point of the first source segment.
     pub a_segment_start_point: Point2,
     /// Exact end point of the first source segment.
@@ -8098,6 +8102,8 @@ pub(crate) fn intersect_curve_strings_with_cached_aabbs_with_report(
                 intersections.push(CurveStringIntersection {
                     a_segment_index,
                     b_segment_index,
+                    a_segment_kind: a_segment.structural_facts().kind,
+                    b_segment_kind: b_segment.structural_facts().kind,
                     a_segment_start_point: a_segment.start().clone(),
                     a_segment_end_point: a_segment.end().clone(),
                     b_segment_start_point: b_segment.start().clone(),

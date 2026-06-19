@@ -1414,6 +1414,8 @@ fn intersect_prepared_segment_pairs_with_cached_aabbs(
                 intersections.push(CurveStringIntersection {
                     a_segment_index,
                     b_segment_index,
+                    a_segment_kind: a_segment.segment_kind(),
+                    b_segment_kind: b_segment.segment_kind(),
                     a_segment_start_point: a_segment.start().clone(),
                     a_segment_end_point: a_segment.end().clone(),
                     b_segment_start_point: b_segment.start().clone(),
