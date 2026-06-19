@@ -3816,26 +3816,30 @@ fn public_exact_blocker_reports_replay_remaining_decisions() {
         ExactReportFreshness::SourceReplayMismatch
     );
 
-    let same_surface = exact_boolean_evaluation(
-        &left,
-        &left,
-        ExactBooleanRequest::new(
-            ExactBooleanOperation::Union,
-            ValidationPolicy::ALLOW_BOUNDARY,
-        ),
-    )
-    .certifications
-    .same_surface
-    .clone();
+    let same_request = ExactBooleanRequest::new(
+        ExactBooleanOperation::Union,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    );
+    let same_evaluation = exact_boolean_evaluation(&left, &left, same_request);
+    let same_surface = same_evaluation.certifications.same_surface.clone();
     assert!(same_surface.is_certified());
     same_surface.validate().unwrap();
-    same_surface.validate_against_sources(&left, &left).unwrap();
+    same_evaluation
+        .certifications
+        .validate_against_sources(&left, &left, same_request)
+        .unwrap();
     assert_eq!(
-        same_surface.freshness_against_sources(&left, &left),
+        same_evaluation
+            .certifications
+            .freshness_against_sources(&left, &left, same_request),
         ExactReportFreshness::Current
     );
     assert_eq!(
-        same_surface.freshness_against_sources(&left, &separated_right),
+        same_evaluation.certifications.freshness_against_sources(
+            &left,
+            &separated_right,
+            same_request
+        ),
         ExactReportFreshness::SourceReplayMismatch
     );
 

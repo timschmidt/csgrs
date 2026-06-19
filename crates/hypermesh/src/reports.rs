@@ -5085,7 +5085,8 @@ impl ExactSameSurfaceReport {
     /// a shortcut certificate is retained numerical and combinatorial state
     /// attached to particular source objects, not a portable label that can be
     /// pasted onto another mesh pair.
-    pub fn validate_against_sources(
+    #[cfg(test)]
+    pub(crate) fn validate_against_sources(
         &self,
         left: &ExactMesh,
         right: &ExactMesh,
@@ -5099,7 +5100,8 @@ impl ExactSameSurfaceReport {
     }
 
     /// Classify whether this retained same-surface report is fresh.
-    pub fn freshness_against_sources(
+    #[cfg(test)]
+    pub(crate) fn freshness_against_sources(
         &self,
         left: &ExactMesh,
         right: &ExactMesh,
