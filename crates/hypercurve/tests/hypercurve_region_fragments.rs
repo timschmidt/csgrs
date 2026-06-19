@@ -1,7 +1,7 @@
 use hypercurve::{
     BulgeVertex2, Classification, Contour2, CurveError, CurvePolicy, Real, Region2,
     RegionContourFragments, RegionContourKey, RegionContourRole, RegionFragmentBuildStage2,
-    RegionFragmentSet, RegionSide, SegmentKind,
+    RegionFragmentSet, RegionSide, SegmentKind, SegmentKindCounts,
 };
 
 fn s(value: i32) -> Real {
@@ -74,6 +74,22 @@ fn region_fragments_split_all_keyed_contours() {
     assert_eq!(
         built.report().intersection_event_count(),
         intersections.event_count()
+    );
+    assert_eq!(
+        built.report().first_event_segment_kind_counts(),
+        intersections.first_event_segment_kind_counts()
+    );
+    assert_eq!(
+        built.report().second_event_segment_kind_counts(),
+        intersections.second_event_segment_kind_counts()
+    );
+    assert_eq!(
+        built.report().first_event_segment_kind_counts(),
+        SegmentKindCounts { lines: 4, arcs: 0 }
+    );
+    assert_eq!(
+        built.report().second_event_segment_kind_counts(),
+        SegmentKindCounts { lines: 4, arcs: 0 }
     );
     assert_eq!(
         built.report().candidate_pair_count(),

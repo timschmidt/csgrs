@@ -65,6 +65,8 @@ pub struct RegionFragmentBuildReport2 {
     point_event_count: usize,
     overlap_event_count: usize,
     uncertain_event_count: usize,
+    first_event_segment_kind_counts: crate::SegmentKindCounts,
+    second_event_segment_kind_counts: crate::SegmentKindCounts,
     candidate_pair_count: usize,
     skipped_aabb_pair_count: usize,
     tested_pair_count: usize,
@@ -335,6 +337,8 @@ pub(crate) fn split_region_views_at_intersections_with_report(
             point_event_count: intersections.point_event_count(),
             overlap_event_count: intersections.overlap_event_count(),
             uncertain_event_count: intersections.uncertain_event_count(),
+            first_event_segment_kind_counts: intersections.first_event_segment_kind_counts(),
+            second_event_segment_kind_counts: intersections.second_event_segment_kind_counts(),
             candidate_pair_count: intersections.candidate_pair_count(),
             skipped_aabb_pair_count: intersections.skipped_aabb_pair_count(),
             tested_pair_count: intersections.tested_pair_count(),
@@ -495,6 +499,16 @@ impl RegionFragmentBuildReport2 {
         self.uncertain_event_count
     }
 
+    /// Returns primitive families touched by retained first-region event segments.
+    pub const fn first_event_segment_kind_counts(&self) -> crate::SegmentKindCounts {
+        self.first_event_segment_kind_counts
+    }
+
+    /// Returns primitive families touched by retained second-region event segments.
+    pub const fn second_event_segment_kind_counts(&self) -> crate::SegmentKindCounts {
+        self.second_event_segment_kind_counts
+    }
+
     /// Returns all contour-pair candidates considered by the source event set.
     pub const fn candidate_pair_count(&self) -> usize {
         self.candidate_pair_count
@@ -623,6 +637,8 @@ fn blocked_region_fragment_build_result(
             point_event_count: intersections.point_event_count(),
             overlap_event_count: intersections.overlap_event_count(),
             uncertain_event_count: intersections.uncertain_event_count(),
+            first_event_segment_kind_counts: intersections.first_event_segment_kind_counts(),
+            second_event_segment_kind_counts: intersections.second_event_segment_kind_counts(),
             candidate_pair_count: intersections.candidate_pair_count(),
             skipped_aabb_pair_count: intersections.skipped_aabb_pair_count(),
             tested_pair_count: intersections.tested_pair_count(),
