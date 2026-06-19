@@ -2473,12 +2473,12 @@ fn closed_winding_shortcuts_are_publicly_replayable() {
             result.freshness_against_sources(&separated_left, &separated_right),
             ExactReportFreshness::Current
         );
-        let separated_evaluation = exact_boolean_evaluation(
+        with_exact_boolean_evaluation(
             &separated_left,
             &separated_right,
             ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
+            |separated_evaluation| separated_evaluation.validate().unwrap(),
         );
-        separated_evaluation.validate().unwrap();
         assert_eq!(
             result.freshness_against_sources(&separated_left, &intersecting_right),
             ExactReportFreshness::SourceReplayMismatch
@@ -2693,7 +2693,6 @@ fn exact_volumetric_winding_coplanar_cap_is_publicly_certified() {
             &right,
             ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
         );
-
         assert!(
             evaluation.is_certified_arrangement_cell_complex(),
             "{operation:?}: {evaluation:?}"
@@ -2913,12 +2912,17 @@ fn exact_contained_face_adjacent_union_is_publicly_replayable() {
     assert_public_contained_face_adjacent_union(&container, &two_caps_right, 1, 2);
     let multi_hole_request =
         ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED);
-    let multi_hole_evaluation =
-        exact_boolean_evaluation(&container, &two_caps_right, multi_hole_request);
-    multi_hole_evaluation.validate().unwrap();
-    multi_hole_evaluation
-        .validate_against_sources(&container, &two_caps_right)
-        .unwrap();
+    with_exact_boolean_evaluation(
+        &container,
+        &two_caps_right,
+        multi_hole_request,
+        |multi_hole_evaluation| {
+            multi_hole_evaluation.validate().unwrap();
+            multi_hole_evaluation
+                .validate_against_sources(&container, &two_caps_right)
+                .unwrap();
+        },
+    );
 
     assert_eq!(
         result.freshness_against_sources(&container, &separated_right),
@@ -2926,39 +2930,47 @@ fn exact_contained_face_adjacent_union_is_publicly_replayable() {
     );
     let split_request =
         ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED);
-    let split_evaluation =
-        exact_boolean_evaluation(&split_container, &split_crossing_right, split_request);
-    split_evaluation.validate().unwrap();
-    split_evaluation
-        .validate_against_sources(&split_container, &split_crossing_right)
-        .unwrap();
+    with_exact_boolean_evaluation(
+        &split_container,
+        &split_crossing_right,
+        split_request,
+        |split_evaluation| {
+            split_evaluation.validate().unwrap();
+            split_evaluation
+                .validate_against_sources(&split_container, &split_crossing_right)
+                .unwrap();
+        },
+    );
 
     let square_disk_request =
         ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED);
-    let square_disk_evaluation = exact_boolean_evaluation(
+    with_exact_boolean_evaluation(
         &square_disk_container,
         &square_disk_cap_right,
         square_disk_request,
+        |square_disk_evaluation| {
+            square_disk_evaluation.validate().unwrap();
+            square_disk_evaluation
+                .validate_against_sources(&square_disk_container, &square_disk_cap_right)
+                .unwrap();
+        },
     );
-    square_disk_evaluation.validate().unwrap();
-    square_disk_evaluation
-        .validate_against_sources(&square_disk_container, &square_disk_cap_right)
-        .unwrap();
 
     let request = ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED);
-    let evaluation = exact_boolean_evaluation(&container, &right, request);
-    evaluation.validate().unwrap();
-    evaluation
-        .validate_against_sources(&container, &right)
-        .unwrap();
-    assert_eq!(
-        evaluation.freshness_against_sources(&container, &right),
-        ExactReportFreshness::Current
-    );
-    assert_eq!(
-        evaluation.freshness_against_sources(&container, &separated_right),
-        ExactReportFreshness::SourceReplayMismatch
-    );
+    with_exact_boolean_evaluation(&container, &right, request, |evaluation| {
+        evaluation.validate().unwrap();
+        evaluation
+            .validate_against_sources(&container, &right)
+            .unwrap();
+        assert_eq!(
+            evaluation.freshness_against_sources(&container, &right),
+            ExactReportFreshness::Current
+        );
+        assert_eq!(
+            evaluation.freshness_against_sources(&container, &separated_right),
+            ExactReportFreshness::SourceReplayMismatch
+        );
+    });
     let result = exact_boolean_result(
         &container,
         &right,
@@ -2986,14 +2998,16 @@ fn exact_evaluation_preflight_reports_disjoint_bounds_without_retained_pairs() {
     let left = tetra([0, 0, 0]);
     let right = tetra([3, 0, 0]);
 
-    let evaluation = exact_boolean_evaluation(
+    with_exact_boolean_evaluation(
         &left,
         &right,
         ExactBooleanRequest::new(ExactBooleanOperation::Union, ValidationPolicy::CLOSED),
+        |evaluation| {
+            assert_eq!(evaluation.retained_face_pairs(), 0);
+            assert_eq!(evaluation.retained_events(), 0);
+            evaluation.validate_against_sources(&left, &right).unwrap();
+        },
     );
-    assert_eq!(evaluation.retained_face_pairs(), 0);
-    assert_eq!(evaluation.retained_events(), 0);
-    evaluation.validate_against_sources(&left, &right).unwrap();
 }
 
 #[test]
@@ -3021,63 +3035,71 @@ fn public_exact_blocker_reports_replay_remaining_decisions() {
         ExactBooleanOperation::Union,
         ValidationPolicy::ALLOW_BOUNDARY,
     );
-    let evaluation = exact_boolean_evaluation(&left, &overlapping_right, request);
-    assert!(!evaluation.requires_refinement());
-    evaluation
-        .validate_against_sources(&left, &overlapping_right)
-        .unwrap();
-    assert_eq!(
-        evaluation.freshness_against_sources(&left, &overlapping_right),
-        ExactReportFreshness::Current
-    );
-    assert_eq!(
-        evaluation.freshness_against_sources(&left, &separated_right),
-        ExactReportFreshness::SourceReplayMismatch
-    );
+    with_exact_boolean_evaluation(&left, &overlapping_right, request, |evaluation| {
+        assert!(!evaluation.requires_refinement());
+        evaluation
+            .validate_against_sources(&left, &overlapping_right)
+            .unwrap();
+        assert_eq!(
+            evaluation.freshness_against_sources(&left, &overlapping_right),
+            ExactReportFreshness::Current
+        );
+        assert_eq!(
+            evaluation.freshness_against_sources(&left, &separated_right),
+            ExactReportFreshness::SourceReplayMismatch
+        );
+    });
 
     let planar_request = ExactBooleanRequest::new(
         ExactBooleanOperation::Union,
         ValidationPolicy::ALLOW_BOUNDARY,
     );
-    let planar_evaluation = exact_boolean_evaluation(&left, &overlapping_right, planar_request);
-    assert!(
-        evaluation_materializes_arrangement_cell_complex(&planar_evaluation),
-        "{planar_evaluation:?}"
-    );
-    planar_evaluation
-        .validate_against_sources(&left, &overlapping_right)
-        .unwrap();
-    assert_eq!(
-        planar_evaluation.freshness_against_sources(&left, &overlapping_right),
-        ExactReportFreshness::Current
-    );
-    assert_eq!(
-        planar_evaluation.freshness_against_sources(&left, &separated_right),
-        ExactReportFreshness::SourceReplayMismatch
+    with_exact_boolean_evaluation(
+        &left,
+        &overlapping_right,
+        planar_request,
+        |planar_evaluation| {
+            assert!(
+                evaluation_materializes_arrangement_cell_complex(planar_evaluation),
+                "{planar_evaluation:?}"
+            );
+            planar_evaluation
+                .validate_against_sources(&left, &overlapping_right)
+                .unwrap();
+            assert_eq!(
+                planar_evaluation.freshness_against_sources(&left, &overlapping_right),
+                ExactReportFreshness::Current
+            );
+            assert_eq!(
+                planar_evaluation.freshness_against_sources(&left, &separated_right),
+                ExactReportFreshness::SourceReplayMismatch
+            );
+        },
     );
 
     let same_request = ExactBooleanRequest::new(
         ExactBooleanOperation::Union,
         ValidationPolicy::ALLOW_BOUNDARY,
     );
-    let same_evaluation = exact_boolean_evaluation(&left, &left, same_request);
-    assert!(
-        same_evaluation.materialized_result().is_some_and(|result| {
-            result.is_certified_shortcut_for(ExactBooleanOperation::Union)
-        }),
-        "{same_evaluation:?}"
-    );
-    same_evaluation
-        .validate_against_sources(&left, &left)
-        .unwrap();
-    assert_eq!(
-        same_evaluation.freshness_against_sources(&left, &left),
-        ExactReportFreshness::Current
-    );
-    assert_eq!(
-        same_evaluation.freshness_against_sources(&left, &separated_right),
-        ExactReportFreshness::SourceReplayMismatch
-    );
+    with_exact_boolean_evaluation(&left, &left, same_request, |same_evaluation| {
+        assert!(
+            same_evaluation.materialized_result().is_some_and(|result| {
+                result.is_certified_shortcut_for(ExactBooleanOperation::Union)
+            }),
+            "{same_evaluation:?}"
+        );
+        same_evaluation
+            .validate_against_sources(&left, &left)
+            .unwrap();
+        assert_eq!(
+            same_evaluation.freshness_against_sources(&left, &left),
+            ExactReportFreshness::Current
+        );
+        assert_eq!(
+            same_evaluation.freshness_against_sources(&left, &separated_right),
+            ExactReportFreshness::SourceReplayMismatch
+        );
+    });
 
     let parallel_right = ExactMesh::from_i64_triangles_with_policy(
         &[0, 0, 1, 2, 0, 1, 0, 2, 1],
@@ -3089,24 +3111,25 @@ fn public_exact_blocker_reports_replay_remaining_decisions() {
         ExactBooleanOperation::Union,
         ValidationPolicy::ALLOW_BOUNDARY,
     );
-    let open_evaluation = exact_boolean_evaluation(&left, &parallel_right, open_request);
-    assert!(
-        open_evaluation.materialized_result().is_some_and(|result| {
-            result.is_certified_shortcut_for(ExactBooleanOperation::Union)
-        }),
-        "{open_evaluation:?}"
-    );
-    open_evaluation
-        .validate_against_sources(&left, &parallel_right)
-        .unwrap();
-    assert_eq!(
-        open_evaluation.freshness_against_sources(&left, &parallel_right),
-        ExactReportFreshness::Current
-    );
-    assert_eq!(
-        open_evaluation.freshness_against_sources(&left, &overlapping_right),
-        ExactReportFreshness::SourceReplayMismatch
-    );
+    with_exact_boolean_evaluation(&left, &parallel_right, open_request, |open_evaluation| {
+        assert!(
+            open_evaluation.materialized_result().is_some_and(|result| {
+                result.is_certified_shortcut_for(ExactBooleanOperation::Union)
+            }),
+            "{open_evaluation:?}"
+        );
+        open_evaluation
+            .validate_against_sources(&left, &parallel_right)
+            .unwrap();
+        assert_eq!(
+            open_evaluation.freshness_against_sources(&left, &parallel_right),
+            ExactReportFreshness::Current
+        );
+        assert_eq!(
+            open_evaluation.freshness_against_sources(&left, &overlapping_right),
+            ExactReportFreshness::SourceReplayMismatch
+        );
+    });
 }
 
 #[test]
