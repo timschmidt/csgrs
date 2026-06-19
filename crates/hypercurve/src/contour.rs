@@ -125,6 +125,8 @@ pub enum ContourFilletStage2 {
 pub struct ContourLineMergeSpanReport2 {
     source_segment_indices: Vec<usize>,
     source_segment_kind_counts: SegmentKindCounts,
+    source_start_point: Point2,
+    source_end_point: Point2,
     output_segment_index: usize,
     output_segment_kind: SegmentKind,
     output_start_point: Point2,
@@ -1214,6 +1216,16 @@ impl ContourLineMergeSpanReport2 {
         self.source_segment_kind_counts
     }
 
+    /// Returns the exact start point of the retained source run.
+    pub const fn source_start_point(&self) -> &Point2 {
+        &self.source_start_point
+    }
+
+    /// Returns the exact end point of the retained source run.
+    pub const fn source_end_point(&self) -> &Point2 {
+        &self.source_end_point
+    }
+
     /// Returns the output segment index produced for this source run.
     pub const fn output_segment_index(&self) -> usize {
         self.output_segment_index
@@ -1502,16 +1514,18 @@ fn push_contour_line_merge_run(
     spans: &mut Vec<ContourLineMergeSpanReport2>,
 ) -> CurveResult<()> {
     let output_segment_index = output_segments.len();
+    let first_source_index = source_indices[0];
+    let last_source_index = *source_indices
+        .last()
+        .expect("line merge run should not be empty");
+    let source_start_point = source_segments[first_source_index].start().clone();
+    let source_end_point = source_segments[last_source_index].end().clone();
     let segment = if source_indices.len() == 1 {
-        source_segments[source_indices[0]].clone()
+        source_segments[first_source_index].clone()
     } else {
-        let first = &source_segments[source_indices[0]];
-        let last = &source_segments[*source_indices
-            .last()
-            .expect("line merge run should not be empty")];
         Segment2::Line(LineSeg2::try_new(
-            first.start().clone(),
-            last.end().clone(),
+            source_start_point.clone(),
+            source_end_point.clone(),
         )?)
     };
     output_segments.push(segment);
@@ -1521,6 +1535,8 @@ fn push_contour_line_merge_run(
             source_segments,
             source_indices,
         ),
+        source_start_point,
+        source_end_point,
         output_segment_index,
         output_segment_kind: output_segments[output_segment_index]
             .structural_facts()

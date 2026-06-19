@@ -196,6 +196,8 @@ fn contour_merge_adjacent_collinear_lines_reports_source_runs() {
         merged.report().spans()[0].source_segment_kind_counts(),
         SegmentKindCounts { lines: 2, arcs: 0 }
     );
+    assert_eq!(merged.report().spans()[0].source_start_point(), &p(0, 0));
+    assert_eq!(merged.report().spans()[0].source_end_point(), &p(4, 0));
     assert_eq!(merged.report().spans()[0].output_segment_index(), 0);
     assert_eq!(
         merged.report().spans()[0].output_segment_kind(),
@@ -237,6 +239,8 @@ fn contour_line_merge_span_reports_preserve_mixed_segment_kinds() {
         merged.report().spans()[1].source_segment_kind_counts(),
         SegmentKindCounts { lines: 0, arcs: 1 }
     );
+    assert_eq!(merged.report().spans()[1].source_start_point(), &p(1, 0));
+    assert_eq!(merged.report().spans()[1].source_end_point(), &p(3, 0));
     assert_eq!(
         merged.report().spans()[1].output_segment_kind(),
         SegmentKind::Arc
@@ -267,6 +271,8 @@ fn contour_merge_adjacent_collinear_lines_merges_wraparound_run() {
     assert_eq!(merged.report().merged_pair_count(), 1);
     assert_eq!(merged.report().preserved_pair_count(), 4);
     assert_eq!(merged.report().spans()[0].source_segment_indices(), &[4, 0]);
+    assert_eq!(merged.report().spans()[0].source_start_point(), &p(0, 0));
+    assert_eq!(merged.report().spans()[0].source_end_point(), &p(4, 0));
     assert_eq!(merged.report().spans()[0].output_segment_index(), 0);
     assert_eq!(merged.report().spans()[0].output_start_point(), &p(0, 0));
     assert_eq!(merged.report().spans()[0].output_end_point(), &p(4, 0));
