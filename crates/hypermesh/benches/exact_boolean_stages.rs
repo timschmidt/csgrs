@@ -173,7 +173,7 @@ fn run_case(case: &BenchCase) {
         "workspace_evaluation_source_replay",
         || retained_workspace_with_evaluation_for_case(case, request),
         |retained| {
-            if let Some(evaluation) = retained.0.evaluate(retained.1).ok() {
+            if let Some(evaluation) = retained.evaluate(request).ok() {
                 black_box(
                     evaluation
                         .validate_against_sources(&case.left, &case.right)
@@ -202,8 +202,7 @@ fn run_case(case: &BenchCase) {
         || retained_workspace_with_evaluation_for_case(case, request),
         |retained| {
             let attempt = retained
-                .0
-                .evaluate(retained.1)
+                .evaluate(request)
                 .unwrap()
                 .retained_arrangement_attempt()
                 .expect("evaluation should retain an arrangement attempt");
@@ -240,8 +239,7 @@ fn run_case(case: &BenchCase) {
         || retained_workspace_with_evaluation_for_case(case, request),
         |retained| {
             let attempt = retained
-                .0
-                .evaluate(retained.1)
+                .evaluate(request)
                 .unwrap()
                 .retained_arrangement_attempt()
                 .expect("evaluation should retain an arrangement attempt");
@@ -275,14 +273,13 @@ fn run_case(case: &BenchCase) {
         || retained_workspace_with_evaluation_for_case(case, request),
         |retained| {
             let attempt = retained
-                .0
-                .evaluate(retained.1)
+                .evaluate(request)
                 .unwrap()
                 .retained_arrangement_attempt()
                 .expect("evaluation should retain an arrangement attempt");
             black_box(
                 attempt
-                    .validate_against_sources_for_request(&case.left, &case.right, retained.1)
+                    .validate_against_sources_for_request(&case.left, &case.right, request)
                     .ok(),
             );
         },
@@ -293,7 +290,9 @@ fn run_case(case: &BenchCase) {
         "workspace_validate_evaluation_from_retained_artifacts",
         || retained_workspace_with_evaluation_for_case(case, request),
         |retained| {
-            black_box(validate_retained_evaluation_for_case(case, retained));
+            black_box(validate_retained_evaluation_for_case(
+                case, retained, request,
+            ));
         },
     );
 
@@ -320,7 +319,9 @@ fn run_case(case: &BenchCase) {
         "evaluation_validate_source_replay",
         || retained_workspace_with_evaluation_for_case(case, request),
         |retained| {
-            black_box(validate_retained_evaluation_for_case(case, retained));
+            black_box(validate_retained_evaluation_for_case(
+                case, retained, request,
+            ));
         },
     );
 
@@ -329,7 +330,9 @@ fn run_case(case: &BenchCase) {
         "evaluation_validate_retained_replay",
         || retained_workspace_with_evaluation_for_case(case, request),
         |retained| {
-            black_box(validate_retained_evaluation_for_case(case, retained));
+            black_box(validate_retained_evaluation_for_case(
+                case, retained, request,
+            ));
         },
     );
 
@@ -356,19 +359,19 @@ fn retained_workspace_for_case<'a>(case: &'a BenchCase) -> ExactBooleanWorkspace
 fn retained_workspace_with_evaluation_for_case<'a>(
     case: &'a BenchCase,
     request: ExactBooleanRequest,
-) -> (ExactBooleanWorkspace<'a>, ExactBooleanRequest) {
+) -> ExactBooleanWorkspace<'a> {
     let mut retained_workspace = retained_workspace_for_case(case);
     retained_workspace.evaluate(request).ok();
-    (retained_workspace, request)
+    retained_workspace
 }
 
 fn validate_retained_evaluation_for_case<'a>(
     case: &BenchCase,
-    retained: &mut (ExactBooleanWorkspace<'a>, ExactBooleanRequest),
+    retained: &mut ExactBooleanWorkspace<'a>,
+    request: ExactBooleanRequest,
 ) -> Option<()> {
     retained
-        .0
-        .evaluate(retained.1)
+        .evaluate(request)
         .ok()?
         .validate_against_sources(&case.left, &case.right)
         .ok()
