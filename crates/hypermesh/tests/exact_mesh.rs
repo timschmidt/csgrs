@@ -3372,7 +3372,14 @@ fn exact_volumetric_winding_coplanar_cap_is_publicly_certified() {
             "{operation:?}: {closure:?}"
         );
         closure.validate().unwrap();
-        closure.validate_against_sources(&left, &right).unwrap();
+        evaluation
+            .certifications
+            .validate_against_sources(
+                &left,
+                &right,
+                ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
+            )
+            .unwrap();
 
         let preflight = &evaluation.preflight;
         assert!(

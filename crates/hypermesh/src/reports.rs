@@ -3726,7 +3726,7 @@ impl ExactVolumetricBoundaryClosureReport {
     }
 
     /// Validate this report against the source meshes that produced it.
-    pub fn validate_against_sources(
+    pub(crate) fn validate_against_sources(
         &self,
         left: &ExactMesh,
         right: &ExactMesh,
@@ -3750,7 +3750,8 @@ impl ExactVolumetricBoundaryClosureReport {
     ///
     /// Local status/count coherence is checked before source replay, so callers
     /// can distinguish stale closure evidence from source-geometry drift.
-    pub fn freshness_against_sources(
+    #[cfg(test)]
+    pub(crate) fn freshness_against_sources(
         &self,
         left: &ExactMesh,
         right: &ExactMesh,
