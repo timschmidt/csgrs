@@ -2341,18 +2341,6 @@ impl ExactBooleanEvaluation {
         if &self.preflight != replay.preflight() || self.certifications != replay.certifications {
             return Err(ExactReportValidationError::SourceReplayMismatch);
         }
-        self.validate_materialized_result_against_sources(left, right)?;
-        Ok(())
-    }
-
-    /// Validate only the materialized result retained by this evaluation,
-    /// replaying from the retained arrangement attempt before falling back to
-    /// broader result replay.
-    fn validate_materialized_result_against_sources(
-        &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-    ) -> Result<(), ExactReportValidationError> {
         if let Some(result) = self.result.as_ref() {
             result.validate_request_against_sources_with_retained_attempt(
                 left,
