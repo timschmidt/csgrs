@@ -266,28 +266,28 @@ impl ExactArrangementBooleanAttempt {
     }
 
     /// Return whether retained topology assembly evidence completed.
-    pub fn topology_assembly_is_complete(&self) -> bool {
+    pub(crate) fn topology_assembly_is_complete(&self) -> bool {
         self.topology_assembly_report
             .as_ref()
             .is_some_and(|report| report.validate().is_ok() && report.is_complete())
     }
 
     /// Return whether retained region ownership resolves named Boolean selection.
-    pub fn region_ownership_is_resolved(&self) -> bool {
+    pub(crate) fn region_ownership_is_resolved(&self) -> bool {
         self.region_ownership_report
             .as_ref()
             .is_some_and(|report| report.validate().is_ok() && report.is_resolved())
     }
 
     /// Return whether retained volume ownership resolves named Boolean selection.
-    pub fn region_ownership_is_volume_resolved(&self) -> bool {
+    pub(crate) fn region_ownership_is_volume_resolved(&self) -> bool {
         self.region_ownership_report
             .as_ref()
             .is_some_and(|report| report.validate().is_ok() && report.status.is_volume_resolved())
     }
 
     /// Return whether retained ownership evidence resolves this attempt's operation.
-    pub fn region_ownership_resolves_requested_operation(&self) -> bool {
+    pub(crate) fn region_ownership_resolves_requested_operation(&self) -> bool {
         self.resolves_requested_volume_ownership()
     }
 
@@ -2251,6 +2251,40 @@ impl ExactBooleanEvaluation {
             .certifications
             .winding_readiness
             .coplanar_volumetric_evidence())
+    }
+
+    /// Return whether the retained arrangement attempt completed topology assembly.
+    pub fn topology_assembly_is_complete(&self) -> bool {
+        self.certifications
+            .arrangement_attempt
+            .as_ref()
+            .is_some_and(ExactArrangementBooleanAttempt::topology_assembly_is_complete)
+    }
+
+    /// Return whether retained ownership evidence resolved named Boolean selection.
+    pub fn region_ownership_is_resolved(&self) -> bool {
+        self.certifications
+            .arrangement_attempt
+            .as_ref()
+            .is_some_and(ExactArrangementBooleanAttempt::region_ownership_is_resolved)
+    }
+
+    /// Return whether retained ownership evidence resolved volume-region selection.
+    pub fn region_ownership_is_volume_resolved(&self) -> bool {
+        self.certifications
+            .arrangement_attempt
+            .as_ref()
+            .is_some_and(ExactArrangementBooleanAttempt::region_ownership_is_volume_resolved)
+    }
+
+    /// Return whether retained ownership evidence resolves this evaluation request.
+    pub fn region_ownership_resolves_requested_operation(&self) -> bool {
+        self.certifications
+            .arrangement_attempt
+            .as_ref()
+            .is_some_and(
+                ExactArrangementBooleanAttempt::region_ownership_resolves_requested_operation,
+            )
     }
 
     /// Return whether retained evidence requires coplanar volumetric cells.

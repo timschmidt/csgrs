@@ -22,11 +22,12 @@ fn with_exact_boolean_evaluation<R>(
 }
 
 fn assert_evaluation_retains_attempt_gate_reports(evaluation: &hypermesh::ExactBooleanEvaluation) {
-    let attempt = evaluation
-        .retained_arrangement_attempt()
-        .expect("evaluation should retain an arrangement attempt");
-    assert!(attempt.topology_assembly_is_complete(), "{evaluation:?}");
-    assert!(attempt.region_ownership_is_resolved(), "{evaluation:?}");
+    assert!(
+        evaluation.retained_arrangement_attempt().is_some(),
+        "evaluation should retain an arrangement attempt"
+    );
+    assert!(evaluation.topology_assembly_is_complete(), "{evaluation:?}");
+    assert!(evaluation.region_ownership_is_resolved(), "{evaluation:?}");
 }
 
 fn exact_boolean_result(
@@ -229,12 +230,9 @@ fn exact_boolean_evaluation_retains_region_ownership_report() {
             evaluation.retained_arrangement_attempt().is_some(),
             "named boolean certifications should retain arrangement attempt"
         );
-        let attempt = evaluation
-            .retained_arrangement_attempt()
-            .expect("named boolean certifications should retain arrangement attempt");
-        assert!(attempt.region_ownership_is_resolved());
-        assert!(attempt.region_ownership_is_volume_resolved());
-        assert!(attempt.topology_assembly_is_complete());
+        assert!(evaluation.region_ownership_is_resolved());
+        assert!(evaluation.region_ownership_is_volume_resolved());
+        assert!(evaluation.topology_assembly_is_complete());
     });
 }
 
@@ -1007,9 +1005,7 @@ fn exact_coplanar_volumetric_cell_policy_is_publicly_replayable() {
                 "{evaluation:?}"
             );
             assert!(
-                evaluation
-                    .retained_arrangement_attempt()
-                    .is_some_and(|attempt| attempt.region_ownership_resolves_requested_operation())
+                evaluation.region_ownership_resolves_requested_operation()
                     || evaluation.materialized_result().is_some()
                     || evaluation.requires_coplanar_volumetric_cells(),
                 "{evaluation:?}"
@@ -3434,8 +3430,6 @@ fn exact_boolean_attempt_public_path_reports_blockers_or_cells() {
         ExactRegularizationPolicy::REGULARIZED_SOLID,
         |attempt| {
             attempt.validate().unwrap();
-            assert!(attempt.topology_assembly_is_complete());
-            assert!(attempt.region_ownership_is_volume_resolved());
             attempt
                 .validate_against_sources_for_request(&left, &right, request)
                 .unwrap();
@@ -3454,6 +3448,10 @@ fn exact_boolean_attempt_public_path_reports_blockers_or_cells() {
             );
         },
     );
+    with_exact_boolean_evaluation(&left, &right, request, |evaluation| {
+        assert!(evaluation.topology_assembly_is_complete());
+        assert!(evaluation.region_ownership_is_volume_resolved());
+    });
 }
 
 #[test]

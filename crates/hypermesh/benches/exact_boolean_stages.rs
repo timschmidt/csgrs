@@ -116,38 +116,26 @@ fn run_case(case: &BenchCase) {
 
     time_stage(case, "arrangement_attempt_from_evaluation", || {
         let mut workspace = ExactBooleanWorkspace::new(&case.left, &case.right);
-        let attempt = workspace
-            .evaluate(request)
-            .unwrap()
-            .retained_arrangement_attempt();
-        black_box(attempt.map(|attempt| {
-            (
-                attempt.topology_assembly_is_complete(),
-                attempt.region_ownership_is_volume_resolved(),
-            )
-        }));
+        let evaluation = workspace.evaluate(request).unwrap();
+        black_box((
+            evaluation.retained_arrangement_attempt().is_some(),
+            evaluation.topology_assembly_is_complete(),
+            evaluation.region_ownership_is_volume_resolved(),
+        ));
     });
 
     let mut attempt_workspace = retained_workspace_for_case(case);
     attempt_workspace.evaluate(request).unwrap();
     time_stage(case, "attempt_topology_assembly_completion", || {
-        let attempt = attempt_workspace
-            .evaluate(request)
-            .unwrap()
-            .retained_arrangement_attempt()
-            .expect("evaluation should retain an arrangement attempt");
-        black_box(attempt.topology_assembly_is_complete());
+        let evaluation = attempt_workspace.evaluate(request).unwrap();
+        black_box(evaluation.topology_assembly_is_complete());
     });
 
     time_stage(case, "attempt_region_ownership_resolution", || {
-        let attempt = attempt_workspace
-            .evaluate(request)
-            .unwrap()
-            .retained_arrangement_attempt()
-            .expect("evaluation should retain an arrangement attempt");
+        let evaluation = attempt_workspace.evaluate(request).unwrap();
         black_box((
-            attempt.region_ownership_is_resolved(),
-            attempt.region_ownership_is_volume_resolved(),
+            evaluation.region_ownership_is_resolved(),
+            evaluation.region_ownership_is_volume_resolved(),
         ));
     });
 
@@ -173,11 +161,8 @@ fn run_case(case: &BenchCase) {
         case,
         "workspace_topology_assembly_completion_from_evaluation_attempt",
         || {
-            let attempt = workspace
-                .evaluate(request)
-                .unwrap()
-                .retained_arrangement_attempt();
-            black_box(attempt.map(|attempt| attempt.topology_assembly_is_complete()));
+            let evaluation = workspace.evaluate(request).unwrap();
+            black_box(evaluation.topology_assembly_is_complete());
         },
     );
 
@@ -186,16 +171,16 @@ fn run_case(case: &BenchCase) {
         "attempt_source_replay_validate_for_topology_evidence",
         || retained_workspace_with_evaluation_for_case(case, request),
         |retained| {
-            let attempt = retained
-                .evaluate(request)
-                .unwrap()
+            let evaluation = retained.evaluate(request).unwrap();
+            let topology_complete = evaluation.topology_assembly_is_complete();
+            let attempt = evaluation
                 .retained_arrangement_attempt()
                 .expect("evaluation should retain an arrangement attempt");
             black_box(
                 attempt
                     .validate_against_sources_for_request(&case.left, &case.right, request)
                     .ok()
-                    .zip(Some(attempt.topology_assembly_is_complete())),
+                    .zip(Some(topology_complete)),
             );
         },
     );
@@ -204,17 +189,12 @@ fn run_case(case: &BenchCase) {
         case,
         "workspace_region_ownership_resolution_from_evaluation_attempt",
         || {
-            let attempt = workspace
-                .evaluate(request)
-                .unwrap()
-                .retained_arrangement_attempt();
-            black_box(attempt.map(|attempt| {
-                (
-                    attempt.region_ownership_is_resolved(),
-                    attempt.region_ownership_is_volume_resolved(),
-                    attempt.region_ownership_resolves_requested_operation(),
-                )
-            }));
+            let evaluation = workspace.evaluate(request).unwrap();
+            black_box((
+                evaluation.region_ownership_is_resolved(),
+                evaluation.region_ownership_is_volume_resolved(),
+                evaluation.region_ownership_resolves_requested_operation(),
+            ));
         },
     );
 
@@ -223,18 +203,16 @@ fn run_case(case: &BenchCase) {
         "attempt_source_replay_validate_for_ownership_evidence",
         || retained_workspace_with_evaluation_for_case(case, request),
         |retained| {
-            let attempt = retained
-                .evaluate(request)
-                .unwrap()
+            let evaluation = retained.evaluate(request).unwrap();
+            let ownership_resolves = evaluation.region_ownership_resolves_requested_operation();
+            let attempt = evaluation
                 .retained_arrangement_attempt()
                 .expect("evaluation should retain an arrangement attempt");
             black_box(
                 attempt
                     .validate_against_sources_for_request(&case.left, &case.right, request)
                     .ok()
-                    .zip(Some(
-                        attempt.region_ownership_resolves_requested_operation(),
-                    )),
+                    .zip(Some(ownership_resolves)),
             );
         },
     );
@@ -242,14 +220,12 @@ fn run_case(case: &BenchCase) {
     workspace.evaluate(request).unwrap();
     time_stage(case, "workspace_evaluation_attempt_cached", || {
         let evaluation = workspace.evaluate(request).unwrap();
-        let attempt = evaluation.retained_arrangement_attempt();
-        black_box(attempt.map(|attempt| {
-            (
-                attempt.topology_assembly_is_complete(),
-                attempt.region_ownership_is_resolved(),
-                attempt.region_ownership_is_volume_resolved(),
-            )
-        }));
+        black_box((
+            evaluation.retained_arrangement_attempt().is_some(),
+            evaluation.topology_assembly_is_complete(),
+            evaluation.region_ownership_is_resolved(),
+            evaluation.region_ownership_is_volume_resolved(),
+        ));
     });
 
     time_prepared_stage(
