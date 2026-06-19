@@ -1266,6 +1266,44 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
         ring_cache.arranged_source_reports(),
         result.report().arranged_source_reports()
     );
+    let arranged_fragment_cache = ring_cache.arranged_fragment_cache();
+    assert_eq!(arranged_fragment_cache.arranged_fragment_count(), 4);
+    assert_eq!(arranged_fragment_cache.source_ref_count(), 4);
+    assert_eq!(
+        arranged_fragment_cache.source_segment_kind_counts(),
+        SegmentKindCounts { lines: 4, arcs: 0 }
+    );
+    assert_eq!(
+        arranged_fragment_cache.arranged_segment_kind_counts(),
+        SegmentKindCounts { lines: 4, arcs: 0 }
+    );
+    assert_eq!(arranged_fragment_cache.max_source_ref_count(), 1);
+    assert_eq!(arranged_fragment_cache.fragments().len(), 4);
+    let arranged_fragment = &arranged_fragment_cache.fragments()[0];
+    assert_eq!(arranged_fragment.arranged_segment_index(), 0);
+    assert_eq!(arranged_fragment.arranged_segment_kind(), SegmentKind::Line);
+    assert_eq!(
+        arranged_fragment.output_start_point(),
+        result.report().arranged_source_reports()[0].output_start_point()
+    );
+    assert_eq!(
+        arranged_fragment.output_end_point(),
+        result.report().arranged_source_reports()[0].output_end_point()
+    );
+    assert_eq!(arranged_fragment.source_refs().len(), 1);
+    assert_eq!(
+        arranged_fragment.source_refs()[0].arranged_source_report_index(),
+        0
+    );
+    assert_eq!(arranged_fragment.source_refs()[0].source_segment_index(), 0);
+    assert_eq!(
+        arranged_fragment.source_refs()[0].source_range(),
+        result.report().arranged_source_reports()[0].source_range()
+    );
+    assert_eq!(
+        arranged_fragment.source_refs()[0].status(),
+        result.report().arranged_source_reports()[0].status()
+    );
     assert_eq!(
         ring_cache.source_reports(),
         result.report().source_reports()
@@ -1514,6 +1552,44 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
     assert_eq!(
         ring_cache.arranged_source_reports(),
         result.report().arranged_source_reports()
+    );
+    let arranged_fragment_cache = ring_cache.arranged_fragment_cache();
+    assert_eq!(arranged_fragment_cache.arranged_fragment_count(), 2);
+    assert_eq!(arranged_fragment_cache.source_ref_count(), 2);
+    assert_eq!(
+        arranged_fragment_cache.source_segment_kind_counts(),
+        SegmentKindCounts { lines: 1, arcs: 1 }
+    );
+    assert_eq!(
+        arranged_fragment_cache.arranged_segment_kind_counts(),
+        SegmentKindCounts { lines: 1, arcs: 1 }
+    );
+    assert_eq!(arranged_fragment_cache.max_source_ref_count(), 1);
+    assert_eq!(arranged_fragment_cache.fragments().len(), 2);
+    let arranged_fragment = &arranged_fragment_cache.fragments()[0];
+    assert_eq!(arranged_fragment.arranged_segment_index(), 0);
+    assert_eq!(arranged_fragment.arranged_segment_kind(), SegmentKind::Line);
+    assert_eq!(
+        arranged_fragment.output_start_point(),
+        result.report().arranged_source_reports()[0].output_start_point()
+    );
+    assert_eq!(
+        arranged_fragment.output_end_point(),
+        result.report().arranged_source_reports()[0].output_end_point()
+    );
+    assert_eq!(arranged_fragment.source_refs().len(), 1);
+    assert_eq!(
+        arranged_fragment.source_refs()[0].arranged_source_report_index(),
+        0
+    );
+    assert_eq!(arranged_fragment.source_refs()[0].source_segment_index(), 0);
+    assert_eq!(
+        arranged_fragment.source_refs()[0].source_segment_kind(),
+        SegmentKind::Line
+    );
+    assert_eq!(
+        arranged_fragment.source_refs()[0].source_range(),
+        result.report().arranged_source_reports()[0].source_range()
     );
     assert_eq!(
         ring_cache.source_reports(),

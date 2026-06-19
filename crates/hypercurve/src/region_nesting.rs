@@ -197,6 +197,37 @@ pub struct ExactCurveArrangementArrangedEndpointBucketCache2 {
     buckets: Vec<ExactCurveArrangementArrangedEndpointBucket2>,
 }
 
+/// Source provenance retained for one arranged fragment.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ExactCurveArrangementArrangedFragmentSourceRef2 {
+    arranged_source_report_index: usize,
+    source_segment_index: usize,
+    source_segment_kind: SegmentKind,
+    source_range: ParamRange,
+    status: RetainedTopologyStatus,
+}
+
+/// Arranged fragment provenance retained after exact splitting.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ExactCurveArrangementArrangedFragment2 {
+    arranged_segment_index: usize,
+    arranged_segment_kind: SegmentKind,
+    output_start_point: Point2,
+    output_end_point: Point2,
+    source_refs: Vec<ExactCurveArrangementArrangedFragmentSourceRef2>,
+}
+
+/// Arranged fragment provenance cache retained after exact splitting.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ExactCurveArrangementArrangedFragmentCache2 {
+    arranged_fragment_count: usize,
+    source_ref_count: usize,
+    source_segment_kind_counts: SegmentKindCounts,
+    arranged_segment_kind_counts: SegmentKindCounts,
+    max_source_ref_count: usize,
+    fragments: Vec<ExactCurveArrangementArrangedFragment2>,
+}
+
 /// Output segment provenance retained for one assembled ring bucket.
 #[derive(Clone, Debug, PartialEq)]
 pub struct ExactCurveArrangementOutputRingSegmentRef2 {
@@ -235,6 +266,7 @@ pub struct ExactCurveArrangementRingAssemblyCache2 {
     output_boundary_segment_kind_counts: Option<SegmentKindCounts>,
     arranged_source_reports: Vec<RegionLineSegmentArrangedSourceReport2>,
     source_reports: Vec<RegionLineSegmentRingSourceReport2>,
+    arranged_fragment_cache: ExactCurveArrangementArrangedFragmentCache2,
     output_ring_bucket_cache: ExactCurveArrangementOutputRingBucketCache2,
 }
 
@@ -1810,6 +1842,155 @@ impl ExactCurveArrangementArrangedEndpointBucketCache2 {
     }
 }
 
+impl ExactCurveArrangementArrangedFragmentSourceRef2 {
+    /// Returns the retained arranged source report index.
+    pub const fn arranged_source_report_index(&self) -> usize {
+        self.arranged_source_report_index
+    }
+
+    /// Returns the source segment index used by this arranged fragment.
+    pub const fn source_segment_index(&self) -> usize {
+        self.source_segment_index
+    }
+
+    /// Returns the primitive family of the source segment.
+    pub const fn source_segment_kind(&self) -> SegmentKind {
+        self.source_segment_kind
+    }
+
+    /// Returns the retained parameter range on the source segment.
+    pub const fn source_range(&self) -> &ParamRange {
+        &self.source_range
+    }
+
+    /// Returns retained topology status for this source-to-fragment mapping.
+    pub const fn status(&self) -> RetainedTopologyStatus {
+        self.status
+    }
+}
+
+impl ExactCurveArrangementArrangedFragment2 {
+    /// Returns the arranged fragment index after exact splitting.
+    pub const fn arranged_segment_index(&self) -> usize {
+        self.arranged_segment_index
+    }
+
+    /// Returns the primitive family of the arranged fragment.
+    pub const fn arranged_segment_kind(&self) -> SegmentKind {
+        self.arranged_segment_kind
+    }
+
+    /// Returns the arranged fragment start point.
+    pub const fn output_start_point(&self) -> &Point2 {
+        &self.output_start_point
+    }
+
+    /// Returns the arranged fragment end point.
+    pub const fn output_end_point(&self) -> &Point2 {
+        &self.output_end_point
+    }
+
+    /// Returns retained source provenance references for this arranged fragment.
+    pub fn source_refs(&self) -> &[ExactCurveArrangementArrangedFragmentSourceRef2] {
+        &self.source_refs
+    }
+}
+
+impl ExactCurveArrangementArrangedFragmentCache2 {
+    fn from_arranged_source_reports(
+        arranged_source_reports: &[RegionLineSegmentArrangedSourceReport2],
+    ) -> Self {
+        let mut fragments: Vec<ExactCurveArrangementArrangedFragment2> = Vec::new();
+        let mut source_segment_kind_counts = SegmentKindCounts::default();
+
+        for (arranged_source_report_index, report) in arranged_source_reports.iter().enumerate() {
+            match report.source_segment_kind() {
+                SegmentKind::Line => source_segment_kind_counts.lines += 1,
+                SegmentKind::Arc => source_segment_kind_counts.arcs += 1,
+            }
+
+            let arranged_segment_index = report.arranged_segment_index();
+            let fragment_index = fragments
+                .iter()
+                .position(|fragment| fragment.arranged_segment_index == arranged_segment_index)
+                .unwrap_or_else(|| {
+                    fragments.push(ExactCurveArrangementArrangedFragment2 {
+                        arranged_segment_index,
+                        arranged_segment_kind: report.arranged_segment_kind(),
+                        output_start_point: report.output_start_point().clone(),
+                        output_end_point: report.output_end_point().clone(),
+                        source_refs: Vec::new(),
+                    });
+                    fragments.len() - 1
+                });
+            fragments[fragment_index].source_refs.push(
+                ExactCurveArrangementArrangedFragmentSourceRef2 {
+                    arranged_source_report_index,
+                    source_segment_index: report.source_segment_index(),
+                    source_segment_kind: report.source_segment_kind(),
+                    source_range: report.source_range().clone(),
+                    status: report.status(),
+                },
+            );
+        }
+
+        fragments.sort_by_key(|fragment| fragment.arranged_segment_index);
+        for fragment in &mut fragments {
+            fragment
+                .source_refs
+                .sort_by_key(|source_ref| source_ref.arranged_source_report_index);
+        }
+
+        let source_ref_count = arranged_source_reports.len();
+        let arranged_segment_kind_counts =
+            arranged_report_segment_kind_counts(arranged_source_reports);
+        let max_source_ref_count = fragments
+            .iter()
+            .map(|fragment| fragment.source_refs.len())
+            .max()
+            .unwrap_or(0);
+
+        Self {
+            arranged_fragment_count: fragments.len(),
+            source_ref_count,
+            source_segment_kind_counts,
+            arranged_segment_kind_counts,
+            max_source_ref_count,
+            fragments,
+        }
+    }
+
+    /// Returns the number of arranged fragments retained.
+    pub const fn arranged_fragment_count(&self) -> usize {
+        self.arranged_fragment_count
+    }
+
+    /// Returns the number of retained source provenance references.
+    pub const fn source_ref_count(&self) -> usize {
+        self.source_ref_count
+    }
+
+    /// Returns source primitive-family counts for retained source references.
+    pub const fn source_segment_kind_counts(&self) -> SegmentKindCounts {
+        self.source_segment_kind_counts
+    }
+
+    /// Returns arranged fragment primitive-family counts after exact splitting.
+    pub const fn arranged_segment_kind_counts(&self) -> SegmentKindCounts {
+        self.arranged_segment_kind_counts
+    }
+
+    /// Returns the largest source reference count for one arranged fragment.
+    pub const fn max_source_ref_count(&self) -> usize {
+        self.max_source_ref_count
+    }
+
+    /// Returns arranged fragments in arranged segment index order.
+    pub fn fragments(&self) -> &[ExactCurveArrangementArrangedFragment2] {
+        &self.fragments
+    }
+}
+
 impl ExactCurveArrangementOutputRingSegmentRef2 {
     /// Returns the retained source report index for this output segment.
     pub const fn source_report_index(&self) -> usize {
@@ -1920,6 +2101,10 @@ impl ExactCurveArrangementRingAssemblyCache2 {
             output_boundary_segment_kind_counts: report.output_boundary_segment_kind_counts,
             arranged_source_reports: report.arranged_source_reports.clone(),
             source_reports: report.source_reports.clone(),
+            arranged_fragment_cache:
+                ExactCurveArrangementArrangedFragmentCache2::from_arranged_source_reports(
+                    &report.arranged_source_reports,
+                ),
             output_ring_bucket_cache:
                 ExactCurveArrangementOutputRingBucketCache2::from_source_reports(
                     &report.source_reports,
@@ -1980,6 +2165,11 @@ impl ExactCurveArrangementRingAssemblyCache2 {
     /// Returns per-output segment source provenance.
     pub fn source_reports(&self) -> &[RegionLineSegmentRingSourceReport2] {
         &self.source_reports
+    }
+
+    /// Returns per-arranged-fragment source provenance buckets.
+    pub const fn arranged_fragment_cache(&self) -> &ExactCurveArrangementArrangedFragmentCache2 {
+        &self.arranged_fragment_cache
     }
 
     /// Returns per-output-ring source provenance buckets.
