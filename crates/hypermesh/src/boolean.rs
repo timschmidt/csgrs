@@ -7454,9 +7454,9 @@ fn volumetric_winding_open_boundary_candidate_counts(
         return Ok(None);
     }
     if matches!(
-        volumetric_boundary_closure_report_from_materialized(&materialized, operation)?.status,
-        ExactVolumetricBoundaryClosureStatus::AlreadyClosed
-            | ExactVolumetricBoundaryClosureStatus::CoplanarClosureAvailable
+        volumetric_boundary_closure_report_from_materialized(&materialized, operation)?.status(),
+        &ExactVolumetricBoundaryClosureStatus::AlreadyClosed
+            | &ExactVolumetricBoundaryClosureStatus::CoplanarClosureAvailable
     ) {
         return Ok(None);
     }
@@ -14084,22 +14084,30 @@ mod tests {
             &right,
         );
         assert_eq!(
-            closure.status,
-            ExactVolumetricBoundaryClosureStatus::BoundaryClosureBlocked(
+            closure.status(),
+            &ExactVolumetricBoundaryClosureStatus::BoundaryClosureBlocked(
                 ExactArrangementBlocker::NonManifoldCellComplex
             ),
             "{closure:?}"
         );
-        assert_eq!(closure.boundary_loops, 1, "{closure:?}");
-        assert_eq!(closure.noncoplanar_boundary_loops, 0, "{closure:?}");
-        assert_eq!(closure.repeated_exact_boundary_points, 0, "{closure:?}");
-        assert_eq!(closure.self_contact_exact_points, 0, "{closure:?}");
-        assert_eq!(closure.self_contact_topological_vertices, 0, "{closure:?}");
-        assert_eq!(closure.self_contact_degenerate_cycles, 0, "{closure:?}");
-        assert_eq!(closure.self_contact_nondegenerate_cycles, 0, "{closure:?}");
-        assert_eq!(closure.coplanar_loop_groups, 1, "{closure:?}");
-        assert!(closure.boundary_edges > 0, "{closure:?}");
-        assert!(closure.output_triangles > 0, "{closure:?}");
+        assert_eq!(closure.boundary_loops(), 1, "{closure:?}");
+        assert_eq!(closure.noncoplanar_boundary_loops(), 0, "{closure:?}");
+        assert_eq!(closure.repeated_exact_boundary_points(), 0, "{closure:?}");
+        assert_eq!(closure.self_contact_exact_points(), 0, "{closure:?}");
+        assert_eq!(
+            closure.self_contact_topological_vertices(),
+            0,
+            "{closure:?}"
+        );
+        assert_eq!(closure.self_contact_degenerate_cycles(), 0, "{closure:?}");
+        assert_eq!(
+            closure.self_contact_nondegenerate_cycles(),
+            0,
+            "{closure:?}"
+        );
+        assert_eq!(closure.coplanar_loop_groups(), 1, "{closure:?}");
+        assert!(closure.boundary_edges() > 0, "{closure:?}");
+        assert!(closure.output_triangles() > 0, "{closure:?}");
         closure.validate().unwrap();
         closure.validate_against_sources(&left, &right).unwrap();
 
@@ -14164,12 +14172,12 @@ mod tests {
             &right,
         );
         assert_eq!(
-            closure.status,
-            ExactVolumetricBoundaryClosureStatus::CoplanarClosureAvailable,
+            closure.status(),
+            &ExactVolumetricBoundaryClosureStatus::CoplanarClosureAvailable,
             "{closure:?}"
         );
-        assert_eq!(closure.boundary_loops, 1, "{closure:?}");
-        assert_eq!(closure.coplanar_loop_groups, 1, "{closure:?}");
+        assert_eq!(closure.boundary_loops(), 1, "{closure:?}");
+        assert_eq!(closure.coplanar_loop_groups(), 1, "{closure:?}");
         closure.validate().unwrap();
         closure.validate_against_sources(&left, &right).unwrap();
     }
@@ -14207,8 +14215,8 @@ mod tests {
             &right,
         );
         assert_eq!(
-            union_closure.status,
-            ExactVolumetricBoundaryClosureStatus::CoplanarClosureAvailable,
+            union_closure.status(),
+            &ExactVolumetricBoundaryClosureStatus::CoplanarClosureAvailable,
             "{union_closure:?}"
         );
         union_closure.validate().unwrap();
@@ -14225,8 +14233,8 @@ mod tests {
             &right,
         );
         assert_eq!(
-            difference_closure.status,
-            ExactVolumetricBoundaryClosureStatus::CoplanarClosureAvailable,
+            difference_closure.status(),
+            &ExactVolumetricBoundaryClosureStatus::CoplanarClosureAvailable,
             "{difference_closure:?}"
         );
         difference_closure.validate().unwrap();
@@ -14242,13 +14250,14 @@ mod tests {
                 &right,
             );
             assert_eq!(
-                closure.status,
-                ExactVolumetricBoundaryClosureStatus::CoplanarClosureAvailable,
+                closure.status(),
+                &ExactVolumetricBoundaryClosureStatus::CoplanarClosureAvailable,
                 "{operation:?}: {closure:?}"
             );
-            assert_eq!(closure.boundary_loops, 1, "{operation:?}: {closure:?}");
+            assert_eq!(closure.boundary_loops(), 1, "{operation:?}: {closure:?}");
             assert_eq!(
-                closure.coplanar_loop_groups, 1,
+                closure.coplanar_loop_groups(),
+                1,
                 "{operation:?}: {closure:?}"
             );
             closure.validate().unwrap();

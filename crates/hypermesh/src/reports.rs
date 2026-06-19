@@ -3789,45 +3789,120 @@ pub enum ExactVolumetricBoundaryClosureStatus {
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ExactVolumetricBoundaryClosureReport {
     /// Requested named operation.
-    pub operation: ExactBooleanOperation,
+    pub(crate) operation: ExactBooleanOperation,
     /// Certified closure status.
-    pub status: ExactVolumetricBoundaryClosureStatus,
+    pub(crate) status: ExactVolumetricBoundaryClosureStatus,
     /// Number of output triangles in the retained boundary materialization.
-    pub output_triangles: usize,
+    pub(crate) output_triangles: usize,
     /// Number of boundary edges retained by the materialized output mesh.
-    pub boundary_edges: usize,
+    pub(crate) boundary_edges: usize,
     /// Number of directed boundary loops, when loop extraction succeeded.
-    pub boundary_loops: usize,
+    pub(crate) boundary_loops: usize,
     /// Number of boundary vertices whose outgoing directed boundary-edge count
     /// is not exactly one.
-    pub boundary_vertices_with_invalid_outgoing_degree: usize,
+    pub(crate) boundary_vertices_with_invalid_outgoing_degree: usize,
     /// Number of boundary vertices whose incoming directed boundary-edge count
     /// is not exactly one.
-    pub boundary_vertices_with_invalid_incoming_degree: usize,
+    pub(crate) boundary_vertices_with_invalid_incoming_degree: usize,
     /// Number of undirected mesh edges used more than twice by output
     /// triangles, proving non-manifold topology before boundary-loop walking.
-    pub overused_boundary_edges: usize,
+    pub(crate) overused_boundary_edges: usize,
     /// Number of boundary loops proven not exactly coplanar.
-    pub noncoplanar_boundary_loops: usize,
+    pub(crate) noncoplanar_boundary_loops: usize,
     /// Number of repeated exact point pairs found inside directed boundary loops.
-    pub repeated_exact_boundary_points: usize,
+    pub(crate) repeated_exact_boundary_points: usize,
     /// Number of exact point classes that appear at multiple topological
     /// vertices inside directed boundary loops.
-    pub self_contact_exact_points: usize,
+    pub(crate) self_contact_exact_points: usize,
     /// Number of topological boundary vertices participating in exact
     /// self-contact point classes.
-    pub self_contact_topological_vertices: usize,
+    pub(crate) self_contact_topological_vertices: usize,
     /// Number of split cycles around exact self-contact points with fewer than
     /// three distinct exact points.
-    pub self_contact_degenerate_cycles: usize,
+    pub(crate) self_contact_degenerate_cycles: usize,
     /// Number of split cycles around exact self-contact points with at least
     /// three distinct exact points.
-    pub self_contact_nondegenerate_cycles: usize,
+    pub(crate) self_contact_nondegenerate_cycles: usize,
     /// Number of coplanar loop groups produced by exact loop grouping.
-    pub coplanar_loop_groups: usize,
+    pub(crate) coplanar_loop_groups: usize,
 }
 
 impl ExactVolumetricBoundaryClosureReport {
+    /// Return the requested named operation.
+    pub const fn operation(&self) -> ExactBooleanOperation {
+        self.operation
+    }
+
+    /// Return the certified closure status.
+    pub const fn status(&self) -> &ExactVolumetricBoundaryClosureStatus {
+        &self.status
+    }
+
+    /// Return the retained output triangle count.
+    pub const fn output_triangles(&self) -> usize {
+        self.output_triangles
+    }
+
+    /// Return the retained boundary edge count.
+    pub const fn boundary_edges(&self) -> usize {
+        self.boundary_edges
+    }
+
+    /// Return the directed boundary loop count.
+    pub const fn boundary_loops(&self) -> usize {
+        self.boundary_loops
+    }
+
+    /// Return the invalid outgoing boundary-vertex degree count.
+    pub const fn boundary_vertices_with_invalid_outgoing_degree(&self) -> usize {
+        self.boundary_vertices_with_invalid_outgoing_degree
+    }
+
+    /// Return the invalid incoming boundary-vertex degree count.
+    pub const fn boundary_vertices_with_invalid_incoming_degree(&self) -> usize {
+        self.boundary_vertices_with_invalid_incoming_degree
+    }
+
+    /// Return the overused undirected boundary-edge count.
+    pub const fn overused_boundary_edges(&self) -> usize {
+        self.overused_boundary_edges
+    }
+
+    /// Return the noncoplanar boundary-loop count.
+    pub const fn noncoplanar_boundary_loops(&self) -> usize {
+        self.noncoplanar_boundary_loops
+    }
+
+    /// Return the repeated exact boundary-point count.
+    pub const fn repeated_exact_boundary_points(&self) -> usize {
+        self.repeated_exact_boundary_points
+    }
+
+    /// Return the exact self-contact point-class count.
+    pub const fn self_contact_exact_points(&self) -> usize {
+        self.self_contact_exact_points
+    }
+
+    /// Return the topological vertices participating in exact self-contact.
+    pub const fn self_contact_topological_vertices(&self) -> usize {
+        self.self_contact_topological_vertices
+    }
+
+    /// Return the degenerate self-contact split-cycle count.
+    pub const fn self_contact_degenerate_cycles(&self) -> usize {
+        self.self_contact_degenerate_cycles
+    }
+
+    /// Return the nondegenerate self-contact split-cycle count.
+    pub const fn self_contact_nondegenerate_cycles(&self) -> usize {
+        self.self_contact_nondegenerate_cycles
+    }
+
+    /// Return the coplanar loop group count.
+    pub const fn coplanar_loop_groups(&self) -> usize {
+        self.coplanar_loop_groups
+    }
+
     /// Return whether retained evidence proves coplanar boundary closure is
     /// available for the materialized volumetric output.
     pub const fn is_coplanar_closure_available(&self) -> bool {
