@@ -1611,12 +1611,12 @@ fn exact_open_surface_arrangement_is_publicly_replayable() {
             result.freshness_against_sources(&left, &right),
             ExactReportFreshness::Current
         );
-        let evaluation = exact_boolean_evaluation(
+        with_exact_boolean_evaluation(
             &left,
             &right,
             ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
+            |evaluation| evaluation.validate().unwrap(),
         );
-        evaluation.validate().unwrap();
         assert!(result.region_classification_count() > 0);
         assert!(result.triangulation_count() > 0);
         if matches!(operation, ExactBooleanOperation::Intersection) {
@@ -1790,16 +1790,18 @@ fn exact_selected_region_boolean_is_publicly_replayable() {
         result.mesh().validation_policy(),
         ValidationPolicy::ALLOW_BOUNDARY
     );
-    let evaluation = exact_boolean_evaluation(
+    with_exact_boolean_evaluation(
         &left,
         &right,
         ExactBooleanRequest::new(
             ExactBooleanOperation::SelectedRegions(selection),
             validation,
         ),
+        |evaluation| {
+            evaluation.validate().unwrap();
+            evaluation.validate_against_sources(&left, &right).unwrap();
+        },
     );
-    evaluation.validate().unwrap();
-    evaluation.validate_against_sources(&left, &right).unwrap();
 }
 
 #[test]
@@ -2260,21 +2262,22 @@ fn closed_boundary_touching_regularized_boolean_is_publicly_replayable() {
     ] {
         let preflight_request =
             ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY);
-        let preflight_evaluation = exact_boolean_evaluation(&left, &right, preflight_request);
-        assert!(
-            preflight_evaluation.is_certified_arrangement_cell_complex()
-                || preflight_evaluation.is_certified_closed_boundary_touching(),
-            "{operation:?}: {preflight_evaluation:?}"
-        );
-        assert!(
-            preflight_evaluation.retained_face_pairs() > 0,
-            "closed boundary-touching request should retain graph evidence: {operation:?}: {preflight_evaluation:?}"
-        );
-        preflight_evaluation.validate().unwrap();
-        preflight_evaluation
-            .validate_against_sources(&left, &right)
-            .unwrap_or_else(|error| panic!("{operation:?}: {error:?}"));
-        assert!(preflight_evaluation.validate().is_ok());
+        with_exact_boolean_evaluation(&left, &right, preflight_request, |preflight_evaluation| {
+            assert!(
+                preflight_evaluation.is_certified_arrangement_cell_complex()
+                    || preflight_evaluation.is_certified_closed_boundary_touching(),
+                "{operation:?}: {preflight_evaluation:?}"
+            );
+            assert!(
+                preflight_evaluation.retained_face_pairs() > 0,
+                "closed boundary-touching request should retain graph evidence: {operation:?}: {preflight_evaluation:?}"
+            );
+            preflight_evaluation.validate().unwrap();
+            preflight_evaluation
+                .validate_against_sources(&left, &right)
+                .unwrap_or_else(|error| panic!("{operation:?}: {error:?}"));
+            assert!(preflight_evaluation.validate().is_ok());
+        });
 
         let result = exact_boolean_result(
             &left,
@@ -2288,12 +2291,12 @@ fn closed_boundary_touching_regularized_boolean_is_publicly_replayable() {
         );
         result.validate().unwrap();
         result.validate_against_sources(&left, &right).unwrap();
-        let evaluation = exact_boolean_evaluation(
+        with_exact_boolean_evaluation(
             &left,
             &right,
             ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
+            |evaluation| evaluation.validate().unwrap(),
         );
-        evaluation.validate().unwrap();
         assert_eq!(
             result.freshness_against_sources(&left, &right),
             ExactReportFreshness::Current
@@ -2325,27 +2328,35 @@ fn closed_no_volume_overlap_regularized_boolean_is_publicly_replayable() {
     ] {
         let preflight_request =
             ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY);
-        let preflight_evaluation = exact_boolean_evaluation(&left, &right, preflight_request);
-        assert!(
-            preflight_evaluation.is_certified_arrangement_cell_complex(),
-            "{operation:?}: {preflight_evaluation:?}"
-        );
-        assert!(
-            preflight_evaluation.retained_face_pairs() > 0,
-            "positive-area no-volume shortcut should retain graph evidence: {operation:?}: {preflight_evaluation:?}"
-        );
-        preflight_evaluation.validate().unwrap();
-        assert!(
-            preflight_evaluation.has_coplanar_volumetric_evidence(),
-            "positive-area no-volume shortcut should retain source-aware boundary-only evidence"
-        );
-        assert!(preflight_evaluation.positive_area_coplanar_volumetric_overlapping_pairs() > 0);
-        let evidence_counts = (
-            preflight_evaluation.coplanar_volumetric_retained_face_pairs(),
-            preflight_evaluation.coplanar_volumetric_overlapping_pairs(),
-            preflight_evaluation.positive_area_coplanar_volumetric_overlapping_pairs(),
-            preflight_evaluation.same_side_coplanar_volumetric_overlapping_pairs(),
-            preflight_evaluation.requires_coplanar_volumetric_cells(),
+        let evidence_counts = with_exact_boolean_evaluation(
+            &left,
+            &right,
+            preflight_request,
+            |preflight_evaluation| {
+                assert!(
+                    preflight_evaluation.is_certified_arrangement_cell_complex(),
+                    "{operation:?}: {preflight_evaluation:?}"
+                );
+                assert!(
+                    preflight_evaluation.retained_face_pairs() > 0,
+                    "positive-area no-volume shortcut should retain graph evidence: {operation:?}: {preflight_evaluation:?}"
+                );
+                preflight_evaluation.validate().unwrap();
+                assert!(
+                    preflight_evaluation.has_coplanar_volumetric_evidence(),
+                    "positive-area no-volume shortcut should retain source-aware boundary-only evidence"
+                );
+                assert!(
+                    preflight_evaluation.positive_area_coplanar_volumetric_overlapping_pairs() > 0
+                );
+                (
+                    preflight_evaluation.coplanar_volumetric_retained_face_pairs(),
+                    preflight_evaluation.coplanar_volumetric_overlapping_pairs(),
+                    preflight_evaluation.positive_area_coplanar_volumetric_overlapping_pairs(),
+                    preflight_evaluation.same_side_coplanar_volumetric_overlapping_pairs(),
+                    preflight_evaluation.requires_coplanar_volumetric_cells(),
+                )
+            },
         );
         if let Some(retained_evidence_counts) = retained_evidence_counts {
             assert_eq!(
@@ -2365,29 +2376,36 @@ fn closed_no_volume_overlap_regularized_boolean_is_publicly_replayable() {
                 ValidationPolicy::ALLOW_BOUNDARY,
                 ExactBoundaryBooleanPolicy::PreserveSeparateShells,
             );
-            let readiness_evaluation = exact_boolean_evaluation(&left, &right, readiness_request);
-            assert!(
-                readiness_evaluation.materializes_arrangement_cell_complex(),
-                "{operation:?}: {readiness_evaluation:?}"
+            with_exact_boolean_evaluation(
+                &left,
+                &right,
+                readiness_request,
+                |readiness_evaluation| {
+                    assert!(
+                        readiness_evaluation.materializes_arrangement_cell_complex(),
+                        "{operation:?}: {readiness_evaluation:?}"
+                    );
+                    assert_eq!(
+                        (
+                            readiness_evaluation.coplanar_volumetric_retained_face_pairs(),
+                            readiness_evaluation.coplanar_volumetric_overlapping_pairs(),
+                            readiness_evaluation
+                                .positive_area_coplanar_volumetric_overlapping_pairs(),
+                            readiness_evaluation.same_side_coplanar_volumetric_overlapping_pairs(),
+                            readiness_evaluation.requires_coplanar_volumetric_cells(),
+                        ),
+                        retained_evidence_counts
+                            .expect("preflight should retain coplanar volumetric evidence counts"),
+                        "{operation:?}: no-volume readiness should retain consumed source-aware evidence"
+                    );
+                },
             );
-            assert_eq!(
-                (
-                    readiness_evaluation.coplanar_volumetric_retained_face_pairs(),
-                    readiness_evaluation.coplanar_volumetric_overlapping_pairs(),
-                    readiness_evaluation.positive_area_coplanar_volumetric_overlapping_pairs(),
-                    readiness_evaluation.same_side_coplanar_volumetric_overlapping_pairs(),
-                    readiness_evaluation.requires_coplanar_volumetric_cells(),
-                ),
-                retained_evidence_counts
-                    .expect("preflight should retain coplanar volumetric evidence counts"),
-                "{operation:?}: no-volume readiness should retain consumed source-aware evidence"
-            );
-            let evaluation = exact_boolean_evaluation(
+            with_exact_boolean_evaluation(
                 &left,
                 &right,
                 ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
+                |evaluation| evaluation.validate().unwrap(),
             );
-            evaluation.validate().unwrap();
         }
 
         let result = exact_boolean_result(
