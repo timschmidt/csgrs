@@ -748,7 +748,7 @@ impl ExactBooleanResult {
     }
 
     /// Return retained topology assembly gate evidence, when present.
-    pub fn topology_assembly_report(&self) -> Option<&ExactTopologyAssemblyReport> {
+    pub(crate) fn topology_assembly_report(&self) -> Option<&ExactTopologyAssemblyReport> {
         self.topology_assembly_report.as_ref()
     }
 
@@ -761,7 +761,7 @@ impl ExactBooleanResult {
     }
 
     /// Return retained region ownership gate evidence, when present.
-    pub fn region_ownership_report(&self) -> Option<&ExactRegionOwnershipReport> {
+    pub(crate) fn region_ownership_report(&self) -> Option<&ExactRegionOwnershipReport> {
         self.region_ownership_report.as_ref()
     }
 

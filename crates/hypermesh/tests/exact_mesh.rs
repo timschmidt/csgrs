@@ -32,6 +32,20 @@ fn evaluation_materializes_arrangement_cell_complex(
         .materializes_arrangement_cell_complex()
 }
 
+fn assert_evaluation_retains_attempt_gate_reports(evaluation: &hypermesh::ExactBooleanEvaluation) {
+    let attempt = evaluation
+        .retained_arrangement_attempt()
+        .expect("evaluation should retain an arrangement attempt");
+    assert!(
+        attempt.topology_assembly_report().is_some(),
+        "{evaluation:?}"
+    );
+    assert!(
+        attempt.region_ownership_report().is_some(),
+        "{evaluation:?}"
+    );
+}
+
 fn exact_boolean_result(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -2694,8 +2708,7 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
             result.is_arrangement_cell_complex_shortcut_for(ExactBooleanOperation::Union),
             "{result:?}"
         );
-        assert!(result.topology_assembly_report().is_some(), "{result:?}");
-        assert!(result.region_ownership_report().is_some(), "{result:?}");
+        assert_evaluation_retains_attempt_gate_reports(&evaluation);
     }
 
     result.validate().unwrap();
@@ -2720,8 +2733,7 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
             result.is_arrangement_cell_complex_shortcut_for(ExactBooleanOperation::Union),
             "{result:?}"
         );
-        assert!(result.topology_assembly_report().is_some(), "{result:?}");
-        assert!(result.region_ownership_report().is_some(), "{result:?}");
+        assert_evaluation_retains_attempt_gate_reports(&evaluation);
     }
     assert!(!result.mesh().triangles().is_empty());
     assert!(
@@ -2758,14 +2770,7 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
             difference.is_arrangement_cell_complex_shortcut_for(ExactBooleanOperation::Difference),
             "{difference:?}"
         );
-        assert!(
-            difference.topology_assembly_report().is_some(),
-            "{difference:?}"
-        );
-        assert!(
-            difference.region_ownership_report().is_some(),
-            "{difference:?}"
-        );
+        assert_evaluation_retains_attempt_gate_reports(&difference_evaluation);
     }
     assert_eq!(
         result.freshness_against_sources(&left, &separated_right),
@@ -2838,14 +2843,7 @@ fn exact_volumetric_winding_coplanar_cap_is_publicly_certified() {
             "{operation:?}: {result:?}"
         );
         result.validate().unwrap();
-        assert!(
-            result.topology_assembly_report().is_some(),
-            "{operation:?}: {result:?}"
-        );
-        assert!(
-            result.region_ownership_report().is_some(),
-            "{operation:?}: {result:?}"
-        );
+        assert_evaluation_retains_attempt_gate_reports(&evaluation);
         assert!(
             result.mesh().facts().mesh.closed_manifold || result.mesh().triangles().is_empty(),
             "{operation:?}: {:?}",
@@ -2919,8 +2917,7 @@ fn arrangement_cell_complex_request_materialization_is_publicly_replayable() {
             result.is_arrangement_cell_complex_shortcut_for(ExactBooleanOperation::Union),
             "{result:?}"
         );
-        assert!(result.topology_assembly_report().is_some(), "{result:?}");
-        assert!(result.region_ownership_report().is_some(), "{result:?}");
+        assert_evaluation_retains_attempt_gate_reports(evaluation);
     }
 
     let horizontal = axis_aligned_box([0, 0, 0], [2, 2, 2]);
@@ -2940,14 +2937,14 @@ fn arrangement_cell_complex_request_materialization_is_publicly_replayable() {
         .unwrap();
     let convex_left = tetra_from_corners([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]);
     let convex_right = tetra_from_corners([1, 1, 1], [5, 1, 1], [1, 5, 1], [1, 1, 5]);
-    let convex_intersection = exact_boolean_result(
-        &convex_left,
-        &convex_right,
-        ExactBooleanRequest::new(
-            ExactBooleanOperation::Intersection,
-            ValidationPolicy::CLOSED,
-        ),
+    let convex_intersection_request = ExactBooleanRequest::new(
+        ExactBooleanOperation::Intersection,
+        ValidationPolicy::CLOSED,
     );
+    let convex_intersection_evaluation =
+        exact_boolean_evaluation(&convex_left, &convex_right, convex_intersection_request);
+    let convex_intersection =
+        exact_boolean_result(&convex_left, &convex_right, convex_intersection_request);
     if convex_intersection
         .is_arrangement_cell_complex_materialized_for(ExactBooleanOperation::Intersection)
     {
@@ -2966,14 +2963,7 @@ fn arrangement_cell_complex_request_materialization_is_publicly_replayable() {
         if convex_intersection
             .is_arrangement_cell_complex_shortcut_for(ExactBooleanOperation::Intersection)
         {
-            assert!(
-                convex_intersection.topology_assembly_report().is_some(),
-                "{convex_intersection:?}"
-            );
-            assert!(
-                convex_intersection.region_ownership_report().is_some(),
-                "{convex_intersection:?}"
-            );
+            assert_evaluation_retains_attempt_gate_reports(&convex_intersection_evaluation);
         }
     }
 }
