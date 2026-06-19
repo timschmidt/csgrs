@@ -362,7 +362,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
             .validate()
             .map_err(workspace_report_validation_error)?;
         if evaluation.preflight.is_certified() {
-            if let Some(result) = evaluation.result.as_ref().cloned() {
+            if let Some(result) = evaluation.materialized_result().cloned() {
                 return Ok(result);
             }
             if evaluation.preflight.support == ExactBooleanSupport::CertifiedArrangementCellComplex
@@ -483,7 +483,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
                 .map_err(workspace_report_validation_error)
         } else {
             let evaluation = self.evaluate(request)?;
-            if evaluation.result.as_ref() == Some(result) {
+            if evaluation.materialized_result() == Some(result) {
                 Ok(())
             } else {
                 Err(workspace_report_validation_error(
@@ -508,7 +508,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
         } else {
             let result = self.materializations[materialization_index].1.clone();
             let evaluation = self.evaluate(request)?;
-            if evaluation.result.as_ref() == Some(&result) {
+            if evaluation.materialized_result() == Some(&result) {
                 Ok(())
             } else {
                 Err(workspace_report_validation_error(
@@ -1039,8 +1039,7 @@ mod tests {
 
         let cached_result = workspace.evaluations[0]
             .1
-            .result
-            .as_mut()
+            .materialized_result_mut()
             .expect("certified test request should retain a result");
         cached_result.graph_had_unknowns = !cached_result.graph_had_unknowns;
         let corrupted = workspace.evaluations[0].1.clone();
@@ -1071,11 +1070,11 @@ mod tests {
         assert_eq!(workspace.materializations.len(), 1);
         assert_eq!(workspace.evaluations.len(), 1);
         assert_eq!(
-            workspace.evaluations[0].1.result.as_ref(),
+            workspace.evaluations[0].1.materialized_result(),
             Some(&materialized)
         );
         let evaluation = workspace.evaluate(request).unwrap().clone();
-        assert_eq!(evaluation.result.as_ref(), Some(&materialized));
+        assert_eq!(evaluation.materialized_result(), Some(&materialized));
         assert_eq!(workspace.evaluations.len(), 1);
         assert_eq!(workspace.materializations.len(), 1);
         evaluation.validate().unwrap();
@@ -1106,8 +1105,7 @@ mod tests {
 
         let evaluation = workspace.evaluate(request).unwrap().clone();
         let evaluated_result = evaluation
-            .result
-            .as_ref()
+            .materialized_result()
             .cloned()
             .expect("certified test request should retain a result");
         assert!(workspace.materializations.is_empty());

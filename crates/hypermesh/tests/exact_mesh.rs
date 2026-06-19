@@ -32,7 +32,7 @@ fn exact_boolean_evaluation(
 fn evaluation_materializes_arrangement_cell_complex(
     evaluation: &hypermesh::ExactBooleanEvaluation,
 ) -> bool {
-    evaluation.result.as_ref().is_some_and(|result| {
+    evaluation.materialized_result().is_some_and(|result| {
         result.is_arrangement_cell_complex_materialized_for(evaluation.request.operation)
             || result.is_arrangement_cell_complex_shortcut_for(evaluation.request.operation)
     }) || evaluation
@@ -291,11 +291,11 @@ fn exact_boolean_evaluation_materializes_certified_result_publicly() {
         hypermesh::ExactReportFreshness::Current
     );
     assert!(evaluation.preflight.is_certified());
-    assert!(evaluation.result.as_ref().is_some());
+    assert!(evaluation.has_materialized_result());
     assert_eq!(evaluation.preflight.required_blocker_kind(), None);
     assert!(evaluation.preflight.is_certified());
     assert!(
-        evaluation.result.as_ref().is_some_and(|result| {
+        evaluation.materialized_result().is_some_and(|result| {
             result.is_certified_shortcut_for(ExactBooleanOperation::Union)
         })
     );
@@ -444,14 +444,13 @@ fn exact_boolean_evaluation_materializes_boundary_policy_shortcut_by_default() {
     evaluation.validate().unwrap();
     evaluation.validate_against_sources(&left, &right).unwrap();
     assert!(evaluation.preflight.is_certified());
-    assert!(evaluation.result.as_ref().is_some());
+    assert!(evaluation.has_materialized_result());
     assert_eq!(evaluation.preflight.required_blocker_kind(), None);
     assert!(evaluation.preflight.is_certified());
     assert!(evaluation.preflight.is_certified_boundary_policy_shortcut());
     assert!(evaluation.preflight.has_retained_exact_evidence());
     let result = evaluation
-        .result
-        .as_ref()
+        .materialized_result()
         .expect("boundary-policy evaluation should materialize");
     result.validate().unwrap();
     result.validate_against_sources(&left, &right).unwrap();
@@ -489,10 +488,12 @@ fn exact_boolean_evaluation_materializes_boundary_policy_shortcut_by_default() {
     let rejected = exact_boolean_evaluation(&left, &right, rejected_request);
     rejected.validate().unwrap();
     assert!(!rejected.preflight.is_certified());
-    assert!(rejected.result.as_ref().is_none());
-    let mut impossible_materialization = rejected.clone();
-    impossible_materialization.result = evaluation.result.as_ref().cloned();
-    assert_report_validation_error!(impossible_materialization.validate());
+    assert!(!rejected.has_materialized_result());
+    assert!(
+        ExactBooleanWorkspace::new(&left, &right)
+            .materialize(rejected_request)
+            .is_err()
+    );
 }
 
 fn skew_affine_box(min: [i64; 3], max: [i64; 3]) -> ExactMesh {
@@ -1084,8 +1085,7 @@ fn affine_orthogonal_solid_recovers_multi_cell_basis_without_sampling_limits() {
             ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
         );
         let result = evaluation
-            .result
-            .as_ref()
+            .materialized_result()
             .expect("certified arrangement cell-complex evaluation should materialize");
         assert!(
             result.is_arrangement_cell_complex_shortcut_for(operation),
@@ -2146,24 +2146,19 @@ fn exact_selected_region_boolean_is_publicly_replayable() {
     evaluation
         .validate_materialized_result_against_sources(&left, &right)
         .unwrap();
-    let mut stale_evaluation_region_fact = evaluation.clone();
-    let classification = stale_evaluation_region_fact
-        .result
-        .as_mut()
-        .expect("selected-region evaluation should materialize")
+    let mut stale_result = evaluation
+        .materialized_result()
+        .cloned()
+        .expect("selected-region evaluation should materialize");
+    let classification = stale_result
         .region_classifications
         .first_mut()
         .expect("selected-region result should retain region facts");
     classification.plane_face = usize::MAX;
-    stale_evaluation_region_fact
-        .result
-        .as_ref()
-        .unwrap()
-        .validate()
-        .unwrap();
+    stale_result.validate().unwrap();
     assert_report_validation_error!(
-        stale_evaluation_region_fact.validate(),
-        "{stale_evaluation_region_fact:?}"
+        stale_result.validate_against_sources(&left, &right),
+        "{stale_result:?}"
     );
     let mut stale_winding_handoff = evaluation.clone();
     stale_winding_handoff
@@ -2626,7 +2621,10 @@ fn boundary_touching_policy_boolean_is_publicly_replayable() {
             ))
             .unwrap();
         reject_evaluation.validate().unwrap();
-        assert!(reject_evaluation.result.is_none(), "{reject_evaluation:?}");
+        assert!(
+            !reject_evaluation.has_materialized_result(),
+            "{reject_evaluation:?}"
+        );
         assert!(!reject_evaluation.preflight.is_certified());
         assert!(reject_evaluation.preflight.blocker.is_some());
 
@@ -3128,8 +3126,7 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
     readiness.validate().unwrap();
 
     let result = evaluation
-        .result
-        .clone()
+        .materialized_result()
         .expect("certified arrangement evaluation should retain union result");
 
     if result.is_arrangement_cell_complex_materialized_for(ExactBooleanOperation::Union) {
@@ -3262,7 +3259,8 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
         .validate_materialized_result_against_sources(&left, &right)
         .unwrap();
     let difference = difference_evaluation
-        .result
+        .materialized_result()
+        .cloned()
         .expect("certified arrangement evaluation should retain difference result");
     difference.validate().unwrap();
     if difference.is_arrangement_cell_complex_materialized_for(ExactBooleanOperation::Difference) {

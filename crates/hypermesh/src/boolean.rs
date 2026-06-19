@@ -2172,7 +2172,10 @@ pub struct ExactBooleanEvaluation {
     /// Replayable exact certification reports for the request.
     pub certifications: ExactBooleanCertificationSet,
     /// Materialized exact result, when available under `request`.
-    pub result: Option<ExactBooleanResult>,
+    ///
+    /// Borrow through [`Self::materialized_result`] or request an owned result
+    /// from [`ExactBooleanWorkspace::materialize`](crate::ExactBooleanWorkspace::materialize).
+    result: Option<ExactBooleanResult>,
 }
 
 impl ExactBooleanEvaluation {
@@ -2196,6 +2199,22 @@ impl ExactBooleanEvaluation {
     /// when evaluation reached that canonical pipeline.
     pub fn retained_arrangement_attempt(&self) -> Option<&ExactArrangementBooleanAttempt> {
         self.certifications.arrangement_attempt.as_ref()
+    }
+
+    /// Return the materialized result retained by this evaluation, when the
+    /// request reached a certified output.
+    pub fn materialized_result(&self) -> Option<&ExactBooleanResult> {
+        self.result.as_ref()
+    }
+
+    /// Return whether this evaluation retained a certified materialized result.
+    pub fn has_materialized_result(&self) -> bool {
+        self.result.is_some()
+    }
+
+    #[cfg(test)]
+    pub(crate) fn materialized_result_mut(&mut self) -> Option<&mut ExactBooleanResult> {
+        self.result.as_mut()
     }
 
     /// Validate the retained evaluation shape without replaying sources.
@@ -11404,9 +11423,8 @@ mod tests {
         left: &ExactMesh,
         right: &ExactMesh,
     ) -> ExactBooleanResult {
-        test_evaluation(request, left, right)
-            .result
-            .expect("certified boolean evaluation should retain materialized result")
+        let mut workspace = ExactBooleanWorkspace::new(left, right);
+        workspace.materialize(request).unwrap()
     }
 
     fn test_winding_readiness(
@@ -11789,8 +11807,7 @@ mod tests {
             "{result:?}"
         );
         let materialized = result
-            .result
-            .as_ref()
+            .materialized_result()
             .expect("open-surface disjoint support should materialize");
         assert!(
             materialized.is_certified_shortcut_kind_for(
@@ -11968,7 +11985,7 @@ mod tests {
         );
         let evaluation = test_evaluation(request, &left, &right);
         assert!(
-            evaluation.result.is_none(),
+            !evaluation.has_materialized_result(),
             "selected-region evaluation should retain certifications when materialization declines"
         );
         let readiness = evaluation.certifications.winding_readiness;
@@ -12563,8 +12580,7 @@ mod tests {
         assert!(attempt.topology_assembly_report.is_some());
         assert!(attempt.region_ownership_report.is_some());
         let result = evaluation
-            .result
-            .as_ref()
+            .materialized_result()
             .expect("certified arrangement evaluation should retain materialized result");
         assert!(result.is_arrangement_cell_complex_materialized_for(ExactBooleanOperation::Union));
         result.validate().unwrap();
@@ -13736,7 +13752,10 @@ mod tests {
             closed_evaluation.preflight.blocker.is_some(),
             "{closed_evaluation:?}"
         );
-        assert!(closed_evaluation.result.is_none(), "{closed_evaluation:?}");
+        assert!(
+            !closed_evaluation.has_materialized_result(),
+            "{closed_evaluation:?}"
+        );
 
         let materialized = materialize_volumetric_winding_region_plan_from_graph(
             &graph,
