@@ -343,6 +343,14 @@ impl<'a> ExactBooleanWorkspace<'a> {
             self.promote_evaluation_cache_from_materialization(request, &result)?;
             return Ok(result);
         }
+        let result = self.materialize_uncached(request)?;
+        self.store_materialization_and_promote_evaluation(request, result)
+    }
+
+    fn materialize_uncached(
+        &mut self,
+        request: ExactBooleanRequest,
+    ) -> Result<ExactBooleanResult, MeshError> {
         if let Some(evaluation) = self
             .evaluations
             .iter()
@@ -352,7 +360,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
                 .replayable_materialized_result(self.left, self.right)
                 .map_err(workspace_report_validation_error)?
         {
-            return self.store_materialization_and_promote_evaluation(request, result);
+            return Ok(result);
         }
         let evaluation = self.evaluate(request)?.clone();
         evaluation
@@ -360,7 +368,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
             .map_err(workspace_report_validation_error)?;
         if evaluation.preflight.is_certified() {
             if let Some(result) = evaluation.result.as_ref().cloned() {
-                return self.store_materialization_and_promote_evaluation(request, result);
+                return Ok(result);
             }
             if evaluation.preflight.support == ExactBooleanSupport::CertifiedArrangementCellComplex
                 && self
@@ -376,7 +384,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
                         ExactReportValidationError::StatusEvidenceMismatch,
                     )
                 })?;
-            return self.store_materialization_and_promote_evaluation(request, result);
+            return Ok(result);
         }
         let graph = self
             .graph
@@ -385,7 +393,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
         let result = materialize_boolean_exact_request_from_retained_graph(
             graph, self.left, self.right, request,
         )?;
-        self.store_materialization_and_promote_evaluation(request, result)
+        Ok(result)
     }
 
     /// Materializes `request` and returns the retained replayable result by
@@ -411,7 +419,22 @@ impl<'a> ExactBooleanWorkspace<'a> {
             return Ok(&self.materializations[index].1);
         }
 
-        self.materialize(request)?;
+        let result = self.materialize_uncached(request)?;
+        let retained_attempt = self
+            .validated_regularized_solid_arrangement_attempt(request)?
+            .cloned();
+        retain_replayable_result(
+            &mut self.materializations,
+            self.left,
+            self.right,
+            request,
+            retained_attempt.as_ref(),
+            result,
+        )?;
+        let index = cached_by_request_index(&self.materializations, request)
+            .expect("retained materialization cache entry was just populated");
+        let result = self.materializations[index].1.clone();
+        self.promote_evaluation_cache_from_materialization(request, &result)?;
         let index = cached_by_request_index(&self.materializations, request).ok_or_else(|| {
             workspace_report_validation_error(ExactReportValidationError::SourceReplayMismatch)
         })?;
@@ -508,6 +531,26 @@ fn cache_replayable_result(
     ExactBooleanEvaluation::validate_result_shape_for_request(request, result)
         .map_err(workspace_report_validation_error)?;
     Ok(false)
+}
+
+fn retain_replayable_result(
+    cache: &mut Vec<(ExactBooleanRequest, ExactBooleanResult)>,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    request: ExactBooleanRequest,
+    retained_arrangement_attempt: Option<&ExactArrangementBooleanAttempt>,
+    result: ExactBooleanResult,
+) -> Result<(), MeshError> {
+    ExactBooleanEvaluation::validate_result_against_sources_for_request(
+        left,
+        right,
+        request,
+        retained_arrangement_attempt,
+        &result,
+    )
+    .map_err(workspace_report_validation_error)?;
+    cache.push((request, result));
+    Ok(())
 }
 
 fn cached_retained_materialization(
