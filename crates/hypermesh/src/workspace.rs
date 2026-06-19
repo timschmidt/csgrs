@@ -474,29 +474,20 @@ impl<'a> ExactBooleanWorkspace<'a> {
             request,
             &self.materializations[materialization_index].1,
         )?;
-        if let Some(index) = cached_by_request_index(&self.evaluations, request) {
-            let result = &self.materializations[materialization_index].1;
-            let evaluation = &mut self.evaluations[index].1;
-            evaluation
-                .retain_materialized_result(result)
-                .map_err(workspace_report_validation_error)
-        } else {
+        if cached_by_request_index(&self.evaluations, request).is_none() {
             self.evaluate(request)?;
-            let result = &self.materializations[materialization_index].1;
-            let evaluation_index =
-                cached_by_request_index(&self.evaluations, request).ok_or_else(|| {
-                    workspace_report_validation_error(
-                        ExactReportValidationError::StatusEvidenceMismatch,
-                    )
-                })?;
-            if self.evaluations[evaluation_index].1.materialized_result() == Some(result) {
-                Ok(())
-            } else {
-                Err(workspace_report_validation_error(
-                    ExactReportValidationError::StatusEvidenceMismatch,
-                ))
-            }
         }
+        let result = &self.materializations[materialization_index].1;
+        let evaluation_index =
+            cached_by_request_index(&self.evaluations, request).ok_or_else(|| {
+                workspace_report_validation_error(
+                    ExactReportValidationError::StatusEvidenceMismatch,
+                )
+            })?;
+        self.evaluations[evaluation_index]
+            .1
+            .retain_materialized_result(result)
+            .map_err(workspace_report_validation_error)
     }
 }
 
