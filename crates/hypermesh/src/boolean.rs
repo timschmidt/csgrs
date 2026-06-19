@@ -973,7 +973,7 @@ pub struct ExactBooleanCertificationSet {
     /// Identical-mesh shortcut status.
     identical: ExactIdenticalMeshReport,
     /// Same-surface shortcut status.
-    pub same_surface: ExactSameSurfaceReport,
+    same_surface: ExactSameSurfaceReport,
     /// Left vertices classified against the right closed mesh.
     closed_winding_left_in_right: ClosedMeshWindingMeshReport,
     /// Right vertices classified against the left closed mesh.
@@ -1027,6 +1027,16 @@ impl ExactBooleanCertificationSet {
     /// Return the identical-mesh shortcut certification report mutably.
     pub fn identical_mut(&mut self) -> &mut ExactIdenticalMeshReport {
         &mut self.identical
+    }
+
+    /// Return the same-surface shortcut certification report.
+    pub fn same_surface(&self) -> &ExactSameSurfaceReport {
+        &self.same_surface
+    }
+
+    /// Return the same-surface shortcut certification report mutably.
+    pub fn same_surface_mut(&mut self) -> &mut ExactSameSurfaceReport {
+        &mut self.same_surface
     }
 
     /// Return the retained volumetric boundary closure evidence, when the

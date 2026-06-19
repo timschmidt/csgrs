@@ -3874,7 +3874,7 @@ fn public_exact_blocker_reports_replay_remaining_decisions() {
         ValidationPolicy::ALLOW_BOUNDARY,
     );
     let same_evaluation = exact_boolean_evaluation(&left, &left, same_request);
-    let same_surface = same_evaluation.certifications().same_surface.clone();
+    let same_surface = same_evaluation.certifications().same_surface().clone();
     assert!(same_surface.is_certified());
     same_surface.validate().unwrap();
     same_evaluation
@@ -4341,19 +4341,20 @@ fn trivial_boolean_shortcuts_are_publicly_replayable() {
         );
         same_surface_evaluation.validate().unwrap();
         let mut relabeled_same_surface_report = same_surface_evaluation.clone();
-        relabeled_same_surface_report
-            .certifications_mut()
-            .same_surface = exact_boolean_evaluation(
+        let replacement_same_surface = exact_boolean_evaluation(
             &open_identical_left,
             &open_disjoint_left,
             ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
         )
         .certifications()
-        .same_surface
+        .same_surface()
         .clone();
+        *relabeled_same_surface_report
+            .certifications_mut()
+            .same_surface_mut() = replacement_same_surface;
         relabeled_same_surface_report
             .certifications()
-            .same_surface
+            .same_surface()
             .validate()
             .unwrap();
         assert_report_validation_error!(
