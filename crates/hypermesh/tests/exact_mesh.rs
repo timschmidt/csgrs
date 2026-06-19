@@ -3849,28 +3849,32 @@ fn public_exact_blocker_reports_replay_remaining_decisions() {
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let open_disjoint = exact_boolean_evaluation(
-        &left,
-        &parallel_right,
-        ExactBooleanRequest::new(
-            ExactBooleanOperation::Union,
-            ValidationPolicy::ALLOW_BOUNDARY,
-        ),
-    )
-    .certifications
-    .open_surface_disjoint
-    .clone();
+    let open_request = ExactBooleanRequest::new(
+        ExactBooleanOperation::Union,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    );
+    let open_evaluation = exact_boolean_evaluation(&left, &parallel_right, open_request);
+    let open_disjoint = open_evaluation.certifications.open_surface_disjoint.clone();
     assert!(open_disjoint.is_certified());
     open_disjoint.validate().unwrap();
-    open_disjoint
-        .validate_against_sources(&left, &parallel_right)
+    open_evaluation
+        .certifications
+        .validate_against_sources(&left, &parallel_right, open_request)
         .unwrap();
     assert_eq!(
-        open_disjoint.freshness_against_sources(&left, &parallel_right),
+        open_evaluation.certifications.freshness_against_sources(
+            &left,
+            &parallel_right,
+            open_request
+        ),
         ExactReportFreshness::Current
     );
     assert_eq!(
-        open_disjoint.freshness_against_sources(&left, &overlapping_right),
+        open_evaluation.certifications.freshness_against_sources(
+            &left,
+            &overlapping_right,
+            open_request
+        ),
         ExactReportFreshness::SourceReplayMismatch
     );
 }
@@ -3890,24 +3894,22 @@ fn open_surface_disjoint_report_classifies_retained_coplanar_overlap_blocker() {
     )
     .unwrap();
 
-    let report = exact_boolean_evaluation(
-        &left,
-        &right,
-        ExactBooleanRequest::new(
-            ExactBooleanOperation::Union,
-            ValidationPolicy::ALLOW_BOUNDARY,
-        ),
-    )
-    .certifications
-    .open_surface_disjoint
-    .clone();
+    let request = ExactBooleanRequest::new(
+        ExactBooleanOperation::Union,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    );
+    let evaluation = exact_boolean_evaluation(&left, &right, request);
+    let report = evaluation.certifications.open_surface_disjoint.clone();
 
     assert!(!report.is_certified());
     assert!(report.blocker.requires_planar_arrangement());
     assert!(report.blocker.coplanar_overlapping_pairs > 0);
     assert!(report.retained_face_pairs > 0);
     report.validate().unwrap();
-    report.validate_against_sources(&left, &right).unwrap();
+    evaluation
+        .certifications
+        .validate_against_sources(&left, &right, request)
+        .unwrap();
 
     let mut relabeled = report;
     relabeled.blocker.candidate_pairs = 1;

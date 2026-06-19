@@ -5170,7 +5170,7 @@ impl ExactOpenSurfaceDisjointReport {
     ///
     /// Open-surface disjointness is certified graph absence plus mesh-shape
     /// preconditions. This method recomputes both from `left` and `right`
-    pub fn validate_against_sources(
+    pub(crate) fn validate_against_sources(
         &self,
         left: &ExactMesh,
         right: &ExactMesh,
@@ -5186,7 +5186,8 @@ impl ExactOpenSurfaceDisjointReport {
     }
 
     /// Classify whether this retained open-surface disjoint report is fresh.
-    pub fn freshness_against_sources(
+    #[cfg(test)]
+    pub(crate) fn freshness_against_sources(
         &self,
         left: &ExactMesh,
         right: &ExactMesh,

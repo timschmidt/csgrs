@@ -455,16 +455,16 @@ fn run_case(case: &BenchCase) {
 
     time_prepared_stage(
         case,
-        "workspace_validate_open_surface_disjoint_from_retained_artifacts",
+        "workspace_validate_certifications_with_open_surface_disjoint_retained",
         || {
             retained_workspace_and_certification_for_case(case, request, |evaluation| {
-                evaluation.certifications.open_surface_disjoint.clone()
+                evaluation.certifications.clone()
             })
         },
-        |(_retained_workspace, report)| {
+        |(_retained_workspace, certifications)| {
             black_box(
-                report
-                    .validate_against_sources(&case.left, &case.right)
+                certifications
+                    .validate_against_sources(&case.left, &case.right, request)
                     .ok(),
             );
         },
