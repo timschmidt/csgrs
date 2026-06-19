@@ -313,7 +313,7 @@ impl ExactArrangementBooleanAttempt {
 
     /// Return whether the retained region ownership evidence resolves this
     /// attempt's requested named operation.
-    pub fn resolves_requested_volume_ownership(&self) -> bool {
+    pub(crate) fn resolves_requested_volume_ownership(&self) -> bool {
         let (Some(status), Some(report)) =
             (self.region_ownership, self.region_ownership_report.as_ref())
         else {
