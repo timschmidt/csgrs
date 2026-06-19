@@ -2407,12 +2407,10 @@ impl ExactBooleanEvaluation {
         right: &ExactMesh,
     ) -> Result<(), ExactReportValidationError> {
         if let Some(result) = self.result.as_ref() {
-            result.validate_operation_against_sources_with_retained_attempt(
+            result.validate_request_against_sources_with_retained_attempt(
                 left,
                 right,
-                self.request.operation,
-                self.request.validation,
-                self.request.boundary_policy,
+                self.request,
                 self.retained_arrangement_attempt(),
             )
         } else if self.requires_materialized_result() {
@@ -2449,12 +2447,10 @@ impl ExactBooleanEvaluation {
             request,
             retained_arrangement_attempt,
         )?;
-        result.validate_operation_against_sources_with_retained_attempt(
+        result.validate_request_against_sources_with_retained_attempt(
             left,
             right,
-            request.operation,
-            request.validation,
-            request.boundary_policy,
+            request,
             retained_arrangement_attempt,
         )
     }
@@ -4685,12 +4681,14 @@ fn materialize_graph_shortcut_from_graph_for_request(
                 )?
             {
                 if result
-                    .validate_operation_against_sources(
+                    .validate_request_against_sources(
                         left,
                         right,
-                        operation,
-                        validation,
-                        ExactBoundaryBooleanPolicy::Reject,
+                        ExactBooleanRequest::with_boundary_policy(
+                            operation,
+                            validation,
+                            ExactBoundaryBooleanPolicy::Reject,
+                        ),
                     )
                     .is_err()
                 {
@@ -4827,7 +4825,11 @@ fn public_operation_replayable_result(
 ) -> Option<ExactBooleanResult> {
     let result = result?;
     result
-        .validate_operation_against_sources(left, right, operation, validation, boundary_policy)
+        .validate_request_against_sources(
+            left,
+            right,
+            ExactBooleanRequest::with_boundary_policy(operation, validation, boundary_policy),
+        )
         .is_ok()
         .then_some(result)
 }
@@ -7027,12 +7029,14 @@ fn materialize_volumetric_coplanar_boundary_closure_boolean_from_graph(
     let result =
         result_with_arrangement_gate_reports_from_graph(result, graph, left, right, operation)?;
     if result
-        .validate_operation_against_sources(
+        .validate_request_against_sources(
             left,
             right,
-            operation,
-            validation,
-            ExactBoundaryBooleanPolicy::Reject,
+            ExactBooleanRequest::with_boundary_policy(
+                operation,
+                validation,
+                ExactBoundaryBooleanPolicy::Reject,
+            ),
         )
         .is_err()
         || closure_report
@@ -13937,12 +13941,14 @@ mod tests {
             ExactReportFreshness::Current
         );
         boundary_result
-            .validate_operation_against_sources(
+            .validate_request_against_sources(
                 &left,
                 &right,
-                ExactBooleanOperation::Union,
-                ValidationPolicy::ALLOW_BOUNDARY,
-                ExactBoundaryBooleanPolicy::Reject,
+                ExactBooleanRequest::with_boundary_policy(
+                    ExactBooleanOperation::Union,
+                    ValidationPolicy::ALLOW_BOUNDARY,
+                    ExactBoundaryBooleanPolicy::Reject,
+                ),
             )
             .unwrap();
     }
@@ -14856,12 +14862,14 @@ mod tests {
             result.validate().unwrap();
             result.validate_against_sources(&left, &right).unwrap();
             result
-                .validate_operation_against_sources(
+                .validate_request_against_sources(
                     &left,
                     &right,
-                    operation,
-                    ValidationPolicy::CLOSED,
-                    ExactBoundaryBooleanPolicy::Reject,
+                    ExactBooleanRequest::with_boundary_policy(
+                        operation,
+                        ValidationPolicy::CLOSED,
+                        ExactBoundaryBooleanPolicy::Reject,
+                    ),
                 )
                 .unwrap();
             assert!(
@@ -15156,12 +15164,14 @@ mod tests {
             Err(ExactReportValidationError::StatusEvidenceMismatch)
         );
         difference
-            .validate_operation_against_sources(
+            .validate_request_against_sources(
                 &left,
                 &right,
-                ExactBooleanOperation::Difference,
-                ValidationPolicy::CLOSED,
-                ExactBoundaryBooleanPolicy::Reject,
+                ExactBooleanRequest::with_boundary_policy(
+                    ExactBooleanOperation::Difference,
+                    ValidationPolicy::CLOSED,
+                    ExactBoundaryBooleanPolicy::Reject,
+                ),
             )
             .unwrap();
         assert!(difference.mesh.triangles().len() >= left.triangles().len());
@@ -15307,12 +15317,14 @@ mod tests {
             result.validate().unwrap();
             result.validate_against_sources(&left, &right).unwrap();
             result
-                .validate_operation_against_sources(
+                .validate_request_against_sources(
                     &left,
                     &right,
-                    operation,
-                    ValidationPolicy::CLOSED,
-                    ExactBoundaryBooleanPolicy::Reject,
+                    ExactBooleanRequest::with_boundary_policy(
+                        operation,
+                        ValidationPolicy::CLOSED,
+                        ExactBoundaryBooleanPolicy::Reject,
+                    ),
                 )
                 .unwrap();
             assert!(
@@ -15833,12 +15845,14 @@ mod tests {
             result.validate().unwrap();
             result.validate_against_sources(&left, &right).unwrap();
             result
-                .validate_operation_against_sources(
+                .validate_request_against_sources(
                     &left,
                     &right,
-                    operation,
-                    ValidationPolicy::ALLOW_BOUNDARY,
-                    ExactBoundaryBooleanPolicy::Reject,
+                    ExactBooleanRequest::with_boundary_policy(
+                        operation,
+                        ValidationPolicy::ALLOW_BOUNDARY,
+                        ExactBoundaryBooleanPolicy::Reject,
+                    ),
                 )
                 .unwrap();
             if matches!(operation, ExactBooleanOperation::Difference) {
@@ -15895,12 +15909,14 @@ mod tests {
         );
         assert!(union.is_certified_shortcut_for(ExactBooleanOperation::Union));
         union
-            .validate_operation_against_sources(
+            .validate_request_against_sources(
                 &left,
                 &right,
-                ExactBooleanOperation::Union,
-                ValidationPolicy::ALLOW_BOUNDARY,
-                ExactBoundaryBooleanPolicy::Reject,
+                ExactBooleanRequest::with_boundary_policy(
+                    ExactBooleanOperation::Union,
+                    ValidationPolicy::ALLOW_BOUNDARY,
+                    ExactBoundaryBooleanPolicy::Reject,
+                ),
             )
             .unwrap();
     }
