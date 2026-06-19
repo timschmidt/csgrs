@@ -308,7 +308,7 @@ fn run_case(case: &BenchCase) {
                 .expect("evaluation should retain an arrangement attempt");
             black_box(
                 attempt
-                    .validate_against_sources(&case.left, &case.right)
+                    .validate_against_sources_for_request(&case.left, &case.right, retained.1)
                     .ok(),
             );
         },

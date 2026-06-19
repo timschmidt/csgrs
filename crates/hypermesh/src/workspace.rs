@@ -99,7 +99,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
         if let Some(index) = retained_attempt_index {
             self.arrangement_attempts[index]
                 .2
-                .validate_against_sources(self.left, self.right)
+                .validate_against_sources_for_request(self.left, self.right, request)
                 .map_err(workspace_report_validation_error)?;
         }
 
@@ -152,7 +152,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
         };
         self.arrangement_attempts[index]
             .2
-            .validate_against_sources(self.left, self.right)
+            .validate_against_sources_for_request(self.left, self.right, request)
             .map_err(workspace_report_validation_error)?;
         Ok(Some(index))
     }
@@ -983,7 +983,7 @@ mod tests {
         assert_eq!(
             stale_workspace.arrangement_attempts[0]
                 .2
-                .validate_against_sources(&left, &right),
+                .validate_against_sources_for_request(&left, &right, request),
             Err(ExactReportValidationError::SourceReplayMismatch)
         );
         assert!(

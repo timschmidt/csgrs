@@ -756,23 +756,6 @@ impl ExactArrangementBooleanAttempt {
         Ok(())
     }
 
-    /// Validate this attempt by replaying it from the source meshes.
-    pub fn validate_against_sources(
-        &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-    ) -> Result<(), ExactReportValidationError> {
-        self.validate_against_sources_for_request(
-            left,
-            right,
-            ExactBooleanRequest::with_boundary_policy(
-                self.operation,
-                self.output_validation,
-                self.boundary_policy,
-            ),
-        )
-    }
-
     /// Validate this attempt by replaying it for an exact Boolean request.
     pub fn validate_against_sources_for_request(
         &self,
@@ -788,15 +771,6 @@ impl ExactArrangementBooleanAttempt {
         } else {
             Err(ExactReportValidationError::SourceReplayMismatch)
         }
-    }
-
-    /// Classify whether this retained arrangement attempt is fresh.
-    pub fn freshness_against_sources(
-        &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-    ) -> ExactReportFreshness {
-        exact_report_freshness(self.validate_against_sources(left, right))
     }
 
     /// Classify whether this retained arrangement attempt is fresh for an
@@ -11640,9 +11614,16 @@ mod tests {
         right: &ExactMesh,
     ) {
         attempt.validate().unwrap();
-        attempt.validate_against_sources(left, right).unwrap();
+        let request = ExactBooleanRequest::with_boundary_policy(
+            attempt.operation,
+            attempt.output_validation,
+            attempt.boundary_policy,
+        );
+        attempt
+            .validate_against_sources_for_request(left, right, request)
+            .unwrap();
         assert_eq!(
-            attempt.freshness_against_sources(left, right),
+            attempt.freshness_against_sources_for_request(left, right, request),
             ExactReportFreshness::Current,
             "{attempt:?}"
         );
@@ -12861,7 +12842,13 @@ mod tests {
                 ExactRegularizationPolicy::REGULARIZED_SOLID,
             );
             attempt.validate().unwrap();
-            attempt.validate_against_sources(&left, &right).unwrap();
+            attempt
+                .validate_against_sources_for_request(
+                    &left,
+                    &right,
+                    ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
+                )
+                .unwrap();
             assert_eq!(
                 attempt.stage,
                 ExactArrangementBooleanStage::Materialized,

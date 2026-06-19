@@ -1541,7 +1541,6 @@ fn exact_open_surface_arrangement_is_publicly_replayable() {
             ExactRegularizationPolicy::REGULARIZED_SOLID,
             |attempt| {
                 attempt.validate().unwrap();
-                attempt.validate_against_sources(&left, &right).unwrap();
                 attempt
                     .validate_against_sources_for_request(
                         &left,
@@ -1549,10 +1548,6 @@ fn exact_open_surface_arrangement_is_publicly_replayable() {
                         ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
                     )
                     .unwrap();
-                assert_eq!(
-                    attempt.freshness_against_sources(&left, &right),
-                    ExactReportFreshness::Current
-                );
                 assert_eq!(
                     attempt.freshness_against_sources_for_request(
                         &left,
@@ -1639,9 +1634,6 @@ fn arrangement_attempt_output_validation_is_publicly_replayable() {
             ExactRegularizationPolicy::REGULARIZED_SOLID,
             |closed_attempt| {
                 closed_attempt.validate().unwrap();
-                closed_attempt
-                    .validate_against_sources(&left, &right)
-                    .unwrap();
                 closed_attempt
                     .validate_against_sources_for_request(
                         &left,
@@ -3694,9 +3686,11 @@ fn exact_boolean_attempt_public_path_reports_blockers_or_cells() {
             attempt.validate().unwrap();
             assert!(attempt.topology_assembly_is_complete());
             assert!(attempt.region_ownership_is_volume_resolved());
-            attempt.validate_against_sources(&left, &right).unwrap();
+            attempt
+                .validate_against_sources_for_request(&left, &right, request)
+                .unwrap();
             assert_eq!(
-                attempt.freshness_against_sources(&left, &right),
+                attempt.freshness_against_sources_for_request(&left, &right, request),
                 ExactReportFreshness::Current
             );
             assert_eq!(
