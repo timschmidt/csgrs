@@ -5516,11 +5516,6 @@ impl ExactOpenSurfaceDisjointReport {
         &self.blocker
     }
 
-    /// Return the retained relation-count blocker mutably.
-    pub fn blocker_mut(&mut self) -> &mut ExactBooleanBlocker {
-        &mut self.blocker
-    }
-
     /// Return whether open-surface disjointness was certified.
     pub const fn is_certified(&self) -> bool {
         matches!(self.status, ExactOpenSurfaceDisjointStatus::Certified)
@@ -5773,11 +5768,6 @@ impl ExactAdjacentUnionCompletionReport {
     /// Return the retained relation-count blocker.
     pub const fn blocker(&self) -> &ExactBooleanBlocker {
         &self.blocker
-    }
-
-    /// Return the retained relation-count blocker mutably.
-    pub fn blocker_mut(&mut self) -> &mut ExactBooleanBlocker {
-        &mut self.blocker
     }
 
     /// Return the exact whole-face pair count consumed by completion.
@@ -6100,11 +6090,6 @@ impl ExactBoundaryTouchingReport {
         &self.blocker
     }
 
-    /// Return the retained relation-count blocker mutably.
-    pub fn blocker_mut(&mut self) -> &mut ExactBooleanBlocker {
-        &mut self.blocker
-    }
-
     /// Return whether the graph is certified boundary-only contact.
     pub const fn is_certified(&self) -> bool {
         matches!(self.status, ExactBoundaryTouchingStatus::Certified)
@@ -6277,11 +6262,6 @@ impl ExactPlanarArrangementReport {
     /// Return the retained relation-count blocker.
     pub const fn blocker(&self) -> &ExactBooleanBlocker {
         &self.blocker
-    }
-
-    /// Return the retained relation-count blocker mutably.
-    pub fn blocker_mut(&mut self) -> &mut ExactBooleanBlocker {
-        &mut self.blocker
     }
 
     /// Return the retained coplanar arrangement readiness summary.
