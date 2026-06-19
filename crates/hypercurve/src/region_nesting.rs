@@ -136,6 +136,15 @@ pub struct RegionLineSegmentSplitIntersectionReport2 {
     point: Point2,
 }
 
+/// Exact predicate family used while arranging unordered segments at split points.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum RegionLineSegmentSplitPredicatePath2 {
+    /// Line-only construction used exact line-line intersection predicates after AABB filtering.
+    AabbFilteredExactLineLine,
+    /// Native line/arc construction used exact native segment intersection predicates after AABB filtering.
+    AabbFilteredNativeSegment,
+}
+
 /// Report for constructing a region from unordered exact line segments.
 #[derive(Clone, Debug, PartialEq)]
 pub struct RegionLineSegmentRegionBuildReport2 {
@@ -144,6 +153,7 @@ pub struct RegionLineSegmentRegionBuildReport2 {
     source_segment_kind_counts: SegmentKindCounts,
     arranged_segment_count: Option<usize>,
     arranged_segment_kind_counts: Option<SegmentKindCounts>,
+    split_predicate_path: Option<RegionLineSegmentSplitPredicatePath2>,
     split_candidate_pair_count: usize,
     split_skipped_aabb_pair_count: usize,
     split_tested_pair_count: usize,
@@ -404,6 +414,7 @@ impl Region2 {
                 arranged_segment_kind_counts: Some(line_segment_kind_counts(
                     arranged.segments.len(),
                 )),
+                split_predicate_path: arranged.report.predicate_path,
                 split_candidate_pair_count: arranged.report.candidate_pair_count,
                 split_skipped_aabb_pair_count: arranged.report.skipped_aabb_pair_count,
                 split_tested_pair_count: arranged.report.tested_pair_count,
@@ -641,6 +652,7 @@ impl Region2 {
                 arranged_segment_kind_counts: Some(native_arranged_segment_kind_counts(
                     &arranged.segments,
                 )),
+                split_predicate_path: arranged.report.predicate_path,
                 split_candidate_pair_count: arranged.report.candidate_pair_count,
                 split_skipped_aabb_pair_count: arranged.report.skipped_aabb_pair_count,
                 split_tested_pair_count: arranged.report.tested_pair_count,
@@ -1185,6 +1197,11 @@ impl RegionLineSegmentRegionBuildReport2 {
         self.arranged_segment_kind_counts
     }
 
+    /// Returns the exact predicate family used for split arrangement, when reached.
+    pub const fn split_predicate_path(&self) -> Option<RegionLineSegmentSplitPredicatePath2> {
+        self.split_predicate_path
+    }
+
     /// Returns source line pairs considered for splitting.
     pub const fn split_candidate_pair_count(&self) -> usize {
         self.split_candidate_pair_count
@@ -1500,6 +1517,7 @@ struct LineSegmentRingAssembly {
 
 #[derive(Clone, Debug, Default, PartialEq)]
 struct LineSegmentSplitReportParts {
+    predicate_path: Option<RegionLineSegmentSplitPredicatePath2>,
     candidate_pair_count: usize,
     skipped_aabb_pair_count: usize,
     tested_pair_count: usize,
@@ -1851,6 +1869,7 @@ fn arrange_line_segments_at_point_intersections(
     policy: &CurvePolicy,
 ) -> CurveResult<Result<ArrangedLineSegments, (LineSegmentSplitReportParts, UncertaintyReason)>> {
     let mut report = LineSegmentSplitReportParts {
+        predicate_path: Some(RegionLineSegmentSplitPredicatePath2::AabbFilteredExactLineLine),
         candidate_pair_count: segments
             .len()
             .saturating_mul(segments.len().saturating_sub(1))
@@ -2059,6 +2078,7 @@ fn arrange_native_segments_at_point_intersections(
     policy: &CurvePolicy,
 ) -> CurveResult<Result<ArrangedNativeSegments, (LineSegmentSplitReportParts, UncertaintyReason)>> {
     let mut report = LineSegmentSplitReportParts {
+        predicate_path: Some(RegionLineSegmentSplitPredicatePath2::AabbFilteredNativeSegment),
         candidate_pair_count: segments
             .len()
             .saturating_mul(segments.len().saturating_sub(1))
@@ -2942,6 +2962,7 @@ fn blocked_line_segment_region_report(
         source_segment_kind_counts,
         arranged_segment_count: split_report.output_segment_count,
         arranged_segment_kind_counts,
+        split_predicate_path: split_report.predicate_path,
         split_candidate_pair_count: split_report.candidate_pair_count,
         split_skipped_aabb_pair_count: split_report.skipped_aabb_pair_count,
         split_tested_pair_count: split_report.tested_pair_count,

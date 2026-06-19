@@ -2,9 +2,10 @@ use hypercurve::{
     BulgeVertex2, CircularArc2, Classification, Contour2, CurveError, CurvePolicy, CurveString2,
     FillRule, FiniteProjectionOptions, Real, Region2, RegionBoundaryContourBuildStage2,
     RegionBoundaryContourRole2, RegionLineSegmentArrangedEndpoint2,
-    RegionLineSegmentRegionBuildStage2, RegionPointLocation, RegionView2, Segment2, SegmentKind,
-    SegmentKindCounts, UncertaintyReason, finite_polyline_vertex_centroid, finite_ring_signed_area,
-    try_finite_polyline_vertex_centroid, try_finite_ring_signed_area,
+    RegionLineSegmentRegionBuildStage2, RegionLineSegmentSplitPredicatePath2, RegionPointLocation,
+    RegionView2, Segment2, SegmentKind, SegmentKindCounts, UncertaintyReason,
+    finite_polyline_vertex_centroid, finite_ring_signed_area, try_finite_polyline_vertex_centroid,
+    try_finite_ring_signed_area,
 };
 use proptest::prelude::*;
 
@@ -409,6 +410,10 @@ fn unordered_line_segments_build_region_with_source_provenance() {
         Some(SegmentKindCounts { lines: 4, arcs: 0 })
     );
     assert_eq!(report.split_candidate_pair_count(), 6);
+    assert_eq!(
+        report.split_predicate_path(),
+        Some(RegionLineSegmentSplitPredicatePath2::AabbFilteredExactLineLine)
+    );
     assert_eq!(report.split_skipped_aabb_pair_count(), 2);
     assert_eq!(report.split_tested_pair_count(), 4);
     assert_eq!(report.split_intersection_event_count(), 4);
@@ -607,6 +612,10 @@ fn unordered_line_segments_split_crossings_before_boundary_blocker() {
         Some(SegmentKindCounts { lines: 4, arcs: 0 })
     );
     assert_eq!(report.split_candidate_pair_count(), 1);
+    assert_eq!(
+        report.split_predicate_path(),
+        Some(RegionLineSegmentSplitPredicatePath2::AabbFilteredExactLineLine)
+    );
     assert_eq!(report.split_skipped_aabb_pair_count(), 0);
     assert_eq!(report.split_tested_pair_count(), 1);
     assert_eq!(report.split_intersection_event_count(), 1);
@@ -684,6 +693,10 @@ fn unordered_line_segments_report_overlap_source_pair_blocker() {
     assert_eq!(report.arranged_segment_count(), None);
     assert_eq!(report.arranged_segment_kind_counts(), None);
     assert_eq!(report.split_candidate_pair_count(), 1);
+    assert_eq!(
+        report.split_predicate_path(),
+        Some(RegionLineSegmentSplitPredicatePath2::AabbFilteredExactLineLine)
+    );
     assert_eq!(report.split_skipped_aabb_pair_count(), 0);
     assert_eq!(report.split_tested_pair_count(), 1);
     assert_eq!(report.split_intersection_event_count(), 0);
@@ -784,6 +797,10 @@ fn unordered_native_segments_build_line_arc_region_with_source_provenance() {
         Some(SegmentKindCounts { lines: 1, arcs: 1 })
     );
     assert_eq!(report.split_candidate_pair_count(), 1);
+    assert_eq!(
+        report.split_predicate_path(),
+        Some(RegionLineSegmentSplitPredicatePath2::AabbFilteredNativeSegment)
+    );
     assert_eq!(report.split_skipped_aabb_pair_count(), 0);
     assert_eq!(report.split_tested_pair_count(), 1);
     assert_eq!(report.split_intersection_event_count(), 2);
