@@ -297,14 +297,14 @@ impl<'a> ExactBooleanWorkspace<'a> {
             regularized_attempt,
         )?;
         let result = if preflight.is_certified() {
-            if let Some(result) = cached_retained_materialization(
+            if let Some(index) = cached_retained_materialization_index(
                 &self.materializations,
                 self.left,
                 self.right,
                 request,
                 regularized_attempt,
             )? {
-                Some(result)
+                Some(self.materializations[index].1.clone())
             } else if matches!(preflight.support, ExactBooleanSupport::SelectedRegionPolicy) {
                 self.try_materialize_certified_support(request, preflight.support)
                     .ok()
@@ -333,13 +333,17 @@ impl<'a> ExactBooleanWorkspace<'a> {
         &mut self,
         request: ExactBooleanRequest,
     ) -> Result<ExactBooleanResult, MeshError> {
-        if let Some(result) = cached_retained_materialization(
+        let retained_attempt = self
+            .validated_regularized_solid_arrangement_attempt(request)?
+            .cloned();
+        if let Some(index) = cached_retained_materialization_index(
             &self.materializations,
             self.left,
             self.right,
             request,
-            self.validated_regularized_solid_arrangement_attempt(request)?,
+            retained_attempt.as_ref(),
         )? {
+            let result = self.materializations[index].1.clone();
             self.promote_evaluation_cache_from_materialization(request, &result)?;
             return Ok(result);
         }
@@ -406,13 +410,17 @@ impl<'a> ExactBooleanWorkspace<'a> {
         &mut self,
         request: ExactBooleanRequest,
     ) -> Result<&ExactBooleanResult, MeshError> {
-        if let Some(result) = cached_retained_materialization(
+        let retained_attempt = self
+            .validated_regularized_solid_arrangement_attempt(request)?
+            .cloned();
+        if let Some(index) = cached_retained_materialization_index(
             &self.materializations,
             self.left,
             self.right,
             request,
-            self.validated_regularized_solid_arrangement_attempt(request)?,
+            retained_attempt.as_ref(),
         )? {
+            let result = self.materializations[index].1.clone();
             self.promote_evaluation_cache_from_materialization(request, &result)?;
             let index = cached_by_request_index(&self.materializations, request)
                 .expect("validated materialization cache entry must still exist");
@@ -420,9 +428,6 @@ impl<'a> ExactBooleanWorkspace<'a> {
         }
 
         let result = self.materialize_uncached(request)?;
-        let retained_attempt = self
-            .validated_regularized_solid_arrangement_attempt(request)?
-            .cloned();
         retain_replayable_result(
             &mut self.materializations,
             self.left,
@@ -553,13 +558,13 @@ fn retain_replayable_result(
     Ok(())
 }
 
-fn cached_retained_materialization(
+fn cached_retained_materialization_index(
     cache: &[(ExactBooleanRequest, ExactBooleanResult)],
     left: &ExactMesh,
     right: &ExactMesh,
     request: ExactBooleanRequest,
     retained_arrangement_attempt: Option<&ExactArrangementBooleanAttempt>,
-) -> Result<Option<ExactBooleanResult>, MeshError> {
+) -> Result<Option<usize>, MeshError> {
     if let Some(index) = cached_by_request_index(cache, request) {
         ExactBooleanEvaluation::validate_result_against_sources_for_request(
             left,
@@ -569,7 +574,7 @@ fn cached_retained_materialization(
             &cache[index].1,
         )
         .map_err(workspace_report_validation_error)?;
-        return Ok(Some(cache[index].1.clone()));
+        return Ok(Some(index));
     }
     Ok(None)
 }
