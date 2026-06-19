@@ -683,7 +683,7 @@ fn validate_arrangement_materialized_coplanar_evidence(
 #[derive(Clone, Debug, PartialEq)]
 pub struct ExactBooleanResult {
     /// Declared production path for this result.
-    pub kind: ExactBooleanResultKind,
+    pub(crate) kind: ExactBooleanResultKind,
     /// Whether graph extraction contained unknown events before policy checks.
     pub graph_had_unknowns: bool,
     /// Certified classifications of split regions against opposite face
@@ -706,6 +706,16 @@ pub struct ExactBooleanResult {
 }
 
 impl ExactBooleanResult {
+    /// Return the declared production path for this result.
+    pub fn kind(&self) -> ExactBooleanResultKind {
+        self.kind
+    }
+
+    /// Replace the declared production path for this result.
+    pub fn replace_kind(&mut self, kind: ExactBooleanResultKind) -> ExactBooleanResultKind {
+        std::mem::replace(&mut self.kind, kind)
+    }
+
     /// Borrow the materialized exact output mesh.
     pub fn mesh(&self) -> &ExactMesh {
         &self.mesh

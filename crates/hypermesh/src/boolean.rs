@@ -1582,7 +1582,7 @@ impl ExactBooleanCertificationSet {
             self.arrangement_attempt_certifies_output_for_operation(request.operation);
         let arrangement_shortcut_attempt_certifies_request =
             self.arrangement_attempt_certifies_shortcut_for_operation(request.operation);
-        match result.kind {
+        match result.kind() {
             ExactBooleanResultKind::ArrangementCellComplexMaterialized { operation } => {
                 operation == request.operation && arrangement_attempt_certifies_request
             }
@@ -2492,7 +2492,7 @@ impl ExactBooleanEvaluation {
         if !result.satisfies_request_shape(self.request) {
             return Err(ExactReportValidationError::StatusEvidenceMismatch);
         }
-        if match result.kind {
+        if match result.kind() {
             ExactBooleanResultKind::SelectedRegions { .. }
             | ExactBooleanResultKind::OpenSurfaceArrangement { .. } => {
                 result.graph_had_unknowns != self.preflight.graph_had_unknowns
@@ -5286,7 +5286,7 @@ fn arrangement_cell_complex_result_is_certified_for_preflight(
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> bool {
-    let operation = match result.kind {
+    let operation = match result.kind() {
         ExactBooleanResultKind::ArrangementCellComplexMaterialized { operation }
         | ExactBooleanResultKind::CertifiedShortcut {
             shortcut: ExactBooleanShortcutKind::ArrangementCellComplex,
@@ -11791,9 +11791,9 @@ mod tests {
         .unwrap();
         stale_mesh.validate().unwrap();
         assert!(stale_mesh.validate_against_sources(&left, &right).is_err());
-        projected.kind = ExactBooleanResultKind::BoundaryPolicyShortcut {
+        projected.replace_kind(ExactBooleanResultKind::BoundaryPolicyShortcut {
             operation: ExactBooleanOperation::SelectedRegions(ExactRegionSelection::KeepAll),
-        };
+        });
         assert_eq!(
             projected.validate(),
             Err(ExactReportValidationError::StatusEvidenceMismatch)
@@ -14141,7 +14141,7 @@ mod tests {
                 &left,
                 &right,
             );
-            assert_eq!(public.kind, result.kind, "{operation:?}: {public:?}");
+            assert_eq!(public.kind(), result.kind(), "{operation:?}: {public:?}");
             public.validate().unwrap();
         }
     }
@@ -15160,10 +15160,10 @@ mod tests {
         difference.validate().unwrap();
         difference.validate_against_sources(&left, &right).unwrap();
         let mut relabeled = difference.clone();
-        relabeled.kind = ExactBooleanResultKind::CertifiedShortcut {
+        relabeled.replace_kind(ExactBooleanResultKind::CertifiedShortcut {
             operation: ExactBooleanOperation::Union,
             shortcut: ExactBooleanShortcutKind::ConvexDifference,
-        };
+        });
         assert_eq!(
             relabeled.validate(),
             Err(ExactReportValidationError::StatusEvidenceMismatch)

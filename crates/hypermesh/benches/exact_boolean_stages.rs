@@ -94,7 +94,7 @@ fn run_case(case: &BenchCase) {
             "materialized_result_kind",
             format!(
                 "{:?};triangles={}",
-                result.kind,
+                result.kind(),
                 result.mesh().triangles().len()
             ),
         ),

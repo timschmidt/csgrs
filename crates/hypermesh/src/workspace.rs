@@ -1154,9 +1154,11 @@ mod tests {
 
         let materialized = workspace.materialize(request).unwrap();
         assert!(materialized.is_boundary_policy_shortcut_for(ExactBooleanOperation::Union));
-        workspace.materializations[0].1.kind = ExactBooleanResultKind::BoundaryPolicyShortcut {
-            operation: ExactBooleanOperation::Difference,
-        };
+        workspace.materializations[0].1.replace_kind(
+            ExactBooleanResultKind::BoundaryPolicyShortcut {
+                operation: ExactBooleanOperation::Difference,
+            },
+        );
         let relabelled = workspace.materializations[0].1.clone();
         assert!(
             ExactBooleanEvaluation::validate_result_against_sources_for_request(
@@ -1203,10 +1205,10 @@ mod tests {
         assert_eq!(workspace.materializations.len(), 1);
 
         let mut relabelled = materialized.clone();
-        relabelled.kind = ExactBooleanResultKind::CertifiedShortcut {
+        relabelled.replace_kind(ExactBooleanResultKind::CertifiedShortcut {
             operation: ExactBooleanOperation::Difference,
             shortcut: ExactBooleanShortcutKind::ClosedBoundaryTouchingDifference,
-        };
+        });
         workspace.materializations[0].1 = relabelled;
         assert!(
             workspace.materialize(request).is_err(),
