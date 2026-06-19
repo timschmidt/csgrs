@@ -219,6 +219,7 @@ pub struct ExactCurveArrangementSplitCache2 {
     uncertain_relation_count: usize,
     intersection_points: Vec<Point2>,
     intersection_reports: Vec<RegionLineSegmentSplitIntersectionReport2>,
+    relation_bucket_cache: ExactCurveArrangementSplitRelationBucketCache2,
     intersection_bucket_cache: ExactCurveArrangementSplitIntersectionBucketCache2,
     intersection_parameter_cache: ExactCurveArrangementSplitIntersectionParameterCache2,
     blocker_cache: Option<ExactCurveArrangementSplitBlockerCache2>,
@@ -237,6 +238,36 @@ pub struct ExactCurveArrangementSplitBlockerCache2 {
     second_source_start_point: Point2,
     second_source_end_point: Point2,
     blocker: Option<UncertaintyReason>,
+}
+
+/// Retained split-stage relation class.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum ExactCurveArrangementSplitRelationClass2 {
+    /// Source pair relation produced exact point-intersection evidence.
+    Point,
+    /// Source pair relation produced exact overlap evidence.
+    Overlap,
+    /// Source pair relation could not be decided by the configured exact predicates.
+    Uncertain,
+}
+
+/// Retained split-stage relation bucket.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ExactCurveArrangementSplitRelationBucket2 {
+    relation: ExactCurveArrangementSplitRelationClass2,
+    relation_count: usize,
+}
+
+/// Retained split-stage relation buckets.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ExactCurveArrangementSplitRelationBucketCache2 {
+    bucket_count: usize,
+    relation_count: usize,
+    point_relation_count: usize,
+    overlap_relation_count: usize,
+    uncertain_relation_count: usize,
+    max_bucket_size: usize,
+    buckets: Vec<ExactCurveArrangementSplitRelationBucket2>,
 }
 
 /// Reference to a retained split-intersection report inside an exact point bucket.
@@ -2398,6 +2429,11 @@ impl ExactCurveArrangementSplitCache2 {
             ExactCurveArrangementSplitIntersectionParameterCache2::from_intersection_reports(
                 &report.split_intersection_reports,
             );
+        let relation_bucket_cache = ExactCurveArrangementSplitRelationBucketCache2::from_counts(
+            report.split_point_relation_count,
+            report.split_overlap_relation_count,
+            report.split_uncertain_relation_count,
+        );
         let blocker_cache =
             ExactCurveArrangementSplitBlockerCache2::from_region_build_report(report);
         Self {
@@ -2411,6 +2447,7 @@ impl ExactCurveArrangementSplitCache2 {
             uncertain_relation_count: report.split_uncertain_relation_count,
             intersection_points: report.split_intersection_points.clone(),
             intersection_reports: report.split_intersection_reports.clone(),
+            relation_bucket_cache,
             intersection_bucket_cache,
             intersection_parameter_cache,
             blocker_cache,
@@ -2466,6 +2503,11 @@ impl ExactCurveArrangementSplitCache2 {
     /// Returns exact per-event source and parameter evidence retained by the split stage.
     pub fn intersection_reports(&self) -> &[RegionLineSegmentSplitIntersectionReport2] {
         &self.intersection_reports
+    }
+
+    /// Returns retained split-stage relation buckets.
+    pub const fn relation_bucket_cache(&self) -> &ExactCurveArrangementSplitRelationBucketCache2 {
+        &self.relation_bucket_cache
     }
 
     /// Returns exact split-intersection point buckets derived from retained split reports.
@@ -2551,6 +2593,94 @@ impl ExactCurveArrangementSplitBlockerCache2 {
     /// Returns the retained blocker reason reported for this split blocker pair.
     pub const fn blocker(&self) -> Option<UncertaintyReason> {
         self.blocker
+    }
+}
+
+impl ExactCurveArrangementSplitRelationBucket2 {
+    /// Returns the retained split-stage relation represented by this bucket.
+    pub const fn relation(&self) -> ExactCurveArrangementSplitRelationClass2 {
+        self.relation
+    }
+
+    /// Returns the number of split-stage relations in this bucket.
+    pub const fn relation_count(&self) -> usize {
+        self.relation_count
+    }
+}
+
+impl ExactCurveArrangementSplitRelationBucketCache2 {
+    fn from_counts(
+        point_relation_count: usize,
+        overlap_relation_count: usize,
+        uncertain_relation_count: usize,
+    ) -> Self {
+        let buckets = vec![
+            ExactCurveArrangementSplitRelationBucket2 {
+                relation: ExactCurveArrangementSplitRelationClass2::Point,
+                relation_count: point_relation_count,
+            },
+            ExactCurveArrangementSplitRelationBucket2 {
+                relation: ExactCurveArrangementSplitRelationClass2::Overlap,
+                relation_count: overlap_relation_count,
+            },
+            ExactCurveArrangementSplitRelationBucket2 {
+                relation: ExactCurveArrangementSplitRelationClass2::Uncertain,
+                relation_count: uncertain_relation_count,
+            },
+        ];
+        let relation_count = point_relation_count
+            .saturating_add(overlap_relation_count)
+            .saturating_add(uncertain_relation_count);
+        let max_bucket_size = buckets
+            .iter()
+            .map(|bucket| bucket.relation_count)
+            .max()
+            .unwrap_or(0);
+
+        Self {
+            bucket_count: buckets.len(),
+            relation_count,
+            point_relation_count,
+            overlap_relation_count,
+            uncertain_relation_count,
+            max_bucket_size,
+            buckets,
+        }
+    }
+
+    /// Returns the number of retained relation buckets.
+    pub const fn bucket_count(&self) -> usize {
+        self.bucket_count
+    }
+
+    /// Returns the total number of classified split-stage relations.
+    pub const fn relation_count(&self) -> usize {
+        self.relation_count
+    }
+
+    /// Returns source-pair relations classified as point intersections.
+    pub const fn point_relation_count(&self) -> usize {
+        self.point_relation_count
+    }
+
+    /// Returns source-pair relations classified as overlaps.
+    pub const fn overlap_relation_count(&self) -> usize {
+        self.overlap_relation_count
+    }
+
+    /// Returns source-pair relations that remained uncertain.
+    pub const fn uncertain_relation_count(&self) -> usize {
+        self.uncertain_relation_count
+    }
+
+    /// Returns the largest relation bucket size.
+    pub const fn max_bucket_size(&self) -> usize {
+        self.max_bucket_size
+    }
+
+    /// Returns split-stage relation buckets in stable relation order.
+    pub fn buckets(&self) -> &[ExactCurveArrangementSplitRelationBucket2] {
+        &self.buckets
     }
 }
 

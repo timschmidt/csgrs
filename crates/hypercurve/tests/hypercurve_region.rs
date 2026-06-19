@@ -2,14 +2,14 @@ use hypercurve::{
     BulgeVertex2, CircularArc2, Classification, Contour2, CurveError, CurvePolicy, CurveString2,
     ExactCurveArrangementAttempt2, ExactCurveArrangementRequest2,
     ExactCurveArrangementSourceAabbStatus2, ExactCurveArrangementSourceEndpoint2,
-    ExactCurveArrangementSplitCandidateAabbStatus2, FillRule, FiniteProjectionOptions, Real,
-    Region2, RegionBoundaryContourBuildPredicatePath2, RegionBoundaryContourBuildStage2,
-    RegionBoundaryContourRole2, RegionLineSegmentArrangedEndpoint2,
-    RegionLineSegmentEndpointGraphPredicatePath2, RegionLineSegmentRegionBuildStage2,
-    RegionLineSegmentRingAssemblyPredicatePath2, RegionLineSegmentSplitPredicatePath2,
-    RegionPointLocation, RegionView2, RetainedTopologyStatus, Segment2, SegmentKind,
-    SegmentKindCounts, UncertaintyReason, finite_polyline_vertex_centroid, finite_ring_signed_area,
-    try_finite_polyline_vertex_centroid, try_finite_ring_signed_area,
+    ExactCurveArrangementSplitCandidateAabbStatus2, ExactCurveArrangementSplitRelationClass2,
+    FillRule, FiniteProjectionOptions, Real, Region2, RegionBoundaryContourBuildPredicatePath2,
+    RegionBoundaryContourBuildStage2, RegionBoundaryContourRole2,
+    RegionLineSegmentArrangedEndpoint2, RegionLineSegmentEndpointGraphPredicatePath2,
+    RegionLineSegmentRegionBuildStage2, RegionLineSegmentRingAssemblyPredicatePath2,
+    RegionLineSegmentSplitPredicatePath2, RegionPointLocation, RegionView2, RetainedTopologyStatus,
+    Segment2, SegmentKind, SegmentKindCounts, UncertaintyReason, finite_polyline_vertex_centroid,
+    finite_ring_signed_area, try_finite_polyline_vertex_centroid, try_finite_ring_signed_area,
 };
 use proptest::prelude::*;
 
@@ -1316,6 +1316,51 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
     );
     assert_eq!(split_cache.output_segment_count(), Some(4));
     assert_eq!(split_cache.blocker_cache(), None);
+    let split_relation_bucket_cache = split_cache.relation_bucket_cache();
+    assert_eq!(split_relation_bucket_cache.bucket_count(), 3);
+    assert_eq!(
+        split_relation_bucket_cache.relation_count(),
+        split_cache.point_relation_count()
+            + split_cache.overlap_relation_count()
+            + split_cache.uncertain_relation_count()
+    );
+    assert_eq!(
+        split_relation_bucket_cache.point_relation_count(),
+        split_cache.point_relation_count()
+    );
+    assert_eq!(
+        split_relation_bucket_cache.overlap_relation_count(),
+        split_cache.overlap_relation_count()
+    );
+    assert_eq!(
+        split_relation_bucket_cache.uncertain_relation_count(),
+        split_cache.uncertain_relation_count()
+    );
+    assert_eq!(split_relation_bucket_cache.buckets().len(), 3);
+    assert_eq!(
+        split_relation_bucket_cache.buckets()[0].relation(),
+        ExactCurveArrangementSplitRelationClass2::Point
+    );
+    assert_eq!(
+        split_relation_bucket_cache.buckets()[0].relation_count(),
+        split_cache.point_relation_count()
+    );
+    assert_eq!(
+        split_relation_bucket_cache.buckets()[1].relation(),
+        ExactCurveArrangementSplitRelationClass2::Overlap
+    );
+    assert_eq!(
+        split_relation_bucket_cache.buckets()[1].relation_count(),
+        split_cache.overlap_relation_count()
+    );
+    assert_eq!(
+        split_relation_bucket_cache.buckets()[2].relation(),
+        ExactCurveArrangementSplitRelationClass2::Uncertain
+    );
+    assert_eq!(
+        split_relation_bucket_cache.buckets()[2].relation_count(),
+        split_cache.uncertain_relation_count()
+    );
     let split_intersection_bucket_cache = split_cache.intersection_bucket_cache();
     assert_eq!(
         split_intersection_bucket_cache.intersection_event_count(),
@@ -2421,6 +2466,51 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
         result.report().split_output_segment_count()
     );
     assert_eq!(split_cache.blocker_cache(), None);
+    let split_relation_bucket_cache = split_cache.relation_bucket_cache();
+    assert_eq!(split_relation_bucket_cache.bucket_count(), 3);
+    assert_eq!(
+        split_relation_bucket_cache.relation_count(),
+        split_cache.point_relation_count()
+            + split_cache.overlap_relation_count()
+            + split_cache.uncertain_relation_count()
+    );
+    assert_eq!(
+        split_relation_bucket_cache.point_relation_count(),
+        split_cache.point_relation_count()
+    );
+    assert_eq!(
+        split_relation_bucket_cache.overlap_relation_count(),
+        split_cache.overlap_relation_count()
+    );
+    assert_eq!(
+        split_relation_bucket_cache.uncertain_relation_count(),
+        split_cache.uncertain_relation_count()
+    );
+    assert_eq!(split_relation_bucket_cache.buckets().len(), 3);
+    assert_eq!(
+        split_relation_bucket_cache.buckets()[0].relation(),
+        ExactCurveArrangementSplitRelationClass2::Point
+    );
+    assert_eq!(
+        split_relation_bucket_cache.buckets()[0].relation_count(),
+        split_cache.point_relation_count()
+    );
+    assert_eq!(
+        split_relation_bucket_cache.buckets()[1].relation(),
+        ExactCurveArrangementSplitRelationClass2::Overlap
+    );
+    assert_eq!(
+        split_relation_bucket_cache.buckets()[1].relation_count(),
+        split_cache.overlap_relation_count()
+    );
+    assert_eq!(
+        split_relation_bucket_cache.buckets()[2].relation(),
+        ExactCurveArrangementSplitRelationClass2::Uncertain
+    );
+    assert_eq!(
+        split_relation_bucket_cache.buckets()[2].relation_count(),
+        split_cache.uncertain_relation_count()
+    );
     let split_intersection_bucket_cache = split_cache.intersection_bucket_cache();
     assert_eq!(
         split_intersection_bucket_cache.intersection_event_count(),
