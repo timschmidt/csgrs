@@ -3012,10 +3012,16 @@ fn public_exact_blocker_reports_replay_remaining_decisions() {
         ValidationPolicy::ALLOW_BOUNDARY,
     );
     with_exact_boolean_evaluation(&left, &overlapping_right, request, |evaluation| {
-        assert!(!evaluation.requires_refinement());
         evaluation
             .validate_against_sources(&left, &overlapping_right)
             .unwrap();
+        assert!(
+            evaluation.materialized_result().is_some()
+                || evaluation.retained_arrangement_attempt().is_some()
+                || evaluation.retained_face_pairs() > 0
+                || evaluation.retained_events() > 0,
+            "{evaluation:?}"
+        );
         assert_eq!(
             evaluation.freshness_against_sources(&left, &overlapping_right),
             ExactReportFreshness::Current

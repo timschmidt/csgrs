@@ -2468,12 +2468,6 @@ impl ExactBooleanEvaluation {
             .map_or(0, ExactBooleanBlocker::coplanar_overlapping_pairs)
     }
 
-    /// Return whether this evaluation is blocked by unresolved exact
-    /// predicate or construction evidence.
-    pub fn requires_refinement(&self) -> bool {
-        self.preflight.requires_refinement()
-    }
-
     /// Return the retained face-pair count from exact preflight scheduling.
     pub fn retained_face_pairs(&self) -> usize {
         self.preflight.retained_face_pairs()

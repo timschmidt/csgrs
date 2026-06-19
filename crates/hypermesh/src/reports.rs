@@ -3694,12 +3694,6 @@ impl ExactBooleanSupport {
                 | Self::CertifiedBoundaryPolicyShortcut
         )
     }
-
-    /// Returns whether exact predicate/construction refinement is required
-    /// before topology policy can safely consume the graph.
-    pub const fn requires_refinement(self) -> bool {
-        matches!(self, Self::UnresolvedGraph)
-    }
 }
 
 /// Preflight report for an exact boolean operation request.
@@ -4204,16 +4198,6 @@ impl ExactBooleanPreflight {
             self.support,
             ExactBooleanSupport::CertifiedLowerDimensionalRegularizedSolid
         ) && self.blocker.is_none()
-    }
-
-    /// Returns whether this preflight is blocked by unresolved exact
-    /// predicate or construction evidence.
-    pub fn requires_refinement(&self) -> bool {
-        self.support.requires_refinement()
-            || self
-                .blocker
-                .as_ref()
-                .is_some_and(|blocker| blocker.kind == ExactBooleanBlockerKind::NeedsRefinement)
     }
 
     /// Validate this preflight report against the supplied source meshes.
