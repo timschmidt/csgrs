@@ -7,9 +7,9 @@ use hypercurve::{
     RegionBoundaryContourRole2, RegionLineSegmentArrangedEndpoint2,
     RegionLineSegmentEndpointGraphPredicatePath2, RegionLineSegmentRegionBuildStage2,
     RegionLineSegmentRingAssemblyPredicatePath2, RegionLineSegmentSplitPredicatePath2,
-    RegionPointLocation, RegionView2, Segment2, SegmentKind, SegmentKindCounts, UncertaintyReason,
-    finite_polyline_vertex_centroid, finite_ring_signed_area, try_finite_polyline_vertex_centroid,
-    try_finite_ring_signed_area,
+    RegionPointLocation, RegionView2, RetainedTopologyStatus, Segment2, SegmentKind,
+    SegmentKindCounts, UncertaintyReason, finite_polyline_vertex_centroid, finite_ring_signed_area,
+    try_finite_polyline_vertex_centroid, try_finite_ring_signed_area,
 };
 use proptest::prelude::*;
 
@@ -1538,6 +1538,81 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
             .fragment_refs()
             .is_empty()
     );
+    let arranged_fragment_status_bucket_cache =
+        arranged_fragment_cache.arranged_fragment_status_bucket_cache();
+    assert_eq!(arranged_fragment_status_bucket_cache.bucket_count(), 6);
+    assert_eq!(
+        arranged_fragment_status_bucket_cache.source_ref_count(),
+        arranged_fragment_cache.source_ref_count()
+    );
+    assert_eq!(
+        arranged_fragment_status_bucket_cache.native_exact_ref_count(),
+        arranged_fragment_cache.source_ref_count()
+    );
+    assert_eq!(
+        arranged_fragment_status_bucket_cache.certified_approximation_ref_count(),
+        0
+    );
+    assert_eq!(
+        arranged_fragment_status_bucket_cache.display_or_export_ref_count(),
+        0
+    );
+    assert_eq!(
+        arranged_fragment_status_bucket_cache.imported_lossy_ref_count(),
+        0
+    );
+    assert_eq!(
+        arranged_fragment_status_bucket_cache.unsupported_ref_count(),
+        0
+    );
+    assert_eq!(
+        arranged_fragment_status_bucket_cache.unresolved_ref_count(),
+        0
+    );
+    assert_eq!(arranged_fragment_status_bucket_cache.max_bucket_size(), 4);
+    assert_eq!(arranged_fragment_status_bucket_cache.buckets().len(), 6);
+    assert_eq!(
+        arranged_fragment_status_bucket_cache.buckets()[0].status(),
+        RetainedTopologyStatus::NativeExact
+    );
+    assert_eq!(
+        arranged_fragment_status_bucket_cache.buckets()[0]
+            .source_refs()
+            .len(),
+        arranged_fragment_cache.source_ref_count()
+    );
+    assert_eq!(
+        arranged_fragment_status_bucket_cache.buckets()[0].source_refs()[0]
+            .arranged_fragment_index(),
+        0
+    );
+    assert_eq!(
+        arranged_fragment_status_bucket_cache.buckets()[0].source_refs()[0].source_ref_index(),
+        0
+    );
+    assert_eq!(
+        arranged_fragment_status_bucket_cache.buckets()[0].source_refs()[0]
+            .arranged_source_report_index(),
+        0
+    );
+    assert_eq!(
+        arranged_fragment_cache.fragments()[arranged_fragment_status_bucket_cache.buckets()[0]
+            .source_refs()[0]
+            .arranged_fragment_index()]
+        .source_refs()[arranged_fragment_status_bucket_cache.buckets()[0].source_refs()[0]
+            .source_ref_index()]
+        .status(),
+        RetainedTopologyStatus::NativeExact
+    );
+    assert_eq!(
+        arranged_fragment_status_bucket_cache.buckets()[1].status(),
+        RetainedTopologyStatus::CertifiedApproximation
+    );
+    assert!(
+        arranged_fragment_status_bucket_cache.buckets()[1]
+            .source_refs()
+            .is_empty()
+    );
     assert_eq!(arranged_fragment_cache.max_source_ref_count(), 1);
     assert_eq!(arranged_fragment_cache.fragments().len(), 4);
     let arranged_fragment = &arranged_fragment_cache.fragments()[0];
@@ -2129,6 +2204,80 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
             .arranged_fragment_index()]
         .arranged_segment_kind(),
         SegmentKind::Arc
+    );
+    let arranged_fragment_status_bucket_cache =
+        arranged_fragment_cache.arranged_fragment_status_bucket_cache();
+    assert_eq!(arranged_fragment_status_bucket_cache.bucket_count(), 6);
+    assert_eq!(
+        arranged_fragment_status_bucket_cache.source_ref_count(),
+        arranged_fragment_cache.source_ref_count()
+    );
+    assert_eq!(
+        arranged_fragment_status_bucket_cache.native_exact_ref_count(),
+        arranged_fragment_cache.source_ref_count()
+    );
+    assert_eq!(
+        arranged_fragment_status_bucket_cache.certified_approximation_ref_count(),
+        0
+    );
+    assert_eq!(
+        arranged_fragment_status_bucket_cache.display_or_export_ref_count(),
+        0
+    );
+    assert_eq!(
+        arranged_fragment_status_bucket_cache.imported_lossy_ref_count(),
+        0
+    );
+    assert_eq!(
+        arranged_fragment_status_bucket_cache.unsupported_ref_count(),
+        0
+    );
+    assert_eq!(
+        arranged_fragment_status_bucket_cache.unresolved_ref_count(),
+        0
+    );
+    assert_eq!(arranged_fragment_status_bucket_cache.max_bucket_size(), 2);
+    assert_eq!(
+        arranged_fragment_status_bucket_cache.buckets()[0].status(),
+        RetainedTopologyStatus::NativeExact
+    );
+    assert_eq!(
+        arranged_fragment_status_bucket_cache.buckets()[0]
+            .source_refs()
+            .len(),
+        arranged_fragment_cache.source_ref_count()
+    );
+    assert_eq!(
+        arranged_fragment_status_bucket_cache.buckets()[0].source_refs()[0]
+            .arranged_fragment_index(),
+        0
+    );
+    assert_eq!(
+        arranged_fragment_status_bucket_cache.buckets()[0].source_refs()[0].source_ref_index(),
+        0
+    );
+    assert_eq!(
+        arranged_fragment_status_bucket_cache.buckets()[0].source_refs()[0]
+            .arranged_source_report_index(),
+        0
+    );
+    assert_eq!(
+        arranged_fragment_cache.fragments()[arranged_fragment_status_bucket_cache.buckets()[0]
+            .source_refs()[0]
+            .arranged_fragment_index()]
+        .source_refs()[arranged_fragment_status_bucket_cache.buckets()[0].source_refs()[0]
+            .source_ref_index()]
+        .status(),
+        RetainedTopologyStatus::NativeExact
+    );
+    assert_eq!(
+        arranged_fragment_status_bucket_cache.buckets()[1].status(),
+        RetainedTopologyStatus::CertifiedApproximation
+    );
+    assert!(
+        arranged_fragment_status_bucket_cache.buckets()[1]
+            .source_refs()
+            .is_empty()
     );
     assert_eq!(arranged_fragment_cache.max_source_ref_count(), 1);
     assert_eq!(arranged_fragment_cache.fragments().len(), 2);

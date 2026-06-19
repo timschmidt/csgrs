@@ -346,11 +346,26 @@ pub struct ExactCurveArrangementArrangedFragmentRef2 {
     arranged_fragment_index: usize,
 }
 
+/// Reference to retained arranged fragment source evidence inside a status bucket.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ExactCurveArrangementArrangedFragmentStatusRef2 {
+    arranged_fragment_index: usize,
+    source_ref_index: usize,
+    arranged_source_report_index: usize,
+}
+
 /// Arranged fragment bucket grouped by retained primitive family.
 #[derive(Clone, Debug, PartialEq)]
 pub struct ExactCurveArrangementArrangedFragmentKindBucket2 {
     arranged_segment_kind: SegmentKind,
     fragment_refs: Vec<ExactCurveArrangementArrangedFragmentRef2>,
+}
+
+/// Arranged fragment source-provenance bucket grouped by retained topology status.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ExactCurveArrangementArrangedFragmentStatusBucket2 {
+    status: RetainedTopologyStatus,
+    source_refs: Vec<ExactCurveArrangementArrangedFragmentStatusRef2>,
 }
 
 /// Arranged fragment primitive-family buckets retained after exact splitting.
@@ -364,6 +379,21 @@ pub struct ExactCurveArrangementArrangedFragmentKindBucketCache2 {
     buckets: Vec<ExactCurveArrangementArrangedFragmentKindBucket2>,
 }
 
+/// Arranged fragment topology-status buckets retained after exact splitting.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ExactCurveArrangementArrangedFragmentStatusBucketCache2 {
+    bucket_count: usize,
+    source_ref_count: usize,
+    native_exact_ref_count: usize,
+    certified_approximation_ref_count: usize,
+    display_or_export_ref_count: usize,
+    imported_lossy_ref_count: usize,
+    unsupported_ref_count: usize,
+    unresolved_ref_count: usize,
+    max_bucket_size: usize,
+    buckets: Vec<ExactCurveArrangementArrangedFragmentStatusBucket2>,
+}
+
 /// Arranged fragment provenance cache retained after exact splitting.
 #[derive(Clone, Debug, PartialEq)]
 pub struct ExactCurveArrangementArrangedFragmentCache2 {
@@ -372,6 +402,7 @@ pub struct ExactCurveArrangementArrangedFragmentCache2 {
     source_segment_kind_counts: SegmentKindCounts,
     arranged_segment_kind_counts: SegmentKindCounts,
     arranged_fragment_kind_bucket_cache: ExactCurveArrangementArrangedFragmentKindBucketCache2,
+    arranged_fragment_status_bucket_cache: ExactCurveArrangementArrangedFragmentStatusBucketCache2,
     max_source_ref_count: usize,
     fragments: Vec<ExactCurveArrangementArrangedFragment2>,
 }
@@ -2635,6 +2666,23 @@ impl ExactCurveArrangementArrangedFragmentRef2 {
     }
 }
 
+impl ExactCurveArrangementArrangedFragmentStatusRef2 {
+    /// Returns the index into [`ExactCurveArrangementArrangedFragmentCache2::fragments`].
+    pub const fn arranged_fragment_index(&self) -> usize {
+        self.arranged_fragment_index
+    }
+
+    /// Returns the source reference index inside the retained arranged fragment.
+    pub const fn source_ref_index(&self) -> usize {
+        self.source_ref_index
+    }
+
+    /// Returns the retained arranged source report index.
+    pub const fn arranged_source_report_index(&self) -> usize {
+        self.arranged_source_report_index
+    }
+}
+
 impl ExactCurveArrangementArrangedFragmentKindBucket2 {
     /// Returns the retained primitive family represented by this bucket.
     pub const fn arranged_segment_kind(&self) -> SegmentKind {
@@ -2644,6 +2692,18 @@ impl ExactCurveArrangementArrangedFragmentKindBucket2 {
     /// Returns arranged fragment references with this retained primitive family.
     pub fn fragment_refs(&self) -> &[ExactCurveArrangementArrangedFragmentRef2] {
         &self.fragment_refs
+    }
+}
+
+impl ExactCurveArrangementArrangedFragmentStatusBucket2 {
+    /// Returns the retained topology status represented by this bucket.
+    pub const fn status(&self) -> RetainedTopologyStatus {
+        self.status
+    }
+
+    /// Returns arranged fragment source references with this retained topology status.
+    pub fn source_refs(&self) -> &[ExactCurveArrangementArrangedFragmentStatusRef2] {
+        &self.source_refs
     }
 }
 
@@ -2722,6 +2782,144 @@ impl ExactCurveArrangementArrangedFragmentKindBucketCache2 {
     }
 }
 
+impl ExactCurveArrangementArrangedFragmentStatusBucketCache2 {
+    fn from_fragments(fragments: &[ExactCurveArrangementArrangedFragment2]) -> Self {
+        let mut native_exact_refs = Vec::new();
+        let mut certified_approximation_refs = Vec::new();
+        let mut display_or_export_refs = Vec::new();
+        let mut imported_lossy_refs = Vec::new();
+        let mut unsupported_refs = Vec::new();
+        let mut unresolved_refs = Vec::new();
+
+        for (arranged_fragment_index, fragment) in fragments.iter().enumerate() {
+            for (source_ref_index, source_ref) in fragment.source_refs().iter().enumerate() {
+                let status_ref = ExactCurveArrangementArrangedFragmentStatusRef2 {
+                    arranged_fragment_index,
+                    source_ref_index,
+                    arranged_source_report_index: source_ref.arranged_source_report_index(),
+                };
+                match source_ref.status() {
+                    RetainedTopologyStatus::NativeExact => native_exact_refs.push(status_ref),
+                    RetainedTopologyStatus::CertifiedApproximation => {
+                        certified_approximation_refs.push(status_ref)
+                    }
+                    RetainedTopologyStatus::DisplayOrExport => {
+                        display_or_export_refs.push(status_ref)
+                    }
+                    RetainedTopologyStatus::ImportedLossy => imported_lossy_refs.push(status_ref),
+                    RetainedTopologyStatus::Unsupported => unsupported_refs.push(status_ref),
+                    RetainedTopologyStatus::Unresolved => unresolved_refs.push(status_ref),
+                }
+            }
+        }
+
+        let native_exact_ref_count = native_exact_refs.len();
+        let certified_approximation_ref_count = certified_approximation_refs.len();
+        let display_or_export_ref_count = display_or_export_refs.len();
+        let imported_lossy_ref_count = imported_lossy_refs.len();
+        let unsupported_ref_count = unsupported_refs.len();
+        let unresolved_ref_count = unresolved_refs.len();
+        let buckets = vec![
+            ExactCurveArrangementArrangedFragmentStatusBucket2 {
+                status: RetainedTopologyStatus::NativeExact,
+                source_refs: native_exact_refs,
+            },
+            ExactCurveArrangementArrangedFragmentStatusBucket2 {
+                status: RetainedTopologyStatus::CertifiedApproximation,
+                source_refs: certified_approximation_refs,
+            },
+            ExactCurveArrangementArrangedFragmentStatusBucket2 {
+                status: RetainedTopologyStatus::DisplayOrExport,
+                source_refs: display_or_export_refs,
+            },
+            ExactCurveArrangementArrangedFragmentStatusBucket2 {
+                status: RetainedTopologyStatus::ImportedLossy,
+                source_refs: imported_lossy_refs,
+            },
+            ExactCurveArrangementArrangedFragmentStatusBucket2 {
+                status: RetainedTopologyStatus::Unsupported,
+                source_refs: unsupported_refs,
+            },
+            ExactCurveArrangementArrangedFragmentStatusBucket2 {
+                status: RetainedTopologyStatus::Unresolved,
+                source_refs: unresolved_refs,
+            },
+        ];
+        let source_ref_count = fragments
+            .iter()
+            .map(|fragment| fragment.source_refs().len())
+            .sum();
+        let max_bucket_size = buckets
+            .iter()
+            .map(|bucket| bucket.source_refs.len())
+            .max()
+            .unwrap_or(0);
+
+        Self {
+            bucket_count: buckets.len(),
+            source_ref_count,
+            native_exact_ref_count,
+            certified_approximation_ref_count,
+            display_or_export_ref_count,
+            imported_lossy_ref_count,
+            unsupported_ref_count,
+            unresolved_ref_count,
+            max_bucket_size,
+            buckets,
+        }
+    }
+
+    /// Returns the number of retained topology-status buckets.
+    pub const fn bucket_count(&self) -> usize {
+        self.bucket_count
+    }
+
+    /// Returns the number of retained arranged fragment source references.
+    pub const fn source_ref_count(&self) -> usize {
+        self.source_ref_count
+    }
+
+    /// Returns the number of native-exact source references.
+    pub const fn native_exact_ref_count(&self) -> usize {
+        self.native_exact_ref_count
+    }
+
+    /// Returns the number of certified-approximation source references.
+    pub const fn certified_approximation_ref_count(&self) -> usize {
+        self.certified_approximation_ref_count
+    }
+
+    /// Returns the number of display/export-only source references.
+    pub const fn display_or_export_ref_count(&self) -> usize {
+        self.display_or_export_ref_count
+    }
+
+    /// Returns the number of lossy-import source references.
+    pub const fn imported_lossy_ref_count(&self) -> usize {
+        self.imported_lossy_ref_count
+    }
+
+    /// Returns the number of unsupported source references.
+    pub const fn unsupported_ref_count(&self) -> usize {
+        self.unsupported_ref_count
+    }
+
+    /// Returns the number of unresolved source references.
+    pub const fn unresolved_ref_count(&self) -> usize {
+        self.unresolved_ref_count
+    }
+
+    /// Returns the largest topology-status bucket size.
+    pub const fn max_bucket_size(&self) -> usize {
+        self.max_bucket_size
+    }
+
+    /// Returns arranged fragment status buckets in stable status order.
+    pub fn buckets(&self) -> &[ExactCurveArrangementArrangedFragmentStatusBucket2] {
+        &self.buckets
+    }
+}
+
 impl ExactCurveArrangementArrangedFragmentCache2 {
     fn from_arranged_source_reports(
         arranged_source_reports: &[RegionLineSegmentArrangedSourceReport2],
@@ -2772,6 +2970,8 @@ impl ExactCurveArrangementArrangedFragmentCache2 {
             arranged_report_segment_kind_counts(arranged_source_reports);
         let arranged_fragment_kind_bucket_cache =
             ExactCurveArrangementArrangedFragmentKindBucketCache2::from_fragments(&fragments);
+        let arranged_fragment_status_bucket_cache =
+            ExactCurveArrangementArrangedFragmentStatusBucketCache2::from_fragments(&fragments);
         let max_source_ref_count = fragments
             .iter()
             .map(|fragment| fragment.source_refs.len())
@@ -2784,6 +2984,7 @@ impl ExactCurveArrangementArrangedFragmentCache2 {
             source_segment_kind_counts,
             arranged_segment_kind_counts,
             arranged_fragment_kind_bucket_cache,
+            arranged_fragment_status_bucket_cache,
             max_source_ref_count,
             fragments,
         }
@@ -2814,6 +3015,13 @@ impl ExactCurveArrangementArrangedFragmentCache2 {
         &self,
     ) -> &ExactCurveArrangementArrangedFragmentKindBucketCache2 {
         &self.arranged_fragment_kind_bucket_cache
+    }
+
+    /// Returns retained arranged fragment source buckets grouped by topology status.
+    pub const fn arranged_fragment_status_bucket_cache(
+        &self,
+    ) -> &ExactCurveArrangementArrangedFragmentStatusBucketCache2 {
+        &self.arranged_fragment_status_bucket_cache
     }
 
     /// Returns the largest source reference count for one arranged fragment.
