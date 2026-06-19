@@ -745,6 +745,8 @@ pub struct CurveStringRegionTrimIntervalReport2 {
     output_curve_string_index: Option<usize>,
     output_segment_index: Option<usize>,
     output_segment_kind: Option<SegmentKind>,
+    output_segment_start_point: Option<Point2>,
+    output_segment_end_point: Option<Point2>,
     status: RetainedTopologyStatus,
     blocker: Option<UncertaintyReason>,
 }
@@ -4118,6 +4120,16 @@ impl CurveStringRegionTrimIntervalReport2 {
         self.output_segment_kind
     }
 
+    /// Returns the exact start point of the emitted output segment, when retained.
+    pub const fn output_segment_start_point(&self) -> Option<&Point2> {
+        self.output_segment_start_point.as_ref()
+    }
+
+    /// Returns the exact end point of the emitted output segment, when retained.
+    pub const fn output_segment_end_point(&self) -> Option<&Point2> {
+        self.output_segment_end_point.as_ref()
+    }
+
     /// Returns retained topology status for this interval.
     pub const fn status(&self) -> RetainedTopologyStatus {
         self.status
@@ -4778,6 +4790,8 @@ fn trim_curve_string_inside_region_with_hits(
                         output_curve_string_index: None,
                         output_segment_index: None,
                         output_segment_kind: None,
+                        output_segment_start_point: None,
+                        output_segment_end_point: None,
                         status: RetainedTopologyStatus::Unsupported,
                         blocker: Some(reason),
                     });
@@ -4815,6 +4829,8 @@ fn trim_curve_string_inside_region_with_hits(
                         output_curve_string_index: None,
                         output_segment_index: None,
                         output_segment_kind: None,
+                        output_segment_start_point: None,
+                        output_segment_end_point: None,
                         status: RetainedTopologyStatus::Unresolved,
                         blocker: Some(reason),
                     });
@@ -4856,6 +4872,8 @@ fn trim_curve_string_inside_region_with_hits(
                         output_curve_string_index: None,
                         output_segment_index: None,
                         output_segment_kind: None,
+                        output_segment_start_point: None,
+                        output_segment_end_point: None,
                         status: retained_status_for_uncertainty(reason),
                         blocker: Some(reason),
                     });
@@ -4898,6 +4916,8 @@ fn trim_curve_string_inside_region_with_hits(
                         output_curve_string_index: None,
                         output_segment_index: None,
                         output_segment_kind: None,
+                        output_segment_start_point: None,
+                        output_segment_end_point: None,
                         status: retained_status_for_uncertainty(reason),
                         blocker: Some(reason),
                     });
@@ -4928,6 +4948,8 @@ fn trim_curve_string_inside_region_with_hits(
                     let output_curve_string_index = output_segments.len();
                     let output_segment_index = current_segments.len();
                     let output_segment_kind = fragment.structural_facts().kind;
+                    let output_segment_start_point = fragment.start().clone();
+                    let output_segment_end_point = fragment.end().clone();
                     current_segments.push(fragment);
                     interval_reports.push(CurveStringRegionTrimIntervalReport2 {
                         source_segment_index,
@@ -4942,6 +4964,8 @@ fn trim_curve_string_inside_region_with_hits(
                         output_curve_string_index: Some(output_curve_string_index),
                         output_segment_index: Some(output_segment_index),
                         output_segment_kind: Some(output_segment_kind),
+                        output_segment_start_point: Some(output_segment_start_point),
+                        output_segment_end_point: Some(output_segment_end_point),
                         status: RetainedTopologyStatus::NativeExact,
                         blocker: None,
                     });
@@ -4961,6 +4985,8 @@ fn trim_curve_string_inside_region_with_hits(
                         output_curve_string_index: None,
                         output_segment_index: None,
                         output_segment_kind: None,
+                        output_segment_start_point: None,
+                        output_segment_end_point: None,
                         status: RetainedTopologyStatus::NativeExact,
                         blocker: None,
                     });
@@ -4979,6 +5005,8 @@ fn trim_curve_string_inside_region_with_hits(
                         output_curve_string_index: None,
                         output_segment_index: None,
                         output_segment_kind: None,
+                        output_segment_start_point: None,
+                        output_segment_end_point: None,
                         status: RetainedTopologyStatus::Unsupported,
                         blocker: Some(UncertaintyReason::Boundary),
                     });

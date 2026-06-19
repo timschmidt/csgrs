@@ -3478,6 +3478,14 @@ fn curve_string_trim_inside_region_materializes_inside_window() {
         None
     );
     assert_eq!(
+        trimmed.report().interval_reports()[0].output_segment_start_point(),
+        None
+    );
+    assert_eq!(
+        trimmed.report().interval_reports()[0].output_segment_end_point(),
+        None
+    );
+    assert_eq!(
         trimmed.report().interval_reports()[1].range_start_point(),
         &p(0, 1)
     );
@@ -3512,6 +3520,14 @@ fn curve_string_trim_inside_region_materializes_inside_window() {
     assert_eq!(
         trimmed.report().interval_reports()[1].output_segment_kind(),
         Some(SegmentKind::Line)
+    );
+    assert_eq!(
+        trimmed.report().interval_reports()[1].output_segment_start_point(),
+        Some(&p(0, 1))
+    );
+    assert_eq!(
+        trimmed.report().interval_reports()[1].output_segment_end_point(),
+        Some(&p(4, 1))
     );
 
     assert_eq!(trimmed.curve_strings().len(), 1);
@@ -3679,6 +3695,33 @@ fn curve_string_trim_inside_region_splits_disconnected_inside_windows() {
     assert_eq!(trimmed.report().boundary_tested_pair_count(), 4);
     assert_eq!(trimmed.report().interval_candidate_count(), 5);
     assert_eq!(trimmed.report().interval_classification_count(), 5);
+    let output_intervals: Vec<_> = trimmed
+        .report()
+        .interval_reports()
+        .iter()
+        .filter(|interval| interval.location() == Some(RegionPointLocation::Inside))
+        .collect();
+    assert_eq!(output_intervals.len(), 2);
+    assert_eq!(output_intervals[0].output_curve_string_index(), Some(0));
+    assert_eq!(output_intervals[0].output_segment_index(), Some(0));
+    assert_eq!(
+        output_intervals[0].output_segment_start_point(),
+        Some(&p(0, 1))
+    );
+    assert_eq!(
+        output_intervals[0].output_segment_end_point(),
+        Some(&p(2, 1))
+    );
+    assert_eq!(output_intervals[1].output_curve_string_index(), Some(1));
+    assert_eq!(output_intervals[1].output_segment_index(), Some(0));
+    assert_eq!(
+        output_intervals[1].output_segment_start_point(),
+        Some(&p(4, 1))
+    );
+    assert_eq!(
+        output_intervals[1].output_segment_end_point(),
+        Some(&p(6, 1))
+    );
     assert_eq!(trimmed.curve_strings().len(), 2);
     assert_line(&trimmed.curve_strings()[0].segments()[0], p(0, 1), p(2, 1));
     assert_line(&trimmed.curve_strings()[1].segments()[0], p(4, 1), p(6, 1));
