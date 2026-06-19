@@ -112,6 +112,7 @@ pub struct BooleanBoundaryFragmentEmissionReport2 {
     keep_reversed_count: usize,
     boundary_needs_resolution_count: usize,
     directed_fragment_count: Option<usize>,
+    directed_source_segment_kind_counts: Option<SegmentKindCounts>,
     directed_fragment_kind_counts: Option<SegmentKindCounts>,
     directed_fragments: Vec<BooleanDirectedFragmentReport2>,
     unresolved_boundary_count: Option<usize>,
@@ -251,6 +252,8 @@ impl BooleanFragmentSelection {
         let directed_fragment_kind_counts =
             directed_boolean_fragment_kind_counts(&directed_fragments);
         let directed_fragment_reports = boolean_directed_fragment_reports(&directed_fragments);
+        let directed_source_segment_kind_counts =
+            boolean_directed_fragment_report_source_kind_counts(&directed_fragment_reports);
         let unresolved_boundary_count = unresolved_boundaries.len();
         match BooleanBoundaryFragmentSet::new(directed_fragments, unresolved_boundaries) {
             Ok(fragments) => Ok(BooleanBoundaryFragmentEmissionResult2 {
@@ -265,6 +268,7 @@ impl BooleanFragmentSelection {
                     boundary_needs_resolution_count: self
                         .count_action(BooleanFragmentAction::BoundaryNeedsResolution),
                     directed_fragment_count: Some(directed_fragment_count),
+                    directed_source_segment_kind_counts: Some(directed_source_segment_kind_counts),
                     directed_fragment_kind_counts: Some(directed_fragment_kind_counts),
                     directed_fragments: directed_fragment_reports,
                     unresolved_boundary_count: Some(unresolved_boundary_count),
@@ -315,6 +319,11 @@ impl BooleanBoundaryFragmentEmissionReport2 {
     /// Returns emitted directed fragment count when materialized.
     pub const fn directed_fragment_count(&self) -> Option<usize> {
         self.directed_fragment_count
+    }
+
+    /// Returns primitive-family counts for emitted source segments when materialized.
+    pub const fn directed_source_segment_kind_counts(&self) -> Option<SegmentKindCounts> {
+        self.directed_source_segment_kind_counts
     }
 
     /// Returns primitive-family counts for emitted directed fragments when materialized.
@@ -429,6 +438,7 @@ fn blocked_boolean_boundary_fragment_emission_result(
             boundary_needs_resolution_count: selection
                 .count_action(BooleanFragmentAction::BoundaryNeedsResolution),
             directed_fragment_count: None,
+            directed_source_segment_kind_counts: None,
             directed_fragment_kind_counts: None,
             directed_fragments: Vec::new(),
             unresolved_boundary_count: None,
@@ -459,6 +469,19 @@ fn boolean_directed_fragment_reports(
             },
         )
         .collect()
+}
+
+fn boolean_directed_fragment_report_source_kind_counts(
+    fragments: &[BooleanDirectedFragmentReport2],
+) -> SegmentKindCounts {
+    let mut counts = SegmentKindCounts::default();
+    for fragment in fragments {
+        match fragment.source_segment_kind {
+            SegmentKind::Line => counts.lines += 1,
+            SegmentKind::Arc => counts.arcs += 1,
+        }
+    }
+    counts
 }
 
 impl BooleanOp {

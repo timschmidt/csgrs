@@ -279,6 +279,16 @@ fn boolean_fragment_selection_emits_directed_boundary_fragments() {
         )
     );
     assert_eq!(
+        emitted_result
+            .report()
+            .directed_source_segment_kind_counts(),
+        Some(SegmentKindCounts {
+            lines: union.count_action(BooleanFragmentAction::KeepSourceDirection)
+                + union.count_action(BooleanFragmentAction::KeepReversed),
+            arcs: 0,
+        })
+    );
+    assert_eq!(
         emitted_result.report().directed_fragment_kind_counts(),
         Some(SegmentKindCounts {
             lines: union.count_action(BooleanFragmentAction::KeepSourceDirection)
