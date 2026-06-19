@@ -867,6 +867,24 @@ pub struct ExactCurveArrangementOutputRoleCache2 {
     buckets: Vec<ExactCurveArrangementOutputRoleBucket2>,
 }
 
+/// Final boundary output counts for one material/hole role.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ExactCurveArrangementOutputBoundaryRoleBucket2 {
+    role: RegionBoundaryContourRole2,
+    output_contour_count: usize,
+    output_segment_count: usize,
+}
+
+/// Final boundary output counts grouped by material/hole role.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ExactCurveArrangementOutputBoundaryRoleBucketCache2 {
+    bucket_count: usize,
+    output_contour_count: usize,
+    output_segment_count: usize,
+    max_segment_count: usize,
+    buckets: Vec<ExactCurveArrangementOutputBoundaryRoleBucket2>,
+}
+
 /// Final boundary output summary retained by an evaluated arrangement workspace.
 #[derive(Clone, Debug, PartialEq)]
 pub struct ExactCurveArrangementOutputBoundaryCache2 {
@@ -877,6 +895,7 @@ pub struct ExactCurveArrangementOutputBoundaryCache2 {
     hole_contour_count: usize,
     material_segment_count: usize,
     hole_segment_count: usize,
+    role_bucket_cache: ExactCurveArrangementOutputBoundaryRoleBucketCache2,
 }
 
 /// Retained exact ring-traversal evidence cached by an evaluated arrangement workspace.
@@ -5516,14 +5535,24 @@ impl ExactCurveArrangementOutputRoleCache2 {
 impl ExactCurveArrangementOutputBoundaryCache2 {
     fn from_region_build_report(report: &RegionLineSegmentRegionBuildReport2) -> Option<Self> {
         let boundary_build_report = report.boundary_build_report.as_ref()?;
+        let material_contour_count = boundary_build_report.material_contour_count()?;
+        let hole_contour_count = boundary_build_report.hole_contour_count()?;
+        let material_segment_count = boundary_build_report.material_segment_count()?;
+        let hole_segment_count = boundary_build_report.hole_segment_count()?;
         Some(Self {
             output_contour_count: boundary_build_report.output_contour_count()?,
             output_segment_count: boundary_build_report.output_segment_count()?,
             output_segment_kind_counts: report.output_boundary_segment_kind_counts?,
-            material_contour_count: boundary_build_report.material_contour_count()?,
-            hole_contour_count: boundary_build_report.hole_contour_count()?,
-            material_segment_count: boundary_build_report.material_segment_count()?,
-            hole_segment_count: boundary_build_report.hole_segment_count()?,
+            material_contour_count,
+            hole_contour_count,
+            material_segment_count,
+            hole_segment_count,
+            role_bucket_cache: ExactCurveArrangementOutputBoundaryRoleBucketCache2::new(
+                material_contour_count,
+                hole_contour_count,
+                material_segment_count,
+                hole_segment_count,
+            ),
         })
     }
 
@@ -5560,6 +5589,85 @@ impl ExactCurveArrangementOutputBoundaryCache2 {
     /// Returns hole boundary segment count.
     pub const fn hole_segment_count(&self) -> usize {
         self.hole_segment_count
+    }
+
+    /// Returns final boundary output counts grouped by material/hole role.
+    pub const fn role_bucket_cache(&self) -> &ExactCurveArrangementOutputBoundaryRoleBucketCache2 {
+        &self.role_bucket_cache
+    }
+}
+
+impl ExactCurveArrangementOutputBoundaryRoleBucketCache2 {
+    fn new(
+        material_contour_count: usize,
+        hole_contour_count: usize,
+        material_segment_count: usize,
+        hole_segment_count: usize,
+    ) -> Self {
+        Self {
+            bucket_count: 2,
+            output_contour_count: material_contour_count + hole_contour_count,
+            output_segment_count: material_segment_count + hole_segment_count,
+            max_segment_count: if material_segment_count > hole_segment_count {
+                material_segment_count
+            } else {
+                hole_segment_count
+            },
+            buckets: vec![
+                ExactCurveArrangementOutputBoundaryRoleBucket2 {
+                    role: RegionBoundaryContourRole2::Material,
+                    output_contour_count: material_contour_count,
+                    output_segment_count: material_segment_count,
+                },
+                ExactCurveArrangementOutputBoundaryRoleBucket2 {
+                    role: RegionBoundaryContourRole2::Hole,
+                    output_contour_count: hole_contour_count,
+                    output_segment_count: hole_segment_count,
+                },
+            ],
+        }
+    }
+
+    /// Returns the number of retained role buckets.
+    pub const fn bucket_count(&self) -> usize {
+        self.bucket_count
+    }
+
+    /// Returns total output contour count across role buckets.
+    pub const fn output_contour_count(&self) -> usize {
+        self.output_contour_count
+    }
+
+    /// Returns total output segment count across role buckets.
+    pub const fn output_segment_count(&self) -> usize {
+        self.output_segment_count
+    }
+
+    /// Returns the largest segment count for one output role bucket.
+    pub const fn max_segment_count(&self) -> usize {
+        self.max_segment_count
+    }
+
+    /// Returns role buckets in stable material, then hole order.
+    pub fn buckets(&self) -> &[ExactCurveArrangementOutputBoundaryRoleBucket2] {
+        &self.buckets
+    }
+}
+
+impl ExactCurveArrangementOutputBoundaryRoleBucket2 {
+    /// Returns the boundary contour role represented by this bucket.
+    pub const fn role(&self) -> RegionBoundaryContourRole2 {
+        self.role
+    }
+
+    /// Returns output contour count for this role.
+    pub const fn output_contour_count(&self) -> usize {
+        self.output_contour_count
+    }
+
+    /// Returns output segment count for this role.
+    pub const fn output_segment_count(&self) -> usize {
+        self.output_segment_count
     }
 }
 

@@ -2217,6 +2217,36 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
     assert_eq!(boundary_output_cache.hole_contour_count(), 0);
     assert_eq!(boundary_output_cache.material_segment_count(), 4);
     assert_eq!(boundary_output_cache.hole_segment_count(), 0);
+    let boundary_role_bucket_cache = boundary_output_cache.role_bucket_cache();
+    assert_eq!(boundary_role_bucket_cache.bucket_count(), 2);
+    assert_eq!(boundary_role_bucket_cache.output_contour_count(), 1);
+    assert_eq!(boundary_role_bucket_cache.output_segment_count(), 4);
+    assert_eq!(boundary_role_bucket_cache.max_segment_count(), 4);
+    assert_eq!(boundary_role_bucket_cache.buckets().len(), 2);
+    assert_eq!(
+        boundary_role_bucket_cache.buckets()[0].role(),
+        RegionBoundaryContourRole2::Material
+    );
+    assert_eq!(
+        boundary_role_bucket_cache.buckets()[0].output_contour_count(),
+        1
+    );
+    assert_eq!(
+        boundary_role_bucket_cache.buckets()[0].output_segment_count(),
+        4
+    );
+    assert_eq!(
+        boundary_role_bucket_cache.buckets()[1].role(),
+        RegionBoundaryContourRole2::Hole
+    );
+    assert_eq!(
+        boundary_role_bucket_cache.buckets()[1].output_contour_count(),
+        0
+    );
+    assert_eq!(
+        boundary_role_bucket_cache.buckets()[1].output_segment_count(),
+        0
+    );
     let role_cache = output_cache.role_cache().unwrap();
     assert_eq!(
         role_cache.role_report_count(),
@@ -2405,6 +2435,37 @@ fn exact_curve_arrangement_attempt_retains_output_role_containment() {
     assert_eq!(role_cache.role_report_count(), 2);
     assert_eq!(role_cache.material_contour_count(), 1);
     assert_eq!(role_cache.hole_contour_count(), 1);
+
+    let boundary_output_cache = output_cache.boundary_output_cache().unwrap();
+    let boundary_role_bucket_cache = boundary_output_cache.role_bucket_cache();
+    assert_eq!(boundary_role_bucket_cache.bucket_count(), 2);
+    assert_eq!(boundary_role_bucket_cache.output_contour_count(), 2);
+    assert_eq!(boundary_role_bucket_cache.output_segment_count(), 8);
+    assert_eq!(boundary_role_bucket_cache.max_segment_count(), 4);
+    assert_eq!(
+        boundary_role_bucket_cache.buckets()[0].role(),
+        RegionBoundaryContourRole2::Material
+    );
+    assert_eq!(
+        boundary_role_bucket_cache.buckets()[0].output_contour_count(),
+        1
+    );
+    assert_eq!(
+        boundary_role_bucket_cache.buckets()[0].output_segment_count(),
+        4
+    );
+    assert_eq!(
+        boundary_role_bucket_cache.buckets()[1].role(),
+        RegionBoundaryContourRole2::Hole
+    );
+    assert_eq!(
+        boundary_role_bucket_cache.buckets()[1].output_contour_count(),
+        1
+    );
+    assert_eq!(
+        boundary_role_bucket_cache.buckets()[1].output_segment_count(),
+        4
+    );
 
     let containment_cache = role_cache.role_containment_bucket_cache();
     assert_eq!(containment_cache.containing_contour_bucket_count(), 1);
@@ -3510,6 +3571,36 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
     assert_eq!(boundary_output_cache.hole_contour_count(), 0);
     assert_eq!(boundary_output_cache.material_segment_count(), 2);
     assert_eq!(boundary_output_cache.hole_segment_count(), 0);
+    let boundary_role_bucket_cache = boundary_output_cache.role_bucket_cache();
+    assert_eq!(boundary_role_bucket_cache.bucket_count(), 2);
+    assert_eq!(boundary_role_bucket_cache.output_contour_count(), 1);
+    assert_eq!(boundary_role_bucket_cache.output_segment_count(), 2);
+    assert_eq!(boundary_role_bucket_cache.max_segment_count(), 2);
+    assert_eq!(boundary_role_bucket_cache.buckets().len(), 2);
+    assert_eq!(
+        boundary_role_bucket_cache.buckets()[0].role(),
+        RegionBoundaryContourRole2::Material
+    );
+    assert_eq!(
+        boundary_role_bucket_cache.buckets()[0].output_contour_count(),
+        1
+    );
+    assert_eq!(
+        boundary_role_bucket_cache.buckets()[0].output_segment_count(),
+        2
+    );
+    assert_eq!(
+        boundary_role_bucket_cache.buckets()[1].role(),
+        RegionBoundaryContourRole2::Hole
+    );
+    assert_eq!(
+        boundary_role_bucket_cache.buckets()[1].output_contour_count(),
+        0
+    );
+    assert_eq!(
+        boundary_role_bucket_cache.buckets()[1].output_segment_count(),
+        0
+    );
     let role_cache = output_cache.role_cache().unwrap();
     assert_eq!(
         role_cache.role_report_count(),
