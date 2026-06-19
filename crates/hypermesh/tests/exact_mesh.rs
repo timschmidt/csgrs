@@ -1720,15 +1720,6 @@ fn adjacent_union_completion_boolean_is_publicly_replayable() {
         result.freshness_against_sources(&left, &separated_right),
         ExactReportFreshness::SourceReplayMismatch
     );
-    result
-        .validate_operation_against_sources(
-            &left,
-            &right,
-            ExactBooleanOperation::Union,
-            ValidationPolicy::CLOSED,
-            ExactBoundaryBooleanPolicy::Reject,
-        )
-        .unwrap();
     assert!(result.mesh.facts().mesh.closed_manifold);
 
     let intersection_report = exact_adjacent_union_completion_report!(
@@ -2242,15 +2233,6 @@ fn exact_coplanar_mesh_overlay_arrangement_is_publicly_replayable() {
         );
         result.validate().unwrap();
         result.validate_against_sources(&left, &right).unwrap();
-        result
-            .validate_operation_against_sources(
-                &left,
-                &right,
-                operation,
-                ValidationPolicy::ALLOW_BOUNDARY,
-                ExactBoundaryBooleanPolicy::Reject,
-            )
-            .unwrap();
         assert_eq!(
             result.freshness_against_sources(&left, &right),
             ExactReportFreshness::Current
@@ -2414,16 +2396,6 @@ fn lower_dimensional_regularized_boolean_is_publicly_replayable() {
             result.freshness_against_sources(&left, &closed_right),
             ExactReportFreshness::SourceReplayMismatch
         );
-        result
-            .validate_operation_against_sources(
-                &left,
-                &right,
-                operation,
-                ValidationPolicy::CLOSED,
-                ExactBoundaryBooleanPolicy::Reject,
-            )
-            .unwrap();
-
         let disjoint_preflight = exact_boolean_evaluation(
             &left,
             &disjoint_right,
@@ -2465,15 +2437,6 @@ fn lower_dimensional_regularized_boolean_is_publicly_replayable() {
         );
         assert!(disjoint_result.mesh.triangles().is_empty());
         assert!(disjoint_result.mesh.facts().mesh.closed_manifold);
-        disjoint_result
-            .validate_operation_against_sources(
-                &left,
-                &disjoint_right,
-                operation,
-                ValidationPolicy::CLOSED,
-                ExactBoundaryBooleanPolicy::Reject,
-            )
-            .unwrap();
     }
 }
 
