@@ -45,6 +45,38 @@ impl RegionContourKey {
     pub const fn new(side: RegionSide, role: RegionContourRole, index: usize) -> Self {
         Self { side, role, index }
     }
+
+    /// Returns the region side.
+    pub const fn side(self) -> RegionSide {
+        self.side
+    }
+
+    /// Returns the contour role in that region.
+    pub const fn role(self) -> RegionContourRole {
+        self.role
+    }
+
+    /// Returns the index within the role bin.
+    pub const fn index(self) -> usize {
+        self.index
+    }
+}
+
+impl RegionContourIntersection {
+    /// Returns the keyed contour in the first region.
+    pub const fn first(&self) -> RegionContourKey {
+        self.first
+    }
+
+    /// Returns the keyed contour in the second region.
+    pub const fn second(&self) -> RegionContourKey {
+        self.second
+    }
+
+    /// Returns normalized contour-level intersections for this contour pair.
+    pub const fn intersections(&self) -> &ContourIntersectionSet {
+        &self.intersections
+    }
 }
 
 /// Intersections between two keyed contours from a region-pair query.

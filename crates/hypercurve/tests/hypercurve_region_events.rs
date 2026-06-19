@@ -62,12 +62,17 @@ fn region_events_keep_material_and_hole_roles() {
     let material_key = RegionContourKey::new(RegionSide::First, RegionContourRole::Material, 0);
     let hole_key = RegionContourKey::new(RegionSide::First, RegionContourRole::Hole, 0);
     let cutter_key = RegionContourKey::new(RegionSide::Second, RegionContourRole::Material, 0);
+    assert_eq!(material_key.side(), RegionSide::First);
+    assert_eq!(material_key.role(), RegionContourRole::Material);
+    assert_eq!(material_key.index(), 0);
 
     assert!(events.pairs().iter().any(|pair| {
-        pair.first == material_key && pair.second == cutter_key && pair.intersections.len() == 2
+        pair.first() == material_key
+            && pair.second() == cutter_key
+            && pair.intersections().len() == 2
     }));
     assert!(events.pairs().iter().any(|pair| {
-        pair.first == hole_key && pair.second == cutter_key && pair.intersections.len() == 2
+        pair.first() == hole_key && pair.second() == cutter_key && pair.intersections().len() == 2
     }));
     assert_eq!(events.pairs_for_contour(cutter_key).count(), 2);
 }
@@ -210,11 +215,11 @@ fn region_event_broad_phase_skips_disjoint_contour_pairs() {
     assert_eq!(events.event_count(), 2);
     assert_eq!(events.len(), 1);
     assert_eq!(
-        events.pairs()[0].first,
+        events.pairs()[0].first(),
         RegionContourKey::new(RegionSide::First, RegionContourRole::Material, 0)
     );
     assert_eq!(
-        events.pairs()[0].second,
+        events.pairs()[0].second(),
         RegionContourKey::new(RegionSide::Second, RegionContourRole::Material, 0)
     );
 }
@@ -227,7 +232,7 @@ fn region_event_broad_phase_keeps_boundary_touching_contours() {
     let events = region.intersect_region(&cutter, &policy()).unwrap();
 
     assert_eq!(events.len(), 1);
-    assert!(!events.pairs()[0].intersections.is_empty());
+    assert!(!events.pairs()[0].intersections().is_empty());
 }
 
 #[test]
@@ -286,5 +291,5 @@ fn prepared_region_events_keep_boundary_touching_contours() {
         .unwrap();
 
     assert_eq!(events.len(), 1);
-    assert!(!events.pairs()[0].intersections.is_empty());
+    assert!(!events.pairs()[0].intersections().is_empty());
 }
