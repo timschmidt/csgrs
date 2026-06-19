@@ -7371,9 +7371,11 @@ fn validate_volumetric_arrangement_result_against_graph(
     else {
         return Err(ExactReportValidationError::SourceReplayMismatch);
     };
-    let mut replay = volumetric_arrangement_cell_complex_result(operation, materialized);
-    replay.replace_topology_assembly_report(result.topology_assembly_report().cloned());
-    replay.replace_region_ownership_report(result.region_ownership_report().cloned());
+    let replay = volumetric_arrangement_cell_complex_result(operation, materialized)
+        .with_gate_reports(
+            result.topology_assembly_report().cloned(),
+            result.region_ownership_report().cloned(),
+        );
     replay.validate()?;
     if result == &replay {
         Ok(())

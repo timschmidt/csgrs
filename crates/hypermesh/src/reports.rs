@@ -801,25 +801,9 @@ impl ExactBooleanResult {
         self.topology_assembly_report.as_ref()
     }
 
-    /// Replace retained topology assembly gate evidence.
-    pub(crate) fn replace_topology_assembly_report(
-        &mut self,
-        report: Option<ExactTopologyAssemblyReport>,
-    ) -> Option<ExactTopologyAssemblyReport> {
-        std::mem::replace(&mut self.topology_assembly_report, report)
-    }
-
     /// Return retained region ownership gate evidence, when present.
     pub(crate) fn region_ownership_report(&self) -> Option<&ExactRegionOwnershipReport> {
         self.region_ownership_report.as_ref()
-    }
-
-    /// Replace retained region ownership gate evidence.
-    pub(crate) fn replace_region_ownership_report(
-        &mut self,
-        report: Option<ExactRegionOwnershipReport>,
-    ) -> Option<ExactRegionOwnershipReport> {
-        std::mem::replace(&mut self.region_ownership_report, report)
     }
 
     /// Borrow the materialized exact output mesh.
