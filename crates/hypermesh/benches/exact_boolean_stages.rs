@@ -128,7 +128,7 @@ fn run_case(case: &BenchCase) {
         }));
     });
 
-    let mut attempt_workspace = retained_workspace_for_case(case, request);
+    let mut attempt_workspace = retained_workspace_for_case(case);
     attempt_workspace.evaluate(request).unwrap();
     time_stage(case, "attempt_topology_assembly_completion", || {
         let attempt = attempt_workspace
@@ -300,7 +300,7 @@ fn run_case(case: &BenchCase) {
     time_prepared_stage(
         case,
         "workspace_evaluation_from_retained_artifacts",
-        || retained_workspace_for_case(case, request),
+        || retained_workspace_for_case(case),
         |retained_workspace| {
             black_box(retained_workspace.evaluate(request).ok());
         },
@@ -309,7 +309,7 @@ fn run_case(case: &BenchCase) {
     time_prepared_stage(
         case,
         "workspace_materialize_ref_from_retained_artifacts",
-        || retained_workspace_for_case(case, request),
+        || retained_workspace_for_case(case),
         |retained_workspace| {
             black_box(retained_workspace.materialize_ref(request).ok());
         },
@@ -333,7 +333,7 @@ fn run_case(case: &BenchCase) {
         },
     );
 
-    let mut materialize_cache_workspace = retained_workspace_for_case(case, request);
+    let mut materialize_cache_workspace = retained_workspace_for_case(case);
     materialize_cache_workspace.materialize_ref(request).ok();
     time_stage(case, "workspace_materialization_cached", || {
         black_box(materialize_cache_workspace.materialize_ref(request).ok());
@@ -349,10 +349,7 @@ fn run_case(case: &BenchCase) {
     });
 }
 
-fn retained_workspace_for_case<'a>(
-    case: &'a BenchCase,
-    _request: ExactBooleanRequest,
-) -> ExactBooleanWorkspace<'a> {
+fn retained_workspace_for_case<'a>(case: &'a BenchCase) -> ExactBooleanWorkspace<'a> {
     ExactBooleanWorkspace::new(&case.left, &case.right)
 }
 
@@ -360,7 +357,7 @@ fn retained_workspace_with_evaluation_for_case<'a>(
     case: &'a BenchCase,
     request: ExactBooleanRequest,
 ) -> (ExactBooleanWorkspace<'a>, ExactBooleanRequest) {
-    let mut retained_workspace = retained_workspace_for_case(case, request);
+    let mut retained_workspace = retained_workspace_for_case(case);
     retained_workspace.evaluate(request).ok();
     (retained_workspace, request)
 }
