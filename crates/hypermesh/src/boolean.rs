@@ -2425,11 +2425,6 @@ impl ExactBooleanEvaluation {
             .is_certified_lower_dimensional_regularized_solid()
     }
 
-    /// Return whether graph extraction retained unknown events before policy checks.
-    pub fn graph_had_unknowns(&self) -> bool {
-        self.preflight.graph_had_unknowns()
-    }
-
     /// Return the number of split-region boundaries retained for classification.
     pub fn region_count(&self) -> usize {
         self.preflight.region_count()

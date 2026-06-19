@@ -4146,11 +4146,6 @@ fn validate_winding_readiness_against_sources_for_request(
 }
 
 impl ExactBooleanPreflight {
-    /// Return whether retained graph events contain explicit unknowns.
-    pub const fn graph_had_unknowns(&self) -> bool {
-        self.graph_had_unknowns
-    }
-
     /// Return the retained face-pair count.
     pub const fn retained_face_pairs(&self) -> usize {
         self.retained_face_pairs

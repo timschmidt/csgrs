@@ -3181,7 +3181,13 @@ fn exact_boolean_public_shortcuts_handle_disjoint_operands() {
             ExactBooleanOperation::Union,
             ValidationPolicy::ALLOW_BOUNDARY,
         ),
-        |preflight_evaluation| assert!(!preflight_evaluation.graph_had_unknowns()),
+        |preflight_evaluation| {
+            assert!(preflight_evaluation.is_certified());
+            assert!(
+                preflight_evaluation.materialized_result().is_some(),
+                "{preflight_evaluation:?}"
+            );
+        },
     );
 
     let union = exact_boolean_result(
