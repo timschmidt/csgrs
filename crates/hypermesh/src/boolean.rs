@@ -9688,6 +9688,30 @@ fn arrangement_cell_complex_already_materialized_winding_readiness(
     operation: ExactBooleanOperation,
 ) -> ExactWindingReadinessReport {
     let counts = retained_graph_counts(graph);
+    let (blocker_kind, coplanar_evidence) =
+        arrangement_materialized_readiness_blocker_kind_and_evidence(graph, left, right);
+    winding_readiness_report(
+        operation,
+        ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized,
+        graph.has_unknowns(),
+        graph.face_pairs.len(),
+        graph.event_count(),
+        0,
+        Vec::new(),
+        counts.into_blocker(blocker_kind),
+        None,
+        coplanar_evidence,
+    )
+}
+
+fn arrangement_materialized_readiness_blocker_kind_and_evidence(
+    graph: &super::graph::ExactIntersectionGraph,
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> (
+    ExactBooleanBlockerKind,
+    Option<CoplanarVolumetricCellEvidenceReport>,
+) {
     let coplanar_evidence =
         certified_arrangement_cell_complex_coplanar_evidence(graph, left, right);
     let blocker_kind = match coplanar_evidence.as_ref().map(|evidence| evidence.obstacle) {
@@ -9705,18 +9729,7 @@ fn arrangement_cell_complex_already_materialized_winding_readiness(
         }
         _ => ExactBooleanBlockerKind::NeedsWinding,
     };
-    winding_readiness_report(
-        operation,
-        ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized,
-        graph.has_unknowns(),
-        graph.face_pairs.len(),
-        graph.event_count(),
-        0,
-        Vec::new(),
-        counts.into_blocker(blocker_kind),
-        None,
-        coplanar_evidence,
-    )
+    (blocker_kind, coplanar_evidence)
 }
 
 /// Validate the retained graph/source-handle handoff for public reports.
@@ -10114,17 +10127,8 @@ fn winding_readiness_report_from_graph(
         )?
         .is_some()
     {
-        let coplanar_evidence =
-            certified_arrangement_cell_complex_coplanar_evidence(graph, left, right);
-        let blocker_kind = match coplanar_evidence.as_ref().map(|evidence| evidence.obstacle) {
-            Some(CoplanarVolumetricCellObstacle::BoundaryOnlyContact) => {
-                ExactBooleanBlockerKind::NeedsBoundaryPolicy
-            }
-            Some(obstacle) if obstacle.requires_coplanar_volumetric_cells() => {
-                ExactBooleanBlockerKind::NeedsCoplanarVolumetricCells
-            }
-            _ => ExactBooleanBlockerKind::NeedsWinding,
-        };
+        let (blocker_kind, coplanar_evidence) =
+            arrangement_materialized_readiness_blocker_kind_and_evidence(graph, left, right);
         let blocker = counts.into_blocker(blocker_kind);
         let (retained_face_pairs, retained_events, blocker, coplanar_evidence) =
             if coplanar_evidence.is_some()
@@ -10263,8 +10267,8 @@ fn winding_readiness_report_from_graph(
         ));
     }
     if arrangement_cell_complex_shortcut_materializes && boundary_policy_required {
-        let coplanar_evidence =
-            certified_arrangement_cell_complex_coplanar_evidence(graph, left, right);
+        let (blocker_kind, coplanar_evidence) =
+            arrangement_materialized_readiness_blocker_kind_and_evidence(graph, left, right);
         return Ok(winding_readiness_report(
             operation,
             ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized,
@@ -10273,7 +10277,7 @@ fn winding_readiness_report_from_graph(
             graph.event_count(),
             0,
             Vec::new(),
-            counts.into_blocker(ExactBooleanBlockerKind::NeedsBoundaryPolicy),
+            counts.into_blocker(blocker_kind),
             None,
             coplanar_evidence,
         ));
