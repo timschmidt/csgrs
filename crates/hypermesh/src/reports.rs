@@ -712,7 +712,8 @@ impl ExactBooleanResult {
     }
 
     /// Replace the declared production path for this result.
-    pub fn replace_kind(&mut self, kind: ExactBooleanResultKind) -> ExactBooleanResultKind {
+    #[cfg(test)]
+    pub(crate) fn replace_kind(&mut self, kind: ExactBooleanResultKind) -> ExactBooleanResultKind {
         std::mem::replace(&mut self.kind, kind)
     }
 
@@ -721,8 +722,8 @@ impl ExactBooleanResult {
         self.graph_had_unknowns
     }
 
-    /// Update whether graph extraction contained unknown events before policy checks.
-    pub fn set_graph_had_unknowns(&mut self, graph_had_unknowns: bool) {
+    #[cfg(test)]
+    pub(crate) fn set_graph_had_unknowns(&mut self, graph_had_unknowns: bool) {
         self.graph_had_unknowns = graph_had_unknowns;
     }
 
@@ -775,7 +776,7 @@ impl ExactBooleanResult {
     }
 
     /// Replace retained topology assembly gate evidence.
-    pub fn replace_topology_assembly_report(
+    pub(crate) fn replace_topology_assembly_report(
         &mut self,
         report: Option<ExactTopologyAssemblyReport>,
     ) -> Option<ExactTopologyAssemblyReport> {
@@ -788,7 +789,7 @@ impl ExactBooleanResult {
     }
 
     /// Replace retained region ownership gate evidence.
-    pub fn replace_region_ownership_report(
+    pub(crate) fn replace_region_ownership_report(
         &mut self,
         report: Option<ExactRegionOwnershipReport>,
     ) -> Option<ExactRegionOwnershipReport> {
