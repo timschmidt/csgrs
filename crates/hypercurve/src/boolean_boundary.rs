@@ -9,9 +9,9 @@ use crate::boolean::{
 };
 use crate::classify::is_zero;
 use crate::{
-    Classification, Contour2, CurveError, CurvePolicy, CurveResult, FillRule, RegionContourKey,
-    RegionContourRole, RegionSide, RetainedTopologyStatus, Segment2, SegmentKindCounts,
-    UncertaintyReason,
+    Classification, Contour2, CurveError, CurvePolicy, CurveResult, FillRule, ParamRange, Point2,
+    RegionContourKey, RegionContourRole, RegionSide, RetainedTopologyStatus, Segment2,
+    SegmentKindCounts, UncertaintyReason,
 };
 
 /// A selected fragment with geometry already oriented for result traversal.
@@ -21,6 +21,16 @@ pub struct DirectedBooleanFragment {
     pub key: crate::RegionContourKey,
     /// Index within [`crate::RegionContourFragments::fragments`].
     pub fragment_index: usize,
+    /// Source segment index in the original contour.
+    pub source_segment_index: usize,
+    /// Exact start point of the original source segment.
+    pub source_segment_start_point: Point2,
+    /// Exact end point of the original source segment.
+    pub source_segment_end_point: Point2,
+    /// Retained parameter interval on the source segment.
+    pub source_range: ParamRange,
+    /// True when `segment` is emitted opposite the source fragment traversal direction.
+    pub reversed: bool,
     /// Segment geometry in result traversal direction.
     pub segment: Segment2,
 }
@@ -869,6 +879,11 @@ impl BooleanBoundaryLoopSet {
                         index,
                     ),
                     fragment_index,
+                    source_segment_index: fragment_index,
+                    source_segment_start_point: segment.start().clone(),
+                    source_segment_end_point: segment.end().clone(),
+                    source_range: ParamRange::new(0.into(), 1.into()),
+                    reversed: false,
                     segment: segment.clone(),
                 })
                 .collect();

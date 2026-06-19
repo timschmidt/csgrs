@@ -220,6 +220,11 @@ impl BooleanFragmentSelection {
                     directed_fragments.push(DirectedBooleanFragment {
                         key: classification.key,
                         fragment_index: classification.fragment_index,
+                        source_segment_index: source.source_segment_index,
+                        source_segment_start_point: source.source_segment_start_point.clone(),
+                        source_segment_end_point: source.source_segment_end_point.clone(),
+                        source_range: source.source_range.clone(),
+                        reversed: classification.action == BooleanFragmentAction::KeepReversed,
                         segment,
                     });
                 }

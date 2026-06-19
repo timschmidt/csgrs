@@ -5,7 +5,7 @@ use hypercurve::{
     BooleanBoundaryLoopExtractionStage2, BooleanBoundaryLoopSet, BooleanFragmentAction,
     BooleanFragmentClassification, BooleanFragmentSelection, BooleanFragmentSelectionStage2,
     BooleanOp, BulgeVertex2, Classification, Contour2, CurveError, CurvePolicy,
-    DirectedBooleanFragment, FillRule, LineSeg2, Real, Region2, RegionContourKey,
+    DirectedBooleanFragment, FillRule, LineSeg2, ParamRange, Real, Region2, RegionContourKey,
     RegionContourRole, RegionPointLocation, RegionSide, Segment2, SegmentKindCounts,
     UncertaintyReason,
 };
@@ -58,10 +58,16 @@ fn directed_fragment(
     x1: i32,
     y1: i32,
 ) -> DirectedBooleanFragment {
+    let segment = line_segment(x0, y0, x1, y1);
     DirectedBooleanFragment {
         key: RegionContourKey::new(RegionSide::First, RegionContourRole::Material, 0),
         fragment_index,
-        segment: line_segment(x0, y0, x1, y1),
+        source_segment_index: fragment_index,
+        source_segment_start_point: segment.start().clone(),
+        source_segment_end_point: segment.end().clone(),
+        source_range: ParamRange::new(s(0), s(1)),
+        reversed: false,
+        segment,
     }
 }
 
@@ -293,6 +299,31 @@ fn boolean_fragment_selection_emits_directed_boundary_fragments() {
     );
     assert_eq!(emitted.unresolved_len(), 0);
     assert!(emitted.is_ready_for_traversal());
+    let emitted_first = &emitted.directed_fragments()[0];
+    let emitted_first_source = fragments
+        .fragments_for_contour(emitted_first.key)
+        .unwrap()
+        .fragments
+        .fragments()
+        .get(emitted_first.fragment_index)
+        .unwrap();
+    assert_eq!(
+        emitted_first.source_segment_index,
+        emitted_first_source.source_segment_index
+    );
+    assert_eq!(
+        emitted_first.source_segment_start_point,
+        emitted_first_source.source_segment_start_point
+    );
+    assert_eq!(
+        emitted_first.source_segment_end_point,
+        emitted_first_source.source_segment_end_point
+    );
+    assert_eq!(
+        emitted_first.source_range,
+        emitted_first_source.source_range
+    );
+    assert!(!emitted_first.reversed);
 
     let assembled = emitted.assemble_chains_with_report(&policy());
     assert!(assembled.report().status().is_native_exact());
@@ -566,6 +597,17 @@ fn boolean_fragment_selection_reverses_emitted_second_difference_fragments() {
 
     assert_eq!(directed.segment.start(), source.segment.end());
     assert_eq!(directed.segment.end(), source.segment.start());
+    assert_eq!(directed.source_segment_index, source.source_segment_index);
+    assert_eq!(
+        directed.source_segment_start_point,
+        source.source_segment_start_point
+    );
+    assert_eq!(
+        directed.source_segment_end_point,
+        source.source_segment_end_point
+    );
+    assert_eq!(directed.source_range, source.source_range);
+    assert!(directed.reversed);
 }
 
 #[test]
@@ -776,6 +818,11 @@ fn boolean_boundary_constructors_reject_zero_length_directed_fragments() {
     let zero = DirectedBooleanFragment {
         key: RegionContourKey::new(RegionSide::First, RegionContourRole::Material, 0),
         fragment_index: 0,
+        source_segment_index: 0,
+        source_segment_start_point: p(0, 0),
+        source_segment_end_point: p(0, 0),
+        source_range: ParamRange::new(s(0), s(1)),
+        reversed: false,
         segment: Segment2::Line(LineSeg2::new_unchecked(p(0, 0), p(0, 0))),
     };
 
@@ -910,24 +957,11 @@ fn boolean_boundary_loop_set_from_borrowed_contours_keeps_inputs_available() {
 
 #[test]
 fn boundary_chain_assembly_rejects_branch_points() {
-    let key = RegionContourKey::new(RegionSide::First, RegionContourRole::Material, 0);
     let fragments = BooleanBoundaryFragmentSet::new(
         vec![
-            DirectedBooleanFragment {
-                key,
-                fragment_index: 0,
-                segment: line_segment(0, 0, 1, 0),
-            },
-            DirectedBooleanFragment {
-                key,
-                fragment_index: 1,
-                segment: line_segment(1, 0, 2, 0),
-            },
-            DirectedBooleanFragment {
-                key,
-                fragment_index: 2,
-                segment: line_segment(1, 0, 1, 1),
-            },
+            directed_fragment(0, 0, 0, 1, 0),
+            directed_fragment(1, 1, 0, 2, 0),
+            directed_fragment(2, 1, 0, 1, 1),
         ],
         Vec::new(),
     )
@@ -959,19 +993,10 @@ fn boundary_chain_assembly_rejects_branch_points() {
 
 #[test]
 fn boundary_loop_extraction_rejects_open_chains() {
-    let key = RegionContourKey::new(RegionSide::First, RegionContourRole::Material, 0);
     let fragments = BooleanBoundaryFragmentSet::new(
         vec![
-            DirectedBooleanFragment {
-                key,
-                fragment_index: 0,
-                segment: line_segment(0, 0, 1, 0),
-            },
-            DirectedBooleanFragment {
-                key,
-                fragment_index: 1,
-                segment: line_segment(1, 0, 2, 0),
-            },
+            directed_fragment(0, 0, 0, 1, 0),
+            directed_fragment(1, 1, 0, 2, 0),
         ],
         Vec::new(),
     )
