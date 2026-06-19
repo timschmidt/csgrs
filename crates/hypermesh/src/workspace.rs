@@ -130,13 +130,15 @@ impl<'a> ExactBooleanWorkspace<'a> {
     ) -> Result<Option<usize>, MeshError> {
         let retained_attempt = self.validated_regularized_solid_arrangement_attempt(request)?;
         if let Some(index) = cached_by_request_index(&self.materializations, request) {
-            validate_replayable_result_for_cache(
-                self.left,
-                self.right,
-                request,
-                retained_attempt,
-                &self.materializations[index].1,
-            )?;
+            self.materializations[index]
+                .1
+                .validate_request_against_sources_with_retained_attempt(
+                    self.left,
+                    self.right,
+                    request,
+                    retained_attempt,
+                )
+                .map_err(workspace_report_validation_error)?;
             Ok(Some(index))
         } else {
             Ok(None)
@@ -409,13 +411,14 @@ impl<'a> ExactBooleanWorkspace<'a> {
 
         let result = self.materialize_uncached(request)?;
         let retained_attempt = self.validated_regularized_solid_arrangement_attempt(request)?;
-        validate_replayable_result_for_cache(
-            self.left,
-            self.right,
-            request,
-            retained_attempt,
-            &result,
-        )?;
+        result
+            .validate_request_against_sources_with_retained_attempt(
+                self.left,
+                self.right,
+                request,
+                retained_attempt,
+            )
+            .map_err(workspace_report_validation_error)?;
         self.materializations.push((request, result));
         let index = self.materializations.len() - 1;
         self.promote_evaluation_cache_from_materialization_index(request, index)?;
@@ -473,23 +476,6 @@ impl<'a> ExactBooleanWorkspace<'a> {
             }
         }
     }
-}
-
-fn validate_replayable_result_for_cache(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    request: ExactBooleanRequest,
-    retained_arrangement_attempt: Option<&ExactArrangementBooleanAttempt>,
-    result: &ExactBooleanResult,
-) -> Result<(), MeshError> {
-    result
-        .validate_request_against_sources_with_retained_attempt(
-            left,
-            right,
-            request,
-            retained_arrangement_attempt,
-        )
-        .map_err(workspace_report_validation_error)
 }
 
 fn cached_by_policy_index<T>(
@@ -1010,7 +996,10 @@ mod tests {
         );
         let relabelled = workspace.materializations[0].1.clone();
         assert!(
-            validate_replayable_result_for_cache(&left, &right, request, None, &relabelled)
+            relabelled
+                .validate_request_against_sources_with_retained_attempt(
+                    &left, &right, request, None
+                )
                 .is_err(),
             "cached result validation must reject relabelled operations"
         );
