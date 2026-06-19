@@ -23,6 +23,8 @@ use super::affine_solid::{
 use super::arrangement3d::{ExactArrangement, ExactTopologyAssemblyReport};
 #[cfg(test)]
 use super::boolean::refinement_report_from_graph;
+#[cfg(test)]
+use super::boolean::winding_readiness_report_for_request_from_graph;
 use super::boolean::{
     ExactArrangementBooleanAttempt, ExactBooleanOperation, ExactBooleanRequest,
     ExactBoundaryBooleanPolicy, adjacent_union_completion_certification,
@@ -36,11 +38,6 @@ use super::boolean::{
     replay_generic_arrangement_cell_complex_result, replay_open_surface_arrangement_result,
     replay_selected_region_boolean_result, same_surface_report_from_sources,
     volumetric_boundary_closure_report_from_graph, workspace_evaluation_for_replay,
-};
-#[cfg(test)]
-use super::boolean::{
-    not_named_planar_arrangement_report, planar_arrangement_report_from_graph,
-    winding_readiness_report_for_request_from_graph,
 };
 use super::bounds::AabbIntersectionKind;
 use super::cell_complex::{
@@ -4762,16 +4759,9 @@ impl ExactRefinementReport {
         if let Ok(evaluation) = workspace_evaluation_for_replay(left, right, request)
             && self == evaluation.certifications().refinement()
         {
-            Ok(())
-        } else {
-            let graph = validated_report_intersection_graph(left, right)?;
-            let replay = refinement_report_from_graph(&graph, self.operation);
-            if self == &replay {
-                Ok(())
-            } else {
-                Err(ExactReportValidationError::SourceReplayMismatch)
-            }
+            return Ok(());
         }
+        Err(ExactReportValidationError::SourceReplayMismatch)
     }
 
     /// Classify whether this retained refinement report is fresh.
@@ -5804,21 +5794,9 @@ impl ExactPlanarArrangementReport {
         if let Ok(evaluation) = workspace_evaluation_for_replay(left, right, request)
             && self == evaluation.certifications().planar_arrangement()
         {
-            Ok(())
-        } else {
-            let replay = if matches!(self.operation, ExactBooleanOperation::SelectedRegions(_)) {
-                not_named_planar_arrangement_report(self.operation)
-            } else {
-                let graph = validated_report_intersection_graph(left, right)?;
-                planar_arrangement_report_from_graph(&graph, left, right, self.operation)
-                    .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
-            };
-            if self == &replay {
-                Ok(())
-            } else {
-                Err(ExactReportValidationError::SourceReplayMismatch)
-            }
+            return Ok(());
         }
+        Err(ExactReportValidationError::SourceReplayMismatch)
     }
 }
 
