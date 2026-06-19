@@ -674,6 +674,10 @@ pub struct CurveStringCurveTrimHit2 {
     cutter_segment_index: usize,
     source_segment_kind: SegmentKind,
     cutter_segment_kind: SegmentKind,
+    source_segment_start_point: Point2,
+    source_segment_end_point: Point2,
+    cutter_segment_start_point: Point2,
+    cutter_segment_end_point: Point2,
     source_param: Real,
     cutter_param: Real,
     point: Point2,
@@ -724,10 +728,14 @@ pub struct CurveStringCurveTrimResult2 {
 pub struct CurveStringRegionTrimHit2 {
     source_segment_index: usize,
     source_segment_kind: SegmentKind,
+    source_segment_start_point: Point2,
+    source_segment_end_point: Point2,
     region_contour_role: RegionContourRole,
     region_contour_index: usize,
     region_segment_index: usize,
     region_segment_kind: SegmentKind,
+    region_segment_start_point: Point2,
+    region_segment_end_point: Point2,
     point: Point2,
     source_param: Real,
     region_param: Real,
@@ -3912,6 +3920,26 @@ impl CurveStringCurveTrimHit2 {
         self.cutter_segment_kind
     }
 
+    /// Returns the exact start point of the source segment that produced this hit.
+    pub const fn source_segment_start_point(&self) -> &Point2 {
+        &self.source_segment_start_point
+    }
+
+    /// Returns the exact end point of the source segment that produced this hit.
+    pub const fn source_segment_end_point(&self) -> &Point2 {
+        &self.source_segment_end_point
+    }
+
+    /// Returns the exact start point of the cutter segment that produced this hit.
+    pub const fn cutter_segment_start_point(&self) -> &Point2 {
+        &self.cutter_segment_start_point
+    }
+
+    /// Returns the exact end point of the cutter segment that produced this hit.
+    pub const fn cutter_segment_end_point(&self) -> &Point2 {
+        &self.cutter_segment_end_point
+    }
+
     /// Returns the exact affine parameter on the source segment.
     pub const fn source_param(&self) -> &Real {
         &self.source_param
@@ -4022,6 +4050,16 @@ impl CurveStringRegionTrimHit2 {
         self.source_segment_kind
     }
 
+    /// Returns the exact start point of the source curve-string segment.
+    pub const fn source_segment_start_point(&self) -> &Point2 {
+        &self.source_segment_start_point
+    }
+
+    /// Returns the exact end point of the source curve-string segment.
+    pub const fn source_segment_end_point(&self) -> &Point2 {
+        &self.source_segment_end_point
+    }
+
     /// Returns whether the hit came from a material or hole contour.
     pub const fn region_contour_role(&self) -> RegionContourRole {
         self.region_contour_role
@@ -4040,6 +4078,16 @@ impl CurveStringRegionTrimHit2 {
     /// Returns the primitive family of the region boundary segment.
     pub const fn region_segment_kind(&self) -> SegmentKind {
         self.region_segment_kind
+    }
+
+    /// Returns the exact start point of the region boundary segment.
+    pub const fn region_segment_start_point(&self) -> &Point2 {
+        &self.region_segment_start_point
+    }
+
+    /// Returns the exact end point of the region boundary segment.
+    pub const fn region_segment_end_point(&self) -> &Point2 {
+        &self.region_segment_end_point
     }
 
     /// Returns the exact boundary point witness.
@@ -5475,10 +5523,14 @@ fn push_region_trim_hit(
     hits.push(CurveStringRegionTrimHit2 {
         source_segment_index,
         source_segment_kind: source_segment.structural_facts().kind,
+        source_segment_start_point: source_segment.start().clone(),
+        source_segment_end_point: source_segment.end().clone(),
         region_contour_role: role,
         region_contour_index: contour_index,
         region_segment_index,
         region_segment_kind: region_segment.structural_facts().kind,
+        region_segment_start_point: region_segment.start().clone(),
+        region_segment_end_point: region_segment.end().clone(),
         point,
         source_param,
         region_param,
@@ -5854,15 +5906,17 @@ fn curve_trim_hit(
     point: Point2,
     kind: IntersectionKind,
 ) -> CurveStringCurveTrimHit2 {
+    let source_segment = &source.segments[event.a_segment_index];
+    let cutter_segment = &cutter.segments[event.b_segment_index];
     CurveStringCurveTrimHit2 {
         source_segment_index: event.a_segment_index,
         cutter_segment_index: event.b_segment_index,
-        source_segment_kind: source.segments[event.a_segment_index]
-            .structural_facts()
-            .kind,
-        cutter_segment_kind: cutter.segments[event.b_segment_index]
-            .structural_facts()
-            .kind,
+        source_segment_kind: source_segment.structural_facts().kind,
+        cutter_segment_kind: cutter_segment.structural_facts().kind,
+        source_segment_start_point: source_segment.start().clone(),
+        source_segment_end_point: source_segment.end().clone(),
+        cutter_segment_start_point: cutter_segment.start().clone(),
+        cutter_segment_end_point: cutter_segment.end().clone(),
         source_param,
         cutter_param,
         point,
