@@ -254,16 +254,6 @@ pub struct ExactArrangementBooleanAttempt {
 }
 
 impl ExactArrangementBooleanAttempt {
-    /// Return the operation attempted.
-    pub const fn operation(&self) -> ExactBooleanOperation {
-        self.operation
-    }
-
-    /// Return the regularization policy used by the arrangement pipeline.
-    pub const fn policy(&self) -> ExactRegularizationPolicy {
-        self.policy
-    }
-
     /// Return the output validation policy used by this attempt.
     pub const fn output_validation(&self) -> ValidationPolicy {
         self.output_validation

@@ -1545,13 +1545,6 @@ fn exact_open_surface_arrangement_is_publicly_replayable() {
             ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
             ExactRegularizationPolicy::REGULARIZED_SOLID,
             |attempt| {
-                assert!(
-                    attempt.operation() == operation
-                        && attempt.policy() == ExactRegularizationPolicy::REGULARIZED_SOLID
-                        && attempt.output_validation() == ValidationPolicy::ALLOW_BOUNDARY
-                        && attempt.validate().is_ok(),
-                    "{operation:?}: {attempt:?}"
-                );
                 assert_eq!(
                     attempt.output_validation(),
                     ValidationPolicy::ALLOW_BOUNDARY
@@ -1695,14 +1688,6 @@ fn arrangement_attempt_output_validation_is_publicly_replayable() {
                 assert_eq!(
                     boundary_attempt.output_validation(),
                     ValidationPolicy::ALLOW_BOUNDARY
-                );
-                assert!(
-                    boundary_attempt.operation() == operation
-                        && boundary_attempt.policy()
-                            == ExactRegularizationPolicy::REGULARIZED_SOLID
-                        && boundary_attempt.output_validation() == ValidationPolicy::ALLOW_BOUNDARY
-                        && boundary_attempt.validate().is_ok(),
-                    "{operation:?}: {boundary_attempt:?}"
                 );
                 boundary_attempt.validate().unwrap();
                 boundary_attempt
