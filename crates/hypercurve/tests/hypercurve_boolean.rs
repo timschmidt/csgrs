@@ -379,6 +379,13 @@ fn boolean_fragment_selection_emits_directed_boundary_fragments() {
         emitted.directed_len()
     );
     assert_eq!(
+        assembled.report().directed_source_segment_kind_counts(),
+        SegmentKindCounts {
+            lines: emitted.directed_len(),
+            arcs: 0,
+        }
+    );
+    assert_eq!(
         assembled.report().directed_fragment_kind_counts(),
         SegmentKindCounts {
             lines: emitted.directed_len(),

@@ -47,6 +47,7 @@ pub struct BooleanBoundaryFragmentSet {
 pub struct BooleanBoundaryChainAssemblyReport2 {
     stage: BooleanBoundaryChainAssemblyStage2,
     directed_fragment_count: usize,
+    directed_source_segment_kind_counts: SegmentKindCounts,
     directed_fragment_kind_counts: SegmentKindCounts,
     unresolved_boundary_count: usize,
     chain_count: Option<usize>,
@@ -339,6 +340,11 @@ impl BooleanBoundaryChainAssemblyReport2 {
     /// Returns the number of directed fragments supplied for traversal.
     pub const fn directed_fragment_count(&self) -> usize {
         self.directed_fragment_count
+    }
+
+    /// Returns primitive-family counts for directed source segments supplied for traversal.
+    pub const fn directed_source_segment_kind_counts(&self) -> SegmentKindCounts {
+        self.directed_source_segment_kind_counts
     }
 
     /// Returns primitive-family counts for directed fragments supplied for traversal.
@@ -1439,6 +1445,9 @@ fn decided_boolean_boundary_chain_assembly_result(
         report: BooleanBoundaryChainAssemblyReport2 {
             stage: BooleanBoundaryChainAssemblyStage2::ChainMaterialization,
             directed_fragment_count: source.directed_len(),
+            directed_source_segment_kind_counts: directed_boolean_fragment_kind_counts(
+                source.directed_fragments(),
+            ),
             directed_fragment_kind_counts: directed_boolean_fragment_kind_counts(
                 source.directed_fragments(),
             ),
@@ -1465,6 +1474,9 @@ fn blocked_boolean_boundary_chain_assembly_result(
         report: BooleanBoundaryChainAssemblyReport2 {
             stage,
             directed_fragment_count: source.directed_len(),
+            directed_source_segment_kind_counts: directed_boolean_fragment_kind_counts(
+                source.directed_fragments(),
+            ),
             directed_fragment_kind_counts: directed_boolean_fragment_kind_counts(
                 source.directed_fragments(),
             ),
