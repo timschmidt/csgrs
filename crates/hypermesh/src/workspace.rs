@@ -130,6 +130,18 @@ impl<'a> ExactBooleanWorkspace<'a> {
         policy: ExactRegularizationPolicy,
     ) -> Result<&ExactArrangement, MeshError> {
         if let Some(index) = cached_by_policy_index(&self.arrangements, policy) {
+            self.arrangements[index]
+                .1
+                .validate_against_sources_with_policy(self.left, self.right, policy)
+                .map_err(|blocker| {
+                    MeshError::one(MeshDiagnostic::new(
+                        Severity::Error,
+                        DiagnosticKind::UnsupportedExactOperation,
+                        format!(
+                            "exact boolean workspace arrangement cache failed replay: {blocker:?}"
+                        ),
+                    ))
+                })?;
             return Ok(&self.arrangements[index].1);
         }
 
