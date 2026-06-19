@@ -1075,7 +1075,6 @@ fn exact_closed_convex_boolean_is_publicly_replayable() {
         assert!(predicate(&result, operation), "{operation:?}: {result:?}");
         result.validate().unwrap();
         result.validate_against_sources(&left, &right).unwrap();
-        assert!(result.validate_against_sources(&left, &right).is_ok());
         assert!(
             result
                 .validate_against_sources(&left, &stale_open_right)
@@ -1365,8 +1364,6 @@ fn adjacent_union_completion_boolean_is_publicly_replayable() {
     );
     result.validate().unwrap();
     result.validate_against_sources(&left, &right).unwrap();
-
-    assert!(result.validate_against_sources(&left, &right).is_ok());
     assert!(
         result
             .validate_against_sources(&left, &separated_right)
@@ -1497,7 +1494,6 @@ fn exact_open_surface_arrangement_is_publicly_replayable() {
         );
         result.validate().unwrap();
         result.validate_against_sources(&left, &right).unwrap();
-        assert!(result.validate_against_sources(&left, &right).is_ok());
         with_exact_boolean_evaluation(
             &left,
             &right,
@@ -1635,7 +1631,6 @@ fn exact_selected_region_boolean_is_publicly_replayable() {
 
     result.validate().unwrap();
     result.validate_against_sources(&left, &right).unwrap();
-    assert!(result.validate_against_sources(&left, &right).is_ok());
     assert!(
         result
             .validate_against_sources(&left, &separated_right)
