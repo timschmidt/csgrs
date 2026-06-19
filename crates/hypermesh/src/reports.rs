@@ -4793,37 +4793,6 @@ impl ExactBooleanBlocker {
             Err(ExactReportValidationError::InvalidBlockerCounts)
         }
     }
-
-    /// Validate this blocker against source meshes that produced its graph counts.
-    ///
-    /// [`Self::validate_for_kind`] checks whether the stored counters justify a
-    /// requested blocker class. Source replay rebuilds the exact intersection
-    /// graph from `left` and `right`, recomputes those counters, and requires
-    /// this public blocker to match the replay for its retained kind. This is
-    /// and construction evidence that blocked the named boolean.
-    pub fn validate_against_sources(
-        &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-    ) -> Result<(), ExactReportValidationError> {
-        self.validate_for_kind(self.kind)?;
-        let graph = validated_report_intersection_graph(left, right)?;
-        let replay = ExactBooleanBlocker::from_graph(&graph, self.kind);
-        if replay.validate_for_kind(self.kind).is_ok() && self == &replay {
-            Ok(())
-        } else {
-            Err(ExactReportValidationError::SourceReplayMismatch)
-        }
-    }
-
-    /// Classify whether this retained blocker is fresh for the source meshes.
-    pub fn freshness_against_sources(
-        &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-    ) -> ExactReportFreshness {
-        exact_report_freshness(self.validate_against_sources(left, right))
-    }
 }
 
 /// Exact boolean preflight blocker kind.
@@ -7013,12 +6982,6 @@ mod tests {
             boundary_touching_report_from_graph(&graph, &open_left, &touching_right).unwrap();
         assert_eq!(
             boundary.freshness_against_sources(&open_left, &touching_right),
-            ExactReportFreshness::Current
-        );
-        assert_eq!(
-            boundary
-                .blocker
-                .freshness_against_sources(&open_left, &touching_right),
             ExactReportFreshness::Current
         );
 
