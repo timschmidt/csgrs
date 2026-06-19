@@ -316,11 +316,9 @@ impl<'a> ExactBooleanWorkspace<'a> {
             ExactBooleanEvaluation::from_parts(request, preflight, certifications, result)
                 .map_err(workspace_report_validation_error)?;
         self.evaluations.push((request, evaluation));
-        Ok(&self
-            .evaluations
-            .last()
-            .expect("evaluation cache was just populated")
-            .1)
+        let index = self.evaluations.len() - 1;
+        debug_assert_eq!(self.evaluations[index].0, request);
+        Ok(&self.evaluations[index].1)
     }
 
     /// Materializes `request`, reusing a cached certified evaluation when the
@@ -352,12 +350,9 @@ impl<'a> ExactBooleanWorkspace<'a> {
         &mut self,
         request: ExactBooleanRequest,
     ) -> Result<ExactBooleanResult, MeshError> {
-        if let Some(evaluation) = self
-            .evaluations
-            .iter()
-            .find(|(stored_request, _)| *stored_request == request)
-            .map(|(_, evaluation)| evaluation)
-            && let Some(result) = evaluation
+        if let Some(index) = cached_by_request_index(&self.evaluations, request)
+            && let Some(result) = self.evaluations[index]
+                .1
                 .replayable_materialized_result(self.left, self.right)
                 .map_err(workspace_report_validation_error)?
         {
