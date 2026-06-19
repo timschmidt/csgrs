@@ -2115,7 +2115,7 @@ fn exact_selected_region_boolean_is_publicly_replayable() {
     let selection = ExactRegionSelection::KeepAll;
     let validation = ValidationPolicy::ALLOW_BOUNDARY;
 
-    let result = exact_boolean_result(
+    let result = exact_boolean_evaluated_result(
         &left,
         &right,
         ExactBooleanRequest::new(
@@ -3626,15 +3626,7 @@ fn arrangement_cell_complex_request_materialization_is_publicly_replayable() {
         "{result:?}"
     );
     result.validate().unwrap();
-    result
-        .validate_operation_against_sources(
-            &left,
-            &right,
-            ExactBooleanOperation::Union,
-            ValidationPolicy::ALLOW_BOUNDARY,
-            ExactBoundaryBooleanPolicy::Reject,
-        )
-        .unwrap();
+    result.validate_against_sources(&left, &right).unwrap();
     assert!(
         result
             .validate_operation_against_sources(
