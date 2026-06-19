@@ -4688,16 +4688,6 @@ impl ExactBooleanBlocker {
         self.coplanar_overlapping_pairs
     }
 
-    /// Return whether this blocker is waiting on planar arrangement topology.
-    pub const fn requires_planar_arrangement(&self) -> bool {
-        matches!(self.kind, ExactBooleanBlockerKind::NeedsPlanarArrangement)
-    }
-
-    /// Return whether this blocker is waiting on certified winding/ownership.
-    pub const fn requires_winding(&self) -> bool {
-        matches!(self.kind, ExactBooleanBlockerKind::NeedsWinding)
-    }
-
     /// Return this exact graph-count blocker with a different semantic kind.
     pub(crate) fn into_blocker(mut self, kind: ExactBooleanBlockerKind) -> Self {
         self.kind = kind;

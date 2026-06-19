@@ -3134,7 +3134,9 @@ fn open_surface_disjoint_report_classifies_retained_coplanar_overlap_blocker() {
         ValidationPolicy::ALLOW_BOUNDARY,
     );
     with_exact_boolean_evaluation(&left, &right, request, |evaluation| {
-        assert!(evaluation.requires_planar_arrangement());
+        assert!(!evaluation.is_certified(), "{evaluation:?}");
+        assert!(evaluation.materialized_result().is_none(), "{evaluation:?}");
+        assert!(evaluation.has_blocker(), "{evaluation:?}");
         assert!(evaluation.retained_coplanar_overlapping_pairs() > 0);
         assert!(evaluation.retained_face_pairs() > 0);
         evaluation.validate_against_sources(&left, &right).unwrap();
@@ -3161,10 +3163,10 @@ fn planar_arrangement_report_classifies_noncoplanar_candidates_as_winding_blocke
         ValidationPolicy::ALLOW_BOUNDARY,
     );
     with_exact_boolean_evaluation(&left, &right, request, |evaluation| {
-        assert!(
-            evaluation.requires_winding() && evaluation.retained_candidate_pairs() > 0,
-            "{evaluation:?}"
-        );
+        assert!(!evaluation.is_certified(), "{evaluation:?}");
+        assert!(evaluation.materialized_result().is_none(), "{evaluation:?}");
+        assert!(evaluation.has_blocker(), "{evaluation:?}");
+        assert!(evaluation.retained_candidate_pairs() > 0, "{evaluation:?}");
         evaluation.validate_against_sources(&left, &right).unwrap();
     });
 }
@@ -4078,10 +4080,10 @@ fn boundary_touching_report_classifies_proper_crossing_as_winding_blocker() {
         ValidationPolicy::ALLOW_BOUNDARY,
     );
     with_exact_boolean_evaluation(&left, &right, request, |evaluation| {
-        assert!(
-            evaluation.requires_winding() && evaluation.retained_candidate_pairs() > 0,
-            "{evaluation:?}"
-        );
+        assert!(!evaluation.is_certified(), "{evaluation:?}");
+        assert!(evaluation.materialized_result().is_none(), "{evaluation:?}");
+        assert!(evaluation.has_blocker(), "{evaluation:?}");
+        assert!(evaluation.retained_candidate_pairs() > 0, "{evaluation:?}");
         evaluation.validate_against_sources(&left, &right).unwrap();
     });
 }

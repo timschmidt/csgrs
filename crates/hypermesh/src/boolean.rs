@@ -2435,20 +2435,6 @@ impl ExactBooleanEvaluation {
         self.preflight.blocker().is_some()
     }
 
-    /// Return whether this evaluation is blocked on planar arrangement topology.
-    pub fn requires_planar_arrangement(&self) -> bool {
-        self.preflight
-            .blocker()
-            .is_some_and(ExactBooleanBlocker::requires_planar_arrangement)
-    }
-
-    /// Return whether this evaluation is blocked on certified winding/ownership.
-    pub fn requires_winding(&self) -> bool {
-        self.preflight
-            .blocker()
-            .is_some_and(ExactBooleanBlocker::requires_winding)
-    }
-
     /// Return retained non-coplanar candidate face-pair count from the blocker.
     pub fn retained_candidate_pairs(&self) -> usize {
         self.preflight
