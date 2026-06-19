@@ -3349,8 +3349,7 @@ fn exact_volumetric_winding_coplanar_cap_is_publicly_certified() {
         );
         let closure = evaluation
             .certifications()
-            .volumetric_boundary_closure
-            .as_ref()
+            .volumetric_boundary_closure()
             .expect("coplanar closure evaluation should retain boundary closure evidence");
         assert!(
             closure.is_coplanar_closure_available(),

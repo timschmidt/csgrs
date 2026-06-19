@@ -992,7 +992,7 @@ pub struct ExactBooleanCertificationSet {
     /// Winding/inside-outside readiness for named volumetric output.
     pub winding_readiness: ExactWindingReadinessReport,
     /// Volumetric boundary closure readiness, when meaningful for the request.
-    pub volumetric_boundary_closure: Option<ExactVolumetricBoundaryClosureReport>,
+    volumetric_boundary_closure: Option<ExactVolumetricBoundaryClosureReport>,
     /// Arrangement/cell-complex materialization attempt.
     arrangement_attempt: Option<ExactArrangementBooleanAttempt>,
 }
@@ -1007,6 +1007,12 @@ impl ExactBooleanCertificationSet {
     /// Return the retained arrangement/cell-complex attempt mutably.
     pub fn arrangement_attempt_mut(&mut self) -> Option<&mut ExactArrangementBooleanAttempt> {
         self.arrangement_attempt.as_mut()
+    }
+
+    /// Return the retained volumetric boundary closure evidence, when the
+    /// request reached that certified shortcut.
+    pub fn volumetric_boundary_closure(&self) -> Option<&ExactVolumetricBoundaryClosureReport> {
+        self.volumetric_boundary_closure.as_ref()
     }
 
     pub(crate) fn from_graph_and_regularized_arrangement(
