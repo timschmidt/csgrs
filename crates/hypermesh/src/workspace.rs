@@ -373,9 +373,6 @@ impl<'a> ExactBooleanWorkspace<'a> {
         }
         let (certified_support, retained_result) = {
             let evaluation = self.evaluate(request)?;
-            evaluation
-                .validate()
-                .map_err(workspace_report_validation_error)?;
             let certified_support = evaluation
                 .preflight()
                 .is_certified()
