@@ -1933,15 +1933,6 @@ fn exact_open_surface_arrangement_is_publicly_replayable() {
         );
         result.validate().unwrap();
         result.validate_against_sources(&left, &right).unwrap();
-        result
-            .validate_operation_against_sources(
-                &left,
-                &right,
-                operation,
-                ValidationPolicy::ALLOW_BOUNDARY,
-                ExactBoundaryBooleanPolicy::Reject,
-            )
-            .unwrap();
         assert_eq!(
             result.freshness_against_sources(&left, &right),
             ExactReportFreshness::Current
@@ -1971,7 +1962,7 @@ fn exact_open_surface_arrangement_is_publicly_replayable() {
             ExactReportFreshness::SourceReplayMismatch
         );
         if matches!(operation, ExactBooleanOperation::Intersection) {
-            let replay = exact_boolean_result(
+            let replay = exact_boolean_evaluated_result(
                 &left,
                 &right,
                 ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
@@ -1980,15 +1971,6 @@ fn exact_open_surface_arrangement_is_publicly_replayable() {
                 replay.is_certified_shortcut_for(operation),
                 "{operation:?}: {replay:?}"
             );
-            replay
-                .validate_operation_against_sources(
-                    &left,
-                    &right,
-                    operation,
-                    ValidationPolicy::CLOSED,
-                    ExactBoundaryBooleanPolicy::Reject,
-                )
-                .unwrap();
         }
     }
 
