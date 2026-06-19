@@ -2,8 +2,9 @@ use hypercurve::{
     BulgeVertex2, Classification, Contour2, ContourChamferStage2, ContourClosurePredicatePath2,
     ContourClosureStage2, ContourFilletStage2, ContourLineMergeStage2, ContourPointLocation,
     CurveError, CurvePolicy, CurveString2, CurveStringChamferInputPath2,
-    CurveStringChamferPredicatePath2, CurveStringFilletInputPath2, FillRule, Real, Region2,
-    RegionPointLocation, Segment2, SegmentKind, SegmentKindCounts, UncertaintyReason,
+    CurveStringChamferPredicatePath2, CurveStringFilletInputPath2, CurveStringFilletPredicatePath2,
+    FillRule, Real, Region2, RegionPointLocation, Segment2, SegmentKind, SegmentKindCounts,
+    UncertaintyReason,
 };
 
 fn s(value: i32) -> Real {
@@ -711,6 +712,10 @@ fn contour_fillet_line_line_vertex_materializes_closed_contour() {
         fillet.report().stage(),
         ContourFilletStage2::ContourMaterialization
     );
+    assert_eq!(
+        fillet.report().predicate_path(),
+        CurveStringFilletPredicatePath2::LineLineTangentArc
+    );
     assert_eq!(fillet.report().vertex_index(), 1);
     assert_eq!(
         fillet.report().curve_string_report().input_path(),
@@ -817,6 +822,10 @@ fn contour_fillet_line_line_vertex_by_parameters_materializes_closed_contour() {
         fillet.report().stage(),
         ContourFilletStage2::ContourMaterialization
     );
+    assert_eq!(
+        fillet.report().predicate_path(),
+        CurveStringFilletPredicatePath2::LineLineTangentArc
+    );
     assert_eq!(fillet.report().vertex_index(), 1);
     assert_eq!(
         fillet.report().curve_string_report().input_path(),
@@ -895,6 +904,10 @@ fn contour_fillet_reports_wrong_orientation_boundary() {
     assert_eq!(
         fillet.report().stage(),
         ContourFilletStage2::CurveStringEdit
+    );
+    assert_eq!(
+        fillet.report().predicate_path(),
+        CurveStringFilletPredicatePath2::TangencyOrOrientationRejected
     );
     assert_eq!(fillet.report().blocker(), Some(UncertaintyReason::Boundary));
     assert_eq!(

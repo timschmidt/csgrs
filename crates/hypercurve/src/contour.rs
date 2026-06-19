@@ -9,9 +9,10 @@ use crate::classify::{classify_oriented_line, compare_reals};
 use crate::curve_string::merge_adjacent_line_segments;
 use crate::{
     BulgeVertex2, Classification, CurveError, CurvePolicy, CurveResult, CurveString2,
-    CurveStringChamferPredicatePath2, CurveStringChamferReport2, CurveStringFilletReport2,
-    CurveStringTrimPoint2, CurveStringTrimSegmentReport2, LineSeg2, LineSide, Point2,
-    RetainedTopologyStatus, Segment2, SegmentKind, SegmentKindCounts, UncertaintyReason,
+    CurveStringChamferPredicatePath2, CurveStringChamferReport2, CurveStringFilletPredicatePath2,
+    CurveStringFilletReport2, CurveStringTrimPoint2, CurveStringTrimSegmentReport2, LineSeg2,
+    LineSide, Point2, RetainedTopologyStatus, Segment2, SegmentKind, SegmentKindCounts,
+    UncertaintyReason,
 };
 
 /// Fill rule used when classifying contour interiors.
@@ -1170,6 +1171,11 @@ impl ContourFilletReport2 {
     /// Returns the retained open curve-string fillet report.
     pub const fn curve_string_report(&self) -> &CurveStringFilletReport2 {
         &self.curve_string_report
+    }
+
+    /// Returns the exact predicate path used by the delegated fillet edit.
+    pub const fn predicate_path(&self) -> CurveStringFilletPredicatePath2 {
+        self.curve_string_report.predicate_path()
     }
 
     /// Returns the previous source segment index at the filleted contour vertex.
