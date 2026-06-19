@@ -271,8 +271,8 @@ pub use split::{ContourSplitMap, ContourSplitMarkers, SegmentSplitMarker, Segmen
 #[cfg(feature = "svg")]
 pub use svg_io::{
     SvgContourImportReport2, SvgContourImportResult2, SvgPathExportReport2, SvgPathExportResult2,
-    SvgPathExportTarget2, SvgPathImportReport2, SvgPathImportResult2, SvgRegionImportReport2,
-    SvgRegionImportResult2, import_svg_contour_path_data_with_report,
+    SvgPathExportSegmentReport2, SvgPathExportTarget2, SvgPathImportReport2, SvgPathImportResult2,
+    SvgRegionImportReport2, SvgRegionImportResult2, import_svg_contour_path_data_with_report,
     import_svg_path_data_with_report, import_svg_region_path_data_with_report,
     retained_svg_import_record,
 };

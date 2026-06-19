@@ -2,7 +2,7 @@
 
 use hypercurve::{
     BulgeVertex2, CircularArc2, Contour2, ContourClosureStage2, CurveString2, FillRule, LineSeg2,
-    Point2, Real, Region2, RetainedImportFormat2, RetainedTopologyStatus, Segment2,
+    Point2, Real, Region2, RetainedImportFormat2, RetainedTopologyStatus, Segment2, SegmentKind,
     SvgPathExportTarget2, UncertaintyReason, import_svg_contour_path_data_with_report,
     import_svg_path_data_with_report, import_svg_region_path_data_with_report,
     retained_svg_import_record,
@@ -42,6 +42,29 @@ fn curve_string_svg_export_reports_display_boundary() {
         SvgPathExportTarget2::CurveString
     );
     assert_eq!(exported.report().segment_count(), 2);
+    assert_eq!(exported.report().segment_reports().len(), 2);
+    assert_eq!(exported.report().segment_reports()[0].carrier_index(), 0);
+    assert_eq!(exported.report().segment_reports()[0].segment_index(), 0);
+    assert_eq!(
+        exported.report().segment_reports()[0].segment_kind(),
+        SegmentKind::Line
+    );
+    assert_eq!(
+        exported.report().segment_reports()[0].start_point(),
+        &p(0, 0)
+    );
+    assert_eq!(exported.report().segment_reports()[0].end_point(), &p(2, 0));
+    assert_eq!(
+        exported.report().segment_reports()[0].status(),
+        RetainedTopologyStatus::DisplayOrExport
+    );
+    assert_eq!(exported.report().segment_reports()[1].carrier_index(), 0);
+    assert_eq!(exported.report().segment_reports()[1].segment_index(), 1);
+    assert_eq!(
+        exported.report().segment_reports()[1].start_point(),
+        &p(2, 0)
+    );
+    assert_eq!(exported.report().segment_reports()[1].end_point(), &p(2, 1));
     assert_eq!(exported.report().closed_subpath_count(), 0);
     assert_eq!(
         exported.report().status(),
@@ -74,6 +97,21 @@ fn region_svg_export_preserves_material_and_hole_counts() {
     assert_eq!(exported.report().curve_string_count(), 2);
     assert_eq!(exported.report().closed_subpath_count(), 2);
     assert_eq!(exported.report().segment_count(), 8);
+    assert_eq!(exported.report().segment_reports().len(), 8);
+    assert_eq!(exported.report().segment_reports()[0].carrier_index(), 0);
+    assert_eq!(exported.report().segment_reports()[0].segment_index(), 0);
+    assert_eq!(
+        exported.report().segment_reports()[0].start_point(),
+        &p(0, 0)
+    );
+    assert_eq!(exported.report().segment_reports()[0].end_point(), &p(4, 0));
+    assert_eq!(exported.report().segment_reports()[4].carrier_index(), 1);
+    assert_eq!(exported.report().segment_reports()[4].segment_index(), 0);
+    assert_eq!(
+        exported.report().segment_reports()[4].start_point(),
+        &p(1, 1)
+    );
+    assert_eq!(exported.report().segment_reports()[4].end_point(), &p(2, 1));
     assert!(exported.path_data().unwrap().contains("M 1 1"));
 }
 

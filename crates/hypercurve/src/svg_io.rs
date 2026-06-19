@@ -10,7 +10,7 @@
 use crate::{
     Contour2, ContourClosureReport2, CurvePolicy, CurveResult, CurveString2, FillRule, LineSeg2,
     Point2, Rational, Real, Region2, RegionBoundaryContourBuildReport2, RetainedImportFormat2,
-    RetainedImportRecord2, RetainedSourceTolerance2, RetainedTopologyStatus, Segment2,
+    RetainedImportRecord2, RetainedSourceTolerance2, RetainedTopologyStatus, Segment2, SegmentKind,
     SegmentKindCounts, UncertaintyReason,
 };
 use std::fmt::Write;
@@ -26,6 +26,17 @@ pub enum SvgPathExportTarget2 {
     Region,
 }
 
+/// Source provenance for one native segment emitted through SVG path export.
+#[derive(Clone, Debug, PartialEq)]
+pub struct SvgPathExportSegmentReport2 {
+    carrier_index: usize,
+    segment_index: usize,
+    segment_kind: SegmentKind,
+    start_point: Point2,
+    end_point: Point2,
+    status: RetainedTopologyStatus,
+}
+
 /// Report for exact SVG path emission.
 #[derive(Clone, Debug, PartialEq)]
 pub struct SvgPathExportReport2 {
@@ -35,6 +46,7 @@ pub struct SvgPathExportReport2 {
     curve_string_count: usize,
     segment_count: usize,
     segment_kind_counts: SegmentKindCounts,
+    segment_reports: Vec<SvgPathExportSegmentReport2>,
     closed_subpath_count: usize,
     status: RetainedTopologyStatus,
     lossy_boundary: bool,
@@ -193,6 +205,38 @@ impl SvgPathExportResult2 {
     }
 }
 
+impl SvgPathExportSegmentReport2 {
+    /// Returns the exported carrier/subpath index.
+    pub const fn carrier_index(&self) -> usize {
+        self.carrier_index
+    }
+
+    /// Returns the segment index within its exported carrier.
+    pub const fn segment_index(&self) -> usize {
+        self.segment_index
+    }
+
+    /// Returns the primitive family of the exported segment.
+    pub const fn segment_kind(&self) -> SegmentKind {
+        self.segment_kind
+    }
+
+    /// Returns the exact exported segment start point.
+    pub const fn start_point(&self) -> &Point2 {
+        &self.start_point
+    }
+
+    /// Returns the exact exported segment end point.
+    pub const fn end_point(&self) -> &Point2 {
+        &self.end_point
+    }
+
+    /// Returns retained status for this display/export segment.
+    pub const fn status(&self) -> RetainedTopologyStatus {
+        self.status
+    }
+}
+
 impl SvgPathExportReport2 {
     /// Returns the SVG path export target.
     pub const fn target(&self) -> SvgPathExportTarget2 {
@@ -222,6 +266,11 @@ impl SvgPathExportReport2 {
     /// Returns exported primitive-family counts.
     pub const fn segment_kind_counts(&self) -> SegmentKindCounts {
         self.segment_kind_counts
+    }
+
+    /// Returns per-segment native provenance emitted through SVG export.
+    pub fn segment_reports(&self) -> &[SvgPathExportSegmentReport2] {
+        &self.segment_reports
     }
 
     /// Returns the number of emitted `Z` subpath closures.
@@ -419,6 +468,7 @@ fn export_curve_string_svg_path(curve: &CurveString2) -> CurveResult<SvgPathExpo
     let mut path_data = String::new();
     append_curve_string_path(&mut path_data, curve, false)?;
     let segment_kind_counts = count_segment_kinds(curve.segments());
+    let segment_reports = svg_export_segment_reports(0, curve.segments());
     Ok(SvgPathExportResult2 {
         path_data: Some(path_data),
         report: SvgPathExportReport2 {
@@ -428,6 +478,7 @@ fn export_curve_string_svg_path(curve: &CurveString2) -> CurveResult<SvgPathExpo
             curve_string_count: 1,
             segment_count: curve.segments().len(),
             segment_kind_counts,
+            segment_reports,
             closed_subpath_count: 0,
             status: RetainedTopologyStatus::DisplayOrExport,
             lossy_boundary: false,
@@ -440,6 +491,7 @@ fn export_contour_svg_path(contour: &Contour2) -> CurveResult<SvgPathExportResul
     let mut path_data = String::new();
     append_segments_path(&mut path_data, contour.segments(), true)?;
     let segment_kind_counts = count_segment_kinds(contour.segments());
+    let segment_reports = svg_export_segment_reports(0, contour.segments());
     Ok(SvgPathExportResult2 {
         path_data: Some(path_data),
         report: SvgPathExportReport2 {
@@ -449,6 +501,7 @@ fn export_contour_svg_path(contour: &Contour2) -> CurveResult<SvgPathExportResul
             curve_string_count: 1,
             segment_count: contour.segments().len(),
             segment_kind_counts,
+            segment_reports,
             closed_subpath_count: 1,
             status: RetainedTopologyStatus::DisplayOrExport,
             lossy_boundary: false,
@@ -461,15 +514,21 @@ fn export_region_svg_path(region: &Region2) -> CurveResult<SvgPathExportResult2>
     let mut path_data = String::new();
     let mut segment_count = 0;
     let mut segment_kind_counts = SegmentKindCounts::default();
-    for contour in region
+    let mut segment_reports = Vec::new();
+    for (carrier_index, contour) in region
         .material_contours()
         .iter()
         .chain(region.hole_contours().iter())
+        .enumerate()
     {
         if !path_data.is_empty() {
             path_data.push(' ');
         }
         append_segments_path(&mut path_data, contour.segments(), true)?;
+        segment_reports.extend(svg_export_segment_reports(
+            carrier_index,
+            contour.segments(),
+        ));
         segment_count += contour.segments().len();
         add_segment_kind_counts(
             &mut segment_kind_counts,
@@ -487,6 +546,7 @@ fn export_region_svg_path(region: &Region2) -> CurveResult<SvgPathExportResult2>
             curve_string_count: contour_count,
             segment_count,
             segment_kind_counts,
+            segment_reports,
             closed_subpath_count: contour_count,
             status: RetainedTopologyStatus::DisplayOrExport,
             lossy_boundary: false,
@@ -589,6 +649,24 @@ fn count_segment_kinds(segments: &[Segment2]) -> SegmentKindCounts {
         }
     }
     counts
+}
+
+fn svg_export_segment_reports(
+    carrier_index: usize,
+    segments: &[Segment2],
+) -> Vec<SvgPathExportSegmentReport2> {
+    segments
+        .iter()
+        .enumerate()
+        .map(|(segment_index, segment)| SvgPathExportSegmentReport2 {
+            carrier_index,
+            segment_index,
+            segment_kind: segment.structural_facts().kind,
+            start_point: segment.start().clone(),
+            end_point: segment.end().clone(),
+            status: RetainedTopologyStatus::DisplayOrExport,
+        })
+        .collect()
 }
 
 fn add_segment_kind_counts(counts: &mut SegmentKindCounts, addend: SegmentKindCounts) {
