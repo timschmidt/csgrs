@@ -174,9 +174,9 @@ fn run_case(case: &BenchCase) {
         black_box(workspace.evaluate(request).ok());
     });
 
-    time_stage(case, "boolean_materialize_or_block", || {
+    time_stage(case, "boolean_materialize_ref_or_block", || {
         let mut workspace = ExactBooleanWorkspace::new(&case.left, &case.right);
-        black_box(workspace.materialize(request).ok());
+        black_box(workspace.materialize_ref(request).ok());
     });
 
     let mut workspace = ExactBooleanWorkspace::new(&case.left, &case.right);
