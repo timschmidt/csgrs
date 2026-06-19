@@ -133,7 +133,7 @@ fn exercise_mesh_arrangement(values: &[i64]) {
         }
         let request = ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY);
         let mut workspace = ExactBooleanWorkspace::new(&left, &right);
-        if let Ok(result) = workspace.materialize(request) {
+        if let Ok(result) = workspace.materialize_ref(request) {
             let _ = result.validate();
         }
     }

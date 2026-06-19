@@ -388,6 +388,36 @@ impl<'a> ExactBooleanWorkspace<'a> {
         self.store_materialization_and_promote_evaluation(request, result)
     }
 
+    /// Materializes `request` and returns the retained replayable result by
+    /// borrow.
+    ///
+    /// This is the preferred workspace API when callers can keep using the
+    /// session: it validates cached artifacts exactly like [`Self::materialize`]
+    /// while avoiding a result clone after the materialization is retained.
+    pub fn materialize_ref(
+        &mut self,
+        request: ExactBooleanRequest,
+    ) -> Result<&ExactBooleanResult, MeshError> {
+        if let Some(result) = cached_retained_materialization(
+            &self.materializations,
+            self.left,
+            self.right,
+            request,
+            self.validated_regularized_solid_arrangement_attempt(request)?,
+        )? {
+            self.promote_evaluation_cache_from_materialization(request, &result)?;
+            let index = cached_by_request_index(&self.materializations, request)
+                .expect("validated materialization cache entry must still exist");
+            return Ok(&self.materializations[index].1);
+        }
+
+        self.materialize(request)?;
+        let index = cached_by_request_index(&self.materializations, request).ok_or_else(|| {
+            workspace_report_validation_error(ExactReportValidationError::SourceReplayMismatch)
+        })?;
+        Ok(&self.materializations[index].1)
+    }
+
     fn try_materialize_certified_support(
         &self,
         request: ExactBooleanRequest,
@@ -1018,6 +1048,10 @@ mod tests {
         assert_eq!(workspace.materializations[0].1, evaluated_result);
         assert_eq!(workspace.materialize(request).unwrap(), evaluated_result);
         assert_eq!(workspace.materializations.len(), 1);
+        let borrowed = workspace.materialize_ref(request).unwrap() as *const ExactBooleanResult;
+        let cached = &workspace.materializations[0].1 as *const ExactBooleanResult;
+        assert_eq!(borrowed, cached);
+        assert_eq!(workspace.materializations.len(), 1);
     }
 
     #[test]
@@ -1061,6 +1095,10 @@ mod tests {
         assert!(
             workspace.materialize(request).is_err(),
             "cached materialization must match the request operation before reuse"
+        );
+        assert!(
+            workspace.materialize_ref(request).is_err(),
+            "borrowed materialization must validate cached results before reuse"
         );
     }
 
