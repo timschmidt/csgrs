@@ -357,16 +357,23 @@ impl<'a> ExactBooleanWorkspace<'a> {
         {
             return Ok(result);
         }
-        let evaluation = self.evaluate(request)?.clone();
-        evaluation
-            .validate()
-            .map_err(workspace_report_validation_error)?;
-        if evaluation.preflight().is_certified() {
-            if let Some(result) = evaluation.materialized_result().cloned() {
+        let (certified_support, retained_result) = {
+            let evaluation = self.evaluate(request)?;
+            evaluation
+                .validate()
+                .map_err(workspace_report_validation_error)?;
+            let certified_support = evaluation
+                .preflight()
+                .is_certified()
+                .then_some(evaluation.preflight().support);
+            let retained_result = evaluation.materialized_result().cloned();
+            (certified_support, retained_result)
+        };
+        if let Some(support) = certified_support {
+            if let Some(result) = retained_result {
                 return Ok(result);
             }
-            if evaluation.preflight().support
-                == ExactBooleanSupport::CertifiedArrangementCellComplex
+            if support == ExactBooleanSupport::CertifiedArrangementCellComplex
                 && self
                     .validated_regularized_solid_arrangement_attempt(request)?
                     .is_none()
@@ -374,7 +381,7 @@ impl<'a> ExactBooleanWorkspace<'a> {
                 self.arrangement_attempt(request, ExactRegularizationPolicy::REGULARIZED_SOLID)?;
             }
             let result = self
-                .try_materialize_certified_support(request, evaluation.preflight().support)?
+                .try_materialize_certified_support(request, support)?
                 .ok_or_else(|| {
                     workspace_report_validation_error(
                         ExactReportValidationError::StatusEvidenceMismatch,

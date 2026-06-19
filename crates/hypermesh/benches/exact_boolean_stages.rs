@@ -2,8 +2,8 @@ use std::hint::black_box;
 use std::time::{Duration, Instant};
 
 use hypermesh::{
-    ExactArrangementBooleanAttempt, ExactBooleanEvaluation, ExactBooleanOperation,
-    ExactBooleanRequest, ExactBooleanWorkspace, ExactMesh, ValidationPolicy,
+    ExactArrangementBooleanAttempt, ExactBooleanOperation, ExactBooleanRequest,
+    ExactBooleanWorkspace, ExactMesh, ValidationPolicy,
 };
 
 struct BenchCase {
@@ -191,9 +191,9 @@ fn run_case(case: &BenchCase) {
     time_prepared_stage(
         case,
         "workspace_validate_evaluation_with_coplanar_volumetric_evidence",
-        || retained_workspace_and_evaluation_for_case(case, request),
-        |(_retained_workspace, evaluation)| {
-            if let Some(evaluation) = evaluation.as_ref() {
+        || retained_workspace_with_evaluation_for_case(case, request),
+        |retained| {
+            if let Some(evaluation) = retained.0.evaluate(retained.1).ok() {
                 if evaluation.has_coplanar_volumetric_evidence() {
                     black_box((
                         evaluation.requires_coplanar_volumetric_cells(),
@@ -307,81 +307,81 @@ fn run_case(case: &BenchCase) {
     time_prepared_stage(
         case,
         "workspace_validate_evaluation_from_retained_artifacts",
-        || retained_workspace_and_evaluation_for_case(case, request),
-        |(_retained_workspace, evaluation)| {
-            black_box(validate_retained_evaluation_for_case(case, evaluation));
+        || retained_workspace_with_evaluation_for_case(case, request),
+        |retained| {
+            black_box(validate_retained_evaluation_for_case(case, retained));
         },
     );
 
     time_prepared_stage(
         case,
         "workspace_validate_evaluation_with_adjacent_union_retained",
-        || retained_workspace_and_evaluation_for_case(case, request),
-        |(_retained_workspace, evaluation)| {
-            black_box(validate_retained_evaluation_for_case(case, evaluation));
+        || retained_workspace_with_evaluation_for_case(case, request),
+        |retained| {
+            black_box(validate_retained_evaluation_for_case(case, retained));
         },
     );
 
     time_prepared_stage(
         case,
         "workspace_validate_evaluation_with_identical_retained",
-        || retained_workspace_and_evaluation_for_case(case, request),
-        |(_retained_workspace, evaluation)| {
-            black_box(validate_retained_evaluation_for_case(case, evaluation));
+        || retained_workspace_with_evaluation_for_case(case, request),
+        |retained| {
+            black_box(validate_retained_evaluation_for_case(case, retained));
         },
     );
 
     time_prepared_stage(
         case,
         "workspace_validate_evaluation_with_same_surface_retained",
-        || retained_workspace_and_evaluation_for_case(case, request),
-        |(_retained_workspace, evaluation)| {
-            black_box(validate_retained_evaluation_for_case(case, evaluation));
+        || retained_workspace_with_evaluation_for_case(case, request),
+        |retained| {
+            black_box(validate_retained_evaluation_for_case(case, retained));
         },
     );
 
     time_prepared_stage(
         case,
         "workspace_validate_evaluation_with_boundary_touching_retained",
-        || retained_workspace_and_evaluation_for_case(case, request),
-        |(_retained_workspace, evaluation)| {
-            black_box(validate_retained_evaluation_for_case(case, evaluation));
+        || retained_workspace_with_evaluation_for_case(case, request),
+        |retained| {
+            black_box(validate_retained_evaluation_for_case(case, retained));
         },
     );
 
     time_prepared_stage(
         case,
         "workspace_validate_evaluation_with_open_surface_disjoint_retained",
-        || retained_workspace_and_evaluation_for_case(case, request),
-        |(_retained_workspace, evaluation)| {
-            black_box(validate_retained_evaluation_for_case(case, evaluation));
+        || retained_workspace_with_evaluation_for_case(case, request),
+        |retained| {
+            black_box(validate_retained_evaluation_for_case(case, retained));
         },
     );
 
     time_prepared_stage(
         case,
         "workspace_validate_evaluation_with_boundary_closure_retained",
-        || retained_workspace_and_evaluation_for_case(case, request),
-        |(_retained_workspace, evaluation)| {
-            black_box(validate_retained_evaluation_for_case(case, evaluation));
+        || retained_workspace_with_evaluation_for_case(case, request),
+        |retained| {
+            black_box(validate_retained_evaluation_for_case(case, retained));
         },
     );
 
     time_prepared_stage(
         case,
         "workspace_validate_evaluation_with_winding_readiness_retained",
-        || retained_workspace_and_evaluation_for_case(case, request),
-        |(_retained_workspace, evaluation)| {
-            black_box(validate_retained_evaluation_for_case(case, evaluation));
+        || retained_workspace_with_evaluation_for_case(case, request),
+        |retained| {
+            black_box(validate_retained_evaluation_for_case(case, retained));
         },
     );
 
     time_prepared_stage(
         case,
         "workspace_validate_evaluation_with_planar_arrangement_retained",
-        || retained_workspace_and_evaluation_for_case(case, request),
-        |(_retained_workspace, evaluation)| {
-            black_box(validate_retained_evaluation_for_case(case, evaluation));
+        || retained_workspace_with_evaluation_for_case(case, request),
+        |retained| {
+            black_box(validate_retained_evaluation_for_case(case, retained));
         },
     );
 
@@ -406,30 +406,18 @@ fn run_case(case: &BenchCase) {
     time_prepared_stage(
         case,
         "evaluation_validate_source_replay",
-        || retained_workspace_and_evaluation_for_case(case, request),
-        |(_retained_workspace, evaluation)| {
-            if let Some(evaluation) = evaluation.as_ref() {
-                black_box(
-                    evaluation
-                        .validate_against_sources(&case.left, &case.right)
-                        .ok(),
-                );
-            }
+        || retained_workspace_with_evaluation_for_case(case, request),
+        |retained| {
+            black_box(validate_retained_evaluation_for_case(case, retained));
         },
     );
 
     time_prepared_stage(
         case,
         "evaluation_validate_retained_replay",
-        || retained_workspace_and_evaluation_for_case(case, request),
-        |(_retained_workspace, evaluation)| {
-            if let Some(evaluation) = evaluation.as_ref() {
-                black_box(
-                    evaluation
-                        .validate_against_sources(&case.left, &case.right)
-                        .ok(),
-                );
-            }
+        || retained_workspace_with_evaluation_for_case(case, request),
+        |retained| {
+            black_box(validate_retained_evaluation_for_case(case, retained));
         },
     );
 
@@ -456,21 +444,23 @@ fn retained_workspace_for_case<'a>(
     ExactBooleanWorkspace::new(&case.left, &case.right)
 }
 
-fn retained_workspace_and_evaluation_for_case<'a>(
+fn retained_workspace_with_evaluation_for_case<'a>(
     case: &'a BenchCase,
     request: ExactBooleanRequest,
-) -> (ExactBooleanWorkspace<'a>, Option<ExactBooleanEvaluation>) {
+) -> (ExactBooleanWorkspace<'a>, ExactBooleanRequest) {
     let mut retained_workspace = retained_workspace_for_case(case, request);
-    let evaluation = retained_workspace.evaluate(request).ok().cloned();
-    (retained_workspace, evaluation)
+    retained_workspace.evaluate(request).ok();
+    (retained_workspace, request)
 }
 
-fn validate_retained_evaluation_for_case(
+fn validate_retained_evaluation_for_case<'a>(
     case: &BenchCase,
-    evaluation: &Option<ExactBooleanEvaluation>,
+    retained: &mut (ExactBooleanWorkspace<'a>, ExactBooleanRequest),
 ) -> Option<()> {
-    evaluation
-        .as_ref()?
+    retained
+        .0
+        .evaluate(retained.1)
+        .ok()?
         .validate_against_sources(&case.left, &case.right)
         .ok()
 }
