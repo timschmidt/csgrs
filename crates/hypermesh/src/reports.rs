@@ -732,11 +732,6 @@ impl ExactBooleanResult {
         &self.region_classifications
     }
 
-    /// Borrow retained split-region plane classifications mutably.
-    pub fn region_classifications_mut(&mut self) -> &mut [FaceRegionPlaneClassification] {
-        &mut self.region_classifications
-    }
-
     /// Borrow retained exact projected triangulations.
     pub fn triangulations(&self) -> &[FaceRegionTriangulation] {
         &self.triangulations
@@ -745,11 +740,6 @@ impl ExactBooleanResult {
     /// Borrow the retained exact output assembly plan.
     pub fn assembly(&self) -> &ExactBooleanAssemblyPlan {
         &self.assembly
-    }
-
-    /// Borrow the retained exact output assembly plan mutably.
-    pub fn assembly_mut(&mut self) -> &mut ExactBooleanAssemblyPlan {
-        &mut self.assembly
     }
 
     /// Replace the retained exact output assembly plan.
@@ -763,11 +753,6 @@ impl ExactBooleanResult {
     /// Borrow retained volumetric triangle classifications.
     pub fn volumetric_classifications(&self) -> &[ExactVolumetricRegionClassification] {
         &self.volumetric_classifications
-    }
-
-    /// Borrow retained volumetric triangle classifications mutably.
-    pub fn volumetric_classifications_mut(&mut self) -> &mut [ExactVolumetricRegionClassification] {
-        &mut self.volumetric_classifications
     }
 
     /// Return retained topology assembly gate evidence, when present.

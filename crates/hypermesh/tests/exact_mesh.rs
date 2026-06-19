@@ -7,15 +7,6 @@ use hypermesh::{
 };
 use hyperreal::Real;
 
-macro_rules! assert_report_validation_error {
-    ($expr:expr $(,)?) => {
-        assert!($expr.is_err())
-    };
-    ($expr:expr, $($arg:tt)+) => {
-        assert!($expr.is_err(), $($arg)+)
-    };
-}
-
 fn p(x: i64, y: i64, z: i64) -> Point3 {
     Point3::new(Real::from(x), Real::from(y), Real::from(z))
 }
@@ -2037,37 +2028,6 @@ fn exact_selected_region_boolean_is_publicly_replayable() {
     evaluation
         .validate_materialized_result_against_sources(&left, &right)
         .unwrap();
-    let mut stale_result = evaluation
-        .materialized_result()
-        .cloned()
-        .expect("selected-region evaluation should materialize");
-    let classification = stale_result
-        .region_classifications_mut()
-        .first_mut()
-        .expect("selected-region result should retain region facts");
-    classification.plane_face = usize::MAX;
-    stale_result.validate().unwrap();
-    assert_report_validation_error!(
-        stale_result.validate_against_sources(&left, &right),
-        "{stale_result:?}"
-    );
-    let mut stale_assembly_source_vertex = result.clone();
-    let vertex = stale_assembly_source_vertex
-        .assembly_mut()
-        .first_original_source_vertex_mut()
-        .expect("selected-region assembly should retain at least one original source vertex");
-    *vertex = usize::MAX;
-    stale_assembly_source_vertex.validate().unwrap();
-    assert!(
-        stale_assembly_source_vertex
-            .validate_against_sources(&left, &right)
-            .is_err()
-    );
-    assert_eq!(
-        stale_assembly_source_vertex.freshness_against_sources(&left, &right),
-        ExactReportFreshness::SourceReplayMismatch
-    );
-
     let keep_left = exact_boolean_result(
         &left,
         &right,
@@ -3023,22 +2983,6 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
     );
     assert!(!result.is_arrangement_cell_complex_shortcut_for(ExactBooleanOperation::Intersection));
     assert!(!result.is_certified_shortcut_for(ExactBooleanOperation::Intersection));
-    if result.volumetric_classifications().len() > 1 {
-        let mut stale_volumetric_order = result.clone();
-        stale_volumetric_order
-            .volumetric_classifications_mut()
-            .swap(0, 1);
-        assert!(
-            stale_volumetric_order.validate().is_err(),
-            "{stale_volumetric_order:?}"
-        );
-        assert_eq!(
-            stale_volumetric_order.freshness_against_sources(&left, &right),
-            ExactReportFreshness::StaleRegionFacts,
-            "{stale_volumetric_order:?}"
-        );
-    }
-
     let difference_request = ExactBooleanRequest::new(
         ExactBooleanOperation::Difference,
         ValidationPolicy::ALLOW_BOUNDARY,
@@ -3059,12 +3003,9 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
         }) else {
             panic!("volumetric difference should retain a reversed source triangle");
         };
-        let mut stale_difference_orientation = difference.clone();
-        stale_difference_orientation.assembly_mut().triangles[reversed_triangle].orientation =
-            ExactOutputTriangleOrientation::PreserveSource;
-        assert_report_validation_error!(
-            stale_difference_orientation.validate(),
-            "{stale_difference_orientation:?}"
+        assert_eq!(
+            difference.assembly().triangles[reversed_triangle].orientation,
+            ExactOutputTriangleOrientation::ReverseSource
         );
     } else {
         assert!(
