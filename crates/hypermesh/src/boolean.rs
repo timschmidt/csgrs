@@ -9524,6 +9524,7 @@ fn boolean_boundary_touching_meshes_from_graph(
     )
 }
 
+#[cfg(test)]
 pub(crate) fn winding_readiness_report_for_request_from_graph(
     graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
@@ -13518,11 +13519,9 @@ mod tests {
             ExactBooleanOperation::Intersection,
             ExactBooleanOperation::Difference,
         ] {
-            let readiness = test_winding_readiness(
-                ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
-                &left,
-                &right,
-            );
+            let request = ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED);
+            let evaluation = test_evaluation(request, &left, &right);
+            let readiness = &evaluation.certifications.winding_readiness;
             let arrangement_materialized = operation == ExactBooleanOperation::Intersection;
             let expected_status = if arrangement_materialized {
                 ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized
@@ -13553,8 +13552,9 @@ mod tests {
                 arrangement_materialized
             );
             readiness.validate().unwrap();
-            readiness
-                .validate_against_sources_with_validation(&left, &right, ValidationPolicy::CLOSED)
+            evaluation
+                .certifications
+                .validate_against_sources(&left, &right, request)
                 .unwrap();
         }
     }
@@ -13701,14 +13701,12 @@ mod tests {
         readiness.validate().unwrap();
         readiness.validate_against_sources(&left, &right).unwrap();
 
-        let boundary_readiness = test_winding_readiness(
-            ExactBooleanRequest::new(
-                ExactBooleanOperation::Union,
-                ValidationPolicy::ALLOW_BOUNDARY,
-            ),
-            &left,
-            &right,
+        let boundary_request = ExactBooleanRequest::new(
+            ExactBooleanOperation::Union,
+            ValidationPolicy::ALLOW_BOUNDARY,
         );
+        let boundary_evaluation = test_evaluation(boundary_request, &left, &right);
+        let boundary_readiness = &boundary_evaluation.certifications.winding_readiness;
         assert_eq!(
             boundary_readiness.status,
             ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized,
@@ -13732,16 +13730,21 @@ mod tests {
                 .materializes_arrangement_cell_complex()
         );
         boundary_readiness.validate().unwrap();
-        boundary_readiness
-            .validate_against_sources_with_validation(
-                &left,
-                &right,
-                ValidationPolicy::ALLOW_BOUNDARY,
-            )
+        boundary_evaluation
+            .certifications
+            .validate_against_sources(&left, &right, boundary_request)
             .unwrap();
         assert!(
-            boundary_readiness
-                .validate_against_sources(&left, &right)
+            boundary_evaluation
+                .certifications
+                .validate_against_sources(
+                    &left,
+                    &right,
+                    ExactBooleanRequest::new(
+                        ExactBooleanOperation::Union,
+                        ValidationPolicy::CLOSED
+                    ),
+                )
                 .is_err(),
             "closed replay should not certify allow-boundary readiness"
         );

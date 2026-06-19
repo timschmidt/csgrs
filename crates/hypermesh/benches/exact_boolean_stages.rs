@@ -489,21 +489,16 @@ fn run_case(case: &BenchCase) {
 
     time_prepared_stage(
         case,
-        "workspace_validate_winding_readiness_from_retained_artifacts",
+        "workspace_validate_certifications_with_winding_readiness_retained",
         || {
             retained_workspace_and_certification_for_case(case, request, |evaluation| {
-                evaluation.certifications.winding_readiness.clone()
+                evaluation.certifications.clone()
             })
         },
-        |(_retained_workspace, readiness)| {
+        |(_retained_workspace, certifications)| {
             black_box(
-                readiness
-                    .validate_against_sources_with_boundary_policy(
-                        &case.left,
-                        &case.right,
-                        request.validation,
-                        request.boundary_policy,
-                    )
+                certifications
+                    .validate_against_sources(&case.left, &case.right, request)
                     .ok(),
             );
         },

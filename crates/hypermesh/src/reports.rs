@@ -35,11 +35,13 @@ use super::boolean::{
     replay_closed_same_surface_boolean_result_if_certified,
     replay_generic_arrangement_cell_complex_result, replay_open_surface_arrangement_result,
     replay_selected_region_boolean_result, same_surface_report_from_sources,
-    volumetric_boundary_closure_report_from_graph, winding_readiness_report_for_request_from_graph,
-    workspace_evaluation_for_replay,
+    volumetric_boundary_closure_report_from_graph, workspace_evaluation_for_replay,
 };
 #[cfg(test)]
-use super::boolean::{not_named_planar_arrangement_report, planar_arrangement_report_from_graph};
+use super::boolean::{
+    not_named_planar_arrangement_report, planar_arrangement_report_from_graph,
+    winding_readiness_report_for_request_from_graph,
+};
 use super::bounds::AabbIntersectionKind;
 use super::cell_complex::{
     ExactRegionOwnershipReport, arrangement_cell_complex_labeling_policy,
@@ -3961,6 +3963,7 @@ impl ExactVolumetricBoundaryClosureReport {
     }
 }
 
+#[cfg(test)]
 fn validate_winding_readiness_against_sources_for_request(
     report: &ExactWindingReadinessReport,
     left: &ExactMesh,
@@ -6156,7 +6159,8 @@ impl ExactWindingReadinessReport {
     /// without choosing the final inside/outside policy. This replay
     /// recomputes the whole public report for the same operation, making stale
     /// region facts and blocker summaries fail before downstream topology
-    pub fn validate_against_sources(
+    #[cfg(test)]
+    pub(crate) fn validate_against_sources(
         &self,
         left: &ExactMesh,
         right: &ExactMesh,
@@ -6168,81 +6172,6 @@ impl ExactWindingReadinessReport {
             ExactBoundaryBooleanPolicy::Reject,
         );
         validate_winding_readiness_against_sources_for_request(self, left, right, request)
-    }
-
-    /// Validate this winding-readiness report against source meshes and an
-    /// explicit output validation policy.
-    ///
-    /// This mirrors [`ExactBooleanRequest::winding_readiness`] for
-    /// policy-aware handoff states such as closed regularization of
-    /// lower-dimensional operands.
-    pub fn validate_against_sources_with_validation(
-        &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-        validation: ValidationPolicy,
-    ) -> Result<(), ExactReportValidationError> {
-        self.validate()?;
-        let request = ExactBooleanRequest::new(self.operation, validation);
-        validate_winding_readiness_against_sources_for_request(self, left, right, request)
-    }
-
-    /// Validate this winding-readiness report against source meshes, output
-    /// validation, and an explicit boundary-output policy.
-    pub fn validate_against_sources_with_boundary_policy(
-        &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-        validation: ValidationPolicy,
-        boundary_policy: ExactBoundaryBooleanPolicy,
-    ) -> Result<(), ExactReportValidationError> {
-        self.validate()?;
-        let request =
-            ExactBooleanRequest::with_boundary_policy(self.operation, validation, boundary_policy);
-        validate_winding_readiness_against_sources_for_request(self, left, right, request)
-    }
-
-    /// Classify whether this retained winding handoff is fresh for the source meshes.
-    ///
-    /// Local integrity is checked before source replay so copied reports can
-    /// distinguish stale region classifications from source-geometry drift.
-    /// summaries must replay before later winding policy consumes them.
-    pub fn freshness_against_sources(
-        &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-    ) -> ExactReportFreshness {
-        exact_report_freshness(self.validate_against_sources(left, right))
-    }
-
-    /// Classify freshness for a source replay under an explicit output
-    /// validation policy.
-    pub fn freshness_against_sources_with_validation(
-        &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-        validation: ValidationPolicy,
-    ) -> ExactReportFreshness {
-        exact_report_freshness(
-            self.validate_against_sources_with_validation(left, right, validation),
-        )
-    }
-
-    /// Classify freshness for a source replay under explicit output
-    /// validation and boundary-output policy.
-    pub fn freshness_against_sources_with_boundary_policy(
-        &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-        validation: ValidationPolicy,
-        boundary_policy: ExactBoundaryBooleanPolicy,
-    ) -> ExactReportFreshness {
-        exact_report_freshness(self.validate_against_sources_with_boundary_policy(
-            left,
-            right,
-            validation,
-            boundary_policy,
-        ))
     }
 
     /// Return whether every retained predicate route was proof-producing.
