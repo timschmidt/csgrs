@@ -380,7 +380,7 @@ fn exact_boolean_evaluation_retains_region_ownership_report() {
     );
     let ownership = evaluation
         .retained_arrangement_attempt()
-        .and_then(|attempt| attempt.region_ownership_report.as_ref())
+        .and_then(|attempt| attempt.region_ownership_report())
         .expect("named boolean certifications should retain region ownership");
     ownership.validate().unwrap();
     assert!(ownership.is_resolved());
@@ -389,7 +389,7 @@ fn exact_boolean_evaluation_retains_region_ownership_report() {
     assert_eq!(ownership.shared_owned_volumes, 1);
     evaluation
         .retained_arrangement_attempt()
-        .and_then(|attempt| attempt.topology_assembly_report.as_ref())
+        .and_then(|attempt| attempt.topology_assembly_report())
         .expect("named boolean certifications should retain topology assembly")
         .validate()
         .unwrap();
@@ -399,7 +399,7 @@ fn exact_boolean_evaluation_retains_region_ownership_report() {
         .certifications
         .arrangement_attempt_mut()
         .expect("evaluation should retain arrangement attempt")
-        .region_ownership_report = None;
+        .replace_region_ownership_report(None);
     assert_report_validation_error!(missing_attempt_ownership.validate());
 
     let mut missing_attempt_topology = evaluation.clone();
@@ -407,7 +407,7 @@ fn exact_boolean_evaluation_retains_region_ownership_report() {
         .certifications
         .arrangement_attempt_mut()
         .expect("evaluation should retain arrangement attempt")
-        .topology_assembly_report = None;
+        .replace_topology_assembly_report(None);
     assert_report_validation_error!(missing_attempt_topology.validate());
 }
 
@@ -1254,8 +1254,7 @@ fn exact_coplanar_volumetric_cell_evidence_is_retained_by_public_evaluation() {
             .retained_arrangement_attempt()
             .and_then(|attempt| {
                 attempt
-                    .region_ownership_report
-                    .as_ref()
+                    .region_ownership_report()
                     .map(|report| (attempt, report))
             })
             .is_some_and(|(attempt, report)| {
@@ -3148,7 +3147,7 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
     let ownership = unresolved_ownership
         .certifications
         .arrangement_attempt_mut()
-        .and_then(|attempt| attempt.region_ownership_report.as_mut())
+        .and_then(|attempt| attempt.region_ownership_report_mut())
         .expect("named arrangement evaluation should retain ownership evidence");
     ownership.volume_regions += 1;
     assert_eq!(
@@ -3159,7 +3158,7 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
     let topology = incomplete_topology
         .certifications
         .arrangement_attempt_mut()
-        .and_then(|attempt| attempt.topology_assembly_report.as_mut())
+        .and_then(|attempt| attempt.topology_assembly_report_mut())
         .expect("named arrangement evaluation should retain topology assembly evidence");
     topology.region_boundaries += 1;
     assert_eq!(
@@ -3178,7 +3177,7 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
         .certifications
         .arrangement_attempt_mut()
         .expect("named evaluation should retain arrangement attempt");
-    attempt.region_ownership_report = None;
+    attempt.replace_region_ownership_report(None);
     assert_report_validation_error!(attempt.validate());
     assert_report_validation_error!(stale_attempt_gate.validate());
     let mut stale_attempt_report = evaluation.clone();
@@ -3186,7 +3185,7 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
         .certifications
         .arrangement_attempt_mut()
         .expect("named evaluation should retain arrangement attempt");
-    attempt.topology_assembly_report = None;
+    attempt.replace_topology_assembly_report(None);
     assert_report_validation_error!(attempt.validate());
     assert_report_validation_error!(stale_attempt_report.validate());
     let mut stale_readiness_counts = evaluation.clone();
@@ -4631,14 +4630,12 @@ fn exact_boolean_attempt_public_path_reports_blockers_or_cells() {
     attempt.validate().unwrap();
     assert!(
         attempt
-            .topology_assembly_report
-            .as_ref()
+            .topology_assembly_report()
             .is_some_and(|report| report.is_complete())
     );
     assert!(
         attempt
-            .region_ownership_report
-            .as_ref()
+            .region_ownership_report()
             .is_some_and(|report| report.status.is_volume_resolved())
     );
     attempt.validate_against_sources(&left, &right).unwrap();
@@ -4647,7 +4644,7 @@ fn exact_boolean_attempt_public_path_reports_blockers_or_cells() {
         ExactReportFreshness::Current
     );
     let mut stale_attempt_report = attempt.clone();
-    stale_attempt_report.region_ownership_report = None;
+    stale_attempt_report.replace_region_ownership_report(None);
     assert_report_validation_error!(stale_attempt_report.validate());
 }
 

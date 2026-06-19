@@ -221,11 +221,11 @@ pub struct ExactArrangementBooleanAttempt {
     /// Topology assembly status observed before consuming labeled cells.
     pub(crate) topology_assembly: Option<ExactTopologyAssemblyStatus>,
     /// Full topology assembly report consumed before labeled-cell output.
-    pub topology_assembly_report: Option<ExactTopologyAssemblyReport>,
+    pub(crate) topology_assembly_report: Option<ExactTopologyAssemblyReport>,
     /// Region ownership status observed before named cell selection.
     pub(crate) region_ownership: Option<ExactRegionOwnershipStatus>,
     /// Full region ownership report consumed before named cell selection.
-    pub region_ownership_report: Option<ExactRegionOwnershipReport>,
+    pub(crate) region_ownership_report: Option<ExactRegionOwnershipReport>,
     /// Selected face-cell count, when selection succeeded.
     pub(crate) selected_faces: usize,
     /// Selected faces whose output orientation is reversed.
@@ -251,6 +251,42 @@ pub struct ExactArrangementBooleanAttempt {
 }
 
 impl ExactArrangementBooleanAttempt {
+    /// Return retained topology assembly gate evidence, when present.
+    pub fn topology_assembly_report(&self) -> Option<&ExactTopologyAssemblyReport> {
+        self.topology_assembly_report.as_ref()
+    }
+
+    /// Return retained topology assembly gate evidence mutably, when present.
+    pub fn topology_assembly_report_mut(&mut self) -> Option<&mut ExactTopologyAssemblyReport> {
+        self.topology_assembly_report.as_mut()
+    }
+
+    /// Replace retained topology assembly gate evidence.
+    pub fn replace_topology_assembly_report(
+        &mut self,
+        report: Option<ExactTopologyAssemblyReport>,
+    ) -> Option<ExactTopologyAssemblyReport> {
+        std::mem::replace(&mut self.topology_assembly_report, report)
+    }
+
+    /// Return retained region ownership gate evidence, when present.
+    pub fn region_ownership_report(&self) -> Option<&ExactRegionOwnershipReport> {
+        self.region_ownership_report.as_ref()
+    }
+
+    /// Return retained region ownership gate evidence mutably, when present.
+    pub fn region_ownership_report_mut(&mut self) -> Option<&mut ExactRegionOwnershipReport> {
+        self.region_ownership_report.as_mut()
+    }
+
+    /// Replace retained region ownership gate evidence.
+    pub fn replace_region_ownership_report(
+        &mut self,
+        report: Option<ExactRegionOwnershipReport>,
+    ) -> Option<ExactRegionOwnershipReport> {
+        std::mem::replace(&mut self.region_ownership_report, report)
+    }
+
     fn retain_topology_assembly_report(&mut self, report: ExactTopologyAssemblyReport) {
         self.topology_assembly = Some(report.status);
         self.topology_assembly_report = Some(report);

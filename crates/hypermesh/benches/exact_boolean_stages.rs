@@ -129,12 +129,10 @@ fn run_case(case: &BenchCase) {
         black_box(attempt.map(|attempt| {
             (
                 attempt
-                    .topology_assembly_report
-                    .as_ref()
+                    .topology_assembly_report()
                     .is_some_and(|report| report.is_complete()),
                 attempt
-                    .region_ownership_report
-                    .as_ref()
+                    .region_ownership_report()
                     .is_some_and(|report| report.status.is_volume_resolved()),
             )
         }));
@@ -142,7 +140,7 @@ fn run_case(case: &BenchCase) {
 
     let attempt = retained_arrangement_attempt_for_case(case, request);
     time_stage(case, "attempt_topology_assembly_report", || {
-        if let Some(report) = attempt.topology_assembly_report.as_ref() {
+        if let Some(report) = attempt.topology_assembly_report() {
             black_box((
                 report.status,
                 report.graph_events,
@@ -154,7 +152,7 @@ fn run_case(case: &BenchCase) {
     });
 
     time_stage(case, "attempt_region_ownership_report", || {
-        if let Some(report) = attempt.region_ownership_report.as_ref() {
+        if let Some(report) = attempt.region_ownership_report() {
             black_box((
                 report.status,
                 report.face_cells,
@@ -240,7 +238,7 @@ fn run_case(case: &BenchCase) {
                 .evaluate(request)
                 .unwrap()
                 .retained_arrangement_attempt()
-                .and_then(|attempt| attempt.topology_assembly_report.as_ref());
+                .and_then(|attempt| attempt.topology_assembly_report());
             if let Some(report) = report {
                 black_box((
                     report.status,
@@ -267,7 +265,7 @@ fn run_case(case: &BenchCase) {
         "topology_assembly_report_replay_validate_from_attempt",
         || retained_arrangement_attempt_for_case(case, request),
         |attempt| {
-            if let Some(report) = attempt.topology_assembly_report.as_ref() {
+            if let Some(report) = attempt.topology_assembly_report() {
                 black_box(
                     report
                         .validate_against_sources(
@@ -289,7 +287,7 @@ fn run_case(case: &BenchCase) {
                 .evaluate(request)
                 .unwrap()
                 .retained_arrangement_attempt()
-                .and_then(|attempt| attempt.region_ownership_report.as_ref());
+                .and_then(|attempt| attempt.region_ownership_report());
             if let Some(report) = report {
                 black_box((
                     report.status,
@@ -312,7 +310,7 @@ fn run_case(case: &BenchCase) {
         "region_ownership_report_replay_validate_from_attempt",
         || retained_arrangement_attempt_for_case(case, request),
         |attempt| {
-            if let Some(report) = attempt.region_ownership_report.as_ref() {
+            if let Some(report) = attempt.region_ownership_report() {
                 black_box(
                     report
                         .validate_against_sources(
@@ -333,16 +331,13 @@ fn run_case(case: &BenchCase) {
         black_box(attempt.map(|attempt| {
             (
                 attempt
-                    .topology_assembly_report
-                    .as_ref()
+                    .topology_assembly_report()
                     .is_some_and(|report| report.is_complete()),
                 attempt
-                    .region_ownership_report
-                    .as_ref()
+                    .region_ownership_report()
                     .is_some_and(|report| report.status.is_resolved()),
                 attempt
-                    .region_ownership_report
-                    .as_ref()
+                    .region_ownership_report()
                     .is_some_and(|report| report.status.is_volume_resolved()),
             )
         }));
