@@ -906,40 +906,44 @@ fn affine_orthogonal_solid_recovers_multi_cell_basis_without_sampling_limits() {
         ExactBooleanOperation::Intersection,
         ExactBooleanOperation::Difference,
     ] {
-        let preflight_evaluation = exact_boolean_evaluation(
+        with_exact_boolean_evaluation(
             &left,
             &right,
             ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
+            |preflight_evaluation| {
+                assert!(
+                    preflight_evaluation.is_certified_arrangement_cell_complex(),
+                    "{operation:?}: {preflight_evaluation:?}"
+                );
+                assert!(
+                    !preflight_evaluation.has_blocker(),
+                    "{operation:?}: {preflight_evaluation:?}"
+                );
+                preflight_evaluation.validate().unwrap();
+                preflight_evaluation
+                    .validate_against_sources(&left, &right)
+                    .unwrap_or_else(|error| panic!("{operation:?}: {error:?}"));
+            },
         );
-        assert!(
-            preflight_evaluation.is_certified_arrangement_cell_complex(),
-            "{operation:?}: {preflight_evaluation:?}"
-        );
-        assert!(
-            !preflight_evaluation.has_blocker(),
-            "{operation:?}: {preflight_evaluation:?}"
-        );
-        preflight_evaluation.validate().unwrap();
-        preflight_evaluation
-            .validate_against_sources(&left, &right)
-            .unwrap_or_else(|error| panic!("{operation:?}: {error:?}"));
 
-        let evaluation = exact_boolean_evaluation(
+        with_exact_boolean_evaluation(
             &left,
             &right,
             ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
+            |evaluation| {
+                let result = evaluation
+                    .materialized_result()
+                    .expect("certified arrangement cell-complex evaluation should materialize");
+                assert!(
+                    result.is_arrangement_cell_complex_shortcut_for(operation),
+                    "{operation:?}: {result:?}"
+                );
+                evaluation.validate().unwrap();
+                evaluation.validate_against_sources(&left, &right).unwrap();
+                result.validate().unwrap();
+                assert!(result.mesh().facts().mesh.closed_manifold);
+            },
         );
-        let result = evaluation
-            .materialized_result()
-            .expect("certified arrangement cell-complex evaluation should materialize");
-        assert!(
-            result.is_arrangement_cell_complex_shortcut_for(operation),
-            "{operation:?}: {result:?}"
-        );
-        evaluation.validate().unwrap();
-        evaluation.validate_against_sources(&left, &right).unwrap();
-        result.validate().unwrap();
-        assert!(result.mesh().facts().mesh.closed_manifold);
     }
 }
 
