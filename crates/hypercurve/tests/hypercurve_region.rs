@@ -1084,6 +1084,34 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
         result.report().split_intersection_reports()
     );
     assert_eq!(split_cache.output_segment_count(), Some(4));
+    let endpoint_cache = result.workspace().endpoint_graph_cache().unwrap();
+    assert_eq!(
+        Some(endpoint_cache.predicate_path()),
+        result.report().endpoint_graph_predicate_path()
+    );
+    assert_eq!(
+        Some(endpoint_cache.endpoint_count()),
+        result.report().endpoint_graph_endpoint_count()
+    );
+    assert_eq!(
+        Some(endpoint_cache.structural_bucket_count()),
+        result.report().endpoint_graph_structural_bucket_count()
+    );
+    assert_eq!(
+        Some(endpoint_cache.structural_singleton_bucket_count()),
+        result
+            .report()
+            .endpoint_graph_structural_singleton_bucket_count()
+    );
+    assert_eq!(
+        Some(endpoint_cache.max_structural_bucket_size()),
+        result.report().endpoint_graph_max_structural_bucket_size()
+    );
+    assert_eq!(endpoint_cache.dangling_endpoint_count(), 0);
+    assert_eq!(endpoint_cache.branch_endpoint_count(), 0);
+    assert_eq!(endpoint_cache.blocker_arranged_segment_index(), None);
+    assert_eq!(endpoint_cache.blocker_endpoint(), None);
+    assert_eq!(endpoint_cache.blocker_point(), None);
     assert!(result.region().is_some());
     assert_eq!(
         result.report().split_predicate_path(),
@@ -1146,6 +1174,32 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
         split_cache.output_segment_count(),
         result.report().split_output_segment_count()
     );
+    let endpoint_cache = result.workspace().endpoint_graph_cache().unwrap();
+    assert_eq!(
+        Some(endpoint_cache.predicate_path()),
+        result.report().endpoint_graph_predicate_path()
+    );
+    assert_eq!(
+        Some(endpoint_cache.endpoint_count()),
+        result.report().endpoint_graph_endpoint_count()
+    );
+    assert_eq!(
+        Some(endpoint_cache.structural_bucket_count()),
+        result.report().endpoint_graph_structural_bucket_count()
+    );
+    assert_eq!(
+        Some(endpoint_cache.max_structural_bucket_size()),
+        result.report().endpoint_graph_max_structural_bucket_size()
+    );
+    assert_eq!(
+        Some(endpoint_cache.dangling_endpoint_count()),
+        result.report().endpoint_graph_dangling_endpoint_count()
+    );
+    assert_eq!(
+        Some(endpoint_cache.branch_endpoint_count()),
+        result.report().endpoint_graph_branch_endpoint_count()
+    );
+    assert_eq!(endpoint_cache.blocker_point(), None);
     assert!(result.region().is_some());
     assert!(result.report().status().is_native_exact());
     assert_eq!(result.report(), legacy.report());
@@ -1180,6 +1234,7 @@ fn exact_curve_arrangement_attempt_retains_overlap_blocker() {
         split_cache.intersection_points(),
         result.report().split_intersection_points()
     );
+    assert!(result.workspace().endpoint_graph_cache().is_none());
     assert_eq!(result.report(), legacy.report());
 }
 

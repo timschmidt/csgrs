@@ -33,6 +33,7 @@ pub struct ExactCurveWorkspace2 {
     source_segment_aabbs: Vec<Option<Aabb2>>,
     source_aabb: Option<Aabb2>,
     split_cache: Option<ExactCurveArrangementSplitCache2>,
+    endpoint_graph_cache: Option<ExactCurveArrangementEndpointGraphCache2>,
 }
 
 /// Retained exact split evidence cached by an evaluated arrangement workspace.
@@ -49,6 +50,21 @@ pub struct ExactCurveArrangementSplitCache2 {
     intersection_points: Vec<Point2>,
     intersection_reports: Vec<RegionLineSegmentSplitIntersectionReport2>,
     output_segment_count: Option<usize>,
+}
+
+/// Retained exact endpoint-bucket evidence cached by an evaluated arrangement workspace.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ExactCurveArrangementEndpointGraphCache2 {
+    predicate_path: RegionLineSegmentEndpointGraphPredicatePath2,
+    endpoint_count: usize,
+    structural_bucket_count: usize,
+    structural_singleton_bucket_count: usize,
+    max_structural_bucket_size: usize,
+    dangling_endpoint_count: usize,
+    branch_endpoint_count: usize,
+    blocker_arranged_segment_index: Option<usize>,
+    blocker_endpoint: Option<RegionLineSegmentArrangedEndpoint2>,
+    blocker_point: Option<Point2>,
 }
 
 /// Evaluation record for a retained exact curve arrangement attempt.
@@ -1094,6 +1110,7 @@ impl ExactCurveWorkspace2 {
             source_segment_aabbs,
             source_aabb,
             split_cache: None,
+            endpoint_graph_cache: None,
         })
     }
 
@@ -1104,6 +1121,10 @@ impl ExactCurveWorkspace2 {
         self.split_cache = Some(ExactCurveArrangementSplitCache2::from_region_build_report(
             region_result.report(),
         ));
+        self.endpoint_graph_cache =
+            ExactCurveArrangementEndpointGraphCache2::from_region_build_report(
+                region_result.report(),
+            );
         self
     }
 
@@ -1145,6 +1166,11 @@ impl ExactCurveWorkspace2 {
     /// Returns exact split evidence retained from the evaluated arrangement.
     pub const fn split_cache(&self) -> Option<&ExactCurveArrangementSplitCache2> {
         self.split_cache.as_ref()
+    }
+
+    /// Returns exact endpoint-bucket evidence retained from the evaluated arrangement.
+    pub const fn endpoint_graph_cache(&self) -> Option<&ExactCurveArrangementEndpointGraphCache2> {
+        self.endpoint_graph_cache.as_ref()
     }
 }
 
@@ -1218,6 +1244,74 @@ impl ExactCurveArrangementSplitCache2 {
     /// Returns arranged output segment count when splitting completed.
     pub const fn output_segment_count(&self) -> Option<usize> {
         self.output_segment_count
+    }
+}
+
+impl ExactCurveArrangementEndpointGraphCache2 {
+    fn from_region_build_report(report: &RegionLineSegmentRegionBuildReport2) -> Option<Self> {
+        Some(Self {
+            predicate_path: report.endpoint_graph_predicate_path?,
+            endpoint_count: report.endpoint_graph_endpoint_count?,
+            structural_bucket_count: report.endpoint_graph_structural_bucket_count?,
+            structural_singleton_bucket_count: report
+                .endpoint_graph_structural_singleton_bucket_count?,
+            max_structural_bucket_size: report.endpoint_graph_max_structural_bucket_size?,
+            dangling_endpoint_count: report.endpoint_graph_dangling_endpoint_count?,
+            branch_endpoint_count: report.endpoint_graph_branch_endpoint_count?,
+            blocker_arranged_segment_index: report.endpoint_graph_blocker_arranged_segment_index,
+            blocker_endpoint: report.endpoint_graph_blocker_endpoint,
+            blocker_point: report.endpoint_graph_blocker_point.clone(),
+        })
+    }
+
+    /// Returns the exact predicate family used for endpoint graph validation.
+    pub const fn predicate_path(&self) -> RegionLineSegmentEndpointGraphPredicatePath2 {
+        self.predicate_path
+    }
+
+    /// Returns the number of arranged endpoints validated.
+    pub const fn endpoint_count(&self) -> usize {
+        self.endpoint_count
+    }
+
+    /// Returns exact structural endpoint bucket count.
+    pub const fn structural_bucket_count(&self) -> usize {
+        self.structural_bucket_count
+    }
+
+    /// Returns structural buckets containing one endpoint.
+    pub const fn structural_singleton_bucket_count(&self) -> usize {
+        self.structural_singleton_bucket_count
+    }
+
+    /// Returns the largest structural endpoint bucket size.
+    pub const fn max_structural_bucket_size(&self) -> usize {
+        self.max_structural_bucket_size
+    }
+
+    /// Returns dangling endpoint count found during validation.
+    pub const fn dangling_endpoint_count(&self) -> usize {
+        self.dangling_endpoint_count
+    }
+
+    /// Returns branch endpoint count found during validation.
+    pub const fn branch_endpoint_count(&self) -> usize {
+        self.branch_endpoint_count
+    }
+
+    /// Returns the blocker arranged segment index, when validation blocked.
+    pub const fn blocker_arranged_segment_index(&self) -> Option<usize> {
+        self.blocker_arranged_segment_index
+    }
+
+    /// Returns the blocker endpoint, when validation blocked.
+    pub const fn blocker_endpoint(&self) -> Option<RegionLineSegmentArrangedEndpoint2> {
+        self.blocker_endpoint
+    }
+
+    /// Returns the blocker point, when validation blocked.
+    pub const fn blocker_point(&self) -> Option<&Point2> {
+        self.blocker_point.as_ref()
     }
 }
 
