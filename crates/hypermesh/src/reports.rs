@@ -690,7 +690,7 @@ pub struct ExactBooleanResult {
     /// planes.
     pub(crate) region_classifications: Vec<FaceRegionPlaneClassification>,
     /// Exact projected triangulations used for assembly.
-    pub triangulations: Vec<FaceRegionTriangulation>,
+    pub(crate) triangulations: Vec<FaceRegionTriangulation>,
     /// Non-mutating exact output assembly.
     pub assembly: ExactBooleanAssemblyPlan,
     /// Exact winding classifications used by volumetric arrangement materialization.
@@ -734,6 +734,11 @@ impl ExactBooleanResult {
     /// Borrow retained split-region plane classifications mutably.
     pub fn region_classifications_mut(&mut self) -> &mut [FaceRegionPlaneClassification] {
         &mut self.region_classifications
+    }
+
+    /// Borrow retained exact projected triangulations.
+    pub fn triangulations(&self) -> &[FaceRegionTriangulation] {
+        &self.triangulations
     }
 
     /// Borrow retained volumetric triangle classifications.
