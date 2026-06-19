@@ -306,18 +306,6 @@ impl ExactArrangementBooleanAttempt {
         self.resolves_requested_volume_ownership()
     }
 
-    /// Return retained volume-region count.
-    pub const fn volume_regions(&self) -> usize {
-        self.volume_regions
-    }
-
-    /// Return volume regions owned by both operands, when ownership evidence is retained.
-    pub fn shared_owned_volume_regions(&self) -> usize {
-        self.region_ownership_report
-            .as_ref()
-            .map_or(0, |report| report.shared_owned_volumes)
-    }
-
     fn retain_topology_assembly_report(&mut self, report: ExactTopologyAssemblyReport) {
         self.topology_assembly = Some(report.status);
         self.topology_assembly_report = Some(report);

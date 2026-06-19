@@ -157,8 +157,6 @@ fn run_case(case: &BenchCase) {
             attempt.has_region_ownership_evidence(),
             attempt.region_ownership_is_resolved(),
             attempt.region_ownership_is_volume_resolved(),
-            attempt.volume_regions(),
-            attempt.shared_owned_volume_regions(),
         ));
     });
 
@@ -262,8 +260,6 @@ fn run_case(case: &BenchCase) {
                     attempt.region_ownership_is_resolved(),
                     attempt.region_ownership_is_volume_resolved(),
                     attempt.region_ownership_resolves_requested_operation(),
-                    attempt.volume_regions(),
-                    attempt.shared_owned_volume_regions(),
                 )
             }));
         },

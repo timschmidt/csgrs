@@ -274,8 +274,6 @@ fn exact_boolean_evaluation_retains_region_ownership_report() {
         assert!(attempt.has_region_ownership_evidence());
         assert!(attempt.region_ownership_is_resolved());
         assert!(attempt.region_ownership_is_volume_resolved());
-        assert_eq!(attempt.volume_regions(), 3);
-        assert_eq!(attempt.shared_owned_volume_regions(), 1);
         assert!(attempt.has_topology_assembly_evidence());
     });
 }
