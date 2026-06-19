@@ -69,7 +69,12 @@ fn exercise_workspace_requests(left: &ExactMesh, right: &ExactMesh, validation: 
                 let _ = attempt.freshness_against_sources_for_request(left, right, request);
             }
         }
-        if let Ok(result) = workspace.materialize(request) {
+        if let Ok(result) = workspace.materialize_ref(request) {
+            let _ = result.validate();
+            if let Ok(evaluation) = workspace.evaluate(request) {
+                let _ = evaluation.validate_against_sources(left, right);
+            }
+        } else if let Ok(result) = workspace.materialize(request) {
             let _ = result.validate();
             if let Ok(evaluation) = workspace.evaluate(request) {
                 let _ = evaluation.validate_against_sources(left, right);
@@ -82,7 +87,7 @@ fn exercise_workspace_requests(left: &ExactMesh, right: &ExactMesh, validation: 
     let mut workspace = ExactBooleanWorkspace::new(left, right);
     if let Ok(evaluation) = workspace.evaluate(disjoint_request)
         && evaluation.freshness_against_sources(left, right) == ExactReportFreshness::Current
-        && let Ok(result) = workspace.materialize(disjoint_request)
+        && let Ok(result) = workspace.materialize_ref(disjoint_request)
     {
         let _ = result.validate();
     }
