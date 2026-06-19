@@ -2223,7 +2223,6 @@ impl ExactBooleanEvaluation {
         Ok(())
     }
 
-    #[cfg(test)]
     pub(crate) fn retain_materialized_result(
         &mut self,
         result: &ExactBooleanResult,
@@ -2279,7 +2278,6 @@ impl ExactBooleanEvaluation {
         }
     }
 
-    #[cfg(test)]
     pub(crate) fn replayable_materialized_result(
         &self,
         left: &ExactMesh,
@@ -2317,7 +2315,6 @@ impl ExactBooleanEvaluation {
         )
     }
 
-    #[cfg(test)]
     pub(crate) fn validate_result_shape_for_request(
         request: ExactBooleanRequest,
         result: &ExactBooleanResult,
@@ -4706,7 +4703,6 @@ fn public_operation_replayable_result(
 /// intersection and difference do not need that projection policy once the
 /// same exact boundary-touch report proves no shared interior volume; those
 /// two operations use certified shortcuts before the policy layer.
-#[cfg(test)]
 pub(crate) fn materialize_boolean_exact_request_from_retained_graph(
     graph: &ExactIntersectionGraph,
     left: &ExactMesh,

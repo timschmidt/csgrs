@@ -38,13 +38,9 @@ fn setup(
     let request =
         ExactBooleanRequest::new(ExactBooleanOperation::Difference, ValidationPolicy::CLOSED);
     let difference = ExactBooleanWorkspace::new(&left, &right)
-        .evaluate(request)
-        .expect("overlapping boxes should be supported by exact boolean evaluation")
-        .result
-        .as_ref()
-        .expect("overlapping boxes should retain a materialized exact boolean result")
-        .mesh
-        .clone();
+        .materialize(request)
+        .expect("overlapping boxes should materialize exact boolean output")
+        .mesh;
 
     let meshes_to_draw = [left, right, difference];
     let colors = [BLUE, GREEN, WHITE];

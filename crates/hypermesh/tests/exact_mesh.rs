@@ -46,22 +46,22 @@ fn exact_boolean_result(
     right: &ExactMesh,
     request: ExactBooleanRequest,
 ) -> ExactBooleanResult {
-    exact_boolean_evaluated_result(left, right, request)
+    exact_boolean_materialized_result(left, right, request)
 }
 
-fn exact_boolean_evaluated_result(
+fn exact_boolean_materialized_result(
     left: &ExactMesh,
     right: &ExactMesh,
     request: ExactBooleanRequest,
 ) -> ExactBooleanResult {
-    let evaluation = exact_boolean_evaluation(left, right, request);
-    evaluation.validate().unwrap();
-    evaluation
+    let mut workspace = ExactBooleanWorkspace::new(left, right);
+    let result = workspace.materialize(request).unwrap();
+    workspace
+        .evaluate(request)
+        .unwrap()
         .validate_materialized_result_against_sources(left, right)
         .unwrap();
-    evaluation
-        .result
-        .expect("certified boolean evaluation should retain materialized result")
+    result
 }
 
 fn exact_boolean_arrangement_attempt(
@@ -1027,7 +1027,7 @@ fn exact_affine_orthogonal_solid_boolean_is_publicly_replayable() {
     let left = skew_affine_box([0, 0, 0], [1, 1, 1]);
     let right = skew_affine_box([2, 0, 0], [3, 1, 1]);
     let operation = ExactBooleanOperation::Union;
-    let result = exact_boolean_evaluated_result(
+    let result = exact_boolean_materialized_result(
         &left,
         &right,
         ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
@@ -1122,7 +1122,7 @@ fn exact_axis_aligned_orthogonal_solid_boolean_is_publicly_replayable() {
             "{operation:?}: {disjoint_replay:?}"
         );
 
-        let result = exact_boolean_evaluated_result(
+        let result = exact_boolean_materialized_result(
             &left,
             &right,
             ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
@@ -1948,7 +1948,7 @@ fn exact_open_surface_arrangement_is_publicly_replayable() {
             ExactReportFreshness::SourceReplayMismatch
         );
         if matches!(operation, ExactBooleanOperation::Intersection) {
-            let replay = exact_boolean_evaluated_result(
+            let replay = exact_boolean_materialized_result(
                 &left,
                 &right,
                 ExactBooleanRequest::new(operation, ValidationPolicy::CLOSED),
@@ -2107,7 +2107,7 @@ fn exact_selected_region_boolean_is_publicly_replayable() {
     let selection = ExactRegionSelection::KeepAll;
     let validation = ValidationPolicy::ALLOW_BOUNDARY;
 
-    let result = exact_boolean_evaluated_result(
+    let result = exact_boolean_materialized_result(
         &left,
         &right,
         ExactBooleanRequest::new(
@@ -3432,23 +3432,24 @@ fn arrangement_cell_complex_request_materialization_is_publicly_replayable() {
     .unwrap();
     let stale_right = tetra([10, 10, 10]);
 
-    let result = exact_boolean_result(
-        &left,
-        &right,
-        ExactBooleanRequest::new(
-            ExactBooleanOperation::Union,
-            ValidationPolicy::ALLOW_BOUNDARY,
-        ),
+    let request = ExactBooleanRequest::new(
+        ExactBooleanOperation::Union,
+        ValidationPolicy::ALLOW_BOUNDARY,
     );
+    let mut workspace = ExactBooleanWorkspace::new(&left, &right);
+    let result = workspace.materialize(request).unwrap();
     assert!(
         result.is_arrangement_cell_complex_materialized_for(ExactBooleanOperation::Union)
             || result.is_arrangement_cell_complex_shortcut_for(ExactBooleanOperation::Union),
         "{result:?}"
     );
     result.validate().unwrap();
-    result.validate_against_sources(&left, &right).unwrap();
+    let evaluation = workspace.evaluate(request).unwrap();
+    evaluation
+        .validate_materialized_result_against_sources(&left, &right)
+        .unwrap();
     assert_eq!(
-        result.freshness_against_sources(&left, &stale_right),
+        evaluation.freshness_against_sources(&left, &stale_right),
         ExactReportFreshness::SourceReplayMismatch,
         "canonical replay must reject stale source operands"
     );
