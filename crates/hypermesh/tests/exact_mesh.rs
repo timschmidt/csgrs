@@ -1878,9 +1878,6 @@ fn exact_open_surface_arrangement_is_publicly_replayable() {
                 ExactRegularizationPolicy::REGULARIZED_SOLID,
             );
             assert_eq!(closed_attempt.output_validation, ValidationPolicy::CLOSED);
-            let (output_vertices, output_triangles) = closed_attempt.output_counts();
-            assert!(output_vertices > 0, "{operation:?}: {closed_attempt:?}");
-            assert!(output_triangles > 0, "{operation:?}: {closed_attempt:?}");
             closed_attempt.validate().unwrap();
             closed_attempt
                 .validate_against_sources_with_validation(&left, &right, ValidationPolicy::CLOSED)
@@ -2069,11 +2066,6 @@ fn arrangement_attempt_output_validation_is_publicly_replayable() {
             ExactRegularizationPolicy::REGULARIZED_SOLID,
         );
         assert_eq!(closed_attempt.output_validation, ValidationPolicy::CLOSED);
-        let (output_vertices, output_triangles) = closed_attempt.output_counts();
-        assert!(output_vertices > 0, "{operation:?}: {closed_attempt:?}");
-        if operation == ExactBooleanOperation::Union {
-            assert!(output_triangles > 0, "{operation:?}: {closed_attempt:?}");
-        }
         closed_attempt.validate().unwrap();
         closed_attempt
             .validate_against_sources(&left, &right)

@@ -251,11 +251,6 @@ pub struct ExactArrangementBooleanAttempt {
 }
 
 impl ExactArrangementBooleanAttempt {
-    /// Return the retained output vertex and triangle counts.
-    pub const fn output_counts(&self) -> (usize, usize) {
-        (self.output_vertices, self.output_triangles)
-    }
-
     fn retain_topology_assembly_report(&mut self, report: ExactTopologyAssemblyReport) {
         self.topology_assembly = Some(report.status);
         self.topology_assembly_report = Some(report);

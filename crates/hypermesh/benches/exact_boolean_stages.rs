@@ -123,7 +123,6 @@ fn run_case(case: &BenchCase) {
             .retained_arrangement_attempt()
             .cloned();
         black_box(attempt.map(|attempt| {
-            let (output_vertices, output_triangles) = attempt.output_counts();
             (
                 attempt
                     .topology_assembly_report
@@ -133,8 +132,6 @@ fn run_case(case: &BenchCase) {
                     .region_ownership_report
                     .as_ref()
                     .is_some_and(|report| report.status.is_volume_resolved()),
-                output_vertices,
-                output_triangles,
             )
         }));
     });
@@ -162,10 +159,6 @@ fn run_case(case: &BenchCase) {
                 report.shared_owned_volumes,
             ));
         }
-    });
-
-    time_stage(case, "attempt_public_materialization_summary", || {
-        black_box(attempt.output_counts());
     });
 
     time_stage(case, "boolean_evaluate", || {
@@ -334,7 +327,6 @@ fn run_case(case: &BenchCase) {
         let attempt = evaluation.retained_arrangement_attempt();
         black_box(attempt.map(|attempt| {
             (
-                attempt.output_counts(),
                 attempt
                     .topology_assembly_report
                     .as_ref()
