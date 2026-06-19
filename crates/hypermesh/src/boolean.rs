@@ -186,7 +186,7 @@ pub(crate) enum ExactArrangementBooleanShortcutReason {
 
 /// Auditable result of trying the arrangement/cell-complex Boolean pipeline.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactArrangementBooleanAttempt {
+pub(crate) struct ExactArrangementBooleanAttempt {
     /// Operation attempted.
     pub(crate) operation: ExactBooleanOperation,
     /// Regularization policy used by the arrangement pipeline.
@@ -461,7 +461,7 @@ impl ExactArrangementBooleanAttempt {
     /// construction. Its stage, decline reason, shortcut materialization, and
     /// retained counts must describe one path through that state machine rather
     /// than an arbitrary mix of successful output and blockers.
-    pub fn validate(&self) -> Result<(), ExactReportValidationError> {
+    pub(crate) fn validate(&self) -> Result<(), ExactReportValidationError> {
         let Some(oriented_selected_faces) = self
             .volume_oriented_selected_faces
             .checked_add(self.label_oriented_selected_faces)
@@ -730,7 +730,7 @@ impl ExactArrangementBooleanAttempt {
     }
 
     /// Validate this attempt by replaying it for an exact Boolean request.
-    pub fn validate_against_sources_for_request(
+    pub(crate) fn validate_against_sources_for_request(
         &self,
         left: &ExactMesh,
         right: &ExactMesh,
