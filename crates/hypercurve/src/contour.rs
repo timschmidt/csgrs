@@ -423,12 +423,28 @@ impl Contour2 {
         next_param: Real,
         policy: &CurvePolicy,
     ) -> CurveResult<ContourChamferResult2> {
+        self.chamfer_line_line_vertex_by_parameters_with_report(
+            vertex_index,
+            previous_param,
+            next_param,
+            policy,
+        )
+    }
+
+    /// Chamfers an interior line-line contour vertex by exact parameters and retains evidence.
+    pub fn chamfer_line_line_vertex_by_parameters_with_report(
+        &self,
+        vertex_index: usize,
+        previous_param: Real,
+        next_param: Real,
+        policy: &CurvePolicy,
+    ) -> CurveResult<ContourChamferResult2> {
         if vertex_index >= self.segments().len() {
             return Err(CurveError::InvalidCurveRange);
         }
         let chamfer = if vertex_index == 0 {
             let rotated = CurveString2::try_new(wraparound_chamfer_segments(self.segments()))?;
-            let mut chamfer = rotated.chamfer_line_line_vertex_by_parameters(
+            let mut chamfer = rotated.chamfer_line_line_vertex_by_parameters_with_report(
                 1,
                 previous_param,
                 next_param,
@@ -440,12 +456,13 @@ impl Contour2 {
             });
             chamfer
         } else {
-            self.curve.chamfer_line_line_vertex_by_parameters(
-                vertex_index,
-                previous_param,
-                next_param,
-                policy,
-            )?
+            self.curve
+                .chamfer_line_line_vertex_by_parameters_with_report(
+                    vertex_index,
+                    previous_param,
+                    next_param,
+                    policy,
+                )?
         };
         let curve_string_report = chamfer.report().clone();
         let status = curve_string_report.status();
@@ -493,12 +510,28 @@ impl Contour2 {
         next_point: &Point2,
         policy: &CurvePolicy,
     ) -> CurveResult<ContourChamferResult2> {
+        self.chamfer_line_line_vertex_by_points_with_report(
+            vertex_index,
+            previous_point,
+            next_point,
+            policy,
+        )
+    }
+
+    /// Chamfers an interior line-line contour vertex by exact cut points and retains evidence.
+    pub fn chamfer_line_line_vertex_by_points_with_report(
+        &self,
+        vertex_index: usize,
+        previous_point: &Point2,
+        next_point: &Point2,
+        policy: &CurvePolicy,
+    ) -> CurveResult<ContourChamferResult2> {
         if vertex_index >= self.segments().len() {
             return Err(CurveError::InvalidCurveRange);
         }
         let chamfer = if vertex_index == 0 {
             let rotated = CurveString2::try_new(wraparound_chamfer_segments(self.segments()))?;
-            let mut chamfer = rotated.chamfer_line_line_vertex_by_points(
+            let mut chamfer = rotated.chamfer_line_line_vertex_by_points_with_report(
                 1,
                 previous_point,
                 next_point,
@@ -510,7 +543,7 @@ impl Contour2 {
             });
             chamfer
         } else {
-            self.curve.chamfer_line_line_vertex_by_points(
+            self.curve.chamfer_line_line_vertex_by_points_with_report(
                 vertex_index,
                 previous_point,
                 next_point,
@@ -564,12 +597,32 @@ impl Contour2 {
         clockwise: bool,
         policy: &CurvePolicy,
     ) -> CurveResult<ContourFilletResult2> {
+        self.fillet_line_line_vertex_by_parameters_with_report(
+            vertex_index,
+            previous_param,
+            next_param,
+            center,
+            clockwise,
+            policy,
+        )
+    }
+
+    /// Fillets an interior line-line contour vertex by exact parameters and center, retaining evidence.
+    pub fn fillet_line_line_vertex_by_parameters_with_report(
+        &self,
+        vertex_index: usize,
+        previous_param: Real,
+        next_param: Real,
+        center: &Point2,
+        clockwise: bool,
+        policy: &CurvePolicy,
+    ) -> CurveResult<ContourFilletResult2> {
         if vertex_index >= self.segments().len() {
             return Err(CurveError::InvalidCurveRange);
         }
         let fillet = if vertex_index == 0 {
             let rotated = CurveString2::try_new(wraparound_chamfer_segments(self.segments()))?;
-            let mut fillet = rotated.fillet_line_line_vertex_by_parameters(
+            let mut fillet = rotated.fillet_line_line_vertex_by_parameters_with_report(
                 1,
                 previous_param,
                 next_param,
@@ -583,14 +636,15 @@ impl Contour2 {
             });
             fillet
         } else {
-            self.curve.fillet_line_line_vertex_by_parameters(
-                vertex_index,
-                previous_param,
-                next_param,
-                center,
-                clockwise,
-                policy,
-            )?
+            self.curve
+                .fillet_line_line_vertex_by_parameters_with_report(
+                    vertex_index,
+                    previous_param,
+                    next_param,
+                    center,
+                    clockwise,
+                    policy,
+                )?
         };
         let curve_string_report = fillet.report().clone();
         let status = curve_string_report.status();
@@ -641,12 +695,32 @@ impl Contour2 {
         clockwise: bool,
         policy: &CurvePolicy,
     ) -> CurveResult<ContourFilletResult2> {
+        self.fillet_line_line_vertex_by_points_with_report(
+            vertex_index,
+            previous_point,
+            next_point,
+            center,
+            clockwise,
+            policy,
+        )
+    }
+
+    /// Fillets an interior line-line contour vertex by exact tangent points and center, retaining evidence.
+    pub fn fillet_line_line_vertex_by_points_with_report(
+        &self,
+        vertex_index: usize,
+        previous_point: &Point2,
+        next_point: &Point2,
+        center: &Point2,
+        clockwise: bool,
+        policy: &CurvePolicy,
+    ) -> CurveResult<ContourFilletResult2> {
         if vertex_index >= self.segments().len() {
             return Err(CurveError::InvalidCurveRange);
         }
         let fillet = if vertex_index == 0 {
             let rotated = CurveString2::try_new(wraparound_chamfer_segments(self.segments()))?;
-            let mut fillet = rotated.fillet_line_line_vertex_by_points(
+            let mut fillet = rotated.fillet_line_line_vertex_by_points_with_report(
                 1,
                 previous_point,
                 next_point,
@@ -660,7 +734,7 @@ impl Contour2 {
             });
             fillet
         } else {
-            self.curve.fillet_line_line_vertex_by_points(
+            self.curve.fillet_line_line_vertex_by_points_with_report(
                 vertex_index,
                 previous_point,
                 next_point,

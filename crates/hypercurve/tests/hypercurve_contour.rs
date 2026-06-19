@@ -284,7 +284,7 @@ fn contour_chamfer_line_line_vertex_materializes_closed_contour() {
     let contour = rectangle();
 
     let chamfer = contour
-        .chamfer_line_line_vertex_by_parameters(1, q(3, 4), q(1, 4), &policy())
+        .chamfer_line_line_vertex_by_parameters_with_report(1, q(3, 4), q(1, 4), &policy())
         .unwrap();
 
     assert!(chamfer.report().status().is_native_exact());
@@ -416,7 +416,7 @@ fn contour_chamfer_line_line_vertex_by_points_materializes_closed_contour() {
     let contour = rectangle();
 
     let chamfer = contour
-        .chamfer_line_line_vertex_by_points(1, &p(3, 0), &p(4, 1), &policy())
+        .chamfer_line_line_vertex_by_points_with_report(1, &p(3, 0), &p(4, 1), &policy())
         .unwrap();
 
     assert!(chamfer.report().status().is_native_exact());
@@ -606,7 +606,14 @@ fn contour_fillet_line_line_vertex_materializes_closed_contour() {
     let contour = rectangle();
 
     let fillet = contour
-        .fillet_line_line_vertex_by_points(1, &p(3, 0), &p(4, 1), &p(3, 1), false, &policy())
+        .fillet_line_line_vertex_by_points_with_report(
+            1,
+            &p(3, 0),
+            &p(4, 1),
+            &p(3, 1),
+            false,
+            &policy(),
+        )
         .unwrap();
 
     assert!(fillet.report().status().is_native_exact());
@@ -679,7 +686,14 @@ fn contour_fillet_line_line_vertex_by_parameters_materializes_closed_contour() {
     let contour = rectangle();
 
     let fillet = contour
-        .fillet_line_line_vertex_by_parameters(1, q(3, 4), q(1, 4), &p(3, 1), false, &policy())
+        .fillet_line_line_vertex_by_parameters_with_report(
+            1,
+            q(3, 4),
+            q(1, 4),
+            &p(3, 1),
+            false,
+            &policy(),
+        )
         .unwrap();
 
     assert!(fillet.report().status().is_native_exact());

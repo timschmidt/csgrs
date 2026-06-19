@@ -1983,6 +1983,22 @@ impl CurveString2 {
         next_param: Real,
         policy: &CurvePolicy,
     ) -> CurveResult<CurveStringChamferResult2> {
+        self.chamfer_line_line_vertex_by_parameters_with_report(
+            vertex_index,
+            previous_param,
+            next_param,
+            policy,
+        )
+    }
+
+    /// Chamfers one interior line-line vertex by exact segment parameters and retains evidence.
+    pub fn chamfer_line_line_vertex_by_parameters_with_report(
+        &self,
+        vertex_index: usize,
+        previous_param: Real,
+        next_param: Real,
+        policy: &CurvePolicy,
+    ) -> CurveResult<CurveStringChamferResult2> {
         if vertex_index == 0 || vertex_index >= self.len() {
             return Err(CurveError::InvalidCurveRange);
         }
@@ -2134,6 +2150,22 @@ impl CurveString2 {
         next_point: &Point2,
         policy: &CurvePolicy,
     ) -> CurveResult<CurveStringChamferResult2> {
+        self.chamfer_line_line_vertex_by_points_with_report(
+            vertex_index,
+            previous_point,
+            next_point,
+            policy,
+        )
+    }
+
+    /// Chamfers one interior line-line vertex by exact cut points and retains evidence.
+    pub fn chamfer_line_line_vertex_by_points_with_report(
+        &self,
+        vertex_index: usize,
+        previous_point: &Point2,
+        next_point: &Point2,
+        policy: &CurvePolicy,
+    ) -> CurveResult<CurveStringChamferResult2> {
         if vertex_index == 0 || vertex_index >= self.len() {
             return Err(CurveError::InvalidCurveRange);
         }
@@ -2198,7 +2230,7 @@ impl CurveString2 {
             }
         };
 
-        let mut result = self.chamfer_line_line_vertex_by_parameters(
+        let mut result = self.chamfer_line_line_vertex_by_parameters_with_report(
             vertex_index,
             previous_param,
             next_param,
@@ -2218,6 +2250,26 @@ impl CurveString2 {
     /// nonzero-radius, equal-radius, tangency, orientation, and retained-range
     /// checks decide whether native topology may be emitted.
     pub fn fillet_line_line_vertex_by_parameters(
+        &self,
+        vertex_index: usize,
+        previous_param: Real,
+        next_param: Real,
+        center: &Point2,
+        clockwise: bool,
+        policy: &CurvePolicy,
+    ) -> CurveResult<CurveStringFilletResult2> {
+        self.fillet_line_line_vertex_by_parameters_with_report(
+            vertex_index,
+            previous_param,
+            next_param,
+            center,
+            clockwise,
+            policy,
+        )
+    }
+
+    /// Fillets one interior line-line vertex from exact parameters and center, retaining evidence.
+    pub fn fillet_line_line_vertex_by_parameters_with_report(
         &self,
         vertex_index: usize,
         previous_param: Real,
@@ -2261,7 +2313,7 @@ impl CurveString2 {
 
         let previous_point = previous_line.point_at(previous_trim.param().clone());
         let next_point = next_line.point_at(next_trim.param().clone());
-        let mut result = self.fillet_line_line_vertex_by_points(
+        let mut result = self.fillet_line_line_vertex_by_points_with_report(
             vertex_index,
             &previous_point,
             &next_point,
@@ -2281,6 +2333,26 @@ impl CurveString2 {
     /// and oriented so the inserted arc is tangent to the incoming and outgoing
     /// line traversal. Failed predicates are retained as explicit blockers.
     pub fn fillet_line_line_vertex_by_points(
+        &self,
+        vertex_index: usize,
+        previous_point: &Point2,
+        next_point: &Point2,
+        center: &Point2,
+        clockwise: bool,
+        policy: &CurvePolicy,
+    ) -> CurveResult<CurveStringFilletResult2> {
+        self.fillet_line_line_vertex_by_points_with_report(
+            vertex_index,
+            previous_point,
+            next_point,
+            center,
+            clockwise,
+            policy,
+        )
+    }
+
+    /// Fillets one interior line-line vertex by exact tangent points and center, retaining evidence.
+    pub fn fillet_line_line_vertex_by_points_with_report(
         &self,
         vertex_index: usize,
         previous_point: &Point2,
