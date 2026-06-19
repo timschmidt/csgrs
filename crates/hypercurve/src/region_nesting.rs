@@ -284,6 +284,18 @@ pub struct ExactCurveArrangementOutputRoleCache2 {
     buckets: Vec<ExactCurveArrangementOutputRoleBucket2>,
 }
 
+/// Final boundary output summary retained by an evaluated arrangement workspace.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ExactCurveArrangementOutputBoundaryCache2 {
+    output_contour_count: usize,
+    output_segment_count: usize,
+    output_segment_kind_counts: SegmentKindCounts,
+    material_contour_count: usize,
+    hole_contour_count: usize,
+    material_segment_count: usize,
+    hole_segment_count: usize,
+}
+
 /// Retained exact ring-traversal evidence cached by an evaluated arrangement workspace.
 #[derive(Clone, Debug, PartialEq)]
 pub struct ExactCurveArrangementRingAssemblyCache2 {
@@ -307,6 +319,7 @@ pub struct ExactCurveArrangementRingAssemblyCache2 {
 pub struct ExactCurveArrangementOutputCache2 {
     materialized_region: bool,
     boundary_build_report: Option<RegionBoundaryContourBuildReport2>,
+    boundary_output_cache: Option<ExactCurveArrangementOutputBoundaryCache2>,
     role_cache: Option<ExactCurveArrangementOutputRoleCache2>,
     status: RetainedTopologyStatus,
     blocker: Option<UncertaintyReason>,
@@ -2259,6 +2272,56 @@ impl ExactCurveArrangementOutputRoleCache2 {
     }
 }
 
+impl ExactCurveArrangementOutputBoundaryCache2 {
+    fn from_region_build_report(report: &RegionLineSegmentRegionBuildReport2) -> Option<Self> {
+        let boundary_build_report = report.boundary_build_report.as_ref()?;
+        Some(Self {
+            output_contour_count: boundary_build_report.output_contour_count()?,
+            output_segment_count: boundary_build_report.output_segment_count()?,
+            output_segment_kind_counts: report.output_boundary_segment_kind_counts?,
+            material_contour_count: boundary_build_report.material_contour_count()?,
+            hole_contour_count: boundary_build_report.hole_contour_count()?,
+            material_segment_count: boundary_build_report.material_segment_count()?,
+            hole_segment_count: boundary_build_report.hole_segment_count()?,
+        })
+    }
+
+    /// Returns total output contour count.
+    pub const fn output_contour_count(&self) -> usize {
+        self.output_contour_count
+    }
+
+    /// Returns total output boundary segment count.
+    pub const fn output_segment_count(&self) -> usize {
+        self.output_segment_count
+    }
+
+    /// Returns output boundary primitive-family counts.
+    pub const fn output_segment_kind_counts(&self) -> SegmentKindCounts {
+        self.output_segment_kind_counts
+    }
+
+    /// Returns material contour count.
+    pub const fn material_contour_count(&self) -> usize {
+        self.material_contour_count
+    }
+
+    /// Returns hole contour count.
+    pub const fn hole_contour_count(&self) -> usize {
+        self.hole_contour_count
+    }
+
+    /// Returns material boundary segment count.
+    pub const fn material_segment_count(&self) -> usize {
+        self.material_segment_count
+    }
+
+    /// Returns hole boundary segment count.
+    pub const fn hole_segment_count(&self) -> usize {
+        self.hole_segment_count
+    }
+}
+
 impl ExactCurveArrangementRingAssemblyCache2 {
     fn from_region_build_report(report: &RegionLineSegmentRegionBuildReport2) -> Option<Self> {
         Some(Self {
@@ -2353,12 +2416,17 @@ impl ExactCurveArrangementRingAssemblyCache2 {
 impl ExactCurveArrangementOutputCache2 {
     fn from_region_build_result(region_result: &RegionLineSegmentRegionBuildResult2) -> Self {
         let boundary_build_report = region_result.report().boundary_build_report.clone();
+        let boundary_output_cache =
+            ExactCurveArrangementOutputBoundaryCache2::from_region_build_report(
+                region_result.report(),
+            );
         let role_cache = boundary_build_report
             .as_ref()
             .and_then(ExactCurveArrangementOutputRoleCache2::from_boundary_build_report);
         Self {
             materialized_region: region_result.region().is_some(),
             boundary_build_report,
+            boundary_output_cache,
             role_cache,
             status: region_result.report().status,
             blocker: region_result.report().blocker,
@@ -2373,6 +2441,13 @@ impl ExactCurveArrangementOutputCache2 {
     /// Returns delegated boundary-contour role assignment evidence, when reached.
     pub const fn boundary_build_report(&self) -> Option<&RegionBoundaryContourBuildReport2> {
         self.boundary_build_report.as_ref()
+    }
+
+    /// Returns retained final boundary output summary when available.
+    pub const fn boundary_output_cache(
+        &self,
+    ) -> Option<&ExactCurveArrangementOutputBoundaryCache2> {
+        self.boundary_output_cache.as_ref()
     }
 
     /// Returns retained material/hole role buckets when role assignment was reached.

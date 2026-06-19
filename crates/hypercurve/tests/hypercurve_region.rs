@@ -1333,6 +1333,20 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
     let boundary_report = output_cache.boundary_build_report().unwrap();
     assert_eq!(boundary_report.material_contour_count(), Some(1));
     assert_eq!(boundary_report.hole_contour_count(), Some(0));
+    let boundary_output_cache = output_cache.boundary_output_cache().unwrap();
+    assert_eq!(boundary_output_cache.output_contour_count(), 1);
+    assert_eq!(boundary_output_cache.output_segment_count(), 4);
+    assert_eq!(
+        boundary_output_cache.output_segment_kind_counts(),
+        result
+            .report()
+            .output_boundary_segment_kind_counts()
+            .unwrap()
+    );
+    assert_eq!(boundary_output_cache.material_contour_count(), 1);
+    assert_eq!(boundary_output_cache.hole_contour_count(), 0);
+    assert_eq!(boundary_output_cache.material_segment_count(), 4);
+    assert_eq!(boundary_output_cache.hole_segment_count(), 0);
     let role_cache = output_cache.role_cache().unwrap();
     assert_eq!(
         role_cache.role_report_count(),
@@ -1654,6 +1668,20 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
         result.report().boundary_build_report()
     );
     let boundary_report = output_cache.boundary_build_report().unwrap();
+    let boundary_output_cache = output_cache.boundary_output_cache().unwrap();
+    assert_eq!(boundary_output_cache.output_contour_count(), 1);
+    assert_eq!(boundary_output_cache.output_segment_count(), 2);
+    assert_eq!(
+        boundary_output_cache.output_segment_kind_counts(),
+        result
+            .report()
+            .output_boundary_segment_kind_counts()
+            .unwrap()
+    );
+    assert_eq!(boundary_output_cache.material_contour_count(), 1);
+    assert_eq!(boundary_output_cache.hole_contour_count(), 0);
+    assert_eq!(boundary_output_cache.material_segment_count(), 2);
+    assert_eq!(boundary_output_cache.hole_segment_count(), 0);
     let role_cache = output_cache.role_cache().unwrap();
     assert_eq!(
         role_cache.role_report_count(),
@@ -1822,6 +1850,7 @@ fn exact_curve_arrangement_attempt_retains_overlap_blocker() {
     assert_eq!(output_cache.status(), result.report().status());
     assert_eq!(output_cache.blocker(), Some(UncertaintyReason::Boundary));
     assert_eq!(output_cache.boundary_build_report(), None);
+    assert_eq!(output_cache.boundary_output_cache(), None);
     assert_eq!(output_cache.role_cache(), None);
     assert_eq!(result.report(), legacy.report());
 }
