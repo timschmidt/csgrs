@@ -3593,7 +3593,7 @@ impl ExactBooleanSupport {
 /// Preflight report for an exact boolean operation request.
 ///
 /// The report gives callers a stable way to audit the current implementation
-/// boundary. Shortcut variants are executable by [`ExactBooleanWorkspace::materialize`]. For
+/// boundary. Shortcut variants are executable by [`ExactBooleanWorkspace::materialize_ref`]. For
 /// nontrivial named booleans, the report exposes the certified split-region
 /// plane classifications that a future exact winding/inside-outside rule must
 /// consume, without dispatching to the specialized tolerance kernel.

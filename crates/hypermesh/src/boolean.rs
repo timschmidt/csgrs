@@ -2216,8 +2216,9 @@ pub struct ExactBooleanEvaluation {
     certifications: ExactBooleanCertificationSet,
     /// Materialized exact result, when available under `request`.
     ///
-    /// Borrow through [`Self::materialized_result`] or request an owned result
-    /// from [`ExactBooleanWorkspace::materialize`](crate::ExactBooleanWorkspace::materialize).
+    /// Borrow through [`Self::materialized_result`] or from the retained
+    /// workspace cache with
+    /// [`ExactBooleanWorkspace::materialize_ref`](crate::ExactBooleanWorkspace::materialize_ref).
     result: Option<ExactBooleanResult>,
 }
 
@@ -6866,7 +6867,7 @@ fn boolean_convex_relation_meshes_optional_from_graph(
 
 /// Certify and materialize a named boolean for closed convex solids.
 ///
-/// This public replay helper follows [`ExactBooleanWorkspace::materialize`]
+/// This replay helper follows [`ExactBooleanWorkspace::materialize_ref`]
 /// precedence: it only materializes when preflight certifies the requested
 /// operation as a convex operation or convex relation shortcut. Inputs handled
 /// by earlier exact shortcuts, such as orthogonal-cell recovery or bounds
