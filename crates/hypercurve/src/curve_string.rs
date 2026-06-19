@@ -620,7 +620,10 @@ pub struct CurveStringTrimPoint2 {
 pub struct CurveStringTrimSegmentReport2 {
     source_segment_index: usize,
     source_segment_kind: SegmentKind,
+    output_segment_index: Option<usize>,
     output_segment_kind: Option<SegmentKind>,
+    output_segment_start_point: Option<Point2>,
+    output_segment_end_point: Option<Point2>,
     source_segment_start_point: Point2,
     source_segment_end_point: Point2,
     source_range: ParamRange,
@@ -1783,7 +1786,10 @@ impl CurveString2 {
             let segment_report = CurveStringTrimSegmentReport2 {
                 source_segment_index,
                 source_segment_kind: source_segment.structural_facts().kind,
+                output_segment_index: None,
                 output_segment_kind: None,
+                output_segment_start_point: None,
+                output_segment_end_point: None,
                 source_segment_start_point: source_segment.start().clone(),
                 source_segment_end_point: source_segment.end().clone(),
                 source_range: source_range.clone(),
@@ -1798,7 +1804,10 @@ impl CurveString2 {
             )? {
                 SegmentTrimMaterialization::Materialized(segment) => {
                     let mut segment_report = segment_report;
+                    segment_report.output_segment_index = Some(trimmed_segments.len());
                     segment_report.output_segment_kind = Some(segment.structural_facts().kind);
+                    segment_report.output_segment_start_point = Some(segment.start().clone());
+                    segment_report.output_segment_end_point = Some(segment.end().clone());
                     segment_reports.push(segment_report);
                     trimmed_segments.push(segment);
                 }
@@ -2126,7 +2135,10 @@ impl CurveString2 {
             CurveStringTrimSegmentReport2 {
                 source_segment_index: previous_segment_index,
                 source_segment_kind: SegmentKind::Line,
+                output_segment_index: Some(previous_segment_index),
                 output_segment_kind: Some(SegmentKind::Line),
+                output_segment_start_point: Some(previous_line.start().clone()),
+                output_segment_end_point: Some(previous_cut_point.clone()),
                 source_segment_start_point: previous_line.start().clone(),
                 source_segment_end_point: previous_line.end().clone(),
                 source_range: previous_range,
@@ -2137,7 +2149,10 @@ impl CurveString2 {
             CurveStringTrimSegmentReport2 {
                 source_segment_index: next_segment_index,
                 source_segment_kind: SegmentKind::Line,
+                output_segment_index: Some(next_segment_index + 1),
                 output_segment_kind: Some(SegmentKind::Line),
+                output_segment_start_point: Some(next_cut_point.clone()),
+                output_segment_end_point: Some(next_line.end().clone()),
                 source_segment_start_point: next_line.start().clone(),
                 source_segment_end_point: next_line.end().clone(),
                 source_range: next_range,
@@ -2643,7 +2658,10 @@ impl CurveString2 {
             CurveStringTrimSegmentReport2 {
                 source_segment_index: previous_segment_index,
                 source_segment_kind: SegmentKind::Line,
+                output_segment_index: Some(previous_segment_index),
                 output_segment_kind: Some(SegmentKind::Line),
+                output_segment_start_point: Some(previous_line.start().clone()),
+                output_segment_end_point: Some((*previous_point).clone()),
                 source_segment_start_point: previous_line.start().clone(),
                 source_segment_end_point: previous_line.end().clone(),
                 source_range: previous_range,
@@ -2654,7 +2672,10 @@ impl CurveString2 {
             CurveStringTrimSegmentReport2 {
                 source_segment_index: next_segment_index,
                 source_segment_kind: SegmentKind::Line,
+                output_segment_index: Some(next_segment_index + 1),
                 output_segment_kind: Some(SegmentKind::Line),
+                output_segment_start_point: Some((*next_point).clone()),
+                output_segment_end_point: Some(next_line.end().clone()),
                 source_segment_start_point: next_line.start().clone(),
                 source_segment_end_point: next_line.end().clone(),
                 source_range: next_range,
@@ -3178,7 +3199,10 @@ impl CurveString2 {
             let segment_report = CurveStringTrimSegmentReport2 {
                 source_segment_index,
                 source_segment_kind: source_segment.structural_facts().kind,
+                output_segment_index: None,
                 output_segment_kind: None,
+                output_segment_start_point: None,
+                output_segment_end_point: None,
                 source_segment_start_point: source_segment.start().clone(),
                 source_segment_end_point: source_segment.end().clone(),
                 source_range: source_range.clone(),
@@ -3195,7 +3219,10 @@ impl CurveString2 {
             )? {
                 SegmentTrimMaterialization::Materialized(segment) => {
                     let mut segment_report = segment_report;
+                    segment_report.output_segment_index = Some(trimmed_segments.len());
                     segment_report.output_segment_kind = Some(segment.structural_facts().kind);
+                    segment_report.output_segment_start_point = Some(segment.start().clone());
+                    segment_report.output_segment_end_point = Some(segment.end().clone());
                     segment_reports.push(segment_report);
                     trimmed_segments.push(segment);
                 }
@@ -3422,9 +3449,24 @@ impl CurveStringTrimSegmentReport2 {
         self.source_segment_kind
     }
 
+    /// Returns the emitted output segment index, when this range materialized.
+    pub const fn output_segment_index(&self) -> Option<usize> {
+        self.output_segment_index
+    }
+
     /// Returns the primitive family of the emitted segment, when materialized.
     pub const fn output_segment_kind(&self) -> Option<SegmentKind> {
         self.output_segment_kind
+    }
+
+    /// Returns the exact start point of the emitted segment, when materialized.
+    pub const fn output_segment_start_point(&self) -> Option<&Point2> {
+        self.output_segment_start_point.as_ref()
+    }
+
+    /// Returns the exact end point of the emitted segment, when materialized.
+    pub const fn output_segment_end_point(&self) -> Option<&Point2> {
+        self.output_segment_end_point.as_ref()
     }
 
     /// Returns the exact start point of the retained source segment.
