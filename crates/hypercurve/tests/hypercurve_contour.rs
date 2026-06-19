@@ -2,8 +2,8 @@ use hypercurve::{
     BulgeVertex2, Classification, Contour2, ContourChamferStage2, ContourClosurePredicatePath2,
     ContourClosureStage2, ContourFilletStage2, ContourLineMergeStage2, ContourPointLocation,
     CurveError, CurvePolicy, CurveString2, CurveStringChamferInputPath2,
-    CurveStringFilletInputPath2, FillRule, Real, Region2, RegionPointLocation, Segment2,
-    SegmentKind, SegmentKindCounts, UncertaintyReason,
+    CurveStringChamferPredicatePath2, CurveStringFilletInputPath2, FillRule, Real, Region2,
+    RegionPointLocation, Segment2, SegmentKind, SegmentKindCounts, UncertaintyReason,
 };
 
 fn s(value: i32) -> Real {
@@ -340,6 +340,10 @@ fn contour_chamfer_line_line_vertex_materializes_closed_contour() {
         chamfer.report().stage(),
         ContourChamferStage2::ContourMaterialization
     );
+    assert_eq!(
+        chamfer.report().predicate_path(),
+        CurveStringChamferPredicatePath2::LineLineStrictInteriorParameters
+    );
     assert_eq!(chamfer.report().vertex_index(), 1);
     assert_eq!(
         chamfer.report().curve_string_report().input_path(),
@@ -465,6 +469,10 @@ fn contour_chamfer_reports_boundary_parameters() {
         ContourChamferStage2::CurveStringEdit
     );
     assert_eq!(
+        chamfer.report().predicate_path(),
+        CurveStringChamferPredicatePath2::CutParameterNotStrictInterior
+    );
+    assert_eq!(
         chamfer.report().blocker(),
         Some(UncertaintyReason::Boundary)
     );
@@ -497,6 +505,10 @@ fn contour_chamfer_line_line_vertex_by_points_materializes_closed_contour() {
     assert_eq!(
         chamfer.report().stage(),
         ContourChamferStage2::ContourMaterialization
+    );
+    assert_eq!(
+        chamfer.report().predicate_path(),
+        CurveStringChamferPredicatePath2::LineLineStrictInteriorParameters
     );
     assert_eq!(chamfer.report().vertex_index(), 1);
     assert_eq!(
@@ -540,6 +552,10 @@ fn contour_chamfer_line_line_vertex_by_points_reports_off_segment_boundary() {
     assert_eq!(
         chamfer.report().stage(),
         ContourChamferStage2::CurveStringEdit
+    );
+    assert_eq!(
+        chamfer.report().predicate_path(),
+        CurveStringChamferPredicatePath2::PointCutNotOnSourceSegment
     );
     assert_eq!(
         chamfer.report().blocker(),
