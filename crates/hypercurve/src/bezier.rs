@@ -50,6 +50,7 @@ pub struct QuadraticBezierMidpointInterpolationReport2 {
     midpoint_constraint: Point2,
     end_point: Point2,
     solved_control_point: Option<Point2>,
+    solve_path: Option<BezierInterpolationSolvePath2>,
     replay_path: Option<BezierInterpolationReplayPath2>,
     replayed_midpoint: Option<Point2>,
     status: RetainedTopologyStatus,
@@ -81,6 +82,7 @@ pub struct QuadraticBezierPointInterpolationReport2 {
     interpolation_point: Point2,
     end_point: Point2,
     solved_control_point: Option<Point2>,
+    solve_path: Option<BezierInterpolationSolvePath2>,
     replay_path: Option<BezierInterpolationReplayPath2>,
     replayed_point: Option<Point2>,
     status: RetainedTopologyStatus,
@@ -115,11 +117,23 @@ pub struct CubicBezierHermiteInterpolationReport2 {
     end_tangent: EndpointTangent2,
     solved_first_control_point: Option<Point2>,
     solved_second_control_point: Option<Point2>,
+    solve_path: Option<BezierInterpolationSolvePath2>,
     replay_path: Option<BezierInterpolationReplayPath2>,
     replayed_start_tangent: Option<EndpointTangent2>,
     replayed_end_tangent: Option<EndpointTangent2>,
     status: RetainedTopologyStatus,
     blocker: Option<UncertaintyReason>,
+}
+
+/// Exact algebraic solve used to construct interpolated Bezier control points.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum BezierInterpolationSolvePath2 {
+    /// Solved the interior quadratic Bernstein control from one retained parameter point.
+    QuadraticBernsteinInteriorPoint,
+    /// Solved the quadratic control from the retained half-parameter midpoint equation.
+    QuadraticBernsteinMidpoint,
+    /// Solved cubic controls from endpoint derivative constraints.
+    CubicHermiteEndpointDerivatives,
 }
 
 /// Replay path used to certify interpolated Bezier constraints after materialization.
@@ -204,6 +218,11 @@ impl QuadraticBezierMidpointInterpolationReport2 {
         self.solved_control_point.as_ref()
     }
 
+    /// Returns the exact algebraic solve path used to construct the control point.
+    pub const fn solve_path(&self) -> Option<BezierInterpolationSolvePath2> {
+        self.solve_path
+    }
+
     /// Returns the exact replay path used to validate the materialized span.
     pub const fn replay_path(&self) -> Option<BezierInterpolationReplayPath2> {
         self.replay_path
@@ -271,6 +290,11 @@ impl QuadraticBezierPointInterpolationReport2 {
     /// Returns the solved quadratic control point, when materialized.
     pub const fn solved_control_point(&self) -> Option<&Point2> {
         self.solved_control_point.as_ref()
+    }
+
+    /// Returns the exact algebraic solve path used to construct the control point.
+    pub const fn solve_path(&self) -> Option<BezierInterpolationSolvePath2> {
+        self.solve_path
     }
 
     /// Returns the exact replay path used to validate the materialized span.
@@ -345,6 +369,11 @@ impl CubicBezierHermiteInterpolationReport2 {
     /// Returns the solved second cubic control point, when materialized.
     pub const fn solved_second_control_point(&self) -> Option<&Point2> {
         self.solved_second_control_point.as_ref()
+    }
+
+    /// Returns the exact algebraic solve path used to construct the control points.
+    pub const fn solve_path(&self) -> Option<BezierInterpolationSolvePath2> {
+        self.solve_path
     }
 
     /// Returns the exact replay path used to validate the materialized span.
@@ -459,6 +488,7 @@ impl QuadraticBezier2 {
                     interpolation_point: point,
                     end_point: end,
                     solved_control_point: None,
+                    solve_path: None,
                     replay_path: None,
                     replayed_point: None,
                     status,
@@ -491,6 +521,7 @@ impl QuadraticBezier2 {
                 interpolation_point: point,
                 end_point: end,
                 solved_control_point: Some(control),
+                solve_path: Some(BezierInterpolationSolvePath2::QuadraticBernsteinInteriorPoint),
                 replay_path: Some(BezierInterpolationReplayPath2::ExactEvaluationReplay),
                 replayed_point: Some(replayed_point),
                 status: RetainedTopologyStatus::NativeExact,
@@ -542,6 +573,7 @@ impl QuadraticBezier2 {
                 midpoint_constraint: midpoint,
                 end_point: end,
                 solved_control_point: control,
+                solve_path: Some(BezierInterpolationSolvePath2::QuadraticBernsteinMidpoint),
                 replay_path: Some(BezierInterpolationReplayPath2::ExactEvaluationReplay),
                 replayed_midpoint,
                 status: RetainedTopologyStatus::NativeExact,
@@ -710,6 +742,7 @@ impl CubicBezier2 {
                 end_tangent,
                 solved_first_control_point: Some(control1),
                 solved_second_control_point: Some(control2),
+                solve_path: Some(BezierInterpolationSolvePath2::CubicHermiteEndpointDerivatives),
                 replay_path: Some(BezierInterpolationReplayPath2::ExactEvaluationReplay),
                 replayed_start_tangent: Some(replayed_start_tangent),
                 replayed_end_tangent: Some(replayed_end_tangent),

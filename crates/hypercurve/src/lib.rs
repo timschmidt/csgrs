@@ -64,7 +64,7 @@ mod triangulation;
 
 pub use bbox::Aabb2;
 pub use bezier::{
-    BezierEndpoint, BezierInterpolationReplayPath2, CubicBezier2,
+    BezierEndpoint, BezierInterpolationReplayPath2, BezierInterpolationSolvePath2, CubicBezier2,
     CubicBezierHermiteInterpolationReport2, CubicBezierHermiteInterpolationResult2,
     CubicBezierHermiteInterpolationStage2, EndpointTangent2, QuadraticBezier2,
     QuadraticBezierMidpointInterpolationReport2, QuadraticBezierMidpointInterpolationResult2,
