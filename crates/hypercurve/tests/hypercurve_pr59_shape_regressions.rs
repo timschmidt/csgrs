@@ -268,6 +268,10 @@ fn boolean_region_report_retains_boundary_role_assignment() {
     );
 
     let boundary_report = report.boundary_build_report().unwrap();
+    assert_eq!(
+        pipeline_report.boundary_build_report(),
+        Some(boundary_report)
+    );
     assert_eq!(boundary_report.source_contour_count(), 1);
     assert_eq!(boundary_report.source_segment_count(), 8);
     assert_eq!(boundary_report.validation_candidate_pair_count(), 0);

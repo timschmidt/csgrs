@@ -65,6 +65,7 @@ pub struct RegionBooleanPipelineReport2 {
     chain_assembly_report: BooleanBoundaryChainAssemblyReport2,
     loop_extraction_report: BooleanBoundaryLoopExtractionReport2,
     contour_transfer_report: BooleanBoundaryContourTransferReport2,
+    boundary_build_report: Option<RegionBoundaryContourBuildReport2>,
 }
 
 /// Query path used by a report-bearing closed region boolean.
@@ -850,6 +851,11 @@ impl RegionBooleanPipelineReport2 {
     pub const fn contour_transfer_report(&self) -> &BooleanBoundaryContourTransferReport2 {
         &self.contour_transfer_report
     }
+
+    /// Returns final boundary-contour role assignment evidence, if available.
+    pub const fn boundary_build_report(&self) -> Option<&RegionBoundaryContourBuildReport2> {
+        self.boundary_build_report.as_ref()
+    }
 }
 
 impl RegionBooleanPreparedCacheReport2 {
@@ -1458,6 +1464,7 @@ fn boolean_boundary_contours_between_with_pipeline_report(
         chain_assembly_report: chain_result.report().clone(),
         loop_extraction_report: loop_result.report().clone(),
         contour_transfer_report: contour_result.report().clone(),
+        boundary_build_report: None,
     };
     Ok(Classification::Decided((contours, Some(pipeline_report))))
 }
@@ -1538,6 +1545,10 @@ pub(crate) fn region_boolean_result_from_boundary_contours_with_prepared_cache_a
         .region()
         .map(|region| region_view_boundary_segment_kind_counts(&region.as_view()));
     let boundary_build_report = built.report().clone();
+    let pipeline_report = pipeline_report.map(|mut report| {
+        report.boundary_build_report = Some(boundary_build_report.clone());
+        report
+    });
     Ok(RegionBooleanResult2 {
         region: built.into_region(),
         report: RegionBooleanReport2 {
