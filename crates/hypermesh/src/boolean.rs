@@ -398,24 +398,17 @@ impl ExactArrangementBooleanAttempt {
             && report.resolves_operation_selection(self.operation)
     }
 
-    pub(crate) fn matches_request_policy(
-        &self,
-        request: ExactBooleanRequest,
-        policy: ExactRegularizationPolicy,
-    ) -> bool {
-        self.operation == request.operation
-            && self.policy == policy
-            && self.output_validation == request.validation
-            && self.boundary_policy == request.boundary_policy
-    }
-
     pub(crate) fn validate_for_request_policy(
         &self,
         request: ExactBooleanRequest,
         policy: ExactRegularizationPolicy,
     ) -> Result<(), ExactReportValidationError> {
         self.validate()?;
-        if !self.matches_request_policy(request, policy) {
+        if self.operation != request.operation
+            || self.policy != policy
+            || self.output_validation != request.validation
+            || self.boundary_policy != request.boundary_policy
+        {
             return Err(ExactReportValidationError::StatusEvidenceMismatch);
         }
         Ok(())
