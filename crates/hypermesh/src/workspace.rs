@@ -414,13 +414,6 @@ impl<'a> ExactBooleanWorkspace<'a> {
             if let Some(result) = retained_result {
                 return Ok(result);
             }
-            if support == ExactBooleanSupport::CertifiedArrangementCellComplex
-                && self
-                    .validated_regularized_solid_arrangement_attempt(request)?
-                    .is_none()
-            {
-                self.arrangement_attempt(request, ExactRegularizationPolicy::REGULARIZED_SOLID)?;
-            }
             let result = self
                 .try_materialize_certified_support(request, support)?
                 .ok_or_else(|| {
