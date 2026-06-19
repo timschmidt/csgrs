@@ -2313,11 +2313,6 @@ impl ExactBooleanEvaluation {
             .coplanar_volumetric_evidence())
     }
 
-    /// Return whether this evaluation retained coplanar volumetric-cell evidence.
-    pub fn has_coplanar_volumetric_evidence(&self) -> bool {
-        self.coplanar_volumetric_evidence().is_some()
-    }
-
     /// Return whether retained evidence requires coplanar volumetric cells.
     pub fn requires_coplanar_volumetric_cells(&self) -> bool {
         self.coplanar_volumetric_evidence()

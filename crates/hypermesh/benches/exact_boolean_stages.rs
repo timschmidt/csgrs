@@ -165,31 +165,25 @@ fn run_case(case: &BenchCase) {
     workspace.evaluate(request).ok();
     time_stage(
         case,
-        "workspace_coplanar_volumetric_evidence_from_evaluation",
+        "workspace_coplanar_volumetric_policy_from_evaluation",
         || {
             let evaluation = workspace.evaluate(request).unwrap();
-            black_box(
-                evaluation
-                    .has_coplanar_volumetric_evidence()
-                    .then(|| evaluation.requires_coplanar_volumetric_cells()),
-            );
+            black_box(evaluation.requires_coplanar_volumetric_cells());
         },
     );
 
     time_prepared_stage(
         case,
-        "workspace_validate_evaluation_with_coplanar_volumetric_evidence",
+        "workspace_validate_evaluation_with_coplanar_volumetric_policy",
         || retained_workspace_with_evaluation_for_case(case, request),
         |retained| {
             if let Some(evaluation) = retained.0.evaluate(retained.1).ok() {
-                if evaluation.has_coplanar_volumetric_evidence() {
-                    black_box((
-                        evaluation.requires_coplanar_volumetric_cells(),
-                        evaluation
-                            .validate_against_sources(&case.left, &case.right)
-                            .ok(),
-                    ));
-                }
+                black_box((
+                    evaluation.requires_coplanar_volumetric_cells(),
+                    evaluation
+                        .validate_against_sources(&case.left, &case.right)
+                        .ok(),
+                ));
             }
         },
     );

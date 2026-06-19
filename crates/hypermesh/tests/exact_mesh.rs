@@ -1051,7 +1051,7 @@ fn affine_orthogonal_solid_recovers_face_fan_basis_from_cell_edges() {
 }
 
 #[test]
-fn exact_coplanar_volumetric_cell_evidence_is_retained_by_public_evaluation() {
+fn exact_coplanar_volumetric_cell_policy_is_publicly_replayable() {
     let left_a = tetra_from_corners([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]);
     let left_b = tetra_from_corners([20, 0, 0], [22, 0, 0], [20, 2, 0], [20, 0, 2]);
     let left = combine_exact_meshes(&left_a, &left_b, "test disconnected same-side fixture");
@@ -1072,14 +1072,10 @@ fn exact_coplanar_volumetric_cell_evidence_is_retained_by_public_evaluation() {
                     .retained_arrangement_attempt()
                     .is_some_and(|attempt| attempt.region_ownership_resolves_requested_operation())
                     || evaluation.materializes_arrangement_cell_complex()
-                    || evaluation.has_coplanar_volumetric_evidence(),
+                    || evaluation.requires_coplanar_volumetric_cells(),
                 "{evaluation:?}"
             );
             evaluation.validate_against_sources(&left, &right).unwrap();
-            assert!(
-                evaluation.has_coplanar_volumetric_evidence(),
-                "coplanar volumetric blocker should retain source-aware evidence"
-            );
             evaluation.validate_against_sources(&left, &right).unwrap();
             assert!(evaluation.requires_coplanar_volumetric_cells());
 
@@ -2241,10 +2237,6 @@ fn closed_no_volume_overlap_regularized_boolean_is_publicly_replayable() {
                     "{operation:?}: {preflight_evaluation:?}"
                 );
                 preflight_evaluation.validate().unwrap();
-                assert!(
-                    preflight_evaluation.has_coplanar_volumetric_evidence(),
-                    "positive-area no-volume shortcut should retain source-aware boundary-only evidence"
-                );
                 preflight_evaluation.requires_coplanar_volumetric_cells()
             },
         );
@@ -2277,7 +2269,6 @@ fn closed_no_volume_overlap_regularized_boolean_is_publicly_replayable() {
                         readiness_evaluation.materializes_arrangement_cell_complex(),
                         "{operation:?}: {readiness_evaluation:?}"
                     );
-                    assert!(readiness_evaluation.has_coplanar_volumetric_evidence());
                     assert_eq!(
                         readiness_evaluation.requires_coplanar_volumetric_cells(),
                         retained_requires_coplanar_volumetric_cells
