@@ -6057,6 +6057,43 @@ impl ExactCurveArrangementResult2 {
         self.evaluation.workspace()
     }
 
+    /// Returns retained source segment facts prepared before split scheduling.
+    pub const fn source_segment_cache(&self) -> &ExactCurveArrangementSourceSegmentCache2 {
+        self.workspace().source_segment_cache()
+    }
+
+    /// Returns exact source endpoint buckets retained during workspace preparation.
+    pub const fn source_endpoint_bucket_cache(
+        &self,
+    ) -> &ExactCurveArrangementSourceEndpointBucketCache2 {
+        self.workspace().source_endpoint_bucket_cache()
+    }
+
+    /// Returns the retained source-pair schedule prepared before split predicates run.
+    pub const fn split_schedule_cache(&self) -> &ExactCurveArrangementSplitScheduleCache2 {
+        self.workspace().split_schedule_cache()
+    }
+
+    /// Returns exact split evidence retained from the evaluated arrangement.
+    pub const fn split_cache(&self) -> Option<&ExactCurveArrangementSplitCache2> {
+        self.workspace().split_cache()
+    }
+
+    /// Returns exact endpoint-bucket evidence retained from the evaluated arrangement.
+    pub const fn endpoint_graph_cache(&self) -> Option<&ExactCurveArrangementEndpointGraphCache2> {
+        self.workspace().endpoint_graph_cache()
+    }
+
+    /// Returns exact ring-traversal evidence retained from the evaluated arrangement.
+    pub const fn ring_assembly_cache(&self) -> Option<&ExactCurveArrangementRingAssemblyCache2> {
+        self.workspace().ring_assembly_cache()
+    }
+
+    /// Returns final output evidence retained from the evaluated arrangement.
+    pub const fn output_cache(&self) -> Option<&ExactCurveArrangementOutputCache2> {
+        self.workspace().output_cache()
+    }
+
     /// Returns final retained evaluation facts derived from workspace caches.
     pub const fn summary_cache(&self) -> &ExactCurveArrangementEvaluationSummaryCache2 {
         self.evaluation.summary_cache()

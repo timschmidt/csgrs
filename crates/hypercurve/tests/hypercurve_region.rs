@@ -1057,7 +1057,7 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
             .map(|bbox| (bbox.min().clone(), bbox.max().clone())),
         Some((p(0, 0), p(4, 4)))
     );
-    let source_segment_cache = result.workspace().source_segment_cache();
+    let source_segment_cache = result.source_segment_cache();
     assert_eq!(
         source_segment_cache.source_segment_count(),
         attempt.request().source_segment_count()
@@ -1177,7 +1177,7 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
             .map(|bbox| (bbox.min().clone(), bbox.max().clone())),
         Some((p(0, 0), p(4, 0)))
     );
-    let source_endpoint_cache = result.workspace().source_endpoint_bucket_cache();
+    let source_endpoint_cache = result.source_endpoint_bucket_cache();
     assert_eq!(source_endpoint_cache.endpoint_count(), 8);
     assert_eq!(source_endpoint_cache.bucket_count(), 4);
     assert_eq!(source_endpoint_cache.singleton_bucket_count(), 0);
@@ -1202,7 +1202,7 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
         first_source_endpoint_bucket.endpoints()[1].endpoint(),
         ExactCurveArrangementSourceEndpoint2::End
     );
-    let split_schedule_cache = result.workspace().split_schedule_cache();
+    let split_schedule_cache = result.split_schedule_cache();
     assert_eq!(
         split_schedule_cache.candidate_pair_count(),
         result.report().split_candidate_pair_count()
@@ -1286,7 +1286,7 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
             ExactCurveArrangementSplitCandidateAabbStatus2::DecidedDisjoint,
         )
     );
-    let split_cache = result.workspace().split_cache().unwrap();
+    let split_cache = result.split_cache().unwrap();
     assert_eq!(
         split_cache.predicate_path(),
         result.report().split_predicate_path()
@@ -1417,7 +1417,7 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
         first_split_parameter.point(),
         result.report().split_intersection_reports()[0].point()
     );
-    let endpoint_cache = result.workspace().endpoint_graph_cache().unwrap();
+    let endpoint_cache = result.endpoint_graph_cache().unwrap();
     assert_eq!(
         Some(endpoint_cache.predicate_path()),
         result.report().endpoint_graph_predicate_path()
@@ -1615,7 +1615,7 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
     assert_eq!(endpoint_cache.blocker_arranged_segment_index(), None);
     assert_eq!(endpoint_cache.blocker_endpoint(), None);
     assert_eq!(endpoint_cache.blocker_point(), None);
-    let ring_cache = result.workspace().ring_assembly_cache().unwrap();
+    let ring_cache = result.ring_assembly_cache().unwrap();
     assert_eq!(
         Some(ring_cache.predicate_path()),
         result.report().ring_assembly_predicate_path()
@@ -2192,7 +2192,7 @@ fn exact_curve_arrangement_attempt_builds_line_region_with_line_specific_report(
         );
         assert!(result.report().source_reports()[reversed_ref.source_report_index()].reversed());
     }
-    let output_cache = result.workspace().output_cache().unwrap();
+    let output_cache = result.output_cache().unwrap();
     assert!(output_cache.materialized_region());
     assert_eq!(output_cache.stage(), result.report().stage());
     assert_eq!(output_cache.status(), result.report().status());
@@ -2464,7 +2464,7 @@ fn exact_curve_arrangement_attempt_retains_output_role_containment() {
     let result = ExactCurveArrangementAttempt2::new(request)
         .evaluate(&policy())
         .unwrap();
-    let output_cache = result.workspace().output_cache().unwrap();
+    let output_cache = result.output_cache().unwrap();
     let boundary_report = output_cache.boundary_build_report().unwrap();
     let role_cache = output_cache.role_cache().unwrap();
 
@@ -2574,7 +2574,7 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
             .map(|bbox| bbox.min().clone()),
         Some(p(0, -2))
     );
-    let source_segment_cache = result.workspace().source_segment_cache();
+    let source_segment_cache = result.source_segment_cache();
     assert_eq!(
         source_segment_cache.source_segment_count(),
         attempt.request().source_segment_count()
@@ -2668,7 +2668,7 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
     );
     assert_eq!(second_source_segment.source_start_point(), &p(0, 0));
     assert_eq!(second_source_segment.source_end_point(), &p(4, 0));
-    let source_endpoint_cache = result.workspace().source_endpoint_bucket_cache();
+    let source_endpoint_cache = result.source_endpoint_bucket_cache();
     assert_eq!(source_endpoint_cache.endpoint_count(), 4);
     assert_eq!(source_endpoint_cache.bucket_count(), 2);
     assert_eq!(source_endpoint_cache.singleton_bucket_count(), 0);
@@ -2692,7 +2692,7 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
         first_source_endpoint_bucket.endpoints()[1].endpoint(),
         ExactCurveArrangementSourceEndpoint2::End
     );
-    let split_schedule_cache = result.workspace().split_schedule_cache();
+    let split_schedule_cache = result.split_schedule_cache();
     assert_eq!(
         split_schedule_cache.candidate_pair_count(),
         result.report().split_candidate_pair_count()
@@ -2756,7 +2756,7 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
             ExactCurveArrangementSplitCandidateAabbStatus2::NotDecidedDisjoint,
         )
     );
-    let split_cache = result.workspace().split_cache().unwrap();
+    let split_cache = result.split_cache().unwrap();
     assert_eq!(
         split_cache.predicate_path(),
         result.report().split_predicate_path()
@@ -2876,7 +2876,7 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
         first_split_parameter.point(),
         result.report().split_intersection_reports()[0].point()
     );
-    let endpoint_cache = result.workspace().endpoint_graph_cache().unwrap();
+    let endpoint_cache = result.endpoint_graph_cache().unwrap();
     assert_eq!(
         Some(endpoint_cache.predicate_path()),
         result.report().endpoint_graph_predicate_path()
@@ -3054,7 +3054,7 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
         result.report().endpoint_graph_branch_endpoint_count()
     );
     assert_eq!(endpoint_cache.blocker_point(), None);
-    let ring_cache = result.workspace().ring_assembly_cache().unwrap();
+    let ring_cache = result.ring_assembly_cache().unwrap();
     assert_eq!(
         Some(ring_cache.predicate_path()),
         result.report().ring_assembly_predicate_path()
@@ -3588,7 +3588,7 @@ fn exact_curve_arrangement_attempt_builds_native_region_with_retained_workspace(
         );
         assert!(result.report().source_reports()[reversed_ref.source_report_index()].reversed());
     }
-    let output_cache = result.workspace().output_cache().unwrap();
+    let output_cache = result.output_cache().unwrap();
     assert!(output_cache.materialized_region());
     assert_eq!(output_cache.stage(), result.report().stage());
     assert_eq!(output_cache.status(), result.report().status());
@@ -3870,12 +3870,12 @@ fn exact_curve_arrangement_attempt_retains_overlap_blocker() {
         RegionLineSegmentRegionBuildStage2::RingAssembly
     );
     assert_eq!(result.report().blocker(), Some(UncertaintyReason::Boundary));
-    let source_endpoint_cache = result.workspace().source_endpoint_bucket_cache();
+    let source_endpoint_cache = result.source_endpoint_bucket_cache();
     assert_eq!(source_endpoint_cache.endpoint_count(), 4);
     assert_eq!(source_endpoint_cache.bucket_count(), 2);
     assert_eq!(source_endpoint_cache.singleton_bucket_count(), 0);
     assert_eq!(source_endpoint_cache.max_bucket_size(), 2);
-    let split_schedule_cache = result.workspace().split_schedule_cache();
+    let split_schedule_cache = result.split_schedule_cache();
     assert_eq!(
         split_schedule_cache.candidate_pair_count(),
         result.report().split_candidate_pair_count()
@@ -3894,7 +3894,7 @@ fn exact_curve_arrangement_attempt_retains_overlap_blocker() {
         split_schedule_cache.candidate_pairs()[0].aabb_status(),
         ExactCurveArrangementSplitCandidateAabbStatus2::NotDecidedDisjoint
     );
-    let split_cache = result.workspace().split_cache().unwrap();
+    let split_cache = result.split_cache().unwrap();
     assert_eq!(split_cache.overlap_relation_count(), 1);
     assert_eq!(split_cache.output_segment_count(), None);
     assert_eq!(
@@ -3968,9 +3968,9 @@ fn exact_curve_arrangement_attempt_retains_overlap_blocker() {
     assert_eq!(split_intersection_bucket_cache.singleton_bucket_count(), 0);
     assert_eq!(split_intersection_bucket_cache.max_bucket_size(), 0);
     assert!(split_intersection_bucket_cache.buckets().is_empty());
-    assert!(result.workspace().endpoint_graph_cache().is_none());
-    assert!(result.workspace().ring_assembly_cache().is_none());
-    let output_cache = result.workspace().output_cache().unwrap();
+    assert!(result.endpoint_graph_cache().is_none());
+    assert!(result.ring_assembly_cache().is_none());
+    let output_cache = result.output_cache().unwrap();
     assert!(!output_cache.materialized_region());
     assert_eq!(output_cache.stage(), result.report().stage());
     assert_eq!(output_cache.status(), result.report().status());
