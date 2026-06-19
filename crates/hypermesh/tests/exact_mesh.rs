@@ -1589,8 +1589,7 @@ fn exact_open_surface_arrangement_is_publicly_replayable() {
             ExactBooleanRequest::new(operation, ValidationPolicy::ALLOW_BOUNDARY),
             |evaluation| evaluation.validate().unwrap(),
         );
-        assert!(result.region_classification_count() > 0);
-        assert!(result.triangulation_count() > 0);
+        assert!(result.has_retained_split_region_evidence());
         if matches!(operation, ExactBooleanOperation::Intersection) {
             assert!(result.mesh().triangles().is_empty());
         } else {
@@ -1746,9 +1745,8 @@ fn exact_selected_region_boolean_is_publicly_replayable() {
         result.freshness_against_sources(&left, &separated_right),
         ExactReportFreshness::SourceReplayMismatch
     );
-    assert!(result.region_classification_count() > 0);
-    assert!(result.triangulation_count() > 0);
-    assert!(result.assembly_triangle_count() > 0);
+    assert!(result.has_retained_split_region_evidence());
+    assert!(result.has_retained_output_assembly());
     assert!(!result.mesh().triangles().is_empty());
     assert_eq!(
         result.mesh().validation_policy(),
@@ -2504,10 +2502,9 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
             .expect("certified arrangement evaluation should retain union result");
 
         if result.is_arrangement_cell_complex_materialized_for(ExactBooleanOperation::Union) {
-            assert!(result.region_classification_count() > 0);
-            assert!(result.triangulation_count() > 0);
-            assert!(result.volumetric_classification_count() > 0);
-            assert!(result.assembly_triangle_count() > 0);
+            assert!(result.has_retained_split_region_evidence());
+            assert!(result.has_retained_volumetric_classification_evidence());
+            assert!(result.has_retained_output_assembly());
         } else {
             assert!(
                 result.is_arrangement_cell_complex_shortcut_for(ExactBooleanOperation::Union),
@@ -2527,10 +2524,9 @@ fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
             "{evaluation:?}"
         );
         if result.is_arrangement_cell_complex_materialized_for(ExactBooleanOperation::Union) {
-            assert!(result.region_classification_count() > 0);
-            assert!(result.triangulation_count() > 0);
-            assert!(result.volumetric_classification_count() > 0);
-            assert!(result.assembly_triangle_count() > 0);
+            assert!(result.has_retained_split_region_evidence());
+            assert!(result.has_retained_volumetric_classification_evidence());
+            assert!(result.has_retained_output_assembly());
         } else {
             assert!(
                 result.is_arrangement_cell_complex_shortcut_for(ExactBooleanOperation::Union),
@@ -2700,10 +2696,9 @@ fn arrangement_cell_complex_request_materialization_is_publicly_replayable() {
         "canonical replay must reject stale source operands"
     );
     if result.is_arrangement_cell_complex_materialized_for(ExactBooleanOperation::Union) {
-        assert!(result.region_classification_count() > 0);
-        assert!(result.triangulation_count() > 0);
-        assert!(result.volumetric_classification_count() > 0);
-        assert!(result.assembly_triangle_count() > 0);
+        assert!(result.has_retained_split_region_evidence());
+        assert!(result.has_retained_volumetric_classification_evidence());
+        assert!(result.has_retained_output_assembly());
     } else {
         assert!(
             result.is_arrangement_cell_complex_shortcut_for(ExactBooleanOperation::Union),
@@ -2745,10 +2740,9 @@ fn arrangement_cell_complex_request_materialization_is_publicly_replayable() {
     if convex_intersection
         .is_arrangement_cell_complex_materialized_for(ExactBooleanOperation::Intersection)
     {
-        assert!(convex_intersection.region_classification_count() > 0);
-        assert!(convex_intersection.triangulation_count() > 0);
-        assert!(convex_intersection.volumetric_classification_count() > 0);
-        assert!(convex_intersection.assembly_triangle_count() > 0);
+        assert!(convex_intersection.has_retained_split_region_evidence());
+        assert!(convex_intersection.has_retained_volumetric_classification_evidence());
+        assert!(convex_intersection.has_retained_output_assembly());
     } else {
         assert!(
             convex_intersection
@@ -3755,7 +3749,10 @@ fn exact_volumetric_region_reports_replay_from_boolean_result() {
             ValidationPolicy::ALLOW_BOUNDARY,
         ),
     );
-    assert!(result.volumetric_classification_count() > 0, "{result:?}");
+    assert!(
+        result.has_retained_volumetric_classification_evidence(),
+        "{result:?}"
+    );
     let shifted_target = tetra([10, 10, 10]);
     assert!(
         result.has_replayable_volumetric_classification_witness(&left, &right, &shifted_target),

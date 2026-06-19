@@ -727,19 +727,14 @@ impl ExactBooleanResult {
         self.graph_had_unknowns = graph_had_unknowns;
     }
 
-    /// Return retained split-region plane classification count.
-    pub fn region_classification_count(&self) -> usize {
-        self.region_classifications.len()
+    /// Return whether this result retained split-region evidence.
+    pub fn has_retained_split_region_evidence(&self) -> bool {
+        !self.region_classifications.is_empty() && !self.triangulations.is_empty()
     }
 
-    /// Return retained exact projected triangulation count.
-    pub fn triangulation_count(&self) -> usize {
-        self.triangulations.len()
-    }
-
-    /// Return retained exact output assembly triangle count.
-    pub fn assembly_triangle_count(&self) -> usize {
-        self.assembly.triangles.len()
+    /// Return whether this result retained materialized output assembly.
+    pub fn has_retained_output_assembly(&self) -> bool {
+        !self.assembly.triangles.is_empty()
     }
 
     /// Return whether retained output assembly includes a reversed source triangle.
@@ -750,9 +745,9 @@ impl ExactBooleanResult {
             .any(|triangle| triangle.orientation == ExactOutputTriangleOrientation::ReverseSource)
     }
 
-    /// Return retained volumetric triangle classification count.
-    pub fn volumetric_classification_count(&self) -> usize {
-        self.volumetric_classifications.len()
+    /// Return whether this result retained volumetric classification evidence.
+    pub fn has_retained_volumetric_classification_evidence(&self) -> bool {
+        !self.volumetric_classifications.is_empty()
     }
 
     /// Return whether retained volumetric classifications replay from source
