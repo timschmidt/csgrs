@@ -957,7 +957,7 @@ impl ExactBooleanRequest {
 /// exact facts that explain which stage certified, blocked, or declined the
 /// requested operation.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactBooleanCertificationSet {
+pub(crate) struct ExactBooleanCertificationSet {
     /// Source-shape facts used by trivial shortcut supports.
     trivial: ExactTrivialBooleanFacts,
     /// Source-shape facts used by closed regularized-solid shortcut supports.
@@ -2304,7 +2304,8 @@ impl ExactBooleanEvaluation {
     }
 
     /// Return the replayable certification bundle retained by this evaluation.
-    pub fn certifications(&self) -> &ExactBooleanCertificationSet {
+    #[cfg(test)]
+    pub(crate) fn certifications(&self) -> &ExactBooleanCertificationSet {
         &self.certifications
     }
 
@@ -2395,8 +2396,7 @@ impl ExactBooleanEvaluation {
     ) -> Result<(), ExactReportValidationError> {
         self.validate()?;
         let replay = workspace_evaluation_for_replay(left, right, self.request)?;
-        if &self.preflight != replay.preflight() || &self.certifications != replay.certifications()
-        {
+        if &self.preflight != replay.preflight() || self.certifications != replay.certifications {
             return Err(ExactReportValidationError::SourceReplayMismatch);
         }
         self.validate_materialized_result_against_sources(left, right)?;
